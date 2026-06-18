@@ -15,16 +15,11 @@
  */
 
 import { useMemo, useState } from "react";
-import { Search, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  LocationTree,
-  buildLocationTree,
-  filterLocationTree,
-} from "@/components/locations/location-tree";
+import { LocationTree } from "@/components/locations/location-tree";
 import { useAllLocations } from "@/services/locations";
 import { useGeduLocations, useSetGeduLocations } from "@/services/gedu-locations";
 import type { Location } from "@/types";
@@ -44,7 +39,6 @@ export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
   // render straight from the server set. This keeps the initial paint in
   // sync with `current` without a setState-in-effect hop.
   const [overrides, setOverrides] = useState<Set<string> | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
 
   const selected = useMemo<Set<string>>(() => {
     if (overrides) return overrides;
@@ -59,16 +53,6 @@ export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
   const locationById = useMemo(
     () => new Map((allLocations ?? []).map((l) => [l.id, l])),
     [allLocations],
-  );
-
-  const tree = useMemo(
-    () => (allLocations ? buildLocationTree(allLocations) : []),
-    [allLocations],
-  );
-
-  const filteredTree = useMemo(
-    () => filterLocationTree(tree, searchQuery),
-    [tree, searchQuery],
   );
 
   const selectedList = useMemo(() => {
@@ -116,32 +100,19 @@ export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
         <p className="text-sm text-muted-foreground">{t("remoteOnlyNote")}</p>
 
         <div className="grid gap-4 md:grid-cols-[1fr_1fr]">
-          <div className="space-y-3">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder={t("searchPlaceholder")}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
+          <div>
+            {isLoading ? (
+              <div className="flex h-[420px] items-center justify-center rounded-md border text-sm text-muted-foreground">
+                {t("loading")}
+              </div>
+            ) : (
+              <LocationTree
+                locations={allLocations ?? []}
+                selection={{ mode: "multi", selectedIds: selected, onToggle: toggle }}
+                searchPlaceholder={t("searchPlaceholder")}
+                listClassName="h-[420px]"
               />
-            </div>
-
-            <div className="h-[420px] overflow-y-auto rounded-md border">
-              {isLoading ? (
-                <div className="py-8 text-center text-sm text-muted-foreground">
-                  {t("loading")}
-                </div>
-              ) : (
-                <LocationTree
-                  nodes={filteredTree}
-                  searchQuery={searchQuery}
-                  selectable
-                  selectedIds={selected}
-                  onToggleSelect={toggle}
-                />
-              )}
-            </div>
+            )}
           </div>
 
           {/* Fixed-height summary — the list scrolls internally so adding or

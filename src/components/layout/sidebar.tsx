@@ -10,7 +10,6 @@ import {
   Settings,
   FlaskConical,
   MessageCircle,
-  MapPin,
   ChevronLeft,
   ChevronRight,
   Joystick,
@@ -26,7 +25,7 @@ import { ROLE_LABEL_KEYS, ROUTES } from "@/lib/constants";
 import type { UserRole } from "@/types";
 
 type SidebarKey =
-  | "dashboard" | "users" | "locations"
+  | "dashboard" | "users"
   | "uiComponents" | "whatsapp" | "testing" | "settings"
   | "voice" | "consumerClubs" | "municipalityClubs" | "camps" | "events";
 
@@ -48,7 +47,6 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
     { href: ROUTES.admin.camps, labelKey: "camps", icon: <Tent className="h-5 w-5" /> },
     { href: ROUTES.admin.events, labelKey: "events", icon: <CalendarDays className="h-5 w-5" /> },
     { href: ROUTES.admin.voice, labelKey: "voice", icon: <AudioLines className="h-5 w-5" /> },
-    { href: ROUTES.admin.locations, labelKey: "locations", icon: <MapPin className="h-5 w-5" /> },
     { href: ROUTES.admin.uiComponents, labelKey: "uiComponents", icon: <Palette className="h-5 w-5" /> },
     { href: ROUTES.admin.whatsapp, labelKey: "whatsapp", icon: <MessageCircle className="h-5 w-5" /> },
     { href: ROUTES.admin.testing, labelKey: "testing", icon: <FlaskConical className="h-5 w-5" /> },

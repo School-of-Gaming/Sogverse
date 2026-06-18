@@ -55,7 +55,8 @@ import type {
   VoiceRoomContextValue,
   VoiceParticipant,
 } from "@/components/voice/hooks/types";
-import type { VoiceZone } from "@/types";
+import type { VoiceZone, Location } from "@/types";
+import { LocationTree } from "@/components/locations/location-tree";
 import {
   ProductBrowseCardView,
   type ProductBrowseCardViewProps,
@@ -1548,6 +1549,21 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
+      {/* Section 9b: Location Tree                                     */}
+      {/* ============================================================ */}
+      <Section title="Location Tree">
+        <p className="text-sm text-muted-foreground">
+          The one shared location-tree component, driven entirely by a hardcoded
+          fixture (no network, no providers). Single-select powers the product
+          location picker; multi-select powers the gedu coverage editor. Because
+          the data and the create handler are injected as props, the same
+          component renders identically from fixtures — which is the
+          separation-of-concerns check: the tree owns no business logic.
+        </p>
+        <LocationTreeDemo />
+      </Section>
+
+      {/* ============================================================ */}
       {/* Section 10: Composite Patterns                                */}
       {/* ============================================================ */}
       <Section title="Composite Patterns">
@@ -1707,6 +1723,110 @@ export default function AdminUIComponentsPage() {
 /* ------------------------------------------------------------------ */
 /*  Section 13: Manage Billing Card                                    */
 /* ------------------------------------------------------------------ */
+
+/* ------------------------------------------------------------------ */
+/*  Location Tree Demo                                                 */
+/* ------------------------------------------------------------------ */
+
+function fixtureLocation(
+  id: string,
+  name: string,
+  type: Location["type"],
+  parent_id: string | null,
+): Location {
+  return {
+    id,
+    name,
+    type,
+    parent_id,
+    country_code: "FI",
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
+  };
+}
+
+const LOCATION_FIXTURE: Location[] = [
+  fixtureLocation("fi", "Finland", "country", null),
+  fixtureLocation("uusimaa", "Uusimaa", "region", "fi"),
+  fixtureLocation("helsinki", "Helsinki", "municipality", "uusimaa"),
+  fixtureLocation("hki-site", "Itälahdenkatu 23 B", "site", "helsinki"),
+  fixtureLocation("espoo", "Espoo", "municipality", "uusimaa"),
+  fixtureLocation("pirkanmaa", "Pirkanmaa", "region", "fi"),
+  fixtureLocation("tampere", "Tampere", "municipality", "pirkanmaa"),
+  fixtureLocation("tre-site", "Sampola", "site", "tampere"),
+];
+
+function LocationTreeDemo() {
+  const [locations, setLocations] = useState<Location[]>(LOCATION_FIXTURE);
+  const [siteValue, setSiteValue] = useState<string | null>(null);
+  const [coverage, setCoverage] = useState<ReadonlySet<string>>(new Set());
+  const [createCount, setCreateCount] = useState(0);
+
+  return (
+    <div className="grid gap-6 md:grid-cols-2">
+      <div className="space-y-2">
+        <h4 className="text-sm font-semibold">Single-select (product picker)</h4>
+        <p className="text-xs text-muted-foreground">
+          Pickable: sites only. Hover a municipality to add a new site under it —
+          the freshly created site auto-selects.
+        </p>
+        <LocationTree
+          locations={locations}
+          selection={{
+            mode: "single",
+            value: siteValue,
+            onSelect: setSiteValue,
+            pickableTypes: ["site"],
+          }}
+          create={{
+            allowedChildTypes: ["site"],
+            onCreate: async (values) => {
+              const created = fixtureLocation(
+                `demo-site-${createCount}`,
+                values.name,
+                values.type,
+                values.parent_id,
+              );
+              setLocations((prev) => [...prev, created]);
+              setCreateCount((c) => c + 1);
+              return created;
+            },
+          }}
+          searchPlaceholder="Search locations…"
+          listClassName="max-h-[300px]"
+        />
+        <p className="text-xs text-muted-foreground">
+          Selected: {siteValue ?? "(none)"}
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <h4 className="text-sm font-semibold">Multi-select (gedu coverage)</h4>
+        <p className="text-xs text-muted-foreground">
+          The component just reports each tick; cascade semantics (tick a parent →
+          tick its subtree) live in the consumer, not here.
+        </p>
+        <LocationTree
+          locations={locations}
+          selection={{
+            mode: "multi",
+            selectedIds: coverage,
+            onToggle: (id) =>
+              setCoverage((prev) => {
+                const next = new Set(prev);
+                if (next.has(id)) next.delete(id);
+                else next.add(id);
+                return next;
+              }),
+          }}
+          searchPlaceholder="Search areas…"
+          listClassName="max-h-[300px]"
+        />
+        <p className="text-xs text-muted-foreground">{coverage.size} selected</p>
+      </div>
+    </div>
+  );
+}
 
 function ManageBillingCardDemo() {
   return (

@@ -1523,6 +1523,12 @@
       "createFreeAccount": "Create Free Account"
     }
   },
+  "locations": {
+    "tree": {
+      "empty": "No locations found matching your search.",
+      "clearSearch": "Clear search"
+    }
+  },
   "minecraft": {
     "label": "Minecraft Username",
     "placeholder": "e.g. Steve",

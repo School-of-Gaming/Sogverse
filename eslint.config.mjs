@@ -49,7 +49,9 @@ const eslintConfig = defineConfig([
         "jsx-attributes": {
           include: [],
           exclude: [
-            "className", "styleName", "style", "type", "key", "id",
+            // ".*ClassName" covers compound class-name props (e.g. listClassName)
+            // — Tailwind class strings, definitionally non-translatable like className.
+            "className", ".*ClassName", "styleName", "style", "type", "key", "id",
             "width", "height", "href", "src", "alt", "htmlFor",
             "data-.*", "role",
             "name", "value", "defaultValue", "defaultTheme",

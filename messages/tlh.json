@@ -1568,6 +1568,12 @@
       "createFreeAccount": "Account Huch Hutlh yIchenmoH"
     }
   },
+  "locations": {
+    "tree": {
+      "empty": "Dapmey DanejboHpu' tu'be'lu'.",
+      "clearSearch": "nejmey yIteq"
+    }
+  },
   "minecraft": {
     "label": "Minecraft lo'wI' pong",
     "placeholder": "e.g. Steve",

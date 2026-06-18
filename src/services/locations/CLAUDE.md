@@ -49,7 +49,13 @@ RLS: a gedu reads/writes only their own rows and only if their role is `gedu` (a
 - Unticking any descendant removes that descendant **and** every selected ancestor up its chain (the ancestor's "I cover my whole subtree" is no longer true). Sibling branches unaffected. Net effect: "I cover Uusimaa except Helsinki."
 - An empty selection is valid — the gedu is remote-only.
 
-UI: `src/components/locations/location-tree.tsx` (`LocationTree`) renders the tree in either admin mode (hover edit/add buttons) or selectable mode (checkboxes, countries collapsed). The gedu coverage editor reuses it in selectable mode and is mounted at two call sites sharing one component: the gedu self-edit settings page and the admin user-detail page. The product picker is `src/components/admin/products/location-picker.tsx` (Remote | In-person toggle; in-person mode builds cascading dropdowns from the country's `hierarchy`, with inline `+` to create rows via `src/components/admin/location-form-dialog.tsx`).
+UI: one shared, presentational tree — `src/components/locations/location-tree.tsx` (`LocationTree`). It takes a flat `locations` list (builds the tree + owns search internally) and a `selection` discriminated union: `single` (value/onSelect + `pickableTypes`) or `multi` (selectedIds/onToggle). Data and the create handler are injected as props — the component holds no business logic, so it is fixture-driven in the `/admin/ui-components` style guide. Optional inline create (`create.allowedChildTypes`, gated to `site` in practice) opens `src/components/admin/location-form-dialog.tsx`.
+
+Two consumers wrap it:
+- **Product picker** (`src/components/admin/products/location-picker.tsx`) — single-select. `pickable="site"` (in-person: only sites pickable, "+" creates a site under a municipality) or `pickable="jurisdiction"` (online municipality clubs: countries/regions/municipalities pickable, sites hidden, no creation). Adds the product-specific selected-state card with breadcrumb + member/staff `SiteNotesEditor`. This is the **only** surface that creates locations, and only sites — regions/municipalities/countries are seeded reference data (see migration `00109_seed_finland_locations.sql`).
+- **Gedu coverage editor** (`src/components/gedu/gedu-coverage-editor.tsx`) — multi-select, mounted at the gedu self-edit settings page and the admin user-detail page. The cascade-tick semantics (tick a parent → tick its subtree; untick a descendant → untick selected ancestors) live in the consumer (`coverage-cascade.ts`), not the component — the tree just reports each tick via `onToggle`.
+
+There is no standalone admin locations CRUD page; it was removed in favour of this shared component. (`useUpdateLocation` + the `PATCH /api/admin/locations/[id]` route are consequently unused — see `TODO.md`.)
 
 ## Recursive queries
 

@@ -1523,6 +1523,12 @@
       "createFreeAccount": "Skapa gratis konto"
     }
   },
+  "locations": {
+    "tree": {
+      "empty": "Inga platser hittades som matchar din sökning.",
+      "clearSearch": "Rensa sökning"
+    }
+  },
   "minecraft": {
     "label": "Minecraft-användarnamn",
     "placeholder": "t.ex. Steve",

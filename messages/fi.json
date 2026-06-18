@@ -1523,6 +1523,12 @@
       "createFreeAccount": "Luo ilmainen tili"
     }
   },
+  "locations": {
+    "tree": {
+      "empty": "Hakuasi vastaavia sijainteja ei löytynyt.",
+      "clearSearch": "Tyhjennä haku"
+    }
+  },
   "minecraft": {
     "label": "Minecraft-käyttäjänimi",
     "placeholder": "esim. Steve",
