@@ -808,7 +808,7 @@ export type Database = {
         Row: {
           created_at: string
           currency: string | null
-          email: string | null
+          email: string
           first_name: string
           id: string
           last_name: string
@@ -817,12 +817,11 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: string[]
           updated_at: string
-          username: string | null
         }
         Insert: {
           created_at?: string
           currency?: string | null
-          email?: string | null
+          email: string
           first_name: string
           id: string
           last_name?: string
@@ -831,12 +830,11 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           spoken_languages?: string[]
           updated_at?: string
-          username?: string | null
         }
         Update: {
           created_at?: string
           currency?: string | null
-          email?: string | null
+          email?: string
           first_name?: string
           id?: string
           last_name?: string
@@ -845,7 +843,6 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           spoken_languages?: string[]
           updated_at?: string
-          username?: string | null
         }
         Relationships: []
       }
@@ -1001,6 +998,119 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_private_zone_occupants: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          placed_by: string
+          session_opens_at: string
+          user_id: string
+          zone_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          placed_by: string
+          session_opens_at: string
+          user_id: string
+          zone_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          placed_by?: string
+          session_opens_at?: string
+          user_id?: string
+          zone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_private_zone_occupants_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_private_zone_occupants_placed_by_fkey"
+            columns: ["placed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_private_zone_occupants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_private_zone_occupants_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "voice_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_zones: {
+        Row: {
+          color: string
+          created_at: string
+          created_by: string
+          group_id: string
+          icon: string
+          id: string
+          is_locked: boolean
+          name: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          created_by: string
+          group_id: string
+          icon: string
+          id?: string
+          is_locked?: boolean
+          name?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          created_by?: string
+          group_id?: string
+          icon?: string
+          id?: string
+          is_locked?: boolean
+          name?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_zones_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_zones_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_contacts: {
         Row: {
           created_at: string
@@ -1094,7 +1204,7 @@ export type Database = {
         }[]
       }
       _list_table_grants: {
-        Args: never
+        Args: { p_grantee: string }
         Returns: {
           privilege_type: string
           table_name: string
@@ -1196,7 +1306,7 @@ export type Database = {
         Returns: {
           created_at: string
           currency: string | null
-          email: string | null
+          email: string
           first_name: string
           id: string
           last_name: string
@@ -1205,7 +1315,6 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: string[]
           updated_at: string
-          username: string | null
         }[]
         SetofOptions: {
           from: "*"
@@ -1219,7 +1328,7 @@ export type Database = {
         Returns: {
           created_at: string
           currency: string | null
-          email: string | null
+          email: string
           first_name: string
           id: string
           last_name: string
@@ -1228,7 +1337,6 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: string[]
           updated_at: string
-          username: string | null
         }[]
         SetofOptions: {
           from: "*"
@@ -1255,6 +1363,11 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }
+      is_voice_group_member: { Args: { p_group_id: string }; Returns: boolean }
+      is_voice_group_moderator: {
+        Args: { p_group_id: string }
+        Returns: boolean
+      }
       join_waitlist: {
         Args: {
           p_customer_id: string

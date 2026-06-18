@@ -1,9 +1,18 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
+import {
+  geduAssignedProduct,
+  myAssignedProductRows,
+} from "@/services/assignments/assignments.contracts";
+import { applyGroupChangesResult } from "@/services/groups/groups.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import {
+  createScheduleSlot,
+  createTestProduct,
+  deleteTestProducts,
+} from "./product-helpers";
 
 /**
  * Auth + return-shape coverage for `get_gedu_assigned_product` (migrations
@@ -42,35 +51,6 @@ const NONEXISTENT_PRODUCT_ID = "00000000-0000-0000-0000-0000000007df";
 const GAMER_MINECRAFT_USERNAME = "TestGamerMC";
 const GAMER_MINECRAFT_UUID = "11111111-2222-3333-4444-555555555555";
 
-interface AssignedProductResult {
-  product: {
-    id: string;
-    product_type: string;
-    is_remote: boolean;
-    translations: Array<{ locale: string; name: string; description: string }>;
-    schedule_slots: Array<unknown>;
-  };
-  my_group_id: string;
-  groups: Array<{
-    id: string;
-    name: string;
-    is_my_group: boolean;
-    gamer_count: number;
-    gedus: Array<{ id: string; first_name: string }>;
-    roster:
-      | Array<{
-          gamer_id: string;
-          first_name: string;
-          date_of_birth: string | null;
-          gender: string | null;
-          minecraft_username: string | null;
-          minecraft_uuid: string | null;
-          parent_email: string | null;
-        }>
-      | null;
-  }>;
-}
-
 describe("get_gedu_assigned_product", () => {
   let admin: SupabaseClient<Database>;
   let adminAuth: SupabaseClient<Database>;
@@ -106,6 +86,23 @@ describe("get_gedu_assigned_product", () => {
       await createTestProduct(admin, { id, seatCount: 50 });
     }
 
+    // createTestProduct seeds only the products row. Give PRODUCT_GEDU_ON one
+    // translation and one schedule slot so the RPCs' embedded jsonb arrays are
+    // non-empty — that's what exercises the nested productTranslationSummary /
+    // scheduleSlotSummary element schemas against real Postgres output. Both
+    // cascade-delete with the product in afterAll.
+    await admin.from("product_translations").insert({
+      product_id: PRODUCT_GEDU_ON,
+      locale: "en",
+      name: "Gedu Cohort Club",
+      short_description: "A club the assigned gedu teaches.",
+    });
+    await createScheduleSlot(admin, PRODUCT_GEDU_ON, {
+      weekday: 2,
+      startTime: "16:00",
+      durationMinutes: 90,
+    });
+
     // PRODUCT_GEDU_ON: Cohort A owned by GEDU, Cohort B a sister group with
     // no caller assignment.
     const created = await adminAuth.rpc("apply_group_changes", {
@@ -115,8 +112,7 @@ describe("get_gedu_assigned_product", () => {
         { tempId: "tB", name: "Cohort B", geduIds: [] },
       ],
     });
-    const tempMap = (created.data as { tempMap: Record<string, string> })
-      .tempMap;
+    const { tempMap } = applyGroupChangesResult.parse(created.data);
     myGroupId = tempMap.tA;
     sisterGroupId = tempMap.tB;
 
@@ -219,6 +215,32 @@ describe("get_gedu_assigned_product", () => {
   });
 
   // ---------------------------------------------------------------------------
+  // get_my_assigned_products contract — reuses this file's gedu/assignment
+  // fixture (GEDU owns Cohort A in PRODUCT_GEDU_ON). The gedu dashboard calls
+  // myAssignedProductRows.parse() on this RPC's output; parse real output
+  // here so a schema/Postgres drift fails CI instead of throwing and blanking
+  // the dashboard in production.
+  // ---------------------------------------------------------------------------
+
+  describe("get_my_assigned_products", () => {
+    it("returns the caller's assigned product, parsed through the contract schema", async () => {
+      const { data, error } = await geduAuth.rpc("get_my_assigned_products");
+      expect(error).toBeNull();
+
+      const rows = myAssignedProductRows.parse(data);
+      const mine = rows.find((r) => r.product_id === PRODUCT_GEDU_ON);
+      expect(mine).toBeDefined();
+      // The caller owns exactly Cohort A on this product.
+      expect(mine?.group_id).toBe(myGroupId);
+      // Both groups exist on the product; one active gamer sits in each.
+      expect(mine?.group_count).toBe(2);
+      expect(mine?.gamer_count).toBe(2);
+      expect(mine?.product_translations.length).toBeGreaterThan(0);
+      expect(mine?.schedule_slots.length).toBeGreaterThan(0);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // Happy path — the assigned gedu sees the product they teach
   // ---------------------------------------------------------------------------
 
@@ -229,7 +251,7 @@ describe("get_gedu_assigned_product", () => {
       });
 
       expect(error).toBeNull();
-      const result = data as unknown as AssignedProductResult;
+      const result = geduAssignedProduct.parse(data);
 
       expect(result.product.id).toBe(PRODUCT_GEDU_ON);
       expect(result.my_group_id).toBe(myGroupId);
@@ -240,7 +262,7 @@ describe("get_gedu_assigned_product", () => {
       const { data } = await geduAuth.rpc("get_gedu_assigned_product", {
         p_product_id: PRODUCT_GEDU_ON,
       });
-      const result = data as unknown as AssignedProductResult;
+      const result = geduAssignedProduct.parse(data);
 
       const mine = result.groups.find((g) => g.id === myGroupId);
       const sister = result.groups.find((g) => g.id === sisterGroupId);
@@ -262,7 +284,7 @@ describe("get_gedu_assigned_product", () => {
       const { data } = await geduAuth.rpc("get_gedu_assigned_product", {
         p_product_id: PRODUCT_GEDU_ON,
       });
-      const result = data as unknown as AssignedProductResult;
+      const result = geduAssignedProduct.parse(data);
       const mine = result.groups.find((g) => g.id === myGroupId);
       const entry = mine?.roster?.[0];
 
@@ -272,8 +294,8 @@ describe("get_gedu_assigned_product", () => {
       expect(entry?.gender).toBe("boy");
       expect(entry?.minecraft_username).toBe(GAMER_MINECRAFT_USERNAME);
       expect(entry?.minecraft_uuid).toBe(GAMER_MINECRAFT_UUID);
-      // parent_email comes from the parent's profile (the gamer's own
-      // profile email is null), and is the primary (oldest) parent link.
+      // parent_email comes from the parent's profile (not the gamer's own
+      // synthetic email), and is the primary (oldest) parent link.
       expect(entry?.parent_email).toBe(parentEmail);
       expect(entry?.parent_email).not.toBeNull();
     });
@@ -310,7 +332,7 @@ describe("get_gedu_assigned_product", () => {
           { p_product_id: PRODUCT_GEDU_ON },
         );
         expect(error).toBeNull();
-        const result = data as unknown as AssignedProductResult;
+        const result = geduAssignedProduct.parse(data);
         const mine = result.groups.find((g) => g.id === myGroupId);
         expect(mine?.roster).toEqual([]);
         expect(mine?.gamer_count).toBe(0);

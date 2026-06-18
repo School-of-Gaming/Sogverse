@@ -13,7 +13,7 @@ import { VOICE_CONFIG } from "@/lib/constants/voice";
  * admin or gedu and grants moderator (`is_owner: true`) tokens to them;
  * everyone else (signed-out, parents, gamers) gets a guest token.
  *
- * **Security invariants** — see `docs/instant-voice-rooms.md` for the full
+ * **Security invariants** — see `src/components/voice/instant/CLAUDE.md` for the full
  * threat model. Briefly:
  *
  *   - `isOwner` is derived purely from the server-side session lookup. The

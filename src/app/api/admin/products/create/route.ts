@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { requireRole } from "@/lib/auth";
+import { parseBodyValue } from "@/lib/api/json-body.server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createProductData } from "@/services/products/products.contracts";
 import type { Database } from "@/types";
 
 type RpcArgs = Database["public"]["Functions"]["create_product"]["Args"];
@@ -63,15 +65,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing 'data' field" }, { status: 400 });
   }
 
-  let body: Record<string, unknown>;
+  let raw: unknown;
   try {
-    body = JSON.parse(dataField) as Record<string, unknown>;
+    raw = JSON.parse(dataField);
   } catch {
     return NextResponse.json(
       { error: "'data' field must be valid JSON" },
       { status: 400 }
     );
   }
+  const body = parseBodyValue(raw, createProductData);
+  if (body instanceof NextResponse) return body;
 
   const file = formData.get("file");
   const hasImage = file instanceof File;
@@ -89,36 +93,33 @@ export async function POST(request: Request) {
     );
   }
 
-  // Build RPC args. Values we don't have go in as undefined so the RPC uses
-  // its DEFAULT NULL. Validation beyond "string is string" lives in the DB
-  // (CHECK constraints + location trigger on products).
+  // Build RPC args. Nullable fields go in as undefined so the RPC uses its
+  // DEFAULT NULL. Semantic validation beyond the contract schema's shapes
+  // lives in the DB (CHECK constraints + location trigger on products).
   const rpcArgs: RpcArgs = {
-    p_product_type: body.product_type as RpcArgs["p_product_type"],
-    p_billing_mode: body.billing_mode as RpcArgs["p_billing_mode"],
-    p_translations: body.translations as RpcArgs["p_translations"],
-    p_topic: body.topic as RpcArgs["p_topic"],
-    p_min_age: body.min_age as number,
-    p_max_age: body.max_age as number,
-    p_spoken_language_code: body.spoken_language_code as string,
-    p_is_remote: body.is_remote as boolean,
-    p_timezone: body.timezone as string,
-    p_status: (body.status as RpcArgs["p_status"]) ?? undefined,
-    p_is_visible: (body.is_visible as boolean | undefined) ?? undefined,
-    p_waitlist_enabled:
-      (body.waitlist_enabled as boolean | undefined) ?? undefined,
-    p_padlet_url: (body.padlet_url as string | null) ?? undefined,
-    p_location_id: (body.location_id as string | null) ?? undefined,
-    p_signup_threshold: (body.signup_threshold as number | null) ?? undefined,
-    p_start_date: (body.start_date as string | null) ?? undefined,
-    p_end_date: (body.end_date as string | null) ?? undefined,
-    p_seat_count: (body.seat_count as number | null) ?? undefined,
-    p_registration_opens_at: body.registration_opens_at as string,
-    p_refund_policy_days:
-      (body.refund_policy_days as number | null) ?? undefined,
-    p_schedule_slots: body.schedule_slots as RpcArgs["p_schedule_slots"],
-    p_prices: body.prices as RpcArgs["p_prices"],
-    p_holiday_calendar_ids:
-      (body.holiday_calendar_ids as string[] | undefined) ?? undefined,
+    p_product_type: body.product_type,
+    p_billing_mode: body.billing_mode,
+    p_translations: body.translations,
+    p_topic: body.topic,
+    p_min_age: body.min_age,
+    p_max_age: body.max_age,
+    p_spoken_language_code: body.spoken_language_code,
+    p_is_remote: body.is_remote,
+    p_timezone: body.timezone,
+    p_status: body.status,
+    p_is_visible: body.is_visible,
+    p_waitlist_enabled: body.waitlist_enabled,
+    p_padlet_url: body.padlet_url ?? undefined,
+    p_location_id: body.location_id ?? undefined,
+    p_signup_threshold: body.signup_threshold ?? undefined,
+    p_start_date: body.start_date ?? undefined,
+    p_end_date: body.end_date ?? undefined,
+    p_seat_count: body.seat_count ?? undefined,
+    p_registration_opens_at: body.registration_opens_at,
+    p_refund_policy_days: body.refund_policy_days ?? undefined,
+    p_schedule_slots: body.schedule_slots,
+    p_prices: body.prices,
+    p_holiday_calendar_ids: body.holiday_calendar_ids,
   };
 
   // Call RPC through the user's session client — SECURITY INVOKER means

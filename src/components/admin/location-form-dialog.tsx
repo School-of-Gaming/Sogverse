@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -152,8 +152,15 @@ function LocationFormDialogInner({
             )}
 
             {isAddingCountry ? (
-              <div className="space-y-2">
-                <Label htmlFor="loc-country">{t('country')}</Label>
+              <Field
+                label={t('country')}
+                htmlFor="loc-country"
+                hint={
+                  availableCountries.length === 0
+                    ? t('allCountriesAdded')
+                    : undefined
+                }
+              >
                 <select
                   id="loc-country"
                   value={selectedCountryCode}
@@ -169,15 +176,9 @@ function LocationFormDialogInner({
                     </option>
                   ))}
                 </select>
-                {availableCountries.length === 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    {t('allCountriesAdded')}
-                  </p>
-                )}
-              </div>
+              </Field>
             ) : (
-              <div className="space-y-2">
-                <Label htmlFor="loc-name">{t('name')}</Label>
+              <Field label={t('name')} htmlFor="loc-name">
                 <Input
                   id="loc-name"
                   placeholder={
@@ -191,7 +192,7 @@ function LocationFormDialogInner({
                   required
                   autoFocus
                 />
-              </div>
+              </Field>
             )}
           </div>
 

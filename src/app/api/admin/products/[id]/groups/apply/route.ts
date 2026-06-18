@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
-import type { GroupChangeSet } from "@/services/groups";
+import { parseJsonBody } from "@/lib/api/json-body.server";
+import {
+  applyGroupChangesResult,
+  groupChangeSet,
+} from "@/services/groups/groups.contracts";
 
 /**
  * POST /api/admin/products/[id]/groups/apply
@@ -26,15 +30,8 @@ export async function POST(
 
   const { id: productId } = await params;
 
-  let changes: GroupChangeSet;
-  try {
-    changes = (await request.json()) as GroupChangeSet;
-  } catch {
-    return NextResponse.json(
-      { error: "Request body must be valid JSON" },
-      { status: 400 },
-    );
-  }
+  const changes = await parseJsonBody(request, groupChangeSet);
+  if (changes instanceof NextResponse) return changes;
 
   const { data, error } = await supabase.rpc("apply_group_changes", {
     p_product_id: productId,
@@ -54,5 +51,7 @@ export async function POST(
     return NextResponse.json({ error: error.message }, { status });
   }
 
-  return NextResponse.json(data as { tempMap: Record<string, string> });
+  // The RPC returns `Json`; validate it really is the tempMap shape before
+  // handing it to the client (the service parses the same contract schema).
+  return NextResponse.json(applyGroupChangesResult.parse(data));
 }

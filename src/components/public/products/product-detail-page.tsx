@@ -94,7 +94,7 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
       kind: "ready",
       gamers: (gamers ?? []).map((g) => ({
         id: g.id,
-        name: g.first_name || g.username,
+        name: g.first_name,
         age: null,
         signupState: gamerStates[g.id] ?? null,
       })),

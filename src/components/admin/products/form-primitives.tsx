@@ -2,7 +2,6 @@
 
 import { Info } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 export function FormSection({
@@ -28,31 +27,6 @@ export function FormSection({
         <div className="space-y-4">{children}</div>
       </CardContent>
     </Card>
-  );
-}
-
-export function Field({
-  label,
-  htmlFor,
-  required,
-  hint,
-  children,
-}: {
-  label: string;
-  htmlFor?: string;
-  required?: boolean;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label htmlFor={htmlFor}>
-        {label}
-        {required && <span className="ml-0.5 text-destructive">*</span>}
-      </Label>
-      {children}
-      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
-    </div>
   );
 }
 

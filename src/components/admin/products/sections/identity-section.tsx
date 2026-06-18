@@ -3,8 +3,9 @@
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
+import { Field } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
+import { cn, findOption } from "@/lib/utils";
 import {
   LOCALE_CONFIG,
   SUPPORTED_LOCALES,
@@ -15,8 +16,8 @@ import {
   SUBJECT_TOPICS,
 } from "@/lib/products/topics";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
-import type { ProductTopic } from "@/types";
-import { Field, FormSection } from "../form-primitives";
+import { Constants } from "@/types";
+import { FormSection } from "../form-primitives";
 import { ImagePicker } from "../image-picker";
 import { LongDescriptionBlocksEditor } from "../long-description-blocks-editor";
 import {
@@ -102,11 +103,7 @@ export function IdentitySection({
     >
       {/* Language tabs — at least one filled locale required. The hint below
           spells the rule out. Switching tabs preserves what's typed in each. */}
-      <div className="space-y-2">
-        <Label>
-          {t("translations.label")}
-          <span className="ml-0.5 text-destructive">*</span>
-        </Label>
+      <Field label={t("translations.label")} hint={t("translations.hint")}>
         <div className="flex flex-wrap items-center gap-1 border-b border-border">
           {addedLocales.map((locale) => {
             const isActive = state.activeLocale === locale;
@@ -146,8 +143,8 @@ export function IdentitySection({
             <select
               value=""
               onChange={(e) => {
-                if (e.target.value)
-                  addLocaleTab(e.target.value as SupportedLocale);
+                const locale = findOption(addableLocales, e.target.value);
+                if (locale) addLocaleTab(locale);
               }}
               className="ml-1 mb-1 h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground"
             >
@@ -160,16 +157,9 @@ export function IdentitySection({
             </select>
           )}
         </div>
-        <p className="text-xs text-muted-foreground">
-          {t("translations.hint")}
-        </p>
-      </div>
+      </Field>
 
-      <Field
-        label={t("labels.name")}
-        htmlFor={`p-name-${state.activeLocale}`}
-        required
-      >
+      <Field label={t("labels.name")} htmlFor={`p-name-${state.activeLocale}`}>
         <Input
           id={`p-name-${state.activeLocale}`}
           value={activeDraft.name}
@@ -183,10 +173,9 @@ export function IdentitySection({
       <Field
         label={t("labels.shortDescription")}
         htmlFor={`p-short-description-${state.activeLocale}`}
-        required
         hint={t("hints.shortDescription")}
       >
-        <textarea
+        <Textarea
           id={`p-short-description-${state.activeLocale}`}
           placeholder={t(`placeholders.description.${config.i18nKey}`)}
           value={activeDraft.shortDescription}
@@ -195,12 +184,12 @@ export function IdentitySection({
           }
           rows={3}
           required
-          className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
       </Field>
 
       <Field
         label={t("labels.longDescription")}
+        optional
         hint={t("hints.longDescription")}
       >
         <LongDescriptionBlocksEditor
@@ -219,14 +208,17 @@ export function IdentitySection({
       <Field
         label={t("labels.topic")}
         htmlFor="p-topic"
-        required
         hint={t("hints.topicHint")}
       >
         <select
           id="p-topic"
           value={state.topic}
           onChange={(e) =>
-            setState({ ...state, topic: e.target.value as ProductTopic | "" })
+            setState({
+              ...state,
+              topic:
+                findOption(Constants.public.Enums.product_topic, e.target.value) ?? "",
+            })
           }
           required
           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -252,6 +244,7 @@ export function IdentitySection({
       <Field
         label={t("labels.padletUrl")}
         htmlFor="p-padlet"
+        optional
         hint={t("hints.padletHint")}
       >
         <Input

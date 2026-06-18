@@ -9,7 +9,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, SUPPORT_EMAIL } from "@/lib/constants";
@@ -135,8 +135,7 @@ export function RegisterForm() {
               {error}
             </div>
           )}
-          <div className="space-y-2">
-            <Label htmlFor="firstName">{t('register.parentFirstName')}</Label>
+          <Field label={t('register.parentFirstName')} htmlFor="firstName">
             <Input
               id="firstName"
               type="text"
@@ -148,9 +147,8 @@ export function RegisterForm() {
               maxLength={DISPLAY_NAME_MAX}
               autoComplete="given-name"
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="lastName">{t('register.parentLastName')}</Label>
+          </Field>
+          <Field label={t('register.parentLastName')} htmlFor="lastName">
             <Input
               id="lastName"
               type="text"
@@ -162,9 +160,8 @@ export function RegisterForm() {
               maxLength={DISPLAY_NAME_MAX}
               autoComplete="family-name"
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">{c('email')}</Label>
+          </Field>
+          <Field label={c('email')} htmlFor="email">
             <Input
               id="email"
               type="email"
@@ -175,9 +172,12 @@ export function RegisterForm() {
               required
               autoComplete="username"
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">{c('password')}</Label>
+          </Field>
+          <Field
+            label={c('password')}
+            htmlFor="password"
+            hint={c('passwordMinLength', { count: 8 })}
+          >
             <PasswordInput
               id="password"
               placeholder={t('register.passwordPlaceholder')}
@@ -187,12 +187,8 @@ export function RegisterForm() {
               required
               autoComplete="new-password"
             />
-            <p className="text-xs text-muted-foreground">
-              {c('passwordMinLength', { count: 8 })}
-            </p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">{c('confirmPassword')}</Label>
+          </Field>
+          <Field label={c('confirmPassword')} htmlFor="confirmPassword">
             <PasswordInput
               id="confirmPassword"
               placeholder={t('register.confirmPasswordPlaceholder')}
@@ -202,7 +198,7 @@ export function RegisterForm() {
               required
               autoComplete="new-password"
             />
-          </div>
+          </Field>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={isLoading}>

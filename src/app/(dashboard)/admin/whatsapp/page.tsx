@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { AlertCircle, Check, CheckCheck, Loader2, MessageCircle, Send } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
+import { formatInTimeZone } from "date-fns-tz";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn, formatTime, formatDate } from "@/lib/utils";
+import { useTimezone } from "@/providers";
 import { getClient } from "@/lib/supabase/client";
 import {
   useWhatsAppContacts,
@@ -21,21 +23,24 @@ import {
   type WhatsAppMessage,
 } from "@/types";
 
-function formatChatDate(dateStr: string, todayLabel: string, yesterdayLabel: string, locale: string) {
+function formatChatDate(dateStr: string, todayLabel: string, yesterdayLabel: string, locale: string, timeZone: string) {
+  // Bucket by calendar day in the viewer's zone, not the host-local zone
+  // toDateString() implies — the "today"/"yesterday" boundary must match the
+  // zone the label and message times render in (CLAUDE.md date-marker rule).
   const date = new Date(dateStr);
-  const today = new Date();
-  if (date.toDateString() === today.toDateString()) return todayLabel;
-  const yesterday = new Date(Date.now() - 86_400_000);
-  if (date.toDateString() === yesterday.toDateString()) return yesterdayLabel;
-  return formatDate(date, locale);
+  const dayKey = formatInTimeZone(date, timeZone, "yyyy-MM-dd");
+  const now = new Date();
+  if (dayKey === formatInTimeZone(now, timeZone, "yyyy-MM-dd")) return todayLabel;
+  if (dayKey === formatInTimeZone(new Date(Date.now() - 86_400_000), timeZone, "yyyy-MM-dd")) return yesterdayLabel;
+  return formatDate(date, locale, { dateStyle: "medium", timeZone });
 }
 
-function groupMessagesByDate(messages: WhatsAppMessage[], todayLabel: string, yesterdayLabel: string, locale: string) {
+function groupMessagesByDate(messages: WhatsAppMessage[], todayLabel: string, yesterdayLabel: string, locale: string, timeZone: string) {
   const groups: { date: string; messages: WhatsAppMessage[] }[] = [];
   let currentDate = "";
 
   for (const msg of messages) {
-    const date = formatChatDate(msg.created_at, todayLabel, yesterdayLabel, locale);
+    const date = formatChatDate(msg.created_at, todayLabel, yesterdayLabel, locale, timeZone);
     if (date !== currentDate) {
       currentDate = date;
       groups.push({ date, messages: [] });
@@ -85,6 +90,7 @@ function ContactList({
 }) {
   const t = useTranslations('admin.whatsapp');
   const locale = useLocale();
+  const timeZone = useTimezone();
   const filtered = contacts.filter((c) => {
     const q = searchQuery.toLowerCase();
     return (
@@ -127,7 +133,7 @@ function ContactList({
               </p>
             </div>
             <span className="shrink-0 text-xs text-muted-foreground">
-              {formatTime(contact.last_message_at, locale)}
+              {formatTime(contact.last_message_at, locale, timeZone)}
             </span>
           </button>
         ))}
@@ -159,6 +165,7 @@ function ChatThread({
 }) {
   const t = useTranslations('admin.whatsapp');
   const locale = useLocale();
+  const timeZone = useTimezone();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -179,7 +186,7 @@ function ChatThread({
     inputRef.current?.focus();
   }
 
-  const dateGroups = groupMessagesByDate(messages, t("today"), t("yesterday"), locale);
+  const dateGroups = groupMessagesByDate(messages, t("today"), t("yesterday"), locale, timeZone);
 
   return (
     <div className="flex h-full flex-col">
@@ -243,7 +250,7 @@ function ChatThread({
                               : "text-muted-foreground"
                       )}
                     >
-                      <span>{formatTime(msg.created_at, locale)}</span>
+                      <span>{formatTime(msg.created_at, locale, timeZone)}</span>
                       {msg.direction === WHATSAPP_DIRECTION.OUTBOUND && msg.status !== WHATSAPP_MESSAGE_STATUS.FAILED && (
                         <StatusIndicator status={msg.status} />
                       )}
@@ -316,11 +323,11 @@ export default function WhatsAppInboxPage() {
           queryClient.invalidateQueries({ queryKey: whatsappKeys.all });
         }
       )
-      .on(
+      .on<WhatsAppMessage>(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "whatsapp_messages" },
         (payload) => {
-          const updated = payload.new as WhatsAppMessage;
+          const updated = payload.new;
           queryClient.setQueryData<WhatsAppMessage[]>(
             whatsappKeys.messages(updated.phone),
             (old) => old?.map((msg) => msg.id === updated.id ? updated : msg)

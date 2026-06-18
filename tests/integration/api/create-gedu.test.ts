@@ -2,6 +2,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "@/app/api/admin/create-gedu/route";
 import { NextResponse } from "next/server";
 
+// The route builds the invite link's redirectTo via getOrigin(), which falls
+// back to NEXT_PUBLIC_SITE_URL when the request carries no trusted Host (these
+// mock requests don't). A fake value keeps the suite hermetic and exercises
+// the production-representative path (untrusted Host → canonical origin).
+// getOrigin reads process.env at call time, so setting it here works despite
+// import hoisting.
+process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+
 // --- Mocks ---
 
 const mockRequireRole = vi.fn();
@@ -229,7 +237,7 @@ describe("POST /api/admin/create-gedu", () => {
       type: "invite",
       email: "gedu@example.com",
       options: {
-        redirectTo: "http://localhost:3000/setup-account",
+        redirectTo: "https://test.sogverse.local/setup-account",
         data: {
           first_name: "Jane",
           last_name: "Smith",
@@ -250,6 +258,33 @@ describe("POST /api/admin/create-gedu", () => {
         toEmail: "gedu@example.com",
         subject: "You\u2019re invited to the Sogverse",
       })
+    );
+  });
+
+  // Regression: the invite link's redirectTo must be built off the trusted
+  // origin (getOrigin → canonical NEXT_PUBLIC_SITE_URL here), never the
+  // attacker-controllable Host header / request URL — the invite link carries
+  // a session-granting token, so a spoofed Host turns the emailed link into a
+  // phishing URL. Admin-only to trigger, but the origin must not depend on
+  // whatever Host the request arrived with.
+  it("builds the invite link off the trusted origin, ignoring a spoofed Host", async () => {
+    mockAdmin();
+    // Both the URL and the Host header carry the attacker value, as a genuinely
+    // spoofed request would — so this fails if the route ever regresses to
+    // either `new URL(request.url).origin` or a raw Host read.
+    const spoofed = new Request("https://evil.com/api/admin/create-gedu", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", host: "evil.com" },
+      body: JSON.stringify({ email: "gedu@example.com", firstName: "Jane", lastName: "Smith" }),
+    });
+    await POST(spoofed);
+
+    expect(mockGenerateLink).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.objectContaining({
+          redirectTo: "https://test.sogverse.local/setup-account",
+        }),
+      }),
     );
   });
 

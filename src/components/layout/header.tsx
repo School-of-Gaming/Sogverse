@@ -15,20 +15,15 @@ import { SiteHeaderShell } from "@/components/layout/site-header-shell";
 import { trackDashboardNav } from "@/lib/analytics";
 
 // Dashboard route prefixes used to detect whether the user is currently on a
-// dashboard. Used both for the avatar's active-ring state (admin/gedu — whose
-// avatar links to the dashboard) and the logo's drop-shadow (parent/gamer —
-// whose logo links to the dashboard).
+// dashboard. Drives the avatar's active-ring state for roles whose avatar
+// links to the dashboard rather than the family selector.
 const DASHBOARD_PREFIXES = ["/admin", "/parent", "/gamer", "/gedu"];
-
-// Roles whose SOG logo routes to their own dashboard (not the public home).
-// Parents and gamers get there past the family-selector interstitial; gedus
-// have a single profile and the logo is the direct route.
-const LOGO_TO_DASHBOARD_ROLES = new Set<UserRole>(["customer", "gamer", "gedu"]);
 
 // Roles whose header avatar routes to the family profile selector instead of
 // their dashboard. Parents and gamers share one household, so the avatar is
-// the "switch to another family member" affordance for both. Gedus have one
-// profile, so their avatar goes to the dashboard alongside the logo.
+// the "switch to another family member" affordance for both. Gedus and admins
+// have a single profile, so their avatar goes to the dashboard alongside the
+// logo.
 const SELECTOR_ROLES = new Set<UserRole>(["customer", "gamer"]);
 
 export function Header() {
@@ -58,16 +53,12 @@ export function Header() {
   const dashboardPath = profile?.role
     ? ROLE_DASHBOARD_PATHS[profile.role]
     : null;
-  const logoGoesToDashboard =
-    !!profile?.role && LOGO_TO_DASHBOARD_ROLES.has(profile.role);
   const usesSelector = !!profile?.role && SELECTOR_ROLES.has(profile.role);
 
-  // Logo destination: parents, gamers, and gedus go to their dashboard
-  // (parents/gamers route past the family-selector interstitial; gedus
-  // directly to /gedu). Everyone else — including signed-out visitors —
-  // goes home.
-  const logoHref =
-    user && logoGoesToDashboard && dashboardPath ? dashboardPath : ROUTES.home;
+  // Logo destination: every signed-in role goes to its own dashboard (parents
+  // and gamers route straight there, past the family-selector interstitial).
+  // Signed-out visitors go home.
+  const logoHref = user && dashboardPath ? dashboardPath : ROUTES.home;
   // The visual "you're here" state for the logo follows whatever it links to.
   const isOnLogoTarget =
     logoHref === ROUTES.home
@@ -150,11 +141,10 @@ export function Header() {
             className={logoClassName}
             aria-current={isOnLogoTarget ? "page" : undefined}
             onClick={() => {
-              // The logo routes parents/gamers/gedus to their dashboard —
-              // record which path they chose. logoGoesToDashboard already
-              // implies profile.role is set (admins' logo goes home, so it's
-              // false and nothing fires).
-              if (logoGoesToDashboard) {
+              // The logo routes every signed-in role to its dashboard — record
+              // which path they chose. Signed-out visitors have no role and
+              // their logo goes home, so nothing fires.
+              if (profile?.role) {
                 trackDashboardNav({
                   role: profile.role,
                   method: "logo",

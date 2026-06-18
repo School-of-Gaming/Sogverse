@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
 import { ROUTES } from "@/lib/constants";
@@ -129,8 +129,11 @@ export function ResetPasswordForm() {
               {error}
             </div>
           )}
-          <div className="space-y-2">
-            <Label htmlFor="password">{c('newPassword')}</Label>
+          <Field
+            label={c('newPassword')}
+            htmlFor="password"
+            hint={c('passwordMinLength', { count: 8 })}
+          >
             <PasswordInput
               id="password"
               placeholder={t('resetPassword.newPasswordPlaceholder')}
@@ -140,12 +143,8 @@ export function ResetPasswordForm() {
               required
               autoComplete="new-password"
             />
-            <p className="text-xs text-muted-foreground">
-              {c('passwordMinLength', { count: 8 })}
-            </p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">{c('confirmPassword')}</Label>
+          </Field>
+          <Field label={c('confirmPassword')} htmlFor="confirmPassword">
             <PasswordInput
               id="confirmPassword"
               placeholder={t('resetPassword.confirmPasswordPlaceholder')}
@@ -155,7 +154,7 @@ export function ResetPasswordForm() {
               required
               autoComplete="new-password"
             />
-          </div>
+          </Field>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={isLoading || !sessionReady}>

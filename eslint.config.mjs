@@ -27,6 +27,11 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-unnecessary-condition": "error",
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-unnecessary-type-assertion": "error",
+      // Types are earned, never asserted: parse at boundaries (contract
+      // schemas), narrow with real guards, derive query rows via QueryData.
+      // See CLAUDE.md § Service Layer Pattern and § "Fix pattern".
+      // Suppressions are not accepted for this rule.
+      "@typescript-eslint/no-unsafe-type-assertion": "error",
       // Every lint suppression (eslint-disable, @ts-expect-error, etc.) must
       // have a `--` description explaining why. Enforces the CLAUDE.md rule.
       "@eslint-community/eslint-comments/require-description": [
@@ -44,7 +49,9 @@ const eslintConfig = defineConfig([
         "jsx-attributes": {
           include: [],
           exclude: [
-            "className", "styleName", "style", "type", "key", "id",
+            // ".*ClassName" covers compound class-name props (e.g. listClassName)
+            // — Tailwind class strings, definitionally non-translatable like className.
+            "className", ".*ClassName", "styleName", "style", "type", "key", "id",
             "width", "height", "href", "src", "alt", "htmlFor",
             "data-.*", "role",
             "name", "value", "defaultValue", "defaultTheme",

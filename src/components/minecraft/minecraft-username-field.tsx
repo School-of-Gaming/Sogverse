@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { useVerifyMinecraft } from "@/services/minecraft";
 
@@ -61,11 +61,7 @@ export function MinecraftUsernameField({
   const isValid = /^[a-zA-Z0-9_]{3,16}$/.test(value);
 
   return (
-    <div className="space-y-2">
-      <Label htmlFor="minecraftUsername">
-        {t('label')}
-        {optional && <span className="ml-1 text-muted-foreground font-normal">{t('optional')}</span>}
-      </Label>
+    <Field label={t('label')} htmlFor="minecraftUsername" optional={optional}>
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Input
@@ -133,6 +129,6 @@ export function MinecraftUsernameField({
       {verifyError && (
         <p className="text-sm text-muted-foreground">{verifyError}</p>
       )}
-    </div>
+    </Field>
   );
 }

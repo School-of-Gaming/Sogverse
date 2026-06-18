@@ -13,11 +13,14 @@ const { mockStripeSessionCreate } = vi.hoisted(() => ({
 }));
 
 vi.mock("stripe", () => {
+  // The route only ever does `new Stripe(...)` and calls
+  // checkout.sessions.create — vi.mock's factory isn't typed against the
+  // real module, so the bare vi.fn constructor needs no cast.
   const StripeMock = vi.fn(function () {
     return {
       checkout: { sessions: { create: mockStripeSessionCreate } },
     };
-  }) as unknown as typeof import("stripe").default;
+  });
   return { default: StripeMock };
 });
 
@@ -106,12 +109,12 @@ type AdminMockOptions = {
   product?: ProductFixture | null;
   productErr?: { message: string } | null;
   /** Gamer profile returned for the subscription-description lookup. */
-  gamer?: { first_name: string | null; username: string | null } | null;
+  gamer?: { first_name: string | null } | null;
 };
 
 function mockAdmin(opts: AdminMockOptions = {}): void {
   const gamer =
-    opts.gamer ?? { first_name: GAMER_FIRST_NAME, username: null };
+    opts.gamer ?? { first_name: GAMER_FIRST_NAME };
 
   mockAdminFrom.mockImplementation((table: string) => {
     if (table === "products") {

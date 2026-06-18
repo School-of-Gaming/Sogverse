@@ -62,7 +62,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 
-    const adminEmails = admins.map((a) => a.email).filter(Boolean) as string[];
+    const adminEmails = admins.flatMap((a) => (a.email ? [a.email] : []));
 
     // Determine reply-to email
     const role = profile.role;
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
       : detectLocaleFromHeader(request.headers.get("Accept-Language"));
 
     const t = await getEmailTranslator(locale);
-    const displayName = profile.first_name || profile.username || "Unknown";
+    const displayName = profile.first_name || "Unknown";
 
     const htmlContent = buildFeedbackEmail(t, locale, {
       userName: displayName,

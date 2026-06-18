@@ -73,7 +73,7 @@ export function GeduPickerSheet({
       if (!q) return true;
       return (
         g.first_name.toLowerCase().includes(q) ||
-        (g.email?.toLowerCase().includes(q) ?? false)
+        g.email.toLowerCase().includes(q)
       );
     });
   }, [gedus, search, languageFilter]);

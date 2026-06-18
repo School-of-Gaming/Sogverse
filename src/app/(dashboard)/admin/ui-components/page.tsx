@@ -26,6 +26,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Field } from "@/components/ui/field";
 import { Avatar } from "@/components/ui/avatar";
@@ -46,8 +47,16 @@ import { UserRow } from "@/components/admin/user-row";
 import { SessionsSection } from "@/components/parent";
 import type { UpcomingSessionEntry } from "@/lib/upcoming-sessions";
 import { useAuth, useNow } from "@/providers";
-import { AVATAR_SIZE } from "@/lib/constants/spatial";
-import { computeGlowStyle } from "@/lib/constants/spatial.config";
+import { computeGlowStyle } from "@/lib/voice/glow";
+import { composeZones } from "@/lib/voice/zone-composition";
+import { ZoneList } from "@/components/voice/ZoneList";
+import { VoiceRoomContext } from "@/components/voice/VoiceRoomProvider";
+import type {
+  VoiceRoomContextValue,
+  VoiceParticipant,
+} from "@/components/voice/hooks/types";
+import type { VoiceZone, Location } from "@/types";
+import { LocationTree } from "@/components/locations/location-tree";
 import {
   ProductBrowseCardView,
   type ProductBrowseCardViewProps,
@@ -212,24 +221,21 @@ function VoiceAvatarDemo() {
 
   return (
     <div className="flex items-center gap-8">
-      <div style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}>
-        <VoiceAvatar
-          userId={profile?.id || user?.id || "demo"}
-          userName={profile?.first_name ?? "You"}
-          audioOn={micOn}
-          videoOn={cameraOn}
-          isLocal
-          glowStyle={glowStyle}
-        >
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="h-full w-full object-cover"
-          />
-        </VoiceAvatar>
-      </div>
+      <VoiceAvatar
+        userId={profile?.id || user?.id || "demo"}
+        audioOn={micOn}
+        videoOn={cameraOn}
+        isLocal
+        glowStyle={glowStyle}
+      >
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="h-full w-full object-cover"
+        />
+      </VoiceAvatar>
 
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
@@ -474,8 +480,173 @@ function useSimulatedGlow(
   }, [ref, audioOn, phaseOffset]);
 }
 
+// Mock provider context driving the discrete-zone voice UI with fixtures — no
+// live Daily call. Because the voice components are pure consumers of
+// VoiceRoomContext, this drives them identically to the real provider.
+function VoiceZonesDemo() {
+  const customZones: VoiceZone[] = [
+    {
+      id: "demo-strategy",
+      group_id: "demo",
+      name: "Strategy corner",
+      icon: "rocket",
+      color: "teal",
+      is_locked: false,
+      sort_order: 0,
+      created_by: "demo",
+      created_at: "2026-06-16T10:00:00Z",
+      updated_at: "2026-06-16T10:00:00Z",
+    },
+    {
+      id: "demo-quiet",
+      group_id: "demo",
+      name: "Quiet room",
+      icon: "ghost",
+      color: "indigo",
+      is_locked: true,
+      sort_order: 1,
+      created_by: "demo",
+      created_at: "2026-06-16T10:00:00Z",
+      updated_at: "2026-06-16T10:00:00Z",
+    },
+    {
+      // Unnamed zone — identified by icon + color alone (name is optional).
+      id: "demo-unnamed",
+      group_id: "demo",
+      name: null,
+      icon: "flame",
+      color: "orange",
+      is_locked: false,
+      sort_order: 2,
+      created_by: "demo",
+      created_at: "2026-06-16T10:00:00Z",
+      updated_at: "2026-06-16T10:00:00Z",
+    },
+  ];
+  const zones = composeZones(customZones, "demo");
+
+  const member = (
+    over: Pick<VoiceParticipant, "sessionId" | "userId" | "userName" | "zoneId"> &
+      Partial<VoiceParticipant>,
+  ): VoiceParticipant => ({
+    role: "gamer",
+    audioOn: true,
+    videoOn: false,
+    screenShareOn: false,
+    isLocal: false,
+    isOwner: false,
+    isSpeaking: false,
+    isBroadcasting: false,
+    ...over,
+  });
+
+  // Real random UUIDs: the identicon hashes the id, so placeholder ids like
+  // "u1" render degenerate avatars that don't represent the real UI.
+  const participants: VoiceParticipant[] = [
+    member({ sessionId: "s1", userId: "1fc70377-0a73-4c36-b6c3-5cad0643748c", userName: "You", zoneId: "lobby", isLocal: true, role: "admin", isOwner: true }),
+    member({ sessionId: "s2", userId: "fea034bc-7e25-4b75-976a-0e567b993279", userName: "Aino", zoneId: "lobby" }),
+    member({ sessionId: "s3", userId: "6ee45509-c687-4d8b-88a8-e933929555e8", userName: "Eero", zoneId: "yty-glow", isSpeaking: true }),
+    member({ sessionId: "s4", userId: "82d61f2c-636f-4cfb-bcd3-9f35b366229e", userName: "Liisa", zoneId: "demo-strategy" }),
+    // A very crowded zone (25) so the horizontal scroll, chevron scroll buttons,
+    // and edge fade are all exercised. Mixed English/Finnish names, with a few
+    // long ones (Maximilian, Aleksanteri, …) to show label truncation.
+    // Six muted members in Valor so the mic-off badge is visible in the demo.
+    member({ sessionId: "s5", userId: "6421f24d-01b3-47eb-a229-38b29c438715", userName: "Aino", zoneId: "yty-valor", audioOn: false }),
+    member({ sessionId: "s6", userId: "c4d53024-4d40-4c2a-9bad-44909fdc333b", userName: "Oliver", zoneId: "yty-valor", audioOn: false }),
+    member({ sessionId: "s7", userId: "a1df031a-f181-49f3-a964-4039d8546ee4", userName: "Väinö", zoneId: "yty-valor", isSpeaking: true }),
+    member({ sessionId: "s8", userId: "9c6f8a84-daa0-424f-a0a8-dd1af4fc3fbd", userName: "Charlotte", zoneId: "yty-valor", audioOn: false }),
+    member({ sessionId: "s9", userId: "10b01f6c-e047-4d61-b5f0-bb80f4ec4a55", userName: "Onni", zoneId: "yty-valor", audioOn: false }),
+    member({ sessionId: "s10", userId: "1620ec58-cc23-4a3f-b3ea-3880b12d19bf", userName: "James", zoneId: "yty-valor", audioOn: false }),
+    member({ sessionId: "s11", userId: "b4af1059-f201-4718-8a1b-fa81e51c48d6", userName: "Helmi", zoneId: "yty-valor", audioOn: false }),
+    member({ sessionId: "s12", userId: "c7d3368f-75bd-4841-bb1f-0ccd7b01d365", userName: "Maximilian", zoneId: "yty-valor" }),
+    member({ sessionId: "s13", userId: "85b79539-938a-4787-96b6-40d85b53c923", userName: "Veera", zoneId: "yty-valor" }),
+    member({ sessionId: "s14", userId: "3f323fe9-a59f-4444-8a2b-77a6ec310153", userName: "Benjamin", zoneId: "yty-valor" }),
+    member({ sessionId: "s15", userId: "a75793f5-b793-44f0-a85e-3f91d19523c3", userName: "Aarni", zoneId: "yty-valor" }),
+    member({ sessionId: "s16", userId: "1941c285-0589-4d4d-b23d-a7b1b9aa01f0", userName: "Sophia", zoneId: "yty-valor" }),
+    member({ sessionId: "s17", userId: "dc3a240c-0397-4300-bbbe-23c56f0287b3", userName: "Niilo", zoneId: "yty-valor" }),
+    member({ sessionId: "s18", userId: "147929ab-93ab-4a24-9d31-8786e14fe771", userName: "Alexandra", zoneId: "yty-valor" }),
+    member({ sessionId: "s19", userId: "2fbddcc4-f8e0-4bf9-b59c-9ac975e54086", userName: "Iiro", zoneId: "yty-valor" }),
+    member({ sessionId: "s20", userId: "3ee04404-1425-4af8-a027-9cfa925f6273", userName: "William", zoneId: "yty-valor" }),
+    member({ sessionId: "s21", userId: "859834f2-89b4-4902-8ae9-ae3d3dbfd3e0", userName: "Eveliina", zoneId: "yty-valor" }),
+    member({ sessionId: "s22", userId: "b039e677-6e77-4cf3-af9d-bd5e5c2fabbc", userName: "Liam", zoneId: "yty-valor" }),
+    member({ sessionId: "s23", userId: "bc17a11c-48f3-46c7-90dd-f1d01da20456", userName: "Aleksanteri", zoneId: "yty-valor" }),
+    member({ sessionId: "s24", userId: "bc5b1c08-6b0d-4265-af42-cf42e12d98da", userName: "Isabella", zoneId: "yty-valor" }),
+    member({ sessionId: "s25", userId: "2330764b-f7e5-483a-875d-691532be11e5", userName: "Pinja", zoneId: "yty-valor" }),
+    member({ sessionId: "s26", userId: "156922f3-8a32-48d6-b7ea-7c8de8b07440", userName: "Matias", zoneId: "yty-valor" }),
+    member({ sessionId: "s27", userId: "a094598f-8ab8-4787-83ff-849e0653a58a", userName: "Tuuli", zoneId: "yty-valor" }),
+    member({ sessionId: "s28", userId: "720504a5-4d6f-496b-b2a1-038fc5c6bc45", userName: "Kaarina", zoneId: "yty-valor" }),
+    member({ sessionId: "s29", userId: "35d24824-26c7-417b-9b6b-32798e1bfe57", userName: "Theodore", zoneId: "yty-valor" }),
+    // Two confined to the private zone. In the real app their media is
+    // SFU-blocked for outsiders (canReceive) — here they're just members of the
+    // locked zone, rendered blurred behind the PrivacyScreen for an outsider.
+    member({ sessionId: "s30", userId: "791c29d1-e2c0-4a9f-bcc8-9d888bf72610", userName: "Onni", zoneId: "demo-quiet" }),
+    member({ sessionId: "s31", userId: "86592793-36ad-4247-a942-f2386cd27b43", userName: "Venla", zoneId: "demo-quiet" }),
+  ];
+
+  const participantsByZone = new Map<string, VoiceParticipant[]>();
+  for (const z of zones) participantsByZone.set(z.id, []);
+  for (const p of participants) participantsByZone.get(p.zoneId)?.push(p);
+
+  const noop = () => {};
+  const asyncNoop = async () => {};
+
+  const value: VoiceRoomContextValue = {
+    joined: true,
+    joining: false,
+    callObject: null,
+    localSessionId: "s1",
+    localRole: "admin",
+    isModerator: true,
+    groupId: "demo",
+    participants,
+    zones,
+    customZones,
+    currentZoneId: "lobby",
+    participantsByZone,
+    moveSelfToZone: noop,
+    moveParticipantToZone: noop,
+    createZone: asyncNoop,
+    updateZone: asyncNoop,
+    deleteZone: asyncNoop,
+    micOn: true,
+    cameraOn: false,
+    cameraAllowed: true,
+    toggleMic: noop,
+    toggleCamera: noop,
+    screenSharerSessionId: null,
+    canScreenShare: true,
+    isScreenSharing: false,
+    startScreenShare: asyncNoop,
+    stopScreenShare: noop,
+    isBroadcasting: false,
+    toggleBroadcast: noop,
+    isDeafened: false,
+    toggleDeafen: noop,
+    audioInputs: [],
+    currentAudioInputId: null,
+    setAudioInput: asyncNoop,
+    mediaError: null,
+    localLocks: { audio: false, video: false },
+    lockStates: new Map(),
+    muteParticipant: noop,
+    lockParticipant: noop,
+    getAnalyser: () => null,
+    messages: [],
+    sendChatMessage: noop,
+    join: asyncNoop,
+    leave: asyncNoop,
+  };
+
+  return (
+    <VoiceRoomContext.Provider value={value}>
+      <div className="max-w-sm">
+        <ZoneList />
+      </div>
+    </VoiceRoomContext.Provider>
+  );
+}
+
 function ParticipantCardDemo() {
-  const [volumes, setVolumes] = useState<Record<string, number>>({});
   const [locks, setLocks] = useState<Record<string, { audio: boolean; video: boolean }>>({
     "19ffd6e5-2e78-4742-a65f-6ed40b2b8b47": { audio: true, video: false },
   });
@@ -503,19 +674,14 @@ function ParticipantCardDemo() {
       </CardHeader>
       <CardContent className="space-y-2">
         {DEMO_PARTICIPANTS.map((p, i) => {
-          const volume = volumes[p.userId] ?? 1.0;
           const lockState = locks[p.userId] ?? { audio: false, video: false };
           return (
             <ParticipantRow
               key={p.userId}
               participant={p}
-              volume={volume}
               lockState={lockState}
               isModView
               avatarRef={avatarRefs[i]}
-              onVolumeChange={(vol) =>
-                setVolumes((prev) => ({ ...prev, [p.userId]: vol }))
-              }
               onLock={(track, locked) =>
                 setLocks((prev) => ({
                   ...prev,
@@ -1128,6 +1294,35 @@ export default function AdminUIComponentsPage() {
             </Field>
           </div>
         </SubSection>
+
+        <SubSection title="Textarea — the multi-line control">
+          <p className="text-sm text-muted-foreground mb-4">
+            <code>&lt;Textarea&gt;</code> is the multi-line sibling of{" "}
+            <code>&lt;Input&gt;</code> — same border, padding, and the
+            load-bearing <code>text-base</code> (anything under 16px makes iOS
+            Safari auto-zoom and horizontal-scroll the page on focus). Size it
+            with <code>rows</code>; add <code>resize-y</code> for a
+            user-resizable box. Wrap it in a <code>&lt;Field&gt;</code> exactly
+            like an input.
+          </p>
+          <div className="grid gap-6 md:grid-cols-2 max-w-2xl">
+            <Field label="Short description" htmlFor="demo-textarea">
+              <Textarea id="demo-textarea" rows={3} placeholder="A sentence or two…" />
+            </Field>
+            <Field
+              label="Message"
+              htmlFor="demo-textarea-resize"
+              hint="Drag the corner to resize."
+            >
+              <Textarea
+                id="demo-textarea-resize"
+                rows={3}
+                placeholder="Longer free text…"
+                className="resize-y"
+              />
+            </Field>
+          </div>
+        </SubSection>
       </Section>
 
       {/* ============================================================ */}
@@ -1170,10 +1365,6 @@ export default function AdminUIComponentsPage() {
               <span className="text-xs text-muted-foreground">48px</span>
             </div>
           </div>
-        </SubSection>
-
-        <SubSection title="Voice Room Avatar (speaking glow)">
-          <VoiceAvatarDemo />
         </SubSection>
 
         <SubSection title="Avatar Picker — icon + color (mockup)">
@@ -1327,16 +1518,49 @@ export default function AdminUIComponentsPage() {
       <SwitchProfileDialogDemo />
 
       {/* ============================================================ */}
-      {/* Section 9: Participant Card                                   */}
+      {/* Section 9: Voice Room                                         */}
       {/* ============================================================ */}
-      <Section title="Participant Card">
-        <SubSection title="Voice Room Participant List">
+      <Section title="Voice Room">
+        <SubSection title="Zone list (mock data, moderator view)">
           <p className="text-sm text-muted-foreground mb-3">
-            Shows avatar, name, volume slider, moderator controls (for non-owner remote participants), and status indicators.
-            Lock buttons toggle between ghost/destructive variants. Used in voice room sidebar.
+            The discrete-zone room UI, fed a hand-built mock provider context
+            (no live Daily call) — which is also the separation-of-concerns
+            check: the components are pure consumers, so fixtures drive them
+            identically. Resize the panel to feel the mobile layout. Live video
+            and the audio-driven glow are inert under mock data (no real tracks);
+            everything else — cards, custom + locked zones, the privacy-screen
+            blur, current-zone emphasis, drag, and the moderator controls —
+            renders from the fixture.
+          </p>
+          <VoiceZonesDemo />
+        </SubSection>
+
+        <SubSection title="Avatar (speaking glow)">
+          <VoiceAvatarDemo />
+        </SubSection>
+
+        <SubSection title="Participant list">
+          <p className="text-sm text-muted-foreground mb-3">
+            Shows avatar, name, moderator controls (for non-owner remote participants), and status indicators.
+            Lock buttons toggle between ghost/destructive variants. Used in the voice room sidebar.
           </p>
           <ParticipantCardDemo />
         </SubSection>
+      </Section>
+
+      {/* ============================================================ */}
+      {/* Section 9b: Location Tree                                     */}
+      {/* ============================================================ */}
+      <Section title="Location Tree">
+        <p className="text-sm text-muted-foreground">
+          The one shared location-tree component, driven entirely by a hardcoded
+          fixture (no network, no providers). Single-select powers the product
+          location picker; multi-select powers the gedu coverage editor. Because
+          the data and the create handler are injected as props, the same
+          component renders identically from fixtures — which is the
+          separation-of-concerns check: the tree owns no business logic.
+        </p>
+        <LocationTreeDemo />
       </Section>
 
       {/* ============================================================ */}
@@ -1499,6 +1723,110 @@ export default function AdminUIComponentsPage() {
 /* ------------------------------------------------------------------ */
 /*  Section 13: Manage Billing Card                                    */
 /* ------------------------------------------------------------------ */
+
+/* ------------------------------------------------------------------ */
+/*  Location Tree Demo                                                 */
+/* ------------------------------------------------------------------ */
+
+function fixtureLocation(
+  id: string,
+  name: string,
+  type: Location["type"],
+  parent_id: string | null,
+): Location {
+  return {
+    id,
+    name,
+    type,
+    parent_id,
+    country_code: "FI",
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
+  };
+}
+
+const LOCATION_FIXTURE: Location[] = [
+  fixtureLocation("fi", "Finland", "country", null),
+  fixtureLocation("uusimaa", "Uusimaa", "region", "fi"),
+  fixtureLocation("helsinki", "Helsinki", "municipality", "uusimaa"),
+  fixtureLocation("hki-site", "Itälahdenkatu 23 B", "site", "helsinki"),
+  fixtureLocation("espoo", "Espoo", "municipality", "uusimaa"),
+  fixtureLocation("pirkanmaa", "Pirkanmaa", "region", "fi"),
+  fixtureLocation("tampere", "Tampere", "municipality", "pirkanmaa"),
+  fixtureLocation("tre-site", "Sampola", "site", "tampere"),
+];
+
+function LocationTreeDemo() {
+  const [locations, setLocations] = useState<Location[]>(LOCATION_FIXTURE);
+  const [siteValue, setSiteValue] = useState<string | null>(null);
+  const [coverage, setCoverage] = useState<ReadonlySet<string>>(new Set());
+  const [createCount, setCreateCount] = useState(0);
+
+  return (
+    <div className="grid gap-6 md:grid-cols-2">
+      <div className="space-y-2">
+        <h4 className="text-sm font-semibold">Single-select (product picker)</h4>
+        <p className="text-xs text-muted-foreground">
+          Pickable: sites only. Hover a municipality to add a new site under it —
+          the freshly created site auto-selects.
+        </p>
+        <LocationTree
+          locations={locations}
+          selection={{
+            mode: "single",
+            value: siteValue,
+            onSelect: setSiteValue,
+            pickableTypes: ["site"],
+          }}
+          create={{
+            allowedChildTypes: ["site"],
+            onCreate: async (values) => {
+              const created = fixtureLocation(
+                `demo-site-${createCount}`,
+                values.name,
+                values.type,
+                values.parent_id,
+              );
+              setLocations((prev) => [...prev, created]);
+              setCreateCount((c) => c + 1);
+              return created;
+            },
+          }}
+          searchPlaceholder="Search locations…"
+          listClassName="max-h-[300px]"
+        />
+        <p className="text-xs text-muted-foreground">
+          Selected: {siteValue ?? "(none)"}
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <h4 className="text-sm font-semibold">Multi-select (gedu coverage)</h4>
+        <p className="text-xs text-muted-foreground">
+          The component just reports each tick; cascade semantics (tick a parent →
+          tick its subtree) live in the consumer, not here.
+        </p>
+        <LocationTree
+          locations={locations}
+          selection={{
+            mode: "multi",
+            selectedIds: coverage,
+            onToggle: (id) =>
+              setCoverage((prev) => {
+                const next = new Set(prev);
+                if (next.has(id)) next.delete(id);
+                else next.add(id);
+                return next;
+              }),
+          }}
+          searchPlaceholder="Search areas…"
+          listClassName="max-h-[300px]"
+        />
+        <p className="text-xs text-muted-foreground">{coverage.size} selected</p>
+      </div>
+    </div>
+  );
+}
 
 function ManageBillingCardDemo() {
   return (

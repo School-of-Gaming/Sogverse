@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import { formatDate } from "@/lib/utils";
+import { rawStringArray } from "@/lib/i18n/raw-messages";
 import { PolicyPage } from "@/components/legal/policy-page";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -42,13 +43,13 @@ export default async function TermsPage() {
       })}
       intro={{
         heading: t("intro.heading"),
-        paragraphs: t.raw("intro.paragraphs") as string[],
+        paragraphs: rawStringArray(t.raw("intro.paragraphs")),
       }}
       sections={SECTIONS.map((key) => ({
         heading: t(`sections.${key}.heading`),
-        paragraphs: t.raw(`sections.${key}.paragraphs`) as string[],
+        paragraphs: rawStringArray(t.raw(`sections.${key}.paragraphs`)),
         bullets: t.has(`sections.${key}.bullets`)
-          ? (t.raw(`sections.${key}.bullets`) as string[])
+          ? rawStringArray(t.raw(`sections.${key}.bullets`))
           : undefined,
       }))}
     />

@@ -1,5 +1,5 @@
 import { useEffect, type RefObject } from "react";
-import { computeGlowStyle } from "@/lib/constants/spatial.config";
+import { computeGlowStyle } from "@/lib/voice/glow";
 import { useVoiceRoom } from "../VoiceRoomProvider";
 
 /**

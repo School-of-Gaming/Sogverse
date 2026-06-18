@@ -2,7 +2,7 @@
 
 > **Status: proposed, not yet built.** This is a high-level design for sending messages
 > from the web app to a Slack channel. It follows the same pattern as the existing
-> [WhatsApp](whatsapp-automated-flow.md) and [Discord](discord-bot.md) integrations —
+> [WhatsApp](../src/services/whatsapp/CLAUDE.md) and [Discord](../src/app/api/discord/CLAUDE.md) integrations —
 > a lib helper holds the API client, a server-side route holds the secret, and (optionally)
 > a service + React Query hook drives it from the UI. No new abstraction is needed.
 

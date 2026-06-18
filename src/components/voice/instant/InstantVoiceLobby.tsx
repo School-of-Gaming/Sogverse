@@ -1,15 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Mic, MicOff, Video, VideoOff } from "lucide-react";
+import { Loader2, Mic, MicOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/providers";
 import { cn } from "@/lib/utils";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { useLocalStreamGlow } from "@/components/voice/hooks/use-local-stream-glow";
+import { MicToggleButton, CameraToggleButton } from "@/components/voice/MediaToggleButtons";
+import { MicSettingsPopover } from "@/components/voice/MicSettingsPopover";
+import { MicLevelIndicator } from "@/components/voice/MicLevelIndicator";
+import type { AudioInputDevice } from "@/components/voice/hooks/use-mic-devices";
+import { classifyMediaError, type MediaErrorCategory } from "@/lib/voice/media-error";
 
 interface InstantVoiceLobbyProps {
   /**
@@ -19,7 +25,7 @@ interface InstantVoiceLobbyProps {
    */
   onJoin: (
     displayName: string,
-    media: { micOn: boolean; cameraOn: boolean },
+    media: { micOn: boolean; cameraOn: boolean; audioDeviceId: string | null },
   ) => void;
   joining: boolean;
   /** Most recent error from a failed join attempt; rendered above the join button. */
@@ -28,7 +34,7 @@ interface InstantVoiceLobbyProps {
 
 /**
  * Pre-join screen for instant voice rooms. Shows a live preview of the
- * avatar exactly as it will appear in the spatial canvas — speaking
+ * avatar exactly as it will appear in the voice room — speaking
  * glow, camera-in-circle, mic indicator — and (for guests) collects a
  * display name.
  *
@@ -48,11 +54,17 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
+  // The current preview stream, mirrored for unmount cleanup. `stream` state
+  // alone isn't enough: switching input device swaps the stream object, and the
+  // cleanup closure would otherwise stop a stale one and leak the live tracks.
+  const streamRef = useRef<MediaStream | null>(null);
 
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraOn, setCameraOn] = useState(false);
   const [micOn, setMicOn] = useState(true);
-  const [permissionError, setPermissionError] = useState(false);
+  const [mediaError, setMediaError] = useState<MediaErrorCategory | null>(null);
+  const [audioInputs, setAudioInputs] = useState<AudioInputDevice[]>([]);
+  const [currentAudioInputId, setCurrentAudioInputId] = useState<string | null>(null);
   const [name, setName] = useState("");
 
   // Preview-only identicon. Generated client-side after mount so SSR doesn't
@@ -75,7 +87,22 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
   // tracks instead of re-prompting for permission.
   useEffect(() => {
     let cancelled = false;
-    let acquired: MediaStream | null = null;
+
+    // Device labels only populate once access is granted, so enumerate *after*
+    // the initial getUserMedia, and again on plug/unplug.
+    const refreshInputs = async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        if (cancelled) return;
+        setAudioInputs(
+          devices
+            .filter((d) => d.kind === "audioinput" && d.deviceId !== "")
+            .map((d) => ({ deviceId: d.deviceId, label: d.label })),
+        );
+      } catch {
+        // Keep the last-known list on a transient enumeration failure.
+      }
+    };
 
     async function acquire() {
       try {
@@ -87,7 +114,7 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
           next.getTracks().forEach((tr) => tr.stop());
           return;
         }
-        acquired = next;
+        streamRef.current = next;
         // Camera starts OFF in the preview; the lobby's `cameraOn` toggle
         // is forwarded to the call object at join time, so whatever the
         // user chose here is what they enter the room with.
@@ -96,21 +123,28 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
           videoRef.current.srcObject = next;
         }
         setStream(next);
-      } catch {
+        setCurrentAudioInputId(
+          next.getAudioTracks()[0]?.getSettings().deviceId ?? null,
+        );
+        void refreshInputs();
+      } catch (err) {
         if (cancelled) return;
-        // User denied permission, no devices, or HTTP origin. We let them
-        // continue to join — they can grant later, and Daily will work
+        // User denied permission, no devices, in use, or HTTP origin. We let
+        // them continue to join — they can grant later, and Daily will work
         // without media. The native error is browser-specific and English-only,
-        // so we surface a localized message instead.
-        setPermissionError(true);
+        // so we classify it and surface a localized, category-specific message.
+        setMediaError(classifyMediaError(err));
       }
     }
 
     void acquire();
+    const onDeviceChange = () => void refreshInputs();
+    navigator.mediaDevices.addEventListener("devicechange", onDeviceChange);
 
     return () => {
       cancelled = true;
-      acquired?.getTracks().forEach((tr) => tr.stop());
+      navigator.mediaDevices.removeEventListener("devicechange", onDeviceChange);
+      streamRef.current?.getTracks().forEach((tr) => tr.stop());
     };
   }, []);
 
@@ -132,6 +166,30 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
     setMicOn(next);
   };
 
+  // Switch the preview to a different mic. Re-acquire *only* audio so the
+  // camera isn't re-opened, swap the audio track into a fresh stream object
+  // (the new ref re-runs the glow/level analysers against the new track), and
+  // carry the choice into the call via `currentAudioInputId` → onJoin.
+  const selectAudioInput = async (deviceId: string) => {
+    try {
+      const audioStream = await navigator.mediaDevices.getUserMedia({
+        audio: { deviceId: { exact: deviceId } },
+      });
+      const newAudio = audioStream.getAudioTracks()[0];
+      newAudio.enabled = micOn;
+      const keptVideo = stream?.getVideoTracks() ?? [];
+      stream?.getAudioTracks().forEach((tr) => tr.stop());
+      const combined = new MediaStream([...keptVideo, newAudio]);
+      streamRef.current = combined;
+      if (videoRef.current) videoRef.current.srcObject = combined;
+      setStream(combined);
+      setCurrentAudioInputId(newAudio.getSettings().deviceId ?? deviceId);
+      setMediaError(null);
+    } catch (err) {
+      setMediaError(classifyMediaError(err));
+    }
+  };
+
   const trimmedName = name.trim();
   const nameValid =
     trimmedName.length >= DISPLAY_NAME_MIN &&
@@ -146,7 +204,11 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!canJoin || joining) return;
-    onJoin(isMod ? "" : trimmedName, { micOn, cameraOn });
+    onJoin(isMod ? "" : trimmedName, {
+      micOn,
+      cameraOn,
+      audioDeviceId: currentAudioInputId,
+    });
   };
 
   return (
@@ -194,39 +256,23 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
               </p>
             </div>
 
-            {/* Cam/mic toggles. Fixed min-width on each button so the layout
-                doesn't shift when the label flips between on/off — the
-                value is sized to fit the longer label across every locale. */}
-            <div className="flex items-center justify-center gap-3">
-              <Button
-                type="button"
-                variant={micOn ? "secondary" : "destructive"}
-                size="sm"
-                onClick={toggleMic}
-                className="min-w-[10rem] justify-center gap-2"
-                aria-label={micOn ? t("muteMic") : t("unmuteMic")}
-              >
-                {micOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-                {micOn ? t("micOn") : t("micOff")}
-              </Button>
-              <Button
-                type="button"
-                variant={cameraOn ? "secondary" : "outline"}
-                size="sm"
-                onClick={toggleCamera}
-                className="min-w-[10rem] justify-center gap-2"
-                aria-label={cameraOn ? t("hideCamera") : t("showCamera")}
-              >
-                {cameraOn ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
-                {cameraOn ? t("cameraOn") : t("cameraOff")}
-              </Button>
+            {/* Mic + device picker + camera — the same controls as the in-call
+                dock (shared `MediaToggleButtons` + `MicSettingsPopover`), so the
+                lobby and the room read as one UI. The picker's chevron carries
+                the device selector, the real acquisition error (behind a badge),
+                and a live level meter off the preview stream. Disabled until the
+                preview stream is acquired. */}
+            <div className="flex items-center justify-center gap-2">
+              <MicToggleButton on={micOn} onToggle={toggleMic} disabled={!stream} />
+              <MicSettingsPopover
+                audioInputs={audioInputs}
+                currentAudioInputId={currentAudioInputId}
+                onSelectInput={selectAudioInput}
+                mediaError={mediaError}
+                levelIndicator={<MicLevelIndicator stream={stream} active={micOn} />}
+              />
+              <CameraToggleButton on={cameraOn} onToggle={toggleCamera} disabled={!stream} />
             </div>
-
-            {permissionError && (
-              <p className="text-center text-sm text-muted-foreground">
-                {t("permissionDenied")}
-              </p>
-            )}
 
             {/* Name input — guests only */}
             {!isMod && (
@@ -234,7 +280,7 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
                 <label htmlFor="display-name" className="text-sm font-medium">
                   {t("nameLabel")}
                 </label>
-                <input
+                <Input
                   id="display-name"
                   type="text"
                   value={name}
@@ -243,7 +289,7 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
                   required
                   autoFocus
                   placeholder={t("namePlaceholder")}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="shadow-sm transition-colors"
                 />
               </div>
             )}

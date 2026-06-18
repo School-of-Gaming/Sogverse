@@ -198,15 +198,17 @@ DELETE FROM customer_profiles WHERE user_id = '00000000-0000-0000-0000-000000000
 UPDATE profiles SET role = 'gedu' WHERE id = '00000000-0000-0000-0000-000000000003';
 DELETE FROM customer_profiles WHERE user_id = '00000000-0000-0000-0000-000000000003';
 
--- Promote gamer: update role/email/username, swap extension tables
-UPDATE profiles SET role = 'gamer', email = NULL, username = 'testgamer'
+-- Promote gamer: set role, swap extension tables. Keep the synthetic email the
+-- trigger seeded (testgamer@gamer.sogverse.internal) — gamers are email-first
+-- and profiles.email is NOT NULL; there is no separate username anymore.
+UPDATE profiles SET role = 'gamer'
 WHERE id = '00000000-0000-0000-0000-000000000004';
 DELETE FROM customer_profiles WHERE user_id = '00000000-0000-0000-0000-000000000004';
 INSERT INTO gamer_profiles (user_id, date_of_birth, gender)
 VALUES ('00000000-0000-0000-0000-000000000004', '2015-06-15', 'boy');
 
 -- Promote gamer 2 (mirrors gamer 1 promotion)
-UPDATE profiles SET role = 'gamer', email = NULL, username = 'testgamer-c1'
+UPDATE profiles SET role = 'gamer'
 WHERE id = '00000000-0000-0000-0000-000000000006';
 DELETE FROM customer_profiles WHERE user_id = '00000000-0000-0000-0000-000000000006';
 INSERT INTO gamer_profiles (user_id, date_of_birth, gender)

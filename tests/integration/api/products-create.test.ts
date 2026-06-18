@@ -1,3 +1,11 @@
+// @vitest-environment node
+//
+// Node environment so Request, FormData, and File are all undici/Node natives
+// from one realm: jsdom's FormData isn't serializable by undici's Request
+// (the body lands as text/plain and formData() rejects), and files parsed out
+// of a real multipart body would fail the route's `instanceof File` check
+// against jsdom's File. This test exercises a route handler only — no DOM.
+
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
 import { POST } from "@/app/api/admin/products/create/route";
@@ -14,9 +22,11 @@ import { POST } from "@/app/api/admin/products/create/route";
 //   2. **Image is optional.** v2 lets admins create a product without
 //      an image, then add it later from the edit page.
 //
-// Validation beyond file/size lives in the RPC + form, not the route — so
-// these tests focus on auth, file handling, RPC error surfacing, and the
-// soft-warning fallback paths.
+// The route validates the body's *structure* against the contract schema
+// (products.contracts.ts); semantic rules (age ordering, translation
+// locales) stay in the RPC + form. These tests focus on auth, body
+// validation, file handling, RPC error surfacing, and the soft-warning
+// fallback paths.
 
 // --- Mocks ---
 
@@ -28,7 +38,13 @@ vi.mock("@/lib/auth", () => ({
 const mockUserRpc = vi.fn();
 const mockUserUpdate = vi.fn();
 
-const mockAdminUpload = vi.fn();
+const mockAdminUpload = vi.fn<
+  (
+    path: string,
+    file: File,
+    opts: { contentType: string; upsert: boolean },
+  ) => Promise<{ error: { message: string } | null }>
+>();
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
     storage: {
@@ -70,6 +86,8 @@ function mockAuthenticatedNonAdmin() {
   );
 }
 
+// Mirrors what the admin form actually sends: every CreateProductInput
+// field, with explicit nulls (the contract schema requires the full shape).
 const validBody = {
   product_type: "consumer_club",
   billing_mode: "paid",
@@ -80,16 +98,27 @@ const validBody = {
   min_age: 7,
   max_age: 12,
   spoken_language_code: "en",
+  padlet_url: null,
+  location_id: null,
   is_remote: true,
+  status: "draft",
+  signup_threshold: null,
+  start_date: null,
+  end_date: null,
   timezone: "Europe/Helsinki",
+  seat_count: null,
+  waitlist_enabled: false,
+  registration_opens_at: "2026-01-01T00:00:00Z",
+  is_visible: true,
   schedule_slots: [{ weekday: 1, start_time: "16:00", duration_minutes: 90 }],
   prices: [],
+  holiday_calendar_ids: [],
 };
 
 /**
- * jsdom's Request can't reliably parse multipart bodies, so we hand the
- * route a fake Request whose formData() returns the prepared FormData.
- * The route only ever calls request.formData(), which is the full surface.
+ * Builds a real multipart Request — in the node environment Request/FormData/
+ * File round-trip formData() natively. The route reads the parsed FormData
+ * via request.formData().
  */
 function createRequest(opts: {
   data?: unknown;
@@ -108,7 +137,10 @@ function createRequest(opts: {
   }
   const file = "file" in opts ? opts.file : new File(["bytes"], "test.jpg", { type: "image/jpeg" });
   if (file) fd.append("file", file);
-  return { formData: async () => fd } as unknown as Request;
+  return new Request("http://localhost/api/admin/products/create", {
+    method: "POST",
+    body: fd,
+  });
 }
 
 // --- Tests ---
@@ -153,13 +185,38 @@ describe("POST /api/admin/products/create", () => {
     expect(json.error).toMatch(/valid JSON/);
   });
 
+  it("returns 400 when the body fails the contract schema", async () => {
+    mockAuthenticatedAdmin();
+    const { min_age: _dropped, ...missingMinAge } = validBody;
+    const response = await POST(createRequest({ data: missingMinAge }));
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toMatch(/min_age/);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for an out-of-enum product_type", async () => {
+    mockAuthenticatedAdmin();
+    const response = await POST(
+      createRequest({ data: { ...validBody, product_type: "nonsense" } }),
+    );
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toMatch(/product_type/);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
   it("returns 400 when formData itself fails to parse", async () => {
     mockAuthenticatedAdmin();
-    const badRequest = {
-      formData: async () => {
-        throw new Error("parse failed");
+    // A plain-text body with a multipart content type makes formData() reject.
+    const badRequest = new Request(
+      "http://localhost/api/admin/products/create",
+      {
+        method: "POST",
+        headers: { "content-type": "multipart/form-data; boundary=bad" },
+        body: "not a multipart body",
       },
-    } as unknown as Request;
+    );
     const response = await POST(badRequest);
     expect(response.status).toBe(400);
   });
@@ -221,7 +278,7 @@ describe("POST /api/admin/products/create", () => {
 
     // Path is a UUID + jpg extension.
     expect(mockAdminUpload).toHaveBeenCalledTimes(1);
-    const uploadedPath = mockAdminUpload.mock.calls[0][0] as string;
+    const uploadedPath = mockAdminUpload.mock.calls[0][0];
     expect(uploadedPath).toMatch(/^[0-9a-f-]{36}\.jpg$/);
 
     // path-update gets the same path.
@@ -232,7 +289,7 @@ describe("POST /api/admin/products/create", () => {
     mockAuthenticatedAdmin();
     const file = new File(["x"], "thing.jpeg", { type: "image/jpeg" });
     await POST(createRequest({ file }));
-    const uploadedPath = mockAdminUpload.mock.calls[0][0] as string;
+    const uploadedPath = mockAdminUpload.mock.calls[0][0];
     expect(uploadedPath).toMatch(/^[0-9a-f-]{36}\.jpg$/);
   });
 

@@ -5,7 +5,6 @@ export function createMockProfile(overrides: Partial<Profile> = {}): Profile {
   return {
     id: "test-user-id",
     email: "test@example.com",
-    username: null,
     role: "customer" as UserRole,
     first_name: "Test",
     last_name: "User",
@@ -24,8 +23,7 @@ export function createMockGamerProfile(
 ): Profile {
   return {
     id: "test-gamer-id",
-    email: null,
-    username: "testgamer",
+    email: "testgamer@gamer.sogverse.internal",
     role: "gamer" as UserRole,
     first_name: "Test",
     last_name: "Gamer",

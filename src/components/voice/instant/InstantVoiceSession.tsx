@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { VoiceRoomProvider, useVoiceRoom } from "@/components/voice/VoiceRoomProvider";
-import { SpatialVoiceRoom } from "@/components/voice/SpatialVoiceRoom";
+import { VoiceRoom } from "@/components/voice/VoiceRoom";
 import { InstantVoiceLobby } from "./InstantVoiceLobby";
 import { CallEndedScreen, type EndReason } from "./CallEndedScreen";
 import { RoomNotFoundScreen } from "./RoomNotFoundScreen";
@@ -37,7 +37,7 @@ interface InstantVoiceSessionProps {
  *                   camera/mic permission and pick a name. Resolves to
  *                   `lobby` or `not-found`.
  *   - `lobby`     — Pre-join: cam/mic preview, name input.
- *   - `in-call`   — Connected to Daily; renders the spatial canvas.
+ *   - `in-call`   — Connected to Daily; renders the zone-based voice room.
  *   - `ended`     — Either the user clicked Leave (reason: "left") or
  *                   the call ended for everyone (reason: "ended" — mod
  *                   ended it, token expired, room deleted, network drop).
@@ -47,7 +47,7 @@ interface InstantVoiceSessionProps {
  */
 export function InstantVoiceSession({ code, copyright }: InstantVoiceSessionProps) {
   return (
-    <VoiceRoomProvider>
+    <VoiceRoomProvider groupId={null}>
       <InstantVoiceSessionInner code={code} copyright={copyright} />
     </VoiceRoomProvider>
   );
@@ -103,7 +103,7 @@ function InstantVoiceSessionInner({ code, copyright }: InstantVoiceSessionProps)
   const handleJoin = useCallback(
     async (
       displayName: string,
-      media: { micOn: boolean; cameraOn: boolean },
+      media: { micOn: boolean; cameraOn: boolean; audioDeviceId: string | null },
     ) => {
       setJoinError(null);
       setJoining(true);
@@ -137,7 +137,7 @@ function InstantVoiceSessionInner({ code, copyright }: InstantVoiceSessionProps)
 
         const { token, roomUrl, role } = await response.json();
         setLocalRole(role);
-        await join(roomUrl, token);
+        await join(roomUrl, token, { audioDeviceId: media.audioDeviceId });
         setState({ phase: "in-call" });
         setJoining(false);
       } catch (err) {
@@ -247,9 +247,9 @@ function InstantVoiceSessionInner({ code, copyright }: InstantVoiceSessionProps)
     openLeaveModalRef.current?.resolve();
   }, [callObject, code, leave]);
 
-  // The leave button in SpatialVoiceRoom calls this. We open the modal
+  // The leave button in VoiceRoom calls this. We open the modal
   // synchronously and resolve a promise when the modal closes (any
-  // outcome) so SpatialVoiceRoom's internal "leaving" spinner reflects
+  // outcome) so VoiceRoom's internal "leaving" spinner reflects
   // the modal-open state.
   const openLeaveModalRef = useRef<{ resolve: () => void } | null>(null);
   const onLeaveButtonPressed = useCallback(() => {
@@ -315,7 +315,7 @@ function InstantVoiceSessionInner({ code, copyright }: InstantVoiceSessionProps)
 
   return (
     <div className="container mx-auto p-4 md:p-6">
-      <SpatialVoiceRoom
+      <VoiceRoom
         onLeave={onLeaveButtonPressed}
         leaveLabel={t("leave")}
       />

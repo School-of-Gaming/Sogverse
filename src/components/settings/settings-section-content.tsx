@@ -165,7 +165,7 @@ export function SettingsSectionContent({
               </p>
               {!isGamer && (
                 <p className="text-sm text-muted-foreground">
-                  {profile?.email || (profile?.username ? `@${profile.username}` : null)}
+                  {profile?.email}
                 </p>
               )}
               <p className="text-xs text-muted-foreground">
@@ -228,16 +228,6 @@ export function SettingsSectionContent({
             <Field label={c('email')}>
               <Input
                 value={profile?.email || ""}
-                disabled
-                className="bg-muted"
-              />
-            </Field>
-          )}
-
-          {profile?.username && !isGamer && (
-            <Field label={c('username')}>
-              <Input
-                value={profile.username}
                 disabled
                 className="bg-muted"
               />

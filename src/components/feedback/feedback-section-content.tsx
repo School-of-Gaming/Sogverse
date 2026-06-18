@@ -5,7 +5,8 @@ import { MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/providers";
 
 const MIN_LENGTH = 10;
@@ -83,16 +84,15 @@ export function FeedbackSectionContent() {
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="feedback-message">{t('message')}</Label>
-            <textarea
+          <Field label={t('message')} htmlFor="feedback-message">
+            <Textarea
               id="feedback-message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder={t('placeholder')}
               rows={6}
               maxLength={MAX_LENGTH}
-              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-y"
+              className="resize-y"
             />
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>
@@ -102,7 +102,7 @@ export function FeedbackSectionContent() {
               </span>
               <span>{message.length}/{MAX_LENGTH}</span>
             </div>
-          </div>
+          </Field>
 
           <Button
             onClick={handleSubmit}

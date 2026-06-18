@@ -1,7 +1,29 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient } from "./helpers";
+
+/**
+ * Row shapes of the catalog-introspection RPCs (`_list_rpc_access`,
+ * `_list_table_grants`). These query information_schema/pg_catalog, so no
+ * src contract exists (or should) — validating the shape at runtime in the
+ * test is the honest move.
+ */
+const rpcAccessRows = z.array(
+  z.object({
+    function_name: z.string(),
+    authenticated_access: z.boolean(),
+    anon_access: z.boolean(),
+  })
+);
+
+const tableGrantRows = z.array(
+  z.object({
+    table_name: z.string(),
+    privilege_type: z.string(),
+  })
+);
 
 /**
  * Allowlist of functions that authenticated users can call via PostgREST /rpc/.
@@ -38,6 +60,14 @@ const AUTHENTICATED_ALLOWLIST = new Set([
   "set_my_pin",
   "verify_my_pin",
   "pin_is_set",
+
+  // Voice zones (00103). RLS predicate helpers for voice_zones /
+  // voice_private_zone_occupants — evaluated in the caller's context by those
+  // tables' policies, so authenticated must hold EXECUTE (same rationale as
+  // can_read_product). SECURITY DEFINER with SET search_path; they only ever
+  // return a boolean derived from the caller's auth.uid(), no data leak.
+  "is_voice_group_member",
+  "is_voice_group_moderator",
 ]);
 
 /**
@@ -63,11 +93,8 @@ describe("Access Control", () => {
     expect(error).toBeNull();
     expect(data).not.toBeNull();
 
-    const authenticatedFunctions = (data as {
-      function_name: string;
-      authenticated_access: boolean;
-      anon_access: boolean;
-    }[])
+    const authenticatedFunctions = rpcAccessRows
+      .parse(data)
       .filter((row) => row.authenticated_access)
       .map((row) => row.function_name);
 
@@ -84,11 +111,8 @@ describe("Access Control", () => {
     expect(error).toBeNull();
     expect(data).not.toBeNull();
 
-    const anonFunctions = (data as {
-      function_name: string;
-      authenticated_access: boolean;
-      anon_access: boolean;
-    }[])
+    const anonFunctions = rpcAccessRows
+      .parse(data)
       .filter((row) => row.anon_access)
       .map((row) => row.function_name);
 
@@ -136,14 +160,22 @@ describe("Access Control", () => {
       ["site_details", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["site_staff_details", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["product_translations", new Set(["INSERT", "UPDATE", "DELETE"])],
+      // Voice zones (00103, 00108). Moderators create/edit/delete custom zones
+      // and write/clear private-zone occupancy directly from the browser under
+      // RLS (is_voice_group_moderator). Occupancy is insert/delete only — no
+      // UPDATE grant. RLS authorizes both actor and target.
+      ["voice_zones", new Set(["INSERT", "UPDATE", "DELETE"])],
+      ["voice_private_zone_occupants", new Set(["INSERT", "DELETE"])],
     ]);
 
-    const { data, error } = await admin.rpc("_list_table_grants");
+    const { data, error } = await admin.rpc("_list_table_grants", {
+      p_grantee: "authenticated",
+    });
 
     expect(error).toBeNull();
     expect(data).not.toBeNull();
 
-    const grants = data as { table_name: string; privilege_type: string }[];
+    const grants = tableGrantRows.parse(data);
 
     const excess = grants.filter((row) => {
       if (row.privilege_type === "SELECT") return false;
@@ -171,6 +203,28 @@ describe("Access Control", () => {
     expect(missing, "allowlisted grants are missing from the database").toEqual(
       []
     );
+  });
+
+  it("anon has no write grants on any table", async () => {
+    // anon's only legitimate table access is SELECT through the public
+    // catalog policies (products, locations, holiday calendars, languages).
+    // Write grants for anon are never acceptable: RLS default-deny is the
+    // only thing between a standing grant and an unauthenticated write path,
+    // and a single future policy written without a TO clause (which defaults
+    // to PUBLIC, including anon) would arm it. 00097 revoked the legacy
+    // auto-expose leftovers; this test keeps the surface at zero.
+    const { data, error } = await admin.rpc("_list_table_grants", {
+      p_grantee: "anon",
+    });
+
+    expect(error).toBeNull();
+    expect(data).not.toBeNull();
+
+    const writeGrants = tableGrantRows
+      .parse(data)
+      .filter((row) => row.privilege_type !== "SELECT");
+
+    expect(writeGrants, "anon must never hold table write grants").toEqual([]);
   });
 
   it("all SECURITY DEFINER functions have SET search_path", async () => {

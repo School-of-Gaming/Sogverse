@@ -18,7 +18,7 @@ import type { ReactNode } from "react";
  */
 export function SiteHeaderShell({ children }: { children: ReactNode }) {
   return (
-    <header className="sticky top-0 z-50 h-[var(--header-height)] w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="glass-panel sticky top-0 z-50 h-[var(--header-height)] w-full border-b border-border">
       {children}
     </header>
   );

@@ -1,12 +1,39 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronRight, ChevronDown, Plus, Pencil } from "lucide-react";
-import { useTranslations, useLocale } from "next-intl";
+import { useMemo, useState } from "react";
+import {
+  ChevronRight,
+  ChevronDown,
+  Plus,
+  Search,
+  X,
+} from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { getChildLevel, resolveLabels } from "@/lib/constants";
+import {
+  LocationFormDialog,
+  type LocationFormValues,
+} from "@/components/admin/location-form-dialog";
 import type { Location } from "@/types";
+
+/**
+ * The single, reusable location-tree UI for the whole app. It is purely
+ * presentational and free of business logic: the flat `locations` list, the
+ * current selection, and the create handler are all injected by the consumer,
+ * so the component can be driven entirely by fixtures (see the demo in
+ * /admin/ui-components). Three consumers share it:
+ *   - the product location picker  (single-select)
+ *   - the gedu coverage editor     (multi-select + cascade, cascade in consumer)
+ *   - the style-guide demo         (fixtures, no network)
+ *
+ * Tree building, search, and the create dialog all live here; the consumer
+ * just supplies data + callbacks and composes the result into its own layout.
+ */
+
+type LocationType = Location["type"];
 
 export interface LocationNode extends Location {
   children: LocationNode[];
@@ -30,6 +57,32 @@ export function buildAncestorChain(location: Location, all: Location[]): Locatio
     current = parent;
   }
   return chain;
+}
+
+/** Build a tree from a flat list of locations, sorted alphabetically at every level. */
+export function buildLocationTree(locations: Location[]): LocationNode[] {
+  const map = new Map<string, LocationNode>();
+  const roots: LocationNode[] = [];
+
+  for (const loc of locations) {
+    map.set(loc.id, { ...loc, children: [] });
+  }
+
+  for (const node of map.values()) {
+    if (node.parent_id && map.has(node.parent_id)) {
+      map.get(node.parent_id)!.children.push(node);
+    } else {
+      roots.push(node);
+    }
+  }
+
+  const sortChildren = (nodes: LocationNode[]) => {
+    nodes.sort((a, b) => a.name.localeCompare(b.name));
+    for (const node of nodes) sortChildren(node.children);
+  };
+  sortChildren(roots);
+
+  return roots;
 }
 
 /**
@@ -57,82 +110,223 @@ export function filterLocationTree(
   }, []);
 }
 
-/** Build a tree from a flat list of locations. */
-export function buildLocationTree(locations: Location[]): LocationNode[] {
-  const map = new Map<string, LocationNode>();
-  const roots: LocationNode[] = [];
+/** How the tree decides what's selected and what a click/tick does. */
+export type LocationTreeSelection =
+  | {
+      mode: "single";
+      value: string | null;
+      onSelect: (id: string) => void;
+      /** Node types that can be picked; others are expand-only. */
+      pickableTypes: readonly LocationType[];
+      /** Label for the explicit "Pick" button shown on pickable nodes that have children. */
+      pickLabel?: string;
+    }
+  | {
+      mode: "multi";
+      selectedIds: ReadonlySet<string>;
+      onToggle: (id: string) => void;
+    };
 
-  for (const loc of locations) {
-    map.set(loc.id, { ...loc, children: [] });
-  }
+/** Optional inline-create affordance. The consumer owns persistence via `onCreate`. */
+export interface LocationTreeCreateConfig {
+  /** Child levels the admin may create — e.g. `["site"]` shows "+" only on municipalities. */
+  allowedChildTypes: readonly LocationType[];
+  /** Persist the new location and return the created row (the consumer's mutation). */
+  onCreate: (values: LocationFormValues) => Promise<Location>;
+  /** Country codes that already exist, so the add-country dialog can't duplicate one. */
+  existingCountryCodes?: Set<string>;
+  /** Whether a create is in flight (drives the dialog's disabled state). */
+  isPending?: boolean;
+}
 
-  for (const node of map.values()) {
-    if (node.parent_id && map.has(node.parent_id)) {
-      map.get(node.parent_id)!.children.push(node);
-    } else {
-      roots.push(node);
+export interface LocationTreeProps {
+  /** Flat list of all locations; the tree is built internally. */
+  locations: Location[];
+  selection: LocationTreeSelection;
+  /** Types to hide from the tree entirely — e.g. `["site"]` for jurisdiction picking. */
+  hiddenTypes?: readonly LocationType[];
+  /** Omit to make the tree read-only (no "+" affordances). */
+  create?: LocationTreeCreateConfig;
+  /** Placeholder for the search box — the one string that genuinely varies per consumer. */
+  searchPlaceholder: string;
+  /** Tailwind height for the scroll area, e.g. `"h-[420px]"` or `"max-h-[360px]"`. */
+  listClassName?: string;
+  className?: string;
+}
+
+export function LocationTree({
+  locations,
+  selection,
+  hiddenTypes,
+  create,
+  searchPlaceholder,
+  listClassName,
+  className,
+}: LocationTreeProps) {
+  const locale = useLocale();
+  const t = useTranslations("locations.tree");
+  const [query, setQuery] = useState("");
+  // Null = dialog closed; otherwise the parent node we're adding a child under.
+  const [addUnder, setAddUnder] = useState<Location | null>(null);
+
+  const visible = useMemo(
+    () =>
+      hiddenTypes && hiddenTypes.length > 0
+        ? locations.filter((l) => !hiddenTypes.includes(l.type))
+        : locations,
+    [locations, hiddenTypes],
+  );
+  const tree = useMemo(() => buildLocationTree(visible), [visible]);
+  const filtered = useMemo(() => filterLocationTree(tree, query), [tree, query]);
+
+  async function handleCreate(values: LocationFormValues) {
+    if (!create) return;
+    const created = await create.onCreate(values);
+    setAddUnder(null);
+    // Auto-select a freshly created node when it's a valid pick for the mode —
+    // the admin just scaffolded the exact thing they were reaching for.
+    if (
+      selection.mode === "single" &&
+      selection.pickableTypes.includes(created.type)
+    ) {
+      selection.onSelect(created.id);
     }
   }
 
-  // Sort children alphabetically at every level
-  const sortChildren = (nodes: LocationNode[]) => {
-    nodes.sort((a, b) => a.name.localeCompare(b.name));
-    for (const node of nodes) sortChildren(node.children);
-  };
-  sortChildren(roots);
+  return (
+    <div className={cn("space-y-3", className)}>
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={searchPlaceholder}
+          className="pl-10"
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+            aria-label={t("clearSearch")}
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
 
-  return roots;
+      <div
+        className={cn(
+          "overflow-y-auto rounded-md border border-input bg-background p-2",
+          listClassName,
+        )}
+      >
+        {filtered.length === 0 ? (
+          <div className="py-8 text-center text-sm text-muted-foreground">
+            {t("empty")}
+          </div>
+        ) : (
+          <div className="space-y-0.5">
+            {filtered.map((node) => (
+              <LocationTreeRow
+                key={node.id}
+                node={node}
+                depth={0}
+                locale={locale}
+                searching={query.length > 0}
+                selection={selection}
+                create={create}
+                onAddUnder={setAddUnder}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {create && (
+        <LocationFormDialog
+          open={addUnder !== null}
+          onOpenChange={(open) => {
+            if (!open) setAddUnder(null);
+          }}
+          onSubmit={handleCreate}
+          isPending={create.isPending ?? false}
+          parent={addUnder}
+          existingCountryCodes={create.existingCountryCodes}
+        />
+      )}
+    </div>
+  );
 }
 
-interface LocationTreeNodeProps {
+interface LocationTreeRowProps {
   node: LocationNode;
   depth: number;
   locale: string;
-  onAdd?: (parent: Location) => void;
-  onEdit?: (location: Location) => void;
-  searchQuery: string;
-  selectable?: boolean;
-  selectedIds?: Set<string>;
-  onToggleSelect?: (id: string) => void;
+  searching: boolean;
+  selection: LocationTreeSelection;
+  create?: LocationTreeCreateConfig;
+  onAddUnder: (parent: Location) => void;
 }
 
-function LocationTreeNode({
+function LocationTreeRow({
   node,
   depth,
   locale,
-  onAdd,
-  onEdit,
-  searchQuery,
-  selectable,
-  selectedIds,
-  onToggleSelect,
-}: LocationTreeNodeProps) {
-  // In the admin locations view, top-level countries are expanded by default
-  // so admins can see the full tree at a glance. In selectable (gedu coverage)
-  // mode we start everything collapsed because gedus just need to drill into
-  // the one country they cover.
-  const initialExpanded = !selectable && depth < 1;
-  const [expanded, setExpanded] = useState(initialExpanded || !!searchQuery);
+  searching,
+  selection,
+  create,
+  onAddUnder,
+}: LocationTreeRowProps) {
+  // Single mode: countries open by default so the tree is visible at a glance.
+  // Multi mode (gedu coverage): start collapsed — gedus drill into one country.
+  const initialExpanded = selection.mode === "single" && depth === 0;
+  const [expanded, setExpanded] = useState(initialExpanded);
+  const isExpanded = searching ? true : expanded;
   const hasChildren = node.children.length > 0;
+
+  const isPickable =
+    selection.mode === "single" && selection.pickableTypes.includes(node.type);
+  const isSelected =
+    selection.mode === "multi"
+      ? selection.selectedIds.has(node.id)
+      : selection.value === node.id;
+
   const childLevel = getChildLevel(node.country_code, node.type);
   const childLabels = childLevel ? resolveLabels(childLevel, locale) : null;
-  const canAddChildren = childLevel !== null;
+  const canCreateChild =
+    !!create && !!childLevel && create.allowedChildTypes.includes(childLevel.type);
+  // Count hint ("3 Maakuntaa") uses the country's own terminology via resolveLabels.
   const childCount = node.children.length;
+  const showPickButton =
+    selection.mode === "single" &&
+    isPickable &&
+    hasChildren &&
+    !!selection.pickLabel;
 
-  // When searching, auto-expand
-  const isExpanded = searchQuery ? true : expanded;
-
-  const isSelected = selectedIds?.has(node.id) ?? false;
+  function handleRowClick() {
+    if (selection.mode === "multi") {
+      if (hasChildren) setExpanded((e) => !e);
+      return;
+    }
+    if (isPickable && !hasChildren) {
+      selection.onSelect(node.id);
+      return;
+    }
+    if (hasChildren) setExpanded((e) => !e);
+    else if (isPickable) selection.onSelect(node.id);
+  }
 
   return (
     <div>
       <div
         className={cn(
-          "group flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-accent hover:text-accent-foreground",
-          hasChildren && "cursor-pointer",
+          "group flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors",
+          (hasChildren || isPickable) && "cursor-pointer",
+          isSelected ? "bg-primary/10 text-primary" : "hover:bg-accent hover:text-accent-foreground",
         )}
         style={{ paddingLeft: `${depth * 20 + 8}px` }}
-        onClick={() => hasChildren && setExpanded(!expanded)}
+        onClick={handleRowClick}
       >
         <span
           className={cn(
@@ -147,11 +341,11 @@ function LocationTreeNode({
           )}
         </span>
 
-        {selectable && (
+        {selection.mode === "multi" && (
           <input
             type="checkbox"
             checked={isSelected}
-            onChange={() => onToggleSelect?.(node.id)}
+            onChange={() => selection.onToggle(node.id)}
             onClick={(e) => e.stopPropagation()}
             className="h-4 w-4 shrink-0 accent-primary cursor-pointer"
             aria-label={node.name}
@@ -162,32 +356,40 @@ function LocationTreeNode({
 
         {childLabels && childCount > 0 && (
           <span className="text-xs text-muted-foreground">
-            {childCount} {childCount === 1 ? childLabels.label.toLowerCase() : childLabels.pluralLabel.toLowerCase()}
+            {childCount}{" "}
+            {childCount === 1
+              ? childLabels.label.toLowerCase()
+              : childLabels.pluralLabel.toLowerCase()}
           </span>
         )}
 
-        {!selectable && (
-          <div className="ml-auto flex gap-1 opacity-0 group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
-            {canAddChildren && onAdd && (
+        {(showPickButton || canCreateChild) && (
+          <div
+            className="ml-auto flex gap-1 opacity-0 group-hover:opacity-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {showPickButton && (
               <Button
+                type="button"
                 variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => onAdd(node)}
-                title={`Add ${childLabels!.label} under ${node.name}`}
+                size="sm"
+                className="h-7 gap-1 px-2 text-xs"
+                onClick={() => selection.onSelect(node.id)}
               >
-                <Plus className="h-3.5 w-3.5" />
+                {selection.pickLabel}
               </Button>
             )}
-            {node.type !== "country" && onEdit && (
+            {canCreateChild && childLabels && (
               <Button
+                type="button"
                 variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => onEdit(node)}
-                title={`Edit ${node.name}`}
+                size="sm"
+                className="h-7 gap-1 px-2 text-xs"
+                onClick={() => onAddUnder(node)}
+                title={childLabels.label}
               >
-                <Pencil className="h-3.5 w-3.5" />
+                <Plus className="h-3.5 w-3.5" />
+                {childLabels.label}
               </Button>
             )}
           </div>
@@ -197,73 +399,19 @@ function LocationTreeNode({
       {isExpanded && hasChildren && (
         <div>
           {node.children.map((child) => (
-            <LocationTreeNode
+            <LocationTreeRow
               key={child.id}
               node={child}
               depth={depth + 1}
               locale={locale}
-              onAdd={onAdd}
-              onEdit={onEdit}
-              searchQuery={searchQuery}
-              selectable={selectable}
-              selectedIds={selectedIds}
-              onToggleSelect={onToggleSelect}
+              searching={searching}
+              selection={selection}
+              create={create}
+              onAddUnder={onAddUnder}
             />
           ))}
         </div>
       )}
-    </div>
-  );
-}
-
-interface LocationTreeProps {
-  nodes: LocationNode[];
-  searchQuery: string;
-  onAdd?: (parent: Location) => void;
-  onEdit?: (location: Location) => void;
-  /** When true, each row renders a checkbox instead of hover edit buttons. */
-  selectable?: boolean;
-  selectedIds?: Set<string>;
-  onToggleSelect?: (id: string) => void;
-}
-
-export function LocationTree({
-  nodes,
-  onAdd,
-  onEdit,
-  searchQuery,
-  selectable,
-  selectedIds,
-  onToggleSelect,
-}: LocationTreeProps) {
-  const t = useTranslations("admin.locations");
-  const locale = useLocale();
-  if (nodes.length === 0) {
-    return (
-      <div className="py-8 text-center text-muted-foreground">
-        {searchQuery
-          ? t("noLocationsMatchSearch")
-          : t("noLocationsYet")}
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-0.5">
-      {nodes.map((node) => (
-        <LocationTreeNode
-          key={node.id}
-          node={node}
-          depth={0}
-          locale={locale}
-          onAdd={onAdd}
-          onEdit={onEdit}
-          searchQuery={searchQuery}
-          selectable={selectable}
-          selectedIds={selectedIds}
-          onToggleSelect={onToggleSelect}
-        />
-      ))}
     </div>
   );
 }

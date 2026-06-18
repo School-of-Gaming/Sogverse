@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import { Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
 import { useUpdateSiteNotes } from "@/services/products";
 
 // One panel that renders the read state + edit affordance for either tier
@@ -75,10 +76,11 @@ export function SiteNotesEditor({
         </div>
         <div className="mt-2 space-y-2">
           {isMember && (
-            <div className="space-y-1">
-              <Label htmlFor={`addr-${locationId}`} className="text-xs">
-                {t("addressLabel")}
-              </Label>
+            <Field
+              label={t("addressLabel")}
+              htmlFor={`addr-${locationId}`}
+              optional
+            >
               <Input
                 id={`addr-${locationId}`}
                 value={draftAddress}
@@ -86,22 +88,22 @@ export function SiteNotesEditor({
                 placeholder={t("addressPlaceholder")}
                 disabled={update.isPending}
               />
-            </div>
+            </Field>
           )}
-          <div className="space-y-1">
-            <Label htmlFor={`notes-${locationId}-${tier}`} className="text-xs">
-              {t(`${tier}NotesFieldLabel`)}
-            </Label>
-            <textarea
+          <Field
+            label={t(`${tier}NotesFieldLabel`)}
+            htmlFor={`notes-${locationId}-${tier}`}
+            optional
+          >
+            <Textarea
               id={`notes-${locationId}-${tier}`}
               rows={3}
               value={draftNotes}
               onChange={(e) => setDraftNotes(e.target.value)}
               placeholder={t(`${tier}NotesPlaceholder`)}
               disabled={update.isPending}
-              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             />
-          </div>
+          </Field>
           {error && (
             <p className="text-xs text-destructive">{error}</p>
           )}

@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef } from "react";
+import { Users } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { useSpeakingGlow } from "./hooks/use-speaking-glow";
 import { ParticipantRow } from "./ParticipantRow";
@@ -11,63 +11,55 @@ import type { VoiceParticipant, LockState } from "./hooks/types";
 export function ParticipantList() {
   const {
     participants,
-    volumeMultipliers,
-    setParticipantVolume,
     lockStates,
     muteParticipant,
     lockParticipant,
-    localRole,
+    isModerator,
   } = useVoiceRoom();
 
   const t = useTranslations('voice');
-  const isLocalOwner = localRole === "admin" || localRole === "gedu";
 
+  // No enclosing Card: each ParticipantRow is itself a bordered card, so wrapping
+  // them in another card was card-in-card (two borders, doubled padding). Flush
+  // section under a plain heading, matching the voice-room section in VoiceRoom.
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium">
-          {t('participantsCount', { count: participants.length })}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {participants.map((p) => (
-          <ParticipantRowWithGlow
-            key={p.sessionId}
-            participant={p}
-            volume={volumeMultipliers.get(p.sessionId) ?? 1.0}
-            lockState={lockStates.get(p.sessionId) ?? { audio: false, video: false }}
-            isLocalOwner={isLocalOwner}
-            onVolumeChange={(vol) => setParticipantVolume(p.sessionId, vol)}
-            onMute={(track) => muteParticipant(p.sessionId, track)}
-            onLock={(track, locked) => lockParticipant(p.sessionId, track, locked)}
-          />
-        ))}
+    <section className="space-y-2">
+      <h2 className="flex items-center gap-2 text-sm font-medium">
+        <Users className="h-4 w-4" />
+        {t('participants')}
+      </h2>
 
-        {participants.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground">
-            {t('noParticipantsYet')}
-          </p>
-        )}
-      </CardContent>
-    </Card>
+      {participants.map((p) => (
+        <ParticipantRowWithGlow
+          key={p.sessionId}
+          participant={p}
+          lockState={lockStates.get(p.sessionId) ?? { audio: false, video: false }}
+          isLocalOwner={isModerator}
+          onMute={(track) => muteParticipant(p.sessionId, track)}
+          onLock={(track, locked) => lockParticipant(p.sessionId, track, locked)}
+        />
+      ))}
+
+      {participants.length === 0 && (
+        <p className="text-center text-sm text-muted-foreground">
+          {t('noParticipantsYet')}
+        </p>
+      )}
+    </section>
   );
 }
 
 /** Wraps ParticipantRow with the speaking-glow hook (needs sessionId for audio analysis). */
 function ParticipantRowWithGlow({
   participant,
-  volume,
   lockState,
   isLocalOwner,
-  onVolumeChange,
   onMute,
   onLock,
 }: {
   participant: VoiceParticipant;
-  volume: number;
   lockState: LockState;
   isLocalOwner: boolean;
-  onVolumeChange: (volume: number) => void;
   onMute: (track: "audio" | "video") => void;
   onLock: (track: "audio" | "video", locked: boolean) => void;
 }) {
@@ -77,11 +69,9 @@ function ParticipantRowWithGlow({
   return (
     <ParticipantRow
       participant={participant}
-      volume={volume}
       lockState={lockState}
       isModView={isLocalOwner}
       avatarRef={avatarRef}
-      onVolumeChange={onVolumeChange}
       onMute={onMute}
       onLock={onLock}
     />

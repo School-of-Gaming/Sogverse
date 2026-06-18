@@ -5,13 +5,23 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { generateGamerEmail } from "@/lib/utils";
 import { lookupMinecraftUser, isValidMinecraftUsername } from "@/lib/mojang";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+import { Constants, type GenderType } from "@/types";
 
-type GenderValue = "boy" | "girl" | "non_binary";
-const VALID_GENDERS: readonly GenderValue[] = ["boy", "girl", "non_binary"];
+// Runtime values of the gender_type DB enum — the source of truth for what
+// the gamer_profiles CHECK accepts, so route validation can't drift from it.
+const VALID_GENDERS = Constants.public.Enums.gender_type;
 
-// Internal handle + password. Opaque on purpose: the parent never sees
-// either (gamer login is via account-switching from the parent).
-function generateOpaqueGamerUsername(): string {
+function isGenderValue(value: unknown): value is GenderType {
+  return (
+    typeof value === "string" &&
+    (VALID_GENDERS as readonly string[]).includes(value)
+  );
+}
+
+// Local part of the gamer's synthetic email + password. Opaque on purpose:
+// the parent never sees either (gamer login is via account-switching from the
+// parent, not credentials they type).
+function generateGamerEmailLocalPart(): string {
   return "g" + randomBytes(8).toString("hex");
 }
 
@@ -52,11 +62,11 @@ export async function POST(request: Request) {
       );
     }
 
-    let gender: GenderValue | null;
+    let gender: GenderType | null;
     if (providedGender === undefined || providedGender === null || providedGender === "") {
       gender = null;
-    } else if (typeof providedGender === "string" && (VALID_GENDERS as readonly string[]).includes(providedGender)) {
-      gender = providedGender as GenderValue;
+    } else if (isGenderValue(providedGender)) {
+      gender = providedGender;
     } else {
       return NextResponse.json(
         { error: "Gender must be boy, girl, or non_binary" },
@@ -69,14 +79,14 @@ export async function POST(request: Request) {
 
     // Belt-and-braces: 64 bits of entropy means collisions are
     // vanishingly improbable, but check once and retry once just in case.
-    let username = generateOpaqueGamerUsername();
+    let syntheticEmail = generateGamerEmail(generateGamerEmailLocalPart());
     const { data: collision } = await admin
       .from("profiles")
       .select("id")
-      .eq("username", username)
+      .eq("email", syntheticEmail)
       .maybeSingle();
     if (collision) {
-      username = generateOpaqueGamerUsername();
+      syntheticEmail = generateGamerEmail(generateGamerEmailLocalPart());
     }
 
     if (minecraftUsername !== undefined && minecraftUsername !== null) {
@@ -87,8 +97,6 @@ export async function POST(request: Request) {
         );
       }
     }
-
-    const syntheticEmail = generateGamerEmail(username);
 
     // Snapshot the parent's last_name onto the gamer at creation time. The
     // parent's UI never asks for the gamer's last_name; we copy it once here
@@ -153,13 +161,14 @@ export async function POST(request: Request) {
 
     const gamerId = authData.user.id;
 
-    // Step 2: Promote to gamer — update profile, swap extension tables
+    // Step 2: Promote to gamer — update profile, swap extension tables.
+    // Keep the synthetic email the trigger seeded (handle_new_user copies
+    // NEW.email from auth.users): gamers are email-first, so `profiles.email`
+    // stays populated and queryable like every other role.
     const { error: promoteError } = await admin
       .from("profiles")
       .update({
         role: "gamer",
-        email: null,
-        username,
         first_name: firstName,
         last_name: inheritedLastName,
       })

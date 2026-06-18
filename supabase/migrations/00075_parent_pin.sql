@@ -4,7 +4,7 @@
 -- "locked" until the PIN is provided once (enforced in src/proxy.ts for pages
 -- and src/lib/auth.ts requireRole() for API routes). The PIN — not the
 -- password — is the real boundary, because on a shared family device the
--- password is typically saved/autofilled. See docs/parent-pin-architecture.md.
+-- password is typically saved/autofilled. See src/services/pin/CLAUDE.md.
 --
 -- One PIN per parent account, stored as a bcrypt hash on customer_profiles.
 -- Verification and mutation go through auth.uid()-scoped SECURITY DEFINER RPCs;
@@ -18,7 +18,7 @@
 -- wrong-PIN feedback (a ~600ms shake/clear per attempt, see use-pin-field.ts),
 -- both of which clear the bar we care about. A parent who picks 0000 has made
 -- their own trust call. Adding attempt throttling is a tracked future
--- improvement — see docs/parent-pin-architecture.md.
+-- improvement — see src/services/pin/CLAUDE.md.
 
 -- pgcrypto provides crypt()/gen_salt(). On Supabase it lives in the extensions
 -- schema; `if not exists` is a no-op when it's already enabled (in whichever

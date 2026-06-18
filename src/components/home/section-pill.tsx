@@ -22,7 +22,11 @@ export function SectionPill() {
           .filter((e) => e.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
         if (visible.length > 0) {
-          setActiveSection(visible[0].target.id as SectionId);
+          // Only SECTIONS elements are observed, so the id always matches —
+          // `find` narrows it to the union without asserting.
+          const id = visible[0].target.id;
+          const section = SECTIONS.find((s) => s === id);
+          if (section) setActiveSection(section);
         }
       },
       // Active band sits in the upper third of the viewport so the pill
@@ -73,7 +77,7 @@ export function SectionPill() {
         isVisible ? "opacity-100" : "pointer-events-none opacity-0",
       )}
     >
-      <ul className="flex items-center gap-1 rounded-full border border-border bg-background/90 p-1 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/70">
+      <ul className="glass-panel flex items-center gap-1 rounded-full border border-border p-1 shadow-lg">
         {SECTIONS.map((id) => (
           <li key={id}>
             <a

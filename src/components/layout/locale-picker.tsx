@@ -7,7 +7,7 @@
  *
  * Not the user's spoken-language preference. For that, see
  * src/components/ui/spoken-language-checkboxes.tsx and
- * docs/i18n-architecture.md.
+ * src/i18n/CLAUDE.md.
  */
 
 import { useState, useRef } from "react";
@@ -20,7 +20,7 @@ import {
   SUPPORTED_LOCALES,
   LOCALE_CONFIG,
 } from "@/lib/constants/locales";
-import { cn } from "@/lib/utils";
+import { cn, isKeyOf } from "@/lib/utils";
 
 // Klingon Empire flag from Wikimedia Commons (by Oren neu dag, public domain).
 // Simplified from the original Inkscape SVG to a minimal inline component.
@@ -54,7 +54,7 @@ function FlagComponent({
   if (country === "KLINGON") {
     return <KlingonFlag title={nativeLabel} />;
   }
-  const Flag = flags[country as keyof typeof flags];
+  const Flag = isKeyOf(flags, country) ? flags[country] : undefined;
   return Flag ? <Flag title={nativeLabel} /> : null;
 }
 

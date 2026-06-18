@@ -1,5 +1,5 @@
 import type { LocationType } from "@/types";
-import type { SupportedLocale } from "./locales";
+import { isSupportedLocale, type SupportedLocale } from "./locales";
 
 interface LabelPair {
   label: string;
@@ -36,7 +36,7 @@ export interface CountryConfig {
  *
  * Location type labels are translated for the country's native language only.
  * A Finnish user sees Finland's hierarchy in Finnish but UK/US in English.
- * See docs/locations-architecture.md § Localised Labels for the rationale.
+ * See src/services/locations/CLAUDE.md for the rationale.
  */
 export const SUPPORTED_COUNTRIES: CountryConfig[] = [
   {
@@ -110,8 +110,8 @@ export function getCountryConfig(countryCode: string | null): CountryConfig | nu
 
 /** Resolve the label/pluralLabel for a hierarchy level, respecting locale. */
 export function resolveLabels(level: HierarchyLevel, locale?: string): LabelPair {
-  if (locale && level.i18n) {
-    const localized = level.i18n[locale as SupportedLocale];
+  if (level.i18n && isSupportedLocale(locale)) {
+    const localized = level.i18n[locale];
     if (localized) return localized;
   }
   return { label: level.label, pluralLabel: level.pluralLabel };
@@ -139,8 +139,8 @@ export function getChildLevel(
 
 /** Get the country display name, respecting locale. */
 export function getCountryName(config: CountryConfig, locale?: string): string {
-  if (locale && config.nameI18n) {
-    const localized = config.nameI18n[locale as SupportedLocale];
+  if (config.nameI18n && isSupportedLocale(locale)) {
+    const localized = config.nameI18n[locale];
     if (localized) return localized;
   }
   return config.name;

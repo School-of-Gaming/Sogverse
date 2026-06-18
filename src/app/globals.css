@@ -205,6 +205,32 @@
   --color-avatar-rose: #f43f5e;
   --color-avatar-slate: #94a3b8;
   --color-avatar-stone: #a8a29e;
+  /* Voice-zone palette — the 16 colors a moderator picks for a custom voice
+     zone (src/lib/constants/voice-zones.ts maps these to tile/glyph/ring/glow/
+     solid classes). A full, even sweep around the color wheel — red → orange →
+     yellow → green → teal → blue → violet → pink — so the picker reads as a
+     vibrant rainbow. Spanning the spectrum is the priority: a few hues land
+     near a fixed Yty element color (harmony/glow/valor/wit above), which is
+     fine — the Yty zones are their own zones, so a custom zone sharing a
+     similar hue doesn't collide. Lightness sits ~L55-70% so each reads as a
+     glyph on both themes (yellow/amber nudged a touch darker for light-theme
+     contrast). */
+  --color-zone-red: #f4504e;
+  --color-zone-orange: #fb8b3c;
+  --color-zone-amber: #f7a31f;
+  --color-zone-yellow: #e8c21f;
+  --color-zone-lime: #9fc92e;
+  --color-zone-green: #46cf5a;
+  --color-zone-emerald: #18cf86;
+  --color-zone-teal: #1cccbe;
+  --color-zone-cyan: #25cfee;
+  --color-zone-sky: #38b0f7;
+  --color-zone-blue: #5b86f0;
+  --color-zone-indigo: #7a72f5;
+  --color-zone-violet: #a36bf6;
+  --color-zone-purple: #c45ff2;
+  --color-zone-fuchsia: #e85fe0;
+  --color-zone-pink: #f767a8;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -217,12 +243,16 @@
   border-color: hsl(var(--border));
 }
 
-/* All interactive elements should show a pointer cursor */
+/* All interactive elements should show a pointer cursor — except dnd-kit
+   draggables, which are tagged role="button" for keyboard a11y but should read
+   as grab/grabbing (see the drag classes below). They carry
+   aria-roledescription="draggable", so excluding that keeps this rule from
+   overreaching onto them (and lets the drag classes stay plain — no !important). */
 button,
 [type="button"],
 [type="reset"],
 [type="submit"],
-[role="button"],
+[role="button"]:not([aria-roledescription="draggable"]),
 a,
 select,
 summary,
@@ -236,6 +266,22 @@ button:disabled,
 [type="button"]:disabled,
 [role="button"][aria-disabled="true"] {
   cursor: default;
+}
+
+/* Drag affordance — one definition for every dnd-kit draggable in the app
+   (voice avatars, admin gamer chips, …). `drag-handle` goes on the grabbable
+   element (grab on hover); `drag-ghost` goes on the DragOverlay content, which
+   is the element under the pointer while dragging (grabbing) — and `drag-ghost *`
+   reaches a nested handle the overlay re-renders (e.g. the admin chip). No
+   !important needed: the pointer rule above no longer claims draggables, and
+   `.drag-ghost *` is declared after `.drag-handle`, so on the overlay copy of a
+   handle (equal specificity) the grabbing cursor wins on source order. */
+.drag-handle {
+  cursor: grab;
+}
+.drag-ghost,
+.drag-ghost * {
+  cursor: grabbing;
 }
 
 body {
@@ -259,6 +305,39 @@ body {
 
 .bg-brand-yellow {
   background-color: hsl(42 98% 49%);
+}
+
+/* Frosted-glass surface — a translucent background plus a backdrop blur, shared
+   by every floating/overlay chrome that sits over scrolling content: the sticky
+   site header, the home section pill, and the voice control dock. Defined once
+   so the look stays identical across all three. Progressive enhancement: a more
+   opaque background when backdrop-filter is unavailable, a lighter one (letting
+   more of the blur show) where the browser supports it. Pair with border /
+   rounded / shadow utilities per use site. */
+.glass-panel {
+  /* color-mix(... transparent) mirrors what Tailwind's `bg-background/90`
+     compiles to — a plain `hsl(var(--background) / 0.9)` slash-alpha gets
+     dropped by Lightning CSS and leaves no background at all. */
+  background-color: color-mix(in oklab, hsl(var(--background)) 90%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+@supports ((backdrop-filter: blur(8px)) or (-webkit-backdrop-filter: blur(8px))) {
+  .glass-panel {
+    background-color: color-mix(in oklab, hsl(var(--background)) 70%, transparent);
+  }
+}
+
+/* Active voice-zone glow — the zone's color spilling in from the border and
+   fading toward the center (paired with a high-contrast border on the active
+   zone card / open zone dialog). The GEOMETRY lives here only: tweak the blur
+   or spread once and every custom zone, the Clubhouse/lobby, and the 4 Yty
+   zones follow. Each zone supplies its own color through the `--glow-color`
+   custom property, set with a Tailwind arbitrary-property class alongside this
+   one, e.g. `zone-glow [--glow-color:var(--color-zone-red)]` (see the `glow`
+   fields in src/lib/constants/voice-zones.ts). */
+.zone-glow {
+  box-shadow: inset 0 0 1.25rem -0.25rem var(--glow-color, transparent);
 }
 
 /* Gaming-inspired glow effects */

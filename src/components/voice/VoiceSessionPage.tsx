@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { VoiceRoomProvider, useVoiceRoom } from "@/components/voice/VoiceRoomProvider";
-import { SpatialVoiceRoom } from "@/components/voice/SpatialVoiceRoom";
+import { VoiceRoom } from "@/components/voice/VoiceRoom";
 import { useVoiceToken } from "@/services/voice";
 
 interface VoiceSessionPageProps {
@@ -42,7 +42,7 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
 
     getToken
       .mutateAsync(groupId)
-      .then(({ token, roomUrl }) => join(roomUrl, token))
+      .then(({ token, roomUrl, sessionOpensAt }) => join(roomUrl, token, { sessionOpensAt }))
       .then(() => setWasJoined(true))
       .catch((err) => {
         setError(err instanceof Error ? err.message : t('failedToJoinRoom'));
@@ -114,12 +114,12 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
     );
   }
 
-  return <SpatialVoiceRoom onLeave={handleLeave} leaveLabel={t('leave')} />;
+  return <VoiceRoom onLeave={handleLeave} leaveLabel={t('leave')} />;
 }
 
 export function VoiceSessionPage(props: VoiceSessionPageProps) {
   return (
-    <VoiceRoomProvider>
+    <VoiceRoomProvider groupId={props.groupId}>
       <VoiceSessionInner {...props} />
     </VoiceRoomProvider>
   );

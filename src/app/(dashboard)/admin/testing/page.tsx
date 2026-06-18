@@ -12,14 +12,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/providers";
 import { SENDER_EMAIL } from "@/lib/constants";
-import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, type SupportedLocale } from "@/lib/constants/locales";
+import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from "@/lib/constants/locales";
+import { findOption } from "@/lib/utils";
 import { templateRegistry, type TemplateField } from "@/lib/email-templates/registry";
 
-type EmailProvider = "brevo" | "klaviyo";
-type EmailMode = "custom" | "template";
+const EMAIL_PROVIDERS = ["brevo", "klaviyo"] as const;
+type EmailProvider = (typeof EMAIL_PROVIDERS)[number];
+const EMAIL_MODES = ["custom", "template"] as const;
+type EmailMode = (typeof EMAIL_MODES)[number];
 
 interface EmailResult {
   type: "success" | "error";
@@ -160,12 +164,14 @@ export default function TestingPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Provider + Mode */}
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="provider">{t('provider')}</Label>
+              <Field label={t('provider')} htmlFor="provider">
                 <select
                   id="provider"
                   value={provider}
-                  onChange={(e) => setProvider(e.target.value as EmailProvider)}
+                  onChange={(e) => {
+                    const value = findOption(EMAIL_PROVIDERS, e.target.value);
+                    if (value) setProvider(value);
+                  }}
                   className={selectClass}
                 >
                   <option value="brevo">{t('brevo')}</option>
@@ -173,24 +179,25 @@ export default function TestingPage() {
                     {t('klaviyoComingSoon')}
                   </option>
                 </select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="mode">{t('content')}</Label>
+              </Field>
+              <Field label={t('content')} htmlFor="mode">
                 <select
                   id="mode"
                   value={mode}
-                  onChange={(e) => handleModeChange(e.target.value as EmailMode)}
+                  onChange={(e) => {
+                    const value = findOption(EMAIL_MODES, e.target.value);
+                    if (value) handleModeChange(value);
+                  }}
                   className={selectClass}
                 >
                   <option value="template">{t('template')}</option>
                   <option value="custom">{t('custom')}</option>
                 </select>
-              </div>
+              </Field>
             </div>
 
             {/* To Email */}
-            <div className="space-y-2">
-              <Label htmlFor="toEmail">{t('toEmail')}</Label>
+            <Field label={t('toEmail')} htmlFor="toEmail">
               <Input
                 id="toEmail"
                 type="text"
@@ -199,14 +206,13 @@ export default function TestingPage() {
                 onChange={(e) => setToEmail(e.target.value)}
                 placeholder={t('toEmailPlaceholder')}
               />
-            </div>
+            </Field>
 
             {/* Template mode fields */}
             {mode === "template" && (
               <>
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="template">{t('template')}</Label>
+                  <Field label={t('template')} htmlFor="template">
                     <select
                       id="template"
                       value={templateName}
@@ -219,13 +225,14 @@ export default function TestingPage() {
                         </option>
                       ))}
                     </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="templateLocale">{t('language')}</Label>
+                  </Field>
+                  <Field label={t('language')} htmlFor="templateLocale">
                     <select
                       id="templateLocale"
                       value={templateLocale}
-                      onChange={(e) => setTemplateLocale(e.target.value as SupportedLocale)}
+                      onChange={(e) => {
+                        if (isSupportedLocale(e.target.value)) setTemplateLocale(e.target.value);
+                      }}
                       className={selectClass}
                     >
                       {SUPPORTED_LOCALES.map((opt) => (
@@ -234,7 +241,7 @@ export default function TestingPage() {
                         </option>
                       ))}
                     </select>
-                  </div>
+                  </Field>
                 </div>
 
                 <div className="space-y-3 rounded-md border border-border p-4">
@@ -242,10 +249,11 @@ export default function TestingPage() {
                       {t('templateParameters')}
                     </p>
                     {selectedTemplate.fields.map((field) => (
-                      <div key={field.key} className="space-y-1">
-                        <Label htmlFor={`param-${field.key}`} className="text-sm">
-                          {field.label}
-                        </Label>
+                      <Field
+                        key={field.key}
+                        label={field.label}
+                        htmlFor={`param-${field.key}`}
+                      >
                         {isSelectField(field) ? (
                           <select
                             id={`param-${field.key}`}
@@ -267,7 +275,7 @@ export default function TestingPage() {
                             placeholder={field.placeholder}
                           />
                         )}
-                      </div>
+                      </Field>
                     ))}
                   </div>
               </>
@@ -277,28 +285,25 @@ export default function TestingPage() {
             {mode === "custom" && (
               <>
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="fromEmail">{t('fromEmail')}</Label>
+                  <Field label={t('fromEmail')} htmlFor="fromEmail">
                     <Input
                       id="fromEmail"
                       type="email"
                       value={SENDER_EMAIL}
                       disabled
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="fromName">{t('fromName')}</Label>
+                  </Field>
+                  <Field label={t('fromName')} htmlFor="fromName">
                     <Input
                       id="fromName"
                       required
                       value={fromName}
                       onChange={(e) => setFromName(e.target.value)}
                     />
-                  </div>
+                  </Field>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="subject">{t('subject')}</Label>
+                <Field label={t('subject')} htmlFor="subject">
                   <Input
                     id="subject"
                     required
@@ -306,23 +311,20 @@ export default function TestingPage() {
                     onChange={(e) => setSubject(e.target.value)}
                     placeholder={t('subjectPlaceholder')}
                   />
-                </div>
+                </Field>
 
-                <div className="space-y-2">
-                  <Label htmlFor="body">{t('body')}</Label>
-                  <textarea
+                <Field label={t('body')} htmlFor="body">
+                  <Textarea
                     id="body"
                     required
                     value={body}
                     onChange={(e) => setBody(e.target.value)}
                     placeholder={t('bodyPlaceholder')}
                     rows={5}
-                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   />
-                </div>
+                </Field>
 
-                <div className="space-y-2">
-                  <Label htmlFor="replyToEmail">{t('replyTo')}</Label>
+                <Field label={t('replyTo')} htmlFor="replyToEmail" optional>
                   <Input
                     id="replyToEmail"
                     type="email"
@@ -330,7 +332,7 @@ export default function TestingPage() {
                     onChange={(e) => setReplyToEmail(e.target.value)}
                     placeholder={t('replyToPlaceholder')}
                   />
-                </div>
+                </Field>
               </>
             )}
 

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getOrigin } from "@/lib/url";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/brevo";
@@ -44,7 +45,10 @@ export async function POST(request: Request) {
       .filter(Boolean)
       .join(" ");
     const locale = resolveLocale(requestedLocale);
-    const origin = new URL(request.url).origin;
+    // Trusted origin, never the raw Host/request URL — the invite link goes
+    // into an email and carries a session-granting token, so a spoofed Host
+    // would turn it into a phishing link.
+    const origin = getOrigin(request);
     const admin = createAdminClient();
 
     // Step 1: Generate invite link — this creates the user AND returns a signed,

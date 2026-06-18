@@ -1,0 +1,17 @@
+-- Locked-zone roster names for outsiders, including late joiners.
+--
+-- Main-room participant names travel via the Daily token (user_name encodes the
+-- display name), so peers read them with no DB lookup. But a gamer placed in a
+-- locked zone is in a *separate* Daily room — outsiders never receive their
+-- token, and profiles RLS has no gamer-to-gamer read policy, so the name can't
+-- be resolved client-side. (It worked live only because the placing client had
+-- just seen them in the main room.)
+--
+-- Snapshot the display name onto the placement row instead. The placing
+-- moderator writes it (they have it from the dragged participant), and it then
+-- rides to every group member through the existing SELECT RLS + realtime — late
+-- joiners get it in their initial fetch, live joiners in the realtime payload —
+-- with no profiles read and no extra query. Nullable: a placement whose name
+-- wasn't known falls back to an identicon-only tile. Session-scoped, so a stale
+-- snapshot is harmless.
+alter table public.voice_locked_placements add column gamer_name text;

@@ -32,7 +32,7 @@ npm run test:e2e:ui      # Playwright with UI
 Four user roles with separate dashboards:
 - `admin` → `/admin` - System management
 - `customer` → `/parent` - Parents who purchase products and manage linked gamers (the role identifier is `customer`; the URL is `/parent`)
-- `gamer` → `/gamer` - Child accounts (use username login, synthetic email: `{username}@gamer.sogverse.internal`)
+- `gamer` → `/gamer` - Child accounts (email-first like every role; email is a synthetic `<token>@gamer.sogverse.internal` address; login is via account-switch from the parent, not a typed credential)
 - `gedu` → `/gedu` - Game educators
 
 Proxy (`src/proxy.ts`) refreshes Supabase auth sessions, enforces role-based routing, and sets a per-request nonce-based Content Security Policy (Next.js 16 uses `proxy.ts` instead of `middleware.ts`). RLS policies protect data at the database level.
@@ -44,9 +44,10 @@ Proxy (`src/proxy.ts`) refreshes Supabase auth sessions, enforces role-based rou
 - Auto-generated types in `types/database.types.ts`, convenience aliases in `types/index.ts`
 
 ### Service Layer Pattern
-Each feature in `src/services/` follows a two-file pattern:
+Each feature in `src/services/` follows a two-to-three-file pattern:
 - `*.service.ts` — Class that takes a `SupabaseClient<Database>` in the constructor. Read methods use the injected client (`.from()` queries, `.rpc()` calls). Write methods that need server-side secrets (Stripe, Daily.co, admin client) use `fetch()` to call API routes instead — the injected client is unused by those methods, and this is intentional.
 - `*.queries.ts` — React Query hooks. Each hook calls `getClient()`, instantiates the service, and returns `useQuery`/`useMutation`. Exports a `*Keys` factory object for cache key hierarchy (e.g., `groupKeys.all`, `groupKeys.byProduct(id)`).
+- `*.contracts.ts` — zod schemas for the feature's wire shapes, shared by both ends: the API route parses its request body with the body schema (`parseJsonBody` / `parseBodyValue` from `src/lib/api/json-body.server.ts`), and the service parses the route's response with the response schema (`parseJsonResponse` / `readErrorMessage` from `src/lib/api/json-response.ts`). Json-returning RPC result schemas live here too. Derive enum values from the generated `Constants` object (`z.enum(Constants.public.Enums.…)`) or the `SUPPORTED_*` tuples so schemas follow codegen. The compiler checks each parse output at its use site (`.insert(parsed)` against the generated Insert type; a service method's return type against the schema), and the db tests parse real RPC output through these schemas in CI — but only for shapes a db test actually exercises, so add db coverage whenever you add an RPC-result schema.
 
 **Rule: Mutations must invalidate related queries in `onSuccess`.** Use the key hierarchy so invalidating a parent key (e.g., `groupKeys.all`) cascades to children.
 
@@ -68,6 +69,8 @@ The canonical sign-out shape is an HTML `<form method="post" action="/api/auth/s
 
 **Rule: Any caller-supplied redirect target (a `?redirect=`/`?next=`/`?back=` param, or anything else deciding where to navigate) must be resolved through `resolveInternalPath()` (`src/lib/navigation/internal-path.ts`) before navigating. Never hand-roll the check.** String matching like `startsWith("/")` + `!startsWith("//")` always loses to a variant you didn't think of (`/\evil.com`, `https:/evil.com`, a stripped leading tab) — an open redirect off a logged-in page is a clean phishing vector. `resolveInternalPath` resolves against a sentinel origin with the URL parser and rejects anything that escapes it, covering every variant at once.
 
+**Rule: Any absolute URL built from an incoming request (especially links placed in emails) must derive its origin from `getOrigin(request)` (`src/lib/url.ts`) — never from `new URL(request.url).origin` or the raw `Host` header.** The browser-supplied `Host` is attacker-controllable on our deployment (Vercel forwards it into `request.url`), and an emailed link is the worst place for a wrong origin: the recipient trusts it and it carries a credential/session token, so a spoofed origin turns it into a phishing/account-takeover vector. `getOrigin` honours `Host` only when it matches a trusted source and otherwise falls back to the canonical `NEXT_PUBLIC_SITE_URL`. Pairs with the `resolveInternalPath` rule above — one governs relative redirect targets, the other absolute origins.
+
 ### Content Security Policy (CSP)
 
 CSP is generated per-request in `src/proxy.ts` with a unique nonce (`crypto.randomUUID()`). In production, `script-src` uses `'nonce-{random}' 'strict-dynamic'` — only scripts tagged by Next.js's SSR pipeline execute. In development, it falls back to `'unsafe-inline' 'unsafe-eval'` for HMR compatibility. Static security headers (X-Frame-Options, HSTS, etc.) remain in `next.config.ts`.
@@ -75,8 +78,6 @@ CSP is generated per-request in `src/proxy.ts` with a unique nonce (`crypto.rand
 **Rule: Never add inline `<script>` tags directly.** The nonce-based CSP blocks any inline script without the per-request nonce. Use Next.js `<Script>` component or ensure scripts go through the SSR pipeline. If you must add an inline script, read the nonce from the `x-nonce` request header in a server component.
 
 ### Layout & Scrolling
-
-See `docs/layout-scroll-architecture.md` for the scroll containment model and how dashboard layouts handle overflow.
 
 **Rule: Once a clickable or readable element is on screen, it must not move unless the user does something.** The promise is about *rendered* content — text the user is reading, buttons/links/inputs they're about to click. If something is already painted, no in-place shift may happen without a user interaction triggering it. Shifts make the UI feel janky and — worse — cause fast users to mis-click when buttons move out from under their cursor.
 
@@ -110,7 +111,7 @@ Setting the flag *inside* `onSuccess` (or via a hook that does so) is too late a
 - **Locale** — which translation of the web app the user sees. Owned by `src/lib/constants/locales.ts` (`SUPPORTED_LOCALES`, `DEFAULT_LOCALE`, `LocaleProvider`, `LocalePicker`), backed by `profiles.locale`. This is what next-intl's `useLocale()` returns.
 - **Spoken language** — the human languages a user speaks / a club is delivered in. Owned by the `spoken_languages` reference table and `profiles.spoken_languages` array. UI lives in `src/components/ui/spoken-language-checkboxes.tsx` and `useSpokenLanguages()`.
 
-A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoken_languages = ["en"]` (wants their child placed in English clubs). Don't conflate them. See `docs/i18n-architecture.md` § "Two distinct concepts".
+A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoken_languages = ["en"]` (wants their child placed in English clubs). Don't conflate them.
 
 **Rule: User-facing strings must be translated for every locale message file in `messages/`. Never leave placeholder copy or skip a locale. Best-effort translation is expected. Klingon (`tlh`) is an easter egg — fun and quirky takes are welcome, accuracy is not the goal there.**
 
@@ -124,19 +125,41 @@ A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoke
 ### UI Component Reference
 A living style guide is available at `/admin/ui-components` (admin login required). It shows every component variant, composite patterns, and the color palette. **Reference this page before creating new UI patterns.** The source at `src/app/(dashboard)/admin/ui-components/page.tsx` serves as copy-paste examples.
 
+**What the page is for (two functions):**
+1. **Fast UI iteration.** It renders components with hand-built mock data, so you can see and tweak a component without manually recreating its state through the normal app flow (no logging in as the right role, seeding a DB row, joining a live call, etc.). Demos feed fixtures directly — including a full mock context where a component reads one (e.g. the voice room renders inside a fixture `VoiceRoomContext.Provider`).
+2. **A separation-of-concerns check.** It's a UI-only surface, so a component that's cleanly demoable here is one whose business logic lives elsewhere (in a provider/hook/service) and that just consumes data + actions. If a component is *painful* to demo — needs real network calls, can't be driven by fixtures — that difficulty is the smell signal that UI and business logic are too coupled; fix the coupling rather than forcing the demo.
+
+**When to add a demo here:** when you build or substantially restyle a reusable component or composite pattern, add (or update) its demo so the next person can iterate on it in isolation. **When not to:** one-off page-specific layouts, or anything that can't render without live side effects — if you can't construct a plausible fixture for it, treat that as a design smell first, not a reason to wire real logic into the page.
+
 ### Customer Enrollment & Billing
 
 See `docs/products-architecture.md` for the purchase / participation flow, the billing model (monthly family subscriptions for clubs, single upfront payments for camps/events), and refund windows.
 
 ### Voice Chat (Daily.co)
 
-See `docs/voice-chat-architecture.md` for the full architecture, component map, permissions, and data flow. See `docs/chrome-webrtc-volume-bug.md` for the Web Audio workaround.
+The full voice architecture auto-loads from colocated `CLAUDE.md` files when you work under `src/components/voice/` (scheduled group rooms) and `src/components/voice/instant/` (instant rooms). The 9-approach Web Audio investigation behind the volume workaround remains in `docs/chrome-webrtc-volume-bug.md` as history.
 
 **Rule: Realtime hooks must only invalidate queries — never make Supabase data queries in callbacks.** Same deadlock risk as `onAuthStateChange`.
 
 ### Documentation
 
-- `docs/` holds architecture notes, bug/fix write-ups, and future-improvement plans — not exhaustive, so when a topic isn't there, treat the code as the source of truth.
+System architecture lives in **colocated `CLAUDE.md` files** next to the code they describe. They auto-load when you (or a future session) work in that directory — no pointer needed here — and are owned like code: update them in the same change that touches their system. Current homes:
+
+| System | Location |
+|---|---|
+| Layout & scrolling | `src/components/layout/` |
+| Parent PIN | `src/services/pin/` |
+| i18n | `src/i18n/` |
+| Email templates | `src/lib/email-templates/` |
+| Locations | `src/services/locations/` |
+| WhatsApp | `src/services/whatsapp/` |
+| Voice — scheduled group rooms | `src/components/voice/` |
+| Voice — instant rooms | `src/components/voice/instant/` |
+| Discord bot | `src/app/api/discord/` |
+| Database / migrations | `supabase/` |
+| Testing conventions | `tests/` |
+
+- `docs/` holds the docs a human deliberately maintains and that don't map to one directory: cross-cutting architecture spanning many systems (products, db-authorization, performance), point-in-time records (security audit, bug/fix write-ups, gap analyses), and ops runbooks (slack, admin quota, stripe testing). When a topic is in neither a colocated `CLAUDE.md` nor `docs/`, treat the code as the source of truth.
 - `TODO.md` is the running list of cross-cutting work we know we want to come back to. Distinct from `docs/`.
 
 ## Environment Variables
@@ -145,104 +168,36 @@ All env vars are in `.env.local`. Keys for Supabase, Stripe, and Daily.co — in
 
 ## Database
 
-Migrations in `supabase/migrations/`.
+Migrations in `supabase/migrations/`. The migration workflow (push → regenerate types →
+dump `schema.sql`), the "read current state from `schema.sql`/`database.types.ts`, not
+migrations" rule, the generated-nullability fix patterns, and the access-control rules
+all live in **`supabase/CLAUDE.md`** (auto-loads when you work under `supabase/`). The
+always-on tripwires:
 
-**Important:** `database.types.ts` is purely auto-generated — **never** hand-edit it, even as a shortcut when the remote DB hasn't been updated yet. Always push the migration first, then regenerate. Convenience type aliases (e.g., `Profile`, `UserRole`) live in `src/types/index.ts`. After regenerating, check whether new tables or enums need aliases added to `index.ts`.
-
-### Linking
-
-**Link the project** (first time only):
-```bash
-supabase link --project-ref "$(grep '^SUPABASE_PROJECT_REF=' .env.local | cut -d= -f2-)"
-# Enter the password from SUPABASE_DB_PASSWORD in .env.local when prompted.
-```
-
-### Migration Workflow (important)
-
-**Rule: When a migration adds or modifies functions/tables, push it to remote and regenerate types before committing.** DB tests and type-check depend on `database.types.ts` matching the schema. The full workflow for a migration PR (run via the Bash tool):
-
-1. Write the migration SQL file
-2. Push to remote:
-   ```bash
-   supabase db push -p "$(grep '^SUPABASE_DB_PASSWORD=' .env.local | cut -d= -f2-)"
-   ```
-3. Regenerate types:
-   ```bash
-   supabase gen types typescript --project-id "$(grep '^SUPABASE_PROJECT_REF=' .env.local | cut -d= -f2-)" 2>/dev/null > src/types/database.types.ts
-   ```
-   `2>/dev/null` swallows the CLI's "new version available" notice so it doesn't end up in the output file. `cut -d= -f2-` (note the trailing `-`) keeps any `=` characters inside the value itself.
-4. Dump the current schema to `supabase/schema.sql`:
-   ```bash
-   PGPASSWORD=$(grep '^SUPABASE_DB_PASSWORD=' .env.local | cut -d= -f2-) pg_dump \
-     -h aws-1-eu-north-1.pooler.supabase.com -p 5432 \
-     -U "postgres.$(grep '^SUPABASE_PROJECT_REF=' .env.local | cut -d= -f2-)" -d postgres \
-     --schema=public --schema-only --no-owner 2>/dev/null \
-     | grep -vE '^[\](un)?restrict ' > supabase/schema.sql
-   ```
-   This is the current-state companion to `database.types.ts` — it captures what the type generator can't (function bodies, RLS policies, triggers, grants, constraints) in one authoritative file. Run it exactly as written: raw `pg_dump` (not `supabase db dump`, which needs Docker), the `5432` session pooler (not the `6543` transaction pooler), and the `grep -vE` that strips pg_dump 18's volatile `\restrict` guard lines so the diff reflects only real schema changes.
-5. Check `src/types/index.ts` — add convenience aliases for any new tables/enums
-6. Commit migration + updated types + `schema.sql` + tests together in the PR
-
-This avoids a chicken-and-egg problem where tests reference functions that aren't in the generated types yet.
-
-**Rule: To understand the current schema — or to copy any existing object's definition into a new migration — read the committed current-state files, not migrations.** Two files hold the live state, and between them they cover almost everything:
-
-- **`database.types.ts` + `src/types/index.ts`** — table/column/function *shapes* (types, signatures, enums). Auto-generated from the live schema.
-- **`supabase/schema.sql`** — the things the type generator can't see: function bodies, RLS policies, triggers, grants, constraints. A `pg_dump` of the live `public` schema (see step 4 of the migration workflow).
-
-Both are regenerated on every migration and reflect current state, so you never reconstruct it by hand. Migrations are append-only history — a later one can supersede an earlier one (drop a constraint, rewrite a function, relax a rule), which is exactly why eyeballing them for current state goes wrong. So when a migration must drop and recreate an object — e.g. a function, to repoint it at a changed type — copy its body from `schema.sql`, never from the migration that first defined it; that copy may already be superseded.
-
-A few objects live **outside** the `public` schema and are therefore **not** in `schema.sql` — so you have to be aware they exist or you'll assume `schema.sql` is the whole story when it isn't. These are: triggers attached to `auth.users` (e.g. the new-user → profile handler), RLS policies on `storage.objects`, and pg_cron jobs (the last two aren't even DDL — they're rows in `storage.buckets`/`cron.job` — so no dump captures them). This is a small, stable set that rarely changes. For *only* these, current state lives in migration history: grep **every** migration touching the object and trust the **highest-numbered** one. Do not hardcode a migration number for them anywhere — the correct file moves the moment one is superseded, which is the staleness trap this rule exists to avoid.
-
-**Rule: Verify generated nullability matches what the SQL actually guarantees.** PostgreSQL has two ways to make a "nullable" column non-null in practice that the type generator can't see: RPC `RETURNS TABLE` columns produced by an INNER JOIN (the generator infers from the base column type alone, missing that the JOIN forbids null), and CHECK constraints that encode conditional invariants like "column X is NOT NULL whenever predicate P holds." Both are real, enforced guarantees, and both leave the generated type nullable everywhere. After pushing and regenerating, check the affected types in `database.types.ts` — the compiler trusts the column/function signature, not the query or the constraint.
-
-**Fix pattern:** When the generated type has wrong nullability, add a corrected alias in `src/types/index.ts` using `Omit` + intersection — never hand-edit `database.types.ts`. For RPC return rows, alias the function's return type and tighten the affected column. For CHECK-tightened columns, alias the row type and tighten under the predicate, plus a type-guard helper so call sites can narrow into the alias at runtime. Either alias is a manual claim about what the DB enforces — if the JOIN or CHECK is ever relaxed, the alias has to come with it, so keep the alias (and any guard) adjacent in `index.ts` and refer to the source constraint or query by name in its doc comment.
-
-```typescript
-type _Generated = Database["public"]["Functions"]["my_rpc"]["Returns"][number];
-export type MyType = Omit<_Generated, "nullable_col"> & { nullable_col: string | null };
-```
-
-**This applies to `.rpc()` returns and CHECK constraints — NOT to embedded `.from().select()` joins.** PostgREST joins are type-inferable, so a hand-written row shape + `as` cast there just throws away protection the generator already gives you. Instead, define the query in a standalone builder and derive the row type from it: `QueryData<ReturnType<typeof builder>>[number]` (import `QueryData` from `@supabase/supabase-js`). No hand-written type, no cast, and the select string and type can't drift.
-
-### Function & Table Access Control
-
-**Rule: Migrations must explicitly `GRANT` every object they create — new tables, views, sequences, and functions have no Data API access by default, not even for `service_role`** (Supabase removed auto-expose: local stacks since CLI v2.106.0, hosted projects for objects created after 2026-10-30; `00095` backfilled everything older). Grant deliberately per role — `GRANT EXECUTE ... TO authenticated` for browser-called RPCs, `TO service_role` for admin-client-called ones — and add any function exposed to `authenticated`/`anon` to the allowlist in `tests/db/access-control.test.ts`. A forgotten grant fails closed as `permission denied` in CI's DB tests; never "fix" that with blanket `ON ALL TABLES` grants or `ALTER DEFAULT PRIVILEGES` — the failure is the feature. Extra care with `SECURITY DEFINER` functions: they bypass RLS, so granting one broadly is a privilege escalation vector.
-
-**Rule: All new tables must enable RLS.** Add `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` and appropriate policies.
-
-**Rule: RLS INSERT/UPDATE policies must authorize both the actor AND the target.** Checking only `column = auth.uid()` is insufficient — also verify the user is authorized to reference the target entity (prevents IDOR).
-
-The DB test `access-control.test.ts` enforces function and RLS rules — it queries PostgreSQL catalogs and fails if any non-allowlisted function is callable or any table lacks RLS.
+- **`database.types.ts` is purely auto-generated — never hand-edit it.** Push the
+  migration first, then regenerate. Convenience aliases (`Profile`, `UserRole`, …) live
+  in `src/types/index.ts`; after regenerating, add aliases for any new tables/enums.
+- **A migration that adds/modifies functions or tables must be pushed and types
+  regenerated before committing** — DB tests and type-check depend on
+  `database.types.ts` matching the schema.
+- **Every new object (table, view, sequence, function) needs an explicit `GRANT`** — no
+  Data API access by default, not even for `service_role`. Grant per role, and add any
+  `authenticated`/`anon` function to the allowlist in `tests/db/access-control.test.ts`.
+- **All new tables must enable RLS**, and **RLS INSERT/UPDATE policies must authorize
+  both the actor AND the target** (checking only `column = auth.uid()` is an IDOR hole).
 
 ## Testing
 
-Tests are in `tests/` with four subdirectories: `unit/`, `integration/`, `db/`, and `e2e/`. Shared mock factories live in `tests/mocks/` — add new mocks there rather than duplicating across files.
+Tests are in `tests/`, split into `unit/`, `integration/`, `db/`, and `e2e/`. The
+classification rules and the per-category conventions (DB test helpers, integration-test
+route-handler mocking, unit setup) live in **`tests/CLAUDE.md`** (auto-loads when you
+work under `tests/`). Two things worth knowing from anywhere:
 
-### Classification Rules
-
-| Category | What goes here | Convention |
-|---|---|---|
-| **unit** | Pure functions, service classes with injected mock dependencies, mapping/transform logic | `.test.ts`, Vitest |
-| **integration** | Route handlers (import real POST/PATCH/GET), proxy, auth flows — full request pipeline with mocked external deps | `.test.ts`, Vitest |
-| **db** | RPCs, constraints, RLS policies against real Postgres | `.test.ts`, Vitest (`vitest.config.db.mts`) |
-| **e2e** | Playwright browser tests against running dev server | `.spec.ts`, Playwright |
-
-### DB Test Conventions
-
-Shared helpers and constants live in `tests/db/`:
-- `helpers.ts` — `createAdminTestClient()` (service-role, bypasses RLS) and `createAuthenticatedClient(email, password)` (signs in via auth, respects RLS). Also exports idempotent seed/reset helpers: `seedEnrollment()`, `resetTokenState()`, `resetEnrollmentState()`.
-- `constants.ts` — `TEST_IDS` (deterministic UUIDs matching `supabase/seed.sql`), `TEST_CREDENTIALS` (email/password per role), and `SEED` values (balances, costs, names that must match seed data).
-
-### Integration Test Conventions
-
-Integration tests import route handlers directly and call them with mock `Request` objects:
-```typescript
-vi.mock("@/lib/auth", () => ({ requireRole: (...args) => mockRequireRole(...args) }));
-import { POST } from "@/app/api/path/route";
-const response = await POST(createRequest({ ... }));
-```
-Mock `requireRole()` to return `{ user, profile, supabase }` for authenticated scenarios or a `NextResponse` error for unauthorized. Mock Supabase clients (`@/lib/supabase/admin`, `@/lib/supabase/server`) with `vi.mock()`.
+- **`npm run test` runs `unit/` + `integration/`** (jsdom). DB tests need a real Postgres
+  and run in **CI only** — we have no local stack — so exercise them by pushing your
+  branch, not locally.
+- **Shared mock factories live in `tests/mocks/`** — add new mocks there rather than
+  duplicating across files.
 
 ## Code Style
 

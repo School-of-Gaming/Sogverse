@@ -12,6 +12,7 @@ import {
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { createParticipationRpcResult } from "@/services/participations/participations.contracts";
 import type { PurchaseShape } from "@/types";
 import { ROUTES } from "@/lib/constants";
 import {
@@ -165,11 +166,18 @@ export async function POST(request: Request) {
     );
   }
 
-  const rpcJson = rpcResult as {
-    kind: "free_active" | "reserving" | "full";
-    participation_id?: string;
-    reserved_until?: string;
-  };
+  const rpcParsed = createParticipationRpcResult.safeParse(rpcResult);
+  if (!rpcParsed.success) {
+    console.error(
+      "create_participation returned an unexpected shape:",
+      rpcParsed.error,
+    );
+    return NextResponse.json(
+      { error: "Failed to start checkout" },
+      { status: 500 },
+    );
+  }
+  const rpcJson = rpcParsed.data;
 
   if (rpcJson.kind === "full") {
     const respBody: CreateResponseBody = { status: "full" };
@@ -342,18 +350,18 @@ export async function POST(request: Request) {
 }
 
 // Resolve a short display name for the gamer, for the Stripe subscription
-// description (what the parent sees in the billing portal). Falls back through
-// username to a generic label so the description is never blank.
+// description (what the parent sees in the billing portal). Falls back to a
+// generic label so the description is never blank.
 async function pickGamerName(
   admin: ReturnType<typeof createAdminClient>,
   gamerId: string,
 ): Promise<string> {
   const { data } = await admin
     .from("profiles")
-    .select("first_name, username")
+    .select("first_name")
     .eq("id", gamerId)
     .maybeSingle();
-  return data?.first_name || data?.username || "your child";
+  return data?.first_name || "your child";
 }
 
 // Stripe Checkout's `locale` is its own fixed enum, not our SUPPORTED_LOCALES.

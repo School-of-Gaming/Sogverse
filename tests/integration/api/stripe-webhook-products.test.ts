@@ -9,15 +9,22 @@ const { mockConstructEvent, mockSubscriptionsRetrieve } = vi.hoisted(() => ({
 }));
 
 vi.mock("stripe", () => {
-  const StripeMock = vi.fn(function () {
-    return {
-      webhooks: { constructEvent: mockConstructEvent },
-      subscriptions: { retrieve: mockSubscriptionsRetrieve },
-    };
-  }) as unknown as typeof import("stripe").default;
-  (StripeMock as unknown as { errors: unknown }).errors = {
-    StripeCardError: class StripeCardError extends Error {},
-  };
+  // Object.assign produces the intersection type, so `errors` rides along
+  // without any cast. The route only ever does `new Stripe(...)` and uses
+  // the two nested methods.
+  const StripeMock = Object.assign(
+    vi.fn(function () {
+      return {
+        webhooks: { constructEvent: mockConstructEvent },
+        subscriptions: { retrieve: mockSubscriptionsRetrieve },
+      };
+    }),
+    {
+      errors: {
+        StripeCardError: class StripeCardError extends Error {},
+      },
+    },
+  );
   return { default: StripeMock };
 });
 

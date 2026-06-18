@@ -222,16 +222,16 @@ $$;
 
 
 --
--- Name: _list_table_grants(); Type: FUNCTION; Schema: public; Owner: -
+-- Name: _list_table_grants(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public._list_table_grants() RETURNS TABLE(table_name text, privilege_type text)
+CREATE FUNCTION public._list_table_grants(p_grantee text) RETURNS TABLE(table_name text, privilege_type text)
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
   SELECT table_name::text, privilege_type::text
   FROM information_schema.table_privileges
-  WHERE grantee = 'authenticated'
+  WHERE grantee = p_grantee
     AND table_schema = 'public'
   ORDER BY table_name, privilege_type;
 $$;
@@ -1101,8 +1101,7 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public.profiles (
     id uuid NOT NULL,
-    email text,
-    username text,
+    email text NOT NULL,
     role public.user_role DEFAULT 'customer'::public.user_role NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
@@ -1112,7 +1111,6 @@ CREATE TABLE public.profiles (
     locale text,
     first_name text NOT NULL,
     last_name text DEFAULT ''::text NOT NULL,
-    CONSTRAINT auth_identifier_check CHECK ((((role = 'gamer'::public.user_role) AND (username IS NOT NULL)) OR ((role <> 'gamer'::public.user_role) AND (email IS NOT NULL)))),
     CONSTRAINT profiles_first_name_len CHECK (((char_length(first_name) >= 2) AND (char_length(first_name) <= 32))),
     CONSTRAINT profiles_last_name_len CHECK ((char_length(last_name) <= 32)),
     CONSTRAINT profiles_phone_e164 CHECK ((phone ~ '^\d{7,15}$'::text))
@@ -1130,14 +1128,7 @@ COMMENT ON TABLE public.profiles IS 'User profiles extending Supabase auth.users
 -- Name: COLUMN profiles.email; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.profiles.email IS 'Email address (NULL for gamer accounts)';
-
-
---
--- Name: COLUMN profiles.username; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.profiles.username IS 'Username (required for gamers, optional for others)';
+COMMENT ON COLUMN public.profiles.email IS 'Email address (NOT NULL for every role). Gamer accounts carry a generated synthetic <token>@gamer.sogverse.internal address until/unless replaced by a real one.';
 
 
 --
@@ -1435,6 +1426,53 @@ BEGIN
     WHERE parent_id = auth.uid() AND gamer_id = gamer_uuid
   );
 END;
+$$;
+
+
+--
+-- Name: is_voice_group_member(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.is_voice_group_member(p_group_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select
+    public.is_admin()
+    or exists (
+      select 1
+      from public.participations p
+      where p.group_id = p_group_id
+        and p.gamer_id = (select auth.uid())
+        and p.status = 'active'
+    )
+    or exists (
+      select 1
+      from public.product_groups g
+      join public.gedu_group_assignments a on a.product_id = g.product_id
+      where g.id = p_group_id
+        and a.gedu_id = (select auth.uid())
+    );
+$$;
+
+
+--
+-- Name: is_voice_group_moderator(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.is_voice_group_moderator(p_group_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select
+    public.is_admin()
+    or exists (
+      select 1
+      from public.product_groups g
+      join public.gedu_group_assignments a on a.product_id = g.product_id
+      where g.id = p_group_id
+        and a.gedu_id = (select auth.uid())
+    );
 $$;
 
 
@@ -2529,6 +2567,44 @@ CREATE TABLE public.spoken_languages (
 
 
 --
+-- Name: voice_private_zone_occupants; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.voice_private_zone_occupants (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    zone_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    group_id uuid NOT NULL,
+    placed_by uuid NOT NULL,
+    session_opens_at timestamp with time zone NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+ALTER TABLE ONLY public.voice_private_zone_occupants REPLICA IDENTITY FULL;
+
+
+--
+-- Name: voice_zones; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.voice_zones (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    group_id uuid NOT NULL,
+    name text,
+    icon text NOT NULL,
+    color text NOT NULL,
+    is_locked boolean DEFAULT false NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_by uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT voice_zones_name_check CHECK (((name IS NULL) OR ((char_length(name) >= 1) AND (char_length(name) <= 40))))
+);
+
+ALTER TABLE ONLY public.voice_zones REPLICA IDENTITY FULL;
+
+
+--
 -- Name: whatsapp_contacts; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2784,14 +2860,6 @@ ALTER TABLE ONLY public.profiles
 
 
 --
--- Name: profiles profiles_username_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.profiles
-    ADD CONSTRAINT profiles_username_key UNIQUE (username);
-
-
---
 -- Name: refunds refunds_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2853,6 +2921,30 @@ ALTER TABLE ONLY public.site_staff_details
 
 ALTER TABLE ONLY public.parent_gamer
     ADD CONSTRAINT unique_parent_gamer UNIQUE (parent_id, gamer_id);
+
+
+--
+-- Name: voice_private_zone_occupants voice_private_zone_occupants_group_id_user_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.voice_private_zone_occupants
+    ADD CONSTRAINT voice_private_zone_occupants_group_id_user_id_key UNIQUE (group_id, user_id);
+
+
+--
+-- Name: voice_private_zone_occupants voice_private_zone_occupants_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.voice_private_zone_occupants
+    ADD CONSTRAINT voice_private_zone_occupants_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: voice_zones voice_zones_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.voice_zones
+    ADD CONSTRAINT voice_zones_pkey PRIMARY KEY (id);
 
 
 --
@@ -3096,13 +3188,6 @@ CREATE INDEX idx_profiles_role ON public.profiles USING btree (role);
 
 
 --
--- Name: idx_profiles_username; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX idx_profiles_username ON public.profiles USING btree (username) WHERE (username IS NOT NULL);
-
-
---
 -- Name: idx_refunds_payment; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3135,6 +3220,27 @@ CREATE INDEX idx_whatsapp_messages_conversation ON public.whatsapp_messages USIN
 --
 
 CREATE UNIQUE INDEX uq_participations_active_or_waitlisted ON public.participations USING btree (product_id, gamer_id) WHERE (status = ANY (ARRAY['active'::public.participation_status, 'waitlisted'::public.participation_status, 'completed'::public.participation_status]));
+
+
+--
+-- Name: voice_private_zone_occupants_group_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX voice_private_zone_occupants_group_id_idx ON public.voice_private_zone_occupants USING btree (group_id);
+
+
+--
+-- Name: voice_private_zone_occupants_zone_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX voice_private_zone_occupants_zone_id_idx ON public.voice_private_zone_occupants USING btree (zone_id);
+
+
+--
+-- Name: voice_zones_group_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX voice_zones_group_id_idx ON public.voice_zones USING btree (group_id);
 
 
 --
@@ -3310,6 +3416,13 @@ CREATE TRIGGER trg_validate_site_staff_details_location BEFORE INSERT OR UPDATE 
 --
 
 CREATE TRIGGER validate_parent_gamer_on_insert BEFORE INSERT ON public.parent_gamer FOR EACH ROW EXECUTE FUNCTION public.validate_parent_gamer_roles();
+
+
+--
+-- Name: voice_zones voice_zones_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER voice_zones_updated_at BEFORE UPDATE ON public.voice_zones FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 
 --
@@ -3590,6 +3703,54 @@ ALTER TABLE ONLY public.site_details
 
 ALTER TABLE ONLY public.site_staff_details
     ADD CONSTRAINT site_staff_details_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.locations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: voice_private_zone_occupants voice_private_zone_occupants_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.voice_private_zone_occupants
+    ADD CONSTRAINT voice_private_zone_occupants_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.product_groups(id) ON DELETE CASCADE;
+
+
+--
+-- Name: voice_private_zone_occupants voice_private_zone_occupants_placed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.voice_private_zone_occupants
+    ADD CONSTRAINT voice_private_zone_occupants_placed_by_fkey FOREIGN KEY (placed_by) REFERENCES public.profiles(id);
+
+
+--
+-- Name: voice_private_zone_occupants voice_private_zone_occupants_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.voice_private_zone_occupants
+    ADD CONSTRAINT voice_private_zone_occupants_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id);
+
+
+--
+-- Name: voice_private_zone_occupants voice_private_zone_occupants_zone_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.voice_private_zone_occupants
+    ADD CONSTRAINT voice_private_zone_occupants_zone_id_fkey FOREIGN KEY (zone_id) REFERENCES public.voice_zones(id) ON DELETE CASCADE;
+
+
+--
+-- Name: voice_zones voice_zones_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.voice_zones
+    ADD CONSTRAINT voice_zones_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id);
+
+
+--
+-- Name: voice_zones voice_zones_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.voice_zones
+    ADD CONSTRAINT voice_zones_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.product_groups(id) ON DELETE CASCADE;
 
 
 --
@@ -4248,6 +4409,69 @@ CREATE POLICY users_view_own_profile ON public.profiles FOR SELECT TO authentica
 
 
 --
+-- Name: voice_private_zone_occupants; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.voice_private_zone_occupants ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: voice_private_zone_occupants voice_private_zone_occupants_delete; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY voice_private_zone_occupants_delete ON public.voice_private_zone_occupants FOR DELETE TO authenticated USING (public.is_voice_group_moderator(group_id));
+
+
+--
+-- Name: voice_private_zone_occupants voice_private_zone_occupants_insert; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY voice_private_zone_occupants_insert ON public.voice_private_zone_occupants FOR INSERT TO authenticated WITH CHECK ((public.is_voice_group_moderator(group_id) AND (placed_by = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1
+   FROM public.voice_zones z
+  WHERE ((z.id = voice_private_zone_occupants.zone_id) AND (z.group_id = voice_private_zone_occupants.group_id) AND (z.is_locked = true))))));
+
+
+--
+-- Name: voice_private_zone_occupants voice_private_zone_occupants_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY voice_private_zone_occupants_select ON public.voice_private_zone_occupants FOR SELECT TO authenticated USING (public.is_voice_group_member(group_id));
+
+
+--
+-- Name: voice_zones; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.voice_zones ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: voice_zones voice_zones_delete; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY voice_zones_delete ON public.voice_zones FOR DELETE TO authenticated USING (public.is_voice_group_moderator(group_id));
+
+
+--
+-- Name: voice_zones voice_zones_insert; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY voice_zones_insert ON public.voice_zones FOR INSERT TO authenticated WITH CHECK ((public.is_voice_group_moderator(group_id) AND (created_by = ( SELECT auth.uid() AS uid))));
+
+
+--
+-- Name: voice_zones voice_zones_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY voice_zones_select ON public.voice_zones FOR SELECT TO authenticated USING (public.is_voice_group_member(group_id));
+
+
+--
+-- Name: voice_zones voice_zones_update; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY voice_zones_update ON public.voice_zones FOR UPDATE TO authenticated USING (public.is_voice_group_moderator(group_id)) WITH CHECK (public.is_voice_group_moderator(group_id));
+
+
+--
 -- Name: whatsapp_contacts; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -4294,11 +4518,11 @@ GRANT ALL ON FUNCTION public._list_security_definer_without_search_path() TO ser
 
 
 --
--- Name: FUNCTION _list_table_grants(); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION _list_table_grants(p_grantee text); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public._list_table_grants() FROM PUBLIC;
-GRANT ALL ON FUNCTION public._list_table_grants() TO service_role;
+REVOKE ALL ON FUNCTION public._list_table_grants(p_grantee text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public._list_table_grants(p_grantee text) TO service_role;
 
 
 --
@@ -4423,7 +4647,7 @@ GRANT ALL ON FUNCTION public.get_my_assigned_products() TO authenticated;
 -- Name: TABLE profiles; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.profiles TO anon;
+GRANT SELECT ON TABLE public.profiles TO anon;
 GRANT SELECT ON TABLE public.profiles TO authenticated;
 GRANT ALL ON TABLE public.profiles TO service_role;
 
@@ -4535,6 +4759,22 @@ GRANT ALL ON FUNCTION public.is_admin() TO service_role;
 REVOKE ALL ON FUNCTION public.is_parent_of(gamer_uuid uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.is_parent_of(gamer_uuid uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.is_parent_of(gamer_uuid uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION is_voice_group_member(p_group_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.is_voice_group_member(p_group_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.is_voice_group_member(p_group_id uuid) TO authenticated;
+
+
+--
+-- Name: FUNCTION is_voice_group_moderator(p_group_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.is_voice_group_moderator(p_group_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.is_voice_group_moderator(p_group_id uuid) TO authenticated;
 
 
 --
@@ -4707,7 +4947,7 @@ GRANT ALL ON FUNCTION public.verify_my_pin(p_pin text) TO authenticated;
 -- Name: TABLE calendar_holidays; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.calendar_holidays TO anon;
+GRANT SELECT ON TABLE public.calendar_holidays TO anon;
 GRANT ALL ON TABLE public.calendar_holidays TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.calendar_holidays TO authenticated;
 
@@ -4716,7 +4956,7 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.calendar_holidays TO authentic
 -- Name: TABLE customer_profiles; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.customer_profiles TO anon;
+GRANT SELECT ON TABLE public.customer_profiles TO anon;
 GRANT SELECT ON TABLE public.customer_profiles TO authenticated;
 GRANT ALL ON TABLE public.customer_profiles TO service_role;
 
@@ -4725,7 +4965,7 @@ GRANT ALL ON TABLE public.customer_profiles TO service_role;
 -- Name: TABLE family_subscriptions; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.family_subscriptions TO anon;
+GRANT SELECT ON TABLE public.family_subscriptions TO anon;
 GRANT ALL ON TABLE public.family_subscriptions TO service_role;
 GRANT SELECT ON TABLE public.family_subscriptions TO authenticated;
 
@@ -4734,7 +4974,7 @@ GRANT SELECT ON TABLE public.family_subscriptions TO authenticated;
 -- Name: TABLE feedback_submissions; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.feedback_submissions TO anon;
+GRANT SELECT ON TABLE public.feedback_submissions TO anon;
 GRANT ALL ON TABLE public.feedback_submissions TO service_role;
 GRANT SELECT ON TABLE public.feedback_submissions TO authenticated;
 
@@ -4743,7 +4983,7 @@ GRANT SELECT ON TABLE public.feedback_submissions TO authenticated;
 -- Name: TABLE gamer_profiles; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.gamer_profiles TO anon;
+GRANT SELECT ON TABLE public.gamer_profiles TO anon;
 GRANT SELECT,UPDATE ON TABLE public.gamer_profiles TO authenticated;
 GRANT ALL ON TABLE public.gamer_profiles TO service_role;
 
@@ -4752,7 +4992,7 @@ GRANT ALL ON TABLE public.gamer_profiles TO service_role;
 -- Name: TABLE gedu_group_assignments; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.gedu_group_assignments TO anon;
+GRANT SELECT ON TABLE public.gedu_group_assignments TO anon;
 GRANT ALL ON TABLE public.gedu_group_assignments TO service_role;
 GRANT SELECT ON TABLE public.gedu_group_assignments TO authenticated;
 
@@ -4761,7 +5001,7 @@ GRANT SELECT ON TABLE public.gedu_group_assignments TO authenticated;
 -- Name: TABLE gedu_locations; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.gedu_locations TO anon;
+GRANT SELECT ON TABLE public.gedu_locations TO anon;
 GRANT ALL ON TABLE public.gedu_locations TO service_role;
 GRANT SELECT,INSERT,DELETE ON TABLE public.gedu_locations TO authenticated;
 
@@ -4770,7 +5010,7 @@ GRANT SELECT,INSERT,DELETE ON TABLE public.gedu_locations TO authenticated;
 -- Name: TABLE holiday_calendars; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.holiday_calendars TO anon;
+GRANT SELECT ON TABLE public.holiday_calendars TO anon;
 GRANT ALL ON TABLE public.holiday_calendars TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.holiday_calendars TO authenticated;
 
@@ -4779,7 +5019,7 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.holiday_calendars TO authentic
 -- Name: TABLE locations; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.locations TO anon;
+GRANT SELECT ON TABLE public.locations TO anon;
 GRANT ALL ON TABLE public.locations TO service_role;
 GRANT SELECT ON TABLE public.locations TO authenticated;
 
@@ -4788,7 +5028,7 @@ GRANT SELECT ON TABLE public.locations TO authenticated;
 -- Name: TABLE minecraft_accounts; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.minecraft_accounts TO anon;
+GRANT SELECT ON TABLE public.minecraft_accounts TO anon;
 GRANT ALL ON TABLE public.minecraft_accounts TO service_role;
 GRANT SELECT ON TABLE public.minecraft_accounts TO authenticated;
 
@@ -4797,7 +5037,7 @@ GRANT SELECT ON TABLE public.minecraft_accounts TO authenticated;
 -- Name: TABLE parent_gamer; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.parent_gamer TO anon;
+GRANT SELECT ON TABLE public.parent_gamer TO anon;
 GRANT SELECT,DELETE ON TABLE public.parent_gamer TO authenticated;
 GRANT ALL ON TABLE public.parent_gamer TO service_role;
 
@@ -4806,7 +5046,7 @@ GRANT ALL ON TABLE public.parent_gamer TO service_role;
 -- Name: TABLE participations; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.participations TO anon;
+GRANT SELECT ON TABLE public.participations TO anon;
 GRANT ALL ON TABLE public.participations TO service_role;
 GRANT SELECT ON TABLE public.participations TO authenticated;
 
@@ -4815,7 +5055,7 @@ GRANT SELECT ON TABLE public.participations TO authenticated;
 -- Name: TABLE payments; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.payments TO anon;
+GRANT SELECT ON TABLE public.payments TO anon;
 GRANT ALL ON TABLE public.payments TO service_role;
 GRANT SELECT ON TABLE public.payments TO authenticated;
 
@@ -4824,7 +5064,7 @@ GRANT SELECT ON TABLE public.payments TO authenticated;
 -- Name: TABLE product_groups; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.product_groups TO anon;
+GRANT SELECT ON TABLE public.product_groups TO anon;
 GRANT ALL ON TABLE public.product_groups TO service_role;
 GRANT SELECT ON TABLE public.product_groups TO authenticated;
 
@@ -4833,7 +5073,7 @@ GRANT SELECT ON TABLE public.product_groups TO authenticated;
 -- Name: TABLE product_holiday_calendars; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.product_holiday_calendars TO anon;
+GRANT SELECT ON TABLE public.product_holiday_calendars TO anon;
 GRANT ALL ON TABLE public.product_holiday_calendars TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_holiday_calendars TO authenticated;
 
@@ -4842,7 +5082,7 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_holiday_calendars TO a
 -- Name: TABLE product_prices; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.product_prices TO anon;
+GRANT SELECT ON TABLE public.product_prices TO anon;
 GRANT ALL ON TABLE public.product_prices TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_prices TO authenticated;
 
@@ -4860,7 +5100,7 @@ GRANT SELECT ON TABLE public.product_seat_counts TO authenticated;
 -- Name: TABLE product_subscription_prices; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.product_subscription_prices TO anon;
+GRANT SELECT ON TABLE public.product_subscription_prices TO anon;
 GRANT ALL ON TABLE public.product_subscription_prices TO service_role;
 
 
@@ -4868,7 +5108,7 @@ GRANT ALL ON TABLE public.product_subscription_prices TO service_role;
 -- Name: TABLE product_translations; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.product_translations TO anon;
+GRANT SELECT ON TABLE public.product_translations TO anon;
 GRANT ALL ON TABLE public.product_translations TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_translations TO authenticated;
 
@@ -4877,7 +5117,7 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_translations TO authen
 -- Name: TABLE products; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.products TO anon;
+GRANT SELECT ON TABLE public.products TO anon;
 GRANT ALL ON TABLE public.products TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.products TO authenticated;
 
@@ -4886,7 +5126,7 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.products TO authenticated;
 -- Name: TABLE refunds; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.refunds TO anon;
+GRANT SELECT ON TABLE public.refunds TO anon;
 GRANT ALL ON TABLE public.refunds TO service_role;
 GRANT SELECT ON TABLE public.refunds TO authenticated;
 
@@ -4895,7 +5135,7 @@ GRANT SELECT ON TABLE public.refunds TO authenticated;
 -- Name: TABLE schedule_slots; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.schedule_slots TO anon;
+GRANT SELECT ON TABLE public.schedule_slots TO anon;
 GRANT ALL ON TABLE public.schedule_slots TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.schedule_slots TO authenticated;
 
@@ -4904,7 +5144,6 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.schedule_slots TO authenticate
 -- Name: TABLE site_details; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,MAINTAIN,UPDATE ON TABLE public.site_details TO anon;
 GRANT ALL ON TABLE public.site_details TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.site_details TO authenticated;
 
@@ -4913,7 +5152,7 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.site_details TO authenticated;
 -- Name: TABLE site_staff_details; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.site_staff_details TO anon;
+GRANT SELECT ON TABLE public.site_staff_details TO anon;
 GRANT ALL ON TABLE public.site_staff_details TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.site_staff_details TO authenticated;
 
@@ -4922,16 +5161,32 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.site_staff_details TO authenti
 -- Name: TABLE spoken_languages; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.spoken_languages TO anon;
+GRANT SELECT ON TABLE public.spoken_languages TO anon;
 GRANT ALL ON TABLE public.spoken_languages TO service_role;
 GRANT SELECT ON TABLE public.spoken_languages TO authenticated;
+
+
+--
+-- Name: TABLE voice_private_zone_occupants; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,DELETE ON TABLE public.voice_private_zone_occupants TO authenticated;
+GRANT SELECT,INSERT,DELETE ON TABLE public.voice_private_zone_occupants TO service_role;
+
+
+--
+-- Name: TABLE voice_zones; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.voice_zones TO authenticated;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.voice_zones TO service_role;
 
 
 --
 -- Name: TABLE whatsapp_contacts; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.whatsapp_contacts TO anon;
+GRANT SELECT ON TABLE public.whatsapp_contacts TO anon;
 GRANT ALL ON TABLE public.whatsapp_contacts TO service_role;
 GRANT SELECT,INSERT,UPDATE ON TABLE public.whatsapp_contacts TO authenticated;
 
@@ -4940,7 +5195,7 @@ GRANT SELECT,INSERT,UPDATE ON TABLE public.whatsapp_contacts TO authenticated;
 -- Name: TABLE whatsapp_messages; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.whatsapp_messages TO anon;
+GRANT SELECT ON TABLE public.whatsapp_messages TO anon;
 GRANT ALL ON TABLE public.whatsapp_messages TO service_role;
 GRANT SELECT,INSERT,UPDATE ON TABLE public.whatsapp_messages TO authenticated;
 
@@ -4950,9 +5205,6 @@ GRANT SELECT,INSERT,UPDATE ON TABLE public.whatsapp_messages TO authenticated;
 --
 
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENCES TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENCES TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENCES TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON SEQUENCES TO service_role;
 
 
 --
@@ -4970,9 +5222,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON S
 --
 
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON FUNCTIONS TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON FUNCTIONS TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON FUNCTIONS TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON FUNCTIONS TO service_role;
 
 
 --
@@ -4990,9 +5239,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public GRANT ALL ON F
 --
 
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES TO postgres;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES TO anon;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES TO authenticated;
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT ALL ON TABLES TO service_role;
 
 
 --

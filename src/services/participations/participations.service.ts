@@ -9,6 +9,16 @@ import type {
 } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { QueryData } from "@supabase/supabase-js";
+import {
+  parseJsonResponse,
+  readErrorMessage,
+} from "@/lib/api/json-response";
+import {
+  createParticipationResponse,
+  joinWaitlistResponse,
+  type CreateParticipationResponse,
+  type JoinWaitlistResponse,
+} from "./participations.contracts";
 
 /**
  * Row shape returned by `getMyUpcomingSessions()`. The parent dashboard's
@@ -185,20 +195,14 @@ export interface ParticipationConfirmation {
   gamerName: string | null;
 }
 
-export type CreateParticipationResponse =
-  | { status: "redirect"; checkoutUrl: string }
-  | { status: "free_confirmed"; participationId: string }
-  | { status: "full" };
+export type {
+  CreateParticipationResponse,
+  JoinWaitlistResponse,
+} from "./participations.contracts";
 
 export type JoinWaitlistInput = {
   productId: string;
   gamerId: string;
-};
-
-export type JoinWaitlistResponse = {
-  participationId: string;
-  waitlistPosition: number;
-  status: string;
 };
 
 export class ParticipationsService {
@@ -403,7 +407,7 @@ export class ParticipationsService {
       .select(
         `
           status, product_id,
-          gamer:profiles!participations_gamer_id_fkey(first_name, username)
+          gamer:profiles!participations_gamer_id_fkey(first_name)
         `,
       )
       .eq("id", participationId)
@@ -415,7 +419,7 @@ export class ParticipationsService {
     return {
       status: data.status,
       productId: data.product_id,
-      gamerName: data.gamer.first_name || data.gamer.username || null,
+      gamerName: data.gamer.first_name || null,
     };
   }
 
@@ -435,10 +439,11 @@ export class ParticipationsService {
       body: JSON.stringify(input),
     });
     if (!response.ok) {
-      const data = (await response.json().catch(() => ({}))) as { error?: string };
-      throw new Error(data.error ?? "Failed to start checkout");
+      throw new Error(
+        await readErrorMessage(response, "Failed to start checkout"),
+      );
     }
-    return (await response.json()) as CreateParticipationResponse;
+    return parseJsonResponse(response, createParticipationResponse);
   }
 
   async joinWaitlist(input: JoinWaitlistInput): Promise<JoinWaitlistResponse> {
@@ -448,10 +453,11 @@ export class ParticipationsService {
       body: JSON.stringify(input),
     });
     if (!response.ok) {
-      const data = (await response.json().catch(() => ({}))) as { error?: string };
-      throw new Error(data.error ?? "Failed to join waitlist");
+      throw new Error(
+        await readErrorMessage(response, "Failed to join waitlist"),
+      );
     }
-    return (await response.json()) as JoinWaitlistResponse;
+    return parseJsonResponse(response, joinWaitlistResponse);
   }
 }
 
@@ -485,7 +491,7 @@ function buildMyUpcomingSessionsQuery(
           schedule_slots(weekday, start_time, duration_minutes)
         ),
         gamer:profiles!participations_gamer_id_fkey!inner(
-          first_name, username
+          first_name
         )
       `,
     )
@@ -507,8 +513,7 @@ function toMyUpcomingSessionRow(
   // Mirror the purchased-card fallback chain so a missing first_name still
   // renders something readable. The seed comes from `gamer_id` regardless,
   // so the identicon stays stable across name edits.
-  const firstName =
-    gamer.first_name || gamer.username || row.gamer_id.slice(0, 8);
+  const firstName = gamer.first_name || row.gamer_id.slice(0, 8);
   return {
     gamer: { id: row.gamer_id, firstName },
     product: {

@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { generateGamerEmail } from "@/lib/utils";
 import { PIN_COOKIE_NAME } from "@/lib/pin-session";
 
 /**
@@ -52,7 +51,7 @@ export async function POST(request: Request) {
 
   const { data: target, error: targetError } = await admin
     .from("profiles")
-    .select("id, role, username")
+    .select("id, role, email")
     .eq("id", userId)
     .maybeSingle();
 
@@ -79,18 +78,19 @@ export async function POST(request: Request) {
   }
 
   // Resolve the target's email so we can mint a magic-link OTP for it.
-  // Gamer emails are synthetic and derived from username; customer emails
-  // come from auth.users (admin lookup — we don't trust the cookie session
-  // for this).
+  // Gamer emails are synthetic (<token>@gamer.sogverse.internal) but stored on
+  // the profile like any other role's, so read them straight from the row.
+  // Customer emails come from auth.users (admin lookup — we don't trust the
+  // cookie session, and a parent could have changed their email there).
   let targetEmail: string;
   if (target.role === "gamer") {
-    if (!target.username) {
+    if (!target.email) {
       return NextResponse.json(
         { error: "Gamer account is not properly configured" },
         { status: 500 },
       );
     }
-    targetEmail = generateGamerEmail(target.username);
+    targetEmail = target.email;
   } else {
     const { data: authUser, error: authError } = await admin.auth.admin.getUserById(target.id);
     if (authError || !authUser.user.email) {

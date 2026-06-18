@@ -33,19 +33,8 @@ export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type ProfileInsert = Database["public"]["Tables"]["profiles"]["Insert"];
 export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
 
-/**
- * Profile narrowed for gamer context — username is always set.
- *
- * Backed by the `auth_identifier_check` CHECK constraint on `profiles`,
- * which enforces `username IS NOT NULL` whenever `role = 'gamer'`. The
- * generated `Profile` type cannot express this conditional invariant
- * (column-level nullability only), so we narrow here. If that CHECK is
- * ever relaxed, this alias must be relaxed with it.
- */
-export type GamerProfileRow = Profile & { username: string };
-
-/** Type guard for `GamerProfileRow`. Use to narrow a `Profile | null | undefined` at sites that need `username` as a non-nullable `string`. */
-export function isGamerProfile(p: Profile | null | undefined): p is GamerProfileRow {
+/** Type guard: narrows a possibly-nullish `Profile` to a non-null gamer profile. */
+export function isGamerProfile(p: Profile | null | undefined): p is Profile & { role: "gamer" } {
   return p?.role === "gamer";
 }
 
@@ -260,6 +249,30 @@ export type ProductGroupUpdate = Database["public"]["Tables"]["product_groups"][
 // gedu_group_assignments
 export type GeduGroupAssignment = Database["public"]["Tables"]["gedu_group_assignments"]["Row"];
 export type GeduGroupAssignmentInsert = Database["public"]["Tables"]["gedu_group_assignments"]["Insert"];
+
+// ---------------------------------------------------------------------------
+// voice zones (00103) — the persisted half of the discrete-zone voice model.
+// See src/components/voice/CLAUDE.md for the discrete-zone voice model.
+// Lobby + the 4 Yty zones stay virtual/hardcoded on the client; only these
+// mod-created rows persist, tied to a product_group.
+// ---------------------------------------------------------------------------
+
+// Icon/color keys are app-owned, not DB enums — the `voice_zones.icon`/`.color`
+// columns are plain text and `src/lib/constants/voice-zones.ts` is the source of
+// truth for the valid set (so adding/removing one needs no migration). Re-export
+// the derived types here so the rest of the app can keep importing from `@/types`.
+export type { VoiceZoneIcon, VoiceZoneColor } from "@/lib/constants/voice-zones";
+
+// voice_zones
+export type VoiceZone = Database["public"]["Tables"]["voice_zones"]["Row"];
+export type VoiceZoneInsert = Database["public"]["Tables"]["voice_zones"]["Insert"];
+export type VoiceZoneUpdate = Database["public"]["Tables"]["voice_zones"]["Update"];
+
+// voice_private_zone_occupants — who is currently in a private (locked) zone
+// this session window; the server-readable, mod-authored privacy boundary that
+// the token endpoint bakes into each joiner's Daily `canReceive`.
+export type VoicePrivateZoneOccupant = Database["public"]["Tables"]["voice_private_zone_occupants"]["Row"];
+export type VoicePrivateZoneOccupantInsert = Database["public"]["Tables"]["voice_private_zone_occupants"]["Insert"];
 
 // get_product_groups_with_details — returns JSONB, so the generated type is
 // `Json`. Define a structured shape that mirrors what the RPC produces so the
@@ -479,11 +492,6 @@ export interface CreateGamerInput {
 
 export interface LoginCredentials {
   email: string;
-  password: string;
-}
-
-export interface GamerLoginCredentials {
-  username: string;
   password: string;
 }
 

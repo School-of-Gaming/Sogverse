@@ -82,7 +82,7 @@ export class UsersService {
     const { data, error } = await this.supabase
       .from("profiles")
       .select("*")
-      .or(`email.ilike.%${escapeLikePattern(query)}%,username.ilike.%${escapeLikePattern(query)}%,first_name.ilike.%${escapeLikePattern(query)}%,last_name.ilike.%${escapeLikePattern(query)}%`)
+      .or(`email.ilike.%${escapeLikePattern(query)}%,first_name.ilike.%${escapeLikePattern(query)}%,last_name.ilike.%${escapeLikePattern(query)}%`)
       .order("created_at", { ascending: false })
       .limit(20);
 

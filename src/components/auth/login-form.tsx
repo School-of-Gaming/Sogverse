@@ -6,10 +6,9 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
-import { generateGamerEmail } from "@/lib/utils";
 import { ROLE_POST_LOGIN_PATHS, ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth } from "@/providers";
@@ -22,7 +21,7 @@ export function LoginForm() {
   const { redirect, status, navigateAfterAuth } = useAuthRedirect();
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
 
-  const [identifier, setIdentifier] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,8 +45,8 @@ export function LoginForm() {
     e.preventDefault();
     setError(null);
 
-    const trimmedIdentifier = identifier.trim();
-    if (!trimmedIdentifier) {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
       setError(t("login.errors.identifierRequired"));
       return;
     }
@@ -59,13 +58,6 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      // Gamer accounts use a synthetic `<username>@gamer.sogverse.internal`
-      // email under the hood. If the user typed a bare username, map it to
-      // that synthetic address before calling Supabase auth.
-      const loginEmail = trimmedIdentifier.includes("@")
-        ? trimmedIdentifier
-        : generateGamerEmail(trimmedIdentifier);
-
       // Freeze auth state updates *before* signInWithPassword. Supabase fires
       // the SIGNED_IN event synchronously inside the call, before the promise
       // resolves — so anything we do "after success" is already too late to
@@ -75,7 +67,7 @@ export function LoginForm() {
       freezeUntilNavigation();
 
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
+        email: trimmedEmail,
         password,
       });
 
@@ -124,29 +116,30 @@ export function LoginForm() {
               {error}
             </div>
           )}
-          <div className="space-y-2">
-            <Label htmlFor="identifier">{c('email')}</Label>
+          <Field label={c('email')} htmlFor="email">
             <Input
-              id="identifier"
-              type="text"
+              id="email"
+              type="email"
               placeholder={t('login.emailPlaceholder')}
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
               required
-              autoComplete="username"
+              autoComplete="email"
             />
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">{c('password')}</Label>
+          </Field>
+          <Field
+            label={c('password')}
+            htmlFor="password"
+            labelAction={
               <Link
                 href={ROUTES.forgotPassword}
                 className="text-sm text-primary hover:underline"
               >
                 {c('forgotPassword')}
               </Link>
-            </div>
+            }
+          >
             <PasswordInput
               id="password"
               placeholder={t('login.passwordPlaceholder')}
@@ -156,7 +149,7 @@ export function LoginForm() {
               required
               autoComplete="current-password"
             />
-          </div>
+          </Field>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={isLoading}>

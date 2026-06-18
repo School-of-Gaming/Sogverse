@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { WHATSAPP_DIRECTION, WHATSAPP_MESSAGE_STATUS } from "@/types";
-import type { WhatsAppMessageUpdate } from "@/types";
+import type { Json, WhatsAppMessageUpdate } from "@/types";
 
 const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN!;
 const appSecret = process.env.WHATSAPP_APP_SECRET!;
@@ -20,22 +21,102 @@ function verifySignature(body: string, signature: string | null): boolean {
   );
 }
 
+// --- Payload schemas ---
+//
+// Deliberately lenient: they cover ONLY the fields this route reads, unknown
+// fields are stripped (the full message still lands in raw_payload), and the
+// optional sub-objects degrade to `undefined` via .catch() instead of failing
+// the whole item. Meta disables webhook endpoints that error persistently, so
+// an unexpected shape must never 500 — items that fail even these minimal
+// requirements are logged and skipped.
+
+/**
+ * `Json`-typed mirror of a JSON.parse result, used to persist the raw inbound
+ * message without a cast. The value already came from JSON.parse of an
+ * HMAC-verified body, so parsing with this schema cannot realistically fail.
+ */
+const jsonSchema: z.ZodType<Json> = z.lazy(() =>
+  z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.null(),
+    z.array(jsonSchema),
+    z.record(jsonSchema),
+  ])
+);
+
+const inboundMessageSchema = z.object({
+  id: z.string(),
+  from: z.string(),
+  type: z.string(),
+  text: z.object({ body: z.string() }).optional().catch(undefined),
+  interactive: z
+    .object({
+      type: z.string(),
+      button_reply: z.object({ title: z.string() }).optional(),
+      list_reply: z.object({ title: z.string() }).optional(),
+    })
+    .optional()
+    .catch(undefined),
+});
+type InboundMessage = z.infer<typeof inboundMessageSchema>;
+
+const statusUpdateSchema = z.object({
+  id: z.string(),
+  status: z.string(),
+  errors: z
+    .array(
+      z.object({
+        code: z.number().optional().catch(undefined),
+        title: z.string().optional().catch(undefined),
+      })
+    )
+    .optional()
+    .catch(undefined),
+});
+
+const contactSchema = z.object({
+  wa_id: z.string(),
+  profile: z
+    .object({ name: z.string().optional() })
+    .optional()
+    .catch(undefined),
+});
+
+const webhookBodySchema = z.object({
+  entry: z
+    .array(
+      z.object({
+        changes: z
+          .array(
+            z.object({
+              field: z.string().optional(),
+              value: z
+                .object({
+                  contacts: z.array(z.unknown()).optional(),
+                  messages: z.array(z.unknown()).optional(),
+                  statuses: z.array(z.unknown()).optional(),
+                })
+                .optional(),
+            })
+          )
+          .optional(),
+      })
+    )
+    .optional(),
+});
+
 /** Extract message body and type from various WhatsApp message formats */
-function extractMessageContent(message: Record<string, unknown>): {
+function extractMessageContent(message: InboundMessage): {
   body: string | null;
   messageType: string;
 } {
-  const type = message.type as string;
-
-  switch (type) {
-    case "text": {
-      const text = message.text as { body: string } | undefined;
-      return { body: text?.body ?? null, messageType: "text" };
-    }
+  switch (message.type) {
+    case "text":
+      return { body: message.text?.body ?? null, messageType: "text" };
     case "interactive": {
-      const interactive = message.interactive as
-        | { type: string; button_reply?: { title: string }; list_reply?: { title: string } }
-        | undefined;
+      const interactive = message.interactive;
       if (interactive?.type === "button_reply") {
         return { body: interactive.button_reply?.title ?? null, messageType: "button_reply" };
       }
@@ -59,7 +140,7 @@ function extractMessageContent(message: Record<string, unknown>): {
     case "contacts":
       return { body: "[Contact]", messageType: "contacts" };
     default:
-      return { body: `[${type}]`, messageType: type };
+      return { body: `[${message.type}]`, messageType: message.type };
   }
 }
 
@@ -88,25 +169,44 @@ export async function POST(request: Request) {
 
   // Safe to parse without try/catch — the HMAC check above guarantees
   // this is the exact payload Meta sent, and Meta always sends valid JSON.
-  const body = JSON.parse(rawBody);
+  const parsedBody = webhookBodySchema.safeParse(JSON.parse(rawBody));
+  if (!parsedBody.success) {
+    // Unexpected envelope — acknowledge anyway (Meta disables endpoints that
+    // error persistently) and log so we notice the shape change.
+    console.error(
+      "[whatsapp webhook] unexpected payload shape:",
+      parsedBody.error.message
+    );
+    return NextResponse.json({ received: true });
+  }
   const admin = createAdminClient();
 
-  const entries = body.entry ?? [];
-  for (const entry of entries) {
-    const changes = entry.changes ?? [];
-    for (const change of changes) {
+  for (const entry of parsedBody.data.entry ?? []) {
+    for (const change of entry.changes ?? []) {
       if (change.field !== "messages") continue;
 
       // --- Inbound messages ---
-      const contacts = change.value?.contacts ?? [];
-      const contactMap = new Map<string, string>();
-      for (const contact of contacts) {
-        contactMap.set(contact.wa_id, contact.profile?.name ?? null);
+      const contactMap = new Map<string, string | null>();
+      for (const rawContact of change.value?.contacts ?? []) {
+        const contact = contactSchema.safeParse(rawContact);
+        if (!contact.success) continue;
+        contactMap.set(contact.data.wa_id, contact.data.profile?.name ?? null);
       }
 
-      const messages = change.value?.messages ?? [];
-      for (const message of messages) {
-        const phone = message.from as string;
+      for (const rawMessage of change.value?.messages ?? []) {
+        const parsedMessage = inboundMessageSchema.safeParse(rawMessage);
+        if (!parsedMessage.success) {
+          console.error(
+            "[whatsapp webhook] skipping message with unexpected shape:",
+            parsedMessage.error.message
+          );
+          continue;
+        }
+        const message = parsedMessage.data;
+        // Cannot fail — rawMessage came from JSON.parse (see jsonSchema doc).
+        const rawPayload = jsonSchema.safeParse(rawMessage);
+
+        const phone = message.from;
         const waName = contactMap.get(phone) ?? null;
         const { body: msgBody, messageType } = extractMessageContent(message);
 
@@ -124,13 +224,13 @@ export async function POST(request: Request) {
         // failures, so duplicate message IDs are expected.
         await admin.from("whatsapp_messages").upsert(
           {
-            id: message.id as string,
+            id: message.id,
             phone,
             direction: WHATSAPP_DIRECTION.INBOUND,
             status: WHATSAPP_MESSAGE_STATUS.RECEIVED,
             body: msgBody,
             message_type: messageType,
-            raw_payload: message,
+            raw_payload: rawPayload.success ? rawPayload.data : null,
             created_at: new Date().toISOString(),
           },
           { onConflict: "id" }
@@ -138,10 +238,18 @@ export async function POST(request: Request) {
       }
 
       // --- Delivery status updates (sent → delivered → read, or failed) ---
-      const statuses = change.value?.statuses ?? [];
-      for (const status of statuses) {
-        const msgId = status.id as string;
-        const statusValue = status.status as string;
+      for (const rawStatus of change.value?.statuses ?? []) {
+        const parsedStatus = statusUpdateSchema.safeParse(rawStatus);
+        if (!parsedStatus.success) {
+          console.error(
+            "[whatsapp webhook] skipping status update with unexpected shape:",
+            parsedStatus.error.message
+          );
+          continue;
+        }
+        const status = parsedStatus.data;
+        const msgId = status.id;
+        const statusValue = status.status;
 
         // Only update statuses we track
         const trackableStatuses: string[] = [

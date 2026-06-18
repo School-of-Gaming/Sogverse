@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Lock } from "lucide-react";
 import { ROUTES } from "@/lib/constants";
 import { resolveInternalPath } from "@/lib/navigation/internal-path";
@@ -18,22 +18,21 @@ import { PinUnlockFlow } from "./pin-unlock-flow";
 export function UnlockGate({ initialPinIsSet }: { initialPinIsSet?: boolean }) {
   const { data: pinIsSet } = usePinIsSet(initialPinIsSet);
 
-  const [redirectTo, setRedirectTo] = useState<string>(ROUTES.customer.dashboard);
-
-  // Read ?redirect= from the URL once on mount (window.location, not
-  // useSearchParams, to avoid forcing a Suspense boundary — same approach as
-  // reset-password-form). `resolveInternalPath` rejects any off-origin target
-  // (protocol-relative, backslash, absolute-URL, whitespace-smuggling variants)
-  // and falls back to the dashboard — never hand-roll this check. We then drop
-  // the gate itself as a target so success can't loop straight back here.
-  useEffect(() => {
+  // Read ?redirect= from the URL once, in a lazy state initializer
+  // (window.location, not useSearchParams, to avoid forcing a Suspense
+  // boundary — same approach as reset-password-form). `resolveInternalPath`
+  // rejects any off-origin target (protocol-relative, backslash, absolute-URL,
+  // whitespace-smuggling variants) and falls back to the dashboard — never
+  // hand-roll this check. We then drop the gate itself as a target so success
+  // can't loop straight back here. The initializer is SSR-guarded; `redirectTo`
+  // is read only in the post-unlock navigation, never in rendered markup, so
+  // the server's default and the client's resolved value can't mismatch.
+  const [redirectTo] = useState<string>(() => {
+    if (typeof window === "undefined") return ROUTES.customer.dashboard;
     const target = new URLSearchParams(window.location.search).get("redirect");
     const safe = resolveInternalPath(target, ROUTES.customer.dashboard);
-    if (safe !== ROUTES.customer.unlock) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot mount-time URL read, mirrors reset-password-form
-      setRedirectTo(safe);
-    }
-  }, []);
+    return safe === ROUTES.customer.unlock ? ROUTES.customer.dashboard : safe;
+  });
 
   // Normally `pinIsSet` is seeded server-side, so this never shows. It only
   // appears in the degraded path where the server prefetch came back undefined

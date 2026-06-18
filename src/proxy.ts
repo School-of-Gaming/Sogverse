@@ -21,7 +21,7 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // resetPassword and setupAccount are public (not auth routes) because the user
 // arrives via an email link with hash tokens — they aren't authenticated yet.
 // ROUTES.voice.prefix is public because instant voice rooms are share-via-link
-// by design — see docs/instant-voice-rooms.md. The authenticated group voice
+// by design — see src/components/voice/instant/CLAUDE.md. The authenticated group voice
 // room at /voice/group/[id] is carved back out below — it shares the prefix
 // but must require a session.
 // ROUTES.shop covers the storefront and its product-detail pages (/shop/[id])
@@ -204,14 +204,10 @@ export async function proxy(request: NextRequest) {
     return redirect(new URL(dashboardPath, request.url));
   }
 
-  // Signed-in parents, gamers, and gedus visiting the home page get bounced
-  // to their dashboard — mirrors the SOG-logo behavior so the home page
-  // isn't a dead-end for them. Admins pass through.
-  if (
-    userId &&
-    pathname === ROUTES.home &&
-    (userRole === "customer" || userRole === "gamer" || userRole === "gedu")
-  ) {
+  // Signed-in users visiting the home page get bounced to their dashboard, so
+  // the home page isn't a dead-end once you're logged in. Mirrors the SOG-logo
+  // behavior, which links to the dashboard for every role.
+  if (userId && userRole && pathname === ROUTES.home) {
     return redirect(new URL(ROLE_DASHBOARD_PATHS[userRole], request.url));
   }
 

@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -236,8 +236,7 @@ function AddGamerForm({
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="add-gamer-first-name">{t("firstNameLabel")}</Label>
+            <Field label={t("firstNameLabel")} htmlFor="add-gamer-first-name">
               <Input
                 id="add-gamer-first-name"
                 value={firstName}
@@ -250,11 +249,10 @@ function AddGamerForm({
                 minLength={DISPLAY_NAME_MIN}
                 maxLength={DISPLAY_NAME_MAX}
               />
-            </div>
+            </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="add-gamer-month">{t("birthMonthLabel")}</Label>
+              <Field label={t("birthMonthLabel")} htmlFor="add-gamer-month">
                 <select
                   id="add-gamer-month"
                   value={month}
@@ -270,9 +268,8 @@ function AddGamerForm({
                     </option>
                   ))}
                 </select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="add-gamer-year">{t("birthYearLabel")}</Label>
+              </Field>
+              <Field label={t("birthYearLabel")} htmlFor="add-gamer-year">
                 <select
                   id="add-gamer-year"
                   value={year}
@@ -288,16 +285,10 @@ function AddGamerForm({
                     </option>
                   ))}
                 </select>
-              </div>
+              </Field>
             </div>
 
-            <div className="space-y-2">
-              <Label>
-                {t("genderLabel")}{" "}
-                <span className="font-normal text-muted-foreground">
-                  ({t("genderOptional")})
-                </span>
-              </Label>
+            <Field label={t("genderLabel")} optional>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 <GenderButton
                   selected={gender === "boy"}
@@ -318,7 +309,7 @@ function AddGamerForm({
                   label={t("genderNonBinary")}
                 />
               </div>
-            </div>
+            </Field>
           </div>
 
           <DialogFooter className="gap-2">

@@ -213,6 +213,20 @@ interface CreateTokenOptions {
    */
   startVideoOff?: boolean;
   startAudioOff?: boolean;
+  /**
+   * The participant's stable id (our `profiles.id`). Set as Daily's `user_id`
+   * so peers' `participant.user_id` matches it — which is what `canReceive`'s
+   * `byUserId` keys on (group rooms only; instant-room guests have no profile).
+   */
+  userId?: string;
+  /**
+   * Baked-in receive permission for the private-zone privacy boundary. When the
+   * current session already has private-zone occupants this joiner mustn't
+   * receive, the token carries the block so it's enforced *before* they connect
+   * — no window where they're sent a private member's media. See
+   * `tokenCanReceiveFor` in `src/lib/voice/receive-permissions.ts`.
+   */
+  canReceive?: { base: boolean; byUserId: Record<string, boolean> };
 }
 
 interface DailyToken {
@@ -230,6 +244,10 @@ export async function createMeetingToken(options: CreateTokenOptions): Promise<s
         start_video_off: options.startVideoOff ?? true,
         start_audio_off: options.startAudioOff ?? false,
         user_name: options.userName,
+        ...(options.userId !== undefined && { user_id: options.userId }),
+        ...(options.canReceive !== undefined && {
+          permissions: { canReceive: options.canReceive },
+        }),
         exp: options.expUnix,
         // See the comment on `eject_at_room_exp` in createDailyRoom — same
         // reason, applied at the per-participant level. Without this,

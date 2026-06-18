@@ -1,10 +1,10 @@
-import type { Profile, GamerProfileRow, ParentGamer, CreateGamerInput, GamerProfile, AppSupabaseClient } from "@/types";
+import type { Profile, ParentGamer, CreateGamerInput, GamerProfile, AppSupabaseClient } from "@/types";
 import { isGamerProfile } from "@/types";
 
 export class GamerService {
   constructor(private supabase: AppSupabaseClient) {}
 
-  async getLinkedGamers(parentId: string): Promise<GamerProfileRow[]> {
+  async getLinkedGamers(parentId: string): Promise<Profile[]> {
     const { data, error } = await this.supabase
       .from("parent_gamer")
       .select(`
@@ -13,11 +13,9 @@ export class GamerService {
       .eq("parent_id", parentId);
 
     if (error) throw error;
-    // `!inner` makes `gamer` a non-null Profile; `isGamerProfile` narrows it to
-    // the username-non-null `GamerProfileRow` (the auth_identifier_check CHECK
-    // guarantees username for gamers — see types/index.ts). The link FK only
-    // ever points at gamer profiles, so the guard never drops a row; it
-    // replaces the old `as GamerProfileRow` cast with a checked narrowing.
+    // `!inner` makes `gamer` a non-null Profile; the link FK only ever points
+    // at gamer profiles, so `isGamerProfile` never drops a row — it just drops
+    // the nullable embed type without a cast.
     return data.map((row) => row.gamer).filter(isGamerProfile);
   }
 
@@ -33,10 +31,12 @@ export class GamerService {
     return data.map((row) => row.parent);
   }
 
-  async getMyGamers(): Promise<GamerProfileRow[]> {
+  async getMyGamers(): Promise<Profile[]> {
     const { data, error } = await this.supabase.rpc("get_my_gamers");
     if (error) throw error;
-    return data as GamerProfileRow[];
+    // Every row this RPC returns is a gamer, so the filter is a no-op that
+    // drops the nullable type without a cast.
+    return data.filter(isGamerProfile);
   }
 
   async getMyParents(): Promise<Profile[]> {

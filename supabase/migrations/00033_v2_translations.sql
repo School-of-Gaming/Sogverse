@@ -4,7 +4,7 @@
 --
 -- See docs/products-redesign.md (translations section) for the resolution
 -- rule (user_locale → en → fi → first_available) and the must-have-en-or-fi
--- rule, and docs/i18n-architecture.md for the broader locale model.
+-- rule, and src/i18n/CLAUDE.md for the broader locale model.
 --
 -- This migration:
 --   1. Creates product_translations_v2 / topic_translations_v2 / tag_translations_v2.

@@ -18,7 +18,7 @@
 // We use the word **locale** for UI translation (matches next-intl's
 // `useLocale()` and Unicode/ICU terminology) and **spoken language** for human
 // fluency. They are deliberately named differently — see CLAUDE.md and
-// docs/i18n-architecture.md.
+// src/i18n/CLAUDE.md.
 //
 // When adding a new locale, also update LOCALE_CONFIG below, add a
 // messages/<code>.json file, and update the CI check script.

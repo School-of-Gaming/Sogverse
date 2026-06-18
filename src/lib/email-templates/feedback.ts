@@ -7,7 +7,7 @@ import type { EmailTranslator } from "./translator";
 
 interface FeedbackEmailOptions {
   userName: string;
-  userRole: string;
+  userRole: UserRole;
   userEmail: string;
   message: string;
   sentAt: string;
@@ -21,7 +21,7 @@ interface FeedbackEmailOptions {
 export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: FeedbackEmailOptions): string {
   const escapedMessage = escapeHtml(opts.message).replace(/\n/g, "<br/>");
   const escapedName = escapeHtml(opts.userName);
-  const roleKey = ROLE_LABEL_KEYS[opts.userRole as UserRole];
+  const roleKey = ROLE_LABEL_KEYS[opts.userRole];
   const escapedRole = escapeHtml(t(roleKey));
   const escapedEmail = escapeHtml(opts.userEmail);
 

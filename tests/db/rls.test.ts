@@ -110,13 +110,13 @@ describe("Row Level Security", () => {
     it("gamer can read own profile", async () => {
       const { data, error } = await gamerClient
         .from("profiles")
-        .select("id, role, username")
+        .select("id, role, email")
         .eq("id", TEST_IDS.GAMER)
         .single();
 
       expect(error).toBeNull();
       expect(data!.role).toBe("gamer");
-      expect(data!.username).toBe("testgamer");
+      expect(data!.email).toBe("testgamer@gamer.sogverse.internal");
     });
 
     it("customer cannot insert a profile", async () => {
@@ -124,6 +124,7 @@ describe("Row Level Security", () => {
         id: "00000000-0000-0000-0000-000000000099",
         role: "customer",
         first_name: "Injected",
+        email: "injected@example.com",
       });
 
       expect(error).not.toBeNull();
@@ -439,10 +440,12 @@ describe("Row Level Security", () => {
           user_metadata: { first_name: "Temp", last_name: "Gamer" },
         });
 
-        // Promote to gamer (same pattern as seed.sql)
+        // Promote to gamer (same pattern as seed.sql). Keep the synthetic
+        // email the trigger seeded — gamers are email-first and profiles.email
+        // is NOT NULL.
         await admin
           .from("profiles")
-          .update({ role: "gamer", email: null, username: "tempgamer" })
+          .update({ role: "gamer" })
           .eq("id", TEMP_GAMER_ID);
         await admin
           .from("customer_profiles")

@@ -11,11 +11,13 @@ import { computeAge, cn } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import type { GenderType } from "@/types";
 
-const GENDER_KEY: Record<string, string> = {
+// `satisfies` keeps the record exhaustive over GenderType while the values
+// keep their literal types, so t(GENDER_KEY[gender]) typechecks unasserted.
+const GENDER_KEY = {
   boy: "genderBoy",
   girl: "genderGirl",
   non_binary: "genderNonBinary",
-};
+} as const satisfies Record<GenderType, string>;
 
 interface ContentProps {
   gamerId: string;
@@ -47,8 +49,8 @@ const ChipContent = memo(function ChipContent({
   if (dateOfBirth) {
     detailParts.push(t("chip.age", { age: computeAge(dateOfBirth, timeZone) }));
   }
-  if (gender && GENDER_KEY[gender]) {
-    detailParts.push(t(GENDER_KEY[gender] as "genderBoy"));
+  if (gender) {
+    detailParts.push(t(GENDER_KEY[gender]));
   }
   const detail = detailParts.join(" / ");
 
@@ -120,7 +122,9 @@ export function GamerChip({
         "flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors",
         isPending
           ? "cursor-progress border-border bg-muted text-foreground opacity-50"
-          : "cursor-grab border-border bg-muted text-foreground",
+          // Shared drag-cursor class (globals.css): grab on hover. The grabbing
+          // cursor while dragging comes from the DragOverlay's `drag-ghost`.
+          : "drag-handle border-border bg-muted text-foreground",
         isDragging && "opacity-50",
       )}
     >

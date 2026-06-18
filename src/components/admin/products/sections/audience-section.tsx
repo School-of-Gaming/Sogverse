@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { cn } from "@/lib/utils";
 import { useSpokenLanguages } from "@/services/users";
-import { Field, FormSection } from "../form-primitives";
+import { Field } from "@/components/ui/field";
+import { FormSection } from "../form-primitives";
 import type { FormState } from "../product-form-state";
 
 interface AudienceSectionProps {
@@ -23,7 +24,7 @@ export function AudienceSection({ state, setState }: AudienceSectionProps) {
       description={t("sections.audienceDescription")}
     >
       <div className="grid grid-cols-2 gap-4">
-        <Field label={t("labels.minAge")} htmlFor="p-min-age" required>
+        <Field label={t("labels.minAge")} htmlFor="p-min-age">
           <Input
             id="p-min-age"
             type="number"
@@ -33,7 +34,7 @@ export function AudienceSection({ state, setState }: AudienceSectionProps) {
             required
           />
         </Field>
-        <Field label={t("labels.maxAge")} htmlFor="p-max-age" required>
+        <Field label={t("labels.maxAge")} htmlFor="p-max-age">
           <Input
             id="p-max-age"
             type="number"
