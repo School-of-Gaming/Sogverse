@@ -1715,8 +1715,15 @@
     "micInput": "Laite",
     "noMics": "Mikrofoneja ei löytynyt",
     "unnamedMic": "Mikrofoni",
-    "micBlockedHint": "Mikrofonin käyttö on estetty. Salli se selaimen asetuksista.",
     "micTestHint": "Puhu testataksesi mikrofonia",
+    "mediaError": {
+      "denied": "Emme saa pääsyä mikrofoniin tai kameraan. Jos estit käytön, salli se selaimen sivustoasetuksista ja lataa sivu uudelleen.",
+      "no-device": "Mikrofonia tai kameraa ei löytynyt. Yhdistä laite ja lataa sivu uudelleen.",
+      "in-use": "Mikrofoniasi tai kameraasi käyttää toinen sovellus tai selaimen välilehti. Sulje se ja lataa sivu uudelleen.",
+      "insecure": "Kamera ja mikrofoni vaativat suojatun (https) yhteyden.",
+      "unknown": "Emme saaneet pääsyä mikrofoniin tai kameraan. Lataa sivu uudelleen ja yritä uudelleen.",
+      "reload": "Lataa uudelleen"
+    },
     "zoneIcon": {
       "rocket": "Raketti",
       "gamepad": "Peliohjain",
@@ -1799,15 +1806,6 @@
         "description": "Tarkista kamera ja mikrofoni ennen sisäänmenoa.",
         "nameLabel": "Nimesi",
         "namePlaceholder": "Miksi sinua kutsutaan?",
-        "micOn": "Mikki päällä",
-        "micOff": "Mikki pois",
-        "cameraOn": "Kamera päällä",
-        "cameraOff": "Kamera pois",
-        "muteMic": "Mykistä mikrofoni",
-        "unmuteMic": "Poista mykistys",
-        "showCamera": "Käynnistä kamera",
-        "hideCamera": "Sammuta kamera",
-        "permissionDenied": "Emme saaneet pääsyä kameraan tai mikrofoniin. Voit silti liittyä — käynnistä ne myöhemmin, jos annat luvan.",
         "join": "Liity",
         "joining": "Liitytään…"
       },

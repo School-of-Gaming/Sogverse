@@ -1715,8 +1715,15 @@
     "micInput": "Input",
     "noMics": "No microphones found",
     "unnamedMic": "Microphone",
-    "micBlockedHint": "Microphone access is blocked. Allow it in your browser settings.",
     "micTestHint": "Speak to test your mic",
+    "mediaError": {
+      "denied": "We can't access your microphone or camera. If you blocked access, allow it in your browser's site settings, then reload.",
+      "no-device": "No microphone or camera was found. Connect one, then reload.",
+      "in-use": "Your microphone or camera is being used by another app or browser tab. Close it, then reload.",
+      "insecure": "Camera and microphone need a secure (https) connection.",
+      "unknown": "We couldn't access your microphone or camera. Reload and try again.",
+      "reload": "Reload"
+    },
     "zoneIcon": {
       "rocket": "Rocket",
       "gamepad": "Game controller",
@@ -1799,15 +1806,6 @@
         "description": "Check your camera and microphone before stepping in.",
         "nameLabel": "Your name",
         "namePlaceholder": "What should we call you?",
-        "micOn": "Mic on",
-        "micOff": "Mic off",
-        "cameraOn": "Camera on",
-        "cameraOff": "Camera off",
-        "muteMic": "Mute microphone",
-        "unmuteMic": "Unmute microphone",
-        "showCamera": "Turn camera on",
-        "hideCamera": "Turn camera off",
-        "permissionDenied": "We couldn't access your camera or microphone. You can still join — toggle them on later if you grant permission.",
         "join": "Join",
         "joining": "Joining…"
       },

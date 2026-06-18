@@ -103,7 +103,7 @@ function InstantVoiceSessionInner({ code, copyright }: InstantVoiceSessionProps)
   const handleJoin = useCallback(
     async (
       displayName: string,
-      media: { micOn: boolean; cameraOn: boolean },
+      media: { micOn: boolean; cameraOn: boolean; audioDeviceId: string | null },
     ) => {
       setJoinError(null);
       setJoining(true);
@@ -137,7 +137,7 @@ function InstantVoiceSessionInner({ code, copyright }: InstantVoiceSessionProps)
 
         const { token, roomUrl, role } = await response.json();
         setLocalRole(role);
-        await join(roomUrl, token);
+        await join(roomUrl, token, { audioDeviceId: media.audioDeviceId });
         setState({ phase: "in-call" });
         setJoining(false);
       } catch (err) {

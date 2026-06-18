@@ -36,38 +36,58 @@ export function useLocalStreamGlow(
     }
 
     const ctx = new AudioContext();
-    const analyser = ctx.createAnalyser();
-    analyser.fftSize = 256;
-    // Wrap the audio track in a fresh stream — passing the original
-    // `stream` directly works too, but isolating one track keeps the
-    // analyser focused on the mic and avoids re-attaching when video
-    // tracks toggle.
-    const source = ctx.createMediaStreamSource(new MediaStream([tracks[0]]));
-    source.connect(analyser);
-
-    const data = new Uint8Array(analyser.fftSize);
     let rafId = 0;
+    let source: MediaStreamAudioSourceNode | null = null;
+    let cancelled = false;
 
-    const tick = () => {
-      analyser.getByteTimeDomainData(data);
-      let sum = 0;
-      for (let i = 0; i < data.length; i++) {
-        const norm = (data[i] - 128) / 128;
-        sum += norm * norm;
+    // On iOS Safari an AudioContext is born `suspended` and the analyser reads
+    // pure silence until it's resumed — so without this the lobby glow never
+    // lit even with a working mic, which is exactly what made the preview look
+    // broken on iPhone. Resume *before* building nodes, mirroring the in-call
+    // pipeline (see src/components/voice/CLAUDE.md). Resume is async, so guard
+    // the node setup against an unmount that races it.
+    const start = async () => {
+      try {
+        await ctx.resume();
+      } catch {
+        // resume can reject if the context is already closed (fast unmount);
+        // the cancelled guard below handles that case.
       }
-      const rms = Math.sqrt(sum / data.length);
-      const level = Math.min(1, rms * 3);
-      const glow = computeGlowStyle(level);
-      el.style.boxShadow = glow.boxShadow ?? "";
-      el.style.borderColor = glow.borderColor ?? "";
+      if (cancelled) return;
+
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      // Wrap the audio track in a fresh stream — passing the original
+      // `stream` directly works too, but isolating one track keeps the
+      // analyser focused on the mic and avoids re-attaching when video
+      // tracks toggle.
+      source = ctx.createMediaStreamSource(new MediaStream([tracks[0]]));
+      source.connect(analyser);
+
+      const data = new Uint8Array(analyser.fftSize);
+      const tick = () => {
+        analyser.getByteTimeDomainData(data);
+        let sum = 0;
+        for (let i = 0; i < data.length; i++) {
+          const norm = (data[i] - 128) / 128;
+          sum += norm * norm;
+        }
+        const rms = Math.sqrt(sum / data.length);
+        const level = Math.min(1, rms * 3);
+        const glow = computeGlowStyle(level);
+        el.style.boxShadow = glow.boxShadow ?? "";
+        el.style.borderColor = glow.borderColor ?? "";
+        rafId = requestAnimationFrame(tick);
+      };
       rafId = requestAnimationFrame(tick);
     };
 
-    rafId = requestAnimationFrame(tick);
+    void start();
 
     return () => {
+      cancelled = true;
       cancelAnimationFrame(rafId);
-      source.disconnect();
+      source?.disconnect();
       void ctx.close();
     };
   }, [ref, stream, audioOn]);

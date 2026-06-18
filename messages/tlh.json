@@ -1760,8 +1760,15 @@
     "micInput": "'el",
     "noMics": "wab jan tu'be'lu'",
     "unnamedMic": "wab jan",
-    "micBlockedHint": "wab jan lo' luchol. De'wI'lij SeHlawmeyDaq yIchaw'.",
     "micTestHint": "wab jan yInIDmeH yIjatlh",
+    "mediaError": {
+      "denied": "jatlhwI' mIlQeD je wISuqlaHbe'! DaqIHpu'chugh, De'wI'lij Daqmey SeHlawDaq yIchaw', vaj yItchu'qa'.",
+      "no-device": "jatlhwI' mIlQeD je tu'lu'be'. wa' yISamchoH, vaj yItchu'qa'.",
+      "in-use": "latlh ngoqvaD jatlhwI' mIlQeD je lo'lu'. yISoQmoH, vaj yItchu'qa'.",
+      "insecure": "Hung He (https) poQ mIlQeD jatlhwI' je.",
+      "unknown": "jatlhwI' mIlQeD je wISuqlaHbe'. yItchu'qa', yInIDqa'.",
+      "reload": "yItchu'qa'"
+    },
     "zoneIcon": {
       "rocket": "puv DujHom",
       "gamepad": "QujmeH jan",
@@ -1844,15 +1851,6 @@
         "description": "Daq bIjaH pa', mIlQeD jatlhwI' je yIqel.",
         "nameLabel": "ponglIj",
         "namePlaceholder": "chay' SoH wIponglu'?",
-        "micOn": "jatlhwI' yIn",
-        "micOff": "jatlhwI' Qom",
-        "cameraOn": "mIlQeD yIn",
-        "cameraOff": "mIlQeD Qom",
-        "muteMic": "jatlhwI' yISov",
-        "unmuteMic": "jatlhwI' yISovHa'",
-        "showCamera": "mIlQeD yIqet",
-        "hideCamera": "mIlQeD yImev",
-        "permissionDenied": "mIlQeD jatlhwI' je vISuqlaHbe'. Daq DamuvchoH 'e' DIcheghmoH ghIq.",
         "join": "yImuv",
         "joining": "vImuv…"
       },

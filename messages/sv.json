@@ -1715,8 +1715,15 @@
     "micInput": "Ingång",
     "noMics": "Inga mikrofoner hittades",
     "unnamedMic": "Mikrofon",
-    "micBlockedHint": "Mikrofonåtkomst är blockerad. Tillåt den i webbläsarens inställningar.",
     "micTestHint": "Prata för att testa mikrofonen",
+    "mediaError": {
+      "denied": "Vi kan inte komma åt din mikrofon eller kamera. Om du har blockerat åtkomsten, tillåt den i webbläsarens webbplatsinställningar och ladda om sidan.",
+      "no-device": "Ingen mikrofon eller kamera hittades. Anslut en och ladda om sidan.",
+      "in-use": "Din mikrofon eller kamera används av en annan app eller flik. Stäng den och ladda om sidan.",
+      "insecure": "Kamera och mikrofon kräver en säker (https) anslutning.",
+      "unknown": "Vi kunde inte komma åt din mikrofon eller kamera. Ladda om sidan och försök igen.",
+      "reload": "Ladda om"
+    },
     "zoneIcon": {
       "rocket": "Raket",
       "gamepad": "Handkontroll",
@@ -1799,15 +1806,6 @@
         "description": "Kontrollera kameran och mikrofonen innan du går in.",
         "nameLabel": "Ditt namn",
         "namePlaceholder": "Vad ska vi kalla dig?",
-        "micOn": "Mikrofon på",
-        "micOff": "Mikrofon av",
-        "cameraOn": "Kamera på",
-        "cameraOff": "Kamera av",
-        "muteMic": "Tysta mikrofon",
-        "unmuteMic": "Slå på mikrofon",
-        "showCamera": "Slå på kamera",
-        "hideCamera": "Stäng av kamera",
-        "permissionDenied": "Vi kunde inte komma åt din kamera eller mikrofon. Du kan ändå gå med — slå på dem senare om du ger tillstånd.",
         "join": "Gå med",
         "joining": "Ansluter…"
       },

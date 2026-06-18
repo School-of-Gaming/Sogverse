@@ -6,11 +6,6 @@ export interface AudioInputDevice {
   label: string;
 }
 
-/** Mic access state for the troubleshooting hint. We avoid the Permissions API
- *  (its `PermissionName` lib type omits "microphone") and infer from device
- *  labels instead: browsers only expose labels once mic access is granted. */
-export type MicPermission = "granted" | "denied" | "unknown";
-
 interface UseMicDevicesParams {
   callObjectRef: React.MutableRefObject<DailyCall | null>;
   joined: boolean;
@@ -65,15 +60,5 @@ export function useMicDevices({ callObjectRef, joined }: UseMicDevicesParams) {
     [callObjectRef],
   );
 
-  // Labels are only populated once mic access is granted; an empty list while
-  // joined means no usable mic (blocked or absent).
-  const micPermission: MicPermission = !joined
-    ? "unknown"
-    : audioInputs.length === 0
-      ? "denied"
-      : audioInputs.some((d) => d.label !== "")
-        ? "granted"
-        : "unknown";
-
-  return { audioInputs, currentAudioInputId, setAudioInput, micPermission };
+  return { audioInputs, currentAudioInputId, setAudioInput };
 }

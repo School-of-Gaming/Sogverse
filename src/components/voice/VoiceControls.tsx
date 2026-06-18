@@ -1,10 +1,12 @@
 "use client";
 
-import { Mic, MicOff, Video, VideoOff, ScreenShare, ScreenShareOff, Lock, Megaphone, Headphones, HeadphoneOff } from "lucide-react";
+import { ScreenShare, ScreenShareOff, Megaphone, Headphones, HeadphoneOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { MicSettingsPopover } from "./MicSettingsPopover";
+import { MicLevelIndicator } from "./MicLevelIndicator";
+import { MicToggleButton, CameraToggleButton } from "./MediaToggleButtons";
 
 export function VoiceControls() {
   const {
@@ -15,6 +17,10 @@ export function VoiceControls() {
     toggleCamera,
     joining,
     localLocks,
+    audioInputs,
+    currentAudioInputId,
+    setAudioInput,
+    mediaError,
     canScreenShare,
     isScreenSharing,
     startScreenShare,
@@ -43,59 +49,32 @@ export function VoiceControls() {
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
       {/* Group 1 — personal media controls */}
       <div className="flex items-center gap-2">
-        {/* Mic toggle */}
-        <div className="relative">
-          <Button
-            variant={micOn ? "default" : "destructive"}
-            size="icon"
-            onClick={toggleMic}
-            disabled={joining || (localLocks.audio && !micOn)}
-            title={
-              localLocks.audio
-                ? t("micLockedByModerator")
-                : micOn
-                  ? t("muteMicrophone")
-                  : t("unmuteMicrophone")
-            }
-          >
-            {micOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-          </Button>
-          {localLocks.audio && (
-            <Lock className="absolute -right-1 -top-1 h-3 w-3 text-destructive" />
-          )}
-        </div>
+        <MicToggleButton
+          on={micOn}
+          onToggle={toggleMic}
+          disabled={joining}
+          locked={localLocks.audio}
+        />
 
         {/* Mic device picker + level + troubleshooting */}
-        {!joining && <MicSettingsPopover />}
-
-        {/* Camera toggle */}
-        {cameraAllowed && (
-          <div className="relative">
-            <Button
-              variant={cameraOn ? "default" : "outline"}
-              size="icon"
-              onClick={toggleCamera}
-              disabled={joining || (localLocks.video && !cameraOn)}
-              title={
-                localLocks.video
-                  ? t("cameraLockedByModerator")
-                  : cameraOn
-                    ? t("turnOffCamera")
-                    : t("turnOnCamera")
-              }
-            >
-              {cameraOn ? (
-                <Video className="h-4 w-4" />
-              ) : (
-                <VideoOff className="h-4 w-4" />
-              )}
-            </Button>
-            {localLocks.video && (
-              <Lock className="absolute -right-1 -top-1 h-3 w-3 text-destructive" />
-            )}
-          </div>
+        {!joining && (
+          <MicSettingsPopover
+            audioInputs={audioInputs}
+            currentAudioInputId={currentAudioInputId}
+            onSelectInput={setAudioInput}
+            mediaError={mediaError}
+            levelIndicator={<MicLevelIndicator />}
+          />
         )}
 
+        {cameraAllowed && (
+          <CameraToggleButton
+            on={cameraOn}
+            onToggle={toggleCamera}
+            disabled={joining}
+            locked={localLocks.video}
+          />
+        )}
       </div>
 
       {/* Group 2 — screen share + moderator broadcast/deafen */}

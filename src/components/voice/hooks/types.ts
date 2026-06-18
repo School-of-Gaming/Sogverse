@@ -1,7 +1,8 @@
 import type { DailyCall } from "@daily-co/daily-js";
 import type { UserRole, VoiceZone, VoiceZoneIcon, VoiceZoneColor } from "@/types";
 import type { VoiceZoneView } from "@/lib/voice/zone-composition";
-import type { AudioInputDevice, MicPermission } from "./use-mic-devices";
+import type { AudioInputDevice } from "./use-mic-devices";
+import type { MediaErrorCategory } from "@/lib/voice/media-error";
 
 /**
  * Voice-room-internal role union. Adds `"guest"` on top of the system roles
@@ -198,7 +199,9 @@ export interface VoiceRoomContextValue {
   audioInputs: AudioInputDevice[];
   currentAudioInputId: string | null;
   setAudioInput: (deviceId: string) => Promise<void>;
-  micPermission: MicPermission;
+  /** The current mic/camera acquisition failure (denied/in-use/no-device/…),
+   *  or null when media is working. Surfaced in the mic-settings popover. */
+  mediaError: MediaErrorCategory | null;
 
   // --- moderation ---
   localLocks: LockState;
@@ -217,7 +220,7 @@ export interface VoiceRoomContextValue {
   join: (
     roomUrl: string,
     token: string,
-    meta?: { sessionOpensAt?: string },
+    meta?: { sessionOpensAt?: string; audioDeviceId?: string | null },
   ) => Promise<void>;
   leave: () => Promise<void>;
 }

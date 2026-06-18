@@ -626,7 +626,7 @@ function VoiceZonesDemo() {
     audioInputs: [],
     currentAudioInputId: null,
     setAudioInput: asyncNoop,
-    micPermission: "granted",
+    mediaError: null,
     localLocks: { audio: false, video: false },
     lockStates: new Map(),
     muteParticipant: noop,

@@ -9,8 +9,17 @@ import {
   useRef,
   useState,
 } from "react";
-import type { DailyCall, DailyParticipant } from "@daily-co/daily-js";
+import type {
+  DailyCall,
+  DailyParticipant,
+  DailyEventObjectCameraError,
+} from "@daily-co/daily-js";
 import { parseUserName } from "@/lib/voice/user-name";
+import {
+  categoryFromDailyCameraError,
+  classifyMediaError,
+  type MediaErrorCategory,
+} from "@/lib/voice/media-error";
 import { composeZones } from "@/lib/voice/zone-composition";
 import { isCurrentSessionPlacement } from "@/lib/voice/locked-session";
 import { nextConfinement } from "@/lib/voice/confinement";
@@ -136,6 +145,12 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   const [cameraAllowed, setCameraAllowed] = useState(false);
   const [localRole, setLocalRole] = useState<VoiceRole>("gamer");
   const [isDeafened, setIsDeafened] = useState(false);
+  // The current mic/camera acquisition failure, if any — set from Daily's
+  // normalized `camera-error` event (covers the join-time mic acquisition) and
+  // from a thrown camera toggle, cleared once a local track plays. Drives the
+  // troubleshooting copy in the mic-settings popover. Replaces the old
+  // inferred-from-empty-device-list "denied" guess with the real category.
+  const [mediaError, setMediaError] = useState<MediaErrorCategory | null>(null);
   const activeSpeakerIdRef = useRef<string | null>(null);
   // Synchronous gate — events like track-started fire before joined-meeting,
   // when co.participants().local doesn't exist yet. updateParticipants skips
@@ -217,8 +232,14 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     setParticipants(list);
 
     const local = pMap.local;
-    setMicOn(local.tracks.audio.state === "playable");
-    setCameraOn(local.tracks.video.state === "playable");
+    const audioPlayable = local.tracks.audio.state === "playable";
+    const videoPlayable = local.tracks.video.state === "playable";
+    setMicOn(audioPlayable);
+    setCameraOn(videoPlayable);
+    // A live local track means the device subsystem is working now, so any prior
+    // acquisition error is stale — clear it. (iOS shares one mic/camera grant, so
+    // either track playing clears the shared-permission error.)
+    if (audioPlayable || videoPlayable) setMediaError(null);
     // Note: the local routing zone is NOT synced from local.userData here — it's
     // owned by useZoneMembership and updated synchronously on a move. Reading it
     // back from Daily's echo is what made routing lag a move on mobile Safari.
@@ -296,6 +317,7 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     setCameraAllowed(false);
     setLocalRole("gamer");
     setIsDeafened(false);
+    setMediaError(null);
     activeSpeakerIdRef.current = null;
     membership.reset();
     moderator.reset();
@@ -307,7 +329,11 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   // --- Join / Leave ---
 
   const join = useCallback(
-    async (roomUrl: string, token: string, meta?: { sessionOpensAt?: string }) => {
+    async (
+      roomUrl: string,
+      token: string,
+      meta?: { sessionOpensAt?: string; audioDeviceId?: string | null },
+    ) => {
       if (meta?.sessionOpensAt) sessionOpensAtRef.current = meta.sessionOpensAt;
       if (callObjectRef.current) {
         await callObjectRef.current.destroy();
@@ -322,9 +348,11 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
       // `start_video_off` / `start_audio_off` properties (see
       // `createMeetingToken`). Token-level settings override anything passed
       // here, so we deliberately don't duplicate them on the call object —
-      // the token is the single source of truth.
+      // the token is the single source of truth. The exception is the mic
+      // *device*: a lobby device pick (instant rooms) rides in via
+      // `audioDeviceId` so Daily captures the chosen input, not the default.
       const co = Daily.createCallObject({
-        audioSource: true,
+        audioSource: meta?.audioDeviceId ?? true,
         videoSource: true,
         dailyConfig: {
           // Use <script> element loader instead of fetch+eval, so the call object
@@ -405,12 +433,22 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
         updateParticipants(co);
       };
 
+      // Daily normalizes the underlying getUserMedia failure (permission, device
+      // in use, none found, insecure context) before firing this — the reliable
+      // signal for the join-time mic acquisition, which has no toggle/promise to
+      // catch. iOS Safari gives no permission prompt for a remembered denial, so
+      // without this the mic just silently never plays.
+      const handleCameraError = (event: DailyEventObjectCameraError) => {
+        setMediaError(categoryFromDailyCameraError(event.error.type));
+      };
+
       co.on("joined-meeting", handleJoined);
       co.on("participant-joined", handleParticipantJoined);
       co.on("participant-left", handleParticipantLeft);
       co.on("participant-updated", handleParticipantUpdate);
       co.on("track-started", handleTrackStarted);
       co.on("active-speaker-change", handleActiveSpeakerChange);
+      co.on("camera-error", handleCameraError);
       co.on("left-meeting", handleLeft);
       co.on("app-message", handleAppMessage);
 
@@ -548,8 +586,12 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     try {
       await callObjectRef.current.setLocalVideo(newState);
       setCameraOn(newState);
-    } catch {
-      // Camera permission denied or device unavailable
+    } catch (err) {
+      // Camera permission denied or device unavailable. Surface it as the real
+      // category instead of swallowing it — this empty catch was a big part of
+      // why the failure was invisible. (Daily's `camera-error` event also fires
+      // for most of these; setting here too covers the rejected-promise path.)
+      setMediaError(classifyMediaError(err));
     }
   }, [cameraOn, cameraAllowed, moderator.localLocksRef]);
 
@@ -743,7 +785,7 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     audioInputs: micDevices.audioInputs,
     currentAudioInputId: micDevices.currentAudioInputId,
     setAudioInput: micDevices.setAudioInput,
-    micPermission: micDevices.micPermission,
+    mediaError,
     localLocks: moderator.localLocks,
     lockStates: moderator.lockStates,
     muteParticipant: moderator.muteParticipant,
