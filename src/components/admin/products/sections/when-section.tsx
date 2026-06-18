@@ -4,10 +4,10 @@ import { formatInTimeZone } from "date-fns-tz";
 import { Info } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 import { useHolidayCalendars } from "@/services/products";
-import { Field, FormSection, InfoCallout } from "../form-primitives";
+import { FormSection, InfoCallout } from "../form-primitives";
 import { FORM_LOCKS } from "../form-locks";
 import { HolidayCalendarOption } from "../holiday-calendar-option";
 import { ScheduleSlotsEditor } from "../schedule-slots-editor";
@@ -117,7 +117,6 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
                   : t("labels.startDate")
               }
               htmlFor="p-start-date"
-              required
               hint={
                 lockStartDate
                   ? lockedToToday
@@ -151,7 +150,6 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
                     : t("labels.endDate")
                 }
                 htmlFor="p-end-date"
-                required
               >
                 <Input
                   id="p-end-date"
@@ -238,7 +236,6 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
         <Field
           label={t("labels.signupThreshold")}
           htmlFor="p-threshold"
-          required
           hint={
             state.startMode === "threshold"
               ? t("hints.thresholdOnly")
@@ -262,14 +259,15 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
 
       <InfoCallout text={t("hints.timezoneFixedHelsinki")} />
 
-      <div className="space-y-2">
-        <Label>
-          {productType === "camp"
+      <Field
+        label={
+          productType === "camp"
             ? t("labels.daysAndTimes")
             : productType === "event"
               ? t("labels.time")
-              : t("labels.dayAndTime")}
-        </Label>
+              : t("labels.dayAndTime")
+        }
+      >
         <ScheduleSlotsEditor
           productType={productType}
           slots={state.scheduleSlots}
@@ -277,11 +275,12 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
             setState({ ...state, scheduleSlots: slots })
           }
         />
-      </div>
+      </Field>
 
       {showHolidayCalendars && (
         <Field
           label={t("labels.holidayCalendars")}
+          optional
           hint={t("hints.holidayHint")}
         >
           {FORM_LOCKS.holidayCalendars ? (

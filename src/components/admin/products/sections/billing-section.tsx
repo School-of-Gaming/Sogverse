@@ -3,8 +3,9 @@
 import { CircleDollarSign, Gift, Info } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
+import { Field } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
-import { Field, FormSection } from "../form-primitives";
+import { FormSection } from "../form-primitives";
 import { FORM_LOCKS } from "../form-locks";
 import { PricingBlock } from "../pricing-block";
 import {
@@ -160,7 +161,6 @@ export function BillingSection({
         <Field
           label={t("labels.seatCount")}
           htmlFor="p-seat"
-          required
           hint={t("hints.seatHint")}
         >
           <Input

@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import {
   CURRENCY_CONFIG,
   DEFAULT_CURRENCY,
@@ -46,11 +46,7 @@ export function PricingBlock({ shape, state, onChange }: PricingBlockProps) {
   const label = shape === "monthly" ? t("perMonthLabel") : t("totalLabel");
 
   return (
-    <div className="space-y-1.5">
-      <Label htmlFor="price-eur">
-        {label}
-        <span className="ml-0.5 text-destructive">*</span>
-      </Label>
+    <Field label={label} htmlFor="price-eur">
       <div className="relative">
         <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
           {CURRENCY_CONFIG[DEFAULT_CURRENCY].symbol}
@@ -66,6 +62,6 @@ export function PricingBlock({ shape, state, onChange }: PricingBlockProps) {
           className="pl-7"
         />
       </div>
-    </div>
+    </Field>
   );
 }

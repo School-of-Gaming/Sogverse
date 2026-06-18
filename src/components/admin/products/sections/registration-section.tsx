@@ -2,8 +2,9 @@
 
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
+import { Field } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
-import { Field, FormSection, InfoCallout } from "../form-primitives";
+import { FormSection, InfoCallout } from "../form-primitives";
 import { FORM_LOCKS } from "../form-locks";
 import {
   HOUR_OPTIONS,
@@ -77,7 +78,7 @@ export function RegistrationSection({
       {state.registrationOpensMode === "scheduled" && (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label={t("labels.date")} htmlFor="p-opens-date" required>
+            <Field label={t("labels.date")} htmlFor="p-opens-date">
               <Input
                 id="p-opens-date"
                 type="date"

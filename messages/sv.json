@@ -1085,7 +1085,6 @@
       "birthYearLabel": "Födelseår",
       "birthYearPlaceholder": "År",
       "genderLabel": "Kön",
-      "genderOptional": "Valfritt",
       "genderBoy": "Pojke",
       "genderGirl": "Flicka",
       "genderNonBinary": "Icke-binär",
@@ -1526,7 +1525,6 @@
   },
   "minecraft": {
     "label": "Minecraft-användarnamn",
-    "optional": "(valfritt)",
     "placeholder": "t.ex. Steve",
     "verify": "Verifiera",
     "verifying": "Verifierar...",

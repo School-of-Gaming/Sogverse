@@ -7,7 +7,7 @@ import { ArrowLeft, User, Gamepad2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
@@ -226,8 +226,7 @@ export default function GamerDetailsPage() {
           )}
 
           <form onSubmit={(e) => { e.preventDefault(); handleSaveProfile(); }} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="gamerDisplayName">{c('firstName')}</Label>
+            <Field label={c('firstName')} htmlFor="gamerDisplayName">
               <Input
                 id="gamerDisplayName"
                 value={firstName}
@@ -235,7 +234,7 @@ export default function GamerDetailsPage() {
                 placeholder={c('firstName')}
                 maxLength={DISPLAY_NAME_MAX}
               />
-            </div>
+            </Field>
 
             <Button
               type="submit"

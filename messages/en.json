@@ -1085,7 +1085,6 @@
       "birthYearLabel": "Birth year",
       "birthYearPlaceholder": "Year",
       "genderLabel": "Gender",
-      "genderOptional": "Optional",
       "genderBoy": "Boy",
       "genderGirl": "Girl",
       "genderNonBinary": "Non-binary",
@@ -1526,7 +1525,6 @@
   },
   "minecraft": {
     "label": "Minecraft Username",
-    "optional": "(optional)",
     "placeholder": "e.g. Steve",
     "verify": "Verify",
     "verifying": "Verifying...",

@@ -2,7 +2,8 @@
 
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { Field, FormSection, InfoCallout } from "../form-primitives";
+import { Field } from "@/components/ui/field";
+import { FormSection, InfoCallout } from "../form-primitives";
 import { LocationPicker } from "../location-picker";
 import {
   locationPickerMode,
@@ -62,7 +63,6 @@ export function WhereSection({ state, setState, config }: WhereSectionProps) {
             label={
               state.isRemote ? t("labels.municipality") : t("labels.site")
             }
-            required
             hint={
               state.isRemote
                 ? t("hints.municipalityHint")

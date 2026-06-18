@@ -5,7 +5,7 @@ import { MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/providers";
 
@@ -84,8 +84,7 @@ export function FeedbackSectionContent() {
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="feedback-message">{t('message')}</Label>
+          <Field label={t('message')} htmlFor="feedback-message">
             <Textarea
               id="feedback-message"
               value={message}
@@ -103,7 +102,7 @@ export function FeedbackSectionContent() {
               </span>
               <span>{message.length}/{MAX_LENGTH}</span>
             </div>
-          </div>
+          </Field>
 
           <Button
             onClick={handleSubmit}

@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
 import { ROLE_POST_LOGIN_PATHS, ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
@@ -116,8 +116,7 @@ export function LoginForm() {
               {error}
             </div>
           )}
-          <div className="space-y-2">
-            <Label htmlFor="email">{c('email')}</Label>
+          <Field label={c('email')} htmlFor="email">
             <Input
               id="email"
               type="email"
@@ -128,17 +127,19 @@ export function LoginForm() {
               required
               autoComplete="email"
             />
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">{c('password')}</Label>
+          </Field>
+          <Field
+            label={c('password')}
+            htmlFor="password"
+            labelAction={
               <Link
                 href={ROUTES.forgotPassword}
                 className="text-sm text-primary hover:underline"
               >
                 {c('forgotPassword')}
               </Link>
-            </div>
+            }
+          >
             <PasswordInput
               id="password"
               placeholder={t('login.passwordPlaceholder')}
@@ -148,7 +149,7 @@ export function LoginForm() {
               required
               autoComplete="current-password"
             />
-          </div>
+          </Field>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={isLoading}>

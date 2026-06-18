@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 
@@ -91,8 +91,7 @@ export function ForgotPasswordForm() {
               {error}
             </div>
           )}
-          <div className="space-y-2">
-            <Label htmlFor="email">{c('email')}</Label>
+          <Field label={c('email')} htmlFor="email">
             <Input
               id="email"
               type="email"
@@ -102,7 +101,7 @@ export function ForgotPasswordForm() {
               disabled={isLoading}
               required
             />
-          </div>
+          </Field>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={isLoading}>

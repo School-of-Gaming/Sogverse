@@ -1085,7 +1085,6 @@
       "birthYearLabel": "Syntymävuosi",
       "birthYearPlaceholder": "Vuosi",
       "genderLabel": "Sukupuoli",
-      "genderOptional": "Valinnainen",
       "genderBoy": "Poika",
       "genderGirl": "Tyttö",
       "genderNonBinary": "Muunsukupuolinen",
@@ -1526,7 +1525,6 @@
   },
   "minecraft": {
     "label": "Minecraft-käyttäjänimi",
-    "optional": "(valinnainen)",
     "placeholder": "esim. Steve",
     "verify": "Vahvista",
     "verifying": "Vahvistetaan...",

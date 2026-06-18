@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpdateSiteNotes } from "@/services/products";
 
@@ -76,10 +76,11 @@ export function SiteNotesEditor({
         </div>
         <div className="mt-2 space-y-2">
           {isMember && (
-            <div className="space-y-1">
-              <Label htmlFor={`addr-${locationId}`} className="text-xs">
-                {t("addressLabel")}
-              </Label>
+            <Field
+              label={t("addressLabel")}
+              htmlFor={`addr-${locationId}`}
+              optional
+            >
               <Input
                 id={`addr-${locationId}`}
                 value={draftAddress}
@@ -87,12 +88,13 @@ export function SiteNotesEditor({
                 placeholder={t("addressPlaceholder")}
                 disabled={update.isPending}
               />
-            </div>
+            </Field>
           )}
-          <div className="space-y-1">
-            <Label htmlFor={`notes-${locationId}-${tier}`} className="text-xs">
-              {t(`${tier}NotesFieldLabel`)}
-            </Label>
+          <Field
+            label={t(`${tier}NotesFieldLabel`)}
+            htmlFor={`notes-${locationId}-${tier}`}
+            optional
+          >
             <Textarea
               id={`notes-${locationId}-${tier}`}
               rows={3}
@@ -101,7 +103,7 @@ export function SiteNotesEditor({
               placeholder={t(`${tier}NotesPlaceholder`)}
               disabled={update.isPending}
             />
-          </div>
+          </Field>
           {error && (
             <p className="text-xs text-destructive">{error}</p>
           )}

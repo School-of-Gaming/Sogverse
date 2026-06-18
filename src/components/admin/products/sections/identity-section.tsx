@@ -3,7 +3,7 @@
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { cn, findOption } from "@/lib/utils";
 import {
@@ -17,7 +17,7 @@ import {
 } from "@/lib/products/topics";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { Constants } from "@/types";
-import { Field, FormSection } from "../form-primitives";
+import { FormSection } from "../form-primitives";
 import { ImagePicker } from "../image-picker";
 import { LongDescriptionBlocksEditor } from "../long-description-blocks-editor";
 import {
@@ -103,11 +103,7 @@ export function IdentitySection({
     >
       {/* Language tabs — at least one filled locale required. The hint below
           spells the rule out. Switching tabs preserves what's typed in each. */}
-      <div className="space-y-2">
-        <Label>
-          {t("translations.label")}
-          <span className="ml-0.5 text-destructive">*</span>
-        </Label>
+      <Field label={t("translations.label")} hint={t("translations.hint")}>
         <div className="flex flex-wrap items-center gap-1 border-b border-border">
           {addedLocales.map((locale) => {
             const isActive = state.activeLocale === locale;
@@ -161,16 +157,9 @@ export function IdentitySection({
             </select>
           )}
         </div>
-        <p className="text-xs text-muted-foreground">
-          {t("translations.hint")}
-        </p>
-      </div>
+      </Field>
 
-      <Field
-        label={t("labels.name")}
-        htmlFor={`p-name-${state.activeLocale}`}
-        required
-      >
+      <Field label={t("labels.name")} htmlFor={`p-name-${state.activeLocale}`}>
         <Input
           id={`p-name-${state.activeLocale}`}
           value={activeDraft.name}
@@ -184,7 +173,6 @@ export function IdentitySection({
       <Field
         label={t("labels.shortDescription")}
         htmlFor={`p-short-description-${state.activeLocale}`}
-        required
         hint={t("hints.shortDescription")}
       >
         <Textarea
@@ -201,6 +189,7 @@ export function IdentitySection({
 
       <Field
         label={t("labels.longDescription")}
+        optional
         hint={t("hints.longDescription")}
       >
         <LongDescriptionBlocksEditor
@@ -219,7 +208,6 @@ export function IdentitySection({
       <Field
         label={t("labels.topic")}
         htmlFor="p-topic"
-        required
         hint={t("hints.topicHint")}
       >
         <select
@@ -256,6 +244,7 @@ export function IdentitySection({
       <Field
         label={t("labels.padletUrl")}
         htmlFor="p-padlet"
+        optional
         hint={t("hints.padletHint")}
       >
         <Input

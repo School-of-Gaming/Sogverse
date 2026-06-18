@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import { productImageUrl } from "@/lib/images/product-image-url";
 import { cn } from "@/lib/utils";
 
@@ -64,10 +64,7 @@ export function ImagePicker({ value, onChange, disabled }: ImagePickerProps) {
   };
 
   return (
-    <div className="space-y-2">
-      <Label>
-        {t("label")} <span className="text-destructive">*</span>
-      </Label>
+    <Field label={t("label")} hint={t("hint")}>
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -133,7 +130,6 @@ export function ImagePicker({ value, onChange, disabled }: ImagePickerProps) {
           disabled={disabled}
         />
       </div>
-      <p className="text-xs text-muted-foreground">{t("hint")}</p>
-    </div>
+    </Field>
   );
 }

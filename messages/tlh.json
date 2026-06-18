@@ -1130,7 +1130,6 @@
       "birthYearLabel": "qoSlIj DIS",
       "birthYearPlaceholder": "DIS",
       "genderLabel": "ghob",
-      "genderOptional": "(wIv)",
       "genderBoy": "loDHom",
       "genderGirl": "be'Hom",
       "genderNonBinary": "latlh",
@@ -1571,7 +1570,6 @@
   },
   "minecraft": {
     "label": "Minecraft lo'wI' pong",
-    "optional": "(nIvbe')",
     "placeholder": "e.g. Steve",
     "verify": "yIchel",
     "verifying": "vIchel...",
