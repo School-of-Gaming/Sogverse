@@ -77,8 +77,6 @@ export function ZoneList() {
     currentZoneId,
     moveSelfToZone,
     moveParticipantToZone,
-    placeInPrivateZone,
-    removeFromPrivateZone,
     isModerator,
     groupId,
     deleteZone,
@@ -112,15 +110,6 @@ export function ZoneList() {
   const currentZone = zones.find((z) => z.id === currentZoneId);
   const isConfinedGamer = !isModerator && !!currentZone?.isLocked;
 
-  // Users currently in a private zone (bucketed there by their occupancy row) —
-  // so dragging one onto a normal zone frees them (clears occupancy) before the
-  // move, instead of letting the realtime auto-confine pull them back.
-  const placedUserIds = new Set<string>();
-  for (const zone of zones) {
-    if (!zone.isLocked) continue;
-    for (const m of participantsByZone.get(zone.id) ?? []) placedUserIds.add(m.userId);
-  }
-
   const handleDragStart = (event: DragStartEvent) => {
     setActiveUserId(readMemberDrag(event.active.data.current)?.userId ?? null);
   };
@@ -138,12 +127,9 @@ export function ZoneList() {
     }
 
     // Moderator moving another participant (the tile is only draggable for them).
-    if (drop.isLocked) {
-      void placeInPrivateZone(drag.userId, drop.zoneId);
-    } else {
-      if (placedUserIds.has(drag.userId)) void removeFromPrivateZone(drag.userId);
-      moveParticipantToZone(drag.sessionId, drop.zoneId);
-    }
+    // One path for normal/private destinations: it sends the moveUser position
+    // message and writes/clears the target's occupancy row as appropriate.
+    moveParticipantToZone(drag.sessionId, drag.userId, drop.zoneId);
   };
 
   // next-intl's message keys are typed literals, so resolve the fixed set of

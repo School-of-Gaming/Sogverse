@@ -98,7 +98,10 @@ export function useZoneMembership({
     onChanged();
   }, [callObjectRef, isModeratorRef, writeUserData, onChanged]);
 
-  /** Set the initial lobby userData on join so peers see us in the lobby. */
+  /** Set the initial lobby userData on join so peers see us in the lobby. A
+   *  joiner who already holds a private-zone occupancy row (placed before they
+   *  connected, or a mid-session rejoin) is moved into it by the provider's
+   *  one-shot seed effect once that row loads — see VoiceRoomProvider. */
   const onJoined = useCallback(() => {
     localZoneIdRef.current = DEFAULT_ZONE_ID;
     broadcastingRef.current = false;

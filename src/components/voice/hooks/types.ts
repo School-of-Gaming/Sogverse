@@ -152,13 +152,12 @@ export interface VoiceRoomContextValue {
    *  self-leave); a mod entering/leaving also writes/clears their own occupancy
    *  row. No room switch — one Daily room, `canReceive`-enforced privacy. */
   moveSelfToZone: (zoneId: string) => void;
-  /** Moderator-only; moves another participant into a non-locked zone. */
-  moveParticipantToZone: (sessionId: string, zoneId: string) => void;
-  /** Moderator-only; place a gamer into a private zone (writes the occupancy row
-   *  that drives the gamer's auto-confine + the `canReceive` boundary). */
-  placeInPrivateZone: (userId: string, zoneId: string) => Promise<void>;
-  /** Moderator-only; clear a user's private-zone occupancy. */
-  removeFromPrivateZone: (userId: string) => Promise<void>;
+  /** Moderator-only; move another participant into *any* zone — normal or
+   *  private. Sends the `moveUser` position message and, for a locked
+   *  destination, writes the target's occupancy row (clears it for a normal
+   *  one). `userId` is needed for that occupancy write. One path for
+   *  placing/freeing anyone; a placed moderator moves the same way. */
+  moveParticipantToZone: (sessionId: string, userId: string, zoneId: string) => void;
 
   // --- custom zone management (moderator, group rooms only) ---
   createZone: (input: {

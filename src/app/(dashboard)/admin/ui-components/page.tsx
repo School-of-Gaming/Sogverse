@@ -604,8 +604,6 @@ function VoiceZonesDemo() {
     participantsByZone,
     moveSelfToZone: noop,
     moveParticipantToZone: noop,
-    placeInPrivateZone: asyncNoop,
-    removeFromPrivateZone: asyncNoop,
     createZone: asyncNoop,
     updateZone: asyncNoop,
     deleteZone: asyncNoop,

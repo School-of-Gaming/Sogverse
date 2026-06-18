@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { DailyCall } from "@daily-co/daily-js";
-import { computeZoneVolumes, type RemoteAudioState } from "@/lib/voice/audio-routing";
+import { computeZoneAudibility, type RemoteAudioState } from "@/lib/voice/audio-routing";
 import { DEFAULT_ZONE_ID } from "@/lib/constants/voice-zones";
 import type { AudioNodes, ZoneUserData } from "./types";
 
@@ -37,16 +37,13 @@ export function useAudioPipeline({
   const audioTrackIdsRef = useRef<Map<string, string>>(new Map());
   const localAnalyserRef = useRef<{ source: MediaStreamAudioSourceNode; analyser: AnalyserNode } | null>(null);
 
-  // The per-participant volume multiplier ("base" in the routing model). The
-  // slider UI was dropped (the discrete-zone redesign reclaimed the space), but
-  // the plumbing stays so it can be re-enabled cheaply — see TODO.md. With no
-  // setter wired up it stays 1.0 for everyone.
-  const volumeMultipliersRef = useRef<Map<string, number>>(new Map());
-
-  /** Update audio routing — `element.volume` is the only audible control (zone
-   *  muting + broadcast + deafen, via the pure zoneVolume decision). The
-   *  separate analyser pipeline (speaking glow) and video are untouched, so
-   *  cross-zone peers stay visible. See docs/chrome-webrtc-volume-bug.md. */
+  /** Update audio routing — `element.muted` is the only audible control (zone
+   *  muting + broadcast + deafen, via the pure isAudible decision). We mute
+   *  rather than set `element.volume` because iOS Safari ignores `volume`
+   *  entirely (it always reads 1) — `muted` is the one control honored on every
+   *  platform. The separate analyser pipeline (speaking glow) and video are
+   *  untouched, so cross-zone peers stay visible. See audio-routing.ts and
+   *  docs/chrome-webrtc-volume-bug.md. */
   const updateAudioRouting = useCallback(() => {
     const co = callObjectRef.current;
     if (!co) return;
@@ -61,20 +58,19 @@ export function useAudioPipeline({
         sessionId,
         zoneId: info?.zoneId ?? DEFAULT_ZONE_ID,
         broadcasting: info?.broadcasting ?? false,
-        base: volumeMultipliersRef.current.get(sessionId) ?? 1.0,
       });
     }
 
-    const volumes = computeZoneVolumes(remotes, localZoneId, deafened);
+    const audible = computeZoneAudibility(remotes, localZoneId, deafened);
     for (const [sessionId, nodes] of audioNodesRef.current) {
-      const volume = volumes.get(sessionId);
-      if (volume !== undefined) nodes.element.volume = volume;
+      const isAud = audible.get(sessionId);
+      if (isAud !== undefined) nodes.element.muted = !isAud;
     }
   }, [callObjectRef, zoneInfoRef, localZoneIdRef, deafenedRef]);
 
   /** Manage audio pipeline for remote participants.
-   *  <audio> elements handle WebRTC playback and all audible control (volume,
-   *  zone muting) via element.volume. A separate MediaStreamSource feeds the
+   *  <audio> elements handle WebRTC playback and all audible control (zone
+   *  muting) via element.muted. A separate MediaStreamSource feeds the
    *  AnalyserNode for speaking-glow visualization.
    *
    *  IMPORTANT: Do NOT use createMediaElementSource for the analyser.
@@ -113,8 +109,8 @@ export function useAudioPipeline({
           existing.element.remove();
         }
 
-        // <audio> element for playback — element.volume controls
-        // volume and zone muting. Completely independent of Web Audio.
+        // <audio> element for playback — element.muted controls zone muting
+        // (updateAudioRouting sets it). Completely independent of Web Audio.
         const element = new Audio();
         element.srcObject = new MediaStream([audioTrack.persistentTrack]);
         element.autoplay = true;
@@ -220,15 +216,9 @@ export function useAudioPipeline({
     audioContextRef.current = new AudioContext();
   }, []);
 
-  /** Clean up volume multiplier for a participant who left */
-  const onParticipantLeft = useCallback((sessionId: string) => {
-    volumeMultipliersRef.current.delete(sessionId);
-  }, []);
-
   /** Reset all state (join/leave) */
   const reset = useCallback(() => {
     cleanupAudioNodes();
-    volumeMultipliersRef.current.clear();
   }, [cleanupAudioNodes]);
 
   return {
@@ -238,7 +228,6 @@ export function useAudioPipeline({
     manageLocalAnalyser,
     cleanupAudioNodes,
     createAudioContext,
-    onParticipantLeft,
     reset,
   };
 }

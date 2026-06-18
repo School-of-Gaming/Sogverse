@@ -1,91 +1,76 @@
 import { describe, it, expect } from "vitest";
 import {
-  zoneVolume,
-  computeZoneVolumes,
+  isAudible,
+  computeZoneAudibility,
   type RemoteAudioState,
 } from "@/lib/voice/audio-routing";
 
 /**
- * The discrete-zone routing decision (see src/components/voice/CLAUDE.md):
- *   deafen  → 0
- *   broadcast → base (heard everywhere)
- *   same zone → base
- *   different zone → 0 (silenced, but still received)
+ * The discrete-zone routing decision (see src/components/voice/CLAUDE.md). It's
+ * binary and applied via `element.muted` (NOT `element.volume`, which iOS Safari
+ * ignores):
+ *   deafen        → not audible
+ *   broadcast     → audible (heard everywhere)
+ *   same zone     → audible
+ *   different zone → not audible (silenced, but still received)
  */
-describe("zoneVolume", () => {
+describe("isAudible", () => {
   const lobby = "lobby";
   const yty = "yty-glow";
 
   it("deafen silences everyone, even a same-zone broadcaster", () => {
     expect(
-      zoneVolume({
+      isAudible({
         localIsDeafened: true,
         remoteIsBroadcasting: true,
         localZoneId: lobby,
         remoteZoneId: lobby,
-        base: 1,
       }),
-    ).toBe(0);
+    ).toBe(false);
   });
 
   it("a broadcaster is heard from a different zone", () => {
     expect(
-      zoneVolume({
+      isAudible({
         localIsDeafened: false,
         remoteIsBroadcasting: true,
         localZoneId: lobby,
         remoteZoneId: yty,
-        base: 1,
       }),
-    ).toBe(1);
+    ).toBe(true);
   });
 
   it("same zone is audible", () => {
     expect(
-      zoneVolume({
+      isAudible({
         localIsDeafened: false,
         remoteIsBroadcasting: false,
         localZoneId: yty,
         remoteZoneId: yty,
-        base: 1,
       }),
-    ).toBe(1);
+    ).toBe(true);
   });
 
   it("different zone is silenced", () => {
     expect(
-      zoneVolume({
+      isAudible({
         localIsDeafened: false,
         remoteIsBroadcasting: false,
         localZoneId: lobby,
         remoteZoneId: yty,
-        base: 1,
       }),
-    ).toBe(0);
+    ).toBe(false);
   });
 
-  it("applies the base multiplier when audible", () => {
+  it("deafen takes priority over a same-zone peer", () => {
     expect(
-      zoneVolume({
-        localIsDeafened: false,
-        remoteIsBroadcasting: false,
-        localZoneId: lobby,
-        remoteZoneId: lobby,
-        base: 0.5,
-      }),
-    ).toBe(0.5);
-  });
-
-  it("deafen takes priority over the base multiplier", () => {
-    expect(
-      zoneVolume({
+      isAudible({
         localIsDeafened: true,
         remoteIsBroadcasting: false,
         localZoneId: lobby,
         remoteZoneId: lobby,
-        base: 0.8,
       }),
-    ).toBe(0);
+    ).toBe(false);
   });
 });
 
@@ -94,46 +79,46 @@ describe("zoneVolume", () => {
  * update. The regression it guards: a remote peer changing zones (a `userData`
  * change with no track change) must re-silence them for an observer in another
  * zone. The old code only re-routed on track changes, so the observer kept
- * hearing a peer who had walked into a different zone.
+ * hearing a peer who had walked into a different zone. `true` = audible.
  */
-describe("computeZoneVolumes", () => {
+describe("computeZoneAudibility", () => {
   const lobby = "lobby";
   const yty = "yty-glow";
   const remotes: RemoteAudioState[] = [
-    { sessionId: "same", zoneId: lobby, broadcasting: false, base: 1 },
-    { sessionId: "other", zoneId: yty, broadcasting: false, base: 1 },
-    { sessionId: "caster", zoneId: yty, broadcasting: true, base: 1 },
+    { sessionId: "same", zoneId: lobby, broadcasting: false },
+    { sessionId: "other", zoneId: yty, broadcasting: false },
+    { sessionId: "caster", zoneId: yty, broadcasting: true },
   ];
 
   it("silences peers in other zones, keeps same-zone peers and broadcasters", () => {
-    const volumes = computeZoneVolumes(remotes, lobby, false);
-    expect(volumes.get("same")).toBe(1); // co-located → audible
-    expect(volumes.get("other")).toBe(0); // different zone → silenced
-    expect(volumes.get("caster")).toBe(1); // broadcaster → heard anywhere
+    const audible = computeZoneAudibility(remotes, lobby, false);
+    expect(audible.get("same")).toBe(true); // co-located → audible
+    expect(audible.get("other")).toBe(false); // different zone → silenced
+    expect(audible.get("caster")).toBe(true); // broadcaster → heard anywhere
   });
 
   it("re-silences a peer the moment they move to another zone (the leak)", () => {
     // Both in the lobby → audible.
     const together: RemoteAudioState[] = [
-      { sessionId: "peer", zoneId: lobby, broadcasting: false, base: 1 },
+      { sessionId: "peer", zoneId: lobby, broadcasting: false },
     ];
-    expect(computeZoneVolumes(together, lobby, false).get("peer")).toBe(1);
+    expect(computeZoneAudibility(together, lobby, false).get("peer")).toBe(true);
 
     // Same peer, same tracks, now reports a different zone via userData →
-    // re-projecting must drop them to 0 even though nothing about their audio
-    // track changed.
+    // re-projecting must drop them to muted even though nothing about their
+    // audio track changed.
     const movedAway: RemoteAudioState[] = [
-      { sessionId: "peer", zoneId: yty, broadcasting: false, base: 1 },
+      { sessionId: "peer", zoneId: yty, broadcasting: false },
     ];
-    expect(computeZoneVolumes(movedAway, lobby, false).get("peer")).toBe(0);
+    expect(computeZoneAudibility(movedAway, lobby, false).get("peer")).toBe(false);
   });
 
   it("deafen silences every remote regardless of zone", () => {
-    const volumes = computeZoneVolumes(remotes, lobby, true);
-    expect([...volumes.values()]).toEqual([0, 0, 0]);
+    const audible = computeZoneAudibility(remotes, lobby, true);
+    expect([...audible.values()]).toEqual([false, false, false]);
   });
 
   it("returns an empty map when there are no remotes", () => {
-    expect(computeZoneVolumes([], lobby, false).size).toBe(0);
+    expect(computeZoneAudibility([], lobby, false).size).toBe(0);
   });
 });
