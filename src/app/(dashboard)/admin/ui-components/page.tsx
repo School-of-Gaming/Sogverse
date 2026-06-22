@@ -950,7 +950,7 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       name: "Tuesday Minecraft Builders",
       description:
         "Weekly creative sessions where your gamer collaborates with new friends and a Gedu who really gets it.",
-      imagePath: "demo-placeholder.svg",
+      imagePath: null,
       topicLabel: "MINECRAFT",
       scheduleLines: ["Tuesday · 17:00–18:30 (EET)"],
       ageLine: "Ages 8–12",
@@ -967,7 +967,7 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       name: "Wednesday Roblox Crew",
       description:
         "Build, race, and collab with your crew — small group with regular faces every week.",
-      imagePath: "demo-placeholder.svg",
+      imagePath: null,
       topicLabel: "ROBLOX",
       scheduleLines: ["Wednesday · 17:00–18:30 (EET)"],
       ageLine: "Ages 9–13",
@@ -984,7 +984,7 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       name: "Spring Roblox Build-Off",
       description:
         "Group challenge that runs once enough builders sign up — gather your crew and we'll lock in a start date.",
-      imagePath: "demo-placeholder.svg",
+      imagePath: null,
       topicLabel: "ROBLOX",
       scheduleLines: ["24–28 March (EET)", "10:00–14:00"],
       ageLine: "Ages 9–14",
@@ -1001,7 +1001,7 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       name: "Friday Family Fortnite",
       description:
         "Drop-in event for parents and gamers — light competition, lots of laughter.",
-      imagePath: "demo-placeholder.svg",
+      imagePath: null,
       topicLabel: "FORTNITE",
       scheduleLines: ["Friday 12 April · 18:00–20:00 (EET)"],
       ageLine: "Ages 10+",
@@ -1018,7 +1018,7 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       name: "Summer Adventure Camp",
       description:
         "A week-long story-driven adventure across multiple games. Sign-ups open soon.",
-      imagePath: "demo-placeholder.svg",
+      imagePath: null,
       topicLabel: "ADVENTURE",
       scheduleLines: ["12–16 August (EET)", "10:00–15:00"],
       ageLine: "Ages 9–13",
@@ -1035,7 +1035,7 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       name: "April Roblox Camp",
       description:
         "Already underway — late joins aren't supported once a camp is running.",
-      imagePath: "demo-placeholder.svg",
+      imagePath: null,
       topicLabel: "ROBLOX",
       scheduleLines: ["20–24 April (EET)", "10:00–14:00"],
       ageLine: "Ages 8–12",
@@ -1051,7 +1051,7 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
     props: {
       name: "March Holiday Tournament",
       description: "This event has wrapped — keep an eye out for the next one.",
-      imagePath: "demo-placeholder.svg",
+      imagePath: null,
       topicLabel: "FORTNITE",
       scheduleLines: ["Saturday 22 March · 14:00–17:00 (EET)"],
       ageLine: "Ages 10+",
@@ -1632,24 +1632,6 @@ export default function AdminUIComponentsPage() {
                   </p>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        </SubSection>
-
-        {/* -- Loading Skeleton -- */}
-        <SubSection title="Loading Skeleton">
-          <div className="space-y-4">
-            {[1, 2].map((i) => (
-              <div
-                key={i}
-                className="flex items-center gap-4 rounded-lg border p-4 animate-pulse"
-              >
-                <div className="h-16 w-16 rounded bg-muted" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 w-32 rounded bg-muted" />
-                  <div className="h-3 w-48 rounded bg-muted" />
-                </div>
-              </div>
             ))}
           </div>
         </SubSection>
