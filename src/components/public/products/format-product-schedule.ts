@@ -3,7 +3,7 @@ import {
   nextOccurrenceInstant,
   viewerWeekdayIndex,
 } from "@/lib/schedule-occurrence";
-import { formatDateOnly } from "@/lib/utils";
+import { formatDate, formatDateOnly } from "@/lib/utils";
 import type { ProductBrowseRow } from "@/types";
 
 // Schedule formatting for the browse + purchased cards and the detail page's
@@ -337,8 +337,8 @@ export function formatProductSchedule({
         kind: "single",
         tzAbbrev: viewerTzAbbrev(instant, locale, timeZone),
         tzAdjusted,
-        date: new Intl.DateTimeFormat(locale, { timeZone, dateStyle: "medium" }).format(instant),
-        weekday: new Intl.DateTimeFormat(locale, { timeZone, weekday: "long" }).format(instant),
+        date: formatDate(instant, locale, { dateStyle: "medium", timeZone }),
+        weekday: formatDate(instant, locale, { weekday: "long", timeZone }),
         time: { start: viewerClock(instant, timeZone), end: viewerClock(endInstant, timeZone) },
       };
     }

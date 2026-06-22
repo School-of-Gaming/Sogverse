@@ -163,9 +163,26 @@ export function ProductListPage({ productType }: ProductListPageProps) {
               status === "pending"
                 ? renderPendingHint(pendingHintKey(p, now), uiLocale, timeZone, t)
                 : null;
-            const scheduleLine = scheduleRowLine(
-              formatProductSchedule({ product: p, locale: uiLocale, timeZone, now }),
-            );
+            const schedule = formatProductSchedule({
+              product: p,
+              locale: uiLocale,
+              timeZone,
+              now,
+            });
+            const scheduleLine = scheduleRowLine(schedule);
+            // A time-bearing event is a date+time instant, so its date renders in
+            // the viewer's zone (may differ from the stored start_date). Every
+            // other dated value here — a camp's date range, a club term date, a
+            // no-time event — is a zoneless calendar date that stays UTC-pinned.
+            const dateChip =
+              schedule.kind === "single" && schedule.time
+                ? schedule.date
+                : p.start_date
+                  ? formatDateOnly(p.start_date, uiLocale) +
+                    (p.end_date && p.end_date !== p.start_date
+                      ? ` → ${formatDateOnly(p.end_date, uiLocale)}`
+                      : "")
+                  : null;
             return (
               <Link
                 key={p.id}
@@ -212,13 +229,10 @@ export function ProductListPage({ productType }: ProductListPageProps) {
                           max: p.max_age,
                         })}
                       </span>
-                      {p.start_date && (
+                      {dateChip && (
                         <span className="inline-flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {formatDateOnly(p.start_date, uiLocale)}
-                          {p.end_date && p.end_date !== p.start_date
-                            ? ` → ${formatDateOnly(p.end_date, uiLocale)}`
-                            : ""}
+                          {dateChip}
                         </span>
                       )}
                       {scheduleLine && (
