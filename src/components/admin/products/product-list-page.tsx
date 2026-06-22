@@ -7,7 +7,7 @@ import {
   Calendar,
   CalendarClock,
   Users,
-  Clock,
+  Ticket,
   Hourglass,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
@@ -219,7 +219,7 @@ export function ProductListPage({ productType }: ProductListPageProps) {
                       )}
                       {p.seat_count !== null && (
                         <span className="inline-flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
+                          <Ticket className="h-3 w-3" />
                           {t("list.seats", { count: p.seat_count })}
                         </span>
                       )}
