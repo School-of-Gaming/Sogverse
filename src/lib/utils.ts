@@ -1,7 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { type SupportedCurrency } from "@/lib/constants/currency";
-import { nextOccurrenceInstant } from "@/lib/schedule-occurrence";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -187,46 +186,3 @@ export const DAYS_OF_WEEK = [
   "Saturday",
   "Sunday",
 ] as const;
-
-/**
- * Convert a recurring wall-clock schedule to the viewer's local timezone.
- *
- * @param dayOfWeek  0 (Monday) – 6 (Sunday) matching DAYS_OF_WEEK
- * @param startTime  "HH:MM" wall-clock time in the source timezone
- * @param timezone   IANA timezone of the source (e.g. "Europe/Helsinki")
- * @returns localDay, localTime (e.g. "3:00 PM"), and tzAbbrev (e.g. "EST")
- */
-export function formatScheduleLocal(
-  dayOfWeek: number,
-  startTime: string,
-  timezone: string,
-  locale: string,
-  opts: { now?: Date } = {},
-): { localDay: string; localTime: string; tzAbbrev: string } {
-  // The next-occurrence-to-instant math lives in `schedule-occurrence.ts` (the
-  // shared primitive the viewer-tz schedule renderer also uses). This helper
-  // keeps its legacy contract: it formats in the RUNTIME-default zone (no
-  // explicit timeZone below), so prefer the schedule renderer for new code.
-  const utcDate = nextOccurrenceInstant(
-    dayOfWeek,
-    startTime,
-    timezone,
-    opts.now ?? new Date(),
-  );
-
-  const localTimeFmt = new Intl.DateTimeFormat(locale, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  const localDayFmt = new Intl.DateTimeFormat(locale, { weekday: "long" });
-  const localTzFmt = new Intl.DateTimeFormat(locale, {
-    timeZoneName: "short",
-  });
-
-  const localTime = localTimeFmt.format(utcDate);
-  const localDay = localDayFmt.format(utcDate);
-  const tzParts = localTzFmt.formatToParts(utcDate);
-  const tzAbbrev = tzParts.find((p) => p.type === "timeZoneName")?.value ?? "";
-
-  return { localDay, localTime, tzAbbrev };
-}
