@@ -45,7 +45,10 @@ describe("formatCurrencyFromCents", () => {
 
 describe("formatDate", () => {
   it("formats date strings", () => {
-    const result = formatDate("2024-01-15T10:00:00Z", "en-US");
+    const result = formatDate("2024-01-15T10:00:00Z", "en-US", {
+      dateStyle: "medium",
+      timeZone: "UTC",
+    });
     expect(result).toContain("Jan");
     expect(result).toContain("15");
     expect(result).toContain("2024");
@@ -53,7 +56,10 @@ describe("formatDate", () => {
 
   it("formats Date objects", () => {
     const date = new Date("2024-06-20");
-    const result = formatDate(date, "en-US");
+    const result = formatDate(date, "en-US", {
+      dateStyle: "medium",
+      timeZone: "UTC",
+    });
     expect(result).toContain("Jun");
     expect(result).toContain("20");
   });

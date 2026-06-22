@@ -72,21 +72,31 @@ export function decimalToCents(value: string): number | null {
   return Math.round(n * 100);
 }
 
-export function formatTime(date: Date | string, locale?: string, timeZone?: string): string {
+// `locale` and `timeZone` are both required: a time-of-day always renders in
+// an explicit viewer zone, never the runtime default (CLAUDE.md viewer-zone
+// rule). The required `timeZone` is the type-level enforcement of that rule —
+// the compiler rejects a call that omits it, no lint heuristic needed.
+export function formatTime(date: Date | string, locale: string, timeZone: string): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat(locale ?? "en-GB", {
+  return new Intl.DateTimeFormat(locale, {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-    ...(timeZone ? { timeZone } : {}),
+    timeZone,
   }).format(d);
 }
 
-export function formatDate(date: Date | string, locale: string, options?: Intl.DateTimeFormatOptions): string {
+// `options` is required and must carry a `timeZone`: an instant always renders
+// in an explicit viewer zone (CLAUDE.md viewer-zone rule), enforced by the
+// type so a call can't silently fall back to the runtime default. A genuinely
+// zoneless calendar date uses `formatDateOnly` instead (which UTC-pins it).
+export function formatDate(
+  date: Date | string,
+  locale: string,
+  options: Intl.DateTimeFormatOptions & { timeZone: string },
+): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  // dateStyle is mutually exclusive with component options (month, day, etc.)
-  // in Intl.DateTimeFormat — only apply the default when no options are given.
-  return new Intl.DateTimeFormat(locale, options ?? { dateStyle: "medium" }).format(d);
+  return new Intl.DateTimeFormat(locale, options).format(d);
 }
 
 /**
