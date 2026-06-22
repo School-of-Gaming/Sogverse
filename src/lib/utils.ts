@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
-import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { twMerge } from "tailwind-merge";
 import { type SupportedCurrency } from "@/lib/constants/currency";
+import { nextOccurrenceInstant } from "@/lib/schedule-occurrence";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -203,26 +203,16 @@ export function formatScheduleLocal(
   locale: string,
   opts: { now?: Date } = {},
 ): { localDay: string; localTime: string; tzAbbrev: string } {
-  // Find the next occurrence of this weekday in the source timezone.
-  const now = opts.now ?? new Date();
-  const zonedNow = toZonedTime(now, timezone);
-  // toZonedTime returns a Date whose UTC fields represent wall-clock in the
-  // source TZ, so getUTCDay() gives the current weekday there.
-  const todayIso = zonedNow.getUTCDay(); // 0=Sun..6=Sat
-  const targetIso = dayOfWeek === 6 ? 0 : dayOfWeek + 1; // convert Mon=0..Sun=6 → Sun=0..Sat=6
-  let daysAhead = (targetIso - todayIso + 7) % 7;
-  if (daysAhead === 0) daysAhead = 7;
-
-  // Build a wall-clock date string in the source timezone
-  const refDate = new Date(zonedNow.getTime() + daysAhead * 86_400_000);
-  const { hours, minutes } = parseTime(startTime);
-  const year = refDate.getUTCFullYear();
-  const month = String(refDate.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(refDate.getUTCDate()).padStart(2, "0");
-  const h = String(hours).padStart(2, "0");
-  const m = String(minutes).padStart(2, "0");
-
-  const utcDate = fromZonedTime(`${year}-${month}-${day}T${h}:${m}:00`, timezone);
+  // The next-occurrence-to-instant math lives in `schedule-occurrence.ts` (the
+  // shared primitive the viewer-tz schedule renderer also uses). This helper
+  // keeps its legacy contract: it formats in the RUNTIME-default zone (no
+  // explicit timeZone below), so prefer the schedule renderer for new code.
+  const utcDate = nextOccurrenceInstant(
+    dayOfWeek,
+    startTime,
+    timezone,
+    opts.now ?? new Date(),
+  );
 
   const localTimeFmt = new Intl.DateTimeFormat(locale, {
     hour: "numeric",
