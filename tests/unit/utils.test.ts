@@ -5,6 +5,7 @@ import {
   formatCurrency,
   formatCurrencyFromCents,
   formatDate,
+  formatDateOnly,
   generateGamerEmail,
   extractUsernameFromGamerEmail,
   isGamerEmail,
@@ -56,6 +57,42 @@ describe("formatDate", () => {
     const result = formatDate(date, "en-US");
     expect(result).toContain("Jun");
     expect(result).toContain("20");
+  });
+});
+
+describe("formatDateOnly", () => {
+  it("renders the exact calendar date, independent of runtime/viewer zone", () => {
+    // UTC-pinned, so this is deterministic on any test runner and identical
+    // across a server (UTC) / client (browser zone) render — no hydration drift.
+    expect(formatDateOnly("2024-06-20", "en-US")).toContain("Jun 20");
+  });
+
+  it("derives the weekday via the options arg", () => {
+    // 2024-01-01 is a Monday.
+    expect(formatDateOnly("2024-01-01", "en-US", { weekday: "long" })).toBe(
+      "Monday",
+    );
+  });
+
+  it("ignores a caller-supplied timeZone — a date-only value is zoneless", () => {
+    // Even handed a negative-offset zone, the forced UTC keeps it on the 20th.
+    expect(
+      formatDateOnly("2024-06-20", "en-US", {
+        timeZone: "America/New_York",
+        dateStyle: "long",
+      }),
+    ).toContain("June 20");
+  });
+
+  it("avoids the day-boundary slip that formatDate suffers on a bare date", () => {
+    // The trap formatDateOnly exists to close: formatDate parses the string as
+    // UTC midnight and renders in the viewer zone, tipping to the previous day.
+    expect(
+      formatDate("2024-06-20", "en-US", {
+        timeZone: "America/New_York",
+        dateStyle: "long",
+      }),
+    ).toContain("June 19");
   });
 });
 

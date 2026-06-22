@@ -1,4 +1,5 @@
 import { addMinutes, clockTime } from "@/lib/time-of-day";
+import { formatDateOnly } from "@/lib/utils";
 import type { ProductBrowseRow } from "@/types";
 
 // Schedule formatting for the browse + purchased cards and the detail
@@ -36,6 +37,7 @@ export type ProductScheduleSummary =
       kind: "single"; // event
       tz: string;
       date: string;
+      weekday: string; // localised long weekday of `date` (e.g. "Thursday")
       time: { start: string; end: string } | null; // null when no slot exists
     };
 
@@ -75,14 +77,6 @@ export function formatWeekday(
   const d = new Date(WEEKDAY_SEED);
   d.setUTCDate(WEEKDAY_SEED.getUTCDate() + weekday);
   return new Intl.DateTimeFormat(locale, { weekday: form }).format(d);
-}
-
-function formatDateOnly(date: string, locale: string): string {
-  // Date-only string. Anchor to UTC noon so locale rendering doesn't tip
-  // it into the previous day for negative-offset zones.
-  return new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(
-    new Date(`${date}T12:00:00Z`),
-  );
 }
 
 export function formatTimezoneShort(tz: string, locale: string): string {
@@ -272,6 +266,7 @@ export function formatProductSchedule({
         kind: "single",
         tz,
         date: formatDateOnly(product.start_date, locale),
+        weekday: formatDateOnly(product.start_date, locale, { weekday: "long" }),
         time,
       };
     }

@@ -1,7 +1,5 @@
 import type {
   AppSupabaseClient,
-  Product,
-  ProductTranslation,
   ProductLongDescription,
   ProductType,
   ProductTopic,
@@ -78,11 +76,31 @@ function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
     .maybeSingle();
 }
 
+// Admin per-type list. Carries the translations the row renders plus the
+// weekly schedule slots — clubs that differ only by weekday are otherwise
+// indistinguishable in the list without opening each one. The slot shape
+// (`weekday, start_time, duration_minutes`) matches what
+// `formatProductSchedule` consumes, so the list reuses the same schedule
+// formatter as the browse card. `product_type`, `start_date`, `end_date`
+// and `timezone` come from `*` (columns on Product).
+function buildProductsByTypeQuery(
+  supabase: AppSupabaseClient,
+  type: ProductType,
+) {
+  return supabase
+    .from("products")
+    .select(
+      "*, product_translations(*), schedule_slots(weekday, start_time, duration_minutes)",
+    )
+    .eq("product_type", type)
+    .order("created_at", { ascending: false });
+}
+
 // `topic` is a column on Product (the product_topic enum) — its label is
 // resolved client-side via PRODUCT_TOPICS, so no join is needed here.
-export type ProductWithDetails = Product & {
-  product_translations: ProductTranslation[];
-};
+export type ProductWithDetails = QueryData<
+  ReturnType<typeof buildProductsByTypeQuery>
+>[number];
 
 // Parent-facing single-product detail. Shares the browse row's joins and adds
 // a flattened `holidays` array — every (date, reason) pair pulled from the
@@ -192,11 +210,7 @@ export class ProductsService {
   constructor(private supabase: AppSupabaseClient) {}
 
   async listByType(type: ProductType): Promise<ProductWithDetails[]> {
-    const { data, error } = await this.supabase
-      .from("products")
-      .select("*, product_translations(*)")
-      .eq("product_type", type)
-      .order("created_at", { ascending: false });
+    const { data, error } = await buildProductsByTypeQuery(this.supabase, type);
 
     if (error) throw error;
     return data;

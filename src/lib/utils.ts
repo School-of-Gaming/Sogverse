@@ -90,6 +90,33 @@ export function formatDate(date: Date | string, locale: string, options?: Intl.D
   return new Intl.DateTimeFormat(locale, options ?? { dateStyle: "medium" }).format(d);
 }
 
+/**
+ * Format a date-only string ("YYYY-MM-DD") — a calendar date carrying no time
+ * or zone (a product start/end date, a weekday label, etc.).
+ *
+ * Use this, not `formatDate`, whenever the input is a bare date. The whole job
+ * here is to render that date as itself, identically, everywhere — so it is
+ * pinned to UTC at both ends: parsed as UTC midnight and rendered with
+ * `timeZone: "UTC"`. That removes three failure modes we've been bitten by:
+ *   - **Hydration mismatch** — the server renders in UTC and the client in the
+ *     browser's zone; without a fixed zone the date portion can differ between
+ *     the two passes. UTC on both sides makes them byte-identical.
+ *   - **Offset tipping** — `formatDate` parses the string as UTC midnight and
+ *     renders in the runtime zone, slipping a day for negative-offset viewers;
+ *     a noon anchor instead slips for extreme positive offsets (UTC+13/+14).
+ *     Rendering in UTC can't tip in either direction.
+ *   - **DST** — UTC has no daylight saving, so no boundary surprises.
+ * `timeZone: "UTC"` is forced last so a caller can't reintroduce zone drift for
+ * what is, by definition, a zoneless date. Pass `options` for a non-default
+ * render (e.g. `{ weekday: "long" }` for the weekday name).
+ */
+export function formatDateOnly(date: string, locale: string, options?: Intl.DateTimeFormatOptions): string {
+  return new Intl.DateTimeFormat(locale, {
+    ...(options ?? { dateStyle: "medium" }),
+    timeZone: "UTC",
+  }).format(new Date(`${date}T00:00:00Z`));
+}
+
 
 export function generateGamerEmail(username: string): string {
   return `${username.toLowerCase()}@gamer.sogverse.internal`;

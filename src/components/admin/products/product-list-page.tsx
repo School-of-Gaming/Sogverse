@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { Plus, Calendar, Users, Clock, Hourglass } from "lucide-react";
+import {
+  Plus,
+  Calendar,
+  CalendarClock,
+  Users,
+  Clock,
+  Hourglass,
+} from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { NavChevron } from "@/components/ui/nav-chevron";
@@ -12,6 +19,11 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { formatDate } from "@/lib/utils";
 import { effectiveStatus, pendingHintKey } from "@/lib/products/effective-status";
+import {
+  formatProductSchedule,
+  joinScheduleGroups,
+  type ProductScheduleSummary,
+} from "@/components/public/products/format-product-schedule";
 import { ProductTypeInfoCard } from "./product-type-info-card";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
@@ -53,6 +65,28 @@ function renderPendingHint(
     formatted.date = formatDate(hint.values.date, locale);
   if (hint.values.count !== undefined) formatted.count = hint.values.count;
   return t(`list.pendingHint.${hint.key}`, formatted);
+}
+
+// One compact "when" line for a list row: weekday + time, no date. Two
+// products can be identical except for which days/times they run — clubs that
+// differ only by weekday, camps with the same date range but different days
+// (Mon/Wed vs Tue/Thu), or two events on different weekdays. The row's date
+// chip can't separate those, so we surface the cadence. Clubs and camps join
+// their weekday groups ("Mon, Wed · 09:00–15:00"); events show their single
+// day + time ("Thursday · 18:00–19:30"). The date itself stays on the date
+// chip — this line is purely the day-of-week/time the chip can't convey.
+function scheduleRowLine(schedule: ProductScheduleSummary): string | null {
+  switch (schedule.kind) {
+    case "tbd":
+      return null;
+    case "recurring":
+    case "ranged":
+      return joinScheduleGroups(schedule.groups) || null;
+    case "single":
+      return schedule.time
+        ? `${schedule.weekday} · ${schedule.time.start}–${schedule.time.end}`
+        : schedule.weekday;
+  }
 }
 
 export function ProductListPage({ productType }: ProductListPageProps) {
@@ -119,6 +153,9 @@ export function ProductListPage({ productType }: ProductListPageProps) {
               status === "pending"
                 ? renderPendingHint(pendingHintKey(p, now), uiLocale, t)
                 : null;
+            const scheduleLine = scheduleRowLine(
+              formatProductSchedule({ product: p, locale: uiLocale }),
+            );
             return (
               <Link
                 key={p.id}
@@ -172,6 +209,12 @@ export function ProductListPage({ productType }: ProductListPageProps) {
                           {p.end_date && p.end_date !== p.start_date
                             ? ` → ${formatDate(p.end_date, uiLocale)}`
                             : ""}
+                        </span>
+                      )}
+                      {scheduleLine && (
+                        <span className="inline-flex items-center gap-1">
+                          <CalendarClock className="h-3 w-3" />
+                          {scheduleLine}
                         </span>
                       )}
                       {p.seat_count !== null && (
