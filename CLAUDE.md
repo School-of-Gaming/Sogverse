@@ -164,7 +164,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Testing conventions | `tests/` |
 
 - `docs/` holds the docs a human deliberately maintains and that don't map to one directory: cross-cutting architecture spanning many systems (products, db-authorization, performance), point-in-time records (security audit, bug/fix write-ups, gap analyses), and ops runbooks (slack, admin quota, stripe testing). When a topic is in neither a colocated `CLAUDE.md` nor `docs/`, treat the code as the source of truth.
-- `TODO.md` is the running list of cross-cutting work we know we want to come back to. Distinct from `docs/`.
+- `TODO.md` is the running list of cross-cutting work we know we want to come back to. Distinct from `docs/`. **When an item is fully done with nothing left to discuss, delete it — don't check it off (`[x]`).** `TODO.md` tracks open work, not a changelog; the record of what was done lives in git history and in the docs/code the work produced. Leave `[ ]`/`[x]` only for partially-done items where the checked sub-points still give context for the open ones.
 
 ## Environment Variables
 
