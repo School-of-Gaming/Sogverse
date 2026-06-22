@@ -1,6 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
+import { useNow, useTimezone } from "@/providers";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
@@ -39,6 +40,10 @@ interface ProductBrowseCardProps {
 export function ProductBrowseCard({ product, counts }: ProductBrowseCardProps) {
   const t = useTranslations("productBrowse.card");
   const uiLocale = resolveLocale(useLocale());
+  const timeZone = useTimezone();
+  // `useNow()` is seeded server-side at request time, so SSR and the first
+  // client render agree — no hydration drift in the converted schedule.
+  const now = useNow();
   const topicLabel = useTopicLabel();
   const currency = DEFAULT_CURRENCY;
 
@@ -52,11 +57,11 @@ export function ProductBrowseCard({ product, counts }: ProductBrowseCardProps) {
 
   const state = deriveRegistrationState({
     product,
-    now: new Date(),
+    now,
     participationsCount,
   });
 
-  const schedule = formatProductSchedule({ product, locale: uiLocale });
+  const schedule = formatProductSchedule({ product, locale: uiLocale, timeZone, now });
   const price = formatProductPrice({
     prices: product.product_prices,
     billingMode: product.billing_mode,
@@ -65,7 +70,7 @@ export function ProductBrowseCard({ product, counts }: ProductBrowseCardProps) {
     locale: uiLocale,
   });
 
-  const scheduleLines = scheduleCardLines(schedule, { withTimezone: true });
+  const scheduleLines = scheduleCardLines(schedule);
 
   const seatsHint: SeatsHint | null =
     product.seat_count !== null

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
+import { useNow, useTimezone } from "@/providers";
 import {
   Plus,
   Calendar,
@@ -93,12 +94,14 @@ export function ProductListPage({ productType }: ProductListPageProps) {
   const config = PRODUCT_TYPE_CONFIG[productType];
   const t = useTranslations("admin.products");
   const uiLocale = resolveLocale(useLocale());
+  const timeZone = useTimezone();
   const label = t(`types.${config.i18nKey}.label`);
   const plural = t(`types.${config.i18nKey}.plural`);
   const { data: products, isLoading } = useProductsByType(productType);
-  // One Date for the whole render so every row derives status from the
-  // same instant — avoids a row-level boundary on the day a status flips.
-  const now = new Date();
+  // One `now` for the whole render so every row derives status from the same
+  // instant — avoids a row-level boundary on the day a status flips. From
+  // `useNow()` (server-seeded) so the schedule conversion is hydration-stable.
+  const now = useNow();
 
   return (
     <div className="space-y-6">
@@ -154,7 +157,7 @@ export function ProductListPage({ productType }: ProductListPageProps) {
                 ? renderPendingHint(pendingHintKey(p, now), uiLocale, t)
                 : null;
             const scheduleLine = scheduleRowLine(
-              formatProductSchedule({ product: p, locale: uiLocale }),
+              formatProductSchedule({ product: p, locale: uiLocale, timeZone, now }),
             );
             return (
               <Link
