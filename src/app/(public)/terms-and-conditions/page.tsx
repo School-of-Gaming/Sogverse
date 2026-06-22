@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
-import { formatDate } from "@/lib/utils";
+import { formatDateOnly } from "@/lib/utils";
 import { rawStringArray } from "@/lib/i18n/raw-messages";
 import { PolicyPage } from "@/components/legal/policy-page";
 
@@ -10,8 +10,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 // The date the terms *text* last changed — bump it whenever the copy below
-// (in messages/*.json) is edited. Rendered through the locale-aware
-// `formatDate` helper rather than hardcoded per language.
+// (in messages/*.json) is edited. A date-only value, rendered through the
+// locale-aware, UTC-pinned `formatDateOnly` helper rather than hardcoded per
+// language (a plain calendar date carries no zone).
 const LAST_UPDATED = "2026-06-08";
 
 // Section order is owned here, not in the message files, so the same structure
@@ -39,7 +40,7 @@ export default async function TermsPage() {
     <PolicyPage
       title={t("title")}
       lastUpdated={t("lastUpdated", {
-        date: formatDate(LAST_UPDATED, locale, { dateStyle: "long" }),
+        date: formatDateOnly(LAST_UPDATED, locale, { dateStyle: "long" }),
       })}
       intro={{
         heading: t("intro.heading"),

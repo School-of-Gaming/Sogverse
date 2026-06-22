@@ -1,5 +1,4 @@
 import { clsx, type ClassValue } from "clsx";
-import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { twMerge } from "tailwind-merge";
 import { type SupportedCurrency } from "@/lib/constants/currency";
 
@@ -73,21 +72,31 @@ export function decimalToCents(value: string): number | null {
   return Math.round(n * 100);
 }
 
-export function formatTime(date: Date | string, locale?: string, timeZone?: string): string {
+// `locale` and `timeZone` are both required: a time-of-day always renders in
+// an explicit viewer zone, never the runtime default (CLAUDE.md viewer-zone
+// rule). The required `timeZone` is the type-level enforcement of that rule —
+// the compiler rejects a call that omits it, no lint heuristic needed.
+export function formatTime(date: Date | string, locale: string, timeZone: string): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat(locale ?? "en-GB", {
+  return new Intl.DateTimeFormat(locale, {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-    ...(timeZone ? { timeZone } : {}),
+    timeZone,
   }).format(d);
 }
 
-export function formatDate(date: Date | string, locale: string, options?: Intl.DateTimeFormatOptions): string {
+// `options` is required and must carry a `timeZone`: an instant always renders
+// in an explicit viewer zone (CLAUDE.md viewer-zone rule), enforced by the
+// type so a call can't silently fall back to the runtime default. A genuinely
+// zoneless calendar date uses `formatDateOnly` instead (which UTC-pins it).
+export function formatDate(
+  date: Date | string,
+  locale: string,
+  options: Intl.DateTimeFormatOptions & { timeZone: string },
+): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  // dateStyle is mutually exclusive with component options (month, day, etc.)
-  // in Intl.DateTimeFormat — only apply the default when no options are given.
-  return new Intl.DateTimeFormat(locale, options ?? { dateStyle: "medium" }).format(d);
+  return new Intl.DateTimeFormat(locale, options).format(d);
 }
 
 /**
@@ -187,56 +196,3 @@ export const DAYS_OF_WEEK = [
   "Saturday",
   "Sunday",
 ] as const;
-
-/**
- * Convert a recurring wall-clock schedule to the viewer's local timezone.
- *
- * @param dayOfWeek  0 (Monday) – 6 (Sunday) matching DAYS_OF_WEEK
- * @param startTime  "HH:MM" wall-clock time in the source timezone
- * @param timezone   IANA timezone of the source (e.g. "Europe/Helsinki")
- * @returns localDay, localTime (e.g. "3:00 PM"), and tzAbbrev (e.g. "EST")
- */
-export function formatScheduleLocal(
-  dayOfWeek: number,
-  startTime: string,
-  timezone: string,
-  locale: string,
-  opts: { now?: Date } = {},
-): { localDay: string; localTime: string; tzAbbrev: string } {
-  // Find the next occurrence of this weekday in the source timezone.
-  const now = opts.now ?? new Date();
-  const zonedNow = toZonedTime(now, timezone);
-  // toZonedTime returns a Date whose UTC fields represent wall-clock in the
-  // source TZ, so getUTCDay() gives the current weekday there.
-  const todayIso = zonedNow.getUTCDay(); // 0=Sun..6=Sat
-  const targetIso = dayOfWeek === 6 ? 0 : dayOfWeek + 1; // convert Mon=0..Sun=6 → Sun=0..Sat=6
-  let daysAhead = (targetIso - todayIso + 7) % 7;
-  if (daysAhead === 0) daysAhead = 7;
-
-  // Build a wall-clock date string in the source timezone
-  const refDate = new Date(zonedNow.getTime() + daysAhead * 86_400_000);
-  const { hours, minutes } = parseTime(startTime);
-  const year = refDate.getUTCFullYear();
-  const month = String(refDate.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(refDate.getUTCDate()).padStart(2, "0");
-  const h = String(hours).padStart(2, "0");
-  const m = String(minutes).padStart(2, "0");
-
-  const utcDate = fromZonedTime(`${year}-${month}-${day}T${h}:${m}:00`, timezone);
-
-  const localTimeFmt = new Intl.DateTimeFormat(locale, {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  const localDayFmt = new Intl.DateTimeFormat(locale, { weekday: "long" });
-  const localTzFmt = new Intl.DateTimeFormat(locale, {
-    timeZoneName: "short",
-  });
-
-  const localTime = localTimeFmt.format(utcDate);
-  const localDay = localDayFmt.format(utcDate);
-  const tzParts = localTzFmt.formatToParts(utcDate);
-  const tzAbbrev = tzParts.find((p) => p.type === "timeZoneName")?.value ?? "";
-
-  return { localDay, localTime, tzAbbrev };
-}

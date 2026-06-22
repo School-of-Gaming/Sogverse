@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
+import { useNow, useTimezone } from "@/providers";
 import {
   Plus,
   Calendar,
@@ -17,7 +18,7 @@ import { useProductsByType } from "@/services/products";
 import { productImageUrl } from "@/lib/images/product-image-url";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatDateOnly } from "@/lib/utils";
 import { effectiveStatus, pendingHintKey } from "@/lib/products/effective-status";
 import {
   formatProductSchedule,
@@ -49,6 +50,7 @@ const STATUS_STYLE: Record<string, string> = {
 function renderPendingHint(
   hint: ReturnType<typeof pendingHintKey>,
   locale: string,
+  timeZone: string,
   t: (
     key:
       | "list.pendingHint.registrationOpens"
@@ -62,7 +64,13 @@ function renderPendingHint(
   if (!hint) return null;
   const formatted: Record<string, string | number> = {};
   if (hint.values.date !== undefined)
-    formatted.date = formatDate(hint.values.date, locale);
+    // `registrationOpens` carries a `registration_opens_at` timestamptz
+    // instant → render in the viewer's zone; every other dated hint carries
+    // date-only `start_date` → UTC-pinned (a bare calendar date has no zone).
+    formatted.date =
+      hint.key === "registrationOpens"
+        ? formatDate(hint.values.date, locale, { dateStyle: "medium", timeZone })
+        : formatDateOnly(hint.values.date, locale);
   if (hint.values.count !== undefined) formatted.count = hint.values.count;
   return t(`list.pendingHint.${hint.key}`, formatted);
 }
@@ -93,12 +101,14 @@ export function ProductListPage({ productType }: ProductListPageProps) {
   const config = PRODUCT_TYPE_CONFIG[productType];
   const t = useTranslations("admin.products");
   const uiLocale = resolveLocale(useLocale());
+  const timeZone = useTimezone();
   const label = t(`types.${config.i18nKey}.label`);
   const plural = t(`types.${config.i18nKey}.plural`);
   const { data: products, isLoading } = useProductsByType(productType);
-  // One Date for the whole render so every row derives status from the
-  // same instant — avoids a row-level boundary on the day a status flips.
-  const now = new Date();
+  // One `now` for the whole render so every row derives status from the same
+  // instant — avoids a row-level boundary on the day a status flips. From
+  // `useNow()` (server-seeded) so the schedule conversion is hydration-stable.
+  const now = useNow();
 
   return (
     <div className="space-y-6">
@@ -151,11 +161,28 @@ export function ProductListPage({ productType }: ProductListPageProps) {
             const status = effectiveStatus(p, now, 0);
             const hint =
               status === "pending"
-                ? renderPendingHint(pendingHintKey(p, now), uiLocale, t)
+                ? renderPendingHint(pendingHintKey(p, now), uiLocale, timeZone, t)
                 : null;
-            const scheduleLine = scheduleRowLine(
-              formatProductSchedule({ product: p, locale: uiLocale }),
-            );
+            const schedule = formatProductSchedule({
+              product: p,
+              locale: uiLocale,
+              timeZone,
+              now,
+            });
+            const scheduleLine = scheduleRowLine(schedule);
+            // A time-bearing event is a date+time instant, so its date renders in
+            // the viewer's zone (may differ from the stored start_date). Every
+            // other dated value here — a camp's date range, a club term date, a
+            // no-time event — is a zoneless calendar date that stays UTC-pinned.
+            const dateChip =
+              schedule.kind === "single" && schedule.time
+                ? schedule.date
+                : p.start_date
+                  ? formatDateOnly(p.start_date, uiLocale) +
+                    (p.end_date && p.end_date !== p.start_date
+                      ? ` → ${formatDateOnly(p.end_date, uiLocale)}`
+                      : "")
+                  : null;
             return (
               <Link
                 key={p.id}
@@ -202,13 +229,10 @@ export function ProductListPage({ productType }: ProductListPageProps) {
                           max: p.max_age,
                         })}
                       </span>
-                      {p.start_date && (
+                      {dateChip && (
                         <span className="inline-flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {formatDate(p.start_date, uiLocale)}
-                          {p.end_date && p.end_date !== p.start_date
-                            ? ` → ${formatDate(p.end_date, uiLocale)}`
-                            : ""}
+                          {dateChip}
                         </span>
                       )}
                       {scheduleLine && (
