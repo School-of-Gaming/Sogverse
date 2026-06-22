@@ -20,7 +20,7 @@ import { SUPPORTED_CURRENCIES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { productImageUrl } from "@/lib/images/product-image-url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatDateOnly } from "@/lib/utils";
 import { ProductOverviewCard } from "@/components/public/products/product-overview-card";
 import {
   useProductAdmin,
@@ -155,6 +155,7 @@ export function ProductDetailsPage({
         product={product}
         topicName={topicName}
         uiLocale={uiLocale}
+        timeZone={timeZone}
         t={t}
         c={c}
       />
@@ -281,12 +282,14 @@ function OperationalFacts({
   product,
   topicName,
   uiLocale,
+  timeZone,
   t,
   c,
 }: {
   product: ProductAdminDetailRow;
   topicName: string | null;
   uiLocale: string;
+  timeZone: string;
   t: ReturnType<typeof useTranslations<"admin.products">>;
   c: ReturnType<typeof useTranslations<"common">>;
 }) {
@@ -300,9 +303,9 @@ function OperationalFacts({
   const termDates = (() => {
     if (!isClub || !product.start_date) return null;
     if (product.end_date && product.end_date !== product.start_date) {
-      return `${formatDate(product.start_date, uiLocale)} → ${formatDate(product.end_date, uiLocale)}`;
+      return `${formatDateOnly(product.start_date, uiLocale)} → ${formatDateOnly(product.end_date, uiLocale)}`;
     }
-    return formatDate(product.start_date, uiLocale);
+    return formatDateOnly(product.start_date, uiLocale);
   })();
 
   const seatsLine =
@@ -347,6 +350,7 @@ function OperationalFacts({
           {formatDate(product.registration_opens_at, uiLocale, {
             dateStyle: "medium",
             timeStyle: "short",
+            timeZone,
           })}
         </Fact>
 

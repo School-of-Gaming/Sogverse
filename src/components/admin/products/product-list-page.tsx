@@ -18,7 +18,7 @@ import { useProductsByType } from "@/services/products";
 import { productImageUrl } from "@/lib/images/product-image-url";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatDateOnly } from "@/lib/utils";
 import { effectiveStatus, pendingHintKey } from "@/lib/products/effective-status";
 import {
   formatProductSchedule,
@@ -50,6 +50,7 @@ const STATUS_STYLE: Record<string, string> = {
 function renderPendingHint(
   hint: ReturnType<typeof pendingHintKey>,
   locale: string,
+  timeZone: string,
   t: (
     key:
       | "list.pendingHint.registrationOpens"
@@ -63,7 +64,13 @@ function renderPendingHint(
   if (!hint) return null;
   const formatted: Record<string, string | number> = {};
   if (hint.values.date !== undefined)
-    formatted.date = formatDate(hint.values.date, locale);
+    // `registrationOpens` carries a `registration_opens_at` timestamptz
+    // instant → render in the viewer's zone; every other dated hint carries
+    // date-only `start_date` → UTC-pinned (a bare calendar date has no zone).
+    formatted.date =
+      hint.key === "registrationOpens"
+        ? formatDate(hint.values.date, locale, { dateStyle: "medium", timeZone })
+        : formatDateOnly(hint.values.date, locale);
   if (hint.values.count !== undefined) formatted.count = hint.values.count;
   return t(`list.pendingHint.${hint.key}`, formatted);
 }
@@ -154,7 +161,7 @@ export function ProductListPage({ productType }: ProductListPageProps) {
             const status = effectiveStatus(p, now, 0);
             const hint =
               status === "pending"
-                ? renderPendingHint(pendingHintKey(p, now), uiLocale, t)
+                ? renderPendingHint(pendingHintKey(p, now), uiLocale, timeZone, t)
                 : null;
             const scheduleLine = scheduleRowLine(
               formatProductSchedule({ product: p, locale: uiLocale, timeZone, now }),
@@ -208,9 +215,9 @@ export function ProductListPage({ productType }: ProductListPageProps) {
                       {p.start_date && (
                         <span className="inline-flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {formatDate(p.start_date, uiLocale)}
+                          {formatDateOnly(p.start_date, uiLocale)}
                           {p.end_date && p.end_date !== p.start_date
-                            ? ` → ${formatDate(p.end_date, uiLocale)}`
+                            ? ` → ${formatDateOnly(p.end_date, uiLocale)}`
                             : ""}
                         </span>
                       )}
