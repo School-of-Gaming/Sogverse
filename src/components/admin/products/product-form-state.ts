@@ -228,11 +228,12 @@ export function startModeUsesThreshold(mode: StartMode): boolean {
 export function locationPickerMode(
   config: ProductTypeConfig,
   isRemote: boolean,
-): "site" | "jurisdiction" | null {
+): "site" | "municipality" | null {
   // Online products only need a location picker for municipality clubs
-  // (they need a jurisdiction anchor). In-person products always pick a site.
+  // (they anchor to the funding municipality). In-person products always
+  // pick a site.
   if (isRemote) {
-    return config.requiresMunicipalityWhenOnline ? "jurisdiction" : null;
+    return config.requiresMunicipalityWhenOnline ? "municipality" : null;
   }
   return "site";
 }

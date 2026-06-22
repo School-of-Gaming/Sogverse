@@ -22,6 +22,7 @@
       "voiceSession": "Röstsession",
       "help": "Hjälp",
       "shop": "Butik",
+      "schools": "Kommunklubbar",
       "unlockPin": "Ange PIN",
       "resetPin": "Återställ PIN",
       "changePin": "Byt PIN",
@@ -398,13 +399,13 @@
         "clearSearch": "Rensa sökning",
         "noResults": "Inga platser matchar \"{query}\".",
         "hintSite": "Välj en lokal. Saknas någon? Lägg till den under kommunen direkt här.",
-        "hintJurisdiction": "Välj ett land, en region eller en kommun. Onlineprodukter har ingen fysisk lokal.",
+        "hintMunicipality": "Välj den finländska kommun som klubben gäller — den som finansierar den. Lokaler och andra länder kan inte väljas här.",
         "addCountry": "Lägg till nytt land",
         "change": "Ändra",
         "edit": "Redigera",
         "cancel": "Avbryt",
         "pick": "Välj",
-        "noVenueHint": "Ingen fysisk lokal. Föräldrar som söker i {name} — eller i ett mindre område inom det — ser denna produkt.",
+        "noVenueHint": "Ingen fysisk lokal. Föräldrar i {name} ser denna klubb när de bläddrar.",
         "memberNotesLabel": "Medlemssynliga anteckningar",
         "memberNotesFieldLabel": "Anteckningar för föräldrar och spelare",
         "memberNotesPlaceholder": "Adressdetaljer, parkering, tillgänglighet — allt föräldrar behöver veta.",
@@ -452,7 +453,7 @@
         "deliveredInHint": "Det primära språk som används under tillfällena.",
         "onlineNoLocation": "Online och tillgänglig för alla — ingen plats behövs. Alla föräldrar som bläddrar ser detta, oavsett var de bor.",
         "voiceRoomAuto": "Ett röstrum skapas automatiskt för denna produkt.",
-        "municipalityHint": "Kommunklubbar är alltid kopplade till en specifik kommun — den som betalar. Föräldrar från den kommunen (eller mindre område inom den) ser den när de bläddrar.",
+        "municipalityHint": "Kommunklubbar är alltid kopplade till en specifik finländsk kommun — den som betalar. Föräldrar från den kommunen ser den när de bläddrar.",
         "siteHint": "Var tillfällena fysiskt äger rum.",
         "eventSingleDay": "Evenemang äger rum ett enda datum.",
         "thresholdOnly": "Inget fast startdatum än. Föräldrar ser en räknare \"X av Y behövs\" medan den fylls. Du trycker Starta när du har tillräckligt med anmälningar och väljer första tillfällets datum då.",
@@ -1231,6 +1232,32 @@
           "a": "Skapa ett föräldrakonto, bläddra bland utbudet och anmäl ditt barn. Hen loggar in med sitt eget konto inför träffarna."
         }
       }
+    }
+  },
+  "schools": {
+    "hero": {
+      "title": "Spelklubbar i <primary>din kommun</primary>",
+      "subtitle": "School of Gaming ordnar Minecraft-klubbar tillsammans med finländska kommuner — ledda av professionella spelpedagoger, nära hemmet. Hitta din kommun och se vad som erbjuds.",
+      "howItWorks": "Beroende på kommun hålls klubben online hemifrån eller på plats i ditt barns skola — och en Gedu är alltid med."
+    },
+    "search": {
+      "label": "Sök din kommun",
+      "placeholder": "Sök kommuner…",
+      "noMatches": "Ingen kommun matchar ”{query}”. Kontrollera stavningen eller prova en närliggande kommun."
+    },
+    "available": {
+      "heading": "Var vi driver klubbar",
+      "subheading": "I dessa kommuner finns klubbar som din spelare kan gå med i direkt.",
+      "empty": "Våra första kommunklubbar är på väg. Sök din kommun för att se om vi har nått den ännu."
+    },
+    "status": {
+      "available": "Klubbar tillgängliga",
+      "comingSoon": "Inget här ännu"
+    },
+    "waitlistNote": "Platserna är begränsade och klubbarna har ofta en väntelista — avboka din anmälan om ditt barn slutar, så att en annan spelare kan ta platsen.",
+    "notListed": {
+      "title": "Hittar du inte din kommun?",
+      "body": "Vi lägger till nya kommuner hela tiden. Under tiden är våra onlineklubbar öppna för spelare var de än bor. Frågor?"
     }
   },
   "productBrowse": {

@@ -22,6 +22,7 @@
       "voiceSession": "Voice Session",
       "help": "Help",
       "shop": "Shop",
+      "schools": "Municipality Clubs",
       "unlockPin": "Enter PIN",
       "resetPin": "Reset PIN",
       "changePin": "Change PIN",
@@ -398,13 +399,13 @@
         "clearSearch": "Clear search",
         "noResults": "No locations match \"{query}\".",
         "hintSite": "Pick a site. Missing one? Add it inline under its municipality.",
-        "hintJurisdiction": "Pick a country, region, or municipality. Online products don't have a physical venue.",
+        "hintMunicipality": "Pick the Finnish municipality this club is for — the one that funds it. Sites and other countries aren't options here.",
         "addCountry": "Add a new country",
         "change": "Change",
         "edit": "Edit",
         "cancel": "Cancel",
         "pick": "Pick",
-        "noVenueHint": "No physical venue. Parents browsing in {name} — or any smaller area inside it — will see this product.",
+        "noVenueHint": "No physical venue. Parents in {name} will see this club when they browse.",
         "memberNotesLabel": "Member-visible notes",
         "memberNotesFieldLabel": "Notes shown to parents and gamers",
         "memberNotesPlaceholder": "Address details, parking, accessibility — anything parents need to know.",
@@ -452,7 +453,7 @@
         "deliveredInHint": "The primary language used during sessions.",
         "onlineNoLocation": "Online and available to anyone — no location needed. Any parent browsing will see this, no matter where they live.",
         "voiceRoomAuto": "A voice room will be set up for this product automatically.",
-        "municipalityHint": "Municipality clubs are always tied to a specific municipality — the one paying for it. Parents from that municipality (or anywhere smaller inside it) will see it when they browse.",
+        "municipalityHint": "Municipality clubs are always tied to a specific Finnish municipality — the one paying for it. Parents from that municipality will see it when they browse.",
         "siteHint": "Where sessions physically happen.",
         "eventSingleDay": "Events happen on a single date.",
         "thresholdOnly": "No fixed start date yet. Parents see a \"X of Y needed\" counter while it fills up. You press Start once you have enough sign-ups and pick the first session date then.",
@@ -1231,6 +1232,32 @@
           "a": "Create a parent account, browse what's on offer, and enrol your child. They'll log in with their own account for sessions."
         }
       }
+    }
+  },
+  "schools": {
+    "hero": {
+      "title": "Game clubs in <primary>your municipality</primary>",
+      "subtitle": "School of Gaming runs Minecraft clubs together with Finnish municipalities — guided by professional game educators, close to home. Find your municipality to see what's on.",
+      "howItWorks": "Depending on your municipality, sessions run online from home or in person at your child's school — and a Gedu is there every time."
+    },
+    "search": {
+      "label": "Search for your municipality",
+      "placeholder": "Search municipalities…",
+      "noMatches": "No municipality matches \"{query}\". Check the spelling, or try a nearby one."
+    },
+    "available": {
+      "heading": "Where we're running clubs",
+      "subheading": "These municipalities have clubs your gamer can join right now.",
+      "empty": "Our first municipality clubs are on the way. Search for your municipality to check whether we've reached it yet."
+    },
+    "status": {
+      "available": "Clubs available",
+      "comingSoon": "Nothing here yet"
+    },
+    "waitlistNote": "Spots are limited and clubs often have a waiting list — please cancel your registration if your child stops, so another gamer can take the place.",
+    "notListed": {
+      "title": "Don't see your municipality?",
+      "body": "We're adding new municipalities all the time. In the meantime, our online clubs are open to gamers anywhere. Questions?"
     }
   },
   "productBrowse": {

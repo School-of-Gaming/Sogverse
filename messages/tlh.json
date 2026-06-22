@@ -22,6 +22,7 @@
       "voiceSession": "jatlh poH",
       "help": "boQ",
       "shop": "ngevwI'",
+      "schools": "veng ghomHommey",
       "unlockPin": "PIN yIghItlh",
       "resetPin": "PIN yIchu'qa'",
       "changePin": "PIN yIchoH",
@@ -443,13 +444,13 @@
         "clearSearch": "nejmey yIteq",
         "noResults": "\"{query}\" Daq pagh.",
         "hintSite": "Daq yIwIv. Hutlh'a'? veng bIngDaq yIchu'.",
-        "hintJurisdiction": "Sepjup, Sep, veng yIwIv. rurmey De' Daq ghajbe'.",
+        "hintMunicipality": "veng yIwIv — Huch nob veng. Daqmey latlh Sepmey je luwIvlaHbe'.",
         "addCountry": "Sepjup chu' yIchu'",
         "change": "choH",
         "edit": "choH",
         "cancel": "pegh",
         "pick": "wIv",
-        "noVenueHint": "Daq pagh. {name} vavmey — qoj qo'Daq Sovmey — De' cha'.",
+        "noVenueHint": "Daq pagh. {name} vavmey De' cha'.",
         "memberNotesLabel": "ghom De' (vavmey je ghItlh)",
         "memberNotesFieldLabel": "vavmey je ghItlh De'",
         "memberNotesPlaceholder": "Daq mIw, mIv pa', baH — vavmey poQ.",
@@ -497,7 +498,7 @@
         "deliveredInHint": "qaStaHvISmeyDaq Hol pIn.",
         "onlineNoLocation": "rurmey — Daq poQbe'. Hoch vavmey nej Hoch lulegh, qo'Daq pagh.",
         "voiceRoomAuto": "voice room chenmoHlu'.",
-        "municipalityHint": "ghomHom veng Sub veng — Huch nob veng. veng vavmey (qoj qo'Daq Sov vengDaq) lulegh.",
+        "municipalityHint": "ghomHom veng Sub veng — Huch nob veng. veng vavmey neH lulegh.",
         "siteHint": "qaStaHvIS Daq mab.",
         "eventSingleDay": "Qu'mey wa' jaj qaS.",
         "thresholdOnly": "jaj tagh DaH pagh. vavmey \"X / Y poQ\" laSvargh lulegh teb. ghItlh law' tIghaj 'ej tagh yIqotlh, jaj tagh yIngu' qIb.",
@@ -1276,6 +1277,32 @@
           "a": "vav Account yIchel, yIQong, je puqlIj yIqar. qep'a'mey luQong puqpu', Account chaj lo'taHvIS."
         }
       }
+    }
+  },
+  "schools": {
+    "hero": {
+      "title": "<primary>venglIjDaq</primary> Qup ghomHommey",
+      "subtitle": "Suomngan vengmey tlhej Minecraft ghomHommey chenmoH School of Gaming — Qup pIn'a'pu' lughoSmoH, juH retlhDaq. venglIj yISam 'ej nuq tu'lu' yIlegh.",
+      "howItWorks": "venglIj ghaj, juHDaq rurmey ghap puqlIj DuSaQDaq ghomHom — 'ej reH Gedu tu'lu'."
+    },
+    "search": {
+      "label": "venglIj yISam",
+      "placeholder": "vengmey yISam…",
+      "noMatches": "”{query}” rur veng pagh. ghItlh yI'ol pagh retlh veng yInID."
+    },
+    "available": {
+      "heading": "ghomHommey wIvangbogh Daqmey",
+      "subheading": "naDev vengmeyDaq ghomHommey tu'lu', DaH lumuvlaH pelaajalIj.",
+      "empty": "ghomHommaj wa'DIch ghoS. venglIj yISam 'ej wImaSpu''a' yIlegh."
+    },
+    "status": {
+      "available": "ghomHommey tu'lu'",
+      "comingSoon": "pagh naDev"
+    },
+    "waitlistNote": "puS Daqmey, 'ej motlh loSwI'mey ghaj ghomHommey — puqlIj mev chugh, yILIjHa' bIH, vaj latlh ghotvaD Daq nob.",
+    "notListed": {
+      "title": "venglIj Daleghbe''a'?",
+      "body": "reH vengmey chu' wIchel. DaH ghomHommaj rurmey lumuvlaH Hoch, Daq pagh qel. yu''a'?"
     }
   },
   "productBrowse": {

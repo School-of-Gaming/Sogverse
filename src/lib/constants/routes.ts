@@ -112,6 +112,14 @@ export const ROUTES = {
   setupAccount: "/setup-account",
   selectProfile: "/select-profile",
   help: "/help",
+  /** Public municipality-club discovery page — list + search of Finnish municipalities. */
+  schools: "/schools",
+  /**
+   * Per-municipality schools page, keyed by a name slug (`municipalitySlug`),
+   * e.g. `/schools/helsinki`. The destination page is not built yet — links to
+   * it are intentionally inert on `/schools` for now.
+   */
+  schoolMunicipality: (slug: string) => `/schools/${slug}`,
   privacy: "/privacy",
   termsAndConditions: "/terms-and-conditions",
   antiBullying: "/anti-bullying-and-discipline",

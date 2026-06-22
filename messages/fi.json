@@ -18,6 +18,7 @@
       "geduSessionDetails": "Session tiedot",
       "help": "Apu",
       "shop": "Kauppa",
+      "schools": "Kuntakerhot",
       "gamerHome": "Pelaaja",
       "gamerGroups": "Omat ryhmät",
       "gamerGroupDetails": "Ryhmän tiedot",
@@ -398,13 +399,13 @@
         "clearSearch": "Tyhjennä haku",
         "noResults": "Hakuehdolla \"{query}\" ei löytynyt sijainteja.",
         "hintSite": "Valitse toimipiste. Puuttuuko jokin? Lisää se kunnan alle tästä.",
-        "hintJurisdiction": "Valitse maa, alue tai kunta. Verkkotuotteilla ei ole fyysistä toimipistettä.",
+        "hintMunicipality": "Valitse kunta, jolle tämä kerho on tarkoitettu — se kunta, joka sen rahoittaa. Toimipisteet ja muut maat eivät ole valittavissa.",
         "addCountry": "Lisää uusi maa",
         "change": "Vaihda",
         "edit": "Muokkaa",
         "cancel": "Peruuta",
         "pick": "Valitse",
-        "noVenueHint": "Ei fyysistä toimipaikkaa. Vanhemmat, jotka selaavat alueella {name} — tai missä tahansa sen sisällä — näkevät tämän tuotteen.",
+        "noVenueHint": "Ei fyysistä toimipaikkaa. Kunnan {name} vanhemmat näkevät tämän kerhon selatessaan.",
         "memberNotesLabel": "Jäsenille näkyvät tiedot",
         "memberNotesFieldLabel": "Vanhemmille ja pelaajille näkyvät tiedot",
         "memberNotesPlaceholder": "Osoitetiedot, parkkipaikka, esteettömyys — kaikki mitä vanhempien on hyvä tietää.",
@@ -452,7 +453,7 @@
         "deliveredInHint": "Pääkieli, jota kerroilla käytetään.",
         "onlineNoLocation": "Verkossa ja avoin kaikille — sijaintia ei tarvita. Kaikki selailevat vanhemmat näkevät tämän asuinpaikasta riippumatta.",
         "voiceRoomAuto": "Tälle tuotteelle luodaan automaattisesti puhehuone.",
-        "municipalityHint": "Kuntakerhot ovat aina sidottu tiettyyn kuntaan — siihen joka sen maksaa. Sen kunnan (tai sen sisällä olevan pienemmän alueen) vanhemmat näkevät sen selatessaan.",
+        "municipalityHint": "Kuntakerhot on aina sidottu tiettyyn Suomen kuntaan — siihen, joka sen maksaa. Sen kunnan vanhemmat näkevät kerhon selatessaan.",
         "siteHint": "Missä kerrat fyysisesti tapahtuvat.",
         "eventSingleDay": "Tapahtumat ovat yhden päivän mittaisia.",
         "thresholdOnly": "Ei vielä kiinteää alkupäivää. Vanhemmat näkevät \"X / Y tarvitaan\" -laskurin sen täyttyessä. Painat Aloita kun ilmoittautuneita on tarpeeksi ja valitset ensimmäisen kerran päivän silloin.",
@@ -1231,6 +1232,32 @@
           "a": "Luo vanhemman tili, selaa tarjontaa ja ilmoita lapsesi mukaan. Hän kirjautuu omalla tunnuksellaan tapaamisiin."
         }
       }
+    }
+  },
+  "schools": {
+    "hero": {
+      "title": "Pelikerhot <primary>omassa kunnassasi</primary>",
+      "subtitle": "School of Gaming järjestää Minecraft-kerhoja yhdessä suomalaisten kuntien kanssa — ammattitaitoisten pelikasvattajien johdolla, lähellä kotia. Etsi kuntasi ja katso, mitä on tarjolla.",
+      "howItWorks": "Kunnasta riippuen kerho kokoontuu verkossa kotoa käsin tai paikan päällä lapsesi koulussa — ja Gedu on aina mukana."
+    },
+    "search": {
+      "label": "Etsi kuntaasi",
+      "placeholder": "Hae kuntia…",
+      "noMatches": "Mikään kunta ei vastaa hakua ”{query}”. Tarkista kirjoitusasu tai kokeile naapurikuntaa."
+    },
+    "available": {
+      "heading": "Missä kerhomme toimivat",
+      "subheading": "Näissä kunnissa on kerhoja, joihin pelaajasi voi liittyä heti.",
+      "empty": "Ensimmäiset kuntakerhomme ovat tulossa. Hae kuntaasi ja katso, olemmeko jo ehtineet sinne."
+    },
+    "status": {
+      "available": "Kerhoja tarjolla",
+      "comingSoon": "Ei vielä kerhoja"
+    },
+    "waitlistNote": "Paikkoja on rajoitetusti, ja kerhoihin on usein jonotuslista — peru ilmoittautuminen, jos lapsesi lopettaa, niin paikka vapautuu toiselle pelaajalle.",
+    "notListed": {
+      "title": "Etkö löydä kuntaasi?",
+      "body": "Lisäämme uusia kuntia jatkuvasti. Sillä välin verkkokerhomme ovat avoinna pelaajille asuinpaikasta riippumatta. Kysyttävää?"
     }
   },
   "productBrowse": {

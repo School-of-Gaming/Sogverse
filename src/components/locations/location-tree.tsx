@@ -143,7 +143,7 @@ export interface LocationTreeProps {
   /** Flat list of all locations; the tree is built internally. */
   locations: Location[];
   selection: LocationTreeSelection;
-  /** Types to hide from the tree entirely — e.g. `["site"]` for jurisdiction picking. */
+  /** Types to hide from the tree entirely — e.g. `["site"]` for municipality picking. */
   hiddenTypes?: readonly LocationType[];
   /** Omit to make the tree read-only (no "+" affordances). */
   create?: LocationTreeCreateConfig;

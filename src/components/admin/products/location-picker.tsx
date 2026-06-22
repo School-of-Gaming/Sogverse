@@ -15,10 +15,15 @@ import {
 import type { Location } from "@/types";
 import { SiteNotesEditor } from "./site-notes-editor";
 
-type PickableMode = "site" | "jurisdiction";
+type PickableMode = "site" | "municipality";
 
 const ANCESTOR_SEPARATOR = " · ";
-const JURISDICTION_TYPES = ["country", "region", "municipality"] as const;
+// Online municipality clubs anchor to a Finnish municipality only. The DB
+// trigger still permits country/region (it predates this UI rule), so the
+// enforcement lives here: the tree is filtered to Finland and only
+// municipality rows are selectable. Tightened from the older
+// country/region/municipality "jurisdiction" picker.
+const MUNI_COUNTRY_CODE = "FI";
 
 interface LocationPickerProps {
   value: string | null;
@@ -27,9 +32,11 @@ interface LocationPickerProps {
    * "site"         — only sites may be picked (in-person products). Admins may
    *                  create new sites under a municipality, but not higher
    *                  levels (those are seeded reference data).
-   * "jurisdiction" — countries, regions, or municipalities may be picked;
-   *                  sites are hidden. Used for online municipality clubs.
-   *                  No creation — the hierarchy is seeded.
+   * "municipality" — only Finnish municipalities may be picked; the tree is
+   *                  filtered to Finland and sites/countries/regions are not
+   *                  selectable. Used for online municipality clubs (the
+   *                  municipality that funds the club). No creation — the
+   *                  hierarchy is seeded.
    */
   pickable: PickableMode;
 }
@@ -49,6 +56,18 @@ export function LocationPicker({ value, onChange, pickable }: LocationPickerProp
   const createLocation = useCreateLocation();
   const all = useMemo(() => locations ?? [], [locations]);
 
+  // Municipality mode shows Finland only — every FI row (country, region,
+  // municipality) carries country_code "FI", so this keeps the navigable
+  // chain down to the selectable municipalities while hiding other countries.
+  // Site mode is unchanged (full tree, sites selectable/creatable anywhere).
+  const treeLocations = useMemo(
+    () =>
+      pickable === "municipality"
+        ? all.filter((l) => l.country_code === MUNI_COUNTRY_CODE)
+        : all,
+    [all, pickable]
+  );
+
   const existingCountryCodes = useMemo(
     () =>
       new Set(
@@ -62,6 +81,10 @@ export function LocationPicker({ value, onChange, pickable }: LocationPickerProp
   // Clear selection if the current pick is no longer valid for the mode.
   useEffect(() => {
     if (!value) return;
+    // Locations load async; until they're here, "not found" just means "not
+    // loaded yet" — don't mistake that for an invalid pick and wipe a valid
+    // location_id while editing an existing product.
+    if (all.length === 0) return;
     const current = all.find((l) => l.id === value);
     if (!current) {
       onChange(null);
@@ -69,7 +92,14 @@ export function LocationPicker({ value, onChange, pickable }: LocationPickerProp
     }
     if (pickable === "site" && current.type !== "site") {
       onChange(null);
-    } else if (pickable === "jurisdiction" && current.type === "site") {
+    } else if (
+      pickable === "municipality" &&
+      (current.type !== "municipality" ||
+        current.country_code !== MUNI_COUNTRY_CODE)
+    ) {
+      // Drops legacy/staging picks that aren't a FI municipality (e.g. an
+      // online muni club previously anchored to a region or country), forcing
+      // the admin to re-pick a valid municipality when they next edit.
       onChange(null);
     }
   }, [pickable, value, all, onChange]);
@@ -105,11 +135,11 @@ export function LocationPicker({ value, onChange, pickable }: LocationPickerProp
             onChange(id);
             setBrowsing(false);
           },
-          pickableTypes: JURISDICTION_TYPES,
+          pickableTypes: ["municipality"],
           pickLabel: t("pick"),
         };
 
-  // Creation is restricted to sites; jurisdictions are seeded reference data.
+  // Creation is restricted to sites; municipalities are seeded reference data.
   const create: LocationTreeCreateConfig | undefined =
     pickable === "site"
       ? {
@@ -123,9 +153,9 @@ export function LocationPicker({ value, onChange, pickable }: LocationPickerProp
   return (
     <div className="space-y-3">
       <LocationTree
-        locations={all}
+        locations={treeLocations}
         selection={selection}
-        hiddenTypes={pickable === "jurisdiction" ? ["site"] : undefined}
+        hiddenTypes={pickable === "municipality" ? ["site"] : undefined}
         create={create}
         searchPlaceholder={t("searchPlaceholder")}
         listClassName="max-h-[360px]"
@@ -133,7 +163,7 @@ export function LocationPicker({ value, onChange, pickable }: LocationPickerProp
 
       <div className="flex items-center justify-between text-xs">
         <span className="text-muted-foreground">
-          {pickable === "site" ? t("hintSite") : t("hintJurisdiction")}
+          {pickable === "site" ? t("hintSite") : t("hintMunicipality")}
         </span>
         {selected && (
           <button
@@ -158,7 +188,7 @@ interface SelectedSiteCardProps {
 function SelectedSiteCard({ selected, all, onChange }: SelectedSiteCardProps) {
   const t = useTranslations("admin.products.locationPicker");
   const isSite = selected.type === "site";
-  // Only sites have site_details / site_staff_details rows. For jurisdiction
+  // Only sites have site_details / site_staff_details rows. For municipality
   // picks we skip the fetch.
   const { data: details } = useSiteDetails(isSite ? selected.id : null);
   const chain = buildAncestorChain(selected, all)
