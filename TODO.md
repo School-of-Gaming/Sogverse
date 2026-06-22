@@ -218,6 +218,21 @@ Catches the case where en.json gets a new key but a translation file is forgotte
 - [ ] Add `tests/unit/i18n/locale-parity.test.ts` comparing flat key sets across all four bundles
 - [ ] Optionally: lint rule rejecting `t(\`...${someVar}...\`)` where `someVar` is `string` rather than a literal union
 
+### Dead-code detection (knip) — reconsider
+
+We keep circling back to wanting an automated dead-code check (unused exports/files/deps). Knip has been evaluated several times before for various reasons and not adopted; parking the latest analysis here so the next pass starts from it rather than re-deriving.
+
+**The goal is dead-code detection, and `import/no-unused-modules` (eslint-plugin-import) is the wrong tool for it in this repo.** Measured 2026-06-22 by running the rule standalone with `{ unusedExports: true }` + the TS resolver over `src/ tests/ services/` (540 files): **299 flagged**. That number is not trustworthy:
+- **~95 are Next.js framework entry points** — `export default` pages, route `GET`/`POST`, `metadata`/`generateMetadata`/`generateStaticParams` under `src/app/`. The framework invokes these by file convention, never by `import`, so the rule calls them unused. They're load-bearing; unexporting them breaks the route/page. Pure false positives that you'd have to allowlist forever.
+- **Barrel + dynamic-import blind spots** — the rule mis-follows `export *` re-export chains (we have 6 in `src/lib/constants/index.ts`), so a constant consumed via `@/lib/constants` looks unused at its source file; and variable-path dynamic `import()` (e.g. `src/i18n/messages.ts` lazy-loading message JSON) isn't traced. These are *false negatives that look like findings* — removing them breaks real importers.
+- **Mechanical removal is not safe** — separate from the above, turning `export const X` into `const X` leaves an unused module-local that trips our `@typescript-eslint/no-unused-vars` (error), so the real operation is *delete the declaration*, which raises the bar on certainty. After discounting framework + the intentional `types/` barrel aliases (53), only ~150 are even plausible dead leaves, each needing a human glance.
+
+**Knip is the better-fit tool** if/when we pick this up: its Next.js plugin auto-treats app-dir pages/routes/metadata as entry points (kills the ~95), it follows barrels and dynamic imports properly (kills the blind spots), and it finds more in one pass — unused *files*, unused exports, and unused/unlisted `package.json` deps. It reports, never auto-deletes. Tradeoffs vs. ESLint: it's a separate CI step (`npx knip`), no live editor squiggles, and another tool in the chain — likely part of why prior passes didn't land.
+
+**Strategy regardless of tool: ratchet, don't boil the ocean.** Don't clear ~150 historical hits in one risky PR. Mark intentional-but-unimported exports as deliberate (knip honors a `// @public` JSDoc tag, or config `ignore` — this is where the `types/` aliases go), drive it to a true zero, then make CI fail on any *new* finding. The value isn't the one-time cleanup, it's preventing the next orphan export from landing. (Knip is accurate enough that a real zero is reachable; the noisy ESLint rule basically never gets there.)
+
+If we ever specifically want it *inside* ESLint for editor feedback: `import/no-unused-modules` set to `warn`, **exclude `src/app/**`**, never auto-delete from its output (barrel blind spot), ratchet the same way. Weaker, but single-toolchain.
+
 ### Multi-Parent Gamer Linking
 
 Currently the only way to link a parent to a gamer is when the parent creates the gamer via `POST /api/gamers/create`. To support a second parent linking to an existing gamer:
