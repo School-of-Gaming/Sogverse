@@ -26,7 +26,9 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // but must require a session.
 // ROUTES.shop covers the storefront and its product-detail pages (/shop/[id])
 // via the prefix match below.
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.help, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.docs, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.setupAccount, ROUTES.voice.prefix];
+// ROUTES.schools is the public municipality-club discovery page; the prefix
+// match also covers the per-municipality pages (/schools/[slug]).
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.help, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.docs, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.setupAccount, ROUTES.voice.prefix];
 
 // The /voice/* prefix is public for instant rooms, but /voice/group/[id] is
 // the authenticated group voice room — gamers join as participants, gedus

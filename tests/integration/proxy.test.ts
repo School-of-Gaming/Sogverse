@@ -2,6 +2,8 @@
 // Headers is a polyfill that fails the instanceof check against Node's native
 // Headers, so all proxy calls throw. Using the node environment avoids this.
 // @vitest-environment node
+import { readdirSync } from "node:fs";
+import { join, relative } from "node:path";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
@@ -101,6 +103,67 @@ describe("proxy", () => {
         expect(response.status).toBe(200);
       }
     );
+  });
+
+  // --- (public) route-group ⇄ proxy PUBLIC_ROUTES drift guard ---
+  //
+  // A page lives in the `src/app/(public)` route group to declare itself
+  // public, but the proxy gates by URL via its hand-maintained PUBLIC_ROUTES
+  // array — the route group means nothing to it. The two drift silently: add a
+  // page under (public) and forget to register its path, and it ships behind
+  // the auth gate (the /schools regression, and not the first). This test
+  // derives every (public) page's URL from the filesystem and asserts the
+  // proxy passes an unauthenticated request through, so the next forgotten
+  // registration fails CI instead of reaching production.
+  //
+  // Intentional exceptions live in PUBLIC_GROUP_CARVE_OUTS with their reason.
+  // A page that is deliberately auth-gated despite living in (public) belongs
+  // there; anything else must be reachable without a session.
+  describe("(public) route group is registered as public in the proxy", () => {
+    const PUBLIC_GROUP_DIR = join(process.cwd(), "src", "app", "(public)");
+
+    // URL-path prefixes that are in (public) for layout/chrome reasons but are
+    // deliberately NOT public — they have their own gate in the proxy.
+    const PUBLIC_GROUP_CARVE_OUTS: { prefix: string; reason: string }[] = [
+      { prefix: "/preview", reason: "admin-only mock surfaces, gated in the proxy" },
+    ];
+
+    function walkPages(dir: string): string[] {
+      // eslint-disable-next-line security/detect-non-literal-fs-filename -- walks a fixed in-repo dir (the (public) route group), no external input
+      return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) return walkPages(full);
+        return entry.name === "page.tsx" ? [full] : [];
+      });
+    }
+
+    // Convert a page.tsx path to the URL the proxy sees: drop route-group dirs
+    // (parenthesized), and substitute a concrete value for dynamic segments so
+    // the prefix matching in PUBLIC_ROUTES still lines up.
+    function toUrlPath(pageFile: string): string {
+      const segments = relative(PUBLIC_GROUP_DIR, pageFile)
+        .replace(/page\.tsx$/, "")
+        .split(/[\\/]/)
+        .filter((s) => s && !/^\(.*\)$/.test(s))
+        .map((s) => s.replace(/\[(?:\.\.\.)?.+?\]/g, "sample"));
+      return "/" + segments.join("/");
+    }
+
+    const urls = walkPages(PUBLIC_GROUP_DIR).map(toUrlPath);
+    const carvedOut = (url: string) =>
+      PUBLIC_GROUP_CARVE_OUTS.some((c) => url === c.prefix || url.startsWith(`${c.prefix}/`));
+    const publicUrls = urls.filter((url) => !carvedOut(url));
+
+    it("found the (public) pages on disk", () => {
+      // Sanity check so a broken glob doesn't make the suite vacuously pass.
+      expect(publicUrls.length).toBeGreaterThan(0);
+    });
+
+    it.each(publicUrls)("passes %s through without auth", async (path) => {
+      mockNoUser();
+      const response = await proxy(createNextRequest(path));
+      expect(response.status).toBe(200);
+    });
   });
 
   // --- Auth routes (unauthenticated → allow) ---
