@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import {
   ArrowLeft,
@@ -18,9 +17,9 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
-import { productImageUrl } from "@/lib/images/product-image-url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { formatDate, formatDateOnly } from "@/lib/utils";
+import { cn, formatDate, formatDateOnly } from "@/lib/utils";
+import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { ProductOverviewCard } from "@/components/public/products/product-overview-card";
 import {
   useProductAdmin,
@@ -115,9 +114,6 @@ export function ProductDetailsPage({
   // rather than render a label-less "Opens at" state.
   const voice = computeVoiceState({ product, now, locale, timeZone });
   const voiceAvailable = product.is_remote && voice.hasUpcomingSession;
-  const imageUrl = product.image_path
-    ? productImageUrl(product.image_path)
-    : null;
   const topicName = topicLabel(product.topic);
 
   return (
@@ -131,7 +127,7 @@ export function ProductDetailsPage({
       </Link>
 
       <HeaderCard
-        imageUrl={imageUrl}
+        imagePath={product.image_path}
         kicker={label}
         title={tr?.name ?? t("list.untitled")}
         description={tr?.short_description ?? null}
@@ -189,7 +185,7 @@ export function ProductDetailsPage({
 // take action right now; everything below is read-only or placeholder.
 // ──────────────────────────────────────────────────────────────────────
 function HeaderCard({
-  imageUrl,
+  imagePath,
   kicker,
   title,
   description,
@@ -203,7 +199,7 @@ function HeaderCard({
   cloneHref,
   cloneLabel,
 }: {
-  imageUrl: string | null;
+  imagePath: string | null;
   kicker: string;
   title: string;
   description: string | null;
@@ -220,11 +216,15 @@ function HeaderCard({
   return (
     <Card>
       <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-start">
-        <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-md border bg-muted">
-          {imageUrl ? (
-            <Image src={imageUrl} alt="" fill className="object-cover" unoptimized />
-          ) : null}
-        </div>
+        <ProductThumbnail
+          imagePath={imagePath ?? ""}
+          alt=""
+          size="h-28 w-28"
+          className={cn(
+            "rounded-md border bg-muted [&>img]:aspect-square [&>img]:h-full [&>img]:w-full [&>img]:object-cover",
+            !imagePath && "[&>img]:hidden",
+          )}
+        />
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             {kicker}

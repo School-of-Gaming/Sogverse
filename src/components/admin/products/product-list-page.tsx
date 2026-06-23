@@ -15,10 +15,10 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { useProductsByType } from "@/services/products";
-import { productImageUrl } from "@/lib/images/product-image-url";
+import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { formatDate, formatDateOnly } from "@/lib/utils";
+import { cn, formatDate, formatDateOnly } from "@/lib/utils";
 import { effectiveStatus, pendingHintKey } from "@/lib/products/effective-status";
 import {
   formatProductSchedule,
@@ -152,9 +152,6 @@ export function ProductListPage({ productType }: ProductListPageProps) {
       {!isLoading && products && products.length > 0 && (
         <div className="space-y-2">
           {products.map((p) => {
-            const thumbnailUrl = p.image_path
-              ? productImageUrl(p.image_path)
-              : null;
             const tr = resolveTranslation(p.product_translations, uiLocale);
             // TODO: thread real active-participation count when participations
             // ships. Until then threshold-bearing products read as pending.
@@ -190,16 +187,15 @@ export function ProductListPage({ productType }: ProductListPageProps) {
                 className="group flex items-center justify-between gap-4 rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <div className="flex min-w-0 flex-1 items-center gap-4">
-                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md border bg-muted">
-                    {thumbnailUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element -- admin list only; next/image unoptimized not worth the ceremony here
-                      <img
-                        src={thumbnailUrl}
-                        alt=""
-                        className="h-full w-full object-cover"
-                      />
-                    ) : null}
-                  </div>
+                  <ProductThumbnail
+                    imagePath={p.image_path ?? ""}
+                    alt=""
+                    size="h-14 w-14"
+                    className={cn(
+                      "rounded-md border bg-muted [&>img]:aspect-square [&>img]:h-full [&>img]:w-full [&>img]:object-cover",
+                      !p.image_path && "[&>img]:hidden",
+                    )}
+                  />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="truncate font-medium">
