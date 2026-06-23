@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { MapPin, Pencil } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useAllLocations, useCreateLocation } from "@/services/locations";
 import { useSiteDetails } from "@/services/products";
@@ -13,6 +13,7 @@ import {
   type LocationTreeSelection,
 } from "@/components/locations/location-tree";
 import type { Location } from "@/types";
+import { localizedLocationName } from "@/lib/locations/localized-name";
 import { SiteNotesEditor } from "./site-notes-editor";
 
 type PickableMode = "site" | "municipality";
@@ -187,6 +188,8 @@ interface SelectedSiteCardProps {
 
 function SelectedSiteCard({ selected, all, onChange }: SelectedSiteCardProps) {
   const t = useTranslations("admin.products.locationPicker");
+  const locale = useLocale();
+  const selectedName = localizedLocationName(selected, locale);
   const isSite = selected.type === "site";
   // Only sites have site_details / site_staff_details rows. For municipality
   // picks we skip the fetch.
@@ -203,7 +206,7 @@ function SelectedSiteCard({ selected, all, onChange }: SelectedSiteCardProps) {
             <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-medium">{selected.name}</span>
+                <span className="font-medium">{selectedName}</span>
                 {!isSite && (
                   <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                     {selected.type}
@@ -212,12 +215,14 @@ function SelectedSiteCard({ selected, all, onChange }: SelectedSiteCardProps) {
               </div>
               {chain.length > 0 && (
                 <div className="mt-0.5 text-xs text-muted-foreground">
-                  {chain.map((a) => a.name).join(ANCESTOR_SEPARATOR)}
+                  {chain
+                    .map((a) => localizedLocationName(a, locale))
+                    .join(ANCESTOR_SEPARATOR)}
                 </div>
               )}
               {!isSite && (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  {t("noVenueHint", { name: selected.name })}
+                  {t("noVenueHint", { name: selectedName })}
                 </p>
               )}
             </div>

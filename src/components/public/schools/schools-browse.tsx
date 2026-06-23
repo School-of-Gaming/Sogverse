@@ -47,7 +47,11 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
 
   const results = useMemo(
     () =>
-      searching ? entries.filter((e) => e.slug.includes(normalizedQuery)) : [],
+      searching
+        ? entries.filter((e) =>
+            e.searchSlugs.some((s) => s.includes(normalizedQuery)),
+          )
+        : [],
     [entries, normalizedQuery, searching],
   );
 

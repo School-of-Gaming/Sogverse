@@ -47,7 +47,7 @@ export function ProductOverviewCard({ product }: ProductOverviewCardProps) {
 
   const schedule = formatProductSchedule({ product, locale: uiLocale, timeZone, now });
   const scheduleLines = renderScheduleLinesForDetail(schedule);
-  const location = formatProductLocation(product);
+  const location = formatProductLocation(product, uiLocale);
 
   return (
     <Card>

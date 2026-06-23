@@ -1,4 +1,5 @@
 import type { Location } from "@/types";
+import { localizedNameAlternates } from "./localized-name";
 
 /**
  * Deterministic, URL-safe slug for a Finnish municipality name.
@@ -28,19 +29,26 @@ export function municipalitySlug(name: string): string {
 /**
  * Reverse lookup: find the municipality whose name slugifies to `slug`.
  *
- * The mapping is 1:1 across Finland's municipalities, so the first match is the
- * only match. `locations` is the full flat list; callers should pass the FI
- * municipality rows (or the whole list -- non-municipality rows simply won't
- * match a municipality slug in practice, but filtering first is cheaper).
- * Returns `null` when nothing matches.
+ * Both the canonical (native-name) slug and any alternate-locale slug resolve to
+ * the same row, so `/schools/helsinki` and `/schools/helsingfors` both land on
+ * Helsinki — the link a viewer follows is built from their locale's slug
+ * (see `buildMunicipalityEntries`), but every form resolves here.
+ *
+ * The canonical slug is matched first: a Swedish exonym can therefore never
+ * shadow another municipality whose *native* name slugifies the same way. The
+ * native mapping is 1:1 across Finland's municipalities, so that first match is
+ * the only one. Returns `null` when nothing matches.
  */
 export function findMunicipalityBySlug(
   locations: Location[],
   slug: string,
 ): Location | null {
+  const municipalities = locations.filter((l) => l.type === "municipality");
+  const canonical = municipalities.find((l) => municipalitySlug(l.name) === slug);
+  if (canonical) return canonical;
   return (
-    locations.find(
-      (l) => l.type === "municipality" && municipalitySlug(l.name) === slug,
+    municipalities.find((l) =>
+      localizedNameAlternates(l).some((n) => municipalitySlug(n) === slug),
     ) ?? null
   );
 }

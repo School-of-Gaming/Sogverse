@@ -6,7 +6,7 @@ Hierarchical geographic system mapping products and gedus to regions, powering s
 
 One self-referential `locations` table (adjacency list): each row has a nullable `parent_id` pointing at another row. A `location_type` enum (`country`, `region`, `municipality`, `district`, `site`) classifies each level. Arbitrary depth, shallow in practice (3-5 levels), so `WITH RECURSIVE` CTEs handle ancestor/descendant walks fine.
 
-Columns: `id`, `name`, `type`, `parent_id` (FK to `locations`, `ON DELETE RESTRICT`), `country_code` (ISO 3166-1 alpha-2, **denormalized on every row** so country filtering needs no recursion), `created_at`, `updated_at`.
+Columns: `id`, `name`, `name_i18n` (jsonb, see below), `type`, `parent_id` (FK to `locations`, `ON DELETE RESTRICT`), `country_code` (ISO 3166-1 alpha-2, **denormalized on every row** so country filtering needs no recursion), `created_at`, `updated_at`.
 
 Hierarchy is flexible, not rigid — not every country uses every level (Finland skips `district`). A `country` row has `parent_id IS NULL`. Per-country level naming (region = maakunta/state/prefecture, etc.) is metadata, not separate types.
 
@@ -29,6 +29,18 @@ Standard service pattern. `LocationsService` takes an `AppSupabaseClient`:
 Localized labels apply **only** to the country whose language matches the user's UI locale (a Finnish admin sees "Maakunta"/"Kunta" for Finland but plain English "Borough" for the UK). `resolveLabels(level, locale)` picks the localized pair or falls back to the English default; country names localize via `nameI18n`.
 
 **Rule: Adding a country whose language is a supported UI locale requires `i18n` entries on each hierarchy level plus a `nameI18n` entry.** A country whose language isn't a supported UI locale needs none — English is the default.
+
+## Localized display names (`name_i18n`)
+
+A location's `name` is the **canonical native-language name** — Finnish for FI rows, English for UK/US, etc. `name_i18n` is a `jsonb` map of `locale → name` overrides holding **only the rows that differ**, e.g. `{ "sv": "Helsingfors" }`. Seeded for Finland by migration `00110` (the companion to `00109`'s location seed): the official Swedish names of the 18 regions and 33 municipalities that have one, sourced from Kotus (Institute for the Languages of Finland) and Government Decree 1385/2022. Rows whose Swedish name equals the Finnish (Satakunta; Korsnäs; Åland's 15 Swedish-only municipalities, already stored Swedish) get no entry, and most municipalities are monolingual Finnish with no legal Swedish name at all.
+
+**Rule: render location names through `localizedLocationName(loc, locale)` (`src/lib/locations/localized-name.ts`), never raw `loc.name`.** It resolves `name_i18n[locale] ?? name`, so every untranslated row, every admin-created site, and every viewer whose locale has no override falls back to `name`. The viewer locale comes from `useLocale()` (client) / `getLocale()` (server); the resolver takes a structural `{ name, name_i18n }`, so the joined browse-row location shape works too. All render sites use it: the /schools list (`buildMunicipalityEntries`), product cards (`formatProductLocation`), the shared `LocationTree` (display + search), the product location picker breadcrumb, and the gedu coverage chips.
+
+**Rule: `name` is never duplicated into `name_i18n`.** Finland's own `fi` names live in `name`, not under a `"fi"` key — the resolver falls back to `name` for the native locale. Don't "helpfully" backfill a `fi` (or `en` for UK) key; the convention is *native name in `name`, alternates in `name_i18n`*. This is also why we don't store traditional exonyms of monolingual towns (Tampere → "Tammerfors"): those aren't the municipality's *legal* name, and the column is for legal/official alternates.
+
+**Search & slugs follow the same data.** The /schools search indexes the canonical slug **plus** every alternate (`searchSlugs`), so "Helsingfors" and "Helsinki" both find the row; the `LocationTree` filter likewise matches alternates. The `/schools/<slug>` link is built from the **viewer-locale** display name (a Swedish viewer links to `helsingfors`), and `findMunicipalityBySlug` resolves the canonical *and* every alternate slug to the same row — canonical first, so a Swedish exonym can never shadow another municipality's native slug.
+
+Adding another locale (or another country's alternates) is data-only: add `name_i18n` entries; no schema change, since the column is locale-agnostic jsonb (this is why we chose it over per-locale `name_sv`/`name_xx` columns).
 
 ## Products ↔ locations
 

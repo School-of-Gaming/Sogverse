@@ -275,14 +275,26 @@ function pickSchedule(productType: ProductType): {
 const MOCK_LOC_TAPIOLA: BrowseRowLocation = {
   id: "mock-loc-tapiolan-koulu",
   name: "Tapiolan koulu",
+  name_i18n: null,
   type: "site",
-  parent: { id: "mock-loc-espoo", name: "Espoo", type: "municipality" },
+  parent: {
+    id: "mock-loc-espoo",
+    name: "Espoo",
+    name_i18n: { sv: "Esbo" },
+    type: "municipality",
+  },
 };
 const MOCK_LOC_SOG_HQ: BrowseRowLocation = {
   id: "mock-loc-sog-hq",
   name: "Sogverse HQ",
+  name_i18n: null,
   type: "site",
-  parent: { id: "mock-loc-helsinki", name: "Helsinki", type: "municipality" },
+  parent: {
+    id: "mock-loc-helsinki",
+    name: "Helsinki",
+    name_i18n: { sv: "Helsingfors" },
+    type: "municipality",
+  },
 };
 
 function pickLocationFixture(

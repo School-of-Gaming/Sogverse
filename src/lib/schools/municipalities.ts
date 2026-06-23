@@ -1,5 +1,9 @@
 import type { Location } from "@/types";
 import { municipalitySlug } from "@/lib/locations/municipality-slug";
+import {
+  localizedLocationName,
+  localizedNameAlternates,
+} from "@/lib/locations/localized-name";
 
 // Pure logic behind the public /schools page: turn the flat FI locations list
 // plus the set of visible municipality-club locations into a sorted list of
@@ -9,10 +13,24 @@ import { municipalitySlug } from "@/lib/locations/municipality-slug";
 /** One municipality row for the /schools list. */
 export interface MunicipalityEntry {
   id: string;
+  /** Display name in the viewer's locale (Swedish name for `sv`, else `name`). */
   name: string;
-  /** URL slug for the (future) `/schools/<slug>` page. 1:1 with the name. */
+  /**
+   * URL slug for the (future) `/schools/<slug>` page, derived from the
+   * viewer-locale display name — a Swedish viewer links to `helsingfors`, a
+   * Finnish viewer to `helsinki`. Both resolve to the same row via
+   * `findMunicipalityBySlug`, which accepts the canonical and every alternate
+   * slug.
+   */
   slug: string;
+  /**
+   * Slugs to match a search query against — the canonical name plus every
+   * alternate-locale name, so a Swedish speaker finds "Helsingfors" and a
+   * Finnish speaker finds "Helsinki" for the same row.
+   */
+  searchSlugs: string[];
   regionId: string | null;
+  /** Region display name in the viewer's locale. */
   regionName: string | null;
   /** True when >=1 visible municipality club resolves to this municipality. */
   hasClubs: boolean;
@@ -58,6 +76,7 @@ function nearestMunicipalityId(
 export function buildMunicipalityEntries(
   locations: Location[],
   clubLocationIds: (string | null)[],
+  locale: string,
 ): MunicipalityEntry[] {
   const byId = new Map(locations.map((l) => [l.id, l]));
 
@@ -72,16 +91,22 @@ export function buildMunicipalityEntries(
     .filter((l) => l.type === "municipality" && l.country_code === "FI")
     .map((m) => {
       const region = m.parent_id ? byId.get(m.parent_id) : undefined;
+      const isRegion = region?.type === "region";
+      const displayName = localizedLocationName(m, locale);
       return {
         id: m.id,
-        name: m.name,
-        slug: municipalitySlug(m.name),
-        regionId: region?.type === "region" ? region.id : null,
-        regionName: region?.type === "region" ? region.name : null,
+        name: displayName,
+        slug: municipalitySlug(displayName),
+        searchSlugs: [
+          municipalitySlug(m.name),
+          ...localizedNameAlternates(m).map(municipalitySlug),
+        ],
+        regionId: isRegion ? region.id : null,
+        regionName: isRegion ? localizedLocationName(region, locale) : null,
         hasClubs: activeMunicipalityIds.has(m.id),
       };
     })
-    .sort((a, b) => a.name.localeCompare(b.name, "fi"));
+    .sort((a, b) => a.name.localeCompare(b.name, locale));
 }
 
 /**

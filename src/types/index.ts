@@ -167,10 +167,12 @@ export type SiteStaffDetailsInsert = Database["public"]["Tables"]["site_staff_de
 export type BrowseRowLocation = {
   id: string;
   name: string;
+  name_i18n: Json | null;
   type: LocationType;
   parent: {
     id: string;
     name: string;
+    name_i18n: Json | null;
     type: LocationType;
   } | null;
 };

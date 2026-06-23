@@ -65,7 +65,7 @@ describe("municipalitySlug", () => {
 
 describe("findMunicipalityBySlug", () => {
   const locations: Location[] = [
-    loc("h", "Helsinki", "municipality"),
+    loc("h", "Helsinki", "municipality", { sv: "Helsingfors" }),
     loc("y", "Ylöjärvi", "municipality"),
     loc("r", "Uusimaa", "region"),
   ];
@@ -73,6 +73,22 @@ describe("findMunicipalityBySlug", () => {
   it("resolves a slug back to its municipality", () => {
     expect(findMunicipalityBySlug(locations, "helsinki")?.id).toBe("h");
     expect(findMunicipalityBySlug(locations, "ylojarvi")?.id).toBe("y");
+  });
+
+  it("resolves the alternate-locale (Swedish) slug to the same row", () => {
+    expect(findMunicipalityBySlug(locations, "helsingfors")?.id).toBe("h");
+  });
+
+  it("prefers the canonical slug over an exonym match", () => {
+    // A row whose native name slugifies to the query wins over any row that
+    // only matches via an alternate name.
+    const withClash: Location[] = [
+      ...locations,
+      loc("clash", "Helsingfors", "municipality"), // native name == the sv slug
+    ];
+    // The canonical "helsinki" still maps to h; the exonym "helsingfors" now has
+    // a native match (clash) which takes priority over h's alternate.
+    expect(findMunicipalityBySlug(withClash, "helsingfors")?.id).toBe("clash");
   });
 
   it("ignores non-municipality rows and returns null on miss", () => {
@@ -83,10 +99,16 @@ describe("findMunicipalityBySlug", () => {
   });
 });
 
-function loc(id: string, name: string, type: Location["type"]): Location {
+function loc(
+  id: string,
+  name: string,
+  type: Location["type"],
+  name_i18n: Location["name_i18n"] = null,
+): Location {
   return {
     id,
     name,
+    name_i18n,
     type,
     parent_id: null,
     country_code: "FI",

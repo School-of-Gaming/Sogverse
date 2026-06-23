@@ -236,11 +236,13 @@ INSERT INTO parent_gamer (id, parent_id, gamer_id) VALUES (
 -- Finland -> Uusimaa (region) -> Helsinki (municipality) -> Test School (site).
 -- The site is the leaf referenced by product-location tests.
 
-INSERT INTO locations (id, name, type, parent_id, country_code) VALUES
-  ('00000000-0000-0000-0000-000000000200', 'Finland',     'country',      NULL,                                   'FI'),
-  ('00000000-0000-0000-0000-000000000201', 'Uusimaa',     'region',       '00000000-0000-0000-0000-000000000200', 'FI'),
-  ('00000000-0000-0000-0000-000000000202', 'Helsinki',    'municipality', '00000000-0000-0000-0000-000000000201', 'FI'),
-  ('00000000-0000-0000-0000-000000000203', 'Test School', 'site',         '00000000-0000-0000-0000-000000000202', 'FI');
+-- name_i18n mirrors the migration backfill (00110): regions/municipalities carry
+-- their official Swedish name; sites and the country fall back to `name`.
+INSERT INTO locations (id, name, type, parent_id, country_code, name_i18n) VALUES
+  ('00000000-0000-0000-0000-000000000200', 'Finland',     'country',      NULL,                                   'FI', NULL),
+  ('00000000-0000-0000-0000-000000000201', 'Uusimaa',     'region',       '00000000-0000-0000-0000-000000000200', 'FI', '{"sv": "Nyland"}'),
+  ('00000000-0000-0000-0000-000000000202', 'Helsinki',    'municipality', '00000000-0000-0000-0000-000000000201', 'FI', '{"sv": "Helsingfors"}'),
+  ('00000000-0000-0000-0000-000000000203', 'Test School', 'site',         '00000000-0000-0000-0000-000000000202', 'FI', NULL);
 
 -- =============================================================================
 -- 6. Feedback Submissions

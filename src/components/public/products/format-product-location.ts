@@ -1,4 +1,5 @@
 import type { ProductBrowseRow } from "@/types";
+import { localizedLocationName } from "@/lib/locations/localized-name";
 
 // Resolve the location strings the parent-facing card and detail page
 // render. The schema invariants (validate_products_location trigger,
@@ -23,16 +24,21 @@ export type ProductLocationDisplay =
 
 export function formatProductLocation(
   product: Pick<ProductBrowseRow, "is_remote" | "product_type" | "locations">,
+  locale: string,
 ): ProductLocationDisplay | null {
   const loc = product.locations;
   if (!loc) return null;
 
   if (!product.is_remote) {
-    return { kind: "site", site: loc.name, parent: loc.parent?.name ?? null };
+    return {
+      kind: "site",
+      site: localizedLocationName(loc, locale),
+      parent: loc.parent ? localizedLocationName(loc.parent, locale) : null,
+    };
   }
 
   if (product.product_type === "municipality_club") {
-    return { kind: "muni", name: loc.name };
+    return { kind: "muni", name: localizedLocationName(loc, locale) };
   }
 
   return null;

@@ -79,7 +79,7 @@ export function ProductBrowseCard({ product, counts }: ProductBrowseCardProps) {
         ? { kind: "waitlist" }
         : null;
 
-  const locationLine = resolveLocationLine(product, t("online"));
+  const locationLine = resolveLocationLine(product, t("online"), uiLocale);
 
   return (
     <ProductBrowseCardView
@@ -107,8 +107,9 @@ export function ProductBrowseCard({ product, counts }: ProductBrowseCardProps) {
 function resolveLocationLine(
   product: ProductBrowseRow,
   onlineLabel: string,
+  locale: string,
 ): LocationLine {
-  const loc = formatProductLocation(product);
+  const loc = formatProductLocation(product, locale);
   if (!loc) return { kind: "online", label: onlineLabel };
   if (loc.kind === "site") {
     return { kind: "in_person", label: loc.site };

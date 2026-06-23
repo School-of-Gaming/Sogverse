@@ -14,6 +14,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getChildLevel, resolveLabels } from "@/lib/constants";
 import {
+  localizedLocationName,
+  localizedNameAlternates,
+} from "@/lib/locations/localized-name";
+import {
   LocationFormDialog,
   type LocationFormValues,
 } from "@/components/admin/location-form-dialog";
@@ -99,7 +103,11 @@ export function filterLocationTree(
   const q = query.toLowerCase();
   return nodes.reduce<LocationNode[]>((acc, node) => {
     const filteredChildren = filterLocationTree(node.children, query);
-    const selfMatches = node.name.toLowerCase().includes(q);
+    // Match the canonical name and every alternate-locale name, so searching
+    // "Helsingfors" surfaces Helsinki regardless of the viewer's UI locale.
+    const selfMatches = [node.name, ...localizedNameAlternates(node)].some(
+      (n) => n.toLowerCase().includes(q),
+    );
     if (selfMatches || filteredChildren.length > 0) {
       acc.push({
         ...node,
@@ -348,11 +356,11 @@ function LocationTreeRow({
             onChange={() => selection.onToggle(node.id)}
             onClick={(e) => e.stopPropagation()}
             className="h-4 w-4 shrink-0 accent-primary cursor-pointer"
-            aria-label={node.name}
+            aria-label={localizedLocationName(node, locale)}
           />
         )}
 
-        <span className="font-medium">{node.name}</span>
+        <span className="font-medium">{localizedLocationName(node, locale)}</span>
 
         {childLabels && childCount > 0 && (
           <span className="text-xs text-muted-foreground">

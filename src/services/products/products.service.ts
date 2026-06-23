@@ -37,7 +37,7 @@ function buildVisibleProductsQuery(
   return supabase
     .from("products")
     .select(
-      "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type))",
+      "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))",
     )
     .in("product_type", types)
     .eq("is_visible", true)
@@ -60,7 +60,7 @@ function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
     .select(
-      "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type)), product_holiday_calendars(holiday_calendars(name, calendar_holidays(date, reason)))",
+      "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_holiday_calendars(holiday_calendars(name, calendar_holidays(date, reason)))",
     )
     .eq("id", id)
     .maybeSingle();
@@ -70,7 +70,7 @@ function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
     .select(
-      "*, product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type)), product_holiday_calendars(calendar_id, holiday_calendars(name))",
+      "*, product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_holiday_calendars(calendar_id, holiday_calendars(name))",
     )
     .eq("id", id)
     .maybeSingle();

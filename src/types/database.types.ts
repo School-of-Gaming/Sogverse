@@ -287,6 +287,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          name_i18n: Json | null
           parent_id: string | null
           type: Database["public"]["Enums"]["location_type"]
           updated_at: string
@@ -296,6 +297,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          name_i18n?: Json | null
           parent_id?: string | null
           type: Database["public"]["Enums"]["location_type"]
           updated_at?: string
@@ -305,6 +307,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          name_i18n?: Json | null
           parent_id?: string | null
           type?: Database["public"]["Enums"]["location_type"]
           updated_at?: string

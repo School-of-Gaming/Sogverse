@@ -16,10 +16,11 @@
 
 import { useMemo, useState } from "react";
 import { X } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LocationTree } from "@/components/locations/location-tree";
+import { localizedLocationName } from "@/lib/locations/localized-name";
 import { useAllLocations } from "@/services/locations";
 import { useGeduLocations, useSetGeduLocations } from "@/services/gedu-locations";
 import type { Location } from "@/types";
@@ -31,6 +32,7 @@ interface GeduCoverageEditorProps {
 
 export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
   const t = useTranslations("gedu.coverage");
+  const locale = useLocale();
   const { data: allLocations, isLoading: locationsLoading } = useAllLocations();
   const { data: current, isLoading: currentLoading } = useGeduLocations(geduId);
   const setMutation = useSetGeduLocations();
@@ -139,9 +141,11 @@ export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
                         type="button"
                         onClick={() => toggle(loc.id)}
                         className="group flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
-                        title={t("remove", { name: loc.name })}
+                        title={t("remove", {
+                          name: localizedLocationName(loc, locale),
+                        })}
                       >
-                        <span>{loc.name}</span>
+                        <span>{localizedLocationName(loc, locale)}</span>
                         <X className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                       </button>
                     </li>

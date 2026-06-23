@@ -1705,10 +1705,12 @@ function fixtureLocation(
   name: string,
   type: Location["type"],
   parent_id: string | null,
+  name_i18n: Location["name_i18n"] = null,
 ): Location {
   return {
     id,
     name,
+    name_i18n,
     type,
     parent_id,
     country_code: "FI",
@@ -1717,13 +1719,19 @@ function fixtureLocation(
   };
 }
 
+// A couple of rows carry their Swedish name so the tree demo shows localized
+// display (the names render in the viewer's locale via localizedLocationName).
 const LOCATION_FIXTURE: Location[] = [
   fixtureLocation("fi", "Finland", "country", null),
-  fixtureLocation("uusimaa", "Uusimaa", "region", "fi"),
-  fixtureLocation("helsinki", "Helsinki", "municipality", "uusimaa"),
+  fixtureLocation("uusimaa", "Uusimaa", "region", "fi", { sv: "Nyland" }),
+  fixtureLocation("helsinki", "Helsinki", "municipality", "uusimaa", {
+    sv: "Helsingfors",
+  }),
   fixtureLocation("hki-site", "Itälahdenkatu 23 B", "site", "helsinki"),
-  fixtureLocation("espoo", "Espoo", "municipality", "uusimaa"),
-  fixtureLocation("pirkanmaa", "Pirkanmaa", "region", "fi"),
+  fixtureLocation("espoo", "Espoo", "municipality", "uusimaa", { sv: "Esbo" }),
+  fixtureLocation("pirkanmaa", "Pirkanmaa", "region", "fi", {
+    sv: "Birkaland",
+  }),
   fixtureLocation("tampere", "Tampere", "municipality", "pirkanmaa"),
   fixtureLocation("tre-site", "Sampola", "site", "tampere"),
 ];

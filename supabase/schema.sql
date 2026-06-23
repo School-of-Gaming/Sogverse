@@ -2269,8 +2269,16 @@ CREATE TABLE public.locations (
     country_code text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    name_i18n jsonb,
     CONSTRAINT locations_no_self_parent CHECK ((parent_id IS DISTINCT FROM id))
 );
+
+
+--
+-- Name: COLUMN locations.name_i18n; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.locations.name_i18n IS 'Locale -> display-name overrides (e.g. {"sv":"Helsingfors"}). Resolve as name_i18n[locale] ?? name. `name` holds the canonical native-language name and is never duplicated here.';
 
 
 --

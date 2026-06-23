@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
 import { LocationsService } from "@/services/locations";
 import { ProductsService } from "@/services/products";
@@ -26,7 +26,9 @@ export async function generateMetadata(): Promise<Metadata> {
  * Wrapped in try/catch with an empty fallback (mirroring `shop/page.tsx`): on
  * any failure the page still renders its intro + search over an empty list.
  */
-async function getMunicipalityEntries(): Promise<MunicipalityEntry[]> {
+async function getMunicipalityEntries(
+  locale: string,
+): Promise<MunicipalityEntry[]> {
   try {
     const supabase = await createClient();
     // A municipality counts as "has clubs" when it has a *visible*, non-ended
@@ -41,6 +43,7 @@ async function getMunicipalityEntries(): Promise<MunicipalityEntry[]> {
     return buildMunicipalityEntries(
       locations,
       clubs.map((c) => c.location_id),
+      locale,
     );
   } catch {
     return [];
@@ -48,6 +51,7 @@ async function getMunicipalityEntries(): Promise<MunicipalityEntry[]> {
 }
 
 export default async function SchoolsPage() {
-  const entries = await getMunicipalityEntries();
+  const locale = await getLocale();
+  const entries = await getMunicipalityEntries(locale);
   return <SchoolsBrowse entries={entries} />;
 }
