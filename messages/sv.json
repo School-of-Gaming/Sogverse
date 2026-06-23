@@ -1246,8 +1246,6 @@
       "noMatches": "Ingen kommun matchar ”{query}”. Kontrollera stavningen eller prova en närliggande kommun."
     },
     "available": {
-      "heading": "Var vi driver klubbar",
-      "subheading": "I dessa kommuner finns klubbar som din spelare kan gå med i direkt.",
       "empty": "Våra första kommunklubbar är på väg. Sök din kommun för att se om vi har nått den ännu."
     },
     "status": {

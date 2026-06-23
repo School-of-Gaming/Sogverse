@@ -1246,8 +1246,6 @@
       "noMatches": "Mikään kunta ei vastaa hakua ”{query}”. Tarkista kirjoitusasu tai kokeile naapurikuntaa."
     },
     "available": {
-      "heading": "Missä kerhomme toimivat",
-      "subheading": "Näissä kunnissa on kerhoja, joihin pelaajasi voi liittyä heti.",
       "empty": "Ensimmäiset kuntakerhomme ovat tulossa. Hae kuntaasi ja katso, olemmeko jo ehtineet sinne."
     },
     "status": {

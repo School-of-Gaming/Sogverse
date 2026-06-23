@@ -137,13 +137,6 @@ function DefaultView({
 }) {
   return (
     <section className="space-y-8">
-      <div className="space-y-1">
-        <h2 className="text-xl font-bold">{t("available.heading")}</h2>
-        <p className="text-sm text-muted-foreground">
-          {t("available.subheading")}
-        </p>
-      </div>
-
       {groups.length === 0 ? (
         <Card>
           <CardContent className="py-10 text-center text-muted-foreground">

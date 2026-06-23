@@ -1246,8 +1246,6 @@
       "noMatches": "No municipality matches \"{query}\". Check the spelling, or try a nearby one."
     },
     "available": {
-      "heading": "Where we're running clubs",
-      "subheading": "These municipalities have clubs your gamer can join right now.",
       "empty": "Our first municipality clubs are on the way. Search for your municipality to check whether we've reached it yet."
     },
     "status": {
