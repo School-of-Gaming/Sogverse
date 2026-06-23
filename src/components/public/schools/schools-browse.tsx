@@ -177,9 +177,7 @@ function RegionSection({ group, t }: { group: RegionGroup; t: Translate }) {
       >
         <span className="flex min-w-0 items-center gap-2.5 font-medium">
           <Chevron className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span className="truncate">
-            {group.regionName ?? t("regions.other")}
-          </span>
+          <span className="truncate">{group.regionName}</span>
         </span>
         <span className="shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
           {group.municipalities.length}
