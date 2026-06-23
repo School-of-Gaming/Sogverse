@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Info, MapPin, Search } from "lucide-react";
+import { ChevronDown, ChevronRight, Info, MapPin, Search } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,19 +13,22 @@ import { municipalitySlug } from "@/lib/locations/municipality-slug";
 import {
   groupByRegion,
   type MunicipalityEntry,
+  type RegionGroup,
 } from "@/lib/schools/municipalities";
 
 /**
  * Public entry point for parents discovering municipality clubs. Two states
  * driven by the search box:
- *  - empty query → the curated default: only municipalities where we run clubs,
- *    grouped by region (compact, no flood);
+ *  - empty query → the curated default: the regions where we run clubs, each an
+ *    expandable section that reveals its available municipalities on click
+ *    (collapsed by default to keep the list compact);
  *  - non-empty query → search across *every* Finnish municipality, each row
  *    flagged "clubs available" or "nothing here yet" so a parent anywhere can
  *    find their town and see its status.
  *
  * `entries` is computed server-side, so the first frame is complete — search
- * only ever filters in place (CLAUDE.md layout-stability rule).
+ * only ever filters in place, and the region sections start collapsed so
+ * expanding is always user-initiated (CLAUDE.md layout-stability rule).
  */
 export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
   const t = useTranslations("schools");
@@ -135,32 +138,61 @@ function DefaultView({
   groups: ReturnType<typeof groupByRegion>;
   t: Translate;
 }) {
+  if (groups.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-10 text-center text-muted-foreground">
+          {t("available.empty")}
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <section className="space-y-8">
-      {groups.length === 0 ? (
-        <Card>
-          <CardContent className="py-10 text-center text-muted-foreground">
-            {t("available.empty")}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-8">
-          {groups.map((group) => (
-            <div key={group.regionId ?? "none"} className="space-y-3">
-              {/* Region acts as a section divider here, so rows below omit it. */}
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {group.regionName}
-              </h3>
-              <ul className="space-y-2">
-                {group.municipalities.map((m) => (
-                  <MunicipalityRow key={m.id} entry={m} t={t} />
-                ))}
-              </ul>
-            </div>
+    <ul className="space-y-2">
+      {groups.map((group) => (
+        <RegionSection key={group.regionId ?? "none"} group={group} t={t} />
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * One region rendered as a collapsible disclosure: a button header with the
+ * region name and its available-municipality count, expanding to the list of
+ * those municipalities. Collapsed by default — a `<button>` (not a bare div)
+ * so it's keyboard-operable, with `aria-expanded` for assistive tech.
+ */
+function RegionSection({ group, t }: { group: RegionGroup; t: Translate }) {
+  const [open, setOpen] = useState(false);
+  const Chevron = open ? ChevronDown : ChevronRight;
+
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-3 rounded-md border border-input bg-card px-4 py-3 text-left transition-colors hover:bg-accent"
+      >
+        <span className="flex min-w-0 items-center gap-2.5 font-medium">
+          <Chevron className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <span className="truncate">
+            {group.regionName ?? t("regions.other")}
+          </span>
+        </span>
+        <span className="shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+          {group.municipalities.length}
+        </span>
+      </button>
+      {open && (
+        <ul className="mt-2 space-y-2 pl-4">
+          {group.municipalities.map((m) => (
+            <MunicipalityRow key={m.id} entry={m} t={t} />
           ))}
-        </div>
+        </ul>
       )}
-    </section>
+    </li>
   );
 }
 

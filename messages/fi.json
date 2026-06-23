@@ -1252,6 +1252,9 @@
       "available": "Kerhoja tarjolla",
       "comingSoon": "Ei vielä kerhoja"
     },
+    "regions": {
+      "other": "Muut"
+    },
     "waitlistNote": "Paikkoja on rajoitetusti, ja kerhoihin on usein jonotuslista. Jos lapsesi lopettaa kerhon, muistathan perua ilmoittautumisen, jotta paikkaa voidaan tarjota seuraavalle pelaajalle.",
     "notListed": {
       "title": "Etkö löydä kuntaasi?",
