@@ -71,9 +71,11 @@ On one protected dashboard navigation, `SELECT role FROM profiles` runs in sever
 
 The **same-render duplication is fixed** (I2 step 1, `9d6d429`): the two layouts now share one fetch via `cache()`, so a render does one lookup, not two. What remains is one lookup **per request-context** — proxy, render, each API route — which `cache()` can't dedupe (separate requests) and which only step 2 (advisory JWT role) removes. The cost lands on Postgres (which has headroom and was *not* the 2026-05-31 bottleneck), so this is efficiency/hygiene, not incident-relevant.
 
-### F4 — Server-prefetched data refetches immediately on mount (double fetch)
+### F4 — Server-prefetched data does NOT double-fetch on mount (non-issue)
 
-Every hook pairing server-prefetched `initialData` with a client `useQuery` (`useVisibleProductsByTypes`, `useParticipationCounts`, `useSpokenLanguages`, plus `useFamily`, `useMyUpcomingSessions`, the assignments/pin hooks) inherits the app default `staleTime: 0`, so data is fetched on the server for SSR and then **immediately refetched on mount** — every such query runs twice on first load. This is the established, intentional pattern (freshness — seat counts especially), so it's not a defect. But for near-static reference data (products, spoken languages) the second fetch is pure waste; a small per-hook `staleTime` would let the seeded data satisfy the first mount. Weigh globally if anyone revisits the prefetch convention — no action needed today.
+An earlier version of this note claimed every hook pairing server-prefetched `initialData` with a client `useQuery` (`useVisibleProductsByTypes`, `useParticipationCounts`, `useSpokenLanguages`, plus `useFamily`, `useMyUpcomingSessions`, the assignments/pin hooks) inherits an app default of `staleTime: 0` and so refetches immediately on mount. **That was wrong.** The global default in `src/providers/query-provider.tsx:16` is `staleTime: 60 * 1000` (1 minute) — and has been since the initial commit — and no hook overrides it (it's the only `staleTime` in the codebase). React Query treats server-seeded `initialData` as fresh on mount, so within that minute there is **no** immediate refetch; the feared double-fetch doesn't happen.
+
+What does happen, by design: after a minute the data is stale, so a background refetch can fire on a later remount/window-focus. That's the intended freshness behavior (seat counts especially), invisible to the user, and not waste. No action needed.
 
 ## Recommended improvements
 
