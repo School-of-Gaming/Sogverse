@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -84,6 +84,13 @@ export function ZoneList() {
   const t = useTranslations();
   const tv = useTranslations("voice");
 
+  // dnd-kit derives its accessibility ids (aria-describedby) from a module-level
+  // counter unless DndContext is given an explicit `id`. With that counter the
+  // value depends on how many DndContext instances mounted before this one, which
+  // differs between the SSR pass and hydration → an aria-describedby mismatch. A
+  // React `useId()` is stable across server and client, so pin it.
+  const dndId = useId();
+
   const [dialog, setDialog] = useState<
     | { kind: "create" }
     | { kind: "edit"; zone: VoiceZone }
@@ -149,6 +156,7 @@ export function ZoneList() {
 
   return (
     <DndContext
+      id={dndId}
       sensors={sensors}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
