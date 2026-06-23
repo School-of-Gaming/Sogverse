@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 import {
   MIN_PRODUCT_AGE,
@@ -64,7 +64,6 @@ function parseAge(raw: string | null): number | null {
 // replaces, not adds. Selecting the active chip clears the filter.
 
 export function useBrowseFilters() {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -131,9 +130,20 @@ export function useBrowseFilters() {
         else params.set(DAYS_PARAM, next.days.join(","));
       }
       const qs = params.toString();
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      // Update the URL via the History API rather than `router.replace` so a
+      // chip tap doesn't trigger an RSC navigation. The shop page is a dynamic
+      // async Server Component (it re-runs three RLS-scoped Supabase queries on
+      // every render); routing here would refetch that payload before the
+      // client-side `filterProducts()` — which needs no server data — could
+      // run, making the filter feel laggy. `useSearchParams()` reflects
+      // `replaceState`, so every reader in this hook updates synchronously.
+      window.history.replaceState(
+        null,
+        "",
+        qs ? `${pathname}?${qs}` : pathname,
+      );
     },
-    [pathname, router, searchParams],
+    [pathname, searchParams],
   );
 
   const toggleTopic = useCallback(
