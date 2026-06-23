@@ -257,6 +257,42 @@ export type Database = {
           },
         ]
       }
+      gedu_profiles: {
+        Row: {
+          user_id: string
+          verified: boolean
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          user_id: string
+          verified?: boolean
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          user_id?: string
+          verified?: boolean
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gedu_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_profiles_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       holiday_calendars: {
         Row: {
           created_at: string
@@ -1394,6 +1430,24 @@ export type Database = {
       promote_from_waitlist: { Args: { p_product_id: string }; Returns: Json }
       refresh_product_seat_counts: {
         Args: { p_product_id: string }
+        Returns: undefined
+      }
+      register_gedu: {
+        Args: {
+          p_first_name: string
+          p_last_name: string
+          p_locale: string
+          p_location_ids: string[]
+          p_minecraft_username: string
+          p_minecraft_uuid: string
+          p_phone: string
+          p_spoken_languages: string[]
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      set_gedu_verified: {
+        Args: { p_gedu_id: string; p_verified: boolean }
         Returns: undefined
       }
       set_my_pin: { Args: { p_pin: string }; Returns: undefined }

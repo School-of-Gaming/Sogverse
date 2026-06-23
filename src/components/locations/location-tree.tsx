@@ -304,8 +304,6 @@ function LocationTreeRow({
   const childLabels = childLevel ? resolveLabels(childLevel, locale) : null;
   const canCreateChild =
     !!create && !!childLevel && create.allowedChildTypes.includes(childLevel.type);
-  // Count hint ("3 Maakuntaa") uses the country's own terminology via resolveLabels.
-  const childCount = node.children.length;
   const showPickButton =
     selection.mode === "single" &&
     isPickable &&
@@ -314,7 +312,11 @@ function LocationTreeRow({
 
   function handleRowClick() {
     if (selection.mode === "multi") {
+      // A row with children expands/collapses on click (the whole row is the
+      // dropdown target); only a leaf row toggles its tick. Ticking a parent is
+      // still possible via its checkbox directly.
       if (hasChildren) setExpanded((e) => !e);
+      else selection.onToggle(node.id);
       return;
     }
     if (isPickable && !hasChildren) {
@@ -329,16 +331,27 @@ function LocationTreeRow({
     <div>
       <div
         className={cn(
-          "group flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors",
-          (hasChildren || isPickable) && "cursor-pointer",
+          "group flex items-center gap-1.5 rounded-md px-1.5 py-1.5 transition-colors",
+          (hasChildren || isPickable || selection.mode === "multi") && "cursor-pointer",
           isSelected ? "bg-primary/10 text-primary" : "hover:bg-accent hover:text-accent-foreground",
         )}
-        style={{ paddingLeft: `${depth * 20 + 8}px` }}
+        style={{ paddingLeft: `${depth * 14 + 6}px` }}
         onClick={handleRowClick}
       >
         <span
+          onClick={
+            hasChildren
+              ? (e) => {
+                  // Chevron owns expand/collapse independently of the row's
+                  // select/tick action.
+                  e.stopPropagation();
+                  setExpanded((x) => !x);
+                }
+              : undefined
+          }
           className={cn(
-            "flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground",
+            "flex h-5 w-4 shrink-0 items-center justify-center text-muted-foreground",
+            hasChildren && "cursor-pointer",
             !hasChildren && "invisible",
           )}
         >
@@ -360,16 +373,9 @@ function LocationTreeRow({
           />
         )}
 
-        <span className="font-medium">{localizedLocationName(node, locale)}</span>
-
-        {childLabels && childCount > 0 && (
-          <span className="text-xs text-muted-foreground">
-            {childCount}{" "}
-            {childCount === 1
-              ? childLabels.label.toLowerCase()
-              : childLabels.pluralLabel.toLowerCase()}
-          </span>
-        )}
+        <span className={cn("font-medium", node.type === "site" && "text-sm")}>
+          {localizedLocationName(node, locale)}
+        </span>
 
         {(showPickButton || canCreateChild) && (
           <div

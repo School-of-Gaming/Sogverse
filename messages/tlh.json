@@ -8,7 +8,7 @@
       "createAccount": "Account yIchenmoH",
       "forgotPassword": "mu'mey DaSovbe'",
       "resetPassword": "mu'mey yIchoH",
-      "setupAccount": "Account yIchel",
+      "registerGedu": "Gedu yImoj!",
       "about": "maH tIqel",
       "yty": "Yty – Sogverse HoS",
       "minecraftApi": "Minecraft Server API",
@@ -599,7 +599,8 @@
         "countSummary": "{filtered} / {total} Gedupu' luleghlu'",
         "noResults": "Gedu lo'wI' tu'be'lu'.",
         "current": "DaH",
-        "alreadyAssigned": "ngu'lu'pu'"
+        "alreadyAssigned": "ngu'lu'pu'",
+        "notVerified": "ngu'be'lu'"
       },
       "gamerPicker": {
         "title": "Suvwl' yIchel",
@@ -683,7 +684,6 @@
     "users": {
       "title": "lo'wI'pu'",
       "manageAccounts": "lo'wI' accountmey je Qu'mey tI'ang",
-      "inviteGedu": "Gedu yIbej",
       "searchPlaceholder": "pong, QIn, qoj lo'wI' pong yInej...",
       "searchAriaLabel": "lo'wI'pu' yInej",
       "roleFilterLabel": "Qu'",
@@ -716,30 +716,18 @@
         "reserving": "DIl loStaH",
         "completed": "rInpu'"
       },
-      "inviteNewGedu": "Gedu chu' yIbej",
-      "sendInvitation": "Gedu chu'vaD QIn ngeH",
-      "newGeduInvitation": "Gedu chu' bejmoH",
-      "geduReceiveEmail": "Gedu QIn Suq — account chenmoH Hoch ghoj.",
-      "inviteLinkExpiryNote": "ngeH Soch maH cha' rep lo'lu'.",
-      "emailAddress": "QIn Daq",
-      "emailPlaceholder": "gedu@example.com",
-      "geduFirstName": "wa'DIch pong",
-      "geduFirstNamePlaceholder": "DaH: Jane",
-      "geduFirstNameHelper": "QIn nuqneH lo'lu' 'ej Gedu profile nIS.",
-      "geduFirstNameTooShort": "wa'DIch pong 2 mu'tlhegh DaghItlh",
-      "geduFirstNameTooLong": "wa'DIch pong 32 mu'tlhegh law' ghobe'",
-      "geduLastName": "qorDu' pong",
-      "geduLastNamePlaceholder": "DaH: Smith",
-      "geduLastNameTooShort": "qorDu' pong 2 mu'tlhegh puS ghobe'",
-      "geduLastNameTooLong": "qorDu' pong 32 mu'tlhegh law' ghobe'",
-      "inviteLanguage": "bejmoH QIn Hol",
-      "sendInvite": "bejmoH yIngeH",
-      "sendingInvite": "vIngeH...",
-      "inviteSent": "bejmoH ngeHlu'!",
-      "inviteSentDescription": "{email}vaD bejmoH ngeHlu'.",
-      "viewAllUsers": "Hoch lo'wI'pu' tIlegh",
-      "inviteAnother": "latlh yIbej",
-      "invalidEmail": "QIn Daq nIvbe' yIchel"
+      "verification": {
+        "title": "ngu'ghach",
+        "verified": "ngu'lu'pu'",
+        "unverified": "ngu'be'lu'",
+        "unverifiedNote": "DaH ngu'be'lu' Geduvam. ngu'lu'pa', ghob Daje'be'.",
+        "verifiedOn": "ngu'lu'pu': {date}",
+        "verifiedByOn": "ngu'lu'pu': {name}, {date}",
+        "verifyAction": "yIngu'",
+        "unverifyAction": "yIngu'Ha'",
+        "saving": "vISaH...",
+        "error": "ngu'ghach choHlu'be'pu'. yInID."
+      }
     },
     "locations": {
       "title": "Dapmey",
@@ -947,20 +935,16 @@
       "successTitle": "mu'mey choHlu'",
       "successDescription": "mu'mey chu'moHlu'. Qapla'!"
     },
-    "setupAccount": {
-      "title": "Sogverse bIghoS!",
-      "description": "Gedu account yIchel.",
-      "firstNamePlaceholder": "SoH wa'DIch pong",
-      "lastNamePlaceholder": "SoH qorDu' pong",
-      "passwordPlaceholder": "8 mu'mey law' nIS",
-      "confirmPasswordPlaceholder": "mu'mey yIchel",
-      "settingUp": "vIchel...",
-      "submitButton": "Account yIchel",
-      "inviteLinkExpired": "bejmoH ngeH Qu' DaQawpa'. admin chu' yInej.",
-      "minecraftSaveFailed": "Minecraft lo'wI' pong Sah Dabe'lu'",
+    "registerGedu": {
+      "title": "Gedu yImoj!",
+      "description": "Sogverse Gedu account yIchenmoH.",
+      "verificationAlertTitle": "account ngu'nIS",
+      "verificationAlertDescription": "DaH bI'el laH, 'ach ghob ghoSlu'pa' admin account ngu'nIS.",
+      "coverageHeading": "nuqDaq bIghojmoH laH?",
+      "coverageNote": "Daqmey yIwIv DaqDaq bIghojmoH laH. chImchugh, Hop ghojmoHghach neH.",
       "invalidPhone": "HablI' HSDu' nIvbe' yIchel",
-      "successTitle": "Qapla'! SoH taylu'!",
-      "successDescription": "Account chenmoHlu'. DaH yItoy'!"
+      "creatingAccount": "account vIchenmoH...",
+      "alreadyHaveAccount": "account Daghaj'a'? <link>yI'el</link>"
     }
   },
   "pin": {
@@ -1981,7 +1965,7 @@
       "subject": "Sogverse mu'mey yIchoH",
       "heading": "mu'mey yIchoH",
       "body": "Sogverse mu'mey chovmoH tlhob Suqlu'. mu'mey chu' yIwIv.",
-      "expiry": "ngeH Soch maH cha' rep Qav.",
+      "expiry": "ngeH wa' rep Qav.",
       "ignore": "mu'mey chovmoH DatlhobHa'chugh, QIn yIleghQo'. mu'mey choHbe'lu'.",
       "button": "mu'mey yIchoH"
     },
@@ -1992,14 +1976,6 @@
       "expiry": "ngeH cha'maH loS rep Qav.",
       "ignore": "PIN chovmoH DatlhobHa'chugh, QIn yIleghQo'. PIN choHbe'lu'.",
       "button": "PIN yIchoH"
-    },
-    "geduInvite": {
-      "subject": "Sogverse bejmoH ngeHlu'",
-      "heading": "Sogverse bIghoS!",
-      "greeting": "nuqneH {name},",
-      "body": "Sogverse <strong>Gedu</strong> SoH bejlu'. account yIchel.",
-      "expiry": "ngeH Soch maH cha' rep Qav.",
-      "button": "Account yIchel"
     },
     "minecraft": {
       "label": "Minecraft lo'wI' pong:",

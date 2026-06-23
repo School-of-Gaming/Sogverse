@@ -1,15 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
-import { Search, UserPlus } from "lucide-react";
+import { Search } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { ROUTES } from "@/lib/constants";
-import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { UserRow } from "@/components/admin/user-row";
 import { useUsers, useSearchUsers, useParentGamerLinks } from "@/services/users";
+import { useGeduVerificationMap } from "@/services/gedu";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import type { Profile, UserRole } from "@/types";
 
@@ -21,6 +19,7 @@ export default function AdminUsersPage() {
   const { data: allUsers, isLoading: isLoadingAll } = useUsers();
   const { data: searchResults, isLoading: isSearching } = useSearchUsers(searchQuery);
   const { data: parentGamerLinks } = useParentGamerLinks();
+  const verification = useGeduVerificationMap();
 
   const ROLE_FILTERS: { value: UserRole; label: string }[] = [
     { value: "admin", label: c(ROLE_LABEL_KEYS.admin) },
@@ -100,17 +99,11 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{t('title')}</h1>
-          <p className="text-muted-foreground">
-            {t('manageAccounts')}
-          </p>
-        </div>
-        <Link href={ROUTES.admin.usersAdd} className={buttonVariants()}>
-          <UserPlus className="mr-2 h-4 w-4" />
-          {t('inviteGedu')}
-        </Link>
+      <div>
+        <h1 className="text-3xl font-bold">{t('title')}</h1>
+        <p className="text-muted-foreground">
+          {t('manageAccounts')}
+        </p>
       </div>
 
       <Card>
@@ -175,6 +168,10 @@ export default function AdminUsersPage() {
                   key={user.id}
                   user={user}
                   linkedGamers={parentToGamers.get(user.id)}
+                  unverified={
+                    user.role === "gedu" &&
+                    !(verification.get(user.id)?.verified ?? false)
+                  }
                 />
               ))}
             </div>

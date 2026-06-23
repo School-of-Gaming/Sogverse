@@ -33,7 +33,7 @@ Four user roles with separate dashboards:
 - `admin` → `/admin` - System management
 - `customer` → `/parent` - Parents who purchase products and manage linked gamers (the role identifier is `customer`; the URL is `/parent`)
 - `gamer` → `/gamer` - Child accounts (email-first like every role; email is a synthetic `<token>@gamer.sogverse.internal` address; login is via account-switch from the parent, not a typed credential)
-- `gedu` → `/gedu` - Game educators
+- `gedu` → `/gedu` - Game educators (self-register at `/register-gedu`; an account is unverified until an admin approves it — verification gates only group assignment, not platform access. See `src/services/gedu/`)
 
 Proxy (`src/proxy.ts`) refreshes Supabase auth sessions, enforces role-based routing, and sets a per-request nonce-based Content Security Policy (Next.js 16 uses `proxy.ts` instead of `middleware.ts`). RLS policies protect data at the database level.
 

@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
+import { GeduVerificationCard } from "@/components/admin/gedu-verification-card";
 import { cn, computeAge, formatDate } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 import { getServerTimezone } from "@/lib/timezone.server";
@@ -19,6 +20,7 @@ import { GamerService } from "@/services/gamers";
 import { MinecraftService } from "@/services/minecraft";
 import { ParticipationsService } from "@/services/participations";
 import type { AdminGamerParticipationRow } from "@/services/participations";
+import { GeduProfilesService, type GeduVerification } from "@/services/gedu/gedu-profiles.service";
 import { MinecraftUsernameBadge } from "@/components/minecraft/minecraft-username-badge";
 import type { ParticipationStatus, ProductType } from "@/types";
 
@@ -123,7 +125,7 @@ export default async function AdminUserDetailPage({
   const isGamer = profile.role === "gamer";
   const isGedu = profile.role === "gedu";
 
-  const [linkedGamers, linkedParents, gamerProfile, minecraftAccount] = await Promise.all([
+  const [linkedGamers, linkedParents, gamerProfile, minecraftAccount, geduVerification] = await Promise.all([
     isCustomer
       ? gamerService.getLinkedGamers(userId).catch(() => [])
       : Promise.resolve([]),
@@ -136,6 +138,9 @@ export default async function AdminUserDetailPage({
     isGamer || isGedu
       ? minecraftService.getMinecraftAccount(userId).catch(() => null)
       : Promise.resolve(null),
+    isGedu
+      ? new GeduProfilesService(supabase).getOne(userId).catch(() => null)
+      : Promise.resolve<GeduVerification | null>(null),
   ]);
 
   const showMinecraft = isGamer || isGedu;
@@ -359,7 +364,8 @@ export default async function AdminUserDetailPage({
         </Card>
       )}
 
-      {/* Gedu coverage areas — substitute matching */}
+      {/* Gedu verification + coverage areas (substitute matching) */}
+      {isGedu && <GeduVerificationCard geduId={userId} initial={geduVerification} />}
       {isGedu && <GeduCoverageEditor geduId={userId} />}
     </div>
   );

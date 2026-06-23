@@ -16,6 +16,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useUsersByRole, useSpokenLanguages } from "@/services/users";
+import { useGeduVerificationMap } from "@/services/gedu";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/types";
 
@@ -47,6 +48,7 @@ export function GeduPickerSheet({
 
   const { data: gedus } = useUsersByRole("gedu");
   const { data: spokenLanguages } = useSpokenLanguages();
+  const verification = useGeduVerificationMap();
 
   useEffect(() => {
     if (open) {
@@ -146,7 +148,9 @@ export function GeduPickerSheet({
             {filtered.map((g) => {
               const isCurrent = g.id === highlightId;
               const isAssigned = excludeIds?.includes(g.id) ?? false;
-              const isDisabled = isCurrent || isAssigned;
+              // Unverified gedus can't be assigned until an admin approves them.
+              const isUnverified = !(verification.get(g.id)?.verified ?? false);
+              const isDisabled = isCurrent || isAssigned || isUnverified;
               return (
                 <GeduRow
                   key={g.id}
@@ -154,6 +158,7 @@ export function GeduPickerSheet({
                   spokenLanguages={spokenLanguages ?? []}
                   isCurrent={isCurrent}
                   isAssigned={isAssigned}
+                  isUnverified={isUnverified}
                   isDisabled={isDisabled}
                   onClick={() => {
                     if (isDisabled) return;
@@ -180,6 +185,7 @@ interface GeduRowProps {
   spokenLanguages: { code: string; name: string }[];
   isCurrent: boolean;
   isAssigned: boolean;
+  isUnverified: boolean;
   isDisabled: boolean;
   onClick: () => void;
 }
@@ -189,6 +195,7 @@ function GeduRow({
   spokenLanguages,
   isCurrent,
   isAssigned,
+  isUnverified,
   isDisabled,
   onClick,
 }: GeduRowProps) {
@@ -219,6 +226,11 @@ function GeduRow({
           {isAssigned && !isCurrent && (
             <Badge variant="outline" className="shrink-0">
               {t("alreadyAssigned")}
+            </Badge>
+          )}
+          {isUnverified && !isCurrent && !isAssigned && (
+            <Badge variant="destructive" className="shrink-0">
+              {t("notVerified")}
             </Badge>
           )}
         </div>

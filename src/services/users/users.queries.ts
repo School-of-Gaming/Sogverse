@@ -105,26 +105,3 @@ export function useSpokenLanguages(options?: {
     initialData: options?.initialData,
   });
 }
-
-export function useCreateGedu() {
-  const queryClient = useQueryClient();
-  const supabase = getClient();
-  const service = new UsersService(supabase);
-
-  return useMutation({
-    mutationFn: ({
-      email,
-      firstName,
-      lastName,
-      locale,
-    }: {
-      email: string;
-      firstName: string;
-      lastName: string | null;
-      locale?: string;
-    }) => service.createGedu(email, firstName, lastName, locale),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-    },
-  });
-}

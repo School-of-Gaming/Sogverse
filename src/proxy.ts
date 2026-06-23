@@ -18,8 +18,8 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 }
 
 // Routes that don't require authentication
-// resetPassword and setupAccount are public (not auth routes) because the user
-// arrives via an email link with hash tokens — they aren't authenticated yet.
+// resetPassword is public (not an auth route) because the user arrives via an
+// email link with hash tokens — they aren't authenticated yet.
 // ROUTES.voice.prefix is public because instant voice rooms are share-via-link
 // by design — see src/components/voice/instant/CLAUDE.md. The authenticated group voice
 // room at /voice/group/[id] is carved back out below — it shares the prefix
@@ -28,7 +28,7 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // via the prefix match below.
 // ROUTES.schools is the public municipality-club discovery page; the prefix
 // match also covers the per-municipality pages (/schools/[slug]).
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.help, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.docs, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.setupAccount, ROUTES.voice.prefix];
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.help, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.docs, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.voice.prefix];
 
 // The /voice/* prefix is public for instant rooms, but /voice/group/[id] is
 // the authenticated group voice room — gamers join as participants, gedus
@@ -40,7 +40,7 @@ const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.help, RO
 const AUTH_REQUIRED_VOICE_PREFIX = ROUTES.voice.groupSessionPrefix;
 
 // Routes for authentication (login, register, etc.)
-const AUTH_ROUTES = [ROUTES.login, ROUTES.register, ROUTES.forgotPassword];
+const AUTH_ROUTES = [ROUTES.login, ROUTES.register, ROUTES.registerGedu, ROUTES.forgotPassword];
 
 /**
  * Build a Content-Security-Policy header value.

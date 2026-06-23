@@ -46,6 +46,10 @@ export type CustomerProfileUpdate = Database["public"]["Tables"]["customer_profi
 export type GamerProfile = Database["public"]["Tables"]["gamer_profiles"]["Row"];
 export type GamerProfileUpdate = Database["public"]["Tables"]["gamer_profiles"]["Update"];
 
+// gedu_profiles
+export type GeduProfile = Database["public"]["Tables"]["gedu_profiles"]["Row"];
+export type GeduProfileUpdate = Database["public"]["Tables"]["gedu_profiles"]["Update"];
+
 // minecraft_accounts
 export type MinecraftAccount = Database["public"]["Tables"]["minecraft_accounts"]["Row"];
 export type MinecraftAccountUpdate = Database["public"]["Tables"]["minecraft_accounts"]["Update"];

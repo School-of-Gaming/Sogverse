@@ -8,7 +8,7 @@ Code-owned, locale-aware HTML transactional emails. Builders here produce HTML s
 - **`utils.ts`** — building blocks: `escapeHtml()`, `paragraph()`, `heading()`, `styledName()`, `styledProductName()`. Use these instead of hand-writing styled markup.
 - **`translator.ts`** — `getEmailTranslator(locale)` returns an `EmailTranslator` (`t`) scoped to the `email` namespace in `messages/*.json`. Every builder takes `t` and `locale`; no user-facing string is hardcoded in a builder.
 - **`registry.ts`** — `templateRegistry`: the single source of truth for templates that are exposed to the admin testing UI and the test-email API route. Each entry is built with `defineTemplate({...})`.
-- **Per-template builder files** (`password-reset.ts`, `pin-reset.ts`, `gedu-invite.ts`, `feedback.ts`, `enrollment-changes.ts`) — exported `build*Email(t, locale, ...)` functions that compose `utils` helpers inside `wrapInLayout`.
+- **Per-template builder files** (`password-reset.ts`, `pin-reset.ts`, `feedback.ts`, `enrollment-changes.ts`) — exported `build*Email(t, locale, ...)` functions that compose `utils` helpers inside `wrapInLayout`.
 
 Sender identity: every email is from the single verified sender address (`SENDER_EMAIL` in `src/lib/constants`). The display name is a per-locale translation chosen via a `fromNameKey` (`senderAuth` / `senderEnrollment` / `senderFeedback`) resolved against the `email` namespace — never a hardcoded name.
 
@@ -48,4 +48,4 @@ Supabase Auth (signup confirmation, magic link) sends its own plain-HTML templat
 
 ## Tests
 
-Builder output is covered by unit tests under `tests/unit/email-templates/`; the Brevo wrapper and the routes that send (test-email, feedback, forgot-password, create-gedu, PIN forgot) are covered under `tests/unit/lib/` and `tests/integration/`. When you add a template or change builder output, update the matching unit test; when you add a registry entry reachable from the test-email route, the send-test-email integration test exercises validation for both modes.
+Builder output is covered by unit tests under `tests/unit/email-templates/`; the Brevo wrapper and the routes that send (test-email, feedback, forgot-password, PIN forgot) are covered under `tests/unit/lib/` and `tests/integration/`. When you add a template or change builder output, update the matching unit test; when you add a registry entry reachable from the test-email route, the send-test-email integration test exercises validation for both modes.

@@ -1682,6 +1682,74 @@ $$;
 
 
 --
+-- Name: register_gedu(uuid, text, text, text, text, text[], uuid[], text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles WHERE id = p_user_id AND role = 'customer'
+  ) THEN
+    RAISE EXCEPTION 'register_gedu: % is not a newly-created customer profile', p_user_id;
+  END IF;
+
+  UPDATE public.profiles
+  SET role             = 'gedu',
+      first_name       = p_first_name,
+      last_name        = p_last_name,
+      locale           = NULLIF(p_locale, ''),
+      phone            = NULLIF(p_phone, ''),
+      spoken_languages = COALESCE(p_spoken_languages, '{}')
+  WHERE id = p_user_id;
+
+  DELETE FROM public.customer_profiles WHERE user_id = p_user_id;
+  INSERT INTO public.gedu_profiles (user_id) VALUES (p_user_id);
+
+  IF p_location_ids IS NOT NULL AND array_length(p_location_ids, 1) IS NOT NULL THEN
+    INSERT INTO public.gedu_locations (gedu_id, location_id)
+    SELECT p_user_id, unnest(p_location_ids);
+  END IF;
+
+  IF p_minecraft_username IS NOT NULL AND p_minecraft_username <> '' THEN
+    INSERT INTO public.minecraft_accounts (user_id, minecraft_username, minecraft_uuid)
+    VALUES (p_user_id, p_minecraft_username, NULLIF(p_minecraft_uuid, ''));
+  END IF;
+END;
+$$;
+
+
+--
+-- Name: set_gedu_verified(uuid, boolean); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_gedu_verified(p_gedu_id uuid, p_verified boolean) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'set_gedu_verified: only admins may verify gedus';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles WHERE id = p_gedu_id AND role = 'gedu'
+  ) THEN
+    RAISE EXCEPTION 'set_gedu_verified: % is not a gedu', p_gedu_id;
+  END IF;
+
+  UPDATE public.gedu_profiles
+  SET verified    = p_verified,
+      verified_at = CASE WHEN p_verified THEN now() ELSE NULL END,
+      verified_by = CASE WHEN p_verified THEN (select auth.uid()) ELSE NULL END
+  WHERE user_id = p_gedu_id;
+END;
+$$;
+
+
+--
 -- Name: set_my_pin(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2245,6 +2313,18 @@ CREATE TABLE public.gedu_locations (
 
 
 --
+-- Name: gedu_profiles; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.gedu_profiles (
+    user_id uuid NOT NULL,
+    verified boolean DEFAULT false NOT NULL,
+    verified_at timestamp with time zone,
+    verified_by uuid
+);
+
+
+--
 -- Name: holiday_calendars; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2729,6 +2809,14 @@ ALTER TABLE ONLY public.gedu_group_assignments
 
 ALTER TABLE ONLY public.gedu_locations
     ADD CONSTRAINT gedu_locations_pkey PRIMARY KEY (gedu_id, location_id);
+
+
+--
+-- Name: gedu_profiles gedu_profiles_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gedu_profiles
+    ADD CONSTRAINT gedu_profiles_pkey PRIMARY KEY (user_id);
 
 
 --
@@ -3522,6 +3610,22 @@ ALTER TABLE ONLY public.gedu_locations
 
 
 --
+-- Name: gedu_profiles gedu_profiles_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gedu_profiles
+    ADD CONSTRAINT gedu_profiles_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: gedu_profiles gedu_profiles_verified_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.gedu_profiles
+    ADD CONSTRAINT gedu_profiles_verified_by_fkey FOREIGN KEY (verified_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
+
+
+--
 -- Name: locations locations_parent_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3885,6 +3989,13 @@ CREATE POLICY admin_full_access_gedu_assignments ON public.gedu_group_assignment
 
 
 --
+-- Name: gedu_profiles admin_full_access_gedu_profiles; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY admin_full_access_gedu_profiles ON public.gedu_profiles TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+
+
+--
 -- Name: holiday_calendars admin_full_access_holiday_calendars; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -4173,6 +4284,12 @@ CREATE POLICY gedu_manage_own_locations ON public.gedu_locations TO authenticate
 
 
 --
+-- Name: gedu_profiles; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.gedu_profiles ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: site_details gedu_read_site_details; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -4200,6 +4317,13 @@ CREATE POLICY gedus_read_assigned_groups ON public.product_groups FOR SELECT TO 
 --
 
 CREATE POLICY gedus_read_own_assignments ON public.gedu_group_assignments FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'gedu'::public.user_role) AND (gedu_id = ( SELECT auth.uid() AS uid))));
+
+
+--
+-- Name: gedu_profiles gedus_read_own_gedu_profile; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY gedus_read_own_gedu_profile ON public.gedu_profiles FOR SELECT TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid)));
 
 
 --
@@ -4835,6 +4959,22 @@ GRANT ALL ON FUNCTION public.refresh_product_seat_counts(p_product_id uuid) TO s
 
 
 --
+-- Name: FUNCTION register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text) TO service_role;
+
+
+--
+-- Name: FUNCTION set_gedu_verified(p_gedu_id uuid, p_verified boolean); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.set_gedu_verified(p_gedu_id uuid, p_verified boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.set_gedu_verified(p_gedu_id uuid, p_verified boolean) TO authenticated;
+
+
+--
 -- Name: FUNCTION set_my_pin(p_pin text); Type: ACL; Schema: public; Owner: -
 --
 
@@ -5012,6 +5152,15 @@ GRANT SELECT ON TABLE public.gedu_group_assignments TO authenticated;
 GRANT SELECT ON TABLE public.gedu_locations TO anon;
 GRANT ALL ON TABLE public.gedu_locations TO service_role;
 GRANT SELECT,INSERT,DELETE ON TABLE public.gedu_locations TO authenticated;
+
+
+--
+-- Name: TABLE gedu_profiles; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.gedu_profiles TO anon;
+GRANT SELECT ON TABLE public.gedu_profiles TO authenticated;
+GRANT ALL ON TABLE public.gedu_profiles TO service_role;
 
 
 --

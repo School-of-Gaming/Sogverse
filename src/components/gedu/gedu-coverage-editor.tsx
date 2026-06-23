@@ -15,16 +15,12 @@
  */
 
 import { useMemo, useState } from "react";
-import { X } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LocationTree } from "@/components/locations/location-tree";
-import { localizedLocationName } from "@/lib/locations/localized-name";
 import { useAllLocations } from "@/services/locations";
 import { useGeduLocations, useSetGeduLocations } from "@/services/gedu-locations";
-import type { Location } from "@/types";
-import { buildCoverageRelations, toggleCoverage } from "./coverage-cascade";
+import { CoveragePicker } from "./coverage-picker";
 
 interface GeduCoverageEditorProps {
   geduId: string;
@@ -32,7 +28,6 @@ interface GeduCoverageEditorProps {
 
 export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
   const t = useTranslations("gedu.coverage");
-  const locale = useLocale();
   const { data: allLocations, isLoading: locationsLoading } = useAllLocations();
   const { data: current, isLoading: currentLoading } = useGeduLocations(geduId);
   const setMutation = useSetGeduLocations();
@@ -47,26 +42,6 @@ export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
     return new Set((current ?? []).map((r) => r.location_id));
   }, [overrides, current]);
 
-  const relations = useMemo(
-    () => buildCoverageRelations(allLocations ?? []),
-    [allLocations],
-  );
-
-  const locationById = useMemo(
-    () => new Map((allLocations ?? []).map((l) => [l.id, l])),
-    [allLocations],
-  );
-
-  const selectedList = useMemo(() => {
-    const rows: Location[] = [];
-    for (const id of selected) {
-      const loc = locationById.get(id);
-      if (loc) rows.push(loc);
-    }
-    rows.sort((a, b) => a.name.localeCompare(b.name));
-    return rows;
-  }, [selected, locationById]);
-
   const isDirty = useMemo(() => {
     if (!current) return false;
     const serverSet = new Set(current.map((r) => r.location_id));
@@ -75,20 +50,12 @@ export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
     return false;
   }, [current, selected]);
 
-  function toggle(id: string) {
-    setOverrides(toggleCoverage(selected, id, relations));
-  }
-
   async function handleSave() {
     // The mutation's onSuccess returns the invalidate promise, so mutateAsync
     // resolves only after the refetch completes — the cache is fresh by this
     // point and dropping the override won't cause a stale-state flash.
     await setMutation.mutateAsync({ geduId, locationIds: Array.from(selected) });
     setOverrides(null);
-  }
-
-  function handleClearAll() {
-    setOverrides(new Set());
   }
 
   const isLoading = locationsLoading || currentLoading;
@@ -101,60 +68,12 @@ export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">{t("remoteOnlyNote")}</p>
 
-        <div className="grid gap-4 md:grid-cols-[1fr_1fr]">
-          <div>
-            {isLoading ? (
-              <div className="flex h-[420px] items-center justify-center rounded-md border text-sm text-muted-foreground">
-                {t("loading")}
-              </div>
-            ) : (
-              <LocationTree
-                locations={allLocations ?? []}
-                selection={{ mode: "multi", selectedIds: selected, onToggle: toggle }}
-                searchPlaceholder={t("searchPlaceholder")}
-                listClassName="h-[420px]"
-              />
-            )}
-          </div>
-
-          {/* Fixed-height summary — the list scrolls internally so adding or
-              removing rows never reflows the page. */}
-          <div className="flex flex-col rounded-md border">
-            <div className="flex items-center justify-between border-b px-3 py-2">
-              <span className="text-sm font-medium">
-                {t("selectedHeading", { count: selected.size })}
-              </span>
-              <Button type="button" variant="ghost" size="sm" onClick={handleClearAll}>
-                {t("clearAll")}
-              </Button>
-            </div>
-            <div className="h-[420px] overflow-y-auto">
-              {selectedList.length === 0 ? (
-                <div className="px-3 py-4 text-sm text-muted-foreground">
-                  {t("noneSelected")}
-                </div>
-              ) : (
-                <ul className="divide-y">
-                  {selectedList.map((loc) => (
-                    <li key={loc.id}>
-                      <button
-                        type="button"
-                        onClick={() => toggle(loc.id)}
-                        className="group flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
-                        title={t("remove", {
-                          name: localizedLocationName(loc, locale),
-                        })}
-                      >
-                        <span>{localizedLocationName(loc, locale)}</span>
-                        <X className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        </div>
+        <CoveragePicker
+          locations={allLocations ?? []}
+          selected={selected}
+          onChange={setOverrides}
+          loading={isLoading}
+        />
 
         <div className="flex items-center justify-end gap-2">
           {setMutation.isError && (

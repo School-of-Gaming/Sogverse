@@ -8,7 +8,7 @@
       "createAccount": "Create Account",
       "forgotPassword": "Forgot Password",
       "resetPassword": "Reset Password",
-      "setupAccount": "Set Up Your Account",
+      "registerGedu": "Become a Game Educator",
       "about": "About Us",
       "yty": "Yty – the Force of the Sogverse",
       "minecraftApi": "Minecraft Server API",
@@ -554,7 +554,8 @@
         "countSummary": "Showing {filtered} of {total} Gedus",
         "noResults": "No Gedus match your search.",
         "current": "Current",
-        "alreadyAssigned": "Already assigned"
+        "alreadyAssigned": "Already assigned",
+        "notVerified": "Not verified"
       },
       "gamerPicker": {
         "title": "Add a gamer",
@@ -638,7 +639,6 @@
     "users": {
       "title": "Users",
       "manageAccounts": "Manage user accounts and roles",
-      "inviteGedu": "Invite Gedu",
       "searchPlaceholder": "Search by name, email, or username...",
       "searchAriaLabel": "Search users",
       "roleFilterLabel": "Role",
@@ -671,30 +671,18 @@
         "reserving": "Awaiting payment",
         "completed": "Completed"
       },
-      "inviteNewGedu": "Invite New Gedu",
-      "sendInvitation": "Send an invitation email to a new game educator",
-      "newGeduInvitation": "New Gedu Invitation",
-      "geduReceiveEmail": "The gedu will receive an email with instructions to set up their account.",
-      "inviteLinkExpiryNote": "The invite link will be valid for 72 hours.",
-      "emailAddress": "Email Address",
-      "emailPlaceholder": "gedu@example.com",
-      "geduFirstName": "First Name",
-      "geduFirstNamePlaceholder": "e.g. Jane",
-      "geduFirstNameHelper": "Shown in the welcome email greeting and pre-filled on the gedu’s profile.",
-      "geduFirstNameTooShort": "First name must be at least 2 characters",
-      "geduFirstNameTooLong": "First name must be at most 32 characters",
-      "geduLastName": "Last Name",
-      "geduLastNamePlaceholder": "e.g. Smith",
-      "geduLastNameTooShort": "Last name must be at least 2 characters",
-      "geduLastNameTooLong": "Last name must be at most 32 characters",
-      "inviteLanguage": "Invite Email Language",
-      "sendInvite": "Send Invitation",
-      "sendingInvite": "Sending...",
-      "inviteSent": "Invitation Sent!",
-      "inviteSentDescription": "An invitation has been sent to {email}.",
-      "viewAllUsers": "View All Users",
-      "inviteAnother": "Invite Another",
-      "invalidEmail": "Please enter a valid email address"
+      "verification": {
+        "title": "Verification",
+        "verified": "Verified",
+        "unverified": "Not verified",
+        "unverifiedNote": "This game educator hasn't been verified yet. They can't be assigned to a group until you verify them.",
+        "verifiedOn": "Verified on {date}",
+        "verifiedByOn": "Verified by {name} on {date}",
+        "verifyAction": "Verify",
+        "unverifyAction": "Un-verify",
+        "saving": "Saving…",
+        "error": "Couldn't update verification. Please try again."
+      }
     },
     "locations": {
       "title": "Locations",
@@ -902,20 +890,16 @@
       "successTitle": "Password updated",
       "successDescription": "Your password has been successfully updated."
     },
-    "setupAccount": {
-      "title": "Welcome to the Sogverse",
-      "description": "Set up your game educator account below.",
-      "firstNamePlaceholder": "Your first name",
-      "lastNamePlaceholder": "Your last name",
-      "passwordPlaceholder": "At least 8 characters",
-      "confirmPasswordPlaceholder": "Confirm your password",
-      "settingUp": "Setting up...",
-      "submitButton": "Set Up Account",
-      "inviteLinkExpired": "Your invite link has expired. Please ask your admin to send a new one.",
-      "minecraftSaveFailed": "Failed to save Minecraft username",
+    "registerGedu": {
+      "title": "Become a Game Educator",
+      "description": "Create your Sogverse game educator account.",
+      "verificationAlertTitle": "Your account needs to be verified",
+      "verificationAlertDescription": "You can sign in right away, but an admin needs to verify your account before you can be assigned to a club or camp.",
+      "coverageHeading": "Where can you teach?",
+      "coverageNote": "Pick the areas you can cover in person. Leave it empty if you only teach remotely.",
       "invalidPhone": "Please enter a valid phone number",
-      "successTitle": "You're all set!",
-      "successDescription": "Your account has been set up successfully."
+      "creatingAccount": "Creating account...",
+      "alreadyHaveAccount": "Already have an account? <link>Sign in</link>"
     }
   },
   "pin": {
@@ -1936,7 +1920,7 @@
       "subject": "Reset your Sogverse password",
       "heading": "Reset Your Password",
       "body": "We received a request to reset your Sogverse password. Click the button below to choose a new password.",
-      "expiry": "This link will expire in 72 hours.",
+      "expiry": "This link will expire in 1 hour.",
       "ignore": "If you didn’t request a password reset, you can safely ignore this email. Your password will not be changed.",
       "button": "Reset Password"
     },
@@ -1947,14 +1931,6 @@
       "expiry": "This link will expire in 24 hours.",
       "ignore": "If you didn’t request a PIN reset, you can safely ignore this email. Your PIN will not be changed.",
       "button": "Reset PIN"
-    },
-    "geduInvite": {
-      "subject": "You’re invited to the Sogverse",
-      "heading": "Welcome to the Sogverse",
-      "greeting": "Hi {name},",
-      "body": "You’ve been invited to join the Sogverse as a <strong>Gedu</strong>. Click the button below to set up your account.",
-      "expiry": "This link will expire in 72 hours.",
-      "button": "Set Up Your Account"
     },
     "minecraft": {
       "label": "Minecraft Username:",

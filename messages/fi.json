@@ -8,7 +8,7 @@
       "createAccount": "Luo tili",
       "forgotPassword": "Unohtuiko salasana",
       "resetPassword": "Vaihda salasana",
-      "setupAccount": "Tilin käyttöönotto",
+      "registerGedu": "Ryhdy pelikasvattajaksi",
       "about": "Tietoa meistä",
       "yty": "Yty – Sogversen voima",
       "minecraftApi": "Minecraft Server API",
@@ -554,7 +554,8 @@
         "countSummary": "Näytetään {filtered} / {total} Geduja",
         "noResults": "Hakuehdoilla ei löytynyt Geduja.",
         "current": "Nykyinen",
-        "alreadyAssigned": "Jo nimetty"
+        "alreadyAssigned": "Jo nimetty",
+        "notVerified": "Ei vahvistettu"
       },
       "gamerPicker": {
         "title": "Lisää pelaaja",
@@ -638,7 +639,6 @@
     "users": {
       "title": "Käyttäjät",
       "manageAccounts": "Hallitse käyttäjätilejä ja rooleja",
-      "inviteGedu": "Kutsu Gedu",
       "searchPlaceholder": "Hae nimellä, sähköpostilla tai käyttäjänimellä...",
       "searchAriaLabel": "Hae käyttäjiä",
       "roleFilterLabel": "Rooli",
@@ -671,30 +671,18 @@
         "reserving": "Odottaa maksua",
         "completed": "Päättynyt"
       },
-      "inviteNewGedu": "Kutsu uusi Gedu",
-      "sendInvitation": "Lähetä kutsu uudelle pelikasvattajalle",
-      "newGeduInvitation": "Uusi Gedu-kutsu",
-      "geduReceiveEmail": "Gedu saa sähköpostin, jossa on ohjeet tilin luomiseen.",
-      "inviteLinkExpiryNote": "Kutsulinkki on voimassa 72 tuntia.",
-      "emailAddress": "Sähköpostiosoite",
-      "emailPlaceholder": "gedu@example.com",
-      "geduFirstName": "Etunimi",
-      "geduFirstNamePlaceholder": "esim. Jane",
-      "geduFirstNameHelper": "Näkyy tervetulosähköpostin tervehdyksessä ja esitäytetään Gedun profiiliin.",
-      "geduFirstNameTooShort": "Etunimessä on oltava vähintään 2 merkkiä",
-      "geduFirstNameTooLong": "Etunimessä saa olla enintään 32 merkkiä",
-      "geduLastName": "Sukunimi",
-      "geduLastNamePlaceholder": "esim. Smith",
-      "geduLastNameTooShort": "Sukunimessä on oltava vähintään 2 merkkiä",
-      "geduLastNameTooLong": "Sukunimessä saa olla enintään 32 merkkiä",
-      "inviteLanguage": "Kutsusähköpostin kieli",
-      "sendInvite": "Lähetä kutsu",
-      "sendingInvite": "Lähetetään...",
-      "inviteSent": "Kutsu lähetetty!",
-      "inviteSentDescription": "Kutsu on lähetetty osoitteeseen {email}.",
-      "viewAllUsers": "Näytä kaikki käyttäjät",
-      "inviteAnother": "Kutsu toinen",
-      "invalidEmail": "Anna kelvollinen sähköpostiosoite"
+      "verification": {
+        "title": "Vahvistus",
+        "verified": "Vahvistettu",
+        "unverified": "Ei vahvistettu",
+        "unverifiedNote": "Tätä pelikasvattajaa ei ole vielä vahvistettu. Häntä ei voi liittää ryhmään ennen vahvistusta.",
+        "verifiedOn": "Vahvistettu {date}",
+        "verifiedByOn": "Vahvistanut {name} {date}",
+        "verifyAction": "Vahvista",
+        "unverifyAction": "Peru vahvistus",
+        "saving": "Tallennetaan…",
+        "error": "Vahvistuksen päivitys epäonnistui. Yritä uudelleen."
+      }
     },
     "locations": {
       "title": "Sijainnit",
@@ -902,20 +890,16 @@
       "successTitle": "Salasana päivitetty",
       "successDescription": "Salasanasi on päivitetty onnistuneesti."
     },
-    "setupAccount": {
-      "title": "Tervetuloa Sogverseen",
-      "description": "Määritä pelikasvattajatilisi alla.",
-      "firstNamePlaceholder": "Etunimesi",
-      "lastNamePlaceholder": "Sukunimesi",
-      "passwordPlaceholder": "Vähintään 8 merkkiä",
-      "confirmPasswordPlaceholder": "Vahvista salasanasi",
-      "settingUp": "Määritetään...",
-      "submitButton": "Luo tili",
-      "inviteLinkExpired": "Kutsulinkki on vanhentunut. Pyydä ylläpitäjää lähettämään uusi.",
-      "minecraftSaveFailed": "Minecraft-käyttäjänimen tallentaminen epäonnistui",
+    "registerGedu": {
+      "title": "Ryhdy pelikasvattajaksi",
+      "description": "Luo Sogverse-pelikasvattajatilisi.",
+      "verificationAlertTitle": "Tilisi on vahvistettava",
+      "verificationAlertDescription": "Voit kirjautua heti, mutta ylläpitäjän on vahvistettava tilisi ennen kuin sinut voidaan liittää kerhoon tai leirille.",
+      "coverageHeading": "Missä voit opettaa?",
+      "coverageNote": "Valitse alueet, joilla voit opettaa paikan päällä. Jätä tyhjäksi, jos opetat vain etänä.",
       "invalidPhone": "Syötä kelvollinen puhelinnumero",
-      "successTitle": "Kaikki valmista!",
-      "successDescription": "Tilisi on luotu onnistuneesti."
+      "creatingAccount": "Luodaan tiliä...",
+      "alreadyHaveAccount": "Onko sinulla jo tili? <link>Kirjaudu sisään</link>"
     }
   },
   "pin": {
@@ -1936,7 +1920,7 @@
       "subject": "Nollaa Sogverse-salasanasi",
       "heading": "Nollaa salasanasi",
       "body": "Saimme pyynnön nollata Sogverse-salasanasi. Napsauta alla olevaa painiketta valitaksesi uuden salasanan.",
-      "expiry": "Tämä linkki vanhenee 72 tunnin kuluttua.",
+      "expiry": "Tämä linkki vanhenee tunnin kuluttua.",
       "ignore": "Jos et pyytänyt salasanan nollausta, voit jättää tämän sähköpostin huomiotta. Salasanaasi ei muuteta.",
       "button": "Nollaa salasana"
     },
@@ -1947,14 +1931,6 @@
       "expiry": "Tämä linkki vanhenee 24 tunnin kuluttua.",
       "ignore": "Jos et pyytänyt PIN-koodin nollausta, voit jättää tämän sähköpostin huomiotta. PIN-koodiasi ei muuteta.",
       "button": "Nollaa PIN-koodi"
-    },
-    "geduInvite": {
-      "subject": "Sinut on kutsuttu Sogverseen",
-      "heading": "Tervetuloa Sogverseen",
-      "greeting": "Hei {name},",
-      "body": "Sinut on kutsuttu liittymään Sogverseen <strong>Geduna</strong>. Napsauta alla olevaa painiketta luodaksesi tilisi.",
-      "expiry": "Tämä linkki vanhenee 72 tunnin kuluttua.",
-      "button": "Luo tilisi"
     },
     "minecraft": {
       "label": "Minecraft-käyttäjänimi:",

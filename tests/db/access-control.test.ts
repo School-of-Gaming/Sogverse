@@ -68,6 +68,13 @@ const AUTHENTICATED_ALLOWLIST = new Set([
   // return a boolean derived from the caller's auth.uid(), no data leak.
   "is_voice_group_member",
   "is_voice_group_moderator",
+
+  // Gedu verification (00111). Admin verifies / un-verifies a gedu from the
+  // admin user-detail page via their own authenticated session. SECURITY
+  // DEFINER, but self-gates with is_admin() and stamps verified_by/verified_at
+  // server-side. (register_gedu, which grants the gedu role, is service_role
+  // only — never authenticated — so it intentionally is NOT listed here.)
+  "set_gedu_verified",
 ]);
 
 /**

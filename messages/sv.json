@@ -8,7 +8,7 @@
       "createAccount": "Skapa konto",
       "forgotPassword": "Glömt lösenord",
       "resetPassword": "Återställ lösenord",
-      "setupAccount": "Konfigurera ditt konto",
+      "registerGedu": "Bli spelfostrare",
       "about": "Om oss",
       "yty": "Yty – Sogversens kraft",
       "minecraftApi": "Minecraft Server API",
@@ -554,7 +554,8 @@
         "countSummary": "Visar {filtered} av {total} Geduer",
         "noResults": "Inga Geduer matchar din sökning.",
         "current": "Nuvarande",
-        "alreadyAssigned": "Redan tilldelad"
+        "alreadyAssigned": "Redan tilldelad",
+        "notVerified": "Inte verifierad"
       },
       "gamerPicker": {
         "title": "Lägg till en spelare",
@@ -638,7 +639,6 @@
     "users": {
       "title": "Användare",
       "manageAccounts": "Hantera användarkonton och roller",
-      "inviteGedu": "Bjud in Gedu",
       "searchPlaceholder": "Sök på namn, e-post eller användarnamn...",
       "searchAriaLabel": "Sök användare",
       "roleFilterLabel": "Roll",
@@ -671,30 +671,18 @@
         "reserving": "Inväntar betalning",
         "completed": "Avslutad"
       },
-      "inviteNewGedu": "Bjud in ny Gedu",
-      "sendInvitation": "Skicka en inbjudan via e-post till en ny spelfostrare",
-      "newGeduInvitation": "Ny Gedu-inbjudan",
-      "geduReceiveEmail": "Gedun kommer att få ett e-postmeddelande med instruktioner för att konfigurera sitt konto.",
-      "inviteLinkExpiryNote": "Inbjudningslänken är giltig i 72 timmar.",
-      "emailAddress": "E-postadress",
-      "emailPlaceholder": "gedu@example.com",
-      "geduFirstName": "Förnamn",
-      "geduFirstNamePlaceholder": "t.ex. Jane",
-      "geduFirstNameHelper": "Visas i välkomstmailets hälsning och förifylls på Geduns profil.",
-      "geduFirstNameTooShort": "Förnamnet måste vara minst 2 tecken",
-      "geduFirstNameTooLong": "Förnamnet får vara högst 32 tecken",
-      "geduLastName": "Efternamn",
-      "geduLastNamePlaceholder": "t.ex. Smith",
-      "geduLastNameTooShort": "Efternamnet måste vara minst 2 tecken",
-      "geduLastNameTooLong": "Efternamnet får vara högst 32 tecken",
-      "inviteLanguage": "Inbjudningsmailets språk",
-      "sendInvite": "Skicka inbjudan",
-      "sendingInvite": "Skickar...",
-      "inviteSent": "Inbjudan skickad!",
-      "inviteSentDescription": "En inbjudan har skickats till {email}.",
-      "viewAllUsers": "Visa alla användare",
-      "inviteAnother": "Bjud in en till",
-      "invalidEmail": "Ange en giltig e-postadress"
+      "verification": {
+        "title": "Verifiering",
+        "verified": "Verifierad",
+        "unverified": "Inte verifierad",
+        "unverifiedNote": "Den här spelfostraren har inte verifierats ännu. Hen kan inte tilldelas en grupp förrän du verifierar hen.",
+        "verifiedOn": "Verifierad {date}",
+        "verifiedByOn": "Verifierad av {name} {date}",
+        "verifyAction": "Verifiera",
+        "unverifyAction": "Ångra verifiering",
+        "saving": "Sparar…",
+        "error": "Det gick inte att uppdatera verifieringen. Försök igen."
+      }
     },
     "locations": {
       "title": "Platser",
@@ -902,20 +890,16 @@
       "successTitle": "Lösenordet uppdaterat",
       "successDescription": "Ditt lösenord har uppdaterats."
     },
-    "setupAccount": {
-      "title": "Välkommen till Sogverse",
-      "description": "Konfigurera ditt spelutbildarkonto nedan.",
-      "firstNamePlaceholder": "Ditt förnamn",
-      "lastNamePlaceholder": "Ditt efternamn",
-      "passwordPlaceholder": "Minst 8 tecken",
-      "confirmPasswordPlaceholder": "Bekräfta ditt lösenord",
-      "settingUp": "Konfigurerar...",
-      "submitButton": "Konfigurera konto",
-      "inviteLinkExpired": "Din inbjudningslänk har gått ut. Be din administratör att skicka en ny.",
-      "minecraftSaveFailed": "Kunde inte spara Minecraft-användarnamn",
+    "registerGedu": {
+      "title": "Bli spelfostrare",
+      "description": "Skapa ditt Sogverse-spelfostrarkonto.",
+      "verificationAlertTitle": "Ditt konto måste verifieras",
+      "verificationAlertDescription": "Du kan logga in direkt, men en administratör måste verifiera ditt konto innan du kan tilldelas en klubb eller ett läger.",
+      "coverageHeading": "Var kan du undervisa?",
+      "coverageNote": "Välj de områden där du kan undervisa på plats. Lämna tomt om du bara undervisar på distans.",
       "invalidPhone": "Ange ett giltigt telefonnummer",
-      "successTitle": "Allt är klart!",
-      "successDescription": "Ditt konto har konfigurerats."
+      "creatingAccount": "Skapar konto...",
+      "alreadyHaveAccount": "Har du redan ett konto? <link>Logga in</link>"
     }
   },
   "pin": {
@@ -1936,7 +1920,7 @@
       "subject": "Återställ ditt Sogverse-lösenord",
       "heading": "Återställ ditt lösenord",
       "body": "Vi har mottagit en begäran om att återställa ditt Sogverse-lösenord. Klicka på knappen nedan för att välja ett nytt lösenord.",
-      "expiry": "Denna länk upphör att gälla om 72 timmar.",
+      "expiry": "Denna länk upphör att gälla om 1 timme.",
       "ignore": "Om du inte begärde en lösenordsåterställning kan du ignorera detta e-postmeddelande. Ditt lösenord kommer inte att ändras.",
       "button": "Återställ lösenord"
     },
@@ -1947,14 +1931,6 @@
       "expiry": "Denna länk upphör att gälla om 24 timmar.",
       "ignore": "Om du inte begärde en PIN-återställning kan du ignorera detta e-postmeddelande. Din PIN-kod kommer inte att ändras.",
       "button": "Återställ PIN-kod"
-    },
-    "geduInvite": {
-      "subject": "Du är inbjuden till Sogverse",
-      "heading": "Välkommen till Sogverse",
-      "greeting": "Hej {name},",
-      "body": "Du har blivit inbjuden att gå med i Sogverse som <strong>Gedu</strong>. Klicka på knappen nedan för att skapa ditt konto.",
-      "expiry": "Denna länk upphör att gälla om 72 timmar.",
-      "button": "Skapa ditt konto"
     },
     "minecraft": {
       "label": "Minecraft-användarnamn:",

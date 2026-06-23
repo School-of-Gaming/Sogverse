@@ -98,25 +98,4 @@ export class UsersService {
     if (error) throw error;
     return data;
   }
-
-  async createGedu(
-    email: string,
-    firstName: string,
-    lastName: string | null,
-    locale?: string,
-  ): Promise<{ warning?: string }> {
-    const response = await fetch("/api/admin/create-gedu", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, firstName, lastName, locale }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Failed to create gedu account");
-    }
-
-    return data;
-  }
 }

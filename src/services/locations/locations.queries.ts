@@ -12,13 +12,14 @@ export const locationKeys = {
   detail: (id: string) => [...locationKeys.details(), id] as const,
 };
 
-export function useAllLocations() {
+export function useAllLocations(options?: { initialData?: Location[] }) {
   const supabase = getClient();
   const service = new LocationsService(supabase);
 
   return useQuery({
     queryKey: locationKeys.lists(),
     queryFn: () => service.getAllLocations(),
+    initialData: options?.initialData,
   });
 }
 

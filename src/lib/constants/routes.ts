@@ -102,6 +102,8 @@ export const ROUTES = {
   docs: "/docs",
   login: "/login",
   register: "/register",
+  /** Public gedu self-registration page (the gedu analogue of /register). */
+  registerGedu: "/register-gedu",
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
   // Landing page for the parent-PIN reset email link. Public (no session): the
@@ -109,7 +111,6 @@ export const ROUTES = {
   // `?token=` query param (NOT a Supabase recovery hash like resetPassword). The
   // token is single-use — bound to the current PIN hash; see pin-session.ts.
   resetPin: "/reset-pin",
-  setupAccount: "/setup-account",
   selectProfile: "/select-profile",
   help: "/help",
   /** Public municipality-club discovery page — list + search of Finnish municipalities. */
@@ -145,7 +146,6 @@ export const ROUTES = {
   admin: {
     dashboard: "/admin",
     users: "/admin/users",
-    usersAdd: "/admin/users/add",
     user: (id: string) => `/admin/users/${id}`,
     product: adminProductHref,
     consumerClubs: "/admin/consumer-clubs",
