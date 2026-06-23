@@ -891,8 +891,7 @@
       "successDescription": "Your password has been successfully updated."
     },
     "registerGedu": {
-      "title": "Become a Game Educator",
-      "description": "Create your Sogverse game educator account.",
+      "title": "Create your Sogverse Gedu account",
       "verificationAlertTitle": "Your account needs to be verified",
       "verificationAlertDescription": "You can sign in right away, but an admin needs to verify your account before you can be assigned to a club or camp.",
       "coverageHeading": "Where can you teach?",

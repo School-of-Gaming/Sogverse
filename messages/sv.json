@@ -891,8 +891,7 @@
       "successDescription": "Ditt lösenord har uppdaterats."
     },
     "registerGedu": {
-      "title": "Bli spelfostrare",
-      "description": "Skapa ditt Sogverse-spelfostrarkonto.",
+      "title": "Skapa ditt Sogverse-spelfostrarkonto",
       "verificationAlertTitle": "Ditt konto måste verifieras",
       "verificationAlertDescription": "Du kan logga in direkt, men en administratör måste verifiera ditt konto innan du kan tilldelas en klubb eller ett läger.",
       "coverageHeading": "Var kan du undervisa?",

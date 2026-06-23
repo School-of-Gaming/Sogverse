@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
@@ -144,9 +144,8 @@ export function RegisterGeduForm({
 
   return (
     <Card className="w-full max-w-2xl">
-      <CardHeader className="space-y-1">
+      <CardHeader>
         <CardTitle className="text-2xl text-center">{t("registerGedu.title")}</CardTitle>
-        <CardDescription className="text-center">{t("registerGedu.description")}</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">

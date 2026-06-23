@@ -936,8 +936,7 @@
       "successDescription": "mu'mey chu'moHlu'. Qapla'!"
     },
     "registerGedu": {
-      "title": "Gedu yImoj!",
-      "description": "Sogverse Gedu account yIchenmoH.",
+      "title": "Sogverse Gedu account yIchenmoH",
       "verificationAlertTitle": "account ngu'nIS",
       "verificationAlertDescription": "DaH bI'el laH, 'ach ghob ghoSlu'pa' admin account ngu'nIS.",
       "coverageHeading": "nuqDaq bIghojmoH laH?",

@@ -891,8 +891,7 @@
       "successDescription": "Salasanasi on päivitetty onnistuneesti."
     },
     "registerGedu": {
-      "title": "Ryhdy pelikasvattajaksi",
-      "description": "Luo Sogverse-pelikasvattajatilisi.",
+      "title": "Luo Sogverse-pelikasvattajatilisi",
       "verificationAlertTitle": "Tilisi on vahvistettava",
       "verificationAlertDescription": "Voit kirjautua heti, mutta ylläpitäjän on vahvistettava tilisi ennen kuin sinut voidaan liittää kerhoon tai leirille.",
       "coverageHeading": "Missä voit opettaa?",
