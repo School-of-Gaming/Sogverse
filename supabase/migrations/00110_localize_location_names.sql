@@ -13,9 +13,10 @@
 -- forms go in the json. Finland's own fi names therefore live in `name`, not under
 -- a "fi" key.
 --
--- Data backfilled here: the official Swedish names of Finland's 19 regions and 33
--- bilingual municipalities, per the Institute for the Languages of Finland (Kotus)
--- and the Government Decree on municipalities' linguistic status (Finlex 1385/2022).
+-- Data backfilled here: the official Swedish names of Finland's 18 regions
+-- (Satakunta omitted — identical in both languages) and 33 bilingual
+-- municipalities, per the Institute for the Languages of Finland (Kotus) and the
+-- Government Decree on municipalities' linguistic status (Finlex 1385/2022).
 -- Rows whose Swedish name equals the Finnish (Satakunta; Korsnäs; Åland's 15
 -- Swedish-only municipalities, already stored in Swedish) get no entry.
 --
