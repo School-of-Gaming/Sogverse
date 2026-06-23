@@ -1237,8 +1237,8 @@
   "schools": {
     "hero": {
       "title": "Spelklubbar i <primary>din kommun</primary>",
-      "subtitle": "School of Gaming ordnar Minecraft-klubbar tillsammans med finländska kommuner — ledda av professionella spelpedagoger, nära hemmet. Hitta din kommun och se vad som erbjuds.",
-      "howItWorks": "Beroende på kommun hålls klubben online hemifrån eller på plats i ditt barns skola — och en Gedu är alltid med."
+      "subtitle": "School of Gaming ordnar klubbar tillsammans med finländska kommuner. Hitta din kommun och utforska utbudet.",
+      "howItWorks": "Beroende på kommun träffas klubben antingen online hemifrån eller på plats i ditt barns skola. En professionell spelpedagog finns alltid med och leder verksamheten."
     },
     "search": {
       "label": "Sök din kommun",
@@ -1254,10 +1254,11 @@
       "available": "Klubbar tillgängliga",
       "comingSoon": "Inget här ännu"
     },
-    "waitlistNote": "Platserna är begränsade och klubbarna har ofta en väntelista — avboka din anmälan om ditt barn slutar, så att en annan spelare kan ta platsen.",
+    "waitlistNote": "Platserna är begränsade och klubbarna har ofta en väntelista. Om ditt barn slutar, kom ihåg att avboka anmälan så att platsen kan erbjudas nästa spelare.",
     "notListed": {
       "title": "Hittar du inte din kommun?",
-      "body": "Vi lägger till nya kommuner hela tiden. Under tiden är våra onlineklubbar öppna för spelare var de än bor. Frågor?"
+      "body": "Kommunklubbar ordnas tillsammans med varje kommun, och vi lägger till nya hela tiden. Om din kommun inte är med ännu, berätta för oss:",
+      "openClubs": "Vi har också klubbar som är öppna för alla, som en spelare kan gå med i oavsett var hen bor."
     }
   },
   "productBrowse": {

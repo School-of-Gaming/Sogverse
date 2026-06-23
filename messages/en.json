@@ -1237,8 +1237,8 @@
   "schools": {
     "hero": {
       "title": "Game clubs in <primary>your municipality</primary>",
-      "subtitle": "School of Gaming runs Minecraft clubs together with Finnish municipalities — guided by professional game educators, close to home. Find your municipality to see what's on.",
-      "howItWorks": "Depending on your municipality, sessions run online from home or in person at your child's school — and a Gedu is there every time."
+      "subtitle": "School of Gaming runs clubs together with Finnish municipalities. Find your municipality and explore what's on offer.",
+      "howItWorks": "Depending on the municipality, the club meets either online from home or in person at your child's school. A professional game educator is always there to guide the activity."
     },
     "search": {
       "label": "Search for your municipality",
@@ -1254,10 +1254,11 @@
       "available": "Clubs available",
       "comingSoon": "Nothing here yet"
     },
-    "waitlistNote": "Spots are limited and clubs often have a waiting list — please cancel your registration if your child stops, so another gamer can take the place.",
+    "waitlistNote": "Spots are limited and clubs often have a waiting list. If your child stops attending, please remember to cancel the registration so the place can be offered to the next gamer.",
     "notListed": {
       "title": "Don't see your municipality?",
-      "body": "We're adding new municipalities all the time. In the meantime, our online clubs are open to gamers anywhere. Questions?"
+      "body": "Municipality clubs are arranged together with each municipality, and we're adding new ones all the time. If yours isn't on board yet, tell us about it:",
+      "openClubs": "We also run clubs that are open to everyone, which a gamer can join wherever they live."
     }
   },
   "productBrowse": {

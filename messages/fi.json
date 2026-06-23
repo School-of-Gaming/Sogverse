@@ -1237,8 +1237,8 @@
   "schools": {
     "hero": {
       "title": "Pelikerhot <primary>omassa kunnassasi</primary>",
-      "subtitle": "School of Gaming järjestää Minecraft-kerhoja yhdessä suomalaisten kuntien kanssa — ammattitaitoisten pelikasvattajien johdolla, lähellä kotia. Etsi kuntasi ja katso, mitä on tarjolla.",
-      "howItWorks": "Kunnasta riippuen kerho kokoontuu verkossa kotoa käsin tai paikan päällä lapsesi koulussa — ja Gedu on aina mukana."
+      "subtitle": "School of Gaming järjestää harrastuskerhoja yhdessä suomalaisten kuntien kanssa. Etsi kuntasi ja tutustu tarjontaan.",
+      "howItWorks": "Kunnasta riippuen kerho kokoontuu joko verkossa kotoa käsin tai paikan päällä lapsesi koulussa. Ammattitaitoinen pelikasvattaja on aina mukana ohjaamassa toimintaa."
     },
     "search": {
       "label": "Etsi kuntaasi",
@@ -1254,10 +1254,11 @@
       "available": "Kerhoja tarjolla",
       "comingSoon": "Ei vielä kerhoja"
     },
-    "waitlistNote": "Paikkoja on rajoitetusti, ja kerhoihin on usein jonotuslista — peru ilmoittautuminen, jos lapsesi lopettaa, niin paikka vapautuu toiselle pelaajalle.",
+    "waitlistNote": "Paikkoja on rajoitetusti, ja kerhoihin on usein jonotuslista. Jos lapsesi lopettaa kerhon, muistathan perua ilmoittautumisen, jotta paikkaa voidaan tarjota seuraavalle pelaajalle.",
     "notListed": {
       "title": "Etkö löydä kuntaasi?",
-      "body": "Lisäämme uusia kuntia jatkuvasti. Sillä välin verkkokerhomme ovat avoinna pelaajille asuinpaikasta riippumatta. Kysyttävää?"
+      "body": "Kuntakerhot järjestetään yhteistyössä kunnan kanssa, ja lisäämme uusia kuntia jatkuvasti. Jos kuntasi ei ole vielä mukana, kerro siitä meille:",
+      "openClubs": "Tarjoamme myös kaikille avoimia kerhoja, joihin pelaaja voi liittyä asuinpaikasta riippumatta."
     }
   },
   "productBrowse": {

@@ -112,6 +112,9 @@ export function SchoolsBrowse({ entries }: { entries: MunicipalityEntry[] }) {
             {SUPPORT_EMAIL}
           </a>
         </p>
+        <p className="mx-auto mt-3 max-w-prose text-sm text-muted-foreground">
+          {t("notListed.openClubs")}
+        </p>
         <Link
           href={ROUTES.shop}
           className={buttonVariants({ size: "sm", className: "mt-4" })}

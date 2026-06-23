@@ -1282,8 +1282,8 @@
   "schools": {
     "hero": {
       "title": "<primary>venglIjDaq</primary> Qup ghomHommey",
-      "subtitle": "Suomngan vengmey tlhej Minecraft ghomHommey chenmoH School of Gaming — Qup pIn'a'pu' lughoSmoH, juH retlhDaq. venglIj yISam 'ej nuq tu'lu' yIlegh.",
-      "howItWorks": "venglIj ghaj, juHDaq rurmey ghap puqlIj DuSaQDaq ghomHom — 'ej reH Gedu tu'lu'."
+      "subtitle": "Suomngan vengmey tlhej ghomHommey chenmoH School of Gaming. venglIj yISam 'ej nuq tu'lu' yIlegh.",
+      "howItWorks": "venglIj ghaj, juHvo' rurmey ghap puqlIj DuSaQDaq ghomHom. vummeH lughoSmoH Qup pIn'a' reH tu'lu'."
     },
     "search": {
       "label": "venglIj yISam",
@@ -1299,10 +1299,11 @@
       "available": "ghomHommey tu'lu'",
       "comingSoon": "pagh naDev"
     },
-    "waitlistNote": "puS Daqmey, 'ej motlh loSwI'mey ghaj ghomHommey — puqlIj mev chugh, yILIjHa' bIH, vaj latlh ghotvaD Daq nob.",
+    "waitlistNote": "puS Daqmey, 'ej motlh loSwI'mey ghaj ghomHommey. puqlIj mev chugh, yILIjHa' bIH, vaj latlh pelaajavaD Daq nob.",
     "notListed": {
       "title": "venglIj Daleghbe''a'?",
-      "body": "reH vengmey chu' wIchel. DaH ghomHommaj rurmey lumuvlaH Hoch, Daq pagh qel. yu''a'?"
+      "body": "veng tlhej kuntakerhomey chenmoH, 'ej reH chu' wIchel. DaH muvbe' venglIj chugh, maHvaD yIja':",
+      "openClubs": "Hoch lumuvlaH ghomHommaj 'op je; nuqDaq yIn pelaaja 'e' qelbe'."
     }
   },
   "productBrowse": {
