@@ -1277,7 +1277,15 @@ export default function AdminUIComponentsPage() {
             correct autocomplete token (given-name, family-name, tel,
             new-password, …) so autofill and accessibility work properly.
           */}
-          <div className="grid gap-6 md:grid-cols-2 max-w-2xl">
+          {/*
+            A <form> wrapper (submit prevented — this is a demo) so the password
+            field has a form ancestor. Chrome warns on form-less password inputs
+            because password managers anchor their save/fill UI to the form.
+          */}
+          <form
+            className="grid gap-6 md:grid-cols-2 max-w-2xl"
+            onSubmit={(e) => e.preventDefault()}
+          >
             <Field label="First name" htmlFor="demo-field-required">
               <Input id="demo-field-required" placeholder="e.g. Jane" autoComplete="off" />
             </Field>
@@ -1291,7 +1299,7 @@ export default function AdminUIComponentsPage() {
             >
               <Input id="demo-field-hint" type="password" autoComplete="new-password" />
             </Field>
-          </div>
+          </form>
         </SubSection>
 
         <SubSection title="Textarea — the multi-line control">
