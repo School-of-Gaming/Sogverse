@@ -53,7 +53,11 @@ A new gedu starts **unverified but with full platform access** — verification 
   `authenticated`; called from the admin user-detail page via the admin's own session.
 - **Assignment gate**: the gedu picker (`../../components/admin/products/`) disables
   unverified gedus and shows a "Not verified" badge — the only place verification is
-  enforced.
+  enforced. **This is a UI-only gate by design, and that is sufficient.** Assignment runs
+  through `apply_group_changes`, which does *not* re-check `verified`; the invariant holds
+  because admins are always trusted and assignment is an admin-only action driven entirely
+  by this picker. If a non-admin assignment path is ever added, move the `verified` check
+  into `apply_group_changes` — until then a DB-level check would be redundant.
 - **Surfaces**: an "Unverified" badge on the admin users list; a verify/un-verify card on
   the admin user-detail page.
 - **Backfill**: every gedu that existed before this feature was marked verified

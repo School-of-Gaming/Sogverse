@@ -148,7 +148,9 @@ export function GeduPickerSheet({
             {filtered.map((g) => {
               const isCurrent = g.id === highlightId;
               const isAssigned = excludeIds?.includes(g.id) ?? false;
-              // Unverified gedus can't be assigned until an admin approves them.
+              // Unverified gedus can't be assigned until an admin approves them
+              // (a UI-only gate — sufficient because only trusted admins assign;
+              // see src/services/gedu/CLAUDE.md).
               const isUnverified = !(verification.get(g.id)?.verified ?? false);
               const isDisabled = isCurrent || isAssigned || isUnverified;
               return (

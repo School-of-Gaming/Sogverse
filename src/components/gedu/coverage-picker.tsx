@@ -48,9 +48,13 @@ export function CoveragePicker({ locations, selected, onChange, loading }: Cover
       const loc = locationById.get(id);
       if (loc) rows.push(loc);
     }
-    rows.sort((a, b) => a.name.localeCompare(b.name));
+    // Sort by the name the user actually sees (localized), so the order matches
+    // the displayed labels rather than the raw `name` column.
+    rows.sort((a, b) =>
+      localizedLocationName(a, locale).localeCompare(localizedLocationName(b, locale), locale),
+    );
     return rows;
-  }, [selected, locationById]);
+  }, [selected, locationById, locale]);
 
   function toggle(id: string) {
     onChange(toggleCoverage(selected, id, relations));
