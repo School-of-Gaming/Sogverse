@@ -1246,7 +1246,7 @@
       "subheading": "{name} – viikoittaiset kerhot, joissa pelaajasi pelaa, rakentaa ja luo uusien kavereiden ja Gedun kanssa.",
       "empty": {
         "title": "{name} – ei kerhoja juuri nyt",
-        "body": "Tämä kunta ei tällä hetkellä tarjoa School of Gaming -kerhoja. Haluaisitko, että se tarjoaisi? Sovimme kuntakerhoista yhdessä kunkin kunnan kanssa – kerro meille:",
+        "body": "{name} ei tällä hetkellä tarjoa School of Gaming -kerhoja. Haluaisitko, että se tarjoaisi? Sovimme kuntakerhoista yhdessä kunkin kunnan kanssa – kerro meille:",
         "openClubs": "Pelaajasi voi liittyä myös kaikille avoimeen kerhoon asuinpaikasta riippumatta."
       }
     }
