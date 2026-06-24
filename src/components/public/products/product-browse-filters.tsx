@@ -7,7 +7,7 @@ import { GAME_TOPICS } from "@/lib/products/topics";
 import { productAgeOptions } from "@/lib/constants/gamer-age";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { useSpokenLanguages } from "@/services/users";
-import type { SpokenLanguage } from "@/types";
+import type { ProductTopic, SpokenLanguage } from "@/types";
 import { cn } from "@/lib/utils";
 import { productTypeSupportsDayFilter } from "./filter-products";
 import { formatWeekday } from "./format-product-schedule";
@@ -37,10 +37,28 @@ interface ProductBrowseFiltersProps {
   /** Server-prefetched spoken-language set so the Language row paints with the
    *  rest of the strip instead of popping in after its own fetch resolves. */
   initialSpokenLanguages: SpokenLanguage[];
+  /** Lead with the Clubs|Camps Type row. The shop does; the per-municipality
+   *  page hides it (everything there is a club). Default true. */
+  showTypeFilter?: boolean;
+  /** Topic chips to offer. The shop shows only games (`GAME_TOPICS`, the
+   *  default); the municipality page shows every topic — games, coding, game
+   *  design — via `PRODUCT_TOPIC_VALUES`. */
+  topicChoices?: readonly ProductTopic[];
+  /** Which `productBrowse.filters` key labels the topic row: `"topic"`
+   *  ("Game", shop default) or `"subject"` ("Subject", municipality page). */
+  topicLabelKey?: "topic" | "subject";
+  /** Whether the Days row applies. Omitted on the shop, where it's derived from
+   *  the live category; the municipality page passes it explicitly (municipality
+   *  clubs are recurring, so `true`) since it has no category to derive from. */
+  daysFilter?: boolean;
 }
 
 export function ProductBrowseFilters({
   initialSpokenLanguages,
+  showTypeFilter = true,
+  topicChoices = GAME_TOPICS,
+  topicLabelKey = "topic",
+  daysFilter,
 }: ProductBrowseFiltersProps) {
   const t = useTranslations("productBrowse.filters");
   const locale = useLocale();
@@ -74,8 +92,11 @@ export function ProductBrowseFilters({
   // The Days row only applies to clubs (same gate as the row's visibility
   // below). A `?days=` carried over from Clubs lingers in the URL on Camps by
   // design, but it shouldn't light up Clear there — so only count selected days
-  // toward Clear when the filter is actually active in this context.
-  const daysActive = productTypeSupportsDayFilter(CATEGORY_TYPE[category]);
+  // toward Clear when the filter is actually active in this context. The shop
+  // derives this from the live category; a caller without a category (the
+  // municipality page) passes `daysFilter` to set it directly.
+  const daysActive =
+    daysFilter ?? productTypeSupportsDayFilter(CATEGORY_TYPE[category]);
   const showClear = hasNonDayFilters || (daysActive && selectedDays.length > 0);
 
   return (
@@ -104,21 +125,23 @@ export function ProductBrowseFilters({
       </div>
 
       <div className="space-y-2">
-        <FilterRow label={t("type")}>
-          <Chip
-            label={t("typeClubs")}
-            active={category === "clubs"}
-            onToggle={() => setCategory("clubs")}
-          />
-          <Chip
-            label={t("typeCamps")}
-            active={category === "camps"}
-            onToggle={() => setCategory("camps")}
-          />
-        </FilterRow>
+        {showTypeFilter && (
+          <FilterRow label={t("type")}>
+            <Chip
+              label={t("typeClubs")}
+              active={category === "clubs"}
+              onToggle={() => setCategory("clubs")}
+            />
+            <Chip
+              label={t("typeCamps")}
+              active={category === "camps"}
+              onToggle={() => setCategory("camps")}
+            />
+          </FilterRow>
+        )}
 
-        <FilterRow label={t("topic")}>
-          {GAME_TOPICS.map((topic) => (
+        <FilterRow label={t(topicLabelKey)}>
+          {topicChoices.map((topic) => (
             <Chip
               key={topic}
               label={topicLabel(topic)}

@@ -30,6 +30,12 @@ interface ProductBrowseCardProps {
    * the counts query is in flight — card falls back to 0/0/0.
    */
   counts?: ParticipationCounts | null;
+  /**
+   * Detail-page URL override. Defaults to the storefront `/shop/[id]`; the
+   * per-municipality schools page passes `/schools/<slug>/[id]` so the card,
+   * and the detail page it opens, stay in that municipality's URL namespace.
+   */
+  detailHref?: string;
 }
 
 // Adapter: resolves a `ProductBrowseRow` into the display props
@@ -37,7 +43,11 @@ interface ProductBrowseCardProps {
 // participation lookups happen here so the View stays purely
 // presentational — that's what lets the UI Components page render every
 // state by hand without forging a full BrowseRow.
-export function ProductBrowseCard({ product, counts }: ProductBrowseCardProps) {
+export function ProductBrowseCard({
+  product,
+  counts,
+  detailHref,
+}: ProductBrowseCardProps) {
   const t = useTranslations("productBrowse.card");
   const uiLocale = resolveLocale(useLocale());
   const timeZone = useTimezone();
@@ -94,7 +104,7 @@ export function ProductBrowseCard({ product, counts }: ProductBrowseCardProps) {
       spokenLanguageCode={product.spoken_language_code}
       price={price}
       state={state}
-      detailHref={ROUTES.shopProduct(product.id)}
+      detailHref={detailHref ?? ROUTES.shopProduct(product.id)}
     />
   );
 }

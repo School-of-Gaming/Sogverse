@@ -149,3 +149,11 @@ export const GAME_TOPICS: readonly ProductTopic[] =
   PRODUCT_TOPIC_VALUES.filter(isGameTopic);
 export const SUBJECT_TOPICS: readonly ProductTopic[] =
   PRODUCT_TOPIC_VALUES.filter((t) => !isGameTopic(t));
+
+// Topic chips shown under the "Subject" filter on the per-municipality schools
+// page (`/schools/<slug>`). Every topic except `webinar` — webinars aren't part
+// of that catalogue. Unlike the shop's games-only `GAME_TOPICS`, this is defined
+// by exclusion, so future non-game topics (e.g. coding, game design) surface
+// here automatically as they're added to the enum.
+export const MUNICIPALITY_BROWSE_TOPICS: readonly ProductTopic[] =
+  PRODUCT_TOPIC_VALUES.filter((t) => t !== "webinar");

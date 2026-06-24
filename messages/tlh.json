@@ -1278,13 +1278,22 @@
     },
     "status": {
       "available": "ghomHommey tu'lu'",
-      "comingSoon": "pagh naDev"
+      "noClubs": "ghomHom pagh"
     },
     "waitlistNote": "puS Daqmey, 'ej motlh loSwI'mey ghaj ghomHommey. puqlIj mev chugh, yILIjHa' bIH, vaj latlh pelaajavaD Daq nob.",
     "notListed": {
       "title": "venglIj Daleghbe''a'?",
       "body": "veng tlhej kuntakerhomey chenmoH, 'ej reH chu' wIchel. DaH muvbe' venglIj chugh, maHvaD yIja':",
       "openClubs": "Hoch lumuvlaH ghomHommaj 'op je; nuqDaq yIn pelaaja 'e' qelbe'."
+    },
+    "municipality": {
+      "heading": "{name} ghomHommey",
+      "subheading": "{name} ghomHommey: Hoch hogh Quj, chen 'ej chenmoH pelaajalI', chu' juppu' 'ej Gedu pIn'a' tlhej.",
+      "empty": {
+        "title": "DaH {name} ghomHom pagh",
+        "body": "DaH {name}vaD School of Gaming ghomHommey wIchenmoHbe'. maHvaD DaneH'a'? veng tlhej ghomHommey wIchenmoH – maHvaD yIja':",
+        "openClubs": "Hoch lumuvlaH ghomHommaj 'op je; nuqDaq bIyIn 'e' qelbe'."
+      }
     }
   },
   "productBrowse": {
@@ -1301,6 +1310,7 @@
       "typeClubs": "ghom'a'mey",
       "typeCamps": "raghmey",
       "topic": "Quj",
+      "subject": "qech",
       "format": "rurmeH",
       "formatOnline": "QumDaq",
       "formatInPerson": "Daqvam",

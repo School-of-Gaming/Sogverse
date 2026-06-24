@@ -1233,13 +1233,22 @@
     },
     "status": {
       "available": "Klubbar tillgängliga",
-      "comingSoon": "Inget här ännu"
+      "noClubs": "Inga klubbar här"
     },
     "waitlistNote": "Platserna är begränsade och klubbarna har ofta en väntelista. Om ditt barn slutar, kom ihåg att avboka anmälan så att platsen kan erbjudas nästa spelare.",
     "notListed": {
       "title": "Hittar du inte din kommun?",
       "body": "Kommunklubbar ordnas tillsammans med varje kommun, och vi lägger till nya hela tiden. Om din kommun inte är med ännu, berätta för oss:",
       "openClubs": "Vi har också klubbar som är öppna för alla, som en spelare kan gå med i oavsett var hen bor."
+    },
+    "municipality": {
+      "heading": "Klubbar från {name}",
+      "subheading": "Veckovisa klubbar som {name} erbjuder, där din spelare spelar, bygger och skapar med nya vänner och en Gedu som verkligen fattar.",
+      "empty": {
+        "title": "{name} erbjuder inga klubbar just nu",
+        "body": "{name} erbjuder inga School of Gaming-klubbar just nu. Vill du att kommunen ska göra det? Vi ordnar kommunklubbar tillsammans med varje kommun – hör av dig:",
+        "openClubs": "Din spelare kan också gå med i en av våra klubbar som är öppna för alla, oavsett var ni bor."
+      }
     }
   },
   "productBrowse": {
@@ -1256,6 +1265,7 @@
       "typeClubs": "Klubbar",
       "typeCamps": "Läger",
       "topic": "Spel",
+      "subject": "Ämne",
       "format": "Format",
       "formatOnline": "Online",
       "formatInPerson": "På plats",

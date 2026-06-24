@@ -1233,13 +1233,22 @@
     },
     "status": {
       "available": "Clubs available",
-      "comingSoon": "Nothing here yet"
+      "noClubs": "No clubs here"
     },
     "waitlistNote": "Spots are limited and clubs often have a waiting list. If your child stops attending, please remember to cancel the registration so the place can be offered to the next gamer.",
     "notListed": {
       "title": "Don't see your municipality?",
       "body": "Municipality clubs are arranged together with each municipality, and we're adding new ones all the time. If yours isn't on board yet, tell us about it:",
       "openClubs": "We also run clubs that are open to everyone, which a gamer can join wherever they live."
+    },
+    "municipality": {
+      "heading": "{name} Clubs",
+      "subheading": "Weekly clubs offered by {name}, where your gamer plays, builds, and creates with new friends and a Gedu who actually gets it.",
+      "empty": {
+        "title": "No {name} clubs right now",
+        "body": "{name} doesn't offer any School of Gaming clubs at the moment. Would you like it to? We set up municipality clubs together with each municipality — tell us:",
+        "openClubs": "Your gamer can also join one of our clubs that's open to everyone, wherever you live."
+      }
     }
   },
   "productBrowse": {
@@ -1256,6 +1265,7 @@
       "typeClubs": "Clubs",
       "typeCamps": "Camps",
       "topic": "Game",
+      "subject": "Subject",
       "format": "Format",
       "formatOnline": "Online",
       "formatInPerson": "In person",

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildMunicipalityEntries,
+  findMunicipalityBySlug,
   groupByRegion,
 } from "@/lib/schools/municipalities";
 import type { Json, Location } from "@/types";
@@ -98,6 +99,31 @@ describe("buildMunicipalityEntries", () => {
       "fi",
     );
     expect(entries.find((e) => e.id === "espoo")?.hasClubs).toBe(true);
+  });
+});
+
+describe("findMunicipalityBySlug", () => {
+  it("resolves the canonical viewer-locale slug", () => {
+    const entries = buildMunicipalityEntries(LOCATIONS, [], "fi");
+    expect(findMunicipalityBySlug("helsinki", entries)?.id).toBe("helsinki");
+    expect(findMunicipalityBySlug("espoo", entries)?.id).toBe("espoo");
+  });
+
+  it("resolves an alternate-locale slug to the same row", () => {
+    // Built for `fi` (slug = "helsinki"), but a Swedish speaker's
+    // "/schools/helsingfors" link must still land here via the search slugs.
+    const fi = buildMunicipalityEntries(LOCATIONS, [], "fi");
+    expect(findMunicipalityBySlug("helsingfors", fi)?.id).toBe("helsinki");
+    // And the reverse: built for `sv` (slug = "helsingfors"), the Finnish
+    // "/schools/helsinki" link resolves too.
+    const sv = buildMunicipalityEntries(LOCATIONS, [], "sv");
+    expect(findMunicipalityBySlug("helsinki", sv)?.id).toBe("helsinki");
+  });
+
+  it("returns undefined for an unknown slug", () => {
+    const entries = buildMunicipalityEntries(LOCATIONS, [], "fi");
+    expect(findMunicipalityBySlug("stockholm", entries)).toBeUndefined();
+    expect(findMunicipalityBySlug("nope", entries)).toBeUndefined();
   });
 });
 

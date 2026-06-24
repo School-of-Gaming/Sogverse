@@ -2,21 +2,15 @@
 
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { Card, CardContent } from "@/components/ui/card";
 import { useVisibleProductsByTypes } from "@/services/products";
 import {
   useParticipationCounts,
   type ParticipationCounts,
 } from "@/services/participations";
 import type { ProductType, ProductBrowseRow, SpokenLanguage } from "@/types";
-import {
-  filterProducts,
-  productTypeSupportsDayFilter,
-} from "./filter-products";
-import { useBrowseFilters } from "./use-browse-filters";
+import { productTypeSupportsDayFilter } from "./filter-products";
 import { SHOP_PRODUCT_TYPES } from "./use-shop-category";
-import { ProductBrowseCard } from "./product-browse-card";
-import { ProductBrowseFilters } from "./product-browse-filters";
+import { ProductBrowseResults } from "./product-browse-results";
 
 interface ProductBrowsePageProps {
   /** Single type rendered in the browse grid. */
@@ -103,29 +97,17 @@ export function ProductBrowsePage({
   }, [counts]);
 
   // The Type filter is just a client-side narrowing of the all-types fetch to
-  // the selected browseType. Topic/format/language filters apply on top.
+  // the selected browseType. The chip filters apply on top inside
+  // <ProductBrowseResults>.
   const typeProducts = useMemo(
     () => (products ?? []).filter((p) => p.product_type === browseType),
     [products, browseType],
   );
 
-  const { topics, format, languages, age, days } = useBrowseFilters();
   // Days is a Clubs-only filter (recurring weekly schedule). Camps run over a
   // date range, so even though their slots carry weekdays we never narrow them
-  // by day — drop a stale `?days=` when the browse type doesn't support it.
+  // by day.
   const supportsDays = productTypeSupportsDayFilter(browseType);
-  const filtered = useMemo(
-    () =>
-      filterProducts(typeProducts, {
-        topics,
-        format,
-        languages,
-        age,
-        days: supportsDays ? days : [],
-      }),
-    [typeProducts, topics, format, languages, age, days, supportsDays],
-  );
-
   const headingKey = HEADING_KEYS[browseType];
 
   return (
@@ -140,31 +122,12 @@ export function ProductBrowsePage({
       </header>
 
       <div className="mx-auto mt-8 max-w-6xl">
-        <section className="space-y-3">
-          <ProductBrowseFilters
-            initialSpokenLanguages={initialSpokenLanguages}
-          />
-
-          {filtered.length > 0 ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((p) => (
-                <ProductBrowseCard
-                  key={p.id}
-                  product={p}
-                  counts={countsByProduct.get(p.id) ?? null}
-                />
-              ))}
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="py-12 text-center text-sm text-muted-foreground">
-                {typeProducts.length === 0
-                  ? t("empty.noProducts")
-                  : t("empty.noMatches")}
-              </CardContent>
-            </Card>
-          )}
-        </section>
+        <ProductBrowseResults
+          products={typeProducts}
+          countsByProduct={countsByProduct}
+          supportsDays={supportsDays}
+          filters={{ initialSpokenLanguages }}
+        />
       </div>
     </div>
   );

@@ -46,6 +46,9 @@ export interface ProductDetailPageBodyProps {
   fixedNowMs?: number;
   /** Mockup preview banner is shown if this is true (preview route). */
   previewBanner?: boolean;
+  /** When opened from a `/schools/<slug>` listing, sends the back link there
+   *  (labelled with the municipality) instead of the storefront. */
+  municipality?: { slug: string; name: string };
 }
 
 export function ProductDetailPageBody({
@@ -54,6 +57,7 @@ export function ProductDetailPageBody({
   authState,
   fixedNowMs,
   previewBanner,
+  municipality,
 }: ProductDetailPageBodyProps) {
   const uiLocale = resolveLocale(useLocale());
   const t = useTranslations("productDetail");
@@ -72,7 +76,10 @@ export function ProductDetailPageBody({
           </div>
         )}
 
-        <BackLink productType={product.product_type} />
+        <BackLink
+          productType={product.product_type}
+          municipality={municipality}
+        />
 
         <div className="mt-6 grid grid-cols-[96px_1fr] items-start gap-x-4 gap-y-3 sm:grid-cols-[140px_1fr] sm:gap-x-6">
           <ProductThumbnail
@@ -142,15 +149,30 @@ export function ProductDetailPageBody({
   );
 }
 
-function BackLink({ productType }: { productType: ProductType }) {
+function BackLink({
+  productType,
+  municipality,
+}: {
+  productType: ProductType;
+  municipality?: { slug: string; name: string };
+}) {
   const t = useTranslations("productDetail.back");
+  // Reuse the listing page's own heading copy ("{name} Clubs") so the back link
+  // and the page it returns to always read identically.
+  const tm = useTranslations("schools.municipality");
+  const href = municipality
+    ? ROUTES.schoolMunicipality(municipality.slug)
+    : ROUTES.shopBrowse(productType);
+  const label = municipality
+    ? tm("heading", { name: municipality.name })
+    : t(productType);
   return (
     <Link
-      href={ROUTES.shopBrowse(productType)}
+      href={href}
       className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
     >
       <ArrowLeft className="h-3.5 w-3.5" />
-      {t(productType)}
+      {label}
     </Link>
   );
 }

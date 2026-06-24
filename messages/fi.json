@@ -1233,13 +1233,22 @@
     },
     "status": {
       "available": "Kerhoja tarjolla",
-      "comingSoon": "Ei vielä kerhoja"
+      "noClubs": "Ei kerhoja"
     },
     "waitlistNote": "Paikkoja on rajoitetusti, ja kerhoihin on usein jonotuslista. Jos lapsesi lopettaa kerhon, muistathan perua ilmoittautumisen, jotta paikkaa voidaan tarjota seuraavalle pelaajalle.",
     "notListed": {
       "title": "Etkö löydä kuntaasi?",
       "body": "Kuntakerhot järjestetään yhteistyössä kunnan kanssa, ja lisäämme uusia kuntia jatkuvasti. Jos kuntasi ei ole vielä mukana, kerro siitä meille:",
       "openClubs": "Tarjoamme myös kaikille avoimia kerhoja, joihin pelaaja voi liittyä asuinpaikasta riippumatta."
+    },
+    "municipality": {
+      "heading": "{name} – kerhot",
+      "subheading": "{name} – viikoittaiset kerhot, joissa pelaajasi pelaa, rakentaa ja luo uusien kavereiden ja Gedun kanssa.",
+      "empty": {
+        "title": "{name} – ei kerhoja juuri nyt",
+        "body": "Tämä kunta ei tällä hetkellä tarjoa School of Gaming -kerhoja. Haluaisitko, että se tarjoaisi? Sovimme kuntakerhoista yhdessä kunkin kunnan kanssa – kerro meille:",
+        "openClubs": "Pelaajasi voi liittyä myös kaikille avoimeen kerhoon asuinpaikasta riippumatta."
+      }
     }
   },
   "productBrowse": {
@@ -1256,6 +1265,7 @@
       "typeClubs": "Kerhot",
       "typeCamps": "Leirit",
       "topic": "Peli",
+      "subject": "Aihe",
       "format": "Muoto",
       "formatOnline": "Verkossa",
       "formatInPerson": "Paikan päällä",
