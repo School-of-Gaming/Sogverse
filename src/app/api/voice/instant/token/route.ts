@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getUserWithProfile } from "@/lib/supabase/server";
+import { createClient, getUserWithProfile } from "@/lib/supabase/server";
+import { isGeduVerified } from "@/services/gedu/gedu-profiles.service";
 import { createMeetingToken, getDailyRoom, buildUserName } from "@/lib/daily";
 import { normalizeVoiceRoomCode } from "@/lib/voice-room-code";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
@@ -20,8 +21,8 @@ import { VOICE_CONFIG } from "@/lib/constants/voice";
  *     request body is never consulted for role/owner/userId. Body fields
  *     with those names are ignored (and our integration test pins this).
  *   - On any auth-detection failure (no session, profile lookup error,
- *     role isn't admin/gedu) we fall through to the guest path. There is
- *     no scenario where ambiguous auth grants ownership.
+ *     role isn't admin/gedu, or an *unverified* gedu) we fall through to the
+ *     guest path. There is no scenario where ambiguous auth grants ownership.
  *   - Guest UUIDs are generated server-side via `crypto.randomUUID()` so a
  *     guest can't pick a UUID that produces a chosen identicon.
  *   - The display name is stripped of `|` characters before token encoding
@@ -70,6 +71,21 @@ export async function POST(request: Request) {
   // `requireRole`-style 401/403 short-circuits — this endpoint is public.
   const session = await getUserWithProfile();
 
+  // An unverified gedu is not a trusted moderator: they get a guest token (no
+  // owner power), same boundary as the create/end routes. This is the third
+  // mod surface for instant rooms — being handed any room link must not confer
+  // ownership on an unverified gedu. Any lookup failure fails closed to guest
+  // (consistent with this endpoint's "ambiguous auth never grants ownership"
+  // rule). Only computed for gedus; admins skip the lookup entirely.
+  let geduVerified = false;
+  if (session?.profile?.role === "gedu") {
+    try {
+      geduVerified = await isGeduVerified(await createClient(), session.user.id);
+    } catch {
+      geduVerified = false;
+    }
+  }
+
   let userId: string;
   let role: "admin" | "gedu" | "guest";
   let displayName: string;
@@ -80,7 +96,8 @@ export async function POST(request: Request) {
   // implication "isMod true → profile non-null" across the const.
   if (
     session?.profile &&
-    (session.profile.role === "admin" || session.profile.role === "gedu")
+    (session.profile.role === "admin" ||
+      (session.profile.role === "gedu" && geduVerified))
   ) {
     role = session.profile.role;
     userId = session.user.id;

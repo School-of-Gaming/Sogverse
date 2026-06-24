@@ -1897,7 +1897,9 @@
         "creating": "chenmoHlu'…",
         "createFailed": "Daq chenmoH luchchugh. yItoH'egh!",
         "ready": "DaqlIj pIm",
-        "join": "yImuv"
+        "join": "yImuv",
+        "unverifiedTitle": "tobtaHvIS ngoq",
+        "unverifiedBody": "Daq DachenmoH 'e' DapoQ pa', ghojmoHwI' SoH 'e' lutob qum. tobchugh, naDev tugh Daq yIchen 'e' DalaH!"
       }
     }
   },

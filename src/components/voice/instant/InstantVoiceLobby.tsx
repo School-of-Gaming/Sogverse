@@ -27,6 +27,15 @@ interface InstantVoiceLobbyProps {
     displayName: string,
     media: { micOn: boolean; cameraOn: boolean; audioDeviceId: string | null },
   ) => void;
+  /**
+   * Whether the server will issue this viewer an owner token (admin or a
+   * *verified* gedu) — computed server-side and passed down. The lobby must
+   * use this, not the client-side `profile.role`, to decide guest vs. mod:
+   * the client role can't see gedu verification, so an unverified gedu would
+   * otherwise be shown the mod UI (no name input) and then rejected by the
+   * token route's guest-name requirement.
+   */
+  isModerator: boolean;
   joining: boolean;
   /** Most recent error from a failed join attempt; rendered above the join button. */
   error: string | null;
@@ -38,19 +47,24 @@ interface InstantVoiceLobbyProps {
  * glow, camera-in-circle, mic indicator — and (for guests) collects a
  * display name.
  *
- * Authenticated admins/gedus skip the name input — the server uses their
- * profile display name. Everyone else, including authenticated parents
- * and gamers, is treated as a guest and must provide a name.
+ * Authenticated admins and *verified* gedus skip the name input — the server
+ * uses their profile display name. Everyone else — authenticated parents,
+ * gamers, and *unverified* gedus — is treated as a guest and must provide a
+ * name. Whether the viewer is a moderator is decided server-side and passed in
+ * (`isModerator`); see that prop's doc for why the client role can't decide it.
  *
  * The lobby's identicon is a *preview* generated from a fresh client-side
  * UUID. The actual call uses a server-issued UUID (see token route's
  * Vector D mitigation), so the in-call avatar pattern won't be identical.
  * Acceptable: identicons are abstract and don't function as identity.
  */
-export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyProps) {
+export function InstantVoiceLobby({ onJoin, isModerator, joining, error }: InstantVoiceLobbyProps) {
   const t = useTranslations("voice.instant.lobby");
   const { profile } = useAuth();
-  const isMod = profile?.role === "admin" || profile?.role === "gedu";
+  // Server-decided (admin or verified gedu), NOT `profile.role` — see the
+  // `isModerator` prop doc. An unverified gedu has a gedu profile role but is a
+  // guest here, so this is false for them.
+  const isMod = isModerator;
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);

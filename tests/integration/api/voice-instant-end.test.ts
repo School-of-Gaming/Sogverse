@@ -95,4 +95,27 @@ describe("POST /api/voice/instant/end", () => {
     const response = await POST(endRequest({ code: "K7P2" }));
     expect(response.status).toBe(500);
   });
+
+  it("opts into the verified-gedu gate (an unverified gedu can't end rooms either)", async () => {
+    // Same mod boundary as create — the 403 itself lives in requireRole
+    // (tests/unit/lib/auth.test.ts); here we pin the route opts in.
+    authenticated("admin");
+    await POST(endRequest({ code: "K7P2" }));
+    expect(mockRequireRole).toHaveBeenLastCalledWith(
+      ["admin", "gedu"],
+      expect.objectContaining({ requireVerifiedGedu: true }),
+    );
+  });
+
+  it("returns 403 when requireRole rejects an unverified gedu", async () => {
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json(
+        { error: "Your educator account is awaiting admin verification.", code: "GEDU_UNVERIFIED" },
+        { status: 403 },
+      ),
+    );
+    const response = await POST(endRequest({ code: "K7P2" }));
+    expect(response.status).toBe(403);
+    expect(mockDeleteDailyRoom).not.toHaveBeenCalled();
+  });
 });

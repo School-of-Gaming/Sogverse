@@ -147,4 +147,29 @@ describe("POST /api/voice/instant/create", () => {
       expect.any(Object),
     );
   });
+
+  it("requires a verified gedu (the unverified-gedu boundary is enforced server-side)", async () => {
+    // The unverified-gedu 403 itself lives in requireRole (covered in
+    // tests/unit/lib/auth.test.ts); here we pin that the route opts into that
+    // gate via `requireVerifiedGedu`, so the boundary can't be lost in a refactor.
+    authenticated("admin");
+    await POST();
+    expect(mockRequireRole).toHaveBeenLastCalledWith(
+      ["admin", "gedu"],
+      expect.objectContaining({ requireVerifiedGedu: true }),
+    );
+  });
+
+  it("returns 403 when requireRole rejects an unverified gedu", async () => {
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json(
+        { error: "Your educator account is awaiting admin verification.", code: "GEDU_UNVERIFIED" },
+        { status: 403 },
+      ),
+    );
+    const response = await POST();
+    expect(response.status).toBe(403);
+    expect((await response.json()).code).toBe("GEDU_UNVERIFIED");
+    expect(mockCreateDailyRoom).not.toHaveBeenCalled();
+  });
 });

@@ -1852,7 +1852,9 @@
         "creating": "Skapar…",
         "createFailed": "Kunde inte skapa rummet. Försök igen.",
         "ready": "Ditt rum är redo",
-        "join": "Gå med"
+        "join": "Gå med",
+        "unverifiedTitle": "Inväntar verifiering",
+        "unverifiedBody": "En administratör måste verifiera ditt utbildarkonto innan du kan skapa röstrum. Du kan starta ett här så snart du är verifierad."
       }
     }
   },

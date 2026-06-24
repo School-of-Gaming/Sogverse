@@ -15,6 +15,35 @@ function geduProfilesQuery(supabase: AppSupabaseClient) {
 
 export type GeduVerification = QueryData<ReturnType<typeof geduProfilesQuery>>[number];
 
+/**
+ * Whether a gedu's account has been admin-verified.
+ *
+ * This is the **server-side** mod boundary for gedu-initiated actions on
+ * instant voice rooms — creating a room, ending one, and being granted owner
+ * (`is_owner`) power when joining one. Unlike the group-assignment gate (UI-only
+ * by design, because only trusted admins assign), these are initiated by the
+ * gedu themselves, so a UI gate is not enough and the check must live on the
+ * server (see ./CLAUDE.md).
+ *
+ * Reads the gedu's own row via `.single()` — RLS lets a gedu read its own
+ * `gedu_profiles` row, and every gedu has exactly one (written at registration),
+ * so an absent row is a real error, not "unverified". Callers decide how to
+ * treat a thrown error: fail-closed to guest (the public token route) or surface
+ * a 500 (the authenticated create/end routes).
+ */
+export async function isGeduVerified(
+  supabase: AppSupabaseClient,
+  userId: string,
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("gedu_profiles")
+    .select("verified")
+    .eq("user_id", userId)
+    .single();
+  if (error) throw error;
+  return data.verified;
+}
+
 export class GeduProfilesService {
   constructor(private supabase: AppSupabaseClient) {}
 

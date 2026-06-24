@@ -1852,7 +1852,9 @@
         "creating": "Creating…",
         "createFailed": "Couldn't create a room. Please try again.",
         "ready": "Your room is ready",
-        "join": "Join"
+        "join": "Join",
+        "unverifiedTitle": "Awaiting verification",
+        "unverifiedBody": "An admin needs to verify your educator account before you can create voice rooms. You'll be able to start one here as soon as you're verified."
       }
     }
   },

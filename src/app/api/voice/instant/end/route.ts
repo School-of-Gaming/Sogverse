@@ -18,6 +18,8 @@ import { normalizeVoiceRoomCode } from "@/lib/voice-room-code";
 export async function POST(request: Request) {
   const result = await requireRole(["admin", "gedu"], {
     forbiddenMessage: "Only admins and educators can end voice rooms",
+    // An unverified gedu is not a trusted moderator — same boundary as create.
+    requireVerifiedGedu: true,
   });
   if (result instanceof NextResponse) return result;
 

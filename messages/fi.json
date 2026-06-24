@@ -1852,7 +1852,9 @@
         "creating": "Luodaan…",
         "createFailed": "Huoneen luonti epäonnistui. Yritä uudelleen.",
         "ready": "Huoneesi on valmis",
-        "join": "Liity"
+        "join": "Liity",
+        "unverifiedTitle": "Odottaa vahvistusta",
+        "unverifiedBody": "Ylläpitäjän on vahvistettava kasvattajatilisi, ennen kuin voit luoda äänihuoneita. Voit käynnistää huoneen tästä heti, kun tilisi on vahvistettu."
       }
     }
   },

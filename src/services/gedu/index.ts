@@ -5,5 +5,9 @@ export {
   useSetGeduVerified,
   geduProfileKeys,
 } from "./gedu-profiles.queries";
-export { GeduProfilesService, type GeduVerification } from "./gedu-profiles.service";
+export {
+  GeduProfilesService,
+  isGeduVerified,
+  type GeduVerification,
+} from "./gedu-profiles.service";
 export { registerGeduBody, type RegisterGeduBody } from "./gedu-registration.contracts";
