@@ -895,7 +895,7 @@
       "verificationAlertTitle": "Your account needs to be verified",
       "verificationAlertDescription": "You can sign in right away, but an admin needs to verify your account before you can be assigned to a club or camp.",
       "coverageHeading": "Where can you teach?",
-      "coverageNote": "Pick the areas you can cover in person. Leave it empty if you only teach remotely.",
+      "coverageNote": "Pick the areas you can cover in person. Leave it empty if you only teach remotely — there's no need to finish this now, you can update it anytime from your settings.",
       "invalidPhone": "Please enter a valid phone number",
       "creatingAccount": "Creating account...",
       "alreadyHaveAccount": "Already have an account? <link>Sign in</link>"
