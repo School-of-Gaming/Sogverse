@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient, getUserWithProfile } from "@/lib/supabase/server";
-import { isGeduVerified } from "@/services/gedu/gedu-profiles.service";
+import { instantRoomModerator } from "@/lib/voice/instant-room-moderator";
 import { createMeetingToken, getDailyRoom, buildUserName } from "@/lib/daily";
 import { normalizeVoiceRoomCode } from "@/lib/voice-room-code";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
@@ -66,42 +65,24 @@ export async function POST(request: Request) {
     );
   }
 
-  // Auth detection. We look up the user's profile if we can; any failure
-  // means the requester is treated as a guest. We deliberately ignore
+  // Auth detection. `instantRoomModerator` is the shared source of truth for
+  // owner eligibility (admin or *verified* gedu), used identically by the
+  // `/voice/[code]` page so the lobby UI and the minted token can't disagree.
+  // It returns the moderator identity or null; null → guest. An unverified gedu
+  // resolves to null (guest, no owner power) — being handed any room link must
+  // not confer ownership. It fails closed to null on any lookup error, so there
+  // is no path where ambiguous auth grants ownership. We deliberately ignore
   // `requireRole`-style 401/403 short-circuits — this endpoint is public.
-  const session = await getUserWithProfile();
-
-  // An unverified gedu is not a trusted moderator: they get a guest token (no
-  // owner power), same boundary as the create/end routes. This is the third
-  // mod surface for instant rooms — being handed any room link must not confer
-  // ownership on an unverified gedu. Any lookup failure fails closed to guest
-  // (consistent with this endpoint's "ambiguous auth never grants ownership"
-  // rule). Only computed for gedus; admins skip the lookup entirely.
-  let geduVerified = false;
-  if (session?.profile?.role === "gedu") {
-    try {
-      geduVerified = await isGeduVerified(await createClient(), session.user.id);
-    } catch {
-      geduVerified = false;
-    }
-  }
+  const moderator = await instantRoomModerator();
 
   let userId: string;
   let role: "admin" | "gedu" | "guest";
   let displayName: string;
 
-  // Inline mod detection so TypeScript narrows session and session.profile
-  // to non-null inside the block. Defining `isMod` as a separate const
-  // boolean above the branch loses the narrowing — TS doesn't track the
-  // implication "isMod true → profile non-null" across the const.
-  if (
-    session?.profile &&
-    (session.profile.role === "admin" ||
-      (session.profile.role === "gedu" && geduVerified))
-  ) {
-    role = session.profile.role;
-    userId = session.user.id;
-    displayName = session.profile.first_name;
+  if (moderator) {
+    role = moderator.role;
+    userId = moderator.userId;
+    displayName = moderator.displayName;
   } else {
     role = "guest";
     userId = crypto.randomUUID();

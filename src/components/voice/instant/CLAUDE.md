@@ -46,10 +46,17 @@ error. The check is `isGeduVerified` (`../../../services/gedu/gedu-profiles.serv
 Two UX surfaces mirror the boundary (UX only — the server gates above are the real
 boundary): the `/gedu` dashboard hides the create card and shows an "awaiting verification"
 notice; and the join lobby decides guest-vs-mod from a **server-computed** `isModerator`
-prop threaded down from the `/voice/[code]` page (`viewerIsModerator`), *not* the
-client-side `profile.role`. That distinction matters — the client role can't see gedu
-verification, so deriving it client-side would show an unverified gedu the mod UI (no name
-input) and then bounce them off the token route's guest-name requirement with a 400.
+prop threaded down from the `/voice/[code]` page, *not* the client-side `profile.role`. That
+distinction matters — the client role can't see gedu verification, so deriving it
+client-side would show an unverified gedu the mod UI (no name input) and then bounce them
+off the token route's guest-name requirement with a 400.
+
+**One predicate, two surfaces.** The owner-eligibility decision (admin or verified gedu →
+moderator identity, else guest) lives in a single `instantRoomModerator`
+(`../../../lib/voice/instant-room-moderator.ts`). The token route mints the owner token
+from the identity it returns; the `/voice/[code]` page treats a null result as a guest. They
+share it so the minted token and the lobby UI can never disagree — re-deriving the rule on
+each side is exactly what would 400-bounce an unverified gedu.
 
 A voice "guest" is permission-equivalent to a gamer: no mute/lock/screen-share/broadcast/deafen, can only move themselves between zones. The voice role union is `UserRole | "guest"` — `"guest"` is display-only; all gating uses positive `role === "admin" || role === "gedu"` mod checks, so guest behavior falls out for free. Instant rooms have no group, so they get the lobby + 4 Yty zones only — no custom or locked zones (`VoiceRoomProvider` is passed `groupId={null}`).
 

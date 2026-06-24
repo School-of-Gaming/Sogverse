@@ -2,32 +2,8 @@ import { InstantVoiceHeader } from "@/components/voice/instant/InstantVoiceHeade
 import { InstantVoiceSession } from "@/components/voice/instant/InstantVoiceSession";
 import { RoomNotFoundScreen } from "@/components/voice/instant/RoomNotFoundScreen";
 import { Copyright } from "@/components/layout";
-import { createClient, getUserWithProfile } from "@/lib/supabase/server";
-import { isGeduVerified } from "@/services/gedu/gedu-profiles.service";
+import { instantRoomModerator } from "@/lib/voice/instant-room-moderator";
 import { normalizeVoiceRoomCode } from "@/lib/voice-room-code";
-
-/**
- * Will this viewer get a moderator (owner) token when they join? Mirrors the
- * token route's decision exactly: admin → yes, gedu → only if verified,
- * everyone else → no. Threaded into the lobby so it shows the guest name input
- * (and uses the guest identity) to anyone the server will treat as a guest —
- * without it, an unverified gedu would be shown the mod UI (no name field) and
- * then bounce off the token route's guest-name requirement. Fails closed to
- * "not a moderator" (the safe, guest side) on any lookup error.
- */
-async function viewerIsModerator(): Promise<boolean> {
-  try {
-    const session = await getUserWithProfile();
-    const role = session?.profile?.role;
-    if (role === "admin") return true;
-    if (role === "gedu" && session) {
-      return await isGeduVerified(await createClient(), session.user.id);
-    }
-    return false;
-  } catch {
-    return false;
-  }
-}
 
 /**
  * Public room page. Anyone with the code in the URL lands here. The page
@@ -59,7 +35,11 @@ export default async function InstantVoicePage({
     );
   }
 
-  const isModerator = await viewerIsModerator();
+  // Same decision the token route uses to mint the owner token (admin or a
+  // verified gedu), so the lobby shows the guest name input to exactly the
+  // viewers the server will treat as guests. Null → guest. See
+  // `instantRoomModerator` for the rule and its fail-closed behavior.
+  const isModerator = (await instantRoomModerator()) !== null;
 
   return (
     <>

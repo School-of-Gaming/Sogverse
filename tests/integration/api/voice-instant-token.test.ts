@@ -6,14 +6,17 @@ import { POST } from "@/app/api/voice/instant/token/route";
 const mockGetUserWithProfile = vi.fn();
 vi.mock("@/lib/supabase/server", () => ({
   getUserWithProfile: () => mockGetUserWithProfile(),
-  // The route opens a fresh client only to read the gedu's verification row;
-  // `isGeduVerified` is mocked below, so the client is just an opaque handle.
+  // `instantRoomModerator` (the route's auth-detection helper) opens a fresh
+  // client only to read the gedu's verification row; `isGeduVerified` is mocked
+  // below, so the client is just an opaque handle.
   createClient: vi.fn(async () => ({})),
 }));
 
 // Verification is the mod boundary: an unverified gedu must be demoted to the
-// guest path. Default verified=true so the existing mod-path tests still see a
-// gedu as an owner; the unverified cases override per-test.
+// guest path. These mocks compose through the real `instantRoomModerator`
+// helper, so the route's owner-eligibility decision is exercised end-to-end.
+// Default verified=true so the existing mod-path tests still see a gedu as an
+// owner; the unverified cases override per-test.
 const mockIsGeduVerified = vi.fn();
 vi.mock("@/services/gedu/gedu-profiles.service", () => ({
   isGeduVerified: (...args: unknown[]) => mockIsGeduVerified(...args),
