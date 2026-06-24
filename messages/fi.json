@@ -894,8 +894,8 @@
       "title": "Luo Sogverse-pelikasvattajatilisi",
       "verificationAlertTitle": "Tilisi on vahvistettava",
       "verificationAlertDescription": "Voit kirjautua heti, mutta ylläpitäjän on vahvistettava tilisi ennen kuin sinut voidaan liittää kerhoon tai leirille.",
-      "coverageHeading": "Missä voit opettaa?",
-      "coverageNote": "Valitse alueet, joilla voit opettaa paikan päällä. Jätä tyhjäksi, jos opetat vain etänä – tätä ei tarvitse täyttää nyt, sillä voit päivittää sen milloin tahansa asetuksista.",
+      "coverageHeading": "Missä voit työskennellä?",
+      "coverageNote": "Valitse alueet, joilla voit työskennellä paikan päällä. Jos voit työskennellä vain etänä, jätä tämä kohta tyhjäksi. Voit muokata valintaasi myöhemmin profiilisi asetuksista.",
       "invalidPhone": "Syötä kelvollinen puhelinnumero",
       "creatingAccount": "Luodaan tiliä...",
       "alreadyHaveAccount": "Onko sinulla jo tili? <link>Kirjaudu sisään</link>"

@@ -894,8 +894,8 @@
       "title": "Skapa ditt Sogverse-spelfostrarkonto",
       "verificationAlertTitle": "Ditt konto måste verifieras",
       "verificationAlertDescription": "Du kan logga in direkt, men en administratör måste verifiera ditt konto innan du kan tilldelas en klubb eller ett läger.",
-      "coverageHeading": "Var kan du undervisa?",
-      "coverageNote": "Välj de områden där du kan undervisa på plats. Lämna tomt om du bara undervisar på distans – du behöver inte fylla i detta nu, du kan uppdatera det när som helst i dina inställningar.",
+      "coverageHeading": "Var kan du arbeta?",
+      "coverageNote": "Välj de områden där du kan arbeta på plats. Om du bara kan arbeta på distans, lämna detta fält tomt. Du kan ändra ditt val senare i dina profilinställningar.",
       "invalidPhone": "Ange ett giltigt telefonnummer",
       "creatingAccount": "Skapar konto...",
       "alreadyHaveAccount": "Har du redan ett konto? <link>Logga in</link>"
