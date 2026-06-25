@@ -24,16 +24,17 @@ interface ProductBrowseResultsProps {
   /** Seat counts for `products` (any order). Built into a per-id map here so
    *  both browse hosts hand this component the raw query result, not a map. */
   counts: ParticipationCounts[];
-  /** Whether the Days filter applies to this scope (passed to `filterProducts`
-   *  and the filter strip). Clubs are recurring-weekly; camps are not. */
+  /** Whether the Days filter applies to this scope — the single source for it.
+   *  Drives `filterProducts` here and, forwarded as `daysFilter`, the filter
+   *  strip's Days row. Clubs are recurring-weekly; camps are not. */
   supportsDays: boolean;
-  /** Forwarded verbatim to `<ProductBrowseFilters>`. */
+  /** Forwarded verbatim to `<ProductBrowseFilters>`. The Days flag is *not*
+   *  here — it's derived from `supportsDays` so the two can't drift. */
   filters: {
     initialSpokenLanguages: SpokenLanguage[];
     showTypeFilter?: boolean;
     topicChoices?: readonly TopicFilterChip[];
     topicLabelKey?: "topic" | "subject";
-    daysFilter?: boolean;
   };
   /** Detail-page URL builder for each card. Defaults to the storefront
    *  `/shop/[id]`; the municipality page passes `/schools/<slug>/[id]`. */
@@ -78,7 +79,7 @@ export function ProductBrowseResults({
 
   return (
     <section className="space-y-3">
-      <ProductBrowseFilters {...filters} />
+      <ProductBrowseFilters {...filters} daysFilter={supportsDays} />
 
       {filtered.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

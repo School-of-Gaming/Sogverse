@@ -218,17 +218,20 @@ function SeatBar({ value }: { value: SeatBarValue }) {
       ? Math.min(100, Math.round((value.filled / value.total) * 100))
       : 0;
 
+  const label = t("seatsFilled", { filled: value.filled, total: value.total });
+
   return (
     <div className="min-w-0 flex-1 space-y-1">
       <div className="flex items-center gap-1 text-xs text-muted-foreground">
         <Users className="h-3 w-3 shrink-0" aria-hidden />
-        <span className="tabular-nums">
-          {t("seatsFilled", { filled: value.filled, total: value.total })}
-        </span>
+        <span className="tabular-nums">{label}</span>
       </div>
       <div
         className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
         role="progressbar"
+        // Name the bar so screen readers announce "11 / 15 seats", not a bare
+        // "11" — the adjacent text is visual-only (aria-hidden icon beside it).
+        aria-label={label}
         aria-valuenow={value.filled}
         aria-valuemin={0}
         aria-valuemax={value.total}

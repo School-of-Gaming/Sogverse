@@ -8,11 +8,6 @@ import { ROUTES } from "@/lib/constants";
 // the app root (not inside a route group) so it catches not-found from
 // anywhere, and renders inside RootLayout's providers but outside any group
 // layout — hence its own minimal chrome rather than the public Header/Footer.
-//
-// Providing this file is also what stops Next's built-in not-found fallback
-// from re-injecting its own <html>/<body> on the client; that injection
-// collided with the next-themes theme <script>, surfacing as a React "script
-// tag while rendering" console error on every 404.
 export default async function NotFound() {
   const t = await getTranslations("notFound");
   return (

@@ -80,13 +80,14 @@ export function MunicipalityClubsBrowse({
         <ProductBrowseResults
           products={clubs}
           counts={counts ?? []}
+          // Municipality clubs are recurring-weekly, so the Days filter applies
+          // (single source — also forwarded to the filter strip downstream).
           supportsDays
           filters={{
             initialSpokenLanguages,
             showTypeFilter: false,
             topicChoices: MUNICIPALITY_TOPIC_CHIPS,
             topicLabelKey: "subject",
-            daysFilter: true,
           }}
           productHref={(id) =>
             ROUTES.schoolMunicipalityProduct(municipalitySlug, id)

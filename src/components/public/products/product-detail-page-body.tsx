@@ -36,6 +36,17 @@ import type { AuthState } from "./signup-panel-view";
 // stacks on mobile. Right panel is sticky on desktop so a scrolling
 // parent never loses the CTA.
 
+/**
+ * Identifies the `/schools/<slug>` listing a detail page was opened from, so
+ * the back link can return there (labelled with the municipality) instead of
+ * the storefront. Threaded unchanged through `ProductDetailPage` → this body →
+ * `BackLink`; single source of truth for that shape.
+ */
+export interface MunicipalityBackLink {
+  slug: string;
+  name: string;
+}
+
 export interface ProductDetailPageBodyProps {
   product: ProductBrowseRow & {
     holidays?: { date: string; reason: string }[];
@@ -48,7 +59,7 @@ export interface ProductDetailPageBodyProps {
   previewBanner?: boolean;
   /** When opened from a `/schools/<slug>` listing, sends the back link there
    *  (labelled with the municipality) instead of the storefront. */
-  municipality?: { slug: string; name: string };
+  municipality?: MunicipalityBackLink;
 }
 
 export function ProductDetailPageBody({
@@ -154,7 +165,7 @@ function BackLink({
   municipality,
 }: {
   productType: ProductType;
-  municipality?: { slug: string; name: string };
+  municipality?: MunicipalityBackLink;
 }) {
   const t = useTranslations("productDetail.back");
   // Reuse the listing page's own heading copy ("{name} Clubs") so the back link

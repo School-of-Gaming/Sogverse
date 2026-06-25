@@ -12,10 +12,9 @@ import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { useSpokenLanguages } from "@/services/users";
 import type { SpokenLanguage } from "@/types";
 import { cn } from "@/lib/utils";
-import { productTypeSupportsDayFilter } from "./filter-products";
 import { formatWeekday } from "./format-product-schedule";
 import { useBrowseFilters } from "./use-browse-filters";
-import { CATEGORY_TYPE, useShopCategory } from "./use-shop-category";
+import { useShopCategory } from "./use-shop-category";
 
 // Weekdays for the Clubs-only "Days" row, in fixed Mon→Sun order (0=Mon..6=Sun,
 // matching `schedule_slots.weekday`). Hardcoded Monday-first: this is a filter,
@@ -50,10 +49,9 @@ interface ProductBrowseFiltersProps {
   /** Which `productBrowse.filters` key labels the topic row: `"topic"`
    *  ("Game", shop default) or `"subject"` ("Subject", municipality page). */
   topicLabelKey?: "topic" | "subject";
-  /** Whether the Days row applies. Omitted on the shop, where it's derived from
-   *  the live category; the municipality page passes it explicitly (municipality
-   *  clubs are recurring, so `true`) since it has no category to derive from. */
-  daysFilter?: boolean;
+  /** Whether the Days row applies, forwarded from `<ProductBrowseResults>`'s
+   *  `supportsDays` (its single source). True for clubs, false for camps. */
+  daysFilter: boolean;
 }
 
 export function ProductBrowseFilters({
@@ -92,15 +90,11 @@ export function ProductBrowseFilters({
   const hasLanguageRow = (spokenLanguages?.length ?? 0) > 0;
   const ageOptions = productAgeOptions();
 
-  // The Days row only applies to clubs (same gate as the row's visibility
-  // below). A `?days=` carried over from Clubs lingers in the URL on Camps by
-  // design, but it shouldn't light up Clear there — so only count selected days
-  // toward Clear when the filter is actually active in this context. The shop
-  // derives this from the live category; a caller without a category (the
-  // municipality page) passes `daysFilter` to set it directly.
-  const daysActive =
-    daysFilter ?? productTypeSupportsDayFilter(CATEGORY_TYPE[category]);
-  const showClear = hasNonDayFilters || (daysActive && selectedDays.length > 0);
+  // The Days row only applies to clubs (`daysFilter`, from the host's
+  // `supportsDays`). A `?days=` carried over from Clubs lingers in the URL on
+  // Camps by design, but it shouldn't light up Clear there — so only count
+  // selected days toward Clear when the filter is actually active here.
+  const showClear = hasNonDayFilters || (daysFilter && selectedDays.length > 0);
 
   return (
     <div className="rounded-xl border bg-card/50 p-3 sm:p-4">
@@ -216,7 +210,7 @@ export function ProductBrowseFilters({
             the Type chip to Camps removes the row without shifting any row
             above it. Chip labels show the short weekday on phones and the full
             name from `sm:` up — both come from Intl via `formatWeekday`. */}
-        {daysActive && (
+        {daysFilter && (
           <FilterRow label={t("days")}>
             {WEEKDAYS.map((w) => (
               <Chip

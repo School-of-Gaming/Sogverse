@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { Inter, Press_Start_2P } from "next/font/google";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { Providers } from "@/providers";
@@ -53,8 +53,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const userWithProfile = await getUserWithProfile();
-  const headersList = await headers();
-  const nonce = headersList.get("x-nonce") ?? undefined;
   const locale = await getLocale();
   const cookieStore = await cookies();
   const initialTimezone = resolveTimezone(
@@ -81,7 +79,6 @@ export default async function RootLayout({
           initialTimezone={initialTimezone}
           initialNow={initialNow}
           messages={clientMessages}
-          nonce={nonce}
         >
           {/* Header rendering is owned by each route group's layout — that's
               how the (voice) group can replace the standard chrome with its
