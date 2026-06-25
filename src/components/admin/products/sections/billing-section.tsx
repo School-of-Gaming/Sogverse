@@ -3,6 +3,7 @@
 import { CircleDollarSign, Gift, Info } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 import { FormSection } from "../form-primitives";
@@ -184,14 +185,12 @@ export function BillingSection({
             lockWaitlist ? "cursor-not-allowed opacity-60" : "cursor-pointer"
           )}
         >
-          <input
-            type="checkbox"
+          <Checkbox
             checked={state.waitlistEnabled}
             disabled={lockWaitlist}
             onChange={(e) =>
               setState({ ...state, waitlistEnabled: e.target.checked })
             }
-            className="h-4 w-4"
           />
           <span>{t("labels.waitlistToggle")}</span>
         </label>

@@ -11,6 +11,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { getChildLevel, resolveLabels } from "@/lib/constants";
 import {
@@ -363,12 +364,10 @@ function LocationTreeRow({
         </span>
 
         {selection.mode === "multi" && (
-          <input
-            type="checkbox"
+          <Checkbox
             checked={isSelected}
             onChange={() => selection.onToggle(node.id)}
             onClick={(e) => e.stopPropagation()}
-            className="h-4 w-4 shrink-0 accent-primary cursor-pointer"
             aria-label={localizedLocationName(node, locale)}
           />
         )}

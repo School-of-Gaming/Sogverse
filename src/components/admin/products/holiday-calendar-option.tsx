@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { HolidayCalendarWithDates } from "@/services/products";
 
 interface HolidayCalendarOptionProps {
@@ -45,12 +46,7 @@ export function HolidayCalendarOption({
           : "border-input hover:border-foreground/30"
       }`}
     >
-      <input
-        type="checkbox"
-        className="mt-1 h-4 w-4"
-        checked={checked}
-        onChange={onToggle}
-      />
+      <Checkbox className="mt-1" checked={checked} onChange={onToggle} />
       <div className="min-w-0 flex-1">
         <div className="font-medium">{calendar.name}</div>
         {upcoming.length === 0 ? (

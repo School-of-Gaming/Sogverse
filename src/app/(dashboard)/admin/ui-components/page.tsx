@@ -26,6 +26,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Field } from "@/components/ui/field";
@@ -253,26 +254,91 @@ function VoiceAvatarDemo() {
         </div>
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 text-xs">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={micOn}
               onChange={(e) => setMicOn(e.target.checked)}
-              className="accent-primary"
             />
             Mic on
           </label>
           <label className="flex items-center gap-2 text-xs">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={cameraOn}
               onChange={(e) => setCameraOn(e.target.checked)}
-              className="accent-primary"
             />
             Camera on
           </label>
         </div>
       </div>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Checkbox Demo                                                      */
+/* ------------------------------------------------------------------ */
+
+function CheckboxDemo() {
+  const [agreed, setAgreed] = useState(true);
+  const [newsletter, setNewsletter] = useState(false);
+  const [boxed, setBoxed] = useState(true);
+
+  return (
+    <>
+      <SubSection title="States">
+        <div className="flex flex-wrap items-center gap-6">
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <Checkbox
+              checked={newsletter}
+              onChange={(e) => setNewsletter(e.target.checked)}
+            />
+            Unchecked / checked (toggle me)
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-not-allowed opacity-60">
+            <Checkbox checked={false} disabled />
+            Disabled
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-not-allowed opacity-60">
+            <Checkbox checked disabled />
+            Disabled (checked)
+          </label>
+        </div>
+      </SubSection>
+
+      <SubSection title="Multi-line label — top-aligned with mt-0.5">
+        <label className="flex max-w-md items-start gap-2 text-xs cursor-pointer">
+          <Checkbox
+            className="mt-0.5"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+          />
+          <span className="text-muted-foreground">
+            By registering I agree to the program rules and the cancellation
+            policy. This label wraps onto multiple lines, so the box pins to the
+            first line rather than centering on the whole block.
+          </span>
+        </label>
+      </SubSection>
+
+      <SubSection title="Boxed gate — reacts to checked state (signup panel pattern)">
+        <label
+          className={`flex max-w-md cursor-pointer items-start gap-3 rounded-md border p-3 text-xs transition-colors ${
+            boxed
+              ? "border-primary bg-primary/5"
+              : "border-input hover:bg-accent/50"
+          }`}
+        >
+          <Checkbox
+            className="mt-0.5"
+            checked={boxed}
+            onChange={(e) => setBoxed(e.target.checked)}
+          />
+          <span className="text-muted-foreground">
+            The container border lights to primary once checked, giving the
+            required agreement visible weight instead of reading as fine print.
+          </span>
+        </label>
+      </SubSection>
+    </>
   );
 }
 
@@ -1350,6 +1416,13 @@ export default function AdminUIComponentsPage() {
             </Field>
           </div>
         </SubSection>
+      </Section>
+
+      {/* ============================================================ */}
+      {/* Section: Checkbox                                             */}
+      {/* ============================================================ */}
+      <Section title="Checkbox">
+        <CheckboxDemo />
       </Section>
 
       {/* ============================================================ */}

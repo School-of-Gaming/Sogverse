@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Identicon } from "@/components/ui/identicon";
 import { cn, formatCurrencyFromCents } from "@/lib/utils";
 import { MAX_GAMERS_PER_PARENT } from "@/lib/constants";
@@ -671,9 +672,15 @@ function RulesCheckbox({
 }) {
   const t = useTranslations("productDetail.signupPanel.rules");
   return (
-    <label className="flex items-start gap-2 text-xs">
-      <input
-        type="checkbox"
+    <label
+      className={cn(
+        "flex cursor-pointer items-start gap-3 rounded-md border p-3 text-xs transition-colors",
+        agreed
+          ? "border-primary bg-primary/5"
+          : "border-input hover:bg-accent/50"
+      )}
+    >
+      <Checkbox
         className="mt-0.5"
         checked={agreed}
         onChange={(e) => onAgreedChange(e.target.checked)}
