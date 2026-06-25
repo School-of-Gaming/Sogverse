@@ -139,6 +139,9 @@ function buildBaseProduct(
     // Minecraft Java — enough to exercise both game chips in the preview.
     topic: productType === "event" ? "fortnite" : "minecraft_java",
     refund_policy_days: null,
+    primary_gedu_fee_cents: null,
+    assistant_gedu_fee_cents: null,
+    municipality_fee_cents: null,
     created_at: refTimestamp,
     updated_at: refTimestamp,
     created_by: "mock-admin",

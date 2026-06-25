@@ -120,6 +120,9 @@ export async function POST(request: Request) {
     p_schedule_slots: body.schedule_slots,
     p_prices: body.prices,
     p_holiday_calendar_ids: body.holiday_calendar_ids,
+    p_primary_gedu_fee_cents: body.primary_gedu_fee_cents ?? undefined,
+    p_assistant_gedu_fee_cents: body.assistant_gedu_fee_cents ?? undefined,
+    p_municipality_fee_cents: body.municipality_fee_cents ?? undefined,
   };
 
   // Call RPC through the user's session client — SECURITY INVOKER means

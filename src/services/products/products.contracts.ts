@@ -66,6 +66,14 @@ const productDataBase = z.object({
   prices: z.array(priceInput),
   holiday_calendar_ids: z.array(z.string()),
   refund_policy_days: z.number().nullable().optional(),
+  // Per-session operating fees, a single EUR amount in integer cents. State is
+  // derived from the value (the form enforces it): null = unknown/none,
+  // 0 = volunteer (free), > 0 = a real fee. The municipality fee is null
+  // (unknown) or > 0 only, and only for municipality clubs — both enforced by
+  // CHECK constraints on `products`.
+  primary_gedu_fee_cents: z.number().nullable(),
+  assistant_gedu_fee_cents: z.number().nullable(),
+  municipality_fee_cents: z.number().nullable(),
 });
 
 /** The `data` field of POST /api/admin/products/create. */

@@ -6,8 +6,10 @@ import {
   ArrowLeft,
   Calendar,
   Clock,
+  Coins,
   Copy,
   Globe2,
+  Landmark,
   Pencil,
   Shapes,
   Wallet,
@@ -18,7 +20,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { cn, formatDate, formatDateOnly } from "@/lib/utils";
+import {
+  cn,
+  formatCurrencyFromCents,
+  formatDate,
+  formatDateOnly,
+} from "@/lib/utils";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { ProductOverviewCard } from "@/components/public/products/product-overview-card";
 import {
@@ -296,6 +303,33 @@ function OperationalFacts({
   const isClub =
     product.product_type === "consumer_club" ||
     product.product_type === "municipality_club";
+  const isMuni = product.product_type === "municipality_club";
+
+  // Render a per-session fee from its stored cents. The state is derived from
+  // the value: null = "not set" (the `nullStatus` label — "unknown" draws the
+  // eye, "none" is just informational), 0 = volunteer (free), > 0 = a EUR
+  // amount in the viewer's locale.
+  const renderFee = (cents: number | null, nullStatus: "unknown" | "none") => {
+    if (cents == null) {
+      return (
+        <span
+          className={
+            nullStatus === "unknown"
+              ? "text-destructive"
+              : "text-muted-foreground"
+          }
+        >
+          {t(`fees.status.${nullStatus}`)}
+        </span>
+      );
+    }
+    if (cents === 0) {
+      return (
+        <span className="text-muted-foreground">{t("fees.status.volunteer")}</span>
+      );
+    }
+    return formatCurrencyFromCents(cents, "eur", uiLocale);
+  };
 
   // Camps/events surface their dates inside the shared "When & where" card
   // (the schedule formatter folds them in); recurring clubs don't, so a
@@ -364,6 +398,20 @@ function OperationalFacts({
             </ul>
           )}
         </Fact>
+
+        <Fact icon={Coins} label={t("detailsPage.fields.primaryGeduFee")}>
+          {renderFee(product.primary_gedu_fee_cents, "unknown")}
+        </Fact>
+
+        <Fact icon={Coins} label={t("detailsPage.fields.assistantGeduFee")}>
+          {renderFee(product.assistant_gedu_fee_cents, "none")}
+        </Fact>
+
+        {isMuni && (
+          <Fact icon={Landmark} label={t("detailsPage.fields.municipalityFee")}>
+            {renderFee(product.municipality_fee_cents, "unknown")}
+          </Fact>
+        )}
 
         <Fact icon={Shapes} label={t("detailsPage.fields.topic")}>
           {topicName ?? <span className="text-muted-foreground">{c("notSet")}</span>}

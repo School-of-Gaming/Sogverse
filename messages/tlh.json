@@ -270,6 +270,8 @@
         "seats": "{count} pa'",
         "hidden": "So'lu'",
         "untitled": "(pong pagh)",
+        "missingGeduFee": "Gedu Huch Hutlh",
+        "missingMunicipalityFee": "veng Huch Hutlh",
         "pendingHint": {
           "registrationOpens": "{date}: ghIt poSchoH",
           "startDate": "{date}: tagh",
@@ -317,6 +319,9 @@
           "seats": "quS",
           "waitlist": "loS DIS",
           "prices": "Huchmey",
+          "primaryGeduFee": "Gedu wa'DIch Huch / qaStaHvIS",
+          "assistantGeduFee": "Gedu boQwI' Huch / qaStaHvIS",
+          "municipalityFee": "veng Huch / qaStaHvIS",
           "registrationOpensAt": "ghIH poSchoH",
           "visibility": "leghlu"
         },
@@ -474,6 +479,23 @@
         "perMonthLabel": "Huch per jar",
         "totalLabel": "Huch Hoch"
       },
+      "fees": {
+        "sectionTitle": "qaStaHvIS Huchmey",
+        "sectionDescription": "qaStaHvIS Gedupu'vaD Huch DInob, 'ej — veng tlhInganmey — maHvaD Huch nob veng. pegh mI' bIH, vavpu' Huch rurbe'.",
+        "primaryGeduLabel": "Gedu wa'DIch Huch",
+        "primaryGeduHint": "qaStaHvIS Gedu wa'DIch DamaH. tugh DaSov 'e' DaHarchugh «Sovbe'» yIwIv, pagh Huch Hutlhchugh «matlh» yIwIv.",
+        "assistantGeduLabel": "Gedu boQwI' Huch",
+        "assistantGeduHint": "qaStaHvIS Gedu boQwI' DamaH. boQwI' tu'be'lu'chugh «pagh» yIwIv.",
+        "municipalityLabel": "veng Huch",
+        "municipalityHint": "qaStaHvIS maHvaD Huch nob veng. tugh DaSov 'e' DaHarchugh «Sovbe'» yIwIv.",
+        "amountLabel": "qaStaHvIS Huch (euro)",
+        "status": {
+          "unknown": "Sovbe' — tugh",
+          "none": "pagh",
+          "volunteer": "matlh (nob Hutlh)",
+          "fee": "Huch yIqon"
+        }
+      },
       "startModes": {
         "label": "chay' tagh?",
         "date": "jaj tagh vIngu'",
@@ -542,6 +564,9 @@
         "priceSessionNegative": "{currency} per qaStaHvIS Huch nIQbe' net poQ",
         "priceMonthMissing": "{currency} per jar Huch yIqon",
         "priceMonthNegative": "{currency} per jar Huch nIQbe' net poQ",
+        "primaryGeduFeeInvalid": "Gedu wa'DIch Huch (0 law') yIqon, pagh «Sovbe'» «matlh» je yIwIv",
+        "assistantGeduFeeInvalid": "Gedu boQwI' Huch (0 law') yIqon, pagh «pagh» «matlh» je yIwIv",
+        "municipalityFeeInvalid": "veng Huch (0 law') yIqon, pagh «Sovbe'» yIwIv",
         "thresholdInvalid": "ghItlh mI' taghmeH positiv 'oHnIS",
         "registrationOpensDateRequired": "ghItlh tagh jaj yIwIv",
         "createFailed": "De' chu' Qap pagh"

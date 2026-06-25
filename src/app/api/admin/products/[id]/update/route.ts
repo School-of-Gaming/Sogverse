@@ -170,6 +170,11 @@ export async function POST(
     p_schedule_slots: body.schedule_slots,
     p_prices: body.prices,
     p_holiday_calendar_ids: body.holiday_calendar_ids,
+    // null (unknown/none) maps to undefined so the RPC's DEFAULT NULL clears
+    // the column; 0 (volunteer) survives `??` since it's not nullish.
+    p_primary_gedu_fee_cents: body.primary_gedu_fee_cents ?? undefined,
+    p_assistant_gedu_fee_cents: body.assistant_gedu_fee_cents ?? undefined,
+    p_municipality_fee_cents: body.municipality_fee_cents ?? undefined,
   };
 
   const { data: productId, error: rpcError } = await supabase.rpc(

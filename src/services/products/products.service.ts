@@ -174,6 +174,11 @@ export type CreateProductInput = {
   schedule_slots: ScheduleSlotInput[];
   prices: PriceInput[];
   holiday_calendar_ids: string[];
+  // Per-session operating fees in integer cents. null = unknown/none,
+  // 0 = volunteer, > 0 = a fee (see products.contracts.ts).
+  primary_gedu_fee_cents: number | null;
+  assistant_gedu_fee_cents: number | null;
+  municipality_fee_cents: number | null;
   image: File | null;
 };
 
@@ -208,6 +213,10 @@ export type UpdateProductInput = {
   schedule_slots: ScheduleSlotInput[];
   prices: PriceInput[];
   holiday_calendar_ids: string[];
+  // Per-session operating fees in integer cents — see CreateProductInput.
+  primary_gedu_fee_cents: number | null;
+  assistant_gedu_fee_cents: number | null;
+  municipality_fee_cents: number | null;
   image: File | string | null;
 };
 

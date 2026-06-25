@@ -225,6 +225,8 @@
         "seats": "{count} seats",
         "hidden": "hidden",
         "untitled": "(untitled)",
+        "missingGeduFee": "Gedu fee missing",
+        "missingMunicipalityFee": "Municipality fee missing",
         "pendingHint": {
           "registrationOpens": "Registration opens {date}",
           "startDate": "Starts {date}",
@@ -272,6 +274,9 @@
           "seats": "Seats",
           "waitlist": "Waitlist",
           "prices": "Prices",
+          "primaryGeduFee": "Primary Gedu fee / session",
+          "assistantGeduFee": "Assistant Gedu fee / session",
+          "municipalityFee": "Municipality fee / session",
           "registrationOpensAt": "Registration opens",
           "visibility": "Visibility"
         },
@@ -429,6 +434,23 @@
         "perMonthLabel": "Price per month",
         "totalLabel": "Total price"
       },
+      "fees": {
+        "sectionTitle": "Per-session fees",
+        "sectionDescription": "What we pay the game educators each session, and — for municipality clubs — what the municipality pays us. These are internal figures, separate from what parents pay above.",
+        "primaryGeduLabel": "Primary Gedu fee",
+        "primaryGeduHint": "Paid to the lead game educator per session. Choose Unknown if you'll set it later, or Volunteer if they run it for free.",
+        "assistantGeduLabel": "Assistant Gedu fee",
+        "assistantGeduHint": "Paid to an assistant educator per session. Choose None if there's no assistant.",
+        "municipalityLabel": "Municipality fee",
+        "municipalityHint": "What the municipality pays us per session. Choose Unknown if you'll set it later.",
+        "amountLabel": "Fee per session in euros",
+        "status": {
+          "unknown": "Unknown — set later",
+          "none": "None",
+          "volunteer": "Volunteer (free)",
+          "fee": "Set a fee"
+        }
+      },
       "startModes": {
         "label": "How does this start?",
         "date": "On a specific date",
@@ -497,6 +519,9 @@
         "priceSessionNegative": "Price per session in {currency} can't be negative",
         "priceMonthMissing": "Enter a monthly price in {currency}",
         "priceMonthNegative": "Monthly price in {currency} can't be negative",
+        "primaryGeduFeeInvalid": "Enter a primary Gedu fee greater than 0, or choose Unknown or Volunteer",
+        "assistantGeduFeeInvalid": "Enter an assistant Gedu fee greater than 0, or choose None or Volunteer",
+        "municipalityFeeInvalid": "Enter a municipality fee greater than 0, or choose Unknown",
         "thresholdInvalid": "Signups needed to start must be a positive integer",
         "registrationOpensDateRequired": "Pick a date when registration should open",
         "createFailed": "Failed to create product"

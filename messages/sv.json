@@ -225,6 +225,8 @@
         "seats": "{count} platser",
         "hidden": "dold",
         "untitled": "(utan titel)",
+        "missingGeduFee": "Gedu-arvode saknas",
+        "missingMunicipalityFee": "Kommunavgift saknas",
         "pendingHint": {
           "registrationOpens": "Anmälan öppnar {date}",
           "startDate": "Startar {date}",
@@ -272,6 +274,9 @@
           "seats": "Platser",
           "waitlist": "Väntelista",
           "prices": "Priser",
+          "primaryGeduFee": "Huvud-Gedu-arvode / tillfälle",
+          "assistantGeduFee": "Assisterande Gedu-arvode / tillfälle",
+          "municipalityFee": "Kommunavgift / tillfälle",
           "registrationOpensAt": "Anmälan öppnar",
           "visibility": "Synlighet"
         },
@@ -429,6 +434,23 @@
         "perMonthLabel": "Pris per månad",
         "totalLabel": "Totalpris"
       },
+      "fees": {
+        "sectionTitle": "Arvoden per tillfälle",
+        "sectionDescription": "Vad vi betalar spelpedagogerna (Gedu) per tillfälle och — för kommunklubbar — vad kommunen betalar oss. Detta är interna siffror, skilda från vad föräldrar betalar ovan.",
+        "primaryGeduLabel": "Huvud-Gedu-arvode",
+        "primaryGeduHint": "Betalas till den ledande spelpedagogen per tillfälle. Välj Okänt om du anger det senare, eller Volontär om hen leder gratis.",
+        "assistantGeduLabel": "Assisterande Gedu-arvode",
+        "assistantGeduHint": "Betalas till en assisterande spelpedagog per tillfälle. Välj Inget om det inte finns någon assistent.",
+        "municipalityLabel": "Kommunavgift",
+        "municipalityHint": "Vad kommunen betalar oss per tillfälle. Välj Okänt om du anger det senare.",
+        "amountLabel": "Belopp per tillfälle i euro",
+        "status": {
+          "unknown": "Okänt — anges senare",
+          "none": "Inget",
+          "volunteer": "Volontär (gratis)",
+          "fee": "Ange ett belopp"
+        }
+      },
       "startModes": {
         "label": "Hur startar detta?",
         "date": "På ett specifikt datum",
@@ -497,6 +519,9 @@
         "priceSessionNegative": "Pris per tillfälle i {currency} kan inte vara negativt",
         "priceMonthMissing": "Ange ett månadspris i {currency}",
         "priceMonthNegative": "Månadspris i {currency} kan inte vara negativt",
+        "primaryGeduFeeInvalid": "Ange ett huvud-Gedu-arvode större än 0, eller välj Okänt eller Volontär",
+        "assistantGeduFeeInvalid": "Ange ett assisterande Gedu-arvode större än 0, eller välj Inget eller Volontär",
+        "municipalityFeeInvalid": "Ange en kommunavgift större än 0, eller välj Okänt",
         "thresholdInvalid": "Antal anmälningar för att starta måste vara ett positivt heltal",
         "registrationOpensDateRequired": "Välj ett datum då anmälan ska öppnas",
         "createFailed": "Det gick inte att skapa produkten"

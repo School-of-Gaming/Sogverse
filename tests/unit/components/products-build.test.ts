@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   buildCreateInput,
   cloneFormState,
+  existingFormState,
   validate,
 } from "@/components/admin/products/product-build";
 import {
@@ -50,6 +51,29 @@ function validConsumerState(): FormState {
   // baseline "capped club" must opt back into a real seat count explicitly.
   s.uncapped = false;
   s.seatCount = "10";
+  return s;
+}
+
+// A municipality club that passes validation — its fee section is the only one
+// that surfaces the municipality fee row. Muni clubs need a location (the
+// funding municipality) and an end date (weekly_bounded), and bill via external
+// contract so no price is collected.
+function validMuniState(): FormState {
+  const s = initialState(muniConfig, "en");
+  s.translations = {
+    en: { name: "Muni Club", shortDescription: "A muni club", longDescription: [] },
+  };
+  s.activeLocale = "en";
+  s.topic = "minecraft_java";
+  s.spokenLanguageCode = "en";
+  s.isRemote = true;
+  s.locationId = "00000000-0000-0000-0000-0000000000aa";
+  s.startMode = "date";
+  s.startDate = "2026-09-01";
+  s.endDate = "2026-12-01";
+  s.scheduleSlots = [{ weekday: 1, start_time: "16:00", duration_minutes: 90 }];
+  s.uncapped = false;
+  s.seatCount = "12";
   return s;
 }
 
@@ -595,6 +619,94 @@ describe("buildCreateInput", () => {
   });
 });
 
+describe("fees", () => {
+  it("maps fee drafts to cents: fee→cents, volunteer→0, unknown/none→null", () => {
+    const s = validConsumerState();
+    s.primaryGeduFee = { status: "fee", amount: "25.00" };
+    s.assistantGeduFee = { status: "volunteer", amount: "" };
+    const out = buildCreateInput(s, "consumer_club", consumerConfig);
+    expect(out.primary_gedu_fee_cents).toBe(2500);
+    expect(out.assistant_gedu_fee_cents).toBe(0);
+  });
+
+  it("defaults primary gedu to unknown (null) and assistant to none (null)", () => {
+    const out = buildCreateInput(
+      validConsumerState(),
+      "consumer_club",
+      consumerConfig,
+    );
+    expect(out.primary_gedu_fee_cents).toBeNull();
+    expect(out.assistant_gedu_fee_cents).toBeNull();
+  });
+
+  it("forces municipality fee to null for non-municipality products", () => {
+    const s = validConsumerState();
+    // A stale muni draft (the section is hidden for consumer clubs) must not
+    // leak — the DB CHECK rejects a muni fee on a non-muni product.
+    s.municipalityFee = { status: "fee", amount: "50.00" };
+    const out = buildCreateInput(s, "consumer_club", consumerConfig);
+    expect(out.municipality_fee_cents).toBeNull();
+  });
+
+  it("persists the municipality fee for municipality clubs", () => {
+    const s = validConsumerState();
+    s.municipalityFee = { status: "fee", amount: "40.00" };
+    const out = buildCreateInput(s, "municipality_club", muniConfig);
+    expect(out.municipality_fee_cents).toBe(4000);
+  });
+
+  it("rejects a 'fee' status with a missing or zero amount", () => {
+    const s = validConsumerState();
+    s.primaryGeduFee = { status: "fee", amount: "" };
+    expect(validate(s, consumerConfig)).toEqual({
+      messageKey: "primaryGeduFeeInvalid",
+    });
+    s.primaryGeduFee = { status: "fee", amount: "0" };
+    expect(validate(s, consumerConfig)).toEqual({
+      messageKey: "primaryGeduFeeInvalid",
+    });
+  });
+
+  it("accepts unknown / volunteer / none without an amount", () => {
+    const s = validConsumerState();
+    s.primaryGeduFee = { status: "volunteer", amount: "" };
+    s.assistantGeduFee = { status: "none", amount: "" };
+    expect(validate(s, consumerConfig)).toBeNull();
+  });
+
+  it("ignores an invalid municipality fee draft on a non-muni club", () => {
+    const s = validConsumerState();
+    // The muni section is hidden for consumer clubs, so a stale invalid draft
+    // must not block submit.
+    s.municipalityFee = { status: "fee", amount: "" };
+    expect(validate(s, consumerConfig)).toBeNull();
+  });
+
+  it("catches an invalid municipality fee on a municipality club", () => {
+    const s = validMuniState();
+    expect(validate(s, muniConfig)).toBeNull();
+    s.municipalityFee = { status: "fee", amount: "" };
+    expect(validate(s, muniConfig)).toEqual({
+      messageKey: "municipalityFeeInvalid",
+    });
+  });
+
+  it("round-trips cents back into fee drafts via existingFormState", () => {
+    const state = existingFormState(
+      mockDetailRow({
+        primary_gedu_fee_cents: 2500,
+        assistant_gedu_fee_cents: 0,
+        municipality_fee_cents: null,
+      }),
+      consumerConfig,
+      "en",
+    );
+    expect(state.primaryGeduFee).toEqual({ status: "fee", amount: "25.00" });
+    expect(state.assistantGeduFee).toEqual({ status: "volunteer", amount: "" });
+    expect(state.municipalityFee).toEqual({ status: "unknown", amount: "" });
+  });
+});
+
 // A fully-populated detail row to clone from. Visible, with an image, two
 // locale names, prices, a schedule, and a real start date — so the clone's
 // "copy everything except the image, append the suffix to names" contract
@@ -625,6 +737,9 @@ function mockDetailRow(
     seat_count: 10,
     waitlist_enabled: false,
     refund_policy_days: null,
+    primary_gedu_fee_cents: null,
+    assistant_gedu_fee_cents: null,
+    municipality_fee_cents: null,
     registration_opens_at: "2020-01-01T00:00:00Z",
     timezone: "Europe/Helsinki",
     product_translations: [

@@ -225,6 +225,8 @@
         "seats": "{count} paikkaa",
         "hidden": "piilotettu",
         "untitled": "(nimetön)",
+        "missingGeduFee": "Gedun palkkio puuttuu",
+        "missingMunicipalityFee": "Kunnan maksu puuttuu",
         "pendingHint": {
           "registrationOpens": "Ilmoittautuminen aukeaa {date}",
           "startDate": "Alkaa {date}",
@@ -272,6 +274,9 @@
           "seats": "Paikat",
           "waitlist": "Jonotuslista",
           "prices": "Hinnat",
+          "primaryGeduFee": "Vastaavan Gedun palkkio / kerta",
+          "assistantGeduFee": "Avustavan Gedun palkkio / kerta",
+          "municipalityFee": "Kunnan maksu / kerta",
           "registrationOpensAt": "Ilmoittautuminen aukeaa",
           "visibility": "Näkyvyys"
         },
@@ -429,6 +434,23 @@
         "perMonthLabel": "Hinta per kuukausi",
         "totalLabel": "Kokonaishinta"
       },
+      "fees": {
+        "sectionTitle": "Kertakohtaiset palkkiot ja maksut",
+        "sectionDescription": "Mitä maksamme pelikasvattajille (Gedu) jokaiselta kerralta ja — kuntakerhojen osalta — mitä kunta maksaa meille. Nämä ovat sisäisiä lukuja, erillään siitä mitä vanhemmat maksavat yllä.",
+        "primaryGeduLabel": "Vastaavan Gedun palkkio",
+        "primaryGeduHint": "Maksetaan vastaavalle Gedulle jokaiselta kerralta. Valitse Ei tiedossa, jos asetat sen myöhemmin, tai Vapaaehtoinen, jos hän ohjaa ilmaiseksi.",
+        "assistantGeduLabel": "Avustavan Gedun palkkio",
+        "assistantGeduHint": "Maksetaan avustavalle Gedulle jokaiselta kerralta. Valitse Ei ole, jos avustajaa ei ole.",
+        "municipalityLabel": "Kunnan maksu",
+        "municipalityHint": "Mitä kunta maksaa meille jokaiselta kerralta. Valitse Ei tiedossa, jos asetat sen myöhemmin.",
+        "amountLabel": "Summa per kerta euroina",
+        "status": {
+          "unknown": "Ei tiedossa — asetetaan myöhemmin",
+          "none": "Ei ole",
+          "volunteer": "Vapaaehtoinen (ilmainen)",
+          "fee": "Aseta summa"
+        }
+      },
       "startModes": {
         "label": "Miten tämä alkaa?",
         "date": "Tiettynä päivänä",
@@ -497,6 +519,9 @@
         "priceSessionNegative": "Kertahinta valuutassa {currency} ei voi olla negatiivinen",
         "priceMonthMissing": "Anna kuukausihinta valuutassa {currency}",
         "priceMonthNegative": "Kuukausihinta valuutassa {currency} ei voi olla negatiivinen",
+        "primaryGeduFeeInvalid": "Anna vastaavan Gedun palkkio, joka on suurempi kuin 0, tai valitse Ei tiedossa tai Vapaaehtoinen",
+        "assistantGeduFeeInvalid": "Anna avustavan Gedun palkkio, joka on suurempi kuin 0, tai valitse Ei ole tai Vapaaehtoinen",
+        "municipalityFeeInvalid": "Anna kunnan maksu, joka on suurempi kuin 0, tai valitse Ei tiedossa",
         "thresholdInvalid": "Ilmoittautumisrajan on oltava positiivinen kokonaisluku",
         "registrationOpensDateRequired": "Valitse päivämäärä, jolloin ilmoittautuminen avautuu",
         "createFailed": "Tuotteen luonti epäonnistui"

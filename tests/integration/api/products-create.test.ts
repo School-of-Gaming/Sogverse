@@ -113,6 +113,9 @@ const validBody = {
   schedule_slots: [{ weekday: 1, start_time: "16:00", duration_minutes: 90 }],
   prices: [],
   holiday_calendar_ids: [],
+  primary_gedu_fee_cents: null,
+  assistant_gedu_fee_cents: null,
+  municipality_fee_cents: null,
 };
 
 /**

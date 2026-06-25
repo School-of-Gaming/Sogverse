@@ -27,6 +27,37 @@ export const SEAT_LIMIT_MODE_VALUES = ["limited", "unlimited"] as const;
 // field won't accept an empty value, so "blank means ongoing" wasn't reachable.
 export const END_DATE_MODE_VALUES = ["ongoing", "dated"] as const;
 
+// Per-session fee selectors. Each fee is one EUR amount the DB stores as
+// integer cents, with state DERIVED from the value (null = unknown/none,
+// 0 = volunteer, > 0 = fee). The form makes the human pick that state
+// explicitly — a select, never an empty box or a typed 0 — so these are the
+// allowed select values per fee. The amount input only shows for "fee".
+//   primary gedu:  unknown | volunteer | fee   (default unknown; always shown)
+//   assistant:     none    | volunteer | fee   (default none; always shown)
+//   municipality:  unknown | fee               (default unknown; muni clubs only)
+export const PRIMARY_GEDU_FEE_STATUS_VALUES = [
+  "unknown",
+  "volunteer",
+  "fee",
+] as const;
+export const ASSISTANT_GEDU_FEE_STATUS_VALUES = [
+  "none",
+  "volunteer",
+  "fee",
+] as const;
+export const MUNICIPALITY_FEE_STATUS_VALUES = ["unknown", "fee"] as const;
+
+export type PrimaryGeduFeeStatus =
+  (typeof PRIMARY_GEDU_FEE_STATUS_VALUES)[number];
+export type AssistantGeduFeeStatus =
+  (typeof ASSISTANT_GEDU_FEE_STATUS_VALUES)[number];
+export type MunicipalityFeeStatus =
+  (typeof MUNICIPALITY_FEE_STATUS_VALUES)[number];
+
+// A fee's form state: the chosen status plus the decimal-string amount, which
+// is only meaningful (and only collected) when status is "fee".
+export type FeeDraft<S> = { status: S; amount: string };
+
 // 15-minute-interval time picker — same pattern as schedule-slots-editor.tsx,
 // where the rationale comment lives (Chrome's <input type="time"> ignores `step`).
 export const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) =>
@@ -99,6 +130,14 @@ export interface FormState {
   seatCount: string;
   uncapped: boolean;
   waitlistEnabled: boolean;
+
+  // Per-session operating fees. `municipalityFee` is only surfaced for
+  // municipality clubs; for other types it's kept at its default and forced
+  // to null at build time (the DB CHECK rejects a muni fee on a non-muni
+  // product).
+  primaryGeduFee: FeeDraft<PrimaryGeduFeeStatus>;
+  assistantGeduFee: FeeDraft<AssistantGeduFeeStatus>;
+  municipalityFee: FeeDraft<MunicipalityFeeStatus>;
 
   // Registration timing — `immediately` accepts signups as soon as the
   // product is published; `scheduled` opens at the picked Helsinki-local
@@ -181,6 +220,12 @@ export function initialState(
       eur: { session: "", month: "" },
     },
     seatCount: defaultSeats(config.productType),
+    // Fees start in their "not yet known" state so the admin product list
+    // alerts until they're filled (primary gedu + muni). Assistant defaults to
+    // "none" — an assistant educator is the exception, not the norm.
+    primaryGeduFee: { status: "unknown", amount: "" },
+    assistantGeduFee: { status: "none", amount: "" },
+    municipalityFee: { status: "unknown", amount: "" },
     // Locked to uncapped (no seat count) for now — see FORM_LOCKS.seatCount.
     uncapped: FORM_LOCKS.seatCount,
     // Locked off for now — see FORM_LOCKS.waitlist.

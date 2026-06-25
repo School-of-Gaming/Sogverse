@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { useNow, useTimezone } from "@/providers";
-import { Calendar, CalendarClock, Users, Ticket, Hourglass } from "lucide-react";
+import {
+  AlertTriangle,
+  Calendar,
+  CalendarClock,
+  Users,
+  Ticket,
+  Hourglass,
+} from "lucide-react";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { resolveLocale } from "@/lib/constants/locales";
@@ -119,6 +126,14 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
           now,
         });
         const scheduleLine = scheduleRowLine(schedule);
+        // Nudge the admin to fill in fees they may not have known at creation.
+        // A null primary gedu fee is "unknown" (0 would be volunteer — set);
+        // the municipality fee only applies to muni clubs. The assistant fee
+        // never alerts (null just means "no assistant").
+        const missingGeduFee = p.primary_gedu_fee_cents == null;
+        const missingMunicipalityFee =
+          productType === "municipality_club" &&
+          p.municipality_fee_cents == null;
         // A time-bearing event is a date+time instant, so its date renders in
         // the viewer's zone (may differ from the stored start_date). Every
         // other dated value here — a camp's date range, a club term date, a
@@ -199,6 +214,18 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
                     <span className="inline-flex items-center gap-1 text-primary">
                       <Hourglass className="h-3 w-3" />
                       {hint}
+                    </span>
+                  )}
+                  {missingGeduFee && (
+                    <span className="inline-flex items-center gap-1 text-destructive">
+                      <AlertTriangle className="h-3 w-3" />
+                      {t("list.missingGeduFee")}
+                    </span>
+                  )}
+                  {missingMunicipalityFee && (
+                    <span className="inline-flex items-center gap-1 text-destructive">
+                      <AlertTriangle className="h-3 w-3" />
+                      {t("list.missingMunicipalityFee")}
                     </span>
                   )}
                 </div>
