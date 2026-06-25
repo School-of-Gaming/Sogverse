@@ -45,6 +45,7 @@
     "back": "pemej",
     "cancel": "yImev",
     "close": "yISoQmoH",
+    "clear": "yIteq",
     "save": "yISaH",
     "delete": "yIHoH",
     "edit": "yIchoH",
@@ -596,6 +597,20 @@
         "chooseFile": "DocH yIwIv",
         "remove": "yIteq",
         "hint": "vavmey nej De'Daq DochlIj cha'."
+      },
+      "filters": {
+        "day": "jaj",
+        "allDays": "Hoch jajmey",
+        "gedu": "Gedu",
+        "language": "Hol",
+        "allLanguages": "Hoch Holmey",
+        "municipality": "veng",
+        "searchGedu": "Gedu yISam…",
+        "searchMunicipality": "veng yISam…",
+        "noResults": "pagh SammoHlu'.",
+        "showing": "cha'lu' {count}/{total}",
+        "clear": "wIvmey yIteq",
+        "noMatches": "wIvpu'bogh DaqmeyvaD pagh {plural} tu'lu'."
       },
       "geduPicker": {
         "searchPlaceholder": "pong, qoj 'ehmaH yInej…",

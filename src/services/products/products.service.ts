@@ -81,8 +81,13 @@ function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
 // indistinguishable in the list without opening each one. The slot shape
 // (`weekday, start_time, duration_minutes`) matches what
 // `formatProductSchedule` consumes, so the list reuses the same schedule
-// formatter as the browse card. `product_type`, `start_date`, `end_date`
-// and `timezone` come from `*` (columns on Product).
+// formatter as the browse card. `product_type`, `start_date`, `end_date`,
+// `timezone`, `location_id` and `spoken_language_code` come from `*` (columns
+// on Product). `gedu_group_assignments(gedu_id)` is embedded for the admin
+// club-list filters (filter by assigned educator / "no educator"); the rows
+// the list renders ignore it, so it's inert for camps/events. The embed is
+// keyed off the assignment's own `product_id` FK, so it spans every group on
+// the product — an empty array means no educator is assigned anywhere.
 function buildProductsByTypeQuery(
   supabase: AppSupabaseClient,
   type: ProductType,
@@ -90,7 +95,7 @@ function buildProductsByTypeQuery(
   return supabase
     .from("products")
     .select(
-      "*, product_translations(*), schedule_slots(weekday, start_time, duration_minutes)",
+      "*, product_translations(*), schedule_slots(weekday, start_time, duration_minutes), gedu_group_assignments(gedu_id)",
     )
     .eq("product_type", type)
     .order("created_at", { ascending: false });

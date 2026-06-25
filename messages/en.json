@@ -45,6 +45,7 @@
     "back": "Back",
     "cancel": "Cancel",
     "close": "Close",
+    "clear": "Clear",
     "save": "Save",
     "delete": "Delete",
     "edit": "Edit",
@@ -551,6 +552,20 @@
         "chooseFile": "Choose file",
         "remove": "Remove",
         "hint": "Shown on the product card when parents are browsing."
+      },
+      "filters": {
+        "day": "Day",
+        "allDays": "All days",
+        "gedu": "Gedu",
+        "language": "Language",
+        "allLanguages": "All languages",
+        "municipality": "Municipality",
+        "searchGedu": "Search Gedus…",
+        "searchMunicipality": "Search municipalities…",
+        "noResults": "No matches.",
+        "showing": "Showing {count} of {total}",
+        "clear": "Clear filters",
+        "noMatches": "No {plural} match the selected filters."
       },
       "geduPicker": {
         "searchPlaceholder": "Search name or email…",

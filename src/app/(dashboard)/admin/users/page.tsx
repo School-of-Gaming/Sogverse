@@ -98,7 +98,10 @@ export default function AdminUsersPage() {
 
 
   return (
-    <div className="space-y-6">
+    // Reserve the document scrollbar gutter so the list/search results loading
+    // in or filtering down doesn't shift the layout — see html:has() rule in
+    // globals.css.
+    <div className="space-y-6" data-reserve-scroll-gutter>
       <div>
         <h1 className="text-3xl font-bold">{t('title')}</h1>
         <p className="text-muted-foreground">

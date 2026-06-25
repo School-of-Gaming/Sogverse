@@ -45,6 +45,7 @@
     "back": "Takaisin",
     "cancel": "Peruuta",
     "close": "Sulje",
+    "clear": "Tyhjennä",
     "save": "Tallenna",
     "delete": "Poista",
     "edit": "Muokkaa",
@@ -551,6 +552,20 @@
         "chooseFile": "Valitse tiedosto",
         "remove": "Poista",
         "hint": "Näkyy tuotekortissa, kun vanhemmat selaavat."
+      },
+      "filters": {
+        "day": "Viikonpäivä",
+        "allDays": "Kaikki päivät",
+        "gedu": "Gedu",
+        "language": "Kieli",
+        "allLanguages": "Kaikki kielet",
+        "municipality": "Kunta",
+        "searchGedu": "Hae Geduja…",
+        "searchMunicipality": "Hae kuntia…",
+        "noResults": "Ei osumia.",
+        "showing": "Näytetään {count} / {total}",
+        "clear": "Tyhjennä suodattimet",
+        "noMatches": "Valituilla suodattimilla ei löytynyt tuloksia."
       },
       "geduPicker": {
         "searchPlaceholder": "Hae nimellä tai sähköpostilla…",

@@ -45,6 +45,7 @@
     "back": "Tillbaka",
     "cancel": "Avbryt",
     "close": "Stäng",
+    "clear": "Rensa",
     "save": "Spara",
     "delete": "Radera",
     "edit": "Redigera",
@@ -551,6 +552,20 @@
         "chooseFile": "Välj fil",
         "remove": "Ta bort",
         "hint": "Visas på produktkortet när föräldrar bläddrar."
+      },
+      "filters": {
+        "day": "Veckodag",
+        "allDays": "Alla dagar",
+        "gedu": "Gedu",
+        "language": "Språk",
+        "allLanguages": "Alla språk",
+        "municipality": "Kommun",
+        "searchGedu": "Sök Geduer…",
+        "searchMunicipality": "Sök kommuner…",
+        "noResults": "Inga träffar.",
+        "showing": "Visar {count} av {total}",
+        "clear": "Rensa filter",
+        "noMatches": "Inga {plural} matchar de valda filtren."
       },
       "geduPicker": {
         "searchPlaceholder": "Sök namn eller e-post…",

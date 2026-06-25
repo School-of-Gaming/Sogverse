@@ -265,6 +265,19 @@ input[type="search"]::-webkit-search-cancel-button {
   cursor: grabbing;
 }
 
+/* Opt-in scrollbar-gutter reservation. A page that flips between "fits the
+   viewport" and "needs a scrollbar" — list data loading in below the fold, or a
+   filter shrinking the list back above it — otherwise shifts the layout
+   sideways as the document scrollbar appears/disappears. The document is the
+   single scroll container for every route group (see
+   src/components/layout/CLAUDE.md), so the gutter must live on the root element;
+   :has() lets an opted-in page (it renders a [data-reserve-scroll-gutter]
+   marker) reserve it without forcing the gutter on every route. No-op where the
+   OS uses overlay scrollbars (nothing to reserve, no shift). */
+html:has([data-reserve-scroll-gutter]) {
+  scrollbar-gutter: stable;
+}
+
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
