@@ -1039,7 +1039,7 @@ The unified shape is proven against the two product lines closest to real users.
 - ✓ DB access-control: `products` family + all financial tables covered by `tests/db/access-control.test.ts`.
 
 **Parent UI**: **do not ship by default**. Each customer-facing screen requires an explicit UX approval from the operator.
-- ✓ Browse cards + detail page read real `useParticipationCounts` (seat-left math, threshold progress, "almost full" pill, full-waitlist transitions).
+- ✓ Browse cards + detail page read real `useParticipationCounts` (seat-left math, threshold progress, seat-availability bar, full-waitlist transitions).
 - ✓ Detail-page CTA wires real Stripe Checkout for club subs and single-payment camps; free events register without Stripe.
 - ✓ Out-of-stock products show "Join the waitlist" → `join_waitlist` with no charge.
 - ✓ Realtime seat counter on the detail page (`useProductSeatCountsRealtime` subscribes to `product_seat_counts` filtered by `product_id`).
@@ -1279,7 +1279,7 @@ Parent browse + detail (src/components/public/products/)
 ├── product-browse-filters.tsx       — Type / game / format / language chips + clear-all
 ├── product-browse-card{,-view}.tsx  — Browse-card adapter + presentational View
 ├── product-purchased-card{,-view}.tsx — Purchased-card adapter + View
-├── registration-pill.tsx            — RegistrationPill (outline chip) + useRegistrationCta hook
+├── registration-cta.ts              — useRegistrationCta hook (card CTA per registration state)
 ├── derive-registration-state.ts     — Pure state machine: product + now + participation count → RegistrationState
 ├── format-product-{schedule,price,location}.ts — Pure formatters
 ├── filter-products.ts               — Pure topic / tag / format filter
@@ -1353,20 +1353,7 @@ Route: `/shop`. One storefront for both browseable types. `ShopBrowse` reads the
 
 **View + adapter split.** Each card is two files. The **View** takes already-resolved display props (strings, numbers, the registration state) and is pure presentational. The **adapter** of the same name resolves a `ProductBrowseRow` (or participation row) into those props — locale, currency, schedule, price, registration state, tag labels. This lets the UI Components style guide at `/admin/ui-components` render every card state by hand without forging a full DB row.
 
-**Registration pill (parent voice, only when notable).** `RegistrationPill` renders only when there's something actionable or urgency-creating to say; default-open (plenty of seats, sign-ups open) returns `null`.
-
-| State (from `deriveRegistrationState`) | Renders | Pill copy |
-|---|---|---|
-| `open` with `seatsLeft` ≤ 3 | yes | "Only N spots left" |
-| `open` with more headroom | **no** | (Sign-up button does the talking) |
-| `pending_thr` | yes | "Need N more to start" |
-| `full_waitlist` | yes | "Full — waitlist open" |
-| `full_closed` | yes | "Full" |
-| `closed_pre` | yes | "Opens 15 May" |
-| `running_late` | yes | "Already started" |
-| `ended` | yes | "Ended" |
-
-`useRegistrationCta(state)` returns the card's CTA — primary "Sign up", secondary "Join waitlist", disabled "Full" / "Opens 15 May", or `null` to hide it (`running_late`, `ended`).
+**Registration state on the card.** Browse cards no longer carry an inline status pill. Registration state is surfaced two ways: the seat-availability bar (muni clubs) shows fill/waitlist, and `useRegistrationCta(state)` drives the card's CTA — a primary "View" link for any state with something to do on the detail page, a disabled "Full" button for `full_closed`, or `null` to hide the CTA entirely (`running_late`, `ended`, the latter also greying the card and showing an "ended" note instead of the footer). Everything else lives on the detail page.
 
 **`deriveRegistrationState` decision tree** (top-down, first match wins; lives in `derive-registration-state.ts`):
 
@@ -1383,7 +1370,7 @@ open          ← otherwise (carries seatCount + seatsLeft + waitlistEnabled)
 
 Muni clubs are intentionally not surfaced in the shop — they have no Type chip and are reached only via the `/registration` direct-link entry, never navigated to from within the site.
 
-**RLS / effectiveStatus interplay.** RLS only returns `pending` and `running` rows to anon/customer; `completed` is hidden at the DB. The browse card still renders the "Ended" pill because `effectiveStatus()` catches `running` rows whose `end_date` has passed (cron lag between midnight and a `running → completed` flip). Do **not** add `completed` to the service filter — see the comment in `products.service.ts:listVisibleByTypes`.
+**RLS / effectiveStatus interplay.** RLS only returns `pending` and `running` rows to anon/customer; `completed` is hidden at the DB. The browse card still renders its "ended" treatment because `effectiveStatus()` catches `running` rows whose `end_date` has passed (cron lag between midnight and a `running → completed` flip). Do **not** add `completed` to the service filter — see the comment in `products.service.ts:listVisibleByTypes`.
 
 **Filter UX.** Filter chips are URL-driven — deep-links like `/shop?category=clubs&topic=minecraft&tag=creative&format=in_person` reproduce a filter state. The **Type** chip leads the filter card and is special: it's the required, mutually-exclusive `?category=` param (`useShopCategory`), never empty and never touched by Clear. The rest are `useBrowseFilters`. `filterProducts` is a pure function over `(rows, { topics, tags, format })`; the Type narrowing happens before it in `ProductBrowsePage`. Topic/tag are multi-select, slug-based, OR-within-row + AND-across-rows; format is single-select (`online` / `in_person`, maps to `products.is_remote`). Clear is always rendered (`invisible` when nothing to clear) so the row's box height is constant.
 

@@ -9,7 +9,7 @@ import { LanguageFlag } from "@/components/ui/language-flag";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { cn } from "@/lib/utils";
 import type { ProductPriceLine } from "./format-product-price";
-import { RegistrationPill, useRegistrationCta } from "./registration-pill";
+import { useRegistrationCta } from "./registration-cta";
 import { SeatAvailabilityBar } from "./seat-availability-bar";
 import type { RegistrationState } from "./derive-registration-state";
 
@@ -124,17 +124,14 @@ export function ProductBrowseCardView({
               </h3>
             </div>
 
-            {/* Topic label + registration pill share the row directly under
-                the title (option B per the spec). The pill keeps a
-                consistent right-edge anchor regardless of topic length. */}
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              {topicLabel && (
-                <p className="text-xs font-medium tracking-wide text-primary">
-                  {topicLabel}
-                </p>
-              )}
-              <RegistrationPill state={state} />
-            </div>
+            {/* Topic label sits directly under the title. Registration
+                state is surfaced by the seat-availability bar and footer
+                rather than an inline pill. */}
+            {topicLabel && (
+              <p className="text-xs font-medium tracking-wide text-primary">
+                {topicLabel}
+              </p>
+            )}
 
             <ul className="space-y-0.5 text-xs text-muted-foreground">
               {scheduleLines.map((line, idx) => (
