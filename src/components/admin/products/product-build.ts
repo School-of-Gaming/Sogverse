@@ -228,15 +228,28 @@ function feeAmountValid(amount: string): boolean {
 
 /**
  * Fold a fee draft (status + decimal amount) into the stored cents value:
- *   "fee"       → the positive amount in cents (validate() guarantees > 0)
+ *   "fee"       → the positive amount in cents
  *   "volunteer" → 0
  *   "unknown" | "none" → null
+ *
+ * A "fee" status with an unparseable amount is unreachable: build only runs
+ * after validate() passes, and validate() rejects exactly that case. We assert
+ * it rather than silently coercing to 0 — a wrong fee should never be invented
+ * from an invalid draft; a thrown error surfaces the broken invariant instead.
  */
 function feeDraftToCents(
   status: "unknown" | "none" | "volunteer" | "fee",
   amount: string,
 ): number | null {
-  if (status === "fee") return decimalToCents(amount) ?? 0;
+  if (status === "fee") {
+    const cents = decimalToCents(amount);
+    if (cents == null) {
+      throw new Error(
+        `feeDraftToCents: "fee" status with an invalid amount (${JSON.stringify(amount)}) — validate() should have blocked this`,
+      );
+    }
+    return cents;
+  }
   if (status === "volunteer") return 0;
   return null;
 }
