@@ -245,11 +245,14 @@ export function ClubProductFilters({
             total: products.length,
           })}
         </span>
+        {/* No vertical padding: with py-1 the button is taller than the bare
+            text, so toggling it in/out grows the row and shifts the cards below.
+            Its height now matches the showing-count span's line-height. */}
         {anyActive && (
           <button
             type="button"
             onClick={clear}
-            className="inline-flex items-center gap-1 rounded-md px-2 py-1 transition-colors hover:text-foreground"
+            className="inline-flex items-center gap-1 rounded-md px-2 transition-colors hover:text-foreground"
           >
             <X className="h-3 w-3" />
             {t("filters.clear")}
