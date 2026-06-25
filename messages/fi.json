@@ -565,7 +565,7 @@
         "noResults": "Ei osumia.",
         "showing": "Näytetään {count} / {total}",
         "clear": "Tyhjennä suodattimet",
-        "noMatches": "Valituilla suodattimilla ei löytynyt tuloksia."
+        "noMatches": "{plural} eivät vastaa valittuja suodattimia."
       },
       "geduPicker": {
         "searchPlaceholder": "Hae nimellä tai sähköpostilla…",

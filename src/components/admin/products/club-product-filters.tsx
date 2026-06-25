@@ -50,6 +50,13 @@ export function ClubProductFilters({
   const [language, setLanguage] = useState<string | null>(null);
   const [municipalityId, setMunicipalityId] = useState<string | null>(null);
 
+  // All three reference queries fire for both club types even though each page
+  // only reads a subset: consumer clubs ignore `locations` (the largest of the
+  // three — the whole locations tree), municipality clubs ignore
+  // `spokenLanguages`. Left unconditional on purpose: the queries are cheap and
+  // cached, and gating them would mean splitting the municipality-only work into
+  // a child component that only mounts for `isMunicipality`. If the locations
+  // tree ever grows enough to matter, that split is the fix.
   const { data: gedus } = useUsersByRole("gedu");
   const { data: spokenLanguages } = useSpokenLanguages();
   const { data: locations } = useAllLocations();
