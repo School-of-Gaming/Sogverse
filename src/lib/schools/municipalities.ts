@@ -110,6 +110,22 @@ export function buildMunicipalityEntries(
 }
 
 /**
+ * Resolve a `/schools/<slug>` URL slug back to its municipality entry. Accepts
+ * the canonical slug *and* every alternate-locale slug, so both `helsinki` and
+ * `helsingfors` land on the same row regardless of the viewer's locale — the
+ * URL rests on whatever was linked/bookmarked, and switching locale never
+ * rewrites it. Returns `undefined` for an unknown slug (the page 404s on that).
+ */
+export function findMunicipalityBySlug(
+  slug: string,
+  entries: MunicipalityEntry[],
+): MunicipalityEntry | undefined {
+  return entries.find(
+    (e) => e.slug === slug || e.searchSlugs.includes(slug),
+  );
+}
+
+/**
  * Group municipalities under their region, regions sorted by name and
  * municipalities sorted within each (Finnish collation). Used for the default
  * view, which passes only the municipalities that `hasClubs`.

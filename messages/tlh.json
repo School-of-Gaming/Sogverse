@@ -31,6 +31,11 @@
       "antiBullying": "Anti-Bullying and Discipline"
     }
   },
+  "notFound": {
+    "title": "Hot lulaHbe'",
+    "description": "Hot Danejbogh tu'lu'be' ngoDHom, ghap vargh.",
+    "home": "juH DaqDaq chegh"
+  },
   "common": {
     "appName": "Sogverse",
     "tagline": "noH Quj yejHaD",
@@ -1278,13 +1283,17 @@
     },
     "status": {
       "available": "ghomHommey tu'lu'",
-      "comingSoon": "pagh naDev"
+      "noClubs": "ghomHom pagh"
     },
     "waitlistNote": "puS Daqmey, 'ej motlh loSwI'mey ghaj ghomHommey. puqlIj mev chugh, yILIjHa' bIH, vaj latlh pelaajavaD Daq nob.",
     "notListed": {
       "title": "venglIj Daleghbe''a'?",
       "body": "veng tlhej kuntakerhomey chenmoH, 'ej reH chu' wIchel. DaH muvbe' venglIj chugh, maHvaD yIja':",
       "openClubs": "Hoch lumuvlaH ghomHommaj 'op je; nuqDaq yIn pelaaja 'e' qelbe'."
+    },
+    "municipality": {
+      "heading": "{name} ghomHommey",
+      "subheading": "{name} ghomHommey: Hoch hogh Quj, chen 'ej chenmoH pelaajalI', chu' juppu' 'ej Gedu pIn'a' tlhej."
     }
   },
   "productBrowse": {
@@ -1301,6 +1310,7 @@
       "typeClubs": "ghom'a'mey",
       "typeCamps": "raghmey",
       "topic": "Quj",
+      "subject": "qech",
       "format": "rurmeH",
       "formatOnline": "QumDaq",
       "formatInPerson": "Daqvam",
@@ -1318,6 +1328,7 @@
       "externalContract": "yejquv DIl",
       "notAvailableInCurrency": "{currency} ghajbe'",
       "seatsCapacity": "{count, plural, one {# quS} other {# quS}}",
+      "seatsFilled": "{filled} / {total} quS",
       "waitlistAvailable": "loS tetlh tu'lu'",
       "endedBadge": "rIn",
       "endedNote": "rInpu' – veb yIloS.",

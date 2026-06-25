@@ -14,7 +14,10 @@ import {
   useProductSeatCountsRealtime,
 } from "@/services/participations";
 import { deriveRegistrationState } from "./derive-registration-state";
-import { ProductDetailPageBody } from "./product-detail-page-body";
+import {
+  ProductDetailPageBody,
+  type MunicipalityBackLink,
+} from "./product-detail-page-body";
 import type { AuthState } from "./signup-panel-view";
 
 // Route-level adapter: fetches the product, resolves the auth state
@@ -25,9 +28,18 @@ import type { AuthState } from "./signup-panel-view";
 
 interface ProductDetailPageProps {
   productId: string;
+  /**
+   * Present when this detail page was opened from a `/schools/<slug>` listing
+   * (the `/schools/<slug>/[id]` route). Redirects the back link to that
+   * municipality instead of the storefront. Omitted on `/shop/[id]`.
+   */
+  municipality?: MunicipalityBackLink;
 }
 
-export function ProductDetailPage({ productId }: ProductDetailPageProps) {
+export function ProductDetailPage({
+  productId,
+  municipality,
+}: ProductDetailPageProps) {
   const pathname = usePathname();
   const redirectParam = `?redirect=${encodeURIComponent(pathname)}`;
 
@@ -119,6 +131,7 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
       product={product}
       state={state}
       authState={authState}
+      municipality={municipality}
     />
   );
 }

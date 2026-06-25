@@ -1061,6 +1061,26 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       state: { kind: "ended" },
     },
   },
+  {
+    // Municipality club: seat-fill bar replaces the price (externally funded),
+    // and the location reads generic "Online" on its single-municipality page.
+    label: "Municipality club · seat bar",
+    props: {
+      name: "Tapiola Minecraft Club",
+      description:
+        "Weekly in-school sessions funded by the municipality — free for families to register.",
+      imagePath: null,
+      topicLabel: "Minecraft",
+      scheduleLines: ["Thursday · 15:00–16:30 (EET)"],
+      ageLine: "Ages 10–12",
+      seatsHint: { kind: "capacity", count: 15 },
+      locationLine: { kind: "online", label: "Online" },
+      spokenLanguageCode: "fi",
+      price: { kind: "external" },
+      seatBar: { filled: 11, total: 15 },
+      state: { kind: "open", seatCount: 15, seatsLeft: 4, waitlistEnabled: false },
+    },
+  },
 ];
 
 // Caption above each card in the demo grid. Uses the same uppercase

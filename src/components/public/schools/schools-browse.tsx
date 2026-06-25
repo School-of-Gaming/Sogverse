@@ -211,28 +211,44 @@ function MunicipalityRow({
   // both would be redundant noise there.
   searchView?: boolean;
 }) {
+  const inner = (
+    <>
+      <span className="flex min-w-0 items-center gap-2.5">
+        <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className="min-w-0">
+          <span className="block truncate font-medium">{entry.name}</span>
+          {searchView && entry.regionName && (
+            <span className="block truncate text-sm text-muted-foreground">
+              {entry.regionName}
+            </span>
+          )}
+        </span>
+      </span>
+      {searchView && <StatusPill hasClubs={entry.hasClubs} t={t} />}
+    </>
+  );
+
+  // A municipality with no clubs has nothing to browse — its page would only
+  // show the empty state — so the row isn't a link. Muted and non-interactive;
+  // the status pill carries the "nothing here" meaning. (Only reachable in the
+  // search view; the default view lists active municipalities only.)
+  if (!entry.hasClubs) {
+    return (
+      <li>
+        <div className="flex items-center justify-between gap-3 rounded-md border border-input bg-card px-4 py-3 text-muted-foreground">
+          {inner}
+        </div>
+      </li>
+    );
+  }
+
   return (
     <li>
       <Link
         href={ROUTES.schoolMunicipality(entry.slug)}
-        // The per-municipality page is out of scope for now. Keep the real href
-        // (correct the moment it ships) but don't navigate to a 404 yet — drop
-        // this handler once /schools/[slug] exists.
-        onClick={(e) => e.preventDefault()}
         className="flex items-center justify-between gap-3 rounded-md border border-input bg-card px-4 py-3 transition-colors hover:bg-accent"
       >
-        <span className="flex min-w-0 items-center gap-2.5">
-          <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span className="min-w-0">
-            <span className="block truncate font-medium">{entry.name}</span>
-            {searchView && entry.regionName && (
-              <span className="block truncate text-sm text-muted-foreground">
-                {entry.regionName}
-              </span>
-            )}
-          </span>
-        </span>
-        {searchView && <StatusPill hasClubs={entry.hasClubs} t={t} />}
+        {inner}
       </Link>
     </li>
   );
@@ -248,7 +264,7 @@ function StatusPill({ hasClubs, t }: { hasClubs: boolean; t: Translate }) {
           : "bg-muted text-muted-foreground",
       )}
     >
-      {hasClubs ? t("status.available") : t("status.comingSoon")}
+      {hasClubs ? t("status.available") : t("status.noClubs")}
     </span>
   );
 }

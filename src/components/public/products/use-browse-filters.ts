@@ -146,12 +146,17 @@ export function useBrowseFilters() {
     [pathname, searchParams],
   );
 
-  const toggleTopic = useCallback(
-    (slug: string) => {
-      const lower = slug.toLowerCase();
-      const next = topics.includes(lower)
-        ? topics.filter((t) => t !== lower)
-        : [...topics, lower];
+  // Toggle a group of topics as one unit. Most chips carry a single topic; the
+  // municipality page's "Minecraft" chip stands for all three editions. Active
+  // when *every* topic in the group is selected; toggling on adds the whole
+  // group (deduped), toggling off removes it.
+  const toggleTopics = useCallback(
+    (group: readonly string[]) => {
+      const lowers = group.map((g) => g.toLowerCase());
+      const allActive = lowers.every((l) => topics.includes(l));
+      const next = allActive
+        ? topics.filter((t) => !lowers.includes(t))
+        : [...new Set([...topics, ...lowers])];
       writeNext({ topics: next });
     },
     [topics, writeNext],
@@ -204,7 +209,7 @@ export function useBrowseFilters() {
     days,
     hasAny,
     hasNonDayFilters,
-    toggleTopic,
+    toggleTopics,
     toggleFormat,
     toggleLanguage,
     setAge,

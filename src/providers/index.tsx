@@ -7,7 +7,6 @@ import { AuthProvider } from "./auth-provider";
 import { LocaleProvider } from "./locale-provider";
 import { TimezoneProvider } from "./timezone-provider";
 import { NowProvider } from "./now-provider";
-import { ThemeProvider } from "./theme-provider";
 import type { AuthenticatedUser, Profile } from "@/types";
 import { DEFAULT_TIMEZONE } from "@/lib/constants/locales";
 
@@ -29,7 +28,6 @@ interface ProvidersProps {
    */
   initialNow: Date;
   messages: Record<string, unknown>;
-  nonce?: string;
 }
 
 export function Providers({
@@ -40,33 +38,29 @@ export function Providers({
   initialTimezone,
   initialNow,
   messages,
-  nonce,
 }: ProvidersProps) {
   return (
-    <ThemeProvider nonce={nonce}>
-      <QueryProvider>
-        <AuthProvider initialUser={initialUser} initialProfile={initialProfile}>
-          {/* `NextIntlClientProvider` keeps `DEFAULT_TIMEZONE` for now — once
-              enough call sites consume `useTimezone()` directly, flip this
-              to the viewer's actual zone. Tracked in TODO.md. */}
-          <NextIntlClientProvider locale={initialLocale} messages={messages} timeZone={DEFAULT_TIMEZONE}>
-            <LocaleProvider>
-              <TimezoneProvider initialTimezone={initialTimezone}>
-                <NowProvider initialNow={initialNow}>
-                  {children}
-                </NowProvider>
-              </TimezoneProvider>
-            </LocaleProvider>
-          </NextIntlClientProvider>
-        </AuthProvider>
-      </QueryProvider>
-    </ThemeProvider>
+    <QueryProvider>
+      <AuthProvider initialUser={initialUser} initialProfile={initialProfile}>
+        {/* `NextIntlClientProvider` keeps `DEFAULT_TIMEZONE` for now — once
+            enough call sites consume `useTimezone()` directly, flip this
+            to the viewer's actual zone. Tracked in TODO.md. */}
+        <NextIntlClientProvider locale={initialLocale} messages={messages} timeZone={DEFAULT_TIMEZONE}>
+          <LocaleProvider>
+            <TimezoneProvider initialTimezone={initialTimezone}>
+              <NowProvider initialNow={initialNow}>
+                {children}
+              </NowProvider>
+            </TimezoneProvider>
+          </LocaleProvider>
+        </NextIntlClientProvider>
+      </AuthProvider>
+    </QueryProvider>
   );
 }
 
 export { useAuth, useRequiredAuth } from "./auth-provider";
 export { QueryProvider } from "./query-provider";
-export { ThemeProvider } from "./theme-provider";
 export { AuthProvider } from "./auth-provider";
 export { LocaleProvider, useLocaleControl } from "./locale-provider";
 export { TimezoneProvider, useTimezone } from "./timezone-provider";

@@ -31,6 +31,11 @@
       "antiBullying": "Mot mobbning och disciplin"
     }
   },
+  "notFound": {
+    "title": "Sidan hittades inte",
+    "description": "Sidan du letar efter finns inte eller kan ha flyttats.",
+    "home": "Tillbaka till startsidan"
+  },
   "common": {
     "appName": "Sogverse",
     "tagline": "School of Gaming",
@@ -1233,13 +1238,17 @@
     },
     "status": {
       "available": "Klubbar tillgängliga",
-      "comingSoon": "Inget här ännu"
+      "noClubs": "Inga klubbar här"
     },
     "waitlistNote": "Platserna är begränsade och klubbarna har ofta en väntelista. Om ditt barn slutar, kom ihåg att avboka anmälan så att platsen kan erbjudas nästa spelare.",
     "notListed": {
       "title": "Hittar du inte din kommun?",
       "body": "Kommunklubbar ordnas tillsammans med varje kommun, och vi lägger till nya hela tiden. Om din kommun inte är med ännu, berätta för oss:",
       "openClubs": "Vi har också klubbar som är öppna för alla, som en spelare kan gå med i oavsett var hen bor."
+    },
+    "municipality": {
+      "heading": "Klubbar från {name}",
+      "subheading": "Veckovisa klubbar som {name} erbjuder, där din spelare spelar, bygger och skapar med nya vänner och en Gedu som verkligen fattar."
     }
   },
   "productBrowse": {
@@ -1256,6 +1265,7 @@
       "typeClubs": "Klubbar",
       "typeCamps": "Läger",
       "topic": "Spel",
+      "subject": "Ämne",
       "format": "Format",
       "formatOnline": "Online",
       "formatInPerson": "På plats",
@@ -1273,6 +1283,7 @@
       "externalContract": "Finansieras av din kommun",
       "notAvailableInCurrency": "Inte i {currency}",
       "seatsCapacity": "{count, plural, one {# plats} other {# platser}}",
+      "seatsFilled": "{filled} / {total} platser",
       "waitlistAvailable": "Väntelista finns",
       "endedBadge": "Avslutad",
       "endedNote": "Den här är slut — håll utkik efter nästa.",
