@@ -7,7 +7,7 @@ import {
   GAME_TOPIC_CHIPS,
   type TopicFilterChip,
 } from "@/lib/products/topics";
-import { productAgeOptions } from "@/lib/constants/gamer-age";
+import { PRODUCT_AGE_BANDS } from "@/lib/constants/gamer-age";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { useSpokenLanguages } from "@/services/users";
 import type { SpokenLanguage } from "@/types";
@@ -88,7 +88,6 @@ export function ProductBrowseFilters({
   } = useBrowseFilters();
 
   const hasLanguageRow = (spokenLanguages?.length ?? 0) > 0;
-  const ageOptions = productAgeOptions();
 
   // The Days row only applies to clubs (`daysFilter`, from the host's
   // `supportsDays`). A `?days=` carried over from Clubs lingers in the URL on
@@ -187,22 +186,25 @@ export function ProductBrowseFilters({
           </FilterRow>
         )}
 
-        {/* Age is single-valued (a gamer has one age) — like the Format row,
-            tapping the active chip clears it back to "any age". The chips span
-            the product age band from @/lib/constants/gamer-age, the same source
-            the Add Gamer enrollment window derives from. */}
+        {/* Age is single-valued — like the Format row, tapping the active chip
+            clears it back to "any age". The chips are the coarse age bands from
+            @/lib/constants/gamer-age (PRODUCT_AGE_BANDS); a band matches any
+            product whose age range overlaps it. */}
         <FilterRow label={t("age")}>
-          {ageOptions.map((a) => (
-            <Chip
-              key={a}
-              // Fixed min-width + centered tabular digits so single-digit ages
-              // (7–9) match the width of the two-digit ones (10–17).
-              className="min-w-[2.5rem] justify-center tabular-nums"
-              label={String(a)}
-              active={selectedAge === a}
-              onToggle={() => setAge(selectedAge === a ? null : a)}
-            />
-          ))}
+          {PRODUCT_AGE_BANDS.map((band) => {
+            const active =
+              selectedAge?.min === band.min && selectedAge.max === band.max;
+            return (
+              <Chip
+                key={`${band.min}-${band.max}`}
+                // Centered tabular digits so the band labels line up evenly.
+                className="justify-center tabular-nums"
+                label={`${band.min}–${band.max}`}
+                active={active}
+                onToggle={() => setAge(active ? null : band)}
+              />
+            );
+          })}
         </FilterRow>
 
         {/* Days is a Clubs-only filter: clubs meet on a recurring weekly

@@ -3,10 +3,7 @@
 import { useCallback, useMemo } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
-import {
-  MIN_PRODUCT_AGE,
-  MAX_PRODUCT_AGE,
-} from "@/lib/constants/gamer-age";
+import { findAgeBand, type AgeBand } from "@/lib/constants/gamer-age";
 import type { ProductFormat } from "./filter-products";
 
 const TOPIC_PARAM = "topic";
@@ -42,16 +39,16 @@ function parseFormat(raw: string | null): ProductFormat | null {
   return null;
 }
 
-// A single gamer age, clamped to the product age band. Anything out of range
-// or unparseable reads as "any age" (null) so a hand-edited URL can't surface
-// an option the filter never offered.
-function parseAge(raw: string | null): number | null {
+// A selected age band, encoded as "min-max" (e.g. "7-9"). Only a value matching
+// one of the offered bands resolves; anything else reads as "any age" (null) so
+// a hand-edited URL can't surface a band the filter never offered.
+function parseAge(raw: string | null): AgeBand | null {
   if (!raw) return null;
-  const n = Number(raw);
-  if (!Number.isInteger(n) || n < MIN_PRODUCT_AGE || n > MAX_PRODUCT_AGE) {
-    return null;
-  }
-  return n;
+  const [minRaw, maxRaw] = raw.split("-");
+  const min = Number(minRaw);
+  const max = Number(maxRaw);
+  if (!Number.isInteger(min) || !Number.isInteger(max)) return null;
+  return findAgeBand(min, max);
 }
 
 // URL-state hook for the topic + tag + format chip filters.
@@ -105,7 +102,7 @@ export function useBrowseFilters() {
       topics?: string[];
       format?: ProductFormat | null;
       languages?: string[];
-      age?: number | null;
+      age?: AgeBand | null;
       days?: number[];
     }) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -123,7 +120,7 @@ export function useBrowseFilters() {
       }
       if (next.age !== undefined) {
         if (next.age === null) params.delete(AGE_PARAM);
-        else params.set(AGE_PARAM, String(next.age));
+        else params.set(AGE_PARAM, `${next.age.min}-${next.age.max}`);
       }
       if (next.days !== undefined) {
         if (next.days.length === 0) params.delete(DAYS_PARAM);
@@ -181,7 +178,7 @@ export function useBrowseFilters() {
   );
 
   const setAge = useCallback(
-    (value: number | null) => {
+    (value: AgeBand | null) => {
       writeNext({ age: value });
     },
     [writeNext],
