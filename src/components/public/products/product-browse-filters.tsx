@@ -3,11 +3,14 @@
 import { useLocale, useTranslations } from "next-intl";
 import { Sliders, X, Globe, MapPin } from "lucide-react";
 import { LanguageFlag } from "@/components/ui/language-flag";
-import { GAME_TOPICS } from "@/lib/products/topics";
+import {
+  GAME_TOPIC_CHIPS,
+  type TopicFilterChip,
+} from "@/lib/products/topics";
 import { productAgeOptions } from "@/lib/constants/gamer-age";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { useSpokenLanguages } from "@/services/users";
-import type { ProductTopic, SpokenLanguage } from "@/types";
+import type { SpokenLanguage } from "@/types";
 import { cn } from "@/lib/utils";
 import { productTypeSupportsDayFilter } from "./filter-products";
 import { formatWeekday } from "./format-product-schedule";
@@ -40,10 +43,10 @@ interface ProductBrowseFiltersProps {
   /** Lead with the Clubs|Camps Type row. The shop does; the per-municipality
    *  page hides it (everything there is a club). Default true. */
   showTypeFilter?: boolean;
-  /** Topic chips to offer. The shop shows only games (`GAME_TOPICS`, the
-   *  default); the municipality page shows every topic — games, coding, game
-   *  design — via `PRODUCT_TOPIC_VALUES`. */
-  topicChoices?: readonly ProductTopic[];
+  /** Topic chips to offer. The shop shows one chip per game (`GAME_TOPIC_CHIPS`,
+   *  the default); the municipality page passes a broader subject set with the
+   *  Minecraft editions collapsed into one chip (`MUNICIPALITY_TOPIC_CHIPS`). */
+  topicChoices?: readonly TopicFilterChip[];
   /** Which `productBrowse.filters` key labels the topic row: `"topic"`
    *  ("Game", shop default) or `"subject"` ("Subject", municipality page). */
   topicLabelKey?: "topic" | "subject";
@@ -56,7 +59,7 @@ interface ProductBrowseFiltersProps {
 export function ProductBrowseFilters({
   initialSpokenLanguages,
   showTypeFilter = true,
-  topicChoices = GAME_TOPICS,
+  topicChoices = GAME_TOPIC_CHIPS,
   topicLabelKey = "topic",
   daysFilter,
 }: ProductBrowseFiltersProps) {
@@ -78,7 +81,7 @@ export function ProductBrowseFilters({
     age: selectedAge,
     days: selectedDays,
     hasNonDayFilters,
-    toggleTopic,
+    toggleTopics,
     toggleFormat,
     toggleLanguage,
     setAge,
@@ -141,12 +144,15 @@ export function ProductBrowseFilters({
         )}
 
         <FilterRow label={t(topicLabelKey)}>
-          {topicChoices.map((topic) => (
+          {topicChoices.map((chip) => (
             <Chip
-              key={topic}
-              label={topicLabel(topic)}
-              active={selectedTopics.includes(topic)}
-              onToggle={() => toggleTopic(topic)}
+              key={chip.key}
+              // A multi-topic group (Minecraft) carries a literal brand label;
+              // a single-topic chip resolves its label from the topic so
+              // localized subjects stay translated.
+              label={chip.label ?? topicLabel(chip.topics[0])}
+              active={chip.topics.every((tp) => selectedTopics.includes(tp))}
+              onToggle={() => toggleTopics(chip.topics)}
             />
           ))}
           {/* TODO: Re-introduce subject topics (e.g. Webinar) here when we

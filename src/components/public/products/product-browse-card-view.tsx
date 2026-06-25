@@ -49,10 +49,20 @@ export interface ProductBrowseCardViewProps {
    */
   spokenLanguageCode: string;
   price: ProductPriceLine;
+  /**
+   * Municipality clubs are externally funded, so their footer shows a
+   * seat-fill bar instead of a price. Provide this (even with `total: null`)
+   * for a muni club to replace the price block; a `null` total — a muni club
+   * whose seat count isn't set yet — leaves the footer-left empty. Omit
+   * entirely for priced products (the shop), which keep the price block.
+   */
+  seatBar?: SeatBarValue;
   state: RegistrationState;
   /** Detail-page URL. The card's CTA + the whole card surface link here. */
   detailHref?: string;
 }
+
+export type SeatBarValue = { filled: number; total: number | null };
 
 export type LocationLine = {
   kind: "in_person" | "online" | "online_muni";
@@ -74,6 +84,7 @@ export function ProductBrowseCardView({
   locationLine,
   spokenLanguageCode,
   price,
+  seatBar,
   state,
   detailHref,
 }: ProductBrowseCardViewProps) {
@@ -158,8 +169,15 @@ export function ProductBrowseCardView({
               {t("endedNote")}
             </p>
           ) : (
-            <div className="flex items-end justify-between gap-2">
-              <PriceBlock price={price} />
+            <div className="flex items-end justify-between gap-6">
+              {/* Muni clubs swap the price for a seat-fill bar; everything else
+                  keeps the price. `seatBar` present (even with a null total) is
+                  the muni signal. */}
+              {seatBar !== undefined ? (
+                <SeatBar value={seatBar} />
+              ) : (
+                <PriceBlock price={price} />
+              )}
               {cta &&
                 (cta.kind === "primary" && detailHref ? (
                   <Link
@@ -183,6 +201,44 @@ export function ProductBrowseCardView({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+// Seat-fill bar shown in a municipality club's footer in place of a price.
+// Empty bar at 0 seats taken, fully filled at capacity. A muni club with no
+// seat count set yet renders nothing here (the business needs a count, but the
+// data contract doesn't enforce one) — the footer-left simply stays empty.
+function SeatBar({ value }: { value: SeatBarValue }) {
+  const t = useTranslations("productBrowse.card");
+  if (value.total === null) return null;
+
+  // Clamp so an over-count from in-flight reservations can't overflow the bar.
+  const pct =
+    value.total > 0
+      ? Math.min(100, Math.round((value.filled / value.total) * 100))
+      : 0;
+
+  return (
+    <div className="min-w-0 flex-1 space-y-1">
+      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+        <Users className="h-3 w-3 shrink-0" aria-hidden />
+        <span className="tabular-nums">
+          {t("seatsFilled", { filled: value.filled, total: value.total })}
+        </span>
+      </div>
+      <div
+        className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+        role="progressbar"
+        aria-valuenow={value.filled}
+        aria-valuemin={0}
+        aria-valuemax={value.total}
+      >
+        <div
+          className="h-full rounded-full bg-primary"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
   );
 }
 

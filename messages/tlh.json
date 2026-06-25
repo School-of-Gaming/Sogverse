@@ -31,6 +31,11 @@
       "antiBullying": "Anti-Bullying and Discipline"
     }
   },
+  "notFound": {
+    "title": "Hot lulaHbe'",
+    "description": "Hot Danejbogh tu'lu'be' ngoDHom, ghap vargh.",
+    "home": "juH DaqDaq chegh"
+  },
   "common": {
     "appName": "Sogverse",
     "tagline": "noH Quj yejHaD",
@@ -1288,12 +1293,7 @@
     },
     "municipality": {
       "heading": "{name} ghomHommey",
-      "subheading": "{name} ghomHommey: Hoch hogh Quj, chen 'ej chenmoH pelaajalI', chu' juppu' 'ej Gedu pIn'a' tlhej.",
-      "empty": {
-        "title": "DaH {name} ghomHom pagh",
-        "body": "DaH {name}vaD School of Gaming ghomHommey wIchenmoHbe'. maHvaD DaneH'a'? veng tlhej ghomHommey wIchenmoH – maHvaD yIja':",
-        "openClubs": "Hoch lumuvlaH ghomHommaj 'op je; nuqDaq bIyIn 'e' qelbe'."
-      }
+      "subheading": "{name} ghomHommey: Hoch hogh Quj, chen 'ej chenmoH pelaajalI', chu' juppu' 'ej Gedu pIn'a' tlhej."
     }
   },
   "productBrowse": {
@@ -1328,6 +1328,7 @@
       "externalContract": "yejquv DIl",
       "notAvailableInCurrency": "{currency} ghajbe'",
       "seatsCapacity": "{count, plural, one {# quS} other {# quS}}",
+      "seatsFilled": "{filled} / {total} quS",
       "waitlistAvailable": "loS tetlh tu'lu'",
       "endedBadge": "rIn",
       "endedNote": "rInpu' – veb yIloS.",

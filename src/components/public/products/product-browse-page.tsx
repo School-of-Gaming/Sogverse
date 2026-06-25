@@ -88,13 +88,6 @@ export function ProductBrowsePage({
   const { data: counts } = useParticipationCounts(productIds, {
     initialData: initialCounts,
   });
-  const countsByProduct = useMemo(() => {
-    const map = new Map<string, ParticipationCounts>();
-    for (const c of counts ?? []) {
-      map.set(c.productId, c);
-    }
-    return map;
-  }, [counts]);
 
   // The Type filter is just a client-side narrowing of the all-types fetch to
   // the selected browseType. The chip filters apply on top inside
@@ -124,7 +117,7 @@ export function ProductBrowsePage({
       <div className="mx-auto mt-8 max-w-6xl">
         <ProductBrowseResults
           products={typeProducts}
-          countsByProduct={countsByProduct}
+          counts={counts ?? []}
           supportsDays={supportsDays}
           filters={{ initialSpokenLanguages }}
         />

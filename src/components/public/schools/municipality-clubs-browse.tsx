@@ -1,12 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
-import { MUNICIPALITY_BROWSE_TOPICS } from "@/lib/products/topics";
+import { ROUTES } from "@/lib/constants";
+import { MUNICIPALITY_TOPIC_CHIPS } from "@/lib/products/topics";
 import { useVisibleProductsByTypes } from "@/services/products";
 import {
   useParticipationCounts,
@@ -21,6 +18,11 @@ import { ProductBrowseResults } from "@/components/public/products/product-brows
 // municipality club) and with the topic row generalised from games to every
 // subject — coding and game design included.
 //
+// The page only renders for a municipality that runs clubs — the route 404s
+// otherwise (see `[municipalityName]/page.tsx`) — so there's no bespoke empty
+// state here; a transient client refetch returning nothing falls back to
+// <ProductBrowseResults>'s generic empty card.
+//
 // `initialProducts` is *every* visible municipality club (the same set the
 // /schools page fetches), so it seeds React Query's `["municipality_club"]`
 // cache exactly and the client refetch is flicker-free. We narrow to this
@@ -31,7 +33,7 @@ interface MunicipalityClubsBrowseProps {
   /** The slug the user is on (the URL param), used to build child detail-page
    *  URLs so they stay in this municipality's namespace. */
   municipalitySlug: string;
-  /** Display name in the viewer's locale, for the heading + empty-state copy. */
+  /** Display name in the viewer's locale, for the heading copy. */
   municipalityName: string;
   /** Every visible municipality club (server-prefetched), not just this one's. */
   initialProducts: ProductBrowseRow[];
@@ -62,13 +64,6 @@ export function MunicipalityClubsBrowse({
   const { data: counts } = useParticipationCounts(productIds, {
     initialData: initialCounts,
   });
-  const countsByProduct = useMemo(() => {
-    const map = new Map<string, ParticipationCounts>();
-    for (const c of counts ?? []) {
-      map.set(c.productId, c);
-    }
-    return map;
-  }, [counts]);
 
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
@@ -82,55 +77,23 @@ export function MunicipalityClubsBrowse({
       </header>
 
       <div className="mx-auto mt-8 max-w-6xl">
-        {clubs.length === 0 ? (
-          <MunicipalityEmptyState name={municipalityName} />
-        ) : (
-          <ProductBrowseResults
-            products={clubs}
-            countsByProduct={countsByProduct}
-            supportsDays
-            filters={{
-              initialSpokenLanguages,
-              showTypeFilter: false,
-              topicChoices: MUNICIPALITY_BROWSE_TOPICS,
-              topicLabelKey: "subject",
-              daysFilter: true,
-            }}
-            productHref={(id) =>
-              ROUTES.schoolMunicipalityProduct(municipalitySlug, id)
-            }
-          />
-        )}
+        <ProductBrowseResults
+          products={clubs}
+          counts={counts ?? []}
+          supportsDays
+          filters={{
+            initialSpokenLanguages,
+            showTypeFilter: false,
+            topicChoices: MUNICIPALITY_TOPIC_CHIPS,
+            topicLabelKey: "subject",
+            daysFilter: true,
+          }}
+          productHref={(id) =>
+            ROUTES.schoolMunicipalityProduct(municipalitySlug, id)
+          }
+          municipalityScoped
+        />
       </div>
     </div>
-  );
-}
-
-// Reached when a parent direct-links to a municipality we don't run clubs in
-// yet (the /schools list keeps those rows non-clickable). No "coming soon"
-// promise — we don't know if or when — just an honest nudge to ask for it,
-// plus a route to the clubs anyone can join from home.
-function MunicipalityEmptyState({ name }: { name: string }) {
-  const t = useTranslations("schools.municipality.empty");
-  const c = useTranslations("common");
-  return (
-    <Card>
-      <CardContent className="mx-auto max-w-prose space-y-4 py-12 text-center">
-        <p className="text-base font-semibold">{t("title", { name })}</p>
-        <p className="text-sm text-muted-foreground">
-          {t("body", { name })}{" "}
-          <a
-            href={`mailto:${SUPPORT_EMAIL}`}
-            className="font-medium text-primary hover:underline"
-          >
-            {SUPPORT_EMAIL}
-          </a>
-        </p>
-        <p className="text-sm text-muted-foreground">{t("openClubs")}</p>
-        <Link href={ROUTES.shop} className={buttonVariants({ size: "sm" })}>
-          {c("exploreClubs")}
-        </Link>
-      </CardContent>
-    </Card>
   );
 }

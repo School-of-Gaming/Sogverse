@@ -150,10 +150,49 @@ export const GAME_TOPICS: readonly ProductTopic[] =
 export const SUBJECT_TOPICS: readonly ProductTopic[] =
   PRODUCT_TOPIC_VALUES.filter((t) => !isGameTopic(t));
 
-// Topic chips shown under the "Subject" filter on the per-municipality schools
-// page (`/schools/<slug>`). Every topic except `webinar` — webinars aren't part
-// of that catalogue. Unlike the shop's games-only `GAME_TOPICS`, this is defined
-// by exclusion, so future non-game topics (e.g. coding, game design) surface
-// here automatically as they're added to the enum.
+// Topics shown under the "Subject" filter on the per-municipality schools page
+// (`/schools/<slug>`). Every topic except `webinar` — webinars aren't part of
+// that catalogue. Unlike the shop's games-only `GAME_TOPICS`, this is defined by
+// exclusion, so future non-game topics (e.g. coding, game design) surface here
+// automatically as they're added to the enum.
 export const MUNICIPALITY_BROWSE_TOPICS: readonly ProductTopic[] =
   PRODUCT_TOPIC_VALUES.filter((t) => t !== "webinar");
+
+// A topic filter chip groups one or more product topics behind a single chip.
+// Most chips are 1:1 with a topic; the municipality page collapses the Minecraft
+// editions (Java/Education/Bedrock) into one "Minecraft" chip, since a parent
+// browsing clubs doesn't pick which edition powers one. A chip selects all its
+// topics together (OR-ed in `filterProducts`).
+export interface TopicFilterChip {
+  /** Stable key for the React list and the URL-membership check. */
+  key: string;
+  /** The topic enum values this chip selects together. */
+  topics: readonly ProductTopic[];
+  /** Literal brand label for a multi-topic group (e.g. "Minecraft"). A
+   *  single-topic chip omits this and resolves its label from the topic via
+   *  `useTopicLabel`, so localized subjects (Webinar) stay translated. */
+  label?: string;
+}
+
+// Shop topic chips: one per game, each label resolved per-topic.
+export const GAME_TOPIC_CHIPS: readonly TopicFilterChip[] = GAME_TOPICS.map(
+  (t) => ({ key: t, topics: [t] }),
+);
+
+// The Minecraft editions, collapsed behind the municipality page's one
+// "Minecraft" chip. Listed explicitly (rather than matched on a name prefix) so
+// adding a new edition is a deliberate choice, not a silent inclusion.
+const MINECRAFT_TOPICS: readonly ProductTopic[] = [
+  "minecraft_java",
+  "minecraft_education",
+  "minecraft_bedrock",
+];
+
+// Municipality topic chips: the Minecraft editions as one "Minecraft" chip,
+// then every remaining browseable topic (Fortnite, future subjects) on its own.
+export const MUNICIPALITY_TOPIC_CHIPS: readonly TopicFilterChip[] = [
+  { key: "minecraft", topics: MINECRAFT_TOPICS, label: "Minecraft" },
+  ...MUNICIPALITY_BROWSE_TOPICS.filter(
+    (t) => !MINECRAFT_TOPICS.includes(t),
+  ).map((t) => ({ key: t, topics: [t] })),
+];

@@ -20,6 +20,7 @@ import {
   ProductBrowseCardView,
   type LocationLine,
   type SeatsHint,
+  type SeatBarValue,
 } from "./product-browse-card-view";
 
 interface ProductBrowseCardProps {
@@ -36,6 +37,13 @@ interface ProductBrowseCardProps {
    * and the detail page it opens, stay in that municipality's URL namespace.
    */
   detailHref?: string;
+  /**
+   * True when rendered on a single-municipality page, where the municipality is
+   * already named in the page header. An online muni club then drops its
+   * (redundant) municipality name and shows the generic "Online" label, like
+   * any other online product.
+   */
+  municipalityScoped?: boolean;
 }
 
 // Adapter: resolves a `ProductBrowseRow` into the display props
@@ -47,6 +55,7 @@ export function ProductBrowseCard({
   product,
   counts,
   detailHref,
+  municipalityScoped = false,
 }: ProductBrowseCardProps) {
   const t = useTranslations("productBrowse.card");
   const uiLocale = resolveLocale(useLocale());
@@ -82,14 +91,32 @@ export function ProductBrowseCard({
 
   const scheduleLines = scheduleCardLines(schedule);
 
-  const seatsHint: SeatsHint | null =
-    product.seat_count !== null
+  const isMuniClub = product.product_type === "municipality_club";
+
+  // Muni clubs tell the whole seat story through the footer bar ("11 / 15
+  // seats"), so the meta-row capacity hint would just repeat it — suppress it
+  // there. Other products keep the capacity / waitlist hint.
+  const seatsHint: SeatsHint | null = isMuniClub
+    ? null
+    : product.seat_count !== null
       ? { kind: "capacity", count: product.seat_count }
       : product.waitlist_enabled
         ? { kind: "waitlist" }
         : null;
 
-  const locationLine = resolveLocationLine(product, t("online"), uiLocale);
+  // Muni clubs are externally funded — show a seat-fill bar in the footer
+  // instead of a price. `total: null` (no seat count set yet) leaves the
+  // footer-left empty; non-muni products get no bar and keep their price.
+  const seatBar: SeatBarValue | undefined = isMuniClub
+    ? { filled: participationsCount, total: product.seat_count }
+    : undefined;
+
+  const locationLine = resolveLocationLine(
+    product,
+    t("online"),
+    uiLocale,
+    municipalityScoped,
+  );
 
   return (
     <ProductBrowseCardView
@@ -103,6 +130,7 @@ export function ProductBrowseCard({
       locationLine={locationLine}
       spokenLanguageCode={product.spoken_language_code}
       price={price}
+      seatBar={seatBar}
       state={state}
       detailHref={detailHref ?? ROUTES.shopProduct(product.id)}
     />
@@ -114,16 +142,22 @@ export function ProductBrowseCard({
 // online non-muni products. The online row shows even though it's
 // content-light — the parallel structure keeps every card visually
 // stable across formats so the eye lands on the same meta line.
+//
+// `municipalityScoped` collapses an online muni club's city name to the generic
+// "Online" label: on a single-municipality page the name is already in the page
+// header, so repeating it on every card is noise.
 function resolveLocationLine(
   product: ProductBrowseRow,
   onlineLabel: string,
   locale: string,
+  municipalityScoped: boolean,
 ): LocationLine {
   const loc = formatProductLocation(product, locale);
   if (!loc) return { kind: "online", label: onlineLabel };
   if (loc.kind === "site") {
     return { kind: "in_person", label: loc.site };
   }
+  if (municipalityScoped) return { kind: "online", label: onlineLabel };
   return { kind: "online_muni", label: loc.name };
 }
 

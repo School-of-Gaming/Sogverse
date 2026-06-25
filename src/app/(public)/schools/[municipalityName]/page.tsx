@@ -40,9 +40,12 @@ interface MunicipalityPageData {
  * `helsinki` and `helsingfors` land here), and narrow the clubs + their seat
  * counts to this municipality.
  *
- * Returns `null` when the slug matches no real Finnish municipality — the page
- * 404s on that. A genuine fetch error is deliberately *not* swallowed (unlike
- * the /schools list's empty fallback): turning a transient DB error into a 404
+ * Returns `null` — the page 404s — when the slug matches no real Finnish
+ * municipality *or* when that municipality runs no clubs. The /schools list
+ * only links municipalities that have clubs, so a clubless municipality page is
+ * reachable only by a hand-typed URL; we'd rather 404 than serve an empty
+ * shell. A genuine fetch error is deliberately *not* swallowed (unlike the
+ * /schools list's empty fallback): turning a transient DB error into a 404
  * would mislead, so we let it surface to the error boundary instead.
  *
  * `cache()` dedupes the two Supabase round-trips across `generateMetadata` and
@@ -67,6 +70,8 @@ const loadMunicipality = cache(
     const muniClubs = allClubs.filter(
       (c) => c.location_id === municipality.id,
     );
+    if (muniClubs.length === 0) return null;
+
     const [counts, spokenLanguages] = await Promise.all([
       new ParticipationsService(supabase).getParticipationCounts(
         muniClubs.map((c) => c.id),

@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, type ReactNode } from "react";
+import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import type { ParticipationCounts } from "@/services/participations";
-import type { ProductBrowseRow, ProductTopic, SpokenLanguage } from "@/types";
+import type { TopicFilterChip } from "@/lib/products/topics";
+import type { ProductBrowseRow, SpokenLanguage } from "@/types";
 import { filterProducts } from "./filter-products";
 import { useBrowseFilters } from "./use-browse-filters";
 import { ProductBrowseCard } from "./product-browse-card";
@@ -20,8 +21,9 @@ interface ProductBrowseResultsProps {
   /** Products already narrowed to this page's scope (a product type for the
    *  shop, a municipality for the schools page), before the chip filters run. */
   products: ProductBrowseRow[];
-  /** Seat counts keyed by product id, shared across the grid's cards. */
-  countsByProduct: Map<string, ParticipationCounts>;
+  /** Seat counts for `products` (any order). Built into a per-id map here so
+   *  both browse hosts hand this component the raw query result, not a map. */
+  counts: ParticipationCounts[];
   /** Whether the Days filter applies to this scope (passed to `filterProducts`
    *  and the filter strip). Clubs are recurring-weekly; camps are not. */
   supportsDays: boolean;
@@ -29,28 +31,36 @@ interface ProductBrowseResultsProps {
   filters: {
     initialSpokenLanguages: SpokenLanguage[];
     showTypeFilter?: boolean;
-    topicChoices?: readonly ProductTopic[];
+    topicChoices?: readonly TopicFilterChip[];
     topicLabelKey?: "topic" | "subject";
     daysFilter?: boolean;
   };
-  /** Shown when the scope holds no products at all (distinct from "filters too
-   *  narrow"). Omit to fall back to the generic no-matches card. */
-  emptyNoProducts?: ReactNode;
   /** Detail-page URL builder for each card. Defaults to the storefront
    *  `/shop/[id]`; the municipality page passes `/schools/<slug>/[id]`. */
   productHref?: (id: string) => string;
+  /** True on a single-municipality page — drops the redundant municipality name
+   *  from online muni cards (see `ProductBrowseCard`). */
+  municipalityScoped?: boolean;
 }
 
 export function ProductBrowseResults({
   products,
-  countsByProduct,
+  counts,
   supportsDays,
   filters,
-  emptyNoProducts,
   productHref,
+  municipalityScoped,
 }: ProductBrowseResultsProps) {
   const t = useTranslations("productBrowse");
   const { topics, format, languages, age, days } = useBrowseFilters();
+
+  const countsByProduct = useMemo(() => {
+    const map = new Map<string, ParticipationCounts>();
+    for (const c of counts) {
+      map.set(c.productId, c);
+    }
+    return map;
+  }, [counts]);
 
   // Days is a Clubs-only filter (recurring weekly schedule); drop a stale
   // `?days=` when this scope doesn't support it — see filter-products.ts.
@@ -78,11 +88,10 @@ export function ProductBrowseResults({
               product={p}
               counts={countsByProduct.get(p.id) ?? null}
               detailHref={productHref?.(p.id)}
+              municipalityScoped={municipalityScoped}
             />
           ))}
         </div>
-      ) : products.length === 0 && emptyNoProducts !== undefined ? (
-        emptyNoProducts
       ) : (
         <Card>
           <CardContent className="py-12 text-center text-sm text-muted-foreground">

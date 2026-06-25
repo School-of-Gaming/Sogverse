@@ -31,6 +31,11 @@
       "antiBullying": "Anti-Bullying and Discipline"
     }
   },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you're looking for doesn't exist or may have moved.",
+    "home": "Back to home"
+  },
   "common": {
     "appName": "Sogverse",
     "tagline": "School of Gaming",
@@ -1243,12 +1248,7 @@
     },
     "municipality": {
       "heading": "{name} Clubs",
-      "subheading": "Weekly clubs offered by {name}, where your gamer plays, builds, and creates with new friends and a Gedu who actually gets it.",
-      "empty": {
-        "title": "No {name} clubs right now",
-        "body": "{name} doesn't offer any School of Gaming clubs at the moment. Would you like it to? We set up municipality clubs together with each municipality — tell us:",
-        "openClubs": "Your gamer can also join one of our clubs that's open to everyone, wherever you live."
-      }
+      "subheading": "Weekly clubs offered by {name}, where your gamer plays, builds, and creates with new friends and a Gedu who actually gets it."
     }
   },
   "productBrowse": {
@@ -1283,6 +1283,7 @@
       "externalContract": "Funded by your municipality",
       "notAvailableInCurrency": "Not in {currency}",
       "seatsCapacity": "{count, plural, one {# seat} other {# seats}}",
+      "seatsFilled": "{filled} / {total} seats",
       "waitlistAvailable": "Waitlist available",
       "endedBadge": "Ended",
       "endedNote": "This one's wrapped — keep an eye out for the next one.",

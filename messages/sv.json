@@ -31,6 +31,11 @@
       "antiBullying": "Mot mobbning och disciplin"
     }
   },
+  "notFound": {
+    "title": "Sidan hittades inte",
+    "description": "Sidan du letar efter finns inte eller kan ha flyttats.",
+    "home": "Tillbaka till startsidan"
+  },
   "common": {
     "appName": "Sogverse",
     "tagline": "School of Gaming",
@@ -1243,12 +1248,7 @@
     },
     "municipality": {
       "heading": "Klubbar från {name}",
-      "subheading": "Veckovisa klubbar som {name} erbjuder, där din spelare spelar, bygger och skapar med nya vänner och en Gedu som verkligen fattar.",
-      "empty": {
-        "title": "{name} erbjuder inga klubbar just nu",
-        "body": "{name} erbjuder inga School of Gaming-klubbar just nu. Vill du att kommunen ska göra det? Vi ordnar kommunklubbar tillsammans med varje kommun – hör av dig:",
-        "openClubs": "Din spelare kan också gå med i en av våra klubbar som är öppna för alla, oavsett var ni bor."
-      }
+      "subheading": "Veckovisa klubbar som {name} erbjuder, där din spelare spelar, bygger och skapar med nya vänner och en Gedu som verkligen fattar."
     }
   },
   "productBrowse": {
@@ -1283,6 +1283,7 @@
       "externalContract": "Finansieras av din kommun",
       "notAvailableInCurrency": "Inte i {currency}",
       "seatsCapacity": "{count, plural, one {# plats} other {# platser}}",
+      "seatsFilled": "{filled} / {total} platser",
       "waitlistAvailable": "Väntelista finns",
       "endedBadge": "Avslutad",
       "endedNote": "Den här är slut — håll utkik efter nästa.",
