@@ -1323,7 +1323,6 @@
       "externalContract": "Funded by your municipality",
       "notAvailableInCurrency": "Not in {currency}",
       "seatsCapacity": "{count, plural, one {# seat} other {# seats}}",
-      "seatsFilled": "{filled} / {total} seats",
       "waitlistAvailable": "Waitlist available",
       "endedBadge": "Ended",
       "endedNote": "This one's wrapped — keep an eye out for the next one.",
@@ -1345,6 +1344,11 @@
   },
   "topics": {
     "webinar": "Webinar"
+  },
+  "seatAvailability": {
+    "remaining": "{count, plural, one {# of {total} seat remaining} other {# of {total} seats remaining}}",
+    "full": "Full",
+    "waitlistAvailable": "Waitlist"
   },
   "productDetail": {
     "back": {
@@ -1417,7 +1421,6 @@
       "bannerAlmostFull": "Going fast — only a few seats left",
       "bannerCountdown": "Sign-up opens at {date}",
       "bannerCountdownDone": "Sign-up is now open",
-      "bannerThreshold": "Starts when it fills up",
       "bannerWaitlist": "Fully booked right now",
       "bannerFullClosed": "Fully booked",
       "bannerRunningLate": "This one's already underway",
@@ -1442,7 +1445,6 @@
       "ctaSubmitting": "One moment…",
       "ctaSelectGamer": "Select a gamer",
       "ctaWaitlist": "Join the waitlist",
-      "ctaThreshold": "Reserve a spot",
       "ctaSignIn": "Sign in to register",
       "ctaCreateAccount": "Create account",
       "gamerAlreadySignedUp": {
@@ -1454,10 +1456,6 @@
       "gamerAlreadyWaitlisted": "On waitlist",
       "nonCustomerNote": "Only parents can register a gamer here.",
       "preOpenHelper": "Pick your child and agree to the rules so it's a one-tap sign-up the moment it opens.",
-      "thresholdHelper": "We'll start once {count} kids have signed up. Reserve a spot now and we'll let you know the moment we have enough.",
-      "thresholdProgress": "{current} of {threshold}",
-      "thresholdRemaining": "{count, plural, =0 {Threshold reached} one {# more to start} other {# more to start}}",
-      "seatsRemaining": "{count, plural, one {# of {total} seat remaining} other {# of {total} seats remaining}}",
       "waitlistHowTitle": "How the waitlist works",
       "waitlistHowItem1": "You keep your spot in line for the whole term.",
       "waitlistHowItem2": "If a family cancels, the next person gets a short window to accept.",

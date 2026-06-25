@@ -62,6 +62,7 @@ import {
   type ProductBrowseCardViewProps,
 } from "@/components/public/products/product-browse-card-view";
 import { RegistrationPill } from "@/components/public/products/registration-pill";
+import { SeatAvailabilityBar } from "@/components/public/products/seat-availability-bar";
 import type { RegistrationState } from "@/components/public/products/derive-registration-state";
 import { SignupPanel } from "@/components/public/products/signup-panel";
 import {
@@ -1143,7 +1144,7 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       locationLine: { kind: "online", label: "Online" },
       spokenLanguageCode: "fi",
       price: { kind: "external" },
-      seatBar: { filled: 11, total: 15 },
+      seatBar: { filled: 11, total: 15, waitlistEnabled: false },
       state: { kind: "open", seatCount: 15, seatsLeft: 4, waitlistEnabled: false },
     },
   },
@@ -1158,6 +1159,66 @@ function DemoCaption({ children }: { children: React.ReactNode }) {
     <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
       {children}
     </p>
+  );
+}
+
+// Each example pins concrete seat numbers so the bar's fill + color + full
+// state are all visible at a glance. The bar tracks seats *remaining*: full
+// bar = empty club, empty bar = full club.
+const SEAT_DEMO_CASES: {
+  label: string;
+  seatCount: number;
+  seatsLeft: number;
+  waitlistEnabled: boolean;
+}[] = [
+  {
+    label: "Empty — 15 of 15",
+    seatCount: 15,
+    seatsLeft: 15,
+    waitlistEnabled: false,
+  },
+  {
+    label: "Filling — 7 of 15",
+    seatCount: 15,
+    seatsLeft: 7,
+    waitlistEnabled: false,
+  },
+  {
+    label: "Almost full — 2 of 15",
+    seatCount: 15,
+    seatsLeft: 2,
+    waitlistEnabled: true,
+  },
+  {
+    label: "Full, no waitlist — 0 of 15",
+    seatCount: 15,
+    seatsLeft: 0,
+    waitlistEnabled: false,
+  },
+  {
+    label: "Full, waitlist — 0 of 15",
+    seatCount: 15,
+    seatsLeft: 0,
+    waitlistEnabled: true,
+  },
+];
+
+function SeatAvailabilityDemo() {
+  return (
+    <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+      {SEAT_DEMO_CASES.map((c) => (
+        <div key={c.label} className="flex flex-col gap-2">
+          <DemoCaption>{c.label}</DemoCaption>
+          <div className="max-w-[260px] rounded-md border p-3">
+            <SeatAvailabilityBar
+              seatCount={c.seatCount}
+              seatsLeft={c.seatsLeft}
+              waitlistEnabled={c.waitlistEnabled}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -1721,7 +1782,22 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 11: Products (parent browse + purchased)              */}
+      {/* Section 11: Seat Availability Bar                             */}
+      {/* ============================================================ */}
+      <Section title="Seat Availability Bar">
+        <p className="text-sm text-muted-foreground -mt-2">
+          Shared seat-availability bar for product cards and the detail-page
+          signup panel. The bar tracks seats <em>remaining</em> — an empty club
+          starts full and drains as it fills — so it reads as &ldquo;room left,&rdquo;
+          not &ldquo;how full.&rdquo; Color escalates with scarcity (green &rarr;
+          yellow at &le;2 left); at zero there&rsquo;s no fill to color, so the
+          full state is carried by text/badge, where the waiting list is surfaced.
+        </p>
+        <SeatAvailabilityDemo />
+      </Section>
+
+      {/* ============================================================ */}
+      {/* Section 12: Products (parent browse + purchased)             */}
       {/* ============================================================ */}
       <Section title="Products — Browse Cards">
         <p className="text-sm text-muted-foreground -mt-2">

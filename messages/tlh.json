@@ -1368,7 +1368,6 @@
       "externalContract": "yejquv DIl",
       "notAvailableInCurrency": "{currency} ghajbe'",
       "seatsCapacity": "{count, plural, one {# quS} other {# quS}}",
-      "seatsFilled": "{filled} / {total} quS",
       "waitlistAvailable": "loS tetlh tu'lu'",
       "endedBadge": "rIn",
       "endedNote": "rInpu' – veb yIloS.",
@@ -1390,6 +1389,11 @@
   },
   "topics": {
     "webinar": "ja'chuq"
+  },
+  "seatAvailability": {
+    "remaining": "{count, plural, one {# / {total} pa' ratlh} other {# / {total} pa' ratlh}}",
+    "full": "buy'",
+    "waitlistAvailable": "loS tetlh"
   },
   "productDetail": {
     "back": {
@@ -1462,7 +1466,6 @@
       "bannerAlmostFull": "nom — pa' puS neH",
       "bannerCountdown": "qonta' poSlaw' {date}",
       "bannerCountdownDone": "qonta' poS",
-      "bannerThreshold": "buy'meH tagh",
       "bannerWaitlist": "DaH buy'",
       "bannerFullClosed": "buy'",
       "bannerRunningLate": "taghta'",
@@ -1487,7 +1490,6 @@
       "ctaSubmitting": "yIloS…",
       "ctaSelectGamer": "QujwI' yIwIv",
       "ctaWaitlist": "tetlh DaqaD",
-      "ctaThreshold": "pa' yIpol",
       "ctaSignIn": "qonmeH yI'el",
       "ctaCreateAccount": "Account chu' chenmoH",
       "gamerAlreadySignedUp": {
@@ -1499,10 +1501,6 @@
       "gamerAlreadyWaitlisted": "tetlhDaq",
       "nonCustomerNote": "vavmey neH puq qonlaH naDev.",
       "preOpenHelper": "puqlI' yIwIv 'ej chutmey yIlaj — qonta' poSDI' wa' tlhopwI' lo'meH.",
-      "thresholdHelper": "{count} puqpu' qonta'DI' tagh. DaH pa' yIpol — buy'DI' qaja' SoH.",
-      "thresholdProgress": "{current} / {threshold}",
-      "thresholdRemaining": "{count, plural, =0 {Hoch ghaj} one {# vIneH taghmeH} other {# vIneH taghmeH}}",
-      "seatsRemaining": "{count, plural, one {# / {total} pa' ratlh} other {# / {total} pa' ratlh}}",
       "waitlistHowTitle": "tetlh teb Qu'",
       "waitlistHowItem1": "DIS naQ tetlh DaqaDtaHbogh.",
       "waitlistHowItem2": "qorDu' chegh chugh, latlh qorDu' poH puS lo' laH.",

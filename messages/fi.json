@@ -1323,7 +1323,6 @@
       "externalContract": "Kuntasi rahoittama",
       "notAvailableInCurrency": "Ei valuutassa {currency}",
       "seatsCapacity": "{count, plural, one {# paikka} other {# paikkaa}}",
-      "seatsFilled": "{filled} / {total} paikkaa",
       "waitlistAvailable": "Jonotuslista käytössä",
       "endedBadge": "Päättynyt",
       "endedNote": "Tämä on päättynyt – seuraava on tulossa pian.",
@@ -1345,6 +1344,11 @@
   },
   "topics": {
     "webinar": "Webinaari"
+  },
+  "seatAvailability": {
+    "remaining": "{count, plural, one {# / {total} paikka jäljellä} other {# / {total} paikkaa jäljellä}}",
+    "full": "Täynnä",
+    "waitlistAvailable": "Jonotuslista"
   },
   "productDetail": {
     "back": {
@@ -1417,7 +1421,6 @@
       "bannerAlmostFull": "Paikat täyttyvät – vain muutama jäljellä",
       "bannerCountdown": "Ilmoittautuminen avautuu {date}",
       "bannerCountdownDone": "Ilmoittautuminen on auki",
-      "bannerThreshold": "Alkaa, kun paikat täyttyvät",
       "bannerWaitlist": "Tällä hetkellä täynnä",
       "bannerFullClosed": "Täynnä",
       "bannerRunningLate": "Tämä on jo käynnissä",
@@ -1442,7 +1445,6 @@
       "ctaSubmitting": "Hetki…",
       "ctaSelectGamer": "Valitse pelaaja",
       "ctaWaitlist": "Liity jonotuslistalle",
-      "ctaThreshold": "Varaa paikka",
       "ctaSignIn": "Kirjaudu sisään ilmoittautuaksesi",
       "ctaCreateAccount": "Luo tili",
       "gamerAlreadySignedUp": {
@@ -1454,10 +1456,6 @@
       "gamerAlreadyWaitlisted": "Jonossa",
       "nonCustomerNote": "Vain vanhempi voi ilmoittaa pelaajan tähän.",
       "preOpenHelper": "Valitse lapsi ja hyväksy säännöt, niin ilmoittautuminen onnistuu yhdellä napautuksella heti, kun se avautuu.",
-      "thresholdHelper": "Aloitamme heti, kun {count} lasta on ilmoittautunut. Varaa paikka nyt – ilmoitamme heti, kun ryhmä on kasassa.",
-      "thresholdProgress": "{current} / {threshold}",
-      "thresholdRemaining": "{count, plural, =0 {Raja saavutettu} one {# vielä alkamiseen} other {# vielä alkamiseen}}",
-      "seatsRemaining": "{count, plural, one {# / {total} paikka jäljellä} other {# / {total} paikkaa jäljellä}}",
       "waitlistHowTitle": "Näin jonotuslista toimii",
       "waitlistHowItem1": "Pidät paikkasi jonossa koko kauden ajan.",
       "waitlistHowItem2": "Jos joku perhe peruu, seuraavalle annetaan lyhyt aika ottaa paikka vastaan.",

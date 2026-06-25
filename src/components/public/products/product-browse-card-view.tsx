@@ -10,6 +10,7 @@ import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { cn } from "@/lib/utils";
 import type { ProductPriceLine } from "./format-product-price";
 import { RegistrationPill, useRegistrationCta } from "./registration-pill";
+import { SeatAvailabilityBar } from "./seat-availability-bar";
 import type { RegistrationState } from "./derive-registration-state";
 
 // Pure presentational browse card. Takes already-resolved display props —
@@ -62,7 +63,11 @@ export interface ProductBrowseCardViewProps {
   detailHref?: string;
 }
 
-export type SeatBarValue = { filled: number; total: number | null };
+export type SeatBarValue = {
+  filled: number;
+  total: number | null;
+  waitlistEnabled: boolean;
+};
 
 export type LocationLine = {
   kind: "in_person" | "online" | "online_muni";
@@ -170,11 +175,21 @@ export function ProductBrowseCardView({
             </p>
           ) : (
             <div className="flex items-end justify-between gap-6">
-              {/* Muni clubs swap the price for a seat-fill bar; everything else
-                  keeps the price. `seatBar` present (even with a null total) is
-                  the muni signal. */}
+              {/* Muni clubs swap the price for a seat-availability bar;
+                  everything else keeps the price. `seatBar` present (even with a
+                  null total) is the muni signal — a null total renders nothing,
+                  leaving the footer-left empty. */}
               {seatBar !== undefined ? (
-                <SeatBar value={seatBar} />
+                <SeatAvailabilityBar
+                  className="flex-1"
+                  seatCount={seatBar.total}
+                  seatsLeft={
+                    seatBar.total === null
+                      ? 0
+                      : Math.max(0, seatBar.total - seatBar.filled)
+                  }
+                  waitlistEnabled={seatBar.waitlistEnabled}
+                />
               ) : (
                 <PriceBlock price={price} />
               )}
@@ -201,47 +216,6 @@ export function ProductBrowseCardView({
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-// Seat-fill bar shown in a municipality club's footer in place of a price.
-// Empty bar at 0 seats taken, fully filled at capacity. A muni club with no
-// seat count set yet renders nothing here (the business needs a count, but the
-// data contract doesn't enforce one) — the footer-left simply stays empty.
-function SeatBar({ value }: { value: SeatBarValue }) {
-  const t = useTranslations("productBrowse.card");
-  if (value.total === null) return null;
-
-  // Clamp so an over-count from in-flight reservations can't overflow the bar.
-  const pct =
-    value.total > 0
-      ? Math.min(100, Math.round((value.filled / value.total) * 100))
-      : 0;
-
-  const label = t("seatsFilled", { filled: value.filled, total: value.total });
-
-  return (
-    <div className="min-w-0 flex-1 space-y-1">
-      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-        <Users className="h-3 w-3 shrink-0" aria-hidden />
-        <span className="tabular-nums">{label}</span>
-      </div>
-      <div
-        className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
-        role="progressbar"
-        // Name the bar so screen readers announce "11 / 15 seats", not a bare
-        // "11" — the adjacent text is visual-only (aria-hidden icon beside it).
-        aria-label={label}
-        aria-valuenow={value.filled}
-        aria-valuemin={0}
-        aria-valuemax={value.total}
-      >
-        <div
-          className="h-full rounded-full bg-primary"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
   );
 }
 

@@ -108,7 +108,11 @@ export function ProductBrowseCard({
   // instead of a price. `total: null` (no seat count set yet) leaves the
   // footer-left empty; non-muni products get no bar and keep their price.
   const seatBar: SeatBarValue | undefined = isMuniClub
-    ? { filled: participationsCount, total: product.seat_count }
+    ? {
+        filled: participationsCount,
+        total: product.seat_count,
+        waitlistEnabled: product.waitlist_enabled,
+      }
     : undefined;
 
   const locationLine = resolveLocationLine(

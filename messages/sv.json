@@ -1323,7 +1323,6 @@
       "externalContract": "Finansieras av din kommun",
       "notAvailableInCurrency": "Inte i {currency}",
       "seatsCapacity": "{count, plural, one {# plats} other {# platser}}",
-      "seatsFilled": "{filled} / {total} platser",
       "waitlistAvailable": "Väntelista finns",
       "endedBadge": "Avslutad",
       "endedNote": "Den här är slut — håll utkik efter nästa.",
@@ -1345,6 +1344,11 @@
   },
   "topics": {
     "webinar": "Webbinarium"
+  },
+  "seatAvailability": {
+    "remaining": "{count, plural, one {# av {total} plats kvar} other {# av {total} platser kvar}}",
+    "full": "Fullt",
+    "waitlistAvailable": "Väntelista"
   },
   "productDetail": {
     "back": {
@@ -1417,7 +1421,6 @@
       "bannerAlmostFull": "Snabbt nu – bara några platser kvar",
       "bannerCountdown": "Anmälan öppnar {date}",
       "bannerCountdownDone": "Anmälan är öppen",
-      "bannerThreshold": "Startar när det fyllts",
       "bannerWaitlist": "Fullbokad just nu",
       "bannerFullClosed": "Fullbokad",
       "bannerRunningLate": "Den här har redan börjat",
@@ -1442,7 +1445,6 @@
       "ctaSubmitting": "Ett ögonblick…",
       "ctaSelectGamer": "Välj en gamer",
       "ctaWaitlist": "Gå med på väntelistan",
-      "ctaThreshold": "Reservera en plats",
       "ctaSignIn": "Logga in för att anmäla",
       "ctaCreateAccount": "Skapa konto",
       "gamerAlreadySignedUp": {
@@ -1454,10 +1456,6 @@
       "gamerAlreadyWaitlisted": "På väntelistan",
       "nonCustomerNote": "Endast föräldrar kan anmäla en spelare här.",
       "preOpenHelper": "Välj ditt barn och godkänn reglerna så blir det en knapptryckning så fort anmälan öppnar.",
-      "thresholdHelper": "Vi startar så fort {count} barn har anmält sig. Reservera en plats nu, så hör vi av oss så fort vi har tillräckligt.",
-      "thresholdProgress": "{current} av {threshold}",
-      "thresholdRemaining": "{count, plural, =0 {Tröskel uppnådd} one {# till för att starta} other {# till för att starta}}",
-      "seatsRemaining": "{count, plural, one {# av {total} plats kvar} other {# av {total} platser kvar}}",
       "waitlistHowTitle": "Så fungerar väntelistan",
       "waitlistHowItem1": "Du behåller din plats i kön under hela terminen.",
       "waitlistHowItem2": "Om en familj avbokar får nästa person en kort tid att tacka ja.",

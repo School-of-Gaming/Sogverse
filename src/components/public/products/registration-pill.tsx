@@ -8,9 +8,10 @@ import {
   Hourglass,
   Lock,
   XCircle,
+  type LucideIcon,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type { RegistrationState } from "./derive-registration-state";
+import { StatusChip, type ChipTone } from "./status-chip";
 
 // Presentational pill that surfaces a product's registration state
 // inline next to the topic label. Speaks parent voice ("Only 2 spots
@@ -19,23 +20,14 @@ import type { RegistrationState } from "./derive-registration-state";
 // "this is a club, you can sign up" leaves the row blank and lets the
 // CTA do the talking.
 //
-// Visual treatment is a small rounded outline chip with a tinted icon
-// + label. Quiet enough to sit next to a busy thumbnail but legible
-// at a glance.
+// Visual treatment is the shared outline `StatusChip` — a small rounded chip
+// with a tinted icon + label. Quiet enough to sit next to a busy thumbnail but
+// legible at a glance.
 
 interface RegistrationPillProps {
   state: RegistrationState;
   className?: string;
 }
-
-// Semantic tone per state. Keeps the colour decision in one place.
-type Tone = "warning" | "info" | "muted";
-
-const TONE_OUTLINE: Record<Tone, string> = {
-  warning: "border-warning/50 text-warning",
-  info: "border-info/40 text-info",
-  muted: "border-border text-muted-foreground",
-};
 
 // Threshold at or below which an `open` product earns the
 // "Only N spots left" urgency pill. Anything above stays pill-less.
@@ -43,7 +35,7 @@ const URGENCY_SEATS_LEFT = 3;
 
 // `null` here means "no pill — the row's empty space is the message."
 // The card layer handles that case by not reserving a slot.
-type Decoration = { tone: Tone; label: string };
+type Decoration = { tone: ChipTone; label: string };
 
 export function RegistrationPill({ state, className }: RegistrationPillProps) {
   const t = useTranslations("productBrowse.card");
@@ -53,44 +45,31 @@ export function RegistrationPill({ state, className }: RegistrationPillProps) {
   if (!decoration) return null;
 
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full border bg-background px-2 py-0.5 text-[10px] font-medium",
-        TONE_OUTLINE[decoration.tone],
-        className,
-      )}
+    <StatusChip
+      tone={decoration.tone}
+      icon={iconForState(state)}
+      className={className}
     >
-      <StateIcon state={state} className="h-3 w-3" />
       {decoration.label}
-    </span>
+    </StatusChip>
   );
 }
 
-// Returning a component (not aliasing one to a local variable) keeps
-// `react-hooks/static-components` happy. Wrapping in a tiny component
-// also lets the className flow through as a JSX attribute, which the
-// i18n literal-string rule allows-lists.
-function StateIcon({
-  state,
-  className,
-}: {
-  state: RegistrationState;
-  className?: string;
-}) {
+function iconForState(state: RegistrationState): LucideIcon {
   switch (state.kind) {
     case "open":
-      return <AlertCircle className={className} aria-hidden />;
+      return AlertCircle;
     case "pending_thr":
     case "full_waitlist":
-      return <Hourglass className={className} aria-hidden />;
+      return Hourglass;
     case "full_closed":
-      return <XCircle className={className} aria-hidden />;
+      return XCircle;
     case "closed_pre":
-      return <CalendarClock className={className} aria-hidden />;
+      return CalendarClock;
     case "running_late":
-      return <Lock className={className} aria-hidden />;
+      return Lock;
     case "ended":
-      return <Clock className={className} aria-hidden />;
+      return Clock;
   }
 }
 

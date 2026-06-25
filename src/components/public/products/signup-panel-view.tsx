@@ -15,6 +15,7 @@ import { CountdownClock, useCountdownDone } from "./countdown-clock";
 import type { RegistrationState } from "./derive-registration-state";
 import { PricingPanelView } from "./pricing-panel-view";
 import type { PricingOption } from "./pricing-options";
+import { SeatAvailabilityBar } from "./seat-availability-bar";
 
 // Top-level Signup Panel View. Pure presentational: takes resolved
 // state and emits intent callbacks. Renders the right banner + body
@@ -22,7 +23,7 @@ import type { PricingOption } from "./pricing-options";
 // the auth overlay).
 //
 // Important detail for the pre-open → open flip: the form-shaped panels
-// (closed_pre, open, pending_thr, full_waitlist) all reuse the same
+// (closed_pre, open, full_waitlist) all reuse the same
 // `<SignupForm>` instance. That keeps the parent's selected gamer +
 // agreed checkbox + pricing pick stable across the countdown flip — so
 // when the clock hits zero, the parent really does have a one-tap
@@ -234,34 +235,24 @@ function WaitlistInfo() {
 
 // ---------- Variant: Threshold-pending ----------
 
+// Threshold handling is deferred, so this state shows a plain sign-up panel —
+// the same banner / pricing / form as a non-urgent open product, with no seat
+// bar and no threshold meter. The product reads as if it has no seating
+// constraints (cf. the pre-open panel, which also renders no bar).
 function ThresholdPanel(props: SignupPanelViewProps) {
   const t = useTranslations("productDetail.signupPanel");
+  const verb = useVerb(props.productType);
+  const activeLabel = useActiveCtaLabel(
+    verb,
+    props.pricingOption,
+    props.currency,
+    props.locale,
+  );
+
   if (props.state.kind !== "pending_thr") return null;
-  const { threshold, count } = props.state;
-  const pct = Math.min(100, (count / threshold) * 100);
-  const remaining = Math.max(0, threshold - count);
 
   return (
-    <PanelShell banner={t("bannerThreshold")} tone="secondary">
-      <div>
-        <div className="flex items-baseline justify-between">
-          <span className="text-2xl font-bold tabular-nums">
-            {t("thresholdProgress", { current: count, threshold })}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            {t("thresholdRemaining", { count: remaining })}
-          </span>
-        </div>
-        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
-          <div
-            className="h-full rounded-full bg-secondary transition-[width] duration-500"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-      </div>
-      <p className="text-xs text-muted-foreground">
-        {t("thresholdHelper", { count: threshold })}
-      </p>
+    <PanelShell banner={t(`noun.${props.productType}`)} tone="muted">
       <PricingPanelView
         option={props.pricingOption}
         currency={props.currency}
@@ -269,8 +260,8 @@ function ThresholdPanel(props: SignupPanelViewProps) {
       />
       <FormOrAuth
         {...props}
-        ctaLabelActive={t("ctaThreshold")}
-        ctaLabelIdle={t("ctaThreshold")}
+        ctaLabelActive={activeLabel}
+        ctaLabelIdle={activeLabel}
         active
       />
     </PanelShell>
@@ -387,9 +378,10 @@ function OpenPanel(props: SignupPanelViewProps) {
         // always null (no participations table yet), so the bar fills 100%.
         // Once enrollments start landing, this fallback will lie about
         // remaining capacity until participations ships.
-        <SeatCounter
+        <SeatAvailabilityBar
           seatCount={props.state.seatCount}
           seatsLeft={props.state.seatsLeft ?? props.state.seatCount}
+          waitlistEnabled={props.state.waitlistEnabled}
         />
       )}
       <PricingPanelView
@@ -404,40 +396,6 @@ function OpenPanel(props: SignupPanelViewProps) {
         active
       />
     </PanelShell>
-  );
-}
-
-function SeatCounter({
-  seatCount,
-  seatsLeft,
-}: {
-  seatCount: number;
-  seatsLeft: number;
-}) {
-  const t = useTranslations("productDetail.signupPanel");
-  const pct = Math.max(0, Math.min(100, (seatsLeft / seatCount) * 100));
-  const barColor =
-    seatsLeft === 0
-      ? "bg-destructive"
-      : seatsLeft <= Math.ceil(seatCount * 0.2)
-        ? "bg-warning"
-        : "bg-success";
-
-  return (
-    <div>
-      <div className="flex items-baseline justify-between">
-        <span className="text-2xl font-bold tabular-nums">{seatsLeft}</span>
-        <span className="text-xs text-muted-foreground">
-          {t("seatsRemaining", { count: seatsLeft, total: seatCount })}
-        </span>
-      </div>
-      <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
-        <div
-          className={cn("h-full transition-[width] duration-500", barColor)}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
   );
 }
 
