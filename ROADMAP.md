@@ -47,6 +47,7 @@ gantt
 
     section Platform Vision
     AI build harness         :harness, 2027-01-01, 90d
+    Marketplace Model        :market, 2027-01-01, 60d
 ```
 
 **Parent**
@@ -73,3 +74,4 @@ gantt
 
 **Platform Vision**
 - **AI build harness** — Long-term vision: an AI harness that lets any team member build, enabling them to integrate their own ideas and features into Sogverse.
+- **Marketplace Model** — Independent Gedus are given tools to create content, products, and market themselves on the platform.
