@@ -1,7 +1,10 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import type { RegistrationState } from "./derive-registration-state";
+import {
+  registrationCtaKind,
+  type RegistrationState,
+} from "./derive-registration-state";
 
 // CTA derivation for the browse-card layer. Returns `null` when the card
 // should hide its CTA entirely (running_late, ended). Returns
@@ -21,24 +24,12 @@ export function useRegistrationCta(
 ): RegistrationCta | null {
   const t = useTranslations("productBrowse.card");
 
-  switch (state.kind) {
-    case "open":
-    case "pending_thr":
-    case "closed_pre":
-    case "full_waitlist":
-      // Every state with *something* to do on the detail page (sign up,
-      // prep for the open moment, watch the threshold, join the waitlist)
-      // shares the same primary "View" CTA. Card buttons stay visually
-      // identical row-to-row; the seat-availability bar and footer carry
-      // the state signal, not the button color.
-      return { kind: "primary", labelText: t("viewDetails") };
-    case "full_closed":
-      // Hard dead end — full and no waitlist. The detail page has
-      // nothing actionable, so the button stays disabled and the parent
-      // isn't sent on a round-trip.
-      return { kind: "disabled", labelText: t("fullDisabled") };
-    case "running_late":
-    case "ended":
-      return null;
-  }
+  // The state→behaviour decision lives in `registrationCtaKind`; this hook
+  // only resolves the matching label. Every primary state shares the same
+  // "View" CTA so card buttons stay visually identical row-to-row — the
+  // seat-availability bar and footer carry the state signal, not the button.
+  const kind = registrationCtaKind(state);
+  if (kind === null) return null;
+  if (kind === "disabled") return { kind, labelText: t("fullDisabled") };
+  return { kind, labelText: t("viewDetails") };
 }

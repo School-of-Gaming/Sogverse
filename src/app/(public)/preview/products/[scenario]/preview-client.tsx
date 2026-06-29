@@ -2,21 +2,18 @@
 
 import { ProductDetailPageBody } from "@/components/public/products/product-detail-page-body";
 import {
-  buildDetailFixture,
-  type PreviewStateKind,
+  buildScenarioFixture,
+  type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
-import type { ProductType } from "@/types";
 
 interface ProductDetailPreviewClientProps {
-  productType: ProductType;
-  stateKind: PreviewStateKind;
+  scenario: PreviewScenario;
 }
 
 export function ProductDetailPreviewClient({
-  productType,
-  stateKind,
+  scenario,
 }: ProductDetailPreviewClientProps) {
-  const fixture = buildDetailFixture(productType, stateKind);
+  const fixture = buildScenarioFixture(scenario);
   return (
     <ProductDetailPageBody
       product={fixture.product}

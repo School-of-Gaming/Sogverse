@@ -309,7 +309,7 @@ describe("proxy", () => {
     it("allows admin to access /preview/products/...", async () => {
       mockUser("admin");
       const response = await proxy(
-        createNextRequest("/preview/products/consumer_club/open"),
+        createNextRequest("/preview/products/consumer-club"),
       );
       expect(response.status).toBe(200);
     });
@@ -317,7 +317,7 @@ describe("proxy", () => {
     it("redirects unlocked customer from /preview/... to /parent", async () => {
       mockUser("customer");
       const response = await proxy(
-        await unlockedCustomerRequest("/preview/products/consumer_club/open"),
+        await unlockedCustomerRequest("/preview/products/consumer-club"),
       );
       expect(response.status).toBe(307);
       expect(getRedirectUrl(response).pathname).toBe("/parent");
@@ -326,7 +326,7 @@ describe("proxy", () => {
     it("redirects unauthenticated from /preview/... to /login", async () => {
       mockNoUser();
       const response = await proxy(
-        createNextRequest("/preview/products/consumer_club/open"),
+        createNextRequest("/preview/products/consumer-club"),
       );
       expect(response.status).toBe(307);
       expect(getRedirectUrl(response).pathname).toBe("/login");

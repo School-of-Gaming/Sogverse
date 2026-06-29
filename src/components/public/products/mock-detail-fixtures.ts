@@ -5,60 +5,316 @@ import type {
 } from "@/types";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import type { ProductDetailRow } from "@/services/products";
-import type { RegistrationState } from "./derive-registration-state";
+import {
+  registrationCtaKind,
+  type RegistrationCtaKind,
+  type RegistrationState,
+} from "./derive-registration-state";
 import type { AuthState } from "./signup-panel-view";
 
-// Synthetic detail-page fixtures, one per (productType, stateKind) pair.
-// Used by the `/preview/products/[type]/[state]` route + the
-// /admin/ui-components page. Real visitors never land on these.
+// Synthetic fixtures, one per curated preview scenario. The mental model: each
+// scenario IS a mocked product. The /admin/ui-components card and the
+// /preview/products/[scenario] full page both just render that one mock — same
+// product row, same registration state, same auth state — so the card and the
+// page it links to can never disagree.
 //
-// `closed_pre` anchors its `opensAt` on `Date.now()` at build time so the
-// countdown shows a live, ticking 2-day-ish window regardless of when an
-// admin loads the page. The other dates (start_date, end_date, holidays)
-// are static reference fixtures — fine for visual review even when the
-// calendar drifts past today.
+// The set is curated down to the *visually distinct* surfaces worth eyeballing,
+// grouped by product type:
+//   • Consumer club — a subscription club (open) + an ended product.
+//   • Municipality club — the full seat-fill range, plus the pre-launch
+//     countdown across the three auth states a parent can be in.
+//   • Event — a free product.
 //
-// Pick the type / state in the URL; the fixture is built on demand. The
-// returned object is shape-compatible with what the live data fetch
-// produces, so the body component renders identically.
+// Most scenarios author their registration `state` directly so they stay
+// deterministic regardless of the wall clock. The countdown scenarios are the
+// exception: they carry an `opensInMs` offset and resolve a live `closed_pre`
+// state at build time, so the clock actually ticks for an admin reviewing them.
 
-export type PreviewStateKind =
-  | "closed_pre"
-  | "closed_pre_10s"
-  | "open"
-  | "open_almost_full"
-  | "pending_thr"
-  | "full_waitlist"
-  | "full_closed"
-  | "running_late"
-  | "ended";
+export type PreviewScenario =
+  | "consumer-club"
+  | "muni-empty"
+  | "muni-filling"
+  | "muni-almost-full"
+  | "muni-full-closed"
+  | "muni-full-waitlist"
+  | "muni-opens-10s"
+  | "muni-opens-signed-out"
+  | "muni-opens-no-gamers"
+  | "muni-opens-with-gamers"
+  | "camp-open"
+  | "camp-running"
+  | "free-event";
 
-export const PREVIEW_STATES: PreviewStateKind[] = [
-  "closed_pre",
-  "closed_pre_10s",
-  "open",
-  "open_almost_full",
-  "pending_thr",
-  "full_waitlist",
-  "full_closed",
-  "running_late",
-  "ended",
+// Which signed-in shape the panel renders against. `signed-out` → the auth
+// overlay (sign in / create account); `no-gamers` → a `ready` customer whose
+// gamer picker is empty (just the "Add a child" row); `with-gamers` → a `ready`
+// customer with the two demo children.
+type AuthKind = "signed-in-with-gamers" | "signed-in-no-gamers" | "signed-out";
+
+interface ScenarioBase {
+  /** Short label shown above the demo card (the subsection carries the type). */
+  label: string;
+  productType: ProductType;
+  billingMode: "paid" | "free" | "external_contract";
+  /** Capacity on the product row. Drives the municipality seat-fill bar. */
+  seatCount: number | null;
+  waitlistEnabled: boolean;
+  /**
+   * EUR list price in cents — monthly for the subscription club, upfront for
+   * camps/events. `null` for free / externally-funded products (no price rows).
+   */
+  priceCentsEur: number | null;
+  auth: AuthKind;
+}
+
+// A scenario either authors a static registration state, or is a live
+// pre-launch countdown (resolved to `closed_pre` against `Date.now()` so the
+// clock ticks).
+type ScenarioConfig =
+  | (ScenarioBase & { state: RegistrationState })
+  | (ScenarioBase & { opensInMs: number });
+
+// Real UUIDs so the gamer picker's identicons hash to distinct, stable avatars
+// — placeholder ids like "g1" render degenerate identicons that misrepresent
+// the real UI.
+const DEMO_GAMERS = [
+  { id: "6aaac864-5ea7-451b-8d02-93f9ae6f25b5", name: "Oona", age: 10 },
+  { id: "d010872c-7034-401b-9c2d-5dfa675f60d8", name: "Aino", age: 8 },
+] as const;
+
+const NINETY_MIN_MS = 90 * 60 * 1000;
+const TEN_SEC_MS = 10 * 1000;
+
+const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
+  "consumer-club": {
+    label: "€45/mo — open",
+    productType: "consumer_club",
+    billingMode: "paid",
+    seatCount: null,
+    waitlistEnabled: false,
+    priceCentsEur: 4500,
+    auth: "signed-in-with-gamers",
+    state: {
+      kind: "open",
+      seatCount: null,
+      seatsLeft: null,
+      waitlistEnabled: false,
+    },
+  },
+  "muni-empty": {
+    label: "15 / 15 seats",
+    productType: "municipality_club",
+    billingMode: "external_contract",
+    seatCount: 15,
+    waitlistEnabled: false,
+    priceCentsEur: null,
+    auth: "signed-in-with-gamers",
+    state: { kind: "open", seatCount: 15, seatsLeft: 15, waitlistEnabled: false },
+  },
+  "muni-filling": {
+    label: "6 / 15 seats",
+    productType: "municipality_club",
+    billingMode: "external_contract",
+    seatCount: 15,
+    waitlistEnabled: false,
+    priceCentsEur: null,
+    auth: "signed-in-with-gamers",
+    state: { kind: "open", seatCount: 15, seatsLeft: 6, waitlistEnabled: false },
+  },
+  "muni-almost-full": {
+    label: "2 / 15 seats",
+    productType: "municipality_club",
+    billingMode: "external_contract",
+    seatCount: 15,
+    waitlistEnabled: false,
+    priceCentsEur: null,
+    auth: "signed-in-with-gamers",
+    state: { kind: "open", seatCount: 15, seatsLeft: 2, waitlistEnabled: false },
+  },
+  "muni-full-closed": {
+    label: "0 / 15 — no waitlist",
+    productType: "municipality_club",
+    billingMode: "external_contract",
+    seatCount: 15,
+    waitlistEnabled: false,
+    priceCentsEur: null,
+    auth: "signed-in-with-gamers",
+    state: { kind: "full_closed", seatCount: 15 },
+  },
+  "muni-full-waitlist": {
+    label: "0 / 15 — waitlist",
+    productType: "municipality_club",
+    billingMode: "external_contract",
+    seatCount: 15,
+    waitlistEnabled: true,
+    priceCentsEur: null,
+    auth: "signed-in-with-gamers",
+    state: { kind: "full_waitlist", seatCount: 15 },
+  },
+  "muni-opens-10s": {
+    label: "Opens in 10 seconds (live)",
+    productType: "municipality_club",
+    billingMode: "external_contract",
+    seatCount: 15,
+    waitlistEnabled: false,
+    priceCentsEur: null,
+    auth: "signed-in-with-gamers",
+    opensInMs: TEN_SEC_MS,
+  },
+  "muni-opens-signed-out": {
+    label: "Opens in 90 min — signed out",
+    productType: "municipality_club",
+    billingMode: "external_contract",
+    seatCount: 15,
+    waitlistEnabled: false,
+    priceCentsEur: null,
+    auth: "signed-out",
+    opensInMs: NINETY_MIN_MS,
+  },
+  "muni-opens-no-gamers": {
+    label: "Opens in 90 min — signed in, no gamers",
+    productType: "municipality_club",
+    billingMode: "external_contract",
+    seatCount: 15,
+    waitlistEnabled: false,
+    priceCentsEur: null,
+    auth: "signed-in-no-gamers",
+    opensInMs: NINETY_MIN_MS,
+  },
+  "muni-opens-with-gamers": {
+    label: "Opens in 90 min — signed in, with gamers",
+    productType: "municipality_club",
+    billingMode: "external_contract",
+    seatCount: 15,
+    waitlistEnabled: false,
+    priceCentsEur: null,
+    auth: "signed-in-with-gamers",
+    opensInMs: NINETY_MIN_MS,
+  },
+  "camp-open": {
+    label: "Not started yet — €250",
+    productType: "camp",
+    billingMode: "paid",
+    seatCount: null,
+    waitlistEnabled: false,
+    priceCentsEur: 25000,
+    auth: "signed-in-with-gamers",
+    state: {
+      kind: "open",
+      seatCount: null,
+      seatsLeft: null,
+      waitlistEnabled: false,
+    },
+  },
+  "camp-running": {
+    // Camps lock late joins once running — no CTA, so no detail page to open.
+    label: "Already started",
+    productType: "camp",
+    billingMode: "paid",
+    seatCount: null,
+    waitlistEnabled: false,
+    priceCentsEur: 25000,
+    auth: "signed-in-with-gamers",
+    state: { kind: "running_late" },
+  },
+  "free-event": {
+    label: "Free — open",
+    productType: "event",
+    billingMode: "free",
+    seatCount: null,
+    waitlistEnabled: false,
+    priceCentsEur: null,
+    auth: "signed-in-with-gamers",
+    state: {
+      kind: "open",
+      seatCount: null,
+      seatsLeft: null,
+      waitlistEnabled: false,
+    },
+  },
+};
+
+// Render order for the UI Components grid. Explicit (rather than `Object.keys`)
+// so the sequence is intentional, and grouped contiguously by product type so
+// the subsections come out in this order.
+const SCENARIO_ORDER: PreviewScenario[] = [
+  "consumer-club",
+  "muni-empty",
+  "muni-filling",
+  "muni-almost-full",
+  "muni-full-closed",
+  "muni-full-waitlist",
+  "muni-opens-10s",
+  "muni-opens-signed-out",
+  "muni-opens-no-gamers",
+  "muni-opens-with-gamers",
+  "camp-open",
+  "camp-running",
+  "free-event",
 ];
 
-export const PREVIEW_TYPES: ProductType[] = [
-  "consumer_club",
-  "municipality_club",
-  "camp",
-  "event",
-];
+// Subsection heading per product type (the type context the short labels omit).
+const GROUP_LABELS: Record<ProductType, string> = {
+  consumer_club: "Consumer club",
+  municipality_club: "Municipality club",
+  camp: "Camp",
+  event: "Event",
+};
 
-// Static reference instant for non-ticking dates (start_date, end_date,
-// timestamps on the row). The countdown's `opensAt` is *not* anchored
-// here — see `pickRegistrationOpensAt` for live-time handling.
+// The list (with subsection grouping) the UI Components page iterates over.
+export const PREVIEW_SCENARIOS: {
+  slug: PreviewScenario;
+  label: string;
+  group: string;
+}[] = SCENARIO_ORDER.map((slug) => ({
+  slug,
+  label: SCENARIOS[slug].label,
+  group: GROUP_LABELS[SCENARIOS[slug].productType],
+}));
+
+export function isPreviewScenario(s: string): s is PreviewScenario {
+  return s in SCENARIOS;
+}
+
+// CTA kind for a scenario without needing the wall clock — a countdown is
+// always `closed_pre`, which is a primary "View" CTA.
+function configCtaKind(c: ScenarioConfig): RegistrationCtaKind {
+  return "opensInMs" in c ? "primary" : registrationCtaKind(c.state);
+}
+
+// Whether a scenario's card links into a full detail page. Only states whose
+// browse-card CTA is a working "View" button do — a parent can never reach the
+// detail page of a full/closed or ended product, so there's nothing to
+// preview. The /preview route 404s the rest rather than mocking a page no one
+// lands on. Single-sourced from `registrationCtaKind` so this never drifts from
+// the actual card CTA.
+export function scenarioHasDetailPage(slug: PreviewScenario): boolean {
+  return configCtaKind(SCENARIOS[slug]) === "primary";
+}
+
+// Seats already taken on a scenario — the count the municipality seat-fill bar
+// reads. Derived from the authored state so the bar and the card's state stay
+// in lock-step. Countdown / no-cap scenarios read empty (no one has registered
+// before registration opens).
+export function scenarioFilledSeats(slug: PreviewScenario): number {
+  const c = SCENARIOS[slug];
+  if (c.seatCount === null || "opensInMs" in c) return 0;
+  switch (c.state.kind) {
+    case "open":
+      return c.state.seatsLeft === null ? 0 : c.seatCount - c.state.seatsLeft;
+    case "full_waitlist":
+    case "full_closed":
+      return c.seatCount;
+    default:
+      return 0;
+  }
+}
+
+// Static reference instant for the dated fixtures (start_date, end_date,
+// timestamps on the row). The countdown scenarios anchor their `opensAt` on
+// `Date.now()` instead — see `buildScenarioFixture`.
 const STATIC_REF_MS = Date.UTC(2026, 0, 5, 12, 0, 0); // Mon 5 Jan 2026, 12:00 UTC
-
 const DAY_MS = 24 * 60 * 60 * 1000;
-const HOUR_MS = 60 * 60 * 1000;
 
 interface BuildFixtureResult {
   product: ProductDetailRow;
@@ -66,46 +322,57 @@ interface BuildFixtureResult {
   authState: AuthState;
 }
 
-export function buildDetailFixture(
-  productType: ProductType,
-  stateKind: PreviewStateKind,
-): BuildFixtureResult {
-  // Capture once so the product row and the registration state agree on
-  // the same "opens at" instant — otherwise the panel countdown could
-  // tick against one timestamp while the row reports another.
-  const nowMs = Date.now();
-  const product = buildBaseProduct(productType, stateKind, nowMs);
-  const state = buildRegistrationState(productType, stateKind, nowMs);
-  const authState: AuthState = {
-    kind: "ready",
-    gamers: [
-      { id: "mock-g-1", name: "Oona", age: 10 },
-      { id: "mock-g-2", name: "Aino", age: 8 },
-    ],
-  };
+export function buildScenarioFixture(slug: PreviewScenario): BuildFixtureResult {
+  const config = SCENARIOS[slug];
+  const detailHref = `/preview/products/${slug}`;
+
+  let state: RegistrationState;
+  let registrationOpensAt: string;
+  if ("opensInMs" in config) {
+    // Live countdown: opens a fixed offset ahead of *now* so the clock ticks.
+    // The row's drop instant and the panel state share the same timestamp.
+    const opensAt = new Date(Date.now() + config.opensInMs).toISOString();
+    state = { kind: "closed_pre", opensAt };
+    registrationOpensAt = opensAt;
+  } else {
+    state = config.state;
+    // Already open (or ended) in every static scenario — the drop is in the past.
+    registrationOpensAt = new Date(STATIC_REF_MS - DAY_MS).toISOString();
+  }
+
+  const product = buildBaseProduct(slug, config, registrationOpensAt, state);
+  const authState = buildAuthState(config.auth, detailHref);
   return { product, state, authState };
+}
+
+function buildAuthState(auth: AuthKind, detailHref: string): AuthState {
+  switch (auth) {
+    case "signed-out": {
+      const redirect = `?redirect=${encodeURIComponent(detailHref)}`;
+      return {
+        kind: "unauthenticated",
+        signInHref: `/login${redirect}`,
+        createAccountHref: `/register${redirect}`,
+      };
+    }
+    case "signed-in-no-gamers":
+      return { kind: "ready", gamers: [] };
+    case "signed-in-with-gamers":
+      return { kind: "ready", gamers: DEMO_GAMERS };
+  }
 }
 
 // ---------- Base product shape ----------
 
 function buildBaseProduct(
-  productType: ProductType,
-  stateKind: PreviewStateKind,
-  nowMs: number,
+  slug: PreviewScenario,
+  config: ScenarioConfig,
+  registrationOpensAt: string,
+  state: RegistrationState,
 ): ProductDetailRow {
-  const billingMode = pickBillingMode(productType);
-  const seatCount = stateKind === "pending_thr" ? null : 12;
-
-  // Use copy that fits each type so the demo reads as realistic.
+  const { productType, billingMode } = config;
   const copy = COPY[productType];
-
-  // Threshold + dates only matter for clubs (term-bound). Camps and events
-  // are date-bound; pick small ranges that produce a readable calendar.
   const { startDate, endDate, scheduleSlots } = pickSchedule(productType);
-
-  const registrationOpensAt = pickRegistrationOpensAt(stateKind, nowMs);
-  const status = pickStatus(productType, stateKind);
-
   const locationFixture = pickLocationFixture(productType);
 
   // Metadata the database would otherwise populate (created_at/updated_at,
@@ -113,11 +380,13 @@ function buildBaseProduct(
   // honestly-typed ProductDetailRow — no casts.
   const refTimestamp = new Date(STATIC_REF_MS - 30 * DAY_MS).toISOString();
 
+  const id = `mock-${slug}`;
+
   return {
-    id: `mock-${productType}-${stateKind}`,
+    id,
     product_type: productType,
     billing_mode: billingMode,
-    status,
+    status: pickStatus(state),
     is_visible: true,
     is_remote: copy.isRemote,
     min_age: 8,
@@ -126,17 +395,17 @@ function buildBaseProduct(
     location_id: locationFixture?.id ?? null,
     locations: locationFixture,
     padlet_url: null,
-    signup_threshold: stateKind === "pending_thr" ? 8 : null,
+    signup_threshold: null,
     start_date: startDate,
     end_date: endDate,
     timezone: "Europe/Helsinki",
-    seat_count: seatCount,
-    waitlist_enabled: stateKind === "full_waitlist",
+    seat_count: config.seatCount,
+    waitlist_enabled: config.waitlistEnabled,
     registration_opens_at: registrationOpensAt,
     image_path: null,
     // Fixed product_topic enum; the label is resolved via PRODUCT_TOPICS, so
     // the value just needs to be valid. Events get Fortnite, the rest
-    // Minecraft Java — enough to exercise both game chips in the preview.
+    // Minecraft Java.
     topic: productType === "event" ? "fortnite" : "minecraft_java",
     refund_policy_days: null,
     primary_gedu_fee_cents: null,
@@ -151,15 +420,15 @@ function buildBaseProduct(
         name: copy.name,
         short_description: copy.description,
         long_description: copy.long ?? null,
-        product_id: `mock-${productType}-${stateKind}`,
+        product_id: id,
         created_at: refTimestamp,
         updated_at: refTimestamp,
       },
     ],
     product_prices:
-      billingMode === "free" || billingMode === "external_contract"
+      config.priceCentsEur === null
         ? []
-        : buildPriceRows(productType, stateKind),
+        : buildPriceRows(id, config.priceCentsEur),
     schedule_slots: scheduleSlots,
     holidays: pickHolidays(productType),
   };
@@ -205,14 +474,14 @@ const COPY: Record<ProductType, TypeCopy> = {
     isRemote: false,
   },
   camp: {
-    name: "Spring Break Roblox Camp",
+    name: "Spring Break Minecraft Camp",
     description:
-      "Five days of game design. Each day we play a different style and end the week with a kid-built obby everyone can try.",
+      "Five days of building. Each day we take on a different style and end the week with a kid-built world everyone can explore together.",
     long: [
       { type: "heading", text: "The week at a glance" },
       {
         type: "paragraph",
-        text: "Monday we play and pull apart a few favourite games. By Friday each camper has built an obby of their own that the whole group plays through together.",
+        text: "Monday we play and pull apart a few favourite builds. By Friday each camper has built a world of their own that the whole group explores together.",
       },
       { type: "heading", text: "Who it's for" },
       {
@@ -328,19 +597,6 @@ function pickHolidays(
   ];
 }
 
-function pickBillingMode(
-  productType: ProductType,
-): "paid" | "free" | "external_contract" {
-  switch (productType) {
-    case "municipality_club":
-      return "external_contract";
-    case "event":
-      return "paid";
-    default:
-      return "paid";
-  }
-}
-
 // ---------- Price rows ----------
 
 // The admin create form requires a row per supported currency (validated
@@ -353,112 +609,37 @@ function pickBillingMode(
 const FX_FROM_EUR = { eur: 1, gbp: 0.86, usd: 1.08 } as const;
 
 function buildPriceRows(
-  productType: ProductType,
-  stateKind: PreviewStateKind,
+  productId: string,
+  priceCentsEur: number,
 ): ProductDetailRow["product_prices"] {
-  // Consumer clubs price as a monthly subscription; camps/events as one
-  // upfront total. Either way it's the single `price_cents` per currency.
-  const eurPrice = productType === "consumer_club" ? 3600 : 9000;
   const refTimestamp = new Date(STATIC_REF_MS - 30 * DAY_MS).toISOString();
   return SUPPORTED_CURRENCIES.map((currency) => ({
-    product_id: `mock-${productType}-${stateKind}`,
+    product_id: productId,
     currency,
-    price_cents: Math.round(eurPrice * FX_FROM_EUR[currency]),
+    price_cents: Math.round(priceCentsEur * FX_FROM_EUR[currency]),
     created_at: refTimestamp,
     updated_at: refTimestamp,
   }));
 }
 
-// ---------- Registration drop instant ----------
+// ---------- Product status ----------
 
-function pickRegistrationOpensAt(
-  stateKind: PreviewStateKind,
-  nowMs: number,
-): string {
-  switch (stateKind) {
-    case "closed_pre":
-      // 2 days, 4 hrs ahead of *now* — gives the countdown enough digits
-      // and ensures it actually ticks for an admin reviewing the mock.
-      return new Date(nowMs + 2 * DAY_MS + 4 * HOUR_MS).toISOString();
-    case "closed_pre_10s":
-      // 10 seconds ahead of *now* — for live-testing the pre-open → open
-      // transition (countdown clock disappearing, banner copy flip, CTA
-      // re-enabling) in real time on the UI Components page.
-      return new Date(nowMs + 10 * 1000).toISOString();
-    default:
-      // Already open in every other state.
-      return new Date(nowMs - DAY_MS).toISOString();
-  }
-}
-
+// `status` is the stored DB status. The panel renders from the authored
+// `state`, not this, but matching the shape a real row would carry avoids
+// confusing future readers: open/ended products stay 'running', full or
+// pre-launch ones sit in 'pending'.
 function pickStatus(
-  productType: ProductType,
-  stateKind: PreviewStateKind,
+  state: RegistrationState,
 ): "pending" | "running" | "draft" | "cancelled" {
-  void productType;
-  switch (stateKind) {
-    case "ended":
-      // Real ended products keep stored status = 'running' and reach
-      // "ended" via end_date in the past — the deriver flips them to
-      // effectiveStatus = 'completed'. The fixture's panel state is
-      // hardcoded to { kind: 'ended' } so the deriver doesn't run, but
-      // matching the real stored shape avoids confusing future readers.
-      return "running";
-    case "running_late":
-    case "open":
-    case "open_almost_full":
-      return "running";
-    case "pending_thr":
-    case "closed_pre":
-    case "closed_pre_10s":
+  switch (state.kind) {
     case "full_closed":
     case "full_waitlist":
+    case "pending_thr":
+    case "closed_pre":
       return "pending";
-  }
-}
-
-// ---------- Registration state passed to the panel ----------
-
-function buildRegistrationState(
-  productType: ProductType,
-  stateKind: PreviewStateKind,
-  nowMs: number,
-): RegistrationState {
-  void productType;
-  switch (stateKind) {
-    case "closed_pre":
-      return {
-        kind: "closed_pre",
-        opensAt: new Date(nowMs + 2 * DAY_MS + 4 * HOUR_MS).toISOString(),
-      };
-    case "closed_pre_10s":
-      return {
-        kind: "closed_pre",
-        opensAt: new Date(nowMs + 10 * 1000).toISOString(),
-      };
     case "open":
-      return {
-        kind: "open",
-        seatCount: 12,
-        seatsLeft: 8,
-        waitlistEnabled: false,
-      };
-    case "open_almost_full":
-      return {
-        kind: "open",
-        seatCount: 12,
-        seatsLeft: 2,
-        waitlistEnabled: false,
-      };
-    case "pending_thr":
-      return { kind: "pending_thr", threshold: 8, count: 5 };
-    case "full_waitlist":
-      return { kind: "full_waitlist", seatCount: 12 };
-    case "full_closed":
-      return { kind: "full_closed", seatCount: 12 };
     case "running_late":
-      return { kind: "running_late" };
     case "ended":
-      return { kind: "ended" };
+      return "running";
   }
 }
