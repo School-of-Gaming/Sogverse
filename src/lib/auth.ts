@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { PIN_COOKIE_NAME, isPinTokenValid } from "@/lib/pin-session";
+// Imported from the service file (not the @/services/gedu barrel) so this
+// server module doesn't pull in the barrel's React Query hooks.
+import { isGeduVerified } from "@/services/gedu/gedu-profiles.service";
 import type { AuthenticatedUser, Profile, UserRole } from "@/types";
 
 type AuthSuccess<R extends UserRole> = {
@@ -38,7 +41,11 @@ function profileHasRole<R extends UserRole>(
  */
 export async function requireRole<const R extends UserRole>(
   allowedRoles: R | readonly R[],
-  options?: { forbiddenMessage?: string; allowUnverified?: boolean },
+  options?: {
+    forbiddenMessage?: string;
+    allowUnverified?: boolean;
+    requireVerifiedGedu?: boolean;
+  },
 ): Promise<AuthSuccess<R> | NextResponse> {
   const supabase = await createClient();
   // `getClaims()` verifies the JWT locally against the project's ES256 JWKS —
@@ -90,6 +97,35 @@ export async function requireRole<const R extends UserRole>(
     if (!verified) {
       return NextResponse.json(
         { error: "PIN verification required", code: "PIN_REQUIRED" },
+        { status: 403 },
+      );
+    }
+  }
+
+  // Verified-gedu gate: a handful of gedu actions are a security boundary that
+  // an unverified gedu must not cross — creating or ending an instant voice
+  // room. Opt-in per route via `requireVerifiedGedu` because most gedu routes
+  // intentionally allow unverified access (a new gedu has full platform access
+  // by design; verification gates only specific actions — see
+  // src/services/gedu/CLAUDE.md). Scoped to `role === "gedu"` so admins (and any
+  // other allowed role) always pass. Unlike the group-assignment gate (UI-only,
+  // admin-driven) this is gedu-initiated, so it must be enforced server-side.
+  if (profile.role === "gedu" && options?.requireVerifiedGedu) {
+    let verified: boolean;
+    try {
+      verified = await isGeduVerified(supabase, claims.sub);
+    } catch {
+      return NextResponse.json(
+        { error: "Failed to load educator verification status" },
+        { status: 500 },
+      );
+    }
+    if (!verified) {
+      return NextResponse.json(
+        {
+          error: "Your educator account is awaiting admin verification.",
+          code: "GEDU_UNVERIFIED",
+        },
         { status: 403 },
       );
     }

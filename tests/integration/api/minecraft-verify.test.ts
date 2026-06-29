@@ -1,13 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET } from "@/app/api/minecraft/verify/route";
-import { NextResponse } from "next/server";
 
 // --- Mocks ---
-
-const mockRequireRole = vi.fn();
-vi.mock("@/lib/auth", () => ({
-  requireRole: (...args: unknown[]) => mockRequireRole(...args),
-}));
+// The route is public (no requireRole) — it's a read-only passthrough to Mojang
+// used by the public /register-gedu page, so only the Mojang lookup is mocked.
 
 const mockLookupMinecraftUser = vi.fn();
 const mockIsValidMinecraftUsername = vi.fn();
@@ -18,14 +14,6 @@ vi.mock("@/lib/mojang", () => ({
 }));
 
 // --- Helpers ---
-
-function mockAuthenticated() {
-  mockRequireRole.mockResolvedValue({
-    user: { id: "user-123" },
-    profile: { role: "customer" },
-    supabase: {},
-  });
-}
 
 function createRequest(username?: string): Request {
   const url = username
@@ -44,26 +32,7 @@ describe("GET /api/minecraft/verify", () => {
     );
   });
 
-  it("should return 401 when unauthenticated", async () => {
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
-    );
-
-    const response = await GET(createRequest("Notch"));
-    expect(response.status).toBe(401);
-  });
-
-  it("should return 403 for non-customer/gamer roles", async () => {
-    mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: "Not authorized" }, { status: 403 }),
-    );
-
-    const response = await GET(createRequest("Notch"));
-    expect(response.status).toBe(403);
-  });
-
-  it("should accept customer, gamer, and gedu roles", async () => {
-    mockAuthenticated();
+  it("works without authentication (public registration uses it)", async () => {
     mockLookupMinecraftUser.mockResolvedValue({
       username: "Notch",
       uuid: "069a79f4-44e9-4726-a5be-fca90e38aaf5",
@@ -71,15 +40,9 @@ describe("GET /api/minecraft/verify", () => {
 
     const response = await GET(createRequest("Notch"));
     expect(response.status).toBe(200);
-    expect(mockRequireRole).toHaveBeenCalledWith(
-      ["customer", "gamer", "gedu"],
-      expect.any(Object),
-    );
   });
 
   it("should return 400 when username is missing", async () => {
-    mockAuthenticated();
-
     const response = await GET(createRequest());
     const data = await response.json();
 
@@ -88,8 +51,6 @@ describe("GET /api/minecraft/verify", () => {
   });
 
   it("should return 400 for invalid username format", async () => {
-    mockAuthenticated();
-
     const response = await GET(createRequest("ab")); // too short
     const data = await response.json();
 
@@ -98,7 +59,6 @@ describe("GET /api/minecraft/verify", () => {
   });
 
   it("should return 404 when Mojang finds no account", async () => {
-    mockAuthenticated();
     mockLookupMinecraftUser.mockResolvedValue(null);
 
     const response = await GET(createRequest("nonexistent_user"));
@@ -109,7 +69,6 @@ describe("GET /api/minecraft/verify", () => {
   });
 
   it("should return username and uuid on success", async () => {
-    mockAuthenticated();
     mockLookupMinecraftUser.mockResolvedValue({
       username: "Notch",
       uuid: "069a79f4-44e9-4726-a5be-fca90e38aaf5",

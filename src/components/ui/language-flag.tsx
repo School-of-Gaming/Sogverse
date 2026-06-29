@@ -1,6 +1,6 @@
 "use client";
 
-import flags from "react-phone-number-input/flags";
+import { FLAGS } from "@/components/ui/flags";
 import { cn, isKeyOf } from "@/lib/utils";
 
 // Spoken-language → country code mapping for flag display. Update when
@@ -15,7 +15,7 @@ export const SPOKEN_LANG_TO_COUNTRY: Record<string, string> = {
   en: "GB",
 };
 
-export type SpokenLanguageFlag = (typeof flags)[keyof typeof flags];
+export type SpokenLanguageFlag = (typeof FLAGS)[keyof typeof FLAGS];
 
 /** Lookup the flag component for a spoken-language code, or undefined.
  *  Suitable for callers that pass it as a prop into a JSX element — see
@@ -23,7 +23,7 @@ export type SpokenLanguageFlag = (typeof flags)[keyof typeof flags];
  *  use `<LanguageFlag>` instead, which renders inline. */
 export function getSpokenLanguageFlag(code: string): SpokenLanguageFlag | undefined {
   const country = SPOKEN_LANG_TO_COUNTRY[code];
-  return country && isKeyOf(flags, country) ? flags[country] : undefined;
+  return country && isKeyOf(FLAGS, country) ? FLAGS[country] : undefined;
 }
 
 interface LanguageFlagProps {
@@ -39,7 +39,7 @@ interface LanguageFlagProps {
 // of the locale picker in the site header so parents recognise it as a
 // language indicator at a glance.
 //
-// The `flags[country]` index expression — rather than the indirect
+// The `FLAGS[country]` index expression — rather than the indirect
 // `getSpokenLanguageFlag()` helper — is what keeps
 // `react-hooks/static-components` happy: the linter recognises a static
 // constant lookup but flags any function call that returns a component.
@@ -51,7 +51,7 @@ export function LanguageFlag({
 }: LanguageFlagProps) {
   const upper = code.toUpperCase();
   const country = SPOKEN_LANG_TO_COUNTRY[code];
-  const Flag = country && isKeyOf(flags, country) ? flags[country] : undefined;
+  const Flag = country && isKeyOf(FLAGS, country) ? FLAGS[country] : undefined;
   return (
     <span
       className={cn(

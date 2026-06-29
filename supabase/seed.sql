@@ -194,9 +194,13 @@ INSERT INTO auth.identities (
 UPDATE profiles SET role = 'admin' WHERE id = '00000000-0000-0000-0000-000000000001';
 DELETE FROM customer_profiles WHERE user_id = '00000000-0000-0000-0000-000000000001';
 
--- Promote gedu: update role, remove customer_profiles row the trigger created
+-- Promote gedu: update role, swap extension tables. Seed the gedu_profiles row
+-- as verified (mirrors the 00111 backfill that marked pre-existing gedus
+-- trusted) — the migration backfill ran before this account was seeded.
 UPDATE profiles SET role = 'gedu' WHERE id = '00000000-0000-0000-0000-000000000003';
 DELETE FROM customer_profiles WHERE user_id = '00000000-0000-0000-0000-000000000003';
+INSERT INTO gedu_profiles (user_id, verified, verified_at)
+VALUES ('00000000-0000-0000-0000-000000000003', true, now());
 
 -- Promote gamer: set role, swap extension tables. Keep the synthetic email the
 -- trigger seeded (testgamer@gamer.sogverse.internal) — gamers are email-first
@@ -236,11 +240,13 @@ INSERT INTO parent_gamer (id, parent_id, gamer_id) VALUES (
 -- Finland -> Uusimaa (region) -> Helsinki (municipality) -> Test School (site).
 -- The site is the leaf referenced by product-location tests.
 
-INSERT INTO locations (id, name, type, parent_id, country_code) VALUES
-  ('00000000-0000-0000-0000-000000000200', 'Finland',     'country',      NULL,                                   'FI'),
-  ('00000000-0000-0000-0000-000000000201', 'Uusimaa',     'region',       '00000000-0000-0000-0000-000000000200', 'FI'),
-  ('00000000-0000-0000-0000-000000000202', 'Helsinki',    'municipality', '00000000-0000-0000-0000-000000000201', 'FI'),
-  ('00000000-0000-0000-0000-000000000203', 'Test School', 'site',         '00000000-0000-0000-0000-000000000202', 'FI');
+-- name_i18n mirrors the migration backfill (00110): regions/municipalities carry
+-- their official Swedish name; sites and the country fall back to `name`.
+INSERT INTO locations (id, name, type, parent_id, country_code, name_i18n) VALUES
+  ('00000000-0000-0000-0000-000000000200', 'Finland',     'country',      NULL,                                   'FI', NULL),
+  ('00000000-0000-0000-0000-000000000201', 'Uusimaa',     'region',       '00000000-0000-0000-0000-000000000200', 'FI', '{"sv": "Nyland"}'),
+  ('00000000-0000-0000-0000-000000000202', 'Helsinki',    'municipality', '00000000-0000-0000-0000-000000000201', 'FI', '{"sv": "Helsingfors"}'),
+  ('00000000-0000-0000-0000-000000000203', 'Test School', 'site',         '00000000-0000-0000-0000-000000000202', 'FI', NULL);
 
 -- =============================================================================
 -- 6. Feedback Submissions

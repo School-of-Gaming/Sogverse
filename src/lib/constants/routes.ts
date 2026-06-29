@@ -40,8 +40,11 @@ function publicProductHref(productId: string): string {
  * `use-shop-category.ts` (the parser) — keep the two in sync.
  *
  * Types the shop doesn't surface fall back to the bare `/shop`:
- * - `municipality_club` — excluded from the storefront; muni clubs are reached
- *   only via a direct public link, never navigated to from within the site.
+ * - `municipality_club` — excluded from the storefront. A muni club opened from
+ *   its `/schools/<slug>` listing overrides the back link to return there (see
+ *   the municipality branch in `product-detail-page-body.tsx`); this fallback
+ *   only applies to a muni club reached by a bare `/shop/<id>` link with no
+ *   municipality context.
  * - `event` — intentionally deferred from this version of the shop (see
  *   `shop-browse.tsx`).
  */
@@ -102,6 +105,8 @@ export const ROUTES = {
   docs: "/docs",
   login: "/login",
   register: "/register",
+  /** Public gedu self-registration page (the gedu analogue of /register). */
+  registerGedu: "/register-gedu",
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
   // Landing page for the parent-PIN reset email link. Public (no session): the
@@ -109,9 +114,25 @@ export const ROUTES = {
   // `?token=` query param (NOT a Supabase recovery hash like resetPassword). The
   // token is single-use — bound to the current PIN hash; see pin-session.ts.
   resetPin: "/reset-pin",
-  setupAccount: "/setup-account",
   selectProfile: "/select-profile",
   help: "/help",
+  /** Public municipality-club discovery page — list + search of Finnish municipalities. */
+  schools: "/schools",
+  /**
+   * Per-municipality schools page, keyed by a name slug (`municipalitySlug`),
+   * e.g. `/schools/helsinki`. Resolves the canonical and every alternate-locale
+   * slug back to the same municipality (see `findMunicipalityBySlug`).
+   */
+  schoolMunicipality: (slug: string) => `/schools/${slug}`,
+  /**
+   * A municipality club's detail page reached from its `/schools/<slug>`
+   * listing — same detail UI as `/shop/[id]`, but nested under the slug so the
+   * back link can return to that municipality. Build the href with the slug the
+   * user is currently on (the URL param), not the canonical one, so the child
+   * URL stays in the same slug namespace as its parent.
+   */
+  schoolMunicipalityProduct: (slug: string, productId: string) =>
+    `/schools/${slug}/${productId}`,
   privacy: "/privacy",
   termsAndConditions: "/terms-and-conditions",
   antiBullying: "/anti-bullying-and-discipline",
@@ -137,7 +158,6 @@ export const ROUTES = {
   admin: {
     dashboard: "/admin",
     users: "/admin/users",
-    usersAdd: "/admin/users/add",
     user: (id: string) => `/admin/users/${id}`,
     product: adminProductHref,
     consumerClubs: "/admin/consumer-clubs",

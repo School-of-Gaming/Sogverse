@@ -26,6 +26,9 @@ export const updateLocationBody = z.object({
 export const locationRow = z.object({
   id: z.string(),
   name: z.string(),
+  // locale -> display-name overrides, e.g. { sv: "Helsingfors" }. Null/absent
+  // for the rows (most municipalities, every site) that have no alternate name.
+  name_i18n: z.record(z.string(), z.string()).nullable(),
   type: z.enum(Constants.public.Enums.location_type),
   parent_id: z.string().nullable(),
   country_code: z.string().nullable(),

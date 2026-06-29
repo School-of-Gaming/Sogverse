@@ -1,6 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
+import { useNow, useTimezone } from "@/providers";
 import { Clock, Globe, Languages, MapPin, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { LanguageFlag } from "@/components/ui/language-flag";
@@ -41,10 +42,12 @@ interface ProductOverviewCardProps {
 export function ProductOverviewCard({ product }: ProductOverviewCardProps) {
   const t = useTranslations("productDetail");
   const uiLocale = resolveLocale(useLocale());
+  const timeZone = useTimezone();
+  const now = useNow();
 
-  const schedule = formatProductSchedule({ product, locale: uiLocale });
+  const schedule = formatProductSchedule({ product, locale: uiLocale, timeZone, now });
   const scheduleLines = renderScheduleLinesForDetail(schedule);
-  const location = formatProductLocation(product);
+  const location = formatProductLocation(product, uiLocale);
 
   return (
     <Card>

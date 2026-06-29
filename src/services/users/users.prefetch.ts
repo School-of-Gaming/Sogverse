@@ -12,7 +12,7 @@ import type { SpokenLanguage } from "@/types";
  * which still refetches on mount.
  *
  * `spoken_languages` is anon-readable reference data, so this works before any
- * auth session exists (e.g. the invite-only setup-account page). On any failure
+ * auth session exists (e.g. the public register-gedu page). On any failure
  * it returns `[]` and the page still renders — the client hook refetches.
  *
  * Shop deliberately does NOT use this; it batches languages with products and

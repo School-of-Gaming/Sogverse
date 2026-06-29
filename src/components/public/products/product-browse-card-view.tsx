@@ -9,7 +9,8 @@ import { LanguageFlag } from "@/components/ui/language-flag";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { cn } from "@/lib/utils";
 import type { ProductPriceLine } from "./format-product-price";
-import { RegistrationPill, useRegistrationCta } from "./registration-pill";
+import { useRegistrationCta } from "./registration-cta";
+import { SeatAvailabilityBar } from "./seat-availability-bar";
 import type { RegistrationState } from "./derive-registration-state";
 
 // Pure presentational browse card. Takes already-resolved display props —
@@ -49,10 +50,24 @@ export interface ProductBrowseCardViewProps {
    */
   spokenLanguageCode: string;
   price: ProductPriceLine;
+  /**
+   * Municipality clubs are externally funded, so their footer shows a
+   * seat-fill bar instead of a price. Provide this (even with `total: null`)
+   * for a muni club to replace the price block; a `null` total — a muni club
+   * whose seat count isn't set yet — leaves the footer-left empty. Omit
+   * entirely for priced products (the shop), which keep the price block.
+   */
+  seatBar?: SeatBarValue;
   state: RegistrationState;
   /** Detail-page URL. The card's CTA + the whole card surface link here. */
   detailHref?: string;
 }
+
+export type SeatBarValue = {
+  filled: number;
+  total: number | null;
+  waitlistEnabled: boolean;
+};
 
 export type LocationLine = {
   kind: "in_person" | "online" | "online_muni";
@@ -74,6 +89,7 @@ export function ProductBrowseCardView({
   locationLine,
   spokenLanguageCode,
   price,
+  seatBar,
   state,
   detailHref,
 }: ProductBrowseCardViewProps) {
@@ -108,17 +124,14 @@ export function ProductBrowseCardView({
               </h3>
             </div>
 
-            {/* Topic label + registration pill share the row directly under
-                the title (option B per the spec). The pill keeps a
-                consistent right-edge anchor regardless of topic length. */}
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              {topicLabel && (
-                <p className="text-xs font-medium tracking-wide text-primary">
-                  {topicLabel}
-                </p>
-              )}
-              <RegistrationPill state={state} />
-            </div>
+            {/* Topic label sits directly under the title. Registration
+                state is surfaced by the seat-availability bar and footer
+                rather than an inline pill. */}
+            {topicLabel && (
+              <p className="text-xs font-medium tracking-wide text-primary">
+                {topicLabel}
+              </p>
+            )}
 
             <ul className="space-y-0.5 text-xs text-muted-foreground">
               {scheduleLines.map((line, idx) => (
@@ -158,8 +171,25 @@ export function ProductBrowseCardView({
               {t("endedNote")}
             </p>
           ) : (
-            <div className="flex items-end justify-between gap-2">
-              <PriceBlock price={price} />
+            <div className="flex items-end justify-between gap-6">
+              {/* Muni clubs swap the price for a seat-availability bar;
+                  everything else keeps the price. `seatBar` present (even with a
+                  null total) is the muni signal — a null total renders nothing,
+                  leaving the footer-left empty. */}
+              {seatBar !== undefined ? (
+                <SeatAvailabilityBar
+                  className="flex-1"
+                  seatCount={seatBar.total}
+                  seatsLeft={
+                    seatBar.total === null
+                      ? 0
+                      : Math.max(0, seatBar.total - seatBar.filled)
+                  }
+                  waitlistEnabled={seatBar.waitlistEnabled}
+                />
+              ) : (
+                <PriceBlock price={price} />
+              )}
               {cta &&
                 (cta.kind === "primary" && detailHref ? (
                   <Link

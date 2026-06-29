@@ -26,6 +26,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Field } from "@/components/ui/field";
@@ -39,7 +40,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Identicon } from "@/components/ui/identicon";
-import { AvatarPickerMockup } from "@/components/admin/avatar-picker-mockup";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { ParticipantRow, type ParticipantRowData } from "@/components/voice/ParticipantRow";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
@@ -61,8 +61,7 @@ import {
   ProductBrowseCardView,
   type ProductBrowseCardViewProps,
 } from "@/components/public/products/product-browse-card-view";
-import { RegistrationPill } from "@/components/public/products/registration-pill";
-import type { RegistrationState } from "@/components/public/products/derive-registration-state";
+import { SeatAvailabilityBar } from "@/components/public/products/seat-availability-bar";
 import { SignupPanel } from "@/components/public/products/signup-panel";
 import {
   buildDetailFixture,
@@ -254,26 +253,91 @@ function VoiceAvatarDemo() {
         </div>
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 text-xs">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={micOn}
               onChange={(e) => setMicOn(e.target.checked)}
-              className="accent-primary"
             />
             Mic on
           </label>
           <label className="flex items-center gap-2 text-xs">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={cameraOn}
               onChange={(e) => setCameraOn(e.target.checked)}
-              className="accent-primary"
             />
             Camera on
           </label>
         </div>
       </div>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Checkbox Demo                                                      */
+/* ------------------------------------------------------------------ */
+
+function CheckboxDemo() {
+  const [agreed, setAgreed] = useState(true);
+  const [newsletter, setNewsletter] = useState(false);
+  const [boxed, setBoxed] = useState(true);
+
+  return (
+    <>
+      <SubSection title="States">
+        <div className="flex flex-wrap items-center gap-6">
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <Checkbox
+              checked={newsletter}
+              onChange={(e) => setNewsletter(e.target.checked)}
+            />
+            Unchecked / checked (toggle me)
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-not-allowed opacity-60">
+            <Checkbox checked={false} disabled />
+            Disabled
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-not-allowed opacity-60">
+            <Checkbox checked disabled />
+            Disabled (checked)
+          </label>
+        </div>
+      </SubSection>
+
+      <SubSection title="Multi-line label — top-aligned with mt-0.5">
+        <label className="flex max-w-md items-start gap-2 text-xs cursor-pointer">
+          <Checkbox
+            className="mt-0.5"
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+          />
+          <span className="text-muted-foreground">
+            By registering I agree to the program rules and the cancellation
+            policy. This label wraps onto multiple lines, so the box pins to the
+            first line rather than centering on the whole block.
+          </span>
+        </label>
+      </SubSection>
+
+      <SubSection title="Boxed gate — reacts to checked state (signup panel pattern)">
+        <label
+          className={`flex max-w-md cursor-pointer items-start gap-3 rounded-md border p-3 text-xs transition-colors ${
+            boxed
+              ? "border-primary bg-primary/5"
+              : "border-input hover:bg-accent/50"
+          }`}
+        >
+          <Checkbox
+            className="mt-0.5"
+            checked={boxed}
+            onChange={(e) => setBoxed(e.target.checked)}
+          />
+          <span className="text-muted-foreground">
+            The container border lights to primary once checked, giving the
+            required agreement visible weight instead of reading as fine print.
+          </span>
+        </label>
+      </SubSection>
+    </>
   );
 }
 
@@ -893,42 +957,8 @@ function buildLoadedSessions(
 }
 
 /* ------------------------------------------------------------------ */
-/*  Products (browse + purchased cards, registration pill)             */
+/*  Products (browse + purchased cards)                                 */
 /* ------------------------------------------------------------------ */
-
-// Every state where the pill earns a row. Default-open is intentionally
-// excluded — the pill returns null in that case (the Sign-up button
-// alone says everything a parent needs).
-const DEMO_REGISTRATION_STATES: { label: string; state: RegistrationState }[] = [
-  {
-    label: "Almost full · 2 spots left",
-    state: { kind: "open", seatCount: 8, seatsLeft: 2, waitlistEnabled: false },
-  },
-  {
-    label: "Needs more sign-ups (threshold)",
-    state: { kind: "pending_thr", threshold: 6, count: 2 },
-  },
-  {
-    label: "Full · waitlist open",
-    state: { kind: "full_waitlist", seatCount: 8 },
-  },
-  {
-    label: "Full · closed",
-    state: { kind: "full_closed", seatCount: 8 },
-  },
-  {
-    label: "Sign-ups open later",
-    state: { kind: "closed_pre", opensAt: "2026-05-15T00:00:00Z" },
-  },
-  {
-    label: "Already started (camp/event)",
-    state: { kind: "running_late" },
-  },
-  {
-    label: "Ended",
-    state: { kind: "ended" },
-  },
-];
 
 // One sample of each price shape so the price block is exercised across
 // the demo browse cards.
@@ -945,14 +975,14 @@ const SAMPLE_PRICE_FREE: ProductBrowseCardViewProps["price"] = { kind: "free" };
 // Browse-card display props for each state we want to render in full.
 const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] = [
   {
-    label: "Default · plenty of seats (no pill)",
+    label: "Default · plenty of seats",
     props: {
       name: "Tuesday Minecraft Builders",
       description:
         "Weekly creative sessions where your gamer collaborates with new friends and a Gedu who really gets it.",
-      imagePath: "demo-placeholder.svg",
+      imagePath: null,
       topicLabel: "MINECRAFT",
-      scheduleLines: ["Tuesday · 17:00–18:30 (EET)"],
+      scheduleLines: ["Tuesday · 17:00–18:30"],
       ageLine: "Ages 8–12",
       seatsHint: { kind: "capacity", count: 8 },
       locationLine: { kind: "online", label: "Online" },
@@ -967,9 +997,9 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       name: "Wednesday Roblox Crew",
       description:
         "Build, race, and collab with your crew — small group with regular faces every week.",
-      imagePath: "demo-placeholder.svg",
+      imagePath: null,
       topicLabel: "ROBLOX",
-      scheduleLines: ["Wednesday · 17:00–18:30 (EET)"],
+      scheduleLines: ["Wednesday · 17:00–18:30"],
       ageLine: "Ages 9–13",
       seatsHint: { kind: "capacity", count: 8 },
       locationLine: { kind: "in_person", label: "Tapiolan koulu" },
@@ -984,9 +1014,9 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       name: "Spring Roblox Build-Off",
       description:
         "Group challenge that runs once enough builders sign up — gather your crew and we'll lock in a start date.",
-      imagePath: "demo-placeholder.svg",
+      imagePath: null,
       topicLabel: "ROBLOX",
-      scheduleLines: ["24–28 March (EET)", "10:00–14:00"],
+      scheduleLines: ["24–28 March", "10:00–14:00"],
       ageLine: "Ages 9–14",
       seatsHint: null,
       locationLine: { kind: "online_muni", label: "Espoo" },
@@ -1001,9 +1031,9 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       name: "Friday Family Fortnite",
       description:
         "Drop-in event for parents and gamers — light competition, lots of laughter.",
-      imagePath: "demo-placeholder.svg",
+      imagePath: null,
       topicLabel: "FORTNITE",
-      scheduleLines: ["Friday 12 April · 18:00–20:00 (EET)"],
+      scheduleLines: ["Friday 12 April · 18:00–20:00"],
       ageLine: "Ages 10+",
       seatsHint: { kind: "capacity", count: 12 },
       locationLine: { kind: "in_person", label: "Iso Omena" },
@@ -1018,9 +1048,9 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       name: "Summer Adventure Camp",
       description:
         "A week-long story-driven adventure across multiple games. Sign-ups open soon.",
-      imagePath: "demo-placeholder.svg",
+      imagePath: null,
       topicLabel: "ADVENTURE",
-      scheduleLines: ["12–16 August (EET)", "10:00–15:00"],
+      scheduleLines: ["12–16 August", "10:00–15:00"],
       ageLine: "Ages 9–13",
       seatsHint: { kind: "capacity", count: 16 },
       locationLine: { kind: "in_person", label: "Sogverse HQ" },
@@ -1035,9 +1065,9 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       name: "April Roblox Camp",
       description:
         "Already underway — late joins aren't supported once a camp is running.",
-      imagePath: "demo-placeholder.svg",
+      imagePath: null,
       topicLabel: "ROBLOX",
-      scheduleLines: ["20–24 April (EET)", "10:00–14:00"],
+      scheduleLines: ["20–24 April", "10:00–14:00"],
       ageLine: "Ages 8–12",
       seatsHint: { kind: "capacity", count: 10 },
       locationLine: { kind: "in_person", label: "Ressun peruskoulu" },
@@ -1051,15 +1081,35 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
     props: {
       name: "March Holiday Tournament",
       description: "This event has wrapped — keep an eye out for the next one.",
-      imagePath: "demo-placeholder.svg",
+      imagePath: null,
       topicLabel: "FORTNITE",
-      scheduleLines: ["Saturday 22 March · 14:00–17:00 (EET)"],
+      scheduleLines: ["Saturday 22 March · 14:00–17:00"],
       ageLine: "Ages 10+",
       seatsHint: null,
       locationLine: { kind: "in_person", label: "Tampere-talo" },
       spokenLanguageCode: "en",
       price: SAMPLE_PRICE_UPFRONT,
       state: { kind: "ended" },
+    },
+  },
+  {
+    // Municipality club: seat-fill bar replaces the price (externally funded),
+    // and the location reads generic "Online" on its single-municipality page.
+    label: "Municipality club · seat bar",
+    props: {
+      name: "Tapiola Minecraft Club",
+      description:
+        "Weekly in-school sessions funded by the municipality — free for families to register.",
+      imagePath: null,
+      topicLabel: "Minecraft",
+      scheduleLines: ["Thursday · 15:00–16:30"],
+      ageLine: "Ages 10–12",
+      seatsHint: { kind: "capacity", count: 15 },
+      locationLine: { kind: "online", label: "Online" },
+      spokenLanguageCode: "fi",
+      price: { kind: "external" },
+      seatBar: { filled: 11, total: 15, waitlistEnabled: false },
+      state: { kind: "open", seatCount: 15, seatsLeft: 4, waitlistEnabled: false },
     },
   },
 ];
@@ -1076,39 +1126,75 @@ function DemoCaption({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Each example pins concrete seat numbers so the bar's fill + color + full
+// state are all visible at a glance. The bar tracks seats *remaining*: full
+// bar = empty club, empty bar = full club.
+const SEAT_DEMO_CASES: {
+  label: string;
+  seatCount: number;
+  seatsLeft: number;
+  waitlistEnabled: boolean;
+}[] = [
+  {
+    label: "Empty — 15 of 15",
+    seatCount: 15,
+    seatsLeft: 15,
+    waitlistEnabled: false,
+  },
+  {
+    label: "Filling — 7 of 15",
+    seatCount: 15,
+    seatsLeft: 7,
+    waitlistEnabled: false,
+  },
+  {
+    label: "Almost full — 2 of 15",
+    seatCount: 15,
+    seatsLeft: 2,
+    waitlistEnabled: true,
+  },
+  {
+    label: "Full, no waitlist — 0 of 15",
+    seatCount: 15,
+    seatsLeft: 0,
+    waitlistEnabled: false,
+  },
+  {
+    label: "Full, waitlist — 0 of 15",
+    seatCount: 15,
+    seatsLeft: 0,
+    waitlistEnabled: true,
+  },
+];
+
+function SeatAvailabilityDemo() {
+  return (
+    <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+      {SEAT_DEMO_CASES.map((c) => (
+        <div key={c.label} className="flex flex-col gap-2">
+          <DemoCaption>{c.label}</DemoCaption>
+          <div className="max-w-[260px] rounded-md border p-3">
+            <SeatAvailabilityBar
+              seatCount={c.seatCount}
+              seatsLeft={c.seatsLeft}
+              waitlistEnabled={c.waitlistEnabled}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function ProductsDemo() {
   return (
-    <div className="space-y-8">
-      <SubSection title="Pill — every state">
-        <p className="text-sm text-muted-foreground mb-3">
-          The pill speaks parent voice and only renders when there&rsquo;s something
-          actionable or urgency-creating to say. Default-open (&ldquo;you can sign up&rdquo;)
-          gets no pill — the Sign-up button alone says everything a parent needs.
-        </p>
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-          {DEMO_REGISTRATION_STATES.map(({ label, state }) => (
-            <div key={label} className="flex flex-col gap-1.5">
-              <DemoCaption>{label}</DemoCaption>
-              <RegistrationPill state={state} />
-            </div>
-          ))}
+    <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+      {BROWSE_DEMO_CARDS.map(({ label, props }) => (
+        <div key={label} className="flex flex-col gap-2">
+          <DemoCaption>{label}</DemoCaption>
+          <ProductBrowseCardView {...props} />
         </div>
-      </SubSection>
-
-      <SubSection title="Browse cards (in context)">
-        <p className="text-sm text-muted-foreground mb-4">
-          Full card with the pill inline next to the topic label. Each example
-          renders one of the registration states the deriver returns.
-        </p>
-        <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
-          {BROWSE_DEMO_CARDS.map(({ label, props }) => (
-            <div key={label} className="flex flex-col gap-2">
-              <DemoCaption>{label}</DemoCaption>
-              <ProductBrowseCardView {...props} />
-            </div>
-          ))}
-        </div>
-      </SubSection>
+      ))}
     </div>
   );
 }
@@ -1278,7 +1364,15 @@ export default function AdminUIComponentsPage() {
             correct autocomplete token (given-name, family-name, tel,
             new-password, …) so autofill and accessibility work properly.
           */}
-          <div className="grid gap-6 md:grid-cols-2 max-w-2xl">
+          {/*
+            A <form> wrapper (submit prevented — this is a demo) so the password
+            field has a form ancestor. Chrome warns on form-less password inputs
+            because password managers anchor their save/fill UI to the form.
+          */}
+          <form
+            className="grid gap-6 md:grid-cols-2 max-w-2xl"
+            onSubmit={(e) => e.preventDefault()}
+          >
             <Field label="First name" htmlFor="demo-field-required">
               <Input id="demo-field-required" placeholder="e.g. Jane" autoComplete="off" />
             </Field>
@@ -1292,7 +1386,7 @@ export default function AdminUIComponentsPage() {
             >
               <Input id="demo-field-hint" type="password" autoComplete="new-password" />
             </Field>
-          </div>
+          </form>
         </SubSection>
 
         <SubSection title="Textarea — the multi-line control">
@@ -1323,6 +1417,13 @@ export default function AdminUIComponentsPage() {
             </Field>
           </div>
         </SubSection>
+      </Section>
+
+      {/* ============================================================ */}
+      {/* Section: Checkbox                                             */}
+      {/* ============================================================ */}
+      <Section title="Checkbox">
+        <CheckboxDemo />
       </Section>
 
       {/* ============================================================ */}
@@ -1365,23 +1466,6 @@ export default function AdminUIComponentsPage() {
               <span className="text-xs text-muted-foreground">48px</span>
             </div>
           </div>
-        </SubSection>
-
-        <SubSection title="Avatar Picker — icon + color (mockup)">
-          <p className="text-sm text-muted-foreground mb-4">
-            Exploration to replace the deterministic identicon: users pick a
-            Lucide icon and a background color. Icons avoid the four Yty
-            elements (Heart/Sun/Sword/Brain) and the Minecraft pickaxe. Colors
-            span a full vibrant wheel — an avatar is an identity tile, not a
-            status signal, so (per the Google/Slack/Apple convention) it may
-            reuse hues that mean something elsewhere; each shade is nudged off
-            its exact semantic token, with deliberate gaps at yellow
-            (brand/warning-locked + poor light-theme contrast) and mid-blue
-            (reads as info). Rendered with the app&rsquo;s soft-tint
-            icon-circle pattern (bg-X/15 + text-X). Nothing here is wired to a
-            profile yet — it&rsquo;s purely to play with the lists.
-          </p>
-          <AvatarPickerMockup />
         </SubSection>
       </Section>
 
@@ -1635,35 +1719,33 @@ export default function AdminUIComponentsPage() {
             ))}
           </div>
         </SubSection>
-
-        {/* -- Loading Skeleton -- */}
-        <SubSection title="Loading Skeleton">
-          <div className="space-y-4">
-            {[1, 2].map((i) => (
-              <div
-                key={i}
-                className="flex items-center gap-4 rounded-lg border p-4 animate-pulse"
-              >
-                <div className="h-16 w-16 rounded bg-muted" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 w-32 rounded bg-muted" />
-                  <div className="h-3 w-48 rounded bg-muted" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </SubSection>
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 11: Products (parent browse + purchased)              */}
+      {/* Section 11: Seat Availability Bar                             */}
+      {/* ============================================================ */}
+      <Section title="Seat Availability Bar">
+        <p className="text-sm text-muted-foreground -mt-2">
+          Shared seat-availability bar for product cards and the detail-page
+          signup panel. The bar tracks seats <em>remaining</em> — an empty club
+          starts full and drains as it fills — so it reads as &ldquo;room left,&rdquo;
+          not &ldquo;how full.&rdquo; Color escalates with scarcity (green &rarr;
+          yellow at &le;2 left); at zero there&rsquo;s no fill to color, so the
+          full state is carried by text/badge, where the waiting list is surfaced.
+        </p>
+        <SeatAvailabilityDemo />
+      </Section>
+
+      {/* ============================================================ */}
+      {/* Section 12: Products (parent browse + purchased)             */}
       {/* ============================================================ */}
       <Section title="Products — Browse Cards">
         <p className="text-sm text-muted-foreground -mt-2">
           Parent-facing card surface for products in the shop (/shop). Every
-          product renders the same browse card whether or not the customer
-          owns it. The registration pill speaks parent voice and only appears
-          when there&rsquo;s something actionable to say.
+          product renders the same browse card whether or not the customer owns
+          it. One card per registration state the deriver returns — the CTA
+          button and (for muni clubs) the seat-availability bar carry the state
+          signal.
         </p>
         <ProductsDemo />
       </Section>
@@ -1733,10 +1815,12 @@ function fixtureLocation(
   name: string,
   type: Location["type"],
   parent_id: string | null,
+  name_i18n: Location["name_i18n"] = null,
 ): Location {
   return {
     id,
     name,
+    name_i18n,
     type,
     parent_id,
     country_code: "FI",
@@ -1745,13 +1829,19 @@ function fixtureLocation(
   };
 }
 
+// A couple of rows carry their Swedish name so the tree demo shows localized
+// display (the names render in the viewer's locale via localizedLocationName).
 const LOCATION_FIXTURE: Location[] = [
   fixtureLocation("fi", "Finland", "country", null),
-  fixtureLocation("uusimaa", "Uusimaa", "region", "fi"),
-  fixtureLocation("helsinki", "Helsinki", "municipality", "uusimaa"),
+  fixtureLocation("uusimaa", "Uusimaa", "region", "fi", { sv: "Nyland" }),
+  fixtureLocation("helsinki", "Helsinki", "municipality", "uusimaa", {
+    sv: "Helsingfors",
+  }),
   fixtureLocation("hki-site", "Itälahdenkatu 23 B", "site", "helsinki"),
-  fixtureLocation("espoo", "Espoo", "municipality", "uusimaa"),
-  fixtureLocation("pirkanmaa", "Pirkanmaa", "region", "fi"),
+  fixtureLocation("espoo", "Espoo", "municipality", "uusimaa", { sv: "Esbo" }),
+  fixtureLocation("pirkanmaa", "Pirkanmaa", "region", "fi", {
+    sv: "Birkaland",
+  }),
   fixtureLocation("tampere", "Tampere", "municipality", "pirkanmaa"),
   fixtureLocation("tre-site", "Sampola", "site", "tampere"),
 ];

@@ -6,6 +6,20 @@ import { POST } from "@/app/api/voice/instant/token/route";
 const mockGetUserWithProfile = vi.fn();
 vi.mock("@/lib/supabase/server", () => ({
   getUserWithProfile: () => mockGetUserWithProfile(),
+  // `instantRoomModerator` (the route's auth-detection helper) opens a fresh
+  // client only to read the gedu's verification row; `isGeduVerified` is mocked
+  // below, so the client is just an opaque handle.
+  createClient: vi.fn(async () => ({})),
+}));
+
+// Verification is the mod boundary: an unverified gedu must be demoted to the
+// guest path. These mocks compose through the real `instantRoomModerator`
+// helper, so the route's owner-eligibility decision is exercised end-to-end.
+// Default verified=true so the existing mod-path tests still see a gedu as an
+// owner; the unverified cases override per-test.
+const mockIsGeduVerified = vi.fn();
+vi.mock("@/services/gedu/gedu-profiles.service", () => ({
+  isGeduVerified: (...args: unknown[]) => mockIsGeduVerified(...args),
 }));
 
 const mockCreateMeetingToken = vi.fn();
@@ -54,6 +68,7 @@ describe("POST /api/voice/instant/token", () => {
     process.env.NEXT_PUBLIC_DAILY_DOMAIN = "testdomain";
     mockCreateMeetingToken.mockResolvedValue("mock-daily-token");
     mockGetDailyRoom.mockResolvedValue({ name: "K7P2" });
+    mockIsGeduVerified.mockResolvedValue(true);
   });
 
   afterEach(() => {
@@ -210,6 +225,50 @@ describe("POST /api/voice/instant/token", () => {
       );
       const data = await response.json();
       expect(data.displayName).toBe("Profile Admin");
+    });
+
+    it("does not consult verification for an admin (admins are always trusted)", async () => {
+      authenticated("admin", { id: "admin-1", firstName: "Admin User" });
+      await POST(createTokenRequest({ code: "K7P2" }));
+      expect(mockIsGeduVerified).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("unverified gedu — demoted to guest", () => {
+    it("issues a non-owner token for an unverified gedu", async () => {
+      authenticated("gedu", { id: "gedu-1", firstName: "Educator" });
+      mockIsGeduVerified.mockResolvedValue(false);
+      const response = await POST(
+        createTokenRequest({ code: "K7P2", displayName: "Lobby Name" }),
+      );
+      expect(response.status).toBe(200);
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({ isOwner: false }),
+      );
+      const data = await response.json();
+      expect(data.role).toBe("guest");
+      // Guest path uses the lobby-supplied name, not the profile name.
+      expect(data.displayName).toBe("Lobby Name");
+    });
+
+    it("requires a guest displayName from an unverified gedu (no profile-name fallback)", async () => {
+      authenticated("gedu", { id: "gedu-1", firstName: "Educator" });
+      mockIsGeduVerified.mockResolvedValue(false);
+      const response = await POST(createTokenRequest({ code: "K7P2" }));
+      expect(response.status).toBe(400);
+    });
+
+    it("fails closed to guest when the verification lookup throws", async () => {
+      authenticated("gedu", { id: "gedu-1", firstName: "Educator" });
+      mockIsGeduVerified.mockRejectedValue(new Error("db down"));
+      const response = await POST(
+        createTokenRequest({ code: "K7P2", displayName: "Lobby Name" }),
+      );
+      expect(response.status).toBe(200);
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({ isOwner: false }),
+      );
+      expect((await response.json()).role).toBe("guest");
     });
   });
 

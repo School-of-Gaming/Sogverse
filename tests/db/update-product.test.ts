@@ -23,6 +23,10 @@ import { deleteTestProducts } from "./product-helpers";
  */
 
 const PRODUCT_ID = "00000000-0000-0000-0000-0000000005f1";
+// A municipality club, used only by the municipality-fee CHECK tests (the fee
+// is meaningless on the consumer-club PRODUCT_ID and rejected by the muni-only
+// constraint). Muni clubs need a location, so it points at the seeded one.
+const MUNI_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f2";
 
 describe("update_product", () => {
   let admin: SupabaseClient<Database>;
@@ -32,7 +36,7 @@ describe("update_product", () => {
   });
 
   afterAll(async () => {
-    await deleteTestProducts(admin, [PRODUCT_ID]);
+    await deleteTestProducts(admin, [PRODUCT_ID, MUNI_PRODUCT_ID]);
   });
 
   // Recreate a fresh product before each path so we're testing update,
@@ -329,5 +333,104 @@ describe("update_product", () => {
       long_description: "not an array",
     });
     expect(error?.code).toBe("23514"); // check_violation
+  });
+
+  // Per-session fees (00112). The RPC threads the three columns through; the
+  // table CHECKs are the backstop the client form also enforces (gedu >= 0,
+  // muni > 0 and muni-only).
+  it("round-trips per-session fees through update_product", async () => {
+    await freshProduct();
+
+    const { error } = await admin.rpc("update_product", {
+      p_id: PRODUCT_ID,
+      p_billing_mode: "paid",
+      p_translations: [{ locale: "en", name: "Fees", short_description: "" }],
+      p_topic: "minecraft_java",
+      p_min_age: 7,
+      p_max_age: 12,
+      p_spoken_language_code: "en",
+      p_is_remote: true,
+      p_timezone: "Europe/Helsinki",
+      p_registration_opens_at: new Date().toISOString(),
+      p_seat_count: 10,
+      // fee → cents, volunteer → 0. The muni-only column is left unset (the
+      // RPC defaults it to NULL); the muni round-trip lives in the muni test.
+      p_primary_gedu_fee_cents: 2500,
+      p_assistant_gedu_fee_cents: 0,
+    });
+    expect(error).toBeNull();
+
+    const { data: row } = await admin
+      .from("products")
+      .select(
+        "primary_gedu_fee_cents, assistant_gedu_fee_cents, municipality_fee_cents",
+      )
+      .eq("id", PRODUCT_ID)
+      .single();
+    expect(row).toEqual({
+      primary_gedu_fee_cents: 2500,
+      assistant_gedu_fee_cents: 0,
+      municipality_fee_cents: null,
+    });
+  });
+
+  it("rejects a negative gedu fee via the CHECK constraint", async () => {
+    await freshProduct();
+    // Direct update — admin bypasses RLS but not products_primary_gedu_fee_cents_check
+    // (NULL or >= 0). The form never produces this; the contract now also
+    // rejects it, leaving the CHECK as the last line.
+    const { error } = await admin
+      .from("products")
+      .update({ primary_gedu_fee_cents: -1 })
+      .eq("id", PRODUCT_ID);
+    expect(error?.code).toBe("23514"); // check_violation
+  });
+
+  it("rejects a municipality fee on a non-municipality product", async () => {
+    await freshProduct(); // consumer_club
+    // chk_products_municipality_fee_only_for_muni — the sole server-side guard
+    // of the invariant the form enforces by forcing the column to null for
+    // every non-muni type.
+    const { error } = await admin
+      .from("products")
+      .update({ municipality_fee_cents: 5000 })
+      .eq("id", PRODUCT_ID);
+    expect(error?.code).toBe("23514"); // check_violation
+  });
+
+  it("accepts a positive but rejects a zero municipality fee on a muni club", async () => {
+    await deleteTestProducts(admin, [MUNI_PRODUCT_ID]);
+    await admin.from("products").insert({
+      id: MUNI_PRODUCT_ID,
+      product_type: "municipality_club",
+      billing_mode: "external_contract",
+      topic: "minecraft_java",
+      min_age: 7,
+      max_age: 12,
+      spoken_language_code: "en",
+      is_remote: true,
+      location_id: TEST_IDS.LOCATION_MUNICIPALITY, // muni clubs need a location
+      timezone: "Europe/Helsinki",
+      registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+      seat_count: 10,
+      waitlist_enabled: false,
+      status: "draft", // draft sidesteps the non-consumer end-date requirement
+      is_visible: false,
+      created_by: TEST_IDS.ADMIN,
+    });
+
+    const positive = await admin
+      .from("products")
+      .update({ municipality_fee_cents: 4000 })
+      .eq("id", MUNI_PRODUCT_ID);
+    expect(positive.error).toBeNull();
+
+    // products_municipality_fee_cents_check — NULL or > 0, never 0 (a
+    // municipality always pays).
+    const zero = await admin
+      .from("products")
+      .update({ municipality_fee_cents: 0 })
+      .eq("id", MUNI_PRODUCT_ID);
+    expect(zero.error?.code).toBe("23514"); // check_violation
   });
 });

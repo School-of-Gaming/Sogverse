@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
 import { lookupMinecraftUser, isValidMinecraftUsername } from "@/lib/mojang";
 
+// Public, unauthenticated: a read-only passthrough to Mojang's public
+// username→UUID API (no DB access, no secrets). The public gedu registration
+// page (/register-gedu) verifies a Minecraft username before any account
+// exists, so this can't require a session. The shared MinecraftUsernameField
+// uses it from authed pages too.
 export async function GET(request: Request) {
   try {
-    const result = await requireRole(["customer", "gamer", "gedu"], {
-      forbiddenMessage: "Not authorized",
-    });
-    if (result instanceof NextResponse) return result;
-
     const { searchParams } = new URL(request.url);
     const username = searchParams.get("username");
 

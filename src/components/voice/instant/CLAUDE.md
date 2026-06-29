@@ -1,10 +1,10 @@
 # Instant Voice Rooms
 
-On-the-fly voice rooms any admin or gedu can spin up, share via a short URL, and let anyone (signed-in or not) join. Distinct from the schedule-driven group voice rooms — those are documented in `../CLAUDE.md`.
+On-the-fly voice rooms any admin or *verified* gedu can spin up, share via a short URL, and let anyone (signed-in or not) join. Distinct from the schedule-driven group voice rooms — those are documented in `../CLAUDE.md`.
 
 ## Flow
 
-A moderator (admin or gedu) creates a room from `/admin/voice` or `/gedu`. The server allocates a 4-character code, asks Daily.co to create a room named with that code, and returns the code. The dashboard shows a copyable URL chip + a Join button. The mod shares `/voice/{CODE}` with whoever should join. Anyone with the link joins, no account required. The room dies when a mod clicks "End for everyone" or after the room's `exp` (8h), whichever comes first.
+A moderator (admin or verified gedu) creates a room from `/admin/voice` or `/gedu`. The server allocates a 4-character code, asks Daily.co to create a room named with that code, and returns the code. The dashboard shows a copyable URL chip + a Join button. The mod shares `/voice/{CODE}` with whoever should join. Anyone with the link joins, no account required. The room dies when a mod clicks "End for everyone" or after the room's `exp` (8h), whichever comes first.
 
 ## No database
 
@@ -30,9 +30,33 @@ Auth is detected server-side at the token endpoint and **never** trusted from th
 
 | Visitor | `is_owner` | Identity | Permissions |
 |---|---|---|---|
-| Signed-in admin / gedu | true | `profile.id`, `profile.first_name` | Full mod (mute, lock, screen-share, end) |
+| Signed-in admin / **verified** gedu | true | `profile.id`, `profile.first_name` | Full mod (mute, lock, screen-share, end) |
+| Signed-in **unverified** gedu | false | server UUID + lobby name | Guest — verification is the mod boundary |
 | Signed-in parent / gamer | false | server UUID + lobby name | Guest — auth ignored |
 | Signed-out | false | server UUID + lobby name | Guest |
+
+**Rule: An unverified gedu is not a moderator here.** A gedu self-registers with broad
+platform access but stays unverified until an admin approves them (see
+`../../../services/gedu/CLAUDE.md`), and moderating an instant room is gedu-initiated — so
+the gate is **server-side**, on all three mod surfaces: `create` and `end` 403 (via
+`requireVerifiedGedu` on `requireRole`), and the public `token` route demotes an unverified
+gedu to the guest path (no `is_owner`), failing closed to guest on any verification-lookup
+error. The check is `isGeduVerified` (`../../../services/gedu/gedu-profiles.service.ts`).
+
+Two UX surfaces mirror the boundary (UX only — the server gates above are the real
+boundary): the `/gedu` dashboard hides the create card and shows an "awaiting verification"
+notice; and the join lobby decides guest-vs-mod from a **server-computed** `isModerator`
+prop threaded down from the `/voice/[code]` page, *not* the client-side `profile.role`. That
+distinction matters — the client role can't see gedu verification, so deriving it
+client-side would show an unverified gedu the mod UI (no name input) and then bounce them
+off the token route's guest-name requirement with a 400.
+
+**One predicate, two surfaces.** The owner-eligibility decision (admin or verified gedu →
+moderator identity, else guest) lives in a single `instantRoomModerator`
+(`../../../lib/voice/instant-room-moderator.ts`). The token route mints the owner token
+from the identity it returns; the `/voice/[code]` page treats a null result as a guest. They
+share it so the minted token and the lobby UI can never disagree — re-deriving the rule on
+each side is exactly what would 400-bounce an unverified gedu.
 
 A voice "guest" is permission-equivalent to a gamer: no mute/lock/screen-share/broadcast/deafen, can only move themselves between zones. The voice role union is `UserRole | "guest"` — `"guest"` is display-only; all gating uses positive `role === "admin" || role === "gedu"` mod checks, so guest behavior falls out for free. Instant rooms have no group, so they get the lobby + 4 Yty zones only — no custom or locked zones (`VoiceRoomProvider` is passed `groupId={null}`).
 
@@ -45,7 +69,7 @@ The room is open by design; defenses target privilege escalation and bounding bl
 - **Daily-signed `is_owner` is the real authority.** Tokens are signed with `DAILY_API_KEY` server-side; nothing client-supplied confers mod power. Display-name role badges (if any) are cosmetic.
 - **Display-name pipe injection.** Daily `user_name` is encoded `userId|role|displayName`. `buildUserName` strips `|` from the display name so a guest can't inject a fake role slot. Cosmetic-only fix (the signed token wins) but keep it.
 - **Guest UUIDs are server-generated** via `crypto.randomUUID()` so a guest can't choose a UUID that yields a targeted identicon. The lobby's preview identicon uses a throwaway client UUID and intentionally won't match the in-call one — identicons are abstract, not identity.
-- **Create / end require admin or gedu** (`requireRole(["admin","gedu"])`). End has no per-room ownership check — any mod with the code can end any room (mods are trusted; there's no room-ownership concept). End treats a Daily 404 as a no-op success.
+- **Create / end require admin or a verified gedu** (`requireRole(["admin","gedu"], { requireVerifiedGedu: true })`). End has no per-room ownership check — any mod with the code can end any room (mods are trusted; there's no room-ownership concept). End treats a Daily 404 as a no-op success.
 - **Code enumeration** is a real but bounded risk: brute-forcing ~1M codes finds active rooms, but a hit only joins as a guest and a mod can end the call. Per-IP rate limiting on the token endpoint is the mitigation (not yet built).
 - **CSRF on the public token endpoint** doesn't meaningfully apply: it's unauthenticated, mints only a public-room token, and SameSite=Lax keeps the admin session off cross-site POSTs. Accepted.
 
@@ -53,17 +77,17 @@ The room is open by design; defenses target privilege escalation and bounding bl
 
 | Route | Method | Auth | Notes |
 |---|---|---|---|
-| `create` | POST | admin/gedu | No body. Mints code, creates Daily room with `exp = now + INSTANT_ROOM_EXP_SECONDS`, retries on duplicate name. Returns `{ code }`. |
+| `create` | POST | admin / verified gedu | No body. Mints code, creates Daily room with `exp = now + INSTANT_ROOM_EXP_SECONDS`, retries on duplicate name. Returns `{ code }`. Unverified gedu → 403 `GEDU_UNVERIFIED`. |
 | `token` | POST | **public** | Body `{ code, displayName, micOn, cameraOn }`. Validates code, detects auth, verifies the Daily room exists (404 → `{ error: "room_not_found", code }`), mints a token. `displayName` required + length-checked on the guest path, ignored for mods. Returns `{ token, roomUrl, role, userId, displayName }`. |
 | `exists` | GET | **public** | `?code=`. Cheap pre-flight so the not-found screen can render before burning the camera/mic prompt. **Returns 204 (not 200) on success, 404 when missing.** Clients must branch on `=== 404`, not `=== 200`. |
-| `end` | POST | admin/gedu | Body `{ code }`. `DELETE`s the Daily room (ejects all participants). Daily 404 → 204 no-op. Returns 204. |
+| `end` | POST | admin / verified gedu | Body `{ code }`. `DELETE`s the Daily room (ejects all participants). Daily 404 → 204 no-op. Returns 204. |
 
 `micOn`/`cameraOn` default to mic-on / camera-off when absent. Token `exp` matches `INSTANT_ROOM_EXP_SECONDS` from each participant's own join; the room's `eject_at_room_exp` lands first in practice, so the per-token cap is just a per-participant ceiling.
 
 ## Components (this directory)
 
 - **`InstantVoiceSession`** — the state-machine orchestrator. Wraps `VoiceRoomProvider`; phases `checking → lobby → in-call → ended | not-found`. On mount pings `exists` (non-404 → lobby, so a transient error still lets the join attempt surface the real failure). Holds the leave/end logic and the `userLeftRef` sentinel.
-- **`InstantVoiceLobby`** — pre-join preview: live avatar (speaking glow via `use-local-stream-glow`, camera-in-circle, mic indicator) mirroring the in-call avatar, mic/cam toggles, and a name input for guests only (mods use their profile name). Acquires `getUserMedia` on mount; camera starts off; toggles flip track `enabled` instead of re-prompting.
+- **`InstantVoiceLobby`** — pre-join preview: live avatar (speaking glow via `use-local-stream-glow`, camera-in-circle, mic indicator) mirroring the in-call avatar, mic/cam toggles, and a name input for guests only (mods use their profile name). Guest-vs-mod comes from the server-computed `isModerator` prop, not the client `profile.role` — so an unverified gedu (a guest here) correctly gets the name input. Acquires `getUserMedia` on mount; camera starts off; toggles flip track `enabled` instead of re-prompting.
 - **`EndCallModal`** — leave confirmation. Guests get "Leave call"; mods additionally get "End for everyone" as the **secondary/destructive** button (so a fast click on the primary only leaves the mod, never nukes the call).
 - **`CallEndedScreen`** — dead-end after the call wraps. `reason: "left"` (reassuring, shows the `RoomLinkChip` to rejoin) vs `"ended"` (hard close). Reuses the home-hero tagline + a server-rendered copyright slot (threaded in to avoid year-boundary hydration mismatch). No "return home" / "create new" buttons.
 - **`RoomNotFoundScreen`** — echoes the entered code char-by-char for typo-spotting; offers mods a shortcut to create a fresh room.

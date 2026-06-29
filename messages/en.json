@@ -8,7 +8,7 @@
       "createAccount": "Create Account",
       "forgotPassword": "Forgot Password",
       "resetPassword": "Reset Password",
-      "setupAccount": "Set Up Your Account",
+      "registerGedu": "Become a Game Educator",
       "about": "About Us",
       "yty": "Yty – the Force of the Sogverse",
       "minecraftApi": "Minecraft Server API",
@@ -22,6 +22,7 @@
       "voiceSession": "Voice Session",
       "help": "Help",
       "shop": "Shop",
+      "schools": "Municipality Clubs",
       "unlockPin": "Enter PIN",
       "resetPin": "Reset PIN",
       "changePin": "Change PIN",
@@ -29,6 +30,11 @@
       "terms": "Terms and Conditions",
       "antiBullying": "Anti-Bullying and Discipline"
     }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you're looking for doesn't exist or may have moved.",
+    "home": "Back to home"
   },
   "common": {
     "appName": "Sogverse",
@@ -39,6 +45,7 @@
     "back": "Back",
     "cancel": "Cancel",
     "close": "Close",
+    "clear": "Clear",
     "save": "Save",
     "delete": "Delete",
     "edit": "Edit",
@@ -163,51 +170,19 @@
       "types": {
         "consumerClub": {
           "label": "Consumer club",
-          "plural": "Consumer clubs",
-          "tagline": "Weekly, ongoing, parents pay per session.",
-          "blurb": "Parents enrol their child and pay per session. Clubs run week after week with no end date unless you set one.",
-          "traits": {
-            "1": "Weekly · one day per week",
-            "2": "No end date by default",
-            "3": "Parents pay per session, with optional subscription rate",
-            "4": "Fixed seat count, with a waitlist"
-          }
+          "plural": "Consumer clubs"
         },
         "municipalityClub": {
           "label": "Municipality club",
-          "plural": "Municipality clubs",
-          "tagline": "Term-based, school-paid, ticket-drop registration.",
-          "blurb": "A municipality or school pays up front for a block of seats. Parents register their child for free; the registration window opens at a fixed moment like a concert ticket drop.",
-          "traits": {
-            "1": "Weekly · one day per week",
-            "2": "Runs between a start and end date",
-            "3": "School of Gaming invoices the municipality",
-            "4": "Fixed seat count, with a waitlist"
-          }
+          "plural": "Municipality clubs"
         },
         "camp": {
           "label": "Camp",
-          "plural": "Camps",
-          "tagline": "Multiple days for a set period. Parents pay upfront.",
-          "blurb": "A camp runs across several days of the week for a set period — any time of year. Parents pay the full price once, at signup. Refundable up to a cutoff before the camp starts.",
-          "traits": {
-            "1": "Several days per week (each with its own time)",
-            "2": "Runs between a start and end date",
-            "3": "Parents pay upfront",
-            "4": "Refundable before the camp starts"
-          }
+          "plural": "Camps"
         },
         "event": {
           "label": "Event",
-          "plural": "Events",
-          "tagline": "A single date. Free, or a one-time charge.",
-          "blurb": "A one-time event on a specific date. Good for demo days, community walks, webinars, tournaments. Free events can have no seat limit; paid events always have a seat count.",
-          "traits": {
-            "1": "Single date, single start time",
-            "2": "Free or paid upfront",
-            "3": "Free events can have no seat limit",
-            "4": "Great for demos, webinars, tournaments"
-          }
+          "plural": "Events"
         }
       },
       "list": {
@@ -218,6 +193,8 @@
         "seats": "{count} seats",
         "hidden": "hidden",
         "untitled": "(untitled)",
+        "missingGeduFee": "Gedu fee missing",
+        "missingMunicipalityFee": "Municipality fee missing",
         "pendingHint": {
           "registrationOpens": "Registration opens {date}",
           "startDate": "Starts {date}",
@@ -265,6 +242,9 @@
           "seats": "Seats",
           "waitlist": "Waitlist",
           "prices": "Prices",
+          "primaryGeduFee": "Primary Gedu fee / session",
+          "assistantGeduFee": "Assistant Gedu fee / session",
+          "municipalityFee": "Municipality fee / session",
           "registrationOpensAt": "Registration opens",
           "visibility": "Visibility"
         },
@@ -398,13 +378,13 @@
         "clearSearch": "Clear search",
         "noResults": "No locations match \"{query}\".",
         "hintSite": "Pick a site. Missing one? Add it inline under its municipality.",
-        "hintJurisdiction": "Pick a country, region, or municipality. Online products don't have a physical venue.",
+        "hintMunicipality": "Pick the Finnish municipality this club is for — the one that funds it. Sites and other countries aren't options here.",
         "addCountry": "Add a new country",
         "change": "Change",
         "edit": "Edit",
         "cancel": "Cancel",
         "pick": "Pick",
-        "noVenueHint": "No physical venue. Parents browsing in {name} — or any smaller area inside it — will see this product.",
+        "noVenueHint": "No physical venue. Parents in {name} will see this club when they browse.",
         "memberNotesLabel": "Member-visible notes",
         "memberNotesFieldLabel": "Notes shown to parents and gamers",
         "memberNotesPlaceholder": "Address details, parking, accessibility — anything parents need to know.",
@@ -421,6 +401,23 @@
       "pricing": {
         "perMonthLabel": "Price per month",
         "totalLabel": "Total price"
+      },
+      "fees": {
+        "sectionTitle": "Per-session fees",
+        "sectionDescription": "What we pay the game educators each session, and — for municipality clubs — what the municipality pays us. These are internal figures, separate from what parents pay above.",
+        "primaryGeduLabel": "Primary Gedu fee",
+        "primaryGeduHint": "Paid to the lead game educator per session. Choose Unknown if you'll set it later, or Volunteer if they run it for free.",
+        "assistantGeduLabel": "Assistant Gedu fee",
+        "assistantGeduHint": "Paid to an assistant educator per session. Choose None if there's no assistant.",
+        "municipalityLabel": "Municipality fee",
+        "municipalityHint": "What the municipality pays us per session. Choose Unknown if you'll set it later.",
+        "amountLabel": "Fee per session in euros",
+        "status": {
+          "unknown": "Unknown — set later",
+          "none": "None",
+          "volunteer": "Volunteer (free)",
+          "fee": "Set a fee"
+        }
       },
       "startModes": {
         "label": "How does this start?",
@@ -452,7 +449,7 @@
         "deliveredInHint": "The primary language used during sessions.",
         "onlineNoLocation": "Online and available to anyone — no location needed. Any parent browsing will see this, no matter where they live.",
         "voiceRoomAuto": "A voice room will be set up for this product automatically.",
-        "municipalityHint": "Municipality clubs are always tied to a specific municipality — the one paying for it. Parents from that municipality (or anywhere smaller inside it) will see it when they browse.",
+        "municipalityHint": "Municipality clubs are always tied to a specific Finnish municipality — the one paying for it. Parents from that municipality will see it when they browse.",
         "siteHint": "Where sessions physically happen.",
         "eventSingleDay": "Events happen on a single date.",
         "thresholdOnly": "No fixed start date yet. Parents see a \"X of Y needed\" counter while it fills up. You press Start once you have enough sign-ups and pick the first session date then.",
@@ -490,6 +487,9 @@
         "priceSessionNegative": "Price per session in {currency} can't be negative",
         "priceMonthMissing": "Enter a monthly price in {currency}",
         "priceMonthNegative": "Monthly price in {currency} can't be negative",
+        "primaryGeduFeeInvalid": "Enter a primary Gedu fee greater than 0, or choose Unknown or Volunteer",
+        "assistantGeduFeeInvalid": "Enter an assistant Gedu fee greater than 0, or choose None or Volunteer",
+        "municipalityFeeInvalid": "Enter a municipality fee greater than 0, or choose Unknown",
         "thresholdInvalid": "Signups needed to start must be a positive integer",
         "registrationOpensDateRequired": "Pick a date when registration should open",
         "createFailed": "Failed to create product"
@@ -546,6 +546,20 @@
         "remove": "Remove",
         "hint": "Shown on the product card when parents are browsing."
       },
+      "filters": {
+        "day": "Day",
+        "allDays": "All days",
+        "gedu": "Gedu",
+        "language": "Language",
+        "allLanguages": "All languages",
+        "municipality": "Municipality",
+        "searchGedu": "Search Gedus…",
+        "searchMunicipality": "Search municipalities…",
+        "noResults": "No matches.",
+        "showing": "Showing {count} of {total}",
+        "clear": "Clear filters",
+        "noMatches": "No {plural} match the selected filters."
+      },
       "geduPicker": {
         "searchPlaceholder": "Search name or email…",
         "speaks": "Speaks",
@@ -553,7 +567,8 @@
         "countSummary": "Showing {filtered} of {total} Gedus",
         "noResults": "No Gedus match your search.",
         "current": "Current",
-        "alreadyAssigned": "Already assigned"
+        "alreadyAssigned": "Already assigned",
+        "notVerified": "Not verified"
       },
       "gamerPicker": {
         "title": "Add a gamer",
@@ -637,7 +652,6 @@
     "users": {
       "title": "Users",
       "manageAccounts": "Manage user accounts and roles",
-      "inviteGedu": "Invite Gedu",
       "searchPlaceholder": "Search by name, email, or username...",
       "searchAriaLabel": "Search users",
       "roleFilterLabel": "Role",
@@ -670,30 +684,18 @@
         "reserving": "Awaiting payment",
         "completed": "Completed"
       },
-      "inviteNewGedu": "Invite New Gedu",
-      "sendInvitation": "Send an invitation email to a new game educator",
-      "newGeduInvitation": "New Gedu Invitation",
-      "geduReceiveEmail": "The gedu will receive an email with instructions to set up their account.",
-      "inviteLinkExpiryNote": "The invite link will be valid for 72 hours.",
-      "emailAddress": "Email Address",
-      "emailPlaceholder": "gedu@example.com",
-      "geduFirstName": "First Name",
-      "geduFirstNamePlaceholder": "e.g. Jane",
-      "geduFirstNameHelper": "Shown in the welcome email greeting and pre-filled on the gedu’s profile.",
-      "geduFirstNameTooShort": "First name must be at least 2 characters",
-      "geduFirstNameTooLong": "First name must be at most 32 characters",
-      "geduLastName": "Last Name",
-      "geduLastNamePlaceholder": "e.g. Smith",
-      "geduLastNameTooShort": "Last name must be at least 2 characters",
-      "geduLastNameTooLong": "Last name must be at most 32 characters",
-      "inviteLanguage": "Invite Email Language",
-      "sendInvite": "Send Invitation",
-      "sendingInvite": "Sending...",
-      "inviteSent": "Invitation Sent!",
-      "inviteSentDescription": "An invitation has been sent to {email}.",
-      "viewAllUsers": "View All Users",
-      "inviteAnother": "Invite Another",
-      "invalidEmail": "Please enter a valid email address"
+      "verification": {
+        "title": "Verification",
+        "verified": "Verified",
+        "unverified": "Not verified",
+        "unverifiedNote": "This game educator hasn't been verified yet. They can't be assigned to a group until you verify them.",
+        "verifiedOn": "Verified on {date}",
+        "verifiedByOn": "Verified by {name} on {date}",
+        "verifyAction": "Verify",
+        "unverifyAction": "Un-verify",
+        "saving": "Saving…",
+        "error": "Couldn't update verification. Please try again."
+      }
     },
     "locations": {
       "title": "Locations",
@@ -901,20 +903,15 @@
       "successTitle": "Password updated",
       "successDescription": "Your password has been successfully updated."
     },
-    "setupAccount": {
-      "title": "Welcome to the Sogverse",
-      "description": "Set up your game educator account below.",
-      "firstNamePlaceholder": "Your first name",
-      "lastNamePlaceholder": "Your last name",
-      "passwordPlaceholder": "At least 8 characters",
-      "confirmPasswordPlaceholder": "Confirm your password",
-      "settingUp": "Setting up...",
-      "submitButton": "Set Up Account",
-      "inviteLinkExpired": "Your invite link has expired. Please ask your admin to send a new one.",
-      "minecraftSaveFailed": "Failed to save Minecraft username",
+    "registerGedu": {
+      "title": "Create your Sogverse Gedu account",
+      "verificationAlertTitle": "Your account needs to be verified",
+      "verificationAlertDescription": "You can sign in right away, but an admin needs to verify your account before you can be assigned to a club or camp.",
+      "coverageHeading": "Where can you work?",
+      "coverageNote": "Pick the areas where you can work on-site. If you can only work remotely, leave this field empty. You can edit your selection later in your profile settings.",
       "invalidPhone": "Please enter a valid phone number",
-      "successTitle": "You're all set!",
-      "successDescription": "Your account has been set up successfully."
+      "creatingAccount": "Creating account...",
+      "alreadyHaveAccount": "Already have an account? <link>Sign in</link>"
     }
   },
   "pin": {
@@ -1233,6 +1230,35 @@
       }
     }
   },
+  "schools": {
+    "hero": {
+      "title": "Game clubs in <primary>your municipality</primary>",
+      "subtitle": "School of Gaming runs clubs together with Finnish municipalities. Find your municipality and explore what's on offer.",
+      "howItWorks": "Depending on the municipality, the club meets either online from home or in person at your child's school. A professional game educator is always there to guide the activity."
+    },
+    "search": {
+      "label": "Search for your municipality",
+      "placeholder": "Search municipalities…",
+      "noMatches": "No municipality matches \"{query}\". Check the spelling, or try a nearby one."
+    },
+    "available": {
+      "empty": "Our first municipality clubs are on the way. Search for your municipality to check whether we've reached it yet."
+    },
+    "status": {
+      "available": "Clubs available",
+      "noClubs": "No clubs here"
+    },
+    "waitlistNote": "Spots are limited and clubs often have a waiting list. If your child stops attending, please remember to cancel the registration so the place can be offered to the next gamer.",
+    "notListed": {
+      "title": "Don't see your municipality?",
+      "body": "Municipality clubs are arranged together with each municipality, and we're adding new ones all the time. If yours isn't on board yet, tell us about it:",
+      "openClubs": "We also run clubs that are open to everyone, which a gamer can join wherever they live."
+    },
+    "municipality": {
+      "heading": "{name} Clubs",
+      "subheading": "Weekly clubs offered by {name}, where your gamer plays, builds, and creates with new friends and a Gedu who actually gets it."
+    }
+  },
   "productBrowse": {
     "headings": {
       "consumer_club": "Our Clubs",
@@ -1247,6 +1273,7 @@
       "typeClubs": "Clubs",
       "typeCamps": "Camps",
       "topic": "Game",
+      "subject": "Subject",
       "format": "Format",
       "formatOnline": "Online",
       "formatInPerson": "In person",
@@ -1265,16 +1292,9 @@
       "notAvailableInCurrency": "Not in {currency}",
       "seatsCapacity": "{count, plural, one {# seat} other {# seats}}",
       "waitlistAvailable": "Waitlist available",
-      "endedBadge": "Ended",
       "endedNote": "This one's wrapped — keep an eye out for the next one.",
       "viewDetails": "View",
       "manage": "Manage",
-      "pillSpotsLeft": "{count, plural, one {Only # spot left} other {Only # spots left}}",
-      "pillNeedsMore": "{count, plural, one {Need # more to start} other {Need # more to start}}",
-      "pillFull": "Full",
-      "pillFullWaitlist": "Full — waitlist open",
-      "pillOpensOn": "Opens {date}",
-      "pillStarted": "Already started",
       "fullDisabled": "Full",
       "online": "Online"
     },
@@ -1285,6 +1305,11 @@
   },
   "topics": {
     "webinar": "Webinar"
+  },
+  "seatAvailability": {
+    "remaining": "{count, plural, one {# of {total} seat remaining} other {# of {total} seats remaining}}",
+    "full": "Full",
+    "waitlistAvailable": "Waitlist"
   },
   "productDetail": {
     "back": {
@@ -1357,7 +1382,6 @@
       "bannerAlmostFull": "Going fast — only a few seats left",
       "bannerCountdown": "Sign-up opens at {date}",
       "bannerCountdownDone": "Sign-up is now open",
-      "bannerThreshold": "Starts when it fills up",
       "bannerWaitlist": "Fully booked right now",
       "bannerFullClosed": "Fully booked",
       "bannerRunningLate": "This one's already underway",
@@ -1382,7 +1406,6 @@
       "ctaSubmitting": "One moment…",
       "ctaSelectGamer": "Select a gamer",
       "ctaWaitlist": "Join the waitlist",
-      "ctaThreshold": "Reserve a spot",
       "ctaSignIn": "Sign in to register",
       "ctaCreateAccount": "Create account",
       "gamerAlreadySignedUp": {
@@ -1394,10 +1417,6 @@
       "gamerAlreadyWaitlisted": "On waitlist",
       "nonCustomerNote": "Only parents can register a gamer here.",
       "preOpenHelper": "Pick your child and agree to the rules so it's a one-tap sign-up the moment it opens.",
-      "thresholdHelper": "We'll start once {count} kids have signed up. Reserve a spot now and we'll let you know the moment we have enough.",
-      "thresholdProgress": "{current} of {threshold}",
-      "thresholdRemaining": "{count, plural, =0 {Threshold reached} one {# more to start} other {# more to start}}",
-      "seatsRemaining": "{count, plural, one {# of {total} seat remaining} other {# of {total} seats remaining}}",
       "waitlistHowTitle": "How the waitlist works",
       "waitlistHowItem1": "You keep your spot in line for the whole term.",
       "waitlistHowItem2": "If a family cancels, the next person gets a short window to accept.",
@@ -1843,7 +1862,9 @@
         "creating": "Creating…",
         "createFailed": "Couldn't create a room. Please try again.",
         "ready": "Your room is ready",
-        "join": "Join"
+        "join": "Join",
+        "unverifiedTitle": "Awaiting verification",
+        "unverifiedBody": "An admin needs to verify your educator account before you can create voice rooms. You'll be able to start one here as soon as you're verified."
       }
     }
   },
@@ -1910,7 +1931,7 @@
       "subject": "Reset your Sogverse password",
       "heading": "Reset Your Password",
       "body": "We received a request to reset your Sogverse password. Click the button below to choose a new password.",
-      "expiry": "This link will expire in 72 hours.",
+      "expiry": "This link will expire in 1 hour.",
       "ignore": "If you didn’t request a password reset, you can safely ignore this email. Your password will not be changed.",
       "button": "Reset Password"
     },
@@ -1921,14 +1942,6 @@
       "expiry": "This link will expire in 24 hours.",
       "ignore": "If you didn’t request a PIN reset, you can safely ignore this email. Your PIN will not be changed.",
       "button": "Reset PIN"
-    },
-    "geduInvite": {
-      "subject": "You’re invited to the Sogverse",
-      "heading": "Welcome to the Sogverse",
-      "greeting": "Hi {name},",
-      "body": "You’ve been invited to join the Sogverse as a <strong>Gedu</strong>. Click the button below to set up your account.",
-      "expiry": "This link will expire in 72 hours.",
-      "button": "Set Up Your Account"
     },
     "minecraft": {
       "label": "Minecraft Username:",

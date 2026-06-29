@@ -12,8 +12,8 @@
 
 import { useState, useRef } from "react";
 import { ChevronDown } from "lucide-react";
-import flags from "react-phone-number-input/flags";
 import { useTranslations } from "next-intl";
+import { FLAGS } from "@/components/ui/flags";
 import { useClickOutside } from "@/hooks/use-click-outside";
 import { useLocaleControl } from "@/providers";
 import {
@@ -54,7 +54,7 @@ function FlagComponent({
   if (country === "KLINGON") {
     return <KlingonFlag title={nativeLabel} />;
   }
-  const Flag = isKeyOf(flags, country) ? flags[country] : undefined;
+  const Flag = isKeyOf(FLAGS, country) ? FLAGS[country] : undefined;
   return Flag ? <Flag title={nativeLabel} /> : null;
 }
 

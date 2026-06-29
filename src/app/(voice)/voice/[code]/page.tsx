@@ -2,6 +2,7 @@ import { InstantVoiceHeader } from "@/components/voice/instant/InstantVoiceHeade
 import { InstantVoiceSession } from "@/components/voice/instant/InstantVoiceSession";
 import { RoomNotFoundScreen } from "@/components/voice/instant/RoomNotFoundScreen";
 import { Copyright } from "@/components/layout";
+import { instantRoomModerator } from "@/lib/voice/instant-room-moderator";
 import { normalizeVoiceRoomCode } from "@/lib/voice-room-code";
 
 /**
@@ -34,6 +35,12 @@ export default async function InstantVoicePage({
     );
   }
 
+  // Same decision the token route uses to mint the owner token (admin or a
+  // verified gedu), so the lobby shows the guest name input to exactly the
+  // viewers the server will treat as guests. Null → guest. See
+  // `instantRoomModerator` for the rule and its fail-closed behavior.
+  const isModerator = (await instantRoomModerator()) !== null;
+
   return (
     <>
       <InstantVoiceHeader code={code} />
@@ -41,7 +48,11 @@ export default async function InstantVoicePage({
           fixed at SSR time — passing it as a prop into the client session
           avoids a client-side getFullYear() that could disagree with the
           server-rendered HTML at year boundaries. */}
-      <InstantVoiceSession code={code} copyright={<Copyright className="text-xs" />} />
+      <InstantVoiceSession
+        code={code}
+        isModerator={isModerator}
+        copyright={<Copyright className="text-xs" />}
+      />
     </>
   );
 }

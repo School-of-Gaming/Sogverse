@@ -7,7 +7,6 @@ import {
   buildUnenrollmentGeduEmail,
 } from "./enrollment-changes";
 import { buildPasswordResetEmail } from "./password-reset";
-import { buildGeduInviteEmail } from "./gedu-invite";
 import type { EmailTranslator } from "./translator";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import { Constants } from "@/types";
@@ -119,11 +118,6 @@ const passwordResetParamsSchema = z.object({
   resetLink: z.string().url(),
 });
 
-const geduInviteParamsSchema = z.object({
-  setupLink: z.string().url(),
-  firstName: z.string().min(1),
-});
-
 const feedbackParamsSchema = z.object({
   userName: z.string().min(1),
   userRole: z.enum(Constants.public.Enums.user_role),
@@ -166,17 +160,6 @@ const unenrollmentGeduParamsSchema = z.object({
 // --- Single source of truth for all email templates ---
 
 export const templateRegistry: Record<string, TemplateDefinition> = {
-  geduInvite: defineTemplate({
-    label: "Gedu Invite",
-    fields: [
-      { key: "firstName", label: "First Name", placeholder: "Jane" },
-      { key: "setupLink", label: "Setup Link", placeholder: "https://sogverse.sog.gg/setup-account" },
-    ],
-    schema: geduInviteParamsSchema,
-    build: (p, t, locale) => buildGeduInviteEmail(t, p.setupLink, locale, p.firstName),
-    subject: (_p, t) => t("geduInvite.subject"),
-    fromNameKey: "senderAuth",
-  }),
   passwordReset: defineTemplate({
     label: "Password Reset",
     fields: [

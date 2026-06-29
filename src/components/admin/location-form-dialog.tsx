@@ -13,6 +13,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { SUPPORTED_COUNTRIES, getChildLevel, resolveLabels, getCountryName } from "@/lib/constants";
+import { localizedLocationName } from "@/lib/locations/localized-name";
 import type { Location } from "@/types";
 
 export interface LocationFormValues {
@@ -89,7 +90,7 @@ function LocationFormDialogInner({
     ? t('editName', { name: initialValues.name })
     : isAddingCountry
       ? t('addCountry')
-      : t('addChildUnder', { type: childLabels?.label ?? t('location'), parent: parent!.name });
+      : t('addChildUnder', { type: childLabels?.label ?? t('location'), parent: localizedLocationName(parent!, locale) });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -21,6 +21,7 @@ function loc(id: string, parent_id: string | null): Location {
   return {
     id,
     name: id,
+    name_i18n: null,
     type: "site",
     parent_id,
     country_code: "FI",

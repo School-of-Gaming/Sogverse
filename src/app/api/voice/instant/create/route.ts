@@ -23,6 +23,9 @@ import { VOICE_CONFIG } from "@/lib/constants/voice";
 export async function POST() {
   const result = await requireRole(["admin", "gedu"], {
     forbiddenMessage: "Only admins and educators can create voice rooms",
+    // An unverified gedu is not a trusted moderator: block room creation until
+    // an admin verifies them (the token route likewise denies them owner power).
+    requireVerifiedGedu: true,
   });
   if (result instanceof NextResponse) return result;
 

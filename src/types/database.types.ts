@@ -257,6 +257,42 @@ export type Database = {
           },
         ]
       }
+      gedu_profiles: {
+        Row: {
+          user_id: string
+          verified: boolean
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          user_id: string
+          verified?: boolean
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          user_id?: string
+          verified?: boolean
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gedu_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_profiles_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       holiday_calendars: {
         Row: {
           created_at: string
@@ -287,6 +323,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          name_i18n: Json | null
           parent_id: string | null
           type: Database["public"]["Enums"]["location_type"]
           updated_at: string
@@ -296,6 +333,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          name_i18n?: Json | null
           parent_id?: string | null
           type: Database["public"]["Enums"]["location_type"]
           updated_at?: string
@@ -305,6 +343,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          name_i18n?: Json | null
           parent_id?: string | null
           type?: Database["public"]["Enums"]["location_type"]
           updated_at?: string
@@ -703,6 +742,7 @@ export type Database = {
       }
       products: {
         Row: {
+          assistant_gedu_fee_cents: number | null
           billing_mode: Database["public"]["Enums"]["billing_mode"]
           created_at: string
           created_by: string
@@ -714,7 +754,9 @@ export type Database = {
           location_id: string | null
           max_age: number
           min_age: number
+          municipality_fee_cents: number | null
           padlet_url: string | null
+          primary_gedu_fee_cents: number | null
           product_type: Database["public"]["Enums"]["product_type"]
           refund_policy_days: number | null
           registration_opens_at: string
@@ -729,6 +771,7 @@ export type Database = {
           waitlist_enabled: boolean
         }
         Insert: {
+          assistant_gedu_fee_cents?: number | null
           billing_mode: Database["public"]["Enums"]["billing_mode"]
           created_at?: string
           created_by: string
@@ -740,7 +783,9 @@ export type Database = {
           location_id?: string | null
           max_age: number
           min_age: number
+          municipality_fee_cents?: number | null
           padlet_url?: string | null
+          primary_gedu_fee_cents?: number | null
           product_type: Database["public"]["Enums"]["product_type"]
           refund_policy_days?: number | null
           registration_opens_at: string
@@ -755,6 +800,7 @@ export type Database = {
           waitlist_enabled?: boolean
         }
         Update: {
+          assistant_gedu_fee_cents?: number | null
           billing_mode?: Database["public"]["Enums"]["billing_mode"]
           created_at?: string
           created_by?: string
@@ -766,7 +812,9 @@ export type Database = {
           location_id?: string | null
           max_age?: number
           min_age?: number
+          municipality_fee_cents?: number | null
           padlet_url?: string | null
+          primary_gedu_fee_cents?: number | null
           product_type?: Database["public"]["Enums"]["product_type"]
           refund_policy_days?: number | null
           registration_opens_at?: string
@@ -1248,6 +1296,7 @@ export type Database = {
       }
       create_product: {
         Args: {
+          p_assistant_gedu_fee_cents?: number
           p_billing_mode: Database["public"]["Enums"]["billing_mode"]
           p_end_date?: string
           p_holiday_calendar_ids?: string[]
@@ -1257,8 +1306,10 @@ export type Database = {
           p_location_id?: string
           p_max_age: number
           p_min_age: number
+          p_municipality_fee_cents?: number
           p_padlet_url?: string
           p_prices?: Json
+          p_primary_gedu_fee_cents?: number
           p_product_type: Database["public"]["Enums"]["product_type"]
           p_refund_policy_days?: number
           p_registration_opens_at: string
@@ -1393,6 +1444,24 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: undefined
       }
+      register_gedu: {
+        Args: {
+          p_first_name: string
+          p_last_name: string
+          p_locale: string
+          p_location_ids: string[]
+          p_minecraft_username: string
+          p_minecraft_uuid: string
+          p_phone: string
+          p_spoken_languages: string[]
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      set_gedu_verified: {
+        Args: { p_gedu_id: string; p_verified: boolean }
+        Returns: undefined
+      }
       set_my_pin: { Args: { p_pin: string }; Returns: undefined }
       set_pin_for_user: {
         Args: { p_pin: string; p_user_id: string }
@@ -1404,6 +1473,7 @@ export type Database = {
       }
       update_product: {
         Args: {
+          p_assistant_gedu_fee_cents?: number
           p_billing_mode: Database["public"]["Enums"]["billing_mode"]
           p_end_date?: string
           p_holiday_calendar_ids?: string[]
@@ -1414,8 +1484,10 @@ export type Database = {
           p_location_id?: string
           p_max_age: number
           p_min_age: number
+          p_municipality_fee_cents?: number
           p_padlet_url?: string
           p_prices?: Json
+          p_primary_gedu_fee_cents?: number
           p_refund_policy_days?: number
           p_registration_opens_at: string
           p_schedule_slots?: Json

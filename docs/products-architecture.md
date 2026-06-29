@@ -1018,7 +1018,6 @@ The unified shape is proven against the two product lines closest to real users.
 - ✓ Inline-create for topics and tags (single-locale, in admin's current UI locale) via `/api/admin/{topics,tags}/create`.
 - ✓ Site notes editor — separate member-visible vs staff-only fields against `site_details` / `site_staff_details` (`/api/admin/site-notes`).
 - ✓ Holiday-calendar checkbox selector on the form (read-only against existing rows; no admin CRUD UI for managing calendars yet).
-- ✓ Type-specific helper card on list pages (`product-type-info-card.tsx`).
 - ✓ Image picker + upload (`image-picker.tsx`).
 - ✓ Groups panel — drag-and-drop UI on the details page (`src/components/admin/products/groups/`). Unassigned column + one card per group with an inline-editable name (edit icon → input → Enter/Save), multi-Gedu pills (add via `GeduPickerSheet`, remove via X button), and droppable participant area. Each action auto-saves immediately through per-action React Query mutations (`useMoveParticipation`, `useRenameGroup`, `useCreateGroup`, `useAddGedu`, `useRemoveGedu`, `useDeleteGroup`) with optimistic updates that revert on error; the touched element greys out until the write settles. All writes funnel through `apply_group_changes`. **Display order is server-side, by recency**: the read RPC orders participations by `updated_at` and group Gedus by their assignment time, so most-recently-touched is last. The client doesn't sort — it renders the array it's handed and, on a move, optimistically appends the chip to the end. A move bumps `updated_at` (DB trigger), so the settle refetch lands the chip in the same spot the optimistic append put it: no jump. Ordering is single-clock on purpose — an earlier client-side sort compared browser-clock optimistic timestamps with Postgres-clock settled ones, and clock skew reordered chips for a frame on every move. Group delete keeps a confirmation dialog (it's destructive); adding a gamer to the product stays a separate enrollment action (`useAdminAddGamerToProduct` → `/participations`).
 - ✓ Edit-product form (thin wrapper around the shared shell; pre-populated via the reverse transform — see §13).
@@ -1039,7 +1038,7 @@ The unified shape is proven against the two product lines closest to real users.
 - ✓ DB access-control: `products` family + all financial tables covered by `tests/db/access-control.test.ts`.
 
 **Parent UI**: **do not ship by default**. Each customer-facing screen requires an explicit UX approval from the operator.
-- ✓ Browse cards + detail page read real `useParticipationCounts` (seat-left math, threshold progress, "almost full" pill, full-waitlist transitions).
+- ✓ Browse cards + detail page read real `useParticipationCounts` (seat-left math, threshold progress, seat-availability bar, full-waitlist transitions).
 - ✓ Detail-page CTA wires real Stripe Checkout for club subs and single-payment camps; free events register without Stripe.
 - ✓ Out-of-stock products show "Join the waitlist" → `join_waitlist` with no charge.
 - ✓ Realtime seat counter on the detail page (`useProductSeatCountsRealtime` subscribes to `product_seat_counts` filtered by `product_id`).
@@ -1259,7 +1258,6 @@ Shared building blocks
 ├── holiday-calendar-option.tsx      — Calendar checkbox row
 ├── schedule-slots-editor.tsx        — Weekday + time-range editor
 ├── site-notes-editor.tsx            — Member-visible vs staff-only notes
-├── product-type-info-card.tsx       — Type-specific helper card on list pages
 └── group-card.tsx                   — Group preview within form
 
 API routes (admin-only)
@@ -1279,7 +1277,7 @@ Parent browse + detail (src/components/public/products/)
 ├── product-browse-filters.tsx       — Type / game / format / language chips + clear-all
 ├── product-browse-card{,-view}.tsx  — Browse-card adapter + presentational View
 ├── product-purchased-card{,-view}.tsx — Purchased-card adapter + View
-├── registration-pill.tsx            — RegistrationPill (outline chip) + useRegistrationCta hook
+├── registration-cta.ts              — useRegistrationCta hook (card CTA per registration state)
 ├── derive-registration-state.ts     — Pure state machine: product + now + participation count → RegistrationState
 ├── format-product-{schedule,price,location}.ts — Pure formatters
 ├── filter-products.ts               — Pure topic / tag / format filter
@@ -1353,20 +1351,7 @@ Route: `/shop`. One storefront for both browseable types. `ShopBrowse` reads the
 
 **View + adapter split.** Each card is two files. The **View** takes already-resolved display props (strings, numbers, the registration state) and is pure presentational. The **adapter** of the same name resolves a `ProductBrowseRow` (or participation row) into those props — locale, currency, schedule, price, registration state, tag labels. This lets the UI Components style guide at `/admin/ui-components` render every card state by hand without forging a full DB row.
 
-**Registration pill (parent voice, only when notable).** `RegistrationPill` renders only when there's something actionable or urgency-creating to say; default-open (plenty of seats, sign-ups open) returns `null`.
-
-| State (from `deriveRegistrationState`) | Renders | Pill copy |
-|---|---|---|
-| `open` with `seatsLeft` ≤ 3 | yes | "Only N spots left" |
-| `open` with more headroom | **no** | (Sign-up button does the talking) |
-| `pending_thr` | yes | "Need N more to start" |
-| `full_waitlist` | yes | "Full — waitlist open" |
-| `full_closed` | yes | "Full" |
-| `closed_pre` | yes | "Opens 15 May" |
-| `running_late` | yes | "Already started" |
-| `ended` | yes | "Ended" |
-
-`useRegistrationCta(state)` returns the card's CTA — primary "Sign up", secondary "Join waitlist", disabled "Full" / "Opens 15 May", or `null` to hide it (`running_late`, `ended`).
+**Registration state on the card.** Browse cards no longer carry an inline status pill. Registration state is surfaced two ways: the seat-availability bar (muni clubs) shows fill/waitlist, and `useRegistrationCta(state)` drives the card's CTA — a primary "View" link for any state with something to do on the detail page, a disabled "Full" button for `full_closed`, or `null` to hide the CTA entirely (`running_late`, `ended`, the latter also greying the card and showing an "ended" note instead of the footer). Everything else lives on the detail page.
 
 **`deriveRegistrationState` decision tree** (top-down, first match wins; lives in `derive-registration-state.ts`):
 
@@ -1383,7 +1368,7 @@ open          ← otherwise (carries seatCount + seatsLeft + waitlistEnabled)
 
 Muni clubs are intentionally not surfaced in the shop — they have no Type chip and are reached only via the `/registration` direct-link entry, never navigated to from within the site.
 
-**RLS / effectiveStatus interplay.** RLS only returns `pending` and `running` rows to anon/customer; `completed` is hidden at the DB. The browse card still renders the "Ended" pill because `effectiveStatus()` catches `running` rows whose `end_date` has passed (cron lag between midnight and a `running → completed` flip). Do **not** add `completed` to the service filter — see the comment in `products.service.ts:listVisibleByTypes`.
+**RLS / effectiveStatus interplay.** RLS only returns `pending` and `running` rows to anon/customer; `completed` is hidden at the DB. The browse card still renders its "ended" treatment because `effectiveStatus()` catches `running` rows whose `end_date` has passed (cron lag between midnight and a `running → completed` flip). Do **not** add `completed` to the service filter — see the comment in `products.service.ts:listVisibleByTypes`.
 
 **Filter UX.** Filter chips are URL-driven — deep-links like `/shop?category=clubs&topic=minecraft&tag=creative&format=in_person` reproduce a filter state. The **Type** chip leads the filter card and is special: it's the required, mutually-exclusive `?category=` param (`useShopCategory`), never empty and never touched by Clear. The rest are `useBrowseFilters`. `filterProducts` is a pure function over `(rows, { topics, tags, format })`; the Type narrowing happens before it in `ProductBrowsePage`. Topic/tag are multi-select, slug-based, OR-within-row + AND-across-rows; format is single-select (`online` / `in_person`, maps to `products.is_remote`). Clear is always rendered (`invisible` when nothing to clear) so the row's box height is constant.
 

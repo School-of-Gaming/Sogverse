@@ -8,7 +8,6 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { useProductAdmin } from "@/services/products";
 import { cloneFormState } from "./product-build";
-import { ProductTypeInfoCard } from "./product-type-info-card";
 import { ProductFormCreate } from "./product-form-create";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
@@ -68,8 +67,6 @@ export function NewProductPage({
               : " "}
         </h1>
       </div>
-
-      <ProductTypeInfoCard productType={productType} />
 
       {!isCloning && <ProductFormCreate productType={productType} />}
 

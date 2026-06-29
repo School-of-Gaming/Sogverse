@@ -8,7 +8,7 @@
       "createAccount": "Luo tili",
       "forgotPassword": "Unohtuiko salasana",
       "resetPassword": "Vaihda salasana",
-      "setupAccount": "Tilin käyttöönotto",
+      "registerGedu": "Ryhdy pelikasvattajaksi",
       "about": "Tietoa meistä",
       "yty": "Yty – Sogversen voima",
       "minecraftApi": "Minecraft Server API",
@@ -18,6 +18,7 @@
       "geduSessionDetails": "Session tiedot",
       "help": "Apu",
       "shop": "Kauppa",
+      "schools": "Kuntakerhot",
       "gamerHome": "Pelaaja",
       "gamerGroups": "Omat ryhmät",
       "gamerGroupDetails": "Ryhmän tiedot",
@@ -30,6 +31,11 @@
       "antiBullying": "Kiusaamisen ehkäisy ja kurinpito"
     }
   },
+  "notFound": {
+    "title": "Sivua ei löytynyt",
+    "description": "Etsimääsi sivua ei ole olemassa tai se on voitu siirtää.",
+    "home": "Takaisin etusivulle"
+  },
   "common": {
     "appName": "Sogverse",
     "tagline": "School of Gaming",
@@ -39,6 +45,7 @@
     "back": "Takaisin",
     "cancel": "Peruuta",
     "close": "Sulje",
+    "clear": "Tyhjennä",
     "save": "Tallenna",
     "delete": "Poista",
     "edit": "Muokkaa",
@@ -163,51 +170,19 @@
       "types": {
         "consumerClub": {
           "label": "Kuluttajakerho",
-          "plural": "Kuluttajakerhot",
-          "tagline": "Viikoittainen, jatkuva, vanhemmat maksavat per kerta.",
-          "blurb": "Vanhemmat ilmoittavat lapsensa ja maksavat per kerta. Kerhot jatkuvat viikko toisensa jälkeen ilman päättymispäivää, ellet aseta sitä.",
-          "traits": {
-            "1": "Viikoittain · yksi päivä viikossa",
-            "2": "Ei oletuksena loppupäivää",
-            "3": "Maksu per kerta, valinnainen kk-tilaus",
-            "4": "Kiinteä paikkamäärä, jonotuslista"
-          }
+          "plural": "Kuluttajakerhot"
         },
         "municipalityClub": {
           "label": "Kuntakerho",
-          "plural": "Kuntakerhot",
-          "tagline": "Lukukauteen sidottu, kunnan maksama, lipunmyyntimäinen ilmo.",
-          "blurb": "Kunta tai koulu maksaa etukäteen paikoista. Vanhemmat ilmoittavat lapsensa maksutta; ilmoittautumisikkuna avautuu tiettynä hetkenä kuin lipunmyynti.",
-          "traits": {
-            "1": "Viikoittain · yksi päivä viikossa",
-            "2": "Käynnissä alku- ja loppupäivän välillä",
-            "3": "School of Gaming laskuttaa kuntaa",
-            "4": "Kiinteä paikkamäärä, jonotuslista"
-          }
+          "plural": "Kuntakerhot"
         },
         "camp": {
           "label": "Leiri",
-          "plural": "Leirit",
-          "tagline": "Useita päiviä tietyssä jaksossa. Vanhemmat maksavat etukäteen.",
-          "blurb": "Leiri kestää useita päiviä viikossa rajatun jakson ajan — milloin tahansa vuodessa. Vanhemmat maksavat koko hinnan kerralla ilmoittautuessaan. Palautettavissa tiettyyn hetkeen asti ennen alkua.",
-          "traits": {
-            "1": "Useita päiviä viikossa (jokaisella oma aika)",
-            "2": "Käynnissä alku- ja loppupäivän välillä",
-            "3": "Vanhemmat maksavat etukäteen",
-            "4": "Palautettavissa ennen leirin alkua"
-          }
+          "plural": "Leirit"
         },
         "event": {
           "label": "Tapahtuma",
-          "plural": "Tapahtumat",
-          "tagline": "Yksi päivä. Ilmainen tai kertamaksullinen.",
-          "blurb": "Yksittäinen tapahtuma tiettynä päivänä. Sopii esittelypäiviin, yhteisökävelyihin, webinaareihin, turnauksiin. Ilmaisilla tapahtumilla ei tarvitse olla paikkarajaa; maksullisilla on aina.",
-          "traits": {
-            "1": "Yksi päivä, yksi alkamisaika",
-            "2": "Ilmainen tai etukäteen maksettu",
-            "3": "Ilmaisissa ei tarvita paikkarajaa",
-            "4": "Sopii esittelyihin, webinaareihin, turnauksiin"
-          }
+          "plural": "Tapahtumat"
         }
       },
       "list": {
@@ -218,6 +193,8 @@
         "seats": "{count} paikkaa",
         "hidden": "piilotettu",
         "untitled": "(nimetön)",
+        "missingGeduFee": "Gedun palkkio puuttuu",
+        "missingMunicipalityFee": "Kunnan maksu puuttuu",
         "pendingHint": {
           "registrationOpens": "Ilmoittautuminen aukeaa {date}",
           "startDate": "Alkaa {date}",
@@ -265,6 +242,9 @@
           "seats": "Paikat",
           "waitlist": "Jonotuslista",
           "prices": "Hinnat",
+          "primaryGeduFee": "Vastaavan Gedun palkkio / kerta",
+          "assistantGeduFee": "Avustavan Gedun palkkio / kerta",
+          "municipalityFee": "Kunnan maksu / kerta",
           "registrationOpensAt": "Ilmoittautuminen aukeaa",
           "visibility": "Näkyvyys"
         },
@@ -398,13 +378,13 @@
         "clearSearch": "Tyhjennä haku",
         "noResults": "Hakuehdolla \"{query}\" ei löytynyt sijainteja.",
         "hintSite": "Valitse toimipiste. Puuttuuko jokin? Lisää se kunnan alle tästä.",
-        "hintJurisdiction": "Valitse maa, alue tai kunta. Verkkotuotteilla ei ole fyysistä toimipistettä.",
+        "hintMunicipality": "Valitse kunta, jolle tämä kerho on tarkoitettu — se kunta, joka sen rahoittaa. Toimipisteet ja muut maat eivät ole valittavissa.",
         "addCountry": "Lisää uusi maa",
         "change": "Vaihda",
         "edit": "Muokkaa",
         "cancel": "Peruuta",
         "pick": "Valitse",
-        "noVenueHint": "Ei fyysistä toimipaikkaa. Vanhemmat, jotka selaavat alueella {name} — tai missä tahansa sen sisällä — näkevät tämän tuotteen.",
+        "noVenueHint": "Ei fyysistä toimipaikkaa. Kunnan {name} vanhemmat näkevät tämän kerhon selatessaan.",
         "memberNotesLabel": "Jäsenille näkyvät tiedot",
         "memberNotesFieldLabel": "Vanhemmille ja pelaajille näkyvät tiedot",
         "memberNotesPlaceholder": "Osoitetiedot, parkkipaikka, esteettömyys — kaikki mitä vanhempien on hyvä tietää.",
@@ -421,6 +401,23 @@
       "pricing": {
         "perMonthLabel": "Hinta per kuukausi",
         "totalLabel": "Kokonaishinta"
+      },
+      "fees": {
+        "sectionTitle": "Kertakohtaiset palkkiot ja maksut",
+        "sectionDescription": "Mitä maksamme pelikasvattajille (Gedu) jokaiselta kerralta ja — kuntakerhojen osalta — mitä kunta maksaa meille. Nämä ovat sisäisiä lukuja, erillään siitä mitä vanhemmat maksavat yllä.",
+        "primaryGeduLabel": "Vastaavan Gedun palkkio",
+        "primaryGeduHint": "Maksetaan vastaavalle Gedulle jokaiselta kerralta. Valitse Ei tiedossa, jos asetat sen myöhemmin, tai Vapaaehtoinen, jos hän ohjaa ilmaiseksi.",
+        "assistantGeduLabel": "Avustavan Gedun palkkio",
+        "assistantGeduHint": "Maksetaan avustavalle Gedulle jokaiselta kerralta. Valitse Ei ole, jos avustajaa ei ole.",
+        "municipalityLabel": "Kunnan maksu",
+        "municipalityHint": "Mitä kunta maksaa meille jokaiselta kerralta. Valitse Ei tiedossa, jos asetat sen myöhemmin.",
+        "amountLabel": "Summa per kerta euroina",
+        "status": {
+          "unknown": "Ei tiedossa — asetetaan myöhemmin",
+          "none": "Ei ole",
+          "volunteer": "Vapaaehtoinen (ilmainen)",
+          "fee": "Aseta summa"
+        }
       },
       "startModes": {
         "label": "Miten tämä alkaa?",
@@ -452,7 +449,7 @@
         "deliveredInHint": "Pääkieli, jota kerroilla käytetään.",
         "onlineNoLocation": "Verkossa ja avoin kaikille — sijaintia ei tarvita. Kaikki selailevat vanhemmat näkevät tämän asuinpaikasta riippumatta.",
         "voiceRoomAuto": "Tälle tuotteelle luodaan automaattisesti puhehuone.",
-        "municipalityHint": "Kuntakerhot ovat aina sidottu tiettyyn kuntaan — siihen joka sen maksaa. Sen kunnan (tai sen sisällä olevan pienemmän alueen) vanhemmat näkevät sen selatessaan.",
+        "municipalityHint": "Kuntakerhot on aina sidottu tiettyyn Suomen kuntaan — siihen, joka sen maksaa. Sen kunnan vanhemmat näkevät kerhon selatessaan.",
         "siteHint": "Missä kerrat fyysisesti tapahtuvat.",
         "eventSingleDay": "Tapahtumat ovat yhden päivän mittaisia.",
         "thresholdOnly": "Ei vielä kiinteää alkupäivää. Vanhemmat näkevät \"X / Y tarvitaan\" -laskurin sen täyttyessä. Painat Aloita kun ilmoittautuneita on tarpeeksi ja valitset ensimmäisen kerran päivän silloin.",
@@ -490,6 +487,9 @@
         "priceSessionNegative": "Kertahinta valuutassa {currency} ei voi olla negatiivinen",
         "priceMonthMissing": "Anna kuukausihinta valuutassa {currency}",
         "priceMonthNegative": "Kuukausihinta valuutassa {currency} ei voi olla negatiivinen",
+        "primaryGeduFeeInvalid": "Anna vastaavan Gedun palkkio, joka on suurempi kuin 0, tai valitse Ei tiedossa tai Vapaaehtoinen",
+        "assistantGeduFeeInvalid": "Anna avustavan Gedun palkkio, joka on suurempi kuin 0, tai valitse Ei ole tai Vapaaehtoinen",
+        "municipalityFeeInvalid": "Anna kunnan maksu, joka on suurempi kuin 0, tai valitse Ei tiedossa",
         "thresholdInvalid": "Ilmoittautumisrajan on oltava positiivinen kokonaisluku",
         "registrationOpensDateRequired": "Valitse päivämäärä, jolloin ilmoittautuminen avautuu",
         "createFailed": "Tuotteen luonti epäonnistui"
@@ -546,6 +546,20 @@
         "remove": "Poista",
         "hint": "Näkyy tuotekortissa, kun vanhemmat selaavat."
       },
+      "filters": {
+        "day": "Viikonpäivä",
+        "allDays": "Kaikki päivät",
+        "gedu": "Gedu",
+        "language": "Kieli",
+        "allLanguages": "Kaikki kielet",
+        "municipality": "Kunta",
+        "searchGedu": "Hae Geduja…",
+        "searchMunicipality": "Hae kuntia…",
+        "noResults": "Ei osumia.",
+        "showing": "Näytetään {count} / {total}",
+        "clear": "Tyhjennä suodattimet",
+        "noMatches": "{plural} eivät vastaa valittuja suodattimia."
+      },
       "geduPicker": {
         "searchPlaceholder": "Hae nimellä tai sähköpostilla…",
         "speaks": "Puhuu",
@@ -553,7 +567,8 @@
         "countSummary": "Näytetään {filtered} / {total} Geduja",
         "noResults": "Hakuehdoilla ei löytynyt Geduja.",
         "current": "Nykyinen",
-        "alreadyAssigned": "Jo nimetty"
+        "alreadyAssigned": "Jo nimetty",
+        "notVerified": "Ei vahvistettu"
       },
       "gamerPicker": {
         "title": "Lisää pelaaja",
@@ -637,7 +652,6 @@
     "users": {
       "title": "Käyttäjät",
       "manageAccounts": "Hallitse käyttäjätilejä ja rooleja",
-      "inviteGedu": "Kutsu Gedu",
       "searchPlaceholder": "Hae nimellä, sähköpostilla tai käyttäjänimellä...",
       "searchAriaLabel": "Hae käyttäjiä",
       "roleFilterLabel": "Rooli",
@@ -670,30 +684,18 @@
         "reserving": "Odottaa maksua",
         "completed": "Päättynyt"
       },
-      "inviteNewGedu": "Kutsu uusi Gedu",
-      "sendInvitation": "Lähetä kutsu uudelle pelikasvattajalle",
-      "newGeduInvitation": "Uusi Gedu-kutsu",
-      "geduReceiveEmail": "Gedu saa sähköpostin, jossa on ohjeet tilin luomiseen.",
-      "inviteLinkExpiryNote": "Kutsulinkki on voimassa 72 tuntia.",
-      "emailAddress": "Sähköpostiosoite",
-      "emailPlaceholder": "gedu@example.com",
-      "geduFirstName": "Etunimi",
-      "geduFirstNamePlaceholder": "esim. Jane",
-      "geduFirstNameHelper": "Näkyy tervetulosähköpostin tervehdyksessä ja esitäytetään Gedun profiiliin.",
-      "geduFirstNameTooShort": "Etunimessä on oltava vähintään 2 merkkiä",
-      "geduFirstNameTooLong": "Etunimessä saa olla enintään 32 merkkiä",
-      "geduLastName": "Sukunimi",
-      "geduLastNamePlaceholder": "esim. Smith",
-      "geduLastNameTooShort": "Sukunimessä on oltava vähintään 2 merkkiä",
-      "geduLastNameTooLong": "Sukunimessä saa olla enintään 32 merkkiä",
-      "inviteLanguage": "Kutsusähköpostin kieli",
-      "sendInvite": "Lähetä kutsu",
-      "sendingInvite": "Lähetetään...",
-      "inviteSent": "Kutsu lähetetty!",
-      "inviteSentDescription": "Kutsu on lähetetty osoitteeseen {email}.",
-      "viewAllUsers": "Näytä kaikki käyttäjät",
-      "inviteAnother": "Kutsu toinen",
-      "invalidEmail": "Anna kelvollinen sähköpostiosoite"
+      "verification": {
+        "title": "Vahvistus",
+        "verified": "Vahvistettu",
+        "unverified": "Ei vahvistettu",
+        "unverifiedNote": "Tätä pelikasvattajaa ei ole vielä vahvistettu. Häntä ei voi liittää ryhmään ennen vahvistusta.",
+        "verifiedOn": "Vahvistettu {date}",
+        "verifiedByOn": "Vahvistanut {name} {date}",
+        "verifyAction": "Vahvista",
+        "unverifyAction": "Peru vahvistus",
+        "saving": "Tallennetaan…",
+        "error": "Vahvistuksen päivitys epäonnistui. Yritä uudelleen."
+      }
     },
     "locations": {
       "title": "Sijainnit",
@@ -901,20 +903,15 @@
       "successTitle": "Salasana päivitetty",
       "successDescription": "Salasanasi on päivitetty onnistuneesti."
     },
-    "setupAccount": {
-      "title": "Tervetuloa Sogverseen",
-      "description": "Määritä pelikasvattajatilisi alla.",
-      "firstNamePlaceholder": "Etunimesi",
-      "lastNamePlaceholder": "Sukunimesi",
-      "passwordPlaceholder": "Vähintään 8 merkkiä",
-      "confirmPasswordPlaceholder": "Vahvista salasanasi",
-      "settingUp": "Määritetään...",
-      "submitButton": "Luo tili",
-      "inviteLinkExpired": "Kutsulinkki on vanhentunut. Pyydä ylläpitäjää lähettämään uusi.",
-      "minecraftSaveFailed": "Minecraft-käyttäjänimen tallentaminen epäonnistui",
+    "registerGedu": {
+      "title": "Luo Sogverse-pelikasvattajatilisi",
+      "verificationAlertTitle": "Tilisi on vahvistettava",
+      "verificationAlertDescription": "Voit kirjautua heti, mutta ylläpitäjän on vahvistettava tilisi ennen kuin sinut voidaan liittää kerhoon tai leirille.",
+      "coverageHeading": "Missä voit työskennellä?",
+      "coverageNote": "Valitse alueet, joilla voit työskennellä paikan päällä. Jos voit työskennellä vain etänä, jätä tämä kohta tyhjäksi. Voit muokata valintaasi myöhemmin profiilisi asetuksista.",
       "invalidPhone": "Syötä kelvollinen puhelinnumero",
-      "successTitle": "Kaikki valmista!",
-      "successDescription": "Tilisi on luotu onnistuneesti."
+      "creatingAccount": "Luodaan tiliä...",
+      "alreadyHaveAccount": "Onko sinulla jo tili? <link>Kirjaudu sisään</link>"
     }
   },
   "pin": {
@@ -1233,6 +1230,35 @@
       }
     }
   },
+  "schools": {
+    "hero": {
+      "title": "Pelikerhot <primary>omassa kunnassasi</primary>",
+      "subtitle": "School of Gaming järjestää harrastuskerhoja yhdessä suomalaisten kuntien kanssa. Etsi kuntasi ja tutustu tarjontaan.",
+      "howItWorks": "Kunnasta riippuen kerho kokoontuu joko verkossa kotoa käsin tai paikan päällä lapsesi koulussa. Ammattitaitoinen pelikasvattaja on aina mukana ohjaamassa toimintaa."
+    },
+    "search": {
+      "label": "Etsi kuntaasi",
+      "placeholder": "Hae kuntia…",
+      "noMatches": "Mikään kunta ei vastaa hakua ”{query}”. Tarkista kirjoitusasu tai kokeile naapurikuntaa."
+    },
+    "available": {
+      "empty": "Ensimmäiset kuntakerhomme ovat tulossa. Hae kuntaasi ja katso, olemmeko jo ehtineet sinne."
+    },
+    "status": {
+      "available": "Kerhoja tarjolla",
+      "noClubs": "Ei kerhoja"
+    },
+    "waitlistNote": "Paikkoja on rajoitetusti, ja kerhoihin on usein jonotuslista. Jos lapsesi lopettaa kerhon, muistathan perua ilmoittautumisen, jotta paikkaa voidaan tarjota seuraavalle pelaajalle.",
+    "notListed": {
+      "title": "Etkö löydä kuntaasi?",
+      "body": "Kuntakerhot järjestetään yhteistyössä kunnan kanssa, ja lisäämme uusia kuntia jatkuvasti. Jos kuntasi ei ole vielä mukana, kerro siitä meille:",
+      "openClubs": "Tarjoamme myös kaikille avoimia kerhoja, joihin pelaaja voi liittyä asuinpaikasta riippumatta."
+    },
+    "municipality": {
+      "heading": "{name} – kerhot",
+      "subheading": "{name} – viikoittaiset kerhot, joissa pelaajasi pelaa, rakentaa ja luo uusien kavereiden ja Gedun kanssa."
+    }
+  },
   "productBrowse": {
     "headings": {
       "consumer_club": "Kerhomme",
@@ -1247,6 +1273,7 @@
       "typeClubs": "Kerhot",
       "typeCamps": "Leirit",
       "topic": "Peli",
+      "subject": "Aihe",
       "format": "Muoto",
       "formatOnline": "Verkossa",
       "formatInPerson": "Paikan päällä",
@@ -1265,16 +1292,9 @@
       "notAvailableInCurrency": "Ei valuutassa {currency}",
       "seatsCapacity": "{count, plural, one {# paikka} other {# paikkaa}}",
       "waitlistAvailable": "Jonotuslista käytössä",
-      "endedBadge": "Päättynyt",
       "endedNote": "Tämä on päättynyt – seuraava on tulossa pian.",
       "viewDetails": "Katso",
       "manage": "Hallitse",
-      "pillSpotsLeft": "{count, plural, one {Vain # paikka jäljellä} other {Vain # paikkaa jäljellä}}",
-      "pillNeedsMore": "{count, plural, one {# ilmoittautuminen puuttuu} other {# ilmoittautumista puuttuu}}",
-      "pillFull": "Täynnä",
-      "pillFullWaitlist": "Täynnä – jonotuslista auki",
-      "pillOpensOn": "Aukeaa {date}",
-      "pillStarted": "Alkanut",
       "fullDisabled": "Täynnä",
       "online": "Verkossa"
     },
@@ -1285,6 +1305,11 @@
   },
   "topics": {
     "webinar": "Webinaari"
+  },
+  "seatAvailability": {
+    "remaining": "{count, plural, one {# / {total} paikka jäljellä} other {# / {total} paikkaa jäljellä}}",
+    "full": "Täynnä",
+    "waitlistAvailable": "Jonotuslista"
   },
   "productDetail": {
     "back": {
@@ -1357,7 +1382,6 @@
       "bannerAlmostFull": "Paikat täyttyvät – vain muutama jäljellä",
       "bannerCountdown": "Ilmoittautuminen avautuu {date}",
       "bannerCountdownDone": "Ilmoittautuminen on auki",
-      "bannerThreshold": "Alkaa, kun paikat täyttyvät",
       "bannerWaitlist": "Tällä hetkellä täynnä",
       "bannerFullClosed": "Täynnä",
       "bannerRunningLate": "Tämä on jo käynnissä",
@@ -1382,7 +1406,6 @@
       "ctaSubmitting": "Hetki…",
       "ctaSelectGamer": "Valitse pelaaja",
       "ctaWaitlist": "Liity jonotuslistalle",
-      "ctaThreshold": "Varaa paikka",
       "ctaSignIn": "Kirjaudu sisään ilmoittautuaksesi",
       "ctaCreateAccount": "Luo tili",
       "gamerAlreadySignedUp": {
@@ -1394,10 +1417,6 @@
       "gamerAlreadyWaitlisted": "Jonossa",
       "nonCustomerNote": "Vain vanhempi voi ilmoittaa pelaajan tähän.",
       "preOpenHelper": "Valitse lapsi ja hyväksy säännöt, niin ilmoittautuminen onnistuu yhdellä napautuksella heti, kun se avautuu.",
-      "thresholdHelper": "Aloitamme heti, kun {count} lasta on ilmoittautunut. Varaa paikka nyt – ilmoitamme heti, kun ryhmä on kasassa.",
-      "thresholdProgress": "{current} / {threshold}",
-      "thresholdRemaining": "{count, plural, =0 {Raja saavutettu} one {# vielä alkamiseen} other {# vielä alkamiseen}}",
-      "seatsRemaining": "{count, plural, one {# / {total} paikka jäljellä} other {# / {total} paikkaa jäljellä}}",
       "waitlistHowTitle": "Näin jonotuslista toimii",
       "waitlistHowItem1": "Pidät paikkasi jonossa koko kauden ajan.",
       "waitlistHowItem2": "Jos joku perhe peruu, seuraavalle annetaan lyhyt aika ottaa paikka vastaan.",
@@ -1843,7 +1862,9 @@
         "creating": "Luodaan…",
         "createFailed": "Huoneen luonti epäonnistui. Yritä uudelleen.",
         "ready": "Huoneesi on valmis",
-        "join": "Liity"
+        "join": "Liity",
+        "unverifiedTitle": "Odottaa vahvistusta",
+        "unverifiedBody": "Ylläpitäjän on vahvistettava kasvattajatilisi, ennen kuin voit luoda äänihuoneita. Voit käynnistää huoneen tästä heti, kun tilisi on vahvistettu."
       }
     }
   },
@@ -1910,7 +1931,7 @@
       "subject": "Nollaa Sogverse-salasanasi",
       "heading": "Nollaa salasanasi",
       "body": "Saimme pyynnön nollata Sogverse-salasanasi. Napsauta alla olevaa painiketta valitaksesi uuden salasanan.",
-      "expiry": "Tämä linkki vanhenee 72 tunnin kuluttua.",
+      "expiry": "Tämä linkki vanhenee tunnin kuluttua.",
       "ignore": "Jos et pyytänyt salasanan nollausta, voit jättää tämän sähköpostin huomiotta. Salasanaasi ei muuteta.",
       "button": "Nollaa salasana"
     },
@@ -1921,14 +1942,6 @@
       "expiry": "Tämä linkki vanhenee 24 tunnin kuluttua.",
       "ignore": "Jos et pyytänyt PIN-koodin nollausta, voit jättää tämän sähköpostin huomiotta. PIN-koodiasi ei muuteta.",
       "button": "Nollaa PIN-koodi"
-    },
-    "geduInvite": {
-      "subject": "Sinut on kutsuttu Sogverseen",
-      "heading": "Tervetuloa Sogverseen",
-      "greeting": "Hei {name},",
-      "body": "Sinut on kutsuttu liittymään Sogverseen <strong>Geduna</strong>. Napsauta alla olevaa painiketta luodaksesi tilisi.",
-      "expiry": "Tämä linkki vanhenee 72 tunnin kuluttua.",
-      "button": "Luo tilisi"
     },
     "minecraft": {
       "label": "Minecraft-käyttäjänimi:",

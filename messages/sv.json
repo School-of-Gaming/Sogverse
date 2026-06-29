@@ -8,7 +8,7 @@
       "createAccount": "Skapa konto",
       "forgotPassword": "Glömt lösenord",
       "resetPassword": "Återställ lösenord",
-      "setupAccount": "Konfigurera ditt konto",
+      "registerGedu": "Bli spelfostrare",
       "about": "Om oss",
       "yty": "Yty – Sogversens kraft",
       "minecraftApi": "Minecraft Server API",
@@ -22,6 +22,7 @@
       "voiceSession": "Röstsession",
       "help": "Hjälp",
       "shop": "Butik",
+      "schools": "Kommunklubbar",
       "unlockPin": "Ange PIN",
       "resetPin": "Återställ PIN",
       "changePin": "Byt PIN",
@@ -29,6 +30,11 @@
       "terms": "Användarvillkor",
       "antiBullying": "Mot mobbning och disciplin"
     }
+  },
+  "notFound": {
+    "title": "Sidan hittades inte",
+    "description": "Sidan du letar efter finns inte eller kan ha flyttats.",
+    "home": "Tillbaka till startsidan"
   },
   "common": {
     "appName": "Sogverse",
@@ -39,6 +45,7 @@
     "back": "Tillbaka",
     "cancel": "Avbryt",
     "close": "Stäng",
+    "clear": "Rensa",
     "save": "Spara",
     "delete": "Radera",
     "edit": "Redigera",
@@ -163,51 +170,19 @@
       "types": {
         "consumerClub": {
           "label": "Konsumentklubb",
-          "plural": "Konsumentklubbar",
-          "tagline": "Veckovis, pågående, föräldrar betalar per tillfälle.",
-          "blurb": "Föräldrar anmäler sitt barn och betalar per tillfälle. Klubbar pågår vecka efter vecka utan slutdatum, om du inte sätter ett.",
-          "traits": {
-            "1": "Veckovis · en dag i veckan",
-            "2": "Inget slutdatum som standard",
-            "3": "Föräldrar betalar per tillfälle, valfri prenumeration",
-            "4": "Fast antal platser, med väntelista"
-          }
+          "plural": "Konsumentklubbar"
         },
         "municipalityClub": {
           "label": "Kommunklubb",
-          "plural": "Kommunklubbar",
-          "tagline": "Terminsbaserad, kommunbetald, biljettsläpps­anmälan.",
-          "blurb": "En kommun eller skola betalar i förskott för en serie platser. Föräldrar anmäler sitt barn gratis; anmälningsfönstret öppnar vid en specifik tidpunkt som ett biljettsläpp.",
-          "traits": {
-            "1": "Veckovis · en dag i veckan",
-            "2": "Pågår mellan ett start- och slutdatum",
-            "3": "School of Gaming fakturerar kommunen",
-            "4": "Fast antal platser, med väntelista"
-          }
+          "plural": "Kommunklubbar"
         },
         "camp": {
           "label": "Läger",
-          "plural": "Läger",
-          "tagline": "Flera dagar under en bestämd period. Föräldrar betalar i förskott.",
-          "blurb": "Ett läger pågår över flera dagar i veckan under en bestämd period — när som helst på året. Föräldrar betalar hela priset en gång vid anmälan. Återbetalas fram till en gräns innan lägret startar.",
-          "traits": {
-            "1": "Flera dagar i veckan (var och en med egen tid)",
-            "2": "Pågår mellan ett start- och slutdatum",
-            "3": "Föräldrar betalar i förskott",
-            "4": "Återbetalas innan lägret startar"
-          }
+          "plural": "Läger"
         },
         "event": {
           "label": "Evenemang",
-          "plural": "Evenemang",
-          "tagline": "Ett enda datum. Gratis eller en engångsavgift.",
-          "blurb": "Ett enstaka evenemang ett specifikt datum. Bra för demodagar, gemenskaps­promenader, webbinarier, turneringar. Gratis evenemang behöver ingen platsgräns; betalda har alltid en.",
-          "traits": {
-            "1": "Ett datum, en starttid",
-            "2": "Gratis eller förbetalt",
-            "3": "Gratis evenemang behöver ingen platsgräns",
-            "4": "Bra för demos, webbinarier, turneringar"
-          }
+          "plural": "Evenemang"
         }
       },
       "list": {
@@ -218,6 +193,8 @@
         "seats": "{count} platser",
         "hidden": "dold",
         "untitled": "(utan titel)",
+        "missingGeduFee": "Gedu-arvode saknas",
+        "missingMunicipalityFee": "Kommunavgift saknas",
         "pendingHint": {
           "registrationOpens": "Anmälan öppnar {date}",
           "startDate": "Startar {date}",
@@ -265,6 +242,9 @@
           "seats": "Platser",
           "waitlist": "Väntelista",
           "prices": "Priser",
+          "primaryGeduFee": "Huvud-Gedu-arvode / tillfälle",
+          "assistantGeduFee": "Assisterande Gedu-arvode / tillfälle",
+          "municipalityFee": "Kommunavgift / tillfälle",
           "registrationOpensAt": "Anmälan öppnar",
           "visibility": "Synlighet"
         },
@@ -398,13 +378,13 @@
         "clearSearch": "Rensa sökning",
         "noResults": "Inga platser matchar \"{query}\".",
         "hintSite": "Välj en lokal. Saknas någon? Lägg till den under kommunen direkt här.",
-        "hintJurisdiction": "Välj ett land, en region eller en kommun. Onlineprodukter har ingen fysisk lokal.",
+        "hintMunicipality": "Välj den finländska kommun som klubben gäller — den som finansierar den. Lokaler och andra länder kan inte väljas här.",
         "addCountry": "Lägg till nytt land",
         "change": "Ändra",
         "edit": "Redigera",
         "cancel": "Avbryt",
         "pick": "Välj",
-        "noVenueHint": "Ingen fysisk lokal. Föräldrar som söker i {name} — eller i ett mindre område inom det — ser denna produkt.",
+        "noVenueHint": "Ingen fysisk lokal. Föräldrar i {name} ser denna klubb när de bläddrar.",
         "memberNotesLabel": "Medlemssynliga anteckningar",
         "memberNotesFieldLabel": "Anteckningar för föräldrar och spelare",
         "memberNotesPlaceholder": "Adressdetaljer, parkering, tillgänglighet — allt föräldrar behöver veta.",
@@ -421,6 +401,23 @@
       "pricing": {
         "perMonthLabel": "Pris per månad",
         "totalLabel": "Totalpris"
+      },
+      "fees": {
+        "sectionTitle": "Arvoden per tillfälle",
+        "sectionDescription": "Vad vi betalar spelpedagogerna (Gedu) per tillfälle och — för kommunklubbar — vad kommunen betalar oss. Detta är interna siffror, skilda från vad föräldrar betalar ovan.",
+        "primaryGeduLabel": "Huvud-Gedu-arvode",
+        "primaryGeduHint": "Betalas till den ledande spelpedagogen per tillfälle. Välj Okänt om du anger det senare, eller Volontär om hen leder gratis.",
+        "assistantGeduLabel": "Assisterande Gedu-arvode",
+        "assistantGeduHint": "Betalas till en assisterande spelpedagog per tillfälle. Välj Inget om det inte finns någon assistent.",
+        "municipalityLabel": "Kommunavgift",
+        "municipalityHint": "Vad kommunen betalar oss per tillfälle. Välj Okänt om du anger det senare.",
+        "amountLabel": "Belopp per tillfälle i euro",
+        "status": {
+          "unknown": "Okänt — anges senare",
+          "none": "Inget",
+          "volunteer": "Volontär (gratis)",
+          "fee": "Ange ett belopp"
+        }
       },
       "startModes": {
         "label": "Hur startar detta?",
@@ -452,7 +449,7 @@
         "deliveredInHint": "Det primära språk som används under tillfällena.",
         "onlineNoLocation": "Online och tillgänglig för alla — ingen plats behövs. Alla föräldrar som bläddrar ser detta, oavsett var de bor.",
         "voiceRoomAuto": "Ett röstrum skapas automatiskt för denna produkt.",
-        "municipalityHint": "Kommunklubbar är alltid kopplade till en specifik kommun — den som betalar. Föräldrar från den kommunen (eller mindre område inom den) ser den när de bläddrar.",
+        "municipalityHint": "Kommunklubbar är alltid kopplade till en specifik finländsk kommun — den som betalar. Föräldrar från den kommunen ser den när de bläddrar.",
         "siteHint": "Var tillfällena fysiskt äger rum.",
         "eventSingleDay": "Evenemang äger rum ett enda datum.",
         "thresholdOnly": "Inget fast startdatum än. Föräldrar ser en räknare \"X av Y behövs\" medan den fylls. Du trycker Starta när du har tillräckligt med anmälningar och väljer första tillfällets datum då.",
@@ -490,6 +487,9 @@
         "priceSessionNegative": "Pris per tillfälle i {currency} kan inte vara negativt",
         "priceMonthMissing": "Ange ett månadspris i {currency}",
         "priceMonthNegative": "Månadspris i {currency} kan inte vara negativt",
+        "primaryGeduFeeInvalid": "Ange ett huvud-Gedu-arvode större än 0, eller välj Okänt eller Volontär",
+        "assistantGeduFeeInvalid": "Ange ett assisterande Gedu-arvode större än 0, eller välj Inget eller Volontär",
+        "municipalityFeeInvalid": "Ange en kommunavgift större än 0, eller välj Okänt",
         "thresholdInvalid": "Antal anmälningar för att starta måste vara ett positivt heltal",
         "registrationOpensDateRequired": "Välj ett datum då anmälan ska öppnas",
         "createFailed": "Det gick inte att skapa produkten"
@@ -546,6 +546,20 @@
         "remove": "Ta bort",
         "hint": "Visas på produktkortet när föräldrar bläddrar."
       },
+      "filters": {
+        "day": "Veckodag",
+        "allDays": "Alla dagar",
+        "gedu": "Gedu",
+        "language": "Språk",
+        "allLanguages": "Alla språk",
+        "municipality": "Kommun",
+        "searchGedu": "Sök Geduer…",
+        "searchMunicipality": "Sök kommuner…",
+        "noResults": "Inga träffar.",
+        "showing": "Visar {count} av {total}",
+        "clear": "Rensa filter",
+        "noMatches": "Inga {plural} matchar de valda filtren."
+      },
       "geduPicker": {
         "searchPlaceholder": "Sök namn eller e-post…",
         "speaks": "Talar",
@@ -553,7 +567,8 @@
         "countSummary": "Visar {filtered} av {total} Geduer",
         "noResults": "Inga Geduer matchar din sökning.",
         "current": "Nuvarande",
-        "alreadyAssigned": "Redan tilldelad"
+        "alreadyAssigned": "Redan tilldelad",
+        "notVerified": "Inte verifierad"
       },
       "gamerPicker": {
         "title": "Lägg till en spelare",
@@ -637,7 +652,6 @@
     "users": {
       "title": "Användare",
       "manageAccounts": "Hantera användarkonton och roller",
-      "inviteGedu": "Bjud in Gedu",
       "searchPlaceholder": "Sök på namn, e-post eller användarnamn...",
       "searchAriaLabel": "Sök användare",
       "roleFilterLabel": "Roll",
@@ -670,30 +684,18 @@
         "reserving": "Inväntar betalning",
         "completed": "Avslutad"
       },
-      "inviteNewGedu": "Bjud in ny Gedu",
-      "sendInvitation": "Skicka en inbjudan via e-post till en ny spelfostrare",
-      "newGeduInvitation": "Ny Gedu-inbjudan",
-      "geduReceiveEmail": "Gedun kommer att få ett e-postmeddelande med instruktioner för att konfigurera sitt konto.",
-      "inviteLinkExpiryNote": "Inbjudningslänken är giltig i 72 timmar.",
-      "emailAddress": "E-postadress",
-      "emailPlaceholder": "gedu@example.com",
-      "geduFirstName": "Förnamn",
-      "geduFirstNamePlaceholder": "t.ex. Jane",
-      "geduFirstNameHelper": "Visas i välkomstmailets hälsning och förifylls på Geduns profil.",
-      "geduFirstNameTooShort": "Förnamnet måste vara minst 2 tecken",
-      "geduFirstNameTooLong": "Förnamnet får vara högst 32 tecken",
-      "geduLastName": "Efternamn",
-      "geduLastNamePlaceholder": "t.ex. Smith",
-      "geduLastNameTooShort": "Efternamnet måste vara minst 2 tecken",
-      "geduLastNameTooLong": "Efternamnet får vara högst 32 tecken",
-      "inviteLanguage": "Inbjudningsmailets språk",
-      "sendInvite": "Skicka inbjudan",
-      "sendingInvite": "Skickar...",
-      "inviteSent": "Inbjudan skickad!",
-      "inviteSentDescription": "En inbjudan har skickats till {email}.",
-      "viewAllUsers": "Visa alla användare",
-      "inviteAnother": "Bjud in en till",
-      "invalidEmail": "Ange en giltig e-postadress"
+      "verification": {
+        "title": "Verifiering",
+        "verified": "Verifierad",
+        "unverified": "Inte verifierad",
+        "unverifiedNote": "Den här spelfostraren har inte verifierats ännu. Hen kan inte tilldelas en grupp förrän du verifierar hen.",
+        "verifiedOn": "Verifierad {date}",
+        "verifiedByOn": "Verifierad av {name} {date}",
+        "verifyAction": "Verifiera",
+        "unverifyAction": "Ångra verifiering",
+        "saving": "Sparar…",
+        "error": "Det gick inte att uppdatera verifieringen. Försök igen."
+      }
     },
     "locations": {
       "title": "Platser",
@@ -901,20 +903,15 @@
       "successTitle": "Lösenordet uppdaterat",
       "successDescription": "Ditt lösenord har uppdaterats."
     },
-    "setupAccount": {
-      "title": "Välkommen till Sogverse",
-      "description": "Konfigurera ditt spelutbildarkonto nedan.",
-      "firstNamePlaceholder": "Ditt förnamn",
-      "lastNamePlaceholder": "Ditt efternamn",
-      "passwordPlaceholder": "Minst 8 tecken",
-      "confirmPasswordPlaceholder": "Bekräfta ditt lösenord",
-      "settingUp": "Konfigurerar...",
-      "submitButton": "Konfigurera konto",
-      "inviteLinkExpired": "Din inbjudningslänk har gått ut. Be din administratör att skicka en ny.",
-      "minecraftSaveFailed": "Kunde inte spara Minecraft-användarnamn",
+    "registerGedu": {
+      "title": "Skapa ditt Sogverse-spelfostrarkonto",
+      "verificationAlertTitle": "Ditt konto måste verifieras",
+      "verificationAlertDescription": "Du kan logga in direkt, men en administratör måste verifiera ditt konto innan du kan tilldelas en klubb eller ett läger.",
+      "coverageHeading": "Var kan du arbeta?",
+      "coverageNote": "Välj de områden där du kan arbeta på plats. Om du bara kan arbeta på distans, lämna detta fält tomt. Du kan ändra ditt val senare i dina profilinställningar.",
       "invalidPhone": "Ange ett giltigt telefonnummer",
-      "successTitle": "Allt är klart!",
-      "successDescription": "Ditt konto har konfigurerats."
+      "creatingAccount": "Skapar konto...",
+      "alreadyHaveAccount": "Har du redan ett konto? <link>Logga in</link>"
     }
   },
   "pin": {
@@ -1233,6 +1230,35 @@
       }
     }
   },
+  "schools": {
+    "hero": {
+      "title": "Spelklubbar i <primary>din kommun</primary>",
+      "subtitle": "School of Gaming ordnar klubbar tillsammans med finländska kommuner. Hitta din kommun och utforska utbudet.",
+      "howItWorks": "Beroende på kommun träffas klubben antingen online hemifrån eller på plats i ditt barns skola. En professionell spelpedagog finns alltid med och leder verksamheten."
+    },
+    "search": {
+      "label": "Sök din kommun",
+      "placeholder": "Sök kommuner…",
+      "noMatches": "Ingen kommun matchar ”{query}”. Kontrollera stavningen eller prova en närliggande kommun."
+    },
+    "available": {
+      "empty": "Våra första kommunklubbar är på väg. Sök din kommun för att se om vi har nått den ännu."
+    },
+    "status": {
+      "available": "Klubbar tillgängliga",
+      "noClubs": "Inga klubbar här"
+    },
+    "waitlistNote": "Platserna är begränsade och klubbarna har ofta en väntelista. Om ditt barn slutar, kom ihåg att avboka anmälan så att platsen kan erbjudas nästa spelare.",
+    "notListed": {
+      "title": "Hittar du inte din kommun?",
+      "body": "Kommunklubbar ordnas tillsammans med varje kommun, och vi lägger till nya hela tiden. Om din kommun inte är med ännu, berätta för oss:",
+      "openClubs": "Vi har också klubbar som är öppna för alla, som en spelare kan gå med i oavsett var hen bor."
+    },
+    "municipality": {
+      "heading": "Klubbar från {name}",
+      "subheading": "Veckovisa klubbar som {name} erbjuder, där din spelare spelar, bygger och skapar med nya vänner och en Gedu som verkligen fattar."
+    }
+  },
   "productBrowse": {
     "headings": {
       "consumer_club": "Våra klubbar",
@@ -1247,6 +1273,7 @@
       "typeClubs": "Klubbar",
       "typeCamps": "Läger",
       "topic": "Spel",
+      "subject": "Ämne",
       "format": "Format",
       "formatOnline": "Online",
       "formatInPerson": "På plats",
@@ -1265,16 +1292,9 @@
       "notAvailableInCurrency": "Inte i {currency}",
       "seatsCapacity": "{count, plural, one {# plats} other {# platser}}",
       "waitlistAvailable": "Väntelista finns",
-      "endedBadge": "Avslutad",
       "endedNote": "Den här är slut — håll utkik efter nästa.",
       "viewDetails": "Visa",
       "manage": "Hantera",
-      "pillSpotsLeft": "{count, plural, one {Bara # plats kvar} other {Bara # platser kvar}}",
-      "pillNeedsMore": "{count, plural, one {# till behövs för att starta} other {# till behövs för att starta}}",
-      "pillFull": "Fullt",
-      "pillFullWaitlist": "Fullt — väntelista öppen",
-      "pillOpensOn": "Öppnar {date}",
-      "pillStarted": "Redan igång",
       "fullDisabled": "Fullt",
       "online": "Online"
     },
@@ -1285,6 +1305,11 @@
   },
   "topics": {
     "webinar": "Webbinarium"
+  },
+  "seatAvailability": {
+    "remaining": "{count, plural, one {# av {total} plats kvar} other {# av {total} platser kvar}}",
+    "full": "Fullt",
+    "waitlistAvailable": "Väntelista"
   },
   "productDetail": {
     "back": {
@@ -1357,7 +1382,6 @@
       "bannerAlmostFull": "Snabbt nu – bara några platser kvar",
       "bannerCountdown": "Anmälan öppnar {date}",
       "bannerCountdownDone": "Anmälan är öppen",
-      "bannerThreshold": "Startar när det fyllts",
       "bannerWaitlist": "Fullbokad just nu",
       "bannerFullClosed": "Fullbokad",
       "bannerRunningLate": "Den här har redan börjat",
@@ -1382,7 +1406,6 @@
       "ctaSubmitting": "Ett ögonblick…",
       "ctaSelectGamer": "Välj en gamer",
       "ctaWaitlist": "Gå med på väntelistan",
-      "ctaThreshold": "Reservera en plats",
       "ctaSignIn": "Logga in för att anmäla",
       "ctaCreateAccount": "Skapa konto",
       "gamerAlreadySignedUp": {
@@ -1394,10 +1417,6 @@
       "gamerAlreadyWaitlisted": "På väntelistan",
       "nonCustomerNote": "Endast föräldrar kan anmäla en spelare här.",
       "preOpenHelper": "Välj ditt barn och godkänn reglerna så blir det en knapptryckning så fort anmälan öppnar.",
-      "thresholdHelper": "Vi startar så fort {count} barn har anmält sig. Reservera en plats nu, så hör vi av oss så fort vi har tillräckligt.",
-      "thresholdProgress": "{current} av {threshold}",
-      "thresholdRemaining": "{count, plural, =0 {Tröskel uppnådd} one {# till för att starta} other {# till för att starta}}",
-      "seatsRemaining": "{count, plural, one {# av {total} plats kvar} other {# av {total} platser kvar}}",
       "waitlistHowTitle": "Så fungerar väntelistan",
       "waitlistHowItem1": "Du behåller din plats i kön under hela terminen.",
       "waitlistHowItem2": "Om en familj avbokar får nästa person en kort tid att tacka ja.",
@@ -1843,7 +1862,9 @@
         "creating": "Skapar…",
         "createFailed": "Kunde inte skapa rummet. Försök igen.",
         "ready": "Ditt rum är redo",
-        "join": "Gå med"
+        "join": "Gå med",
+        "unverifiedTitle": "Inväntar verifiering",
+        "unverifiedBody": "En administratör måste verifiera ditt utbildarkonto innan du kan skapa röstrum. Du kan starta ett här så snart du är verifierad."
       }
     }
   },
@@ -1910,7 +1931,7 @@
       "subject": "Återställ ditt Sogverse-lösenord",
       "heading": "Återställ ditt lösenord",
       "body": "Vi har mottagit en begäran om att återställa ditt Sogverse-lösenord. Klicka på knappen nedan för att välja ett nytt lösenord.",
-      "expiry": "Denna länk upphör att gälla om 72 timmar.",
+      "expiry": "Denna länk upphör att gälla om 1 timme.",
       "ignore": "Om du inte begärde en lösenordsåterställning kan du ignorera detta e-postmeddelande. Ditt lösenord kommer inte att ändras.",
       "button": "Återställ lösenord"
     },
@@ -1921,14 +1942,6 @@
       "expiry": "Denna länk upphör att gälla om 24 timmar.",
       "ignore": "Om du inte begärde en PIN-återställning kan du ignorera detta e-postmeddelande. Din PIN-kod kommer inte att ändras.",
       "button": "Återställ PIN-kod"
-    },
-    "geduInvite": {
-      "subject": "Du är inbjuden till Sogverse",
-      "heading": "Välkommen till Sogverse",
-      "greeting": "Hej {name},",
-      "body": "Du har blivit inbjuden att gå med i Sogverse som <strong>Gedu</strong>. Klicka på knappen nedan för att skapa ditt konto.",
-      "expiry": "Denna länk upphör att gälla om 72 timmar.",
-      "button": "Skapa ditt konto"
     },
     "minecraft": {
       "label": "Minecraft-användarnamn:",

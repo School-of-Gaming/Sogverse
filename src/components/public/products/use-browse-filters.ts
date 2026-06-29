@@ -1,12 +1,9 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
-import {
-  MIN_PRODUCT_AGE,
-  MAX_PRODUCT_AGE,
-} from "@/lib/constants/gamer-age";
+import { findAgeBand, type AgeBand } from "@/lib/constants/gamer-age";
 import type { ProductFormat } from "./filter-products";
 
 const TOPIC_PARAM = "topic";
@@ -42,16 +39,16 @@ function parseFormat(raw: string | null): ProductFormat | null {
   return null;
 }
 
-// A single gamer age, clamped to the product age band. Anything out of range
-// or unparseable reads as "any age" (null) so a hand-edited URL can't surface
-// an option the filter never offered.
-function parseAge(raw: string | null): number | null {
+// A selected age band, encoded as "min-max" (e.g. "7-9"). Only a value matching
+// one of the offered bands resolves; anything else reads as "any age" (null) so
+// a hand-edited URL can't surface a band the filter never offered.
+function parseAge(raw: string | null): AgeBand | null {
   if (!raw) return null;
-  const n = Number(raw);
-  if (!Number.isInteger(n) || n < MIN_PRODUCT_AGE || n > MAX_PRODUCT_AGE) {
-    return null;
-  }
-  return n;
+  const [minRaw, maxRaw] = raw.split("-");
+  const min = Number(minRaw);
+  const max = Number(maxRaw);
+  if (!Number.isInteger(min) || !Number.isInteger(max)) return null;
+  return findAgeBand(min, max);
 }
 
 // URL-state hook for the topic + tag + format chip filters.
@@ -64,7 +61,6 @@ function parseAge(raw: string | null): number | null {
 // replaces, not adds. Selecting the active chip clears the filter.
 
 export function useBrowseFilters() {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -106,7 +102,7 @@ export function useBrowseFilters() {
       topics?: string[];
       format?: ProductFormat | null;
       languages?: string[];
-      age?: number | null;
+      age?: AgeBand | null;
       days?: number[];
     }) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -124,24 +120,40 @@ export function useBrowseFilters() {
       }
       if (next.age !== undefined) {
         if (next.age === null) params.delete(AGE_PARAM);
-        else params.set(AGE_PARAM, String(next.age));
+        else params.set(AGE_PARAM, `${next.age.min}-${next.age.max}`);
       }
       if (next.days !== undefined) {
         if (next.days.length === 0) params.delete(DAYS_PARAM);
         else params.set(DAYS_PARAM, next.days.join(","));
       }
       const qs = params.toString();
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      // Update the URL via the History API rather than `router.replace` so a
+      // chip tap doesn't trigger an RSC navigation. The shop page is a dynamic
+      // async Server Component (it re-runs three RLS-scoped Supabase queries on
+      // every render); routing here would refetch that payload before the
+      // client-side `filterProducts()` — which needs no server data — could
+      // run, making the filter feel laggy. `useSearchParams()` reflects
+      // `replaceState`, so every reader in this hook updates synchronously.
+      window.history.replaceState(
+        null,
+        "",
+        qs ? `${pathname}?${qs}` : pathname,
+      );
     },
-    [pathname, router, searchParams],
+    [pathname, searchParams],
   );
 
-  const toggleTopic = useCallback(
-    (slug: string) => {
-      const lower = slug.toLowerCase();
-      const next = topics.includes(lower)
-        ? topics.filter((t) => t !== lower)
-        : [...topics, lower];
+  // Toggle a group of topics as one unit. Most chips carry a single topic; the
+  // municipality page's "Minecraft" chip stands for all three editions. Active
+  // when *every* topic in the group is selected; toggling on adds the whole
+  // group (deduped), toggling off removes it.
+  const toggleTopics = useCallback(
+    (group: readonly string[]) => {
+      const lowers = group.map((g) => g.toLowerCase());
+      const allActive = lowers.every((l) => topics.includes(l));
+      const next = allActive
+        ? topics.filter((t) => !lowers.includes(t))
+        : [...new Set([...topics, ...lowers])];
       writeNext({ topics: next });
     },
     [topics, writeNext],
@@ -166,7 +178,7 @@ export function useBrowseFilters() {
   );
 
   const setAge = useCallback(
-    (value: number | null) => {
+    (value: AgeBand | null) => {
       writeNext({ age: value });
     },
     [writeNext],
@@ -194,7 +206,7 @@ export function useBrowseFilters() {
     days,
     hasAny,
     hasNonDayFilters,
-    toggleTopic,
+    toggleTopics,
     toggleFormat,
     toggleLanguage,
     setAge,

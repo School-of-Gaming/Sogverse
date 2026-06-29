@@ -1,3 +1,4 @@
+import type { AgeBand } from "@/lib/constants/gamer-age";
 import type { ProductBrowseRow, ProductType } from "@/types";
 
 // Topic + format + language filters as the parent navigates the catalog.
@@ -12,10 +13,11 @@ import type { ProductBrowseRow, ProductType } from "@/types";
 // - `languages`: list of spoken-language codes (`fi`, `en`, `sv`).
 //   Single-valued on a product (`spoken_language_code`) — a product passes
 //   when its language is in the selected set. OR semantics across the set.
-// - `age`: a single gamer age, or null. A product passes when the age falls
-//   within its [min_age, max_age] band. Null means "any age" and skips the
-//   filter. The selectable ages come from the product age band in
-//   `@/lib/constants/gamer-age` (see `product-browse-filters.tsx`).
+// - `age`: a selected age band ({min, max}), or null. A product passes when its
+//   [min_age, max_age] *overlaps* the band — i.e. it serves some age the band
+//   covers. Null means "any age" and skips the filter. The offered bands come
+//   from `PRODUCT_AGE_BANDS` in `@/lib/constants/gamer-age` (see
+//   `product-browse-filters.tsx`).
 // - `days`: list of weekdays (0=Mon..6=Sun, matching `schedule_slots.weekday`)
 //   the recurring schedule must touch. A product passes when any of its
 //   `schedule_slots` falls on a selected day. OR semantics across the set
@@ -37,7 +39,7 @@ export interface BrowseFilters {
   topics: string[];
   format: ProductFormat | null;
   languages: string[];
-  age: number | null;
+  age: AgeBand | null;
   days: number[];
 }
 
@@ -79,7 +81,11 @@ export function filterProducts(
       }
     }
     if (filters.age !== null) {
-      if (filters.age < p.min_age || filters.age > p.max_age) return false;
+      // Overlap: the product's [min_age, max_age] and the selected band share
+      // at least one age.
+      if (p.min_age > filters.age.max || p.max_age < filters.age.min) {
+        return false;
+      }
     }
     if (filters.days.length > 0) {
       if (!p.schedule_slots.some((s) => filters.days.includes(s.weekday))) {

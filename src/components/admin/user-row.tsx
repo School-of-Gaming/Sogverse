@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CheckCircle2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { Badge } from "@/components/ui/badge";
@@ -20,9 +21,11 @@ interface UserRowProps {
   linkedGamers?: UserRowUser[];
   /** Base path for user detail links. Defaults to "/admin/users" */
   basePath?: string;
+  /** Gedu awaiting admin verification — shows an "Unverified" badge. */
+  unverified?: boolean;
 }
 
-export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserRowProps) {
+export function UserRow({ user, linkedGamers, basePath = "/admin/users", unverified }: UserRowProps) {
   const t = useTranslations('admin.users');
   const c = useTranslations('common');
   return (
@@ -47,6 +50,12 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserR
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {user.role === "gedu" && !unverified && (
+            <CheckCircle2
+              className="h-4 w-4 text-success"
+              aria-label={t('verification.verified')}
+            />
+          )}
           <Badge className={ROLE_BADGE_STYLES[user.role]}>
             {c(ROLE_LABEL_KEYS[user.role])}
           </Badge>

@@ -59,6 +59,9 @@ export type ValidationKey =
   | "priceSessionNegative"
   | "priceMonthMissing"
   | "priceMonthNegative"
+  | "primaryGeduFeeInvalid"
+  | "assistantGeduFeeInvalid"
+  | "municipalityFeeInvalid"
   | "registrationOpensDateRequired";
 
 export type ValidationFailure = {
@@ -182,6 +185,31 @@ export function validate(
     }
   }
 
+  // Fees: only the "fee" status collects an amount, and that amount must be a
+  // real positive number (0 is the separate "volunteer" status, never a typed
+  // "fee" of 0). "unknown"/"none"/"volunteer" need no input. The municipality
+  // fee is only validated for municipality clubs (its section is hidden
+  // otherwise and the value is forced to null at build time).
+  if (
+    state.primaryGeduFee.status === "fee" &&
+    !feeAmountValid(state.primaryGeduFee.amount)
+  ) {
+    return err("primaryGeduFeeInvalid");
+  }
+  if (
+    state.assistantGeduFee.status === "fee" &&
+    !feeAmountValid(state.assistantGeduFee.amount)
+  ) {
+    return err("assistantGeduFeeInvalid");
+  }
+  if (
+    config.productType === "municipality_club" &&
+    state.municipalityFee.status === "fee" &&
+    !feeAmountValid(state.municipalityFee.amount)
+  ) {
+    return err("municipalityFeeInvalid");
+  }
+
   if (
     state.registrationOpensMode === "scheduled" &&
     !state.registrationOpensDate
@@ -189,6 +217,40 @@ export function validate(
     return err("registrationOpensDateRequired");
   }
 
+  return null;
+}
+
+/** A "fee" amount is valid only as a real positive number of cents. */
+function feeAmountValid(amount: string): boolean {
+  const cents = decimalToCents(amount);
+  return cents != null && cents > 0;
+}
+
+/**
+ * Fold a fee draft (status + decimal amount) into the stored cents value:
+ *   "fee"       → the positive amount in cents
+ *   "volunteer" → 0
+ *   "unknown" | "none" → null
+ *
+ * A "fee" status with an unparseable amount is unreachable: build only runs
+ * after validate() passes, and validate() rejects exactly that case. We assert
+ * it rather than silently coercing to 0 — a wrong fee should never be invented
+ * from an invalid draft; a thrown error surfaces the broken invariant instead.
+ */
+function feeDraftToCents(
+  status: "unknown" | "none" | "volunteer" | "fee",
+  amount: string,
+): number | null {
+  if (status === "fee") {
+    const cents = decimalToCents(amount);
+    if (cents == null) {
+      throw new Error(
+        `feeDraftToCents: "fee" status with an invalid amount (${JSON.stringify(amount)}) — validate() should have blocked this`,
+      );
+    }
+    return cents;
+  }
+  if (status === "volunteer") return 0;
   return null;
 }
 
@@ -347,6 +409,24 @@ function buildSharedFields(
         })
       : [],
     holiday_calendar_ids: Array.from(state.holidayCalendarIds),
+    primary_gedu_fee_cents: feeDraftToCents(
+      state.primaryGeduFee.status,
+      state.primaryGeduFee.amount,
+    ),
+    assistant_gedu_fee_cents: feeDraftToCents(
+      state.assistantGeduFee.status,
+      state.assistantGeduFee.amount,
+    ),
+    // Municipality fee only exists on municipality clubs; force null for every
+    // other type so the DB CHECK (chk_products_municipality_fee_only_for_muni)
+    // never trips on a stale draft.
+    municipality_fee_cents:
+      config.productType === "municipality_club"
+        ? feeDraftToCents(
+            state.municipalityFee.status,
+            state.municipalityFee.amount,
+          )
+        : null,
   };
 }
 
@@ -401,6 +481,33 @@ export function buildUpdateInput(
 /** cents → "X.XX" with no trailing-zero stripping (matches form input). */
 function centsToDecimalString(cents: number): string {
   return (cents / 100).toFixed(2);
+}
+
+// cents → fee draft. Inverse of feeDraftToCents, with the null fallback that
+// each fee uses for "not set": gedu/municipality → "unknown", assistant →
+// "none". Gedu fees can be 0 (volunteer); the municipality fee can't (CHECK).
+function primaryGeduFeeDraft(
+  cents: number | null,
+): FormState["primaryGeduFee"] {
+  if (cents == null) return { status: "unknown", amount: "" };
+  if (cents === 0) return { status: "volunteer", amount: "" };
+  return { status: "fee", amount: centsToDecimalString(cents) };
+}
+
+function assistantGeduFeeDraft(
+  cents: number | null,
+): FormState["assistantGeduFee"] {
+  if (cents == null) return { status: "none", amount: "" };
+  if (cents === 0) return { status: "volunteer", amount: "" };
+  return { status: "fee", amount: centsToDecimalString(cents) };
+}
+
+function municipalityFeeDraft(
+  cents: number | null,
+): FormState["municipalityFee"] {
+  // null = unknown; > 0 = fee. 0 can't occur (the > 0 CHECK rejects it).
+  if (cents == null) return { status: "unknown", amount: "" };
+  return { status: "fee", amount: centsToDecimalString(cents) };
 }
 
 /** Infer the StartMode from the persisted (start_date, signup_threshold) pair. */
@@ -541,6 +648,9 @@ export function existingFormState(
     seatCount: product.seat_count != null ? String(product.seat_count) : "",
     uncapped: product.seat_count == null,
     waitlistEnabled: product.waitlist_enabled,
+    primaryGeduFee: primaryGeduFeeDraft(product.primary_gedu_fee_cents),
+    assistantGeduFee: assistantGeduFeeDraft(product.assistant_gedu_fee_cents),
+    municipalityFee: municipalityFeeDraft(product.municipality_fee_cents),
     registrationOpensMode: mode,
     registrationOpensDate: opensDate,
     registrationOpensHour: opensHour,

@@ -22,6 +22,13 @@ type SessionState =
 interface InstantVoiceSessionProps {
   /** Validated, uppercase 4-character code from the URL. */
   code: string;
+  /** Whether the server will grant this viewer an owner token (admin or a
+   *  verified gedu). Computed server-side and threaded into the lobby so it
+   *  shows the guest name input to anyone the token route treats as a guest —
+   *  an unverified gedu included. Don't re-derive this from the client-side
+   *  profile role: that can't see gedu verification and would mismatch the
+   *  server, leaving an unverified gedu with no name field and a 400 on join. */
+  isModerator: boolean;
   /** Pre-rendered copyright slot from the parent server component. Threaded
    *  down to CallEndedScreen so the year is computed on the server and we
    *  don't risk a hydration mismatch at year boundaries. */
@@ -45,15 +52,15 @@ interface InstantVoiceSessionProps {
  *   - `not-found` — Room doesn't exist. Echoes the code back so the user
  *                   can spot typos.
  */
-export function InstantVoiceSession({ code, copyright }: InstantVoiceSessionProps) {
+export function InstantVoiceSession({ code, isModerator, copyright }: InstantVoiceSessionProps) {
   return (
     <VoiceRoomProvider groupId={null}>
-      <InstantVoiceSessionInner code={code} copyright={copyright} />
+      <InstantVoiceSessionInner code={code} isModerator={isModerator} copyright={copyright} />
     </VoiceRoomProvider>
   );
 }
 
-function InstantVoiceSessionInner({ code, copyright }: InstantVoiceSessionProps) {
+function InstantVoiceSessionInner({ code, isModerator, copyright }: InstantVoiceSessionProps) {
   const t = useTranslations("voice");
   const tInstant = useTranslations("voice.instant");
   const { joined, join, leave, callObject } = useVoiceRoom();
@@ -291,6 +298,7 @@ function InstantVoiceSessionInner({ code, copyright }: InstantVoiceSessionProps)
     return (
       <InstantVoiceLobby
         onJoin={handleJoin}
+        isModerator={isModerator}
         joining={joining}
         error={joinError}
       />

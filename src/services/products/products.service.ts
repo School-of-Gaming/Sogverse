@@ -1,7 +1,5 @@
 import type {
   AppSupabaseClient,
-  Product,
-  ProductTranslation,
   ProductLongDescription,
   ProductType,
   ProductTopic,
@@ -39,7 +37,7 @@ function buildVisibleProductsQuery(
   return supabase
     .from("products")
     .select(
-      "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type))",
+      "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))",
     )
     .in("product_type", types)
     .eq("is_visible", true)
@@ -62,7 +60,7 @@ function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
     .select(
-      "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type)), product_holiday_calendars(holiday_calendars(name, calendar_holidays(date, reason)))",
+      "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_holiday_calendars(holiday_calendars(name, calendar_holidays(date, reason)))",
     )
     .eq("id", id)
     .maybeSingle();
@@ -72,17 +70,42 @@ function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
     .select(
-      "*, product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type)), product_holiday_calendars(calendar_id, holiday_calendars(name))",
+      "*, product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_holiday_calendars(calendar_id, holiday_calendars(name))",
     )
     .eq("id", id)
     .maybeSingle();
 }
 
+// Admin per-type list. Carries the translations the row renders plus the
+// weekly schedule slots — clubs that differ only by weekday are otherwise
+// indistinguishable in the list without opening each one. The slot shape
+// (`weekday, start_time, duration_minutes`) matches what
+// `formatProductSchedule` consumes, so the list reuses the same schedule
+// formatter as the browse card. `product_type`, `start_date`, `end_date`,
+// `timezone`, `location_id` and `spoken_language_code` come from `*` (columns
+// on Product). `gedu_group_assignments(gedu_id)` is embedded for the admin
+// club-list filter on assigned educator; the rows the list renders ignore it,
+// so it's inert for camps/events. The embed is keyed off the assignment's own
+// `product_id` FK, so it spans every group on the product — an empty array
+// means no educator is assigned anywhere.
+function buildProductsByTypeQuery(
+  supabase: AppSupabaseClient,
+  type: ProductType,
+) {
+  return supabase
+    .from("products")
+    .select(
+      "*, product_translations(*), schedule_slots(weekday, start_time, duration_minutes), gedu_group_assignments(gedu_id)",
+    )
+    .eq("product_type", type)
+    .order("created_at", { ascending: false });
+}
+
 // `topic` is a column on Product (the product_topic enum) — its label is
 // resolved client-side via PRODUCT_TOPICS, so no join is needed here.
-export type ProductWithDetails = Product & {
-  product_translations: ProductTranslation[];
-};
+export type ProductWithDetails = QueryData<
+  ReturnType<typeof buildProductsByTypeQuery>
+>[number];
 
 // Parent-facing single-product detail. Shares the browse row's joins and adds
 // a flattened `holidays` array — every (date, reason) pair pulled from the
@@ -151,6 +174,11 @@ export type CreateProductInput = {
   schedule_slots: ScheduleSlotInput[];
   prices: PriceInput[];
   holiday_calendar_ids: string[];
+  // Per-session operating fees in integer cents. null = unknown/none,
+  // 0 = volunteer, > 0 = a fee (see products.contracts.ts).
+  primary_gedu_fee_cents: number | null;
+  assistant_gedu_fee_cents: number | null;
+  municipality_fee_cents: number | null;
   image: File | null;
 };
 
@@ -185,6 +213,10 @@ export type UpdateProductInput = {
   schedule_slots: ScheduleSlotInput[];
   prices: PriceInput[];
   holiday_calendar_ids: string[];
+  // Per-session operating fees in integer cents — see CreateProductInput.
+  primary_gedu_fee_cents: number | null;
+  assistant_gedu_fee_cents: number | null;
+  municipality_fee_cents: number | null;
   image: File | string | null;
 };
 
@@ -192,11 +224,7 @@ export class ProductsService {
   constructor(private supabase: AppSupabaseClient) {}
 
   async listByType(type: ProductType): Promise<ProductWithDetails[]> {
-    const { data, error } = await this.supabase
-      .from("products")
-      .select("*, product_translations(*)")
-      .eq("product_type", type)
-      .order("created_at", { ascending: false });
+    const { data, error } = await buildProductsByTypeQuery(this.supabase, type);
 
     if (error) throw error;
     return data;

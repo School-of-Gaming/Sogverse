@@ -32,6 +32,9 @@ function row(overrides: {
     padlet_url: null,
     product_type: "consumer_club",
     refund_policy_days: null,
+    primary_gedu_fee_cents: null,
+    assistant_gedu_fee_cents: null,
+    municipality_fee_cents: null,
     registration_opens_at: "2026-01-01T00:00:00.000Z",
     seat_count: null,
     signup_threshold: null,
@@ -201,38 +204,28 @@ describe("filterProducts", () => {
     expect(ids).toEqual(["a"]);
   });
 
-  it("age keeps products whose [min_age, max_age] band includes it", () => {
+  it("age keeps products whose [min_age, max_age] overlaps the band", () => {
     const ids = filterProducts(ALL, {
       topics: [],
       format: null,
       languages: [],
-      age: 8,
+      age: { min: 7, max: 9 },
       days: [],
     }).map((p) => p.id);
-    // A is 7–9, C is 7–17 (both include 8); B is 12–17.
+    // A is 7–9 (overlaps) and C is 7–17 (overlaps); B is 12–17 (no overlap).
     expect(ids.sort()).toEqual(["a", "c"]);
   });
 
-  it("age matches at the inclusive band edges", () => {
-    const lower = filterProducts(ALL, {
+  it("age matches when the band touches a product's edge", () => {
+    // The 10–12 band overlaps B (12–17) at age 12 and C (7–17); A tops out at 9.
+    const ids = filterProducts(ALL, {
       topics: [],
       format: null,
       languages: [],
-      age: 9,
+      age: { min: 10, max: 12 },
       days: [],
     }).map((p) => p.id);
-    // 9 is A's max_age (inclusive) and inside C's band.
-    expect(lower.sort()).toEqual(["a", "c"]);
-
-    const upper = filterProducts(ALL, {
-      topics: [],
-      format: null,
-      languages: [],
-      age: 12,
-      days: [],
-    }).map((p) => p.id);
-    // 12 is B's min_age (inclusive) and inside C's band; A tops out at 9.
-    expect(upper.sort()).toEqual(["b", "c"]);
+    expect(ids.sort()).toEqual(["b", "c"]);
   });
 
   it("ANDs age with other filters", () => {
@@ -240,10 +233,11 @@ describe("filterProducts", () => {
       topics: [],
       format: "online",
       languages: [],
-      age: 15,
+      age: { min: 13, max: 16 },
       days: [],
     }).map((p) => p.id);
-    // 15 is in B (12–17) and C (7–17), but B is in-person — only C is online.
+    // The 13–16 band overlaps B (12–17) and C (7–17), but B is in-person —
+    // only C is online.
     expect(ids).toEqual(["c"]);
   });
 

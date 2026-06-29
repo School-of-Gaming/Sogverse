@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Checkbox } from "@/components/ui/checkbox";
 import { FormSection } from "../form-primitives";
 import type { FormState } from "../product-form-state";
 
@@ -21,13 +22,12 @@ export function VisibilitySection({
       description={t("sections.visibilityDescription")}
     >
       <label className="flex cursor-pointer items-start gap-3 rounded-md border border-input p-3">
-        <input
-          type="checkbox"
+        <Checkbox
+          className="mt-0.5"
           checked={state.isVisible}
           onChange={(e) =>
             setState({ ...state, isVisible: e.target.checked })
           }
-          className="mt-0.5 h-4 w-4"
         />
         <div className="min-w-0 flex-1 text-sm">
           <div className="font-medium">{t("labels.makeVisible")}</div>

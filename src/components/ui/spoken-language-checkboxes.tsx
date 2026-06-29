@@ -19,6 +19,7 @@
 
 import { useTranslations } from "next-intl";
 import type { SpokenLanguage } from "@/types";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   getSpokenLanguageFlag,
   type SpokenLanguageFlag,
@@ -86,8 +87,7 @@ export function SpokenLanguageCheckboxes({
           const { FlagIcon, displayName } = display(lang);
           return (
             <label key={lang.code} className="flex items-center gap-2 text-sm cursor-pointer">
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={selected.includes(lang.code)}
                 onChange={(e) => {
                   onChange(
@@ -97,7 +97,6 @@ export function SpokenLanguageCheckboxes({
                   );
                 }}
                 disabled={disabled}
-                className="h-4 w-4 accent-primary cursor-pointer"
               />
               <FlagLabel FlagIcon={FlagIcon} displayName={displayName} />
             </label>

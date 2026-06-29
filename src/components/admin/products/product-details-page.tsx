@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import {
   ArrowLeft,
   Calendar,
   Clock,
+  Coins,
   Copy,
   Globe2,
+  Landmark,
   Pencil,
   Shapes,
   Wallet,
@@ -18,9 +19,14 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
-import { productImageUrl } from "@/lib/images/product-image-url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { formatDate } from "@/lib/utils";
+import {
+  cn,
+  formatCurrencyFromCents,
+  formatDate,
+  formatDateOnly,
+} from "@/lib/utils";
+import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { ProductOverviewCard } from "@/components/public/products/product-overview-card";
 import {
   useProductAdmin,
@@ -115,9 +121,6 @@ export function ProductDetailsPage({
   // rather than render a label-less "Opens at" state.
   const voice = computeVoiceState({ product, now, locale, timeZone });
   const voiceAvailable = product.is_remote && voice.hasUpcomingSession;
-  const imageUrl = product.image_path
-    ? productImageUrl(product.image_path)
-    : null;
   const topicName = topicLabel(product.topic);
 
   return (
@@ -131,7 +134,7 @@ export function ProductDetailsPage({
       </Link>
 
       <HeaderCard
-        imageUrl={imageUrl}
+        imagePath={product.image_path}
         kicker={label}
         title={tr?.name ?? t("list.untitled")}
         description={tr?.short_description ?? null}
@@ -155,6 +158,7 @@ export function ProductDetailsPage({
         product={product}
         topicName={topicName}
         uiLocale={uiLocale}
+        timeZone={timeZone}
         t={t}
         c={c}
       />
@@ -188,7 +192,7 @@ export function ProductDetailsPage({
 // take action right now; everything below is read-only or placeholder.
 // ──────────────────────────────────────────────────────────────────────
 function HeaderCard({
-  imageUrl,
+  imagePath,
   kicker,
   title,
   description,
@@ -202,7 +206,7 @@ function HeaderCard({
   cloneHref,
   cloneLabel,
 }: {
-  imageUrl: string | null;
+  imagePath: string | null;
   kicker: string;
   title: string;
   description: string | null;
@@ -219,11 +223,15 @@ function HeaderCard({
   return (
     <Card>
       <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-start">
-        <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-md border bg-muted">
-          {imageUrl ? (
-            <Image src={imageUrl} alt="" fill className="object-cover" unoptimized />
-          ) : null}
-        </div>
+        <ProductThumbnail
+          imagePath={imagePath ?? ""}
+          alt=""
+          size="h-28 w-28"
+          className={cn(
+            "rounded-md border bg-muted [&>img]:aspect-square [&>img]:h-full [&>img]:w-full [&>img]:object-cover",
+            !imagePath && "[&>img]:hidden",
+          )}
+        />
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             {kicker}
@@ -281,18 +289,47 @@ function OperationalFacts({
   product,
   topicName,
   uiLocale,
+  timeZone,
   t,
   c,
 }: {
   product: ProductAdminDetailRow;
   topicName: string | null;
   uiLocale: string;
+  timeZone: string;
   t: ReturnType<typeof useTranslations<"admin.products">>;
   c: ReturnType<typeof useTranslations<"common">>;
 }) {
   const isClub =
     product.product_type === "consumer_club" ||
     product.product_type === "municipality_club";
+  const isMuni = product.product_type === "municipality_club";
+
+  // Render a per-session fee from its stored cents. The state is derived from
+  // the value: null = "not set" (the `nullStatus` label — "unknown" draws the
+  // eye, "none" is just informational), 0 = volunteer (free), > 0 = a EUR
+  // amount in the viewer's locale.
+  const renderFee = (cents: number | null, nullStatus: "unknown" | "none") => {
+    if (cents == null) {
+      return (
+        <span
+          className={
+            nullStatus === "unknown"
+              ? "text-destructive"
+              : "text-muted-foreground"
+          }
+        >
+          {t(`fees.status.${nullStatus}`)}
+        </span>
+      );
+    }
+    if (cents === 0) {
+      return (
+        <span className="text-muted-foreground">{t("fees.status.volunteer")}</span>
+      );
+    }
+    return formatCurrencyFromCents(cents, "eur", uiLocale);
+  };
 
   // Camps/events surface their dates inside the shared "When & where" card
   // (the schedule formatter folds them in); recurring clubs don't, so a
@@ -300,9 +337,9 @@ function OperationalFacts({
   const termDates = (() => {
     if (!isClub || !product.start_date) return null;
     if (product.end_date && product.end_date !== product.start_date) {
-      return `${formatDate(product.start_date, uiLocale)} → ${formatDate(product.end_date, uiLocale)}`;
+      return `${formatDateOnly(product.start_date, uiLocale)} → ${formatDateOnly(product.end_date, uiLocale)}`;
     }
-    return formatDate(product.start_date, uiLocale);
+    return formatDateOnly(product.start_date, uiLocale);
   })();
 
   const seatsLine =
@@ -347,6 +384,7 @@ function OperationalFacts({
           {formatDate(product.registration_opens_at, uiLocale, {
             dateStyle: "medium",
             timeStyle: "short",
+            timeZone,
           })}
         </Fact>
 
@@ -360,6 +398,20 @@ function OperationalFacts({
             </ul>
           )}
         </Fact>
+
+        <Fact icon={Coins} label={t("detailsPage.fields.primaryGeduFee")}>
+          {renderFee(product.primary_gedu_fee_cents, "unknown")}
+        </Fact>
+
+        <Fact icon={Coins} label={t("detailsPage.fields.assistantGeduFee")}>
+          {renderFee(product.assistant_gedu_fee_cents, "none")}
+        </Fact>
+
+        {isMuni && (
+          <Fact icon={Landmark} label={t("detailsPage.fields.municipalityFee")}>
+            {renderFee(product.municipality_fee_cents, "unknown")}
+          </Fact>
+        )}
 
         <Fact icon={Shapes} label={t("detailsPage.fields.topic")}>
           {topicName ?? <span className="text-muted-foreground">{c("notSet")}</span>}

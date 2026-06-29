@@ -139,6 +139,9 @@ function buildBaseProduct(
     // Minecraft Java — enough to exercise both game chips in the preview.
     topic: productType === "event" ? "fortnite" : "minecraft_java",
     refund_policy_days: null,
+    primary_gedu_fee_cents: null,
+    assistant_gedu_fee_cents: null,
+    municipality_fee_cents: null,
     created_at: refTimestamp,
     updated_at: refTimestamp,
     created_by: "mock-admin",
@@ -275,14 +278,26 @@ function pickSchedule(productType: ProductType): {
 const MOCK_LOC_TAPIOLA: BrowseRowLocation = {
   id: "mock-loc-tapiolan-koulu",
   name: "Tapiolan koulu",
+  name_i18n: null,
   type: "site",
-  parent: { id: "mock-loc-espoo", name: "Espoo", type: "municipality" },
+  parent: {
+    id: "mock-loc-espoo",
+    name: "Espoo",
+    name_i18n: { sv: "Esbo" },
+    type: "municipality",
+  },
 };
 const MOCK_LOC_SOG_HQ: BrowseRowLocation = {
   id: "mock-loc-sog-hq",
   name: "Sogverse HQ",
+  name_i18n: null,
   type: "site",
-  parent: { id: "mock-loc-helsinki", name: "Helsinki", type: "municipality" },
+  parent: {
+    id: "mock-loc-helsinki",
+    name: "Helsinki",
+    name_i18n: { sv: "Helsingfors" },
+    type: "municipality",
+  },
 };
 
 function pickLocationFixture(

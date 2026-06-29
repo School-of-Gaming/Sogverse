@@ -33,7 +33,7 @@ Four user roles with separate dashboards:
 - `admin` → `/admin` - System management
 - `customer` → `/parent` - Parents who purchase products and manage linked gamers (the role identifier is `customer`; the URL is `/parent`)
 - `gamer` → `/gamer` - Child accounts (email-first like every role; email is a synthetic `<token>@gamer.sogverse.internal` address; login is via account-switch from the parent, not a typed credential)
-- `gedu` → `/gedu` - Game educators
+- `gedu` → `/gedu` - Game educators (self-register at `/register-gedu`; an account is unverified until an admin approves it — verification gates only group assignment, not platform access. See `src/services/gedu/`)
 
 Proxy (`src/proxy.ts`) refreshes Supabase auth sessions, enforces role-based routing, and sets a per-request nonce-based Content Security Policy (Next.js 16 uses `proxy.ts` instead of `middleware.ts`). RLS policies protect data at the database level.
 
@@ -104,6 +104,10 @@ Setting the flag *inside* `onSuccess` (or via a hook that does so) is too late a
 - **Zone-to-zone conversion.** `fromZonedTime` / `toZonedTime` from `date-fns-tz` (already a project dep — see `src/lib/utils.ts`, `effective-status.ts`).
 - **Anti-pattern: never write `new Date().toISOString().slice(0, 10)`.** That's the date in UTC, not anyone's local date — for any non-UTC viewer it's off-by-one near midnight and silently wrong everywhere else without anyone noticing. If you find yourself reaching for it, you want `formatInTimeZone` with an explicit zone instead.
 
+**Rule: Anything with a time of day renders in the *viewer's* timezone — never the runtime default, never the source/product zone.** A true instant (a timestamptz column) or a date+time (a session, an event, a recurring slot) is shown in the viewer's IANA zone — resolved from the viewer's profile/settings, paired with a request-stable "now" so SSR and the first client render agree. Make the viewer zone a required argument of the shared date/time formatters so a call can't silently fall back to the runtime default; a genuinely zoneless date goes through the date-only path instead. When the displayed zone differs from the source (products are authored in `Europe/Helsinki`), surface the viewer's short tz abbrev next to the time so the adjustment is visible — the abbrev is already locale-formatted by `Intl`, so it is not a translated string. A recurring wall-clock slot can't be converted without a concrete date (the offset is DST-dependent): resolve one (the next occurrence of that weekday), turn it into an absolute instant, then derive the weekday + clock face and **re-group in viewer space** — a Helsinki Mon/Wed pair can shift to different viewer weekdays. Compute end times by adding the duration to the *instant* and re-formatting — never string-add the viewer-local start, or a DST transition inside the session corrupts it.
+
+**Rule: A pure calendar date with no time of day stays UTC-pinned — do not give it the viewer's zone.** A camp's start/end date range, a club term date, a legal "last updated" date — these are zoneless; parse the bare date at UTC midnight and render in UTC, because re-anchoring it to a viewer's zone shifts it off-by-one. Rule of thumb: **a value with a clock face converts; a bare date does not.** (An event's date *does* shift when it carries a slot time — that's a date+time instant; an event with no time stays date-only.)
+
 ### Locale vs. Spoken Language
 
 **Rule: Use *locale* for the UI translation system and *spoken language* for human languages.** They are deliberately named differently because they are distinct concepts.
@@ -160,7 +164,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Testing conventions | `tests/` |
 
 - `docs/` holds the docs a human deliberately maintains and that don't map to one directory: cross-cutting architecture spanning many systems (products, db-authorization, performance), point-in-time records (security audit, bug/fix write-ups, gap analyses), and ops runbooks (slack, admin quota, stripe testing). When a topic is in neither a colocated `CLAUDE.md` nor `docs/`, treat the code as the source of truth.
-- `TODO.md` is the running list of cross-cutting work we know we want to come back to. Distinct from `docs/`.
+- `TODO.md` is the running list of cross-cutting work we know we want to come back to. Distinct from `docs/`. **When an item is fully done with nothing left to discuss, delete it — don't check it off (`[x]`).** `TODO.md` tracks open work, not a changelog; the record of what was done lives in git history and in the docs/code the work produced. Leave `[ ]`/`[x]` only for partially-done items where the checked sub-points still give context for the open ones.
 
 ## Environment Variables
 
