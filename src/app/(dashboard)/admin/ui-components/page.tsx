@@ -1112,12 +1112,18 @@ function ScenarioBrowseCard({
     locale: uiLocale,
   });
 
+  // Muni clubs are only ever surfaced on the per-municipality page, which
+  // renders them `municipalityScoped` — so an online muni club collapses its
+  // (redundant) city name to the generic "Online" label, exactly as the
+  // production adapter does there. In-person muni clubs still show their school
+  // site. (The `online_muni` city-name branch never fires for muni clubs in the
+  // live app, so the demo doesn't reproduce it.)
   const loc = formatProductLocation(product, uiLocale);
   const locationLine: LocationLine = !loc
     ? { kind: "online", label: t("online") }
     : loc.kind === "site"
       ? { kind: "in_person", label: loc.site }
-      : { kind: "online_muni", label: loc.name };
+      : { kind: "online", label: t("online") };
 
   // Same rule as the production adapter: muni clubs tell the seat story through
   // the footer bar, so they suppress the capacity hint; everything else shows

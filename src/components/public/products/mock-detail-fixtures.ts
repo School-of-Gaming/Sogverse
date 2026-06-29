@@ -10,7 +10,7 @@ import {
   type RegistrationCtaKind,
   type RegistrationState,
 } from "./derive-registration-state";
-import type { AuthState } from "./signup-panel-view";
+import type { AuthState, MyParticipationState } from "./signup-panel-view";
 
 // Synthetic fixtures, one per curated preview scenario. The mental model: each
 // scenario IS a mocked product. The /admin/ui-components card and the
@@ -65,6 +65,12 @@ interface ScenarioBase {
    */
   priceCentsEur: number | null;
   auth: AuthKind;
+  /**
+   * Online municipality club: `is_remote` with a municipality-typed location
+   * (no school site), so the card/detail render the "online — {city}" location
+   * line instead of the in-person school. Only meaningful for muni clubs.
+   */
+  online?: boolean;
 }
 
 // A scenario either authors a static registration state, or is a live
@@ -76,9 +82,13 @@ type ScenarioConfig =
 
 // Real UUIDs so the gamer picker's identicons hash to distinct, stable avatars
 // — placeholder ids like "g1" render degenerate identicons that misrepresent
-// the real UI.
+// the real UI. The middle child (Väinö) already participates in the product;
+// `buildAuthState` stamps the matching signup state (waitlisted vs. seat) so
+// the picker shows the disabled "already signed up / waitlisted" row alongside
+// two still-selectable siblings.
 const DEMO_GAMERS = [
   { id: "6aaac864-5ea7-451b-8d02-93f9ae6f25b5", name: "Oona", age: 10 },
+  { id: "decdae83-3f51-4209-bf1a-254e88f1c32f", name: "Väinö", age: 11 },
   { id: "d010872c-7034-401b-9c2d-5dfa675f60d8", name: "Aino", age: 8 },
 ] as const;
 
@@ -112,13 +122,17 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     state: { kind: "open", seatCount: 15, seatsLeft: 15, waitlistEnabled: false },
   },
   "muni-filling": {
-    label: "6 / 15 seats",
+    // The single 6/15 card doubles as the online-muni demo: it's remote and
+    // references a municipality node, so it exercises the "online — {city}"
+    // location line. The other muni cards stay in-person (a school site).
+    label: "Online · 6 / 15 seats",
     productType: "municipality_club",
     billingMode: "external_contract",
     seatCount: 15,
     waitlistEnabled: false,
     priceCentsEur: null,
     auth: "signed-in-with-gamers",
+    online: true,
     state: { kind: "open", seatCount: 15, seatsLeft: 6, waitlistEnabled: false },
   },
   "muni-almost-full": {
@@ -341,11 +355,15 @@ export function buildScenarioFixture(slug: PreviewScenario): BuildFixtureResult 
   }
 
   const product = buildBaseProduct(slug, config, registrationOpensAt, state);
-  const authState = buildAuthState(config.auth, detailHref);
+  const authState = buildAuthState(config.auth, detailHref, state);
   return { product, state, authState };
 }
 
-function buildAuthState(auth: AuthKind, detailHref: string): AuthState {
+function buildAuthState(
+  auth: AuthKind,
+  detailHref: string,
+  state: RegistrationState,
+): AuthState {
   switch (auth) {
     case "signed-out": {
       const redirect = `?redirect=${encodeURIComponent(detailHref)}`;
@@ -357,8 +375,20 @@ function buildAuthState(auth: AuthKind, detailHref: string): AuthState {
     }
     case "signed-in-no-gamers":
       return { kind: "ready", gamers: [] };
-    case "signed-in-with-gamers":
-      return { kind: "ready", gamers: DEMO_GAMERS };
+    case "signed-in-with-gamers": {
+      // The middle child already participates — on a full product with a
+      // waitlist they hold a waitlist spot; otherwise they hold a seat.
+      const signupState: MyParticipationState =
+        state.kind === "full_waitlist" ? "waitlisted" : "active";
+      return {
+        kind: "ready",
+        gamers: [
+          DEMO_GAMERS[0],
+          { ...DEMO_GAMERS[1], signupState },
+          DEMO_GAMERS[2],
+        ],
+      };
+    }
   }
 }
 
@@ -373,7 +403,13 @@ function buildBaseProduct(
   const { productType, billingMode } = config;
   const copy = COPY[productType];
   const { startDate, endDate, scheduleSlots } = pickSchedule(productType);
-  const locationFixture = pickLocationFixture(productType);
+  // Online muni clubs are remote and reference a municipality node (not a
+  // school site); everything else keeps its per-type location + remoteness.
+  const isOnlineMuni = config.online === true;
+  const isRemote = isOnlineMuni ? true : copy.isRemote;
+  const locationFixture = isOnlineMuni
+    ? MOCK_LOC_ESPOO_MUNI
+    : pickLocationFixture(productType);
 
   // Metadata the database would otherwise populate (created_at/updated_at,
   // created_by) gets static demo values so the fixture is a complete,
@@ -388,7 +424,7 @@ function buildBaseProduct(
     billing_mode: billingMode,
     status: pickStatus(state),
     is_visible: true,
-    is_remote: copy.isRemote,
+    is_remote: isRemote,
     min_age: 8,
     max_age: 12,
     spoken_language_code: "fi",
@@ -474,14 +510,18 @@ const COPY: Record<ProductType, TypeCopy> = {
     isRemote: false,
   },
   camp: {
-    name: "Spring Break Minecraft Camp",
+    name: "Minecraft Builders Camp",
     description:
-      "Five days of building. Each day we take on a different style and end the week with a kid-built world everyone can explore together.",
+      "Three mornings a week for two weeks. Each session we take on a new build, and the group ends with a world everyone can explore together.",
     long: [
-      { type: "heading", text: "The week at a glance" },
+      { type: "heading", text: "How it runs" },
       {
         type: "paragraph",
-        text: "Monday we play and pull apart a few favourite builds. By Friday each camper has built a world of their own that the whole group explores together.",
+        text: "We meet Monday, Wednesday, and Friday mornings across two weeks — enough rhythm to build something real without taking over the whole holiday.",
+      },
+      {
+        type: "paragraph",
+        text: "Each morning starts by looking at what the group made last time, then we take on one new build together — a redstone gadget, a themed house, a small adventure map.",
       },
       { type: "heading", text: "Who it's for" },
       {
@@ -518,14 +558,16 @@ function pickSchedule(productType: ProductType): {
         ],
       };
     case "camp":
+      // Real camps run a few days a week, not all five — Mon/Wed/Fri mornings
+      // across two weeks (weekday 0 = Mon). Start/end bracket the first and last
+      // session so the date range and the calendar agree.
       return {
-        startDate: "2026-02-23",
-        endDate: "2026-02-27",
-        // Mon–Fri.
-        scheduleSlots: [0, 1, 2, 3, 4].map((weekday) => ({
+        startDate: "2026-02-23", // Mon
+        endDate: "2026-03-06", // Fri, two weeks later
+        scheduleSlots: [0, 2, 4].map((weekday) => ({
           weekday,
           start_time: "10:00:00",
-          duration_minutes: 360,
+          duration_minutes: 240,
         })),
       };
     case "event":
@@ -554,6 +596,21 @@ const MOCK_LOC_TAPIOLA: BrowseRowLocation = {
     name: "Espoo",
     name_i18n: { sv: "Esbo" },
     type: "municipality",
+  },
+};
+// Municipality node (not a school site) — the location an online muni club
+// references. `formatProductLocation` renders its city name as the "online —
+// {city}" line when the product is remote.
+const MOCK_LOC_ESPOO_MUNI: BrowseRowLocation = {
+  id: "mock-loc-espoo-muni",
+  name: "Espoo",
+  name_i18n: { sv: "Esbo" },
+  type: "municipality",
+  parent: {
+    id: "mock-loc-uusimaa",
+    name: "Uusimaa",
+    name_i18n: { sv: "Nyland" },
+    type: "region",
   },
 };
 const MOCK_LOC_SOG_HQ: BrowseRowLocation = {

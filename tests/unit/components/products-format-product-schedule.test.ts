@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   formatProductSchedule,
   formatWeekday,
+  scheduleCardLines,
 } from "@/components/public/products/format-product-schedule";
 import type { ProductBrowseRow } from "@/types";
 
@@ -296,5 +297,41 @@ describe("formatProductSchedule — viewer-tz conversion", () => {
     expect(s.weekday).toBe("Tuesday"); // May 5 2026 is a Tuesday
     expect(s.date).toMatch(/May/);
     expect(s.time).toEqual({ start: "05:30", end: "07:30" });
+  });
+});
+
+describe("scheduleCardLines — camp weekdays", () => {
+  // A camp's card must always name the weekdays it runs: the date range alone
+  // doesn't tell a parent which days within it have sessions.
+  it("partial-week camp (Mon/Wed/Fri, one time) names its days", () => {
+    const s = summary({
+      product_type: "camp",
+      start_date: "2026-02-23", // Mon
+      end_date: "2026-03-06", // Fri, two weeks later
+      schedule_slots: [0, 2, 4].map((weekday) => ({
+        weekday,
+        start_time: "10:00:00",
+        duration_minutes: 240,
+      })),
+    });
+    const lines = scheduleCardLines(s);
+    expect(lines).toHaveLength(2);
+    expect(lines[1]).toBe("Mon, Wed, Fri · 10:00–14:00");
+  });
+
+  it("every-weekday camp still names its days (range alone is ambiguous)", () => {
+    const s = summary({
+      product_type: "camp",
+      start_date: "2026-02-23",
+      end_date: "2026-02-27",
+      schedule_slots: [0, 1, 2, 3, 4].map((weekday) => ({
+        weekday,
+        start_time: "09:00:00",
+        duration_minutes: 360,
+      })),
+    });
+    const lines = scheduleCardLines(s);
+    expect(lines).toHaveLength(2);
+    expect(lines[1]).toBe("Mon, Tue, Wed, Thu, Fri · 09:00–15:00");
   });
 });

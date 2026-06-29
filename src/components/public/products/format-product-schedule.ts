@@ -209,14 +209,11 @@ export function scheduleCardLines(schedule: ProductScheduleSummary): string[] {
     case "ranged": {
       const dateLine = `${schedule.startDate} – ${schedule.endDate}`;
       if (schedule.groups.length === 0) return [dateLine];
-      // Common single-bucket camp: drop the weekday list — the date range
-      // already gives the calendar shape and "09:00–15:00" reads as "daily
-      // hours". Multi-bucket camps keep weekday labels.
-      const timeLine =
-        schedule.groups.length === 1
-          ? `${schedule.groups[0].startTime}–${schedule.groups[0].endTime}`
-          : joinScheduleGroups(schedule.groups);
-      return [dateLine, withTz(timeLine, abbrev)];
+      // Always name the weekdays a camp runs. The date range alone never tells a
+      // parent *which* days within it have sessions — a single daily time slot
+      // could mean every day, or just Mon/Wed/Fri — so the weekday list isn't
+      // redundant the way it would be for a true every-day camp.
+      return [dateLine, withTz(joinScheduleGroups(schedule.groups), abbrev)];
     }
     case "single": {
       const line = schedule.time
