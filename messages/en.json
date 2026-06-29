@@ -170,51 +170,19 @@
       "types": {
         "consumerClub": {
           "label": "Consumer club",
-          "plural": "Consumer clubs",
-          "tagline": "Weekly, ongoing, parents pay per session.",
-          "blurb": "Parents enrol their child and pay per session. Clubs run week after week with no end date unless you set one.",
-          "traits": {
-            "1": "Weekly · one day per week",
-            "2": "No end date by default",
-            "3": "Parents pay per session, with optional subscription rate",
-            "4": "Fixed seat count, with a waitlist"
-          }
+          "plural": "Consumer clubs"
         },
         "municipalityClub": {
           "label": "Municipality club",
-          "plural": "Municipality clubs",
-          "tagline": "Term-based, school-paid, ticket-drop registration.",
-          "blurb": "A municipality or school pays up front for a block of seats. Parents register their child for free; the registration window opens at a fixed moment like a concert ticket drop.",
-          "traits": {
-            "1": "Weekly · one day per week",
-            "2": "Runs between a start and end date",
-            "3": "School of Gaming invoices the municipality",
-            "4": "Fixed seat count, with a waitlist"
-          }
+          "plural": "Municipality clubs"
         },
         "camp": {
           "label": "Camp",
-          "plural": "Camps",
-          "tagline": "Multiple days for a set period. Parents pay upfront.",
-          "blurb": "A camp runs across several days of the week for a set period — any time of year. Parents pay the full price once, at signup. Refundable up to a cutoff before the camp starts.",
-          "traits": {
-            "1": "Several days per week (each with its own time)",
-            "2": "Runs between a start and end date",
-            "3": "Parents pay upfront",
-            "4": "Refundable before the camp starts"
-          }
+          "plural": "Camps"
         },
         "event": {
           "label": "Event",
-          "plural": "Events",
-          "tagline": "A single date. Free, or a one-time charge.",
-          "blurb": "A one-time event on a specific date. Good for demo days, community walks, webinars, tournaments. Free events can have no seat limit; paid events always have a seat count.",
-          "traits": {
-            "1": "Single date, single start time",
-            "2": "Free or paid upfront",
-            "3": "Free events can have no seat limit",
-            "4": "Great for demos, webinars, tournaments"
-          }
+          "plural": "Events"
         }
       },
       "list": {

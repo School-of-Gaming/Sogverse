@@ -1018,7 +1018,6 @@ The unified shape is proven against the two product lines closest to real users.
 - ✓ Inline-create for topics and tags (single-locale, in admin's current UI locale) via `/api/admin/{topics,tags}/create`.
 - ✓ Site notes editor — separate member-visible vs staff-only fields against `site_details` / `site_staff_details` (`/api/admin/site-notes`).
 - ✓ Holiday-calendar checkbox selector on the form (read-only against existing rows; no admin CRUD UI for managing calendars yet).
-- ✓ Type-specific helper card on list pages (`product-type-info-card.tsx`).
 - ✓ Image picker + upload (`image-picker.tsx`).
 - ✓ Groups panel — drag-and-drop UI on the details page (`src/components/admin/products/groups/`). Unassigned column + one card per group with an inline-editable name (edit icon → input → Enter/Save), multi-Gedu pills (add via `GeduPickerSheet`, remove via X button), and droppable participant area. Each action auto-saves immediately through per-action React Query mutations (`useMoveParticipation`, `useRenameGroup`, `useCreateGroup`, `useAddGedu`, `useRemoveGedu`, `useDeleteGroup`) with optimistic updates that revert on error; the touched element greys out until the write settles. All writes funnel through `apply_group_changes`. **Display order is server-side, by recency**: the read RPC orders participations by `updated_at` and group Gedus by their assignment time, so most-recently-touched is last. The client doesn't sort — it renders the array it's handed and, on a move, optimistically appends the chip to the end. A move bumps `updated_at` (DB trigger), so the settle refetch lands the chip in the same spot the optimistic append put it: no jump. Ordering is single-clock on purpose — an earlier client-side sort compared browser-clock optimistic timestamps with Postgres-clock settled ones, and clock skew reordered chips for a frame on every move. Group delete keeps a confirmation dialog (it's destructive); adding a gamer to the product stays a separate enrollment action (`useAdminAddGamerToProduct` → `/participations`).
 - ✓ Edit-product form (thin wrapper around the shared shell; pre-populated via the reverse transform — see §13).
@@ -1259,7 +1258,6 @@ Shared building blocks
 ├── holiday-calendar-option.tsx      — Calendar checkbox row
 ├── schedule-slots-editor.tsx        — Weekday + time-range editor
 ├── site-notes-editor.tsx            — Member-visible vs staff-only notes
-├── product-type-info-card.tsx       — Type-specific helper card on list pages
 └── group-card.tsx                   — Group preview within form
 
 API routes (admin-only)

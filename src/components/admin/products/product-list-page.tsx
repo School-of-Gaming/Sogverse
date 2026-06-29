@@ -6,7 +6,6 @@ import { Plus } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useProductsByType } from "@/services/products";
-import { ProductTypeInfoCard } from "./product-type-info-card";
 import { ProductRows } from "./product-rows";
 import { ClubProductFilters } from "./club-product-filters";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
@@ -48,8 +47,6 @@ export function ProductListPage({ productType }: ProductListPageProps) {
           {t("list.new", { label })}
         </Link>
       </div>
-
-      <ProductTypeInfoCard productType={productType} />
 
       {isLoading && (
         <div className="space-y-3">

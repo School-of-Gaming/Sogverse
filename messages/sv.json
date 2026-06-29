@@ -170,51 +170,19 @@
       "types": {
         "consumerClub": {
           "label": "Konsumentklubb",
-          "plural": "Konsumentklubbar",
-          "tagline": "Veckovis, pågående, föräldrar betalar per tillfälle.",
-          "blurb": "Föräldrar anmäler sitt barn och betalar per tillfälle. Klubbar pågår vecka efter vecka utan slutdatum, om du inte sätter ett.",
-          "traits": {
-            "1": "Veckovis · en dag i veckan",
-            "2": "Inget slutdatum som standard",
-            "3": "Föräldrar betalar per tillfälle, valfri prenumeration",
-            "4": "Fast antal platser, med väntelista"
-          }
+          "plural": "Konsumentklubbar"
         },
         "municipalityClub": {
           "label": "Kommunklubb",
-          "plural": "Kommunklubbar",
-          "tagline": "Terminsbaserad, kommunbetald, biljettsläpps­anmälan.",
-          "blurb": "En kommun eller skola betalar i förskott för en serie platser. Föräldrar anmäler sitt barn gratis; anmälningsfönstret öppnar vid en specifik tidpunkt som ett biljettsläpp.",
-          "traits": {
-            "1": "Veckovis · en dag i veckan",
-            "2": "Pågår mellan ett start- och slutdatum",
-            "3": "School of Gaming fakturerar kommunen",
-            "4": "Fast antal platser, med väntelista"
-          }
+          "plural": "Kommunklubbar"
         },
         "camp": {
           "label": "Läger",
-          "plural": "Läger",
-          "tagline": "Flera dagar under en bestämd period. Föräldrar betalar i förskott.",
-          "blurb": "Ett läger pågår över flera dagar i veckan under en bestämd period — när som helst på året. Föräldrar betalar hela priset en gång vid anmälan. Återbetalas fram till en gräns innan lägret startar.",
-          "traits": {
-            "1": "Flera dagar i veckan (var och en med egen tid)",
-            "2": "Pågår mellan ett start- och slutdatum",
-            "3": "Föräldrar betalar i förskott",
-            "4": "Återbetalas innan lägret startar"
-          }
+          "plural": "Läger"
         },
         "event": {
           "label": "Evenemang",
-          "plural": "Evenemang",
-          "tagline": "Ett enda datum. Gratis eller en engångsavgift.",
-          "blurb": "Ett enstaka evenemang ett specifikt datum. Bra för demodagar, gemenskaps­promenader, webbinarier, turneringar. Gratis evenemang behöver ingen platsgräns; betalda har alltid en.",
-          "traits": {
-            "1": "Ett datum, en starttid",
-            "2": "Gratis eller förbetalt",
-            "3": "Gratis evenemang behöver ingen platsgräns",
-            "4": "Bra för demos, webbinarier, turneringar"
-          }
+          "plural": "Evenemang"
         }
       },
       "list": {

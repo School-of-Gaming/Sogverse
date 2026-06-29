@@ -215,51 +215,19 @@
       "types": {
         "consumerClub": {
           "label": "ghomHom tlhIngan",
-          "plural": "ghomHom tlhIngan",
-          "tagline": "Hogh, taH, vavmey Huch nob qaStaHvIS.",
-          "blurb": "vavmey puqpu'chaj loSlu' 'ej qaStaHvIS Huch nob. Hogh ghomHom rur, jaj van pagh.",
-          "traits": {
-            "1": "Hogh · wa' jaj per Hogh",
-            "2": "jaj van pagh",
-            "3": "vavmey Huch nob qaStaHvIS",
-            "4": "pa' mI' Sub, tetlh teb"
-          }
+          "plural": "ghomHom tlhIngan"
         },
         "municipalityClub": {
           "label": "ghomHom veng",
-          "plural": "ghomHom veng",
-          "tagline": "DIS Hut, veng Huch nob, ghItlh tagh poQ.",
-          "blurb": "veng pagh DuSaQ Huch nob 'oH. vavmey loSlu' Huch pagh; ghItlh tagh poH ngu'lu'.",
-          "traits": {
-            "1": "Hogh · wa' jaj per Hogh",
-            "2": "jaj tagh 'ej jaj van joj qaS",
-            "3": "School of Gaming veng nIDqu'",
-            "4": "pa' mI' Sub, tetlh teb"
-          }
+          "plural": "ghomHom veng"
         },
         "camp": {
           "label": "pa' Qugh",
-          "plural": "pa' Qugh",
-          "tagline": "law' jaj poH ngu'lu'. vavmey Huch nob bI'reS.",
-          "blurb": "pa' Qugh law' jaj qaS, poH ngu'. vavmey Hoch Huch nob qaS ghItlh. cheghlaH Huch jaj tagh pagh.",
-          "traits": {
-            "1": "law' jaj per Hogh (vay' poH ghaj)",
-            "2": "jaj tagh 'ej jaj van joj qaS",
-            "3": "vavmey Huch nob bI'reS",
-            "4": "pa' Qugh tagh pagh, Huch chegh"
-          }
+          "plural": "pa' Qugh"
         },
         "event": {
           "label": "Qu'",
-          "plural": "Qu'mey",
-          "tagline": "wa' jaj. Huch pagh, qoj wa' Huch.",
-          "blurb": "wa' Qu' jaj ngu'lu'. demo, leng, webinar, qa' QumvaD QaQ. Huch pagh Qu' pa' mI' Sub poQbe'; Huch Qu' pa' mI' Sub poQ.",
-          "traits": {
-            "1": "wa' jaj, wa' poH tagh",
-            "2": "Huch pagh, qoj Huch nob",
-            "3": "Huch pagh Qu' pa' mI' Sub poQbe'",
-            "4": "demo, webinar, qa' Qum QaQ"
-          }
+          "plural": "Qu'mey"
         }
       },
       "list": {

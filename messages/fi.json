@@ -170,51 +170,19 @@
       "types": {
         "consumerClub": {
           "label": "Kuluttajakerho",
-          "plural": "Kuluttajakerhot",
-          "tagline": "Viikoittainen, jatkuva, vanhemmat maksavat per kerta.",
-          "blurb": "Vanhemmat ilmoittavat lapsensa ja maksavat per kerta. Kerhot jatkuvat viikko toisensa jälkeen ilman päättymispäivää, ellet aseta sitä.",
-          "traits": {
-            "1": "Viikoittain · yksi päivä viikossa",
-            "2": "Ei oletuksena loppupäivää",
-            "3": "Maksu per kerta, valinnainen kk-tilaus",
-            "4": "Kiinteä paikkamäärä, jonotuslista"
-          }
+          "plural": "Kuluttajakerhot"
         },
         "municipalityClub": {
           "label": "Kuntakerho",
-          "plural": "Kuntakerhot",
-          "tagline": "Lukukauteen sidottu, kunnan maksama, lipunmyyntimäinen ilmo.",
-          "blurb": "Kunta tai koulu maksaa etukäteen paikoista. Vanhemmat ilmoittavat lapsensa maksutta; ilmoittautumisikkuna avautuu tiettynä hetkenä kuin lipunmyynti.",
-          "traits": {
-            "1": "Viikoittain · yksi päivä viikossa",
-            "2": "Käynnissä alku- ja loppupäivän välillä",
-            "3": "School of Gaming laskuttaa kuntaa",
-            "4": "Kiinteä paikkamäärä, jonotuslista"
-          }
+          "plural": "Kuntakerhot"
         },
         "camp": {
           "label": "Leiri",
-          "plural": "Leirit",
-          "tagline": "Useita päiviä tietyssä jaksossa. Vanhemmat maksavat etukäteen.",
-          "blurb": "Leiri kestää useita päiviä viikossa rajatun jakson ajan — milloin tahansa vuodessa. Vanhemmat maksavat koko hinnan kerralla ilmoittautuessaan. Palautettavissa tiettyyn hetkeen asti ennen alkua.",
-          "traits": {
-            "1": "Useita päiviä viikossa (jokaisella oma aika)",
-            "2": "Käynnissä alku- ja loppupäivän välillä",
-            "3": "Vanhemmat maksavat etukäteen",
-            "4": "Palautettavissa ennen leirin alkua"
-          }
+          "plural": "Leirit"
         },
         "event": {
           "label": "Tapahtuma",
-          "plural": "Tapahtumat",
-          "tagline": "Yksi päivä. Ilmainen tai kertamaksullinen.",
-          "blurb": "Yksittäinen tapahtuma tiettynä päivänä. Sopii esittelypäiviin, yhteisökävelyihin, webinaareihin, turnauksiin. Ilmaisilla tapahtumilla ei tarvitse olla paikkarajaa; maksullisilla on aina.",
-          "traits": {
-            "1": "Yksi päivä, yksi alkamisaika",
-            "2": "Ilmainen tai etukäteen maksettu",
-            "3": "Ilmaisissa ei tarvita paikkarajaa",
-            "4": "Sopii esittelyihin, webinaareihin, turnauksiin"
-          }
+          "plural": "Tapahtumat"
         }
       },
       "list": {

@@ -31,7 +31,7 @@ export type PricingShape = "monthly" | "upfront_total" | "external" | "none";
 
 export interface ProductTypeConfig {
   productType: ProductType;
-  /** i18n key under admin.products.types (label + plural + tagline + blurb + traits) */
+  /** i18n key under admin.products.types (label + plural) */
   i18nKey: "consumerClub" | "municipalityClub" | "camp" | "event";
   routeSlug: string; // "consumer-clubs"
   scheduleShape: ScheduleShape;
