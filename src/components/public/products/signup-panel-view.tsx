@@ -217,7 +217,6 @@ function PreOpenPanel(props: SignupPanelViewProps) {
   // order across renders. The conditional early return is unreachable
   // in practice (the parent dispatches by kind) but kept for type
   // narrowing in the JSX below.
-  const t = useTranslations("productDetail.signupPanel");
   const opensAt =
     props.state.kind === "closed_pre"
       ? props.state.opensAt
@@ -243,7 +242,6 @@ function PreOpenPanel(props: SignupPanelViewProps) {
       />
       <FormOrAuth
         {...props}
-        helperText={t("preOpenHelper")}
         // The prep checklist in SignupForm runs the same whether or not
         // registration is open yet, so a parent can finish every step during the
         // countdown. `active={isOpen}` only gates the final leaf: until the clock
@@ -306,7 +304,6 @@ function OpenPanel(props: SignupPanelViewProps) {
 // ---------- Form / Auth overlay ----------
 
 interface FormOrAuthProps extends SignupPanelViewProps {
-  helperText?: string;
   /**
    * The CTA's *enabled* label — the live action ("Enrol now · €45/mo", "Join
    * the waitlist") shown once every prep step is done and registration is open.
@@ -401,15 +398,16 @@ function SignupForm(
   // every step during the pre-open countdown and land on "Ready & waiting",
   // primed to one-tap the instant it opens. Only the final leaf differs by
   // window: the live action label once open (`active`), the holding state until
-  // then. selectedGamerId is null only when no child is selectable — zero
-  // gamers (offer "Add a gamer") or every child already on (at the cap, nothing
-  // left to do but the status).
+  // then. selectedGamerId is null only when no child is selectable: either
+  // there's still room to add one (canAddGamer → prompt to add a gamer), or
+  // every child is already on the product at the gamer cap (nothing left to do
+  // — the picker rows show each child's exact seat/waitlist status in place).
   const ctaLabel = props.submitting
     ? t("ctaSubmitting")
     : props.selectedGamerId === null
       ? canAddGamer
         ? t("ctaAddGamer")
-        : t("ctaAllGamersEnrolled")
+        : t("ctaAllSet")
       : !props.agreed
         ? t("ctaAgreeRules")
         : props.active
@@ -424,11 +422,6 @@ function SignupForm(
               (enrol / register / sign up / join). */}
           {t(`whoAreYouSigningUp.${props.productType}`)}
         </h3>
-        {props.helperText && (
-          <p className="mt-1 text-xs text-muted-foreground">
-            {props.helperText}
-          </p>
-        )}
         <div className="mt-3 space-y-2">
           <div
             role="radiogroup"
@@ -551,21 +544,31 @@ function RulesCheckbox({
   onAgreedChange: (next: boolean) => void;
 }) {
   const t = useTranslations("productDetail.signupPanel.rules");
+  // Heading names this section "The Rules" so the CTA's "Agree to the rules"
+  // prompt has a visible referent — the rule sentence itself never says the
+  // word. The whole box is one clickable toggle (heading + rule + checkbox)
+  // that highlights when agreed. No nested box: unlike the gamer picker — whose
+  // outer box wraps a border-per-selectable-row — the rules section is a single
+  // choice, so a box-in-a-box would just be visual noise.
+  const tPanel = useTranslations("productDetail.signupPanel");
   return (
     <label
       className={cn(
-        "flex cursor-pointer items-start gap-3 rounded-md border p-3 text-xs transition-colors",
+        "block cursor-pointer rounded-md border p-4 transition-colors",
         agreed
           ? "border-primary bg-primary/5"
-          : "border-input hover:bg-accent/50"
+          : "border-border bg-muted/30 hover:bg-accent/50"
       )}
     >
-      <Checkbox
-        className="mt-0.5"
-        checked={agreed}
-        onChange={(e) => onAgreedChange(e.target.checked)}
-      />
-      <span className="text-muted-foreground">{t(productType)}</span>
+      <h3 className="text-sm font-semibold">{tPanel("rulesHeading")}</h3>
+      <div className="mt-3 flex items-start gap-3 text-xs">
+        <Checkbox
+          className="mt-0.5"
+          checked={agreed}
+          onChange={(e) => onAgreedChange(e.target.checked)}
+        />
+        <span className="text-muted-foreground">{t(productType)}</span>
+      </div>
     </label>
   );
 }
