@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -110,42 +110,23 @@ export function SignupPanelView(props: SignupPanelViewProps) {
 
 // ---------- Shared shell ----------
 
-type Tone = "primary" | "warning" | "destructive" | "muted" | "secondary";
-
-const TONE_BANNER: Record<Tone, string> = {
-  primary: "bg-primary text-primary-foreground",
-  warning: "bg-warning text-warning-foreground",
-  destructive: "bg-destructive text-destructive-foreground",
-  muted: "bg-muted text-muted-foreground",
-  secondary: "bg-secondary text-secondary-foreground",
-};
-
-const TONE_BORDER: Record<Tone, string> = {
-  primary: "border-primary/40",
-  warning: "border-warning/60",
-  destructive: "border-destructive/60",
-  muted: "border-border",
-  secondary: "border-secondary/40",
-};
-
+// Every state shows the same calm header: the product's action noun
+// (Enrolment / Registration / Sign-up / Joining) in muted grey — no per-state
+// text or colour. The panel body (seat bar, pricing, CTA button, status notes)
+// carries the state-specific signal instead, so the header never competes with
+// it or repeats it.
 function PanelShell({
-  banner,
-  tone,
+  productType,
   children,
 }: {
-  banner: string;
-  tone: Tone;
+  productType: ProductType;
   children: React.ReactNode;
 }) {
+  const t = useTranslations("productDetail.signupPanel");
   return (
-    <Card className={cn("overflow-hidden", TONE_BORDER[tone])}>
-      <div
-        className={cn(
-          "px-5 py-2.5 text-center text-sm font-semibold",
-          TONE_BANNER[tone],
-        )}
-      >
-        {banner}
+    <Card className="overflow-hidden">
+      <div className="bg-muted px-5 py-2.5 text-center text-sm font-semibold text-muted-foreground">
+        {t(`noun.${productType}`)}
       </div>
       <CardContent className="space-y-5 p-5 sm:p-6">{children}</CardContent>
     </Card>
@@ -156,9 +137,8 @@ function PanelShell({
 
 function EndedPanel({ productType }: { productType: ProductType }) {
   const t = useTranslations("productDetail.signupPanel");
-  void productType;
   return (
-    <PanelShell banner={t("bannerEnded")} tone="muted">
+    <PanelShell productType={productType}>
       <p className="text-sm text-muted-foreground">{t("endedNote")}</p>
     </PanelShell>
   );
@@ -168,9 +148,8 @@ function EndedPanel({ productType }: { productType: ProductType }) {
 
 function RunningLatePanel({ productType }: { productType: ProductType }) {
   const t = useTranslations("productDetail.signupPanel");
-  void productType;
   return (
-    <PanelShell banner={t("bannerRunningLate")} tone="muted">
+    <PanelShell productType={productType}>
       <p className="text-sm text-muted-foreground">{t("runningLateNote")}</p>
     </PanelShell>
   );
@@ -181,14 +160,16 @@ function RunningLatePanel({ productType }: { productType: ProductType }) {
 function FullClosedPanel(props: SignupPanelViewProps) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <PanelShell banner={t("bannerFullClosed")} tone="destructive">
+    <PanelShell productType={props.productType}>
       <PricingPanelView
         option={props.pricingOption}
         currency={props.currency}
         locale={props.locale}
       />
+      {/* The disabled CTA is where "you can't sign up — it's full" lives now;
+          the header just names the action noun like every other state. */}
       <Button size="lg" className="w-full text-base" disabled>
-        {t("bannerFullClosed")}
+        {t("ctaFullClosed")}
       </Button>
     </PanelShell>
   );
@@ -199,7 +180,7 @@ function FullClosedPanel(props: SignupPanelViewProps) {
 function FullWaitlistPanel(props: SignupPanelViewProps) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <PanelShell banner={t("bannerWaitlist")} tone="destructive">
+    <PanelShell productType={props.productType}>
       <WaitlistInfo />
       <PricingPanelView
         option={props.pricingOption}
@@ -240,7 +221,6 @@ function WaitlistInfo() {
 // bar and no threshold meter. The product reads as if it has no seating
 // constraints (cf. the pre-open panel, which also renders no bar).
 function ThresholdPanel(props: SignupPanelViewProps) {
-  const t = useTranslations("productDetail.signupPanel");
   const verb = useVerb(props.productType);
   const activeLabel = useActiveCtaLabel(
     verb,
@@ -252,7 +232,7 @@ function ThresholdPanel(props: SignupPanelViewProps) {
   if (props.state.kind !== "pending_thr") return null;
 
   return (
-    <PanelShell banner={t(`noun.${props.productType}`)} tone="muted">
+    <PanelShell productType={props.productType}>
       <PricingPanelView
         option={props.pricingOption}
         currency={props.currency}
@@ -276,7 +256,6 @@ function PreOpenPanel(props: SignupPanelViewProps) {
   // in practice (the parent dispatches by kind) but kept for type
   // narrowing in the JSX below.
   const t = useTranslations("productDetail.signupPanel");
-  const format = useFormatter();
   const opensAt =
     props.state.kind === "closed_pre"
       ? props.state.opensAt
@@ -293,21 +272,8 @@ function PreOpenPanel(props: SignupPanelViewProps) {
 
   if (props.state.kind !== "closed_pre") return null;
 
-  // Pre-zero banner names the exact moment registration opens — the
-  // countdown clock sits below the button (so the button doesn't shift
-  // when it unmounts), so the banner has to carry the "when" itself.
-  const banner = isOpen
-    ? t("bannerCountdownDone")
-    : t("bannerCountdown", {
-        date: format.dateTime(new Date(targetMs), {
-          dateStyle: "medium",
-          timeStyle: "short",
-        }),
-      });
-  const tone: Tone = isOpen ? "primary" : "muted";
-
   return (
-    <PanelShell banner={banner} tone={tone}>
+    <PanelShell productType={props.productType}>
       <PricingPanelView
         option={props.pricingOption}
         currency={props.currency}
@@ -318,9 +284,9 @@ function PreOpenPanel(props: SignupPanelViewProps) {
         helperText={t("preOpenHelper")}
         // Idle copy flips with the countdown: pre-zero we tell the parent
         // registration isn't open yet; post-zero it reads as the live action
-        // label (same as the open panel) so it never contradicts the banner.
-        // The "no gamer selected" case is handled centrally in SignupForm
-        // (ctaSelectGamer), so it doesn't need a special idle label here.
+        // label (same as the open panel). The "no gamer selected" case is
+        // handled centrally in SignupForm (ctaSelectGamer), so it doesn't need
+        // a special idle label here.
         ctaLabelIdle={isOpen ? activeLabel : t("ctaPreOpenIdle", { verb })}
         ctaLabelActive={isOpen ? activeLabel : t("ctaPreOpenReady")}
         active={isOpen}
@@ -346,7 +312,6 @@ function PreOpenPanel(props: SignupPanelViewProps) {
 // ---------- Variant: Open ----------
 
 function OpenPanel(props: SignupPanelViewProps) {
-  const t = useTranslations("productDetail.signupPanel");
   const verb = useVerb(props.productType);
   const activeLabel = useActiveCtaLabel(
     verb,
@@ -356,22 +321,9 @@ function OpenPanel(props: SignupPanelViewProps) {
   );
 
   if (props.state.kind !== "open") return null;
-  const urgent =
-    props.state.seatsLeft !== null &&
-    props.state.seatsLeft <= 3 &&
-    props.state.seatsLeft > 0;
 
   return (
-    <PanelShell
-      // Non-urgent open state: the banner is a neutral section label naming the
-      // *noun* of the action (Enrolment / Registration / …), deliberately NOT a
-      // second "{verb} now" CTA. The solid-primary Enrol button below is the one
-      // call to action; a loud primary banner here would compete with it. The
-      // urgent (almost-full) banner stays loud — that's a real scarcity signal,
-      // not a duplicated CTA.
-      banner={urgent ? t("bannerAlmostFull") : t(`noun.${props.productType}`)}
-      tone={urgent ? "warning" : "muted"}
-    >
+    <PanelShell productType={props.productType}>
       {props.state.seatCount !== null && (
         // TODO(participations): drop the `?? seatCount` fallback once
         // real seatsLeft counts are threaded through. Today seatsLeft is

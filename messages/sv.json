@@ -1375,13 +1375,7 @@
       "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
-      "bannerAlmostFull": "Snabbt nu – bara några platser kvar",
-      "bannerCountdown": "Anmälan öppnar {date}",
-      "bannerCountdownDone": "Anmälan är öppen",
-      "bannerWaitlist": "Fullbokad just nu",
-      "bannerFullClosed": "Fullbokad",
-      "bannerRunningLate": "Den här har redan börjat",
-      "bannerEnded": "Den här är avslutad",
+      "ctaFullClosed": "Fullbokad",
       "verb": {
         "consumer_club": "Anmäl dig",
         "municipality_club": "Registrera dig",

@@ -1420,13 +1420,7 @@
       "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
-      "bannerAlmostFull": "nom — pa' puS neH",
-      "bannerCountdown": "qonta' poSlaw' {date}",
-      "bannerCountdownDone": "qonta' poS",
-      "bannerWaitlist": "DaH buy'",
-      "bannerFullClosed": "buy'",
-      "bannerRunningLate": "taghta'",
-      "bannerEnded": "rIn",
+      "ctaFullClosed": "buy'",
       "verb": {
         "consumer_club": "yImuv",
         "municipality_club": "yIqon",

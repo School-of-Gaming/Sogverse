@@ -1375,13 +1375,7 @@
       "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
-      "bannerAlmostFull": "Going fast — only a few seats left",
-      "bannerCountdown": "Sign-up opens at {date}",
-      "bannerCountdownDone": "Sign-up is now open",
-      "bannerWaitlist": "Fully booked right now",
-      "bannerFullClosed": "Fully booked",
-      "bannerRunningLate": "This one's already underway",
-      "bannerEnded": "This one's wrapped",
+      "ctaFullClosed": "Fully booked",
       "verb": {
         "consumer_club": "Enrol",
         "municipality_club": "Register",

@@ -1375,13 +1375,7 @@
       "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
-      "bannerAlmostFull": "Paikat täyttyvät – vain muutama jäljellä",
-      "bannerCountdown": "Ilmoittautuminen avautuu {date}",
-      "bannerCountdownDone": "Ilmoittautuminen on auki",
-      "bannerWaitlist": "Tällä hetkellä täynnä",
-      "bannerFullClosed": "Täynnä",
-      "bannerRunningLate": "Tämä on jo käynnissä",
-      "bannerEnded": "Tämä on päättynyt",
+      "ctaFullClosed": "Täynnä",
       "verb": {
         "consumer_club": "Ilmoittaudu",
         "municipality_club": "Rekisteröidy",
