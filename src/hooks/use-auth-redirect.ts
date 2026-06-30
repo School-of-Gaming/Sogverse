@@ -7,13 +7,16 @@ import { resolveInternalPath } from "@/lib/navigation/internal-path";
 
 // Allowlisted prefixes for post-auth redirects. Anything else is dropped
 // and the user lands on the fallback (their dashboard). Public product detail
-// pages — which expose the "Sign in to enroll" CTA — live at `/shop/[id]`, so
-// the single `/shop/` prefix covers them and sign-in returns the user to the
-// product they came from. The trailing slash is required so the bare `/shop`
-// listing isn't itself a valid target (the redirect is meant for a specific
-// product) and so `/shopxyz`-style prefix confusion can't sneak through.
+// pages — which expose the "Sign in to enroll" CTA — live at `/shop/[id]` and
+// at `/schools/[municipalityName]/[id]` (the municipality-club variant; both
+// render the same ProductDetailPage), so both prefixes are allowlisted and
+// sign-in returns the user to the product they came from. A trailing slash is
+// required on each so the bare `/shop` / `/schools` listing isn't itself a
+// valid target (the redirect is meant for a specific product) and so
+// `/shopxyz`-style prefix confusion can't sneak through.
 const SAFE_REDIRECT_PREFIXES: readonly string[] = [
   `${ROUTES.shop}/`, // /shop/[id]
+  `${ROUTES.schools}/`, // /schools/[municipalityName]/[id]
 ];
 
 /**
@@ -21,9 +24,9 @@ const SAFE_REDIRECT_PREFIXES: readonly string[] = [
  *
  * Two-stage check: first normalize the candidate through `resolveInternalPath`
  * (WHATWG URL parser — collapses `..`, rejects every off-origin variant), then
- * apply the `/shop/` allowlist to the *normalized* path. Normalizing first is
- * load-bearing: a raw `startsWith("/shop/")` passes `/shop/../admin`, which the
- * browser then navigates to `/admin` — the prefix check and the real
+ * apply the product-page allowlist to the *normalized* path. Normalizing first
+ * is load-bearing: a raw `startsWith("/shop/")` passes `/shop/../admin`, which
+ * the browser then navigates to `/admin` — the prefix check and the real
  * destination would disagree. Checking the post-normalization path closes that
  * gap while keeping the narrow product-page-only intent.
  */
