@@ -32,15 +32,12 @@ interface SignupPanelProps {
   >;
   state: RegistrationState;
   authState: AuthState;
-  /** Render the panel frozen at this instant for deterministic mocks. */
-  fixedNowMs?: number;
 }
 
 export function SignupPanel({
   product,
   state,
   authState,
-  fixedNowMs,
 }: SignupPanelProps) {
   const router = useRouter();
   // Pricing / gamer selection / agreed / locale+currency — the view props
@@ -140,7 +137,6 @@ export function SignupPanel({
     onJoinWaitlist: handleJoinWaitlist,
     submitting: committing,
     submitError,
-    fixedNowMs,
   };
 
   return (

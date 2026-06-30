@@ -85,8 +85,6 @@ export interface SignupPanelViewProps {
   submitError?: string | null;
   currency: SupportedCurrency;
   locale: string;
-  /** Render frozen at this instant for deterministic mock previews. */
-  fixedNowMs?: number;
 }
 
 export function SignupPanelView(props: SignupPanelViewProps) {
@@ -256,7 +254,7 @@ function PreOpenPanel(props: SignupPanelViewProps) {
       ? props.state.opensAt
       : "2099-01-01T00:00:00Z";
   const targetMs = new Date(opensAt).getTime();
-  const isOpen = useCountdownDone(targetMs, props.fixedNowMs);
+  const isOpen = useCountdownDone(targetMs);
   const verb = useVerb(props.productType);
   const activeLabel = useActiveCtaLabel(
     verb,
@@ -295,11 +293,7 @@ function PreOpenPanel(props: SignupPanelViewProps) {
           up, etc.) and the Sign-up button shifts under the parent's
           cursor. The whole point of the live countdown is the one-tap-buy
           moment, so the slot is held constant. */}
-      <CountdownClock
-        targetMs={targetMs}
-        fixedNowMs={props.fixedNowMs}
-        done={isOpen}
-      />
+      <CountdownClock targetMs={targetMs} done={isOpen} />
     </PanelShell>
   );
 }

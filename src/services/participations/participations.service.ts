@@ -394,10 +394,6 @@ export class ParticipationsService {
    * signups arrive 'active' — but every field the page displays lives on the
    * row from creation, so a rare still-'reserving' row renders identically. We
    * don't poll.
-   *
-   * TODO(waitlist): waitlisted signups never route here today — the 'full'
-   * create outcome keeps its own waitlist CTA on the product page. If that
-   * changes, branch the confirmation copy on `status === 'waitlisted'`.
    */
   async getConfirmation(
     participationId: string,

@@ -19,8 +19,6 @@ import { cn } from "@/lib/utils";
 export interface CountdownClockProps {
   /** Unix epoch ms of the moment we're counting down to. */
   targetMs: number;
-  /** Set to a fixed value to render a deterministic preview snapshot. */
-  fixedNowMs?: number;
   className?: string;
   /** Renders the four cells but with `--` numbers, no live ticking. */
   paused?: boolean;
@@ -43,7 +41,6 @@ interface Snapshot {
 
 export function CountdownClock({
   targetMs,
-  fixedNowMs,
   className,
   paused,
   done,
@@ -55,18 +52,15 @@ export function CountdownClock({
   // know `Date.now()` and the client does. State here is *just a tick
   // counter* — the real `now` is computed inline at render so we don't
   // synchronously call setState from the effect body (anti-pattern).
-  const [snapshot, setSnapshot] = useState<Snapshot | null>(() =>
-    fixedNowMs !== undefined ? buildSnapshot(targetMs, fixedNowMs) : null,
-  );
+  const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
 
   useEffect(() => {
     if (paused || done) return;
-    if (fixedNowMs !== undefined) return;
     const id = setInterval(() => {
       setSnapshot(buildSnapshot(targetMs, Date.now()));
     }, 1000);
     return () => clearInterval(id);
-  }, [targetMs, paused, done, fixedNowMs]);
+  }, [targetMs, paused, done]);
 
   // When `done`, force the cells to render `--` placeholders regardless of
   // the last live snapshot, so the visual matches the panel's "registration
@@ -123,17 +117,13 @@ function pad2(n: number): string {
  * after mount, picking up the real time on the first tick (within 1s).
  * Same SSR-safe shape as `CountdownClock` above.
  */
-export function useCountdownDone(
-  targetMs: number,
-  fixedNowMs?: number,
-): boolean {
-  const [now, setNow] = useState<number>(() => fixedNowMs ?? targetMs - 1);
+export function useCountdownDone(targetMs: number): boolean {
+  const [now, setNow] = useState<number>(() => targetMs - 1);
 
   useEffect(() => {
-    if (fixedNowMs !== undefined) return;
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
-  }, [fixedNowMs]);
+  }, []);
 
   return now >= targetMs;
 }
