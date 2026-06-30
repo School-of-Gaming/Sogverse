@@ -179,9 +179,18 @@ function FullClosedPanel(props: SignupPanelViewProps) {
 
 function FullWaitlistPanel(props: SignupPanelViewProps) {
   const t = useTranslations("productDetail.signupPanel");
+  if (props.state.kind !== "full_waitlist") return null;
   return (
     <PanelShell productType={props.productType}>
-      <WaitlistInfo />
+      {/* Same seat bar as any capped product — full reads as "0 of N seats
+          remaining" with the waitlist chip, so the parent sees the capacity
+          story like everywhere else. The "how the waitlist works" detail moved
+          to the post-join summary (it's "what happens next"). */}
+      <SeatAvailabilityBar
+        seatCount={props.state.seatCount}
+        seatsLeft={0}
+        waitlistEnabled
+      />
       <PricingPanelView
         option={props.pricingOption}
         currency={props.currency}
@@ -197,20 +206,6 @@ function FullWaitlistPanel(props: SignupPanelViewProps) {
         variant="secondary"
       />
     </PanelShell>
-  );
-}
-
-function WaitlistInfo() {
-  const t = useTranslations("productDetail.signupPanel");
-  return (
-    <div className="space-y-2 rounded-md border border-border bg-muted/30 p-4 text-xs text-muted-foreground">
-      <p className="font-semibold text-foreground">{t("waitlistHowTitle")}</p>
-      <ul className="list-disc space-y-1 pl-4">
-        <li>{t("waitlistHowItem1")}</li>
-        <li>{t("waitlistHowItem2")}</li>
-        <li>{t("waitlistHowItem3")}</li>
-      </ul>
-    </div>
   );
 }
 

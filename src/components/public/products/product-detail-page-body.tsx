@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
@@ -18,14 +19,11 @@ import type {
 import { LongDescription } from "./long-description";
 import { ProductOverviewCard } from "./product-overview-card";
 import { GameInfoCard } from "./game-info-card";
-import type { RegistrationState } from "./derive-registration-state";
-import { SignupPanel } from "./signup-panel";
-import type { AuthState } from "./signup-panel-view";
 
-// Page body — same role as the cards' "View": layout + presentation,
-// with sub-adapters handling their own state. Owns nothing about
-// fetching. The route-level adapter (`ProductDetailPage`) and the
-// mockup preview route both render this directly.
+// Page body — pure layout + presentation. Owns nothing about fetching, and is
+// agnostic to the signup panel: the panel is injected as a slot, so the
+// route-level adapter (`ProductDetailPage`) passes the live `SignupPanel` while
+// the mockup preview passes a navigating one. Both render this directly.
 //
 // Layout: full-width container, image hero (1:1 product image), name +
 // tagline, then a 2-column grid on desktop (3:1 main : panel) that
@@ -47,10 +45,9 @@ export interface ProductDetailPageBodyProps {
   product: ProductBrowseRow & {
     holidays?: { date: string; reason: string }[];
   };
-  state: RegistrationState;
-  authState: AuthState;
-  /** Render the panel frozen at this instant for deterministic mocks. */
-  fixedNowMs?: number;
+  /** The right-column signup panel, injected so the body stays panel-agnostic.
+   *  Prod passes the live `SignupPanel`; the preview passes a navigating one. */
+  signupPanel: ReactNode;
   /** When opened from a `/schools/<slug>` listing, sends the back link there
    *  (labelled with the municipality) instead of the storefront. */
   municipality?: MunicipalityBackLink;
@@ -58,9 +55,7 @@ export interface ProductDetailPageBodyProps {
 
 export function ProductDetailPageBody({
   product,
-  state,
-  authState,
-  fixedNowMs,
+  signupPanel,
   municipality,
 }: ProductDetailPageBodyProps) {
   const uiLocale = resolveLocale(useLocale());
@@ -134,12 +129,7 @@ export function ProductDetailPageBody({
               used elsewhere. Without the offset the card's top tucks under the
               header. */}
           <div className="lg:sticky lg:top-[calc(var(--header-height)+1rem)] lg:self-start">
-            <SignupPanel
-              product={product}
-              state={state}
-              authState={authState}
-              fixedNowMs={fixedNowMs}
-            />
+            {signupPanel}
           </div>
         </div>
       </div>

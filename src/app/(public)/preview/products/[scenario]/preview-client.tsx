@@ -1,6 +1,7 @@
 "use client";
 
 import { ProductDetailPageBody } from "@/components/public/products/product-detail-page-body";
+import { PreviewSignupPanel } from "@/components/public/products/preview-signup-panel";
 import {
   buildScenarioFixture,
   type PreviewScenario,
@@ -17,8 +18,14 @@ export function ProductDetailPreviewClient({
   return (
     <ProductDetailPageBody
       product={fixture.product}
-      state={fixture.state}
-      authState={fixture.authState}
+      signupPanel={
+        <PreviewSignupPanel
+          product={fixture.product}
+          state={fixture.state}
+          authState={fixture.authState}
+          summaryHref={`/preview/confirmation/${scenario}`}
+        />
+      }
     />
   );
 }

@@ -18,6 +18,7 @@ import {
   ProductDetailPageBody,
   type MunicipalityBackLink,
 } from "./product-detail-page-body";
+import { SignupPanel } from "./signup-panel";
 import type { AuthState } from "./signup-panel-view";
 
 // Route-level adapter: fetches the product, resolves the auth state
@@ -129,9 +130,10 @@ export function ProductDetailPage({
   return (
     <ProductDetailPageBody
       product={product}
-      state={state}
-      authState={authState}
       municipality={municipality}
+      signupPanel={
+        <SignupPanel product={product} state={state} authState={authState} />
+      }
     />
   );
 }

@@ -4,11 +4,12 @@ import { ProductsService } from "@/services/products";
 import {
   PurchaseConfirmationView,
   PurchaseConfirmationFallback,
+  type SignupOutcome,
 } from "@/components/public/products/purchase-confirmation-view";
 import type { ProductBrowseRow } from "@/types";
 
-// Post-purchase confirmation page. Both the paid flow (Stripe `success_url`)
-// and the free-signup flow (router.push) land here with `?p=<participationId>`.
+// Post-signup summary page. The paid flow (Stripe `success_url`), the free-
+// signup flow, and a waitlist join all land here with `?p=<participationId>`.
 //
 // Fetched server-side with the viewer's RLS-scoped client so the page renders
 // complete on first paint — no client loading state, no skeleton, and so no
@@ -29,6 +30,7 @@ export default async function ShopConfirmationPage({
   const supabase = await createClient();
   let product: ProductBrowseRow | null = null;
   let gamerName: string | null = null;
+  let outcome: SignupOutcome = "enrolled";
   try {
     const confirmation = await new ParticipationsService(
       supabase,
@@ -38,6 +40,9 @@ export default async function ShopConfirmationPage({
         confirmation.productId,
       );
       gamerName = confirmation.gamerName;
+      // A waitlisted participation lands on the waitlist summary variant.
+      outcome =
+        confirmation.status === "waitlisted" ? "waitlisted" : "enrolled";
     }
   } catch {
     // RLS miss / stale id / transient error → render the friendly fallback
@@ -53,5 +58,11 @@ export default async function ShopConfirmationPage({
 
   if (!product) return <PurchaseConfirmationFallback />;
 
-  return <PurchaseConfirmationView product={product} gamerName={gamerName} />;
+  return (
+    <PurchaseConfirmationView
+      product={product}
+      gamerName={gamerName}
+      outcome={outcome}
+    />
+  );
 }

@@ -1031,6 +1031,15 @@
       "title": "ralHa'ghaj vISamlaHbe'",
       "description": "ngaq qan ghap naQbe'. reH My SOG-Daq DochlIj DaSammeH laH.",
       "cta": "My SOG yIghoS"
+    },
+    "waitlist": {
+      "heading": "loS tetlhDaq SoH",
+      "subheading": "{gamer} loS tetlhDaq: {product}. quS poSDI', SoH wIja'.",
+      "summaryTitle": "loS DaqlIj",
+      "forLabel": "loStaH",
+      "next1": "quS poSDI', QInHom wIngeH.",
+      "next2": "DIS naQ tetlhDaq {gamer} Daq qaD.",
+      "next3": "reH My SOG-Daq loS DaqlIj DaleghlaH."
     }
   },
   "docs": {
@@ -1453,10 +1462,6 @@
       "gamerAlreadyWaitlisted": "tetlhDaq",
       "nonCustomerNote": "vavmey neH puq qonlaH naDev.",
       "preOpenHelper": "puqlI' yIwIv 'ej chutmey yIlaj — qonta' poSDI' wa' tlhopwI' lo'meH.",
-      "waitlistHowTitle": "tetlh teb Qu'",
-      "waitlistHowItem1": "DIS naQ tetlh DaqaDtaHbogh.",
-      "waitlistHowItem2": "qorDu' chegh chugh, latlh qorDu' poH puS lo' laH.",
-      "waitlistHowItem3": "DaH 'aw' tetlh DaH'el laH.",
       "endedNote": "rIn. latlh boqDI' yI'aHta'.",
       "runningLateNote": "taghta' — qonta' SoQ. latlh boq DaH poSlaw'.",
       "rules": {

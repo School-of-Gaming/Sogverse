@@ -986,6 +986,15 @@
       "title": "We couldn't find that order",
       "description": "This link may be old or incomplete. Your purchases are always available in My SOG.",
       "cta": "Go to My SOG"
+    },
+    "waitlist": {
+      "heading": "You're on the waitlist",
+      "subheading": "{gamer} is on the waitlist for {product}. We'll let you know if a seat opens.",
+      "summaryTitle": "Your waitlist spot",
+      "forLabel": "Waitlisted",
+      "next1": "We'll email you the moment a seat opens.",
+      "next2": "{gamer} keeps their place in line for the whole term.",
+      "next3": "You can keep track of your waitlist spot anytime in My SOG."
     }
   },
   "docs": {
@@ -1408,10 +1417,6 @@
       "gamerAlreadyWaitlisted": "On waitlist",
       "nonCustomerNote": "Only parents can register a gamer here.",
       "preOpenHelper": "Pick your child and agree to the rules so it's a one-tap sign-up the moment it opens.",
-      "waitlistHowTitle": "How the waitlist works",
-      "waitlistHowItem1": "You keep your spot in line for the whole term.",
-      "waitlistHowItem2": "If a family cancels, the next person gets a short window to accept.",
-      "waitlistHowItem3": "You can leave the waitlist anytime from your account.",
       "endedNote": "This one already wrapped. Keep an eye out for the next one.",
       "runningLateNote": "We've already started — sign-up is closed. The next round will open soon.",
       "rules": {

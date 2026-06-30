@@ -11,6 +11,7 @@ import {
   type RegistrationState,
 } from "./derive-registration-state";
 import type { AuthState, MyParticipationState } from "./signup-panel-view";
+import type { SignupOutcome } from "./purchase-confirmation-view";
 
 // Synthetic fixtures, one per curated preview scenario. The mental model: each
 // scenario IS a mocked product. The /admin/ui-components card and the
@@ -358,6 +359,30 @@ export function buildScenarioFixture(slug: PreviewScenario): BuildFixtureResult 
   const product = buildBaseProduct(slug, config, registrationOpensAt, state);
   const authState = buildAuthState(config.auth, detailHref, state);
   return { product, state, authState };
+}
+
+export interface ConfirmationFixtureResult {
+  product: ProductDetailRow;
+  gamerName: string;
+  outcome: SignupOutcome;
+}
+
+// Post-signup summary fixture for /preview/confirmation/<scenario>. Reuses the
+// scenario's product and derives the outcome from its registration state — a
+// full-waitlist signup lands on the waitlist variant, everything else on the
+// enrolled one. The detail preview's CTA navigates here, so the preview walks
+// the real detail → CTA → summary flow.
+export function buildConfirmationFixture(
+  slug: PreviewScenario,
+): ConfirmationFixtureResult {
+  const { product, state } = buildScenarioFixture(slug);
+  return {
+    product,
+    // Literal placeholder rather than a demo gamer's name — makes it obvious
+    // this is a mock. The live summary shows the actual child's first name.
+    gamerName: "GamerName",
+    outcome: state.kind === "full_waitlist" ? "waitlisted" : "enrolled",
+  };
 }
 
 function buildAuthState(

@@ -986,6 +986,15 @@
       "title": "Vi kunde inte hitta den beställningen",
       "description": "Länken kan vara gammal eller ofullständig. Dina köp finns alltid i Min SOG.",
       "cta": "Gå till Min SOG"
+    },
+    "waitlist": {
+      "heading": "Du står på väntelistan",
+      "subheading": "{gamer} står på väntelistan för {product}. Vi hör av oss så snart en plats blir ledig.",
+      "summaryTitle": "Din väntelisteplats",
+      "forLabel": "På väntelista",
+      "next1": "Vi mejlar så snart en plats blir ledig.",
+      "next2": "{gamer} behåller sin plats i kön under hela terminen.",
+      "next3": "Du kan följa din plats i kön när som helst i Min SOG."
     }
   },
   "docs": {
@@ -1408,10 +1417,6 @@
       "gamerAlreadyWaitlisted": "På väntelistan",
       "nonCustomerNote": "Endast föräldrar kan anmäla en spelare här.",
       "preOpenHelper": "Välj ditt barn och godkänn reglerna så blir det en knapptryckning så fort anmälan öppnar.",
-      "waitlistHowTitle": "Så fungerar väntelistan",
-      "waitlistHowItem1": "Du behåller din plats i kön under hela terminen.",
-      "waitlistHowItem2": "Om en familj avbokar får nästa person en kort tid att tacka ja.",
-      "waitlistHowItem3": "Du kan lämna väntelistan när som helst från ditt konto.",
       "endedNote": "Den här är redan avslutad. Håll utkik efter nästa omgång.",
       "runningLateNote": "Vi har redan börjat – anmälan är stängd. Nästa omgång öppnar snart.",
       "rules": {
