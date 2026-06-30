@@ -11,9 +11,12 @@ import { resolveInternalPath } from "@/lib/navigation/internal-path";
 // at `/schools/[municipalityName]/[id]` (the municipality-club variant; both
 // render the same ProductDetailPage), so both prefixes are allowlisted and
 // sign-in returns the user to the product they came from. A trailing slash is
-// required on each so the bare `/shop` / `/schools` listing isn't itself a
-// valid target (the redirect is meant for a specific product) and so
-// `/shopxyz`-style prefix confusion can't sneak through.
+// required on each so the bare `/shop` / `/schools` root isn't itself a valid
+// target and so `/shopxyz`-style prefix confusion can't sneak through.
+// `/shop/` resolves to exactly the product pages; `/schools/` also admits the
+// per-municipality listing (`/schools/[municipalityName]`) since it shares the
+// segment — that's a harmless internal landing spot, and the destination is
+// guaranteed internal by `resolveInternalPath` regardless.
 const SAFE_REDIRECT_PREFIXES: readonly string[] = [
   `${ROUTES.shop}/`, // /shop/[id]
   `${ROUTES.schools}/`, // /schools/[municipalityName]/[id]

@@ -1611,7 +1611,12 @@ BEGIN
   END IF;
 
   -- Stamp the join time; order is derived from it, never stored as a rank.
-  v_now := now();
+  -- clock_timestamp(), NOT now(): now() is transaction_timestamp() (frozen at
+  -- transaction start), so concurrent joins serialized on the gate lock can
+  -- carry equal/inverted stamps and both compute rank 1. clock_timestamp()
+  -- reads the wall clock at this statement — which runs under the lock, after
+  -- the prior joiner committed — so stamps are monotonic with real join order.
+  v_now := clock_timestamp();
   INSERT INTO public.participations (
     product_id, gamer_id, customer_id, status, waitlisted_at
   ) VALUES (

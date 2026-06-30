@@ -151,3 +151,17 @@ to reference the target entity (prevents IDOR).
 The DB test `tests/db/access-control.test.ts` enforces the function and RLS rules — it
 queries PostgreSQL catalogs and fails if any non-allowlisted function is callable or any
 table lacks RLS. (DB tests run against a real Postgres in CI — see `tests/CLAUDE.md`.)
+
+## `now()` is frozen at transaction start
+
+**Rule: When a timestamp is an ordering/sequence key compared across concurrent
+transactions, stamp it with `clock_timestamp()`, not `now()`.** `now()` is
+`transaction_timestamp()` — fixed at transaction start and identical for every statement
+in that transaction. Transactions serialized on a row lock (e.g. the participation
+product-gate lock) still have independent start times, so `now()` stamps can tie or
+invert relative to lock-acquisition order: two concurrent `join_waitlist` calls each
+derived waitlist rank 1 this way. `clock_timestamp()` reads the wall clock at the
+statement — run under the lock it executes after the prior transaction committed, so
+stamps follow real serialization order (keep an `id` tiebreaker for sub-tick ties).
+`now()` stays correct for deadlines and defaults (`reserved_until`, `signed_up_at`) where
+cross-row ordering doesn't matter.
