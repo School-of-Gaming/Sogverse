@@ -304,7 +304,7 @@ describe("participations race + idempotency", () => {
           gamer_id: TEST_IDS.GAMER,
           customer_id: TEST_IDS.CUSTOMER,
           status: "waitlisted",
-          waitlist_position: 1,
+          waitlisted_at: new Date().toISOString(),
         })
         .select("id")
         .single();

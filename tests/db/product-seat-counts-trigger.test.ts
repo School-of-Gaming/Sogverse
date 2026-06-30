@@ -132,7 +132,7 @@ describe("product_seat_counts trigger", () => {
       gamer_id: TEST_IDS.GAMER,
       customer_id: TEST_IDS.CUSTOMER,
       status: "waitlisted",
-      waitlist_position: 1,
+      waitlisted_at: new Date().toISOString(),
     });
 
     expect(await readRollup(admin, PRODUCT_TRIG)).toEqual({

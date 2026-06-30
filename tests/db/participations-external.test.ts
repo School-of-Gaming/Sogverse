@@ -89,13 +89,14 @@ describe("create_participation — external_contract (municipality) registration
 
     const { data: row } = await admin
       .from("participations")
-      .select("status, reserved_until, waitlist_position")
+      .select("status, reserved_until, waitlisted_at")
       .eq("id", parsed.participation_id!)
       .single();
     expect(row?.status).toBe("active");
-    // External registrations hold the seat outright — never a timed reservation.
+    // External registrations hold the seat outright — never a timed reservation,
+    // never on the waitlist.
     expect(row?.reserved_until).toBeNull();
-    expect(row?.waitlist_position).toBeNull();
+    expect(row?.waitlisted_at).toBeNull();
   });
 
   it("honors the seat cap — a full muni club returns kind='full'", async () => {

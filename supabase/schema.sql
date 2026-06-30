@@ -1557,9 +1557,10 @@ CREATE FUNCTION public.join_waitlist(p_product_id uuid, p_gamer_id uuid, p_custo
 DECLARE
   v_product           public.products;
   v_existing_id       UUID;
-  v_existing_pos      INTEGER;
+  v_existing_ts       TIMESTAMPTZ;
   v_existing_status   public.participation_status;
-  v_next_position     INTEGER;
+  v_now               TIMESTAMPTZ;
+  v_position          INTEGER;
   v_participation_id  UUID;
   v_is_parent         BOOLEAN;
 BEGIN
@@ -1584,36 +1585,49 @@ BEGIN
   END IF;
 
   -- Idempotency: existing waitlisted/reserving/active row → return it as-is.
-  SELECT id, waitlist_position, status
-    INTO v_existing_id, v_existing_pos, v_existing_status
+  SELECT id, waitlisted_at, status
+    INTO v_existing_id, v_existing_ts, v_existing_status
     FROM public.participations
     WHERE product_id = p_product_id
       AND gamer_id = p_gamer_id
       AND status IN ('waitlisted', 'reserving', 'active')
     LIMIT 1;
   IF v_existing_id IS NOT NULL THEN
+    IF v_existing_status = 'waitlisted' THEN
+      SELECT COUNT(*) INTO v_position
+        FROM public.participations
+        WHERE product_id = p_product_id AND status = 'waitlisted'
+          AND (waitlisted_at < v_existing_ts
+               OR (waitlisted_at = v_existing_ts AND id <= v_existing_id));
+    ELSE
+      -- Already holds a spot (active/reserving) — not on the waitlist.
+      v_position := 0;
+    END IF;
     RETURN jsonb_build_object(
       'participation_id', v_existing_id,
-      'waitlist_position', v_existing_pos,
+      'waitlist_position', v_position,
       'status', v_existing_status::text
     );
   END IF;
 
-  -- Compute next waitlist position.
-  SELECT COALESCE(MAX(waitlist_position), 0) + 1 INTO v_next_position
-    FROM public.participations
-    WHERE product_id = p_product_id AND status = 'waitlisted';
-
+  -- Stamp the join time; order is derived from it, never stored as a rank.
+  v_now := now();
   INSERT INTO public.participations (
-    product_id, gamer_id, customer_id, status, waitlist_position
+    product_id, gamer_id, customer_id, status, waitlisted_at
   ) VALUES (
-    p_product_id, p_gamer_id, p_customer_id, 'waitlisted', v_next_position
+    p_product_id, p_gamer_id, p_customer_id, 'waitlisted', v_now
   )
   RETURNING id INTO v_participation_id;
 
+  SELECT COUNT(*) INTO v_position
+    FROM public.participations
+    WHERE product_id = p_product_id AND status = 'waitlisted'
+      AND (waitlisted_at < v_now
+           OR (waitlisted_at = v_now AND id <= v_participation_id));
+
   RETURN jsonb_build_object(
     'participation_id', v_participation_id,
-    'waitlist_position', v_next_position,
+    'waitlist_position', v_position,
     'status', 'waitlisted'
   );
 END;
@@ -1677,43 +1691,6 @@ CREATE FUNCTION public.product_has_session(p_product_id uuid, p_session_date dat
       WHERE phc.product_id = p_product_id
         AND ch.date = p_session_date
     );
-$$;
-
-
---
--- Name: promote_from_waitlist(uuid); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.promote_from_waitlist(p_product_id uuid) RETURNS jsonb
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO ''
-    AS $$
-DECLARE
-  v_id           UUID;
-  v_gamer_id     UUID;
-  v_customer_id  UUID;
-  v_position     INTEGER;
-BEGIN
-  -- Caller is expected to hold the gate lock; we don't re-take it.
-  SELECT id, gamer_id, customer_id, waitlist_position
-    INTO v_id, v_gamer_id, v_customer_id, v_position
-    FROM public.participations
-    WHERE product_id = p_product_id AND status = 'waitlisted'
-    ORDER BY waitlist_position ASC
-    LIMIT 1;
-
-  IF NOT FOUND THEN
-    RETURN jsonb_build_object('kind', 'empty_waitlist');
-  END IF;
-
-  RETURN jsonb_build_object(
-    'kind', 'promoted',
-    'participation_id', v_id,
-    'gamer_id', v_gamer_id,
-    'customer_id', v_customer_id,
-    'waitlist_position', v_position
-  );
-END;
 $$;
 
 
@@ -2485,13 +2462,13 @@ CREATE TABLE public.participations (
     customer_id uuid NOT NULL,
     status public.participation_status NOT NULL,
     reserved_until timestamp with time zone,
-    waitlist_position integer,
     signed_up_at timestamp with time zone DEFAULT now() NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    waitlisted_at timestamp with time zone,
     CONSTRAINT chk_participations_no_self_signup CHECK ((gamer_id <> customer_id)),
     CONSTRAINT chk_participations_reserving_has_until CHECK (((status <> 'reserving'::public.participation_status) OR (reserved_until IS NOT NULL))),
-    CONSTRAINT chk_participations_waitlisted_has_position CHECK (((status <> 'waitlisted'::public.participation_status) OR (waitlist_position IS NOT NULL)))
+    CONSTRAINT chk_participations_waitlisted_has_timestamp CHECK (((status <> 'waitlisted'::public.participation_status) OR (waitlisted_at IS NOT NULL)))
 );
 
 
@@ -3262,7 +3239,7 @@ CREATE INDEX idx_participations_reserving_live ON public.participations USING bt
 -- Name: idx_participations_waitlisted; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_participations_waitlisted ON public.participations USING btree (product_id, waitlist_position) WHERE (status = 'waitlisted'::public.participation_status);
+CREATE INDEX idx_participations_waitlisted ON public.participations USING btree (product_id, waitlisted_at) WHERE (status = 'waitlisted'::public.participation_status);
 
 
 --
@@ -5028,14 +5005,6 @@ GRANT ALL ON FUNCTION public.pin_is_set() TO authenticated;
 
 REVOKE ALL ON FUNCTION public.product_has_session(p_product_id uuid, p_session_date date) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.product_has_session(p_product_id uuid, p_session_date date) TO service_role;
-
-
---
--- Name: FUNCTION promote_from_waitlist(p_product_id uuid); Type: ACL; Schema: public; Owner: -
---
-
-REVOKE ALL ON FUNCTION public.promote_from_waitlist(p_product_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.promote_from_waitlist(p_product_id uuid) TO service_role;
 
 
 --

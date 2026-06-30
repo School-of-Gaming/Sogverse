@@ -435,7 +435,7 @@ export type Database = {
           signed_up_at: string
           status: Database["public"]["Enums"]["participation_status"]
           updated_at: string
-          waitlist_position: number | null
+          waitlisted_at: string | null
         }
         Insert: {
           created_at?: string
@@ -448,7 +448,7 @@ export type Database = {
           signed_up_at?: string
           status: Database["public"]["Enums"]["participation_status"]
           updated_at?: string
-          waitlist_position?: number | null
+          waitlisted_at?: string | null
         }
         Update: {
           created_at?: string
@@ -461,7 +461,7 @@ export type Database = {
           signed_up_at?: string
           status?: Database["public"]["Enums"]["participation_status"]
           updated_at?: string
-          waitlist_position?: number | null
+          waitlisted_at?: string | null
         }
         Relationships: [
           {
@@ -1452,7 +1452,6 @@ export type Database = {
         Args: { p_product_id: string; p_session_date: string }
         Returns: boolean
       }
-      promote_from_waitlist: { Args: { p_product_id: string }; Returns: Json }
       refresh_product_seat_counts: {
         Args: { p_product_id: string }
         Returns: undefined

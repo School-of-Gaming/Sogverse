@@ -53,11 +53,9 @@ Migration 00039:547-612. Same applies to `count_active_seats`, `count_seats_take
 
 **Fix:** persist `stripe_product_id` on `products` (or a sibling table) under a row lock. Treat the column as authoritative; never re-search Stripe.
 
-### `promote_from_waitlist` is read-only — caller-completes is non-atomic
+### ~~`promote_from_waitlist` is read-only — caller-completes is non-atomic~~ — *Resolved: dropped in 00116*
 
-Migration 00039:1043-1077. Function picks the lowest-position waitlist row and returns its metadata; doesn't mutate. The caller (route layer) is expected to do the actual flip. Two concurrent webhooks can pick the same waitlist row.
-
-**Fix:** make the RPC actually mutate. `SELECT … FOR UPDATE SKIP LOCKED` against the waitlist row, then transition status atomically inside the function.
+The read-only stub was **deleted** (migration 00116), not fixed. We decided against automatic promotion; the replacement will be a manual, admin-driven promote action (a new mutating RPC under the product-row lock) built when the admin waitlist UI lands. See `products-architecture.md` §11. Note for that build: the original "fix" suggested `FOR UPDATE SKIP LOCKED`, but the product-row gate lock the other participation RPCs hold already serializes promotion — prefer running it under that lock rather than `SKIP LOCKED`, consistent with §4.6.
 
 ---
 

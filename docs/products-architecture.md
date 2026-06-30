@@ -302,8 +302,8 @@ What we give up: a family with several clubs now has several Stripe subs, each w
 
 - `products.seat_count` — nullable. `NULL` means **uncapped / all welcome** — no capacity limit, no waitlist, no "full" state. Only valid when `billing_mode = 'free'`.
 - Parent-facing surfaces render `seat_count = NULL` as **"unlimited" / "all welcome"** — never a missing number or a zero.
-- When a participation is requested on a capped product and seats are full, it becomes `waitlisted` with a `waitlist_position`.
-- When an active participant leaves or is removed, the lowest-position waitlisted row is atomically promoted.
+- When a participation is requested on a capped product and seats are full, it becomes `waitlisted`, stamped with a `waitlisted_at` time. Waitlist order is **derived** from that timestamp (`ORDER BY waitlisted_at, id`), not stored as a dense rank — so removing or promoting a row never needs renumbering.
+- When a seat opens, promotion is a future **admin-driven, manual** action — there is no automatic promotion (see §11). The old read-only `promote_from_waitlist` stub was dropped in 00116.
 
 All participation mutations go through `SECURITY DEFINER` RPCs that begin with `SELECT 1 FROM products WHERE id = $1 FOR UPDATE`. This **product-row lock is the signup gate** — concurrent `create_participation` / `cancel_participation` / waitlist-promotion calls on the same product serialize on it, so seat-count reads and waitlist arithmetic inside the transaction are race-free.
 
@@ -330,7 +330,7 @@ This pattern works uniformly for **all** purchase shapes — single-payment camp
 
 **Subscriptions and the manual-capture gap.** Stripe doesn't support `capture_method: "manual"` for recurring charges, which would complicate any "auth-then-decide" pattern for the one-shot camp/event payment. The reservation row sidesteps this entirely: the seat is held in our DB before any Stripe transaction starts, so subs and one-offs follow the same path.
 
-**Waitlist sits outside Stripe.** A parent who joins the waitlist has *not* been charged and is *not* pre-authorised. When a seat opens (active participation removed), `promote_from_waitlist` picks the lowest-position waitlisted row and sends a transactional email with a re-checkout link. Promotion is opt-in — the parent has to click and complete a fresh Checkout. Stripe's auth windows (~7 days) aren't long enough to cover realistic waitlist gaps, so we don't try to use them.
+**Waitlist sits outside Stripe.** A parent who joins the waitlist has *not* been charged and is *not* pre-authorised. Promoting a waitlisted gamer when a seat opens is a future **admin-driven, manual** action — there is no automatic promotion today. When built, a paid club will hand the parent a fresh Checkout link (Stripe's ~7-day auth windows are too short to pre-authorise across realistic waitlist gaps); a municipality club promotes with a plain status flip to `active` (no charge). The admin will pick whom to promote off the timestamp-derived order.
 
 ### 4.7 Product type as label, not switch
 
@@ -678,12 +678,12 @@ participations
   customer_id           uuid → profiles.id                 -- parent who signed up the gamer
   status                enum('reserving','active','waitlisted','completed')
   reserved_until        timestamptz                        -- populated iff status='reserving' (§4.6a)
-  waitlist_position     int                                -- populated iff status='waitlisted'
+  waitlisted_at         timestamptz                        -- stamped iff status='waitlisted'; waitlist order derives from it
   signed_up_at          timestamptz
   unique(product_id, gamer_id)
   -- CHECK: group_id's product_id (if set) matches row's product_id
   -- CHECK: status='reserving' → reserved_until IS NOT NULL
-  -- CHECK: status='waitlisted' → waitlist_position IS NOT NULL
+  -- CHECK: status='waitlisted' → waitlisted_at IS NOT NULL
 ```
 
 There is no per-session credit balance on a participation. A consumer-club participation's coverage is simply the existence of a live `family_subscriptions` row pointing at it (`participation_id`); camps/events are covered by their one-time `payments` row.
@@ -836,7 +836,7 @@ All RPCs in this section begin with `SELECT 1 FROM products WHERE id = $1 FOR UP
   The reservation-row insert is the *seat-holding* mechanism (§4.6a). Without it, two parents can both pass the gate, both proceed to Stripe, and one is stuck with a charge against an already-full club.
 
 - **`join_waitlist(product_id, gamer_id, customer_id)`**
-  After the gate lock: inserts a `participations` row with `status='waitlisted'` and the next `waitlist_position`. No Stripe call, no charge, no pre-authorization. Returns the position so the UI can confirm.
+  After the gate lock: inserts a `participations` row with `status='waitlisted'`, stamping `waitlisted_at = now()`. No Stripe call, no charge, no pre-authorization. Returns the **derived** position (rank by `waitlisted_at`, ties broken by `id`) so the UI can confirm "you're #N" — the rank is computed, never stored.
 
 - **`cancel_participation(participation_id, reason)`**
   The teardown for a cancelled participation. After the gate lock: reads the linked `stripe_subscription_id` off `family_subscriptions` (so an *admin*-initiated cancel can cancel the whole Stripe sub), then hard-DELETEs the participation — which CASCADEs the `family_subscriptions` row away. Returns the `stripe_subscription_id` for the caller. No Stripe refunds in any branch.
@@ -844,10 +844,7 @@ All RPCs in this section begin with `SELECT 1 FROM products WHERE id = $1 FOR UP
   This is the RPC the `customer.subscription.deleted` webhook calls when a parent cancels a club in Stripe's portal (§4.5c). On that path Stripe has **already** cancelled the sub, so the webhook does not call Stripe back — it only runs this DB teardown. (Customer-initiated cancellation is portal-only; there is no in-app "Leave this club" action and no `unsubscribe_from_product` RPC.)
 
 - **`admin_remove_participation(participation_id, reason)`**
-  Admin-initiated. Same as `cancel_participation` including hard-DELETE and waitlist promotion, with the ability to force a Stripe refund outside the normal window — `reason='admin_refund'` on the `refunds` row.
-
-- **`promote_from_waitlist(product_id)`**
-  Internal helper, called inside cancellation RPCs. Assumes gate lock is held.
+  Admin-initiated. Same as `cancel_participation` (hard-DELETE), with the ability to force a Stripe refund outside the normal window — `reason='admin_refund'` on the `refunds` row. Not started. Freeing a seat does **not** auto-promote anyone (see §11).
 
 ### 6.1a Group mutations
 
@@ -969,7 +966,7 @@ Seat state ("8 of 10 seats · 3 on waitlist"), schedule with skipped dates surfa
 The objects that make up this domain (tables, RPCs, enums, types, service classes, query-key factories, constants, API routes):
 
 - Tables: `products`, `product_prices`, `product_subscription_prices`, `participations`, `payments`, `refunds`, `family_subscriptions`, `product_groups`, `gedu_group_assignments`, `schedule_slots`, `session_overrides`, `session_substitutions`, `session_attendance`, `session_notes`, `holiday_calendars`, `calendar_holidays`, `product_holiday_calendars`, `site_details`, `site_staff_details`, `product_seat_counts`.
-- RPCs: `create_participation`, `confirm_reservation`, `expire_reservation`, `cancel_participation`, `admin_remove_participation`, `promote_from_waitlist`, `apply_group_changes`, `cancel_session`, `reschedule_session`, `request_substitute`, `assign_substitute`, `set_substitute`, `record_attendance`, `start_product`, `cancel_product`, `finalize_completed_products`, `product_has_session`.
+- RPCs: `create_participation`, `confirm_reservation`, `expire_reservation`, `cancel_participation`, `admin_remove_participation`, `apply_group_changes`, `cancel_session`, `reschedule_session`, `request_substitute`, `assign_substitute`, `set_substitute`, `record_attendance`, `start_product`, `cancel_product`, `finalize_completed_products`, `product_has_session`.
 - Enums: `product_type`, `billing_mode`, `product_status`, `participation_status`, `payment_purpose`, `refund_reason`, `session_note_visibility`, `session_attendance_status`, `topic_kind`.
 - Code: `services/products/*`, `services/participations/*` (family-subscription reads/RPCs live here too), `productsKeys`, `ParticipationsService`, etc.
 - Routes: admin management at `/admin/products/*`; Checkout endpoints at `/api/checkout/products/*`; webhook at `/api/webhooks/stripe/products`. Parent-facing routes are `/shop` (browse) and `/shop/[id]` (detail, any product type), plus `/registration` for muni clubs.
@@ -1004,7 +1001,7 @@ The unified shape is proven against the two product lines closest to real users.
 **RPCs (§6).**
 - ✓ `create_product` — atomic insert across products + translations + schedule slots + tags + prices + holiday calendars; rejects empty translation payloads.
 - ✓ Effective-status derivation — TS helper (`src/lib/products/effective-status.ts`) and SQL twin `effective_status(product_id)` both ship.
-- ◐ Participation lifecycle — `create_participation`, `confirm_reservation`, `expire_reservation`, `join_waitlist`, `cancel_participation` ship; `promote_from_waitlist` ships as a stub (not wired into a customer flow — see §11); `admin_remove_participation` not started. `create_participation` handles all four purchase shapes: paid (`reserving` → Stripe), `free` (instant `free_active`), and `external` (municipality clubs — instant `external_active`, no Stripe; migration 00115).
+- ◐ Participation lifecycle — `create_participation`, `confirm_reservation`, `expire_reservation`, `join_waitlist`, `cancel_participation` ship; `admin_remove_participation` and any waitlist promotion not started (the old read-only `promote_from_waitlist` stub was dropped in 00116 — see §11). `create_participation` handles all four purchase shapes: paid (`reserving` → Stripe), `free` (instant `free_active`), and `external` (municipality clubs — instant `external_active`, no Stripe; migration 00115). Waitlist order is derived from `participations.waitlisted_at` (00116), not a stored position.
 - ○ Session operations (`cancel_session`, `reschedule_session`, `request_substitute`, `assign_substitute`, `record_attendance`).
 - ✓ Subscription management — every consumer-club signup creates its own Stripe sub via Checkout (one per gamer×club); the `checkout.session.completed` webhook writes the per-participation `family_subscriptions` row. Cancellation is portal-only: `customer.subscription.deleted` → `cancel_participation` teardown. There is no inline-add path and no `unsubscribe_from_product` RPC.
 - ○ Lifecycle transitions (`start_product`, `cancel_product`, `finalize_completed_products`).
@@ -1092,7 +1089,7 @@ Flagged inline as `OPEN` in the sections they affect.
 - **Single-group auto-assign.** When a product has exactly one group, auto-assign new participations instead of routing through the inbox? Defer until we see inbox in real use.
 - **Unassigned inbox notifications.** WhatsApp / email / in-app nudges to admins when the inbox has sat non-empty for N hours. Future phase.
 - **Attendance → removal policy.** N-unexcused-absences threshold, approval flow, appeal path. Defer until attendance tracking ships.
-- **`promote_from_waitlist` lifecycle is not yet wired.** Function shipped in 00039 as a forward-looking stub per §6.1. As written it (a) holds no `FOR UPDATE` lock so two concurrent webhook workers could pick the same row, and (b) doesn't transition the row's status — it stays `'waitlisted'`, which makes a subsequent `create_participation` for that gamer hit the existing-row guard with "already on waitlist". Zero TS callers, zero tests today. The intended flow (cancel → admin emails next-on-waitlist → parent clicks → re-checkout) needs an additional RPC to convert a waitlist row into a reservation without tripping the existing-row check, plus the cancellation RPCs need to actually invoke it. Defer until the waitlist-promotion phase starts; rewrite with locking + transition + race tests parallel to `tests/db/participations-race.test.ts`.
+- **Waitlist promotion is unbuilt, and will be admin-driven and manual.** The old read-only `promote_from_waitlist` stub (00039) was **dropped in 00116** — we decided against automatic seat-opens→promote logic; it was the wrong shape (read-only, no lock, no status transition) and confusing to keep around. The replacement, when built, is a **manual admin action** in the admin UI: the admin sees the waitlist in timestamp-derived order (`ORDER BY waitlisted_at, id`) and promotes a chosen gamer. That needs a new *mutating* RPC under the product-row lock that transitions `waitlisted → active` (re-checking the seat) — for a municipality club a plain status flip (no charge); for a paid club, handing the parent a fresh Checkout link rather than flipping directly. Also still needs `admin_remove_participation` to exist so a seat can be freed in the first place. Build with race tests parallel to `tests/db/participations-race.test.ts`.
 - **Event account requirement for truly free events.** The platform requires an account for all participations. Consider magic-link + gamer-only capture later if friction is too high.
 - **Topic taxonomy depth.** Sub-topics (Minecraft — Survival vs Redstone) or new topics — add a value to the `product_topic` enum (and a `PRODUCT_TOPICS` entry), or graduate back to a `topics` table if the set ever needs to be admin-managed again. Not yet.
 - **Calendar view as a first-class parent feature.** "Everything my kids are doing this week" across products is obvious future UX. Design the per-gamer session query to support it.
@@ -1404,7 +1401,7 @@ Concrete behaviors that fall out of this model:
 
 The `expire_reservation` RPC stays around — the webhook calls it on `checkout.session.expired` — but is **never** invoked from a customer-facing API route.
 
-**Waitlist is dead until promotion lands.** `promote_from_waitlist` exists in the schema but no caller wires it up — no email path, no cron, no trigger on participation removal. A waitlisted parent is not notified when a seat opens; whoever clicks Sign Up first wins it. (Plan: post-removal RPC trigger + transactional email + opt-in re-checkout link — see §11.) A known minor wart: a parent with a held reserving row who clicks "Join waitlist" gets the held row back as-is (`join_waitlist`'s idempotency check accepts `'reserving'`); the state self-heals when the reserving row expires. The `'reserving'` carve-out is deliberate — with no promotion logic, a "correctly waitlisted" parent would be stuck behind their own waitlisted row.
+**No promotion exists yet — joining the waitlist works, advancing off it does not.** There is no `promote_from_waitlist` (the stub was dropped in 00116), no email path, no cron, no trigger on participation removal. A waitlisted parent is not notified when a seat opens; whoever clicks Sign Up first wins it. Promotion will be a manual admin action off the timestamp-derived order (see §11). A known minor wart: a parent with a held reserving row who clicks "Join waitlist" gets the held row back as-is (`join_waitlist`'s idempotency check accepts `'reserving'`); the state self-heals when the reserving row expires. The `'reserving'` carve-out is deliberate — with no promotion logic, a "correctly waitlisted" parent would be stuck behind their own waitlisted row.
 
 ### Non-obvious gotchas
 

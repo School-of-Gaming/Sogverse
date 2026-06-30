@@ -306,10 +306,13 @@ describe("get_gedu_assigned_product", () => {
       // by the roster sub-aggregate and the gamer_count sub-select.
       //
       // CHECK constraints require companion columns: waitlisted needs a
-      // waitlist_position, reserving needs a reserved_until. The admin
+      // waitlisted_at, reserving needs a reserved_until. The admin
       // (service-role) client bypasses RLS but NOT CHECK constraints.
       const fixtures = [
-        { status: "waitlisted" as const, extras: { waitlist_position: 1 } },
+        {
+          status: "waitlisted" as const,
+          extras: { waitlisted_at: new Date().toISOString() },
+        },
         {
           status: "reserving" as const,
           extras: {
