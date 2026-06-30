@@ -387,15 +387,27 @@ export function GroupsPanel({
           to a "Remove gamer" drop zone mid-drag (HeaderGamerAction). The picker
           sheets are deliberately kept OUTSIDE it — see the note below. */}
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="flex flex-row items-center justify-between">
-          <div>
+        <div className="flex items-center gap-4">
+          <div className="min-w-0">
             <h2 className="flex items-center gap-2 text-lg font-semibold">
               <Users className="h-5 w-5 text-muted-foreground" />
               {t("title")}
             </h2>
             <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+            {/* Capacity context — the same bar the shop shows, fed from the live
+                snapshot's active count. Grows into the free space between the
+                title and the action buttons (capped so it isn't absurdly wide on
+                large screens); hidden on mobile, where its nowrap "X of Y
+                remaining" label would crowd the buttons. Renders nothing (no
+                gap) for uncapped products. */}
+            <SeatAvailabilityBar
+              seatCount={seatCount}
+              seatsLeft={seatsLeft}
+              waitlistEnabled={waitlistEnabled}
+              className="hidden min-w-0 max-w-xs flex-1 sm:block"
+            />
             {canAddGamer && (
               <HeaderGamerAction onAddGamer={() => setGamerPickerOpen(true)} />
             )}
@@ -410,14 +422,6 @@ export function GroupsPanel({
             </Button>
           </div>
         </div>
-
-        {/* Capacity context — the same bar the shop shows, fed from the live
-            snapshot's active count. Renders nothing for uncapped products. */}
-        <SeatAvailabilityBar
-          seatCount={seatCount}
-          seatsLeft={seatsLeft}
-          waitlistEnabled={waitlistEnabled}
-        />
 
         <div className="space-y-3">
           <UnassignedCard

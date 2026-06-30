@@ -65,10 +65,36 @@ type Participation = ProductGroupsSnapshot["unassigned"][number];
 
 // ─── Optimistic cache patches (pure) ─────────────────────────────────────────
 
-function withParticipationMoved(
+/** Where a dragged participation lands: a group, the unassigned inbox, or the waitlist. */
+type Placement =
+  | { area: "group"; groupId: string }
+  | { area: "unassigned" }
+  | { area: "waitlist" };
+
+/** A group/unassigned drop target keyed by `toGroupId` (null = unassigned inbox). */
+function groupPlacement(toGroupId: string | null): Placement {
+  return toGroupId === null
+    ? { area: "unassigned" }
+    : { area: "group", groupId: toGroupId };
+}
+
+/**
+ * The one optimistic cache patch behind every participation drag — move,
+ * promote, and demote are all the same operation: pull the chip out of wherever
+ * it currently sits (group, unassigned, or waitlist — taking from all three is
+ * safe since it's only ever in one), optionally re-stamp its status (promote →
+ * active, demote → waitlisted), and append it to the destination.
+ *
+ * Append-to-end is load-bearing: the server orders each list by a key the
+ * mutation bumps to "now" (updated_at for the active lists, waitlisted_at for
+ * the waitlist), so the row lands last on refetch too — optimistic and settle
+ * agree and nothing reorders. Returns the snapshot untouched if id isn't found.
+ */
+function withParticipationRelocated(
   snapshot: ProductGroupsSnapshot,
   participationId: string,
-  toGroupId: string | null,
+  to: Placement,
+  status?: Participation["status"],
 ): ProductGroupsSnapshot {
   let moved: Participation | undefined;
   const take = (list: Participation[]): Participation[] =>
@@ -87,24 +113,27 @@ function withParticipationMoved(
       participations: take(g.participations),
     })),
     unassigned: take(snapshot.unassigned),
+    waitlist: take(snapshot.waitlist),
   };
 
   if (!moved) return snapshot;
-  // Append to the end of the destination list. The server orders by updated_at,
-  // and the move bumps updated_at, so the settle refetch lands it here too.
-  const landed = moved;
+  const landed: Participation = status ? { ...moved, status } : moved;
 
-  if (toGroupId === null) {
-    return { ...stripped, unassigned: [...stripped.unassigned, landed] };
+  switch (to.area) {
+    case "unassigned":
+      return { ...stripped, unassigned: [...stripped.unassigned, landed] };
+    case "waitlist":
+      return { ...stripped, waitlist: [...stripped.waitlist, landed] };
+    case "group":
+      return {
+        ...stripped,
+        groups: stripped.groups.map((g) =>
+          g.id === to.groupId
+            ? { ...g, participations: [...g.participations, landed] }
+            : g,
+        ),
+      };
   }
-  return {
-    ...stripped,
-    groups: stripped.groups.map((g) =>
-      g.id === toGroupId
-        ? { ...g, participations: [...g.participations, landed] }
-        : g,
-    ),
-  };
 }
 
 function withGroupRenamed(
@@ -164,7 +193,11 @@ export function useMoveParticipation(productId: string) {
       if (previous) {
         queryClient.setQueryData(
           key,
-          withParticipationMoved(previous, participationId, toGroupId),
+          withParticipationRelocated(
+            previous,
+            participationId,
+            groupPlacement(toGroupId),
+          ),
         );
       }
       return { previous };
@@ -399,13 +432,11 @@ export function useAdminRemoveGamerFromProduct(productId: string) {
 }
 
 /**
- * Promote a waitlisted gamer into a group/unassigned (status→active). Like the
- * destructive actions, no optimistic patch: the waitlist chip greys via the
- * pending registry (`moves`) while in flight, then the settle refetch relocates
- * it — the snapshot's `waitlist`/`groups`/`unassigned` arrays and the seat-count
- * bar all reconcile from one source of truth. Promotion is gated behind a
- * confirm dialog in the UI, so the brief grey-then-move reads fine. Keyed into
- * groupMutationBase so the pending registry surfaces it.
+ * Promote a waitlisted gamer into a group/unassigned (status→active). Uses the
+ * same optimistic-then-settle shape as useMoveParticipation — the chip lands in
+ * its destination immediately (append-to-end, matching the server's updated_at
+ * order) so there's no grey-then-jump and no reconcile flicker as it crosses the
+ * waitlist boundary. Rolls back on error; settle refetch is the source of truth.
  */
 export function usePromoteFromWaitlist(productId: string) {
   const queryClient = useQueryClient();
@@ -414,24 +445,43 @@ export function usePromoteFromWaitlist(productId: string) {
 
   return useMutation({
     mutationKey: [...groupMutationBase(productId), "promote"],
-    ...destructiveSettle(
-      queryClient,
-      key,
-      ({
-        participationId,
-        toGroupId,
-      }: {
-        participationId: string;
-        toGroupId: string | null;
-      }) => service.promoteFromWaitlist(productId, participationId, toGroupId),
-    ),
+    mutationFn: ({
+      participationId,
+      toGroupId,
+    }: {
+      participationId: string;
+      toGroupId: string | null;
+    }) => service.promoteFromWaitlist(productId, participationId, toGroupId),
+    onMutate: async ({ participationId, toGroupId }) => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<ProductGroupsSnapshot>(key);
+      if (previous) {
+        queryClient.setQueryData(
+          key,
+          withParticipationRelocated(
+            previous,
+            participationId,
+            groupPlacement(toGroupId),
+            "active",
+          ),
+        );
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(key, context.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key });
+    },
   });
 }
 
 /**
  * Demote an active gamer to the back of the waitlist (status→waitlisted). Same
- * no-optimistic-patch model as promote: the chip greys while saving, then the
- * settle refetch moves it into the waitlist array.
+ * optimistic-then-settle shape as promote: the chip moves to the end of the
+ * waitlist immediately (matching the server's waitlisted_at = now() order), so
+ * crossing the boundary doesn't flicker.
  */
 export function useDemoteToWaitlist(productId: string) {
   const queryClient = useQueryClient();
@@ -440,12 +490,30 @@ export function useDemoteToWaitlist(productId: string) {
 
   return useMutation({
     mutationKey: [...groupMutationBase(productId), "demote"],
-    ...destructiveSettle(
-      queryClient,
-      key,
-      ({ participationId }: { participationId: string }) =>
-        service.demoteToWaitlist(productId, participationId),
-    ),
+    mutationFn: ({ participationId }: { participationId: string }) =>
+      service.demoteToWaitlist(productId, participationId),
+    onMutate: async ({ participationId }) => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<ProductGroupsSnapshot>(key);
+      if (previous) {
+        queryClient.setQueryData(
+          key,
+          withParticipationRelocated(
+            previous,
+            participationId,
+            { area: "waitlist" },
+            "waitlisted",
+          ),
+        );
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(key, context.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key });
+    },
   });
 }
 
