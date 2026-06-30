@@ -256,10 +256,6 @@
           "waitlist": {
             "title": "Jonotuslista",
             "body": "Pelaajat, jotka eivät saaneet paikkaa, näkyvät tässä, jotta voit nostaa heidät listalta paikkojen vapautuessa."
-          },
-          "metrics": {
-            "title": "Liiketoimintamittarit",
-            "body": "Tämän tuotteen ilmoittautumismäärät, liikevaihto ja palautukset näkyvät tässä, kun maksudata on valmis."
           }
         }
       },

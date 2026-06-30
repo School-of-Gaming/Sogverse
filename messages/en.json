@@ -256,10 +256,6 @@
           "waitlist": {
             "title": "Waitlist",
             "body": "Gamers who couldn't get a seat will appear here so you can promote them as space opens."
-          },
-          "metrics": {
-            "title": "Business metrics",
-            "body": "Enrolment counts, revenue, and refunds for this product will land here once payments data is wired up."
           }
         }
       },

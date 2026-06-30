@@ -256,10 +256,6 @@
           "waitlist": {
             "title": "Väntelista",
             "body": "Gamare som inte fick någon plats visas här så att du kan flytta upp dem när platser frigörs."
-          },
-          "metrics": {
-            "title": "Affärsstatistik",
-            "body": "Anmälningsantal, intäkter och återbetalningar för den här produkten landar här när betaldatan är ansluten."
           }
         }
       },

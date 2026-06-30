@@ -177,11 +177,6 @@ export function ProductDetailsPage({
         title={t("detailsPage.placeholders.waitlist.title")}
         body={t("detailsPage.placeholders.waitlist.body")}
       />
-      <FuturePlaceholder
-        icon={Wallet}
-        title={t("detailsPage.placeholders.metrics.title")}
-        body={t("detailsPage.placeholders.metrics.body")}
-      />
     </div>
   );
 }
@@ -458,7 +453,7 @@ function Fact({
 
 // ──────────────────────────────────────────────────────────────────────
 // Placeholder card for sections that surface later (groups + gedu
-// assignment, waitlist, business metrics). Rendered with dashed border
+// assignment, waitlist). Rendered with dashed border
 // so they don't read as broken empty states — the admin can see what's
 // coming and where it'll land.
 // ──────────────────────────────────────────────────────────────────────
