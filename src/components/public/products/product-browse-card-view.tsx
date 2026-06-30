@@ -204,6 +204,7 @@ export function ProductBrowseCardView({
                     size="sm"
                     variant={cta.kind === "disabled" ? "outline" : "default"}
                     disabled={cta.kind === "disabled"}
+                    className="whitespace-nowrap"
                   >
                     {cta.labelText}
                   </Button>

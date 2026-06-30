@@ -1292,6 +1292,7 @@
       "viewDetails": "Visa",
       "manage": "Hantera",
       "fullDisabled": "Fullt",
+      "alreadyStarted": "Pågår",
       "online": "Online"
     },
     "empty": {

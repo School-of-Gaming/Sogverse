@@ -144,9 +144,10 @@ export function deriveRegistrationState({
 // How a state's browse-card CTA behaves:
 //   "primary"  → a working "View" button into the detail page (something to do
 //                there: sign up, watch the threshold, join the waitlist).
-//   "disabled" → a dead end — full with no waitlist; the detail page has
-//                nothing actionable, so the parent isn't sent on a round-trip.
-//   null       → no button at all (already running, or ended).
+//   "disabled" → a dead end — full with no waitlist, or a camp/event already
+//                underway; the detail page has nothing actionable, so the
+//                parent isn't sent on a round-trip.
+//   null       → no button at all (ended).
 //
 // Lives next to the state it switches on so the CTA component
 // (`useRegistrationCta`) and anything deciding "does this state have a detail
@@ -165,8 +166,8 @@ export function registrationCtaKind(
     case "full_waitlist":
       return "primary";
     case "full_closed":
-      return "disabled";
     case "running_late":
+      return "disabled";
     case "ended":
       return null;
   }

@@ -1292,6 +1292,7 @@
       "viewDetails": "View",
       "manage": "Manage",
       "fullDisabled": "Full",
+      "alreadyStarted": "Already started",
       "online": "Online"
     },
     "empty": {
