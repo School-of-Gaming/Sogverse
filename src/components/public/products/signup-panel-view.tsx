@@ -90,15 +90,9 @@ export interface SignupPanelViewProps {
 export function SignupPanelView(props: SignupPanelViewProps) {
   switch (props.state.kind) {
     case "ended":
-      return <ClosedPanel productType={props.productType} reason="ended" />;
     case "running_late":
-      return (
-        <ClosedPanel productType={props.productType} reason="running_late" />
-      );
     case "full_closed":
-      return (
-        <ClosedPanel productType={props.productType} reason="full_closed" />
-      );
+      return <ClosedPanel productType={props.productType} />;
     case "full_waitlist":
       return <FullWaitlistPanel {...props} />;
     case "pending_thr":
@@ -137,30 +131,19 @@ function PanelShell({
 
 // ---------- Variant: Closed (ended / running late / full + no waitlist) ----------
 
-// One shared panel for every "you can't sign up right now" dead end. A parent
-// never reaches these through a browse card — registrationCtaKind resolves them
-// to a disabled card button or no button at all — so the only way in is a stale
-// link or bookmark. That makes three bespoke layouts not worth maintaining:
-// they collapse to a single calm note that names the reason, with no actionable
-// CTA. (The RegistrationState kinds stay distinct — the card layer still needs
-// them; only the panel rendering merges.)
-function ClosedPanel({
-  productType,
-  reason,
-}: {
-  productType: ProductType;
-  reason: "ended" | "running_late" | "full_closed";
-}) {
+// One shared panel for every "you can't sign up right now" dead end (ended,
+// already started, or full with no waitlist). A parent never reaches these
+// through a browse card — registrationCtaKind resolves them to a disabled card
+// button or no button at all — so the only way in is a stale link or bookmark.
+// That makes three bespoke layouts not worth maintaining, and the exact reason
+// not worth spelling out: they collapse to one generic note, no actionable CTA.
+// (The RegistrationState kinds stay distinct — the card layer still needs them;
+// only the panel rendering merges.)
+function ClosedPanel({ productType }: { productType: ProductType }) {
   const t = useTranslations("productDetail.signupPanel");
-  const noteKey =
-    reason === "ended"
-      ? "endedNote"
-      : reason === "running_late"
-        ? "runningLateNote"
-        : "fullClosedNote";
   return (
     <PanelShell productType={productType}>
-      <p className="text-sm text-muted-foreground">{t(noteKey)}</p>
+      <p className="text-sm text-muted-foreground">{t("closedNote")}</p>
     </PanelShell>
   );
 }

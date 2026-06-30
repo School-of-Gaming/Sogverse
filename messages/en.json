@@ -1417,9 +1417,7 @@
       "gamerAlreadyWaitlisted": "On waitlist",
       "nonCustomerNote": "Only parents can register a gamer here.",
       "preOpenHelper": "Pick your child and agree to the rules so it's a one-tap sign-up the moment it opens.",
-      "endedNote": "This one already wrapped. Keep an eye out for the next one.",
-      "runningLateNote": "We've already started — sign-up is closed. The next round will open soon.",
-      "fullClosedNote": "This one's full. Keep an eye out for the next round.",
+      "closedNote": "This one's not open right now. Keep an eye out for the next one.",
       "rules": {
         "consumer_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior.",
         "municipality_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, and that repeated unexcused absences may open my child's seat for the next family on the waitlist.",

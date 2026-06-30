@@ -1462,9 +1462,7 @@
       "gamerAlreadyWaitlisted": "tetlhDaq",
       "nonCustomerNote": "vavmey neH puq qonlaH naDev.",
       "preOpenHelper": "puqlI' yIwIv 'ej chutmey yIlaj — qonta' poSDI' wa' tlhopwI' lo'meH.",
-      "endedNote": "rIn. latlh boqDI' yI'aHta'.",
-      "runningLateNote": "taghta' — qonta' SoQ. latlh boq DaH poSlaw'.",
-      "fullClosedNote": "buy'. latlh boqDI' yI'aHta'.",
+      "closedNote": "DaH poSbe'. latlh boqDI' yI'aHta'.",
       "rules": {
         "consumer_club": "qIp 'ej tlhejHa' vuvbe' School of Gaming, jIyaj.",
         "municipality_club": "qIp 'ej tlhejHa' vuvbe' School of Gaming, 'ej qaSpa' choHmeH puqwI' DaH lop laH latlh qorDu' tetlh teb 'oHbogh, jIyaj.",
