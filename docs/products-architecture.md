@@ -300,10 +300,10 @@ What we give up: a family with several clubs now has several Stripe subs, each w
 
 ### 4.6 Capacity and waitlist
 
-- `products.seat_count` — nullable. `NULL` means **uncapped / all welcome** — no capacity limit, no waitlist, no "full" state. Only valid when `billing_mode = 'free'`.
+- `products.seat_count` — nullable. `NULL` means **uncapped / all welcome** — no capacity limit, no waitlist, no "full" state. Allowed for **any** product type (00083 removed the free-only restriction); the admin form unlocks the choice per type (muni today — see §10 admin form).
 - Parent-facing surfaces render `seat_count = NULL` as **"unlimited" / "all welcome"** — never a missing number or a zero.
 - When a participation is requested on a capped product and seats are full, it becomes `waitlisted`, stamped with a `waitlisted_at` time. Waitlist order is **derived** from that timestamp (`ORDER BY waitlisted_at, id`), not stored as a dense rank — so removing or promoting a row never needs renumbering.
-- When a seat opens, promotion is a future **admin-driven, manual** action — there is no automatic promotion (see §11). The old read-only `promote_from_waitlist` stub was dropped in 00116.
+- There is **no automatic promotion** when a seat opens. An admin promotes manually from the product's groups panel: dragging a waitlisted gamer into a group / the unassigned inbox runs `promote_from_waitlist` (status → `active`, `waitlisted_at` cleared) with **no seat-count gate** — promoting past a full cap is a deliberate admin override. Dragging an active gamer onto the waitlist runs `demote_to_waitlist` (back of the line, `waitlisted_at` re-stamped). A parent/gamer reads their own live rank via `get_waitlist_position`.
 
 All participation mutations go through `SECURITY DEFINER` RPCs that begin with `SELECT 1 FROM products WHERE id = $1 FOR UPDATE`. This **product-row lock is the signup gate** — concurrent `create_participation` / `cancel_participation` / waitlist-promotion calls on the same product serialize on it, so seat-count reads and waitlist arithmetic inside the transaction are race-free.
 
@@ -482,7 +482,7 @@ products
   end_date              date              -- nullable (ongoing for consumer_club)
   timezone              text              -- IANA
 
-  seat_count            int               -- nullable (uncapped — only allowed for free)
+  seat_count            int               -- nullable (uncapped); allowed for any type (00083)
   waitlist_enabled      bool              -- default true when seat_count is set
 
   registration_opens_at timestamptz       -- NOT NULL; "Right away" resolves to creation time
@@ -497,7 +497,6 @@ products
   --   billing_mode='external_contract'    → product_type='municipality_club'
   --   billing_mode='free'                 → no row in product_prices (app-enforced)
   --   billing_mode='paid'                 → ≥ 1 row in product_prices (app-enforced)
-  --   seat_count IS NULL                  → billing_mode='free'
   --   product_type='event'                → end_date = start_date (one-off)
   --   product_type != 'consumer_club'     → end_date IS NOT NULL once status != 'draft'
   --   is_remote=false                     → location_id IS NOT NULL AND locations.type='site'
@@ -836,7 +835,11 @@ All RPCs in this section begin with `SELECT 1 FROM products WHERE id = $1 FOR UP
   The reservation-row insert is the *seat-holding* mechanism (§4.6a). Without it, two parents can both pass the gate, both proceed to Stripe, and one is stuck with a charge against an already-full club.
 
 - **`join_waitlist(product_id, gamer_id, customer_id)`**
-  After the gate lock: inserts a `participations` row with `status='waitlisted'`, stamping `waitlisted_at = now()`. No Stripe call, no charge, no pre-authorization. Returns the **derived** position (rank by `waitlisted_at`, ties broken by `id`) so the UI can confirm "you're #N" — the rank is computed, never stored.
+  After the gate lock: inserts a `participations` row with `status='waitlisted'`, stamping `waitlisted_at = clock_timestamp()` (not `now()` — under the gate lock that's monotonic with real join order, so concurrent joins get distinct ranks; 00117). No Stripe call. Returns the **derived** position so the UI can confirm "you're #N" — computed, never stored.
+
+- **`promote_from_waitlist(participation_id, group_id)` / `demote_to_waitlist(participation_id)`** — admin-only, gate-locked, `SECURITY DEFINER`. Promote flips a waitlisted row to `active`, sets `group_id` (NULL = unassigned), clears `waitlisted_at`; **no seat-count gate** (capacity override). Demote flips an active row to `waitlisted`, clears `group_id`, re-stamps `waitlisted_at` (back of line). Both self-gate on `get_user_role() = 'admin'` and are driven by the groups-panel drag UI.
+
+- **`get_waitlist_position(participation_id) → int`** — the RLS-safe "you're #N" read for parents/gamers. `SECURITY DEFINER` so it can count past the caller's RLS, but **owner-authorized** (`customer_id` OR `gamer_id`) and returns **only the integer** (NULL if unknown / not waitlisted / not the caller's). Same `(waitlisted_at, id)` order, recomputed live so it shrinks as people ahead leave.
 
 - **`cancel_participation(participation_id, reason)`**
   The teardown for a cancelled participation. After the gate lock: reads the linked `stripe_subscription_id` off `family_subscriptions` (so an *admin*-initiated cancel can cancel the whole Stripe sub), then hard-DELETEs the participation — which CASCADEs the `family_subscriptions` row away. Returns the `stripe_subscription_id` for the caller. No Stripe refunds in any branch.
