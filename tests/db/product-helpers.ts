@@ -21,6 +21,7 @@ import { TEST_IDS } from "./constants";
  *   5c1            product-seat-counts-trigger.test.ts
  *   5c2            cancel-participation.test.ts
  *   5c3–5c6        get-my-participation-subscription-states.test.ts
+ *   5c7            waitlist-admin.test.ts
  *   5d1–5da        session-credits-cron.test.ts
  *   5e1–5e4        products-gamer-rls.test.ts
  *   5e5–5e8        products-purchaser-rls.test.ts

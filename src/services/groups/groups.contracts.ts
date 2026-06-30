@@ -87,4 +87,10 @@ export const productGroupsSnapshot = z.object({
     })
   ),
   unassigned: z.array(groupParticipationDetail),
+  /**
+   * Waitlisted gamers in derived order (waitlisted_at, id) — same detail shape
+   * as a group/unassigned chip. Waitlist position is the array index + 1,
+   * computed in the UI; it is never stored. See migration 00118.
+   */
+  waitlist: z.array(groupParticipationDetail),
 });

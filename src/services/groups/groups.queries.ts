@@ -398,6 +398,57 @@ export function useAdminRemoveGamerFromProduct(productId: string) {
   });
 }
 
+/**
+ * Promote a waitlisted gamer into a group/unassigned (status→active). Like the
+ * destructive actions, no optimistic patch: the waitlist chip greys via the
+ * pending registry (`moves`) while in flight, then the settle refetch relocates
+ * it — the snapshot's `waitlist`/`groups`/`unassigned` arrays and the seat-count
+ * bar all reconcile from one source of truth. Promotion is gated behind a
+ * confirm dialog in the UI, so the brief grey-then-move reads fine. Keyed into
+ * groupMutationBase so the pending registry surfaces it.
+ */
+export function usePromoteFromWaitlist(productId: string) {
+  const queryClient = useQueryClient();
+  const service = new GroupsService(getClient());
+  const key = groupsKeys.byProduct(productId);
+
+  return useMutation({
+    mutationKey: [...groupMutationBase(productId), "promote"],
+    ...destructiveSettle(
+      queryClient,
+      key,
+      ({
+        participationId,
+        toGroupId,
+      }: {
+        participationId: string;
+        toGroupId: string | null;
+      }) => service.promoteFromWaitlist(productId, participationId, toGroupId),
+    ),
+  });
+}
+
+/**
+ * Demote an active gamer to the back of the waitlist (status→waitlisted). Same
+ * no-optimistic-patch model as promote: the chip greys while saving, then the
+ * settle refetch moves it into the waitlist array.
+ */
+export function useDemoteToWaitlist(productId: string) {
+  const queryClient = useQueryClient();
+  const service = new GroupsService(getClient());
+  const key = groupsKeys.byProduct(productId);
+
+  return useMutation({
+    mutationKey: [...groupMutationBase(productId), "demote"],
+    ...destructiveSettle(
+      queryClient,
+      key,
+      ({ participationId }: { participationId: string }) =>
+        service.demoteToWaitlist(productId, participationId),
+    ),
+  });
+}
+
 // ─── Pending registry ────────────────────────────────────────────────────────
 //
 // Derives which elements have an in-flight mutation from React Query's mutation
@@ -470,7 +521,12 @@ export function useGroupPending(productId: string): GroupPending {
   let creating = false;
 
   for (const { action, vars } of entries) {
-    if (action === "move" && vars?.participationId) {
+    if (
+      (action === "move" || action === "promote" || action === "demote") &&
+      vars?.participationId
+    ) {
+      // Promote/demote grey the chip the same way a move does — it's in flight
+      // and shouldn't be re-dragged until the snapshot settles.
       moves.add(vars.participationId);
     } else if (action === "removeGamer" && vars?.participationId) {
       removes.add(vars.participationId);

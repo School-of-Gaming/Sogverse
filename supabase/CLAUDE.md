@@ -26,6 +26,19 @@ recreate an object — e.g. a function, to repoint it at a changed type — copy
 from `schema.sql`, never from the migration that first defined it; that copy may already
 be superseded.
 
+**The same staleness trap applies to *conventions*, not just object bodies.** When you
+need a template for how to author a new migration — grant boilerplate, `SECURITY
+DEFINER` + `SET search_path` headers, header-comment style, ordering-key stamping — model
+it on the **highest-numbered** migrations, never an arbitrary or early one. Conventions
+have evolved and old migrations preserve the superseded version: explicit per-role
+`GRANT`s replaced blanket/auto-expose grants (`00095`/`00099`), `clock_timestamp()`
+replaced `now()` for cross-transaction ordering keys (`00117`), and `SET search_path TO
+''` is the current default. The *rules* are written out in this file (grants, RLS,
+nullability, `now()` vs `clock_timestamp()` below); the newest migrations are their
+freshest worked examples. Pattern-matching on an old migration is how a dead convention
+gets revived — when in doubt, the rule in this file wins over any example in
+`migrations/`.
+
 **Important:** `database.types.ts` is purely auto-generated — **never** hand-edit it,
 even as a shortcut when the remote DB hasn't been updated yet. Always push the migration
 first, then regenerate. After regenerating, check whether new tables or enums need

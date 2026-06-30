@@ -823,6 +823,60 @@ $$;
 
 
 --
+-- Name: demote_to_waitlist(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.demote_to_waitlist(p_participation_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_product_id  UUID;
+  v_status      public.participation_status;
+  v_now         TIMESTAMPTZ;
+BEGIN
+  IF (SELECT public.get_user_role()) <> 'admin' THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT product_id, status INTO v_product_id, v_status
+    FROM public.participations
+    WHERE id = p_participation_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Participation not found' USING ERRCODE = 'P0002';
+  END IF;
+
+  PERFORM 1 FROM public.products WHERE id = v_product_id FOR UPDATE;
+
+  -- Idempotent: already on the waitlist.
+  IF v_status = 'waitlisted' THEN
+    RETURN jsonb_build_object('kind', 'noop', 'status', v_status::text);
+  END IF;
+
+  IF v_status <> 'active' THEN
+    RAISE EXCEPTION 'only an active participation can be moved to the waitlist (status: %)', v_status
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- Back of the line: clock_timestamp() under the gate lock is monotonic with
+  -- real ordering (00117 rule). Clear group_id — waitlisted gamers aren't grouped.
+  v_now := clock_timestamp();
+  UPDATE public.participations
+     SET status = 'waitlisted',
+         waitlisted_at = v_now,
+         group_id = NULL
+   WHERE id = p_participation_id;
+
+  RETURN jsonb_build_object(
+    'kind', 'demoted',
+    'participation_id', p_participation_id,
+    'product_id', v_product_id
+  );
+END;
+$$;
+
+
+--
 -- Name: effective_status(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1288,6 +1342,7 @@ CREATE FUNCTION public.get_product_groups_with_details(p_product_id uuid) RETURN
 DECLARE
   v_groups     JSONB;
   v_unassigned JSONB;
+  v_waitlist   JSONB;
 BEGIN
   IF (SELECT get_user_role()) <> 'admin' THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
@@ -1387,10 +1442,47 @@ BEGIN
      AND p.group_id IS NULL
      AND p.status = 'active';
 
+  -- Waitlist: same detail shape as `unassigned`, but ordered by the derived
+  -- waitlist key (waitlisted_at, id). Position is the array index + 1, computed
+  -- client-side — never stored. waitlisted_at drives ORDER BY but is omitted
+  -- from the object so the row shape stays identical to a group/unassigned chip.
+  SELECT COALESCE(jsonb_agg(
+           jsonb_build_object(
+             'id',                       p.id,
+             'gamer_id',                 p.gamer_id,
+             'gamer_first_name',         gmp.first_name,
+             'gamer_date_of_birth',      gprof.date_of_birth,
+             'gamer_gender',             gprof.gender,
+             'gamer_minecraft_username', mca.minecraft_username,
+             'gamer_minecraft_uuid',     mca.minecraft_uuid,
+             'gamer_parent_first_name',  parent.first_name,
+             'gamer_parent_last_name',   parent.last_name,
+             'status',                   p.status,
+             'signed_up_at',             p.signed_up_at
+           )
+           ORDER BY p.waitlisted_at, p.id
+         ), '[]'::jsonb)
+    INTO v_waitlist
+    FROM participations p
+    JOIN profiles gmp ON gmp.id = p.gamer_id
+    LEFT JOIN gamer_profiles gprof ON gprof.user_id = p.gamer_id
+    LEFT JOIN minecraft_accounts mca ON mca.user_id = p.gamer_id
+    LEFT JOIN LATERAL (
+      SELECT pp.first_name, pp.last_name
+        FROM parent_gamer pgm
+        JOIN profiles pp ON pp.id = pgm.parent_id
+       WHERE pgm.gamer_id = p.gamer_id
+       ORDER BY pgm.created_at ASC NULLS LAST, pgm.id ASC
+       LIMIT 1
+    ) parent ON true
+   WHERE p.product_id = p_product_id
+     AND p.status = 'waitlisted';
+
   RETURN jsonb_build_object(
     'product_id', p_product_id,
     'groups',     v_groups,
-    'unassigned', v_unassigned
+    'unassigned', v_unassigned,
+    'waitlist',   v_waitlist
   );
 END;
 $$;
@@ -1408,6 +1500,57 @@ BEGIN
   RETURN (
     SELECT role FROM public.profiles WHERE id = auth.uid()
   );
+END;
+$$;
+
+
+--
+-- Name: get_waitlist_position(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_waitlist_position(p_participation_id uuid) RETURNS integer
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_product_id     UUID;
+  v_gamer_id       UUID;
+  v_customer_id    UUID;
+  v_status         public.participation_status;
+  v_waitlisted_at  TIMESTAMPTZ;
+  v_uid            UUID;
+  v_position       INTEGER;
+BEGIN
+  v_uid := auth.uid();
+  IF v_uid IS NULL THEN
+    RETURN NULL;
+  END IF;
+
+  SELECT product_id, gamer_id, customer_id, status, waitlisted_at
+    INTO v_product_id, v_gamer_id, v_customer_id, v_status, v_waitlisted_at
+    FROM public.participations
+    WHERE id = p_participation_id;
+
+  -- Unknown row, not waitlisted, or caller doesn't own it -> no position.
+  -- Owner = the purchasing parent (customer) or the gamer themselves. Returning
+  -- NULL rather than raising avoids leaking whether the id exists.
+  IF NOT FOUND
+     OR v_status <> 'waitlisted'
+     OR (v_uid <> v_customer_id AND v_uid <> v_gamer_id) THEN
+    RETURN NULL;
+  END IF;
+
+  -- Position = count of waitlisted rows ordered at-or-before this one
+  -- (waitlisted_at, id) — the same derivation join_waitlist uses, recomputed
+  -- live so it shrinks as people ahead leave.
+  SELECT COUNT(*)::INTEGER INTO v_position
+    FROM public.participations
+    WHERE product_id = v_product_id
+      AND status = 'waitlisted'
+      AND (waitlisted_at < v_waitlisted_at
+           OR (waitlisted_at = v_waitlisted_at AND id <= p_participation_id));
+
+  RETURN v_position;
 END;
 $$;
 
@@ -1696,6 +1839,67 @@ CREATE FUNCTION public.product_has_session(p_product_id uuid, p_session_date dat
       WHERE phc.product_id = p_product_id
         AND ch.date = p_session_date
     );
+$$;
+
+
+--
+-- Name: promote_from_waitlist(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.promote_from_waitlist(p_participation_id uuid, p_group_id uuid DEFAULT NULL::uuid) RETURNS jsonb
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_product_id  UUID;
+  v_status      public.participation_status;
+BEGIN
+  IF (SELECT public.get_user_role()) <> 'admin' THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT product_id, status INTO v_product_id, v_status
+    FROM public.participations
+    WHERE id = p_participation_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Participation not found' USING ERRCODE = 'P0002';
+  END IF;
+
+  -- Serialize against concurrent joins/cancels/promotions on this product.
+  PERFORM 1 FROM public.products WHERE id = v_product_id FOR UPDATE;
+
+  -- Idempotent / wrong-state: report current status without mutating.
+  IF v_status <> 'waitlisted' THEN
+    RETURN jsonb_build_object('kind', 'noop', 'status', v_status::text);
+  END IF;
+
+  -- A drop target group must belong to this product (NULL = unassigned inbox).
+  IF p_group_id IS NOT NULL
+     AND NOT EXISTS (
+       SELECT 1 FROM public.product_groups
+        WHERE id = p_group_id AND product_id = v_product_id
+     ) THEN
+    RAISE EXCEPTION 'group % is not in product %', p_group_id, v_product_id
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- Give them a seat. No seat-count gate by design: promoting from a full
+  -- waitlist is a deliberate admin capacity override. waitlisted_at cleared so
+  -- they leave the waitlist ordering. The uq_participations_active_or_waitlisted
+  -- index already guaranteed no other in-set row exists for this (product,gamer).
+  UPDATE public.participations
+     SET status = 'active',
+         group_id = p_group_id,
+         waitlisted_at = NULL
+   WHERE id = p_participation_id;
+
+  RETURN jsonb_build_object(
+    'kind', 'promoted',
+    'participation_id', p_participation_id,
+    'product_id', v_product_id,
+    'group_id', p_group_id
+  );
+END;
 $$;
 
 
@@ -4804,6 +5008,15 @@ GRANT ALL ON FUNCTION public.create_product(p_product_type public.product_type, 
 
 
 --
+-- Name: FUNCTION demote_to_waitlist(p_participation_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.demote_to_waitlist(p_participation_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.demote_to_waitlist(p_participation_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.demote_to_waitlist(p_participation_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION effective_status(p_product_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
@@ -4928,6 +5141,15 @@ GRANT ALL ON FUNCTION public.get_user_role() TO service_role;
 
 
 --
+-- Name: FUNCTION get_waitlist_position(p_participation_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.get_waitlist_position(p_participation_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.get_waitlist_position(p_participation_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.get_waitlist_position(p_participation_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION handle_new_user(); Type: ACL; Schema: public; Owner: -
 --
 
@@ -5010,6 +5232,15 @@ GRANT ALL ON FUNCTION public.pin_is_set() TO authenticated;
 
 REVOKE ALL ON FUNCTION public.product_has_session(p_product_id uuid, p_session_date date) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.product_has_session(p_product_id uuid, p_session_date date) TO service_role;
+
+
+--
+-- Name: FUNCTION promote_from_waitlist(p_participation_id uuid, p_group_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.promote_from_waitlist(p_participation_id uuid, p_group_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.promote_from_waitlist(p_participation_id uuid, p_group_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.promote_from_waitlist(p_participation_id uuid, p_group_id uuid) TO service_role;
 
 
 --

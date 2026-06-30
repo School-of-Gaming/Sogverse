@@ -54,3 +54,53 @@ export const joinWaitlistRpcResult = z.object({
   waitlist_position: z.number(),
   status: z.string(),
 });
+
+/**
+ * Body of PATCH /api/admin/products/[id]/participations/[participationId] — the
+ * admin waitlist status transitions driven by the groups-panel drag UI.
+ * `promote` carries the drop target (`groupId` null = unassigned inbox);
+ * `demote` sends an active gamer to the back of the waitlist (no target).
+ */
+export const waitlistTransitionBody = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("promote"), groupId: z.string().nullable() }),
+  z.object({ action: z.literal("demote") }),
+]);
+
+export type WaitlistTransitionBody = z.infer<typeof waitlistTransitionBody>;
+
+/**
+ * `get_waitlist_position` RPC result. Codegen types it as a bare `number`, but
+ * the function returns NULL when the row is unknown, not waitlisted, or not
+ * owned by the caller — so the live shape is nullable. Parsing through this
+ * schema restores the truth the generator drops (see supabase/CLAUDE.md).
+ */
+export const waitlistPositionResult = z.number().int().positive().nullable();
+
+/**
+ * `promote_from_waitlist` RPC result (Json in codegen; structure from
+ * schema.sql). `promoted` on success; `noop` when the row wasn't waitlisted
+ * (already seated / cancelled) — the admin UI treats both as success and lets
+ * the snapshot refetch reconcile.
+ */
+export const promoteFromWaitlistRpcResult = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("promoted"),
+    participation_id: z.string(),
+    product_id: z.string(),
+    group_id: z.string().nullable(),
+  }),
+  z.object({ kind: z.literal("noop"), status: z.string() }),
+]);
+
+/**
+ * `demote_to_waitlist` RPC result (Json in codegen; structure from schema.sql).
+ * `demoted` on success; `noop` when the row was already waitlisted.
+ */
+export const demoteToWaitlistRpcResult = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("demoted"),
+    participation_id: z.string(),
+    product_id: z.string(),
+  }),
+  z.object({ kind: z.literal("noop"), status: z.string() }),
+]);

@@ -1,0 +1,251 @@
+import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/database.types";
+import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
+import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import {
+  createParticipationRpcResult,
+  demoteToWaitlistRpcResult,
+  joinWaitlistRpcResult,
+  promoteFromWaitlistRpcResult,
+  waitlistPositionResult,
+} from "@/services/participations/participations.contracts";
+import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
+
+/**
+ * Admin waitlist read + promote/demote, and the self-position RPC (migration
+ * 00118). Covers:
+ *  - get_product_groups_with_details surfaces the waitlist in derived order
+ *    (waitlisted_at, id), parsed through the productGroupsSnapshot contract.
+ *  - promote_from_waitlist seats a waitlisted gamer (capacity override, group
+ *    placement, noop on a non-waitlisted row).
+ *  - demote_to_waitlist sends an active gamer to the back of the waitlist.
+ *  - get_waitlist_position returns the owner's 1-based position and NULL for a
+ *    non-owner.
+ *  - the admin RPCs reject a non-admin caller.
+ *
+ * Product UUID 5c7 (see product-helpers allocation registry). Muni product
+ * points at LOCATION_MUNICIPALITY to satisfy the online-muni location
+ * constraints. Both seeded gamers (GAMER, GAMER_2) are children of CUSTOMER.
+ */
+
+const PRODUCT_MUNI = "00000000-0000-0000-0000-0000000005c7";
+const FAR_FUTURE = "2099-12-31";
+
+describe("waitlist — admin read + promote/demote + self position", () => {
+  let admin: SupabaseClient<Database>;
+  let adminUser: SupabaseClient<Database>;
+  let customer: SupabaseClient<Database>;
+  let customer2: SupabaseClient<Database>;
+
+  beforeAll(async () => {
+    admin = createAdminTestClient();
+    adminUser = await createAuthenticatedClient(
+      TEST_CREDENTIALS.ADMIN.email,
+      TEST_CREDENTIALS.ADMIN.password,
+    );
+    customer = await createAuthenticatedClient(
+      TEST_CREDENTIALS.CUSTOMER.email,
+      TEST_CREDENTIALS.CUSTOMER.password,
+    );
+    customer2 = await createAuthenticatedClient(
+      TEST_CREDENTIALS.CUSTOMER_2.email,
+      TEST_CREDENTIALS.CUSTOMER_2.password,
+    );
+
+    await deleteTestProducts(admin, [PRODUCT_MUNI]);
+    await createTestProduct(admin, {
+      id: PRODUCT_MUNI,
+      productType: "municipality_club",
+      billingMode: "external_contract",
+      locationId: TEST_IDS.LOCATION_MUNICIPALITY,
+      endDate: FAR_FUTURE,
+      seatCount: 1,
+      waitlistEnabled: true,
+    });
+  });
+
+  afterAll(async () => {
+    await deleteTestProducts(admin, [PRODUCT_MUNI]);
+  });
+
+  afterEach(async () => {
+    await admin.from("participations").delete().eq("product_id", PRODUCT_MUNI);
+    await admin.from("product_groups").delete().eq("product_id", PRODUCT_MUNI);
+    await admin
+      .from("products")
+      .update({ seat_count: 1 })
+      .eq("id", PRODUCT_MUNI);
+  });
+
+  /** Adds a gamer to the waitlist; returns the participation id. */
+  async function joinWaitlist(gamerId: string): Promise<string> {
+    const res = await admin.rpc("join_waitlist", {
+      p_product_id: PRODUCT_MUNI,
+      p_gamer_id: gamerId,
+      p_customer_id: TEST_IDS.CUSTOMER,
+    });
+    expect(res.error).toBeNull();
+    return joinWaitlistRpcResult.parse(res.data).participation_id;
+  }
+
+  /** Registers a gamer as an active (external) participation; returns its id. */
+  async function registerActive(gamerId: string): Promise<string> {
+    const res = await admin.rpc("create_participation", {
+      p_product_id: PRODUCT_MUNI,
+      p_gamer_id: gamerId,
+      p_customer_id: TEST_IDS.CUSTOMER,
+      p_purchase_shape: "external",
+      p_currency: "eur",
+    });
+    expect(res.error).toBeNull();
+    const parsed = createParticipationRpcResult.parse(res.data);
+    expect(parsed.kind).toBe("external_active");
+    return parsed.participation_id!;
+  }
+
+  it("get_product_groups_with_details returns the waitlist in derived order", async () => {
+    // GAMER joins first, GAMER_2 second → that's the waitlist order.
+    await joinWaitlist(TEST_IDS.GAMER);
+    await joinWaitlist(TEST_IDS.GAMER_2);
+
+    const res = await adminUser.rpc("get_product_groups_with_details", {
+      p_product_id: PRODUCT_MUNI,
+    });
+    expect(res.error).toBeNull();
+
+    const snapshot = productGroupsSnapshot.parse(res.data);
+    expect(snapshot.waitlist).toHaveLength(2);
+    expect(snapshot.waitlist.map((p) => p.gamer_id)).toEqual([
+      TEST_IDS.GAMER,
+      TEST_IDS.GAMER_2,
+    ]);
+    // Waitlisted rows never carry a seat, so none leak into the active lists.
+    expect(snapshot.unassigned).toHaveLength(0);
+    expect(snapshot.waitlist.every((p) => p.status === "waitlisted")).toBe(true);
+  });
+
+  it("promote_from_waitlist seats a gamer over a full cap (capacity override)", async () => {
+    // 1 seat, taken by GAMER. GAMER_2 waits.
+    await registerActive(TEST_IDS.GAMER);
+    const waiting = await joinWaitlist(TEST_IDS.GAMER_2);
+
+    const res = await adminUser.rpc("promote_from_waitlist", {
+      p_participation_id: waiting,
+    });
+    expect(res.error).toBeNull();
+    const parsed = promoteFromWaitlistRpcResult.parse(res.data);
+    expect(parsed.kind).toBe("promoted");
+
+    const { data: row } = await admin
+      .from("participations")
+      .select("status, group_id, waitlisted_at")
+      .eq("id", waiting)
+      .single();
+    expect(row?.status).toBe("active");
+    expect(row?.group_id).toBeNull();
+    expect(row?.waitlisted_at).toBeNull();
+
+    // Override is real: active_count now exceeds the 1-seat cap.
+    const { data: counts } = await admin
+      .from("product_seat_counts")
+      .select("active_count, waitlist_count")
+      .eq("product_id", PRODUCT_MUNI)
+      .single();
+    expect(counts?.active_count).toBe(2);
+    expect(counts?.waitlist_count).toBe(0);
+  });
+
+  it("promote_from_waitlist places the gamer into the given group", async () => {
+    const { data: group } = await admin
+      .from("product_groups")
+      .insert({ product_id: PRODUCT_MUNI, name: "Group A" })
+      .select("id")
+      .single();
+    const waiting = await joinWaitlist(TEST_IDS.GAMER);
+
+    const res = await adminUser.rpc("promote_from_waitlist", {
+      p_participation_id: waiting,
+      p_group_id: group!.id,
+    });
+    expect(promoteFromWaitlistRpcResult.parse(res.data).kind).toBe("promoted");
+
+    const { data: row } = await admin
+      .from("participations")
+      .select("status, group_id")
+      .eq("id", waiting)
+      .single();
+    expect(row?.status).toBe("active");
+    expect(row?.group_id).toBe(group!.id);
+  });
+
+  it("promote_from_waitlist is a noop on a row that isn't waitlisted", async () => {
+    const active = await registerActive(TEST_IDS.GAMER);
+
+    const res = await adminUser.rpc("promote_from_waitlist", {
+      p_participation_id: active,
+    });
+    const parsed = promoteFromWaitlistRpcResult.parse(res.data);
+    expect(parsed.kind).toBe("noop");
+  });
+
+  it("demote_to_waitlist sends an active gamer to the back of the waitlist", async () => {
+    // GAMER already waiting (front of the line); GAMER_2 active.
+    const front = await joinWaitlist(TEST_IDS.GAMER);
+    const active = await registerActive(TEST_IDS.GAMER_2);
+
+    const res = await adminUser.rpc("demote_to_waitlist", {
+      p_participation_id: active,
+    });
+    expect(res.error).toBeNull();
+    expect(demoteToWaitlistRpcResult.parse(res.data).kind).toBe("demoted");
+
+    const { data: rows } = await admin
+      .from("participations")
+      .select("id, status, group_id, waitlisted_at")
+      .eq("product_id", PRODUCT_MUNI);
+    const demoted = rows?.find((r) => r.id === active);
+    const frontRow = rows?.find((r) => r.id === front);
+    expect(demoted?.status).toBe("waitlisted");
+    expect(demoted?.group_id).toBeNull();
+    // Back of the line: stamped after the gamer already waiting.
+    expect(
+      new Date(demoted!.waitlisted_at!).getTime(),
+    ).toBeGreaterThan(new Date(frontRow!.waitlisted_at!).getTime());
+  });
+
+  it("get_waitlist_position returns the owner's 1-based position, NULL for a non-owner", async () => {
+    await joinWaitlist(TEST_IDS.GAMER);
+    const second = await joinWaitlist(TEST_IDS.GAMER_2);
+
+    // The purchasing parent (CUSTOMER) owns both rows → sees position 2.
+    const owned = await customer.rpc("get_waitlist_position", {
+      p_participation_id: second,
+    });
+    expect(owned.error).toBeNull();
+    expect(waitlistPositionResult.parse(owned.data)).toBe(2);
+
+    // A different parent gets NULL — no leak of another family's queue.
+    const foreign = await customer2.rpc("get_waitlist_position", {
+      p_participation_id: second,
+    });
+    expect(foreign.error).toBeNull();
+    expect(waitlistPositionResult.parse(foreign.data)).toBeNull();
+  });
+
+  it("rejects promote/demote from a non-admin caller", async () => {
+    const waiting = await joinWaitlist(TEST_IDS.GAMER);
+
+    const promote = await customer.rpc("promote_from_waitlist", {
+      p_participation_id: waiting,
+    });
+    expect(promote.error?.code).toBe("42501");
+
+    const active = await registerActive(TEST_IDS.GAMER_2);
+    const demote = await customer.rpc("demote_to_waitlist", {
+      p_participation_id: active,
+    });
+    expect(demote.error?.code).toBe("42501");
+  });
+});
