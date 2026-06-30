@@ -365,6 +365,8 @@ export interface ConfirmationFixtureResult {
   product: ProductDetailRow;
   gamerName: string;
   outcome: SignupOutcome;
+  /** Mock waitlist position for the waitlist outcome; null otherwise. */
+  waitlistPosition: number | null;
 }
 
 // Post-signup summary fixture for /preview/confirmation/<scenario>. Reuses the
@@ -376,12 +378,15 @@ export function buildConfirmationFixture(
   slug: PreviewScenario,
 ): ConfirmationFixtureResult {
   const { product, state } = buildScenarioFixture(slug);
+  const isWaitlist = state.kind === "full_waitlist";
   return {
     product,
     // Literal placeholder rather than a demo gamer's name — makes it obvious
     // this is a mock. The live summary shows the actual child's first name.
     gamerName: "GamerName",
-    outcome: state.kind === "full_waitlist" ? "waitlisted" : "enrolled",
+    outcome: isWaitlist ? "waitlisted" : "enrolled",
+    // A sample rank so the "You're #N" row shows in the preview.
+    waitlistPosition: isWaitlist ? 3 : null,
   };
 }
 

@@ -987,6 +987,8 @@
       "subheading": "{gamer} on jonotuslistalla – {product}. Ilmoitamme heti, kun paikka vapautuu.",
       "summaryTitle": "Jonotuspaikkasi",
       "forLabel": "Jonotuslistalla",
+      "positionLabel": "Sijasi jonossa",
+      "positionValue": "#{position}",
       "next1": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
       "next2": "{gamer} säilyttää paikkansa jonossa koko kauden ajan.",
       "next3": "Voit seurata jonotustilannetta milloin tahansa Oma SOG -sivulla."

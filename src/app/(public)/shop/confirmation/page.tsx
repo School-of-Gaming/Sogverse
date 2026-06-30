@@ -28,13 +28,13 @@ export default async function ShopConfirmationPage({
   if (!participationId) return <PurchaseConfirmationFallback />;
 
   const supabase = await createClient();
+  const participations = new ParticipationsService(supabase);
   let product: ProductBrowseRow | null = null;
   let gamerName: string | null = null;
   let outcome: SignupOutcome = "enrolled";
+  let waitlistPosition: number | null = null;
   try {
-    const confirmation = await new ParticipationsService(
-      supabase,
-    ).getConfirmation(participationId);
+    const confirmation = await participations.getConfirmation(participationId);
     if (confirmation) {
       product = await new ProductsService(supabase).getDetailById(
         confirmation.productId,
@@ -43,6 +43,13 @@ export default async function ShopConfirmationPage({
       // A waitlisted participation lands on the waitlist summary variant.
       outcome =
         confirmation.status === "waitlisted" ? "waitlisted" : "enrolled";
+      // "You're #N" — fetched live (not the stale join-time value) so a parent
+      // who revisits sees their position shrink as people ahead leave. Null is
+      // tolerated: the view just omits the line.
+      if (outcome === "waitlisted") {
+        waitlistPosition =
+          await participations.getWaitlistPosition(participationId);
+      }
     }
   } catch {
     // RLS miss / stale id / transient error → render the friendly fallback
@@ -63,6 +70,7 @@ export default async function ShopConfirmationPage({
       product={product}
       gamerName={gamerName}
       outcome={outcome}
+      waitlistPosition={waitlistPosition}
     />
   );
 }

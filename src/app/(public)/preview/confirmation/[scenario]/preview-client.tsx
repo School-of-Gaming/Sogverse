@@ -13,12 +13,14 @@ interface ConfirmationPreviewClientProps {
 export function ConfirmationPreviewClient({
   scenario,
 }: ConfirmationPreviewClientProps) {
-  const { product, gamerName, outcome } = buildConfirmationFixture(scenario);
+  const { product, gamerName, outcome, waitlistPosition } =
+    buildConfirmationFixture(scenario);
   return (
     <PurchaseConfirmationView
       product={product}
       gamerName={gamerName}
       outcome={outcome}
+      waitlistPosition={waitlistPosition}
     />
   );
 }

@@ -987,6 +987,8 @@
       "subheading": "{gamer} is on the waitlist for {product}. We'll let you know if a seat opens.",
       "summaryTitle": "Your waitlist spot",
       "forLabel": "Waitlisted",
+      "positionLabel": "Your position",
+      "positionValue": "#{position}",
       "next1": "We'll email you the moment a seat opens.",
       "next2": "{gamer} keeps their place in line for the whole term.",
       "next3": "You can keep track of your waitlist spot anytime in My SOG."

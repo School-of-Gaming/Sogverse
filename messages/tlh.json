@@ -1032,6 +1032,8 @@
       "subheading": "{gamer} loS tetlhDaq: {product}. quS poSDI', SoH wIja'.",
       "summaryTitle": "loS DaqlIj",
       "forLabel": "loStaH",
+      "positionLabel": "DaqlIj",
+      "positionValue": "#{position}",
       "next1": "quS poSDI', QInHom wIngeH.",
       "next2": "DIS naQ tetlhDaq {gamer} Daq qaD.",
       "next3": "reH My SOG-Daq loS DaqlIj DaleghlaH."

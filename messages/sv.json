@@ -987,6 +987,8 @@
       "subheading": "{gamer} står på väntelistan för {product}. Vi hör av oss så snart en plats blir ledig.",
       "summaryTitle": "Din väntelisteplats",
       "forLabel": "På väntelista",
+      "positionLabel": "Din plats i kön",
+      "positionValue": "#{position}",
       "next1": "Vi mejlar så snart en plats blir ledig.",
       "next2": "{gamer} behåller sin plats i kön under hela terminen.",
       "next3": "Du kan följa din plats i kön när som helst i Min SOG."

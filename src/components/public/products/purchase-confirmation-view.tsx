@@ -31,12 +31,18 @@ interface PurchaseConfirmationViewProps {
   gamerName: string | null;
   /** `enrolled` (paid/free signup) or `waitlisted` (joined the waitlist). */
   outcome?: SignupOutcome;
+  /**
+   * 1-based waitlist position, for the `waitlisted` outcome. Null when unknown
+   * (RLS miss / no longer waitlisted) → the position line is simply omitted.
+   */
+  waitlistPosition?: number | null;
 }
 
 export function PurchaseConfirmationView({
   product,
   gamerName,
   outcome = "enrolled",
+  waitlistPosition = null,
 }: PurchaseConfirmationViewProps) {
   const t = useTranslations("purchaseConfirmation");
   const tProduct = useTranslations("productDetail");
@@ -115,6 +121,16 @@ export function PurchaseConfirmationView({
                 }
                 value={gamer}
               />
+              {/* "You're #N in line" — the reassuring number. Omitted if the
+                  position couldn't be read (e.g. a stale revisit). */}
+              {isWaitlist && waitlistPosition != null && (
+                <SummaryRow
+                  label={t("waitlist.positionLabel")}
+                  value={t("waitlist.positionValue", {
+                    position: waitlistPosition,
+                  })}
+                />
+              )}
               {/* No charge yet on a waitlist join — the "what's next" list
                   explains billing only happens if a seat opens and is accepted. */}
               {!isWaitlist && price && (
