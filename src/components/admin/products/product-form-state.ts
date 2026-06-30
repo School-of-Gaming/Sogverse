@@ -1,8 +1,8 @@
 import { formatInTimeZone } from "date-fns-tz";
 import { type SupportedCurrency } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import type { ProductLongDescription, ProductTopic, ProductType } from "@/types";
-import { FORM_LOCKS } from "./form-locks";
+import type { ProductLongDescription, ProductTopic } from "@/types";
+import { FORM_LOCKS, formLocksFor } from "./form-locks";
 import type {
   ProductTypeConfig,
   StartMode,
@@ -152,19 +152,6 @@ export interface FormState {
   isVisible: boolean;
 }
 
-function defaultSeats(productType: ProductType): string {
-  switch (productType) {
-    case "consumer_club":
-      return "10";
-    case "municipality_club":
-      return "12";
-    case "camp":
-      return "16";
-    case "event":
-      return "30";
-  }
-}
-
 function defaultSlots(config: ProductTypeConfig): ScheduleSlotDraft[] {
   if (config.scheduleShape === "multi_day_bounded") {
     return [
@@ -195,6 +182,10 @@ export function initialState(
     config.productType === "consumer_club"
       ? formatInTimeZone(new Date(), FIXED_TIMEZONE, "yyyy-MM-dd")
       : "";
+  // Seat/waitlist defaults pair with the locks in effect for this type: where
+  // they're still locked the safe default is pinned (uncapped, waitlist off);
+  // muni clubs unlock them and default to capped + waitlist on (see form-locks).
+  const locks = formLocksFor(config.productType);
   return {
     translations: {
       [uiLocale]: { name: "", shortDescription: "", longDescription: [] },
@@ -219,17 +210,22 @@ export function initialState(
     prices: {
       eur: { session: "", month: "" },
     },
-    seatCount: defaultSeats(config.productType),
+    // Always blank — there's no sensible default capacity. An admin who opts
+    // into a seat cap must type the real number; nothing to skip past.
+    seatCount: "",
     // Fees start in their "not yet known" state so the admin product list
     // alerts until they're filled (primary gedu + muni). Assistant defaults to
     // "none" — an assistant educator is the exception, not the norm.
     primaryGeduFee: { status: "unknown", amount: "" },
     assistantGeduFee: { status: "none", amount: "" },
     municipalityFee: { status: "unknown", amount: "" },
-    // Locked to uncapped (no seat count) for now — see FORM_LOCKS.seatCount.
-    uncapped: FORM_LOCKS.seatCount,
-    // Locked off for now — see FORM_LOCKS.waitlist.
-    waitlistEnabled: !FORM_LOCKS.waitlist,
+    // Capacity defaults follow the locks in effect for this type. Where seats
+    // are still locked (every type but muni) this pins "No seat limit"; muni
+    // unlocks it and so defaults to capped — the empty seatCount above then
+    // forces the admin to enter the contracted capacity.
+    uncapped: locks.seatCount,
+    // Waitlist defaults on only where it's unlocked (muni); locked off elsewhere.
+    waitlistEnabled: !locks.waitlist,
     registrationOpensMode: "immediately",
     registrationOpensDate: "",
     registrationOpensHour: "10",

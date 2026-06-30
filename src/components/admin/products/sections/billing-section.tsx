@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 import { FormSection } from "../form-primitives";
-import { FORM_LOCKS } from "../form-locks";
+import { formLocksFor } from "../form-locks";
 import { PricingBlock } from "../pricing-block";
 import {
   PAID_MODE_VALUES,
@@ -38,10 +38,12 @@ export function BillingSection({
   const showExternalInfo = billingMode === "external_contract";
 
   // Seats: every product type may be capped or uncapped (no seat count). The
-  // chooser and the waitlist toggle are pre-prod-locked for now (form-locks.ts)
-  // — defaulted to "no seat limit" / waitlist off in initialState.
-  const lockSeat = FORM_LOCKS.seatCount;
-  const lockWaitlist = FORM_LOCKS.waitlist;
+  // chooser and the waitlist toggle are pre-prod-locked for every type except
+  // municipality clubs (form-locks.ts) — defaulted to "no seat limit" /
+  // waitlist off in initialState wherever they're still locked.
+  const locks = formLocksFor(config.productType);
+  const lockSeat = locks.seatCount;
+  const lockWaitlist = locks.waitlist;
 
   return (
     <FormSection
