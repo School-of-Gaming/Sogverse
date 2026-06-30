@@ -328,6 +328,9 @@ describe("POST /api/gamers/create — atomic create_gamer RPC", () => {
       data: { user: { id: "new-gamer-id" } },
       error: null,
     });
+    // Supabase's deleteUser resolves an { error } shape (it doesn't throw); the
+    // route's cleanup helper destructures it, so the mock must mirror that.
+    mockDeleteUser.mockResolvedValue({ error: null });
   });
 
   it("calls create_gamer with the verified parent id and gamer details", async () => {
@@ -364,6 +367,8 @@ describe("POST /api/gamers/create — atomic create_gamer RPC", () => {
     // The raw Postgres error text never reaches the client.
     expect(data.error).not.toContain("boom");
     expect(data.error).toBe("Something went wrong creating the gamer. Please try again.");
+    // No code on a 5xx — the client falls back to its localized generic.
+    expect(data.code).toBeUndefined();
     expect(mockDeleteUser).toHaveBeenCalledWith("new-gamer-id");
   });
 
@@ -381,6 +386,8 @@ describe("POST /api/gamers/create — atomic create_gamer RPC", () => {
 
     expect(response.status).toBe(409);
     expect(data.error).toBe("This Minecraft account is already linked to another user");
+    // Stable code the client maps to a localized string (never the English text).
+    expect(data.code).toBe("minecraft_already_linked");
     expect(mockDeleteUser).toHaveBeenCalledWith("new-gamer-id");
   });
 });

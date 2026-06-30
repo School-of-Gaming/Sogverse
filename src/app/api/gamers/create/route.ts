@@ -135,7 +135,10 @@ export async function POST(request: Request) {
 
         if (existingMc) {
           return NextResponse.json(
-            { error: "This Minecraft account is already linked to another user" },
+            {
+              error: "This Minecraft account is already linked to another user",
+              code: "minecraft_already_linked",
+            },
             { status: 409 },
           );
         }
@@ -191,7 +194,7 @@ export async function POST(request: Request) {
       // The RPC ran in a transaction, so no partial gamer record persisted —
       // but the auth user we created above would now be orphaned (a login with
       // no usable gamer record), so delete it before returning the error.
-      await admin.auth.admin.deleteUser(gamerId);
+      await deleteOrphanedAuthUser(admin, gamerId);
 
       // The only unique constraint create_gamer can hit is minecraft_uuid: the
       // 00114 guard makes a double-promote raise P0001 (not 23505) before any
@@ -209,11 +212,12 @@ export async function POST(request: Request) {
         console.error("create_gamer RPC failed", rpcError);
       }
       return NextResponse.json(
-        {
-          error: isMinecraftConflict
-            ? "This Minecraft account is already linked to another user"
-            : "Something went wrong creating the gamer. Please try again.",
-        },
+        isMinecraftConflict
+          ? {
+              error: "This Minecraft account is already linked to another user",
+              code: "minecraft_already_linked",
+            }
+          : { error: "Something went wrong creating the gamer. Please try again." },
         { status: isMinecraftConflict ? 409 : 500 },
       );
     }
@@ -223,17 +227,38 @@ export async function POST(request: Request) {
     // the gamers list on success and refetches the full row from there, so there's
     // no reason to read it back here.
     return NextResponse.json({ gamerId });
-  } catch {
-    // A throw anywhere after the auth user was created (an rpc/network error, a
-    // thrown deleteUser, a read-back failure) would orphan it. The RPC is
-    // transactional, so the DB is already untouched; delete the auth user so a
-    // retry starts from a clean slate rather than colliding or piling up.
+  } catch (err) {
+    // Log the root cause: without this, a thrown failure (an rpc/network error,
+    // a thrown deleteUser, a read-back failure) produced a bare 500 with nothing
+    // recorded — exactly the failures hardest to reproduce.
+    console.error("gamer creation failed", err);
+    // A throw anywhere after the auth user was created would orphan it. The RPC
+    // is transactional, so the DB is already untouched; delete the auth user so
+    // a retry starts from a clean slate rather than colliding or piling up.
     if (createdAuthUserId) {
-      await admin.auth.admin.deleteUser(createdAuthUserId);
+      await deleteOrphanedAuthUser(admin, createdAuthUserId);
     }
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     );
+  }
+}
+
+// Best-effort cleanup of the auth user when post-auth creation fails. If the
+// delete itself fails we can't do anything useful — but we must record it: that
+// id is now a genuine orphan (an auth user with no usable gamer record), and
+// this log line is the only trace of it.
+async function deleteOrphanedAuthUser(
+  admin: ReturnType<typeof createAdminClient>,
+  authUserId: string,
+): Promise<void> {
+  try {
+    const { error } = await admin.auth.admin.deleteUser(authUserId);
+    if (error) {
+      console.error("orphaned auth user cleanup failed", authUserId, error);
+    }
+  } catch (cleanupErr) {
+    console.error("orphaned auth user cleanup threw", authUserId, cleanupErr);
   }
 }

@@ -1087,7 +1087,8 @@
       "firstNameTooLong": "First name must be 32 characters or fewer.",
       "birthMonthRequired": "Pick a birth month.",
       "birthYearRequired": "Pick a birth year.",
-      "genericError": "Couldn't add this gamer. Please try again."
+      "genericError": "Couldn't add this gamer. Please try again.",
+      "minecraftAlreadyLinked": "This Minecraft account is already linked to another gamer."
     }
   },
   "selectProfile": {

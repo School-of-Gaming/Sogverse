@@ -86,6 +86,7 @@ export class GamerService {
       throw new ApiError(
         data.error || "Failed to create gamer account",
         response.status,
+        data.code,
       );
     }
 

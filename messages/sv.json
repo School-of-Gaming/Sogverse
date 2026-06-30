@@ -1087,7 +1087,8 @@
       "firstNameTooLong": "Förnamnet får vara högst 32 tecken.",
       "birthMonthRequired": "Välj en födelsemånad.",
       "birthYearRequired": "Välj ett födelseår.",
-      "genericError": "Det gick inte att lägga till gamern. Försök igen."
+      "genericError": "Det gick inte att lägga till gamern. Försök igen.",
+      "minecraftAlreadyLinked": "Det här Minecraft-kontot är redan kopplat till en annan gamer."
     }
   },
   "selectProfile": {

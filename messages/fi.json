@@ -1087,7 +1087,8 @@
       "firstNameTooLong": "Etunimessä saa olla enintään 32 merkkiä.",
       "birthMonthRequired": "Valitse syntymäkuukausi.",
       "birthYearRequired": "Valitse syntymävuosi.",
-      "genericError": "Pelaajan lisääminen epäonnistui. Yritä uudelleen."
+      "genericError": "Pelaajan lisääminen epäonnistui. Yritä uudelleen.",
+      "minecraftAlreadyLinked": "Tämä Minecraft-tili on jo liitetty toiseen pelaajaan."
     }
   },
   "selectProfile": {

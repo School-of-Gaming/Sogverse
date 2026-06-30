@@ -212,12 +212,15 @@ function AddGamerForm({
       // Intentionally not clearing `committing` — the dialog unmounts.
     } catch (err) {
       setCommitting(false);
-      // Show the route's message only for an actionable 4xx; a 5xx (or any
-      // unexpected throw) gets the localized generic, never raw English
-      // server text — see ApiError.
+      // Map the route's machine-readable error code to a *localized* string.
+      // The route's own `message` is raw English (for logs); never show it.
+      // Anything without a known code — every 5xx, any unexpected throw — falls
+      // back to the localized generic.
+      const code =
+        err instanceof ApiError && !err.isServerError ? err.code : undefined;
       setError(
-        err instanceof ApiError && !err.isServerError
-          ? err.message
+        code === "minecraft_already_linked"
+          ? t("minecraftAlreadyLinked")
           : t("genericError"),
       );
     }
