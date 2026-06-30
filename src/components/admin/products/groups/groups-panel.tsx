@@ -23,22 +23,30 @@ import {
   useAdminRemoveGamerFromProduct,
   useCreateGroup,
   useDeleteGroup,
+  useDemoteToWaitlist,
   useGroupPending,
   useMoveParticipation,
   useProductGroups,
+  usePromoteFromWaitlist,
   useRemoveGedu,
   useRenameGroup,
 } from "@/services/groups";
+import { SeatAvailabilityBar } from "@/components/public/products/seat-availability-bar";
 import { GamerPickerSheet } from "../gamer-picker-sheet";
 import { GeduPickerSheet } from "../gedu-picker-sheet";
 import { GamerChip } from "./gamer-chip";
 import { GroupColumn } from "./group-column";
 import { UnassignedCard } from "./unassigned-card";
+import { WaitlistCard } from "./waitlist-card";
 import type { ProductGroupsSnapshot, ProductType } from "@/types";
 
 interface GroupsPanelProps {
   productId: string;
   productType: ProductType;
+  /** Capacity cap, or null for uncapped — drives the seat-availability bar. */
+  seatCount: number | null;
+  /** Whether the product opens a waitlist once full — drives the seat bar copy. */
+  waitlistEnabled: boolean;
   /**
    * True when this product has a joinable voice room: remote, and with a
    * session still ahead of it. False for in-person products and for
@@ -85,13 +93,17 @@ function readGamerDragData(value: unknown): GamerDragData | null {
 /**
  * Payload attached by the droppables: group columns and the unassigned card
  * carry `{ toGroupId }` (null = unassigned inbox); the header's removal zone
- * carries `{ remove: true }`.
+ * carries `{ remove: true }`; the waitlist card carries `{ waitlist: true }`.
  */
-type DropData = { kind: "move"; toGroupId: string | null } | { kind: "remove" };
+type DropData =
+  | { kind: "move"; toGroupId: string | null }
+  | { kind: "remove" }
+  | { kind: "waitlist" };
 
 function readDropData(value: unknown): DropData | null {
   if (typeof value !== "object" || value === null) return null;
   if ("remove" in value && value.remove === true) return { kind: "remove" };
+  if ("waitlist" in value && value.waitlist === true) return { kind: "waitlist" };
   if ("toGroupId" in value) {
     const { toGroupId } = value;
     if (typeof toGroupId === "string" || toGroupId === null) {
@@ -119,6 +131,7 @@ function DragOverlayContent({
     const all = [
       ...snapshot.unassigned,
       ...snapshot.groups.flatMap((g) => g.participations),
+      ...snapshot.waitlist,
     ];
     return all.find((p) => p.id === data.participationId) ?? null;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on active?.id rather than the ref-changing `active` object
@@ -187,6 +200,8 @@ function HeaderGamerAction({ onAddGamer }: { onAddGamer: () => void }) {
 export function GroupsPanel({
   productId,
   productType,
+  seatCount,
+  waitlistEnabled,
   voiceAvailable,
   voiceIsOpen,
   opensDate,
@@ -204,6 +219,8 @@ export function GroupsPanel({
   const deleteGroup = useDeleteGroup(productId);
   const addGamer = useAdminAddGamerToProduct(productId);
   const removeGamer = useAdminRemoveGamerFromProduct(productId);
+  const promote = usePromoteFromWaitlist(productId);
+  const demote = useDemoteToWaitlist(productId);
 
   const [pickerForGroupId, setPickerForGroupId] = useState<string | null>(null);
   const [gamerPickerOpen, setGamerPickerOpen] = useState(false);
@@ -215,8 +232,11 @@ export function GroupsPanel({
 
   // Recurring billing on consumer clubs makes a no-payment comp awkward, so
   // the Add Gamer affordance is hidden for that product type. Route enforces
-  // this too (defense in depth).
+  // this too (defense in depth). The waitlist section is hidden for the same
+  // reason — a consumer-club waitlister can't be promoted without a Stripe
+  // subscription, and the create UI already blocks waitlists on consumer clubs.
   const canAddGamer = productType !== "consumer_club";
+  const showWaitlist = productType !== "consumer_club";
 
   // Any enrolled gamer blocks a re-add via the picker.
   const enrolledGamerIds = useMemo(() => {
@@ -253,6 +273,23 @@ export function GroupsPanel({
     return map;
   }, [snapshot]);
 
+  // Which chips are waitlisted — decides promote (waitlisted → group/unassigned)
+  // vs an ordinary move, and demote (active → waitlist) vs a no-op.
+  const waitlistedIds = useMemo(() => {
+    return new Set((snapshot?.waitlist ?? []).map((p) => p.id));
+  }, [snapshot]);
+
+  // Seats taken = every active participation (groups + unassigned; the snapshot
+  // only ever holds active rows there). Drives the seat-availability bar and the
+  // promote dialog's over-capacity warning, from the one snapshot source.
+  const activeCount = useMemo(() => {
+    if (!snapshot) return 0;
+    return (
+      snapshot.groups.reduce((n, g) => n + g.participations.length, 0) +
+      snapshot.unassigned.length
+    );
+  }, [snapshot]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
@@ -270,6 +307,28 @@ export function GroupsPanel({
       // mutating. Stash the chip's identity for the dialog copy; the mutation
       // fires only when the admin confirms.
       setRemoving({ id: dragData.participationId, name: dragData.firstName });
+      return;
+    }
+
+    const isWaitlisted = waitlistedIds.has(dragData.participationId);
+
+    if (dropData.kind === "waitlist") {
+      // Dropping onto the waitlist demotes an active gamer to the back of the
+      // line. A chip already on the waitlist is a no-op.
+      if (isWaitlisted) return;
+      demote.mutate({ participationId: dragData.participationId });
+      return;
+    }
+
+    // dropData.kind === "move": a group column or the unassigned inbox.
+    if (isWaitlisted) {
+      // Promote the waitlisted gamer straight into the drop target — give them a
+      // seat. No confirm: the live seat bar already shows the admin where the
+      // club's capacity stands, and the action is reversible (demote).
+      promote.mutate({
+        participationId: dragData.participationId,
+        toGroupId: dropData.toGroupId,
+      });
       return;
     }
 
@@ -311,9 +370,15 @@ export function GroupsPanel({
 
   const groups = snapshot?.groups ?? [];
   const unassigned = snapshot?.unassigned ?? [];
+  const waitlist = snapshot?.waitlist ?? [];
   const hasGroups = groups.length > 0;
 
-  // Greyed/undraggable chips: an in-flight move OR an in-flight admin removal.
+  // Capacity context. The bar renders nothing when uncapped (seatCount null);
+  // when full or over-filled it simply reads "0 remaining" — admins promoting
+  // over the cap do so deliberately, so we don't special-case over-capacity.
+  const seatsLeft = seatCount !== null ? Math.max(0, seatCount - activeCount) : 0;
+
+  // Greyed/undraggable chips: an in-flight move/promote/demote OR removal.
   const busyChipIds = new Set<string>([...pending.moves, ...pending.removes]);
 
   return (
@@ -345,6 +410,14 @@ export function GroupsPanel({
             </Button>
           </div>
         </div>
+
+        {/* Capacity context — the same bar the shop shows, fed from the live
+            snapshot's active count. Renders nothing for uncapped products. */}
+        <SeatAvailabilityBar
+          seatCount={seatCount}
+          seatsLeft={seatsLeft}
+          waitlistEnabled={waitlistEnabled}
+        />
 
         <div className="space-y-3">
           <UnassignedCard
@@ -389,6 +462,16 @@ export function GroupsPanel({
                 </Button>
               </CardContent>
             </Card>
+          )}
+
+          {/* Waitlist — hidden for consumer clubs (no waitlist there). Inside
+              the DndContext so its chips can be dragged out to promote/remove
+              and active gamers can be dropped in to demote. */}
+          {showWaitlist && (
+            <WaitlistCard
+              participations={waitlist}
+              pendingChipIds={busyChipIds}
+            />
           )}
         </div>
 

@@ -166,16 +166,12 @@ export function ProductDetailsPage({
       <GroupsPanel
         productId={productId}
         productType={productType}
+        seatCount={product.seat_count}
+        waitlistEnabled={product.waitlist_enabled}
         voiceAvailable={voiceAvailable}
         voiceIsOpen={voice.voiceIsOpen}
         opensDate={voice.opensDate}
         opensTime={voice.opensTime}
-      />
-
-      <FuturePlaceholder
-        icon={Clock}
-        title={t("detailsPage.placeholders.waitlist.title")}
-        body={t("detailsPage.placeholders.waitlist.body")}
       />
     </div>
   );
@@ -437,34 +433,6 @@ function Fact({
           {label}
         </p>
         <div className="mt-0.5 text-sm">{children}</div>
-      </div>
-    </div>
-  );
-}
-
-// ──────────────────────────────────────────────────────────────────────
-// Placeholder card for sections that surface later (groups + gedu
-// assignment, waitlist). Rendered with dashed border
-// so they don't read as broken empty states — the admin can see what's
-// coming and where it'll land.
-// ──────────────────────────────────────────────────────────────────────
-function FuturePlaceholder({
-  icon: Icon,
-  title,
-  body,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  body: string;
-}) {
-  return (
-    <div className="rounded-lg border border-dashed bg-muted/20 p-6">
-      <div className="flex items-start gap-3">
-        <Icon className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
-        <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold">{title}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">{body}</p>
-        </div>
       </div>
     </div>
   );

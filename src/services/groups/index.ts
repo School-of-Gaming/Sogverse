@@ -14,6 +14,8 @@ export {
   useDeleteGroup,
   useAdminAddGamerToProduct,
   useAdminRemoveGamerFromProduct,
+  usePromoteFromWaitlist,
+  useDemoteToWaitlist,
   useGroupPending,
   type GroupPending,
 } from "./groups.queries";

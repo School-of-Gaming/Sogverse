@@ -318,6 +318,8 @@ export interface ProductGroupsSnapshot {
   product_id: string;
   groups: ProductGroupWithDetails[];
   unassigned: GroupParticipationDetail[];
+  /** Waitlisted gamers in derived order (waitlisted_at, id). See migration 00118. */
+  waitlist: GroupParticipationDetail[];
 }
 
 // get_gedu_assigned_product — the JSONB document that backs the gedu's

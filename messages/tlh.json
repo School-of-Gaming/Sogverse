@@ -292,16 +292,6 @@
           "municipalityFee": "veng Huch / qaStaHvIS",
           "registrationOpensAt": "ghIH poSchoH",
           "visibility": "leghlu"
-        },
-        "placeholders": {
-          "groups": {
-            "title": "ghommey 'ej Gedus",
-            "body": "QojvIp tagh DIvI', ghommey vIchenmoH, Gedus vIlaH, 'ej veqlargh Hovmey vIvummoH."
-          },
-          "waitlist": {
-            "title": "loS DIS",
-            "body": "quS ghaj Hovmey loSlu'taHvIS naDev tu'lu', vaj ghuv quSmey ghoS DaH."
-          }
         }
       },
       "editPage": {
@@ -681,6 +671,11 @@
           "confirmDescription": "ngu'be'choH {name}, 'ej DaH 'el laHbe'.",
           "noRefundWarning": "Huch nobHa'lu'be'! DIlta' 'e' DIl, vaj HuchDaj Suqqa'be'.",
           "confirmCta": "Suvwl' yIteq"
+        },
+        "waitlist": {
+          "title": "loSwI'pu'",
+          "subtitle": "pa' loStaH SuvwI'pu', 'el poHchaj mI'lu'. ghommeHghaj wa' yIngeH 'ej pa' yInob; pagh naDev SuvwI' Sang yIqep, tlha'Daq yIlan.",
+          "empty": "pagh loSwI'pu' tu'lu'."
         }
       },
       "seatLimitModes": {

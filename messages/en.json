@@ -247,16 +247,6 @@
           "municipalityFee": "Municipality fee / session",
           "registrationOpensAt": "Registration opens",
           "visibility": "Visibility"
-        },
-        "placeholders": {
-          "groups": {
-            "title": "Groups & Gedus",
-            "body": "Once gamers register, this is where you'll create groups, assign Gedus, and drag unassigned gamers into the right room."
-          },
-          "waitlist": {
-            "title": "Waitlist",
-            "body": "Gamers who couldn't get a seat will appear here so you can promote them as space opens."
-          }
         }
       },
       "editPage": {
@@ -636,6 +626,11 @@
           "confirmDescription": "{name} will be unenrolled and lose access immediately.",
           "noRefundWarning": "No refund is issued. If this customer paid, they will not get their money back.",
           "confirmCta": "Remove gamer"
+        },
+        "waitlist": {
+          "title": "Waitlist",
+          "subtitle": "Gamers waiting for a seat, numbered in the order they joined. Drag one into a group to give them a seat, or drop an active gamer here to send them to the back.",
+          "empty": "No one is on the waitlist."
         }
       },
       "seatLimitModes": {

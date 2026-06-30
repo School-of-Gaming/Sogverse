@@ -247,16 +247,6 @@
           "municipalityFee": "Kommunavgift / tillfälle",
           "registrationOpensAt": "Anmälan öppnar",
           "visibility": "Synlighet"
-        },
-        "placeholders": {
-          "groups": {
-            "title": "Grupper och Gedus",
-            "body": "När gamare anmäler sig skapar du grupper här, tilldelar Gedus och drar in oanmälda gamare till rätt rum."
-          },
-          "waitlist": {
-            "title": "Väntelista",
-            "body": "Gamare som inte fick någon plats visas här så att du kan flytta upp dem när platser frigörs."
-          }
         }
       },
       "editPage": {
@@ -636,6 +626,11 @@
           "confirmDescription": "{name} avregistreras och förlorar åtkomsten omedelbart.",
           "noRefundWarning": "Ingen återbetalning sker. Om den här kunden har betalat får de inte tillbaka pengarna.",
           "confirmCta": "Ta bort spelare"
+        },
+        "waitlist": {
+          "title": "Väntelista",
+          "subtitle": "Spelare som väntar på en plats, numrerade i den ordning de ställde sig i kö. Dra en till en grupp för att ge hen en plats, eller släpp en aktiv spelare här för att flytta hen sist i kön.",
+          "empty": "Ingen står på väntelistan."
         }
       },
       "seatLimitModes": {
