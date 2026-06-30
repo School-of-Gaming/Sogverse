@@ -1385,7 +1385,6 @@
       "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
-      "ctaFullClosed": "Fully booked",
       "verb": {
         "consumer_club": "Enrol",
         "municipality_club": "Register",
@@ -1398,13 +1397,14 @@
         "camp": "Sign-up",
         "event": "Joining"
       },
-      "ctaPreOpenIdle": "{verb} — not yet open",
-      "ctaPreOpenReady": "Ready when sign-up opens",
+      "ctaReadyWaiting": "Ready & waiting",
       "ctaActive": "{verb} now",
       "ctaActiveWithPrice": "{verb} now {price}",
       "ctaActiveWithPriceSub": "{verb} now · {price}/mo",
       "ctaSubmitting": "One moment…",
-      "ctaSelectGamer": "Select a gamer",
+      "ctaAddGamer": "Add a gamer",
+      "ctaAllGamersEnrolled": "All gamers enrolled",
+      "ctaAgreeRules": "Agree to the rules",
       "ctaWaitlist": "Join the waitlist",
       "ctaSignIn": "Sign in to register",
       "ctaCreateAccount": "Create account",
@@ -1419,6 +1419,7 @@
       "preOpenHelper": "Pick your child and agree to the rules so it's a one-tap sign-up the moment it opens.",
       "endedNote": "This one already wrapped. Keep an eye out for the next one.",
       "runningLateNote": "We've already started — sign-up is closed. The next round will open soon.",
+      "fullClosedNote": "This one's full. Keep an eye out for the next round.",
       "rules": {
         "consumer_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior.",
         "municipality_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, and that repeated unexcused absences may open my child's seat for the next family on the waitlist.",

@@ -1385,7 +1385,6 @@
       "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
-      "ctaFullClosed": "Täynnä",
       "verb": {
         "consumer_club": "Ilmoittaudu",
         "municipality_club": "Rekisteröidy",
@@ -1398,13 +1397,14 @@
         "camp": "Ilmoittautuminen",
         "event": "Liittyminen"
       },
-      "ctaPreOpenIdle": "{verb} – ei vielä avoinna",
-      "ctaPreOpenReady": "Valmis – odotetaan avaamista",
+      "ctaReadyWaiting": "Valmiina odottamassa",
       "ctaActive": "{verb} nyt",
       "ctaActiveWithPrice": "{verb} nyt {price}",
       "ctaActiveWithPriceSub": "{verb} nyt · {price}/kk",
       "ctaSubmitting": "Hetki…",
-      "ctaSelectGamer": "Valitse pelaaja",
+      "ctaAddGamer": "Lisää pelaaja",
+      "ctaAllGamersEnrolled": "Kaikki pelaajat mukana",
+      "ctaAgreeRules": "Hyväksy säännöt",
       "ctaWaitlist": "Liity jonotuslistalle",
       "ctaSignIn": "Kirjaudu sisään ilmoittautuaksesi",
       "ctaCreateAccount": "Luo tili",
@@ -1419,6 +1419,7 @@
       "preOpenHelper": "Valitse lapsi ja hyväksy säännöt, niin ilmoittautuminen onnistuu yhdellä napautuksella heti, kun se avautuu.",
       "endedNote": "Tämä on jo päättynyt. Pidä silmällä seuraavaa kierrosta.",
       "runningLateNote": "Olemme jo aloittaneet – ilmoittautuminen on suljettu. Seuraava kierros avautuu pian.",
+      "fullClosedNote": "Tämä on täynnä. Pidä silmällä seuraavaa kierrosta.",
       "rules": {
         "consumer_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä.",
         "municipality_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa lapseni paikan seuraavalle jonossa olevalle perheelle.",

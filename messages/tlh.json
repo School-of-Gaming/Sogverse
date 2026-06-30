@@ -1430,7 +1430,6 @@
       "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
-      "ctaFullClosed": "buy'",
       "verb": {
         "consumer_club": "yImuv",
         "municipality_club": "yIqon",
@@ -1443,13 +1442,14 @@
         "camp": "muvghach",
         "event": "muvghach"
       },
-      "ctaPreOpenIdle": "{verb} — DaH poSbe'",
-      "ctaPreOpenReady": "qonta' poSDI' SuD",
+      "ctaReadyWaiting": "ghuHta', yIloS",
       "ctaActive": "DaH {verb}",
       "ctaActiveWithPrice": "DaH {verb} {price}",
       "ctaActiveWithPriceSub": "DaH {verb} · {price}/jar",
       "ctaSubmitting": "yIloS…",
-      "ctaSelectGamer": "QujwI' yIwIv",
+      "ctaAddGamer": "QujwI' yIchel",
+      "ctaAllGamersEnrolled": "muvpu' Hoch QujwI'pu'",
+      "ctaAgreeRules": "chutmey yIlaj",
       "ctaWaitlist": "tetlh DaqaD",
       "ctaSignIn": "qonmeH yI'el",
       "ctaCreateAccount": "Account chu' chenmoH",
@@ -1464,6 +1464,7 @@
       "preOpenHelper": "puqlI' yIwIv 'ej chutmey yIlaj — qonta' poSDI' wa' tlhopwI' lo'meH.",
       "endedNote": "rIn. latlh boqDI' yI'aHta'.",
       "runningLateNote": "taghta' — qonta' SoQ. latlh boq DaH poSlaw'.",
+      "fullClosedNote": "buy'. latlh boqDI' yI'aHta'.",
       "rules": {
         "consumer_club": "qIp 'ej tlhejHa' vuvbe' School of Gaming, jIyaj.",
         "municipality_club": "qIp 'ej tlhejHa' vuvbe' School of Gaming, 'ej qaSpa' choHmeH puqwI' DaH lop laH latlh qorDu' tetlh teb 'oHbogh, jIyaj.",

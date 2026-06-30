@@ -16,7 +16,7 @@ import {
   Info,
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ROLE_BADGE_STYLES } from "@/lib/constants";
 import {
@@ -1067,6 +1067,22 @@ function ProductsDemo() {
           </div>
         </SubSection>
       ))}
+
+      <SubSection title="Closed-state signup panel">
+        <p className="max-w-prose text-sm text-muted-foreground">
+          The shared &ldquo;registration closed&rdquo; panel (ended / already
+          started / fully booked) has no browse-card link &mdash; a parent only
+          reaches it through a stale link or bookmark. Preview it full-page:
+        </p>
+        <a
+          href="/preview/products/muni-full-closed"
+          target="_blank"
+          rel="noreferrer"
+          className={buttonVariants({ variant: "outline", size: "sm" })}
+        >
+          View closed panel &rarr;
+        </a>
+      </SubSection>
     </div>
   );
 }

@@ -1,9 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import {
-  isPreviewScenario,
-  scenarioHasDetailPage,
-} from "@/components/public/products/mock-detail-fixtures";
+import { isPreviewScenario } from "@/components/public/products/mock-detail-fixtures";
 import { ProductDetailPreviewClient } from "./preview-client";
 
 // Sandbox route used by /admin/ui-components to preview the detail page
@@ -24,10 +21,13 @@ export const metadata: Metadata = {
 export default async function ProductDetailPreviewPage({ params }: PageProps) {
   const { scenario } = await params;
 
-  // Only scenarios whose card has a working "View" CTA have a detail page worth
-  // previewing — a parent can't navigate to a full/closed or ended product's
-  // page, so we don't mock one.
-  if (!isPreviewScenario(scenario) || !scenarioHasDetailPage(scenario)) {
+  // Any valid scenario renders here. A parent only ever *navigates* to the
+  // open/countdown states (their card carries a "View" CTA — see
+  // scenarioHasDetailPage, which still gates the card link). The closed states
+  // (ended / running late / fully booked) have no card link, but they're
+  // reachable in real life via a stale link or bookmark, so the UI Components
+  // page links here directly to preview that ClosedPanel full-page.
+  if (!isPreviewScenario(scenario)) {
     notFound();
   }
 

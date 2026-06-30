@@ -1385,7 +1385,6 @@
       "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
-      "ctaFullClosed": "Fullbokad",
       "verb": {
         "consumer_club": "Anmäl dig",
         "municipality_club": "Registrera dig",
@@ -1398,13 +1397,14 @@
         "camp": "Anmälan",
         "event": "Deltagande"
       },
-      "ctaPreOpenIdle": "{verb} – inte öppen ännu",
-      "ctaPreOpenReady": "Redo när anmälan öppnar",
+      "ctaReadyWaiting": "Redo och väntar",
       "ctaActive": "{verb} nu",
       "ctaActiveWithPrice": "{verb} nu {price}",
       "ctaActiveWithPriceSub": "{verb} nu · {price}/mån",
       "ctaSubmitting": "Ett ögonblick…",
-      "ctaSelectGamer": "Välj en gamer",
+      "ctaAddGamer": "Lägg till en gamer",
+      "ctaAllGamersEnrolled": "Alla gamers är anmälda",
+      "ctaAgreeRules": "Godkänn reglerna",
       "ctaWaitlist": "Gå med på väntelistan",
       "ctaSignIn": "Logga in för att anmäla",
       "ctaCreateAccount": "Skapa konto",
@@ -1419,6 +1419,7 @@
       "preOpenHelper": "Välj ditt barn och godkänn reglerna så blir det en knapptryckning så fort anmälan öppnar.",
       "endedNote": "Den här är redan avslutad. Håll utkik efter nästa omgång.",
       "runningLateNote": "Vi har redan börjat – anmälan är stängd. Nästa omgång öppnar snart.",
+      "fullClosedNote": "Den här är fullbokad. Håll utkik efter nästa omgång.",
       "rules": {
         "consumer_club": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende.",
         "municipality_club": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, samt att upprepad oanmäld frånvaro kan göra att mitt barns plats erbjuds nästa familj på väntelistan.",
