@@ -212,7 +212,6 @@
       },
       "newPage": {
         "back": "Back to {plural}",
-        "kicker": "New {label}",
         "title": "New {label}"
       },
       "detailsPage": {
@@ -288,8 +287,8 @@
         },
         "registration": "Registration timing",
         "registrationDescription": "Pick when parents can start signing up.",
-        "visibility": "Shop visibility",
-        "visibilityDescription": "Control whether this product is listed in the shop. It doesn't affect anyone already taking part."
+        "visibility": "Visibility",
+        "visibilityDescription": "Control whether parents can find and view this product. Anyone already taking part keeps it on their My SOG page — this never affects them."
       },
       "labels": {
         "name": "Name",
@@ -323,7 +322,7 @@
         "seatCount": "Seat count",
         "waitlistToggle": "Enable waitlist when seats are full",
         "signupThreshold": "Signups needed to start",
-        "makeVisible": "List this product in the shop",
+        "makeVisible": "Make this product visible to parents",
         "seatLimit": "Seat limit"
       },
       "placeholders": {
@@ -449,7 +448,7 @@
         "pricingMonthly": "Charged every month while the subscription is active. Cancel anytime.",
         "pricingUpfront": "Charged once at signup. Same total no matter the duration.",
         "seatHint": "When full, new signups go to the waitlist.",
-        "visibleHint": "This only controls the shop. Uncheck it while you're still setting up, or to stop new sign-ups. Parents, gamers, and educators already taking part still see their sessions on their My SOG page — unchecking only removes it from the shop.",
+        "visibleHint": "Uncheck it while you're still setting up, or to stop new sign-ups. It only hides the product from new parents — parents and gamers already enrolled still see it and their sessions on their My SOG page.",
         "seatLimitHint": "Cap the number of gamers, or run with no limit.",
         "holidayComingSoon": "Holiday calendars are coming soon. For now, every scheduled session runs.",
         "startDateToday": "Locked to today's date for now.",

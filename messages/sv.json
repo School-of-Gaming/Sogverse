@@ -212,7 +212,6 @@
       },
       "newPage": {
         "back": "Tillbaka till {plural}",
-        "kicker": "Nytt {label}",
         "title": "Nytt {label}"
       },
       "detailsPage": {
@@ -288,8 +287,8 @@
         },
         "registration": "Registreringstid",
         "registrationDescription": "Välj när föräldrar kan börja anmäla sig.",
-        "visibility": "Synlighet i butiken",
-        "visibilityDescription": "Bestäm om produkten visas i butiken. Det påverkar inte någon som redan deltar."
+        "visibility": "Synlighet",
+        "visibilityDescription": "Bestäm om föräldrar kan hitta och se produkten. De som redan deltar har den kvar på sin My SOG-sida — det påverkar dem inte."
       },
       "labels": {
         "name": "Namn",
@@ -323,7 +322,7 @@
         "seatCount": "Antal platser",
         "waitlistToggle": "Aktivera väntelista när platserna är fulla",
         "signupThreshold": "Antal anmälningar för att starta",
-        "makeVisible": "Visa produkten i butiken",
+        "makeVisible": "Visa produkten för föräldrar",
         "seatLimit": "Platsgräns"
       },
       "placeholders": {
@@ -449,7 +448,7 @@
         "pricingMonthly": "Debiteras varje månad så länge prenumerationen är aktiv. Avsluta när som helst.",
         "pricingUpfront": "Debiteras en gång vid anmälan. Samma totalbelopp oavsett längd.",
         "seatHint": "När fullt går nya anmälningar till väntelistan.",
-        "visibleHint": "Detta styr bara butiken. Avmarkera medan du fortfarande arbetar på produkten, eller för att stoppa nya anmälningar. Föräldrar, gamers och pedagoger som redan deltar ser fortfarande sina tillfällen på sin My SOG-sida — att avmarkera tar bara bort den från butiken.",
+        "visibleHint": "Avmarkera medan du fortfarande arbetar på produkten, eller för att stoppa nya anmälningar. Det döljer bara produkten för nya föräldrar — föräldrar och gamers som redan är anmälda ser den och sina tillfällen på sin My SOG-sida.",
         "seatLimitHint": "Begränsa antalet deltagare eller kör utan gräns.",
         "holidayComingSoon": "Lovkalendrar kommer snart. Tills vidare körs varje schemalagt tillfälle.",
         "startDateToday": "Låst till dagens datum tills vidare.",

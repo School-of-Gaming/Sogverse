@@ -212,7 +212,6 @@
       },
       "newPage": {
         "back": "Takaisin: {plural}",
-        "kicker": "Uusi {label}",
         "title": "Uusi {label}"
       },
       "detailsPage": {
@@ -288,8 +287,8 @@
         },
         "registration": "Ilmoittautumisaika",
         "registrationDescription": "Valitse, milloin vanhemmat voivat alkaa ilmoittautua.",
-        "visibility": "Näkyvyys kaupassa",
-        "visibilityDescription": "Hallitse, näkyykö tuote kaupassa. Tämä ei vaikuta niihin, jotka jo osallistuvat."
+        "visibility": "Näkyvyys",
+        "visibilityDescription": "Hallitse, voivatko vanhemmat löytää ja nähdä tuotteen. Jo osallistuvat näkevät sen edelleen My SOG -sivullaan — tämä ei vaikuta heihin."
       },
       "labels": {
         "name": "Nimi",
@@ -323,7 +322,7 @@
         "seatCount": "Paikkamäärä",
         "waitlistToggle": "Käytä jonotuslistaa, kun paikat täynnä",
         "signupThreshold": "Ilmoittautumisraja aloitukseen",
-        "makeVisible": "Näytä tuote kaupassa",
+        "makeVisible": "Näytä tuote vanhemmille",
         "seatLimit": "Paikkaraja"
       },
       "placeholders": {
@@ -449,7 +448,7 @@
         "pricingMonthly": "Veloitetaan joka kuukausi tilauksen ollessa voimassa. Voit perua milloin tahansa.",
         "pricingUpfront": "Veloitetaan kerran ilmoittautuessa. Sama kokonaishinta riippumatta kestosta.",
         "seatHint": "Kun täynnä, uudet ilmoittautujat menevät jonotuslistalle.",
-        "visibleHint": "Tämä vaikuttaa vain kauppaan. Poista valinta, kun tuote on vielä tekeillä tai kun haluat lopettaa uudet ilmoittautumiset. Vanhemmat, pelaajat ja ohjaajat, jotka jo osallistuvat, näkevät kertansa edelleen My SOG -sivullaan — valinnan poistaminen poistaa tuotteen vain kaupasta.",
+        "visibleHint": "Poista valinta, kun tuote on vielä tekeillä tai kun haluat lopettaa uudet ilmoittautumiset. Tämä piilottaa tuotteen vain uusilta vanhemmilta — jo ilmoittautuneet vanhemmat ja pelaajat näkevät sen ja kertansa edelleen My SOG -sivullaan.",
         "seatLimitHint": "Rajaa osallistujamäärä tai pidä se rajattomana.",
         "holidayComingSoon": "Lomakalenterit tulevat pian. Toistaiseksi jokainen aikataulutettu kerta pidetään.",
         "startDateToday": "Lukittu toistaiseksi tähän päivään.",

@@ -48,12 +48,18 @@ export function NewProductPage({
       </Link>
 
       <div>
-        <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          {isCloning
-            ? t("clonePage.kicker", { label: label.toLowerCase() })
-            : t("newPage.kicker", { label: label.toLowerCase() })}
-        </p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
+        {/* Eyebrow only on the clone page, where it carries distinct info
+            ("Clone {type}") above a title that's the source product's name.
+            The new page's title already reads "New {type}", so an eyebrow
+            here would just repeat it. */}
+        {isCloning && (
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {t("clonePage.kicker", { label: label.toLowerCase() })}
+          </p>
+        )}
+        <h1
+          className={`${isCloning ? "mt-1 " : ""}text-2xl font-bold tracking-tight sm:text-3xl`}
+        >
           {!isCloning
             ? t("newPage.title", { label })
             : source
