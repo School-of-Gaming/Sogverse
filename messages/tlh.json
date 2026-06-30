@@ -1350,7 +1350,6 @@
   },
   "seatAvailability": {
     "remaining": "{count, plural, one {# / {total} pa' ratlh} other {# / {total} pa' ratlh}}",
-    "full": "buy'",
     "waitlistAvailable": "loS tetlh"
   },
   "productDetail": {

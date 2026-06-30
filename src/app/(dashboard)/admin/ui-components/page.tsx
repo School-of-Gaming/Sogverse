@@ -1013,7 +1013,7 @@ const SEAT_DEMO_CASES: {
     waitlistEnabled: true,
   },
   {
-    label: "Full, no waitlist — 0 of 15",
+    label: "Full, no waitlist — 0 of 15 (no chip; the disabled CTA says Full)",
     seatCount: 15,
     seatsLeft: 0,
     waitlistEnabled: false,

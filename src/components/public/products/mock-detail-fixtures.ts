@@ -485,7 +485,7 @@ const COPY: Record<ProductType, TypeCopy> = {
   consumer_club: {
     name: "Minecraft Redstone Club",
     description:
-      "We build little machines together — doors that open on command, sorters, traps, small factories. A playful way to learn how circuits actually think.",
+      "We build little machines together — doors that open on command, item sorters, hidden traps, and small automated factories. A playful, hands-on way for kids to learn how circuits actually think, one contraption at a time.",
     long: [
       { type: "heading", text: "What happens each week" },
       {
@@ -507,13 +507,13 @@ const COPY: Record<ProductType, TypeCopy> = {
   municipality_club: {
     name: "Espoon Minecraft-kerho",
     description:
-      "Funded by the City of Espoo. Free for Espoo residents. Held weekly at Tapiolan koulu after school.",
+      "Funded by the City of Espoo and free for Espoo residents. We meet weekly at Tapiolan koulu after school — a relaxed group where kids build together, team up on projects, and make a few friends along the way.",
     isRemote: false,
   },
   camp: {
     name: "Minecraft Builders Camp",
     description:
-      "Three mornings a week for two weeks. Each session we take on a new build, and the group ends with a world everyone can explore together.",
+      "Three mornings a week across two weeks of school holiday. Each session the group takes on a fresh build, and by the end everyone shares one big world they can explore, show off, and keep playing in together.",
     long: [
       { type: "heading", text: "How it runs" },
       {
@@ -535,7 +535,7 @@ const COPY: Record<ProductType, TypeCopy> = {
   event: {
     name: "Friday Night Mario Kart Tournament",
     description:
-      "Bring your A-game. Bracket-style races, casual vibes, snacks provided. One night only.",
+      "Bring your A-game for a bracket-style Mario Kart night — fast races, friendly rivalries, and snacks on us. One evening only, so come hang out with the crew and see who takes the crown.",
     isRemote: false,
   },
 };

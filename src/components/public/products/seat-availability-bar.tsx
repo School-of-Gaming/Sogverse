@@ -1,6 +1,6 @@
 "use client";
 
-import { Hourglass, Users, XCircle } from "lucide-react";
+import { Hourglass, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { cn } from "@/lib/utils";
@@ -25,11 +25,12 @@ export interface SeatAvailabilityBarProps {
  * zero there's no fill to color, so fullness is communicated by the right-side
  * indicator instead.
  *
- * Full vs. waitlist are mutually exclusive: a full club with a waiting list
- * reads "Waiting list available" (there's still an action), and only a full
- * club without one reads "Full". The indicator sits on the seats-remaining row,
- * right-aligned, in a fixed-height row so the component's height never changes
- * whether or not an indicator is present.
+ * When full, the bar surfaces only the *actionable* state: a club with a
+ * waiting list reads "Waitlist" (there's still something to do), while a full
+ * club without one shows no chip at all — the disabled "Full" CTA sitting next
+ * to the bar already says so, and repeating it here is just noise. The
+ * indicator sits on the seats-remaining row, right-aligned, in a fixed-height
+ * row so the component's height never changes whether or not one is present.
  */
 export function SeatAvailabilityBar({
   seatCount,
@@ -62,13 +63,13 @@ export function SeatAvailabilityBar({
           <Users className="h-3 w-3 shrink-0" aria-hidden />
           <span className="whitespace-nowrap tabular-nums">{remainingLabel}</span>
         </span>
-        {isFull && (
+        {isFull && waitlistEnabled && (
           <StatusChip
             tone="primary"
-            icon={waitlistEnabled ? Hourglass : XCircle}
+            icon={Hourglass}
             className="ml-auto shrink-0"
           >
-            {waitlistEnabled ? t("waitlistAvailable") : t("full")}
+            {t("waitlistAvailable")}
           </StatusChip>
         )}
       </div>

@@ -1305,7 +1305,6 @@
   },
   "seatAvailability": {
     "remaining": "{count, plural, one {# av {total} plats kvar} other {# av {total} platser kvar}}",
-    "full": "Fullt",
     "waitlistAvailable": "Väntelista"
   },
   "productDetail": {

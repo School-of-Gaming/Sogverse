@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import type { ProductPriceLine } from "./format-product-price";
 import { useRegistrationCta } from "./registration-cta";
 import { SeatAvailabilityBar } from "./seat-availability-bar";
+import { StatusChip } from "./status-chip";
 import type { RegistrationState } from "./derive-registration-state";
 
 // Pure presentational browse card. Takes already-resolved display props —
@@ -160,7 +161,7 @@ export function ProductBrowseCardView({
         </div>
 
         {description && (
-          <p className="line-clamp-2 text-sm text-muted-foreground">
+          <p className="line-clamp-3 text-sm text-muted-foreground">
             {description}
           </p>
         )}
@@ -241,10 +242,12 @@ function PriceBlock({ price }: { price: ProductPriceLine }) {
 
   switch (price.kind) {
     case "free":
+      // Outline chip (no icon) to match the Full/Waitlist seat-bar chips,
+      // sized up to sit on the price row.
       return (
-        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+        <StatusChip tone="primary" size="md">
           {t("free")}
-        </span>
+        </StatusChip>
       );
     case "external":
       return (
