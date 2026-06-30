@@ -77,7 +77,7 @@ const GAMER_FIRST_NAME = "Liam";
 type ProductFixture = {
   id: string;
   product_type: "consumer_club" | "municipality_club" | "camp" | "event";
-  billing_mode: "paid" | "free";
+  billing_mode: "paid" | "free" | "external_contract";
   seat_count: number | null;
   timezone: string;
   product_translations: { locale: string; name: string }[];
@@ -101,6 +101,12 @@ const FREE_EVENT: ProductFixture = {
   ...PAID_CLUB,
   product_type: "event",
   billing_mode: "free",
+};
+
+const MUNI_CLUB: ProductFixture = {
+  ...PAID_CLUB,
+  product_type: "municipality_club",
+  billing_mode: "external_contract",
 };
 
 // --- Mock builders ---
@@ -310,6 +316,42 @@ describe("POST /api/checkout/products/create", () => {
     expect(data.error).toBe("Paid purchase shapes only apply to paid products");
   });
 
+  it("returns 400 when the 'external' shape is sent for a non-external product", async () => {
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: PAID_CLUB });
+    const res = await POST(
+      createRequest({ ...VALID_BODY, purchaseShape: "external" }),
+    );
+    const data = await res.json();
+    expect(res.status).toBe(400);
+    expect(data.error).toBe(
+      "Only externally-contracted products accept the 'external' purchase shape",
+    );
+    expect(mockAdminRpc).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when a paid shape is sent for an external (municipality) product", async () => {
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: MUNI_CLUB });
+    const res = await POST(createRequest(VALID_BODY));
+    const data = await res.json();
+    expect(res.status).toBe(400);
+    expect(data.error).toBe("Paid purchase shapes only apply to paid products");
+  });
+
+  it("returns 400 when the 'free' shape is sent for an external (municipality) product", async () => {
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: MUNI_CLUB });
+    const res = await POST(
+      createRequest({ ...VALID_BODY, purchaseShape: "free" }),
+    );
+    const data = await res.json();
+    expect(res.status).toBe(400);
+    expect(data.error).toBe(
+      "Only free products accept the 'free' purchase shape",
+    );
+  });
+
   it("returns 400 when single_payment is sent for a consumer_club", async () => {
     mockAuthenticatedCustomer();
     mockAdmin({ product: PAID_CLUB });
@@ -374,6 +416,41 @@ describe("POST /api/checkout/products/create", () => {
       p_gamer_id: GAMER_ID,
       p_customer_id: CUSTOMER_ID,
       p_purchase_shape: "free",
+      p_currency: "eur",
+    });
+  });
+
+  it("returns status='external_confirmed' for a municipality club, with no Stripe call", async () => {
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: MUNI_CLUB });
+    mockAdminRpc.mockResolvedValueOnce({
+      data: { kind: "external_active", participation_id: RESERVATION_ID },
+      error: null,
+    });
+
+    const res = await POST(
+      createRequest({
+        productId: PRODUCT_ID,
+        gamerId: GAMER_ID,
+        purchaseShape: "external",
+        currency: "eur",
+      }),
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data).toEqual({
+      status: "external_confirmed",
+      participationId: RESERVATION_ID,
+    });
+    // Municipality clubs are invoiced off-platform — never touch Stripe.
+    expect(mockStripeSessionCreate).not.toHaveBeenCalled();
+    expect(mockGetOrCreateStripeCustomer).not.toHaveBeenCalled();
+    expect(mockAdminRpc).toHaveBeenCalledWith("create_participation", {
+      p_product_id: PRODUCT_ID,
+      p_gamer_id: GAMER_ID,
+      p_customer_id: CUSTOMER_ID,
+      p_purchase_shape: "external",
       p_currency: "eur",
     });
   });
@@ -678,6 +755,25 @@ describe("POST /api/checkout/products/create", () => {
         productId: PRODUCT_ID,
         gamerId: GAMER_ID,
         purchaseShape: "free",
+        currency: "eur",
+      }),
+    );
+    expect(res.status).toBe(500);
+  });
+
+  it("returns 500 when RPC returns external_active without a participation_id", async () => {
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: MUNI_CLUB });
+    mockAdminRpc.mockResolvedValueOnce({
+      data: { kind: "external_active" },
+      error: null,
+    });
+
+    const res = await POST(
+      createRequest({
+        productId: PRODUCT_ID,
+        gamerId: GAMER_ID,
+        purchaseShape: "external",
         currency: "eur",
       }),
     );

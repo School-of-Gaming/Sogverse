@@ -642,7 +642,7 @@ BEGIN
   END IF;
 
   IF p_purchase_shape NOT IN (
-    'subscription_monthly', 'single_payment', 'free'
+    'subscription_monthly', 'single_payment', 'free', 'external'
   ) THEN
     RAISE EXCEPTION 'unsupported purchase shape: %', p_purchase_shape
       USING ERRCODE = 'check_violation';
@@ -659,10 +659,10 @@ BEGIN
       USING ERRCODE = 'unique_violation';
   END IF;
 
-  -- Seat-count gate. Sits above the free branch so an explicit cap on a
-  -- free product (the schema permits it) is honored — earlier versions
-  -- only checked the cap on paid signups, so a free product with
-  -- seat_count=20 silently accepted the 21st signup.
+  -- Seat-count gate. Sits above the free / external branches so an explicit cap
+  -- on a no-charge product (the schema permits it, incl. municipality clubs) is
+  -- honored — earlier versions only checked the cap on paid signups, so a free
+  -- product with seat_count=20 silently accepted the 21st signup.
   IF v_product.seat_count IS NOT NULL THEN
     v_seats_taken := public.count_seats_taken(p_product_id);
     IF v_seats_taken >= v_product.seat_count THEN
@@ -683,6 +683,26 @@ BEGIN
     RETURNING id INTO v_participation_id;
     RETURN jsonb_build_object(
       'kind', 'free_active',
+      'participation_id', v_participation_id
+    );
+  END IF;
+
+  -- Municipality clubs are invoiced off-platform: no Stripe, no reservation.
+  -- Mirrors the free branch (instant active), gated on billing_mode so a paid
+  -- product can never be registered without payment.
+  IF p_purchase_shape = 'external' THEN
+    IF v_product.billing_mode <> 'external_contract' THEN
+      RAISE EXCEPTION 'product is not externally contracted'
+        USING ERRCODE = 'check_violation';
+    END IF;
+    INSERT INTO public.participations (
+      product_id, gamer_id, customer_id, status
+    ) VALUES (
+      p_product_id, p_gamer_id, p_customer_id, 'active'
+    )
+    RETURNING id INTO v_participation_id;
+    RETURN jsonb_build_object(
+      'kind', 'external_active',
       'participation_id', v_participation_id
     );
   END IF;

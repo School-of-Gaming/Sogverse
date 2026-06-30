@@ -17,6 +17,7 @@ import { TEST_IDS } from "./constants";
  * suffix is the last byte of the UUID (`...0000000005XX`):
  *   5b1–5b5        participations-race.test.ts
  *   5b6–5b7        participations-rls.test.ts
+ *   5b8–5b9        participations-external.test.ts
  *   5c1            product-seat-counts-trigger.test.ts
  *   5c2            cancel-participation.test.ts
  *   5c3–5c6        get-my-participation-subscription-states.test.ts
@@ -39,6 +40,14 @@ export interface ProductOptions {
   signupThreshold?: number | null;
   startDate?: string | null;
   endDate?: string | null;
+  /**
+   * Location FK. Default: null. Required (and must be a country/region/
+   * municipality) for online municipality clubs; must be a site for in-person
+   * products; must be null for online non-muni products. See the
+   * chk_products_*_location constraints + the validate_products_location
+   * trigger.
+   */
+  locationId?: string | null;
   /** ISO timestamp; default: 1 minute ago (registration is open). */
   registrationOpensAt?: string;
   /** Default: "UTC" — keeps cron tests free of zone-arithmetic edge cases. */
@@ -71,6 +80,7 @@ export async function createTestProduct(
     signup_threshold: options.signupThreshold ?? null,
     start_date: options.startDate ?? null,
     end_date: options.endDate ?? null,
+    location_id: options.locationId ?? null,
     registration_opens_at:
       options.registrationOpensAt ?? new Date(Date.now() - 60_000).toISOString(),
     timezone: options.timezone ?? "UTC",

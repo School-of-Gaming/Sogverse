@@ -1,13 +1,19 @@
 import { z } from "zod";
 
 /**
- * Response of POST /api/checkout/products/create — the three signup
- * outcomes: paid (redirect to Stripe Checkout), free (instantly active
- * participation), or product full.
+ * Response of POST /api/checkout/products/create — the signup outcomes: paid
+ * (redirect to Stripe Checkout), free (instantly active participation),
+ * external/municipality (instantly active, invoiced off-platform), or product
+ * full. `free_confirmed` and `external_confirmed` are distinct outcomes but the
+ * client treats both the same way — navigate to the confirmation page.
  */
 export const createParticipationResponse = z.discriminatedUnion("status", [
   z.object({ status: z.literal("redirect"), checkoutUrl: z.string() }),
   z.object({ status: z.literal("free_confirmed"), participationId: z.string() }),
+  z.object({
+    status: z.literal("external_confirmed"),
+    participationId: z.string(),
+  }),
   z.object({ status: z.literal("full") }),
 ]);
 
@@ -37,7 +43,7 @@ export type JoinWaitlistResponse = z.infer<typeof joinWaitlistResponse>;
  * checks structure, the route checks the per-kind invariants.
  */
 export const createParticipationRpcResult = z.object({
-  kind: z.enum(["free_active", "reserving", "full"]),
+  kind: z.enum(["free_active", "external_active", "reserving", "full"]),
   participation_id: z.string().optional(),
   reserved_until: z.string().optional(),
 });

@@ -193,9 +193,9 @@ There is exactly **one purchase option per product type** — the `purchase_shap
 - **Consumer clubs** are a flat **monthly family subscription** (`subscription_monthly`) — the only option. There are no pay-as-you-go bundles.
 - **Camps and paid events** are a single upfront payment (`single_payment`) — one Stripe charge, one seat.
 - **Free events** (`free`) have no checkout step.
-- **Municipality clubs** have no on-platform charge (`external_contract`).
+- **Municipality clubs** have no on-platform charge (`external_contract`); registration uses the `external` shape — `create_participation` makes the participation `active` immediately, never touching Stripe (mirrors the `free` path).
 
-The valid `purchase_shape` values are exactly `subscription_monthly`, `single_payment`, and `free`.
+The valid `purchase_shape` values are exactly `subscription_monthly`, `single_payment`, `free`, and `external`. `free` and `external` are the two no-charge shapes: both insert an `active` participation directly with no reservation and no Stripe Checkout, each gated on its matching `billing_mode` (`free` ↔ `free`, `external` ↔ `external_contract`).
 
 Paid products store their price in `product_prices` (see §5.1a) as a single `price_cents` column, keyed by `(product_id, currency)` — today only an `eur` row is written. What the amount means is decided by product type:
 
@@ -1004,7 +1004,7 @@ The unified shape is proven against the two product lines closest to real users.
 **RPCs (§6).**
 - ✓ `create_product` — atomic insert across products + translations + schedule slots + tags + prices + holiday calendars; rejects empty translation payloads.
 - ✓ Effective-status derivation — TS helper (`src/lib/products/effective-status.ts`) and SQL twin `effective_status(product_id)` both ship.
-- ◐ Participation lifecycle — `create_participation`, `confirm_reservation`, `expire_reservation`, `join_waitlist`, `cancel_participation` ship; `promote_from_waitlist` ships as a stub (not wired into a customer flow — see §11); `admin_remove_participation` not started.
+- ◐ Participation lifecycle — `create_participation`, `confirm_reservation`, `expire_reservation`, `join_waitlist`, `cancel_participation` ship; `promote_from_waitlist` ships as a stub (not wired into a customer flow — see §11); `admin_remove_participation` not started. `create_participation` handles all four purchase shapes: paid (`reserving` → Stripe), `free` (instant `free_active`), and `external` (municipality clubs — instant `external_active`, no Stripe; migration 00115).
 - ○ Session operations (`cancel_session`, `reschedule_session`, `request_substitute`, `assign_substitute`, `record_attendance`).
 - ✓ Subscription management — every consumer-club signup creates its own Stripe sub via Checkout (one per gamer×club); the `checkout.session.completed` webhook writes the per-participation `family_subscriptions` row. Cancellation is portal-only: `customer.subscription.deleted` → `cancel_participation` teardown. There is no inline-add path and no `unsubscribe_from_product` RPC.
 - ○ Lifecycle transitions (`start_product`, `cancel_product`, `finalize_completed_products`).

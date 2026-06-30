@@ -10,7 +10,7 @@ import {
   useJoinWaitlist,
   type CreateParticipationInput,
 } from "@/services/participations";
-import type { PricingOption } from "./pricing-options";
+import { purchaseShapeFor } from "./pricing-options";
 import {
   SignupPanelView,
   type AuthState,
@@ -86,9 +86,13 @@ export function SignupPanel({
           window.location.href = response.checkoutUrl;
           return;
         }
-        if (response.status === "free_confirmed") {
-          // Free events skip Stripe — send the parent to the same confirmation
-          // page the paid flow lands on. Keep `committing` set so the CTA stays
+        if (
+          response.status === "free_confirmed" ||
+          response.status === "external_confirmed"
+        ) {
+          // Free events and municipality clubs skip Stripe — the participation
+          // is already active. Send the parent to the same confirmation page
+          // the paid flow lands on. Keep `committing` set so the CTA stays
           // disabled through the navigation (the panel unmounts on push).
           router.push(ROUTES.shopConfirmation(response.participationId));
           return;
@@ -153,20 +157,4 @@ export function SignupPanel({
       />
     </>
   );
-}
-
-function purchaseShapeFor(
-  option: PricingOption,
-): CreateParticipationInput["purchaseShape"] | null {
-  switch (option.kind) {
-    case "subscription":
-      return "subscription_monthly";
-    case "upfront":
-      return "single_payment";
-    case "free":
-      return "free";
-    case "external":
-    case "unavailable":
-      return null;
-  }
 }

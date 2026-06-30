@@ -220,7 +220,10 @@ export type ParticipationState = "waitlisted" | "unassigned" | "assigned";
 export type PurchaseShape =
   | "subscription_monthly"
   | "single_payment"
-  | "free";
+  | "free"
+  // Municipality clubs: invoiced off-platform, so registration is instant and
+  // never touches Stripe. See create_participation's external_contract branch.
+  | "external";
 
 // payments
 export type Payment = Database["public"]["Tables"]["payments"]["Row"];

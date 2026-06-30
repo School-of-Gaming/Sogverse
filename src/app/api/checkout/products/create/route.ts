@@ -31,17 +31,20 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 //                    the parent to Stripe Checkout — even with a saved card —
 //                    for the trust/safety moment. Each subscription is its own
 //                    Stripe sub (one per gamer×club), so there is no inline add.
-//   free_confirmed — free event; no Stripe involvement.
-//   full           — seat gone; UI flips to waitlist CTA.
+//   free_confirmed     — free event; no Stripe involvement.
+//   external_confirmed — municipality club; invoiced off-platform, no Stripe.
+//   full               — seat gone; UI flips to waitlist CTA.
 type CreateResponseBody =
   | { status: "redirect"; checkoutUrl: string }
   | { status: "free_confirmed"; participationId: string }
+  | { status: "external_confirmed"; participationId: string }
   | { status: "full" };
 
 const ALLOWED_SHAPES: ReadonlySet<PurchaseShape> = new Set<PurchaseShape>([
   "subscription_monthly",
   "single_payment",
   "free",
+  "external",
 ]);
 
 export async function POST(request: Request) {
@@ -113,13 +116,33 @@ export async function POST(request: Request) {
       resolveLocale(profile.locale),
     )?.name ?? "School of Gaming product";
 
+  // Shape × billing_mode must agree. Each billing mode has exactly one valid
+  // shape family: free→'free', external_contract→'external', paid→subscription/
+  // single_payment. Mismatches are rejected up front so the RPC only ever sees
+  // a coherent (shape, product) pair.
   if (purchaseShape === "free" && product.billing_mode !== "free") {
     return NextResponse.json(
       { error: "Only free products accept the 'free' purchase shape" },
       { status: 400 },
     );
   }
-  if (purchaseShape !== "free" && product.billing_mode !== "paid") {
+  if (
+    purchaseShape === "external" &&
+    product.billing_mode !== "external_contract"
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Only externally-contracted products accept the 'external' purchase shape",
+      },
+      { status: 400 },
+    );
+  }
+  if (
+    purchaseShape !== "free" &&
+    purchaseShape !== "external" &&
+    product.billing_mode !== "paid"
+  ) {
     return NextResponse.json(
       { error: "Paid purchase shapes only apply to paid products" },
       { status: 400 },
@@ -193,6 +216,23 @@ export async function POST(request: Request) {
     }
     const respBody: CreateResponseBody = {
       status: "free_confirmed",
+      participationId: rpcJson.participation_id,
+    };
+    return NextResponse.json(respBody);
+  }
+
+  if (rpcJson.kind === "external_active") {
+    if (!rpcJson.participation_id) {
+      return NextResponse.json(
+        { error: "RPC returned no participation id" },
+        { status: 500 },
+      );
+    }
+    // Municipality clubs are invoiced off-platform — the participation is
+    // already active, so we never touch Stripe. Same confirmation page as the
+    // free flow.
+    const respBody: CreateResponseBody = {
+      status: "external_confirmed",
       participationId: rpcJson.participation_id,
     };
     return NextResponse.json(respBody);
