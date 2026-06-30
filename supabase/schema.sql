@@ -544,6 +544,51 @@ $$;
 
 
 --
+-- Name: create_gamer(uuid, uuid, text, text, date, public.gender_type, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type DEFAULT NULL::public.gender_type, p_minecraft_username text DEFAULT NULL::text, p_minecraft_uuid text DEFAULT NULL::text) RETURNS void
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+begin
+  -- Promote the trigger-seeded customer profile to a gamer. Keep the synthetic
+  -- email handle_new_user() copied from auth.users — gamers are email-first.
+  update public.profiles
+  set role = 'gamer',
+      first_name = p_first_name,
+      last_name = p_last_name
+  where id = p_gamer_id;
+
+  if not found then
+    raise exception 'Profile % not found for gamer promotion', p_gamer_id;
+  end if;
+
+  -- Swap extension tables: drop the customer row handle_new_user() created,
+  -- add the gamer row.
+  delete from public.customer_profiles where user_id = p_gamer_id;
+
+  insert into public.gamer_profiles (user_id, date_of_birth, gender)
+  values (p_gamer_id, p_date_of_birth, p_gender);
+
+  -- Optional Minecraft link. A unique_violation here (the minecraft_uuid was
+  -- claimed between the route's pre-check and now) propagates as SQLSTATE 23505,
+  -- which the route maps to a 409 — and, being inside this transaction, aborts
+  -- the whole creation rather than leaving a half-built gamer.
+  if p_minecraft_username is not null then
+    insert into public.minecraft_accounts (user_id, minecraft_username, minecraft_uuid)
+    values (p_gamer_id, p_minecraft_username, p_minecraft_uuid);
+  end if;
+
+  -- Link to the parent. The validate_parent_gamer_on_insert trigger re-checks
+  -- both roles, so this must run after the promote above.
+  insert into public.parent_gamer (parent_id, gamer_id)
+  values (p_parent_id, p_gamer_id);
+end;
+$$;
+
+
+--
 -- Name: create_participation(uuid, uuid, uuid, text, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -4726,6 +4771,14 @@ GRANT ALL ON FUNCTION public.count_active_seats(p_product_id uuid) TO service_ro
 
 REVOKE ALL ON FUNCTION public.count_seats_taken(p_product_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.count_seats_taken(p_product_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text) TO service_role;
 
 
 --

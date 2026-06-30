@@ -161,80 +161,46 @@ export async function POST(request: Request) {
 
     const gamerId = authData.user.id;
 
-    // Step 2: Promote to gamer — update profile, swap extension tables.
-    // Keep the synthetic email the trigger seeded (handle_new_user copies
-    // NEW.email from auth.users): gamers are email-first, so `profiles.email`
-    // stays populated and queryable like every other role.
-    const { error: promoteError } = await admin
-      .from("profiles")
-      .update({
-        role: "gamer",
-        first_name: firstName,
-        last_name: inheritedLastName,
-      })
-      .eq("id", gamerId);
+    // Step 2: Promote + link atomically. handle_new_user already seeded a
+    // 'customer' profile + customer_profiles row for the new auth user; this
+    // RPC swaps it to a gamer, inserts the gamer/minecraft rows, and links the
+    // parent — all in one transaction, so a failure can't leave a half-promoted
+    // orphan (see migration 00113). The synthetic email the trigger copied from
+    // auth.users is left untouched (gamers are email-first).
+    const { error: rpcError } = await admin.rpc("create_gamer", {
+      p_gamer_id: gamerId,
+      p_parent_id: user.id,
+      p_first_name: firstName,
+      p_last_name: inheritedLastName,
+      p_date_of_birth: dateOfBirth,
+      // Omit (→ undefined) rather than pass null: the RPC params default to
+      // null, and the generated Args type accepts undefined, not null. A null
+      // Mojang UUID still inserts a Minecraft row (username present, uuid null).
+      p_gender: gender ?? undefined,
+      p_minecraft_username: resolvedMinecraft?.username ?? undefined,
+      p_minecraft_uuid: resolvedMinecraft?.uuid ?? undefined,
+    });
 
-    if (promoteError) {
+    if (rpcError) {
+      // The RPC ran in a transaction, so no partial gamer record persisted —
+      // but the auth user we created above would now be orphaned (a login with
+      // no usable gamer record), so delete it before returning the error.
+      await admin.auth.admin.deleteUser(gamerId);
+
+      // A unique violation is the minecraft_uuid race (claimed between our
+      // pre-check and the RPC's insert) — map it to the same 409 as before.
+      const isMinecraftConflict = rpcError.code === "23505";
       return NextResponse.json(
-        { error: promoteError.message },
-        { status: 500 }
+        {
+          error: isMinecraftConflict
+            ? "This Minecraft account is already linked to another user"
+            : rpcError.message,
+        },
+        { status: isMinecraftConflict ? 409 : 500 },
       );
     }
 
-    await admin.from("customer_profiles").delete().eq("user_id", gamerId);
-
-    const { error: gamerProfileError } = await admin
-      .from("gamer_profiles")
-      .insert({
-        user_id: gamerId,
-        date_of_birth: dateOfBirth,
-        gender,
-      });
-
-    if (gamerProfileError) {
-      return NextResponse.json(
-        { error: gamerProfileError.message },
-        { status: 500 }
-      );
-    }
-
-    if (resolvedMinecraft) {
-      const { error: mcError } = await admin
-        .from("minecraft_accounts")
-        .insert({
-          user_id: gamerId,
-          minecraft_username: resolvedMinecraft.username,
-          minecraft_uuid: resolvedMinecraft.uuid,
-        });
-
-      if (mcError) {
-        // UNIQUE constraint race (another request claimed the UUID between our check and insert)
-        const message = mcError.code === "23505"
-          ? "This Minecraft account is already linked to another user"
-          : mcError.message;
-        return NextResponse.json(
-          { error: message },
-          { status: mcError.code === "23505" ? 409 : 500 },
-        );
-      }
-    }
-
-    // Step 3: Link gamer to parent (validate_parent_gamer_roles trigger
-    // checks both roles, so this must happen after the promote)
-    const { data: linkData, error: linkError } = await admin
-      .from("parent_gamer")
-      .insert({
-        parent_id: user.id,
-        gamer_id: gamerId,
-      })
-      .select()
-      .single();
-
-    if (linkError) {
-      return NextResponse.json({ error: linkError.message }, { status: 500 });
-    }
-
-    // Fetch the final gamer profile
+    // Fetch the final gamer profile for the response.
     const { data: gamerProfile, error: fetchError } = await admin
       .from("profiles")
       .select("*")
@@ -248,7 +214,7 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ gamer: gamerProfile, link: linkData });
+    return NextResponse.json({ gamer: gamerProfile });
   } catch {
     return NextResponse.json(
       { error: "Internal server error" },

@@ -374,17 +374,6 @@ Sequenced; each phase is a PR batch. The spine comes **before** the route sweep 
 every later change is "make the edit and let the test tell you if you broke the
 boundary."
 
-### Phase 0 — ship-first standalone fix: atomic gamer creation
-
-Independent of everything else and a confirmed production bug: the gamer-creation
-route runs five-plus sequential admin-client writes after `auth.admin.createUser()`
-(profile role promotion, customer-profile cleanup, gamer-profile insert, optional
-external-account insert, parent link) with no transaction — a failure partway leaves
-orphaned, inconsistent records. Move the post-auth DB writes into one `SECURITY
-DEFINER` RPC running in a single transaction, with the route deleting the auth user if
-the RPC fails. The auth-user creation itself stays route-side (Auth Admin API —
-legitimately Model A). Don't wait for the spine to ship this.
-
 ### Phase 1 — guard primitives + ownership predicates
 
 Add the §3.1 assertions and §3.2 predicates, and convert the existing role-gated RPC

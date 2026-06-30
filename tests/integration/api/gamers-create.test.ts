@@ -11,11 +11,19 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 const mockCreateUser = vi.fn();
+const mockDeleteUser = vi.fn();
+const mockRpc = vi.fn();
 const mockAdminFrom = vi.fn();
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
-    auth: { admin: { createUser: (...args: unknown[]) => mockCreateUser(...args) } },
+    auth: {
+      admin: {
+        createUser: (...args: unknown[]) => mockCreateUser(...args),
+        deleteUser: (...args: unknown[]) => mockDeleteUser(...args),
+      },
+    },
     from: (...args: unknown[]) => mockAdminFrom(...args),
+    rpc: (...args: unknown[]) => mockRpc(...args),
   })),
 }));
 
@@ -308,5 +316,65 @@ describe("POST /api/gamers/create — v1 minimal body (auto-generated credential
     const data = await response.json();
     expect(data.error).toBe("mock-stop");
     expect(response.status).toBe(400);
+  });
+});
+
+describe("POST /api/gamers/create — atomic create_gamer RPC", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockAuthenticated();
+    mockPreCreateChecks({ emailExists: false, parentLastName: "Parentson" });
+    mockCreateUser.mockResolvedValue({
+      data: { user: { id: "new-gamer-id" } },
+      error: null,
+    });
+  });
+
+  it("calls create_gamer with the verified parent id and gamer details", async () => {
+    mockRpc.mockResolvedValue({ error: null });
+
+    await POST(createRequest(validBody));
+
+    expect(mockRpc).toHaveBeenCalledWith(
+      "create_gamer",
+      expect.objectContaining({
+        p_gamer_id: "new-gamer-id",
+        p_parent_id: "customer-123",
+        p_first_name: "New Gamer",
+        p_last_name: "Parentson",
+        p_date_of_birth: "2015-06-15",
+        p_gender: "boy",
+      }),
+    );
+    // Happy path never rolls back the auth user.
+    expect(mockDeleteUser).not.toHaveBeenCalled();
+  });
+
+  it("deletes the orphaned auth user and returns 500 when the RPC fails", async () => {
+    mockRpc.mockResolvedValue({ error: { code: "P0001", message: "boom" } });
+
+    const response = await POST(createRequest(validBody));
+    const data = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(data.error).toBe("boom");
+    expect(mockDeleteUser).toHaveBeenCalledWith("new-gamer-id");
+  });
+
+  it("maps a 23505 unique violation to a 409 Minecraft conflict and rolls back", async () => {
+    // Pass the route's pre-createUser Minecraft checks so the conflict surfaces
+    // from the RPC (the race), not the pre-check.
+    mockIsValidMinecraftUsername.mockReturnValue(true);
+    mockLookupMinecraftUser.mockResolvedValue({ username: "RacedPlayer", uuid: "raced-uuid" });
+    mockRpc.mockResolvedValue({ error: { code: "23505", message: "duplicate key" } });
+
+    const response = await POST(
+      createRequest({ ...validBody, minecraftUsername: "RacedPlayer" }),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(data.error).toBe("This Minecraft account is already linked to another user");
+    expect(mockDeleteUser).toHaveBeenCalledWith("new-gamer-id");
   });
 });

@@ -67,7 +67,7 @@ export class GamerService {
   async createGamerAccount(
     _parentId: string,
     input: CreateGamerInput
-  ): Promise<{ gamer: Profile; link: ParentGamer }> {
+  ): Promise<{ gamer: Profile }> {
     const response = await fetch("/api/gamers/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -85,7 +85,7 @@ export class GamerService {
       throw new Error(data.error || "Failed to create gamer account");
     }
 
-    return { gamer: data.gamer, link: data.link };
+    return { gamer: data.gamer };
   }
 
   async updateGamer(

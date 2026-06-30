@@ -1284,6 +1284,19 @@ export type Database = {
       confirm_reservation: { Args: { p_reservation_id: string }; Returns: Json }
       count_active_seats: { Args: { p_product_id: string }; Returns: number }
       count_seats_taken: { Args: { p_product_id: string }; Returns: number }
+      create_gamer: {
+        Args: {
+          p_date_of_birth: string
+          p_first_name: string
+          p_gamer_id: string
+          p_gender?: Database["public"]["Enums"]["gender_type"]
+          p_last_name: string
+          p_minecraft_username?: string
+          p_minecraft_uuid?: string
+          p_parent_id: string
+        }
+        Returns: undefined
+      }
       create_participation: {
         Args: {
           p_currency: string
