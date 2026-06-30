@@ -68,7 +68,7 @@ export class GamerService {
   async createGamerAccount(
     _parentId: string,
     input: CreateGamerInput
-  ): Promise<{ gamer: Profile }> {
+  ): Promise<{ gamerId: string }> {
     const response = await fetch("/api/gamers/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -89,7 +89,7 @@ export class GamerService {
       );
     }
 
-    return { gamer: data.gamer };
+    return { gamerId: data.gamerId };
   }
 
   async updateGamer(

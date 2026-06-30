@@ -30,6 +30,12 @@ function generateOpaqueGamerPassword(): string {
 }
 
 export async function POST(request: Request) {
+  // Hoisted so the catch can clean up: once the auth user is created, any later
+  // throw would orphan it (a login with no usable gamer record). The create_gamer
+  // RPC is transactional, so the DB itself is always left untouched on failure —
+  // this marker only tracks the auth-user side that lives outside that transaction.
+  const admin = createAdminClient();
+  let createdAuthUserId: string | null = null;
   try {
     const result = await requireRole("customer", {
       forbiddenMessage: "Switch to a parent account to add a gamer.",
@@ -75,7 +81,6 @@ export async function POST(request: Request) {
     }
 
     const password = generateOpaqueGamerPassword();
-    const admin = createAdminClient();
 
     // Belt-and-braces: 64 bits of entropy means collisions are
     // vanishingly improbable, but check once and retry once just in case.
@@ -160,6 +165,7 @@ export async function POST(request: Request) {
     }
 
     const gamerId = authData.user.id;
+    createdAuthUserId = gamerId;
 
     // Step 2: Promote + link atomically. handle_new_user already seeded a
     // 'customer' profile + customer_profiles row for the new auth user; this
@@ -187,8 +193,13 @@ export async function POST(request: Request) {
       // no usable gamer record), so delete it before returning the error.
       await admin.auth.admin.deleteUser(gamerId);
 
-      // A unique violation is the minecraft_uuid race (claimed between our
-      // pre-check and the RPC's insert) — map it to the same 409 as before.
+      // The only unique constraint create_gamer can hit is minecraft_uuid: the
+      // 00114 guard makes a double-promote raise P0001 (not 23505) before any
+      // insert runs, and gamer_profiles/parent_gamer can't collide for a
+      // brand-new id. So a 23505 unambiguously means the minecraft_uuid race
+      // (claimed between our pre-check and the RPC's insert) — map it to the
+      // same 409 as before. Revisit this mapping if a future unique constraint
+      // is added inside the RPC.
       const isMinecraftConflict = rpcError.code === "23505";
       if (!isMinecraftConflict) {
         // Anything else is an internal failure (a constraint, the promote
@@ -207,27 +218,19 @@ export async function POST(request: Request) {
       );
     }
 
-    // Fetch the final gamer profile for the response.
-    const { data: gamerProfile, error: fetchError } = await admin
-      .from("profiles")
-      .select("*")
-      .eq("id", gamerId)
-      .single();
-
-    if (fetchError) {
-      // The gamer was created successfully (the RPC committed) — we just
-      // couldn't read it back for the response. Log the raw error; tell the
-      // parent the account exists so they refresh rather than retry into a
-      // duplicate.
-      console.error("Failed to load created gamer profile", fetchError);
-      return NextResponse.json(
-        { error: "The gamer was created. Refresh to see them." },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ gamer: gamerProfile });
+    // The RPC committed, so the gamer exists. Return only its id — the sole
+    // thing callers consume (to pre-select the new gamer). The client invalidates
+    // the gamers list on success and refetches the full row from there, so there's
+    // no reason to read it back here.
+    return NextResponse.json({ gamerId });
   } catch {
+    // A throw anywhere after the auth user was created (an rpc/network error, a
+    // thrown deleteUser, a read-back failure) would orphan it. The RPC is
+    // transactional, so the DB is already untouched; delete the auth user so a
+    // retry starts from a clean slate rather than colliding or piling up.
+    if (createdAuthUserId) {
+      await admin.auth.admin.deleteUser(createdAuthUserId);
+    }
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

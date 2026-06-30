@@ -333,7 +333,8 @@ describe("POST /api/gamers/create — atomic create_gamer RPC", () => {
   it("calls create_gamer with the verified parent id and gamer details", async () => {
     mockRpc.mockResolvedValue({ error: null });
 
-    await POST(createRequest(validBody));
+    const response = await POST(createRequest(validBody));
+    const data = await response.json();
 
     expect(mockRpc).toHaveBeenCalledWith(
       "create_gamer",
@@ -346,6 +347,9 @@ describe("POST /api/gamers/create — atomic create_gamer RPC", () => {
         p_gender: "boy",
       }),
     );
+    // Returns just the new gamer's id (no read-back) — the only thing callers use.
+    expect(response.status).toBe(200);
+    expect(data).toEqual({ gamerId: "new-gamer-id" });
     // Happy path never rolls back the auth user.
     expect(mockDeleteUser).not.toHaveBeenCalled();
   });

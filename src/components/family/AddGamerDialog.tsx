@@ -207,7 +207,7 @@ function AddGamerForm({
           gender,
         },
       });
-      onCreated?.(result.gamer.id);
+      onCreated?.(result.gamerId);
       onOpenChange(false);
       // Intentionally not clearing `committing` — the dialog unmounts.
     } catch (err) {
