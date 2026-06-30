@@ -1717,10 +1717,11 @@ export default function AdminUIComponentsPage() {
           layout — hero, long description, schedule calendar, and the
           registration signup panel — exactly as a parent would see it. The
           panel therefore needs no separate demo: it lives in the full-page
-          view. Cards with no &ldquo;View&rdquo; button (full &amp; closed, an
-          already-started camp) have no detail page to open — a parent can&rsquo;t
-          act there, so it isn&rsquo;t mocked. The set is curated to the visually
-          distinct surfaces worth eyeballing.
+          view. Cards with no working &ldquo;View&rdquo; button (full &amp;
+          closed shows a disabled button; an already-started camp shows none)
+          have no detail page to open — a parent can&rsquo;t act there, so it
+          isn&rsquo;t mocked. The set is curated to the visually distinct
+          surfaces worth eyeballing.
         </p>
         <ProductsDemo />
       </Section>
