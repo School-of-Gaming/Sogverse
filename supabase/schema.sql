@@ -827,7 +827,7 @@ $$;
 --
 
 CREATE FUNCTION public.demote_to_waitlist(p_participation_id uuid) RETURNS jsonb
-    LANGUAGE plpgsql
+    LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
 DECLARE
@@ -1847,7 +1847,7 @@ $$;
 --
 
 CREATE FUNCTION public.promote_from_waitlist(p_participation_id uuid, p_group_id uuid DEFAULT NULL::uuid) RETURNS jsonb
-    LANGUAGE plpgsql
+    LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
 DECLARE
