@@ -350,14 +350,16 @@ describe("POST /api/gamers/create — atomic create_gamer RPC", () => {
     expect(mockDeleteUser).not.toHaveBeenCalled();
   });
 
-  it("deletes the orphaned auth user and returns 500 when the RPC fails", async () => {
+  it("deletes the orphaned auth user and returns a friendly 500 when the RPC fails", async () => {
     mockRpc.mockResolvedValue({ error: { code: "P0001", message: "boom" } });
 
     const response = await POST(createRequest(validBody));
     const data = await response.json();
 
     expect(response.status).toBe(500);
-    expect(data.error).toBe("boom");
+    // The raw Postgres error text never reaches the client.
+    expect(data.error).not.toContain("boom");
+    expect(data.error).toBe("Something went wrong creating the gamer. Please try again.");
     expect(mockDeleteUser).toHaveBeenCalledWith("new-gamer-id");
   });
 

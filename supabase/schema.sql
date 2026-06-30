@@ -552,16 +552,19 @@ CREATE FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_n
     SET search_path TO ''
     AS $$
 begin
-  -- Promote the trigger-seeded customer profile to a gamer. Keep the synthetic
-  -- email handle_new_user() copied from auth.users — gamers are email-first.
+  -- Promote the trigger-seeded customer profile to a gamer. Gate on role =
+  -- 'customer' so this can't corrupt an already-promoted gamer or an admin/gedu,
+  -- and so a double-call fails on the second pass. Keep the synthetic email
+  -- handle_new_user() copied from auth.users — gamers are email-first.
   update public.profiles
   set role = 'gamer',
       first_name = p_first_name,
       last_name = p_last_name
-  where id = p_gamer_id;
+  where id = p_gamer_id
+    and role = 'customer';
 
   if not found then
-    raise exception 'Profile % not found for gamer promotion', p_gamer_id;
+    raise exception 'No promotable customer profile % found for gamer creation', p_gamer_id;
   end if;
 
   -- Swap extension tables: drop the customer row handle_new_user() created,

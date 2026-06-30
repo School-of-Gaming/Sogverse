@@ -190,11 +190,18 @@ export async function POST(request: Request) {
       // A unique violation is the minecraft_uuid race (claimed between our
       // pre-check and the RPC's insert) — map it to the same 409 as before.
       const isMinecraftConflict = rpcError.code === "23505";
+      if (!isMinecraftConflict) {
+        // Anything else is an internal failure (a constraint, the promote
+        // guard's raise, a connection error). Log the raw error for debugging
+        // but never surface it: it's Postgres text the parent shouldn't see,
+        // and there's nothing actionable in it for them.
+        console.error("create_gamer RPC failed", rpcError);
+      }
       return NextResponse.json(
         {
           error: isMinecraftConflict
             ? "This Minecraft account is already linked to another user"
-            : rpcError.message,
+            : "Something went wrong creating the gamer. Please try again.",
         },
         { status: isMinecraftConflict ? 409 : 500 },
       );
@@ -208,8 +215,13 @@ export async function POST(request: Request) {
       .single();
 
     if (fetchError) {
+      // The gamer was created successfully (the RPC committed) — we just
+      // couldn't read it back for the response. Log the raw error; tell the
+      // parent the account exists so they refresh rather than retry into a
+      // duplicate.
+      console.error("Failed to load created gamer profile", fetchError);
       return NextResponse.json(
-        { error: fetchError.message },
+        { error: "The gamer was created. Refresh to see them." },
         { status: 500 }
       );
     }

@@ -19,6 +19,7 @@ import { usePinStatus, pinKeys } from "@/services/pin";
 import { PinUnlockFlow } from "@/components/pin";
 import { useRequiredAuth } from "@/providers/auth-provider";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+import { ApiError } from "@/lib/api/api-error";
 import { cn } from "@/lib/utils";
 import {
   assembleGamerDateOfBirth,
@@ -211,7 +212,14 @@ function AddGamerForm({
       // Intentionally not clearing `committing` — the dialog unmounts.
     } catch (err) {
       setCommitting(false);
-      setError(err instanceof Error ? err.message : t("genericError"));
+      // Show the route's message only for an actionable 4xx; a 5xx (or any
+      // unexpected throw) gets the localized generic, never raw English
+      // server text — see ApiError.
+      setError(
+        err instanceof ApiError && !err.isServerError
+          ? err.message
+          : t("genericError"),
+      );
     }
   }
 

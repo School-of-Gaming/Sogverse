@@ -173,4 +173,45 @@ describe("create_gamer() atomic promotion", () => {
       .maybeSingle();
     expect(link).toBeNull();
   });
+
+  it("refuses to re-promote a profile that is no longer a customer (00114 guard)", async () => {
+    const parent = await createCustomerUser("cg-guard-parent@test.local");
+    const gamer = await createCustomerUser("cg-guard-child@test.local");
+
+    // First call promotes the customer to a gamer — succeeds.
+    const { error: firstError } = await admin.rpc("create_gamer", {
+      p_gamer_id: gamer.id,
+      p_parent_id: parent.id,
+      p_first_name: "Once",
+      p_last_name: "Parentson",
+      p_date_of_birth: "2015-09-09",
+    });
+    expect(firstError).toBeNull();
+
+    // Second call targets the same id — now role = 'gamer', so the role =
+    // 'customer' guard makes the promotion UPDATE match nothing and the function
+    // raises rather than corrupting the already-promoted account.
+    const { error: secondError } = await admin.rpc("create_gamer", {
+      p_gamer_id: gamer.id,
+      p_parent_id: parent.id,
+      p_first_name: "Twice",
+      p_last_name: "Parentson",
+      p_date_of_birth: "2015-09-09",
+    });
+    expect(secondError).not.toBeNull();
+
+    // The first promotion is untouched: name from the first call, single link.
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("role, first_name")
+      .eq("id", gamer.id)
+      .single();
+    expect(profile).toMatchObject({ role: "gamer", first_name: "Once" });
+
+    const { data: links } = await admin
+      .from("parent_gamer")
+      .select("gamer_id")
+      .eq("gamer_id", gamer.id);
+    expect(links).toHaveLength(1);
+  });
 });
