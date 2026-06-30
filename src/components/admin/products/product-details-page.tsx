@@ -15,6 +15,7 @@ import {
   Wallet,
   ExternalLink,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants";
@@ -241,15 +242,9 @@ function HeaderCard({
             >
               {statusLabel}
             </span>
-            <span
-              className={`rounded-full px-2 py-0.5 text-xs ${
-                isVisible
-                  ? "bg-primary/10 text-primary"
-                  : "bg-muted text-muted-foreground"
-              }`}
-            >
+            <Badge variant={isVisible ? "default" : "secondary"}>
               {isVisible ? visibleLabel : hiddenLabel}
-            </span>
+            </Badge>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
