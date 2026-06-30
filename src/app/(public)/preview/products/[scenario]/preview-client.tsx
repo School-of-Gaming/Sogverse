@@ -19,7 +19,6 @@ export function ProductDetailPreviewClient({
       product={fixture.product}
       state={fixture.state}
       authState={fixture.authState}
-      previewBanner
     />
   );
 }

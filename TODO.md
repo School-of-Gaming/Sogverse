@@ -53,6 +53,32 @@
   - **Eventual modernization (a deliberate project):** (1) pin the SDK constructor `apiVersion` — currently unpinned in all 5 instantiations (`checkout/products/create/route.ts`, `webhooks/stripe/products/route.ts`, `lib/stripe/{participation-prices,customer,portal-configuration}.ts`); (2) audit field shapes against Stripe's migration changelog — note `stripe@17.7.0`'s TS types already describe ~2025 shapes while runtime returns 2019 shapes, so **the types can lie** (a field TS says exists may be absent at runtime); (3) decide whether to capture `session.presentment_details` while in there.
   - **Doc correction owed:** `docs/stripe-participations-review-followups.md` lists "pin `apiVersion` on the Stripe SDK constructor" as the fix for this bomb. That alone would NOT protect the webhook — webhook payload shape is governed by the *endpoint/account* version, not the SDK constructor (which only affects outbound API calls). Update that note when this item is worked.
 
+### Session calendar dropped from the product detail page — component preserved
+
+The product detail page no longer renders the session calendar: `CalendarCard`
+was removed from `src/components/public/products/product-detail-page-body.tsx`
+because we're not ready to go live with it. The reusable pieces were **kept, not
+deleted** — `src/components/calendar/session-calendar-view.tsx` (the
+presentational month/session grid) and
+`src/components/calendar/compute-product-sessions.ts` (expands a product's slots
++ holidays into dated sessions), plus their `productDetail.calendar.*` and
+`productDetail.sections.calendar` message keys. With the detail page no longer
+mounting them, they have **no remaining consumer**, so a dead-code sweep (cf. the
+knip note above) would flag them, and there's no `/admin/ui-components` demo
+keeping them visible.
+
+The one thing the calendar uniquely surfaced — a club's term date range — is now
+shown without it: `ProductOverviewCard` folds the range into its Schedule cell
+(keeping the 2×2 fact grid) via the shared `formatClubTermDates`
+(`src/components/public/products/format-product-term-dates.ts`), which the admin
+details page now uses too. Camps/events already carry their dates in the schedule
+line, so the helper returns null for them.
+
+- [ ] Decide: wire the calendar back into the detail page (and add a standalone
+  `/admin/ui-components` demo so it stops being invisible and rotting), or delete
+  `session-calendar-view.tsx` + `compute-product-sessions.ts` and their message
+  keys for good.
+
 ### Locations: one shared tree component; creation restricted to sites (Finland seeded)
 
 We seeded the full Finland hierarchy (19 regions + 308 municipalities, migration `00109_seed_finland_locations.sql`, Finnish names) so admins pick a verified municipality and attach a site under it instead of hand-typing region/municipality names. The standalone `/admin/locations` CRUD page was **deleted**, and all surfaces now share one presentational component — `src/components/locations/location-tree.tsx` (single-select for the product picker, multi-select for gedu coverage; data + create handler injected, demoed in `/admin/ui-components`). The product location picker is now the only place locations are created, and it's restricted to **sites** (regions/municipalities/countries are seeded reference data). Follow-ups:

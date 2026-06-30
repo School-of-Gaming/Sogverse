@@ -1457,9 +1457,6 @@
       "description": "Den kan ha tagits bort eller länken är fel. Bläddra bland tillgängliga alternativ nedan.",
       "cta": "Tillbaka till bläddring"
     },
-    "preview": {
-      "banner": "Mockup-förhandsvisning · interaktioner är inte kopplade"
-    },
     "geduGroups": {
       "heading": "Grupper",
       "yourGroupBadge": "Din grupp",

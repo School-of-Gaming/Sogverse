@@ -1457,9 +1457,6 @@
       "description": "Se on ehkä poistettu tai linkki on virheellinen. Selaa muita vaihtoehtoja alta.",
       "cta": "Takaisin selaamaan"
     },
-    "preview": {
-      "banner": "Mallinäkymä · toiminnot eivät ole vielä kytkettyinä"
-    },
     "geduGroups": {
       "heading": "Ryhmät",
       "yourGroupBadge": "Oma ryhmä",

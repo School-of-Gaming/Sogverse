@@ -24,10 +24,10 @@ import {
   cn,
   formatCurrencyFromCents,
   formatDate,
-  formatDateOnly,
 } from "@/lib/utils";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { ProductOverviewCard } from "@/components/public/products/product-overview-card";
+import { formatClubTermDates } from "@/components/public/products/format-product-term-dates";
 import {
   useProductAdmin,
   type ProductAdminDetailRow,
@@ -295,9 +295,6 @@ function OperationalFacts({
   t: ReturnType<typeof useTranslations<"admin.products">>;
   c: ReturnType<typeof useTranslations<"common">>;
 }) {
-  const isClub =
-    product.product_type === "consumer_club" ||
-    product.product_type === "municipality_club";
   const isMuni = product.product_type === "municipality_club";
 
   // Render a per-session fee from its stored cents. The state is derived from
@@ -326,16 +323,10 @@ function OperationalFacts({
     return formatCurrencyFromCents(cents, "eur", uiLocale);
   };
 
-  // Camps/events surface their dates inside the shared "When & where" card
-  // (the schedule formatter folds them in); recurring clubs don't, so a
-  // club's term dates live here — the only admin-only date surface.
-  const termDates = (() => {
-    if (!isClub || !product.start_date) return null;
-    if (product.end_date && product.end_date !== product.start_date) {
-      return `${formatDateOnly(product.start_date, uiLocale)} → ${formatDateOnly(product.end_date, uiLocale)}`;
-    }
-    return formatDateOnly(product.start_date, uiLocale);
-  })();
+  // A club's term range (shared with the parent overview card via
+  // `formatClubTermDates`). Camps/events fold their dates into the schedule
+  // card instead, so the helper returns null for them.
+  const termDates = formatClubTermDates(product, uiLocale);
 
   const seatsLine =
     product.seat_count !== null

@@ -1457,9 +1457,6 @@
       "description": "It may have been removed or the link is wrong. Browse what's available below.",
       "cta": "Back to browse"
     },
-    "preview": {
-      "banner": "Mockup preview · interactions are not wired up"
-    },
     "geduGroups": {
       "heading": "Groups",
       "yourGroupBadge": "Your group",
