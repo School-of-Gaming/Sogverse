@@ -16,6 +16,7 @@ import {
 import {
   createParticipationResponse,
   joinWaitlistResponse,
+  waitlistPositionResult,
   type CreateParticipationResponse,
   type JoinWaitlistResponse,
 } from "./participations.contracts";
@@ -394,10 +395,6 @@ export class ParticipationsService {
    * signups arrive 'active' — but every field the page displays lives on the
    * row from creation, so a rare still-'reserving' row renders identically. We
    * don't poll.
-   *
-   * TODO(waitlist): waitlisted signups never route here today — the 'full'
-   * create outcome keeps its own waitlist CTA on the product page. If that
-   * changes, branch the confirmation copy on `status === 'waitlisted'`.
    */
   async getConfirmation(
     participationId: string,
@@ -421,6 +418,28 @@ export class ParticipationsService {
       productId: data.product_id,
       gamerName: data.gamer.first_name || null,
     };
+  }
+
+  /**
+   * The caller's 1-based position on a product's waitlist for one of their own
+   * waitlisted participations — the "you're #N" read for the post-join summary
+   * (and, later, the parent/gamer dashboards). Recomputed live from
+   * (waitlisted_at, id), so it shrinks as people ahead leave — unlike the
+   * stamped-at-join value join_waitlist returns.
+   *
+   * Backed by the get_waitlist_position RPC: SECURITY DEFINER so it can count
+   * past the caller's RLS, but owner-authorized (customer_id OR gamer_id) and
+   * returns ONLY the integer. Null when the row is unknown, not waitlisted, or
+   * not the caller's — the contract schema makes that nullability explicit
+   * (codegen types the RPC as a bare number). Uses the injected RLS-scoped
+   * client, like the other read methods.
+   */
+  async getWaitlistPosition(participationId: string): Promise<number | null> {
+    const { data, error } = await this.supabase.rpc("get_waitlist_position", {
+      p_participation_id: participationId,
+    });
+    if (error) throw error;
+    return waitlistPositionResult.parse(data);
   }
 
   // ------------------------------------------------------------------

@@ -30,6 +30,12 @@ function generateOpaqueGamerPassword(): string {
 }
 
 export async function POST(request: Request) {
+  // Hoisted so the catch can clean up: once the auth user is created, any later
+  // throw would orphan it (a login with no usable gamer record). The create_gamer
+  // RPC is transactional, so the DB itself is always left untouched on failure —
+  // this marker only tracks the auth-user side that lives outside that transaction.
+  const admin = createAdminClient();
+  let createdAuthUserId: string | null = null;
   try {
     const result = await requireRole("customer", {
       forbiddenMessage: "Switch to a parent account to add a gamer.",
@@ -75,7 +81,6 @@ export async function POST(request: Request) {
     }
 
     const password = generateOpaqueGamerPassword();
-    const admin = createAdminClient();
 
     // Belt-and-braces: 64 bits of entropy means collisions are
     // vanishingly improbable, but check once and retry once just in case.
@@ -130,7 +135,10 @@ export async function POST(request: Request) {
 
         if (existingMc) {
           return NextResponse.json(
-            { error: "This Minecraft account is already linked to another user" },
+            {
+              error: "This Minecraft account is already linked to another user",
+              code: "minecraft_already_linked",
+            },
             { status: 409 },
           );
         }
@@ -160,99 +168,97 @@ export async function POST(request: Request) {
     }
 
     const gamerId = authData.user.id;
+    createdAuthUserId = gamerId;
 
-    // Step 2: Promote to gamer — update profile, swap extension tables.
-    // Keep the synthetic email the trigger seeded (handle_new_user copies
-    // NEW.email from auth.users): gamers are email-first, so `profiles.email`
-    // stays populated and queryable like every other role.
-    const { error: promoteError } = await admin
-      .from("profiles")
-      .update({
-        role: "gamer",
-        first_name: firstName,
-        last_name: inheritedLastName,
-      })
-      .eq("id", gamerId);
+    // Step 2: Promote + link atomically. handle_new_user already seeded a
+    // 'customer' profile + customer_profiles row for the new auth user; this
+    // RPC swaps it to a gamer, inserts the gamer/minecraft rows, and links the
+    // parent — all in one transaction, so a failure can't leave a half-promoted
+    // orphan (see migration 00113). The synthetic email the trigger copied from
+    // auth.users is left untouched (gamers are email-first).
+    const { error: rpcError } = await admin.rpc("create_gamer", {
+      p_gamer_id: gamerId,
+      p_parent_id: user.id,
+      p_first_name: firstName,
+      p_last_name: inheritedLastName,
+      p_date_of_birth: dateOfBirth,
+      // Omit (→ undefined) rather than pass null: the RPC params default to
+      // null, and the generated Args type accepts undefined, not null. A null
+      // Mojang UUID still inserts a Minecraft row (username present, uuid null).
+      p_gender: gender ?? undefined,
+      p_minecraft_username: resolvedMinecraft?.username ?? undefined,
+      p_minecraft_uuid: resolvedMinecraft?.uuid ?? undefined,
+    });
 
-    if (promoteError) {
-      return NextResponse.json(
-        { error: promoteError.message },
-        { status: 500 }
-      );
-    }
+    if (rpcError) {
+      // The RPC ran in a transaction, so no partial gamer record persisted —
+      // but the auth user we created above would now be orphaned (a login with
+      // no usable gamer record), so delete it before returning the error.
+      await deleteOrphanedAuthUser(admin, gamerId);
 
-    await admin.from("customer_profiles").delete().eq("user_id", gamerId);
-
-    const { error: gamerProfileError } = await admin
-      .from("gamer_profiles")
-      .insert({
-        user_id: gamerId,
-        date_of_birth: dateOfBirth,
-        gender,
-      });
-
-    if (gamerProfileError) {
-      return NextResponse.json(
-        { error: gamerProfileError.message },
-        { status: 500 }
-      );
-    }
-
-    if (resolvedMinecraft) {
-      const { error: mcError } = await admin
-        .from("minecraft_accounts")
-        .insert({
-          user_id: gamerId,
-          minecraft_username: resolvedMinecraft.username,
-          minecraft_uuid: resolvedMinecraft.uuid,
-        });
-
-      if (mcError) {
-        // UNIQUE constraint race (another request claimed the UUID between our check and insert)
-        const message = mcError.code === "23505"
-          ? "This Minecraft account is already linked to another user"
-          : mcError.message;
-        return NextResponse.json(
-          { error: message },
-          { status: mcError.code === "23505" ? 409 : 500 },
-        );
+      // The only unique constraint create_gamer can hit is minecraft_uuid: the
+      // 00114 guard makes a double-promote raise P0001 (not 23505) before any
+      // insert runs, and gamer_profiles/parent_gamer can't collide for a
+      // brand-new id. So a 23505 unambiguously means the minecraft_uuid race
+      // (claimed between our pre-check and the RPC's insert) — map it to the
+      // same 409 as before. Revisit this mapping if a future unique constraint
+      // is added inside the RPC.
+      const isMinecraftConflict = rpcError.code === "23505";
+      if (!isMinecraftConflict) {
+        // Anything else is an internal failure (a constraint, the promote
+        // guard's raise, a connection error). Log the raw error for debugging
+        // but never surface it: it's Postgres text the parent shouldn't see,
+        // and there's nothing actionable in it for them.
+        console.error("create_gamer RPC failed", rpcError);
       }
-    }
-
-    // Step 3: Link gamer to parent (validate_parent_gamer_roles trigger
-    // checks both roles, so this must happen after the promote)
-    const { data: linkData, error: linkError } = await admin
-      .from("parent_gamer")
-      .insert({
-        parent_id: user.id,
-        gamer_id: gamerId,
-      })
-      .select()
-      .single();
-
-    if (linkError) {
-      return NextResponse.json({ error: linkError.message }, { status: 500 });
-    }
-
-    // Fetch the final gamer profile
-    const { data: gamerProfile, error: fetchError } = await admin
-      .from("profiles")
-      .select("*")
-      .eq("id", gamerId)
-      .single();
-
-    if (fetchError) {
       return NextResponse.json(
-        { error: fetchError.message },
-        { status: 500 }
+        isMinecraftConflict
+          ? {
+              error: "This Minecraft account is already linked to another user",
+              code: "minecraft_already_linked",
+            }
+          : { error: "Something went wrong creating the gamer. Please try again." },
+        { status: isMinecraftConflict ? 409 : 500 },
       );
     }
 
-    return NextResponse.json({ gamer: gamerProfile, link: linkData });
-  } catch {
+    // The RPC committed, so the gamer exists. Return only its id — the sole
+    // thing callers consume (to pre-select the new gamer). The client invalidates
+    // the gamers list on success and refetches the full row from there, so there's
+    // no reason to read it back here.
+    return NextResponse.json({ gamerId });
+  } catch (err) {
+    // Log the root cause: without this, a thrown failure (an rpc/network error,
+    // a thrown deleteUser, a read-back failure) produced a bare 500 with nothing
+    // recorded — exactly the failures hardest to reproduce.
+    console.error("gamer creation failed", err);
+    // A throw anywhere after the auth user was created would orphan it. The RPC
+    // is transactional, so the DB is already untouched; delete the auth user so
+    // a retry starts from a clean slate rather than colliding or piling up.
+    if (createdAuthUserId) {
+      await deleteOrphanedAuthUser(admin, createdAuthUserId);
+    }
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     );
+  }
+}
+
+// Best-effort cleanup of the auth user when post-auth creation fails. If the
+// delete itself fails we can't do anything useful — but we must record it: that
+// id is now a genuine orphan (an auth user with no usable gamer record), and
+// this log line is the only trace of it.
+async function deleteOrphanedAuthUser(
+  admin: ReturnType<typeof createAdminClient>,
+  authUserId: string,
+): Promise<void> {
+  try {
+    const { error } = await admin.auth.admin.deleteUser(authUserId);
+    if (error) {
+      console.error("orphaned auth user cleanup failed", authUserId, error);
+    }
+  } catch (cleanupErr) {
+    console.error("orphaned auth user cleanup threw", authUserId, cleanupErr);
   }
 }

@@ -91,7 +91,7 @@ export function ProductFormShell({
       <WhenSection state={state} setState={setState} config={config} />
       <BillingSection state={state} setState={setState} config={config} />
       <FeesSection state={state} setState={setState} config={config} />
-      <RegistrationSection state={state} setState={setState} />
+      <RegistrationSection state={state} setState={setState} config={config} />
       <VisibilitySection state={state} setState={setState} />
 
       {error && (

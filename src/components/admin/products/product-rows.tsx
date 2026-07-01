@@ -15,7 +15,7 @@ import { NavChevron } from "@/components/ui/nav-chevron";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { cn, formatDate, formatDateOnly } from "@/lib/utils";
+import { cn, formatDate, formatDateOnly, formatDateRange } from "@/lib/utils";
 import { effectiveStatus, pendingHintKey } from "@/lib/products/effective-status";
 import {
   formatProductSchedule,
@@ -142,10 +142,7 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
           schedule.kind === "single" && schedule.time
             ? schedule.date
             : p.start_date
-              ? formatDateOnly(p.start_date, uiLocale) +
-                (p.end_date && p.end_date !== p.start_date
-                  ? ` → ${formatDateOnly(p.end_date, uiLocale)}`
-                  : "")
+              ? formatDateRange(p.start_date, p.end_date, uiLocale)
               : null;
         return (
           <Link

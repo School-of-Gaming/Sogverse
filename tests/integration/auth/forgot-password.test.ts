@@ -57,7 +57,7 @@ describe("POST /api/auth/forgot-password", () => {
     vi.clearAllMocks();
     mockProfileLocale = null;
     mockGenerateLink.mockResolvedValue({
-      data: { properties: { action_link: "https://supabase.co/verify?token=abc" } },
+      data: { properties: { hashed_token: "hashed-abc-123" } },
       error: null,
     });
     mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-123" });
@@ -108,25 +108,22 @@ describe("POST /api/auth/forgot-password", () => {
 
   // -- Happy path --
 
-  it("should call generateLink with recovery type and correct redirectTo", async () => {
+  it("should call generateLink with recovery type (no redirectTo — we email the token_hash, not the action_link)", async () => {
     await POST(createRequest({ email: "user@example.com" }));
 
     expect(mockGenerateLink).toHaveBeenCalledWith({
       type: "recovery",
       email: "user@example.com",
-      options: {
-        redirectTo: "https://test.sogverse.local/reset-password",
-      },
     });
   });
 
-  // Regression: the recovery link's redirectTo must be built off the trusted
-  // origin (getOrigin → canonical NEXT_PUBLIC_SITE_URL here), never the
+  // Regression: the emailed reset link's origin must come from the trusted
+  // source (getOrigin → canonical NEXT_PUBLIC_SITE_URL here), never the
   // attacker-controllable Host header / request URL. This route is
   // unauthenticated and takes an arbitrary email, so a spoofed Host would mail
   // the victim a real recovery link pointing at the attacker's domain —
   // clicking it hands over the recovery token (account takeover).
-  it("builds the reset link off the trusted origin, ignoring a spoofed Host", async () => {
+  it("builds the emailed reset link off the trusted origin, ignoring a spoofed Host", async () => {
     // Both the URL and the Host header carry the attacker value, as a genuinely
     // spoofed request would — so this fails if the route ever regresses to
     // either `new URL(request.url).origin` or a raw Host read.
@@ -137,23 +134,34 @@ describe("POST /api/auth/forgot-password", () => {
     });
     await POST(spoofed);
 
-    expect(mockGenerateLink).toHaveBeenCalledWith(
-      expect.objectContaining({
-        options: { redirectTo: "https://test.sogverse.local/reset-password" },
-      }),
-    );
+    const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
+    expect(htmlContent).toContain("https://test.sogverse.local/reset-password?token_hash=");
+    expect(htmlContent).not.toContain("evil.com");
   });
 
-  it("should send email via Brevo with the action link", async () => {
+  it("should send email via Brevo with the token_hash reset link on our domain", async () => {
     await POST(createRequest({ email: "user@example.com" }));
 
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
         toEmail: "user@example.com",
         subject: "Reset your Sogverse password",
-        htmlContent: expect.stringContaining("Reset"),
+        htmlContent: expect.stringContaining(
+          "https://test.sogverse.local/reset-password?token_hash=hashed-abc-123&type=recovery",
+        ),
       })
     );
+  });
+
+  // The email rides in the reset link as the username hint for the reset page's
+  // hidden autocomplete="username" field (so password managers save the new
+  // password against the right account). It's a hint, not a credential — but it
+  // must be URL-encoded so a `+` or other reserved char survives.
+  it("appends the URL-encoded account email as the password-manager username hint", async () => {
+    await POST(createRequest({ email: "user+tag@example.com" }));
+
+    const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
+    expect(htmlContent).toContain("&email=user%2Btag%40example.com");
   });
 
   // -- Accept-Language locale detection --

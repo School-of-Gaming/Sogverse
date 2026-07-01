@@ -1,4 +1,9 @@
-import type { BillingMode, ProductPrice, ProductType } from "@/types";
+import type {
+  BillingMode,
+  ProductPrice,
+  ProductType,
+  PurchaseShape,
+} from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 
 // Pure computation of the single price option a parent can buy for a product.
@@ -50,4 +55,25 @@ export function buildPricingOption({
 
   // Camps and paid events are a single upfront total.
   return { kind: "upfront", totalCents: row.price_cents };
+}
+
+// Maps the one pricing option a product offers to the purchase shape the
+// create-participation route expects. `null` means "not purchasable" — only
+// the `unavailable` case (product not sold in the viewer's currency), which the
+// signup panel renders as a disabled CTA rather than a submit. Every other kind
+// has a real shape, including `external` (municipality clubs: instant, off-
+// platform, no Stripe — see create_participation's external_contract branch).
+export function purchaseShapeFor(option: PricingOption): PurchaseShape | null {
+  switch (option.kind) {
+    case "subscription":
+      return "subscription_monthly";
+    case "upfront":
+      return "single_payment";
+    case "free":
+      return "free";
+    case "external":
+      return "external";
+    case "unavailable":
+      return null;
+  }
 }

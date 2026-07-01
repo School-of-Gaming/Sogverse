@@ -54,6 +54,17 @@ const AUTHENTICATED_ALLOWLIST = new Set([
   "get_gedu_assigned_product",
   "get_my_assigned_products",
 
+  // Admin waitlist transitions from the groups panel (00118). SECURITY-checked
+  // internally (get_user_role() = 'admin'), so they run with the admin's own
+  // JWT — like apply_group_changes, their drag-UI sibling — hence authenticated
+  // EXECUTE. A non-admin caller is rejected by the internal role gate.
+  "promote_from_waitlist",
+  "demote_to_waitlist",
+  // "You're #N" read for parents/gamers (00118). SECURITY DEFINER so it can
+  // count rows the caller's RLS hides, but owner-authorized (customer_id OR
+  // gamer_id) and returns only the integer position — no other family's data.
+  "get_waitlist_position",
+
   // Parent PIN (00075). auth.uid()-scoped, touch only the caller's own
   // customer_profiles row; called from the PIN API routes via the user's
   // server client. The pin_hash itself is never returned to the client.

@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { parseJsonBody } from "@/lib/api/json-body.server";
+import {
+  demoteToWaitlistRpcResult,
+  promoteFromWaitlistRpcResult,
+  waitlistTransitionBody,
+} from "@/services/participations/participations.contracts";
 
 /**
  * DELETE /api/admin/products/[id]/participations/[participationId]
@@ -138,6 +144,119 @@ export async function DELETE(
       product_id: productId,
       participation_id: participationId,
       result: rpcResult,
+      at: new Date().toISOString(),
+    }),
+  );
+
+  return NextResponse.json({ ok: true });
+}
+
+/**
+ * PATCH /api/admin/products/[id]/participations/[participationId]
+ *
+ * Admin waitlist status transitions from the groups-panel drag UI:
+ *  - `promote` — a waitlisted gamer dragged into a group/unassigned. Gives them
+ *    a seat via promote_from_waitlist (status→active, group set, waitlisted_at
+ *    cleared). No seat-count gate — a deliberate admin capacity override.
+ *  - `demote` — an active gamer dragged onto the waitlist. Sends them to the
+ *    back via demote_to_waitlist (status→waitlisted, group cleared).
+ *
+ * Unlike the DELETE handler above, this uses the USER-context client, not the
+ * admin client: both RPCs re-check get_user_role() = 'admin' internally (like
+ * apply_group_changes, their drag-UI sibling), so they must run with the
+ * caller's JWT — a service-role call has no auth.uid() and would be Forbidden.
+ *
+ * Gated to the same product types as add/remove: blocked on consumer_club,
+ * where promotion would mean an unbilled active seat and demotion would strand
+ * a paying subscriber on the waitlist.
+ */
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string; participationId: string }> },
+) {
+  const result = await requireRole("admin", {
+    forbiddenMessage: "Only admins can change waitlist status",
+  });
+  if (result instanceof NextResponse) return result;
+  const { supabase, user } = result;
+
+  const { id: productId, participationId } = await params;
+
+  const body = await parseJsonBody(request, waitlistTransitionBody);
+  if (body instanceof NextResponse) return body;
+
+  // IDOR guard: the participation must belong to THIS product (else a
+  // participationId from another product could be transitioned via this URL).
+  const { data: participation, error: fetchError } = await supabase
+    .from("participations")
+    .select("id, product_id")
+    .eq("id", participationId)
+    .maybeSingle();
+
+  if (fetchError) {
+    return NextResponse.json({ error: fetchError.message }, { status: 400 });
+  }
+  if (!participation || participation.product_id !== productId) {
+    return NextResponse.json(
+      { error: "Participation not found on this product" },
+      { status: 404 },
+    );
+  }
+
+  // Block consumer_club — symmetric with the add/remove gate (defense in depth).
+  const { data: product, error: productError } = await supabase
+    .from("products")
+    .select("product_type")
+    .eq("id", productId)
+    .maybeSingle();
+
+  if (productError) {
+    return NextResponse.json({ error: productError.message }, { status: 400 });
+  }
+  if (!product) {
+    return NextResponse.json({ error: "Product not found" }, { status: 404 });
+  }
+  if (product.product_type === "consumer_club") {
+    return NextResponse.json(
+      {
+        error:
+          "Waitlist promote/demote is not supported for consumer clubs (recurring billing).",
+      },
+      { status: 400 },
+    );
+  }
+
+  // Dispatch to the matching RPC and validate its Json result shape before
+  // responding (the db tests parse real RPC output through the same schemas).
+  if (body.action === "promote") {
+    const { data, error } = await supabase.rpc("promote_from_waitlist", {
+      p_participation_id: participationId,
+      p_group_id: body.groupId ?? undefined,
+    });
+    if (error) {
+      const status = error.code === "P0002" ? 404 : 400;
+      return NextResponse.json({ error: error.message }, { status });
+    }
+    promoteFromWaitlistRpcResult.parse(data);
+  } else {
+    const { data, error } = await supabase.rpc("demote_to_waitlist", {
+      p_participation_id: participationId,
+    });
+    if (error) {
+      const status = error.code === "P0002" ? 404 : 400;
+      return NextResponse.json({ error: error.message }, { status });
+    }
+    demoteToWaitlistRpcResult.parse(data);
+  }
+
+  // Audit trail — mirrors admin_add_gamer / admin_remove_gamer.
+  console.info(
+    JSON.stringify({
+      event: "admin_waitlist_transition",
+      action: body.action,
+      admin_id: user.id,
+      product_id: productId,
+      participation_id: participationId,
       at: new Date().toISOString(),
     }),
   );

@@ -1,9 +1,9 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
@@ -17,19 +17,13 @@ import type {
   ProductType,
 } from "@/types";
 import { LongDescription } from "./long-description";
-import { formatInTimeZone } from "date-fns-tz";
-import { computeProductSessions } from "@/components/calendar/compute-product-sessions";
-import { SessionCalendarView } from "@/components/calendar/session-calendar-view";
 import { ProductOverviewCard } from "./product-overview-card";
 import { GameInfoCard } from "./game-info-card";
-import type { RegistrationState } from "./derive-registration-state";
-import { SignupPanel } from "./signup-panel";
-import type { AuthState } from "./signup-panel-view";
 
-// Page body — same role as the cards' "View": layout + presentation,
-// with sub-adapters handling their own state. Owns nothing about
-// fetching. The route-level adapter (`ProductDetailPage`) and the
-// mockup preview route both render this directly.
+// Page body — pure layout + presentation. Owns nothing about fetching, and is
+// agnostic to the signup panel: the panel is injected as a slot, so the
+// route-level adapter (`ProductDetailPage`) passes the live `SignupPanel` while
+// the mockup preview passes a navigating one. Both render this directly.
 //
 // Layout: full-width container, image hero (1:1 product image), name +
 // tagline, then a 2-column grid on desktop (3:1 main : panel) that
@@ -51,12 +45,9 @@ export interface ProductDetailPageBodyProps {
   product: ProductBrowseRow & {
     holidays?: { date: string; reason: string }[];
   };
-  state: RegistrationState;
-  authState: AuthState;
-  /** Render the panel frozen at this instant for deterministic mocks. */
-  fixedNowMs?: number;
-  /** Mockup preview banner is shown if this is true (preview route). */
-  previewBanner?: boolean;
+  /** The right-column signup panel, injected so the body stays panel-agnostic.
+   *  Prod passes the live `SignupPanel`; the preview passes a navigating one. */
+  signupPanel: ReactNode;
   /** When opened from a `/schools/<slug>` listing, sends the back link there
    *  (labelled with the municipality) instead of the storefront. */
   municipality?: MunicipalityBackLink;
@@ -64,10 +55,7 @@ export interface ProductDetailPageBodyProps {
 
 export function ProductDetailPageBody({
   product,
-  state,
-  authState,
-  fixedNowMs,
-  previewBanner,
+  signupPanel,
   municipality,
 }: ProductDetailPageBodyProps) {
   const uiLocale = resolveLocale(useLocale());
@@ -81,12 +69,6 @@ export function ProductDetailPageBody({
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
       <div className="mx-auto max-w-5xl">
-        {previewBanner && (
-          <div className="mb-4 rounded-md border border-warning/60 bg-warning/10 px-3 py-2 text-center text-xs font-medium text-warning">
-            {t("preview.banner")}
-          </div>
-        )}
-
         <BackLink
           productType={product.product_type}
           municipality={municipality}
@@ -135,11 +117,11 @@ export function ProductDetailPageBody({
         {/* `minmax(0,…)` on every breakpoint (via `grid-cols-1` on
             mobile, which is shorthand for `minmax(0,1fr)`, and the
             explicit form on lg+) lets the main column shrink below
-            its content's intrinsic width. Required because the
-            calendar inside is a horizontal scroller whose children
-            would otherwise expand the grid track and blow out the
-            page width. Without this on mobile the default implicit
-            track is `auto`, which sizes to content. */}
+            its content's intrinsic width — so a wide child (a long
+            unbroken word, a code block in the long description) can't
+            expand the grid track and blow out the page width. Without
+            this on mobile the default implicit track is `auto`, which
+            sizes to content. */}
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
           <MainColumn product={product} longDescription={longDescription} />
           {/* Pin the whole panel just below the sticky site header (64px) with
@@ -147,12 +129,7 @@ export function ProductDetailPageBody({
               used elsewhere. Without the offset the card's top tucks under the
               header. */}
           <div className="lg:sticky lg:top-[calc(var(--header-height)+1rem)] lg:self-start">
-            <SignupPanel
-              product={product}
-              state={state}
-              authState={authState}
-              fixedNowMs={fixedNowMs}
-            />
+            {signupPanel}
           </div>
         </div>
       </div>
@@ -207,51 +184,6 @@ function MainColumn({
       <ProductOverviewCard product={product} />
 
       {isGameTopic(product.topic) && <GameInfoCard topic={product.topic} />}
-
-      <CalendarCard product={product} />
     </div>
-  );
-}
-
-function CalendarCard({
-  product,
-}: {
-  product: ProductDetailPageBodyProps["product"];
-}) {
-  const t = useTranslations("productDetail.sections");
-  const uiLocale = resolveLocale(useLocale());
-
-  const result = computeProductSessions({
-    productType: product.product_type,
-    startDate: product.start_date,
-    endDate: product.end_date,
-    scheduleSlots: product.schedule_slots,
-    holidays: product.holidays ?? [],
-  });
-  if (!result) return null;
-
-  // "Today" must be derived from the product's timezone — using UTC
-  // (`new Date().toISOString().slice(0, 10)`) lands on the wrong day for
-  // any non-UTC viewer near midnight. See CLAUDE.md "Date & Time".
-  const todayIso = formatInTimeZone(new Date(), product.timezone, "yyyy-MM-dd");
-
-  return (
-    <Card>
-      <CardContent className="p-5 sm:p-6">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          {t("calendar")}
-        </h2>
-        <div className="mt-4">
-          <SessionCalendarView
-            rangeStart={result.rangeStart}
-            rangeEnd={result.rangeEnd}
-            sessions={result.sessions}
-            skips={result.skips}
-            locale={uiLocale}
-            todayIso={todayIso}
-          />
-        </div>
-      </CardContent>
-    </Card>
   );
 }

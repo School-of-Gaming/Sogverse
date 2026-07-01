@@ -1,30 +1,29 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useLocale } from "next-intl";
 import type { ProductBrowseRow } from "@/types";
 import { AddGamerDialog } from "@/components/family";
 import { ROUTES } from "@/lib/constants";
-import { resolveLocale } from "@/lib/constants/locales";
-import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import {
   useCreateParticipation,
   useJoinWaitlist,
   type CreateParticipationInput,
 } from "@/services/participations";
-import { buildPricingOption, type PricingOption } from "./pricing-options";
+import { purchaseShapeFor } from "./pricing-options";
 import {
   SignupPanelView,
   type AuthState,
   type SignupPanelViewProps,
 } from "./signup-panel-view";
+import { useSignupPanelFields } from "./use-signup-panel-fields";
 import type { RegistrationState } from "./derive-registration-state";
 
-// Adapter: owns the form state (gamer / agreed / pricing pick) and fires the
-// create-participation / join-waitlist mutations. Every paid signup goes
-// through Stripe Checkout (one Stripe sub per gamer×club for subscriptions),
-// so there's no "add to existing sub" branch to detect.
+// Production adapter: takes the shared view fields from `useSignupPanelFields`
+// (gamer / agreed / pricing — the same hook the preview panel uses) and adds the
+// live create-participation / join-waitlist mutations on top. Every paid signup
+// goes through Stripe Checkout (one Stripe sub per gamer×club for
+// subscriptions), so there's no "add to existing sub" branch to detect.
 
 interface SignupPanelProps {
   product: Pick<
@@ -33,55 +32,19 @@ interface SignupPanelProps {
   >;
   state: RegistrationState;
   authState: AuthState;
-  /** Render the panel frozen at this instant for deterministic mocks. */
-  fixedNowMs?: number;
 }
 
 export function SignupPanel({
   product,
   state,
   authState,
-  fixedNowMs,
 }: SignupPanelProps) {
   const router = useRouter();
-  const uiLocale = resolveLocale(useLocale());
-  // Platform is EUR-only; Stripe Adaptive Pricing handles the customer's
-  // local currency at checkout. See src/lib/constants/currency.ts.
-  const currency = DEFAULT_CURRENCY;
+  // Pricing / gamer selection / agreed / locale+currency — the view props
+  // shared verbatim with the preview panel. This panel only adds the live
+  // mutation actions on top, so the demo can't drift from the real UI.
+  const fields = useSignupPanelFields(product, authState);
 
-  const pricingOption = useMemo(
-    () =>
-      buildPricingOption({
-        prices: product.product_prices,
-        billingMode: product.billing_mode,
-        productType: product.product_type,
-        currency,
-        currencyLabel: CURRENCY_CONFIG[currency].label,
-      }),
-    [product.product_prices, product.billing_mode, product.product_type, currency],
-  );
-
-  const [userPickedGamerId, setUserPickedGamerId] = useState<string | null>(
-    null,
-  );
-  // Only children who aren't already on the product can be selected. The
-  // default falls to the first selectable child (skipping any that are already
-  // signed up / waitlisted); a user pick of a locked child is ignored. When
-  // every child is already on, this resolves to null and the CTA stays
-  // disabled — the page still renders, the picker just shows their states.
-  const selectableGamers =
-    authState.kind === "ready"
-      ? authState.gamers.filter((g) => !g.signupState)
-      : [];
-  const selectedGamerId: string | null =
-    authState.kind === "ready"
-      ? userPickedGamerId !== null &&
-        selectableGamers.some((g) => g.id === userPickedGamerId)
-        ? userPickedGamerId
-        : (selectableGamers[0]?.id ?? null)
-      : null;
-
-  const [agreed, setAgreed] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [addGamerOpen, setAddGamerOpen] = useState(false);
 
@@ -93,23 +56,29 @@ export function SignupPanel({
   // the click and the outcome. `mutation.isPending` alone doesn't suffice —
   // it flips false the instant React Query dispatches the success state, but
   // the navigation/panel-swap hasn't happened yet, so the CTA briefly
-  // re-enables. Only cleared on retry-able outcomes (`full`, error). For both
-  // 'redirect' (Stripe) and 'free_confirmed' (router.push to the confirmation
-  // page) the outgoing page unloads/unmounts, so the flag stays set through
-  // the navigation.
+  // re-enables. Only cleared on retry-able outcomes (`full`, error). For
+  // 'redirect' (Stripe), 'free_confirmed', and a waitlist join — all of which
+  // navigate to the confirmation page — the outgoing page unloads/unmounts, so
+  // the flag stays set through the navigation.
+  //
+  // The await behind this spinner is also load-bearing for correctness, not
+  // just UX: for 'free_confirmed' and the waitlist join we router.push to the
+  // summary, which reads the participation row by id — so we must wait for the
+  // create/join mutation to commit that row before navigating, or the summary
+  // races the write and 404s. (The preview panel fakes this wait to match.)
   const [committing, setCommitting] = useState(false);
 
-  const purchaseShape = purchaseShapeFor(pricingOption);
+  const purchaseShape = purchaseShapeFor(fields.pricingOption);
 
   const handleSubmit = () => {
-    if (!selectedGamerId || !purchaseShape) return;
+    if (!fields.selectedGamerId || !purchaseShape) return;
     setSubmitError(null);
     setCommitting(true);
     const input: CreateParticipationInput = {
       productId: product.id,
-      gamerId: selectedGamerId,
+      gamerId: fields.selectedGamerId,
       purchaseShape,
-      currency,
+      currency: fields.currency,
     };
     createMutation.mutate(input, {
       onSuccess: (response) => {
@@ -117,9 +86,13 @@ export function SignupPanel({
           window.location.href = response.checkoutUrl;
           return;
         }
-        if (response.status === "free_confirmed") {
-          // Free events skip Stripe — send the parent to the same confirmation
-          // page the paid flow lands on. Keep `committing` set so the CTA stays
+        if (
+          response.status === "free_confirmed" ||
+          response.status === "external_confirmed"
+        ) {
+          // Free events and municipality clubs skip Stripe — the participation
+          // is already active. Send the parent to the same confirmation page
+          // the paid flow lands on. Keep `committing` set so the CTA stays
           // disabled through the navigation (the panel unmounts on push).
           router.push(ROUTES.shopConfirmation(response.participationId));
           return;
@@ -138,12 +111,17 @@ export function SignupPanel({
   };
 
   const handleJoinWaitlist = () => {
-    if (!selectedGamerId) return;
+    if (!fields.selectedGamerId) return;
     setSubmitError(null);
     setCommitting(true);
     waitlistMutation.mutate(
-      { productId: product.id, gamerId: selectedGamerId },
+      { productId: product.id, gamerId: fields.selectedGamerId },
       {
+        onSuccess: (response) => {
+          // Mirror the free-signup branch: land the parent on the summary
+          // (waitlist variant). Keep `committing` set — the panel unmounts on nav.
+          router.push(ROUTES.shopConfirmation(response.participationId));
+        },
         onError: (err) => {
           setCommitting(false);
           setSubmitError(
@@ -155,22 +133,14 @@ export function SignupPanel({
   };
 
   const viewProps: SignupPanelViewProps = {
-    productType: product.product_type,
+    ...fields,
     state,
     authState,
-    pricingOption,
-    selectedGamerId,
-    onSelectGamer: setUserPickedGamerId,
     onAddGamer: () => setAddGamerOpen(true),
-    agreed,
-    onAgreedChange: setAgreed,
     onSubmit: handleSubmit,
     onJoinWaitlist: handleJoinWaitlist,
     submitting: committing,
     submitError,
-    currency,
-    locale: uiLocale,
-    fixedNowMs,
   };
 
   return (
@@ -183,24 +153,8 @@ export function SignupPanel({
       <AddGamerDialog
         open={addGamerOpen}
         onOpenChange={setAddGamerOpen}
-        onCreated={(gamerId) => setUserPickedGamerId(gamerId)}
+        onCreated={fields.onSelectGamer}
       />
     </>
   );
-}
-
-function purchaseShapeFor(
-  option: PricingOption,
-): CreateParticipationInput["purchaseShape"] | null {
-  switch (option.kind) {
-    case "subscription":
-      return "subscription_monthly";
-    case "upfront":
-      return "single_payment";
-    case "free":
-      return "free";
-    case "external":
-    case "unavailable":
-      return null;
-  }
 }

@@ -1,13 +1,19 @@
 import { z } from "zod";
 
 /**
- * Response of POST /api/checkout/products/create — the three signup
- * outcomes: paid (redirect to Stripe Checkout), free (instantly active
- * participation), or product full.
+ * Response of POST /api/checkout/products/create — the signup outcomes: paid
+ * (redirect to Stripe Checkout), free (instantly active participation),
+ * external/municipality (instantly active, invoiced off-platform), or product
+ * full. `free_confirmed` and `external_confirmed` are distinct outcomes but the
+ * client treats both the same way — navigate to the confirmation page.
  */
 export const createParticipationResponse = z.discriminatedUnion("status", [
   z.object({ status: z.literal("redirect"), checkoutUrl: z.string() }),
   z.object({ status: z.literal("free_confirmed"), participationId: z.string() }),
+  z.object({
+    status: z.literal("external_confirmed"),
+    participationId: z.string(),
+  }),
   z.object({ status: z.literal("full") }),
 ]);
 
@@ -37,7 +43,7 @@ export type JoinWaitlistResponse = z.infer<typeof joinWaitlistResponse>;
  * checks structure, the route checks the per-kind invariants.
  */
 export const createParticipationRpcResult = z.object({
-  kind: z.enum(["free_active", "reserving", "full"]),
+  kind: z.enum(["free_active", "external_active", "reserving", "full"]),
   participation_id: z.string().optional(),
   reserved_until: z.string().optional(),
 });
@@ -48,3 +54,53 @@ export const joinWaitlistRpcResult = z.object({
   waitlist_position: z.number(),
   status: z.string(),
 });
+
+/**
+ * Body of PATCH /api/admin/products/[id]/participations/[participationId] — the
+ * admin waitlist status transitions driven by the groups-panel drag UI.
+ * `promote` carries the drop target (`groupId` null = unassigned inbox);
+ * `demote` sends an active gamer to the back of the waitlist (no target).
+ */
+export const waitlistTransitionBody = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("promote"), groupId: z.string().nullable() }),
+  z.object({ action: z.literal("demote") }),
+]);
+
+export type WaitlistTransitionBody = z.infer<typeof waitlistTransitionBody>;
+
+/**
+ * `get_waitlist_position` RPC result. Codegen types it as a bare `number`, but
+ * the function returns NULL when the row is unknown, not waitlisted, or not
+ * owned by the caller — so the live shape is nullable. Parsing through this
+ * schema restores the truth the generator drops (see supabase/CLAUDE.md).
+ */
+export const waitlistPositionResult = z.number().int().positive().nullable();
+
+/**
+ * `promote_from_waitlist` RPC result (Json in codegen; structure from
+ * schema.sql). `promoted` on success; `noop` when the row wasn't waitlisted
+ * (already seated / cancelled) — the admin UI treats both as success and lets
+ * the snapshot refetch reconcile.
+ */
+export const promoteFromWaitlistRpcResult = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("promoted"),
+    participation_id: z.string(),
+    product_id: z.string(),
+    group_id: z.string().nullable(),
+  }),
+  z.object({ kind: z.literal("noop"), status: z.string() }),
+]);
+
+/**
+ * `demote_to_waitlist` RPC result (Json in codegen; structure from schema.sql).
+ * `demoted` on success; `noop` when the row was already waitlisted.
+ */
+export const demoteToWaitlistRpcResult = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("demoted"),
+    participation_id: z.string(),
+    product_id: z.string(),
+  }),
+  z.object({ kind: z.literal("noop"), status: z.string() }),
+]);

@@ -7,6 +7,7 @@ export {
   UpcomingSessionCard,
   type UpcomingSessionCardProps,
 } from "./UpcomingSessionCard";
+export { WaitlistCard, type WaitlistCardProps } from "./WaitlistCard";
 export {
   SessionsSection,
   type SessionsSectionProps,

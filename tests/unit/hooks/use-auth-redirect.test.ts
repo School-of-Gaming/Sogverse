@@ -11,11 +11,23 @@ describe("resolveSafeRedirect", () => {
     expect(resolveSafeRedirect("/shop/abc-123")).toBe("/shop/abc-123");
   });
 
+  it("allows municipality-club product detail pages", () => {
+    // `/schools/[municipalityName]/[id]` renders the same ProductDetailPage
+    // as `/shop/[id]`, so its sign-in CTA must round-trip back here too.
+    expect(resolveSafeRedirect("/schools/helsinki/abc-123")).toBe(
+      "/schools/helsinki/abc-123"
+    );
+  });
+
   it("rejects the bare shop listing (no trailing id)", () => {
     // Without the trailing slash this is just the listing page; the
     // post-auth redirect is meant to land users back on a specific
     // product they were trying to enroll in.
     expect(resolveSafeRedirect("/shop")).toBe(null);
+  });
+
+  it("rejects the bare schools listing (no trailing slug)", () => {
+    expect(resolveSafeRedirect("/schools")).toBe(null);
   });
 
   it("rejects the retired per-type storefront roots", () => {

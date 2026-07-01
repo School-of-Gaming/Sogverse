@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -85,18 +85,14 @@ export interface SignupPanelViewProps {
   submitError?: string | null;
   currency: SupportedCurrency;
   locale: string;
-  /** Render frozen at this instant for deterministic mock previews. */
-  fixedNowMs?: number;
 }
 
 export function SignupPanelView(props: SignupPanelViewProps) {
   switch (props.state.kind) {
     case "ended":
-      return <EndedPanel productType={props.productType} />;
     case "running_late":
-      return <RunningLatePanel productType={props.productType} />;
     case "full_closed":
-      return <FullClosedPanel {...props} />;
+      return <ClosedPanel productType={props.productType} />;
     case "full_waitlist":
       return <FullWaitlistPanel {...props} />;
     case "pending_thr":
@@ -110,86 +106,44 @@ export function SignupPanelView(props: SignupPanelViewProps) {
 
 // ---------- Shared shell ----------
 
-type Tone = "primary" | "warning" | "destructive" | "muted" | "secondary";
-
-const TONE_BANNER: Record<Tone, string> = {
-  primary: "bg-primary text-primary-foreground",
-  warning: "bg-warning text-warning-foreground",
-  destructive: "bg-destructive text-destructive-foreground",
-  muted: "bg-muted text-muted-foreground",
-  secondary: "bg-secondary text-secondary-foreground",
-};
-
-const TONE_BORDER: Record<Tone, string> = {
-  primary: "border-primary/40",
-  warning: "border-warning/60",
-  destructive: "border-destructive/60",
-  muted: "border-border",
-  secondary: "border-secondary/40",
-};
-
+// Every state shows the same calm header: the product's action noun
+// (Enrolment / Registration / Sign-up / Joining) in muted grey — no per-state
+// text or colour. The panel body (seat bar, pricing, CTA button, status notes)
+// carries the state-specific signal instead, so the header never competes with
+// it or repeats it.
 function PanelShell({
-  banner,
-  tone,
+  productType,
   children,
 }: {
-  banner: string;
-  tone: Tone;
+  productType: ProductType;
   children: React.ReactNode;
 }) {
+  const t = useTranslations("productDetail.signupPanel");
   return (
-    <Card className={cn("overflow-hidden", TONE_BORDER[tone])}>
-      <div
-        className={cn(
-          "px-5 py-2.5 text-center text-sm font-semibold",
-          TONE_BANNER[tone],
-        )}
-      >
-        {banner}
+    <Card className="overflow-hidden">
+      <div className="bg-muted px-5 py-2.5 text-center text-sm font-semibold text-muted-foreground">
+        {t(`noun.${productType}`)}
       </div>
       <CardContent className="space-y-5 p-5 sm:p-6">{children}</CardContent>
     </Card>
   );
 }
 
-// ---------- Variant: Ended ----------
+// ---------- Variant: Closed (ended / running late / full + no waitlist) ----------
 
-function EndedPanel({ productType }: { productType: ProductType }) {
-  const t = useTranslations("productDetail.signupPanel");
-  void productType;
-  return (
-    <PanelShell banner={t("bannerEnded")} tone="muted">
-      <p className="text-sm text-muted-foreground">{t("endedNote")}</p>
-    </PanelShell>
-  );
-}
-
-// ---------- Variant: Running late ----------
-
-function RunningLatePanel({ productType }: { productType: ProductType }) {
-  const t = useTranslations("productDetail.signupPanel");
-  void productType;
-  return (
-    <PanelShell banner={t("bannerRunningLate")} tone="muted">
-      <p className="text-sm text-muted-foreground">{t("runningLateNote")}</p>
-    </PanelShell>
-  );
-}
-
-// ---------- Variant: Full + closed (no waitlist) ----------
-
-function FullClosedPanel(props: SignupPanelViewProps) {
+// One shared panel for every "you can't sign up right now" dead end (ended,
+// already started, or full with no waitlist). A parent never reaches these
+// through a browse card — registrationCtaKind resolves them to a disabled card
+// button or no button at all — so the only way in is a stale link or bookmark.
+// That makes three bespoke layouts not worth maintaining, and the exact reason
+// not worth spelling out: they collapse to one generic note, no actionable CTA.
+// (The RegistrationState kinds stay distinct — the card layer still needs them;
+// only the panel rendering merges.)
+function ClosedPanel({ productType }: { productType: ProductType }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
-    <PanelShell banner={t("bannerFullClosed")} tone="destructive">
-      <PricingPanelView
-        option={props.pricingOption}
-        currency={props.currency}
-        locale={props.locale}
-      />
-      <Button size="lg" className="w-full text-base" disabled>
-        {t("bannerFullClosed")}
-      </Button>
+    <PanelShell productType={productType}>
+      <p className="text-sm text-muted-foreground">{t("closedNote")}</p>
     </PanelShell>
   );
 }
@@ -198,9 +152,18 @@ function FullClosedPanel(props: SignupPanelViewProps) {
 
 function FullWaitlistPanel(props: SignupPanelViewProps) {
   const t = useTranslations("productDetail.signupPanel");
+  if (props.state.kind !== "full_waitlist") return null;
   return (
-    <PanelShell banner={t("bannerWaitlist")} tone="destructive">
-      <WaitlistInfo />
+    <PanelShell productType={props.productType}>
+      {/* Same seat bar as any capped product — full reads as "0 of N seats
+          remaining" with the waitlist chip, so the parent sees the capacity
+          story like everywhere else. The "how the waitlist works" detail moved
+          to the post-join summary (it's "what happens next"). */}
+      <SeatAvailabilityBar
+        seatCount={props.state.seatCount}
+        seatsLeft={0}
+        waitlistEnabled
+      />
       <PricingPanelView
         option={props.pricingOption}
         currency={props.currency}
@@ -211,25 +174,10 @@ function FullWaitlistPanel(props: SignupPanelViewProps) {
         // Full+waitlist branch dispatches to onJoinWaitlist instead of onSubmit.
         onSubmit={props.onJoinWaitlist}
         ctaLabelActive={t("ctaWaitlist")}
-        ctaLabelIdle={t("ctaWaitlist")}
         active
         variant="secondary"
       />
     </PanelShell>
-  );
-}
-
-function WaitlistInfo() {
-  const t = useTranslations("productDetail.signupPanel");
-  return (
-    <div className="space-y-2 rounded-md border border-border bg-muted/30 p-4 text-xs text-muted-foreground">
-      <p className="font-semibold text-foreground">{t("waitlistHowTitle")}</p>
-      <ul className="list-disc space-y-1 pl-4">
-        <li>{t("waitlistHowItem1")}</li>
-        <li>{t("waitlistHowItem2")}</li>
-        <li>{t("waitlistHowItem3")}</li>
-      </ul>
-    </div>
   );
 }
 
@@ -240,7 +188,6 @@ function WaitlistInfo() {
 // bar and no threshold meter. The product reads as if it has no seating
 // constraints (cf. the pre-open panel, which also renders no bar).
 function ThresholdPanel(props: SignupPanelViewProps) {
-  const t = useTranslations("productDetail.signupPanel");
   const verb = useVerb(props.productType);
   const activeLabel = useActiveCtaLabel(
     verb,
@@ -252,18 +199,13 @@ function ThresholdPanel(props: SignupPanelViewProps) {
   if (props.state.kind !== "pending_thr") return null;
 
   return (
-    <PanelShell banner={t(`noun.${props.productType}`)} tone="muted">
+    <PanelShell productType={props.productType}>
       <PricingPanelView
         option={props.pricingOption}
         currency={props.currency}
         locale={props.locale}
       />
-      <FormOrAuth
-        {...props}
-        ctaLabelActive={activeLabel}
-        ctaLabelIdle={activeLabel}
-        active
-      />
+      <FormOrAuth {...props} ctaLabelActive={activeLabel} active />
     </PanelShell>
   );
 }
@@ -275,14 +217,12 @@ function PreOpenPanel(props: SignupPanelViewProps) {
   // order across renders. The conditional early return is unreachable
   // in practice (the parent dispatches by kind) but kept for type
   // narrowing in the JSX below.
-  const t = useTranslations("productDetail.signupPanel");
-  const format = useFormatter();
   const opensAt =
     props.state.kind === "closed_pre"
       ? props.state.opensAt
       : "2099-01-01T00:00:00Z";
   const targetMs = new Date(opensAt).getTime();
-  const isOpen = useCountdownDone(targetMs, props.fixedNowMs);
+  const isOpen = useCountdownDone(targetMs);
   const verb = useVerb(props.productType);
   const activeLabel = useActiveCtaLabel(
     verb,
@@ -293,21 +233,8 @@ function PreOpenPanel(props: SignupPanelViewProps) {
 
   if (props.state.kind !== "closed_pre") return null;
 
-  // Pre-zero banner names the exact moment registration opens — the
-  // countdown clock sits below the button (so the button doesn't shift
-  // when it unmounts), so the banner has to carry the "when" itself.
-  const banner = isOpen
-    ? t("bannerCountdownDone")
-    : t("bannerCountdown", {
-        date: format.dateTime(new Date(targetMs), {
-          dateStyle: "medium",
-          timeStyle: "short",
-        }),
-      });
-  const tone: Tone = isOpen ? "primary" : "muted";
-
   return (
-    <PanelShell banner={banner} tone={tone}>
+    <PanelShell productType={props.productType}>
       <PricingPanelView
         option={props.pricingOption}
         currency={props.currency}
@@ -315,14 +242,12 @@ function PreOpenPanel(props: SignupPanelViewProps) {
       />
       <FormOrAuth
         {...props}
-        helperText={t("preOpenHelper")}
-        // Idle copy flips with the countdown: pre-zero we tell the parent
-        // registration isn't open yet; post-zero it reads as the live action
-        // label (same as the open panel) so it never contradicts the banner.
-        // The "no gamer selected" case is handled centrally in SignupForm
-        // (ctaSelectGamer), so it doesn't need a special idle label here.
-        ctaLabelIdle={isOpen ? activeLabel : t("ctaPreOpenIdle", { verb })}
-        ctaLabelActive={isOpen ? activeLabel : t("ctaPreOpenReady")}
+        // The prep checklist in SignupForm runs the same whether or not
+        // registration is open yet, so a parent can finish every step during the
+        // countdown. `active={isOpen}` only gates the final leaf: until the clock
+        // hits zero a fully-prepped parent sees "Ready & waiting"; at zero it
+        // flips in place to the live action label (same as the open panel).
+        ctaLabelActive={activeLabel}
         active={isOpen}
       />
       {/* Countdown stays mounted across the pre-open → open flip. When the
@@ -334,11 +259,7 @@ function PreOpenPanel(props: SignupPanelViewProps) {
           up, etc.) and the Sign-up button shifts under the parent's
           cursor. The whole point of the live countdown is the one-tap-buy
           moment, so the slot is held constant. */}
-      <CountdownClock
-        targetMs={targetMs}
-        fixedNowMs={props.fixedNowMs}
-        done={isOpen}
-      />
+      <CountdownClock targetMs={targetMs} done={isOpen} />
     </PanelShell>
   );
 }
@@ -346,7 +267,6 @@ function PreOpenPanel(props: SignupPanelViewProps) {
 // ---------- Variant: Open ----------
 
 function OpenPanel(props: SignupPanelViewProps) {
-  const t = useTranslations("productDetail.signupPanel");
   const verb = useVerb(props.productType);
   const activeLabel = useActiveCtaLabel(
     verb,
@@ -356,28 +276,15 @@ function OpenPanel(props: SignupPanelViewProps) {
   );
 
   if (props.state.kind !== "open") return null;
-  const urgent =
-    props.state.seatsLeft !== null &&
-    props.state.seatsLeft <= 3 &&
-    props.state.seatsLeft > 0;
 
   return (
-    <PanelShell
-      // Non-urgent open state: the banner is a neutral section label naming the
-      // *noun* of the action (Enrolment / Registration / …), deliberately NOT a
-      // second "{verb} now" CTA. The solid-primary Enrol button below is the one
-      // call to action; a loud primary banner here would compete with it. The
-      // urgent (almost-full) banner stays loud — that's a real scarcity signal,
-      // not a duplicated CTA.
-      banner={urgent ? t("bannerAlmostFull") : t(`noun.${props.productType}`)}
-      tone={urgent ? "warning" : "muted"}
-    >
+    <PanelShell productType={props.productType}>
       {props.state.seatCount !== null && (
-        // TODO(participations): drop the `?? seatCount` fallback once
-        // real seatsLeft counts are threaded through. Today seatsLeft is
-        // always null (no participations table yet), so the bar fills 100%.
-        // Once enrollments start landing, this fallback will lie about
-        // remaining capacity until participations ships.
+        // seatsLeft is live now — deriveRegistrationState computes it from the
+        // real product_seat_counts row. The `?? seatCount` is only type
+        // narrowing: the open state types seatsLeft as `number | null`, but
+        // derive only returns null when seatCount is null (the branch we're
+        // already inside excludes that), so the fallback is unreachable.
         <SeatAvailabilityBar
           seatCount={props.state.seatCount}
           seatsLeft={props.state.seatsLeft ?? props.state.seatCount}
@@ -389,12 +296,7 @@ function OpenPanel(props: SignupPanelViewProps) {
         currency={props.currency}
         locale={props.locale}
       />
-      <FormOrAuth
-        {...props}
-        ctaLabelActive={activeLabel}
-        ctaLabelIdle={activeLabel}
-        active
-      />
+      <FormOrAuth {...props} ctaLabelActive={activeLabel} active />
     </PanelShell>
   );
 }
@@ -402,9 +304,13 @@ function OpenPanel(props: SignupPanelViewProps) {
 // ---------- Form / Auth overlay ----------
 
 interface FormOrAuthProps extends SignupPanelViewProps {
-  helperText?: string;
+  /**
+   * The CTA's *enabled* label — the live action ("Enrol now · €45/mo", "Join
+   * the waitlist") shown once every prep step is done and registration is open.
+   * Every disabled step (add a gamer, agree to the rules, "Ready & waiting")
+   * is resolved centrally in SignupForm, so there's no separate idle label.
+   */
   ctaLabelActive: string;
-  ctaLabelIdle: string;
   active: boolean;
   variant?: "default" | "secondary";
 }
@@ -485,6 +391,29 @@ function SignupForm(
   const formReady = props.selectedGamerId !== null && props.agreed;
   const clickable = formReady && props.active && !props.submitting;
 
+  // The CTA doubles as the instruction for the parent's next step: while it's
+  // disabled it names exactly what's still missing, in the order they can act
+  // on it (add a gamer → agree to the rules → wait for the window). The same
+  // checklist runs whether or not registration is open, so a parent can finish
+  // every step during the pre-open countdown and land on "Ready & waiting",
+  // primed to one-tap the instant it opens. Only the final leaf differs by
+  // window: the live action label once open (`active`), the holding state until
+  // then. selectedGamerId is null only when no child is selectable: either
+  // there's still room to add one (canAddGamer → prompt to add a gamer), or
+  // every child is already on the product at the gamer cap (nothing left to do
+  // — the picker rows show each child's exact seat/waitlist status in place).
+  const ctaLabel = props.submitting
+    ? t("ctaSubmitting")
+    : props.selectedGamerId === null
+      ? canAddGamer
+        ? t("ctaAddGamer")
+        : t("ctaAllSet")
+      : !props.agreed
+        ? t("ctaAgreeRules")
+        : props.active
+          ? props.ctaLabelActive
+          : t("ctaReadyWaiting");
+
   return (
     <div className="space-y-4">
       <div className="rounded-md border border-border bg-muted/30 p-4">
@@ -493,11 +422,6 @@ function SignupForm(
               (enrol / register / sign up / join). */}
           {t(`whoAreYouSigningUp.${props.productType}`)}
         </h3>
-        {props.helperText && (
-          <p className="mt-1 text-xs text-muted-foreground">
-            {props.helperText}
-          </p>
-        )}
         <div className="mt-3 space-y-2">
           <div
             role="radiogroup"
@@ -598,16 +522,7 @@ function SignupForm(
         disabled={!clickable}
         onClick={props.onSubmit}
       >
-        {props.submitting
-          ? t("ctaSubmitting")
-          : // When registration is actionable but no gamer is selected (zero
-            // gamers, or all already enrolled), prompt to pick one rather than
-            // showing the action verb on a dead button.
-            props.active && props.selectedGamerId === null
-            ? t("ctaSelectGamer")
-            : formReady
-              ? props.ctaLabelActive
-              : props.ctaLabelIdle}
+        {ctaLabel}
       </Button>
 
       {props.submitError && (
@@ -629,21 +544,31 @@ function RulesCheckbox({
   onAgreedChange: (next: boolean) => void;
 }) {
   const t = useTranslations("productDetail.signupPanel.rules");
+  // Heading names this section "The Rules" so the CTA's "Agree to the rules"
+  // prompt has a visible referent — the rule sentence itself never says the
+  // word. The whole box is one clickable toggle (heading + rule + checkbox)
+  // that highlights when agreed. No nested box: unlike the gamer picker — whose
+  // outer box wraps a border-per-selectable-row — the rules section is a single
+  // choice, so a box-in-a-box would just be visual noise.
+  const tPanel = useTranslations("productDetail.signupPanel");
   return (
     <label
       className={cn(
-        "flex cursor-pointer items-start gap-3 rounded-md border p-3 text-xs transition-colors",
+        "block cursor-pointer rounded-md border p-4 transition-colors",
         agreed
           ? "border-primary bg-primary/5"
-          : "border-input hover:bg-accent/50"
+          : "border-border bg-muted/30 hover:bg-accent/50"
       )}
     >
-      <Checkbox
-        className="mt-0.5"
-        checked={agreed}
-        onChange={(e) => onAgreedChange(e.target.checked)}
-      />
-      <span className="text-muted-foreground">{t(productType)}</span>
+      <h3 className="text-sm font-semibold">{tPanel("rulesHeading")}</h3>
+      <div className="mt-3 flex items-start gap-3 text-xs">
+        <Checkbox
+          className="mt-0.5"
+          checked={agreed}
+          onChange={(e) => onAgreedChange(e.target.checked)}
+        />
+        <span className="text-muted-foreground">{t(productType)}</span>
+      </div>
     </label>
   );
 }

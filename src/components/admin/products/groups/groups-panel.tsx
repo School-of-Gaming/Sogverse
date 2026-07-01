@@ -23,22 +23,30 @@ import {
   useAdminRemoveGamerFromProduct,
   useCreateGroup,
   useDeleteGroup,
+  useDemoteToWaitlist,
   useGroupPending,
   useMoveParticipation,
   useProductGroups,
+  usePromoteFromWaitlist,
   useRemoveGedu,
   useRenameGroup,
 } from "@/services/groups";
+import { SeatAvailabilityBar } from "@/components/public/products/seat-availability-bar";
 import { GamerPickerSheet } from "../gamer-picker-sheet";
 import { GeduPickerSheet } from "../gedu-picker-sheet";
 import { GamerChip } from "./gamer-chip";
 import { GroupColumn } from "./group-column";
 import { UnassignedCard } from "./unassigned-card";
+import { WaitlistCard } from "./waitlist-card";
 import type { ProductGroupsSnapshot, ProductType } from "@/types";
 
 interface GroupsPanelProps {
   productId: string;
   productType: ProductType;
+  /** Capacity cap, or null for uncapped — drives the seat-availability bar. */
+  seatCount: number | null;
+  /** Whether the product opens a waitlist once full — drives the seat bar copy. */
+  waitlistEnabled: boolean;
   /**
    * True when this product has a joinable voice room: remote, and with a
    * session still ahead of it. False for in-person products and for
@@ -85,13 +93,17 @@ function readGamerDragData(value: unknown): GamerDragData | null {
 /**
  * Payload attached by the droppables: group columns and the unassigned card
  * carry `{ toGroupId }` (null = unassigned inbox); the header's removal zone
- * carries `{ remove: true }`.
+ * carries `{ remove: true }`; the waitlist card carries `{ waitlist: true }`.
  */
-type DropData = { kind: "move"; toGroupId: string | null } | { kind: "remove" };
+type DropData =
+  | { kind: "move"; toGroupId: string | null }
+  | { kind: "remove" }
+  | { kind: "waitlist" };
 
 function readDropData(value: unknown): DropData | null {
   if (typeof value !== "object" || value === null) return null;
   if ("remove" in value && value.remove === true) return { kind: "remove" };
+  if ("waitlist" in value && value.waitlist === true) return { kind: "waitlist" };
   if ("toGroupId" in value) {
     const { toGroupId } = value;
     if (typeof toGroupId === "string" || toGroupId === null) {
@@ -119,6 +131,7 @@ function DragOverlayContent({
     const all = [
       ...snapshot.unassigned,
       ...snapshot.groups.flatMap((g) => g.participations),
+      ...snapshot.waitlist,
     ];
     return all.find((p) => p.id === data.participationId) ?? null;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on active?.id rather than the ref-changing `active` object
@@ -187,6 +200,8 @@ function HeaderGamerAction({ onAddGamer }: { onAddGamer: () => void }) {
 export function GroupsPanel({
   productId,
   productType,
+  seatCount,
+  waitlistEnabled,
   voiceAvailable,
   voiceIsOpen,
   opensDate,
@@ -204,6 +219,8 @@ export function GroupsPanel({
   const deleteGroup = useDeleteGroup(productId);
   const addGamer = useAdminAddGamerToProduct(productId);
   const removeGamer = useAdminRemoveGamerFromProduct(productId);
+  const promote = usePromoteFromWaitlist(productId);
+  const demote = useDemoteToWaitlist(productId);
 
   const [pickerForGroupId, setPickerForGroupId] = useState<string | null>(null);
   const [gamerPickerOpen, setGamerPickerOpen] = useState(false);
@@ -217,6 +234,15 @@ export function GroupsPanel({
   // the Add Gamer affordance is hidden for that product type. Route enforces
   // this too (defense in depth).
   const canAddGamer = productType !== "consumer_club";
+  // The waitlist section shows only when the product actually opens a waitlist
+  // — same signal the seat bar reads. Gating on the capability (not the type)
+  // keeps a full camp/event, or a muni club with the waitlist toggle off, from
+  // exposing a drop target that would demote actives onto a waitlist the
+  // product doesn't offer. Consumer clubs can't enable a waitlist anyway (a
+  // waitlister there can't be promoted without a Stripe subscription), so
+  // waitlistEnabled is already false for them; the explicit exclusion documents
+  // that and mirrors the route's defense-in-depth block.
+  const showWaitlist = waitlistEnabled && productType !== "consumer_club";
 
   // Any enrolled gamer blocks a re-add via the picker.
   const enrolledGamerIds = useMemo(() => {
@@ -253,6 +279,23 @@ export function GroupsPanel({
     return map;
   }, [snapshot]);
 
+  // Which chips are waitlisted — decides promote (waitlisted → group/unassigned)
+  // vs an ordinary move, and demote (active → waitlist) vs a no-op.
+  const waitlistedIds = useMemo(() => {
+    return new Set((snapshot?.waitlist ?? []).map((p) => p.id));
+  }, [snapshot]);
+
+  // Seats taken = every active participation (groups + unassigned; the snapshot
+  // only ever holds active rows there). Drives the seat-availability bar and the
+  // promote dialog's over-capacity warning, from the one snapshot source.
+  const activeCount = useMemo(() => {
+    if (!snapshot) return 0;
+    return (
+      snapshot.groups.reduce((n, g) => n + g.participations.length, 0) +
+      snapshot.unassigned.length
+    );
+  }, [snapshot]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
@@ -270,6 +313,28 @@ export function GroupsPanel({
       // mutating. Stash the chip's identity for the dialog copy; the mutation
       // fires only when the admin confirms.
       setRemoving({ id: dragData.participationId, name: dragData.firstName });
+      return;
+    }
+
+    const isWaitlisted = waitlistedIds.has(dragData.participationId);
+
+    if (dropData.kind === "waitlist") {
+      // Dropping onto the waitlist demotes an active gamer to the back of the
+      // line. A chip already on the waitlist is a no-op.
+      if (isWaitlisted) return;
+      demote.mutate({ participationId: dragData.participationId });
+      return;
+    }
+
+    // dropData.kind === "move": a group column or the unassigned inbox.
+    if (isWaitlisted) {
+      // Promote the waitlisted gamer straight into the drop target — give them a
+      // seat. No confirm: the live seat bar already shows the admin where the
+      // club's capacity stands, and the action is reversible (demote).
+      promote.mutate({
+        participationId: dragData.participationId,
+        toGroupId: dropData.toGroupId,
+      });
       return;
     }
 
@@ -311,9 +376,15 @@ export function GroupsPanel({
 
   const groups = snapshot?.groups ?? [];
   const unassigned = snapshot?.unassigned ?? [];
+  const waitlist = snapshot?.waitlist ?? [];
   const hasGroups = groups.length > 0;
 
-  // Greyed/undraggable chips: an in-flight move OR an in-flight admin removal.
+  // Capacity context. The bar renders nothing when uncapped (seatCount null);
+  // when full or over-filled it simply reads "0 remaining" — admins promoting
+  // over the cap do so deliberately, so we don't special-case over-capacity.
+  const seatsLeft = seatCount !== null ? Math.max(0, seatCount - activeCount) : 0;
+
+  // Greyed/undraggable chips: an in-flight move/promote/demote OR removal.
   const busyChipIds = new Set<string>([...pending.moves, ...pending.removes]);
 
   return (
@@ -322,8 +393,8 @@ export function GroupsPanel({
           to a "Remove gamer" drop zone mid-drag (HeaderGamerAction). The picker
           sheets are deliberately kept OUTSIDE it — see the note below. */}
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="flex flex-row items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
             <h2 className="flex items-center gap-2 text-lg font-semibold">
               <Users className="h-5 w-5 text-muted-foreground" />
               {t("title")}
@@ -331,6 +402,17 @@ export function GroupsPanel({
             <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
           </div>
           <div className="flex items-center gap-2">
+            {/* Capacity context — the same bar the shop shows, fed from the live
+                snapshot's active count. Fixed at ~a card/panel width so it reads
+                the same as on the product card and detail page (where it fills
+                its parent). Hidden on mobile, where its nowrap "X of Y remaining"
+                label would crowd the buttons. Renders nothing for uncapped. */}
+            <SeatAvailabilityBar
+              seatCount={seatCount}
+              seatsLeft={seatsLeft}
+              waitlistEnabled={waitlistEnabled}
+              className="hidden w-80 sm:block"
+            />
             {canAddGamer && (
               <HeaderGamerAction onAddGamer={() => setGamerPickerOpen(true)} />
             )}
@@ -389,6 +471,16 @@ export function GroupsPanel({
                 </Button>
               </CardContent>
             </Card>
+          )}
+
+          {/* Waitlist — hidden for consumer clubs (no waitlist there). Inside
+              the DndContext so its chips can be dragged out to promote/remove
+              and active gamers can be dropped in to demote. */}
+          {showWaitlist && (
+            <WaitlistCard
+              participations={waitlist}
+              pendingChipIds={busyChipIds}
+            />
           )}
         </div>
 

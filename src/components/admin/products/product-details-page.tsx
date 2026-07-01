@@ -15,6 +15,7 @@ import {
   Wallet,
   ExternalLink,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants";
@@ -24,10 +25,10 @@ import {
   cn,
   formatCurrencyFromCents,
   formatDate,
-  formatDateOnly,
 } from "@/lib/utils";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { ProductOverviewCard } from "@/components/public/products/product-overview-card";
+import { formatClubTermDates } from "@/components/public/products/format-product-term-dates";
 import {
   useProductAdmin,
   type ProductAdminDetailRow,
@@ -166,21 +167,12 @@ export function ProductDetailsPage({
       <GroupsPanel
         productId={productId}
         productType={productType}
+        seatCount={product.seat_count}
+        waitlistEnabled={product.waitlist_enabled}
         voiceAvailable={voiceAvailable}
         voiceIsOpen={voice.voiceIsOpen}
         opensDate={voice.opensDate}
         opensTime={voice.opensTime}
-      />
-
-      <FuturePlaceholder
-        icon={Clock}
-        title={t("detailsPage.placeholders.waitlist.title")}
-        body={t("detailsPage.placeholders.waitlist.body")}
-      />
-      <FuturePlaceholder
-        icon={Wallet}
-        title={t("detailsPage.placeholders.metrics.title")}
-        body={t("detailsPage.placeholders.metrics.body")}
       />
     </div>
   );
@@ -250,15 +242,9 @@ function HeaderCard({
             >
               {statusLabel}
             </span>
-            <span
-              className={`rounded-full px-2 py-0.5 text-xs ${
-                isVisible
-                  ? "bg-primary/10 text-primary"
-                  : "bg-muted text-muted-foreground"
-              }`}
-            >
+            <Badge variant={isVisible ? "default" : "secondary"}>
               {isVisible ? visibleLabel : hiddenLabel}
-            </span>
+            </Badge>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -300,9 +286,6 @@ function OperationalFacts({
   t: ReturnType<typeof useTranslations<"admin.products">>;
   c: ReturnType<typeof useTranslations<"common">>;
 }) {
-  const isClub =
-    product.product_type === "consumer_club" ||
-    product.product_type === "municipality_club";
   const isMuni = product.product_type === "municipality_club";
 
   // Render a per-session fee from its stored cents. The state is derived from
@@ -331,16 +314,10 @@ function OperationalFacts({
     return formatCurrencyFromCents(cents, "eur", uiLocale);
   };
 
-  // Camps/events surface their dates inside the shared "When & where" card
-  // (the schedule formatter folds them in); recurring clubs don't, so a
-  // club's term dates live here — the only admin-only date surface.
-  const termDates = (() => {
-    if (!isClub || !product.start_date) return null;
-    if (product.end_date && product.end_date !== product.start_date) {
-      return `${formatDateOnly(product.start_date, uiLocale)} → ${formatDateOnly(product.end_date, uiLocale)}`;
-    }
-    return formatDateOnly(product.start_date, uiLocale);
-  })();
+  // A club's term range (shared with the parent overview card via
+  // `formatClubTermDates`). Camps/events fold their dates into the schedule
+  // card instead, so the helper returns null for them.
+  const termDates = formatClubTermDates(product, uiLocale);
 
   const seatsLine =
     product.seat_count !== null
@@ -451,34 +428,6 @@ function Fact({
           {label}
         </p>
         <div className="mt-0.5 text-sm">{children}</div>
-      </div>
-    </div>
-  );
-}
-
-// ──────────────────────────────────────────────────────────────────────
-// Placeholder card for sections that surface later (groups + gedu
-// assignment, waitlist, business metrics). Rendered with dashed border
-// so they don't read as broken empty states — the admin can see what's
-// coming and where it'll land.
-// ──────────────────────────────────────────────────────────────────────
-function FuturePlaceholder({
-  icon: Icon,
-  title,
-  body,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  title: string;
-  body: string;
-}) {
-  return (
-    <div className="rounded-lg border border-dashed bg-muted/20 p-6">
-      <div className="flex items-start gap-3">
-        <Icon className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
-        <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold">{title}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">{body}</p>
-        </div>
       </div>
     </div>
   );

@@ -435,7 +435,7 @@ export type Database = {
           signed_up_at: string
           status: Database["public"]["Enums"]["participation_status"]
           updated_at: string
-          waitlist_position: number | null
+          waitlisted_at: string | null
         }
         Insert: {
           created_at?: string
@@ -448,7 +448,7 @@ export type Database = {
           signed_up_at?: string
           status: Database["public"]["Enums"]["participation_status"]
           updated_at?: string
-          waitlist_position?: number | null
+          waitlisted_at?: string | null
         }
         Update: {
           created_at?: string
@@ -461,7 +461,7 @@ export type Database = {
           signed_up_at?: string
           status?: Database["public"]["Enums"]["participation_status"]
           updated_at?: string
-          waitlist_position?: number | null
+          waitlisted_at?: string | null
         }
         Relationships: [
           {
@@ -1284,6 +1284,19 @@ export type Database = {
       confirm_reservation: { Args: { p_reservation_id: string }; Returns: Json }
       count_active_seats: { Args: { p_product_id: string }; Returns: number }
       count_seats_taken: { Args: { p_product_id: string }; Returns: number }
+      create_gamer: {
+        Args: {
+          p_date_of_birth: string
+          p_first_name: string
+          p_gamer_id: string
+          p_gender?: Database["public"]["Enums"]["gender_type"]
+          p_last_name: string
+          p_minecraft_username?: string
+          p_minecraft_uuid?: string
+          p_parent_id: string
+        }
+        Returns: undefined
+      }
       create_participation: {
         Args: {
           p_currency: string
@@ -1325,6 +1338,10 @@ export type Database = {
           p_waitlist_enabled?: boolean
         }
         Returns: string
+      }
+      demote_to_waitlist: {
+        Args: { p_participation_id: string }
+        Returns: Json
       }
       effective_status: {
         Args: { p_product_id: string }
@@ -1412,6 +1429,10 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      get_waitlist_position: {
+        Args: { p_participation_id: string }
+        Returns: number
+      }
       is_admin: { Args: never; Returns: boolean }
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }
       is_voice_group_member: { Args: { p_group_id: string }; Returns: boolean }
@@ -1439,7 +1460,10 @@ export type Database = {
         Args: { p_product_id: string; p_session_date: string }
         Returns: boolean
       }
-      promote_from_waitlist: { Args: { p_product_id: string }; Returns: Json }
+      promote_from_waitlist: {
+        Args: { p_group_id?: string; p_participation_id: string }
+        Returns: Json
+      }
       refresh_product_seat_counts: {
         Args: { p_product_id: string }
         Returns: undefined

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
@@ -12,13 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { getClient } from "@/lib/supabase/client";
 import { ROUTES } from "@/lib/constants";
 
-const resetPasswordSchema = z.object({
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
+const MIN_PASSWORD_LENGTH = 8;
 
 export function ResetPasswordForm() {
   const t = useTranslations('auth');
@@ -27,70 +21,114 @@ export function ResetPasswordForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [sessionReady, setSessionReady] = useState(false);
+  const [committing, setCommitting] = useState(false);
+  const [linkFailed, setLinkFailed] = useState(false);
+  // Once verifyOtp() consumes the single-use token, the recovery session is live.
+  // A retry (e.g. after the server rejects a weak password) must not re-verify
+  // the now-spent token; this flag makes retries update off the session instead.
+  const [verified, setVerified] = useState(false);
+  // Hidden username field for password managers: the account email (from the
+  // emailed link) so they save the new password against the right account.
+  // Set via ref, NOT `readOnly` or `hidden`/display:none — password managers
+  // skip both when choosing the username; sr-only keeps it rendered but unseen.
+  // Not a credential — never passed to verifyOtp/updateUser; the token authorizes.
+  const usernameRef = useRef<HTMLInputElement>(null);
 
   const supabase = getClient();
 
-  // generateLink() uses implicit flow (tokens in URL hash) because there's
-  // no PKCE challenge. The @supabase/ssr client is configured for PKCE mode
-  // so it won't detect hash tokens automatically — parse them manually.
   useEffect(() => {
-    const hash = window.location.hash;
-    if (!hash) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot mount-time URL hash parse; see TODO.md "Audit setState-in-effect violations from eslint-plugin-react-hooks@7"
-      setSessionReady(true);
-      return;
+    const email = new URLSearchParams(window.location.search).get("email");
+    if (email && usernameRef.current) {
+      usernameRef.current.value = email;
     }
-
-    const params = new URLSearchParams(hash.substring(1));
-    const accessToken = params.get("access_token");
-    const refreshToken = params.get("refresh_token");
-
-    if (accessToken && refreshToken) {
-      supabase.auth
-        .setSession({ access_token: accessToken, refresh_token: refreshToken })
-        .then(({ error }) => {
-          if (error) {
-            setError(t('resetPassword.linkExpired'));
-          } else {
-            // Clear hash from URL without triggering navigation
-            window.history.replaceState(null, "", window.location.pathname);
-          }
-          setSessionReady(true);
-        });
-    } else {
-      setSessionReady(true);
-    }
-  }, [supabase.auth, t]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setIsLoading(true);
 
-    try {
-      const validatedData = resetPasswordSchema.parse({ password, confirmPassword });
+    // Read the recovery token at submit, never on mount: consuming it on page
+    // load would let a corporate email-link scanner (which fetches the page but
+    // never submits) burn the single-use token before the real user acts. See
+    // the emailed-link comment in src/app/api/auth/forgot-password/route.ts.
+    //
+    // A missing token_hash is a can't-happen in practice — the only way onto this
+    // page is the emailed link, which always carries the token, so the real cases
+    // are "valid" and "expired", both handled below. We deliberately don't
+    // pre-check presence on mount (it'd only matter for a hand-typed URL); if it's
+    // somehow absent we fall through to the same dead-link view here.
+    const tokenHash = new URLSearchParams(window.location.search).get("token_hash");
+    if (!tokenHash) {
+      setLinkFailed(true);
+      return;
+    }
 
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: validatedData.password,
+    // Compare via a zod refine on member expressions (d.password), not a bare
+    // `password === confirmPassword` — the latter trips
+    // security/detect-possible-timing-attacks (a false positive for two
+    // client-side form fields, but cleanly avoided this way).
+    const validation = z
+      .object({
+        password: z.string().min(MIN_PASSWORD_LENGTH, c('passwordMinLength', { count: MIN_PASSWORD_LENGTH })),
+        confirmPassword: z.string(),
+      })
+      .refine((d) => d.password === d.confirmPassword, {
+        message: t('resetPassword.passwordsDoNotMatch'),
+        path: ['confirmPassword'],
+      })
+      .safeParse({ password, confirmPassword });
+
+    if (!validation.success) {
+      setError(validation.error.errors[0].message);
+      return;
+    }
+
+    // Hold `committing` across the whole flow so the button can't re-enable
+    // between the click and the terminal outcome (a fast user could otherwise
+    // double-submit). Set it true synchronously before the first await.
+    setCommitting(true);
+
+    // Consume the single-use token exactly once. On a retry after a failed
+    // updateUser the session is already established, so we skip straight to the
+    // update below rather than re-verifying an already-burned token.
+    if (!verified) {
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: "recovery",
       });
 
-      if (updateError) {
-        setError(updateError.message);
+      if (verifyError) {
+        // Token expired / already used (e.g. double-click, a genuinely stale
+        // link) — or a transient verify failure. We don't distinguish them: the
+        // only reasonable recovery for any of these is requesting a fresh link,
+        // which the dead-link view offers. Swap to it; leave `committing` set —
+        // the unmount handles the rest.
+        setLinkFailed(true);
         return;
       }
 
-      setSuccess(true);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        setError(err.errors[0].message);
-      } else {
-        setError(c('unexpectedError'));
-      }
-    } finally {
-      setIsLoading(false);
+      setVerified(true);
     }
+
+    const { error: updateError } = await supabase.auth.updateUser({ password });
+
+    if (updateError) {
+      // Session is valid but the update failed — let the user retry. We show a
+      // generic message rather than surfacing updateError.message: the realistic
+      // cause is Supabase's password policy rejecting the input (too weak, or
+      // "must differ from the old password"), whose messages are English-only and
+      // would break i18n if surfaced raw. The tradeoff: if Supabase's policy ever
+      // drifts stricter than the client's MIN_PASSWORD_LENGTH check, the user sees
+      // an unactionable message and can loop. Keep the two in sync so that stays a
+      // non-case; revisit (map known codes to translated copy) if it ever bites.
+      setError(t('resetPassword.updateFailed'));
+      setCommitting(false);
+      return;
+    }
+
+    // Success swaps to the success card (unmounts the form); leave `committing`
+    // set so the button never re-enables on the way out.
+    setSuccess(true);
   };
 
   if (success) {
@@ -114,6 +152,36 @@ export function ResetPasswordForm() {
     );
   }
 
+  // No token in the URL, or verification failed at submit time — either way the
+  // link is unusable, so point the user at requesting a fresh one.
+  if (linkFailed) {
+    return (
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-2xl">{t('resetPassword.linkExpiredTitle')}</CardTitle>
+          <CardDescription>
+            {t('resetPassword.linkExpired')}
+          </CardDescription>
+        </CardHeader>
+        <CardFooter className="flex flex-col space-y-4">
+          <Button
+            className="w-full"
+            onClick={() => { window.location.href = ROUTES.forgotPassword; }}
+          >
+            {t('resetPassword.requestNewLink')}
+          </Button>
+          <Link
+            href="/login"
+            className="flex items-center justify-center text-sm text-muted-foreground hover:text-primary"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            {c('backToLogin')}
+          </Link>
+        </CardFooter>
+      </Card>
+    );
+  }
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
@@ -124,6 +192,14 @@ export function ResetPasswordForm() {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          {/* Hidden username field — see usernameRef above. */}
+          <input
+            ref={usernameRef}
+            type="email"
+            autoComplete="username"
+            tabIndex={-1}
+            className="sr-only"
+          />
           {error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               {error}
@@ -132,14 +208,14 @@ export function ResetPasswordForm() {
           <Field
             label={c('newPassword')}
             htmlFor="password"
-            hint={c('passwordMinLength', { count: 8 })}
+            hint={c('passwordMinLength', { count: MIN_PASSWORD_LENGTH })}
           >
             <PasswordInput
               id="password"
               placeholder={t('resetPassword.newPasswordPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
+              disabled={committing}
               required
               autoComplete="new-password"
             />
@@ -150,15 +226,15 @@ export function ResetPasswordForm() {
               placeholder={t('resetPassword.confirmPasswordPlaceholder')}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={isLoading}
+              disabled={committing}
               required
               autoComplete="new-password"
             />
           </Field>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full" disabled={isLoading || !sessionReady}>
-            {!sessionReady ? c('loading') : isLoading ? t('resetPassword.updating') : t('resetPassword.resetButton')}
+          <Button type="submit" className="w-full" disabled={committing}>
+            {committing ? t('resetPassword.updating') : t('resetPassword.resetButton')}
           </Button>
           <Link
             href="/login"

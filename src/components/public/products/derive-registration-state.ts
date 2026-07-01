@@ -140,3 +140,35 @@ export function deriveRegistrationState({
     waitlistEnabled: product.waitlist_enabled,
   };
 }
+
+// How a state's browse-card CTA behaves:
+//   "primary"  → a working "View" button into the detail page (something to do
+//                there: sign up, watch the threshold, join the waitlist).
+//   "disabled" → a dead end — full with no waitlist, or a camp/event already
+//                underway; the detail page has nothing actionable, so the
+//                parent isn't sent on a round-trip.
+//   null       → no button at all (ended).
+//
+// Lives next to the state it switches on so the CTA component
+// (`useRegistrationCta`) and anything deciding "does this state have a detail
+// page worth linking to" stay in agreement from one source. It's a pure
+// function (no i18n), so server code can call it too — `useRegistrationCta`
+// only wraps it to resolve the label.
+export type RegistrationCtaKind = "primary" | "disabled" | null;
+
+export function registrationCtaKind(
+  state: RegistrationState,
+): RegistrationCtaKind {
+  switch (state.kind) {
+    case "open":
+    case "pending_thr":
+    case "closed_pre":
+    case "full_waitlist":
+      return "primary";
+    case "full_closed":
+    case "running_late":
+      return "disabled";
+    case "ended":
+      return null;
+  }
+}

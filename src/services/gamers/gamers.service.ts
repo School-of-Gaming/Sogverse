@@ -1,5 +1,6 @@
 import type { Profile, ParentGamer, CreateGamerInput, GamerProfile, AppSupabaseClient } from "@/types";
 import { isGamerProfile } from "@/types";
+import { ApiError } from "@/lib/api/api-error";
 
 export class GamerService {
   constructor(private supabase: AppSupabaseClient) {}
@@ -67,7 +68,7 @@ export class GamerService {
   async createGamerAccount(
     _parentId: string,
     input: CreateGamerInput
-  ): Promise<{ gamer: Profile; link: ParentGamer }> {
+  ): Promise<{ gamerId: string }> {
     const response = await fetch("/api/gamers/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -82,10 +83,14 @@ export class GamerService {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || "Failed to create gamer account");
+      throw new ApiError(
+        data.error || "Failed to create gamer account",
+        response.status,
+        data.code,
+      );
     }
 
-    return { gamer: data.gamer, link: data.link };
+    return { gamerId: data.gamerId };
   }
 
   async updateGamer(

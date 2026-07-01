@@ -212,7 +212,6 @@
       },
       "newPage": {
         "back": "Takaisin: {plural}",
-        "kicker": "Uusi {label}",
         "title": "Uusi {label}"
       },
       "detailsPage": {
@@ -247,20 +246,6 @@
           "municipalityFee": "Kunnan maksu / kerta",
           "registrationOpensAt": "Ilmoittautuminen aukeaa",
           "visibility": "Näkyvyys"
-        },
-        "placeholders": {
-          "groups": {
-            "title": "Ryhmät ja Gedut",
-            "body": "Kun pelaajat ilmoittautuvat, voit luoda täällä ryhmiä, lisätä Geduja ja siirtää ilman paikkaa olevat pelaajat oikeaan ryhmään."
-          },
-          "waitlist": {
-            "title": "Jonotuslista",
-            "body": "Pelaajat, jotka eivät saaneet paikkaa, näkyvät tässä, jotta voit nostaa heidät listalta paikkojen vapautuessa."
-          },
-          "metrics": {
-            "title": "Liiketoimintamittarit",
-            "body": "Tämän tuotteen ilmoittautumismäärät, liikevaihto ja palautukset näkyvät tässä, kun maksudata on valmis."
-          }
         }
       },
       "editPage": {
@@ -302,8 +287,8 @@
         },
         "registration": "Ilmoittautumisaika",
         "registrationDescription": "Valitse, milloin vanhemmat voivat alkaa ilmoittautua.",
-        "visibility": "Näkyvyys kaupassa",
-        "visibilityDescription": "Hallitse, näkyykö tuote kaupassa. Tämä ei vaikuta niihin, jotka jo osallistuvat."
+        "visibility": "Näkyvyys",
+        "visibilityDescription": "Hallitse, voivatko vanhemmat löytää ja nähdä tuotteen. Jo osallistuvat näkevät sen edelleen My SOG -sivullaan — tämä ei vaikuta heihin."
       },
       "labels": {
         "name": "Nimi",
@@ -337,7 +322,7 @@
         "seatCount": "Paikkamäärä",
         "waitlistToggle": "Käytä jonotuslistaa, kun paikat täynnä",
         "signupThreshold": "Ilmoittautumisraja aloitukseen",
-        "makeVisible": "Näytä tuote kaupassa",
+        "makeVisible": "Näytä tuote vanhemmille",
         "seatLimit": "Paikkaraja"
       },
       "placeholders": {
@@ -463,7 +448,7 @@
         "pricingMonthly": "Veloitetaan joka kuukausi tilauksen ollessa voimassa. Voit perua milloin tahansa.",
         "pricingUpfront": "Veloitetaan kerran ilmoittautuessa. Sama kokonaishinta riippumatta kestosta.",
         "seatHint": "Kun täynnä, uudet ilmoittautujat menevät jonotuslistalle.",
-        "visibleHint": "Tämä vaikuttaa vain kauppaan. Poista valinta, kun tuote on vielä tekeillä tai kun haluat lopettaa uudet ilmoittautumiset. Vanhemmat, pelaajat ja ohjaajat, jotka jo osallistuvat, näkevät kertansa edelleen My SOG -sivullaan — valinnan poistaminen poistaa tuotteen vain kaupasta.",
+        "visibleHint": "Poista valinta, kun tuote on vielä tekeillä tai kun haluat lopettaa uudet ilmoittautumiset. Tämä piilottaa tuotteen vain uusilta vanhemmilta — jo ilmoittautuneet vanhemmat ja pelaajat näkevät sen ja kertansa edelleen My SOG -sivullaan.",
         "seatLimitHint": "Rajaa osallistujamäärä tai pidä se rajattomana.",
         "holidayComingSoon": "Lomakalenterit tulevat pian. Toistaiseksi jokainen aikataulutettu kerta pidetään.",
         "startDateToday": "Lukittu toistaiseksi tähän päivään.",
@@ -640,6 +625,11 @@
           "confirmDescription": "{name} poistetaan ilmoittautuneista, ja hän menettää pääsyn välittömästi.",
           "noRefundWarning": "Hyvitystä ei makseta. Jos tämä asiakas on maksanut, hän ei saa rahojaan takaisin.",
           "confirmCta": "Poista pelaaja"
+        },
+        "waitlist": {
+          "title": "Jonotuslista",
+          "subtitle": "Paikkaa odottavat pelaajat liittymisjärjestyksessä numeroituina. Vedä pelaaja ryhmään antaaksesi hänelle paikan tai pudota aktiivinen pelaaja tähän siirtääksesi hänet jonon perälle.",
+          "empty": "Jonotuslistalla ei ole ketään."
         }
       },
       "seatLimitModes": {
@@ -900,6 +890,10 @@
       "updating": "Päivitetään...",
       "resetButton": "Nollaa salasana",
       "linkExpired": "Nollauslinkkisi on vanhentunut. Pyydä uusi linkki.",
+      "linkExpiredTitle": "Nollauslinkki on vanhentunut",
+      "requestNewLink": "Pyydä uusi linkki",
+      "passwordsDoNotMatch": "Antamasi salasanat eivät täsmää.",
+      "updateFailed": "Salasanan päivitys epäonnistui. Yritä uudelleen.",
       "successTitle": "Salasana päivitetty",
       "successDescription": "Salasanasi on päivitetty onnistuneesti."
     },
@@ -990,6 +984,17 @@
       "title": "Tilausta ei löytynyt",
       "description": "Linkki saattaa olla vanha tai puutteellinen. Ostoksesi löytyvät aina Oma SOG -sivulta.",
       "cta": "Siirry Oma SOG -sivulle"
+    },
+    "waitlist": {
+      "heading": "Olet jonotuslistalla",
+      "subheading": "{gamer} on jonotuslistalla – {product}. Ilmoitamme heti, kun paikka vapautuu.",
+      "summaryTitle": "Jonotuspaikkasi",
+      "forLabel": "Jonotuslistalla",
+      "positionLabel": "Sijasi jonossa",
+      "positionValue": "#{position}",
+      "next1": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
+      "next2": "{gamer} säilyttää paikkansa jonossa koko kauden ajan.",
+      "next3": "Voit seurata jonotustilannetta milloin tahansa Oma SOG -sivulla."
     }
   },
   "docs": {
@@ -1063,7 +1068,9 @@
     "help": "Apu",
     "yty": "Yty",
     "settings": "Asetukset",
-    "instantVoiceRoom": "Pikaäänihuone"
+    "instantVoiceRoom": "Pikaäänihuone",
+    "waitlistBand": "Jonotuslistalla",
+    "scheduledBand": "Aikataulussa"
   },
   "family": {
     "addGamer": "Lisää pelaaja",
@@ -1091,7 +1098,8 @@
       "firstNameTooLong": "Etunimessä saa olla enintään 32 merkkiä.",
       "birthMonthRequired": "Valitse syntymäkuukausi.",
       "birthYearRequired": "Valitse syntymävuosi.",
-      "genericError": "Pelaajan lisääminen epäonnistui. Yritä uudelleen."
+      "genericError": "Pelaajan lisääminen epäonnistui. Yritä uudelleen.",
+      "minecraftAlreadyLinked": "Tämä Minecraft-tili on jo liitetty toiseen pelaajaan."
     }
   },
   "selectProfile": {
@@ -1296,6 +1304,7 @@
       "viewDetails": "Katso",
       "manage": "Hallitse",
       "fullDisabled": "Täynnä",
+      "alreadyStarted": "Käynnissä",
       "online": "Verkossa"
     },
     "empty": {
@@ -1308,7 +1317,6 @@
   },
   "seatAvailability": {
     "remaining": "{count, plural, one {# / {total} paikka jäljellä} other {# / {total} paikkaa jäljellä}}",
-    "full": "Täynnä",
     "waitlistAvailable": "Jonotuslista"
   },
   "productDetail": {
@@ -1379,13 +1387,6 @@
       "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
-      "bannerAlmostFull": "Paikat täyttyvät – vain muutama jäljellä",
-      "bannerCountdown": "Ilmoittautuminen avautuu {date}",
-      "bannerCountdownDone": "Ilmoittautuminen on auki",
-      "bannerWaitlist": "Tällä hetkellä täynnä",
-      "bannerFullClosed": "Täynnä",
-      "bannerRunningLate": "Tämä on jo käynnissä",
-      "bannerEnded": "Tämä on päättynyt",
       "verb": {
         "consumer_club": "Ilmoittaudu",
         "municipality_club": "Rekisteröidy",
@@ -1398,13 +1399,14 @@
         "camp": "Ilmoittautuminen",
         "event": "Liittyminen"
       },
-      "ctaPreOpenIdle": "{verb} – ei vielä avoinna",
-      "ctaPreOpenReady": "Valmis – odotetaan avaamista",
+      "ctaReadyWaiting": "Valmiina odottamassa",
       "ctaActive": "{verb} nyt",
       "ctaActiveWithPrice": "{verb} nyt {price}",
       "ctaActiveWithPriceSub": "{verb} nyt · {price}/kk",
       "ctaSubmitting": "Hetki…",
-      "ctaSelectGamer": "Valitse pelaaja",
+      "ctaAddGamer": "Lisää pelaaja jatkaaksesi",
+      "ctaAllSet": "Olet valmis",
+      "ctaAgreeRules": "Hyväksy säännöt",
       "ctaWaitlist": "Liity jonotuslistalle",
       "ctaSignIn": "Kirjaudu sisään ilmoittautuaksesi",
       "ctaCreateAccount": "Luo tili",
@@ -1416,13 +1418,8 @@
       },
       "gamerAlreadyWaitlisted": "Jonossa",
       "nonCustomerNote": "Vain vanhempi voi ilmoittaa pelaajan tähän.",
-      "preOpenHelper": "Valitse lapsi ja hyväksy säännöt, niin ilmoittautuminen onnistuu yhdellä napautuksella heti, kun se avautuu.",
-      "waitlistHowTitle": "Näin jonotuslista toimii",
-      "waitlistHowItem1": "Pidät paikkasi jonossa koko kauden ajan.",
-      "waitlistHowItem2": "Jos joku perhe peruu, seuraavalle annetaan lyhyt aika ottaa paikka vastaan.",
-      "waitlistHowItem3": "Voit poistua jonotuslistalta milloin tahansa tililtäsi.",
-      "endedNote": "Tämä on jo päättynyt. Pidä silmällä seuraavaa kierrosta.",
-      "runningLateNote": "Olemme jo aloittaneet – ilmoittautuminen on suljettu. Seuraava kierros avautuu pian.",
+      "closedNote": "Tämä ei ole juuri nyt avoinna. Pidä silmällä seuraavaa kierrosta.",
+      "rulesHeading": "Säännöt",
       "rules": {
         "consumer_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä.",
         "municipality_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa lapseni paikan seuraavalle jonossa olevalle perheelle.",
@@ -1460,9 +1457,6 @@
       "title": "Sivua ei löytynyt",
       "description": "Se on ehkä poistettu tai linkki on virheellinen. Selaa muita vaihtoehtoja alta.",
       "cta": "Takaisin selaamaan"
-    },
-    "preview": {
-      "banner": "Mallinäkymä · toiminnot eivät ole vielä kytkettyinä"
     },
     "geduGroups": {
       "heading": "Ryhmät",
@@ -1573,6 +1567,13 @@
     },
     "upcomingSession": {
       "gamerLabel": "Pelaaja: {name}"
+    },
+    "waitlist": {
+      "forLabel": "Pelaaja: {name}",
+      "positionLabel": "Sijasi jonossa",
+      "positionValue": "#{position}",
+      "reassuranceCustomer": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
+      "reassuranceGamer": "Ilmoitamme heti, kun paikka vapautuu."
     },
     "subscriptionEnding": {
       "wontRenew": "Ei uusiudu",

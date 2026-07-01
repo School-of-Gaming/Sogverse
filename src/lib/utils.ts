@@ -126,6 +126,26 @@ export function formatDateOnly(date: string, locale: string, options?: Intl.Date
   }).format(new Date(`${date}T00:00:00Z`));
 }
 
+/**
+ * A zoneless calendar date range from two ISO dates, en-dash separated
+ * ("13 Jan – 30 May 2026"). Shared by the consumers that build a range straight
+ * from start/end ISO columns (club term dates, the admin product rows) so the
+ * separator + single-date collapse live in one place. A missing end, or an end
+ * equal to the start, renders as just the one date rather than a degenerate
+ * "X – X". Both dates go through `formatDateOnly`, so they stay UTC-pinned (per
+ * CLAUDE.md "Date & Time").
+ */
+export function formatDateRange(
+  startDate: string,
+  endDate: string | null,
+  locale: string,
+): string {
+  if (endDate && endDate !== startDate) {
+    return `${formatDateOnly(startDate, locale)} – ${formatDateOnly(endDate, locale)}`;
+  }
+  return formatDateOnly(startDate, locale);
+}
+
 
 export function generateGamerEmail(username: string): string {
   return `${username.toLowerCase()}@gamer.sogverse.internal`;

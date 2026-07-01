@@ -14,6 +14,15 @@
 
 /* SOG Brand Theme - Dark by default */
 :root {
+  /* Tell the browser to render native form-control internals in dark mode:
+     the date input's calendar-picker glyph, autofill fill backgrounds (the
+     sign-in email/password fields), native dropdowns, and scrollbars. Without
+     this the UA defaults to light rendering — a black calendar glyph that
+     vanishes against our dark input, and a white autofill background — even
+     though our own tokens (bg-background, etc.) are dark. Paired with
+     `color-scheme: light` on `.light` below. */
+  color-scheme: dark;
+
   /* Background colors */
   --background: 0 0% 7%;           /* #121212 */
   --foreground: 0 0% 93%;          /* #ededed */
@@ -89,6 +98,8 @@
 
 /* Light theme override */
 .light {
+  color-scheme: light;
+
   --background: 0 0% 98%;
   --foreground: 0 0% 7%;
 

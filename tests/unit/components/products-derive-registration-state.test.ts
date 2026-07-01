@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   deriveRegistrationState,
+  registrationCtaKind,
   type RegistrationStateInputs,
 } from "@/components/public/products/derive-registration-state";
 
@@ -260,5 +261,32 @@ describe("deriveRegistrationState", () => {
       expect(state.count).toBe(0);
       expect(state.threshold).toBe(8);
     }
+  });
+});
+
+describe("registrationCtaKind", () => {
+  it("running_late → disabled (a started camp/event shows the dead-end button)", () => {
+    expect(registrationCtaKind({ kind: "running_late" })).toBe("disabled");
+  });
+
+  it("full_closed → disabled (full with no waitlist is a dead end too)", () => {
+    expect(registrationCtaKind({ kind: "full_closed", seatCount: 15 })).toBe(
+      "disabled",
+    );
+  });
+
+  it("ended → no button at all", () => {
+    expect(registrationCtaKind({ kind: "ended" })).toBeNull();
+  });
+
+  it("open → primary View button", () => {
+    expect(
+      registrationCtaKind({
+        kind: "open",
+        seatCount: null,
+        seatsLeft: null,
+        waitlistEnabled: false,
+      }),
+    ).toBe("primary");
   });
 });

@@ -212,7 +212,6 @@
       },
       "newPage": {
         "back": "Back to {plural}",
-        "kicker": "New {label}",
         "title": "New {label}"
       },
       "detailsPage": {
@@ -247,20 +246,6 @@
           "municipalityFee": "Municipality fee / session",
           "registrationOpensAt": "Registration opens",
           "visibility": "Visibility"
-        },
-        "placeholders": {
-          "groups": {
-            "title": "Groups & Gedus",
-            "body": "Once gamers register, this is where you'll create groups, assign Gedus, and drag unassigned gamers into the right room."
-          },
-          "waitlist": {
-            "title": "Waitlist",
-            "body": "Gamers who couldn't get a seat will appear here so you can promote them as space opens."
-          },
-          "metrics": {
-            "title": "Business metrics",
-            "body": "Enrolment counts, revenue, and refunds for this product will land here once payments data is wired up."
-          }
         }
       },
       "editPage": {
@@ -302,8 +287,8 @@
         },
         "registration": "Registration timing",
         "registrationDescription": "Pick when parents can start signing up.",
-        "visibility": "Shop visibility",
-        "visibilityDescription": "Control whether this product is listed in the shop. It doesn't affect anyone already taking part."
+        "visibility": "Visibility",
+        "visibilityDescription": "Control whether parents can find and view this product. Anyone already taking part keeps it on their My SOG page — this never affects them."
       },
       "labels": {
         "name": "Name",
@@ -337,7 +322,7 @@
         "seatCount": "Seat count",
         "waitlistToggle": "Enable waitlist when seats are full",
         "signupThreshold": "Signups needed to start",
-        "makeVisible": "List this product in the shop",
+        "makeVisible": "Make this product visible to parents",
         "seatLimit": "Seat limit"
       },
       "placeholders": {
@@ -463,7 +448,7 @@
         "pricingMonthly": "Charged every month while the subscription is active. Cancel anytime.",
         "pricingUpfront": "Charged once at signup. Same total no matter the duration.",
         "seatHint": "When full, new signups go to the waitlist.",
-        "visibleHint": "This only controls the shop. Uncheck it while you're still setting up, or to stop new sign-ups. Parents, gamers, and educators already taking part still see their sessions on their My SOG page — unchecking only removes it from the shop.",
+        "visibleHint": "Uncheck it while you're still setting up, or to stop new sign-ups. It only hides the product from new parents — parents and gamers already enrolled still see it and their sessions on their My SOG page.",
         "seatLimitHint": "Cap the number of gamers, or run with no limit.",
         "holidayComingSoon": "Holiday calendars are coming soon. For now, every scheduled session runs.",
         "startDateToday": "Locked to today's date for now.",
@@ -640,6 +625,11 @@
           "confirmDescription": "{name} will be unenrolled and lose access immediately.",
           "noRefundWarning": "No refund is issued. If this customer paid, they will not get their money back.",
           "confirmCta": "Remove gamer"
+        },
+        "waitlist": {
+          "title": "Waitlist",
+          "subtitle": "Gamers waiting for a seat, numbered in the order they joined. Drag one into a group to give them a seat, or drop an active gamer here to send them to the back.",
+          "empty": "No one is on the waitlist."
         }
       },
       "seatLimitModes": {
@@ -900,6 +890,10 @@
       "updating": "Updating...",
       "resetButton": "Reset Password",
       "linkExpired": "Your reset link has expired. Please request a new one.",
+      "linkExpiredTitle": "Reset link expired",
+      "requestNewLink": "Request a new link",
+      "passwordsDoNotMatch": "The passwords you entered don't match.",
+      "updateFailed": "We couldn't update your password. Please try again.",
       "successTitle": "Password updated",
       "successDescription": "Your password has been successfully updated."
     },
@@ -990,6 +984,17 @@
       "title": "We couldn't find that order",
       "description": "This link may be old or incomplete. Your purchases are always available in My SOG.",
       "cta": "Go to My SOG"
+    },
+    "waitlist": {
+      "heading": "You're on the waitlist",
+      "subheading": "{gamer} is on the waitlist for {product}. We'll let you know if a seat opens.",
+      "summaryTitle": "Your waitlist spot",
+      "forLabel": "Waitlisted",
+      "positionLabel": "Your position",
+      "positionValue": "#{position}",
+      "next1": "We'll email you the moment a seat opens.",
+      "next2": "{gamer} keeps their place in line for the whole term.",
+      "next3": "You can keep track of your waitlist spot anytime in My SOG."
     }
   },
   "docs": {
@@ -1063,7 +1068,9 @@
     "help": "Help",
     "yty": "Yty",
     "settings": "Settings",
-    "instantVoiceRoom": "Instant Voice Room"
+    "instantVoiceRoom": "Instant Voice Room",
+    "waitlistBand": "On the waitlist",
+    "scheduledBand": "Scheduled"
   },
   "family": {
     "addGamer": "Add Gamer",
@@ -1091,7 +1098,8 @@
       "firstNameTooLong": "First name must be 32 characters or fewer.",
       "birthMonthRequired": "Pick a birth month.",
       "birthYearRequired": "Pick a birth year.",
-      "genericError": "Couldn't add this gamer. Please try again."
+      "genericError": "Couldn't add this gamer. Please try again.",
+      "minecraftAlreadyLinked": "This Minecraft account is already linked to another gamer."
     }
   },
   "selectProfile": {
@@ -1296,6 +1304,7 @@
       "viewDetails": "View",
       "manage": "Manage",
       "fullDisabled": "Full",
+      "alreadyStarted": "Already started",
       "online": "Online"
     },
     "empty": {
@@ -1308,7 +1317,6 @@
   },
   "seatAvailability": {
     "remaining": "{count, plural, one {# of {total} seat remaining} other {# of {total} seats remaining}}",
-    "full": "Full",
     "waitlistAvailable": "Waitlist"
   },
   "productDetail": {
@@ -1379,13 +1387,6 @@
       "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
-      "bannerAlmostFull": "Going fast — only a few seats left",
-      "bannerCountdown": "Sign-up opens at {date}",
-      "bannerCountdownDone": "Sign-up is now open",
-      "bannerWaitlist": "Fully booked right now",
-      "bannerFullClosed": "Fully booked",
-      "bannerRunningLate": "This one's already underway",
-      "bannerEnded": "This one's wrapped",
       "verb": {
         "consumer_club": "Enrol",
         "municipality_club": "Register",
@@ -1398,13 +1399,14 @@
         "camp": "Sign-up",
         "event": "Joining"
       },
-      "ctaPreOpenIdle": "{verb} — not yet open",
-      "ctaPreOpenReady": "Ready when sign-up opens",
+      "ctaReadyWaiting": "Ready & waiting",
       "ctaActive": "{verb} now",
       "ctaActiveWithPrice": "{verb} now {price}",
       "ctaActiveWithPriceSub": "{verb} now · {price}/mo",
       "ctaSubmitting": "One moment…",
-      "ctaSelectGamer": "Select a gamer",
+      "ctaAddGamer": "Add a gamer to continue",
+      "ctaAllSet": "You're all set",
+      "ctaAgreeRules": "Agree to the rules",
       "ctaWaitlist": "Join the waitlist",
       "ctaSignIn": "Sign in to register",
       "ctaCreateAccount": "Create account",
@@ -1416,13 +1418,8 @@
       },
       "gamerAlreadyWaitlisted": "On waitlist",
       "nonCustomerNote": "Only parents can register a gamer here.",
-      "preOpenHelper": "Pick your child and agree to the rules so it's a one-tap sign-up the moment it opens.",
-      "waitlistHowTitle": "How the waitlist works",
-      "waitlistHowItem1": "You keep your spot in line for the whole term.",
-      "waitlistHowItem2": "If a family cancels, the next person gets a short window to accept.",
-      "waitlistHowItem3": "You can leave the waitlist anytime from your account.",
-      "endedNote": "This one already wrapped. Keep an eye out for the next one.",
-      "runningLateNote": "We've already started — sign-up is closed. The next round will open soon.",
+      "closedNote": "This one's not open right now. Keep an eye out for the next one.",
+      "rulesHeading": "The Rules",
       "rules": {
         "consumer_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior.",
         "municipality_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, and that repeated unexcused absences may open my child's seat for the next family on the waitlist.",
@@ -1460,9 +1457,6 @@
       "title": "We couldn't find that",
       "description": "It may have been removed or the link is wrong. Browse what's available below.",
       "cta": "Back to browse"
-    },
-    "preview": {
-      "banner": "Mockup preview · interactions are not wired up"
     },
     "geduGroups": {
       "heading": "Groups",
@@ -1573,6 +1567,13 @@
     },
     "upcomingSession": {
       "gamerLabel": "For {name}"
+    },
+    "waitlist": {
+      "forLabel": "For {name}",
+      "positionLabel": "Your position",
+      "positionValue": "#{position}",
+      "reassuranceCustomer": "We'll email you the moment a seat opens.",
+      "reassuranceGamer": "We'll let you know as soon as a seat opens."
     },
     "subscriptionEnding": {
       "wontRenew": "Won't renew",

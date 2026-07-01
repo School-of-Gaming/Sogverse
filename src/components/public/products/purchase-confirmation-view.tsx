@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Hourglass } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
@@ -15,27 +15,40 @@ import type { ProductBrowseRow } from "@/types";
 import { buildPricingOption, type PricingOption } from "./pricing-options";
 import { ProductOverviewCard } from "./product-overview-card";
 
-// Purchase confirmation — data-only presentational view (no fetching). A
-// non-tech-savvy parent has just paid (or signed up for a free event) and
-// lands here. We reassure them it worked and lay out exactly what they bought,
-// who for, and what happens next. The page server-fetches the participation +
-// product and hands them here, so it paints complete on first load: no client
+// Signup summary — data-only presentational view (no fetching). A
+// non-tech-savvy parent has just paid, signed up for a free event, or joined a
+// waitlist, and lands here. We reassure them it worked and lay out exactly what
+// happened, who for, and what's next. The page server-fetches the participation
+// + product and hands them here, so it paints complete on first load: no client
 // loading state, no skeleton, no layout shift.
+
+/** Which signup outcome the summary reassures the parent about. */
+export type SignupOutcome = "enrolled" | "waitlisted";
 
 interface PurchaseConfirmationViewProps {
   product: ProductBrowseRow;
   /** Gamer's first name (or username fallback); null → "Your child". */
   gamerName: string | null;
+  /** `enrolled` (paid/free signup) or `waitlisted` (joined the waitlist). */
+  outcome?: SignupOutcome;
+  /**
+   * 1-based waitlist position, for the `waitlisted` outcome. Null when unknown
+   * (RLS miss / no longer waitlisted) → the position line is simply omitted.
+   */
+  waitlistPosition?: number | null;
 }
 
 export function PurchaseConfirmationView({
   product,
   gamerName,
+  outcome = "enrolled",
+  waitlistPosition = null,
 }: PurchaseConfirmationViewProps) {
   const t = useTranslations("purchaseConfirmation");
   const tProduct = useTranslations("productDetail");
   const locale = resolveLocale(useLocale());
 
+  const isWaitlist = outcome === "waitlisted";
   const tr = resolveTranslation(product.product_translations, locale);
   const productName = tr?.name ?? "";
   const gamer = gamerName ?? t("fallbackGamer");
@@ -61,23 +74,29 @@ export function PurchaseConfirmationView({
       <div className="mx-auto max-w-2xl">
         <div className="flex flex-col items-center text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-            <CheckCircle2 className="h-8 w-8 text-primary" />
+            {isWaitlist ? (
+              <Hourglass className="h-7 w-7 text-primary" />
+            ) : (
+              <CheckCircle2 className="h-8 w-8 text-primary" />
+            )}
           </div>
           <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
-            {t("heading")}
+            {isWaitlist ? t("waitlist.heading") : t("heading")}
           </h1>
           <p className="mt-2 text-muted-foreground">
-            {t(`subheading.${product.product_type}`, {
-              gamer,
-              product: productName,
-            })}
+            {isWaitlist
+              ? t("waitlist.subheading", { gamer, product: productName })
+              : t(`subheading.${product.product_type}`, {
+                  gamer,
+                  product: productName,
+                })}
           </p>
         </div>
 
         <Card className="mt-8">
           <CardContent className="p-5 sm:p-6">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              {t("summaryTitle")}
+              {isWaitlist ? t("waitlist.summaryTitle") : t("summaryTitle")}
             </h2>
             <div className="mt-4 flex items-start gap-4">
               <ProductThumbnail
@@ -95,10 +114,28 @@ export function PurchaseConfirmationView({
             </div>
             <dl className="mt-4 space-y-2 border-t border-border pt-4 text-sm">
               <SummaryRow
-                label={t(`forLabel.${product.product_type}`)}
+                label={
+                  isWaitlist
+                    ? t("waitlist.forLabel")
+                    : t(`forLabel.${product.product_type}`)
+                }
                 value={gamer}
               />
-              {price && <SummaryRow label={t("priceLabel")} value={price} />}
+              {/* "You're #N in line" — the reassuring number. Omitted if the
+                  position couldn't be read (e.g. a stale revisit). */}
+              {isWaitlist && waitlistPosition != null && (
+                <SummaryRow
+                  label={t("waitlist.positionLabel")}
+                  value={t("waitlist.positionValue", {
+                    position: waitlistPosition,
+                  })}
+                />
+              )}
+              {/* No charge yet on a waitlist join — the "what's next" list
+                  explains billing only happens if a seat opens and is accepted. */}
+              {!isWaitlist && price && (
+                <SummaryRow label={t("priceLabel")} value={price} />
+              )}
             </dl>
           </CardContent>
         </Card>
@@ -113,18 +150,30 @@ export function PurchaseConfirmationView({
               {t("nextTitle")}
             </h2>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-muted-foreground">
-              <li>{t("next.placement", { gamer })}</li>
-              {pricingOption.kind === "subscription" && (
-                <li>{t("next.subscription")}</li>
+              {isWaitlist ? (
+                <>
+                  <li>{t("waitlist.next1")}</li>
+                  <li>{t("waitlist.next2", { gamer })}</li>
+                  <li>{t("waitlist.next3")}</li>
+                </>
+              ) : (
+                <>
+                  <li>{t("next.placement", { gamer })}</li>
+                  {pricingOption.kind === "subscription" && (
+                    <li>{t("next.subscription")}</li>
+                  )}
+                  {pricingOption.kind === "upfront" && (
+                    <li>{t("next.oneTime")}</li>
+                  )}
+                  {pricingOption.kind === "upfront" &&
+                    product.refund_policy_days != null &&
+                    product.refund_policy_days > 0 && (
+                      <li>
+                        {t("next.refund", { days: product.refund_policy_days })}
+                      </li>
+                    )}
+                </>
               )}
-              {pricingOption.kind === "upfront" && <li>{t("next.oneTime")}</li>}
-              {pricingOption.kind === "upfront" &&
-                product.refund_policy_days != null &&
-                product.refund_policy_days > 0 && (
-                  <li>
-                    {t("next.refund", { days: product.refund_policy_days })}
-                  </li>
-                )}
             </ul>
           </CardContent>
         </Card>

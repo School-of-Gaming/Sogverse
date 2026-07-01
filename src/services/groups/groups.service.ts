@@ -210,6 +210,65 @@ export class GroupsService {
   }
 
   /**
+   * Promotes a waitlisted gamer to an active seat, placing them in `toGroupId`
+   * (null = unassigned inbox). Calls the PATCH waitlist-transition route, which
+   * runs promote_from_waitlist — no seat-count gate, a deliberate admin override
+   * (see the route). On success the caller should invalidate
+   * groupsKeys.byProduct(productId) so the chip moves from the waitlist into its
+   * new home and the seat-count bar updates.
+   */
+  async promoteFromWaitlist(
+    productId: string,
+    participationId: string,
+    toGroupId: string | null,
+  ): Promise<void> {
+    const response = await fetch(
+      `/api/admin/products/${productId}/participations/${participationId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "promote", groupId: toGroupId }),
+      },
+    );
+    if (!response.ok) {
+      throw new Error(
+        await readErrorMessage(
+          response,
+          `Failed to promote gamer (${response.status})`,
+        ),
+      );
+    }
+  }
+
+  /**
+   * Demotes an active gamer to the BACK of the waitlist (status→waitlisted,
+   * group cleared). Calls the PATCH waitlist-transition route, which runs
+   * demote_to_waitlist. On success the caller should invalidate
+   * groupsKeys.byProduct(productId).
+   */
+  async demoteToWaitlist(
+    productId: string,
+    participationId: string,
+  ): Promise<void> {
+    const response = await fetch(
+      `/api/admin/products/${productId}/participations/${participationId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "demote" }),
+      },
+    );
+    if (!response.ok) {
+      throw new Error(
+        await readErrorMessage(
+          response,
+          `Failed to move gamer to waitlist (${response.status})`,
+        ),
+      );
+    }
+  }
+
+  /**
    * Admin un-enrollment: hard-deletes a participation — the inverse of
    * addGamerToProduct. Hits the DELETE participations route, which calls
    * cancel_participation(reason='admin_cancelled'). No refund is issued (see

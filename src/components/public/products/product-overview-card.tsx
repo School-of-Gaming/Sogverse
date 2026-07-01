@@ -8,6 +8,7 @@ import { LanguageFlag } from "@/components/ui/language-flag";
 import { resolveLocale } from "@/lib/constants/locales";
 import type { ProductBrowseRow } from "@/types";
 import { formatProductLocation } from "./format-product-location";
+import { formatClubTermDates } from "./format-product-term-dates";
 import {
   formatProductSchedule,
   renderScheduleLinesForDetail,
@@ -49,6 +50,15 @@ export function ProductOverviewCard({ product }: ProductOverviewCardProps) {
   const scheduleLines = renderScheduleLinesForDetail(schedule);
   const location = formatProductLocation(product, uiLocale);
 
+  // A club's term range ("13 Jan – 30 May 2026") isn't in its weekly schedule
+  // line — camps/events already fold their dates into the schedule, so the
+  // helper returns null for them. Fold the club range in as an extra schedule
+  // line (rather than a 5th overview Fact) to keep the 2×2 grid intact.
+  const termRange = formatClubTermDates(product, uiLocale);
+  const scheduleDisplayLines = termRange
+    ? [...scheduleLines, termRange]
+    : scheduleLines;
+
   return (
     <Card>
       <CardContent className="space-y-3 p-5 sm:p-6 text-sm">
@@ -59,11 +69,11 @@ export function ProductOverviewCard({ product }: ProductOverviewCardProps) {
             and a single stacked column on mobile, where there isn't room. */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-4">
           <DetailRow icon={Clock} label={t("info.schedule")}>
-            {scheduleLines.length === 1 ? (
-              scheduleLines[0]
+            {scheduleDisplayLines.length === 1 ? (
+              scheduleDisplayLines[0]
             ) : (
               <ul className="space-y-0.5">
-                {scheduleLines.map((line, idx) => (
+                {scheduleDisplayLines.map((line, idx) => (
                   <li key={idx}>{line}</li>
                 ))}
               </ul>

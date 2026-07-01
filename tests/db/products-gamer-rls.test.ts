@@ -100,7 +100,7 @@ describe("products gamer-read RLS (00067)", () => {
         gamer_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "waitlisted",
-        waitlist_position: 1,
+        waitlisted_at: new Date().toISOString(),
       },
       {
         product_id: HIDDEN_RESERVING_PRODUCT,

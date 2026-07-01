@@ -257,7 +257,6 @@
       },
       "newPage": {
         "back": "{plural} vIcheghmoH",
-        "kicker": "{label} chu'",
         "title": "{label} chu'"
       },
       "detailsPage": {
@@ -292,20 +291,6 @@
           "municipalityFee": "veng Huch / qaStaHvIS",
           "registrationOpensAt": "ghIH poSchoH",
           "visibility": "leghlu"
-        },
-        "placeholders": {
-          "groups": {
-            "title": "ghommey 'ej Gedus",
-            "body": "QojvIp tagh DIvI', ghommey vIchenmoH, Gedus vIlaH, 'ej veqlargh Hovmey vIvummoH."
-          },
-          "waitlist": {
-            "title": "loS DIS",
-            "body": "quS ghaj Hovmey loSlu'taHvIS naDev tu'lu', vaj ghuv quSmey ghoS DaH."
-          },
-          "metrics": {
-            "title": "Huch ngoq",
-            "body": "ghIH mI', Huch tlhutlh, 'ej Huch chegh tu'lu' naDev qaStaHvIS Huch De' chu'lu'pu'."
-          }
         }
       },
       "editPage": {
@@ -347,8 +332,8 @@
         },
         "registration": "ghItlh poH",
         "registrationDescription": "ghItlh tagh poH yIwIv.",
-        "visibility": "mIrDaq leghlu'",
-        "visibilityDescription": "mIrDaq Doch legh 'e' yIqotlh. ghoStaHbogh nuvpu' luQaHbe'."
+        "visibility": "leghlu'",
+        "visibilityDescription": "Doch luleghlaH vavpu' 'e' yIqotlh. ghoStaHbogh nuvpu' My SOG HaqwI'chajDaq luleghtaH — luQaHbe'."
       },
       "labels": {
         "name": "pong",
@@ -382,7 +367,7 @@
         "seatCount": "pa' mI'",
         "waitlistToggle": "pa' tebDI', tetlh teb yIchu'",
         "signupThreshold": "ghItlh mI' taghmeH",
-        "makeVisible": "mIrDaq Doch yI'ang",
+        "makeVisible": "vavpu'vaD Doch yI'ang",
         "seatLimit": "pa' mI' Sub"
       },
       "placeholders": {
@@ -508,7 +493,7 @@
         "pricingMonthly": "jar Hoch Huch lo' qaStaHvIS rar yoH. DaH yIqIl 'e' DaneHchugh, yIqIl.",
         "pricingUpfront": "ghItlh wa' Huch lo'. poH nab Sov pagh, Huch rapchu'.",
         "seatHint": "tebDI', ghItlh chu'mey tetlh teb Daq jaH.",
-        "visibleHint": "mIrDaq neH qotlh. DochlIj DachenmoHtaHvIS, ghap ghItlh chu' DamevmeH, yIchu'Ha'. ghoStaHbogh vavmey, QujwI'pu', ghojmoHwI'pu' je, My SOG HaqwI'chajDaq Qu'chaj lulegh taH — yIchu'Ha'chugh, mIrDaq neH Doch teqlu'.",
+        "visibleHint": "DochlIj DachenmoHtaHvIS, ghap ghItlh chu' DamevmeH, yIchu'Ha'. vav chu'vo' neH Doch So' — ghoStaHbogh vavpu' QujwI'pu' je Doch Qu'chaj je My SOG HaqwI'chajDaq luleghtaH.",
         "seatLimitHint": "pa' mI' yIgheS pagh Sub Hutlh yIqaw.",
         "holidayComingSoon": "jaj Do' De'wI' tugh chol. DaH Hoch ghum qaS.",
         "startDateToday": "DaHjaj Daq poSmoHlu'pu'.",
@@ -685,6 +670,11 @@
           "confirmDescription": "ngu'be'choH {name}, 'ej DaH 'el laHbe'.",
           "noRefundWarning": "Huch nobHa'lu'be'! DIlta' 'e' DIl, vaj HuchDaj Suqqa'be'.",
           "confirmCta": "Suvwl' yIteq"
+        },
+        "waitlist": {
+          "title": "loSwI'pu'",
+          "subtitle": "pa' loStaH SuvwI'pu', 'el poHchaj mI'lu'. ghommeHghaj wa' yIngeH 'ej pa' yInob; pagh naDev SuvwI' Sang yIqep, tlha'Daq yIlan.",
+          "empty": "pagh loSwI'pu' tu'lu'."
         }
       },
       "seatLimitModes": {
@@ -945,6 +935,10 @@
       "updating": "vIchoH...",
       "resetButton": "mu'mey yIchoH",
       "linkExpired": "chovmoH ngeH Qu' DaQawpa'. chu' yInej.",
+      "linkExpiredTitle": "ngeH Qu' rInpu'",
+      "requestNewLink": "chu' yInej",
+      "passwordsDoNotMatch": "rapbe' mu'mey.",
+      "updateFailed": "mu'mey choHlu'pu'be'. yInID.",
       "successTitle": "mu'mey choHlu'",
       "successDescription": "mu'mey chu'moHlu'. Qapla'!"
     },
@@ -1035,6 +1029,17 @@
       "title": "ralHa'ghaj vISamlaHbe'",
       "description": "ngaq qan ghap naQbe'. reH My SOG-Daq DochlIj DaSammeH laH.",
       "cta": "My SOG yIghoS"
+    },
+    "waitlist": {
+      "heading": "loS tetlhDaq SoH",
+      "subheading": "{gamer} loS tetlhDaq: {product}. quS poSDI', SoH wIja'.",
+      "summaryTitle": "loS DaqlIj",
+      "forLabel": "loStaH",
+      "positionLabel": "DaqlIj",
+      "positionValue": "#{position}",
+      "next1": "quS poSDI', QInHom wIngeH.",
+      "next2": "DIS naQ tetlhDaq {gamer} Daq qaD.",
+      "next3": "reH My SOG-Daq loS DaqlIj DaleghlaH."
     }
   },
   "docs": {
@@ -1108,7 +1113,9 @@
     "help": "boQ",
     "yty": "Yty",
     "settings": "tlhInganpu' chu'",
-    "instantVoiceRoom": "tugh Daq"
+    "instantVoiceRoom": "tugh Daq",
+    "waitlistBand": "loS tetlhDaq",
+    "scheduledBand": "ghoSqep'a'mey"
   },
   "family": {
     "addGamer": "QujwI' chel",
@@ -1136,7 +1143,8 @@
       "firstNameTooLong": "wa'DIch pong tIn law' cha'maH cha' Hap law'.",
       "birthMonthRequired": "qoSlIj jar yIwIv!",
       "birthYearRequired": "qoSlIj DIS yIwIv!",
-      "genericError": "QujwI' chelta'be'. yInIDqa'!"
+      "genericError": "QujwI' chelta'be'. yInIDqa'!",
+      "minecraftAlreadyLinked": "Minecraft De'wI' 'oH latlh QujwI' rurmoHlu'pu'. wa' QujwI' neH."
     }
   },
   "selectProfile": {
@@ -1341,6 +1349,7 @@
       "viewDetails": "yIlegh",
       "manage": "yIche'",
       "fullDisabled": "buy'",
+      "alreadyStarted": "taghpu'",
       "online": "QumDaq"
     },
     "empty": {
@@ -1353,7 +1362,6 @@
   },
   "seatAvailability": {
     "remaining": "{count, plural, one {# / {total} pa' ratlh} other {# / {total} pa' ratlh}}",
-    "full": "buy'",
     "waitlistAvailable": "loS tetlh"
   },
   "productDetail": {
@@ -1424,13 +1432,6 @@
       "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
-      "bannerAlmostFull": "nom — pa' puS neH",
-      "bannerCountdown": "qonta' poSlaw' {date}",
-      "bannerCountdownDone": "qonta' poS",
-      "bannerWaitlist": "DaH buy'",
-      "bannerFullClosed": "buy'",
-      "bannerRunningLate": "taghta'",
-      "bannerEnded": "rIn",
       "verb": {
         "consumer_club": "yImuv",
         "municipality_club": "yIqon",
@@ -1443,13 +1444,14 @@
         "camp": "muvghach",
         "event": "muvghach"
       },
-      "ctaPreOpenIdle": "{verb} — DaH poSbe'",
-      "ctaPreOpenReady": "qonta' poSDI' SuD",
+      "ctaReadyWaiting": "ghuHta', yIloS",
       "ctaActive": "DaH {verb}",
       "ctaActiveWithPrice": "DaH {verb} {price}",
       "ctaActiveWithPriceSub": "DaH {verb} · {price}/jar",
       "ctaSubmitting": "yIloS…",
-      "ctaSelectGamer": "QujwI' yIwIv",
+      "ctaAddGamer": "QujwI' yIchel 'ej taH",
+      "ctaAllSet": "bIghuHrup",
+      "ctaAgreeRules": "chutmey yIlaj",
       "ctaWaitlist": "tetlh DaqaD",
       "ctaSignIn": "qonmeH yI'el",
       "ctaCreateAccount": "Account chu' chenmoH",
@@ -1461,13 +1463,8 @@
       },
       "gamerAlreadyWaitlisted": "tetlhDaq",
       "nonCustomerNote": "vavmey neH puq qonlaH naDev.",
-      "preOpenHelper": "puqlI' yIwIv 'ej chutmey yIlaj — qonta' poSDI' wa' tlhopwI' lo'meH.",
-      "waitlistHowTitle": "tetlh teb Qu'",
-      "waitlistHowItem1": "DIS naQ tetlh DaqaDtaHbogh.",
-      "waitlistHowItem2": "qorDu' chegh chugh, latlh qorDu' poH puS lo' laH.",
-      "waitlistHowItem3": "DaH 'aw' tetlh DaH'el laH.",
-      "endedNote": "rIn. latlh boqDI' yI'aHta'.",
-      "runningLateNote": "taghta' — qonta' SoQ. latlh boq DaH poSlaw'.",
+      "closedNote": "DaH poSbe'. latlh boqDI' yI'aHta'.",
+      "rulesHeading": "chutmey",
       "rules": {
         "consumer_club": "qIp 'ej tlhejHa' vuvbe' School of Gaming, jIyaj.",
         "municipality_club": "qIp 'ej tlhejHa' vuvbe' School of Gaming, 'ej qaSpa' choHmeH puqwI' DaH lop laH latlh qorDu' tetlh teb 'oHbogh, jIyaj.",
@@ -1505,9 +1502,6 @@
       "title": "tu'be'lu'",
       "description": "luchHa'lu'pu' joq link motlhHa'. bIH tu'lu'bogh yIleng.",
       "cta": "leng yIchegh"
-    },
-    "preview": {
-      "banner": "mocku' · ngeD lan'be'."
     },
     "geduGroups": {
       "heading": "ghomHommey",
@@ -1618,6 +1612,13 @@
     },
     "upcomingSession": {
       "gamerLabel": "{name}vaD"
+    },
+    "waitlist": {
+      "forLabel": "{name}vaD",
+      "positionLabel": "DaqlIj",
+      "positionValue": "#{position}",
+      "reassuranceCustomer": "quS poSDI', QInHom wIngeH.",
+      "reassuranceGamer": "quS poSDI', SoH wIja'."
     },
     "subscriptionEnding": {
       "wontRenew": "qaSqa'be'",

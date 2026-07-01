@@ -16,7 +16,7 @@ import {
   Info,
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ROLE_BADGE_STYLES } from "@/lib/constants";
 import {
@@ -44,9 +44,14 @@ import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { ParticipantRow, type ParticipantRowData } from "@/components/voice/ParticipantRow";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
 import { UserRow } from "@/components/admin/user-row";
-import { SessionsSection } from "@/components/parent";
+import { SessionsSection, WaitlistCard } from "@/components/parent";
 import type { UpcomingSessionEntry } from "@/lib/upcoming-sessions";
-import { useAuth, useNow } from "@/providers";
+import { useAuth, useNow, useTimezone } from "@/providers";
+import { useLocale, useTranslations } from "next-intl";
+import { resolveLocale } from "@/lib/constants/locales";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { useTopicLabel } from "@/lib/products/use-topic-label";
+import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import { computeGlowStyle } from "@/lib/voice/glow";
 import { composeZones } from "@/lib/voice/zone-composition";
 import { ZoneList } from "@/components/voice/ZoneList";
@@ -59,15 +64,23 @@ import type { VoiceZone, Location } from "@/types";
 import { LocationTree } from "@/components/locations/location-tree";
 import {
   ProductBrowseCardView,
-  type ProductBrowseCardViewProps,
+  type LocationLine,
+  type SeatBarValue,
+  type SeatsHint,
 } from "@/components/public/products/product-browse-card-view";
 import { SeatAvailabilityBar } from "@/components/public/products/seat-availability-bar";
-import { SignupPanel } from "@/components/public/products/signup-panel";
+import { formatProductLocation } from "@/components/public/products/format-product-location";
+import { formatProductPrice } from "@/components/public/products/format-product-price";
 import {
-  buildDetailFixture,
-  PREVIEW_STATES,
-  PREVIEW_TYPES,
-  type PreviewStateKind,
+  formatProductSchedule,
+  scheduleCardLines,
+} from "@/components/public/products/format-product-schedule";
+import {
+  buildScenarioFixture,
+  scenarioFilledSeats,
+  scenarioHasDetailPage,
+  PREVIEW_SCENARIOS,
+  type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
 import { ManageBillingCardView } from "@/components/billing";
 
@@ -957,162 +970,93 @@ function buildLoadedSessions(
 }
 
 /* ------------------------------------------------------------------ */
-/*  Products (browse + purchased cards)                                 */
+/*  Parent/Gamer — Waitlist Card                                        */
 /* ------------------------------------------------------------------ */
 
-// One sample of each price shape so the price block is exercised across
-// the demo browse cards.
-const SAMPLE_PRICE_SUBSCRIPTION: ProductBrowseCardViewProps["price"] = {
-  kind: "subscription",
-  perMonth: "€55.00",
-};
-const SAMPLE_PRICE_UPFRONT: ProductBrowseCardViewProps["price"] = {
-  kind: "upfront",
-  total: "€120.00",
-};
-const SAMPLE_PRICE_FREE: ProductBrowseCardViewProps["price"] = { kind: "free" };
+// Card for a club the viewer waitlisted (a `status='waitlisted'` participation
+// — no scheduled session, so it never appears in the session stack). Two
+// groups: the card's own states (parent with the "For {name}" line, gamer
+// without it, and the position-unknown fallback), then a composed preview of
+// how it slots into the Sessions section — an "On the waitlist" band above the
+// "Scheduled" list. The band sub-labels only show when both kinds are present;
+// a viewer with only one kind sees the cards with no labels.
+const WAITLIST_DEMO_GAMER = {
+  firstName: "Eino",
+  seed: "9b2e5d18-7a4c-4f0b-9c31-1d6e2a5f8b04",
+} as const;
+const WAITLIST_DEMO_GAMER_ALT = {
+  firstName: "Aada",
+  seed: "4c7f9a20-3e51-4b8d-8f26-0a9d1c6e5b73",
+} as const;
 
-// Browse-card display props for each state we want to render in full.
-const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] = [
-  {
-    label: "Default · plenty of seats",
-    props: {
-      name: "Tuesday Minecraft Builders",
-      description:
-        "Weekly creative sessions where your gamer collaborates with new friends and a Gedu who really gets it.",
-      imagePath: null,
-      topicLabel: "MINECRAFT",
-      scheduleLines: ["Tuesday · 17:00–18:30"],
-      ageLine: "Ages 8–12",
-      seatsHint: { kind: "capacity", count: 8 },
-      locationLine: { kind: "online", label: "Online" },
-      spokenLanguageCode: "fi",
-      price: SAMPLE_PRICE_SUBSCRIPTION,
-      state: { kind: "open", seatCount: 8, seatsLeft: 6, waitlistEnabled: false },
-    },
-  },
-  {
-    label: "Almost full · 2 spots left",
-    props: {
-      name: "Wednesday Roblox Crew",
-      description:
-        "Build, race, and collab with your crew — small group with regular faces every week.",
-      imagePath: null,
-      topicLabel: "ROBLOX",
-      scheduleLines: ["Wednesday · 17:00–18:30"],
-      ageLine: "Ages 9–13",
-      seatsHint: { kind: "capacity", count: 8 },
-      locationLine: { kind: "in_person", label: "Tapiolan koulu" },
-      spokenLanguageCode: "en",
-      price: SAMPLE_PRICE_SUBSCRIPTION,
-      state: { kind: "open", seatCount: 8, seatsLeft: 2, waitlistEnabled: false },
-    },
-  },
-  {
-    label: "Needs more sign-ups",
-    props: {
-      name: "Spring Roblox Build-Off",
-      description:
-        "Group challenge that runs once enough builders sign up — gather your crew and we'll lock in a start date.",
-      imagePath: null,
-      topicLabel: "ROBLOX",
-      scheduleLines: ["24–28 March", "10:00–14:00"],
-      ageLine: "Ages 9–14",
-      seatsHint: null,
-      locationLine: { kind: "online_muni", label: "Espoo" },
-      spokenLanguageCode: "fi",
-      price: SAMPLE_PRICE_UPFRONT,
-      state: { kind: "pending_thr", threshold: 6, count: 2 },
-    },
-  },
-  {
-    label: "Full · waitlist open",
-    props: {
-      name: "Friday Family Fortnite",
-      description:
-        "Drop-in event for parents and gamers — light competition, lots of laughter.",
-      imagePath: null,
-      topicLabel: "FORTNITE",
-      scheduleLines: ["Friday 12 April · 18:00–20:00"],
-      ageLine: "Ages 10+",
-      seatsHint: { kind: "capacity", count: 12 },
-      locationLine: { kind: "in_person", label: "Iso Omena" },
-      spokenLanguageCode: "en",
-      price: SAMPLE_PRICE_FREE,
-      state: { kind: "full_waitlist", seatCount: 12 },
-    },
-  },
-  {
-    label: "Sign-ups open later",
-    props: {
-      name: "Summer Adventure Camp",
-      description:
-        "A week-long story-driven adventure across multiple games. Sign-ups open soon.",
-      imagePath: null,
-      topicLabel: "ADVENTURE",
-      scheduleLines: ["12–16 August", "10:00–15:00"],
-      ageLine: "Ages 9–13",
-      seatsHint: { kind: "capacity", count: 16 },
-      locationLine: { kind: "in_person", label: "Sogverse HQ" },
-      spokenLanguageCode: "sv",
-      price: SAMPLE_PRICE_UPFRONT,
-      state: { kind: "closed_pre", opensAt: "2026-05-15T00:00:00Z" },
-    },
-  },
-  {
-    label: "Already started (camp)",
-    props: {
-      name: "April Roblox Camp",
-      description:
-        "Already underway — late joins aren't supported once a camp is running.",
-      imagePath: null,
-      topicLabel: "ROBLOX",
-      scheduleLines: ["20–24 April", "10:00–14:00"],
-      ageLine: "Ages 8–12",
-      seatsHint: { kind: "capacity", count: 10 },
-      locationLine: { kind: "in_person", label: "Ressun peruskoulu" },
-      spokenLanguageCode: "fi",
-      price: SAMPLE_PRICE_UPFRONT,
-      state: { kind: "running_late" },
-    },
-  },
-  {
-    label: "Ended",
-    props: {
-      name: "March Holiday Tournament",
-      description: "This event has wrapped — keep an eye out for the next one.",
-      imagePath: null,
-      topicLabel: "FORTNITE",
-      scheduleLines: ["Saturday 22 March · 14:00–17:00"],
-      ageLine: "Ages 10+",
-      seatsHint: null,
-      locationLine: { kind: "in_person", label: "Tampere-talo" },
-      spokenLanguageCode: "en",
-      price: SAMPLE_PRICE_UPFRONT,
-      state: { kind: "ended" },
-    },
-  },
-  {
-    // Municipality club: seat-fill bar replaces the price (externally funded),
-    // and the location reads generic "Online" on its single-municipality page.
-    label: "Municipality club · seat bar",
-    props: {
-      name: "Tapiola Minecraft Club",
-      description:
-        "Weekly in-school sessions funded by the municipality — free for families to register.",
-      imagePath: null,
-      topicLabel: "Minecraft",
-      scheduleLines: ["Thursday · 15:00–16:30"],
-      ageLine: "Ages 10–12",
-      seatsHint: { kind: "capacity", count: 15 },
-      locationLine: { kind: "online", label: "Online" },
-      spokenLanguageCode: "fi",
-      price: { kind: "external" },
-      seatBar: { filled: 11, total: 15, waitlistEnabled: false },
-      state: { kind: "open", seatCount: 15, seatsLeft: 4, waitlistEnabled: false },
-    },
-  },
-];
+function WaitlistCardDemo() {
+  const t = useTranslations("dashboardSections");
+  const now = useNow();
+  const scheduled = buildLoadedSessions(
+    [
+      { name: "Rocket League Club", daysAhead: 2 },
+      { name: "Rocket League Club", daysAhead: 9 },
+    ],
+    WAITLIST_DEMO_GAMER,
+    now,
+  );
+
+  return (
+    <div className="space-y-8">
+      <SubSection title="Card states">
+        <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex flex-col gap-2">
+            <DemoCaption>Parent — position known</DemoCaption>
+            <WaitlistCard
+              productName="Minecraft Builders Club"
+              gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
+              gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
+              position={3}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <DemoCaption>Gamer — no attribution</DemoCaption>
+            <WaitlistCard
+              productName="Minecraft Builders Club"
+              gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
+              gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
+              position={3}
+              audience="gamer"
+            />
+          </div>
+        </div>
+      </SubSection>
+
+      <SubSection title="Band within Sessions">
+        <div className="mx-auto w-full max-w-lg space-y-6">
+          <div className="space-y-3">
+            <DemoCaption>{t("waitlistBand")}</DemoCaption>
+            <WaitlistCard
+              productName="Minecraft Builders Club"
+              gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
+              gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
+              position={3}
+            />
+            <WaitlistCard
+              productName="Roblox Obby Makers"
+              gamerFirstName={WAITLIST_DEMO_GAMER.firstName}
+              gamerSeed={WAITLIST_DEMO_GAMER.seed}
+              position={7}
+            />
+          </div>
+          <div className="space-y-3">
+            <DemoCaption>{t("scheduledBand")}</DemoCaption>
+            <SessionsSection sessions={scheduled} />
+          </div>
+        </div>
+      </SubSection>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Products (browse + purchased cards)                                 */
+/* ------------------------------------------------------------------ */
 
 // Caption above each card in the demo grid. Uses the same uppercase
 // micro-label treatment as the topic chip inside the card so it reads
@@ -1154,7 +1098,7 @@ const SEAT_DEMO_CASES: {
     waitlistEnabled: true,
   },
   {
-    label: "Full, no waitlist — 0 of 15",
+    label: "Full, no waitlist — 0 of 15 (no chip; the disabled CTA says Full)",
     seatCount: 15,
     seatsLeft: 0,
     waitlistEnabled: false,
@@ -1187,14 +1131,140 @@ function SeatAvailabilityDemo() {
 }
 
 function ProductsDemo() {
+  // Group scenarios into subsections by product type, preserving SCENARIO_ORDER
+  // (the list is already laid out so each group is contiguous).
+  type ScenarioEntry = (typeof PREVIEW_SCENARIOS)[number];
+  const groups: { group: string; scenarios: ScenarioEntry[] }[] = [];
+  for (const entry of PREVIEW_SCENARIOS) {
+    const last = groups.at(-1);
+    if (last?.group === entry.group) last.scenarios.push(entry);
+    else groups.push({ group: entry.group, scenarios: [entry] });
+  }
+
   return (
-    <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
-      {BROWSE_DEMO_CARDS.map(({ label, props }) => (
-        <div key={label} className="flex flex-col gap-2">
-          <DemoCaption>{label}</DemoCaption>
-          <ProductBrowseCardView {...props} />
-        </div>
+    <div className="space-y-8">
+      {groups.map(({ group, scenarios }) => (
+        <SubSection key={group} title={group}>
+          <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+            {scenarios.map(({ slug, label }) => (
+              <ScenarioBrowseCard key={slug} slug={slug} label={label} />
+            ))}
+          </div>
+        </SubSection>
       ))}
+
+      <SubSection title="Closed-state signup panel">
+        <p className="max-w-prose text-sm text-muted-foreground">
+          The shared &ldquo;registration closed&rdquo; panel (ended / already
+          started / fully booked) has no browse-card link &mdash; a parent only
+          reaches it through a stale link or bookmark. Preview it full-page:
+        </p>
+        <a
+          href="/preview/products/muni-full-closed"
+          target="_blank"
+          rel="noreferrer"
+          className={buttonVariants({ variant: "outline", size: "sm" })}
+        >
+          View closed panel &rarr;
+        </a>
+      </SubSection>
+    </div>
+  );
+}
+
+// One demo card per scenario, rendered from that scenario's mocked product. It
+// feeds the *pure* `ProductBrowseCardView` directly, deriving the display props
+// from the same fixture row that drives the full-page preview (via the shared
+// schedule / price / location formatters) and passing the authored registration
+// `state` straight through as a prop. The production `deriveRegistrationState`
+// adapter is intentionally bypassed — the style guide authors the state it wants
+// to eyeball, the card never computes it. The card's own "View" CTA (for states
+// that have one) links to the matching full page at /preview/products/[slug].
+function ScenarioBrowseCard({
+  slug,
+  label,
+}: {
+  slug: PreviewScenario;
+  label: string;
+}) {
+  const t = useTranslations("productBrowse.card");
+  const uiLocale = resolveLocale(useLocale());
+  const timeZone = useTimezone();
+  const now = useNow();
+  const topicLabel = useTopicLabel();
+
+  const { product, state } = buildScenarioFixture(slug);
+  // Only states with a working "View" CTA navigate; the rest (full/closed,
+  // ended) render no link, so they get no detail href.
+  const detailHref = scenarioHasDetailPage(slug)
+    ? `/preview/products/${slug}`
+    : undefined;
+  const tr = resolveTranslation(product.product_translations, uiLocale);
+  const isMuniClub = product.product_type === "municipality_club";
+
+  const scheduleLines = scheduleCardLines(
+    formatProductSchedule({ product, locale: uiLocale, timeZone, now }),
+  );
+  const price = formatProductPrice({
+    prices: product.product_prices,
+    billingMode: product.billing_mode,
+    productType: product.product_type,
+    currency: DEFAULT_CURRENCY,
+    locale: uiLocale,
+  });
+
+  // Muni clubs are only ever surfaced on the per-municipality page, which
+  // renders them `municipalityScoped` — so an online muni club collapses its
+  // (redundant) city name to the generic "Online" label, exactly as the
+  // production adapter does there. In-person muni clubs still show their school
+  // site. (The `online_muni` city-name branch never fires for muni clubs in the
+  // live app, so the demo doesn't reproduce it.)
+  const loc = formatProductLocation(product, uiLocale);
+  const locationLine: LocationLine = !loc
+    ? { kind: "online", label: t("online") }
+    : loc.kind === "site"
+      ? { kind: "in_person", label: loc.site }
+      : { kind: "online", label: t("online") };
+
+  // Same rule as the production adapter: muni clubs tell the seat story through
+  // the footer bar, so they suppress the capacity hint; everything else shows
+  // its capacity (or "waitlist available" when uncapped but waitlisted).
+  const seatsHint: SeatsHint | null = isMuniClub
+    ? null
+    : product.seat_count !== null
+      ? { kind: "capacity", count: product.seat_count }
+      : product.waitlist_enabled
+        ? { kind: "waitlist" }
+        : null;
+
+  // Muni clubs swap the price for a seat-fill bar; the fill comes from the
+  // scenario's authored state so the bar and the card agree.
+  const seatBar: SeatBarValue | undefined = isMuniClub
+    ? {
+        filled: scenarioFilledSeats(slug),
+        total: product.seat_count,
+        waitlistEnabled: product.waitlist_enabled,
+      }
+    : undefined;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <DemoCaption>{label}</DemoCaption>
+      <ProductBrowseCardView
+        name={tr?.name ?? ""}
+        description={tr?.short_description ?? null}
+        imagePath={product.image_path}
+        topicLabel={topicLabel(product.topic)}
+        scheduleLines={scheduleLines}
+        ageLine={t("ages", { min: product.min_age, max: product.max_age })}
+        seatsHint={seatsHint}
+        locationLine={locationLine}
+        spokenLanguageCode={product.spoken_language_code}
+        price={price}
+        seatBar={seatBar}
+        state={state}
+        detailHref={detailHref}
+      />
     </div>
   );
 }
@@ -1737,32 +1807,24 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 12: Products (parent browse + purchased)             */}
+      {/* Section 12: Products                                          */}
       {/* ============================================================ */}
-      <Section title="Products — Browse Cards">
+      <Section title="Products">
         <p className="text-sm text-muted-foreground -mt-2">
-          Parent-facing card surface for products in the shop (/shop). Every
-          product renders the same browse card whether or not the customer owns
-          it. One card per registration state the deriver returns — the CTA
-          button and (for muni clubs) the seat-availability bar carry the state
-          signal.
+          Parent-facing product surfaces, grouped by product type. Each card is
+          one mocked product rendered as the browse card a parent sees in the
+          shop (/shop); its own &ldquo;View&rdquo; button (for states that have
+          one) opens that same mock&rsquo;s full detail page in the public
+          layout — hero, long description, schedule calendar, and the
+          registration signup panel — exactly as a parent would see it. The
+          panel therefore needs no separate demo: it lives in the full-page
+          view. Cards with no working &ldquo;View&rdquo; button (full &amp;
+          closed shows a disabled button; an already-started camp shows none)
+          have no detail page to open — a parent can&rsquo;t act there, so it
+          isn&rsquo;t mocked. The set is curated to the visually distinct
+          surfaces worth eyeballing.
         </p>
         <ProductsDemo />
-      </Section>
-
-      {/* ============================================================ */}
-      {/* Section 12: Products — Detail Page                             */}
-      {/* ============================================================ */}
-      <Section title="Products — Detail Page">
-        <p className="text-sm text-muted-foreground -mt-2">
-          Product detail page (/shop/[id]).
-          The right-side signup panel switches across registration states
-          (countdown / open / waitlist / threshold / ended). Each tile here
-          shows the panel inline; the &ldquo;Preview full page &rarr;&rdquo;
-          link opens the route in the public layout exactly as a parent
-          would see it.
-        </p>
-        <ProductDetailDemo />
       </Section>
 
       {/* ============================================================ */}
@@ -1796,6 +1858,24 @@ export default function AdminUIComponentsPage() {
           informational).
         </p>
         <SessionsSectionDemo />
+      </Section>
+
+      {/* ============================================================ */}
+      {/* Section 15: Parent/Gamer — Waitlist Card                       */}
+      {/* ============================================================ */}
+      <Section title="Parent/Gamer — Waitlist Card">
+        <p className="text-sm text-muted-foreground -mt-2">
+          A club the viewer joined the <em>waitlist</em> for. Waitlisted
+          participations have no scheduled session, so they never appear in the
+          session stack above &mdash; this card is their home on My SOG, mirroring
+          the post-signup confirmation page&rsquo;s <code>Hourglass</code> +{" "}
+          <code>#position</code> treatment. It renders the same on both the
+          parent and gamer dashboards; <code>audience</code> only toggles the
+          &ldquo;For {"{name}"}&rdquo; line and the reassurance voice. The
+          position badge is fixed-width + <code>tabular-nums</code> so a live
+          position change never reflows the copy beside it.
+        </p>
+        <WaitlistCardDemo />
       </Section>
 
     </div>
@@ -1934,83 +2014,3 @@ function ManageBillingCardDemo() {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Section 12: Products — Detail Page                                 */
-/* ------------------------------------------------------------------ */
-
-function ProductDetailDemo() {
-  return (
-    <div className="space-y-6">
-      {PREVIEW_TYPES.map((productType) => (
-        <SubSection
-          key={productType}
-          title={productType.replace(/_/g, " ").toUpperCase()}
-        >
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {PREVIEW_STATES.map((stateKind) => (
-              <ProductDetailPanelTile
-                key={`${productType}-${stateKind}`}
-                productType={productType}
-                stateKind={stateKind}
-              />
-            ))}
-          </div>
-        </SubSection>
-      ))}
-    </div>
-  );
-}
-
-// Plain-English labels for each PreviewStateKind. The state key is the
-// internal code name (matches `RegistrationState["kind"]`); the label is
-// what an admin reading this page should see at a glance.
-const STATE_LABELS: Record<PreviewStateKind, string> = {
-  closed_pre: "Pre-launch — registration not yet open",
-  closed_pre_10s: "Pre-launch — opens in 10 seconds (live test)",
-  open: "Open for sign-ups",
-  open_almost_full: "Open — almost full",
-  pending_thr: "Pending threshold — needs more sign-ups",
-  full_waitlist: "Full — waitlist available",
-  full_closed: "Full — waitlist closed",
-  running_late: "Already running — no late joins",
-  ended: "Ended",
-};
-
-function ProductDetailPanelTile({
-  productType,
-  stateKind,
-}: {
-  productType: (typeof PREVIEW_TYPES)[number];
-  stateKind: PreviewStateKind;
-}) {
-  const fixture = buildDetailFixture(productType, stateKind);
-  const fullPageHref = `/preview/products/${productType}/${stateKind}`;
-
-  return (
-    <div className="rounded-lg border bg-muted/20 p-3 space-y-2">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-sm font-medium leading-tight">
-            {STATE_LABELS[stateKind]}
-          </p>
-          <p className="text-xs font-mono text-muted-foreground">{stateKind}</p>
-        </div>
-        <a
-          href={fullPageHref}
-          target="_blank"
-          rel="noreferrer"
-          className="shrink-0 text-xs font-medium text-primary hover:underline"
-        >
-          Preview full page →
-        </a>
-      </div>
-      <div className="rounded-md bg-background p-3">
-        <SignupPanel
-          product={fixture.product}
-          state={fixture.state}
-          authState={fixture.authState}
-        />
-      </div>
-    </div>
-  );
-}

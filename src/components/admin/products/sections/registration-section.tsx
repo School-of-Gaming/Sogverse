@@ -5,28 +5,32 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 import { FormSection, InfoCallout } from "../form-primitives";
-import { FORM_LOCKS } from "../form-locks";
+import { formLocksFor } from "../form-locks";
 import {
   HOUR_OPTIONS,
   MINUTE_OPTIONS,
   REGISTRATION_OPENS_MODE_VALUES,
   type FormState,
 } from "../product-form-state";
+import type { ProductTypeConfig } from "../product-type-config";
 
 interface RegistrationSectionProps {
   state: FormState;
   setState: React.Dispatch<React.SetStateAction<FormState>>;
+  config: ProductTypeConfig;
 }
 
 export function RegistrationSection({
   state,
   setState,
+  config,
 }: RegistrationSectionProps) {
   const t = useTranslations("admin.products");
 
-  // Pre-prod UI lock (see form-locks.ts): registration always opens
-  // immediately, so the chooser is pinned to "Right away".
-  const lockTiming = FORM_LOCKS.registrationTiming;
+  // Pre-prod UI lock (see form-locks.ts): registration always opens immediately
+  // and the chooser is pinned to "Right away" — except on municipality clubs,
+  // where the registration window is signed off and the chooser is editable.
+  const lockTiming = formLocksFor(config.productType).registrationTiming;
 
   return (
     <FormSection

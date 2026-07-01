@@ -4,11 +4,12 @@ import { ProductsService } from "@/services/products";
 import {
   PurchaseConfirmationView,
   PurchaseConfirmationFallback,
+  type SignupOutcome,
 } from "@/components/public/products/purchase-confirmation-view";
 import type { ProductBrowseRow } from "@/types";
 
-// Post-purchase confirmation page. Both the paid flow (Stripe `success_url`)
-// and the free-signup flow (router.push) land here with `?p=<participationId>`.
+// Post-signup summary page. The paid flow (Stripe `success_url`), the free-
+// signup flow, and a waitlist join all land here with `?p=<participationId>`.
 //
 // Fetched server-side with the viewer's RLS-scoped client so the page renders
 // complete on first paint — no client loading state, no skeleton, and so no
@@ -27,17 +28,28 @@ export default async function ShopConfirmationPage({
   if (!participationId) return <PurchaseConfirmationFallback />;
 
   const supabase = await createClient();
+  const participations = new ParticipationsService(supabase);
   let product: ProductBrowseRow | null = null;
   let gamerName: string | null = null;
+  let outcome: SignupOutcome = "enrolled";
+  let waitlistPosition: number | null = null;
   try {
-    const confirmation = await new ParticipationsService(
-      supabase,
-    ).getConfirmation(participationId);
+    const confirmation = await participations.getConfirmation(participationId);
     if (confirmation) {
       product = await new ProductsService(supabase).getDetailById(
         confirmation.productId,
       );
       gamerName = confirmation.gamerName;
+      // A waitlisted participation lands on the waitlist summary variant.
+      outcome =
+        confirmation.status === "waitlisted" ? "waitlisted" : "enrolled";
+      // "You're #N" — fetched live (not the stale join-time value) so a parent
+      // who revisits sees their position shrink as people ahead leave. Null is
+      // tolerated: the view just omits the line.
+      if (outcome === "waitlisted") {
+        waitlistPosition =
+          await participations.getWaitlistPosition(participationId);
+      }
     }
   } catch {
     // RLS miss / stale id / transient error → render the friendly fallback
@@ -53,5 +65,12 @@ export default async function ShopConfirmationPage({
 
   if (!product) return <PurchaseConfirmationFallback />;
 
-  return <PurchaseConfirmationView product={product} gamerName={gamerName} />;
+  return (
+    <PurchaseConfirmationView
+      product={product}
+      gamerName={gamerName}
+      outcome={outcome}
+      waitlistPosition={waitlistPosition}
+    />
+  );
 }
