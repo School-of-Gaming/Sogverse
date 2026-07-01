@@ -935,6 +935,10 @@
       "updating": "vIchoH...",
       "resetButton": "mu'mey yIchoH",
       "linkExpired": "chovmoH ngeH Qu' DaQawpa'. chu' yInej.",
+      "linkExpiredTitle": "ngeH Qu' rInpu'",
+      "requestNewLink": "chu' yInej",
+      "passwordsDoNotMatch": "rapbe' mu'mey.",
+      "updateFailed": "mu'mey choHlu'pu'be'. yInID.",
       "successTitle": "mu'mey choHlu'",
       "successDescription": "mu'mey chu'moHlu'. Qapla'!"
     },

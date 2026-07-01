@@ -890,6 +890,10 @@
       "updating": "Updating...",
       "resetButton": "Reset Password",
       "linkExpired": "Your reset link has expired. Please request a new one.",
+      "linkExpiredTitle": "Reset link expired",
+      "requestNewLink": "Request a new link",
+      "passwordsDoNotMatch": "The passwords you entered don't match.",
+      "updateFailed": "We couldn't update your password. Please try again.",
       "successTitle": "Password updated",
       "successDescription": "Your password has been successfully updated."
     },

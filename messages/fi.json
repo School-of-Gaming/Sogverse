@@ -890,6 +890,10 @@
       "updating": "Päivitetään...",
       "resetButton": "Nollaa salasana",
       "linkExpired": "Nollauslinkkisi on vanhentunut. Pyydä uusi linkki.",
+      "linkExpiredTitle": "Nollauslinkki on vanhentunut",
+      "requestNewLink": "Pyydä uusi linkki",
+      "passwordsDoNotMatch": "Antamasi salasanat eivät täsmää.",
+      "updateFailed": "Salasanan päivitys epäonnistui. Yritä uudelleen.",
       "successTitle": "Salasana päivitetty",
       "successDescription": "Salasanasi on päivitetty onnistuneesti."
     },

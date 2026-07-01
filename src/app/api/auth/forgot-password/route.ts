@@ -36,15 +36,12 @@ export async function POST(request: Request) {
         .select("locale")
         .eq("email", parsed.data.email)
         .single(),
+      // We only consume the single-use token_hash from the result (see the
+      // emailed-link construction below) — not the action_link — so no
+      // redirectTo is needed.
       adminClient.auth.admin.generateLink({
         type: "recovery",
         email: parsed.data.email,
-        options: {
-          // generateLink() has no PKCE challenge, so Supabase's verify endpoint
-          // redirects with implicit flow (tokens in URL hash). The reset-password
-          // form parses these and calls setSession() manually.
-          redirectTo: `${origin}${ROUTES.resetPassword}`,
-        },
       }),
     ]);
 
@@ -62,12 +59,25 @@ export async function POST(request: Request) {
 
     const t = await getEmailTranslator(locale);
 
+    // Email a link to OUR reset page carrying the single-use token_hash — NOT
+    // Supabase's action_link. The action_link is a bare GET on /auth/v1/verify
+    // that consumes the token on *access*, so corporate email security scanners
+    // (SafeLinks / Proofpoint / etc.) that pre-fetch links burn it before the
+    // real user clicks. Our page consumes the token via verifyOtp() only when
+    // the user submits their new password — a POST from a real interaction that
+    // a passive scanner never performs. Origin comes from getOrigin (a trusted
+    // source, never the raw Host) since this link is emailed and carries a
+    // recovery credential. See src/components/auth/reset-password-form.tsx.
+    const resetUrl = `${origin}${ROUTES.resetPassword}?token_hash=${encodeURIComponent(
+      linkResult.data.properties.hashed_token,
+    )}&type=recovery`;
+
     await sendTransactionalEmail({
       fromEmail: SENDER_EMAIL,
       fromName: t("senderAuth"),
       toEmail: parsed.data.email,
       subject: t("passwordReset.subject"),
-      htmlContent: buildPasswordResetEmail(t, linkResult.data.properties.action_link, locale),
+      htmlContent: buildPasswordResetEmail(t, resetUrl, locale),
     });
 
     return NextResponse.json({ success: true });

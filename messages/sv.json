@@ -890,6 +890,10 @@
       "updating": "Uppdaterar...",
       "resetButton": "Återställ lösenord",
       "linkExpired": "Din återställningslänk har gått ut. Begär en ny.",
+      "linkExpiredTitle": "Återställningslänken har gått ut",
+      "requestNewLink": "Begär en ny länk",
+      "passwordsDoNotMatch": "Lösenorden du angav matchar inte.",
+      "updateFailed": "Vi kunde inte uppdatera ditt lösenord. Försök igen.",
       "successTitle": "Lösenordet uppdaterat",
       "successDescription": "Ditt lösenord har uppdaterats."
     },
