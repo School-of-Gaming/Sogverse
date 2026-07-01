@@ -1064,7 +1064,9 @@
     "help": "Apu",
     "yty": "Yty",
     "settings": "Asetukset",
-    "instantVoiceRoom": "Pikaäänihuone"
+    "instantVoiceRoom": "Pikaäänihuone",
+    "waitlistBand": "Jonotuslistalla",
+    "scheduledBand": "Aikataulussa"
   },
   "family": {
     "addGamer": "Lisää pelaaja",
@@ -1561,6 +1563,13 @@
     },
     "upcomingSession": {
       "gamerLabel": "Pelaaja: {name}"
+    },
+    "waitlist": {
+      "forLabel": "Pelaaja: {name}",
+      "positionLabel": "Sijasi jonossa",
+      "positionValue": "#{position}",
+      "reassuranceCustomer": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
+      "reassuranceGamer": "Ilmoitamme heti, kun paikka vapautuu."
     },
     "subscriptionEnding": {
       "wontRenew": "Ei uusiudu",

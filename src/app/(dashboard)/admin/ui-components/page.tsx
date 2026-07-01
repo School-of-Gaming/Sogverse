@@ -44,7 +44,7 @@ import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { ParticipantRow, type ParticipantRowData } from "@/components/voice/ParticipantRow";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
 import { UserRow } from "@/components/admin/user-row";
-import { SessionsSection } from "@/components/parent";
+import { SessionsSection, WaitlistCard } from "@/components/parent";
 import type { UpcomingSessionEntry } from "@/lib/upcoming-sessions";
 import { useAuth, useNow, useTimezone } from "@/providers";
 import { useLocale, useTranslations } from "next-intl";
@@ -970,6 +970,91 @@ function buildLoadedSessions(
 }
 
 /* ------------------------------------------------------------------ */
+/*  Parent/Gamer — Waitlist Card                                        */
+/* ------------------------------------------------------------------ */
+
+// Card for a club the viewer waitlisted (a `status='waitlisted'` participation
+// — no scheduled session, so it never appears in the session stack). Two
+// groups: the card's own states (parent with the "For {name}" line, gamer
+// without it, and the position-unknown fallback), then a composed preview of
+// how it slots into the Sessions section — an "On the waitlist" band above the
+// "Scheduled" list. The band sub-labels only show when both kinds are present;
+// a viewer with only one kind sees the cards with no labels.
+const WAITLIST_DEMO_GAMER = {
+  firstName: "Eino",
+  seed: "9b2e5d18-7a4c-4f0b-9c31-1d6e2a5f8b04",
+} as const;
+const WAITLIST_DEMO_GAMER_ALT = {
+  firstName: "Aada",
+  seed: "4c7f9a20-3e51-4b8d-8f26-0a9d1c6e5b73",
+} as const;
+
+function WaitlistCardDemo() {
+  const t = useTranslations("dashboardSections");
+  const now = useNow();
+  const scheduled = buildLoadedSessions(
+    [
+      { name: "Rocket League Club", daysAhead: 2 },
+      { name: "Rocket League Club", daysAhead: 9 },
+    ],
+    WAITLIST_DEMO_GAMER,
+    now,
+  );
+
+  return (
+    <div className="space-y-8">
+      <SubSection title="Card states">
+        <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex flex-col gap-2">
+            <DemoCaption>Parent — position known</DemoCaption>
+            <WaitlistCard
+              productName="Minecraft Builders Club"
+              gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
+              gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
+              position={3}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <DemoCaption>Gamer — no attribution</DemoCaption>
+            <WaitlistCard
+              productName="Minecraft Builders Club"
+              gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
+              gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
+              position={3}
+              audience="gamer"
+            />
+          </div>
+        </div>
+      </SubSection>
+
+      <SubSection title="Band within Sessions">
+        <div className="mx-auto w-full max-w-lg space-y-6">
+          <div className="space-y-3">
+            <DemoCaption>{t("waitlistBand")}</DemoCaption>
+            <WaitlistCard
+              productName="Minecraft Builders Club"
+              gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
+              gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
+              position={3}
+            />
+            <WaitlistCard
+              productName="Roblox Obby Makers"
+              gamerFirstName={WAITLIST_DEMO_GAMER.firstName}
+              gamerSeed={WAITLIST_DEMO_GAMER.seed}
+              position={7}
+            />
+          </div>
+          <div className="space-y-3">
+            <DemoCaption>{t("scheduledBand")}</DemoCaption>
+            <SessionsSection sessions={scheduled} />
+          </div>
+        </div>
+      </SubSection>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Products (browse + purchased cards)                                 */
 /* ------------------------------------------------------------------ */
 
@@ -1773,6 +1858,24 @@ export default function AdminUIComponentsPage() {
           informational).
         </p>
         <SessionsSectionDemo />
+      </Section>
+
+      {/* ============================================================ */}
+      {/* Section 15: Parent/Gamer — Waitlist Card                       */}
+      {/* ============================================================ */}
+      <Section title="Parent/Gamer — Waitlist Card">
+        <p className="text-sm text-muted-foreground -mt-2">
+          A club the viewer joined the <em>waitlist</em> for. Waitlisted
+          participations have no scheduled session, so they never appear in the
+          session stack above &mdash; this card is their home on My SOG, mirroring
+          the post-signup confirmation page&rsquo;s <code>Hourglass</code> +{" "}
+          <code>#position</code> treatment. It renders the same on both the
+          parent and gamer dashboards; <code>audience</code> only toggles the
+          &ldquo;For {"{name}"}&rdquo; line and the reassurance voice. The
+          position badge is fixed-width + <code>tabular-nums</code> so a live
+          position change never reflows the copy beside it.
+        </p>
+        <WaitlistCardDemo />
       </Section>
 
     </div>

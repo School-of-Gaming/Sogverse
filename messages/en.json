@@ -1064,7 +1064,9 @@
     "help": "Help",
     "yty": "Yty",
     "settings": "Settings",
-    "instantVoiceRoom": "Instant Voice Room"
+    "instantVoiceRoom": "Instant Voice Room",
+    "waitlistBand": "On the waitlist",
+    "scheduledBand": "Scheduled"
   },
   "family": {
     "addGamer": "Add Gamer",
@@ -1561,6 +1563,13 @@
     },
     "upcomingSession": {
       "gamerLabel": "For {name}"
+    },
+    "waitlist": {
+      "forLabel": "For {name}",
+      "positionLabel": "Your position",
+      "positionValue": "#{position}",
+      "reassuranceCustomer": "We'll email you the moment a seat opens.",
+      "reassuranceGamer": "We'll let you know as soon as a seat opens."
     },
     "subscriptionEnding": {
       "wontRenew": "Won't renew",

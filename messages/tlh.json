@@ -1109,7 +1109,9 @@
     "help": "boQ",
     "yty": "Yty",
     "settings": "tlhInganpu' chu'",
-    "instantVoiceRoom": "tugh Daq"
+    "instantVoiceRoom": "tugh Daq",
+    "waitlistBand": "loS tetlhDaq",
+    "scheduledBand": "ghoSqep'a'mey"
   },
   "family": {
     "addGamer": "QujwI' chel",
@@ -1606,6 +1608,13 @@
     },
     "upcomingSession": {
       "gamerLabel": "{name}vaD"
+    },
+    "waitlist": {
+      "forLabel": "{name}vaD",
+      "positionLabel": "DaqlIj",
+      "positionValue": "#{position}",
+      "reassuranceCustomer": "quS poSDI', QInHom wIngeH.",
+      "reassuranceGamer": "quS poSDI', SoH wIja'."
     },
     "subscriptionEnding": {
       "wontRenew": "qaSqa'be'",
