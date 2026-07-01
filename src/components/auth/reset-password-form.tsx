@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
@@ -23,19 +23,34 @@ export function ResetPasswordForm() {
   const [success, setSuccess] = useState(false);
   const [committing, setCommitting] = useState(false);
   const [linkFailed, setLinkFailed] = useState(false);
+  // Once verifyOtp() consumes the single-use token, the recovery session is live.
+  // A retry (e.g. after the server rejects a weak password) must not re-verify
+  // the now-spent token; this flag makes retries update off the session instead.
+  const [verified, setVerified] = useState(false);
+  // Hidden username field for password managers: the account email (from the
+  // emailed link) so they save the new password against the right account.
+  // Set via ref, NOT `readOnly` or `hidden`/display:none — password managers
+  // skip both when choosing the username; sr-only keeps it rendered but unseen.
+  // Not a credential — never passed to verifyOtp/updateUser; the token authorizes.
+  const usernameRef = useRef<HTMLInputElement>(null);
 
   const supabase = getClient();
+
+  useEffect(() => {
+    const email = new URLSearchParams(window.location.search).get("email");
+    if (email && usernameRef.current) {
+      usernameRef.current.value = email;
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    // Read the single-use recovery token from the emailed link's `?token_hash=`
-    // here, at submit time — never on mount. Consuming it on page load would let
-    // a corporate email-link scanner (which fetches the page but never submits a
-    // form) burn the token before the real user acts. The user's explicit submit
-    // is a POST a passive scanner doesn't perform. See the emailed-link comment
-    // in src/app/api/auth/forgot-password/route.ts.
+    // Read the recovery token at submit, never on mount: consuming it on page
+    // load would let a corporate email-link scanner (which fetches the page but
+    // never submits) burn the single-use token before the real user acts. See
+    // the emailed-link comment in src/app/api/auth/forgot-password/route.ts.
     const tokenHash = new URLSearchParams(window.location.search).get("token_hash");
     if (!tokenHash) {
       setLinkFailed(true);
@@ -67,18 +82,24 @@ export function ResetPasswordForm() {
     // double-submit). Set it true synchronously before the first await.
     setCommitting(true);
 
-    // This is the moment the single-use token is consumed.
-    const { error: verifyError } = await supabase.auth.verifyOtp({
-      token_hash: tokenHash,
-      type: "recovery",
-    });
+    // Consume the single-use token exactly once. On a retry after a failed
+    // updateUser the session is already established, so we skip straight to the
+    // update below rather than re-verifying an already-burned token.
+    if (!verified) {
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: "recovery",
+      });
 
-    if (verifyError) {
-      // Token expired / already used (e.g. double-click, or a genuinely stale
-      // link). Swap to the dead-link view; leave `committing` set — the unmount
-      // handles the rest.
-      setLinkFailed(true);
-      return;
+      if (verifyError) {
+        // Token expired / already used (e.g. double-click, or a genuinely stale
+        // link). Swap to the dead-link view; leave `committing` set — the
+        // unmount handles the rest.
+        setLinkFailed(true);
+        return;
+      }
+
+      setVerified(true);
     }
 
     const { error: updateError } = await supabase.auth.updateUser({ password });
@@ -156,6 +177,14 @@ export function ResetPasswordForm() {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          {/* Hidden username field — see usernameRef above. */}
+          <input
+            ref={usernameRef}
+            type="email"
+            autoComplete="username"
+            tabIndex={-1}
+            className="sr-only"
+          />
           {error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               {error}

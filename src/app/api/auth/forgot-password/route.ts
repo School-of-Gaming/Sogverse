@@ -63,14 +63,22 @@ export async function POST(request: Request) {
     // Supabase's action_link. The action_link is a bare GET on /auth/v1/verify
     // that consumes the token on *access*, so corporate email security scanners
     // (SafeLinks / Proofpoint / etc.) that pre-fetch links burn it before the
-    // real user clicks. Our page consumes the token via verifyOtp() only when
-    // the user submits their new password — a POST from a real interaction that
-    // a passive scanner never performs. Origin comes from getOrigin (a trusted
-    // source, never the raw Host) since this link is emailed and carries a
-    // recovery credential. See src/components/auth/reset-password-form.tsx.
+    // real user clicks. Our page consumes the token via verifyOtp() only on
+    // submit — a POST a passive scanner never makes.
+    //
+    // The token_hash rides in the query string. That's safe because our global
+    // `Referrer-Policy: strict-origin-when-cross-origin` (next.config.ts) strips
+    // the query from any cross-origin Referer, so it never leaves our domain —
+    // the assumption behind Supabase's documented token_hash pattern.
+    //
+    // `email` is the username hint for the reset page's hidden
+    // autocomplete="username" field, so password managers save the new password
+    // against the right account. Not a credential — the page uses it only as a
+    // hint, the token authorizes the reset. It's the recipient's own email: no
+    // enumeration exposure, same low-sensitivity URL channel as the token.
     const resetUrl = `${origin}${ROUTES.resetPassword}?token_hash=${encodeURIComponent(
       linkResult.data.properties.hashed_token,
-    )}&type=recovery`;
+    )}&type=recovery&email=${encodeURIComponent(parsed.data.email)}`;
 
     await sendTransactionalEmail({
       fromEmail: SENDER_EMAIL,

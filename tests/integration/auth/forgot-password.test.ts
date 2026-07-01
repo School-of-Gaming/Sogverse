@@ -153,6 +153,17 @@ describe("POST /api/auth/forgot-password", () => {
     );
   });
 
+  // The email rides in the reset link as the username hint for the reset page's
+  // hidden autocomplete="username" field (so password managers save the new
+  // password against the right account). It's a hint, not a credential — but it
+  // must be URL-encoded so a `+` or other reserved char survives.
+  it("appends the URL-encoded account email as the password-manager username hint", async () => {
+    await POST(createRequest({ email: "user+tag@example.com" }));
+
+    const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
+    expect(htmlContent).toContain("&email=user%2Btag%40example.com");
+  });
+
   // -- Accept-Language locale detection --
 
   it("should send Finnish email when Accept-Language has fi as best supported match", async () => {
