@@ -232,11 +232,17 @@ export function GroupsPanel({
 
   // Recurring billing on consumer clubs makes a no-payment comp awkward, so
   // the Add Gamer affordance is hidden for that product type. Route enforces
-  // this too (defense in depth). The waitlist section is hidden for the same
-  // reason — a consumer-club waitlister can't be promoted without a Stripe
-  // subscription, and the create UI already blocks waitlists on consumer clubs.
+  // this too (defense in depth).
   const canAddGamer = productType !== "consumer_club";
-  const showWaitlist = productType !== "consumer_club";
+  // The waitlist section shows only when the product actually opens a waitlist
+  // — same signal the seat bar reads. Gating on the capability (not the type)
+  // keeps a full camp/event, or a muni club with the waitlist toggle off, from
+  // exposing a drop target that would demote actives onto a waitlist the
+  // product doesn't offer. Consumer clubs can't enable a waitlist anyway (a
+  // waitlister there can't be promoted without a Stripe subscription), so
+  // waitlistEnabled is already false for them; the explicit exclusion documents
+  // that and mirrors the route's defense-in-depth block.
+  const showWaitlist = waitlistEnabled && productType !== "consumer_club";
 
   // Any enrolled gamer blocks a re-add via the picker.
   const enrolledGamerIds = useMemo(() => {

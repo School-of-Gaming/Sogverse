@@ -49,7 +49,7 @@ export const addParticipationResponse = z.object({
   participation_id: z.string(),
 });
 
-const groupParticipationDetail = z.object({
+export const groupParticipationDetail = z.object({
   id: z.string(),
   gamer_id: z.string(),
   gamer_first_name: z.string(),
@@ -63,6 +63,20 @@ const groupParticipationDetail = z.object({
   signed_up_at: z.string(),
 });
 
+export const groupGeduDetail = z.object({
+  id: z.string(),
+  first_name: z.string(),
+  email: z.string().nullable(),
+});
+
+export const productGroupWithDetails = z.object({
+  id: z.string(),
+  name: z.string(),
+  created_at: z.string(),
+  gedus: z.array(groupGeduDetail),
+  participations: z.array(groupParticipationDetail),
+});
+
 /**
  * The `get_product_groups_with_details` JSONB document backing the admin
  * Groups panel. The RPC returns `Json`; this schema is the structure,
@@ -71,21 +85,7 @@ const groupParticipationDetail = z.object({
  */
 export const productGroupsSnapshot = z.object({
   product_id: z.string(),
-  groups: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      created_at: z.string(),
-      gedus: z.array(
-        z.object({
-          id: z.string(),
-          first_name: z.string(),
-          email: z.string().nullable(),
-        })
-      ),
-      participations: z.array(groupParticipationDetail),
-    })
-  ),
+  groups: z.array(productGroupWithDetails),
   unassigned: z.array(groupParticipationDetail),
   /**
    * Waitlisted gamers in derived order (waitlisted_at, id) — same detail shape
@@ -94,3 +94,13 @@ export const productGroupsSnapshot = z.object({
    */
   waitlist: z.array(groupParticipationDetail),
 });
+
+/**
+ * The compile-time shapes for the Groups panel, derived from the schemas above
+ * so the wire contract and the type can't drift. Re-exported through `@/types`
+ * (see types/index.ts) so consumers keep a single import surface.
+ */
+export type GroupParticipationDetail = z.infer<typeof groupParticipationDetail>;
+export type GroupGeduDetail = z.infer<typeof groupGeduDetail>;
+export type ProductGroupWithDetails = z.infer<typeof productGroupWithDetails>;
+export type ProductGroupsSnapshot = z.infer<typeof productGroupsSnapshot>;

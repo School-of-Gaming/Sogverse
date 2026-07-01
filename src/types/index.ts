@@ -284,43 +284,16 @@ export type VoicePrivateZoneOccupant = Database["public"]["Tables"]["voice_priva
 export type VoicePrivateZoneOccupantInsert = Database["public"]["Tables"]["voice_private_zone_occupants"]["Insert"];
 
 // get_product_groups_with_details — returns JSONB, so the generated type is
-// `Json`. Define a structured shape that mirrors what the RPC produces so the
-// admin UI gets type safety without a Zod parse step.
-export interface GroupGeduDetail {
-  id: string;
-  first_name: string;
-  email: string | null;
-}
-
-export interface GroupParticipationDetail {
-  id: string;
-  gamer_id: string;
-  gamer_first_name: string;
-  gamer_date_of_birth: string | null;
-  gamer_gender: GenderType | null;
-  gamer_minecraft_username: string | null;
-  gamer_minecraft_uuid: string | null;
-  gamer_parent_first_name: string | null;
-  gamer_parent_last_name: string | null;
-  status: ParticipationStatus;
-  signed_up_at: string;
-}
-
-export interface ProductGroupWithDetails {
-  id: string;
-  name: string;
-  created_at: string;
-  gedus: GroupGeduDetail[];
-  participations: GroupParticipationDetail[];
-}
-
-export interface ProductGroupsSnapshot {
-  product_id: string;
-  groups: ProductGroupWithDetails[];
-  unassigned: GroupParticipationDetail[];
-  /** Waitlisted gamers in derived order (waitlisted_at, id). See migration 00118. */
-  waitlist: GroupParticipationDetail[];
-}
+// `Json`. The structured shape is derived from the productGroupsSnapshot zod
+// contract (the same schema the service and db tests parse through), so the
+// wire contract and the type can't drift. Re-exported here so consumers keep
+// importing these from `@/types`.
+export type {
+  GroupGeduDetail,
+  GroupParticipationDetail,
+  ProductGroupWithDetails,
+  ProductGroupsSnapshot,
+} from "@/services/groups/groups.contracts";
 
 // get_gedu_assigned_product — the JSONB document that backs the gedu's
 // session-details page (entered from a dashboard session card, but
