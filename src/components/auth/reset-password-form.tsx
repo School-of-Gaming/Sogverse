@@ -51,6 +51,12 @@ export function ResetPasswordForm() {
     // load would let a corporate email-link scanner (which fetches the page but
     // never submits) burn the single-use token before the real user acts. See
     // the emailed-link comment in src/app/api/auth/forgot-password/route.ts.
+    //
+    // A missing token_hash is a can't-happen in practice — the only way onto this
+    // page is the emailed link, which always carries the token, so the real cases
+    // are "valid" and "expired", both handled below. We deliberately don't
+    // pre-check presence on mount (it'd only matter for a hand-typed URL); if it's
+    // somehow absent we fall through to the same dead-link view here.
     const tokenHash = new URLSearchParams(window.location.search).get("token_hash");
     if (!tokenHash) {
       setLinkFailed(true);
@@ -92,9 +98,11 @@ export function ResetPasswordForm() {
       });
 
       if (verifyError) {
-        // Token expired / already used (e.g. double-click, or a genuinely stale
-        // link). Swap to the dead-link view; leave `committing` set — the
-        // unmount handles the rest.
+        // Token expired / already used (e.g. double-click, a genuinely stale
+        // link) — or a transient verify failure. We don't distinguish them: the
+        // only reasonable recovery for any of these is requesting a fresh link,
+        // which the dead-link view offers. Swap to it; leave `committing` set —
+        // the unmount handles the rest.
         setLinkFailed(true);
         return;
       }
@@ -105,7 +113,14 @@ export function ResetPasswordForm() {
     const { error: updateError } = await supabase.auth.updateUser({ password });
 
     if (updateError) {
-      // Session is valid but the update failed — let the user retry.
+      // Session is valid but the update failed — let the user retry. We show a
+      // generic message rather than surfacing updateError.message: the realistic
+      // cause is Supabase's password policy rejecting the input (too weak, or
+      // "must differ from the old password"), whose messages are English-only and
+      // would break i18n if surfaced raw. The tradeoff: if Supabase's policy ever
+      // drifts stricter than the client's MIN_PASSWORD_LENGTH check, the user sees
+      // an unactionable message and can loop. Keep the two in sync so that stays a
+      // non-case; revisit (map known codes to translated copy) if it ever bites.
       setError(t('resetPassword.updateFailed'));
       setCommitting(false);
       return;

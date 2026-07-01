@@ -18,7 +18,7 @@ export function buildPasswordResetEmail(t: EmailTranslator, resetLink: string, l
           <table role="presentation" cellpadding="0" cellspacing="0">
             <tr>
               <td align="center" style="background-color:${BRAND.primary};border-radius:8px;">
-                <!-- resetLink is a Supabase-generated URL, safe to embed unescaped -->
+                <!-- resetLink is app-built with encodeURIComponent'd params (see the forgot-password route), so it's safe to embed unescaped -->
                 <a href="${resetLink}" target="_blank" style="display:inline-block;padding:12px 32px;font-size:14px;font-weight:bold;color:${DARK_THEME.bg};text-decoration:none;">
                   ${t("passwordReset.button")}
                 </a>
