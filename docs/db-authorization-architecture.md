@@ -454,9 +454,6 @@ fields) on the same predicates.
 
 Adjacent but *different* refactors — folding them in would bloat this one:
 
-- **Emailed-link / origin-trust hardening** — deriving emailed link origins from a
-  trusted source rather than the request `Host`, scanner-resistant token flows, OTP
-  expiry split. Auth-email security, not DB authz.
 - **Data-validity constraints** — CHECK constraints on free-text columns, NOT NULL
   tightening. Same layer, different property (validity, not authorization).
 - **Browser-level auth E2E** — Playwright against a local Supabase stack. Shares the
