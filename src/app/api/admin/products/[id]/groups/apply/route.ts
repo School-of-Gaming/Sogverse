@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
-import { parseJsonBody } from "@/lib/api/json-body.server";
+import { z } from "zod";
+import { defineRoute } from "@/lib/api/define-route";
+import { ApiError } from "@/lib/api/api-error";
 import {
   applyGroupChangesResult,
   groupChangeSet,
@@ -18,40 +18,46 @@ import {
  * here. The legacy provisioning logic wires those up and stays available for
  * future reuse.
  */
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const result = await requireRole("admin", {
-    forbiddenMessage: "Only admins can manage product groups",
-  });
-  if (result instanceof NextResponse) return result;
-  const { supabase } = result;
+export const POST = defineRoute({
+  posture: "role-gated",
+  roles: "admin",
+  forbiddenMessage: "Only admins can manage product groups",
+  params: z.object({ id: z.string().uuid() }),
+  body: groupChangeSet,
 
-  const { id: productId } = await params;
+  // `no_data_found`: the RPC raises it for a product that is not there, and the
+  // product is named by the URL path — a missing one is a missing resource, so
+  // the shared table's 404 stands and no override is needed. Every other code
+  // the RPC can raise (constraint violations from a malformed batch) also lands
+  // on the shared table; this route used to collapse all of them to 400.
+  discloseErrorMessages:
+    "apply_group_changes raises with a written explanation of which change in the batch was refused, and the groups panel shows it verbatim beside the failed action",
 
-  const changes = await parseJsonBody(request, groupChangeSet);
-  if (changes instanceof NextResponse) return changes;
+  handler: async ({ supabase, params, body }) => {
+    const { data, error } = await supabase.rpc("apply_group_changes", {
+      p_product_id: params.id,
+      p_added_groups: body.addedGroups,
+      p_renamed_groups: body.renamedGroups,
+      p_deleted_group_ids: body.deletedGroupIds,
+      p_gedu_assignments_added: body.geduAssignmentsAdded,
+      p_gedu_assignments_removed: body.geduAssignmentsRemoved,
+      p_participation_moves: body.participationMoves,
+    });
 
-  const { data, error } = await supabase.rpc("apply_group_changes", {
-    p_product_id: productId,
-    p_added_groups: changes.addedGroups,
-    p_renamed_groups: changes.renamedGroups,
-    p_deleted_group_ids: changes.deletedGroupIds,
-    p_gedu_assignments_added: changes.geduAssignmentsAdded,
-    p_gedu_assignments_removed: changes.geduAssignmentsRemoved,
-    p_participation_moves: changes.participationMoves,
-  });
+    if (error) throw error;
 
-  if (error) {
-    // P0002 = product not found; surface as 404. Everything else is a 400
-    // (constraint violation, malformed batch) — the RPC raises with a
-    // descriptive message so we forward it.
-    const status = error.code === "P0002" ? 404 : 400;
-    return NextResponse.json({ error: error.message }, { status });
-  }
-
-  // The RPC returns `Json`; validate it really is the tempMap shape before
-  // handing it to the client (the service parses the same contract schema).
-  return NextResponse.json(applyGroupChangesResult.parse(data));
-}
+    // The RPC is typed `Json` by codegen, so the contract schema is what
+    // narrows it. A mismatch is our bug, not the caller's: a logged 500. The
+    // zod detail goes to the log rather than into the ApiError, because this
+    // route discloses its error messages and that detail is not admin copy.
+    const parsed = applyGroupChangesResult.safeParse(data);
+    if (!parsed.success) {
+      console.error(
+        "apply_group_changes returned an unexpected shape:",
+        parsed.error.message,
+      );
+      throw new ApiError("Failed to apply group changes", 500);
+    }
+    return parsed.data;
+  },
+});

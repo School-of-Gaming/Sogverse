@@ -56,6 +56,14 @@ export const joinWaitlistRpcResult = z.object({
 });
 
 /**
+ * Body of POST /api/admin/products/[id]/participations — admin comp-enrollment.
+ * The product comes from the URL path, so the body names only the gamer.
+ */
+export const adminEnrollGamerBody = z.object({
+  gamerId: z.string().min(1, "gamerId is required"),
+});
+
+/**
  * Body of PATCH /api/admin/products/[id]/participations/[participationId] — the
  * admin waitlist status transitions driven by the groups-panel drag UI.
  * `promote` carries the drop target (`groupId` null = unassigned inbox);

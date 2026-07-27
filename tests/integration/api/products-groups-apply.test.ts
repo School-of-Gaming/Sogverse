@@ -143,7 +143,10 @@ describe("POST /api/admin/products/[id]/groups/apply", () => {
     expect(body.error).toBe("Product not found");
   });
 
-  it("maps other RPC errors to HTTP 400", async () => {
+  it("maps a unique violation to HTTP 409 through the shared error table", async () => {
+    // This route used to answer 400 for every code except P0002. On the shared
+    // table a duplicate is a conflict, which is what every other route on the
+    // surface already answered for the same code.
     mockAuthenticatedAdmin();
     mockRpc.mockResolvedValue({
       data: null,
@@ -154,8 +157,21 @@ describe("POST /api/admin/products/[id]/groups/apply", () => {
     });
 
     const response = await POST(createRequest(emptyBatch), { params });
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(409);
     const body = await response.json();
     expect(body.error).toContain("duplicate key");
+  });
+
+  it("maps an unrecognized database code to a logged 500 rather than a 400", async () => {
+    // An error nobody anticipated is a server error; reporting it to the admin
+    // as their bad request hid it.
+    mockAuthenticatedAdmin();
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { message: "boom", code: "XX000" },
+    });
+
+    const response = await POST(createRequest(emptyBatch), { params });
+    expect(response.status).toBe(500);
   });
 });
