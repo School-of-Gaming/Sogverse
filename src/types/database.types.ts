@@ -1229,6 +1229,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _list_column_grants: {
+        Args: { p_grantee: string }
+        Returns: {
+          column_name: string
+          privilege_type: string
+          table_name: string
+        }[]
+      }
       _list_cron_jobs: {
         Args: never
         Returns: {
@@ -1237,12 +1245,17 @@ export type Database = {
           schedule: string
         }[]
       }
-      _list_rpc_access: {
+      _list_function_authorization_surface: {
         Args: never
         Returns: {
           anon_access: boolean
+          argument_names: string[]
           authenticated_access: boolean
+          body: string
+          function_language: string
           function_name: string
+          is_security_definer: boolean
+          is_strict: boolean
         }[]
       }
       _list_security_definer_without_search_path: {

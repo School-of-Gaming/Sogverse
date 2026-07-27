@@ -188,8 +188,11 @@ always-on tripwires:
   regenerated before committing** — DB tests and type-check depend on
   `database.types.ts` matching the schema.
 - **Every new object (table, view, sequence, function) needs an explicit `GRANT`** — no
-  Data API access by default, not even for `service_role`. Grant per role, and add any
-  `authenticated`/`anon` function to the allowlist in `tests/db/access-control.test.ts`.
+  Data API access by default, not even for `service_role`. Grant per role. A function
+  exposed to `authenticated`/`anon` additionally has to be **classified in the DB test
+  suite's authorization spine** — role-gated (guard-first body + its permitted roles) or
+  self-scoping (named to a scope test) — and a table that gains a write grant needs a
+  write-IDOR case. The spine's completeness checks fail the build otherwise.
 - **All new tables must enable RLS**, and **RLS INSERT/UPDATE policies must authorize
   both the actor AND the target** (checking only `column = auth.uid()` is an IDOR hole).
 

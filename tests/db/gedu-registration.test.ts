@@ -29,8 +29,10 @@ describe("gedu registration + verification RPCs", () => {
   });
 
   afterAll(async () => {
-    // Restore the seeded gedu to its verified baseline in case a test flipped it.
-    await admin.rpc("set_gedu_verified", {
+    // Restore the seeded gedu to its verified baseline in case a test flipped
+    // it. Through the signed-in admin, not the service-role client: since 00121
+    // the RPC's guard refuses a caller with no profiles row.
+    await adminClient.rpc("set_gedu_verified", {
       p_gedu_id: TEST_IDS.GEDU,
       p_verified: true,
     });
@@ -156,12 +158,15 @@ describe("gedu registration + verification RPCs", () => {
       expect(afterVerify?.verified_by).toBe(TEST_IDS.ADMIN);
     });
 
-    it("rejects a non-admin caller", async () => {
+    it("rejects a non-admin caller with the canonical 42501", async () => {
+      // 00121 moved this RPC onto assert_admin(), so its refusal now carries the
+      // same forbidden ERRCODE as every other role-gated RPC instead of a
+      // generic raise. That is what let the role × RPC matrix pick it up.
       const { error } = await geduClient.rpc("set_gedu_verified", {
         p_gedu_id: TEST_IDS.GEDU,
         p_verified: false,
       });
-      expect(error).not.toBeNull();
+      expect(error?.code).toBe("42501");
     });
   });
 });

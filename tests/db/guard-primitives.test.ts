@@ -9,16 +9,16 @@ import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
  * create_product and update_product are SECURITY INVOKER — their guard runs as
  * the caller. That grant is a new exposed surface, so it is tested directly
  * here rather than only through the eight RPCs that call it: the primitives
- * must refuse every role they don't name and pass the one they do — and, for
- * now, reproduce the hand-written guards' NULL-role pass-through verbatim.
+ * must refuse every role they don't name, pass the one they do, and — since
+ * migration 00121 — refuse a caller who holds no role at all.
  *
- * Which functions are *exposed* is pinned mechanically by access-control.test
- * .ts (assert_self and the two §3.2 predicates are deliberately absent from its
- * allowlist), so this file covers behaviour only.
- *
- * The wrong-role behaviour of the RPCs that call these guards is already
- * covered per-RPC (apply-group-changes, update-product, waitlist-admin,
- * get-gedu-assigned-product); the systematic role × RPC matrix is Phase 2.
+ * Which functions are *exposed* is pinned mechanically by
+ * authorization-spine.test.ts's completeness check (assert_self and the two §3.2
+ * predicates are deliberately absent from its classifications, so they must
+ * stay unexposed), so this file covers behaviour only. The systematic role × RPC
+ * matrix — including these primitives — lives in that file too; what is here is
+ * the primitives' own edge cases, which the matrix's all-NULL convention cannot
+ * express.
  */
 describe("guard primitives", () => {
   describe("assert_admin", () => {
@@ -48,19 +48,20 @@ describe("guard primitives", () => {
       expect(error?.code).toBe("42501");
     });
 
-    it("KNOWN GAP: lets a caller with no role through", async () => {
-      // service_role carries no `sub` claim, so get_user_role() is NULL, and
-      // `NULL <> 'admin'` is NULL — the IF never fires. The hand-written guards
-      // this primitive replaces behaved the same way, and that pass-through is
-      // load-bearing today: update-product.test.ts and gedu-registration.test.ts
-      // drive admin-gated RPCs through the service-role client. Pinned here so
-      // the hole is visible and Phase 2 closes it as a deliberate test change,
-      // not a surprise.
+    it("refuses a caller with no role", async () => {
+      // service_role carries no `sub` claim, so get_user_role() is NULL. Under
+      // the `<>` comparison this primitive shipped with, `NULL <> 'admin'` was
+      // NULL, the IF never fired, and the caller went straight through — the
+      // pass-through Phase 1 inherited from the hand-written guards it replaced.
+      // 00121 switched the comparison to IS DISTINCT FROM, so a roleless caller
+      // is now refused like any other non-admin. This is the inverse of the
+      // KNOWN GAP assertion that stood here, kept in place so the closure is
+      // visible in the diff rather than just an absent test.
       const admin = createAdminTestClient();
 
       const { error } = await admin.rpc("assert_admin");
 
-      expect(error).toBeNull();
+      expect(error?.code).toBe("42501");
     });
   });
 
@@ -83,6 +84,33 @@ describe("guard primitives", () => {
       );
 
       const { error } = await client.rpc("assert_role", { p_role: "gedu" });
+
+      expect(error?.code).toBe("42501");
+    });
+
+    it("refuses a caller with no role, even for a role that exists", async () => {
+      // The direct test of the 00121 `<>` → IS DISTINCT FROM change: a real role
+      // name, a caller whose get_user_role() is NULL. The matrix in
+      // authorization-spine.test.ts only ever hands this primitive a NULL role
+      // name, so this case is only assertable here.
+      const admin = createAdminTestClient();
+
+      const { error } = await admin.rpc("assert_role", { p_role: "gedu" });
+
+      expect(error?.code).toBe("42501");
+    });
+  });
+
+  describe("assert_self", () => {
+    it("refuses a caller who is not the referenced user", async () => {
+      // service_role only (no SECURITY INVOKER consumer yet), so the service-role
+      // client is the caller here. auth.uid() is NULL, which IS DISTINCT FROM any
+      // user id — the fail-closed default the primitive shipped with.
+      const admin = createAdminTestClient();
+
+      const { error } = await admin.rpc("assert_self", {
+        p_user_id: TEST_IDS.CUSTOMER,
+      });
 
       expect(error?.code).toBe("42501");
     });

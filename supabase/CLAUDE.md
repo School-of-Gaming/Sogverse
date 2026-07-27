@@ -146,8 +146,8 @@ CLI v2.106.0, and hosted DBs since `00099` proactively revoked the legacy auto-e
 default privileges (ahead of Supabase's 2026-10-30 platform flip); `00095` backfilled
 explicit grants for everything older. Grant deliberately per role —
 `GRANT EXECUTE ... TO authenticated` for browser-called RPCs, `TO service_role` for
-admin-client-called ones — and add any function exposed to `authenticated`/`anon` to the
-allowlist in `tests/db/access-control.test.ts`. A forgotten grant fails closed as
+admin-client-called ones — and classify any function exposed to `authenticated`/`anon`
+in the DB test suite's authorization spine (see below). A forgotten grant fails closed as
 `permission denied` in CI's DB tests; never "fix" that with blanket `ON ALL TABLES`
 grants or by re-adding auto-expose `ALTER DEFAULT PRIVILEGES` — the failure is the
 feature. The `REVOKE EXECUTE` boilerplate in older migrations is historical and harmless.
@@ -161,9 +161,27 @@ is a privilege escalation vector.
 Checking only `column = auth.uid()` is insufficient — also verify the user is authorized
 to reference the target entity (prevents IDOR).
 
-The DB test `tests/db/access-control.test.ts` enforces the function and RLS rules — it
-queries PostgreSQL catalogs and fails if any non-allowlisted function is callable or any
-table lacks RLS. (DB tests run against a real Postgres in CI — see `tests/CLAUDE.md`.)
+**Rule: an exposed function's *body* is verified, not just its grant.** The DB test
+suite's **authorization spine** (`docs/db-authorization-architecture.md` §3.4) queries the
+PostgreSQL catalogs and requires every function reachable by `authenticated` to be one of
+two things, with nothing escaping both:
+
+- **Role-gated** — a `plpgsql` body whose *first statement* is a guard primitive
+  (`PERFORM public.assert_admin();` / `assert_role(…)` / `assert_self(…)`, all raising
+  ERRCODE `42501`), annotated with the roles it permits. The spine then signs in as every
+  other role, calls it with all-NULL arguments, and requires the forbidden error — and
+  signs in as a permitted role and requires anything *but* it, so a permissive annotation
+  cannot pass vacuously.
+- **Self-scoping** — every read and write keyed to `auth.uid()`, no guard by design,
+  named to a scope test that proves it cannot answer about anyone else. `LANGUAGE sql`
+  functions have no first statement, so they can only ever be this.
+
+Alongside it: no exposed function may be `STRICT` (a `STRICT` function skips its body on
+NULL input, so its guard would never run); no privilege-bearing column may be reachable by
+an `UPDATE` grant, at table or column level; and every table `authenticated` can UPDATE or
+DELETE needs a write-IDOR case proving a wrong user's statement affects zero rows. RLS
+coverage (every table has it) and the table-level write-grant allowlist live in the
+access-control test. (DB tests run against a real Postgres in CI — see `tests/CLAUDE.md`.)
 
 ## `now()` is frozen at transaction start
 

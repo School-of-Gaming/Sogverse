@@ -1,10 +1,11 @@
 # Database Authorization Architecture
 
 **Status:** target architecture + migration plan. The conventions in §2–§3 are how new
-code is written today; §5 Phase 1 (guard primitives + ownership predicates) has landed,
-and the verification spine (§3.4) and the route sweep (§5 Phase 3) are not yet built.
-This is the single source of truth for the refactor — when someone says "let's do the DB
-authorization refactor," this is the doc to read and act on.
+code is written today; §5 Phase 1 (guard primitives + ownership predicates) and Phase 2
+(the §3.4 verification spine) have landed, and the route sweep (§5 Phase 3) and RLS
+completeness (Phase 4) are not yet built. This is the single source of truth for the
+refactor — when someone says "let's do the DB authorization refactor," this is the doc to
+read and act on.
 
 **Execution contract.** This doc is written so a fresh Claude Code session can execute
 the refactor from it. Before acting on any phase:
@@ -172,21 +173,28 @@ to construct it.
 
 ### Existing verification
 
-What the DB test suite already covers (don't rebuild this — extend it):
+What the DB test suite covers (don't rebuild this — extend it):
 
-- **Static** (the access-control test): function-grant allowlists for `authenticated`
-  and `anon`; every public table has RLS; every `SECURITY DEFINER` function sets
-  `search_path`; table-level write grants match an allowlist. Column-level grants are
-  explicitly out of scope today.
-- **Behavioral, handwritten per-target**: wrong-role 42501 tests for the admin- and
-  gedu-gated RPCs; SELECT-side IDOR tests (customer A cannot read customer B's rows)
-  for participations, payments, refunds, groups, and products; scope tests for the
-  self-scoping `get_my_*` and PIN RPCs.
+- **The spine** (§3.4, landed in Phase 2): static conformance, the behavioral role × RPC
+  matrix, the write-path IDOR loop, the column-grant audit, and the completeness check
+  that ties the exposed surface to one of two classifications. Adding an exposed
+  function, a write grant, or a column grant without its annotation and test now fails
+  CI.
+- **Static, grant-level** (the access-control test): every public table has RLS; every
+  `SECURITY DEFINER` function sets `search_path`; table-level write grants match a
+  bidirectional allowlist; `anon` holds no table write grant. The *function*-grant
+  allowlists it used to carry were retired when the spine subsumed them.
+- **Behavioral, handwritten per-target**: SELECT-side IDOR tests (customer A cannot read
+  customer B's rows) for participations, payments, refunds, groups, and products; the
+  per-RPC happy-path and business-rule tests. These are the fixture-bearing coverage the
+  fixture-free matrix cannot replace.
 - **Substrate**: `tests/db/helpers.ts` signs in as any seeded role (admin, customer,
-  second customer, gedu, gamer) with deterministic UUIDs; CI runs the suite against a
-  local Supabase stack.
+  second customer, gedu, gamer) with deterministic UUIDs, hands out an `anon` client and
+  a raw access token, and can post an RPC call straight to PostgREST (which is how the
+  matrix passes `null` for every argument without fighting the generated arg types); CI
+  runs the suite against a local Supabase stack.
 
-The spine (§3.4) systematizes this; it is not greenfield.
+The spine systematized this; it was not greenfield.
 
 ---
 
@@ -286,8 +294,8 @@ guarantees nothing escapes both.
    and every allowlist entry names its scope test. This closes the two silent holes:
    an RPC annotated permissively passes check 2 vacuously, and an allowlisted function
    with no scope test is vetted by nothing. Allowlist growth is this design's failure
-   mode; check 5 is what polices it. Once 1+2+5 are in place they subsume the current
-   grant-allowlist test — retire it then, not before.
+   mode; check 5 is what polices it. 1+2+5 subsume the old grant-allowlist test, which
+   was retired with them (§5 Phase 2).
 
 ### 3.5 The RPC shape under this architecture
 
@@ -382,30 +390,56 @@ bodies (the small `42501` set — regrep `schema.sql` to enumerate) to call them
 policy rewrites in this phase — the predicates exist but no policy composes from them
 until Phase 4, so they carry no `authenticated` grant yet.
 
-Two things Phase 2 inherits from it:
+Both items it deferred were closed in Phase 2: the role assertion's NULL-role
+pass-through (`<>` → `IS DISTINCT FROM`) and the unconverted `set_gedu_verified`.
 
-- **The role assertion still lets a caller with *no* role through.** The comparison is
-  `<>`, so a NULL role (no `profiles` row — a `service_role` connection, or a session
-  whose profile was deleted) evaluates to NULL, the `IF` never fires, and the caller
-  passes. Phase 1 reproduced that verbatim rather than fixing it, because it is
-  load-bearing: db tests drive admin-gated RPCs through the service-role client and only
-  work because of it. Closing it means switching to `IS DISTINCT FROM` *and* giving those
-  tests a caller that actually holds the role — which is matrix work, so it belongs here
-  in Phase 2, not in a refactor that promised no behavior change. (The self assertion has
-  no legacy callers and already fails closed.)
-- **`set_gedu_verified` is still unconverted.** It is role-gated (`is_admin()`) but
-  raises a generic error rather than `42501`, so the `42501` grep does not find it — and
-  it depends on the same NULL-role pass-through. Reconciling it (canonical code + a
-  caller that actually holds the role) is the same piece of work.
+### Phase 2 — the verification spine — **landed**
 
-### Phase 2 — the verification spine
+The five checks of §3.4 live in the DB test suite. The two classifications — role-gated
+RPCs with their permitted roles, and self-scoping helpers with the scope test that vets
+each one — are the spine's data; everything else is derived from the PostgreSQL catalogs
+at test time, so the surface cannot drift out from under them. The grant-level function
+allowlists were retired once checks 1+2+5 were green, as planned.
 
-Implement the five checks of §3.4 in the DB test suite. Build the matrix annotations
-and the self-scoping allowlist (seed both from the current access-control allowlist
-and its intent comments); write scope tests for any allowlisted function that lacks
-one. Keep the current grant-allowlist test until checks 1+2+5 subsume it, then retire
-it. After this phase, a forgotten guard, a vacuous annotation, or an unvetted exposure
-fails CI.
+Three judgment calls worth carrying forward:
+
+- **Check 1 is applied to every plpgsql function exposed to `authenticated`, not only
+  the `SECURITY DEFINER` ones.** `create_product`/`update_product` are `SECURITY
+  INVOKER` and would have escaped the narrower reading, which is why the guard
+  primitives carry an `authenticated` grant in the first place. The partition is
+  "role-gated or self-scoping", and it is the same partition check 5 enforces.
+- **The matrix asserts both directions.** For a disallowed (role, RPC) pair the call
+  must come back `42501`; for a permitted one it must come back *anything but* `42501`.
+  Without the second half, annotating every role as permitted would pass vacuously —
+  which §3.4 names as the check's own failure mode. One RPC opts out of the positive
+  half (`get_gedu_assigned_product` raises a second `42501` for a gedu with no
+  assignment, which is its ownership gate, not its role gate); the opt-out carries its
+  reason inline.
+- **INSERT is out of scope for the write-IDOR loop.** A blocked INSERT and a constraint
+  violation are both "an error", so the check would risk passing for the wrong reason
+  unless every case carried a fully valid payload. UPDATE/DELETE need no payload: RLS
+  simply filters the row out and the statement affects zero rows. INSERT `WITH CHECK`
+  stays with the per-feature RLS tests, which do supply valid payloads.
+
+What Phase 3 inherits:
+
+- **Every new RPC needs a matrix annotation or an allowlist entry with a scope test**,
+  and every new write grant needs an IDOR case — the completeness checks fail the build
+  otherwise. That is the intended cost, and it is what the per-route checklist below
+  already anticipates.
+- **A dead grant worth folding into a later phase**: `authenticated` holds `UPDATE` on
+  `whatsapp_messages` with no UPDATE policy behind it, so it authorizes nothing today.
+  The IDOR loop covers it, but the grant should be revoked when that table is next
+  touched.
+- **`can_read_product` answers `NULL`, not `false`, for a caller with no profiles row.**
+  Its first disjunct compares `get_user_role()` to `'admin'`, which is NULL for `anon`,
+  and `NULL OR false` is NULL. Harmless where it is used — a policy's `USING` clause
+  treats NULL as deny — and the scope test pins both the NULL and the deny. Worth a
+  `COALESCE(…, false)` when Phase 4 next touches that predicate, so the boolean is total.
+- **The Phase 1 grant asymmetry stands**: `assert_self` and the two §3.2 participation
+  predicates remain `service_role`-only, because nothing composes from them yet. The
+  phase that puts them in a policy or a `SECURITY INVOKER` body grants them then — and
+  check 5 will require the classification at that point.
 
 ### Phase 3 — the route sweep
 
