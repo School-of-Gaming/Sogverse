@@ -1618,7 +1618,14 @@
       "positionLabel": "DaqlIj",
       "positionValue": "#{position}",
       "reassuranceCustomer": "quS poSDI', QInHom wIngeH.",
-      "reassuranceGamer": "quS poSDI', SoH wIja'."
+      "reassuranceGamer": "quS poSDI', SoSlI' vavlI' je wIja'.",
+      "leave": {
+        "trigger": "tlhegh yImej",
+        "confirmTitle": "tlhegh Damejqang'a'?",
+        "confirmDescription": "DaqDaj chIl {name}. ({product})",
+        "confirmCta": "tlhegh yImej",
+        "backOfLineWarning": "tlhegh DajeSqa'chugh, tlhegh HeHDaq bIQam."
+      }
     },
     "subscriptionEnding": {
       "wontRenew": "qaSqa'be'",

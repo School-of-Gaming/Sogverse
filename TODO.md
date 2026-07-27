@@ -280,3 +280,39 @@ Currently the only way to link a parent to a gamer is when the parent creates th
 - [ ] Choose an authorization mechanism (invite code, existing parent approval, or admin-only)
 - [ ] Create a server-side API route (e.g., `POST /api/gamers/link`) that validates authorization before inserting into `parent_gamer` using the admin client
 - [ ] Add UI for the chosen flow (e.g., "Share invite code" button for existing parent, "Enter code" form for second parent)
+
+## Waitlist — the parent/gamer side
+
+The `WaitlistCard` (`src/components/parent/`) is built and demoed at
+`/admin/ui-components`, but nothing renders it on a real dashboard yet and its
+leave affordance has no backend. What's left, in dependency order:
+
+- [ ] **Give "leave the waitlist" a backend.** The card's corner badge takes an
+  `onLeave` callback and holds a `leaving` flag; there is no route behind it.
+  `cancel_participation` is the wrong tool as it stands: it's `service_role`-only,
+  does **no caller authorization** (any participation id → delete), and hard-DELETEs
+  the row. Needs an owner-authorized path that checks the caller owns the
+  participation and that it's still `waitlisted`, under the product lock.
+  Decide at the same time whether leaving deletes the row or moves it to a terminal
+  status — a delete leaves no record that the family ever wanted the product.
+- [ ] **Render the waitlist band on `/parent` and `/gamer`.** No migration needed,
+  but waitlisted rows never reach either dashboard today: the upcoming-sessions read
+  is filtered to `status='active'`. Needs a new service read + query hook + server
+  prefetch in both pages, and `SessionsSection` has to stop early-returning its empty
+  state on `sessions.length === 0` — **a viewer holding only waitlist spots currently
+  gets "no upcoming sessions" and no band at all**, which is a likely state before a
+  term starts. The `position` is a card prop, so the read has to supply it; a per-row
+  `get_waitlist_position` call is an N+1 and can race an admin promotion into a
+  `null`, so prefer one read that returns rows and positions together.
+- [ ] **The waitlist copy promises an email nobody sends.** `parent.waitlist.reassurance*`
+  and the confirmation page's `next1` both say we'll email the moment a seat opens.
+  There is no waitlist email template and promotion is a manual admin drag that
+  notifies nobody. Emails + promotion are handled by hand for now (deliberate), so
+  this is a note, not a bug — but if manual sending ever slips, soften the copy
+  rather than leave the promise standing.
+- [ ] **Decide what promotion looks like to a parent.** `promote_from_waitlist`
+  flips the row to `active` with no payment step, so for a paid club it grants a free
+  seat, and from the parent's side the card silently disappears from the waitlist band
+  and reappears as a session card. If the answer is ever "a seat opened — claim it by
+  {date}" rather than "you're in", that's a new card state (offer + expiry +
+  accept/decline) and it's much cheaper to design before the card hardens.

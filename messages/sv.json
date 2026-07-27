@@ -1573,7 +1573,14 @@
       "positionLabel": "Din plats i kön",
       "positionValue": "#{position}",
       "reassuranceCustomer": "Vi mejlar så snart en plats blir ledig.",
-      "reassuranceGamer": "Vi hör av oss så snart en plats blir ledig."
+      "reassuranceGamer": "Vi mejlar en förälder så snart en plats blir ledig.",
+      "leave": {
+        "trigger": "Lämna väntelistan",
+        "confirmTitle": "Lämna väntelistan?",
+        "confirmDescription": "{name} förlorar sin plats i kön ({product}).",
+        "confirmCta": "Lämna väntelistan",
+        "backOfLineWarning": "Om du ställer dig på väntelistan igen senare börjar du längst bak i kön."
+      }
     },
     "subscriptionEnding": {
       "wontRenew": "Förnyas inte",

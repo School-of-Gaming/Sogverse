@@ -975,11 +975,16 @@ function buildLoadedSessions(
 
 // Card for a club the viewer waitlisted (a `status='waitlisted'` participation
 // — no scheduled session, so it never appears in the session stack). Two
-// groups: the card's own states (parent with the "For {name}" line, gamer
-// without it, and the position-unknown fallback), then a composed preview of
-// how it slots into the Sessions section — an "On the waitlist" band above the
-// "Scheduled" list. The band sub-labels only show when both kinds are present;
-// a viewer with only one kind sees the cards with no labels.
+// groups: the card's own states (parent with the "For {name}" line and the
+// leave badge, the same mid-leave, and the gamer variant — no attribution, no
+// badge), then a composed preview of how it slots into the Sessions section —
+// an "On the waitlist" band above the "Scheduled" list. The band sub-labels
+// only show when both kinds are present; a viewer with only one kind sees the
+// cards with no labels.
+//
+// `onLeave` is a no-op here: the demo exists to show the badge + confirm dialog
+// without a backend, and clicking through to "Leave waitlist" should leave the
+// fixture card exactly where it is.
 const WAITLIST_DEMO_GAMER = {
   firstName: "Eino",
   seed: "9b2e5d18-7a4c-4f0b-9c31-1d6e2a5f8b04",
@@ -992,6 +997,7 @@ const WAITLIST_DEMO_GAMER_ALT = {
 function WaitlistCardDemo() {
   const t = useTranslations("dashboardSections");
   const now = useNow();
+  const noop = () => {};
   const scheduled = buildLoadedSessions(
     [
       { name: "Rocket League Club", daysAhead: 2 },
@@ -1006,22 +1012,40 @@ function WaitlistCardDemo() {
       <SubSection title="Card states">
         <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
           <div className="flex flex-col gap-2">
-            <DemoCaption>Parent — position known</DemoCaption>
+            <DemoCaption>Parent — leave badge</DemoCaption>
             <WaitlistCard
               productName="Minecraft Builders Club"
               gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
               gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
               position={3}
+              onLeave={noop}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <DemoCaption>Gamer — no attribution</DemoCaption>
+            {/* What the parent sees between confirming and the row leaving the
+                list: the whole card fades, badge locked, no spinner. The caller
+                holds this set — the card never re-enables on its own. */}
+            <DemoCaption>Parent — leaving</DemoCaption>
+            <WaitlistCard
+              productName="Minecraft Builders Club"
+              gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
+              gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
+              position={3}
+              onLeave={noop}
+              leaving
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            {/* No attribution and no badge, even with `onLeave` passed — a kid
+                can't give up their own place in line. */}
+            <DemoCaption>Gamer — no attribution, no badge</DemoCaption>
             <WaitlistCard
               productName="Minecraft Builders Club"
               gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
               gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
               position={3}
               audience="gamer"
+              onLeave={noop}
             />
           </div>
         </div>
@@ -1036,12 +1060,14 @@ function WaitlistCardDemo() {
               gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
               gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
               position={3}
+              onLeave={noop}
             />
             <WaitlistCard
               productName="Roblox Obby Makers"
               gamerFirstName={WAITLIST_DEMO_GAMER.firstName}
               gamerSeed={WAITLIST_DEMO_GAMER.seed}
               position={7}
+              onLeave={noop}
             />
           </div>
           <div className="space-y-3">

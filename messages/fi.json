@@ -1573,7 +1573,14 @@
       "positionLabel": "Sijasi jonossa",
       "positionValue": "#{position}",
       "reassuranceCustomer": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
-      "reassuranceGamer": "Ilmoitamme heti, kun paikka vapautuu."
+      "reassuranceGamer": "Lähetämme vanhemmallesi sähköpostia heti, kun paikka vapautuu.",
+      "leave": {
+        "trigger": "Poistu jonotuslistalta",
+        "confirmTitle": "Poistutaanko jonotuslistalta?",
+        "confirmDescription": "{name} menettää paikkansa jonossa ({product}).",
+        "confirmCta": "Poistu jonotuslistalta",
+        "backOfLineWarning": "Jos liityt jonotuslistalle myöhemmin uudelleen, aloitat jonon lopusta."
+      }
     },
     "subscriptionEnding": {
       "wontRenew": "Ei uusiudu",
