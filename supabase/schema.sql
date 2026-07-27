@@ -375,9 +375,17 @@ CREATE FUNCTION public.assert_role(p_role public.user_role) RETURNS void
     SET search_path TO ''
     AS $$
 BEGIN
-  -- IS DISTINCT FROM (not <>) so a NULL role — no profile row — is refused
-  -- rather than silently passing. A NULL p_role is a caller bug: refuse.
-  IF p_role IS NULL OR (SELECT public.get_user_role()) IS DISTINCT FROM p_role THEN
+  -- A NULL p_role is a caller bug — no role name was asked for, so nothing can
+  -- satisfy the assertion. Refuse before the comparison can swallow it.
+  IF p_role IS NULL THEN
+    RAISE EXCEPTION 'assert_role requires a role' USING ERRCODE = '42501';
+  END IF;
+
+  -- `<>` (not IS DISTINCT FROM) is deliberate and behaviour-preserving: it
+  -- reproduces the hand-written guards exactly, including their NULL-role
+  -- pass-through for callers with no profiles row. See the header note — closing
+  -- that is Phase 2 work, once the matrix has pinned every caller.
+  IF (SELECT public.get_user_role()) <> p_role THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 END;

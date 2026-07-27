@@ -33,14 +33,19 @@
 --   every other guard. The ERRCODE ('42501') — the part routes and DB tests
 --   actually match on — is unchanged.
 --
--- * NULL-role tightening: the old `(SELECT get_user_role()) <> 'admin'` compares
---   against NULL when the caller has no profile row (a service_role connection,
---   or an authenticated session whose profile was deleted). `NULL <> 'admin'` is
---   NULL, so the IF did NOT fire and the caller was let THROUGH. The primitives
---   use IS DISTINCT FROM, so "no role" is now refused. Verified unreachable for
---   all eight converted RPCs: every app call site uses the caller's session
---   client (the admin client is used only for storage in the product routes),
---   no db test invokes them via service_role, and anon holds no EXECUTE grant.
+-- * The NULL-role pass-through is PRESERVED, deliberately. `(SELECT
+--   get_user_role()) <> 'admin'` evaluates to NULL when the caller has no
+--   profiles row — a service_role connection, or an authenticated session whose
+--   profile was deleted — so the IF never fires and the caller is let THROUGH.
+--   That is a real hole, but it is also load-bearing today: db tests drive
+--   update_product and set_gedu_verified through the service-role client, which
+--   only works because of it. Phase 1 is a pure refactor, so assert_role keeps
+--   the `<>` comparison verbatim; closing the hole needs the Phase 2 matrix to
+--   pin every caller first, and is recorded there.
+--
+--   assert_self has no legacy callers, so it does NOT inherit the hole — it uses
+--   IS DISTINCT FROM. The asymmetry is intentional: preserve behaviour where
+--   there is behaviour to preserve, fail closed in new code.
 --
 -- GRANTS (no-default-grants regime — a new function is unreachable until
 -- explicitly granted, and PUBLIC's implicit EXECUTE must be revoked):
@@ -66,9 +71,17 @@ CREATE OR REPLACE FUNCTION public.assert_role(p_role public.user_role) RETURNS v
     SET search_path = ''
     AS $$
 BEGIN
-  -- IS DISTINCT FROM (not <>) so a NULL role — no profile row — is refused
-  -- rather than silently passing. A NULL p_role is a caller bug: refuse.
-  IF p_role IS NULL OR (SELECT public.get_user_role()) IS DISTINCT FROM p_role THEN
+  -- A NULL p_role is a caller bug — no role name was asked for, so nothing can
+  -- satisfy the assertion. Refuse before the comparison can swallow it.
+  IF p_role IS NULL THEN
+    RAISE EXCEPTION 'assert_role requires a role' USING ERRCODE = '42501';
+  END IF;
+
+  -- `<>` (not IS DISTINCT FROM) is deliberate and behaviour-preserving: it
+  -- reproduces the hand-written guards exactly, including their NULL-role
+  -- pass-through for callers with no profiles row. See the header note — closing
+  -- that is Phase 2 work, once the matrix has pinned every caller.
+  IF (SELECT public.get_user_role()) <> p_role THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 END;
@@ -84,7 +97,9 @@ END;
 $$;
 
 -- "The caller IS this user." The ownership half of §3.1, for RPCs that take a
--- user id and must refuse to act on anyone else's behalf.
+-- user id and must refuse to act on anyone else's behalf. No legacy callers, so
+-- this one fails closed on NULL (IS DISTINCT FROM) — a roleless/anonymous
+-- caller is never "self".
 CREATE OR REPLACE FUNCTION public.assert_self(p_user_id uuid) RETURNS void
     LANGUAGE plpgsql
     SET search_path = ''

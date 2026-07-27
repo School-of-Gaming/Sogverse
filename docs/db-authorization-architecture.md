@@ -384,16 +384,19 @@ until Phase 4, so they carry no `authenticated` grant yet.
 
 Two things Phase 2 inherits from it:
 
-- **The assertions refuse a caller with no role.** The hand-written guards compared with
+- **The role assertion still lets a caller with *no* role through.** The comparison is
   `<>`, so a NULL role (no `profiles` row — a `service_role` connection, or a session
-  whose profile was deleted) evaluated to NULL, the `IF` never fired, and the caller was
-  let through. The primitives use `IS DISTINCT FROM`. Every converted RPC was verified to
-  have no `service_role` caller before this tightened.
+  whose profile was deleted) evaluates to NULL, the `IF` never fires, and the caller
+  passes. Phase 1 reproduced that verbatim rather than fixing it, because it is
+  load-bearing: db tests drive admin-gated RPCs through the service-role client and only
+  work because of it. Closing it means switching to `IS DISTINCT FROM` *and* giving those
+  tests a caller that actually holds the role — which is matrix work, so it belongs here
+  in Phase 2, not in a refactor that promised no behavior change. (The self assertion has
+  no legacy callers and already fails closed.)
 - **`set_gedu_verified` is still unconverted.** It is role-gated (`is_admin()`) but
   raises a generic error rather than `42501`, so the `42501` grep does not find it — and
-  a db test calls it through the service-role client, which the old NULL-role
-  pass-through is what lets succeed. Reconciling it (canonical code + a caller that
-  actually holds the role) belongs with the matrix, not with a mechanical conversion.
+  it depends on the same NULL-role pass-through. Reconciling it (canonical code + a
+  caller that actually holds the role) is the same piece of work.
 
 ### Phase 2 — the verification spine
 
