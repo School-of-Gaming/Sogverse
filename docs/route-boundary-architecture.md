@@ -1,0 +1,259 @@
+# HTTP Route Boundary Architecture
+
+**Status:** target architecture + migration plan. This is the second instance of the
+hindsight-refactor loop (`docs/refactor-playbook.md`); the first was
+`docs/db-authorization-architecture.md`, whose §1 problem statement this doc repeats one
+layer up. When someone says "let's do the route-layer refactor," this is the doc to read
+and act on.
+
+**Execution contract.** Written so a fresh session can execute the refactor from it:
+
+1. **Re-verify current state.** The §2 snapshot was verified 2026-07-27 and will drift.
+   Regenerate the surface with a glob over `src/app/api/**/route.ts`; regenerate the
+   admin-client import list with `git grep -l createAdminClient src/`. The Model-A
+   justifications live in the triage CSV in `docs/db-authorization-architecture.md` §5
+   Phase 3 — re-derive against it, don't edit it.
+2. **No database involvement.** This refactor is app-layer only: no migrations, no
+   staging side effects, no deploy-window hazards. The spine tests are plain jsdom
+   integration tests and run locally (`npx vitest run <file>`) and in CI.
+3. **One phase per PR**, CI green before the next starts.
+4. **No authorization semantics change silently.** Every posture in §2 is recorded as it
+   *is*, warts included. A wart fixed during the sweep is a deliberate, recorded change
+   in the PR description — never a side effect of mechanical conversion.
+
+---
+
+## 1. The problem
+
+The route layer's conventions — `requireRole` gating, contract-schema body parsing,
+error-code→HTTP mapping, the `{ error: string }` wire shape — are enforced by
+convention, not mechanically. Of 41 exported handlers: 27 are gated by `requireRole`,
+one hand-rolls the same session check inline, and the rest are public, webhook-verified,
+API-keyed, token-authorized, or optional-auth — and **nothing distinguishes a
+deliberately public route from a route whose author forgot the gate.** A new route that
+skips auth, parses its body by hand, and echoes raw error messages passes CI today.
+
+The same fragmentation holds for the other two boundary duties:
+
+- **Input:** 12 handlers parse through the shared helpers with a schema; 14 parse ad hoc
+  (half with a local zod schema, half with hand-rolled `typeof` checks or none); dynamic
+  params are trusted unvalidated in every route that has them; query strings are
+  hand-validated in the handful of GETs that read them.
+- **Errors:** the PostgREST-code→HTTP map is re-implemented per route with real
+  divergence (the same code mapping to 403 in five routes and falling through to 500 in
+  another; unique-violation → 409 in five, swallowed in one), and eight handlers forward
+  raw error messages to the client — three deliberately, five incidentally.
+- **Tests:** eight route files (plus one handler in a ninth) have no integration test at
+  all, and nothing notices when a new route ships untested.
+
+This is precisely the pre-refactor state of the DB layer: the right way exists and is
+mostly followed, deviations are invisible, and the class of bug — *a privileged
+operation reachable without its guard* — stays alive because only instances ever get
+fixed. The DB spine now stands as the second and third layer behind every route; this
+refactor builds the mechanical first layer in front of it.
+
+---
+
+## 2. Current state (verified 2026-07-27 — re-verify per the execution contract)
+
+### The surface
+
+39 `route.ts` files, 41 handlers (two files export two methods). Auth postures found in
+the wild — this taxonomy is exhaustive over today's surface, and §3.1 adopts it:
+
+| Posture | Handlers | Notes |
+|---|---|---|
+| `role-gated` (`requireRole`) | 27 | Variants that must be captured: `allowUnverified` (6 — the PIN-locked-customer routes), `requireVerifiedGedu` (2), all-four-roles-as-any-authenticated (1) |
+| `any-authenticated`, hand-rolled | 1 | The locale route: inline session check + claims read, no `requireRole` — the one route that re-implements the primitive |
+| `public` | 4 | Mojang username lookup, instant-room existence check, gedu self-registration (unauthenticated account creation — the highest-value public route), forgot-password (always-200 enumeration defense) |
+| `session-mutating public` | 2 | OAuth callback (redirect-only, `resolveInternalPath` on `next`), signout (POST-only as the CSRF control, 303) |
+| `signed-token` | 1 | PIN reset: a signed token *is* the authorization; session-agnostic; deliberately admin-client |
+| `optional-auth` | 1 | Instant-room token: public, but silently elevates admin/verified-gedu to room owner; fails closed to guest. A `role-gated \| public` binary cannot express this route |
+| `webhook` | 4 | Three verifier strategies (Stripe signature, Meta HMAC + timing-safe compare, Discord Ed25519) plus Meta's GET challenge (plain `===` compare — recorded wart). All POST verifiers consume the **raw text body** before any JSON parse. Divergent error contracts: Stripe wants 5xx for retry; Meta must never 5xx or the endpoint is disabled |
+| `api-key` | 1 | Minecraft join-check: Bearer + timing-safe compare, server-to-server, fails closed 501 for unported roles |
+
+### Existing primitives (the wrapper composes these; it replaces none of them)
+
+- **`requireRole(roles, options?)`** (`src/lib/auth.ts`) — verifies claims locally, loads
+  the profile, narrows the role at type level, and enforces two extra gates: the parent
+  PIN gate (skipped via `allowUnverified`) and the verified-gedu gate (opt-in via
+  `requireVerifiedGedu`). Returns `{ user, profile, supabase }` (user-bound client) or a
+  ready `NextResponse` (401/403 with stable `code`s). Every gated route uses the
+  `instanceof NextResponse` early-return convention.
+- **`parseJsonBody` / `parseBodyValue`** (`src/lib/api/json-body.server.ts`) — JSON →
+  schema → 400 with first-issue message, same early-return convention. `parseBodyValue`
+  also serves the two multipart routes (JSON `data` field beside a `File`).
+- **`ApiError`** (`src/lib/api/api-error.ts`) — status + stable machine `code` +
+  log-only message. Currently service-side only; no route constructs it.
+- Boundary utilities the postures depend on: `getOrigin` (trusted-host origins),
+  `resolveInternalPath` (redirect targets), the instant-room moderator resolver
+  (optional-auth elevation, fails closed), timing-safe secret compares.
+
+### The Model-A registry seed
+
+The db-auth refactor's Phase 3 triage CSV (`docs/db-authorization-architecture.md` §5,
+"The triage, machine-readably") classifies every module that used the service-role
+client, with one-clause justifications: 15 route modules justified as Model A, one
+partial (feedback: user-client write, admin-client notification fan-out), 3 non-route
+modules, plus the factory. Verified 2026-07-27: its route set exactly matches today's
+`createAdminClient` importers — **no drift**. It seeds §3.3 check 3.
+
+### Verification precedent (copy this shape, don't reinvent it)
+
+The proxy integration test already does surface-enumeration correctly: a recursive walk
+of a fixed in-repo directory, route-group stripping, a carve-out array where every entry
+carries a mandatory `reason` string, an **anti-vacuity guard** (a test that fails if the
+glob finds nothing), and `it.each` over the discovered surface. The route spine is that
+pattern pointed at `src/app/api/`.
+
+### Test conventions
+
+Integration tests mock `requireRole` per `tests/CLAUDE.md` and exercise imported
+handlers directly. Coverage today: 26 of 39 route files. Untested: signout, family
+list, billing portal, instant-room exists, site notes, Discord interactions, gedu
+registration, product update — plus the waitlist-transition PATCH handler in an
+otherwise-tested file. The per-route bar (from the db-auth doc's Phase 3 checklist):
+unauthenticated, wrong-role, bad-input, happy path.
+
+---
+
+## 3. The solution
+
+Make the route boundary a declared, verified surface: **every handler carries a
+machine-readable posture, a completeness test proves nothing escapes classification, and
+a single primitive makes the conforming route the shortest one to write.**
+
+### 3.1 The posture registry
+
+One registry (colocated with the spine test that consumes it) mapping every route file →
+its classification:
+
+- **Posture** — the §2 taxonomy as a tagged union: `role-gated` (roles +
+  `allowUnverified`/`requireVerifiedGedu` flags), `any-authenticated`, `public`,
+  `session-mutating-public`, `signed-token`, `optional-auth`, `webhook` (which
+  verifier), `api-key`. Every non-`role-gated` entry carries a mandatory `reason`
+  string — the carve-out-with-reason shape the proxy test already uses.
+- **Body discipline** — `json` (names its schema), `multipart`, `raw` (webhook text
+  verification), `none`.
+- **Test** — the integration test file that exercises the route. The spine verifies it
+  exists on disk and imports the route. An entry may carry `test: null` only during
+  Phase 1 (seeding reality); Phase 2 ends with none left.
+
+This mirrors the DB spine's two-classification design: role-gated RPCs vs. self-scoping
+allowlist becomes gated routes vs. reasoned carve-outs. Registry growth without reasons
+is this design's failure mode; the completeness check polices it.
+
+### 3.2 The primitive: `defineRoute`
+
+A wrapper in `src/lib/api/` that a new route uses by default, composing the existing
+primitives — not replacing them:
+
+1. **Auth** from the posture declaration: runs `requireRole` (or the session check for
+   `any-authenticated`) and hands the handler the narrowed `{ user, profile, supabase }`.
+2. **Parsing slots** for body (schema), query (schema), and params (schema) — closing
+   the currently-unvalidated params/query axes. The wrapper must **never pre-consume the
+   body for `raw` postures**: webhook verifiers need the untouched text.
+3. **A default PostgREST-code→HTTP table** (permission-denied → 403,
+   unique-violation → 409, no-data-found → 404, FK/check violations → 400,
+   assert-failure class → 500 + log) with per-route overrides, replacing the per-route
+   re-implementations.
+4. **One message-disclosure point.** The wrapper's outer catch returns a generic
+   `{ error }` and logs the real one; forwarding a raw DB/RPC message to the client is a
+   per-route opt-in with a comment, preserving the three routes that do it deliberately
+   and ending the five that do it by accident.
+5. **Optional response schema** — `safeParse` the outgoing payload (500 + log on
+   mismatch), unifying the eight routes that already validate RPC results by hand.
+6. **Non-JSON escape hatch** — redirects, 204, and raw-text responses pass through
+   untouched; the wrapper constrains only what it wraps.
+
+Not every route must use the wrapper — redirect flows and webhook verifiers may stay
+hand-written where wrapping obscures more than it helps. **Classification is mandatory;
+the wrapper is the default.** The spine's static check keeps the honest boundary: a
+route off the wrapper must be a reasoned carve-out in the registry.
+
+### 3.3 The verification spine (route edition)
+
+Plain integration-suite tests — no DB, fast, run locally:
+
+1. **Completeness.** Glob the route files (anti-vacuity guard included); every handler
+   appears in the registry exactly once; every registry entry corresponds to a file on
+   disk (no stale entries). A new unclassified route fails CI.
+2. **Static conformance.** Read each route file's source: a `role-gated` /
+   `any-authenticated` entry must contain the primitive call (`defineRoute`, or
+   `requireRole` for not-yet-converted files); a file containing neither must be a
+   reasoned carve-out. The hand-rolled session check counts as nonconforming from day
+   one (it is the recorded exception until Phase 2 converts it).
+3. **Admin-client pinning.** The set of files importing the service-role client equals
+   the justified registry (seeded from the triage CSV). A new import site without a
+   registry entry + reason fails CI — the same move that pinned `anon` grants at zero.
+4. **Test linkage.** Every registry entry names its integration test; the spine asserts
+   the file exists and references the route. (Test *quality* stays a review concern; the
+   spine only guarantees a test exists to review.)
+
+### 3.4 The route shape under this architecture
+
+For reference when writing a new route: declare the posture and schemas in
+`defineRoute`, receive `{ user, profile, supabase, body, query, params }` already
+narrowed and validated, do the work through the user-bound client or a guarded RPC, and
+return data — the wrapper owns status mapping and the error wire shape. A route that
+needs something the wrapper can't express is a signal to either extend the wrapper (if
+the need generalizes) or write a reasoned carve-out (if it doesn't) — never to
+hand-roll silently.
+
+---
+
+## 4. Justification
+
+- **Tests the property, not a proxy.** "This route file declares no gate and no reason"
+  is a property check on the actual surface; code review is an intention check. Only the
+  former catches the forgotten-gate class — the route-layer twin of the DB audit's
+  recurring bug.
+- **Defense in depth, both directions.** The DB spine guarantees a handler bug is not a
+  DB-level capability; this spine guarantees the handler layer itself is uniformly
+  gated, so the DB guards are the *second* check, not the only one.
+- **The registry can't rot silently.** Carve-outs demand reasons, stale entries fail,
+  admin-client creep fails, untested routes fail. Allowlist growth is the failure mode;
+  the completeness check is the police.
+- **Low risk by construction.** No schema changes, no shared-environment effects; every
+  conversion is one route, independently verified by its integration test, wrong
+  conversions caught by the existing suite.
+
+---
+
+## 5. Implementation plan
+
+### Phase 1 — registry + spine + primitive
+
+Build `defineRoute`, write the registry seeding **reality as-is** (every current
+handler classified with today's posture, warts recorded as warts — including the
+hand-rolled locale auth, the plain-compare webhook challenge, and `test: null` for the
+untested nine), and land the four spine checks green against that honest seed. Convert
+two or three exemplar routes (one role-gated JSON route, one public carve-out, one
+webhook left off-wrapper but classified) to prove the primitive's shape. From this
+phase on, a new route cannot ship unclassified.
+
+### Phase 2 — the sweep
+
+Convert route-by-route in batches: simple role-gated JSON routes first, then multipart
+and odd shapes, then the recorded exceptions. Each conversion: move to `defineRoute`,
+normalize its error map to the default table (each divergence resolved deliberately and
+noted), give ad-hoc bodies a schema (and params/query schemas where read), keep or
+revoke raw-message forwarding explicitly. Write the missing integration tests (the
+nine), converting `test: null` entries to real links. Deliberate, recorded fixes that
+belong here rather than in silent conversion: the locale route moves onto the standard
+session primitive; the webhook GET challenge gains a timing-safe compare; incidental
+raw-message forwards close. End state: zero `test: null`, zero unreasoned carve-outs,
+and the playbook's instance table flipped to done.
+
+---
+
+## 6. Explicitly out of scope
+
+- **Rate limiting / bot protection** on the public routes — already tracked in
+  `TODO.md`; a different property (abuse, not authorization).
+- **The RSC sibling problem** — two server helpers (family resolution, PIN-reset token)
+  are shared by routes and pages, so their authorization can't be encoded purely at the
+  route boundary. Recorded, not solved here.
+- **Response localization** and any change to the `{ error, code }` wire contract.
+- **Changing what any route actually authorizes.** Posture changes are findings for a
+  human decision, not sweep work.

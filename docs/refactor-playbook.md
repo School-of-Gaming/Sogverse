@@ -64,13 +64,14 @@ without the last two is an audit, not a fix.
 |---|---|---|
 | DB grants + RLS presence | Done (2026-03) | `docs/SECURITY_REPORT.md`; enforced by the DB access-control test |
 | DB function bodies + RLS behavior | Done (2026-07) | `docs/db-authorization-architecture.md`; enforced by the verification-spine DB tests |
-| HTTP route layer | Next — stub below | — |
+| HTTP route layer | In flight | `docs/route-boundary-architecture.md` |
 | Data validity (constraints) | Future | Deferred by the db-auth doc's out-of-scope list; instances accumulate in `TODO.md` |
 
 ## Next instance stub: the HTTP route layer
 
-Not yet a plan — the seed for one. Whoever picks this up writes the full instance doc
-first.
+Superseded 2026-07-27: the full instance doc now exists at
+`docs/route-boundary-architecture.md`. The seed below is kept as the record of what a
+stub should contain.
 
 - **Surface:** route handlers under `src/app/api/` (enumerate by glob over `route.ts`
   files).
