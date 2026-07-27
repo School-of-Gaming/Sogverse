@@ -1,6 +1,14 @@
 # Stripe
 
-Manual test cards for local/staging checkout, plus the products-webhook deployment runbook across environments.
+Manual test cards for local/staging checkout, the failed-payment account setting the seat model depends on, plus the products-webhook deployment runbook across environments.
+
+## The failed-payment end-action must stay "cancel the subscription"
+
+Dashboard → Settings → Billing → Subscriptions and emails → failed-payment retries. When Stripe exhausts its dunning retries, the end-of-dunning action must remain **cancel the subscription** — not "mark the subscription as unpaid".
+
+Releasing a club seat is driven entirely by `customer.subscription.deleted`; that event is the only thing that cancels a participation. Choose "mark as unpaid" (or pause a subscription instead of cancelling it) and Stripe never fires it, so a child who has stopped paying keeps an active seat indefinitely. The failure is silent from both ends: the stored subscription status also stops updating, because the status column's CHECK rejects Stripe's `unpaid`/`paused` values and the webhook does not surface that rejected write.
+
+Verified against the live account 2026-07-27: no subscriptions sit in `unpaid`, and dunning-exhausted subs carry cancellation reason `payment_failed`.
 
 ## Test Mode Card Details
 
