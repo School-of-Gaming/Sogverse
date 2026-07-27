@@ -119,8 +119,9 @@ describe("guard primitives", () => {
   describe("ownership predicates", () => {
     it("answer false for a caller with no participation context", async () => {
       // service_role has no auth.uid(), so the predicates can only answer
-      // false. Enough to pin the signature, the grant and the fail-closed
-      // default until Phase 4 wires them into policies with real fixtures.
+      // false. That fail-closed default is what this pins; the fixture-bearing
+      // scope tests (exposed-function-scope.test.ts) cover the true answers now
+      // that three policies compose from them.
       const admin = createAdminTestClient();
 
       const onProduct = await admin.rpc("has_active_participation_on_product", {

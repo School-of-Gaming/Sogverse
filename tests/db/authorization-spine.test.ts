@@ -135,6 +135,14 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/exposed-function-scope.test.ts",
     why: "read predicate behind the product policies; anon-reachable on purpose, and its anon branch returns true only for published+visible products",
   },
+  has_active_participation_on_product: {
+    scopeTest: "tests/db/exposed-function-scope.test.ts",
+    why: "answers only 'am I a party to an active participation on X', bounded to the caller's uid; consumed by the customer-side assignment policy",
+  },
+  has_active_participation_in_group: {
+    scopeTest: "tests/db/exposed-function-scope.test.ts",
+    why: "the group-level sibling of the above; consumed by the customer- and gamer-side group policies",
+  },
   get_my_gamers: {
     scopeTest: "tests/db/exposed-function-scope.test.ts",
     why: "the caller's own linked gamers",

@@ -222,22 +222,77 @@ describe("self-scoping exposed functions", () => {
       });
       expect(asCustomer2.data).toBe(false);
 
-      // anon answers NULL, not false, and that is worth pinning rather than
-      // hiding behind a truthiness check: anon has no profiles row, so
-      // `get_user_role() = 'admin'` is NULL, and `NULL OR false OR false` is
-      // NULL under SQL's three-valued logic. It is not a leak — a policy's
-      // USING clause treats NULL as deny, which is exactly what read_products
-      // relies on, and the read below proves it.
+      // anon answers a real `false`, and that is worth pinning: anon has no
+      // profiles row, so `get_user_role() = 'admin'` is NULL and the whole OR
+      // chain evaluates to NULL under SQL's three-valued logic. Phase 4 wrapped
+      // the chain in COALESCE(…, false) so the predicate is a total boolean.
+      // The deny was never in doubt — a policy's USING clause treats NULL as
+      // deny too, which is what read_products relied on and what the read below
+      // proves — but a predicate that can answer NULL is a trap for the next
+      // consumer, which may not be a USING clause.
       const asAnon = await anon.rpc("can_read_product", {
         p_product_id: PRIVATE_PRODUCT,
       });
-      expect(asAnon.data).toBeNull();
+      expect(asAnon.data).toBe(false);
 
       const visible = await anon
         .from("products")
         .select("id")
         .eq("id", PRIVATE_PRODUCT);
       expect(visible.data).toEqual([]);
+    });
+  });
+
+  /**
+   * The two §3.2 party-to predicates. They unify the customer and gamer columns
+   * into one question — "am I a party to an active participation here" — which
+   * is what makes them reusable across the customer-side and gamer-side
+   * policies that used to inline the subquery separately. So the scoping claim
+   * has two halves: both parties get `true`, and nobody else does.
+   */
+  describe("has_active_participation_on_product", () => {
+    it("is true for both parties to the participation and no one else", async () => {
+      for (const client of [customer, gamer]) {
+        const { data } = await client.rpc("has_active_participation_on_product", {
+          p_product_id: PRIVATE_PRODUCT,
+        });
+        expect(data).toBe(true);
+      }
+
+      // The assigned gedu and the admin are not *parties* — they reach the
+      // product by other routes, which is precisely why this predicate is not
+      // the same question as can_read_product.
+      for (const client of [customer2, gedu, adminAuth]) {
+        const { data } = await client.rpc("has_active_participation_on_product", {
+          p_product_id: PRIVATE_PRODUCT,
+        });
+        expect(data).toBe(false);
+      }
+    });
+
+    it("is false for a product the caller is a party to nothing on", async () => {
+      const { data } = await customer.rpc("has_active_participation_on_product", {
+        p_product_id: PUBLIC_PRODUCT,
+      });
+      expect(data).toBe(false);
+    });
+  });
+
+  describe("has_active_participation_in_group", () => {
+    it("is true for both parties to the participation and no one else", async () => {
+      for (const client of [customer, gamer]) {
+        const { data } = await client.rpc("has_active_participation_in_group", {
+          p_group_id: GROUP_ID,
+        });
+        expect(data).toBe(true);
+      }
+
+      for (const client of [customer2, gedu, adminAuth]) {
+        const { data } = await client.rpc("has_active_participation_in_group", {
+          p_group_id: GROUP_ID,
+        });
+        expect(data).toBe(false);
+      }
     });
   });
 
