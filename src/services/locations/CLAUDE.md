@@ -16,7 +16,7 @@ Hierarchy is flexible, not rigid — not every country uses every level (Finland
 
 Standard service pattern. `LocationsService` takes an `AppSupabaseClient`:
 - **Reads** (`getAllLocations`, `getLocation`) use the injected client directly against `locations`.
-- **Writes** (`createLocation`, `updateLocation`) `fetch()` the admin API (`/api/admin/locations/...`). The `locations` table's DML grants are revoked from `authenticated`, so browser writes must go through the admin client server-side. The injected client is intentionally unused by write methods.
+- **Writes** (`createLocation`, `updateLocation`) `fetch()` the admin API (`/api/admin/locations/...`). The route re-checks the role and performs the write on the caller's own server-side client, so the admin-only write policy on `locations` is the second layer behind it; `authenticated` holds INSERT and UPDATE but no DELETE, which is why there is no delete route. The injected client is intentionally unused by write methods.
 
 `locations.queries.ts` exposes React Query hooks plus the `locationKeys` factory. `locations.contracts.ts` holds the zod schemas (`createLocationBody`, `updateLocationBody`, `locationRow`) shared by route and service; enum values derive from `Constants.public.Enums.location_type`. Re-exports in `index.ts`.
 

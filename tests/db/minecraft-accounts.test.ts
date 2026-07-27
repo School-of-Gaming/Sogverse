@@ -167,27 +167,61 @@ describe("minecraft_accounts RLS", () => {
     expect(data!.length).toBeGreaterThanOrEqual(2);
   });
 
-  // -- Write restrictions (no INSERT/UPDATE/DELETE grants for authenticated) --
+  // -- Writes: own row yes, anyone else's no, DELETE nobody --
+  //
+  // Phase 3 of the DB authorization refactor moved the account-linking route off
+  // the service-role client, which meant granting INSERT/UPDATE and adding the
+  // two self-write policies. What was previously "authenticated cannot write
+  // this table at all" is now "authenticated can write exactly their own row".
 
-  it("gamer cannot insert a minecraft account directly", async () => {
+  it("gamer can update own minecraft account", async () => {
     const { error } = await gamerClient
       .from("minecraft_accounts")
-      .insert({
-        user_id: TEST_IDS.GAMER,
-        minecraft_username: "Hacker",
-      });
+      .update({ minecraft_username: "OwnEdit" })
+      .eq("user_id", TEST_IDS.GAMER);
 
-    expect(error).not.toBeNull();
+    expect(error).toBeNull();
+
+    const { data } = await admin
+      .from("minecraft_accounts")
+      .select("minecraft_username")
+      .eq("user_id", TEST_IDS.GAMER)
+      .single();
+
+    expect(data!.minecraft_username).toBe("OwnEdit");
+
+    await admin
+      .from("minecraft_accounts")
+      .update({ minecraft_username: SEED.MINECRAFT_USERNAME_GAMER })
+      .eq("user_id", TEST_IDS.GAMER);
   });
 
-  it("gamer cannot update own minecraft account directly", async () => {
-    // RLS would allow reading but the table-level GRANT only has SELECT
-    await gamerClient
+  it("gamer cannot insert a row for another user", async () => {
+    // The INSERT policy's WITH CHECK derives the target from auth.uid(), so a
+    // gamer naming the gedu's id is refused rather than silently re-pointed.
+    const { error } = await gamerClient
+      .from("minecraft_accounts")
+      .insert({ user_id: TEST_IDS.ADMIN, minecraft_username: "Hacker" });
+
+    expect(error).not.toBeNull();
+
+    const { data } = await admin
+      .from("minecraft_accounts")
+      .select("user_id")
+      .eq("user_id", TEST_IDS.ADMIN);
+
+    expect(data).toEqual([]);
+  });
+
+  it("linked parent cannot update their gamer's minecraft account", async () => {
+    // The parent may READ this row (policy above). Write access does not follow
+    // from read access — the parent-facing edit path goes through the gamers
+    // route, not a direct table write.
+    await customerClient
       .from("minecraft_accounts")
       .update({ minecraft_username: "Hacked" })
       .eq("user_id", TEST_IDS.GAMER);
 
-    // Verify it wasn't changed
     const { data } = await admin
       .from("minecraft_accounts")
       .select("minecraft_username")

@@ -33,7 +33,7 @@ Use the `WHATSAPP_DIRECTION` / `WHATSAPP_MESSAGE_STATUS` const objects for these
 
 **Rule: Inbound persistence is upsert, not insert.** Meta retries deliveries on transient failures, so duplicate message IDs are expected — upsert on `id` (messages) and `phone` (contacts) to stay idempotent. The admin send route inserts (the `messageId` is fresh from the Graph response).
 
-**Rule: After a successful outbound send, do not fail the request on a DB write error.** The message is already delivered to Meta by then; failing would mislead the admin. The send route records the message/contact best-effort and still returns `{ messageId }`. (A DB failure there is near-impossible — service role, no RLS, no token expiry.)
+**Rule: After a successful outbound send, do not fail the request on a DB write error.** The message is already delivered to Meta by then; failing would mislead the admin. The send route records the message/contact best-effort and still returns `{ messageId }`. Log the failure rather than swallowing it: the write runs on the caller's own client under RLS, so a refusal is a real signal about grants or policies, not the impossibility it was when the route held the service-role key.
 
 **Rule: Surface the 24-hour-window failure in plain language.** WhatsApp forbids business-initiated free-form replies more than 24h after the customer's last message. When a delivery status comes back `failed` with Meta error `131047` (or a title mentioning "re-engage"), store a support-friendly `status_error` explaining the customer must message first — not Meta's raw title.
 

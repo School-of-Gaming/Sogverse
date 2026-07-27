@@ -14,21 +14,25 @@ vi.mock("@/lib/whatsapp", () => ({
   sendWhatsAppMessage: (...args: unknown[]) => mockSendWhatsAppMessage(...args),
 }));
 
+// Both writes run on the USER-bound client now — the admin-only insert/update
+// policies on whatsapp_contacts and whatsapp_messages are the second check
+// behind requireRole, and the message policy additionally pins direction to
+// outbound. So the mock hangs off `supabase`, not off the admin client, which
+// this route no longer imports.
 const mockContactUpsert = vi.fn().mockResolvedValue({ error: null });
 const mockMessageInsert = vi.fn().mockResolvedValue({ error: null });
-vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: vi.fn(() => ({
-    from: (table: string) => {
-      if (table === "whatsapp_contacts") {
-        return { upsert: mockContactUpsert };
-      }
-      if (table === "whatsapp_messages") {
-        return { insert: mockMessageInsert };
-      }
-      return {};
-    },
-  })),
-}));
+
+const userClient = {
+  from: (table: string) => {
+    if (table === "whatsapp_contacts") {
+      return { upsert: mockContactUpsert };
+    }
+    if (table === "whatsapp_messages") {
+      return { insert: mockMessageInsert };
+    }
+    return {};
+  },
+};
 
 // --- Helpers ---
 
@@ -36,7 +40,7 @@ function mockAdmin() {
   mockRequireRole.mockResolvedValue({
     user: { id: "admin-user-id" },
     profile: { role: "admin" },
-    supabase: {},
+    supabase: userClient,
   });
 }
 
@@ -135,6 +139,23 @@ describe("POST /api/admin/whatsapp/send", () => {
         status: "pending",
       })
     );
+  });
+
+  it("still returns the message id when the DB write is refused", async () => {
+    // The message is already at Meta by then — reporting failure would be a lie.
+    // The refusal is logged, not surfaced.
+    mockAdmin();
+    mockMessageInsert.mockResolvedValueOnce({
+      error: { code: "42501", message: "new row violates row-level security" },
+    });
+
+    const response = await POST(
+      createRequest({ to: "358401234567", body: "Hello!" })
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.messageId).toBe("wamid.test123");
   });
 
   it("should not store message in DB when Meta API fails", async () => {

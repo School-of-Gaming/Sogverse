@@ -222,13 +222,17 @@ const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
 
 /**
  * The only table whose UPDATE surface is column-scoped rather than table-wide.
- * Pinned exactly: these four are the safe profile fields a user may edit.
+ * Pinned exactly: these five are the safe profile fields a user may edit —
+ * identity and presentation, nothing that decides what they may do. `locale`
+ * joined them in Phase 3 when the locale route stopped writing through the
+ * service-role client.
  */
 const PROFILES_UPDATABLE_COLUMNS = [
   "first_name",
   "last_name",
   "phone",
   "spoken_languages",
+  "locale",
 ];
 
 // ---------------------------------------------------------------------------

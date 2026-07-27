@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { WHATSAPP_DIRECTION, WHATSAPP_MESSAGE_STATUS } from "@/types";
 import { z } from "zod";
 
@@ -18,6 +17,7 @@ export async function POST(request: Request) {
       forbiddenMessage: "Only admins can send WhatsApp messages",
     });
     if (result instanceof NextResponse) return result;
+    const { supabase } = result;
 
     const json = await request.json();
     const parsed = requestSchema.safeParse(json);
@@ -37,27 +37,40 @@ export async function POST(request: Request) {
       body,
     });
 
-    // Store outbound message and upsert contact.
-    // DB errors are not checked — the message is already sent to Meta at this
-    // point, so failing the request would mislead the admin. A DB failure here
-    // is near-impossible anyway (service role, no RLS, no token expiry).
-    const admin = createAdminClient();
+    // Store outbound message and upsert contact on the USER-bound client: the
+    // whatsapp_contacts insert/update and whatsapp_messages insert policies each
+    // re-check that the caller is an admin, and the message policy additionally
+    // pins `direction` to outbound — so this route cannot forge inbound history
+    // even if it tried.
+    //
+    // Neither failure fails the request: the message is already at Meta by this
+    // point, so a 500 would tell the admin their message didn't send when it
+    // did. They are logged instead — under RLS a DB refusal here is a real
+    // signal (it used to be near-impossible under service role), so it must not
+    // be swallowed silently.
     const now = new Date().toISOString();
 
-    await admin.from("whatsapp_contacts").upsert(
-      { phone: to, last_message_at: now },
-      { onConflict: "phone" }
-    );
+    const { error: contactError } = await supabase
+      .from("whatsapp_contacts")
+      .upsert({ phone: to, last_message_at: now }, { onConflict: "phone" });
+    if (contactError) {
+      console.error("[whatsapp/send] contact upsert failed", contactError);
+    }
 
-    await admin.from("whatsapp_messages").insert({
-      id: messageId,
-      phone: to,
-      direction: WHATSAPP_DIRECTION.OUTBOUND,
-      body,
-      message_type: "text",
-      status: WHATSAPP_MESSAGE_STATUS.PENDING,
-      created_at: now,
-    });
+    const { error: messageError } = await supabase
+      .from("whatsapp_messages")
+      .insert({
+        id: messageId,
+        phone: to,
+        direction: WHATSAPP_DIRECTION.OUTBOUND,
+        body,
+        message_type: "text",
+        status: WHATSAPP_MESSAGE_STATUS.PENDING,
+        created_at: now,
+      });
+    if (messageError) {
+      console.error("[whatsapp/send] message insert failed", messageError);
+    }
 
     return NextResponse.json({ messageId });
   } catch (error) {

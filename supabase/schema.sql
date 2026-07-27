@@ -4942,6 +4942,13 @@ ALTER TABLE public.site_staff_details ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.spoken_languages ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: minecraft_accounts users_insert_own_minecraft_account; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY users_insert_own_minecraft_account ON public.minecraft_accounts FOR INSERT TO authenticated WITH CHECK ((user_id = ( SELECT auth.uid() AS uid)));
+
+
+--
 -- Name: feedback_submissions users_read_own_feedback; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -4953,6 +4960,13 @@ CREATE POLICY users_read_own_feedback ON public.feedback_submissions FOR SELECT 
 --
 
 CREATE POLICY users_read_own_minecraft_account ON public.minecraft_accounts FOR SELECT TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid)));
+
+
+--
+-- Name: minecraft_accounts users_update_own_minecraft_account; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY users_update_own_minecraft_account ON public.minecraft_accounts FOR UPDATE TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((user_id = ( SELECT auth.uid() AS uid)));
 
 
 --
@@ -5276,6 +5290,13 @@ GRANT UPDATE(phone) ON TABLE public.profiles TO authenticated;
 --
 
 GRANT UPDATE(spoken_languages) ON TABLE public.profiles TO authenticated;
+
+
+--
+-- Name: COLUMN profiles.locale; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(locale) ON TABLE public.profiles TO authenticated;
 
 
 --
@@ -5702,7 +5723,7 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.holiday_calendars TO authentic
 
 GRANT SELECT ON TABLE public.locations TO anon;
 GRANT ALL ON TABLE public.locations TO service_role;
-GRANT SELECT ON TABLE public.locations TO authenticated;
+GRANT SELECT,INSERT,UPDATE ON TABLE public.locations TO authenticated;
 
 
 --
@@ -5711,7 +5732,7 @@ GRANT SELECT ON TABLE public.locations TO authenticated;
 
 GRANT SELECT ON TABLE public.minecraft_accounts TO anon;
 GRANT ALL ON TABLE public.minecraft_accounts TO service_role;
-GRANT SELECT ON TABLE public.minecraft_accounts TO authenticated;
+GRANT SELECT,INSERT,UPDATE ON TABLE public.minecraft_accounts TO authenticated;
 
 
 --
@@ -5878,7 +5899,7 @@ GRANT SELECT,INSERT,UPDATE ON TABLE public.whatsapp_contacts TO authenticated;
 
 GRANT SELECT ON TABLE public.whatsapp_messages TO anon;
 GRANT ALL ON TABLE public.whatsapp_messages TO service_role;
-GRANT SELECT,INSERT,UPDATE ON TABLE public.whatsapp_messages TO authenticated;
+GRANT SELECT,INSERT ON TABLE public.whatsapp_messages TO authenticated;
 
 
 --

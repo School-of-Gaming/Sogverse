@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
@@ -18,7 +17,7 @@ import { getOrigin } from "@/lib/url";
 export async function POST(request: Request) {
   const auth = await requireRole("customer", { allowUnverified: true });
   if (auth instanceof NextResponse) return auth;
-  const { user, profile } = auth;
+  const { user, profile, supabase } = auth;
 
   // No email on file → nothing to send. Succeed silently (no info leak).
   if (!profile.email) {
@@ -27,9 +26,10 @@ export async function POST(request: Request) {
 
   // Bind the token to the current PIN hash so it's single-use: completing the
   // reset rotates the hash and the token stops validating (see pin-session.ts).
-  // Read via the admin client (bypasses RLS; the hash never leaves the server).
-  const admin = createAdminClient();
-  const { data: cp } = await admin
+  // Read on the user-bound client — the caller's own customer_profiles row is
+  // inside their RLS view, so nothing here needs the service-role bypass. The
+  // hash is used only to derive the signature and never leaves the server.
+  const { data: cp } = await supabase
     .from("customer_profiles")
     .select("pin_hash")
     .eq("user_id", user.id)

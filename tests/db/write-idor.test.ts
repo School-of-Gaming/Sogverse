@@ -42,7 +42,6 @@ const CALENDAR = "00000000-0000-0000-0000-0000000005a7";
 const HOLIDAY = "00000000-0000-0000-0000-0000000005a8";
 const SLOT = "00000000-0000-0000-0000-0000000005a9";
 const WHATSAPP_PHONE = "358900000005";
-const WHATSAPP_MESSAGE_ID = "write-idor-seeded-message";
 
 const tableGrantRows = z.array(
   z.object({ table_name: z.string(), privilege_type: z.string() })
@@ -485,24 +484,51 @@ const CASES: Record<string, IdorCase> = {
       ),
   },
 
-  whatsapp_messages: {
+  // whatsapp_messages has no case: Phase 3 revoked `authenticated`'s dead UPDATE
+  // grant (it had no policy behind it), so message history is now unwritable at
+  // the grant layer — a stronger guarantee than an RLS assertion, and one the
+  // access-control test's grant allowlist already pins. `authenticated` keeps
+  // INSERT, which this loop deliberately does not cover (see the header).
+
+  locations: {
     attacker: "customer2",
-    why: "rewriting someone else's message history",
+    why: "locations are world-readable reference data that only an admin may edit — the classic read/write mismatch, now that authenticated holds the raw grant",
     probe: async (admin) =>
       (
         await admin
-          .from("whatsapp_messages")
+          .from("locations")
           .select("*")
-          .eq("id", WHATSAPP_MESSAGE_ID)
+          .eq("id", TEST_IDS.LOCATION_SITE)
           .maybeSingle()
       ).data,
     update: async (client) =>
       outcomeOf(
         await client
-          .from("whatsapp_messages")
-          .update({ body: "Defaced", status: "failed" })
-          .eq("id", WHATSAPP_MESSAGE_ID)
+          .from("locations")
+          .update({ name: "Defaced" })
+          .eq("id", TEST_IDS.LOCATION_SITE)
           .select("id")
+      ),
+  },
+
+  minecraft_accounts: {
+    attacker: "customer",
+    why: "the linked *parent* may read their gamer's Minecraft row — the self-write policies must still keep them from editing it",
+    probe: async (admin) =>
+      (
+        await admin
+          .from("minecraft_accounts")
+          .select("*")
+          .eq("user_id", TEST_IDS.GAMER)
+          .maybeSingle()
+      ).data,
+    update: async (client) =>
+      outcomeOf(
+        await client
+          .from("minecraft_accounts")
+          .update({ minecraft_username: "Defaced" })
+          .eq("user_id", TEST_IDS.GAMER)
+          .select("user_id")
       ),
   },
 
@@ -553,7 +579,6 @@ describe("write-path IDOR (§3.4 check 3)", () => {
 
     await deleteTestProducts(admin, [PRODUCT]);
     await admin.from("holiday_calendars").delete().eq("id", CALENDAR);
-    await admin.from("whatsapp_messages").delete().eq("id", WHATSAPP_MESSAGE_ID);
     await admin.from("whatsapp_contacts").delete().eq("phone", WHATSAPP_PHONE);
 
     await createTestProduct(admin, { id: PRODUCT, seatCount: null });
@@ -639,19 +664,19 @@ describe("write-path IDOR (§3.4 check 3)", () => {
     await admin
       .from("whatsapp_contacts")
       .insert({ phone: WHATSAPP_PHONE, wa_name: "IDOR fixture" });
-    await admin.from("whatsapp_messages").insert({
-      id: WHATSAPP_MESSAGE_ID,
-      phone: WHATSAPP_PHONE,
-      direction: "inbound",
-      status: "received",
-      body: "Seeded by write-idor.test.ts",
-    });
+
+    // The gamer's Minecraft row: owned by the gamer, readable by their linked
+    // parent, and therefore the sharp attacker's target. Seeded here rather than
+    // relied on from seed.sql because minecraft-accounts.test.ts deletes it.
+    await admin.from("minecraft_accounts").upsert(
+      { user_id: TEST_IDS.GAMER, minecraft_username: "IDOR fixture" },
+      { onConflict: "user_id" },
+    );
   });
 
   afterAll(async () => {
     await deleteTestProducts(admin, [PRODUCT]);
     await admin.from("holiday_calendars").delete().eq("id", CALENDAR);
-    await admin.from("whatsapp_messages").delete().eq("id", WHATSAPP_MESSAGE_ID);
     await admin.from("whatsapp_contacts").delete().eq("phone", WHATSAPP_PHONE);
     await admin
       .from("gedu_locations")
