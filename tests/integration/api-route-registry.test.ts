@@ -149,12 +149,17 @@ const API_DIR = join("src", "app", "api");
 
 const TESTS = {
   adminLocations: "tests/integration/api/admin-locations.test.ts",
+  adminSiteNotes: "tests/integration/api/admin-site-notes.test.ts",
+  billingPortal: "tests/integration/api/billing-portal.test.ts",
   callback: "tests/integration/auth/callback.test.ts",
   checkout: "tests/integration/api/checkout-products-create.test.ts",
+  discordInteractions: "tests/integration/api/discord-interactions.test.ts",
+  familyList: "tests/integration/api/family-list.test.ts",
   feedback: "tests/integration/api/feedback.test.ts",
   forgotPassword: "tests/integration/auth/forgot-password.test.ts",
   gamersCreate: "tests/integration/api/gamers-create.test.ts",
   gamersUpdate: "tests/integration/api/gamers-update.test.ts",
+  geduRegister: "tests/integration/api/gedu-register.test.ts",
   minecraftAccount: "tests/integration/api/minecraft-account.test.ts",
   minecraftJoinCheck: "tests/integration/api/minecraft-join-check.test.ts",
   minecraftVerify: "tests/integration/api/minecraft-verify.test.ts",
@@ -164,12 +169,17 @@ const TESTS = {
   productsParticipations: "tests/integration/api/products-participations.test.ts",
   productsParticipationsDelete:
     "tests/integration/api/products-participations-delete.test.ts",
+  productsParticipationsTransition:
+    "tests/integration/api/products-participations-transition.test.ts",
+  productsUpdate: "tests/integration/api/products-update.test.ts",
   sendTestEmail: "tests/integration/api/send-test-email.test.ts",
+  signout: "tests/integration/auth/signout.test.ts",
   stripeWebhook: "tests/integration/api/stripe-webhook-products.test.ts",
   switchAccount: "tests/integration/auth/switch-account.test.ts",
   userLocale: "tests/integration/api/user-locale.test.ts",
   voiceInstantCreate: "tests/integration/api/voice-instant-create.test.ts",
   voiceInstantEnd: "tests/integration/api/voice-instant-end.test.ts",
+  voiceInstantExists: "tests/integration/api/voice-instant-exists.test.ts",
   voiceInstantToken: "tests/integration/api/voice-instant-token.test.ts",
   voiceToken: "tests/integration/api/voice-token.test.ts",
   waitlist: "tests/integration/api/participations-waitlist.test.ts",
@@ -222,10 +232,10 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
       PATCH: {
         posture: ADMIN_ONLY,
         body: { kind: "json", schema: "waitlistTransitionBody" },
-        // The one untested handler in an otherwise-tested file — the shape the
-        // per-file view of coverage hides, and the reason check 4 is per
-        // handler rather than per file.
-        test: null,
+        // The handler that was untested while its file-mate was covered — the
+        // shape a per-file view of coverage hides, and the reason check 4 is
+        // per handler rather than per file.
+        test: TESTS.productsParticipationsTransition,
       },
     },
   },
@@ -247,7 +257,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
       POST: {
         posture: ADMIN_ONLY,
         body: { kind: "multipart", schema: "updateProductData" },
-        test: null,
+        test: TESTS.productsUpdate,
       },
     },
   },
@@ -282,7 +292,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
       PATCH: {
         posture: ADMIN_ONLY,
         body: { kind: "json", schema: "updateSiteNotesBody" },
-        test: null,
+        test: TESTS.adminSiteNotes,
       },
     },
   },
@@ -418,7 +428,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
             "clearing a session must work even when the session is already unusable, so requiring a valid one would strand exactly the callers who need it. POST-only is the CSRF control: a cross-origin top-level POST carries no SameSite=Lax cookie, so a hostile page cannot force a sign-out. Answers a 303 the browser follows as a full-page GET",
         },
         body: { kind: "none" },
-        test: null,
+        test: TESTS.signout,
       },
     },
   },
@@ -458,7 +468,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
       POST: {
         posture: { kind: "role-gated", roles: ["customer"] },
         body: { kind: "none" },
-        test: null,
+        test: TESTS.billingPortal,
       },
     },
   },
@@ -478,7 +488,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           kind: "raw",
           reason: "the signature is computed over the exact bytes sent",
         },
-        test: null,
+        test: TESTS.discordInteractions,
       },
     },
   },
@@ -496,7 +506,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           allowUnverified: true,
         },
         body: { kind: "none" },
-        test: null,
+        test: TESTS.familyList,
       },
     },
   },
@@ -559,7 +569,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
             "educators self-register, so no session can exist yet. The highest-value public route on the surface: it creates an account, and the account it creates is unverified until an admin approves it",
         },
         body: { kind: "json", schema: "registerGeduBody" },
-        test: null,
+        test: TESTS.geduRegister,
       },
     },
   },
@@ -673,7 +683,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
             "the lobby checks whether a room code resolves before asking for camera and microphone permission, and a guest joining by link has no session. Reveals only that a code exists, which anyone holding the code could learn by joining",
         },
         body: { kind: "none" },
-        test: null,
+        test: TESTS.voiceInstantExists,
       },
     },
   },
@@ -1035,19 +1045,12 @@ describe("check 4 — test linkage", () => {
     ).toBe(true);
   });
 
-  // Untested handlers are recorded rather than excused. This assertion is the
-  // counter: it can only go down, and the sweep ends when it reaches zero.
-  it("records the handlers that still have no test", () => {
-    expect(untested.map((h) => h.label).sort()).toEqual([
-      "GET src/app/api/family/list/route.ts",
-      "GET src/app/api/voice/instant/exists/route.ts",
-      "PATCH src/app/api/admin/products/[id]/participations/[participationId]/route.ts",
-      "PATCH src/app/api/admin/site-notes/route.ts",
-      "POST src/app/api/admin/products/[id]/update/route.ts",
-      "POST src/app/api/auth/signout/route.ts",
-      "POST src/app/api/discord/interactions/route.ts",
-      "POST src/app/api/gedu/register/route.ts",
-      "POST src/app/api/parent/billing-portal/route.ts",
-    ]);
+  // Untested handlers were recorded rather than excused, and the list is now
+  // empty. Keeping the assertion as an equality against `[]` rather than
+  // deleting it is deliberate: it is a ratchet. A new handler that ships with
+  // `test: null` fails here immediately, so the zero cannot quietly become a
+  // one the way the original nine accumulated.
+  it("has no handler left without a test", () => {
+    expect(untested.map((h) => h.label).sort()).toEqual([]);
   });
 });

@@ -82,6 +82,10 @@ or the build fails. Three things about maintaining it:
 - **Warts are recorded, not excused.** A route standing off the shared primitive, a
   handler with no test, a body parsed without a schema — each has a slot in the
   registry. Recording one keeps it countable; hiding it is how it survives.
+- **The untested list is a ratchet, and it is at zero.** The check asserts equality
+  against an empty list rather than being deleted once it emptied, so a handler that
+  ships with no test fails immediately instead of quietly starting a new backlog. Add
+  the test, not an entry.
 - **A recorded exception expires on its own.** The checks fail when a file that claims
   to stand off the primitive starts using it, so fixing the code forces the annotation
   to be deleted in the same change instead of rotting into a rubber stamp.
