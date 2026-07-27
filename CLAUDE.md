@@ -208,6 +208,12 @@ work under `tests/`). Two things worth knowing from anywhere:
   branch, not locally.
 - **Shared mock factories live in `tests/mocks/`** — add new mocks there rather than
   duplicating across files.
+- **A new API route has to be classified in the integration suite's route posture
+  registry** — its auth posture (with a written reason for anything that is not
+  role-gated), how it takes its body, and the test that exercises it. The registry's
+  completeness checks fail the build otherwise, and they also fail on an undeclared
+  handler method, an unjustified service-role import, and a named test that does not
+  exist or does not reference the route.
 
 ## Code Style
 

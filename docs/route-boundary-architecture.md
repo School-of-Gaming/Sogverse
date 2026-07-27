@@ -222,15 +222,85 @@ hand-roll silently.
 
 ## 5. Implementation plan
 
-### Phase 1 — registry + spine + primitive
+### Phase 1 — registry + spine + primitive — **LANDED**
 
-Build `defineRoute`, write the registry seeding **reality as-is** (every current
-handler classified with today's posture, warts recorded as warts — including the
-hand-rolled locale auth, the plain-compare webhook challenge, and `test: null` for the
-untested nine), and land the four spine checks green against that honest seed. Convert
-two or three exemplar routes (one role-gated JSON route, one public carve-out, one
-webhook left off-wrapper but classified) to prove the primitive's shape. From this
-phase on, a new route cannot ship unclassified.
+`defineRoute` lives in `src/lib/api/`; the posture registry and the four spine checks
+live together in the route-registry integration test, mirroring the DB spine's
+in-test annotations. The registry seeds reality as-is: all 39 route files and 41
+handlers classified, warts recorded as warts. From this phase on, a new route cannot
+ship unclassified — an unregistered route file, an undeclared handler method, an
+unjustified service-role import and a stale test link each fail CI.
+
+**Registry seed.** 27 role-gated handlers (6 skipping the PIN gate, 2 requiring a
+verified educator, 1 naming all four roles), 1 any-authenticated, 4 public, 2
+session-mutating-public, 1 signed-token, 1 optional-auth, 4 webhook across four
+verifier strategies, 1 api-key. Body discipline: 17 JSON with a schema (7 through a
+feature contract, 10 through a schema declared inline in the route), 7 JSON with no
+schema at all, 2 multipart, 3 raw, 12 with no body. 16 route files justify a
+service-role import; 4 non-route modules are pinned separately. 9 handlers carry no
+test.
+
+**The primitive's shape, as built.** It covers the three postures that authenticate
+through shared code — role-gated, any-authenticated and public — and deliberately
+covers none of the others: a webhook, an api-key or a signed-token route stays
+hand-written, and the spine's static check is what keeps it honest. Two properties
+worth knowing before writing against it:
+
+- **The body is read only when a body schema is declared.** That is the structural
+  guarantee that a raw-body verifier can coexist with the wrapper rather than being
+  quietly broken by it, and it is pinned by a test that asserts an unconsumed stream.
+- **A declared response schema is an allowlist, not just a check.** The payload sent
+  is the schema's parse output, so an undeclared field is dropped rather than
+  delivered; only a genuine shape mismatch becomes a logged 500.
+
+**Exemplars.** One role-gated JSON route moved onto `defineRoute` — its 13 existing
+integration tests pass unchanged, which is the evidence that the wrapper preserves
+behaviour. The public and webhook exemplars are classifications, not conversions:
+they demonstrate the reasoned carve-out shape, which is the other half of the design.
+
+### What Phase 2 inherits
+
+Findings and judgment calls from Phase 1 that the sweep should carry forward:
+
+- **Two error-mapping divergences resolved deliberately in the exemplar**, and the
+  same two questions recur in every conversion. First, an unrecognized database code
+  now becomes a 500 rather than being folded into a 400 — an error nobody anticipated
+  is a server error, and pretending otherwise hides it. Second, a route whose
+  underlying messages are genuinely the user-facing explanation must opt into
+  disclosure explicitly, and the opt-in carries its reason as its value.
+- **Per-route overrides are how a deliberate divergence survives conversion.** The
+  exemplar keeps one code on a non-default status because the client treats that
+  failure as bad input rather than a missing resource. Prefer an override with a
+  written reason over silently normalizing a route's observable behaviour.
+- **`no-data-found` is the code most likely to need a per-route decision** — some
+  routes mean "you asked for something that isn't there" (404), others mean "your
+  input names something that doesn't exist" (400). Decide it per route, not globally.
+- **The taxonomy needed no new posture**, but two entries needed a note rather than a
+  category: the all-four-roles route is recorded as role-gated rather than
+  any-authenticated because that is what the code does (it loads the profile and
+  applies the PIN gate along the way), and the two webhook handlers in one file carry
+  different verifier strategies, which is why verifier is a per-handler field.
+- **Body discipline needed a "declared but unschema'd" state.** Seven handlers parse
+  JSON with hand-rolled checks or none; recording them as JSON-with-no-schema keeps
+  them countable, and zero of them is a Phase 2 exit condition alongside zero
+  untested handlers.
+- **The recorded off-primitive exception expires by itself.** The spine fails if a
+  file carrying that exception later gains the shared gate, so converting the
+  hand-rolled session route forces the exception's removal in the same change.
+- **The architecture still has no permanent home.** Phase 1 put the tripwire in the
+  root and the registry conventions with the test suite, and deliberately left the
+  route shape here rather than duplicating a mid-flight design into a colocated doc.
+  When the sweep finishes, decide that home — the primitive and the routes live in
+  different directories, so the doc that a route author auto-loads is not the one
+  beside the primitive.
+
+**Snapshot corrections found while re-verifying §2.** The surface, the posture counts
+and the service-role import set were all exact. Coverage was not: "26 of 39 route
+files" counts the integration *test files*, not the routes they cover. The real
+figures are 31 of 39 files covered, with 8 files plus one handler in a ninth
+untested — which is what §2's untested list already named, so only the ratio was
+wrong. The WhatsApp webhook is covered by a test that imports it dynamically, so any
+linkage check has to match both the static and the dynamic import form.
 
 ### Phase 2 — the sweep
 

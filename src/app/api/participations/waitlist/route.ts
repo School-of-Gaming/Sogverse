@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
-import { parseJsonBody } from "@/lib/api/json-body.server";
+import { defineRoute } from "@/lib/api/define-route";
+import { ApiError } from "@/lib/api/api-error";
 import {
   joinWaitlistBody,
   joinWaitlistRpcResult,
@@ -15,46 +14,46 @@ import {
  * else, and the RPC's own guard refuses a non-customer even if this route's
  * role check were bypassed.
  */
-export async function POST(request: Request) {
-  const result = await requireRole("customer", {
-    forbiddenMessage: "Only customers can join a waitlist",
-  });
-  if (result instanceof NextResponse) return result;
-  const { supabase } = result;
+export const POST = defineRoute({
+  posture: "role-gated",
+  roles: "customer",
+  forbiddenMessage: "Only customers can join a waitlist",
+  body: joinWaitlistBody,
 
-  const body = await parseJsonBody(request, joinWaitlistBody);
-  if (body instanceof NextResponse) return body;
-  const { productId, gamerId } = body;
+  // The RPC raises the canonical forbidden code when the caller is not a
+  // customer, and a check violation for a request the customer may make but
+  // that this data refuses (waitlist disabled, not the gamer's parent) — both
+  // already land on the shared table. `no_data_found` is the exception: the
+  // RPC raises it for a product that does not exist, which the client treats
+  // as bad input rather than a missing endpoint, so it stays a 400 here.
+  errorStatus: { P0002: 400 },
 
-  const { data, error } = await supabase.rpc("join_product_waitlist", {
-    p_product_id: productId,
-    p_gamer_id: gamerId,
-  });
+  // The RPC's messages are written for the parent to read — "waitlist is not
+  // enabled for this product", "product … does not exist" — and the UI shows
+  // them verbatim. They name no row the caller was not already holding.
+  discloseErrorMessages:
+    "the guarded RPC's messages are the user-facing explanation of a refused join",
 
-  if (error) {
-    // The RPC raises the canonical forbidden code when the caller is not a
-    // customer; everything else it raises (missing product, not the gamer's
-    // parent, waitlist disabled) is a request the customer may make but that
-    // this data refuses.
-    const status = error.code === "42501" ? 403 : 400;
-    return NextResponse.json({ error: error.message }, { status });
-  }
+  handler: async ({ supabase, body }) => {
+    const { data, error } = await supabase.rpc("join_product_waitlist", {
+      p_product_id: body.productId,
+      p_gamer_id: body.gamerId,
+    });
 
-  const parsed = joinWaitlistRpcResult.safeParse(data);
-  if (!parsed.success) {
-    console.error(
-      "join_product_waitlist returned an unexpected shape:",
-      parsed.error.message,
-    );
-    return NextResponse.json(
-      { error: "Failed to join waitlist" },
-      { status: 500 },
-    );
-  }
+    if (error) throw error;
 
-  return NextResponse.json({
-    participationId: parsed.data.participation_id,
-    waitlistPosition: parsed.data.waitlist_position,
-    status: parsed.data.status,
-  });
-}
+    const parsed = joinWaitlistRpcResult.safeParse(data);
+    if (!parsed.success) {
+      throw new ApiError(
+        `join_product_waitlist returned an unexpected shape: ${parsed.error.message}`,
+        500,
+      );
+    }
+
+    return {
+      participationId: parsed.data.participation_id,
+      waitlistPosition: parsed.data.waitlist_position,
+      status: parsed.data.status,
+    };
+  },
+});
