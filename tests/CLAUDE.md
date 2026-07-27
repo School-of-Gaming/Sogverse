@@ -65,6 +65,27 @@ or a `NextResponse` error for unauthorized. Mock Supabase clients
 import Next.js's `server-only` marker work because `vitest.config.mts` aliases it to a
 stub in `tests/mocks/server-only.ts`.
 
+A route that goes through `defineRoute` still runs the same role gate underneath, so
+the same `requireRole` mock drives it and an existing test needs no rewrite. The per-
+route bar is unchanged: unauthenticated, wrong role, bad input, happy path.
+
+### The route posture registry
+
+The integration suite carries a registry classifying every API route handler — auth
+posture, body discipline, and the test that exercises it — beside the four checks that
+consume it. **Adding an API route means adding its registry entry in the same change**,
+or the build fails. Three things about maintaining it:
+
+- **A posture that is not role-gated needs a written reason.** Reasons are the whole
+  point: a deliberately public route and a route missing its gate look identical
+  without one. Write the sentence you would want to read in a security review.
+- **Warts are recorded, not excused.** A route standing off the shared primitive, a
+  handler with no test, a body parsed without a schema — each has a slot in the
+  registry. Recording one keeps it countable; hiding it is how it survives.
+- **A recorded exception expires on its own.** The checks fail when a file that claims
+  to stand off the primitive starts using it, so fixing the code forces the annotation
+  to be deleted in the same change instead of rotting into a rubber stamp.
+
 ## Unit test setup
 
 `tests/setup.ts` (the jsdom config's setup file) globally mocks `next/navigation` and the
