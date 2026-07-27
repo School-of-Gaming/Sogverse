@@ -15,6 +15,9 @@ import { TEST_IDS } from "./constants";
  *
  * Allocation registry — keep this current when adding a v2 db test. The
  * suffix is the last byte of the UUID (`...0000000005XX`):
+ *   5a1–5a3        exposed-function-scope.test.ts (5a3 is its product_groups id)
+ *   5a4–5a9        write-idor.test.ts (5a4 is the product; 5a5–5a9 are the
+ *                  group / zone / calendar / holiday / slot fixtures it seeds)
  *   5b1–5b5        participations-race.test.ts
  *   5b6–5b7        participations-rls.test.ts
  *   5b8–5b9        participations-external.test.ts

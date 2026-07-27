@@ -5,19 +5,21 @@ import type { Database } from "@/types/database.types";
 import { createAdminTestClient } from "./helpers";
 
 /**
- * Row shapes of the catalog-introspection RPCs (`_list_rpc_access`,
- * `_list_table_grants`). These query information_schema/pg_catalog, so no
- * src contract exists (or should) — validating the shape at runtime in the
- * test is the honest move.
+ * Grant- and schema-level access control: which tables `authenticated` and
+ * `anon` may write, that every SECURITY DEFINER function pins its search_path,
+ * and that every table has RLS.
+ *
+ * The *function*-grant allowlists that used to live here are gone. They proved
+ * someone had meant to expose a function, not that its body enforced anything —
+ * an admin-only RPC with a forgotten role check passed them. They are superseded
+ * by authorization-spine.test.ts (docs/db-authorization-architecture.md §3.4),
+ * whose checks 1, 2 and 5 together require every function exposed to
+ * `authenticated` to be classified as role-gated (and then behaviourally proven
+ * to refuse every other role) or self-scoping (and then named to a scope test),
+ * with the anon surface pinned the same way. That is a strict superset of what
+ * the allowlists asserted, so keeping both would be two places to update and one
+ * of them weaker.
  */
-const rpcAccessRows = z.array(
-  z.object({
-    function_name: z.string(),
-    authenticated_access: z.boolean(),
-    anon_access: z.boolean(),
-  })
-);
-
 const tableGrantRows = z.array(
   z.object({
     table_name: z.string(),
@@ -25,132 +27,11 @@ const tableGrantRows = z.array(
   })
 );
 
-/**
- * Allowlist of functions that authenticated users can call via PostgREST /rpc/.
- * If a new function should be public, add it here. Otherwise, REVOKE EXECUTE
- * from authenticated/anon/public in the migration.
- */
-const AUTHENTICATED_ALLOWLIST = new Set([
-  "get_user_role",
-  "is_admin",
-  "is_parent_of",
-  // RLS predicate for product-scoped read policies (00069). Evaluated in the
-  // caller's context by the read_*_via_product policies (TO anon,
-  // authenticated), so the role must hold EXECUTE — same as get_user_role.
-  "can_read_product",
-  "get_my_gamers",
-  "get_my_parents",
-  // Read-time signals for the dashboard payment-problem + access-until badges
-  // (00093, supersedes 00085). auth.uid()-scoped (customer_id OR gamer_id),
-  // returns participation id + status + current_period_end — no money. Called
-  // from the browser by both parents and gamers.
-  "get_my_participation_subscription_states",
-
-  "create_product",
-  "update_product",
-
-  "get_product_groups_with_details",
-  "apply_group_changes",
-  "get_gedu_assigned_product",
-  "get_my_assigned_products",
-
-  // Admin waitlist transitions from the groups panel (00118). SECURITY-checked
-  // internally (get_user_role() = 'admin'), so they run with the admin's own
-  // JWT — like apply_group_changes, their drag-UI sibling — hence authenticated
-  // EXECUTE. A non-admin caller is rejected by the internal role gate.
-  "promote_from_waitlist",
-  "demote_to_waitlist",
-  // "You're #N" read for parents/gamers (00118). SECURITY DEFINER so it can
-  // count rows the caller's RLS hides, but owner-authorized (customer_id OR
-  // gamer_id) and returns only the integer position — no other family's data.
-  "get_waitlist_position",
-
-  // Parent PIN (00075). auth.uid()-scoped, touch only the caller's own
-  // customer_profiles row; called from the PIN API routes via the user's
-  // server client. The pin_hash itself is never returned to the client.
-  "set_my_pin",
-  "verify_my_pin",
-  "pin_is_set",
-
-  // Voice zones (00103). RLS predicate helpers for voice_zones /
-  // voice_private_zone_occupants — evaluated in the caller's context by those
-  // tables' policies, so authenticated must hold EXECUTE (same rationale as
-  // can_read_product). SECURITY DEFINER with SET search_path; they only ever
-  // return a boolean derived from the caller's auth.uid(), no data leak.
-  "is_voice_group_member",
-  "is_voice_group_moderator",
-
-  // Authorization guard primitives (00120, docs/db-authorization-architecture
-  // .md §3.1). They raise the canonical forbidden 42501 or return void — they
-  // hold no privilege of their own (SECURITY INVOKER) and answer only "does the
-  // caller hold role X", which get_user_role() and is_admin() already tell the
-  // caller, so exposing them adds no capability and leaks nothing. authenticated
-  // needs EXECUTE because create_product / update_product are SECURITY INVOKER:
-  // their guard runs as the caller, not as the function owner. The third
-  // primitive, assert_self, has no SECURITY INVOKER consumer yet and is
-  // therefore service_role-only — deliberately NOT listed here.
-  "assert_role",
-  "assert_admin",
-
-  // Gedu verification (00111). Admin verifies / un-verifies a gedu from the
-  // admin user-detail page via their own authenticated session. SECURITY
-  // DEFINER, but self-gates with is_admin() and stamps verified_by/verified_at
-  // server-side. (register_gedu, which grants the gedu role, is service_role
-  // only — never authenticated — so it intentionally is NOT listed here.)
-  "set_gedu_verified",
-]);
-
-/**
- * Allowlist of functions that anonymous (unauthenticated) users can call.
- */
-const ANON_ALLOWLIST = new Set([
-  // See AUTHENTICATED_ALLOWLIST: the child-table read policies are
-  // TO anon, authenticated, so anon evaluates can_read_product too (it
-  // returns true only for the public visible-published branch).
-  "can_read_product",
-]);
-
 describe("Access Control", () => {
   let admin: SupabaseClient<Database>;
 
   beforeAll(() => {
     admin = createAdminTestClient();
-  });
-
-  it("only allowlisted RPCs are callable by authenticated users", async () => {
-    const { data, error } = await admin.rpc("_list_rpc_access");
-
-    expect(error).toBeNull();
-    expect(data).not.toBeNull();
-
-    const authenticatedFunctions = rpcAccessRows
-      .parse(data)
-      .filter((row) => row.authenticated_access)
-      .map((row) => row.function_name);
-
-    const unexpected = authenticatedFunctions.filter(
-      (name) => !AUTHENTICATED_ALLOWLIST.has(name)
-    );
-
-    expect(unexpected).toEqual([]);
-  });
-
-  it("only allowlisted RPCs are callable by anon users", async () => {
-    const { data, error } = await admin.rpc("_list_rpc_access");
-
-    expect(error).toBeNull();
-    expect(data).not.toBeNull();
-
-    const anonFunctions = rpcAccessRows
-      .parse(data)
-      .filter((row) => row.anon_access)
-      .map((row) => row.function_name);
-
-    const unexpected = anonFunctions.filter(
-      (name) => !ANON_ALLOWLIST.has(name)
-    );
-
-    expect(unexpected).toEqual([]);
   });
 
   it("table-level grants match allowlist (bidirectional: no excess, no missing)", async () => {
@@ -167,7 +48,11 @@ describe("Access Control", () => {
     // profiles is intentionally NOT in this allowlist: it uses column-level
     // UPDATE grants on (first_name, last_name, phone, spoken_languages) rather
     // than table-level UPDATE. Column privileges live in information_schema
-    // .column_privileges and are out of scope for _list_table_grants.
+    // .column_privileges — out of scope for _list_table_grants, and covered by
+    // the column-grant audit in authorization-spine.test.ts.
+    //
+    // Every table listed here also needs a write-IDOR case in
+    // write-idor.test.ts; that file fails if one is missing.
     const WRITE_GRANT_ALLOWLIST = new Map<string, Set<string>>([
       ["parent_gamer", new Set(["DELETE"])],
       ["gamer_profiles", new Set(["UPDATE"])],

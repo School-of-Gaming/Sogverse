@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAnonTestClient,
+  createAuthenticatedClient,
+} from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
 /**
@@ -19,16 +23,6 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
  * docs/products-architecture.md § "Extend site_details read
  * policy to purchasing customers" for the planned policy shape.
  */
-
-const supabaseUrl =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321";
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-
-function createAnonTestClient(): SupabaseClient<Database> {
-  return createClient<Database>(supabaseUrl, anonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-}
 
 describe("site_details RLS", () => {
   let admin: SupabaseClient<Database>;

@@ -170,6 +170,22 @@ CREATE TYPE public.user_role AS ENUM (
 
 
 --
+-- Name: _list_column_grants(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public._list_column_grants(p_grantee text) RETURNS TABLE(table_name text, column_name text, privilege_type text)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT c.table_name::text, c.column_name::text, c.privilege_type::text
+  FROM information_schema.column_privileges c
+  WHERE c.grantee = p_grantee
+    AND c.table_schema = 'public'
+  ORDER BY 1, 2, 3;
+$$;
+
+
+--
 -- Name: _list_cron_jobs(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -183,21 +199,32 @@ $$;
 
 
 --
--- Name: _list_rpc_access(); Type: FUNCTION; Schema: public; Owner: -
+-- Name: _list_function_authorization_surface(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public._list_rpc_access() RETURNS TABLE(function_name text, authenticated_access boolean, anon_access boolean)
+CREATE FUNCTION public._list_function_authorization_surface() RETURNS TABLE(function_name text, function_language text, is_security_definer boolean, is_strict boolean, authenticated_access boolean, anon_access boolean, argument_names text[], body text)
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
   SELECT
-    p.proname::text AS function_name,
-    has_function_privilege('authenticated', p.oid, 'EXECUTE') AS authenticated_access,
-    has_function_privilege('anon', p.oid, 'EXECUTE') AS anon_access
+    p.proname::text,
+    l.lanname::text,
+    p.prosecdef,
+    p.proisstrict,
+    pg_catalog.has_function_privilege('authenticated', p.oid, 'EXECUTE'),
+    pg_catalog.has_function_privilege('anon', p.oid, 'EXECUTE'),
+    -- proargnames carries OUT/TABLE column names after the input args, so slice
+    -- to pronargs. NULL when the function takes no arguments at all.
+    COALESCE(p.proargnames[1:p.pronargs], '{}'::text[]),
+    p.prosrc::text
   FROM pg_catalog.pg_proc p
   JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+  JOIN pg_catalog.pg_language  l ON l.oid = p.prolang
   WHERE n.nspname = 'public'
-    AND p.prorettype != 'pg_catalog.trigger'::pg_catalog.regtype;
+    -- Trigger functions are not a callable surface: PostgREST cannot invoke them
+    -- and PostgreSQL only runs them from a trigger context. Same exclusion the
+    -- RPC-access view this replaces used.
+    AND p.prorettype <> 'pg_catalog.trigger'::pg_catalog.regtype;
 $$;
 
 
@@ -381,11 +408,11 @@ BEGIN
     RAISE EXCEPTION 'assert_role requires a role' USING ERRCODE = '42501';
   END IF;
 
-  -- `<>` (not IS DISTINCT FROM) is deliberate and behaviour-preserving: it
-  -- reproduces the hand-written guards exactly, including their NULL-role
-  -- pass-through for callers with no profiles row. See the header note — closing
-  -- that is Phase 2 work, once the matrix has pinned every caller.
-  IF (SELECT public.get_user_role()) <> p_role THEN
+  -- IS DISTINCT FROM, not `<>`: a caller with no profiles row has a NULL role,
+  -- and `NULL <> 'admin'` is NULL, which an IF treats as false — that let a
+  -- roleless caller straight through. NULL is distinct from every role, so this
+  -- form refuses them.
+  IF (SELECT public.get_user_role()) IS DISTINCT FROM p_role THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 END;
@@ -2060,12 +2087,10 @@ $$;
 
 CREATE FUNCTION public.set_gedu_verified(p_gedu_id uuid, p_verified boolean) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'public'
+    SET search_path TO ''
     AS $$
 BEGIN
-  IF NOT public.is_admin() THEN
-    RAISE EXCEPTION 'set_gedu_verified: only admins may verify gedus';
-  END IF;
+  PERFORM public.assert_admin();
 
   IF NOT EXISTS (
     SELECT 1 FROM public.profiles WHERE id = p_gedu_id AND role = 'gedu'
@@ -2076,7 +2101,7 @@ BEGIN
   UPDATE public.gedu_profiles
   SET verified    = p_verified,
       verified_at = CASE WHEN p_verified THEN now() ELSE NULL END,
-      verified_by = CASE WHEN p_verified THEN (select auth.uid()) ELSE NULL END
+      verified_by = CASE WHEN p_verified THEN (SELECT auth.uid()) ELSE NULL END
   WHERE user_id = p_gedu_id;
 END;
 $$;
@@ -4966,6 +4991,14 @@ GRANT USAGE ON SCHEMA public TO service_role;
 
 
 --
+-- Name: FUNCTION _list_column_grants(p_grantee text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public._list_column_grants(p_grantee text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public._list_column_grants(p_grantee text) TO service_role;
+
+
+--
 -- Name: FUNCTION _list_cron_jobs(); Type: ACL; Schema: public; Owner: -
 --
 
@@ -4974,11 +5007,11 @@ GRANT ALL ON FUNCTION public._list_cron_jobs() TO service_role;
 
 
 --
--- Name: FUNCTION _list_rpc_access(); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION _list_function_authorization_surface(); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public._list_rpc_access() FROM PUBLIC;
-GRANT ALL ON FUNCTION public._list_rpc_access() TO service_role;
+REVOKE ALL ON FUNCTION public._list_function_authorization_surface() FROM PUBLIC;
+GRANT ALL ON FUNCTION public._list_function_authorization_surface() TO service_role;
 
 
 --
