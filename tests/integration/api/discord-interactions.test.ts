@@ -49,6 +49,15 @@ vi.mock("@/lib/microsoft-graph", () => ({
   resetPassword: (...args: unknown[]) => mockResetPassword(...args),
 }));
 
+// The deferred work PATCHes the answer back to Discord over the network, and
+// it is started eagerly (the platform hook receives an already-running
+// promise). Stub fetch so the suite stays hermetic, and give every downstream
+// mock a resolved value in beforeEach for the same reason: that promise is
+// never awaited, so anything it rejects with surfaces as an unhandled
+// rejection and fails the run even though every assertion passed.
+const mockFetch = vi.fn();
+vi.stubGlobal("fetch", mockFetch);
+
 import { POST } from "@/app/api/discord/interactions/route";
 
 function interactionRequest(
@@ -71,7 +80,21 @@ describe("POST /api/discord/interactions", () => {
     vi.clearAllMocks();
     deferred.length = 0;
     mockVerifyKey.mockResolvedValue(true);
+    mockFetch.mockResolvedValue(new Response(null, { status: 200 }));
+    mockAskGeduGuru.mockResolvedValue("vastaus");
+    mockAskHappinappi.mockResolvedValue("HAPPEE!");
+    mockResetPassword.mockResolvedValue({
+      ok: true,
+      upn: "alice@gamer.sog.gg",
+      password: "Sogverse42",
+      forceChange: false,
+    });
   });
+
+  /** Let the eagerly-started deferred work settle before the test ends. */
+  async function settleDeferred(): Promise<void> {
+    await Promise.all(deferred);
+  }
 
   // -- Authorization: the signature is the whole gate --
 
@@ -181,6 +204,7 @@ describe("POST /api/discord/interactions", () => {
     // The slow work is handed to the platform's post-response hook, so the
     // function stays alive for it after the interaction is acknowledged.
     expect(deferred).toHaveLength(1);
+    await settleDeferred();
   });
 
   it("defers the password-reset command the same way", async () => {
@@ -197,6 +221,7 @@ describe("POST /api/discord/interactions", () => {
     // Two usernames, one Graph call each — dispatched to the deferred path
     // rather than blocking the acknowledgement.
     expect(mockResetPassword).toHaveBeenCalledTimes(2);
+    await settleDeferred();
   });
 
   it("falls back to a harmless PONG when the command carries no argument", async () => {
