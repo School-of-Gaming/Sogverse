@@ -271,9 +271,7 @@ DECLARE
   v_gedu_id_text    TEXT;
   v_temp_map        JSONB := '{}'::jsonb;
 BEGIN
-  IF (SELECT get_user_role()) <> 'admin' THEN
-    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
-  END IF;
+  PERFORM public.assert_admin();
 
   PERFORM 1 FROM products WHERE id = p_product_id FOR UPDATE;
   IF NOT FOUND THEN
@@ -350,6 +348,62 @@ BEGIN
   END LOOP;
 
   RETURN jsonb_build_object('tempMap', v_temp_map);
+END;
+$$;
+
+
+--
+-- Name: assert_admin(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.assert_admin() RETURNS void
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+BEGIN
+  PERFORM public.assert_role('admin');
+END;
+$$;
+
+
+--
+-- Name: assert_role(public.user_role); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.assert_role(p_role public.user_role) RETURNS void
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+BEGIN
+  -- A NULL p_role is a caller bug — no role name was asked for, so nothing can
+  -- satisfy the assertion. Refuse before the comparison can swallow it.
+  IF p_role IS NULL THEN
+    RAISE EXCEPTION 'assert_role requires a role' USING ERRCODE = '42501';
+  END IF;
+
+  -- `<>` (not IS DISTINCT FROM) is deliberate and behaviour-preserving: it
+  -- reproduces the hand-written guards exactly, including their NULL-role
+  -- pass-through for callers with no profiles row. See the header note — closing
+  -- that is Phase 2 work, once the matrix has pinned every caller.
+  IF (SELECT public.get_user_role()) <> p_role THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+END;
+$$;
+
+
+--
+-- Name: assert_self(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.assert_self(p_user_id uuid) RETURNS void
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+BEGIN
+  IF p_user_id IS NULL OR (SELECT auth.uid()) IS DISTINCT FROM p_user_id THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
 END;
 $$;
 
@@ -738,10 +792,7 @@ DECLARE
   v_price         JSONB;
   v_translation   JSONB;
 BEGIN
-  IF (SELECT public.get_user_role()) <> 'admin' THEN
-    RAISE EXCEPTION 'Only admins can create products'
-      USING ERRCODE = '42501';
-  END IF;
+  PERFORM public.assert_admin();
 
   IF p_translations IS NULL OR jsonb_array_length(p_translations) = 0 THEN
     RAISE EXCEPTION 'At least one translation is required'
@@ -835,9 +886,7 @@ DECLARE
   v_status      public.participation_status;
   v_now         TIMESTAMPTZ;
 BEGIN
-  IF (SELECT public.get_user_role()) <> 'admin' THEN
-    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
-  END IF;
+  PERFORM public.assert_admin();
 
   SELECT product_id, status INTO v_product_id, v_status
     FROM public.participations
@@ -1019,9 +1068,7 @@ DECLARE
   v_product     JSONB;
   v_groups      JSONB;
 BEGIN
-  IF (SELECT get_user_role()) <> 'gedu' THEN
-    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
-  END IF;
+  PERFORM public.assert_role('gedu');
 
   SELECT group_id
     INTO v_my_group_id
@@ -1160,9 +1207,7 @@ CREATE FUNCTION public.get_my_assigned_products() RETURNS TABLE(product_id uuid,
 DECLARE
   v_gedu_id UUID := (SELECT auth.uid());
 BEGIN
-  IF (SELECT get_user_role()) <> 'gedu' THEN
-    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
-  END IF;
+  PERFORM public.assert_role('gedu');
 
   RETURN QUERY
   SELECT
@@ -1344,9 +1389,7 @@ DECLARE
   v_unassigned JSONB;
   v_waitlist   JSONB;
 BEGIN
-  IF (SELECT get_user_role()) <> 'admin' THEN
-    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
-  END IF;
+  PERFORM public.assert_admin();
 
   IF NOT EXISTS (SELECT 1 FROM products WHERE id = p_product_id) THEN
     RAISE EXCEPTION 'Product not found' USING ERRCODE = 'P0002';
@@ -1612,6 +1655,42 @@ $$;
 
 
 --
+-- Name: has_active_participation_in_group(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.has_active_participation_in_group(p_group_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.participations p
+     WHERE p.group_id = p_group_id
+       AND (p.customer_id = (SELECT auth.uid()) OR p.gamer_id = (SELECT auth.uid()))
+       AND p.status = 'active'
+  );
+$$;
+
+
+--
+-- Name: has_active_participation_on_product(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.has_active_participation_on_product(p_product_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.participations p
+     WHERE p.product_id = p_product_id
+       AND (p.customer_id = (SELECT auth.uid()) OR p.gamer_id = (SELECT auth.uid()))
+       AND p.status = 'active'
+  );
+$$;
+
+
+--
 -- Name: is_admin(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1854,9 +1933,7 @@ DECLARE
   v_product_id  UUID;
   v_status      public.participation_status;
 BEGIN
-  IF (SELECT public.get_user_role()) <> 'admin' THEN
-    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
-  END IF;
+  PERFORM public.assert_admin();
 
   SELECT product_id, status INTO v_product_id, v_status
     FROM public.participations
@@ -2143,10 +2220,7 @@ DECLARE
   v_translation   JSONB;
   v_locales       TEXT[];
 BEGIN
-  IF (SELECT public.get_user_role()) <> 'admin' THEN
-    RAISE EXCEPTION 'Only admins can update products'
-      USING ERRCODE = '42501';
-  END IF;
+  PERFORM public.assert_admin();
 
   IF NOT EXISTS (SELECT 1 FROM public.products WHERE id = p_id) THEN
     RAISE EXCEPTION 'Product not found'
@@ -4941,6 +5015,32 @@ GRANT ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_grou
 
 
 --
+-- Name: FUNCTION assert_admin(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.assert_admin() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.assert_admin() TO authenticated;
+GRANT ALL ON FUNCTION public.assert_admin() TO service_role;
+
+
+--
+-- Name: FUNCTION assert_role(p_role public.user_role); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.assert_role(p_role public.user_role) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.assert_role(p_role public.user_role) TO authenticated;
+GRANT ALL ON FUNCTION public.assert_role(p_role public.user_role) TO service_role;
+
+
+--
+-- Name: FUNCTION assert_self(p_user_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.assert_self(p_user_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.assert_self(p_user_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION can_read_product(p_product_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
@@ -5165,6 +5265,22 @@ GRANT ALL ON FUNCTION public.handle_new_user() TO service_role;
 GRANT ALL ON FUNCTION public.handle_orphaned_gamer() TO anon;
 GRANT ALL ON FUNCTION public.handle_orphaned_gamer() TO authenticated;
 GRANT ALL ON FUNCTION public.handle_orphaned_gamer() TO service_role;
+
+
+--
+-- Name: FUNCTION has_active_participation_in_group(p_group_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.has_active_participation_in_group(p_group_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.has_active_participation_in_group(p_group_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION has_active_participation_on_product(p_product_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.has_active_participation_on_product(p_product_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.has_active_participation_on_product(p_product_id uuid) TO service_role;
 
 
 --

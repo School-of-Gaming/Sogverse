@@ -1,9 +1,10 @@
 # Database Authorization Architecture
 
 **Status:** target architecture + migration plan. The conventions in §2–§3 are how new
-code is written today; the verification spine (§3.4) and the route sweep (§5 Phase 3)
-are not yet built. This is the single source of truth for the refactor — when someone
-says "let's do the DB authorization refactor," this is the doc to read and act on.
+code is written today; §5 Phase 1 (guard primitives + ownership predicates) has landed,
+and the verification spine (§3.4) and the route sweep (§5 Phase 3) are not yet built.
+This is the single source of truth for the refactor — when someone says "let's do the DB
+authorization refactor," this is the doc to read and act on.
 
 **Execution contract.** This doc is written so a fresh Claude Code session can execute
 the refactor from it. Before acting on any phase:
@@ -122,9 +123,9 @@ Functions granted to `authenticated` (~40; the authoritative list is the DB
 access-control test's allowlist) fall into four kinds. The taxonomy matters because
 the verification spine treats each kind differently:
 
-- **Role-gated RPCs** (a handful): plpgsql, first statement is
-  `IF get_user_role() <> '<role>' THEN RAISE … ERRCODE '42501'`. Find them by
-  grepping `schema.sql` for `42501`.
+- **Role-gated RPCs** (a handful): plpgsql, first statement is a §3.1 guard
+  assertion, which raises `ERRCODE '42501'`. Find them by grepping `schema.sql`
+  for `42501` (which also finds the assertions themselves).
 - **Self-scoping helpers** (the majority): every read/write keyed to `auth.uid()`;
   no raise block, by design. The `get_my_*` family, the PIN functions.
 - **Boolean predicates consumed by RLS policies**: `is_admin()`,
@@ -374,11 +375,28 @@ Sequenced; each phase is a PR batch. The spine comes **before** the route sweep 
 every later change is "make the edit and let the test tell you if you broke the
 boundary."
 
-### Phase 1 — guard primitives + ownership predicates
+### Phase 1 — guard primitives + ownership predicates — **landed**
 
-Add the §3.1 assertions and §3.2 predicates, and convert the existing role-gated RPC
+Added the §3.1 assertions and §3.2 predicates, and converted the existing role-gated RPC
 bodies (the small `42501` set — regrep `schema.sql` to enumerate) to call them. No
-policy rewrites in this phase, no new behavior — the matrix in Phase 2 will pin it.
+policy rewrites in this phase — the predicates exist but no policy composes from them
+until Phase 4, so they carry no `authenticated` grant yet.
+
+Two things Phase 2 inherits from it:
+
+- **The role assertion still lets a caller with *no* role through.** The comparison is
+  `<>`, so a NULL role (no `profiles` row — a `service_role` connection, or a session
+  whose profile was deleted) evaluates to NULL, the `IF` never fires, and the caller
+  passes. Phase 1 reproduced that verbatim rather than fixing it, because it is
+  load-bearing: db tests drive admin-gated RPCs through the service-role client and only
+  work because of it. Closing it means switching to `IS DISTINCT FROM` *and* giving those
+  tests a caller that actually holds the role — which is matrix work, so it belongs here
+  in Phase 2, not in a refactor that promised no behavior change. (The self assertion has
+  no legacy callers and already fails closed.)
+- **`set_gedu_verified` is still unconverted.** It is role-gated (`is_admin()`) but
+  raises a generic error rather than `42501`, so the `42501` grep does not find it — and
+  it depends on the same NULL-role pass-through. Reconciling it (canonical code + a
+  caller that actually holds the role) is the same piece of work.
 
 ### Phase 2 — the verification spine
 

@@ -1276,6 +1276,12 @@ export type Database = {
         }
         Returns: Json
       }
+      assert_admin: { Args: never; Returns: undefined }
+      assert_role: {
+        Args: { p_role: Database["public"]["Enums"]["user_role"] }
+        Returns: undefined
+      }
+      assert_self: { Args: { p_user_id: string }; Returns: undefined }
       can_read_product: { Args: { p_product_id: string }; Returns: boolean }
       cancel_participation: {
         Args: { p_participation_id: string; p_reason: string }
@@ -1432,6 +1438,14 @@ export type Database = {
       get_waitlist_position: {
         Args: { p_participation_id: string }
         Returns: number
+      }
+      has_active_participation_in_group: {
+        Args: { p_group_id: string }
+        Returns: boolean
+      }
+      has_active_participation_on_product: {
+        Args: { p_product_id: string }
+        Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }
