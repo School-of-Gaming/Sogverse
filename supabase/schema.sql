@@ -559,31 +559,33 @@ $$;
 
 CREATE FUNCTION public.can_read_product(p_product_id uuid) RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER
-    SET search_path TO 'public'
+    SET search_path TO ''
     AS $$
-  SELECT
+  SELECT COALESCE(
     -- admin sees everything (mirrors admin_full_access_* FOR ALL)
-    (SELECT get_user_role()) = 'admin'
+    (SELECT public.get_user_role()) = 'admin'::public.user_role
     -- public: published and visible
     OR EXISTS (
-      SELECT 1 FROM products pr
+      SELECT 1 FROM public.products pr
       WHERE pr.id = p_product_id
-        AND pr.status IN ('pending', 'running')
+        AND pr.status IN ('pending'::public.product_status, 'running'::public.product_status)
         AND pr.is_visible = true
     )
     -- enrolled gamer (child's own login) OR purchaser (parent), active/waitlisted
     OR EXISTS (
-      SELECT 1 FROM participations p
+      SELECT 1 FROM public.participations p
       WHERE p.product_id = p_product_id
         AND (p.gamer_id = (SELECT auth.uid()) OR p.customer_id = (SELECT auth.uid()))
-        AND p.status IN ('active', 'waitlisted')
+        AND p.status IN ('active'::public.participation_status, 'waitlisted'::public.participation_status)
     )
     -- assigned gedu
     OR EXISTS (
-      SELECT 1 FROM gedu_group_assignments a
+      SELECT 1 FROM public.gedu_group_assignments a
       WHERE a.product_id = p_product_id
         AND a.gedu_id = (SELECT auth.uid())
-    );
+    ),
+    false
+  );
 $$;
 
 
@@ -4424,59 +4426,49 @@ ALTER TABLE ONLY public.whatsapp_messages
 -- Name: customer_profiles Admins can do everything on customer_profiles; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Admins can do everything on customer_profiles" ON public.customer_profiles TO authenticated USING (public.is_admin());
+CREATE POLICY "Admins can do everything on customer_profiles" ON public.customer_profiles TO authenticated USING (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: gamer_profiles Admins can do everything on gamer_profiles; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Admins can do everything on gamer_profiles" ON public.gamer_profiles TO authenticated USING (public.is_admin());
+CREATE POLICY "Admins can do everything on gamer_profiles" ON public.gamer_profiles TO authenticated USING (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: whatsapp_contacts Admins can insert whatsapp_contacts; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Admins can insert whatsapp_contacts" ON public.whatsapp_contacts FOR INSERT TO authenticated WITH CHECK ((EXISTS ( SELECT 1
-   FROM public.profiles
-  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::public.user_role)))));
+CREATE POLICY "Admins can insert whatsapp_contacts" ON public.whatsapp_contacts FOR INSERT TO authenticated WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: whatsapp_messages Admins can insert whatsapp_messages; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Admins can insert whatsapp_messages" ON public.whatsapp_messages FOR INSERT TO authenticated WITH CHECK (((EXISTS ( SELECT 1
-   FROM public.profiles
-  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::public.user_role)))) AND (direction = 'outbound'::text)));
+CREATE POLICY "Admins can insert whatsapp_messages" ON public.whatsapp_messages FOR INSERT TO authenticated WITH CHECK ((( SELECT public.is_admin() AS is_admin) AND (direction = 'outbound'::text)));
 
 
 --
 -- Name: whatsapp_contacts Admins can read whatsapp_contacts; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Admins can read whatsapp_contacts" ON public.whatsapp_contacts FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.profiles
-  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::public.user_role)))));
+CREATE POLICY "Admins can read whatsapp_contacts" ON public.whatsapp_contacts FOR SELECT TO authenticated USING (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: whatsapp_messages Admins can read whatsapp_messages; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Admins can read whatsapp_messages" ON public.whatsapp_messages FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.profiles
-  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::public.user_role)))));
+CREATE POLICY "Admins can read whatsapp_messages" ON public.whatsapp_messages FOR SELECT TO authenticated USING (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: whatsapp_contacts Admins can update whatsapp_contacts; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Admins can update whatsapp_contacts" ON public.whatsapp_contacts FOR UPDATE TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.profiles
-  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::public.user_role)))));
+CREATE POLICY "Admins can update whatsapp_contacts" ON public.whatsapp_contacts FOR UPDATE TO authenticated USING (( SELECT public.is_admin() AS is_admin));
 
 
 --
@@ -4511,168 +4503,168 @@ CREATE POLICY "Parents can read linked gamer profiles" ON public.gamer_profiles 
 -- Name: calendar_holidays admin_full_access_calendar_holidays; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_calendar_holidays ON public.calendar_holidays TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_calendar_holidays ON public.calendar_holidays TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: family_subscriptions admin_full_access_family_subscriptions; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_family_subscriptions ON public.family_subscriptions TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_family_subscriptions ON public.family_subscriptions TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: feedback_submissions admin_full_access_feedback; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_feedback ON public.feedback_submissions TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_feedback ON public.feedback_submissions TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: gedu_group_assignments admin_full_access_gedu_assignments; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_gedu_assignments ON public.gedu_group_assignments TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_gedu_assignments ON public.gedu_group_assignments TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: gedu_profiles admin_full_access_gedu_profiles; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_gedu_profiles ON public.gedu_profiles TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY admin_full_access_gedu_profiles ON public.gedu_profiles TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: holiday_calendars admin_full_access_holiday_calendars; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_holiday_calendars ON public.holiday_calendars TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_holiday_calendars ON public.holiday_calendars TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: minecraft_accounts admin_full_access_minecraft_accounts; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_minecraft_accounts ON public.minecraft_accounts TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY admin_full_access_minecraft_accounts ON public.minecraft_accounts TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: parent_gamer admin_full_access_parent_gamer; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_parent_gamer ON public.parent_gamer TO authenticated USING ((public.get_user_role() = 'admin'::public.user_role)) WITH CHECK ((public.get_user_role() = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_parent_gamer ON public.parent_gamer TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: participations admin_full_access_participations; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_participations ON public.participations TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_participations ON public.participations TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: payments admin_full_access_payments; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_payments ON public.payments TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_payments ON public.payments TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: product_groups admin_full_access_product_groups; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_product_groups ON public.product_groups TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_product_groups ON public.product_groups TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: product_holiday_calendars admin_full_access_product_holiday_calendars; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_product_holiday_calendars ON public.product_holiday_calendars TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_product_holiday_calendars ON public.product_holiday_calendars TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: product_prices admin_full_access_product_prices; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_product_prices ON public.product_prices TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_product_prices ON public.product_prices TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: product_subscription_prices admin_full_access_product_subscription_prices; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_product_subscription_prices ON public.product_subscription_prices TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_product_subscription_prices ON public.product_subscription_prices TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: product_translations admin_full_access_product_translations; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_product_translations ON public.product_translations TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_product_translations ON public.product_translations TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: products admin_full_access_products; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_products ON public.products TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_products ON public.products TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: profiles admin_full_access_profiles; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_profiles ON public.profiles TO authenticated USING ((public.get_user_role() = 'admin'::public.user_role)) WITH CHECK ((public.get_user_role() = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_profiles ON public.profiles TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: refunds admin_full_access_refunds; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_refunds ON public.refunds TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_refunds ON public.refunds TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: schedule_slots admin_full_access_schedule_slots; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_schedule_slots ON public.schedule_slots TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_schedule_slots ON public.schedule_slots TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: site_details admin_full_access_site_details; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_site_details ON public.site_details TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_site_details ON public.site_details TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: site_staff_details admin_full_access_site_staff_details; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_site_staff_details ON public.site_staff_details TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_site_staff_details ON public.site_staff_details TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: gedu_locations admin_manage_gedu_locations; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_manage_gedu_locations ON public.gedu_locations TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_manage_gedu_locations ON public.gedu_locations TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: locations admin_manage_locations; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_manage_locations ON public.locations TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_manage_locations ON public.locations TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: spoken_languages admin_manage_spoken_languages; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_manage_spoken_languages ON public.spoken_languages TO authenticated USING ((public.get_user_role() = 'admin'::public.user_role)) WITH CHECK ((public.get_user_role() = 'admin'::public.user_role));
+CREATE POLICY admin_manage_spoken_languages ON public.spoken_languages TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
@@ -4749,18 +4741,14 @@ CREATE POLICY customers_delete_own_links ON public.parent_gamer FOR DELETE TO au
 -- Name: gedu_group_assignments customers_read_assignments_via_gamers; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY customers_read_assignments_via_gamers ON public.gedu_group_assignments FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'customer'::public.user_role) AND (product_id IN ( SELECT participations.product_id
-   FROM public.participations
-  WHERE ((participations.customer_id = auth.uid()) AND (participations.status = 'active'::public.participation_status))))));
+CREATE POLICY customers_read_assignments_via_gamers ON public.gedu_group_assignments FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'customer'::public.user_role) AND ( SELECT public.has_active_participation_on_product(gedu_group_assignments.product_id) AS has_active_participation_on_product)));
 
 
 --
 -- Name: product_groups customers_read_groups_via_gamers; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY customers_read_groups_via_gamers ON public.product_groups FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'customer'::public.user_role) AND (id IN ( SELECT participations.group_id
-   FROM public.participations
-  WHERE ((participations.customer_id = auth.uid()) AND (participations.group_id IS NOT NULL) AND (participations.status = 'active'::public.participation_status))))));
+CREATE POLICY customers_read_groups_via_gamers ON public.product_groups FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'customer'::public.user_role) AND ( SELECT public.has_active_participation_in_group(product_groups.id) AS has_active_participation_in_group)));
 
 
 --
@@ -4799,9 +4787,7 @@ CREATE POLICY gamer_select_own_participations ON public.participations FOR SELEC
 -- Name: product_groups gamers_read_own_group; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY gamers_read_own_group ON public.product_groups FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'gamer'::public.user_role) AND (id IN ( SELECT participations.group_id
-   FROM public.participations
-  WHERE ((participations.gamer_id = auth.uid()) AND (participations.group_id IS NOT NULL) AND (participations.status = 'active'::public.participation_status))))));
+CREATE POLICY gamers_read_own_group ON public.product_groups FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'gamer'::public.user_role) AND ( SELECT public.has_active_participation_in_group(product_groups.id) AS has_active_participation_in_group)));
 
 
 --
@@ -5527,6 +5513,7 @@ GRANT ALL ON FUNCTION public.handle_orphaned_gamer() TO service_role;
 
 REVOKE ALL ON FUNCTION public.has_active_participation_in_group(p_group_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.has_active_participation_in_group(p_group_id uuid) TO service_role;
+GRANT ALL ON FUNCTION public.has_active_participation_in_group(p_group_id uuid) TO authenticated;
 
 
 --
@@ -5535,6 +5522,7 @@ GRANT ALL ON FUNCTION public.has_active_participation_in_group(p_group_id uuid) 
 
 REVOKE ALL ON FUNCTION public.has_active_participation_on_product(p_product_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.has_active_participation_on_product(p_product_id uuid) TO service_role;
+GRANT ALL ON FUNCTION public.has_active_participation_on_product(p_product_id uuid) TO authenticated;
 
 
 --
