@@ -46,8 +46,8 @@ describe("Access Control", () => {
     // policy intact but silently breaks every authenticated write against
     // the table — exactly how products/games writes regressed in the past.
     // profiles is intentionally NOT in this allowlist: it uses column-level
-    // UPDATE grants on (first_name, last_name, phone, spoken_languages) rather
-    // than table-level UPDATE. Column privileges live in information_schema
+    // UPDATE grants on the safe self-editable fields rather than table-level
+    // UPDATE. Column privileges live in information_schema
     // .column_privileges — out of scope for _list_table_grants, and covered by
     // the column-grant audit in authorization-spine.test.ts.
     //
@@ -57,7 +57,18 @@ describe("Access Control", () => {
       ["parent_gamer", new Set(["DELETE"])],
       ["gamer_profiles", new Set(["UPDATE"])],
       ["whatsapp_contacts", new Set(["INSERT", "UPDATE"])],
-      ["whatsapp_messages", new Set(["INSERT", "UPDATE"])],
+      // INSERT only: the outbound-send route inserts and never updates, and the
+      // dead UPDATE grant (no policy behind it) was revoked in 00123. Delivery
+      // status is stamped by the inbound webhook on the service-role client.
+      ["whatsapp_messages", new Set(["INSERT"])],
+      // Admin-only reference data. The write policy was always there; the grant
+      // that made it reachable arrived in 00123 when the locations routes moved
+      // off the service-role client. No DELETE — there is no delete route.
+      ["locations", new Set(["INSERT", "UPDATE"])],
+      // Users link their own Minecraft account (00123). RLS derives the target
+      // row from auth.uid(), so actor and target are the same check. No DELETE:
+      // unlinking clears the columns rather than removing the row.
+      ["minecraft_accounts", new Set(["INSERT", "UPDATE"])],
       // Gedus write their own coverage rows directly from the browser
       // (setForGedu uses DELETE + INSERT). RLS enforces self-only access
       // and the role-is-gedu check on WITH CHECK.
