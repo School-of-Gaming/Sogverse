@@ -104,3 +104,29 @@ export const demoteToWaitlistRpcResult = z.discriminatedUnion("kind", [
   }),
   z.object({ kind: z.literal("noop"), status: z.string() }),
 ]);
+
+/**
+ * `admin_enroll_gamer` RPC result (Json in codegen; structure from schema.sql).
+ * The customer id is resolved inside the function from the gamer's parent link,
+ * so the route learns it from the result rather than looking it up itself.
+ */
+export const adminEnrollGamerRpcResult = z.object({
+  participation_id: z.string(),
+  customer_id: z.string(),
+});
+
+/**
+ * `admin_remove_participation` RPC result. It delegates to
+ * `cancel_participation`, so the shape is that function's: `cancelled` with the
+ * details the audit line needs, or `noop` when the row had already gone.
+ */
+export const adminRemoveParticipationRpcResult = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("cancelled"),
+    product_id: z.string(),
+    previous_status: z.string(),
+    stripe_subscription_id: z.string().nullable(),
+    reason: z.string(),
+  }),
+  z.object({ kind: z.literal("noop") }),
+]);

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { parseJsonBody } from "@/lib/api/json-body.server";
 import {
+  adminRemoveParticipationRpcResult,
   demoteToWaitlistRpcResult,
   promoteFromWaitlistRpcResult,
   waitlistTransitionBody,
@@ -12,23 +12,27 @@ import {
  * DELETE /api/admin/products/[id]/participations/[participationId]
  *
  * Admin-only un-enrollment — the inverse of the comp-enrollment POST on the
- * collection route. Hard-deletes the participation via the cancel_participation
- * RPC (reason 'admin_cancelled'), which removes the row and CASCADEs any linked
+ * collection route. Hard-deletes the participation, which CASCADEs any linked
  * family_subscriptions row.
  *
- * Gated to the same product types as the add path: blocked on consumer_club,
- * where enrollment is a recurring subscription and removal must go through
- * Stripe / the parent, not an admin hard-delete.
+ * Model C, like every other handler in this file: `participations` is
+ * grant-locked, so the write goes through `admin_remove_participation`, an
+ * admin-guarded SECURITY DEFINER RPC. Three preconditions live inside it rather
+ * than here, and each is safer there than it was in TypeScript:
  *
- * No refund is issued. cancel_participation only touches our DB — it never
- * calls Stripe. For the in-scope product types (camps/events one-shot, muni
- * invoiced off-platform) there is no live Stripe subscription anyway. We assert
- * that invariant before deleting: if the participation somehow has a live
- * stripe_subscription_id we refuse and log loudly, rather than CASCADE-orphan a
- * subscription that would keep billing the customer (see the guard below).
+ *  - the participation must be on THIS product (an id from another product
+ *    could otherwise be cancelled through this URL);
+ *  - consumer clubs are refused, where removal must go through Stripe and the
+ *    parent rather than an admin hard-delete;
+ *  - a participation with a live Stripe subscription is refused, because the
+ *    CASCADE would orphan a subscription that keeps billing the customer with
+ *    no DB record and no refund. In the RPC that check shares a transaction and
+ *    a product lock with the delete, so unlike the route-level version it has no
+ *    window between checking and deleting. It is unreachable under current
+ *    invariants — only consumer_club ever has a live sub — and stays as the
+ *    thing that fails loud if that ever changes.
  *
- * Uses the admin (service-role) client: cancel_participation is granted to
- * service_role only, and participations is grant-locked against authenticated.
+ * No refund is issued: nothing here calls Stripe.
  */
 export async function DELETE(
   _request: Request,
@@ -38,100 +42,72 @@ export async function DELETE(
     forbiddenMessage: "Only admins can remove gamers from a product",
   });
   if (result instanceof NextResponse) return result;
-  const { user } = result;
+  const { supabase, user } = result;
 
   const { id: productId, participationId } = await params;
 
-  const admin = createAdminClient();
+  const { data, error } = await supabase.rpc("admin_remove_participation", {
+    p_product_id: productId,
+    p_participation_id: participationId,
+  });
 
-  // IDOR guard: the participation must belong to THIS product, or a
-  // participationId from another product could be cancelled via this URL.
-  const { data: participation, error: fetchError } = await admin
-    .from("participations")
-    .select("id, product_id")
-    .eq("id", participationId)
-    .maybeSingle();
+  if (error) {
+    if (error.code === "42501") {
+      return NextResponse.json(
+        { error: "Only admins can remove gamers from a product" },
+        { status: 403 },
+      );
+    }
+    if (error.code === "P0002") {
+      return NextResponse.json(
+        { error: "Participation not found on this product" },
+        { status: 404 },
+      );
+    }
+    // 55000 (object_not_in_prerequisite_state) is the live-subscription
+    // refusal. It means an invariant we believe holds has stopped holding, so
+    // it is logged at error level with the identifiers needed to chase it.
+    if (error.code === "55000") {
+      console.error(
+        JSON.stringify({
+          event: "admin_remove_gamer_blocked_live_subscription",
+          admin_id: user.id,
+          product_id: productId,
+          participation_id: participationId,
+          detail: error.message,
+          at: new Date().toISOString(),
+        }),
+      );
+      return NextResponse.json(
+        {
+          error:
+            "This participation has a live Stripe subscription and can't be removed here. Cancel the subscription first.",
+        },
+        { status: 500 },
+      );
+    }
+    if (error.code === "23514") {
+      return NextResponse.json(
+        {
+          error:
+            "Admin remove-gamer is not supported for consumer clubs (recurring billing). Cancel the subscription instead.",
+        },
+        { status: 400 },
+      );
+    }
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
 
-  if (fetchError) {
-    return NextResponse.json({ error: fetchError.message }, { status: 400 });
-  }
-  if (!participation || participation.product_id !== productId) {
-    return NextResponse.json(
-      { error: "Participation not found on this product" },
-      { status: 404 },
-    );
-  }
-
-  // Block consumer_club here as well as in the UI — defense in depth, symmetric
-  // with the add-gamer gate.
-  const { data: product, error: productError } = await admin
-    .from("products")
-    .select("product_type")
-    .eq("id", productId)
-    .maybeSingle();
-
-  if (productError) {
-    return NextResponse.json({ error: productError.message }, { status: 400 });
-  }
-  if (!product) {
-    return NextResponse.json({ error: "Product not found" }, { status: 404 });
-  }
-  if (product.product_type === "consumer_club") {
-    return NextResponse.json(
-      {
-        error:
-          "Admin remove-gamer is not supported for consumer clubs (recurring billing). Cancel the subscription instead.",
-      },
-      { status: 400 },
-    );
-  }
-
-  // Money-path safety: refuse to hard-delete a participation that still has a
-  // live Stripe subscription. cancel_participation CASCADEs the
-  // family_subscriptions row away, so once it runs the orphan already exists —
-  // this guard MUST sit before the RPC, not after its return value. Under
-  // current invariants it's unreachable (only consumer_club, blocked above,
-  // ever has a live sub, and product_type is immutable), but if that ever
-  // changes, deleting here would bill the customer forever with no DB record
-  // and no refund. Fail loud instead.
-  // family_subscriptions.participation_id is UNIQUE (≤1 row, so maybeSingle is
-  // safe) and stripe_subscription_id is NOT NULL — so the mere existence of a
-  // row here means a live Stripe sub is linked.
-  const { data: liveSub, error: subError } = await admin
-    .from("family_subscriptions")
-    .select("stripe_subscription_id")
-    .eq("participation_id", participationId)
-    .maybeSingle();
-
-  if (subError) {
-    return NextResponse.json({ error: subError.message }, { status: 400 });
-  }
-  if (liveSub) {
+  const parsed = adminRemoveParticipationRpcResult.safeParse(data);
+  if (!parsed.success) {
     console.error(
-      JSON.stringify({
-        event: "admin_remove_gamer_blocked_live_subscription",
-        admin_id: user.id,
-        product_id: productId,
-        participation_id: participationId,
-        stripe_subscription_id: liveSub.stripe_subscription_id,
-        at: new Date().toISOString(),
-      }),
+      "admin_remove_participation returned an unexpected shape:",
+      parsed.error.message,
     );
     return NextResponse.json(
-      {
-        error:
-          "This participation has a live Stripe subscription and can't be removed here. Cancel the subscription first.",
-      },
+      { error: "Failed to remove gamer" },
       { status: 500 },
     );
-  }
-
-  const { data: rpcResult, error: rpcError } = await admin.rpc(
-    "cancel_participation",
-    { p_participation_id: participationId, p_reason: "admin_cancelled" },
-  );
-  if (rpcError) {
-    return NextResponse.json({ error: rpcError.message }, { status: 400 });
   }
 
   // Audit trail — mirrors admin_add_gamer so we can answer "which admin
@@ -143,7 +119,7 @@ export async function DELETE(
       admin_id: user.id,
       product_id: productId,
       participation_id: participationId,
-      result: rpcResult,
+      result: parsed.data,
       at: new Date().toISOString(),
     }),
   );
@@ -161,8 +137,8 @@ export async function DELETE(
  *  - `demote` — an active gamer dragged onto the waitlist. Sends them to the
  *    back via demote_to_waitlist (status→waitlisted, group cleared).
  *
- * Unlike the DELETE handler above, this uses the USER-context client, not the
- * admin client: both RPCs re-check get_user_role() = 'admin' internally (like
+ * Same shape as the DELETE handler above: the user-context client against an
+ * admin-guarded RPC. Both RPCs re-check the caller's role internally (like
  * apply_group_changes, their drag-UI sibling), so they must run with the
  * caller's JWT — a service-role call has no auth.uid() and would be Forbidden.
  *

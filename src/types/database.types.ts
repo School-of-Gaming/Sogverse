@@ -1277,6 +1277,14 @@ export type Database = {
           table_name: string
         }[]
       }
+      admin_enroll_gamer: {
+        Args: { p_gamer_id: string; p_product_id: string }
+        Returns: Json
+      }
+      admin_remove_participation: {
+        Args: { p_participation_id: string; p_product_id: string }
+        Returns: Json
+      }
       apply_group_changes: {
         Args: {
           p_added_groups?: Json

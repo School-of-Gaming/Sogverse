@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     console.error(
       "join_product_waitlist returned an unexpected shape:",
-      parsed.error,
+      parsed.error.message,
     );
     return NextResponse.json(
       { error: "Failed to join waitlist" },
