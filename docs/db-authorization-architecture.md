@@ -1,11 +1,10 @@
 # Database Authorization Architecture
 
 **Status:** target architecture + migration plan. The conventions in §2–§3 are how new
-code is written today; §5 Phase 1 (guard primitives + ownership predicates) and Phase 2
-(the §3.4 verification spine) have landed, and the route sweep (§5 Phase 3) and RLS
-completeness (Phase 4) are not yet built. This is the single source of truth for the
-refactor — when someone says "let's do the DB authorization refactor," this is the doc to
-read and act on.
+code is written today; §5 Phase 1 (guard primitives + ownership predicates), Phase 2 (the
+§3.4 verification spine) and Phase 3 (the route sweep) have landed; RLS completeness
+(Phase 4) is not yet built. This is the single source of truth for the refactor — when
+someone says "let's do the DB authorization refactor," this is the doc to read and act on.
 
 **Execution contract.** This doc is written so a fresh Claude Code session can execute
 the refactor from it. Before acting on any phase:
@@ -132,10 +131,14 @@ the verification spine treats each kind differently:
 - **Boolean predicates consumed by RLS policies**: `is_admin()`,
   `can_read_product()`, `is_parent_of()` — `STABLE SECURITY DEFINER`, return a
   boolean, never raise. `can_read_product` is the only function granted to `anon`.
-- **The participation state machine** (`join_waitlist`, `create_participation`,
-  `cancel_participation`, `confirm_reservation`, …): granted to **service_role
-  only** — not callable by `authenticated` at all. Routes invoke these via the
-  admin client today; that indirection is what Phase 3 removes.
+- **The participation state machine** (the waitlist-join, participation-create,
+  participation-cancel and reservation-confirm functions): granted to **service_role
+  only** — not callable by `authenticated` at all. Phase 3 put guarded,
+  `authenticated`-facing entry points in front of the ones a signed-in user may
+  legitimately drive, and left the engines themselves service_role-only. The ones
+  that remain reachable *only* by service_role are the ones whose callers genuinely
+  have no session: the Stripe webhook's cancel and confirm paths, and checkout's
+  reservation handling.
 
 Several of these are `LANGUAGE sql`, where "first statement" has no meaning — all
 current `sql`-language functions are predicates or self-scoping helpers, which is
@@ -427,10 +430,10 @@ What Phase 3 inherits:
   and every new write grant needs an IDOR case — the completeness checks fail the build
   otherwise. That is the intended cost, and it is what the per-route checklist below
   already anticipates.
-- **A dead grant worth folding into a later phase**: `authenticated` holds `UPDATE` on
-  `whatsapp_messages` with no UPDATE policy behind it, so it authorizes nothing today.
-  The IDOR loop covers it, but the grant should be revoked when that table is next
-  touched.
+- **A dead grant worth folding into a later phase**: `authenticated` held `UPDATE` on
+  `whatsapp_messages` with no UPDATE policy behind it, so it authorized nothing. Phase 3
+  revoked it while converting that route, and retired its IDOR case with it — the grant
+  layer now refuses those writes outright, which is the stronger guarantee.
 - **`can_read_product` answers `NULL`, not `false`, for a caller with no profiles row.**
   Its first disjunct compares `get_user_role()` to `'admin'`, which is NULL for `anon`,
   and `NULL OR false` is NULL. Harmless where it is used — a policy's `USING` clause
@@ -441,7 +444,7 @@ What Phase 3 inherits:
   phase that puts them in a policy or a `SECURITY INVOKER` body grants them then — and
   check 5 will require the classification at that point.
 
-### Phase 3 — the route sweep
+### Phase 3 — the route sweep — **landed**
 
 **Selection criteria** (use these, not a frozen list — regenerate with
 `git grep -l createAdminClient src/` and triage): a route is a conversion candidate if
@@ -453,33 +456,14 @@ context.
 The conversions come in three distinct shapes — triage each candidate into one:
 
 1. **Grant-plus-guard** (cheapest; the RPC already exists but is service_role-only,
-   and the route calls it via the admin client): add the guard primitive to the RPC
-   body, grant it to `authenticated`, switch the route to the user-bound client,
-   annotate it in the matrix. The waitlist-join, feedback-submission, and
-   admin-participation-cancel routes are this shape today.
+   and the route calls it via the admin client): guard the RPC, expose it to
+   `authenticated`, switch the route to the user-bound client, annotate it in the
+   matrix.
 2. **New RPC** (the route does direct admin-client writes to a grant-locked table):
-   write the Model C/D RPC per §3.5. The admin "comp-enroll a gamer onto a product"
-   route is the natural worked example.
+   write the Model C/D RPC per §3.5.
 3. **Client swap to Model B** (the route touches only normal tables): switch to the
    user-bound client and verify RLS grants the role the operation, both actor and
-   target halves. Candidates at time of writing: the admin outbound-WhatsApp write,
-   the PIN-forgot read, the external-account (Minecraft) upsert, and the voice-token
-   route's membership reads (which may instead justify a read predicate — investigate
-   before converting). Two carry extra work: the locale-update route uses the admin
-   client only to dodge a server-client *typing* issue — root-cause that rather than
-   carrying the workaround into the conversion; and the locations CRUD needs grant
-   changes too (`authenticated` currently lacks UPDATE on locations), not just a
-   client swap.
-
-**Verified non-candidates** (criterion (c), confirmed in triage — re-verify, don't
-assume): the auth-admin routes (gedu creation, password reset, PIN reset token flow,
-account switch, gamer metadata sync, gamer creation), the Stripe and WhatsApp
-webhooks, storage-upload portions of product create/update (their data writes already
-go through user-client RPCs), the Stripe-customer helper used by checkout and the
-billing portal (checkout's data reads already use the user client — its earlier
-"cross-user seat reads" concern turned out not to exist), and the family-list route
-(a gamer legitimately reads siblings beyond their own RLS view; the route scopes the
-admin client to the verified caller's family).
+   target halves.
 
 **Per-route checklist** before converting:
 1. No storage writes, no Auth Admin API calls remain on the converted path.
@@ -492,13 +476,122 @@ admin client to the verified caller's family).
 Batch by shape: the grant-plus-guard set first (smallest diff, settles the pattern),
 then Model B swaps, then new RPCs.
 
+#### The triage, machine-readably
+
+Every module that used the service-role client at triage time, with the write model it
+landed on. The route-layer refactor instance in `docs/refactor-playbook.md` consumes
+this as its own step-2 classification, so keep the shape stable and re-derive rather
+than edit when the surface changes. `shape` is the conversion shape above (`1`
+grant-plus-guard, `2` new RPC, `3` Model B swap) or `-` for a module that stayed Model
+A. Twelve of the twenty-nine modules dropped the service-role client entirely; three
+kept it for a narrowed purpose.
+
+```csv
+module,model,shape,justification
+src/app/api/participations/waitlist/route.ts,C,1,customer waitlist-join now runs on the user client against a customer-guarded RPC that reads the actor from the session
+src/app/api/feedback/route.ts,C+A,1,the submission write moved to a self-scoping RPC on the user client; the admin client survives only for the notification fan-out (every admin's email; a gamer's parent's) which is not in the submitter's RLS view and must not be returnable from an RPC
+src/app/api/admin/whatsapp/send/route.ts,B,3,contacts upsert + message insert run under the pre-existing admin-only policies; the message policy also pins direction to outbound
+src/app/api/auth/pin/forgot/route.ts,B,3,reads the caller's own PIN hash, already inside their RLS view
+src/app/api/minecraft/account/route.ts,B,3,self-write policies added; the row key comes from the session and never from the request
+src/app/api/user/locale/route.ts,B,3,column-level UPDATE grant on the locale column added; the pre-existing self-update policy scopes it
+src/app/api/admin/locations/create/route.ts,B,3,INSERT grant added so the pre-existing admin-only write policy is reachable
+src/app/api/admin/locations/[id]/route.ts,B,3,as above for UPDATE
+src/app/api/admin/products/[id]/participations/route.ts,C,2,participations is grant-locked; admin comp-enroll became an admin-guarded RPC carrying the product-type gate and parent resolution
+src/app/api/admin/products/[id]/participations/[participationId]/route.ts,C,2,same table; admin un-enroll became an admin-guarded RPC carrying the product-membership pair check and the live-subscription refusal
+src/app/api/admin/products/create/route.ts,A,-,admin client is used ONLY for a privileged-bucket storage upload; the data writes already run on the user client
+src/app/api/admin/products/[id]/update/route.ts,A,-,as above, plus storage deletes of superseded images
+src/app/api/auth/forgot-password/route.ts,A,-,Auth Admin API (recovery link generation)
+src/app/api/auth/pin/reset/route.ts,A,-,resolves its user from a signed token rather than a session, so there is no caller to act as
+src/app/api/auth/switch-account/route.ts,A,-,Auth Admin API (user lookup + magic-link generation)
+src/app/api/gamers/create/route.ts,A,-,Auth Admin API (user creation, with delete-on-failure compensation)
+src/app/api/gamers/[id]/route.ts,A,-,Auth Admin API (metadata + password updates) interleaved with writes to a LINKED user's rows; the parent-writes-gamer policy is Phase 4 work
+src/app/api/gedu/register/route.ts,A,-,Auth Admin API (self-registration creates the auth user before any session exists)
+src/app/api/webhooks/stripe/products/route.ts,A,-,webhook; no session by construction
+src/app/api/webhooks/whatsapp/route.ts,A,-,webhook; no session by construction
+src/app/api/minecraft/join-check/route.ts,A,-,server-to-server, authenticated by a shared API key rather than a user session
+src/app/api/checkout/products/create/route.ts,A,-,caches a Stripe customer id onto the grant-locked billing table; an authenticated write path there would let a user point their billing row at someone else's Stripe customer
+src/app/api/parent/billing-portal/route.ts,A,-,same Stripe-customer helper as checkout
+src/app/api/family/list/route.ts,A,-,a gamer legitimately reads siblings beyond their own RLS view; the resolver is scoped to the verified caller's family
+src/app/select-profile/page.tsx,A,-,same family resolver as the family-list route
+src/services/family/family.server.ts,A,-,the shared family resolver itself
+src/lib/pin-session-server.ts,A,-,resolves a PIN-reset token to a user id with no session in hand; shared by the reset page and the reset route
+src/app/api/voice/token/route.ts,A,-,see the judgment call below — the self-healing occupancy prune is a cross-user system write no participant is authorized to make
+src/lib/supabase/admin.ts,-,-,the client factory itself
+```
+
+#### Judgment calls
+
+- **The deployment window forced additive conversions rather than in-place guards.**
+  A migration reaches the shared staging database the moment it is pushed, but the code
+  running against that database only changes when the PR stack merges. Guarding an RPC
+  that the currently-deployed routes call through the service-role client would refuse
+  those calls — the caller has no `auth.uid()`, hence no role — and break staging for
+  the whole window. The rejected alternative was an `auth.uid() IS NULL` escape hatch
+  inside the guard: that reopens exactly the roleless-caller hole Phase 2 closed, in the
+  one place every guarded function shares, and "transitional" allowances in shared
+  primitives have a way of becoming permanent. So the grant-plus-guard shape landed as
+  *new* guarded entry points beside the untouched service_role-only engines. Nothing was
+  weakened for even one request, and no allowance needs remembering to remove — only two
+  now-redundant signatures need retiring (see the inherited items).
+- **The admin cancel route was not the shape the plan expected.** It was sketched as
+  grant-plus-guard; re-verification found the underlying cancel RPC is also called by
+  the Stripe webhook, which has no session by definition and must keep calling it as
+  service_role *permanently*. A role guard on that body would break the webhook for
+  good, not just through the deployment window. It stays a service_role-only engine and
+  the admin-facing entry point wraps it — which is also what lets the wrapper hold
+  admin-specific preconditions the webhook must not have.
+- **Moving route logic into an RPC closed a real race, not just a layer.** The
+  admin un-enroll path refuses to delete a participation that still has a live Stripe
+  subscription, because the CASCADE would orphan a subscription that keeps billing with
+  no DB row behind it. In the route that check and the delete were separate statements;
+  in the RPC they share a transaction and the product lock.
+- **The locale route's admin client was not a typing problem.** It carried a comment
+  blaming a `@supabase/ssr` version whose bug made `.update()` resolve as `never`. That
+  dependency has since moved two majors and the workaround was obsolete; the real reason
+  the write could not run as the user was a missing column grant. Root-caused and
+  removed rather than carried forward.
+- **The voice-token route stays Model A, deliberately.** Its membership reads would
+  convert cleanly, but the same handler performs a self-healing prune of stale
+  private-zone occupancy from *previous* session windows — a cross-user maintenance
+  DELETE that no individual participant is authorized to make (the delete policy is
+  moderator-only, and most joiners are not moderators). Converting only the reads would
+  leave the handler holding the service-role client anyway, so the trust boundary would
+  not move; it would only add a way for an RLS subtlety to lock a gamer out of a live
+  voice session. A member-scoped prune RPC is the obvious way to finish this and is
+  recorded as a Phase 4 candidate rather than forced here.
+- **The feedback route is a partial conversion and is recorded as such.** Its write is
+  Model C; its notification fan-out stays Model A. Folding the recipient lookup into the
+  RPC would make every admin's email address readable by any authenticated caller who
+  invoked that RPC directly, which is worse than the thing it would fix.
+
+What Phase 4 inherits:
+
+- **Two now-redundant function signatures.** The engines behind the waitlist-join and
+  feedback-submission entry points still carry their pre-Phase-3 signatures, which take
+  the caller's identity as a parameter. They are unreferenced by application code once
+  this stack deploys; drop them then, and drop their `service_role` grants with them.
+  Nothing depends on the timing beyond "after the deploy".
+- **A member-scoped voice-occupancy prune** would let the voice-token route convert; see
+  the judgment call above for why it was not forced into this phase.
+- **The parent-writes-linked-gamer policy** is the last thing keeping the gamer-update
+  route's data writes on the admin client (its Auth Admin calls keep it Model A
+  regardless). Phase 4 already plans this policy; landing it shrinks that route's
+  service-role surface to the auth work alone.
+- **`can_read_product` answers `NULL`, not `false`,** for a caller with no profiles row
+  — carried forward from Phase 2, still worth a total-boolean fix when that predicate is
+  next touched.
+- **The Phase 1 grant asymmetry still stands** for the self-assertion primitive and the
+  two §3.2 participation predicates: nothing composes from them yet, so they remain
+  `service_role`-only. Phase 4 is the phase that puts them in a policy.
+
 ### Phase 4 — RLS completeness
 
 Refactor existing write policies to compose from the §3.2 predicates so the write-IDOR
 loop passes everywhere; migrate inline `(SELECT get_user_role()) = 'admin'` policy
 comparisons to `is_admin()` opportunistically as policies are touched. Ship pending
 features that add write policies (e.g. a parent updating their linked gamer's profile
-fields) on the same predicates.
+fields) on the same predicates. Start from the inherited-items list at the end of
+Phase 3 — it is the backlog this phase clears.
 
 ---
 
