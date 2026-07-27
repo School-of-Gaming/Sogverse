@@ -72,6 +72,13 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   demote_to_waitlist: { permittedRoles: ["admin"] },
   set_gedu_verified: { permittedRoles: ["admin"] },
 
+  // --- customer-gated ------------------------------------------------------
+  // Phase 3's grant-plus-guard conversion. Past the role guard, a customer
+  // reaches the engine with a NULL product id and is refused with
+  // `no_data_found` — an error, but not the forbidden one, which is exactly what
+  // the positive half of the matrix asserts.
+  join_product_waitlist: { permittedRoles: ["customer"] },
+
   // --- gedu-gated ----------------------------------------------------------
   get_my_assigned_products: { permittedRoles: ["gedu"] },
   get_gedu_assigned_product: {
@@ -143,6 +150,10 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   get_my_participation_subscription_states: {
     scopeTest: "tests/db/get-my-participation-subscription-states.test.ts",
     why: "billing-state signals for participations the caller is party to",
+  },
+  submit_my_feedback: {
+    scopeTest: "tests/db/feedback-submission.test.ts",
+    why: "writes a feedback row for auth.uid(); no parameter names a user, and every role may send feedback",
   },
   get_waitlist_position: {
     scopeTest: "tests/db/waitlist-admin.test.ts",

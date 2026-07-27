@@ -1467,6 +1467,10 @@ export type Database = {
         Args: { p_group_id: string }
         Returns: boolean
       }
+      join_product_waitlist: {
+        Args: { p_gamer_id: string; p_product_id: string }
+        Returns: Json
+      }
       join_waitlist: {
         Args: {
           p_customer_id: string
@@ -1522,6 +1526,7 @@ export type Database = {
         Args: { p_message: string; p_user_id: string }
         Returns: boolean
       }
+      submit_my_feedback: { Args: { p_message: string }; Returns: boolean }
       update_product: {
         Args: {
           p_assistant_gedu_fee_cents?: number
