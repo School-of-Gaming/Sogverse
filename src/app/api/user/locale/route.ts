@@ -1,6 +1,11 @@
-import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { isSupportedLocale } from "@/lib/constants/locales";
+import { z } from "zod";
+import { defineRoute } from "@/lib/api/define-route";
+import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
+
+/** Request body of PATCH /api/user/locale. */
+const setLocaleBody = z.object({
+  locale: z.enum(SUPPORTED_LOCALES),
+});
 
 /**
  * PATCH /api/user/locale — set the caller's own UI locale.
@@ -10,53 +15,31 @@ import { isSupportedLocale } from "@/lib/constants/locales";
  * database refuses a write aimed at anyone else's row even though this handler
  * never aims one.
  *
- * (The route previously used the service-role client to work around a typing
- * problem in @supabase/ssr 0.5.2, where `.update()` resolved as `never`. That
- * dependency is on 0.9 now and the workaround was obsolete — the grant, not the
- * types, was the real reason the write couldn't run as the user.)
+ * The any-authenticated posture is the point of this route: every role sets
+ * their own interface language, and the write is scoped to the caller's own row
+ * by the grant plus the self-update policy, so the role is genuinely irrelevant.
+ * The caller's id comes from the verified session, never from the body.
  */
-export async function PATCH(request: Request) {
-  try {
-    const supabase = await createClient();
+export const PATCH = defineRoute({
+  posture: "any-authenticated",
+  reason:
+    "every role sets their own interface language, and the write is scoped to the caller's own row by a column grant plus a self-update policy, so the role is genuinely irrelevant here",
+  body: setLocaleBody,
+  response: setLocaleBody,
 
-    // `getClaims()` verifies the access token locally against the project JWKS —
-    // no GoTrue round-trip. We only need the subject.
-    const { data, error: claimsError } = await supabase.auth.getClaims();
-    const userId = data?.claims.sub;
+  // The route used to answer 500 for every database failure except the policy
+  // refusal. On the shared table the refusal is still a 403 and anything
+  // unrecognized is still a logged 500, so the observable mapping is unchanged
+  // — it is now the shared one rather than a local re-implementation.
 
-    if (claimsError || !userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { locale } = await request.json();
-
-    if (!isSupportedLocale(locale)) {
-      return NextResponse.json(
-        { error: "Invalid locale" },
-        { status: 400 },
-      );
-    }
-
+  handler: async ({ supabase, user, body }) => {
     const { error } = await supabase
       .from("profiles")
-      .update({ locale })
-      .eq("id", userId);
+      .update({ locale: body.locale })
+      .eq("id", user.id);
 
-    if (error) {
-      console.error("Locale update error:", error);
-      const status = error.code === "42501" ? 403 : 500;
-      return NextResponse.json(
-        { error: "Failed to update locale" },
-        { status },
-      );
-    }
+    if (error) throw error;
 
-    return NextResponse.json({ locale });
-  } catch (err) {
-    console.error("Locale update error:", err);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
-  }
-}
+    return { locale: body.locale };
+  },
+});

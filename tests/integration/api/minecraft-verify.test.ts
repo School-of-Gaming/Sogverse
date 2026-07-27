@@ -47,7 +47,7 @@ describe("GET /api/minecraft/verify", () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toContain("Invalid username");
+    expect(data.error).toContain("username");
   });
 
   it("should return 400 for invalid username format", async () => {

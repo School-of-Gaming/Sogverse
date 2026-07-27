@@ -77,6 +77,8 @@ describe("PATCH /api/user/locale", () => {
 
   // -- Validation --
 
+  // The hand-rolled `isSupportedLocale` check is now a body schema, so the 400
+  // names the offending field the way every other schema-validated route does.
   it("should return 400 for unsupported locale", async () => {
     mockAuthenticated();
 
@@ -84,7 +86,8 @@ describe("PATCH /api/user/locale", () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe("Invalid locale");
+    expect(data.error).toContain("locale");
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 
   it("should return 400 for missing locale", async () => {
@@ -94,7 +97,8 @@ describe("PATCH /api/user/locale", () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe("Invalid locale");
+    expect(data.error).toContain("locale");
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 
   // -- Happy path --
@@ -139,7 +143,9 @@ describe("PATCH /api/user/locale", () => {
     const data = await response.json();
 
     expect(response.status).toBe(500);
-    expect(data.error).toBe("Failed to update locale");
+    // The driver's message goes to the log, not to the client — this route
+    // never opted into disclosure.
+    expect(data.error).toBe("Internal server error");
   });
 
   it("should return 403 when the database refuses the write", async () => {

@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
+import type { PurchaseShape } from "@/types";
 
 /**
  * Response of POST /api/checkout/products/create — the signup outcomes: paid
@@ -20,6 +22,28 @@ export const createParticipationResponse = z.discriminatedUnion("status", [
 export type CreateParticipationResponse = z.infer<
   typeof createParticipationResponse
 >;
+
+/**
+ * Request body of POST /api/checkout/products/create. The purchase shape and
+ * currency are enums rather than free strings so the route never has to ask
+ * "is this one of the four we support?" after the fact — and the coherence
+ * rules the shape must satisfy against the product's billing mode stay in the
+ * route, because they need the product row to decide.
+ */
+export const createCheckoutBody = z.object({
+  productId: z.string().min(1, "productId is required"),
+  gamerId: z.string().min(1, "gamerId is required"),
+  // Spelled out rather than derived so the compiler checks it against the
+  // shared union below — adding a shape there fails the build until it is
+  // decided here too.
+  purchaseShape: z.enum([
+    "subscription_monthly",
+    "single_payment",
+    "free",
+    "external",
+  ] as const satisfies readonly PurchaseShape[]),
+  currency: z.enum(SUPPORTED_CURRENCIES),
+});
 
 /** Request body of POST /api/participations/waitlist. */
 export const joinWaitlistBody = z.object({

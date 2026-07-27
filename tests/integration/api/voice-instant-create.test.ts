@@ -4,6 +4,14 @@ import { POST } from "@/app/api/voice/instant/create/route";
 import { DailyApiError } from "@/lib/daily";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 
+/** The route takes no body; the handler still receives the request Next.js
+ * hands it, so the tests pass one. */
+function createRequest(): Request {
+  return new Request("http://localhost:3000/api/voice/instant/create", {
+    method: "POST",
+  });
+}
+
 const mockRequireRole = vi.fn();
 vi.mock("@/lib/auth", () => ({
   requireRole: (...args: unknown[]) => mockRequireRole(...args),
@@ -36,7 +44,7 @@ describe("POST /api/voice/instant/create", () => {
     mockRequireRole.mockResolvedValue(
       NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
     );
-    const response = await POST();
+    const response = await POST(createRequest());
     expect(response.status).toBe(401);
   });
 
@@ -44,13 +52,13 @@ describe("POST /api/voice/instant/create", () => {
     mockRequireRole.mockResolvedValue(
       NextResponse.json({ error: "Forbidden" }, { status: 403 }),
     );
-    const response = await POST();
+    const response = await POST(createRequest());
     expect(response.status).toBe(403);
   });
 
   it("returns a 4-character code on success", async () => {
     authenticated("admin");
-    const response = await POST();
+    const response = await POST(createRequest());
     expect(response.status).toBe(200);
     const data = await response.json();
     expect(data.code).toMatch(/^[A-HJ-NP-Z2-9]{4}$/);
@@ -59,7 +67,7 @@ describe("POST /api/voice/instant/create", () => {
   it("creates a Daily room with an 8-hour exp", async () => {
     authenticated("admin");
     const before = Math.round(Date.now() / 1000);
-    await POST();
+    await POST(createRequest());
     const after = Math.round(Date.now() / 1000);
 
     expect(mockCreateDailyRoom).toHaveBeenCalledTimes(1);
@@ -83,7 +91,7 @@ describe("POST /api/voice/instant/create", () => {
       .mockRejectedValueOnce(new DailyApiError(400, "a room named X already exists"))
       .mockResolvedValueOnce({ name: "ok" });
 
-    const response = await POST();
+    const response = await POST(createRequest());
     expect(response.status).toBe(200);
     expect(mockCreateDailyRoom).toHaveBeenCalledTimes(2);
   });
@@ -94,7 +102,7 @@ describe("POST /api/voice/instant/create", () => {
       .mockRejectedValueOnce(new DailyApiError(409, "Conflict"))
       .mockResolvedValueOnce({ name: "ok" });
 
-    const response = await POST();
+    const response = await POST(createRequest());
     expect(response.status).toBe(200);
     expect(mockCreateDailyRoom).toHaveBeenCalledTimes(2);
   });
@@ -105,7 +113,7 @@ describe("POST /api/voice/instant/create", () => {
       new DailyApiError(400, "a room named X already exists"),
     );
 
-    const response = await POST();
+    const response = await POST(createRequest());
     expect(response.status).toBe(503);
     expect(mockCreateDailyRoom).toHaveBeenCalledTimes(
       VOICE_CONFIG.INSTANT_ROOM_CREATE_MAX_RETRIES,
@@ -118,7 +126,7 @@ describe("POST /api/voice/instant/create", () => {
       new DailyApiError(500, "Daily down"),
     );
 
-    const response = await POST();
+    const response = await POST(createRequest());
     expect(response.status).toBe(500);
     expect(mockCreateDailyRoom).toHaveBeenCalledTimes(1);
   });
@@ -131,7 +139,7 @@ describe("POST /api/voice/instant/create", () => {
       new DailyApiError(400, "invalid token format"),
     );
 
-    const response = await POST();
+    const response = await POST(createRequest());
     expect(response.status).toBe(500);
     expect(mockCreateDailyRoom).toHaveBeenCalledTimes(1);
   });
@@ -141,7 +149,7 @@ describe("POST /api/voice/instant/create", () => {
     // we wired the right role list, not requireRole's internals.
     expect(mockRequireRole).not.toHaveBeenCalled();
     authenticated("admin");
-    await POST();
+    await POST(createRequest());
     expect(mockRequireRole).toHaveBeenLastCalledWith(
       ["admin", "gedu"],
       expect.any(Object),
@@ -153,7 +161,7 @@ describe("POST /api/voice/instant/create", () => {
     // tests/unit/lib/auth.test.ts); here we pin that the route opts into that
     // gate via `requireVerifiedGedu`, so the boundary can't be lost in a refactor.
     authenticated("admin");
-    await POST();
+    await POST(createRequest());
     expect(mockRequireRole).toHaveBeenLastCalledWith(
       ["admin", "gedu"],
       expect.objectContaining({ requireVerifiedGedu: true }),
@@ -167,7 +175,7 @@ describe("POST /api/voice/instant/create", () => {
         { status: 403 },
       ),
     );
-    const response = await POST();
+    const response = await POST(createRequest());
     expect(response.status).toBe(403);
     expect((await response.json()).code).toBe("GEDU_UNVERIFIED");
     expect(mockCreateDailyRoom).not.toHaveBeenCalled();

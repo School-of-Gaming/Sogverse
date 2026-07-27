@@ -1,54 +1,57 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
+import { z } from "zod";
+import { defineRoute } from "@/lib/api/define-route";
+import { ApiError } from "@/lib/api/api-error";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { buildFeedbackEmail } from "@/lib/email-templates/feedback";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { SENDER_EMAIL } from "@/lib/constants";
-import { detectLocaleFromHeader, isSupportedLocale } from "@/lib/constants/locales";
+import {
+  detectLocaleFromHeader,
+  isSupportedLocale,
+} from "@/lib/constants/locales";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
-import { z } from "zod";
 
 const feedbackSchema = z.object({
-  message: z.string().min(10, "Message must be at least 10 characters").max(2000, "Message must be at most 2000 characters"),
+  message: z
+    .string()
+    .min(10, "Message must be at least 10 characters")
+    .max(2000, "Message must be at most 2000 characters"),
 });
 
-export async function POST(request: Request) {
-  try {
-    const result = await requireRole(["admin", "customer", "gamer", "gedu"]);
-    if (result instanceof NextResponse) return result;
+/**
+ * POST /api/feedback
+ *
+ * Naming all four roles is this gate's way of spelling "any authenticated
+ * caller", and it stays that way deliberately: it loads the profile (the email
+ * template needs the name, role and locale) and applies the parent-PIN gate
+ * along the way, neither of which the any-authenticated posture does.
+ */
+export const POST = defineRoute({
+  posture: "role-gated",
+  roles: ["admin", "customer", "gamer", "gedu"],
+  body: feedbackSchema,
 
-    const { user, profile, supabase } = result;
+  // The submission RPC is self-scoping and its only failure is "the write did
+  // not happen", which the shared table answers as a logged, generic 500. The
+  // route used to return the thrown message from its own catch — incidental
+  // forwarding, now closed.
 
-    const body = await request.json();
-    const parsed = feedbackSchema.safeParse(body);
-
-    if (!parsed.success) {
-      const firstError = parsed.error.errors[0];
-      return NextResponse.json(
-        { error: firstError.message },
-        { status: 400 }
-      );
-    }
-
+  handler: async ({ request, supabase, user, profile, body }) => {
     // Atomic rate-limit check + insert via a self-scoping RPC on the USER-bound
     // client: `submit_my_feedback` writes a row for `auth.uid()` and has no
     // parameter naming a user, so this handler cannot file feedback as anyone
     // else. It re-checks the same length bounds the schema above enforces.
     const { data: accepted, error: rpcError } = await supabase.rpc(
       "submit_my_feedback",
-      { p_message: parsed.data.message },
+      { p_message: body.message },
     );
-
-    if (rpcError) {
-      console.error("Failed to submit feedback:", rpcError);
-      return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-    }
-
+    if (rpcError) throw rpcError;
     if (!accepted) {
       return NextResponse.json(
         { error: "Too many feedback submissions. Please try again later." },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -67,12 +70,11 @@ export async function POST(request: Request) {
 
     if (adminsError || !admins.length) {
       console.error("Failed to fetch admin emails:", adminsError);
-      return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+      throw new ApiError("no admin recipients for the feedback notification", 500);
     }
 
     const adminEmails = admins.flatMap((a) => (a.email ? [a.email] : []));
 
-    // Determine reply-to email
     const role = profile.role;
     const userEmail = profile.email || "";
     let replyToEmail = userEmail;
@@ -81,7 +83,6 @@ export async function POST(request: Request) {
 
     if (role === "gamer") {
       isGamer = true;
-      // Look up parent's email
       const { data: parentLink } = await adminClient
         .from("parent_gamer")
         .select("parent_id")
@@ -116,8 +117,11 @@ export async function POST(request: Request) {
       userName: displayName,
       userRole: role,
       userEmail: replyToEmail || userEmail,
-      message: parsed.data.message,
-      sentAt: new Date().toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" }),
+      message: body.message,
+      sentAt: new Date().toLocaleString(locale, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }),
       isGamer,
       parentEmail,
     });
@@ -126,16 +130,14 @@ export async function POST(request: Request) {
       fromEmail: SENDER_EMAIL,
       fromName: t("senderFeedback"),
       toEmail: adminEmails,
-      subject: t("feedback.subject", { displayName, role: t(ROLE_LABEL_KEYS[role]) }),
+      subject: t("feedback.subject", {
+        displayName,
+        role: t(ROLE_LABEL_KEYS[role]),
+      }),
       htmlContent,
       replyToEmail: replyToEmail || undefined,
     });
 
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Internal server error";
-    console.error("Feedback submission error:", message);
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+    return { success: true };
+  },
+});

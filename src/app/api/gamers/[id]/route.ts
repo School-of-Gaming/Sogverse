@@ -1,70 +1,42 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
+import { z } from "zod";
+import { defineRoute } from "@/lib/api/define-route";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { lookupMinecraftUser, isValidMinecraftUsername } from "@/lib/mojang";
-import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+import { lookupMinecraftUser } from "@/lib/mojang";
+import { updateGamerBody } from "@/services/gamers/gamers.contracts";
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    // 1. Authenticate caller + enforce customer role
-    const result = await requireRole("customer", {
-      forbiddenMessage: "Only customers can update gamer accounts",
-    });
-    if (result instanceof NextResponse) return result;
-    const { supabase } = result;
+/**
+ * PATCH /api/gamers/[id] — a parent edits one of their own gamers.
+ *
+ * Two authorization layers before anything is written: the parent_gamer link is
+ * confirmed on the RLS-bound client (so the database agrees the caller owns the
+ * link), and the target's role is confirmed to be `gamer` on the admin client
+ * (so a link row can never be used to reach a non-gamer account).
+ */
+export const PATCH = defineRoute({
+  posture: "role-gated",
+  roles: "customer",
+  forbiddenMessage: "Only customers can update gamer accounts",
+  params: z.object({ id: z.string().uuid() }),
+  body: updateGamerBody,
 
-    const { id: gamerId } = await params;
+  // The hand-rolled `typeof` checks are now the shared body schema, which also
+  // preserves the one distinction the old code carried in `"key" in body`: an
+  // explicit null Minecraft username unlinks, an absent key leaves it alone.
+  //
+  // Every write failure used to be returned as a 500 carrying the driver's or
+  // GoTrue's own message. Those are logged now and answered through the shared
+  // table; the already-linked conflict keeps its copy because the status alone
+  // does not explain it.
 
-    // 2. Validate input
-    const body = await request.json();
-    const { firstName, password } = body;
-    const hasMinecraft = "minecraftUsername" in body;
+  handler: async ({ supabase, user, params, body }) => {
+    const gamerId = params.id;
 
-    if (!firstName && !password && !hasMinecraft) {
-      return NextResponse.json(
-        { error: "At least one of firstName, password, or minecraftUsername is required" },
-        { status: 400 },
-      );
-    }
-
-    if (firstName !== undefined) {
-      if (typeof firstName !== "string" || firstName.trim().length < DISPLAY_NAME_MIN || firstName.trim().length > DISPLAY_NAME_MAX) {
-        return NextResponse.json(
-          { error: `First name must be between ${DISPLAY_NAME_MIN} and ${DISPLAY_NAME_MAX} characters` },
-          { status: 400 },
-        );
-      }
-    }
-
-    if ("password" in body) {
-      if (typeof password !== "string" || password.length < 6) {
-        return NextResponse.json(
-          { error: "Password must be at least 6 characters" },
-          { status: 400 },
-        );
-      }
-    }
-
-    if (hasMinecraft && body.minecraftUsername !== null) {
-      if (
-        typeof body.minecraftUsername !== "string" ||
-        !isValidMinecraftUsername(body.minecraftUsername)
-      ) {
-        return NextResponse.json(
-          { error: "Invalid Minecraft username. Must be 3-16 characters: letters, numbers, underscores." },
-          { status: 400 },
-        );
-      }
-    }
-
-    // 3. Verify parent-child relationship via RLS-protected client
+    // Verify parent-child relationship via the RLS-protected client.
     const { data: link, error: linkError } = await supabase
       .from("parent_gamer")
       .select("id")
-      .eq("parent_id", result.user.id)
+      .eq("parent_id", user.id)
       .eq("gamer_id", gamerId)
       .maybeSingle();
 
@@ -75,7 +47,7 @@ export async function PATCH(
       );
     }
 
-    // 4. Verify target is a gamer (defense-in-depth)
+    // Verify the target really is a gamer (defense in depth).
     const admin = createAdminClient();
     const { data: targetProfile, error: targetError } = await admin
       .from("profiles")
@@ -90,69 +62,53 @@ export async function PATCH(
       );
     }
 
-    // 5. Apply updates via admin client
-    if (firstName !== undefined) {
-      const trimmed = firstName.trim();
-
+    if (body.firstName !== undefined) {
       const { data: updatedRow, error: profileError } = await admin
         .from("profiles")
-        .update({ first_name: trimmed })
+        .update({ first_name: body.firstName })
         .eq("id", gamerId)
         .select("first_name, last_name")
         .single();
 
-      if (profileError) {
-        return NextResponse.json(
-          { error: profileError.message },
-          { status: 500 },
-        );
-      }
+      if (profileError) throw profileError;
 
       // Sync to auth metadata so the Supabase dashboard label stays current.
       // Compose display_name from the post-update row so the dashboard sees a
-      // human-readable full name. The profiles table is the source of truth —
-      // if this sync fails, the app is unaffected.
+      // human-readable full name. The profiles table is the source of truth.
       const composed = [updatedRow.first_name, updatedRow.last_name]
         .filter(Boolean)
         .join(" ");
       const { error: authError } = await admin.auth.admin.updateUserById(
         gamerId,
-        { user_metadata: { first_name: updatedRow.first_name, display_name: composed } },
+        {
+          user_metadata: {
+            first_name: updatedRow.first_name,
+            display_name: composed,
+          },
+        },
       );
 
-      if (authError) {
-        return NextResponse.json(
-          { error: authError.message },
-          { status: 500 },
-        );
-      }
+      if (authError) throw authError;
     }
 
-    if ("password" in body) {
-      const { error: pwError } = await admin.auth.admin.updateUserById(
-        gamerId,
-        { password },
-      );
-
-      if (pwError) {
-        return NextResponse.json({ error: pwError.message }, { status: 500 });
-      }
+    if (body.password !== undefined) {
+      const { error: pwError } = await admin.auth.admin.updateUserById(gamerId, {
+        password: body.password,
+      });
+      if (pwError) throw pwError;
     }
 
-    // 6. Update Minecraft username if provided (stored in minecraft_accounts)
-    if (hasMinecraft) {
-      let mcUpsert: { user_id: string; minecraft_username: string | null; minecraft_uuid: string | null };
-
-      if (body.minecraftUsername === null) {
-        mcUpsert = { user_id: gamerId, minecraft_username: null, minecraft_uuid: null };
-      } else {
-        const mojang = await lookupMinecraftUser(body.minecraftUsername);
-        mcUpsert = {
-          user_id: gamerId,
-          minecraft_username: body.minecraftUsername,
-          minecraft_uuid: mojang?.uuid ?? null,
-        };
-      }
+    if (body.minecraftUsername !== undefined) {
+      const username = body.minecraftUsername;
+      const mcUpsert =
+        username === null
+          ? { user_id: gamerId, minecraft_username: null, minecraft_uuid: null }
+          : {
+              user_id: gamerId,
+              minecraft_username: username,
+              minecraft_uuid:
+                (await lookupMinecraftUser(username))?.uuid ?? null,
+            };
 
       const { error: mcError } = await admin
         .from("minecraft_accounts")
@@ -161,33 +117,24 @@ export async function PATCH(
       if (mcError) {
         if (mcError.code === "23505") {
           return NextResponse.json(
-            { error: "This Minecraft account is already linked to another user" },
+            {
+              error: "This Minecraft account is already linked to another user",
+            },
             { status: 409 },
           );
         }
-        return NextResponse.json({ error: "Failed to update Minecraft account" }, { status: 500 });
+        throw mcError;
       }
     }
 
-    // 7. Return updated profile
     const { data: updatedProfile, error: fetchError } = await admin
       .from("profiles")
       .select("*")
       .eq("id", gamerId)
       .single();
 
-    if (fetchError) {
-      return NextResponse.json(
-        { error: fetchError.message },
-        { status: 500 },
-      );
-    }
+    if (fetchError) throw fetchError;
 
-    return NextResponse.json({ gamer: updatedProfile });
-  } catch {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
-  }
-}
+    return { gamer: updatedProfile };
+  },
+});

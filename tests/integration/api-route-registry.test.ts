@@ -363,7 +363,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           roles: ["customer"],
           allowUnverified: true,
         },
-        body: { kind: "json", schema: "inline: { pin, currentPin? }" },
+        body: { kind: "json", schema: "pinBody" },
         test: TESTS.pin,
       },
     },
@@ -391,7 +391,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           roles: ["customer"],
           allowUnverified: true,
         },
-        body: { kind: "json", schema: "inline: { pin }" },
+        body: { kind: "json", schema: "pinBody" },
         test: TESTS.pin,
       },
     },
@@ -420,7 +420,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           roles: ["customer", "gamer"],
           allowUnverified: true,
         },
-        body: { kind: "json", schema: null },
+        body: { kind: "json", schema: "inline: switchAccountBody" },
         test: TESTS.switchAccount,
       },
     },
@@ -434,7 +434,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     handlers: {
       POST: {
         posture: { kind: "role-gated", roles: ["customer"] },
-        body: { kind: "json", schema: null },
+        body: { kind: "json", schema: "createCheckoutBody" },
         test: TESTS.checkout,
       },
     },
@@ -516,7 +516,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     handlers: {
       PATCH: {
         posture: { kind: "role-gated", roles: ["customer"] },
-        body: { kind: "json", schema: null },
+        body: { kind: "json", schema: "updateGamerBody" },
         test: TESTS.gamersUpdate,
       },
     },
@@ -528,7 +528,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     handlers: {
       POST: {
         posture: { kind: "role-gated", roles: ["customer"] },
-        body: { kind: "json", schema: null },
+        body: { kind: "json", schema: "createGamerBody" },
         test: TESTS.gamersCreate,
       },
     },
@@ -558,7 +558,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     handlers: {
       PATCH: {
         posture: { kind: "role-gated", roles: ["gamer", "gedu"] },
-        body: { kind: "json", schema: null },
+        body: { kind: "json", schema: "updateMinecraftAccountBody" },
         test: TESTS.minecraftAccount,
       },
     },
@@ -609,8 +609,6 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // --- User settings -------------------------------------------------------
 
   "src/app/api/user/locale/route.ts": {
-    offPrimitive:
-      "the one route that re-implements the session check inline — it verifies the token and reads the subject itself instead of calling the shared gate. Recorded as nonconforming from day one; the sweep moves it onto the standard primitive",
     handlers: {
       PATCH: {
         posture: {
@@ -618,7 +616,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           reason:
             "every role sets their own interface language, and the write is scoped to the caller's own row by a column grant plus a self-update policy, so the role is genuinely irrelevant here",
         },
-        body: { kind: "json", schema: null },
+        body: { kind: "json", schema: "setLocaleBody" },
         test: TESTS.userLocale,
       },
     },
@@ -648,7 +646,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           roles: ["admin", "gedu"],
           requireVerifiedGedu: true,
         },
-        body: { kind: "json", schema: "inline: { code }" },
+        body: { kind: "json", schema: "inline: { code } (declared on the primitive)" },
         test: TESTS.voiceInstantEnd,
       },
     },
@@ -691,7 +689,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           kind: "role-gated",
           roles: ["gedu", "gamer", "admin"],
         },
-        body: { kind: "json", schema: "inline: { groupId }" },
+        body: { kind: "json", schema: "inline: { groupId } (declared on the primitive)" },
         test: TESTS.voiceToken,
       },
     },
