@@ -22,18 +22,21 @@ vi.mock("next/headers", () => ({
 }));
 
 const mockAdminRpc = vi.fn();
-// The admin client reads customer_profiles.pin_hash (forgot mints / reset
-// verifies the single-use token bound to it). Returns whatever mockPinHash is
-// set to for the current test.
+// customer_profiles.pin_hash is read in two places, and they are deliberately
+// different clients. The RESET route still needs the admin client: it resolves a
+// user id out of a signed token, not out of a session, so there may be no
+// session to read as. The FORGOT route reads the caller's OWN row and now does
+// so on the user-bound client, which its own RLS policy already allows.
 const mockPinHash = vi.fn<() => { data: { pin_hash: string | null } | null; error: unknown }>(
   () => ({ data: { pin_hash: null }, error: null }),
 );
+const pinHashSelect = () => ({
+  select: () => ({ eq: () => ({ single: () => mockPinHash() }) }),
+});
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
     rpc: (...args: unknown[]) => mockAdminRpc(...args),
-    from: () => ({
-      select: () => ({ eq: () => ({ single: () => mockPinHash() }) }),
-    }),
+    from: () => pinHashSelect(),
   })),
 }));
 
@@ -79,7 +82,11 @@ function authCustomer(overrides: { email?: string | null } = {}) {
       email: overrides.email === undefined ? "p@test.local" : overrides.email,
       locale: "en",
     },
-    supabase: { rpc: mockRpc, auth: { getClaims: mockGetClaims } },
+    supabase: {
+      rpc: mockRpc,
+      from: () => pinHashSelect(),
+      auth: { getClaims: mockGetClaims },
+    },
   });
   mockGetClaims.mockResolvedValue({
     data: { claims: { sub: "u1", session_id: "s1" } },

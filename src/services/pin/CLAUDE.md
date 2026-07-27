@@ -64,7 +64,10 @@ security, not a guarantee.
 - `set_my_pin(pin)` / `verify_my_pin(pin)` / `pin_is_set()` — `auth.uid()`-scoped,
   granted to `authenticated`, touch only the caller's own row.
 - `set_pin_for_user(user_id, pin)` — admin-only (REVOKE'd from `authenticated`),
-  used solely by the email-reset route via the service-role client.
+  used solely by the email-reset route via the service-role client. That route
+  resolves its user from a signed token rather than a session, so it genuinely
+  has no caller to act as; the *forgot* route, which reads the caller's own hash
+  to bind the token, uses the caller's client and its own-row read policy.
 
 There is no rate-limiting and no PIN-strength validation beyond "exactly 4
 digits". Both are **deliberate**, not oversights:
@@ -130,9 +133,9 @@ Follows the project two/three-file pattern (see root `CLAUDE.md` § Service Laye
 - `pin.service.ts` — `PinService(supabase)`. The one read (`isSet`) uses the
   injected client (`pin_is_set` is granted to `authenticated`, own-row scoped).
   All writes (`verify`, `setPin`, `forgot`, `reset`) and the unlock-aware
-  `status` read go through the API routes — they set/clear the HMAC cookie or
-  touch the admin client, neither of which the browser client can do. The
-  injected client is unused by those methods, intentionally.
+  `status` read go through the API routes — they set/clear the HMAC cookie, or
+  need the PIN hash server-side to bind a reset token, neither of which the
+  browser may do. The injected client is unused by those methods, intentionally.
 - `pin.contracts.ts` — zod schemas for the route responses (`pinStatusResponse`,
   `pinVerifyResponse`), parsed via `parseJsonResponse`.
 - `pin.queries.ts` — React Query hooks + `pinKeys`.

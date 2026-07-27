@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     const result = await requireRole(["admin", "customer", "gamer", "gedu"]);
     if (result instanceof NextResponse) return result;
 
-    const { user, profile } = result;
+    const { user, profile, supabase } = result;
 
     const body = await request.json();
     const parsed = feedbackSchema.safeParse(body);
@@ -31,13 +31,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const adminClient = createAdminClient();
-
-    // Atomic rate-limit check + insert via RPC (prevents concurrent bypass)
-    const { data: accepted, error: rpcError } = await adminClient.rpc("submit_feedback", {
-      p_user_id: user.id,
-      p_message: parsed.data.message,
-    });
+    // Atomic rate-limit check + insert via a self-scoping RPC on the USER-bound
+    // client: `submit_my_feedback` writes a row for `auth.uid()` and has no
+    // parameter naming a user, so this handler cannot file feedback as anyone
+    // else. It re-checks the same length bounds the schema above enforces.
+    const { data: accepted, error: rpcError } = await supabase.rpc(
+      "submit_my_feedback",
+      { p_message: parsed.data.message },
+    );
 
     if (rpcError) {
       console.error("Failed to submit feedback:", rpcError);
@@ -51,7 +52,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get all admin emails
+    const adminClient = createAdminClient();
+
+    // From here on the work is *notification*, not the user's own write, and it
+    // stays on the service-role client by necessity: the recipient list is every
+    // admin's email address, and a gamer's reply-to is their parent's. Neither
+    // is in the submitter's RLS view, and neither may be — an RPC that returned
+    // them would be readable by any authenticated caller who invoked it
+    // directly. Nothing read here is ever echoed back in the response.
     const { data: admins, error: adminsError } = await adminClient
       .from("profiles")
       .select("email")

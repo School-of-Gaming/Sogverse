@@ -71,6 +71,17 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   promote_from_waitlist: { permittedRoles: ["admin"] },
   demote_to_waitlist: { permittedRoles: ["admin"] },
   set_gedu_verified: { permittedRoles: ["admin"] },
+  // Phase 3's new-RPC conversions. Past the admin guard, all-NULL arguments hit
+  // "no such product" / "no such participation" — an error, but not 42501.
+  admin_enroll_gamer: { permittedRoles: ["admin"] },
+  admin_remove_participation: { permittedRoles: ["admin"] },
+
+  // --- customer-gated ------------------------------------------------------
+  // Phase 3's grant-plus-guard conversion. Past the role guard, a customer
+  // reaches the engine with a NULL product id and is refused with
+  // `no_data_found` — an error, but not the forbidden one, which is exactly what
+  // the positive half of the matrix asserts.
+  join_product_waitlist: { permittedRoles: ["customer"] },
 
   // --- gedu-gated ----------------------------------------------------------
   get_my_assigned_products: { permittedRoles: ["gedu"] },
@@ -144,6 +155,10 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/get-my-participation-subscription-states.test.ts",
     why: "billing-state signals for participations the caller is party to",
   },
+  submit_my_feedback: {
+    scopeTest: "tests/db/feedback-submission.test.ts",
+    why: "writes a feedback row for auth.uid(); no parameter names a user, and every role may send feedback",
+  },
   get_waitlist_position: {
     scopeTest: "tests/db/waitlist-admin.test.ts",
     why: "owner-authorized: returns NULL rather than a position for a row the caller neither purchased nor is the gamer on",
@@ -211,13 +226,17 @@ const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
 
 /**
  * The only table whose UPDATE surface is column-scoped rather than table-wide.
- * Pinned exactly: these four are the safe profile fields a user may edit.
+ * Pinned exactly: these five are the safe profile fields a user may edit —
+ * identity and presentation, nothing that decides what they may do. `locale`
+ * joined them in Phase 3 when the locale route stopped writing through the
+ * service-role client.
  */
 const PROFILES_UPDATABLE_COLUMNS = [
   "first_name",
   "last_name",
   "phone",
   "spoken_languages",
+  "locale",
 ];
 
 // ---------------------------------------------------------------------------

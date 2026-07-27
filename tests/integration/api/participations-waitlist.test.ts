@@ -9,10 +9,10 @@ vi.mock("@/lib/auth", () => ({
   requireRole: (...args: unknown[]) => mockRequireRole(...args),
 }));
 
-const mockAdminRpc = vi.fn();
-vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: vi.fn(() => ({ rpc: mockAdminRpc })),
-}));
+// The route runs on the USER-bound client from `requireRole`, so the RPC mock
+// hangs off the `supabase` handed back by that mock rather than off the admin
+// client — which this route no longer touches at all.
+const mockRpc = vi.fn();
 
 // --- Fixtures ---
 
@@ -52,7 +52,7 @@ function mockForbidden(role: string) {
       return Promise.resolve({
         user: { id: CUSTOMER_ID },
         profile: { role },
-        supabase: {},
+        supabase: { rpc: mockRpc },
       });
     },
   );
@@ -62,7 +62,7 @@ function mockAuthenticatedCustomer() {
   mockRequireRole.mockResolvedValue({
     user: { id: CUSTOMER_ID },
     profile: { role: "customer" },
-    supabase: {},
+    supabase: { rpc: mockRpc },
   });
 }
 
@@ -83,7 +83,7 @@ describe("POST /api/participations/waitlist", () => {
     );
 
     expect(res.status).toBe(401);
-    expect(mockAdminRpc).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
   });
 
   it("returns 403 for gamer role", async () => {
@@ -96,7 +96,7 @@ describe("POST /api/participations/waitlist", () => {
 
     expect(res.status).toBe(403);
     expect(data.error).toBe("Only customers can join a waitlist");
-    expect(mockAdminRpc).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
   });
 
   it("returns 403 for gedu role", async () => {
@@ -107,7 +107,7 @@ describe("POST /api/participations/waitlist", () => {
     );
 
     expect(res.status).toBe(403);
-    expect(mockAdminRpc).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
   });
 
   it("returns 403 for admin role", async () => {
@@ -118,7 +118,7 @@ describe("POST /api/participations/waitlist", () => {
     );
 
     expect(res.status).toBe(403);
-    expect(mockAdminRpc).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
   });
 
   // -- Validation --
@@ -131,7 +131,7 @@ describe("POST /api/participations/waitlist", () => {
 
     expect(res.status).toBe(400);
     expect(data.error).toBe("Invalid JSON body");
-    expect(mockAdminRpc).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
   });
 
   it("returns 400 when productId is missing", async () => {
@@ -142,7 +142,7 @@ describe("POST /api/participations/waitlist", () => {
 
     expect(res.status).toBe(400);
     expect(data.error).toMatch(/(productId|gamerId): Required/);
-    expect(mockAdminRpc).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
   });
 
   it("returns 400 when gamerId is missing", async () => {
@@ -153,14 +153,14 @@ describe("POST /api/participations/waitlist", () => {
 
     expect(res.status).toBe(400);
     expect(data.error).toMatch(/(productId|gamerId): Required/);
-    expect(mockAdminRpc).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
   });
 
   // -- Happy path --
 
   it("returns the new waitlist position when join_waitlist succeeds", async () => {
     mockAuthenticatedCustomer();
-    mockAdminRpc.mockResolvedValue({
+    mockRpc.mockResolvedValue({
       data: {
         participation_id: PARTICIPATION_ID,
         waitlist_position: 3,
@@ -180,10 +180,9 @@ describe("POST /api/participations/waitlist", () => {
       waitlistPosition: 3,
       status: "waitlisted",
     });
-    expect(mockAdminRpc).toHaveBeenCalledWith("join_waitlist", {
+    expect(mockRpc).toHaveBeenCalledWith("join_product_waitlist", {
       p_product_id: PRODUCT_ID,
       p_gamer_id: GAMER_ID,
-      p_customer_id: CUSTOMER_ID,
     });
   });
 
@@ -191,7 +190,7 @@ describe("POST /api/participations/waitlist", () => {
     mockAuthenticatedCustomer();
     // The RPC itself short-circuits on existing participation rows; the route
     // just relays whatever shape the RPC returns. This locks in that contract.
-    mockAdminRpc.mockResolvedValue({
+    mockRpc.mockResolvedValue({
       data: {
         participation_id: PARTICIPATION_ID,
         waitlist_position: 1,
@@ -213,7 +212,7 @@ describe("POST /api/participations/waitlist", () => {
 
   it("returns 400 when waitlist is not enabled for the product (RPC raises check_violation)", async () => {
     mockAuthenticatedCustomer();
-    mockAdminRpc.mockResolvedValue({
+    mockRpc.mockResolvedValue({
       data: null,
       error: {
         code: "23514",
@@ -232,7 +231,7 @@ describe("POST /api/participations/waitlist", () => {
 
   it("returns 400 when the customer is not the parent of the gamer (IDOR guard)", async () => {
     mockAuthenticatedCustomer();
-    mockAdminRpc.mockResolvedValue({
+    mockRpc.mockResolvedValue({
       data: null,
       error: {
         code: "23514",
@@ -249,9 +248,25 @@ describe("POST /api/participations/waitlist", () => {
     expect(data.error).toContain("is not the parent of gamer");
   });
 
+  it("returns 403 when the RPC guard refuses the caller (42501)", async () => {
+    // Defense in depth made visible: even if this route's own role check were
+    // bypassed, `join_product_waitlist` refuses a non-customer in the database.
+    mockAuthenticatedCustomer();
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { code: "42501", message: "Forbidden" },
+    });
+
+    const res = await POST(
+      createRequest({ productId: PRODUCT_ID, gamerId: GAMER_ID }),
+    );
+
+    expect(res.status).toBe(403);
+  });
+
   it("returns 400 when the product does not exist", async () => {
     mockAuthenticatedCustomer();
-    mockAdminRpc.mockResolvedValue({
+    mockRpc.mockResolvedValue({
       data: null,
       error: {
         code: "P0002",

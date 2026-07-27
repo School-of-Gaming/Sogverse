@@ -280,6 +280,124 @@ $$;
 
 
 --
+-- Name: admin_enroll_gamer(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_product_type     public.product_type;
+  v_customer_id      uuid;
+  v_participation_id uuid;
+BEGIN
+  PERFORM public.assert_admin();
+
+  SELECT product_type INTO v_product_type
+    FROM public.products WHERE id = p_product_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'product % does not exist', p_product_id
+      USING ERRCODE = 'no_data_found';
+  END IF;
+
+  IF v_product_type = 'consumer_club' THEN
+    RAISE EXCEPTION 'admin enrollment is not supported for consumer clubs'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- One parent per gamer is the current model; where a gamer somehow has
+  -- several links, the oldest wins so the choice is deterministic rather than
+  -- whatever the planner returned. Multi-parent reckoning is future work.
+  SELECT parent_id INTO v_customer_id
+    FROM public.parent_gamer
+    WHERE gamer_id = p_gamer_id
+    ORDER BY created_at ASC
+    LIMIT 1;
+  IF v_customer_id IS NULL THEN
+    RAISE EXCEPTION 'gamer % has no linked parent', p_gamer_id
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- The partial unique index on (product_id, gamer_id) for non-reserving
+  -- statuses is the source of truth for "already enrolled"; it raises 23505 and
+  -- the route maps that to 409. Re-checking it here would be a race, not a
+  -- safeguard.
+  INSERT INTO public.participations (product_id, gamer_id, customer_id, status)
+  VALUES (p_product_id, p_gamer_id, v_customer_id, 'active')
+  RETURNING id INTO v_participation_id;
+
+  RETURN jsonb_build_object(
+    'participation_id', v_participation_id,
+    'customer_id', v_customer_id
+  );
+END;
+$$;
+
+
+--
+-- Name: FUNCTION admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid) IS 'Admin-gated comp-enrollment: drops a gamer onto a non-consumer_club product with status=active, bypassing payment, seat caps and registration windows by design.';
+
+
+--
+-- Name: admin_remove_participation(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.admin_remove_participation(p_product_id uuid, p_participation_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_row_product_id uuid;
+  v_product_type   public.product_type;
+  v_live_sub       text;
+BEGIN
+  PERFORM public.assert_admin();
+
+  SELECT product_id INTO v_row_product_id
+    FROM public.participations WHERE id = p_participation_id;
+  IF NOT FOUND OR v_row_product_id IS DISTINCT FROM p_product_id THEN
+    RAISE EXCEPTION 'participation % is not on product %',
+      p_participation_id, p_product_id
+      USING ERRCODE = 'no_data_found';
+  END IF;
+
+  SELECT product_type INTO v_product_type
+    FROM public.products WHERE id = p_product_id;
+  IF v_product_type = 'consumer_club' THEN
+    RAISE EXCEPTION 'admin removal is not supported for consumer clubs'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- family_subscriptions.participation_id is UNIQUE and stripe_subscription_id
+  -- is NOT NULL, so the mere existence of a row means a live Stripe sub is
+  -- linked to this participation.
+  SELECT stripe_subscription_id INTO v_live_sub
+    FROM public.family_subscriptions
+    WHERE participation_id = p_participation_id;
+  IF v_live_sub IS NOT NULL THEN
+    RAISE EXCEPTION
+      'participation % still has live Stripe subscription %',
+      p_participation_id, v_live_sub
+      USING ERRCODE = 'object_not_in_prerequisite_state';
+  END IF;
+
+  RETURN public.cancel_participation(p_participation_id, 'admin_cancelled');
+END;
+$$;
+
+
+--
+-- Name: FUNCTION admin_remove_participation(p_product_id uuid, p_participation_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.admin_remove_participation(p_product_id uuid, p_participation_id uuid) IS 'Admin-gated un-enrollment. Refuses a participation that is not on the named product, a consumer_club product, or a participation with a live Stripe subscription; otherwise delegates to cancel_participation.';
+
+
+--
 -- Name: apply_group_changes(uuid, jsonb, jsonb, uuid[], jsonb, jsonb, jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1796,6 +1914,33 @@ $$;
 
 
 --
+-- Name: join_product_waitlist(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.join_product_waitlist(p_product_id uuid, p_gamer_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+  PERFORM public.assert_role('customer');
+
+  -- Everything else — product lock, parent-of-gamer check, waitlist_enabled
+  -- gate, idempotency, the clock_timestamp() ordering stamp — is unchanged and
+  -- lives in the engine. This function's whole job is authorization plus
+  -- pinning the actor to the session.
+  RETURN public.join_waitlist(p_product_id, p_gamer_id, (SELECT auth.uid()));
+END;
+$$;
+
+
+--
+-- Name: FUNCTION join_product_waitlist(p_product_id uuid, p_gamer_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_gamer_id uuid) IS 'Guarded, authenticated-facing entry point for joining a product waitlist. The customer is auth.uid(); the parent-of-gamer check lives in join_waitlist.';
+
+
+--
 -- Name: join_waitlist(uuid, uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2183,6 +2328,43 @@ BEGIN
   RETURN true;
 END;
 $$;
+
+
+--
+-- Name: submit_my_feedback(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.submit_my_feedback(p_message text) RETURNS boolean
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_user_id uuid := (SELECT auth.uid());
+BEGIN
+  -- Not reachable through PostgREST as `authenticated` (that role's JWT always
+  -- carries a subject), but an unattributable feedback row is worse than a
+  -- refused one, so this fails closed rather than inserting NULL.
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  IF p_message IS NULL OR length(p_message) < 10 OR length(p_message) > 2000 THEN
+    RAISE EXCEPTION 'feedback message must be between 10 and 2000 characters'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- Returns false (not an error) when the per-hour rate limit is hit; the route
+  -- maps that to 429.
+  RETURN public.submit_feedback(v_user_id, p_message);
+END;
+$$;
+
+
+--
+-- Name: FUNCTION submit_my_feedback(p_message text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.submit_my_feedback(p_message text) IS 'Self-scoping feedback submission: writes a feedback_submissions row for auth.uid(), rate-limited and length-bounded. Returns false when rate-limited.';
 
 
 --
@@ -4878,6 +5060,13 @@ ALTER TABLE public.site_staff_details ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.spoken_languages ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: minecraft_accounts users_insert_own_minecraft_account; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY users_insert_own_minecraft_account ON public.minecraft_accounts FOR INSERT TO authenticated WITH CHECK ((user_id = ( SELECT auth.uid() AS uid)));
+
+
+--
 -- Name: feedback_submissions users_read_own_feedback; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -4889,6 +5078,13 @@ CREATE POLICY users_read_own_feedback ON public.feedback_submissions FOR SELECT 
 --
 
 CREATE POLICY users_read_own_minecraft_account ON public.minecraft_accounts FOR SELECT TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid)));
+
+
+--
+-- Name: minecraft_accounts users_update_own_minecraft_account; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY users_update_own_minecraft_account ON public.minecraft_accounts FOR UPDATE TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((user_id = ( SELECT auth.uid() AS uid)));
 
 
 --
@@ -5036,6 +5232,24 @@ GRANT ALL ON FUNCTION public._list_table_grants(p_grantee text) TO service_role;
 
 REVOKE ALL ON FUNCTION public._list_tables_without_rls() FROM PUBLIC;
 GRANT ALL ON FUNCTION public._list_tables_without_rls() TO service_role;
+
+
+--
+-- Name: FUNCTION admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION admin_remove_participation(p_product_id uuid, p_participation_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.admin_remove_participation(p_product_id uuid, p_participation_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.admin_remove_participation(p_product_id uuid, p_participation_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.admin_remove_participation(p_product_id uuid, p_participation_id uuid) TO service_role;
 
 
 --
@@ -5215,6 +5429,13 @@ GRANT UPDATE(spoken_languages) ON TABLE public.profiles TO authenticated;
 
 
 --
+-- Name: COLUMN profiles.locale; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(locale) ON TABLE public.profiles TO authenticated;
+
+
+--
 -- Name: COLUMN profiles.first_name; Type: ACL; Schema: public; Owner: -
 --
 
@@ -5351,6 +5572,15 @@ GRANT ALL ON FUNCTION public.is_voice_group_moderator(p_group_id uuid) TO authen
 
 
 --
+-- Name: FUNCTION join_product_waitlist(p_product_id uuid, p_gamer_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_gamer_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_gamer_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_gamer_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION join_waitlist(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
@@ -5439,6 +5669,15 @@ GRANT ALL ON FUNCTION public.set_pin_for_user(p_user_id uuid, p_pin text) TO ser
 
 REVOKE ALL ON FUNCTION public.submit_feedback(p_user_id uuid, p_message text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.submit_feedback(p_user_id uuid, p_message text) TO service_role;
+
+
+--
+-- Name: FUNCTION submit_my_feedback(p_message text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.submit_my_feedback(p_message text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.submit_my_feedback(p_message text) TO authenticated;
+GRANT ALL ON FUNCTION public.submit_my_feedback(p_message text) TO service_role;
 
 
 --
@@ -5620,7 +5859,7 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.holiday_calendars TO authentic
 
 GRANT SELECT ON TABLE public.locations TO anon;
 GRANT ALL ON TABLE public.locations TO service_role;
-GRANT SELECT ON TABLE public.locations TO authenticated;
+GRANT SELECT,INSERT,UPDATE ON TABLE public.locations TO authenticated;
 
 
 --
@@ -5629,7 +5868,7 @@ GRANT SELECT ON TABLE public.locations TO authenticated;
 
 GRANT SELECT ON TABLE public.minecraft_accounts TO anon;
 GRANT ALL ON TABLE public.minecraft_accounts TO service_role;
-GRANT SELECT ON TABLE public.minecraft_accounts TO authenticated;
+GRANT SELECT,INSERT,UPDATE ON TABLE public.minecraft_accounts TO authenticated;
 
 
 --
@@ -5796,7 +6035,7 @@ GRANT SELECT,INSERT,UPDATE ON TABLE public.whatsapp_contacts TO authenticated;
 
 GRANT SELECT ON TABLE public.whatsapp_messages TO anon;
 GRANT ALL ON TABLE public.whatsapp_messages TO service_role;
-GRANT SELECT,INSERT,UPDATE ON TABLE public.whatsapp_messages TO authenticated;
+GRANT SELECT,INSERT ON TABLE public.whatsapp_messages TO authenticated;
 
 
 --

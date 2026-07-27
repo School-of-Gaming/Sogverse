@@ -17,12 +17,10 @@ vi.mock("@/lib/mojang", () => ({
     mockIsValidMinecraftUsername(...args),
 }));
 
-const mockAdminFrom = vi.fn();
-vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: vi.fn(() => ({
-    from: (...args: unknown[]) => mockAdminFrom(...args),
-  })),
-}));
+// The upsert runs on the USER-bound client: the caller may write exactly their
+// own minecraft_accounts row, and the row key comes from the session rather than
+// the request body. The mock therefore hangs off `supabase`.
+const mockFrom = vi.fn();
 
 // --- Helpers ---
 
@@ -38,13 +36,13 @@ function mockAuthenticated(userId = "gamer-123", role = "gamer") {
   mockRequireRole.mockResolvedValue({
     user: { id: userId },
     profile: { role },
-    supabase: {},
+    supabase: { from: (...args: unknown[]) => mockFrom(...args) },
   });
 }
 
 function mockUpsertSuccess() {
   const upsertMock = vi.fn().mockResolvedValue({ data: null, error: null });
-  mockAdminFrom.mockReturnValue({ upsert: upsertMock });
+  mockFrom.mockReturnValue({ upsert: upsertMock });
   return { upsertMock };
 }
 
@@ -186,7 +184,7 @@ describe("PATCH /api/minecraft/account", () => {
         code: "23505",
       },
     });
-    mockAdminFrom.mockReturnValue({ upsert: upsertMock });
+    mockFrom.mockReturnValue({ upsert: upsertMock });
 
     const response = await PATCH(createRequest({ minecraftUsername: "TakenPlayer" }));
     const data = await response.json();
