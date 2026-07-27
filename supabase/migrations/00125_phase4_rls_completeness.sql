@@ -217,12 +217,46 @@ ALTER POLICY admin_manage_spoken_languages ON public.spoken_languages
 -- 4b. FOR ALL policies carrying only USING. A FOR ALL policy with no WITH CHECK
 --     reuses its USING clause for writes, so leaving WITH CHECK unset preserves
 --     the existing shape exactly.
+--
+--     These two are create-or-alter rather than a plain ALTER, because they are
+--     the one place where the hosted databases and migration history disagree:
+--     both policies exist on the hosted databases but were never written into a
+--     migration, so a database built from migrations alone has no admin policy
+--     on either table. That drift meant CI was verifying a *different* RLS
+--     surface from the one that runs in production on exactly the two tables
+--     holding the parent PIN hash and a child's date of birth. Creating them
+--     when absent repairs it; the hosted databases take the ALTER branch and
+--     are unaffected.
 
-ALTER POLICY "Admins can do everything on customer_profiles" ON public.customer_profiles
-  USING ((SELECT public.is_admin()));
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_policies
+     WHERE schemaname = 'public'
+       AND tablename = 'customer_profiles'
+       AND policyname = 'Admins can do everything on customer_profiles'
+  ) THEN
+    ALTER POLICY "Admins can do everything on customer_profiles" ON public.customer_profiles
+      USING ((SELECT public.is_admin()));
+  ELSE
+    CREATE POLICY "Admins can do everything on customer_profiles" ON public.customer_profiles
+      TO authenticated USING ((SELECT public.is_admin()));
+  END IF;
 
-ALTER POLICY "Admins can do everything on gamer_profiles" ON public.gamer_profiles
-  USING ((SELECT public.is_admin()));
+  IF EXISTS (
+    SELECT 1 FROM pg_policies
+     WHERE schemaname = 'public'
+       AND tablename = 'gamer_profiles'
+       AND policyname = 'Admins can do everything on gamer_profiles'
+  ) THEN
+    ALTER POLICY "Admins can do everything on gamer_profiles" ON public.gamer_profiles
+      USING ((SELECT public.is_admin()));
+  ELSE
+    CREATE POLICY "Admins can do everything on gamer_profiles" ON public.gamer_profiles
+      TO authenticated USING ((SELECT public.is_admin()));
+  END IF;
+END;
+$$;
 
 -- 4c. The WhatsApp policies, which hand-rolled the EXISTS over profiles rather
 --     than calling the role accessor at all — the last copies of that idiom.

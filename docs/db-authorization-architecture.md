@@ -1,13 +1,16 @@
 # Database Authorization Architecture
 
-**Status:** target architecture + migration plan. The conventions in §2–§3 are how new
-code is written today; §5 Phase 1 (guard primitives + ownership predicates), Phase 2 (the
-§3.4 verification spine) and Phase 3 (the route sweep) have landed; RLS completeness
-(Phase 4) is not yet built. This is the single source of truth for the refactor — when
-someone says "let's do the DB authorization refactor," this is the doc to read and act on.
+**Status: built.** All four phases of §5 have landed — the guard primitives and ownership
+predicates, the §3.4 verification spine, the route sweep, and RLS completeness. §2–§3
+describe the system that exists, not a target: every privileged function body opens with a
+guard primitive or is classified self-scoping with a named scope test, every policy
+expresses its admin half as one named predicate, and the spine fails the build when
+anything escapes that. What remains is the post-deploy cleanup listed at the end of §5 and
+the feature work in §7 — no structural work. This doc stays the single source of truth for
+how authorization is enforced in the database.
 
-**Execution contract.** This doc is written so a fresh Claude Code session can execute
-the refactor from it. Before acting on any phase:
+**Execution contract.** This doc is written so a fresh Claude Code session can act on it.
+Before touching anything it describes:
 
 1. **Re-verify current state.** Snapshots in this doc were verified against the live
    schema in 2026-06 and will drift. Current state lives in `supabase/schema.sql`
@@ -18,8 +21,13 @@ the refactor from it. Before acting on any phase:
    dump `schema.sql` → check type aliases → commit together).
 3. **DB tests run in CI** against a local Supabase stack started by the workflow. Do
    not run them locally or against the remote DB — push the branch and let CI run them.
-4. **One phase per PR batch**, in order. A phase's checks must be green before the
-   next phase starts, because later phases lean on them.
+4. **A migration reaches the shared database the moment it is pushed; the code running
+   against that database does not change until the PR merges and deploys.** So any
+   change to a policy, a grant, or a guard has to be behaviour-equivalent for the
+   *currently deployed* code, or it breaks the shared environment for the whole window.
+   The reliable shapes are: add a new object beside the old one, or rewrite a policy so
+   it can only ever admit more than before, never less. A rewrite that cannot be argued
+   to one of those does not ship — it gets recorded and sequenced behind a deploy.
 
 ---
 
@@ -128,9 +136,15 @@ the verification spine treats each kind differently:
   for `42501` (which also finds the assertions themselves).
 - **Self-scoping helpers** (the majority): every read/write keyed to `auth.uid()`;
   no raise block, by design. The `get_my_*` family, the PIN functions.
-- **Boolean predicates consumed by RLS policies**: `is_admin()`,
-  `can_read_product()`, `is_parent_of()` — `STABLE SECURITY DEFINER`, return a
-  boolean, never raise. `can_read_product` is the only function granted to `anon`.
+- **Boolean predicates consumed by RLS policies**: the admin predicate, the product-read
+  predicate, parent-of-gamer, the two party-to-a-participation predicates, and the two
+  voice-room ones — `STABLE SECURITY DEFINER`, return a boolean, never raise. Each is
+  granted to `authenticated` because a policy expression is evaluated as the *querying*
+  role, so a predicate a policy composes from must be executable by that role. The
+  product-read predicate is the only function granted to `anon`. **A predicate returns a
+  total boolean** — never NULL. A `USING` clause treats NULL as deny, so a NULL-capable
+  predicate is not a hole *there*, but it is a trap for any consumer that is not a policy;
+  wrap a disjunction whose first term can be NULL in `COALESCE(…, false)`.
 - **The participation state machine** (the waitlist-join, participation-create,
   participation-cancel and reservation-confirm functions): granted to **service_role
   only** — not callable by `authenticated` at all. Phase 3 put guarded,
@@ -150,6 +164,16 @@ that subquery form makes it an InitPlan evaluated once per statement. **The Init
 wrapping, not `STABLE` itself, is what makes it cheap** — `STABLE` permits
 optimization but guarantees no caching. Keep the wrapped form in every policy; a bare
 call in a policy predicate is a per-row function call.
+
+**The wrapping rule applies to argument-free predicates.** A predicate that takes the
+row's own column as an argument cannot be an InitPlan — it depends on the row, so
+`(SELECT p(col))` is a correlated subplan re-executed per row, exactly like the bare
+call. Wrap it anyway for one shape across every policy, but do not expect the InitPlan
+payoff there, and be aware of the trade the wrapping rule cannot hide: replacing an
+uncorrelated `col IN (SELECT …)` — which PostgreSQL evaluates once and hashes — with a
+per-row predicate call buys auditability at the cost of a function call per row. That is
+the right trade on the small tables the party-to predicates guard; it would not be on a
+large one.
 
 ### Sensitive tables (grant-locked today)
 
@@ -234,22 +258,30 @@ is for *policies*, which evaluate per row.)
 
 **Keep `is_admin()`.** Assertions and predicates are two primitives for two contexts,
 not duplicates: function bodies need a raising assertion; RLS policies need a boolean
-expression. `is_admin()` is the named admin predicate for policies (20+ policies use
-it today) and the first member of the §3.2 predicate family. The thing to migrate away
-from is the *other* policy idiom — the inline `(SELECT get_user_role()) = 'admin'`
-comparison some policies carry — folded into Phase 4 opportunistically, not as a
-big-bang rewrite.
+expression. `is_admin()` is the named admin predicate for policies and the first member
+of the §3.2 predicate family. **It is now the only way a policy asks "is the caller an
+admin"** — the inline `(SELECT get_user_role()) = 'admin'` comparison and the
+hand-rolled `EXISTS` over `profiles` are both gone from every policy in the database
+(Phase 4). A new policy that reintroduces either is doing by hand what a named,
+audited, single-definition predicate already does.
 
 ### 3.2 Ownership predicates (for policies)
 
 The "target half" of RLS — "is this caller allowed to reference *this specific
 row*?" — expressed as a small set of reusable `STABLE` predicate functions rather than
-re-derived as an inline `EXISTS` subquery inside each policy. The concrete duplication
-today: the "caller has an active participation on this product/group" subquery appears
-inline in at least three policies (customer- and gamer-side group visibility), each a
-chance to get it half-right. Policies then *compose* from audited predicates:
-`is_admin()`, parent-of-gamer, has-active-participation-on, and the like. The IDOR
-class of bug exists precisely because the inline subquery is easy to write half-right.
+re-derived as an inline `EXISTS` subquery inside each policy. Policies *compose* from
+audited predicates: `is_admin()`, parent-of-gamer, has-active-participation-on, and the
+like. The IDOR class of bug exists precisely because the inline subquery is easy to
+write half-right, and the duplication that motivated this — the same "caller has an
+active participation on this product/group" subquery written out in three separate
+policies — is gone as of Phase 4.
+
+**A predicate asks about the caller's *relationship* to a row, not about their role.**
+The party-to predicates deliberately treat the purchasing parent and the enrolled gamer
+as one question ("am I a party to this participation") rather than one predicate per
+column. That unification is what makes a predicate reusable across the customer-side
+and gamer-side policies; the role gate, where a policy still wants one, stays in the
+policy where it is visible.
 
 ### 3.3 Grant lockdown as the default for sensitive tables
 
