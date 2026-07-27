@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
+import { z } from "zod";
+import { defineRoute } from "@/lib/api/define-route";
 import { createDailyRoom, isDailyDuplicateRoomError } from "@/lib/daily";
 import { generateVoiceRoomCode } from "@/lib/voice-room-code";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
+
+/** Response of POST /api/voice/instant/create. */
+const createInstantRoomResponse = z.object({ code: z.string() });
 
 /**
  * Create a new instant voice room.
@@ -16,47 +20,50 @@ import { VOICE_CONFIG } from "@/lib/constants/voice";
  * Collisions are rare (~1 in 2,000 with 500 concurrent rooms) so we don't
  * pre-check the code. If Daily says the room name already exists, we
  * generate a fresh code and try again — `INSTANT_ROOM_CREATE_MAX_RETRIES`
- * times. (We can't use the `getOrCreateDailyRoom` helper here: random
- * codes are not authorization-pre-gated, so silently joining the existing
- * room on collision would let a caller into someone else's instant room.)
+ * times. (We can't use the get-or-create helper here: random codes are not
+ * authorization-pre-gated, so silently joining the existing room on collision
+ * would let a caller into someone else's instant room.)
  */
-export async function POST() {
-  const result = await requireRole(["admin", "gedu"], {
-    forbiddenMessage: "Only admins and educators can create voice rooms",
-    // An unverified gedu is not a trusted moderator: block room creation until
-    // an admin verifies them (the token route likewise denies them owner power).
-    requireVerifiedGedu: true,
-  });
-  if (result instanceof NextResponse) return result;
+export const POST = defineRoute({
+  posture: "role-gated",
+  roles: ["admin", "gedu"],
+  forbiddenMessage: "Only admins and educators can create voice rooms",
+  // An unverified gedu is not a trusted moderator: block room creation until
+  // an admin verifies them (the token route likewise denies them owner power).
+  requireVerifiedGedu: true,
+  response: createInstantRoomResponse,
 
-  const expUnix =
-    Math.round(Date.now() / 1000) + VOICE_CONFIG.INSTANT_ROOM_EXP_SECONDS;
+  handler: async () => {
+    const expUnix =
+      Math.round(Date.now() / 1000) + VOICE_CONFIG.INSTANT_ROOM_EXP_SECONDS;
 
-  for (let attempt = 0; attempt < VOICE_CONFIG.INSTANT_ROOM_CREATE_MAX_RETRIES; attempt++) {
-    const code = generateVoiceRoomCode();
-    try {
-      await createDailyRoom({ name: code, expUnix });
-      return NextResponse.json({ code });
-    } catch (err) {
-      // Duplicate-name means the random code happened to collide — try
-      // again with a fresh code. Anything else is a real failure; bail.
-      if (isDailyDuplicateRoomError(err)) {
-        continue;
+    for (
+      let attempt = 0;
+      attempt < VOICE_CONFIG.INSTANT_ROOM_CREATE_MAX_RETRIES;
+      attempt++
+    ) {
+      const code = generateVoiceRoomCode();
+      try {
+        await createDailyRoom({ name: code, expUnix });
+        return { code };
+      } catch (err) {
+        // Duplicate-name means the random code happened to collide — try
+        // again with a fresh code. Anything else is a real failure; let the
+        // wrapper log it and answer a generic 500.
+        if (isDailyDuplicateRoomError(err)) continue;
+        throw err;
       }
-      console.error("Failed to create instant voice room:", err);
-      return NextResponse.json(
-        { error: "Failed to create voice room" },
-        { status: 500 },
-      );
     }
-  }
 
-  // Exhausted retries — astronomically unlikely. Surface so we hear about it.
-  console.error(
-    `Could not allocate an instant voice room code after ${VOICE_CONFIG.INSTANT_ROOM_CREATE_MAX_RETRIES} attempts`,
-  );
-  return NextResponse.json(
-    { error: "Could not allocate a voice room code; please try again" },
-    { status: 503 },
-  );
-}
+    // Exhausted retries — astronomically unlikely. 503 rather than the shared
+    // table's 500 because a retry really might succeed, and the wrapper has no
+    // service-unavailable default.
+    console.error(
+      `Could not allocate an instant voice room code after ${VOICE_CONFIG.INSTANT_ROOM_CREATE_MAX_RETRIES} attempts`,
+    );
+    return NextResponse.json(
+      { error: "Could not allocate a voice room code; please try again" },
+      { status: 503 },
+    );
+  },
+});

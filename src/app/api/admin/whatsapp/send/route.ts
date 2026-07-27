@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
-import { sendWhatsAppMessage } from "@/lib/whatsapp";
-import { WHATSAPP_DIRECTION, WHATSAPP_MESSAGE_STATUS } from "@/types";
 import { z } from "zod";
+import { defineRoute } from "@/lib/api/define-route";
+import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { sendWhatsAppResponse } from "@/services/whatsapp/whatsapp.contracts";
+import { WHATSAPP_DIRECTION, WHATSAPP_MESSAGE_STATUS } from "@/types";
 
 const requestSchema = z.object({
   // No format validation — `to` always comes from a whatsapp_contacts row
@@ -11,43 +11,36 @@ const requestSchema = z.object({
   body: z.string().min(1).max(4096),
 });
 
-export async function POST(request: Request) {
-  try {
-    const result = await requireRole("admin", {
-      forbiddenMessage: "Only admins can send WhatsApp messages",
-    });
-    if (result instanceof NextResponse) return result;
-    const { supabase } = result;
+/**
+ * POST /api/admin/whatsapp/send
+ *
+ * Sends an outbound text through the Graph API, then records it. Neither DB
+ * write fails the request: the message is already at Meta by then, so a 500
+ * would tell the admin their message didn't send when it did.
+ */
+export const POST = defineRoute({
+  posture: "role-gated",
+  roles: "admin",
+  forbiddenMessage: "Only admins can send WhatsApp messages",
+  body: requestSchema,
+  response: sendWhatsAppResponse,
 
-    const json = await request.json();
-    const parsed = requestSchema.safeParse(json);
+  // The Graph client throws on a non-OK response, and that message used to be
+  // returned to the admin as a 500 body — incidental forwarding of a third
+  // party's error text. It is now logged and answered generically.
 
-    if (!parsed.success) {
-      const firstError = parsed.error.errors[0];
-      return NextResponse.json(
-        { error: `${firstError.path.join(".")}: ${firstError.message}` },
-        { status: 400 },
-      );
-    }
+  handler: async ({ supabase, body: { to, body } }) => {
+    const { messageId } = await sendWhatsAppMessage(to, { type: "text", body });
 
-    const { to, body } = parsed.data;
-
-    const { messageId } = await sendWhatsAppMessage(to, {
-      type: "text",
-      body,
-    });
-
-    // Store outbound message and upsert contact on the USER-bound client: the
-    // whatsapp_contacts insert/update and whatsapp_messages insert policies each
-    // re-check that the caller is an admin, and the message policy additionally
-    // pins `direction` to outbound — so this route cannot forge inbound history
+    // Both writes run on the USER-bound client: the whatsapp_contacts
+    // insert/update and whatsapp_messages insert policies each re-check that
+    // the caller is an admin, and the message policy additionally pins
+    // `direction` to outbound — so this route cannot forge inbound history
     // even if it tried.
     //
-    // Neither failure fails the request: the message is already at Meta by this
-    // point, so a 500 would tell the admin their message didn't send when it
-    // did. They are logged instead — under RLS a DB refusal here is a real
-    // signal (it used to be near-impossible under service role), so it must not
-    // be swallowed silently.
+    // Failures are logged rather than thrown — under RLS a DB refusal here is
+    // a real signal (it used to be near-impossible under service role), so it
+    // must not be swallowed silently.
     const now = new Date().toISOString();
 
     const { error: contactError } = await supabase
@@ -72,10 +65,6 @@ export async function POST(request: Request) {
       console.error("[whatsapp/send] message insert failed", messageError);
     }
 
-    return NextResponse.json({ messageId });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Internal server error";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+    return { messageId };
+  },
+});

@@ -8,17 +8,27 @@ import type { Json, WhatsAppMessageUpdate } from "@/types";
 const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN!;
 const appSecret = process.env.WHATSAPP_APP_SECRET!;
 
+/**
+ * Compare two secrets without leaking how far they matched.
+ *
+ * `timingSafeEqual` throws on a length mismatch, so the lengths are checked
+ * first — which is fine: a length difference is not the leak that matters here,
+ * a per-character early exit is.
+ */
+function secretsMatch(expected: string, received: string | null): boolean {
+  if (received === null) return false;
+  const a = Buffer.from(expected);
+  const b = Buffer.from(received);
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
+}
+
 /** Verify that the request came from Meta using X-Hub-Signature-256 */
 function verifySignature(body: string, signature: string | null): boolean {
-  if (!signature) return false;
   const expected =
     "sha256=" +
     crypto.createHmac("sha256", appSecret).update(body).digest("hex");
-  if (expected.length !== signature.length) return false;
-  return crypto.timingSafeEqual(
-    Buffer.from(expected),
-    Buffer.from(signature)
-  );
+  return secretsMatch(expected, signature);
 }
 
 // --- Payload schemas ---
@@ -144,14 +154,23 @@ function extractMessageContent(message: InboundMessage): {
   }
 }
 
-/** Meta webhook verification challenge */
+/**
+ * Meta webhook verification challenge.
+ *
+ * The verify token is compared in constant time, like every other secret
+ * comparison on this surface. It used to be a plain `===`, which is a
+ * character-by-character compare that returns early on the first difference —
+ * the same class of leak the HMAC check above has always avoided, on a secret
+ * that is equally long-lived and equally sufficient on its own to pass this
+ * handshake.
+ */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const mode = searchParams.get("hub.mode");
   const token = searchParams.get("hub.verify_token");
   const challenge = searchParams.get("hub.challenge");
 
-  if (mode === "subscribe" && token === verifyToken) {
+  if (mode === "subscribe" && secretsMatch(verifyToken, token)) {
     return new Response(challenge, { status: 200 });
   }
 

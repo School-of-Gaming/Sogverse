@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { requireRole } from "@/lib/auth";
+import { defineRoute } from "@/lib/api/define-route";
+import { pinStatusResponse } from "@/services/pin/pin.contracts";
 import { PIN_COOKIE_NAME, isPinTokenValid } from "@/lib/pin-session";
 
 /**
@@ -12,22 +12,26 @@ import { PIN_COOKIE_NAME, isPinTokenValid } from "@/lib/pin-session";
  * allowUnverified: a LOCKED customer must be able to query this — it's how the
  * gate decides whether to show the create/enter pad in the first place.
  */
-export async function GET() {
-  const auth = await requireRole("customer", { allowUnverified: true });
-  if (auth instanceof NextResponse) return auth;
-  const { user, supabase } = auth;
+export const GET = defineRoute({
+  posture: "role-gated",
+  roles: "customer",
+  allowUnverified: true,
+  response: pinStatusResponse,
 
-  const { data: isSet, error } = await supabase.rpc("pin_is_set");
-  if (error) {
-    console.error("pin/status: pin_is_set failed", error);
-    return NextResponse.json({ error: "Failed to load PIN status" }, { status: 500 });
-  }
+  handler: async ({ supabase, user }) => {
+    const { data: isSet, error } = await supabase.rpc("pin_is_set");
+    if (error) throw error;
 
-  const { data: claimsData } = await supabase.auth.getClaims();
-  const sessionId = claimsData?.claims.session_id;
-  const unlocked =
-    !!sessionId &&
-    (await isPinTokenValid((await cookies()).get(PIN_COOKIE_NAME)?.value, user.id, sessionId));
+    const { data: claimsData } = await supabase.auth.getClaims();
+    const sessionId = claimsData?.claims.session_id;
+    const unlocked =
+      !!sessionId &&
+      (await isPinTokenValid(
+        (await cookies()).get(PIN_COOKIE_NAME)?.value,
+        user.id,
+        sessionId,
+      ));
 
-  return NextResponse.json({ isSet, unlocked });
-}
+    return { isSet, unlocked };
+  },
+});

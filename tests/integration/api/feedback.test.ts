@@ -318,7 +318,10 @@ describe("POST /api/feedback", () => {
     });
   });
 
-  it("returns 500 and sends no mail when the RPC errors", async () => {
+  it("returns 400 and sends no mail when the RPC refuses the message", async () => {
+    // The RPC re-checks the same length bounds the body schema enforces, so its
+    // check violation is genuinely bad input. The route used to fold every RPC
+    // failure into a 500; the shared table separates the two.
     mockAuthenticatedAs("customer");
     setupHappyPath();
     mockRpc.mockResolvedValue({
@@ -328,7 +331,22 @@ describe("POST /api/feedback", () => {
 
     const response = await POST(createRequest(validBody));
 
+    expect(response.status).toBe(400);
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+  });
+
+  it("returns a generic 500 and sends no mail when the RPC fails unexpectedly", async () => {
+    mockAuthenticatedAs("customer");
+    setupHappyPath();
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { code: "XX000", message: "connection reset" },
+    });
+
+    const response = await POST(createRequest(validBody));
+
     expect(response.status).toBe(500);
+    expect((await response.json()).error).toBe("Internal server error");
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 });

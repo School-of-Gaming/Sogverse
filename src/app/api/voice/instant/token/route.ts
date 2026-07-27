@@ -1,9 +1,33 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { parseJsonBody } from "@/lib/api/json-body.server";
 import { instantRoomModerator } from "@/lib/voice/instant-room-moderator";
 import { createMeetingToken, getDailyRoom, buildUserName } from "@/lib/daily";
 import { normalizeVoiceRoomCode } from "@/lib/voice-room-code";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
+
+/**
+ * The lobby's join request. Every field is optional and everything else is
+ * dropped: the schema is what makes "role", "owner" and "userId" in the body
+ * unreadable rather than merely unread, so a future edit cannot start trusting
+ * one by accident. Ownership comes from the server-side session lookup below.
+ *
+ * `displayName` is only length-checked on the guest path (a recognized
+ * moderator's name comes from their profile), so the schema takes any string
+ * and the guest branch applies the shared display-name bounds.
+ *
+ * The two media flags degrade to `undefined` instead of failing the request:
+ * they are lobby preferences, not authorization, and an older client sending a
+ * stringly-typed value should still be able to join with the defaults rather
+ * than be refused at the door.
+ */
+const instantRoomTokenBody = z.object({
+  code: z.string().optional(),
+  displayName: z.string().optional(),
+  micOn: z.boolean().optional().catch(undefined),
+  cameraOn: z.boolean().optional().catch(undefined),
+});
 
 /**
  * Mint a Daily.co meeting token for an instant voice room.
@@ -30,34 +54,18 @@ import { VOICE_CONFIG } from "@/lib/constants/voice";
  *     `is_owner` is the actual permission authority — but worth doing.
  */
 export async function POST(request: Request) {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
-  const {
-    code: rawCode,
-    displayName: rawDisplayName,
-    micOn: rawMicOn,
-    cameraOn: rawCameraOn,
-  } = (body ?? {}) as {
-    code?: unknown;
-    displayName?: unknown;
-    micOn?: unknown;
-    cameraOn?: unknown;
-  };
+  const body = await parseJsonBody(request, instantRoomTokenBody);
+  if (body instanceof NextResponse) return body;
 
   // Lobby preview choices. Default to the historical (mic on, camera off)
   // shape if the client didn't send them — keeps older clients working and
   // the test surface predictable.
-  const micOn = typeof rawMicOn === "boolean" ? rawMicOn : true;
-  const cameraOn = typeof rawCameraOn === "boolean" ? rawCameraOn : false;
+  const micOn = body.micOn ?? true;
+  const cameraOn = body.cameraOn ?? false;
 
   // Validate code format BEFORE any Daily API call so a malformed code can't
   // produce a path-traversal request to Daily's API.
-  const code = normalizeVoiceRoomCode(rawCode);
+  const code = normalizeVoiceRoomCode(body.code);
   if (!code) {
     return NextResponse.json(
       { error: "Invalid room code" },
@@ -91,8 +99,7 @@ export async function POST(request: Request) {
     // (DISPLAY_NAME_MIN/MAX) so the constraint is consistent across the
     // app. We trim before checking because trailing whitespace is just
     // noise in display names.
-    const trimmed =
-      typeof rawDisplayName === "string" ? rawDisplayName.trim() : "";
+    const trimmed = body.displayName?.trim() ?? "";
     if (trimmed.length < DISPLAY_NAME_MIN || trimmed.length > DISPLAY_NAME_MAX) {
       return NextResponse.json(
         {

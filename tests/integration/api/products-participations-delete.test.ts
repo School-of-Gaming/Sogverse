@@ -105,8 +105,10 @@ describe("DELETE /api/admin/products/[id]/participations/[participationId]", () 
     rpcFails("P0002", "participation is not on product");
     const response = await DELETE(createRequest(), { params });
     expect(response.status).toBe(404);
+    // The status carries the meaning; the body is the shared table's generic
+    // message, because the RPC's own text names rows the admin never asked for.
     const error = getString(await response.json(), "error");
-    expect(error).toContain("not found on this product");
+    expect(error).toBe("Not found");
   });
 
   it("rejects consumer_club products (removal goes through Stripe, not here)", async () => {
@@ -130,11 +132,15 @@ describe("DELETE /api/admin/products/[id]/participations/[participationId]", () 
     expect(error).toContain("live Stripe subscription");
   });
 
-  it("returns 400 for any other RPC error", async () => {
+  it("returns a logged 500 for an unrecognized RPC error code", async () => {
+    // Used to be a 400 carrying the raw message. A code the shared table does
+    // not recognize is not the admin's mistake, so it is a server error.
     mockAuthenticatedAdmin();
     rpcFails("XX000", "boom");
     const response = await DELETE(createRequest(), { params });
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(500);
+    const error = getString(await response.json(), "error");
+    expect(error).toBe("Internal server error");
   });
 
   it("returns 500 when the RPC result does not match its contract", async () => {

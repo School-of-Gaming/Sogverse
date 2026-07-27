@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireRole } from "@/lib/auth";
-import { parseJsonBody } from "@/lib/api/json-body.server";
+import { defineRoute } from "@/lib/api/define-route";
+import { ApiError } from "@/lib/api/api-error";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   buildUserName,
@@ -12,53 +12,44 @@ import {
 import { computeSessionWindow } from "@/lib/session-schedule";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { tokenCanReceiveFor } from "@/lib/voice/receive-permissions";
+import { voiceTokenResponse } from "@/services/voice/voice.contracts";
 
 /**
  * Mint a Daily.co meeting token for a product group's voice room.
  *
- * Request body: `{ groupId: product_groups.id }`.
- *
- * There is no backing `voice_rooms` table — Daily.co is the single
- * source of truth for room existence. We derive a deterministic room name
- * from the group + the current session window, get-or-create on demand,
- * and set Daily's `exp` to the session-window close so the platform reaps
- * the room (and ejects late joiners) once the window passes.
+ * There is no backing `voice_rooms` table — Daily.co is the single source of
+ * truth for room existence. We derive a deterministic room name from the group
+ * + the current session window, get-or-create on demand, and set Daily's `exp`
+ * to the session-window close so the platform reaps the room (and ejects late
+ * joiners) once the window passes.
  *
  * Gates:
- *   1. Membership — gamers via `participations.status = 'active'`, gedus
- *      via `gedu_group_assignments` on the product (per redesign §4.10's
- *      cross-group voice mobility rule), admins pass through.
+ *   1. Membership — gamers via an active participation, gedus via a
+ *      product-level assignment (cross-group voice mobility), admins pass
+ *      through.
  *   2. Session window — at least one slot's window must be open right now.
  *
  * Notably absent: there is no "did you enroll before this session started?"
- * gate. Active membership is the binary access predicate — if
- * you're an active participant, you're in. (Credit-based billing makes a
- * mid-session enrollment cut-off irrelevant.)
+ * gate. Active membership is the binary access predicate. (Credit-based
+ * billing makes a mid-session enrollment cut-off irrelevant.)
  */
-export async function POST(request: Request) {
-  try {
-    const result = await requireRole(["gedu", "gamer", "admin"], {
-      forbiddenMessage: "You do not have permission to join voice rooms",
-    });
-    if (result instanceof NextResponse) return result;
-    const { user, profile } = result;
+export const POST = defineRoute({
+  posture: "role-gated",
+  roles: ["gedu", "gamer", "admin"],
+  forbiddenMessage: "You do not have permission to join voice rooms",
+  body: z.object({ groupId: z.string().min(1, "groupId is required") }),
+  response: voiceTokenResponse,
+
+  handler: async ({ user, profile, body }) => {
     const role = profile.role;
-
-    const body = await parseJsonBody(
-      request,
-      z.object({ groupId: z.string().min(1, "groupId is required") }),
-    );
-    if (body instanceof NextResponse) return body;
     const { groupId } = body;
-
     const admin = createAdminClient();
 
-    // Group → product → slots → timezone in one round trip. `!inner` is
-    // important: it makes PostgREST fail the parent select on a missing
-    // product (shouldn't happen given the FK, but defends against partially
-    // deleted rows). schedule_slots is keyed off `product_id`, so it
-    // nests inside the products join — `product_groups ↔
-    // schedule_slots` is not a direct FK pair.
+    // Group → product → slots → timezone in one round trip. `!inner` makes
+    // PostgREST fail the parent select on a missing product (shouldn't happen
+    // given the FK, but defends against partially deleted rows).
+    // schedule_slots is keyed off `product_id`, so it nests inside the products
+    // join — product_groups ↔ schedule_slots is not a direct FK pair.
     const { data: group, error: groupErr } = await admin
       .from("product_groups")
       .select(
@@ -73,14 +64,12 @@ export async function POST(request: Request) {
       .eq("id", groupId)
       .maybeSingle();
 
-    if (groupErr || !group) {
-      return NextResponse.json({ error: "Room not found" }, { status: 404 });
-    }
-
-    if (!group.product.is_remote) {
-      // In-person products have no voice room. 404 (not 403) matches the
-      // dashboard's "no destination" stance — the URL shape isn't a valid
-      // voice room.
+    if (groupErr) throw groupErr;
+    // In-person products have no voice room. 404 (not 403) matches the
+    // dashboard's "no destination" stance — the URL shape isn't a valid voice
+    // room — and it is the same answer as an unknown group, so this route
+    // cannot be used to probe which group ids exist.
+    if (!group || !group.product.is_remote) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
 
@@ -105,8 +94,8 @@ export async function POST(request: Request) {
         );
       }
     } else if (role === "gedu") {
-      // Per redesign §4.10, the gedu assignment predicate is on
-      // `product_id` (cross-group voice mobility), not `group_id`.
+      // The gedu assignment predicate is on `product_id` (cross-group voice
+      // mobility), not `group_id`.
       const { data: assignment } = await admin
         .from("gedu_group_assignments")
         .select("group_id")
@@ -127,13 +116,10 @@ export async function POST(request: Request) {
     // ---- Session window gate ----
     // Iterate every slot; the first whose window is currently open wins.
     // Mon-11pm + Tue-5am sessions for the same group sit on different slots
-    // (and end up with distinct Daily room names below), so checking each
-    // slot independently is correct.
+    // (and end up with distinct Daily room names below), so checking each slot
+    // independently is correct.
     const now = new Date();
-    let openSlot: {
-      windowOpensAt: Date;
-      windowClosesAt: Date;
-    } | null = null;
+    let openSlot: { windowOpensAt: Date; windowClosesAt: Date } | null = null;
     for (const slot of slots) {
       const window = computeSessionWindow(
         {
@@ -161,14 +147,13 @@ export async function POST(request: Request) {
 
     // Self-healing cleanup of private-zone occupancy: every join reaps this
     // group's occupancy rows from *prior* session windows. A row is only valid
-    // for its own window (privacy is scoped to session_opens_at), so older rows
-    // are dead — they'd otherwise block re-occupying via the (group_id, user_id)
-    // unique constraint, over-block a returning user's joiners, and grow
-    // unbounded. This is also what cleans up a user who never left (closed their
-    // laptop mid-session): their row lingers only until the window rolls, then
-    // the next join reaps it. No cron: someone joins every session, and because
-    // the table is in the realtime publication these DELETEs propagate to every
-    // client's projection. Best-effort — a failed prune just lingers.
+    // for its own window, so older rows are dead — they'd otherwise block
+    // re-occupying via the (group_id, user_id) unique constraint, over-block a
+    // returning user's joiners, and grow unbounded. This is also what cleans up
+    // a user who never left (closed their laptop mid-session). No cron: someone
+    // joins every session, and because the table is in the realtime publication
+    // these DELETEs propagate to every client's projection. Best-effort — a
+    // failed prune just lingers.
     await admin
       .from("voice_private_zone_occupants")
       .delete()
@@ -191,11 +176,11 @@ export async function POST(request: Request) {
     );
 
     // ---- Daily room: get-or-create ----
-    // The room name is content-addressable from (group, window open time),
-    // so every joiner derives the same name independently and the helper
-    // either returns the existing room or creates it. No race-on-first-join
-    // surfaces as a user-visible error — the duplicate-name path falls
-    // through silently inside the helper.
+    // The room name is content-addressable from (group, window open time), so
+    // every joiner derives the same name independently and the helper either
+    // returns the existing room or creates it. No race-on-first-join surfaces
+    // as a user-visible error — the duplicate-name path falls through silently
+    // inside the helper.
     const dailyRoomName = groupVoiceRoomName({
       groupId,
       windowOpensAt: openSlot.windowOpensAt,
@@ -210,60 +195,45 @@ export async function POST(request: Request) {
 
     const domain = process.env.NEXT_PUBLIC_DAILY_DOMAIN;
     if (!domain) {
-      console.error("Missing NEXT_PUBLIC_DAILY_DOMAIN environment variable");
-      return NextResponse.json(
-        { error: "Voice chat is not configured" },
-        { status: 500 },
-      );
+      throw new ApiError("missing NEXT_PUBLIC_DAILY_DOMAIN", 500);
     }
 
     // The joiner's own Minecraft identity rides along in the Daily token so
-    // peers can render the badge without a DB lookup — `minecraft_accounts`
-    // RLS forbids reading another user's row, so per-participant client
-    // fetches aren't possible. We read the joiner's own row (always passing
-    // the slots, even when there's no row, so the client shows "(Unknown)"
-    // rather than no badge for gamers/gedus).
+    // peers can render the badge without a DB lookup — `minecraft_accounts` RLS
+    // forbids reading another user's row, so per-participant client fetches
+    // aren't possible. We read the joiner's own row (always passing the slots,
+    // even when there's no row, so the client shows "(Unknown)" rather than no
+    // badge for gamers/gedus).
     const { data: minecraft } = await admin
       .from("minecraft_accounts")
       .select("minecraft_username, minecraft_uuid")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    const userName = buildUserName({
-      userId: user.id,
-      role,
-      displayName: profile.first_name,
-      minecraftUsername: minecraft?.minecraft_username ?? null,
-      minecraftUuid: minecraft?.minecraft_uuid ?? null,
-    });
-    const roomUrl = `https://${domain}.daily.co/${dailyRoomName}`;
-    const isOwner = role !== "gamer";
-
     const token = await createMeetingToken({
       roomName: dailyRoomName,
-      isOwner,
-      userName,
+      isOwner: role !== "gamer",
+      userName: buildUserName({
+        userId: user.id,
+        role,
+        displayName: profile.first_name,
+        minecraftUsername: minecraft?.minecraft_username ?? null,
+        minecraftUuid: minecraft?.minecraft_uuid ?? null,
+      }),
       userId: user.id,
       canReceive,
       expUnix,
     });
 
     // sessionOpensAt lets the client stamp private-zone occupancy rows with the
-    // current window (`voice_private_zone_occupants.session_opens_at`). This same
-    // route reads current-window occupancy above to bake `canReceive`, and the
-    // client filters occupancy to the current window (`isCurrentSessionPlacement`)
+    // current window. This same route reads current-window occupancy above to
+    // bake `canReceive`, and the client filters occupancy to the current window
     // so a stale prior-session row can't affect routing or confinement.
-    return NextResponse.json({
+    return {
       token,
-      roomUrl,
+      roomUrl: `https://${domain}.daily.co/${dailyRoomName}`,
       role,
       sessionOpensAt: openSlot.windowOpensAt.toISOString(),
-    });
-  } catch (err) {
-    console.error("Voice token error:", err);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
-  }
-}
+    };
+  },
+});

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
+import { z } from "zod";
+import { defineRoute } from "@/lib/api/define-route";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL } from "@/lib/constants";
 import { templateRegistry } from "@/lib/email-templates/registry";
@@ -7,7 +8,6 @@ import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { escapeHtml } from "@/lib/email-templates/utils";
 import { parseEmails } from "@/lib/utils";
 import { resolveLocale } from "@/lib/constants/locales";
-import { z } from "zod";
 
 // --- Request schemas ---
 
@@ -32,25 +32,25 @@ const templateSchema = z.object({
 
 const requestSchema = z.discriminatedUnion("mode", [customSchema, templateSchema]);
 
-export async function POST(request: Request) {
-  try {
-    const result = await requireRole("admin", {
-      forbiddenMessage: "Only admins can send test emails",
-    });
-    if (result instanceof NextResponse) return result;
+/**
+ * POST /api/admin/send-test-email
+ *
+ * The admin email-preview harness: render either a hand-written message or a
+ * registered template, and send it through the transactional provider.
+ */
+export const POST = defineRoute({
+  posture: "role-gated",
+  roles: "admin",
+  forbiddenMessage: "Only admins can send test emails",
+  body: requestSchema,
 
-    const body = await request.json();
-    const parsed = requestSchema.safeParse(body);
+  // No database calls, so the shared error table never comes into play. What
+  // changes is the catch-all: a provider failure used to be returned to the
+  // admin as a 500 carrying the thrown message, which is the incidental
+  // forwarding shape. It is now logged and answered generically.
 
-    if (!parsed.success) {
-      const firstError = parsed.error.errors[0];
-      return NextResponse.json(
-        { error: `${firstError.path.join(".")}: ${firstError.message}` },
-        { status: 400 },
-      );
-    }
-
-    const toEmails = parseEmails(parsed.data.toEmail);
+  handler: async ({ body }) => {
+    const toEmails = parseEmails(body.toEmail);
     const emailSchema = z.string().email();
     for (const email of toEmails) {
       if (!emailSchema.safeParse(email).success) {
@@ -66,21 +66,21 @@ export async function POST(request: Request) {
     let htmlContent: string;
     let replyToEmail: string | undefined;
 
-    if (parsed.data.mode === "custom") {
-      fromName = parsed.data.fromName;
-      subject = parsed.data.subject;
-      replyToEmail = parsed.data.replyToEmail;
-      htmlContent = escapeHtml(parsed.data.body).replace(/\n/g, "<br/>");
+    if (body.mode === "custom") {
+      fromName = body.fromName;
+      subject = body.subject;
+      replyToEmail = body.replyToEmail;
+      htmlContent = escapeHtml(body.body).replace(/\n/g, "<br/>");
     } else {
-      if (!(parsed.data.template in templateRegistry)) {
+      if (!(body.template in templateRegistry)) {
         return NextResponse.json(
-          { error: `Unknown template: ${parsed.data.template}` },
+          { error: `Unknown template: ${body.template}` },
           { status: 400 },
         );
       }
-      const tmpl = templateRegistry[parsed.data.template];
+      const tmpl = templateRegistry[body.template];
 
-      const paramsParsed = tmpl.schema.safeParse(parsed.data.params);
+      const paramsParsed = tmpl.schema.safeParse(body.params);
       if (!paramsParsed.success) {
         const firstError = paramsParsed.error.errors[0];
         return NextResponse.json(
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
         );
       }
 
-      const locale = resolveLocale(parsed.data.locale);
+      const locale = resolveLocale(body.locale);
       const t = await getEmailTranslator(locale);
 
       fromName = t(tmpl.fromNameKey);
@@ -107,10 +107,6 @@ export async function POST(request: Request) {
       replyToEmail,
     });
 
-    return NextResponse.json({ messageId: emailResult.messageId });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Internal server error";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+    return { messageId: emailResult.messageId };
+  },
+});

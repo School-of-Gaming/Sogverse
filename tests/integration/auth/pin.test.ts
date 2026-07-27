@@ -73,6 +73,11 @@ function request(path: string, body: unknown): Request {
   });
 }
 
+/** A GET has no body; the handler still receives the request Next.js hands it. */
+function getRequest(path: string): Request {
+  return new Request(`http://localhost:3000${path}`);
+}
+
 function authCustomer(overrides: { email?: string | null } = {}) {
   mockRequireRole.mockResolvedValue({
     user: { id: "u1", email: "p@test.local" },
@@ -187,7 +192,7 @@ describe("GET /api/auth/pin/status", () => {
     setRpc({ pin_is_set: { data: false, error: null } });
     mockCookieGet.mockReturnValue(undefined);
 
-    await statusGet();
+    await statusGet(getRequest("/api/auth/pin/status"));
     expect(mockRequireRole).toHaveBeenCalledWith("customer", { allowUnverified: true });
   });
 
@@ -197,7 +202,7 @@ describe("GET /api/auth/pin/status", () => {
     // A valid token for this (user, session) is the proof of an unlocked session.
     mockCookieGet.mockReturnValue({ value: await pinTokenFor("u1", "s1") });
 
-    const res = await statusGet();
+    const res = await statusGet(getRequest("/api/auth/pin/status"));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ isSet: true, unlocked: true });
   });
@@ -207,7 +212,7 @@ describe("GET /api/auth/pin/status", () => {
     setRpc({ pin_is_set: { data: true, error: null } });
     mockCookieGet.mockReturnValue(undefined);
 
-    const res = await statusGet();
+    const res = await statusGet(getRequest("/api/auth/pin/status"));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ isSet: true, unlocked: false });
   });
@@ -219,7 +224,7 @@ describe("GET /api/auth/pin/status", () => {
     // account switch / re-login relies on this binding).
     mockCookieGet.mockReturnValue({ value: await pinTokenFor("u1", "other-session") });
 
-    const res = await statusGet();
+    const res = await statusGet(getRequest("/api/auth/pin/status"));
     expect(await res.json()).toMatchObject({ unlocked: false });
   });
 
@@ -228,7 +233,7 @@ describe("GET /api/auth/pin/status", () => {
     setRpc({ pin_is_set: { data: false, error: null } });
     mockCookieGet.mockReturnValue(undefined);
 
-    const res = await statusGet();
+    const res = await statusGet(getRequest("/api/auth/pin/status"));
     expect(await res.json()).toEqual({ isSet: false, unlocked: false });
   });
 
@@ -238,7 +243,7 @@ describe("GET /api/auth/pin/status", () => {
     // Silence the route's console.error for the expected failure path.
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    const res = await statusGet();
+    const res = await statusGet(getRequest("/api/auth/pin/status"));
     expect(res.status).toBe(500);
     spy.mockRestore();
   });

@@ -98,14 +98,15 @@ type Posture =
 type WebhookVerifier =
   | "stripe-signature"
   | "meta-hmac-sha256"
-  | "meta-challenge-plain-compare"
+  | "meta-challenge-timing-safe"
   | "discord-ed25519";
 
 /**
  * How the handler takes its request payload. `schema: null` on a `json` entry
  * records a body parsed without a schema — a hand-rolled shape check, or none
- * at all. Those are the sweep's targets; recording them is how they stay
- * countable.
+ * at all. There are none left, and the `null` stays in the type as the slot a
+ * regression would have to occupy: recording one is what makes it countable,
+ * and check 1 asserts the count is still zero.
  */
 type BodyDiscipline =
   | { kind: "json"; schema: string | null }
@@ -149,12 +150,17 @@ const API_DIR = join("src", "app", "api");
 
 const TESTS = {
   adminLocations: "tests/integration/api/admin-locations.test.ts",
+  adminSiteNotes: "tests/integration/api/admin-site-notes.test.ts",
+  billingPortal: "tests/integration/api/billing-portal.test.ts",
   callback: "tests/integration/auth/callback.test.ts",
   checkout: "tests/integration/api/checkout-products-create.test.ts",
+  discordInteractions: "tests/integration/api/discord-interactions.test.ts",
+  familyList: "tests/integration/api/family-list.test.ts",
   feedback: "tests/integration/api/feedback.test.ts",
   forgotPassword: "tests/integration/auth/forgot-password.test.ts",
   gamersCreate: "tests/integration/api/gamers-create.test.ts",
   gamersUpdate: "tests/integration/api/gamers-update.test.ts",
+  geduRegister: "tests/integration/api/gedu-register.test.ts",
   minecraftAccount: "tests/integration/api/minecraft-account.test.ts",
   minecraftJoinCheck: "tests/integration/api/minecraft-join-check.test.ts",
   minecraftVerify: "tests/integration/api/minecraft-verify.test.ts",
@@ -164,12 +170,17 @@ const TESTS = {
   productsParticipations: "tests/integration/api/products-participations.test.ts",
   productsParticipationsDelete:
     "tests/integration/api/products-participations-delete.test.ts",
+  productsParticipationsTransition:
+    "tests/integration/api/products-participations-transition.test.ts",
+  productsUpdate: "tests/integration/api/products-update.test.ts",
   sendTestEmail: "tests/integration/api/send-test-email.test.ts",
+  signout: "tests/integration/auth/signout.test.ts",
   stripeWebhook: "tests/integration/api/stripe-webhook-products.test.ts",
   switchAccount: "tests/integration/auth/switch-account.test.ts",
   userLocale: "tests/integration/api/user-locale.test.ts",
   voiceInstantCreate: "tests/integration/api/voice-instant-create.test.ts",
   voiceInstantEnd: "tests/integration/api/voice-instant-end.test.ts",
+  voiceInstantExists: "tests/integration/api/voice-instant-exists.test.ts",
   voiceInstantToken: "tests/integration/api/voice-instant-token.test.ts",
   voiceToken: "tests/integration/api/voice-token.test.ts",
   waitlist: "tests/integration/api/participations-waitlist.test.ts",
@@ -222,10 +233,10 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
       PATCH: {
         posture: ADMIN_ONLY,
         body: { kind: "json", schema: "waitlistTransitionBody" },
-        // The one untested handler in an otherwise-tested file — the shape the
-        // per-file view of coverage hides, and the reason check 4 is per
-        // handler rather than per file.
-        test: null,
+        // The handler that was untested while its file-mate was covered — the
+        // shape a per-file view of coverage hides, and the reason check 4 is
+        // per handler rather than per file.
+        test: TESTS.productsParticipationsTransition,
       },
     },
   },
@@ -234,7 +245,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     handlers: {
       POST: {
         posture: ADMIN_ONLY,
-        body: { kind: "json", schema: "inline: { gamerId }" },
+        body: { kind: "json", schema: "adminEnrollGamerBody" },
         test: TESTS.productsParticipations,
       },
     },
@@ -247,7 +258,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
       POST: {
         posture: ADMIN_ONLY,
         body: { kind: "multipart", schema: "updateProductData" },
-        test: null,
+        test: TESTS.productsUpdate,
       },
     },
   },
@@ -268,7 +279,10 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     handlers: {
       POST: {
         posture: ADMIN_ONLY,
-        body: { kind: "json", schema: "inline: requestSchema" },
+        body: {
+          kind: "json",
+          schema: "inline: requestSchema (declared on the primitive)",
+        },
         test: TESTS.sendTestEmail,
       },
     },
@@ -279,7 +293,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
       PATCH: {
         posture: ADMIN_ONLY,
         body: { kind: "json", schema: "updateSiteNotesBody" },
-        test: null,
+        test: TESTS.adminSiteNotes,
       },
     },
   },
@@ -288,7 +302,10 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     handlers: {
       POST: {
         posture: ADMIN_ONLY,
-        body: { kind: "json", schema: "inline: requestSchema" },
+        body: {
+          kind: "json",
+          schema: "inline: requestSchema (declared on the primitive)",
+        },
         test: TESTS.whatsappSend,
       },
     },
@@ -319,7 +336,13 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           reason:
             "a password reset is requested by someone who cannot sign in. Always answers 200 regardless of whether the address exists, which is the enumeration defence",
         },
-        body: { kind: "json", schema: "inline: requestSchema" },
+        body: {
+          kind: "json",
+          // Parsed inside the handler rather than through the primitive's body
+          // slot: the slot answers 400 on a schema failure, and this route must
+          // answer 200 whatever happens or the answer itself enumerates.
+          schema: "inline: requestSchema (parsed in-handler)",
+        },
         test: TESTS.forgotPassword,
       },
     },
@@ -363,7 +386,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           roles: ["customer"],
           allowUnverified: true,
         },
-        body: { kind: "json", schema: "inline: { pin, currentPin? }" },
+        body: { kind: "json", schema: "pinBody" },
         test: TESTS.pin,
       },
     },
@@ -391,7 +414,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           roles: ["customer"],
           allowUnverified: true,
         },
-        body: { kind: "json", schema: "inline: { pin }" },
+        body: { kind: "json", schema: "pinBody" },
         test: TESTS.pin,
       },
     },
@@ -406,7 +429,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
             "clearing a session must work even when the session is already unusable, so requiring a valid one would strand exactly the callers who need it. POST-only is the CSRF control: a cross-origin top-level POST carries no SameSite=Lax cookie, so a hostile page cannot force a sign-out. Answers a 303 the browser follows as a full-page GET",
         },
         body: { kind: "none" },
-        test: null,
+        test: TESTS.signout,
       },
     },
   },
@@ -420,7 +443,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           roles: ["customer", "gamer"],
           allowUnverified: true,
         },
-        body: { kind: "json", schema: null },
+        body: { kind: "json", schema: "inline: switchAccountBody" },
         test: TESTS.switchAccount,
       },
     },
@@ -434,7 +457,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     handlers: {
       POST: {
         posture: { kind: "role-gated", roles: ["customer"] },
-        body: { kind: "json", schema: null },
+        body: { kind: "json", schema: "createCheckoutBody" },
         test: TESTS.checkout,
       },
     },
@@ -446,7 +469,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
       POST: {
         posture: { kind: "role-gated", roles: ["customer"] },
         body: { kind: "none" },
-        test: null,
+        test: TESTS.billingPortal,
       },
     },
   },
@@ -466,7 +489,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           kind: "raw",
           reason: "the signature is computed over the exact bytes sent",
         },
-        test: null,
+        test: TESTS.discordInteractions,
       },
     },
   },
@@ -484,7 +507,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           allowUnverified: true,
         },
         body: { kind: "none" },
-        test: null,
+        test: TESTS.familyList,
       },
     },
   },
@@ -516,7 +539,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     handlers: {
       PATCH: {
         posture: { kind: "role-gated", roles: ["customer"] },
-        body: { kind: "json", schema: null },
+        body: { kind: "json", schema: "updateGamerBody" },
         test: TESTS.gamersUpdate,
       },
     },
@@ -528,7 +551,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     handlers: {
       POST: {
         posture: { kind: "role-gated", roles: ["customer"] },
-        body: { kind: "json", schema: null },
+        body: { kind: "json", schema: "createGamerBody" },
         test: TESTS.gamersCreate,
       },
     },
@@ -547,7 +570,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
             "educators self-register, so no session can exist yet. The highest-value public route on the surface: it creates an account, and the account it creates is unverified until an admin approves it",
         },
         body: { kind: "json", schema: "registerGeduBody" },
-        test: null,
+        test: TESTS.geduRegister,
       },
     },
   },
@@ -558,7 +581,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     handlers: {
       PATCH: {
         posture: { kind: "role-gated", roles: ["gamer", "gedu"] },
-        body: { kind: "json", schema: null },
+        body: { kind: "json", schema: "updateMinecraftAccountBody" },
         test: TESTS.minecraftAccount,
       },
     },
@@ -609,8 +632,6 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   // --- User settings -------------------------------------------------------
 
   "src/app/api/user/locale/route.ts": {
-    offPrimitive:
-      "the one route that re-implements the session check inline — it verifies the token and reads the subject itself instead of calling the shared gate. Recorded as nonconforming from day one; the sweep moves it onto the standard primitive",
     handlers: {
       PATCH: {
         posture: {
@@ -618,7 +639,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           reason:
             "every role sets their own interface language, and the write is scoped to the caller's own row by a column grant plus a self-update policy, so the role is genuinely irrelevant here",
         },
-        body: { kind: "json", schema: null },
+        body: { kind: "json", schema: "setLocaleBody" },
         test: TESTS.userLocale,
       },
     },
@@ -648,7 +669,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           roles: ["admin", "gedu"],
           requireVerifiedGedu: true,
         },
-        body: { kind: "json", schema: "inline: { code }" },
+        body: { kind: "json", schema: "inline: { code } (declared on the primitive)" },
         test: TESTS.voiceInstantEnd,
       },
     },
@@ -663,7 +684,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
             "the lobby checks whether a room code resolves before asking for camera and microphone permission, and a guest joining by link has no session. Reveals only that a code exists, which anyone holding the code could learn by joining",
         },
         body: { kind: "none" },
-        test: null,
+        test: TESTS.voiceInstantExists,
       },
     },
   },
@@ -676,7 +697,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           reason:
             "anyone holding the room code may join as a guest, and a recognized admin or verified educator is silently elevated to room owner. A public-or-gated binary cannot express it. Ownership is derived only from the server-side session lookup — never from the request body — and every ambiguous outcome falls through to guest",
         },
-        body: { kind: "json", schema: null },
+        body: { kind: "json", schema: "inline: instantRoomTokenBody" },
         test: TESTS.voiceInstantToken,
       },
     },
@@ -691,7 +712,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           kind: "role-gated",
           roles: ["gedu", "gamer", "admin"],
         },
-        body: { kind: "json", schema: "inline: { groupId }" },
+        body: { kind: "json", schema: "inline: { groupId } (declared on the primitive)" },
         test: TESTS.voiceToken,
       },
     },
@@ -724,9 +745,9 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
       GET: {
         posture: {
           kind: "webhook",
-          verifier: "meta-challenge-plain-compare",
+          verifier: "meta-challenge-timing-safe",
           reason:
-            "Meta's subscription handshake: it echoes a challenge back when the shared verify token matches. RECORDED WART — the token comparison is a plain equality check rather than a constant-time one, unlike every other secret comparison on this surface. The sweep gives it a timing-safe compare",
+            "Meta's subscription handshake: it echoes a challenge back when the shared verify token matches. The verify token is compared in constant time, like every other secret comparison on this surface — it was a plain equality check until the sweep fixed it",
         },
         body: { kind: "none" },
         test: TESTS.whatsappWebhook,
@@ -863,6 +884,17 @@ describe("check 1 — completeness: the surface and the registry agree", () => {
       expect(handler.posture.reason.trim().length).toBeGreaterThan(0);
     },
   );
+
+  // The second counter the sweep drove to zero, kept as a ratchet for the same
+  // reason as the untested one in check 4: a JSON body parsed by hand is how a
+  // shape rule ends up stated twice and drifting, and the only way one comes
+  // back is if someone writes the `null` in.
+  it("has no JSON handler left without a body schema", () => {
+    const unschemad = REGISTERED_HANDLERS.filter(
+      (h) => h.handler.body.kind === "json" && h.handler.body.schema === null,
+    );
+    expect(unschemad.map((h) => h.label).sort()).toEqual([]);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -1025,19 +1057,12 @@ describe("check 4 — test linkage", () => {
     ).toBe(true);
   });
 
-  // Untested handlers are recorded rather than excused. This assertion is the
-  // counter: it can only go down, and the sweep ends when it reaches zero.
-  it("records the handlers that still have no test", () => {
-    expect(untested.map((h) => h.label).sort()).toEqual([
-      "GET src/app/api/family/list/route.ts",
-      "GET src/app/api/voice/instant/exists/route.ts",
-      "PATCH src/app/api/admin/products/[id]/participations/[participationId]/route.ts",
-      "PATCH src/app/api/admin/site-notes/route.ts",
-      "POST src/app/api/admin/products/[id]/update/route.ts",
-      "POST src/app/api/auth/signout/route.ts",
-      "POST src/app/api/discord/interactions/route.ts",
-      "POST src/app/api/gedu/register/route.ts",
-      "POST src/app/api/parent/billing-portal/route.ts",
-    ]);
+  // Untested handlers were recorded rather than excused, and the list is now
+  // empty. Keeping the assertion as an equality against `[]` rather than
+  // deleting it is deliberate: it is a ratchet. A new handler that ships with
+  // `test: null` fails here immediately, so the zero cannot quietly become a
+  // one the way the original nine accumulated.
+  it("has no handler left without a test", () => {
+    expect(untested.map((h) => h.label).sort()).toEqual([]);
   });
 });
