@@ -98,7 +98,7 @@ type Posture =
 type WebhookVerifier =
   | "stripe-signature"
   | "meta-hmac-sha256"
-  | "meta-challenge-plain-compare"
+  | "meta-challenge-timing-safe"
   | "discord-ed25519";
 
 /**
@@ -268,7 +268,10 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     handlers: {
       POST: {
         posture: ADMIN_ONLY,
-        body: { kind: "json", schema: "inline: requestSchema" },
+        body: {
+          kind: "json",
+          schema: "inline: requestSchema (declared on the primitive)",
+        },
         test: TESTS.sendTestEmail,
       },
     },
@@ -288,7 +291,10 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     handlers: {
       POST: {
         posture: ADMIN_ONLY,
-        body: { kind: "json", schema: "inline: requestSchema" },
+        body: {
+          kind: "json",
+          schema: "inline: requestSchema (declared on the primitive)",
+        },
         test: TESTS.whatsappSend,
       },
     },
@@ -319,7 +325,13 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           reason:
             "a password reset is requested by someone who cannot sign in. Always answers 200 regardless of whether the address exists, which is the enumeration defence",
         },
-        body: { kind: "json", schema: "inline: requestSchema" },
+        body: {
+          kind: "json",
+          // Parsed inside the handler rather than through the primitive's body
+          // slot: the slot answers 400 on a schema failure, and this route must
+          // answer 200 whatever happens or the answer itself enumerates.
+          schema: "inline: requestSchema (parsed in-handler)",
+        },
         test: TESTS.forgotPassword,
       },
     },
@@ -674,7 +686,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           reason:
             "anyone holding the room code may join as a guest, and a recognized admin or verified educator is silently elevated to room owner. A public-or-gated binary cannot express it. Ownership is derived only from the server-side session lookup — never from the request body — and every ambiguous outcome falls through to guest",
         },
-        body: { kind: "json", schema: null },
+        body: { kind: "json", schema: "inline: instantRoomTokenBody" },
         test: TESTS.voiceInstantToken,
       },
     },
@@ -722,9 +734,9 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
       GET: {
         posture: {
           kind: "webhook",
-          verifier: "meta-challenge-plain-compare",
+          verifier: "meta-challenge-timing-safe",
           reason:
-            "Meta's subscription handshake: it echoes a challenge back when the shared verify token matches. RECORDED WART — the token comparison is a plain equality check rather than a constant-time one, unlike every other secret comparison on this surface. The sweep gives it a timing-safe compare",
+            "Meta's subscription handshake: it echoes a challenge back when the shared verify token matches. The verify token is compared in constant time, like every other secret comparison on this surface — it was a plain equality check until the sweep fixed it",
         },
         body: { kind: "none" },
         test: TESTS.whatsappWebhook,
