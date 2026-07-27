@@ -80,6 +80,18 @@ const AUTHENTICATED_ALLOWLIST = new Set([
   "is_voice_group_member",
   "is_voice_group_moderator",
 
+  // Authorization guard primitives (00120, docs/db-authorization-architecture
+  // .md §3.1). They raise the canonical forbidden 42501 or return void — they
+  // hold no privilege of their own (SECURITY INVOKER) and answer only "does the
+  // caller hold role X", which get_user_role() and is_admin() already tell the
+  // caller, so exposing them adds no capability and leaks nothing. authenticated
+  // needs EXECUTE because create_product / update_product are SECURITY INVOKER:
+  // their guard runs as the caller, not as the function owner. The third
+  // primitive, assert_self, has no SECURITY INVOKER consumer yet and is
+  // therefore service_role-only — deliberately NOT listed here.
+  "assert_role",
+  "assert_admin",
+
   // Gedu verification (00111). Admin verifies / un-verifies a gedu from the
   // admin user-detail page via their own authenticated session. SECURITY
   // DEFINER, but self-gates with is_admin() and stamps verified_by/verified_at
