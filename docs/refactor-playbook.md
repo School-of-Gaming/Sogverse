@@ -64,7 +64,7 @@ without the last two is an audit, not a fix.
 |---|---|---|
 | DB grants + RLS presence | Done (2026-03) | `docs/SECURITY_REPORT.md`; enforced by the DB access-control test |
 | DB function bodies + RLS behavior | Done (2026-07) | `docs/db-authorization-architecture.md`; enforced by the verification-spine DB tests |
-| HTTP route layer | In flight | `docs/route-boundary-architecture.md` |
+| HTTP route layer | Done (2026-07) | `docs/route-boundary-architecture.md`; enforced by the route posture registry's integration tests |
 | Data validity (constraints) | Future | Deferred by the db-auth doc's out-of-scope list; instances accumulate in `TODO.md` |
 
 ## Next instance stub: the HTTP route layer

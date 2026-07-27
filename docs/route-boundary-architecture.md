@@ -1,29 +1,37 @@
 # HTTP Route Boundary Architecture
 
-**Status:** target architecture + migration plan. This is the second instance of the
+**Status: built.** Both phases of §5 have landed — the primitive, the posture registry
+and its four spine checks, then the sweep. §2–§3 describe the system that exists, not a
+target: every handler on the surface carries one machine-readable classification, every
+handler that authenticates its caller does so through shared code, every JSON body is
+validated against a schema, every handler has an integration test, and the spine fails
+the build when any of that stops being true. This is the second instance of the
 hindsight-refactor loop (`docs/refactor-playbook.md`); the first was
 `docs/db-authorization-architecture.md`, whose §1 problem statement this doc repeats one
-layer up. When someone says "let's do the route-layer refactor," this is the doc to read
-and act on.
+layer up. This doc stays the source of truth for how the HTTP boundary is enforced.
 
-**Execution contract.** Written so a fresh session can execute the refactor from it:
+**Execution contract.** Written so a fresh session can act on it:
 
 1. **Re-verify current state.** The §2 snapshot was verified 2026-07-27 and will drift.
    Regenerate the surface with a glob over `src/app/api/**/route.ts`; regenerate the
-   admin-client import list with `git grep -l createAdminClient src/`. The Model-A
-   justifications live in the triage CSV in `docs/db-authorization-architecture.md` §5
-   Phase 3 — re-derive against it, don't edit it.
-2. **No database involvement.** This refactor is app-layer only: no migrations, no
-   staging side effects, no deploy-window hazards. The spine tests are plain jsdom
-   integration tests and run locally (`npx vitest run <file>`) and in CI.
-3. **One phase per PR**, CI green before the next starts.
-4. **No authorization semantics change silently.** Every posture in §2 is recorded as it
-   *is*, warts included. A wart fixed during the sweep is a deliberate, recorded change
-   in the PR description — never a side effect of mechanical conversion.
+   admin-client import list with `git grep -l createAdminClient src/`. The registry
+   itself is the live classification and is checked against the filesystem on every CI
+   run, so it cannot silently disagree with the surface the way a doc snapshot can.
+2. **No database involvement.** This work is app-layer only: no migrations, no staging
+   side effects, no deploy-window hazards. The spine tests are plain jsdom integration
+   tests and run locally (`npx vitest run <file>`) and in CI.
+3. **No authorization semantics change silently.** Every posture in §2 was recorded as
+   it *was*, warts included, before anything moved. A wart fixed during the sweep was a
+   deliberate, recorded change in its PR description — never a side effect of mechanical
+   conversion. The same rule applies to any future change here.
 
 ---
 
 ## 1. The problem
+
+*Stated as it stood before the work, and kept in that tense: it is the record of why
+the machinery in §3 exists, and the thing to re-read if anyone proposes removing a
+piece of it.*
 
 The route layer's conventions — `requireRole` gating, contract-schema body parsing,
 error-code→HTTP mapping, the `{ error: string }` wire shape — are enforced by
@@ -54,7 +62,11 @@ refactor builds the mechanical first layer in front of it.
 
 ---
 
-## 2. Current state (verified 2026-07-27 — re-verify per the execution contract)
+## 2. The surface (snapshot 2026-07-27 — re-verify per the execution contract)
+
+*The posture taxonomy and the per-posture counts below still describe the surface: the
+sweep changed no route's posture, by design. What the sweep did change is recorded at
+the end of §5 — how bodies are parsed, how errors map, and what is tested.*
 
 ### The surface
 
@@ -258,9 +270,11 @@ integration tests pass unchanged, which is the evidence that the wrapper preserv
 behaviour. The public and webhook exemplars are classifications, not conversions:
 they demonstrate the reasoned carve-out shape, which is the other half of the design.
 
-### What Phase 2 inherits
+### What Phase 1 handed the sweep
 
-Findings and judgment calls from Phase 1 that the sweep should carry forward:
+Findings and judgment calls from Phase 1, kept because they are the reasoning behind
+choices the sweep then applied surface-wide — the "why" the Phase 2 record below
+assumes:
 
 - **Two error-mapping divergences resolved deliberately in the exemplar**, and the
   same two questions recur in every conversion. First, an unrecognized database code
@@ -287,12 +301,10 @@ Findings and judgment calls from Phase 1 that the sweep should carry forward:
 - **The recorded off-primitive exception expires by itself.** The spine fails if a
   file carrying that exception later gains the shared gate, so converting the
   hand-rolled session route forces the exception's removal in the same change.
-- **The architecture still has no permanent home.** Phase 1 put the tripwire in the
+- **The architecture had no permanent home yet.** Phase 1 put the tripwire in the
   root and the registry conventions with the test suite, and deliberately left the
   route shape here rather than duplicating a mid-flight design into a colocated doc.
-  When the sweep finishes, decide that home — the primitive and the routes live in
-  different directories, so the doc that a route author auto-loads is not the one
-  beside the primitive.
+  The sweep's answer is at the end of this section.
 
 **Snapshot corrections found while re-verifying §2.** The surface, the posture counts
 and the service-role import set were all exact. Coverage was not: "26 of 39 route
@@ -302,18 +314,84 @@ untested — which is what §2's untested list already named, so only the ratio 
 wrong. The WhatsApp webhook is covered by a test that imports it dynamically, so any
 linkage check has to match both the static and the dynamic import form.
 
-### Phase 2 — the sweep
+### Phase 2 — the sweep — **LANDED**
 
-Convert route-by-route in batches: simple role-gated JSON routes first, then multipart
-and odd shapes, then the recorded exceptions. Each conversion: move to `defineRoute`,
-normalize its error map to the default table (each divergence resolved deliberately and
-noted), give ad-hoc bodies a schema (and params/query schemas where read), keep or
-revoke raw-message forwarding explicitly. Write the missing integration tests (the
-nine), converting `test: null` entries to real links. Deliberate, recorded fixes that
-belong here rather than in silent conversion: the locale route moves onto the standard
-session primitive; the webhook GET challenge gains a timing-safe compare; incidental
-raw-message forwards close. End state: zero `test: null`, zero unreasoned carve-outs,
-and the playbook's instance table flipped to done.
+Converted route-by-route in batches — simple role-gated JSON routes, then the rest of
+the gated surface, then multipart and the public routes — with the spine green between
+batches. Thirty-one of the thirty-nine route files now go through the primitive. The
+eight that do not are the postures it deliberately does not cover: the two
+session-mutating redirect flows, the signed-token PIN reset, the api-key server-to-server
+check, the optional-auth room token, and the three webhook verifiers. Each is a reasoned
+carve-out in the registry rather than an omission, which is the honest boundary the
+design was aiming for.
+
+**The three counters are at zero and stay there.** No handler is unclassified, no JSON
+body is unschema'd, no handler is untested, no route stands off the primitive without a
+written reason. Two of those are now assertions against an empty list rather than
+assertions that were deleted once they emptied — kept deliberately as ratchets, so a
+regression fails CI immediately instead of quietly starting a fresh backlog.
+
+**What the sweep changed, and what it deliberately did not.** No route's posture moved.
+The one apparent exception is not one: the route that hand-rolled its session check now
+declares the any-authenticated posture, which is what its code always did. Everything
+else that changed is input handling, error mapping and message disclosure.
+
+**Error-mapping decisions worth carrying forward.** Three patterns recurred:
+
+- An unrecognized database code is a logged 500 everywhere now, not a 400 reported to
+  the caller as their mistake. Several routes had a catch-all `else 400` that turned
+  every unanticipated failure into a client error and hid it.
+- `no_data_found` really did need deciding per route, exactly as Phase 1 predicted. The
+  split turned out to be clean: a route whose subject is named in the URL path answers
+  404, because a missing one is a missing resource; a route whose subject arrives in the
+  body answers 400, because the caller's input names something that does not exist. Both
+  answers appear on the surface, each with the reason written beside it.
+- A status the shared table has no default for stays an explicit response with its
+  reason recorded — an upstream payment failure as 502, an exhausted retry loop as 503,
+  a broken money-path invariant as 500 through a per-route override.
+
+**Message disclosure is now a decision rather than an accident.** Every route that
+forwards an underlying message opts in by name and says why; the rest answer a generic
+message for the status and log the real one. The routes that kept the opt-in are the
+ones whose underlying messages are genuinely the user-facing explanation — a refused
+signup, a refused waitlist join, a refused batch of group changes, a refused product
+write — and on those the handler is written so nothing raw can escape past it. Everywhere
+else the forwarding was incidental and is closed. Curated copy survived only where it
+tells the caller something the status alone does not; where it merely restated the
+status, the shared generic replaced it.
+
+**Where schemas live.** Feature contract files gained the shapes that were floating in
+routes, and two features that had none now have one. Body schemas belong there because
+both ends of an internal call then import the same shape; a schema declared inline in
+the route is fine when nothing else consumes it, and the registry records which is which.
+
+**One shape the primitive does not express, recorded rather than worked around.** A
+route whose payload is an RPC's `Json` result cannot use the response-schema slot
+directly: the generated type is `Json`, the slot's type is the contract shape, and
+nothing bridges them without a cast. Those routes narrow the result in the handler
+instead — the shape the Phase 1 exemplar already used — and the response slot is used
+where the route assembles the payload itself. Worth revisiting only if a wrapper change
+can remove the cast without weakening the handler's return type everywhere else.
+
+**The deliberate fixes.** The hand-rolled session check moved onto the primitive, and
+the spine's recorded exception expired by itself as designed — the check fails a file
+that carries the excuse while using the gate, so deleting the annotation was forced by
+the same change rather than left to be remembered. The webhook challenge that compared
+its verify token with a plain equality check now uses the same constant-time compare its
+sibling handler always used for the HMAC, and the registry's verifier name changed with
+it so the annotation cannot outlive the fix.
+
+**Where this doc should live.** Phase 1 deferred the question; the recommendation is to
+leave it here in `docs/` rather than colocate it. The reasoning is the one the deferral
+anticipated: this system has three homes in the tree — the primitive, the routes, and
+the registry that classifies them — and no single directory a route author works in
+would auto-load a doc covering all three. What belongs colocated is the *operating
+rule*, and that already is: the testing conventions carry how to add a route to the
+registry and what a reason has to say, which is what someone adding a route needs at the
+moment they need it. This doc is the design record behind that rule — why the boundary
+is mechanically verified at all — and it is read deliberately, not incidentally. Moving
+it would trade a doc a human opens on purpose for one that auto-loads in one of three
+places and is wrong about the other two.
 
 ---
 
@@ -325,5 +403,11 @@ and the playbook's instance table flipped to done.
   are shared by routes and pages, so their authorization can't be encoded purely at the
   route boundary. Recorded, not solved here.
 - **Response localization** and any change to the `{ error, code }` wire contract.
-- **Changing what any route actually authorizes.** Posture changes are findings for a
-  human decision, not sweep work.
+- **Changing what any route actually authorizes.** Posture changes were findings for a
+  human decision, not sweep work — and none were made. The one posture question the
+  sweep surfaced and left alone: the feedback route names all four roles, which is the
+  shared gate's way of spelling "any authenticated caller", and it stays role-gated
+  because that is what the code does. It loads the profile the notification email needs
+  and applies the parent-PIN gate on the way, neither of which the any-authenticated
+  posture does. Reclassifying it would be a behaviour change wearing a tidy-up's
+  clothes.

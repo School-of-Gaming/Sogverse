@@ -104,8 +104,9 @@ type WebhookVerifier =
 /**
  * How the handler takes its request payload. `schema: null` on a `json` entry
  * records a body parsed without a schema — a hand-rolled shape check, or none
- * at all. Those are the sweep's targets; recording them is how they stay
- * countable.
+ * at all. There are none left, and the `null` stays in the type as the slot a
+ * regression would have to occupy: recording one is what makes it countable,
+ * and check 1 asserts the count is still zero.
  */
 type BodyDiscipline =
   | { kind: "json"; schema: string | null }
@@ -883,6 +884,17 @@ describe("check 1 — completeness: the surface and the registry agree", () => {
       expect(handler.posture.reason.trim().length).toBeGreaterThan(0);
     },
   );
+
+  // The second counter the sweep drove to zero, kept as a ratchet for the same
+  // reason as the untested one in check 4: a JSON body parsed by hand is how a
+  // shape rule ends up stated twice and drifting, and the only way one comes
+  // back is if someone writes the `null` in.
+  it("has no JSON handler left without a body schema", () => {
+    const unschemad = REGISTERED_HANDLERS.filter(
+      (h) => h.handler.body.kind === "json" && h.handler.body.schema === null,
+    );
+    expect(unschemad.map((h) => h.label).sort()).toEqual([]);
+  });
 });
 
 // ---------------------------------------------------------------------------
