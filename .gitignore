@@ -59,6 +59,9 @@ supabase/.temp/
 *.swp
 *.swo
 
+# claude code (agent worktrees are local scratch checkouts)
+.claude/worktrees/
+
 # Logs
 logs
 *.log
