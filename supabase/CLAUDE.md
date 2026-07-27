@@ -57,10 +57,22 @@ and trust the **highest-numbered** one. Do not hardcode a migration number for t
 anywhere — the correct file moves the moment one is superseded, which is the staleness
 trap this rule exists to avoid.
 
+## CLI version
+
+**Rule: always invoke the CLI as `npx supabase` — never a bare/global `supabase`.** The
+CLI is a pinned exact devDependency, and CI pins the same version
+(`SUPABASE_CLI_VERSION` in the workflow); the two move together in one commit, always.
+The pin is load-bearing twice over: local-stack security semantics changed at v2.106.0
+(no more auto-granted Data API privileges — the fail-closed regime the access-control
+tests assume), and `gen types` / dump output formats drift across versions, so an
+unpinned CLI turns every regeneration into spurious diffs. A globally installed
+`supabase` on the machine may be any version; `npx` resolves the devDependency and makes
+it irrelevant.
+
 ## Linking (first time only)
 
 ```bash
-supabase link --project-ref "$(grep '^SUPABASE_PROJECT_REF=' .env.local | cut -d= -f2-)"
+npx supabase link --project-ref "$(grep '^SUPABASE_PROJECT_REF=' .env.local | cut -d= -f2-)"
 # Enter the password from SUPABASE_DB_PASSWORD in .env.local when prompted.
 ```
 
@@ -78,11 +90,11 @@ a migration PR (run via the Bash tool):
 1. Write the migration SQL file in `migrations/`.
 2. Push to remote:
    ```bash
-   supabase db push -p "$(grep '^SUPABASE_DB_PASSWORD=' .env.local | cut -d= -f2-)"
+   npx supabase db push -p "$(grep '^SUPABASE_DB_PASSWORD=' .env.local | cut -d= -f2-)"
    ```
 3. Regenerate types:
    ```bash
-   supabase gen types typescript --project-id "$(grep '^SUPABASE_PROJECT_REF=' .env.local | cut -d= -f2-)" 2>/dev/null > src/types/database.types.ts
+   npx supabase gen types typescript --project-id "$(grep '^SUPABASE_PROJECT_REF=' .env.local | cut -d= -f2-)" 2>/dev/null > src/types/database.types.ts
    ```
    `2>/dev/null` swallows the CLI's "new version available" notice so it doesn't end up
    in the output file. `cut -d= -f2-` (note the trailing `-`) keeps any `=` characters
