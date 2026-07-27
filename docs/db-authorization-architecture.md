@@ -431,6 +431,11 @@ What Phase 3 inherits:
   `whatsapp_messages` with no UPDATE policy behind it, so it authorizes nothing today.
   The IDOR loop covers it, but the grant should be revoked when that table is next
   touched.
+- **`can_read_product` answers `NULL`, not `false`, for a caller with no profiles row.**
+  Its first disjunct compares `get_user_role()` to `'admin'`, which is NULL for `anon`,
+  and `NULL OR false` is NULL. Harmless where it is used — a policy's `USING` clause
+  treats NULL as deny — and the scope test pins both the NULL and the deny. Worth a
+  `COALESCE(…, false)` when Phase 4 next touches that predicate, so the boolean is total.
 - **The Phase 1 grant asymmetry stands**: `assert_self` and the two §3.2 participation
   predicates remain `service_role`-only, because nothing composes from them yet. The
   phase that puts them in a policy or a `SECURITY INVOKER` body grants them then — and

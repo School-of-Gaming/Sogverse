@@ -216,13 +216,28 @@ describe("self-scoping exposed functions", () => {
         expect(data).toBe(true);
       }
 
-      // An unrelated customer and an anonymous visitor are not parties to it.
-      for (const client of [customer2, anon]) {
-        const { data } = await client.rpc("can_read_product", {
-          p_product_id: PRIVATE_PRODUCT,
-        });
-        expect(data).toBe(false);
-      }
+      // An unrelated customer is not a party to it.
+      const asCustomer2 = await customer2.rpc("can_read_product", {
+        p_product_id: PRIVATE_PRODUCT,
+      });
+      expect(asCustomer2.data).toBe(false);
+
+      // anon answers NULL, not false, and that is worth pinning rather than
+      // hiding behind a truthiness check: anon has no profiles row, so
+      // `get_user_role() = 'admin'` is NULL, and `NULL OR false OR false` is
+      // NULL under SQL's three-valued logic. It is not a leak — a policy's
+      // USING clause treats NULL as deny, which is exactly what read_products
+      // relies on, and the read below proves it.
+      const asAnon = await anon.rpc("can_read_product", {
+        p_product_id: PRIVATE_PRODUCT,
+      });
+      expect(asAnon.data).toBeNull();
+
+      const visible = await anon
+        .from("products")
+        .select("id")
+        .eq("id", PRIVATE_PRODUCT);
+      expect(visible.data).toEqual([]);
     });
   });
 
