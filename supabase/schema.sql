@@ -5573,7 +5573,6 @@ GRANT ALL ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_gamer_id
 --
 
 REVOKE ALL ON FUNCTION public.join_waitlist(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.join_waitlist(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid) TO service_role;
 
 
 --
@@ -5656,7 +5655,6 @@ GRANT ALL ON FUNCTION public.set_pin_for_user(p_user_id uuid, p_pin text) TO ser
 --
 
 REVOKE ALL ON FUNCTION public.submit_feedback(p_user_id uuid, p_message text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.submit_feedback(p_user_id uuid, p_message text) TO service_role;
 
 
 --

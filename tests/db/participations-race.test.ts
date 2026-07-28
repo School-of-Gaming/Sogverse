@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { createAdminTestClient } from "./helpers";
-import { TEST_IDS } from "./constants";
+import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import {
   createTestProduct,
   deleteTestProducts,
@@ -44,9 +44,17 @@ const ALL_TEST_PRODUCTS = [
 
 describe("participations race + idempotency", () => {
   let admin: SupabaseClient<Database>;
+  // The waitlist engine is not callable by service_role (migration 00126); the
+  // waitlist block below goes through the guarded wrapper as CUSTOMER, who is
+  // the parent of both seeded gamers.
+  let customer: SupabaseClient<Database>;
 
   beforeAll(async () => {
     admin = createAdminTestClient();
+    customer = await createAuthenticatedClient(
+      TEST_CREDENTIALS.CUSTOMER.email,
+      TEST_CREDENTIALS.CUSTOMER.password,
+    );
     // Ensure no leftover rows from prior aborted runs — we hard-reset
     // before creating products so beforeAll is idempotent under the
     // shared local Supabase.
@@ -371,7 +379,10 @@ describe("participations race + idempotency", () => {
   // Waitlist concurrency + idempotency
   // ---------------------------------------------------------------------------
 
-  describe("join_waitlist", () => {
+  // The engine (join_waitlist) is exercised through its guarded wrapper, which
+  // is a thin assert_role + auth.uid() pass-through — the concurrency and
+  // idempotency under test are the engine's own.
+  describe("join_waitlist (via join_product_waitlist)", () => {
     beforeAll(async () => {
       await createTestProduct(admin, {
         id: PRODUCT_WAITLIST,
@@ -382,15 +393,13 @@ describe("participations race + idempotency", () => {
 
     it("two parallel joins for distinct gamers yield positions 1 and 2", async () => {
       const [a, b] = await Promise.all([
-        admin.rpc("join_waitlist", {
+        customer.rpc("join_product_waitlist", {
           p_product_id: PRODUCT_WAITLIST,
           p_gamer_id: TEST_IDS.GAMER,
-          p_customer_id: TEST_IDS.CUSTOMER,
         }),
-        admin.rpc("join_waitlist", {
+        customer.rpc("join_product_waitlist", {
           p_product_id: PRODUCT_WAITLIST,
           p_gamer_id: TEST_IDS.GAMER_2,
-          p_customer_id: TEST_IDS.CUSTOMER,
         }),
       ]);
 
@@ -410,18 +419,16 @@ describe("participations race + idempotency", () => {
     });
 
     it("repeat call for the same (product, gamer) returns the existing row", async () => {
-      const first = await admin.rpc("join_waitlist", {
+      const first = await customer.rpc("join_product_waitlist", {
         p_product_id: PRODUCT_WAITLIST,
         p_gamer_id: TEST_IDS.GAMER,
-        p_customer_id: TEST_IDS.CUSTOMER,
       });
       const firstId = getString(first.data, "participation_id");
       const firstPos = getNumber(first.data, "waitlist_position");
 
-      const second = await admin.rpc("join_waitlist", {
+      const second = await customer.rpc("join_product_waitlist", {
         p_product_id: PRODUCT_WAITLIST,
         p_gamer_id: TEST_IDS.GAMER,
-        p_customer_id: TEST_IDS.CUSTOMER,
       });
       expect(getString(second.data, "participation_id")).toBe(firstId);
       expect(getNumber(second.data, "waitlist_position")).toBe(firstPos);

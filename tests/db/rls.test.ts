@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import {
@@ -295,67 +295,35 @@ describe("Row Level Security", () => {
   });
 
   // =========================================================================
-  // submit_feedback RPC
+  // submit_feedback engine — reachable only through its guarded wrapper
   // =========================================================================
 
-  describe("submit_feedback RPC", () => {
-    afterEach(async () => {
-      // Clean up rows created by RPC tests — use CUSTOMER_2 to avoid colliding with seed data
-      await admin
-        .from("feedback_submissions")
-        .delete()
-        .eq("user_id", TEST_IDS.CUSTOMER_2);
-    });
-
-    it("inserts feedback and returns true via admin client", async () => {
-      const { data, error } = await admin.rpc("submit_feedback", {
-        p_user_id: TEST_IDS.CUSTOMER_2,
-        p_message: "Test feedback from RPC",
-      });
-
-      expect(error).toBeNull();
-      expect(data).toBe(true);
-
-      // Verify the row was inserted
-      const { data: rows } = await admin
-        .from("feedback_submissions")
-        .select("message")
-        .eq("user_id", TEST_IDS.CUSTOMER_2)
-        .eq("message", "Test feedback from RPC");
-
-      expect(rows).toHaveLength(1);
-    });
-
-    it("returns false when rate limit is reached (6 per hour)", async () => {
-      // Insert 6 submissions to hit the limit
-      for (let i = 0; i < 6; i++) {
-        await admin.rpc("submit_feedback", {
-          p_user_id: TEST_IDS.CUSTOMER_2,
-          p_message: `Rate limit test ${i}`,
-        });
-      }
-
-      // 7th should be rejected
-      const { data, error } = await admin.rpc("submit_feedback", {
-        p_user_id: TEST_IDS.CUSTOMER_2,
-        p_message: "Should be rate limited",
-      });
-
-      expect(error).toBeNull();
-      expect(data).toBe(false);
-
-      // Verify only 6 rows exist
-      const { data: rows } = await admin
-        .from("feedback_submissions")
-        .select("id")
-        .eq("user_id", TEST_IDS.CUSTOMER_2);
-
-      expect(rows).toHaveLength(6);
-    });
-
+  /**
+   * What the engine *does* — insert, attribution, the six-per-hour rate limit,
+   * the length bounds — is covered through the wrapper in
+   * feedback-submission.test.ts, which is also the scope test the §3.4 spine
+   * names for it.
+   *
+   * What is pinned here is the grant posture migration 00126 established. The
+   * engine takes the user id as a parameter, so any role that can execute it
+   * can attribute feedback to anyone; since Phase 3 no role can. The wrapper is
+   * SECURITY DEFINER and reaches the engine through ownership, so it keeps
+   * working while both callable roles are shut out.
+   */
+  describe("submit_feedback engine grants", () => {
     it("authenticated users cannot call submit_feedback directly", async () => {
       const { error } = await customerClient.rpc("submit_feedback", {
         p_user_id: TEST_IDS.CUSTOMER,
+        p_message: "Should be denied",
+      });
+
+      expect(error).not.toBeNull();
+      expect(error!.message).toMatch(/permission denied/i);
+    });
+
+    it("service_role cannot call submit_feedback directly either", async () => {
+      const { error } = await admin.rpc("submit_feedback", {
+        p_user_id: TEST_IDS.CUSTOMER_2,
         p_message: "Should be denied",
       });
 

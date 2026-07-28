@@ -712,8 +712,10 @@ trust boundary — the same reasoning Phase 3 applied.
 
 #### Post-deploy cleanup
 
-The only work this refactor leaves. Both items are blocked on the deploy of this stack,
-not on design:
+The only work this refactor leaves. Both items were blocked on the deploy of this stack,
+not on design. **Both are done — the stack deployed to production on 2026-07-28 and the
+revoke landed the same day.** The second item found drift; what it found, and the one
+piece of work it left, is written up under it.
 
 - **Revoke `service_role` EXECUTE from the two participation engines** — the three-argument
   waitlist-join and the two-argument feedback-submission functions, which take the
@@ -733,10 +735,29 @@ not on design:
   as a normal migration; the wrappers are `SECURITY DEFINER` and reach the engines through
   ownership, not through a role grant.
 - **Confirm the two repaired admin policies exist on production.** The drift repair above
-  is conditional, so production takes the ALTER branch — but the drift is evidence that
-  the hosted schemas were edited outside migrations at least once, and the cheapest time
-  to notice another instance is right after this stack lands. Compare the production
-  policy catalog against `supabase/schema.sql`.
+  is conditional, and the reasoning recorded here was that production would take the ALTER
+  branch and be unaffected. **The post-release diff proved that wrong, in both directions.**
+
+  The out-of-band edit is on **staging**, not production. Migration history names the six
+  profile-table policies in snake_case; production still matches it exactly, while staging
+  had them renamed by hand to quoted human-readable names at some point. The repair block
+  keys its `IF EXISTS` on the quoted admin name — so staging matched and took ALTER, and
+  **production did not match and took CREATE**. Production therefore ends up with *two*
+  admin policies per profile table: the original, with a bare role-predicate call, and the
+  new one the repair created, with the InitPlan-wrapped call.
+
+  Nothing is exposed by this — both policies are permissive over the same admin predicate,
+  so effective access is identical. The costs are narrower: the "every admin policy is one
+  shape" property fails on those two tables, the un-wrapped duplicate re-evaluates its
+  predicate per row, and the committed snapshot describes neither database completely.
+  Converging the two catalogs onto the migration-history names, and dropping the
+  duplicates, is tracked in `TODO.md`; it needs a migration that reaches the same end state
+  from either starting point, because the two databases genuinely differ.
+
+  The general lesson is the one the drift was evidence for in the first place: a
+  conditional repair keyed on a *name* encodes an assumption about which database you are
+  looking at. Keying it on the thing being repaired — or asserting the end state
+  unconditionally — would have converged both.
 
 The self-assertion primitive remains `service_role`-only: nothing composes from it yet,
 because no `SECURITY INVOKER` body or policy has needed a raising self-check. That is the

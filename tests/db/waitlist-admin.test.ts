@@ -79,12 +79,18 @@ describe("waitlist — admin read + promote/demote + self position", () => {
       .eq("id", PRODUCT_MUNI);
   });
 
-  /** Adds a gamer to the waitlist; returns the participation id. */
+  /**
+   * Adds a gamer to the waitlist; returns the participation id.
+   *
+   * Goes through the guarded wrapper rather than the engine: migration 00126
+   * revoked service_role EXECUTE on join_waitlist, so the admin client cannot
+   * reach it. CUSTOMER is the parent of both seeded gamers, which is what the
+   * engine's parent-of-gamer check wants.
+   */
   async function joinWaitlist(gamerId: string): Promise<string> {
-    const res = await admin.rpc("join_waitlist", {
+    const res = await customer.rpc("join_product_waitlist", {
       p_product_id: PRODUCT_MUNI,
       p_gamer_id: gamerId,
-      p_customer_id: TEST_IDS.CUSTOMER,
     });
     expect(res.error).toBeNull();
     return joinWaitlistRpcResult.parse(res.data).participation_id;
@@ -247,5 +253,36 @@ describe("waitlist — admin read + promote/demote + self position", () => {
       p_participation_id: active,
     });
     expect(demote.error?.code).toBe("42501");
+  });
+
+  /**
+   * The grant posture migration 00126 established. join_waitlist takes the
+   * customer id as a parameter, so any role that can execute it can enqueue a
+   * gamer on someone else's behalf; since Phase 3 no role can. The wrapper
+   * (join_product_waitlist) is SECURITY DEFINER and reaches the engine through
+   * ownership, so it keeps working — every joinWaitlist() call above proves it.
+   */
+  describe("join_waitlist engine grants", () => {
+    it("authenticated users cannot call join_waitlist directly", async () => {
+      const { error } = await customer.rpc("join_waitlist", {
+        p_product_id: PRODUCT_MUNI,
+        p_gamer_id: TEST_IDS.GAMER,
+        p_customer_id: TEST_IDS.CUSTOMER,
+      });
+
+      expect(error).not.toBeNull();
+      expect(error!.message).toMatch(/permission denied/i);
+    });
+
+    it("service_role cannot call join_waitlist directly either", async () => {
+      const { error } = await admin.rpc("join_waitlist", {
+        p_product_id: PRODUCT_MUNI,
+        p_gamer_id: TEST_IDS.GAMER,
+        p_customer_id: TEST_IDS.CUSTOMER,
+      });
+
+      expect(error).not.toBeNull();
+      expect(error!.message).toMatch(/permission denied/i);
+    });
   });
 });

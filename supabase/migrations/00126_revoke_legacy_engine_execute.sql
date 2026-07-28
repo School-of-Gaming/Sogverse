@@ -1,0 +1,42 @@
+-- Post-deploy cleanup for the DB authorization refactor
+-- (docs/db-authorization-architecture.md §5, "Post-deploy cleanup", item 1).
+--
+-- WHAT THIS CHANGES
+--
+-- Revokes `service_role` EXECUTE from the two participation engines that take
+-- the caller's identity as a parameter:
+--
+--   join_waitlist(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid)
+--   submit_feedback(p_user_id uuid, p_message text)
+--
+-- Nothing else. No function body, signature, policy or grant is touched, so
+-- there is no type-generation impact.
+--
+-- WHY THIS IS SAFE ONLY NOW
+--
+-- Phase 3 put guarded entry points in front of both engines — join_product_waitlist
+-- and submit_my_feedback — which pin the actor to auth.uid() instead of trusting a
+-- parameter, and no application code has called the engines directly since. But the
+-- *deployed* production code called them through the admin client until the stack
+-- carrying those wrappers shipped. Landing this revoke before that deploy would have
+-- broken production waitlist joins and feedback inside the migrate-then-deploy
+-- window, which is why it was held back to a migration of its own.
+--
+-- WHY REVOKE RATHER THAN DROP
+--
+-- The engines cannot be dropped, as an earlier Phase 3 note assumed: the guarded
+-- wrappers call them. Revoking is the stronger outcome anyway — it makes each engine
+-- reachable only through its wrapper, which is the §2 grant-lockdown posture applied
+-- to a function instead of a table. The wrappers are SECURITY DEFINER and reach the
+-- engines through ownership, not through a role grant, so they are unaffected.
+--
+-- AFTER THIS, THE ENGINES HAVE NO ROLE GRANTS AT ALL
+--
+-- `authenticated` and `anon` never held EXECUTE on either (both were service_role-only
+-- since the blanket-grant removal), and PUBLIC is already revoked. So this leaves the
+-- owner as the only caller — exactly what the wrapper-only posture means. The §3.4
+-- verification spine enumerates functions exposed to `authenticated`, so neither engine
+-- was ever in its matrix and its classifications are unaffected.
+
+REVOKE EXECUTE ON FUNCTION public.join_waitlist(uuid, uuid, uuid) FROM service_role;
+REVOKE EXECUTE ON FUNCTION public.submit_feedback(uuid, text) FROM service_role;
