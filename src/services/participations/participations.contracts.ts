@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
+import type { PurchaseShape } from "@/types";
 
 /**
  * Response of POST /api/checkout/products/create — the signup outcomes: paid
@@ -20,6 +22,28 @@ export const createParticipationResponse = z.discriminatedUnion("status", [
 export type CreateParticipationResponse = z.infer<
   typeof createParticipationResponse
 >;
+
+/**
+ * Request body of POST /api/checkout/products/create. The purchase shape and
+ * currency are enums rather than free strings so the route never has to ask
+ * "is this one of the four we support?" after the fact — and the coherence
+ * rules the shape must satisfy against the product's billing mode stay in the
+ * route, because they need the product row to decide.
+ */
+export const createCheckoutBody = z.object({
+  productId: z.string().min(1, "productId is required"),
+  gamerId: z.string().min(1, "gamerId is required"),
+  // Spelled out rather than derived so the compiler checks it against the
+  // shared union below — adding a shape there fails the build until it is
+  // decided here too.
+  purchaseShape: z.enum([
+    "subscription_monthly",
+    "single_payment",
+    "free",
+    "external",
+  ] as const satisfies readonly PurchaseShape[]),
+  currency: z.enum(SUPPORTED_CURRENCIES),
+});
 
 /** Request body of POST /api/participations/waitlist. */
 export const joinWaitlistBody = z.object({
@@ -53,6 +77,14 @@ export const joinWaitlistRpcResult = z.object({
   participation_id: z.string(),
   waitlist_position: z.number(),
   status: z.string(),
+});
+
+/**
+ * Body of POST /api/admin/products/[id]/participations — admin comp-enrollment.
+ * The product comes from the URL path, so the body names only the gamer.
+ */
+export const adminEnrollGamerBody = z.object({
+  gamerId: z.string().min(1, "gamerId is required"),
 });
 
 /**
@@ -103,4 +135,30 @@ export const demoteToWaitlistRpcResult = z.discriminatedUnion("kind", [
     product_id: z.string(),
   }),
   z.object({ kind: z.literal("noop"), status: z.string() }),
+]);
+
+/**
+ * `admin_enroll_gamer` RPC result (Json in codegen; structure from schema.sql).
+ * The customer id is resolved inside the function from the gamer's parent link,
+ * so the route learns it from the result rather than looking it up itself.
+ */
+export const adminEnrollGamerRpcResult = z.object({
+  participation_id: z.string(),
+  customer_id: z.string(),
+});
+
+/**
+ * `admin_remove_participation` RPC result. It delegates to
+ * `cancel_participation`, so the shape is that function's: `cancelled` with the
+ * details the audit line needs, or `noop` when the row had already gone.
+ */
+export const adminRemoveParticipationRpcResult = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("cancelled"),
+    product_id: z.string(),
+    previous_status: z.string(),
+    stripe_subscription_id: z.string().nullable(),
+    reason: z.string(),
+  }),
+  z.object({ kind: z.literal("noop") }),
 ]);

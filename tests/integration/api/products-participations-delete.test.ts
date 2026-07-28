@@ -1,32 +1,28 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
 import { DELETE } from "@/app/api/admin/products/[id]/participations/[participationId]/route";
-import { mockSupabaseError, mockSupabaseSuccess } from "../../mocks/supabase";
 import { getBoolean, getString } from "../../helpers/json";
-import type { ProductType } from "@/types";
 
-// The admin remove-gamer route does two reads and one RPC:
-//   1. SELECT participations (IDOR guard — must belong to this product).
-//   2. SELECT products (type gate — consumer_club blocked, symmetric w/ add).
-//   3. RPC cancel_participation(reason='admin_cancelled') — hard delete, no
-//      refund. cancel_participation is service_role-only, so the admin client.
+// The admin remove-gamer route is now one call: `admin_remove_participation` on
+// the USER-bound client. The product-membership check, the consumer_club gate
+// and the live-subscription refusal moved into that RPC — where the last of them
+// finally shares a transaction with the delete instead of racing it. What this
+// file covers is the handler's remaining job: the role check and the mapping
+// from SQLSTATE to HTTP status. The rules themselves are covered against a real
+// database in tests/db/admin-participation-rpcs.test.ts.
 
 const mockRequireRole = vi.fn();
 vi.mock("@/lib/auth", () => ({
   requireRole: (...args: unknown[]) => mockRequireRole(...args),
 }));
 
-const mockFrom = vi.fn();
 const mockRpc = vi.fn();
-vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: vi.fn(() => ({ from: mockFrom, rpc: mockRpc })),
-}));
 
 function mockAuthenticatedAdmin() {
   mockRequireRole.mockResolvedValue({
     user: { id: "admin-user-id" },
     profile: { role: "admin" },
-    supabase: {},
+    supabase: { rpc: mockRpc },
   });
 }
 
@@ -45,61 +41,8 @@ function mockNonAdmin() {
   );
 }
 
-type SupabaseResult<T> =
-  | { data: T; error: null }
-  | { data: null; error: { message: string; code?: string } };
-
-function ok<T>(data: T): SupabaseResult<T> {
-  return mockSupabaseSuccess(data);
-}
-
-function err(message: string): SupabaseResult<never> {
-  return mockSupabaseError(message) as SupabaseResult<never>;
-}
-
-interface WireOptions {
-  participation?: SupabaseResult<{ id: string; product_id: string } | null>;
-  product?: SupabaseResult<{ product_type: ProductType } | null>;
-  liveSub?: SupabaseResult<{ stripe_subscription_id: string } | null>;
-  rpcResult?: SupabaseResult<unknown>;
-}
-
-// Wires the three from() calls (participations, products, family_subscriptions
-// — all select().eq().maybeSingle()) and the rpc() call. The route calls from()
-// in a fixed order; dispatch by table keeps tests off call-ordering hacks.
-function wireSupabase(opts: WireOptions) {
-  const participationCall = {
-    select: () => ({
-      eq: () => ({
-        maybeSingle: () => Promise.resolve(opts.participation ?? ok(null)),
-      }),
-    }),
-  };
-
-  const productCall = {
-    select: () => ({
-      eq: () => ({
-        maybeSingle: () => Promise.resolve(opts.product ?? ok(null)),
-      }),
-    }),
-  };
-
-  const familySubscriptionCall = {
-    select: () => ({
-      eq: () => ({
-        maybeSingle: () => Promise.resolve(opts.liveSub ?? ok(null)),
-      }),
-    }),
-  };
-
-  mockFrom.mockImplementation((table: string) => {
-    if (table === "participations") return participationCall;
-    if (table === "products") return productCall;
-    if (table === "family_subscriptions") return familySubscriptionCall;
-    throw new Error(`Unexpected from() table: ${table}`);
-  });
-
-  mockRpc.mockResolvedValue(opts.rpcResult ?? ok({ kind: "cancelled" }));
+function rpcFails(code: string, message = "refused") {
+  mockRpc.mockResolvedValue({ data: null, error: { code, message } });
 }
 
 const PRODUCT_ID = "11111111-1111-1111-1111-111111111111";
@@ -119,8 +62,17 @@ const params = Promise.resolve({
 
 beforeEach(() => {
   mockRequireRole.mockReset();
-  mockFrom.mockReset();
   mockRpc.mockReset();
+  mockRpc.mockResolvedValue({
+    data: {
+      kind: "cancelled",
+      product_id: PRODUCT_ID,
+      previous_status: "active",
+      stripe_subscription_id: null,
+      reason: "admin_cancelled",
+    },
+    error: null,
+  });
 });
 
 describe("DELETE /api/admin/products/[id]/participations/[participationId]", () => {
@@ -128,7 +80,6 @@ describe("DELETE /api/admin/products/[id]/participations/[participationId]", () 
     mockUnauthenticated();
     const response = await DELETE(createRequest(), { params });
     expect(response.status).toBe(401);
-    expect(mockFrom).not.toHaveBeenCalled();
     expect(mockRpc).not.toHaveBeenCalled();
   });
 
@@ -136,81 +87,79 @@ describe("DELETE /api/admin/products/[id]/participations/[participationId]", () 
     mockNonAdmin();
     const response = await DELETE(createRequest(), { params });
     expect(response.status).toBe(403);
-    expect(mockFrom).not.toHaveBeenCalled();
     expect(mockRpc).not.toHaveBeenCalled();
   });
 
-  it("returns 404 when the participation does not exist", async () => {
+  it("returns 403 when the RPC guard refuses the caller", async () => {
     mockAuthenticatedAdmin();
-    wireSupabase({ participation: ok(null) });
+    rpcFails("42501", "Forbidden");
     const response = await DELETE(createRequest(), { params });
-    expect(response.status).toBe(404);
-    expect(mockRpc).not.toHaveBeenCalled();
+    expect(response.status).toBe(403);
   });
 
-  it("returns 404 when the participation belongs to a different product (IDOR)", async () => {
+  it("returns 404 when the participation is unknown or on another product", async () => {
+    // One refusal covers both: the RPC checks the (product, participation) pair,
+    // so an id from another product is indistinguishable from a missing one —
+    // which is the correct answer to give, not a limitation.
     mockAuthenticatedAdmin();
-    wireSupabase({
-      participation: ok({ id: PARTICIPATION_ID, product_id: "other-product" }),
-    });
+    rpcFails("P0002", "participation is not on product");
     const response = await DELETE(createRequest(), { params });
     expect(response.status).toBe(404);
-    expect(mockRpc).not.toHaveBeenCalled();
+    // The status carries the meaning; the body is the shared table's generic
+    // message, because the RPC's own text names rows the admin never asked for.
+    const error = getString(await response.json(), "error");
+    expect(error).toBe("Not found");
   });
 
   it("rejects consumer_club products (removal goes through Stripe, not here)", async () => {
     mockAuthenticatedAdmin();
-    wireSupabase({
-      participation: ok({ id: PARTICIPATION_ID, product_id: PRODUCT_ID }),
-      product: ok({ product_type: "consumer_club" }),
-    });
+    rpcFails("23514", "admin removal is not supported for consumer clubs");
     const response = await DELETE(createRequest(), { params });
     expect(response.status).toBe(400);
     const error = getString(await response.json(), "error");
     expect(error).toContain("consumer club");
-    expect(mockRpc).not.toHaveBeenCalled();
   });
 
-  it("refuses (500) and does NOT delete when a live Stripe subscription exists", async () => {
+  it("refuses (500) when a live Stripe subscription is still linked", async () => {
     // Money-path guard: deleting would CASCADE-orphan the subscription, billing
     // the customer forever. Unreachable under current invariants, but must fail
     // loud rather than silently delete if it ever happens.
     mockAuthenticatedAdmin();
-    wireSupabase({
-      participation: ok({ id: PARTICIPATION_ID, product_id: PRODUCT_ID }),
-      product: ok({ product_type: "camp" }),
-      liveSub: ok({ stripe_subscription_id: "sub_live_123" }),
-    });
+    rpcFails("55000", "participation still has live Stripe subscription sub_123");
     const response = await DELETE(createRequest(), { params });
     expect(response.status).toBe(500);
-    expect(mockRpc).not.toHaveBeenCalled();
+    const error = getString(await response.json(), "error");
+    expect(error).toContain("live Stripe subscription");
   });
 
-  it("returns 400 when the RPC errors", async () => {
+  it("returns a logged 500 for an unrecognized RPC error code", async () => {
+    // Used to be a 400 carrying the raw message. A code the shared table does
+    // not recognize is not the admin's mistake, so it is a server error.
     mockAuthenticatedAdmin();
-    wireSupabase({
-      participation: ok({ id: PARTICIPATION_ID, product_id: PRODUCT_ID }),
-      product: ok({ product_type: "camp" }),
-      rpcResult: err("boom"),
-    });
+    rpcFails("XX000", "boom");
     const response = await DELETE(createRequest(), { params });
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(500);
+    const error = getString(await response.json(), "error");
+    expect(error).toBe("Internal server error");
   });
 
-  it("happy path: cancels with admin_cancelled and returns ok", async () => {
+  it("returns 500 when the RPC result does not match its contract", async () => {
     mockAuthenticatedAdmin();
-    wireSupabase({
-      participation: ok({ id: PARTICIPATION_ID, product_id: PRODUCT_ID }),
-      product: ok({ product_type: "event" }),
-      rpcResult: ok({ kind: "cancelled" }),
-    });
+    mockRpc.mockResolvedValue({ data: { kind: "who-knows" }, error: null });
     const response = await DELETE(createRequest(), { params });
+    expect(response.status).toBe(500);
+  });
+
+  it("happy path: passes both ids to the RPC and returns ok", async () => {
+    mockAuthenticatedAdmin();
+    const response = await DELETE(createRequest(), { params });
+
     expect(response.status).toBe(200);
     const okFlag = getBoolean(await response.json(), "ok");
     expect(okFlag).toBe(true);
-    expect(mockRpc).toHaveBeenCalledWith("cancel_participation", {
+    expect(mockRpc).toHaveBeenCalledWith("admin_remove_participation", {
+      p_product_id: PRODUCT_ID,
       p_participation_id: PARTICIPATION_ID,
-      p_reason: "admin_cancelled",
     });
   });
 });

@@ -1,6 +1,14 @@
 # Stripe
 
-Manual test cards for local/staging checkout, plus the products-webhook deployment runbook across environments.
+Manual test cards for local/staging checkout, the failed-payment account setting the seat model depends on, plus the products-webhook deployment runbook across environments.
+
+## The failed-payment end-action must stay "cancel the subscription"
+
+Dashboard → Settings → Billing → Subscriptions and emails → failed-payment retries. When Stripe exhausts its dunning retries, the end-of-dunning action must remain **cancel the subscription** — not "mark the subscription as unpaid".
+
+Releasing a club seat is driven entirely by `customer.subscription.deleted`; that event is the only thing that cancels a participation. Choose "mark as unpaid" (or pause a subscription instead of cancelling it) and Stripe never fires it, so a child who has stopped paying keeps an active seat indefinitely. The failure is silent from both ends: the stored subscription status also stops updating, because the status column's CHECK rejects Stripe's `unpaid`/`paused` values and the webhook does not surface that rejected write.
+
+Verified against the live account 2026-07-27: no subscriptions sit in `unpaid`, and dunning-exhausted subs carry cancellation reason `payment_failed`.
 
 ## Test Mode Card Details
 
@@ -41,6 +49,19 @@ customer.subscription.updated
 customer.subscription.deleted
 charge.refunded
 ```
+
+### Two traps in the commands below
+
+- **Live-mode writes (create/delete) need `--confirm`.** Without it the CLI aborts silently in a non-interactive shell — no error, no endpoint, exit 0.
+- `webhook_endpoints create` returns the `whsec_…` **only in the creation response**. It cannot be retrieved afterwards; if it's lost, delete the endpoint and recreate it.
+
+Local CLI auth (device key provisioning, live-mode grants) is per-machine setup, not repo procedure — it isn't documented here.
+
+### Environment variable names
+
+- `STRIPE_PRODUCTS_WEBHOOK_SECRET` is the signing secret the products webhook verifies against. It is **not** `STRIPE_WEBHOOK_SECRET` — that's a dead name from the retired Sorg-era webhook, and a stale copy of it was once found lingering in prod.
+- `STRIPE_SECRET_KEY` is used everywhere else.
+- There is **no publishable key in use.** Checkout and the billing portal redirect to server-created session URLs, so no client-side Stripe.js loads and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` is not read anywhere. Don't reintroduce it without a client-side Stripe need.
 
 **1. Preview (feature branch on PR open).** Repeat this if a future feature branch needs its own webhook.
 

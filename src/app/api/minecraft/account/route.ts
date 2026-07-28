@@ -1,66 +1,66 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { lookupMinecraftUser, isValidMinecraftUsername } from "@/lib/mojang";
+import { defineRoute } from "@/lib/api/define-route";
+import { lookupMinecraftUser } from "@/lib/mojang";
+import { updateMinecraftAccountBody } from "@/services/minecraft/minecraft.contracts";
 
-export async function PATCH(request: Request) {
-  try {
-    const result = await requireRole(["gamer", "gedu"], {
-      forbiddenMessage: "Only gamers and gedus can update their Minecraft username",
-    });
-    if (result instanceof NextResponse) return result;
+/**
+ * PATCH /api/minecraft/account — link (or unlink) the CALLER'S OWN Minecraft
+ * account.
+ *
+ * Model B: the upsert runs on the user-bound client, so the
+ * users_insert_own_minecraft_account / users_update_own_minecraft_account
+ * policies re-derive the target row from `auth.uid()`. The row key is the
+ * session's user id and is never read from the request, so there is no way to
+ * name someone else's row here — and if that ever changed, RLS would refuse it.
+ */
+export const PATCH = defineRoute({
+  posture: "role-gated",
+  roles: ["gamer", "gedu"],
+  forbiddenMessage: "Only gamers and gedus can update their Minecraft username",
+  body: updateMinecraftAccountBody,
 
-    const { minecraftUsername } = await request.json();
+  // The two codes this route mapped by hand are the shared table's answers
+  // already: a unique violation is a 409 and a policy refusal is a 403. What
+  // changes is the fall-through, which used to be a blanket 500 with a fixed
+  // message and is now the shared table plus a logged generic message.
 
-    if (minecraftUsername !== null) {
-      if (
-        typeof minecraftUsername !== "string" ||
-        !isValidMinecraftUsername(minecraftUsername)
-      ) {
-        return NextResponse.json(
-          { error: "Invalid Minecraft username. Must be 3-16 characters: letters, numbers, underscores." },
-          { status: 400 },
-        );
-      }
-    }
+  handler: async ({ supabase, user, body }) => {
+    const { minecraftUsername } = body;
 
-    const admin = createAdminClient();
-    let upsertData: { user_id: string; minecraft_username: string | null; minecraft_uuid: string | null };
+    const upsertData =
+      minecraftUsername === null
+        ? {
+            user_id: user.id,
+            minecraft_username: null,
+            minecraft_uuid: null,
+          }
+        : {
+            user_id: user.id,
+            minecraft_username: minecraftUsername,
+            minecraft_uuid:
+              (await lookupMinecraftUser(minecraftUsername))?.uuid ?? null,
+          };
 
-    if (minecraftUsername === null) {
-      upsertData = { user_id: result.user.id, minecraft_username: null, minecraft_uuid: null };
-    } else {
-      const mojang = await lookupMinecraftUser(minecraftUsername);
-      upsertData = {
-        user_id: result.user.id,
-        minecraft_username: minecraftUsername,
-        minecraft_uuid: mojang?.uuid ?? null,
-      };
-    }
-
-    const { error } = await admin
+    const { error } = await supabase
       .from("minecraft_accounts")
       .upsert(upsertData, { onConflict: "user_id" });
 
     if (error) {
+      // The one code carrying copy the user needs: a bare "Conflict" would not
+      // tell them the account belongs to somebody else.
       if (error.code === "23505") {
         return NextResponse.json(
           { error: "This Minecraft account is already linked to another user" },
           { status: 409 },
         );
       }
-      return NextResponse.json({ error: "Failed to update Minecraft account" }, { status: 500 });
+      throw error;
     }
 
-    return NextResponse.json({
+    return {
       success: true,
       minecraft_username: upsertData.minecraft_username,
       minecraft_uuid: upsertData.minecraft_uuid,
-    });
-  } catch {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
-  }
-}
+    };
+  },
+});

@@ -2,6 +2,11 @@
 
 ## Cleanup
 
+- [ ] **db-auth refactor: release-gated follow-ups (next dev→main release).** The refactor (merged to dev 2026-07-27, PRs #74–#77) leaves items that can only happen after the production release, recorded at the end of `docs/db-authorization-architecture.md` §5:
+  - [x] Pre-release prod data check — done 2026-07-27, clean: 162 participations, zero party/role crossover rows in either direction, zero orphaned party references. The Phase 4 policy rewrite is verified equivalent on prod data, not just directionally argued; nothing gates the release itself.
+  - [ ] **After prod deploys:** ship the migration revoking `service_role` EXECUTE on the two legacy engine signatures (3-arg `join_waitlist`, 2-arg `submit_feedback`). Prod's *old* code calls them via the admin client until the release deploys — so do NOT commit this migration to dev before the current stack has shipped to production, or the release's own migrate-then-deploy window breaks prod waitlist joins and feedback.
+  - [ ] **After prod deploys:** diff the prod policy catalog against `schema.sql` for further out-of-band drift (the Phase 4 repair found two admin policies living outside migration history; prod should match `schema.sql` exactly once the release's migrations land). Delete this whole item when both remaining steps are done.
+
 - [ ] **Per-participant volume slider — wiring removed; would be desktop-only if revived.** The discrete-zone redesign dropped the per-participant volume slider; the `element.volume`/`base` multiplier plumbing was then removed entirely when audio routing switched to a binary `element.muted` (zone in/out is the only control; see `src/lib/voice/audio-routing.ts`). **A volume slider can't work on iPhone:** iOS Safari ignores `element.volume` *and* the Web Audio `GainNode` path for WebRTC (volume is hardware-buttons-only), so a true per-participant volume would be desktop/iPad-only — reconsider whether it's worth a platform-split control before reviving it. To restore: bring back a per-remote multiplier (`isAudible` → a volume number on non-iOS), a `setParticipantVolume` action, and the slider; gate it off mobile.
 
 - [ ] **Restore per-action email notifications for group changes.** The apply route sends no emails (`src/app/api/admin/products/[id]/groups/apply/route.ts` has a comment saying so explicitly); the old groups flow notified affected gedus/gamers/parents. Now that each action auto-saves, wire notifications per action. This is the last parity gap with the old groups flow — a visible product with zero groups is fine (signups land in the Unassigned section, `participations.group_id` is nullable), so no zero-groups visibility warning or auto-hide is needed.
@@ -10,7 +15,7 @@
   - **Desired behavior (two distinct cases — must be handled separately):**
     - *Click a pill:* smooth scroll **and** the URL updates to `#id`. (Keep the smooth scroll — that's the whole reason the handler intercepts the click.)
     - *Direct load of `/parent#billing` (or any `#section`):* land at the section instantly on first paint — no animated scroll, no jump.
-  - **Inbound is already solved — do NOT add code for it.** Native browser fragment scrolling already lands direct loads at the section instantly, because these sections are server-rendered with `id` + `scroll-mt-*`. This is exactly why returning from the Stripe portal to `/parent#billing` (return URL hardcoded in `src/app/api/parent/billing-portal/route.ts:53`) scrolls correctly today, with zero pill involvement. The admin UI Components page (`AnchorHeading` in `src/app/(dashboard)/admin/ui-components/page.tsx:84`) leans on this same native mechanism with plain `<a href="#id">` anchors. **Adding a `scrollIntoView` on mount would reintroduce an animated scroll-from-top on load — the exact jump we don't want.**
+  - **Inbound is already solved — do NOT add code for it.** Native browser fragment scrolling already lands direct loads at the section instantly, because these sections are server-rendered with `id` + `scroll-mt-*`. This is exactly why returning from the Stripe portal to `/parent#billing` (return URL hardcoded in `src/app/api/parent/billing-portal/route.ts`) scrolls correctly today, with zero pill involvement. The admin UI Components page (`AnchorHeading` in `src/app/(dashboard)/admin/ui-components/page.tsx:84`) leans on this same native mechanism with plain `<a href="#id">` anchors. **Adding a `scrollIntoView` on mount would reintroduce an animated scroll-from-top on load — the exact jump we don't want.**
   - **Why we can't just copy the admin page's plain-anchor approach:** native anchors scroll *instantly* on click (there's no `scroll-behavior: smooth` anywhere — not in `globals.css` or any CSS), which would lose the pills' smooth scroll. CSS can't rescue this: a global `scroll-behavior: smooth` would also animate the inbound load case, violating "instant on direct load." Smooth-on-click vs. instant-on-load genuinely requires the JS split — keep the click handler, let native handle load.
   - **Fix:** add `history.replaceState(null, "", \`#${id}\`)` to each pill's `handleClick`, after the existing smooth `scrollIntoView`. `replaceState` (not `pushState`) so clicking pills doesn't stack back-button history entries. One line per pill; no mount/inbound code. Apply to both pills.
   - **Known residual (out of scope, note only):** on direct load, if a client-loaded section *above* the target grows taller after first paint (e.g. `MyGamersGrid` populating above `#billing`), native scroll lands before the growth and the target gets shoved down afterward. Doesn't bite billing today. The real remedy is stable-height skeletons for above-the-fold sections, not anything in the pills.
@@ -53,6 +58,7 @@
 
   **How to verify after splitting:** open a file in each target subtree, check that `/context` shows the nested CLAUDE.md as loaded and the root file is correspondingly leaner. Confirm a sample rule (e.g., the `apply_group_changes` RPC rule) no longer appears in a fresh-session context dump until a `src/services/groups/*` file is touched.
 - [ ] **Cancel the live Stripe subscription when a subscription Checkout is abandoned (orphan / duplicate-payment).** In `src/app/api/webhooks/stripe/products/route.ts` `handleCheckoutCompleted`, by the time `checkout.session.completed` fires for a subscription the Stripe sub is already live and recurring. Two branches bail out without recording a `family_subscriptions` row *and without cancelling the sub*: `confirmJson.kind === "orphan"` (reservation row missing/in an unexpected status — admin interference) and `kind === "duplicate_payment"` (parent paid two Stripe sessions for the same product×gamer). Result: Stripe keeps charging the parent every month for a club with no participation, `handleInvoicePaid` silently drops every renewal (no `famSub` row to match), and `customer.subscription.deleted` finds no row to tear down. Pre-existing, but the per-participation model widened the exposure — every subscription signup is now its own standalone recurring sub (the old shared-family-sub model only created a fresh Checkout sub for the *first* club in a currency; later clubs were inline `subscriptions.update` adds that never hit this path). **Fix:** in both branches, when `isSubscription && typeof session.subscription === "string"`, call `stripe.subscriptions.cancel(session.subscription)` before returning (keep the duplicate-payment `console.error` so admin still gets alerted). Rare in practice, but it's a silent recurring overcharge of a real customer — a refund of one invoice doesn't stop it, the sub itself has to be cancelled.
+- [ ] **Whitelist the Stripe status before writing `family_subscriptions.status`, and stop swallowing that update's error.** In `src/app/api/webhooks/stripe/products/route.ts`, the `customer.subscription.updated` handler writes Stripe's `status` through verbatim (only special-casing `active` + `cancel_at_period_end` → `canceling`), but the column's CHECK accepts just `active | past_due | cancelled | incomplete | canceling`. Stripe's `trialing`, `unpaid`, `paused` and `incomplete_expired` all violate it — and unlike the sibling writes in the same file, this update never destructures/checks `error`, so a CHECK violation silently no-ops, the route returns 200, Stripe never retries, and the row keeps a stale status forever. **Not exposed today (verified 2026-07-27 against the live account):** the failed-payment end-action is *cancel*, so dunning exhaustion fires `customer.subscription.deleted` (3 subs carry cancellation reason `payment_failed`) and there are **zero** `unpaid` subs. It goes live the moment that Dashboard setting is flipped to "mark as unpaid", or a sub is paused — and the damage is worse than a stale string: freeing a seat runs only off `subscription.deleted`, so a churned child would keep an `active` participation indefinitely while the row still read `past_due`. Benign version of the same bug already reachable: for a `trialing` sub (migrated subs carry real trials), an update event during the trial fails the CHECK, so `current_period_end` silently stops tracking. **Fix:** map the Stripe status onto the allowed set before the update (`trialing` → `active`, `unpaid`/`incomplete_expired` → `cancelled`, decide `paused` deliberately), and check the returned error and throw, like the other writes do. Pairs with the ops constraint in `docs/stripe.md`.
 - [ ] **Harden the Stripe renewal webhook against an API-version change (code fix), and eventually modernize the account version deliberately.** The Stripe account default API version is `2019-12-03` — inherited from the pre-Sogverse School-of-Gaming account (it still carries the old Chargebee, WooCommerce, and Klaviyo webhook endpoints). Stripe keeps old versions working indefinitely, so nothing is broken by being old; the hazard is a *future* upgrade.
   - **Two "silent bombs" — both in `src/app/api/webhooks/stripe/products/route.ts`, both fail the same way (no error, just missing rows). Field shapes verified against Stripe's changelog 2026-07-01.**
     - **`invoice.subscription` (`handleInvoicePaid`, `:292`).** Reads the renewal's subscription id from top-level `invoice.subscription`. On Stripe API ≥ `2024-09-30.acacia` that field moved to `invoice.parent.subscription_details.subscription`, so on a newer version `subId` is null and the handler returns early at `:296` (`if (!subId …) return;`) — every monthly renewal silently no-ops, `family_subscriptions` rows stop updating. NOT exposed today (account renders `2019-12-03`, field present — confirmed on live events); first Sogverse renewal ~2026-07-12.
@@ -280,3 +286,39 @@ Currently the only way to link a parent to a gamer is when the parent creates th
 - [ ] Choose an authorization mechanism (invite code, existing parent approval, or admin-only)
 - [ ] Create a server-side API route (e.g., `POST /api/gamers/link`) that validates authorization before inserting into `parent_gamer` using the admin client
 - [ ] Add UI for the chosen flow (e.g., "Share invite code" button for existing parent, "Enter code" form for second parent)
+
+## Waitlist — the parent/gamer side
+
+The `WaitlistCard` (`src/components/parent/`) is built and demoed at
+`/admin/ui-components`, but nothing renders it on a real dashboard yet and its
+leave affordance has no backend. What's left, in dependency order:
+
+- [ ] **Give "leave the waitlist" a backend.** The card's corner badge takes an
+  `onLeave` callback and holds a `leaving` flag; there is no route behind it.
+  `cancel_participation` is the wrong tool as it stands: it's `service_role`-only,
+  does **no caller authorization** (any participation id → delete), and hard-DELETEs
+  the row. Needs an owner-authorized path that checks the caller owns the
+  participation and that it's still `waitlisted`, under the product lock.
+  Decide at the same time whether leaving deletes the row or moves it to a terminal
+  status — a delete leaves no record that the family ever wanted the product.
+- [ ] **Render the waitlist band on `/parent` and `/gamer`.** No migration needed,
+  but waitlisted rows never reach either dashboard today: the upcoming-sessions read
+  is filtered to `status='active'`. Needs a new service read + query hook + server
+  prefetch in both pages, and `SessionsSection` has to stop early-returning its empty
+  state on `sessions.length === 0` — **a viewer holding only waitlist spots currently
+  gets "no upcoming sessions" and no band at all**, which is a likely state before a
+  term starts. The `position` is a card prop, so the read has to supply it; a per-row
+  `get_waitlist_position` call is an N+1 and can race an admin promotion into a
+  `null`, so prefer one read that returns rows and positions together.
+- [ ] **The waitlist copy promises an email nobody sends.** `parent.waitlist.reassurance*`
+  and the confirmation page's `next1` both say we'll email the moment a seat opens.
+  There is no waitlist email template and promotion is a manual admin drag that
+  notifies nobody. Emails + promotion are handled by hand for now (deliberate), so
+  this is a note, not a bug — but if manual sending ever slips, soften the copy
+  rather than leave the promise standing.
+- [ ] **Decide what promotion looks like to a parent.** `promote_from_waitlist`
+  flips the row to `active` with no payment step, so for a paid club it grants a free
+  seat, and from the parent's side the card silently disappears from the waitlist band
+  and reappears as a session card. If the answer is ever "a seat opened — claim it by
+  {date}" rather than "you're in", that's a new card state (offer + expiry +
+  accept/decline) and it's much cheaper to design before the card hardens.

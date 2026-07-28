@@ -1229,6 +1229,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _list_column_grants: {
+        Args: { p_grantee: string }
+        Returns: {
+          column_name: string
+          privilege_type: string
+          table_name: string
+        }[]
+      }
       _list_cron_jobs: {
         Args: never
         Returns: {
@@ -1237,12 +1245,17 @@ export type Database = {
           schedule: string
         }[]
       }
-      _list_rpc_access: {
+      _list_function_authorization_surface: {
         Args: never
         Returns: {
           anon_access: boolean
+          argument_names: string[]
           authenticated_access: boolean
+          body: string
+          function_language: string
           function_name: string
+          is_security_definer: boolean
+          is_strict: boolean
         }[]
       }
       _list_security_definer_without_search_path: {
@@ -1264,6 +1277,14 @@ export type Database = {
           table_name: string
         }[]
       }
+      admin_enroll_gamer: {
+        Args: { p_gamer_id: string; p_product_id: string }
+        Returns: Json
+      }
+      admin_remove_participation: {
+        Args: { p_participation_id: string; p_product_id: string }
+        Returns: Json
+      }
       apply_group_changes: {
         Args: {
           p_added_groups?: Json
@@ -1276,6 +1297,12 @@ export type Database = {
         }
         Returns: Json
       }
+      assert_admin: { Args: never; Returns: undefined }
+      assert_role: {
+        Args: { p_role: Database["public"]["Enums"]["user_role"] }
+        Returns: undefined
+      }
+      assert_self: { Args: { p_user_id: string }; Returns: undefined }
       can_read_product: { Args: { p_product_id: string }; Returns: boolean }
       cancel_participation: {
         Args: { p_participation_id: string; p_reason: string }
@@ -1433,12 +1460,24 @@ export type Database = {
         Args: { p_participation_id: string }
         Returns: number
       }
+      has_active_participation_in_group: {
+        Args: { p_group_id: string }
+        Returns: boolean
+      }
+      has_active_participation_on_product: {
+        Args: { p_product_id: string }
+        Returns: boolean
+      }
       is_admin: { Args: never; Returns: boolean }
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }
       is_voice_group_member: { Args: { p_group_id: string }; Returns: boolean }
       is_voice_group_moderator: {
         Args: { p_group_id: string }
         Returns: boolean
+      }
+      join_product_waitlist: {
+        Args: { p_gamer_id: string; p_product_id: string }
+        Returns: Json
       }
       join_waitlist: {
         Args: {
@@ -1495,6 +1534,7 @@ export type Database = {
         Args: { p_message: string; p_user_id: string }
         Returns: boolean
       }
+      submit_my_feedback: { Args: { p_message: string }; Returns: boolean }
       update_product: {
         Args: {
           p_assistant_gedu_fee_cents?: number

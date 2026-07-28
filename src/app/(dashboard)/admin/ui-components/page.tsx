@@ -82,7 +82,10 @@ import {
   PREVIEW_SCENARIOS,
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
-import { ManageBillingCardView } from "@/components/billing";
+import {
+  ManageBillingCardView,
+  type BillingAccountSummary,
+} from "@/components/billing";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -935,9 +938,15 @@ function buildLoadedSessions(
   return fixtures.map((f) => {
     const isNext = !seenProducts.has(f.name);
     seenProducts.add(f.name);
+    // Fixture participation id. Only the payment-problem badge reads it (to
+    // name which subscription's billing portal to open), and no demo stack
+    // flags a payment problem — but the cards require it, so key it off the
+    // pairing the way the real expander does.
+    const participationId = `${gamer.seed}-${f.name}`;
     if (f.live) {
       const end = new Date(liveStart.getTime() + SESSIONS_DURATION_MS);
       return {
+        participationId,
         gamerFirstName: gamer.firstName,
         gamerSeed: gamer.seed,
         productName: f.name,
@@ -956,6 +965,7 @@ function buildLoadedSessions(
     );
     const end = new Date(start.getTime() + SESSIONS_DURATION_MS);
     return {
+      participationId,
       gamerFirstName: gamer.firstName,
       gamerSeed: gamer.seed,
       productName: f.name,
@@ -975,11 +985,16 @@ function buildLoadedSessions(
 
 // Card for a club the viewer waitlisted (a `status='waitlisted'` participation
 // — no scheduled session, so it never appears in the session stack). Two
-// groups: the card's own states (parent with the "For {name}" line, gamer
-// without it, and the position-unknown fallback), then a composed preview of
-// how it slots into the Sessions section — an "On the waitlist" band above the
-// "Scheduled" list. The band sub-labels only show when both kinds are present;
-// a viewer with only one kind sees the cards with no labels.
+// groups: the card's own states (parent with the "For {name}" line and the
+// leave badge, the same mid-leave, and the gamer variant — no attribution, no
+// badge), then a composed preview of how it slots into the Sessions section —
+// an "On the waitlist" band above the "Scheduled" list. The band sub-labels
+// only show when both kinds are present; a viewer with only one kind sees the
+// cards with no labels.
+//
+// `onLeave` is a no-op here: the demo exists to show the badge + confirm dialog
+// without a backend, and clicking through to "Leave waitlist" should leave the
+// fixture card exactly where it is.
 const WAITLIST_DEMO_GAMER = {
   firstName: "Eino",
   seed: "9b2e5d18-7a4c-4f0b-9c31-1d6e2a5f8b04",
@@ -992,6 +1007,7 @@ const WAITLIST_DEMO_GAMER_ALT = {
 function WaitlistCardDemo() {
   const t = useTranslations("dashboardSections");
   const now = useNow();
+  const noop = () => {};
   const scheduled = buildLoadedSessions(
     [
       { name: "Rocket League Club", daysAhead: 2 },
@@ -1006,22 +1022,40 @@ function WaitlistCardDemo() {
       <SubSection title="Card states">
         <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
           <div className="flex flex-col gap-2">
-            <DemoCaption>Parent — position known</DemoCaption>
+            <DemoCaption>Parent — leave badge</DemoCaption>
             <WaitlistCard
               productName="Minecraft Builders Club"
               gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
               gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
               position={3}
+              onLeave={noop}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <DemoCaption>Gamer — no attribution</DemoCaption>
+            {/* What the parent sees between confirming and the row leaving the
+                list: the whole card fades, badge locked, no spinner. The caller
+                holds this set — the card never re-enables on its own. */}
+            <DemoCaption>Parent — leaving</DemoCaption>
+            <WaitlistCard
+              productName="Minecraft Builders Club"
+              gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
+              gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
+              position={3}
+              onLeave={noop}
+              leaving
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            {/* No attribution and no badge, even with `onLeave` passed — a kid
+                can't give up their own place in line. */}
+            <DemoCaption>Gamer — no attribution, no badge</DemoCaption>
             <WaitlistCard
               productName="Minecraft Builders Club"
               gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
               gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
               position={3}
               audience="gamer"
+              onLeave={noop}
             />
           </div>
         </div>
@@ -1036,12 +1070,14 @@ function WaitlistCardDemo() {
               gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
               gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
               position={3}
+              onLeave={noop}
             />
             <WaitlistCard
               productName="Roblox Obby Makers"
               gamerFirstName={WAITLIST_DEMO_GAMER.firstName}
               gamerSeed={WAITLIST_DEMO_GAMER.seed}
               position={7}
+              onLeave={noop}
             />
           </div>
           <div className="space-y-3">
@@ -1998,17 +2034,56 @@ function LocationTreeDemo() {
   );
 }
 
+// A Stripe billing-portal session covers exactly one customer. Almost every
+// parent has one, and sees the single unlabelled button (the first two demos).
+// Parents migrated from the old platform can own several — that platform made a
+// customer per enrolment, and Stripe can neither move a subscription between
+// customers nor merge them — so they get one labelled button each. The last
+// account carries no subscriptions, which is the profile-bound customer holding
+// only saved cards and invoice history.
+const BILLING_ACCOUNTS_SPLIT: BillingAccountSummary[] = [
+  { stripeCustomerId: "cus_demo_native", covers: ["Alex · Rocket League Club"] },
+  {
+    stripeCustomerId: "cus_demo_migrated",
+    covers: ["Bobby · Cosmic Builders Club"],
+  },
+  { stripeCustomerId: "cus_demo_empty", covers: [] },
+];
+
 function ManageBillingCardDemo() {
   return (
     <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2">
       <div className="flex flex-col gap-2">
         <DemoCaption>Idle</DemoCaption>
-        <ManageBillingCardView onManage={() => {}} isOpening={false} />
+        <ManageBillingCardView
+          accounts={[]}
+          onManage={() => {}}
+          isOpening={false}
+        />
       </div>
 
       <div className="flex flex-col gap-2">
         <DemoCaption>Opening (disabled)</DemoCaption>
-        <ManageBillingCardView onManage={() => {}} isOpening />
+        <ManageBillingCardView accounts={[]} onManage={() => {}} isOpening />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <DemoCaption>Several billing accounts</DemoCaption>
+        <ManageBillingCardView
+          accounts={BILLING_ACCOUNTS_SPLIT}
+          onManage={() => {}}
+          isOpening={false}
+        />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <DemoCaption>Several accounts, one opening</DemoCaption>
+        <ManageBillingCardView
+          accounts={BILLING_ACCOUNTS_SPLIT}
+          onManage={() => {}}
+          isOpening
+          openingAccountId="cus_demo_migrated"
+        />
       </div>
     </div>
   );

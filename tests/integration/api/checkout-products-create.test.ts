@@ -247,7 +247,7 @@ describe("POST /api/checkout/products/create", () => {
     const res = await POST(createRequest(null, { rawBody: "{not-json" }));
     const data = await res.json();
     expect(res.status).toBe(400);
-    expect(data.error).toBe("Invalid JSON");
+    expect(data.error).toBe("Invalid JSON body");
   });
 
   it.each([
@@ -259,7 +259,7 @@ describe("POST /api/checkout/products/create", () => {
     const res = await POST(createRequest(body));
     const data = await res.json();
     expect(res.status).toBe(400);
-    expect(data.error).toBe("productId, gamerId and purchaseShape are required");
+    expect(data.error).toContain("Required");
   });
 
   it("returns 400 when purchaseShape is not in the allowed set", async () => {
@@ -271,7 +271,7 @@ describe("POST /api/checkout/products/create", () => {
     );
     const data = await res.json();
     expect(res.status).toBe(400);
-    expect(data.error).toContain("Unsupported purchaseShape");
+    expect(data.error).toContain("purchaseShape");
   });
 
   it("returns 400 when currency is not supported", async () => {
@@ -281,7 +281,7 @@ describe("POST /api/checkout/products/create", () => {
     );
     const data = await res.json();
     expect(res.status).toBe(400);
-    expect(data.error).toBe("Unsupported currency");
+    expect(data.error).toContain("currency");
   });
 
   // ── Product lookup / shape × billing_mode × product_type guards ───

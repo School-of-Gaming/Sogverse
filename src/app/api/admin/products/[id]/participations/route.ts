@@ -1,144 +1,87 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireRole } from "@/lib/auth";
-import { parseJsonBody } from "@/lib/api/json-body.server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { defineRoute } from "@/lib/api/define-route";
+import { ApiError } from "@/lib/api/api-error";
+import {
+  adminEnrollGamerBody,
+  adminEnrollGamerRpcResult,
+} from "@/services/participations/participations.contracts";
 
 /**
  * POST /api/admin/products/[id]/participations
  *
- * Admin-only comp-enrollment path: drops a gamer directly into a product
- * with status='active', bypassing payment, seat caps, registration windows,
- * and effective-status gates. The customer_id is resolved from parent_gamer
- * (one parent per gamer; multi-parent reckoning is future work).
+ * Admin-only comp-enrollment: drops a gamer directly into a product with
+ * status='active', bypassing payment, seat caps, registration windows, and
+ * effective-status gates.
  *
- * Blocked on consumer_club (recurring subscription/bundle billing makes a
- * no-payment comp awkward and we don't model it yet). Camps, events, and
- * municipality clubs are all in scope — camps + events are one-shot paid /
- * free, muni is invoiced off-platform via external_contract.
- *
- * Uses the admin (service-role) client for the write. participations is
- * grant-locked: REVOKE ALL FROM authenticated + GRANT SELECT only, so even
- * with the admin_full_access_participations RLS policy in place,
- * PostgreSQL rejects authenticated INSERTs at the grant level. Writes
- * happen through SECURITY DEFINER RPCs or createAdminClient by design
- * (migration 00039). We deliberately bypass create_participation here
- * because its gates (parent-of-customer, registration-opens-at,
- * effective-status, seat-cap) are exactly what this admin override should
- * sail past.
- *
- * The SECURITY DEFINER RPC + user-bound client pattern is a better
- * architectural fit for this route; conversion is planned as part of the
- * database authorization refactor.
+ * Model C. `participations` is grant-locked — `authenticated` holds SELECT and
+ * nothing else, because a stray write there is a free seat — so this runs on the
+ * user-bound client through `admin_enroll_gamer`, a SECURITY DEFINER RPC whose
+ * first statement is the admin guard. The rules that survive the override
+ * (product exists, consumer clubs out of scope, the gamer needs a linked parent
+ * to attribute the participation to) live in the RPC rather than here, so they
+ * hold for any admin calling it, not only for requests that came through this
+ * handler.
  */
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const result = await requireRole("admin", {
-    forbiddenMessage: "Only admins can add gamers directly to a product",
-  });
-  if (result instanceof NextResponse) return result;
-  const { user } = result;
+export const POST = defineRoute({
+  posture: "role-gated",
+  roles: "admin",
+  forbiddenMessage: "Only admins can add gamers directly to a product",
+  params: z.object({ id: z.string().uuid() }),
+  body: adminEnrollGamerBody,
 
-  const { id: productId } = await params;
+  // Every code this RPC raises already lands where this route used to put it:
+  // the already-enrolled unique violation on 409, the guard's refusal on 403,
+  // and `no_data_found` on 404. That last one is the per-route decision — the
+  // product is named by the URL path, so "the product does not exist" is a
+  // missing resource rather than a malformed field, and the shared 404 is
+  // right. What changes is the fall-through: an unrecognized code used to be
+  // reported to the admin as a 400 carrying raw Postgres text, and is now a
+  // logged 500, because an error nobody anticipated is a server error.
 
-  const body = await parseJsonBody(
-    request,
-    z.object({ gamerId: z.string().min(1, "gamerId is required") }),
-  );
-  if (body instanceof NextResponse) return body;
-  const { gamerId } = body;
+  handler: async ({ supabase, user, params, body }) => {
+    const { data, error } = await supabase.rpc("admin_enroll_gamer", {
+      p_product_id: params.id,
+      p_gamer_id: body.gamerId,
+    });
 
-  const admin = createAdminClient();
-
-  // Fetch product type. Consumer clubs are blocked here in addition to the
-  // UI gate — defense in depth against direct route calls.
-  const { data: product, error: productError } = await admin
-    .from("products")
-    .select("id, product_type")
-    .eq("id", productId)
-    .maybeSingle();
-
-  if (productError) {
-    return NextResponse.json({ error: productError.message }, { status: 400 });
-  }
-  if (!product) {
-    return NextResponse.json({ error: "Product not found" }, { status: 404 });
-  }
-  if (product.product_type === "consumer_club") {
-    return NextResponse.json(
-      {
-        error:
-          "Admin add-gamer is not supported for consumer clubs (recurring billing). Have the parent purchase a subscription instead.",
-      },
-      { status: 400 },
-    );
-  }
-
-  // Resolve the gamer's parent. We assume a single parent per gamer; if a
-  // gamer is somehow linked to multiple parents we pick the oldest link
-  // deterministically. Multi-parent UX is tracked for future work.
-  const { data: parentLinks, error: parentError } = await admin
-    .from("parent_gamer")
-    .select("parent_id, created_at")
-    .eq("gamer_id", gamerId)
-    .order("created_at", { ascending: true })
-    .limit(1);
-
-  if (parentError) {
-    return NextResponse.json({ error: parentError.message }, { status: 400 });
-  }
-  if (parentLinks.length === 0) {
-    return NextResponse.json(
-      { error: "Gamer has no linked parent — cannot enroll" },
-      { status: 400 },
-    );
-  }
-  const customerId = parentLinks[0].parent_id;
-
-  // Direct insert via service-role — bypasses the grant lockdown on
-  // participations (REVOKE ALL FROM authenticated) that exists to
-  // funnel writes through SECURITY DEFINER RPCs or createAdminClient.
-  const { data: inserted, error: insertError } = await admin
-    .from("participations")
-    .insert({
-      product_id: productId,
-      gamer_id: gamerId,
-      customer_id: customerId,
-      status: "active",
-    })
-    .select("id")
-    .single();
-
-  if (insertError) {
-    // 23505 = the partial unique index on (product_id, gamer_id) for
-    // non-reserving statuses fired — the gamer is already enrolled (active,
-    // waitlisted, or completed).
-    if (insertError.code === "23505") {
-      return NextResponse.json(
-        { error: "This gamer is already enrolled on the product" },
-        { status: 409 },
-      );
+    if (error) {
+      // The one code carrying copy the admin needs: the shared table's bare
+      // "Conflict" would not tell them the gamer is already on the product.
+      if (error.code === "23505") {
+        return NextResponse.json(
+          { error: "This gamer is already enrolled on the product" },
+          { status: 409 },
+        );
+      }
+      throw error;
     }
-    return NextResponse.json({ error: insertError.message }, { status: 400 });
-  }
 
-  // Audit log line — there's no audit column on participations per the
-  // product spec, but a server-side trail is necessary so we can answer
-  // "which admin comped this gamer onto this product?" later. Hosted log
-  // aggregation picks this up; no DB write.
-  console.info(
-    JSON.stringify({
-      event: "admin_add_gamer",
-      admin_id: user.id,
-      product_id: productId,
-      gamer_id: gamerId,
-      customer_id: customerId,
-      participation_id: inserted.id,
-      at: new Date().toISOString(),
-    }),
-  );
+    const parsed = adminEnrollGamerRpcResult.safeParse(data);
+    if (!parsed.success) {
+      console.error(
+        "admin_enroll_gamer returned an unexpected shape:",
+        parsed.error.message,
+      );
+      throw new ApiError("Failed to enroll gamer", 500);
+    }
 
-  return NextResponse.json({ participation_id: inserted.id });
-}
+    // Audit log line — there's no audit column on participations per the product
+    // spec, but a server-side trail is necessary so we can answer "which admin
+    // comped this gamer onto this product?" later. Hosted log aggregation picks
+    // this up; no DB write.
+    console.info(
+      JSON.stringify({
+        event: "admin_add_gamer",
+        admin_id: user.id,
+        product_id: params.id,
+        gamer_id: body.gamerId,
+        customer_id: parsed.data.customer_id,
+        participation_id: parsed.data.participation_id,
+        at: new Date().toISOString(),
+      }),
+    );
+
+    return { participation_id: parsed.data.participation_id };
+  },
+});

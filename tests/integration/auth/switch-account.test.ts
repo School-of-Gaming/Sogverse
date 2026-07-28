@@ -187,7 +187,9 @@ describe("POST /api/auth/switch-account", () => {
       const response = await POST(createRequest({}));
       const data = await response.json();
       expect(response.status).toBe(400);
-      expect(data.error).toBe("userId is required");
+      // The hand-rolled presence check is now a body schema, so the message is
+      // the shared "<field>: <issue>" shape every other route already uses.
+      expect(data.error).toContain("userId");
     });
 
     it("returns 400 when userId is the caller itself", async () => {
@@ -403,7 +405,9 @@ describe("POST /api/auth/switch-account", () => {
       const response = await POST(createRequest({ userId: GAMER_A1 }));
       const data = await response.json();
       expect(response.status).toBe(500);
-      expect(data.error).toBe("Gamer account is not properly configured");
+      // A misconfigured account is our problem, not a fact the caller needs
+      // spelled out — the detail is logged and the client gets the generic 500.
+      expect(data.error).toBe("Internal server error");
       expect(mockSignOut).not.toHaveBeenCalled();
     });
 

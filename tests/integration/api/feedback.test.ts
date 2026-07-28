@@ -14,9 +14,12 @@ vi.mock("@/lib/brevo", () => ({
   sendTransactionalEmail: (...args: unknown[]) => mockSendTransactionalEmail(...args),
 }));
 
+// The feedback WRITE now runs on the user-bound client (`submit_my_feedback`);
+// the admin client survives only for the notification fan-out, which reads every
+// admin's email and a gamer's parent's — neither in the submitter's RLS view.
 const mockFrom = vi.fn();
 const mockRpc = vi.fn();
-const mockAdminClient = { from: mockFrom, rpc: mockRpc };
+const mockAdminClient = { from: mockFrom };
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => mockAdminClient,
@@ -48,7 +51,7 @@ function mockAuthenticatedAs(role: string, overrides?: Record<string, unknown>) 
       first_name: `Test ${role}`,
       ...overrides,
     },
-    supabase: {},
+    supabase: { rpc: mockRpc },
   });
 }
 
@@ -301,15 +304,49 @@ describe("POST /api/feedback", () => {
 
   // -- RPC --
 
-  it("should call submit_feedback RPC with correct params", async () => {
+  it("calls submit_my_feedback on the user client, with no user parameter", async () => {
     mockAuthenticatedAs("customer");
     setupHappyPath();
 
     await POST(createRequest(validBody));
 
-    expect(mockRpc).toHaveBeenCalledWith("submit_feedback", {
-      p_user_id: "user-123",
+    // The absence of a user id here is the point: the row is attributed by the
+    // database from auth.uid(), so this handler cannot file feedback as anyone
+    // else even if `user.id` were wrong.
+    expect(mockRpc).toHaveBeenCalledWith("submit_my_feedback", {
       p_message: validBody.message,
     });
+  });
+
+  it("returns 400 and sends no mail when the RPC refuses the message", async () => {
+    // The RPC re-checks the same length bounds the body schema enforces, so its
+    // check violation is genuinely bad input. The route used to fold every RPC
+    // failure into a 500; the shared table separates the two.
+    mockAuthenticatedAs("customer");
+    setupHappyPath();
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { code: "23514", message: "feedback message must be between..." },
+    });
+
+    const response = await POST(createRequest(validBody));
+
+    expect(response.status).toBe(400);
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+  });
+
+  it("returns a generic 500 and sends no mail when the RPC fails unexpectedly", async () => {
+    mockAuthenticatedAs("customer");
+    setupHappyPath();
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { code: "XX000", message: "connection reset" },
+    });
+
+    const response = await POST(createRequest(validBody));
+
+    expect(response.status).toBe(500);
+    expect((await response.json()).error).toBe("Internal server error");
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 });

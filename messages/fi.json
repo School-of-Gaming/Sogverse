@@ -1573,7 +1573,14 @@
       "positionLabel": "Sijasi jonossa",
       "positionValue": "#{position}",
       "reassuranceCustomer": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
-      "reassuranceGamer": "Ilmoitamme heti, kun paikka vapautuu."
+      "reassuranceGamer": "Lähetämme vanhemmallesi sähköpostia heti, kun paikka vapautuu.",
+      "leave": {
+        "trigger": "Poistu jonotuslistalta",
+        "confirmTitle": "Poistutaanko jonotuslistalta?",
+        "confirmDescription": "{name} menettää paikkansa jonossa ({product}).",
+        "confirmCta": "Poistu jonotuslistalta",
+        "backOfLineWarning": "Jos liityt jonotuslistalle myöhemmin uudelleen, aloitat jonon lopusta."
+      }
     },
     "subscriptionEnding": {
       "wontRenew": "Ei uusiudu",
@@ -1624,7 +1631,10 @@
         "description": "Hallinnoi tallennettuja kortteja, laskuja ja tilauksia turvallisesti Stripessä.",
         "cta": "Hallinnoi laskutusta",
         "opening": "Avataan…",
-        "error": "Laskutusportaalin avaaminen epäonnistui. Yritä uudelleen."
+        "error": "Laskutusportaalin avaaminen epäonnistui. Yritä uudelleen.",
+        "splitExplanation": "Perheesi tilaukset jakautuvat useammalle laskutustilille, koska kerhonne siirtyivät tälle sivustolle vanhasta järjestelmästä. Kukin painike avaa oman laskutustilinsä sivun Stripessä.",
+        "coversItem": "{name} · {product}",
+        "coversFallback": "Tallennetut kortit ja aiemmat laskut"
       },
       "alert": {
         "tooltip": "Maksuongelma – päivitä korttitietosi, jotta kerho pysyy aktiivisena",

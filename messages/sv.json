@@ -1573,7 +1573,14 @@
       "positionLabel": "Din plats i kön",
       "positionValue": "#{position}",
       "reassuranceCustomer": "Vi mejlar så snart en plats blir ledig.",
-      "reassuranceGamer": "Vi hör av oss så snart en plats blir ledig."
+      "reassuranceGamer": "Vi mejlar en förälder så snart en plats blir ledig.",
+      "leave": {
+        "trigger": "Lämna väntelistan",
+        "confirmTitle": "Lämna väntelistan?",
+        "confirmDescription": "{name} förlorar sin plats i kön ({product}).",
+        "confirmCta": "Lämna väntelistan",
+        "backOfLineWarning": "Om du ställer dig på väntelistan igen senare börjar du längst bak i kön."
+      }
     },
     "subscriptionEnding": {
       "wontRenew": "Förnyas inte",
@@ -1624,7 +1631,10 @@
         "description": "Hantera dina sparade kort, fakturor och prenumerationer säkert i Stripe.",
         "cta": "Hantera fakturering",
         "opening": "Öppnar…",
-        "error": "Det gick inte att öppna faktureringsportalen. Försök igen."
+        "error": "Det gick inte att öppna faktureringsportalen. Försök igen.",
+        "splitExplanation": "Din familjs prenumerationer ligger på fler än ett faktureringskonto – en rest från när era klubbar flyttade till den här webbplatsen. Varje knapp öppnar det kontots egen sida i Stripe.",
+        "coversItem": "{name} · {product}",
+        "coversFallback": "Sparade kort och tidigare fakturor"
       },
       "alert": {
         "tooltip": "Betalningsproblem – uppdatera ditt kort för att behålla klubben aktiv",

@@ -1573,7 +1573,14 @@
       "positionLabel": "Your position",
       "positionValue": "#{position}",
       "reassuranceCustomer": "We'll email you the moment a seat opens.",
-      "reassuranceGamer": "We'll let you know as soon as a seat opens."
+      "reassuranceGamer": "We'll email a parent as soon as a seat opens.",
+      "leave": {
+        "trigger": "Leave waitlist",
+        "confirmTitle": "Leave the waitlist?",
+        "confirmDescription": "{name} will lose their place in line for {product}.",
+        "confirmCta": "Leave waitlist",
+        "backOfLineWarning": "If you join again later, you'll start at the back of the line."
+      }
     },
     "subscriptionEnding": {
       "wontRenew": "Won't renew",
@@ -1624,7 +1631,10 @@
         "description": "Manage your saved cards, invoices, and subscriptions securely on Stripe.",
         "cta": "Manage billing",
         "opening": "Opening…",
-        "error": "Couldn't open the billing portal. Please try again."
+        "error": "Couldn't open the billing portal. Please try again.",
+        "splitExplanation": "Your family's subscriptions sit on more than one billing account — a leftover from when your clubs moved to this site. Each button opens that account's own page on Stripe.",
+        "coversItem": "{name} · {product}",
+        "coversFallback": "Saved cards and past invoices"
       },
       "alert": {
         "tooltip": "Payment problem — update your card to keep this club active",

@@ -16,6 +16,17 @@ export function createAdminTestClient(): SupabaseClient<Database> {
 }
 
 /**
+ * Unauthenticated client — carries the `anon` role, so it sees exactly the
+ * public surface. Use to prove a public read policy or predicate really is
+ * reachable (or not) without a session.
+ */
+export function createAnonTestClient(): SupabaseClient<Database> {
+  return createClient<Database>(supabaseUrl, anonKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
+
+/**
  * Signs in via Supabase Auth and returns a client that respects RLS.
  * Each call creates a fresh client instance (no shared session state).
  */
@@ -33,4 +44,77 @@ export async function createAuthenticatedClient(
   }
 
   return client;
+}
+
+/**
+ * Signs in and returns the raw access token, for callers that need to hit
+ * PostgREST directly rather than through the typed supabase-js client.
+ */
+export async function accessTokenFor(
+  email: string,
+  password: string
+): Promise<string> {
+  const client = createClient(supabaseUrl, anonKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  const { data, error } = await client.auth.signInWithPassword({
+    email,
+    password,
+  });
+  if (error) {
+    throw new Error(`Failed to sign in as ${email}: ${error.message}`);
+  }
+
+  return data.session.access_token;
+}
+
+/** What PostgREST said: the HTTP status plus the PostgreSQL SQLSTATE, if any. */
+export interface RawRpcResult {
+  status: number;
+  /** SQLSTATE from the PostgREST error body — `null` when the call succeeded. */
+  code: string | null;
+  message: string | null;
+}
+
+/**
+ * Calls an RPC over PostgREST with an arbitrary argument object.
+ *
+ * The typed `supabase.rpc()` helper cannot express the role × RPC matrix's
+ * calling convention — deliberately passing `null` for every parameter, so the
+ * call reaches the function's guard without per-RPC fixtures — because the
+ * generated argument types forbid it, and casting around them would be the
+ * suppression the code-style rule warns about. This posts the same request the
+ * browser posts, and hands back the SQLSTATE the matrix asserts on.
+ */
+export async function callRpcRaw(
+  accessToken: string,
+  functionName: string,
+  args: Record<string, unknown>
+): Promise<RawRpcResult> {
+  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/${functionName}`, {
+    method: "POST",
+    headers: {
+      apikey: anonKey,
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(args),
+  });
+
+  if (response.ok) {
+    return { status: response.status, code: null, message: null };
+  }
+
+  const body: unknown = await response.json().catch(() => null);
+  const error =
+    body !== null && typeof body === "object"
+      ? (body as { code?: unknown; message?: unknown })
+      : {};
+
+  return {
+    status: response.status,
+    code: typeof error.code === "string" ? error.code : null,
+    message: typeof error.message === "string" ? error.message : null,
+  };
 }

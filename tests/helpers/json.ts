@@ -8,6 +8,20 @@ import { z } from "zod";
 
 const objectSchema = z.record(z.string(), z.unknown());
 
+/**
+ * Narrow a loosely-typed value (a `vi.fn()` mock-call argument, a console line)
+ * to a string. Same contract as the field readers below: validates at runtime
+ * and throws loudly on a mismatch, so no assertion is needed at the call site.
+ */
+export function asString(value: unknown): string {
+  return z.string().parse(value);
+}
+
+/** Narrow a loosely-typed value to a plain object, for key/shape assertions. */
+export function asObject(value: unknown): Record<string, unknown> {
+  return objectSchema.parse(value);
+}
+
 /** Read a required string field. Throws if absent or not a string. */
 export function getString(value: unknown, key: string): string {
   return z.string().parse(objectSchema.parse(value)[key]);

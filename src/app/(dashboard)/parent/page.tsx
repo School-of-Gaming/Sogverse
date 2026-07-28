@@ -12,6 +12,8 @@ import {
 } from "@/services/participations";
 import { resolveCustomerFamilyViaRls } from "@/services/family/family.server";
 import type { FamilyMember } from "@/services/family";
+import { resolveBillingAccountsViaRls } from "@/services/billing/billing.server";
+import type { BillingAccount } from "@/services/billing";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -60,18 +62,39 @@ async function getInitialFamily(): Promise<FamilyMember[]> {
   }
 }
 
+/**
+ * Server-resolve the parent's Stripe billing accounts, again via their own
+ * RLS-scoped client. Resolved here rather than client-side because the count
+ * decides how many buttons the billing card renders: fetching it after paint
+ * would turn one rendered button into several under the parent's cursor, which
+ * the "rendered content must not move" rule forbids. `[]` on failure, which the
+ * card renders as the ordinary single button.
+ */
+async function getInitialBillingAccounts(): Promise<BillingAccount[]> {
+  try {
+    const supabase = await createClient();
+    return await resolveBillingAccountsViaRls(supabase);
+  } catch {
+    return [];
+  }
+}
+
 export default async function CustomerDashboardPage() {
-  // Both reads run together: the page already blocks on the sessions fetch, so
-  // adding the (cheaper) family read in parallel costs ~no extra wall-clock and
-  // lets My Gamers paint populated on the first frame.
-  const [initialSessionRows, initialFamily] = await Promise.all([
-    getInitialSessionRows(),
-    getInitialFamily(),
-  ]);
+  // All three reads run together: the page already blocks on the sessions
+  // fetch, so adding the (cheaper) family and billing reads in parallel costs
+  // ~no extra wall-clock and lets My Gamers and Billing paint populated on the
+  // first frame.
+  const [initialSessionRows, initialFamily, billingAccounts] =
+    await Promise.all([
+      getInitialSessionRows(),
+      getInitialFamily(),
+      getInitialBillingAccounts(),
+    ]);
   return (
     <CustomerDashboardPageBody
       initialSessionRows={initialSessionRows}
       initialFamily={initialFamily}
+      billingAccounts={billingAccounts}
     />
   );
 }
@@ -79,9 +102,11 @@ export default async function CustomerDashboardPage() {
 function CustomerDashboardPageBody({
   initialSessionRows,
   initialFamily,
+  billingAccounts,
 }: {
   initialSessionRows: MyUpcomingSessionRow[];
   initialFamily: FamilyMember[];
+  billingAccounts: BillingAccount[];
 }) {
   const t = useTranslations('dashboardSections');
   const p = useTranslations('parent.placeholders');
@@ -124,7 +149,7 @@ function CustomerDashboardPageBody({
         <section id="billing" className="scroll-mt-32">
           <div className="mx-auto max-w-3xl space-y-6">
             <h2 className="text-3xl font-bold">{t('billing')}</h2>
-            <ManageBillingCard />
+            <ManageBillingCard accounts={billingAccounts} />
           </div>
         </section>
 

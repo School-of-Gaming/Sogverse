@@ -29,10 +29,22 @@ const PRODUCT_ID = "00000000-0000-0000-0000-0000000005f1";
 const MUNI_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f2";
 
 describe("update_product", () => {
+  /** Service-role client — bypasses RLS, used to seed and to read back. */
   let admin: SupabaseClient<Database>;
+  /**
+   * The RPC caller. It has to be a *signed-in* admin, not the service-role
+   * client: the guard reads the caller's live role via get_user_role(), and
+   * since 00121 a caller with no profiles row (which is what a service-role
+   * connection is) is refused rather than waved through.
+   */
+  let adminAuth: SupabaseClient<Database>;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     admin = createAdminTestClient();
+    adminAuth = await createAuthenticatedClient(
+      TEST_CREDENTIALS.ADMIN.email,
+      TEST_CREDENTIALS.ADMIN.password,
+    );
   });
 
   afterAll(async () => {
@@ -78,7 +90,7 @@ describe("update_product", () => {
   it("admin can update parent fields and wipe-and-replace children", async () => {
     await freshProduct();
 
-    const { data, error } = await admin.rpc("update_product", {
+    const { data, error } = await adminAuth.rpc("update_product", {
       p_id: PRODUCT_ID,
       p_billing_mode: "paid",
       p_translations: [
@@ -158,7 +170,7 @@ describe("update_product", () => {
       .update({ status: "cancelled" })
       .eq("id", PRODUCT_ID);
 
-    const { error } = await admin.rpc("update_product", {
+    const { error } = await adminAuth.rpc("update_product", {
       p_id: PRODUCT_ID,
       p_billing_mode: "paid",
       p_translations: [{ locale: "en", name: "Whatever", short_description: "" }],
@@ -212,7 +224,7 @@ describe("update_product", () => {
     // sv-only still resolves for every viewer.
     await freshProduct();
 
-    const { error } = await admin.rpc("update_product", {
+    const { error } = await adminAuth.rpc("update_product", {
       p_id: PRODUCT_ID,
       p_billing_mode: "paid",
       p_translations: [{ locale: "sv", name: "Bara svenska", short_description: "" }],
@@ -237,7 +249,7 @@ describe("update_product", () => {
   it("rejects an empty translation set", async () => {
     await freshProduct();
 
-    const { error } = await admin.rpc("update_product", {
+    const { error } = await adminAuth.rpc("update_product", {
       p_id: PRODUCT_ID,
       p_billing_mode: "paid",
       p_translations: [],
@@ -255,7 +267,7 @@ describe("update_product", () => {
 
   it("returns no_data_found for an unknown product id", async () => {
     const fakeId = "00000000-0000-0000-0000-0000000005ff";
-    const { error } = await admin.rpc("update_product", {
+    const { error } = await adminAuth.rpc("update_product", {
       p_id: fakeId,
       p_billing_mode: "paid",
       p_translations: [{ locale: "en", name: "Doesn't exist", short_description: "" }],
@@ -282,7 +294,7 @@ describe("update_product", () => {
       { type: "paragraph", text: "Build a redstone door together." },
     ];
 
-    const { error } = await admin.rpc("update_product", {
+    const { error } = await adminAuth.rpc("update_product", {
       p_id: PRODUCT_ID,
       p_billing_mode: "paid",
       p_translations: [
@@ -341,7 +353,7 @@ describe("update_product", () => {
   it("round-trips per-session fees through update_product", async () => {
     await freshProduct();
 
-    const { error } = await admin.rpc("update_product", {
+    const { error } = await adminAuth.rpc("update_product", {
       p_id: PRODUCT_ID,
       p_billing_mode: "paid",
       p_translations: [{ locale: "en", name: "Fees", short_description: "" }],

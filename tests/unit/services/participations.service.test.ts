@@ -169,6 +169,11 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
     expect(alex?.paymentProblem).toBe(true);
     expect(alex?.subscriptionEndsAt).toBeNull();
     expect(bobby?.paymentProblem).toBe(false);
+    // The flagged row's participation id has to survive the mapping — it's
+    // what lets the badge open the portal for the failing subscription's own
+    // Stripe customer rather than the parent's default one.
+    expect(alex?.participationId).toBe("p1");
+    expect(bobby?.participationId).toBe("p2");
   });
 
   it("derives subscriptionEndsAt from canceling rows (and never flags them as a payment problem)", async () => {

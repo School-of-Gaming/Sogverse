@@ -25,6 +25,12 @@ import { formatDate, formatTime } from "@/lib/utils";
  */
 
 export interface UpcomingSessionCardProps {
+  /**
+   * The participation this card expands from. Only the payment-problem badge
+   * uses it — a portal session covers one Stripe customer, so the badge has to
+   * name which subscription is failing rather than routing by parent.
+   */
+  participationId: string;
   /** First name shown in the "for {name}" attribution line. */
   gamerFirstName: string;
   /** Stable seed for the identicon (usually the gamer's UUID). Falls back to the first name. */
@@ -59,6 +65,7 @@ export interface UpcomingSessionCardProps {
 }
 
 export function UpcomingSessionCard({
+  participationId,
   gamerFirstName,
   gamerSeed,
   productName,
@@ -116,7 +123,12 @@ export function UpcomingSessionCard({
       {/* Shown only when the club's sub is past_due. Audience-aware: clickable
           money badge for parents, non-interactive "ask a parent" alert for
           gamers. */}
-      {paymentProblem && <PaymentProblemBadge audience={audience} />}
+      {paymentProblem && (
+        <PaymentProblemBadge
+          participationId={participationId}
+          audience={audience}
+        />
+      )}
       {/* Parent-only "Won't renew" / "Last session" note for a cancelled sub
           (mutually exclusive with past_due). Gamer cards are just clamped, no
           badge. */}

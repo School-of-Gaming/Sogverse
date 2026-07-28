@@ -1,24 +1,36 @@
 # Database Authorization Architecture
 
-**Status:** target architecture + migration plan. The conventions in §2–§3 are how new
-code is written today; the verification spine (§3.4) and the route sweep (§5 Phase 3)
-are not yet built. This is the single source of truth for the refactor — when someone
-says "let's do the DB authorization refactor," this is the doc to read and act on.
+**Status: built.** All four phases of §5 have landed — the guard primitives and ownership
+predicates, the §3.4 verification spine, the route sweep, and RLS completeness. §2–§3
+describe the system that exists, not a target: every privileged function body opens with a
+guard primitive or is classified self-scoping with a named scope test, every policy
+expresses its admin half as one named predicate, and the spine fails the build when
+anything escapes that. What remains is the post-deploy cleanup listed at the end of §5 and
+the feature work in §7 — no structural work. This doc stays the single source of truth for
+how authorization is enforced in the database.
 
-**Execution contract.** This doc is written so a fresh Claude Code session can execute
-the refactor from it. Before acting on any phase:
+**Execution contract.** This doc is written so a fresh Claude Code session can act on it.
+Before touching anything it describes:
 
 1. **Re-verify current state.** Snapshots in this doc were verified against the live
-   schema in 2026-06 and will drift. Current state lives in `supabase/schema.sql`
-   (function bodies, grants, policies) and the DB access-control test's allowlists —
-   never in migration history. Regenerate the route list with
-   `git grep -l createAdminClient src/`.
+   schema in 2026-07 and will drift. Current state lives in `supabase/schema.sql`
+   (function bodies, grants, policies) and the DB test suite's classifications — never
+   in migration history. Regenerate the route list with
+   `git grep -l createAdminClient src/`. Note the corollary the Phase 4 drift repair
+   made concrete: `schema.sql` is a dump of a *hosted* database, so an object created
+   outside a migration lands in it and is invisible to every check we run, all of which
+   build their database from migrations alone.
 2. **Follow the migration workflow in CLAUDE.md** (push migration → regenerate types →
    dump `schema.sql` → check type aliases → commit together).
 3. **DB tests run in CI** against a local Supabase stack started by the workflow. Do
    not run them locally or against the remote DB — push the branch and let CI run them.
-4. **One phase per PR batch**, in order. A phase's checks must be green before the
-   next phase starts, because later phases lean on them.
+4. **A migration reaches the shared database the moment it is pushed; the code running
+   against that database does not change until the PR merges and deploys.** So any
+   change to a policy, a grant, or a guard has to be behaviour-equivalent for the
+   *currently deployed* code, or it breaks the shared environment for the whole window.
+   The reliable shapes are: add a new object beside the old one, or rewrite a policy so
+   it can only ever admit more than before, never less. A rewrite that cannot be argued
+   to one of those does not ship — it gets recorded and sequenced behind a deploy.
 
 ---
 
@@ -65,7 +77,7 @@ the next instance of that class fails a test before it ships.
 
 ---
 
-## 2. Current state (verified 2026-06 — re-verify per the execution contract)
+## 2. Current state (verified 2026-07 — re-verify per the execution contract)
 
 **Platform regime change (2026-06):** Supabase no longer auto-grants Data API privileges
 (`anon`/`authenticated`/`service_role`) to new `public`-schema objects — on local stacks
@@ -122,18 +134,28 @@ Functions granted to `authenticated` (~40; the authoritative list is the DB
 access-control test's allowlist) fall into four kinds. The taxonomy matters because
 the verification spine treats each kind differently:
 
-- **Role-gated RPCs** (a handful): plpgsql, first statement is
-  `IF get_user_role() <> '<role>' THEN RAISE … ERRCODE '42501'`. Find them by
-  grepping `schema.sql` for `42501`.
+- **Role-gated RPCs** (a handful): plpgsql, first statement is a §3.1 guard
+  assertion, which raises `ERRCODE '42501'`. Find them by grepping `schema.sql`
+  for `42501` (which also finds the assertions themselves).
 - **Self-scoping helpers** (the majority): every read/write keyed to `auth.uid()`;
   no raise block, by design. The `get_my_*` family, the PIN functions.
-- **Boolean predicates consumed by RLS policies**: `is_admin()`,
-  `can_read_product()`, `is_parent_of()` — `STABLE SECURITY DEFINER`, return a
-  boolean, never raise. `can_read_product` is the only function granted to `anon`.
-- **The participation state machine** (`join_waitlist`, `create_participation`,
-  `cancel_participation`, `confirm_reservation`, …): granted to **service_role
-  only** — not callable by `authenticated` at all. Routes invoke these via the
-  admin client today; that indirection is what Phase 3 removes.
+- **Boolean predicates consumed by RLS policies**: the admin predicate, the product-read
+  predicate, parent-of-gamer, the two party-to-a-participation predicates, and the two
+  voice-room ones — `STABLE SECURITY DEFINER`, return a boolean, never raise. Each is
+  granted to `authenticated` because a policy expression is evaluated as the *querying*
+  role, so a predicate a policy composes from must be executable by that role. The
+  product-read predicate is the only function granted to `anon`. **A predicate returns a
+  total boolean** — never NULL. A `USING` clause treats NULL as deny, so a NULL-capable
+  predicate is not a hole *there*, but it is a trap for any consumer that is not a policy;
+  wrap a disjunction whose first term can be NULL in `COALESCE(…, false)`.
+- **The participation state machine** (the waitlist-join, participation-create,
+  participation-cancel and reservation-confirm functions): granted to **service_role
+  only** — not callable by `authenticated` at all. Phase 3 put guarded,
+  `authenticated`-facing entry points in front of the ones a signed-in user may
+  legitimately drive, and left the engines themselves service_role-only. The ones
+  that remain reachable *only* by service_role are the ones whose callers genuinely
+  have no session: the Stripe webhook's cancel and confirm paths, and checkout's
+  reservation handling.
 
 Several of these are `LANGUAGE sql`, where "first statement" has no meaning — all
 current `sql`-language functions are predicates or self-scoping helpers, which is
@@ -145,6 +167,16 @@ that subquery form makes it an InitPlan evaluated once per statement. **The Init
 wrapping, not `STABLE` itself, is what makes it cheap** — `STABLE` permits
 optimization but guarantees no caching. Keep the wrapped form in every policy; a bare
 call in a policy predicate is a per-row function call.
+
+**The wrapping rule applies to argument-free predicates.** A predicate that takes the
+row's own column as an argument cannot be an InitPlan — it depends on the row, so
+`(SELECT p(col))` is a correlated subplan re-executed per row, exactly like the bare
+call. Wrap it anyway for one shape across every policy, but do not expect the InitPlan
+payoff there, and be aware of the trade the wrapping rule cannot hide: replacing an
+uncorrelated `col IN (SELECT …)` — which PostgreSQL evaluates once and hashes — with a
+per-row predicate call buys auditability at the cost of a function call per row. That is
+the right trade on the small tables the party-to predicates guard; it would not be on a
+large one.
 
 ### Sensitive tables (grant-locked today)
 
@@ -163,29 +195,37 @@ write path. The access-control test now audits `anon` grants alongside
 `authenticated` and pins the write surface at zero; `anon` keeps `SELECT` for the
 public catalog policies.
 
-**Column-level grants are already in use on `profiles`**: `authenticated` holds
-`UPDATE` on exactly the safe columns (name, phone, spoken languages) — `role` is not
-grantable — and the self-update policy's `WITH CHECK` additionally pins `role` to its
-current value. The §3.4 column-grant audit asserts this state holds; it does not need
-to construct it.
+**Column-level grants are in use on `profiles`**, and it is the only table where they
+are: `authenticated` holds `UPDATE` on exactly the safe columns (name, phone, spoken
+languages, locale) — `role` is not grantable — and the self-update policy's `WITH CHECK`
+additionally pins `role` to its current value. The §3.4 column-grant audit asserts this
+state holds, and asserts that `profiles` is still the only member; it does not need to
+construct either.
 
 ### Existing verification
 
-What the DB test suite already covers (don't rebuild this — extend it):
+What the DB test suite covers (don't rebuild this — extend it):
 
-- **Static** (the access-control test): function-grant allowlists for `authenticated`
-  and `anon`; every public table has RLS; every `SECURITY DEFINER` function sets
-  `search_path`; table-level write grants match an allowlist. Column-level grants are
-  explicitly out of scope today.
-- **Behavioral, handwritten per-target**: wrong-role 42501 tests for the admin- and
-  gedu-gated RPCs; SELECT-side IDOR tests (customer A cannot read customer B's rows)
-  for participations, payments, refunds, groups, and products; scope tests for the
-  self-scoping `get_my_*` and PIN RPCs.
+- **The spine** (§3.4, landed in Phase 2): static conformance, the behavioral role × RPC
+  matrix, the write-path IDOR loop, the column-grant audit, and the completeness check
+  that ties the exposed surface to one of two classifications. Adding an exposed
+  function, a write grant, or a column grant without its annotation and test now fails
+  CI.
+- **Static, grant-level** (the access-control test): every public table has RLS; every
+  `SECURITY DEFINER` function sets `search_path`; table-level write grants match a
+  bidirectional allowlist; `anon` holds no table write grant. The *function*-grant
+  allowlists it used to carry were retired when the spine subsumed them.
+- **Behavioral, handwritten per-target**: SELECT-side IDOR tests (customer A cannot read
+  customer B's rows) for participations, payments, refunds, groups, and products; the
+  per-RPC happy-path and business-rule tests. These are the fixture-bearing coverage the
+  fixture-free matrix cannot replace.
 - **Substrate**: `tests/db/helpers.ts` signs in as any seeded role (admin, customer,
-  second customer, gedu, gamer) with deterministic UUIDs; CI runs the suite against a
-  local Supabase stack.
+  second customer, gedu, gamer) with deterministic UUIDs, hands out an `anon` client and
+  a raw access token, and can post an RPC call straight to PostgREST (which is how the
+  matrix passes `null` for every argument without fighting the generated arg types); CI
+  runs the suite against a local Supabase stack.
 
-The spine (§3.4) systematizes this; it is not greenfield.
+The spine systematized this; it was not greenfield.
 
 ---
 
@@ -222,22 +262,30 @@ is for *policies*, which evaluate per row.)
 
 **Keep `is_admin()`.** Assertions and predicates are two primitives for two contexts,
 not duplicates: function bodies need a raising assertion; RLS policies need a boolean
-expression. `is_admin()` is the named admin predicate for policies (20+ policies use
-it today) and the first member of the §3.2 predicate family. The thing to migrate away
-from is the *other* policy idiom — the inline `(SELECT get_user_role()) = 'admin'`
-comparison some policies carry — folded into Phase 4 opportunistically, not as a
-big-bang rewrite.
+expression. `is_admin()` is the named admin predicate for policies and the first member
+of the §3.2 predicate family. **It is now the only way a policy asks "is the caller an
+admin"** — the inline `(SELECT get_user_role()) = 'admin'` comparison and the
+hand-rolled `EXISTS` over `profiles` are both gone from every policy in the database
+(Phase 4). A new policy that reintroduces either is doing by hand what a named,
+audited, single-definition predicate already does.
 
 ### 3.2 Ownership predicates (for policies)
 
 The "target half" of RLS — "is this caller allowed to reference *this specific
 row*?" — expressed as a small set of reusable `STABLE` predicate functions rather than
-re-derived as an inline `EXISTS` subquery inside each policy. The concrete duplication
-today: the "caller has an active participation on this product/group" subquery appears
-inline in at least three policies (customer- and gamer-side group visibility), each a
-chance to get it half-right. Policies then *compose* from audited predicates:
-`is_admin()`, parent-of-gamer, has-active-participation-on, and the like. The IDOR
-class of bug exists precisely because the inline subquery is easy to write half-right.
+re-derived as an inline `EXISTS` subquery inside each policy. Policies *compose* from
+audited predicates: `is_admin()`, parent-of-gamer, has-active-participation-on, and the
+like. The IDOR class of bug exists precisely because the inline subquery is easy to
+write half-right, and the duplication that motivated this — the same "caller has an
+active participation on this product/group" subquery written out in three separate
+policies — is gone as of Phase 4.
+
+**A predicate asks about the caller's *relationship* to a row, not about their role.**
+The party-to predicates deliberately treat the purchasing parent and the enrolled gamer
+as one question ("am I a party to this participation") rather than one predicate per
+column. That unification is what makes a predicate reusable across the customer-side
+and gamer-side policies; the role gate, where a policy still wants one, stays in the
+policy where it is visible.
 
 ### 3.3 Grant lockdown as the default for sensitive tables
 
@@ -285,8 +333,8 @@ guarantees nothing escapes both.
    and every allowlist entry names its scope test. This closes the two silent holes:
    an RPC annotated permissively passes check 2 vacuously, and an allowlisted function
    with no scope test is vetted by nothing. Allowlist growth is this design's failure
-   mode; check 5 is what polices it. Once 1+2+5 are in place they subsume the current
-   grant-allowlist test — retire it then, not before.
+   mode; check 5 is what polices it. 1+2+5 subsume the old grant-allowlist test, which
+   was retired with them (§5 Phase 2).
 
 ### 3.5 The RPC shape under this architecture
 
@@ -374,22 +422,65 @@ Sequenced; each phase is a PR batch. The spine comes **before** the route sweep 
 every later change is "make the edit and let the test tell you if you broke the
 boundary."
 
-### Phase 1 — guard primitives + ownership predicates
+### Phase 1 — guard primitives + ownership predicates — **landed**
 
-Add the §3.1 assertions and §3.2 predicates, and convert the existing role-gated RPC
+Added the §3.1 assertions and §3.2 predicates, and converted the existing role-gated RPC
 bodies (the small `42501` set — regrep `schema.sql` to enumerate) to call them. No
-policy rewrites in this phase, no new behavior — the matrix in Phase 2 will pin it.
+policy rewrites in this phase — the predicates exist but no policy composes from them
+until Phase 4, so they carry no `authenticated` grant yet.
 
-### Phase 2 — the verification spine
+Both items it deferred were closed in Phase 2: the role assertion's NULL-role
+pass-through (`<>` → `IS DISTINCT FROM`) and the unconverted `set_gedu_verified`.
 
-Implement the five checks of §3.4 in the DB test suite. Build the matrix annotations
-and the self-scoping allowlist (seed both from the current access-control allowlist
-and its intent comments); write scope tests for any allowlisted function that lacks
-one. Keep the current grant-allowlist test until checks 1+2+5 subsume it, then retire
-it. After this phase, a forgotten guard, a vacuous annotation, or an unvetted exposure
-fails CI.
+### Phase 2 — the verification spine — **landed**
 
-### Phase 3 — the route sweep
+The five checks of §3.4 live in the DB test suite. The two classifications — role-gated
+RPCs with their permitted roles, and self-scoping helpers with the scope test that vets
+each one — are the spine's data; everything else is derived from the PostgreSQL catalogs
+at test time, so the surface cannot drift out from under them. The grant-level function
+allowlists were retired once checks 1+2+5 were green, as planned.
+
+Three judgment calls worth carrying forward:
+
+- **Check 1 is applied to every plpgsql function exposed to `authenticated`, not only
+  the `SECURITY DEFINER` ones.** `create_product`/`update_product` are `SECURITY
+  INVOKER` and would have escaped the narrower reading, which is why the guard
+  primitives carry an `authenticated` grant in the first place. The partition is
+  "role-gated or self-scoping", and it is the same partition check 5 enforces.
+- **The matrix asserts both directions.** For a disallowed (role, RPC) pair the call
+  must come back `42501`; for a permitted one it must come back *anything but* `42501`.
+  Without the second half, annotating every role as permitted would pass vacuously —
+  which §3.4 names as the check's own failure mode. One RPC opts out of the positive
+  half (`get_gedu_assigned_product` raises a second `42501` for a gedu with no
+  assignment, which is its ownership gate, not its role gate); the opt-out carries its
+  reason inline.
+- **INSERT is out of scope for the write-IDOR loop.** A blocked INSERT and a constraint
+  violation are both "an error", so the check would risk passing for the wrong reason
+  unless every case carried a fully valid payload. UPDATE/DELETE need no payload: RLS
+  simply filters the row out and the statement affects zero rows. INSERT `WITH CHECK`
+  stays with the per-feature RLS tests, which do supply valid payloads.
+
+What Phase 3 inherits:
+
+- **Every new RPC needs a matrix annotation or an allowlist entry with a scope test**,
+  and every new write grant needs an IDOR case — the completeness checks fail the build
+  otherwise. That is the intended cost, and it is what the per-route checklist below
+  already anticipates.
+- **A dead grant worth folding into a later phase**: `authenticated` held `UPDATE` on
+  `whatsapp_messages` with no UPDATE policy behind it, so it authorized nothing. Phase 3
+  revoked it while converting that route, and retired its IDOR case with it — the grant
+  layer now refuses those writes outright, which is the stronger guarantee.
+- **`can_read_product` answers `NULL`, not `false`, for a caller with no profiles row.**
+  Its first disjunct compares `get_user_role()` to `'admin'`, which is NULL for `anon`,
+  and `NULL OR false` is NULL. Harmless where it is used — a policy's `USING` clause
+  treats NULL as deny — and the scope test pins both the NULL and the deny. Worth a
+  `COALESCE(…, false)` when Phase 4 next touches that predicate, so the boolean is total.
+- **The Phase 1 grant asymmetry stands**: `assert_self` and the two §3.2 participation
+  predicates remain `service_role`-only, because nothing composes from them yet. The
+  phase that puts them in a policy or a `SECURITY INVOKER` body grants them then — and
+  check 5 will require the classification at that point.
+
+### Phase 3 — the route sweep — **landed**
 
 **Selection criteria** (use these, not a frozen list — regenerate with
 `git grep -l createAdminClient src/` and triage): a route is a conversion candidate if
@@ -401,33 +492,14 @@ context.
 The conversions come in three distinct shapes — triage each candidate into one:
 
 1. **Grant-plus-guard** (cheapest; the RPC already exists but is service_role-only,
-   and the route calls it via the admin client): add the guard primitive to the RPC
-   body, grant it to `authenticated`, switch the route to the user-bound client,
-   annotate it in the matrix. The waitlist-join, feedback-submission, and
-   admin-participation-cancel routes are this shape today.
+   and the route calls it via the admin client): guard the RPC, expose it to
+   `authenticated`, switch the route to the user-bound client, annotate it in the
+   matrix.
 2. **New RPC** (the route does direct admin-client writes to a grant-locked table):
-   write the Model C/D RPC per §3.5. The admin "comp-enroll a gamer onto a product"
-   route is the natural worked example.
+   write the Model C/D RPC per §3.5.
 3. **Client swap to Model B** (the route touches only normal tables): switch to the
    user-bound client and verify RLS grants the role the operation, both actor and
-   target halves. Candidates at time of writing: the admin outbound-WhatsApp write,
-   the PIN-forgot read, the external-account (Minecraft) upsert, and the voice-token
-   route's membership reads (which may instead justify a read predicate — investigate
-   before converting). Two carry extra work: the locale-update route uses the admin
-   client only to dodge a server-client *typing* issue — root-cause that rather than
-   carrying the workaround into the conversion; and the locations CRUD needs grant
-   changes too (`authenticated` currently lacks UPDATE on locations), not just a
-   client swap.
-
-**Verified non-candidates** (criterion (c), confirmed in triage — re-verify, don't
-assume): the auth-admin routes (gedu creation, password reset, PIN reset token flow,
-account switch, gamer metadata sync, gamer creation), the Stripe and WhatsApp
-webhooks, storage-upload portions of product create/update (their data writes already
-go through user-client RPCs), the Stripe-customer helper used by checkout and the
-billing portal (checkout's data reads already use the user client — its earlier
-"cross-user seat reads" concern turned out not to exist), and the family-list route
-(a gamer legitimately reads siblings beyond their own RLS view; the route scopes the
-admin client to the verified caller's family).
+   target halves.
 
 **Per-route checklist** before converting:
 1. No storage writes, no Auth Admin API calls remain on the converted path.
@@ -440,22 +512,269 @@ admin client to the verified caller's family).
 Batch by shape: the grant-plus-guard set first (smallest diff, settles the pattern),
 then Model B swaps, then new RPCs.
 
-### Phase 4 — RLS completeness
+#### The triage, machine-readably
 
-Refactor existing write policies to compose from the §3.2 predicates so the write-IDOR
-loop passes everywhere; migrate inline `(SELECT get_user_role()) = 'admin'` policy
-comparisons to `is_admin()` opportunistically as policies are touched. Ship pending
-features that add write policies (e.g. a parent updating their linked gamer's profile
-fields) on the same predicates.
+Every module that used the service-role client at triage time, with the write model it
+landed on. The route-layer refactor instance in `docs/refactor-playbook.md` consumes
+this as its own step-2 classification, so keep the shape stable and re-derive rather
+than edit when the surface changes. `shape` is the conversion shape above (`1`
+grant-plus-guard, `2` new RPC, `3` Model B swap) or `-` for a module that stayed Model
+A. Twelve of the twenty-nine modules dropped the service-role client entirely; three
+kept it for a narrowed purpose.
+
+```csv
+module,model,shape,justification
+src/app/api/participations/waitlist/route.ts,C,1,customer waitlist-join now runs on the user client against a customer-guarded RPC that reads the actor from the session
+src/app/api/feedback/route.ts,C+A,1,the submission write moved to a self-scoping RPC on the user client; the admin client survives only for the notification fan-out (every admin's email; a gamer's parent's) which is not in the submitter's RLS view and must not be returnable from an RPC
+src/app/api/admin/whatsapp/send/route.ts,B,3,contacts upsert + message insert run under the pre-existing admin-only policies; the message policy also pins direction to outbound
+src/app/api/auth/pin/forgot/route.ts,B,3,reads the caller's own PIN hash, already inside their RLS view
+src/app/api/minecraft/account/route.ts,B,3,self-write policies added; the row key comes from the session and never from the request
+src/app/api/user/locale/route.ts,B,3,column-level UPDATE grant on the locale column added; the pre-existing self-update policy scopes it
+src/app/api/admin/locations/create/route.ts,B,3,INSERT grant added so the pre-existing admin-only write policy is reachable
+src/app/api/admin/locations/[id]/route.ts,B,3,as above for UPDATE
+src/app/api/admin/products/[id]/participations/route.ts,C,2,participations is grant-locked; admin comp-enroll became an admin-guarded RPC carrying the product-type gate and parent resolution
+src/app/api/admin/products/[id]/participations/[participationId]/route.ts,C,2,same table; admin un-enroll became an admin-guarded RPC carrying the product-membership pair check and the live-subscription refusal
+src/app/api/admin/products/create/route.ts,A,-,admin client is used ONLY for a privileged-bucket storage upload; the data writes already run on the user client
+src/app/api/admin/products/[id]/update/route.ts,A,-,as above, plus storage deletes of superseded images
+src/app/api/auth/forgot-password/route.ts,A,-,Auth Admin API (recovery link generation)
+src/app/api/auth/pin/reset/route.ts,A,-,resolves its user from a signed token rather than a session, so there is no caller to act as
+src/app/api/auth/switch-account/route.ts,A,-,Auth Admin API (user lookup + magic-link generation)
+src/app/api/gamers/create/route.ts,A,-,Auth Admin API (user creation, with delete-on-failure compensation)
+src/app/api/gamers/[id]/route.ts,A,-,Auth Admin API (metadata + password updates) interleaved with writes to a LINKED user's rows; the parent-writes-gamer policy is Phase 4 work
+src/app/api/gedu/register/route.ts,A,-,Auth Admin API (self-registration creates the auth user before any session exists)
+src/app/api/webhooks/stripe/products/route.ts,A,-,webhook; no session by construction
+src/app/api/webhooks/whatsapp/route.ts,A,-,webhook; no session by construction
+src/app/api/minecraft/join-check/route.ts,A,-,server-to-server, authenticated by a shared API key rather than a user session
+src/app/api/checkout/products/create/route.ts,A,-,caches a Stripe customer id onto the grant-locked billing table; an authenticated write path there would let a user point their billing row at someone else's Stripe customer
+src/app/api/parent/billing-portal/route.ts,A,-,same Stripe-customer helper as checkout
+src/app/api/family/list/route.ts,A,-,a gamer legitimately reads siblings beyond their own RLS view; the resolver is scoped to the verified caller's family
+src/app/select-profile/page.tsx,A,-,same family resolver as the family-list route
+src/services/family/family.server.ts,A,-,the shared family resolver itself
+src/lib/pin-session-server.ts,A,-,resolves a PIN-reset token to a user id with no session in hand; shared by the reset page and the reset route
+src/app/api/voice/token/route.ts,A,-,see the judgment call below — the self-healing occupancy prune is a cross-user system write no participant is authorized to make
+src/lib/supabase/admin.ts,-,-,the client factory itself
+```
+
+#### Judgment calls
+
+- **The deployment window forced additive conversions rather than in-place guards.**
+  A migration reaches the shared staging database the moment it is pushed, but the code
+  running against that database only changes when the PR stack merges. Guarding an RPC
+  that the currently-deployed routes call through the service-role client would refuse
+  those calls — the caller has no `auth.uid()`, hence no role — and break staging for
+  the whole window. The rejected alternative was an `auth.uid() IS NULL` escape hatch
+  inside the guard: that reopens exactly the roleless-caller hole Phase 2 closed, in the
+  one place every guarded function shares, and "transitional" allowances in shared
+  primitives have a way of becoming permanent. So the grant-plus-guard shape landed as
+  *new* guarded entry points beside the untouched service_role-only engines. Nothing was
+  weakened for even one request, and no allowance needs remembering to remove — only two
+  now-redundant signatures need retiring (see the inherited items).
+- **The admin cancel route was not the shape the plan expected.** It was sketched as
+  grant-plus-guard; re-verification found the underlying cancel RPC is also called by
+  the Stripe webhook, which has no session by definition and must keep calling it as
+  service_role *permanently*. A role guard on that body would break the webhook for
+  good, not just through the deployment window. It stays a service_role-only engine and
+  the admin-facing entry point wraps it — which is also what lets the wrapper hold
+  admin-specific preconditions the webhook must not have.
+- **Moving route logic into an RPC closed a real race, not just a layer.** The
+  admin un-enroll path refuses to delete a participation that still has a live Stripe
+  subscription, because the CASCADE would orphan a subscription that keeps billing with
+  no DB row behind it. In the route that check and the delete were separate statements;
+  in the RPC they share a transaction and the product lock.
+- **The locale route's admin client was not a typing problem.** It carried a comment
+  blaming a `@supabase/ssr` version whose bug made `.update()` resolve as `never`. That
+  dependency has since moved two majors and the workaround was obsolete; the real reason
+  the write could not run as the user was a missing column grant. Root-caused and
+  removed rather than carried forward.
+- **The voice-token route stays Model A, deliberately.** Its membership reads would
+  convert cleanly, but the same handler performs a self-healing prune of stale
+  private-zone occupancy from *previous* session windows — a cross-user maintenance
+  DELETE that no individual participant is authorized to make (the delete policy is
+  moderator-only, and most joiners are not moderators). Converting only the reads would
+  leave the handler holding the service-role client anyway, so the trust boundary would
+  not move; it would only add a way for an RLS subtlety to lock a gamer out of a live
+  voice session. A member-scoped prune RPC is the obvious way to finish this and is
+  recorded as a Phase 4 candidate rather than forced here. (Phase 4 designed it and did
+  not ship it either — for a sharper reason than this one; see its design note.)
+- **The feedback route is a partial conversion and is recorded as such.** Its write is
+  Model C; its notification fan-out stays Model A. Folding the recipient lookup into the
+  RPC would make every admin's email address readable by any authenticated caller who
+  invoked that RPC directly, which is worse than the thing it would fix.
+
+Phase 4 cleared the backlog Phase 3 left: the two participation predicates went into
+policies, the product-read predicate became total, and the redundant engine signatures
+were sequenced behind the deploy (see the post-deploy list at the end of §5).
+
+### Phase 4 — RLS completeness — **landed**
+
+Every policy in the database now expresses its admin half as one named predicate, and no
+policy re-derives an ownership question a predicate already answers.
+
+- **The admin idiom is now singular.** Twenty-eight policies migrated to the named admin
+  predicate, InitPlan-wrapped. They had been written three different ways — an inline
+  comparison against the role accessor, a bare call to the predicate, and a hand-rolled
+  `EXISTS` over the profiles table — and the three were scattered across tables with no
+  pattern to which table got which. Each swap is a rename of an identical expression,
+  including the NULL answer for a caller with no profiles row, which a `USING` /
+  `WITH CHECK` clause denies either way. Three of them carried a bare call and were
+  paying a function call per row; the wrapper fixed that as a side effect.
+- **The three party-to policies compose from the §3.2 predicates**, which took their
+  `authenticated` grant at that point (a policy expression is evaluated as the querying
+  role) and their spine classification with fixture-bearing scope tests. The equivalence
+  argument is below — it is the interesting part of this phase.
+- **The product-read predicate became a total boolean.** Its admin disjunct is NULL for a
+  caller with no profiles row and `NULL OR false` is NULL, so it answered SQL NULL. The
+  deny was never in doubt; the fix is about not handing the next consumer a
+  three-valued answer. Wrapped in `COALESCE(…, false)`, and moved to the canonical empty
+  search_path while it was open.
+- **`ALTER POLICY`, not `DROP` + `CREATE`.** No statement ever observes a table without
+  its policy, and the change is one catalog update rather than a window.
+
+#### Judgment calls
+
+- **The party-to swap was argued from its *direction*, not from a data snapshot.** The
+  predicates unify the two participation columns into one question; the policies they
+  replaced each keyed on one column under a role gate. So the rewrite can only ever
+  *admit* a row the old form refused, never refuse one it admitted — which is what makes
+  it safe to apply to a shared database whose deployed code has not changed yet. A
+  snapshot showing zero affected rows would have been weaker: it says nothing about the
+  next row inserted.
+- **The row it could additionally admit is the policies' own intent.** That row is a
+  caller holding one party's role who occupies the *other* party's column — a
+  customer-role account that is the gamer on an active participation, or the reverse.
+  It does not exist on the shared database (checked in both directions before writing
+  the migration) and is unreachable through the application's own creation paths:
+  participation parties are resolved from parent/gamer links, gamer accounts are created
+  with the gamer role by the atomic creation RPC, which refuses to promote an existing
+  account, and the role column carries no write grant for `authenticated` at all, so only
+  an admin could ever produce one. And if one existed, the effect would be to show a
+  party to a participation the group or assignment row they are themselves party to —
+  the thing these policies exist to do. Making it *structurally* impossible would mean a
+  cross-table role invariant enforced by triggers on both tables, which buys nothing here
+  and would refuse an admin's legitimate role correction.
+- **A drift between the hosted databases and migration history surfaced here and was
+  repaired.** Two admin full-access policies — on the tables holding the parent PIN hash
+  and a child's date of birth — existed on the hosted databases but had never been
+  written into a migration, so a database built from migrations alone did not have them.
+  CI builds exactly such a database, which means the DB suite had been verifying a
+  different RLS surface from the one that runs in production on those two tables. The
+  migration creates them when absent and alters them when present. Worth remembering as
+  a class: **a policy created outside a migration is invisible to every check we have**,
+  because every check runs against a database built from migrations.
+- **The voice-token route stays Model A, and this is now a decision rather than a
+  deferral** — see the design note below.
+
+#### The voice-occupancy prune: designed, not shipped
+
+Phase 3 recorded a member-scoped prune RPC as the obvious way to finish the voice-token
+route's conversion. Designing it surfaced two blockers, and the first is a genuine
+privacy hole rather than an inconvenience:
+
+1. **No caller may supply the cutoff.** The prune deletes private-zone occupancy rows
+   from *previous* session windows, so it needs to know where the current window starts.
+   If that boundary is a parameter, any group member can pass a value that sweeps the
+   *current* window's rows — and those rows are the privacy ledger the SFU permission
+   projection is rebuilt from, so deleting them un-blocks the very people they confine.
+   A confined participant could free themselves, which is precisely the guarantee the
+   write-IDOR loop pins for that table. Bounding the parameter to the past does not help:
+   the current window opened in the past too.
+2. **A gedu's cross-group voice mobility has no matching read policy.** The voice model
+   treats a gedu as a member and moderator of every group of a product they are assigned
+   to, and the token route's membership gate follows that. But the policy letting a gedu
+   *read a group row* is assignment-scoped, not product-scoped — so converting the
+   route's group read to the user client would lock a gedu out of a sibling group's room
+   that they are entitled to join. Widening that policy would fix it, but widening is not
+   behaviour-equivalent, which the deployment-window rule forbids in the same change.
+
+The three ways out of the first blocker, for whoever picks this up:
+
+- **Compute the window in the database.** Correct and parameterless, but it means a
+  second implementation of the session-window arithmetic — weekday, product timezone,
+  duration, and the open/close grace margins — in SQL, where it would silently drift from
+  the application's copy. The margins are application constants, not schema.
+- **Prune on a fixed retention** (delete occupancy older than a day) rather than on the
+  window boundary. Parameterless, safe by construction because a current window's start
+  is always within hours of now, and it still serves every purpose the prune has: freeing
+  the uniqueness constraint for re-occupancy, reaping a participant who never left, and
+  bounding growth. It is not equivalent — rows survive longer — but nothing reads them:
+  every consumer filters occupancy to an exact window already.
+- **Restrict the prune to moderators**, who are authorized to delete occupancy anyway.
+  Simplest, but it stops being self-healing on a session no moderator joins.
+
+The second blocker wants the route to stop reading the group row directly at all: a
+single self-scoping RPC that answers "may I join this room, and what are its schedule and
+timezone", bounded by the existing voice-membership predicate — which already encodes
+exactly the route's three-way membership gate. That collapses two of the route's gates
+and its group read into one call, and leaves only the prune, the occupancy read and the
+caller's own Minecraft row, all of which convert cleanly. Until both parts land, the
+route holds the service-role client, so converting its reads piecemeal would move no
+trust boundary — the same reasoning Phase 3 applied.
+
+#### Post-deploy cleanup
+
+The only work this refactor leaves. Both items are blocked on the deploy of this stack,
+not on design:
+
+- **Revoke `service_role` EXECUTE from the two participation engines** — the three-argument
+  waitlist-join and the two-argument feedback-submission functions, which take the
+  caller's identity as a parameter. Phase 3 put guarded entry points in front of them and
+  no application code calls them directly any more, but staging's *deployed* code still
+  does until this stack ships. Note they cannot be dropped, as Phase 3's note assumed:
+  the guarded entry points call them. Revoking the grant is the stronger outcome anyway —
+  it makes the engines reachable only through their guarded wrappers, which is the §2
+  grant-lockdown posture applied to a function instead of a table:
+
+  ```sql
+  REVOKE EXECUTE ON FUNCTION public.join_waitlist(uuid, uuid, uuid) FROM service_role;
+  REVOKE EXECUTE ON FUNCTION public.submit_feedback(uuid, text) FROM service_role;
+  ```
+
+  Verify first that nothing outside the wrappers still calls them, then push the revoke
+  as a normal migration; the wrappers are `SECURITY DEFINER` and reach the engines through
+  ownership, not through a role grant.
+- **Confirm the two repaired admin policies exist on production.** The drift repair above
+  is conditional, so production takes the ALTER branch — but the drift is evidence that
+  the hosted schemas were edited outside migrations at least once, and the cheapest time
+  to notice another instance is right after this stack lands. Compare the production
+  policy catalog against `supabase/schema.sql`.
+
+The self-assertion primitive remains `service_role`-only: nothing composes from it yet,
+because no `SECURITY INVOKER` body or policy has needed a raising self-check. That is the
+Phase 1 asymmetry working as designed, not an omission — the phase that needs it grants
+it, and the spine will require its classification at that point.
 
 ---
 
 ## 6. Explicitly out of scope
 
-Adjacent but *different* refactors — folding them in would bloat this one:
+Adjacent but *different* refactors — folding either into this one would have bloated it,
+and both are still open:
 
 - **Data-validity constraints** — CHECK constraints on free-text columns, NOT NULL
   tightening. Same layer, different property (validity, not authorization).
-- **Browser-level auth E2E** — Playwright against a local Supabase stack. Shares the
-  role-switching substrate and would accelerate Phase 2, but the DB-test helpers
-  already cover what the spine needs.
+- **Browser-level auth E2E** — Playwright against a local Supabase stack. It shares the
+  role-switching substrate, but the DB-test helpers cover what the spine needs, so this
+  buys coverage of the *browser* half of an auth flow rather than more of the database
+  half.
+
+---
+
+## 7. Feature work this refactor makes cheap
+
+Not part of the refactor, and not blocking anything. Recorded here because the refactor
+is what put the pieces in place, and because each one is a *product* decision wearing an
+authorization costume — none should be slipped in as a cleanup.
+
+- **A parent writing their linked gamer's profile fields.** The predicate for it exists
+  and has since Phase 1, so the policy itself is a few lines. What makes it a product
+  decision is what it costs: the write-IDOR loop currently pins the opposite guarantee —
+  a parent may *read* their child's profile row and may not write it — with the linked
+  parent deliberately chosen as the sharpest attacker for that table. Landing the feature
+  means rewriting that case to a narrower one (which columns, and which are still the
+  child's alone), and that column list is the actual decision. The payoff is that the
+  gamer-update route's data writes leave the service-role client; its Auth Admin calls
+  keep it Model A regardless, so the win is a smaller Model A surface, not one fewer
+  Model A route.
+- **Finishing the voice-token conversion**, per the design note in §5 Phase 4. Both parts
+  of it change behaviour — one changes when stale occupancy is reaped, the other widens
+  what a gedu may read — so both want a deploy boundary of their own.

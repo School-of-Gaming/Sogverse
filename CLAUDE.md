@@ -152,6 +152,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | System | Location |
 |---|---|
 | Layout & scrolling | `src/components/layout/` |
+| Billing portal | `src/services/billing/` |
 | Parent PIN | `src/services/pin/` |
 | i18n | `src/i18n/` |
 | Email templates | `src/lib/email-templates/` |
@@ -164,7 +165,10 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Testing conventions | `tests/` |
 
 - `docs/` holds the docs a human deliberately maintains and that don't map to one directory: cross-cutting architecture spanning many systems (products, db-authorization, performance), point-in-time records (security audit, bug/fix write-ups, gap analyses), and ops runbooks (slack, admin quota, stripe testing). When a topic is in neither a colocated `CLAUDE.md` nor `docs/`, treat the code as the source of truth.
+- `docs/plans/` holds decided, ready-to-build implementation plans, each self-contained enough for a fresh session to execute without prior context. A plan is **deleted** when its work lands — a file sitting there means the work is still open. See its own `CLAUDE.md`.
 - `TODO.md` is the running list of cross-cutting work we know we want to come back to. Distinct from `docs/`. **When an item is fully done with nothing left to discuss, delete it — don't check it off (`[x]`).** `TODO.md` tracks open work, not a changelog; the record of what was done lives in git history and in the docs/code the work produced. Leave `[ ]`/`[x]` only for partially-done items where the checked sub-points still give context for the open ones.
+
+**Rule: Docs state their rules self-containedly — never cite a specific code symbol as an illustration.** A pointer like "see `getParticipationsForGamers` in `participations.service.ts`" rots silently: the function gets renamed, moved, or deleted, and the doc goes on citing something that no longer exists or no longer makes the point. Describe the *shape* of the code instead, so the rule stands on its own. Two things stay fair game: naming an API the rule mandates (a rule like "resolve redirect targets through `resolveInternalPath()`" *is* that name — it cannot be stated without it), and directory or module references used for navigation, which are stable.
 
 ## Environment Variables
 
@@ -185,8 +189,11 @@ always-on tripwires:
   regenerated before committing** — DB tests and type-check depend on
   `database.types.ts` matching the schema.
 - **Every new object (table, view, sequence, function) needs an explicit `GRANT`** — no
-  Data API access by default, not even for `service_role`. Grant per role, and add any
-  `authenticated`/`anon` function to the allowlist in `tests/db/access-control.test.ts`.
+  Data API access by default, not even for `service_role`. Grant per role. A function
+  exposed to `authenticated`/`anon` additionally has to be **classified in the DB test
+  suite's authorization spine** — role-gated (guard-first body + its permitted roles) or
+  self-scoping (named to a scope test) — and a table that gains a write grant needs a
+  write-IDOR case. The spine's completeness checks fail the build otherwise.
 - **All new tables must enable RLS**, and **RLS INSERT/UPDATE policies must authorize
   both the actor AND the target** (checking only `column = auth.uid()` is an IDOR hole).
 
@@ -202,6 +209,12 @@ work under `tests/`). Two things worth knowing from anywhere:
   branch, not locally.
 - **Shared mock factories live in `tests/mocks/`** — add new mocks there rather than
   duplicating across files.
+- **A new API route has to be classified in the integration suite's route posture
+  registry** — its auth posture (with a written reason for anything that is not
+  role-gated), how it takes its body, and the test that exercises it. The registry's
+  completeness checks fail the build otherwise, and they also fail on an undeclared
+  handler method, an unjustified service-role import, and a named test that does not
+  exist or does not reference the route.
 
 ## Code Style
 

@@ -143,6 +143,7 @@ export function expandUpcomingSessions(
       // If either the status filter or that index changes, revisit this.
       const isNext = index === 0;
       sessions.push({
+        participationId: row.participationId,
         gamerFirstName: row.gamer.firstName,
         gamerSeed: row.gamer.id,
         productName,

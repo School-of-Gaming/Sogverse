@@ -124,7 +124,7 @@ describe("POST /api/gamers/create — DOB validation", () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toContain("Date of birth is required");
+    expect(data.error).toContain("dateOfBirth");
   });
 
   it("should return 400 when dateOfBirth is in the future", async () => {
@@ -297,7 +297,7 @@ describe("POST /api/gamers/create — v1 minimal body (auto-generated credential
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toContain("Gender");
+    expect(data.error).toContain("gender");
   });
 
   it("accepts a missing/null gender (no longer required)", async () => {
@@ -313,8 +313,11 @@ describe("POST /api/gamers/create — v1 minimal body (auto-generated credential
     );
 
     // 400 from createUser's mock-stop, not from a gender validation error.
+    // The provider's own message is logged rather than forwarded now, so the
+    // body is this route's own copy — what matters here is that no gender
+    // issue was raised on the way.
     const data = await response.json();
-    expect(data.error).toBe("mock-stop");
+    expect(data.error).not.toContain("gender");
     expect(response.status).toBe(400);
   });
 });

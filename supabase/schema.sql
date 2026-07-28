@@ -170,6 +170,22 @@ CREATE TYPE public.user_role AS ENUM (
 
 
 --
+-- Name: _list_column_grants(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public._list_column_grants(p_grantee text) RETURNS TABLE(table_name text, column_name text, privilege_type text)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT c.table_name::text, c.column_name::text, c.privilege_type::text
+  FROM information_schema.column_privileges c
+  WHERE c.grantee = p_grantee
+    AND c.table_schema = 'public'
+  ORDER BY 1, 2, 3;
+$$;
+
+
+--
 -- Name: _list_cron_jobs(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -183,21 +199,32 @@ $$;
 
 
 --
--- Name: _list_rpc_access(); Type: FUNCTION; Schema: public; Owner: -
+-- Name: _list_function_authorization_surface(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public._list_rpc_access() RETURNS TABLE(function_name text, authenticated_access boolean, anon_access boolean)
+CREATE FUNCTION public._list_function_authorization_surface() RETURNS TABLE(function_name text, function_language text, is_security_definer boolean, is_strict boolean, authenticated_access boolean, anon_access boolean, argument_names text[], body text)
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
   SELECT
-    p.proname::text AS function_name,
-    has_function_privilege('authenticated', p.oid, 'EXECUTE') AS authenticated_access,
-    has_function_privilege('anon', p.oid, 'EXECUTE') AS anon_access
+    p.proname::text,
+    l.lanname::text,
+    p.prosecdef,
+    p.proisstrict,
+    pg_catalog.has_function_privilege('authenticated', p.oid, 'EXECUTE'),
+    pg_catalog.has_function_privilege('anon', p.oid, 'EXECUTE'),
+    -- proargnames carries OUT/TABLE column names after the input args, so slice
+    -- to pronargs. NULL when the function takes no arguments at all.
+    COALESCE(p.proargnames[1:p.pronargs], '{}'::text[]),
+    p.prosrc::text
   FROM pg_catalog.pg_proc p
   JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+  JOIN pg_catalog.pg_language  l ON l.oid = p.prolang
   WHERE n.nspname = 'public'
-    AND p.prorettype != 'pg_catalog.trigger'::pg_catalog.regtype;
+    -- Trigger functions are not a callable surface: PostgREST cannot invoke them
+    -- and PostgreSQL only runs them from a trigger context. Same exclusion the
+    -- RPC-access view this replaces used.
+    AND p.prorettype <> 'pg_catalog.trigger'::pg_catalog.regtype;
 $$;
 
 
@@ -253,6 +280,124 @@ $$;
 
 
 --
+-- Name: admin_enroll_gamer(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_product_type     public.product_type;
+  v_customer_id      uuid;
+  v_participation_id uuid;
+BEGIN
+  PERFORM public.assert_admin();
+
+  SELECT product_type INTO v_product_type
+    FROM public.products WHERE id = p_product_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'product % does not exist', p_product_id
+      USING ERRCODE = 'no_data_found';
+  END IF;
+
+  IF v_product_type = 'consumer_club' THEN
+    RAISE EXCEPTION 'admin enrollment is not supported for consumer clubs'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- One parent per gamer is the current model; where a gamer somehow has
+  -- several links, the oldest wins so the choice is deterministic rather than
+  -- whatever the planner returned. Multi-parent reckoning is future work.
+  SELECT parent_id INTO v_customer_id
+    FROM public.parent_gamer
+    WHERE gamer_id = p_gamer_id
+    ORDER BY created_at ASC
+    LIMIT 1;
+  IF v_customer_id IS NULL THEN
+    RAISE EXCEPTION 'gamer % has no linked parent', p_gamer_id
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- The partial unique index on (product_id, gamer_id) for non-reserving
+  -- statuses is the source of truth for "already enrolled"; it raises 23505 and
+  -- the route maps that to 409. Re-checking it here would be a race, not a
+  -- safeguard.
+  INSERT INTO public.participations (product_id, gamer_id, customer_id, status)
+  VALUES (p_product_id, p_gamer_id, v_customer_id, 'active')
+  RETURNING id INTO v_participation_id;
+
+  RETURN jsonb_build_object(
+    'participation_id', v_participation_id,
+    'customer_id', v_customer_id
+  );
+END;
+$$;
+
+
+--
+-- Name: FUNCTION admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid) IS 'Admin-gated comp-enrollment: drops a gamer onto a non-consumer_club product with status=active, bypassing payment, seat caps and registration windows by design.';
+
+
+--
+-- Name: admin_remove_participation(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.admin_remove_participation(p_product_id uuid, p_participation_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_row_product_id uuid;
+  v_product_type   public.product_type;
+  v_live_sub       text;
+BEGIN
+  PERFORM public.assert_admin();
+
+  SELECT product_id INTO v_row_product_id
+    FROM public.participations WHERE id = p_participation_id;
+  IF NOT FOUND OR v_row_product_id IS DISTINCT FROM p_product_id THEN
+    RAISE EXCEPTION 'participation % is not on product %',
+      p_participation_id, p_product_id
+      USING ERRCODE = 'no_data_found';
+  END IF;
+
+  SELECT product_type INTO v_product_type
+    FROM public.products WHERE id = p_product_id;
+  IF v_product_type = 'consumer_club' THEN
+    RAISE EXCEPTION 'admin removal is not supported for consumer clubs'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- family_subscriptions.participation_id is UNIQUE and stripe_subscription_id
+  -- is NOT NULL, so the mere existence of a row means a live Stripe sub is
+  -- linked to this participation.
+  SELECT stripe_subscription_id INTO v_live_sub
+    FROM public.family_subscriptions
+    WHERE participation_id = p_participation_id;
+  IF v_live_sub IS NOT NULL THEN
+    RAISE EXCEPTION
+      'participation % still has live Stripe subscription %',
+      p_participation_id, v_live_sub
+      USING ERRCODE = 'object_not_in_prerequisite_state';
+  END IF;
+
+  RETURN public.cancel_participation(p_participation_id, 'admin_cancelled');
+END;
+$$;
+
+
+--
+-- Name: FUNCTION admin_remove_participation(p_product_id uuid, p_participation_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.admin_remove_participation(p_product_id uuid, p_participation_id uuid) IS 'Admin-gated un-enrollment. Refuses a participation that is not on the named product, a consumer_club product, or a participation with a live Stripe subscription; otherwise delegates to cancel_participation.';
+
+
+--
 -- Name: apply_group_changes(uuid, jsonb, jsonb, uuid[], jsonb, jsonb, jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -271,9 +416,7 @@ DECLARE
   v_gedu_id_text    TEXT;
   v_temp_map        JSONB := '{}'::jsonb;
 BEGIN
-  IF (SELECT get_user_role()) <> 'admin' THEN
-    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
-  END IF;
+  PERFORM public.assert_admin();
 
   PERFORM 1 FROM products WHERE id = p_product_id FOR UPDATE;
   IF NOT FOUND THEN
@@ -355,36 +498,94 @@ $$;
 
 
 --
+-- Name: assert_admin(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.assert_admin() RETURNS void
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+BEGIN
+  PERFORM public.assert_role('admin');
+END;
+$$;
+
+
+--
+-- Name: assert_role(public.user_role); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.assert_role(p_role public.user_role) RETURNS void
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+BEGIN
+  -- A NULL p_role is a caller bug — no role name was asked for, so nothing can
+  -- satisfy the assertion. Refuse before the comparison can swallow it.
+  IF p_role IS NULL THEN
+    RAISE EXCEPTION 'assert_role requires a role' USING ERRCODE = '42501';
+  END IF;
+
+  -- IS DISTINCT FROM, not `<>`: a caller with no profiles row has a NULL role,
+  -- and `NULL <> 'admin'` is NULL, which an IF treats as false — that let a
+  -- roleless caller straight through. NULL is distinct from every role, so this
+  -- form refuses them.
+  IF (SELECT public.get_user_role()) IS DISTINCT FROM p_role THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+END;
+$$;
+
+
+--
+-- Name: assert_self(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.assert_self(p_user_id uuid) RETURNS void
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+BEGIN
+  IF p_user_id IS NULL OR (SELECT auth.uid()) IS DISTINCT FROM p_user_id THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+END;
+$$;
+
+
+--
 -- Name: can_read_product(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.can_read_product(p_product_id uuid) RETURNS boolean
     LANGUAGE sql STABLE SECURITY DEFINER
-    SET search_path TO 'public'
+    SET search_path TO ''
     AS $$
-  SELECT
+  SELECT COALESCE(
     -- admin sees everything (mirrors admin_full_access_* FOR ALL)
-    (SELECT get_user_role()) = 'admin'
+    (SELECT public.get_user_role()) = 'admin'::public.user_role
     -- public: published and visible
     OR EXISTS (
-      SELECT 1 FROM products pr
+      SELECT 1 FROM public.products pr
       WHERE pr.id = p_product_id
-        AND pr.status IN ('pending', 'running')
+        AND pr.status IN ('pending'::public.product_status, 'running'::public.product_status)
         AND pr.is_visible = true
     )
     -- enrolled gamer (child's own login) OR purchaser (parent), active/waitlisted
     OR EXISTS (
-      SELECT 1 FROM participations p
+      SELECT 1 FROM public.participations p
       WHERE p.product_id = p_product_id
         AND (p.gamer_id = (SELECT auth.uid()) OR p.customer_id = (SELECT auth.uid()))
-        AND p.status IN ('active', 'waitlisted')
+        AND p.status IN ('active'::public.participation_status, 'waitlisted'::public.participation_status)
     )
     -- assigned gedu
     OR EXISTS (
-      SELECT 1 FROM gedu_group_assignments a
+      SELECT 1 FROM public.gedu_group_assignments a
       WHERE a.product_id = p_product_id
         AND a.gedu_id = (SELECT auth.uid())
-    );
+    ),
+    false
+  );
 $$;
 
 
@@ -738,10 +939,7 @@ DECLARE
   v_price         JSONB;
   v_translation   JSONB;
 BEGIN
-  IF (SELECT public.get_user_role()) <> 'admin' THEN
-    RAISE EXCEPTION 'Only admins can create products'
-      USING ERRCODE = '42501';
-  END IF;
+  PERFORM public.assert_admin();
 
   IF p_translations IS NULL OR jsonb_array_length(p_translations) = 0 THEN
     RAISE EXCEPTION 'At least one translation is required'
@@ -835,9 +1033,7 @@ DECLARE
   v_status      public.participation_status;
   v_now         TIMESTAMPTZ;
 BEGIN
-  IF (SELECT public.get_user_role()) <> 'admin' THEN
-    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
-  END IF;
+  PERFORM public.assert_admin();
 
   SELECT product_id, status INTO v_product_id, v_status
     FROM public.participations
@@ -1019,9 +1215,7 @@ DECLARE
   v_product     JSONB;
   v_groups      JSONB;
 BEGIN
-  IF (SELECT get_user_role()) <> 'gedu' THEN
-    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
-  END IF;
+  PERFORM public.assert_role('gedu');
 
   SELECT group_id
     INTO v_my_group_id
@@ -1160,9 +1354,7 @@ CREATE FUNCTION public.get_my_assigned_products() RETURNS TABLE(product_id uuid,
 DECLARE
   v_gedu_id UUID := (SELECT auth.uid());
 BEGIN
-  IF (SELECT get_user_role()) <> 'gedu' THEN
-    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
-  END IF;
+  PERFORM public.assert_role('gedu');
 
   RETURN QUERY
   SELECT
@@ -1344,9 +1536,7 @@ DECLARE
   v_unassigned JSONB;
   v_waitlist   JSONB;
 BEGIN
-  IF (SELECT get_user_role()) <> 'admin' THEN
-    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
-  END IF;
+  PERFORM public.assert_admin();
 
   IF NOT EXISTS (SELECT 1 FROM products WHERE id = p_product_id) THEN
     RAISE EXCEPTION 'Product not found' USING ERRCODE = 'P0002';
@@ -1612,6 +1802,42 @@ $$;
 
 
 --
+-- Name: has_active_participation_in_group(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.has_active_participation_in_group(p_group_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.participations p
+     WHERE p.group_id = p_group_id
+       AND (p.customer_id = (SELECT auth.uid()) OR p.gamer_id = (SELECT auth.uid()))
+       AND p.status = 'active'
+  );
+$$;
+
+
+--
+-- Name: has_active_participation_on_product(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.has_active_participation_on_product(p_product_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.participations p
+     WHERE p.product_id = p_product_id
+       AND (p.customer_id = (SELECT auth.uid()) OR p.gamer_id = (SELECT auth.uid()))
+       AND p.status = 'active'
+  );
+$$;
+
+
+--
 -- Name: is_admin(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1687,6 +1913,33 @@ CREATE FUNCTION public.is_voice_group_moderator(p_group_id uuid) RETURNS boolean
         and a.gedu_id = (select auth.uid())
     );
 $$;
+
+
+--
+-- Name: join_product_waitlist(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.join_product_waitlist(p_product_id uuid, p_gamer_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+  PERFORM public.assert_role('customer');
+
+  -- Everything else — product lock, parent-of-gamer check, waitlist_enabled
+  -- gate, idempotency, the clock_timestamp() ordering stamp — is unchanged and
+  -- lives in the engine. This function's whole job is authorization plus
+  -- pinning the actor to the session.
+  RETURN public.join_waitlist(p_product_id, p_gamer_id, (SELECT auth.uid()));
+END;
+$$;
+
+
+--
+-- Name: FUNCTION join_product_waitlist(p_product_id uuid, p_gamer_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_gamer_id uuid) IS 'Guarded, authenticated-facing entry point for joining a product waitlist. The customer is auth.uid(); the parent-of-gamer check lives in join_waitlist.';
 
 
 --
@@ -1854,9 +2107,7 @@ DECLARE
   v_product_id  UUID;
   v_status      public.participation_status;
 BEGIN
-  IF (SELECT public.get_user_role()) <> 'admin' THEN
-    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
-  END IF;
+  PERFORM public.assert_admin();
 
   SELECT product_id, status INTO v_product_id, v_status
     FROM public.participations
@@ -1983,12 +2234,10 @@ $$;
 
 CREATE FUNCTION public.set_gedu_verified(p_gedu_id uuid, p_verified boolean) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'public'
+    SET search_path TO ''
     AS $$
 BEGIN
-  IF NOT public.is_admin() THEN
-    RAISE EXCEPTION 'set_gedu_verified: only admins may verify gedus';
-  END IF;
+  PERFORM public.assert_admin();
 
   IF NOT EXISTS (
     SELECT 1 FROM public.profiles WHERE id = p_gedu_id AND role = 'gedu'
@@ -1999,7 +2248,7 @@ BEGIN
   UPDATE public.gedu_profiles
   SET verified    = p_verified,
       verified_at = CASE WHEN p_verified THEN now() ELSE NULL END,
-      verified_by = CASE WHEN p_verified THEN (select auth.uid()) ELSE NULL END
+      verified_by = CASE WHEN p_verified THEN (SELECT auth.uid()) ELSE NULL END
   WHERE user_id = p_gedu_id;
 END;
 $$;
@@ -2084,6 +2333,43 @@ $$;
 
 
 --
+-- Name: submit_my_feedback(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.submit_my_feedback(p_message text) RETURNS boolean
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_user_id uuid := (SELECT auth.uid());
+BEGIN
+  -- Not reachable through PostgREST as `authenticated` (that role's JWT always
+  -- carries a subject), but an unattributable feedback row is worse than a
+  -- refused one, so this fails closed rather than inserting NULL.
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  IF p_message IS NULL OR length(p_message) < 10 OR length(p_message) > 2000 THEN
+    RAISE EXCEPTION 'feedback message must be between 10 and 2000 characters'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- Returns false (not an error) when the per-hour rate limit is hit; the route
+  -- maps that to 429.
+  RETURN public.submit_feedback(v_user_id, p_message);
+END;
+$$;
+
+
+--
+-- Name: FUNCTION submit_my_feedback(p_message text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.submit_my_feedback(p_message text) IS 'Self-scoping feedback submission: writes a feedback_submissions row for auth.uid(), rate-limited and length-bounded. Returns false when rate-limited.';
+
+
+--
 -- Name: trg_refresh_product_seat_counts(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2143,10 +2429,7 @@ DECLARE
   v_translation   JSONB;
   v_locales       TEXT[];
 BEGIN
-  IF (SELECT public.get_user_role()) <> 'admin' THEN
-    RAISE EXCEPTION 'Only admins can update products'
-      USING ERRCODE = '42501';
-  END IF;
+  PERFORM public.assert_admin();
 
   IF NOT EXISTS (SELECT 1 FROM public.products WHERE id = p_id) THEN
     RAISE EXCEPTION 'Product not found'
@@ -4143,59 +4426,49 @@ ALTER TABLE ONLY public.whatsapp_messages
 -- Name: customer_profiles Admins can do everything on customer_profiles; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Admins can do everything on customer_profiles" ON public.customer_profiles TO authenticated USING (public.is_admin());
+CREATE POLICY "Admins can do everything on customer_profiles" ON public.customer_profiles TO authenticated USING (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: gamer_profiles Admins can do everything on gamer_profiles; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Admins can do everything on gamer_profiles" ON public.gamer_profiles TO authenticated USING (public.is_admin());
+CREATE POLICY "Admins can do everything on gamer_profiles" ON public.gamer_profiles TO authenticated USING (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: whatsapp_contacts Admins can insert whatsapp_contacts; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Admins can insert whatsapp_contacts" ON public.whatsapp_contacts FOR INSERT TO authenticated WITH CHECK ((EXISTS ( SELECT 1
-   FROM public.profiles
-  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::public.user_role)))));
+CREATE POLICY "Admins can insert whatsapp_contacts" ON public.whatsapp_contacts FOR INSERT TO authenticated WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: whatsapp_messages Admins can insert whatsapp_messages; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Admins can insert whatsapp_messages" ON public.whatsapp_messages FOR INSERT TO authenticated WITH CHECK (((EXISTS ( SELECT 1
-   FROM public.profiles
-  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::public.user_role)))) AND (direction = 'outbound'::text)));
+CREATE POLICY "Admins can insert whatsapp_messages" ON public.whatsapp_messages FOR INSERT TO authenticated WITH CHECK ((( SELECT public.is_admin() AS is_admin) AND (direction = 'outbound'::text)));
 
 
 --
 -- Name: whatsapp_contacts Admins can read whatsapp_contacts; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Admins can read whatsapp_contacts" ON public.whatsapp_contacts FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.profiles
-  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::public.user_role)))));
+CREATE POLICY "Admins can read whatsapp_contacts" ON public.whatsapp_contacts FOR SELECT TO authenticated USING (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: whatsapp_messages Admins can read whatsapp_messages; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Admins can read whatsapp_messages" ON public.whatsapp_messages FOR SELECT TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.profiles
-  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::public.user_role)))));
+CREATE POLICY "Admins can read whatsapp_messages" ON public.whatsapp_messages FOR SELECT TO authenticated USING (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: whatsapp_contacts Admins can update whatsapp_contacts; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY "Admins can update whatsapp_contacts" ON public.whatsapp_contacts FOR UPDATE TO authenticated USING ((EXISTS ( SELECT 1
-   FROM public.profiles
-  WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'admin'::public.user_role)))));
+CREATE POLICY "Admins can update whatsapp_contacts" ON public.whatsapp_contacts FOR UPDATE TO authenticated USING (( SELECT public.is_admin() AS is_admin));
 
 
 --
@@ -4230,168 +4503,168 @@ CREATE POLICY "Parents can read linked gamer profiles" ON public.gamer_profiles 
 -- Name: calendar_holidays admin_full_access_calendar_holidays; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_calendar_holidays ON public.calendar_holidays TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_calendar_holidays ON public.calendar_holidays TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: family_subscriptions admin_full_access_family_subscriptions; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_family_subscriptions ON public.family_subscriptions TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_family_subscriptions ON public.family_subscriptions TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: feedback_submissions admin_full_access_feedback; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_feedback ON public.feedback_submissions TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_feedback ON public.feedback_submissions TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: gedu_group_assignments admin_full_access_gedu_assignments; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_gedu_assignments ON public.gedu_group_assignments TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_gedu_assignments ON public.gedu_group_assignments TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: gedu_profiles admin_full_access_gedu_profiles; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_gedu_profiles ON public.gedu_profiles TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY admin_full_access_gedu_profiles ON public.gedu_profiles TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: holiday_calendars admin_full_access_holiday_calendars; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_holiday_calendars ON public.holiday_calendars TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_holiday_calendars ON public.holiday_calendars TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: minecraft_accounts admin_full_access_minecraft_accounts; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_minecraft_accounts ON public.minecraft_accounts TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY admin_full_access_minecraft_accounts ON public.minecraft_accounts TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: parent_gamer admin_full_access_parent_gamer; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_parent_gamer ON public.parent_gamer TO authenticated USING ((public.get_user_role() = 'admin'::public.user_role)) WITH CHECK ((public.get_user_role() = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_parent_gamer ON public.parent_gamer TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: participations admin_full_access_participations; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_participations ON public.participations TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_participations ON public.participations TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: payments admin_full_access_payments; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_payments ON public.payments TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_payments ON public.payments TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: product_groups admin_full_access_product_groups; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_product_groups ON public.product_groups TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_product_groups ON public.product_groups TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: product_holiday_calendars admin_full_access_product_holiday_calendars; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_product_holiday_calendars ON public.product_holiday_calendars TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_product_holiday_calendars ON public.product_holiday_calendars TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: product_prices admin_full_access_product_prices; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_product_prices ON public.product_prices TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_product_prices ON public.product_prices TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: product_subscription_prices admin_full_access_product_subscription_prices; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_product_subscription_prices ON public.product_subscription_prices TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_product_subscription_prices ON public.product_subscription_prices TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: product_translations admin_full_access_product_translations; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_product_translations ON public.product_translations TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_product_translations ON public.product_translations TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: products admin_full_access_products; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_products ON public.products TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_products ON public.products TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: profiles admin_full_access_profiles; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_profiles ON public.profiles TO authenticated USING ((public.get_user_role() = 'admin'::public.user_role)) WITH CHECK ((public.get_user_role() = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_profiles ON public.profiles TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: refunds admin_full_access_refunds; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_refunds ON public.refunds TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_refunds ON public.refunds TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: schedule_slots admin_full_access_schedule_slots; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_schedule_slots ON public.schedule_slots TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_schedule_slots ON public.schedule_slots TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: site_details admin_full_access_site_details; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_site_details ON public.site_details TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_site_details ON public.site_details TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: site_staff_details admin_full_access_site_staff_details; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_site_staff_details ON public.site_staff_details TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_full_access_site_staff_details ON public.site_staff_details TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: gedu_locations admin_manage_gedu_locations; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_manage_gedu_locations ON public.gedu_locations TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_manage_gedu_locations ON public.gedu_locations TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: locations admin_manage_locations; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_manage_locations ON public.locations TO authenticated USING ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role)) WITH CHECK ((( SELECT public.get_user_role() AS get_user_role) = 'admin'::public.user_role));
+CREATE POLICY admin_manage_locations ON public.locations TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
 -- Name: spoken_languages admin_manage_spoken_languages; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_manage_spoken_languages ON public.spoken_languages TO authenticated USING ((public.get_user_role() = 'admin'::public.user_role)) WITH CHECK ((public.get_user_role() = 'admin'::public.user_role));
+CREATE POLICY admin_manage_spoken_languages ON public.spoken_languages TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
@@ -4468,18 +4741,14 @@ CREATE POLICY customers_delete_own_links ON public.parent_gamer FOR DELETE TO au
 -- Name: gedu_group_assignments customers_read_assignments_via_gamers; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY customers_read_assignments_via_gamers ON public.gedu_group_assignments FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'customer'::public.user_role) AND (product_id IN ( SELECT participations.product_id
-   FROM public.participations
-  WHERE ((participations.customer_id = auth.uid()) AND (participations.status = 'active'::public.participation_status))))));
+CREATE POLICY customers_read_assignments_via_gamers ON public.gedu_group_assignments FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'customer'::public.user_role) AND ( SELECT public.has_active_participation_on_product(gedu_group_assignments.product_id) AS has_active_participation_on_product)));
 
 
 --
 -- Name: product_groups customers_read_groups_via_gamers; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY customers_read_groups_via_gamers ON public.product_groups FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'customer'::public.user_role) AND (id IN ( SELECT participations.group_id
-   FROM public.participations
-  WHERE ((participations.customer_id = auth.uid()) AND (participations.group_id IS NOT NULL) AND (participations.status = 'active'::public.participation_status))))));
+CREATE POLICY customers_read_groups_via_gamers ON public.product_groups FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'customer'::public.user_role) AND ( SELECT public.has_active_participation_in_group(product_groups.id) AS has_active_participation_in_group)));
 
 
 --
@@ -4518,9 +4787,7 @@ CREATE POLICY gamer_select_own_participations ON public.participations FOR SELEC
 -- Name: product_groups gamers_read_own_group; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY gamers_read_own_group ON public.product_groups FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'gamer'::public.user_role) AND (id IN ( SELECT participations.group_id
-   FROM public.participations
-  WHERE ((participations.gamer_id = auth.uid()) AND (participations.group_id IS NOT NULL) AND (participations.status = 'active'::public.participation_status))))));
+CREATE POLICY gamers_read_own_group ON public.product_groups FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'gamer'::public.user_role) AND ( SELECT public.has_active_participation_in_group(product_groups.id) AS has_active_participation_in_group)));
 
 
 --
@@ -4779,6 +5046,13 @@ ALTER TABLE public.site_staff_details ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.spoken_languages ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: minecraft_accounts users_insert_own_minecraft_account; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY users_insert_own_minecraft_account ON public.minecraft_accounts FOR INSERT TO authenticated WITH CHECK ((user_id = ( SELECT auth.uid() AS uid)));
+
+
+--
 -- Name: feedback_submissions users_read_own_feedback; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -4790,6 +5064,13 @@ CREATE POLICY users_read_own_feedback ON public.feedback_submissions FOR SELECT 
 --
 
 CREATE POLICY users_read_own_minecraft_account ON public.minecraft_accounts FOR SELECT TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid)));
+
+
+--
+-- Name: minecraft_accounts users_update_own_minecraft_account; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY users_update_own_minecraft_account ON public.minecraft_accounts FOR UPDATE TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((user_id = ( SELECT auth.uid() AS uid)));
 
 
 --
@@ -4892,6 +5173,14 @@ GRANT USAGE ON SCHEMA public TO service_role;
 
 
 --
+-- Name: FUNCTION _list_column_grants(p_grantee text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public._list_column_grants(p_grantee text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public._list_column_grants(p_grantee text) TO service_role;
+
+
+--
 -- Name: FUNCTION _list_cron_jobs(); Type: ACL; Schema: public; Owner: -
 --
 
@@ -4900,11 +5189,11 @@ GRANT ALL ON FUNCTION public._list_cron_jobs() TO service_role;
 
 
 --
--- Name: FUNCTION _list_rpc_access(); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION _list_function_authorization_surface(); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public._list_rpc_access() FROM PUBLIC;
-GRANT ALL ON FUNCTION public._list_rpc_access() TO service_role;
+REVOKE ALL ON FUNCTION public._list_function_authorization_surface() FROM PUBLIC;
+GRANT ALL ON FUNCTION public._list_function_authorization_surface() TO service_role;
 
 
 --
@@ -4932,12 +5221,56 @@ GRANT ALL ON FUNCTION public._list_tables_without_rls() TO service_role;
 
 
 --
+-- Name: FUNCTION admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION admin_remove_participation(p_product_id uuid, p_participation_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.admin_remove_participation(p_product_id uuid, p_participation_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.admin_remove_participation(p_product_id uuid, p_participation_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.admin_remove_participation(p_product_id uuid, p_participation_id uuid) TO service_role;
+
+
+--
 -- Name: FUNCTION apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb) TO service_role;
 GRANT ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb) TO authenticated;
+
+
+--
+-- Name: FUNCTION assert_admin(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.assert_admin() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.assert_admin() TO authenticated;
+GRANT ALL ON FUNCTION public.assert_admin() TO service_role;
+
+
+--
+-- Name: FUNCTION assert_role(p_role public.user_role); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.assert_role(p_role public.user_role) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.assert_role(p_role public.user_role) TO authenticated;
+GRANT ALL ON FUNCTION public.assert_role(p_role public.user_role) TO service_role;
+
+
+--
+-- Name: FUNCTION assert_self(p_user_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.assert_self(p_user_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.assert_self(p_user_id uuid) TO service_role;
 
 
 --
@@ -5082,6 +5415,13 @@ GRANT UPDATE(spoken_languages) ON TABLE public.profiles TO authenticated;
 
 
 --
+-- Name: COLUMN profiles.locale; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(locale) ON TABLE public.profiles TO authenticated;
+
+
+--
 -- Name: COLUMN profiles.first_name; Type: ACL; Schema: public; Owner: -
 --
 
@@ -5168,6 +5508,24 @@ GRANT ALL ON FUNCTION public.handle_orphaned_gamer() TO service_role;
 
 
 --
+-- Name: FUNCTION has_active_participation_in_group(p_group_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.has_active_participation_in_group(p_group_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.has_active_participation_in_group(p_group_id uuid) TO service_role;
+GRANT ALL ON FUNCTION public.has_active_participation_in_group(p_group_id uuid) TO authenticated;
+
+
+--
+-- Name: FUNCTION has_active_participation_on_product(p_product_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.has_active_participation_on_product(p_product_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.has_active_participation_on_product(p_product_id uuid) TO service_role;
+GRANT ALL ON FUNCTION public.has_active_participation_on_product(p_product_id uuid) TO authenticated;
+
+
+--
 -- Name: FUNCTION is_admin(); Type: ACL; Schema: public; Owner: -
 --
 
@@ -5199,6 +5557,15 @@ GRANT ALL ON FUNCTION public.is_voice_group_member(p_group_id uuid) TO authentic
 
 REVOKE ALL ON FUNCTION public.is_voice_group_moderator(p_group_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.is_voice_group_moderator(p_group_id uuid) TO authenticated;
+
+
+--
+-- Name: FUNCTION join_product_waitlist(p_product_id uuid, p_gamer_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_gamer_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_gamer_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_gamer_id uuid) TO service_role;
 
 
 --
@@ -5290,6 +5657,15 @@ GRANT ALL ON FUNCTION public.set_pin_for_user(p_user_id uuid, p_pin text) TO ser
 
 REVOKE ALL ON FUNCTION public.submit_feedback(p_user_id uuid, p_message text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.submit_feedback(p_user_id uuid, p_message text) TO service_role;
+
+
+--
+-- Name: FUNCTION submit_my_feedback(p_message text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.submit_my_feedback(p_message text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.submit_my_feedback(p_message text) TO authenticated;
+GRANT ALL ON FUNCTION public.submit_my_feedback(p_message text) TO service_role;
 
 
 --
@@ -5471,7 +5847,7 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.holiday_calendars TO authentic
 
 GRANT SELECT ON TABLE public.locations TO anon;
 GRANT ALL ON TABLE public.locations TO service_role;
-GRANT SELECT ON TABLE public.locations TO authenticated;
+GRANT SELECT,INSERT,UPDATE ON TABLE public.locations TO authenticated;
 
 
 --
@@ -5480,7 +5856,7 @@ GRANT SELECT ON TABLE public.locations TO authenticated;
 
 GRANT SELECT ON TABLE public.minecraft_accounts TO anon;
 GRANT ALL ON TABLE public.minecraft_accounts TO service_role;
-GRANT SELECT ON TABLE public.minecraft_accounts TO authenticated;
+GRANT SELECT,INSERT,UPDATE ON TABLE public.minecraft_accounts TO authenticated;
 
 
 --
@@ -5647,7 +6023,7 @@ GRANT SELECT,INSERT,UPDATE ON TABLE public.whatsapp_contacts TO authenticated;
 
 GRANT SELECT ON TABLE public.whatsapp_messages TO anon;
 GRANT ALL ON TABLE public.whatsapp_messages TO service_role;
-GRANT SELECT,INSERT,UPDATE ON TABLE public.whatsapp_messages TO authenticated;
+GRANT SELECT,INSERT ON TABLE public.whatsapp_messages TO authenticated;
 
 
 --

@@ -242,7 +242,9 @@ describe("POST /api/admin/send-test-email", () => {
 
   // -- Error handling --
 
-  it("should return 500 when Brevo API fails", async () => {
+  it("should return a generic 500 when the email provider fails", async () => {
+    // The provider's own message used to be returned to the client. It is now
+    // logged and answered generically — this route never opted into disclosure.
     mockAuthenticatedWithRole("admin");
     mockSendTransactionalEmail.mockRejectedValue(new Error("Brevo API error: 500 Internal Server Error"));
 
@@ -250,7 +252,7 @@ describe("POST /api/admin/send-test-email", () => {
     const data = await response.json();
 
     expect(response.status).toBe(500);
-    expect(data.error).toBe("Brevo API error: 500 Internal Server Error");
+    expect(data.error).toBe("Internal server error");
   });
 
   // -- Template mode --

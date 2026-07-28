@@ -22,18 +22,21 @@ vi.mock("next/headers", () => ({
 }));
 
 const mockAdminRpc = vi.fn();
-// The admin client reads customer_profiles.pin_hash (forgot mints / reset
-// verifies the single-use token bound to it). Returns whatever mockPinHash is
-// set to for the current test.
+// customer_profiles.pin_hash is read in two places, and they are deliberately
+// different clients. The RESET route still needs the admin client: it resolves a
+// user id out of a signed token, not out of a session, so there may be no
+// session to read as. The FORGOT route reads the caller's OWN row and now does
+// so on the user-bound client, which its own RLS policy already allows.
 const mockPinHash = vi.fn<() => { data: { pin_hash: string | null } | null; error: unknown }>(
   () => ({ data: { pin_hash: null }, error: null }),
 );
+const pinHashSelect = () => ({
+  select: () => ({ eq: () => ({ single: () => mockPinHash() }) }),
+});
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
     rpc: (...args: unknown[]) => mockAdminRpc(...args),
-    from: () => ({
-      select: () => ({ eq: () => ({ single: () => mockPinHash() }) }),
-    }),
+    from: () => pinHashSelect(),
   })),
 }));
 
@@ -70,6 +73,11 @@ function request(path: string, body: unknown): Request {
   });
 }
 
+/** A GET has no body; the handler still receives the request Next.js hands it. */
+function getRequest(path: string): Request {
+  return new Request(`http://localhost:3000${path}`);
+}
+
 function authCustomer(overrides: { email?: string | null } = {}) {
   mockRequireRole.mockResolvedValue({
     user: { id: "u1", email: "p@test.local" },
@@ -79,7 +87,11 @@ function authCustomer(overrides: { email?: string | null } = {}) {
       email: overrides.email === undefined ? "p@test.local" : overrides.email,
       locale: "en",
     },
-    supabase: { rpc: mockRpc, auth: { getClaims: mockGetClaims } },
+    supabase: {
+      rpc: mockRpc,
+      from: () => pinHashSelect(),
+      auth: { getClaims: mockGetClaims },
+    },
   });
   mockGetClaims.mockResolvedValue({
     data: { claims: { sub: "u1", session_id: "s1" } },
@@ -180,7 +192,7 @@ describe("GET /api/auth/pin/status", () => {
     setRpc({ pin_is_set: { data: false, error: null } });
     mockCookieGet.mockReturnValue(undefined);
 
-    await statusGet();
+    await statusGet(getRequest("/api/auth/pin/status"));
     expect(mockRequireRole).toHaveBeenCalledWith("customer", { allowUnverified: true });
   });
 
@@ -190,7 +202,7 @@ describe("GET /api/auth/pin/status", () => {
     // A valid token for this (user, session) is the proof of an unlocked session.
     mockCookieGet.mockReturnValue({ value: await pinTokenFor("u1", "s1") });
 
-    const res = await statusGet();
+    const res = await statusGet(getRequest("/api/auth/pin/status"));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ isSet: true, unlocked: true });
   });
@@ -200,7 +212,7 @@ describe("GET /api/auth/pin/status", () => {
     setRpc({ pin_is_set: { data: true, error: null } });
     mockCookieGet.mockReturnValue(undefined);
 
-    const res = await statusGet();
+    const res = await statusGet(getRequest("/api/auth/pin/status"));
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ isSet: true, unlocked: false });
   });
@@ -212,7 +224,7 @@ describe("GET /api/auth/pin/status", () => {
     // account switch / re-login relies on this binding).
     mockCookieGet.mockReturnValue({ value: await pinTokenFor("u1", "other-session") });
 
-    const res = await statusGet();
+    const res = await statusGet(getRequest("/api/auth/pin/status"));
     expect(await res.json()).toMatchObject({ unlocked: false });
   });
 
@@ -221,7 +233,7 @@ describe("GET /api/auth/pin/status", () => {
     setRpc({ pin_is_set: { data: false, error: null } });
     mockCookieGet.mockReturnValue(undefined);
 
-    const res = await statusGet();
+    const res = await statusGet(getRequest("/api/auth/pin/status"));
     expect(await res.json()).toEqual({ isSet: false, unlocked: false });
   });
 
@@ -231,7 +243,7 @@ describe("GET /api/auth/pin/status", () => {
     // Silence the route's console.error for the expected failure path.
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    const res = await statusGet();
+    const res = await statusGet(getRequest("/api/auth/pin/status"));
     expect(res.status).toBe(500);
     spy.mockRestore();
   });

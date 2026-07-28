@@ -11,9 +11,11 @@ import type { MyUpcomingSessionRow } from "@/services/participations";
 const PRODUCT_ID = "11111111-1111-1111-1111-111111111111";
 const GAMER_ID = "22222222-2222-2222-2222-222222222222";
 const GROUP_ID = "33333333-3333-3333-3333-333333333333";
+const PARTICIPATION_ID = "44444444-4444-4444-4444-444444444444";
 
 function makeRow(overrides: Partial<MyUpcomingSessionRow> = {}): MyUpcomingSessionRow {
   return {
+    participationId: PARTICIPATION_ID,
     gamer: { id: GAMER_ID, firstName: "Alex" },
     product: {
       id: PRODUCT_ID,
@@ -400,6 +402,21 @@ describe("expandUpcomingSessions", () => {
 
     const healthy = expandUpcomingSessions([makeRow()], now, "en");
     expect(healthy.every((s) => s.paymentProblem === false)).toBe(true);
+  });
+
+  it("carries the participation id onto every emitted occurrence", () => {
+    // The payment-problem badge sends it to the billing-portal route so the
+    // parent lands on the Stripe customer that owns the *failing*
+    // subscription. A card without it would fall back to the parent's own
+    // customer, which for a migrated family is a different page.
+    const out = expandUpcomingSessions(
+      [makeRow({ paymentProblem: true })],
+      new Date("2026-02-25T08:00:00Z"),
+      "en",
+    );
+
+    expect(out.length).toBeGreaterThan(0);
+    expect(out.every((s) => s.participationId === PARTICIPATION_ID)).toBe(true);
   });
 
   it("flags unassigned participations as awaiting; assigned ones are not", () => {
