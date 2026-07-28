@@ -91,6 +91,17 @@ the parent's cursor. See the root `CLAUDE.md` layout rule.
 
 ## Related constraints
 
+- **The portal's card update does reach the subscription. Verified — don't
+  re-derive it.** Stripe charges a subscription's own default payment method
+  whenever it has one, and nearly all of ours do (checkout sets it, not just the
+  migration), so "the portal only updates the customer" would mean a parent
+  fixing a failing card changes nothing. It doesn't work that way: the portal
+  sets the new card as the customer's default **and clears the subscription's
+  override**, so the subscription falls through the precedence chain to the
+  customer default — which is the card the parent just entered. Confirmed in
+  test mode against the worst-case shape (subscription carrying an explicit
+  payment method, customer carrying none). Stripe's portal documentation does
+  not state this, which is why it is written down here.
 - Plan switching is deliberately disabled in our portal configuration and must
   stay disabled — we use our own configuration, not Stripe's dashboard default,
   so the portal never offers tiers we don't sell.

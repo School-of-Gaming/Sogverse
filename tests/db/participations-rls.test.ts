@@ -3,34 +3,53 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import {
+  createTestProduct,
+  deleteTestProducts,
+  resetFamilySubs,
+} from "./product-helpers";
 
 /**
  * Cross-customer RLS coverage for the financial tables in the v2
- * participations system. We collapse five tables into one file so the
+ * participations system. We collapse six tables into one file so the
  * IDOR shape — "customer A must not see customer B's row" — is asserted
- * once per table without copying boilerplate setup five times.
+ * once per table without copying boilerplate setup six times.
  *
  * Tables under test:
  *   - participations          — direct customer_id ownership
  *   - payments                — direct customer_id ownership
  *   - refunds                 — ownership inherited via payment_id
+ *   - family_subscriptions    — direct customer_id ownership
  *   - product_seat_counts     — public-readable rollup; assert anon CAN read
  *   - (writes against all tables) — confirm only admin role can mutate;
  *                                   customers must go through SECURITY DEFINER RPCs
  *
- * Other tables (family_subscriptions, product_subscription_prices)
- * follow the same RLS shape; the
- * access-control catalog test in tests/db/access-control.test.ts will
- * fail CI if any of them lose RLS coverage. They're covered there, not
- * here — those rows hold no data a parent could harvest from another
- * parent that isn't already protected by the participations row's
- * ownership chain (FKs cascade on customer deletion).
+ * `family_subscriptions` was once excluded from this file, on the reasoning
+ * that its rows held nothing a parent could harvest from another parent beyond
+ * what the participations ownership chain already protected. That reasoning
+ * expired when the billing portal began routing per subscription:
+ * `stripe_customer_id` is no longer a bare reference, it is the capability the
+ * portal route turns into a Stripe session carrying saved cards, the full
+ * invoice history, and the ability to cancel. Reading one row of someone
+ * else's is the whole leak. The server-side reads behind that route do filter
+ * on `customer_id` themselves, so the cases below deliberately drop that
+ * filter — what is being asserted is that the *policy* refuses the row even
+ * when the application forgets to.
+ *
+ * product_subscription_prices still follows the same RLS shape and is covered
+ * by the access-control catalog test in tests/db/access-control.test.ts, which
+ * fails CI if any table loses RLS coverage.
  */
 
 const PRODUCT_A = "00000000-0000-0000-0000-0000000005b6"; // CUSTOMER's product
 const PRODUCT_B = "00000000-0000-0000-0000-0000000005b7"; // CUSTOMER_2's product
 const ALL_PRODUCTS = [PRODUCT_A, PRODUCT_B];
+
+// The two families' Stripe customers. Distinct on purpose: the billing-portal
+// route turns one of these strings into a portal session, so "can customer A
+// read customer B's stripe_customer_id" is the question the policy answers.
+const CUSTOMER_STRIPE_ID = "cus_rls_a";
+const CUSTOMER_2_STRIPE_ID = "cus_rls_b";
 
 const supabaseUrl =
   process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321";
@@ -55,6 +74,8 @@ describe("v2 participations / payments / refunds RLS", () => {
   let customer2PaymentId: string;
   let customerRefundId: string;
   let customer2RefundId: string;
+  let customerSubRowId: string;
+  let customer2SubRowId: string;
 
   beforeAll(async () => {
     admin = createAdminTestClient();
@@ -81,6 +102,10 @@ describe("v2 participations / payments / refunds RLS", () => {
       .from("payments")
       .delete()
       .in("stripe_event_id", ["evt_rls_pa", "evt_rls_pb"]);
+    // Before the products go, so an aborted run can't leave `sub_rls_a`
+    // stranded on some other participation — stripe_subscription_id is UNIQUE
+    // account-wide, and the collision would fail setup rather than a test.
+    await resetFamilySubs(admin);
     await deleteTestProducts(admin, ALL_PRODUCTS);
 
     await createTestProduct(admin, { id: PRODUCT_A, seatCount: 10 });
@@ -175,6 +200,39 @@ describe("v2 participations / payments / refunds RLS", () => {
       .single();
     if (refB.error) throw refB.error;
     customer2RefundId = refB.data.id;
+
+    // family_subscriptions — one per participation. The Stripe customer ids
+    // are distinct per family, which is what the cross-customer cases below
+    // key off: reading the other family's row hands over their portal.
+    const subA = await admin
+      .from("family_subscriptions")
+      .insert({
+        customer_id: TEST_IDS.CUSTOMER,
+        participation_id: customerParticipationId,
+        stripe_subscription_id: "sub_rls_a",
+        stripe_customer_id: CUSTOMER_STRIPE_ID,
+        currency: "eur",
+        status: "active",
+      })
+      .select("id")
+      .single();
+    if (subA.error) throw subA.error;
+    customerSubRowId = subA.data.id;
+
+    const subB = await admin
+      .from("family_subscriptions")
+      .insert({
+        customer_id: TEST_IDS.CUSTOMER_2,
+        participation_id: customer2ParticipationId,
+        stripe_subscription_id: "sub_rls_b",
+        stripe_customer_id: CUSTOMER_2_STRIPE_ID,
+        currency: "eur",
+        status: "active",
+      })
+      .select("id")
+      .single();
+    if (subB.error) throw subB.error;
+    customer2SubRowId = subB.data.id;
   });
 
   afterAll(async () => {
@@ -187,6 +245,7 @@ describe("v2 participations / payments / refunds RLS", () => {
       .from("payments")
       .delete()
       .in("stripe_event_id", ["evt_rls_pa", "evt_rls_pb"]);
+    await resetFamilySubs(admin);
     // Products cascade to participations.
     await deleteTestProducts(admin, ALL_PRODUCTS);
   });
@@ -351,6 +410,126 @@ describe("v2 participations / payments / refunds RLS", () => {
       const { data, error } = await anonClient.from("refunds").select("id");
       expect(error).toBeNull();
       expect(data).toEqual([]);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // family_subscriptions — direct customer_id ownership, and the row the
+  // billing-portal route reads to decide which Stripe customer to open
+  // ---------------------------------------------------------------------------
+
+  describe("family_subscriptions", () => {
+    it("customer can SELECT their own subscription row", async () => {
+      const { data, error } = await customerClient
+        .from("family_subscriptions")
+        .select("id, stripe_customer_id")
+        .eq("id", customerSubRowId)
+        .maybeSingle();
+      expect(error).toBeNull();
+      expect(data?.stripe_customer_id).toBe(CUSTOMER_STRIPE_ID);
+    });
+
+    it("customer cannot SELECT another customer's subscription row", async () => {
+      const { data, error } = await customerClient
+        .from("family_subscriptions")
+        .select("id")
+        .eq("id", customer2SubRowId);
+      expect(error).toBeNull();
+      expect(data).toEqual([]);
+    });
+
+    it("a participation_id lookup cannot reach another customer's row", async () => {
+      // The shape the portal route uses to answer "which Stripe customer bills
+      // this club?", with its own `customer_id` filter deliberately removed.
+      // The policy has to refuse on its own — if it didn't, a parent who
+      // guessed or scraped a participation id would get a portal session for
+      // the family that owns it.
+      const { data, error } = await customerClient
+        .from("family_subscriptions")
+        .select("stripe_customer_id")
+        .eq("participation_id", customer2ParticipationId);
+      expect(error).toBeNull();
+      expect(data).toEqual([]);
+    });
+
+    it("a stripe_customer_id lookup cannot confirm another customer's id", async () => {
+      // The shape behind the "is this Stripe customer mine?" check, again
+      // without the app's `customer_id` filter. A hit here would let a tampered
+      // request open another family's saved cards and invoice history.
+      const { data, error } = await customerClient
+        .from("family_subscriptions")
+        .select("id")
+        .eq("stripe_customer_id", CUSTOMER_2_STRIPE_ID);
+      expect(error).toBeNull();
+      expect(data).toEqual([]);
+    });
+
+    it("the symmetric assertion holds for customer 2", async () => {
+      // Catches an over-tight USING clause that refuses everyone equally.
+      const { data, error } = await customer2Client
+        .from("family_subscriptions")
+        .select("stripe_customer_id")
+        .eq("id", customer2SubRowId)
+        .maybeSingle();
+      expect(error).toBeNull();
+      expect(data?.stripe_customer_id).toBe(CUSTOMER_2_STRIPE_ID);
+    });
+
+    it("gamer SELECT returns no rows (billing is the parent's alone)", async () => {
+      // The gamer dashboard renders the same session cards, payment-problem
+      // badge included — it must read subscription state through the
+      // self-scoping RPC, never off this table.
+      const gamerClient = await createAuthenticatedClient(
+        TEST_CREDENTIALS.GAMER.email,
+        TEST_CREDENTIALS.GAMER.password,
+      );
+      const { data, error } = await gamerClient
+        .from("family_subscriptions")
+        .select("id");
+      expect(error).toBeNull();
+      expect(data).toEqual([]);
+    });
+
+    it("anon SELECT returns no rows (RLS blocks)", async () => {
+      const { data, error } = await anonClient
+        .from("family_subscriptions")
+        .select("id");
+      expect(error).toBeNull();
+      expect(data).toEqual([]);
+    });
+
+    it("customer cannot UPDATE the Stripe customer on their own row", async () => {
+      // Writable `stripe_customer_id` would be self-service IDOR: point your
+      // own row at another family's customer, then ask for its portal.
+      const { error } = await customerClient
+        .from("family_subscriptions")
+        .update({ stripe_customer_id: CUSTOMER_2_STRIPE_ID })
+        .eq("id", customerSubRowId);
+      // `authenticated` holds SELECT and nothing else, so the refusal is a
+      // privilege error. Pinning the code (not just "some error") keeps a
+      // later write grant from passing this on an unrelated failure.
+      expect(error?.code).toBe("42501");
+
+      const { data } = await admin
+        .from("family_subscriptions")
+        .select("stripe_customer_id")
+        .eq("id", customerSubRowId)
+        .maybeSingle();
+      expect(data?.stripe_customer_id).toBe(CUSTOMER_STRIPE_ID);
+    });
+
+    it("customer cannot INSERT a subscription row directly", async () => {
+      const { error } = await customerClient
+        .from("family_subscriptions")
+        .insert({
+          customer_id: TEST_IDS.CUSTOMER,
+          participation_id: customerParticipationId,
+          stripe_subscription_id: "sub_rls_forge",
+          stripe_customer_id: CUSTOMER_2_STRIPE_ID,
+          currency: "eur",
+          status: "active",
+        });
+      expect(error?.code).toBe("42501");
     });
   });
 

@@ -224,6 +224,10 @@ const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
   ["refunds", "amount_cents"],
   ["family_subscriptions", "status"],
   ["family_subscriptions", "current_period_end"],
+  // Not money, but a capability: the billing-portal route turns this id into a
+  // Stripe session with saved cards and invoice history, so a writable column
+  // would let a parent repoint their own row at another family's customer.
+  ["family_subscriptions", "stripe_customer_id"],
   // Seat accounting — the rollup the capacity gate reads.
   ["product_seat_counts", "active_count"],
   ["product_seat_counts", "reserving_count"],

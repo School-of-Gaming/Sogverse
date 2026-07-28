@@ -44,7 +44,10 @@ export async function resolveBillingAccountsViaRls(
   const userId = claims?.claims.sub;
   if (!userId) return [];
 
-  const [{ data: profile }, { data: subs, error }] = await Promise.all([
+  const [
+    { data: profile, error: profileError },
+    { data: subs, error },
+  ] = await Promise.all([
     supabase
       .from("customer_profiles")
       .select("stripe_customer_id")
@@ -53,6 +56,11 @@ export async function resolveBillingAccountsViaRls(
     // `!inner` on both embeds mirrors the schema (`participation_id` and
     // `gamer_id` are NOT-NULL FKs), so the inferred row treats them as
     // non-null. Ordered so the button order is stable across renders.
+    //
+    // The translation embed names its columns rather than taking `*`: these
+    // rows are serialized into the dashboard's RSC payload for every parent,
+    // and all the label needs is the locale and the club's name — `*` would
+    // ship each product's `long_description` body along with it.
     supabase
       .from("family_subscriptions")
       .select(
@@ -60,7 +68,7 @@ export async function resolveBillingAccountsViaRls(
           stripe_customer_id,
           participation:participations!inner(
             gamer:profiles!participations_gamer_id_fkey!inner(first_name),
-            product:products!inner(product_translations(*))
+            product:products!inner(product_translations(locale, name))
           )
         `,
       )
@@ -71,6 +79,17 @@ export async function resolveBillingAccountsViaRls(
   if (error) {
     console.error("resolveBillingAccountsViaRls: subscription lookup failed", error);
     return [];
+  }
+  // Not fatal — the subscriptions alone still produce working buttons. But it
+  // silently drops the profile-bound customer, which is the one that carries a
+  // migrated family's saved cards and invoice history and often no
+  // subscription at all. Without this line the account just isn't there and
+  // nothing anywhere says why.
+  if (profileError) {
+    console.error(
+      "resolveBillingAccountsViaRls: customer profile lookup failed",
+      profileError,
+    );
   }
 
   const accounts = new Map<string, BillingAccount>();
@@ -130,13 +149,23 @@ export async function resolveParticipationStripeCustomerId(
  * The billing card's per-customer buttons send an id the browser was given, so
  * this is the check that keeps a tampered id from opening another family's
  * portal.
+ *
+ * Both reads propagate their errors rather than resolving to `false`. "We could
+ * not check" is not "not yours": answering `false` turns a database blip into a
+ * 404 telling the parent an account we just rendered a button for isn't theirs,
+ * and it does so most readily for the profile-bound customer, whose ownership
+ * rests on the profile read alone. Throwing keeps the refusal honest — the
+ * caller reports a retryable failure instead of a wrong verdict.
  */
 export async function ownsStripeCustomer(
   supabase: AppSupabaseClient,
   userId: string,
   stripeCustomerId: string,
 ): Promise<boolean> {
-  const [{ data: profile }, { data: subscription, error }] = await Promise.all([
+  const [
+    { data: profile, error: profileError },
+    { data: subscription, error },
+  ] = await Promise.all([
     supabase
       .from("customer_profiles")
       .select("stripe_customer_id")
@@ -152,5 +181,6 @@ export async function ownsStripeCustomer(
   ]);
 
   if (error) throw error;
+  if (profileError) throw profileError;
   return profile?.stripe_customer_id === stripeCustomerId || subscription !== null;
 }

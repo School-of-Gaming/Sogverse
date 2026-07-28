@@ -15,11 +15,15 @@ export interface BillingAccountSubscription {
   /** The child's first name. Empty when the profile has no name set. */
   gamerFirstName: string;
   /**
-   * Raw product translation rows. The name is resolved to the viewer's UI
-   * locale at render time, the same way the session cards do it, so switching
-   * locale doesn't need this data refetched.
+   * The club's name in each locale it has been translated into. Resolved to
+   * the viewer's UI locale at render time, the same way the session cards do
+   * it, so switching locale doesn't need this data refetched.
+   *
+   * Deliberately narrower than a whole translation row: this crosses into the
+   * client on every parent dashboard load, and the rest of the row — notably
+   * the `long_description` marketing body — is dead weight in a button label.
    */
-  productTranslations: ProductTranslation[];
+  productTranslations: Pick<ProductTranslation, "locale" | "name">[];
 }
 
 /**

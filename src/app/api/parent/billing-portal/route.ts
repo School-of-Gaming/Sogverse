@@ -107,8 +107,14 @@ export const POST = defineRoute({
   response: billingPortalResponse,
 
   handler: async ({ request, body, user, supabase }) => {
+    // Resolved OUTSIDE the try below, which exists solely to turn a Stripe
+    // failure into a 502. A refused target throws `ApiError`, and a failed
+    // ownership read throws a Postgres error the wrapper's code table already
+    // knows how to answer — swallowing either into "Stripe is down" would send
+    // the next investigation to Stripe's status page for a database problem.
+    const target = await resolvePortalTarget(supabase, user.id, body);
+
     try {
-      const target = await resolvePortalTarget(supabase, user.id, body);
       const locale = await getLocale();
 
       const session = await stripe.billingPortal.sessions.create({
@@ -125,9 +131,6 @@ export const POST = defineRoute({
 
       return { url: session.url };
     } catch (err) {
-      // A refused target is the caller's problem, not Stripe's — let the
-      // wrapper turn it into its 404 rather than blaming an upstream outage.
-      if (err instanceof ApiError) throw err;
       // 502 rather than the shared table's 500: the failure is upstream at
       // Stripe, and the parent's retry is worth prompting. Kept as an explicit
       // response because the wrapper has no bad-gateway default.
