@@ -756,7 +756,9 @@ piece of work it left, is written up under it.
   walks the six (legacy name, canonical name) pairs and drops the legacy policy when both
   exist, renames it when only the legacy one does, and does nothing when already converged.
   That leaves the canonical name present everywhere, which is what lets it then restate the
-  admin predicates unconditionally, and it ends with a policy-count assertion so a database
+  admin predicates unconditionally, and it ends by asserting the exact expected policy set
+  per table — naming them rather than counting, since the wrong policies in the right
+  number is the very state being repaired — so a database
   that fails to converge fails the migration rather than the next dump diff. Re-running is a
   no-op.
 

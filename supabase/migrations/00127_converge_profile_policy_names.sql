@@ -35,11 +35,15 @@
 --
 -- The two databases genuinely differ, so a migration that assumes either one is
 -- wrong somewhere. The loop below is keyed on the *pair* (legacy name, canonical
--- name) and handles all three reachable states:
+-- name) and handles all three states a database should be in:
 --
 --   both present     -> the legacy one is the duplicate; drop it
 --   only legacy      -> it is the original under a hand-edited name; rename it
 --   only canonical   -> already converged; do nothing
+--
+-- A fourth state — neither present — means the policy was dropped outside
+-- migration history. This migration refuses it rather than recreating it; see the
+-- precondition block below for why.
 --
 -- After it runs, the canonical name exists on every database regardless of which
 -- branch each row took, which is what lets the ALTERs at the bottom be
@@ -80,6 +84,38 @@ BEGIN
       END IF;
     END IF;
   END LOOP;
+END;
+$$;
+
+-- Precondition for the two unconditional ALTERs below. If neither name was present
+-- the loop had nothing to converge, and the ALTER would fail on Postgres's generic
+-- "policy does not exist" rather than saying what actually happened.
+--
+-- It stops here rather than recreating the policy on purpose. A missing admin
+-- policy means an access-granting rule was deleted outside migration history, and
+-- recreating it would silently restore access on a database whose state nobody has
+-- explained — while this file exists because of exactly one such unexplained edit.
+-- Fail closed and make someone look.
+DO $$
+DECLARE
+  missing text[];
+BEGIN
+  SELECT coalesce(array_agg(t.tbl || '.' || t.pol ORDER BY t.tbl), ARRAY[]::text[])
+    INTO missing
+    FROM (VALUES
+      ('customer_profiles', 'admin_full_access_customer_profiles'),
+      ('gamer_profiles',    'admin_full_access_gamer_profiles')
+    ) AS t(tbl, pol)
+   WHERE NOT EXISTS (
+     SELECT 1 FROM pg_policies
+      WHERE schemaname = 'public' AND tablename = t.tbl AND policyname = t.pol
+   );
+
+  IF cardinality(missing) > 0 THEN
+    RAISE EXCEPTION
+      'cannot converge: admin policy absent under both names (%). It was dropped outside migration history; restore it deliberately rather than having this migration recreate it.',
+      array_to_string(missing, ', ');
+  END IF;
 END;
 $$;
 
