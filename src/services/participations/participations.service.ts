@@ -35,6 +35,13 @@ import {
  * purchase shows up before an admin has placed the gamer in a group.
  */
 export interface MyUpcomingSessionRow {
+  /**
+   * The `participations.id` this row expands from. Carried through to the
+   * cards so the payment-problem badge can name the exact subscription it is
+   * complaining about when it opens the billing portal — a parent can own
+   * several Stripe customers, and a portal session covers only one.
+   */
+  participationId: string;
   gamer: {
     id: string;
     firstName: string;
@@ -534,6 +541,7 @@ function toMyUpcomingSessionRow(
   // so the identicon stays stable across name edits.
   const firstName = gamer.first_name || row.gamer_id.slice(0, 8);
   return {
+    participationId: row.id,
     gamer: { id: row.gamer_id, firstName },
     product: {
       id: product.id,

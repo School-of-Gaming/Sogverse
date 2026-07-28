@@ -1631,7 +1631,10 @@
         "description": "Manage your saved cards, invoices, and subscriptions securely on Stripe.",
         "cta": "Manage billing",
         "opening": "Opening…",
-        "error": "Couldn't open the billing portal. Please try again."
+        "error": "Couldn't open the billing portal. Please try again.",
+        "splitExplanation": "Your family's subscriptions sit on more than one billing account — a leftover from when your clubs moved to this site. Each button opens that account's own page on Stripe.",
+        "coversItem": "{name} · {product}",
+        "coversFallback": "Saved cards and past invoices"
       },
       "alert": {
         "tooltip": "Payment problem — update your card to keep this club active",

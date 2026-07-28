@@ -1,12 +1,22 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { z } from "zod";
 import { getLocale } from "next-intl/server";
 import { defineRoute } from "@/lib/api/define-route";
+import { ApiError } from "@/lib/api/api-error";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getOrCreateStripeCustomer } from "@/lib/stripe/customer";
 import { getPortalConfigurationId } from "@/lib/stripe/portal-configuration";
 import { getOrigin } from "@/lib/url";
+import {
+  billingPortalBody,
+  billingPortalResponse,
+  type BillingPortalBody,
+} from "@/services/billing/billing.contracts";
+import {
+  ownsStripeCustomer,
+  resolveParticipationStripeCustomerId,
+} from "@/services/billing/billing.server";
+import type { AppSupabaseClient } from "@/types";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -22,32 +32,87 @@ const STRIPE_PORTAL_LOCALES: Record<
   sv: "sv",
 };
 
-/** Response of POST /api/parent/billing-portal. */
-const billingPortalResponse = z.object({ url: z.string() });
+/**
+ * Which Stripe customer this session opens, and whether to land the parent on
+ * a task flow rather than the portal's front page.
+ */
+interface PortalTarget {
+  customerId: string;
+  flowData?: Stripe.BillingPortal.SessionCreateParams.FlowData;
+}
+
+/**
+ * Turn the caller's requested target into a Stripe customer id, authorizing it
+ * on the way.
+ *
+ * The two named forms are caller-supplied and untrusted, so each is resolved
+ * through the parent's own RLS-scoped client and refused with a 404 when it
+ * isn't theirs — accepting either at face value would open another family's
+ * billing portal. A request naming nothing keeps the original behaviour: the
+ * parent's own customer, created on the spot if they have never purchased.
+ */
+async function resolvePortalTarget(
+  supabase: AppSupabaseClient,
+  userId: string,
+  body: BillingPortalBody,
+): Promise<PortalTarget> {
+  if (body.participationId) {
+    const customerId = await resolveParticipationStripeCustomerId(
+      supabase,
+      userId,
+      body.participationId,
+    );
+    if (!customerId) {
+      throw new ApiError(
+        `participation ${body.participationId} is not the caller's, or has no subscription`,
+        404,
+      );
+    }
+    // Only the payment-problem badge names a participation, and it only renders
+    // for a `past_due` subscription — the intent is already "this card failed",
+    // so skip the portal's front page and open the card form directly.
+    return { customerId, flowData: { type: "payment_method_update" } };
+  }
+
+  if (body.stripeCustomerId) {
+    if (!(await ownsStripeCustomer(supabase, userId, body.stripeCustomerId))) {
+      throw new ApiError(
+        `stripe customer ${body.stripeCustomerId} is not the caller's`,
+        404,
+      );
+    }
+    return { customerId: body.stripeCustomerId };
+  }
+
+  // We get-or-create rather than doing a read-only lookup: the portal needs a
+  // customer id, and a parent who's never purchased doesn't have one yet. This
+  // lazily provisions it so "Manage billing" always works.
+  return { customerId: await getOrCreateStripeCustomer(createAdminClient(), userId) };
+}
 
 /**
  * Create a Stripe Customer Portal session and hand back its URL. The parent's
- * billing card POSTs here, then does a full-page navigation to the returned
- * `url` so Stripe owns all payment-method / invoice / subscription management.
+ * billing card (and the payment-problem badge) POST here, then do a full-page
+ * navigation to the returned `url` so Stripe owns all payment-method / invoice
+ * / subscription management.
  *
- * We get-or-create the Stripe customer rather than doing a read-only lookup:
- * the portal needs a customer id, and a parent who's never purchased doesn't
- * have one yet. This lazily provisions it so "Manage billing" always works.
+ * A portal session is scoped to exactly one Stripe customer, and a parent
+ * migrated from the old platform can own several — so the body names which one,
+ * and `resolvePortalTarget` authorizes the choice. See `billing.contracts.ts`.
  */
 export const POST = defineRoute({
   posture: "role-gated",
   roles: "customer",
+  body: billingPortalBody,
   response: billingPortalResponse,
 
-  handler: async ({ request, user }) => {
-    const admin = createAdminClient();
-
+  handler: async ({ request, body, user, supabase }) => {
     try {
-      const customerId = await getOrCreateStripeCustomer(admin, user.id);
+      const target = await resolvePortalTarget(supabase, user.id, body);
       const locale = await getLocale();
 
       const session = await stripe.billingPortal.sessions.create({
-        customer: customerId,
+        customer: target.customerId,
         // Our own configuration (not Stripe's dashboard default), so the portal
         // never offers plan switching for tiers we don't sell.
         configuration: await getPortalConfigurationId(),
@@ -55,10 +120,14 @@ export const POST = defineRoute({
         // only trusts known hosts, so a spoofed Host can't redirect elsewhere.
         return_url: `${getOrigin(request)}/parent#billing`,
         locale: STRIPE_PORTAL_LOCALES[locale] ?? "auto",
+        ...(target.flowData ? { flow_data: target.flowData } : {}),
       });
 
       return { url: session.url };
     } catch (err) {
+      // A refused target is the caller's problem, not Stripe's — let the
+      // wrapper turn it into its 404 rather than blaming an upstream outage.
+      if (err instanceof ApiError) throw err;
       // 502 rather than the shared table's 500: the failure is upstream at
       // Stripe, and the parent's retry is worth prompting. Kept as an explicit
       // response because the wrapper has no bad-gateway default.

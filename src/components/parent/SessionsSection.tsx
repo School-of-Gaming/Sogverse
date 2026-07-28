@@ -95,6 +95,7 @@ export function SessionsSection({
         ) : (
           <UpcomingSessionCard
             key={sessionKey(s)}
+            participationId={s.participationId}
             gamerFirstName={s.gamerFirstName}
             gamerSeed={s.gamerSeed}
             productName={s.productName}

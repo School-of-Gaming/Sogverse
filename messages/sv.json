@@ -1631,7 +1631,10 @@
         "description": "Hantera dina sparade kort, fakturor och prenumerationer säkert i Stripe.",
         "cta": "Hantera fakturering",
         "opening": "Öppnar…",
-        "error": "Det gick inte att öppna faktureringsportalen. Försök igen."
+        "error": "Det gick inte att öppna faktureringsportalen. Försök igen.",
+        "splitExplanation": "Din familjs prenumerationer ligger på fler än ett faktureringskonto – en rest från när era klubbar flyttade till den här webbplatsen. Varje knapp öppnar det kontots egen sida i Stripe.",
+        "coversItem": "{name} · {product}",
+        "coversFallback": "Sparade kort och tidigare fakturor"
       },
       "alert": {
         "tooltip": "Betalningsproblem – uppdatera ditt kort för att behålla klubben aktiv",

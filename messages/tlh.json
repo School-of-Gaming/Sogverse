@@ -1676,7 +1676,10 @@
         "description": "Stripe Daq HuchHommey, jabbI'IDmey, je rarmeH tlhobmey DawIvlaH 'ej DaSeHlaH.",
         "cta": "Huch yISeH",
         "opening": "poSmoHlu'taH…",
-        "error": "Huch lojmIt poSmoHlu'pu'be'. yInIDqa'."
+        "error": "Huch lojmIt poSmoHlu'pu'be'. yInIDqa'.",
+        "splitExplanation": "wa' Huch juH neH Dapoq 'e' DaHar'a'? ghobe'! qorDu'lI' rarmeH tlhobmey lu'ev Huch juHmey law' — tlhejwI' wo' ngo'vo' bIghoSpu'mo'. wa' juH neH poSmoH Hoch 'och Stripe Daq.",
+        "coversItem": "{name} · {product}",
+        "coversFallback": "HuchHommey polbogh je jabbI'IDmey ngo'"
       },
       "alert": {
         "tooltip": "Huch Qob! DaSDIq yIchoH 'ej tlhejwI' wo' yItaHmoH",

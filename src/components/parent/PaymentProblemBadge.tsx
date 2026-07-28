@@ -5,6 +5,7 @@ import { AlertTriangle, CreditCard, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { SessionAudience } from "@/types";
 import { cn } from "@/lib/utils";
+import { BillingService } from "@/services/billing";
 import { BADGE_FRAME } from "./session-card-badge";
 
 /**
@@ -17,6 +18,16 @@ import { BADGE_FRAME } from "./session-card-badge";
  * - **Parent** (`audience="customer"`): a clickable button. Credit-card icon
  *   (plus an alert icon on prominent cards via `showAlert`), and clicking opens
  *   Stripe's Customer Portal so they can fix the card on file.
+ *
+ *   It opens the portal *for this participation*, not for the parent generally.
+ *   That matters because a parent migrated from the old platform can own
+ *   several Stripe customers, and a portal session covers exactly one: routed
+ *   by parent, the badge would announce a payment problem and then open a page
+ *   where the failing subscription isn't listed, so they'd update a card that
+ *   wasn't failing and the real one would go on to involuntary cancellation.
+ *   The route resolves the participation's own customer, and — since the badge
+ *   only ever renders for a failing card — lands them straight on Stripe's
+ *   card-update form.
  * - **Gamer** (`audience="gamer"`): informational only. Billing is the parent's
  *   job, so the gamer never sees money — just the alert icon and a tooltip
  *   telling them to ask a parent. Rendered as a non-interactive element: no
@@ -47,12 +58,20 @@ const BADGE_BASE = cn(
 );
 
 export function PaymentProblemBadge({
+  /**
+   * The participation whose subscription is failing. Sent to the portal route
+   * so it opens the Stripe customer that actually owns this subscription. The
+   * gamer variant never uses it — billing is the parent's job — but it's
+   * required so a card can't render the parent variant without one.
+   */
+  participationId,
   /** Whose dashboard this renders on. Drives interactivity + icon. */
   audience = "customer",
   /** Parent only: show an alert icon next to the card icon (prominent cards). */
   showAlert = false,
   className,
 }: {
+  participationId: string;
   audience?: SessionAudience;
   showAlert?: boolean;
   className?: string;
@@ -79,14 +98,9 @@ export function PaymentProblemBadge({
     if (opening) return;
     setOpening(true);
     try {
-      const response = await fetch("/api/parent/billing-portal", {
-        method: "POST",
+      const url = await new BillingService().createPortalSession({
+        participationId,
       });
-      if (!response.ok) {
-        setOpening(false);
-        return;
-      }
-      const { url } = await response.json();
       // Leave `opening` set — the document unloads on navigation.
       window.location.href = url;
     } catch {

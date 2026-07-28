@@ -468,7 +468,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     handlers: {
       POST: {
         posture: { kind: "role-gated", roles: ["customer"] },
-        body: { kind: "none" },
+        body: { kind: "json", schema: "billingPortalBody" },
         test: TESTS.billingPortal,
       },
     },

@@ -152,6 +152,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | System | Location |
 |---|---|
 | Layout & scrolling | `src/components/layout/` |
+| Billing portal | `src/services/billing/` |
 | Parent PIN | `src/services/pin/` |
 | i18n | `src/i18n/` |
 | Email templates | `src/lib/email-templates/` |
