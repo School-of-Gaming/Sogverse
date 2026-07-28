@@ -750,14 +750,20 @@ piece of work it left, is written up under it.
   so effective access is identical. The costs are narrower: the "every admin policy is one
   shape" property fails on those two tables, the un-wrapped duplicate re-evaluates its
   predicate per row, and the committed snapshot describes neither database completely.
-  Converging the two catalogs onto the migration-history names, and dropping the
-  duplicates, is tracked in `TODO.md`; it needs a migration that reaches the same end state
-  from either starting point, because the two databases genuinely differ.
+
+  **Repaired in `00127`**, which converges both catalogs onto the migration-history names.
+  Because the two databases genuinely differ, it cannot assert either starting state: it
+  walks the six (legacy name, canonical name) pairs and drops the legacy policy when both
+  exist, renames it when only the legacy one does, and does nothing when already converged.
+  That leaves the canonical name present everywhere, which is what lets it then restate the
+  admin predicates unconditionally, and it ends with a policy-count assertion so a database
+  that fails to converge fails the migration rather than the next dump diff. Re-running is a
+  no-op.
 
   The general lesson is the one the drift was evidence for in the first place: a
   conditional repair keyed on a *name* encodes an assumption about which database you are
   looking at. Keying it on the thing being repaired — or asserting the end state
-  unconditionally — would have converged both.
+  unconditionally, as the repair for this one does — would have converged both.
 
 The self-assertion primitive remains `service_role`-only: nothing composes from it yet,
 because no `SECURITY INVOKER` body or policy has needed a raising self-check. That is the

@@ -4423,20 +4423,6 @@ ALTER TABLE ONLY public.whatsapp_messages
 
 
 --
--- Name: customer_profiles Admins can do everything on customer_profiles; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Admins can do everything on customer_profiles" ON public.customer_profiles TO authenticated USING (( SELECT public.is_admin() AS is_admin));
-
-
---
--- Name: gamer_profiles Admins can do everything on gamer_profiles; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Admins can do everything on gamer_profiles" ON public.gamer_profiles TO authenticated USING (( SELECT public.is_admin() AS is_admin));
-
-
---
 -- Name: whatsapp_contacts Admins can insert whatsapp_contacts; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -4472,38 +4458,17 @@ CREATE POLICY "Admins can update whatsapp_contacts" ON public.whatsapp_contacts 
 
 
 --
--- Name: customer_profiles Customers can read own customer_profile; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Customers can read own customer_profile" ON public.customer_profiles FOR SELECT TO authenticated USING ((user_id = auth.uid()));
-
-
---
--- Name: gamer_profiles Gamers can read own gamer_profile; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Gamers can read own gamer_profile" ON public.gamer_profiles FOR SELECT TO authenticated USING ((user_id = auth.uid()));
-
-
---
--- Name: gamer_profiles Gamers can update own gamer_profile; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Gamers can update own gamer_profile" ON public.gamer_profiles FOR UPDATE TO authenticated USING ((user_id = auth.uid())) WITH CHECK ((user_id = auth.uid()));
-
-
---
--- Name: gamer_profiles Parents can read linked gamer profiles; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY "Parents can read linked gamer profiles" ON public.gamer_profiles FOR SELECT TO authenticated USING (public.is_parent_of(user_id));
-
-
---
 -- Name: calendar_holidays admin_full_access_calendar_holidays; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY admin_full_access_calendar_holidays ON public.calendar_holidays TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
+
+
+--
+-- Name: customer_profiles admin_full_access_customer_profiles; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY admin_full_access_customer_profiles ON public.customer_profiles TO authenticated USING (( SELECT public.is_admin() AS is_admin));
 
 
 --
@@ -4518,6 +4483,13 @@ CREATE POLICY admin_full_access_family_subscriptions ON public.family_subscripti
 --
 
 CREATE POLICY admin_full_access_feedback ON public.feedback_submissions TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
+
+
+--
+-- Name: gamer_profiles admin_full_access_gamer_profiles; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY admin_full_access_gamer_profiles ON public.gamer_profiles TO authenticated USING (( SELECT public.is_admin() AS is_admin));
 
 
 --
@@ -4752,6 +4724,13 @@ CREATE POLICY customers_read_groups_via_gamers ON public.product_groups FOR SELE
 
 
 --
+-- Name: customer_profiles customers_read_own_customer_profile; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY customers_read_own_customer_profile ON public.customer_profiles FOR SELECT TO authenticated USING ((user_id = auth.uid()));
+
+
+--
 -- Name: parent_gamer customers_view_own_links; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -4784,10 +4763,24 @@ CREATE POLICY gamer_select_own_participations ON public.participations FOR SELEC
 
 
 --
+-- Name: gamer_profiles gamers_read_own_gamer_profile; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY gamers_read_own_gamer_profile ON public.gamer_profiles FOR SELECT TO authenticated USING ((user_id = auth.uid()));
+
+
+--
 -- Name: product_groups gamers_read_own_group; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY gamers_read_own_group ON public.product_groups FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'gamer'::public.user_role) AND ( SELECT public.has_active_participation_in_group(product_groups.id) AS has_active_participation_in_group)));
+
+
+--
+-- Name: gamer_profiles gamers_update_own_gamer_profile; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY gamers_update_own_gamer_profile ON public.gamer_profiles FOR UPDATE TO authenticated USING ((user_id = auth.uid())) WITH CHECK ((user_id = auth.uid()));
 
 
 --
@@ -4888,6 +4881,13 @@ ALTER TABLE public.parent_gamer ENABLE ROW LEVEL SECURITY;
 --
 
 CREATE POLICY parents_read_linked_gamer_minecraft ON public.minecraft_accounts FOR SELECT TO authenticated USING (public.is_parent_of(user_id));
+
+
+--
+-- Name: gamer_profiles parents_read_linked_gamer_profiles; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY parents_read_linked_gamer_profiles ON public.gamer_profiles FOR SELECT TO authenticated USING (public.is_parent_of(user_id));
 
 
 --

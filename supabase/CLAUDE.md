@@ -94,11 +94,20 @@ a migration PR (run via the Bash tool):
    ```
 3. Regenerate types:
    ```bash
-   npx supabase gen types typescript --project-id "$(grep '^SUPABASE_PROJECT_REF=' .env.local | cut -d= -f2-)" 2>/dev/null > src/types/database.types.ts
+   npx supabase gen types typescript --project-id "$(grep '^SUPABASE_PROJECT_REF=' .env.local | cut -d= -f2-)" --schema public 2>/dev/null > src/types/database.types.ts
    ```
    `2>/dev/null` swallows the CLI's "new version available" notice so it doesn't end up
    in the output file. `cut -d= -f2-` (note the trailing `-`) keeps any `=` characters
    inside the value itself.
+
+   **`--schema public` is load-bearing, not decoration.** Without it the generator emits
+   every schema the project's Data API currently exposes, which is a *dashboard setting*
+   rather than anything in this repo — so flipping that toggle silently changes the
+   generated file and the next regeneration arrives carrying an unrelated schema block
+   (this happened with `graphql_public`). Pinning the schema makes regeneration depend
+   only on the migrations, which is the property that lets "push, then regenerate, then
+   diff" mean anything. If the app ever genuinely needs a second schema, add it here
+   explicitly rather than dropping the flag.
 4. Dump the current schema to `supabase/schema.sql`:
    ```bash
    PGPASSWORD=$(grep '^SUPABASE_DB_PASSWORD=' .env.local | cut -d= -f2-) pg_dump \
