@@ -100,14 +100,27 @@ a migration PR (run via the Bash tool):
    in the output file. `cut -d= -f2-` (note the trailing `-`) keeps any `=` characters
    inside the value itself.
 
-   **`--schema public` is load-bearing, not decoration.** Without it the generator emits
-   every schema the project's Data API currently exposes, which is a *dashboard setting*
-   rather than anything in this repo — so flipping that toggle silently changes the
-   generated file and the next regeneration arrives carrying an unrelated schema block
-   (this happened with `graphql_public`). Pinning the schema makes regeneration depend
-   only on the migrations, which is the property that lets "push, then regenerate, then
-   diff" mean anything. If the app ever genuinely needs a second schema, add it here
-   explicitly rather than dropping the flag.
+   **`--schema public` is load-bearing, not decoration.** Omitted, the flag has no default:
+   the CLI asks the Management API for types without naming a schema, and the server
+   answers with every schema the project's Data API currently exposes — a *dashboard
+   setting*, not anything in this repo. So the generated file starts depending on a toggle
+   nobody can see in a diff, and a regeneration arrives carrying an unrelated schema block
+   (`graphql_public` is the one that showed up). Naming the schema makes regeneration
+   depend only on the migrations, which is what lets "push, then regenerate, then diff"
+   mean anything. If the app ever genuinely needs a second schema, add it here explicitly
+   rather than dropping the flag.
+
+   This surfaced the day the CLI was pinned as a devDependency: before the pin, a bare
+   `supabase` resolved to whatever was installed globally (2.78.1 here), which defaulted
+   the omitted flag to `public`; `npx` then resolved the pin (2.106.0), which does not.
+   Every committed regeneration before that point was made by the older binary — the
+   reason the block had never appeared despite the command never carrying the flag.
+
+   **There is deliberately no npm script for this.** One existed and was wrong in three
+   ways at once — bare `supabase` instead of `npx`, no `--schema`, and `--local` against a
+   stack this project does not run — so it silently produced a different file than the
+   documented command. A second call site for a command whose correctness depends on this
+   many details is a liability; run the command above.
 4. Dump the current schema to `supabase/schema.sql`:
    ```bash
    PGPASSWORD=$(grep '^SUPABASE_DB_PASSWORD=' .env.local | cut -d= -f2-) pg_dump \

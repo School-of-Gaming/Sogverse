@@ -20,8 +20,7 @@
     "test:db:ui": "vitest --ui --config vitest.config.db.mts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "db:reset": "supabase db reset",
-    "supabase:gen-types": "supabase gen types typescript --local > src/types/database.types.ts",
+    "db:reset": "npx supabase db reset",
     "check-translations": "node scripts/check-translations.mjs"
   },
   "dependencies": {

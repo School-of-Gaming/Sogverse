@@ -95,23 +95,38 @@ ALTER POLICY admin_full_access_customer_profiles ON public.customer_profiles
 ALTER POLICY admin_full_access_gamer_profiles ON public.gamer_profiles
   USING ((SELECT public.is_admin()));
 
--- Fails the migration if either table did not converge to exactly its four/two
--- policies. Cheaper to catch here than in a dump diff three months from now.
+-- Fails the migration if either table did not converge to exactly the expected
+-- policies. Asserts identity, not just cardinality: a table holding the right
+-- *number* of the wrong policies is the failure this whole migration exists to
+-- clean up, so counting alone would miss precisely the case worth catching.
+-- Cheaper here than in a dump diff three months from now.
 DO $$
 DECLARE
-  n_customer int;
-  n_gamer    int;
+  expected text[];
+  actual   text[];
 BEGIN
-  SELECT count(*) INTO n_customer
+  expected := ARRAY[
+    'admin_full_access_customer_profiles',
+    'customers_read_own_customer_profile'
+  ];
+  SELECT coalesce(array_agg(policyname::text ORDER BY policyname), ARRAY[]::text[])
+    INTO actual
     FROM pg_policies WHERE schemaname = 'public' AND tablename = 'customer_profiles';
-  SELECT count(*) INTO n_gamer
-    FROM pg_policies WHERE schemaname = 'public' AND tablename = 'gamer_profiles';
-
-  IF n_customer <> 2 THEN
-    RAISE EXCEPTION 'customer_profiles has % policies after convergence, expected 2', n_customer;
+  IF actual IS DISTINCT FROM (SELECT array_agg(e ORDER BY e) FROM unnest(expected) AS e) THEN
+    RAISE EXCEPTION 'customer_profiles did not converge; expected %, found %', expected, actual;
   END IF;
-  IF n_gamer <> 4 THEN
-    RAISE EXCEPTION 'gamer_profiles has % policies after convergence, expected 4', n_gamer;
+
+  expected := ARRAY[
+    'admin_full_access_gamer_profiles',
+    'gamers_read_own_gamer_profile',
+    'gamers_update_own_gamer_profile',
+    'parents_read_linked_gamer_profiles'
+  ];
+  SELECT coalesce(array_agg(policyname::text ORDER BY policyname), ARRAY[]::text[])
+    INTO actual
+    FROM pg_policies WHERE schemaname = 'public' AND tablename = 'gamer_profiles';
+  IF actual IS DISTINCT FROM (SELECT array_agg(e ORDER BY e) FROM unnest(expected) AS e) THEN
+    RAISE EXCEPTION 'gamer_profiles did not converge; expected %, found %', expected, actual;
   END IF;
 END;
 $$;
