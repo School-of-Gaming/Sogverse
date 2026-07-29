@@ -80,13 +80,22 @@ export interface SessionsSectionProps {
    */
   onLeaveWaitlist?: (entry: WaitlistEntry) => void;
   /**
-   * The `participationId` whose leave is in flight, or `null`. Held by the
+   * Every `participationId` whose leave is currently in flight. Held by the
    * caller (not derived from `mutation.isPending`) and kept set until the row
    * leaves the list, so the card stays dimmed and its badge locked across the
    * refetch — see the "Loading & Disabled State" rule.
+   *
+   * A set rather than a single id because the band renders one card per
+   * waitlisted row and each has its own badge: with a single id, leaving card B
+   * would clear card A's flag while A's request is still in flight, un-dimming
+   * a card whose action has not landed yet. Defaults to an empty set, so a
+   * caller with no leave action wired stays a one-prop component.
    */
-  leavingParticipationId?: string | null;
+  leavingParticipationIds?: ReadonlySet<string>;
 }
+
+/** Module-level so the default prop is referentially stable across renders. */
+const NO_LEAVES_IN_FLIGHT: ReadonlySet<string> = new Set();
 
 /**
  * Single Sessions-section component for both dashboards. The three states
@@ -111,7 +120,7 @@ export function SessionsSection({
   audience = "customer",
   onJoinClick,
   onLeaveWaitlist,
-  leavingParticipationId = null,
+  leavingParticipationIds = NO_LEAVES_IN_FLIGHT,
 }: SessionsSectionProps) {
   const t = useTranslations("dashboardSections");
 
@@ -145,7 +154,7 @@ export function SessionsSection({
               onLeave={
                 onLeaveWaitlist ? () => onLeaveWaitlist(entry) : undefined
               }
-              leaving={leavingParticipationId === entry.participationId}
+              leaving={leavingParticipationIds.has(entry.participationId)}
             />
           ))}
         </div>

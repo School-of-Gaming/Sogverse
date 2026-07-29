@@ -134,11 +134,11 @@ export interface MyWaitlistRow {
     firstName: string;
   };
   product: {
-    id: string;
     /**
      * Raw translation rows, resolved to the viewer's UI locale at render time —
      * same arrangement as the sessions read, so the cache key stays locale-free
-     * and switching locale doesn't refetch.
+     * and switching locale doesn't refetch. The product's own id is not here:
+     * a waitlist card links nowhere, so nothing downstream ever needed it.
      */
     translations: ProductTranslation[];
   };
@@ -395,7 +395,11 @@ export class ParticipationsService {
    * that the select still calls waitlisted and the RPC no longer ranks; that
    * family now holds a seat, and showing them a waitlist card — at a
    * fabricated position, since `position` is required — would be worse than
-   * showing nothing for the one render before the refetch.
+   * showing nothing. Nothing here schedules a retry, so the row simply stays
+   * absent from the band until some independent refetch — a remount, or React
+   * Query's refetch-on-window-focus once the cached data has gone stale — runs
+   * both reads again. By then both agree the row was promoted, so it never
+   * comes back to the band: it appears in the sessions list instead.
    */
   async getMyWaitlistEntries(
     audience: SessionAudience,
@@ -680,7 +684,6 @@ function buildMyWaitlistQuery(
         id,
         gamer_id,
         product:products!inner(
-          id,
           product_translations(*)
         ),
         gamer:profiles!participations_gamer_id_fkey!inner(
@@ -745,7 +748,7 @@ function toMyWaitlistRow(
       id: row.gamer_id,
       firstName: gamer.first_name || row.gamer_id.slice(0, 8),
     },
-    product: { id: product.id, translations: product.product_translations },
+    product: { translations: product.product_translations },
     position,
   };
 }

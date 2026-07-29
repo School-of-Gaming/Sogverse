@@ -66,31 +66,48 @@ export function ParentSessionsSection({
     redirectUrl: string;
   } | null>(null);
   /**
-   * Which card is mid-leave. Set synchronously *before* `mutate()` so it is
-   * live for the very next render, and deliberately not derived from
-   * `leaveWaitlist.isPending` — that flips false the moment React Query
-   * dispatches success, which is before `onSuccess` invalidates and well before
-   * the refetch drops the row. Cleared only on error, the one outcome where the
-   * parent has to try again; on success the row disappears and the card with
-   * it. See the "Loading & Disabled State" rule.
+   * Which cards are mid-leave. Each id is added synchronously *before*
+   * `mutate()` so it is live for the very next render, and deliberately not
+   * derived from `leaveWaitlist.isPending` — that flips false the moment React
+   * Query dispatches success, which is before `onSuccess` invalidates and well
+   * before the refetch drops the row. An id is removed only on that card's own
+   * error, the one outcome where the parent has to try again; on success the
+   * row disappears and the card with it. See the "Loading & Disabled State"
+   * rule.
+   *
+   * A set, not one id: the band can hold several waitlist cards, each with its
+   * own badge. A single id would make leaving a second card clear the first
+   * card's flag mid-request — the first card would un-dim and re-enable while
+   * its DELETE was still in flight, which is precisely the re-enable the rule
+   * forbids. Every update is functional so two clicks landing in the same tick
+   * don't overwrite each other.
    */
-  const [leavingId, setLeavingId] = useState<string | null>(null);
+  const [leavingIds, setLeavingIds] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
 
   return (
     <>
       <SessionsSection
         sessions={sessions}
         waitlist={waitlist}
-        leavingParticipationId={leavingId}
+        leavingParticipationIds={leavingIds}
         onLeaveWaitlist={(entry) => {
-          setLeavingId(entry.participationId);
+          const { participationId } = entry;
+          setLeavingIds((prev) => new Set(prev).add(participationId));
           leaveWaitlist.mutate(
-            { participationId: entry.participationId },
+            { participationId },
             {
-              // Un-dim in place. With no toast anywhere in the app there is
+              // Un-dim in place, and only this card — a sibling's leave may
+              // still be in flight. With no toast anywhere in the app there is
               // nothing else to say what happened, so the card simply comes
               // back to life where it already was and stays clickable.
-              onError: () => setLeavingId(null),
+              onError: () =>
+                setLeavingIds((prev) => {
+                  const next = new Set(prev);
+                  next.delete(participationId);
+                  return next;
+                }),
             },
           );
         }}

@@ -24,7 +24,7 @@ import { TEST_IDS } from "./constants";
  *   5c1            product-seat-counts-trigger.test.ts
  *   5c2            cancel-participation.test.ts
  *   5c3–5c6        get-my-participation-subscription-states.test.ts
- *   5c7            waitlist-admin.test.ts
+ *   5c7            waitlist-admin.test.ts (its muni product; see also 5f6)
  *   5c8–5c9        admin-participation-rpcs.test.ts
  *   5d1–5da        session-credits-cron.test.ts
  *   5e1–5e4        products-gamer-rls.test.ts
@@ -32,6 +32,8 @@ import { TEST_IDS } from "./constants";
  *   5f1, 5f2, 5ff  update-product.test.ts
  *   5f3            product-translations-trigger.test.ts
  *   5f4, 5f5       waitlist-self-service.test.ts
+ *   5f6            waitlist-admin.test.ts (its consumer_club product, for the
+ *                  demote refusal; the file's muni product is 5c7)
  */
 
 export interface ProductOptions {

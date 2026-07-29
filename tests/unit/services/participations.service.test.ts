@@ -253,7 +253,6 @@ describe("ParticipationsService.getMyWaitlistEntries", () => {
       id,
       gamer_id: `gamer-${id}`,
       product: {
-        id: `prod-${id}`,
         product_translations: [{ locale: "en", name: `Club ${id}` }],
       },
       gamer: { first_name: gamerFirstName },
@@ -295,19 +294,13 @@ describe("ParticipationsService.getMyWaitlistEntries", () => {
       {
         participationId: "p1",
         gamer: { id: "gamer-p1", firstName: "Alex" },
-        product: {
-          id: "prod-p1",
-          translations: [{ locale: "en", name: "Club p1" }],
-        },
+        product: { translations: [{ locale: "en", name: "Club p1" }] },
         position: 3,
       },
       {
         participationId: "p2",
         gamer: { id: "gamer-p2", firstName: "Bobby" },
-        product: {
-          id: "prod-p2",
-          translations: [{ locale: "en", name: "Club p2" }],
-        },
+        product: { translations: [{ locale: "en", name: "Club p2" }] },
         position: 1,
       },
     ]);

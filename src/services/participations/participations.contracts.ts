@@ -45,19 +45,28 @@ export const createCheckoutBody = z.object({
   currency: z.enum(SUPPORTED_CURRENCIES),
 });
 
-/** Request body of POST /api/participations/waitlist. */
+/**
+ * Request body of POST /api/participations/waitlist.
+ *
+ * `.uuid()` rather than `.min(1)` because these ids go straight into a `uuid`
+ * RPC parameter: a merely non-empty string reaches Postgres, fails to cast, and
+ * comes back as `22P02` — which is not a status the route maps, so a
+ * malformed-input request is logged and answered as a 500 instead of the 400 it
+ * is. Rejecting the shape here keeps the classification honest.
+ */
 export const joinWaitlistBody = z.object({
-  productId: z.string().min(1, "productId and gamerId are required"),
-  gamerId: z.string().min(1, "productId and gamerId are required"),
+  productId: z.string().uuid("productId must be a UUID"),
+  gamerId: z.string().uuid("gamerId must be a UUID"),
 });
 
 /**
  * Request body of DELETE /api/participations/waitlist — giving up a spot. The
  * participation is the only input; who may give it up is decided from
- * `auth.uid()` inside the RPC, never from the body.
+ * `auth.uid()` inside the RPC, never from the body. `.uuid()` for the same
+ * 22P02 reason as the join body above.
  */
 export const leaveWaitlistBody = z.object({
-  participationId: z.string().min(1, "participationId is required"),
+  participationId: z.string().uuid("participationId must be a UUID"),
 });
 
 /**
