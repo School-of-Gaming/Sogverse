@@ -1,0 +1,172 @@
+# Gedu session feed — past sessions, attendance, and session notes
+
+## Problem
+
+Sessions do not exist as things. Both dashboards compute upcoming occurrences at render
+time by expanding a product's weekly `schedule_slots` forward from `now` (the shared
+occurrence-expansion helpers in `src/lib/`); an occurrence has no identity, no row, no
+URL, and disappears from every list the moment its voice window closes. Consequences:
+
+- A gedu who ran a session yesterday cannot pull it up today. Attendance-taking and
+  session notes — both coming requirements of the gedu job — have nowhere to live.
+- Attendance will double as the gedu's official confirmation that they ran the session,
+  which is how we verify they should be paid. Today there is no record at all.
+- Parents/gamers have the same gap (notes are a static product-level Padlet URL that
+  becomes unreachable when the club ends) — tracked in `TODO.md`, deferred here.
+
+## Scale
+
+Every gedu, every running club/camp/event. Once shipped, recording attendance is a job
+requirement tied to pay — not an optional nicety. Parent/gamer narrative reading is a
+later phase built on the same data.
+
+## The decision
+
+### Data model shape (decided now, built in a later step)
+
+1. **A session is per (group, local calendar date).** Unique key: `(group_id,
+   session_date)` where the date is the product-timezone local date. **One session per
+   group per day is a deliberate architectural bet** — it blocks morning+afternoon camp
+   days, which we don't allow and don't plan to. Record this trade-off in the migration
+   comment on the unique constraint and in `docs/products-architecture.md` when built.
+2. **Lazy materialization.** Schedule math stays the only source of the *plan*: admins
+   freely edit dates/times/weekdays and nothing needs migrating, because future sessions
+   are never rows. A DB row is created only when there is something to hold — a note,
+   attendance, or a cancelled/skipped status. **Records beat projections:** the UI for
+   any past range renders derived occurrences merged with materialized rows on the key;
+   where both exist the row wins; a row whose date no longer matches the current
+   schedule (orphaned by an admin edit) still renders — history doesn't retroactively
+   change because the plan was edited. Rows snapshot their scheduled start/end at
+   materialization (after a schedule edit it can't be re-derived) and carry
+   created-by/updated-by + timestamps — the audit trail matters because attendance is
+   pay confirmation, which inverts the incentive from "nag gedus to record" to "audit
+   what they recorded".
+3. **Two note fields from day one:** a public note (eventually parent/gamer-visible)
+   and a staff-only note (gedu + admin). Never a single field — staff notes written
+   under an assumption of privacy can never be retro-published (children's data).
+4. **Attendance is binary in the UI** (checkbox per gamer) but stored as an enum-ready
+   status string (`present`/`absent`), so `late`/`excused` later are additive.
+5. **Skip/cancel is just materialization:** a row with a status and no attendance is
+   both the record that "week 5 didn't happen" and the queue's "nothing to record"
+   escape hatch.
+6. **Enforcement epoch:** a constant in code, set when the feature ships. The
+   work-owed lower bound is `max(product start, epoch)` — pre-existing clubs owe
+   nothing for their history. Pre-epoch gaps render muted ("no record"), never as
+   alerts. Not a column, not admin-configurable.
+7. **Permissions:** any gedu assigned to a group can edit attendance/notes of any
+   session that group ran. Admin can override anything (admin UI out of scope).
+   Peer-group feeds are not visible in v1 (neither read nor write) — the schema must
+   not block opening read access later.
+8. **Server-side write validation is loose:** reject dates in the future or before the
+   product start; accept anything plausibly matching the current schedule. Strictness
+   buys little (an admin edit can orphan any row a day later anyway) and risks blocking
+   a legitimate write-up right after a schedule fix.
+
+### UI shape
+
+**One blog-like feed per group — the group's story.** Reverse-chronological. The next
+upcoming session sits at the top (carrying the live/join-voice state today's prominent
+card has), then this week, last week, five weeks ago, down to the product start. No
+per-session pages: reading history is scrolling, not clicking.
+
+Each past entry renders inline:
+
+- **Date + status** — recorded / skipped / missing.
+- **Public note as the entry body** — this is the "blog post".
+- **Staff note visually distinct** (muted treatment + lock icon) so the two audiences
+  never blur, even while only gedus can see the page.
+- **Attendance as a compact summary line** (e.g. "6/8 present") expanding to the
+  per-gamer roster.
+- **A missing post-epoch session renders as an inline gap entry** with alert
+  treatment — the "work to do" queue is the set of gaps in the feed, not a separate
+  surface. Pre-epoch and pre-start gaps render muted or not at all.
+- **Editing expands in place** — click a gap or an entry, it expands into the editor
+  (attendance checklist + both note fields), saves back into place. Expansion is
+  user-triggered so allowed under the layout rules, but must animate and expand
+  *downward* so the entry's own controls don't move under the cursor.
+
+Entries are always anchored to a session occurrence — there is deliberately no
+free-floating "post to the club" action (announcements would undermine the
+attendance-is-pay-confirmation anchor; if wanted, that's a different feature).
+
+The gedu dashboard gets only an **aggregate alert badge** on the product card ("N
+sessions need attention") linking into the feed — no separate queue UI. The feed itself
+becomes the spine of the existing gedu product detail pages
+(`/gedu/clubs|camps|events/[id]`) for the gedu's assigned group.
+
+### Scope for this effort
+
+Gedu side only. Out of scope, deliberately: parent/gamer read-only feed (later phase on
+the same data), admin UI, the holiday calendar (see constraints), email/in-app nag
+notifications (alert icons in the UI are enough for now).
+
+## Rejected alternatives
+
+- **Pre-generated session rows with reconciliation on schedule edits** — rejected hard.
+  Admins fix typos and move weekdays; a reconciler must then decide which rows to move,
+  merge, or delete, *including rows with attendance attached* — a sync problem with no
+  clean answer. Lazy materialization deletes the class: future edits are free (nothing
+  exists), and the untouched past self-heals (a typo'd start date creating months of
+  phantom "missing" entries evaporates when fixed, because they were never rows).
+- **Keying sessions by UTC instant or slot start time** — breaks on the most common
+  admin edit (time-of-day fix). Local date survives everything except weekday moves,
+  which the orphan rule (records still render) absorbs.
+- **Per-session detail pages behind card clicks** — friction kills history-reading.
+  The narrative (gedu prepping this week reads last week; parent reads the club's
+  story) is the point of the surface.
+- **A separate "needs write-up" queue list/page** — redundant; the queue is the gaps
+  rendered inline in the feed plus the dashboard aggregate badge.
+- **A boolean attendance column** — status string costs nothing now and avoids a
+  bool→enum migration.
+- **A rolling reach-back amnesty window** (only nag about the last N weeks) — the fixed
+  epoch is honest (the obligation genuinely began on a date) and simpler.
+
+## Steps
+
+1. **UI-only mock (current step).** Fixture-driven presentational components under
+   `src/components/gedu/session-feed/`, demoed in `/admin/ui-components` per the
+   style-guide convention (mock club, roster, all entry states, working inline editor
+   on local state). All strings translated in all four locales. No schema, services,
+   or API changes. Iterate on look/behaviour until signed off.
+2. **Schema + services.** Sessions table (unique `(group_id, session_date)`, snapshot
+   start/end, two note columns, status, audit columns), attendance table (session ×
+   gamer, status string), grants + RLS + authorization-spine classification per the db
+   rules. Backward occurrence enumeration added to the shared expansion helpers
+   (today they only walk forward). The epoch constant. RPC(s) for the feed window,
+   record upsert, attendance set — with db-test coverage for any Json-returning
+   result schemas.
+3. **Wiring.** Feed replaces the assigned-group section of the gedu detail pages;
+   dashboard product cards gain the aggregate badge.
+4. **Docs + cleanup.** One-session-per-day bet recorded (migration comment +
+   `docs/products-architecture.md`); TODO.md parent/gamer item updated; this plan
+   deleted.
+
+## Acceptance criteria
+
+- **Mock step:** the feed renders in `/admin/ui-components` with every entry state
+  (upcoming with join, recorded, skipped, missing post-epoch gap, muted pre-epoch gap),
+  inline editing expands/saves against local state, lint + type-check clean, all four
+  locales translated. Kyle signs off on the shape from a dev server.
+- **Feature complete:** a gedu can open any past session of their group back to
+  `max(start, epoch)`, record attendance + both notes, skip a session, and see gaps;
+  records survive admin schedule edits; the dashboard badge counts open gaps; nothing
+  changes for parents/gamers.
+
+## Constraints discovered while deciding
+
+- **Two divergent occurrence expansions already exist:** the live dashboards' expansion
+  ignores the holiday calendar entirely, while the unmounted calendar component's
+  expansion honours it. Harmless while sessions are ephemeral UI; the moment backward
+  enumeration drives "you owe a write-up" alerts, holiday-ignorance produces false
+  nags for winter break. Accepted for now (holiday calendar is out of scope; the skip
+  escape hatch clears a false gap in one click), but when the holiday work lands the
+  expansions must be unified and made holiday-aware in both directions.
+- The forward-occurrence helper contract only ever returns *future* starts;
+  in-progress and backward walking need the DST-safe patterns documented in the
+  shared occurrence helpers (`src/lib/`) — a naive `now − 7×24h` is wrong on DST
+  transition days.
+- Session dates are product-timezone local dates; rendered times follow the viewer's
+  timezone per the root date/time rules.
+- `messages/` files: no emoji, all four locales, Klingon may be playful.
+- One session per group per day is baked into the unique key — revisiting
+  morning+afternoon camp days means revisiting the key.
