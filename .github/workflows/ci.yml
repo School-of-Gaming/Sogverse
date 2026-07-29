@@ -157,6 +157,35 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
           SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
 
+      # supabase/schema.sql is regenerated here, from the stack `supabase start`
+      # just built out of migrations/ — not dumped from any long-lived database.
+      # That is the whole point: a hosted database can be (and has been) edited
+      # outside migrations, and dumping the snapshot from one lets that drift into
+      # the committed file, where it then reads as authoritative. Built from
+      # migrations, the snapshot is faithful by construction.
+      #
+      # The dump goes through the CLI rather than the runner's pg_dump so the
+      # client version always matches the server the CLI booted; a host pg_dump
+      # older than the container's Postgres refuses to run at all.
+      - name: Regenerate schema snapshot from migrations
+        run: supabase db dump --local --schema public -f /tmp/schema-from-migrations.sql
+
+      - name: Upload regenerated snapshot
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: schema-from-migrations
+          path: /tmp/schema-from-migrations.sql
+          retention-days: 30
+
+      - name: Verify committed schema.sql matches migrations
+        run: |
+          if ! diff -u supabase/schema.sql /tmp/schema-from-migrations.sql; then
+            echo "::error::supabase/schema.sql does not match what migrations/ produces."
+            echo "Download the 'schema-from-migrations' artifact from this run and commit it as supabase/schema.sql."
+            exit 1
+          fi
+
       - name: Stop local Supabase
         if: always()
         run: supabase stop

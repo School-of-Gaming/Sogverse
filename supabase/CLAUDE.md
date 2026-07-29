@@ -15,22 +15,28 @@ files hold the live state, and between them they cover almost everything:
 - **`src/types/database.types.ts` + `src/types/index.ts`** — table/column/function
   *shapes* (types, signatures, enums). Auto-generated from the live schema.
 - **`supabase/schema.sql`** — the things the type generator can't see: function bodies,
-  RLS policies, triggers, grants, constraints. A `pg_dump` of the live `public` schema
-  (see step 4 of the migration workflow).
+  RLS policies, triggers, grants, constraints. Dumped from a database built **purely from
+  `migrations/`** (see step 4 of the migration workflow).
 
 Both are regenerated on every migration and reflect current state, so you never
 reconstruct it by hand.
 
-**One caveat on `schema.sql`, established 2026-07-29.** It is dumped from the linked
-hosted database, and that database has been edited outside migrations more than once —
-verified by tracing a prod↔staging diff case by case against migration source, where the
-hosted snapshot lost function-body comments, reformatted a function body, and carried two
-`COMMENT ON` statements no migration contains. Grants, policies, constraints and triggers
-are trustworthy (a release diff confirmed those match exactly). **Function bodies are the
-soft spot** — if you are copying one into a new migration and the details matter, check it
-against the migration that last defined it rather than trusting the dump's formatting and
-comments. The durable fix is to dump the snapshot from a database built purely from
-migrations, which is tracked in `TODO.md`. Migrations are append-only history — a later one can supersede
+**Why the snapshot is built from migrations and not dumped from a hosted database.** It
+used to be dumped from the linked project, and on 2026-07-29 that was shown to be
+unsound: the hosted database had been edited outside migrations more than once — a
+function body reformatted, function-body comments stripped from two functions, two
+`COMMENT ON` statements present that appear in no migration, a column dropped and
+re-added so its ordinal moved. All of it flowed straight into the committed file, where
+it then read as authoritative. Diffing the two hosted databases is what surfaced it;
+tracing each case against migration source is what settled which one was wrong.
+
+Generating the snapshot from migrations removes the whole class: the file cannot record
+anything a migration did not do, and a hand-edit to a hosted database no longer has a
+path into it. CI regenerates it on every run and fails when the committed copy disagrees,
+so drift is caught the moment it is introduced rather than a release cycle later. What
+this deliberately does *not* do is tell you whether a hosted database has drifted from
+migrations — that is a different check, and a dump diff against production is how to run
+it. Migrations are append-only history — a later one can supersede
 an earlier one (drop a constraint, rewrite a function, relax a rule), which is exactly
 why eyeballing them for current state goes wrong. So when a migration must drop and
 recreate an object — e.g. a function, to repoint it at a changed type — copy its body
@@ -132,20 +138,18 @@ a migration PR (run via the Bash tool):
    stack this project does not run — so it silently produced a different file than the
    documented command. A second call site for a command whose correctness depends on this
    many details is a liability; run the command above.
-4. Dump the current schema to `supabase/schema.sql`:
-   ```bash
-   PGPASSWORD=$(grep '^SUPABASE_DB_PASSWORD=' .env.local | cut -d= -f2-) pg_dump \
-     -h aws-1-eu-north-1.pooler.supabase.com -p 5432 \
-     -U "postgres.$(grep '^SUPABASE_PROJECT_REF=' .env.local | cut -d= -f2-)" -d postgres \
-     --schema=public --schema-only --no-owner 2>/dev/null \
-     | grep -vE '^[\](un)?restrict ' > supabase/schema.sql
-   ```
-   This is the current-state companion to `database.types.ts` — it captures what the
-   type generator can't (function bodies, RLS policies, triggers, grants, constraints)
-   in one authoritative file. Run it exactly as written: raw `pg_dump` (not
-   `supabase db dump`, which needs Docker), the `5432` session pooler (not the `6543`
-   transaction pooler), and the `grep -vE` that strips pg_dump 18's volatile `\restrict`
-   guard lines so the diff reflects only real schema changes.
+4. Refresh `supabase/schema.sql` — **CI generates this; you do not dump it.** Push the
+   branch, let the Database Tests job run, then download its `schema-from-migrations`
+   artifact and commit it as `supabase/schema.sql`. The job regenerates the snapshot from
+   the stack it builds out of `migrations/` and fails when the committed copy disagrees,
+   naming the artifact in the error.
+
+   The reason it is not a local command is above: dumping from a hosted database lets that
+   database's hand-edits into the file. Building from migrations makes that impossible, and
+   the local stack this would otherwise need does not run on every machine (no Docker
+   here — see `tests/CLAUDE.md`), so CI is the one place it can be produced consistently.
+   The cost is a round trip: the first push after a migration fails this check by design,
+   and the second carries the regenerated file.
 5. Check `src/types/index.ts` — add convenience aliases for any new tables/enums.
 6. Commit migration + updated types + `schema.sql` + tests together in the PR.
 
