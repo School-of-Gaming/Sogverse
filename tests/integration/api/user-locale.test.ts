@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { PATCH } from "@/app/api/user/locale/route";
+import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 
 // --- Mocks ---
 
@@ -115,8 +116,10 @@ describe("PATCH /api/user/locale", () => {
     expect(mockEq).toHaveBeenCalledWith("id", "user-123");
   });
 
+  // Iterates the real list rather than a copy of it, so shipping a locale is
+  // covered here the moment it lands in SUPPORTED_LOCALES.
   it("should accept all supported locales", async () => {
-    for (const locale of ["en", "fi", "sv", "tlh"]) {
+    for (const locale of SUPPORTED_LOCALES) {
       vi.clearAllMocks();
       mockUpdate.mockReturnValue({ eq: mockEq });
       mockEq.mockResolvedValue({ data: null, error: null });

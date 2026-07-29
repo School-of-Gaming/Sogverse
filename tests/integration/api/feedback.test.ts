@@ -283,7 +283,8 @@ describe("POST /api/feedback", () => {
 
     await POST(createRequest(
       validBody,
-      { "Accept-Language": "de-DE,fr;q=0.9" },
+      // None of these is a shipped locale (fr used to sit here, and is one now).
+      { "Accept-Language": "de-DE,pl;q=0.9" },
     ));
 
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(

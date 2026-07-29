@@ -4,11 +4,7 @@ import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { SupportedCurrency } from "@/lib/constants/currency";
-import {
-  isSupportedLocale,
-  resolveLocale,
-  type SupportedLocale,
-} from "@/lib/constants/locales";
+import { resolveLocale, stripeLocaleOrAuto } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   createCheckoutBody,
@@ -255,7 +251,7 @@ export const POST = defineRoute({
       // Render Stripe's own chrome ("Subscribe", "Pay", field labels) in the
       // parent's app locale. Falls back to 'auto' (browser Accept-Language) for
       // locales Stripe doesn't support — e.g. Klingon.
-      locale: stripeCheckoutLocale(profile.locale),
+      locale: stripeLocaleOrAuto(profile.locale),
       // Show the "Add promotion code" field. Codes themselves are created and
       // managed in the Stripe dashboard (per mode — test and live separately);
       // nothing in our DB models them. With Adaptive Pricing, percent-off
@@ -358,28 +354,6 @@ async function pickGamerName(
     .eq("id", gamerId)
     .maybeSingle();
   return data?.first_name || "your child";
-}
-
-// Stripe Checkout's `locale` is its own fixed enum, not our SUPPORTED_LOCALES.
-// This map is `Record<SupportedLocale, …>`, so the compiler forces an entry for
-// every app locale — add one to SUPPORTED_LOCALES and the build fails here until
-// it's mapped (no silent fall-through to the wrong language). Use Stripe's
-// matching locale where it has one; 'auto' (Stripe reads Accept-Language) for
-// locales Stripe doesn't speak, like Klingon.
-const APP_TO_STRIPE_LOCALE: Record<
-  SupportedLocale,
-  Stripe.Checkout.SessionCreateParams.Locale
-> = {
-  en: "en",
-  fi: "fi",
-  sv: "sv",
-  tlh: "auto",
-};
-
-function stripeCheckoutLocale(
-  appLocale: string | null,
-): Stripe.Checkout.SessionCreateParams.Locale {
-  return isSupportedLocale(appLocale) ? APP_TO_STRIPE_LOCALE[appLocale] : "auto";
 }
 
 async function rollbackReservation(

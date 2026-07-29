@@ -1,6 +1,6 @@
 # i18n (next-intl)
 
-This directory holds the next-intl request wiring. The i18n system spans the whole stack: UI strings, email templates, page metadata, and user-facing constants. Locales currently shipped: English (`en`, source of truth), Finnish (`fi`), Swedish (`sv`), Klingon (`tlh`, easter egg). `en` is the default.
+This directory holds the next-intl request wiring. The i18n system spans the whole stack: UI strings, email templates, page metadata, and user-facing constants. Locales currently shipped: English (`en`, source of truth), Finnish (`fi`), Swedish (`sv`), French (`fr`), Klingon (`tlh`, easter egg). `en` is the default.
 
 ## Locale vs. spoken language
 
@@ -21,7 +21,7 @@ The two are fully independent: a Finnish-speaking parent can have `locale = "fi"
 
 ## Translation files
 
-Per-locale JSON in `messages/<code>.json` at the repo root (`en`, `fi`, `sv`, `tlh`). `en.json` is the source of truth; the others mirror its shape exactly.
+Per-locale JSON in `messages/<code>.json` at the repo root (`en`, `fi`, `sv`, `fr`, `tlh`). `en.json` is the source of truth; the others mirror its shape exactly.
 
 **Rule: Every user-facing string must be translated for every locale file in `messages/`. Never leave placeholder copy or skip a locale. Best-effort translation is expected; Klingon (`tlh`) is an easter egg where fun takes are welcome and accuracy is not the goal.**
 
@@ -63,12 +63,24 @@ Translation keys are organized into top-level namespaces in the JSON files. Two 
 
 All other namespaces (role/feature pages, public pages, feature components, layout chrome, `common`) ship to the client.
 
+## The locale config is the single point of control
+
+`LOCALE_CONFIG` in `src/lib/constants/locales.ts` holds everything that varies per locale — English label, native label, flag country, and the locale to render Stripe's own chrome in. `SUPPORTED_LOCALES` beside it is the ordered list, and the config `satisfies` a record keyed by it, so a locale with no config (or a config entry for no locale) fails the build. A unit test pins that the two are in the same order.
+
+**Rule: per-locale data belongs in `LOCALE_CONFIG`, never in a second map keyed by locale.** The Stripe Checkout and Billing Portal routes each used to hand-maintain their own app-locale → Stripe-locale map; a new locale meant remembering both, and forgetting one shipped a page in the wrong language. The Stripe mapping is now a config field (typed as the intersection of Stripe's Checkout and Billing Portal locale enums, so a value only one surface accepts fails to compile), read through the shared helper that falls back to Stripe's `auto` for anything unsupported.
+
+**Rule: Klingon (`tlh`) is always the last entry.** It's a novelty easter egg and never sits among languages a user might actually need. The picker renders `SUPPORTED_LOCALES` in order, and a unit test pins the last entry.
+
+**Rule: locale codes are bare language subtags** (`fr`, not `fr-FR`). A region-qualified code is only added when we genuinely ship two variants of one language — it changes what the `locale` column and cookie carry and forces a decision about how regions appear in any future locale-prefixed URLs. The header matcher already prefers an exact tag match over a language-subtag one, so no structural prep remains; the decision does. The tripwire comment lives at the `LOCALE_CONFIG` definition.
+
 ## Adding a locale
 
-1. Create `messages/<code>.json` by copying `en.json` and translating every value.
-2. Add the code to `SUPPORTED_LOCALES` and an entry to `LOCALE_CONFIG` (label, native label, country flag) in `src/lib/constants/locales.ts`.
-3. Add its import to the `messageLoaders` map in `messages.ts`.
-4. CI validation picks it up automatically. No changes needed to `request.ts`, `types.ts`, `next.config.ts`, or provider code.
+1. Add the code to `SUPPORTED_LOCALES` and its entry to `LOCALE_CONFIG` in `src/lib/constants/locales.ts` — label, native label, flag country, Stripe locale (`"auto"` if Stripe doesn't speak it). Place it **before** `tlh` in both.
+2. Register its flag in `src/components/ui/flags.ts` (a named per-country import — never the barrel). `country` is typed against that registry, so an unregistered flag fails the build.
+3. Add its loader to the `messageLoaders` map in `messages.ts`.
+4. Create `messages/<code>.json` by copying `en.json` and translating every value.
+5. Decide separately whether the country belongs in `PHONE_COUNTRIES` (`src/lib/constants/phone.ts`). That list is **not** derived from locales and drifts on purpose — US is a phone country with no locale, Klingon a locale with no country.
+6. CI translation validation picks the new file up automatically. No changes needed to `request.ts`, `types.ts`, `next.config.ts`, the check script, or provider code.
 
 ## Adding a namespace
 
