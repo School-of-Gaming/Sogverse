@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Landmark, MapPin, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRevealAfter } from "@/hooks/use-reveal-after";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -329,13 +330,19 @@ function sortGroups(
  * point, and editing an existing product is the most common way in here.
  */
 function PickerSkeleton({ label, compact }: { label: string; compact: boolean }) {
+  // Gated per the house loading rule: switching a product from online to
+  // in-person mounts this over an often-cached sites query, and a ~100ms load
+  // painting a grey block reads as a flash, not a loading state.
+  const visible = useRevealAfter(150);
   return (
     <div
       className={cn(
-        "animate-pulse rounded-md bg-muted",
+        "animate-pulse rounded-md bg-muted transition-opacity duration-200",
         compact ? "h-24" : "h-[460px]",
+        visible ? "opacity-100" : "opacity-0",
       )}
       aria-label={label}
+      aria-busy="true"
     />
   );
 }

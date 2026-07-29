@@ -95,6 +95,8 @@ The pattern that works: hold a local `committing` boolean, flip it true *synchro
 
 Setting the flag *inside* `onSuccess` (or via a hook that does so) is too late and does not close the gap. The flag has to be live before any render after the click.
 
+**Rule: A loading skeleton stays invisible for its first ~150ms.** Skeletons are the right pattern for loads that genuinely take time — but most loads here resolve in ~100ms (warm React Query cache, small scoped queries), and a skeleton that lives for two frames reads as an ugly grey flash, not a loading state. Gate the skeleton's *visibility* (not its mount) on `useRevealAfter(150)` (`src/hooks/use-reveal-after.ts`), inside a container that already has its final size per the layout rule: a fast load then shows calm nothing in a correctly-sized box, and a slow one still gets its skeleton. Prefer structured ghosts (bars where rows will be) over one solid block when the skeleton does show.
+
 ### Date & Time Formatting
 
 **Rule: Pick the right tool for the date/time operation, and never use UTC as a stand-in for someone's local date.**

@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRevealAfter } from "@/hooks/use-reveal-after";
 import { Input } from "@/components/ui/input";
 import { normalizeForSearch } from "@/lib/locations/catalog";
 
@@ -149,10 +150,7 @@ export function LocationList({
         )}
       >
         {loading ? (
-          <div
-            className="h-full animate-pulse rounded bg-muted"
-            aria-label={labels.loading}
-          />
+          <GhostRows label={labels.loading} />
         ) : visible.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
             {trimmed ? labels.noResults(trimmed) : labels.empty}
@@ -200,6 +198,30 @@ export function LocationList({
       </div>
 
       {footer}
+    </div>
+  );
+}
+
+// Skeleton per the house loading rule: invisible for its first 150ms, so a
+// fast (cached) load never flashes grey; only a genuinely slow one shows it.
+function GhostRows({ label }: { label: string }) {
+  const visible = useRevealAfter(150);
+  return (
+    <div
+      className={cn(
+        "space-y-2 p-1 transition-opacity duration-200",
+        visible ? "opacity-100" : "opacity-0",
+      )}
+      aria-label={label}
+      aria-busy="true"
+    >
+      {[78, 62, 84, 57, 70].map((width) => (
+        <div
+          key={width}
+          className="h-7 animate-pulse rounded bg-muted"
+          style={{ width: `${width}%` }}
+        />
+      ))}
     </div>
   );
 }
