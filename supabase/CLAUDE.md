@@ -15,11 +15,57 @@ files hold the live state, and between them they cover almost everything:
 - **`src/types/database.types.ts` + `src/types/index.ts`** — table/column/function
   *shapes* (types, signatures, enums). Auto-generated from the live schema.
 - **`supabase/schema.sql`** — the things the type generator can't see: function bodies,
-  RLS policies, triggers, grants, constraints. A `pg_dump` of the live `public` schema
-  (see step 4 of the migration workflow).
+  RLS policies, triggers, grants, constraints. Dumped from a database built **purely from
+  `migrations/`**, by the `test-db` job in `.github/workflows/ci.yml`; the reasoning is
+  in "Why the snapshot is built from migrations" below.
 
-Both are regenerated on every migration and reflect current state, so you never
-reconstruct it by hand. Migrations are append-only history — a later one can supersede
+Neither is reconstructed by hand. `database.types.ts` reflects the database you generate
+it against; `schema.sql` reflects **migrations merged to `dev`**.
+
+**That last distinction has one sharp edge, and it is the one thing this arrangement
+costs you.** On a branch that has added migrations, `schema.sql` does not contain them
+yet — it is still describing `dev`. So for any object *your own unmerged branch* has
+touched, `schema.sql` is stale by exactly your own work, and the "copy the body from
+`schema.sql`" rule below would hand you back the pre-branch version and silently revert
+you. For those objects, your branch's own migration files are the truth. For everything
+else — which is nearly all of it — `schema.sql` remains the right thing to read.
+
+**Why the snapshot is built from migrations and not dumped from a hosted database.** It
+used to be dumped from the linked project, and the decisive problem is that **staging is
+shared and mutable**: migrations land there from branches that have not merged, so a dump
+taken at any moment is the union of everyone's in-flight work. Committing that produces a
+`schema.sql` describing a schema which exists nowhere — and an agent reading it will write
+code against columns that are not on `dev` or in production. Hand-edits compound it (a
+reformatted function body, comments stripped from others, `COMMENT ON` statements
+belonging to no migration have all been found there), but the shared-environment problem
+alone is enough: no amount of tidying staging makes it a valid source for one branch's
+snapshot.
+
+Building from `migrations/` removes the class entirely. The file cannot record anything a
+migration did not do, so neither a hand-edit nor an unmerged branch has a path into it.
+CI regenerates it on every run and commits the result on `dev`, which is why step 4 of
+the workflow below is "do nothing".
+
+What that deliberately does *not* answer is whether a hosted database matches — the
+snapshot is a statement about `migrations/`, not about any live system. There is no
+standing check for that, on purpose. Production was compared against migration source on
+2026-07-29 and matched it exactly, and no instance of production being edited by hand has
+ever been found; the one prod discrepancy on record was a *migration* whose `IF EXISTS`
+condition matched on one database and not the other, taking a branch its author did not
+expect. A migration that asserts its own end state — as `00127` does — catches that at the
+moment it runs, which is both earlier and more specific than any periodic dump diff. If a
+hosted database ever does drift, `pg_dump` against it and diff the result against
+`schema.sql`; that is a debugging step, not something worth running on a timer.
+
+**Staging carries known cosmetic drift** and is deliberately left alone: a reformatted
+function body, comments stripped from a few others, two `COMMENT ON` statements belonging
+to no migration, and a column dropped and re-added so its ordinal moved. None of it
+behavioural, and the ordinal cannot be corrected without rebuilding the table. It stopped
+mattering when the snapshot stopped being sourced from it. If staging ever drifts in a way
+that changes *behaviour*, that shows up as tests passing there and failing against
+production, which is a louder signal than a dump diff.
+
+Migrations are append-only history — a later one can supersede
 an earlier one (drop a constraint, rewrite a function, relax a rule), which is exactly
 why eyeballing them for current state goes wrong. So when a migration must drop and
 recreate an object — e.g. a function, to repoint it at a changed type — copy its body
@@ -121,22 +167,13 @@ a migration PR (run via the Bash tool):
    stack this project does not run — so it silently produced a different file than the
    documented command. A second call site for a command whose correctness depends on this
    many details is a liability; run the command above.
-4. Dump the current schema to `supabase/schema.sql`:
-   ```bash
-   PGPASSWORD=$(grep '^SUPABASE_DB_PASSWORD=' .env.local | cut -d= -f2-) pg_dump \
-     -h aws-1-eu-north-1.pooler.supabase.com -p 5432 \
-     -U "postgres.$(grep '^SUPABASE_PROJECT_REF=' .env.local | cut -d= -f2-)" -d postgres \
-     --schema=public --schema-only --no-owner 2>/dev/null \
-     | grep -vE '^[\](un)?restrict ' > supabase/schema.sql
-   ```
-   This is the current-state companion to `database.types.ts` — it captures what the
-   type generator can't (function bodies, RLS policies, triggers, grants, constraints)
-   in one authoritative file. Run it exactly as written: raw `pg_dump` (not
-   `supabase db dump`, which needs Docker), the `5432` session pooler (not the `6543`
-   transaction pooler), and the `grep -vE` that strips pg_dump 18's volatile `\restrict`
-   guard lines so the diff reflects only real schema changes.
+4. **Do nothing about `supabase/schema.sql`.** It is machine-maintained: CI regenerates it
+   from `migrations/` and commits it to `dev` after merge. Do not dump it, do not edit it,
+   and do not include it in a feature branch — if you do, the next `dev` build overwrites
+   it anyway.
 5. Check `src/types/index.ts` — add convenience aliases for any new tables/enums.
-6. Commit migration + updated types + `schema.sql` + tests together in the PR.
+6. Commit migration + updated types + tests together in the PR. `schema.sql` is not part
+   of it.
 
 ## Generated nullability can lie
 

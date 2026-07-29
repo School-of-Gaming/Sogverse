@@ -5,6 +5,13 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Read-only by default so the write grant on test-db (for the dev-only schema
+# snapshot commit) is an actual narrowing. Without this the repository default
+# applies to every job, and on a repo set to "read and write" the lint, test, e2e
+# and deploy jobs would each hold contents:write for no reason.
+permissions:
+  contents: read
+
 # Single source of truth for the Supabase CLI version used by every job below.
 # Pinned (not `latest`) on purpose: `latest` makes supabase/setup-cli resolve the
 # newest release via the GitHub API at runtime, and that lookup intermittently
@@ -120,6 +127,9 @@ jobs:
   test-db:
     name: Database Tests
     runs-on: ubuntu-latest
+    # Needed only by the dev-only snapshot commit at the end of this job.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v5
 
@@ -156,6 +166,105 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
           NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
           SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+
+      # supabase/schema.sql is regenerated here, from the stack `supabase start`
+      # just built out of migrations/ — not dumped from any long-lived database.
+      # That is the whole point: a hosted database can be (and has been) edited
+      # outside migrations, and dumping the snapshot from one lets that drift into
+      # the committed file, where it then reads as authoritative. Built from
+      # migrations, the snapshot is faithful by construction.
+      #
+      # pg_dump runs INSIDE the database container, for two reasons. Its client
+      # version then always matches the server the CLI booted (a host pg_dump older
+      # than the server refuses to run at all, and the runner's version is not ours
+      # to pin). And it is raw pg_dump: `supabase db dump` silently emits no
+      # CREATE TRIGGER at all — verified, 0 against 26 — so using it would have
+      # quietly dropped every trigger from the snapshot while leaving policies,
+      # grants and functions intact enough to look right.
+      - name: Regenerate schema snapshot from migrations
+        run: |
+          # pipefail matters here specifically: the dump is a pipeline into grep, and
+          # without it the exit status is grep's. A pg_dump that dies mid-stream would
+          # still "succeed" so long as one line reached the file — and on dev this file
+          # is committed unattended. The object-class guard below catches the usual
+          # shape of that (policies and grants are emitted late, so truncation trips
+          # it), but it is a backstop, not the check.
+          set -euo pipefail
+          CONTAINER=$(docker ps --filter "name=supabase_db_" --format '{{.Names}}' | head -1)
+          if [ -z "$CONTAINER" ]; then
+            echo "::error::supabase db container not found; cannot regenerate the schema snapshot"
+            exit 1
+          fi
+          echo "dumping from $CONTAINER"
+          docker exec "$CONTAINER" pg_dump -U postgres -d postgres \
+            --schema=public --schema-only --no-owner \
+            | grep -vE '^[\](un)?restrict ' > /tmp/schema-from-migrations.sql
+          echo "wrote $(wc -l < /tmp/schema-from-migrations.sql) lines"
+          # Cheap guard against a dump that "succeeds" but lost an object class.
+          for obj in "CREATE TABLE" "CREATE POLICY" "CREATE TRIGGER" "GRANT"; do
+            n=$(grep -c "^$obj" /tmp/schema-from-migrations.sql || true)
+            echo "$obj: $n"
+            if [ "$n" -eq 0 ]; then
+              echo "::error::regenerated snapshot contains no '$obj' statements — refusing to treat it as authoritative"
+              exit 1
+            fi
+          done
+
+      - name: Upload regenerated snapshot
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: schema-from-migrations
+          path: /tmp/schema-from-migrations.sql
+          retention-days: 30
+          # When the tests fail the dump never runs, and a missing-file warning
+          # stacked on top of the real failure only obscures it.
+          if-no-files-found: ignore
+
+      # schema.sql is machine-maintained: nobody writes it by hand, so CI commits it
+      # rather than failing and asking someone to. Only on dev, and deliberately not
+      # on feature branches — a branch that regenerated it would put a 6000-line
+      # generated file into every migration diff, and two branches doing so would
+      # conflict on it constantly. Keeping it to dev also means the file tracks
+      # *merged* migrations, so an unmerged branch's objects never leak into it.
+      #
+      # The commit message carries a skip-ci marker so it does not trigger another
+      # run; that run would have nothing to do, since the next pass finds the file
+      # already matching.
+      #
+      # The commit is built on whatever dev is at *now*, not on the SHA this job
+      # checked out. Pushes to dev are direct and frequent here, and a job that
+      # committed onto its own checkout would be rejected as a non-fast-forward
+      # whenever anything landed during the two-to-four minutes it was running —
+      # surfacing as a red Database Tests job with every test passing, which is the
+      # kind of failure people learn to ignore. Re-basing is not available: the
+      # checkout is shallow (fetch-depth 1), so there is no history to rebase onto.
+      # Fetching dev and committing onto FETCH_HEAD sidesteps both problems.
+      #
+      # If it still loses a race, that is not fatal and must not fail the job: the
+      # file is regenerated from scratch on every run, so the next schema-changing
+      # push to dev repairs it. It warns instead, so a persistent failure is still
+      # visible rather than silent.
+      - name: Commit the regenerated snapshot (dev only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+        run: |
+          set -euo pipefail
+          git fetch --depth=1 origin dev
+          if diff -q <(git show FETCH_HEAD:supabase/schema.sql) /tmp/schema-from-migrations.sql > /dev/null; then
+            echo "schema.sql on dev already matches migrations — nothing to commit"
+            exit 0
+          fi
+          echo "schema.sql on dev is out of date with migrations; updating it"
+          diff -u <(git show FETCH_HEAD:supabase/schema.sql) /tmp/schema-from-migrations.sql || true
+          git checkout -B snapshot-update FETCH_HEAD
+          cp /tmp/schema-from-migrations.sql supabase/schema.sql
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add supabase/schema.sql
+          git commit -m "chore(db): regenerate schema.sql from migrations [skip ci]"
+          if ! git push origin snapshot-update:dev; then
+            echo "::warning::lost a race pushing the regenerated schema.sql to dev; the next schema-changing push will regenerate it"
+          fi
 
       - name: Stop local Supabase
         if: always()

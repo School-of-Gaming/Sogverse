@@ -16,12 +16,16 @@ Before touching anything it describes:
    schema in 2026-07 and will drift. Current state lives in `supabase/schema.sql`
    (function bodies, grants, policies) and the DB test suite's classifications — never
    in migration history. Regenerate the route list with
-   `git grep -l createAdminClient src/`. Note the corollary the Phase 4 drift repair
-   made concrete: `schema.sql` is a dump of a *hosted* database, so an object created
-   outside a migration lands in it and is invisible to every check we run, all of which
-   build their database from migrations alone.
+   `git grep -l createAdminClient src/`. Note the corollary, which **inverted** in
+   2026-07: `schema.sql` used to be a dump of a *hosted* database, so anything created
+   outside a migration landed in it. It is now built from `migrations/` by CI, so it
+   cannot record an object no migration creates — but the exposure runs the other way
+   instead. A hosted database can drift *away* from `schema.sql`, and nothing standing
+   watches for that; a `pg_dump` of the database you care about, diffed against
+   `schema.sql`, is how to check.
 2. **Follow the migration workflow in CLAUDE.md** (push migration → regenerate types →
-   dump `schema.sql` → check type aliases → commit together).
+   check type aliases → commit together). `schema.sql` is not part of it — CI
+   regenerates and commits that on `dev`.
 3. **DB tests run in CI** against a local Supabase stack started by the workflow. Do
    not run them locally or against the remote DB — push the branch and let CI run them.
 4. **A migration reaches the shared database the moment it is pushed; the code running
