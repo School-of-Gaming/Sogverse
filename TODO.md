@@ -2,6 +2,8 @@
 
 ## Cleanup
 
+- [ ] **Sweep pre-existing loading skeletons behind the 150ms reveal gate.** Root CLAUDE.md now has the rule (skeletons invisible for their first ~150ms via `useRevealAfter`, structured ghosts over solid blocks) and every skeleton born on the French-locale branch follows it — but ~14 older files still show instant solid-pulse placeholders (auth pages, admin users/product pages, parent gamer page, ProfileTiles, groups panel, gamer picker…). Each is a mechanical two-line change; batch them in one pass and eyeball each surface with a warm cache.
+
 - [ ] **Verify prod after the next dev→main release lands `00126` + `00127`.** Both migrations are written, applied to staging, and green in CI, but neither has reached production yet — and `00127` exists precisely because the *last* conditional policy repair did something different on prod than its author expected and nobody looked. So look, once:
   - `join_waitlist(uuid,uuid,uuid)` and `submit_feedback(uuid,text)` have no role grants at all (`00126`).
   - `customer_profiles` has exactly 2 policies and `gamer_profiles` exactly 4, all snake_case, both `admin_full_access_*` predicates InitPlan-wrapped (`00127` — its own assertion block raises if not, so a clean migration run is most of the proof).
