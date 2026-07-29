@@ -16,9 +16,12 @@ import {
 import {
   createParticipationResponse,
   joinWaitlistResponse,
+  leaveWaitlistResponse,
+  myWaitlistPositions,
   waitlistPositionResult,
   type CreateParticipationResponse,
   type JoinWaitlistResponse,
+  type LeaveWaitlistResponse,
 } from "./participations.contracts";
 
 /**
@@ -110,6 +113,40 @@ export interface MyUpcomingSessionRow {
    * `getMyUpcomingSessions`.
    */
   subscriptionEndsAt: Date | null;
+}
+
+/**
+ * Row shape returned by `getMyWaitlistEntries()` — one waitlisted
+ * participation, with the live position that makes it a card. The counterpart
+ * to `MyUpcomingSessionRow`: that one covers `status='active'` rows, which have
+ * a placement and a schedule; this one covers `status='waitlisted'` rows, which
+ * have neither and so never appear in the sessions list.
+ *
+ * Deliberately thin. A waitlist card shows a product name, a gamer and a
+ * number — no slots, timezone, Padlet URL or subscription state — so none of
+ * that is fetched.
+ */
+export interface MyWaitlistRow {
+  /** The `participations.id`, and what the leave action names. */
+  participationId: string;
+  gamer: {
+    id: string;
+    firstName: string;
+  };
+  product: {
+    id: string;
+    /**
+     * Raw translation rows, resolved to the viewer's UI locale at render time —
+     * same arrangement as the sessions read, so the cache key stays locale-free
+     * and switching locale doesn't refetch.
+     */
+    translations: ProductTranslation[];
+  };
+  /**
+   * 1-based position in line, recomputed live by the RPC rather than read from
+   * the stamped-at-join value, so it shrinks as people ahead leave.
+   */
+  position: number;
 }
 
 /**
@@ -206,11 +243,16 @@ export interface ParticipationConfirmation {
 export type {
   CreateParticipationResponse,
   JoinWaitlistResponse,
+  LeaveWaitlistResponse,
 } from "./participations.contracts";
 
 export type JoinWaitlistInput = {
   productId: string;
   gamerId: string;
+};
+
+export type LeaveWaitlistInput = {
+  participationId: string;
 };
 
 export class ParticipationsService {
@@ -326,6 +368,69 @@ export class ParticipationsService {
         cancelEnds.get(row.id) ?? null,
       ),
     );
+  }
+
+  /**
+   * The logged-in user's *waitlisted* participations, with each one's live
+   * position — the waitlist band on both dashboards. The complement of
+   * `getMyUpcomingSessions`, which filters to `status='active'`: between them
+   * the two reads cover every row a family holds on a product, and neither
+   * shows a row the other does.
+   *
+   * Audience selects the owner column exactly as it does for the sessions read
+   * ('customer' → every child's spot the parent joined; 'gamer' → only the
+   * logged-in child's), with the matching RLS policy gating the other one out
+   * regardless.
+   *
+   * Two reads, not N+1. The rows come back through the caller's own RLS; the
+   * positions come from `get_my_waitlist_positions`, which self-scopes on
+   * `auth.uid()` and is SECURITY DEFINER because a position counts rows the
+   * caller may not see. Calling the single-row `get_waitlist_position` per card
+   * would issue N round trips answered at N different instants — an admin
+   * promotion landing mid-flight nulls one card's position while its
+   * neighbours keep a staler one.
+   *
+   * A row with no position in the map is DROPPED rather than rendered. The two
+   * reads run concurrently, so a promotion landing between them leaves a row
+   * that the select still calls waitlisted and the RPC no longer ranks; that
+   * family now holds a seat, and showing them a waitlist card — at a
+   * fabricated position, since `position` is required — would be worse than
+   * showing nothing for the one render before the refetch.
+   */
+  async getMyWaitlistEntries(
+    audience: SessionAudience,
+  ): Promise<MyWaitlistRow[]> {
+    const { data: claims } = await this.supabase.auth.getClaims();
+    const userId = claims?.claims.sub;
+    if (!userId) return [];
+
+    const audienceColumn =
+      audience === "customer" ? "customer_id" : "gamer_id";
+
+    const [{ data, error }, { data: positionRows, error: positionError }] =
+      await Promise.all([
+        buildMyWaitlistQuery(this.supabase, audienceColumn, userId),
+        this.supabase.rpc("get_my_waitlist_positions"),
+      ]);
+
+    if (error) throw error;
+    // Unlike the sessions read's badge signals, this one can't degrade: the
+    // position IS the card. Failing loudly beats a band of positionless cards.
+    if (positionError) throw positionError;
+
+    // No `?? []` fallback: throwing on `positionError` above is what makes the
+    // rows non-null here, unlike the sessions read where a failed signal query
+    // degrades instead of throwing.
+    const positions = new Map(
+      myWaitlistPositions
+        .parse(positionRows)
+        .map((row) => [row.participation_id, row.waitlist_position]),
+    );
+
+    return data.flatMap((row) => {
+      const position = positions.get(row.id);
+      return position === undefined ? [] : [toMyWaitlistRow(row, position)];
+    });
   }
 
   /**
@@ -485,6 +590,29 @@ export class ParticipationsService {
     }
     return parseJsonResponse(response, joinWaitlistResponse);
   }
+
+  /**
+   * Give up a waitlist spot — the same collection the join POSTs to, addressed
+   * with DELETE. Parent-only, and enforced in the database rather than here:
+   * the route is role-gated to `customer` and the RPC underneath keys on
+   * `customer_id = auth.uid()`, so a gamer's call would be refused even if the
+   * UI ever offered them the button.
+   */
+  async leaveWaitlist(
+    input: LeaveWaitlistInput,
+  ): Promise<LeaveWaitlistResponse> {
+    const response = await fetch("/api/participations/waitlist", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    if (!response.ok) {
+      throw new Error(
+        await readErrorMessage(response, "Failed to leave waitlist"),
+      );
+    }
+    return parseJsonResponse(response, leaveWaitlistResponse);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -529,6 +657,45 @@ type RawMyUpcomingSessionRow = QueryData<
   ReturnType<typeof buildMyUpcomingSessionsQuery>
 >[number];
 
+/**
+ * Builds the waitlist query for one audience — the `status='waitlisted'`
+ * counterpart to the upcoming-sessions builder, and the same shape of thing:
+ * `!inner` on both NOT-NULL-FK embeds so the inferred row treats `product` and
+ * `gamer` as non-null, and standalone so `QueryData` can infer it.
+ *
+ * Ordered oldest-first by the waitlist stamp, which is neither selected nor
+ * needed by the card: it just gives the band a stable order that means
+ * something (longest wait at the top) instead of whatever PostgREST returns.
+ * `id` breaks sub-tick ties, the same tiebreaker the position derivation uses.
+ */
+function buildMyWaitlistQuery(
+  supabase: AppSupabaseClient,
+  audienceColumn: "customer_id" | "gamer_id",
+  userId: string,
+) {
+  return supabase
+    .from("participations")
+    .select(
+      `
+        id,
+        gamer_id,
+        product:products!inner(
+          id,
+          product_translations(*)
+        ),
+        gamer:profiles!participations_gamer_id_fkey!inner(
+          first_name
+        )
+      `,
+    )
+    .eq(audienceColumn, userId)
+    .eq("status", "waitlisted")
+    .order("waitlisted_at", { ascending: true })
+    .order("id", { ascending: true });
+}
+
+type RawMyWaitlistRow = QueryData<ReturnType<typeof buildMyWaitlistQuery>>[number];
+
 function toMyUpcomingSessionRow(
   row: RawMyUpcomingSessionRow,
   paymentProblem: boolean,
@@ -561,6 +728,25 @@ function toMyUpcomingSessionRow(
     })),
     paymentProblem,
     subscriptionEndsAt,
+  };
+}
+
+function toMyWaitlistRow(
+  row: RawMyWaitlistRow,
+  position: number,
+): MyWaitlistRow {
+  // Both non-null via the `!inner` joins in buildMyWaitlistQuery. Same
+  // first-name fallback as the sessions adapter, so a gamer with no name set
+  // reads identically on a waitlist card and a session card.
+  const { product, gamer } = row;
+  return {
+    participationId: row.id,
+    gamer: {
+      id: row.gamer_id,
+      firstName: gamer.first_name || row.gamer_id.slice(0, 8),
+    },
+    product: { id: product.id, translations: product.product_translations },
+    position,
   };
 }
 

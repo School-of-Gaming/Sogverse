@@ -77,7 +77,9 @@ A participation carries **two independent rights**: the **seat hold** (occupies 
 
 - **Order is derived from `participations.waitlisted_at` (`ORDER BY waitlisted_at, id`), never a stored rank** — removing or promoting a row needs no renumbering. (`join_waitlist` stamps `clock_timestamp()` under the lock so concurrent joins get distinct ranks.)
 - **No automatic promotion.** An admin promotes/demotes manually from the groups panel: `promote_from_waitlist` (→ active, place in a group/unassigned, **no seat-count gate** — a deliberate capacity override) and `demote_to_waitlist` (→ back of the line). Both admin-gated, under the product lock.
-- **`get_waitlist_position`** is the parent/gamer "you're #N" read: `SECURITY DEFINER` to count past the caller's RLS, but **owner-authorized** and returns only the integer.
+- **`get_waitlist_position`** is the parent/gamer "you're #N" read: `SECURITY DEFINER` to count past the caller's RLS, but **owner-authorized** and returns only the integer. Its **set-valued sibling, `get_my_waitlist_positions`**, answers for every row the caller is party to in one snapshot — what the dashboard band uses, because a per-card call would be an N+1 whose answers are also read at N different instants.
+- **The dashboard read is split by status, and the two halves must stay disjoint.** The sessions read filters to `active` (rows with a placement and a schedule); the waitlist read filters to `waitlisted` (rows with neither). A row appearing in both, or in neither, is the bug to watch for when either filter changes.
+- **A parent may leave a waitlist; a gamer may not.** `leave_my_waitlist_spot` is authorized to the purchasing parent (`customer_id = auth.uid()`) — the card's corner badge doesn't render for the gamer audience, and the database enforces the same split rather than trusting it. It answers "not yours" and "not real" identically so the id space can't be probed, and **deletes** the row (matching `cancel_participation`) because `participation_status` has no terminal member to move it to.
 
 ### Lifecycle & visibility
 
@@ -129,7 +131,7 @@ Two parallel entry points, **never cross-linked** — one canonical URL per prod
 
 Names by purpose — **read the signatures and bodies in `schema.sql`**. All `SECURITY DEFINER`, gate-locked where they touch seats or money.
 
-- **Participation lifecycle:** `create_participation`, `confirm_reservation`, `expire_reservation`, `join_waitlist`, `promote_from_waitlist`, `demote_to_waitlist`, `get_waitlist_position`, `cancel_participation`.
+- **Participation lifecycle:** `create_participation`, `confirm_reservation`, `expire_reservation`, `join_waitlist`, `promote_from_waitlist`, `demote_to_waitlist`, `get_waitlist_position`, `get_my_waitlist_positions`, `leave_my_waitlist_spot`, `cancel_participation`.
 - **Groups:** `apply_group_changes` (the sole write path for groups / gedu assignments / `participations.group_id`) + the read `get_product_groups_with_details` (groups + unassigned + waitlist snapshot).
 - **Sessions / lifecycle** (several still unbuilt — check code): `product_has_session`, `cancel_session`, `reschedule_session`, `request_substitute` / `assign_substitute`, `record_attendance`, `start_product`, `cancel_product`, `finalize_completed_products`.
 - **Effective status:** `effective_status(product_id)` — SQL twin of the TS helper.

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { POST } from "@/app/api/participations/waitlist/route";
+import { DELETE, POST } from "@/app/api/participations/waitlist/route";
 import { NextResponse } from "next/server";
 
 // --- Mocks ---
@@ -27,6 +27,18 @@ function createRequest(
 ): Request {
   return new Request("http://localhost:3000/api/participations/waitlist", {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: rawBody ?? JSON.stringify(body),
+  });
+}
+
+/** The same collection, addressed with DELETE — giving up a spot. */
+function createDeleteRequest(
+  body: unknown,
+  { rawBody }: { rawBody?: string } = {},
+): Request {
+  return new Request("http://localhost:3000/api/participations/waitlist", {
+    method: "DELETE",
     headers: { "Content-Type": "application/json" },
     body: rawBody ?? JSON.stringify(body),
   });
@@ -281,5 +293,177 @@ describe("POST /api/participations/waitlist", () => {
 
     expect(res.status).toBe(400);
     expect(data.error).toContain("does not exist");
+  });
+});
+
+describe("DELETE /api/participations/waitlist", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // -- Auth --
+
+  it("returns 401 when not authenticated", async () => {
+    mockUnauthenticated();
+
+    const res = await DELETE(
+      createDeleteRequest({ participationId: PARTICIPATION_ID }),
+    );
+
+    expect(res.status).toBe(401);
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 for gamer role — a kid can't give up their own place in line", async () => {
+    mockForbidden("gamer");
+
+    const res = await DELETE(
+      createDeleteRequest({ participationId: PARTICIPATION_ID }),
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(403);
+    expect(data.error).toBe("Only customers can leave a waitlist");
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 for gedu role", async () => {
+    mockForbidden("gedu");
+
+    const res = await DELETE(
+      createDeleteRequest({ participationId: PARTICIPATION_ID }),
+    );
+
+    expect(res.status).toBe(403);
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 for admin role", async () => {
+    mockForbidden("admin");
+
+    const res = await DELETE(
+      createDeleteRequest({ participationId: PARTICIPATION_ID }),
+    );
+
+    expect(res.status).toBe(403);
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  // -- Validation --
+
+  it("returns 400 when JSON is malformed", async () => {
+    mockAuthenticatedCustomer();
+
+    const res = await DELETE(
+      createDeleteRequest(null, { rawBody: "{not-json" }),
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toBe("Invalid JSON body");
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when participationId is missing", async () => {
+    mockAuthenticatedCustomer();
+
+    const res = await DELETE(createDeleteRequest({}));
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toMatch(/participationId/);
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  // -- Happy path --
+
+  it("relays the participation id to the RPC and returns the outcome kind", async () => {
+    mockAuthenticatedCustomer();
+    mockRpc.mockResolvedValue({
+      data: {
+        kind: "left",
+        participation_id: PARTICIPATION_ID,
+        product_id: PRODUCT_ID,
+      },
+      error: null,
+    });
+
+    const res = await DELETE(
+      createDeleteRequest({ participationId: PARTICIPATION_ID }),
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    // Only the kind crosses the wire; the ids the RPC echoes back are ones the
+    // caller already had, so the response schema drops them.
+    expect(data).toEqual({ kind: "left" });
+    expect(mockRpc).toHaveBeenCalledWith("leave_my_waitlist_spot", {
+      p_participation_id: PARTICIPATION_ID,
+    });
+    // The caller's identity is never a parameter — the RPC reads auth.uid().
+    expect(mockRpc.mock.calls[0][1]).not.toHaveProperty("p_customer_id");
+  });
+
+  it("returns 200 with kind 'noop' when the row was already promoted", async () => {
+    mockAuthenticatedCustomer();
+    mockRpc.mockResolvedValue({
+      data: { kind: "noop", status: "active" },
+      error: null,
+    });
+
+    const res = await DELETE(
+      createDeleteRequest({ participationId: PARTICIPATION_ID }),
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data).toEqual({ kind: "noop" });
+  });
+
+  it("returns 200 with kind 'not_found' rather than a 404 for someone else's row", async () => {
+    // The RPC deliberately answers "not yours" and "not real" identically. A
+    // 404 here would hand that distinction back to a prober via the status
+    // code, so every outcome is a 200 carrying its kind.
+    mockAuthenticatedCustomer();
+    mockRpc.mockResolvedValue({ data: { kind: "not_found" }, error: null });
+
+    const res = await DELETE(
+      createDeleteRequest({ participationId: PARTICIPATION_ID }),
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data).toEqual({ kind: "not_found" });
+  });
+
+  // -- RPC error mapping --
+
+  it("returns 403 when the RPC guard refuses the caller (42501)", async () => {
+    mockAuthenticatedCustomer();
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { code: "42501", message: "Forbidden" },
+    });
+
+    const res = await DELETE(
+      createDeleteRequest({ participationId: PARTICIPATION_ID }),
+    );
+
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 500 without disclosing the message when the RPC shape is unexpected", async () => {
+    mockAuthenticatedCustomer();
+    mockRpc.mockResolvedValue({ data: { kind: "teleported" }, error: null });
+
+    const res = await DELETE(
+      createDeleteRequest({ participationId: PARTICIPATION_ID }),
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(500);
+    // This route doesn't opt into disclosure — unlike the POST above, none of
+    // its outcomes are written for a parent to read.
+    expect(data.error).toBe("Internal server error");
   });
 });

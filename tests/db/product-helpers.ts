@@ -31,6 +31,7 @@ import { TEST_IDS } from "./constants";
  *   5e5–5e8        products-purchaser-rls.test.ts
  *   5f1, 5f2, 5ff  update-product.test.ts
  *   5f3            product-translations-trigger.test.ts
+ *   5f4, 5f5       waitlist-self-service.test.ts
  */
 
 export interface ProductOptions {

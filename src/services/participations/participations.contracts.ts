@@ -51,6 +51,27 @@ export const joinWaitlistBody = z.object({
   gamerId: z.string().min(1, "productId and gamerId are required"),
 });
 
+/**
+ * Request body of DELETE /api/participations/waitlist — giving up a spot. The
+ * participation is the only input; who may give it up is decided from
+ * `auth.uid()` inside the RPC, never from the body.
+ */
+export const leaveWaitlistBody = z.object({
+  participationId: z.string().min(1, "participationId is required"),
+});
+
+/**
+ * Response of DELETE /api/participations/waitlist. Only the outcome kind
+ * crosses the wire: the client's three jobs — stop showing the card, keep the
+ * button locked, refetch — are the same for every outcome, and the ids the RPC
+ * echoes back are ones the caller already had.
+ */
+export const leaveWaitlistResponse = z.object({
+  kind: z.enum(["left", "noop", "not_found"]),
+});
+
+export type LeaveWaitlistResponse = z.infer<typeof leaveWaitlistResponse>;
+
 /** Response of POST /api/participations/waitlist. */
 export const joinWaitlistResponse = z.object({
   participationId: z.string(),
@@ -107,6 +128,40 @@ export type WaitlistTransitionBody = z.infer<typeof waitlistTransitionBody>;
  * schema restores the truth the generator drops (see supabase/CLAUDE.md).
  */
 export const waitlistPositionResult = z.number().int().positive().nullable();
+
+/**
+ * `get_my_waitlist_positions` RPC result — the set-valued sibling of the above,
+ * one row per waitlisted participation the caller is party to. Codegen types
+ * the `RETURNS TABLE` columns as non-null, which the function body does
+ * guarantee (`id` is the primary key and the position is a `COUNT`), so this
+ * schema is not correcting nullability — it pins the *contents*: a position is
+ * a 1-based rank, and a zero or negative one would mean the derivation had gone
+ * three-valued against a NULL `waitlisted_at`. The db test parses live RPC
+ * output through it.
+ */
+export const myWaitlistPositions = z.array(
+  z.object({
+    participation_id: z.string(),
+    waitlist_position: z.number().int().positive(),
+  }),
+);
+
+/**
+ * `leave_my_waitlist_spot` RPC result (Json in codegen; structure from
+ * schema.sql). `left` when the row was waitlisted and is now gone; `noop` when
+ * it had already moved on (an admin promotion landing first); `not_found` when
+ * no row with that id belongs to the caller — deliberately the same answer for
+ * a stranger's id and a nonexistent one.
+ */
+export const leaveWaitlistRpcResult = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("left"),
+    participation_id: z.string(),
+    product_id: z.string(),
+  }),
+  z.object({ kind: z.literal("noop"), status: z.string() }),
+  z.object({ kind: z.literal("not_found") }),
+]);
 
 /**
  * `promote_from_waitlist` RPC result (Json in codegen; structure from

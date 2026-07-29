@@ -3,6 +3,9 @@ import { ApiError } from "@/lib/api/api-error";
 import {
   joinWaitlistBody,
   joinWaitlistRpcResult,
+  leaveWaitlistBody,
+  leaveWaitlistResponse,
+  leaveWaitlistRpcResult,
 } from "@/services/participations/participations.contracts";
 
 /**
@@ -55,5 +58,52 @@ export const POST = defineRoute({
       waitlistPosition: parsed.data.waitlist_position,
       status: parsed.data.status,
     };
+  },
+});
+
+/**
+ * DELETE /api/participations/waitlist
+ *
+ * Give up a spot in line — the same collection the POST above joins. Model C
+ * again: the user-bound client calls a SECURITY DEFINER RPC that reads the
+ * actor from `auth.uid()`. The body names a participation but never a person,
+ * and `leave_my_waitlist_spot` matches on `customer_id = auth.uid()`, so a
+ * parent aiming this at another family's participation id gets the same
+ * `not_found` as they would for an id that never existed — the role gate here
+ * is the outer of two independent checks, not the only one.
+ *
+ * Customer-only, matching the card: the corner badge does not render for
+ * `audience="gamer"`, because giving up a place in line is a decision for the
+ * adult who joined it.
+ */
+export const DELETE = defineRoute({
+  posture: "role-gated",
+  roles: "customer",
+  forbiddenMessage: "Only customers can leave a waitlist",
+  body: leaveWaitlistBody,
+  response: leaveWaitlistResponse,
+
+  handler: async ({ supabase, body }) => {
+    const { data, error } = await supabase.rpc("leave_my_waitlist_spot", {
+      p_participation_id: body.participationId,
+    });
+
+    if (error) throw error;
+
+    const parsed = leaveWaitlistRpcResult.safeParse(data);
+    if (!parsed.success) {
+      throw new ApiError(
+        `leave_my_waitlist_spot returned an unexpected shape: ${parsed.error.message}`,
+        500,
+      );
+    }
+
+    // Every outcome is a 200 carrying its kind, including `not_found`. All
+    // three mean the same thing to the caller — this row is not a waitlist spot
+    // of yours any more, refetch — and a 404 would additionally confirm to a
+    // prober that some *other* id does exist. The RPC deliberately refuses to
+    // distinguish "not yours" from "not real"; answering with a status code
+    // would give that distinction back.
+    return { kind: parsed.data.kind };
   },
 });

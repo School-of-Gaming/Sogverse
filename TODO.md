@@ -284,27 +284,9 @@ Currently the only way to link a parent to a gamer is when the parent creates th
 
 ## Waitlist — the parent/gamer side
 
-The `WaitlistCard` (`src/components/parent/`) is built and demoed at
-`/admin/ui-components`, but nothing renders it on a real dashboard yet and its
-leave affordance has no backend. What's left, in dependency order:
+The `WaitlistCard` (`src/components/parent/`) now renders on both dashboards and
+its leave affordance has a backend. Two open questions remain:
 
-- [ ] **Give "leave the waitlist" a backend.** The card's corner badge takes an
-  `onLeave` callback and holds a `leaving` flag; there is no route behind it.
-  `cancel_participation` is the wrong tool as it stands: it's `service_role`-only,
-  does **no caller authorization** (any participation id → delete), and hard-DELETEs
-  the row. Needs an owner-authorized path that checks the caller owns the
-  participation and that it's still `waitlisted`, under the product lock.
-  Decide at the same time whether leaving deletes the row or moves it to a terminal
-  status — a delete leaves no record that the family ever wanted the product.
-- [ ] **Render the waitlist band on `/parent` and `/gamer`.** No migration needed,
-  but waitlisted rows never reach either dashboard today: the upcoming-sessions read
-  is filtered to `status='active'`. Needs a new service read + query hook + server
-  prefetch in both pages, and `SessionsSection` has to stop early-returning its empty
-  state on `sessions.length === 0` — **a viewer holding only waitlist spots currently
-  gets "no upcoming sessions" and no band at all**, which is a likely state before a
-  term starts. The `position` is a card prop, so the read has to supply it; a per-row
-  `get_waitlist_position` call is an N+1 and can race an admin promotion into a
-  `null`, so prefer one read that returns rows and positions together.
 - [ ] **The waitlist copy promises an email nobody sends.** `parent.waitlist.reassurance*`
   and the confirmation page's `next1` both say we'll email the moment a seat opens.
   There is no waitlist email template and promotion is a manual admin drag that

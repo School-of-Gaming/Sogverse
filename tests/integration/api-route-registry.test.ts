@@ -626,6 +626,11 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         body: { kind: "json", schema: "joinWaitlistBody" },
         test: TESTS.waitlist,
       },
+      DELETE: {
+        posture: { kind: "role-gated", roles: ["customer"] },
+        body: { kind: "json", schema: "leaveWaitlistBody" },
+        test: TESTS.waitlist,
+      },
     },
   },
 
