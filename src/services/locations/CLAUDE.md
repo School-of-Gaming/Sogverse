@@ -20,7 +20,7 @@ Hierarchy is flexible, not rigid — not every country uses every level (Finland
 
 ## Catalogs and materialization
 
-The exhaustive per-country lists are **not** in the database. They ship as generated static catalogs in `src/lib/locations/catalog/` — one JSON file per country, plus the shape contract in `types.ts` and the module that loads and reads them. `scripts/generate-location-catalogs.mjs` rebuilds them from the official releases (INSEE's Code officiel géographique, Statistics Finland's classifications); its header documents the source URLs and the refresh procedure.
+The exhaustive per-country lists are **not** in the database. They ship as generated static catalogs in `src/lib/locations/catalog/` — one JSON file per country, plus the shape contract in `types.ts` and the module that loads and reads them. `scripts/generate-location-catalogs.mjs` rebuilds them from the official releases (INSEE's Code officiel géographique, Statistics Finland's classifications). The download/parse/canonical-name machinery those releases need lives one level down in `scripts/lib/location-classifications.mjs`, whose header documents the source URLs and the annual refresh procedure; it is shared with the France commune seed generator so a catalog name and a database row name are built from one parse and cannot drift.
 
 The split is the whole design:
 

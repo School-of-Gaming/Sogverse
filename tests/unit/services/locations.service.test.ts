@@ -150,3 +150,255 @@ describe("LocationsService.getAllLocations", () => {
     );
   });
 });
+
+// The scoped reads that replace fetching the whole table. `locations` is fully
+// seeded from the official classifications, so "a country's municipalities" is
+// 34,875 rows for France — these have to page exactly like getAllLocations,
+// which is why they share its walk.
+
+describe("LocationsService.getMunicipalitiesByCountry", () => {
+  let fetchMock: FetchMock;
+  let service: LocationsService;
+
+  beforeEach(() => {
+    fetchMock = vi.fn<typeof fetch>();
+    service = new LocationsService(createFetchStubbedClient(fetchMock));
+  });
+
+  it("asks only for that country's municipalities, in a total order", async () => {
+    fetchMock.mockResolvedValue(postgrestJson(locationRows(308)));
+
+    await service.getMunicipalitiesByCountry("FI");
+
+    const url = requestedUrl(fetchMock.mock.calls[0][0]);
+    expect(url.searchParams.get("country_code")).toBe("eq.FI");
+    expect(url.searchParams.get("type")).toBe("eq.municipality");
+    expect(url.searchParams.get("order")).toBe("name.asc,id.asc");
+  });
+
+  it("pages through a country the size of France", async () => {
+    fetchMock
+      .mockResolvedValueOnce(postgrestJson(locationRows(PAGE_SIZE, 0)))
+      .mockResolvedValueOnce(postgrestJson(locationRows(PAGE_SIZE, PAGE_SIZE)))
+      .mockResolvedValueOnce(postgrestJson(locationRows(12, 2 * PAGE_SIZE)));
+
+    const result = await service.getMunicipalitiesByCountry("FR");
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(result).toHaveLength(2 * PAGE_SIZE + 12);
+    expect(requestedRanges(fetchMock)).toEqual([
+      "0:1000",
+      "1000:1000",
+      "2000:1000",
+    ]);
+  });
+
+  it("throws rather than returning a truncated list when the total disagrees", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestPage(locationRows(400), { from: 0, total: 34875 }),
+    );
+
+    await expect(service.getMunicipalitiesByCountry("FR")).rejects.toThrow(
+      /400 of 34875 rows/,
+    );
+  });
+});
+
+describe("LocationsService.getSites", () => {
+  let fetchMock: FetchMock;
+  let service: LocationsService;
+
+  beforeEach(() => {
+    fetchMock = vi.fn<typeof fetch>();
+    service = new LocationsService(createFetchStubbedClient(fetchMock));
+  });
+
+  it("selects sites with four embedded ancestor levels", async () => {
+    fetchMock.mockResolvedValue(postgrestJson([]));
+
+    await service.getSites();
+
+    const url = requestedUrl(fetchMock.mock.calls[0][0]);
+    expect(url.searchParams.get("type")).toBe("eq.site");
+    // Four levels is the deepest chain any supported country has: a French
+    // site sits under commune -> département -> région -> France.
+    const select = url.searchParams.get("select") ?? "";
+    expect(select.split("parent:parent_id(")).toHaveLength(5);
+  });
+
+  // The embed comes back as a nest of `parent` objects; consumers want an
+  // array, nearest first, so `ancestors[0]` is the municipality whatever the
+  // country's depth. The walk also has to stop at the first null parent —
+  // Finland's chain is one level shorter than France's.
+  it("flattens the embedded parent nest into a nearest-first chain", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestJson([
+        {
+          ...locationRows(1)[0],
+          type: "site",
+          parent: {
+            id: "muni",
+            name: "Helsinki",
+            parent: { id: "region", name: "Uusimaa", parent: null },
+          },
+        },
+      ]),
+    );
+
+    const [site] = await service.getSites();
+
+    expect(site.ancestors.map((node) => node.name)).toEqual([
+      "Helsinki",
+      "Uusimaa",
+    ]);
+    // The nesting key itself is gone — a consumer reads the array, not a nest.
+    expect(site.ancestors[0]).not.toHaveProperty("parent");
+  });
+
+  it("pages, so a long venue list cannot silently truncate", async () => {
+    fetchMock
+      .mockResolvedValueOnce(postgrestJson(locationRows(PAGE_SIZE, 0)))
+      .mockResolvedValueOnce(postgrestJson(locationRows(3, PAGE_SIZE)));
+
+    await expect(service.getSites()).resolves.toHaveLength(PAGE_SIZE + 3);
+    expect(requestedRanges(fetchMock)).toEqual(["0:1000", "1000:1000"]);
+  });
+});
+
+describe("LocationsService.getSitesByParent", () => {
+  let fetchMock: FetchMock;
+  let service: LocationsService;
+
+  beforeEach(() => {
+    fetchMock = vi.fn<typeof fetch>();
+    service = new LocationsService(createFetchStubbedClient(fetchMock));
+  });
+
+  it("filters to sites under exactly that municipality", async () => {
+    fetchMock.mockResolvedValue(postgrestJson(locationRows(2)));
+
+    await service.getSitesByParent("muni-1");
+
+    const url = requestedUrl(fetchMock.mock.calls[0][0]);
+    expect(url.searchParams.get("type")).toBe("eq.site");
+    expect(url.searchParams.get("parent_id")).toBe("eq.muni-1");
+    expect(url.searchParams.get("order")).toBe("name.asc,id.asc");
+  });
+});
+
+describe("LocationsService.getLocationsByIds", () => {
+  let fetchMock: FetchMock;
+  let service: LocationsService;
+
+  beforeEach(() => {
+    fetchMock = vi.fn<typeof fetch>();
+    service = new LocationsService(createFetchStubbedClient(fetchMock));
+  });
+
+  it("makes no request at all for an empty selection", async () => {
+    await expect(service.getLocationsByIds([])).resolves.toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("asks for each id once, whatever the caller passed", async () => {
+    fetchMock.mockResolvedValue(postgrestJson(locationRows(2)));
+
+    await service.getLocationsByIds(["b", "a", "b"]);
+
+    const url = requestedUrl(fetchMock.mock.calls[0][0]);
+    expect(url.searchParams.get("id")).toBe("in.(a,b)");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  // Batching is what lets this skip the paged walk: a request asking for at
+  // most 100 keys can come back with at most 100 rows, well under max_rows.
+  it("batches a large selection and concatenates the batches", async () => {
+    const ids = Array.from({ length: 250 }, (_, i) => `id-${String(i).padStart(3, "0")}`);
+    fetchMock
+      .mockResolvedValueOnce(postgrestJson(locationRows(100, 0)))
+      .mockResolvedValueOnce(postgrestJson(locationRows(100, 100)))
+      .mockResolvedValueOnce(postgrestJson(locationRows(50, 200)));
+
+    const result = await service.getLocationsByIds(ids);
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(result).toHaveLength(250);
+    const batches = fetchMock.mock.calls.map(
+      ([input]) => (requestedUrl(input).searchParams.get("id") ?? "").split(",").length,
+    );
+    expect(batches).toEqual([100, 100, 50]);
+  });
+
+  it("throws on a failing batch instead of returning a partial list", async () => {
+    fetchMock.mockResolvedValue(postgrestError("boom"));
+
+    await expect(service.getLocationsByIds(["a"])).rejects.toMatchObject({
+      message: "boom",
+    });
+  });
+});
+
+describe("LocationsService.resolveLocationsByCodes", () => {
+  let fetchMock: FetchMock;
+  let service: LocationsService;
+
+  beforeEach(() => {
+    fetchMock = vi.fn<typeof fetch>();
+    service = new LocationsService(createFetchStubbedClient(fetchMock));
+  });
+
+  it("makes no request when nothing is ticked", async () => {
+    await expect(service.resolveLocationsByCodes("FR", [])).resolves.toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  // France reuses every one of its 18 région codes as a département code, so a
+  // code-only lookup would be ambiguous. The type has to be on the filter.
+  it("issues one request per type, each scoped to country and type", async () => {
+    // A fresh Response per call — a Response body is single-use and this test
+    // drives two requests.
+    fetchMock.mockImplementation(() => Promise.resolve(postgrestJson([])));
+
+    await service.resolveLocationsByCodes("FR", [
+      { type: "municipality", external_code: "59350" },
+      { type: "district", external_code: "59" },
+      { type: "municipality", external_code: "59009" },
+    ]);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const urls = fetchMock.mock.calls.map(([input]) => requestedUrl(input));
+    const seen = urls.map((url) => ({
+      country: url.searchParams.get("country_code"),
+      type: url.searchParams.get("type"),
+      codes: url.searchParams.get("external_code"),
+    }));
+    expect(seen).toEqual([
+      { country: "eq.FR", type: "eq.district", codes: "in.(59)" },
+      { country: "eq.FR", type: "eq.municipality", codes: "in.(59009,59350)" },
+    ]);
+  });
+
+  it("merges the per-type results into one list", async () => {
+    fetchMock
+      .mockResolvedValueOnce(postgrestJson(locationRows(1, 0)))
+      .mockResolvedValueOnce(postgrestJson(locationRows(2, 1)));
+
+    const result = await service.resolveLocationsByCodes("FI", [
+      { type: "region", external_code: "01" },
+      { type: "municipality", external_code: "091" },
+      { type: "municipality", external_code: "049" },
+    ]);
+
+    expect(result.map((row) => row.id)).toEqual(["loc-0", "loc-1", "loc-2"]);
+  });
+
+  it("throws rather than resolving half the ticks", async () => {
+    fetchMock.mockResolvedValue(postgrestError("nope"));
+
+    await expect(
+      service.resolveLocationsByCodes("FR", [
+        { type: "municipality", external_code: "59350" },
+      ]),
+    ).rejects.toMatchObject({ message: "nope" });
+  });
+});
