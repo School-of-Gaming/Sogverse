@@ -1029,9 +1029,10 @@ CREATE FUNCTION public.demote_to_waitlist(p_participation_id uuid) RETURNS jsonb
     SET search_path TO ''
     AS $$
 DECLARE
-  v_product_id  UUID;
-  v_status      public.participation_status;
-  v_now         TIMESTAMPTZ;
+  v_product_id   UUID;
+  v_product_type public.product_type;
+  v_status       public.participation_status;
+  v_now          TIMESTAMPTZ;
 BEGIN
   PERFORM public.assert_admin();
 
@@ -1042,7 +1043,19 @@ BEGIN
     RAISE EXCEPTION 'Participation not found' USING ERRCODE = 'P0002';
   END IF;
 
-  PERFORM 1 FROM public.products WHERE id = v_product_id FOR UPDATE;
+  -- Same product-gate lock as before, now also reading the type it needs one
+  -- statement later rather than issuing a second query for it.
+  SELECT product_type INTO v_product_type
+    FROM public.products WHERE id = v_product_id FOR UPDATE;
+
+  -- Refused for the operation, not for the row's current state — so this
+  -- precedes the idempotent noop below, the way both siblings refuse a consumer
+  -- club before looking at anything else. There is no demotion of a consumer
+  -- club that is correct to perform, retried or otherwise.
+  IF v_product_type = 'consumer_club' THEN
+    RAISE EXCEPTION 'demotion to the waitlist is not supported for consumer clubs'
+      USING ERRCODE = 'check_violation';
+  END IF;
 
   -- Idempotent: already on the waitlist.
   IF v_status = 'waitlisted' THEN
@@ -1070,6 +1083,13 @@ BEGIN
   );
 END;
 $$;
+
+
+--
+-- Name: FUNCTION demote_to_waitlist(p_participation_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.demote_to_waitlist(p_participation_id uuid) IS 'Admin-gated demotion of an active participation to the back of the product waitlist, under the product gate lock. Refuses consumer clubs: those are the only subscription-billed type, and a waitlisted row carrying a live Stripe subscription could be deleted by the parent via leave_my_waitlist_spot, cascading family_subscriptions and orphaning the subscription.';
 
 
 --
@@ -1507,6 +1527,42 @@ CREATE FUNCTION public.get_my_participation_subscription_states() RETURNS TABLE(
       OR p.gamer_id = (SELECT auth.uid())
     );
 $$;
+
+
+--
+-- Name: get_my_waitlist_positions(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_my_waitlist_positions() RETURNS TABLE(participation_id uuid, waitlist_position integer)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT mine.id,
+         -- Same derivation as join_waitlist and get_waitlist_position: count the
+         -- waitlisted rows ordered at-or-before this one by (waitlisted_at, id).
+         -- Recomputed live, so it shrinks as people ahead of them leave.
+         -- waitlisted_at is never NULL on a waitlisted row
+         -- (chk_participations_waitlisted_has_timestamp), so neither comparison
+         -- can go three-valued and swallow a peer.
+         (SELECT COUNT(*)::INTEGER
+            FROM public.participations peer
+           WHERE peer.product_id = mine.product_id
+             AND peer.status = 'waitlisted'::public.participation_status
+             AND (peer.waitlisted_at < mine.waitlisted_at
+                  OR (peer.waitlisted_at = mine.waitlisted_at
+                      AND peer.id <= mine.id)))
+    FROM public.participations mine
+   WHERE mine.status = 'waitlisted'::public.participation_status
+     AND (mine.customer_id = (SELECT auth.uid())
+          OR mine.gamer_id = (SELECT auth.uid()));
+$$;
+
+
+--
+-- Name: FUNCTION get_my_waitlist_positions(); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.get_my_waitlist_positions() IS 'Every waitlist position the caller is party to (purchasing parent or the gamer), in one snapshot. SECURITY DEFINER to count past the caller''s RLS; returns only their own participation ids and an integer each.';
 
 
 --
@@ -2017,6 +2073,80 @@ BEGIN
   );
 END;
 $$;
+
+
+--
+-- Name: leave_my_waitlist_spot(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.leave_my_waitlist_spot(p_participation_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_uid        UUID;
+  v_product_id UUID;
+  v_status     public.participation_status;
+BEGIN
+  v_uid := (SELECT auth.uid());
+  IF v_uid IS NULL THEN
+    RETURN jsonb_build_object('kind', 'not_found');
+  END IF;
+
+  -- Keyed to the purchasing parent rather than to the row's existence: a row
+  -- belonging to someone else is answered identically to one that never
+  -- existed, so a probe learns nothing from which id it aims at.
+  SELECT product_id, status
+    INTO v_product_id, v_status
+    FROM public.participations
+   WHERE id = p_participation_id
+     AND customer_id = v_uid;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('kind', 'not_found');
+  END IF;
+
+  -- Serialize against concurrent joins, promotions and cancels on this product,
+  -- the same gate every other waitlist transition takes.
+  PERFORM 1 FROM public.products WHERE id = v_product_id FOR UPDATE;
+
+  -- Re-read under the lock. An admin promotion can land between the ownership
+  -- read above and the lock; deleting then would throw away a seat the family
+  -- now holds, which is emphatically not what the parent confirmed.
+  SELECT status
+    INTO v_status
+    FROM public.participations
+   WHERE id = p_participation_id;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('kind', 'not_found');
+  END IF;
+
+  IF v_status <> 'waitlisted'::public.participation_status THEN
+    RETURN jsonb_build_object('kind', 'noop', 'status', v_status::text);
+  END IF;
+
+  -- The ownership predicate is repeated on the DELETE so the statement that
+  -- actually mutates carries the authorization itself, rather than inheriting
+  -- it from a SELECT several statements up.
+  DELETE FROM public.participations
+   WHERE id = p_participation_id
+     AND customer_id = v_uid;
+
+  RETURN jsonb_build_object(
+    'kind', 'left',
+    'participation_id', p_participation_id,
+    'product_id', v_product_id
+  );
+END;
+$$;
+
+
+--
+-- Name: FUNCTION leave_my_waitlist_spot(p_participation_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.leave_my_waitlist_spot(p_participation_id uuid) IS 'Give up a waitlist spot. Authorized to the purchasing parent (customer_id = auth.uid()); refuses any row that is not still waitlisted, under the product gate lock. Deletes the row, matching cancel_participation.';
 
 
 --
@@ -5460,6 +5590,15 @@ GRANT ALL ON FUNCTION public.get_my_participation_subscription_states() TO servi
 
 
 --
+-- Name: FUNCTION get_my_waitlist_positions(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.get_my_waitlist_positions() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.get_my_waitlist_positions() TO authenticated;
+GRANT ALL ON FUNCTION public.get_my_waitlist_positions() TO service_role;
+
+
+--
 -- Name: FUNCTION get_product_groups_with_details(p_product_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
@@ -5570,6 +5709,15 @@ GRANT ALL ON FUNCTION public.join_product_waitlist(p_product_id uuid, p_gamer_id
 --
 
 REVOKE ALL ON FUNCTION public.join_waitlist(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid) FROM PUBLIC;
+
+
+--
+-- Name: FUNCTION leave_my_waitlist_spot(p_participation_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.leave_my_waitlist_spot(p_participation_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.leave_my_waitlist_spot(p_participation_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.leave_my_waitlist_spot(p_participation_id uuid) TO service_role;
 
 
 --
