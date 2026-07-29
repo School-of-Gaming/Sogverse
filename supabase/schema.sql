@@ -4,7 +4,7 @@
 
 
 -- Dumped from database version 17.6
--- Dumped by pg_dump version 18.2
+-- Dumped by pg_dump version 17.6
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -1419,9 +1419,9 @@ CREATE TABLE public.profiles (
     id uuid NOT NULL,
     email text NOT NULL,
     role public.user_role DEFAULT 'customer'::public.user_role NOT NULL,
+    currency text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    currency text,
     phone text,
     spoken_languages text[] DEFAULT '{}'::text[] NOT NULL,
     locale text,
@@ -1434,24 +1434,10 @@ CREATE TABLE public.profiles (
 
 
 --
--- Name: TABLE profiles; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.profiles IS 'User profiles extending Supabase auth.users with role-based access';
-
-
---
 -- Name: COLUMN profiles.email; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.profiles.email IS 'Email address (NOT NULL for every role). Gamer accounts carry a generated synthetic <token>@gamer.sogverse.internal address until/unless replaced by a real one.';
-
-
---
--- Name: COLUMN profiles.role; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.profiles.role IS 'User role determining access permissions';
 
 
 --
@@ -1687,9 +1673,7 @@ CREATE FUNCTION public.get_user_role() RETURNS public.user_role
     SET search_path TO 'public'
     AS $$
 BEGIN
-  RETURN (
-    SELECT role FROM public.profiles WHERE id = auth.uid()
-  );
+  RETURN (SELECT role FROM public.profiles WHERE id = auth.uid());
 END;
 $$;
 
@@ -2197,12 +2181,18 @@ CREATE FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_last_n
     SET search_path TO 'public'
     AS $$
 BEGIN
+  -- Only operate on a freshly-created customer profile (the role the new-user
+  -- trigger seeds). Refusing anything else stops this from being used to mutate
+  -- an established account of any role.
   IF NOT EXISTS (
     SELECT 1 FROM public.profiles WHERE id = p_user_id AND role = 'customer'
   ) THEN
     RAISE EXCEPTION 'register_gedu: % is not a newly-created customer profile', p_user_id;
   END IF;
 
+  -- Callers pass '' for absent optional text (the generated RPC arg types are
+  -- non-null `string`); NULLIF turns those back into SQL NULL so e.g. an empty
+  -- phone stays NULL rather than tripping the profiles.phone format CHECK.
   UPDATE public.profiles
   SET role             = 'gedu',
       first_name       = p_first_name,
@@ -2212,14 +2202,19 @@ BEGIN
       spoken_languages = COALESCE(p_spoken_languages, '{}')
   WHERE id = p_user_id;
 
+  -- Swap the trigger-created customer extension row for a gedu one.
   DELETE FROM public.customer_profiles WHERE user_id = p_user_id;
   INSERT INTO public.gedu_profiles (user_id) VALUES (p_user_id);
 
+  -- Coverage areas (empty = remote-only, which is valid).
   IF p_location_ids IS NOT NULL AND array_length(p_location_ids, 1) IS NOT NULL THEN
     INSERT INTO public.gedu_locations (gedu_id, location_id)
     SELECT p_user_id, unnest(p_location_ids);
   END IF;
 
+  -- Optional Minecraft account. The UNIQUE constraint on minecraft_uuid raises
+  -- here on a duplicate, aborting the transaction (the route pre-checks too, but
+  -- this closes the race).
   IF p_minecraft_username IS NOT NULL AND p_minecraft_username <> '' THEN
     INSERT INTO public.minecraft_accounts (user_id, minecraft_username, minecraft_uuid)
     VALUES (p_user_id, p_minecraft_username, NULLIF(p_minecraft_uuid, ''));
@@ -2313,6 +2308,7 @@ CREATE FUNCTION public.submit_feedback(p_user_id uuid, p_message text) RETURNS b
 DECLARE
   v_count integer;
 BEGIN
+  -- Advisory lock keyed to user prevents concurrent rate-limit bypass
   PERFORM pg_advisory_xact_lock(hashtext(p_user_id::text));
 
   SELECT count(*) INTO v_count
@@ -2926,20 +2922,6 @@ CREATE TABLE public.parent_gamer (
     created_at timestamp with time zone DEFAULT now(),
     CONSTRAINT no_self_link CHECK ((parent_id <> gamer_id))
 );
-
-
---
--- Name: TABLE parent_gamer; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.parent_gamer IS 'Junction table linking parent (customer) accounts to child (gamer) accounts';
-
-
---
--- Name: COLUMN parent_gamer.relationship; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.parent_gamer.relationship IS 'Relationship type (parent, guardian, etc.)';
 
 
 --
@@ -5243,8 +5225,8 @@ GRANT ALL ON FUNCTION public.admin_remove_participation(p_product_id uuid, p_par
 --
 
 REVOKE ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb) TO service_role;
 GRANT ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb) TO authenticated;
+GRANT ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb) TO service_role;
 
 
 --
@@ -5378,8 +5360,8 @@ GRANT ALL ON FUNCTION public.expire_reservation(p_reservation_id uuid) TO servic
 --
 
 REVOKE ALL ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid) TO service_role;
 GRANT ALL ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid) TO service_role;
 
 
 --
@@ -5387,8 +5369,8 @@ GRANT ALL ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid) TO aut
 --
 
 REVOKE ALL ON FUNCTION public.get_my_assigned_products() FROM PUBLIC;
-GRANT ALL ON FUNCTION public.get_my_assigned_products() TO service_role;
 GRANT ALL ON FUNCTION public.get_my_assigned_products() TO authenticated;
+GRANT ALL ON FUNCTION public.get_my_assigned_products() TO service_role;
 
 
 --
@@ -5396,8 +5378,8 @@ GRANT ALL ON FUNCTION public.get_my_assigned_products() TO authenticated;
 --
 
 GRANT SELECT ON TABLE public.profiles TO anon;
-GRANT SELECT ON TABLE public.profiles TO authenticated;
 GRANT ALL ON TABLE public.profiles TO service_role;
+GRANT SELECT ON TABLE public.profiles TO authenticated;
 
 
 --
@@ -5458,8 +5440,8 @@ GRANT ALL ON FUNCTION public.get_my_parents() TO service_role;
 --
 
 REVOKE ALL ON FUNCTION public.get_my_participation_subscription_states() FROM PUBLIC;
-GRANT ALL ON FUNCTION public.get_my_participation_subscription_states() TO service_role;
 GRANT ALL ON FUNCTION public.get_my_participation_subscription_states() TO authenticated;
+GRANT ALL ON FUNCTION public.get_my_participation_subscription_states() TO service_role;
 
 
 --
@@ -5588,8 +5570,8 @@ GRANT ALL ON FUNCTION public.participation_state(p_status public.participation_s
 --
 
 REVOKE ALL ON FUNCTION public.pin_is_set() FROM PUBLIC;
-GRANT ALL ON FUNCTION public.pin_is_set() TO service_role;
 GRANT ALL ON FUNCTION public.pin_is_set() TO authenticated;
+GRANT ALL ON FUNCTION public.pin_is_set() TO service_role;
 
 
 --
@@ -5638,8 +5620,8 @@ GRANT ALL ON FUNCTION public.set_gedu_verified(p_gedu_id uuid, p_verified boolea
 --
 
 REVOKE ALL ON FUNCTION public.set_my_pin(p_pin text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.set_my_pin(p_pin text) TO service_role;
 GRANT ALL ON FUNCTION public.set_my_pin(p_pin text) TO authenticated;
+GRANT ALL ON FUNCTION public.set_my_pin(p_pin text) TO service_role;
 
 
 --
@@ -5754,8 +5736,8 @@ GRANT ALL ON FUNCTION public.validate_site_details_location() TO service_role;
 --
 
 REVOKE ALL ON FUNCTION public.verify_my_pin(p_pin text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.verify_my_pin(p_pin text) TO service_role;
 GRANT ALL ON FUNCTION public.verify_my_pin(p_pin text) TO authenticated;
+GRANT ALL ON FUNCTION public.verify_my_pin(p_pin text) TO service_role;
 
 
 --
@@ -5772,8 +5754,8 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.calendar_holidays TO authentic
 --
 
 GRANT SELECT ON TABLE public.customer_profiles TO anon;
-GRANT SELECT ON TABLE public.customer_profiles TO authenticated;
 GRANT ALL ON TABLE public.customer_profiles TO service_role;
+GRANT SELECT ON TABLE public.customer_profiles TO authenticated;
 
 
 --
@@ -5799,8 +5781,8 @@ GRANT SELECT ON TABLE public.feedback_submissions TO authenticated;
 --
 
 GRANT SELECT ON TABLE public.gamer_profiles TO anon;
-GRANT SELECT,UPDATE ON TABLE public.gamer_profiles TO authenticated;
 GRANT ALL ON TABLE public.gamer_profiles TO service_role;
+GRANT SELECT,UPDATE ON TABLE public.gamer_profiles TO authenticated;
 
 
 --
@@ -5862,8 +5844,8 @@ GRANT SELECT,INSERT,UPDATE ON TABLE public.minecraft_accounts TO authenticated;
 --
 
 GRANT SELECT ON TABLE public.parent_gamer TO anon;
-GRANT SELECT,DELETE ON TABLE public.parent_gamer TO authenticated;
 GRANT ALL ON TABLE public.parent_gamer TO service_role;
+GRANT SELECT,DELETE ON TABLE public.parent_gamer TO authenticated;
 
 
 --
