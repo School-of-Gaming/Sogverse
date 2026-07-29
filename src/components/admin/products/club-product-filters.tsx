@@ -13,6 +13,7 @@ import { buildAncestorChain } from "@/components/locations/location-tree";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { formatWeekday } from "@/components/public/products/format-product-schedule";
 import { resolveLocale } from "@/lib/constants/locales";
+import { useLanguageNames } from "@/hooks/use-language-names";
 import { ProductRows } from "./product-rows";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductWithDetails } from "@/services/products";
@@ -61,17 +62,7 @@ export function ClubProductFilters({
   const { data: spokenLanguages } = useSpokenLanguages();
   const { data: locations } = useAllLocations();
 
-  // Spoken-language names render in the viewer's locale. The `spoken_languages`
-  // reference table only carries one (English) `name`, so localizing it there
-  // would need a translation table; `Intl.DisplayNames` resolves a language
-  // code to its name in any locale for free ("fi" → Finnish / suomi / finska).
-  const languageNames = useMemo(() => {
-    try {
-      return new Intl.DisplayNames([uiLocale], { type: "language" });
-    } catch {
-      return null;
-    }
-  }, [uiLocale]);
+  const languageName = useLanguageNames();
 
   // Resolve each club to its Finnish municipality. A municipality club's
   // `location_id` is either the municipality itself (online clubs pick one) or
@@ -137,14 +128,14 @@ export function ClubProductFilters({
       .filter((code) => present.has(code));
     for (const code of present) if (!ordered.includes(code)) ordered.push(code);
     return ordered.map((code) => {
-      const name = languageNames?.of(code) ?? code.toUpperCase();
+      const name = languageName(code, code.toUpperCase());
       return {
         value: code,
         label: name,
         adornment: <LanguageFlag code={code} showCode={false} title={name} />,
       };
     });
-  }, [products, spokenLanguages, languageNames, isConsumer]);
+  }, [products, spokenLanguages, languageName, isConsumer]);
 
   const municipalityOptions = useMemo(() => {
     if (!isMunicipality) return [];

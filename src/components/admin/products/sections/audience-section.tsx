@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { cn } from "@/lib/utils";
 import { useSpokenLanguages } from "@/services/users";
+import { useLanguageNames } from "@/hooks/use-language-names";
 import { Field } from "@/components/ui/field";
 import { FormSection } from "../form-primitives";
 import type { FormState } from "../product-form-state";
@@ -17,6 +18,7 @@ interface AudienceSectionProps {
 export function AudienceSection({ state, setState }: AudienceSectionProps) {
   const t = useTranslations("admin.products");
   const { data: spokenLanguages } = useSpokenLanguages();
+  const languageName = useLanguageNames();
 
   return (
     <FormSection
@@ -69,9 +71,9 @@ export function AudienceSection({ state, setState }: AudienceSectionProps) {
                 <LanguageFlag
                   code={lang.code}
                   showCode={false}
-                  title={lang.name}
+                  title={languageName(lang.code, lang.name)}
                 />
-                {lang.name}
+                {languageName(lang.code, lang.name)}
               </button>
             ))}
           </div>

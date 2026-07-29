@@ -17,36 +17,23 @@
  * this component never needs a loading/placeholder state.
  */
 
-import { useMemo } from "react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import type { SpokenLanguage } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   getSpokenLanguageFlag,
   type SpokenLanguageFlag,
 } from "@/components/ui/language-flag";
-import { resolveLocale } from "@/lib/constants/locales";
+import { useLanguageNames } from "@/hooks/use-language-names";
 
-// Language names render in the viewer's locale. The `spoken_languages`
-// reference table carries a single (English) `name`, so localizing it there
-// would need a translation table; `Intl.DisplayNames` names any language code
-// in any locale for free ("fi" → Finnish / suomi / finska), and it covers every
-// code the table may ever grow — where the hand-maintained map of `common.*`
-// keys this replaced silently fell back to English for anything new.
+// Names render in the viewer's locale via the shared language-name hook; the
+// DB `name` is the fallback for a code Intl cannot resolve.
 function useLangDisplay() {
-  const uiLocale = resolveLocale(useLocale());
-  const languageNames = useMemo(() => {
-    try {
-      return new Intl.DisplayNames([uiLocale], { type: "language" });
-    } catch {
-      return null;
-    }
-  }, [uiLocale]);
+  const languageName = useLanguageNames();
 
   return (lang: SpokenLanguage): { FlagIcon: SpokenLanguageFlag | undefined; displayName: string } => {
     const FlagIcon = getSpokenLanguageFlag(lang.code);
-    // The DB `name` is the fallback for a code Intl cannot resolve.
-    const displayName = languageNames?.of(lang.code) ?? lang.name;
+    const displayName = languageName(lang.code, lang.name);
     return { FlagIcon, displayName };
   };
 }

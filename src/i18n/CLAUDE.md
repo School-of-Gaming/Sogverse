@@ -13,6 +13,8 @@ The two are fully independent: a Finnish-speaking parent can have `locale = "fi"
 
 **Rule: Use the word *locale* for the UI translation system and *spoken language* for human fluency. Never name one after the other.**
 
+**Rule: A language's display name always comes from the shared language-name hook (`useLanguageNames`, `src/hooks/`), never from `spoken_languages.name` or `LOCALE_CONFIG.label` directly.** Those two are English *fallbacks*, not display strings — rendering them raw ships English names to every non-English viewer (this happened on three admin surfaces at once). The hook resolves any code via `Intl.DisplayNames` in the viewer's locale and takes the English value as its fallback argument.
+
 ## Files in this directory
 
 - `request.ts` — next-intl request config (SSR/RSC). Resolves the per-request locale and loads its messages.
