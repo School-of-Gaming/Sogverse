@@ -1,8 +1,11 @@
 export { LocationsService } from "./locations.service";
-export type { LocationCodeRef, SiteWithChain } from "./locations.service";
+export type {
+  LocationChainNode,
+  LocationCodeRef,
+  LocationWithChain,
+} from "./locations.service";
 export {
   locationKeys,
-  useAllLocations,
   useLocation,
   useMunicipalitiesByCountry,
   useSites,
@@ -11,7 +14,5 @@ export {
   useLocationsByCodes,
   useResolveLocationsByCodes,
   useCreateLocation,
-  useMaterializeLocation,
   useUpdateLocation,
 } from "./locations.queries";
-export type { MaterializeLocationBody } from "./locations.contracts";

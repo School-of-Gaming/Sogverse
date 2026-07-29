@@ -60,10 +60,13 @@ import type {
   VoiceRoomContextValue,
   VoiceParticipant,
 } from "@/components/voice/hooks/types";
-import type { VoiceZone, Location } from "@/types";
-import { LocationTree } from "@/components/locations/location-tree";
+import type { VoiceZone } from "@/types";
 import { CatalogPicker } from "@/components/locations/catalog-picker";
 import { catalogRefKey, type LocationCatalog } from "@/lib/locations/catalog";
+import {
+  LocationList,
+  type LocationListGroup,
+} from "@/components/admin/products/location-list";
 import {
   ProductBrowseCardView,
   type LocationLine,
@@ -1747,19 +1750,25 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 9b: Location Tree                                     */}
+      {/* Section 9b: Location List                                     */}
       {/* ============================================================ */}
-      <Section title="Location Tree">
+      <Section title="Location List">
         <p className="text-sm text-muted-foreground">
-          The one shared location-tree component, driven entirely by a hardcoded
-          fixture (no network, no providers). Single-select powers the product
-          location picker; multi-select is the generic tick mode (gedu coverage
-          has since moved to the catalog panel below). Because the data and the
-          create handler are injected as props, the same component renders
-          identically from fixtures — which is the separation-of-concerns check:
-          the tree owns no business logic.
+          The database-row counterpart to the catalog panel below. The catalog
+          browses an exhaustive static classification and never touches the
+          database; this browses the small set of rows that <em>are</em> in the
+          database and that no catalog contains or orders — the venues an admin
+          created, and the Finnish municipalities an online club can be funded
+          by. Both are small enough to search client-side in one pass.
         </p>
-        <LocationTreeDemo />
+        <p className="text-sm text-muted-foreground">
+          Worth trying: matching a group header keeps every row under it (type{" "}
+          <code>helsinki</code> to list its venues), search is
+          diacritic-insensitive in both directions (<code>jarvenpaa</code> finds
+          Järvenpää), and the list holds one fixed height across loading, empty
+          and loaded so nothing under it moves.
+        </p>
+        <LocationListDemo />
       </Section>
 
       {/* ============================================================ */}
@@ -1782,7 +1791,15 @@ export default function AdminUIComponentsPage() {
           disabled from the click until the parent swaps the view away, so the
           action can&rsquo;t be fired twice.
         </p>
-        <CatalogPickerDemo />
+        <SubSection title="Single mode (geography navigator)">
+          <p className="text-sm text-muted-foreground mb-3">
+            Confirming a commune writes nothing — every commune is already a
+            seeded row, so the product picker resolves the confirmed code to
+            that row and shows what is already there before offering to name a
+            new venue under it.
+          </p>
+          <CatalogPickerDemo />
+        </SubSection>
         <SubSection title="Multi mode (gedu coverage)">
           <p className="text-sm text-muted-foreground mb-3">
             Every level is tickable and each tick is an independent &ldquo;I
@@ -1968,113 +1985,114 @@ export default function AdminUIComponentsPage() {
 /* ------------------------------------------------------------------ */
 
 /* ------------------------------------------------------------------ */
-/*  Location Tree Demo                                                 */
+/*  Location List Demo                                                 */
 /* ------------------------------------------------------------------ */
 
-function fixtureLocation(
-  id: string,
-  name: string,
-  type: Location["type"],
-  parent_id: string | null,
-  name_i18n: Location["name_i18n"] = null,
-): Location {
-  return {
-    id,
-    name,
-    name_i18n,
-    type,
-    parent_id,
-    country_code: "FI",
-    external_code: null,
-    created_at: "2026-01-01T00:00:00Z",
-    updated_at: "2026-01-01T00:00:00Z",
-  };
-}
-
-// A couple of rows carry their Swedish name so the tree demo shows localized
-// display (the names render in the viewer's locale via localizedLocationName).
-const LOCATION_FIXTURE: Location[] = [
-  fixtureLocation("fi", "Finland", "country", null),
-  fixtureLocation("uusimaa", "Uusimaa", "region", "fi", { sv: "Nyland" }),
-  fixtureLocation("helsinki", "Helsinki", "municipality", "uusimaa", {
-    sv: "Helsingfors",
-  }),
-  fixtureLocation("hki-site", "Itälahdenkatu 23 B", "site", "helsinki"),
-  fixtureLocation("espoo", "Espoo", "municipality", "uusimaa", { sv: "Esbo" }),
-  fixtureLocation("pirkanmaa", "Pirkanmaa", "region", "fi", {
-    sv: "Birkaland",
-  }),
-  fixtureLocation("tampere", "Tampere", "municipality", "pirkanmaa"),
-  fixtureLocation("tre-site", "Sampola", "site", "tampere"),
+// Venues under their municipality, with the region as the header's context —
+// the exact shape the product picker's site mode builds from the scoped sites
+// read. Järvenpää is here so the diacritic folding is visible, and Helsinki
+// carries its Swedish name so a header search matches an alternate too.
+const VENUE_GROUPS: LocationListGroup[] = [
+  {
+    key: "helsinki",
+    label: "Helsinki",
+    detail: "Uusimaa",
+    searchTerms: ["Helsinki", "Helsingfors"],
+    rows: [
+      {
+        id: "hki-1",
+        name: "Itälahdenkatu 23 B",
+        detail: "",
+        searchTerms: ["Itälahdenkatu 23 B"],
+      },
+      {
+        id: "hki-2",
+        name: "Kalasataman kirjasto",
+        detail: "",
+        searchTerms: ["Kalasataman kirjasto"],
+      },
+    ],
+  },
+  {
+    key: "jarvenpaa",
+    label: "Järvenpää",
+    detail: "Uusimaa",
+    searchTerms: ["Järvenpää"],
+    rows: [
+      {
+        id: "jp-1",
+        name: "Kirjasto",
+        detail: "",
+        searchTerms: ["Kirjasto"],
+      },
+    ],
+  },
+  {
+    key: "tampere",
+    label: "Tampere",
+    detail: "Pirkanmaa",
+    searchTerms: ["Tampere", "Tammerfors"],
+    rows: [
+      { id: "tre-1", name: "Sampola", detail: "", searchTerms: ["Sampola"] },
+    ],
+  },
 ];
 
-function LocationTreeDemo() {
-  const [locations, setLocations] = useState<Location[]>(LOCATION_FIXTURE);
-  const [siteValue, setSiteValue] = useState<string | null>(null);
-  const [coverage, setCoverage] = useState<ReadonlySet<string>>(new Set());
-  const [createCount, setCreateCount] = useState(0);
+const LIST_LABELS = {
+  searchPlaceholder: "Search venues by name or municipality…",
+  clearSearch: "Clear search",
+  empty: "No venues yet.",
+  noResults: (query: string) => `No locations match “${query}”.`,
+  loading: "Loading locations",
+};
+
+function LocationListDemo() {
+  const [value, setValue] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
       <div className="space-y-2">
-        <h4 className="text-sm font-semibold">Single-select (product picker)</h4>
-        <p className="text-xs text-muted-foreground">
-          Pickable: sites only. Hover a municipality to add a new site under it —
-          the freshly created site auto-selects.
-        </p>
-        <LocationTree
-          locations={locations}
-          selection={{
-            mode: "single",
-            value: siteValue,
-            onSelect: setSiteValue,
-            pickableTypes: ["site"],
-          }}
-          create={{
-            allowedChildTypes: ["site"],
-            onCreate: async (values) => {
-              const created = fixtureLocation(
-                `demo-site-${createCount}`,
-                values.name,
-                values.type,
-                values.parent_id,
-              );
-              setLocations((prev) => [...prev, created]);
-              setCreateCount((c) => c + 1);
-              return created;
-            },
-          }}
-          searchPlaceholder="Search locations…"
-          listClassName="max-h-[300px]"
+        <h4 className="text-sm font-semibold">Loaded</h4>
+        <LocationList
+          groups={VENUE_GROUPS}
+          value={value}
+          onSelect={setValue}
+          labels={LIST_LABELS}
+          footer={
+            <Button type="button" variant="outline" size="sm">
+              New venue…
+            </Button>
+          }
         />
         <p className="text-xs text-muted-foreground">
-          Selected: {siteValue ?? "(none)"}
+          Selected: {value ?? "(none)"}
         </p>
       </div>
 
       <div className="space-y-2">
-        <h4 className="text-sm font-semibold">Multi-select</h4>
+        <h4 className="text-sm font-semibold">Loading / empty</h4>
         <p className="text-xs text-muted-foreground">
-          The component just reports each tick; what a tick <em>means</em> is the
-          consumer&rsquo;s business, not the tree&rsquo;s.
+          Both states occupy the same height as the loaded list, so the button
+          below never moves as rows arrive.
         </p>
-        <LocationTree
-          locations={locations}
-          selection={{
-            mode: "multi",
-            selectedIds: coverage,
-            onToggle: (id) =>
-              setCoverage((prev) => {
-                const next = new Set(prev);
-                if (next.has(id)) next.delete(id);
-                else next.add(id);
-                return next;
-              }),
-          }}
-          searchPlaceholder="Search areas…"
-          listClassName="max-h-[300px]"
+        <LocationList
+          groups={[]}
+          value={null}
+          onSelect={() => {}}
+          loading={loading}
+          labels={LIST_LABELS}
+          footer={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setLoading((current) => !current)}
+            >
+              {loading ? "Show empty state" : "Show loading state"}
+            </Button>
+          }
         />
-        <p className="text-xs text-muted-foreground">{coverage.size} selected</p>
       </div>
     </div>
   );
@@ -2134,8 +2152,9 @@ function CatalogPickerDemo() {
     return (
       <div className="space-y-3 rounded-md border border-input bg-card p-4">
         <p className="text-sm">
-          Materialized <span className="font-medium">{added}</span> — in the
-          product picker the tree would now reveal it, ready for a site.
+          Confirmed <span className="font-medium">{added}</span> — the product
+          picker would now resolve that code to its seeded row and list the
+          venues already in it.
         </p>
         <Button type="button" variant="outline" onClick={() => setAdded(null)}>
           Pick another

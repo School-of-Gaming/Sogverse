@@ -88,6 +88,12 @@ function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
 // so it's inert for camps/events. The embed is keyed off the assignment's own
 // `product_id` FK, so it spans every group on the product — an empty array
 // means no educator is assigned anywhere.
+//
+// The location embed carries one level of parent, which is exactly what the
+// admin club list's municipality filter needs: an online municipality club
+// points at the municipality itself, an in-person one at a site whose parent
+// is that municipality. Riding on this query is what lets that filter answer
+// the question without reading the locations table.
 function buildProductsByTypeQuery(
   supabase: AppSupabaseClient,
   type: ProductType,
@@ -95,7 +101,7 @@ function buildProductsByTypeQuery(
   return supabase
     .from("products")
     .select(
-      "*, product_translations(*), schedule_slots(weekday, start_time, duration_minutes), gedu_group_assignments(gedu_id)",
+      "*, product_translations(*), schedule_slots(weekday, start_time, duration_minutes), gedu_group_assignments(gedu_id), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))",
     )
     .eq("product_type", type)
     .order("created_at", { ascending: false });

@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { Constants } from "@/types";
-import { CATALOG_COUNTRIES } from "@/lib/locations/catalog";
 
 /**
  * Request/response contracts for the admin locations API.
@@ -24,21 +23,6 @@ export const updateLocationBody = z.object({
   name: z.string().trim().min(1, "Name is required"),
 });
 
-/**
- * Identifies ONE municipality-level catalog entry — the pair the shipped
- * catalogs are keyed on. Everything the row needs (its name, and the names and
- * codes of every ancestor) comes from the catalog on the server, never from
- * the caller: that is what makes typos and duplicate spellings structurally
- * impossible. The country is an enum over the catalogs that actually ship, so
- * a country with no catalog is refused by the schema rather than by a lookup.
- */
-export const materializeLocationBody = z.object({
-  country_code: z.enum(CATALOG_COUNTRIES),
-  external_code: z.string().trim().min(1, "A catalog code is required"),
-});
-
-export type MaterializeLocationBody = z.infer<typeof materializeLocationBody>;
-
 export const locationRow = z.object({
   id: z.string(),
   name: z.string(),
@@ -48,9 +32,9 @@ export const locationRow = z.object({
   type: z.enum(Constants.public.Enums.location_type),
   parent_id: z.string().nullable(),
   country_code: z.string().nullable(),
-  // The official statistical code (INSEE / Tilastokeskus) on a seeded or
-  // materialized row; null on the admin-created sites this API creates, which
-  // exist in no national classification.
+  // The official statistical code (INSEE / Tilastokeskus) on a seeded row;
+  // null on the admin-created sites this API creates, which exist in no
+  // national classification.
   external_code: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),

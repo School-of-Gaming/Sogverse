@@ -30,13 +30,11 @@ import {
   type CatalogPick,
   type LocationCatalog,
 } from "@/lib/locations/catalog";
-import { useMaterializeLocation } from "@/services/locations";
-import type { Location } from "@/types";
 
 /**
  * Browse, search and pick places out of a country's official catalog.
  *
- * Three things live here, split along the line the style guide cares about:
+ * Two things live here, split along the line the style guide cares about:
  *
  *  - `CatalogPicker` is presentational. It is handed a catalog and a
  *    `selection` config, owns only its own search/browse state, and makes no
@@ -46,8 +44,6 @@ import type { Location } from "@/types";
  *    country and loads that country's catalog behind a dynamic `import()`,
  *    holding one fixed height across loading, failure and loaded so the dialog
  *    never resizes under the pointer.
- *  - `CatalogPickerDialog` is the single-select consumer, which runs the
- *    materialization mutation on confirm.
  *
  * The catalog is never bundled with the page. France's is ~890 KB of raw JSON,
  * so it is fetched as its own chunk the first time a dialog opens, and the
@@ -55,8 +51,9 @@ import type { Location } from "@/types";
  *
  * ## The two selection modes
  *
- * **single** confirms exactly one leaf (a municipality/commune) — how a place
- * enters the database.
+ * **single** confirms exactly one leaf (a municipality/commune). Nothing is
+ * written by confirming: every commune is already a seeded row, so the caller
+ * resolves the confirmed code to that row and carries on from there.
  *
  * **multi** ticks any number of nodes at *any* level, and each tick is an
  * independent "I cover this whole subtree" claim. Ticking a parent deliberately
@@ -111,7 +108,6 @@ export function CatalogPicker({
 }: CatalogPickerProps) {
   const t = useTranslations("locations.catalog");
   const c = useTranslations("common");
-  const tree = useTranslations("locations.tree");
 
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<CatalogEntry | null>(null);
@@ -122,7 +118,7 @@ export function CatalogPicker({
    * Held locally rather than read off the mutation: `isPending` flips false the
    * moment the mutation resolves, which is before the caller has swapped this
    * panel away — a gap in which the button would re-enable and a fast admin
-   * could materialize twice. Set synchronously before `onConfirm`, and cleared
+   * could confirm twice. Set synchronously before `onConfirm`, and cleared
    * only on the failure path, where a retry is the point.
    */
   const [committing, setCommitting] = useState(false);
@@ -245,7 +241,7 @@ export function CatalogPicker({
             type="button"
             onClick={() => setQuery("")}
             className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-            aria-label={tree("clearSearch")}
+            aria-label={t("clearSearch")}
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -357,7 +353,7 @@ export function CatalogPicker({
               onClick={handleConfirm}
               disabled={!selected || committing}
             >
-              {committing ? t("adding") : t("confirm")}
+              {committing ? t("confirming") : t("confirm")}
             </Button>
           </div>
         </div>
@@ -601,52 +597,6 @@ export function CatalogDialogShell({
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-interface CatalogPickerDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  /** Called with the municipality row once it exists in the database. */
-  onMaterialized: (location: Location) => void;
-}
-
-export function CatalogPickerDialog({
-  open,
-  onOpenChange,
-  onMaterialized,
-}: CatalogPickerDialogProps) {
-  const t = useTranslations("locations.catalog");
-  const materialize = useMaterializeLocation();
-
-  return (
-    <CatalogDialogShell
-      open={open}
-      onOpenChange={onOpenChange}
-      title={t("title")}
-      description={t("description")}
-    >
-      {({ catalog, country, countryLabel }) => (
-        <CatalogPicker
-          // A new catalog is a new search index, a new browse position and
-          // a new selection — all of which are the panel's state.
-          key={country}
-          catalog={catalog}
-          countryLabel={countryLabel}
-          selection={{
-            mode: "single",
-            onConfirm: async (entry) => {
-              const row = await materialize.mutateAsync({
-                country_code: country,
-                external_code: entry.code,
-              });
-              onMaterialized(row);
-            },
-            onCancel: () => onOpenChange(false),
-          }}
-        />
-      )}
-    </CatalogDialogShell>
   );
 }
 

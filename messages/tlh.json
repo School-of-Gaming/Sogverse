@@ -401,16 +401,13 @@
         "subject": "paQDI’norgh"
       },
       "locationPicker": {
-        "searchPlaceholder": "Sepjup, Sep, veng, Daq yInej…",
         "clearSearch": "nejmey yIteq",
         "noResults": "”{query}” Daq pagh.",
-        "hintSite": "Daq yIwIv. Hutlh’a’? veng bIngDaq yIchu’.",
+        "hintSite": "Daq wIlo’bogh yIwIv. Daq chu’’a’? veng yIwIv wa’DIch.",
         "hintMunicipality": "veng yIwIv — Huch nob veng. Daqmey latlh Sepmey je luwIvlaHbe’.",
-        "addFromCatalog": "wo’ tetlh’a’vo’ veng chel…",
         "change": "choH",
         "edit": "choH",
         "cancel": "pegh",
-        "pick": "wIv",
         "noVenueHint": "Daq pagh. {name} vavmey De’ cha’.",
         "memberNotesLabel": "ghom De’ (vavmey je ghItlh)",
         "memberNotesFieldLabel": "vavmey je ghItlh De’",
@@ -423,7 +420,22 @@
         "addressLabel": "Daq mIw",
         "addressPlaceholder": "He, postnumber, veng",
         "noMemberNotes": "ghom De’ pagh.",
-        "noStaffNotes": "Qu’ De’ pagh."
+        "noStaffNotes": "Qu’ De’ pagh.",
+        "searchSites": "Daq yInej — pong ghap veng…",
+        "searchMunicipalities": "veng yInej…",
+        "noVenues": "Daqmey tu’lu’be’. ”Daq chu’” yIlo’ ’ej wa’DIch yIchenmoH.",
+        "noMunicipalities": "vengmey tu’lu’be’.",
+        "ungrouped": "latlhDaq",
+        "loading": "Daqmey laDlu’",
+        "newVenue": "Daq chu’…",
+        "newVenueTitle": "Daq chu’ yIpoSmoH",
+        "newVenueDescription": "veng yIwIv wa’DIch. Sep tetlh’a’vo’ pongmey mI’mey je tu’lu’, vaj Daq pong neH ghItlhlu’.",
+        "newVenueUnresolved": "{name} tetlhDaq ’oHbe’ vam ’u’Homvam; naDev Daq chu’ chenmoHlaHbe’lu’.",
+        "venuesIn": "{name} DaqmeyDaj",
+        "venuesInDescription": "tu’lu’bogh wa’ yIwIv ghap Daq chu’ yIchel.",
+        "venuesHereEmpty": "naDev Daq tu’lu’be’.",
+        "addVenue": "Daq yIchel",
+        "changeMunicipality": "veng pIm yIwIv"
       },
       "pricing": {
         "perMonthLabel": "Huch per jar",
@@ -1579,13 +1591,7 @@
     }
   },
   "locations": {
-    "tree": {
-      "empty": "Dapmey DanejboHpu’ tu’be’lu’.",
-      "clearSearch": "nejmey yIteq"
-    },
     "catalog": {
-      "title": "wo’ tetlh’a’vo’ veng chel",
-      "description": "Sep tetlh’a’Daq veng pongmey lugh neH tu’lu’. ghItlh Qagh tu’lu’be’. veng yIwIv ’ej Sor DaqDaq chelbe’lu’pu’bogh veng chel.",
       "coverageTitle": "DaSo’laHbogh Daqmey yIwIv",
       "coverageDescription": "DaSo’laHbogh Hoch yIwIv. wa’ wIv qoDDaq Hoch So’lu’, vaj Sep DawIvDI’ vengmeyDaj Hoch DaSo’.",
       "country": "Sep",
@@ -1598,10 +1604,11 @@
       "showingSome": "{total} veng tu’lu’. {shown} neH wI’ang. yIghItlhtaH ’ej yInej.",
       "browseInto": "{name} qoDDaq nuq tu’lu’ — yI’ang",
       "nothingSelected": "veng yIwIv ’ej yIruch.",
-      "confirm": "veng chel",
-      "adding": "cheltaH…",
+      "confirm": "yIruch",
       "tickedCount": "{count, plural, =0 {pagh wIvlu’} one {# Daq wIvlu’} other {# Daqmey wIvlu’}}",
-      "done": "pItlh"
+      "done": "pItlh",
+      "clearSearch": "nejmey yIteq",
+      "confirming": "poSmoHtaH…"
     }
   },
   "minecraft": {

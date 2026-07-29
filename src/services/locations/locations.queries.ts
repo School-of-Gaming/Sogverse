@@ -3,8 +3,11 @@
 import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
-import { LocationsService, type LocationCodeRef } from "./locations.service";
-import type { MaterializeLocationBody } from "./locations.contracts";
+import {
+  LocationsService,
+  type LocationCodeRef,
+  type LocationWithChain,
+} from "./locations.service";
 import type { Location, LocationInsert } from "@/types";
 
 /**
@@ -19,7 +22,6 @@ function keySet(values: readonly string[]): string {
 
 export const locationKeys = {
   all: ["locations"] as const,
-  lists: () => [...locationKeys.all, "list"] as const,
   details: () => [...locationKeys.all, "detail"] as const,
   detail: (id: string) => [...locationKeys.details(), id] as const,
   municipalities: () => [...locationKeys.all, "municipalities"] as const,
@@ -41,17 +43,6 @@ export const locationKeys = {
     ] as const,
 };
 
-export function useAllLocations(options?: { initialData?: Location[] }) {
-  const supabase = getClient();
-  const service = new LocationsService(supabase);
-
-  return useQuery({
-    queryKey: locationKeys.lists(),
-    queryFn: () => service.getAllLocations(),
-    initialData: options?.initialData,
-  });
-}
-
 export function useLocation(id: string) {
   const supabase = getClient();
   const service = new LocationsService(supabase);
@@ -66,7 +57,7 @@ export function useLocation(id: string) {
 /** Every municipality of one country — the /schools list, the FI club picker. */
 export function useMunicipalitiesByCountry(
   countryCode: string,
-  options?: { initialData?: Location[] },
+  options?: { initialData?: LocationWithChain[] },
 ) {
   const supabase = getClient();
   const service = new LocationsService(supabase);
@@ -172,29 +163,9 @@ export function useCreateLocation() {
   return useMutation({
     mutationFn: (location: LocationInsert) => service.createLocation(location),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: locationKeys.lists() });
       // The only thing this route creates is a site, and a new site changes
       // both the flat list and the per-municipality one.
       queryClient.invalidateQueries({ queryKey: locationKeys.sites() });
-    },
-  });
-}
-
-/**
- * Materialize a catalog entry. Invalidates the list even on a get-only hit:
- * the caller cannot tell the two apart, and the tree has to show the row
- * either way.
- */
-export function useMaterializeLocation() {
-  const queryClient = useQueryClient();
-  const supabase = getClient();
-  const service = new LocationsService(supabase);
-
-  return useMutation({
-    mutationFn: (entry: MaterializeLocationBody) =>
-      service.materializeLocation(entry),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: locationKeys.lists() });
     },
   });
 }
@@ -209,7 +180,7 @@ export function useUpdateLocation() {
       service.updateLocation(id, updates),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: locationKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: locationKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: locationKeys.municipalities() });
       queryClient.invalidateQueries({ queryKey: locationKeys.sites() });
     },
   });

@@ -356,16 +356,13 @@
         "subject": "Subjects"
       },
       "locationPicker": {
-        "searchPlaceholder": "Search by country, region, municipality, or site…",
         "clearSearch": "Clear search",
         "noResults": "No locations match “{query}”.",
-        "hintSite": "Pick a site. Missing one? Add it inline under its municipality.",
+        "hintSite": "Pick the venue this runs at. Opening a new one? Start from its municipality.",
         "hintMunicipality": "Pick the Finnish municipality this club is for — the one that funds it. Sites and other countries aren’t options here.",
-        "addFromCatalog": "Add a municipality from the official catalog…",
         "change": "Change",
         "edit": "Edit",
         "cancel": "Cancel",
-        "pick": "Pick",
         "noVenueHint": "No physical venue. Parents in {name} will see this club when they browse.",
         "memberNotesLabel": "Member-visible notes",
         "memberNotesFieldLabel": "Notes shown to parents and gamers",
@@ -378,7 +375,22 @@
         "addressLabel": "Address",
         "addressPlaceholder": "Street, postal code, city",
         "noMemberNotes": "No member-visible notes for this site.",
-        "noStaffNotes": "No staff notes for this site."
+        "noStaffNotes": "No staff notes for this site.",
+        "searchSites": "Search venues by name or municipality…",
+        "searchMunicipalities": "Search municipalities…",
+        "noVenues": "No venues yet. Use “New venue” to open the first one.",
+        "noMunicipalities": "No municipalities are available.",
+        "ungrouped": "Elsewhere",
+        "loading": "Loading locations",
+        "newVenue": "New venue…",
+        "newVenueTitle": "Open a new venue",
+        "newVenueDescription": "Start with the municipality it sits in. Official names and codes come from each country’s statistical classification, so nothing above the venue itself is ever typed by hand.",
+        "newVenueUnresolved": "{name} has no location record in this environment yet, so a venue cannot be opened there.",
+        "venuesIn": "Venues in {name}",
+        "venuesInDescription": "Pick one that is already here, or add a new one.",
+        "venuesHereEmpty": "No venues here yet.",
+        "addVenue": "Add a venue",
+        "changeMunicipality": "Choose a different municipality"
       },
       "pricing": {
         "perMonthLabel": "Price per month",
@@ -1534,13 +1546,7 @@
     }
   },
   "locations": {
-    "tree": {
-      "empty": "No locations found matching your search.",
-      "clearSearch": "Clear search"
-    },
     "catalog": {
-      "title": "Add a municipality from the official catalog",
-      "description": "Municipalities come from each country’s official statistical classification, so the spelling and the code are always right. Pick one and it is added to the tree.",
       "coverageTitle": "Choose the areas you cover",
       "coverageDescription": "Tick anything you can cover. Each tick covers everything inside it, so ticking a region already covers every municipality in it.",
       "country": "Country",
@@ -1553,10 +1559,11 @@
       "showingSome": "Showing the first {shown} of {total} matches. Keep typing to narrow them down.",
       "browseInto": "Show what is inside {name}",
       "nothingSelected": "Pick a municipality to continue.",
-      "confirm": "Add municipality",
-      "adding": "Adding…",
+      "confirm": "Continue",
       "tickedCount": "{count, plural, =0 {Nothing ticked} one {# area ticked} other {# areas ticked}}",
-      "done": "Done"
+      "done": "Done",
+      "clearSearch": "Clear search",
+      "confirming": "Opening…"
     }
   },
   "minecraft": {

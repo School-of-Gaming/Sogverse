@@ -30,10 +30,10 @@ export interface LocationFormValues {
  *
  * There is deliberately no "add a country" mode any more, and no free-text
  * creation above the site level. Countries, regions and municipalities are
- * official reference data: they arrive by seed or by materializing a catalog
- * entry, never by someone typing a name. A site is the only level that exists
- * in no national classification, which is why it is the only one an admin
- * names.
+ * official reference data seeded from each country's statistical
+ * classification, never named by someone typing. A site is the only level that
+ * exists in no national classification, which is why it is the only one an
+ * admin names.
  */
 interface LocationFormDialogProps {
   open: boolean;

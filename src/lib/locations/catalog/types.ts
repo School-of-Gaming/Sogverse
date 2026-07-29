@@ -39,7 +39,7 @@ export interface LocationCatalog {
   readonly generated: string;
   /**
    * What each depth of `tree` means, root first — the same `location_type`
-   * values a materialized row gets. France is
+   * values the seeded rows carry. France is
    * `["region", "district", "municipality"]`; Finland skips `district` and is
    * `["region", "municipality"]`. Read the depth's type from here rather than
    * assuming a fixed depth: countries do not all use every level.

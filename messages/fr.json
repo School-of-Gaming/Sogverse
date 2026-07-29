@@ -356,16 +356,13 @@
         "subject": "Sujets"
       },
       "locationPicker": {
-        "searchPlaceholder": "Rechercher par pays, région, commune ou site…",
         "clearSearch": "Effacer la recherche",
         "noResults": "Aucun lieu ne correspond à « {query} ».",
-        "hintSite": "Choisissez un site. Il en manque un ? Ajoutez-le directement sous sa commune.",
+        "hintSite": "Choisissez le site où cela se déroule. Vous en ouvrez un nouveau ? Partez de sa commune.",
         "hintMunicipality": "Choisissez la commune finlandaise concernée par ce club — celle qui le finance. Les sites et les autres pays ne sont pas proposés ici.",
-        "addFromCatalog": "Ajouter une commune depuis le catalogue officiel…",
         "change": "Changer",
         "edit": "Modifier",
         "cancel": "Annuler",
-        "pick": "Choisir",
         "noVenueHint": "Aucun lieu physique. Les parents de {name} verront ce club lorsqu’ils parcourront le catalogue.",
         "memberNotesLabel": "Notes visibles par les membres",
         "memberNotesFieldLabel": "Notes affichées aux parents et aux joueurs",
@@ -378,7 +375,22 @@
         "addressLabel": "Adresse",
         "addressPlaceholder": "Rue, code postal, ville",
         "noMemberNotes": "Aucune note visible par les membres pour ce site.",
-        "noStaffNotes": "Aucune note interne pour ce site."
+        "noStaffNotes": "Aucune note interne pour ce site.",
+        "searchSites": "Rechercher un site par nom ou par commune…",
+        "searchMunicipalities": "Rechercher une commune…",
+        "noVenues": "Aucun site pour l’instant. Utilisez « Nouveau site » pour créer le premier.",
+        "noMunicipalities": "Aucune commune disponible.",
+        "ungrouped": "Ailleurs",
+        "loading": "Chargement des lieux",
+        "newVenue": "Nouveau site…",
+        "newVenueTitle": "Ouvrir un nouveau site",
+        "newVenueDescription": "Commencez par la commune où il se trouve. Les noms et les codes officiels proviennent de la classification statistique de chaque pays : rien au-dessus du site lui-même n’est saisi à la main.",
+        "newVenueUnresolved": "{name} n’a pas encore d’enregistrement de lieu dans cet environnement : impossible d’y ouvrir un site.",
+        "venuesIn": "Sites à {name}",
+        "venuesInDescription": "Choisissez-en un qui existe déjà, ou ajoutez-en un nouveau.",
+        "venuesHereEmpty": "Aucun site ici pour l’instant.",
+        "addVenue": "Ajouter un site",
+        "changeMunicipality": "Choisir une autre commune"
       },
       "pricing": {
         "perMonthLabel": "Prix par mois",
@@ -1534,13 +1546,7 @@
     }
   },
   "locations": {
-    "tree": {
-      "empty": "Aucun lieu ne correspond à votre recherche.",
-      "clearSearch": "Effacer la recherche"
-    },
     "catalog": {
-      "title": "Ajouter une commune depuis le catalogue officiel",
-      "description": "Les communes proviennent de la classification statistique officielle de chaque pays : l’orthographe et le code sont donc toujours exacts. Choisissez-en une et elle est ajoutée à l’arborescence.",
       "coverageTitle": "Choisissez les zones que vous couvrez",
       "coverageDescription": "Cochez tout ce que vous pouvez couvrir. Chaque case cochée couvre tout ce qu’elle contient : cocher une région couvre déjà toutes ses communes.",
       "country": "Pays",
@@ -1553,10 +1559,11 @@
       "showingSome": "Affichage des {shown} premiers résultats sur {total}. Continuez à saisir pour affiner.",
       "browseInto": "Afficher le contenu de {name}",
       "nothingSelected": "Choisissez une commune pour continuer.",
-      "confirm": "Ajouter la commune",
-      "adding": "Ajout en cours…",
+      "confirm": "Continuer",
       "tickedCount": "{count, plural, =0 {Aucune zone cochée} one {# zone cochée} other {# zones cochées}}",
-      "done": "Terminé"
+      "done": "Terminé",
+      "clearSearch": "Effacer la recherche",
+      "confirming": "Ouverture…"
     }
   },
   "minecraft": {

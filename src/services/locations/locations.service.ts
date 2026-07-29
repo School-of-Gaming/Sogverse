@@ -9,10 +9,7 @@ import {
   parseJsonResponse,
   readErrorMessage,
 } from "@/lib/api/json-response";
-import {
-  locationRow,
-  type MaterializeLocationBody,
-} from "./locations.contracts";
+import { locationRow } from "./locations.contracts";
 
 /**
  * PostgREST caps every response at its `max_rows` setting (1000 on this
@@ -129,7 +126,7 @@ export interface LocationCodeRef {
 }
 
 // ---------------------------------------------------------------------------
-// The site query and its ancestor chain.
+// The chain-carrying queries.
 //
 // `parent:parent_id(...)` (column-name form) embeds the *parent* via the FK on
 // parent_id. The `locations!parent_id` form looks like the same thing but
@@ -140,22 +137,52 @@ export interface LocationCodeRef {
 const CHAIN_COLUMNS = "id, name, name_i18n, type, parent_id, country_code, external_code";
 
 /**
- * Four ancestor levels, which is the deepest chain any supported country has:
- * a French site sits under commune → département → région → France, and a
- * Finnish one under kunta → maakunta → Suomi (so its fourth level comes back
- * null, since a country row has no parent).
+ * Four ancestor levels, the deepest chain any supported country has: a French
+ * site sits under commune → département → région → France, and a Finnish one
+ * under kunta → maakunta → Suomi (so its fourth level comes back null, since a
+ * country row has no parent).
+ *
+ * Spelled out rather than generated, because the depth has to be visible in the
+ * *type* of the select string: the client infers the response shape from the
+ * literal, and a runtime-built string collapses it to `string` and takes the
+ * whole row type with it.
  */
-const PARENT_CHAIN_EMBED =
+const SITE_CHAIN_EMBED =
   `parent:parent_id(${CHAIN_COLUMNS}, ` +
   `parent:parent_id(${CHAIN_COLUMNS}, ` +
   `parent:parent_id(${CHAIN_COLUMNS}, ` +
   `parent:parent_id(${CHAIN_COLUMNS}))))`;
 
+/**
+ * One level shallower, because a municipality *is* the level below a site: a
+ * French commune sits under département → région → France, a Finnish kunta
+ * under maakunta → Suomi. Each embedded level is an indexed lookup per row, and
+ * this query runs over 34,875 rows for France — so it asks for the depth it
+ * needs and no more.
+ */
+const MUNICIPALITY_CHAIN_EMBED =
+  `parent:parent_id(${CHAIN_COLUMNS}, ` +
+  `parent:parent_id(${CHAIN_COLUMNS}, ` +
+  `parent:parent_id(${CHAIN_COLUMNS})))`;
+
 function buildSitesQuery(supabase: AppSupabaseClient) {
   return supabase
     .from("locations")
-    .select(`*, ${PARENT_CHAIN_EMBED}`, { count: "exact" })
+    .select(`*, ${SITE_CHAIN_EMBED}`, { count: "exact" })
     .eq("type", "site")
+    .order("name")
+    .order("id");
+}
+
+function buildMunicipalitiesQuery(
+  supabase: AppSupabaseClient,
+  countryCode: string,
+) {
+  return supabase
+    .from("locations")
+    .select(`*, ${MUNICIPALITY_CHAIN_EMBED}`, { count: "exact" })
+    .eq("country_code", countryCode)
+    .eq("type", "municipality")
     .order("name")
     .order("id");
 }
@@ -187,25 +214,25 @@ interface EmbeddedAncestor extends LocationChainNode {
   parent?: EmbeddedAncestor | null;
 }
 
-interface RawSiteRow extends Location {
+interface RawChainRow extends Location {
   parent?: EmbeddedAncestor | null;
 }
 
 /**
- * A `site` row with its ancestor chain flattened to an array, **nearest
- * first**: `ancestors[0]` is the municipality whatever the country, which
+ * A row with its ancestor chain flattened to an array, **nearest first**:
+ * `ancestors[0]` is the level immediately above it whatever the country, which
  * France's extra `district` level would otherwise make position-dependent.
  * Reverse it for a root-first breadcrumb.
  *
- * Sites are the one thing no catalog contains — an admin names them by hand —
- * so they are the one thing a UI has to read out of the table.
+ * A site's chain starts at its municipality; a municipality's at its
+ * département (France) or region (Finland).
  */
-export interface SiteWithChain extends Location {
+export interface LocationWithChain extends Location {
   ancestors: LocationChainNode[];
 }
 
-function flattenSiteChain(row: RawSiteRow): SiteWithChain {
-  const { parent, ...site } = row;
+function flattenChain(row: RawChainRow): LocationWithChain {
+  const { parent, ...self } = row;
   const ancestors: LocationChainNode[] = [];
   let node = parent;
   while (node) {
@@ -213,22 +240,11 @@ function flattenSiteChain(row: RawSiteRow): SiteWithChain {
     ancestors.push(ancestor);
     node = next;
   }
-  return { ...site, ancestors };
+  return { ...self, ancestors };
 }
 
 export class LocationsService {
   constructor(private supabase: AppSupabaseClient) {}
-
-  async getAllLocations(): Promise<Location[]> {
-    return walkPages("getAllLocations", (from, to) =>
-      this.supabase
-        .from("locations")
-        .select("*", { count: "exact" })
-        .order("name")
-        .order("id")
-        .range(from, to),
-    );
-  }
 
   async getLocation(id: string): Promise<Location> {
     const { data, error } = await this.supabase
@@ -242,29 +258,29 @@ export class LocationsService {
   }
 
   /**
-   * Every municipality of one country. Drives the `/schools` list and the
-   * online municipality-club picker, both Finland-only today (308 rows) — but
-   * the same call for France is 34,875, so this is a paged walk, not a select.
+   * Every municipality of one country, each carrying its ancestor chain.
+   * Drives the `/schools` list and the online municipality-club picker, both
+   * Finland-only today (308 rows) — but the same call for France is 34,875, so
+   * this is a paged walk, not a select. The chain is what lets both surfaces
+   * show (and group by) the region without a second read.
    */
-  async getMunicipalitiesByCountry(countryCode: string): Promise<Location[]> {
-    return walkPages("getMunicipalitiesByCountry", (from, to) =>
-      this.supabase
-        .from("locations")
-        .select("*", { count: "exact" })
-        .eq("country_code", countryCode)
-        .eq("type", "municipality")
-        .order("name")
-        .order("id")
-        .range(from, to),
+  async getMunicipalitiesByCountry(
+    countryCode: string,
+  ): Promise<LocationWithChain[]> {
+    const rows = await walkPages<RawChainRow>(
+      "getMunicipalitiesByCountry",
+      (from, to) =>
+        buildMunicipalitiesQuery(this.supabase, countryCode).range(from, to),
     );
+    return rows.map(flattenChain);
   }
 
   /** Every site, each carrying its ancestor chain. */
-  async getSites(): Promise<SiteWithChain[]> {
-    const rows = await walkPages<RawSiteRow>("getSites", (from, to) =>
+  async getSites(): Promise<LocationWithChain[]> {
+    const rows = await walkPages<RawChainRow>("getSites", (from, to) =>
       buildSitesQuery(this.supabase).range(from, to),
     );
-    return rows.map(flattenSiteChain);
+    return rows.map(flattenChain);
   }
 
   /**
@@ -371,25 +387,6 @@ export class LocationsService {
     if (!response.ok) {
       throw new Error(
         await readErrorMessage(response, "Failed to create location")
-      );
-    }
-    return parseJsonResponse(response, locationRow);
-  }
-
-  /**
-   * Turn a municipality-level catalog entry into rows, creating whichever of
-   * its ancestors are missing. Get-or-create, so picking an already-present
-   * commune is a plain read that returns the existing row.
-   */
-  async materializeLocation(entry: MaterializeLocationBody): Promise<Location> {
-    const response = await fetch("/api/admin/locations/materialize", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(entry),
-    });
-    if (!response.ok) {
-      throw new Error(
-        await readErrorMessage(response, "Failed to add location from catalog")
       );
     }
     return parseJsonResponse(response, locationRow);

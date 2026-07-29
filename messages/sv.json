@@ -356,16 +356,13 @@
         "subject": "Ämnen"
       },
       "locationPicker": {
-        "searchPlaceholder": "Sök efter land, region, kommun eller lokal…",
         "clearSearch": "Rensa sökning",
         "noResults": "Inga platser matchar ”{query}”.",
-        "hintSite": "Välj en lokal. Saknas någon? Lägg till den under kommunen direkt här.",
+        "hintSite": "Välj lokalen där detta hålls. Öppnar du en ny? Börja med kommunen.",
         "hintMunicipality": "Välj den finländska kommun som klubben gäller — den som finansierar den. Lokaler och andra länder kan inte väljas här.",
-        "addFromCatalog": "Lägg till en kommun från den officiella katalogen…",
         "change": "Ändra",
         "edit": "Redigera",
         "cancel": "Avbryt",
-        "pick": "Välj",
         "noVenueHint": "Ingen fysisk lokal. Föräldrar i {name} ser denna klubb när de bläddrar.",
         "memberNotesLabel": "Medlemssynliga anteckningar",
         "memberNotesFieldLabel": "Anteckningar för föräldrar och spelare",
@@ -378,7 +375,22 @@
         "addressLabel": "Adress",
         "addressPlaceholder": "Gata, postnummer, ort",
         "noMemberNotes": "Inga medlemssynliga anteckningar för denna lokal.",
-        "noStaffNotes": "Inga personalanteckningar för denna lokal."
+        "noStaffNotes": "Inga personalanteckningar för denna lokal.",
+        "searchSites": "Sök lokal på namn eller kommun…",
+        "searchMunicipalities": "Sök kommun…",
+        "noVenues": "Inga lokaler ännu. Använd ”Ny lokal” för att lägga till den första.",
+        "noMunicipalities": "Inga kommuner är tillgängliga.",
+        "ungrouped": "Annanstans",
+        "loading": "Platser laddas",
+        "newVenue": "Ny lokal…",
+        "newVenueTitle": "Öppna en ny lokal",
+        "newVenueDescription": "Börja med kommunen den ligger i. Officiella namn och koder kommer från varje lands statistiska klassificering, så ingenting ovanför själva lokalen skrivs för hand.",
+        "newVenueUnresolved": "{name} har ännu ingen platspost i den här miljön, så det går inte att öppna en lokal där.",
+        "venuesIn": "Lokaler i {name}",
+        "venuesInDescription": "Välj en som redan finns, eller lägg till en ny.",
+        "venuesHereEmpty": "Inga lokaler här ännu.",
+        "addVenue": "Lägg till en lokal",
+        "changeMunicipality": "Välj en annan kommun"
       },
       "pricing": {
         "perMonthLabel": "Pris per månad",
@@ -1534,13 +1546,7 @@
     }
   },
   "locations": {
-    "tree": {
-      "empty": "Inga platser hittades som matchar din sökning.",
-      "clearSearch": "Rensa sökning"
-    },
     "catalog": {
-      "title": "Lägg till en kommun från den officiella katalogen",
-      "description": "Kommunerna kommer från varje lands officiella statistiska klassificering, så stavningen och koden stämmer alltid. Välj en kommun så läggs den till i trädet.",
       "coverageTitle": "Välj de områden du täcker",
       "coverageDescription": "Kryssa i allt du kan täcka. Varje kryss täcker allt som ligger inuti, så ett kryss för ett landskap täcker redan alla dess kommuner.",
       "country": "Land",
@@ -1553,10 +1559,11 @@
       "showingSome": "Visar de {shown} första av {total} träffar. Fortsätt skriva för att begränsa dem.",
       "browseInto": "Visa vad som finns i {name}",
       "nothingSelected": "Välj en kommun för att fortsätta.",
-      "confirm": "Lägg till kommun",
-      "adding": "Lägger till…",
+      "confirm": "Fortsätt",
       "tickedCount": "{count, plural, =0 {Inget ikryssat} one {# område ikryssat} other {# områden ikryssade}}",
-      "done": "Klar"
+      "done": "Klar",
+      "clearSearch": "Rensa sökning",
+      "confirming": "Öppnar…"
     }
   },
   "minecraft": {

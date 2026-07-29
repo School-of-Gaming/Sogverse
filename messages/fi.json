@@ -356,16 +356,13 @@
         "subject": "Aineet"
       },
       "locationPicker": {
-        "searchPlaceholder": "Hae maan, alueen, kunnan tai toimipisteen mukaan…",
         "clearSearch": "Tyhjennä haku",
         "noResults": "Hakuehdolla ”{query}” ei löytynyt sijainteja.",
-        "hintSite": "Valitse toimipiste. Puuttuuko jokin? Lisää se kunnan alle tästä.",
+        "hintSite": "Valitse toimipiste, jossa tämä järjestetään. Avaatko uuden? Aloita sen kunnasta.",
         "hintMunicipality": "Valitse kunta, jolle tämä kerho on tarkoitettu — se kunta, joka sen rahoittaa. Toimipisteet ja muut maat eivät ole valittavissa.",
-        "addFromCatalog": "Lisää kunta virallisesta luettelosta…",
         "change": "Vaihda",
         "edit": "Muokkaa",
         "cancel": "Peruuta",
-        "pick": "Valitse",
         "noVenueHint": "Ei fyysistä toimipaikkaa. Kunnan {name} vanhemmat näkevät tämän kerhon selatessaan.",
         "memberNotesLabel": "Jäsenille näkyvät tiedot",
         "memberNotesFieldLabel": "Vanhemmille ja pelaajille näkyvät tiedot",
@@ -378,7 +375,22 @@
         "addressLabel": "Osoite",
         "addressPlaceholder": "Katu, postinumero, kaupunki",
         "noMemberNotes": "Ei jäsenille näkyviä tietoja tälle toimipisteelle.",
-        "noStaffNotes": "Ei henkilökunnan tietoja tälle toimipisteelle."
+        "noStaffNotes": "Ei henkilökunnan tietoja tälle toimipisteelle.",
+        "searchSites": "Hae toimipistettä nimellä tai kunnalla…",
+        "searchMunicipalities": "Hae kuntaa…",
+        "noVenues": "Ei vielä toimipisteitä. Avaa ensimmäinen kohdasta ”Uusi toimipiste”.",
+        "noMunicipalities": "Kuntia ei ole saatavilla.",
+        "ungrouped": "Muualla",
+        "loading": "Ladataan sijainteja",
+        "newVenue": "Uusi toimipiste…",
+        "newVenueTitle": "Avaa uusi toimipiste",
+        "newVenueDescription": "Aloita kunnasta, jossa toimipiste sijaitsee. Viralliset nimet ja koodit tulevat kunkin maan tilastoluokituksesta, joten toimipisteen yläpuolella mitään ei kirjoiteta käsin.",
+        "newVenueUnresolved": "Kunnalla {name} ei ole vielä sijaintitietuetta tässä ympäristössä, joten toimipistettä ei voi avata sinne.",
+        "venuesIn": "Toimipisteet kunnassa {name}",
+        "venuesInDescription": "Valitse jokin olemassa oleva tai lisää uusi.",
+        "venuesHereEmpty": "Täällä ei ole vielä toimipisteitä.",
+        "addVenue": "Lisää toimipiste",
+        "changeMunicipality": "Valitse toinen kunta"
       },
       "pricing": {
         "perMonthLabel": "Hinta per kuukausi",
@@ -1534,13 +1546,7 @@
     }
   },
   "locations": {
-    "tree": {
-      "empty": "Hakuasi vastaavia sijainteja ei löytynyt.",
-      "clearSearch": "Tyhjennä haku"
-    },
     "catalog": {
-      "title": "Lisää kunta virallisesta luettelosta",
-      "description": "Kunnat tulevat kunkin maan virallisesta tilastoluokituksesta, joten kirjoitusasu ja koodi ovat aina oikein. Valitse kunta, niin se lisätään puuhun.",
       "coverageTitle": "Valitse alueet, jotka katat",
       "coverageDescription": "Merkitse kaikki, jotka voit kattaa. Jokainen merkintä kattaa myös kaiken sen sisällä, joten maakunnan merkitseminen kattaa jo kaikki sen kunnat.",
       "country": "Maa",
@@ -1553,10 +1559,11 @@
       "showingSome": "Näytetään {shown} ensimmäistä osumaa {total} osumasta. Tarkenna hakua kirjoittamalla lisää.",
       "browseInto": "Näytä, mitä alueella {name} on",
       "nothingSelected": "Jatka valitsemalla kunta.",
-      "confirm": "Lisää kunta",
-      "adding": "Lisätään…",
+      "confirm": "Jatka",
       "tickedCount": "{count, plural, =0 {Ei merkintöjä} one {# alue merkitty} other {# aluetta merkitty}}",
-      "done": "Valmis"
+      "done": "Valmis",
+      "clearSearch": "Tyhjennä haku",
+      "confirming": "Avataan…"
     }
   },
   "minecraft": {

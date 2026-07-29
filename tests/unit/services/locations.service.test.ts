@@ -42,7 +42,13 @@ function requestedRanges(fetchMock: FetchMock): string[] {
   });
 }
 
-describe("LocationsService.getAllLocations", () => {
+// The paged walk every list read shares. `locations` is fully seeded from the
+// official classifications — France alone is 34,875 communes — so no list read
+// is bounded by construction, and PostgREST enforces `max_rows` by returning a
+// short page rather than an error. These cases pin the walk's behaviour once,
+// through `getSites`; the per-method suites below only assert their own filters.
+
+describe("LocationsService paged walk (via getSites)", () => {
   let fetchMock: FetchMock;
   let service: LocationsService;
 
@@ -54,7 +60,7 @@ describe("LocationsService.getAllLocations", () => {
   it("stops after one request when the first page comes back short", async () => {
     fetchMock.mockResolvedValue(postgrestJson(locationRows(120)));
 
-    const result = await service.getAllLocations();
+    const result = await service.getSites();
 
     expect(result).toHaveLength(120);
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -65,7 +71,7 @@ describe("LocationsService.getAllLocations", () => {
       postgrestPage(locationRows(120), { from: 0, total: 120 }),
     );
 
-    await expect(service.getAllLocations()).resolves.toHaveLength(120);
+    await expect(service.getSites()).resolves.toHaveLength(120);
   });
 
   it("throws when the walk ends short of the server-reported total", async () => {
@@ -76,7 +82,7 @@ describe("LocationsService.getAllLocations", () => {
       postgrestPage(locationRows(500), { from: 0, total: 1500 }),
     );
 
-    await expect(service.getAllLocations()).rejects.toThrow(
+    await expect(service.getSites()).rejects.toThrow(
       /500 of 1500 rows/,
     );
   });
@@ -89,7 +95,7 @@ describe("LocationsService.getAllLocations", () => {
       .mockResolvedValueOnce(postgrestJson(locationRows(PAGE_SIZE, PAGE_SIZE)))
       .mockResolvedValueOnce(postgrestJson(locationRows(37, 2 * PAGE_SIZE)));
 
-    const result = await service.getAllLocations();
+    const result = await service.getSites();
 
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(result).toHaveLength(2 * PAGE_SIZE + 37);
@@ -103,7 +109,7 @@ describe("LocationsService.getAllLocations", () => {
       .mockResolvedValueOnce(postgrestJson(locationRows(PAGE_SIZE, 0)))
       .mockResolvedValueOnce(postgrestJson(locationRows(1, PAGE_SIZE)));
 
-    await service.getAllLocations();
+    await service.getSites();
 
     expect(requestedRanges(fetchMock)).toEqual(["0:1000", "1000:1000"]);
   });
@@ -113,7 +119,7 @@ describe("LocationsService.getAllLocations", () => {
   it("orders by name and then id so paging is stable across requests", async () => {
     fetchMock.mockResolvedValue(postgrestJson([]));
 
-    await service.getAllLocations();
+    await service.getSites();
 
     const url = requestedUrl(fetchMock.mock.calls[0][0]);
     expect(url.searchParams.get("order")).toBe("name.asc,id.asc");
@@ -122,7 +128,7 @@ describe("LocationsService.getAllLocations", () => {
   it("stops immediately when a page comes back exactly empty", async () => {
     fetchMock.mockResolvedValue(postgrestJson([]));
 
-    await expect(service.getAllLocations()).resolves.toEqual([]);
+    await expect(service.getSites()).resolves.toEqual([]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -131,7 +137,7 @@ describe("LocationsService.getAllLocations", () => {
       .mockResolvedValueOnce(postgrestJson(locationRows(PAGE_SIZE, 0)))
       .mockResolvedValueOnce(postgrestError("boom"));
 
-    await expect(service.getAllLocations()).rejects.toMatchObject({
+    await expect(service.getSites()).rejects.toMatchObject({
       message: "boom",
     });
     expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -145,16 +151,13 @@ describe("LocationsService.getAllLocations", () => {
     const page = locationRows(PAGE_SIZE);
     fetchMock.mockImplementation(() => Promise.resolve(postgrestJson(page)));
 
-    await expect(service.getAllLocations()).rejects.toThrow(
+    await expect(service.getSites()).rejects.toThrow(
       /range filter is not being applied/
     );
   });
 });
 
-// The scoped reads that replace fetching the whole table. `locations` is fully
-// seeded from the official classifications, so "a country's municipalities" is
-// 34,875 rows for France — these have to page exactly like getAllLocations,
-// which is why they share its walk.
+// The scoped reads that replace fetching the whole table.
 
 describe("LocationsService.getMunicipalitiesByCountry", () => {
   let fetchMock: FetchMock;
@@ -174,6 +177,42 @@ describe("LocationsService.getMunicipalitiesByCountry", () => {
     expect(url.searchParams.get("country_code")).toBe("eq.FI");
     expect(url.searchParams.get("type")).toBe("eq.municipality");
     expect(url.searchParams.get("order")).toBe("name.asc,id.asc");
+  });
+
+  // One level shallower than the site query, and that is the point: this one
+  // runs over 34,875 rows for France, so it asks for the depth a municipality
+  // actually has (département -> région -> pays) and no more.
+  it("embeds three ancestor levels, not the site query's four", async () => {
+    fetchMock.mockResolvedValue(postgrestJson([]));
+
+    await service.getMunicipalitiesByCountry("FR");
+
+    const select =
+      requestedUrl(fetchMock.mock.calls[0][0]).searchParams.get("select") ?? "";
+    expect(select.split("parent:parent_id(")).toHaveLength(4);
+  });
+
+  it("flattens the embedded parent nest into a nearest-first chain", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestJson([
+        {
+          ...locationRows(1)[0],
+          parent: {
+            id: "region",
+            name: "Uusimaa",
+            parent: { id: "country", name: "Finland", parent: null },
+          },
+        },
+      ]),
+    );
+
+    const [municipality] = await service.getMunicipalitiesByCountry("FI");
+
+    expect(municipality.ancestors.map((node) => node.name)).toEqual([
+      "Uusimaa",
+      "Finland",
+    ]);
+    expect(municipality.ancestors[0]).not.toHaveProperty("parent");
   });
 
   it("pages through a country the size of France", async () => {

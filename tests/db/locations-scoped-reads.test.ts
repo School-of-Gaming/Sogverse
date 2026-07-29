@@ -10,9 +10,9 @@ import { createAdminTestClient } from "./helpers";
  * These exist because the unit tests for the same methods run over a fake fetch
  * transport: that proves the service builds the request it means to and handles
  * the pages it gets back, but it cannot prove PostgREST *accepts* the request.
- * Two things here are only knowable against a live server — whether a
- * four-deep self-referential embed resolves, and whether the paged walk really
- * clears `max_rows` on a 34,875-row country — and both are load-bearing for the
+ * Two things here are only knowable against a live server — whether a deep
+ * self-referential embed resolves, and whether the paged walk really clears
+ * `max_rows` on a 34,875-row country — and both are load-bearing for the
  * "nothing fetches the whole table" design.
  *
  * The France commune seed (migration 00131) is asserted here too, for the same
@@ -82,6 +82,31 @@ describe("locations scoped reads", () => {
       expect(rows.length).toBeGreaterThanOrEqual(308);
       expect(rows.every((row) => row.country_code === "FI")).toBe(true);
       expect(rows.every((row) => row.type === "municipality")).toBe(true);
+    });
+
+    // The chain is what lets /schools group by region and the club picker show
+    // one, without a second read or a lookup table.
+    it("carries each municipality's chain, nearest first", async () => {
+      const rows = await service.getMunicipalitiesByCountry("FI");
+      const helsinki = rows.find((row) => row.external_code === "091");
+
+      expect(helsinki?.ancestors.map((node) => node.name)).toEqual([
+        "Uusimaa",
+        "Finland",
+      ]);
+    });
+
+    // France needs one more level than Finland: a commune sits under a
+    // département, which is the level Finland skips entirely.
+    it("reaches the région through France's extra département level", async () => {
+      const rows = await service.getMunicipalitiesByCountry("FR");
+      const lille = rows.find((row) => row.external_code === "59350");
+
+      expect(lille?.ancestors.map((node) => node.type)).toEqual([
+        "district",
+        "region",
+        "country",
+      ]);
     });
   });
 

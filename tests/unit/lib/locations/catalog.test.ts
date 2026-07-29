@@ -3,7 +3,6 @@ import {
   CATALOG_SEARCH_LIMIT,
   buildCatalogIndex,
   catalogRefKey,
-  findLeafChain,
   isCatalogCountry,
   normalizeForSearch,
   searchCatalogIndex,
@@ -11,11 +10,11 @@ import {
 } from "@/lib/locations/catalog";
 
 /**
- * The catalog readers are the layer between a generated static asset and both
- * consumers of it — the materialization route and the picker. What matters is
- * that a lookup is unambiguous (France reuses codes across levels), that the
- * search folds diacritics (nobody types "Nîmes"), and that the result cap
- * cannot cost a prefix match its place.
+ * The catalog readers are the layer between a generated static asset and the
+ * picker UI that browses it. What matters is that the search folds diacritics
+ * (nobody types "Nîmes"), that a tick's key stays unambiguous across levels
+ * (France reuses each région code as a département code), and that the result
+ * cap cannot cost a prefix match its place.
  */
 
 const FR: LocationCatalog = {
@@ -93,32 +92,6 @@ describe("isCatalogCountry", () => {
     expect(isCatalogCountry("GB")).toBe(false);
     expect(isCatalogCountry(null)).toBe(false);
     expect(isCatalogCountry(undefined)).toBe(false);
-  });
-});
-
-describe("findLeafChain", () => {
-  it("returns the whole chain, root first", () => {
-    expect(findLeafChain(FR, "59350")).toEqual([
-      ["32", "Hauts-de-France", expect.anything()],
-      ["59", "Nord", expect.anything()],
-      ["59350", "Lille"],
-    ]);
-  });
-
-  it("handles a country that skips a level", () => {
-    const chain = findLeafChain(FI, "091");
-    expect(chain).toHaveLength(2);
-    expect(chain?.[1][1]).toBe("Helsinki");
-  });
-
-  it("matches only at leaf depth, so a région code is not a commune", () => {
-    // "32" is a real code in this catalog — as a région, not a commune.
-    expect(findLeafChain(FR, "32")).toBeNull();
-    expect(findLeafChain(FR, "59")).toBeNull();
-  });
-
-  it("returns null for a code that is not in the catalog", () => {
-    expect(findLeafChain(FR, "99999")).toBeNull();
   });
 });
 

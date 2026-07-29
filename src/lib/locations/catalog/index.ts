@@ -5,8 +5,7 @@ export type { CatalogNode, LocationCatalog } from "./types";
 
 /**
  * The catalog module's public surface: which countries ship one, how to load
- * one, and the two pure readers (chain lookup, search index) that the
- * materialization route and the picker UI both need.
+ * one, and the pure readers (tick identity, search index) the picker UI needs.
  */
 
 /**
@@ -81,49 +80,6 @@ export async function loadCatalog(
 }
 
 /**
- * The chain of catalog nodes from a root-level entry down to a leaf, index
- * aligned with `catalog.levels` — so `chain[i]` is a row of type `levels[i]`.
- */
-export type CatalogChain = readonly CatalogNode[];
-
-/**
- * Find the leaf (municipality/commune) entry carrying `code`, returning the
- * whole ancestor chain the materializer needs to build.
- *
- * Only leaf depth is searched, which is what makes the lookup unambiguous:
- * France reuses each of its 18 région codes as a département code, so a
- * depth-agnostic search for "01" would have three answers. Leaf codes (INSEE
- * commune, Tilastokeskus kunta) are unique within their own classification.
- */
-export function findLeafChain(
-  catalog: LocationCatalog,
-  code: string,
-): CatalogChain | null {
-  const leafDepth = catalog.levels.length - 1;
-
-  function walk(
-    nodes: readonly CatalogNode[],
-    depth: number,
-    trail: CatalogNode[],
-  ): CatalogChain | null {
-    for (const node of nodes) {
-      const chain = [...trail, node];
-      if (depth === leafDepth) {
-        if (node[0] === code) return chain;
-        continue;
-      }
-      const children = node[2];
-      if (!children) continue;
-      const found = walk(children, depth + 1, chain);
-      if (found) return found;
-    }
-    return null;
-  }
-
-  return walk(catalog.tree, 0, []);
-}
-
-/**
  * Identifies one catalog node the way the `locations` table is keyed:
  * `(country_code, type, external_code)`. A UI that only ever handled catalog
  * entries can therefore hand a set of these straight to the row resolver
@@ -163,7 +119,7 @@ export interface CatalogPick extends CatalogRef {
 
 /** One searchable entry, with its display path and pre-normalized name. */
 export interface CatalogEntry {
-  /** The official code — what materialization and row resolution are keyed on. */
+  /** The official code — what row resolution is keyed on. */
   code: string;
   /** The level the entry sits at, i.e. `catalog.levels[its depth]`. */
   type: LocationType;
