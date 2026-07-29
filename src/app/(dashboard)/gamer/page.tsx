@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   ParticipationsService,
   type MyUpcomingSessionRow,
+  type MyWaitlistRow,
 } from "@/services/participations";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -27,15 +28,37 @@ async function getInitialSessionRows(): Promise<MyUpcomingSessionRow[]> {
   }
 }
 
+/** The waitlist band's rows, read-only for this audience. Same prefetch shape
+ *  and the same `[]`-on-failure fallback as the sessions read above. */
+async function getInitialWaitlistRows(): Promise<MyWaitlistRow[]> {
+  try {
+    const supabase = await createClient();
+    const service = new ParticipationsService(supabase);
+    return await service.getMyWaitlistEntries("gamer");
+  } catch {
+    return [];
+  }
+}
+
 export default async function GamerDashboardPage() {
-  const initialSessionRows = await getInitialSessionRows();
-  return <GamerDashboardPageBody initialSessionRows={initialSessionRows} />;
+  const [initialSessionRows, initialWaitlistRows] = await Promise.all([
+    getInitialSessionRows(),
+    getInitialWaitlistRows(),
+  ]);
+  return (
+    <GamerDashboardPageBody
+      initialSessionRows={initialSessionRows}
+      initialWaitlistRows={initialWaitlistRows}
+    />
+  );
 }
 
 function GamerDashboardPageBody({
   initialSessionRows,
+  initialWaitlistRows,
 }: {
   initialSessionRows: MyUpcomingSessionRow[];
+  initialWaitlistRows: MyWaitlistRow[];
 }) {
   const t = useTranslations('gamer');
   const sections = useTranslations('dashboardSections');
@@ -58,7 +81,10 @@ function GamerDashboardPageBody({
 
       <section className="mx-auto max-w-3xl space-y-4">
         <h2 className="text-3xl font-bold">{sections('upcomingSessions')}</h2>
-        <GamerSessionsSection initialRows={initialSessionRows} />
+        <GamerSessionsSection
+          initialRows={initialSessionRows}
+          initialWaitlistRows={initialWaitlistRows}
+        />
       </section>
 
       <section className="mx-auto max-w-3xl space-y-4">

@@ -1,6 +1,7 @@
 export { ParticipationsService } from "./participations.service";
 export type {
   MyUpcomingSessionRow,
+  MyWaitlistRow,
   AdminGamerParticipationRow,
   ParticipationCounts,
   ParticipationConfirmation,
@@ -8,12 +9,16 @@ export type {
   CreateParticipationResponse,
   JoinWaitlistInput,
   JoinWaitlistResponse,
+  LeaveWaitlistInput,
+  LeaveWaitlistResponse,
 } from "./participations.service";
 export {
   participationKeys,
   useMyUpcomingSessions,
+  useMyWaitlist,
   useParticipationCounts,
   useCreateParticipation,
   useJoinWaitlist,
+  useLeaveWaitlist,
   useProductSeatCountsRealtime,
 } from "./participations.queries";

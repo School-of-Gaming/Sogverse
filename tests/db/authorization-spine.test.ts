@@ -171,6 +171,14 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/waitlist-admin.test.ts",
     why: "owner-authorized: returns NULL rather than a position for a row the caller neither purchased nor is the gamer on",
   },
+  get_my_waitlist_positions: {
+    scopeTest: "tests/db/waitlist-self-service.test.ts",
+    why: "takes no argument at all: the set it answers with is defined by auth.uid() on the row's two owner columns, so rows ahead of the caller in a queue are counted but never returned",
+  },
+  leave_my_waitlist_spot: {
+    scopeTest: "tests/db/waitlist-self-service.test.ts",
+    why: "the only write here: both the lookup and the DELETE carry customer_id = auth.uid(), and a row belonging to someone else is answered identically to one that does not exist",
+  },
   set_my_pin: {
     scopeTest: "tests/db/parent-pin.test.ts",
     why: "writes the caller's own customer_profiles.pin_hash",

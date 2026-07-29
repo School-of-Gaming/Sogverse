@@ -1451,6 +1451,13 @@ export type Database = {
           status: string
         }[]
       }
+      get_my_waitlist_positions: {
+        Args: never
+        Returns: {
+          participation_id: string
+          waitlist_position: number
+        }[]
+      }
       get_product_groups_with_details: {
         Args: { p_product_id: string }
         Returns: Json
@@ -1488,6 +1495,10 @@ export type Database = {
           p_gamer_id: string
           p_product_id: string
         }
+        Returns: Json
+      }
+      leave_my_waitlist_spot: {
+        Args: { p_participation_id: string }
         Returns: Json
       }
       participation_state: {

@@ -46,6 +46,7 @@ import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
 import { UserRow } from "@/components/admin/user-row";
 import { SessionsSection, WaitlistCard } from "@/components/parent";
 import type { UpcomingSessionEntry } from "@/lib/upcoming-sessions";
+import type { WaitlistEntry } from "@/lib/waitlist-entries";
 import { useAuth, useNow, useTimezone } from "@/providers";
 import { useLocale, useTranslations } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
@@ -1009,8 +1010,29 @@ const WAITLIST_DEMO_GAMER_ALT = {
   seed: "4c7f9a20-3e51-4b8d-8f26-0a9d1c6e5b73",
 } as const;
 
+/**
+ * The band fixture, in the shape `useMyWaitlist` returns — two children of the
+ * same family in line for different clubs, which is what makes the per-card
+ * "For {name}" attribution earn its place.
+ */
+const WAITLIST_DEMO_ENTRIES: WaitlistEntry[] = [
+  {
+    participationId: "demo-waitlist-1",
+    productName: "Minecraft Builders Club",
+    gamerFirstName: WAITLIST_DEMO_GAMER_ALT.firstName,
+    gamerSeed: WAITLIST_DEMO_GAMER_ALT.seed,
+    position: 3,
+  },
+  {
+    participationId: "demo-waitlist-2",
+    productName: "Roblox Obby Makers",
+    gamerFirstName: WAITLIST_DEMO_GAMER.firstName,
+    gamerSeed: WAITLIST_DEMO_GAMER.seed,
+    position: 7,
+  },
+];
+
 function WaitlistCardDemo() {
-  const t = useTranslations("dashboardSections");
   const now = useNow();
   const noop = () => {};
   const scheduled = buildLoadedSessions(
@@ -1066,28 +1088,52 @@ function WaitlistCardDemo() {
         </div>
       </SubSection>
 
-      <SubSection title="Band within Sessions">
-        <div className="mx-auto w-full max-w-lg space-y-6">
-          <div className="space-y-3">
-            <DemoCaption>{t("waitlistBand")}</DemoCaption>
-            <WaitlistCard
-              productName="Minecraft Builders Club"
-              gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
-              gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
-              position={3}
-              onLeave={noop}
-            />
-            <WaitlistCard
-              productName="Roblox Obby Makers"
-              gamerFirstName={WAITLIST_DEMO_GAMER.firstName}
-              gamerSeed={WAITLIST_DEMO_GAMER.seed}
-              position={7}
-              onLeave={noop}
+      {/* Driven through the real `SessionsSection` rather than hand-composed
+          bands, so this demo shows the shipped band order and labelling rule
+          instead of a second arrangement that could quietly diverge from it.
+          The four cases below are the whole state space of the two lists. */}
+      <SubSection title="Bands within Sessions">
+        <div className="space-y-8">
+          <div className="flex flex-col gap-2">
+            <DemoCaption>
+              Both bands — labels appear only here, where there are two groups
+              to tell apart
+            </DemoCaption>
+            <SessionsSection
+              sessions={scheduled}
+              waitlist={WAITLIST_DEMO_ENTRIES}
+              onLeaveWaitlist={noop}
             />
           </div>
-          <div className="space-y-3">
-            <DemoCaption>{t("scheduledBand")}</DemoCaption>
-            <SessionsSection sessions={scheduled} />
+          <div className="flex flex-col gap-2">
+            {/* The state the pre-waitlist section got wrong: a family holding
+                only waitlist spots was told they had no upcoming sessions. */}
+            <DemoCaption>Waitlist only — no label, nothing to disambiguate</DemoCaption>
+            <SessionsSection
+              sessions={[]}
+              waitlist={WAITLIST_DEMO_ENTRIES}
+              onLeaveWaitlist={noop}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            {/* Unchanged from before the waitlist band existed — the common
+                case stays exactly as it was. */}
+            <DemoCaption>Scheduled only — no label</DemoCaption>
+            <SessionsSection sessions={scheduled} waitlist={[]} />
+          </div>
+          <div className="flex flex-col gap-2">
+            {/* Read-only: no leave handler, and the cards drop the "For {name}"
+                attribution. What a logged-in kid sees. */}
+            <DemoCaption>Gamer audience — read-only band</DemoCaption>
+            <SessionsSection
+              sessions={[]}
+              waitlist={WAITLIST_DEMO_ENTRIES}
+              audience="gamer"
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <DemoCaption>Neither — empty state</DemoCaption>
+            <SessionsSection sessions={[]} waitlist={[]} />
           </div>
         </div>
       </SubSection>

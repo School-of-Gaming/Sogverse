@@ -12,10 +12,16 @@ import {
 import { useNow } from "@/providers";
 import type { SessionAudience } from "@/types";
 import {
+  toWaitlistEntries,
+  type WaitlistEntry,
+} from "@/lib/waitlist-entries";
+import {
   ParticipationsService,
   type CreateParticipationInput,
   type JoinWaitlistInput,
+  type LeaveWaitlistInput,
   type MyUpcomingSessionRow,
+  type MyWaitlistRow,
   type ParticipationCounts,
 } from "./participations.service";
 import { productKeys } from "../products";
@@ -24,6 +30,8 @@ export const participationKeys = {
   all: ["participations"] as const,
   myUpcomingSessions: (audience: SessionAudience) =>
     [...participationKeys.all, "my-upcoming-sessions", audience] as const,
+  myWaitlist: (audience: SessionAudience) =>
+    [...participationKeys.all, "my-waitlist", audience] as const,
   countsByProducts: (productIds: string[]) =>
     [...participationKeys.all, "counts", { productIds: [...productIds].sort() }] as const,
 };
@@ -64,6 +72,63 @@ export function useMyUpcomingSessions(
     () => expandUpcomingSessions(query.data, now, locale),
     [query.data, now, locale],
   );
+}
+
+/**
+ * Drives the "On the waitlist" band on both `/parent` and `/gamer` — the
+ * companion to `useMyUpcomingSessions`, filtered to the rows that one excludes.
+ * Returns the viewer's waitlisted participations as cards, each carrying a
+ * position recomputed live by the database (so it shrinks as people ahead of
+ * them leave) and a product name resolved into the current UI locale.
+ *
+ * `initialData` is **required** for the same reason it is on the sessions hook:
+ * both dashboards prefetch in their Server Component, so the band paints
+ * populated on first frame rather than appearing under content the viewer is
+ * already reading. Leaving a waitlist cascades through `participationKeys.all`
+ * and refetches this like everything else.
+ */
+export function useMyWaitlist(
+  audience: SessionAudience,
+  options: { initialData: MyWaitlistRow[] },
+): WaitlistEntry[] {
+  const supabase = getClient();
+  const service = new ParticipationsService(supabase);
+  const locale = resolveLocale(useLocale());
+
+  const query = useQuery({
+    queryKey: participationKeys.myWaitlist(audience),
+    queryFn: () => service.getMyWaitlistEntries(audience),
+    initialData: options.initialData,
+  });
+
+  return useMemo(
+    () => toWaitlistEntries(query.data, locale),
+    [query.data, locale],
+  );
+}
+
+/**
+ * Give up a waitlist spot. Invalidates the whole participation hierarchy — the
+ * band the card sits in, and the seat counts on the product it came from, which
+ * just gained a place in line for everyone behind them.
+ *
+ * The caller holds its own `committing` flag rather than reading
+ * `mutation.isPending`: the card has to stay dimmed and the badge locked from
+ * the click through to the row leaving the list, and `isPending` flips false
+ * before `onSuccess` — let alone before the refetch lands. See the "Loading &
+ * Disabled State" rule.
+ */
+export function useLeaveWaitlist() {
+  const queryClient = useQueryClient();
+  const supabase = getClient();
+  const service = new ParticipationsService(supabase);
+  return useMutation({
+    mutationFn: (input: LeaveWaitlistInput) => service.leaveWaitlist(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: participationKeys.all });
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
+    },
+  });
 }
 
 // `initialData` (optional) is the server-prefetched seat counts from the shop

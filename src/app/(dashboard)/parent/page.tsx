@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   ParticipationsService,
   type MyUpcomingSessionRow,
+  type MyWaitlistRow,
 } from "@/services/participations";
 import { resolveCustomerFamilyViaRls } from "@/services/family/family.server";
 import type { FamilyMember } from "@/services/family";
@@ -38,6 +39,23 @@ async function getInitialSessionRows(): Promise<MyUpcomingSessionRow[]> {
     const supabase = await createClient();
     const service = new ParticipationsService(supabase);
     return await service.getMyUpcomingSessions("customer");
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Server-prefetch the parent's waitlisted participations and their live
+ * positions, the same way and for the same reason as the session rows above.
+ * These render in a band directly above the session cards, so arriving late
+ * would push a button the parent was already reaching for — exactly the reflow
+ * the layout-stability rule forbids. `[]` on failure.
+ */
+async function getInitialWaitlistRows(): Promise<MyWaitlistRow[]> {
+  try {
+    const supabase = await createClient();
+    const service = new ParticipationsService(supabase);
+    return await service.getMyWaitlistEntries("customer");
   } catch {
     return [];
   }
@@ -80,19 +98,25 @@ async function getInitialBillingAccounts(): Promise<BillingAccount[]> {
 }
 
 export default async function CustomerDashboardPage() {
-  // All three reads run together: the page already blocks on the sessions
-  // fetch, so adding the (cheaper) family and billing reads in parallel costs
-  // ~no extra wall-clock and lets My Gamers and Billing paint populated on the
-  // first frame.
-  const [initialSessionRows, initialFamily, billingAccounts] =
-    await Promise.all([
-      getInitialSessionRows(),
-      getInitialFamily(),
-      getInitialBillingAccounts(),
-    ]);
+  // All four reads run together: the page already blocks on the sessions
+  // fetch, so adding the (cheaper) waitlist, family and billing reads in
+  // parallel costs ~no extra wall-clock and lets every section paint populated
+  // on the first frame.
+  const [
+    initialSessionRows,
+    initialWaitlistRows,
+    initialFamily,
+    billingAccounts,
+  ] = await Promise.all([
+    getInitialSessionRows(),
+    getInitialWaitlistRows(),
+    getInitialFamily(),
+    getInitialBillingAccounts(),
+  ]);
   return (
     <CustomerDashboardPageBody
       initialSessionRows={initialSessionRows}
+      initialWaitlistRows={initialWaitlistRows}
       initialFamily={initialFamily}
       billingAccounts={billingAccounts}
     />
@@ -101,10 +125,12 @@ export default async function CustomerDashboardPage() {
 
 function CustomerDashboardPageBody({
   initialSessionRows,
+  initialWaitlistRows,
   initialFamily,
   billingAccounts,
 }: {
   initialSessionRows: MyUpcomingSessionRow[];
+  initialWaitlistRows: MyWaitlistRow[];
   initialFamily: FamilyMember[];
   billingAccounts: BillingAccount[];
 }) {
@@ -142,7 +168,10 @@ function CustomerDashboardPageBody({
         <section id="sessions" className="scroll-mt-32">
           <div className="mx-auto max-w-3xl space-y-6">
             <h2 className="text-3xl font-bold">{t('upcomingSessions')}</h2>
-            <ParentSessionsSection initialRows={initialSessionRows} />
+            <ParentSessionsSection
+              initialRows={initialSessionRows}
+              initialWaitlistRows={initialWaitlistRows}
+            />
           </div>
         </section>
 
