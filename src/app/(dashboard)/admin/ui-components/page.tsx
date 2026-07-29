@@ -1940,6 +1940,7 @@ function fixtureLocation(
     type,
     parent_id,
     country_code: "FI",
+    external_code: null,
     created_at: "2026-01-01T00:00:00Z",
     updated_at: "2026-01-01T00:00:00Z",
   };

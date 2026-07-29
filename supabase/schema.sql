@@ -2892,6 +2892,7 @@ CREATE TABLE public.locations (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     name_i18n jsonb,
+    external_code text,
     CONSTRAINT locations_no_self_parent CHECK ((parent_id IS DISTINCT FROM id))
 );
 
@@ -2901,6 +2902,13 @@ CREATE TABLE public.locations (
 --
 
 COMMENT ON COLUMN public.locations.name_i18n IS 'Locale -> display-name overrides (e.g. {"sv":"Helsingfors"}). Resolve as name_i18n[locale] ?? name. `name` holds the canonical native-language name and is never duplicated here.';
+
+
+--
+-- Name: COLUMN locations.external_code; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.locations.external_code IS 'Official statistical code for this location in its national classification: INSEE Code officiel géographique code for FR rows (région / département / commune), Statistics Finland region (maakunta) or municipality (kunta) code for FI rows. NULL on admin-created sites, which exist in no national classification. Unique per (country_code, type) — France reuses the same code across levels.';
 
 
 --
@@ -3858,6 +3866,13 @@ CREATE INDEX idx_whatsapp_contacts_last_message ON public.whatsapp_contacts USIN
 --
 
 CREATE INDEX idx_whatsapp_messages_conversation ON public.whatsapp_messages USING btree (phone, created_at DESC);
+
+
+--
+-- Name: uq_locations_external_code; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_locations_external_code ON public.locations USING btree (country_code, type, external_code) WHERE (external_code IS NOT NULL);
 
 
 --

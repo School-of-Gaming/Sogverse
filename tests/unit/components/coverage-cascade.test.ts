@@ -25,6 +25,7 @@ function loc(id: string, parent_id: string | null): Location {
     type: "site",
     parent_id,
     country_code: "FI",
+    external_code: null,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
   };

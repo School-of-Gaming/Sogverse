@@ -13,6 +13,12 @@
 *.bat   text eol=crlf
 *.cmd   text eol=crlf
 
+# Generated location catalogs — 34,875 French communes, one entry per line.
+# Never hand-edited (scripts/generate-location-catalogs.mjs rewrites them from
+# the official INSEE/Tilastokeskus releases), so collapse them in review rather
+# than burying a PR under an annual refresh diff.
+src/lib/locations/catalog/*.json linguist-generated=true
+
 # Binary assets — never convert.
 *.png   binary
 *.jpg   binary

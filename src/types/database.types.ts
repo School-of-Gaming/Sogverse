@@ -321,6 +321,7 @@ export type Database = {
         Row: {
           country_code: string | null
           created_at: string
+          external_code: string | null
           id: string
           name: string
           name_i18n: Json | null
@@ -331,6 +332,7 @@ export type Database = {
         Insert: {
           country_code?: string | null
           created_at?: string
+          external_code?: string | null
           id?: string
           name: string
           name_i18n?: Json | null
@@ -341,6 +343,7 @@ export type Database = {
         Update: {
           country_code?: string | null
           created_at?: string
+          external_code?: string | null
           id?: string
           name?: string
           name_i18n?: Json | null

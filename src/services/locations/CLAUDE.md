@@ -6,7 +6,15 @@ Hierarchical geographic system mapping products and gedus to regions, powering s
 
 One self-referential `locations` table (adjacency list): each row has a nullable `parent_id` pointing at another row. A `location_type` enum (`country`, `region`, `municipality`, `district`, `site`) classifies each level. Arbitrary depth, shallow in practice (3-5 levels), so `WITH RECURSIVE` CTEs handle ancestor/descendant walks fine.
 
-Columns: `id`, `name`, `name_i18n` (jsonb, see below), `type`, `parent_id` (FK to `locations`, `ON DELETE RESTRICT`), `country_code` (ISO 3166-1 alpha-2, **denormalized on every row** so country filtering needs no recursion), `created_at`, `updated_at`.
+Columns: `id`, `name`, `name_i18n` (jsonb, see below), `type`, `parent_id` (FK to `locations`, `ON DELETE RESTRICT`), `country_code` (ISO 3166-1 alpha-2, **denormalized on every row** so country filtering needs no recursion), `external_code` (nullable, see below), `created_at`, `updated_at`.
+
+## Official codes (`external_code`)
+
+`external_code` holds the row's code in its country's official statistical classification — INSEE's Code officiel géographique for France, Statistics Finland's maakunta/kunta classifications for Finland. It is the key seeded and generated rows are deduped on, because names are not one: France has homonymous communes, and each DROM has a région and a département of the same name. Sites an admin creates by hand exist in no national classification and keep it NULL — which is why the column is nullable and its uniqueness partial.
+
+Uniqueness is `(country_code, type, external_code)`, not `(country_code, external_code)`. France reuses the same code across levels — every one of the 18 région codes is also a département code — and the two are unambiguous in the COG only because they ship as separate files. `type` *is* that file, so the tuple expresses "the official code within its own classification". Storing prefixed codes instead was rejected: the column would stop holding the official code, breaking any join against upstream data.
+
+The exhaustive per-country lists live as generated static catalogs in `src/lib/locations/catalog/` (`scripts/generate-location-catalogs.mjs` rebuilds them from the official releases; its header documents the sources and the annual refresh procedure). The table holds only rows something references.
 
 Hierarchy is flexible, not rigid — not every country uses every level (Finland skips `district`). A `country` row has `parent_id IS NULL`. Per-country level naming (region = maakunta/state/prefecture, etc.) is metadata, not separate types.
 
@@ -16,6 +24,8 @@ Hierarchy is flexible, not rigid — not every country uses every level (Finland
 
 Standard service pattern. `LocationsService` takes an `AppSupabaseClient`:
 - **Reads** (`getAllLocations`, `getLocation`) use the injected client directly against `locations`.
+
+**Rule: a read that can return the whole table pages through `.range()` until a page comes back short.** PostgREST enforces `max_rows` (1000) by truncating the response, not by erroring, so an unbounded select is indistinguishable from a complete one — it silently drops rows the moment the tree outgrows the cap, and every country shares that one budget. Paging also requires a **total** order: `name` alone is not one (see the DROM name collisions above), so order by `name` then `id` or rows shift between requests and the walk both duplicates and drops them.
 - **Writes** (`createLocation`, `updateLocation`) `fetch()` the admin API (`/api/admin/locations/...`). The route re-checks the role and performs the write on the caller's own server-side client, so the admin-only write policy on `locations` is the second layer behind it; `authenticated` holds INSERT and UPDATE but no DELETE, which is why there is no delete route. The injected client is intentionally unused by write methods.
 
 `locations.queries.ts` exposes React Query hooks plus the `locationKeys` factory. `locations.contracts.ts` holds the zod schemas (`createLocationBody`, `updateLocationBody`, `locationRow`) shared by route and service; enum values derive from `Constants.public.Enums.location_type`. Re-exports in `index.ts`.
