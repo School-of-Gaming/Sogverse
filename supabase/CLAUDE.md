@@ -22,18 +22,20 @@ Both are regenerated on every migration and reflect current state, so you never
 reconstruct it by hand.
 
 **Why the snapshot is built from migrations and not dumped from a hosted database.** It
-used to be dumped from the linked project, and on 2026-07-29 that was shown to be
-unsound: the hosted database had been edited outside migrations more than once — a
-function body reformatted, function-body comments stripped from two functions, two
-`COMMENT ON` statements present that appear in no migration, a column dropped and
-re-added so its ordinal moved. All of it flowed straight into the committed file, where
-it then read as authoritative. Diffing the two hosted databases is what surfaced it;
-tracing each case against migration source is what settled which one was wrong.
+used to be dumped from the linked project, and the decisive problem is that **staging is
+shared and mutable**: migrations land there from branches that have not merged, so a dump
+taken at any moment is the union of everyone's in-flight work. Committing that produces a
+`schema.sql` describing a schema which exists nowhere — and an agent reading it will write
+code against columns that are not on `dev` or in production. Hand-edits compound it (a
+reformatted function body, comments stripped from others, `COMMENT ON` statements
+belonging to no migration have all been found there), but the shared-environment problem
+alone is enough: no amount of tidying staging makes it a valid source for one branch's
+snapshot.
 
-Generating the snapshot from migrations removes the whole class: the file cannot record
-anything a migration did not do, and a hand-edit to a hosted database no longer has a
-path into it. CI regenerates it on every run and fails when the committed copy disagrees,
-so drift is caught the moment it is introduced rather than a release cycle later.
+Building from `migrations/` removes the class entirely. The file cannot record anything a
+migration did not do, so neither a hand-edit nor an unmerged branch has a path into it.
+CI regenerates it on every run, and on `dev` commits the result — see step 4 of the
+workflow below, which is "do nothing".
 
 What that deliberately does *not* answer is whether a hosted database matches — the
 snapshot is a statement about `migrations/`, not about any live system. There is no
@@ -154,20 +156,13 @@ a migration PR (run via the Bash tool):
    stack this project does not run — so it silently produced a different file than the
    documented command. A second call site for a command whose correctness depends on this
    many details is a liability; run the command above.
-4. Refresh `supabase/schema.sql` — **CI generates this; you do not dump it.** Push the
-   branch, let the Database Tests job run, then download its `schema-from-migrations`
-   artifact and commit it as `supabase/schema.sql`. The job regenerates the snapshot from
-   the stack it builds out of `migrations/` and fails when the committed copy disagrees,
-   naming the artifact in the error.
-
-   The reason it is not a local command is above: dumping from a hosted database lets that
-   database's hand-edits into the file. Building from migrations makes that impossible, and
-   the local stack this would otherwise need does not run on every machine (no Docker
-   here — see `tests/CLAUDE.md`), so CI is the one place it can be produced consistently.
-   The cost is a round trip: the first push after a migration fails this check by design,
-   and the second carries the regenerated file.
+4. **Do nothing about `supabase/schema.sql`.** It is machine-maintained: CI regenerates it
+   from `migrations/` and commits it to `dev` after merge. Do not dump it, do not edit it,
+   and do not include it in a feature branch — if you do, the next `dev` build overwrites
+   it anyway.
 5. Check `src/types/index.ts` — add convenience aliases for any new tables/enums.
-6. Commit migration + updated types + `schema.sql` + tests together in the PR.
+6. Commit migration + updated types + tests together in the PR. `schema.sql` is not part
+   of it.
 
 ## Generated nullability can lie
 

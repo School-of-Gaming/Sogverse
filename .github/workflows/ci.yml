@@ -120,6 +120,9 @@ jobs:
   test-db:
     name: Database Tests
     runs-on: ubuntu-latest
+    # Needed only by the dev-only snapshot commit at the end of this job.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v5
 
@@ -201,13 +204,31 @@ jobs:
           path: /tmp/schema-from-migrations.sql
           retention-days: 30
 
-      - name: Verify committed schema.sql matches migrations
+      # schema.sql is machine-maintained: nobody writes it by hand, so CI commits it
+      # rather than failing and asking someone to. Only on dev, and deliberately not
+      # on feature branches — a branch that regenerated it would put a 6000-line
+      # generated file into every migration diff, and two branches doing so would
+      # conflict on it constantly. Keeping it to dev also means the file tracks
+      # *merged* migrations, so an unmerged branch's objects never leak into it.
+      #
+      # [skip ci] stops the commit from triggering another run. The run it would
+      # trigger has nothing left to do — the second pass finds the file already
+      # matching and commits nothing.
+      - name: Commit the regenerated snapshot (dev only)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
         run: |
-          if ! diff -u supabase/schema.sql /tmp/schema-from-migrations.sql; then
-            echo "::error::supabase/schema.sql does not match what migrations/ produces."
-            echo "Download the 'schema-from-migrations' artifact from this run and commit it as supabase/schema.sql."
-            exit 1
+          if diff -q supabase/schema.sql /tmp/schema-from-migrations.sql > /dev/null; then
+            echo "schema.sql already matches migrations — nothing to commit"
+            exit 0
           fi
+          echo "schema.sql is out of date with migrations; updating it"
+          diff -u supabase/schema.sql /tmp/schema-from-migrations.sql || true
+          cp /tmp/schema-from-migrations.sql supabase/schema.sql
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add supabase/schema.sql
+          git commit -m "chore(db): regenerate schema.sql from migrations [skip ci]"
+          git push origin HEAD:dev
 
       - name: Stop local Supabase
         if: always()
