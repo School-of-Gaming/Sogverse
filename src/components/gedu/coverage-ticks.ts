@@ -8,10 +8,10 @@
  * Each tick is an independent claim — "I cover this whole subtree" — and is
  * stored as exactly one `gedu_locations` row. Ticking a région does not tick
  * its départements, and unticking a commune does not disturb any ancestor tick.
- * (The old cascade, which enumerated descendants so a gedu could express
- * "Uusimaa except Helsinki", is retired: with an exhaustive catalog a gedu ticks
- * what they cover, and matching is an ancestor walk that reads any one of those
- * rows.)
+ * Nothing enumerates descendants: with an exhaustive catalog a gedu ticks
+ * exactly what they cover — "Uusimaa except Helsinki" is just the other
+ * municipalities, ticked — and matching is an ancestor walk that reads any one
+ * of those rows, so enumerating would only multiply rows saying the same thing.
  *
  * ## Why some saved rows can never be a tick
  *

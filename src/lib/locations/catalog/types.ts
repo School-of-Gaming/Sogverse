@@ -6,10 +6,11 @@ import type { LocationType } from "@/types";
  * from each country's official statistical classification.
  *
  * A catalog is the **exhaustive** list of a country's official administrative
- * divisions. The `locations` table, by contrast, holds only the rows something
- * actually references — a catalog entry becomes a row the first time an admin
- * picks it. So the catalog is what an admin browses and searches; the table is
- * what products, sites and gedu coverage point at.
+ * divisions, and it is what human eyes browse and search. The `locations` table
+ * holds the same divisions as seeded rows, and it is what the query engine
+ * reads — products, sites and gedu coverage point at those rows. The two are
+ * generated from one parse of one release, so an entry here and the row it
+ * names carry the same name and the same code.
  *
  * ## Why tuples
  *

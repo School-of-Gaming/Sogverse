@@ -6,9 +6,8 @@
  * All 34,875 communes of INSEE's Code officiel géographique become
  * `type = 'municipality'` rows in `public.locations`, each parented to its
  * département and stamped with its INSEE code. Why the table holds all of them
- * — rather than the catalog-only, materialize-on-demand arrangement this
- * replaces — is written into the emitted migration's own header, which is where
- * a future reader will look.
+ * is written into the emitted migration's own header, which is where a future
+ * reader will look.
  *
  * ## Reuse, not duplication
  *
