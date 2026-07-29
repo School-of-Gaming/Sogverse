@@ -22,6 +22,8 @@ import {
   useSitesByParent,
 } from "@/services/locations";
 import { localizedLocationName } from "@/lib/locations/localized-name";
+import { useRevealAfter } from "@/hooks/use-reveal-after";
+import { cn } from "@/lib/utils";
 import type { Location } from "@/types";
 
 /**
@@ -157,10 +159,7 @@ export function NewVenueDialog({
               buttons under it never move. */}
           <div className="h-[180px] overflow-y-auto rounded-md border border-input bg-background p-2">
             {sitesLoading ? (
-              <div
-                className="h-full animate-pulse rounded bg-muted"
-                aria-label={t("loading")}
-              />
+              <VenueListSkeleton label={t("loading")} />
             ) : sites && sites.length > 0 ? (
               <div className="space-y-0.5">
                 {sites.map((site) => (
@@ -205,5 +204,33 @@ export function NewVenueDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * Ghost rows for the venue box, invisible for the first 150ms: most communes
+ * answer faster than that (and most answer "no venues"), and a full-box grey
+ * pulse flashing before "no venues here yet" reads as breakage. The box
+ * around this already has its fixed height, so the gate shifts nothing.
+ */
+function VenueListSkeleton({ label }: { label: string }) {
+  const visible = useRevealAfter(150);
+  return (
+    <div
+      className={cn(
+        "space-y-2 p-1 transition-opacity duration-200",
+        visible ? "opacity-100" : "opacity-0",
+      )}
+      aria-label={label}
+      aria-busy="true"
+    >
+      {[82, 64, 73].map((width) => (
+        <div
+          key={width}
+          className="h-7 animate-pulse rounded bg-muted"
+          style={{ width: `${width}%` }}
+        />
+      ))}
+    </div>
   );
 }

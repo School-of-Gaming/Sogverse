@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ChevronRight, Search, X } from "lucide-react";
+import { useRevealAfter } from "@/hooks/use-reveal-after";
 import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -621,11 +622,7 @@ export function CatalogDialogShell({
  * worse than showing nothing in a box that already has its final size.
  */
 function CatalogLoadingSkeleton({ label }: { label: string }) {
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const id = window.setTimeout(() => setVisible(true), 150);
-    return () => window.clearTimeout(id);
-  }, []);
+  const visible = useRevealAfter(150);
 
   return (
     <div
