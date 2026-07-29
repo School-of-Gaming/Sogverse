@@ -95,9 +95,6 @@
     "noRecentActivity": "Ingen senaste aktivitet att visa.",
     "recentActivity": "Senaste aktivitet",
     "selectLanguage": "Välj språk",
-    "languageEnglish": "engelska",
-    "languageFinnish": "finska",
-    "languageSwedish": "svenska",
     "roleAdmin": "Administratör",
     "roleParent": "Förälder",
     "roleGamer": "Spelare",
@@ -109,7 +106,7 @@
       "subtitle": "I våra Minecraft-klubbar blir skärmtid kvalitetstid. Vi sammanför barn, professionella spelfostrare och spelet som barnen redan älskar — och skapar lekfulla lärandeupplevelser där de får nya vänner, utvecklar riktiga färdigheter och har roligt."
     },
     "quote": {
-      "text": "\"Det som är sant nu, var en gång bara din fantasi.\"",
+      "text": "”Det som är sant nu, var en gång bara din fantasi.”",
       "attribution": "— Rektorn för School of Gaming"
     },
     "mission": {
@@ -361,7 +358,7 @@
       "locationPicker": {
         "searchPlaceholder": "Sök efter land, region, kommun eller lokal…",
         "clearSearch": "Rensa sökning",
-        "noResults": "Inga platser matchar \"{query}\".",
+        "noResults": "Inga platser matchar ”{query}”.",
         "hintSite": "Välj en lokal. Saknas någon? Lägg till den under kommunen direkt här.",
         "hintMunicipality": "Välj den finländska kommun som klubben gäller — den som finansierar den. Lokaler och andra länder kan inte väljas här.",
         "addFromCatalog": "Lägg till en kommun från den officiella katalogen…",
@@ -437,7 +434,7 @@
         "municipalityHint": "Kommunklubbar är alltid kopplade till en specifik finländsk kommun — den som betalar. Föräldrar från den kommunen ser den när de bläddrar.",
         "siteHint": "Var tillfällena fysiskt äger rum.",
         "eventSingleDay": "Evenemang äger rum ett enda datum.",
-        "thresholdOnly": "Inget fast startdatum än. Föräldrar ser en räknare \"X av Y behövs\" medan den fylls. Du trycker Starta när du har tillräckligt med anmälningar och väljer första tillfällets datum då.",
+        "thresholdOnly": "Inget fast startdatum än. Föräldrar ser en räknare ”X av Y behövs” medan den fylls. Du trycker Starta när du har tillräckligt med anmälningar och väljer första tillfällets datum då.",
         "thresholdWithDate": "Om färre än så här många föräldrar anmäler sig till startdatumet behöver du ställa in den och återbetala från produktsidan.",
         "timezoneFixedHelsinki": "Tider är i tidszonen Europe/Helsinki. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
         "holidayHint": "Inget tillfälle körs på något datum från de valda kalendrarna. Redigera en kalender en gång och alla produkter som använder den uppdateras automatiskt.",
@@ -986,7 +983,7 @@
       "summaryTitle": "Din väntelisteplats",
       "forLabel": "På väntelista",
       "positionLabel": "Din plats i kön",
-      "positionValue": "#{position}",
+      "positionValue": "nr {position}",
       "next1": "Vi mejlar så snart en plats blir ledig.",
       "next2": "{gamer} behåller sin plats i kön under hela terminen.",
       "next3": "Du kan följa din plats i kön när som helst i Min SOG."
@@ -1162,7 +1159,7 @@
       "copyParentEmail": "Kopiera förälderns e-post {email}",
       "noParentEmail": "Ingen förälder-e-post sparad",
       "emailCopied": "E-post kopierad",
-      "copyAllParentEmails": "Kopiera alla förälder-e-postadresser ({count, plural, one {#} other {#}})",
+      "copyAllParentEmails": "Kopiera alla förälder-e-postadresser ({count})",
       "allEmailsCopied": "Alla förälder-e-postadresser kopierade"
     }
   },
@@ -1579,7 +1576,7 @@
     "waitlist": {
       "forLabel": "För {name}",
       "positionLabel": "Din plats i kön",
-      "positionValue": "#{position}",
+      "positionValue": "nr {position}",
       "reassuranceCustomer": "Vi mejlar så snart en plats blir ledig.",
       "reassuranceGamer": "Vi mejlar en förälder så snart en plats blir ledig.",
       "leave": {

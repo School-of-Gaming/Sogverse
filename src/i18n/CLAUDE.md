@@ -79,9 +79,10 @@ All other namespaces (role/feature pages, public pages, feature components, layo
 2. Register its flag in `src/components/ui/flags.ts` (a named per-country import — never the barrel). `country` is typed against that registry, so an unregistered flag fails the build.
 3. Add its loader to the `messageLoaders` map in `messages.ts`.
 4. Create `messages/<code>.json` by copying `en.json` and translating every value.
-5. Decide separately whether the country belongs in `PHONE_COUNTRIES` (`src/lib/constants/phone.ts`). That list is **not** derived from locales and drifts on purpose — US is a phone country with no locale, Klingon a locale with no country.
-6. CI translation validation picks the new file up automatically. No changes needed to `request.ts`, `types.ts`, `next.config.ts`, the check script, or provider code.
-7. Produce the native-speaker review handoff for the new translation — see the
+5. **Give it a matching spoken language** — a data-only migration inserting the code into the `spoken_languages` reference table, and its country in the spoken-language → flag map under `components/ui/`. Shipping a UI locale says we serve families who speak that language, so a club has to be offerable in it the same day, and `products.spoken_language_code` can only reference a row in that table. **Novelty locales are exempt** (Klingon is an easter egg, not a language a club is delivered in). A CI db test asserts this parity, so skipping it fails the build rather than shipping a dead language option. This is a parity requirement between the two systems, not a merge — locale and spoken language stay distinct everywhere else.
+6. Decide separately whether the country belongs in `PHONE_COUNTRIES` (`src/lib/constants/phone.ts`). That list is **not** derived from locales and drifts on purpose — US is a phone country with no locale, Klingon a locale with no country.
+7. CI translation validation picks the new file up automatically. No changes needed to `request.ts`, `types.ts`, `next.config.ts`, the check script, or provider code.
+8. Produce the native-speaker review handoff for the new translation — see the
    "Native-speaker review handoff" section below.
 
 ## Native-speaker review handoff

@@ -17,31 +17,36 @@
  * this component never needs a loading/placeholder state.
  */
 
-import { useTranslations } from "next-intl";
+import { useMemo } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import type { SpokenLanguage } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   getSpokenLanguageFlag,
   type SpokenLanguageFlag,
 } from "@/components/ui/language-flag";
-import { isKeyOf } from "@/lib/utils";
+import { resolveLocale } from "@/lib/constants/locales";
 
-// Map spoken-language codes to common.* translation keys.
-// Falls back to the DB name for codes not listed here. `as const` keeps the
-// values as literal message keys so c(...) typechecks without an assertion.
-const SPOKEN_LANG_NAME_KEYS = {
-  en: "languageEnglish",
-  fi: "languageFinnish",
-  sv: "languageSwedish",
-} as const;
-
+// Language names render in the viewer's locale. The `spoken_languages`
+// reference table carries a single (English) `name`, so localizing it there
+// would need a translation table; `Intl.DisplayNames` names any language code
+// in any locale for free ("fi" → Finnish / suomi / finska), and it covers every
+// code the table may ever grow — where the hand-maintained map of `common.*`
+// keys this replaced silently fell back to English for anything new.
 function useLangDisplay() {
-  const c = useTranslations("common");
+  const uiLocale = resolveLocale(useLocale());
+  const languageNames = useMemo(() => {
+    try {
+      return new Intl.DisplayNames([uiLocale], { type: "language" });
+    } catch {
+      return null;
+    }
+  }, [uiLocale]);
+
   return (lang: SpokenLanguage): { FlagIcon: SpokenLanguageFlag | undefined; displayName: string } => {
     const FlagIcon = getSpokenLanguageFlag(lang.code);
-    const displayName = isKeyOf(SPOKEN_LANG_NAME_KEYS, lang.code)
-      ? c(SPOKEN_LANG_NAME_KEYS[lang.code])
-      : lang.name;
+    // The DB `name` is the fallback for a code Intl cannot resolve.
+    const displayName = languageNames?.of(lang.code) ?? lang.name;
     return { FlagIcon, displayName };
   };
 }

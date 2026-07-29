@@ -33,7 +33,7 @@
   },
   "notFound": {
     "title": "Page not found",
-    "description": "The page you're looking for doesn't exist or may have moved.",
+    "description": "The page you’re looking for doesn’t exist or may have moved.",
     "home": "Back to home"
   },
   "common": {
@@ -67,7 +67,7 @@
     "createAccount": "Create Account",
     "unexpectedError": "An unexpected error occurred",
     "somethingWentWrong": "Something went wrong",
-    "noPermission": "You don't have permission to view this page.",
+    "noPermission": "You don’t have permission to view this page.",
     "perSession": "per session",
     "minutes": "min",
     "ages": "Ages {min}–{max}",
@@ -95,9 +95,6 @@
     "noRecentActivity": "No recent activity to display.",
     "recentActivity": "Recent Activity",
     "selectLanguage": "Select language",
-    "languageEnglish": "English",
-    "languageFinnish": "Finnish",
-    "languageSwedish": "Swedish",
     "roleAdmin": "Admin",
     "roleParent": "Parent",
     "roleGamer": "Gamer",
@@ -114,13 +111,13 @@
     },
     "mission": {
       "heading": "Our Mission",
-      "text": "All screen content is not made equal. Gaming is a great hobby when it is treated like all the other hobbies. We use children's love for games to their advantage — with good friends and a professional game educator who is there to guide and help."
+      "text": "All screen content is not made equal. Gaming is a great hobby when it is treated like all the other hobbies. We use children’s love for games to their advantage — with good friends and a professional game educator who is there to guide and help."
     },
     "values": {
       "heading": "Things We Care About",
       "playIsEssential": {
         "title": "Play Is Essential for Children",
-        "description": "Play is a child's work. It is crucial for their wellbeing and development. Our clubs are designed to promote free play that feeds imagination, curiosity, and creativity — powerful tools to face any future."
+        "description": "Play is a child’s work. It is crucial for their wellbeing and development. Our clubs are designed to promote free play that feeds imagination, curiosity, and creativity — powerful tools to face any future."
       },
       "friendsCarry": {
         "title": "Friends Carry Over Obstacles",
@@ -132,12 +129,12 @@
       },
       "familyInTheLoop": {
         "title": "Family in the Loop",
-        "description": "Parents are partners. You stay in control of your child's gaming experience while they enjoy the freedom to explore, create, and make friends in a safe environment."
+        "description": "Parents are partners. You stay in control of your child’s gaming experience while they enjoy the freedom to explore, create, and make friends in a safe environment."
       }
     },
     "howClubsWork": {
       "heading": "How Our Clubs Work",
-      "paragraph1": "Each week, our gamers log in and are greeted by their own game educator — a Gedu. The Gedu guides them through the day's topic, giving children space and freedom to make the adventures their own.",
+      "paragraph1": "Each week, our gamers log in and are greeted by their own game educator — a Gedu. The Gedu guides them through the day’s topic, giving children space and freedom to make the adventures their own.",
       "paragraph2": "Our Gedus are gamers themselves. They understand firsthand that as children and teenagers, identity and friendships are built both online and offline. That understanding shapes every session they lead.",
       "paragraph3": "All our clubs are built around stories that give space for gamers to explore, create, and imagine. Between weekly sessions, gamers get fun challenges to do online and offline. During holidays we organise camps, and every week there are community events, tournaments, and competitions.",
       "paragraph4": "Every gamer takes an oath to behave kindly and righteously — whether in-game, on voice chat, or out in the real world. The same values apply everywhere."
@@ -261,7 +258,7 @@
       },
       "sections": {
         "identity": "Identity",
-        "identityDescription": "What to call this and what it's about.",
+        "identityDescription": "What to call this and what it’s about.",
         "audience": "Audience",
         "audienceDescription": "Who this is intended for.",
         "where": "Where",
@@ -313,7 +310,7 @@
         "daysAndTimes": "Days & times",
         "time": "Time",
         "holidayCalendars": "Holiday calendars",
-        "holidayNoUpcoming": "No upcoming dates — this calendar needs dates before it's useful.",
+        "holidayNoUpcoming": "No upcoming dates — this calendar needs dates before it’s useful.",
         "pricing": "Price",
         "free": "Free",
         "paid": "Paid",
@@ -336,7 +333,7 @@
           "event": "e.g. Pokémon GO community walk · Helsinki"
         },
         "description": {
-          "consumerClub": "What happens each week, who it's for, what they'll learn.",
+          "consumerClub": "What happens each week, who it’s for, what they’ll learn.",
           "municipalityClub": "Hosted at which school, run during which term, delivered in which language.",
           "camp": "Days, total hours, theme of the week.",
           "event": "One-line pitch for the event — what, where, for whom."
@@ -361,9 +358,9 @@
       "locationPicker": {
         "searchPlaceholder": "Search by country, region, municipality, or site…",
         "clearSearch": "Clear search",
-        "noResults": "No locations match \"{query}\".",
+        "noResults": "No locations match “{query}”.",
         "hintSite": "Pick a site. Missing one? Add it inline under its municipality.",
-        "hintMunicipality": "Pick the Finnish municipality this club is for — the one that funds it. Sites and other countries aren't options here.",
+        "hintMunicipality": "Pick the Finnish municipality this club is for — the one that funds it. Sites and other countries aren’t options here.",
         "addFromCatalog": "Add a municipality from the official catalog…",
         "change": "Change",
         "edit": "Edit",
@@ -391,11 +388,11 @@
         "sectionTitle": "Per-session fees",
         "sectionDescription": "What we pay the game educators each session, and — for municipality clubs — what the municipality pays us. These are internal figures, separate from what parents pay above.",
         "primaryGeduLabel": "Primary Gedu fee",
-        "primaryGeduHint": "Paid to the lead game educator per session. Choose Unknown if you'll set it later, or Volunteer if they run it for free.",
+        "primaryGeduHint": "Paid to the lead game educator per session. Choose Unknown if you’ll set it later, or Volunteer if they run it for free.",
         "assistantGeduLabel": "Assistant Gedu fee",
-        "assistantGeduHint": "Paid to an assistant educator per session. Choose None if there's no assistant.",
+        "assistantGeduHint": "Paid to an assistant educator per session. Choose None if there’s no assistant.",
         "municipalityLabel": "Municipality fee",
-        "municipalityHint": "What the municipality pays us per session. Choose Unknown if you'll set it later.",
+        "municipalityHint": "What the municipality pays us per session. Choose Unknown if you’ll set it later.",
         "amountLabel": "Fee per session in euros",
         "status": {
           "unknown": "Unknown — set later",
@@ -411,7 +408,7 @@
         "threshold": "When enough gamers have signed up",
         "dateDescription": "Runs on the selected date, no matter how many parents sign up.",
         "date_and_thresholdDescription": "Scheduled for the selected date, but only runs if enough parents sign up in time. Otherwise you cancel it and parents are refunded automatically.",
-        "thresholdDescription": "No fixed start date. You pick the first session date once enough parents have signed up — parents see a live counter and know you'll contact them when it's ready."
+        "thresholdDescription": "No fixed start date. You pick the first session date once enough parents have signed up — parents see a live counter and know you’ll contact them when it’s ready."
       },
       "registrationModes": {
         "label": "When does registration open?",
@@ -428,7 +425,7 @@
       },
       "hints": {
         "shortDescription": "A one-line teaser shown on browse cards, listings, and the top of the detail page.",
-        "longDescription": "Optional. Shown only on the product's detail page. Build it from headings and paragraphs.",
+        "longDescription": "Optional. Shown only on the product’s detail page. Build it from headings and paragraphs.",
         "topicHint": "The topic this product covers — a game (like Minecraft or Fortnite) or a subject (like Webinar).",
         "padletHint": "Optional. Shared with families after they sign up.",
         "deliveredInHint": "The primary language used during sessions.",
@@ -437,8 +434,8 @@
         "municipalityHint": "Municipality clubs are always tied to a specific Finnish municipality — the one paying for it. Parents from that municipality will see it when they browse.",
         "siteHint": "Where sessions physically happen.",
         "eventSingleDay": "Events happen on a single date.",
-        "thresholdOnly": "No fixed start date yet. Parents see a \"X of Y needed\" counter while it fills up. You press Start once you have enough sign-ups and pick the first session date then.",
-        "thresholdWithDate": "If fewer than this many parents sign up by the start date, you'll need to cancel and refund from the product's page.",
+        "thresholdOnly": "No fixed start date yet. Parents see a “X of Y needed” counter while it fills up. You press Start once you have enough sign-ups and pick the first session date then.",
+        "thresholdWithDate": "If fewer than this many parents sign up by the start date, you’ll need to cancel and refund from the product’s page.",
         "timezoneFixedHelsinki": "Times are in Europe/Helsinki. Parents see them converted to their local timezone automatically.",
         "holidayHint": "No session will run on any date from the selected calendars. Edit a calendar once and every product using it updates automatically.",
         "billingHint": "Free events can have no seat limit. Paid events always have a seat count.",
@@ -448,10 +445,10 @@
         "pricingMonthly": "Charged every month while the subscription is active. Cancel anytime.",
         "pricingUpfront": "Charged once at signup. Same total no matter the duration.",
         "seatHint": "When full, new signups go to the waitlist.",
-        "visibleHint": "Uncheck it while you're still setting up, or to stop new sign-ups. It only hides the product from new parents — parents and gamers already enrolled still see it and their sessions on their My SOG page.",
+        "visibleHint": "Uncheck it while you’re still setting up, or to stop new sign-ups. It only hides the product from new parents — parents and gamers already enrolled still see it and their sessions on their My SOG page.",
         "seatLimitHint": "Cap the number of gamers, or run with no limit.",
         "holidayComingSoon": "Holiday calendars are coming soon. For now, every scheduled session runs.",
-        "startDateToday": "Locked to today's date for now.",
+        "startDateToday": "Locked to today’s date for now.",
         "startDateLocked": "Start date is locked for now."
       },
       "errors": {
@@ -469,9 +466,9 @@
         "endDateRequired": "End date is required",
         "seatCountInvalid": "Seat count must be a positive integer",
         "priceSessionMissing": "Enter a price per session in {currency}",
-        "priceSessionNegative": "Price per session in {currency} can't be negative",
+        "priceSessionNegative": "Price per session in {currency} can’t be negative",
         "priceMonthMissing": "Enter a monthly price in {currency}",
-        "priceMonthNegative": "Monthly price in {currency} can't be negative",
+        "priceMonthNegative": "Monthly price in {currency} can’t be negative",
         "primaryGeduFeeInvalid": "Enter a primary Gedu fee greater than 0, or choose Unknown or Volunteer",
         "assistantGeduFeeInvalid": "Enter an assistant Gedu fee greater than 0, or choose None or Volunteer",
         "municipalityFeeInvalid": "Enter a municipality fee greater than 0, or choose Unknown",
@@ -572,7 +569,7 @@
       },
       "groupsPanel": {
         "title": "Groups",
-        "subtitle": "Drag each gamer into the group they'll play with. Add Gedus to lead each group.",
+        "subtitle": "Drag each gamer into the group they’ll play with. Add Gedus to lead each group.",
         "addGroup": "Add group",
         "loading": "Loading…",
         "genderBoy": "boy",
@@ -584,14 +581,14 @@
         },
         "unassigned": {
           "title": "Unassigned",
-          "subtitle": "Gamers who've paid but aren't in a group yet. Drag them into one to place them.",
+          "subtitle": "Gamers who’ve paid but aren’t in a group yet. Drag them into one to place them.",
           "empty": "Everyone has a group.",
           "addGamer": "Add gamer",
           "removeGamer": "Remove gamer"
         },
         "empty": {
           "title": "No groups yet",
-          "description": "Add a group when you're ready to start placing gamers.",
+          "description": "Add a group when you’re ready to start placing gamers.",
           "addFirst": "Add your first group"
         },
         "group": {
@@ -611,7 +608,7 @@
           "empty": "No gamers here yet — drag one in.",
           "deleteConfirmTitle": "Delete {name}?",
           "deleteConfirmEmpty": "Nobody is in this group, so deleting it just clears the Gedu assignments.",
-          "deleteConfirmWithGamers": "{count, plural, =1 {1 gamer is in this group} other {# gamers are in this group}}. They'll move to Unassigned."
+          "deleteConfirmWithGamers": "{count, plural, =1 {1 gamer is in this group} other {# gamers are in this group}}. They’ll move to Unassigned."
         },
         "gedu": {
           "removeAria": "Remove {name}"
@@ -636,7 +633,7 @@
         "limited": "Limited seats",
         "limitedDescription": "Cap how many gamers can join. When full, new signups can go to a waitlist.",
         "unlimited": "No seat limit",
-        "unlimitedDescription": "Anyone who signs up can join — there's no cap."
+        "unlimitedDescription": "Anyone who signs up can join — there’s no cap."
       }
     },
     "users": {
@@ -678,13 +675,13 @@
         "title": "Verification",
         "verified": "Verified",
         "unverified": "Not verified",
-        "unverifiedNote": "This game educator hasn't been verified yet. They can't be assigned to a group until you verify them.",
+        "unverifiedNote": "This game educator hasn’t been verified yet. They can’t be assigned to a group until you verify them.",
         "verifiedOn": "Verified on {date}",
         "verifiedByOn": "Verified by {name} on {date}",
         "verifyAction": "Verify",
         "unverifyAction": "Un-verify",
         "saving": "Saving…",
-        "error": "Couldn't update verification. Please try again."
+        "error": "Couldn’t update verification. Please try again."
       }
     },
     "locations": {
@@ -840,7 +837,7 @@
     "login": {
       "welcomeTitle": "Welcome to the Sogverse",
       "description": "Sign in to your account",
-      "noAccountSignUp": "Don't have an account? <link>Sign up</link>",
+      "noAccountSignUp": "Don’t have an account? <link>Sign up</link>",
       "signingIn": "Signing in...",
       "emailPlaceholder": "you@example.com",
       "passwordPlaceholder": "Enter your password",
@@ -857,9 +854,9 @@
       "title": "Create an account",
       "description": "Enter your details to create your parent account",
       "parentAccountAlertTitle": "This is a parent account",
-      "parentAccountAlertDescription": "This account is for you, the parent. Your child's gamer account is separate and will be created later when you enrol them in a club.",
-      "parentFirstName": "Parent's First Name",
-      "parentLastName": "Parent's Last Name",
+      "parentAccountAlertDescription": "This account is for you, the parent. Your child’s gamer account is separate and will be created later when you enrol them in a club.",
+      "parentFirstName": "Parent’s First Name",
+      "parentLastName": "Parent’s Last Name",
       "firstNamePlaceholder": "Your first name",
       "lastNamePlaceholder": "Your last name",
       "emailPlaceholder": "you@example.com",
@@ -871,11 +868,11 @@
     },
     "forgotPassword": {
       "title": "Forgot password?",
-      "description": "Enter your email address and we'll send you a link to reset your password.",
+      "description": "Enter your email address and we’ll send you a link to reset your password.",
       "emailPlaceholder": "you@example.com",
       "sendResetLink": "Send Reset Link",
       "checkEmailTitle": "Check your email",
-      "checkEmailDescription": "We've sent a password reset link to {email}. Please check your inbox and click the link to reset your password."
+      "checkEmailDescription": "We’ve sent a password reset link to {email}. Please check your inbox and click the link to reset your password."
     },
     "resetPassword": {
       "title": "Reset your password",
@@ -887,8 +884,8 @@
       "linkExpired": "Your reset link has expired. Please request a new one.",
       "linkExpiredTitle": "Reset link expired",
       "requestNewLink": "Request a new link",
-      "passwordsDoNotMatch": "The passwords you entered don't match.",
-      "updateFailed": "We couldn't update your password. Please try again.",
+      "passwordsDoNotMatch": "The passwords you entered don’t match.",
+      "updateFailed": "We couldn’t update your password. Please try again.",
       "successTitle": "Password updated",
       "successDescription": "Your password has been successfully updated."
     },
@@ -914,11 +911,11 @@
       "description": "Your PIN keeps your kids safe — only you can make purchases or manage their accounts. Their safety is at the heart of everything we do at School of Gaming.",
       "forgot": "Forgot your PIN?"
     },
-    "mismatch": "Those PINs didn't match. Let's try again.",
+    "mismatch": "Those PINs didn’t match. Let’s try again.",
     "deleteDigit": "Delete last digit",
     "forgotSent": {
       "title": "Check your email",
-      "description": "If your account has an email on file, we've sent a link to reset your PIN. The link expires in 24 hours.",
+      "description": "If your account has an email on file, we’ve sent a link to reset your PIN. The link expires in 24 hours.",
       "back": "Back to PIN entry"
     },
     "reset": {
@@ -945,7 +942,7 @@
     "error": "Something went wrong starting checkout. Please <link>go back</link> and try again."
   },
   "purchaseConfirmation": {
-    "heading": "You're all set!",
+    "heading": "You’re all set!",
     "subheading": {
       "consumer_club": "{gamer} is enrolled in {product}.",
       "municipality_club": "{gamer} is registered for {product}.",
@@ -968,26 +965,26 @@
     },
     "nextTitle": "What happens next",
     "next": {
-      "placement": "We'll place {gamer} in a group with a game educator. The sessions will then appear under My SOG.",
-      "subscription": "You'll be billed every month. You can manage or cancel anytime from My SOG.",
-      "oneTime": "This was a one-time payment — there's nothing more to pay.",
+      "placement": "We’ll place {gamer} in a group with a game educator. The sessions will then appear under My SOG.",
+      "subscription": "You’ll be billed every month. You can manage or cancel anytime from My SOG.",
+      "oneTime": "This was a one-time payment — there’s nothing more to pay.",
       "refund": "Free cancellation within {days} days of your purchase."
     },
     "goToDashboard": "Go to My SOG",
     "keepBrowsing": "Keep browsing",
     "notFound": {
-      "title": "We couldn't find that order",
+      "title": "We couldn’t find that order",
       "description": "This link may be old or incomplete. Your purchases are always available in My SOG.",
       "cta": "Go to My SOG"
     },
     "waitlist": {
-      "heading": "You're on the waitlist",
-      "subheading": "{gamer} is on the waitlist for {product}. We'll let you know if a seat opens.",
+      "heading": "You’re on the waitlist",
+      "subheading": "{gamer} is on the waitlist for {product}. We’ll let you know if a seat opens.",
       "summaryTitle": "Your waitlist spot",
       "forLabel": "Waitlisted",
       "positionLabel": "Your position",
       "positionValue": "#{position}",
-      "next1": "We'll email you the moment a seat opens.",
+      "next1": "We’ll email you the moment a seat opens.",
       "next2": "{gamer} keeps their place in line for the whole term.",
       "next3": "You can keep track of your waitlist spot anytime in My SOG."
     }
@@ -995,7 +992,7 @@
   "docs": {
     "minecraftApi": {
       "title": "Minecraft Server API",
-      "description": "Use this endpoint to check whether a connecting player is allowed to join the Minecraft world. The server sends the player's Minecraft UUID and receives an allow/deny decision with session timing.",
+      "description": "Use this endpoint to check whether a connecting player is allowed to join the Minecraft world. The server sends the player’s Minecraft UUID and receives an allow/deny decision with session timing.",
       "authentication": {
         "heading": "Authentication",
         "description": "All requests require a static API key passed as a Bearer token in the <code>Authorization</code> header.",
@@ -1005,7 +1002,7 @@
         "heading": "Endpoint",
         "queryParams": "Query Parameters",
         "uuidType": "string (required)",
-        "uuidDescription": "The player's Minecraft UUID. Both dashed (<code1>069a79f4-44e9-4726-a5be-fca90e38aaf5</code1>) and undashed (<code2>069a79f444e94726a5befca90e38aaf5</code2>) formats are accepted."
+        "uuidDescription": "The player’s Minecraft UUID. Both dashed (<code1>069a79f4-44e9-4726-a5be-fca90e38aaf5</code1>) and undashed (<code2>069a79f444e94726a5befca90e38aaf5</code2>) formats are accepted."
       },
       "responses": {
         "heading": "Responses",
@@ -1015,8 +1012,8 @@
         "deniedDescription": "The player exists in Sogverse but has no active session right now. No <code>endTime</code> is included.",
         "fields": {
           "allowedTrue": "Player has an active session right now.",
-          "role": "The player's role in Sogverse.",
-          "firstName": "The player's first name.",
+          "role": "The player’s role in Sogverse.",
+          "firstName": "The player’s first name.",
           "endTime": "When the session window closes (includes a 5-minute buffer after the scheduled end). Use this to schedule a kick or re-check.",
           "reason": "Human-readable description: the product name and educator name."
         },
@@ -1032,8 +1029,8 @@
         "heading": "Integration Notes",
         "note1": "Call this endpoint on every player join. Both gedus and gamers are session-gated — they can only join during their scheduled session window.",
         "note2": "The session window opens 5 minutes before the scheduled start and closes 5 minutes after the scheduled end.",
-        "note3": "When <code1>allowed: true</code1>, use <code2>endTime</code2> to schedule a re-check or kick. If back-to-back sessions exist (e.g. one ends 14:00, next starts 14:05), the player gets kicked at the first session's end and rejoins for the next.",
-        "note4": "A <code>404</code> means the player hasn't linked their Minecraft account in Sogverse yet. You can show them a message to link their account in their profile settings.",
+        "note3": "When <code1>allowed: true</code1>, use <code2>endTime</code2> to schedule a re-check or kick. If back-to-back sessions exist (e.g. one ends 14:00, next starts 14:05), the player gets kicked at the first session’s end and rejoins for the next.",
+        "note4": "A <code>404</code> means the player hasn’t linked their Minecraft account in Sogverse yet. You can show them a message to link their account in their profile settings.",
         "note5": "All error responses follow the shape <code>'{ \"error\": \"message\" }'</code>."
       }
     }
@@ -1042,7 +1039,7 @@
     "title": "Feedback",
     "subtitle": "Share your thoughts with us",
     "sendFeedback": "Send Feedback",
-    "feedbackDescription": "We'd love to hear your feedback, suggestions, or bug reports.",
+    "feedbackDescription": "We’d love to hear your feedback, suggestions, or bug reports.",
     "gamerReplyNote": "Your educator may follow up with you during your next session.",
     "message": "Message",
     "placeholder": "Share your thoughts, suggestions, or report a bug...",
@@ -1056,9 +1053,9 @@
     "myFamily": "My Family",
     "myGamers": "My Gamers",
     "upcomingSessions": "Sessions",
-    "upcomingSessionsEmptyStateGamer": "When your next session is coming up, this is where you'll join the voice room with your Gedu and friends.",
-    "upcomingSessionsEmptyStateParent": "When your child's next session is coming up, this is where they'll join the voice room with their Gedu and friends.",
-    "upcomingSessionsEmptyStateGedu": "When a session you're running is coming up, this is where you'll join the voice room with your gamers.",
+    "upcomingSessionsEmptyStateGamer": "When your next session is coming up, this is where you’ll join the voice room with your Gedu and friends.",
+    "upcomingSessionsEmptyStateParent": "When your child’s next session is coming up, this is where they’ll join the voice room with their Gedu and friends.",
+    "upcomingSessionsEmptyStateGedu": "When a session you’re running is coming up, this is where you’ll join the voice room with your gamers.",
     "billing": "Billing",
     "help": "Help",
     "yty": "Yty",
@@ -1072,8 +1069,8 @@
     "switchFailed": "Failed to switch accounts",
     "loadFailed": "Failed to load family",
     "switchToParentToAddGamer": {
-      "title": "Switch to {name}'s profile to add a gamer?",
-      "oneWayWarning": "You'll be signed out of your gamer account."
+      "title": "Switch to {name}’s profile to add a gamer?",
+      "oneWayWarning": "You’ll be signed out of your gamer account."
     },
     "addGamerForm": {
       "title": "Add a gamer",
@@ -1093,7 +1090,7 @@
       "firstNameTooLong": "First name must be 32 characters or fewer.",
       "birthMonthRequired": "Pick a birth month.",
       "birthYearRequired": "Pick a birth year.",
-      "genericError": "Couldn't add this gamer. Please try again.",
+      "genericError": "Couldn’t add this gamer. Please try again.",
       "minecraftAlreadyLinked": "This Minecraft account is already linked to another gamer."
     }
   },
@@ -1117,7 +1114,7 @@
   "gedu": {
     "coverage": {
       "title": "Coverage areas",
-      "remoteOnlyNote": "Used to match you as a substitute when another Gedu can't cover their club. Leave empty if you only sub remotely.",
+      "remoteOnlyNote": "Used to match you as a substitute when another Gedu can’t cover their club. Leave empty if you only sub remotely.",
       "selectedHeading": "Selected ({count})",
       "noneSelected": "No areas selected",
       "remove": "Remove {name}",
@@ -1152,9 +1149,9 @@
       "gamerCount": "{count, plural, one {# gamer} other {# gamers}}",
       "emptyRoster": "No gamers enrolled in this group yet.",
       "untitledGroup": "Untitled group",
-      "noAssignedGroup": "You don't have an assigned group in this session.",
+      "noAssignedGroup": "You don’t have an assigned group in this session.",
       "notAssignedTitle": "Not your session",
-      "notAssignedBody": "You aren't assigned to a group in this session, so its details aren't available to you.",
+      "notAssignedBody": "You aren’t assigned to a group in this session, so its details aren’t available to you.",
       "age": "Age {age}",
       "genderBoy": "Boy",
       "genderGirl": "Girl",
@@ -1162,7 +1159,7 @@
       "copyParentEmail": "Copy parent email {email}",
       "noParentEmail": "No parent email on file",
       "emailCopied": "Email copied",
-      "copyAllParentEmails": "Copy all parent emails ({count, plural, one {#} other {#}})",
+      "copyAllParentEmails": "Copy all parent emails ({count})",
       "allEmailsCopied": "All parent emails copied"
     }
   },
@@ -1204,7 +1201,7 @@
     "intro": "Answers to common questions about Sogverse.",
     "contact": {
       "heading": "Need a hand?",
-      "body": "Reach out anytime — we're happy to help with anything from picking the right club to questions about how Sogverse works.",
+      "body": "Reach out anytime — we’re happy to help with anything from picking the right club to questions about how Sogverse works.",
       "emailLabel": "Email us at"
     },
     "faq": {
@@ -1215,12 +1212,12 @@
           "a": "Sogverse — School of Gaming — runs Minecraft clubs led by professional game educators so that screen time becomes quality time."
         },
         "productTypes": {
-          "q": "What's the difference between clubs, camps, and events?",
+          "q": "What’s the difference between clubs, camps, and events?",
           "a": "Clubs meet on a recurring schedule. Camps run across multiple days during school breaks. Events are one-off get-togethers."
         },
         "whoLeads": {
           "q": "Who leads the sessions?",
-          "a": "Every session is hosted by a Gedu — a game educator who's also a gamer and knows how to support kids in-game and out."
+          "a": "Every session is hosted by a Gedu — a game educator who’s also a gamer and knows how to support kids in-game and out."
         },
         "safety": {
           "q": "Is it safe for my child?",
@@ -1228,7 +1225,7 @@
         },
         "howToStart": {
           "q": "How do I get started?",
-          "a": "Create a parent account, browse what's on offer, and enrol your child. They'll log in with their own account for sessions."
+          "a": "Create a parent account, browse what’s on offer, and enrol your child. They’ll log in with their own account for sessions."
         }
       }
     }
@@ -1236,16 +1233,16 @@
   "schools": {
     "hero": {
       "title": "Game clubs in <primary>your municipality</primary>",
-      "subtitle": "School of Gaming runs clubs together with Finnish municipalities. Find your municipality and explore what's on offer.",
-      "howItWorks": "Depending on the municipality, the club meets either online from home or in person at your child's school. A professional game educator is always there to guide the activity."
+      "subtitle": "School of Gaming runs clubs together with Finnish municipalities. Find your municipality and explore what’s on offer.",
+      "howItWorks": "Depending on the municipality, the club meets either online from home or in person at your child’s school. A professional game educator is always there to guide the activity."
     },
     "search": {
       "label": "Search for your municipality",
       "placeholder": "Search municipalities…",
-      "noMatches": "No municipality matches \"{query}\". Check the spelling, or try a nearby one."
+      "noMatches": "No municipality matches “{query}”. Check the spelling, or try a nearby one."
     },
     "available": {
-      "empty": "Our first municipality clubs are on the way. Search for your municipality to check whether we've reached it yet."
+      "empty": "Our first municipality clubs are on the way. Search for your municipality to check whether we’ve reached it yet."
     },
     "status": {
       "available": "Clubs available",
@@ -1253,8 +1250,8 @@
     },
     "waitlistNote": "Spots are limited and clubs often have a waiting list. If your child stops attending, please remember to cancel the registration so the place can be offered to the next gamer.",
     "notListed": {
-      "title": "Don't see your municipality?",
-      "body": "Municipality clubs are arranged together with each municipality, and we're adding new ones all the time. If yours isn't on board yet, tell us about it:",
+      "title": "Don’t see your municipality?",
+      "body": "Municipality clubs are arranged together with each municipality, and we’re adding new ones all the time. If yours isn’t on board yet, tell us about it:",
       "openClubs": "We also run clubs that are open to everyone, which a gamer can join wherever they live."
     },
     "municipality": {
@@ -1295,7 +1292,7 @@
       "notAvailableInCurrency": "Not in {currency}",
       "seatsCapacity": "{count, plural, one {# seat} other {# seats}}",
       "waitlistAvailable": "Waitlist available",
-      "endedNote": "This one's wrapped — keep an eye out for the next one.",
+      "endedNote": "This one’s wrapped — keep an eye out for the next one.",
       "viewDetails": "View",
       "manage": "Manage",
       "fullDisabled": "Full",
@@ -1337,23 +1334,23 @@
       "pegi": "PEGI {age}",
       "games": {
         "minecraft_java": {
-          "description": "Minecraft is a creative building game — think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine, from a cosy house to a whole city. There's no winning or losing; it's a calm, open-ended space to create and problem-solve. \"Java\" is the original version for Windows, Mac and Linux computers — the one our remote clubs use, because it supports the tools our instructors rely on.",
-          "note": "For our clubs your child needs Minecraft on a computer. On Minecraft.net it's sold as \"Minecraft: Java & Bedrock Edition for PC\" — a single one-time purchase (not a subscription) that includes the version we use. The separate console, phone and tablet version won't work for these clubs.",
+          "description": "Minecraft is a creative building game — think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine, from a cosy house to a whole city. There’s no winning or losing; it’s a calm, open-ended space to create and problem-solve. “Java” is the original version for Windows, Mac and Linux computers — the one our remote clubs use, because it supports the tools our instructors rely on.",
+          "note": "For our clubs your child needs Minecraft on a computer. On Minecraft.net it’s sold as “Minecraft: Java & Bedrock Edition for PC” — a single one-time purchase (not a subscription) that includes the version we use. The separate console, phone and tablet version won’t work for these clubs.",
           "linkLabel": "Get Minecraft for PC"
         },
         "minecraft_bedrock": {
-          "description": "Minecraft is a creative building game — think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine, from a cosy house to a whole city. There's no winning or losing; it's a calm, open-ended space to create and problem-solve. \"Bedrock\" is the version that runs on consoles (Xbox, PlayStation, Switch), phones, tablets and Windows PCs.",
-          "note": "Your child needs Minecraft Bedrock for this club. It isn't included in the price — buy it from the store that matches the device your child will play on (the same game, sold in a different place on each device). On a games console, playing online may also need that console's paid online membership.",
+          "description": "Minecraft is a creative building game — think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine, from a cosy house to a whole city. There’s no winning or losing; it’s a calm, open-ended space to create and problem-solve. “Bedrock” is the version that runs on consoles (Xbox, PlayStation, Switch), phones, tablets and Windows PCs.",
+          "note": "Your child needs Minecraft Bedrock for this club. It isn’t included in the price — buy it from the store that matches the device your child will play on (the same game, sold in a different place on each device). On a games console, playing online may also need that console’s paid online membership.",
           "linkLabel": "Where to get it"
         },
         "minecraft_education": {
           "description": "Minecraft is a creative building game — think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine. Minecraft Education is a version made for the classroom: the same friendly, open-ended building, plus extra tools for teachers, designed for guided activities led by an instructor rather than solo play.",
-          "note": "This edition is normally provided through a school or a Microsoft 365 Education account rather than bought in a shop. If your child needs access for this club, just ask — we'll help you sort it out.",
+          "note": "This edition is normally provided through a school or a Microsoft 365 Education account rather than bought in a shop. If your child needs access for this club, just ask — we’ll help you sort it out.",
           "linkLabel": "About Minecraft Education"
         },
         "fortnite": {
-          "description": "Fortnite is a colourful, cartoon-style online game where players team up and compete in short, round-based matches. It's hugely popular and very social — kids play together with friends. The look is bright and non-realistic (no blood or gore), though matches are competitive and played online with others.",
-          "note": "Fortnite is free to download and play — you don't buy the game itself. Your child creates a free Epic Games account to play. Some optional extras (outfits and such) cost money, which you can limit with parental controls.",
+          "description": "Fortnite is a colourful, cartoon-style online game where players team up and compete in short, round-based matches. It’s hugely popular and very social — kids play together with friends. The look is bright and non-realistic (no blood or gore), though matches are competitive and played online with others.",
+          "note": "Fortnite is free to download and play — you don’t buy the game itself. Your child creates a free Epic Games account to play. Some optional extras (outfits and such) cost money, which you can limit with parental controls.",
           "linkLabel": "Get Fortnite"
         }
       }
@@ -1400,7 +1397,7 @@
       "ctaActiveWithPriceSub": "{verb} now · {price}/mo",
       "ctaSubmitting": "One moment…",
       "ctaAddGamer": "Add a gamer to continue",
-      "ctaAllSet": "You're all set",
+      "ctaAllSet": "You’re all set",
       "ctaAgreeRules": "Agree to the rules",
       "ctaWaitlist": "Join the waitlist",
       "ctaSignIn": "Sign in to register",
@@ -1413,11 +1410,11 @@
       },
       "gamerAlreadyWaitlisted": "On waitlist",
       "nonCustomerNote": "Only parents can register a gamer here.",
-      "closedNote": "This one's not open right now. Keep an eye out for the next one.",
+      "closedNote": "This one’s not open right now. Keep an eye out for the next one.",
       "rulesHeading": "The Rules",
       "rules": {
         "consumer_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior.",
-        "municipality_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, and that repeated unexcused absences may open my child's seat for the next family on the waitlist.",
+        "municipality_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, and that repeated unexcused absences may open my child’s seat for the next family on the waitlist.",
         "camp": "I understand School of Gaming has zero tolerance for bullying and toxic behavior.",
         "event": "I understand School of Gaming has zero tolerance for bullying and toxic behavior."
       },
@@ -1425,7 +1422,7 @@
         "consumer_club": "Who are you enrolling?",
         "municipality_club": "Who are you registering?",
         "camp": "Who are you signing up?",
-        "event": "Who's joining?"
+        "event": "Who’s joining?"
       },
       "selected": "Selected",
       "agePill": "Age {age}"
@@ -1438,7 +1435,7 @@
       "external": "Free to you · paid by your municipality",
       "externalHint": "No payment needed — your municipality covers the cost.",
       "upfrontHint": "One-time payment.",
-      "notAvailable": "Pricing isn't available in {currency} yet.",
+      "notAvailable": "Pricing isn’t available in {currency} yet.",
       "cadenceMonth": "/ month"
     },
     "countdown": {
@@ -1449,8 +1446,8 @@
     },
     "loading": "Loading…",
     "notFound": {
-      "title": "We couldn't find that",
-      "description": "It may have been removed or the link is wrong. Browse what's available below.",
+      "title": "We couldn’t find that",
+      "description": "It may have been removed or the link is wrong. Browse what’s available below.",
       "cta": "Back to browse"
     },
     "geduGroups": {
@@ -1502,11 +1499,11 @@
       },
       "newFriends": {
         "title": "New Friends, Real Connections",
-        "description": "Children build genuine, lasting friendships through shared adventures. No one is left without a friend. The gamer's oath means treating each other with kindness — online and offline."
+        "description": "Children build genuine, lasting friendships through shared adventures. No one is left without a friend. The gamer’s oath means treating each other with kindness — online and offline."
       },
       "parents": {
         "title": "Parents Are Part of It",
-        "description": "Parental game education is just as important as the clubs themselves. We keep you informed, involved, and equipped to support your child's gaming journey."
+        "description": "Parental game education is just as important as the clubs themselves. We keep you informed, involved, and equipped to support your child’s gaming journey."
       }
     },
     "howItWorks": {
@@ -1538,7 +1535,7 @@
     },
     "catalog": {
       "title": "Add a municipality from the official catalog",
-      "description": "Municipalities come from each country's official statistical classification, so the spelling and the code are always right. Pick one and it is added to the tree.",
+      "description": "Municipalities come from each country’s official statistical classification, so the spelling and the code are always right. Pick one and it is added to the tree.",
       "country": "Country",
       "loading": "Loading the catalog",
       "searchPlaceholder": "Search by name or official code…",
@@ -1568,7 +1565,7 @@
       "myGamersHint": "Select a gamer to manage their account."
     },
     "nextSession": {
-      "title": "{name}'s next session",
+      "title": "{name}’s next session",
       "startsIn": "Starts in {countdown}",
       "inProgress": "Session in progress",
       "reports": "Your reports"
@@ -1580,30 +1577,30 @@
       "forLabel": "For {name}",
       "positionLabel": "Your position",
       "positionValue": "#{position}",
-      "reassuranceCustomer": "We'll email you the moment a seat opens.",
-      "reassuranceGamer": "We'll email a parent as soon as a seat opens.",
+      "reassuranceCustomer": "We’ll email you the moment a seat opens.",
+      "reassuranceGamer": "We’ll email a parent as soon as a seat opens.",
       "leave": {
         "trigger": "Leave waitlist",
         "confirmTitle": "Leave the waitlist?",
         "confirmDescription": "{name} will lose their place in line for {product}.",
         "confirmCta": "Leave waitlist",
-        "backOfLineWarning": "If you join again later, you'll start at the back of the line."
+        "backOfLineWarning": "If you join again later, you’ll start at the back of the line."
       }
     },
     "subscriptionEnding": {
-      "wontRenew": "Won't renew",
+      "wontRenew": "Won’t renew",
       "lastSession": "Last session",
-      "tooltip": "You canceled this membership — it won't renew. {name}'s last session is {lastSession}, and access runs through {accessUntil}.",
-      "tooltipSameDay": "You canceled this membership — it won't renew. {name}'s last session is {lastSession}."
+      "tooltip": "You canceled this membership — it won’t renew. {name}’s last session is {lastSession}, and access runs through {accessUntil}.",
+      "tooltipSameDay": "You canceled this membership — it won’t renew. {name}’s last session is {lastSession}."
     },
     "awaiting": {
       "customer": "{name} is in! Their instructor will place them in a group before the first session starts.",
-      "gamer": "You're all signed up! We'll put you in your group before the next session begins."
+      "gamer": "You’re all signed up! We’ll put you in your group before the next session begins."
     },
     "help": {
       "contact": {
         "heading": "Need a hand?",
-        "body": "We're here to help with anything from joining your camp to questions about the platform. Email us anytime — we usually reply within a day.",
+        "body": "We’re here to help with anything from joining your camp to questions about the platform. Email us anytime — we usually reply within a day.",
         "emailLabel": "Email us at"
       },
       "minecraft": {
@@ -1612,7 +1609,7 @@
         "steps": {
           "install": {
             "title": "Install Minecraft Java Edition",
-            "body": "Buy and install Minecraft Java Edition from minecraft.net. Bedrock and Pocket Edition won't work with our server."
+            "body": "Buy and install Minecraft Java Edition from minecraft.net. Bedrock and Pocket Edition won’t work with our server."
           },
           "signIn": {
             "title": "Sign in with a Microsoft account",
@@ -1620,7 +1617,7 @@
           },
           "addServer": {
             "title": "Add the SOG server",
-            "body": "From Multiplayer → Add Server, paste the address that matches your camp and save it so it's ready when camp starts:"
+            "body": "From Multiplayer → Add Server, paste the address that matches your camp and save it so it’s ready when camp starts:"
           },
           "joinAtCampTime": {
             "title": "Join when camp starts",
@@ -1639,21 +1636,21 @@
         "description": "Manage your saved cards, invoices, and subscriptions securely on Stripe.",
         "cta": "Manage billing",
         "opening": "Opening…",
-        "error": "Couldn't open the billing portal. Please try again.",
-        "splitExplanation": "Your family's subscriptions sit on more than one billing account — a leftover from when your clubs moved to this site. Each button opens that account's own page on Stripe.",
+        "error": "Couldn’t open the billing portal. Please try again.",
+        "splitExplanation": "Your family’s subscriptions sit on more than one billing account — a leftover from when your clubs moved to this site. Each button opens that account’s own page on Stripe.",
         "coversItem": "{name} · {product}",
         "coversFallback": "Saved cards and past invoices"
       },
       "alert": {
         "tooltip": "Payment problem — update your card to keep this club active",
-        "gamerTooltip": "Something's not right — ask a parent to check this"
+        "gamerTooltip": "Something’s not right — ask a parent to check this"
       }
     },
     "gamerDetail": {
       "backToMySog": "Back to My SOG",
       "title": "Gamer Settings",
       "subtitle": "Manage settings for {name}",
-      "profileDescription": "Update your gamer's details.",
+      "profileDescription": "Update your gamer’s details.",
       "profileUpdated": "Name updated!",
       "failedUpdateDisplayName": "Failed to update name",
       "ageYears": "{age, plural, one {# year old} other {# years old}}",
@@ -1664,7 +1661,7 @@
       },
       "notFound": {
         "title": "Gamer not found",
-        "description": "This gamer account may have been removed or you don't have access to it."
+        "description": "This gamer account may have been removed or you don’t have access to it."
       },
       "minecraft": {
         "title": "Minecraft Account",
@@ -1676,8 +1673,8 @@
       "failedUpdateMc": "Failed to update Minecraft username"
     },
     "switchToGamer": {
-      "title": "Switch to {name}'s profile to join {productName}?",
-      "oneWayWarning": "You'll be signed out of your parent account."
+      "title": "Switch to {name}’s profile to join {productName}?",
+      "oneWayWarning": "You’ll be signed out of your parent account."
     }
   },
   "settings": {
@@ -1711,7 +1708,7 @@
     "unlockMicrophone": "Unlock microphone",
     "lockCamera": "Lock camera",
     "unlockCamera": "Unlock camera",
-    "sharerScreen": "{name}'s screen",
+    "sharerScreen": "{name}’s screen",
     "stopSharing": "Stop sharing",
     "voiceRoom": "Voice Room",
     "spatialDescription": "Drag your avatar to move between zones. Same-zone participants can hear each other.",
@@ -1759,11 +1756,11 @@
     "unnamedMic": "Microphone",
     "micTestHint": "Speak to test your mic",
     "mediaError": {
-      "denied": "We can't access your microphone or camera. If you blocked access, allow it in your browser's site settings, then reload.",
+      "denied": "We can’t access your microphone or camera. If you blocked access, allow it in your browser’s site settings, then reload.",
       "no-device": "No microphone or camera was found. Connect one, then reload.",
       "in-use": "Your microphone or camera is being used by another app or browser tab. Close it, then reload.",
       "insecure": "Camera and microphone need a secure (https) connection.",
-      "unknown": "We couldn't access your microphone or camera. Reload and try again.",
+      "unknown": "We couldn’t access your microphone or camera. Reload and try again.",
       "reload": "Reload"
     },
     "zoneIcon": {
@@ -1833,7 +1830,7 @@
       "empty": "No messages yet"
     },
     "instant": {
-      "joinFailed": "Couldn't join the room. Please try again.",
+      "joinFailed": "Couldn’t join the room. Please try again.",
       "share": {
         "hint": "Click the link to copy it.",
         "copied": "Copied!"
@@ -1870,7 +1867,7 @@
       },
       "notFound": {
         "title": "Room not found",
-        "body": "We couldn't find a voice room with this code:",
+        "body": "We couldn’t find a voice room with this code:",
         "hint": "Double-check the code for typos. Letters and numbers must match exactly.",
         "createNew": "Create a new voice room"
       },
@@ -1879,11 +1876,11 @@
         "subtitle": "One tap → fresh room & shareable link to send. Use it for impromptu 1-on-1s, or co-gedu coordination outside or in addition to the scheduled session.",
         "createButton": "Start instant room",
         "creating": "Creating…",
-        "createFailed": "Couldn't create a room. Please try again.",
+        "createFailed": "Couldn’t create a room. Please try again.",
         "ready": "Your room is ready",
         "join": "Join",
         "unverifiedTitle": "Awaiting verification",
-        "unverifiedBody": "An admin needs to verify your educator account before you can create voice rooms. You'll be able to start one here as soon as you're verified."
+        "unverifiedBody": "An admin needs to verify your educator account before you can create voice rooms. You’ll be able to start one here as soon as you’re verified."
       }
     }
   },
@@ -1904,7 +1901,7 @@
     },
     "elements": {
       "heading": "The Four Elements of Yty",
-      "subheading": "Each element reflects a gamer's relationship with a different part of their world",
+      "subheading": "Each element reflects a gamer’s relationship with a different part of their world",
       "harmony": {
         "name": "Harmony",
         "description": "Your relationship with yourself",
@@ -1928,9 +1925,9 @@
     },
     "earning": {
       "heading": "How Gamers Earn Yty",
-      "paragraph1": "Yty points are earned through participation. Attending weekly club sessions, completing quests and challenges, showing kindness to fellow gamers, joining community events and camps — all of these contribute to a gamer's Yty.",
+      "paragraph1": "Yty points are earned through participation. Attending weekly club sessions, completing quests and challenges, showing kindness to fellow gamers, joining community events and camps — all of these contribute to a gamer’s Yty.",
       "paragraph2": "As points accumulate under specific achievement badges, gamers level up those badges — from bronze to silver, gold, platinum, and diamond. Every point also feeds into their overall Yty level and the element it belongs to.",
-      "paragraph3": "And it's not just gamers. Gedus, parents, and the entire community can take part in building the Yty of the Sogverse through events and shared activities."
+      "paragraph3": "And it’s not just gamers. Gedus, parents, and the entire community can take part in building the Yty of the Sogverse through events and shared activities."
     },
     "cta": {
       "heading": "Start Your Journey",
@@ -2079,7 +2076,7 @@
         ]
       },
       "childrensPrivacy": {
-        "heading": "Children's privacy comes first",
+        "heading": "Children’s privacy comes first",
         "paragraphs": [
           "Most of the people using Sogverse are children, so their safety and privacy is our highest priority.",
           "A child can never create their own account. Only a parent or guardian sets up a child's account, chooses what to share, and gives permission on their behalf. That's how we meet our responsibilities under data-protection law when it comes to children.",
@@ -2102,7 +2099,7 @@
         ]
       },
       "legalBasis": {
-        "heading": "Why we're allowed to use it",
+        "heading": "Why we’re allowed to use it",
         "paragraphs": [
           "Data-protection law (the GDPR) asks us to have a clear reason for using your information. Ours are simple:"
         ],
@@ -2154,7 +2151,7 @@
         ]
       },
       "rights": {
-        "heading": "Your rights — and your child's",
+        "heading": "Your rights — and your child’s",
         "paragraphs": [
           "You're in control of your information. At any time you can ask us to:"
         ],
@@ -2199,7 +2196,7 @@
     },
     "sections": {
       "whoWeAre": {
-        "heading": "Who you're agreeing with",
+        "heading": "Who you’re agreeing with",
         "paragraphs": [
           "Sogverse is run by School of Gaming Galactic Oy (\"School of Gaming\", \"we\", \"us\"), a Finnish company. These terms apply whenever you use Sogverse or buy one of our clubs, camps, or events.",
           "Our official details:"
@@ -2262,7 +2259,7 @@
         ]
       },
       "privacy": {
-        "heading": "Your family's privacy",
+        "heading": "Your family’s privacy",
         "paragraphs": [
           "We take the privacy of your family — and your child especially — very seriously, and we handle your information in line with Finnish and EU data-protection law. Our Privacy Policy explains exactly what we collect and why."
         ]
@@ -2342,7 +2339,7 @@
         ]
       },
       "partnership": {
-        "heading": "We're in this together",
+        "heading": "We’re in this together",
         "paragraphs": [
           "You know your child best, and we get the best results when we work together. If you have any worries about how your child is getting on — or if you think they're being treated unkindly by someone else — please tell us. Sharing the same expectations at home and in the club makes a real difference."
         ]

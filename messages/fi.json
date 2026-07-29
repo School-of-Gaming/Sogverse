@@ -95,9 +95,6 @@
     "noRecentActivity": "Ei viimeaikaista toimintaa näytettäväksi.",
     "recentActivity": "Viimeaikainen toiminta",
     "selectLanguage": "Valitse kieli",
-    "languageEnglish": "englanti",
-    "languageFinnish": "suomi",
-    "languageSwedish": "ruotsi",
     "roleAdmin": "Ylläpitäjä",
     "roleParent": "Vanhempi",
     "roleGamer": "Pelaaja",
@@ -109,7 +106,7 @@
       "subtitle": "Minecraft-kerhoissamme ruutuajasta tulee laatuaikaa. Yhdistämme lapset, ammattitaitoiset pelikasvattajat ja pelin, jota lapset jo rakastavat — luoden leikillisiä oppimiskokemuksia, joissa he saavat uusia ystäviä, oppivat uutta ja pitävät hauskaa."
     },
     "quote": {
-      "text": "\"Se mikä on totta nyt, oli kerran vain mielikuvitustasi.\"",
+      "text": "”Se mikä on totta nyt, oli kerran vain mielikuvitustasi.”",
       "attribution": "— School of Gaming -rehtorin sanat"
     },
     "mission": {
@@ -361,7 +358,7 @@
       "locationPicker": {
         "searchPlaceholder": "Hae maan, alueen, kunnan tai toimipisteen mukaan…",
         "clearSearch": "Tyhjennä haku",
-        "noResults": "Hakuehdolla \"{query}\" ei löytynyt sijainteja.",
+        "noResults": "Hakuehdolla ”{query}” ei löytynyt sijainteja.",
         "hintSite": "Valitse toimipiste. Puuttuuko jokin? Lisää se kunnan alle tästä.",
         "hintMunicipality": "Valitse kunta, jolle tämä kerho on tarkoitettu — se kunta, joka sen rahoittaa. Toimipisteet ja muut maat eivät ole valittavissa.",
         "addFromCatalog": "Lisää kunta virallisesta luettelosta…",
@@ -437,7 +434,7 @@
         "municipalityHint": "Kuntakerhot on aina sidottu tiettyyn Suomen kuntaan — siihen, joka sen maksaa. Sen kunnan vanhemmat näkevät kerhon selatessaan.",
         "siteHint": "Missä kerrat fyysisesti tapahtuvat.",
         "eventSingleDay": "Tapahtumat ovat yhden päivän mittaisia.",
-        "thresholdOnly": "Ei vielä kiinteää alkupäivää. Vanhemmat näkevät \"X / Y tarvitaan\" -laskurin sen täyttyessä. Painat Aloita kun ilmoittautuneita on tarpeeksi ja valitset ensimmäisen kerran päivän silloin.",
+        "thresholdOnly": "Ei vielä kiinteää alkupäivää. Vanhemmat näkevät ”X / Y tarvitaan” -laskurin sen täyttyessä. Painat Aloita kun ilmoittautuneita on tarpeeksi ja valitset ensimmäisen kerran päivän silloin.",
         "thresholdWithDate": "Jos vanhempia ilmoittautuu vähemmän kuin tämä alkupäivään mennessä, sinun täytyy perua ja palauttaa maksut tuotesivulta.",
         "timezoneFixedHelsinki": "Ajat ovat aikavyöhykkeellä Europe/Helsinki. Vanhemmat näkevät ne automaattisesti omalla aikavyöhykkeellään.",
         "holidayHint": "Yksikään kerta ei pidetä valittujen kalenterien päivinä. Muokkaa kalenteria kerran ja kaikki sitä käyttävät tuotteet päivittyvät automaattisesti.",
@@ -986,7 +983,7 @@
       "summaryTitle": "Jonotuspaikkasi",
       "forLabel": "Jonotuslistalla",
       "positionLabel": "Sijasi jonossa",
-      "positionValue": "#{position}",
+      "positionValue": "{position}.",
       "next1": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
       "next2": "{gamer} säilyttää paikkansa jonossa koko kauden ajan.",
       "next3": "Voit seurata jonotustilannetta milloin tahansa Oma SOG -sivulla."
@@ -1162,7 +1159,7 @@
       "copyParentEmail": "Kopioi vanhemman sähköposti {email}",
       "noParentEmail": "Vanhemman sähköpostia ei ole tallennettu",
       "emailCopied": "Sähköposti kopioitu",
-      "copyAllParentEmails": "Kopioi kaikki vanhempien sähköpostit ({count, plural, one {#} other {#}})",
+      "copyAllParentEmails": "Kopioi kaikki vanhempien sähköpostit ({count})",
       "allEmailsCopied": "Kaikki vanhempien sähköpostit kopioitu"
     }
   },
@@ -1579,7 +1576,7 @@
     "waitlist": {
       "forLabel": "Pelaaja: {name}",
       "positionLabel": "Sijasi jonossa",
-      "positionValue": "#{position}",
+      "positionValue": "{position}.",
       "reassuranceCustomer": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
       "reassuranceGamer": "Lähetämme vanhemmallesi sähköpostia heti, kun paikka vapautuu.",
       "leave": {
