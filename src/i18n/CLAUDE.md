@@ -81,6 +81,40 @@ All other namespaces (role/feature pages, public pages, feature components, layo
 4. Create `messages/<code>.json` by copying `en.json` and translating every value.
 5. Decide separately whether the country belongs in `PHONE_COUNTRIES` (`src/lib/constants/phone.ts`). That list is **not** derived from locales and drifts on purpose — US is a phone country with no locale, Klingon a locale with no country.
 6. CI translation validation picks the new file up automatically. No changes needed to `request.ts`, `types.ts`, `next.config.ts`, the check script, or provider code.
+7. Produce the native-speaker review handoff for the new translation — see the
+   "Native-speaker review handoff" section below.
+
+## Native-speaker review handoff
+
+A new locale ships as best-effort translation and then gets a human pass. The handoff is
+**one styled `.xlsx`** the owner uploads to Google Sheets and sends to a native speaker
+(built programmatically with a spreadsheet lib; a plain CSV loses the styling that makes
+it usable). What the reviewer is like drives every choice: **no code access, thinks in UI
+terms, assumes the English source is correct.** English-source problems found during
+translation go to the team, never into the reviewer's file.
+
+Two tabs:
+
+- **"Read me"** — plain-language cover note: what the product is, how to fill the sheet
+  in, the global choices to confirm as questions (register policy — e.g. vous/tu split —
+  glossary, brand names kept in English), and one practical rule stated without jargon:
+  text in curly braces is filled in automatically — keep it exactly, but it may move
+  within the sentence; same for angle-bracket tags. No mention of JSON, keys, or ICU.
+- **"Strings to review"** — one row per flagged string. Columns, in order: row number ·
+  where it appears (plain UI location — trace the key's actual consumer, don't guess from
+  the namespace; group rows by UI area) · English source · current translation · why
+  we're asking (plain language; when a string contains a placeholder whose values matter,
+  enumerate them so every combination can be checked) · corrected translation (edit
+  here) · reviewer comments · **internal reference last** (the message key, marked
+  "please ignore" — it's how edits get applied back precisely). Extract source/current
+  text programmatically from the message files, never retype it. Style: frozen header,
+  filter row, zebra striping, wrapped text, the two edit columns visibly highlighted, the
+  reference column demoted to small gray.
+
+Flag selectively (~5% of the catalog, not everything): idiom/tone doubts, marketing
+taglines, legal text, and gendered/inflection frames. Drop staff-internal tooling and
+developer-docs strings — a non-technical reviewer can't judge them. Invite the reviewer
+to add rows for anything not flagged that bothers them.
 
 ## Adding a namespace
 
