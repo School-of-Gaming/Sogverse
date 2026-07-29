@@ -1,7 +1,14 @@
 /* eslint-disable i18next/no-literal-string -- internal admin-only style guide; all content is copy-paste component examples, not user-facing text that ships in any locale */
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Plus,
   Pencil,
@@ -92,6 +99,21 @@ import {
   ManageBillingCardView,
   type BillingAccountSummary,
 } from "@/components/billing";
+import {
+  SessionFeed,
+  SessionFeedAlertBadge,
+  applyDraftToEntry,
+  countEntriesNeedingAttention,
+  isEditableEntry,
+  type SessionFeedEntry,
+  type SessionRecordDraft,
+} from "@/components/gedu/session-feed";
+import {
+  buildSessionFeedFixture,
+  SESSION_FEED_CLUB_NAME,
+  SESSION_FEED_ROSTER,
+  SESSION_FEED_TIMEZONE,
+} from "@/components/gedu/session-feed/mock-fixtures";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -2022,6 +2044,31 @@ export default function AdminUIComponentsPage() {
         <WaitlistCardDemo />
       </Section>
 
+      {/* ============================================================ */}
+      {/* Section 16: Gedu — Session Feed                                */}
+      {/* ============================================================ */}
+      <Section title="Gedu — Session Feed">
+        <p className="text-sm text-muted-foreground -mt-2">
+          A group&rsquo;s sessions as a reverse-chronological, blog-like scroll:
+          the next session on top, then the term running backwards. Gedus record
+          attendance and two notes per session &mdash; a{" "}
+          <strong>public</strong> one that becomes the entry body families read,
+          and a <strong>staff-only</strong> one behind a padlocked, recessed
+          panel so the two audiences can never blur. Sessions still missing their
+          write-up are the work to do, so they sit{" "}
+          <em>inline in the narrative</em> with warning tinting rather than in a
+          separate queue; sessions from before the enforcement epoch are bare
+          &ldquo;no record&rdquo; lines with no alert and no editor, because
+          nothing is owed for them. Clicking a gap (or{" "}
+          <strong>Edit</strong> on a written-up entry) expands that entry in
+          place: the header holding the controls stays put and the editor grows
+          downward beneath it. Everything below is fixture-driven and edits live
+          in local React state &mdash; typing, ticking and saving all work,
+          nothing persists past a reload.
+        </p>
+        <GeduSessionFeedDemo />
+      </Section>
+
     </div>
   );
 }
@@ -2278,6 +2325,104 @@ const BILLING_ACCOUNTS_SPLIT: BillingAccountSummary[] = [
   },
   { stripeCustomerId: "cus_demo_empty", covers: [] },
 ];
+
+/* ------------------------------------------------------------------ */
+/*  Section 16: Gedu — Session Feed                                     */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The feed rendered against the mock club, with the inline editor wired to
+ * local state: ticking attendance, typing either note, flipping "this session
+ * didn't run" and saving all mutate the fixture in place, so a gap really does
+ * turn into a written-up entry (and the alert badge above it really does count
+ * down). Nothing persists — a reload puts the fixture back.
+ *
+ * The fixture is built once from `useNow()` and then held in state: rebuilding
+ * it on every 30s tick would throw away whatever the reviewer had just typed.
+ * The read-only "voice open" variant below has no such state, so it can rebuild
+ * freely.
+ */
+function GeduSessionFeedDemo() {
+  const now = useNow();
+  const [entries, setEntries] = useState<SessionFeedEntry[]>(
+    () => buildSessionFeedFixture(now).entries,
+  );
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Second fixture, upcoming entry only, with the voice window open — the one
+  // state the main feed can't show at the same time as its locked counterpart.
+  const voiceOpenEntries = useMemo(
+    () => buildSessionFeedFixture(now, { voiceIsOpen: true }).entries.slice(0, 1),
+    [now],
+  );
+
+  const needingAttention = countEntriesNeedingAttention(entries);
+
+  const handleSave = (entryId: string, draft: SessionRecordDraft) => {
+    setEntries((prev) =>
+      prev.map((entry) =>
+        entry.id === entryId && isEditableEntry(entry)
+          ? applyDraftToEntry(entry, draft)
+          : entry,
+      ),
+    );
+    setEditingId(null);
+  };
+
+  return (
+    <div className="space-y-8">
+      <SubSection title="Full feed (editor wired to local state)">
+        <div className="max-w-2xl space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h4 className="text-base font-semibold">
+              {SESSION_FEED_CLUB_NAME}
+            </h4>
+            <SessionFeedAlertBadge count={needingAttention} />
+          </div>
+          <SessionFeed
+            entries={entries}
+            roster={SESSION_FEED_ROSTER}
+            sourceTimeZone={SESSION_FEED_TIMEZONE}
+            editingEntryId={editingId}
+            onEditEntry={setEditingId}
+            onSaveEntry={handleSave}
+          />
+        </div>
+      </SubSection>
+
+      <SubSection title="Upcoming entry — voice window open">
+        <div className="max-w-2xl space-y-2">
+          <DemoCaption>
+            Same entry as the head of the feed above, with the window open so
+            the active Join button shows instead of the locked &ldquo;Opens
+            …&rdquo; state. Read-only.
+          </DemoCaption>
+          <SessionFeed
+            entries={voiceOpenEntries}
+            roster={SESSION_FEED_ROSTER}
+            sourceTimeZone={SESSION_FEED_TIMEZONE}
+            editingEntryId={null}
+            onEditEntry={() => {}}
+            onSaveEntry={() => {}}
+          />
+        </div>
+      </SubSection>
+
+      <SubSection title="Alert badge">
+        <div className="flex flex-wrap items-center gap-6">
+          {[0, 1, 3, 12].map((count) => (
+            <div key={count} className="flex flex-col items-start gap-2">
+              <DemoCaption>
+                {count === 0 ? "0 — renders nothing" : `${count} outstanding`}
+              </DemoCaption>
+              <SessionFeedAlertBadge count={count} />
+            </div>
+          ))}
+        </div>
+      </SubSection>
+    </div>
+  );
+}
 
 function ManageBillingCardDemo() {
   return (
