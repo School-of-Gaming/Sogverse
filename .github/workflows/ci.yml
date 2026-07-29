@@ -164,11 +164,34 @@ jobs:
       # the committed file, where it then reads as authoritative. Built from
       # migrations, the snapshot is faithful by construction.
       #
-      # The dump goes through the CLI rather than the runner's pg_dump so the
-      # client version always matches the server the CLI booted; a host pg_dump
-      # older than the container's Postgres refuses to run at all.
+      # pg_dump runs INSIDE the database container, for two reasons. Its client
+      # version then always matches the server the CLI booted (a host pg_dump older
+      # than the server refuses to run at all, and the runner's version is not ours
+      # to pin). And it is raw pg_dump: `supabase db dump` silently emits no
+      # CREATE TRIGGER at all — verified, 0 against 26 — so using it would have
+      # quietly dropped every trigger from the snapshot while leaving policies,
+      # grants and functions intact enough to look right.
       - name: Regenerate schema snapshot from migrations
-        run: supabase db dump --local --schema public -f /tmp/schema-from-migrations.sql
+        run: |
+          CONTAINER=$(docker ps --filter "name=supabase_db_" --format '{{.Names}}' | head -1)
+          if [ -z "$CONTAINER" ]; then
+            echo "::error::supabase db container not found; cannot regenerate the schema snapshot"
+            exit 1
+          fi
+          echo "dumping from $CONTAINER"
+          docker exec "$CONTAINER" pg_dump -U postgres -d postgres \
+            --schema=public --schema-only --no-owner \
+            | grep -vE '^[\](un)?restrict ' > /tmp/schema-from-migrations.sql
+          echo "wrote $(wc -l < /tmp/schema-from-migrations.sql) lines"
+          # Cheap guard against a dump that "succeeds" but lost an object class.
+          for obj in "CREATE TABLE" "CREATE POLICY" "CREATE TRIGGER" "GRANT"; do
+            n=$(grep -c "^$obj" /tmp/schema-from-migrations.sql || true)
+            echo "$obj: $n"
+            if [ "$n" -eq 0 ]; then
+              echo "::error::regenerated snapshot contains no '$obj' statements — refusing to treat it as authoritative"
+              exit 1
+            fi
+          done
 
       - name: Upload regenerated snapshot
         if: always()
