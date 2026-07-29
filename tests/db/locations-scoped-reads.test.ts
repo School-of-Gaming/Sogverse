@@ -15,7 +15,7 @@ import { createAdminTestClient } from "./helpers";
  * `max_rows` on a 34,875-row country — and both are load-bearing for the
  * "nothing fetches the whole table" design.
  *
- * The France commune seed (migration 00131) is asserted here too, for the same
+ * The France commune seed (migration 00133) is asserted here too, for the same
  * reason its own assertion block exists: a partial seed is a catalog entry that
  * resolves to no row, and it should fail in CI rather than in front of an admin.
  */
@@ -28,7 +28,7 @@ describe("locations scoped reads", () => {
     service = new LocationsService(admin);
   });
 
-  describe("France commune seed (00131)", () => {
+  describe("France commune seed (00133)", () => {
     it("seeded every commune, each under its département", async () => {
       const { count, error } = await admin
         .from("locations")

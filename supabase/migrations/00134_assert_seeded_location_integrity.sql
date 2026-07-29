@@ -11,7 +11,7 @@
 -- read-only "legacy" chip a gedu can remove but never re-add, and a catalog
 -- tick on it refuses to save — so a single renamed kunta would quietly become
 -- unpickable, with a warning in a push log as the only witness. France's seed
--- (00131) already raises on this condition; Finland must hold the same bar.
+-- (00133) already raises on this condition; Finland must hold the same bar.
 --
 -- 2. FRANCE: THE ORPHAN CHECK CAN ACTUALLY SEE ORPHANS
 --
@@ -19,7 +19,7 @@
 -- NULL or dangling parent_id fell out of the join and counted as zero orphans —
 -- a paranoia check blind to one of its cases. (Nothing 00129 inserts can hit
 -- it; a hand-created row could.) Re-checked here with the LEFT JOIN shape
--- 00131 uses, for both districts under régions and municipalities under
+-- 00133 uses, for both districts under régions and municipalities under
 -- districts.
 --
 -- Assertion-only: no data change, no schema change, re-runnable by nature.

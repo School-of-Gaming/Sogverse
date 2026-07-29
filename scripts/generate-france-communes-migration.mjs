@@ -50,7 +50,7 @@ import { FR, fail, buildFrance } from "./lib/location-classifications.mjs";
  * history, so the number is chosen once by a human and never inferred from a
  * directory listing (which would silently mint a second file on a rerun).
  */
-const MIGRATION_FILE = "00131_seed_france_communes.sql";
+const MIGRATION_FILE = "00133_seed_france_communes.sql";
 
 const MIGRATIONS_DIR = join(import.meta.dirname, "..", "supabase", "migrations");
 
