@@ -4,7 +4,7 @@
 
 
 -- Dumped from database version 17.6
--- Dumped by pg_dump version 17.6
+-- Dumped by pg_dump version 17.6 (deliberate probe: CI should overwrite this line)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
