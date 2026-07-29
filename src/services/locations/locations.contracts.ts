@@ -32,6 +32,10 @@ export const locationRow = z.object({
   type: z.enum(Constants.public.Enums.location_type),
   parent_id: z.string().nullable(),
   country_code: z.string().nullable(),
+  // The official statistical code (INSEE / Tilastokeskus) on a seeded row;
+  // null on the admin-created sites this API creates, which exist in no
+  // national classification.
+  external_code: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
 });

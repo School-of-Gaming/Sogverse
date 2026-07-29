@@ -8,15 +8,18 @@ import { FilterDropdown } from "@/components/ui/filter-dropdown";
 import { FilterCombobox } from "@/components/ui/filter-combobox";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { useSpokenLanguages, useUsersByRole } from "@/services/users";
-import { useAllLocations } from "@/services/locations";
-import { buildAncestorChain } from "@/components/locations/location-tree";
+import {
+  municipalityOf,
+  type EmbeddedLocationNode,
+} from "@/lib/locations/embedded-chain";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { formatWeekday } from "@/components/public/products/format-product-schedule";
 import { resolveLocale } from "@/lib/constants/locales";
+import { useLanguageNames } from "@/hooks/use-language-names";
 import { ProductRows } from "./product-rows";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductWithDetails } from "@/services/products";
-import type { Location, ProductType } from "@/types";
+import type { ProductType } from "@/types";
 
 interface ClubProductFiltersProps {
   productType: ProductType;
@@ -31,8 +34,8 @@ interface ClubProductFiltersProps {
 // All filters are single-select; no selection means "all", and active filters
 // AND together — a row must satisfy every one. Filtering is client-side over
 // the already loaded list; the day/educator/language/municipality data all ride
-// on the list query (educator via `gedu_group_assignments`, municipality
-// resolved from `location_id` against the locations tree).
+// on the list query (educator via `gedu_group_assignments`, municipality via
+// the embedded location and its parent).
 export function ClubProductFilters({
   productType,
   products,
@@ -50,50 +53,30 @@ export function ClubProductFilters({
   const [language, setLanguage] = useState<string | null>(null);
   const [municipalityId, setMunicipalityId] = useState<string | null>(null);
 
-  // All three reference queries fire for both club types even though each page
-  // only reads a subset: consumer clubs ignore `locations` (the largest of the
-  // three — the whole locations tree), municipality clubs ignore
-  // `spokenLanguages`. Left unconditional on purpose: the queries are cheap and
-  // cached, and gating them would mean splitting the municipality-only work into
-  // a child component that only mounts for `isMunicipality`. If the locations
-  // tree ever grows enough to matter, that split is the fix.
+  // Both reference queries fire for both club types even though each page only
+  // reads one: consumer clubs ignore nothing here, municipality clubs ignore
+  // `spokenLanguages`. Left unconditional on purpose — the queries are cheap
+  // and cached, and gating them would mean splitting the municipality-only work
+  // into a child component that only mounts for `isMunicipality`.
   const { data: gedus } = useUsersByRole("gedu");
   const { data: spokenLanguages } = useSpokenLanguages();
-  const { data: locations } = useAllLocations();
 
-  // Spoken-language names render in the viewer's locale. The `spoken_languages`
-  // reference table only carries one (English) `name`, so localizing it there
-  // would need a translation table; `Intl.DisplayNames` resolves a language
-  // code to its name in any locale for free ("fi" → Finnish / suomi / finska).
-  const languageNames = useMemo(() => {
-    try {
-      return new Intl.DisplayNames([uiLocale], { type: "language" });
-    } catch {
-      return null;
-    }
-  }, [uiLocale]);
+  const languageName = useLanguageNames();
 
-  // Resolve each club to its Finnish municipality. A municipality club's
-  // `location_id` is either the municipality itself (online clubs pick one) or
-  // a site beneath it (in-person clubs pin a leaf site) — walking the ancestor
-  // chain and picking the `municipality` node handles both shapes. DB CHECK
-  // constraints guarantee a municipality club always has a `location_id`, so
-  // there's no "no municipality" bucket here.
+  // Resolve each club to its Finnish municipality off the row itself — the list
+  // query embeds the club's location plus one level of parent, which covers
+  // both shapes the schema allows (online clubs point at the municipality, in-
+  // person ones at a site under it). DB CHECK constraints guarantee a
+  // municipality club always has a `location_id`, so there's no "no
+  // municipality" bucket here.
   const muniByProduct = useMemo(() => {
-    const map = new Map<string, Location>();
-    if (!locations) return map;
-    const byId = new Map(locations.map((l) => [l.id, l]));
+    const map = new Map<string, EmbeddedLocationNode>();
     for (const p of products) {
-      if (!p.location_id) continue;
-      const loc = byId.get(p.location_id);
-      if (!loc) continue;
-      const muni = buildAncestorChain(loc, locations).find(
-        (c) => c.type === "municipality",
-      );
+      const muni = municipalityOf(p.locations);
       if (muni) map.set(p.id, muni);
     }
     return map;
-  }, [locations, products]);
+  }, [products]);
 
   // Each filter's options are derived from the values actually present on the
   // listed clubs, so a selection always yields at least one match (no dead
@@ -137,14 +120,14 @@ export function ClubProductFilters({
       .filter((code) => present.has(code));
     for (const code of present) if (!ordered.includes(code)) ordered.push(code);
     return ordered.map((code) => {
-      const name = languageNames?.of(code) ?? code.toUpperCase();
+      const name = languageName(code, code.toUpperCase());
       return {
         value: code,
         label: name,
         adornment: <LanguageFlag code={code} showCode={false} title={name} />,
       };
     });
-  }, [products, spokenLanguages, languageNames, isConsumer]);
+  }, [products, spokenLanguages, languageName, isConsumer]);
 
   const municipalityOptions = useMemo(() => {
     if (!isMunicipality) return [];

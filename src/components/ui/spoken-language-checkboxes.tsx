@@ -24,24 +24,16 @@ import {
   getSpokenLanguageFlag,
   type SpokenLanguageFlag,
 } from "@/components/ui/language-flag";
-import { isKeyOf } from "@/lib/utils";
+import { useLanguageNames } from "@/hooks/use-language-names";
 
-// Map spoken-language codes to common.* translation keys.
-// Falls back to the DB name for codes not listed here. `as const` keeps the
-// values as literal message keys so c(...) typechecks without an assertion.
-const SPOKEN_LANG_NAME_KEYS = {
-  en: "languageEnglish",
-  fi: "languageFinnish",
-  sv: "languageSwedish",
-} as const;
-
+// Names render in the viewer's locale via the shared language-name hook; the
+// DB `name` is the fallback for a code Intl cannot resolve.
 function useLangDisplay() {
-  const c = useTranslations("common");
+  const languageName = useLanguageNames();
+
   return (lang: SpokenLanguage): { FlagIcon: SpokenLanguageFlag | undefined; displayName: string } => {
     const FlagIcon = getSpokenLanguageFlag(lang.code);
-    const displayName = isKeyOf(SPOKEN_LANG_NAME_KEYS, lang.code)
-      ? c(SPOKEN_LANG_NAME_KEYS[lang.code])
-      : lang.name;
+    const displayName = languageName(lang.code, lang.name);
     return { FlagIcon, displayName };
   };
 }

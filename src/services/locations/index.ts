@@ -1,8 +1,17 @@
 export { LocationsService } from "./locations.service";
+export type {
+  LocationChainNode,
+  LocationCodeRef,
+  LocationWithChain,
+} from "./locations.service";
 export {
   locationKeys,
-  useAllLocations,
   useLocation,
+  useMunicipalitiesByCountry,
+  useSites,
+  useSitesByParent,
+  useLocationsByIds,
+  useResolveLocationsByCodes,
   useCreateLocation,
   useUpdateLocation,
 } from "./locations.queries";

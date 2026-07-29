@@ -712,6 +712,30 @@ describe("POST /api/checkout/products/create", () => {
     expect(mockStripeSessionCreate.mock.calls[0][0].locale).toBe("auto");
   });
 
+  it("passes French through to the Stripe chrome", async () => {
+    mockAuthenticatedCustomer("fr");
+    mockAdmin({ product: PAID_CLUB });
+    mockAdminRpc.mockResolvedValueOnce({
+      data: { kind: "reserving", participation_id: RESERVATION_ID },
+      error: null,
+    });
+    mockGetOrCreateSubscriptionPrice.mockResolvedValue({
+      product_id: PRODUCT_ID,
+      currency: "eur",
+      stripe_price_id: STRIPE_PRICE_ID,
+      unit_amount_cents: 5000,
+    });
+    mockStripeSessionCreate.mockResolvedValue({
+      url: "https://checkout.stripe.com/c/test_sub_fr",
+    });
+
+    const res = await POST(
+      createRequest({ ...VALID_BODY, purchaseShape: "subscription_monthly" }),
+    );
+    expect(res.status).toBe(200);
+    expect(mockStripeSessionCreate.mock.calls[0][0].locale).toBe("fr");
+  });
+
   it("rolls back and returns 400 when the product is not sold in the requested currency (sub branch)", async () => {
     mockAuthenticatedCustomer();
     mockAdmin({ product: PAID_CLUB });

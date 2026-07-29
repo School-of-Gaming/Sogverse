@@ -111,9 +111,11 @@ describe("validate", () => {
         sv: { name: "Klubb", shortDescription: "", longDescription: [] },
       };
       const result = validate(s, consumerConfig);
+      // The locale *code*: the validator is pure, so the form resolves the
+      // viewer-locale display name at the t() call site.
       expect(result).toEqual({
         messageKey: "translationIncomplete",
-        values: { locale: "Swedish" },
+        values: { locale: "sv" },
       });
     });
 

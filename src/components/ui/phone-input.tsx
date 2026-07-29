@@ -1,12 +1,18 @@
 "use client";
 
-import PhoneInput from "react-phone-number-input";
+import PhoneInput, { type Country } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import { FLAGS } from "@/components/ui/flags";
+import { PHONE_COUNTRIES } from "@/lib/constants/phone";
+
+// `countries` is typed as a mutable array, and our constant is readonly on
+// purpose. Copy once at module scope rather than per render, so the prop keeps
+// a stable identity.
+const countries: Country[] = [...PHONE_COUNTRIES];
 
 /**
  * Pre-configured international phone input with Finnish default.
- * Restricts country dropdown to Finland, UK, Sweden, and US.
+ * Restricts the country dropdown to PHONE_COUNTRIES.
  * Outputs E.164 format (e.g. "+358401234567").
  */
 export function InternationalPhoneInput({
@@ -25,7 +31,7 @@ export function InternationalPhoneInput({
       id={id}
       international
       defaultCountry="FI"
-      countries={["FI", "GB", "SE", "US"]}
+      countries={countries}
       addInternationalOption={true}
       flags={FLAGS}
       value={value}

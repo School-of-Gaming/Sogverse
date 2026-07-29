@@ -16,6 +16,7 @@ import {
   SUBJECT_TOPICS,
 } from "@/lib/products/topics";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
+import { useLanguageNames } from "@/hooks/use-language-names";
 import { Constants } from "@/types";
 import { FormSection } from "../form-primitives";
 import { ImagePicker } from "../image-picker";
@@ -41,6 +42,7 @@ export function IdentitySection({
 }: IdentitySectionProps) {
   const t = useTranslations("admin.products");
   const topicLabel = useTopicLabel();
+  const languageName = useLanguageNames();
 
   const addedLocales = SUPPORTED_LOCALES.filter(
     (l) => state.translations[l] !== undefined,
@@ -130,7 +132,7 @@ export function IdentitySection({
                     onClick={() => removeLocaleTab(locale)}
                     className="rounded p-0.5 text-muted-foreground hover:text-destructive"
                     aria-label={t("translations.removeLocale", {
-                      locale: LOCALE_CONFIG[locale].label,
+                      locale: languageName(locale, LOCALE_CONFIG[locale].label),
                     })}
                   >
                     <X className="h-3 w-3" />
@@ -151,7 +153,7 @@ export function IdentitySection({
               <option value="">{t("translations.addLocale")}</option>
               {addableLocales.map((l) => (
                 <option key={l} value={l}>
-                  {LOCALE_CONFIG[l].label}
+                  {languageName(l, LOCALE_CONFIG[l].label)}
                 </option>
               ))}
             </select>

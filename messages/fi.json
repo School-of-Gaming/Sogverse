@@ -95,9 +95,6 @@
     "noRecentActivity": "Ei viimeaikaista toimintaa näytettäväksi.",
     "recentActivity": "Viimeaikainen toiminta",
     "selectLanguage": "Valitse kieli",
-    "languageEnglish": "englanti",
-    "languageFinnish": "suomi",
-    "languageSwedish": "ruotsi",
     "roleAdmin": "Ylläpitäjä",
     "roleParent": "Vanhempi",
     "roleGamer": "Pelaaja",
@@ -109,7 +106,7 @@
       "subtitle": "Minecraft-kerhoissamme ruutuajasta tulee laatuaikaa. Yhdistämme lapset, ammattitaitoiset pelikasvattajat ja pelin, jota lapset jo rakastavat — luoden leikillisiä oppimiskokemuksia, joissa he saavat uusia ystäviä, oppivat uutta ja pitävät hauskaa."
     },
     "quote": {
-      "text": "\"Se mikä on totta nyt, oli kerran vain mielikuvitustasi.\"",
+      "text": "”Se mikä on totta nyt, oli kerran vain mielikuvitustasi.”",
       "attribution": "— School of Gaming -rehtorin sanat"
     },
     "mission": {
@@ -359,16 +356,13 @@
         "subject": "Aineet"
       },
       "locationPicker": {
-        "searchPlaceholder": "Hae maan, alueen, kunnan tai toimipisteen mukaan…",
         "clearSearch": "Tyhjennä haku",
-        "noResults": "Hakuehdolla \"{query}\" ei löytynyt sijainteja.",
-        "hintSite": "Valitse toimipiste. Puuttuuko jokin? Lisää se kunnan alle tästä.",
+        "noResults": "Hakuehdolla ”{query}” ei löytynyt sijainteja.",
+        "hintSite": "Valitse toimipiste, jossa tämä järjestetään. Avaatko uuden? Aloita sen kunnasta.",
         "hintMunicipality": "Valitse kunta, jolle tämä kerho on tarkoitettu — se kunta, joka sen rahoittaa. Toimipisteet ja muut maat eivät ole valittavissa.",
-        "addCountry": "Lisää uusi maa",
         "change": "Vaihda",
         "edit": "Muokkaa",
         "cancel": "Peruuta",
-        "pick": "Valitse",
         "noVenueHint": "Ei fyysistä toimipaikkaa. Kunnan {name} vanhemmat näkevät tämän kerhon selatessaan.",
         "memberNotesLabel": "Jäsenille näkyvät tiedot",
         "memberNotesFieldLabel": "Vanhemmille ja pelaajille näkyvät tiedot",
@@ -381,7 +375,22 @@
         "addressLabel": "Osoite",
         "addressPlaceholder": "Katu, postinumero, kaupunki",
         "noMemberNotes": "Ei jäsenille näkyviä tietoja tälle toimipisteelle.",
-        "noStaffNotes": "Ei henkilökunnan tietoja tälle toimipisteelle."
+        "noStaffNotes": "Ei henkilökunnan tietoja tälle toimipisteelle.",
+        "searchSites": "Hae toimipistettä nimellä tai kunnalla…",
+        "searchMunicipalities": "Hae kuntaa…",
+        "noVenues": "Ei vielä toimipisteitä. Avaa ensimmäinen kohdasta ”Uusi toimipiste”.",
+        "noMunicipalities": "Kuntia ei ole saatavilla.",
+        "ungrouped": "Muualla",
+        "loading": "Ladataan sijainteja",
+        "newVenue": "Uusi toimipiste…",
+        "newVenueTitle": "Avaa uusi toimipiste",
+        "newVenueDescription": "Aloita kunnasta, jossa toimipiste sijaitsee. Viralliset nimet ja koodit tulevat kunkin maan tilastoluokituksesta, joten toimipisteen yläpuolella mitään ei kirjoiteta käsin.",
+        "newVenueUnresolved": "Kunnalla {name} ei ole vielä sijaintitietuetta tässä ympäristössä, joten toimipistettä ei voi avata sinne.",
+        "venuesIn": "Toimipisteet kunnassa {name}",
+        "venuesInDescription": "Valitse jokin olemassa oleva tai lisää uusi.",
+        "venuesHereEmpty": "Täällä ei ole vielä toimipisteitä.",
+        "addVenue": "Lisää toimipiste",
+        "changeMunicipality": "Valitse toinen kunta"
       },
       "pricing": {
         "perMonthLabel": "Hinta per kuukausi",
@@ -437,7 +446,7 @@
         "municipalityHint": "Kuntakerhot on aina sidottu tiettyyn Suomen kuntaan — siihen, joka sen maksaa. Sen kunnan vanhemmat näkevät kerhon selatessaan.",
         "siteHint": "Missä kerrat fyysisesti tapahtuvat.",
         "eventSingleDay": "Tapahtumat ovat yhden päivän mittaisia.",
-        "thresholdOnly": "Ei vielä kiinteää alkupäivää. Vanhemmat näkevät \"X / Y tarvitaan\" -laskurin sen täyttyessä. Painat Aloita kun ilmoittautuneita on tarpeeksi ja valitset ensimmäisen kerran päivän silloin.",
+        "thresholdOnly": "Ei vielä kiinteää alkupäivää. Vanhemmat näkevät ”X / Y tarvitaan” -laskurin sen täyttyessä. Painat Aloita kun ilmoittautuneita on tarpeeksi ja valitset ensimmäisen kerran päivän silloin.",
         "thresholdWithDate": "Jos vanhempia ilmoittautuu vähemmän kuin tämä alkupäivään mennessä, sinun täytyy perua ja palauttaa maksut tuotesivulta.",
         "timezoneFixedHelsinki": "Ajat ovat aikavyöhykkeellä Europe/Helsinki. Vanhemmat näkevät ne automaattisesti omalla aikavyöhykkeellään.",
         "holidayHint": "Yksikään kerta ei pidetä valittujen kalenterien päivinä. Muokkaa kalenteria kerran ja kaikki sitä käyttävät tuotteet päivittyvät automaattisesti.",
@@ -690,16 +699,11 @@
     "locations": {
       "title": "Sijainnit",
       "description": "Hallitse maita, kaupunkeja ja toimipisteitä",
-      "addCountry": "Lisää maa",
       "searchPlaceholder": "Hae sijainteja...",
       "editName": "Muokkaa: {name}",
       "addChildUnder": "Lisää {type} kohteen {parent} alle",
       "location": "Sijainti",
-      "pleaseSelectCountry": "Valitse maa",
       "nameRequired": "Nimi on pakollinen",
-      "country": "Maa",
-      "selectCountry": "Valitse maa...",
-      "allCountriesAdded": "Kaikki tuetut maat on jo lisätty.",
       "name": "Nimi",
       "enterTypeName": "Syötä {type} nimi",
       "enterName": "Syötä nimi",
@@ -991,7 +995,7 @@
       "summaryTitle": "Jonotuspaikkasi",
       "forLabel": "Jonotuslistalla",
       "positionLabel": "Sijasi jonossa",
-      "positionValue": "#{position}",
+      "positionValue": "{position}.",
       "next1": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
       "next2": "{gamer} säilyttää paikkansa jonossa koko kauden ajan.",
       "next3": "Voit seurata jonotustilannetta milloin tahansa Oma SOG -sivulla."
@@ -1127,11 +1131,16 @@
       "noneSelected": "Ei valittuja alueita",
       "remove": "Poista {name}",
       "clearAll": "Tyhjennä kaikki",
-      "searchPlaceholder": "Etsi sijainteja...",
+      "chooseAreas": "Valitse alueet",
+      "legacyHeading": "Toimipaikat ja vanhat merkinnät",
+      "legacyNote": "Lisätty ennen luetteloa. Voit poistaa ne täältä, mutta et lisätä uusia.",
+      "venueBadge": "Toimipaikka",
+      "legacyBadge": "Vanha merkintä",
       "loading": "Ladataan sijainteja...",
       "save": "Tallenna",
       "saving": "Tallennetaan...",
-      "saveError": "Tallennus epäonnistui"
+      "saveError": "Tallennus epäonnistui",
+      "unresolvedError": "Ei vielä sijaintitietokannassa: {names}. Poista ne ja tallenna uudelleen."
     },
     "myGroups": {
       "counts": "{groupCount, plural, one {# ryhmä} other {# ryhmää}} · {gamerCount, plural, one {# pelaaja} other {# pelaajaa}}",
@@ -1167,7 +1176,7 @@
       "copyParentEmail": "Kopioi vanhemman sähköposti {email}",
       "noParentEmail": "Vanhemman sähköpostia ei ole tallennettu",
       "emailCopied": "Sähköposti kopioitu",
-      "copyAllParentEmails": "Kopioi kaikki vanhempien sähköpostit ({count, plural, one {#} other {#}})",
+      "copyAllParentEmails": "Kopioi kaikki vanhempien sähköpostit ({count})",
       "allEmailsCopied": "Kaikki vanhempien sähköpostit kopioitu"
     }
   },
@@ -1537,9 +1546,24 @@
     }
   },
   "locations": {
-    "tree": {
-      "empty": "Hakuasi vastaavia sijainteja ei löytynyt.",
-      "clearSearch": "Tyhjennä haku"
+    "catalog": {
+      "coverageTitle": "Valitse alueet, jotka katat",
+      "coverageDescription": "Merkitse kaikki, jotka voit kattaa. Jokainen merkintä kattaa myös kaiken sen sisällä, joten maakunnan merkitseminen kattaa jo kaikki sen kunnat.",
+      "country": "Maa",
+      "loading": "Ladataan luetteloa",
+      "loadFailed": "Luetteloa ei voitu ladata. Tarkista yhteytesi ja yritä uudelleen.",
+      "retry": "Yritä uudelleen",
+      "searchPlaceholder": "Hae nimellä tai virallisella koodilla…",
+      "searchingAll": "Haetaan koko luettelosta: {country}",
+      "noResults": "Luettelosta ei löydy hakua ”{query}” vastaavaa.",
+      "showingSome": "Näytetään {shown} ensimmäistä osumaa {total} osumasta. Tarkenna hakua kirjoittamalla lisää.",
+      "browseInto": "Näytä, mitä alueella {name} on",
+      "nothingSelected": "Jatka valitsemalla kunta.",
+      "confirm": "Jatka",
+      "tickedCount": "{count, plural, =0 {Ei merkintöjä} one {# alue merkitty} other {# aluetta merkitty}}",
+      "done": "Valmis",
+      "clearSearch": "Tyhjennä haku",
+      "confirming": "Avataan…"
     }
   },
   "minecraft": {
@@ -1571,7 +1595,7 @@
     "waitlist": {
       "forLabel": "Pelaaja: {name}",
       "positionLabel": "Sijasi jonossa",
-      "positionValue": "#{position}",
+      "positionValue": "{position}.",
       "reassuranceCustomer": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
       "reassuranceGamer": "Lähetämme vanhemmallesi sähköpostia heti, kun paikka vapautuu.",
       "leave": {

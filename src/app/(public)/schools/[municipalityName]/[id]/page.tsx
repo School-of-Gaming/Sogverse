@@ -5,6 +5,7 @@ import { LocationsService } from "@/services/locations";
 import {
   buildMunicipalityEntries,
   findMunicipalityBySlug,
+  SCHOOLS_COUNTRY_CODE,
 } from "@/lib/schools/municipalities";
 import { ProductDetailPage } from "@/components/public/products/product-detail-page";
 
@@ -29,10 +30,12 @@ export default async function MunicipalityClubDetailPage({ params }: PageProps) 
   const locale = await getLocale();
 
   const supabase = await createClient();
-  const locations = await new LocationsService(supabase).getAllLocations();
-  // `[]` for club location ids — we only need the slug→name/region mapping
-  // here, not the `hasClubs` flag the listing page computes.
-  const entries = buildMunicipalityEntries(locations, [], locale);
+  const municipalities = await new LocationsService(
+    supabase,
+  ).getMunicipalitiesByCountry(SCHOOLS_COUNTRY_CODE);
+  // `[]` for club locations — we only need the slug→name/region mapping here,
+  // not the `hasClubs` flag the listing page computes.
+  const entries = buildMunicipalityEntries(municipalities, [], locale);
   const municipality = findMunicipalityBySlug(municipalityName, entries);
   if (!municipality) notFound();
 

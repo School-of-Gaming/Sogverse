@@ -95,9 +95,6 @@
     "noRecentActivity": "Ingen senaste aktivitet att visa.",
     "recentActivity": "Senaste aktivitet",
     "selectLanguage": "Välj språk",
-    "languageEnglish": "engelska",
-    "languageFinnish": "finska",
-    "languageSwedish": "svenska",
     "roleAdmin": "Administratör",
     "roleParent": "Förälder",
     "roleGamer": "Spelare",
@@ -109,7 +106,7 @@
       "subtitle": "I våra Minecraft-klubbar blir skärmtid kvalitetstid. Vi sammanför barn, professionella spelfostrare och spelet som barnen redan älskar — och skapar lekfulla lärandeupplevelser där de får nya vänner, utvecklar riktiga färdigheter och har roligt."
     },
     "quote": {
-      "text": "\"Det som är sant nu, var en gång bara din fantasi.\"",
+      "text": "”Det som är sant nu, var en gång bara din fantasi.”",
       "attribution": "— Rektorn för School of Gaming"
     },
     "mission": {
@@ -359,16 +356,13 @@
         "subject": "Ämnen"
       },
       "locationPicker": {
-        "searchPlaceholder": "Sök efter land, region, kommun eller lokal…",
         "clearSearch": "Rensa sökning",
-        "noResults": "Inga platser matchar \"{query}\".",
-        "hintSite": "Välj en lokal. Saknas någon? Lägg till den under kommunen direkt här.",
+        "noResults": "Inga platser matchar ”{query}”.",
+        "hintSite": "Välj lokalen där detta hålls. Öppnar du en ny? Börja med kommunen.",
         "hintMunicipality": "Välj den finländska kommun som klubben gäller — den som finansierar den. Lokaler och andra länder kan inte väljas här.",
-        "addCountry": "Lägg till nytt land",
         "change": "Ändra",
         "edit": "Redigera",
         "cancel": "Avbryt",
-        "pick": "Välj",
         "noVenueHint": "Ingen fysisk lokal. Föräldrar i {name} ser denna klubb när de bläddrar.",
         "memberNotesLabel": "Medlemssynliga anteckningar",
         "memberNotesFieldLabel": "Anteckningar för föräldrar och spelare",
@@ -381,7 +375,22 @@
         "addressLabel": "Adress",
         "addressPlaceholder": "Gata, postnummer, ort",
         "noMemberNotes": "Inga medlemssynliga anteckningar för denna lokal.",
-        "noStaffNotes": "Inga personalanteckningar för denna lokal."
+        "noStaffNotes": "Inga personalanteckningar för denna lokal.",
+        "searchSites": "Sök lokal på namn eller kommun…",
+        "searchMunicipalities": "Sök kommun…",
+        "noVenues": "Inga lokaler ännu. Använd ”Ny lokal” för att lägga till den första.",
+        "noMunicipalities": "Inga kommuner är tillgängliga.",
+        "ungrouped": "Annanstans",
+        "loading": "Platser laddas",
+        "newVenue": "Ny lokal…",
+        "newVenueTitle": "Öppna en ny lokal",
+        "newVenueDescription": "Börja med kommunen den ligger i. Officiella namn och koder kommer från varje lands statistiska klassificering, så ingenting ovanför själva lokalen skrivs för hand.",
+        "newVenueUnresolved": "{name} har ännu ingen platspost i den här miljön, så det går inte att öppna en lokal där.",
+        "venuesIn": "Lokaler i {name}",
+        "venuesInDescription": "Välj en som redan finns, eller lägg till en ny.",
+        "venuesHereEmpty": "Inga lokaler här ännu.",
+        "addVenue": "Lägg till en lokal",
+        "changeMunicipality": "Välj en annan kommun"
       },
       "pricing": {
         "perMonthLabel": "Pris per månad",
@@ -437,7 +446,7 @@
         "municipalityHint": "Kommunklubbar är alltid kopplade till en specifik finländsk kommun — den som betalar. Föräldrar från den kommunen ser den när de bläddrar.",
         "siteHint": "Var tillfällena fysiskt äger rum.",
         "eventSingleDay": "Evenemang äger rum ett enda datum.",
-        "thresholdOnly": "Inget fast startdatum än. Föräldrar ser en räknare \"X av Y behövs\" medan den fylls. Du trycker Starta när du har tillräckligt med anmälningar och väljer första tillfällets datum då.",
+        "thresholdOnly": "Inget fast startdatum än. Föräldrar ser en räknare ”X av Y behövs” medan den fylls. Du trycker Starta när du har tillräckligt med anmälningar och väljer första tillfällets datum då.",
         "thresholdWithDate": "Om färre än så här många föräldrar anmäler sig till startdatumet behöver du ställa in den och återbetala från produktsidan.",
         "timezoneFixedHelsinki": "Tider är i tidszonen Europe/Helsinki. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
         "holidayHint": "Inget tillfälle körs på något datum från de valda kalendrarna. Redigera en kalender en gång och alla produkter som använder den uppdateras automatiskt.",
@@ -690,16 +699,11 @@
     "locations": {
       "title": "Platser",
       "description": "Hantera länder, städer och platser",
-      "addCountry": "Lägg till land",
       "searchPlaceholder": "Sök platser...",
       "editName": "Redigera {name}",
       "addChildUnder": "Lägg till {type} under {parent}",
       "location": "Plats",
-      "pleaseSelectCountry": "Välj ett land",
       "nameRequired": "Namn krävs",
-      "country": "Land",
-      "selectCountry": "Välj ett land...",
-      "allCountriesAdded": "Alla länder som stöds har redan lagts till.",
       "name": "Namn",
       "enterTypeName": "Ange namn för {type}",
       "enterName": "Ange namn",
@@ -991,7 +995,7 @@
       "summaryTitle": "Din väntelisteplats",
       "forLabel": "På väntelista",
       "positionLabel": "Din plats i kön",
-      "positionValue": "#{position}",
+      "positionValue": "nr {position}",
       "next1": "Vi mejlar så snart en plats blir ledig.",
       "next2": "{gamer} behåller sin plats i kön under hela terminen.",
       "next3": "Du kan följa din plats i kön när som helst i Min SOG."
@@ -1127,11 +1131,16 @@
       "noneSelected": "Inga områden valda",
       "remove": "Ta bort {name}",
       "clearAll": "Rensa alla",
-      "searchPlaceholder": "Sök platser...",
+      "chooseAreas": "Välj områden",
+      "legacyHeading": "Platser och äldre poster",
+      "legacyNote": "Tillagda innan katalogen fanns. Du kan ta bort dem här, men inte lägga till fler.",
+      "venueBadge": "Plats",
+      "legacyBadge": "Äldre post",
       "loading": "Laddar platser...",
       "save": "Spara",
       "saving": "Sparar...",
-      "saveError": "Kunde inte spara"
+      "saveError": "Kunde inte spara",
+      "unresolvedError": "Finns ännu inte i platsdatabasen: {names}. Ta bort dem och spara igen."
     },
     "myGroups": {
       "counts": "{groupCount, plural, one {# grupp} other {# grupper}} · {gamerCount, plural, one {# spelare} other {# spelare}}",
@@ -1167,7 +1176,7 @@
       "copyParentEmail": "Kopiera förälderns e-post {email}",
       "noParentEmail": "Ingen förälder-e-post sparad",
       "emailCopied": "E-post kopierad",
-      "copyAllParentEmails": "Kopiera alla förälder-e-postadresser ({count, plural, one {#} other {#}})",
+      "copyAllParentEmails": "Kopiera alla förälder-e-postadresser ({count})",
       "allEmailsCopied": "Alla förälder-e-postadresser kopierade"
     }
   },
@@ -1537,9 +1546,24 @@
     }
   },
   "locations": {
-    "tree": {
-      "empty": "Inga platser hittades som matchar din sökning.",
-      "clearSearch": "Rensa sökning"
+    "catalog": {
+      "coverageTitle": "Välj de områden du täcker",
+      "coverageDescription": "Kryssa i allt du kan täcka. Varje kryss täcker allt som ligger inuti, så ett kryss för ett landskap täcker redan alla dess kommuner.",
+      "country": "Land",
+      "loading": "Katalogen laddas",
+      "loadFailed": "Katalogen kunde inte läsas in. Kontrollera din anslutning och försök igen.",
+      "retry": "Försök igen",
+      "searchPlaceholder": "Sök på namn eller officiell kod…",
+      "searchingAll": "Söker i hela katalogen: {country}",
+      "noResults": "Ingenting i katalogen matchar ”{query}”.",
+      "showingSome": "Visar de {shown} första av {total} träffar. Fortsätt skriva för att begränsa dem.",
+      "browseInto": "Visa vad som finns i {name}",
+      "nothingSelected": "Välj en kommun för att fortsätta.",
+      "confirm": "Fortsätt",
+      "tickedCount": "{count, plural, =0 {Inget ikryssat} one {# område ikryssat} other {# områden ikryssade}}",
+      "done": "Klar",
+      "clearSearch": "Rensa sökning",
+      "confirming": "Öppnar…"
     }
   },
   "minecraft": {
@@ -1571,7 +1595,7 @@
     "waitlist": {
       "forLabel": "För {name}",
       "positionLabel": "Din plats i kön",
-      "positionValue": "#{position}",
+      "positionValue": "nr {position}",
       "reassuranceCustomer": "Vi mejlar så snart en plats blir ledig.",
       "reassuranceGamer": "Vi mejlar en förälder så snart en plats blir ledig.",
       "leave": {

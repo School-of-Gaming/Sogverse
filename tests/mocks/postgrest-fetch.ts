@@ -45,6 +45,25 @@ export function postgrestJson(body: unknown, status = 200): Response {
   });
 }
 
+/**
+ * A PostgREST range page carrying a Content-Range total — what a
+ * `select(..., { count: "exact" })` query receives. Plain `postgrestJson`
+ * responses have no Content-Range, so the client reports `count: null`.
+ */
+export function postgrestPage(
+  body: unknown[],
+  range: { from: number; total: number },
+): Response {
+  const to = range.from + body.length - 1;
+  return new Response(JSON.stringify(body), {
+    status: 206,
+    headers: {
+      "Content-Type": "application/json",
+      "Content-Range": `${body.length ? `${range.from}-${to}` : "*"}/${range.total}`,
+    },
+  });
+}
+
 /** The PostgREST error wire shape; the client surfaces it as `{ error }`. */
 export function postgrestError(message: string, status = 400): Response {
   return postgrestJson(

@@ -4,8 +4,13 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { resolveLocale } from "@/lib/constants/locales";
+import {
+  isSupportedLocale,
+  LOCALE_CONFIG,
+  resolveLocale,
+} from "@/lib/constants/locales";
 import { useLocale } from "next-intl";
+import { useLanguageNames } from "@/hooks/use-language-names";
 import { AudienceSection } from "./sections/audience-section";
 import { BillingSection } from "./sections/billing-section";
 import { FeesSection } from "./sections/fees-section";
@@ -58,6 +63,7 @@ export function ProductFormShell({
   const [state, setState] = useState<FormState>(initialFormState);
   const [error, setError] = useState<string | null>(null);
   const [committing, setCommitting] = useState(false);
+  const languageName = useLanguageNames();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -65,7 +71,22 @@ export function ProductFormShell({
 
     const failure = validate(state, config);
     if (failure) {
-      setError(t(`errors.${failure.messageKey}`, failure.values));
+      // translationIncomplete carries a locale *code* — the validator is pure
+      // and cannot resolve display names, so the viewer-locale language name
+      // is substituted here, per the i18n language-name rule.
+      const failureLocale = failure.values?.locale;
+      const values =
+        failure.messageKey === "translationIncomplete" &&
+        isSupportedLocale(failureLocale)
+          ? {
+              ...failure.values,
+              locale: languageName(
+                failureLocale,
+                LOCALE_CONFIG[failureLocale].label,
+              ),
+            }
+          : failure.values;
+      setError(t(`errors.${failure.messageKey}`, values));
       return;
     }
 

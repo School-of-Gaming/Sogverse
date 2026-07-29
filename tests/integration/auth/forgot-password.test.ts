@@ -182,7 +182,8 @@ describe("POST /api/auth/forgot-password", () => {
   it("should fall back to English when no Accept-Language language is supported", async () => {
     await POST(createRequest(
       { email: "user@example.com" },
-      { "Accept-Language": "de-DE,fr;q=0.9,ja;q=0.8" },
+      // None of these is a shipped locale (fr used to sit here, and is one now).
+      { "Accept-Language": "de-DE,pl;q=0.9,ja;q=0.8" },
     ));
 
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(

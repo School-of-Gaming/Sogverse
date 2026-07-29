@@ -76,9 +76,16 @@ Verification state is read via `useGeduProfiles` / `useGeduVerificationMap` (lis
 and `useGeduProfile` (detail, seeded with a server fetch). `useSetGeduVerified` invalidates
 the whole `gedu-profiles` key on success.
 
-## Coverage picker reuse
+## Coverage field reuse
 
-The register form and the settings/admin coverage editor render the same presentational
-`CoveragePicker` (`../../components/gedu/coverage-picker.tsx`) — identical tree + cascade
-semantics. The editor wraps it with a Save button (immediate `gedu_locations` mutation);
-the register form collects the selection into the atomic `register_gedu` call instead.
+The register form and the settings/admin coverage editor render the same coverage field
+(`../../components/gedu/`) — a fixed-height box of claim chips plus the shared catalog
+dialog, with identical positive-selection semantics (one tick is one independent "I cover
+this subtree" claim; ticking a parent never touches its descendants). The editor wraps it
+with a Save button (immediate `gedu_locations` mutation); the register form collects the
+selection into the atomic `register_gedu` call instead.
+
+Both hold ticks as catalog codes and resolve them to `locations` row ids only at commit —
+the register form because no account exists yet, the editor because a freshly ticked node
+has never been a row to it. Resolution is a lookup, so **a code that resolves to nothing
+must fail the commit with the place named**, never be dropped from the set being written.

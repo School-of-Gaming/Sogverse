@@ -1,6 +1,6 @@
 # i18n (next-intl)
 
-This directory holds the next-intl request wiring. The i18n system spans the whole stack: UI strings, email templates, page metadata, and user-facing constants. Locales currently shipped: English (`en`, source of truth), Finnish (`fi`), Swedish (`sv`), Klingon (`tlh`, easter egg). `en` is the default.
+This directory holds the next-intl request wiring. The i18n system spans the whole stack: UI strings, email templates, page metadata, and user-facing constants. Locales currently shipped: English (`en`, source of truth), Finnish (`fi`), Swedish (`sv`), French (`fr`), Klingon (`tlh`, easter egg). `en` is the default.
 
 ## Locale vs. spoken language
 
@@ -13,6 +13,8 @@ The two are fully independent: a Finnish-speaking parent can have `locale = "fi"
 
 **Rule: Use the word *locale* for the UI translation system and *spoken language* for human fluency. Never name one after the other.**
 
+**Rule: A language's display name always comes from the shared language-name hook (`useLanguageNames`, `src/hooks/`), never from `spoken_languages.name` or `LOCALE_CONFIG.label` directly.** Those two are English *fallbacks*, not display strings — rendering them raw ships English names to every non-English viewer (this happened on three admin surfaces at once). The hook resolves any code via `Intl.DisplayNames` in the viewer's locale and takes the English value as its fallback argument.
+
 ## Files in this directory
 
 - `request.ts` — next-intl request config (SSR/RSC). Resolves the per-request locale and loads its messages.
@@ -21,7 +23,7 @@ The two are fully independent: a Finnish-speaking parent can have `locale = "fi"
 
 ## Translation files
 
-Per-locale JSON in `messages/<code>.json` at the repo root (`en`, `fi`, `sv`, `tlh`). `en.json` is the source of truth; the others mirror its shape exactly.
+Per-locale JSON in `messages/<code>.json` at the repo root (`en`, `fi`, `sv`, `fr`, `tlh`). `en.json` is the source of truth; the others mirror its shape exactly.
 
 **Rule: Every user-facing string must be translated for every locale file in `messages/`. Never leave placeholder copy or skip a locale. Best-effort translation is expected; Klingon (`tlh`) is an easter egg where fun takes are welcome and accuracy is not the goal.**
 
@@ -63,12 +65,59 @@ Translation keys are organized into top-level namespaces in the JSON files. Two 
 
 All other namespaces (role/feature pages, public pages, feature components, layout chrome, `common`) ship to the client.
 
+## The locale config is the single point of control
+
+`LOCALE_CONFIG` in `src/lib/constants/locales.ts` holds everything that varies per locale — English label, native label, flag country, and the locale to render Stripe's own chrome in. `SUPPORTED_LOCALES` beside it is the ordered list, and the config `satisfies` a record keyed by it, so a locale with no config (or a config entry for no locale) fails the build. A unit test pins that the two are in the same order.
+
+**Rule: per-locale data belongs in `LOCALE_CONFIG`, never in a second map keyed by locale.** The Stripe Checkout and Billing Portal routes each used to hand-maintain their own app-locale → Stripe-locale map; a new locale meant remembering both, and forgetting one shipped a page in the wrong language. The Stripe mapping is now a config field (typed as the intersection of Stripe's Checkout and Billing Portal locale enums, so a value only one surface accepts fails to compile), read through the shared helper that falls back to Stripe's `auto` for anything unsupported.
+
+**Rule: Klingon (`tlh`) is always the last entry.** It's a novelty easter egg and never sits among languages a user might actually need. The picker renders `SUPPORTED_LOCALES` in order, and a unit test pins the last entry.
+
+**Rule: locale codes are bare language subtags** (`fr`, not `fr-FR`). A region-qualified code is only added when we genuinely ship two variants of one language — it changes what the `locale` column and cookie carry and forces a decision about how regions appear in any future locale-prefixed URLs. The header matcher already prefers an exact tag match over a language-subtag one, so no structural prep remains; the decision does. The tripwire comment lives at the `LOCALE_CONFIG` definition.
+
 ## Adding a locale
 
-1. Create `messages/<code>.json` by copying `en.json` and translating every value.
-2. Add the code to `SUPPORTED_LOCALES` and an entry to `LOCALE_CONFIG` (label, native label, country flag) in `src/lib/constants/locales.ts`.
-3. Add its import to the `messageLoaders` map in `messages.ts`.
-4. CI validation picks it up automatically. No changes needed to `request.ts`, `types.ts`, `next.config.ts`, or provider code.
+1. Add the code to `SUPPORTED_LOCALES` and its entry to `LOCALE_CONFIG` in `src/lib/constants/locales.ts` — label, native label, flag country, Stripe locale (`"auto"` if Stripe doesn't speak it). Place it **before** `tlh` in both.
+2. Register its flag in `src/components/ui/flags.ts` (a named per-country import — never the barrel). `country` is typed against that registry, so an unregistered flag fails the build.
+3. Add its loader to the `messageLoaders` map in `messages.ts`.
+4. Create `messages/<code>.json` by copying `en.json` and translating every value.
+5. **Give it a matching spoken language** — a data-only migration inserting the code into the `spoken_languages` reference table, and its country in the spoken-language → flag map under `components/ui/`. Shipping a UI locale says we serve families who speak that language, so a club has to be offerable in it the same day, and `products.spoken_language_code` can only reference a row in that table. **Novelty locales are exempt** (Klingon is an easter egg, not a language a club is delivered in). A CI db test asserts this parity, so skipping it fails the build rather than shipping a dead language option. This is a parity requirement between the two systems, not a merge — locale and spoken language stay distinct everywhere else.
+6. Decide separately whether the country belongs in `PHONE_COUNTRIES` (`src/lib/constants/phone.ts`). That list is **not** derived from locales and drifts on purpose — US is a phone country with no locale, Klingon a locale with no country.
+7. CI translation validation picks the new file up automatically. No changes needed to `request.ts`, `types.ts`, `next.config.ts`, the check script, or provider code.
+8. Produce the native-speaker review handoff for the new translation — see the
+   "Native-speaker review handoff" section below.
+
+## Native-speaker review handoff
+
+A new locale ships as best-effort translation and then gets a human pass. The handoff is
+**one styled `.xlsx`** the owner uploads to Google Sheets and sends to a native speaker
+(built programmatically with a spreadsheet lib; a plain CSV loses the styling that makes
+it usable). What the reviewer is like drives every choice: **no code access, thinks in UI
+terms, assumes the English source is correct.** English-source problems found during
+translation go to the team, never into the reviewer's file.
+
+Two tabs:
+
+- **"Read me"** — plain-language cover note: what the product is, how to fill the sheet
+  in, the global choices to confirm as questions (register policy — e.g. vous/tu split —
+  glossary, brand names kept in English), and one practical rule stated without jargon:
+  text in curly braces is filled in automatically — keep it exactly, but it may move
+  within the sentence; same for angle-bracket tags. No mention of JSON, keys, or ICU.
+- **"Strings to review"** — one row per flagged string. Columns, in order: row number ·
+  where it appears (plain UI location — trace the key's actual consumer, don't guess from
+  the namespace; group rows by UI area) · English source · current translation · why
+  we're asking (plain language; when a string contains a placeholder whose values matter,
+  enumerate them so every combination can be checked) · corrected translation (edit
+  here) · reviewer comments · **internal reference last** (the message key, marked
+  "please ignore" — it's how edits get applied back precisely). Extract source/current
+  text programmatically from the message files, never retype it. Style: frozen header,
+  filter row, zebra striping, wrapped text, the two edit columns visibly highlighted, the
+  reference column demoted to small gray.
+
+Flag selectively (~5% of the catalog, not everything): idiom/tone doubts, marketing
+taglines, legal text, and gendered/inflection frames. Drop staff-internal tooling and
+developer-docs strings — a non-technical reviewer can't judge them. Invite the reviewer
+to add rows for anything not flagged that bothers them.
 
 ## Adding a namespace
 

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/sheet";
 import { useUsersByRole, useSpokenLanguages } from "@/services/users";
 import { useGeduVerificationMap } from "@/services/gedu";
+import { useLanguageNames } from "@/hooks/use-language-names";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/types";
 
@@ -49,6 +50,7 @@ export function GeduPickerSheet({
   const { data: gedus } = useUsersByRole("gedu");
   const { data: spokenLanguages } = useSpokenLanguages();
   const verification = useGeduVerificationMap();
+  const languageName = useLanguageNames();
 
   useEffect(() => {
     if (open) {
@@ -130,7 +132,7 @@ export function GeduPickerSheet({
                     : "border-input text-muted-foreground hover:text-foreground"
                 )}
               >
-                {lang.name}
+                {languageName(lang.code, lang.name)}
               </button>
             ))}
           </div>
