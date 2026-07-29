@@ -9,6 +9,7 @@ export {
   useSitesByParent,
   useLocationsByIds,
   useLocationsByCodes,
+  useResolveLocationsByCodes,
   useCreateLocation,
   useMaterializeLocation,
   useUpdateLocation,

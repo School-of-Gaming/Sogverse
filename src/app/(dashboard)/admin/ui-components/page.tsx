@@ -63,7 +63,7 @@ import type {
 import type { VoiceZone, Location } from "@/types";
 import { LocationTree } from "@/components/locations/location-tree";
 import { CatalogPicker } from "@/components/locations/catalog-picker";
-import type { LocationCatalog } from "@/lib/locations/catalog";
+import { catalogRefKey, type LocationCatalog } from "@/lib/locations/catalog";
 import {
   ProductBrowseCardView,
   type LocationLine,
@@ -1753,10 +1753,11 @@ export default function AdminUIComponentsPage() {
         <p className="text-sm text-muted-foreground">
           The one shared location-tree component, driven entirely by a hardcoded
           fixture (no network, no providers). Single-select powers the product
-          location picker; multi-select powers the gedu coverage editor. Because
-          the data and the create handler are injected as props, the same
-          component renders identically from fixtures — which is the
-          separation-of-concerns check: the tree owns no business logic.
+          location picker; multi-select is the generic tick mode (gedu coverage
+          has since moved to the catalog panel below). Because the data and the
+          create handler are injected as props, the same component renders
+          identically from fixtures — which is the separation-of-concerns check:
+          the tree owns no business logic.
         </p>
         <LocationTreeDemo />
       </Section>
@@ -1766,22 +1767,35 @@ export default function AdminUIComponentsPage() {
       {/* ============================================================ */}
       <Section title="Catalog Picker">
         <p className="text-sm text-muted-foreground">
-          How a municipality enters the database. In the real app the panel is
-          handed one of the shipped official catalogs — France&rsquo;s alone has
-          34,875 communes, loaded as its own chunk behind a dynamic import —
-          and confirming materializes the whole ancestor chain. Here it is fed a
-          five-commune fixture and a fake &ldquo;save&rdquo;, no network: the
-          component takes the catalog and an <code>onConfirm</code> as props and
-          owns nothing else, which is the separation-of-concerns check.
+          One panel, two selection modes. In the real app it is handed one of the
+          shipped official catalogs — France&rsquo;s alone has 34,875 communes,
+          loaded as its own chunk behind a dynamic import — by a dialog that owns
+          the country switch, the loading skeleton and the retry. Here both modes
+          are fed the same five-commune fixture and fake handlers, no network:
+          the panel takes a catalog and a <code>selection</code> config as props
+          and owns nothing else, which is the separation-of-concerns check.
         </p>
         <p className="text-sm text-muted-foreground">
           Worth trying: search is diacritic-insensitive, so{" "}
           <code>nimes</code> finds N&icirc;mes; clearing the box drops back to
-          drill-down browsing; and the confirm button stays disabled from the
-          click until the parent swaps the view away, so the action can&rsquo;t
-          be fired twice.
+          drill-down browsing; and in single mode the confirm button stays
+          disabled from the click until the parent swaps the view away, so the
+          action can&rsquo;t be fired twice.
         </p>
         <CatalogPickerDemo />
+        <SubSection title="Multi mode (gedu coverage)">
+          <p className="text-sm text-muted-foreground mb-3">
+            Every level is tickable and each tick is an independent &ldquo;I
+            cover this whole subtree&rdquo; claim, so ticking Hauts-de-France and
+            then drilling into it shows Nord and Pas-de-Calais{" "}
+            <em>unticked</em> — deliberately. Half-ticking them would say
+            something the saved rows don&rsquo;t: one claim is one row, and
+            matching walks the ancestor chain to find it. Multi mode also indexes
+            the levels above the leaves, so searching <code>nord</code> finds the
+            département itself and not only communes spelled like it.
+          </p>
+          <CatalogCoverageDemo />
+        </SubSection>
       </Section>
 
       {/* ============================================================ */}
@@ -2039,10 +2053,10 @@ function LocationTreeDemo() {
       </div>
 
       <div className="space-y-2">
-        <h4 className="text-sm font-semibold">Multi-select (gedu coverage)</h4>
+        <h4 className="text-sm font-semibold">Multi-select</h4>
         <p className="text-xs text-muted-foreground">
-          The component just reports each tick; cascade semantics (tick a parent →
-          tick its subtree) live in the consumer, not here.
+          The component just reports each tick; what a tick <em>means</em> is the
+          consumer&rsquo;s business, not the tree&rsquo;s.
         </p>
         <LocationTree
           locations={locations}
@@ -2135,16 +2149,51 @@ function CatalogPickerDemo() {
       <CatalogPicker
         catalog={CATALOG_FIXTURE}
         countryLabel="France"
-        onConfirm={(entry) =>
-          new Promise<void>((resolve) =>
-            setTimeout(() => {
-              setAdded(entry.name);
-              resolve();
-            }, 600),
-          )
-        }
-        onCancel={() => setAdded(null)}
+        selection={{
+          mode: "single",
+          onConfirm: (entry) =>
+            new Promise<void>((resolve) =>
+              setTimeout(() => {
+                setAdded(entry.name);
+                resolve();
+              }, 600),
+            ),
+          onCancel: () => setAdded(null),
+        }}
       />
+    </div>
+  );
+}
+
+function CatalogCoverageDemo() {
+  const [ticked, setTicked] = useState<ReadonlySet<string>>(new Set());
+
+  return (
+    <div className="space-y-2">
+      <div className="max-w-2xl rounded-md border border-input bg-card p-4">
+        <CatalogPicker
+          catalog={CATALOG_FIXTURE}
+          countryLabel="France"
+          selection={{
+            mode: "multi",
+            tickedKeys: ticked,
+            onToggle: (pick) =>
+              setTicked((prev) => {
+                const next = new Set(prev);
+                const key = catalogRefKey(pick);
+                if (next.has(key)) next.delete(key);
+                else next.add(key);
+                return next;
+              }),
+            onDone: () => setTicked(new Set()),
+          }}
+        />
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Ticked: {ticked.size === 0 ? "(none)" : [...ticked].join(", ")}{" "}
+        &mdash; &ldquo;Done&rdquo; clears the demo&rsquo;s state; in the real app
+        it closes the dialog and the caller&rsquo;s save commits the ticks.
+      </p>
     </div>
   );
 }

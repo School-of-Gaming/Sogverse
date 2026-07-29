@@ -1119,11 +1119,16 @@
       "noneSelected": "Inga områden valda",
       "remove": "Ta bort {name}",
       "clearAll": "Rensa alla",
-      "searchPlaceholder": "Sök platser...",
+      "chooseAreas": "Välj områden",
+      "legacyHeading": "Platser och äldre poster",
+      "legacyNote": "Tillagda innan katalogen fanns. Du kan ta bort dem här, men inte lägga till fler.",
+      "venueBadge": "Plats",
+      "legacyBadge": "Äldre post",
       "loading": "Laddar platser...",
       "save": "Spara",
       "saving": "Sparar...",
-      "saveError": "Kunde inte spara"
+      "saveError": "Kunde inte spara",
+      "unresolvedError": "Finns ännu inte i platsdatabasen: {names}. Ta bort dem och spara igen."
     },
     "myGroups": {
       "counts": "{groupCount, plural, one {# grupp} other {# grupper}} · {gamerCount, plural, one {# spelare} other {# spelare}}",
@@ -1536,6 +1541,8 @@
     "catalog": {
       "title": "Lägg till en kommun från den officiella katalogen",
       "description": "Kommunerna kommer från varje lands officiella statistiska klassificering, så stavningen och koden stämmer alltid. Välj en kommun så läggs den till i trädet.",
+      "coverageTitle": "Välj de områden du täcker",
+      "coverageDescription": "Kryssa i allt du kan täcka. Varje kryss täcker allt som ligger inuti, så ett kryss för ett landskap täcker redan alla dess kommuner.",
       "country": "Land",
       "loading": "Katalogen laddas",
       "loadFailed": "Katalogen kunde inte läsas in. Kontrollera din anslutning och försök igen.",
@@ -1544,9 +1551,12 @@
       "searchingAll": "Söker i hela katalogen: {country}",
       "noResults": "Ingenting i katalogen matchar ”{query}”.",
       "showingSome": "Visar de {shown} första av {total} träffar. Fortsätt skriva för att begränsa dem.",
+      "browseInto": "Visa vad som finns i {name}",
       "nothingSelected": "Välj en kommun för att fortsätta.",
       "confirm": "Lägg till kommun",
-      "adding": "Lägger till…"
+      "adding": "Lägger till…",
+      "tickedCount": "{count, plural, =0 {Inget ikryssat} one {# område ikryssat} other {# områden ikryssade}}",
+      "done": "Klar"
     }
   },
   "minecraft": {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { LocationsService, type LocationCodeRef } from "./locations.service";
@@ -131,6 +132,36 @@ export function useLocationsByCodes(
     queryFn: () => service.resolveLocationsByCodes(countryCode, refs),
     enabled: !!countryCode,
   });
+}
+
+/**
+ * The same resolution, on demand.
+ *
+ * A save path only learns which codes it needs at the moment the user commits,
+ * which is too late for a declarative query. This returns a stable function
+ * that reads through the *same* cache entry `useLocationsByCodes` uses, so a
+ * screen that already resolved a set does not refetch it to save.
+ */
+export function useResolveLocationsByCodes() {
+  const queryClient = useQueryClient();
+
+  return useCallback(
+    (countryCode: string, refs: readonly LocationCodeRef[]) => {
+      // `getClient()` is the browser singleton, so building the service here
+      // rather than at render time costs nothing and keeps the callback stable.
+      const service = new LocationsService(getClient());
+      return queryClient.fetchQuery({
+        queryKey: locationKeys.byCodes(countryCode, refs),
+        queryFn: () => service.resolveLocationsByCodes(countryCode, refs),
+        // A commit asks the server, every time. The default one-minute
+        // staleness is right for a screen that re-renders; it is wrong here,
+        // where the interesting answer is "no row for this code" and a retry
+        // must be able to see that change rather than replay the cached miss.
+        staleTime: 0,
+      });
+    },
+    [queryClient],
+  );
 }
 
 export function useCreateLocation() {

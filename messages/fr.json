@@ -1119,11 +1119,16 @@
       "noneSelected": "Aucune zone sélectionnée",
       "remove": "Retirer {name}",
       "clearAll": "Tout effacer",
-      "searchPlaceholder": "Rechercher des lieux...",
+      "chooseAreas": "Choisir des zones",
+      "legacyHeading": "Lieux et anciennes entrées",
+      "legacyNote": "Ajoutés avant l’existence du catalogue. Vous pouvez les retirer ici, mais pas en ajouter d’autres.",
+      "venueBadge": "Lieu",
+      "legacyBadge": "Ancienne entrée",
       "loading": "Chargement des lieux...",
       "save": "Enregistrer",
       "saving": "Enregistrement...",
-      "saveError": "Échec de l’enregistrement des zones d’intervention"
+      "saveError": "Échec de l’enregistrement des zones d’intervention",
+      "unresolvedError": "Pas encore dans la base des lieux : {names}. Retirez-les puis enregistrez à nouveau."
     },
     "myGroups": {
       "counts": "{groupCount, plural, one {# groupe} other {# groupes}} · {gamerCount, plural, one {# joueur} other {# joueurs}}",
@@ -1536,6 +1541,8 @@
     "catalog": {
       "title": "Ajouter une commune depuis le catalogue officiel",
       "description": "Les communes proviennent de la classification statistique officielle de chaque pays : l’orthographe et le code sont donc toujours exacts. Choisissez-en une et elle est ajoutée à l’arborescence.",
+      "coverageTitle": "Choisissez les zones que vous couvrez",
+      "coverageDescription": "Cochez tout ce que vous pouvez couvrir. Chaque case cochée couvre tout ce qu’elle contient : cocher une région couvre déjà toutes ses communes.",
       "country": "Pays",
       "loading": "Chargement du catalogue",
       "loadFailed": "Impossible de charger le catalogue. Vérifiez votre connexion et réessayez.",
@@ -1544,9 +1551,12 @@
       "searchingAll": "Recherche dans tout le catalogue : {country}",
       "noResults": "Aucun résultat dans le catalogue pour « {query} ».",
       "showingSome": "Affichage des {shown} premiers résultats sur {total}. Continuez à saisir pour affiner.",
+      "browseInto": "Afficher le contenu de {name}",
       "nothingSelected": "Choisissez une commune pour continuer.",
       "confirm": "Ajouter la commune",
-      "adding": "Ajout en cours…"
+      "adding": "Ajout en cours…",
+      "tickedCount": "{count, plural, =0 {Aucune zone cochée} one {# zone cochée} other {# zones cochées}}",
+      "done": "Terminé"
     }
   },
   "minecraft": {

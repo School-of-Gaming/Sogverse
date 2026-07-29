@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   CATALOG_SEARCH_LIMIT,
   buildCatalogIndex,
+  catalogRefKey,
   findLeafChain,
   isCatalogCountry,
   normalizeForSearch,
@@ -136,6 +137,7 @@ describe("buildCatalogIndex", () => {
     expect(index).toHaveLength(5);
     expect(index[0]).toEqual({
       code: "59350",
+      type: "municipality",
       name: "Lille",
       ancestors: ["Nord", "Hauts-de-France"],
       normalized: "lille",
@@ -145,6 +147,49 @@ describe("buildCatalogIndex", () => {
   it("carries no non-leaf entries", () => {
     const codes = buildCatalogIndex(FI).map((e) => e.code);
     expect(codes).toEqual(["091", "049"]);
+  });
+
+  it("indexes every level on request, each typed by its depth", () => {
+    // What coverage ticking needs: a gedu covering the whole département has
+    // to be able to find it, and a search that only knows leaves cannot.
+    const index = buildCatalogIndex(FR, { includeAllLevels: true });
+
+    expect(index).toHaveLength(3 + 3 + 5);
+    expect(index.find((e) => e.name === "Nord")).toEqual({
+      code: "59",
+      type: "district",
+      name: "Nord",
+      ancestors: ["Hauts-de-France"],
+      normalized: "nord",
+    });
+    expect(index.find((e) => e.name === "Hauts-de-France")?.type).toBe("region");
+  });
+
+  it("takes the level type from the catalog, so a country skipping one is right", () => {
+    // Finland has no district level: its leaves are municipalities directly
+    // under regions.
+    const index = buildCatalogIndex(FI, { includeAllLevels: true });
+    expect(index.map((e) => [e.name, e.type])).toEqual([
+      ["Uusimaa", "region"],
+      ["Helsinki", "municipality"],
+      ["Espoo", "municipality"],
+    ]);
+  });
+});
+
+describe("catalogRefKey", () => {
+  it("separates the same code at two levels", () => {
+    // France reuses every one of its 18 région codes as a département code, so
+    // a key that ignored the type would collapse two different places into one.
+    expect(catalogRefKey({ country: "FR", type: "region", code: "32" })).not.toBe(
+      catalogRefKey({ country: "FR", type: "district", code: "32" }),
+    );
+  });
+
+  it("separates the same code in two countries", () => {
+    expect(catalogRefKey({ country: "FI", type: "municipality", code: "091" })).not.toBe(
+      catalogRefKey({ country: "FR", type: "municipality", code: "091" }),
+    );
   });
 });
 
@@ -184,6 +229,7 @@ describe("searchCatalogIndex", () => {
     // A synthetic index far larger than the cap, all matching.
     const many = Array.from({ length: CATALOG_SEARCH_LIMIT * 3 }, (_, i) => ({
       code: String(i),
+      type: "municipality" as const,
       name: `Ville ${i}`,
       ancestors: [] as string[],
       normalized: `ville ${i}`,

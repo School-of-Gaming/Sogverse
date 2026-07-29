@@ -1119,11 +1119,16 @@
       "noneSelected": "No areas selected",
       "remove": "Remove {name}",
       "clearAll": "Clear all",
-      "searchPlaceholder": "Search locations...",
+      "chooseAreas": "Choose areas",
+      "legacyHeading": "Venues and older entries",
+      "legacyNote": "Added before the catalog existed. You can remove them here, but not add more.",
+      "venueBadge": "Venue",
+      "legacyBadge": "Older entry",
       "loading": "Loading locations...",
       "save": "Save",
       "saving": "Saving...",
-      "saveError": "Failed to save coverage"
+      "saveError": "Failed to save coverage",
+      "unresolvedError": "Not in the location database yet: {names}. Remove them and save again."
     },
     "myGroups": {
       "counts": "{groupCount, plural, one {# group} other {# groups}} · {gamerCount, plural, one {# gamer} other {# gamers}}",
@@ -1536,6 +1541,8 @@
     "catalog": {
       "title": "Add a municipality from the official catalog",
       "description": "Municipalities come from each country’s official statistical classification, so the spelling and the code are always right. Pick one and it is added to the tree.",
+      "coverageTitle": "Choose the areas you cover",
+      "coverageDescription": "Tick anything you can cover. Each tick covers everything inside it, so ticking a region already covers every municipality in it.",
       "country": "Country",
       "loading": "Loading the catalog",
       "loadFailed": "The catalog could not be loaded. Check your connection and try again.",
@@ -1544,9 +1551,12 @@
       "searchingAll": "Searching the whole catalog: {country}",
       "noResults": "Nothing in the catalog matches “{query}”.",
       "showingSome": "Showing the first {shown} of {total} matches. Keep typing to narrow them down.",
+      "browseInto": "Show what is inside {name}",
       "nothingSelected": "Pick a municipality to continue.",
       "confirm": "Add municipality",
-      "adding": "Adding…"
+      "adding": "Adding…",
+      "tickedCount": "{count, plural, =0 {Nothing ticked} one {# area ticked} other {# areas ticked}}",
+      "done": "Done"
     }
   },
   "minecraft": {

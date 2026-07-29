@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
@@ -14,16 +14,23 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
-import { CoveragePicker } from "@/components/gedu/coverage-picker";
+import { CoverageAreasField } from "@/components/gedu/coverage-areas-field";
+import {
+  codeRefsOf,
+  matchResolvedRows,
+  pendingTicksByCountry,
+  toggleCoverageTick,
+  type CoverageTick,
+} from "@/components/gedu/coverage-ticks";
 import { isValidPhoneNumber } from "react-phone-number-input";
 import { getClient } from "@/lib/supabase/client";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, SUPPORT_EMAIL } from "@/lib/constants";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth } from "@/providers";
 import { useSpokenLanguages } from "@/services/users";
-import { useAllLocations } from "@/services/locations";
+import { useResolveLocationsByCodes } from "@/services/locations";
 import { readErrorMessage } from "@/lib/api/json-response";
-import type { Location, SpokenLanguage } from "@/types";
+import type { SpokenLanguage } from "@/types";
 
 const registerGeduSchema = z.object({
   firstName: z.string().min(DISPLAY_NAME_MIN, `First name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `First name must be at most ${DISPLAY_NAME_MAX} characters`),
@@ -38,13 +45,12 @@ const registerGeduSchema = z.object({
 
 export function RegisterGeduForm({
   initialSpokenLanguages,
-  initialLocations,
 }: {
   initialSpokenLanguages: SpokenLanguage[];
-  initialLocations: Location[];
 }) {
   const t = useTranslations("auth");
   const c = useTranslations("common");
+  const coverageT = useTranslations("gedu.coverage");
   const locale = useLocale();
   const { navigateAfterAuth, status } = useAuthRedirect();
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
@@ -57,15 +63,20 @@ export function RegisterGeduForm({
   const [minecraftUsername, setMinecraftUsername] = useState("");
   const [phone, setPhone] = useState("");
   const [spokenLanguages, setSpokenLanguages] = useState<string[]>([]);
-  const [coverage, setCoverage] = useState<Set<string>>(new Set());
+  /**
+   * Coverage claims, keyed by catalog ref. The account does not exist yet, so
+   * these stay as catalog codes until submit resolves them to row ids — which
+   * anonymous callers may do, `locations` being anon-readable reference data.
+   */
+  const [coverage, setCoverage] = useState<ReadonlyMap<string, CoverageTick>>(
+    new Map(),
+  );
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const supabase = getClient();
   const { data: availableLanguages } = useSpokenLanguages({ initialData: initialSpokenLanguages });
-  const { data: locations } = useAllLocations({ initialData: initialLocations });
-
-  const locationList = useMemo(() => locations ?? [], [locations]);
+  const resolveByCodes = useResolveLocationsByCodes();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +105,36 @@ export function RegisterGeduForm({
     // re-enable between the click and the navigation that follows success.
     setIsLoading(true);
 
+    // Resolve the ticked catalog codes to row ids *before* the account is
+    // created. Resolution is a lookup, not an assertion — a code with no row
+    // comes back absent — so a miss has to stop the submit here rather than
+    // leave a brand-new gedu holding a coverage set missing what they ticked.
+    let locationIds: string[];
+    try {
+      const resolvedIds: string[] = [];
+      const unresolved: CoverageTick[] = [];
+      for (const [country, pending] of pendingTicksByCountry(coverage)) {
+        const rows = await resolveByCodes(country, codeRefsOf(pending));
+        const matched = matchResolvedRows(pending, rows);
+        resolvedIds.push(...matched.ids);
+        unresolved.push(...matched.unresolved);
+      }
+      if (unresolved.length > 0) {
+        setError(
+          coverageT("unresolvedError", {
+            names: unresolved.map((tick) => tick.label).join(", "),
+          }),
+        );
+        setIsLoading(false);
+        return;
+      }
+      locationIds = resolvedIds;
+    } catch {
+      setError(c("unexpectedError"));
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch("/api/gedu/register", {
         method: "POST",
@@ -106,7 +147,7 @@ export function RegisterGeduForm({
           phone: phone || undefined,
           spokenLanguages,
           locale,
-          locationIds: Array.from(coverage),
+          locationIds,
           minecraftUsername: minecraftUsername.trim() || undefined,
         }),
       });
@@ -240,7 +281,14 @@ export function RegisterGeduForm({
           <div className="space-y-2">
             <p className="text-sm font-medium">{t("registerGedu.coverageHeading")}</p>
             <p className="text-sm text-muted-foreground">{t("registerGedu.coverageNote")}</p>
-            <CoveragePicker locations={locationList} selected={coverage} onChange={setCoverage} />
+            <CoverageAreasField
+              ticks={coverage}
+              onToggle={(pick) =>
+                setCoverage((current) => toggleCoverageTick(current, pick))
+              }
+              onClear={() => setCoverage(new Map())}
+              disabled={isLoading}
+            />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">

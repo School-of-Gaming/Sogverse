@@ -1119,11 +1119,16 @@
       "noneSelected": "Ei valittuja alueita",
       "remove": "Poista {name}",
       "clearAll": "Tyhjennä kaikki",
-      "searchPlaceholder": "Etsi sijainteja...",
+      "chooseAreas": "Valitse alueet",
+      "legacyHeading": "Toimipaikat ja vanhat merkinnät",
+      "legacyNote": "Lisätty ennen luetteloa. Voit poistaa ne täältä, mutta et lisätä uusia.",
+      "venueBadge": "Toimipaikka",
+      "legacyBadge": "Vanha merkintä",
       "loading": "Ladataan sijainteja...",
       "save": "Tallenna",
       "saving": "Tallennetaan...",
-      "saveError": "Tallennus epäonnistui"
+      "saveError": "Tallennus epäonnistui",
+      "unresolvedError": "Ei vielä sijaintitietokannassa: {names}. Poista ne ja tallenna uudelleen."
     },
     "myGroups": {
       "counts": "{groupCount, plural, one {# ryhmä} other {# ryhmää}} · {gamerCount, plural, one {# pelaaja} other {# pelaajaa}}",
@@ -1536,6 +1541,8 @@
     "catalog": {
       "title": "Lisää kunta virallisesta luettelosta",
       "description": "Kunnat tulevat kunkin maan virallisesta tilastoluokituksesta, joten kirjoitusasu ja koodi ovat aina oikein. Valitse kunta, niin se lisätään puuhun.",
+      "coverageTitle": "Valitse alueet, jotka katat",
+      "coverageDescription": "Merkitse kaikki, jotka voit kattaa. Jokainen merkintä kattaa myös kaiken sen sisällä, joten maakunnan merkitseminen kattaa jo kaikki sen kunnat.",
       "country": "Maa",
       "loading": "Ladataan luetteloa",
       "loadFailed": "Luetteloa ei voitu ladata. Tarkista yhteytesi ja yritä uudelleen.",
@@ -1544,9 +1551,12 @@
       "searchingAll": "Haetaan koko luettelosta: {country}",
       "noResults": "Luettelosta ei löydy hakua ”{query}” vastaavaa.",
       "showingSome": "Näytetään {shown} ensimmäistä osumaa {total} osumasta. Tarkenna hakua kirjoittamalla lisää.",
+      "browseInto": "Näytä, mitä alueella {name} on",
       "nothingSelected": "Jatka valitsemalla kunta.",
       "confirm": "Lisää kunta",
-      "adding": "Lisätään…"
+      "adding": "Lisätään…",
+      "tickedCount": "{count, plural, =0 {Ei merkintöjä} one {# alue merkitty} other {# aluetta merkitty}}",
+      "done": "Valmis"
     }
   },
   "minecraft": {

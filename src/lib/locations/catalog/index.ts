@@ -1,3 +1,4 @@
+import type { LocationType } from "@/types";
 import type { CatalogNode, LocationCatalog } from "./types";
 
 export type { CatalogNode, LocationCatalog } from "./types";
@@ -122,10 +123,50 @@ export function findLeafChain(
   return walk(catalog.tree, 0, []);
 }
 
-/** One searchable leaf entry, with its display path and pre-normalized name. */
+/**
+ * Identifies one catalog node the way the `locations` table is keyed:
+ * `(country_code, type, external_code)`. A UI that only ever handled catalog
+ * entries can therefore hand a set of these straight to the row resolver
+ * without having seen a row.
+ *
+ * `type` comes from the node's depth (`catalog.levels[depth]`) and is
+ * load-bearing rather than decorative: France reuses every one of its 18 région
+ * codes as a département code, so a code alone names two different places.
+ */
+export interface CatalogRef {
+  /** ISO 3166-1 alpha-2 — the catalog's own `country`. */
+  readonly country: string;
+  /** The level this node sits at, from `catalog.levels`. */
+  readonly type: LocationType;
+  /** The official code in this country's classification. */
+  readonly code: string;
+}
+
+/**
+ * A stable string for a `CatalogRef`, for use as a Set/Map key or a React key.
+ * Country first so one collection can hold ticks from several catalogs.
+ */
+export function catalogRefKey(ref: CatalogRef): string {
+  return `${ref.country}:${ref.type}:${ref.code}`;
+}
+
+/**
+ * What a multi-select panel emits when a node is ticked: the identity, plus
+ * enough text to render a chip for it before anything has resolved it to a row.
+ */
+export interface CatalogPick extends CatalogRef {
+  /** The official name, exactly as published. */
+  readonly name: string;
+  /** Ancestor names, nearest first: `["Nord", "Hauts-de-France"]`. */
+  readonly ancestors: readonly string[];
+}
+
+/** One searchable entry, with its display path and pre-normalized name. */
 export interface CatalogEntry {
-  /** The official leaf code — what materialization is keyed on. */
+  /** The official code — what materialization and row resolution are keyed on. */
   code: string;
+  /** The level the entry sits at, i.e. `catalog.levels[its depth]`. */
+  type: LocationType;
   /** The official name, exactly as published. */
   name: string;
   /** Ancestor names, nearest first: `["Nord", "Hauts-de-France"]`. */
@@ -149,14 +190,26 @@ export function normalizeForSearch(value: string): string {
 }
 
 /**
- * Flatten a catalog to its leaf entries, normalizing each name once.
+ * Flatten a catalog to searchable entries, normalizing each name once.
  *
  * Built a single time per catalog and reused across keystrokes: France has
  * 34,875 communes, so normalizing inside the filter would redo ~35k Unicode
  * decompositions on every character typed.
+ *
+ * By default only leaves are indexed, because the single-select flow it feeds
+ * exists to name a municipality and a leaf code is unambiguous on its own.
+ * `includeAllLevels` adds the levels above, which is what a coverage picker
+ * needs — a gedu ticking "Nord" is making a claim about the whole département,
+ * and searching for it must find it rather than the communes spelled like it.
+ * The extra entries are cheap: France's 18 régions and 101 départements against
+ * ~35k communes.
  */
-export function buildCatalogIndex(catalog: LocationCatalog): CatalogEntry[] {
+export function buildCatalogIndex(
+  catalog: LocationCatalog,
+  options?: { readonly includeAllLevels?: boolean },
+): CatalogEntry[] {
   const leafDepth = catalog.levels.length - 1;
+  const includeAllLevels = options?.includeAllLevels ?? false;
   const entries: CatalogEntry[] = [];
 
   function walk(
@@ -165,11 +218,18 @@ export function buildCatalogIndex(catalog: LocationCatalog): CatalogEntry[] {
     ancestors: readonly string[],
   ): void {
     for (const [code, name, children] of nodes) {
-      if (depth === leafDepth) {
-        entries.push({ code, name, ancestors, normalized: normalizeForSearch(name) });
-        continue;
+      if (depth === leafDepth || includeAllLevels) {
+        entries.push({
+          code,
+          type: catalog.levels[depth],
+          name,
+          ancestors,
+          normalized: normalizeForSearch(name),
+        });
       }
-      if (children) walk(children, depth + 1, [name, ...ancestors]);
+      if (depth < leafDepth && children) {
+        walk(children, depth + 1, [name, ...ancestors]);
+      }
     }
   }
 
