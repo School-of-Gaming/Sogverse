@@ -16,10 +16,19 @@ files hold the live state, and between them they cover almost everything:
   *shapes* (types, signatures, enums). Auto-generated from the live schema.
 - **`supabase/schema.sql`** — the things the type generator can't see: function bodies,
   RLS policies, triggers, grants, constraints. Dumped from a database built **purely from
-  `migrations/`** (see step 4 of the migration workflow).
+  `migrations/`**, by the `test-db` job in `.github/workflows/ci.yml`; the reasoning is
+  in "Why the snapshot is built from migrations" below.
 
-Both are regenerated on every migration and reflect current state, so you never
-reconstruct it by hand.
+Neither is reconstructed by hand. `database.types.ts` reflects the database you generate
+it against; `schema.sql` reflects **migrations merged to `dev`**.
+
+**That last distinction has one sharp edge, and it is the one thing this arrangement
+costs you.** On a branch that has added migrations, `schema.sql` does not contain them
+yet — it is still describing `dev`. So for any object *your own unmerged branch* has
+touched, `schema.sql` is stale by exactly your own work, and the "copy the body from
+`schema.sql`" rule below would hand you back the pre-branch version and silently revert
+you. For those objects, your branch's own migration files are the truth. For everything
+else — which is nearly all of it — `schema.sql` remains the right thing to read.
 
 **Why the snapshot is built from migrations and not dumped from a hosted database.** It
 used to be dumped from the linked project, and the decisive problem is that **staging is
@@ -34,8 +43,8 @@ snapshot.
 
 Building from `migrations/` removes the class entirely. The file cannot record anything a
 migration did not do, so neither a hand-edit nor an unmerged branch has a path into it.
-CI regenerates it on every run, and on `dev` commits the result — see step 4 of the
-workflow below, which is "do nothing".
+CI regenerates it on every run and commits the result on `dev`, which is why step 4 of
+the workflow below is "do nothing".
 
 What that deliberately does *not* answer is whether a hosted database matches — the
 snapshot is a statement about `migrations/`, not about any live system. There is no
@@ -54,7 +63,9 @@ to no migration, and a column dropped and re-added so its ordinal moved. None of
 behavioural, and the ordinal cannot be corrected without rebuilding the table. It stopped
 mattering when the snapshot stopped being sourced from it. If staging ever drifts in a way
 that changes *behaviour*, that shows up as tests passing there and failing against
-production, which is a louder signal than a dump diff. Migrations are append-only history — a later one can supersede
+production, which is a louder signal than a dump diff.
+
+Migrations are append-only history — a later one can supersede
 an earlier one (drop a constraint, rewrite a function, relax a rule), which is exactly
 why eyeballing them for current state goes wrong. So when a migration must drop and
 recreate an object — e.g. a function, to repoint it at a changed type — copy its body

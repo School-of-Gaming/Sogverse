@@ -176,9 +176,10 @@ All env vars are in `.env.local`. Keys for Supabase, Stripe, and Daily.co — in
 
 ## Database
 
-Migrations in `supabase/migrations/`. The migration workflow (push → regenerate types →
-dump `schema.sql`), the "read current state from `schema.sql`/`database.types.ts`, not
-migrations" rule, the generated-nullability fix patterns, and the access-control rules
+Migrations in `supabase/migrations/`. The migration workflow (push → regenerate types —
+`schema.sql` is CI-maintained and must not be dumped or edited by hand), the "read
+current state from `schema.sql`/`database.types.ts`, not migrations" rule, the
+generated-nullability fix patterns, and the access-control rules
 all live in **`supabase/CLAUDE.md`** (auto-loads when you work under `supabase/`). The
 always-on tripwires:
 
