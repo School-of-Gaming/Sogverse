@@ -4,5 +4,7 @@ export {
   useAllLocations,
   useLocation,
   useCreateLocation,
+  useMaterializeLocation,
   useUpdateLocation,
 } from "./locations.queries";
+export type { MaterializeLocationBody } from "./locations.contracts";

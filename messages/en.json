@@ -364,7 +364,7 @@
         "noResults": "No locations match \"{query}\".",
         "hintSite": "Pick a site. Missing one? Add it inline under its municipality.",
         "hintMunicipality": "Pick the Finnish municipality this club is for — the one that funds it. Sites and other countries aren't options here.",
-        "addCountry": "Add a new country",
+        "addFromCatalog": "Add a municipality from the official catalog…",
         "change": "Change",
         "edit": "Edit",
         "cancel": "Cancel",
@@ -690,16 +690,11 @@
     "locations": {
       "title": "Locations",
       "description": "Manage countries, cities, and sites",
-      "addCountry": "Add Country",
       "searchPlaceholder": "Search locations...",
       "editName": "Edit {name}",
       "addChildUnder": "Add {type} under {parent}",
       "location": "Location",
-      "pleaseSelectCountry": "Please select a country",
       "nameRequired": "Name is required",
-      "country": "Country",
-      "selectCountry": "Select a country...",
-      "allCountriesAdded": "All supported countries have already been added.",
       "name": "Name",
       "enterTypeName": "Enter {type} name",
       "enterName": "Enter name",
@@ -1540,6 +1535,19 @@
     "tree": {
       "empty": "No locations found matching your search.",
       "clearSearch": "Clear search"
+    },
+    "catalog": {
+      "title": "Add a municipality from the official catalog",
+      "description": "Municipalities come from each country's official statistical classification, so the spelling and the code are always right. Pick one and it is added to the tree.",
+      "country": "Country",
+      "loading": "Loading the catalog",
+      "searchPlaceholder": "Search by name or official code…",
+      "searchingAll": "Searching the whole catalog: {country}",
+      "noResults": "Nothing in the catalog matches “{query}”.",
+      "showingSome": "Showing the first {shown} of {total} matches. Keep typing to narrow them down.",
+      "nothingSelected": "Pick a municipality to continue.",
+      "confirm": "Add municipality",
+      "adding": "Adding…"
     }
   },
   "minecraft": {

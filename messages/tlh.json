@@ -409,7 +409,7 @@
         "noResults": "\"{query}\" Daq pagh.",
         "hintSite": "Daq yIwIv. Hutlh'a'? veng bIngDaq yIchu'.",
         "hintMunicipality": "veng yIwIv — Huch nob veng. Daqmey latlh Sepmey je luwIvlaHbe'.",
-        "addCountry": "Sepjup chu' yIchu'",
+        "addFromCatalog": "wo' tetlh'a'vo' veng chel…",
         "change": "choH",
         "edit": "choH",
         "cancel": "pegh",
@@ -735,16 +735,11 @@
     "locations": {
       "title": "Dapmey",
       "description": "volchanmey, veng, je Dapmey tI'ang",
-      "addCountry": "volchan yIchel",
       "searchPlaceholder": "Dapmey yInej...",
       "editName": "{name} yIchoH",
       "addChildUnder": "{type} {parent}Daq yIchel",
       "location": "Dap",
-      "pleaseSelectCountry": "volchan yIwIv",
       "nameRequired": "pong nIS",
-      "country": "volchan",
-      "selectCountry": "volchan yIwIv...",
-      "allCountriesAdded": "Hoch volchanmey chellu'.",
       "name": "pong",
       "enterTypeName": "{type} pong yIchel",
       "enterName": "pong yIchel",
@@ -1585,6 +1580,19 @@
     "tree": {
       "empty": "Dapmey DanejboHpu' tu'be'lu'.",
       "clearSearch": "nejmey yIteq"
+    },
+    "catalog": {
+      "title": "wo' tetlh'a'vo' veng chel",
+      "description": "Sep tetlh'a'Daq veng pongmey lugh neH tu'lu'. ghItlh Qagh tu'lu'be'. veng yIwIv 'ej Sor DaqDaq chelbe'lu'pu'bogh veng chel.",
+      "country": "Sep",
+      "loading": "tetlh'a' laDlu'",
+      "searchPlaceholder": "pong ghap mI' yInej…",
+      "searchingAll": "tetlh'a' naQ wInej: {country}",
+      "noResults": "pagh! “{query}” rurbogh veng tu'lu'be'.",
+      "showingSome": "{total} veng tu'lu'. {shown} neH wI'ang. yIghItlhtaH 'ej yInej.",
+      "nothingSelected": "veng yIwIv 'ej yIruch.",
+      "confirm": "veng chel",
+      "adding": "cheltaH…"
     }
   },
   "minecraft": {

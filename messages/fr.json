@@ -364,7 +364,7 @@
         "noResults": "Aucun lieu ne correspond à « {query} ».",
         "hintSite": "Choisissez un site. Il en manque un ? Ajoutez-le directement sous sa commune.",
         "hintMunicipality": "Choisissez la commune finlandaise concernée par ce club — celle qui le finance. Les sites et les autres pays ne sont pas proposés ici.",
-        "addCountry": "Ajouter un nouveau pays",
+        "addFromCatalog": "Ajouter une commune depuis le catalogue officiel…",
         "change": "Changer",
         "edit": "Modifier",
         "cancel": "Annuler",
@@ -690,16 +690,11 @@
     "locations": {
       "title": "Lieux",
       "description": "Gérer les pays, les villes et les sites",
-      "addCountry": "Ajouter un pays",
       "searchPlaceholder": "Rechercher des lieux...",
       "editName": "Modifier {name}",
       "addChildUnder": "Ajouter {type} sous {parent}",
       "location": "Lieu",
-      "pleaseSelectCountry": "Veuillez sélectionner un pays",
       "nameRequired": "Le nom est obligatoire",
-      "country": "Pays",
-      "selectCountry": "Sélectionnez un pays...",
-      "allCountriesAdded": "Tous les pays pris en charge ont déjà été ajoutés.",
       "name": "Nom",
       "enterTypeName": "Saisissez le nom du {type}",
       "enterName": "Saisissez un nom",
@@ -1540,6 +1535,19 @@
     "tree": {
       "empty": "Aucun lieu ne correspond à votre recherche.",
       "clearSearch": "Effacer la recherche"
+    },
+    "catalog": {
+      "title": "Ajouter une commune depuis le catalogue officiel",
+      "description": "Les communes proviennent de la classification statistique officielle de chaque pays : l'orthographe et le code sont donc toujours exacts. Choisissez-en une et elle est ajoutée à l'arborescence.",
+      "country": "Pays",
+      "loading": "Chargement du catalogue",
+      "searchPlaceholder": "Rechercher par nom ou par code officiel…",
+      "searchingAll": "Recherche dans tout le catalogue : {country}",
+      "noResults": "Aucun résultat dans le catalogue pour « {query} ».",
+      "showingSome": "Affichage des {shown} premiers résultats sur {total}. Continuez à saisir pour affiner.",
+      "nothingSelected": "Choisissez une commune pour continuer.",
+      "confirm": "Ajouter la commune",
+      "adding": "Ajout en cours…"
     }
   },
   "minecraft": {

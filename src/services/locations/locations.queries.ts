@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { LocationsService } from "./locations.service";
+import type { MaterializeLocationBody } from "./locations.contracts";
 import type { Location, LocationInsert } from "@/types";
 
 export const locationKeys = {
@@ -41,6 +42,25 @@ export function useCreateLocation() {
 
   return useMutation({
     mutationFn: (location: LocationInsert) => service.createLocation(location),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: locationKeys.lists() });
+    },
+  });
+}
+
+/**
+ * Materialize a catalog entry. Invalidates the list even on a get-only hit:
+ * the caller cannot tell the two apart, and the tree has to show the row
+ * either way.
+ */
+export function useMaterializeLocation() {
+  const queryClient = useQueryClient();
+  const supabase = getClient();
+  const service = new LocationsService(supabase);
+
+  return useMutation({
+    mutationFn: (entry: MaterializeLocationBody) =>
+      service.materializeLocation(entry),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: locationKeys.lists() });
     },

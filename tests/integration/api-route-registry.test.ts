@@ -150,6 +150,8 @@ const API_DIR = join("src", "app", "api");
 
 const TESTS = {
   adminLocations: "tests/integration/api/admin-locations.test.ts",
+  adminLocationsMaterialize:
+    "tests/integration/api/admin-locations-materialize.test.ts",
   adminSiteNotes: "tests/integration/api/admin-site-notes.test.ts",
   billingPortal: "tests/integration/api/billing-portal.test.ts",
   callback: "tests/integration/auth/callback.test.ts",
@@ -209,6 +211,16 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: ADMIN_ONLY,
         body: { kind: "json", schema: "createLocationBody" },
         test: TESTS.adminLocations,
+      },
+    },
+  },
+
+  "src/app/api/admin/locations/materialize/route.ts": {
+    handlers: {
+      POST: {
+        posture: ADMIN_ONLY,
+        body: { kind: "json", schema: "materializeLocationBody" },
+        test: TESTS.adminLocationsMaterialize,
       },
     },
   },

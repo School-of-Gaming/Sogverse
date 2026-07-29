@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { SUPPORTED_COUNTRIES, getChildLevel, resolveLabels, getCountryName } from "@/lib/constants";
+import { getChildLevel, resolveLabels } from "@/lib/constants";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import type { Location } from "@/types";
 
@@ -23,6 +23,18 @@ export interface LocationFormValues {
   country_code: string | null;
 }
 
+/**
+ * The one dialog for naming a location by hand. Two modes remain — rename an
+ * existing row, or add a child under a parent — and in practice the child is
+ * always a `site`.
+ *
+ * There is deliberately no "add a country" mode any more, and no free-text
+ * creation above the site level. Countries, regions and municipalities are
+ * official reference data: they arrive by seed or by materializing a catalog
+ * entry, never by someone typing a name. A site is the only level that exists
+ * in no national classification, which is why it is the only one an admin
+ * names.
+ */
 interface LocationFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -32,8 +44,6 @@ interface LocationFormDialogProps {
   initialValues?: Location;
   /** When adding a child, this is the parent location. */
   parent?: Location | null;
-  /** Country codes that already exist (to disable in the country picker). */
-  existingCountryCodes?: Set<string>;
 }
 
 export function LocationFormDialog({
@@ -43,9 +53,9 @@ export function LocationFormDialog({
   isPending,
   initialValues,
   parent,
-  existingCountryCodes,
 }: LocationFormDialogProps) {
-  if (!open) return null;
+  // Nothing to name without either a row to rename or a parent to add under.
+  if (!open || (!initialValues && !parent)) return null;
 
   return (
     <LocationFormDialogInner
@@ -54,7 +64,6 @@ export function LocationFormDialog({
       isPending={isPending}
       initialValues={initialValues}
       parent={parent}
-      existingCountryCodes={existingCountryCodes}
     />
   );
 }
@@ -69,55 +78,39 @@ function LocationFormDialogInner({
   isPending,
   initialValues,
   parent,
-  existingCountryCodes,
 }: Omit<LocationFormDialogProps, "open">) {
   const t = useTranslations('admin.locations');
   const c = useTranslations('common');
   const locale = useLocale();
   const isEditing = !!initialValues;
-  const isAddingCountry = !isEditing && !parent;
 
   // For "add child" mode, determine the child level from the parent
   const childLevel = parent ? getChildLevel(parent.country_code, parent.type) : null;
   const childLabels = childLevel ? resolveLabels(childLevel, locale) : null;
 
   const [name, setName] = useState(initialValues?.name ?? "");
-  const [selectedCountryCode, setSelectedCountryCode] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  // Build the dialog title
   const title = isEditing
     ? t('editName', { name: initialValues.name })
-    : isAddingCountry
-      ? t('addCountry')
-      : t('addChildUnder', { type: childLabels?.label ?? t('location'), parent: localizedLocationName(parent!, locale) });
+    : t('addChildUnder', {
+        type: childLabels?.label ?? t('location'),
+        parent: parent ? localizedLocationName(parent, locale) : t('location'),
+      });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    // Build values per mode, validating along the way
-    let values: LocationFormValues;
+    if (!name.trim()) {
+      setError(t('nameRequired'));
+      return;
+    }
 
-    if (isAddingCountry) {
-      if (!selectedCountryCode) {
-        setError(t('pleaseSelectCountry'));
-        return;
-      }
-      const country = SUPPORTED_COUNTRIES.find((c) => c.code === selectedCountryCode);
-      if (!country) return;
-      values = { name: country.name, type: "country", parent_id: null, country_code: country.code };
-    } else if (isEditing) {
-      if (!name.trim()) {
-        setError(t('nameRequired'));
-        return;
-      }
+    let values: LocationFormValues;
+    if (isEditing) {
       values = { name: name.trim(), type: initialValues.type, parent_id: initialValues.parent_id, country_code: initialValues.country_code };
     } else {
-      if (!name.trim()) {
-        setError(t('nameRequired'));
-        return;
-      }
       if (!childLevel || !parent) return;
       values = { name: name.trim(), type: childLevel.type, parent_id: parent.id, country_code: parent.country_code };
     }
@@ -129,13 +122,6 @@ function LocationFormDialogInner({
       setError(err instanceof Error ? err.message : c('unexpectedError'));
     }
   };
-
-  const selectClassName =
-    "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
-
-  const availableCountries = SUPPORTED_COUNTRIES.filter(
-    (c) => !existingCountryCodes?.has(c.code)
-  );
 
   return (
     <Dialog open onOpenChange={onOpenChange}>
@@ -152,49 +138,21 @@ function LocationFormDialogInner({
               </div>
             )}
 
-            {isAddingCountry ? (
-              <Field
-                label={t('country')}
-                htmlFor="loc-country"
-                hint={
-                  availableCountries.length === 0
-                    ? t('allCountriesAdded')
-                    : undefined
+            <Field label={t('name')} htmlFor="loc-name">
+              <Input
+                id="loc-name"
+                placeholder={
+                  childLevel
+                    ? t('enterTypeName', { type: childLabels!.label.toLowerCase() })
+                    : t('enterName')
                 }
-              >
-                <select
-                  id="loc-country"
-                  value={selectedCountryCode}
-                  onChange={(e) => setSelectedCountryCode(e.target.value)}
-                  disabled={isPending}
-                  className={selectClassName}
-                  autoFocus
-                >
-                  <option value="">{t('selectCountry')}</option>
-                  {availableCountries.map((country) => (
-                    <option key={country.code} value={country.code}>
-                      {getCountryName(country, locale)} ({country.code})
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            ) : (
-              <Field label={t('name')} htmlFor="loc-name">
-                <Input
-                  id="loc-name"
-                  placeholder={
-                    childLevel
-                      ? t('enterTypeName', { type: childLabels!.label.toLowerCase() })
-                      : t('enterName')
-                  }
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  disabled={isPending}
-                  required
-                  autoFocus
-                />
-              </Field>
-            )}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={isPending}
+                required
+                autoFocus
+              />
+            </Field>
           </div>
 
           <DialogFooter>
@@ -206,13 +164,10 @@ function LocationFormDialogInner({
             >
               {c('cancel')}
             </Button>
-            <Button
-              type="submit"
-              disabled={isPending || (isAddingCountry && availableCountries.length === 0)}
-            >
+            <Button type="submit" disabled={isPending}>
               {isPending
                 ? isEditing ? c('saving') : t('adding')
-                : isEditing ? c('saveChanges') : isAddingCountry ? t('addCountry') : t('addType', { type: childLabels?.label ?? t('location') })}
+                : isEditing ? c('saveChanges') : t('addType', { type: childLabels?.label ?? t('location') })}
             </Button>
           </DialogFooter>
         </form>

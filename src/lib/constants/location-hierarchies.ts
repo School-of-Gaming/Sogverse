@@ -50,6 +50,20 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
     ],
   },
   {
+    code: "FR",
+    name: "France",
+    nameI18n: { fr: "France" },
+    // France uses the `district` level Finland skips: région → département →
+    // commune. `fr` is a supported UI locale, so every level carries its French
+    // label pair per the rule in src/services/locations/CLAUDE.md.
+    hierarchy: [
+      { type: "region", label: "Region", pluralLabel: "Regions", i18n: { fr: { label: "Région", pluralLabel: "Régions" } } },
+      { type: "district", label: "Department", pluralLabel: "Departments", i18n: { fr: { label: "Département", pluralLabel: "Départements" } } },
+      { type: "municipality", label: "Commune", pluralLabel: "Communes", i18n: { fr: { label: "Commune", pluralLabel: "Communes" } } },
+      { type: "site", label: "Site", pluralLabel: "Sites", i18n: { fr: { label: "Site", pluralLabel: "Sites" } } },
+    ],
+  },
+  {
     code: "US",
     name: "United States",
     hierarchy: [

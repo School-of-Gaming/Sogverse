@@ -62,6 +62,8 @@ import type {
 } from "@/components/voice/hooks/types";
 import type { VoiceZone, Location } from "@/types";
 import { LocationTree } from "@/components/locations/location-tree";
+import { CatalogPicker } from "@/components/locations/catalog-picker";
+import type { LocationCatalog } from "@/lib/locations/catalog";
 import {
   ProductBrowseCardView,
   type LocationLine,
@@ -1754,6 +1756,29 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
+      {/* Section 9c: Catalog Picker                                    */}
+      {/* ============================================================ */}
+      <Section title="Catalog Picker">
+        <p className="text-sm text-muted-foreground">
+          How a municipality enters the database. In the real app the panel is
+          handed one of the shipped official catalogs — France&rsquo;s alone has
+          34,875 communes, loaded as its own chunk behind a dynamic import —
+          and confirming materializes the whole ancestor chain. Here it is fed a
+          five-commune fixture and a fake &ldquo;save&rdquo;, no network: the
+          component takes the catalog and an <code>onConfirm</code> as props and
+          owns nothing else, which is the separation-of-concerns check.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Worth trying: search is diacritic-insensitive, so{" "}
+          <code>nimes</code> finds N&icirc;mes; clearing the box drops back to
+          drill-down browsing; and the confirm button stays disabled from the
+          click until the parent swaps the view away, so the action can&rsquo;t
+          be fired twice.
+        </p>
+        <CatalogPickerDemo />
+      </Section>
+
+      {/* ============================================================ */}
       {/* Section 10: Composite Patterns                                */}
       {/* ============================================================ */}
       <Section title="Composite Patterns">
@@ -2031,6 +2056,89 @@ function LocationTreeDemo() {
         />
         <p className="text-xs text-muted-foreground">{coverage.size} selected</p>
       </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Catalog Picker Demo                                                */
+/* ------------------------------------------------------------------ */
+
+// A miniature stand-in for src/lib/locations/catalog/fr.json: same shape, same
+// three levels, five communes instead of 34,875. Nîmes and Béziers are here on
+// purpose — they are what makes the diacritic folding visible.
+const CATALOG_FIXTURE: LocationCatalog = {
+  country: "FR",
+  source: "Fixture — not a real classification",
+  release: "2026",
+  generated: "2026-01-01",
+  levels: ["region", "district", "municipality"],
+  counts: [2, 3, 5],
+  tree: [
+    [
+      "32",
+      "Hauts-de-France",
+      [
+        [
+          "59",
+          "Nord",
+          [
+            ["59350", "Lille"],
+            ["59512", "Roubaix"],
+          ],
+        ],
+        ["62", "Pas-de-Calais", [["62041", "Arras"]]],
+      ],
+    ],
+    [
+      "76",
+      "Occitanie",
+      [
+        [
+          "30",
+          "Gard",
+          [["30189", "Nîmes"]],
+        ],
+        ["34", "Hérault", [["34032", "Béziers"]]],
+      ],
+    ],
+  ],
+};
+
+function CatalogPickerDemo() {
+  const [added, setAdded] = useState<string | null>(null);
+
+  // Mirrors the real flow: on success the parent swaps this view away, which
+  // is why the picker never has to re-enable its confirm button.
+  if (added) {
+    return (
+      <div className="space-y-3 rounded-md border border-input bg-card p-4">
+        <p className="text-sm">
+          Materialized <span className="font-medium">{added}</span> — in the
+          product picker the tree would now reveal it, ready for a site.
+        </p>
+        <Button type="button" variant="outline" onClick={() => setAdded(null)}>
+          Pick another
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl rounded-md border border-input bg-card p-4">
+      <CatalogPicker
+        catalog={CATALOG_FIXTURE}
+        countryLabel="France"
+        onConfirm={(entry) =>
+          new Promise<void>((resolve) =>
+            setTimeout(() => {
+              setAdded(entry.name);
+              resolve();
+            }, 600),
+          )
+        }
+        onCancel={() => setAdded(null)}
+      />
     </div>
   );
 }

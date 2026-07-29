@@ -3,7 +3,10 @@ import {
   parseJsonResponse,
   readErrorMessage,
 } from "@/lib/api/json-response";
-import { locationRow } from "./locations.contracts";
+import {
+  locationRow,
+  type MaterializeLocationBody,
+} from "./locations.contracts";
 
 /**
  * PostgREST caps every response at its `max_rows` setting (1000 on this
@@ -66,9 +69,11 @@ export class LocationsService {
     return data;
   }
 
-  // `locations` writes go through the admin API (the table's DML grants are
-  // revoked from `authenticated` per migration 00021 — see CLAUDE.md
-  // service-layer pattern). The injected `supabase` client is unused by
+  // `locations` writes go through the admin API. `authenticated` holds INSERT
+  // and UPDATE on the table (migration 00123) and the admin_manage_locations
+  // policy decides who may use them — the route re-checks the role and then
+  // writes on the caller's own server-side client, so the route's answer and
+  // the database's have to agree. The injected `supabase` client is unused by
   // these methods, kept for symmetry with the read methods.
   async createLocation(location: LocationInsert): Promise<Location> {
     const response = await fetch("/api/admin/locations/create", {
@@ -79,6 +84,25 @@ export class LocationsService {
     if (!response.ok) {
       throw new Error(
         await readErrorMessage(response, "Failed to create location")
+      );
+    }
+    return parseJsonResponse(response, locationRow);
+  }
+
+  /**
+   * Turn a municipality-level catalog entry into rows, creating whichever of
+   * its ancestors are missing. Get-or-create, so picking an already-present
+   * commune is a plain read that returns the existing row.
+   */
+  async materializeLocation(entry: MaterializeLocationBody): Promise<Location> {
+    const response = await fetch("/api/admin/locations/materialize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(entry),
+    });
+    if (!response.ok) {
+      throw new Error(
+        await readErrorMessage(response, "Failed to add location from catalog")
       );
     }
     return parseJsonResponse(response, locationRow);

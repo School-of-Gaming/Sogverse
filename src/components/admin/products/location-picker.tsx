@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { MapPin, Pencil } from "lucide-react";
+import { Landmark, MapPin, Pencil } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useAllLocations, useCreateLocation } from "@/services/locations";
@@ -12,6 +12,7 @@ import {
   type LocationTreeCreateConfig,
   type LocationTreeSelection,
 } from "@/components/locations/location-tree";
+import { CatalogPickerDialog } from "@/components/locations/catalog-picker";
 import type { Location } from "@/types";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { SiteNotesEditor } from "./site-notes-editor";
@@ -31,8 +32,9 @@ interface LocationPickerProps {
   onChange: (id: string | null) => void;
   /**
    * "site"         — only sites may be picked (in-person products). Admins may
-   *                  create new sites under a municipality, but not higher
-   *                  levels (those are seeded reference data).
+   *                  name new sites under a municipality, and add a missing
+   *                  municipality from its country's official catalog. No level
+   *                  above a site is ever typed by hand.
    * "municipality" — only Finnish municipalities may be picked; the tree is
    *                  filtered to Finland and sites/countries/regions are not
    *                  selectable. Used for online municipality clubs (the
@@ -48,10 +50,18 @@ interface LocationPickerProps {
  * summary card (with breadcrumb + member/staff site notes) and the data/
  * mutation wiring. The tree, search, and create dialog all live in the
  * shared component.
+ *
+ * In site mode it also owns the bridge between the two shared components: the
+ * catalog picker materializes a municipality, and the tree is then told to
+ * reveal it so the admin's next click is the "+ Site" button on that row.
  */
 export function LocationPicker({ value, onChange, pickable }: LocationPickerProps) {
   const t = useTranslations("admin.products.locationPicker");
   const [browsing, setBrowsing] = useState(false);
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  // The municipality a catalog pick just materialized: the tree reveals it so
+  // the admin's next click ("+ Site") is already under the cursor.
+  const [focusId, setFocusId] = useState<string | null>(null);
 
   const { data: locations } = useAllLocations();
   const createLocation = useCreateLocation();
@@ -67,16 +77,6 @@ export function LocationPicker({ value, onChange, pickable }: LocationPickerProp
         ? all.filter((l) => l.country_code === MUNI_COUNTRY_CODE)
         : all,
     [all, pickable]
-  );
-
-  const existingCountryCodes = useMemo(
-    () =>
-      new Set(
-        all.flatMap((l) =>
-          l.type === "country" && l.country_code ? [l.country_code] : []
-        )
-      ),
-    [all]
   );
 
   // Clear selection if the current pick is no longer valid for the mode.
@@ -140,13 +140,13 @@ export function LocationPicker({ value, onChange, pickable }: LocationPickerProp
           pickLabel: t("pick"),
         };
 
-  // Creation is restricted to sites; municipalities are seeded reference data.
+  // Creation is restricted to sites, and that is the whole rule: every level
+  // above a site comes from an official catalog, by seed or by materialization.
   const create: LocationTreeCreateConfig | undefined =
     pickable === "site"
       ? {
           allowedChildTypes: ["site"],
           onCreate: (values) => createLocation.mutateAsync(values),
-          existingCountryCodes,
           isPending: createLocation.isPending,
         }
       : undefined;
@@ -158,9 +158,23 @@ export function LocationPicker({ value, onChange, pickable }: LocationPickerProp
         selection={selection}
         hiddenTypes={pickable === "municipality" ? ["site"] : undefined}
         create={create}
+        focusId={pickable === "site" ? focusId : null}
         searchPlaceholder={t("searchPlaceholder")}
         listClassName="max-h-[360px]"
       />
+
+      {pickable === "site" && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={() => setCatalogOpen(true)}
+        >
+          <Landmark className="h-3.5 w-3.5" />
+          {t("addFromCatalog")}
+        </Button>
+      )}
 
       <div className="flex items-center justify-between text-xs">
         <span className="text-muted-foreground">
@@ -176,6 +190,19 @@ export function LocationPicker({ value, onChange, pickable }: LocationPickerProp
           </button>
         )}
       </div>
+
+      {pickable === "site" && (
+        <CatalogPickerDialog
+          open={catalogOpen}
+          onOpenChange={setCatalogOpen}
+          onMaterialized={(location) => {
+            setCatalogOpen(false);
+            // The list invalidation the mutation fired is still in flight; the
+            // tree reveals the row as soon as the refetch delivers it.
+            setFocusId(location.id);
+          }}
+        />
+      )}
     </div>
   );
 }

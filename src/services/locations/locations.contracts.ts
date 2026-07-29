@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Constants } from "@/types";
+import { CATALOG_COUNTRIES } from "@/lib/locations/catalog";
 
 /**
  * Request/response contracts for the admin locations API.
@@ -22,6 +23,21 @@ export const createLocationBody = z.object({
 export const updateLocationBody = z.object({
   name: z.string().trim().min(1, "Name is required"),
 });
+
+/**
+ * Identifies ONE municipality-level catalog entry — the pair the shipped
+ * catalogs are keyed on. Everything the row needs (its name, and the names and
+ * codes of every ancestor) comes from the catalog on the server, never from
+ * the caller: that is what makes typos and duplicate spellings structurally
+ * impossible. The country is an enum over the catalogs that actually ship, so
+ * a country with no catalog is refused by the schema rather than by a lookup.
+ */
+export const materializeLocationBody = z.object({
+  country_code: z.enum(CATALOG_COUNTRIES),
+  external_code: z.string().trim().min(1, "A catalog code is required"),
+});
+
+export type MaterializeLocationBody = z.infer<typeof materializeLocationBody>;
 
 export const locationRow = z.object({
   id: z.string(),

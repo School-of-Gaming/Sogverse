@@ -364,7 +364,7 @@
         "noResults": "Inga platser matchar \"{query}\".",
         "hintSite": "Välj en lokal. Saknas någon? Lägg till den under kommunen direkt här.",
         "hintMunicipality": "Välj den finländska kommun som klubben gäller — den som finansierar den. Lokaler och andra länder kan inte väljas här.",
-        "addCountry": "Lägg till nytt land",
+        "addFromCatalog": "Lägg till en kommun från den officiella katalogen…",
         "change": "Ändra",
         "edit": "Redigera",
         "cancel": "Avbryt",
@@ -690,16 +690,11 @@
     "locations": {
       "title": "Platser",
       "description": "Hantera länder, städer och platser",
-      "addCountry": "Lägg till land",
       "searchPlaceholder": "Sök platser...",
       "editName": "Redigera {name}",
       "addChildUnder": "Lägg till {type} under {parent}",
       "location": "Plats",
-      "pleaseSelectCountry": "Välj ett land",
       "nameRequired": "Namn krävs",
-      "country": "Land",
-      "selectCountry": "Välj ett land...",
-      "allCountriesAdded": "Alla länder som stöds har redan lagts till.",
       "name": "Namn",
       "enterTypeName": "Ange namn för {type}",
       "enterName": "Ange namn",
@@ -1540,6 +1535,19 @@
     "tree": {
       "empty": "Inga platser hittades som matchar din sökning.",
       "clearSearch": "Rensa sökning"
+    },
+    "catalog": {
+      "title": "Lägg till en kommun från den officiella katalogen",
+      "description": "Kommunerna kommer från varje lands officiella statistiska klassificering, så stavningen och koden stämmer alltid. Välj en kommun så läggs den till i trädet.",
+      "country": "Land",
+      "loading": "Katalogen laddas",
+      "searchPlaceholder": "Sök på namn eller officiell kod…",
+      "searchingAll": "Söker i hela katalogen: {country}",
+      "noResults": "Ingenting i katalogen matchar ”{query}”.",
+      "showingSome": "Visar de {shown} första av {total} träffar. Fortsätt skriva för att begränsa dem.",
+      "nothingSelected": "Välj en kommun för att fortsätta.",
+      "confirm": "Lägg till kommun",
+      "adding": "Lägger till…"
     }
   },
   "minecraft": {

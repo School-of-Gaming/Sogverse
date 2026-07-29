@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronRight,
   ChevronDown,
@@ -136,14 +136,19 @@ export type LocationTreeSelection =
       onToggle: (id: string) => void;
     };
 
-/** Optional inline-create affordance. The consumer owns persistence via `onCreate`. */
+/**
+ * Optional inline-create affordance. The consumer owns persistence via
+ * `onCreate`.
+ *
+ * `allowedChildTypes` is `["site"]` everywhere, and that is the design rather
+ * than a coincidence: sites are the only level an admin names, because every
+ * level above them comes from an official catalog.
+ */
 export interface LocationTreeCreateConfig {
-  /** Child levels the admin may create — e.g. `["site"]` shows "+" only on municipalities. */
+  /** Child levels the admin may create — `["site"]` shows "+" only on municipalities. */
   allowedChildTypes: readonly LocationType[];
   /** Persist the new location and return the created row (the consumer's mutation). */
   onCreate: (values: LocationFormValues) => Promise<Location>;
-  /** Country codes that already exist, so the add-country dialog can't duplicate one. */
-  existingCountryCodes?: Set<string>;
   /** Whether a create is in flight (drives the dialog's disabled state). */
   isPending?: boolean;
 }
@@ -156,6 +161,13 @@ export interface LocationTreeProps {
   hiddenTypes?: readonly LocationType[];
   /** Omit to make the tree read-only (no "+" affordances). */
   create?: LocationTreeCreateConfig;
+  /**
+   * Row to reveal: its ancestors start expanded, it is highlighted, its row
+   * actions are shown without hovering, and it scrolls itself into view. Set
+   * after materializing a municipality so the admin lands on the row they just
+   * added instead of hunting for it.
+   */
+  focusId?: string | null;
   /** Placeholder for the search box — the one string that genuinely varies per consumer. */
   searchPlaceholder: string;
   /** Tailwind height for the scroll area, e.g. `"h-[420px]"` or `"max-h-[360px]"`. */
@@ -168,6 +180,7 @@ export function LocationTree({
   selection,
   hiddenTypes,
   create,
+  focusId,
   searchPlaceholder,
   listClassName,
   className,
@@ -187,6 +200,20 @@ export function LocationTree({
   );
   const tree = useMemo(() => buildLocationTree(visible), [visible]);
   const filtered = useMemo(() => filterLocationTree(tree, query), [tree, query]);
+
+  // Ids on the path to `focusId`, so those rows mount already expanded.
+  const focusChain = useMemo(() => {
+    const target = focusId ? locations.find((l) => l.id === focusId) : undefined;
+    if (!target) return null;
+    return new Set(buildAncestorChain(target, locations).map((l) => l.id));
+  }, [focusId, locations]);
+
+  // Expansion is per-row `useState`, so a focus arriving later only takes
+  // effect if the rows remount — hence keying the list. The size is in the key
+  // because the focused row usually lands one refetch AFTER `focusId` is set:
+  // the chain is empty on the first render and complete on the next, and
+  // without it the remount would happen while the row still does not exist.
+  const rowsKey = `${focusId ?? ""}:${focusChain?.size ?? 0}`;
 
   async function handleCreate(values: LocationFormValues) {
     if (!create) return;
@@ -235,7 +262,7 @@ export function LocationTree({
             {t("empty")}
           </div>
         ) : (
-          <div className="space-y-0.5">
+          <div className="space-y-0.5" key={rowsKey}>
             {filtered.map((node) => (
               <LocationTreeRow
                 key={node.id}
@@ -245,6 +272,8 @@ export function LocationTree({
                 searching={query.length > 0}
                 selection={selection}
                 create={create}
+                focusId={focusId ?? null}
+                focusChain={focusChain}
                 onAddUnder={setAddUnder}
               />
             ))}
@@ -261,7 +290,6 @@ export function LocationTree({
           onSubmit={handleCreate}
           isPending={create.isPending ?? false}
           parent={addUnder}
-          existingCountryCodes={create.existingCountryCodes}
         />
       )}
     </div>
@@ -275,6 +303,8 @@ interface LocationTreeRowProps {
   searching: boolean;
   selection: LocationTreeSelection;
   create?: LocationTreeCreateConfig;
+  focusId: string | null;
+  focusChain: ReadonlySet<string> | null;
   onAddUnder: (parent: Location) => void;
 }
 
@@ -285,12 +315,27 @@ function LocationTreeRow({
   searching,
   selection,
   create,
+  focusId,
+  focusChain,
   onAddUnder,
 }: LocationTreeRowProps) {
+  const isFocused = node.id === focusId;
   // Single mode: countries open by default so the tree is visible at a glance.
   // Multi mode (gedu coverage): start collapsed — gedus drill into one country.
-  const initialExpanded = selection.mode === "single" && depth === 0;
+  // A row on the path to the focused node opens regardless, so the focused row
+  // is on screen the moment its branch mounts.
+  const initialExpanded =
+    (selection.mode === "single" && depth === 0) ||
+    (focusChain?.has(node.id) ?? false);
   const [expanded, setExpanded] = useState(initialExpanded);
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  // Bring the focused row into view. `block: "nearest"` keeps the scroll to the
+  // list's own overflow container instead of jumping the page.
+  useEffect(() => {
+    if (isFocused) rowRef.current?.scrollIntoView({ block: "nearest" });
+  }, [isFocused]);
+
   const isExpanded = searching ? true : expanded;
   const hasChildren = node.children.length > 0;
 
@@ -331,10 +376,12 @@ function LocationTreeRow({
   return (
     <div>
       <div
+        ref={rowRef}
         className={cn(
           "group flex items-center gap-1.5 rounded-md px-1.5 py-1.5 transition-colors",
           (hasChildren || isPickable || selection.mode === "multi") && "cursor-pointer",
           isSelected ? "bg-primary/10 text-primary" : "hover:bg-accent hover:text-accent-foreground",
+          isFocused && !isSelected && "bg-primary/5 ring-1 ring-primary/40",
         )}
         style={{ paddingLeft: `${depth * 14 + 6}px` }}
         onClick={handleRowClick}
@@ -378,7 +425,12 @@ function LocationTreeRow({
 
         {(showPickButton || canCreateChild) && (
           <div
-            className="ml-auto flex gap-1 opacity-0 group-hover:opacity-100"
+            className={cn(
+              "ml-auto flex gap-1",
+              // The focused row keeps its actions visible: it was just
+              // materialized, and "add a site here" is the next step.
+              isFocused ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+            )}
             onClick={(e) => e.stopPropagation()}
           >
             {showPickButton && (
@@ -420,6 +472,8 @@ function LocationTreeRow({
               searching={searching}
               selection={selection}
               create={create}
+              focusId={focusId}
+              focusChain={focusChain}
               onAddUnder={onAddUnder}
             />
           ))}
