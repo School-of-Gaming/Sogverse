@@ -35,24 +35,24 @@ anything a migration did not do, and a hand-edit to a hosted database no longer 
 path into it. CI regenerates it on every run and fails when the committed copy disagrees,
 so drift is caught the moment it is introduced rather than a release cycle later.
 
-What that deliberately does *not* answer is whether a hosted database has drifted from
-migrations — the snapshot is now a statement about `migrations/`, not about any live
-system. **The Production Schema Drift workflow answers that half**, daily and on manual
-dispatch: it dumps production and diffs it against the committed snapshot, which is sound
-precisely because CI has already proven the snapshot equals what migrations produce. It
-pins the same PostgreSQL 17 client the snapshot is built with, so a difference means
-schema rather than tooling. Between the two, both directions are covered — the file can't
-drift from the migrations, and production can't drift from the file unnoticed.
+What that deliberately does *not* answer is whether a hosted database matches — the
+snapshot is a statement about `migrations/`, not about any live system. There is no
+standing check for that, on purpose. Production was compared against migration source on
+2026-07-29 and matched it exactly, and no instance of production being edited by hand has
+ever been found; the one prod discrepancy on record was a *migration* whose `IF EXISTS`
+condition matched on one database and not the other, taking a branch its author did not
+expect. A migration that asserts its own end state — as `00127` does — catches that at the
+moment it runs, which is both earlier and more specific than any periodic dump diff. If a
+hosted database ever does drift, `pg_dump` against it and diff the result against
+`schema.sql`; that is a debugging step, not something worth running on a timer.
 
-**Staging is deliberately not covered**, and carries known cosmetic drift: a reformatted
+**Staging carries known cosmetic drift** and is deliberately left alone: a reformatted
 function body, comments stripped from a few others, two `COMMENT ON` statements belonging
-to no migration, and a column that was dropped and re-added so its ordinal moved. None of
-it behavioural. The ordinal in particular cannot be corrected without rebuilding the
-table, so including staging would mean a permanently failing check reporting something
-nobody intends to fix — and the reason to care is gone anyway, since staging can no longer
-reach anything committed. If staging ever drifts in a way that changes *behaviour*, that
-shows up as tests passing there and failing against production, which is a louder signal
-than a dump diff. Migrations are append-only history — a later one can supersede
+to no migration, and a column dropped and re-added so its ordinal moved. None of it
+behavioural, and the ordinal cannot be corrected without rebuilding the table. It stopped
+mattering when the snapshot stopped being sourced from it. If staging ever drifts in a way
+that changes *behaviour*, that shows up as tests passing there and failing against
+production, which is a louder signal than a dump diff. Migrations are append-only history — a later one can supersede
 an earlier one (drop a constraint, rewrite a function, relax a rule), which is exactly
 why eyeballing them for current state goes wrong. So when a migration must drop and
 recreate an object — e.g. a function, to repoint it at a changed type — copy its body
