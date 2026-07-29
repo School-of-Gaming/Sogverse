@@ -19,7 +19,18 @@ files hold the live state, and between them they cover almost everything:
   (see step 4 of the migration workflow).
 
 Both are regenerated on every migration and reflect current state, so you never
-reconstruct it by hand. Migrations are append-only history — a later one can supersede
+reconstruct it by hand.
+
+**One caveat on `schema.sql`, established 2026-07-29.** It is dumped from the linked
+hosted database, and that database has been edited outside migrations more than once —
+verified by tracing a prod↔staging diff case by case against migration source, where the
+hosted snapshot lost function-body comments, reformatted a function body, and carried two
+`COMMENT ON` statements no migration contains. Grants, policies, constraints and triggers
+are trustworthy (a release diff confirmed those match exactly). **Function bodies are the
+soft spot** — if you are copying one into a new migration and the details matter, check it
+against the migration that last defined it rather than trusting the dump's formatting and
+comments. The durable fix is to dump the snapshot from a database built purely from
+migrations, which is tracked in `TODO.md`. Migrations are append-only history — a later one can supersede
 an earlier one (drop a constraint, rewrite a function, relax a rule), which is exactly
 why eyeballing them for current state goes wrong. So when a migration must drop and
 recreate an object — e.g. a function, to repoint it at a changed type — copy its body

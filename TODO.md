@@ -2,11 +2,13 @@
 
 ## Cleanup
 
-- [ ] **Verify prod after the next dev→main release lands `00126` + `00127`.** Both migrations are written, applied to staging, and green in CI, but neither has reached production yet — and `00127` exists precisely because the *last* conditional policy repair did something different on prod than its author expected and nobody looked. So look, once:
-  - `join_waitlist(uuid,uuid,uuid)` and `submit_feedback(uuid,text)` have no role grants at all (`00126`).
-  - `customer_profiles` has exactly 2 policies and `gamer_profiles` exactly 4, all snake_case, both `admin_full_access_*` predicates InitPlan-wrapped (`00127` — its own assertion block raises if not, so a clean migration run is most of the proof).
-  - A full `pg_dump` of prod's `public` schema diffs clean against `supabase/schema.sql`. The 2026-07-28 diff also showed non-policy drift worth a second look while you are in there: two `COMMENT ON` statements present on staging but not prod, a `currency` column in a different ordinal position, and a handful of function bodies whose comments differ.
-  - Delete this item once prod is confirmed.
+- [ ] **`supabase/schema.sql` is dumped from staging, and staging is the hand-edited database — so the snapshot misreports function bodies.** Established 2026-07-29 while verifying the `00126`/`00127` release on prod (that verification passed: engine grants gone, policy catalogs identical, 78 = 78). The remaining prod↔staging diff was then traced case by case against migration source, and **prod matched migration history in every one; staging did not**:
+  - `get_user_role`'s body is reformatted on staging (`00002` defines the single-line form prod has).
+  - Function-body comments are stripped on staging in at least two functions — the gedu self-registration RPC and the feedback rate limiter (`00111`, `00010` both carry them, as does prod).
+  - Two `COMMENT ON` statements (`profiles`, `parent_gamer`) exist on staging and in no migration at all.
+  - `profiles.currency` sits at its `00002`-declared position on prod, later on staging — i.e. staging's column was dropped and re-added at some point.
+  - **Why this matters beyond cosmetics:** `supabase/CLAUDE.md` tells you to read current state from `schema.sql` precisely *because* it captures what codegen can't — function bodies, policies, triggers, grants. Grants/policies/constraints are trustworthy (the release just proved they match). Function bodies are not: they describe a database somebody edited by hand.
+  - **The structural fix is to stop dumping the snapshot from a long-lived hosted database.** CI already builds a database purely from migrations; dumping `schema.sql` from that (or from a scratch project reset to migrations) makes it faithful by construction and ends this whole class of drift. Repairing staging in place is the smaller alternative, but it only holds until the next hand-edit.
 
 - [ ] **Per-participant volume slider — wiring removed; would be desktop-only if revived.** The discrete-zone redesign dropped the per-participant volume slider; the `element.volume`/`base` multiplier plumbing was then removed entirely when audio routing switched to a binary `element.muted` (zone in/out is the only control; see `src/lib/voice/audio-routing.ts`). **A volume slider can't work on iPhone:** iOS Safari ignores `element.volume` *and* the Web Audio `GainNode` path for WebRTC (volume is hardware-buttons-only), so a true per-participant volume would be desktop/iPad-only — reconsider whether it's worth a platform-split control before reviving it. To restore: bring back a per-remote multiplier (`isAudible` → a volume number on non-iOS), a `setParticipantVolume` action, and the slider; gate it off mobile.
 
