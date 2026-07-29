@@ -186,11 +186,34 @@ describe("searchCatalogIndex", () => {
     expect(searchCatalogIndex(index, "2a004").entries.map((e) => e.name)).toEqual(["Ajaccio"]);
   });
 
-  it("ranks prefix matches ahead of infix ones", () => {
-    // "ill" is a prefix of nothing here and an infix of Lille; "lil" is a
-    // prefix of Lille. Adding a second infix match proves the ordering.
-    const { entries } = searchCatalogIndex(index, "l");
+  it("a prefix match found late in the scan outranks infix matches found early", () => {
+    // The property that matters at France's scale: typing "lil" hits
+    // thousands of infix matches before the scan ever reaches a
+    // prefix-matching commune late in the index. The buckets fill
+    // independently, so the late prefix match still ranks first — a single
+    // capped-then-sorted array would have dropped it.
+    const manyInfix = Array.from({ length: CATALOG_SEARCH_LIMIT * 2 }, (_, i) => ({
+      code: String(i),
+      type: "municipality" as const,
+      name: `Ville-lil-${i}`,
+      ancestors: [] as string[],
+      normalized: `ville-lil-${i}`,
+    }));
+    const latePrefix = {
+      code: "99999",
+      type: "municipality" as const,
+      name: "Lille",
+      ancestors: [] as string[],
+      normalized: "lille",
+    };
+
+    const { entries, total } = searchCatalogIndex(
+      [...manyInfix, latePrefix],
+      "lil",
+    );
+
     expect(entries[0].name).toBe("Lille");
+    expect(total).toBe(manyInfix.length + 1);
   });
 
   it("returns nothing for an empty or whitespace query", () => {

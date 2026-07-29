@@ -30,7 +30,11 @@ export function useLanguageNames(): (code: string, fallback?: string) => string 
       // return the code itself for any well-formed tag Intl has no data for,
       // so the `?? fallback` chain below would never fire and an unknown code
       // would render raw instead of its DB/config English name.
-      return new Intl.DisplayNames([uiLocale], {
+      // "en" second: for a locale Intl has no data for (Klingon), a bare
+      // [uiLocale] falls back to the RUNTIME default locale — different on the
+      // server and each visitor's machine, i.e. a hydration mismatch. The
+      // explicit fallback makes the answer deterministic English everywhere.
+      return new Intl.DisplayNames([uiLocale, "en"], {
         type: "language",
         fallback: "none",
       });

@@ -69,26 +69,34 @@ describe("locations scoped reads", () => {
   });
 
   describe("getMunicipalitiesByCountry", () => {
+    // One walk each, shared by every assertion below: the France walk is 35
+    // sequential pages with a three-level embed and an exact count per page —
+    // doing it twice inside one 15s test timeout is how this file flakes.
+    let frRows: Awaited<ReturnType<typeof service.getMunicipalitiesByCountry>>;
+    let fiRows: Awaited<ReturnType<typeof service.getMunicipalitiesByCountry>>;
+
+    beforeAll(async () => {
+      frRows = await service.getMunicipalitiesByCountry("FR");
+      fiRows = await service.getMunicipalitiesByCountry("FI");
+    }, 120_000);
+
     // 34,875 rows is 35 pages at PostgREST's max_rows — the case an unpaged
     // select would silently truncate to the first 1000.
-    it("walks past max_rows for a country the size of France", async () => {
-      const rows = await service.getMunicipalitiesByCountry("FR");
-      expect(rows).toHaveLength(34875);
-      expect(new Set(rows.map((row) => row.id)).size).toBe(34875);
+    it("walks past max_rows for a country the size of France", () => {
+      expect(frRows).toHaveLength(34875);
+      expect(new Set(frRows.map((row) => row.id)).size).toBe(34875);
     });
 
-    it("returns Finland's municipalities and nothing else", async () => {
-      const rows = await service.getMunicipalitiesByCountry("FI");
-      expect(rows.length).toBeGreaterThanOrEqual(308);
-      expect(rows.every((row) => row.country_code === "FI")).toBe(true);
-      expect(rows.every((row) => row.type === "municipality")).toBe(true);
+    it("returns Finland's municipalities and nothing else", () => {
+      expect(fiRows.length).toBeGreaterThanOrEqual(308);
+      expect(fiRows.every((row) => row.country_code === "FI")).toBe(true);
+      expect(fiRows.every((row) => row.type === "municipality")).toBe(true);
     });
 
     // The chain is what lets /schools group by region and the club picker show
     // one, without a second read or a lookup table.
-    it("carries each municipality's chain, nearest first", async () => {
-      const rows = await service.getMunicipalitiesByCountry("FI");
-      const helsinki = rows.find((row) => row.external_code === "091");
+    it("carries each municipality's chain, nearest first", () => {
+      const helsinki = fiRows.find((row) => row.external_code === "091");
 
       expect(helsinki?.ancestors.map((node) => node.name)).toEqual([
         "Uusimaa",
@@ -98,9 +106,8 @@ describe("locations scoped reads", () => {
 
     // France needs one more level than Finland: a commune sits under a
     // département, which is the level Finland skips entirely.
-    it("reaches the région through France's extra département level", async () => {
-      const rows = await service.getMunicipalitiesByCountry("FR");
-      const lille = rows.find((row) => row.external_code === "59350");
+    it("reaches the région through France's extra département level", () => {
+      const lille = frRows.find((row) => row.external_code === "59350");
 
       expect(lille?.ancestors.map((node) => node.type)).toEqual([
         "district",

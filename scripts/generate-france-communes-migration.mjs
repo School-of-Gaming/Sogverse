@@ -282,9 +282,18 @@ END;
 $$;
 `;
 
-const sql = [header, ...chunks.map((chunk, i) => chunkStatement(chunk, i, communes.length)), assertion].join(
-  "\n"
-);
+// An explicit transaction, although `supabase db push` already wraps each
+// migration in one: this file is deliberately held back from staging and will
+// be applied by hand at release, and under a bare `psql -f` (no `-1`) the
+// INSERTs would autocommit one by one — leaving a committed partial seed
+// behind the very assertion that exists to prevent one.
+const sql = [
+  header,
+  "BEGIN;",
+  ...chunks.map((chunk, i) => chunkStatement(chunk, i, communes.length)),
+  assertion,
+  "COMMIT;\n",
+].join("\n");
 
 const file = join(MIGRATIONS_DIR, MIGRATION_FILE);
 writeFileSync(file, sql, "utf8");

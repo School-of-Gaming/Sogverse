@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Landmark, MapPin, Pencil } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -88,7 +89,7 @@ function SitePicker({ value, onChange }: ModeProps) {
 
   const selected = sites?.find((site) => site.id === value);
 
-  if (!sites) return <PickerSkeleton label={t("loading")} />;
+  if (!sites) return <PickerSkeleton label={t("loading")} compact={!!value} />;
 
   if (selected && !browsing) {
     return (
@@ -171,7 +172,8 @@ function MunicipalityPicker({ value, onChange }: ModeProps) {
 
   const selected = municipalities?.find((row) => row.id === value);
 
-  if (!municipalities) return <PickerSkeleton label={t("loading")} />;
+  if (!municipalities)
+    return <PickerSkeleton label={t("loading")} compact={!!value} />;
 
   if (selected && !browsing) {
     return (
@@ -319,10 +321,20 @@ function sortGroups(
  * rendering the browse list first and swapping it for the selected-venue card
  * would move things the admin is already reading.
  */
-function PickerSkeleton({ label }: { label: string }) {
+/**
+ * `compact` = the caller already knows a location is picked, so the skeleton
+ * will resolve into the small selected-state card, not the browse list. Sizing
+ * the placeholder to the state it becomes is what keeps the rest of the
+ * product form from jumping when the query lands — the layout rule's whole
+ * point, and editing an existing product is the most common way in here.
+ */
+function PickerSkeleton({ label, compact }: { label: string; compact: boolean }) {
   return (
     <div
-      className="h-[400px] animate-pulse rounded-md bg-muted"
+      className={cn(
+        "animate-pulse rounded-md bg-muted",
+        compact ? "h-24" : "h-[460px]",
+      )}
       aria-label={label}
     />
   );

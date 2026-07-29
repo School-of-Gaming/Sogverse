@@ -2111,7 +2111,7 @@ const CATALOG_FIXTURE: LocationCatalog = {
   release: "2026",
   generated: "2026-01-01",
   levels: ["region", "district", "municipality"],
-  counts: [2, 3, 5],
+  counts: [2, 4, 5],
   tree: [
     [
       "32",

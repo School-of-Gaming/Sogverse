@@ -11,7 +11,6 @@ export {
   useSites,
   useSitesByParent,
   useLocationsByIds,
-  useLocationsByCodes,
   useResolveLocationsByCodes,
   useCreateLocation,
   useUpdateLocation,

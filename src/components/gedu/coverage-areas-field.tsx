@@ -133,11 +133,15 @@ export function CoverageAreasField({
         </div>
       </div>
 
+      {/* Also gated on `loading`: opening the dialog before the saved rows
+          have landed would let the first tick seed a draft from an EMPTY
+          saved set — and saving that draft would silently delete every
+          existing claim via the delete-all-and-insert write. */}
       <Button
         type="button"
         variant="outline"
         onClick={() => setOpen(true)}
-        disabled={disabled}
+        disabled={disabled || loading}
       >
         {t("chooseAreas")}
       </Button>

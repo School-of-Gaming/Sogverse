@@ -2062,8 +2062,8 @@
     "intro": {
       "heading": "En bref",
       "paragraphs": [
-        "School of Gaming existe pour offrir aux enfants un endroit sûr et amusant où apprendre par le jeu. Protéger la vie privée de votre famille — et celle de votre enfant avant tout — compte beaucoup pour nous : nous avons donc rédigé ce document en langage clair plutôt qu'en jargon juridique.",
-        "En résumé : nous ne collectons que ce dont nous avons besoin pour faire vivre nos clubs, nos camps et nos événements. Nous ne vendons jamais vos informations ni celles de votre enfant. Seul un parent peut créer le compte d'un enfant, et nous ne diffusons jamais de publicité aux enfants. Vous pouvez à tout moment nous demander de vous montrer, de corriger ou de supprimer vos informations en écrivant à hello@sog.gg."
+        "School of Gaming existe pour offrir aux enfants un endroit sûr et amusant où apprendre par le jeu. Protéger la vie privée de votre famille — et celle de votre enfant avant tout — compte beaucoup pour nous : nous avons donc rédigé ce document en langage clair plutôt qu’en jargon juridique.",
+        "En résumé : nous ne collectons que ce dont nous avons besoin pour faire vivre nos clubs, nos camps et nos événements. Nous ne vendons jamais vos informations ni celles de votre enfant. Seul un parent peut créer le compte d’un enfant, et nous ne diffusons jamais de publicité aux enfants. Vous pouvez à tout moment nous demander de vous montrer, de corriger ou de supprimer vos informations en écrivant à hello@sog.gg."
       ]
     },
     "sections": {
@@ -2074,7 +2074,7 @@
           "Voici nos coordonnées officielles :"
         ],
         "bullets": [
-          "School of Gaming Galactic Oy (numéro d'entreprise 3110461-1)",
+          "School of Gaming Galactic Oy (numéro d’entreprise 3110461-1)",
           "Isokatu 56, 90100 Oulu, Finlande",
           "E-mail : hello@sog.gg"
         ]
@@ -2086,20 +2086,20 @@
         ],
         "bullets": [
           "Votre nom, votre adresse e-mail et (si vous en ajoutez un) votre numéro de téléphone — pour créer votre compte et rester en contact au sujet des clubs de votre enfant.",
-          "Vos préférences de langue et de devise — pour que le site s'affiche comme vous l'attendez.",
+          "Vos préférences de langue et de devise — pour que le site s’affiche comme vous l’attendez.",
           "Votre mot de passe, que nous ne conservons que sous forme chiffrée (hachée) — nous ne pouvons jamais le voir.",
           "Les informations de paiement sont traitées directement dans Stripe. Nous ne voyons ni ne conservons jamais votre numéro de carte complet.",
           "Au sujet de votre enfant : son prénom, son mois et son année de naissance (nous ne demandons pas la date complète — seulement ce dont nous avons réellement besoin) et, facultativement, son genre — afin de le placer dans le bon groupe et de nous adresser à lui correctement.",
-          "Facultativement, le nom d'utilisateur Minecraft de votre enfant — pour qu'il puisse se connecter à notre serveur Minecraft pendant les sessions.",
-          "Des informations de base et anonymes sur l'utilisation du site (voir « Cookies et statistiques » ci-dessous)."
+          "Facultativement, le nom d’utilisateur Minecraft de votre enfant — pour qu’il puisse se connecter à notre serveur Minecraft pendant les sessions.",
+          "Des informations de base et anonymes sur l’utilisation du site (voir « Cookies et statistiques » ci-dessous)."
         ]
       },
       "childrensPrivacy": {
         "heading": "La vie privée des enfants passe avant tout",
         "paragraphs": [
           "La plupart des personnes qui utilisent Sogverse sont des enfants : leur sécurité et leur vie privée sont donc notre priorité absolue.",
-          "Un enfant ne peut jamais créer son propre compte. Seul un parent ou un tuteur crée le compte d'un enfant, choisit ce qui est partagé et donne son autorisation en son nom. C'est ainsi que nous respectons nos obligations vis-à-vis des enfants au regard du droit de la protection des données.",
-          "Nous réduisons au minimum les informations concernant les enfants, nous ne leur montrons jamais de publicité et nous ne vendons ni ne partageons jamais leurs données à des fins commerciales. Pendant les sessions en direct, les enfants sont toujours accompagnés par l'un de nos éducateurs formés (nous les appelons les Gedus).",
+          "Un enfant ne peut jamais créer son propre compte. Seul un parent ou un tuteur crée le compte d’un enfant, choisit ce qui est partagé et donne son autorisation en son nom. C’est ainsi que nous respectons nos obligations vis-à-vis des enfants au regard du droit de la protection des données.",
+          "Nous réduisons au minimum les informations concernant les enfants, nous ne leur montrons jamais de publicité et nous ne vendons ni ne partageons jamais leurs données à des fins commerciales. Pendant les sessions en direct, les enfants sont toujours accompagnés par l’un de nos éducateurs formés (nous les appelons les Gedus).",
           "Si vous souhaitez consulter, modifier ou supprimer les informations de votre enfant, écrivez simplement à hello@sog.gg et nous nous en occuperons."
         ]
       },
@@ -2110,21 +2110,21 @@
         ],
         "bullets": [
           "Pour créer et gérer votre compte et celui de votre enfant.",
-          "Pour placer votre enfant dans le bon groupe de club, de camp ou d'événement et le mettre en relation avec un éducateur.",
+          "Pour placer votre enfant dans le bon groupe de club, de camp ou d’événement et le mettre en relation avec un éducateur.",
           "Pour assurer les sessions audio et vidéo en direct.",
           "Pour encaisser les paiements et envoyer les reçus, rappels et informations importantes concernant vos clubs.",
           "Pour répondre à vos questions lorsque vous nous contactez.",
-          "Pour maintenir Sogverse sûr, corriger les problèmes et l'améliorer au fil du temps."
+          "Pour maintenir Sogverse sûr, corriger les problèmes et l’améliorer au fil du temps."
         ]
       },
       "legalBasis": {
         "heading": "Pourquoi nous avons le droit de les utiliser",
         "paragraphs": [
-          "Le droit de la protection des données (le RGPD) nous impose d'avoir une raison claire d'utiliser vos informations. Les nôtres sont simples :"
+          "Le droit de la protection des données (le RGPD) nous impose d’avoir une raison claire d’utiliser vos informations. Les nôtres sont simples :"
         ],
         "bullets": [
           "Pour fournir ce à quoi vous avez souscrit — les clubs et services que vous nous avez achetés (notre contrat avec vous).",
-          "Parce qu'un parent a donné son autorisation au nom de son enfant (le consentement).",
+          "Parce qu’un parent a donné son autorisation au nom de son enfant (le consentement).",
           "Pour respecter nos obligations légales, comme la conservation des pièces comptables relatives aux paiements.",
           "Pour notre intérêt légitime à maintenir le site sûr et fonctionnel — toujours mis en balance avec votre vie privée."
         ]
@@ -2132,29 +2132,29 @@
       "providers": {
         "heading": "Les entreprises qui nous aident à faire fonctionner Sogverse",
         "paragraphs": [
-          "Faire vivre un service en ligne suppose de s'appuyer sur quelques entreprises de confiance pour l'hébergement, les paiements ou l'e-mail. Elles ne traitent vos informations que pour accomplir leur mission pour nous, dans le cadre de contrats qui les obligent à les protéger. Les principales sont :"
+          "Faire vivre un service en ligne suppose de s’appuyer sur quelques entreprises de confiance pour l’hébergement, les paiements ou l’e-mail. Elles ne traitent vos informations que pour accomplir leur mission pour nous, dans le cadre de contrats qui les obligent à les protéger. Les principales sont :"
         ],
         "bullets": [
           "Supabase — stocke de manière sécurisée les informations de votre compte, de votre famille et de vos clubs.",
           "Stripe — traite les paiements. Les données de votre carte vont directement à Stripe ; nous ne les voyons jamais.",
           "Brevo — envoie nos e-mails, comme les reçus et les rappels.",
           "Daily.co — assure les sessions audio et vidéo en direct.",
-          "Vercel — héberge le site et fournit des statistiques d'utilisation anonymes et sans cookies.",
+          "Vercel — héberge le site et fournit des statistiques d’utilisation anonymes et sans cookies.",
           "Meta (WhatsApp) — utilisé pour envoyer certains messages et rappels aux familles qui préfèrent WhatsApp."
         ]
       },
       "cookies": {
         "heading": "Cookies et statistiques",
         "paragraphs": [
-          "Nous n'utilisons ni cookies publicitaires ni cookies de suivi, et nous ne vous suivons pas à la trace sur Internet.",
+          "Nous n’utilisons ni cookies publicitaires ni cookies de suivi, et nous ne vous suivons pas à la trace sur Internet.",
           "Nous utilisons un petit nombre de cookies nécessaires pour vous maintenir connecté en toute sécurité — le site ne peut pas fonctionner sans eux, ils ne nécessitent donc pas votre consentement.",
-          "Pour comprendre des choses comme le nombre de visiteurs ou le type d'appareil utilisé (téléphone ou ordinateur), nous utilisons les statistiques de Vercel. Elles respectent la vie privée : pas de cookies, et aucune identification personnelle."
+          "Pour comprendre des choses comme le nombre de visiteurs ou le type d’appareil utilisé (téléphone ou ordinateur), nous utilisons les statistiques de Vercel. Elles respectent la vie privée : pas de cookies, et aucune identification personnelle."
         ]
       },
       "voice": {
         "heading": "Sessions audio et vidéo",
         "paragraphs": [
-          "Les clubs, camps et événements en direct se déroulent en audio et en vidéo, via Daily.co. Chaque session est animée et supervisée par l'un de nos éducateurs formés, et nous n'utilisons cet outil que pour assurer la session à laquelle votre enfant s'est inscrit."
+          "Les clubs, camps et événements en direct se déroulent en audio et en vidéo, via Daily.co. Chaque session est animée et supervisée par l’un de nos éducateurs formés, et nous n’utilisons cet outil que pour assurer la session à laquelle votre enfant s’est inscrit."
         ]
       },
       "retention": {
@@ -2166,7 +2166,7 @@
       "storage": {
         "heading": "Où vos informations sont conservées",
         "paragraphs": [
-          "Certaines des entreprises qui nous aident (listées ci-dessus) sont établies en dehors de l'Union européenne, par exemple aux États-Unis. Lorsque vos informations leur sont transmises, nous veillons à ce qu'elles soient protégées par les garanties exigées par le droit de la protection des données — généralement les clauses contractuelles types de la Commission européenne."
+          "Certaines des entreprises qui nous aident (listées ci-dessus) sont établies en dehors de l’Union européenne, par exemple aux États-Unis. Lorsque vos informations leur sont transmises, nous veillons à ce qu’elles soient protégées par les garanties exigées par le droit de la protection des données — généralement les clauses contractuelles types de la Commission européenne."
         ]
       },
       "rights": {
@@ -2177,15 +2177,15 @@
         "bullets": [
           "Vous montrer les informations que nous détenons sur vous et sur votre enfant.",
           "Corriger tout ce qui est inexact.",
-          "Supprimer vos informations (le « droit à l'oubli »).",
+          "Supprimer vos informations (le « droit à l’oubli »).",
           "Vous en fournir une copie à emporter ailleurs.",
-          "Cesser ou limiter l'usage que nous en faisons."
+          "Cesser ou limiter l’usage que nous en faisons."
         ]
       },
       "security": {
         "heading": "La sécurité de vos informations",
         "paragraphs": [
-          "Nous protégeons vos informations avec des mesures conformes aux standards du secteur : connexions chiffrées, mots de passe conservés uniquement sous forme hachée et restrictions strictes sur les personnes pouvant accéder aux données. Aucun système n'est parfaitement sûr, mais nous mettons tout en œuvre pour protéger les informations de votre famille."
+          "Nous protégeons vos informations avec des mesures conformes aux standards du secteur : connexions chiffrées, mots de passe conservés uniquement sous forme hachée et restrictions strictes sur les personnes pouvant accéder aux données. Aucun système n’est parfaitement sûr, mais nous mettons tout en œuvre pour protéger les informations de votre famille."
         ]
       },
       "changes": {
@@ -2197,8 +2197,8 @@
       "contact": {
         "heading": "Nous contacter et votre droit de réclamation",
         "paragraphs": [
-          "Pour exercer l'un des droits ci-dessus, ou si vous avez une question sur votre vie privée ou sur les informations de votre enfant, écrivez simplement à hello@sog.gg. C'est gratuit, nous répondons toujours, et l'e-mail est le meilleur moyen de nous joindre.",
-          "Si vous n'êtes pas satisfait de la façon dont nous avons traité vos informations, vous avez le droit d'introduire une réclamation auprès du médiateur finlandais à la protection des données (Tietosuojavaltuutetun toimisto), sur tietosuoja.fi."
+          "Pour exercer l’un des droits ci-dessus, ou si vous avez une question sur votre vie privée ou sur les informations de votre enfant, écrivez simplement à hello@sog.gg. C’est gratuit, nous répondons toujours, et l’e-mail est le meilleur moyen de nous joindre.",
+          "Si vous n’êtes pas satisfait de la façon dont nous avons traité vos informations, vous avez le droit d’introduire une réclamation auprès du médiateur finlandais à la protection des données (Tietosuojavaltuutetun toimisto), sur tietosuoja.fi."
         ]
       }
     }
@@ -2209,7 +2209,7 @@
     "intro": {
       "heading": "En bref",
       "paragraphs": [
-        "Voici les conditions d'utilisation de Sogverse et d'inscription de votre enfant à nos clubs, camps et événements. Nous les avons rédigées en langage clair, parce que nous voulons que vous compreniez vraiment ce que vous acceptez — et non que vous ayez à décrypter du jargon juridique.",
+        "Voici les conditions d’utilisation de Sogverse et d’inscription de votre enfant à nos clubs, camps et événements. Nous les avons rédigées en langage clair, parce que nous voulons que vous compreniez vraiment ce que vous acceptez — et non que vous ayez à décrypter du jargon juridique.",
         "En résumé : nos clubs se déroulent en ligne, votre enfant étant toujours encadré par un éducateur formé. Vous pouvez résilier un club mensuel quand vous le souhaitez, et la première session de votre enfant est satisfait ou remboursé. Si vous avez une question, écrivez à kanslia@sog.gg : une vraie personne vous répondra."
       ]
     },
@@ -2217,11 +2217,11 @@
       "whoWeAre": {
         "heading": "Avec qui vous contractez",
         "paragraphs": [
-          "Sogverse est édité par School of Gaming Galactic Oy (« School of Gaming », « nous »), une société finlandaise. Ces conditions s'appliquent dès que vous utilisez Sogverse ou achetez l'un de nos clubs, camps ou événements.",
+          "Sogverse est édité par School of Gaming Galactic Oy (« School of Gaming », « nous »), une société finlandaise. Ces conditions s’appliquent dès que vous utilisez Sogverse ou achetez l’un de nos clubs, camps ou événements.",
           "Nos coordonnées officielles :"
         ],
         "bullets": [
-          "School of Gaming Galactic Oy (numéro d'entreprise 3110461-1)",
+          "School of Gaming Galactic Oy (numéro d’entreprise 3110461-1)",
           "Isokatu 56, 90100 Oulu, Finlande",
           "E-mail : kanslia@sog.gg"
         ]
@@ -2229,52 +2229,52 @@
       "service": {
         "heading": "Comment fonctionnent nos clubs",
         "paragraphs": [
-          "Presque tout ce que nous faisons se passe en ligne — votre enfant rejoint son club, son camp ou son événement depuis la maison, via notre site. Si un produit fonctionne autrement (par exemple un événement en présentiel), nous l'indiquons toujours clairement sur sa page avant l'achat."
+          "Presque tout ce que nous faisons se passe en ligne — votre enfant rejoint son club, son camp ou son événement depuis la maison, via notre site. Si un produit fonctionne autrement (par exemple un événement en présentiel), nous l’indiquons toujours clairement sur sa page avant l’achat."
         ]
       },
       "games": {
         "heading": "Les jeux auxquels votre enfant joue",
         "paragraphs": [
-          "Nos clubs s'articulent autour de jeux vidéo édités par d'autres entreprises, comme Minecraft. Nous suivons les recommandations officielles finlandaises en matière de classification par âge.",
-          "En pratique, cela signifie qu'un enfant peut jouer à un jeu classé jusqu'à trois ans au-dessus de son âge, à condition qu'un parent soit présent et à l'aise avec cela — mais jamais à un jeu classé 18+. En inscrivant votre enfant, vous confirmez que les classifications par âge des jeux concernés vous conviennent."
+          "Nos clubs s’articulent autour de jeux vidéo édités par d’autres entreprises, comme Minecraft. Nous suivons les recommandations officielles finlandaises en matière de classification par âge.",
+          "En pratique, cela signifie qu’un enfant peut jouer à un jeu classé jusqu’à trois ans au-dessus de son âge, à condition qu’un parent soit présent et à l’aise avec cela — mais jamais à un jeu classé 18+. En inscrivant votre enfant, vous confirmez que les classifications par âge des jeux concernés vous conviennent."
         ]
       },
       "online": {
         "heading": "La sécurité en ligne",
         "paragraphs": [
-          "Les outils que nous utilisons pour les sessions en direct ont leurs propres règles d'âge minimum, fixées par les entreprises qui les éditent et par la loi locale. Pour rester sûrs et dans les règles, les enfants de moins de 13 ans participent via le compte de leur parent, et chaque session est supervisée par l'un de nos éducateurs formés (nous les appelons les Gedus). Les enfants ne sont jamais en ligne avec nous sans surveillance."
+          "Les outils que nous utilisons pour les sessions en direct ont leurs propres règles d’âge minimum, fixées par les entreprises qui les éditent et par la loi locale. Pour rester sûrs et dans les règles, les enfants de moins de 13 ans participent via le compte de leur parent, et chaque session est supervisée par l’un de nos éducateurs formés (nous les appelons les Gedus). Les enfants ne sont jamais en ligne avec nous sans surveillance."
         ]
       },
       "pricing": {
         "heading": "Prix et paiement",
         "paragraphs": [
-          "Tous les prix sont affichés en euros et incluent la TVA. Nous pouvons modifier nos prix de temps à autre, mais un changement n'affectera jamais un club que vous payez déjà sans que nous vous en informions au préalable."
+          "Tous les prix sont affichés en euros et incluent la TVA. Nous pouvons modifier nos prix de temps à autre, mais un changement n’affectera jamais un club que vous payez déjà sans que nous vous en informions au préalable."
         ]
       },
       "clubsCancellation": {
         "heading": "Résilier un club mensuel",
         "paragraphs": [
-          "Nos clubs fonctionnent par abonnement mensuel, et vous êtes libre de résilier quand vous le souhaitez — il n'y a aucun engagement de durée. Vous pouvez le faire vous-même depuis votre compte, et votre enfant conserve sa place jusqu'à la fin du mois déjà réglé.",
+          "Nos clubs fonctionnent par abonnement mensuel, et vous êtes libre de résilier quand vous le souhaitez — il n’y a aucun engagement de durée. Vous pouvez le faire vous-même depuis votre compte, et votre enfant conserve sa place jusqu’à la fin du mois déjà réglé.",
           "Nous voulons aussi que vous puissiez nous essayer en toute confiance. Si votre enfant assiste à sa première session et que cela ne lui convient finalement pas, dites-le-nous dans les 2 jours suivant cette première session et nous vous remboursons intégralement."
         ]
       },
       "campsCancellation": {
         "heading": "Annuler un camp",
         "paragraphs": [
-          "Les camps sont réservés et payés en une seule fois : les conditions d'annulation sont donc un peu différentes. Si vous devez annuler un camp :"
+          "Les camps sont réservés et payés en une seule fois : les conditions d’annulation sont donc un peu différentes. Si vous devez annuler un camp :"
         ],
         "bullets": [
           "14 jours ou plus avant le début du camp : vous êtes intégralement remboursé.",
           "Entre 7 et 14 jours avant : nous vous remboursons, déduction faite de 50 € de frais de dossier.",
           "Moins de 7 jours avant : nous ne pouvons pas rembourser le paiement, car la place a été réservée et préparée pour votre enfant — sauf urgence médicale ou circonstance véritablement indépendante de votre volonté.",
-          "Si votre enfant ne peut pas participer pour cause de maladie, nous vous remboursons sur envoi d'un certificat médical à kanslia@sog.gg."
+          "Si votre enfant ne peut pas participer pour cause de maladie, nous vous remboursons sur envoi d’un certificat médical à kanslia@sog.gg."
         ]
       },
       "conduct": {
         "heading": "Comportement et exclusion d’un enfant d’un club",
         "paragraphs": [
-          "Nous voulons que chaque enfant se sente en sécurité et bienvenu : nous ne tolérons donc ni le harcèlement ni les comportements qui gâchent l'expérience des autres. Quand un problème survient, nous commençons toujours par accompagner l'enfant et l'aider à réparer les choses — notre démarche complète est décrite dans notre politique de lutte contre le harcèlement et de discipline.",
-          "Ce n'est qu'après ces étapes d'accompagnement, et en cas de comportement toxique ou perturbateur persistant ou de harcèlement, que nous pouvons mettre fin à la participation d'un enfant. Nous en discuterons toujours avec vous au préalable."
+          "Nous voulons que chaque enfant se sente en sécurité et bienvenu : nous ne tolérons donc ni le harcèlement ni les comportements qui gâchent l’expérience des autres. Quand un problème survient, nous commençons toujours par accompagner l’enfant et l’aider à réparer les choses — notre démarche complète est décrite dans notre politique de lutte contre le harcèlement et de discipline.",
+          "Ce n’est qu’après ces étapes d’accompagnement, et en cas de comportement toxique ou perturbateur persistant ou de harcèlement, que nous pouvons mettre fin à la participation d’un enfant. Nous en discuterons toujours avec vous au préalable."
         ]
       },
       "privacy": {
@@ -2292,7 +2292,7 @@
       "contact": {
         "heading": "Nous contacter",
         "paragraphs": [
-          "Si quelque chose ici n'est pas clair, ou si vous souhaitez en discuter, écrivez simplement à kanslia@sog.gg. Une vraie personne vous répondra, et nous sommes toujours ravis d'aider."
+          "Si quelque chose ici n’est pas clair, ou si vous souhaitez en discuter, écrivez simplement à kanslia@sog.gg. Une vraie personne vous répondra, et nous sommes toujours ravis d’aider."
         ]
       }
     }
@@ -2303,46 +2303,46 @@
     "intro": {
       "heading": "En bref",
       "paragraphs": [
-        "Chaque enfant doit se sentir en sécurité, respecté et bienvenu dans nos clubs. Le harcèlement et la méchanceté n'y ont pas leur place, et nous les prenons au sérieux.",
-        "Quand quelque chose se passe mal, nous ne nous contentons pas de sanctionner — nous aidons. Nous suivons une démarche calme et progressive, qui vise à aider l'enfant à comprendre ce qui s'est passé, à réparer et à mieux faire la fois suivante. Nous ne passons à une étape plus ferme que si le comportement se répète, et nous vous tenons informé tout du long."
+        "Chaque enfant doit se sentir en sécurité, respecté et bienvenu dans nos clubs. Le harcèlement et la méchanceté n’y ont pas leur place, et nous les prenons au sérieux.",
+        "Quand quelque chose se passe mal, nous ne nous contentons pas de sanctionner — nous aidons. Nous suivons une démarche calme et progressive, qui vise à aider l’enfant à comprendre ce qui s’est passé, à réparer et à mieux faire la fois suivante. Nous ne passons à une étape plus ferme que si le comportement se répète, et nous vous tenons informé tout du long."
       ]
     },
     "sections": {
       "commitment": {
         "heading": "Notre promesse à votre enfant",
         "paragraphs": [
-          "Nos clubs sont un endroit pour apprendre, se faire des amis et s'amuser — et cela ne fonctionne que si chacun s'y sent en sécurité. Nous nous engageons pour une communauté sans harcèlement, sans intimidation et sans cruauté, où chaque enfant est traité avec respect par nos éducateurs et par les autres enfants."
+          "Nos clubs sont un endroit pour apprendre, se faire des amis et s’amuser — et cela ne fonctionne que si chacun s’y sent en sécurité. Nous nous engageons pour une communauté sans harcèlement, sans intimidation et sans cruauté, où chaque enfant est traité avec respect par nos éducateurs et par les autres enfants."
         ]
       },
       "approach": {
         "heading": "Comment nous traitons les problèmes",
         "paragraphs": [
-          "Quand un enfant se comporte d'une façon qui blesse ou perturbe les autres, nos éducateurs (nous les appelons les Gedus) réagissent avec calme et bienveillance, d'une manière adaptée à son âge. L'objectif est toujours d'aider l'enfant à comprendre l'effet de ce qu'il a fait et à le réparer — pas simplement de le punir.",
-          "Nous réglons la plupart des situations en douceur, par un mot discret. Si le comportement se poursuit, nous passons à des mesures plus fermes, une étape à la fois. Les étapes ci-dessous constituent l'échelle que nous suivons, et vous serez tenu informé au fur et à mesure."
+          "Quand un enfant se comporte d’une façon qui blesse ou perturbe les autres, nos éducateurs (nous les appelons les Gedus) réagissent avec calme et bienveillance, d’une manière adaptée à son âge. L’objectif est toujours d’aider l’enfant à comprendre l’effet de ce qu’il a fait et à le réparer — pas simplement de le punir.",
+          "Nous réglons la plupart des situations en douceur, par un mot discret. Si le comportement se poursuit, nous passons à des mesures plus fermes, une étape à la fois. Les étapes ci-dessous constituent l’échelle que nous suivons, et vous serez tenu informé au fur et à mesure."
         ]
       },
       "step1": {
         "heading": "Étape 1 — Un rappel et une réparation",
         "paragraphs": [
-          "Le Gedu parle avec votre enfant de ce qui s'est passé et de l'effet produit sur les autres, et l'aide à trouver une meilleure façon de réagir. C'est fait avec douceur et sans dramatiser — par exemple : « Souviens-toi de ne pas prendre des affaires dans le coffre de quelqu'un d'autre sans demander. Tu pourrais plutôt lui proposer un échange. »"
+          "Le Gedu parle avec votre enfant de ce qui s’est passé et de l’effet produit sur les autres, et l’aide à trouver une meilleure façon de réagir. C’est fait avec douceur et sans dramatiser — par exemple : « Souviens-toi de ne pas prendre des affaires dans le coffre de quelqu’un d’autre sans demander. Tu pourrais plutôt lui proposer un échange. »"
         ]
       },
       "step2": {
         "heading": "Étape 2 — Un mot en tête-à-tête",
         "paragraphs": [
-          "Si cela se reproduit, le Gedu s'entretient seul à seul avec votre enfant pour réfléchir à ce qu'il a fait et à l'effet que cela a sur les autres. Nous vous préviendrons également à la maison que nous avons parlé avec votre enfant de son comportement au club."
+          "Si cela se reproduit, le Gedu s’entretient seul à seul avec votre enfant pour réfléchir à ce qu’il a fait et à l’effet que cela a sur les autres. Nous vous préviendrons également à la maison que nous avons parlé avec votre enfant de son comportement au club."
         ]
       },
       "step3": {
         "heading": "Étape 3 — Une intervention pendant la session",
         "paragraphs": [
-          "Si le comportement perturbateur se poursuit, le Gedu intervient pour l'arrêter pendant la session — par exemple en coupant le micro de votre enfant un moment ou en limitant ce qu'il peut faire dans le jeu. Le Gedu en parle en privé avec votre enfant, et nous vous envoyons un message à la maison."
+          "Si le comportement perturbateur se poursuit, le Gedu intervient pour l’arrêter pendant la session — par exemple en coupant le micro de votre enfant un moment ou en limitant ce qu’il peut faire dans le jeu. Le Gedu en parle en privé avec votre enfant, et nous vous envoyons un message à la maison."
         ]
       },
       "step4": {
         "heading": "Étape 4 — Une pause pendant une session",
         "paragraphs": [
-          "Si les choses ne s'apaisent toujours pas, le Gedu peut demander à votre enfant de rester en retrait pour le reste de la session. Si une pause plus longue est nécessaire, nous vous prévenons à l'avance. Le Gedu en discute en privé avec votre enfant, nous vous envoyons un message à la maison, et notre bureau (kanslia@sog.gg) prend part à la conversation."
+          "Si les choses ne s’apaisent toujours pas, le Gedu peut demander à votre enfant de rester en retrait pour le reste de la session. Si une pause plus longue est nécessaire, nous vous prévenons à l’avance. Le Gedu en discute en privé avec votre enfant, nous vous envoyons un message à la maison, et notre bureau (kanslia@sog.gg) prend part à la conversation."
         ]
       },
       "step5": {
@@ -2354,19 +2354,19 @@
       "step6": {
         "heading": "Étape 6 — Un nouveau départ plus tard",
         "paragraphs": [
-          "Une mise à l'écart n'est pas nécessairement définitive. Votre enfant peut revenir quand vous et lui vous sentez tous les deux prêts. S'il revient et que le comportement n'a pas changé, nous mettrons définitivement fin à sa participation plutôt que de reprendre l'échelle depuis le début — mais notre espoir, toujours, c'est un nouveau départ réussi."
+          "Une mise à l’écart n’est pas nécessairement définitive. Votre enfant peut revenir quand vous et lui vous sentez tous les deux prêts. S’il revient et que le comportement n’a pas changé, nous mettrons définitivement fin à sa participation plutôt que de reprendre l’échelle depuis le début — mais notre espoir, toujours, c’est un nouveau départ réussi."
         ]
       },
       "partnership": {
         "heading": "Nous sommes dans le même bateau",
         "paragraphs": [
-          "C'est vous qui connaissez le mieux votre enfant, et nous obtenons les meilleurs résultats en travaillant ensemble. Si vous avez la moindre inquiétude sur la façon dont votre enfant vit les choses — ou si vous pensez qu'il est traité méchamment par quelqu'un — dites-le-nous. Partager les mêmes attentes à la maison et au club fait une vraie différence."
+          "C’est vous qui connaissez le mieux votre enfant, et nous obtenons les meilleurs résultats en travaillant ensemble. Si vous avez la moindre inquiétude sur la façon dont votre enfant vit les choses — ou si vous pensez qu’il est traité méchamment par quelqu’un — dites-le-nous. Partager les mêmes attentes à la maison et au club fait une vraie différence."
         ]
       },
       "contact": {
         "heading": "Nous contacter",
         "paragraphs": [
-          "Si vous avez des questions sur cette politique, ou si vous souhaitez parler de quelque chose qui s'est passé, écrivez à notre bureau à kanslia@sog.gg. Une vraie personne vous répondra, et nous sommes là pour vous aider."
+          "Si vous avez des questions sur cette politique, ou si vous souhaitez parler de quelque chose qui s’est passé, écrivez à notre bureau à kanslia@sog.gg. Une vraie personne vous répondra, et nous sommes là pour vous aider."
         ]
       }
     }

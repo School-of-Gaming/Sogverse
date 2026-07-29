@@ -62,6 +62,7 @@
 --
 -- Data-only migration: no schema change, no type/grant change.
 
+BEGIN;
 -- Communes 1–2000 of 34875 (INSEE 01001–06135).
 INSERT INTO public.locations (name, type, parent_id, country_code, external_code)
 SELECT c.name, 'municipality', dep.id, 'FR', c.code
@@ -35234,3 +35235,5 @@ BEGIN
   END IF;
 END;
 $$;
+
+COMMIT;

@@ -2062,15 +2062,15 @@
     "intro": {
       "heading": "The short version",
       "paragraphs": [
-        "School of Gaming exists to give children a safe, fun place to learn through gaming. Protecting your family's privacy — and your child's most of all — matters to us, so we've written this in plain language instead of legal jargon.",
-        "In short: we only collect what we need to run our clubs, camps, and events. We never sell your information or your child's. Only a parent can create a child's account, and we never advertise to children. You can ask us to show, correct, or delete your information at any time by emailing hello@sog.gg."
+        "School of Gaming exists to give children a safe, fun place to learn through gaming. Protecting your family’s privacy — and your child’s most of all — matters to us, so we’ve written this in plain language instead of legal jargon.",
+        "In short: we only collect what we need to run our clubs, camps, and events. We never sell your information or your child’s. Only a parent can create a child’s account, and we never advertise to children. You can ask us to show, correct, or delete your information at any time by emailing hello@sog.gg."
       ]
     },
     "sections": {
       "whoWeAre": {
         "heading": "Who we are",
         "paragraphs": [
-          "Sogverse is run by School of Gaming Galactic Oy (\"School of Gaming\", \"we\", \"us\"), a Finnish company. We're responsible for looking after the personal information you and your child share with us — in legal terms, we're the \"data controller\".",
+          "Sogverse is run by School of Gaming Galactic Oy (\"School of Gaming\", \"we\", \"us\"), a Finnish company. We’re responsible for looking after the personal information you and your child share with us — in legal terms, we’re the \"data controller\".",
           "Here are our official details:"
         ],
         "bullets": [
@@ -2082,15 +2082,15 @@
       "infoWeCollect": {
         "heading": "The information we collect",
         "paragraphs": [
-          "We try to collect as little as possible — only what we genuinely need to run Sogverse. Here's what that looks like:"
+          "We try to collect as little as possible — only what we genuinely need to run Sogverse. Here’s what that looks like:"
         ],
         "bullets": [
-          "Your name, email address, and (if you add one) phone number — so we can set up your account and keep in touch about your child's clubs.",
+          "Your name, email address, and (if you add one) phone number — so we can set up your account and keep in touch about your child’s clubs.",
           "Your language and currency preferences — so the site shows up the way you expect.",
           "Your password, which we store only in a scrambled (hashed) form — we can never see it.",
           "Payment details are handled directly in Stripe. We never see or store your full card number.",
-          "About your child: their first name, their birth month and year (we don't ask for the full date — only what we actually need), and optionally their gender — so we can place them in the right group and address them properly.",
-          "Optionally, your child's Minecraft username — so they can connect to our Minecraft server during sessions.",
+          "About your child: their first name, their birth month and year (we don’t ask for the full date — only what we actually need), and optionally their gender — so we can place them in the right group and address them properly.",
+          "Optionally, your child’s Minecraft username — so they can connect to our Minecraft server during sessions.",
           "Basic, anonymous information about how the site is used (see \"Cookies and analytics\" below)."
         ]
       },
@@ -2098,9 +2098,9 @@
         "heading": "Children’s privacy comes first",
         "paragraphs": [
           "Most of the people using Sogverse are children, so their safety and privacy is our highest priority.",
-          "A child can never create their own account. Only a parent or guardian sets up a child's account, chooses what to share, and gives permission on their behalf. That's how we meet our responsibilities under data-protection law when it comes to children.",
-          "We keep children's information to a minimum, we never show children advertising, and we never sell or share their data for marketing. During live sessions, children are always with one of our trained educators (we call them Gedus).",
-          "If you ever want to see, change, or delete your child's information, just email hello@sog.gg and we'll take care of it."
+          "A child can never create their own account. Only a parent or guardian sets up a child’s account, chooses what to share, and gives permission on their behalf. That’s how we meet our responsibilities under data-protection law when it comes to children.",
+          "We keep children’s information to a minimum, we never show children advertising, and we never sell or share their data for marketing. During live sessions, children are always with one of our trained educators (we call them Gedus).",
+          "If you ever want to see, change, or delete your child’s information, just email hello@sog.gg and we’ll take care of it."
         ]
       },
       "howWeUse": {
@@ -2109,7 +2109,7 @@
           "We use the information above only to run Sogverse and give your family a good experience — specifically:"
         ],
         "bullets": [
-          "To create and manage your account and your child's account.",
+          "To create and manage your account and your child’s account.",
           "To place your child in the right club, camp, or event group and connect them with an educator.",
           "To run the live voice and video sessions.",
           "To take payments and send receipts, reminders, and important updates about your clubs.",
@@ -2123,8 +2123,8 @@
           "Data-protection law (the GDPR) asks us to have a clear reason for using your information. Ours are simple:"
         ],
         "bullets": [
-          "To deliver what you signed up for — the clubs and services you've bought from us (our contract with you).",
-          "Because a parent has given permission on their child's behalf (consent).",
+          "To deliver what you signed up for — the clubs and services you’ve bought from us (our contract with you).",
+          "Because a parent has given permission on their child’s behalf (consent).",
           "To meet our legal duties, such as keeping accounting records for payments.",
           "For our legitimate interest in keeping the site secure and working well — always balanced against your privacy."
         ]
@@ -2146,9 +2146,9 @@
       "cookies": {
         "heading": "Cookies and analytics",
         "paragraphs": [
-          "We don't use advertising or tracking cookies, and we don't follow you around the internet.",
-          "We use a small number of necessary cookies to keep you securely logged in — the site can't work without these, so they don't need your consent.",
-          "To understand things like how many people visit and whether they're using a phone or a computer, we use Vercel's analytics. It's privacy-friendly: no cookies, and it doesn't identify you personally."
+          "We don’t use advertising or tracking cookies, and we don’t follow you around the internet.",
+          "We use a small number of necessary cookies to keep you securely logged in — the site can’t work without these, so they don’t need your consent.",
+          "To understand things like how many people visit and whether they’re using a phone or a computer, we use Vercel’s analytics. It’s privacy-friendly: no cookies, and it doesn’t identify you personally."
         ]
       },
       "voice": {
@@ -2166,17 +2166,17 @@
       "storage": {
         "heading": "Where your information is kept",
         "paragraphs": [
-          "Some of the companies that help us (listed above) are based outside the European Union, for example in the United States. When your information is sent to them, we make sure it's protected by the safeguards data-protection law requires — usually the European Commission's Standard Contractual Clauses."
+          "Some of the companies that help us (listed above) are based outside the European Union, for example in the United States. When your information is sent to them, we make sure it’s protected by the safeguards data-protection law requires — usually the European Commission’s Standard Contractual Clauses."
         ]
       },
       "rights": {
         "heading": "Your rights — and your child’s",
         "paragraphs": [
-          "You're in control of your information. At any time you can ask us to:"
+          "You’re in control of your information. At any time you can ask us to:"
         ],
         "bullets": [
           "Show you what information we hold about you and your child.",
-          "Correct anything that's wrong.",
+          "Correct anything that’s wrong.",
           "Delete your information (the \"right to be forgotten\").",
           "Give you a copy to take elsewhere.",
           "Stop or limit how we use it."
@@ -2185,20 +2185,20 @@
       "security": {
         "heading": "Keeping your information safe",
         "paragraphs": [
-          "We protect your information with industry-standard measures: encrypted connections, passwords stored only in scrambled form, and strict limits on who can access data. No system is ever perfectly secure, but we work hard to keep your family's information safe."
+          "We protect your information with industry-standard measures: encrypted connections, passwords stored only in scrambled form, and strict limits on who can access data. No system is ever perfectly secure, but we work hard to keep your family’s information safe."
         ]
       },
       "changes": {
         "heading": "Changes to this policy",
         "paragraphs": [
-          "We may update this policy from time to time — for example, if we add a new feature. When we make an important change, we'll update the date at the top and, where it matters, let you know."
+          "We may update this policy from time to time — for example, if we add a new feature. When we make an important change, we’ll update the date at the top and, where it matters, let you know."
         ]
       },
       "contact": {
         "heading": "Getting in touch and your right to complain",
         "paragraphs": [
-          "To use any of the rights above, or if you have a question about your privacy or your child's information, just email hello@sog.gg. There's no charge, we'll always reply, and email is the best way to reach us.",
-          "If you're ever unhappy with how we've handled your information, you have the right to complain to the Finnish Data Protection Ombudsman (Tietosuojavaltuutetun toimisto) at tietosuoja.fi."
+          "To use any of the rights above, or if you have a question about your privacy or your child’s information, just email hello@sog.gg. There’s no charge, we’ll always reply, and email is the best way to reach us.",
+          "If you’re ever unhappy with how we’ve handled your information, you have the right to complain to the Finnish Data Protection Ombudsman (Tietosuojavaltuutetun toimisto) at tietosuoja.fi."
         ]
       }
     }
@@ -2209,8 +2209,8 @@
     "intro": {
       "heading": "The short version",
       "paragraphs": [
-        "These are the terms for using Sogverse and signing your child up for our clubs, camps, and events. We've written them in plain language, because we want you to actually understand what you're agreeing to — not wade through legal jargon.",
-        "In short: our clubs happen online, with your child always supervised by a trained educator. You can cancel a monthly club whenever you like, and there's a money-back guarantee on your child's first session. If you ever have a question, email kanslia@sog.gg and a real person will help."
+        "These are the terms for using Sogverse and signing your child up for our clubs, camps, and events. We’ve written them in plain language, because we want you to actually understand what you’re agreeing to — not wade through legal jargon.",
+        "In short: our clubs happen online, with your child always supervised by a trained educator. You can cancel a monthly club whenever you like, and there’s a money-back guarantee on your child’s first session. If you ever have a question, email kanslia@sog.gg and a real person will help."
       ]
     },
     "sections": {
@@ -2229,33 +2229,33 @@
       "service": {
         "heading": "How our clubs work",
         "paragraphs": [
-          "Almost everything we do happens online — your child joins their club, camp, or event from home, through our website. If a particular product works differently (for example, an in-person event), we'll always say so clearly on that product's page before you buy."
+          "Almost everything we do happens online — your child joins their club, camp, or event from home, through our website. If a particular product works differently (for example, an in-person event), we’ll always say so clearly on that product’s page before you buy."
         ]
       },
       "games": {
         "heading": "The games your child plays",
         "paragraphs": [
-          "Our clubs are built around video games made by other companies, such as Minecraft. We follow Finland's official age-rating guidance.",
-          "In practice this means a child may play a game rated for up to three years above their own age, as long as a parent is present and comfortable with it — but never a game rated 18+. When you sign your child up, you're confirming you're happy with the age ratings of the games involved."
+          "Our clubs are built around video games made by other companies, such as Minecraft. We follow Finland’s official age-rating guidance.",
+          "In practice this means a child may play a game rated for up to three years above their own age, as long as a parent is present and comfortable with it — but never a game rated 18+. When you sign your child up, you’re confirming you’re happy with the age ratings of the games involved."
         ]
       },
       "online": {
         "heading": "Staying safe online",
         "paragraphs": [
-          "The tools we use for live sessions have their own minimum-age rules, set by the companies that make them and by local law. To keep things safe and above board, children under 13 take part using their parent's account, and every session is supervised by one of our trained educators (we call them Gedus). Children are never online with us unsupervised."
+          "The tools we use for live sessions have their own minimum-age rules, set by the companies that make them and by local law. To keep things safe and above board, children under 13 take part using their parent’s account, and every session is supervised by one of our trained educators (we call them Gedus). Children are never online with us unsupervised."
         ]
       },
       "pricing": {
         "heading": "Prices and payment",
         "paragraphs": [
-          "All prices are shown in euros and include VAT. We may change our prices from time to time, but a change will never affect a club you're already paying for without us telling you first."
+          "All prices are shown in euros and include VAT. We may change our prices from time to time, but a change will never affect a club you’re already paying for without us telling you first."
         ]
       },
       "clubsCancellation": {
         "heading": "Cancelling a monthly club",
         "paragraphs": [
-          "Our clubs run as a monthly subscription, and you're free to cancel whenever you like — there's no fixed commitment. You can do it yourself from your account, and your child keeps their place until the end of the month you've already paid for.",
-          "We also want you to be able to try us with confidence. If your child attends their first session and it turns out not to be the right fit, let us know within 2 days of that first session and we'll give you a full refund."
+          "Our clubs run as a monthly subscription, and you’re free to cancel whenever you like — there’s no fixed commitment. You can do it yourself from your account, and your child keeps their place until the end of the month you’ve already paid for.",
+          "We also want you to be able to try us with confidence. If your child attends their first session and it turns out not to be the right fit, let us know within 2 days of that first session and we’ll give you a full refund."
         ]
       },
       "campsCancellation": {
@@ -2266,15 +2266,15 @@
         "bullets": [
           "14 days or more before the camp starts: you get a full refund.",
           "Between 7 and 14 days before: we refund you minus a €50 administration fee.",
-          "Less than 7 days before: we're unable to refund the payment, because the place has been held and prepared for your child — unless it's a medical emergency or something genuinely outside your control.",
-          "If your child can't attend because of illness, we'll refund you when you send us a doctor's certificate at kanslia@sog.gg."
+          "Less than 7 days before: we’re unable to refund the payment, because the place has been held and prepared for your child — unless it’s a medical emergency or something genuinely outside your control.",
+          "If your child can’t attend because of illness, we’ll refund you when you send us a doctor’s certificate at kanslia@sog.gg."
         ]
       },
       "conduct": {
         "heading": "Behaviour and removing a child from a club",
         "paragraphs": [
-          "We want every child to feel safe and welcome, so we don't tolerate bullying or behaviour that spoils things for others. When a problem comes up, we always start by supporting the child and helping them put it right — our full approach is set out in our Anti-Bullying and Discipline policy.",
-          "Only after those supportive steps, and in the case of ongoing toxic or disruptive behaviour or bullying, may we end a child's participation. We'll always talk it through with you first."
+          "We want every child to feel safe and welcome, so we don’t tolerate bullying or behaviour that spoils things for others. When a problem comes up, we always start by supporting the child and helping them put it right — our full approach is set out in our Anti-Bullying and Discipline policy.",
+          "Only after those supportive steps, and in the case of ongoing toxic or disruptive behaviour or bullying, may we end a child’s participation. We’ll always talk it through with you first."
         ]
       },
       "privacy": {
@@ -2286,13 +2286,13 @@
       "changes": {
         "heading": "Changes to these terms",
         "paragraphs": [
-          "We may update these terms from time to time, for example if we add a new kind of club or change how something works. When we make an important change, we'll update the date at the top of this page, and where it matters we'll let you know directly."
+          "We may update these terms from time to time, for example if we add a new kind of club or change how something works. When we make an important change, we’ll update the date at the top of this page, and where it matters we’ll let you know directly."
         ]
       },
       "contact": {
         "heading": "Getting in touch",
         "paragraphs": [
-          "If anything here is unclear, or you'd like to talk something through, just email kanslia@sog.gg. There's a real person at the other end, and we're always happy to help."
+          "If anything here is unclear, or you’d like to talk something through, just email kanslia@sog.gg. There’s a real person at the other end, and we’re always happy to help."
         ]
       }
     }
@@ -2304,33 +2304,33 @@
       "heading": "The short version",
       "paragraphs": [
         "Every child should feel safe, respected, and welcome in our clubs. Bullying and unkindness have no place here, and we take them seriously.",
-        "When something goes wrong, we don't just punish — we help. We use a calm, step-by-step approach that focuses on helping a child understand what happened, make it right, and do better next time. We only move to a firmer step if the behaviour keeps happening, and we keep you informed the whole way through."
+        "When something goes wrong, we don’t just punish — we help. We use a calm, step-by-step approach that focuses on helping a child understand what happened, make it right, and do better next time. We only move to a firmer step if the behaviour keeps happening, and we keep you informed the whole way through."
       ]
     },
     "sections": {
       "commitment": {
         "heading": "Our promise to your child",
         "paragraphs": [
-          "Our clubs are a place to learn, make friends, and have fun — and that only works if everyone feels safe. We're committed to a community free of bullying, harassment, and cruelty, where every child is treated with respect by our educators and by each other."
+          "Our clubs are a place to learn, make friends, and have fun — and that only works if everyone feels safe. We’re committed to a community free of bullying, harassment, and cruelty, where every child is treated with respect by our educators and by each other."
         ]
       },
       "approach": {
         "heading": "How we handle problems",
         "paragraphs": [
-          "When a child behaves in a way that hurts or disrupts others, our educators (we call them Gedus) respond in a way that's calm, kind, and right for the child's age. The goal is always to help the child understand the effect of what they did and to put it right — not simply to punish.",
-          "We deal with most situations gently, with a quiet word. If the behaviour continues, we take firmer steps, one at a time. The steps below are the ladder we follow, and you'll always be kept in the loop as we go."
+          "When a child behaves in a way that hurts or disrupts others, our educators (we call them Gedus) respond in a way that’s calm, kind, and right for the child’s age. The goal is always to help the child understand the effect of what they did and to put it right — not simply to punish.",
+          "We deal with most situations gently, with a quiet word. If the behaviour continues, we take firmer steps, one at a time. The steps below are the ladder we follow, and you’ll always be kept in the loop as we go."
         ]
       },
       "step1": {
         "heading": "Step 1 — A reminder and putting things right",
         "paragraphs": [
-          "The Gedu talks with your child about what happened and how it affected others, and helps them find a better way to handle it. It's gentle and matter-of-fact — for example: \"Remember not to take things from someone else's chest without asking. You could ask them if they'd like to trade instead.\""
+          "The Gedu talks with your child about what happened and how it affected others, and helps them find a better way to handle it. It’s gentle and matter-of-fact — for example: \"Remember not to take things from someone else’s chest without asking. You could ask them if they’d like to trade instead.\""
         ]
       },
       "step2": {
         "heading": "Step 2 — A quiet word",
         "paragraphs": [
-          "If it happens again, the Gedu has a one-on-one chat with your child to think through what they did and how it affects others. We'll also let you know at home that we've talked with your child about their behaviour in the club."
+          "If it happens again, the Gedu has a one-on-one chat with your child to think through what they did and how it affects others. We’ll also let you know at home that we’ve talked with your child about their behaviour in the club."
         ]
       },
       "step3": {
@@ -2342,7 +2342,7 @@
       "step4": {
         "heading": "Step 4 — A time-out from a session",
         "paragraphs": [
-          "If things still don't settle, the Gedu may ask your child to sit out the rest of that session. If a longer break is needed, we'll tell you in advance. The Gedu talks it through privately with your child, we message you at home, and our office (kanslia@sog.gg) joins the conversation."
+          "If things still don’t settle, the Gedu may ask your child to sit out the rest of that session. If a longer break is needed, we’ll tell you in advance. The Gedu talks it through privately with your child, we message you at home, and our office (kanslia@sog.gg) joins the conversation."
         ]
       },
       "step5": {
@@ -2354,19 +2354,19 @@
       "step6": {
         "heading": "Step 6 — A fresh start later",
         "paragraphs": [
-          "Time away isn't necessarily the end. Your child can come back when you and they both feel ready for it. If they return and the behaviour hasn't changed, we'll step them out of the activity for good rather than starting the ladder over — but our hope, always, is a fresh start that works."
+          "Time away isn’t necessarily the end. Your child can come back when you and they both feel ready for it. If they return and the behaviour hasn’t changed, we’ll step them out of the activity for good rather than starting the ladder over — but our hope, always, is a fresh start that works."
         ]
       },
       "partnership": {
         "heading": "We’re in this together",
         "paragraphs": [
-          "You know your child best, and we get the best results when we work together. If you have any worries about how your child is getting on — or if you think they're being treated unkindly by someone else — please tell us. Sharing the same expectations at home and in the club makes a real difference."
+          "You know your child best, and we get the best results when we work together. If you have any worries about how your child is getting on — or if you think they’re being treated unkindly by someone else — please tell us. Sharing the same expectations at home and in the club makes a real difference."
         ]
       },
       "contact": {
         "heading": "Getting in touch",
         "paragraphs": [
-          "If you have any questions about this policy, or you'd like to talk about something that's happened, email our office at kanslia@sog.gg. There's a real person at the other end, and we're here to help."
+          "If you have any questions about this policy, or you’d like to talk about something that’s happened, email our office at kanslia@sog.gg. There’s a real person at the other end, and we’re here to help."
         ]
       }
     }

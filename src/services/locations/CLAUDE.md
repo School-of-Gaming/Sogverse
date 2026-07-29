@@ -118,13 +118,21 @@ rules:
 **Rule: a catalog name and the `locations.name` of the same place are built from one
 parse.** They cannot be allowed to disagree — the same commune under two spellings reads
 as two places — and sharing the parse makes that true by construction rather than by
-review. Generator output is deterministic (code-unit ordering, no timestamps, fixed
-chunking) so a regenerated file is diffable and a rerun is a no-op.
+review. The **migration** generator's output is fully deterministic (code-unit
+ordering, no timestamps, fixed chunking, explicit transaction) — a rerun on the same
+release is byte-identical. The **catalog** files are diffable but not rerun-stable in
+the same way: they carry a `generated` provenance date and are ordered by locale
+collation (that ordering is what the browse UI shows, so it is deliberate) — expect a
+refresh diff to include the date line, and know that a different Node/ICU can reorder
+entries without any data changing.
 
-### Annual refresh
+### Refresh (ad-hoc, deliberately unscheduled)
 
-Both classifications are republished each January. The refresh procedure lives in the
-shared module's header (release ids, expected counts, the exact steps). Its shape:
+Both classifications are republished each January, but **nothing runs on a schedule —
+refreshing is a manual decision, made when the staleness starts to matter** (a commune
+we operate in renamed, a merger affects live data, or a new country is added). Stale
+official names cost nothing until then. The procedure lives in the shared module's
+header (release ids, expected counts, the exact steps). Its shape:
 
 1. Bump the release identifiers and the asserted expected counts — a refresh that
    silently loses half a file fails at generation instead of shipping.

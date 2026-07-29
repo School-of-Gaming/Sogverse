@@ -37,9 +37,10 @@
  *   https://data.stat.fi/api/classifications/v2/classifications/maakunta_1_20260101/classificationItems
  *   https://data.stat.fi/api/classifications/v2/correspondenceTables/kunta_1_20260101%23maakunta_1_20260101/maps
  *
- * ## Annual refresh
+ * ## Refresh (ad-hoc — nothing is scheduled)
  *
- * Both classifications are republished each January. To refresh:
+ * Both classifications are republished each January, but refreshing is a
+ * manual, when-it-matters decision, not a standing job. To refresh:
  *
  *   1. Bump `FR.release` / `FR.datasetId` to the new COG information-page id
  *      (from insee.fr/fr/information/…), and `FI.release` to the new
@@ -118,7 +119,13 @@ async function getJson(url) {
   return JSON.parse(await getText(url));
 }
 
-/** Minimal RFC-4180 reader — the INSEE files quote every field and embed commas. */
+/**
+ * CSV reader for the shapes these sources actually ship: quoted fields with
+ * embedded commas and doubled quotes. NOT a full RFC-4180 parser — it splits
+ * on newlines before parsing quotes, so a quoted field containing a newline
+ * would desync every following row. Neither source has ever shipped one; if a
+ * release does, the count assertions downstream fail loudly.
+ */
 function parseCsv(text) {
   const lines = text.trim().split(/\r?\n/);
   const header = splitCsvLine(lines[0]);

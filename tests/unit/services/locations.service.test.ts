@@ -87,13 +87,48 @@ describe("LocationsService paged walk (via getSites)", () => {
     );
   });
 
+  it("throws when a LATER page ends the walk short of the total", async () => {
+    // Multi-page variant: full first page (count captured there), short second
+    // page that still leaves the walk below the reported total. Guards the
+    // accumulation across pages, not just the single-page capture.
+    fetchMock
+      .mockResolvedValueOnce(
+        postgrestPage(locationRows(PAGE_SIZE, 0), { from: 0, total: 2600 }),
+      )
+      .mockResolvedValueOnce(
+        postgrestPage(locationRows(600, PAGE_SIZE), {
+          from: PAGE_SIZE,
+          total: 2600,
+        }),
+      );
+
+    await expect(service.getSites()).rejects.toThrow(/1600 of 2600 rows/);
+  });
+
   // The bug this guards: PostgREST enforces max_rows by returning a short page,
   // not an error, so an unbounded select silently truncated at 1000 rows.
+  // Real Content-Range totals on every page (count: "exact" sends one per
+  // page), so the count reconciliation is exercised in multi-page mode too —
+  // with bare postgrestJson responses the guard never arms and deleting it
+  // would keep every test green.
   it("keeps paging while pages come back full, and concatenates them in order", async () => {
+    const TOTAL = 2 * PAGE_SIZE + 37;
     fetchMock
-      .mockResolvedValueOnce(postgrestJson(locationRows(PAGE_SIZE, 0)))
-      .mockResolvedValueOnce(postgrestJson(locationRows(PAGE_SIZE, PAGE_SIZE)))
-      .mockResolvedValueOnce(postgrestJson(locationRows(37, 2 * PAGE_SIZE)));
+      .mockResolvedValueOnce(
+        postgrestPage(locationRows(PAGE_SIZE, 0), { from: 0, total: TOTAL }),
+      )
+      .mockResolvedValueOnce(
+        postgrestPage(locationRows(PAGE_SIZE, PAGE_SIZE), {
+          from: PAGE_SIZE,
+          total: TOTAL,
+        }),
+      )
+      .mockResolvedValueOnce(
+        postgrestPage(locationRows(37, 2 * PAGE_SIZE), {
+          from: 2 * PAGE_SIZE,
+          total: TOTAL,
+        }),
+      );
 
     const result = await service.getSites();
 

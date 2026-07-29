@@ -59,7 +59,7 @@ const REGION_CLUB: EmbeddedLocation = {
 };
 
 describe("buildMunicipalityEntries", () => {
-  it("lists only FI municipalities, sorted, with slugs and region", () => {
+  it("lists municipalities sorted, with slugs and region", () => {
     const entries = buildMunicipalityEntries(MUNICIPALITIES, [], "fi");
 
     expect(entries.map((e) => e.name)).toEqual(["Espoo", "Helsinki", "Tampere"]);

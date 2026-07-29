@@ -294,10 +294,14 @@ export function CatalogPicker({
           )
         ) : (
           <div className="space-y-0.5">
+            {/* No detail text while browsing: the breadcrumb already says
+                where we are, and the official code ("Kainuu — 18") reads as
+                noise to anyone who isn't holding the INSEE/Tilastokeskus
+                list. Codes stay searchable — that's where they earn a place. */}
             {nodes.map((node) =>
               renderRow(
                 browseEntry(node),
-                node[0],
+                "",
                 level < leafDepth ? node : undefined,
               ),
             )}
@@ -420,26 +424,37 @@ function TickRow({
   onDrill,
   drillLabel,
 }: TickRowProps) {
-  return (
-    <div className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
-      <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left">
-        <Checkbox checked={checked} onChange={onToggle} />
-        <RowLabel name={name} detail={detail} />
-      </label>
-      {onDrill ? (
-        <button
-          type="button"
-          onClick={onDrill}
-          aria-label={drillLabel}
-          className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      ) : (
-        // Keeps the label column the same width whether or not a row can be
-        // drilled into, so names don't jump between levels.
+  // Interaction split, same as every tree UI here has had: clicking a row
+  // that can be descended into NAVIGATES — the checkbox alone makes the
+  // claim. Someone looking for Helsinki clicks "Uusimaa" expecting to see its
+  // municipalities, not to accidentally claim the whole region off a small
+  // chevron mis-read. A leaf row (and every search result) has nowhere to
+  // descend, so there the whole row toggles.
+  if (!onDrill) {
+    return (
+      <div className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground">
+        <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left">
+          <Checkbox checked={checked} onChange={onToggle} />
+          <RowLabel name={name} detail={detail} />
+        </label>
+        {/* Keeps the label column the same width whether or not a row can be
+            drilled into, so names don't jump between levels. */}
         <span className="h-6 w-6 shrink-0" aria-hidden="true" />
-      )}
+      </div>
+    );
+  }
+  return (
+    <div className="flex w-full items-center gap-2 rounded-md pl-2 text-sm hover:bg-accent hover:text-accent-foreground">
+      <Checkbox checked={checked} onChange={onToggle} aria-label={name} />
+      <button
+        type="button"
+        onClick={onDrill}
+        aria-label={drillLabel}
+        className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 py-1.5 pr-2 text-left"
+      >
+        <RowLabel name={name} detail={detail} />
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+      </button>
     </div>
   );
 }
@@ -589,14 +604,52 @@ export function CatalogDialogShell({
               </Button>
             </div>
           ) : (
-            <div
-              className={cn("animate-pulse rounded-md bg-muted", PANEL_HEIGHT)}
-              aria-label={t("loading")}
-            />
+            <CatalogLoadingSkeleton label={t("loading")} />
           )}
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * The loading stand-in for the panel: same height, same internal layout
+ * (search bar, breadcrumb line, list box with ghost rows, footer), instead of
+ * one solid block — a 440px grey slab reads as a broken page, not a loading
+ * one. It also stays *invisible for the first 150ms*: on a warm cache the
+ * chunk lands faster than that, and flashing a skeleton for two frames is
+ * worse than showing nothing in a box that already has its final size.
+ */
+function CatalogLoadingSkeleton({ label }: { label: string }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const id = window.setTimeout(() => setVisible(true), 150);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  return (
+    <div
+      className={cn(
+        "flex flex-col gap-3 transition-opacity duration-200",
+        PANEL_HEIGHT,
+        visible ? "opacity-100" : "opacity-0",
+      )}
+      aria-label={label}
+      aria-busy="true"
+    >
+      <div className="h-10 animate-pulse rounded-md bg-muted" />
+      <div className="h-5 w-40 animate-pulse rounded bg-muted" />
+      <div className="min-h-0 flex-1 space-y-2 rounded-md border border-input p-3">
+        {Array.from({ length: 8 }, (_, i) => (
+          <div
+            key={i}
+            className="h-7 animate-pulse rounded bg-muted"
+            style={{ width: `${88 - (i % 4) * 9}%` }}
+          />
+        ))}
+      </div>
+      <div className="h-5 animate-pulse rounded bg-muted" />
+    </div>
   );
 }
 

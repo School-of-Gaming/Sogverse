@@ -108,30 +108,13 @@ export function useLocationsByIds(ids: readonly string[]) {
 }
 
 /**
- * Catalog entries → rows. What a code-only UI calls to get the ids it needs to
- * write a foreign key.
- */
-export function useLocationsByCodes(
-  countryCode: string,
-  refs: readonly LocationCodeRef[],
-) {
-  const supabase = getClient();
-  const service = new LocationsService(supabase);
-
-  return useQuery({
-    queryKey: locationKeys.byCodes(countryCode, refs),
-    queryFn: () => service.resolveLocationsByCodes(countryCode, refs),
-    enabled: !!countryCode,
-  });
-}
-
-/**
- * The same resolution, on demand.
+ * Catalog entries → rows, on demand. What a code-only UI calls to get the ids
+ * it needs to write a foreign key.
  *
- * A save path only learns which codes it needs at the moment the user commits,
- * which is too late for a declarative query. This returns a stable function
- * that reads through the *same* cache entry `useLocationsByCodes` uses, so a
- * screen that already resolved a set does not refetch it to save.
+ * Imperative rather than declarative: a save path only learns which codes it
+ * needs at the moment the user commits, which is too late for a mounted query.
+ * Returns a stable function that reads through the `locationKeys.byCodes`
+ * cache entry.
  */
 export function useResolveLocationsByCodes() {
   const queryClient = useQueryClient();
@@ -165,7 +148,14 @@ export function useCreateLocation() {
     onSuccess: () => {
       // The only thing this route creates is a site, and a new site changes
       // both the flat list and the per-municipality one.
-      queryClient.invalidateQueries({ queryKey: locationKeys.sites() });
+      //
+      // RETURNED, not fired-and-forgotten: React Query awaits a promise
+      // returned from onSuccess before resolving mutateAsync. The site picker
+      // auto-selects the created id the moment the dialog closes, and it also
+      // clears any selected id that is not in useSites() — so if mutateAsync
+      // resolved while the sites cache was still the pre-create array, the
+      // picker would select the new venue and immediately wipe it.
+      return queryClient.invalidateQueries({ queryKey: locationKeys.sites() });
     },
   });
 }
