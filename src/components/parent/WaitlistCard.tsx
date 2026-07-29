@@ -147,7 +147,12 @@ export function WaitlistCard({
                 single digits square; `px-3` lets 3+ digits grow without
                 clipping. */}
             <div className="flex h-14 min-w-14 items-center justify-center rounded-lg bg-secondary px-3">
-              <span className="text-2xl font-bold tabular-nums text-secondary-foreground">
+              {/* whitespace-nowrap: locales prefix the number ("n° 12") and the
+                  badge is a squeezable flex item — without it the label wraps at
+                  the prefix space as soon as the number has two digits. The
+                  fr/sv strings also use no-break spaces (French typography
+                  requires one after "n°"), so this is the second layer. */}
+              <span className="whitespace-nowrap text-2xl font-bold tabular-nums text-secondary-foreground">
                 {t("positionValue", { position })}
               </span>
             </div>

@@ -983,7 +983,7 @@
       "summaryTitle": "Votre place en liste d’attente",
       "forLabel": "En liste d’attente",
       "positionLabel": "Votre position",
-      "positionValue": "n° {position}",
+      "positionValue": "n° {position}",
       "next1": "Nous vous enverrons un e-mail dès qu’une place se libère.",
       "next2": "{gamer} conserve sa place dans la file pendant toute la période.",
       "next3": "Vous pouvez suivre votre place en liste d’attente à tout moment dans Mon SOG."
@@ -1308,7 +1308,7 @@
     "webinar": "Webinaire"
   },
   "seatAvailability": {
-    "remaining": "{count, plural, one {# place restante sur {total}} other {# places restantes sur {total}}}",
+    "remaining": "{count, plural, one {# / {total} place restante} other {# / {total} places restantes}}",
     "waitlistAvailable": "Liste d’attente"
   },
   "productDetail": {
@@ -1576,7 +1576,7 @@
     "waitlist": {
       "forLabel": "Pour {name}",
       "positionLabel": "Votre position",
-      "positionValue": "n° {position}",
+      "positionValue": "n° {position}",
       "reassuranceCustomer": "Nous vous enverrons un e-mail dès qu’une place se libère.",
       "reassuranceGamer": "Nous enverrons un e-mail à un parent dès qu’une place se libère.",
       "leave": {

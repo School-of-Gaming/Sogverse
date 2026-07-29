@@ -983,7 +983,7 @@
       "summaryTitle": "Din väntelisteplats",
       "forLabel": "På väntelista",
       "positionLabel": "Din plats i kön",
-      "positionValue": "nr {position}",
+      "positionValue": "nr {position}",
       "next1": "Vi mejlar så snart en plats blir ledig.",
       "next2": "{gamer} behåller sin plats i kön under hela terminen.",
       "next3": "Du kan följa din plats i kön när som helst i Min SOG."
@@ -1576,7 +1576,7 @@
     "waitlist": {
       "forLabel": "För {name}",
       "positionLabel": "Din plats i kön",
-      "positionValue": "nr {position}",
+      "positionValue": "nr {position}",
       "reassuranceCustomer": "Vi mejlar så snart en plats blir ledig.",
       "reassuranceGamer": "Vi mejlar en förälder så snart en plats blir ledig.",
       "leave": {
