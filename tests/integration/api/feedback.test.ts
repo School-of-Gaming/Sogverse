@@ -181,6 +181,13 @@ describe("POST /api/feedback", () => {
 
     expect(response.status).toBe(429);
     expect(data.error).toContain("Too many");
+
+    // The whole point of the rate limit is the admin inbox, not the status
+    // code: the RPC's per-hour cap is the only throttle on feedback mail, since
+    // a caller can reach the RPC through PostgREST without this route at all.
+    // Sending the mail before the accepted check — or ignoring it — would keep
+    // every other assertion in this file green while unbounding the spam.
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 
   // -- Happy path --
