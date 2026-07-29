@@ -208,13 +208,13 @@ export function NewVenueDialog({
 }
 
 /**
- * Ghost rows for the venue box, invisible for the first 150ms: most communes
+ * Ghost rows for the venue box, invisible for the reveal delay: most communes
  * answer faster than that (and most answer "no venues"), and a full-box grey
  * pulse flashing before "no venues here yet" reads as breakage. The box
  * around this already has its fixed height, so the gate shifts nothing.
  */
 function VenueListSkeleton({ label }: { label: string }) {
-  const visible = useRevealAfter(150);
+  const visible = useRevealAfter();
   return (
     <div
       className={cn(

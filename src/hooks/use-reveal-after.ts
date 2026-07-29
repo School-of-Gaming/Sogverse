@@ -3,7 +3,18 @@
 import { useEffect, useState } from "react";
 
 /**
- * False for the first `ms` after mount, then true.
+ * The house skeleton-reveal delay. One number, owned here: loads on a warm
+ * React Query cache cluster under ~200ms, so anything shorter still let the
+ * stragglers flash a skeleton for a blink; anything much longer starts to
+ * feel like dead air on genuinely slow loads. Pair the reveal with an opacity
+ * fade so a load finishing just past the threshold sees a faint shimmer, not
+ * a hard flash.
+ */
+export const SKELETON_REVEAL_MS = 250;
+
+/**
+ * False for the first `ms` after mount (default `SKELETON_REVEAL_MS`), then
+ * true.
  *
  * The anti-flash gate for loading placeholders: a skeleton that appears
  * instantly is wrong twice on a fast response — it paints for two frames and
@@ -11,7 +22,7 @@ import { useEffect, useState } from "react";
  * a container that already has its final size, per the layout rule) and a
  * fast path shows calm nothing while a slow one still gets its skeleton.
  */
-export function useRevealAfter(ms: number): boolean {
+export function useRevealAfter(ms: number = SKELETON_REVEAL_MS): boolean {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {

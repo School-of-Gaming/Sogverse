@@ -333,7 +333,7 @@ function PickerSkeleton({ label, compact }: { label: string; compact: boolean })
   // Gated per the house loading rule: switching a product from online to
   // in-person mounts this over an often-cached sites query, and a ~100ms load
   // painting a grey block reads as a flash, not a loading state.
-  const visible = useRevealAfter(150);
+  const visible = useRevealAfter();
   return (
     <div
       className={cn(

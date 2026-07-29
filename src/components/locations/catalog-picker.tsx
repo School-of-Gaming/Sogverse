@@ -617,12 +617,12 @@ export function CatalogDialogShell({
  * The loading stand-in for the panel: same height, same internal layout
  * (search bar, breadcrumb line, list box with ghost rows, footer), instead of
  * one solid block — a 440px grey slab reads as a broken page, not a loading
- * one. It also stays *invisible for the first 150ms*: on a warm cache the
+ * one. It also stays *invisible for the reveal delay*: on a warm cache the
  * chunk lands faster than that, and flashing a skeleton for two frames is
  * worse than showing nothing in a box that already has its final size.
  */
 function CatalogLoadingSkeleton({ label }: { label: string }) {
-  const visible = useRevealAfter(150);
+  const visible = useRevealAfter();
 
   return (
     <div

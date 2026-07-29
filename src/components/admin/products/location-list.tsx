@@ -202,10 +202,10 @@ export function LocationList({
   );
 }
 
-// Skeleton per the house loading rule: invisible for its first 150ms, so a
+// Skeleton per the house loading rule: invisible for its reveal delay, so a
 // fast (cached) load never flashes grey; only a genuinely slow one shows it.
 function GhostRows({ label }: { label: string }) {
-  const visible = useRevealAfter(150);
+  const visible = useRevealAfter();
   return (
     <div
       className={cn(
