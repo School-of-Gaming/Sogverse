@@ -1155,7 +1155,13 @@ function SeatAvailabilityDemo() {
       {SEAT_DEMO_CASES.map((c) => (
         <div key={c.label} className="flex flex-col gap-2">
           <DemoCaption>{c.label}</DemoCaption>
-          <div className="max-w-[260px] rounded-md border p-3">
+          {/* w-80 mirrors the narrowest fixed real consumer (the groups panel
+              caps the bar at w-80); the detail panel gives it more. Don't demo
+              at an arbitrary tighter width — a fixture narrower than every real
+              container reports fake overflow bugs. The genuinely tighter case
+              (browse-card footer, flex-1 beside a CTA) is shown in the product
+              card demos in real context. */}
+          <div className="w-80 max-w-full rounded-md border p-3">
             <SeatAvailabilityBar
               seatCount={c.seatCount}
               seatsLeft={c.seatsLeft}
