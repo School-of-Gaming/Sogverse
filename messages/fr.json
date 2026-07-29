@@ -1538,6 +1538,8 @@
       "description": "Les communes proviennent de la classification statistique officielle de chaque pays : l’orthographe et le code sont donc toujours exacts. Choisissez-en une et elle est ajoutée à l’arborescence.",
       "country": "Pays",
       "loading": "Chargement du catalogue",
+      "loadFailed": "Impossible de charger le catalogue. Vérifiez votre connexion et réessayez.",
+      "retry": "Réessayer",
       "searchPlaceholder": "Rechercher par nom ou par code officiel…",
       "searchingAll": "Recherche dans tout le catalogue : {country}",
       "noResults": "Aucun résultat dans le catalogue pour « {query} ».",

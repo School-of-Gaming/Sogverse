@@ -201,19 +201,25 @@ export function LocationTree({
   const tree = useMemo(() => buildLocationTree(visible), [visible]);
   const filtered = useMemo(() => filterLocationTree(tree, query), [tree, query]);
 
-  // Ids on the path to `focusId`, so those rows mount already expanded.
+  // Ids on the path to `focusId`, so those rows render already expanded.
   const focusChain = useMemo(() => {
     const target = focusId ? locations.find((l) => l.id === focusId) : undefined;
     if (!target) return null;
     return new Set(buildAncestorChain(target, locations).map((l) => l.id));
   }, [focusId, locations]);
 
-  // Expansion is per-row `useState`, so a focus arriving later only takes
-  // effect if the rows remount — hence keying the list. The size is in the key
-  // because the focused row usually lands one refetch AFTER `focusId` is set:
-  // the chain is empty on the first render and complete on the next, and
-  // without it the remount would happen while the row still does not exist.
-  const rowsKey = `${focusId ?? ""}:${focusChain?.size ?? 0}`;
+  // Expansion is *derived*, with user toggles as overrides: a row is open when
+  // the admin toggled it open, or — untouched — when its mode default says so
+  // (countries in single mode, anything on the focus chain). Deriving instead
+  // of storing per-row state means a focus chain that lands a refetch later
+  // simply changes the default — no remount, so branches the admin opened by
+  // hand stay open through a materialization.
+  const [expandOverrides, setExpandOverrides] = useState<
+    ReadonlyMap<string, boolean>
+  >(new Map());
+  const toggleExpand = (id: string, effective: boolean) => {
+    setExpandOverrides((prev) => new Map(prev).set(id, !effective));
+  };
 
   async function handleCreate(values: LocationFormValues) {
     if (!create) return;
@@ -262,7 +268,7 @@ export function LocationTree({
             {t("empty")}
           </div>
         ) : (
-          <div className="space-y-0.5" key={rowsKey}>
+          <div className="space-y-0.5">
             {filtered.map((node) => (
               <LocationTreeRow
                 key={node.id}
@@ -274,6 +280,8 @@ export function LocationTree({
                 create={create}
                 focusId={focusId ?? null}
                 focusChain={focusChain}
+                expandOverrides={expandOverrides}
+                onToggleExpand={toggleExpand}
                 onAddUnder={setAddUnder}
               />
             ))}
@@ -305,6 +313,9 @@ interface LocationTreeRowProps {
   create?: LocationTreeCreateConfig;
   focusId: string | null;
   focusChain: ReadonlySet<string> | null;
+  expandOverrides: ReadonlyMap<string, boolean>;
+  /** Toggle a row given its current *effective* expanded state. */
+  onToggleExpand: (id: string, effective: boolean) => void;
   onAddUnder: (parent: Location) => void;
 }
 
@@ -317,17 +328,20 @@ function LocationTreeRow({
   create,
   focusId,
   focusChain,
+  expandOverrides,
+  onToggleExpand,
   onAddUnder,
 }: LocationTreeRowProps) {
   const isFocused = node.id === focusId;
   // Single mode: countries open by default so the tree is visible at a glance.
   // Multi mode (gedu coverage): start collapsed — gedus drill into one country.
   // A row on the path to the focused node opens regardless, so the focused row
-  // is on screen the moment its branch mounts.
-  const initialExpanded =
+  // is on screen the moment its branch renders. A manual toggle overrides
+  // either default (see the override map in LocationTree).
+  const defaultExpanded =
     (selection.mode === "single" && depth === 0) ||
     (focusChain?.has(node.id) ?? false);
-  const [expanded, setExpanded] = useState(initialExpanded);
+  const expanded = expandOverrides.get(node.id) ?? defaultExpanded;
   const rowRef = useRef<HTMLDivElement>(null);
 
   // Bring the focused row into view. `block: "nearest"` keeps the scroll to the
@@ -361,7 +375,7 @@ function LocationTreeRow({
       // A row with children expands/collapses on click (the whole row is the
       // dropdown target); only a leaf row toggles its tick. Ticking a parent is
       // still possible via its checkbox directly.
-      if (hasChildren) setExpanded((e) => !e);
+      if (hasChildren) onToggleExpand(node.id, expanded);
       else selection.onToggle(node.id);
       return;
     }
@@ -369,7 +383,7 @@ function LocationTreeRow({
       selection.onSelect(node.id);
       return;
     }
-    if (hasChildren) setExpanded((e) => !e);
+    if (hasChildren) onToggleExpand(node.id, expanded);
     else if (isPickable) selection.onSelect(node.id);
   }
 
@@ -393,7 +407,7 @@ function LocationTreeRow({
                   // Chevron owns expand/collapse independently of the row's
                   // select/tick action.
                   e.stopPropagation();
-                  setExpanded((x) => !x);
+                  onToggleExpand(node.id, expanded);
                 }
               : undefined
           }
@@ -474,6 +488,8 @@ function LocationTreeRow({
               create={create}
               focusId={focusId}
               focusChain={focusChain}
+              expandOverrides={expandOverrides}
+              onToggleExpand={onToggleExpand}
               onAddUnder={onAddUnder}
             />
           ))}

@@ -1538,6 +1538,8 @@
       "description": "Kommunerna kommer från varje lands officiella statistiska klassificering, så stavningen och koden stämmer alltid. Välj en kommun så läggs den till i trädet.",
       "country": "Land",
       "loading": "Katalogen laddas",
+      "loadFailed": "Katalogen kunde inte läsas in. Kontrollera din anslutning och försök igen.",
+      "retry": "Försök igen",
       "searchPlaceholder": "Sök på namn eller officiell kod…",
       "searchingAll": "Söker i hela katalogen: {country}",
       "noResults": "Ingenting i katalogen matchar ”{query}”.",

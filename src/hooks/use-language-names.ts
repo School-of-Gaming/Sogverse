@@ -26,7 +26,14 @@ export function useLanguageNames(): (code: string, fallback?: string) => string 
 
   const displayNames = useMemo(() => {
     try {
-      return new Intl.DisplayNames([uiLocale], { type: "language" });
+      // fallback: "none" is load-bearing: the default ("code") makes `.of()`
+      // return the code itself for any well-formed tag Intl has no data for,
+      // so the `?? fallback` chain below would never fire and an unknown code
+      // would render raw instead of its DB/config English name.
+      return new Intl.DisplayNames([uiLocale], {
+        type: "language",
+        fallback: "none",
+      });
     } catch {
       return null;
     }

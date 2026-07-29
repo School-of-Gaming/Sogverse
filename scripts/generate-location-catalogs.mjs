@@ -379,6 +379,9 @@ function emit(config, tree) {
     country: config.country,
     source: config.source,
     release: config.release,
+    // Provenance stamp, deliberately UTC: this marks when the asset was
+    // generated, not anyone's local "today" — the case the repo-wide ban on
+    // toISOString().slice() dates exists to protect doesn't apply to it.
     generated: new Date().toISOString().slice(0, 10),
     levels: config.levels,
     counts,

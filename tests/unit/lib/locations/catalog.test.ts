@@ -23,7 +23,7 @@ const FR: LocationCatalog = {
   release: "2026",
   generated: "2026-01-01",
   levels: ["region", "district", "municipality"],
-  counts: [2, 2, 4],
+  counts: [3, 3, 5],
   tree: [
     [
       "32",
@@ -52,6 +52,13 @@ const FR: LocationCatalog = {
           ],
         ],
       ],
+    ],
+    // Corsica carries the catalog's one structural oddity: alphabetic INSEE
+    // codes (2A/2B). Any code-matching logic must survive the uppercase.
+    [
+      "94",
+      "Corse",
+      [["2A", "Corse-du-Sud", [["2A004", "Ajaccio"]]]],
     ],
   ],
 };
@@ -126,7 +133,7 @@ describe("buildCatalogIndex", () => {
   it("flattens to leaves with their ancestors nearest first", () => {
     const index = buildCatalogIndex(FR);
 
-    expect(index).toHaveLength(4);
+    expect(index).toHaveLength(5);
     expect(index[0]).toEqual({
       code: "59350",
       name: "Lille",
@@ -152,6 +159,13 @@ describe("searchCatalogIndex", () => {
   it("matches the official code too", () => {
     const { entries } = searchCatalogIndex(index, "59512");
     expect(entries.map((e) => e.name)).toEqual(["Roubaix"]);
+  });
+
+  it("matches an alphabetic Corsican code in either case", () => {
+    // 360 real communes have 2A/2B codes; the search needle is lowercased by
+    // normalizeForSearch, so the code side must fold case too.
+    expect(searchCatalogIndex(index, "2A004").entries.map((e) => e.name)).toEqual(["Ajaccio"]);
+    expect(searchCatalogIndex(index, "2a004").entries.map((e) => e.name)).toEqual(["Ajaccio"]);
   });
 
   it("ranks prefix matches ahead of infix ones", () => {

@@ -208,7 +208,10 @@ export function searchCatalogIndex(
     const at = entry.normalized.indexOf(needle);
     // Codes are searchable too — an admin working from an official list has
     // the INSEE/Tilastokeskus code in front of them, not always the spelling.
-    const matches = at !== -1 || entry.code.startsWith(needle);
+    // Lowercased on both sides: the needle already is (normalizeForSearch),
+    // and 360 French commune codes carry uppercase letters (Corsica's 2A/2B),
+    // which would otherwise never match.
+    const matches = at !== -1 || entry.code.toLowerCase().startsWith(needle);
     if (!matches) continue;
 
     total++;

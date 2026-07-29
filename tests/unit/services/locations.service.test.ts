@@ -5,6 +5,7 @@ import {
   createFetchStubbedClient,
   postgrestError,
   postgrestJson,
+  postgrestPage,
   requestedUrl,
   type FetchMock,
 } from "../../mocks/postgrest-fetch";
@@ -57,6 +58,27 @@ describe("LocationsService.getAllLocations", () => {
 
     expect(result).toHaveLength(120);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("accepts a short page whose Content-Range total confirms it is the whole table", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestPage(locationRows(120), { from: 0, total: 120 }),
+    );
+
+    await expect(service.getAllLocations()).resolves.toHaveLength(120);
+  });
+
+  it("throws when the walk ends short of the server-reported total", async () => {
+    // The scenario the count guards: max_rows lowered below our page size, so
+    // every page comes back short and "short page ⇒ done" would silently
+    // return a truncated table. Content-Range still reports the true total.
+    fetchMock.mockResolvedValue(
+      postgrestPage(locationRows(500), { from: 0, total: 1500 }),
+    );
+
+    await expect(service.getAllLocations()).rejects.toThrow(
+      /500 of 1500 rows/,
+    );
   });
 
   // The bug this guards: PostgREST enforces max_rows by returning a short page,

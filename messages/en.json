@@ -1538,6 +1538,8 @@
       "description": "Municipalities come from each country’s official statistical classification, so the spelling and the code are always right. Pick one and it is added to the tree.",
       "country": "Country",
       "loading": "Loading the catalog",
+      "loadFailed": "The catalog could not be loaded. Check your connection and try again.",
+      "retry": "Try again",
       "searchPlaceholder": "Search by name or official code…",
       "searchingAll": "Searching the whole catalog: {country}",
       "noResults": "Nothing in the catalog matches “{query}”.",

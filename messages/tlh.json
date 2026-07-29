@@ -1076,7 +1076,7 @@
         "note2": "poH 5 tup pawpa’ SoQ — 5 tup Qu’ Qav pawDaq.",
         "note3": "<code1>allowed: true</code1> DaleghDI’, <code2>endTime</code2> yIlo’ — tIqmeH qoj boq. back-to-back poHmey tu’lu’chugh, wa’DIch toy’wI’ voq.",
         "note4": "<code>404</code> — toy’wI’ Minecraft account Sogverse jonbe’lu’. chaH leghmoH — Sogverse profile Daq jonmoH.",
-        "note5": "Hoch Qagh jangmey <code>'{ \"error\": \"mu'\" }'</code> lo'."
+        "note5": "Hoch Qagh jangmey <code>'{ \"error\": \"mu''\" }'</code> lo'."
       }
     }
   },
@@ -1583,6 +1583,8 @@
       "description": "Sep tetlh’a’Daq veng pongmey lugh neH tu’lu’. ghItlh Qagh tu’lu’be’. veng yIwIv ’ej Sor DaqDaq chelbe’lu’pu’bogh veng chel.",
       "country": "Sep",
       "loading": "tetlh’a’ laDlu’",
+      "loadFailed": "tetlh’a’ laDlaHbe’lu’. rarwI’lIj yI’ol ’ej yInIDqa’.",
+      "retry": "yInIDqa’",
       "searchPlaceholder": "pong ghap mI’ yInej…",
       "searchingAll": "tetlh’a’ naQ wInej: {country}",
       "noResults": "pagh! ”{query}” rurbogh veng tu’lu’be’.",

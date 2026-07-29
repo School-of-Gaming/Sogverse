@@ -343,11 +343,17 @@ export function CatalogPickerDialog({
     catalog: LocationCatalog;
   } | null>(null);
   const catalog = loaded?.country === country ? loaded.catalog : null;
+  // Which country's load failed, in the same "carries its country" shape as
+  // `loaded` — switching country reads as "no error" without a clearing effect.
+  const [errorFor, setErrorFor] = useState<CatalogCountry | null>(null);
+  const loadFailed = errorFor === country;
 
   // The dynamic import is the code-split point: the country's JSON arrives as
-  // its own chunk, only once the admin opens this dialog.
+  // its own chunk, only once the admin opens this dialog. A failed load (flaky
+  // network, a stale chunk URL after a deploy) parks in the error state; the
+  // retry button clears it, which re-arms this effect.
   useEffect(() => {
-    if (!open || catalog) return;
+    if (!open || catalog || loadFailed) return;
     let cancelled = false;
     loadCatalog(country).then(
       (result) => {
@@ -355,12 +361,13 @@ export function CatalogPickerDialog({
       },
       (err: unknown) => {
         console.error("Failed to load the location catalog", err);
+        if (!cancelled) setErrorFor(country);
       },
     );
     return () => {
       cancelled = true;
     };
-  }, [open, country, catalog]);
+  }, [open, country, catalog, loadFailed]);
 
   const countryLabel = useMemo(() => {
     const config = getCountryConfig(country);
@@ -417,6 +424,28 @@ export function CatalogPickerDialog({
               }}
               onCancel={() => onOpenChange(false)}
             />
+          ) : loadFailed ? (
+            // Same fixed height as the skeleton and the panel, so the dialog
+            // never changes size between loading, failure and loaded.
+            <div
+              className={cn(
+                "flex flex-col items-center justify-center gap-3 rounded-md border border-border",
+                PANEL_HEIGHT,
+              )}
+              role="alert"
+            >
+              <p className="max-w-sm text-center text-sm text-muted-foreground">
+                {t("loadFailed")}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setErrorFor(null)}
+              >
+                {t("retry")}
+              </Button>
+            </div>
           ) : (
             <div
               className={cn(

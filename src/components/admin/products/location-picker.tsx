@@ -126,6 +126,10 @@ export function LocationPicker({ value, onChange, pickable }: LocationPickerProp
           onSelect: (id) => {
             onChange(id);
             setBrowsing(false);
+            // The reveal has served its purpose once the admin picks anything:
+            // clearing it drops the highlight and the always-visible row
+            // actions instead of leaving them on for the picker's lifetime.
+            setFocusId(null);
           },
           pickableTypes: ["site"],
         }

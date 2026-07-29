@@ -32,12 +32,19 @@ export class LocationsService {
 
   async getAllLocations(): Promise<Location[]> {
     const all: Location[] = [];
+    let expected: number | null = null;
 
     for (let page = 0; page < LOCATIONS_MAX_PAGES; page++) {
       const from = page * LOCATIONS_PAGE_SIZE;
-      const { data, error } = await this.supabase
+      const { data, error, count } = await this.supabase
         .from("locations")
-        .select("*")
+        // count: "exact" reports the true table size alongside the first page.
+        // "short page ⇒ done" is only sound while the server's max_rows stays
+        // ≥ our page size — max_rows is a dashboard setting nothing in this
+        // repo controls, and if it drops below the page size every page comes
+        // back short. The count turns that silent truncation into a thrown
+        // error.
+        .select("*", { count: "exact" })
         // Paging needs a *total* order or rows shift between requests and the
         // walk both duplicates and drops them. `name` alone is not one: every
         // French DROM has a région and a département of the same name, and
@@ -48,9 +55,17 @@ export class LocationsService {
 
       if (error) throw error;
       all.push(...data);
+      expected = count ?? expected;
 
       // A short page is PostgREST saying there is nothing after it.
-      if (data.length < LOCATIONS_PAGE_SIZE) return all;
+      if (data.length < LOCATIONS_PAGE_SIZE) {
+        if (expected !== null && all.length < expected) {
+          throw new Error(
+            `getAllLocations: walk ended with ${all.length} of ${expected} rows — the server is returning pages shorter than LOCATIONS_PAGE_SIZE (max_rows lowered below ${LOCATIONS_PAGE_SIZE}?)`
+          );
+        }
+        return all;
+      }
     }
 
     throw new Error(

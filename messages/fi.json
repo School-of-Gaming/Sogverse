@@ -1538,6 +1538,8 @@
       "description": "Kunnat tulevat kunkin maan virallisesta tilastoluokituksesta, joten kirjoitusasu ja koodi ovat aina oikein. Valitse kunta, niin se lisätään puuhun.",
       "country": "Maa",
       "loading": "Ladataan luetteloa",
+      "loadFailed": "Luetteloa ei voitu ladata. Tarkista yhteytesi ja yritä uudelleen.",
+      "retry": "Yritä uudelleen",
       "searchPlaceholder": "Hae nimellä tai virallisella koodilla…",
       "searchingAll": "Haetaan koko luettelosta: {country}",
       "noResults": "Luettelosta ei löydy hakua ”{query}” vastaavaa.",

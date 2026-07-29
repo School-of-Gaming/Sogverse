@@ -12,7 +12,6 @@ import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { isSupportedCurrency, SUPPORTED_CURRENCIES } from "@/lib/constants";
 import {
   isSupportedLocale,
-  LOCALE_CONFIG,
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "@/lib/constants/locales";
@@ -105,9 +104,10 @@ export function validate(
     const v = state.translations[locale];
     if (!v) continue;
     if (!v.name.trim() || !v.shortDescription.trim()) {
-      return err("translationIncomplete", {
-        locale: LOCALE_CONFIG[locale].label,
-      });
+      // The locale *code*, not a display name: this validator is pure and
+      // cannot call useLanguageNames — the form resolves the code to the
+      // viewer's language name at the t() call site.
+      return err("translationIncomplete", { locale });
     }
   }
 
