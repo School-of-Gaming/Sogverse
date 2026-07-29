@@ -85,7 +85,11 @@ export function SectionPill() {
               onClick={(e) => handleClick(e, id)}
               aria-current={activeSection === id ? "location" : undefined}
               className={cn(
-                "block rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-300 ease-[cubic-bezier(0.65,0,0.35,1)] sm:px-4 sm:text-sm",
+                // whitespace-nowrap: the fixed, left-1/2-centered <nav> shrink-to-fits
+                // against half the viewport, and when the row hits that cap flex
+                // shrinks the items — a multi-word label ("À propos", "Om oss")
+                // would wrap mid-pill instead of the row keeping its width.
+                "block whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-300 ease-[cubic-bezier(0.65,0,0.35,1)] sm:px-4 sm:text-sm",
                 activeSection === id
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground",
