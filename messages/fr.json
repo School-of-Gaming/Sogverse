@@ -2397,13 +2397,13 @@
         "title": "Des compétences pour l’avenir",
         "description": "Roblox Studio, la conception assistée par IA et les bases de la logique de programmation."
       },
-      "experience": {
-        "title": "Aucune expérience requise",
-        "description": "Vous partez de zéro. La curiosité suffit."
-      },
       "people": {
         "title": "Rencontrez les vôtres",
         "description": "Retrouvez d’autres créateurs qui aiment construire autant que vous."
+      },
+      "portfolio": {
+        "title": "Construisez votre portfolio",
+        "description": "Vous repartez avec une création publiée, bien réelle, à montrer."
       },
       "recognised": {
         "title": "Faites-vous remarquer",

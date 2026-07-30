@@ -1571,13 +1571,13 @@
         "title": "Skills for the future",
         "description": "Roblox Studio, AI-assisted design, and the fundamentals of coding logic."
       },
-      "experience": {
-        "title": "No experience needed",
-        "description": "Start from scratch. Curiosity is the only requirement."
-      },
       "people": {
         "title": "Meet your people",
         "description": "Connect with other creators who love building as much as you do."
+      },
+      "portfolio": {
+        "title": "Build your portfolio",
+        "description": "Walk away with a real, published creation to show off."
       },
       "recognised": {
         "title": "Get recognised",

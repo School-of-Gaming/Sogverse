@@ -2442,13 +2442,13 @@
         "title": "wa’leS laHmey",
         "description": "Roblox Studio, qorDu’ nISwI’ boq chenmoHghach, je chuvmey meq patlh."
       },
-      "experience": {
-        "title": "laH tIn Hutlh",
-        "description": "pagh yIchu’. neH tu’lI’ yIghaj."
-      },
       "people": {
         "title": "lIj tuq yISam",
         "description": "latlh chenmoHwI’pu’ tISam — chenmoHghach lumuSHa’be’, SoH rap."
+      },
+      "portfolio": {
+        "title": "batlh qonta’ yIchenmoH",
+        "description": "qetlh teH qInpu’ Datlhap — Hoch Da’ang."
       },
       "recognised": {
         "title": "yIquv",

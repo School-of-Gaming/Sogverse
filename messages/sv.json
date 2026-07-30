@@ -2397,13 +2397,13 @@
         "title": "Färdigheter för framtiden",
         "description": "Roblox Studio, AI-assisterad design och grunderna i kodningslogik."
       },
-      "experience": {
-        "title": "Ingen erfarenhet behövs",
-        "description": "Du börjar från noll. Nyfikenhet är allt som krävs."
-      },
       "people": {
         "title": "Hitta ditt gäng",
         "description": "Träffa andra skapare som älskar att bygga lika mycket som du."
+      },
+      "portfolio": {
+        "title": "Bygg din portfölj",
+        "description": "Du går härifrån med en riktig, publicerad skapelse att visa upp."
       },
       "recognised": {
         "title": "Bli uppmärksammad",

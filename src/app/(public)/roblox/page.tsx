@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import {
   ArrowRight,
   Cpu,
-  Rocket,
+  FolderOpen,
   ShieldCheck,
   Sparkles,
   Trophy,
@@ -40,13 +40,13 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-// Six reasons so the grid fills an even 2 x 3. Paired by row as they read:
-// capability + accessibility, social + recognition, fun + safety.
-const whyIcons = [Cpu, Rocket, Users, Trophy, Sparkles, ShieldCheck];
+// Six reasons, in the order they were signed off, filling an even 2 x 3 grid.
+// Rows pair as skills+people, portfolio+recognised, fun+safety.
+const whyIcons = [Cpu, Users, FolderOpen, Trophy, Sparkles, ShieldCheck];
 const whyKeys = [
   "skills",
-  "experience",
   "people",
+  "portfolio",
   "recognised",
   "fun",
   "safe",
