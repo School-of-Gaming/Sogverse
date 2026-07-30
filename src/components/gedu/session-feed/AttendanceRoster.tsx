@@ -16,22 +16,28 @@ import type { AttendanceMark, AttendanceMarks, SessionFeedGamer } from "./types"
  * both start unchosen make the distinction visible: an unmarked row is plainly
  * unanswered, and the editor above refuses to save until none are left.
  *
- * Each row is a native radio group, so a keyboard user gets arrow-key selection,
- * focus handling and the right screen-reader semantics for free — the visible
- * pills are styled siblings of visually-hidden inputs rather than buttons
- * pretending to be radios.
+ * **The pills are `aria-pressed` toggle buttons, not radios.** A mark has to be
+ * revertable — a gedu who taps Absent on the wrong child must be able to put
+ * that row back to unanswered rather than being forced to choose the other
+ * wrong answer. Radios have no gesture for that in any assistive technology:
+ * re-activating a checked radio is a no-op by definition, so "click it again to
+ * clear it" would have been a mouse-only affordance bolted onto a control whose
+ * announced semantics said otherwise. A toggle button already means "on or off",
+ * so pressing a pressed pill clearing the mark is the control behaving exactly
+ * as it is announced, with Space and Enter doing it from the keyboard. The two
+ * pills sit in a `role="group"` named after the child, so a screen-reader user
+ * still hears whose attendance they are on; what they lose against a radiogroup
+ * is arrow-key traversal, which costs one extra Tab per child.
  */
 export function AttendanceRoster({
   roster,
   attendance,
-  namePrefix,
   onMark,
 }: {
   roster: readonly SessionFeedGamer[];
   attendance: AttendanceMarks;
-  /** Unique per editor instance — radio `name`s must not collide on a page. */
-  namePrefix: string;
-  onMark: (gamerId: string, mark: AttendanceMark) => void;
+  /** `undefined` clears the mark, returning the row to unanswered. */
+  onMark: (gamerId: string, mark: AttendanceMark | undefined) => void;
 }) {
   const t = useTranslations("gedu.sessionFeed");
 
@@ -39,6 +45,10 @@ export function AttendanceRoster({
     <ul className="space-y-1.5">
       {roster.map((gamer) => {
         const mark = attendance[gamer.id];
+        /** Pressing the pill that is already on clears the row. */
+        const toggle = (value: AttendanceMark) =>
+          onMark(gamer.id, mark === value ? undefined : value);
+
         return (
           <li
             key={gamer.id}
@@ -48,32 +58,35 @@ export function AttendanceRoster({
               // so it is the one that doesn't fade into the panel behind it.
               mark === undefined
                 ? "border-border bg-transparent"
-                : "border-transparent bg-muted/40",
+                : "border-transparent bg-muted/30",
             )}
           >
             <span className="min-w-0 truncate text-sm">{gamer.firstName}</span>
             <div
-              role="radiogroup"
+              role="group"
               aria-label={t("attendanceForGamer", { name: gamer.firstName })}
               className="flex shrink-0 items-center gap-1"
             >
               <MarkOption
-                name={`${namePrefix}-${gamer.id}`}
-                selected={mark === "present"}
-                onSelect={() => onMark(gamer.id, "present")}
+                pressed={mark === "present"}
+                onToggle={() => toggle("present")}
                 label={t("presentLabel")}
                 icon={<Check className="h-3 w-3" aria-hidden />}
-                selectedClassName="border-success/50 bg-success/10 text-success"
+                pressedClassName="border-success bg-success/20 text-success"
               />
               <MarkOption
-                name={`${namePrefix}-${gamer.id}`}
-                selected={mark === "absent"}
-                onSelect={() => onMark(gamer.id, "absent")}
+                pressed={mark === "absent"}
+                onToggle={() => toggle("absent")}
                 label={t("absentLabel")}
                 icon={<X className="h-3 w-3" aria-hidden />}
                 // Neutral rather than destructive: an absence is a fact about
-                // the afternoon, not an error the gedu made.
-                selectedClassName="border-muted-foreground/50 bg-muted text-foreground"
+                // the afternoon, not an error the gedu made. Neutral still has
+                // to *read* as chosen, though — a plain `bg-muted` pill sitting
+                // on a muted row was near-invisible, so the selected state is a
+                // foreground-tinted fill behind a full-strength foreground
+                // outline, which lands as unmistakably filled in both themes
+                // without borrowing an alarm colour it hasn't earned.
+                pressedClassName="border-foreground bg-foreground/15 text-foreground"
               />
             </div>
           </li>
@@ -84,41 +97,33 @@ export function AttendanceRoster({
 }
 
 function MarkOption({
-  name,
-  selected,
-  onSelect,
+  pressed,
+  onToggle,
   label,
   icon,
-  selectedClassName,
+  pressedClassName,
 }: {
-  name: string;
-  selected: boolean;
-  onSelect: () => void;
+  pressed: boolean;
+  onToggle: () => void;
   label: string;
   icon: React.ReactNode;
-  selectedClassName: string;
+  pressedClassName: string;
 }) {
   return (
-    <label className="relative inline-flex cursor-pointer">
-      <input
-        type="radio"
-        name={name}
-        checked={selected}
-        onChange={onSelect}
-        className="peer absolute inset-0 z-10 m-0 cursor-pointer opacity-0"
-      />
-      <span
-        className={cn(
-          "pointer-events-none inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors",
-          "peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background",
-          selected
-            ? selectedClassName
-            : "border-border text-muted-foreground peer-hover:text-foreground",
-        )}
-      >
-        {icon}
-        {label}
-      </span>
-    </label>
+    <button
+      type="button"
+      aria-pressed={pressed}
+      onClick={onToggle}
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        pressed
+          ? cn("font-semibold", pressedClassName)
+          : "border-border text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {icon}
+      {label}
+    </button>
   );
 }

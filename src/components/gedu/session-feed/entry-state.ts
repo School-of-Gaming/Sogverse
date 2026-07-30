@@ -100,13 +100,6 @@ export function attendanceMarksFromPresentIds(
   );
 }
 
-/** Every roster member present — the "mark all present" shortcut's output. */
-export function allPresentMarks(
-  roster: readonly SessionFeedGamer[],
-): AttendanceMarks {
-  return Object.fromEntries(roster.map((g) => [g.id, "present"] as const));
-}
-
 export interface AttendanceProgress {
   /** How many roster members carry a mark. */
   marked: number;
@@ -137,11 +130,12 @@ export function attendanceProgress(
  * Seed the editor from whatever the entry currently is.
  *
  * A session whose attendance has never been recorded opens with **every row
- * unmarked**. Pre-ticking everyone present would be the convenient thing to do
- * and is exactly what this model exists to stop: a gedu could then save a room
- * they never looked at, and the stored record would claim eight children
- * attended on the strength of one click. The "mark all present" shortcut keeps
- * the common case to a single deliberate action instead.
+ * unmarked**, and there is no shortcut anywhere that fills them in. Pre-ticking
+ * everyone present — or offering one button that does — would be the convenient
+ * thing to do and is exactly what this model exists to stop: a gedu could then
+ * save a room they never looked at, and the stored record would claim eight
+ * children attended on the strength of one click. Every mark is somebody
+ * deciding about one child.
  */
 export function editorStateFromEntry(
   entry: EditableSessionFeedEntry,

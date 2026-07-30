@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   FEED_INITIAL_PAST_ENTRIES,
   FEED_PAST_CHUNK_SIZE,
-  allPresentMarks,
   applyDraftToEntry,
   applyPlanDraftToEntry,
   attendanceCounts,
@@ -356,22 +355,13 @@ describe("attendanceCounts", () => {
   });
 });
 
-describe("attendanceMarksFromPresentIds / allPresentMarks", () => {
+describe("attendanceMarksFromPresentIds", () => {
   it("expands a stored present list into an explicit mark per roster member", () => {
     expect(attendanceMarksFromPresentIds(ROSTER, ["a", "c"])).toEqual({
       a: "present",
       b: "absent",
       c: "present",
     });
-  });
-
-  it("marks everybody present for the shortcut", () => {
-    expect(allPresentMarks(ROSTER)).toEqual({
-      a: "present",
-      b: "present",
-      c: "present",
-    });
-    expect(allPresentMarks([])).toEqual({});
   });
 });
 

@@ -5,7 +5,6 @@ export { StaffNoteBlock } from "./StaffNoteBlock";
 export {
   FEED_INITIAL_PAST_ENTRIES,
   FEED_PAST_CHUNK_SIZE,
-  allPresentMarks,
   applyDraftToEntry,
   applyPlanDraftToEntry,
   attendanceCounts,

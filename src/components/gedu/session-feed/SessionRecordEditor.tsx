@@ -7,11 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  allPresentMarks,
-  attendanceProgress,
-  draftFromEditorState,
-} from "./entry-state";
+import { attendanceProgress, draftFromEditorState } from "./entry-state";
 import { AttendanceRoster } from "./AttendanceRoster";
 import { CollapsibleRegion } from "./CollapsibleRegion";
 import { StaffNoteBlock } from "./StaffNoteBlock";
@@ -47,8 +43,13 @@ interface SessionRecordEditorProps {
  * a half-filled sheet saves as "two present, six absent" and nobody can tell it
  * apart from a room where six children genuinely didn't turn up. Both notes stay
  * optional — attendance is what the gedu is paid on, a write-up is a nicety.
- * "Mark all present" keeps the common case (a full house) to one action, so the
- * rule costs a click rather than eight.
+ *
+ * **There is deliberately no "mark all present" shortcut**, and its absence is
+ * the point rather than an omission. One button that fills the whole sheet is
+ * one button that fills the whole sheet *without anyone looking at the room* —
+ * and since this record is what the gedu is paid on, the cheapest possible way
+ * to produce it must not also be the least honest one. Marking eight children
+ * individually is a few seconds of friction bought on purpose.
  *
  * Two things drive the layout. First, the didn't-run toggle sits at the very
  * top and the Save/Cancel row at the very bottom, with the two swappable field
@@ -88,11 +89,16 @@ export function SessionRecordEditor({
   // An empty roster has nothing to mark, so it can't be what blocks a save.
   const canSave = draft.didNotRun || complete;
 
-  const markGamer = (gamerId: string, mark: AttendanceMark) => {
-    setDraft((d) => ({
-      ...d,
-      attendance: { ...d.attendance, [gamerId]: mark },
-    }));
+  // `undefined` returns the row to unanswered, and the key is dropped rather
+  // than set to `undefined` so the map never carries a slot that reads as
+  // marked to anything checking for the key's presence.
+  const markGamer = (gamerId: string, mark: AttendanceMark | undefined) => {
+    setDraft((d) => {
+      const attendance = { ...d.attendance };
+      if (mark === undefined) delete attendance[gamerId];
+      else attendance[gamerId] = mark;
+      return { ...d, attendance };
+    });
   };
 
   const handleSave = () => {
@@ -121,26 +127,12 @@ export function SessionRecordEditor({
               native radio group with its own accessible name, so the wrapper
               would only add a second grouping announcement around them. */}
           <div className="space-y-2">
-            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-              <p className="text-sm font-medium leading-none">
-                {t("attendanceLegend")}
-                <span className="ml-2 font-normal tabular-nums text-muted-foreground">
-                  {t("attendanceMarkedCount", { marked, total })}
-                </span>
-              </p>
-              {roster.length > 0 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setDraft((d) => ({ ...d, attendance: allPresentMarks(roster) }))
-                  }
-                >
-                  {t("markAllPresent")}
-                </Button>
-              )}
-            </div>
+            <p className="text-sm font-medium leading-none">
+              {t("attendanceLegend")}
+              <span className="ml-2 font-normal tabular-nums text-muted-foreground">
+                {t("attendanceMarkedCount", { marked, total })}
+              </span>
+            </p>
             {/* Always rendered, never conditional on the sheet being
                 incomplete: a hint that appears the moment you start marking
                 would reflow the notes below it while the gedu is working. */}
@@ -151,7 +143,6 @@ export function SessionRecordEditor({
               <AttendanceRoster
                 roster={roster}
                 attendance={draft.attendance}
-                namePrefix={`${fieldId}-attendance`}
                 onMark={markGamer}
               />
             </div>
