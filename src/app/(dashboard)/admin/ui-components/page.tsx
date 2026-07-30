@@ -2055,44 +2055,56 @@ export default function AdminUIComponentsPage() {
           the next session on top, then the term running backwards. Gedus record
           attendance and two notes per session &mdash; a{" "}
           <strong>public</strong> one that becomes the entry body families read,
-          and a <strong>staff-only</strong> one behind a padlocked, recessed
-          panel so the two audiences can never blur. Sessions still missing their
-          write-up are the work to do, so they sit{" "}
-          <em>inline in the narrative</em> with warning tinting rather than in a
-          separate queue; sessions from before the enforcement epoch are bare
-          &ldquo;no record&rdquo; lines with no alert and no editor, because
-          nothing is owed for them. Clicking a gap (or{" "}
-          <strong>Edit</strong> on a written-up entry) expands that entry in
-          place: the header holding the controls stays put and the editor grows
-          downward beneath it. Everything below is fixture-driven and edits live
-          in local React state &mdash; typing, ticking and saving all work,
-          nothing persists past a reload.
+          and a <strong>Gedu-only</strong> one behind a padlocked, recessed
+          panel so the two audiences can never blur. Sessions from before the
+          enforcement epoch are bare &ldquo;no record&rdquo; lines with no alert
+          and no editor, because nothing is owed for them. Every editable entry
+          &mdash; past or future, recorded or not &mdash; opens through the same{" "}
+          <strong>Edit</strong> button, and expands in place: the header holding
+          the controls stays put and the editor grows downward beneath it.
+          Everything below is fixture-driven and edits live in local React state
+          &mdash; typing, marking and saving all work, nothing persists past a
+          reload.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          <strong>Attendance is explicit and mandatory; notes are optional.</strong>{" "}
+          A past session&rsquo;s attendance is <em>null until recorded</em>, so
+          every roster row starts unmarked and Save stays disabled until each
+          child is explicitly present or absent &mdash; an untouched row must
+          never read as an absence. &ldquo;Mark all present&rdquo; keeps the
+          common case to one action. <em>Needs attention</em> therefore means
+          exactly one thing: past, not skipped, attendance unrecorded &mdash;
+          even when a full write-up is already there, which is why such an entry
+          renders its notes <em>and</em> its alert. The alert is an icon and a
+          label on an ordinary card, not a tinted one.
         </p>
         <p className="text-sm text-muted-foreground">
           Sessions still <em>ahead</em> of us carry planning fields only &mdash; a
-          forward note families read later, a reminder for the team, and &ldquo;I
-          need a substitute&rdquo;. Never attendance or didn&rsquo;t-run: those
-          record what happened. Only the next session is prominent; the rest of
-          the horizon collapses behind one row above it, which surfaces any
-          substitute request so it can&rsquo;t hide. On a long history the recent
-          past renders and older chunks append below on request, with month
-          dividers marking each boundary the scroll crosses.
+          forward note families read later and a reminder for whoever runs it.
+          Never attendance or didn&rsquo;t-run: those record what happened. Only
+          the next session is prominent; the rest of the horizon collapses behind
+          one &ldquo;N more upcoming sessions&rdquo; row above it. On a long
+          history the recent past renders and older chunks append below on
+          request, with month dividers marking each boundary the scroll crosses.
         </p>
         <GeduSessionFeedDemo />
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 17: Product links — family vs. staff                  */}
+      {/* Section 17: Product links — family vs. Gedu                   */}
       {/* ============================================================ */}
-      <Section title="Product links — family vs. staff">
+      <Section title="Product links — family vs. Gedu">
         <p className="text-sm text-muted-foreground -mt-2">
           A product carries two outward links with different audiences, and they
-          sit side by side in the product header, so the difference has to be
-          legible at a glance rather than remembered. The <strong>Padlet</strong>{" "}
-          is the family-facing one and reads as a primary link; the{" "}
-          <strong>material</strong> link is staff-only and reads as back-of-house
-          &mdash; padlocked book glyph, muted tone. The material component renders
-          whatever href it is given and knows nothing about who is looking:{" "}
+          sit side by side in the product header. They are deliberately the{" "}
+          <em>same chip</em> &mdash; same shape, size and tone &mdash; because two
+          links to the same kind of thing on one line reading as two different
+          weights made one look like the important one. The <strong>Padlet</strong>{" "}
+          is the family-facing one; the <strong>materials</strong> link is
+          Gedu-only, and the difference is carried by its padlocked book glyph
+          and its hover title, not by a demoted tone. The material component
+          renders whatever href it is given and knows nothing about who is
+          looking:{" "}
           <em>
             only render it on a gedu- or admin-only surface. Never hide it with
             CSS on a page a parent can reach
@@ -2368,11 +2380,11 @@ const BILLING_ACCOUNTS_SPLIT: BillingAccountSummary[] = [
 
 /**
  * The feed rendered against the mock club, with both inline editors wired to
- * local state: ticking attendance, typing any note, flipping "this session
- * didn't run", planning a future session and asking for a substitute all mutate
- * the fixture in place, so a gap really does turn into a written-up entry (and
- * the alert badge above it really does count down). Nothing persists — a reload
- * puts the fixture back.
+ * local state: marking each child present or absent, typing any note, flipping
+ * "this session didn't run" and planning a future session all mutate the fixture
+ * in place, so a flagged session really does turn into a recorded one (and the
+ * alert badge above it really does count down). Nothing persists — a reload puts
+ * the fixture back.
  *
  * The fixture is built once from `useNow()` and then held in state: rebuilding
  * it on every 30s tick would throw away whatever the reviewer had just typed.

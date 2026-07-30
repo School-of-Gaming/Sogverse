@@ -1,18 +1,20 @@
 export { CollapsibleRegion } from "./CollapsibleRegion";
-export { sessionFeedEntryDomId } from "./anchors";
 export { SessionFeed } from "./SessionFeed";
 export { SessionFeedAlertBadge } from "./SessionFeedAlertBadge";
 export { StaffNoteBlock } from "./StaffNoteBlock";
 export {
   FEED_INITIAL_PAST_ENTRIES,
   FEED_PAST_CHUNK_SIZE,
+  allPresentMarks,
   applyDraftToEntry,
   applyPlanDraftToEntry,
   attendanceCounts,
+  attendanceMarksFromPresentIds,
+  attendanceProgress,
   countEntriesNeedingAttention,
-  countSubstituteRequests,
   draftFromEditorState,
   editorStateFromEntry,
+  entryNeedsAttention,
   isEditableEntry,
   isPlannableEntry,
   partitionFeedEntries,
@@ -21,8 +23,11 @@ export {
   planEditorStateFromEntry,
 } from "./entry-state";
 export type {
+  AttendanceMark,
+  AttendanceMarks,
   EditableSessionFeedEntry,
   FutureSessionFeedEntry,
+  PastSessionFeedEntry,
   SessionEditorState,
   SessionEntryDraft,
   SessionFeedEntry,

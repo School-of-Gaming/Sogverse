@@ -6,6 +6,7 @@
  */
 
 import type {
+  AttendanceMarks,
   EditableSessionFeedEntry,
   FutureSessionFeedEntry,
   SessionEditorState,
@@ -21,17 +22,13 @@ import type {
  *
  * `future` can't: it hasn't happened, so there is nothing to record — it gets
  * the planning editor instead. `no_record` can't either — it sits before the
- * enforcement epoch, so no write-up is owed and offering an editor would invite
+ * enforcement epoch, so nothing is owed and offering an editor would invite
  * busywork on sessions we deliberately stopped asking about.
  */
 export function isEditableEntry(
   entry: SessionFeedEntry,
 ): entry is EditableSessionFeedEntry {
-  return (
-    entry.kind === "recorded" ||
-    entry.kind === "skipped" ||
-    entry.kind === "needs_record"
-  );
+  return entry.kind === "past" || entry.kind === "skipped";
 }
 
 /** Whether an entry can be expanded into the **planning** editor. */
@@ -42,23 +39,25 @@ export function isPlannableEntry(
 }
 
 /**
- * How many entries are the gedu's outstanding work — the alert-badge count.
+ * Whether an entry is outstanding work — the alert state, derived rather than
+ * stored.
  *
- * A substitute request is deliberately *not* counted. It is a message to
- * admins and peers, not work the gedu owes anyone, and folding it into the same
- * number would make the badge mean two different things at once.
+ * It means exactly one thing: **a past session, not skipped, whose attendance
+ * has not been recorded.** Notes have no say in it. Attendance doubles as the
+ * gedu's confirmation that they ran the session and is what they are paid on,
+ * so it is the mandatory half; a write-up is a nicety on top. A past entry can
+ * therefore carry a full note and still be flagged, and it renders both — the
+ * note as its body, the alert in its header.
  */
+export function entryNeedsAttention(entry: SessionFeedEntry): boolean {
+  return entry.kind === "past" && entry.presentGamerIds === null;
+}
+
+/** How many entries are the gedu's outstanding work — the alert-badge count. */
 export function countEntriesNeedingAttention(
   entries: readonly SessionFeedEntry[],
 ): number {
-  return entries.filter((e) => e.kind === "needs_record").length;
-}
-
-/** How many of these entries are future sessions asking for a substitute. */
-export function countSubstituteRequests(
-  entries: readonly SessionFeedEntry[],
-): number {
-  return entries.filter((e) => e.kind === "future" && e.needsSubstitute).length;
+  return entries.filter(entryNeedsAttention).length;
 }
 
 /**
@@ -79,55 +78,122 @@ export function attendanceCounts(
   };
 }
 
+/* ------------------------------------------------------------------ */
+/*  Attendance marks                                                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Expand a stored present-list into explicit per-gamer marks.
+ *
+ * Only meaningful for a session whose attendance *was* recorded: at that point
+ * every roster member was marked one way or the other, so "not in the present
+ * list" is a genuine absence rather than an unanswered question. Reopening the
+ * editor therefore shows exactly what was saved.
+ */
+export function attendanceMarksFromPresentIds(
+  roster: readonly SessionFeedGamer[],
+  presentGamerIds: readonly string[],
+): AttendanceMarks {
+  const present = new Set(presentGamerIds);
+  return Object.fromEntries(
+    roster.map((g) => [g.id, present.has(g.id) ? "present" : "absent"] as const),
+  );
+}
+
+/** Every roster member present — the "mark all present" shortcut's output. */
+export function allPresentMarks(
+  roster: readonly SessionFeedGamer[],
+): AttendanceMarks {
+  return Object.fromEntries(roster.map((g) => [g.id, "present"] as const));
+}
+
+export interface AttendanceProgress {
+  /** How many roster members carry a mark. */
+  marked: number;
+  total: number;
+  /** Whether every roster member has been marked — the gate on saving. */
+  complete: boolean;
+}
+
+/**
+ * How far through the roster the marking has got.
+ *
+ * Counted **over the roster**, not over the map's keys: a stale key for a child
+ * who has since left the group must not make an incomplete sheet look finished.
+ */
+export function attendanceProgress(
+  roster: readonly SessionFeedGamer[],
+  attendance: AttendanceMarks,
+): AttendanceProgress {
+  const marked = roster.filter((g) => attendance[g.id] !== undefined).length;
+  return { marked, total: roster.length, complete: marked === roster.length };
+}
+
+/* ------------------------------------------------------------------ */
+/*  The write-up editor                                                */
+/* ------------------------------------------------------------------ */
+
 /**
  * Seed the editor from whatever the entry currently is.
  *
- * A never-recorded session opens with **everyone ticked present** — the common
- * case is a full house, so the gedu unticks the one or two who were missing
- * instead of ticking eight boxes every week.
+ * A session whose attendance has never been recorded opens with **every row
+ * unmarked**. Pre-ticking everyone present would be the convenient thing to do
+ * and is exactly what this model exists to stop: a gedu could then save a room
+ * they never looked at, and the stored record would claim eight children
+ * attended on the strength of one click. The "mark all present" shortcut keeps
+ * the common case to a single deliberate action instead.
  */
 export function editorStateFromEntry(
   entry: EditableSessionFeedEntry,
   roster: readonly SessionFeedGamer[],
 ): SessionEditorState {
   switch (entry.kind) {
-    case "recorded":
+    case "past":
       return {
         didNotRun: false,
-        presentGamerIds: [...entry.presentGamerIds],
-        publicNote: entry.publicNote,
+        attendance:
+          entry.presentGamerIds === null
+            ? {}
+            : attendanceMarksFromPresentIds(roster, entry.presentGamerIds),
+        publicNote: entry.publicNote ?? "",
         staffNote: entry.staffNote ?? "",
         skipReason: "",
       };
     case "skipped":
       return {
         didNotRun: true,
-        presentGamerIds: roster.map((g) => g.id),
+        attendance: {},
         publicNote: "",
         staffNote: "",
         skipReason: entry.reason ?? "",
       };
-    case "needs_record":
-      return {
-        didNotRun: false,
-        presentGamerIds: roster.map((g) => g.id),
-        publicNote: "",
-        staffNote: "",
-        skipReason: "",
-      };
   }
 }
 
-/** Collapse the editor's flat working state into the branch it saves as. */
+/**
+ * Collapse the editor's flat working state into the branch it saves as, or
+ * `null` when the sheet is not savable yet.
+ *
+ * The only way to get `null` is an incomplete attendance sheet on the ran
+ * branch, and returning it rather than quietly filling the blanks is the whole
+ * guarantee: there is no code path that turns "unmarked" into a stored mark.
+ * The editor keeps Save disabled on the same condition, so the null is a
+ * belt-and-braces floor rather than something a user can reach.
+ */
 export function draftFromEditorState(
   state: SessionEditorState,
-): SessionRecordDraft {
+  roster: readonly SessionFeedGamer[],
+): SessionRecordDraft | null {
   if (state.didNotRun) {
     return { kind: "skipped", reason: state.skipReason.trim() };
   }
+  if (!attendanceProgress(roster, state.attendance).complete) return null;
   return {
-    kind: "recorded",
-    presentGamerIds: [...state.presentGamerIds],
+    kind: "past",
+    // Roster order, so a saved record reads the same way twice running.
+    presentGamerIds: roster
+      .filter((g) => state.attendance[g.id] === "present")
+      .map((g) => g.id),
     publicNote: state.publicNote.trim(),
     staffNote: state.staffNote.trim(),
   };
@@ -135,11 +201,12 @@ export function draftFromEditorState(
 
 /**
  * Replace an entry with what the save turned it into, keeping its identity and
- * schedule. A gap becomes a real entry here — which is the whole point of the
- * inline editor: the feed keeps its shape and one row changes state.
+ * schedule. An unrecorded session becomes a recorded one here — which is the
+ * whole point of the inline editor: the feed keeps its shape and one row
+ * changes state.
  *
- * Empty text collapses back to `null` so a cleared staff note stops rendering
- * its block, and a skip with no typed reason falls back to the generic line.
+ * Empty text collapses back to `null` so a cleared note stops rendering its
+ * block, and a skip with no typed reason falls back to the generic line.
  */
 export function applyDraftToEntry(
   entry: EditableSessionFeedEntry,
@@ -156,11 +223,11 @@ export function applyDraftToEntry(
     };
   }
   return {
-    kind: "recorded",
+    kind: "past",
     id,
     startsAt,
     endsAt,
-    publicNote: draft.publicNote,
+    publicNote: draft.publicNote.length > 0 ? draft.publicNote : null,
     staffNote: draft.staffNote.length > 0 ? draft.staffNote : null,
     presentGamerIds: draft.presentGamerIds,
   };
@@ -177,7 +244,6 @@ export function planEditorStateFromEntry(
   return {
     publicNote: entry.publicNote ?? "",
     staffNote: entry.staffNote ?? "",
-    needsSubstitute: entry.needsSubstitute,
   };
 }
 
@@ -189,7 +255,6 @@ export function planDraftFromEditorState(
     kind: "plan",
     publicNote: state.publicNote.trim(),
     staffNote: state.staffNote.trim(),
-    needsSubstitute: state.needsSubstitute,
   };
 }
 
@@ -206,7 +271,6 @@ export function applyPlanDraftToEntry(
     ...entry,
     publicNote: draft.publicNote.length > 0 ? draft.publicNote : null,
     staffNote: draft.staffNote.length > 0 ? draft.staffNote : null,
-    needsSubstitute: draft.needsSubstitute,
   };
 }
 

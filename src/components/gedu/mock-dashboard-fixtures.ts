@@ -33,9 +33,7 @@ import {
  *
  * **The badge counts are derived, not authored.** Each assignment's
  * needs-attention number is counted out of the very feed its card links to, so a
- * card can never advertise a number the page behind it disagrees with. Substitute
- * requests are deliberately excluded: they are a message to admins, not work the
- * gedu owes, and folding them in would make one number mean two things.
+ * card can never advertise a number the page behind it disagrees with.
  */
 
 export const GEDU_DASHBOARD_SCENARIOS = [
@@ -155,7 +153,7 @@ export function buildGeduDashboardFixture(
 }
 
 /**
- * Count each product's outstanding write-ups straight out of the feed its card
+ * Count each product's outstanding sessions straight out of the feed its card
  * links to. Derived rather than authored so the two scenes can't drift.
  */
 function outstandingByProduct(now: Date): Record<string, number> {

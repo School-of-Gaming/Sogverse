@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { toZonedTime } from "date-fns-tz";
 import {
   CLUB_FUTURE_SPECS,
+  SESSION_FEED_ROSTER,
   buildSessionFeedFixture,
   countLeadingFutureSpecs,
   sessionStartsForCadence,
@@ -245,7 +246,7 @@ describe("countLeadingFutureSpecs", () => {
       countLeadingFutureSpecs([
         { kind: "future" },
         { kind: "future" },
-        { kind: "needs_record" },
+        { kind: "past" },
         // A stray future entry after the past block is a caller ordering bug
         // and must not extend the count.
         { kind: "future" },
@@ -269,15 +270,15 @@ describe("CLUB_FUTURE_SPECS", () => {
     expect(CLUB_FUTURE_SPECS.every((s) => s.kind === "future")).toBe(true);
   });
 
-  it("shows a substitute request and a forward note, so both states are visible", () => {
+  it("shows both planning fields, so neither renders only in theory", () => {
     expect(
       CLUB_FUTURE_SPECS.some(
-        (s) => s.kind === "future" && s.needsSubstitute === true,
+        (s) => s.kind === "future" && s.publicNote !== undefined,
       ),
     ).toBe(true);
     expect(
       CLUB_FUTURE_SPECS.some(
-        (s) => s.kind === "future" && s.publicNote !== undefined,
+        (s) => s.kind === "future" && s.staffNote !== undefined,
       ),
     ).toBe(true);
   });
@@ -289,15 +290,11 @@ describe("buildSessionFeedFixture", () => {
   it("emits one entry per spec, in the order given", () => {
     const specs: readonly EntrySpec[] = [
       { kind: "future" },
-      { kind: "needs_record" },
+      { kind: "past" },
       { kind: "skipped", reason: "Public holiday" },
     ];
     const { entries } = buildSessionFeedFixture(now, { specs });
-    expect(entries.map((e) => e.kind)).toEqual([
-      "future",
-      "needs_record",
-      "skipped",
-    ]);
+    expect(entries.map((e) => e.kind)).toEqual(["future", "past", "skipped"]);
   });
 
   it("dates the whole future block ahead of now, next session last", () => {
@@ -305,7 +302,7 @@ describe("buildSessionFeedFixture", () => {
       { kind: "future" },
       { kind: "future" },
       { kind: "future" },
-      { kind: "needs_record" },
+      { kind: "past" },
     ];
     const { entries } = buildSessionFeedFixture(now, { specs });
     for (const entry of entries.slice(0, 3)) {
@@ -321,7 +318,6 @@ describe("buildSessionFeedFixture", () => {
           kind: "future",
           publicNote: "Redstone follow-up.",
           staffNote: "Charge the spare laptop.",
-          needsSubstitute: true,
         },
       ],
     });
@@ -329,11 +325,10 @@ describe("buildSessionFeedFixture", () => {
       kind: "future",
       publicNote: "Redstone follow-up.",
       staffNote: "Charge the spare laptop.",
-      needsSubstitute: true,
     });
   });
 
-  it("leaves an unplanned future session's fields null and unflagged", () => {
+  it("leaves an unplanned future session's fields null", () => {
     const { entries } = buildSessionFeedFixture(now, {
       specs: [{ kind: "future" }],
     });
@@ -341,7 +336,34 @@ describe("buildSessionFeedFixture", () => {
       kind: "future",
       publicNote: null,
       staffNote: null,
-      needsSubstitute: false,
+    });
+  });
+
+  it("leaves a past spec's attendance null unless the spec records it", () => {
+    // The spec has to *say* attendance was taken; omitting it is the gap state,
+    // not a shorthand for "everyone turned up".
+    const { entries } = buildSessionFeedFixture(now, {
+      specs: [{ kind: "past", publicNote: "Notes, but nobody marked off." }],
+    });
+    expect(entries[0]).toMatchObject({
+      kind: "past",
+      publicNote: "Notes, but nobody marked off.",
+      presentGamerIds: null,
+    });
+  });
+
+  it("records the full roster for an all-present spec, minus any absentees", () => {
+    const { entries } = buildSessionFeedFixture(now, {
+      specs: [
+        { kind: "past", allPresent: true },
+        { kind: "past", absent: [SESSION_FEED_ROSTER[0].id] },
+      ],
+    });
+    expect(entries[0]).toMatchObject({
+      presentGamerIds: SESSION_FEED_ROSTER.map((g) => g.id),
+    });
+    expect(entries[1]).toMatchObject({
+      presentGamerIds: SESSION_FEED_ROSTER.slice(1).map((g) => g.id),
     });
   });
 
@@ -360,7 +382,7 @@ describe("buildSessionFeedFixture", () => {
 
   it("packs a camp's dates into consecutive weekdays", () => {
     const specs: readonly EntrySpec[] = Array.from({ length: 6 }, () => ({
-      kind: "needs_record" as const,
+      kind: "past" as const,
     }));
     const { entries } = buildSessionFeedFixture(now, {
       cadence: "daily",

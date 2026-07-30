@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, UserRoundSearch } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { CollapsibleRegion } from "./CollapsibleRegion";
@@ -16,24 +16,19 @@ import { CollapsibleRegion } from "./CollapsibleRegion";
  * the row itself does not move and the revealed sessions read continuously down
  * into the prominent entry beneath them.
  *
- * The one thing that must never hide behind the collapse is a substitute
- * request: it is a session the gedu has said they cannot run, and it needs
- * somebody to act. So the count of them is surfaced on the closed row in the
- * warning tone, and it stays rendered when the block opens — a chip that
- * appeared and disappeared with the toggle would reflow the row under the
- * cursor.
+ * The row says "N more upcoming sessions" rather than "N later sessions": in a
+ * feed that runs future-to-past, "later" is ambiguous about which direction it
+ * means, and the row sitting at the very top is exactly where that ambiguity
+ * costs the most.
  */
 export function LaterSessionsBlock({
   count,
-  substituteCount,
   open,
   onToggle,
   children,
 }: {
   /** How many future sessions are behind the collapse. */
   count: number;
-  /** How many of those have been flagged as needing a substitute. */
-  substituteCount: number;
   open: boolean;
   onToggle: () => void;
   /** The later sessions themselves, revealed on expand. */
@@ -53,14 +48,8 @@ export function LaterSessionsBlock({
         aria-expanded={open}
         className="flex w-full flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-md border border-dashed border-border px-3 py-2 text-left text-sm transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
-        <span className="flex min-w-0 items-center gap-2">
-          <span className="font-medium">{t("laterSessions", { count })}</span>
-          {substituteCount > 0 && (
-            <span className="flex items-center gap-1.5 text-xs font-medium text-warning">
-              <UserRoundSearch className="h-3.5 w-3.5" aria-hidden />
-              {t("laterSessionsSubstitutes", { count: substituteCount })}
-            </span>
-          )}
+        <span className="min-w-0 font-medium">
+          {t("laterSessions", { count })}
         </span>
         <ChevronDown
           aria-hidden

@@ -7,10 +7,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { attendanceCounts, draftFromEditorState } from "./entry-state";
+import {
+  allPresentMarks,
+  attendanceProgress,
+  draftFromEditorState,
+} from "./entry-state";
+import { AttendanceRoster } from "./AttendanceRoster";
 import { CollapsibleRegion } from "./CollapsibleRegion";
 import { StaffNoteBlock } from "./StaffNoteBlock";
 import type {
+  AttendanceMark,
   SessionEditorState,
   SessionFeedGamer,
   SessionRecordDraft,
@@ -31,15 +37,24 @@ interface SessionRecordEditorProps {
 }
 
 /**
- * The inline write-up editor: attendance checklist, the public note families
- * will read, the staff-only note they won't, and the "this session didn't run"
+ * The inline write-up editor: the attendance sheet, the public note families
+ * will read, the gedu-only note they won't, and the "this session didn't run"
  * escape hatch.
+ *
+ * **Attendance is the mandatory half and Save enforces it.** Every roster member
+ * has to be explicitly present or absent before the button enables, because that
+ * rule is the only thing that makes the stored record mean anything: without it
+ * a half-filled sheet saves as "two present, six absent" and nobody can tell it
+ * apart from a room where six children genuinely didn't turn up. Both notes stay
+ * optional — attendance is what the gedu is paid on, a write-up is a nicety.
+ * "Mark all present" keeps the common case (a full house) to one action, so the
+ * rule costs a click rather than eight.
  *
  * Two things drive the layout. First, the didn't-run toggle sits at the very
  * top and the Save/Cancel row at the very bottom, with the two swappable field
  * groups animating between them — so flipping the toggle grows and shrinks the
  * middle rather than yanking the controls the user just clicked. Second, the
- * staff note keeps the same recessed padlocked treatment while it is being
+ * gedu note keeps the same recessed padlocked treatment while it is being
  * *written* as it has when it is read, so the gedu can see which audience they
  * are typing for without having to remember.
  *
@@ -66,20 +81,30 @@ export function SessionRecordEditor({
     if (open) setDraft(initialState);
   }
 
-  const presentSet = new Set(draft.presentGamerIds);
-  const { present, total } = attendanceCounts(roster, draft.presentGamerIds);
+  const { marked, total, complete } = attendanceProgress(
+    roster,
+    draft.attendance,
+  );
+  // An empty roster has nothing to mark, so it can't be what blocks a save.
+  const canSave = draft.didNotRun || complete;
 
-  const toggleGamer = (gamerId: string, isPresent: boolean) => {
+  const markGamer = (gamerId: string, mark: AttendanceMark) => {
     setDraft((d) => ({
       ...d,
-      presentGamerIds: isPresent
-        ? [...d.presentGamerIds, gamerId]
-        : d.presentGamerIds.filter((id) => id !== gamerId),
+      attendance: { ...d.attendance, [gamerId]: mark },
     }));
   };
 
+  const handleSave = () => {
+    const record = draftFromEditorState(draft, roster);
+    if (record !== null) onSave(record);
+  };
+
   return (
-    <div className="space-y-4 pt-4">
+    // `pb-1` gives the Save row's focus ring somewhere to land: this editor is
+    // rendered inside a collapsible region, which has to clip its overflow for
+    // the open/close animation to work.
+    <div className="space-y-4 pb-1 pt-4">
       <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
         <Checkbox
           checked={draft.didNotRun}
@@ -92,32 +117,50 @@ export function SessionRecordEditor({
 
       <CollapsibleRegion open={!draft.didNotRun}>
         <div className="space-y-4">
-          <fieldset className="space-y-2">
-            <legend className="text-sm font-medium leading-none">
-              {t("attendanceLegend")}
-              <span className="ml-2 font-normal tabular-nums text-muted-foreground">
-                {t("attendanceSummary", { present, total })}
-              </span>
-            </legend>
-            <div className="flex flex-wrap gap-x-5 gap-y-2 pt-1">
-              {roster.map((gamer) => (
-                <label
-                  key={gamer.id}
-                  className="flex cursor-pointer items-center gap-2 text-sm"
+          {/* Not a `fieldset`/`legend`: each roster row is already its own
+              native radio group with its own accessible name, so the wrapper
+              would only add a second grouping announcement around them. */}
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+              <p className="text-sm font-medium leading-none">
+                {t("attendanceLegend")}
+                <span className="ml-2 font-normal tabular-nums text-muted-foreground">
+                  {t("attendanceMarkedCount", { marked, total })}
+                </span>
+              </p>
+              {roster.length > 0 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setDraft((d) => ({ ...d, attendance: allPresentMarks(roster) }))
+                  }
                 >
-                  <Checkbox
-                    checked={presentSet.has(gamer.id)}
-                    onChange={(e) => toggleGamer(gamer.id, e.target.checked)}
-                  />
-                  {gamer.firstName}
-                </label>
-              ))}
+                  {t("markAllPresent")}
+                </Button>
+              )}
             </div>
-          </fieldset>
+            {/* Always rendered, never conditional on the sheet being
+                incomplete: a hint that appears the moment you start marking
+                would reflow the notes below it while the gedu is working. */}
+            <p className="text-xs text-muted-foreground">
+              {t("attendanceRequiredHint")}
+            </p>
+            <div className="pt-1">
+              <AttendanceRoster
+                roster={roster}
+                attendance={draft.attendance}
+                namePrefix={`${fieldId}-attendance`}
+                onMark={markGamer}
+              />
+            </div>
+          </div>
 
           <Field
             label={t("publicNoteLabel")}
             htmlFor={`${fieldId}-public`}
+            optional
             hint={t("publicNoteHint")}
           >
             <Textarea
@@ -174,11 +217,7 @@ export function SessionRecordEditor({
         <Button type="button" variant="outline" size="sm" onClick={onCancel}>
           {t("cancel")}
         </Button>
-        <Button
-          type="button"
-          size="sm"
-          onClick={() => onSave(draftFromEditorState(draft))}
-        >
+        <Button type="button" size="sm" disabled={!canSave} onClick={handleSave}>
           {t("save")}
         </Button>
       </div>

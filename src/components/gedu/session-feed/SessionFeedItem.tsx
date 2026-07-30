@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CalendarOff, Pencil, UserRoundSearch } from "lucide-react";
+import { AlertTriangle, CalendarOff, Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { AttendanceSummary } from "./AttendanceSummary";
 import { CollapsibleRegion } from "./CollapsibleRegion";
 import {
   editorStateFromEntry,
+  entryNeedsAttention,
   isEditableEntry,
   isPlannableEntry,
   planEditorStateFromEntry,
@@ -53,18 +54,23 @@ interface SessionFeedItemProps {
  * regions *below* it, so opening the editor grows the card downward instead of
  * sliding the button that was just clicked out from under the cursor.
  *
- * Each state gets a treatment that says how much attention it wants. A session
- * needing a write-up is tinted with the warning token and is clickable across
- * its whole header, because it is work to do. A future session asking for a
- * substitute wears the same warning tint for the same reason — somebody has to
- * act on it. A pre-epoch gap is a bare dashed line with no card and no editor,
+ * **One edit affordance, everywhere.** Every editable entry — past or future,
+ * written up or not — opens through the same icon-and-text Edit button in the
+ * same corner. A card whose whole header was the click target taught a different
+ * gesture for one state, which is exactly the state a gedu meets least often
+ * and would have to relearn each time.
+ *
+ * A session needing attention says so with an alert icon and label on an
+ * otherwise ordinary card. It used to wear a tinted background too; that made
+ * the feed's most common transient state look like a failure, and on a gedu
+ * catching up after half term it painted half the page amber. The icon carries
+ * it. A pre-epoch gap is a bare dashed line with no card and no editor at all,
  * because nothing is owed for it and it must not compete with the narrative
  * around it.
  *
  * Which editor opens follows the side of the present the entry is on: past
  * entries get the write-up editor (attendance + notes + didn't-run), future ones
- * get the planning editor (forward notes + substitute request). No entry ever
- * offers both.
+ * get the planning editor (forward notes). No entry ever offers both.
  */
 export function SessionFeedItem({
   entry,
@@ -79,7 +85,7 @@ export function SessionFeedItem({
   const t = useTranslations("gedu.sessionFeed");
   const recordable = isEditableEntry(entry);
   const plannable = isPlannableEntry(entry);
-  const needsSubstitute = entry.kind === "future" && entry.needsSubstitute;
+  const needsAttention = entryNeedsAttention(entry);
 
   // Pre-epoch gaps aren't part of the story and aren't work — a single quiet
   // dashed line, deliberately not a card.
@@ -97,66 +103,47 @@ export function SessionFeedItem({
       className={cn(
         "p-4 sm:p-5",
         entry.kind === "future" && prominent && "border-primary/40",
-        needsSubstitute && "border-warning/50 bg-warning/10",
-        entry.kind === "needs_record" && "border-warning/50 bg-warning/10",
         entry.kind === "skipped" && "border-dashed bg-muted/30",
       )}
     >
-      {entry.kind === "needs_record" ? (
-        // The whole header is the affordance — a gap exists to be filled in,
-        // so there is no reason to make the gedu aim at a small button.
-        <button
-          type="button"
-          onClick={onToggleEdit}
-          aria-expanded={editing}
-          className="flex w-full items-start justify-between gap-3 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-        >
-          <SessionDateLine labels={labels} />
-          <span className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-warning">
-            <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
-            {t("needsRecordLabel")}
-          </span>
-        </button>
-      ) : (
-        <div className="flex items-start justify-between gap-3">
-          <SessionDateLine labels={labels} />
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-            {entry.kind === "future" && prominent && (
-              <Badge
-                variant="outline"
-                className="border-primary/40 text-[10px] uppercase tracking-wide text-primary"
-              >
-                {t("upcomingBadge")}
-              </Badge>
-            )}
-            {needsSubstitute && (
-              <span className="flex items-center gap-1.5 text-xs font-medium text-warning">
-                <UserRoundSearch className="h-3.5 w-3.5" aria-hidden />
-                {t("needsSubstituteBadge")}
-              </span>
-            )}
-            {entry.kind === "skipped" && (
-              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <CalendarOff className="h-3.5 w-3.5" aria-hidden />
-                {t("skippedLabel")}
-              </span>
-            )}
-            {(recordable || plannable) && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={onToggleEdit}
-                aria-expanded={editing}
-                className="-my-1 gap-1.5"
-              >
-                <Pencil className="h-3.5 w-3.5" aria-hidden />
-                {plannable ? t("plan") : t("edit")}
-              </Button>
-            )}
-          </div>
+      <div className="flex items-start justify-between gap-3">
+        <SessionDateLine labels={labels} />
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          {entry.kind === "future" && prominent && (
+            <Badge
+              variant="outline"
+              className="border-primary/40 text-[10px] uppercase tracking-wide text-primary"
+            >
+              {t("upcomingBadge")}
+            </Badge>
+          )}
+          {needsAttention && (
+            <span className="flex items-center gap-1.5 text-xs font-medium text-warning">
+              <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
+              {t("needsAttentionLabel")}
+            </span>
+          )}
+          {entry.kind === "skipped" && (
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <CalendarOff className="h-3.5 w-3.5" aria-hidden />
+              {t("skippedLabel")}
+            </span>
+          )}
+          {(recordable || plannable) && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onToggleEdit}
+              aria-expanded={editing}
+              className="-my-1 gap-1.5"
+            >
+              <Pencil className="h-3.5 w-3.5" aria-hidden />
+              {t("edit")}
+            </Button>
+          )}
         </div>
-      )}
+      </div>
 
       <CollapsibleRegion open={!editing}>
         <SessionEntryBody
@@ -240,8 +227,11 @@ function SessionEntryBody({
       const hasPlan =
         (entry.publicNote !== null && entry.publicNote.length > 0) ||
         (entry.staffNote !== null && entry.staffNote.length > 0);
+      // `pb-1`: the Join button can be the last thing in this region, and a
+      // collapsible region clips its overflow — without the padding the button's
+      // focus ring loses a hairline off its bottom edge.
       return (
-        <div className="space-y-3 pt-3">
+        <div className="space-y-3 pb-1 pt-3">
           {prominent && (
             <div className="flex flex-wrap items-center gap-2">
               <JoinVoiceButton
@@ -254,9 +244,6 @@ function SessionEntryBody({
                 {t("upcomingHint")}
               </p>
             </div>
-          )}
-          {entry.needsSubstitute && (
-            <p className="text-sm text-warning">{t("needsSubstituteBody")}</p>
           )}
           {entry.publicNote !== null && entry.publicNote.length > 0 && (
             <div>
@@ -277,17 +264,22 @@ function SessionEntryBody({
           )}
           {/* A later session with nothing planned still needs a line, or the
               card is a bare date with no reason to exist on the page. */}
-          {!prominent && !hasPlan && !entry.needsSubstitute && (
+          {!prominent && !hasPlan && (
             <p className="text-sm text-muted-foreground">{t("noPlanYet")}</p>
           )}
         </div>
       );
     }
 
-    case "recorded":
+    case "past":
+      // Notes and attendance are independent: a session can carry a full
+      // write-up and still be owed its attendance, so the notes render either
+      // way and only the attendance line waits on having been recorded.
+      // `pb-1` for the attendance disclosure's focus ring: it is the last thing
+      // in this region and the region clips its overflow to animate.
       return (
-        <div className="space-y-3 pt-3">
-          {entry.publicNote.length > 0 && (
+        <div className="space-y-3 pb-1 pt-3">
+          {entry.publicNote !== null && entry.publicNote.length > 0 && (
             <p className="whitespace-pre-line text-sm leading-relaxed">
               {entry.publicNote}
             </p>
@@ -299,10 +291,16 @@ function SessionEntryBody({
               </p>
             </StaffNoteBlock>
           )}
-          <AttendanceSummary
-            roster={roster}
-            presentGamerIds={entry.presentGamerIds}
-          />
+          {entry.presentGamerIds === null ? (
+            <p className="text-sm text-muted-foreground">
+              {t("needsAttentionHint")}
+            </p>
+          ) : (
+            <AttendanceSummary
+              roster={roster}
+              presentGamerIds={entry.presentGamerIds}
+            />
+          )}
         </div>
       );
 
@@ -310,13 +308,6 @@ function SessionEntryBody({
       return (
         <p className="pt-2 text-sm text-muted-foreground">
           {entry.reason ?? t("skippedNoReason")}
-        </p>
-      );
-
-    case "needs_record":
-      return (
-        <p className="pt-2 text-sm text-muted-foreground">
-          {t("needsRecordHint")}
         </p>
       );
 

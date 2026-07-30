@@ -173,12 +173,33 @@ describe("the year-long scenario stays a stress test", () => {
     expect(past.length).toBeGreaterThan(50);
 
     const kinds = new Set(past.map((e) => e.kind));
-    // Mostly written up, with skips, owed write-ups and pre-epoch history —
-    // otherwise the long-feed navigation is only exercised against one state.
-    expect(kinds).toContain("recorded");
+    // Skips and pre-epoch history alongside the ordinary weeks — otherwise the
+    // long-feed navigation is only exercised against one state.
+    expect(kinds).toContain("past");
     expect(kinds).toContain("skipped");
-    expect(kinds).toContain("needs_record");
     expect(kinds).toContain("no_record");
+  });
+
+  it("mixes recorded weeks, bare gaps and a written-up week still owed", () => {
+    // The three shapes a past entry can take, all in one feed. The third is the
+    // one the attendance model exists for: notes present, attendance null, so
+    // it renders its body *and* its alert.
+    const { entries } = buildGeduProductPageFixture(now, "club-yearlong");
+    const pastEntries = entries.filter((e) => e.kind === "past");
+
+    expect(
+      pastEntries.filter((e) => e.presentGamerIds !== null).length,
+    ).toBeGreaterThan(40);
+    expect(
+      pastEntries.some(
+        (e) => e.presentGamerIds === null && e.publicNote === null,
+      ),
+    ).toBe(true);
+    expect(
+      pastEntries.some(
+        (e) => e.presentGamerIds === null && e.publicNote !== null,
+      ),
+    ).toBe(true);
   });
 
   it("spans more than a year, so the month dividers cross a New Year", () => {
@@ -194,8 +215,9 @@ describe("the year-long scenario stays a stress test", () => {
   it("varies its recap copy rather than repeating one note 53 times", () => {
     const { entries } = buildGeduProductPageFixture(now, "club-yearlong");
     const notes = entries
-      .filter((e) => e.kind === "recorded")
-      .map((e) => e.publicNote);
+      .filter((e) => e.kind === "past")
+      .map((e) => e.publicNote)
+      .filter((n) => n !== null);
     expect(new Set(notes).size).toBeGreaterThan(10);
   });
 });

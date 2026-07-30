@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, type ReactNode } from "react";
-import { AlertTriangle, ArrowDown, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,8 +11,6 @@ import { PadletLink } from "@/components/ui/padlet-link";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import {
   SessionFeed,
-  countEntriesNeedingAttention,
-  sessionFeedEntryDomId,
   type SessionEntryDraft,
   type SessionFeedEntry,
   type SessionFeedGamer,
@@ -50,24 +48,30 @@ import { GroupNotesPanel, type GroupNotesDraft } from "./GroupNotesPanel";
  *   width beside it is a reference rail. Below `lg` it all stacks in DOM order —
  *   masthead, timeline, rail — so the phone keeps the weekly loop (read last
  *   week, join, write up) first and the reference material after it.
- * - **The rail holds the three things that are true between sessions**, in
- *   descending urgency: the other groups on this product (a colleague asking
- *   you to cover their room for ten minutes is one glance and one click), this
- *   group's co-teachers and roster, and the group's standing notes. Each is a
- *   compact card, and the *shape* is fixed — a product with no sister groups
- *   still renders the other-groups card, saying so — so the rail doesn't
- *   reshuffle between two products the same gedu teaches.
+ * - **The group's standing notes are a full-width row under the masthead**, not
+ *   a rail card. They answer "what is always true about this group" — how the
+ *   shared world works, who the siblings are — which is what somebody needs
+ *   *before* they start reading sessions, and they are prose: squeezed into a
+ *   third of the page they wrapped into a narrow column nobody read. Above the
+ *   split they get the reading width the feed has, and the columns start
+ *   underneath them.
+ * - **The rail holds the two things that are true between sessions**, this
+ *   group first: its co-teachers and roster (the reference a gedu actually
+ *   reaches for mid-session), then the other groups on the product — the
+ *   peer-cover surface, where a colleague asking you to watch their room for
+ *   ten minutes is one glance and one click. The *shape* is fixed — a product
+ *   with no sister groups still renders the other-groups card, saying so — so
+ *   the rail doesn't reshuffle between two products the same gedu teaches.
  * - **Each room has exactly one Join on the page.** This group's is on the
  *   prominent next-session entry in the timeline, where the gedu is already
  *   looking at the time it starts; every peer group's is on its own rail row.
  *   The old layout offered this group's room twice, which made the second one
  *   read as a different room.
- * - **The outstanding-work count is a jump, not a heading ornament.** It is the
- *   same number the dashboard product card shows, so it is still there when the
- *   gedu lands — but here it scrolls the first owed write-up into view instead
- *   of just naming a quantity. At zero it renders nothing and the timeline
- *   simply starts higher; there is no shift, because nothing was ever painted
- *   in the space.
+ * - **No aggregate attention count above the timeline.** The per-entry alerts
+ *   already are the queue, and each one sits on the card that has to be filled
+ *   in; a chip naming a number the reader then has to go hunting for was one
+ *   more thing to read on the way to the same place. The dashboard badge stays
+ *   the cross-product signal.
  */
 interface GeduProductPageBodyDraftProps {
   data: GeduAssignedProduct;
@@ -134,12 +138,6 @@ export function GeduProductPageBodyDraft({
     [data.product, now, locale, timeZone],
   );
 
-  const needingAttention = countEntriesNeedingAttention(entries);
-  // The feed is newest-first, so the first gap in the array is the most recent
-  // one — the one a gedu catching up would write first.
-  const firstGapEntryId =
-    entries.find((e) => e.kind === "needs_record")?.id ?? null;
-
   return (
     // Wide, because this is a gedu surface and gedus are at a desk. The reading
     // column inside is still capped; the extra width buys the reference rail.
@@ -178,24 +176,37 @@ export function GeduProductPageBodyDraft({
         </div>
       </header>
 
+      {assignedGroup && (
+        // Full width, but the panel inside is capped at the same reading width
+        // the timeline uses — which is also the main column's width, so the
+        // heading and its Edit control line up with the feed beneath them.
+        <Card className="mt-6">
+          <CardContent className="p-4 sm:p-5">
+            <div className="max-w-3xl">
+              <GroupNotesPanel
+                publicNote={groupPublicNote}
+                staffNote={groupStaffNote}
+                editing={groupNotesEditing}
+                onEditingChange={onGroupNotesEditingChange}
+                onSave={onSaveGroupNotes}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="mt-6 grid items-start gap-6 lg:grid-cols-3 lg:gap-8">
         <div className="min-w-0 space-y-4 lg:col-span-2">
           {assignedGroup ? (
-            <>
-              <NeedsWriteUpsJump
-                count={needingAttention}
-                targetEntryId={firstGapEntryId}
-              />
-              <SessionFeed
-                className="max-w-3xl"
-                entries={entries}
-                roster={feedRoster}
-                sourceTimeZone={sourceTimeZone}
-                editingEntryId={editingEntryId}
-                onEditEntry={onEditEntry}
-                onSaveEntry={onSaveEntry}
-              />
-            </>
+            <SessionFeed
+              className="max-w-3xl"
+              entries={entries}
+              roster={feedRoster}
+              sourceTimeZone={sourceTimeZone}
+              editingEntryId={editingEntryId}
+              onEditEntry={onEditEntry}
+              onSaveEntry={onSaveEntry}
+            />
           ) : (
             <Card>
               <CardContent className="p-6 text-sm text-muted-foreground">
@@ -205,11 +216,16 @@ export function GeduProductPageBodyDraft({
           )}
         </div>
 
-        {/* Static, not sticky. These cards are taller than a viewport once a
-            roster and two notes are open, so pinning them would need an inner
+        {/* Static, not sticky. An eight-child roster plus the peer rows is
+            taller than a viewport, so pinning the column would need an inner
             scroll pane beside the document scroll — a second scrollbar, and a
             column that stops agreeing with the page it sits next to. */}
         <aside className="min-w-0 space-y-4">
+          {/* This group before the peers: the roster and its parent emails are
+              what a gedu reaches for during their own session, and the peer
+              rows only matter when somebody asks for cover. */}
+          {assignedGroup && <GroupRailCard group={assignedGroup} />}
+
           <OtherGroupsRailCard
             peerGroups={peerGroups}
             isRemote={data.product.is_remote}
@@ -217,74 +233,9 @@ export function GeduProductPageBodyDraft({
             opensDate={voiceState.opensDate}
             opensTime={voiceState.opensTime}
           />
-
-          {assignedGroup && (
-            <>
-              <GroupRailCard group={assignedGroup} />
-              <RailCard>
-                <GroupNotesPanel
-                  publicNote={groupPublicNote}
-                  staffNote={groupStaffNote}
-                  editing={groupNotesEditing}
-                  onEditingChange={onGroupNotesEditingChange}
-                  onSave={onSaveGroupNotes}
-                />
-              </RailCard>
-            </>
-          )}
         </aside>
       </div>
     </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Main column                                                        */
-/* ------------------------------------------------------------------ */
-
-/**
- * "2 need write-ups", as a control that takes you to the first one.
- *
- * Same semantics as the feed's alert badge — the warning tone, the triangle,
- * and nothing at all at zero, because a badge reading "0 need write-ups" trains
- * the eye to skip the spot the real warning will appear in. It is a button
- * rather than that badge because it *does* something: a long feed can put the
- * oldest owed write-up below the fold, and naming a number the reader then has
- * to go hunting for is the part the old heading got wrong.
- *
- * Scrolling is user-triggered, so smooth motion is allowed here (and the browser
- * drops it for anyone who asked for reduced motion). If the target isn't in the
- * DOM — a gap sitting behind the feed's "show earlier sessions" reveal — the
- * click is a no-op rather than a jump to the wrong place.
- */
-function NeedsWriteUpsJump({
-  count,
-  targetEntryId,
-}: {
-  count: number;
-  targetEntryId: string | null;
-}) {
-  const t = useTranslations("gedu.sessionDetails");
-
-  if (count <= 0 || targetEntryId === null) return null;
-
-  const handleClick = () => {
-    const el = document.getElementById(sessionFeedEntryDomId(targetEntryId));
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
-  return (
-    <button
-      type="button"
-      onClick={handleClick}
-      aria-label={t("jumpToNeedsWriteUp", { count })}
-      className="inline-flex items-center gap-1.5 rounded-full border border-warning/50 bg-warning/10 px-3 py-1 text-xs font-medium text-warning transition-colors hover:bg-warning/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-    >
-      <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
-      {t("needsWriteUps", { count })}
-      <ArrowDown className="h-3.5 w-3.5" aria-hidden />
-    </button>
   );
 }
 
@@ -294,28 +245,16 @@ function NeedsWriteUpsJump({
 
 /**
  * One card in the rail. Tighter padding than a page card — the rail is a third
- * of the width and three cards deep, so every card that spends a page card's
- * padding pushes the one below it off the first screen.
- *
- * The heading is optional: the notes card's own header row carries a heading and
- * the Edit control together, and stacking a second title above it would read as
- * two sections.
+ * of the width, so every card that spends a page card's padding pushes the one
+ * below it further down the first screen.
  */
-function RailCard({
-  title,
-  children,
-}: {
-  title?: string;
-  children: ReactNode;
-}) {
+function RailCard({ title, children }: { title: string; children: ReactNode }) {
   return (
     <Card>
       <CardContent className="space-y-3 p-4">
-        {title !== undefined && (
-          <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            {title}
-          </h2>
-        )}
+        <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+          {title}
+        </h2>
         {children}
       </CardContent>
     </Card>
@@ -326,11 +265,13 @@ function RailCard({
  * The peer-cover card: every other group running on this product, each one
  * name + who teaches it + how many children + a live-state Join.
  *
- * This is the "can you watch my room for ten minutes?" surface, so it is the
- * first thing in the rail and the row is deliberately one line of identity plus
- * the button — enough to know you have the right room, and nothing that needs
- * reading before you click. Sister-group *rosters* stay out: a gedu sees who is
- * teaching alongside them, not the children in someone else's group.
+ * This is the "can you watch my room for ten minutes?" surface, and the row is
+ * deliberately one line of identity plus the button — enough to know you have
+ * the right room, and nothing that needs reading before you click. It sits
+ * *below* this group's own card, because covering for somebody is the rarer
+ * errand: the roster above it is what a gedu opens mid-session. Sister-group
+ * *rosters* stay out: a gedu sees who is teaching alongside them, not the
+ * children in someone else's group.
  *
  * A product with only one group still renders the card, saying so. The rail's
  * shape is then the same on every product a gedu opens, which is worth more than

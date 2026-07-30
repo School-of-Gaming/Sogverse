@@ -6,11 +6,10 @@ import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useNow, useTimezone } from "@/providers";
 import { cn } from "@/lib/utils";
-import { sessionFeedEntryDomId } from "./anchors";
 import { LaterSessionsBlock } from "./LaterSessionsBlock";
 import { SessionFeedItem } from "./SessionFeedItem";
 import {
-  countSubstituteRequests,
+  entryNeedsAttention,
   partitionFeedEntries,
   pastEntryWindow,
 } from "./entry-state";
@@ -57,8 +56,7 @@ interface SessionFeedProps {
  *
  * Three things keep a long feed navigable without ever moving painted content:
  *
- * - **Later future sessions collapse** behind one row above the next session,
- *   with any substitute request surfaced on the closed row.
+ * - **Later future sessions collapse** behind one row above the next session.
  * - **The past opens on its recent slice** and older chunks are appended
  *   *below* on request, so the reveal grows away from everything being read.
  * - **Month dividers** mark each boundary the scroll crosses, which is what
@@ -132,14 +130,7 @@ export function SessionFeed({
     const editing = editingEntryId === entry.id;
     const prominent = entry.id === nextSession?.id;
     return (
-      <li
-        key={row.key}
-        // Addressable so a control outside the feed can scroll one entry into
-        // view; the margin keeps the landing clear of the sticky header rather
-        // than tucking the entry behind it.
-        id={sessionFeedEntryDomId(entry.id)}
-        className="relative scroll-mt-[calc(var(--header-height)+1rem)]"
-      >
+      <li key={row.key} className="relative">
         <span
           aria-hidden
           className={cn(
@@ -174,7 +165,6 @@ export function SessionFeed({
       {laterFuture.length > 0 && (
         <LaterSessionsBlock
           count={laterFuture.length}
-          substituteCount={countSubstituteRequests(laterFuture)}
           open={laterOpen}
           onToggle={() => setLaterOpen((o) => !o)}
         >
@@ -207,18 +197,16 @@ export function SessionFeed({
  * so the markers carry the same hierarchy the cards do: the next session and the
  * outstanding work stand out, the ordinary weeks are neutral, and the
  * nothing-owed rows all but disappear. A future session is only primary-toned
- * when it is the next one — a later plan is not a thing to walk into — unless it
- * is asking for a substitute, which is a warning wherever it sits.
+ * when it is the next one — a later plan is not a thing to walk into.
  */
 function markerTone(entry: SessionFeedEntry, prominent: boolean): string {
   switch (entry.kind) {
     case "future":
-      if (entry.needsSubstitute) return "bg-warning";
       return prominent ? "bg-primary" : "bg-primary/40";
-    case "recorded":
-      return "bg-muted-foreground/60";
-    case "needs_record":
-      return "bg-warning";
+    case "past":
+      return entryNeedsAttention(entry)
+        ? "bg-warning"
+        : "bg-muted-foreground/60";
     case "skipped":
     case "no_record":
       return "bg-muted-foreground/25";

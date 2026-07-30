@@ -26,21 +26,23 @@ interface GroupNotesPanelProps {
 }
 
 /**
- * The group's **standing** notes — its own card in the page's reference rail.
+ * The group's **standing** notes — a full-width row directly under the page's
+ * masthead, above the point where the workspace splits into columns.
  *
  * These are deliberately not session notes. A session note answers "what
  * happened on this date"; these answer "what should anyone know about this
  * group at all" — how the shared world works, who the siblings are, which
  * laptop has bad audio. There is no free-floating "post to the club" action
- * anywhere in the feed, so this card is the one home for information that isn't
- * anchored to an occurrence.
+ * anywhere in the feed, so this panel is the one home for information that isn't
+ * anchored to an occurrence, and it reads *before* the sessions do because it is
+ * the context they happen in.
  *
  * The public note is rendered first and unadorned because it is the one families
- * will eventually read; the staff note sits beneath it in the padlocked recessed
+ * will eventually read; the gedu note sits beneath it in the padlocked recessed
  * treatment so the two audiences can never be misread for each other.
  *
  * The same two-audience split as everywhere else, and for the same reason: a
- * staff note written under an assumption of privacy can never be retro-published,
+ * gedu note written under an assumption of privacy can never be retro-published,
  * so it wears the padlocked recessed treatment both when read and while being
  * written, and the two are never one field.
  *
@@ -80,8 +82,8 @@ export function GroupNotesPanel({
   const hasStaff = staffNote !== null && staffNote.length > 0;
   const isEmpty = !hasPublic && !hasStaff;
 
-  // No divider or top padding of its own: the panel is the whole body of its
-  // rail card, so its header row *is* the card's heading row.
+  // No divider or top padding of its own: the panel is the whole body of the
+  // card it sits in, so its header row *is* the card's heading row.
   return (
     <div>
       <div className="flex items-center justify-between gap-2">
@@ -126,7 +128,9 @@ export function GroupNotesPanel({
       </CollapsibleRegion>
 
       <CollapsibleRegion open={editing}>
-        <div className="space-y-4 pt-3">
+        {/* `pb-1` gives the Save row's focus ring room: a collapsible region
+            has to clip its overflow for the open/close animation to work. */}
+        <div className="space-y-4 pb-1 pt-3">
           <Field
             label={t("publicLabel")}
             htmlFor={`${fieldId}-public`}

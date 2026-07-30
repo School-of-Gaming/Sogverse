@@ -5,12 +5,12 @@
  *
  * These are presentation types, deliberately independent of any table: the feed
  * mixes rows that exist (a written-up session) with rows that only exist as an
- * *absence* (a scheduled occurrence nobody wrote up). Whoever feeds the
- * component reconciles the schedule against the stored write-ups and emits one
+ * *absence* (a scheduled occurrence nobody has recorded). Whoever feeds the
+ * component reconciles the schedule against the stored records and emits one
  * entry per occurrence.
  */
 
-/** One child on the group's roster, as the attendance checklist needs them. */
+/** One child on the group's roster, as the attendance editor needs them. */
 export interface SessionFeedGamer {
   id: string;
   firstName: string;
@@ -42,17 +42,14 @@ interface SessionFeedEntryBase {
  * A future entry holds **planning** fields only. Attendance and a
  * ran/didn't-run status are records of what happened and only attach once the
  * session is past; what a gedu can say in advance is what they plan to do
- * (which families read later), a reminder to themselves, and that they cannot
- * run it.
+ * (which families read later) and a reminder to themselves.
  */
 export interface FutureSessionFeedEntry extends SessionFeedEntryBase {
   kind: "future";
   /** Planned note families will read once the session runs. `null` = unset. */
   publicNote: string | null;
-  /** Planned staff-only note — a reminder to the team. `null` = unset. */
+  /** Planned gedu-only note — a reminder for whoever runs it. `null` = unset. */
   staffNote: string | null;
-  /** The gedu has declared they can't run this one. */
-  needsSubstitute: boolean;
   /**
    * Whether the voice window is open right now (drives the Join button).
    * Only ever meaningful on the next session, which is the only future entry
@@ -63,15 +60,34 @@ export interface FutureSessionFeedEntry extends SessionFeedEntryBase {
   voiceHref: string;
 }
 
-/** A session that ran and has its write-up. The blog post of the feed. */
-export interface RecordedSessionFeedEntry extends SessionFeedEntryBase {
-  kind: "recorded";
-  /** The entry body — later visible to parents and gamers. */
-  publicNote: string;
-  /** Gedu + admin only. `null` (or empty) renders no staff block at all. */
+/**
+ * A past scheduled occurrence, carrying whatever has been recorded about it.
+ *
+ * There is deliberately **one** past kind rather than a "written up" one and a
+ * separate "nothing here yet" one. The two would be the same row at two moments
+ * in its life, and splitting them forces every caller to decide which to emit
+ * for a session that has a note but no attendance — a state that genuinely
+ * exists and has to render both its note *and* its alert.
+ *
+ * `presentGamerIds` is `null` **until attendance is recorded**, and that null is
+ * the whole point of the model: an empty list would mean "everybody was away",
+ * which is a real and very different claim from "nobody has said yet". Once
+ * recorded, every roster member is explicitly present or absent, so an untouched
+ * row can never silently read as an absence. Attendance is the mandatory part —
+ * it doubles as the gedu's confirmation that they ran the session, which is what
+ * they are paid on — and both notes are optional.
+ */
+export interface PastSessionFeedEntry extends SessionFeedEntryBase {
+  kind: "past";
+  /** The entry body — later visible to parents and gamers. `null` = unset. */
+  publicNote: string | null;
+  /** Gedu + admin only. `null` (or empty) renders no gedu block at all. */
   staffNote: string | null;
-  /** Roster ids marked present. Anything not listed counts as absent. */
-  presentGamerIds: readonly string[];
+  /**
+   * Roster ids marked present, with everyone else on the roster explicitly
+   * marked absent — or `null` while attendance has not been recorded at all.
+   */
+  presentGamerIds: readonly string[] | null;
 }
 
 /** A session that did not happen — holiday, closure, nobody turned up. */
@@ -79,15 +95,6 @@ export interface SkippedSessionFeedEntry extends SessionFeedEntryBase {
   kind: "skipped";
   /** Short free text. `null` renders the generic "no reason given" line. */
   reason: string | null;
-}
-
-/**
- * A scheduled occurrence with no write-up, on the enforcement side of the
- * epoch. This is the gedu's work-to-do, rendered inline in the narrative
- * rather than pulled out into a separate queue.
- */
-export interface NeedsRecordSessionFeedEntry extends SessionFeedEntryBase {
-  kind: "needs_record";
 }
 
 /**
@@ -101,24 +108,44 @@ export interface NoRecordSessionFeedEntry extends SessionFeedEntryBase {
 
 export type SessionFeedEntry =
   | FutureSessionFeedEntry
-  | RecordedSessionFeedEntry
+  | PastSessionFeedEntry
   | SkippedSessionFeedEntry
-  | NeedsRecordSessionFeedEntry
   | NoRecordSessionFeedEntry;
 
 /** The past kinds whose entry can be expanded into the write-up editor. */
 export type EditableSessionFeedEntry =
-  | RecordedSessionFeedEntry
-  | SkippedSessionFeedEntry
-  | NeedsRecordSessionFeedEntry;
+  | PastSessionFeedEntry
+  | SkippedSessionFeedEntry;
+
+/** How one roster member's attendance was recorded. */
+export type AttendanceMark = "present" | "absent";
+
+/**
+ * The editor's per-gamer marks, keyed by roster id.
+ *
+ * A roster id **missing from the map is unmarked** — not absent. That is the
+ * three-state distinction a checkbox cannot express and the reason the editor
+ * refuses to save until every roster member has a key here.
+ *
+ * `Partial` is load-bearing rather than decorative: it is what makes a lookup
+ * return `AttendanceMark | undefined`, so the compiler keeps every reader
+ * handling the unmarked case instead of letting it read as a mark.
+ */
+export type AttendanceMarks = Readonly<
+  Partial<Record<string, AttendanceMark>>
+>;
 
 /**
  * What the write-up editor emits on save — the same two-way split the past
  * display states have, so a caller maps it straight onto the entry it replaces.
+ *
+ * The `past` branch carries a plain `presentGamerIds` array with no null case:
+ * the editor only produces a draft once every roster member is marked, so a
+ * saved record is unambiguous by construction.
  */
 export type SessionRecordDraft =
   | {
-      kind: "recorded";
+      kind: "past";
       presentGamerIds: string[];
       publicNote: string;
       staffNote: string;
@@ -130,7 +157,6 @@ export interface SessionPlanDraft {
   kind: "plan";
   publicNote: string;
   staffNote: string;
-  needsSubstitute: boolean;
 }
 
 /**
@@ -149,7 +175,7 @@ export type SessionEntryDraft = SessionRecordDraft | SessionPlanDraft;
  */
 export interface SessionEditorState {
   didNotRun: boolean;
-  presentGamerIds: string[];
+  attendance: AttendanceMarks;
   publicNote: string;
   staffNote: string;
   skipReason: string;
@@ -157,11 +183,9 @@ export interface SessionEditorState {
 
 /**
  * The planning editor's working state. Flat and identical in shape to the draft
- * it produces (bar the tag) — there is no either/or branch to preserve here,
- * since a substitute request and a written plan coexist happily.
+ * it produces, bar the tag.
  */
 export interface SessionPlanEditorState {
   publicNote: string;
   staffNote: string;
-  needsSubstitute: boolean;
 }

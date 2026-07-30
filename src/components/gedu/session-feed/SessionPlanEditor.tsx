@@ -3,7 +3,6 @@
 import { useId, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { planDraftFromEditorState } from "./entry-state";
@@ -25,19 +24,17 @@ interface SessionPlanEditorProps {
 
 /**
  * The planning editor for a session that hasn't happened yet: what the gedu
- * intends to do, a reminder for the team, and "I can't run this one".
+ * intends to do, and a reminder for whoever runs it.
  *
  * Deliberately **not** the write-up editor with half its fields hidden. There is
- * no attendance checklist and no didn't-run toggle, because neither can be true
- * of a session in the future — attendance is a record and the whole reason it
+ * no attendance sheet and no didn't-run toggle, because neither can be true of a
+ * session in the future — attendance is a record, and the whole reason it
  * doubles as pay confirmation is that it describes something that actually
- * happened. Offering either here would invite a gedu to pre-tick a room full of
+ * happened. Offering either here would invite a gedu to pre-mark a room full of
  * children who haven't turned up yet.
  *
- * The substitute request sits at the top, above the notes, because it is the one
- * field with a reader other than the gedu themselves: it is a message to admins
- * and peers, and burying it under two textareas would make it feel optional. The
- * Save/Cancel row stays pinned at the bottom so neither field growing moves it.
+ * Both fields are optional; the Save/Cancel row stays pinned at the bottom so
+ * neither textarea growing moves it.
  */
 export function SessionPlanEditor({
   open,
@@ -59,22 +56,10 @@ export function SessionPlanEditor({
   }
 
   return (
-    <div className="space-y-4 pt-4">
-      <label className="flex cursor-pointer items-start gap-2 text-sm font-medium">
-        <Checkbox
-          checked={draft.needsSubstitute}
-          onChange={(e) =>
-            setDraft((d) => ({ ...d, needsSubstitute: e.target.checked }))
-          }
-        />
-        <span>
-          {t("needsSubstituteLabel")}
-          <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
-            {t("needsSubstituteHint")}
-          </span>
-        </span>
-      </label>
-
+    // `pb-1` leaves the Save row's focus ring somewhere to land — this editor
+    // renders inside a collapsible region, which clips its overflow so the
+    // open/close animation has something to reveal.
+    <div className="space-y-4 pb-1 pt-4">
       <Field
         label={t("plannedPublicNoteLabel")}
         htmlFor={`${fieldId}-public`}

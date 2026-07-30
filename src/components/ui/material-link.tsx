@@ -7,15 +7,16 @@ interface MaterialLinkProps {
 }
 
 /**
- * Link to a product's lesson/material content — **staff-facing only**.
+ * Link to a product's lesson/material content — **gedu- and admin-facing only**.
  *
- * A product carries two outward links and they have different audiences: the
- * Padlet is what families read, and this one is what the people running the
- * product read. They sit side by side in the product header, so the difference
- * has to be legible at a glance rather than remembered — hence the padlocked
- * book glyph instead of the Padlet's plain external-link arrow, and the
- * muted-foreground tone rather than primary, which reads as "back of house"
- * next to the family link.
+ * A product carries two outward links with different audiences: the Padlet is
+ * what families read, and this one is what the people running the product read.
+ * They sit side by side in the product header, and they are deliberately the
+ * **same chip** — same shape, size and tone as the Padlet link — because two
+ * links to the same kind of thing, on the same line, reading as two different
+ * weights made one of them look like the important one. The difference is
+ * carried by the glyph (a padlocked book against the Padlet's external-link
+ * arrow) and by the hover title, not by demoting this one to grey.
  *
  * **The visibility rule is the caller's to enforce.** This component renders
  * whatever href it is handed; it has no idea who is looking. It is safe on a
@@ -34,7 +35,7 @@ export function MaterialLink({ href, className }: MaterialLinkProps) {
       title={t("materialStaffOnly")}
       className={
         className ??
-        "inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground hover:underline"
+        "inline-flex items-center gap-1 text-sm text-primary hover:underline"
       }
     >
       <BookLock className="h-3.5 w-3.5" aria-hidden />

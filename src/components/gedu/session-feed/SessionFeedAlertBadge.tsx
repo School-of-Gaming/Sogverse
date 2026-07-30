@@ -6,9 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 /**
- * "3 sessions need attention" — the aggregate of a group's `needs_record`
- * entries, small enough to sit on a product card on the gedu dashboard and
- * point at the feed.
+ * "3 sessions need attention" — the aggregate of a group's past sessions whose
+ * attendance is still unrecorded, small enough to sit on a product card on the
+ * gedu dashboard and point at the feed.
  *
  * Renders nothing at zero. A badge that says "0 sessions need attention" is
  * worse than no badge: it trains the eye to skip the spot where the real

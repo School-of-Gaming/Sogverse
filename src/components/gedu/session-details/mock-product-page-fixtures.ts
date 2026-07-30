@@ -140,24 +140,31 @@ const MARKUS = { id: GEDU_IDS.markus, firstName: "Markus" } as const;
 
 const NEEDS_ATTENTION_SPECS: readonly EntrySpec[] = [
   ...CLUB_FUTURE_SPECS,
-  { kind: "needs_record" },
-  { kind: "needs_record" },
+  { kind: "past" },
+  // Notes written, attendance never marked off. It reads as a full entry and is
+  // still owed — the state a write-up-only model could not express.
   {
-    kind: "recorded",
+    kind: "past",
+    publicNote:
+      "Elytra course. We strung checkpoints along the cliff and everyone crashed into the same overhang until Oskar worked out you have to come in high and drop.",
+  },
+  {
+    kind: "past",
     absent: [SESSION_FEED_GAMER_IDS.emil],
     publicNote:
       "Survival week. We agreed one shared base instead of eight scattered huts, and it turned into a proper little town by the end — Linnéa dug the well, Oskar ran the fence line, and three people argued about where the door should go for twenty minutes.",
   },
-  { kind: "needs_record" },
-  { kind: "needs_record" },
+  { kind: "past" },
+  { kind: "past" },
   {
-    kind: "recorded",
+    kind: "past",
+    allPresent: true,
     publicNote:
       "Nether trip. Lots of dying, lots of laughing about dying, and one successful return with enough quartz to finish the floor everyone had been complaining about.",
     staffNote:
       "Väinö gets genuinely stressed in the Nether. Give him the map-and-supplies job next time rather than the front of the party.",
   },
-  { kind: "needs_record" },
+  { kind: "past" },
   { kind: "no_record" },
   { kind: "no_record" },
 ];
@@ -176,9 +183,8 @@ const CAMP_FUTURE_SPECS: readonly EntrySpec[] = [
   },
   {
     kind: "future",
-    needsSubstitute: true,
     staffNote:
-      "I have a dentist appointment I couldn't move on this day. The morning block is fine, someone needs to cover 13:00 onwards.",
+      "Day seven is the short one — the hall is booked from 14:00, so wrap up by half past one and leave the machines on for the showcase.",
   },
   {
     kind: "future",
@@ -190,28 +196,34 @@ const CAMP_FUTURE_SPECS: readonly EntrySpec[] = [
 const CAMP_SPECS: readonly EntrySpec[] = [
   ...CAMP_FUTURE_SPECS,
   {
-    kind: "recorded",
+    kind: "past",
     absent: [SESSION_FEED_GAMER_IDS.siiri],
     publicNote:
       "Day five: playtesting. Every team handed their obby to another team and watched them fail at it, which is the most useful hour of the week. Three levels got quietly made easier straight afterwards.",
   },
-  { kind: "needs_record" },
+  { kind: "past" },
   {
-    kind: "recorded",
+    kind: "past",
+    allPresent: true,
     publicNote:
       "Day three: scripting. We wrote our first Lua — a checkpoint that saves where you got to — and then broke it on purpose to see what the error messages actually mean. Hilda ended up debugging two other tables' scripts.",
     staffNote:
       "The room's laptops are slow to load Studio; start the machines ten minutes before the group arrives tomorrow.",
   },
   {
-    kind: "recorded",
+    kind: "past",
     absent: [SESSION_FEED_GAMER_IDS.oskar, SESSION_FEED_GAMER_IDS.emil],
     publicNote:
       "Day two: building. Teams of two, one obstacle each, all snapped together into one course by the end of the afternoon. It is unfair and much too long, which everyone considers the point.",
   },
-  { kind: "needs_record" },
   {
-    kind: "recorded",
+    kind: "past",
+    publicNote:
+      "Day one and a half: the group voted on a theme for the shared course. Neon city won by a distance, and half the afternoon went on arguing about whether lava counts as neon.",
+  },
+  {
+    kind: "past",
+    allPresent: true,
     publicNote:
       "Day one: everyone got a Roblox Studio account working, made a baseplate, and pushed a block off it. Names, ground rules, and who is sitting next to whom for the week.",
   },
@@ -220,7 +232,7 @@ const CAMP_SPECS: readonly EntrySpec[] = [
 const FIRST_WEEK_SPECS: readonly EntrySpec[] = [
   ...CLUB_FUTURE_SPECS,
   {
-    kind: "recorded",
+    kind: "past",
     absent: [SESSION_FEED_GAMER_IDS.hilda],
     publicNote:
       "First session. We went round the table on what everyone has built before — answers ranged from \"a house\" to \"a working calculator\" — agreed how we talk to each other in voice, and spent the last half hour digging out a spot for the group's base.",
@@ -284,24 +296,36 @@ const YEARLONG_SKIP_REASONS: readonly string[] = [
  * Built from an index rule rather than hand-written, and deliberately with no
  * randomness — a fixture that reshuffles itself between renders would make the
  * inline editor's local state jump around and would make any screenshot
- * unreproducible. The mix is what a real year looks like: mostly written up,
- * five holiday skips, two write-ups still owed, and two sessions from before
- * write-ups were expected at all.
+ * unreproducible.
+ *
+ * The mix is what a real year looks like, and it covers all three shapes a past
+ * session can take: mostly recorded with a write-up, five holiday skips, two
+ * bare gaps with nothing on them at all, one week whose notes were written but
+ * whose attendance was never marked off, and two sessions from before any of
+ * this was expected.
  */
 function yearlongSpecs(): readonly EntrySpec[] {
   const SKIP_AT = new Set([6, 17, 18, 31, 44]);
   const OWED_AT = new Set([2, 12]);
+  const NOTES_BUT_NO_ATTENDANCE_AT = new Set([8]);
   const past: EntrySpec[] = [];
 
   for (let index = 0; index < 53; index++) {
     if (OWED_AT.has(index)) {
-      past.push({ kind: "needs_record" });
+      past.push({ kind: "past" });
       continue;
     }
     if (SKIP_AT.has(index)) {
       past.push({
         kind: "skipped",
         reason: YEARLONG_SKIP_REASONS[index % YEARLONG_SKIP_REASONS.length],
+      });
+      continue;
+    }
+    if (NOTES_BUT_NO_ATTENDANCE_AT.has(index)) {
+      past.push({
+        kind: "past",
+        publicNote: YEARLONG_RECAPS[index % YEARLONG_RECAPS.length],
       });
       continue;
     }
@@ -312,12 +336,12 @@ function yearlongSpecs(): readonly EntrySpec[] {
         ? [SESSION_FEED_ROSTER[index % SESSION_FEED_ROSTER.length].id]
         : undefined;
     past.push({
-      kind: "recorded",
+      kind: "past",
       publicNote: YEARLONG_RECAPS[index % YEARLONG_RECAPS.length],
       ...(index % 7 === 3
         ? { staffNote: YEARLONG_STAFF_NOTES[index % YEARLONG_STAFF_NOTES.length] }
         : {}),
-      ...(away ? { absent: away } : {}),
+      ...(away ? { absent: away } : { allPresent: true }),
     });
   }
 

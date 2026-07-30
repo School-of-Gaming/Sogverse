@@ -85,31 +85,34 @@ export type SessionFeedCadence = "weekly" | "daily";
  * session; the leading run of `future` specs is the feed's future horizon, the
  * last of them is the next session, and everything after that is the past.
  *
- * In the default club run the enforcement epoch sits between the seventh and
- * eighth past sessions: everything newer is either written up or flagged as
- * owed, and everything older is a quiet "no record" line. That boundary is the
- * whole reason the two gap states look nothing alike — one is work, the other is
- * history.
+ * In the default club run the enforcement epoch sits just above the two closing
+ * `no_record` lines: everything newer either has its attendance recorded or is
+ * flagged as owed, and everything older is a quiet "no record" line. That
+ * boundary is the whole reason the two gap states look nothing alike — one is
+ * work, the other is history.
  */
 export type EntrySpec =
   | {
       kind: "future";
       /** Forward-looking note families read once the session runs. */
       publicNote?: string;
-      /** Forward-looking staff note — a reminder for the team. */
+      /** Forward-looking gedu note — a reminder for whoever runs it. */
       staffNote?: string;
-      /** The gedu has declared they can't run this one. */
-      needsSubstitute?: boolean;
     }
   | {
-      kind: "recorded";
-      publicNote: string;
+      kind: "past";
+      publicNote?: string;
       staffNote?: string;
-      /** Roster ids who were away; everyone else counts as present. */
+      /**
+       * Roster ids marked absent; everyone else is marked present. Omit it
+       * entirely and attendance stays **unrecorded** — which is what makes the
+       * entry need attention, whether or not it carries a note.
+       */
       absent?: readonly string[];
+      /** Attendance recorded with the whole roster present. */
+      allPresent?: boolean;
     }
   | { kind: "skipped"; reason?: string }
-  | { kind: "needs_record" }
   | { kind: "no_record" };
 
 /**
@@ -123,9 +126,8 @@ export const CLUB_FUTURE_SPECS: readonly EntrySpec[] = [
   { kind: "future" },
   {
     kind: "future",
-    needsSubstitute: true,
     staffNote:
-      "I'm away at a family wedding this week and can't run the session. Padlet is up to date if whoever covers wants to see where the group is.",
+      "Parents' evening runs late this week — the room may not be free until quarter past. Padlet is up to date if anyone needs to see where the group is.",
   },
   { kind: "future" },
   { kind: "future" },
@@ -148,17 +150,23 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
   ...CLUB_FUTURE_SPECS,
 
   {
-    kind: "recorded",
+    kind: "past",
     absent: [SESSION_FEED_GAMER_IDS.oskar],
     publicNote:
       "We finished the village square this week. Aino's clock tower finally chimes on the hour after three goes at the redstone, and half the group split off to dig a proper road down to the harbour. We ended with a tour where everyone showed one thing they had made — nobody wanted to log off.",
   },
 
-  // The recent one still owed — this is what the alert badge is counting.
-  { kind: "needs_record" },
+  // Written up on the night and never marked off — the case the whole model
+  // exists for: the notes render in full and the entry is still flagged,
+  // because attendance is the mandatory half and it is missing.
+  {
+    kind: "past",
+    publicNote:
+      "Command blocks. We made teleport pads that fire you across the map, then spent twenty minutes working out why one of them dropped you inside a mountain. Väinö found it: the coordinates were a block off and the pad was aiming at solid stone.",
+  },
 
   {
-    kind: "recorded",
+    kind: "past",
     absent: [SESSION_FEED_GAMER_IDS.siiri, SESSION_FEED_GAMER_IDS.hilda],
     publicNote:
       "Redstone week. We built item sorters from scratch — hoppers, comparators, the lot — and then broke them on purpose to work out what each part was actually doing. Elias solved the overflow problem on his own and spent the rest of the session teaching it to the table. The sorters go into the storage room next time.",
@@ -172,17 +180,19 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
   },
 
   {
-    kind: "recorded",
+    kind: "past",
+    allPresent: true,
     publicNote:
       "Build battle night: two teams, forty minutes, theme drawn out of a hat — \"somewhere you'd hide\". We got a hollowed-out mountain with a hidden lift, and a very convincing haystack with a basement under it. The vote ended in a tie, which everyone agreed was the correct result.",
     staffNote:
       "Emil and Oskar are better on separate teams next time. It got competitive and there was some sniping in chat before I stepped in.",
   },
 
-  { kind: "needs_record" },
+  // Nothing at all on this one — the plain gap.
+  { kind: "past" },
 
   {
-    kind: "recorded",
+    kind: "past",
     absent: [
       SESSION_FEED_GAMER_IDS.vaino,
       SESSION_FEED_GAMER_IDS.linnea,
@@ -432,28 +442,26 @@ function toEntry(
         endsAt,
         publicNote: spec.publicNote ?? null,
         staffNote: spec.staffNote ?? null,
-        needsSubstitute: spec.needsSubstitute ?? false,
         voiceIsOpen,
         voiceHref: "#",
       };
-    case "recorded": {
+    case "past": {
+      const recorded = spec.absent !== undefined || spec.allPresent === true;
       const absent = new Set(spec.absent ?? []);
       return {
-        kind: "recorded",
+        kind: "past",
         id,
         startsAt,
         endsAt,
-        publicNote: spec.publicNote,
+        publicNote: spec.publicNote ?? null,
         staffNote: spec.staffNote ?? null,
-        presentGamerIds: SESSION_FEED_ROSTER.filter(
-          (g) => !absent.has(g.id),
-        ).map((g) => g.id),
+        presentGamerIds: recorded
+          ? SESSION_FEED_ROSTER.filter((g) => !absent.has(g.id)).map((g) => g.id)
+          : null,
       };
     }
     case "skipped":
       return { kind: "skipped", id, startsAt, endsAt, reason: spec.reason ?? null };
-    case "needs_record":
-      return { kind: "needs_record", id, startsAt, endsAt };
     case "no_record":
       return { kind: "no_record", id, startsAt, endsAt };
   }

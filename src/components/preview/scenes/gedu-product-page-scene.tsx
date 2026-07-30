@@ -20,12 +20,12 @@ import { useNow } from "@/providers";
 /**
  * The gedu's product page redesigned around the session feed.
  *
- * Every editor is fully live against local state: ticking attendance, typing
- * both session notes, marking a session as not run, planning a future session
- * and asking for a substitute, and writing the group's standing notes. A gap
- * turning into a written-up entry — and a bare future date turning into a plan —
- * is the single most important thing to feel before this gets wired to a
- * database. Nothing persists past a reload.
+ * Every editor is fully live against local state: marking each child present or
+ * absent, typing both session notes, marking a session as not run, planning a
+ * future session, and writing the group's standing notes. A flagged session
+ * turning into a recorded one — and a bare future date turning into a plan — is
+ * the single most important thing to feel before this gets wired to a database.
+ * Nothing persists past a reload.
  *
  * The fixture is built once from the first `useNow()` value and then held in
  * state — rebuilding it on the 30-second tick would throw away whatever the
