@@ -137,6 +137,14 @@ A living style guide is available at `/admin/ui-components` (admin login require
 
 **When to add a demo here:** when you build or substantially restyle a reusable component or composite pattern, add (or update) its demo so the next person can iterate on it in isolation. **When not to:** one-off page-specific layouts, or anything that can't render without live side effects — if you can't construct a plausible fixture for it, treat that as a design smell first, not a reason to wire real logic into the page.
 
+### Full-page preview scenes
+
+The style guide demos components; a *page-level* change has to be judged as a page — real chrome, real viewport, real scrolling. That's what a **preview scene** is: one fixture-driven page at `/preview/{surface}/{scenario}`, served by a single dynamic route from a central scene registry (`src/components/preview/`), admin-gated in the proxy, noindex, and listed automatically in a section of the UI Components page. Scenes make page-level iteration cheap: sign the design off from fixtures first, wire it once afterwards.
+
+**Rule: a scene never owns a layout — one body, two shells.** It renders the same presentational page body the live route renders: either the *live* body (a showcase that cannot drift) or the *draft* body that is going to replace it. Promotion means the draft body becomes the route's body and the data shell swaps fixtures for service calls; the layout does not change in that step. A scene that becomes a permanent third fork of a page is the rot this rule exists to prevent.
+
+**Rule: chrome is composed, never simulated,** and never inherited by accident — each scene names the shell it wants and gets the real components (a dashboard scene renders the header plus the dashboard layout with no sidebar). **Rule: a scene mocks the whole page as the role meets it** — every section present, with backend-touching actions inert but rendering their real states, and pure-UI interactions working against local state. Faking or omitting a section because it's awkward to feed is the same separation-of-concerns smell the style guide exists to catch: fix the coupling (give the section a presentational core that takes rows/props), don't fake the section.
+
 ### Customer Enrollment & Billing
 
 See `docs/products-architecture.md` for the purchase / participation flow, the billing model (monthly family subscriptions for clubs, single upfront payments for camps/events), and refund windows.

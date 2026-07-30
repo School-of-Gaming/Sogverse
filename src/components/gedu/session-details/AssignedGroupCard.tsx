@@ -165,7 +165,12 @@ export function GroupCardHeader({
   );
 }
 
-function CopyAllEmailsButton({ emails }: { emails: string[] }) {
+/**
+ * "Copy all parent emails (7)" — one comma-separated list the gedu can paste
+ * straight into Gmail. Exported so the draft redesign's roster panel offers the
+ * same helper rather than growing a second copy of it.
+ */
+export function CopyAllEmailsButton({ emails }: { emails: string[] }) {
   const t = useTranslations("gedu.sessionDetails");
   const { copied, copy } = useCopyToClipboard();
 
@@ -193,7 +198,7 @@ function CopyAllEmailsButton({ emails }: { emails: string[] }) {
  * Strip nulls and de-duplicate so the same parent (e.g. two siblings in
  * the same group) only appears once in the pasted list.
  */
-function deduplicateEmails(emails: (string | null)[]): string[] {
+export function deduplicateEmails(emails: (string | null)[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const email of emails) {

@@ -1161,6 +1161,7 @@
       },
       "yourGroupBadge": "Votre groupe",
       "otherGroupsHeading": "Autres groupes de cette session",
+      "sessionsHeading": "Séances",
       "gedusLabel": "Gedus",
       "noGedus": "Aucun Gedu affecté.",
       "gamersLabel": "Joueurs",
@@ -1180,7 +1181,8 @@
       "noParentEmail": "Aucun e-mail de parent enregistré",
       "emailCopied": "E-mail copié",
       "copyAllParentEmails": "Copier tous les e-mails des parents ({count})",
-      "allEmailsCopied": "Tous les e-mails des parents ont été copiés"
+      "allEmailsCopied": "Tous les e-mails des parents ont été copiés",
+      "rosterDisclosureLabel": "Participants et e-mails des parents"
     },
     "sessionFeed": {
       "upcomingBadge": "Prochaine séance",

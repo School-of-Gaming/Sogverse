@@ -1161,6 +1161,7 @@
       },
       "yourGroupBadge": "Oma ryhmä",
       "otherGroupsHeading": "Muut session ryhmät",
+      "sessionsHeading": "Tapaamiset",
       "gedusLabel": "Gedut",
       "noGedus": "Ryhmälle ei ole määritetty Geduja.",
       "gamersLabel": "Pelaajat",
@@ -1180,7 +1181,8 @@
       "noParentEmail": "Vanhemman sähköpostia ei ole tallennettu",
       "emailCopied": "Sähköposti kopioitu",
       "copyAllParentEmails": "Kopioi kaikki vanhempien sähköpostit ({count})",
-      "allEmailsCopied": "Kaikki vanhempien sähköpostit kopioitu"
+      "allEmailsCopied": "Kaikki vanhempien sähköpostit kopioitu",
+      "rosterDisclosureLabel": "Ryhmäläiset ja huoltajien sähköpostit"
     },
     "sessionFeed": {
       "upcomingBadge": "Seuraava kerta",

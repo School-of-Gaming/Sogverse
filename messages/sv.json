@@ -1161,6 +1161,7 @@
       },
       "yourGroupBadge": "Din grupp",
       "otherGroupsHeading": "Andra grupper i denna session",
+      "sessionsHeading": "Träffar",
       "gedusLabel": "Geduer",
       "noGedus": "Inga Geduer tilldelade.",
       "gamersLabel": "Spelare",
@@ -1180,7 +1181,8 @@
       "noParentEmail": "Ingen förälder-e-post sparad",
       "emailCopied": "E-post kopierad",
       "copyAllParentEmails": "Kopiera alla förälder-e-postadresser ({count})",
-      "allEmailsCopied": "Alla förälder-e-postadresser kopierade"
+      "allEmailsCopied": "Alla förälder-e-postadresser kopierade",
+      "rosterDisclosureLabel": "Deltagare och föräldrarnas e-post"
     },
     "sessionFeed": {
       "upcomingBadge": "Nästa tillfälle",

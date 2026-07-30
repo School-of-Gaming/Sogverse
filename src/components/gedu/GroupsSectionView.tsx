@@ -12,6 +12,18 @@ interface GroupsSectionViewProps {
    * compact row. The view sorts nothing and fetches nothing.
    */
   items: readonly GroupSessionItem[];
+  /**
+   * How many of each product's past sessions still need a write-up.
+   *
+   * The dashboard's whole share of the session feed is this one aggregate per
+   * product — no queue UI, just a badge pointing into the feed, and every card
+   * already navigates to the product page. A product appears once per
+   * occurrence in the list, so the badge is drawn on that product's *first*
+   * card only; repeating it down eight weekly rows would read as eight
+   * separate problems. Omit it entirely and no card carries a badge, which is
+   * what the live dashboard does until the feed is wired up.
+   */
+  attentionByProductId?: Readonly<Record<string, number>>;
 }
 
 /**
@@ -22,7 +34,10 @@ interface GroupsSectionViewProps {
  * dashboard (wrapped by the section that owns the assignments query) and a
  * fixture-driven full-page preview scene.
  */
-export function GroupsSectionView({ items }: GroupsSectionViewProps) {
+export function GroupsSectionView({
+  items,
+  attentionByProductId,
+}: GroupsSectionViewProps) {
   const t = useTranslations("dashboardSections");
 
   if (items.length === 0) {
@@ -33,20 +48,44 @@ export function GroupsSectionView({ items }: GroupsSectionViewProps) {
     );
   }
 
+  const alertCounts = firstCardAlertCounts(items, attentionByProductId);
+
   const [next, ...upcoming] = items;
   return (
     <div className="mx-auto w-full max-w-lg space-y-3">
-      <GroupCard key={sessionKey(next)} {...next} />
-      {upcoming.map((s) => (
+      <GroupCard
+        key={sessionKey(next)}
+        {...next}
+        alertCount={alertCounts[0]}
+      />
+      {upcoming.map((s, index) => (
         <UpcomingGroupSessionCard
           key={sessionKey(s)}
           productName={s.productName}
           sessionStart={s.sessionStart}
           openGroupHref={s.openGroupHref}
+          alertCount={alertCounts[index + 1]}
         />
       ))}
     </div>
   );
+}
+
+/**
+ * The badge count to draw on each card: a product's outstanding total on its
+ * first occurrence in the list, zero on every later one (the badge renders
+ * nothing at zero).
+ */
+function firstCardAlertCounts(
+  items: readonly GroupSessionItem[],
+  attentionByProductId: Readonly<Record<string, number>> | undefined,
+): number[] {
+  const seen = new Set<string>();
+  return items.map((item) => {
+    if (seen.has(item.productId)) return 0;
+    seen.add(item.productId);
+    return attentionByProductId?.[item.productId] ?? 0;
+  });
 }
 
 /**

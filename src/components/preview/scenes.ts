@@ -86,6 +86,31 @@ export const PREVIEW_SCENES = [
     chrome: "public",
     scenarios: PRODUCT_SCENARIOS,
   },
+  {
+    surface: "gedu-dashboard",
+    title: "Gedu dashboard (draft)",
+    description:
+      "The gedu dashboard once the session feed lands: each product card carries an aggregate “needs attention” badge linking into that product’s feed. Cards open the matching product-page scene.",
+    chrome: "dashboard",
+    scenarios: [
+      { slug: "default", label: "Two clubs, one behind" },
+      { slug: "all-clear", label: "Nothing outstanding" },
+      { slug: "unverified", label: "Awaiting verification" },
+    ],
+  },
+  {
+    surface: "gedu-product",
+    title: "Gedu product page (draft)",
+    description:
+      "The product page rebuilt around the session feed: group identity band, roster behind a disclosure, then the term running backwards. The inline write-up editor works against local state.",
+    chrome: "dashboard",
+    scenarios: [
+      { slug: "club-midterm", label: "Club, mid-term" },
+      { slug: "needs-attention", label: "Several write-ups owed" },
+      { slug: "camp-daily", label: "Camp, consecutive days" },
+      { slug: "first-week", label: "Club, first week" },
+    ],
+  },
 ] as const satisfies readonly PreviewSceneMeta[];
 
 export type PreviewScene = (typeof PREVIEW_SCENES)[number];
@@ -101,7 +126,4 @@ export function sceneHasScenario(scene: PreviewScene, scenario: string): boolean
   return scene.scenarios.some((s) => s.slug === scenario);
 }
 
-/** Link target for one scene × scenario pair. */
-export function previewSceneHref(surface: string, scenario: string): string {
-  return `/preview/${surface}/${scenario}`;
-}
+export { previewSceneHref } from "./href";

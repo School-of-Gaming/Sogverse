@@ -11,6 +11,7 @@ import {
   formatSessionDateTimeRange,
 } from "@/lib/session-format";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
+import { SessionFeedAlertBadge } from "@/components/gedu/session-feed";
 
 /**
  * Prominent card for the soonest upcoming session in the gedu dashboard's
@@ -59,6 +60,12 @@ export interface GroupCardProps {
   voiceHref: string;
   /** Where a click anywhere on the card navigates — the gedu's session-details page. */
   openGroupHref: string;
+  /**
+   * Past sessions of this product still needing a write-up. Renders the
+   * aggregate alert badge; zero or absent renders nothing. The card is already
+   * one big link to the product page, which is where the badge points.
+   */
+  alertCount?: number;
 }
 
 export function GroupCard({
@@ -70,6 +77,7 @@ export function GroupCard({
   voiceIsOpen,
   voiceHref,
   openGroupHref,
+  alertCount = 0,
 }: GroupCardProps) {
   const t = useTranslations("gedu.myGroups");
   const locale = useLocale();
@@ -105,12 +113,15 @@ export function GroupCard({
       )}
     >
       <CardHeader className="pb-4">
-        <div className="min-w-0 space-y-0.5">
-          <p className="text-lg font-semibold leading-tight">{productName}</p>
-          <p className="text-sm text-muted-foreground">
-            {t("counts", { groupCount, gamerCount })}
-          </p>
-          <p className="text-sm text-muted-foreground">{sessionTimeLabel}</p>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0 space-y-0.5">
+            <p className="text-lg font-semibold leading-tight">{productName}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("counts", { groupCount, gamerCount })}
+            </p>
+            <p className="text-sm text-muted-foreground">{sessionTimeLabel}</p>
+          </div>
+          <SessionFeedAlertBadge count={alertCount} className="shrink-0" />
         </div>
       </CardHeader>
 

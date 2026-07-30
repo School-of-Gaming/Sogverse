@@ -1206,6 +1206,7 @@
       },
       "yourGroupBadge": "ghom’a’lIj",
       "otherGroupsHeading": "may’vam latlh ghommey",
+      "sessionsHeading": "may’ qaStaHvIS",
       "gedusLabel": "Gedupu’",
       "noGedus": "Gedu tu’lu’be’.",
       "gamersLabel": "Suvwl’pu’",
@@ -1225,7 +1226,8 @@
       "noParentEmail": "vavnI’ QInHom tu’lu’be’",
       "emailCopied": "QInHom ’aQpu’",
       "copyAllParentEmails": "Hoch vavnI’ QInHommey yI’aQ ({count})",
-      "allEmailsCopied": "Hoch vavnI’ QInHommey ’aQpu’"
+      "allEmailsCopied": "Hoch vavnI’ QInHommey ’aQpu’",
+      "rosterDisclosureLabel": "SuvwI’pu’ ’ej vavpu’ QIn"
     },
     "sessionFeed": {
       "upcomingBadge": "may’ veb",

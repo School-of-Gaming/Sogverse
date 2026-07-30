@@ -20,6 +20,9 @@ Route-group wrappers:
 | `(auth)` | same as public, `<main>` centers its child |
 | `(dashboard)` | `<Header>` then `DashboardLayout`: `<div className="flex">` → `<Sidebar>` (admin only) + `<main min-w-0 flex-1>` |
 | `(voice)` | page renders its own voice header (also via `SiteHeaderShell`) then session UI; no app chrome |
+| `(preview)` | pass-through layout — **no chrome at all**; each admin-only preview scene composes the shell of the page it mocks (see below) |
+
+**Rule: the preview route group's layout stays a pass-through.** A full-page preview scene mocks a *specific* page, so it has to compose that page's chrome itself — a dashboard scene renders `Header` + `DashboardLayout` with no sidebar, a public scene renders `Header` + `main` + `Footer`. Putting any chrome in the group layout would either double-wrap a scene or force every scene into one role's shell, which is exactly what moving these routes out of the public group fixed. Adding a shell to a scene means naming it in the scene registry, not editing this layout.
 
 ## `--header-height`
 

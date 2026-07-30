@@ -1161,6 +1161,7 @@
       },
       "yourGroupBadge": "Your group",
       "otherGroupsHeading": "Other groups in this session",
+      "sessionsHeading": "Sessions",
       "gedusLabel": "Gedus",
       "noGedus": "No Gedus assigned.",
       "gamersLabel": "Gamers",
@@ -1180,7 +1181,8 @@
       "noParentEmail": "No parent email on file",
       "emailCopied": "Email copied",
       "copyAllParentEmails": "Copy all parent emails ({count})",
-      "allEmailsCopied": "All parent emails copied"
+      "allEmailsCopied": "All parent emails copied",
+      "rosterDisclosureLabel": "Roster and parent emails"
     },
     "sessionFeed": {
       "upcomingBadge": "Next session",

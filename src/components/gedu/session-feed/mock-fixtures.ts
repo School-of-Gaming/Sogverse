@@ -3,17 +3,18 @@ import { getNextSessionStart } from "@/lib/enrollment";
 import type { SessionFeedEntry, SessionFeedGamer } from "./types";
 
 /**
- * Fixture feed for the `/admin/ui-components` style guide: one realistic weekly
- * club, ten weeks deep, covering every entry state the feed can render.
+ * Fixture feeds for the `/admin/ui-components` style guide and the full-page
+ * preview scenes: realistic groups, deep enough to cover every entry state the
+ * feed can render.
  *
- * Everything is computed from a `now` handed in by the caller (the style guide
- * passes `useNow()`), so the demo always shows a plausible past and future
- * whenever it is opened, and SSR and the first client render agree. There are
- * no absolute dates anywhere in here on purpose.
+ * Everything is computed from a `now` handed in by the caller (callers pass
+ * `useNow()`), so a demo always shows a plausible past and future whenever it
+ * is opened, and SSR and the first client render agree. There are no absolute
+ * dates anywhere in here on purpose.
  *
- * The club meets on Mondays, which is what the name says, so the most recent
- * past session is "last Monday" — anywhere from yesterday to six days ago
- * depending on which day the page is opened. That is the honest shape of a
+ * The default club meets on Mondays, which is what its name says, so the most
+ * recent past session is "last Monday" — anywhere from yesterday to six days
+ * ago depending on which day the page is opened. That is the honest shape of a
  * weekly club; the alternative (deriving the weekday from `now` so the last
  * session is always yesterday) would make the club's own name a lie half the
  * week.
@@ -49,15 +50,27 @@ export const SESSION_FEED_ROSTER: readonly SessionFeedGamer[] = [
 ];
 
 /**
- * What each week is, newest first. Index 0 is the upcoming session; index N is
- * N weeks before it.
+ * How often the group meets.
  *
- * The enforcement epoch sits between weeks 7 and 8: everything from week 7
- * forward is either written up or flagged as owed, and everything older is a
- * quiet "no record" line. That boundary is the whole reason the two gap states
- * look nothing alike — one is work, the other is history.
+ * `weekly` is a club: the same weekday every week. `daily` is a camp: back to
+ * back weekdays, which packs the feed's dates far tighter than a club ever
+ * does and is the layout stress a weekly fixture never shows. Weekends are
+ * skipped in both directions — a camp runs Mon–Fri, and stepping back over a
+ * Sunday would invent a session that never existed.
  */
-type EntrySpec =
+export type SessionFeedCadence = "weekly" | "daily";
+
+/**
+ * What each session is, newest first. Index 0 is the upcoming session; index N
+ * is N sessions before it.
+ *
+ * In the default club run the enforcement epoch sits between weeks 7 and 8:
+ * everything from week 7 forward is either written up or flagged as owed, and
+ * everything older is a quiet "no record" line. That boundary is the whole
+ * reason the two gap states look nothing alike — one is work, the other is
+ * history.
+ */
+export type EntrySpec =
   | { kind: "upcoming" }
   | {
       kind: "recorded";
@@ -70,7 +83,7 @@ type EntrySpec =
   | { kind: "needs_record" }
   | { kind: "no_record" };
 
-const WEEK_SPECS: readonly EntrySpec[] = [
+export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
   { kind: "upcoming" },
 
   {
@@ -131,37 +144,171 @@ export interface SessionFeedFixture {
   entries: SessionFeedEntry[];
 }
 
+export interface SessionFeedFixtureOptions {
+  /**
+   * Flips the upcoming session's Join button between its open and locked
+   * states so both can be eyeballed without waiting for a real window.
+   */
+  voiceIsOpen?: boolean;
+  /** Defaults to `weekly` — the club shape the style guide demos. */
+  cadence?: SessionFeedCadence;
+  /** Overrides the run of sessions; defaults to the ten-week club term. */
+  specs?: readonly EntrySpec[];
+  /** Overrides the group's display name (a camp isn't a Monday club). */
+  clubName?: string;
+  /** Wall-clock start in the source zone, e.g. `"10:00"`. */
+  startTime?: string;
+  durationMinutes?: number;
+}
+
 /**
- * Build the fixture feed against a reference instant.
+ * Build a fixture feed against a reference instant.
  *
- * `voiceIsOpen` flips the upcoming session's Join button between its open and
- * locked states so both can be eyeballed without waiting for a real window.
+ * Defaults reproduce the ten-week Monday club the style guide demos; the
+ * options let a preview scene ask for a different run of states, a camp's
+ * daily cadence, or a different clock face.
  */
 export function buildSessionFeedFixture(
   now: Date,
-  opts: { voiceIsOpen?: boolean } = {},
+  opts: SessionFeedFixtureOptions = {},
 ): SessionFeedFixture {
-  const upcomingStart = getNextSessionStart(
-    { dayOfWeek: WEEKDAY, startTime: START_TIME, timezone: TIMEZONE },
-    { now },
-  );
+  const {
+    voiceIsOpen = false,
+    cadence = "weekly",
+    specs = SESSION_FEED_WEEK_SPECS,
+    clubName = SESSION_FEED_CLUB_NAME,
+    startTime = START_TIME,
+    durationMinutes,
+  } = opts;
 
-  const entries = WEEK_SPECS.map((spec, weeksBack) => {
-    const startsAt = weeksBefore(upcomingStart, weeksBack);
-    const endsAt = new Date(startsAt.getTime() + DURATION_MS);
+  const durationMs =
+    durationMinutes === undefined ? DURATION_MS : durationMinutes * 60 * 1000;
+
+  const starts = sessionStartsForCadence({
+    now,
+    count: specs.length,
+    cadence,
+    weekday: WEEKDAY,
+    startTime,
+    timeZone: TIMEZONE,
+  });
+
+  const entries = specs.map((spec, sessionsBack) => {
+    const startsAt = starts[sessionsBack];
+    const endsAt = new Date(startsAt.getTime() + durationMs);
     // Index-keyed rather than date-keyed so an entry keeps its identity across
-    // the `useNow()` tick — the style guide holds edits in local state against
-    // these ids.
-    const id = `mock-session-${weeksBack}`;
-    return toEntry(spec, { id, startsAt, endsAt, voiceIsOpen: opts.voiceIsOpen ?? false });
+    // the `useNow()` tick — callers hold edits in local state against these ids.
+    const id = `mock-session-${sessionsBack}`;
+    return toEntry(spec, { id, startsAt, endsAt, voiceIsOpen });
   });
 
   return {
-    clubName: SESSION_FEED_CLUB_NAME,
+    clubName,
     timeZone: TIMEZONE,
     roster: SESSION_FEED_ROSTER,
     entries,
   };
+}
+
+/**
+ * The `count` most recent session starts for a cadence, newest first: index 0
+ * is the next session still ahead of us, index N the one N sessions before it.
+ *
+ * Pure and exported so the cadence arithmetic can be unit-tested without
+ * rendering anything. Every step walks the calendar **in the source zone**
+ * rather than subtracting a flat number of milliseconds: across a DST boundary
+ * a flat subtraction drifts an hour, which would show up in the feed as a club
+ * that mysteriously met at 15:30 for half the term.
+ */
+export function sessionStartsForCadence(opts: {
+  now: Date;
+  count: number;
+  cadence: SessionFeedCadence;
+  /** 0 = Monday. Only the weekly cadence uses it. */
+  weekday: number;
+  startTime: string;
+  timeZone: string;
+}): Date[] {
+  const { now, count, cadence, weekday, startTime, timeZone } = opts;
+  if (count <= 0) return [];
+
+  const first =
+    cadence === "weekly"
+      ? getNextSessionStart(
+          { dayOfWeek: weekday, startTime, timezone: timeZone },
+          { now },
+        )
+      : nextWeekdayStart(now, startTime, timeZone);
+
+  const starts = [first];
+  for (let i = 1; i < count; i++) {
+    starts.push(
+      cadence === "weekly"
+        ? shiftZonedDays(starts[i - 1], -7, timeZone)
+        : previousWeekdayStart(starts[i - 1], timeZone),
+    );
+  }
+  return starts;
+}
+
+/**
+ * The next Mon–Fri occurrence of a wall-clock time, at or after `now`.
+ *
+ * A camp has no single weekday to aim at, so this walks forward a day at a
+ * time from today in the camp's own zone, skipping the weekend, and takes the
+ * first slot that hasn't already started.
+ */
+function nextWeekdayStart(now: Date, startTime: string, timeZone: string): Date {
+  const zonedNow = toZonedTime(now, timeZone);
+  for (let offset = 0; offset <= 7; offset++) {
+    const candidate = new Date(zonedNow.getTime());
+    candidate.setDate(candidate.getDate() + offset);
+    if (isWeekendDay(candidate.getDay())) continue;
+
+    const start = fromZonedTime(
+      `${wallDate(candidate)}T${startTime}:00`,
+      timeZone,
+    );
+    if (start.getTime() > now.getTime()) return start;
+  }
+  // Unreachable: at most three consecutive days are skipped (a Friday evening
+  // start plus the weekend), so a match always lands inside the eight-day walk.
+  throw new Error("no weekday session start found within eight days");
+}
+
+/** One weekday earlier, same wall clock, weekend skipped. */
+function previousWeekdayStart(instant: Date, timeZone: string): Date {
+  let candidate = shiftZonedDays(instant, -1, timeZone);
+  while (isWeekendDay(toZonedTime(candidate, timeZone).getDay())) {
+    candidate = shiftZonedDays(candidate, -1, timeZone);
+  }
+  return candidate;
+}
+
+/** JS `getDay()`: 0 = Sunday, 6 = Saturday. */
+function isWeekendDay(jsDay: number): boolean {
+  return jsDay === 0 || jsDay === 6;
+}
+
+/**
+ * Shift by whole calendar days in `timeZone`, keeping the wall clock.
+ *
+ * `toZonedTime` hands back a Date whose *local* fields read the wall clock in
+ * the zone, so `setDate` moves calendar days there and the `fromZonedTime`
+ * round-trip returns the right instant.
+ */
+function shiftZonedDays(instant: Date, days: number, timeZone: string): Date {
+  if (days === 0) return instant;
+  const zoned = toZonedTime(instant, timeZone);
+  zoned.setDate(zoned.getDate() + days);
+  return fromZonedTime(zoned, timeZone);
+}
+
+/** `YYYY-MM-DD` from a Date whose local fields already read the target zone. */
+function wallDate(zoned: Date): string {
+  const month = String(zoned.getMonth() + 1).padStart(2, "0");
+  const day = String(zoned.getDate()).padStart(2, "0");
+  return `${zoned.getFullYear()}-${month}-${day}`;
 }
 
 function toEntry(
@@ -171,8 +318,8 @@ function toEntry(
   const { id, startsAt, endsAt, voiceIsOpen } = base;
   switch (spec.kind) {
     case "upcoming":
-      // `"#"` keeps the Join button inert — the style guide has no room to
-      // join, and the button renders its real open state either way.
+      // `"#"` keeps the Join button inert — a fixture has no room to join, and
+      // the button renders its real open state either way.
       return { kind: "upcoming", id, startsAt, endsAt, voiceIsOpen, voiceHref: "#" };
     case "recorded": {
       const absent = new Set(spec.absent ?? []);
@@ -195,20 +342,4 @@ function toEntry(
     case "no_record":
       return { kind: "no_record", id, startsAt, endsAt };
   }
-}
-
-/**
- * Step back whole weeks in the club's own zone, not by a flat 7×24h.
- *
- * `toZonedTime` hands back a Date whose *local* fields read the wall clock in
- * `TIMEZONE`, so `setDate(-7n)` subtracts calendar weeks there and the
- * `fromZonedTime` round-trip returns the right instant. A flat millisecond
- * subtraction drifts an hour across a DST boundary, which would show up in the
- * feed as a club that mysteriously met at 15:30 for half the term.
- */
-function weeksBefore(instant: Date, weeks: number): Date {
-  if (weeks === 0) return instant;
-  const zoned = toZonedTime(instant, TIMEZONE);
-  zoned.setDate(zoned.getDate() - weeks * 7);
-  return fromZonedTime(zoned, TIMEZONE);
 }

@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation";
+import { isGeduDashboardScenario } from "@/components/gedu/mock-dashboard-fixtures";
+import { isGeduProductScenario } from "@/components/gedu/session-details/mock-product-page-fixtures";
 import { isPreviewScenario } from "@/components/public/products/mock-detail-fixtures";
 import type { PreviewSurface } from "./scenes";
+import { GeduDashboardScene } from "./scenes/gedu-dashboard-scene";
+import { GeduProductPageScene } from "./scenes/gedu-product-page-scene";
 import { ProductDetailScene } from "./scenes/product-detail-scene";
 import { PurchaseConfirmationScene } from "./scenes/purchase-confirmation-scene";
 
@@ -28,6 +32,14 @@ const SCENE_RENDERERS: Record<
   confirmation: (scenario) => {
     if (!isPreviewScenario(scenario)) notFound();
     return <PurchaseConfirmationScene scenario={scenario} />;
+  },
+  "gedu-dashboard": (scenario) => {
+    if (!isGeduDashboardScenario(scenario)) notFound();
+    return <GeduDashboardScene scenario={scenario} />;
+  },
+  "gedu-product": (scenario) => {
+    if (!isGeduProductScenario(scenario)) notFound();
+    return <GeduProductPageScene scenario={scenario} />;
   },
 };
 

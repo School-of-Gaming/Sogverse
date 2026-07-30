@@ -1,3 +1,4 @@
+export { CollapsibleRegion } from "./CollapsibleRegion";
 export { SessionFeed } from "./SessionFeed";
 export { SessionFeedAlertBadge } from "./SessionFeedAlertBadge";
 export {

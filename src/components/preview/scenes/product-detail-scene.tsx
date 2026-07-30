@@ -6,7 +6,7 @@ import {
   buildScenarioFixture,
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
-import { previewSceneHref } from "../scenes";
+import { previewSceneHref } from "../href";
 
 /**
  * The public product detail page, rendered from a scenario fixture.

@@ -1,24 +1,39 @@
+"use client";
+
 import { useTranslations } from "next-intl";
-import { CreateInstantRoomCard } from "@/components/voice/instant/CreateInstantRoomCard";
 import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
-import type { MyAssignedProductSessionRow } from "@/services/assignments";
-import { GroupsSection } from "./GroupsSection";
 import { UnverifiedVoiceNotice } from "./unverified-voice-notice";
 
 /**
- * The gedu dashboard's page body — everything below the route's data shell.
+ * **Draft** gedu dashboard body — what the page becomes once the session feed
+ * lands. Rendered today only by a full-page preview scene; at promotion it
+ * replaces the live body and the route passes the wired sections in.
  *
- * It lives apart from `app/(dashboard)/gedu/page.tsx` so the page is only a
- * data shell (auth, prefetch) and the body is a plain component: that is what
- * lets a full-page preview scene render the dashboard exactly as a gedu meets
- * it, with fixtures in place of the server reads.
+ * The one change from the page it replaces is small on purpose: per the feed
+ * plan the dashboard gets *no* queue UI, only an aggregate "N sessions need
+ * attention" badge on each product's card, pointing into that product's feed.
+ * That badge lives in the session's card components behind an optional count,
+ * so the live dashboard is untouched until the shell starts supplying numbers —
+ * the draft here is not a second copy of those cards.
+ *
+ * Both data-bound sections arrive as nodes rather than being reached for
+ * directly. That is the shell/body seam: the live shell will pass the
+ * query-bound Sessions section and the wired instant-room card, a preview scene
+ * passes their presentational cores over fixtures with the backend actions
+ * inert. The body itself stays a plain function of its props, which is what
+ * lets one body serve both shells.
  */
-export function GeduDashboardPageBody({
-  initialRows,
+export function GeduDashboardPageBodyDraft({
+  sessionsSection,
   verified,
+  instantRoomCard,
 }: {
-  initialRows: MyAssignedProductSessionRow[];
+  /** The Sessions section — the whole list of upcoming occurrences. */
+  sessionsSection: React.ReactNode;
+  /** Has an admin verified this gedu? Gates the instant-room panel. */
   verified: boolean;
+  /** The instant-voice-room panel shown to a verified gedu. */
+  instantRoomCard: React.ReactNode;
 }) {
   const t = useTranslations("dashboardSections");
   const m = useTranslations("metadata.pages");
@@ -42,7 +57,7 @@ export function GeduDashboardPageBody({
         <section id="sessions" className="scroll-mt-32">
           <div className="mx-auto max-w-3xl space-y-6">
             <h2 className="text-3xl font-bold">{t("upcomingSessions")}</h2>
-            <GroupsSection initialRows={initialRows} />
+            {sessionsSection}
           </div>
         </section>
 
@@ -56,7 +71,7 @@ export function GeduDashboardPageBody({
         >
           <div className="mx-auto max-w-3xl space-y-6">
             <h2 className="text-3xl font-bold">{t("instantVoiceRoom")}</h2>
-            {verified ? <CreateInstantRoomCard /> : <UnverifiedVoiceNotice />}
+            {verified ? instantRoomCard : <UnverifiedVoiceNotice />}
           </div>
         </section>
       </div>
