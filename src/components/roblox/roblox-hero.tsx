@@ -2,6 +2,17 @@ import { useTranslations } from "next-intl";
 import { ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { PartnerLockup } from "@/components/roblox/partner-lockup";
+import { rawString } from "@/lib/i18n/raw-messages";
+
+/**
+ * Slogan type scale per character budget, narrowest budget first. See the
+ * component doc below for the arithmetic behind each step and why `md` steps
+ * down rather than up in the wider budget.
+ */
+const SLOGAN_SIZES = [
+  { maxChars: 8, className: "text-2xl sm:text-4xl lg:text-5xl xl:text-6xl" },
+  { maxChars: 11, className: "text-2xl sm:text-4xl md:text-3xl lg:text-4xl xl:text-5xl" },
+] as const;
 
 /**
  * The /roblox hero: three-beat pixel slogan, subtitle, inert CTA, partner
@@ -24,26 +35,45 @@ import { PartnerLockup } from "@/components/roblox/partner-lockup";
  * smudges pixel glyphs together) and no `text-balance` (the line breaks are
  * authored in the copy).
  *
- * **The slogan's size steps are load-bearing, so do not raise them casually.**
- * Press Start 2P advances almost exactly 1em per character, so a line's width is
- * simply (characters x font-size) and the two-column layout gives it only half
- * the container. Worst case is the longest line in any locale — currently 8
- * characters ("Build It", French "Possédez") — checked against the column at
- * each step:
+ * **The slogan's size is derived from the copy, not fixed.** Press Start 2P is a
+ * true monospace whose every glyph advances exactly 1000/1000 units — 1em per
+ * character, verified from the font's own hmtx table — so a line's width is
+ * simply (characters x font-size), and the two-column layout gives it only half
+ * the container. That makes the safe size a pure function of the longest line,
+ * and locales differ: "Build It" is 8 characters, French "Construisez" is 11.
  *
- *     sm  640px   36px   1 col, 608px avail   8x36 = 288px
- *     md  768px   36px   344px column        8x36 = 288px
- *     lg  1024px  48px   472px column        8x48 = 384px
- *     xl  1280px+ 60px   536px column        8x60 = 480px
+ * Picking one size for the longest locale would shrink the slogan for everyone,
+ * so `SLOGAN_SIZES` holds a step per budget and the longest line selects it.
+ * Verified against the column at each breakpoint:
  *
- * Hence the jump to 60px waits for `xl`: at `lg` it would need 480px of a 472px
- * column and wrap, which for a slogan whose whole point is one beat per line is
- * the one failure that matters. A **translation longer than 8 characters per
- * line breaks this** — keep new locales inside that budget rather than shrinking
- * the type for everyone.
+ *     8 chars    sm 36px / 608px avail   md 36px / 344px   lg 48px / 472px   xl 60px / 536px
+ *                   288px OK               288px OK          384px OK          480px OK
+ *     11 chars   sm 36px / 608px avail   md 30px / 344px   lg 36px / 472px   xl 48px / 536px
+ *                   396px OK               330px OK          396px OK          528px OK
+ *
+ * Two things that look like mistakes and are not. The jump to 60px waits for
+ * `xl` because at `lg` even 8 characters would need 480px of a 472px column. And
+ * the 11-character step *decreases* from `sm` to `md`, because `md` is where the
+ * grid splits and the available width drops from 608px to 344px.
+ *
+ * A locale longer than the largest budget wraps, which for a slogan whose whole
+ * point is one beat per line is the one failure that matters — so add a step
+ * here rather than letting it wrap.
  */
 export function RobloxHero() {
   const t = useTranslations("roblox");
+
+  // Longest beat in this locale's slogan, which selects the size step above.
+  // Measured off the raw message because the rendered output is React elements:
+  // strip the rich-text tags, split on the authored line breaks, take the max.
+  const longestBeat = Math.max(
+    ...rawString(t.raw("hero.title"))
+      .split("<br></br>")
+      .map((beat) => beat.replace(/<[^>]+>/g, "").length),
+  );
+  const sloganSize =
+    SLOGAN_SIZES.find(({ maxChars }) => longestBeat <= maxChars) ??
+    SLOGAN_SIZES[SLOGAN_SIZES.length - 1];
 
   return (
     // Same gradient treatment as the home page hero, pulled up under the
@@ -53,7 +83,9 @@ export function RobloxHero() {
       <div className="container mx-auto max-w-6xl px-4 py-20 sm:py-28">
         <div className="grid items-center gap-14 md:grid-cols-2 md:gap-12">
           <div className="text-center md:text-left">
-            <h1 className="font-display text-2xl font-bold leading-snug sm:text-4xl lg:text-5xl xl:text-6xl">
+            <h1
+              className={`font-display font-bold leading-snug ${sloganSize.className}`}
+            >
               {t.rich("hero.title", {
                 br: () => <br />,
                 primary: (chunks) => <span className="text-primary">{chunks}</span>,

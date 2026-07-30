@@ -8,3 +8,8 @@ import { z } from "zod";
 export function rawStringArray(raw: unknown): string[] {
   return z.array(z.string()).parse(raw);
 }
+
+/** Same contract as `rawStringArray`, for a single raw message string. */
+export function rawString(raw: unknown): string {
+  return z.string().parse(raw);
+}
