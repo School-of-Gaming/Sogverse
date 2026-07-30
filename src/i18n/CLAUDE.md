@@ -31,6 +31,26 @@ Per-locale JSON in `messages/<code>.json` at the repo root (`en`, `fi`, `sv`, `f
 
 A CI script (under `scripts/`) validates translation completeness on every push — missing keys, empty values, and stale keys. It picks up new locale files automatically.
 
+## Editing a message catalog
+
+**Rule: for any change touching more than a handful of keys, edit a catalog with a script that round-trips the file — not a hand merge.** Every `messages/*.json` round-trips byte-identically through `JSON.stringify(parsed, null, 2) + "\n"`, so a scripted set-by-path merge cannot reformat the file or reorder keys. Assert each target path already exists, so a mistyped key fails loudly instead of silently adding one the other locales don't have.
+
+Gates for a catalog change: the completeness script under `scripts/`, **plus** an ICU parse of every string in the changed locale and a placeholder/tag parity check against `en.json`. Human-supplied copy is the main source of broken `{placeholder}` and `<tag>` pairs, and completeness checking does not look inside a value. `intl-messageformat` is already available as a transitive dep — a throwaway check script has to sit inside the repo to resolve it.
+
+French typography: U+2019 for apostrophes (never U+0027, outside code samples) and a no-break space only after `n°`. Copy pasted from a person or a spreadsheet always arrives with straight apostrophes; normalise on the way in.
+
+## French register and glossary
+
+**Rule: French is a transcreation, not a literal mirror of `en.json`.** Public-page marketing copy — including the slogan, whose French imagery deliberately differs from the English — was rewritten by a native speaker rather than translated. CI enforces key parity and cannot see meaning, so a French string that says something other than its English counterpart on a public page is intentional and must not be "corrected" back.
+
+**The divergence is scoped to French alone.** `fi`, `sv` and `tlh` render the English positioning; French does not. Do not reconcile the two in either direction — neither by pulling French back toward the English source, nor by pushing the French imagery outward into the other locales. Diverging a second locale is a positioning decision for the owner, not a consistency fix.
+
+- **Role name splits by register.** `animateur` / `animatrice` on public and parent-facing surfaces; `éducateur de jeu` in formal copy — terms, privacy policy, discipline policy, the educator registration page, and staff back-office. `animateur` is the familiar word from French youth-club and summer-camp culture; `éducateur de jeu` reads as a calque but is the right register for legal and internal text.
+- **`Gedu` is a product name, never translated — but never used cold in general public prose.** Describe the adult as an `animateur` there. `Gedu` appears where the copy introduces it with a gloss, and throughout the signed-in product (dashboards, voice, admin, email), where the reader already knows the word.
+- **Municipality: the adjective is `municipal` / `municipaux`, the noun stays `commune`.** "Clubs municipaux", but "payé par votre commune". `municipal` maps to town-funded public services in French; `communal` is correct but less instinctive.
+- **`vous` to adults, `tu` in child-facing strings.**
+- **Never use the middle dot (`Prêt·e`) to dodge gender agreement — reframe instead.** It is visually awkward on screen and contested in France. Open child-facing prompts with a construction that takes no agreement, and where inserting a name would force a participle to inflect, state the event as a noun phrase (an enrolment is confirmed) rather than agreeing with the person.
+
 ## Locale resolution
 
 Priority order:
@@ -118,6 +138,25 @@ Flag selectively (~5% of the catalog, not everything): idiom/tone doubts, market
 taglines, legal text, and gendered/inflection frames. Drop staff-internal tooling and
 developer-docs strings — a non-technical reviewer can't judge them. Invite the reviewer
 to add rows for anything not flagged that bothers them.
+
+### Applying a returned review
+
+It is a merge, not an overwrite.
+
+- **Reconcile every row against the *current* value, not the one in the workbook** — the
+  catalog moves on while the review is out, and a reviewer edit must never silently revert
+  a later fix. Re-apply house typography onto their wording rather than pasting it raw. An
+  empty correction column means "approved", not "blank".
+- **A correction often quotes only the sentence being fixed.** Splice that sentence into
+  the existing value; replacing the whole string drops the substantive copy that followed
+  it — most damaging in legal text, where the dropped clause is the obligation.
+- **A reviewer may return a second artifact** (a full copy rewrite) beside the workbook.
+  Do not assume the newer file supersedes the older: diff them and take the conflicts to
+  the owner. A rewrite drafted from the original text silently reverts the workbook's own
+  corrections — including the ones the reviewer argued for hardest.
+- **A glossary or register verdict fans out well beyond the flagged rows.** Scope it with
+  the owner before mass-editing, then sweep the whole catalog for the old term so no
+  stragglers survive.
 
 ## Adding a namespace
 

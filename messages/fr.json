@@ -1,8 +1,8 @@
 {
   "metadata": {
     "title": "Sogverse – School of Gaming",
-    "description": "Là où le temps d’écran devient du temps de qualité, grâce à des clubs Minecraft encadrés par des éducateurs de jeu professionnels.",
-    "shortDescription": "School of Gaming – Là où le temps d’écran devient du temps de qualité",
+    "description": "Là où le temps d’écran devient du temps qui fait grandir, grâce à des clubs Minecraft encadrés par des animateurs professionnels.",
+    "shortDescription": "School of Gaming : là où le temps d’écran devient du temps qui fait grandir",
     "pages": {
       "signIn": "Connexion",
       "createAccount": "Créer un compte",
@@ -22,7 +22,7 @@
       "voiceSession": "Session vocale",
       "help": "Aide",
       "shop": "Boutique",
-      "schools": "Clubs communaux",
+      "schools": "Clubs municipaux",
       "unlockPin": "Saisir le code PIN",
       "resetPin": "Réinitialiser le code PIN",
       "changePin": "Modifier le code PIN",
@@ -60,7 +60,7 @@
     "optional": "(facultatif)",
     "signIn": "Connexion",
     "signOut": "Déconnexion",
-    "getStarted": "Commencer",
+    "getStarted": "C’est parti !",
     "viewDetails": "Voir les détails",
     "learnMore": "En savoir plus",
     "exploreClubs": "Découvrir les clubs",
@@ -103,50 +103,50 @@
   "about": {
     "hero": {
       "title": "À propos de <primary>School of Gaming</primary>",
-      "subtitle": "Dans nos clubs Minecraft, le temps d’écran devient du temps de qualité. Nous réunissons les enfants, des éducateurs de jeu professionnels et le jeu qu’ils adorent déjà — pour créer des expériences d’apprentissage ludiques où ils se font de nouveaux amis, développent de vraies compétences et s’amusent."
+      "subtitle": "Dans nos clubs Minecraft, le temps d’écran devient du temps qui fait vraiment grandir. Nous réunissons les enfants, des animateurs passionnés et le jeu qu’ils adorent, pour créer des moments où les liens se nouent, les compétences se forgent, et le plaisir est au rendez-vous."
     },
     "quote": {
-      "text": "« Ce qui est vrai aujourd’hui n’était autrefois que votre imagination. »",
-      "attribution": "— Le Directeur de la School of Gaming"
+      "text": "« Tout ce qui est réel aujourd’hui n’était hier que dans votre imagination. »",
+      "attribution": "— Le Maître du Jeu, School of Gaming"
     },
     "mission": {
       "heading": "Notre mission",
-      "text": "Tous les contenus à l’écran ne se valent pas. Le jeu vidéo est un excellent loisir dès lors qu’on le traite comme tous les autres. Nous mettons la passion des enfants pour le jeu à leur service — avec de bons amis et un éducateur de jeu professionnel présent pour les guider et les aider."
+      "text": "Tous les écrans ne se valent pas. Quand le jeu vidéo est bien encadré, c’est un loisir enrichissant, pas si différent du foot ou de la musique. Notre mission : mettre la passion des enfants pour le jeu au service de leur développement, avec de vrais amis et un animateur professionnel pour les guider."
     },
     "values": {
       "heading": "Ce qui compte pour nous",
       "playIsEssential": {
         "title": "Le jeu est essentiel pour les enfants",
-        "description": "Jouer, c’est le travail de l’enfant. C’est déterminant pour son bien-être et son développement. Nos clubs sont conçus pour favoriser le jeu libre, qui nourrit l’imagination, la curiosité et la créativité — des outils puissants pour affronter n’importe quel avenir."
+        "description": "Jouer, c’est le travail de l’enfant. C’est fondamental pour son équilibre et sa construction. Nos clubs favorisent le jeu libre et créatif : celui qui nourrit l’imagination, développe la curiosité, et prépare à tout."
       },
       "friendsCarry": {
-        "title": "Les amis aident à franchir les obstacles",
-        "description": "Personne ne devrait rester sans ami. Les moments de jeu et d’amitié aident les enfants à franchir tous les obstacles de la vie. Dans nos clubs, les enfants tissent des liens sincères au fil d’aventures partagées."
+        "title": "Les amis, ça change tout",
+        "description": "Personne ne devrait rester sans ami. Les aventures partagées créent des liens sincères et durables. Dans nos clubs, les enfants ne se retrouvent jamais seuls face à un défi."
       },
       "keepChildrenSafe": {
         "title": "Protéger les enfants en ligne",
-        "description": "Nous cultivons des communautés en ligne inclusives, bienveillantes et sûres. Nous faisons grandir des citoyens numériques attentionnés et polis, qui veillent sur les autres joueurs. Tolérance zéro pour le harcèlement et la toxicité."
+        "description": "Nous construisons des communautés où la bienveillance est la règle. Nos clubs apprennent aux enfants à être de bons citoyens du numérique : ceux qui veillent sur les autres, pas ceux qui font du mal. Tolérance zéro pour le harcèlement."
       },
       "familyInTheLoop": {
         "title": "La famille reste dans la boucle",
-        "description": "Les parents sont nos partenaires. Vous gardez la maîtrise de l’expérience de jeu de votre enfant, pendant qu’il profite de la liberté d’explorer, de créer et de se faire des amis dans un environnement sûr."
+        "description": "Les parents sont nos partenaires. Vous gardez la main sur l’expérience de jeu de votre enfant, pendant qu’il profite d’un espace pour explorer, créer et se faire de vrais amis."
       }
     },
     "howClubsWork": {
       "heading": "Comment fonctionnent nos clubs",
-      "paragraph1": "Chaque semaine, nos joueurs se connectent et sont accueillis par leur propre éducateur de jeu — un Gedu. Le Gedu les guide à travers le thème du jour, en laissant aux enfants l’espace et la liberté de faire de ces aventures les leurs.",
-      "paragraph2": "Nos Gedus sont eux-mêmes des joueurs. Ils savent d’expérience que, chez les enfants et les adolescents, l’identité et les amitiés se construisent aussi bien en ligne qu’hors ligne. Cette compréhension façonne chacune des sessions qu’ils animent.",
-      "paragraph3": "Tous nos clubs s’articulent autour d’histoires qui laissent aux joueurs la place d’explorer, de créer et d’imaginer. Entre les sessions hebdomadaires, les joueurs reçoivent des défis amusants à relever en ligne et hors ligne. Pendant les vacances, nous organisons des camps, et chaque semaine il y a des événements communautaires, des tournois et des concours.",
-      "paragraph4": "Chaque joueur prête serment de se comporter avec gentillesse et droiture — dans le jeu, sur le chat vocal comme dans la vie réelle. Les mêmes valeurs s’appliquent partout."
+      "paragraph1": "Chaque semaine, les joueurs retrouvent leur Gedu, leur animateur de jeu. Ensemble, ils explorent le thème du jour dans l’univers Minecraft, mais le Gedu laisse toujours aux enfants la liberté de s’approprier l’aventure.",
+      "paragraph2": "Nos Gedus sont des joueurs avant tout. Ils savent ce que c’est de grandir avec les jeux vidéo, de construire son identité en ligne, de se lier d’amitié à travers un écran. Cette expérience, ils la mettent au service des enfants à chaque session.",
+      "paragraph3": "Les clubs sont construits autour d’histoires évolutives qui invitent à explorer, créer et imaginer. Entre les sessions, les joueurs reçoivent des défis à relever, en ligne et dans la vraie vie. Les vacances sont l’occasion de camps, et tout au long de l’année ont lieu des tournois, des événements communautaires et des concours.",
+      "paragraph4": "Chaque joueur s’engage à se comporter avec bienveillance et intégrité : en jeu, en vocal, dans la vie réelle. Les mêmes valeurs, partout."
     },
     "forParents": {
       "heading": "Pour les parents",
-      "paragraph1": "L’éducation au jeu des parents est une part aussi importante de notre travail que les clubs eux-mêmes. Nous voulons aider les parents à suivre l’évolution permanente du monde du jeu vidéo, afin qu’ils puissent accompagner leur enfant en toute confiance.",
-      "paragraph2": "Vous gardez la maîtrise — gestion des comptes, des inscriptions et des dépenses — pendant que votre enfant profite d’un environnement sûr, encadré par des professionnels qui s’investissent."
+      "paragraph1": "Accompagner son enfant dans le jeu vidéo, ça s’apprend aussi. Le monde du gaming évolue vite, et personne ne peut tout suivre. On est là pour ça : vous tenir au courant, vous expliquer ce qui se passe, et faire en sorte que vous vous sentiez à l’aise avec ce que vit votre enfant.",
+      "paragraph2": "Côté pratique, vous gardez la main sur tout : comptes, inscriptions, dépenses. Votre enfant joue dans un environnement sécurisé, encadré par des professionnels qui s’investissent vraiment."
     },
     "cta": {
       "heading": "Rejoignez notre communauté",
-      "subheading": "Offrez à votre enfant un endroit amusant et sûr pour jouer, apprendre et se faire des amis — accompagné par un éducateur de jeu professionnel."
+      "subheading": "Offrez à votre enfant un espace amusant et sécurisé pour jouer, apprendre et se faire de vrais amis, encadré par un animateur professionnel."
     }
   },
   "admin": {
@@ -170,8 +170,8 @@
           "plural": "clubs grand public"
         },
         "municipalityClub": {
-          "label": "club communal",
-          "plural": "clubs communaux"
+          "label": "club municipal",
+          "plural": "clubs municipaux"
         },
         "camp": {
           "label": "camp",
@@ -232,7 +232,7 @@
           "startDate": "Date de début",
           "endDate": "Date de fin",
           "signupThreshold": "Seuil d’inscriptions",
-          "termDates": "Dates de la période",
+          "termDates": "Dates de la période scolaire",
           "holidayCalendars": "Calendriers de vacances",
           "billingMode": "Facturation",
           "seats": "Places",
@@ -328,9 +328,9 @@
         "threshold": "ex. 8",
         "name": {
           "consumerClub": "ex. Club Minecraft Redstone",
-          "municipalityClub": "ex. Club Minecraft de Tapiola · Printemps 2026",
+          "municipalityClub": "ex. Club Minecraft de Montreuil · Printemps 2026",
           "camp": "ex. Camp de game design · Vacances d’automne",
-          "event": "ex. Balade communautaire Pokémon GO · Helsinki"
+          "event": "ex. Balade communautaire Pokémon GO · Paris"
         },
         "description": {
           "consumerClub": "Ce qui se passe chaque semaine, à qui cela s’adresse, ce qu’ils vont apprendre.",
@@ -398,7 +398,7 @@
       },
       "fees": {
         "sectionTitle": "Montants par session",
-        "sectionDescription": "Ce que nous versons aux éducateurs de jeu à chaque session et — pour les clubs communaux — ce que la commune nous verse. Ce sont des chiffres internes, distincts de ce que paient les parents ci-dessus.",
+        "sectionDescription": "Ce que nous versons aux éducateurs de jeu à chaque session et — pour les clubs municipaux — ce que la commune nous verse. Ce sont des chiffres internes, distincts de ce que paient les parents ci-dessus.",
         "primaryGeduLabel": "Rémunération du Gedu principal",
         "primaryGeduHint": "Versée à l’éducateur de jeu principal pour chaque session. Choisissez Inconnu si vous la définirez plus tard, ou Bénévole s’il anime gratuitement.",
         "assistantGeduLabel": "Rémunération du Gedu assistant",
@@ -443,7 +443,7 @@
         "deliveredInHint": "La langue principale utilisée pendant les sessions.",
         "onlineNoLocation": "En ligne et accessible à tous — aucun lieu n’est nécessaire. Tout parent parcourant le catalogue le verra, où qu’il habite.",
         "voiceRoomAuto": "Un salon vocal sera créé automatiquement pour ce produit.",
-        "municipalityHint": "Les clubs communaux sont toujours rattachés à une commune finlandaise précise — celle qui les finance. Les parents de cette commune le verront en parcourant le catalogue.",
+        "municipalityHint": "Les clubs municipaux sont toujours rattachés à une commune finlandaise précise — celle qui les finance. Les parents de cette commune le verront en parcourant le catalogue.",
         "siteHint": "Où les sessions se déroulent physiquement.",
         "eventSingleDay": "Les événements ont lieu à une seule date.",
         "thresholdOnly": "Pas encore de date de début fixe. Les parents voient un compteur « X sur Y requis » pendant le remplissage. Vous appuyez sur Démarrer quand vous avez assez d’inscriptions et vous choisissez alors la date de la première session.",
@@ -457,7 +457,7 @@
         "pricingMonthly": "Prélevé chaque mois tant que l’abonnement est actif. Résiliable à tout moment.",
         "pricingUpfront": "Prélevé une seule fois à l’inscription. Même montant total quelle que soit la durée.",
         "seatHint": "Une fois complet, les nouvelles inscriptions passent en liste d’attente.",
-        "visibleHint": "Décochez pendant que vous préparez encore le produit, ou pour arrêter les nouvelles inscriptions. Cela masque seulement le produit aux nouveaux parents — les parents et les joueurs déjà inscrits continuent de le voir, ainsi que leurs sessions, sur leur page Mon SOG.",
+        "visibleHint": "Décochez pendant que vous préparez encore le produit, ou pour arrêter les nouvelles inscriptions. Cela ne masque le produit qu’aux nouveaux parents — les parents et les joueurs déjà inscrits continuent de le voir, ainsi que leurs sessions, sur leur page Mon SOG.",
         "seatLimitHint": "Plafonnez le nombre de joueurs, ou fonctionnez sans limite.",
         "holidayComingSoon": "Les calendriers de vacances arrivent bientôt. Pour l’instant, toutes les sessions programmées ont lieu.",
         "startDateToday": "Verrouillée sur la date du jour pour le moment.",
@@ -470,7 +470,7 @@
         "spokenLanguageRequired": "La langue parlée est obligatoire",
         "minAgeInvalid": "L’âge minimum doit être un entier positif ou nul",
         "maxAgeInvalid": "L’âge maximum doit être supérieur ou égal à l’âge minimum",
-        "municipalityRequired": "La commune est obligatoire pour les clubs communaux en ligne",
+        "municipalityRequired": "La commune est obligatoire pour les clubs municipaux en ligne",
         "siteRequired": "Le site est obligatoire pour les produits en présentiel",
         "scheduleRequired": "Au moins un créneau est requis",
         "padletInvalid": "L’URL Padlet doit être une URL valide",
@@ -592,7 +592,7 @@
           "parent": "Parent : {name}"
         },
         "unassigned": {
-          "title": "Non attribués",
+          "title": "Sans groupe",
           "subtitle": "Joueurs qui ont payé mais ne sont pas encore dans un groupe. Faites-les glisser dans un groupe pour les placer.",
           "empty": "Tout le monde a un groupe.",
           "addGamer": "Ajouter un joueur",
@@ -643,7 +643,7 @@
       },
       "seatLimitModes": {
         "limited": "Places limitées",
-        "limitedDescription": "Plafonnez le nombre de joueurs pouvant participer. Une fois complet, les nouvelles inscriptions peuvent aller en liste d’attente.",
+        "limitedDescription": "Limitez le nombre de joueurs pouvant participer. Une fois complet, les nouvelles inscriptions peuvent aller en liste d’attente.",
         "unlimited": "Aucune limite de places",
         "unlimitedDescription": "Toute personne qui s’inscrit peut participer — il n’y a pas de plafond."
       }
@@ -905,7 +905,7 @@
       "title": "Créez votre compte Gedu Sogverse",
       "verificationAlertTitle": "Votre compte doit être vérifié",
       "verificationAlertDescription": "Vous pouvez vous connecter tout de suite, mais un administrateur doit vérifier votre compte avant que vous puissiez être affecté à un club ou à un camp.",
-      "coverageHeading": "Où pouvez-vous intervenir ?",
+      "coverageHeading": "Zones où vous pouvez animer",
       "coverageNote": "Choisissez les zones où vous pouvez intervenir sur place. Si vous n’intervenez qu’à distance, laissez ce champ vide. Vous pourrez modifier votre sélection plus tard dans les paramètres de votre profil.",
       "invalidPhone": "Veuillez saisir un numéro de téléphone valide",
       "creatingAccount": "Création du compte...",
@@ -956,18 +956,18 @@
   "purchaseConfirmation": {
     "heading": "C’est tout bon !",
     "subheading": {
-      "consumer_club": "{gamer} est inscrit à {product}.",
-      "municipality_club": "{gamer} est inscrit à {product}.",
-      "camp": "{gamer} est inscrit à {product}.",
-      "event": "{gamer} participe à {product}."
+      "consumer_club": "L’inscription de {gamer} à {product} est confirmée.",
+      "municipality_club": "L’inscription de {gamer} à {product} est confirmée.",
+      "camp": "L’inscription de {gamer} à {product} est confirmée.",
+      "event": "L’inscription de {gamer} à {product} est confirmée."
     },
     "fallbackGamer": "Votre enfant",
     "summaryTitle": "Votre commande",
     "forLabel": {
-      "consumer_club": "Inscrit",
-      "municipality_club": "Inscrit",
-      "camp": "Inscrit",
-      "event": "Participe"
+      "consumer_club": "Inscription",
+      "municipality_club": "Inscription",
+      "camp": "Inscription",
+      "event": "Participation"
     },
     "priceLabel": "Prix",
     "price": {
@@ -975,9 +975,9 @@
       "upfront": "{amount} (paiement unique)",
       "free": "Gratuit"
     },
-    "nextTitle": "Et maintenant ?",
+    "nextTitle": "La suite",
     "next": {
-      "placement": "Nous placerons {gamer} dans un groupe avec un éducateur de jeu. Les sessions apparaîtront ensuite dans Mon SOG.",
+      "placement": "Nous placerons {gamer} dans un groupe avec un animateur. Les sessions apparaîtront ensuite dans Mon SOG.",
       "subscription": "Vous serez prélevé chaque mois. Vous pouvez gérer ou résilier à tout moment depuis Mon SOG.",
       "oneTime": "Il s’agissait d’un paiement unique — il n’y a plus rien à régler.",
       "refund": "Annulation gratuite dans les {days} jours suivant votre achat."
@@ -1043,7 +1043,7 @@
         "note2": "La fenêtre de session s’ouvre 5 minutes avant le début prévu et se ferme 5 minutes après la fin prévue.",
         "note3": "Lorsque <code1>allowed: true</code1>, utilisez <code2>endTime</code2> pour programmer une nouvelle vérification ou une exclusion. En cas de sessions consécutives (par exemple l’une se terminant à 14:00 et la suivante commençant à 14:05), le joueur est exclu à la fin de la première session puis se reconnecte pour la suivante.",
         "note4": "Un <code>404</code> signifie que le joueur n’a pas encore lié son compte Minecraft dans Sogverse. Vous pouvez lui afficher un message l’invitant à lier son compte dans les paramètres de son profil.",
-        "note5": "Toutes les réponses d'erreur suivent la forme <code>'{ \"error\": \"message\" }'</code>."
+        "note5": "Toutes les réponses d’erreur suivent la forme <code>'{ \"error\": \"message\" }'</code>."
       }
     }
   },
@@ -1065,7 +1065,7 @@
     "myFamily": "Ma famille",
     "myGamers": "Mes joueurs",
     "upcomingSessions": "Sessions",
-    "upcomingSessionsEmptyStateGamer": "Quand ta prochaine session approchera, c’est ici que tu rejoindras le salon vocal avec ton Gedu et tes amis.",
+    "upcomingSessionsEmptyStateGamer": "Ta prochaine session apparaîtra ici — avec le lien pour rejoindre ton Gedu et tes amis.",
     "upcomingSessionsEmptyStateParent": "Quand la prochaine session de votre enfant approchera, c’est ici qu’il rejoindra le salon vocal avec son Gedu et ses amis.",
     "upcomingSessionsEmptyStateGedu": "Quand une session que vous animez approchera, c’est ici que vous rejoindrez le salon vocal avec vos joueurs.",
     "billing": "Facturation",
@@ -1110,7 +1110,7 @@
     "title": "Qui entre dans le Sogverse ?"
   },
   "footer": {
-    "tagline": "School of Gaming - Là où le temps d’écran devient du temps de qualité.",
+    "tagline": "School of Gaming : là où le temps d’écran devient du temps qui fait grandir.",
     "copyright": "© {year} School of Gaming. Tous droits réservés.",
     "contact": {
       "email": "E-mail : {email}"
@@ -1121,11 +1121,11 @@
   },
   "gamer": {
     "welcome": "Bienvenue, joueur !",
-    "subtitle": "Prêt à jouer et à apprendre ?"
+    "subtitle": "Envie de jouer et d’apprendre ?"
   },
   "gedu": {
     "coverage": {
-      "title": "Zones d’intervention",
+      "title": "Zones où vous pouvez animer",
       "remoteOnlyNote": "Sert à vous proposer comme remplaçant quand un autre Gedu ne peut pas assurer son club. Laissez vide si vous ne remplacez qu’à distance.",
       "selectedHeading": "Sélection ({count})",
       "noneSelected": "Aucune zone sélectionnée",
@@ -1226,7 +1226,7 @@
       "items": {
         "whatIsSogverse": {
           "q": "Qu’est-ce que Sogverse ?",
-          "a": "Sogverse — School of Gaming — anime des clubs Minecraft encadrés par des éducateurs de jeu professionnels, pour que le temps d’écran devienne du temps de qualité."
+          "a": "Sogverse — School of Gaming — anime des clubs Minecraft encadrés par des animateurs professionnels, pour que le temps d’écran devienne du temps qui fait grandir."
         },
         "productTypes": {
           "q": "Quelle est la différence entre les clubs, les camps et les événements ?",
@@ -1234,11 +1234,11 @@
         },
         "whoLeads": {
           "q": "Qui anime les sessions ?",
-          "a": "Chaque session est animée par un Gedu — un éducateur de jeu qui est lui-même joueur et sait accompagner les enfants dans le jeu comme en dehors."
+          "a": "Chaque session est animée par un Gedu — un animateur de jeu qui est lui-même joueur et sait accompagner les enfants dans le jeu comme en dehors."
         },
         "safety": {
           "q": "Est-ce sans danger pour mon enfant ?",
-          "a": "Un éducateur anime chaque session, nos communautés sont modérées et nous appliquons une tolérance zéro face au harcèlement."
+          "a": "Un animateur accompagne chaque session, nos communautés sont modérées et nous appliquons une tolérance zéro face au harcèlement."
         },
         "howToStart": {
           "q": "Comment commencer ?",
@@ -1251,7 +1251,7 @@
     "hero": {
       "title": "Des clubs de jeu dans <primary>votre commune</primary>",
       "subtitle": "School of Gaming anime des clubs en partenariat avec les communes finlandaises. Trouvez votre commune et découvrez l’offre disponible.",
-      "howItWorks": "Selon la commune, le club se retrouve soit en ligne depuis la maison, soit sur place dans l’école de votre enfant. Un éducateur de jeu professionnel est toujours présent pour encadrer l’activité."
+      "howItWorks": "Selon la commune, le club se retrouve soit en ligne depuis la maison, soit sur place dans l’école de votre enfant. Un animateur professionnel est toujours présent pour encadrer l’activité."
     },
     "search": {
       "label": "Recherchez votre commune",
@@ -1259,7 +1259,7 @@
       "noMatches": "Aucune commune ne correspond à « {query} ». Vérifiez l’orthographe, ou essayez une commune voisine."
     },
     "available": {
-      "empty": "Nos premiers clubs communaux arrivent. Recherchez votre commune pour voir si nous y sommes déjà."
+      "empty": "Nos premiers clubs municipaux arrivent. Recherchez votre commune pour voir si nous y sommes déjà."
     },
     "status": {
       "available": "Clubs disponibles",
@@ -1268,12 +1268,12 @@
     "waitlistNote": "Les places sont limitées et les clubs ont souvent une liste d’attente. Si votre enfant arrête de venir, pensez à annuler l’inscription pour que sa place puisse être proposée au joueur suivant.",
     "notListed": {
       "title": "Vous ne voyez pas votre commune ?",
-      "body": "Les clubs communaux sont organisés en partenariat avec chaque commune, et nous en ajoutons régulièrement de nouveaux. Si la vôtre n’en fait pas encore partie, parlez-nous-en :",
+      "body": "Les clubs municipaux sont organisés en partenariat avec chaque commune, et nous en ajoutons régulièrement de nouveaux. Si la vôtre n’en fait pas encore partie, parlez-nous-en :",
       "openClubs": "Nous proposons aussi des clubs ouverts à tous, qu’un joueur peut rejoindre où qu’il habite."
     },
     "municipality": {
       "heading": "Clubs de {name}",
-      "subheading": "Clubs hebdomadaires proposés par {name}, où votre joueur joue, construit et crée avec de nouveaux amis et un Gedu qui comprend vraiment."
+      "subheading": "Clubs hebdomadaires proposés par {name}, où votre joueur joue, construit et crée avec de nouveaux amis et un animateur qui capte vraiment."
     }
   },
   "productBrowse": {
@@ -1282,8 +1282,8 @@
       "camp": "Nos camps"
     },
     "subheadings": {
-      "consumer_club": "Des clubs hebdomadaires où votre joueur joue aux jeux qu’il adore avec de nouveaux amis et un Gedu qui comprend vraiment.",
-      "camp": "Des vacances scolaires transformées en aventures pleines de jeu — de nouveaux amis, de vraies compétences et un Gedu qui vous accompagne."
+      "consumer_club": "Des clubs hebdomadaires où votre joueur retrouve des amis, un animateur qui capte vraiment, et le jeu qu’il adore.",
+      "camp": "Des vacances scolaires qui deviennent de vraies aventures de jeu — de nouveaux amis, des compétences concrètes, et un animateur qui embarque avec eux."
     },
     "filters": {
       "type": "Type",
@@ -1309,7 +1309,7 @@
       "notAvailableInCurrency": "Pas en {currency}",
       "seatsCapacity": "{count, plural, one {# place} other {# places}}",
       "waitlistAvailable": "Liste d’attente disponible",
-      "endedNote": "Celui-ci est terminé — guettez le prochain.",
+      "endedNote": "Celui-ci est terminé — le prochain arrive bientôt !",
       "viewDetails": "Voir",
       "manage": "Gérer",
       "fullDisabled": "Complet",
@@ -1331,13 +1331,13 @@
   "productDetail": {
     "back": {
       "consumer_club": "Tous les clubs",
-      "municipality_club": "Tous les clubs communaux",
+      "municipality_club": "Tous les clubs municipaux",
       "camp": "Tous les camps",
       "event": "Tous les événements"
     },
     "typeLabel": {
       "consumer_club": "Club",
-      "municipality_club": "Club communal",
+      "municipality_club": "Club municipal",
       "camp": "Camp",
       "event": "Événement"
     },
@@ -1463,15 +1463,15 @@
     },
     "loading": "Chargement…",
     "notFound": {
-      "title": "Nous n’avons pas trouvé cette page",
+      "title": "On n’a pas trouvé ça",
       "description": "Elle a peut-être été supprimée ou le lien est erroné. Parcourez l’offre disponible ci-dessous.",
       "cta": "Retour au catalogue"
     },
     "geduGroups": {
       "heading": "Groupes",
       "yourGroupBadge": "Votre groupe",
-      "educatorsLabel": "Éducateurs",
-      "noEducators": "Aucun éducateur affecté pour l’instant.",
+      "educatorsLabel": "Animateurs",
+      "noEducators": "Aucun animateur affecté pour l’instant.",
       "gamersLabel": "Joueurs",
       "gamerCount": "{count, plural, =0 {0 joueur} one {# joueur} other {# joueurs}}",
       "emptyNoGamers": "Aucun joueur dans ce groupe pour l’instant.",
@@ -1486,7 +1486,7 @@
     "dashboard": "Tableau de bord",
     "users": "Utilisateurs",
     "consumerClubs": "Clubs grand public",
-    "municipalityClubs": "Clubs communaux",
+    "municipalityClubs": "Clubs municipaux",
     "camps": "Camps",
     "events": "Événements",
     "locations": "Lieux",
@@ -1500,49 +1500,49 @@
   },
   "home": {
     "hero": {
-      "title": "Quand<br></br><primary>le temps d’écran</primary><br></br>devient<br></br><secondary>du temps de qualité</secondary>",
-      "subtitle": "Nos clubs Minecraft, conçus avec soin, font du jeu vidéo un loisir sain. Des éducateurs de jeu de premier plan font de chaque session une expérience d’apprentissage ludique, où les enfants se font de nouveaux amis, développent leurs talents et s’amusent en faisant ce qu’ils aiment."
+      "title": "Du temps d’écran<br></br><primary>au temps qui</primary><br></br>fait<br></br><secondary>grandir</secondary>",
+      "subtitle": "Nos clubs Minecraft, c’est le jeu vidéo tel qu’il devrait être : encadré, enrichissant, avec de vrais amis. Un animateur professionnel accompagne chaque session pour que les enfants apprennent, se lient d’amitié, et rentrent avec des choses à raconter."
     },
     "features": {
-      "heading": "Faire du jeu vidéo un vrai loisir",
-      "subheading": "Le jeu vidéo est un loisir comme un autre — en mieux avec de bons amis et un animateur professionnel présent pour guider et aider.",
+      "heading": "Le jeu vidéo, un vrai loisir",
+      "subheading": "Comme le foot ou la musique, avec de bons amis et quelqu’un pour guider.",
       "minecraftClubs": {
-        "title": "Des clubs Minecraft avec des Gedus",
-        "description": "Nos éducateurs de jeu — les Gedus — sont eux-mêmes des joueurs. Ils savent que, chez les enfants, l’identité et les amitiés se construisent aussi bien en ligne qu’hors ligne. Chaque session est encadrée par quelqu’un qui comprend vraiment."
+        "title": "Des clubs Minecraft avec des animateurs",
+        "description": "Nos animateurs sont des joueurs avant tout. Ils savent ce que c’est de grandir avec les jeux vidéo, de se faire des amis en ligne, de construire son identité à travers un écran. Chaque session est encadrée par quelqu’un qui comprend vraiment."
       },
       "screenTime": {
-        "title": "Le temps d’écran devient du temps de qualité",
-        "description": "Des clubs conçus avec soin transforment le jeu vidéo en une expérience d’apprentissage ludique, où les enfants développent de vraies compétences et s’amusent en faisant ce qu’ils aiment."
+        "title": "Du temps d’écran au temps qui fait grandir",
+        "description": "Des clubs pensés pour que le jeu soit formateur : les enfants développent des compétences concrètes, se lient d’amitié, et vivent des aventures qui leur appartiennent."
       },
       "newFriends": {
         "title": "De nouveaux amis, de vrais liens",
-        "description": "Les enfants nouent des amitiés sincères et durables au fil d’aventures partagées. Personne ne reste sans ami. Le serment du joueur, c’est se traiter les uns les autres avec bienveillance — en ligne comme hors ligne."
+        "description": "Les enfants se font de vrais amis. Les aventures partagées créent des liens durables. L’engagement du joueur : se traiter avec bienveillance, en ligne comme dans la vie."
       },
       "parents": {
-        "title": "Les parents en font partie",
-        "description": "L’éducation au jeu des parents compte autant que les clubs eux-mêmes. Nous vous tenons informés, impliqués et outillés pour accompagner le parcours de jeu de votre enfant."
+        "title": "Les parents, dans la boucle",
+        "description": "Vous n’êtes pas mis de côté. On vous tient au courant, on vous implique, et on vous donne les clés pour accompagner votre enfant dans son parcours de jeu."
       }
     },
     "howItWorks": {
       "heading": "Comment ça marche",
-      "subheading": "Rejoignez un club Minecraft en trois étapes simples.",
+      "subheading": "Rejoignez un club en trois étapes simples.",
       "step1": {
         "title": "Créez votre compte",
-        "description": "Inscrivez-vous en tant que parent et créez des comptes joueur pour vos enfants."
+        "description": "Inscrivez-vous en tant que parent et créez les comptes de jeu de vos enfants."
       },
       "step2": {
         "title": "Choisissez un club",
-        "description": "Parcourez nos clubs et inscrivez vos joueurs à ceux qui correspondent à leur emploi du temps et à leurs envies."
+        "description": "Parcourez les clubs disponibles et inscrivez vos enfants dans celui qui colle à leur emploi du temps et à leurs envies."
       },
       "step3": {
-        "title": "Partez à l’aventure",
-        "description": "Vos joueurs se connectent chaque semaine, retrouvent leur Gedu et se lancent dans des aventures Minecraft avec de nouveaux amis."
+        "title": "À vous de jouer !",
+        "description": "Chaque semaine, vos enfants rejoignent leur animateur et plongent dans une nouvelle aventure Minecraft avec leurs amis."
       }
     },
     "cta": {
-      "heading": "Prêt à transformer le jeu en apprentissage ?",
-      "subheading": "Offrez à votre enfant un endroit amusant et sûr pour jouer, apprendre et se faire des amis — accompagné par un éducateur de jeu professionnel.",
-      "createFreeAccount": "Créer un compte gratuit"
+      "heading": "Prêt à transformer le temps d’écran en temps qui fait grandir ?",
+      "subheading": "Offrez à votre enfant un espace amusant et sécurisé pour jouer, apprendre et se faire de vrais amis, encadré par un animateur professionnel.",
+      "createFreeAccount": "Démarrer l’aventure"
     }
   },
   "locations": {
@@ -1587,7 +1587,7 @@
       "title": "Prochaine session de {name}",
       "startsIn": "Commence dans {countdown}",
       "inProgress": "Session en cours",
-      "reports": "Vos comptes rendus"
+      "reports": "Bulletins de session"
     },
     "upcomingSession": {
       "gamerLabel": "Pour {name}"
@@ -1715,7 +1715,7 @@
     "minecraftCleared": "Nom d’utilisateur Minecraft effacé.",
     "failedToUpdateMinecraft": "Échec de la mise à jour du nom d’utilisateur Minecraft.",
     "saveMinecraft": "Enregistrer le nom d’utilisateur Minecraft",
-    "spokenLanguages": "Langues parlées"
+    "spokenLanguages": "Langues parlées à la maison"
   },
   "voice": {
     "participants": "Participants",
@@ -1747,7 +1747,7 @@
     "stopBroadcast": "Arrêter la diffusion",
     "deafen": "Couper le son",
     "undeafen": "Rétablir le son",
-    "zoneLobby": "Salle du club",
+    "zoneLobby": "Le Clubhouse",
     "joinZone": "Rejoindre {zone}",
     "zonesDescription": "Touchez une zone ou faites-vous glisser dessus pour y entrer. Vous entendez tout le monde dans la même zone.",
     "privateZone": "Privée",
@@ -1860,7 +1860,7 @@
         "copied": "Copié !"
       },
       "lobby": {
-        "title": "Prêt à entrer ?",
+        "title": "Envie de rejoindre l’aventure ?",
         "description": "Vérifiez votre caméra et votre micro avant d’entrer.",
         "nameLabel": "Votre nom",
         "namePlaceholder": "Comment devons-nous vous appeler ?",
@@ -1891,7 +1891,7 @@
         "createNew": "Créer un nouveau salon vocal"
       },
       "createPage": {
-        "title": "Lancez un salon vocal instantané",
+        "title": "Lancez un salon vocal en un clic",
         "subtitle": "Un clic → un salon tout neuf et un lien à partager. Idéal pour des échanges en tête-à-tête improvisés, ou pour la coordination entre gedus en dehors de la session programmée ou en complément.",
         "createButton": "Lancer un salon instantané",
         "creating": "Création…",
@@ -1911,42 +1911,42 @@
   "yty": {
     "hero": {
       "title": "Qu’est-ce que l’<primary>Yty</primary> ?",
-      "subtitle": "L’Yty est une force magique qui maintient le fragile équilibre des mondes du Sogverse. En faisant de bonnes choses — apprendre de nouvelles compétences, se faire des amis, bien se comporter et participer à la communauté — les joueurs gagnent de l’Yty pour eux-mêmes et pour tout le monde."
+      "subtitle": "L’Yty est la force qui maintient l’équilibre des mondes du Sogverse. Apprendre quelque chose de nouveau, se faire un ami, se comporter avec bienveillance, participer à la communauté : chaque bonne action fait grandir l’Yty de chaque joueur et celle du Sogverse tout entier."
     },
     "overview": {
       "heading": "Comment fonctionne l’Yty",
-      "paragraph1": "Chaque joueur part de zéro. À chaque session suivie, chaque défi relevé et chaque geste de gentillesse, les joueurs gagnent des points d’Yty. Ces points s’accumulent selon quatre éléments, chacun reflétant une facette du fait de bien grandir.",
-      "paragraph2": "En collectant de l’Yty pour eux-mêmes, les joueurs augmentent aussi l’Yty totale du Sogverse — façonnant l’histoire et ouvrant de nouvelles possibilités pour toute la communauté."
+      "paragraph1": "Chaque joueur part de zéro. Sessions suivies, défis relevés, gestes de bienveillance : tout se transforme en points d’Yty. Ces points se répartissent sur quatre éléments, chacun reflétant une dimension de la croissance personnelle.",
+      "paragraph2": "En accumulant de l’Yty pour eux-mêmes, les joueurs font aussi grandir celle du Sogverse entier, influençant l’histoire et ouvrant de nouvelles possibilités pour toute la communauté."
     },
     "elements": {
       "heading": "Les quatre éléments de l’Yty",
-      "subheading": "Chaque élément reflète la relation d’un joueur à une facette différente de son monde",
+      "subheading": "Chaque élément reflète la relation d’un joueur à une dimension différente de son monde.",
       "harmony": {
         "name": "Harmonie",
         "description": "Ta relation à toi-même",
-        "detail": "Qui suis-je ? L’Harmonie, c’est s’accepter tel que l’on est — avec ses forces comme ses faiblesses. Cela veut dire apprendre à prendre soin de son bien-être, exprimer ses émotions, prendre de bonnes décisions et comprendre pourquoi les règles et la confiance comptent."
+        "detail": "Qui suis-je vraiment ? L’Harmonie, c’est apprendre à se connaître : ses forces, ses limites, ses émotions. C’est savoir prendre soin de soi, faire de bons choix, et comprendre pourquoi la confiance et les règles ont du sens."
       },
       "glow": {
         "name": "Éclat",
         "description": "Ta relation aux autres",
-        "detail": "Comment puis-je aider les autres ? L’Éclat, c’est l’empathie, la gentillesse et la construction de relations qui ont du sens. Cela veut dire respecter les différences, laisser de la place aux autres, bien communiquer et être le genre de personne qui tire les autres vers le haut."
+        "detail": "Comment est-ce que j’aide les autres ? L’Éclat, c’est l’empathie et la bienveillance. C’est écouter, respecter les différences, faire de la place aux autres et être le genre de personne qui tire les autres vers le haut."
       },
       "valor": {
         "name": "Bravoure",
         "description": "Ta relation au monde",
-        "detail": "Comment puis-je faire la différence ? La Bravoure, c’est trouver sa place dans le monde et avoir le courage d’y contribuer. Cela veut dire travailler en équipe, exprimer ses idées, se servir de son imagination et œuvrer pour un avenir meilleur — près de chez soi comme à l’échelle du monde."
+        "detail": "Comment est-ce que je fais une différence ? La Bravoure, c’est trouver sa place dans le monde et avoir le cran d’y contribuer. Travailler en équipe, porter ses idées, utiliser son imagination pour construire quelque chose qui compte."
       },
       "wit": {
         "name": "Discernement",
-        "description": "Ta relation aux médias et aux technologies",
-        "detail": "Comment je m’oriente dans le monde numérique ? Le Discernement, c’est entretenir un rapport sain et critique aux jeux, aux médias et à la technologie. Cela veut dire comprendre les comportements en ligne, faire preuve d’esprit critique face à l’information et équilibrer le temps d’écran avec le reste de la vie."
+        "description": "Ta relation aux médias et à la technologie",
+        "detail": "Comment je m’y retrouve dans le monde numérique ? Le Discernement, c’est avoir un rapport sain et critique à la technologie. Comprendre les dynamiques en ligne, reconnaître une fausse info, et trouver le bon équilibre entre l’écran et le reste de la vie."
       }
     },
     "earning": {
       "heading": "Comment les joueurs gagnent de l’Yty",
-      "paragraph1": "Les points d’Yty se gagnent par la participation. Assister aux sessions hebdomadaires du club, accomplir des quêtes et des défis, se montrer gentil avec les autres joueurs, participer aux événements communautaires et aux camps — tout cela alimente l’Yty d’un joueur.",
-      "paragraph2": "À mesure que les points s’accumulent sous des badges de réussite précis, les joueurs font monter ces badges de niveau — du bronze à l’argent, l’or, le platine et le diamant. Chaque point alimente aussi leur niveau d’Yty global et l’élément auquel il appartient.",
-      "paragraph3": "Et il n’y a pas que les joueurs. Les Gedus, les parents et toute la communauté peuvent participer à la construction de l’Yty du Sogverse à travers les événements et les activités partagées."
+      "paragraph1": "L’Yty se gagne en participant. Sessions hebdomadaires, quêtes et défis, bienveillance envers les autres joueurs, événements communautaires, camps : tout compte.",
+      "paragraph2": "Au fil des points accumulés, les joueurs font progresser leurs badges de réussite, du bronze à l’argent, l’or, le platine et le diamant. Chaque point alimente à la fois leur niveau global et l’élément auquel il correspond.",
+      "paragraph3": "Et ce n’est pas réservé aux joueurs. Les Gedus, les parents, toute la communauté peuvent contribuer à l’Yty du Sogverse à travers les événements et les activités partagées."
     },
     "cta": {
       "heading": "Commencez votre aventure",
@@ -2123,7 +2123,7 @@
           "Le droit de la protection des données (le RGPD) nous impose d’avoir une raison claire d’utiliser vos informations. Les nôtres sont simples :"
         ],
         "bullets": [
-          "Pour fournir ce à quoi vous avez souscrit — les clubs et services que vous nous avez achetés (notre contrat avec vous).",
+          "Pour vous fournir ce que vous avez souscrit — les clubs et services que vous nous avez achetés (notre contrat avec vous).",
           "Parce qu’un parent a donné son autorisation au nom de son enfant (le consentement).",
           "Pour respecter nos obligations légales, comme la conservation des pièces comptables relatives aux paiements.",
           "Pour notre intérêt légitime à maintenir le site sûr et fonctionnel — toujours mis en balance avec votre vie privée."
@@ -2248,7 +2248,7 @@
       "pricing": {
         "heading": "Prix et paiement",
         "paragraphs": [
-          "Tous les prix sont affichés en euros et incluent la TVA. Nous pouvons modifier nos prix de temps à autre, mais un changement n’affectera jamais un club que vous payez déjà sans que nous vous en informions au préalable."
+          "Tous les prix sont affichés en euros, TTC. Nous pouvons modifier nos prix de temps à autre, mais un changement n’affectera jamais un club que vous payez déjà sans que nous vous en informions au préalable."
         ]
       },
       "clubsCancellation": {
@@ -2271,7 +2271,7 @@
         ]
       },
       "conduct": {
-        "heading": "Comportement et exclusion d’un enfant d’un club",
+        "heading": "Comportement et retrait d’un enfant d’un club",
         "paragraphs": [
           "Nous voulons que chaque enfant se sente en sécurité et bienvenu : nous ne tolérons donc ni le harcèlement ni les comportements qui gâchent l’expérience des autres. Quand un problème survient, nous commençons toujours par accompagner l’enfant et l’aider à réparer les choses — notre démarche complète est décrite dans notre politique de lutte contre le harcèlement et de discipline.",
           "Ce n’est qu’après ces étapes d’accompagnement, et en cas de comportement toxique ou perturbateur persistant ou de harcèlement, que nous pouvons mettre fin à la participation d’un enfant. Nous en discuterons toujours avec vous au préalable."
@@ -2304,7 +2304,7 @@
       "heading": "En bref",
       "paragraphs": [
         "Chaque enfant doit se sentir en sécurité, respecté et bienvenu dans nos clubs. Le harcèlement et la méchanceté n’y ont pas leur place, et nous les prenons au sérieux.",
-        "Quand quelque chose se passe mal, nous ne nous contentons pas de sanctionner — nous aidons. Nous suivons une démarche calme et progressive, qui vise à aider l’enfant à comprendre ce qui s’est passé, à réparer et à mieux faire la fois suivante. Nous ne passons à une étape plus ferme que si le comportement se répète, et nous vous tenons informé tout du long."
+        "Quand quelque chose se passe mal, nous ne nous contentons pas de sanctionner. Nous aidons. Nous suivons une démarche calme et progressive, qui vise à aider l’enfant à comprendre ce qui s’est passé, à réparer et à mieux faire la fois suivante. Nous ne passons à une étape plus ferme que si le comportement se répète, et nous vous tenons informé tout du long."
       ]
     },
     "sections": {
