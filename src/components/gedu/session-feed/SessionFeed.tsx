@@ -56,7 +56,9 @@ interface SessionFeedProps {
  *
  * Three things keep a long feed navigable without ever moving painted content:
  *
- * - **Later future sessions collapse** behind one row above the next session.
+ * - **Later future sessions collapse** behind one row above the next session,
+ *   and reveal *inside* it — they are that block's contents, so it keeps the
+ *   single rail marker and they render without one.
  * - **The past opens on its recent slice** and older chunks are appended
  *   *below* on request, so the reveal grows away from everything being read.
  * - **Month dividers** mark each boundary the scroll crosses, which is what
@@ -111,14 +113,23 @@ export function SessionFeed({
     );
   }
 
-  const renderRow = (row: SessionFeedRow<SessionFeedEntry>) => {
+  /**
+   * `onRail` is false for the rows revealed inside the collapsed future block.
+   * Those sessions are the *contents* of that block, which carries the rail
+   * marker for all of them; giving each one its own marker would push a row of
+   * dots into the block's padding, where they read as decoration rather than as
+   * points on the timeline.
+   */
+  const renderRow = (row: SessionFeedRow<SessionFeedEntry>, onRail: boolean) => {
     if (row.kind === "month") {
       return (
         <li key={row.key} className="relative pt-1">
-          <span
-            aria-hidden
-            className="absolute -left-6 top-1/2 h-px w-3 -translate-x-1/2 bg-border"
-          />
+          {onRail && (
+            <span
+              aria-hidden
+              className="absolute -left-6 top-1/2 h-px w-3 -translate-x-1/2 bg-border"
+            />
+          )}
           <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             {formatMonthLabel(row.startsAt, locale, timeZone)}
           </p>
@@ -131,14 +142,16 @@ export function SessionFeed({
     const prominent = entry.id === nextSession?.id;
     return (
       <li key={row.key} className="relative">
-        <span
-          aria-hidden
-          className={cn(
-            "absolute -left-6 h-2.5 w-2.5 -translate-x-1/2 rounded-full ring-4 ring-background",
-            entry.kind === "no_record" ? "top-3.5" : "top-5",
-            markerTone(entry, prominent),
-          )}
-        />
+        {onRail && (
+          <span
+            aria-hidden
+            className={cn(
+              "absolute -left-6 h-2.5 w-2.5 -translate-x-1/2 rounded-full ring-4 ring-background",
+              entry.kind === "no_record" ? "top-3.5" : "top-5",
+              markerTone(entry, prominent),
+            )}
+          />
+        )}
         <SessionFeedItem
           entry={entry}
           roster={roster}
@@ -168,11 +181,15 @@ export function SessionFeed({
           open={laterOpen}
           onToggle={() => setLaterOpen((o) => !o)}
         >
-          <ol className="space-y-3 pt-3">{laterRows.map(renderRow)}</ol>
+          <ol className="space-y-3">
+            {laterRows.map((row) => renderRow(row, false))}
+          </ol>
         </LaterSessionsBlock>
       )}
 
-      <ol className="space-y-3">{mainRows.map(renderRow)}</ol>
+      <ol className="space-y-3">
+        {mainRows.map((row) => renderRow(row, true))}
+      </ol>
 
       {pastWindow.remaining > 0 && (
         // Appends beneath itself, so the button walks down the page with the
