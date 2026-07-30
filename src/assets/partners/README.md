@@ -16,14 +16,32 @@ which is also what the Roblox guidelines require ("always at full resolution").
 
 | File | Source |
 |---|---|
-| `roblox-wordmark-black.svg` | Official Roblox press kit → "Roblox Logo" pack, `about.roblox.com/press-kit` |
-| `lynx-educate.svg` | `lynxeducate.com/wp-content/uploads/2023/10/logo.svg` |
+| `roblox-wordmark-white.svg` | Official Roblox press kit → "Roblox Logo" pack, `about.roblox.com/press-kit` |
+| `lynx-educate.svg` | `lynxeducate.com/wp-content/uploads/2023/10/logo.svg` — as supplied, unmodified |
+| `lynx-educate-reversed.svg` | **Derived by us** from the file above — see below |
 | `sog-badge-yellow.svg` | Our own badge, from the sog.gg Webflow CDN |
 
-The Roblox pack also ships white wordmark and black/white Tilt variants, plus the brand
-guidelines PDF. Only the black wordmark is vendored here because that is the only
-colourway this codebase currently renders — re-download the pack if a dark-surface
-lockup or the Tilt is ever needed.
+The Roblox pack also ships the black wordmark and both Tilt colourways, plus the brand
+guidelines PDF. Only the white wordmark is vendored because the app renders dark-only
+(the root layout hardcodes the dark class), so the black colourway has no surface to sit
+on yet — re-download the pack if a light theme or the Tilt is ever needed.
+
+### The derived Lynx mark
+
+`lynx-educate-reversed.svg` is **our reversal, not something Lynx supplied.** Lynx ships
+one colourway everywhere — a `#000000` wordmark with a `#009fe3` lynx head, in the site
+`logo.svg` and in both legacy logo PNGs — and there is no reversed variant anywhere on
+their site, so their mark is illegible on our dark pages as delivered.
+
+The reversal changes `fill="#000000"` to `fill="#ffffff"` and nothing else: the blue lynx
+head keeps its brand colour and every path is byte-identical to the supplied file, which
+is kept beside it precisely so the derivation can be verified or redone. Black-to-white is
+the conventional reversed treatment and almost certainly what Lynx would send if asked —
+but we did not ask, so **this is an assumption pending their sign-off** (tracked in
+`TODO.md`). Replace this file with their official reversed mark when it arrives.
+
+Do not extend this to the other marks. Roblox supplies both colourways and their
+guidelines forbid recolouring outright, so their wordmark is only ever used as shipped.
 
 ## Usage constraints
 
@@ -35,8 +53,5 @@ vertically stack, or place it over a busy background. Their pack also supplies a
 boilerplate copy describing Roblox, and requires a trademark notice wherever the mark
 appears. Using the mark to represent a partnership needs Roblox's approval, which we have.
 
-**Lynx Educate** ships only a dark-ink mark — black wordmark with a `#009fe3` lynx head —
-so it is illegible on our dark-default background. Lockups therefore sit on an explicitly
-light surface (see the `brand-plate` tokens in `globals.css`) with every mark in its
-light-surface colourway. Do **not** recolour their wordmark to solve this; the fix is a
-reversed variant from Lynx, tracked in `TODO.md`.
+**Lynx Educate** — see "The derived Lynx mark" above. Their trademark is used with
+permission; the reversal is our own and needs confirming.

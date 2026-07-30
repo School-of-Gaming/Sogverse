@@ -17,7 +17,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { PartnerLockup } from "@/components/roblox/partner-lockup";
 import { PartnershipCta } from "@/components/roblox/partnership-cta";
 
@@ -70,27 +69,34 @@ export default function RobloxPage() {
       <section className="relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_hsl(var(--background))_100%),linear-gradient(to_right,_hsl(var(--primary)/0.2),_transparent_50%,_hsl(var(--secondary)/0.1))] pt-[var(--header-height)]">
         <div className="container mx-auto px-4 py-20 sm:py-28">
           <div className="mx-auto max-w-3xl text-center">
-            <Badge variant="outline" className="border-primary/40 text-primary">
-              {t("hero.badge")}
-            </Badge>
-            <h1 className="mt-6 font-display text-3xl font-bold tracking-tight md:text-6xl">
+            {/* Deliberately *not* `font-display` (Press Start 2P). The pixel
+                face is the right voice for the home page's playful promise, but
+                here it fights the page's job: this is the surface where three
+                organisations put their names to something, and a pixel headline
+                sitting above three corporate wordmarks reads as a novelty
+                rather than as credibility. Inter at a large tight-tracked size
+                carries the same warmth in the words without undercutting them.
+                `text-balance` evens the line lengths, which is why there is no
+                hand-placed <br /> in the copy. */}
+            <h1 className="text-balance text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
               {t.rich("hero.title", {
-                br: () => <br />,
                 primary: (chunks) => <span className="text-primary">{chunks}</span>,
                 secondary: (chunks) => (
                   <span className="text-secondary">{chunks}</span>
                 ),
               })}
             </h1>
-            <p className="mt-6 text-lg leading-8 text-muted-foreground">
+            <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
               {t("hero.subtitle")}
             </p>
           </div>
 
           {/* The lockup sits directly under the hero copy: it is the whole
               point of the page — the credibility signal — so it should land
-              above the fold rather than being buried as a footer strip. */}
-          <div className="mx-auto mt-14 max-w-3xl">
+              above the fold rather than being buried as a footer strip. A
+              hairline rule separates it from the copy instead of a card, so
+              the marks read as part of the hero rather than as a widget. */}
+          <div className="mx-auto mt-16 max-w-2xl border-t pt-12">
             <PartnerLockup />
           </div>
         </div>
