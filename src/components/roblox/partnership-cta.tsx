@@ -1,18 +1,22 @@
+import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { ArrowRight } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ROUTES } from "@/lib/constants";
 
 /**
- * Closing call-to-action for the partnership page.
+ * Closing call-to-action for the partnership page — the second of the two
+ * "start here" prompts, repeating the hero's destination for anyone who read to
+ * the bottom before deciding.
  *
- * Deliberately its own component even though it currently renders nothing but
- * copy: the plan is for this page to eventually carry a superset of `/register`
- * (the partnership needs more from a family than the standard sign-up does), and
- * that lands here. Keeping the section isolated means growing it into a real
- * form is an edit to one file rather than surgery on the page.
+ * Kept as its own component because the plan is for this page to eventually
+ * carry a superset of `/register` (the programme needs more from a family than
+ * the standard sign-up does), and that lands here. Growing it into a real form
+ * is then an edit to one file rather than surgery on the page.
  *
- * Until then it renders no button at all. An inert or disabled button would be
- * worse than none: it promises an action that does not exist, and a visitor who
- * clicks it learns nothing about why nothing happened.
+ * The button's destination is provisional — see `ROUTES.robloxTeenPrograms` for
+ * the two model gaps that currently make it land on an empty shop.
  */
 export function PartnershipCta() {
   const t = useTranslations("roblox.cta");
@@ -23,9 +27,13 @@ export function PartnershipCta() {
         <CardContent className="flex flex-col items-center py-12 text-center">
           <h2 className="text-2xl font-bold sm:text-3xl">{t("heading")}</h2>
           <p className="mt-4 max-w-xl text-muted-foreground">{t("body")}</p>
-          <p className="mt-8 text-xs uppercase tracking-widest text-muted-foreground/70">
-            {t("note")}
-          </p>
+          <Link
+            href={ROUTES.robloxTeenPrograms}
+            className={buttonVariants({ size: "lg", className: "mt-8 gap-2" })}
+          >
+            {t("button")}
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </CardContent>
       </Card>
     </section>

@@ -18,15 +18,17 @@ import sogBadge from "@/assets/partners/sog-badge-yellow.svg";
  * advance into the logo") is what the generous gaps are for, and their 20px
  * floor is why the smallest mark here is 24px tall.
  *
- * Every mark is sized with a literal width *and* height rather than
- * `w-auto`: until an SVG has loaded its intrinsic ratio is unknown, so an
- * auto-width mark starts at zero width and snaps wider on load, shoving its
- * neighbours sideways. Fixed boxes mean the row is laid out correctly on the
- * first paint. The numbers are each mark's own viewBox ratio (Lynx 1754x406,
- * Roblox 800x148, SOG 379x207.5) scaled to a chosen height, so nothing is
- * stretched. Heights differ per mark on purpose — the aspect ratios range from
- * 1.8:1 to 5.4:1, and matching heights would make the squat SOG badge tower
- * over the two wordmarks instead of reading as its equal.
+ * Heights are set in CSS so they can step up on wider viewports, with the
+ * `width`/`height` props left on each mark as its true viewBox size (Lynx
+ * 1754x406, Roblox 800x148, SOG 379x207.5). Those props are what make `w-auto`
+ * safe here: the browser derives an intrinsic aspect-ratio from them and
+ * reserves the correct box before the file arrives, so nothing snaps wider on
+ * load and shoves its neighbours sideways. Dropping them — or setting a width
+ * that isn't the real ratio — is what would reintroduce that shift.
+ *
+ * Heights differ per mark on purpose. The aspect ratios span 1.8:1 to 5.4:1, so
+ * matching heights would make the squat SOG badge tower over the two wordmarks
+ * instead of reading as its equal.
  */
 export function PartnerLockup() {
   const t = useTranslations("roblox.lockup");
@@ -38,13 +40,34 @@ export function PartnerLockup() {
       </p>
       {/* Wrap rather than scroll on narrow viewports — a lockup is a single
           visual statement, and horizontal scroll would hide a partner. */}
-      <div className="mt-8 flex flex-wrap items-center justify-center gap-x-12 gap-y-8 sm:gap-x-16">
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-x-12 gap-y-10 sm:mt-10 sm:gap-x-16">
         {/* `unoptimized` on all three: the optimizer refuses SVG without
             `dangerouslyAllowSVG`, and these are trusted first-party bundled
             files that need no resizing pass anyway. */}
-        <Image src={sogBadge} alt={t("sogAlt")} width={95} height={52} unoptimized />
-        <Image src={lynxEducate} alt={t("lynxAlt")} width={121} height={28} unoptimized />
-        <Image src={robloxWordmark} alt={t("robloxAlt")} width={130} height={24} unoptimized />
+        <Image
+          src={sogBadge}
+          alt={t("sogAlt")}
+          width={379}
+          height={207.5}
+          className="h-14 w-auto sm:h-20"
+          unoptimized
+        />
+        <Image
+          src={lynxEducate}
+          alt={t("lynxAlt")}
+          width={1754}
+          height={406}
+          className="h-8 w-auto sm:h-11"
+          unoptimized
+        />
+        <Image
+          src={robloxWordmark}
+          alt={t("robloxAlt")}
+          width={800}
+          height={148}
+          className="h-7 w-auto sm:h-9"
+          unoptimized
+        />
       </div>
     </div>
   );

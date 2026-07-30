@@ -1548,8 +1548,9 @@
   },
   "roblox": {
     "hero": {
-      "title": "Your Gamer Can <primary>Create</primary> the Games They Love to <secondary>Play</secondary>",
-      "subtitle": "School of Gaming is partnering with Lynx Educate to bring Roblox Studio clubs to France. The same world-class game educators and the same safe, friendly clubs — with your child in the creator’s seat."
+      "title": "Build It. <primary>Play It.</primary> <secondary>Own It.</secondary>",
+      "subtitle": "A free Roblox game design programme for teens — brought to you by Lynx Educate and School of Gaming, in partnership with Roblox.",
+      "cta": "Register now"
     },
     "lockup": {
       "heading": "A partnership between",
@@ -1557,51 +1558,72 @@
       "lynxAlt": "Lynx Educate",
       "robloxAlt": "Roblox"
     },
-    "placeholder": {
-      "heading": "This page is still taking shape",
-      "body": "The partnership is new and we are still confirming the details — where the clubs will run, when they start, and how to join. We have put this page up early so you can see where we are heading. It will grow as things are settled."
-    },
     "what": {
-      "heading": "From Playing to Making",
-      "subheading": "Roblox is already where millions of children spend their time. Roblox Studio is where they can start building it themselves.",
-      "studio": {
-        "title": "Real Game Creation",
-        "description": "Children learn Roblox Studio — the same tools Roblox creators use for real. They design worlds, make things move and react, and finish with something of their own they can share with friends."
+      "eyebrow": "What is this",
+      "heading": "Learn to build on Roblox.",
+      "paragraph1": "This programme gives 15–18 year-olds in France the chance to design, code, and publish their own Roblox game — with the people who matter most cheering them on. Delivered by Lynx Educate and School of Gaming, and supported by Roblox, it is a hands-on introduction to game design, digital creativity, and safe online collaboration.",
+      "paragraph2": "By the end of the programme, participants will have published their own original creation on Roblox. No experience necessary — just curiosity."
+    },
+    "why": {
+      "eyebrow": "Why join",
+      "heading": "More Than a Coding Class",
+      "skills": {
+        "title": "Skills for the future",
+        "description": "Roblox Studio, AI-assisted design, and the fundamentals of coding logic."
       },
-      "gedus": {
-        "title": "Guided by Gedus",
-        "description": "Our game educators are gamers themselves. They know a child who is proud of what they made will keep going, so a session is about building confidence just as much as building skills."
+      "people": {
+        "title": "Meet your people",
+        "description": "Connect with other creators who love building as much as you do."
+      },
+      "recognised": {
+        "title": "Get recognised",
+        "description": "Top projects are showcased at our closing celebration event."
+      },
+      "fun": {
+        "title": "Genuine fun",
+        "description": "Creative, social, and made to be enjoyed."
       },
       "safe": {
-        "title": "Safe, Friendly Clubs",
-        "description": "Small groups, the same familiar Gedu every week, and the gamer’s oath: treat each other with kindness, online and offline. The same care we put into our Minecraft clubs."
-      },
-      "parents": {
-        "title": "Parents Are Part of It",
-        "description": "You will see what your child is making and how they are getting on. Parental game education matters as much as the clubs themselves — that does not change here."
+        "title": "Stay safe online",
+        "description": "Dedicated parent sessions on digital safety, civility, and parental controls."
       }
     },
-    "partners": {
-      "heading": "Who Brings What",
-      "subheading": "Three organisations, one club.",
-      "sog": {
-        "name": "School of Gaming",
-        "role": "The club format and the game educators who run it — the people who turn screen time into quality time."
+    "how": {
+      "eyebrow": "How it works",
+      "heading": "Get Started in 4 Simple Steps",
+      "subheading": "Choose the format that suits: in-person or online events, ranging from 1 hour to 4 weeks.",
+      "step1": {
+        "title": "Choose an event",
+        "description": "Pick from the options below — we add new events often, so keep checking back."
       },
-      "lynx": {
-        "name": "Lynx Educate",
-        "role": "Our partner in France, whose work is removing the barriers that keep people out of education."
+      "step2": {
+        "title": "Create your account",
+        "description": "Right on the event page. Quick and free for new parents."
       },
-      "roblox": {
-        "name": "Roblox",
-        "role": "The platform the clubs are built on, and the creation tools the children will learn to use."
+      "step3": {
+        "title": "Register your teen’s details",
+        "description": "A few details to complete enrolment."
       },
-      "hosted": "Sogverse is the platform that hosts it all — the same place parents already manage their gamers, clubs and sessions."
+      "step4": {
+        "title": "Check your inbox",
+        "description": "You will get confirmation and everything you need before the first session."
+      }
+    },
+    "events": {
+      "heading": "Upcoming Events",
+      "subheading": "New events are added often. Each one takes you straight to its own page to enrol.",
+      "empty": "The first events are being scheduled now. Check back shortly, or register your interest to hear when they open."
+    },
+    "parents": {
+      "eyebrow": "For parents",
+      "heading": "We Know Online Safety Matters",
+      "body": "Alongside the teen programme we run dedicated parent sessions on digital safety, parental controls, and how to support your teen’s creative journey.",
+      "cta": "See our parent sessions"
     },
     "cta": {
-      "heading": "More Details on the Way",
-      "body": "Sign-up is not open yet. When it opens, this is where it will happen. If you already have a School of Gaming account, nothing about it changes.",
-      "note": "Placeholder — no action available yet"
+      "heading": "Ready to Get Started?",
+      "body": "Spots are limited by city and cohort.",
+      "button": "Get started"
     },
     "legal": {
       "roblox": "© 2024 Roblox Corporation. The Roblox word mark, Roblox Logo and Roblox Tilt are among the registered and unregistered trademarks of Roblox Corporation in the U.S. and other countries. Used with permission.",
