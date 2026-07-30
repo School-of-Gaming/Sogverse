@@ -72,17 +72,18 @@ export default function RobloxPage() {
       <section className="relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_hsl(var(--background))_100%),linear-gradient(to_right,_hsl(var(--primary)/0.2),_transparent_50%,_hsl(var(--secondary)/0.1))] pt-[var(--header-height)]">
         <div className="container mx-auto px-4 py-20 sm:py-28">
           <div className="mx-auto max-w-3xl text-center">
-            {/* Deliberately *not* `font-display` (Press Start 2P). The pixel
-                face is the right voice for the home page's playful promise, but
-                here it fights the page's job: this is the surface where three
-                organisations put their names to something, and a pixel headline
-                sitting above three corporate wordmarks reads as a novelty
-                rather than as credibility. Inter at a large tight-tracked size
-                carries the same warmth in the words without undercutting them.
-                `text-balance` evens the line lengths, which is why there is no
-                hand-placed <br /> in the copy. */}
-            <h1 className="text-balance text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+            {/* `font-display` is Press Start 2P, the pixel face — same as the
+                home page hero, and the three-beat slogan is built for it: one
+                short beat per line, so the widest line is 8 characters and the
+                monospaced pixel glyphs never need to wrap.
+                No `tracking-tight` (negative tracking closes up pixel glyphs
+                until they smudge into each other) and no `text-balance` (the
+                line breaks are authored in the copy, so there is nothing left
+                to balance). The size steps at `sm` as well as `md` because the
+                jump straight from 24px to 60px leaves tablets oddly small. */}
+            <h1 className="font-display text-2xl font-bold leading-snug sm:text-4xl md:text-6xl">
               {t.rich("hero.title", {
+                br: () => <br />,
                 primary: (chunks) => <span className="text-primary">{chunks}</span>,
                 secondary: (chunks) => (
                   <span className="text-secondary">{chunks}</span>

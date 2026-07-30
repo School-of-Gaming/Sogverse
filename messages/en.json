@@ -1548,7 +1548,7 @@
   },
   "roblox": {
     "hero": {
-      "title": "Build It. <primary>Play It.</primary> <secondary>Own It.</secondary>",
+      "title": "Build It<br></br><primary>Play It</primary><br></br><secondary>Own It</secondary>",
       "subtitle": "A free Roblox game design programme for teens — brought to you by Lynx Educate and School of Gaming, in partnership with Roblox.",
       "cta": "Register now"
     },
