@@ -167,6 +167,34 @@ duplicated the Join affordance; the decided layout separates them:
 - **Mobile**: single column — masthead, timeline, then the rail cards stacked
   below. The weekly loop (read last week, join, write up) stays first.
 
+Decisions from feedback round 4:
+
+- **Site notes surface on the product page for in-person products.** The schema
+  already holds them: a site (location) carries family-facing details
+  (`site_details`: address + notes, parent/gamer-visible) and staff notes
+  (`site_staff_details`: gedu/admin-visible), and every in-person product has a
+  `location_id`. Both render in the "About this group" area with the same
+  two-audience treatments as group notes, **editable by gedus** — with the honest
+  caveat surfaced in the UI that site notes belong to the *site* and are shared by
+  every product running there (an edit is site-wide, not product-scoped).
+- **No "Mark all present" shortcut** — reverses round 3. Bulk-confirm invites
+  recording attendance without actually checking; each gamer is marked
+  individually, and that friction is deliberate (attendance is pay confirmation).
+- **A mark must be revertable to unmarked** — clicking a selected Present/Absent
+  pill deselects it back to the null state; the gedu can always return a row to
+  "unanswered". The absent-selected treatment needs enough contrast to read.
+- **Scenes carry minimal scenario sets**: one kitchen-sink scenario per surface
+  plus genuinely mutually-exclusive variants only. Product page: `club` (remote,
+  weekly, long history, every entry state, peer groups) and `camp` (in-person,
+  daily cadence, site notes, no voice). Dashboard: `default` (one card live) and
+  `unverified`. A state that can coexist with the others lives in the kitchen
+  sink, not in its own scenario.
+- The collapsed future block reads **"N upcoming sessions"** (no "more"), its
+  expanded content renders *inside* the block, and expansion animates.
+- The avatar + first-name person chip becomes a shared `components/ui/` primitive
+  (it was already duplicated across the gedu cards before this feature tripled
+  it), and the rail labels its gedu chips so they can't be misread as gamers.
+
 Copy & treatment decisions (feedback round 3):
 
 - The attention state is called **"Needs attention"** (not "needs a write-up" —
