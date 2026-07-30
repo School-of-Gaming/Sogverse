@@ -28,7 +28,8 @@
       "changePin": "Byt PIN",
       "privacy": "Integritetspolicy",
       "terms": "Användarvillkor",
-      "antiBullying": "Mot mobbning och disciplin"
+      "antiBullying": "Mot mobbning och disciplin",
+      "roblox": "Roblox-speldesignprogram"
     }
   },
   "notFound": {
@@ -2369,6 +2370,90 @@
           "Om du har frågor om den här policyn, eller vill prata om något som har hänt, mejla vårt kansli på kanslia@sog.gg. Det är en riktig människa i andra änden, och vi finns här för att hjälpa till."
         ]
       }
+    }
+  },
+  "roblox": {
+    "hero": {
+      "title": "Bygg<br></br><primary>Spela</primary><br></br><secondary>Äg det</secondary>",
+      "subtitle": "Ett gratis Roblox-speldesignprogram för tonåringar — från Lynx Educate och School of Gaming, i samarbete med Roblox.",
+      "cta": "Anmäl dig nu"
+    },
+    "lockup": {
+      "heading": "Ett samarbete mellan",
+      "sogAlt": "School of Gaming",
+      "lynxAlt": "Lynx Educate",
+      "robloxAlt": "Roblox"
+    },
+    "what": {
+      "eyebrow": "Vad är det här",
+      "heading": "Lär dig bygga i Roblox.",
+      "paragraph1": "Programmet ger 15–18-åringar i Frankrike chansen att designa, koda och publicera sitt eget Roblox-spel — med de viktigaste personerna som hejar på. Det genomförs av Lynx Educate och School of Gaming med stöd av Roblox, och är en praktisk introduktion till speldesign, digital kreativitet och trygg samverkan online.",
+      "paragraph2": "När programmet är slut har deltagarna publicerat sin egen skapelse på Roblox. Ingen erfarenhet krävs — bara nyfikenhet."
+    },
+    "why": {
+      "eyebrow": "Varför vara med",
+      "heading": "Mer än en kodningskurs",
+      "skills": {
+        "title": "Färdigheter för framtiden",
+        "description": "Roblox Studio, AI-assisterad design och grunderna i kodningslogik."
+      },
+      "people": {
+        "title": "Hitta ditt gäng",
+        "description": "Träffa andra skapare som älskar att bygga lika mycket som du."
+      },
+      "recognised": {
+        "title": "Bli uppmärksammad",
+        "description": "De bästa projekten visas upp på vår avslutningsfest."
+      },
+      "fun": {
+        "title": "Äkta kul",
+        "description": "Kreativt, socialt och gjort för att avnjutas."
+      },
+      "safe": {
+        "title": "Var trygg online",
+        "description": "Egna föräldrasessioner om digital trygghet, gott bemötande och föräldrakontroller."
+      }
+    },
+    "how": {
+      "eyebrow": "Så fungerar det",
+      "heading": "Kom igång i fyra enkla steg",
+      "subheading": "Välj det format som passar: evenemang på plats eller online, från en timme till fyra veckor.",
+      "step1": {
+        "title": "Välj ett evenemang",
+        "description": "Bland alternativen nedan — vi lägger till nya ofta, så titta in igen."
+      },
+      "step2": {
+        "title": "Skapa ditt konto",
+        "description": "Direkt på evenemangssidan. Snabbt och gratis för nya föräldrar."
+      },
+      "step3": {
+        "title": "Fyll i din tonårings uppgifter",
+        "description": "Några uppgifter för att slutföra anmälan."
+      },
+      "step4": {
+        "title": "Kolla din inkorg",
+        "description": "Du får bekräftelse och allt du behöver veta inför första tillfället."
+      }
+    },
+    "events": {
+      "heading": "Kommande evenemang",
+      "subheading": "Vi lägger till nya evenemang ofta — titta in och se vad som är på gång.",
+      "empty": "De första evenemangen planeras just nu. Titta in snart och se vad som är på gång."
+    },
+    "parents": {
+      "eyebrow": "För föräldrar",
+      "heading": "Vi vet att trygghet online spelar roll",
+      "body": "Parallellt med tonårsprogrammet håller vi egna föräldrasessioner om digital trygghet, föräldrakontroller och hur du stöttar din tonårings skapande.",
+      "cta": "Se våra föräldrasessioner"
+    },
+    "cta": {
+      "heading": "Redo att börja?",
+      "body": "Platserna är begränsade per stad och grupp.",
+      "button": "Kom igång"
+    },
+    "legal": {
+      "roblox": "© 2024 Roblox Corporation. Ordmärket Roblox, Roblox-logotypen och Roblox Tilt är bland Roblox Corporations registrerade och oregistrerade varumärken i USA och andra länder. Används med tillstånd.",
+      "lynx": "Lynx Educate och Lynx Educate-logotypen är varumärken som tillhör Lynx Educate. Används med tillstånd."
     }
   }
 }

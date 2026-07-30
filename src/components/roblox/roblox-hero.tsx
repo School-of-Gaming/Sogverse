@@ -22,9 +22,25 @@ import { PartnerLockup } from "@/components/roblox/partner-lockup";
  *
  * `font-display` is Press Start 2P. No `tracking-tight` (negative tracking
  * smudges pixel glyphs together) and no `text-balance` (the line breaks are
- * authored in the copy). The slogan holds at 48px until `lg` because 8
- * characters at 60px is 480px, which does not clear a half-width column before
- * then.
+ * authored in the copy).
+ *
+ * **The slogan's size steps are load-bearing, so do not raise them casually.**
+ * Press Start 2P advances almost exactly 1em per character, so a line's width is
+ * simply (characters x font-size) and the two-column layout gives it only half
+ * the container. Worst case is the longest line in any locale — currently 8
+ * characters ("Build It", French "Possédez") — checked against the column at
+ * each step:
+ *
+ *     sm  640px   36px   1 col, 608px avail   8x36 = 288px
+ *     md  768px   36px   344px column        8x36 = 288px
+ *     lg  1024px  48px   472px column        8x48 = 384px
+ *     xl  1280px+ 60px   536px column        8x60 = 480px
+ *
+ * Hence the jump to 60px waits for `xl`: at `lg` it would need 480px of a 472px
+ * column and wrap, which for a slogan whose whole point is one beat per line is
+ * the one failure that matters. A **translation longer than 8 characters per
+ * line breaks this** — keep new locales inside that budget rather than shrinking
+ * the type for everyone.
  */
 export function RobloxHero() {
   const t = useTranslations("roblox");
@@ -37,7 +53,7 @@ export function RobloxHero() {
       <div className="container mx-auto max-w-6xl px-4 py-20 sm:py-28">
         <div className="grid items-center gap-14 md:grid-cols-2 md:gap-12">
           <div className="text-center md:text-left">
-            <h1 className="font-display text-2xl font-bold leading-snug sm:text-4xl md:text-5xl lg:text-6xl">
+            <h1 className="font-display text-2xl font-bold leading-snug sm:text-4xl lg:text-5xl xl:text-6xl">
               {t.rich("hero.title", {
                 br: () => <br />,
                 primary: (chunks) => <span className="text-primary">{chunks}</span>,

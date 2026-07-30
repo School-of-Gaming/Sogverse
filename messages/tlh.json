@@ -28,7 +28,8 @@
       "changePin": "PIN yIchoH",
       "privacy": "Privacy Policy",
       "terms": "Terms and Conditions",
-      "antiBullying": "Anti-Bullying and Discipline"
+      "antiBullying": "Anti-Bullying and Discipline",
+      "roblox": "Roblox qetlh chenmoHmeH ghojmoH"
     }
   },
   "notFound": {
@@ -2414,6 +2415,90 @@
           "If you hold any question on this code, or would counsel a thing that has come to pass, hail our chancery at kanslia@sog.gg. A true warrior of flesh and blood stands at the other end, and we are here to aid. Qapla'!"
         ]
       }
+    }
+  },
+  "roblox": {
+    "hero": {
+      "title": "yIchen<br></br><primary>yItIv</primary><br></br><secondary>yIghaj</secondary>",
+      "subtitle": "Roblox qetlh chenmoHmeH ghojmoH — Huch Hutlh! loDHompu’ be’Hompu’vaD. Lynx Educate, School of Gaming, je Roblox boqwI’pu’.",
+      "cta": "DaH yIjeS"
+    },
+    "lockup": {
+      "heading": "boqwI’pu’",
+      "sogAlt": "School of Gaming",
+      "lynxAlt": "Lynx Educate",
+      "robloxAlt": "Roblox"
+    },
+    "what": {
+      "eyebrow": "nuq ’oH",
+      "heading": "Robloxdaq chenmoH yIghoj.",
+      "paragraph1": "France Sepdaq 15–18 ben loDHompu’ be’Hompu’ je qetlhmey luchenmoH, chuvmey lulughmoH, ’ej Robloxdaq luqIn. LughojmoH Lynx Educate je School of Gaming; Roblox tungHa’. qetlh chenmoHghach, De’ laHmey, je jIrDaq QaQ boqghach ghojmoH.",
+      "paragraph2": "ghojmoH van, Hoch jeSwI’ Robloxdaq qetlhDaj chu’ qInpu’. laH tIn Hutlh — neH tu’lI’ neH."
+    },
+    "why": {
+      "eyebrow": "qatlh yIjeS",
+      "heading": "chuvmey ghojmoH law’qu’",
+      "skills": {
+        "title": "wa’leS laHmey",
+        "description": "Roblox Studio, qorDu’ nISwI’ boq chenmoHghach, je chuvmey meq patlh."
+      },
+      "people": {
+        "title": "lIj tuq yISam",
+        "description": "latlh chenmoHwI’pu’ tISam — chenmoHghach lumuSHa’be’, SoH rap."
+      },
+      "recognised": {
+        "title": "yIquv",
+        "description": "qetlhmey pov lo’laH van Hoch legh."
+      },
+      "fun": {
+        "title": "tIv teH",
+        "description": "chenmoHghach, ghom, je tIvmeH chenta’."
+      },
+      "safe": {
+        "title": "jIrDaq yIQaD",
+        "description": "vav SoS ghojmoHmeH poHmey: jIr QaD, quv, je puq nISwI’ SeH."
+      }
+    },
+    "how": {
+      "eyebrow": "chay’ Qu’",
+      "heading": "loS Qu’mey ngeD — yIchu’",
+      "subheading": "Do’Ha’ yIwIv: Daq pagh jIrDaq wanI’mey, wa’ rep ghap loS Hogh.",
+      "step1": {
+        "title": "wanI’ yIwIv",
+        "description": "bIngDaq yIwIv — reH wanI’mey chu’ wImaH, vaj reH yIleghqa’."
+      },
+      "step2": {
+        "title": "Account yIchenmoH",
+        "description": "wanI’ QIn Daq. nom je Huch Hutlh vavpu’ chu’vaD."
+      },
+      "step3": {
+        "title": "loDHom De’ yIqIn",
+        "description": "puS De’ neH, ’ej jeSmeH naQ."
+      },
+      "step4": {
+        "title": "QIn Daq yIlegh",
+        "description": "qay’be’ QIn je Hoch De’ Datlhap wa’DIch poH pa’."
+      }
+    },
+    "events": {
+      "heading": "wanI’mey wa’leS",
+      "subheading": "reH wanI’mey chu’ wImaH — nuq ghoS yIlegh.",
+      "empty": "wanI’mey wa’DIch DaH wIqech. tugh yIleghqa’, ’ej nuq ghoS yISov."
+    },
+    "parents": {
+      "eyebrow": "vavpu’ SoSpu’vaD",
+      "heading": "jIr QaD potlh wISov",
+      "body": "loDHom ghojmoH tlhej, vavpu’vaD ghojmoHmeH poHmey wImaH: jIr QaD, puq nISwI’ SeH, je chay’ loDHom chenmoHghach Daboq.",
+      "cta": "vavpu’ poHmey yIlegh"
+    },
+    "cta": {
+      "heading": "bIchu’meH bIQap’a’?",
+      "body": "veng ’ej ghom, Daqmey puS.",
+      "button": "yIchu’"
+    },
+    "legal": {
+      "roblox": "© 2024 Roblox Corporation. Roblox per, Roblox Degh, je Roblox Tilt Roblox Corporation ngoq’a’mey — Amerika Sepmey je latlh Sepmey. chaw’ lo’lu’.",
+      "lynx": "Lynx Educate je Lynx Educate Degh Lynx Educate ngoq’a’mey. chaw’ lo’lu’."
     }
   }
 }

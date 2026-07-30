@@ -28,7 +28,8 @@
       "changePin": "Vaihda PIN",
       "privacy": "Tietosuojaseloste",
       "terms": "Käyttöehdot",
-      "antiBullying": "Kiusaamisen ehkäisy ja kurinpito"
+      "antiBullying": "Kiusaamisen ehkäisy ja kurinpito",
+      "roblox": "Roblox-pelisuunnitteluohjelma"
     }
   },
   "notFound": {
@@ -2369,6 +2370,90 @@
           "Jos sinulla on kysyttävää tästä ohjeesta tai haluat keskustella jostakin tapahtuneesta, lähetä kanslialle viesti osoitteeseen kanslia@sog.gg. Linjan toisessa päässä on oikea ihminen, ja autamme mielellämme."
         ]
       }
+    }
+  },
+  "roblox": {
+    "hero": {
+      "title": "Rakenna<br></br><primary>Pelaa</primary><br></br><secondary>Omista</secondary>",
+      "subtitle": "Ilmainen Roblox-pelisuunnitteluohjelma nuorille – järjestäjinä Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa.",
+      "cta": "Ilmoittaudu nyt"
+    },
+    "lockup": {
+      "heading": "Yhteistyössä",
+      "sogAlt": "School of Gaming",
+      "lynxAlt": "Lynx Educate",
+      "robloxAlt": "Roblox"
+    },
+    "what": {
+      "eyebrow": "Mistä on kyse",
+      "heading": "Opi rakentamaan Robloxissa.",
+      "paragraph1": "Ohjelma antaa 15–18-vuotiaille Ranskassa mahdollisuuden suunnitella, koodata ja julkaista oma Roblox-pelinsä – ja tärkeimmät ihmiset kannustavat vierellä. Lynx Educaten ja School of Gamingin toteuttama ja Robloxin tukema ohjelma on käytännönläheinen johdatus pelisuunnitteluun, digitaaliseen luovuuteen ja turvalliseen verkkoyhteistyöhön.",
+      "paragraph2": "Ohjelman päätteeksi osallistujat ovat julkaisseet oman teoksensa Robloxissa. Aiempaa kokemusta ei tarvita – pelkkä kiinnostus riittää."
+    },
+    "why": {
+      "eyebrow": "Miksi mukaan",
+      "heading": "Enemmän kuin koodauskurssi",
+      "skills": {
+        "title": "Taitoja tulevaisuuteen",
+        "description": "Roblox Studio, tekoälyn avustama suunnittelu ja koodauslogiikan perusteet."
+      },
+      "people": {
+        "title": "Löydä oma porukkasi",
+        "description": "Tutustu muihin tekijöihin, jotka innostuvat rakentamisesta yhtä paljon kuin sinä."
+      },
+      "recognised": {
+        "title": "Saa tunnustusta",
+        "description": "Parhaat projektit esitellään ohjelman päätösjuhlassa."
+      },
+      "fun": {
+        "title": "Aitoa hauskaa",
+        "description": "Luovaa, sosiaalista ja tehty nautittavaksi."
+      },
+      "safe": {
+        "title": "Pysy turvassa verkossa",
+        "description": "Vanhemmille omat tilaisuudet verkkoturvallisuudesta, hyvästä käytöksestä ja lapsilukoista."
+      }
+    },
+    "how": {
+      "eyebrow": "Näin se toimii",
+      "heading": "Aloita neljässä helpossa vaiheessa",
+      "subheading": "Valitse sopiva muoto: lähitapahtumia ja verkkotapahtumia yhdestä tunnista neljään viikkoon.",
+      "step1": {
+        "title": "Valitse tapahtuma",
+        "description": "Poimi sopiva alta – lisäämme uusia tapahtumia usein, joten käy katsomassa uudelleen."
+      },
+      "step2": {
+        "title": "Luo tili",
+        "description": "Suoraan tapahtuman sivulla. Uusille vanhemmille nopeaa ja ilmaista."
+      },
+      "step3": {
+        "title": "Täytä nuoren tiedot",
+        "description": "Muutama tieto, ja ilmoittautuminen on valmis."
+      },
+      "step4": {
+        "title": "Tarkista sähköpostisi",
+        "description": "Saat vahvistuksen ja kaikki tarvittavat tiedot ennen ensimmäistä kertaa."
+      }
+    },
+    "events": {
+      "heading": "Tulevat tapahtumat",
+      "subheading": "Lisäämme uusia tapahtumia usein – käy katsomassa, mitä on tulossa.",
+      "empty": "Ensimmäisiä tapahtumia aikataulutetaan juuri nyt. Käy pian katsomassa, mitä on tulossa."
+    },
+    "parents": {
+      "eyebrow": "Vanhemmille",
+      "heading": "Tiedämme, että verkkoturvallisuus on tärkeää",
+      "body": "Nuorten ohjelman rinnalla järjestämme vanhemmille omia tilaisuuksia verkkoturvallisuudesta, lapsilukoista ja siitä, miten voit tukea nuoren luovaa työtä.",
+      "cta": "Katso vanhempien tilaisuudet"
+    },
+    "cta": {
+      "heading": "Valmis aloittamaan?",
+      "body": "Paikkoja on rajoitetusti kaupungeittain ja ryhmittäin.",
+      "button": "Aloita"
+    },
+    "legal": {
+      "roblox": "© 2024 Roblox Corporation. Roblox-sanamerkki, Roblox-logo ja Roblox Tilt ovat Roblox Corporationin rekisteröityjä ja rekisteröimättömiä tavaramerkkejä Yhdysvalloissa ja muissa maissa. Käytetty luvalla.",
+      "lynx": "Lynx Educate ja Lynx Educate -logo ovat Lynx Educaten tavaramerkkejä. Käytetty luvalla."
     }
   }
 }

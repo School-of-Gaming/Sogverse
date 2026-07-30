@@ -29,7 +29,7 @@
       "privacy": "Privacy Policy",
       "terms": "Terms and Conditions",
       "antiBullying": "Anti-Bullying and Discipline",
-      "roblox": "Roblox Studio Clubs"
+      "roblox": "Roblox Game Design Programme"
     }
   },
   "notFound": {
@@ -1590,8 +1590,8 @@
     },
     "how": {
       "eyebrow": "How it works",
-      "heading": "Get Started in 4 Simple Steps",
-      "subheading": "Choose the format that suits: in-person or online events, ranging from 1 hour to 4 weeks.",
+      "heading": "Get Started in Four Simple Steps",
+      "subheading": "Choose the format that suits: in-person or online events, ranging from one hour to four weeks.",
       "step1": {
         "title": "Choose an event",
         "description": "Pick from the options below — we add new events often, so keep checking back."
@@ -1611,8 +1611,8 @@
     },
     "events": {
       "heading": "Upcoming Events",
-      "subheading": "New events are added often. Each one takes you straight to its own page to enrol.",
-      "empty": "The first events are being scheduled now. Check back shortly, or register your interest to hear when they open."
+      "subheading": "We add new events often — check back to see what is coming up.",
+      "empty": "The first events are being scheduled now. Check back shortly to see what is coming up."
     },
     "parents": {
       "eyebrow": "For parents",
