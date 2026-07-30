@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
+import { MaterialLink } from "@/components/ui/material-link";
 import { PadletLink } from "@/components/ui/padlet-link";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import {
@@ -13,9 +14,9 @@ import {
   SessionFeed,
   SessionFeedAlertBadge,
   countEntriesNeedingAttention,
+  type SessionEntryDraft,
   type SessionFeedEntry,
   type SessionFeedGamer,
-  type SessionRecordDraft,
 } from "@/components/gedu/session-feed";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
@@ -31,6 +32,7 @@ import {
 } from "./AssignedGroupCard";
 import { SessionDetailsBackLink } from "./BackLink";
 import { GamerRosterRow } from "./GamerRosterRow";
+import { GroupNotesPanel, type GroupNotesDraft } from "./GroupNotesPanel";
 import { PeerGroupCard } from "./PeerGroupCard";
 
 /**
@@ -59,18 +61,41 @@ import { PeerGroupCard } from "./PeerGroupCard";
  * - **The outstanding-work count sits on the Sessions heading**, the same
  *   number the dashboard's product card shows, so the badge a gedu clicked from
  *   the dashboard is still there when they land.
+ * - **The group's standing notes live in the identity band**, not in the feed.
+ *   The feed is a run of occurrences and there is deliberately no "post to the
+ *   club" action in it, so anything true of the group rather than of one date
+ *   needs a home above it.
+ * - **The header carries both of the product's outward links**: the Padlet
+ *   families read, and the staff-only material link they never see.
  */
 interface GeduProductPageBodyDraftProps {
   data: GeduAssignedProduct;
-  /** Newest first: the upcoming session, then the term running backwards. */
+  /**
+   * Newest first: the future sessions inside the horizon (furthest away first,
+   * so the next session is the last of them), then the term running backwards.
+   */
   entries: readonly SessionFeedEntry[];
   /** Attendance roster for the feed — same children as the group roster. */
   feedRoster: readonly SessionFeedGamer[];
   /** Zone the schedule was authored in; the feed renders in the viewer's. */
   sourceTimeZone: string;
+  /**
+   * Staff-only lesson/material URL, or `null` when unset. **Never render this on
+   * a surface a parent or gamer can reach** — this page is gedu-only, which is
+   * the only reason no visibility check happens here. At promotion it comes from
+   * the product's material column, alongside the family-facing Padlet.
+   */
+  materialUrl: string | null;
+  /** The group's standing public note, independent of any session. */
+  groupPublicNote: string | null;
+  /** The group's standing staff-only note. */
+  groupStaffNote: string | null;
+  groupNotesEditing: boolean;
+  onGroupNotesEditingChange: (editing: boolean) => void;
+  onSaveGroupNotes: (draft: GroupNotesDraft) => void;
   editingEntryId: string | null;
   onEditEntry: (entryId: string | null) => void;
-  onSaveEntry: (entryId: string, draft: SessionRecordDraft) => void;
+  onSaveEntry: (entryId: string, draft: SessionEntryDraft) => void;
 }
 
 export function GeduProductPageBodyDraft({
@@ -78,6 +103,12 @@ export function GeduProductPageBodyDraft({
   entries,
   feedRoster,
   sourceTimeZone,
+  materialUrl,
+  groupPublicNote,
+  groupStaffNote,
+  groupNotesEditing,
+  onGroupNotesEditingChange,
+  onSaveGroupNotes,
   editingEntryId,
   onEditEntry,
   onSaveEntry,
@@ -120,9 +151,14 @@ export function GeduProductPageBodyDraft({
               {productName}
             </h1>
           </div>
-          {data.product.padlet_url && (
-            <PadletLink href={data.product.padlet_url} />
-          )}
+          {/* Two audiences, side by side: the Padlet is the family-facing link,
+              the material link is staff-only and never leaves this page. */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            {data.product.padlet_url && (
+              <PadletLink href={data.product.padlet_url} />
+            )}
+            {materialUrl && <MaterialLink href={materialUrl} />}
+          </div>
         </header>
 
         {assignedGroup ? (
@@ -133,6 +169,11 @@ export function GeduProductPageBodyDraft({
               voiceIsOpen={voiceState.voiceIsOpen}
               opensDate={voiceState.opensDate}
               opensTime={voiceState.opensTime}
+              publicNote={groupPublicNote}
+              staffNote={groupStaffNote}
+              notesEditing={groupNotesEditing}
+              onNotesEditingChange={onGroupNotesEditingChange}
+              onSaveNotes={onSaveGroupNotes}
             />
 
             <section className="space-y-3">
@@ -186,9 +227,15 @@ export function GeduProductPageBodyDraft({
 
 /**
  * Who this group is, in one band above the feed: name, gamer count, the gedus
- * teaching it, the Join button, and the roster behind a disclosure. Everything
- * the old assigned-group card carried, compressed to the height the feed can
- * afford to give it.
+ * teaching it, the Join button, the group's standing notes, and the roster
+ * behind a disclosure. Everything the old assigned-group card carried,
+ * compressed to the height the feed can afford to give it, plus the one thing
+ * the feed structurally cannot hold — information about the group rather than
+ * about a session.
+ *
+ * The notes sit above the roster disclosure rather than below it: they are read
+ * far more often than a parent's email address is looked up, and a collapsed
+ * disclosure between the two would bury them.
  */
 function AssignedGroupBand({
   group,
@@ -196,12 +243,22 @@ function AssignedGroupBand({
   voiceIsOpen,
   opensDate,
   opensTime,
+  publicNote,
+  staffNote,
+  notesEditing,
+  onNotesEditingChange,
+  onSaveNotes,
 }: {
   group: GeduAssignedProductGroup;
   isRemote: boolean;
   voiceIsOpen: boolean;
   opensDate: string;
   opensTime: string;
+  publicNote: string | null;
+  staffNote: string | null;
+  notesEditing: boolean;
+  onNotesEditingChange: (editing: boolean) => void;
+  onSaveNotes: (draft: GroupNotesDraft) => void;
 }) {
   const t = useTranslations("gedu.sessionDetails");
   const voiceHref = isRemote ? ROUTES.voice.groupSession(group.id) : "#";
@@ -238,6 +295,14 @@ function AssignedGroupBand({
             opensTime={opensTime}
           />
         </div>
+
+        <GroupNotesPanel
+          publicNote={publicNote}
+          staffNote={staffNote}
+          editing={notesEditing}
+          onEditingChange={onNotesEditingChange}
+          onSave={onSaveNotes}
+        />
 
         <RosterDisclosure roster={group.roster ?? []} />
       </CardContent>

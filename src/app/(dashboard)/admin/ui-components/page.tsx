@@ -23,9 +23,9 @@ import {
   Info,
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ROLE_BADGE_STYLES } from "@/lib/constants";
+import { ROLE_BADGE_STYLES, ROUTES } from "@/lib/constants";
 import {
   Card,
   CardContent,
@@ -47,6 +47,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Identicon } from "@/components/ui/identicon";
+import { MaterialLink } from "@/components/ui/material-link";
+import { PadletLink } from "@/components/ui/padlet-link";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { ParticipantRow, type ParticipantRowData } from "@/components/voice/ParticipantRow";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
@@ -99,15 +101,17 @@ import {
   ManageBillingCardView,
   type BillingAccountSummary,
 } from "@/components/billing";
-import { PREVIEW_SCENES, previewSceneHref } from "@/components/preview/scenes";
 import {
   SessionFeed,
   SessionFeedAlertBadge,
   applyDraftToEntry,
+  applyPlanDraftToEntry,
   countEntriesNeedingAttention,
   isEditableEntry,
+  isPlannableEntry,
+  partitionFeedEntries,
+  type SessionEntryDraft,
   type SessionFeedEntry,
-  type SessionRecordDraft,
 } from "@/components/gedu/session-feed";
 import {
   buildSessionFeedFixture,
@@ -407,7 +411,7 @@ function SwitchProfileDialogDemo() {
         <SwitchProfileDialog
           open={open}
           onOpenChange={setOpen}
-          target={{ id: "demo-gamer-id", role: "gamer", first_name: "Aino" }}
+          target={{ id: "7d0cf9eb-2567-4ec8-a883-2e67b9138a98", role: "gamer", first_name: "Aino" }}
           redirectUrl="#"
           title="Switch to Aino's profile to join Minecraft Club?"
           oneWayWarning="You'll be signed out of your parent account."
@@ -531,7 +535,7 @@ const DEMO_PARTICIPANTS = [
     videoOn: false,
   },
   {
-    userId: "a3b7c912-45de-4f01-b8a2-9c6d3e7f1234",
+    userId: "8661f882-c470-4225-934d-b7330e6867d1",
     userName: "Väinö",
     role: "gedu",
     minecraftUsername: "DarkPhoenixRising",
@@ -542,7 +546,7 @@ const DEMO_PARTICIPANTS = [
     videoOn: true,
   },
   {
-    userId: "d5e8f234-67ab-4c12-9d3e-a1b2c3d4e5f6",
+    userId: "6f6a6faf-f556-43cd-8ffe-87a0573e68b5",
     userName: "Sofia",
     role: "gamer",
     minecraftUsername: "GalaxyDestroyer9000",
@@ -1274,8 +1278,11 @@ function ProductsDemo() {
           The shared &ldquo;registration closed&rdquo; panel (ended / already
           started / fully booked) has no browse-card link &mdash; a parent only
           reaches it through a stale link or bookmark. It is still previewable
-          full-page: every scenario, closed ones included, is listed under{" "}
-          <em>Full-page previews</em> at the bottom of this page.
+          full-page: every scenario, closed ones included, is listed on the{" "}
+          <a href={ROUTES.admin.uiPreviews} className="underline">
+            UI Previews
+          </a>{" "}
+          page.
         </p>
       </SubSection>
     </div>
@@ -2061,62 +2068,43 @@ export default function AdminUIComponentsPage() {
           in local React state &mdash; typing, ticking and saving all work,
           nothing persists past a reload.
         </p>
+        <p className="text-sm text-muted-foreground">
+          Sessions still <em>ahead</em> of us carry planning fields only &mdash; a
+          forward note families read later, a reminder for the team, and &ldquo;I
+          need a substitute&rdquo;. Never attendance or didn&rsquo;t-run: those
+          record what happened. Only the next session is prominent; the rest of
+          the horizon collapses behind one row above it, which surfaces any
+          substitute request so it can&rsquo;t hide. On a long history the recent
+          past renders and older chunks append below on request, with month
+          dividers marking each boundary the scroll crosses.
+        </p>
         <GeduSessionFeedDemo />
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 17: Full-page previews                                */}
+      {/* Section 17: Product links — family vs. staff                  */}
       {/* ============================================================ */}
-      <Section title="Full-page previews">
+      <Section title="Product links — family vs. staff">
         <p className="text-sm text-muted-foreground -mt-2">
-          The demos above show components; a page-level change has to be judged
-          as a <em>page</em> &mdash; real chrome, real viewport, real scrolling.
-          Each link below opens one fixture-driven scene at{" "}
-          <code>/preview/{"{surface}"}/{"{scenario}"}</code>, composed inside the
-          same header/sidebar/footer shell the real route uses, with no network
-          calls behind it. Scenes render the <em>same</em> page body the live
-          route renders (or the draft body that will replace it), so they
-          can&rsquo;t drift into a parallel design. Pure-UI interactions work
-          against local state; anything that would hit a backend renders its real
-          state with the action inert. This list is generated from the scene
-          registry &mdash; adding a scene surfaces its links here automatically.
+          A product carries two outward links with different audiences, and they
+          sit side by side in the product header, so the difference has to be
+          legible at a glance rather than remembered. The <strong>Padlet</strong>{" "}
+          is the family-facing one and reads as a primary link; the{" "}
+          <strong>material</strong> link is staff-only and reads as back-of-house
+          &mdash; padlocked book glyph, muted tone. The material component renders
+          whatever href it is given and knows nothing about who is looking:{" "}
+          <em>
+            only render it on a gedu- or admin-only surface. Never hide it with
+            CSS on a page a parent can reach
+          </em>{" "}
+          &mdash; the URL would still be in the HTML.
         </p>
-        <FullPagePreviewsDemo />
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border p-4">
+          <PadletLink href="https://padlet.com/sog/minecraft-monday-club" />
+          <MaterialLink href="https://drive.sog.gg/minecraft-monday-club/lesson-plans" />
+        </div>
       </Section>
 
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Full-page previews                                                 */
-/* ------------------------------------------------------------------ */
-
-// Iterates the preview scene registry — one subsection per scene, one link per
-// scenario. Nothing here knows what any individual scene is, on purpose.
-function FullPagePreviewsDemo() {
-  return (
-    <div className="space-y-8">
-      {PREVIEW_SCENES.map((scene) => (
-        <SubSection key={scene.surface} title={scene.title}>
-          <p className="max-w-prose text-sm text-muted-foreground">
-            {scene.description}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {scene.scenarios.map((scenario) => (
-              <a
-                key={scenario.slug}
-                href={previewSceneHref(scene.surface, scenario.slug)}
-                target="_blank"
-                rel="noreferrer"
-                className={buttonVariants({ variant: "outline", size: "sm" })}
-              >
-                {scenario.label} &rarr;
-              </a>
-            ))}
-          </div>
-        </SubSection>
-      ))}
     </div>
   );
 }
@@ -2379,11 +2367,12 @@ const BILLING_ACCOUNTS_SPLIT: BillingAccountSummary[] = [
 /* ------------------------------------------------------------------ */
 
 /**
- * The feed rendered against the mock club, with the inline editor wired to
- * local state: ticking attendance, typing either note, flipping "this session
- * didn't run" and saving all mutate the fixture in place, so a gap really does
- * turn into a written-up entry (and the alert badge above it really does count
- * down). Nothing persists — a reload puts the fixture back.
+ * The feed rendered against the mock club, with both inline editors wired to
+ * local state: ticking attendance, typing any note, flipping "this session
+ * didn't run", planning a future session and asking for a substitute all mutate
+ * the fixture in place, so a gap really does turn into a written-up entry (and
+ * the alert badge above it really does count down). Nothing persists — a reload
+ * puts the fixture back.
  *
  * The fixture is built once from `useNow()` and then held in state: rebuilding
  * it on every 30s tick would throw away whatever the reviewer had just typed.
@@ -2397,22 +2386,33 @@ function GeduSessionFeedDemo() {
   );
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Second fixture, upcoming entry only, with the voice window open — the one
+  // Second fixture, next session only, with the voice window open — the one
   // state the main feed can't show at the same time as its locked counterpart.
-  const voiceOpenEntries = useMemo(
-    () => buildSessionFeedFixture(now, { voiceIsOpen: true }).entries.slice(0, 1),
-    [now],
-  );
+  // Pulled out by the same partition the feed uses rather than by index, so it
+  // stays the *next* session however deep the future horizon gets.
+  const voiceOpenEntries = useMemo(() => {
+    const next = partitionFeedEntries(
+      buildSessionFeedFixture(now, { voiceIsOpen: true }).entries,
+    ).nextSession;
+    return next === null ? [] : [next];
+  }, [now]);
 
   const needingAttention = countEntriesNeedingAttention(entries);
 
-  const handleSave = (entryId: string, draft: SessionRecordDraft) => {
+  // A plan can only land on a future session and a write-up only on a past one,
+  // so the entry's own kind settles which apply runs; a mismatch leaves the
+  // entry untouched rather than corrupting it.
+  const handleSave = (entryId: string, draft: SessionEntryDraft) => {
     setEntries((prev) =>
-      prev.map((entry) =>
-        entry.id === entryId && isEditableEntry(entry)
-          ? applyDraftToEntry(entry, draft)
-          : entry,
-      ),
+      prev.map((entry) => {
+        if (entry.id !== entryId) return entry;
+        if (draft.kind === "plan") {
+          return isPlannableEntry(entry)
+            ? applyPlanDraftToEntry(entry, draft)
+            : entry;
+        }
+        return isEditableEntry(entry) ? applyDraftToEntry(entry, draft) : entry;
+      }),
     );
     setEditingId(null);
   };
@@ -2438,10 +2438,10 @@ function GeduSessionFeedDemo() {
         </div>
       </SubSection>
 
-      <SubSection title="Upcoming entry — voice window open">
+      <SubSection title="Next session — voice window open">
         <div className="max-w-2xl space-y-2">
           <DemoCaption>
-            Same entry as the head of the feed above, with the window open so
+            The same next session as in the feed above, with the window open so
             the active Join button shows instead of the locked &ldquo;Opens
             …&rdquo; state. Read-only.
           </DemoCaption>

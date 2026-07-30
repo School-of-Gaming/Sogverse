@@ -1,21 +1,32 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import { ChevronsDown } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
 import { useNow, useTimezone } from "@/providers";
 import { cn } from "@/lib/utils";
+import { LaterSessionsBlock } from "./LaterSessionsBlock";
 import { SessionFeedItem } from "./SessionFeedItem";
-import { formatSessionLabels } from "./session-labels";
+import {
+  countSubstituteRequests,
+  partitionFeedEntries,
+  pastEntryWindow,
+} from "./entry-state";
+import { withMonthDividers, type SessionFeedRow } from "./feed-rows";
+import { formatMonthLabel, formatSessionLabels } from "./session-labels";
 import type {
+  SessionEntryDraft,
   SessionFeedEntry,
   SessionFeedGamer,
-  SessionRecordDraft,
 } from "./types";
 
 interface SessionFeedProps {
   /**
-   * The group's sessions, newest first: the one upcoming session (if there is
-   * one) at the head, then every past occurrence going back in time. The
-   * component renders the order it is given — it does no sorting of its own.
+   * The group's sessions, newest first: every future occurrence inside the
+   * horizon at the head (furthest away first, so the next session is the last
+   * of them), then every past occurrence going back in time. The component
+   * renders the order it is given — it does no sorting of its own.
    */
   entries: readonly SessionFeedEntry[];
   /** The group's current roster, for the attendance summary and checklist. */
@@ -26,11 +37,11 @@ interface SessionFeedProps {
    * how the feed knows whether that is a conversion worth flagging.
    */
   sourceTimeZone: string;
-  /** Id of the entry expanded into the editor, or `null` when none is. */
+  /** Id of the entry expanded into an editor, or `null` when none is. */
   editingEntryId: string | null;
   /** Ask to expand an entry's editor, or `null` to collapse whatever is open. */
   onEditEntry: (entryId: string | null) => void;
-  onSaveEntry: (entryId: string, draft: SessionRecordDraft) => void;
+  onSaveEntry: (entryId: string, draft: SessionEntryDraft) => void;
   className?: string;
 }
 
@@ -43,8 +54,19 @@ interface SessionFeedProps {
  * reads as a single continuous story rather than a stack of unrelated cards,
  * and the markers alone tell you where the gaps are before you read a word.
  *
- * Purely presentational: which entry is open is the caller's state, and saving
- * is the caller's callback. Nothing here fetches, mutates, or sorts.
+ * Three things keep a long feed navigable without ever moving painted content:
+ *
+ * - **Later future sessions collapse** behind one row above the next session,
+ *   with any substitute request surfaced on the closed row.
+ * - **The past opens on its recent slice** and older chunks are appended
+ *   *below* on request, so the reveal grows away from everything being read.
+ * - **Month dividers** mark each boundary the scroll crosses, which is what
+ *   turns a year of near-identical weekly dates back into something scannable.
+ *
+ * Which entry is open is the caller's state and saving is the caller's callback;
+ * how much of the feed is revealed is this component's own, because it is pure
+ * view state that no shell needs to know about. Nothing here fetches, mutates,
+ * or sorts.
  */
 export function SessionFeed({
   entries,
@@ -60,6 +82,28 @@ export function SessionFeed({
   const timeZone = useTimezone();
   const now = useNow();
 
+  const [laterOpen, setLaterOpen] = useState(false);
+  const [chunksRevealed, setChunksRevealed] = useState(0);
+
+  const { laterFuture, nextSession, past } = useMemo(
+    () => partitionFeedEntries(entries),
+    [entries],
+  );
+  const pastWindow = pastEntryWindow(past.length, chunksRevealed);
+
+  const mainRows = useMemo(() => {
+    const visible = past.slice(0, pastWindow.visible);
+    return withMonthDividers(
+      nextSession === null ? visible : [nextSession, ...visible],
+      timeZone,
+    );
+  }, [nextSession, past, pastWindow.visible, timeZone]);
+
+  const laterRows = useMemo(
+    () => withMonthDividers(laterFuture, timeZone),
+    [laterFuture, timeZone],
+  );
+
   if (entries.length === 0) {
     return (
       <p className={cn("text-sm text-muted-foreground", className)}>
@@ -68,51 +112,107 @@ export function SessionFeed({
     );
   }
 
+  const renderRow = (row: SessionFeedRow<SessionFeedEntry>) => {
+    if (row.kind === "month") {
+      return (
+        <li key={row.key} className="relative pt-1">
+          <span
+            aria-hidden
+            className="absolute -left-6 top-1/2 h-px w-3 -translate-x-1/2 bg-border"
+          />
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            {formatMonthLabel(row.startsAt, locale, timeZone)}
+          </p>
+        </li>
+      );
+    }
+
+    const { entry } = row;
+    const editing = editingEntryId === entry.id;
+    const prominent = entry.id === nextSession?.id;
+    return (
+      <li key={row.key} className="relative">
+        <span
+          aria-hidden
+          className={cn(
+            "absolute -left-6 h-2.5 w-2.5 -translate-x-1/2 rounded-full ring-4 ring-background",
+            entry.kind === "no_record" ? "top-3.5" : "top-5",
+            markerTone(entry, prominent),
+          )}
+        />
+        <SessionFeedItem
+          entry={entry}
+          roster={roster}
+          prominent={prominent}
+          labels={formatSessionLabels(entry, {
+            locale,
+            timeZone,
+            sourceTimeZone,
+            now,
+          })}
+          editing={editing}
+          onToggleEdit={() => onEditEntry(editing ? null : entry.id)}
+          onCancelEdit={() => onEditEntry(null)}
+          onSave={(draft) => onSaveEntry(entry.id, draft)}
+        />
+      </li>
+    );
+  };
+
   return (
-    <ol className={cn("relative space-y-3 border-l border-border pl-6", className)}>
-      {entries.map((entry) => {
-        const editing = editingEntryId === entry.id;
-        return (
-          <li key={entry.id} className="relative">
-            <span
-              aria-hidden
-              className={cn(
-                "absolute -left-6 h-2.5 w-2.5 -translate-x-1/2 rounded-full ring-4 ring-background",
-                entry.kind === "no_record" ? "top-3.5" : "top-5",
-                MARKER_TONE[entry.kind],
-              )}
-            />
-            <SessionFeedItem
-              entry={entry}
-              roster={roster}
-              labels={formatSessionLabels(entry, {
-                locale,
-                timeZone,
-                sourceTimeZone,
-                now,
-              })}
-              editing={editing}
-              onToggleEdit={() => onEditEntry(editing ? null : entry.id)}
-              onCancelEdit={() => onEditEntry(null)}
-              onSave={(draft) => onSaveEntry(entry.id, draft)}
-            />
-          </li>
-        );
-      })}
-    </ol>
+    <div
+      className={cn("relative space-y-3 border-l border-border pl-6", className)}
+    >
+      {laterFuture.length > 0 && (
+        <LaterSessionsBlock
+          count={laterFuture.length}
+          substituteCount={countSubstituteRequests(laterFuture)}
+          open={laterOpen}
+          onToggle={() => setLaterOpen((o) => !o)}
+        >
+          <ol className="space-y-3 pt-3">{laterRows.map(renderRow)}</ol>
+        </LaterSessionsBlock>
+      )}
+
+      <ol className="space-y-3">{mainRows.map(renderRow)}</ol>
+
+      {pastWindow.remaining > 0 && (
+        // Appends beneath itself, so the button walks down the page with the
+        // reveal instead of pushing the story the reader is in.
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="w-full gap-1.5"
+          onClick={() => setChunksRevealed((c) => c + 1)}
+        >
+          <ChevronsDown className="h-4 w-4" aria-hidden />
+          {t("showEarlier", { count: pastWindow.remaining })}
+        </Button>
+      )}
+    </div>
   );
 }
 
 /**
  * Timeline marker tone per state. The rail is scanned before anything is read,
- * so the markers carry the same hierarchy the cards do: the next session and
- * the outstanding work stand out, the ordinary weeks are neutral, and the
- * nothing-owed rows all but disappear.
+ * so the markers carry the same hierarchy the cards do: the next session and the
+ * outstanding work stand out, the ordinary weeks are neutral, and the
+ * nothing-owed rows all but disappear. A future session is only primary-toned
+ * when it is the next one — a later plan is not a thing to walk into — unless it
+ * is asking for a substitute, which is a warning wherever it sits.
  */
-const MARKER_TONE: Record<SessionFeedEntry["kind"], string> = {
-  upcoming: "bg-primary",
-  recorded: "bg-muted-foreground/60",
-  skipped: "bg-muted-foreground/25",
-  needs_record: "bg-warning",
-  no_record: "bg-muted-foreground/25",
-};
+function markerTone(entry: SessionFeedEntry, prominent: boolean): string {
+  switch (entry.kind) {
+    case "future":
+      if (entry.needsSubstitute) return "bg-warning";
+      return prominent ? "bg-primary" : "bg-primary/40";
+    case "recorded":
+      return "bg-muted-foreground/60";
+    case "needs_record":
+      return "bg-warning";
+    case "skipped":
+    case "no_record":
+      return "bg-muted-foreground/25";
+  }
+}

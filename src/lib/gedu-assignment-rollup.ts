@@ -1,0 +1,176 @@
+import type { SupportedLocale } from "@/lib/constants/locales";
+import { VOICE_CONFIG } from "@/lib/constants/voice";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import {
+  endDateToCutoff,
+  enumerateRowOccurrences,
+  startDateToCutoff,
+} from "@/lib/session-occurrence";
+import { isVoiceWindowOpen } from "@/lib/voice-window";
+import type { MyAssignedProductSessionRow } from "@/services/assignments";
+import type { ProductType } from "@/types";
+
+/**
+ * Rolling a gedu's assignments up to **one card per assignment** for the
+ * dashboard.
+ *
+ * The dashboard used to enumerate occurrences: a weekly club emitted up to eight
+ * near-identical cards, and a camp one per scheduled day, so a gedu with two
+ * clubs met a screen of a dozen rows saying almost the same thing. Once per-
+ * session detail lives in the product page's feed, that enumeration has exactly
+ * one right home — the feed — and the dashboard's job shrinks to "which rooms do
+ * I run, which one is next, and where am I behind". This module is that
+ * reduction: it consumes the same assignment rows the per-occurrence expansion
+ * does, and emits one summary per (product × group).
+ *
+ * The occurrence horizon is still walked, because the *next* session has to be
+ * correct including the case where one is in progress right now — it is just
+ * collapsed to its first element instead of being handed on as a list. A
+ * recurring-schedule line replaces the enumerated dates, so the reader still
+ * learns the cadence without reading eight rows to infer it.
+ */
+
+/**
+ * An assignment row plus the two group-level facts a roll-up card needs.
+ *
+ * The per-occurrence expansion never needed either, so the RPC behind the live
+ * dashboard does not return them yet: promotion adds the gedu's own group name
+ * and that group's active participation count to its output. Until then a
+ * fixture supplies them, which is also why they are modelled as part of the
+ * *input* rather than invented inside this module.
+ */
+export interface GeduAssignmentRow extends MyAssignedProductSessionRow {
+  /** Display name of the gedu's own group, or `null` when unnamed. */
+  groupName: string | null;
+  /** Active participations in the gedu's own group — not the product total. */
+  groupGamerCount: number;
+}
+
+/** One rolled-up card: an assignment, its next session, and its backlog. */
+export interface GeduAssignmentSummary {
+  /** Stable key — an assignment is unique per (product, group). */
+  productId: string;
+  groupId: string;
+  /** Translated product name. */
+  productName: string;
+  productType: ProductType;
+  groupName: string | null;
+  /** Gamers in the gedu's own group. */
+  groupGamerCount: number;
+  /**
+   * Start of the soonest session still worth showing, or `null` once the
+   * schedule has run out (a finished camp, a club with no slots).
+   */
+  nextSessionStart: Date | null;
+  /** End of that session — drives the start–end range label. */
+  nextSessionEnd: Date | null;
+  /** Whether that session's voice window is open right now. */
+  voiceIsOpen: boolean;
+  /** Where the Join button navigates. `"#"` keeps it inert. */
+  voiceHref: string;
+  /** Where a click anywhere on the card navigates — the product's feed. */
+  openHref: string;
+  /** Past sessions of this assignment still needing a write-up. */
+  attentionCount: number;
+}
+
+export interface RollUpArgs {
+  rows: readonly GeduAssignmentRow[];
+  now: Date;
+  locale: SupportedLocale;
+  /** Outstanding write-ups per product id; missing means none. */
+  attentionByProductId?: Readonly<Record<string, number>>;
+  /** Where each assignment's card navigates, by product id. */
+  hrefByProductId: Readonly<Record<string, string>>;
+  /** Voice-room href per product id; anything missing collapses to `"#"`. */
+  voiceHrefByProductId?: Readonly<Record<string, string>>;
+}
+
+/**
+ * Roll assignment rows up into one summary each, **sorted by soonest next
+ * session ascending** so a live or imminent session floats to the top and an
+ * assignment with nothing scheduled sinks to the bottom. Sorting here rather
+ * than in the view keeps the section presentational and makes the order
+ * testable.
+ */
+export function rollUpGeduAssignments({
+  rows,
+  now,
+  locale,
+  attentionByProductId,
+  hrefByProductId,
+  voiceHrefByProductId,
+}: RollUpArgs): GeduAssignmentSummary[] {
+  const windowCloseMs = VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000;
+
+  const summaries = rows.map((row) => {
+    const next = nextOccurrenceFor(row, now, windowCloseMs);
+    return {
+      productId: row.product.id,
+      groupId: row.groupId,
+      productName:
+        resolveTranslation(row.product.translations, locale)?.name ?? "",
+      productType: row.product.productType,
+      groupName: row.groupName,
+      groupGamerCount: row.groupGamerCount,
+      nextSessionStart: next?.start ?? null,
+      nextSessionEnd: next?.end ?? null,
+      voiceIsOpen:
+        next !== null && isVoiceWindowOpen(next.start, next.end, now),
+      // Only a remote product has a room to join at all; an in-person one
+      // collapses to the same inert-but-rendered locked button the gamer side
+      // shows, rather than disappearing.
+      voiceHref:
+        row.product.isRemote === true
+          ? (voiceHrefByProductId?.[row.product.id] ?? "#")
+          : "#",
+      openHref: hrefByProductId[row.product.id] ?? "#",
+      attentionCount: attentionByProductId?.[row.product.id] ?? 0,
+    } satisfies GeduAssignmentSummary;
+  });
+
+  summaries.sort(bySoonestSession);
+  return summaries;
+}
+
+/**
+ * The soonest occurrence still worth showing for one assignment.
+ *
+ * Capped at one occurrence per walk: the roll-up only needs the head of the
+ * list, and asking for the full horizon here would rebuild the very enumeration
+ * this module exists to stop producing. An in-progress session is included —
+ * that is the soonest meaningful moment for the card, and it is precisely when
+ * the Join button matters.
+ */
+function nextOccurrenceFor(
+  row: GeduAssignmentRow,
+  now: Date,
+  windowCloseMs: number,
+): { start: Date; end: Date } | null {
+  if (row.slots.length === 0) return null;
+
+  const occurrences = enumerateRowOccurrences({
+    slots: row.slots,
+    timezone: row.product.timezone,
+    now,
+    startBoundary: startDateToCutoff(row.product.startDate, row.product.timezone),
+    endBoundary: endDateToCutoff(row.product.endDate, row.product.timezone),
+    cap: 1,
+    windowCloseMs,
+  });
+
+  return occurrences[0] ?? null;
+}
+
+/** Soonest first; assignments with no scheduled session last, then by name. */
+function bySoonestSession(
+  a: GeduAssignmentSummary,
+  b: GeduAssignmentSummary,
+): number {
+  if (a.nextSessionStart === null && b.nextSessionStart === null) {
+    return a.productName.localeCompare(b.productName);
+  }
+  if (a.nextSessionStart === null) return 1;
+  if (b.nextSessionStart === null) return -1;
+  return a.nextSessionStart.getTime() - b.nextSessionStart.getTime();
+}

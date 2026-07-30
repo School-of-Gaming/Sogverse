@@ -9,27 +9,30 @@ import { UnverifiedVoiceNotice } from "./unverified-voice-notice";
  * lands. Rendered today only by a full-page preview scene; at promotion it
  * replaces the live body and the route passes the wired sections in.
  *
- * The one change from the page it replaces is small on purpose: per the feed
- * plan the dashboard gets *no* queue UI, only an aggregate "N sessions need
- * attention" badge on each product's card, pointing into that product's feed.
- * That badge lives in the session's card components behind an optional count,
- * so the live dashboard is untouched until the shell starts supplying numbers —
- * the draft here is not a second copy of those cards.
+ * Two changes from the page it replaces, and the first drives the second:
+ *
+ * - **The dashboard rolls up to the assignment.** It used to enumerate every
+ *   upcoming occurrence, which is eight near-identical rows for one weekly club.
+ *   Per-session detail now lives in the product page's feed, so the future
+ *   horizon belongs there and only there; the dashboard shows one card per room
+ *   the gedu runs, with its next session and its outstanding-write-up count.
+ * - **The section is therefore "My Groups", not "Sessions".** The old heading
+ *   described a list of occurrences and would be a lie over a roll-up.
  *
  * Both data-bound sections arrive as nodes rather than being reached for
  * directly. That is the shell/body seam: the live shell will pass the
- * query-bound Sessions section and the wired instant-room card, a preview scene
+ * query-bound groups section and the wired instant-room card, a preview scene
  * passes their presentational cores over fixtures with the backend actions
  * inert. The body itself stays a plain function of its props, which is what
  * lets one body serve both shells.
  */
 export function GeduDashboardPageBodyDraft({
-  sessionsSection,
+  groupsSection,
   verified,
   instantRoomCard,
 }: {
-  /** The Sessions section — the whole list of upcoming occurrences. */
-  sessionsSection: React.ReactNode;
+  /** The My Groups section — one roll-up card per assignment. */
+  groupsSection: React.ReactNode;
   /** Has an admin verified this gedu? Gates the instant-room panel. */
   verified: boolean;
   /** The instant-voice-room panel shown to a verified gedu. */
@@ -39,7 +42,7 @@ export function GeduDashboardPageBodyDraft({
   const m = useTranslations("metadata.pages");
 
   const sections: DashboardSection[] = [
-    { id: "sessions", label: t("upcomingSessions") },
+    { id: "groups", label: t("myGroups") },
     { id: "instant-voice-room", label: t("instantVoiceRoom") },
   ];
 
@@ -51,13 +54,13 @@ export function GeduDashboardPageBodyDraft({
           heading instead of competing h1s. */}
       <h1 className="sr-only">{m("geduDashboard")}</h1>
 
-      <DashboardSectionPill sections={sections} ariaLabel={t("upcomingSessions")} />
+      <DashboardSectionPill sections={sections} ariaLabel={t("myGroups")} />
 
       <div className="space-y-24 pb-24">
-        <section id="sessions" className="scroll-mt-32">
+        <section id="groups" className="scroll-mt-32">
           <div className="mx-auto max-w-3xl space-y-6">
-            <h2 className="text-3xl font-bold">{t("upcomingSessions")}</h2>
-            {sessionsSection}
+            <h2 className="text-3xl font-bold">{t("myGroups")}</h2>
+            {groupsSection}
           </div>
         </section>
 

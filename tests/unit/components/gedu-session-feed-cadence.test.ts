@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { toZonedTime } from "date-fns-tz";
 import {
+  CLUB_FUTURE_SPECS,
   buildSessionFeedFixture,
+  countLeadingFutureSpecs,
   sessionStartsForCadence,
   type EntrySpec,
 } from "@/components/gedu/session-feed/mock-fixtures";
+import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
 
 /**
  * The session-feed fixtures place every session relative to a `now` the caller
@@ -172,29 +175,187 @@ describe("sessionStartsForCadence — DST", () => {
   });
 });
 
+describe("sessionStartsForCadence — a future block", () => {
+  const now = new Date("2026-02-11T09:00:00Z"); // Wednesday, mid-term
+
+  it("puts the next session at futureCount - 1 and steps forward above it", () => {
+    const starts = sessionStartsForCadence({
+      now,
+      count: 8,
+      cadence: "weekly",
+      weekday: 0,
+      startTime: "16:30",
+      timeZone: TZ,
+      futureCount: 3,
+    });
+
+    // Still strictly descending across the whole list — the future block is not
+    // a separately-ordered island, it is the head of one continuous sequence.
+    for (let i = 1; i < starts.length; i++) {
+      expect(starts[i].getTime()).toBeLessThan(starts[i - 1].getTime());
+    }
+    // Index 2 is the next session; 0 and 1 are further ahead, 3+ are past.
+    expect(starts[2].getTime()).toBeGreaterThan(now.getTime());
+    expect(starts[1].getTime()).toBeGreaterThan(starts[2].getTime());
+    expect(starts[3].getTime()).toBeLessThan(now.getTime());
+    for (const start of starts) expect(wallClock(start)).toBe("16:30");
+  });
+
+  it("walks a camp's future forward over the weekend without inventing a Saturday", () => {
+    const starts = sessionStartsForCadence({
+      // Friday morning before the 10:00 start.
+      now: new Date("2026-02-13T06:00:00Z"),
+      count: 6,
+      cadence: "daily",
+      weekday: 0,
+      startTime: "10:00",
+      timeZone: TZ,
+      futureCount: 4,
+    });
+    for (const start of starts) {
+      expect(weekdayIn(start)).toBeGreaterThanOrEqual(1);
+      expect(weekdayIn(start)).toBeLessThanOrEqual(5);
+      expect(wallClock(start)).toBe("10:00");
+    }
+    for (let i = 1; i < starts.length; i++) {
+      expect(starts[i].getTime()).toBeLessThan(starts[i - 1].getTime());
+    }
+  });
+
+  it("clamps a futureCount past the list length", () => {
+    const starts = sessionStartsForCadence({
+      now,
+      count: 2,
+      cadence: "weekly",
+      weekday: 0,
+      startTime: "16:30",
+      timeZone: TZ,
+      futureCount: 9,
+    });
+    expect(starts).toHaveLength(2);
+    for (const start of starts) {
+      expect(start.getTime()).toBeGreaterThan(now.getTime());
+    }
+  });
+});
+
+describe("countLeadingFutureSpecs", () => {
+  it("counts the leading run and stops at the first past entry", () => {
+    expect(
+      countLeadingFutureSpecs([
+        { kind: "future" },
+        { kind: "future" },
+        { kind: "needs_record" },
+        // A stray future entry after the past block is a caller ordering bug
+        // and must not extend the count.
+        { kind: "future" },
+      ]),
+    ).toBe(2);
+  });
+
+  it("is zero for a purely historical list and the full length for a purely future one", () => {
+    expect(countLeadingFutureSpecs([{ kind: "no_record" }])).toBe(0);
+    expect(
+      countLeadingFutureSpecs([{ kind: "future" }, { kind: "future" }]),
+    ).toBe(2);
+  });
+});
+
+describe("CLUB_FUTURE_SPECS", () => {
+  it("reaches exactly as far ahead as the shared open-ended cap", () => {
+    // The feed's horizon and the dashboards' horizon are the same rule; if the
+    // cap moves, this fixture has to move with it or the scene starts lying.
+    expect(CLUB_FUTURE_SPECS).toHaveLength(OPEN_ENDED_OCCURRENCE_CAP);
+    expect(CLUB_FUTURE_SPECS.every((s) => s.kind === "future")).toBe(true);
+  });
+
+  it("shows a substitute request and a forward note, so both states are visible", () => {
+    expect(
+      CLUB_FUTURE_SPECS.some(
+        (s) => s.kind === "future" && s.needsSubstitute === true,
+      ),
+    ).toBe(true);
+    expect(
+      CLUB_FUTURE_SPECS.some(
+        (s) => s.kind === "future" && s.publicNote !== undefined,
+      ),
+    ).toBe(true);
+  });
+});
+
 describe("buildSessionFeedFixture", () => {
   const now = new Date("2026-02-11T09:00:00Z");
 
   it("emits one entry per spec, in the order given", () => {
     const specs: readonly EntrySpec[] = [
-      { kind: "upcoming" },
+      { kind: "future" },
       { kind: "needs_record" },
       { kind: "skipped", reason: "Public holiday" },
     ];
     const { entries } = buildSessionFeedFixture(now, { specs });
     expect(entries.map((e) => e.kind)).toEqual([
-      "upcoming",
+      "future",
       "needs_record",
       "skipped",
     ]);
   });
 
-  it("defaults to the weekly club and keeps the upcoming session ahead of now", () => {
+  it("dates the whole future block ahead of now, next session last", () => {
+    const specs: readonly EntrySpec[] = [
+      { kind: "future" },
+      { kind: "future" },
+      { kind: "future" },
+      { kind: "needs_record" },
+    ];
+    const { entries } = buildSessionFeedFixture(now, { specs });
+    for (const entry of entries.slice(0, 3)) {
+      expect(entry.startsAt.getTime()).toBeGreaterThan(now.getTime());
+    }
+    expect(entries[3].startsAt.getTime()).toBeLessThan(now.getTime());
+  });
+
+  it("carries a future spec's planning fields onto its entry", () => {
+    const { entries } = buildSessionFeedFixture(now, {
+      specs: [
+        {
+          kind: "future",
+          publicNote: "Redstone follow-up.",
+          staffNote: "Charge the spare laptop.",
+          needsSubstitute: true,
+        },
+      ],
+    });
+    expect(entries[0]).toMatchObject({
+      kind: "future",
+      publicNote: "Redstone follow-up.",
+      staffNote: "Charge the spare laptop.",
+      needsSubstitute: true,
+    });
+  });
+
+  it("leaves an unplanned future session's fields null and unflagged", () => {
+    const { entries } = buildSessionFeedFixture(now, {
+      specs: [{ kind: "future" }],
+    });
+    expect(entries[0]).toMatchObject({
+      kind: "future",
+      publicNote: null,
+      staffNote: null,
+      needsSubstitute: false,
+    });
+  });
+
+  it("defaults to the weekly club with its full future horizon", () => {
     const { entries, timeZone } = buildSessionFeedFixture(now);
     expect(timeZone).toBe(TZ);
-    expect(entries[0].kind).toBe("upcoming");
-    expect(entries[0].startsAt.getTime()).toBeGreaterThan(now.getTime());
-    expect(weekdayIn(entries[0].startsAt)).toBe(1);
+    const future = entries.filter((e) => e.kind === "future");
+    expect(future).toHaveLength(OPEN_ENDED_OCCURRENCE_CAP);
+    // The next session is the last future entry, and every one of them is on
+    // the club's own weekday.
+    for (const entry of future) {
+      expect(entry.startsAt.getTime()).toBeGreaterThan(now.getTime());
+      expect(weekdayIn(entry.startsAt)).toBe(1);
+    }
   });
 
   it("packs a camp's dates into consecutive weekdays", () => {

@@ -62,6 +62,26 @@ export function formatSessionLabels(
   };
 }
 
+/**
+ * "March 2026" for a feed month divider, in the viewer's zone.
+ *
+ * The year is always spelled out: a divider exists precisely because the reader
+ * is scrolling far enough back to lose track, and "March" alone is ambiguous the
+ * moment a club has run for more than a year. Built through `Intl` rather than
+ * concatenated, so the month word and its order follow the locale.
+ */
+export function formatMonthLabel(
+  instant: Date,
+  locale: string,
+  timeZone: string,
+): string {
+  return formatDate(instant, locale, {
+    month: "long",
+    year: "numeric",
+    timeZone,
+  });
+}
+
 function yearIn(date: Date, locale: string, timeZone: string): string {
   return formatDate(date, locale, { year: "numeric", timeZone });
 }

@@ -30,12 +30,34 @@ interface SessionFeedEntryBase {
 }
 
 /**
- * The one session still ahead of us. Only ever one, always first in the list —
- * everything below it has already happened.
+ * A session still ahead of us.
+ *
+ * Every future occurrence inside the feed's horizon is one of these — there is
+ * no separate "next session" kind, because "next" is a fact about *position*,
+ * not about the session: in a strictly descending feed the next session is
+ * simply the last future entry, the one sitting immediately above the most
+ * recent past one. Making it a kind of its own would let a caller hand over two
+ * next sessions, or a next session below a past one.
+ *
+ * A future entry holds **planning** fields only. Attendance and a
+ * ran/didn't-run status are records of what happened and only attach once the
+ * session is past; what a gedu can say in advance is what they plan to do
+ * (which families read later), a reminder to themselves, and that they cannot
+ * run it.
  */
-export interface UpcomingSessionFeedEntry extends SessionFeedEntryBase {
-  kind: "upcoming";
-  /** Whether the voice window is open right now (drives the Join button). */
+export interface FutureSessionFeedEntry extends SessionFeedEntryBase {
+  kind: "future";
+  /** Planned note families will read once the session runs. `null` = unset. */
+  publicNote: string | null;
+  /** Planned staff-only note — a reminder to the team. `null` = unset. */
+  staffNote: string | null;
+  /** The gedu has declared they can't run this one. */
+  needsSubstitute: boolean;
+  /**
+   * Whether the voice window is open right now (drives the Join button).
+   * Only ever meaningful on the next session, which is the only future entry
+   * that renders a Join affordance.
+   */
   voiceIsOpen: boolean;
   /** Where the open Join button navigates. `"#"` keeps it inert. */
   voiceHref: string;
@@ -78,21 +100,21 @@ export interface NoRecordSessionFeedEntry extends SessionFeedEntryBase {
 }
 
 export type SessionFeedEntry =
-  | UpcomingSessionFeedEntry
+  | FutureSessionFeedEntry
   | RecordedSessionFeedEntry
   | SkippedSessionFeedEntry
   | NeedsRecordSessionFeedEntry
   | NoRecordSessionFeedEntry;
 
-/** The kinds whose entry can be expanded into the inline editor. */
+/** The past kinds whose entry can be expanded into the write-up editor. */
 export type EditableSessionFeedEntry =
   | RecordedSessionFeedEntry
   | SkippedSessionFeedEntry
   | NeedsRecordSessionFeedEntry;
 
 /**
- * What the editor emits on save — the same two-way split the display states
- * have, so a caller maps it straight onto the entry it replaces.
+ * What the write-up editor emits on save — the same two-way split the past
+ * display states have, so a caller maps it straight onto the entry it replaces.
  */
 export type SessionRecordDraft =
   | {
@@ -103,9 +125,25 @@ export type SessionRecordDraft =
     }
   | { kind: "skipped"; reason: string };
 
+/** What the planning editor emits on save, for a future session. */
+export interface SessionPlanDraft {
+  kind: "plan";
+  publicNote: string;
+  staffNote: string;
+  needsSubstitute: boolean;
+}
+
 /**
- * The editor's flat working state. Deliberately *not* a union: ticking "this
- * session didn't run" and ticking it back must not throw away a half-typed
+ * Either editor's output. The two editors are mutually exclusive per entry — a
+ * past session can never take a plan, a future one can never take attendance —
+ * so one save callback carrying the union keeps the feed's prop surface flat
+ * while the kind tag says which side of the present the save came from.
+ */
+export type SessionEntryDraft = SessionRecordDraft | SessionPlanDraft;
+
+/**
+ * The write-up editor's flat working state. Deliberately *not* a union: ticking
+ * "this session didn't run" and ticking it back must not throw away a half-typed
  * write-up, so both branches stay alive side by side and only collapse into a
  * `SessionRecordDraft` at save time.
  */
@@ -115,4 +153,15 @@ export interface SessionEditorState {
   publicNote: string;
   staffNote: string;
   skipReason: string;
+}
+
+/**
+ * The planning editor's working state. Flat and identical in shape to the draft
+ * it produces (bar the tag) — there is no either/or branch to preserve here,
+ * since a substitute request and a written plan coexist happily.
+ */
+export interface SessionPlanEditorState {
+  publicNote: string;
+  staffNote: string;
+  needsSubstitute: boolean;
 }

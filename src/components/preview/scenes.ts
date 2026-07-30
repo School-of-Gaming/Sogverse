@@ -28,13 +28,14 @@ import { PREVIEW_SCENARIOS } from "@/components/public/products/mock-detail-fixt
  * UI (an inline editor over local state) work; interactions that would hit a
  * backend render their real states with the action inert.
  *
- * This module is deliberately data-only — no React — so the route, the style
- * guide and the renderer can all import it without dragging every scene's
- * component tree along. The renderer beside it (`render-scene.tsx`) is keyed by
- * `PreviewSurface`, so a scene listed here with no render fails to compile.
+ * This module is deliberately data-only — no React — so the route, the
+ * admin UI Previews page and the renderer can all import it without dragging
+ * every scene's component tree along. The renderer beside it
+ * (`render-scene.tsx`) is keyed by `PreviewSurface`, so a scene listed here with
+ * no render fails to compile.
  *
  * Titles and scenario labels are literal English: they are shown only on the
- * admin-only style guide, never on the preview pages themselves. Anything a
+ * admin-only UI Previews page, never on the preview pages themselves. Anything a
  * scene *renders* is user-facing-shaped and goes through next-intl as usual.
  */
 
@@ -44,14 +45,14 @@ export type PreviewChromeKind = "public" | "dashboard";
 export interface PreviewScenarioMeta {
   /** URL segment — `/preview/{surface}/{slug}`. */
   slug: string;
-  /** Short human label for the style guide's link list. */
+  /** Short human label for the UI Previews page's link list. */
   label: string;
 }
 
 export interface PreviewSceneMeta {
   /** URL segment — `/preview/{surface}`. */
   surface: string;
-  /** Human title for the style guide's link list. */
+  /** Human title for the UI Previews page's link list. */
   title: string;
   /** One line on what the scene is for, shown above its links. */
   description: string;
@@ -90,7 +91,7 @@ export const PREVIEW_SCENES = [
     surface: "gedu-dashboard",
     title: "Gedu dashboard (draft)",
     description:
-      "The gedu dashboard once the session feed lands: each product card carries an aggregate “needs attention” badge linking into that product’s feed. Cards open the matching product-page scene.",
+      "The gedu dashboard rolled up to one card per group they run: next session with its Join state, the cadence in words, and an aggregate “needs attention” badge counted out of that product’s own feed. Cards open the matching product-page scene.",
     chrome: "dashboard",
     scenarios: [
       { slug: "default", label: "Two clubs, one behind" },
@@ -102,11 +103,12 @@ export const PREVIEW_SCENES = [
     surface: "gedu-product",
     title: "Gedu product page (draft)",
     description:
-      "The product page rebuilt around the session feed: group identity band, roster behind a disclosure, then the term running backwards. The inline write-up editor works against local state.",
+      "The product page rebuilt around the session feed: group identity band with its standing notes, roster behind a disclosure, the future horizon collapsed above the next session, then the term running backwards behind month dividers. Every editor — write-up, forward plan, group notes — works against local state.",
     chrome: "dashboard",
     scenarios: [
       { slug: "club-midterm", label: "Club, mid-term" },
       { slug: "needs-attention", label: "Several write-ups owed" },
+      { slug: "club-yearlong", label: "Club, a year of history" },
       { slug: "camp-daily", label: "Camp, consecutive days" },
       { slug: "first-week", label: "Club, first week" },
     ],

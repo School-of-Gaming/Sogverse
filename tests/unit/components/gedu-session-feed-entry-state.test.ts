@@ -1,13 +1,23 @@
 import { describe, it, expect } from "vitest";
 import {
+  FEED_INITIAL_PAST_ENTRIES,
+  FEED_PAST_CHUNK_SIZE,
   applyDraftToEntry,
+  applyPlanDraftToEntry,
   attendanceCounts,
   countEntriesNeedingAttention,
+  countSubstituteRequests,
   draftFromEditorState,
   editorStateFromEntry,
   isEditableEntry,
+  isPlannableEntry,
+  partitionFeedEntries,
+  pastEntryWindow,
+  planDraftFromEditorState,
+  planEditorStateFromEntry,
 } from "@/components/gedu/session-feed/entry-state";
 import type {
+  FutureSessionFeedEntry,
   NeedsRecordSessionFeedEntry,
   NoRecordSessionFeedEntry,
   RecordedSessionFeedEntry,
@@ -15,7 +25,6 @@ import type {
   SessionFeedEntry,
   SessionFeedGamer,
   SkippedSessionFeedEntry,
-  UpcomingSessionFeedEntry,
 } from "@/components/gedu/session-feed/types";
 
 const ROSTER: SessionFeedGamer[] = [
@@ -43,8 +52,23 @@ function needsRecord(id: string): NeedsRecordSessionFeedEntry {
 function noRecord(id: string): NoRecordSessionFeedEntry {
   return { kind: "no_record", id, ...WHEN };
 }
-function upcoming(id: string): UpcomingSessionFeedEntry {
-  return { kind: "upcoming", id, ...WHEN, voiceIsOpen: false, voiceHref: "#" };
+function future(
+  id: string,
+  fields: Partial<
+    Omit<FutureSessionFeedEntry, "kind" | "id" | "startsAt" | "endsAt">
+  > = {},
+): FutureSessionFeedEntry {
+  return {
+    kind: "future",
+    id,
+    ...WHEN,
+    publicNote: null,
+    staffNote: null,
+    needsSubstitute: false,
+    voiceIsOpen: false,
+    voiceHref: "#",
+    ...fields,
+  };
 }
 
 describe("isEditableEntry", () => {
@@ -58,16 +82,42 @@ describe("isEditableEntry", () => {
     expect(isEditableEntry(needsRecord("g"))).toBe(true);
   });
 
-  it("rejects the upcoming session and pre-epoch gaps", () => {
-    expect(isEditableEntry(upcoming("u"))).toBe(false);
+  it("rejects future sessions and pre-epoch gaps", () => {
+    expect(isEditableEntry(future("u"))).toBe(false);
     expect(isEditableEntry(noRecord("n"))).toBe(false);
+  });
+});
+
+describe("isPlannableEntry", () => {
+  it("accepts only future sessions", () => {
+    expect(isPlannableEntry(future("u"))).toBe(true);
+    expect(isPlannableEntry(needsRecord("g"))).toBe(false);
+    expect(isPlannableEntry(noRecord("n"))).toBe(false);
+    expect(
+      isPlannableEntry(
+        recorded("r", { publicNote: "x", staffNote: null, presentGamerIds: [] }),
+      ),
+    ).toBe(false);
+  });
+
+  it("never overlaps with the write-up editor's set", () => {
+    const entries: SessionFeedEntry[] = [
+      future("u"),
+      recorded("r", { publicNote: "", staffNote: null, presentGamerIds: [] }),
+      skipped("s", null),
+      needsRecord("g"),
+      noRecord("n"),
+    ];
+    for (const entry of entries) {
+      expect(isEditableEntry(entry) && isPlannableEntry(entry)).toBe(false);
+    }
   });
 });
 
 describe("countEntriesNeedingAttention", () => {
   it("counts only the post-epoch gaps", () => {
     const entries: SessionFeedEntry[] = [
-      upcoming("u"),
+      future("u"),
       needsRecord("g1"),
       needsRecord("g2"),
       noRecord("n"),
@@ -76,8 +126,220 @@ describe("countEntriesNeedingAttention", () => {
     expect(countEntriesNeedingAttention(entries)).toBe(2);
   });
 
+  it("ignores substitute requests — they are a message, not owed work", () => {
+    // This is what keeps the dashboard badge meaning one thing: "write-ups you
+    // owe", never "write-ups plus favours you asked for".
+    const entries: SessionFeedEntry[] = [
+      future("f1", { needsSubstitute: true }),
+      future("f2", { needsSubstitute: true }),
+      needsRecord("g1"),
+    ];
+    expect(countEntriesNeedingAttention(entries)).toBe(1);
+  });
+
   it("is zero for an empty feed", () => {
     expect(countEntriesNeedingAttention([])).toBe(0);
+  });
+});
+
+describe("countSubstituteRequests", () => {
+  it("counts flagged future sessions only", () => {
+    const entries: SessionFeedEntry[] = [
+      future("f1", { needsSubstitute: true }),
+      future("f2"),
+      future("f3", { needsSubstitute: true }),
+      needsRecord("g"),
+    ];
+    expect(countSubstituteRequests(entries)).toBe(2);
+    expect(countSubstituteRequests([])).toBe(0);
+  });
+});
+
+describe("partitionFeedEntries", () => {
+  it("reads the next session off position — the last of the leading future run", () => {
+    const entries: SessionFeedEntry[] = [
+      future("f3"),
+      future("f2"),
+      future("f1"),
+      recorded("p1", { publicNote: "", staffNote: null, presentGamerIds: [] }),
+      noRecord("p2"),
+    ];
+    const { laterFuture, nextSession, past } = partitionFeedEntries(entries);
+    expect(laterFuture.map((e) => e.id)).toEqual(["f3", "f2"]);
+    expect(nextSession?.id).toBe("f1");
+    expect(past.map((e) => e.id)).toEqual(["p1", "p2"]);
+  });
+
+  it("has no later block when only one session is ahead", () => {
+    const { laterFuture, nextSession, past } = partitionFeedEntries([
+      future("f1"),
+      needsRecord("p1"),
+    ]);
+    expect(laterFuture).toEqual([]);
+    expect(nextSession?.id).toBe("f1");
+    expect(past.map((e) => e.id)).toEqual(["p1"]);
+  });
+
+  it("returns no next session for a feed whose schedule has run out", () => {
+    const { laterFuture, nextSession, past } = partitionFeedEntries([
+      needsRecord("p1"),
+      noRecord("p2"),
+    ]);
+    expect(laterFuture).toEqual([]);
+    expect(nextSession).toBeNull();
+    expect(past).toHaveLength(2);
+  });
+
+  it("leaves a stray out-of-order future entry in the past block", () => {
+    // The feed sorts nothing, so a caller's ordering bug must render in the
+    // order it was given rather than being silently reshuffled.
+    const { laterFuture, nextSession, past } = partitionFeedEntries([
+      future("f1"),
+      needsRecord("p1"),
+      future("stray"),
+    ]);
+    expect(laterFuture).toEqual([]);
+    expect(nextSession?.id).toBe("f1");
+    expect(past.map((e) => e.id)).toEqual(["p1", "stray"]);
+  });
+
+  it("is empty all round for an empty feed", () => {
+    expect(partitionFeedEntries([])).toEqual({
+      laterFuture: [],
+      nextSession: null,
+      past: [],
+    });
+  });
+});
+
+describe("pastEntryWindow", () => {
+  it("opens on the recent slice and reports the rest as remaining", () => {
+    const total = 55;
+    expect(pastEntryWindow(total, 0)).toEqual({
+      visible: FEED_INITIAL_PAST_ENTRIES,
+      remaining: total - FEED_INITIAL_PAST_ENTRIES,
+    });
+  });
+
+  it("reveals one chunk per click, cumulatively", () => {
+    const total = 55;
+    expect(pastEntryWindow(total, 1).visible).toBe(
+      FEED_INITIAL_PAST_ENTRIES + FEED_PAST_CHUNK_SIZE,
+    );
+    expect(pastEntryWindow(total, 2).visible).toBe(
+      FEED_INITIAL_PAST_ENTRIES + 2 * FEED_PAST_CHUNK_SIZE,
+    );
+  });
+
+  it("never exceeds the total, and reaches zero remaining", () => {
+    const total = 12;
+    expect(pastEntryWindow(total, 1)).toEqual({ visible: 12, remaining: 0 });
+    expect(pastEntryWindow(total, 99)).toEqual({ visible: 12, remaining: 0 });
+  });
+
+  it("hides the control for a term short enough to render whole", () => {
+    expect(pastEntryWindow(FEED_INITIAL_PAST_ENTRIES, 0).remaining).toBe(0);
+    expect(pastEntryWindow(3, 0)).toEqual({ visible: 3, remaining: 0 });
+    expect(pastEntryWindow(0, 0)).toEqual({ visible: 0, remaining: 0 });
+  });
+});
+
+describe("planEditorStateFromEntry / planDraftFromEditorState", () => {
+  it("seeds an unplanned session with empty fields and no request", () => {
+    expect(planEditorStateFromEntry(future("f"))).toEqual({
+      publicNote: "",
+      staffNote: "",
+      needsSubstitute: false,
+    });
+  });
+
+  it("seeds from an existing plan, mapping nulls to empty strings", () => {
+    expect(
+      planEditorStateFromEntry(
+        future("f", {
+          publicNote: "Redstone follow-up.",
+          staffNote: "Charge the laptop.",
+          needsSubstitute: true,
+        }),
+      ),
+    ).toEqual({
+      publicNote: "Redstone follow-up.",
+      staffNote: "Charge the laptop.",
+      needsSubstitute: true,
+    });
+  });
+
+  it("trims both notes on the way out and keeps the flag", () => {
+    expect(
+      planDraftFromEditorState({
+        publicNote: "  Harbour road.  ",
+        staffNote: "  Pair Siiri with Aino.  ",
+        needsSubstitute: true,
+      }),
+    ).toEqual({
+      kind: "plan",
+      publicNote: "Harbour road.",
+      staffNote: "Pair Siiri with Aino.",
+      needsSubstitute: true,
+    });
+  });
+});
+
+describe("applyPlanDraftToEntry", () => {
+  it("folds a plan back in, keeping identity, schedule and voice state", () => {
+    const entry = future("f", { voiceIsOpen: true, voiceHref: "/voice/x" });
+    expect(
+      applyPlanDraftToEntry(entry, {
+        kind: "plan",
+        publicNote: "Lighthouse week.",
+        staffNote: "Bring the spare mouse.",
+        needsSubstitute: true,
+      }),
+    ).toEqual({
+      kind: "future",
+      id: "f",
+      startsAt: START,
+      endsAt: END,
+      publicNote: "Lighthouse week.",
+      staffNote: "Bring the spare mouse.",
+      needsSubstitute: true,
+      voiceIsOpen: true,
+      voiceHref: "/voice/x",
+    });
+  });
+
+  it("collapses cleared notes to null so their blocks stop rendering", () => {
+    const entry = future("f", {
+      publicNote: "old",
+      staffNote: "old",
+      needsSubstitute: true,
+    });
+    expect(
+      applyPlanDraftToEntry(entry, {
+        kind: "plan",
+        publicNote: "",
+        staffNote: "",
+        needsSubstitute: false,
+      }),
+    ).toMatchObject({
+      publicNote: null,
+      staffNote: null,
+      needsSubstitute: false,
+    });
+  });
+
+  it("round-trips a plan through the editor without losing anything", () => {
+    const entry = future("f", {
+      publicNote: "Lighthouse week.",
+      staffNote: "Bring the spare mouse.",
+      needsSubstitute: true,
+    });
+    expect(
+      applyPlanDraftToEntry(
+        entry,
+        planDraftFromEditorState(planEditorStateFromEntry(entry)),
+      ),
+    ).toEqual(entry);
   });
 });
 

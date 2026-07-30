@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CalendarOff, Pencil } from "lucide-react";
+import { AlertTriangle, CalendarOff, Pencil, UserRoundSearch } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,32 +9,44 @@ import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import { cn } from "@/lib/utils";
 import { AttendanceSummary } from "./AttendanceSummary";
 import { CollapsibleRegion } from "./CollapsibleRegion";
-import { editorStateFromEntry, isEditableEntry } from "./entry-state";
+import {
+  editorStateFromEntry,
+  isEditableEntry,
+  isPlannableEntry,
+  planEditorStateFromEntry,
+} from "./entry-state";
+import { SessionPlanEditor } from "./SessionPlanEditor";
 import { SessionRecordEditor } from "./SessionRecordEditor";
 import { StaffNoteBlock } from "./StaffNoteBlock";
 import type { SessionLabels } from "./session-labels";
 import type {
+  SessionEntryDraft,
   SessionFeedEntry,
   SessionFeedGamer,
-  SessionRecordDraft,
 } from "./types";
 
 interface SessionFeedItemProps {
   entry: SessionFeedEntry;
   roster: readonly SessionFeedGamer[];
   labels: SessionLabels;
-  /** Whether this entry is the one currently expanded into the editor. */
+  /**
+   * Whether this is the soonest session still ahead of us. Only the prominent
+   * entry carries the Join affordance and the "next session" badge; every later
+   * future entry is a plan, not a thing to walk into.
+   */
+  prominent?: boolean;
+  /** Whether this entry is the one currently expanded into an editor. */
   editing: boolean;
   /** Open this entry's editor (or close it if it is already open). */
   onToggleEdit: () => void;
   onCancelEdit: () => void;
-  onSave: (draft: SessionRecordDraft) => void;
+  onSave: (draft: SessionEntryDraft) => void;
 }
 
 /**
- * One row of the feed: the session's date and state, its write-up, and — for
- * everything that can still be written up — the editor that expands in place
- * beneath it.
+ * One row of the feed: the session's date and state, its notes, and — for
+ * everything that can still be written up or planned — the editor that expands
+ * in place beneath it.
  *
  * The header carries the date and every control, and it is the one part that
  * never moves: the display body and the editor are two sibling collapsing
@@ -43,21 +55,31 @@ interface SessionFeedItemProps {
  *
  * Each state gets a treatment that says how much attention it wants. A session
  * needing a write-up is tinted with the warning token and is clickable across
- * its whole header, because it is work to do. A pre-epoch gap is a bare dashed
- * line with no card and no editor, because nothing is owed for it and it must
- * not compete with the narrative around it.
+ * its whole header, because it is work to do. A future session asking for a
+ * substitute wears the same warning tint for the same reason — somebody has to
+ * act on it. A pre-epoch gap is a bare dashed line with no card and no editor,
+ * because nothing is owed for it and it must not compete with the narrative
+ * around it.
+ *
+ * Which editor opens follows the side of the present the entry is on: past
+ * entries get the write-up editor (attendance + notes + didn't-run), future ones
+ * get the planning editor (forward notes + substitute request). No entry ever
+ * offers both.
  */
 export function SessionFeedItem({
   entry,
   roster,
   labels,
+  prominent = false,
   editing,
   onToggleEdit,
   onCancelEdit,
   onSave,
 }: SessionFeedItemProps) {
   const t = useTranslations("gedu.sessionFeed");
-  const editable = isEditableEntry(entry);
+  const recordable = isEditableEntry(entry);
+  const plannable = isPlannableEntry(entry);
+  const needsSubstitute = entry.kind === "future" && entry.needsSubstitute;
 
   // Pre-epoch gaps aren't part of the story and aren't work — a single quiet
   // dashed line, deliberately not a card.
@@ -74,7 +96,8 @@ export function SessionFeedItem({
     <Card
       className={cn(
         "p-4 sm:p-5",
-        entry.kind === "upcoming" && "border-primary/40",
+        entry.kind === "future" && prominent && "border-primary/40",
+        needsSubstitute && "border-warning/50 bg-warning/10",
         entry.kind === "needs_record" && "border-warning/50 bg-warning/10",
         entry.kind === "skipped" && "border-dashed bg-muted/30",
       )}
@@ -97,8 +120,8 @@ export function SessionFeedItem({
       ) : (
         <div className="flex items-start justify-between gap-3">
           <SessionDateLine labels={labels} />
-          <div className="flex shrink-0 items-center gap-2">
-            {entry.kind === "upcoming" && (
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+            {entry.kind === "future" && prominent && (
               <Badge
                 variant="outline"
                 className="border-primary/40 text-[10px] uppercase tracking-wide text-primary"
@@ -106,13 +129,19 @@ export function SessionFeedItem({
                 {t("upcomingBadge")}
               </Badge>
             )}
+            {needsSubstitute && (
+              <span className="flex items-center gap-1.5 text-xs font-medium text-warning">
+                <UserRoundSearch className="h-3.5 w-3.5" aria-hidden />
+                {t("needsSubstituteBadge")}
+              </span>
+            )}
             {entry.kind === "skipped" && (
               <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <CalendarOff className="h-3.5 w-3.5" aria-hidden />
                 {t("skippedLabel")}
               </span>
             )}
-            {editable && (
+            {(recordable || plannable) && (
               <Button
                 type="button"
                 variant="ghost"
@@ -122,7 +151,7 @@ export function SessionFeedItem({
                 className="-my-1 gap-1.5"
               >
                 <Pencil className="h-3.5 w-3.5" aria-hidden />
-                {t("edit")}
+                {plannable ? t("plan") : t("edit")}
               </Button>
             )}
           </div>
@@ -130,15 +159,31 @@ export function SessionFeedItem({
       )}
 
       <CollapsibleRegion open={!editing}>
-        <SessionEntryBody entry={entry} roster={roster} labels={labels} />
+        <SessionEntryBody
+          entry={entry}
+          roster={roster}
+          labels={labels}
+          prominent={prominent}
+        />
       </CollapsibleRegion>
 
-      {editable && (
+      {recordable && (
         <CollapsibleRegion open={editing}>
           <SessionRecordEditor
             open={editing}
             roster={roster}
             initialState={editorStateFromEntry(entry, roster)}
+            onCancel={onCancelEdit}
+            onSave={onSave}
+          />
+        </CollapsibleRegion>
+      )}
+
+      {plannable && (
+        <CollapsibleRegion open={editing}>
+          <SessionPlanEditor
+            open={editing}
+            initialState={planEditorStateFromEntry(entry)}
             onCancel={onCancelEdit}
             onSave={onSave}
           />
@@ -181,26 +226,63 @@ function SessionEntryBody({
   entry,
   roster,
   labels,
+  prominent,
 }: {
   entry: SessionFeedEntry;
   roster: readonly SessionFeedGamer[];
   labels: SessionLabels;
+  prominent: boolean;
 }) {
   const t = useTranslations("gedu.sessionFeed");
 
   switch (entry.kind) {
-    case "upcoming":
+    case "future": {
+      const hasPlan =
+        (entry.publicNote !== null && entry.publicNote.length > 0) ||
+        (entry.staffNote !== null && entry.staffNote.length > 0);
       return (
-        <div className="flex flex-wrap items-center gap-2 pt-3">
-          <JoinVoiceButton
-            voiceIsOpen={entry.voiceIsOpen}
-            voiceHref={entry.voiceHref}
-            opensDate={labels.date}
-            opensTime={labels.startTime}
-          />
-          <p className="text-xs text-muted-foreground">{t("upcomingHint")}</p>
+        <div className="space-y-3 pt-3">
+          {prominent && (
+            <div className="flex flex-wrap items-center gap-2">
+              <JoinVoiceButton
+                voiceIsOpen={entry.voiceIsOpen}
+                voiceHref={entry.voiceHref}
+                opensDate={labels.date}
+                opensTime={labels.startTime}
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("upcomingHint")}
+              </p>
+            </div>
+          )}
+          {entry.needsSubstitute && (
+            <p className="text-sm text-warning">{t("needsSubstituteBody")}</p>
+          )}
+          {entry.publicNote !== null && entry.publicNote.length > 0 && (
+            <div>
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                {t("plannedNoteHeading")}
+              </p>
+              <p className="mt-1 whitespace-pre-line text-sm leading-relaxed">
+                {entry.publicNote}
+              </p>
+            </div>
+          )}
+          {entry.staffNote !== null && entry.staffNote.length > 0 && (
+            <StaffNoteBlock>
+              <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+                {entry.staffNote}
+              </p>
+            </StaffNoteBlock>
+          )}
+          {/* A later session with nothing planned still needs a line, or the
+              card is a bare date with no reason to exist on the page. */}
+          {!prominent && !hasPlan && !entry.needsSubstitute && (
+            <p className="text-sm text-muted-foreground">{t("noPlanYet")}</p>
+          )}
         </div>
       );
+    }
 
     case "recorded":
       return (

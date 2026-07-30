@@ -34,19 +34,39 @@ export const SESSION_FEED_CLUB_NAME = "Minecraft Monday Club";
 export const SESSION_FEED_TIMEZONE = TIMEZONE;
 
 /**
+ * Roster ids, named so a spec can say who was away without repeating a UUID.
+ *
+ * They are real generated UUIDv4s and hardcoded as literals. Both halves matter:
+ * an identicon is a pattern hashed out of the id's hex bytes, so a readable id
+ * like `"mock-gamer-aino"` parses to nothing and renders an empty square; and
+ * generating them at module load would hand every reload a different avatar for
+ * the same child, which is exactly the drift a fixture exists to avoid.
+ */
+export const SESSION_FEED_GAMER_IDS = {
+  aino: "e1dd1bcd-1b1b-408a-adab-bacb876d4bb2",
+  vaino: "606abb0b-52fa-4de4-9b63-be5903ba08d8",
+  elias: "a6681627-f470-4327-af87-8cc6d61f52ac",
+  linnea: "ae6c92e3-7438-4d43-92a2-4e6d4bc99cb3",
+  oskar: "7022016c-a95d-437c-8c62-1fcea6649e7f",
+  siiri: "d3f30b1b-c7aa-4cfc-b02b-fb79547c4710",
+  emil: "fccd4964-e55a-4f75-8fc1-ec559d80e0d8",
+  hilda: "0d470b0a-08dd-4d53-99ae-322bf8e326e1",
+} as const;
+
+/**
  * Eight regulars with plausible Finnish and Swedish first names — enough that
  * "6 of 8 present" reads like a real group and the attendance checklist has to
  * wrap.
  */
 export const SESSION_FEED_ROSTER: readonly SessionFeedGamer[] = [
-  { id: "mock-gamer-aino", firstName: "Aino" },
-  { id: "mock-gamer-vaino", firstName: "Väinö" },
-  { id: "mock-gamer-elias", firstName: "Elias" },
-  { id: "mock-gamer-linnea", firstName: "Linnéa" },
-  { id: "mock-gamer-oskar", firstName: "Oskar" },
-  { id: "mock-gamer-siiri", firstName: "Siiri" },
-  { id: "mock-gamer-emil", firstName: "Emil" },
-  { id: "mock-gamer-hilda", firstName: "Hilda" },
+  { id: SESSION_FEED_GAMER_IDS.aino, firstName: "Aino" },
+  { id: SESSION_FEED_GAMER_IDS.vaino, firstName: "Väinö" },
+  { id: SESSION_FEED_GAMER_IDS.elias, firstName: "Elias" },
+  { id: SESSION_FEED_GAMER_IDS.linnea, firstName: "Linnéa" },
+  { id: SESSION_FEED_GAMER_IDS.oskar, firstName: "Oskar" },
+  { id: SESSION_FEED_GAMER_IDS.siiri, firstName: "Siiri" },
+  { id: SESSION_FEED_GAMER_IDS.emil, firstName: "Emil" },
+  { id: SESSION_FEED_GAMER_IDS.hilda, firstName: "Hilda" },
 ];
 
 /**
@@ -61,17 +81,26 @@ export const SESSION_FEED_ROSTER: readonly SessionFeedGamer[] = [
 export type SessionFeedCadence = "weekly" | "daily";
 
 /**
- * What each session is, newest first. Index 0 is the upcoming session; index N
- * is N sessions before it.
+ * What each session is, newest first. Index 0 is the furthest-away future
+ * session; the leading run of `future` specs is the feed's future horizon, the
+ * last of them is the next session, and everything after that is the past.
  *
- * In the default club run the enforcement epoch sits between weeks 7 and 8:
- * everything from week 7 forward is either written up or flagged as owed, and
- * everything older is a quiet "no record" line. That boundary is the whole
- * reason the two gap states look nothing alike — one is work, the other is
+ * In the default club run the enforcement epoch sits between the seventh and
+ * eighth past sessions: everything newer is either written up or flagged as
+ * owed, and everything older is a quiet "no record" line. That boundary is the
+ * whole reason the two gap states look nothing alike — one is work, the other is
  * history.
  */
 export type EntrySpec =
-  | { kind: "upcoming" }
+  | {
+      kind: "future";
+      /** Forward-looking note families read once the session runs. */
+      publicNote?: string;
+      /** Forward-looking staff note — a reminder for the team. */
+      staffNote?: string;
+      /** The gedu has declared they can't run this one. */
+      needsSubstitute?: boolean;
+    }
   | {
       kind: "recorded";
       publicNote: string;
@@ -83,12 +112,44 @@ export type EntrySpec =
   | { kind: "needs_record" }
   | { kind: "no_record" };
 
+/**
+ * The future horizon an open-ended weekly club shows: as many entries as the
+ * shared open-ended occurrence cap allows, so the feed reaches exactly as far
+ * ahead as the live upcoming-session lists do. A unit test pins the length to
+ * that cap, so raising it can't quietly leave this list behind.
+ */
+export const CLUB_FUTURE_SPECS: readonly EntrySpec[] = [
+  { kind: "future" },
+  { kind: "future" },
+  {
+    kind: "future",
+    needsSubstitute: true,
+    staffNote:
+      "I'm away at a family wedding this week and can't run the session. Padlet is up to date if whoever covers wants to see where the group is.",
+  },
+  { kind: "future" },
+  { kind: "future" },
+  { kind: "future" },
+  {
+    kind: "future",
+    publicNote:
+      "Redstone follow-up: we'll wire the item sorters into the storage room and see whether the overflow fix survives eight people using it at once.",
+  },
+  {
+    kind: "future",
+    publicNote:
+      "We're finishing the harbour road and starting on the lighthouse at the end of it. Bring ideas for what should be inside it.",
+    staffNote:
+      "Ask Siiri's group to pair her with Aino this week rather than leaving her to pick — she goes quiet when she has to choose.",
+  },
+];
+
 export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
-  { kind: "upcoming" },
+  ...CLUB_FUTURE_SPECS,
 
   {
     kind: "recorded",
-    absent: ["mock-gamer-oskar"],
+    absent: [SESSION_FEED_GAMER_IDS.oskar],
     publicNote:
       "We finished the village square this week. Aino's clock tower finally chimes on the hour after three goes at the redstone, and half the group split off to dig a proper road down to the harbour. We ended with a tour where everyone showed one thing they had made — nobody wanted to log off.",
   },
@@ -98,7 +159,7 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
 
   {
     kind: "recorded",
-    absent: ["mock-gamer-siiri", "mock-gamer-hilda"],
+    absent: [SESSION_FEED_GAMER_IDS.siiri, SESSION_FEED_GAMER_IDS.hilda],
     publicNote:
       "Redstone week. We built item sorters from scratch — hoppers, comparators, the lot — and then broke them on purpose to work out what each part was actually doing. Elias solved the overflow problem on his own and spent the rest of the session teaching it to the table. The sorters go into the storage room next time.",
     staffNote:
@@ -123,9 +184,9 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
   {
     kind: "recorded",
     absent: [
-      "mock-gamer-vaino",
-      "mock-gamer-linnea",
-      "mock-gamer-emil",
+      SESSION_FEED_GAMER_IDS.vaino,
+      SESSION_FEED_GAMER_IDS.linnea,
+      SESSION_FEED_GAMER_IDS.emil,
     ],
     publicNote:
       "A quieter week with a few away, so we used it for housekeeping: tidied up the spawn area, fixed the paths people kept falling off, and agreed some ground rules about building on each other's plots. Hilda started a shared library that anyone can add books to.",
@@ -146,8 +207,8 @@ export interface SessionFeedFixture {
 
 export interface SessionFeedFixtureOptions {
   /**
-   * Flips the upcoming session's Join button between its open and locked
-   * states so both can be eyeballed without waiting for a real window.
+   * Flips the next session's Join button between its open and locked states so
+   * both can be eyeballed without waiting for a real window.
    */
   voiceIsOpen?: boolean;
   /** Defaults to `weekly` — the club shape the style guide demos. */
@@ -164,9 +225,9 @@ export interface SessionFeedFixtureOptions {
 /**
  * Build a fixture feed against a reference instant.
  *
- * Defaults reproduce the ten-week Monday club the style guide demos; the
- * options let a preview scene ask for a different run of states, a camp's
- * daily cadence, or a different clock face.
+ * Defaults reproduce the Monday club the style guide demos; the options let a
+ * preview scene ask for a different run of states, a camp's daily cadence, or a
+ * different clock face.
  */
 export function buildSessionFeedFixture(
   now: Date,
@@ -191,6 +252,7 @@ export function buildSessionFeedFixture(
     weekday: WEEKDAY,
     startTime,
     timeZone: TIMEZONE,
+    futureCount: countLeadingFutureSpecs(specs),
   });
 
   const entries = specs.map((spec, sessionsBack) => {
@@ -211,14 +273,32 @@ export function buildSessionFeedFixture(
 }
 
 /**
- * The `count` most recent session starts for a cadence, newest first: index 0
- * is the next session still ahead of us, index N the one N sessions before it.
+ * How many of a spec list's leading entries are future sessions.
+ *
+ * The feed is strictly descending, so the future block can only ever be the
+ * head of the list. Deriving the count instead of asking the caller for it keeps
+ * a spec list self-describing — the dates follow whatever states were authored.
+ */
+export function countLeadingFutureSpecs(specs: readonly EntrySpec[]): number {
+  let count = 0;
+  while (count < specs.length && specs[count].kind === "future") count += 1;
+  return count;
+}
+
+/**
+ * The session starts for a cadence, newest first: index 0 is the furthest-away
+ * session in the feed and the last index the oldest.
+ *
+ * `futureCount` says how many of them are still ahead of `now`. The next session
+ * lands at `futureCount - 1`, the further-future ones step forward above it, and
+ * the past runs backwards beneath it — which is exactly the order the feed
+ * renders, so no caller ever has to reverse a slice.
  *
  * Pure and exported so the cadence arithmetic can be unit-tested without
  * rendering anything. Every step walks the calendar **in the source zone**
- * rather than subtracting a flat number of milliseconds: across a DST boundary
- * a flat subtraction drifts an hour, which would show up in the feed as a club
- * that mysteriously met at 15:30 for half the term.
+ * rather than adding a flat number of milliseconds: across a DST boundary a flat
+ * step drifts an hour, which would show up in the feed as a club that
+ * mysteriously met at 15:30 for half the term.
  */
 export function sessionStartsForCadence(opts: {
   now: Date;
@@ -228,11 +308,21 @@ export function sessionStartsForCadence(opts: {
   weekday: number;
   startTime: string;
   timeZone: string;
+  /** Defaults to 1 — just the next session ahead of `now`. */
+  futureCount?: number;
 }): Date[] {
-  const { now, count, cadence, weekday, startTime, timeZone } = opts;
+  const {
+    now,
+    count,
+    cadence,
+    weekday,
+    startTime,
+    timeZone,
+    futureCount = 1,
+  } = opts;
   if (count <= 0) return [];
 
-  const first =
+  const next =
     cadence === "weekly"
       ? getNextSessionStart(
           { dayOfWeek: weekday, startTime, timezone: timeZone },
@@ -240,14 +330,20 @@ export function sessionStartsForCadence(opts: {
         )
       : nextWeekdayStart(now, startTime, timeZone);
 
-  const starts = [first];
-  for (let i = 1; i < count; i++) {
-    starts.push(
-      cadence === "weekly"
-        ? shiftZonedDays(starts[i - 1], -7, timeZone)
-        : previousWeekdayStart(starts[i - 1], timeZone),
-    );
-  }
+  const forward = (from: Date) =>
+    cadence === "weekly"
+      ? shiftZonedDays(from, 7, timeZone)
+      : nextWeekdayStartAfter(from, timeZone);
+  const backward = (from: Date) =>
+    cadence === "weekly"
+      ? shiftZonedDays(from, -7, timeZone)
+      : previousWeekdayStart(from, timeZone);
+
+  const futureLength = Math.min(Math.max(futureCount, 1), count);
+  const starts: Date[] = new Array<Date>(count);
+  starts[futureLength - 1] = next;
+  for (let i = futureLength - 2; i >= 0; i--) starts[i] = forward(starts[i + 1]);
+  for (let i = futureLength; i < count; i++) starts[i] = backward(starts[i - 1]);
   return starts;
 }
 
@@ -274,6 +370,15 @@ function nextWeekdayStart(now: Date, startTime: string, timeZone: string): Date 
   // Unreachable: at most three consecutive days are skipped (a Friday evening
   // start plus the weekend), so a match always lands inside the eight-day walk.
   throw new Error("no weekday session start found within eight days");
+}
+
+/** One weekday later, same wall clock, weekend skipped. */
+function nextWeekdayStartAfter(instant: Date, timeZone: string): Date {
+  let candidate = shiftZonedDays(instant, 1, timeZone);
+  while (isWeekendDay(toZonedTime(candidate, timeZone).getDay())) {
+    candidate = shiftZonedDays(candidate, 1, timeZone);
+  }
+  return candidate;
 }
 
 /** One weekday earlier, same wall clock, weekend skipped. */
@@ -317,10 +422,20 @@ function toEntry(
 ): SessionFeedEntry {
   const { id, startsAt, endsAt, voiceIsOpen } = base;
   switch (spec.kind) {
-    case "upcoming":
+    case "future":
       // `"#"` keeps the Join button inert — a fixture has no room to join, and
       // the button renders its real open state either way.
-      return { kind: "upcoming", id, startsAt, endsAt, voiceIsOpen, voiceHref: "#" };
+      return {
+        kind: "future",
+        id,
+        startsAt,
+        endsAt,
+        publicNote: spec.publicNote ?? null,
+        staffNote: spec.staffNote ?? null,
+        needsSubstitute: spec.needsSubstitute ?? false,
+        voiceIsOpen,
+        voiceHref: "#",
+      };
     case "recorded": {
       const absent = new Set(spec.absent ?? []);
       return {

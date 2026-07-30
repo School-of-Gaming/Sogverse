@@ -6,25 +6,36 @@ import {
   buildGeduProductPageFixture,
   type GeduProductScenario,
 } from "@/components/gedu/session-details/mock-product-page-fixtures";
+import type { GeduAssignmentCardData } from "@/components/gedu/GeduAssignmentsSectionView";
 import {
-  expandAssignedSessionsToCards,
-  type GroupSessionItem,
-} from "@/lib/assigned-sessions";
+  formatProductSchedule,
+  scheduleCardLines,
+} from "@/components/public/products/format-product-schedule";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import type { MyAssignedProductSessionRow } from "@/services/assignments";
+import {
+  rollUpGeduAssignments,
+  type GeduAssignmentRow,
+} from "@/lib/gedu-assignment-rollup";
 
 /**
  * Fixtures for the gedu dashboard preview scene — a plausible week for a gedu
  * running two Monday clubs, computed from a `now` the caller supplies.
  *
- * The occurrence list is not hand-written: assignment rows go through the same
- * `expandAssignedSessionsToCards` the live dashboard uses, so the preview shows
- * the real expansion (per-slot occurrences, the eight-week cap on open-ended
- * clubs, the soonest item taking the prominent card) rather than a plausible
- * imitation of it. Only two fields are rewritten afterwards, and both because a
- * preview must not lead anywhere live: the Join button is made inert and every
- * card points at the matching product-page *scene*, so clicking through lands
- * on the feed the badge is talking about.
+ * Nothing here is hand-written narrative. Assignment rows go through the same
+ * roll-up adapter the live dashboard will use, and the recurring-schedule line
+ * comes from the same product-schedule formatter the public browse cards use, so
+ * the preview shows the real derivations (next occurrence including an
+ * in-progress one, cadence in the viewer's zone) rather than a plausible
+ * imitation of them. Only two fields are rewritten afterwards, and both because
+ * a preview must not lead anywhere live: the Join button is made inert and every
+ * card points at the matching product-page *scene*, so clicking through lands on
+ * the feed the badge is talking about.
+ *
+ * **The badge counts are derived, not authored.** Each assignment's
+ * needs-attention number is counted out of the very feed its card links to, so a
+ * card can never advertise a number the page behind it disagrees with. Substitute
+ * requests are deliberately excluded: they are a message to admins, not work the
+ * gedu owes, and folding them in would make one number mean two things.
  */
 
 export const GEDU_DASHBOARD_SCENARIOS = [
@@ -40,9 +51,8 @@ export function isGeduDashboardScenario(s: string): s is GeduDashboardScenario {
 }
 
 export interface GeduDashboardFixture {
-  sessions: GroupSessionItem[];
-  /** Outstanding write-ups per product — the aggregate badge on each card. */
-  attentionByProductId: Record<string, number>;
+  /** One roll-up card per assignment, soonest next session first. */
+  assignments: GeduAssignmentCardData[];
   verified: boolean;
 }
 
@@ -50,9 +60,8 @@ const MINECRAFT_PRODUCT_ID = "mock-dashboard-minecraft-club";
 const TERRARIA_PRODUCT_ID = "mock-dashboard-terraria-club";
 
 /**
- * Which product-page scene each dashboard card opens. The two feeds behind
- * these scenes are also where the badge counts come from, so a card can never
- * advertise a number the page it links to disagrees with.
+ * Which product-page scene each dashboard card opens. The feeds behind these
+ * scenes are also where the badge counts come from.
  */
 const SCENE_BY_PRODUCT: Record<string, GeduProductScenario> = {
   [MINECRAFT_PRODUCT_ID]: "club-midterm",
@@ -63,8 +72,10 @@ export function buildGeduDashboardFixture(
   now: Date,
   scenario: GeduDashboardScenario,
   locale: SupportedLocale,
+  /** Viewer's IANA zone — the cadence line renders in it, like every time. */
+  timeZone: string,
 ): GeduDashboardFixture {
-  const rows: MyAssignedProductSessionRow[] = [
+  const rows: GeduAssignmentRow[] = [
     assignmentRow({
       now,
       id: MINECRAFT_PRODUCT_ID,
@@ -74,6 +85,8 @@ export function buildGeduDashboardFixture(
       startedDaysAgo: 84,
       groupCount: 3,
       gamerCount: 21,
+      groupName: "Monday A",
+      groupGamerCount: 8,
     }),
     assignmentRow({
       now,
@@ -84,25 +97,59 @@ export function buildGeduDashboardFixture(
       startedDaysAgo: 9,
       groupCount: 2,
       gamerCount: 13,
+      groupName: "Tuesday A",
+      groupGamerCount: 6,
     }),
   ];
 
-  const sessions = expandAssignedSessionsToCards(rows, now, locale).map(
-    (item) => ({
-      ...item,
-      // A preview has no room to join and no live product page to open.
-      voiceHref: "#",
-      openGroupHref: previewSceneHref(
-        "gedu-product",
-        SCENE_BY_PRODUCT[item.productId],
-      ),
-    }),
-  );
-
-  return {
-    sessions,
+  const assignments = rollUpGeduAssignments({
+    rows,
+    now,
+    locale,
     attentionByProductId:
       scenario === "all-clear" ? {} : outstandingByProduct(now),
+    hrefByProductId: Object.fromEntries(
+      Object.entries(SCENE_BY_PRODUCT).map(([productId, sceneScenario]) => [
+        productId,
+        previewSceneHref("gedu-product", sceneScenario),
+      ]),
+    ),
+    // Left empty on purpose: a preview has no room to join, so every Join
+    // button collapses to its inert form while still rendering its real
+    // open/locked state.
+    voiceHrefByProductId: {},
+  });
+
+  const rowsById = new Map(rows.map((row) => [row.product.id, row]));
+
+  return {
+    assignments: assignments.map((assignment) => {
+      const row = rowsById.get(assignment.productId);
+      return {
+        assignment,
+        scheduleLines:
+          row === undefined
+            ? []
+            : scheduleCardLines(
+                formatProductSchedule({
+                  product: {
+                    product_type: row.product.productType,
+                    start_date: row.product.startDate,
+                    end_date: row.product.endDate,
+                    timezone: row.product.timezone,
+                    schedule_slots: row.slots.map((slot) => ({
+                      weekday: slot.weekday,
+                      start_time: slot.startTime,
+                      duration_minutes: slot.durationMinutes,
+                    })),
+                  },
+                  locale,
+                  timeZone,
+                  now,
+                }),
+              ),
+      };
+    }),
     verified: scenario !== "unverified",
   };
 }
@@ -130,7 +177,9 @@ function assignmentRow(opts: {
   startedDaysAgo: number;
   groupCount: number;
   gamerCount: number;
-}): MyAssignedProductSessionRow {
+  groupName: string;
+  groupGamerCount: number;
+}): GeduAssignmentRow {
   return {
     product: {
       id: opts.id,
@@ -145,6 +194,8 @@ function assignmentRow(opts: {
     groupId: `${opts.id}-group-a`,
     groupCount: opts.groupCount,
     gamerCount: opts.gamerCount,
+    groupName: opts.groupName,
+    groupGamerCount: opts.groupGamerCount,
     // 0 = Monday. Both clubs run the same evening, back to back.
     slots: [
       {
