@@ -99,6 +99,7 @@ import {
   ManageBillingCardView,
   type BillingAccountSummary,
 } from "@/components/billing";
+import { PREVIEW_SCENES, previewSceneHref } from "@/components/preview/scenes";
 import {
   SessionFeed,
   SessionFeedAlertBadge,
@@ -1272,16 +1273,10 @@ function ProductsDemo() {
         <p className="max-w-prose text-sm text-muted-foreground">
           The shared &ldquo;registration closed&rdquo; panel (ended / already
           started / fully booked) has no browse-card link &mdash; a parent only
-          reaches it through a stale link or bookmark. Preview it full-page:
+          reaches it through a stale link or bookmark. It is still previewable
+          full-page: every scenario, closed ones included, is listed under{" "}
+          <em>Full-page previews</em> at the bottom of this page.
         </p>
-        <a
-          href="/preview/products/muni-full-closed"
-          target="_blank"
-          rel="noreferrer"
-          className={buttonVariants({ variant: "outline", size: "sm" })}
-        >
-          View closed panel &rarr;
-        </a>
       </SubSection>
     </div>
   );
@@ -2069,6 +2064,59 @@ export default function AdminUIComponentsPage() {
         <GeduSessionFeedDemo />
       </Section>
 
+      {/* ============================================================ */}
+      {/* Section 17: Full-page previews                                */}
+      {/* ============================================================ */}
+      <Section title="Full-page previews">
+        <p className="text-sm text-muted-foreground -mt-2">
+          The demos above show components; a page-level change has to be judged
+          as a <em>page</em> &mdash; real chrome, real viewport, real scrolling.
+          Each link below opens one fixture-driven scene at{" "}
+          <code>/preview/{"{surface}"}/{"{scenario}"}</code>, composed inside the
+          same header/sidebar/footer shell the real route uses, with no network
+          calls behind it. Scenes render the <em>same</em> page body the live
+          route renders (or the draft body that will replace it), so they
+          can&rsquo;t drift into a parallel design. Pure-UI interactions work
+          against local state; anything that would hit a backend renders its real
+          state with the action inert. This list is generated from the scene
+          registry &mdash; adding a scene surfaces its links here automatically.
+        </p>
+        <FullPagePreviewsDemo />
+      </Section>
+
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Full-page previews                                                 */
+/* ------------------------------------------------------------------ */
+
+// Iterates the preview scene registry — one subsection per scene, one link per
+// scenario. Nothing here knows what any individual scene is, on purpose.
+function FullPagePreviewsDemo() {
+  return (
+    <div className="space-y-8">
+      {PREVIEW_SCENES.map((scene) => (
+        <SubSection key={scene.surface} title={scene.title}>
+          <p className="max-w-prose text-sm text-muted-foreground">
+            {scene.description}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {scene.scenarios.map((scenario) => (
+              <a
+                key={scenario.slug}
+                href={previewSceneHref(scene.surface, scenario.slug)}
+                target="_blank"
+                rel="noreferrer"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                {scenario.label} &rarr;
+              </a>
+            ))}
+          </div>
+        </SubSection>
+      ))}
     </div>
   );
 }
