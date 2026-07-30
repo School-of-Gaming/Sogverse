@@ -36,9 +36,9 @@ their site, so their mark is illegible on our dark pages as delivered.
 The reversal changes `fill="#000000"` to `fill="#ffffff"` and nothing else: the blue lynx
 head keeps its brand colour and every path is byte-identical to the supplied file, which
 is kept beside it precisely so the derivation can be verified or redone. Black-to-white is
-the conventional reversed treatment and almost certainly what Lynx would send if asked —
-but we did not ask, so **this is an assumption pending their sign-off** (tracked in
-`TODO.md`). Replace this file with their official reversed mark when it arrives.
+the conventional reversed treatment and almost certainly what Lynx would send if asked,
+but we did not ask — so if Lynx ever supplies an official reversed mark, prefer theirs
+over this file.
 
 Do not extend this to the other marks. Roblox supplies both colourways and their
 guidelines forbid recolouring outright, so their wordmark is only ever used as shipped.
