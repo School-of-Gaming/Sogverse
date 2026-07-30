@@ -44,8 +44,14 @@ later phase built on the same data.
 3. **Two note fields from day one:** a public note (eventually parent/gamer-visible)
    and a staff-only note (gedu + admin). Never a single field — staff notes written
    under an assumption of privacy can never be retro-published (children's data).
-4. **Attendance is binary in the UI** (checkbox per gamer) but stored as an enum-ready
-   status string (`present`/`absent`), so `late`/`excused` later are additive.
+4. **Attendance is explicitly recorded, never implied.** A session's attendance is
+   **null until the gedu records it** — an untouched roster row must never silently
+   mean "absent". When recorded, every roster member is explicitly present or absent
+   (stored as an enum-ready status string so `late`/`excused` later are additive),
+   and the editor offers a "mark all present" shortcut so the common case stays one
+   action. **Attendance is mandatory — it doubles as the ran-confirmation tied to
+   pay; notes are optional.** "Needs attention" therefore means exactly: past, not
+   skipped, attendance unrecorded — even when notes exist.
 5. **Skip/cancel is just materialization:** a row with a status and no attendance is
    both the record that "week 5 didn't happen" and the queue's "nothing to record"
    escape hatch.
@@ -59,10 +65,12 @@ later phase built on the same data.
    not block opening read access later.
 8. **Future sessions materialize too, but only for planning fields.** A session row
    for a *future* occurrence may hold notes (a forward-looking note acts as a
-   reminder / a plan families can read) and a **needs-substitute flag** (a gedu
-   declaring they can't run a future session, for admins/peers to act on). It may
-   never hold attendance or a ran/skipped status — those are records of what
-   happened and only attach once the session is past.
+   reminder / a plan families can read). It may never hold attendance or a
+   ran/skipped status — those are records of what happened and only attach once the
+   session is past. A **needs-substitute flag** (a gedu declaring they can't run a
+   future session) remains a schema-level intention, but its **UI is deliberately
+   out of scope for this design** — deferred to keep the first release tight;
+   nothing in the mock renders or edits it.
 9. **Server-side write validation is loose:** reject dates before the product start
    or beyond the visible future horizon; accept anything plausibly matching the
    current schedule; enforce the past-only rule for attendance/status per point 8.
@@ -137,22 +145,42 @@ duplicated the Join affordance; the decided layout separates them:
   "Your group" card — the gedu arrived by clicking their group; the group *is* the
   page.
 - **Masthead** (full width, ~3 lines): back link; product context line (type label,
-  product name, Padlet + material link chips — product scope lives here); group
-  identity line (group name, gamer count).
+  product name, Padlet + material link chips — product scope lives here, and the
+  material chip matches the Padlet chip's visual style); group identity line
+  (group name, gamer count).
+- **Group notes sit full-width directly under the masthead, on their own row** —
+  the standing "About this group" panel reads before the columns split; the rail
+  below holds the Group card first, then Other groups.
 - **Desktop = two columns.** Main column (~2/3, capped at reading width): the
   timeline — a slim attention row ("N need write-ups", jumps to the first gap),
   the collapsed later-sessions block, the prominent next session, the chunked
-  past. Reference rail (~1/3): three compact cards —
-  1. **Other groups** — the peer-cover scenario ("can you watch my room for 10
+  past. Reference rail (~1/3): two compact cards —
+  1. **Group** — co-teachers, roster with parent emails, copy-all-emails.
+  2. **Other groups** — the peer-cover scenario ("can you watch my room for 10
      min?"): one row per peer group with name, gedu chips, gamer count, and a
      live-state Join button. Peer rooms appear here and only here.
-  2. **Group** — co-teachers, roster with parent emails, copy-all-emails.
-  3. **Group notes** — public note (preview-first; it is what families will see)
-     + staff note, inline-editable.
+  (Group notes are not a rail card — they sit full-width under the masthead,
+  public note preview-first since it is what families will see, gedu note in its
+  padlocked treatment, inline-editable.)
 - **One Join per room on the whole page**: the gedu's own room only on the
   next-session timeline entry; each peer room only on its rail row.
 - **Mobile**: single column — masthead, timeline, then the rail cards stacked
   below. The weekly loop (read last week, join, write up) stays first.
+
+Copy & treatment decisions (feedback round 3):
+
+- The attention state is called **"Needs attention"** (not "needs a write-up" —
+  attendance is the mandatory part, notes are optional) and renders as an alert
+  icon + label on an otherwise normal card: no tinted card background.
+- The gedu/admin note audience is labelled **"Gedu"** ("Gedu only" etc.) — admin
+  visibility is implied; never "Staff" or "Team" in user-facing copy.
+- **One edit affordance everywhere**: every editable entry (past or future) uses
+  the same icon+text "Edit" control as its click target — no "Plan" label, no
+  whole-header click targets.
+- The collapsed future block is labelled **"N more upcoming sessions"** so the
+  feed's future→past direction is self-evident.
+- **No aggregate jump chip** above the timeline — the per-card alerts are the
+  queue signal on this page (the dashboard badge remains the cross-product one).
 
 The gedu dashboard gets only an **aggregate alert badge** on the product card ("N
 sessions need attention") linking into the feed — no separate queue UI. The feed itself
