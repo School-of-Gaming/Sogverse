@@ -22,10 +22,11 @@ import { useNow } from "@/providers";
  *
  * Every editor is fully live against local state: marking each child present or
  * absent, typing both session notes, marking a session as not run, planning a
- * future session, and writing the group's standing notes. A flagged session
- * turning into a recorded one — and a bare future date turning into a plan — is
- * the single most important thing to feel before this gets wired to a database.
- * Nothing persists past a reload.
+ * future session, and writing the group's standing notes — and, on an in-person
+ * product, the venue's shared ones. A flagged session turning into a recorded
+ * one — and a bare future date turning into a plan — is the single most
+ * important thing to feel before this gets wired to a database. Nothing persists
+ * past a reload.
  *
  * The fixture is built once from the first `useNow()` value and then held in
  * state — rebuilding it on the 30-second tick would throw away whatever the
@@ -42,6 +43,8 @@ export function GeduProductPageScene({
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [groupNotes, setGroupNotes] = useState(fixture.groupNotes);
   const [groupNotesEditing, setGroupNotesEditing] = useState(false);
+  const [site, setSite] = useState(fixture.site);
+  const [siteNotesEditing, setSiteNotesEditing] = useState(false);
 
   // Which editor produced the draft is settled by the entry's own kind, not by
   // the caller: a plan can only land on a future session and a write-up only on
@@ -70,6 +73,23 @@ export function GeduProductPageScene({
     setGroupNotesEditing(false);
   };
 
+  // Site notes belong to the venue, so a save here would in reality touch every
+  // product running there. In the scene it touches this page's copy and stops —
+  // but the panel says out loud what the real write would do, which is the part
+  // that has to be right before any of this is wired up.
+  const handleSaveSiteNotes = (draft: GroupNotesDraft) => {
+    setSite((prev) =>
+      prev === null
+        ? prev
+        : {
+            ...prev,
+            publicNote: draft.publicNote.length > 0 ? draft.publicNote : null,
+            staffNote: draft.staffNote.length > 0 ? draft.staffNote : null,
+          },
+    );
+    setSiteNotesEditing(false);
+  };
+
   return (
     <GeduProductPageBodyDraft
       data={fixture.data}
@@ -82,6 +102,10 @@ export function GeduProductPageScene({
       groupNotesEditing={groupNotesEditing}
       onGroupNotesEditingChange={setGroupNotesEditing}
       onSaveGroupNotes={handleSaveGroupNotes}
+      site={site}
+      siteNotesEditing={siteNotesEditing}
+      onSiteNotesEditingChange={setSiteNotesEditing}
+      onSaveSiteNotes={handleSaveSiteNotes}
       editingEntryId={editingEntryId}
       onEditEntry={setEditingEntryId}
       onSaveEntry={handleSave}

@@ -1226,11 +1226,10 @@
       "plannedStaffNoteLabel": "Rappel pour les Gedus",
       "plannedStaffNoteHint": "Visible uniquement par les Gedus et les admins. Jamais par les familles.",
       "plannedStaffNotePlaceholder": "Ce qu’il faut préparer, apporter ou ne pas oublier avant cette séance.",
-      "laterSessions": "{count, plural, one {# autre séance à venir} other {# autres séances à venir}}",
+      "laterSessions": "{count, plural, one {# séance à venir} other {# séances à venir}}",
       "showEarlier": "{count, plural, one {Afficher # séance précédente} other {Afficher # séances précédentes}}",
-      "markAllPresent": "Tout marquer présent",
       "attendanceMarkedCount": "{marked} sur {total} renseignés",
-      "attendanceRequiredHint": "Marquez chaque gamer présent ou absent avant d’enregistrer. Le compte rendu est facultatif.",
+      "attendanceRequiredHint": "Marquez chaque gamer présent ou absent avant d’enregistrer. Choisissez de nouveau la même réponse pour l’effacer. Le compte rendu est facultatif.",
       "attendanceForGamer": "Présence de {name}"
     },
     "groupNotes": {
@@ -1246,6 +1245,22 @@
       "staffLabel": "Note pour les Gedus",
       "staffHint": "Visible uniquement par les Gedus et les admins. Jamais par les familles.",
       "staffPlaceholder": "Ce qu’un autre Gedu doit savoir en permanence sur ce groupe."
+    },
+    "siteNotes": {
+      "heading": "Notes sur le lieu",
+      "sharedCaption": "{site} — tous les produits organisés sur ce lieu affichent les mêmes notes : une modification ici les change partout.",
+      "addressLabel": "Adresse",
+      "add": "Ajouter",
+      "edit": "Modifier",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "emptyHint": "Ajoutez une note sur le lieu — tout ce qui concerne les locaux eux-mêmes.",
+      "publicLabel": "Note pour les familles",
+      "publicHint": "Les parents et les gamers qui viennent sur ce lieu pourront le lire.",
+      "publicPlaceholder": "Par quelle porte entrer, où attendre, quoi apporter…",
+      "staffLabel": "Note pour les Gedus",
+      "staffHint": "Visible uniquement par les Gedus et les admins. Jamais par les familles.",
+      "staffPlaceholder": "Clés, matériel, particularités de la salle — ce que le prochain Gedu sur place doit savoir."
     }
   },
   "groups": {

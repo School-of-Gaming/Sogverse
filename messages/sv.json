@@ -1226,11 +1226,10 @@
       "plannedStaffNoteLabel": "Påminnelse till Gedus",
       "plannedStaffNoteHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
       "plannedStaffNotePlaceholder": "Något att förbereda, ta med eller komma ihåg inför det här.",
-      "laterSessions": "{count, plural, one {# kommande tillfälle till} other {# kommande tillfällen till}}",
+      "laterSessions": "{count, plural, one {# kommande tillfälle} other {# kommande tillfällen}}",
       "showEarlier": "{count, plural, one {Visa # tidigare tillfälle} other {Visa # tidigare tillfällen}}",
-      "markAllPresent": "Markera alla som närvarande",
       "attendanceMarkedCount": "{marked} av {total} markerade",
-      "attendanceRequiredHint": "Markera varje spelare som närvarande eller frånvarande innan du sparar. Sammanfattningen är frivillig.",
+      "attendanceRequiredHint": "Markera varje spelare som närvarande eller frånvarande innan du sparar. Välj samma svar igen för att ta bort markeringen. Sammanfattningen är frivillig.",
       "attendanceForGamer": "Närvaro för {name}"
     },
     "groupNotes": {
@@ -1246,6 +1245,22 @@
       "staffLabel": "Anteckning till Gedus",
       "staffHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
       "staffPlaceholder": "Sådant som en annan Gedu bör veta om gruppen över tid."
+    },
+    "siteNotes": {
+      "heading": "Anteckningar om platsen",
+      "sharedCaption": "{site} — alla produkter som körs på den här platsen visar samma anteckningar, så en ändring här slår igenom överallt.",
+      "addressLabel": "Adress",
+      "add": "Lägg till",
+      "edit": "Redigera",
+      "cancel": "Avbryt",
+      "save": "Spara",
+      "emptyHint": "Lägg till en platsanteckning — något som gäller själva lokalen.",
+      "publicLabel": "Anteckning till familjerna",
+      "publicHint": "Föräldrar och spelare som kommer hit läser det här.",
+      "publicPlaceholder": "Vilken dörr man använder, var man väntar, vad man tar med…",
+      "staffLabel": "Anteckning till Gedus",
+      "staffHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
+      "staffPlaceholder": "Nycklar, utrustning, lokalens egenheter — vad nästa Gedu på plats behöver veta."
     }
   },
   "groups": {

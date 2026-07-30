@@ -1226,11 +1226,10 @@
       "plannedStaffNoteLabel": "Gedu reminder",
       "plannedStaffNoteHint": "Only Gedus and admins can see this. Families never do.",
       "plannedStaffNotePlaceholder": "Anything to set up, bring or remember before this one.",
-      "laterSessions": "{count, plural, one {# more upcoming session} other {# more upcoming sessions}}",
+      "laterSessions": "{count, plural, one {# upcoming session} other {# upcoming sessions}}",
       "showEarlier": "{count, plural, one {Show # earlier session} other {Show # earlier sessions}}",
-      "markAllPresent": "Mark all present",
       "attendanceMarkedCount": "{marked} of {total} marked",
-      "attendanceRequiredHint": "Mark every gamer present or absent before saving. The write-up is optional.",
+      "attendanceRequiredHint": "Mark every gamer present or absent before saving. Choose the same answer again to clear it. The write-up is optional.",
       "attendanceForGamer": "Attendance for {name}"
     },
     "groupNotes": {
@@ -1246,6 +1245,22 @@
       "staffLabel": "Gedu note",
       "staffHint": "Only Gedus and admins can see this. Families never do.",
       "staffPlaceholder": "Standing things another Gedu should know about this group."
+    },
+    "siteNotes": {
+      "heading": "Site notes",
+      "sharedCaption": "{site} — shared by every product running at this site, so an edit here changes them everywhere.",
+      "addressLabel": "Address",
+      "add": "Add",
+      "edit": "Edit",
+      "cancel": "Cancel",
+      "save": "Save",
+      "emptyHint": "Add a site note — anything that stays true about the venue itself.",
+      "publicLabel": "Note for families",
+      "publicHint": "Parents and gamers coming to this site will read this.",
+      "publicPlaceholder": "Which door to use, where to wait, what to bring…",
+      "staffLabel": "Gedu note",
+      "staffHint": "Only Gedus and admins can see this. Families never do.",
+      "staffPlaceholder": "Keys, kit, room quirks — what the next Gedu at this site needs to know."
     }
   },
   "groups": {

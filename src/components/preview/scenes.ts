@@ -47,6 +47,16 @@ export interface PreviewScenarioMeta {
   slug: string;
   /** Short human label for the UI Previews page's link list. */
   label: string;
+  /**
+   * What this scenario shows that its siblings don't.
+   *
+   * Optional, because a scene whose scenarios are an enumeration of one axis
+   * (every state of the product page's signup panel) says everything in its
+   * labels and would only repeat itself here. It earns its place the moment a
+   * scene has few, deliberately-chosen scenarios: then the question a reader
+   * has is "which of these do I open?", and a label alone doesn't answer it.
+   */
+  description?: string;
 }
 
 export interface PreviewSceneMeta {
@@ -94,23 +104,39 @@ export const PREVIEW_SCENES = [
       "The gedu dashboard rolled up to one card per group they run: next session with its Join state, the cadence in words, and an aggregate “needs attention” badge counted out of that product’s own feed. Cards open the matching product-page scene.",
     chrome: "dashboard",
     scenarios: [
-      { slug: "default", label: "Two clubs, one behind" },
-      { slug: "all-clear", label: "Nothing outstanding" },
-      { slug: "unverified", label: "Awaiting verification" },
+      {
+        slug: "default",
+        label: "Working dashboard",
+        description:
+          "Two assignments: a remote club mid-session right now (open Join, outstanding write-ups) and an in-person camp that is up to date (locked Join, no badge). Both Join states and both badge states on one screen.",
+      },
+      {
+        slug: "unverified",
+        label: "Awaiting verification",
+        description:
+          "The same assignments for an account an admin has not approved yet — the instant-room panel is replaced by the verification notice. The one state that cannot coexist with the default.",
+      },
     ],
   },
   {
     surface: "gedu-product",
     title: "Gedu product page (draft)",
     description:
-      "The product page rebuilt around the session feed: group identity band with its standing notes, roster behind a disclosure, the future horizon collapsed above the next session, then the term running backwards behind month dividers. Every editor — write-up, forward plan, group notes — works against local state.",
+      "The product page rebuilt around the session feed: the masthead, the standing notes row, the future horizon collapsed above the next session, the term running backwards behind month dividers, and the reference rail beside it. Every editor — write-up, forward plan, group notes, site notes — works against local state.",
     chrome: "dashboard",
     scenarios: [
-      { slug: "club-midterm", label: "Club, mid-term" },
-      { slug: "needs-attention", label: "Several write-ups owed" },
-      { slug: "club-yearlong", label: "Club, a year of history" },
-      { slug: "camp-daily", label: "Camp, consecutive days" },
-      { slug: "first-week", label: "Club, first week" },
+      {
+        slug: "club",
+        label: "Club — remote, weekly",
+        description:
+          "The kitchen sink. Fifty-five weeks of history behind month dividers and the chunked reveal, a week written up but never marked off, holiday skips, bare gaps still owed, a pre-epoch tail, a planned future session, and three sister groups in the rail including one nobody teaches yet.",
+      },
+      {
+        slug: "camp",
+        label: "Camp — in person, daily",
+        description:
+          "The two things the club cannot show: back-to-back weekday dates across a weekend, and a venue — so this is the scenario with site notes (shared by every product at that site) and with no voice room anywhere, every Join inert.",
+      },
     ],
   },
 ] as const satisfies readonly PreviewSceneMeta[];

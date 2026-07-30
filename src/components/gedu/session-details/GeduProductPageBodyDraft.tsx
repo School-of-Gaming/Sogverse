@@ -3,11 +3,10 @@
 import { useMemo, type ReactNode } from "react";
 import { Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Identicon } from "@/components/ui/identicon";
 import { MaterialLink } from "@/components/ui/material-link";
 import { PadletLink } from "@/components/ui/padlet-link";
+import { PersonChipList } from "@/components/ui/person-chip";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import {
   SessionFeed,
@@ -22,10 +21,15 @@ import { cn } from "@/lib/utils";
 import { computeVoiceState } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
 import type { GeduAssignedProduct, GeduAssignedProductGroup } from "@/types";
-import { CopyAllEmailsButton, deduplicateEmails } from "./AssignedGroupCard";
+import {
+  CopyAllEmailsButton,
+  deduplicateEmails,
+  geduChipPeople,
+} from "./AssignedGroupCard";
 import { SessionDetailsBackLink } from "./BackLink";
 import { GamerRosterRow } from "./GamerRosterRow";
 import { GroupNotesPanel, type GroupNotesDraft } from "./GroupNotesPanel";
+import { SiteNotesPanel, type SiteNotesDraft } from "./SiteNotesPanel";
 
 /**
  * **Draft** redesign of the gedu's product page: the assigned group's
@@ -48,13 +52,20 @@ import { GroupNotesPanel, type GroupNotesDraft } from "./GroupNotesPanel";
  *   width beside it is a reference rail. Below `lg` it all stacks in DOM order —
  *   masthead, timeline, rail — so the phone keeps the weekly loop (read last
  *   week, join, write up) first and the reference material after it.
- * - **The group's standing notes are a full-width row under the masthead**, not
- *   a rail card. They answer "what is always true about this group" — how the
- *   shared world works, who the siblings are — which is what somebody needs
- *   *before* they start reading sessions, and they are prose: squeezed into a
- *   third of the page they wrapped into a narrow column nobody read. Above the
- *   split they get the reading width the feed has, and the columns start
- *   underneath them.
+ * - **The standing notes are a full-width row under the masthead**, not a rail
+ *   card. They answer "what is always true here" — how the shared world works,
+ *   who the siblings are, which door the group comes in through — which is what
+ *   somebody needs *before* they start reading sessions. They span the whole
+ *   container rather than being capped at the timeline's reading width: capped,
+ *   they sat in the left third of a wide workspace with the rest of the row
+ *   blank, which read as a rendering fault rather than as a choice.
+ * - **An in-person product also carries its site's notes**, beside the group's
+ *   own on the same row and inside the same card — a bordered column, not a
+ *   second card, because a card inside a card says "different kind of thing"
+ *   when these are two instances of one kind. Site notes belong to the *venue*
+ *   and every product running there reads the same two paragraphs, so the panel
+ *   names the site and says so; a remote product has no building and the row
+ *   collapses back to one column.
  * - **The rail holds the two things that are true between sessions**, this
  *   group first: its co-teachers and roster (the reference a gedu actually
  *   reaches for mid-session), then the other groups on the product — the
@@ -73,6 +84,22 @@ import { GroupNotesPanel, type GroupNotesDraft } from "./GroupNotesPanel";
  *   more thing to read on the way to the same place. The dashboard badge stays
  *   the cross-product signal.
  */
+/**
+ * The venue an in-person product runs at, with the two notes that hang off it.
+ *
+ * Both notes are **site-scoped**: they are shared by every product running
+ * there, which is why the panel that renders them says so by name.
+ */
+export interface ProductSite {
+  name: string;
+  /** Street address, family-facing. `null` when the venue record has none. */
+  address: string | null;
+  /** The site note families can eventually read. */
+  publicNote: string | null;
+  /** The site note only Gedus and admins ever see. */
+  staffNote: string | null;
+}
+
 interface GeduProductPageBodyDraftProps {
   data: GeduAssignedProduct;
   /**
@@ -98,6 +125,19 @@ interface GeduProductPageBodyDraftProps {
   groupNotesEditing: boolean;
   onGroupNotesEditingChange: (editing: boolean) => void;
   onSaveGroupNotes: (draft: GroupNotesDraft) => void;
+  /**
+   * The venue an in-person product runs at, or `null` for a remote one. Every
+   * in-person product has a site (the schema requires it), and nothing on a
+   * remote product does — so this prop being null is exactly "no building
+   * involved", not "we didn't load it".
+   *
+   * At promotion it comes from the product's location joined to its
+   * family-facing details (address + note) and its staff-only note.
+   */
+  site: ProductSite | null;
+  siteNotesEditing: boolean;
+  onSiteNotesEditingChange: (editing: boolean) => void;
+  onSaveSiteNotes: (draft: SiteNotesDraft) => void;
   editingEntryId: string | null;
   onEditEntry: (entryId: string | null) => void;
   onSaveEntry: (entryId: string, draft: SessionEntryDraft) => void;
@@ -114,6 +154,10 @@ export function GeduProductPageBodyDraft({
   groupNotesEditing,
   onGroupNotesEditingChange,
   onSaveGroupNotes,
+  site,
+  siteNotesEditing,
+  onSiteNotesEditingChange,
+  onSaveSiteNotes,
   editingEntryId,
   onEditEntry,
   onSaveEntry,
@@ -141,7 +185,12 @@ export function GeduProductPageBodyDraft({
   return (
     // Wide, because this is a gedu surface and gedus are at a desk. The reading
     // column inside is still capped; the extra width buys the reference rail.
-    <div className="container mx-auto max-w-6xl px-4 py-6 sm:py-10">
+    //
+    // No horizontal padding of its own: the dashboard layout this body renders
+    // inside already spends a gutter on every side, and adding a second one
+    // here double-pads the phone (where the two gutters are most of the screen)
+    // while doing nothing at all on the desktop this page is designed for.
+    <div className="mx-auto max-w-7xl py-6 sm:py-10">
       <SessionDetailsBackLink />
 
       <header className="mt-5 border-b border-border pb-5">
@@ -177,12 +226,19 @@ export function GeduProductPageBodyDraft({
       </header>
 
       {assignedGroup && (
-        // Full width, but the panel inside is capped at the same reading width
-        // the timeline uses — which is also the main column's width, so the
-        // heading and its Edit control line up with the feed beneath them.
+        // One card spanning the container, holding one panel per scope. The
+        // site panel is a bordered column beside the group's rather than a card
+        // of its own: nesting a card inside a card announces a change of kind,
+        // and these are two instances of the same kind of thing — standing
+        // notes, differing only in what they are standing on.
         <Card className="mt-6">
           <CardContent className="p-4 sm:p-5">
-            <div className="max-w-3xl">
+            <div
+              className={cn(
+                "grid gap-5",
+                site !== null && "lg:grid-cols-2 lg:gap-8",
+              )}
+            >
               <GroupNotesPanel
                 publicNote={groupPublicNote}
                 staffNote={groupStaffNote}
@@ -190,6 +246,19 @@ export function GeduProductPageBodyDraft({
                 onEditingChange={onGroupNotesEditingChange}
                 onSave={onSaveGroupNotes}
               />
+              {site !== null && (
+                <div className="border-t border-border pt-5 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+                  <SiteNotesPanel
+                    siteName={site.name}
+                    address={site.address}
+                    publicNote={site.publicNote}
+                    staffNote={site.staffNote}
+                    editing={siteNotesEditing}
+                    onEditingChange={onSiteNotesEditingChange}
+                    onSave={onSaveSiteNotes}
+                  />
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -313,13 +382,25 @@ function OtherGroupsRailCard({
                     {t("gamerCount", { count: group.gamer_count })}
                   </span>
                 </div>
-                {group.gedus.length === 0 ? (
-                  <p className="text-[11px] text-muted-foreground">
-                    {t("noGedus")}
-                  </p>
-                ) : (
-                  <GeduChips gedus={group.gedus} compact />
-                )}
+                {/* The chips are labelled, because the row above them already
+                    carries a *gamer* count — an unlabelled row of faces next to
+                    "6 gamers" reads as six children, and the whole point of
+                    this card is knowing whose room you would be covering. */}
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                    {t("gedusLabel")}
+                  </span>
+                  {group.gedus.length === 0 ? (
+                    <span className="text-[11px] text-muted-foreground">
+                      {t("noGedus")}
+                    </span>
+                  ) : (
+                    <PersonChipList
+                      people={geduChipPeople(group.gedus)}
+                      size="compact"
+                    />
+                  )}
+                </div>
               </div>
               <JoinVoiceButton
                 voiceIsOpen={voiceIsOpen}
@@ -368,7 +449,7 @@ function GroupRailCard({ group }: { group: GeduAssignedProductGroup }) {
         {group.gedus.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("noGedus")}</p>
         ) : (
-          <GeduChips gedus={group.gedus} />
+          <PersonChipList people={geduChipPeople(group.gedus)} />
         )}
       </div>
 
@@ -390,37 +471,5 @@ function GroupRailCard({ group }: { group: GeduAssignedProductGroup }) {
         )}
       </div>
     </RailCard>
-  );
-}
-
-/**
- * Identicon-and-first-name chips for a set of gedus. `compact` is the peer-row
- * size — the rail rows carry a Join button on the same line, so the chips there
- * have to stay smaller than the group card's.
- */
-function GeduChips({
-  gedus,
-  compact = false,
-}: {
-  gedus: GeduAssignedProductGroup["gedus"];
-  compact?: boolean;
-}) {
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {gedus.map((g) => (
-        <span
-          key={g.id}
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-full border border-border bg-muted",
-            compact ? "px-1.5 py-0.5 text-[11px]" : "px-2 py-1 text-xs",
-          )}
-        >
-          <Avatar className={compact ? "h-4 w-4" : "h-5 w-5"}>
-            <Identicon id={g.id} size={compact ? 16 : 20} />
-          </Avatar>
-          <span className="leading-none">{g.first_name}</span>
-        </span>
-      ))}
-    </div>
   );
 }

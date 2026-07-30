@@ -4,7 +4,6 @@ import {
   SESSION_FEED_GAMER_IDS,
   SESSION_FEED_ROSTER,
   SESSION_FEED_TIMEZONE,
-  SESSION_FEED_WEEK_SPECS,
   buildSessionFeedFixture,
   type EntrySpec,
   type SessionFeedCadence,
@@ -33,13 +32,23 @@ import type {
  * render would give the same person a different face on every reload.
  */
 
-export const GEDU_PRODUCT_SCENARIOS = [
-  "club-midterm",
-  "needs-attention",
-  "club-yearlong",
-  "camp-daily",
-  "first-week",
-] as const;
+/**
+ * **Two scenarios, and deliberately only two.**
+ *
+ * There were five, and four of them differed from the kitchen sink by one
+ * state each — a heavier backlog, a shorter history, no peer groups. States
+ * that can coexist belong in the same scenario, because a reviewer who has to
+ * open five pages to see five things will see three of them; and every extra
+ * scenario is another fixture to keep honest for a page that only has two
+ * genuinely exclusive shapes to be in.
+ *
+ * Those two are the shapes that cannot coexist: `club` is remote and weekly,
+ * `camp` is in-person and daily. Everything else the page can do — a year of
+ * history, a session written up but never marked off, a skipped week, an
+ * unstaffed sister group, a venue's shared notes — is packed into whichever of
+ * the two it belongs to.
+ */
+export const GEDU_PRODUCT_SCENARIOS = ["club", "camp"] as const;
 
 export type GeduProductScenario = (typeof GEDU_PRODUCT_SCENARIOS)[number];
 
@@ -53,6 +62,21 @@ export interface GroupNotesFixture {
   staffNote: string | null;
 }
 
+/**
+ * The venue an in-person product runs at, with the notes that hang off it.
+ *
+ * Site notes belong to the *location*, not the product: the schema keeps the
+ * family-facing pair (address + note) and the Gedu-only note on the site row,
+ * so every product running there reads and writes the same two paragraphs.
+ * `null` on a remote product, which has no building at all.
+ */
+export interface SiteFixture {
+  name: string;
+  address: string | null;
+  publicNote: string | null;
+  staffNote: string | null;
+}
+
 export interface GeduProductPageFixture {
   data: GeduAssignedProduct;
   entries: SessionFeedEntry[];
@@ -62,6 +86,8 @@ export interface GeduProductPageFixture {
   sourceTimeZone: string;
   /** Standing notes about the group, distinct from any one session's. */
   groupNotes: GroupNotesFixture;
+  /** The venue and its shared notes, or `null` for a remote product. */
+  site: SiteFixture | null;
   /**
    * Staff-facing lesson/material URL. Separate from the product's Padlet, which
    * is the family-facing link — the promotion step reads this from a new
@@ -114,15 +140,22 @@ interface ScenarioConfig {
   startedDaysAgo: number;
   /** Days after `now` the product ends, or `null` for an ongoing club. */
   endsInDays: number | null;
+  /**
+   * Remote products have a voice room; in-person ones have a building. The two
+   * are exclusive, and the flag drives both — every Join on an in-person page
+   * is inert, and only an in-person page carries site notes.
+   */
+  isRemote: boolean;
+  /** The venue, on in-person products only. */
+  site: SiteFixture | null;
   padletUrl: string | null;
   materialUrl: string | null;
   groupName: string;
   groupNotes: GroupNotesFixture;
   /**
    * The other groups running on the same product — the reference rail's
-   * peer-cover rows. Every scenario carries at least one so the rail is always
-   * exercised, except `first-week`, which is deliberately the single-group
-   * product that shows the rail's empty state.
+   * peer-cover rows. Both scenarios carry some: the rail's empty state is one
+   * short line, and losing it costs less than losing a scenario to it.
    */
   peers: readonly {
     id: string;
@@ -137,37 +170,6 @@ interface ScenarioConfig {
 const PETRA = { id: GEDU_IDS.petra, firstName: "Petra" } as const;
 const JOONAS = { id: GEDU_IDS.joonas, firstName: "Joonas" } as const;
 const MARKUS = { id: GEDU_IDS.markus, firstName: "Markus" } as const;
-
-const NEEDS_ATTENTION_SPECS: readonly EntrySpec[] = [
-  ...CLUB_FUTURE_SPECS,
-  { kind: "past" },
-  // Notes written, attendance never marked off. It reads as a full entry and is
-  // still owed — the state a write-up-only model could not express.
-  {
-    kind: "past",
-    publicNote:
-      "Elytra course. We strung checkpoints along the cliff and everyone crashed into the same overhang until Oskar worked out you have to come in high and drop.",
-  },
-  {
-    kind: "past",
-    absent: [SESSION_FEED_GAMER_IDS.emil],
-    publicNote:
-      "Survival week. We agreed one shared base instead of eight scattered huts, and it turned into a proper little town by the end — Linnéa dug the well, Oskar ran the fence line, and three people argued about where the door should go for twenty minutes.",
-  },
-  { kind: "past" },
-  { kind: "past" },
-  {
-    kind: "past",
-    allPresent: true,
-    publicNote:
-      "Nether trip. Lots of dying, lots of laughing about dying, and one successful return with enough quartz to finish the floor everyone had been complaining about.",
-    staffNote:
-      "Väinö gets genuinely stressed in the Nether. Give him the map-and-supplies job next time rather than the front of the party.",
-  },
-  { kind: "past" },
-  { kind: "no_record" },
-  { kind: "no_record" },
-];
 
 /**
  * A camp's future block: one entry per remaining day of the run, not the
@@ -193,6 +195,15 @@ const CAMP_FUTURE_SPECS: readonly EntrySpec[] = [
   },
 ];
 
+/**
+ * The camp's run so far — **every day recorded**, deliberately.
+ *
+ * The club scenario beside it is where the backlog lives; a camp that also
+ * owed write-ups would leave the page with no scenario showing what "nothing
+ * outstanding" looks like, and would give the dashboard two cards wearing the
+ * same badge. A five-day camp whose Gedu is up to date is also simply the
+ * common case: you write the day up at the end of the day, in the room.
+ */
 const CAMP_SPECS: readonly EntrySpec[] = [
   ...CAMP_FUTURE_SPECS,
   {
@@ -201,7 +212,12 @@ const CAMP_SPECS: readonly EntrySpec[] = [
     publicNote:
       "Day five: playtesting. Every team handed their obby to another team and watched them fail at it, which is the most useful hour of the week. Three levels got quietly made easier straight afterwards.",
   },
-  { kind: "past" },
+  {
+    kind: "past",
+    allPresent: true,
+    publicNote:
+      "Day four: sound and lighting. Neon needs neon, so we spent the afternoon on emissive parts and a soundtrack that loops without anyone noticing the seam.",
+  },
   {
     kind: "past",
     allPresent: true,
@@ -218,6 +234,7 @@ const CAMP_SPECS: readonly EntrySpec[] = [
   },
   {
     kind: "past",
+    absent: [SESSION_FEED_GAMER_IDS.hilda],
     publicNote:
       "Day one and a half: the group voted on a theme for the shared course. Neon city won by a distance, and half the afternoon went on arguing about whether lava counts as neon.",
   },
@@ -229,27 +246,15 @@ const CAMP_SPECS: readonly EntrySpec[] = [
   },
 ];
 
-const FIRST_WEEK_SPECS: readonly EntrySpec[] = [
-  ...CLUB_FUTURE_SPECS,
-  {
-    kind: "past",
-    absent: [SESSION_FEED_GAMER_IDS.hilda],
-    publicNote:
-      "First session. We went round the table on what everyone has built before — answers ranged from \"a house\" to \"a working calculator\" — agreed how we talk to each other in voice, and spent the last half hour digging out a spot for the group's base.",
-    staffNote:
-      "Hilda's parents said she'd miss the first week. Worth a catch-up at the start of the next one so she isn't behind on the ground rules.",
-  },
-];
-
 /* ------------------------------------------------------------------ */
 /*  A year of history                                                  */
 /* ------------------------------------------------------------------ */
 
 /**
- * Short recaps for the year-long club. Deliberately varied in length and shape —
- * a year of identically-phrased notes would make the feed look uniform and hide
- * the thing the scenario exists to test, which is whether 50+ real entries stay
- * readable and navigable.
+ * Short recaps for the club's long run. Deliberately varied in length and shape
+ * — a year of identically-phrased notes would make the feed look uniform and
+ * hide the thing this history exists to test, which is whether 50+ real entries
+ * stay readable and navigable.
  */
 const YEARLONG_RECAPS: readonly string[] = [
   "Redstone doors week. Everyone built one that actually closes behind them, which took longer than anyone expected.",
@@ -291,12 +296,14 @@ const YEARLONG_SKIP_REASONS: readonly string[] = [
 ];
 
 /**
- * The year-long club's past: 53 dated sessions plus two pre-epoch lines.
+ * The club's past: 53 dated sessions plus two pre-epoch lines.
  *
  * Built from an index rule rather than hand-written, and deliberately with no
  * randomness — a fixture that reshuffles itself between renders would make the
  * inline editor's local state jump around and would make any screenshot
- * unreproducible.
+ * unreproducible. The rule stays parameterless on purpose: the sets below are
+ * what make it *this* club, and a caller wanting a different history composes
+ * its own spec list rather than passing knobs into this one.
  *
  * The mix is what a real year looks like, and it covers all three shapes a past
  * session can take: mostly recorded with a write-up, five holiday skips, two
@@ -348,29 +355,43 @@ function yearlongSpecs(): readonly EntrySpec[] {
   return [...CLUB_FUTURE_SPECS, ...past, { kind: "no_record" }, { kind: "no_record" }];
 }
 
-const YEARLONG_SPECS = yearlongSpecs();
+const CLUB_SPECS = yearlongSpecs();
 
 /* ------------------------------------------------------------------ */
 
 const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
-  "club-midterm": {
+  /**
+   * **The kitchen sink.** A remote weekly club a year and a bit into its run,
+   * carrying every state the feed can be in at once: recorded weeks with
+   * write-ups, holiday skips, bare gaps still owed, a week written up but never
+   * marked off, a pre-epoch tail nothing is owed for, a future horizon with a
+   * plan on it, and three sister groups in the rail — one of them not staffed
+   * yet. Fifty-five weeks is also what makes the month dividers and the chunked
+   * "show earlier" reveal do any work at all.
+   */
+  club: {
     productName: "Minecraft Monday Club",
     productType: "consumer_club",
     cadence: "weekly",
-    specs: SESSION_FEED_WEEK_SPECS,
+    specs: CLUB_SPECS,
     startTime: "16:30",
     durationMinutes: 90,
     slots: CLUB_SLOTS,
-    startedDaysAgo: 84,
+    // Fifty-five weeks of history — the club has run through a full year and
+    // over a New Year, which is what makes the month dividers earn their place.
+    startedDaysAgo: 55 * 7,
     endsInDays: null,
+    isRemote: true,
+    // Remote: no building, so no site-notes panel on the page.
+    site: null,
     padletUrl: "https://padlet.com/sog/minecraft-monday-club",
     materialUrl: "https://drive.sog.gg/minecraft-monday-club/lesson-plans",
     groupName: "Monday A",
     groupNotes: {
       publicNote:
-        "Monday A is our redstone-heavy group. We keep a shared world between sessions, so anything you build stays there for next week. The Padlet has photos from every session and the build challenges we have run so far.",
+        "Monday A is our redstone-heavy group, and we have been going for over a year now. The shared world carries across every session, so anything you build stays there for next week — scroll back through the feed to see what the group has made since it started.",
       staffNote:
-        "Two siblings in this group (Aino and Väinö) — same parent email, so one message reaches both. Siiri needs pairing rather than free choice of partner. Room laptops 3 and 5 have flaky audio.",
+        "Two siblings in this group (Aino and Väinö) — same parent email, so one message reaches both. Siiri needs pairing rather than free choice of partner. Room laptops 3 and 5 have flaky audio. Everything before last autumn predates write-ups, so the oldest entries are blank by design, not by neglect.",
     },
     peers: [
       { id: "mock-group-b", name: "Monday B", gamerCount: 7, gedus: [PETRA] },
@@ -380,61 +401,24 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
         gamerCount: 6,
         gedus: [PETRA, JOONAS],
       },
-      { id: "mock-group-d", name: "Monday D", gamerCount: 5, gedus: [MARKUS] },
-    ],
-  },
-  "needs-attention": {
-    productName: "Minecraft Monday Club",
-    productType: "consumer_club",
-    cadence: "weekly",
-    specs: NEEDS_ATTENTION_SPECS,
-    startTime: "16:30",
-    durationMinutes: 90,
-    slots: CLUB_SLOTS,
-    startedDaysAgo: 84,
-    endsInDays: null,
-    padletUrl: "https://padlet.com/sog/minecraft-monday-club",
-    materialUrl: "https://drive.sog.gg/minecraft-monday-club/lesson-plans",
-    groupName: "Monday A",
-    groupNotes: {
-      publicNote: null,
-      staffNote:
-        "I have been behind on write-ups since half term. Catching up backwards from the most recent.",
-    },
-    peers: [
-      { id: "mock-group-b", name: "Monday B", gamerCount: 7, gedus: [PETRA] },
-      { id: "mock-group-c", name: "Monday C", gamerCount: 6, gedus: [JOONAS] },
-    ],
-  },
-  "club-yearlong": {
-    productName: "Minecraft Monday Club",
-    productType: "consumer_club",
-    cadence: "weekly",
-    specs: YEARLONG_SPECS,
-    startTime: "16:30",
-    durationMinutes: 90,
-    slots: CLUB_SLOTS,
-    // Fifty-five weeks of history — the club has run through a full year and
-    // over a New Year, which is what makes the month dividers earn their place.
-    startedDaysAgo: 55 * 7,
-    endsInDays: null,
-    padletUrl: "https://padlet.com/sog/minecraft-monday-club",
-    materialUrl: "https://drive.sog.gg/minecraft-monday-club/lesson-plans",
-    groupName: "Monday A",
-    groupNotes: {
-      publicNote:
-        "We have been going for over a year now. The shared world carries across every session — scroll back through the feed to see what the group has built since it started.",
-      staffNote:
-        "Longest-running group I have. Everything before last autumn predates write-ups, so the old entries are blank by design, not by neglect.",
-    },
-    peers: [
-      { id: "mock-group-b", name: "Monday B", gamerCount: 7, gedus: [PETRA] },
       // Newly split off and not staffed yet — the peer row's "no Gedus
       // assigned" line, which is a real state on a growing product.
-      { id: "mock-group-c", name: "Monday C", gamerCount: 4, gedus: [] },
+      { id: "mock-group-d", name: "Monday D", gamerCount: 4, gedus: [] },
     ],
   },
-  "camp-daily": {
+
+  /**
+   * **The other shape a product can be**: in person, and daily rather than
+   * weekly.
+   *
+   * Both halves are things the club scenario structurally cannot show. Daily
+   * cadence packs the dates far tighter than a club ever does — consecutive
+   * weekdays with a weekend gap through the middle — which is the layout stress
+   * a weekly fixture never applies. In person means the product has a *venue*,
+   * so this is the only scenario carrying site notes, and it means there is no
+   * voice room anywhere on the page: every Join stays inert.
+   */
+  camp: {
     productName: "Roblox Builders Camp",
     productType: "camp",
     cadence: "daily",
@@ -445,6 +429,15 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
     startedDaysAgo: 9,
     // Four weekday sessions left, which can straddle a weekend.
     endsInDays: 6,
+    isRemote: false,
+    site: {
+      name: "Sello Library, Espoo",
+      address: "Leppävaarankatu 9, 02600 Espoo",
+      publicNote:
+        "Drop-off and pick-up are at the main entrance on Leppävaarankatu. Come up to the second floor and the group room is on the right, past the study desks. There is a water fountain outside the room, and the café downstairs closes at 16:00.",
+      staffNote:
+        "Room key is at the info desk on the ground floor, signed out under the SOG booking. The projector needs the HDMI adapter from the drawer, not the cable left on the table. Fire exit is the stairwell behind the room, not the lift lobby. The caretaker locks the second floor at 18:00 sharp.",
+    },
     padletUrl: "https://padlet.com/sog/roblox-builders-camp",
     materialUrl: "https://drive.sog.gg/roblox-builders-camp/day-by-day",
     groupName: "Builders red",
@@ -468,31 +461,6 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
         gedus: [JOONAS, MARKUS],
       },
     ],
-  },
-  "first-week": {
-    productName: "Terraria Starter Club",
-    productType: "consumer_club",
-    cadence: "weekly",
-    specs: FIRST_WEEK_SPECS,
-    // The gedu's second Monday club, straight after the first — the dashboard
-    // fixture lists the two together, so the clock faces have to agree.
-    startTime: "18:15",
-    durationMinutes: 90,
-    slots: [{ weekday: 0, start_time: "18:15", duration_minutes: 90 }],
-    startedDaysAgo: 9,
-    endsInDays: null,
-    padletUrl: null,
-    materialUrl: "https://drive.sog.gg/terraria-starter-club/week-one",
-    groupName: "Tuesday A",
-    groupNotes: {
-      // A brand-new group has nothing standing to say yet — this is the empty
-      // state the notes card's "add a note" affordance exists for.
-      publicNote: null,
-      staffNote: null,
-    },
-    // The one-group product: the reference rail still renders its other-groups
-    // card, saying there are none, so the rail's shape is the same everywhere.
-    peers: [],
   },
 };
 
@@ -546,7 +514,7 @@ export function buildGeduProductPageFixture(
         start_date: calendarDate(now, -config.startedDaysAgo),
         end_date:
           config.endsInDays === null ? null : calendarDate(now, config.endsInDays),
-        is_remote: true,
+        is_remote: config.isRemote,
         translations: [
           {
             locale: "en",
@@ -563,6 +531,7 @@ export function buildGeduProductPageFixture(
     feedRoster: feed.roster,
     sourceTimeZone: feed.timeZone,
     groupNotes: config.groupNotes,
+    site: config.site,
     materialUrl: config.materialUrl,
   };
 }

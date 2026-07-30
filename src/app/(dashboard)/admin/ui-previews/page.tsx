@@ -64,19 +64,53 @@ export default function AdminUIPreviewsPage() {
             <p className="max-w-prose text-sm text-muted-foreground">
               {scene.description}
             </p>
-            <div className="flex flex-wrap gap-2">
-              {scene.scenarios.map((scenario) => (
-                <a
-                  key={scenario.slug}
-                  href={previewSceneHref(scene.surface, scenario.slug)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={buttonVariants({ variant: "outline", size: "sm" })}
-                >
-                  {scenario.label} &rarr;
-                </a>
-              ))}
-            </div>
+            {/* Two shapes on purpose. A scene whose scenarios each say what
+                they uniquely show gets a list with room to say it; a scene
+                enumerating one axis (every state of a panel) gets the compact
+                row of links, because a description per link there would be the
+                label again with more words. */}
+            {scene.scenarios.some((s) => s.description !== undefined) ? (
+              <ul className="space-y-3">
+                {scene.scenarios.map((scenario) => (
+                  <li key={scenario.slug} className="flex flex-col gap-1.5">
+                    <a
+                      href={previewSceneHref(scene.surface, scenario.slug)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={buttonVariants({
+                        variant: "outline",
+                        size: "sm",
+                        className: "self-start",
+                      })}
+                    >
+                      {scenario.label} &rarr;
+                    </a>
+                    {scenario.description !== undefined && (
+                      <p className="max-w-prose text-sm text-muted-foreground">
+                        {scenario.description}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {scene.scenarios.map((scenario) => (
+                  <a
+                    key={scenario.slug}
+                    href={previewSceneHref(scene.surface, scenario.slug)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={buttonVariants({
+                      variant: "outline",
+                      size: "sm",
+                    })}
+                  >
+                    {scenario.label} &rarr;
+                  </a>
+                ))}
+              </div>
+            )}
           </section>
         ))}
       </div>

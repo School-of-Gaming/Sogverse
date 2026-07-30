@@ -5,7 +5,10 @@ import {
   previewSceneHref,
   sceneHasScenario,
 } from "@/components/preview/scenes";
-import { GEDU_DASHBOARD_SCENARIOS } from "@/components/gedu/mock-dashboard-fixtures";
+import {
+  GEDU_DASHBOARD_SCENARIOS,
+  buildGeduDashboardFixture,
+} from "@/components/gedu/mock-dashboard-fixtures";
 import {
   GEDU_PRODUCT_SCENARIOS,
   buildGeduProductPageFixture,
@@ -54,15 +57,33 @@ describe("preview scene registry", () => {
   it("matches scenarios against the scene that declares them", () => {
     const scene = findPreviewScene("gedu-product");
     expect(scene).not.toBeNull();
-    expect(sceneHasScenario(scene!, "camp-daily")).toBe(true);
-    expect(sceneHasScenario(scene!, "club-midterm")).toBe(true);
+    expect(sceneHasScenario(scene!, "camp")).toBe(true);
+    expect(sceneHasScenario(scene!, "club")).toBe(true);
     expect(sceneHasScenario(scene!, "default")).toBe(false);
   });
 
   it("builds the route the dynamic page serves", () => {
-    expect(previewSceneHref("gedu-product", "camp-daily")).toBe(
-      "/preview/gedu-product/camp-daily",
+    expect(previewSceneHref("gedu-product", "camp")).toBe(
+      "/preview/gedu-product/camp",
     );
+  });
+
+  /**
+   * The scenario lists were deliberately collapsed to the states that cannot
+   * coexist: everything else belongs in the kitchen sink. A scene creeping back
+   * up to a scenario per state is the drift this pins down, and a scene whose
+   * scenarios each need a sentence of explanation has to actually carry one.
+   */
+  it("keeps the gedu scenes down to their mutually-exclusive scenarios", () => {
+    for (const surface of ["gedu-product", "gedu-dashboard"] as const) {
+      const scene = findPreviewScene(surface);
+      expect(scene).not.toBeNull();
+      expect(scene!.scenarios.length, surface).toBe(2);
+      for (const scenario of scene!.scenarios) {
+        expect(scenario.description?.trim(), `${surface}/${scenario.slug}`)
+          .toBeTruthy();
+      }
+    }
   });
 });
 
@@ -120,8 +141,8 @@ describe("identicon fixture ids are real UUIDs", () => {
 
   it("keeps the same ids across two builds, so avatars never change under a reload", () => {
     const now = new Date("2026-02-11T09:00:00Z");
-    const first = buildGeduProductPageFixture(now, "club-midterm");
-    const second = buildGeduProductPageFixture(now, "club-midterm");
+    const first = buildGeduProductPageFixture(now, "club");
+    const second = buildGeduProductPageFixture(now, "club");
     expect(first.data.groups[0].gedus.map((g) => g.id)).toEqual(
       second.data.groups[0].gedus.map((g) => g.id),
     );
@@ -130,9 +151,9 @@ describe("identicon fixture ids are real UUIDs", () => {
 
 /**
  * The product page's reference rail leads with the other groups on the product —
- * the "cover my room for ten minutes" surface. A scenario with no sister groups
- * only ever shows the rail's empty state, so the scenarios have to be split
- * deliberately between the two rather than by accident.
+ * the "cover my room for ten minutes" surface. With only two scenarios left,
+ * neither may be the one that skips it: an empty rail on half the scenes would
+ * mean the peer-cover row is only ever reviewable on one page.
  */
 describe("every scenario exercises the reference rail's other-groups card", () => {
   const now = new Date("2026-02-11T09:00:00Z");
@@ -142,15 +163,10 @@ describe("every scenario exercises the reference rail's other-groups card", () =
     return data.groups.filter((g) => g.id !== data.my_group_id).length;
   }
 
-  it("gives every scenario but first-week at least one peer group", () => {
+  it("gives every scenario at least one peer group", () => {
     for (const scenario of GEDU_PRODUCT_SCENARIOS) {
-      if (scenario === "first-week") continue;
       expect(peerCountFor(scenario), scenario).toBeGreaterThan(0);
     }
-  });
-
-  it("keeps first-week at zero peers, as the rail's empty state", () => {
-    expect(peerCountFor("first-week")).toBe(0);
   });
 
   it("covers a peer group with nobody teaching it yet", () => {
@@ -164,11 +180,43 @@ describe("every scenario exercises the reference rail's other-groups card", () =
   });
 });
 
-describe("the year-long scenario stays a stress test", () => {
+/**
+ * Remote-vs-in-person is the axis the two scenarios exist to split, and site
+ * notes hang off exactly one side of it: an in-person product always has a
+ * venue (the schema requires a location), a remote one never does. A fixture
+ * that lost the site would silently take the whole site-notes panel off every
+ * scene without failing anything else.
+ */
+describe("site notes follow in-person, and only in-person", () => {
+  const now = new Date("2026-02-11T09:00:00Z");
+
+  it("gives the in-person camp a venue with both notes and an address", () => {
+    const { data, site } = buildGeduProductPageFixture(now, "camp");
+    expect(data.product.is_remote).toBe(false);
+    expect(site).not.toBeNull();
+    expect(site!.name.trim()).not.toBe("");
+    expect(site!.address).not.toBeNull();
+    expect(site!.publicNote).not.toBeNull();
+    expect(site!.staffNote).not.toBeNull();
+  });
+
+  it("gives the remote club no venue at all", () => {
+    const { data, site } = buildGeduProductPageFixture(now, "club");
+    expect(data.product.is_remote).toBe(true);
+    expect(site).toBeNull();
+  });
+});
+
+/**
+ * The consolidated `club` scenario is the kitchen sink: everything that can
+ * coexist on one product page now has to be reachable from that one page,
+ * because there is no longer a second scenario to hide a missing state in.
+ */
+describe("the club scenario stays the kitchen sink", () => {
   const now = new Date("2026-02-11T09:00:00Z");
 
   it("carries 50+ past entries with a realistic mix of states", () => {
-    const { entries } = buildGeduProductPageFixture(now, "club-yearlong");
+    const { entries } = buildGeduProductPageFixture(now, "club");
     const past = entries.filter((e) => e.kind !== "future");
     expect(past.length).toBeGreaterThan(50);
 
@@ -184,7 +232,7 @@ describe("the year-long scenario stays a stress test", () => {
     // The three shapes a past entry can take, all in one feed. The third is the
     // one the attendance model exists for: notes present, attendance null, so
     // it renders its body *and* its alert.
-    const { entries } = buildGeduProductPageFixture(now, "club-yearlong");
+    const { entries } = buildGeduProductPageFixture(now, "club");
     const pastEntries = entries.filter((e) => e.kind === "past");
 
     expect(
@@ -202,8 +250,17 @@ describe("the year-long scenario stays a stress test", () => {
     ).toBe(true);
   });
 
+  it("plans at least one future session, so the planning editor has a filled state", () => {
+    const { entries } = buildGeduProductPageFixture(now, "club");
+    const planned = entries.filter(
+      (e) =>
+        e.kind === "future" && (e.publicNote !== null || e.staffNote !== null),
+    );
+    expect(planned.length).toBeGreaterThan(0);
+  });
+
   it("spans more than a year, so the month dividers cross a New Year", () => {
-    const { entries } = buildGeduProductPageFixture(now, "club-yearlong");
+    const { entries } = buildGeduProductPageFixture(now, "club");
     const oldest = entries[entries.length - 1].startsAt;
     const newest = entries[0].startsAt;
     const months =
@@ -213,11 +270,95 @@ describe("the year-long scenario stays a stress test", () => {
   });
 
   it("varies its recap copy rather than repeating one note 53 times", () => {
-    const { entries } = buildGeduProductPageFixture(now, "club-yearlong");
+    const { entries } = buildGeduProductPageFixture(now, "club");
     const notes = entries
       .filter((e) => e.kind === "past")
       .map((e) => e.publicNote)
       .filter((n) => n !== null);
     expect(new Set(notes).size).toBeGreaterThan(10);
+  });
+});
+
+/**
+ * The camp is the "nothing outstanding" side of the pair, and the dashboard
+ * leans on it: its badge counts are derived from these very feeds, so a camp
+ * that quietly grew a gap would put the same badge on both dashboard cards and
+ * take the zero state off the scene entirely.
+ */
+describe("the camp scenario is fully written up", () => {
+  const now = new Date("2026-02-11T09:00:00Z");
+
+  it("has no past session still owing its attendance", () => {
+    const { entries } = buildGeduProductPageFixture(now, "camp");
+    const owed = entries.filter(
+      (e) => e.kind === "past" && e.presentGamerIds === null,
+    );
+    expect(owed).toEqual([]);
+  });
+
+  it("still runs several days, so the daily cadence is visible", () => {
+    const { entries } = buildGeduProductPageFixture(now, "camp");
+    expect(entries.filter((e) => e.kind === "past").length).toBeGreaterThan(3);
+  });
+});
+
+/**
+ * The dashboard's whole job is four states — open Join, locked Join, a badge,
+ * no badge — and an open voice window is true for about two hours a week, so
+ * the fixture manufactures one rather than leaving the most interesting state
+ * unreviewable six days out of seven. That is worth pinning: it is derived from
+ * `now` through the real schedule expansion, so a change to either the slot
+ * arithmetic or the window boundaries would silently take it away again.
+ *
+ * `now` is late evening in the club's own zone, outside the camp's daytime
+ * hours, so the camp cannot accidentally be open too.
+ */
+describe("the gedu dashboard scene puts every card state on one screen", () => {
+  const now = new Date("2026-02-11T20:00:00Z");
+
+  function summaries() {
+    return buildGeduDashboardFixture(
+      now,
+      "default",
+      "en",
+      "Europe/Helsinki",
+    ).assignments.map((card) => card.assignment);
+  }
+
+  it("has exactly one card mid-session, with its room open", () => {
+    const open = summaries().filter((a) => a.voiceIsOpen);
+    expect(open).toHaveLength(1);
+    expect(open[0].nextSessionStart!.getTime()).toBeLessThanOrEqual(
+      now.getTime(),
+    );
+  });
+
+  it("shows one card behind on write-ups and one clear", () => {
+    const counts = summaries()
+      .map((a) => a.attentionCount)
+      .sort((a, b) => a - b);
+    expect(counts).toHaveLength(2);
+    expect(counts[0]).toBe(0);
+    expect(counts[1]).toBeGreaterThan(0);
+  });
+
+  it("points every card at the product-page scene its badge was counted from", () => {
+    for (const assignment of summaries()) {
+      expect(assignment.openHref).toMatch(
+        /^\/preview\/gedu-product\/(club|camp)$/,
+      );
+    }
+  });
+
+  it("only withholds verification in the scenario that is about it", () => {
+    for (const scenario of GEDU_DASHBOARD_SCENARIOS) {
+      const { verified } = buildGeduDashboardFixture(
+        now,
+        scenario,
+        "en",
+        "Europe/Helsinki",
+      );
+      expect(verified, scenario).toBe(scenario !== "unverified");
+    }
   });
 });

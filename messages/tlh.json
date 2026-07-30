@@ -1271,11 +1271,10 @@
       "plannedStaffNoteLabel": "Gedupu’vaD qawmoHwI’",
       "plannedStaffNoteHint": "Gedupu’ che’wI’pu’ je neH bIH lulegh. qorDu’ luleghbe’ not.",
       "plannedStaffNotePlaceholder": "may’vam pa’ nuq DanIS, nuq Daqem, nuq Daqaw.",
-      "laterSessions": "{count, plural, one {# may’ veb latlh} other {# may’mey veb latlh}}",
+      "laterSessions": "{count, plural, one {# may’ veb} other {# may’mey veb}}",
       "showEarlier": "{count, plural, one {# may’ qan yIcha’} other {# may’mey qan yIcha’}}",
-      "markAllPresent": "Hoch pawpu’ yIngu’",
       "attendanceMarkedCount": "{marked}/{total} ngu’ta’",
-      "attendanceRequiredHint": "bIpolmeH Hoch QujwI’ yIngu’: pawpu’ pagh pawbe’. qonta’ DaHutlhchugh qay’be’.",
+      "attendanceRequiredHint": "bIpolmeH Hoch QujwI’ yIngu’: pawpu’ pagh pawbe’. wIv rap DawIvqa’chugh, vaj ngu’ Danatlh. qonta’ DaHutlhchugh qay’be’.",
       "attendanceForGamer": "{name} pawwI’"
     },
     "groupNotes": {
@@ -1291,6 +1290,22 @@
       "staffLabel": "Gedupu’vaD qonta’",
       "staffHint": "Gedupu’ che’wI’pu’ je neH bIH lulegh. qorDu’ luleghbe’ not.",
       "staffPlaceholder": "ghom’a’vam ’ang taHbogh De’: latlh Gedupu’ luSovnIS."
+    },
+    "siteNotes": {
+      "heading": "Daq qonta’",
+      "sharedCaption": "{site} — DaqvamDaq Qapbogh Hoch ngoq qonta’ rap lulegh; wa’ DachoHDI’, Hoch DachoH.",
+      "addressLabel": "Daq ngoq",
+      "add": "yIchel",
+      "edit": "yIchoH",
+      "cancel": "yIqIl",
+      "save": "yIpol",
+      "emptyHint": "Daq qonta’ yIchel — pa’ ’e’ taHbogh De’.",
+      "publicLabel": "qorDu’vaD qonta’",
+      "publicHint": "Daqvamvo’ ghoSbogh vavpu’ QujwI’pu’ je lulaD.",
+      "publicPlaceholder": "nuq lojmIt Dalo’? nuqDaq DaloS? nuq Daqem?",
+      "staffLabel": "Gedupu’vaD qonta’",
+      "staffHint": "Gedupu’ che’wI’pu’ je neH bIH lulegh. qorDu’ luleghbe’ not.",
+      "staffPlaceholder": "ngaQHa’moHwI’mey, jan, pa’ Do’Ha’ghach — Daqvamvo’ Gedu veb SovnIS."
     }
   },
   "groups": {

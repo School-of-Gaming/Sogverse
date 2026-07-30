@@ -1226,11 +1226,10 @@
       "plannedStaffNoteLabel": "Muistutus Geduille",
       "plannedStaffNoteHint": "Vain Gedut ja ylläpitäjät näkevät tämän, perheet eivät koskaan.",
       "plannedStaffNotePlaceholder": "Mitä pitää valmistella, ottaa mukaan tai muistaa ennen tätä kertaa.",
-      "laterSessions": "{count, plural, one {# tuleva kerta lisää} other {# tulevaa kertaa lisää}}",
+      "laterSessions": "{count, plural, one {# tuleva kerta} other {# tulevaa kertaa}}",
       "showEarlier": "{count, plural, one {Näytä # aiempi kerta} other {Näytä # aiempaa kertaa}}",
-      "markAllPresent": "Merkitse kaikki paikalla oleviksi",
       "attendanceMarkedCount": "{marked}/{total} merkitty",
-      "attendanceRequiredHint": "Merkitse jokainen pelaaja paikalla olevaksi tai poissaolevaksi ennen tallennusta. Muistiinpanot ovat vapaaehtoisia.",
+      "attendanceRequiredHint": "Merkitse jokainen pelaaja paikalla olevaksi tai poissaolevaksi ennen tallennusta. Sama valinta uudelleen poistaa merkinnän. Muistiinpanot ovat vapaaehtoisia.",
       "attendanceForGamer": "{name} – läsnäolo"
     },
     "groupNotes": {
@@ -1246,6 +1245,22 @@
       "staffLabel": "Muistiinpano Geduille",
       "staffHint": "Vain Gedut ja ylläpitäjät näkevät tämän, perheet eivät koskaan.",
       "staffPlaceholder": "Pysyvät asiat, jotka toisen Gedun on hyvä tietää tästä ryhmästä."
+    },
+    "siteNotes": {
+      "heading": "Toimipaikan muistiinpanot",
+      "sharedCaption": "{site} — kaikki tässä toimipaikassa järjestettävät tuotteet näkevät samat muistiinpanot, joten muokkaus näkyy niissä kaikissa.",
+      "addressLabel": "Osoite",
+      "add": "Lisää",
+      "edit": "Muokkaa",
+      "cancel": "Peruuta",
+      "save": "Tallenna",
+      "emptyHint": "Lisää muistiinpano toimipaikasta — mikä tahansa asia, joka koskee tilaa itseään.",
+      "publicLabel": "Muistiinpano perheille",
+      "publicHint": "Tähän toimipaikkaan tulevat vanhemmat ja pelaajat lukevat tämän.",
+      "publicPlaceholder": "Mistä ovesta sisään, missä odotetaan, mitä otetaan mukaan…",
+      "staffLabel": "Muistiinpano Geduille",
+      "staffHint": "Vain Gedut ja ylläpitäjät näkevät tämän, perheet eivät koskaan.",
+      "staffPlaceholder": "Avaimet, välineet, tilan erityispiirteet — mitä seuraavan Gedun on hyvä tietää tästä toimipaikasta."
     }
   },
   "groups": {

@@ -1,4 +1,4 @@
-import { formatInTimeZone } from "date-fns-tz";
+import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 import { previewSceneHref } from "@/components/preview/href";
 import { countEntriesNeedingAttention } from "@/components/gedu/session-feed";
 import { SESSION_FEED_TIMEZONE } from "@/components/gedu/session-feed/mock-fixtures";
@@ -19,7 +19,8 @@ import {
 
 /**
  * Fixtures for the gedu dashboard preview scene — a plausible week for a gedu
- * running two Monday clubs, computed from a `now` the caller supplies.
+ * running one remote club and one in-person camp, computed from a `now` the
+ * caller supplies.
  *
  * Nothing here is hand-written narrative. Assignment rows go through the same
  * roll-up adapter the live dashboard will use, and the recurring-schedule line
@@ -36,11 +37,20 @@ import {
  * card can never advertise a number the page behind it disagrees with.
  */
 
-export const GEDU_DASHBOARD_SCENARIOS = [
-  "default",
-  "all-clear",
-  "unverified",
-] as const;
+/**
+ * **Two scenarios.** `default` is the working dashboard and carries everything
+ * that can coexist on one: two assignments, one behind on write-ups and one
+ * clear, one of them live *right now* so the open Join state is on screen
+ * without anyone having to wait for a Monday. `unverified` is the only genuinely
+ * exclusive variant — an account an admin has not approved yet, which swaps the
+ * instant-room panel for a notice and cannot be true at the same time as the
+ * panel being usable.
+ *
+ * There was a third, `all-clear`, showing zero outstanding badges. That state
+ * lives inside `default` now, on the camp card: a scenario per badge value is a
+ * scenario that will rot the first time the badge changes shape.
+ */
+export const GEDU_DASHBOARD_SCENARIOS = ["default", "unverified"] as const;
 
 export type GeduDashboardScenario = (typeof GEDU_DASHBOARD_SCENARIOS)[number];
 
@@ -55,15 +65,17 @@ export interface GeduDashboardFixture {
 }
 
 const MINECRAFT_PRODUCT_ID = "mock-dashboard-minecraft-club";
-const TERRARIA_PRODUCT_ID = "mock-dashboard-terraria-club";
+const CAMP_PRODUCT_ID = "mock-dashboard-roblox-camp";
 
 /**
  * Which product-page scene each dashboard card opens. The feeds behind these
- * scenes are also where the badge counts come from.
+ * scenes are also where the badge counts come from — so the two assignments are
+ * the two product-page scenarios, and clicking a card lands on the very feed
+ * its badge was counted out of.
  */
 const SCENE_BY_PRODUCT: Record<string, GeduProductScenario> = {
-  [MINECRAFT_PRODUCT_ID]: "club-midterm",
-  [TERRARIA_PRODUCT_ID]: "first-week",
+  [MINECRAFT_PRODUCT_ID]: "club",
+  [CAMP_PRODUCT_ID]: "camp",
 };
 
 export function buildGeduDashboardFixture(
@@ -78,9 +90,17 @@ export function buildGeduDashboardFixture(
       now,
       id: MINECRAFT_PRODUCT_ID,
       name: "Minecraft Monday Club",
-      startTime: "16:30",
-      durationMinutes: 90,
+      productType: "consumer_club",
+      isRemote: true,
+      // Anchored to `now` rather than to a fixed Monday evening: the open Join
+      // state is the one thing on this card that cannot be seen on demand — it
+      // is true for a couple of hours a week — so the club that owns the room
+      // is always mid-session when the scene is opened. Its cadence line then
+      // reads as whatever weekday you happen to look on, which is the honest
+      // consequence and costs less than a Join button nobody can ever see lit.
+      slots: [liveNowSlot(now, 90)],
       startedDaysAgo: 84,
+      endsInDays: null,
       groupCount: 3,
       gamerCount: 21,
       groupName: "Monday A",
@@ -88,15 +108,23 @@ export function buildGeduDashboardFixture(
     }),
     assignmentRow({
       now,
-      id: TERRARIA_PRODUCT_ID,
-      name: "Terraria Starter Club",
-      startTime: "18:15",
-      durationMinutes: 90,
+      id: CAMP_PRODUCT_ID,
+      name: "Roblox Builders Camp",
+      productType: "camp",
+      // In person: no room to join, so this card renders the locked Join beside
+      // the club's open one — the two states side by side on one screen.
+      isRemote: false,
+      slots: [0, 1, 2, 3, 4].map((weekday) => ({
+        weekday,
+        startTime: "10:00",
+        durationMinutes: 180,
+      })),
       startedDaysAgo: 9,
-      groupCount: 2,
-      gamerCount: 13,
-      groupName: "Tuesday A",
-      groupGamerCount: 6,
+      endsInDays: 6,
+      groupCount: 3,
+      gamerCount: 23,
+      groupName: "Builders red",
+      groupGamerCount: 8,
     }),
   ];
 
@@ -104,8 +132,7 @@ export function buildGeduDashboardFixture(
     rows,
     now,
     locale,
-    attentionByProductId:
-      scenario === "all-clear" ? {} : outstandingByProduct(now),
+    attentionByProductId: outstandingByProduct(now),
     hrefByProductId: Object.fromEntries(
       Object.entries(SCENE_BY_PRODUCT).map(([productId, sceneScenario]) => [
         productId,
@@ -170,9 +197,12 @@ function assignmentRow(opts: {
   now: Date;
   id: string;
   name: string;
-  startTime: string;
-  durationMinutes: number;
+  productType: GeduAssignmentRow["product"]["productType"];
+  isRemote: boolean;
+  slots: GeduAssignmentRow["slots"];
   startedDaysAgo: number;
+  /** Days after `now` the product ends, or `null` for an ongoing club. */
+  endsInDays: number | null;
   groupCount: number;
   gamerCount: number;
   groupName: string;
@@ -183,10 +213,11 @@ function assignmentRow(opts: {
       id: opts.id,
       timezone: SESSION_FEED_TIMEZONE,
       startDate: calendarDate(opts.now, -opts.startedDaysAgo),
-      endDate: null,
+      endDate:
+        opts.endsInDays === null ? null : calendarDate(opts.now, opts.endsInDays),
       padletUrl: null,
-      isRemote: true,
-      productType: "consumer_club",
+      isRemote: opts.isRemote,
+      productType: opts.productType,
       translations: [{ locale: "en", name: opts.name, description: "" }],
     },
     groupId: `${opts.id}-group-a`,
@@ -194,15 +225,41 @@ function assignmentRow(opts: {
     gamerCount: opts.gamerCount,
     groupName: opts.groupName,
     groupGamerCount: opts.groupGamerCount,
-    // 0 = Monday. Both clubs run the same evening, back to back.
-    slots: [
-      {
-        weekday: 0,
-        startTime: opts.startTime,
-        durationMinutes: opts.durationMinutes,
-      },
-    ],
+    slots: opts.slots,
   };
+}
+
+/**
+ * A weekly slot whose current occurrence started a few minutes ago, so the
+ * assignment's voice window is open the moment the scene is opened.
+ *
+ * The wall clock is read **in the product's own zone** and floored to a quarter
+ * hour, because that is where a schedule slot lives: a slot is a weekday plus a
+ * clock face in the product's timezone, not an instant, and deriving one from
+ * the viewer's zone would put the session on the wrong day either side of
+ * midnight. Flooring only ever moves the start earlier, so the session stays in
+ * progress, and it keeps the cadence line reading like a real schedule
+ * ("16:30–18:00") instead of an arbitrary minute.
+ */
+function liveNowSlot(
+  now: Date,
+  durationMinutes: number,
+): GeduAssignmentRow["slots"][number] {
+  const started = toZonedTime(
+    new Date(now.getTime() - 25 * 60_000),
+    SESSION_FEED_TIMEZONE,
+  );
+  started.setMinutes(Math.floor(started.getMinutes() / 15) * 15, 0, 0);
+  return {
+    // `getDay()` is 0 = Sunday; schedule slots are 0 = Monday.
+    weekday: (started.getDay() + 6) % 7,
+    startTime: `${pad2(started.getHours())}:${pad2(started.getMinutes())}`,
+    durationMinutes,
+  };
+}
+
+function pad2(value: number): string {
+  return String(value).padStart(2, "0");
 }
 
 /**
