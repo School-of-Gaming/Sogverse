@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
-import { PartnerLockup } from "@/components/roblox/partner-lockup";
+import { RobloxHero } from "@/components/roblox/roblox-hero";
 import { PartnershipCta } from "@/components/roblox/partnership-cta";
 import { UpcomingEvents } from "@/components/roblox/upcoming-events";
 
@@ -65,62 +65,7 @@ export default function RobloxPage() {
 
   return (
     <>
-      {/* Hero — mirrors the home page's treatment (pulled up under the
-          translucent header, with the same two-stop brand gradient) so the
-          programme page reads as part of the same site rather than a microsite
-          bolted on. */}
-      <section className="relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_hsl(var(--background))_100%),linear-gradient(to_right,_hsl(var(--primary)/0.2),_transparent_50%,_hsl(var(--secondary)/0.1))] pt-[var(--header-height)]">
-        <div className="container mx-auto px-4 py-20 sm:py-28">
-          <div className="mx-auto max-w-3xl text-center">
-            {/* `font-display` is Press Start 2P, the pixel face — same as the
-                home page hero, and the three-beat slogan is built for it: one
-                short beat per line, so the widest line is 8 characters and the
-                monospaced pixel glyphs never need to wrap.
-                No `tracking-tight` (negative tracking closes up pixel glyphs
-                until they smudge into each other) and no `text-balance` (the
-                line breaks are authored in the copy, so there is nothing left
-                to balance). The size steps at `sm` as well as `md` because the
-                jump straight from 24px to 60px leaves tablets oddly small. */}
-            <h1 className="font-display text-2xl font-bold leading-snug sm:text-4xl md:text-6xl">
-              {t.rich("hero.title", {
-                br: () => <br />,
-                primary: (chunks) => <span className="text-primary">{chunks}</span>,
-                secondary: (chunks) => (
-                  <span className="text-secondary">{chunks}</span>
-                ),
-              })}
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-              {t("hero.subtitle")}
-            </p>
-            {/* Every CTA on this page is an inert <button>, not a link. The
-                storefront cannot express this programme yet — `product_topic`
-                has no `roblox` member, and the 15–18 age target exceeds
-                MAX_PRODUCT_AGE — so any href would land on an empty shop. A
-                real destination arrives with the products; until then the
-                buttons exist to be judged as design, and going nowhere is
-                honest where a wrong destination would not be. */}
-            <div className="mt-10 flex justify-center">
-              <button
-                type="button"
-                className={buttonVariants({ size: "lg", className: "gap-2" })}
-              >
-                {t("hero.cta")}
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* The lockup sits directly under the hero: it is what makes the free
-              programme above credible, so it lands above the fold rather than
-              being buried as a footer strip. A hairline rule separates it from
-              the copy instead of a card, so the marks read as part of the hero
-              rather than as a widget. */}
-          <div className="mx-auto mt-16 max-w-2xl border-t pt-12">
-            <PartnerLockup />
-          </div>
-        </div>
-      </section>
+      <RobloxHero />
 
       {/* What is this */}
       <section className="container mx-auto px-4 py-16 sm:py-24">

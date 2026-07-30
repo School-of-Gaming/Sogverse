@@ -35,12 +35,18 @@ export function PartnerLockup() {
 
   return (
     <div>
-      <p className="text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+      <p className="text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground md:text-left">
         {t("heading")}
       </p>
       {/* Wrap rather than scroll on narrow viewports — a lockup is a single
           visual statement, and horizontal scroll would hide a partner. */}
-      <div className="mt-8 flex flex-wrap items-center justify-center gap-x-12 gap-y-10 sm:mt-10 sm:gap-x-16">
+      {/* Two arrangements, one component. On mobile the marks wrap into a
+          centred row under the hero copy, which is the arrangement that reads
+          best when they have the full page width to spread across. From `md`
+          the hero becomes two columns and this moves into the narrow right
+          one, where a left-aligned vertical stack is the only thing that fits
+          without shrinking the marks. */}
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-x-12 gap-y-10 sm:gap-x-16 md:flex-col md:items-start md:justify-start md:gap-y-8">
         {/* `unoptimized` on all three: the optimizer refuses SVG without
             `dangerouslyAllowSVG`, and these are trusted first-party bundled
             files that need no resizing pass anyway. */}
