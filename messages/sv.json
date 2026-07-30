@@ -1066,6 +1066,7 @@
     "failedToSubmitRetry": "Kunde inte skicka feedback. Försök igen."
   },
   "dashboardSections": {
+    "pageTitle": "Min SOG",
     "myFamily": "Min familj",
     "myGamers": "Mina spelare",
     "upcomingSessions": "Träffar",

@@ -39,7 +39,6 @@ export function GeduDashboardPageBodyDraft({
   instantRoomCard: React.ReactNode;
 }) {
   const t = useTranslations("dashboardSections");
-  const m = useTranslations("metadata.pages");
 
   const sections: DashboardSection[] = [
     { id: "groups", label: t("myGroups") },
@@ -51,8 +50,14 @@ export function GeduDashboardPageBodyDraft({
       {/* Visually-hidden page title — the two sections below are equal-weight
           h2s under it, and the section pill is the visual nav. Matches the
           parent dashboard so screen readers get a single "My SOG" page
-          heading instead of competing h1s. */}
-      <h1 className="sr-only">{m("geduDashboard")}</h1>
+          heading instead of competing h1s.
+
+          Read from `dashboardSections`, the same key the live body reads: the
+          `metadata` namespace is server-only (stripped before the client
+          provider) so reading it from a client component throws at render, and
+          this body is a client component. Page copy belongs in a page namespace
+          regardless — `metadata` names documents, not headings. */}
+      <h1 className="sr-only">{t("pageTitle")}</h1>
 
       <DashboardSectionPill sections={sections} ariaLabel={t("myGroups")} />
 

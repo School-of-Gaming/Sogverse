@@ -1066,6 +1066,7 @@
     "failedToSubmitRetry": "Échec de l’envoi du retour. Veuillez réessayer."
   },
   "dashboardSections": {
+    "pageTitle": "Mon SOG",
     "myFamily": "Ma famille",
     "myGamers": "Mes joueurs",
     "upcomingSessions": "Sessions",

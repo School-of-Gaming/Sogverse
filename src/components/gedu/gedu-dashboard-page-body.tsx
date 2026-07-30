@@ -21,7 +21,6 @@ export function GeduDashboardPageBody({
   verified: boolean;
 }) {
   const t = useTranslations("dashboardSections");
-  const m = useTranslations("metadata.pages");
 
   const sections: DashboardSection[] = [
     { id: "sessions", label: t("upcomingSessions") },
@@ -33,8 +32,15 @@ export function GeduDashboardPageBody({
       {/* Visually-hidden page title — the two sections below are equal-weight
           h2s under it, and the section pill is the visual nav. Matches the
           parent dashboard so screen readers get a single "My SOG" page
-          heading instead of competing h1s. */}
-      <h1 className="sr-only">{m("geduDashboard")}</h1>
+          heading instead of competing h1s.
+
+          It reads `dashboardSections`, not the `metadata` namespace that names
+          the document title: `metadata` is server-only and stripped from the
+          client bundle, so a client component reading it throws. This body is a
+          server component and would get away with it; its draft twin is a client
+          component and did not. Rendered page copy belongs in a page namespace
+          either way — `metadata` is for `generateMetadata()`. */}
+      <h1 className="sr-only">{t("pageTitle")}</h1>
 
       <DashboardSectionPill sections={sections} ariaLabel={t("upcomingSessions")} />
 

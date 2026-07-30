@@ -1066,6 +1066,7 @@
     "failedToSubmitRetry": "Palautteen lähettäminen epäonnistui. Yritä uudelleen."
   },
   "dashboardSections": {
+    "pageTitle": "Oma SOG",
     "myFamily": "Perheeni",
     "myGamers": "Pelaajani",
     "upcomingSessions": "Tapaamiset",

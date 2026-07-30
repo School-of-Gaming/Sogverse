@@ -85,6 +85,8 @@ Translation keys are organized into top-level namespaces in the JSON files. Two 
 
 All other namespaces (role/feature pages, public pages, feature components, layout chrome, `common`) ship to the client.
 
+**Rule: a client component must never read a server-only namespace, and rendered page copy must never live in one.** The strip is invisible from the call site — the same `useTranslations("metadata.pages")` line works in a server component and throws `MISSING_MESSAGE` in a client one — so the failure only shows up when a component crosses the boundary, which it does silently the day someone adds `"use client"` above it or renders it inside a client-side shell. Keep the two apart at the source: `metadata` names *documents* (`generateMetadata()` and nothing else). Anything painted into the page — including a visually-hidden `h1` that happens to say the same words as the page title — is content and belongs in a content namespace, so the server and client renderings of a body can read one key and stay in step.
+
 ## The locale config is the single point of control
 
 `LOCALE_CONFIG` in `src/lib/constants/locales.ts` holds everything that varies per locale — English label, native label, flag country, and the locale to render Stripe's own chrome in. `SUPPORTED_LOCALES` beside it is the ordered list, and the config `satisfies` a record keyed by it, so a locale with no config (or a config entry for no locale) fails the build. A unit test pins that the two are in the same order.

@@ -1066,6 +1066,7 @@
     "failedToSubmitRetry": "Failed to submit feedback. Please try again."
   },
   "dashboardSections": {
+    "pageTitle": "My SOG",
     "myFamily": "My Family",
     "myGamers": "My Gamers",
     "upcomingSessions": "Sessions",
