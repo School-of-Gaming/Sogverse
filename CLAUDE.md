@@ -37,6 +37,8 @@ Four user roles with separate dashboards:
 
 Proxy (`src/proxy.ts`) refreshes Supabase auth sessions, enforces role-based routing, and sets a per-request nonce-based Content Security Policy (Next.js 16 uses `proxy.ts` instead of `middleware.ts`). RLS policies protect data at the database level.
 
+**Rule: user-facing copy calls a role's dashboard "My SOG" — "dashboard" is internal vocabulary.** The role dashboards (`/parent`, `/gamer`, `/gedu`) are named "My SOG" to the people using them, in page titles, back links, buttons and emails alike. "Dashboard" is what we call them among ourselves and in the code; a translated string that says it has leaked an implementation word into the product. The brand name itself stays "My SOG" rather than being translated wholesale — locales localise the surrounding words and the possessive, not the mark. The one exception is the **admin** dashboard, which is genuinely an admin panel and is called one: admin sidebar entries and admin page titles keep saying "Dashboard".
+
 ### Key Conventions
 - App routes are grouped: `(auth)`, `(dashboard)`, `(public)`, plus `api/`
 - Components are organized by role: `components/[role]/`, shared UI in `components/ui/`
@@ -137,9 +139,13 @@ A living style guide is available at `/admin/ui-components` (admin login require
 
 **When to add a demo here:** when you build or substantially restyle a reusable component or composite pattern, add (or update) its demo so the next person can iterate on it in isolation. **When not to:** one-off page-specific layouts, or anything that can't render without live side effects — if you can't construct a plausible fixture for it, treat that as a design smell first, not a reason to wire real logic into the page.
 
+**Rule: a fixture id that feeds an identicon-style avatar must be a real, generated UUID, hardcoded as a literal.** The identicon is a pattern derived from the id's hex bytes, so a readable stand-in like `"mock-gamer-aino"` doesn't render a different-looking avatar — it renders a degenerate one (the non-hex characters parse to nothing, and the grid collapses), which quietly makes every avatar-bearing demo a false picture of the real thing. Generate the UUIDs once (`node -e "console.log(crypto.randomUUID())"`) and paste them in; **never** call a UUID generator at module load or render time, because the same person would then get a different face on every reload, which destroys the stability a fixture exists to provide and makes screenshots unreproducible. Where a spec or scenario needs to refer to a fixture person, give the ids a named map so the readable name lives in the key and the UUID stays the value.
+
 ### Full-page preview scenes
 
-The style guide demos components; a *page-level* change has to be judged as a page — real chrome, real viewport, real scrolling. That's what a **preview scene** is: one fixture-driven page at `/preview/{surface}/{scenario}`, served by a single dynamic route from a central scene registry (`src/components/preview/`), admin-gated in the proxy, noindex, and listed automatically in a section of the UI Components page. Scenes make page-level iteration cheap: sign the design off from fixtures first, wire it once afterwards.
+The style guide demos components; a *page-level* change has to be judged as a page — real chrome, real viewport, real scrolling. That's what a **preview scene** is: one fixture-driven page at `/preview/{surface}/{scenario}`, served by a single dynamic route from a central scene registry (`src/components/preview/`), admin-gated in the proxy, noindex, and listed automatically on the admin **UI Previews** page (its own sidebar entry, directly below UI Components). Scenes make page-level iteration cheap: sign the design off from fixtures first, wire it once afterwards.
+
+**Rule: the registry is the only place a scene is declared.** The UI Previews page enumerates it, so adding a scene or a scenario surfaces its links with no edit to that page and no hand-maintained index anywhere. Scene titles, descriptions and scenario labels are literal English on purpose: they are developer-facing metadata on an admin-only page, never shown to a user, so they do not belong in the message files.
 
 **Rule: a scene never owns a layout — one body, two shells.** It renders the same presentational page body the live route renders: either the *live* body (a showcase that cannot drift) or the *draft* body that is going to replace it. Promotion means the draft body becomes the route's body and the data shell swaps fixtures for service calls; the layout does not change in that step. A scene that becomes a permanent third fork of a page is the rot this rule exists to prevent.
 

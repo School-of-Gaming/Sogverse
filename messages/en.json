@@ -1072,6 +1072,8 @@
     "upcomingSessionsEmptyStateGamer": "When your next session is coming up, this is where you’ll join the voice room with your Gedu and friends.",
     "upcomingSessionsEmptyStateParent": "When your child’s next session is coming up, this is where they’ll join the voice room with their Gedu and friends.",
     "upcomingSessionsEmptyStateGedu": "When a session you’re running is coming up, this is where you’ll join the voice room with your gamers.",
+    "myGroups": "My Groups",
+    "myGroupsEmptyStateGedu": "When you’re assigned to a group, it will appear here with its next session.",
     "billing": "Billing",
     "help": "Help",
     "yty": "Yty",
@@ -1149,10 +1151,12 @@
       "counts": "{groupCount, plural, one {# group} other {# groups}} · {gamerCount, plural, one {# gamer} other {# gamers}}",
       "startsIn": "Starts in {countdown}",
       "inProgress": "Session in progress",
-      "viewDetails": "View details"
+      "viewDetails": "View details",
+      "noNextSession": "No session scheduled",
+      "openFeed": "Open sessions"
     },
     "sessionDetails": {
-      "back": "Back to dashboard",
+      "back": "Back to My SOG",
       "typeLabel": {
         "consumer_club": "Club",
         "municipality_club": "Club",
@@ -1211,7 +1215,37 @@
       "skipReasonPlaceholder": "Holiday, closure, nobody turned up...",
       "save": "Save",
       "cancel": "Cancel",
-      "alertBadge": "{count, plural, one {# session needs attention} other {# sessions need attention}}"
+      "alertBadge": "{count, plural, one {# session needs attention} other {# sessions need attention}}",
+      "plan": "Plan",
+      "noPlanYet": "Nothing planned for this one yet.",
+      "plannedNoteHeading": "Planned",
+      "needsSubstituteLabel": "I need a substitute for this session",
+      "needsSubstituteHint": "Tells admins and the other Gedus that this one needs covering.",
+      "needsSubstituteBadge": "Needs a substitute",
+      "needsSubstituteBody": "You’ve asked for someone to cover this session.",
+      "plannedPublicNoteLabel": "What’s planned",
+      "plannedPublicNoteHint": "Parents and gamers in this group will read this once the session has run.",
+      "plannedPublicNotePlaceholder": "What is the group going to build, play or try next?",
+      "plannedStaffNoteLabel": "Reminder for the team",
+      "plannedStaffNoteHint": "Only Gedus and admins can see this. Families never do.",
+      "plannedStaffNotePlaceholder": "Anything to set up, bring or remember before this one.",
+      "laterSessions": "{count, plural, one {# later session} other {# later sessions}}",
+      "laterSessionsSubstitutes": "{count, plural, one {# needs a substitute} other {# need a substitute}}",
+      "showEarlier": "{count, plural, one {Show # earlier session} other {Show # earlier sessions}}"
+    },
+    "groupNotes": {
+      "heading": "About this group",
+      "add": "Add",
+      "edit": "Edit",
+      "cancel": "Cancel",
+      "save": "Save",
+      "emptyHint": "Add a group note — anything that stays true between sessions.",
+      "publicLabel": "Note for families",
+      "publicHint": "Parents and gamers in this group will read this.",
+      "publicPlaceholder": "How this group works, what carries over between sessions…",
+      "staffLabel": "Note for the team",
+      "staffHint": "Only Gedus and admins can see this. Families never do.",
+      "staffPlaceholder": "Standing things the team should know about this group."
     }
   },
   "groups": {
@@ -1231,6 +1265,8 @@
     "join": "Join",
     "alwaysOpen": "Always Open",
     "padlet": "Padlet",
+    "material": "Materials",
+    "materialStaffOnly": "Staff only — families never see this link",
     "myGroupsHeading": "My Groups",
     "myGroupsSubheading": "Your enrolled groups and upcoming voice sessions.",
     "myGroupsEmpty": "You’re not enrolled in any groups yet.",
@@ -1525,6 +1561,7 @@
     "events": "Events",
     "locations": "Locations",
     "uiComponents": "UI Components",
+    "uiPreviews": "UI Previews",
     "whatsapp": "WhatsApp",
     "testing": "Testing",
     "settings": "Settings",
@@ -2130,7 +2167,7 @@
       "subject": "You’ve been assigned to a new group – {productName}",
       "heading": "You’ve been assigned to a new group",
       "body": "Hi {geduName}, you’ve been assigned to a new group for {productName}.",
-      "dashboardNote": "You’ll see this group in your dashboard shortly."
+      "dashboardNote": "You’ll see this group in My SOG shortly."
     },
     "groupDeleted": {
       "subject": "Your group has been removed – {productName}",

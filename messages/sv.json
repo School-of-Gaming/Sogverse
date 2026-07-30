@@ -1072,6 +1072,8 @@
     "upcomingSessionsEmptyStateGamer": "När din nästa träff börjar är det här du går in i röstrummet med din Gedu och dina vänner.",
     "upcomingSessionsEmptyStateParent": "När ditt barns nästa träff börjar är det här hen går in i röstrummet med sin Gedu och sina vänner.",
     "upcomingSessionsEmptyStateGedu": "När en träff du leder närmar sig är det här du går in i röstrummet med dina spelare.",
+    "myGroups": "Mina grupper",
+    "myGroupsEmptyStateGedu": "När du tilldelas en grupp visas den här tillsammans med sitt nästa tillfälle.",
     "billing": "Fakturering",
     "help": "Hjälp",
     "yty": "Yty",
@@ -1149,10 +1151,12 @@
       "counts": "{groupCount, plural, one {# grupp} other {# grupper}} · {gamerCount, plural, one {# spelare} other {# spelare}}",
       "startsIn": "Börjar om {countdown}",
       "inProgress": "Pågående pass",
-      "viewDetails": "Visa detaljer"
+      "viewDetails": "Visa detaljer",
+      "noNextSession": "Inget tillfälle inbokat",
+      "openFeed": "Öppna tillfällen"
     },
     "sessionDetails": {
-      "back": "Tillbaka till panelen",
+      "back": "Tillbaka till Min SOG",
       "typeLabel": {
         "consumer_club": "Klubb",
         "municipality_club": "Klubb",
@@ -1211,7 +1215,37 @@
       "skipReasonPlaceholder": "Lov, stängt, ingen dök upp...",
       "save": "Spara",
       "cancel": "Avbryt",
-      "alertBadge": "{count, plural, one {# tillfälle behöver åtgärd} other {# tillfällen behöver åtgärd}}"
+      "alertBadge": "{count, plural, one {# tillfälle behöver åtgärd} other {# tillfällen behöver åtgärd}}",
+      "plan": "Planera",
+      "noPlanYet": "Inget planerat för det här tillfället än.",
+      "plannedNoteHeading": "Planerat",
+      "needsSubstituteLabel": "Jag behöver en ersättare för det här tillfället",
+      "needsSubstituteHint": "Talar om för administratörer och de andra Gedus att det här tillfället behöver täckas.",
+      "needsSubstituteBadge": "Behöver ersättare",
+      "needsSubstituteBody": "Du har bett om någon som kan ta det här tillfället.",
+      "plannedPublicNoteLabel": "Det här är planen",
+      "plannedPublicNoteHint": "Föräldrar och spelare i gruppen läser det här när tillfället har hållits.",
+      "plannedPublicNotePlaceholder": "Vad ska gruppen bygga, spela eller testa härnäst?",
+      "plannedStaffNoteLabel": "Påminnelse till teamet",
+      "plannedStaffNoteHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
+      "plannedStaffNotePlaceholder": "Något att förbereda, ta med eller komma ihåg inför det här.",
+      "laterSessions": "{count, plural, one {# senare tillfälle} other {# senare tillfällen}}",
+      "laterSessionsSubstitutes": "{count, plural, one {# behöver ersättare} other {# behöver ersättare}}",
+      "showEarlier": "{count, plural, one {Visa # tidigare tillfälle} other {Visa # tidigare tillfällen}}"
+    },
+    "groupNotes": {
+      "heading": "Om gruppen",
+      "add": "Lägg till",
+      "edit": "Redigera",
+      "cancel": "Avbryt",
+      "save": "Spara",
+      "emptyHint": "Lägg till en gruppanteckning — något som gäller mellan tillfällena.",
+      "publicLabel": "Anteckning till familjerna",
+      "publicHint": "Föräldrar och spelare i gruppen läser det här.",
+      "publicPlaceholder": "Hur gruppen fungerar, vad som följer med mellan tillfällena…",
+      "staffLabel": "Anteckning till teamet",
+      "staffHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
+      "staffPlaceholder": "Sådant som teamet bör veta om gruppen över tid."
     }
   },
   "groups": {
@@ -1231,6 +1265,8 @@
     "join": "Gå med",
     "alwaysOpen": "Alltid öppen",
     "padlet": "Padlet",
+    "material": "Material",
+    "materialStaffOnly": "Endast personal — familjerna ser aldrig den här länken",
     "myGroupsHeading": "Mina grupper",
     "myGroupsSubheading": "Dina anmälda grupper och kommande röstsessioner.",
     "myGroupsEmpty": "Du är inte anmäld i någon grupp ännu.",
@@ -1525,6 +1561,7 @@
     "events": "Evenemang",
     "locations": "Platser",
     "uiComponents": "UI-komponenter",
+    "uiPreviews": "UI-förhandsvisningar",
     "whatsapp": "WhatsApp",
     "testing": "Testning",
     "settings": "Inställningar",
@@ -2042,7 +2079,7 @@
       "subject": "Du har tilldelats en ny grupp – {productName}",
       "heading": "Du har tilldelats en ny grupp",
       "body": "Hej {geduName}, du har tilldelats en ny grupp för {productName}.",
-      "dashboardNote": "Du kommer att se denna grupp i din instrumentpanel inom kort."
+      "dashboardNote": "Du kommer att se den här gruppen i Min SOG inom kort."
     },
     "groupDeleted": {
       "subject": "Din grupp har tagits bort – {productName}",

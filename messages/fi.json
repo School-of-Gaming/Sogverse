@@ -1072,6 +1072,8 @@
     "upcomingSessionsEmptyStateGamer": "Kun seuraava tapaamisesi lähestyy, täältä pääset liittymään ryhmän omalle puhekanavalle.",
     "upcomingSessionsEmptyStateParent": "Kun lapsesi seuraavan tapaamisen aika koittaa, ilmestyy tähän painike, josta pääsette sisään puhekanaville.",
     "upcomingSessionsEmptyStateGedu": "Kun ohjaamasi tapaaminen lähestyy, täältä pääset liittymään puhekanavalle pelaajiesi kanssa.",
+    "myGroups": "Omat ryhmät",
+    "myGroupsEmptyStateGedu": "Kun sinut on liitetty ryhmään, se näkyy täällä seuraavan kerran kanssa.",
     "billing": "Laskutus",
     "help": "Apu",
     "yty": "Yty",
@@ -1149,10 +1151,12 @@
       "counts": "{groupCount, plural, one {# ryhmä} other {# ryhmää}} · {gamerCount, plural, one {# pelaaja} other {# pelaajaa}}",
       "startsIn": "Alkaa {countdown} kuluttua",
       "inProgress": "Istunto käynnissä",
-      "viewDetails": "Näytä tiedot"
+      "viewDetails": "Näytä tiedot",
+      "noNextSession": "Ei kertoja aikataulussa",
+      "openFeed": "Avaa kerrat"
     },
     "sessionDetails": {
-      "back": "Takaisin hallintapaneeliin",
+      "back": "Takaisin Omaan SOGiin",
       "typeLabel": {
         "consumer_club": "Kerho",
         "municipality_club": "Kerho",
@@ -1211,7 +1215,37 @@
       "skipReasonPlaceholder": "Loma, koulu kiinni, ei osallistujia...",
       "save": "Tallenna",
       "cancel": "Peruuta",
-      "alertBadge": "{count, plural, one {# kerta vaatii huomiota} other {# kertaa vaatii huomiota}}"
+      "alertBadge": "{count, plural, one {# kerta vaatii huomiota} other {# kertaa vaatii huomiota}}",
+      "plan": "Suunnittele",
+      "noPlanYet": "Tälle kerralle ei ole vielä suunnitelmaa.",
+      "plannedNoteHeading": "Suunnitelma",
+      "needsSubstituteLabel": "Tarvitsen sijaisen tälle kerralle",
+      "needsSubstituteHint": "Kertoo ylläpidolle ja muille Geduille, että tälle kerralle tarvitaan sijainen.",
+      "needsSubstituteBadge": "Tarvitsee sijaisen",
+      "needsSubstituteBody": "Olet pyytänyt sijaista tälle kerralle.",
+      "plannedPublicNoteLabel": "Mitä on suunnitteilla",
+      "plannedPublicNoteHint": "Ryhmän vanhemmat ja pelaajat lukevat tämän, kun kerta on pidetty.",
+      "plannedPublicNotePlaceholder": "Mitä ryhmä aikoo rakentaa, pelata tai kokeilla seuraavaksi?",
+      "plannedStaffNoteLabel": "Muistutus tiimille",
+      "plannedStaffNoteHint": "Vain Gedut ja ylläpitäjät näkevät tämän, perheet eivät koskaan.",
+      "plannedStaffNotePlaceholder": "Mitä pitää valmistella, ottaa mukaan tai muistaa ennen tätä kertaa.",
+      "laterSessions": "{count, plural, one {# myöhempi kerta} other {# myöhempää kertaa}}",
+      "laterSessionsSubstitutes": "{count, plural, one {# tarvitsee sijaisen} other {# tarvitsee sijaisen}}",
+      "showEarlier": "{count, plural, one {Näytä # aiempi kerta} other {Näytä # aiempaa kertaa}}"
+    },
+    "groupNotes": {
+      "heading": "Tästä ryhmästä",
+      "add": "Lisää",
+      "edit": "Muokkaa",
+      "cancel": "Peruuta",
+      "save": "Tallenna",
+      "emptyHint": "Lisää ryhmämuistiinpano — mikä tahansa asia, joka pysyy samana kerrasta toiseen.",
+      "publicLabel": "Muistiinpano perheille",
+      "publicHint": "Ryhmän vanhemmat ja pelaajat lukevat tämän.",
+      "publicPlaceholder": "Miten tämä ryhmä toimii ja mitä siirtyy kerrasta toiseen…",
+      "staffLabel": "Muistiinpano tiimille",
+      "staffHint": "Vain Gedut ja ylläpitäjät näkevät tämän, perheet eivät koskaan.",
+      "staffPlaceholder": "Pysyvät asiat, jotka tiimin on hyvä tietää tästä ryhmästä."
     }
   },
   "groups": {
@@ -1231,6 +1265,8 @@
     "join": "Liity",
     "alwaysOpen": "Aina auki",
     "padlet": "Padlet",
+    "material": "Materiaalit",
+    "materialStaffOnly": "Vain henkilökunnalle — perheet eivät näe tätä linkkiä",
     "myGroupsHeading": "Ryhmäni",
     "myGroupsSubheading": "Ilmoittautuneet ryhmäsi ja tulevat äänikeskustelut.",
     "myGroupsEmpty": "Et ole ilmoittautunut mihinkään ryhmään vielä.",
@@ -1525,6 +1561,7 @@
     "events": "Tapahtumat",
     "locations": "Sijainnit",
     "uiComponents": "UI-komponentit",
+    "uiPreviews": "UI-esikatselut",
     "whatsapp": "WhatsApp",
     "testing": "Testaus",
     "settings": "Asetukset",
@@ -2042,7 +2079,7 @@
       "subject": "Sinut on määrätty uuteen ryhmään – {productName}",
       "heading": "Sinut on määrätty uuteen ryhmään",
       "body": "Hei {geduName}, sinut on määrätty uuteen ryhmään kerhossa {productName}.",
-      "dashboardNote": "Näet tämän ryhmän hallintapaneelissasi pian."
+      "dashboardNote": "Näet tämän ryhmän Oma SOG -sivullasi pian."
     },
     "groupDeleted": {
       "subject": "Ryhmäsi on poistettu – {productName}",

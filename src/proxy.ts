@@ -237,7 +237,7 @@ export async function proxy(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // /preview/* are admin-only mock surfaces linked from /admin/ui-components:
+  // /preview/* are admin-only mock surfaces indexed on /admin/ui-previews:
   // full pages rendered from fixtures, each composing the chrome of the role
   // whose page it mocks. Only admins should be able to reach them. Non-admins
   // bounce to their own dashboard; unauthenticated users were already

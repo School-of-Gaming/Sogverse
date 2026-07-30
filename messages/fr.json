@@ -1072,6 +1072,8 @@
     "upcomingSessionsEmptyStateGamer": "Ta prochaine session apparaîtra ici — avec le lien pour rejoindre ton Gedu et tes amis.",
     "upcomingSessionsEmptyStateParent": "Quand la prochaine session de votre enfant approchera, c’est ici qu’il rejoindra le salon vocal avec son Gedu et ses amis.",
     "upcomingSessionsEmptyStateGedu": "Quand une session que vous animez approchera, c’est ici que vous rejoindrez le salon vocal avec vos joueurs.",
+    "myGroups": "Mes groupes",
+    "myGroupsEmptyStateGedu": "Dès qu’un groupe vous est attribué, il apparaîtra ici avec sa prochaine séance.",
     "billing": "Facturation",
     "help": "Aide",
     "yty": "Yty",
@@ -1149,10 +1151,12 @@
       "counts": "{groupCount, plural, one {# groupe} other {# groupes}} · {gamerCount, plural, one {# joueur} other {# joueurs}}",
       "startsIn": "Commence dans {countdown}",
       "inProgress": "Session en cours",
-      "viewDetails": "Voir les détails"
+      "viewDetails": "Voir les détails",
+      "noNextSession": "Aucune séance programmée",
+      "openFeed": "Ouvrir les séances"
     },
     "sessionDetails": {
-      "back": "Retour au tableau de bord",
+      "back": "Retour à Mon SOG",
       "typeLabel": {
         "consumer_club": "Club",
         "municipality_club": "Club",
@@ -1211,7 +1215,37 @@
       "skipReasonPlaceholder": "Vacances, fermeture, personne n’est venu…",
       "save": "Enregistrer",
       "cancel": "Annuler",
-      "alertBadge": "{count, plural, one {# séance à traiter} other {# séances à traiter}}"
+      "alertBadge": "{count, plural, one {# séance à traiter} other {# séances à traiter}}",
+      "plan": "Planifier",
+      "noPlanYet": "Rien de prévu pour cette séance pour l’instant.",
+      "plannedNoteHeading": "Au programme",
+      "needsSubstituteLabel": "J’ai besoin d’un remplaçant pour cette séance",
+      "needsSubstituteHint": "Prévient les admins et les autres Gedus que cette séance doit être couverte.",
+      "needsSubstituteBadge": "Remplaçant nécessaire",
+      "needsSubstituteBody": "Vous avez demandé quelqu’un pour assurer cette séance.",
+      "plannedPublicNoteLabel": "Ce qui est prévu",
+      "plannedPublicNoteHint": "Les parents et les gamers de ce groupe le liront une fois la séance passée.",
+      "plannedPublicNotePlaceholder": "Que va construire, jouer ou essayer le groupe la prochaine fois ?",
+      "plannedStaffNoteLabel": "Rappel pour l’équipe",
+      "plannedStaffNoteHint": "Visible uniquement par les Gedus et les admins. Jamais par les familles.",
+      "plannedStaffNotePlaceholder": "Ce qu’il faut préparer, apporter ou ne pas oublier avant cette séance.",
+      "laterSessions": "{count, plural, one {# séance à venir} other {# séances à venir}}",
+      "laterSessionsSubstitutes": "{count, plural, one {# à remplacer} other {# à remplacer}}",
+      "showEarlier": "{count, plural, one {Afficher # séance précédente} other {Afficher # séances précédentes}}"
+    },
+    "groupNotes": {
+      "heading": "À propos du groupe",
+      "add": "Ajouter",
+      "edit": "Modifier",
+      "cancel": "Annuler",
+      "save": "Enregistrer",
+      "emptyHint": "Ajoutez une note de groupe — tout ce qui reste vrai d’une séance à l’autre.",
+      "publicLabel": "Note pour les familles",
+      "publicHint": "Les parents et les gamers de ce groupe pourront le lire.",
+      "publicPlaceholder": "Comment ce groupe fonctionne, ce qui se poursuit d’une séance à l’autre…",
+      "staffLabel": "Note pour l’équipe",
+      "staffHint": "Visible uniquement par les Gedus et les admins. Jamais par les familles.",
+      "staffPlaceholder": "Ce que l’équipe doit savoir en permanence sur ce groupe."
     }
   },
   "groups": {
@@ -1231,6 +1265,8 @@
     "join": "Rejoindre",
     "alwaysOpen": "Toujours ouvert",
     "padlet": "Padlet",
+    "material": "Supports",
+    "materialStaffOnly": "Équipe uniquement — les familles ne voient jamais ce lien",
     "myGroupsHeading": "Mes groupes",
     "myGroupsSubheading": "Vos groupes d’inscription et vos prochaines sessions vocales.",
     "myGroupsEmpty": "Vous n’êtes encore inscrit dans aucun groupe.",
@@ -1525,6 +1561,7 @@
     "events": "Événements",
     "locations": "Lieux",
     "uiComponents": "Composants UI",
+    "uiPreviews": "Aperçus UI",
     "whatsapp": "WhatsApp",
     "testing": "Tests",
     "settings": "Paramètres",
@@ -2042,7 +2079,7 @@
       "subject": "Vous avez été affecté à un nouveau groupe – {productName}",
       "heading": "Vous avez été affecté à un nouveau groupe",
       "body": "Bonjour {geduName}, vous avez été affecté à un nouveau groupe pour {productName}.",
-      "dashboardNote": "Ce groupe apparaîtra sous peu dans votre tableau de bord."
+      "dashboardNote": "Ce groupe apparaîtra sous peu dans Mon SOG."
     },
     "groupDeleted": {
       "subject": "Votre groupe a été supprimé – {productName}",
