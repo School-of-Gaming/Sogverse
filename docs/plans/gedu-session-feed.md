@@ -303,7 +303,10 @@ notifications (alert icons in the UI are enough for now).
    start/end, two note columns, status, needs-substitute flag, audit columns),
    attendance table (session × gamer, status string), group-level note columns (public
    + staff), product-level material URL column, grants + RLS + authorization-spine
-   classification per the db rules. Backward occurrence enumeration added to the shared expansion helpers
+   classification per the db rules. Site notes need a **gedu UPDATE path**:
+   `site_details` / `site_staff_details` currently carry only a gedu read policy —
+   the mock's gedu-editable site notes are a promise this step has to keep (policy or
+   RPC, authorized via the gedu's assignment to a product at that site). Backward occurrence enumeration added to the shared expansion helpers
    (today they only walk forward). The epoch constant. RPC(s) for the feed window,
    record upsert, attendance set — with db-test coverage for any Json-returning
    result schemas.
