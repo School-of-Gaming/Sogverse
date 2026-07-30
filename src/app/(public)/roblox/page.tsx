@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { useTranslations } from "next-intl";
 import { ArrowRight, Cpu, ShieldCheck, Sparkles, Trophy, Users } from "lucide-react";
@@ -14,7 +13,6 @@ import { buttonVariants } from "@/components/ui/button";
 import { PartnerLockup } from "@/components/roblox/partner-lockup";
 import { PartnershipCta } from "@/components/roblox/partnership-cta";
 import { UpcomingEvents } from "@/components/roblox/upcoming-events";
-import { ROUTES } from "@/lib/constants";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -94,14 +92,21 @@ export default function RobloxPage() {
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
               {t("hero.subtitle")}
             </p>
+            {/* Every CTA on this page is an inert <button>, not a link. The
+                storefront cannot express this programme yet — `product_topic`
+                has no `roblox` member, and the 15–18 age target exceeds
+                MAX_PRODUCT_AGE — so any href would land on an empty shop. A
+                real destination arrives with the products; until then the
+                buttons exist to be judged as design, and going nowhere is
+                honest where a wrong destination would not be. */}
             <div className="mt-10 flex justify-center">
-              <Link
-                href={ROUTES.robloxTeenPrograms}
+              <button
+                type="button"
                 className={buttonVariants({ size: "lg", className: "gap-2" })}
               >
                 {t("hero.cta")}
                 <ArrowRight className="h-4 w-4" />
-              </Link>
+              </button>
             </div>
           </div>
 
@@ -206,8 +211,8 @@ export default function RobloxPage() {
             <p className="mt-6 text-lg leading-8 text-muted-foreground">
               {t("parents.body")}
             </p>
-            <Link
-              href={ROUTES.robloxParentSessions}
+            <button
+              type="button"
               className={buttonVariants({
                 variant: "outline",
                 size: "lg",
@@ -216,7 +221,7 @@ export default function RobloxPage() {
             >
               {t("parents.cta")}
               <ArrowRight className="h-4 w-4" />
-            </Link>
+            </button>
           </div>
         </div>
       </section>

@@ -142,35 +142,6 @@ export const ROUTES = {
    * Flip all four together when the content is ready to be found.
    */
   roblox: "/roblox",
-  /**
-   * Where the /roblox page's CTAs send people: the storefront pre-filtered to
-   * the programme's own products — the teen programme, and the parent
-   * digital-safety sessions.
-   *
-   * BOTH ARE PROVISIONAL, and land on an empty shop today. Two separate gaps,
-   * neither of which this page can close on its own:
-   *
-   * 1. `products.topic` is a fixed Postgres enum (`product_topic`) holding the
-   *    Minecraft editions, Fortnite and Webinar. There is no `roblox` member, so
-   *    `?topic=roblox` matches nothing. Adding one means a migration, a
-   *    regenerated `database.types.ts`, a `PRODUCT_TOPICS` entry (PEGI rating
-   *    plus a where-to-get-it URL) with its game-info copy, and real products.
-   * 2. The programme targets 15–18 year-olds, which the age model does not
-   *    currently express. The filter only offers the bands 7–9, 10–12 and 13–16
-   *    (anything else resolves to "any age" and is dropped), and `MAX_PRODUCT_AGE`
-   *    is 17 — so a band reaching 18 needs that ceiling raised, not just a new
-   *    band. No age param is set here rather than shipping one that is silently
-   *    ignored; add it once a matching band exists.
-   *
-   * The parent link reuses the existing `webinar` topic because the parent
-   * sessions genuinely are webinars, but it will also match every unrelated
-   * webinar until the Roblox topic exists to pair with it.
-   *
-   * Defined here rather than inline so that closing the gaps above is a one-line
-   * edit in one place instead of a hunt through the page.
-   */
-  robloxTeenPrograms: "/shop?topic=roblox",
-  robloxParentSessions: "/shop?topic=webinar",
   privacy: "/privacy",
   termsAndConditions: "/terms-and-conditions",
   antiBullying: "/anti-bullying-and-discipline",

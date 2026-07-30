@@ -1,8 +1,6 @@
-import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { ArrowRight, CalendarDays } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { ROUTES } from "@/lib/constants";
 
 /** One upcoming programme event, as the section needs to render it. */
 export interface UpcomingEvent {
@@ -22,12 +20,13 @@ interface UpcomingEventsProps {
 }
 
 /**
- * "Upcoming Events" — the programme's own products, each linking to its
- * product page to enrol.
+ * "Upcoming Events" — the programme's own products.
  *
  * Presentational by design: it takes rows and renders them, so the eventual
  * wiring is a data shell fetching Roblox-topic products and passing them in,
- * with no change to this file. That also keeps it demoable from fixtures.
+ * with no change to this file. That also keeps it demoable from fixtures. The
+ * cards do not link anywhere yet — like every CTA on this page they stay inert
+ * until the products they would point at exist.
  *
  * Dates arrive pre-formatted rather than as instants. A session's start time is
  * a real instant and has to be rendered in the *viewer's* timezone against a
@@ -61,22 +60,13 @@ export function UpcomingEvents({ events = [] }: UpcomingEventsProps) {
       ) : (
         <div className="mx-auto mt-12 grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {events.map((event) => (
-            <Link
-              key={event.id}
-              href={ROUTES.shopProduct(event.id)}
-              className="group rounded-lg transition-colors hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <Card className="h-full bg-card/50">
-                <CardContent className="flex h-full flex-col py-6">
-                  <p className="font-semibold">{event.name}</p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {event.when}
-                  </p>
-                  <p className="text-sm text-muted-foreground">{event.where}</p>
-                  <ArrowRight className="mt-4 h-4 w-4 text-primary transition-transform group-hover:translate-x-1" />
-                </CardContent>
-              </Card>
-            </Link>
+            <Card key={event.id} className="h-full bg-card/50">
+              <CardContent className="flex h-full flex-col py-6">
+                <p className="font-semibold">{event.name}</p>
+                <p className="mt-2 text-sm text-muted-foreground">{event.when}</p>
+                <p className="text-sm text-muted-foreground">{event.where}</p>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
