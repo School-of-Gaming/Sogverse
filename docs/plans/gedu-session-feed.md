@@ -94,6 +94,49 @@ sessions need attention") linking into the feed — no separate queue UI. The fe
 becomes the spine of the existing gedu product detail pages
 (`/gedu/clubs|camps|events/[id]`) for the gedu's assigned group.
 
+### Full-page preview scenes (mock-first page iteration)
+
+The `/admin/ui-components` style guide demos *components*; a dashboard redesign has to
+be judged as a *page* — real chrome, real viewport, real scrolling. The repo already
+has the seed of this: `/preview/*` routes (fixture-driven full pages, admin-gated in
+the proxy, noindex, linked from the UI Components page) exist for the product detail
+page and the purchase confirmation, but each is a hand-rolled one-off. Promote the
+pattern to a registry-driven system:
+
+- **One dynamic route** `/preview/[surface]/[scenario]` resolving against a central
+  scene registry (unknown surface/scenario → 404). A scene declares its name, its
+  scenario list, its chrome, and a fixture-driven render per scenario. The existing
+  proxy rule admin-gating `/preview/*` covers every future scene with no new code.
+- **Chrome is composed, not simulated.** The gedu/parent/gamer dashboard chrome is the
+  header + dashboard layout *without* the admin sidebar — both plain importable
+  components — so a scene renders the exact shell the role sees. The only honest
+  difference is the viewer's own account in the header menu.
+- **The UI Components page gains one generic "Full-page previews" section** that
+  iterates the registry, so a new scene surfaces its links automatically.
+- **A scene mocks the whole page as the role meets it** — every section present, e.g.
+  the instant-voice-room card rendering with its action a no-op — so the page reads as
+  the real thing. Pure-UI interactions (the feed editor) work against local state;
+  backend-touching interactions are inert but render their real states.
+- **Anti-drift rule (one body, two shells):** a scene never owns a layout. It renders
+  the same presentational page-body component the live route renders — either the
+  *live* body (showcase; cannot drift) or the *draft* body that will replace it
+  (design in progress). **Promotion = the draft body becomes the route's body and the
+  data shell swaps fixtures for service calls.** A scene that is a permanent third
+  fork of a page is the rot this rule exists to prevent — never build one.
+- Fold the two existing one-off previews into the registry (mechanical).
+
+This is the general fix for "iterating a page-level change is expensive": UI iteration
+happens in scenes before any wiring, and wiring happens once against a signed-off
+design. Rejected alternatives: Storybook (a parallel build that loses the real app
+shell, CSP, i18n providers, and theme — fidelity is the point); a `?mock=` flag on
+live routes (fixture branches inside production data paths); iframing style-guide
+demos (viewport and scroll behaviour would be a lie).
+
+First scenes: the **gedu dashboard** (sessions band, aggregate badges, instant-voice
+section) and the **gedu product page** with the feed as its spine — scenarios along
+the lines of club-midterm, needs-attention-heavy, camp-daily (consecutive days — a
+layout stress the weekly fixture never shows), and first-week (almost no history).
+
 ### Scope for this effort
 
 Gedu side only. Out of scope, deliberately: parent/gamer read-only feed (later phase on
@@ -123,30 +166,38 @@ notifications (alert icons in the UI are enough for now).
 
 ## Steps
 
-1. **UI-only mock (current step).** Fixture-driven presentational components under
-   `src/components/gedu/session-feed/`, demoed in `/admin/ui-components` per the
-   style-guide convention (mock club, roster, all entry states, working inline editor
-   on local state). All strings translated in all four locales. No schema, services,
-   or API changes. Iterate on look/behaviour until signed off.
-2. **Schema + services.** Sessions table (unique `(group_id, session_date)`, snapshot
+1. **UI-only mock — components.** Done: fixture-driven presentational components under
+   `src/components/gedu/session-feed/`, demoed in `/admin/ui-components` (mock club,
+   roster, all entry states, working inline editor on local state), strings in every
+   locale. No schema, services, or API changes.
+2. **Preview scenes (current step).** The registry + `/preview/[surface]/[scenario]`
+   route described above; fold the two existing one-off previews in; build the gedu
+   dashboard scene and the gedu product-page scene rendering the *draft* page bodies
+   with the session feed as the product page's spine. Page-level UX sign-off happens
+   here — iterate on the draft bodies until the shape is right.
+3. **Schema + services.** Sessions table (unique `(group_id, session_date)`, snapshot
    start/end, two note columns, status, audit columns), attendance table (session ×
    gamer, status string), grants + RLS + authorization-spine classification per the db
    rules. Backward occurrence enumeration added to the shared expansion helpers
    (today they only walk forward). The epoch constant. RPC(s) for the feed window,
    record upsert, attendance set — with db-test coverage for any Json-returning
    result schemas.
-3. **Wiring.** Feed replaces the assigned-group section of the gedu detail pages;
-   dashboard product cards gain the aggregate badge.
-4. **Docs + cleanup.** One-session-per-day bet recorded (migration comment +
-   `docs/products-architecture.md`); TODO.md parent/gamer item updated; this plan
-   deleted.
+4. **Wiring (promotion).** The signed-off draft bodies become the live routes' bodies;
+   the data shells swap fixtures for service calls. Layout does not change in this
+   step — that is the whole point of iterating in scenes first.
+5. **Docs + cleanup.** One-session-per-day bet recorded (migration comment +
+   `docs/products-architecture.md`); the preview-scene system documented where the
+   style-guide conventions live; TODO.md parent/gamer item updated; this plan deleted.
 
 ## Acceptance criteria
 
-- **Mock step:** the feed renders in `/admin/ui-components` with every entry state
-  (upcoming with join, recorded, skipped, missing post-epoch gap, muted pre-epoch gap),
-  inline editing expands/saves against local state, lint + type-check clean, all four
-  locales translated. Kyle signs off on the shape from a dev server.
+- **Mock steps:** the feed renders in `/admin/ui-components` with every entry state
+  (upcoming with join, recorded, skipped, missing post-epoch gap, muted pre-epoch gap)
+  and inline editing works against local state — done. The scenes step is accepted
+  when the gedu dashboard and gedu product page render as full pages under
+  `/preview/*` with every section present, scenarios switchable, lint + type-check
+  clean, all locales translated. Kyle signs off on the page-level UX from a dev
+  server before any wiring starts.
 - **Feature complete:** a gedu can open any past session of their group back to
   `max(start, epoch)`, record attendance + both notes, skip a session, and see gaps;
   records survive admin schedule edits; the dashboard badge counts open gaps; nothing
