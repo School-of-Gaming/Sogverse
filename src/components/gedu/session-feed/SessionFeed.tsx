@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useNow, useTimezone } from "@/providers";
 import { cn } from "@/lib/utils";
+import { sessionFeedEntryDomId } from "./anchors";
 import { LaterSessionsBlock } from "./LaterSessionsBlock";
 import { SessionFeedItem } from "./SessionFeedItem";
 import {
@@ -131,7 +132,14 @@ export function SessionFeed({
     const editing = editingEntryId === entry.id;
     const prominent = entry.id === nextSession?.id;
     return (
-      <li key={row.key} className="relative">
+      <li
+        key={row.key}
+        // Addressable so a control outside the feed can scroll one entry into
+        // view; the margin keeps the landing clear of the sticky header rather
+        // than tucking the entry behind it.
+        id={sessionFeedEntryDomId(entry.id)}
+        className="relative scroll-mt-[calc(var(--header-height)+1rem)]"
+      >
         <span
           aria-hidden
           className={cn(

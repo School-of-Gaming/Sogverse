@@ -75,6 +75,7 @@ const GEDU_IDS = {
   sanna: "4a84d001-b789-41f5-ace3-cfcffa139869",
   petra: "96e29545-ad63-4948-b783-14e91189ad75",
   joonas: "d2826073-1d3f-4023-b45e-f42fea4332ca",
+  markus: "a79fc7fd-8527-4826-8062-94d25ed30873",
 } as const;
 
 /**
@@ -117,18 +118,25 @@ interface ScenarioConfig {
   materialUrl: string | null;
   groupName: string;
   groupNotes: GroupNotesFixture;
+  /**
+   * The other groups running on the same product — the reference rail's
+   * peer-cover rows. Every scenario carries at least one so the rail is always
+   * exercised, except `first-week`, which is deliberately the single-group
+   * product that shows the rail's empty state.
+   */
   peers: readonly {
     id: string;
     name: string;
     gamerCount: number;
-    /** The gedus teaching the peer group — each id renders as an identicon. */
+    /** The gedus teaching the peer group — each id renders an identicon. */
     gedus: readonly { id: string; firstName: string }[];
   }[];
 }
 
-/** The two gedus who show up as peer-group teachers, as identicon chips. */
+/** The gedus who show up as peer-group teachers, as identicon chips. */
 const PETRA = { id: GEDU_IDS.petra, firstName: "Petra" } as const;
 const JOONAS = { id: GEDU_IDS.joonas, firstName: "Joonas" } as const;
+const MARKUS = { id: GEDU_IDS.markus, firstName: "Markus" } as const;
 
 const NEEDS_ATTENTION_SPECS: readonly EntrySpec[] = [
   ...CLUB_FUTURE_SPECS,
@@ -348,6 +356,7 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
         gamerCount: 6,
         gedus: [PETRA, JOONAS],
       },
+      { id: "mock-group-d", name: "Monday D", gamerCount: 5, gedus: [MARKUS] },
     ],
   },
   "needs-attention": {
@@ -370,6 +379,7 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
     },
     peers: [
       { id: "mock-group-b", name: "Monday B", gamerCount: 7, gedus: [PETRA] },
+      { id: "mock-group-c", name: "Monday C", gamerCount: 6, gedus: [JOONAS] },
     ],
   },
   "club-yearlong": {
@@ -395,6 +405,9 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
     },
     peers: [
       { id: "mock-group-b", name: "Monday B", gamerCount: 7, gedus: [PETRA] },
+      // Newly split off and not staffed yet — the peer row's "no Gedus
+      // assigned" line, which is a real state on a growing product.
+      { id: "mock-group-c", name: "Monday C", gamerCount: 4, gedus: [] },
     ],
   },
   "camp-daily": {
@@ -424,6 +437,12 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
         gamerCount: 8,
         gedus: [PETRA],
       },
+      {
+        id: "mock-group-green",
+        name: "Builders green",
+        gamerCount: 7,
+        gedus: [JOONAS, MARKUS],
+      },
     ],
   },
   "first-week": {
@@ -443,10 +462,12 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
     groupName: "Tuesday A",
     groupNotes: {
       // A brand-new group has nothing standing to say yet — this is the empty
-      // state the band's "add a note" affordance exists for.
+      // state the notes card's "add a note" affordance exists for.
       publicNote: null,
       staffNote: null,
     },
+    // The one-group product: the reference rail still renders its other-groups
+    // card, saying there are none, so the rail's shape is the same everywhere.
     peers: [],
   },
 };

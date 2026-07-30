@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ChevronDown, Users } from "lucide-react";
+import { useMemo, type ReactNode } from "react";
+import { AlertTriangle, ArrowDown, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,10 +10,9 @@ import { MaterialLink } from "@/components/ui/material-link";
 import { PadletLink } from "@/components/ui/padlet-link";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import {
-  CollapsibleRegion,
   SessionFeed,
-  SessionFeedAlertBadge,
   countEntriesNeedingAttention,
+  sessionFeedEntryDomId,
   type SessionEntryDraft,
   type SessionFeedEntry,
   type SessionFeedGamer,
@@ -25,48 +24,50 @@ import { cn } from "@/lib/utils";
 import { computeVoiceState } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
 import type { GeduAssignedProduct, GeduAssignedProductGroup } from "@/types";
-import {
-  CopyAllEmailsButton,
-  GroupCardHeader,
-  deduplicateEmails,
-} from "./AssignedGroupCard";
+import { CopyAllEmailsButton, deduplicateEmails } from "./AssignedGroupCard";
 import { SessionDetailsBackLink } from "./BackLink";
 import { GamerRosterRow } from "./GamerRosterRow";
 import { GroupNotesPanel, type GroupNotesDraft } from "./GroupNotesPanel";
-import { PeerGroupCard } from "./PeerGroupCard";
 
 /**
- * **Draft** redesign of the gedu's product page, with the session feed as its
- * spine. Rendered today only by a full-page preview scene; at promotion it
- * becomes the body of `/gedu/clubs|camps|events/[id]` and the live shell swaps
- * fixtures for the product query. It deliberately takes everything as props —
- * no query, no clock of its own beyond the shared providers — which is what
- * lets one body serve both shells.
+ * **Draft** redesign of the gedu's product page: the assigned group's
+ * *workspace*, with the session feed as its spine. Rendered today only by a
+ * full-page preview scene; at promotion it becomes the body of
+ * `/gedu/clubs|camps|events/[id]` and the live shell swaps fixtures for the
+ * product query. It deliberately takes everything as props — no query, no clock
+ * of its own beyond the shared providers — which is what lets one body serve
+ * both shells.
  *
- * What changes versus the page it replaces:
+ * The shape, and why:
  *
- * - **The feed is the page.** Today the assigned-group card is the centre of
- *   gravity and there is no history at all; here the group's identity is a thin
- *   band and the reverse-chronological feed underneath it is the main column.
- *   Reading last week is the job, so it is what the page is made of.
- * - **The roster moves into a disclosure above the feed.** It is the one piece
- *   of the old card with nowhere obvious to go: eight rows of children, ages
- *   and parent emails would push the newest session most of a screen down, and
- *   the roster is reference data a gedu consults occasionally (emailing a
- *   parent) rather than every visit. Collapsed, it costs one line and stays
- *   exactly where it was; expanding grows downward, so nothing already on
- *   screen moves. The alternative placements were both worse: below the feed
- *   makes it unfindable behind a term of scrolling, and a side column collapses
- *   into a stack on the phones gedus actually use between sessions.
- * - **The outstanding-work count sits on the Sessions heading**, the same
- *   number the dashboard's product card shows, so the badge a gedu clicked from
- *   the dashboard is still there when they land.
- * - **The group's standing notes live in the identity band**, not in the feed.
- *   The feed is a run of occurrences and there is deliberately no "post to the
- *   club" action in it, so anything true of the group rather than of one date
- *   needs a home above it.
- * - **The header carries both of the product's outward links**: the Padlet
- *   families read, and the staff-only material link they never see.
+ * - **The page is the group, not the product.** The gedu arrived by clicking
+ *   their own group, so there is no "your group" card and no badge announcing
+ *   which one is theirs — the group's name is the page's title. The product is
+ *   context above it: type, name, and its two outward links (the family-facing
+ *   Padlet and the staff-only material link) on one line.
+ * - **Desktop is two columns**, because a gedu surface is a desktop surface.
+ *   The main column is the timeline capped at a reading width; the third of the
+ *   width beside it is a reference rail. Below `lg` it all stacks in DOM order —
+ *   masthead, timeline, rail — so the phone keeps the weekly loop (read last
+ *   week, join, write up) first and the reference material after it.
+ * - **The rail holds the three things that are true between sessions**, in
+ *   descending urgency: the other groups on this product (a colleague asking
+ *   you to cover their room for ten minutes is one glance and one click), this
+ *   group's co-teachers and roster, and the group's standing notes. Each is a
+ *   compact card, and the *shape* is fixed — a product with no sister groups
+ *   still renders the other-groups card, saying so — so the rail doesn't
+ *   reshuffle between two products the same gedu teaches.
+ * - **Each room has exactly one Join on the page.** This group's is on the
+ *   prominent next-session entry in the timeline, where the gedu is already
+ *   looking at the time it starts; every peer group's is on its own rail row.
+ *   The old layout offered this group's room twice, which made the second one
+ *   read as a different room.
+ * - **The outstanding-work count is a jump, not a heading ornament.** It is the
+ *   same number the dashboard product card shows, so it is still there when the
+ *   gedu lands — but here it scrolls the first owed write-up into view instead
+ *   of just naming a quantity. At zero it renders nothing and the timeline
+ *   simply starts higher; there is no shift, because nothing was ever painted
+ *   in the space.
  */
 interface GeduProductPageBodyDraftProps {
   data: GeduAssignedProduct;
@@ -134,56 +135,59 @@ export function GeduProductPageBodyDraft({
   );
 
   const needingAttention = countEntriesNeedingAttention(entries);
+  // The feed is newest-first, so the first gap in the array is the most recent
+  // one — the one a gedu catching up would write first.
+  const firstGapEntryId =
+    entries.find((e) => e.kind === "needs_record")?.id ?? null;
 
   return (
-    // Narrower than the page it replaces: the feed is a reading column, and a
-    // term of write-ups at the old width runs to unreadable line lengths.
-    <div className="container mx-auto max-w-3xl px-4 py-6 sm:py-10">
+    // Wide, because this is a gedu surface and gedus are at a desk. The reading
+    // column inside is still capped; the extra width buys the reference rail.
+    <div className="container mx-auto max-w-6xl px-4 py-6 sm:py-10">
       <SessionDetailsBackLink />
 
-      <div className="mt-6 space-y-6">
-        <header className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              {t(`typeLabel.${data.product.product_type}`)}
-            </p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-              {productName}
-            </h1>
-          </div>
-          {/* Two audiences, side by side: the Padlet is the family-facing link,
-              the material link is staff-only and never leaves this page. */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-            {data.product.padlet_url && (
-              <PadletLink href={data.product.padlet_url} />
-            )}
-            {materialUrl && <MaterialLink href={materialUrl} />}
-          </div>
-        </header>
+      <header className="mt-5 border-b border-border pb-5">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {t(`typeLabel.${data.product.product_type}`)}
+          </span>
+          {assignedGroup && (
+            <span className="text-sm text-muted-foreground">{productName}</span>
+          )}
+          {/* Product scope, inline in the masthead rather than floated to the
+              right of the title: the Padlet and the material link belong to the
+              product, not to this group, and the group's name is the title. */}
+          {data.product.padlet_url && (
+            <PadletLink href={data.product.padlet_url} />
+          )}
+          {materialUrl && <MaterialLink href={materialUrl} />}
+        </div>
 
-        {assignedGroup ? (
-          <>
-            <AssignedGroupBand
-              group={assignedGroup}
-              isRemote={data.product.is_remote}
-              voiceIsOpen={voiceState.voiceIsOpen}
-              opensDate={voiceState.opensDate}
-              opensTime={voiceState.opensTime}
-              publicNote={groupPublicNote}
-              staffNote={groupStaffNote}
-              notesEditing={groupNotesEditing}
-              onNotesEditingChange={onGroupNotesEditingChange}
-              onSaveNotes={onSaveGroupNotes}
-            />
+        <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            {assignedGroup
+              ? assignedGroup.name || t("untitledGroup")
+              : productName}
+          </h1>
+          {assignedGroup && (
+            <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+              <Users className="h-4 w-4" aria-hidden />
+              {t("gamerCount", { count: assignedGroup.gamer_count })}
+            </span>
+          )}
+        </div>
+      </header>
 
-            <section className="space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                  {t("sessionsHeading")}
-                </h2>
-                <SessionFeedAlertBadge count={needingAttention} />
-              </div>
+      <div className="mt-6 grid items-start gap-6 lg:grid-cols-3 lg:gap-8">
+        <div className="min-w-0 space-y-4 lg:col-span-2">
+          {assignedGroup ? (
+            <>
+              <NeedsWriteUpsJump
+                count={needingAttention}
+                targetEntryId={firstGapEntryId}
+              />
               <SessionFeed
+                className="max-w-3xl"
                 entries={entries}
                 roster={feedRoster}
                 sourceTimeZone={sourceTimeZone}
@@ -191,196 +195,291 @@ export function GeduProductPageBodyDraft({
                 onEditEntry={onEditEntry}
                 onSaveEntry={onSaveEntry}
               />
-            </section>
-          </>
-        ) : (
-          <Card>
-            <CardContent className="p-6 text-sm text-muted-foreground">
-              {t("noAssignedGroup")}
-            </CardContent>
-          </Card>
-        )}
+            </>
+          ) : (
+            <Card>
+              <CardContent className="p-6 text-sm text-muted-foreground">
+                {t("noAssignedGroup")}
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
-        {peerGroups.length > 0 && (
-          <section className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              {t("otherGroupsHeading")}
-            </h2>
-            <div className="space-y-4">
-              {peerGroups.map((g) => (
-                <PeerGroupCard
-                  key={g.id}
-                  group={g}
-                  isRemote={data.product.is_remote}
-                  voiceIsOpen={voiceState.voiceIsOpen}
-                  opensDate={voiceState.opensDate}
-                  opensTime={voiceState.opensTime}
+        {/* Static, not sticky. These cards are taller than a viewport once a
+            roster and two notes are open, so pinning them would need an inner
+            scroll pane beside the document scroll — a second scrollbar, and a
+            column that stops agreeing with the page it sits next to. */}
+        <aside className="min-w-0 space-y-4">
+          <OtherGroupsRailCard
+            peerGroups={peerGroups}
+            isRemote={data.product.is_remote}
+            voiceIsOpen={voiceState.voiceIsOpen}
+            opensDate={voiceState.opensDate}
+            opensTime={voiceState.opensTime}
+          />
+
+          {assignedGroup && (
+            <>
+              <GroupRailCard group={assignedGroup} />
+              <RailCard>
+                <GroupNotesPanel
+                  publicNote={groupPublicNote}
+                  staffNote={groupStaffNote}
+                  editing={groupNotesEditing}
+                  onEditingChange={onGroupNotesEditingChange}
+                  onSave={onSaveGroupNotes}
                 />
-              ))}
-            </div>
-          </section>
-        )}
+              </RailCard>
+            </>
+          )}
+        </aside>
       </div>
     </div>
   );
 }
 
+/* ------------------------------------------------------------------ */
+/*  Main column                                                        */
+/* ------------------------------------------------------------------ */
+
 /**
- * Who this group is, in one band above the feed: name, gamer count, the gedus
- * teaching it, the Join button, the group's standing notes, and the roster
- * behind a disclosure. Everything the old assigned-group card carried,
- * compressed to the height the feed can afford to give it, plus the one thing
- * the feed structurally cannot hold — information about the group rather than
- * about a session.
+ * "2 need write-ups", as a control that takes you to the first one.
  *
- * The notes sit above the roster disclosure rather than below it: they are read
- * far more often than a parent's email address is looked up, and a collapsed
- * disclosure between the two would bury them.
+ * Same semantics as the feed's alert badge — the warning tone, the triangle,
+ * and nothing at all at zero, because a badge reading "0 need write-ups" trains
+ * the eye to skip the spot the real warning will appear in. It is a button
+ * rather than that badge because it *does* something: a long feed can put the
+ * oldest owed write-up below the fold, and naming a number the reader then has
+ * to go hunting for is the part the old heading got wrong.
+ *
+ * Scrolling is user-triggered, so smooth motion is allowed here (and the browser
+ * drops it for anyone who asked for reduced motion). If the target isn't in the
+ * DOM — a gap sitting behind the feed's "show earlier sessions" reveal — the
+ * click is a no-op rather than a jump to the wrong place.
  */
-function AssignedGroupBand({
-  group,
-  isRemote,
-  voiceIsOpen,
-  opensDate,
-  opensTime,
-  publicNote,
-  staffNote,
-  notesEditing,
-  onNotesEditingChange,
-  onSaveNotes,
+function NeedsWriteUpsJump({
+  count,
+  targetEntryId,
 }: {
-  group: GeduAssignedProductGroup;
-  isRemote: boolean;
-  voiceIsOpen: boolean;
-  opensDate: string;
-  opensTime: string;
-  publicNote: string | null;
-  staffNote: string | null;
-  notesEditing: boolean;
-  onNotesEditingChange: (editing: boolean) => void;
-  onSaveNotes: (draft: GroupNotesDraft) => void;
+  count: number;
+  targetEntryId: string | null;
 }) {
   const t = useTranslations("gedu.sessionDetails");
-  const voiceHref = isRemote ? ROUTES.voice.groupSession(group.id) : "#";
+
+  if (count <= 0 || targetEntryId === null) return null;
+
+  const handleClick = () => {
+    const el = document.getElementById(sessionFeedEntryDomId(targetEntryId));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   return (
-    <Card className="border-primary/40">
-      <CardContent className="space-y-4 p-5 sm:p-6">
-        <GroupCardHeader
-          name={group.name || t("untitledGroup")}
-          gamerCount={group.gamer_count}
-          showAssignedBadge
-        />
+    <button
+      type="button"
+      onClick={handleClick}
+      aria-label={t("jumpToNeedsWriteUp", { count })}
+      className="inline-flex items-center gap-1.5 rounded-full border border-warning/50 bg-warning/10 px-3 py-1 text-xs font-medium text-warning transition-colors hover:bg-warning/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+    >
+      <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
+      {t("needsWriteUps", { count })}
+      <ArrowDown className="h-3.5 w-3.5" aria-hidden />
+    </button>
+  );
+}
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          {group.gedus.length > 0 && (
-            <div className="flex min-w-0 flex-wrap gap-1.5">
-              {group.gedus.map((g) => (
-                <span
-                  key={g.id}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2 py-1 text-xs"
-                >
-                  <Avatar className="h-5 w-5">
-                    <Identicon id={g.id} size={20} />
-                  </Avatar>
-                  <span className="leading-none">{g.first_name}</span>
-                </span>
-              ))}
-            </div>
-          )}
-          <JoinVoiceButton
-            voiceIsOpen={voiceIsOpen}
-            voiceHref={voiceHref}
-            opensDate={opensDate}
-            opensTime={opensTime}
-          />
-        </div>
+/* ------------------------------------------------------------------ */
+/*  Reference rail                                                     */
+/* ------------------------------------------------------------------ */
 
-        <GroupNotesPanel
-          publicNote={publicNote}
-          staffNote={staffNote}
-          editing={notesEditing}
-          onEditingChange={onNotesEditingChange}
-          onSave={onSaveNotes}
-        />
-
-        <RosterDisclosure roster={group.roster ?? []} />
+/**
+ * One card in the rail. Tighter padding than a page card — the rail is a third
+ * of the width and three cards deep, so every card that spends a page card's
+ * padding pushes the one below it off the first screen.
+ *
+ * The heading is optional: the notes card's own header row carries a heading and
+ * the Edit control together, and stacking a second title above it would read as
+ * two sections.
+ */
+function RailCard({
+  title,
+  children,
+}: {
+  title?: string;
+  children: ReactNode;
+}) {
+  return (
+    <Card>
+      <CardContent className="space-y-3 p-4">
+        {title !== undefined && (
+          <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            {title}
+          </h2>
+        )}
+        {children}
       </CardContent>
     </Card>
   );
 }
 
 /**
- * The roster, collapsed by default.
+ * The peer-cover card: every other group running on this product, each one
+ * name + who teaches it + how many children + a live-state Join.
  *
- * The toggle row never moves — the list grows beneath it — so a second click
- * lands where the first one did, and the feed below is pushed down only when
- * the gedu asked for it.
+ * This is the "can you watch my room for ten minutes?" surface, so it is the
+ * first thing in the rail and the row is deliberately one line of identity plus
+ * the button — enough to know you have the right room, and nothing that needs
+ * reading before you click. Sister-group *rosters* stay out: a gedu sees who is
+ * teaching alongside them, not the children in someone else's group.
+ *
+ * A product with only one group still renders the card, saying so. The rail's
+ * shape is then the same on every product a gedu opens, which is worth more than
+ * the four lines saved by hiding it.
  */
-function RosterDisclosure({
-  roster,
+function OtherGroupsRailCard({
+  peerGroups,
+  isRemote,
+  voiceIsOpen,
+  opensDate,
+  opensTime,
 }: {
-  roster: readonly GeduAssignedProductRosterRow[];
+  peerGroups: readonly GeduAssignedProductGroup[];
+  isRemote: boolean;
+  voiceIsOpen: boolean;
+  opensDate: string;
+  opensTime: string;
 }) {
   const t = useTranslations("gedu.sessionDetails");
-  const [open, setOpen] = useState(false);
 
+  return (
+    <RailCard title={t("railOtherGroupsHeading")}>
+      {peerGroups.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{t("noOtherGroups")}</p>
+      ) : (
+        <ul className="space-y-2">
+          {peerGroups.map((group) => (
+            <li
+              key={group.id}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-muted/30 p-2.5"
+            >
+              <div className="min-w-0 space-y-1.5">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                  <p className="truncate text-sm font-medium leading-tight">
+                    {group.name || t("untitledGroup")}
+                  </p>
+                  <span className="inline-flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground">
+                    <Users className="h-3 w-3" aria-hidden />
+                    {t("gamerCount", { count: group.gamer_count })}
+                  </span>
+                </div>
+                {group.gedus.length === 0 ? (
+                  <p className="text-[11px] text-muted-foreground">
+                    {t("noGedus")}
+                  </p>
+                ) : (
+                  <GeduChips gedus={group.gedus} compact />
+                )}
+              </div>
+              <JoinVoiceButton
+                voiceIsOpen={voiceIsOpen}
+                voiceHref={isRemote ? ROUTES.voice.groupSession(group.id) : "#"}
+                opensDate={opensDate}
+                opensTime={opensTime}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+    </RailCard>
+  );
+}
+
+/**
+ * Who is in this group: the gedus teaching it, then every child with their
+ * parent's email and the copy-all helper.
+ *
+ * **The roster renders open, with no disclosure.** It was collapsed in the
+ * single-column draft for one reason — eight rows of children between the
+ * masthead and the feed pushed the newest session most of a screen down. Out
+ * here that reason is gone: nothing the gedu reads sits below the rail on
+ * desktop, and on mobile the rail is already past the whole timeline, so the
+ * roster's height costs a scroll rather than a displacement. A reference column
+ * that hides its reference data behind a click isn't one.
+ *
+ * The two-column "Gamer / Parent email" header the wide card used is dropped —
+ * at a third of the page the rows stack, and the header would label columns
+ * that aren't there.
+ */
+function GroupRailCard({ group }: { group: GeduAssignedProductGroup }) {
+  const t = useTranslations("gedu.sessionDetails");
+  const roster = useMemo(() => group.roster ?? [], [group.roster]);
   const emails = useMemo(
     () => deduplicateEmails(roster.map((r) => r.parent_email)),
     [roster],
   );
 
-  if (roster.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">{t("emptyRoster")}</p>
-    );
-  }
-
   return (
-    <div className="border-t border-border pt-3">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        className="flex w-full items-center justify-between gap-2 rounded-sm text-left text-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-      >
-        <span className="flex min-w-0 items-center gap-2 font-medium">
-          <Users className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-          {t("rosterDisclosureLabel")}
-          <span className="font-normal tabular-nums text-muted-foreground">
-            {t("gamerCount", { count: roster.length })}
-          </span>
-        </span>
-        <ChevronDown
-          aria-hidden
-          className={cn(
-            "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 motion-reduce:transition-none",
-            open && "rotate-180",
-          )}
-        />
-      </button>
+    <RailCard title={t("railGroupHeading")}>
+      <div className="space-y-1.5">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+          {t("gedusLabel")}
+        </p>
+        {group.gedus.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t("noGedus")}</p>
+        ) : (
+          <GeduChips gedus={group.gedus} />
+        )}
+      </div>
 
-      <CollapsibleRegion open={open}>
-        <div className="space-y-2 pt-3">
+      <div className="space-y-2 border-t border-border pt-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            {t("gamersLabel")}
+          </p>
           {emails.length > 0 && <CopyAllEmailsButton emails={emails} />}
-          {/* Two-column header — "Gamer" anchors the left half of each row,
-              "Parent email" the right. On mobile the rows stack and the
-              header is replaced by a single section label. */}
-          <div className="hidden items-center justify-between px-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground sm:flex">
-            <span>{t("rosterGamerHeader")}</span>
-            <span>{t("rosterParentEmailHeader")}</span>
-          </div>
+        </div>
+        {roster.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t("emptyRoster")}</p>
+        ) : (
           <ul className="space-y-1.5">
             {roster.map((g) => (
               <GamerRosterRow key={g.gamer_id} gamer={g} />
             ))}
           </ul>
-        </div>
-      </CollapsibleRegion>
-    </div>
+        )}
+      </div>
+    </RailCard>
   );
 }
 
-type GeduAssignedProductRosterRow = NonNullable<
-  GeduAssignedProductGroup["roster"]
->[number];
+/**
+ * Identicon-and-first-name chips for a set of gedus. `compact` is the peer-row
+ * size — the rail rows carry a Join button on the same line, so the chips there
+ * have to stay smaller than the group card's.
+ */
+function GeduChips({
+  gedus,
+  compact = false,
+}: {
+  gedus: GeduAssignedProductGroup["gedus"];
+  compact?: boolean;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {gedus.map((g) => (
+        <span
+          key={g.id}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-full border border-border bg-muted",
+            compact ? "px-1.5 py-0.5 text-[11px]" : "px-2 py-1 text-xs",
+          )}
+        >
+          <Avatar className={compact ? "h-4 w-4" : "h-5 w-5"}>
+            <Identicon id={g.id} size={compact ? 16 : 20} />
+          </Avatar>
+          <span className="leading-none">{g.first_name}</span>
+        </span>
+      ))}
+    </div>
+  );
+}

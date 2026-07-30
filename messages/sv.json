@@ -1165,7 +1165,11 @@
       },
       "yourGroupBadge": "Din grupp",
       "otherGroupsHeading": "Andra grupper i denna session",
-      "sessionsHeading": "Träffar",
+      "railOtherGroupsHeading": "Andra grupper",
+      "noOtherGroups": "Inga andra grupper i denna session.",
+      "railGroupHeading": "Grupp",
+      "needsWriteUps": "{count, plural, one {# tillfälle saknar sammanfattning} other {# tillfällen saknar sammanfattning}}",
+      "jumpToNeedsWriteUp": "{count, plural, one {# tillfälle saknar sammanfattning} other {# tillfällen saknar sammanfattning}} – gå till det första",
       "gedusLabel": "Geduer",
       "noGedus": "Inga Geduer tilldelade.",
       "gamersLabel": "Spelare",
@@ -1185,8 +1189,7 @@
       "noParentEmail": "Ingen förälder-e-post sparad",
       "emailCopied": "E-post kopierad",
       "copyAllParentEmails": "Kopiera alla förälder-e-postadresser ({count})",
-      "allEmailsCopied": "Alla förälder-e-postadresser kopierade",
-      "rosterDisclosureLabel": "Deltagare och föräldrarnas e-post"
+      "allEmailsCopied": "Alla förälder-e-postadresser kopierade"
     },
     "sessionFeed": {
       "upcomingBadge": "Nästa tillfälle",

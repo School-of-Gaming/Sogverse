@@ -1,4 +1,5 @@
 export { CollapsibleRegion } from "./CollapsibleRegion";
+export { sessionFeedEntryDomId } from "./anchors";
 export { SessionFeed } from "./SessionFeed";
 export { SessionFeedAlertBadge } from "./SessionFeedAlertBadge";
 export { StaffNoteBlock } from "./StaffNoteBlock";

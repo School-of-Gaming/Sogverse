@@ -128,6 +128,42 @@ describe("identicon fixture ids are real UUIDs", () => {
   });
 });
 
+/**
+ * The product page's reference rail leads with the other groups on the product —
+ * the "cover my room for ten minutes" surface. A scenario with no sister groups
+ * only ever shows the rail's empty state, so the scenarios have to be split
+ * deliberately between the two rather than by accident.
+ */
+describe("every scenario exercises the reference rail's other-groups card", () => {
+  const now = new Date("2026-02-11T09:00:00Z");
+
+  function peerCountFor(scenario: (typeof GEDU_PRODUCT_SCENARIOS)[number]) {
+    const { data } = buildGeduProductPageFixture(now, scenario);
+    return data.groups.filter((g) => g.id !== data.my_group_id).length;
+  }
+
+  it("gives every scenario but first-week at least one peer group", () => {
+    for (const scenario of GEDU_PRODUCT_SCENARIOS) {
+      if (scenario === "first-week") continue;
+      expect(peerCountFor(scenario), scenario).toBeGreaterThan(0);
+    }
+  });
+
+  it("keeps first-week at zero peers, as the rail's empty state", () => {
+    expect(peerCountFor("first-week")).toBe(0);
+  });
+
+  it("covers a peer group with nobody teaching it yet", () => {
+    const unstaffed = GEDU_PRODUCT_SCENARIOS.flatMap((scenario) => {
+      const { data } = buildGeduProductPageFixture(now, scenario);
+      return data.groups.filter(
+        (g) => g.id !== data.my_group_id && g.gedus.length === 0,
+      );
+    });
+    expect(unstaffed.length).toBeGreaterThan(0);
+  });
+});
+
 describe("the year-long scenario stays a stress test", () => {
   const now = new Date("2026-02-11T09:00:00Z");
 

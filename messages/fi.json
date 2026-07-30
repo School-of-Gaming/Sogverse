@@ -1165,7 +1165,11 @@
       },
       "yourGroupBadge": "Oma ryhmä",
       "otherGroupsHeading": "Muut session ryhmät",
-      "sessionsHeading": "Tapaamiset",
+      "railOtherGroupsHeading": "Muut ryhmät",
+      "noOtherGroups": "Tässä sessiossa ei ole muita ryhmiä.",
+      "railGroupHeading": "Ryhmä",
+      "needsWriteUps": "{count, plural, one {# kerta kaipaa muistiinpanoja} other {# kertaa kaipaa muistiinpanoja}}",
+      "jumpToNeedsWriteUp": "{count, plural, one {# kerta kaipaa muistiinpanoja} other {# kertaa kaipaa muistiinpanoja}} – siirry ensimmäiseen",
       "gedusLabel": "Gedut",
       "noGedus": "Ryhmälle ei ole määritetty Geduja.",
       "gamersLabel": "Pelaajat",
@@ -1185,8 +1189,7 @@
       "noParentEmail": "Vanhemman sähköpostia ei ole tallennettu",
       "emailCopied": "Sähköposti kopioitu",
       "copyAllParentEmails": "Kopioi kaikki vanhempien sähköpostit ({count})",
-      "allEmailsCopied": "Kaikki vanhempien sähköpostit kopioitu",
-      "rosterDisclosureLabel": "Ryhmäläiset ja huoltajien sähköpostit"
+      "allEmailsCopied": "Kaikki vanhempien sähköpostit kopioitu"
     },
     "sessionFeed": {
       "upcomingBadge": "Seuraava kerta",

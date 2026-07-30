@@ -1165,7 +1165,11 @@
       },
       "yourGroupBadge": "Votre groupe",
       "otherGroupsHeading": "Autres groupes de cette session",
-      "sessionsHeading": "Séances",
+      "railOtherGroupsHeading": "Autres groupes",
+      "noOtherGroups": "Aucun autre groupe dans cette session.",
+      "railGroupHeading": "Groupe",
+      "needsWriteUps": "{count, plural, one {# compte rendu à faire} other {# comptes rendus à faire}}",
+      "jumpToNeedsWriteUp": "{count, plural, one {# compte rendu à faire} other {# comptes rendus à faire}} — aller au premier",
       "gedusLabel": "Gedus",
       "noGedus": "Aucun Gedu affecté.",
       "gamersLabel": "Joueurs",
@@ -1185,8 +1189,7 @@
       "noParentEmail": "Aucun e-mail de parent enregistré",
       "emailCopied": "E-mail copié",
       "copyAllParentEmails": "Copier tous les e-mails des parents ({count})",
-      "allEmailsCopied": "Tous les e-mails des parents ont été copiés",
-      "rosterDisclosureLabel": "Participants et e-mails des parents"
+      "allEmailsCopied": "Tous les e-mails des parents ont été copiés"
     },
     "sessionFeed": {
       "upcomingBadge": "Prochaine séance",

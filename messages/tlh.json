@@ -1210,7 +1210,11 @@
       },
       "yourGroupBadge": "ghom’a’lIj",
       "otherGroupsHeading": "may’vam latlh ghommey",
-      "sessionsHeading": "may’ qaStaHvIS",
+      "railOtherGroupsHeading": "latlh ghommey",
+      "noOtherGroups": "may’vamDaq latlh ghom tu’lu’be’.",
+      "railGroupHeading": "ghom’a’",
+      "needsWriteUps": "{count, plural, one {# qonlu’pu’be’} other {# qonlu’pu’be’}}",
+      "jumpToNeedsWriteUp": "{count, plural, one {# qonlu’pu’be’} other {# qonlu’pu’be’}} — wa’DIch yIghoS",
       "gedusLabel": "Gedupu’",
       "noGedus": "Gedu tu’lu’be’.",
       "gamersLabel": "Suvwl’pu’",
@@ -1230,8 +1234,7 @@
       "noParentEmail": "vavnI’ QInHom tu’lu’be’",
       "emailCopied": "QInHom ’aQpu’",
       "copyAllParentEmails": "Hoch vavnI’ QInHommey yI’aQ ({count})",
-      "allEmailsCopied": "Hoch vavnI’ QInHommey ’aQpu’",
-      "rosterDisclosureLabel": "SuvwI’pu’ ’ej vavpu’ QIn"
+      "allEmailsCopied": "Hoch vavnI’ QInHommey ’aQpu’"
     },
     "sessionFeed": {
       "upcomingBadge": "may’ veb",

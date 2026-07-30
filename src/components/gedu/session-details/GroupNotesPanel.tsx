@@ -26,14 +26,18 @@ interface GroupNotesPanelProps {
 }
 
 /**
- * The group's **standing** notes, inside the identity band above the feed.
+ * The group's **standing** notes — its own card in the page's reference rail.
  *
  * These are deliberately not session notes. A session note answers "what
  * happened on this date"; these answer "what should anyone know about this
  * group at all" — how the shared world works, who the siblings are, which
  * laptop has bad audio. There is no free-floating "post to the club" action
- * anywhere in the feed, so this band is the one home for information that isn't
+ * anywhere in the feed, so this card is the one home for information that isn't
  * anchored to an occurrence.
+ *
+ * The public note is rendered first and unadorned because it is the one families
+ * will eventually read; the staff note sits beneath it in the padlocked recessed
+ * treatment so the two audiences can never be misread for each other.
  *
  * The same two-audience split as everywhere else, and for the same reason: a
  * staff note written under an assumption of privacy can never be retro-published,
@@ -76,12 +80,14 @@ export function GroupNotesPanel({
   const hasStaff = staffNote !== null && staffNote.length > 0;
   const isEmpty = !hasPublic && !hasStaff;
 
+  // No divider or top padding of its own: the panel is the whole body of its
+  // rail card, so its header row *is* the card's heading row.
   return (
-    <div className="border-t border-border pt-3">
+    <div>
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           {t("heading")}
-        </p>
+        </h2>
         <Button
           type="button"
           variant="ghost"
