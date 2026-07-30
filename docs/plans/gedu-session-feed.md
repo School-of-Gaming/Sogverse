@@ -57,17 +57,43 @@ later phase built on the same data.
    session that group ran. Admin can override anything (admin UI out of scope).
    Peer-group feeds are not visible in v1 (neither read nor write) — the schema must
    not block opening read access later.
-8. **Server-side write validation is loose:** reject dates in the future or before the
-   product start; accept anything plausibly matching the current schedule. Strictness
-   buys little (an admin edit can orphan any row a day later anyway) and risks blocking
-   a legitimate write-up right after a schedule fix.
+8. **Future sessions materialize too, but only for planning fields.** A session row
+   for a *future* occurrence may hold notes (a forward-looking note acts as a
+   reminder / a plan families can read) and a **needs-substitute flag** (a gedu
+   declaring they can't run a future session, for admins/peers to act on). It may
+   never hold attendance or a ran/skipped status — those are records of what
+   happened and only attach once the session is past.
+9. **Server-side write validation is loose:** reject dates before the product start
+   or beyond the visible future horizon; accept anything plausibly matching the
+   current schedule; enforce the past-only rule for attendance/status per point 8.
+   Strictness beyond that buys little (an admin edit can orphan any row a day later
+   anyway) and risks blocking a legitimate write-up right after a schedule fix.
+10. **Group-level notes, distinct from session notes:** each group carries a
+    persistent public note (parent/gamer-visible later) and a persistent staff note
+    (gedu + admin) — standing information about the group rather than any one
+    session. Same two-audience split and the same never-retro-publish rule.
+11. **Product-level material link (gedu/admin only):** a URL to lesson/material
+    content for the people running the product — separate from the Padlet URL,
+    which is the family-facing one. Never shown to parents/gamers.
 
 ### UI shape
 
-**One blog-like feed per group — the group's story.** Reverse-chronological. The next
-upcoming session sits at the top (carrying the live/join-voice state today's prominent
-card has), then this week, last week, five weeks ago, down to the product start. No
-per-session pages: reading history is scrolling, not clicking.
+**One blog-like feed per group — the group's story.** Strictly descending by date:
+future at the top, past below, down to the product start. No per-session pages:
+reading history is scrolling, not clicking.
+
+- **Future horizon:** the same rule as the existing upcoming-session lists — open-ended
+  products show the next 8 occurrences, end-dated products every occurrence to the end.
+  The **next** session stays the prominent entry (live/join-voice state); everything
+  beyond it collapses by default behind a "later sessions" row above it (count shown,
+  and any needs-substitute flags surfaced on the collapsed row so they can't hide).
+  Expanding is user-triggered and animates; global date order is never violated.
+- **Future entries are editable for planning fields only**: forward-looking notes and
+  the needs-substitute toggle — no attendance checklist, no didn't-run.
+- **Long histories must stay navigable** — a year-old club is 50+ sessions. Render the
+  recent past (~10 entries) and put the rest behind a chunked "show earlier sessions"
+  reveal; month dividers as the feed crosses month boundaries keep a long scroll
+  scannable. Recent sessions are always the cheapest to reach.
 
 Each past entry renders inline:
 
@@ -87,7 +113,17 @@ Each past entry renders inline:
 
 Entries are always anchored to a session occurrence — there is deliberately no
 free-floating "post to the club" action (announcements would undermine the
-attendance-is-pay-confirmation anchor; if wanted, that's a different feature).
+attendance-is-pay-confirmation anchor; if wanted, that's a different feature). The
+place for standing, non-session information is the **group identity band above the
+feed**, which carries the group-level public + staff notes (inline-editable, same
+two-audience treatments as session notes). The **product header** carries the two
+product-level links side by side: the Padlet (family-facing) and the material link
+(gedu/admin-facing).
+
+The full per-scope requirements matrix the mock must represent: per **session** —
+attendance, public note, staff note (+ needs-substitute on future ones); per
+**group** — public note, staff note; per **product** — material URL (staff) and
+Padlet URL (families).
 
 The gedu dashboard gets only an **aggregate alert badge** on the product card ("N
 sessions need attention") linking into the feed — no separate queue UI. The feed itself
@@ -173,12 +209,16 @@ notifications (alert icons in the UI are enough for now).
 2. **Preview scenes (current step).** The registry + `/preview/[surface]/[scenario]`
    route described above; fold the two existing one-off previews in; build the gedu
    dashboard scene and the gedu product-page scene rendering the *draft* page bodies
-   with the session feed as the product page's spine. Page-level UX sign-off happens
-   here — iterate on the draft bodies until the shape is right.
+   with the session feed as the product page's spine. Admins reach every scene from a
+   **"UI Previews" page in the admin sidebar** (below UI Components) that enumerates
+   the registry with descriptions — that page is the single home for the links.
+   Page-level UX sign-off happens here — iterate on the draft bodies until the shape
+   is right, covering the full requirements matrix above.
 3. **Schema + services.** Sessions table (unique `(group_id, session_date)`, snapshot
-   start/end, two note columns, status, audit columns), attendance table (session ×
-   gamer, status string), grants + RLS + authorization-spine classification per the db
-   rules. Backward occurrence enumeration added to the shared expansion helpers
+   start/end, two note columns, status, needs-substitute flag, audit columns),
+   attendance table (session × gamer, status string), group-level note columns (public
+   + staff), product-level material URL column, grants + RLS + authorization-spine
+   classification per the db rules. Backward occurrence enumeration added to the shared expansion helpers
    (today they only walk forward). The epoch constant. RPC(s) for the feed window,
    record upsert, attendance set — with db-test coverage for any Json-returning
    result schemas.
