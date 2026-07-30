@@ -103,6 +103,30 @@ export function buildMunicipalityEntries(
 }
 
 /**
+ * The clubs that belong to one municipality, by *resolved* membership — the same
+ * rule that decides whether a municipality is listed as having clubs at all.
+ *
+ * A municipality club always carries a location, in one of two shapes: the
+ * municipality row itself (online) or a site inside it (in-person). Comparing a
+ * club's `location_id` against the municipality id therefore answers a
+ * different, narrower question — it matches only the online half and silently
+ * drops every in-person club. Resolving each club's own location up to its
+ * municipality is what puts both shapes in the same bucket.
+ *
+ * Delivery mode is a separate axis and is deliberately not touched here: a
+ * municipality page shows both modes and lets the viewer filter by format.
+ *
+ * Typed structurally (any row carrying its embedded location works) so the
+ * server prefetch and the client refetch can both hand over their product rows
+ * without this module knowing the product query's shape.
+ */
+export function selectClubsInMunicipality<
+  T extends { locations: EmbeddedLocation | null },
+>(clubs: readonly T[], municipalityId: string): T[] {
+  return clubs.filter((c) => municipalityOf(c.locations)?.id === municipalityId);
+}
+
+/**
  * Resolve a `/schools/<slug>` URL slug back to its municipality entry. Accepts
  * the canonical slug *and* every alternate-locale slug, so both `helsinki` and
  * `helsingfors` land on the same row regardless of the viewer's locale — the

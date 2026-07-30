@@ -3,6 +3,7 @@ import {
   buildMunicipalityEntries,
   findMunicipalityBySlug,
   groupByRegion,
+  selectClubsInMunicipality,
 } from "@/lib/schools/municipalities";
 import type { LocationWithChain } from "@/services/locations";
 import type { EmbeddedLocation } from "@/lib/locations/embedded-chain";
@@ -133,6 +134,65 @@ describe("buildMunicipalityEntries", () => {
   });
 });
 
+describe("selectClubsInMunicipality", () => {
+  // The narrowing the /schools/<slug> page does. Membership is resolved, not an
+  // id comparison, so it must agree with the list's `hasClubs` above — the two
+  // ends of one feature answering "which municipality is this club in?".
+  const ONLINE_ESPOO = club("online-espoo", ESPOO_CLUB);
+  const IN_PERSON_HELSINKI = club("in-person-helsinki", HELSINKI_SITE_CLUB);
+  const REGIONAL = club("regional", REGION_CLUB);
+
+  it("keeps an online club anchored at the municipality itself", () => {
+    expect(
+      selectClubsInMunicipality([ONLINE_ESPOO], "espoo").map((c) => c.id),
+    ).toEqual(["online-espoo"]);
+  });
+
+  it("keeps an in-person club anchored at a site under the municipality", () => {
+    expect(
+      selectClubsInMunicipality([IN_PERSON_HELSINKI], "helsinki").map(
+        (c) => c.id,
+      ),
+    ).toEqual(["in-person-helsinki"]);
+  });
+
+  it("keeps both delivery modes of the same municipality together", () => {
+    // The bug this rule exists for: an online club and an in-person one funded
+    // by the same municipality are anchored at different levels, and both belong
+    // on that municipality's page. Format filtering happens separately.
+    const HELSINKI_ONLINE: EmbeddedLocation = {
+      id: "helsinki",
+      name: "Helsinki",
+      name_i18n: null,
+      type: "municipality",
+      parent: null,
+    };
+    const clubs = [club("online-helsinki", HELSINKI_ONLINE), IN_PERSON_HELSINKI];
+    expect(selectClubsInMunicipality(clubs, "helsinki").map((c) => c.id)).toEqual(
+      ["online-helsinki", "in-person-helsinki"],
+    );
+  });
+
+  it("drops a club belonging to a different municipality", () => {
+    const clubs = [ONLINE_ESPOO, IN_PERSON_HELSINKI];
+    expect(selectClubsInMunicipality(clubs, "tampere")).toEqual([]);
+    expect(selectClubsInMunicipality(clubs, "espoo").map((c) => c.id)).toEqual([
+      "online-espoo",
+    ]);
+  });
+
+  it("drops a club anchored above municipality level, and one with no location", () => {
+    // A region-anchored club (legacy shape) belongs to no municipality — no
+    // cascade down to the municipalities under it — and a null embed is simply
+    // not this municipality's.
+    expect(selectClubsInMunicipality([REGIONAL], "tampere")).toEqual([]);
+    expect(selectClubsInMunicipality([REGIONAL], "pirkanmaa")).toEqual([]);
+    expect(selectClubsInMunicipality([club("nowhere", null)], "espoo")).toEqual(
+      [],
+    );
+  });
+});
+
 describe("findMunicipalityBySlug", () => {
   it("resolves the canonical viewer-locale slug", () => {
     const entries = buildMunicipalityEntries(MUNICIPALITIES, [], "fi");
@@ -181,6 +241,15 @@ describe("groupByRegion", () => {
     expect(groups[0].municipalities.map((m) => m.name)).toEqual(["Espoo"]);
   });
 });
+
+/**
+ * A club row as the narrowing sees it: an id plus the location embed. Typed
+ * structurally on purpose — the helper takes any row carrying its location, so
+ * the fixture doesn't have to fake a whole product row.
+ */
+function club(id: string, locations: EmbeddedLocation | null) {
+  return { id, locations };
+}
 
 function chainNode(
   id: string,

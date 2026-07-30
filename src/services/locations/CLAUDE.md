@@ -323,25 +323,65 @@ it over per-locale `name_sv`/`name_xx` columns).
 
 ## Products ↔ locations
 
-Every product is **either** remote (`is_remote = true`, `location_id IS NULL`) **or**
-in-person (`is_remote = false`, `location_id` set) — enforced by a CHECK constraint. A
-`BEFORE INSERT/UPDATE` trigger additionally requires any non-null `location_id` to
-reference a `type = 'site'` row.
+**`is_remote` is the only field that says how a product is delivered.** `location_id` says
+where it *belongs*, and which levels it may point at depends on the product type as well as
+the delivery mode. Three CHECK constraints plus a `BEFORE INSERT/UPDATE` trigger on
+`products` together permit exactly three shapes:
 
-**Rule: Products pin only to `site` (leaf) locations — never to a region/city.** This
-gives the ancestor-walk matcher a well-defined start point. Defence in depth: the product
-form's zod rule disables submit until a leaf is chosen; the CHECK + trigger are the DB
-backstop.
+| Product | `is_remote` | `location_id` |
+|---|---|---|
+| In-person, any type | `false` | required, must be a `site` row |
+| Online municipality club | `true` | required, must be a `country`, `region` or `municipality` row |
+| Online, any other type | `true` | must be `NULL` |
+
+The trigger also refuses a `location_id` referencing no row at all, raising a
+foreign-key violation instead of letting the write through.
+
+**Rule: an in-person product pins to a `site` (leaf) location — never to a municipality,
+region or country.** This gives the ancestor-walk matcher a well-defined start point.
+Defence in depth: the product form's zod rule disables submit until a leaf is chosen; the
+CHECK + trigger are the DB backstop.
 
 **Rule: `is_remote` and `spoken_language_code` on `products` are NOT NULL with no
 DEFAULT — admins must explicitly pick both on every product.** No silent default at any
 layer.
 
-Product queries embed a product's location plus one level of parent, which is exactly
-enough to derive the municipality it sits in: the schema allows only two shapes for a
-municipality club — the municipality itself (online) or a site directly under it
-(in-person). Surfaces that group clubs by municipality read that embed and never touch the
-locations table.
+### A municipality club's location is a municipality reference, not a delivery mode
+
+A municipality club is funded by one Finnish municipality, and its `location_id` is how
+that ownership is recorded — **in both delivery modes, at whichever level the mode
+requires**: an online club points at the municipality row itself, an in-person one at a
+site inside it. A site is only ever created directly beneath the municipality an admin
+confirmed, so the municipality sits at depth 0 or 1 either way. Both shapes assert the same
+thing — this is the municipality paying for the club, and therefore the municipality whose
+parents see it when they browse.
+
+**Rule: never read `location_id` presence, or its value, as a delivery-mode proxy.** On a
+consumer club the two happen to coincide (online means no location at all), so code written
+for that type reads as though a location implied in-person. A municipality club always has
+one, so on that type the inference is simply false — and the failure is silent: the surface
+renders its online clubs and quietly omits every in-person one. Ask `is_remote`.
+
+**Rule: a surface that groups, filters or scopes clubs by municipality resolves membership
+— it never compares `location_id` against a municipality id.** Resolving means taking the
+club's own location and stepping up to the nearest municipality, itself included, which
+lands both shapes in the same bucket; an equality test keeps only the online half. One
+resolver in `src/lib/locations/` implements this for every such surface — a per-surface
+hand-rolled filter is how the two ends of one feature came to disagree, one listing a
+municipality and the other 404ing it.
+
+Membership is municipality-exact, with no cascade: a club anchored to a region or a country
+— legacy data the trigger still permits for online muni clubs, per the UI-enforced
+restriction above — resolves to *no* municipality rather than lighting up every
+municipality beneath it.
+
+Delivery mode stays an orthogonal axis on top of membership. A page scoped to one
+municipality shows both modes by default and offers online/in-person as its own filter, so
+the two dimensions never collapse into each other.
+
+Product queries embed a product's location plus one level of parent, which is exactly the
+depth those two shapes need. Surfaces that group clubs by municipality read that embed and
+never touch the locations table.
 
 ## Gedu coverage
 

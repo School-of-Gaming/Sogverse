@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { ROUTES } from "@/lib/constants";
 import { MUNICIPALITY_TOPIC_CHIPS } from "@/lib/products/topics";
+import { selectClubsInMunicipality } from "@/lib/schools/municipalities";
 import { useVisibleProductsByTypes } from "@/services/products";
 import {
   useParticipationCounts,
@@ -25,9 +26,14 @@ import { ProductBrowseResults } from "@/components/public/products/product-brows
 //
 // `initialProducts` is *every* visible municipality club (the same set the
 // /schools page fetches), so it seeds React Query's `["municipality_club"]`
-// cache exactly and the client refetch is flicker-free. We narrow to this
-// municipality's clubs client-side via `location_id`, mirroring how the shop
-// narrows its all-types fetch down to the selected category.
+// cache exactly and the client refetch is flicker-free. Narrowing to this
+// municipality happens client-side through the shared resolved-membership
+// helper — the same rule the server prefetch and the /schools list use, so all
+// three agree. It has to be a resolution rather than a `location_id` match:
+// this municipality's clubs are anchored at two levels (the municipality itself
+// when online, a site inside it when in-person), and an equality test would
+// keep only the online ones. Delivery mode is filtered separately, by the
+// filter strip's Format row.
 interface MunicipalityClubsBrowseProps {
   municipalityId: string;
   /** The slug the user is on (the URL param), used to build child detail-page
@@ -56,7 +62,7 @@ export function MunicipalityClubsBrowse({
     initialData: initialProducts,
   });
   const clubs = useMemo(
-    () => (allClubs ?? []).filter((p) => p.location_id === municipalityId),
+    () => selectClubsInMunicipality(allClubs ?? [], municipalityId),
     [allClubs, municipalityId],
   );
 
