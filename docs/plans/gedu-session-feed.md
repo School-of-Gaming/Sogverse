@@ -125,6 +125,35 @@ attendance, public note, staff note (+ needs-substitute on future ones); per
 **group** — public note, staff note; per **product** — material URL (staff) and
 Padlet URL (families).
 
+### Product page layout (decided in feedback round 2 — desktop-first workspace)
+
+Gedu (and admin) surfaces are **desktop-default** — assume ~16:9/16:10 and use the
+width; mobile must work but is secondary. (Parents and gamers remain mobile-first;
+this split is a deliberate site-wide convention.) The first single-column draft
+flattened product/group/session scopes into one equal-weight pile of cards and
+duplicated the Join affordance; the decided layout separates them:
+
+- **The page is the group's workspace**, not a product page listing groups. No
+  "Your group" card — the gedu arrived by clicking their group; the group *is* the
+  page.
+- **Masthead** (full width, ~3 lines): back link; product context line (type label,
+  product name, Padlet + material link chips — product scope lives here); group
+  identity line (group name, gamer count).
+- **Desktop = two columns.** Main column (~2/3, capped at reading width): the
+  timeline — a slim attention row ("N need write-ups", jumps to the first gap),
+  the collapsed later-sessions block, the prominent next session, the chunked
+  past. Reference rail (~1/3): three compact cards —
+  1. **Other groups** — the peer-cover scenario ("can you watch my room for 10
+     min?"): one row per peer group with name, gedu chips, gamer count, and a
+     live-state Join button. Peer rooms appear here and only here.
+  2. **Group** — co-teachers, roster with parent emails, copy-all-emails.
+  3. **Group notes** — public note (preview-first; it is what families will see)
+     + staff note, inline-editable.
+- **One Join per room on the whole page**: the gedu's own room only on the
+  next-session timeline entry; each peer room only on its rail row.
+- **Mobile**: single column — masthead, timeline, then the rail cards stacked
+  below. The weekly loop (read last week, join, write up) stays first.
+
 The gedu dashboard gets only an **aggregate alert badge** on the product card ("N
 sessions need attention") linking into the feed — no separate queue UI. The feed itself
 becomes the spine of the existing gedu product detail pages
