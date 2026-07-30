@@ -1,7 +1,15 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { useTranslations } from "next-intl";
-import { ArrowRight, Cpu, ShieldCheck, Sparkles, Trophy, Users } from "lucide-react";
+import {
+  ArrowRight,
+  Cpu,
+  Rocket,
+  ShieldCheck,
+  Sparkles,
+  Trophy,
+  Users,
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -32,8 +40,17 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-const whyIcons = [Cpu, Users, Trophy, Sparkles, ShieldCheck];
-const whyKeys = ["skills", "people", "recognised", "fun", "safe"] as const;
+// Six reasons so the grid fills an even 2 x 3. Paired by row as they read:
+// capability + accessibility, social + recognition, fun + safety.
+const whyIcons = [Cpu, Rocket, Users, Trophy, Sparkles, ShieldCheck];
+const whyKeys = [
+  "skills",
+  "experience",
+  "people",
+  "recognised",
+  "fun",
+  "safe",
+] as const;
 
 const stepKeys = ["step1", "step2", "step3", "step4"] as const;
 
@@ -81,7 +98,37 @@ export default function RobloxPage() {
         </div>
       </section>
 
-      {/* Why join */}
+      {/* How it works — ahead of the events list, so a reader knows what the
+          four steps are before meeting the thing they take those steps on. */}
+      <section className="bg-muted/30 py-16 sm:py-24">
+        <div className="container mx-auto px-4">
+          <div className="mx-auto max-w-2xl text-center">
+            <Eyebrow>{t("how.eyebrow")}</Eyebrow>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
+              {t("how.heading")}
+            </h2>
+            <p className="mt-4 text-muted-foreground">{t("how.subheading")}</p>
+          </div>
+          <div className="mx-auto mt-14 grid max-w-5xl gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {steps.map((step) => (
+              <div key={step.key} className="text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-xl font-bold text-primary-foreground">
+                  {step.number}
+                </div>
+                <h3 className="mt-4 text-lg font-semibold">{step.title}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {step.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <UpcomingEvents />
+
+      {/* Why join — after the events, where it answers the hesitation a reader
+          has once they have seen what is actually on offer. */}
       <section className="bg-muted/30 py-16 sm:py-24">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl text-center">
@@ -90,17 +137,9 @@ export default function RobloxPage() {
               {t("why.heading")}
             </h2>
           </div>
-          {/* Five items in a two-column grid leaves a lone card on the last row;
-              the last one spans both columns so the block ends square rather
-              than lopsided. */}
           <div className="mx-auto mt-14 grid max-w-5xl gap-6 sm:grid-cols-2">
-            {reasons.map((reason, i) => (
-              <Card
-                key={reason.key}
-                className={
-                  i === reasons.length - 1 ? "bg-card/50 sm:col-span-2" : "bg-card/50"
-                }
-              >
+            {reasons.map((reason) => (
+              <Card key={reason.key} className="bg-card/50">
                 <CardHeader>
                   <div className="flex items-center gap-4">
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10">
@@ -120,34 +159,11 @@ export default function RobloxPage() {
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="container mx-auto px-4 py-16 sm:py-24">
-        <div className="mx-auto max-w-2xl text-center">
-          <Eyebrow>{t("how.eyebrow")}</Eyebrow>
-          <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-            {t("how.heading")}
-          </h2>
-          <p className="mt-4 text-muted-foreground">{t("how.subheading")}</p>
-        </div>
-        <div className="mx-auto mt-14 grid max-w-5xl gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {steps.map((step) => (
-            <div key={step.key} className="text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary text-xl font-bold text-primary-foreground">
-                {step.number}
-              </div>
-              <h3 className="mt-4 text-lg font-semibold">{step.title}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {step.description}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <UpcomingEvents />
-
       {/* For parents */}
-      <section className="bg-muted/30 py-16 sm:py-24">
+      {/* Plain ground, not the tinted one it used to sit on: "Why join" now runs
+          directly above it, and two tinted bands in a row read as a single
+          section with a stray heading in the middle. */}
+      <section className="py-16 sm:py-24">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-3xl text-center">
             <Eyebrow>{t("parents.eyebrow")}</Eyebrow>
