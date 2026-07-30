@@ -3,10 +3,12 @@
 import { useMemo } from "react";
 import { Check, Copy, Star, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Identicon } from "@/components/ui/identicon";
+import {
+  PersonChipList,
+  type PersonChipListPerson,
+} from "@/components/ui/person-chip";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
@@ -73,19 +75,7 @@ export function AssignedGroupCard({
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               {t("gedusLabel")}
             </p>
-            <div className="flex flex-wrap gap-1.5">
-              {group.gedus.map((g) => (
-                <span
-                  key={g.id}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2 py-1 text-xs"
-                >
-                  <Avatar className="h-5 w-5">
-                    <Identicon id={g.id} size={20} />
-                  </Avatar>
-                  <span className="leading-none">{g.first_name}</span>
-                </span>
-              ))}
-            </div>
+            <PersonChipList people={geduChipPeople(group.gedus)} />
           </div>
         )}
 
@@ -192,6 +182,18 @@ export function CopyAllEmailsButton({ emails }: { emails: string[] }) {
         : t("copyAllParentEmails", { count: emails.length })}
     </Button>
   );
+}
+
+/**
+ * A group's gedus as person-chip rows. The DB row spells the field
+ * `first_name`; the shared chip primitive is not a gedu component and takes a
+ * plain `name`, so the adaptation happens once here rather than in each of the
+ * three surfaces that render these chips.
+ */
+export function geduChipPeople(
+  gedus: GeduAssignedProductGroup["gedus"],
+): PersonChipListPerson[] {
+  return gedus.map((gedu) => ({ id: gedu.id, name: gedu.first_name }));
 }
 
 /**

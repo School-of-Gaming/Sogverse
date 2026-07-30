@@ -49,6 +49,11 @@ import {
 import { Identicon } from "@/components/ui/identicon";
 import { MaterialLink } from "@/components/ui/material-link";
 import { PadletLink } from "@/components/ui/padlet-link";
+import {
+  PersonChip,
+  PersonChipList,
+  type PersonChipListPerson,
+} from "@/components/ui/person-chip";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { ParticipantRow, type ParticipantRowData } from "@/components/voice/ParticipantRow";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
@@ -119,6 +124,18 @@ import {
   SESSION_FEED_ROSTER,
   SESSION_FEED_TIMEZONE,
 } from "@/components/gedu/session-feed/mock-fixtures";
+
+/**
+ * Chip demo people. Real generated UUIDv4s, hardcoded: an identicon is hashed
+ * out of the id's hex bytes, so a readable stand-in renders an empty square and
+ * a generated one gives the same person a different face on every reload.
+ */
+const PERSON_CHIP_PEOPLE: readonly PersonChipListPerson[] = [
+  { id: "8f6f0242-a296-4f05-a046-c7a6f26c8962", name: "Sanna" },
+  { id: "65884374-5a68-4b8c-83bb-dbeb60fe39c2", name: "Petra" },
+  { id: "5a880b4d-b6a7-46b3-afcc-49e445c650e4", name: "Joonas" },
+  { id: "60e43688-3e84-43a3-9e57-1be908284716", name: "Markus" },
+];
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -1651,6 +1668,50 @@ export default function AdminUIComponentsPage() {
                 <Identicon id="e3248221-170c-472f-ab56-eb60f1261966" size={48} />
               </Avatar>
               <span className="text-xs text-muted-foreground">48px</span>
+            </div>
+          </div>
+        </SubSection>
+
+        <SubSection title="Person chip">
+          <p className="max-w-prose text-sm text-muted-foreground">
+            A person as a pill — identicon plus first name. The avatar box and
+            the identicon&rsquo;s pixel size are paired inside the component, so
+            a call site can&rsquo;t desync them. Use{" "}
+            <code>compact</code> on a line that already carries something else
+            (a rail row with a button beside the chips); the default size is for
+            a row of chips on their own line.
+          </p>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground">Default</p>
+              <PersonChipList people={PERSON_CHIP_PEOPLE} />
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground">Compact</p>
+              <PersonChipList people={PERSON_CHIP_PEOPLE} size="compact" />
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground">
+                Labelled, as the product page&rsquo;s rail does it — the row
+                already shows a gamer count, so an unlabelled set of faces would
+                read as children rather than as the Gedus teaching the group.
+              </p>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Gedus
+                </span>
+                <PersonChipList
+                  people={PERSON_CHIP_PEOPLE.slice(0, 2)}
+                  size="compact"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground">Single chip</p>
+              <PersonChip
+                id={PERSON_CHIP_PEOPLE[0].id}
+                name={PERSON_CHIP_PEOPLE[0].name}
+              />
             </div>
           </div>
         </SubSection>
