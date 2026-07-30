@@ -28,7 +28,8 @@
       "changePin": "Modifier le code PIN",
       "privacy": "Politique de confidentialité",
       "terms": "Conditions générales",
-      "antiBullying": "Lutte contre le harcèlement et discipline"
+      "antiBullying": "Lutte contre le harcèlement et discipline",
+      "roblox": "Programme de création de jeux Roblox"
     }
   },
   "notFound": {
@@ -2369,6 +2370,94 @@
           "Si vous avez des questions sur cette politique, ou si vous souhaitez parler de quelque chose qui s’est passé, écrivez à notre bureau à kanslia@sog.gg. Une vraie personne vous répondra, et nous sommes là pour vous aider."
         ]
       }
+    }
+  },
+  "roblox": {
+    "hero": {
+      "title": "Construisez<br></br><primary>Jouez</primary><br></br><secondary>Publiez</secondary>",
+      "subtitle": "Un programme gratuit de création de jeux Roblox pour les ados, proposé par Lynx Educate et School of Gaming, en partenariat avec Roblox.",
+      "cta": "Inscrivez-vous"
+    },
+    "lockup": {
+      "heading": "Un partenariat entre",
+      "sogAlt": "School of Gaming",
+      "lynxAlt": "Lynx Educate",
+      "robloxAlt": "Roblox"
+    },
+    "what": {
+      "eyebrow": "Le programme",
+      "heading": "Apprenez à construire sur Roblox.",
+      "paragraph1": "Ce programme donne aux ados de 15–18 ans en France l’occasion de concevoir, coder et publier leur propre jeu Roblox — avec les personnes qui comptent le plus pour les encourager. Proposé par Lynx Educate et School of Gaming, et soutenu par Roblox, c’est une introduction pratique à la création de jeux, à la créativité numérique et à la collaboration en ligne en toute sécurité.",
+      "paragraph2": "À la fin du programme, les participants auront publié leur propre création originale sur Roblox. Aucune expérience requise — juste de la curiosité."
+    },
+    "why": {
+      "eyebrow": "Pourquoi participer",
+      "heading": "Bien plus qu’un cours de code",
+      "skills": {
+        "title": "Des compétences pour l’avenir",
+        "description": "Roblox Studio, la conception assistée par IA et les bases de la logique de programmation."
+      },
+      "people": {
+        "title": "Rencontrez les vôtres",
+        "description": "Retrouvez d’autres créateurs qui aiment construire autant que vous."
+      },
+      "portfolio": {
+        "title": "Construisez votre portfolio",
+        "description": "Vous repartez avec une création publiée, bien réelle, à montrer."
+      },
+      "recognised": {
+        "title": "Faites-vous remarquer",
+        "description": "Les meilleurs projets sont présentés lors de notre événement de clôture."
+      },
+      "fun": {
+        "title": "Du vrai plaisir",
+        "description": "Créatif, convivial et fait pour être apprécié."
+      },
+      "safe": {
+        "title": "Restez en sécurité en ligne",
+        "description": "Des sessions dédiées aux parents sur la sécurité numérique, la civilité et le contrôle parental."
+      }
+    },
+    "how": {
+      "eyebrow": "Comment ça marche",
+      "heading": "Commencez en quatre étapes simples",
+      "subheading": "Choisissez le format qui vous convient : des événements en présentiel ou en ligne, d’une heure à quatre semaines.",
+      "step1": {
+        "title": "Choisissez un événement",
+        "description": "Parmi les options ci-dessous — nous en ajoutons souvent, alors revenez y jeter un œil."
+      },
+      "step2": {
+        "title": "Créez votre compte",
+        "description": "Directement sur la page de l’événement. Rapide et gratuit pour les nouveaux parents."
+      },
+      "step3": {
+        "title": "Renseignez les informations de votre ado",
+        "description": "Quelques informations pour finaliser l’inscription."
+      },
+      "step4": {
+        "title": "Consultez votre boîte mail",
+        "description": "Vous recevrez la confirmation et tout ce qu’il faut savoir avant la première session."
+      }
+    },
+    "events": {
+      "heading": "Événements à venir",
+      "subheading": "Nous ajoutons souvent de nouveaux événements — revenez voir ce qui arrive.",
+      "empty": "Les premiers événements sont en cours de programmation. Revenez bientôt pour découvrir ce qui arrive."
+    },
+    "parents": {
+      "eyebrow": "Pour les parents",
+      "heading": "Nous savons que la sécurité en ligne compte",
+      "body": "En parallèle du programme pour les ados, nous organisons des sessions dédiées aux parents sur la sécurité numérique, le contrôle parental et la façon d’accompagner votre ado dans sa démarche créative.",
+      "cta": "Voir nos sessions parents"
+    },
+    "cta": {
+      "heading": "Prêt à commencer ?",
+      "body": "Les places sont limitées par ville et par groupe.",
+      "button": "Commencer"
+    },
+    "legal": {
+      "roblox": "© 2024 Roblox Corporation. Roblox, le logo Roblox et Roblox Tilt font partie des marques déposées et non déposées de Roblox Corporation aux États-Unis et dans d’autres pays. Utilisées avec autorisation.",
+      "lynx": "Lynx Educate et le logo Lynx Educate sont des marques de Lynx Educate. Utilisées avec autorisation."
     }
   }
 }
