@@ -28,7 +28,8 @@
       "changePin": "Change PIN",
       "privacy": "Privacy Policy",
       "terms": "Terms and Conditions",
-      "antiBullying": "Anti-Bullying and Discipline"
+      "antiBullying": "Anti-Bullying and Discipline",
+      "roblox": "Roblox Studio Clubs"
     }
   },
   "notFound": {
@@ -1543,6 +1544,69 @@
       "heading": "Ready to Turn Gaming into Learning?",
       "subheading": "Give your child a fun, safe place to play, learn, and make friends — guided by a professional game educator.",
       "createFreeAccount": "Create Free Account"
+    }
+  },
+  "roblox": {
+    "hero": {
+      "badge": "New partnership — details coming soon",
+      "title": "Your Child Can <primary>Build</primary> the Games<br></br>They Love to <secondary>Play</secondary>",
+      "subtitle": "School of Gaming is partnering with Lynx Educate to bring Roblox Studio clubs to France. The same world-class game educators and the same safe, friendly clubs — with your child in the creator’s seat."
+    },
+    "lockup": {
+      "heading": "A partnership between",
+      "sogAlt": "School of Gaming",
+      "lynxAlt": "Lynx Educate",
+      "robloxAlt": "Roblox"
+    },
+    "placeholder": {
+      "heading": "This page is still taking shape",
+      "body": "The partnership is new and we are still confirming the details — where the clubs will run, when they start, and how to join. We have put this page up early so you can see where we are heading. It will grow as things are settled."
+    },
+    "what": {
+      "heading": "From Playing to Making",
+      "subheading": "Roblox is already where millions of children spend their time. Roblox Studio is where they can start building it themselves.",
+      "studio": {
+        "title": "Real Game Creation",
+        "description": "Children learn Roblox Studio — the same tools Roblox creators use for real. They design worlds, make things move and react, and finish with something of their own they can share with friends."
+      },
+      "gedus": {
+        "title": "Guided by Gedus",
+        "description": "Our game educators are gamers themselves. They know a child who is proud of what they made will keep going, so a session is about building confidence just as much as building skills."
+      },
+      "safe": {
+        "title": "Safe, Friendly Clubs",
+        "description": "Small groups, the same familiar Gedu every week, and the gamer’s oath: treat each other with kindness, online and offline. The same care we put into our Minecraft clubs."
+      },
+      "parents": {
+        "title": "Parents Are Part of It",
+        "description": "You will see what your child is making and how they are getting on. Parental game education matters as much as the clubs themselves — that does not change here."
+      }
+    },
+    "partners": {
+      "heading": "Who Brings What",
+      "subheading": "Three organisations, one club.",
+      "sog": {
+        "name": "School of Gaming",
+        "role": "The club format and the game educators who run it — the people who turn screen time into quality time."
+      },
+      "lynx": {
+        "name": "Lynx Educate",
+        "role": "Our partner in France, whose work is removing the barriers that keep people out of education."
+      },
+      "roblox": {
+        "name": "Roblox",
+        "role": "The platform the clubs are built on, and the creation tools the children will learn to use."
+      },
+      "hosted": "Sogverse is the platform that hosts it all — the same place parents already manage their gamers, clubs and sessions."
+    },
+    "cta": {
+      "heading": "More Details on the Way",
+      "body": "Sign-up is not open yet. When it opens, this is where it will happen. If you already have a School of Gaming account, nothing about it changes.",
+      "note": "Placeholder — no action available yet"
+    },
+    "legal": {
+      "roblox": "© 2024 Roblox Corporation. The Roblox word mark, Roblox Logo and Roblox Tilt are among the registered and unregistered trademarks of Roblox Corporation in the U.S. and other countries. Used with permission.",
+      "lynx": "Lynx Educate and the Lynx Educate logo are trademarks of Lynx Educate. Used with permission."
     }
   },
   "locations": {

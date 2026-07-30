@@ -186,6 +186,19 @@
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-ring: hsl(var(--sidebar-ring));
+  /* Brand plate — the surface a partner-logo lockup sits on. Deliberately the
+     same near-white in both themes, unlike every token above it: partner marks
+     are supplied in fixed colourways we may not alter, and the marks we carry
+     are dark-ink (a black Roblox wordmark, a black Lynx Educate wordmark), so
+     they need a light ground to stay legible on our dark-default pages. Roblox's
+     brand guidelines ask for exactly this — their black wordmark belongs on a
+     light surface — and forbid the alternative of recolouring the mark to suit
+     our background. Off-white rather than pure white so the plate reads as a
+     surface rather than a hole, with a hairline border to define its edge in
+     light theme where page and plate are close in value. */
+  --color-brand-plate: #f7f7f5;
+  --color-brand-plate-foreground: #121212;
+  --color-brand-plate-border: #e2e2dd;
   /* YTY Element colors */
   --color-yty-harmony: #34d399;
   --color-yty-glow: #fbbf24;

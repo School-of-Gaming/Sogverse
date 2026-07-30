@@ -133,6 +133,15 @@ export const ROUTES = {
    */
   schoolMunicipalityProduct: (slug: string, productId: string) =>
     `/schools/${slug}/${productId}`,
+  /**
+   * Public landing page for the Roblox Studio partnership with Lynx Educate,
+   * running in France. Placeholder content while the partnership is being
+   * finalised: reachable by anyone who has the URL (so it can be shared with
+   * partners) but deliberately undiscoverable — no nav link, excluded from the
+   * sitemap, disallowed in robots.txt, and noindex via its own metadata.
+   * Flip all four together when the content is ready to be found.
+   */
+  roblox: "/roblox",
   privacy: "/privacy",
   termsAndConditions: "/terms-and-conditions",
   antiBullying: "/anti-bullying-and-discipline",
