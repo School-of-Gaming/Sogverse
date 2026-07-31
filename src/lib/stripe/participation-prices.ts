@@ -14,13 +14,9 @@ interface ProductPrice {
 
 /**
  * The catalogue price for a (product, currency), or null when the product is
- * genuinely not sold in that currency.
- *
- * A failed *query* is not the same as a missing row, and the two must not be
- * flattened together: callers read the absence of a price as "not for sale" and
- * decide what to charge from it, so a transient read failure presenting as
- * "no price" is a pricing decision made on missing data. Errors propagate
- * instead, and the caller fails closed.
+ * genuinely not sold in that currency. Errors propagate: callers read a missing
+ * price as "not for sale" and decide what to charge from it, so a failed query
+ * must not present as an absent one.
  */
 async function loadBasePrice(
   admin: SupabaseClient<Database>,
@@ -59,31 +55,22 @@ interface SubscriptionPriceRow {
 }
 
 /**
- * Resolve the monthly Stripe Price for a (product, currency) pair, creating
- * one when the cache is empty **or stale**.
+ * Resolve the monthly Stripe Price for a (product, currency) pair, creating one
+ * when the cache is empty **or stale**.
  *
- * `product_subscription_prices` caches the Stripe Price backing a club's
- * catalogue price. Stripe Prices are immutable, so an admin raising
- * `price_cents` on the product form cannot edit the cached Price — it has to be
- * replaced. We therefore compare the cached amount against the catalogue amount
- * on every call and mint a replacement Price whenever they diverge.
- *
- * Skipping that comparison is what made an admin price change apply to the
- * displayed price but not the charged one: the club advertised the new amount
- * while checkout silently kept billing the old cached Price forever.
- *
- * Existing subscribers are unaffected — a Stripe Subscription holds its own
- * Price reference, so replacing the cached Price only governs *future*
- * checkouts. That is why the superseded Price must stay active in Stripe: live
- * subscriptions still bill against it.
+ * Two things here are load-bearing. **Keep the amount comparison** — Stripe
+ * Prices are immutable, so an admin raising `price_cents` cannot edit the
+ * cached Price and it has to be replaced; without the comparison the club
+ * advertises the new amount while checkout bills the old one forever. And
+ * **never deactivate the superseded Price** — live subscriptions hold their own
+ * Price reference and still bill against it, which is also why existing
+ * subscribers keep their original amount.
  */
 export async function getOrCreateSubscriptionPrice(
   admin: SupabaseClient<Database>,
   productId: string,
   currency: SupportedCurrency,
 ): Promise<SubscriptionPriceRow | null> {
-  // Independent reads, so issue them together: the common case is now "read
-  // both, compare, reuse", on the checkout hot path.
   const [{ data: cached, error: cachedErr }, base] = await Promise.all([
     admin
       .from("product_subscription_prices")
@@ -93,23 +80,16 @@ export async function getOrCreateSubscriptionPrice(
       .maybeSingle(),
     loadBasePrice(admin, productId, currency),
   ]);
-  // Same rule as the catalogue read: a failed query is not an empty cache.
-  // Treating it as one would mint a duplicate Price and clobber a good row on
-  // every transient blip, so it fails closed too.
   if (cachedErr) throw cachedErr;
 
-  // Fail closed. Without a catalogue price there is nothing to price against,
-  // and a cached Price is not a safe stand-in: it would sell a product the
-  // catalogue says is not for sale, at an amount nothing currently confirms.
-  // The caller renders this as "Product is not sold in {currency}".
+  // No catalogue price: fail closed rather than sell on a cached Price the
+  // catalogue no longer confirms. The caller renders this as a 400.
   if (!base) return null;
 
-  // Cache agrees with the catalogue — reuse it.
   if (cached && cached.unit_amount_cents === base.price_cents) {
     return cached;
   }
 
-  // Ensure the product has a Stripe Product. Look up by metadata.
   const stripeProductId = await ensureStripeProductForProduct(admin, productId);
 
   const unitAmount = base.price_cents;
@@ -133,7 +113,7 @@ export async function getOrCreateSubscriptionPrice(
   });
 
   // Upsert, not insert: on a price change the row already exists and has to be
-  // repointed at the replacement Price. The PK is (product_id, currency).
+  // repointed at the replacement Price.
   const { data: upserted, error: upsertErr } = await admin
     .from("product_subscription_prices")
     .upsert(
@@ -147,23 +127,7 @@ export async function getOrCreateSubscriptionPrice(
     )
     .select("product_id, currency, stripe_price_id, unit_amount_cents")
     .single();
-
-  if (upsertErr) {
-    // A duplicate key does NOT land here — upsert resolves it as an update — so
-    // reaching this means the write genuinely failed. Re-read only to survive a
-    // concurrent writer who already stored the amount we resolved; a row still
-    // carrying the old amount is the staleness this function exists to catch,
-    // and returning it would bill the superseded price. Fail closed instead:
-    // a failed checkout is recoverable, a wrong recurring charge is not.
-    const { data: raced } = await admin
-      .from("product_subscription_prices")
-      .select("product_id, currency, stripe_price_id, unit_amount_cents")
-      .eq("product_id", productId)
-      .eq("currency", currency)
-      .maybeSingle();
-    if (raced && raced.unit_amount_cents === unitAmount) return raced;
-    throw upsertErr;
-  }
+  if (upsertErr) throw upsertErr;
 
   return upserted;
 }

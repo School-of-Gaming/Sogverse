@@ -119,6 +119,21 @@ Now unlocked by the one-Stripe-sub-per-participation model (each consumer-club s
 - [ ] Decide the rule for **threshold-start** clubs (no fixed `start_date`): simplest is to charge immediately as today (there's no date to anchor to); deferring those would need a job that anchors the sub when the product flips to `running`. See the AskUserQuestion discussion that scoped this.
 - [ ] Parent-facing checkout copy must make "you won't be charged until {date}" explicit.
 
+### `count_seats_taken` and the seat-count rollup disagree over expired reservations
+
+- [ ] `count_seats_taken` counts `status IN ('active','reserving')` with **no
+      `reserved_until` filter**, while `refresh_product_seat_counts` — the rollup the
+      parent-facing counter reads — filters `reserved_until > NOW()`. So an expired
+      reservation is invisible on the page but still occupies a seat in the RPC that
+      gates signup: the product advertises a free seat and checkout answers "full",
+      permanently, with no way for a parent to tell why.
+
+Independent of the reservation-flow rewrite below and worth fixing either way — it is
+what turns any stranded reserving row from a temporary blemish into a destroyed seat. The
+fix is a one-line predicate change in the RPC (`AND (status = 'active' OR reserved_until
+> NOW())`), plus a db test that an expired reservation stops counting. Only bites capped
+products, so it is currently latent — see the entry below for why nothing is capped today.
+
 ### Simplify the reserve → confirm checkout flow (it pays for a cap nothing uses)
 
 A paid signup currently takes a seat in two stages: `create_participation` inserts a
@@ -140,10 +155,7 @@ any sellable product.
 - Every failure between reserving and creating the Checkout Session must remember to
   release the seat by hand. Miss one and the row is stranded — no Session exists yet, so
   the expiry webhook never fires.
-- `count_seats_taken` counts `reserving` rows with **no `reserved_until` filter**, while
-  `refresh_product_seat_counts` filters on it. A stranded row therefore holds its seat
-  permanently *and* the two counts disagree, so the page offers a seat that checkout
-  refuses. That inconsistency is worth fixing on its own even if the flow stays.
+- A stranded row holds its seat permanently, because of the seat-count bug below.
 - Two writes and a webhook round-trip on every paid signup, plus a reservation lifetime
   to tune.
 

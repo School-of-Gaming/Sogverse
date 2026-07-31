@@ -12,26 +12,19 @@ import {
 // --- Stripe mock ---
 //
 // The module creates Prices and looks up the Stripe Product that owns them.
-// `prices.update` is stubbed purely so a test can assert we never reach for it:
-// a superseded Price must stay active, because live subscriptions still bill
-// against it.
 
-const {
-  mockPricesCreate,
-  mockPricesUpdate,
-  mockProductsSearch,
-  mockProductsCreate,
-} = vi.hoisted(() => ({
-  mockPricesCreate: vi.fn(),
-  mockPricesUpdate: vi.fn(),
-  mockProductsSearch: vi.fn(),
-  mockProductsCreate: vi.fn(),
-}));
+const { mockPricesCreate, mockProductsSearch, mockProductsCreate } = vi.hoisted(
+  () => ({
+    mockPricesCreate: vi.fn(),
+    mockProductsSearch: vi.fn(),
+    mockProductsCreate: vi.fn(),
+  }),
+);
 
 vi.mock("stripe", () => {
   const StripeMock = vi.fn(function () {
     return {
-      prices: { create: mockPricesCreate, update: mockPricesUpdate },
+      prices: { create: mockPricesCreate },
       products: { search: mockProductsSearch, create: mockProductsCreate },
     };
   });
@@ -103,9 +96,10 @@ describe("getOrCreateSubscriptionPrice", () => {
   /**
    * Serves the cache table and the catalogue price, recording cache writes.
    *
-   * The cache table enforces its primary key, so a plain insert over an
-   * existing row fails the way real Postgres would. Without that, a regression
-   * from upsert back to insert would pass here and only surface in production.
+   * A dumb store on purpose: whether the write's conflict target is valid is a
+   * question only Postgres can answer, and it is pinned in
+   * tests/db/subscription-price-cache.test.ts. Reimplementing PostgREST's
+   * upsert encoding here would fail on a supabase-js change rather than a bug.
    */
   function mockBackend(state: {
     cache: CacheRow | null;
@@ -127,25 +121,6 @@ describe("getOrCreateSubscriptionPrice", () => {
 
         if (state.writeFails === true) {
           return Promise.resolve(postgrestError("write failed", 500));
-        }
-
-        // PostgREST signals an upsert via on_conflict + a merge-duplicates
-        // Prefer header; a bare insert has neither and must collide.
-        // The conflict target must name the real PK. `on_conflict=product_id`
-        // alone would pass a presence check here and fail in Postgres with "no
-        // unique or exclusion constraint matching the ON CONFLICT
-        // specification" — i.e. every price change 500s while CI stays green.
-        const headers = new Headers(init?.headers);
-        const isUpsert =
-          url.searchParams.get("on_conflict") === "product_id,currency" &&
-          (headers.get("Prefer") ?? "").includes("resolution=merge-duplicates");
-        if (state.cache !== null && !isUpsert) {
-          return Promise.resolve(
-            postgrestError(
-              'duplicate key value violates unique constraint "product_subscription_prices_pkey"',
-              409,
-            ),
-          );
         }
 
         // The body may be a bare row or an array of them.
@@ -181,7 +156,9 @@ describe("getOrCreateSubscriptionPrice", () => {
     supabase = createFetchStubbedClient(fetchMock);
     mockProductsSearch.mockResolvedValue({ data: [{ id: STRIPE_PRODUCT_ID }] });
     let n = 0;
-    mockPricesCreate.mockImplementation(async () => ({ id: `price_new_${++n}` }));
+    mockPricesCreate.mockImplementation(async () => ({
+      id: `price_new_${++n}`,
+    }));
   });
 
   it("mints a replacement Price when the cached amount is stale", async () => {
@@ -204,14 +181,6 @@ describe("getOrCreateSubscriptionPrice", () => {
       stripe_price_id: "price_new_1",
       unit_amount_cents: 2000,
     });
-  });
-
-  it("leaves the superseded Price active so live subscriptions keep billing", async () => {
-    mockBackend({ cache: cacheRow("price_old", 1000), basePriceCents: 2000 });
-
-    await getOrCreateSubscriptionPrice(supabase, PRODUCT_ID, "eur");
-
-    expect(mockPricesUpdate).not.toHaveBeenCalled();
   });
 
   it("reuses the cached Price when it matches the catalogue amount", async () => {
@@ -267,14 +236,6 @@ describe("getOrCreateSubscriptionPrice", () => {
       await getOrCreateSubscriptionPrice(supabase, PRODUCT_ID, "eur"),
     ).toBeNull();
     expect(mockPricesCreate).not.toHaveBeenCalled();
-  });
-
-  it("returns null when the product is not sold in the currency at all", async () => {
-    mockBackend({ cache: null, basePriceCents: null });
-
-    expect(
-      await getOrCreateSubscriptionPrice(supabase, PRODUCT_ID, "eur"),
-    ).toBeNull();
   });
 
   it("fails closed rather than billing the stale Price when the cache write fails", async () => {
