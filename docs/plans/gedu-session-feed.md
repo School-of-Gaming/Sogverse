@@ -346,7 +346,12 @@ notifications (alert icons in the UI are enough for now).
    requirement that a gedu can edit a group member's **Minecraft username** needs its
    own gedu write path (scoped to gamers in the gedu's assigned group), and the
    attendance storage must accommodate **partial recordings** (per-gamer marks saved
-   incrementally; a roster member may remain unmarked). Backward occurrence enumeration added to the shared expansion helpers
+   incrementally; a roster member may remain unmarked). The completeness check that
+   drives "needs attention" must evaluate against the roster **as of the session
+   date** (via participation start dates), not the current roster — otherwise a child
+   joining a long-running club retroactively reopens every completed past session.
+   The mock can't know join dates and deliberately uses the current roster; this is a
+   promotion-time correction, not a mock defect. Backward occurrence enumeration added to the shared expansion helpers
    (today they only walk forward). The epoch constant. RPC(s) for the feed window,
    record upsert, attendance set — with db-test coverage for any Json-returning
    result schemas.
