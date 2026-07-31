@@ -195,6 +195,42 @@ Decisions from feedback round 4:
   (it was already duplicated across the gedu cards before this feature tripled
   it), and the rail labels its gedu chips so they can't be misread as gamers.
 
+Decisions from feedback round 5:
+
+- **Absolute dates/times everywhere on gedu surfaces** — no relative phrasing
+  ("today"/"tomorrow"); revisit later if wanted.
+- **In-person products render no join affordance at all** — not a locked/inert
+  button; absent. Only online products have voice rooms, so only they render
+  Join, and there is no "in-person locked Join" state anywhere on gedu surfaces.
+- **Product-primary naming.** A gedu can hold at most one group per product, so
+  functionally they look at products; groups default to non-descriptive names
+  ("Group A"), products are always descriptive. Dashboard cards AND the
+  workspace masthead title with the product name; the group renders as a
+  secondary identity line. The dashboard section heading is **"My Activities"**
+  — the umbrella honest for clubs, camps and events ("My Clubs" lies to a camp
+  gedu; "Products"/"Assignments" are internal vocabulary).
+- **Joins live on group surfaces, never session cards.** The rail Group card
+  hosts the gedu's own-room Join; peer rows keep theirs; every session card
+  (including the next session) has none. Dashboard cards keep Join for online
+  products.
+- **Notes are just notes.** No planned-vs-recorded distinction in model or copy
+  — a future session may simply carry notes; no "the write-up appears here once
+  the session has run" style hinting.
+- **Attendance saves are always allowed, partial included.** The saved record
+  keeps per-gamer marks including unmarked; "Needs attention" persists until
+  every roster member is explicitly marked, which is what brings the gedu back
+  to finish; the summary shows progress ("N of M marked").
+- **Parent email is a backend-guaranteed invariant** — the UI renders it
+  unconditionally, with no empty-state.
+- **Roster rows must survive long emails** (redesigned layout, truncation +
+  copy affordance rather than wrapping), and gain a new requirement: **a gedu
+  can edit the Minecraft username of gamers in their group** (mocked now; the
+  schema step must add the gedu write path for it, authorized via the group
+  assignment).
+- The next-session accent must be visually distinct from the warning/attention
+  tone (info/secondary family, not primary-adjacent-to-warning).
+- The session feed fills the width its column gives it (no internal reading cap).
+
 Copy & treatment decisions (feedback round 3):
 
 - The attention state is called **"Needs attention"** (not "needs a write-up" —
@@ -306,7 +342,11 @@ notifications (alert icons in the UI are enough for now).
    classification per the db rules. Site notes need a **gedu UPDATE path**:
    `site_details` / `site_staff_details` currently carry only a gedu read policy —
    the mock's gedu-editable site notes are a promise this step has to keep (policy or
-   RPC, authorized via the gedu's assignment to a product at that site). Backward occurrence enumeration added to the shared expansion helpers
+   RPC, authorized via the gedu's assignment to a product at that site). The round-5
+   requirement that a gedu can edit a group member's **Minecraft username** needs its
+   own gedu write path (scoped to gamers in the gedu's assigned group), and the
+   attendance storage must accommodate **partial recordings** (per-gamer marks saved
+   incrementally; a roster member may remain unmarked). Backward occurrence enumeration added to the shared expansion helpers
    (today they only walk forward). The epoch constant. RPC(s) for the feed window,
    record upsert, attendance set — with db-test coverage for any Json-returning
    result schemas.
