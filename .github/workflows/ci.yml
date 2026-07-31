@@ -12,16 +12,33 @@ on:
 permissions:
   contents: read
 
-# Single source of truth for the Supabase CLI version used by every job below.
-# Pinned (not `latest`) on purpose: `latest` makes supabase/setup-cli resolve the
-# newest release via the GitHub API at runtime, and that lookup intermittently
-# rate-limits / times out / hangs — which is a CI flake unrelated to our code.
-# This must stay >= the v2.106.0 floor the DB-grants regime depends on (see
-# CLAUDE.md "Function & Table Access Control"). Bump it when the local dev CLI is
-# upgraded (keep CI == what we run migrations against locally); check the newest
-# stable with `gh api repos/supabase/cli/releases/latest`.
 env:
+  # Single source of truth for the Supabase CLI version used by every job below.
+  # Pinned (not `latest`) on purpose: `latest` makes supabase/setup-cli resolve the
+  # newest release via the GitHub API at runtime, and that lookup intermittently
+  # rate-limits / times out / hangs — which is a CI flake unrelated to our code.
+  # This must stay >= the v2.106.0 floor the DB-grants regime depends on (see
+  # CLAUDE.md "Function & Table Access Control"). Bump it when the local dev CLI is
+  # upgraded (keep CI == what we run migrations against locally); check the newest
+  # stable with `gh api repos/supabase/cli/releases/latest`.
   SUPABASE_CLI_VERSION: "2.106.0"
+
+  # `npm ci` installs every workspace, including services/bedrock-portal, whose
+  # bedrock-protocol -> raknet-native dependency resolves prebuilds by
+  # platform-kernelmajor-arch and only ships linux-5-x64 — the runner image is on
+  # kernel 6, so its install script compiles RakNet from source on every job. That
+  # build downloads Node headers from nodejs.org, and when the fetch flakes it reds
+  # the run. No job here loads the binary (type-check reads its .d.ts, no test
+  # imports it), so skip dependency install scripts outright.
+  #
+  # If you add a dependency that DOES need its install script, CI fails with a
+  # missing-native-module error that reads like a bug in your code — it is this
+  # flag. Unset it for that job, or use a package that ships a usable prebuild.
+  #
+  # Must stay CI-only: never move this into a committed .npmrc. That file travels
+  # to the GCE box in services/bedrock-portal/DEPLOY.md, where the portal does need
+  # the compiled binary at runtime.
+  NPM_CONFIG_IGNORE_SCRIPTS: "true"
 
 jobs:
   lint-and-typecheck:
