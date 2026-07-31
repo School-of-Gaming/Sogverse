@@ -1,6 +1,11 @@
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { getNextSessionStart } from "@/lib/enrollment";
-import type { SessionFeedEntry, SessionFeedGamer } from "./types";
+import type {
+  AttendanceMark,
+  AttendanceMarks,
+  SessionFeedEntry,
+  SessionFeedGamer,
+} from "./types";
 
 /**
  * Fixture feeds for the `/admin/ui-components` style guide and the full-page
@@ -86,7 +91,7 @@ export type SessionFeedCadence = "weekly" | "daily";
  * last of them is the next session, and everything after that is the past.
  *
  * In the default club run the enforcement epoch sits just above the two closing
- * `no_record` lines: everything newer either has its attendance recorded or is
+ * `no_record` lines: everything newer either has its attendance finished or is
  * flagged as owed, and everything older is a quiet "no record" line. That
  * boundary is the whole reason the two gap states look nothing alike — one is
  * work, the other is history.
@@ -94,9 +99,9 @@ export type SessionFeedCadence = "weekly" | "daily";
 export type EntrySpec =
   | {
       kind: "future";
-      /** Forward-looking note families read once the session runs. */
+      /** Note families read. */
       publicNote?: string;
-      /** Forward-looking gedu note — a reminder for whoever runs it. */
+      /** Gedu note — a reminder for whoever runs it. */
       staffNote?: string;
     }
   | {
@@ -104,13 +109,21 @@ export type EntrySpec =
       publicNote?: string;
       staffNote?: string;
       /**
-       * Roster ids marked absent; everyone else is marked present. Omit it
-       * entirely and attendance stays **unrecorded** — which is what makes the
-       * entry need attention, whether or not it carries a note.
+       * Roster ids marked absent; everyone else is marked present. Omit every
+       * attendance field and the sheet stays **wholly unmarked** — which is what
+       * makes the entry need attention, whether or not it carries a note.
        */
       absent?: readonly string[];
-      /** Attendance recorded with the whole roster present. */
+      /** Attendance marked with the whole roster present. */
       allPresent?: boolean;
+      /**
+       * A **part-marked** sheet: only the ids listed here get a mark, everyone
+       * else on the roster stays unmarked. This is the state a save can now
+       * land in — a gedu interrupted three children into a roster of eight —
+       * and the entry it produces still needs attention, renders its notes, and
+       * reports its own progress.
+       */
+      partial?: { present?: readonly string[]; absent?: readonly string[] };
     }
   | { kind: "skipped"; reason?: string }
   | { kind: "no_record" };
@@ -165,6 +178,19 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
       "Command blocks. We made teleport pads that fire you across the map, then spent twenty minutes working out why one of them dropped you inside a mountain. Väinö found it: the coordinates were a block off and the pad was aiming at solid stone.",
   },
 
+  // Started and abandoned: three children marked, five still unanswered. The
+  // state a partial save leaves behind — the entry keeps its alert, reports "3
+  // of 8 marked", and reopens on the three marks rather than on a blank sheet.
+  {
+    kind: "past",
+    partial: {
+      present: [SESSION_FEED_GAMER_IDS.aino, SESSION_FEED_GAMER_IDS.vaino],
+      absent: [SESSION_FEED_GAMER_IDS.oskar],
+    },
+    publicNote:
+      "Mob-proofing night: we lit the paths, walled the gaps and got through a whole session without losing anybody to a creeper.",
+  },
+
   {
     kind: "past",
     absent: [SESSION_FEED_GAMER_IDS.siiri, SESSION_FEED_GAMER_IDS.hilda],
@@ -216,11 +242,6 @@ export interface SessionFeedFixture {
 }
 
 export interface SessionFeedFixtureOptions {
-  /**
-   * Flips the next session's Join button between its open and locked states so
-   * both can be eyeballed without waiting for a real window.
-   */
-  voiceIsOpen?: boolean;
   /** Defaults to `weekly` — the club shape the style guide demos. */
   cadence?: SessionFeedCadence;
   /** Overrides the run of sessions; defaults to the ten-week club term. */
@@ -244,7 +265,6 @@ export function buildSessionFeedFixture(
   opts: SessionFeedFixtureOptions = {},
 ): SessionFeedFixture {
   const {
-    voiceIsOpen = false,
     cadence = "weekly",
     specs = SESSION_FEED_WEEK_SPECS,
     clubName = SESSION_FEED_CLUB_NAME,
@@ -271,7 +291,7 @@ export function buildSessionFeedFixture(
     // Index-keyed rather than date-keyed so an entry keeps its identity across
     // the `useNow()` tick — callers hold edits in local state against these ids.
     const id = `mock-session-${sessionsBack}`;
-    return toEntry(spec, { id, startsAt, endsAt, voiceIsOpen });
+    return toEntry(spec, { id, startsAt, endsAt });
   });
 
   return {
@@ -428,13 +448,11 @@ function wallDate(zoned: Date): string {
 
 function toEntry(
   spec: EntrySpec,
-  base: { id: string; startsAt: Date; endsAt: Date; voiceIsOpen: boolean },
+  base: { id: string; startsAt: Date; endsAt: Date },
 ): SessionFeedEntry {
-  const { id, startsAt, endsAt, voiceIsOpen } = base;
+  const { id, startsAt, endsAt } = base;
   switch (spec.kind) {
     case "future":
-      // `"#"` keeps the Join button inert — a fixture has no room to join, and
-      // the button renders its real open state either way.
       return {
         kind: "future",
         id,
@@ -442,12 +460,8 @@ function toEntry(
         endsAt,
         publicNote: spec.publicNote ?? null,
         staffNote: spec.staffNote ?? null,
-        voiceIsOpen,
-        voiceHref: "#",
       };
-    case "past": {
-      const recorded = spec.absent !== undefined || spec.allPresent === true;
-      const absent = new Set(spec.absent ?? []);
+    case "past":
       return {
         kind: "past",
         id,
@@ -455,14 +469,37 @@ function toEntry(
         endsAt,
         publicNote: spec.publicNote ?? null,
         staffNote: spec.staffNote ?? null,
-        presentGamerIds: recorded
-          ? SESSION_FEED_ROSTER.filter((g) => !absent.has(g.id)).map((g) => g.id)
-          : null,
+        attendance: marksForSpec(spec),
       };
-    }
     case "skipped":
       return { kind: "skipped", id, startsAt, endsAt, reason: spec.reason ?? null };
     case "no_record":
       return { kind: "no_record", id, startsAt, endsAt };
   }
+}
+
+/**
+ * Turn a past spec's shorthand into the sparse mark map the entry stores.
+ *
+ * The three shorthands map onto the three shapes a real sheet can be in: a
+ * `partial` names only the children somebody got to, `absent`/`allPresent`
+ * cover the whole roster, and a spec with none of them is a session nobody has
+ * touched — an empty map, not a roster of invented absences.
+ */
+function marksForSpec(
+  spec: Extract<EntrySpec, { kind: "past" }>,
+): AttendanceMarks {
+  if (spec.partial !== undefined) {
+    const marks: Record<string, AttendanceMark> = {};
+    for (const id of spec.partial.present ?? []) marks[id] = "present";
+    for (const id of spec.partial.absent ?? []) marks[id] = "absent";
+    return marks;
+  }
+  if (spec.absent === undefined && spec.allPresent !== true) return {};
+  const absent = new Set(spec.absent ?? []);
+  return Object.fromEntries(
+    SESSION_FEED_ROSTER.map(
+      (g) => [g.id, absent.has(g.id) ? "absent" : "present"] as const,
+    ),
+  );
 }

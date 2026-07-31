@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { attendanceProgress, draftFromEditorState } from "./entry-state";
+import { attendanceTally, draftFromEditorState } from "./entry-state";
 import { AttendanceRoster } from "./AttendanceRoster";
 import { CollapsibleRegion } from "./CollapsibleRegion";
 import { StaffNoteBlock } from "./StaffNoteBlock";
@@ -33,16 +33,20 @@ interface SessionRecordEditorProps {
 }
 
 /**
- * The inline write-up editor: the attendance sheet, the public note families
+ * The inline session editor: the attendance sheet, the public note families
  * will read, the gedu-only note they won't, and the "this session didn't run"
  * escape hatch.
  *
- * **Attendance is the mandatory half and Save enforces it.** Every roster member
- * has to be explicitly present or absent before the button enables, because that
- * rule is the only thing that makes the stored record mean anything: without it
- * a half-filled sheet saves as "two present, six absent" and nobody can tell it
- * apart from a room where six children genuinely didn't turn up. Both notes stay
- * optional — attendance is what the gedu is paid on, a write-up is a nicety.
+ * **Save is always available, and a half-marked roster saves as itself.** It
+ * used to be gated on every child having an answer, on the reasoning that a
+ * partial sheet is ambiguous — but the sheet was never the ambiguous thing, the
+ * *storage* was, and that is fixed at the model instead: marks are kept per
+ * child, so an unmarked child stays unmarked rather than being padded into an
+ * absence. What the gate actually did was throw away the work of a gedu who got
+ * interrupted three children in. Now they save what they have, the entry keeps
+ * saying it needs attention, and they come back to five rows instead of eight.
+ * Both notes stay optional — attendance is what the gedu is paid on, a write-up
+ * is a nicety.
  *
  * **There is deliberately no "mark all present" shortcut**, and its absence is
  * the point rather than an omission. One button that fills the whole sheet is
@@ -82,12 +86,7 @@ export function SessionRecordEditor({
     if (open) setDraft(initialState);
   }
 
-  const { marked, total, complete } = attendanceProgress(
-    roster,
-    draft.attendance,
-  );
-  // An empty roster has nothing to mark, so it can't be what blocks a save.
-  const canSave = draft.didNotRun || complete;
+  const { marked, total } = attendanceTally(roster, draft.attendance);
 
   // `undefined` returns the row to unanswered, and the key is dropped rather
   // than set to `undefined` so the map never carries a slot that reads as
@@ -101,10 +100,7 @@ export function SessionRecordEditor({
     });
   };
 
-  const handleSave = () => {
-    const record = draftFromEditorState(draft, roster);
-    if (record !== null) onSave(record);
-  };
+  const handleSave = () => onSave(draftFromEditorState(draft, roster));
 
   return (
     // `pb-1` gives the Save row's focus ring somewhere to land: this editor is
@@ -133,11 +129,14 @@ export function SessionRecordEditor({
                 {t("attendanceMarkedCount", { marked, total })}
               </span>
             </p>
-            {/* Always rendered, never conditional on the sheet being
-                incomplete: a hint that appears the moment you start marking
-                would reflow the notes below it while the gedu is working. */}
+            {/* Always rendered, never conditional on the sheet's state: a hint
+                that appeared the moment you started marking would reflow the
+                notes below it while the gedu was working. What it says is now
+                only the two things a gedu cannot discover by looking — that a
+                second press clears a mark, and that a half-finished sheet is
+                allowed to be saved. */}
             <p className="text-xs text-muted-foreground">
-              {t("attendanceRequiredHint")}
+              {t("attendanceRevertHint")}
             </p>
             <div className="pt-1">
               <AttendanceRoster
@@ -208,7 +207,7 @@ export function SessionRecordEditor({
         <Button type="button" variant="outline" size="sm" onClick={onCancel}>
           {t("cancel")}
         </Button>
-        <Button type="button" size="sm" disabled={!canSave} onClick={handleSave}>
+        <Button type="button" size="sm" onClick={handleSave}>
           {t("save")}
         </Button>
       </div>

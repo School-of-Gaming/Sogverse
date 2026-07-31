@@ -328,7 +328,7 @@ describe("buildSessionFeedFixture", () => {
     });
   });
 
-  it("leaves an unplanned future session's fields null", () => {
+  it("leaves a future session with no notes on it null", () => {
     const { entries } = buildSessionFeedFixture(now, {
       specs: [{ kind: "future" }],
     });
@@ -339,20 +339,20 @@ describe("buildSessionFeedFixture", () => {
     });
   });
 
-  it("leaves a past spec's attendance null unless the spec records it", () => {
-    // The spec has to *say* attendance was taken; omitting it is the gap state,
-    // not a shorthand for "everyone turned up".
+  it("leaves a past spec's attendance empty unless the spec marks it", () => {
+    // The spec has to *say* attendance was taken; omitting it is the untouched
+    // state, not a shorthand for "everyone turned up" or for "nobody did".
     const { entries } = buildSessionFeedFixture(now, {
       specs: [{ kind: "past", publicNote: "Notes, but nobody marked off." }],
     });
     expect(entries[0]).toMatchObject({
       kind: "past",
       publicNote: "Notes, but nobody marked off.",
-      presentGamerIds: null,
+      attendance: {},
     });
   });
 
-  it("records the full roster for an all-present spec, minus any absentees", () => {
+  it("marks the whole roster present, minus any named absentees", () => {
     const { entries } = buildSessionFeedFixture(now, {
       specs: [
         { kind: "past", allPresent: true },
@@ -360,11 +360,39 @@ describe("buildSessionFeedFixture", () => {
       ],
     });
     expect(entries[0]).toMatchObject({
-      presentGamerIds: SESSION_FEED_ROSTER.map((g) => g.id),
+      attendance: Object.fromEntries(
+        SESSION_FEED_ROSTER.map((g) => [g.id, "present"]),
+      ),
     });
     expect(entries[1]).toMatchObject({
-      presentGamerIds: SESSION_FEED_ROSTER.slice(1).map((g) => g.id),
+      attendance: Object.fromEntries(
+        SESSION_FEED_ROSTER.map((g, i) => [g.id, i === 0 ? "absent" : "present"]),
+      ),
     });
+  });
+
+  it("marks only the named children for a partial spec, leaving the rest unmarked", () => {
+    // The state a partial save produces: what the gedu got to, and nothing
+    // invented for the children they did not.
+    const [first, second, third] = SESSION_FEED_ROSTER;
+    const { entries } = buildSessionFeedFixture(now, {
+      specs: [
+        {
+          kind: "past",
+          partial: { present: [first.id, second.id], absent: [third.id] },
+        },
+      ],
+    });
+    const entry = entries[0];
+    if (entry.kind !== "past") throw new Error("expected a past entry");
+    expect(entry.attendance).toEqual({
+      [first.id]: "present",
+      [second.id]: "present",
+      [third.id]: "absent",
+    });
+    // Nobody else picked up a mark: the rest of the roster is genuinely
+    // unanswered rather than quietly filed as absent.
+    expect(SESSION_FEED_ROSTER.length).toBeGreaterThan(3);
   });
 
   it("defaults to the weekly club with its full future horizon", () => {

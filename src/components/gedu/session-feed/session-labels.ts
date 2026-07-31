@@ -16,8 +16,6 @@ export interface SessionLabels {
   date: string;
   /** e.g. "16:30–18:00", already in the viewer's zone. */
   timeRange: string;
-  /** Just the start, e.g. "16:30" — for callers that want the two apart. */
-  startTime: string;
   /** Viewer's short zone abbrev, or `null` when it matches the source zone. */
   timeZoneAbbrev: string | null;
 }
@@ -52,7 +50,6 @@ export function formatSessionLabels(
       ...(sameYear ? {} : { year: "numeric" }),
       timeZone,
     }),
-    startTime,
     // En dash, matching the date-range separator used elsewhere in the app.
     timeRange: `${startTime}–${formatTime(session.endsAt, locale, timeZone)}`,
     timeZoneAbbrev:

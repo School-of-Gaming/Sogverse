@@ -6,6 +6,7 @@
  */
 
 import type {
+  AttendanceMark,
   AttendanceMarks,
   EditableSessionFeedEntry,
   FutureSessionFeedEntry,
@@ -21,7 +22,7 @@ import type {
  * Whether an entry can be expanded into the **write-up** editor.
  *
  * `future` can't: it hasn't happened, so there is nothing to record — it gets
- * the planning editor instead. `no_record` can't either — it sits before the
+ * the notes-only editor instead. `no_record` can't either — it sits before the
  * enforcement epoch, so nothing is owed and offering an editor would invite
  * busywork on sessions we deliberately stopped asking about.
  */
@@ -31,7 +32,7 @@ export function isEditableEntry(
   return entry.kind === "past" || entry.kind === "skipped";
 }
 
-/** Whether an entry can be expanded into the **planning** editor. */
+/** Whether an entry can be expanded into the **notes-only** editor. */
 export function isPlannableEntry(
   entry: SessionFeedEntry,
 ): entry is FutureSessionFeedEntry {
@@ -42,84 +43,98 @@ export function isPlannableEntry(
  * Whether an entry is outstanding work — the alert state, derived rather than
  * stored.
  *
- * It means exactly one thing: **a past session, not skipped, whose attendance
- * has not been recorded.** Notes have no say in it. Attendance doubles as the
- * gedu's confirmation that they ran the session and is what they are paid on,
- * so it is the mandatory half; a write-up is a nicety on top. A past entry can
- * therefore carry a full note and still be flagged, and it renders both — the
- * note as its body, the alert in its header.
+ * It means exactly one thing: **a past session, not skipped, some of whose
+ * current roster has not been marked.** Notes have no say in it. Attendance
+ * doubles as the gedu's confirmation that they ran the session and is what they
+ * are paid on, so it is the mandatory half; a write-up is a nicety on top. A
+ * past entry can therefore carry a full note and still be flagged, and it
+ * renders both — the note as its body, the alert in its header.
+ *
+ * **A partial save does not discharge it.** Saving is always allowed, so the
+ * flag cannot be "has anything been recorded" or half a roster would silence
+ * it; it stays up until the last child has an answer, which is precisely what
+ * brings the gedu back to finish. And because it is measured against the
+ * *current* roster, a child joining the group after a session was fully marked
+ * reopens it — which is the honest reading, since nobody has said whether that
+ * child was there.
  */
-export function entryNeedsAttention(entry: SessionFeedEntry): boolean {
-  return entry.kind === "past" && entry.presentGamerIds === null;
+export function entryNeedsAttention(
+  entry: SessionFeedEntry,
+  roster: readonly SessionFeedGamer[],
+): boolean {
+  return (
+    entry.kind === "past" && !attendanceTally(roster, entry.attendance).complete
+  );
 }
 
 /** How many entries are the gedu's outstanding work — the alert-badge count. */
 export function countEntriesNeedingAttention(
   entries: readonly SessionFeedEntry[],
-): number {
-  return entries.filter(entryNeedsAttention).length;
-}
-
-/**
- * Attendance headline numbers ("6 of 8 present").
- *
- * `present` is intersected with the roster rather than trusted from the stored
- * list: a child who left the group after a session was recorded is still in the
- * old `presentGamerIds`, and counting them would render "9 of 8 present".
- */
-export function attendanceCounts(
   roster: readonly SessionFeedGamer[],
-  presentGamerIds: readonly string[],
-): { present: number; total: number } {
-  const present = new Set(presentGamerIds);
-  return {
-    present: roster.filter((g) => present.has(g.id)).length,
-    total: roster.length,
-  };
+): number {
+  return entries.filter((entry) => entryNeedsAttention(entry, roster)).length;
 }
 
 /* ------------------------------------------------------------------ */
 /*  Attendance marks                                                   */
 /* ------------------------------------------------------------------ */
 
-/**
- * Expand a stored present-list into explicit per-gamer marks.
- *
- * Only meaningful for a session whose attendance *was* recorded: at that point
- * every roster member was marked one way or the other, so "not in the present
- * list" is a genuine absence rather than an unanswered question. Reopening the
- * editor therefore shows exactly what was saved.
- */
-export function attendanceMarksFromPresentIds(
-  roster: readonly SessionFeedGamer[],
-  presentGamerIds: readonly string[],
-): AttendanceMarks {
-  const present = new Set(presentGamerIds);
-  return Object.fromEntries(
-    roster.map((g) => [g.id, present.has(g.id) ? "present" : "absent"] as const),
-  );
-}
-
-export interface AttendanceProgress {
-  /** How many roster members carry a mark. */
+export interface AttendanceTally {
+  /** Roster members marked present. */
+  present: number;
+  /** Roster members carrying any mark at all, present or absent. */
   marked: number;
   total: number;
-  /** Whether every roster member has been marked — the gate on saving. */
+  /** Whether every roster member has been marked. */
   complete: boolean;
 }
 
 /**
- * How far through the roster the marking has got.
+ * The one attendance derivation: how many are present, how far through the
+ * roster the marking has got, and whether it is finished.
  *
- * Counted **over the roster**, not over the map's keys: a stale key for a child
- * who has since left the group must not make an incomplete sheet look finished.
+ * These three questions were three functions and are one because they are one
+ * count over one list — every caller that wanted the headline also wanted to
+ * know which headline to show, and splitting them meant walking the roster
+ * twice to answer a single question.
+ *
+ * Everything is counted **over the roster**, never over the map's keys. A child
+ * who left the group leaves their mark behind in the stored map; counting keys
+ * would report "9 of 8 present" on a group of eight and would let a stale key
+ * make an unfinished sheet look complete.
  */
-export function attendanceProgress(
+export function attendanceTally(
   roster: readonly SessionFeedGamer[],
   attendance: AttendanceMarks,
-): AttendanceProgress {
-  const marked = roster.filter((g) => attendance[g.id] !== undefined).length;
-  return { marked, total: roster.length, complete: marked === roster.length };
+): AttendanceTally {
+  let present = 0;
+  let marked = 0;
+  for (const gamer of roster) {
+    const mark = attendance[gamer.id];
+    if (mark === undefined) continue;
+    marked += 1;
+    if (mark === "present") present += 1;
+  }
+  return { present, marked, total: roster.length, complete: marked === roster.length };
+}
+
+/**
+ * Drop marks for anyone no longer on the roster.
+ *
+ * Applied on the way *into* storage so a saved record describes the group as it
+ * is now. Without it a child who left would keep re-entering the record every
+ * time an old session was reopened and saved again.
+ */
+export function rosterScopedMarks(
+  roster: readonly SessionFeedGamer[],
+  attendance: AttendanceMarks,
+): AttendanceMarks {
+  const marks: Record<string, AttendanceMark> = {};
+  for (const gamer of roster) {
+    const mark = attendance[gamer.id];
+    if (mark !== undefined) marks[gamer.id] = mark;
+  }
+  return marks;
 }
 
 /* ------------------------------------------------------------------ */
@@ -129,13 +144,17 @@ export function attendanceProgress(
 /**
  * Seed the editor from whatever the entry currently is.
  *
- * A session whose attendance has never been recorded opens with **every row
- * unmarked**, and there is no shortcut anywhere that fills them in. Pre-ticking
- * everyone present — or offering one button that does — would be the convenient
- * thing to do and is exactly what this model exists to stop: a gedu could then
- * save a room they never looked at, and the stored record would claim eight
- * children attended on the strength of one click. Every mark is somebody
- * deciding about one child.
+ * A past entry's marks come across exactly as stored, which is what makes the
+ * editor resumable: a gedu who marked three children on the night and saved
+ * reopens the sheet on those three marks with the other five still unanswered,
+ * rather than on a blank sheet or on five invented absences.
+ *
+ * Nothing is ever pre-ticked, and there is no shortcut anywhere that fills the
+ * blanks in. Pre-ticking everyone present — or offering one button that does —
+ * would be the convenient thing to do and is exactly what this model exists to
+ * stop: a gedu could then save a room they never looked at, and the stored
+ * record would claim eight children attended on the strength of one click.
+ * Every mark is somebody deciding about one child.
  */
 export function editorStateFromEntry(
   entry: EditableSessionFeedEntry,
@@ -145,10 +164,7 @@ export function editorStateFromEntry(
     case "past":
       return {
         didNotRun: false,
-        attendance:
-          entry.presentGamerIds === null
-            ? {}
-            : attendanceMarksFromPresentIds(roster, entry.presentGamerIds),
+        attendance: rosterScopedMarks(roster, entry.attendance),
         publicNote: entry.publicNote ?? "",
         staffNote: entry.staffNote ?? "",
         skipReason: "",
@@ -165,29 +181,26 @@ export function editorStateFromEntry(
 }
 
 /**
- * Collapse the editor's flat working state into the branch it saves as, or
- * `null` when the sheet is not savable yet.
+ * Collapse the editor's flat working state into the branch it saves as.
  *
- * The only way to get `null` is an incomplete attendance sheet on the ran
- * branch, and returning it rather than quietly filling the blanks is the whole
- * guarantee: there is no code path that turns "unmarked" into a stored mark.
- * The editor keeps Save disabled on the same condition, so the null is a
- * belt-and-braces floor rather than something a user can reach.
+ * **It always produces a draft.** It used to refuse an incomplete sheet, and
+ * that refusal cost more than it bought: the gedu who was interrupted halfway
+ * through a roster saved *nothing*, so the three marks they had made were lost
+ * and the next attempt started from zero. Partial marks travel through here
+ * unchanged — the sparse map is the stored shape, so there is still no code
+ * path that turns "unmarked" into a stored mark, and the entry it lands on goes
+ * on flagging itself until the roster is finished.
  */
 export function draftFromEditorState(
   state: SessionEditorState,
   roster: readonly SessionFeedGamer[],
-): SessionRecordDraft | null {
+): SessionRecordDraft {
   if (state.didNotRun) {
     return { kind: "skipped", reason: state.skipReason.trim() };
   }
-  if (!attendanceProgress(roster, state.attendance).complete) return null;
   return {
     kind: "past",
-    // Roster order, so a saved record reads the same way twice running.
-    presentGamerIds: roster
-      .filter((g) => state.attendance[g.id] === "present")
-      .map((g) => g.id),
+    attendance: rosterScopedMarks(roster, state.attendance),
     publicNote: state.publicNote.trim(),
     staffNote: state.staffNote.trim(),
   };
@@ -223,15 +236,15 @@ export function applyDraftToEntry(
     endsAt,
     publicNote: draft.publicNote.length > 0 ? draft.publicNote : null,
     staffNote: draft.staffNote.length > 0 ? draft.staffNote : null,
-    presentGamerIds: draft.presentGamerIds,
+    attendance: draft.attendance,
   };
 }
 
 /* ------------------------------------------------------------------ */
-/*  Planning a future session                                          */
+/*  Notes on a future session                                          */
 /* ------------------------------------------------------------------ */
 
-/** Seed the planning editor from what the future session currently says. */
+/** Seed the future-session editor from what that session currently says. */
 export function planEditorStateFromEntry(
   entry: FutureSessionFeedEntry,
 ): SessionPlanEditorState {
@@ -241,7 +254,7 @@ export function planEditorStateFromEntry(
   };
 }
 
-/** Collapse the planning editor's working state into the draft it saves as. */
+/** Collapse the future-session editor's working state into its draft. */
 export function planDraftFromEditorState(
   state: SessionPlanEditorState,
 ): SessionPlanDraft {
@@ -253,9 +266,9 @@ export function planDraftFromEditorState(
 }
 
 /**
- * Fold a saved plan back into its future entry, keeping identity, schedule and
- * voice state. Emptied text collapses to `null` so a cleared note stops
- * rendering its block, exactly as on the past side.
+ * Fold saved notes back into their future entry, keeping identity and schedule.
+ * Emptied text collapses to `null` so a cleared note stops rendering its block,
+ * exactly as on the past side.
  */
 export function applyPlanDraftToEntry(
   entry: FutureSessionFeedEntry,
@@ -281,8 +294,8 @@ export interface FeedPartition {
    */
   laterFuture: FutureSessionFeedEntry[];
   /**
-   * The soonest session still ahead of us — the prominent entry that carries
-   * the Join affordance. `null` once a product's schedule has run out.
+   * The soonest session still ahead of us — the prominent entry at the head of
+   * the feed. `null` once a product's schedule has run out.
    */
   nextSession: FutureSessionFeedEntry | null;
   /** Everything that has already happened, still descending. */

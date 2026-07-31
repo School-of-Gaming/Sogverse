@@ -4,9 +4,7 @@ import {
   FEED_PAST_CHUNK_SIZE,
   applyDraftToEntry,
   applyPlanDraftToEntry,
-  attendanceCounts,
-  attendanceMarksFromPresentIds,
-  attendanceProgress,
+  attendanceTally,
   countEntriesNeedingAttention,
   draftFromEditorState,
   editorStateFromEntry,
@@ -17,6 +15,7 @@ import {
   pastEntryWindow,
   planDraftFromEditorState,
   planEditorStateFromEntry,
+  rosterScopedMarks,
 } from "@/components/gedu/session-feed/entry-state";
 import type {
   FutureSessionFeedEntry,
@@ -34,6 +33,9 @@ const ROSTER: SessionFeedGamer[] = [
   { id: "c", firstName: "Elias" },
 ];
 
+/** Every roster member answered — the only shape that clears the alert. */
+const ALL_MARKED = { a: "present", b: "absent", c: "present" } as const;
+
 const START = new Date("2026-03-02T14:30:00.000Z");
 const END = new Date("2026-03-02T16:00:00.000Z");
 const WHEN = { startsAt: START, endsAt: END };
@@ -50,7 +52,7 @@ function past(
     ...WHEN,
     publicNote: null,
     staffNote: null,
-    presentGamerIds: null,
+    attendance: {},
     ...fields,
   };
 }
@@ -72,15 +74,13 @@ function future(
     ...WHEN,
     publicNote: null,
     staffNote: null,
-    voiceIsOpen: false,
-    voiceHref: "#",
     ...fields,
   };
 }
 
 describe("isEditableEntry", () => {
   it("accepts the two past states that can still be edited", () => {
-    expect(isEditableEntry(past("r", { presentGamerIds: [] }))).toBe(true);
+    expect(isEditableEntry(past("r", { attendance: ALL_MARKED }))).toBe(true);
     expect(isEditableEntry(past("g"))).toBe(true);
     expect(isEditableEntry(skipped("s", null))).toBe(true);
   });
@@ -98,10 +98,10 @@ describe("isPlannableEntry", () => {
     expect(isPlannableEntry(noRecord("n"))).toBe(false);
   });
 
-  it("never overlaps with the write-up editor's set", () => {
+  it("never overlaps with the record editor's set", () => {
     const entries: SessionFeedEntry[] = [
       future("u"),
-      past("r", { presentGamerIds: ["a"] }),
+      past("r", { attendance: ALL_MARKED }),
       skipped("s", null),
       past("g"),
       noRecord("n"),
@@ -113,12 +113,14 @@ describe("isPlannableEntry", () => {
 });
 
 describe("entryNeedsAttention", () => {
-  it("is exactly: past, not skipped, attendance unrecorded", () => {
-    expect(entryNeedsAttention(past("g"))).toBe(true);
-    expect(entryNeedsAttention(past("r", { presentGamerIds: [] }))).toBe(false);
-    expect(entryNeedsAttention(skipped("s", null))).toBe(false);
-    expect(entryNeedsAttention(noRecord("n"))).toBe(false);
-    expect(entryNeedsAttention(future("f"))).toBe(false);
+  it("is exactly: past, not skipped, some of the roster still unmarked", () => {
+    expect(entryNeedsAttention(past("g"), ROSTER)).toBe(true);
+    expect(entryNeedsAttention(past("r", { attendance: ALL_MARKED }), ROSTER)).toBe(
+      false,
+    );
+    expect(entryNeedsAttention(skipped("s", null), ROSTER)).toBe(false);
+    expect(entryNeedsAttention(noRecord("n"), ROSTER)).toBe(false);
+    expect(entryNeedsAttention(future("f"), ROSTER)).toBe(false);
   });
 
   it("still flags a session that has both notes but no attendance", () => {
@@ -128,40 +130,74 @@ describe("entryNeedsAttention", () => {
     expect(
       entryNeedsAttention(
         past("g", { publicNote: "Redstone week.", staffNote: "Watch Siiri." }),
+        ROSTER,
       ),
     ).toBe(true);
   });
 
-  it("does not flag a recorded session that has no notes at all", () => {
+  it("does not flag a fully-marked session that has no notes at all", () => {
     // The other half of the same rule: notes are optional, so their absence is
     // never work owed.
-    expect(entryNeedsAttention(past("r", { presentGamerIds: ["a", "b"] }))).toBe(
-      false,
-    );
+    expect(
+      entryNeedsAttention(past("r", { attendance: ALL_MARKED }), ROSTER),
+    ).toBe(false);
   });
 
-  it("treats an all-absent record as recorded, not as unrecorded", () => {
-    // The distinction the null exists for: "everybody was away" is a real
-    // claim, and an empty present list is how it is stored.
-    expect(entryNeedsAttention(past("r", { presentGamerIds: [] }))).toBe(false);
+  it("keeps flagging a partially-marked session", () => {
+    // The whole point of allowing a partial save: the work saved, and the entry
+    // still asks for the rest of it.
+    expect(
+      entryNeedsAttention(past("p", { attendance: { a: "present" } }), ROSTER),
+    ).toBe(true);
+    expect(
+      entryNeedsAttention(
+        past("p", { attendance: { a: "present", b: "absent" } }),
+        ROSTER,
+      ),
+    ).toBe(true);
+  });
+
+  it("treats an all-absent record as finished, not as unrecorded", () => {
+    // "Everybody was away" is a real claim, and marking every row absent is how
+    // it is made — nothing like a sheet nobody has touched.
+    expect(
+      entryNeedsAttention(
+        past("r", { attendance: { a: "absent", b: "absent", c: "absent" } }),
+        ROSTER,
+      ),
+    ).toBe(false);
+  });
+
+  it("reopens when a child joins the group after the session was marked", () => {
+    // Measured against the *current* roster: nobody has said whether the new
+    // child was there, so the honest answer is that the sheet is unfinished.
+    const entry = past("r", { attendance: ALL_MARKED });
+    const grown = [...ROSTER, { id: "d", firstName: "Linnéa" }];
+    expect(entryNeedsAttention(entry, ROSTER)).toBe(false);
+    expect(entryNeedsAttention(entry, grown)).toBe(true);
+  });
+
+  it("never flags anything against an empty roster", () => {
+    expect(entryNeedsAttention(past("g"), [])).toBe(false);
   });
 });
 
 describe("countEntriesNeedingAttention", () => {
-  it("counts only the post-epoch past entries with no attendance", () => {
+  it("counts the past entries whose roster is not finished", () => {
     const entries: SessionFeedEntry[] = [
       future("u"),
       past("g1"),
       past("g2", { publicNote: "Notes but no attendance." }),
-      past("r", { presentGamerIds: ["a"] }),
+      past("g3", { attendance: { a: "present" } }),
+      past("r", { attendance: ALL_MARKED }),
       noRecord("n"),
       skipped("s", null),
     ];
-    expect(countEntriesNeedingAttention(entries)).toBe(2);
+    expect(countEntriesNeedingAttention(entries, ROSTER)).toBe(3);
   });
 
   it("is zero for an empty feed", () => {
-    expect(countEntriesNeedingAttention([])).toBe(0);
+    expect(countEntriesNeedingAttention([], ROSTER)).toBe(0);
   });
 });
 
@@ -171,7 +207,7 @@ describe("partitionFeedEntries", () => {
       future("f3"),
       future("f2"),
       future("f1"),
-      past("p1", { presentGamerIds: [] }),
+      past("p1", { attendance: ALL_MARKED }),
       noRecord("p2"),
     ];
     const { laterFuture, nextSession, past: pastRows } =
@@ -256,14 +292,14 @@ describe("pastEntryWindow", () => {
 });
 
 describe("planEditorStateFromEntry / planDraftFromEditorState", () => {
-  it("seeds an unplanned session with empty fields", () => {
+  it("seeds a session with no notes on it with empty fields", () => {
     expect(planEditorStateFromEntry(future("f"))).toEqual({
       publicNote: "",
       staffNote: "",
     });
   });
 
-  it("seeds from an existing plan, mapping nulls to empty strings", () => {
+  it("seeds from existing notes, mapping nulls to empty strings", () => {
     expect(
       planEditorStateFromEntry(
         future("f", {
@@ -292,8 +328,8 @@ describe("planEditorStateFromEntry / planDraftFromEditorState", () => {
 });
 
 describe("applyPlanDraftToEntry", () => {
-  it("folds a plan back in, keeping identity, schedule and voice state", () => {
-    const entry = future("f", { voiceIsOpen: true, voiceHref: "/voice/x" });
+  it("folds notes back in, keeping identity and schedule", () => {
+    const entry = future("f");
     expect(
       applyPlanDraftToEntry(entry, {
         kind: "plan",
@@ -307,8 +343,6 @@ describe("applyPlanDraftToEntry", () => {
       endsAt: END,
       publicNote: "Lighthouse week.",
       staffNote: "Bring the spare mouse.",
-      voiceIsOpen: true,
-      voiceHref: "/voice/x",
     });
   });
 
@@ -323,7 +357,7 @@ describe("applyPlanDraftToEntry", () => {
     ).toMatchObject({ publicNote: null, staffNote: null });
   });
 
-  it("round-trips a plan through the editor without losing anything", () => {
+  it("round-trips notes through the editor without losing anything", () => {
     const entry = future("f", {
       publicNote: "Lighthouse week.",
       staffNote: "Bring the spare mouse.",
@@ -337,70 +371,77 @@ describe("applyPlanDraftToEntry", () => {
   });
 });
 
-describe("attendanceCounts", () => {
-  it("counts the roster members marked present", () => {
-    expect(attendanceCounts(ROSTER, ["a", "c"])).toEqual({
+describe("attendanceTally", () => {
+  it("counts present, marked and completeness in one pass", () => {
+    expect(attendanceTally(ROSTER, ALL_MARKED)).toEqual({
       present: 2,
+      marked: 3,
       total: 3,
+      complete: true,
     });
   });
 
-  it("ignores ids that are no longer on the roster", () => {
-    // A child who left the group after the session was recorded must not push
-    // the headline past the roster size ("4 of 3 present").
-    expect(attendanceCounts(ROSTER, ["a", "b", "c", "departed"])).toEqual({
-      present: 3,
-      total: 3,
-    });
-  });
-});
-
-describe("attendanceMarksFromPresentIds", () => {
-  it("expands a stored present list into an explicit mark per roster member", () => {
-    expect(attendanceMarksFromPresentIds(ROSTER, ["a", "c"])).toEqual({
-      a: "present",
-      b: "absent",
-      c: "present",
-    });
-  });
-});
-
-describe("attendanceProgress", () => {
   it("is incomplete while any roster member is unmarked", () => {
-    expect(attendanceProgress(ROSTER, { a: "present" })).toEqual({
+    expect(attendanceTally(ROSTER, { a: "present" })).toEqual({
+      present: 1,
       marked: 1,
       total: 3,
       complete: false,
     });
   });
 
-  it("is complete once every roster member carries a mark, present or absent", () => {
+  it("counts over the roster, so a departed child can't skew either number", () => {
+    // A child who left the group leaves a key behind; counting keys would both
+    // report "3 of 3 present" on two survivors and make an unfinished sheet
+    // look complete.
     expect(
-      attendanceProgress(ROSTER, { a: "present", b: "absent", c: "absent" }),
-    ).toEqual({ marked: 3, total: 3, complete: true });
-  });
-
-  it("counts over the roster, so a stale mark can't fake completeness", () => {
-    // A child who left the group leaves a key behind; counting keys would make
-    // a two-of-three sheet look finished.
-    expect(
-      attendanceProgress(ROSTER, { a: "present", b: "absent", departed: "present" }),
-    ).toEqual({ marked: 2, total: 3, complete: false });
+      attendanceTally(ROSTER, {
+        a: "present",
+        b: "absent",
+        departed: "present",
+      }),
+    ).toEqual({ present: 1, marked: 2, total: 3, complete: false });
   });
 
   it("is trivially complete for an empty roster", () => {
-    expect(attendanceProgress([], {})).toEqual({
+    expect(attendanceTally([], {})).toEqual({
+      present: 0,
       marked: 0,
       total: 0,
       complete: true,
     });
   });
+
+  it("treats an untouched sheet as zero marked, not zero present", () => {
+    expect(attendanceTally(ROSTER, {})).toEqual({
+      present: 0,
+      marked: 0,
+      total: 3,
+      complete: false,
+    });
+  });
+});
+
+describe("rosterScopedMarks", () => {
+  it("keeps every mark belonging to a current roster member", () => {
+    expect(rosterScopedMarks(ROSTER, ALL_MARKED)).toEqual(ALL_MARKED);
+  });
+
+  it("drops a mark for a child who has left the group", () => {
+    expect(
+      rosterScopedMarks(ROSTER, { a: "present", departed: "absent" }),
+    ).toEqual({ a: "present" });
+  });
+
+  it("leaves an unmarked roster member out rather than inventing a mark", () => {
+    expect(rosterScopedMarks(ROSTER, { b: "absent" })).toEqual({ b: "absent" });
+  });
 });
 
 describe("editorStateFromEntry", () => {
-  it("opens an unrecorded session with every row unmarked", () => {
+  it("opens an untouched session with every row unmarked", () => {
     // Never pre-ticked: a gedu must not be able to save a room they never
-    // looked at, and "unmarked" is the state that makes Save refuse.
+    // looked at as a room full of children who were present.
     expect(editorStateFromEntry(past("g"), ROSTER)).toEqual({
       didNotRun: false,
       attendance: {},
@@ -410,7 +451,7 @@ describe("editorStateFromEntry", () => {
     });
   });
 
-  it("keeps an unrecorded session's existing notes when it opens", () => {
+  it("keeps an unmarked session's existing notes when it opens", () => {
     const state = editorStateFromEntry(
       past("g", { publicNote: "Redstone week.", staffNote: "Watch Siiri." }),
       ROSTER,
@@ -420,22 +461,40 @@ describe("editorStateFromEntry", () => {
     expect(state.attendance).toEqual({});
   });
 
-  it("reopens a recorded session showing exactly what was saved", () => {
+  it("reopens a finished session showing exactly what was saved", () => {
     expect(
       editorStateFromEntry(
         past("r", {
           publicNote: "We built a clock tower.",
-          presentGamerIds: ["a"],
+          attendance: ALL_MARKED,
         }),
         ROSTER,
       ),
     ).toEqual({
       didNotRun: false,
-      attendance: { a: "present", b: "absent", c: "absent" },
+      attendance: { a: "present", b: "absent", c: "present" },
       publicNote: "We built a clock tower.",
       staffNote: "",
       skipReason: "",
     });
+  });
+
+  it("reopens a partial save on the marks already made, not on a blank sheet", () => {
+    // The reason a partial save is worth allowing at all: the gedu comes back
+    // to one row left rather than three.
+    const state = editorStateFromEntry(
+      past("p", { attendance: { a: "present", b: "absent" } }),
+      ROSTER,
+    );
+    expect(state.attendance).toEqual({ a: "present", b: "absent" });
+  });
+
+  it("drops a departed child's stale mark as the editor opens", () => {
+    const state = editorStateFromEntry(
+      past("p", { attendance: { a: "present", departed: "absent" } }),
+      ROSTER,
+    );
+    expect(state.attendance).toEqual({ a: "present" });
   });
 
   it("opens a skipped session with the didn't-run branch already on", () => {
@@ -455,21 +514,41 @@ describe("draftFromEditorState", () => {
     skipReason: "  Winter break  ",
   };
 
-  it("emits the past branch, trimmed, once every roster member is marked", () => {
+  it("emits the past branch, trimmed, with the marks as they stand", () => {
     expect(draftFromEditorState(base, ROSTER)).toEqual({
       kind: "past",
-      presentGamerIds: ["a", "b"],
+      attendance: { a: "present", b: "present", c: "absent" },
       publicNote: "We finished the square.",
       staffNote: "Watch Siiri.",
     });
   });
 
-  it("refuses to produce a draft while any roster member is unmarked", () => {
-    // The floor under the disabled Save button: there is no path that turns
-    // "nobody said" into a stored absence.
+  it("emits a partial sheet unchanged rather than refusing it", () => {
+    // It used to return null here and the gedu lost the marks they had made.
+    // The unmarked rows stay unmarked — nothing is padded into an absence.
     expect(
       draftFromEditorState({ ...base, attendance: { a: "present" } }, ROSTER),
-    ).toBeNull();
+    ).toEqual({
+      kind: "past",
+      attendance: { a: "present" },
+      publicNote: "We finished the square.",
+      staffNote: "Watch Siiri.",
+    });
+  });
+
+  it("emits an empty map for a sheet nobody has touched", () => {
+    expect(
+      draftFromEditorState({ ...base, attendance: {} }, ROSTER),
+    ).toMatchObject({ attendance: {} });
+  });
+
+  it("drops marks for anyone no longer on the roster", () => {
+    expect(
+      draftFromEditorState(
+        { ...base, attendance: { a: "present", departed: "present" } },
+        ROSTER,
+      ),
+    ).toMatchObject({ attendance: { a: "present" } });
   });
 
   it("saves happily with no notes at all — they are the optional half", () => {
@@ -480,18 +559,10 @@ describe("draftFromEditorState", () => {
       ),
     ).toEqual({
       kind: "past",
-      presentGamerIds: ["a", "b"],
+      attendance: { a: "present", b: "present", c: "absent" },
       publicNote: "",
       staffNote: "",
     });
-  });
-
-  it("emits present ids in roster order, whatever order they were marked in", () => {
-    const draft = draftFromEditorState(
-      { ...base, attendance: { c: "present", a: "present", b: "present" } },
-      ROSTER,
-    );
-    expect(draft).toMatchObject({ presentGamerIds: ["a", "b", "c"] });
   });
 
   it("emits the skipped branch without asking for attendance at all", () => {
@@ -505,11 +576,11 @@ describe("draftFromEditorState", () => {
 });
 
 describe("applyDraftToEntry", () => {
-  it("turns an unrecorded session into a recorded one, keeping identity and schedule", () => {
+  it("turns an unmarked session into a finished one, keeping identity and schedule", () => {
     expect(
       applyDraftToEntry(past("g"), {
         kind: "past",
-        presentGamerIds: ["a"],
+        attendance: ALL_MARKED,
         publicNote: "Redstone week.",
         staffNote: "",
       }),
@@ -521,26 +592,37 @@ describe("applyDraftToEntry", () => {
       publicNote: "Redstone week.",
       // An emptied note collapses to null so its block stops rendering.
       staffNote: null,
-      presentGamerIds: ["a"],
+      attendance: ALL_MARKED,
     });
   });
 
   it("records attendance with no notes, and the entry stops needing attention", () => {
     const saved = applyDraftToEntry(past("g"), {
       kind: "past",
-      presentGamerIds: ["a", "b", "c"],
+      attendance: ALL_MARKED,
       publicNote: "",
       staffNote: "",
     });
     expect(saved).toMatchObject({ publicNote: null, staffNote: null });
-    expect(entryNeedsAttention(saved)).toBe(false);
+    expect(entryNeedsAttention(saved, ROSTER)).toBe(false);
   });
 
-  it("turns a recorded entry into a skipped one", () => {
+  it("keeps a partially-saved entry flagged", () => {
+    const saved = applyDraftToEntry(past("g"), {
+      kind: "past",
+      attendance: { a: "present" },
+      publicNote: "Half a roster and then the fire alarm went.",
+      staffNote: "",
+    });
+    expect(saved).toMatchObject({ attendance: { a: "present" } });
+    expect(entryNeedsAttention(saved, ROSTER)).toBe(true);
+  });
+
+  it("turns a finished entry into a skipped one", () => {
     const entry = past("r", {
       publicNote: "Redstone week.",
       staffNote: "Watch Siiri.",
-      presentGamerIds: ["a", "b"],
+      attendance: ALL_MARKED,
     });
     expect(applyDraftToEntry(entry, { kind: "skipped", reason: "" })).toEqual({
       kind: "skipped",
@@ -552,17 +634,25 @@ describe("applyDraftToEntry", () => {
     });
   });
 
-  it("round-trips a recorded entry through the editor without losing anything", () => {
+  it("round-trips a finished entry through the editor without losing anything", () => {
     const entry = past("r", {
       publicNote: "Redstone week.",
       staffNote: "Watch Siiri.",
-      presentGamerIds: ["a", "b"],
+      attendance: ALL_MARKED,
     });
     const draft = draftFromEditorState(
       editorStateFromEntry(entry, ROSTER),
       ROSTER,
     );
-    expect(draft).not.toBeNull();
-    expect(applyDraftToEntry(entry, draft!)).toEqual(entry);
+    expect(applyDraftToEntry(entry, draft)).toEqual(entry);
+  });
+
+  it("round-trips a partial entry through the editor without filling it in", () => {
+    const entry = past("p", { attendance: { b: "absent" } });
+    const draft = draftFromEditorState(
+      editorStateFromEntry(entry, ROSTER),
+      ROSTER,
+    );
+    expect(applyDraftToEntry(entry, draft)).toEqual(entry);
   });
 });

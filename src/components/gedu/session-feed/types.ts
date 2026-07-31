@@ -39,25 +39,27 @@ interface SessionFeedEntryBase {
  * recent past one. Making it a kind of its own would let a caller hand over two
  * next sessions, or a next session below a past one.
  *
- * A future entry holds **planning** fields only. Attendance and a
- * ran/didn't-run status are records of what happened and only attach once the
- * session is past; what a gedu can say in advance is what they plan to do
- * (which families read later) and a reminder to themselves.
+ * A future entry holds **notes only**. Attendance and a ran/didn't-run status
+ * are records of what happened and only attach once the session is past; what a
+ * gedu can say in advance is a note about what is coming (which families read)
+ * and a reminder to themselves. The notes are the *same two notes* a past entry
+ * carries — there is deliberately no planned-versus-recorded distinction in the
+ * model or in the copy, because a note written before a session and one written
+ * after it are the same field at two moments, and splitting them made every
+ * caller decide which one a session sitting on today's date should show.
+ *
+ * A future entry carries **no voice state**, because no session card anywhere
+ * renders a Join affordance: joining is a fact about a *room*, so it lives on
+ * the group surfaces (the rail's own-group card, each peer row) and nowhere
+ * else. A Join on the timeline made the same room look like a different room
+ * from the one in the rail.
  */
 export interface FutureSessionFeedEntry extends SessionFeedEntryBase {
   kind: "future";
-  /** Planned note families will read once the session runs. `null` = unset. */
+  /** Note families will read. `null` = unset. */
   publicNote: string | null;
-  /** Planned gedu-only note — a reminder for whoever runs it. `null` = unset. */
+  /** Gedu-only note — a reminder for whoever runs it. `null` = unset. */
   staffNote: string | null;
-  /**
-   * Whether the voice window is open right now (drives the Join button).
-   * Only ever meaningful on the next session, which is the only future entry
-   * that renders a Join affordance.
-   */
-  voiceIsOpen: boolean;
-  /** Where the open Join button navigates. `"#"` keeps it inert. */
-  voiceHref: string;
 }
 
 /**
@@ -69,13 +71,19 @@ export interface FutureSessionFeedEntry extends SessionFeedEntryBase {
  * for a session that has a note but no attendance — a state that genuinely
  * exists and has to render both its note *and* its alert.
  *
- * `presentGamerIds` is `null` **until attendance is recorded**, and that null is
- * the whole point of the model: an empty list would mean "everybody was away",
- * which is a real and very different claim from "nobody has said yet". Once
- * recorded, every roster member is explicitly present or absent, so an untouched
- * row can never silently read as an absence. Attendance is the mandatory part —
- * it doubles as the gedu's confirmation that they ran the session, which is what
- * they are paid on — and both notes are optional.
+ * **Attendance is stored as the sparse per-gamer mark map, not as a list of the
+ * present.** A save is allowed at any point — half a roster marked is a real
+ * and useful thing to have written down, and refusing it just meant the gedu
+ * who got interrupted saved nothing at all. So the record keeps exactly what
+ * was said about each child, *including the ones nobody has said anything about
+ * yet*: a roster id missing from the map is unmarked, which is a third state a
+ * present-list cannot express. That is what lets an entry come back tomorrow
+ * still flagged, with the marks already made intact.
+ *
+ * An empty map is a session nobody has started on; a map marking every roster
+ * member "absent" is the very different claim that nobody turned up. Attendance
+ * is the mandatory part — it doubles as the gedu's confirmation that they ran
+ * the session, which is what they are paid on — and both notes are optional.
  */
 export interface PastSessionFeedEntry extends SessionFeedEntryBase {
   kind: "past";
@@ -84,10 +92,11 @@ export interface PastSessionFeedEntry extends SessionFeedEntryBase {
   /** Gedu + admin only. `null` (or empty) renders no gedu block at all. */
   staffNote: string | null;
   /**
-   * Roster ids marked present, with everyone else on the roster explicitly
-   * marked absent — or `null` while attendance has not been recorded at all.
+   * What has been said about each child so far, keyed by roster id. A roster
+   * member with no key here has not been marked; an empty map is a session
+   * nobody has recorded anything for.
    */
-  presentGamerIds: readonly string[] | null;
+  attendance: AttendanceMarks;
 }
 
 /** A session that did not happen — holiday, closure, nobody turned up. */
@@ -121,11 +130,13 @@ export type EditableSessionFeedEntry =
 export type AttendanceMark = "present" | "absent";
 
 /**
- * The editor's per-gamer marks, keyed by roster id.
+ * Per-gamer marks, keyed by roster id — both the editor's working state and the
+ * shape a past entry stores.
  *
  * A roster id **missing from the map is unmarked** — not absent. That is the
- * three-state distinction a checkbox cannot express and the reason the editor
- * refuses to save until every roster member has a key here.
+ * three-state distinction a checkbox cannot express, and it survives all the way
+ * into storage: a partially-marked sheet saves as itself rather than being
+ * padded out with absences nobody claimed.
  *
  * `Partial` is load-bearing rather than decorative: it is what makes a lookup
  * return `AttendanceMark | undefined`, so the compiler keeps every reader
@@ -139,20 +150,21 @@ export type AttendanceMarks = Readonly<
  * What the write-up editor emits on save — the same two-way split the past
  * display states have, so a caller maps it straight onto the entry it replaces.
  *
- * The `past` branch carries a plain `presentGamerIds` array with no null case:
- * the editor only produces a draft once every roster member is marked, so a
- * saved record is unambiguous by construction.
+ * The `past` branch carries the marks as they stand, however few of them there
+ * are. There is no completeness precondition to encode, because there is no
+ * completeness gate: a partial sheet is savable, and the entry it lands on
+ * simply keeps saying it needs attention until the last child is marked.
  */
 export type SessionRecordDraft =
   | {
       kind: "past";
-      presentGamerIds: string[];
+      attendance: AttendanceMarks;
       publicNote: string;
       staffNote: string;
     }
   | { kind: "skipped"; reason: string };
 
-/** What the planning editor emits on save, for a future session. */
+/** What the future-session editor emits on save — notes, and nothing else. */
 export interface SessionPlanDraft {
   kind: "plan";
   publicNote: string;
@@ -182,8 +194,8 @@ export interface SessionEditorState {
 }
 
 /**
- * The planning editor's working state. Flat and identical in shape to the draft
- * it produces, bar the tag.
+ * The future-session editor's working state. Flat and identical in shape to the
+ * draft it produces, bar the tag.
  */
 export interface SessionPlanEditorState {
   publicNote: string;

@@ -148,7 +148,7 @@ export function SessionFeed({
             className={cn(
               "absolute -left-6 h-2.5 w-2.5 -translate-x-1/2 rounded-full ring-4 ring-background",
               entry.kind === "no_record" ? "top-3.5" : "top-5",
-              markerTone(entry, prominent),
+              markerTone(entry, roster, prominent),
             )}
           />
         )}
@@ -213,15 +213,25 @@ export function SessionFeed({
  * Timeline marker tone per state. The rail is scanned before anything is read,
  * so the markers carry the same hierarchy the cards do: the next session and the
  * outstanding work stand out, the ordinary weeks are neutral, and the
- * nothing-owed rows all but disappear. A future session is only primary-toned
- * when it is the next one — a later plan is not a thing to walk into.
+ * nothing-owed rows all but disappear. A future session is only fully toned when
+ * it is the next one — a later date is not a thing to walk into.
+ *
+ * The two loud markers are deliberately on **different hues**: info blue for
+ * what is coming, warning amber for what is owed. When "next" was primary-toned
+ * the rail read as one graded run of warm dots, and the single most useful thing
+ * a glance down it can tell you — where the gaps are — was the thing hardest to
+ * see.
  */
-function markerTone(entry: SessionFeedEntry, prominent: boolean): string {
+function markerTone(
+  entry: SessionFeedEntry,
+  roster: readonly SessionFeedGamer[],
+  prominent: boolean,
+): string {
   switch (entry.kind) {
     case "future":
-      return prominent ? "bg-primary" : "bg-primary/40";
+      return prominent ? "bg-info" : "bg-info/40";
     case "past":
-      return entryNeedsAttention(entry)
+      return entryNeedsAttention(entry, roster)
         ? "bg-warning"
         : "bg-muted-foreground/60";
     case "skipped":

@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import { cn } from "@/lib/utils";
 import { AttendanceSummary } from "./AttendanceSummary";
 import { CollapsibleRegion } from "./CollapsibleRegion";
@@ -32,8 +31,8 @@ interface SessionFeedItemProps {
   labels: SessionLabels;
   /**
    * Whether this is the soonest session still ahead of us. Only the prominent
-   * entry carries the Join affordance and the "next session" badge; every later
-   * future entry is a plan, not a thing to walk into.
+   * entry wears the "next session" accent; every later future entry is a date
+   * with notes on it, not the one being walked into.
    */
   prominent?: boolean;
   /** Whether this entry is the one currently expanded into an editor. */
@@ -68,9 +67,17 @@ interface SessionFeedItemProps {
  * because nothing is owed for it and it must not compete with the narrative
  * around it.
  *
+ * **The next session's accent is the info tone, not the primary one.** The two
+ * signals in this feed sit inches apart — "this is the one coming up" and "this
+ * one owes you work" — and primary is a warm brand tone close enough to the
+ * warning amber that a column of cards read as one undifferentiated wash of
+ * attention. Info is a blue: it separates on hue rather than on saturation, so
+ * the two states are told apart at a glance and from across the room.
+ *
  * Which editor opens follows the side of the present the entry is on: past
- * entries get the write-up editor (attendance + notes + didn't-run), future ones
- * get the planning editor (forward notes). No entry ever offers both.
+ * entries get the record editor (attendance + notes + didn't-run), future ones
+ * get the notes-only editor. No entry ever offers both, and neither carries a
+ * Join — rooms are joined from the group surfaces, never from a session card.
  */
 export function SessionFeedItem({
   entry,
@@ -85,7 +92,7 @@ export function SessionFeedItem({
   const t = useTranslations("gedu.sessionFeed");
   const recordable = isEditableEntry(entry);
   const plannable = isPlannableEntry(entry);
-  const needsAttention = entryNeedsAttention(entry);
+  const needsAttention = entryNeedsAttention(entry, roster);
 
   // Pre-epoch gaps aren't part of the story and aren't work — a single quiet
   // dashed line, deliberately not a card.
@@ -102,7 +109,7 @@ export function SessionFeedItem({
     <Card
       className={cn(
         "p-4 sm:p-5",
-        entry.kind === "future" && prominent && "border-primary/40",
+        entry.kind === "future" && prominent && "border-info/50",
         entry.kind === "skipped" && "border-dashed bg-muted/30",
       )}
     >
@@ -112,7 +119,7 @@ export function SessionFeedItem({
           {entry.kind === "future" && prominent && (
             <Badge
               variant="outline"
-              className="border-primary/40 text-[10px] uppercase tracking-wide text-primary"
+              className="border-info/50 text-[10px] uppercase tracking-wide text-info"
             >
               {t("upcomingBadge")}
             </Badge>
@@ -146,12 +153,7 @@ export function SessionFeedItem({
       </div>
 
       <CollapsibleRegion open={!editing}>
-        <SessionEntryBody
-          entry={entry}
-          roster={roster}
-          labels={labels}
-          prominent={prominent}
-        />
+        <SessionEntryBody entry={entry} roster={roster} />
       </CollapsibleRegion>
 
       {recordable && (
@@ -212,48 +214,27 @@ function SessionDateLine({
 function SessionEntryBody({
   entry,
   roster,
-  labels,
-  prominent,
 }: {
   entry: SessionFeedEntry;
   roster: readonly SessionFeedGamer[];
-  labels: SessionLabels;
-  prominent: boolean;
 }) {
   const t = useTranslations("gedu.sessionFeed");
 
   switch (entry.kind) {
     case "future": {
-      const hasPlan =
+      const hasNotes =
         (entry.publicNote !== null && entry.publicNote.length > 0) ||
         (entry.staffNote !== null && entry.staffNote.length > 0);
-      // `pb-1`: the Join button can be the last thing in this region, and a
-      // collapsible region clips its overflow — without the padding the button's
-      // focus ring loses a hairline off its bottom edge.
+      // The public note renders bare, exactly as it does on a past entry — no
+      // "Planned" heading over it. A note written before the session and one
+      // written after it are the same note; labelling one of them made the feed
+      // claim a distinction the model does not have.
       return (
         <div className="space-y-3 pb-1 pt-3">
-          {prominent && (
-            <div className="flex flex-wrap items-center gap-2">
-              <JoinVoiceButton
-                voiceIsOpen={entry.voiceIsOpen}
-                voiceHref={entry.voiceHref}
-                opensDate={labels.date}
-                opensTime={labels.startTime}
-              />
-              <p className="text-xs text-muted-foreground">
-                {t("upcomingHint")}
-              </p>
-            </div>
-          )}
           {entry.publicNote !== null && entry.publicNote.length > 0 && (
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                {t("plannedNoteHeading")}
-              </p>
-              <p className="mt-1 whitespace-pre-line text-sm leading-relaxed">
-                {entry.publicNote}
-              </p>
-            </div>
+            <p className="whitespace-pre-line text-sm leading-relaxed">
+              {entry.publicNote}
+            </p>
           )}
           {entry.staffNote !== null && entry.staffNote.length > 0 && (
             <StaffNoteBlock>
@@ -262,10 +243,10 @@ function SessionEntryBody({
               </p>
             </StaffNoteBlock>
           )}
-          {/* A later session with nothing planned still needs a line, or the
+          {/* A future session with nothing on it still needs a line, or the
               card is a bare date with no reason to exist on the page. */}
-          {!prominent && !hasPlan && (
-            <p className="text-sm text-muted-foreground">{t("noPlanYet")}</p>
+          {!hasNotes && (
+            <p className="text-sm text-muted-foreground">{t("noNotesYet")}</p>
           )}
         </div>
       );
@@ -273,8 +254,10 @@ function SessionEntryBody({
 
     case "past":
       // Notes and attendance are independent: a session can carry a full
-      // write-up and still be owed its attendance, so the notes render either
-      // way and only the attendance line waits on having been recorded.
+      // write-up and still owe its attendance, so the notes render either way.
+      // The attendance line is unconditional — a part-marked or wholly unmarked
+      // sheet is exactly the case the gedu came back for, and its own headline
+      // ("3 of 8 marked") says more than a sentence of prose could.
       // `pb-1` for the attendance disclosure's focus ring: it is the last thing
       // in this region and the region clips its overflow to animate.
       return (
@@ -291,16 +274,7 @@ function SessionEntryBody({
               </p>
             </StaffNoteBlock>
           )}
-          {entry.presentGamerIds === null ? (
-            <p className="text-sm text-muted-foreground">
-              {t("needsAttentionHint")}
-            </p>
-          ) : (
-            <AttendanceSummary
-              roster={roster}
-              presentGamerIds={entry.presentGamerIds}
-            />
-          )}
+          <AttendanceSummary roster={roster} attendance={entry.attendance} />
         </div>
       );
 

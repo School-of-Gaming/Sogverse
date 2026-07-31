@@ -23,15 +23,22 @@ interface SessionPlanEditorProps {
 }
 
 /**
- * The planning editor for a session that hasn't happened yet: what the gedu
- * intends to do, and a reminder for whoever runs it.
+ * The editor for a session that hasn't happened yet: its two notes, and nothing
+ * else.
  *
- * Deliberately **not** the write-up editor with half its fields hidden. There is
- * no attendance sheet and no didn't-run toggle, because neither can be true of a
- * session in the future — attendance is a record, and the whole reason it
- * doubles as pay confirmation is that it describes something that actually
+ * There is no attendance sheet and no didn't-run toggle, because neither can be
+ * true of a session in the future — attendance is a record, and the whole reason
+ * it doubles as pay confirmation is that it describes something that actually
  * happened. Offering either here would invite a gedu to pre-mark a room full of
  * children who haven't turned up yet.
+ *
+ * **The two note fields are labelled exactly as the past editor labels them**,
+ * and that is deliberate rather than lazy. A note is a note: the same field, the
+ * same audience, the same box — the only thing that changes is which side of the
+ * session it was typed on. Giving the future one its own "planned" vocabulary
+ * made a gedu writing on Sunday about Monday believe they were filling in a
+ * different field from the one they would open on Tuesday, and left every
+ * caller deciding which set of words a session sitting on today's date deserved.
  *
  * Both fields are optional; the Save/Cancel row stays pinned at the bottom so
  * neither textarea growing moves it.
@@ -61,16 +68,16 @@ export function SessionPlanEditor({
     // open/close animation has something to reveal.
     <div className="space-y-4 pb-1 pt-4">
       <Field
-        label={t("plannedPublicNoteLabel")}
+        label={t("publicNoteLabel")}
         htmlFor={`${fieldId}-public`}
         optional
-        hint={t("plannedPublicNoteHint")}
+        hint={t("publicNoteHint")}
       >
         <Textarea
           id={`${fieldId}-public`}
           rows={4}
           value={draft.publicNote}
-          placeholder={t("plannedPublicNotePlaceholder")}
+          placeholder={t("publicNotePlaceholder")}
           onChange={(e) =>
             setDraft((d) => ({ ...d, publicNote: e.target.value }))
           }
@@ -79,16 +86,16 @@ export function SessionPlanEditor({
 
       <StaffNoteBlock>
         <Field
-          label={t("plannedStaffNoteLabel")}
+          label={t("staffNoteFieldLabel")}
           htmlFor={`${fieldId}-staff`}
           optional
-          hint={t("plannedStaffNoteHint")}
+          hint={t("staffNoteHint")}
         >
           <Textarea
             id={`${fieldId}-staff`}
             rows={3}
             value={draft.staffNote}
-            placeholder={t("plannedStaffNotePlaceholder")}
+            placeholder={t("staffNotePlaceholder")}
             onChange={(e) =>
               setDraft((d) => ({ ...d, staffNote: e.target.value }))
             }

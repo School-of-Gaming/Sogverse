@@ -7,9 +7,7 @@ export {
   FEED_PAST_CHUNK_SIZE,
   applyDraftToEntry,
   applyPlanDraftToEntry,
-  attendanceCounts,
-  attendanceMarksFromPresentIds,
-  attendanceProgress,
+  attendanceTally,
   countEntriesNeedingAttention,
   draftFromEditorState,
   editorStateFromEntry,
@@ -20,7 +18,9 @@ export {
   pastEntryWindow,
   planDraftFromEditorState,
   planEditorStateFromEntry,
+  rosterScopedMarks,
 } from "./entry-state";
+export type { AttendanceTally } from "./entry-state";
 export type {
   AttendanceMark,
   AttendanceMarks,
