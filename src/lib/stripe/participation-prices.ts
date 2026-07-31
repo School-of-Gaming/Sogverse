@@ -49,30 +49,47 @@ interface SubscriptionPriceRow {
 }
 
 /**
- * Lazy-create the monthly Stripe Price for a (product, currency) pair.
+ * Resolve the monthly Stripe Price for a (product, currency) pair, creating
+ * one when the cache is empty **or stale**.
  *
- * Cached in `product_subscription_prices`. If `price_cents` later
- * changes on the admin form, existing subscribers keep their old Price —
- * Stripe Prices are immutable. A future admin action could recreate them.
+ * `product_subscription_prices` caches the Stripe Price backing a club's
+ * catalogue price. Stripe Prices are immutable, so an admin raising
+ * `price_cents` on the product form cannot edit the cached Price — it has to be
+ * replaced. We therefore compare the cached amount against the catalogue amount
+ * on every call and mint a replacement Price whenever they diverge.
+ *
+ * Skipping that comparison is what made an admin price change apply to the
+ * displayed price but not the charged one: the club advertised the new amount
+ * while checkout silently kept billing the old cached Price forever.
+ *
+ * Existing subscribers are unaffected — a Stripe Subscription holds its own
+ * Price reference, so replacing the cached Price only governs *future*
+ * checkouts. That is why the superseded Price must stay active in Stripe: live
+ * subscriptions still bill against it.
  */
 export async function getOrCreateSubscriptionPrice(
   admin: SupabaseClient<Database>,
   productId: string,
   currency: SupportedCurrency,
 ): Promise<SubscriptionPriceRow | null> {
-  const { data: existing } = await admin
+  const { data: cached } = await admin
     .from("product_subscription_prices")
     .select("product_id, currency, stripe_price_id, unit_amount_cents")
     .eq("product_id", productId)
     .eq("currency", currency)
     .maybeSingle();
 
-  if (existing) {
-    return existing as SubscriptionPriceRow;
-  }
-
   const base = await loadBasePrice(admin, productId, currency);
-  if (!base) return null;
+
+  // No catalogue price to compare against (product not sold in this currency).
+  // A cached Price is then the best answer available; without one there is
+  // nothing to charge.
+  if (!base) return cached ? (cached as SubscriptionPriceRow) : null;
+
+  // Cache agrees with the catalogue — reuse it.
+  if (cached && cached.unit_amount_cents === base.price_cents) {
+    return cached as SubscriptionPriceRow;
+  }
 
   // Ensure the product has a Stripe Product. Look up by metadata.
   const stripeProductId = await ensureStripeProductForProduct(admin, productId);
@@ -97,19 +114,26 @@ export async function getOrCreateSubscriptionPrice(
     },
   });
 
-  const { data: inserted, error: insertErr } = await admin
+  // Upsert, not insert: on a price change the row already exists and has to be
+  // repointed at the replacement Price. The PK is (product_id, currency).
+  const { data: upserted, error: upsertErr } = await admin
     .from("product_subscription_prices")
-    .insert({
-      product_id: productId,
-      currency,
-      stripe_price_id: stripePrice.id,
-      unit_amount_cents: unitAmount,
-    })
+    .upsert(
+      {
+        product_id: productId,
+        currency,
+        stripe_price_id: stripePrice.id,
+        unit_amount_cents: unitAmount,
+      },
+      { onConflict: "product_id,currency" },
+    )
     .select("product_id, currency, stripe_price_id, unit_amount_cents")
     .single();
 
-  if (insertErr) {
-    // Concurrent caller raced us — fetch the row they wrote.
+  if (upsertErr) {
+    // Concurrent caller raced us — fetch the row they wrote. Both callers
+    // resolved the same catalogue amount, so either row is correct; the loser's
+    // Stripe Price is simply left unused (harmless, and never billed).
     const { data: raced } = await admin
       .from("product_subscription_prices")
       .select("product_id, currency, stripe_price_id, unit_amount_cents")
@@ -117,10 +141,10 @@ export async function getOrCreateSubscriptionPrice(
       .eq("currency", currency)
       .maybeSingle();
     if (raced !== null) return raced;
-    throw insertErr;
+    throw upsertErr;
   }
 
-  return inserted;
+  return upserted;
 }
 
 /**
