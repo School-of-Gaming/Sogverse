@@ -86,6 +86,9 @@ describe("product_subscription_prices — Stripe Price cache", () => {
       },
       { onConflict: "product_id" },
     );
-    expect(error).not.toBeNull();
+    // Assert the specific code: a bare "some error happened" would also pass on
+    // a grant problem or a check violation, and this test now carries the whole
+    // conflict-target guarantee on the database side.
+    expect(error?.code).toBe("42P10");
   });
 });

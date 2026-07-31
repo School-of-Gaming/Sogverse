@@ -87,6 +87,25 @@ function cacheRow(stripePriceId: string, unitAmountCents: number): CacheRow {
   };
 }
 
+/**
+ * How the cache-table write actually went out. The db test proves Postgres
+ * accepts this conflict target; only this proves the module *sends* it, so
+ * a revert to a plain insert (which would collide on every price change)
+ * cannot pass unnoticed.
+ */
+function cacheWriteRequest(fetchMock: FetchMock) {
+  const call = fetchMock.mock.calls.find(
+    ([input, init]) =>
+      requestedUrl(input).pathname === CACHE_PATH &&
+      (init?.method ?? "GET") !== "GET",
+  );
+  if (!call) throw new Error("no cache write was issued");
+  return {
+    onConflict: requestedUrl(call[0]).searchParams.get("on_conflict"),
+    prefer: new Headers(call[1]?.headers).get("Prefer") ?? "",
+  };
+}
+
 describe("getOrCreateSubscriptionPrice", () => {
   let fetchMock: FetchMock;
   let supabase: SupabaseClient<Database>;
@@ -181,6 +200,12 @@ describe("getOrCreateSubscriptionPrice", () => {
       stripe_price_id: "price_new_1",
       unit_amount_cents: 2000,
     });
+    // ...and repointing only works as an upsert on the real primary key. A
+    // plain insert collides with the row already there, so every price change
+    // would fail in Postgres while a mocked transport happily accepted it.
+    const write = cacheWriteRequest(fetchMock);
+    expect(write.onConflict).toBe("product_id,currency");
+    expect(write.prefer).toContain("resolution=merge-duplicates");
   });
 
   it("reuses the cached Price when it matches the catalogue amount", async () => {
