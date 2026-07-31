@@ -64,6 +64,13 @@ export interface GeduAssignmentSummary {
   nextSessionStart: Date | null;
   /** End of that session — drives the start–end range label. */
   nextSessionEnd: Date | null;
+  /**
+   * Whether this assignment has a voice room at all — true only for a remote
+   * product. **An in-person assignment renders no Join affordance**, rather
+   * than a locked one: a locked button promises it will unlock, and a camp in a
+   * library has no room behind it that ever will.
+   */
+  hasVoiceRoom: boolean;
   /** Whether that session's voice window is open right now. */
   voiceIsOpen: boolean;
   /** Where the Join button navigates. `"#"` keeps it inert. */
@@ -105,6 +112,7 @@ export function rollUpGeduAssignments({
 
   const summaries = rows.map((row) => {
     const next = nextOccurrenceFor(row, now, windowCloseMs);
+    const hasVoiceRoom = row.product.isRemote === true;
     return {
       productId: row.product.id,
       groupId: row.groupId,
@@ -115,15 +123,14 @@ export function rollUpGeduAssignments({
       groupGamerCount: row.groupGamerCount,
       nextSessionStart: next?.start ?? null,
       nextSessionEnd: next?.end ?? null,
+      hasVoiceRoom,
       voiceIsOpen:
         next !== null && isVoiceWindowOpen(next.start, next.end, now),
-      // Only a remote product has a room to join at all; an in-person one
-      // collapses to the same inert-but-rendered locked button the gamer side
-      // shows, rather than disappearing.
-      voiceHref:
-        row.product.isRemote === true
-          ? (voiceHrefByProductId?.[row.product.id] ?? "#")
-          : "#",
+      // Only meaningful when there is a room; an in-person assignment renders no
+      // Join at all, so its href is never read.
+      voiceHref: hasVoiceRoom
+        ? (voiceHrefByProductId?.[row.product.id] ?? "#")
+        : "#",
       openHref: hrefByProductId[row.product.id] ?? "#",
       attentionCount: attentionByProductId?.[row.product.id] ?? 0,
     } satisfies GeduAssignmentSummary;

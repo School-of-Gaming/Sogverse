@@ -111,8 +111,11 @@ export function buildGeduDashboardFixture(
       id: CAMP_PRODUCT_ID,
       name: "Roblox Builders Camp",
       productType: "camp",
-      // In person: no room to join, so this card renders the locked Join beside
-      // the club's open one — the two states side by side on one screen.
+      // In person: no room to join at all, so this card renders **no** Join
+      // beside the club's open one. That pairing is the point — the two
+      // in-person and remote shapes side by side on one screen, so it is
+      // obvious the camp card is missing a button by design rather than
+      // showing a locked one that will never open.
       isRemote: false,
       slots: [0, 1, 2, 3, 4].map((weekday) => ({
         weekday,
@@ -182,13 +185,16 @@ export function buildGeduDashboardFixture(
 /**
  * Count each product's outstanding sessions straight out of the feed its card
  * links to. Derived rather than authored so the two scenes can't drift.
+ *
+ * The count is taken against that feed's own roster, because "outstanding" now
+ * means "some of this group is still unmarked" — a session with three of eight
+ * marked counts, exactly as the card behind it says it does.
  */
 function outstandingByProduct(now: Date): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const [productId, scenario] of Object.entries(SCENE_BY_PRODUCT)) {
-    counts[productId] = countEntriesNeedingAttention(
-      buildGeduProductPageFixture(now, scenario).entries,
-    );
+    const { entries, feedRoster } = buildGeduProductPageFixture(now, scenario);
+    counts[productId] = countEntriesNeedingAttention(entries, feedRoster);
   }
   return counts;
 }

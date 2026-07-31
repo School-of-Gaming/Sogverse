@@ -9,15 +9,24 @@ import { UnverifiedVoiceNotice } from "./unverified-voice-notice";
  * lands. Rendered today only by a full-page preview scene; at promotion it
  * replaces the live body and the route passes the wired sections in.
  *
- * Two changes from the page it replaces, and the first drives the second:
+ * Three changes from the page it replaces, and the first drives the rest:
  *
  * - **The dashboard rolls up to the assignment.** It used to enumerate every
  *   upcoming occurrence, which is eight near-identical rows for one weekly club.
  *   Per-session detail now lives in the product page's feed, so the future
- *   horizon belongs there and only there; the dashboard shows one card per room
- *   the gedu runs, with its next session and its outstanding-write-up count.
- * - **The section is therefore "My Groups", not "Sessions".** The old heading
- *   described a list of occurrences and would be a lie over a roll-up.
+ *   horizon belongs there and only there; the dashboard shows one card per
+ *   activity the gedu runs, with its next session and its outstanding-write-up
+ *   count.
+ * - **The section is therefore "My Activities", not "Sessions".** The old
+ *   heading described a list of occurrences and would be a lie over a roll-up.
+ *   "Activities" is the umbrella that stays honest across all three product
+ *   types: "My Clubs" lies to a camp gedu, and "Products" and "Assignments" are
+ *   words we use to each other, not to the person running the room.
+ * - **The sections are wider than the family dashboards', and the cards tile.**
+ *   Gedu surfaces are desktop-default, and a roll-up card is small — a gedu with
+ *   three activities on a laptop met one narrow column and a screen and a half
+ *   of scrolling. Both sections take the same wider container so their left
+ *   edges still line up under the section pill, and the cards grid inside it.
  *
  * Both data-bound sections arrive as nodes rather than being reached for
  * directly. That is the shell/body seam: the live shell will pass the
@@ -31,7 +40,7 @@ export function GeduDashboardPageBodyDraft({
   verified,
   instantRoomCard,
 }: {
-  /** The My Groups section — one roll-up card per assignment. */
+  /** The My Activities section — one roll-up card per assignment. */
   groupsSection: React.ReactNode;
   /** Has an admin verified this gedu? Gates the instant-room panel. */
   verified: boolean;
@@ -41,7 +50,7 @@ export function GeduDashboardPageBodyDraft({
   const t = useTranslations("dashboardSections");
 
   const sections: DashboardSection[] = [
-    { id: "groups", label: t("myGroups") },
+    { id: "groups", label: t("myActivities") },
     { id: "instant-voice-room", label: t("instantVoiceRoom") },
   ];
 
@@ -59,12 +68,16 @@ export function GeduDashboardPageBodyDraft({
           regardless — `metadata` names documents, not headings. */}
       <h1 className="sr-only">{t("pageTitle")}</h1>
 
-      <DashboardSectionPill sections={sections} ariaLabel={t("myGroups")} />
+      <DashboardSectionPill sections={sections} ariaLabel={t("myActivities")} />
 
       <div className="space-y-24 pb-24">
         <section id="groups" className="scroll-mt-32">
-          <div className="mx-auto max-w-3xl space-y-6">
-            <h2 className="text-3xl font-bold">{t("myGroups")}</h2>
+          {/* `max-w-5xl`, not the family dashboards' `max-w-3xl`: this is a
+              desktop surface, and three roll-up cards need the room. Both
+              sections share the width so their headings line up down the page —
+              two different `mx-auto` caps would read as a broken grid. */}
+          <div className="mx-auto max-w-5xl space-y-6">
+            <h2 className="text-3xl font-bold">{t("myActivities")}</h2>
             {groupsSection}
           </div>
         </section>
@@ -77,7 +90,7 @@ export function GeduDashboardPageBodyDraft({
           id="instant-voice-room"
           className="scroll-mt-32 min-h-[calc(100svh-9rem)]"
         >
-          <div className="mx-auto max-w-3xl space-y-6">
+          <div className="mx-auto max-w-5xl space-y-6">
             <h2 className="text-3xl font-bold">{t("instantVoiceRoom")}</h2>
             {verified ? instantRoomCard : <UnverifiedVoiceNotice />}
           </div>
