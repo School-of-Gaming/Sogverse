@@ -5,7 +5,6 @@ import {
   createContext,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -114,7 +113,6 @@ import {
   countEntriesNeedingAttention,
   isEditableEntry,
   isPlannableEntry,
-  partitionFeedEntries,
   type SessionEntryDraft,
   type SessionFeedEntry,
 } from "@/components/gedu/session-feed";
@@ -2441,16 +2439,20 @@ const BILLING_ACCOUNTS_SPLIT: BillingAccountSummary[] = [
 
 /**
  * The feed rendered against the mock club, with both inline editors wired to
- * local state: marking each child present or absent, typing any note, flipping
- * "this session didn't run" and planning a future session all mutate the fixture
- * in place, so a flagged session really does turn into a recorded one (and the
- * alert badge above it really does count down). Nothing persists — a reload puts
- * the fixture back.
+ * local state: marking each child present or absent, typing any note on a past
+ * *or* a future session, and flipping "this session didn't run" all mutate the
+ * fixture in place — so a flagged session really does turn into a finished one
+ * (and the alert badge above it really does count down), while a half-marked
+ * save really does stay flagged. Nothing persists — a reload puts the fixture
+ * back.
  *
  * The fixture is built once from `useNow()` and then held in state: rebuilding
  * it on every 30s tick would throw away whatever the reviewer had just typed.
- * The read-only "voice open" variant below has no such state, so it can rebuild
- * freely.
+ *
+ * There is no Join button anywhere in here, and there is nothing missing: the
+ * feed's cards carry no voice affordance at all. Rooms are joined from the
+ * product page's rail, which is a page-level composition rather than a
+ * component, so it is reviewed in the preview scene instead.
  */
 function GeduSessionFeedDemo() {
   const now = useNow();
@@ -2459,18 +2461,10 @@ function GeduSessionFeedDemo() {
   );
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Second fixture, next session only, with the voice window open — the one
-  // state the main feed can't show at the same time as its locked counterpart.
-  // Pulled out by the same partition the feed uses rather than by index, so it
-  // stays the *next* session however deep the future horizon gets.
-  const voiceOpenEntries = useMemo(() => {
-    const next = partitionFeedEntries(
-      buildSessionFeedFixture(now, { voiceIsOpen: true }).entries,
-    ).nextSession;
-    return next === null ? [] : [next];
-  }, [now]);
-
-  const needingAttention = countEntriesNeedingAttention(entries);
+  const needingAttention = countEntriesNeedingAttention(
+    entries,
+    SESSION_FEED_ROSTER,
+  );
 
   // A plan can only land on a future session and a write-up only on a past one,
   // so the entry's own kind settles which apply runs; a mismatch leaves the
@@ -2507,24 +2501,6 @@ function GeduSessionFeedDemo() {
             editingEntryId={editingId}
             onEditEntry={setEditingId}
             onSaveEntry={handleSave}
-          />
-        </div>
-      </SubSection>
-
-      <SubSection title="Next session — voice window open">
-        <div className="max-w-2xl space-y-2">
-          <DemoCaption>
-            The same next session as in the feed above, with the window open so
-            the active Join button shows instead of the locked &ldquo;Opens
-            …&rdquo; state. Read-only.
-          </DemoCaption>
-          <SessionFeed
-            entries={voiceOpenEntries}
-            roster={SESSION_FEED_ROSTER}
-            sourceTimeZone={SESSION_FEED_TIMEZONE}
-            editingEntryId={null}
-            onEditEntry={() => {}}
-            onSaveEntry={() => {}}
           />
         </div>
       </SubSection>
