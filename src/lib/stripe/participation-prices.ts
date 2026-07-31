@@ -12,6 +12,12 @@ interface ProductPrice {
   price_cents: number;
 }
 
+/**
+ * The catalogue price for a (product, currency), or null when the product is
+ * genuinely not sold in that currency. Errors propagate: callers read a missing
+ * price as "not for sale" and decide what to charge from it, so a failed query
+ * must not present as an absent one.
+ */
 async function loadBasePrice(
   admin: SupabaseClient<Database>,
   productId: string,
@@ -23,7 +29,7 @@ async function loadBasePrice(
     .eq("product_id", productId)
     .eq("currency", currency)
     .maybeSingle();
-  if (error || !data) return null;
+  if (error) throw error;
   return data;
 }
 
@@ -49,32 +55,41 @@ interface SubscriptionPriceRow {
 }
 
 /**
- * Lazy-create the monthly Stripe Price for a (product, currency) pair.
+ * Resolve the monthly Stripe Price for a (product, currency) pair, creating one
+ * when the cache is empty **or stale**.
  *
- * Cached in `product_subscription_prices`. If `price_cents` later
- * changes on the admin form, existing subscribers keep their old Price —
- * Stripe Prices are immutable. A future admin action could recreate them.
+ * Two things here are load-bearing. **Keep the amount comparison** — Stripe
+ * Prices are immutable, so an admin raising `price_cents` cannot edit the
+ * cached Price and it has to be replaced; without the comparison the club
+ * advertises the new amount while checkout bills the old one forever. And
+ * **never deactivate the superseded Price** — live subscriptions hold their own
+ * Price reference and still bill against it, which is also why existing
+ * subscribers keep their original amount.
  */
 export async function getOrCreateSubscriptionPrice(
   admin: SupabaseClient<Database>,
   productId: string,
   currency: SupportedCurrency,
 ): Promise<SubscriptionPriceRow | null> {
-  const { data: existing } = await admin
-    .from("product_subscription_prices")
-    .select("product_id, currency, stripe_price_id, unit_amount_cents")
-    .eq("product_id", productId)
-    .eq("currency", currency)
-    .maybeSingle();
+  const [{ data: cached, error: cachedErr }, base] = await Promise.all([
+    admin
+      .from("product_subscription_prices")
+      .select("product_id, currency, stripe_price_id, unit_amount_cents")
+      .eq("product_id", productId)
+      .eq("currency", currency)
+      .maybeSingle(),
+    loadBasePrice(admin, productId, currency),
+  ]);
+  if (cachedErr) throw cachedErr;
 
-  if (existing) {
-    return existing as SubscriptionPriceRow;
-  }
-
-  const base = await loadBasePrice(admin, productId, currency);
+  // No catalogue price: fail closed rather than sell on a cached Price the
+  // catalogue no longer confirms. The caller renders this as a 400.
   if (!base) return null;
 
-  // Ensure the product has a Stripe Product. Look up by metadata.
+  if (cached && cached.unit_amount_cents === base.price_cents) {
+    return cached;
+  }
+
   const stripeProductId = await ensureStripeProductForProduct(admin, productId);
 
   const unitAmount = base.price_cents;
@@ -97,30 +112,24 @@ export async function getOrCreateSubscriptionPrice(
     },
   });
 
-  const { data: inserted, error: insertErr } = await admin
+  // Upsert, not insert: on a price change the row already exists and has to be
+  // repointed at the replacement Price.
+  const { data: upserted, error: upsertErr } = await admin
     .from("product_subscription_prices")
-    .insert({
-      product_id: productId,
-      currency,
-      stripe_price_id: stripePrice.id,
-      unit_amount_cents: unitAmount,
-    })
+    .upsert(
+      {
+        product_id: productId,
+        currency,
+        stripe_price_id: stripePrice.id,
+        unit_amount_cents: unitAmount,
+      },
+      { onConflict: "product_id,currency" },
+    )
     .select("product_id, currency, stripe_price_id, unit_amount_cents")
     .single();
+  if (upsertErr) throw upsertErr;
 
-  if (insertErr) {
-    // Concurrent caller raced us — fetch the row they wrote.
-    const { data: raced } = await admin
-      .from("product_subscription_prices")
-      .select("product_id, currency, stripe_price_id, unit_amount_cents")
-      .eq("product_id", productId)
-      .eq("currency", currency)
-      .maybeSingle();
-    if (raced !== null) return raced;
-    throw insertErr;
-  }
-
-  return inserted;
+  return upserted;
 }
 
 /**
