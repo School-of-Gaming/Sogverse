@@ -21,12 +21,13 @@ import { useNow } from "@/providers";
  * The gedu's product page redesigned around the session feed.
  *
  * Every editor is fully live against local state: marking each child present or
- * absent, typing both session notes, marking a session as not run, planning a
- * future session, and writing the group's standing notes — and, on an in-person
- * product, the venue's shared ones. A flagged session turning into a recorded
- * one — and a bare future date turning into a plan — is the single most
- * important thing to feel before this gets wired to a database. Nothing persists
- * past a reload.
+ * absent (including saving half a roster and coming back to it), typing both
+ * session notes on a past *or* a future session, marking a session as not run,
+ * writing the group's standing notes — and, on an in-person product, the venue's
+ * shared ones — plus correcting a child's Minecraft username from the roster. A
+ * flagged session turning into a finished one, and a part-marked one staying
+ * flagged, are the two most important things to feel before this gets wired to a
+ * database. Nothing persists past a reload.
  *
  * The fixture is built once from the first `useNow()` value and then held in
  * state — rebuilding it on the 30-second tick would throw away whatever the
@@ -39,6 +40,7 @@ export function GeduProductPageScene({
 }) {
   const now = useNow();
   const [fixture] = useState(() => buildGeduProductPageFixture(now, scenario));
+  const [data, setData] = useState(fixture.data);
   const [entries, setEntries] = useState<SessionFeedEntry[]>(fixture.entries);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [groupNotes, setGroupNotes] = useState(fixture.groupNotes);
@@ -90,9 +92,38 @@ export function GeduProductPageScene({
     setSiteNotesEditing(false);
   };
 
+  /**
+   * A gedu correcting a mistyped Minecraft name. The real write is scoped to
+   * gamers in the gedu's own group, so the scene only ever touches this group's
+   * roster — and it clears `minecraft_uuid` alongside, because a verification
+   * belongs to the name it was issued for: keeping the old UUID would render the
+   * new, unchecked name in verified green.
+   */
+  const handleSaveMinecraftUsername = (gamerId: string, username: string) => {
+    setData((prev) => ({
+      ...prev,
+      groups: prev.groups.map((group) =>
+        group.id !== prev.my_group_id || group.roster === null
+          ? group
+          : {
+              ...group,
+              roster: group.roster.map((member) =>
+                member.gamer_id === gamerId
+                  ? {
+                      ...member,
+                      minecraft_username: username.length > 0 ? username : null,
+                      minecraft_uuid: null,
+                    }
+                  : member,
+              ),
+            },
+      ),
+    }));
+  };
+
   return (
     <GeduProductPageBodyDraft
-      data={fixture.data}
+      data={data}
       entries={entries}
       feedRoster={fixture.feedRoster}
       sourceTimeZone={fixture.sourceTimeZone}
@@ -109,6 +140,7 @@ export function GeduProductPageScene({
       editingEntryId={editingEntryId}
       onEditEntry={setEditingEntryId}
       onSaveEntry={handleSave}
+      onSaveMinecraftUsername={handleSaveMinecraftUsername}
     />
   );
 }

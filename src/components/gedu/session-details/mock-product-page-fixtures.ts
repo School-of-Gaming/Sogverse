@@ -142,8 +142,9 @@ interface ScenarioConfig {
   endsInDays: number | null;
   /**
    * Remote products have a voice room; in-person ones have a building. The two
-   * are exclusive, and the flag drives both — every Join on an in-person page
-   * is inert, and only an in-person page carries site notes.
+   * are exclusive, and the flag drives both — an in-person page renders **no
+   * Join affordance at all** (not a locked one: there is no room, so there is
+   * nothing to lock), and only an in-person page carries site notes.
    */
   isRemote: boolean;
   /** The venue, on in-person products only. */
@@ -305,21 +306,40 @@ const YEARLONG_SKIP_REASONS: readonly string[] = [
  * what make it *this* club, and a caller wanting a different history composes
  * its own spec list rather than passing knobs into this one.
  *
- * The mix is what a real year looks like, and it covers all three shapes a past
- * session can take: mostly recorded with a write-up, five holiday skips, two
+ * The mix is what a real year looks like, and it covers every shape a past
+ * session can take: mostly finished with a write-up, five holiday skips, two
  * bare gaps with nothing on them at all, one week whose notes were written but
- * whose attendance was never marked off, and two sessions from before any of
- * this was expected.
+ * whose roster was never touched, one week whose roster was *started and
+ * abandoned* — the partial save — and two sessions from before any of this was
+ * expected.
  */
 function yearlongSpecs(): readonly EntrySpec[] {
   const SKIP_AT = new Set([6, 17, 18, 31, 44]);
   const OWED_AT = new Set([2, 12]);
   const NOTES_BUT_NO_ATTENDANCE_AT = new Set([8]);
+  const PART_MARKED_AT = new Set([4]);
   const past: EntrySpec[] = [];
 
   for (let index = 0; index < 53; index++) {
     if (OWED_AT.has(index)) {
       past.push({ kind: "past" });
+      continue;
+    }
+    if (PART_MARKED_AT.has(index)) {
+      // Four of eight answered and then something else happened. It saved, it
+      // is still flagged, and it reads "4 of 8 marked" until someone finishes.
+      past.push({
+        kind: "past",
+        publicNote: YEARLONG_RECAPS[index % YEARLONG_RECAPS.length],
+        partial: {
+          present: [
+            SESSION_FEED_GAMER_IDS.aino,
+            SESSION_FEED_GAMER_IDS.vaino,
+            SESSION_FEED_GAMER_IDS.elias,
+          ],
+          absent: [SESSION_FEED_GAMER_IDS.linnea],
+        },
+      });
       continue;
     }
     if (SKIP_AT.has(index)) {
@@ -362,12 +382,13 @@ const CLUB_SPECS = yearlongSpecs();
 const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
   /**
    * **The kitchen sink.** A remote weekly club a year and a bit into its run,
-   * carrying every state the feed can be in at once: recorded weeks with
+   * carrying every state the feed can be in at once: fully-marked weeks with
    * write-ups, holiday skips, bare gaps still owed, a week written up but never
-   * marked off, a pre-epoch tail nothing is owed for, a future horizon with a
-   * plan on it, and three sister groups in the rail — one of them not staffed
-   * yet. Fifty-five weeks is also what makes the month dividers and the chunked
-   * "show earlier" reveal do any work at all.
+   * marked off, a week whose roster was started and abandoned, a pre-epoch tail
+   * nothing is owed for, a future horizon with notes on it, and three sister
+   * groups in the rail — one of them not staffed yet. Fifty-five weeks is also
+   * what makes the month dividers and the chunked "show earlier" reveal do any
+   * work at all.
    */
   club: {
     productName: "Minecraft Monday Club",
@@ -416,7 +437,7 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
    * weekdays with a weekend gap through the middle — which is the layout stress
    * a weekly fixture never applies. In person means the product has a *venue*,
    * so this is the only scenario carrying site notes, and it means there is no
-   * voice room anywhere on the page: every Join stays inert.
+   * voice room anywhere on the page: no Join button is rendered at all.
    */
   camp: {
     productName: "Roblox Builders Camp",
@@ -550,9 +571,18 @@ function calendarDate(now: Date, dayOffset: number): string {
 /**
  * The eight feed regulars as roster rows. Ages, genders and Minecraft states
  * are spread across the group so the row component's every variant (verified,
- * entered-but-unverified, not linked, missing parent email) is on screen at
- * once. Two children share a parent email — that's the sibling case the
- * copy-all-emails helper de-duplicates.
+ * entered-but-unverified, not linked) is on screen at once. Two children share
+ * a parent email — that's the sibling case the copy-all-emails helper
+ * de-duplicates.
+ *
+ * **Every child has a parent email**, because every child really does: a gamer
+ * account is created by a parent who signed up with one. There is no
+ * missing-email state in the UI any more, so a fixture withholding one would be
+ * rehearsing a case the product does not have.
+ *
+ * One address is deliberately very long. Roster rows have to survive an email
+ * that is wider than the rail they sit in, and a fixture full of tidy
+ * eleven-character addresses is exactly how a wrapping bug ships.
  */
 function buildRoster(now: Date): GeduAssignedProductRosterEntry[] {
   const details: readonly {
@@ -560,14 +590,14 @@ function buildRoster(now: Date): GeduAssignedProductRosterEntry[] {
     gender: GeduAssignedProductRosterEntry["gender"];
     minecraftUsername: string | null;
     verified: boolean;
-    parentEmail: string | null;
+    parentEmail: string;
   }[] = [
     { age: 11, gender: "girl", minecraftUsername: "AinoBuilds", verified: true, parentEmail: "marja.korhonen@example.com" },
     { age: 12, gender: "boy", minecraftUsername: "VainoTheBold", verified: true, parentEmail: "marja.korhonen@example.com" },
     { age: 10, gender: "boy", minecraftUsername: "EliasRedstone", verified: false, parentEmail: "tuomas.laine@example.com" },
-    { age: 13, gender: "girl", minecraftUsername: null, verified: false, parentEmail: "sofia.lindqvist@example.com" },
+    { age: 13, gender: "girl", minecraftUsername: null, verified: false, parentEmail: "sofia.margareta.lindqvist-holmberg@kotiposti.example.com" },
     { age: 9, gender: "boy", minecraftUsername: "OskarOre", verified: true, parentEmail: "henrik.lindqvist@example.com" },
-    { age: 11, gender: "girl", minecraftUsername: "SiiriSky", verified: false, parentEmail: null },
+    { age: 11, gender: "girl", minecraftUsername: "SiiriSky", verified: false, parentEmail: "petri.makinen@example.com" },
     { age: 12, gender: "boy", minecraftUsername: null, verified: false, parentEmail: "anna.virtanen@example.com" },
     { age: 10, gender: "non_binary", minecraftUsername: "HildaHollow", verified: true, parentEmail: "kaisa.nieminen@example.com" },
   ];

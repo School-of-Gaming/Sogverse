@@ -14,6 +14,7 @@ import {
   buildGeduProductPageFixture,
 } from "@/components/gedu/session-details/mock-product-page-fixtures";
 import { SESSION_FEED_ROSTER } from "@/components/gedu/session-feed/mock-fixtures";
+import { countEntriesNeedingAttention } from "@/components/gedu/session-feed";
 import { PREVIEW_SCENARIOS } from "@/components/public/products/mock-detail-fixtures";
 
 /**
@@ -181,6 +182,41 @@ describe("every scenario exercises the reference rail's other-groups card", () =
 });
 
 /**
+ * The roster row renders a parent email unconditionally — there is no
+ * missing-email state left in the UI, because a gamer account is created by a
+ * parent who signed up with one. A fixture that dropped an address would render
+ * a row with a hole in it and nothing would fail.
+ *
+ * The long address is pinned for the same reason the roster row was redesigned:
+ * an email has no useful upper bound, and a fixture of tidy short ones is how a
+ * wrapping bug reaches a gedu's screen.
+ */
+describe("every roster row carries a parent email", () => {
+  const now = new Date("2026-02-11T09:00:00Z");
+
+  it("gives every child in every scenario an address", () => {
+    for (const scenario of GEDU_PRODUCT_SCENARIOS) {
+      const { data } = buildGeduProductPageFixture(now, scenario);
+      for (const group of data.groups) {
+        for (const child of group.roster ?? []) {
+          expect(child.parent_email, `${scenario}/${child.first_name}`)
+            .toBeTruthy();
+        }
+      }
+    }
+  });
+
+  it("includes one address long enough to stress the row", () => {
+    const { data } = buildGeduProductPageFixture(now, "club");
+    const roster = data.groups.find((g) => g.id === data.my_group_id)?.roster;
+    const longest = Math.max(
+      ...(roster ?? []).map((r) => (r.parent_email ?? "").length),
+    );
+    expect(longest).toBeGreaterThan(40);
+  });
+});
+
+/**
  * Remote-vs-in-person is the axis the two scenarios exist to split, and site
  * notes hang off exactly one side of it: an in-person product always has a
  * venue (the schema requires a location), a remote one never does. A fixture
@@ -228,35 +264,39 @@ describe("the club scenario stays the kitchen sink", () => {
     expect(kinds).toContain("no_record");
   });
 
-  it("mixes recorded weeks, bare gaps and a written-up week still owed", () => {
-    // The three shapes a past entry can take, all in one feed. The third is the
-    // one the attendance model exists for: notes present, attendance null, so
-    // it renders its body *and* its alert.
-    const { entries } = buildGeduProductPageFixture(now, "club");
+  it("mixes finished weeks, bare gaps, a written-up week still owed, and a partial", () => {
+    // The four shapes a past entry can take, all in one feed. The last two are
+    // what the attendance model exists for: notes present with nothing marked,
+    // and a roster started then abandoned — both render their body *and* their
+    // alert, and only the fully-marked ones are clear.
+    const { entries, feedRoster } = buildGeduProductPageFixture(now, "club");
     const pastEntries = entries.filter((e) => e.kind === "past");
+    const markedCount = (entry: (typeof pastEntries)[number]) =>
+      feedRoster.filter((g) => entry.attendance[g.id] !== undefined).length;
 
     expect(
-      pastEntries.filter((e) => e.presentGamerIds !== null).length,
+      pastEntries.filter((e) => markedCount(e) === feedRoster.length).length,
     ).toBeGreaterThan(40);
     expect(
-      pastEntries.some(
-        (e) => e.presentGamerIds === null && e.publicNote === null,
-      ),
+      pastEntries.some((e) => markedCount(e) === 0 && e.publicNote === null),
+    ).toBe(true);
+    expect(
+      pastEntries.some((e) => markedCount(e) === 0 && e.publicNote !== null),
     ).toBe(true);
     expect(
       pastEntries.some(
-        (e) => e.presentGamerIds === null && e.publicNote !== null,
+        (e) => markedCount(e) > 0 && markedCount(e) < feedRoster.length,
       ),
     ).toBe(true);
   });
 
-  it("plans at least one future session, so the planning editor has a filled state", () => {
+  it("puts notes on at least one future session, so its editor has a filled state", () => {
     const { entries } = buildGeduProductPageFixture(now, "club");
-    const planned = entries.filter(
+    const noted = entries.filter(
       (e) =>
         e.kind === "future" && (e.publicNote !== null || e.staffNote !== null),
     );
-    expect(planned.length).toBeGreaterThan(0);
+    expect(noted.length).toBeGreaterThan(0);
   });
 
   it("spans more than a year, so the month dividers cross a New Year", () => {
@@ -288,12 +328,9 @@ describe("the club scenario stays the kitchen sink", () => {
 describe("the camp scenario is fully written up", () => {
   const now = new Date("2026-02-11T09:00:00Z");
 
-  it("has no past session still owing its attendance", () => {
-    const { entries } = buildGeduProductPageFixture(now, "camp");
-    const owed = entries.filter(
-      (e) => e.kind === "past" && e.presentGamerIds === null,
-    );
-    expect(owed).toEqual([]);
+  it("has no past session still owing any of its attendance", () => {
+    const { entries, feedRoster } = buildGeduProductPageFixture(now, "camp");
+    expect(countEntriesNeedingAttention(entries, feedRoster)).toBe(0);
   });
 
   it("still runs several days, so the daily cadence is visible", () => {
