@@ -154,7 +154,7 @@ The seam is `SUPPORTED_CURRENCIES` in `src/lib/constants/currency.ts`. To turn c
 
 **Gotchas / things that did NOT change (so re-enabling stays safe):**
 - We do **not** record the customer's presentment currency. `payments`/`family_subscriptions` store EUR (our settlement currency) because, under single-currency settlement, Adaptive Pricing settles us the exact EUR price we set. If you later want "what the customer actually paid", it's in `session.presentment_details` (`presentment_amount` + `presentment_currency`) on the webhook event — capture it then; it needs a small schema add.
-- Stripe `Price` objects are immutable. `getOrCreateSubscriptionPrice` lazily creates one EUR Price per product; existing subscribers keep their old Price if the admin later changes the amount.
+- Stripe `Price` objects are immutable. `getOrCreateSubscriptionPrice` lazily creates one EUR Price per product and **replaces** it when the admin changes the amount, so new checkouts follow the catalogue. Existing subscribers keep the Price they bought on — nothing migrates a live subscription to the new amount, so a club can be advertised at one price while some parents keep paying an older one indefinitely.
 - Legacy `product_prices` rows in non-EUR currencies (from before the lockdown) are harmless and ignored — `existingFormState` only loads the `eur` row.
 
 ### E2E Tests with Local Supabase

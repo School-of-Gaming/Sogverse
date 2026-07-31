@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import {
   createFetchStubbedClient,
+  postgrestError,
   postgrestJson,
   requestedUrl,
   type FetchMock,
@@ -99,10 +100,18 @@ describe("getOrCreateSubscriptionPrice", () => {
   /** Every row written to the cache table, in order. */
   let writes: CacheRow[];
 
-  /** Serves the cache table and the catalogue price, recording cache writes. */
+  /**
+   * Serves the cache table and the catalogue price, recording cache writes.
+   *
+   * The cache table enforces its primary key, so a plain insert over an
+   * existing row fails the way real Postgres would. Without that, a regression
+   * from upsert back to insert would pass here and only surface in production.
+   */
   function mockBackend(state: {
     cache: CacheRow | null;
     basePriceCents: number | null;
+    /** Simulates the cache write failing outright (5xx, timeout, RLS). */
+    writeFails?: boolean;
   }) {
     fetchMock.mockImplementation((input, init) => {
       const url = requestedUrl(input);
@@ -115,8 +124,27 @@ describe("getOrCreateSubscriptionPrice", () => {
             postgrestJson(state.cache === null ? [] : [state.cache]),
           );
         }
-        // Both insert and upsert POST here; the body may be a bare row or an
-        // array of them.
+
+        if (state.writeFails === true) {
+          return Promise.resolve(postgrestError("write failed", 500));
+        }
+
+        // PostgREST signals an upsert via on_conflict + a merge-duplicates
+        // Prefer header; a bare insert has neither and must collide.
+        const headers = new Headers(init?.headers);
+        const isUpsert =
+          url.searchParams.has("on_conflict") &&
+          (headers.get("Prefer") ?? "").includes("resolution=merge-duplicates");
+        if (state.cache !== null && !isUpsert) {
+          return Promise.resolve(
+            postgrestError(
+              'duplicate key value violates unique constraint "product_subscription_prices_pkey"',
+              409,
+            ),
+          );
+        }
+
+        // The body may be a bare row or an array of them.
         const parsed: unknown = JSON.parse(String(init?.body));
         const rows: unknown[] = Array.isArray(parsed) ? parsed : [parsed];
         const written = toCacheRow(rows[0]);
@@ -221,15 +249,19 @@ describe("getOrCreateSubscriptionPrice", () => {
     });
   });
 
-  it("falls back to the cached Price when the product has no catalogue price", async () => {
+  it("refuses to sell on a cached Price once the catalogue price is gone", async () => {
+    // De-listing a product in a currency removes its product_prices row. The
+    // cached Price outlives it, but selling on it would keep taking money for
+    // something the catalogue says is no longer for sale, at an amount nothing
+    // confirms. The caller turns null into "Product is not sold in {currency}".
     mockBackend({
       cache: cacheRow("price_current", 2000),
       basePriceCents: null,
     });
 
-    const row = await getOrCreateSubscriptionPrice(supabase, PRODUCT_ID, "eur");
-
-    expect(row?.stripe_price_id).toBe("price_current");
+    expect(
+      await getOrCreateSubscriptionPrice(supabase, PRODUCT_ID, "eur"),
+    ).toBeNull();
     expect(mockPricesCreate).not.toHaveBeenCalled();
   });
 
@@ -239,5 +271,36 @@ describe("getOrCreateSubscriptionPrice", () => {
     expect(
       await getOrCreateSubscriptionPrice(supabase, PRODUCT_ID, "eur"),
     ).toBeNull();
+  });
+
+  it("fails closed rather than billing the stale Price when the cache write fails", async () => {
+    // The write is what repoints the row. If it fails, the only row on hand is
+    // the superseded one — returning it would charge the old amount, which is
+    // the very bug this function exists to prevent.
+    mockBackend({
+      cache: cacheRow("price_old", 1000),
+      basePriceCents: 2000,
+      writeFails: true,
+    });
+
+    await expect(
+      getOrCreateSubscriptionPrice(supabase, PRODUCT_ID, "eur"),
+    ).rejects.toThrow();
+  });
+
+  it("fails closed when the catalogue price cannot be read", async () => {
+    // A failed read must not be mistaken for "not sold in this currency" and
+    // must not fall back to the cached amount.
+    fetchMock.mockImplementation((input) => {
+      const url = requestedUrl(input);
+      if (url.pathname === CACHE_PATH) {
+        return Promise.resolve(postgrestJson([cacheRow("price_old", 1000)]));
+      }
+      return Promise.resolve(postgrestError("catalogue read failed", 500));
+    });
+
+    await expect(
+      getOrCreateSubscriptionPrice(supabase, PRODUCT_ID, "eur"),
+    ).rejects.toThrow();
   });
 });
