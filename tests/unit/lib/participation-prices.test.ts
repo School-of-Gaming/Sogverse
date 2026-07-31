@@ -131,9 +131,13 @@ describe("getOrCreateSubscriptionPrice", () => {
 
         // PostgREST signals an upsert via on_conflict + a merge-duplicates
         // Prefer header; a bare insert has neither and must collide.
+        // The conflict target must name the real PK. `on_conflict=product_id`
+        // alone would pass a presence check here and fail in Postgres with "no
+        // unique or exclusion constraint matching the ON CONFLICT
+        // specification" — i.e. every price change 500s while CI stays green.
         const headers = new Headers(init?.headers);
         const isUpsert =
-          url.searchParams.has("on_conflict") &&
+          url.searchParams.get("on_conflict") === "product_id,currency" &&
           (headers.get("Prefer") ?? "").includes("resolution=merge-duplicates");
         if (state.cache !== null && !isUpsert) {
           return Promise.resolve(

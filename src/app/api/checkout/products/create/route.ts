@@ -273,7 +273,9 @@ export const POST = defineRoute({
     };
 
     if (isSinglePayment) {
-      const amount = await computeSinglePaymentAmount(admin, productId, currency);
+      const amount = await resolvePriceOrReleaseSeat(admin, reservationId, () =>
+        computeSinglePaymentAmount(admin, productId, currency),
+      );
       if (amount === null) {
         await rollbackReservation(admin, reservationId);
         return NextResponse.json(
@@ -300,10 +302,10 @@ export const POST = defineRoute({
         payment_method_save: "enabled",
       };
     } else {
-      const priceRow = await getOrCreateSubscriptionPrice(
+      const priceRow = await resolvePriceOrReleaseSeat(
         admin,
-        productId,
-        currency,
+        reservationId,
+        () => getOrCreateSubscriptionPrice(admin, productId, currency),
       );
       if (!priceRow) {
         await rollbackReservation(admin, reservationId);
@@ -354,6 +356,39 @@ async function pickGamerName(
     .eq("id", gamerId)
     .maybeSingle();
   return data?.first_name || "your child";
+}
+
+/**
+ * Run price resolution with a reservation already held, releasing the seat if
+ * it fails.
+ *
+ * The reservation row is reclaimed by exactly two things: an explicit rollback,
+ * or Stripe's `checkout.session.expired` webhook. At this point no Checkout
+ * Session exists yet, so a failure that escapes leaves a row nothing will ever
+ * clean up — and `count_seats_taken` counts reserving rows regardless of
+ * `reserved_until`, so on a capped product that seat is gone for good. The
+ * branches below already release the seat for the *expected* "no price" answer;
+ * this covers the unexpected ones.
+ *
+ * The failure is re-thrown as a deliberate 500 rather than raw: this route
+ * discloses error messages to the parent, and a PostgREST string ("canceling
+ * statement due to statement timeout") beside the signup button is meaningless
+ * to them and leaks internals. Postgres error codes would also be mapped to
+ * misleading statuses — `42501` to a 403, `PGRST116` to a 404 — for what is a
+ * server fault.
+ */
+async function resolvePriceOrReleaseSeat<T>(
+  admin: ReturnType<typeof createAdminClient>,
+  reservationId: string,
+  resolve: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await resolve();
+  } catch (error) {
+    await rollbackReservation(admin, reservationId);
+    console.error("[checkout/products] price resolution failed:", error);
+    throw new ApiError("Could not determine the price for this product", 500);
+  }
 }
 
 async function rollbackReservation(

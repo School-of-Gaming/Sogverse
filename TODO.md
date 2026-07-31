@@ -119,6 +119,45 @@ Now unlocked by the one-Stripe-sub-per-participation model (each consumer-club s
 - [ ] Decide the rule for **threshold-start** clubs (no fixed `start_date`): simplest is to charge immediately as today (there's no date to anchor to); deferring those would need a job that anchors the sub when the product flips to `running`. See the AskUserQuestion discussion that scoped this.
 - [ ] Parent-facing checkout copy must make "you won't be charged until {date}" explicit.
 
+### Simplify the reserve → confirm checkout flow (it pays for a cap nothing uses)
+
+A paid signup currently takes a seat in two stages: `create_participation` inserts a
+`status='reserving'` row, the Checkout Session carries that row's id in its metadata, and
+Stripe's `checkout.session.completed` webhook flips it to `active` (or
+`checkout.session.expired` deletes it). The reserving stage exists to stop a popular
+product overselling while parents sit on the Stripe page.
+
+**The premise no longer holds.** Seat caps are locked off in the admin form for every
+product type except municipality clubs (`formLocksFor` in
+`src/components/admin/products/form-locks.ts` — "every product launches uncapped"), and
+municipality clubs are free/external-contract, so they never reach Stripe Checkout at
+all. In prod today every consumer club is uncapped, there are no municipality clubs, and
+the only capped products are a handful of paid camps that pre-date the lock and have
+already finished. So the overselling this protects against cannot currently happen on
+any sellable product.
+
+**What it costs while dormant:**
+- Every failure between reserving and creating the Checkout Session must remember to
+  release the seat by hand. Miss one and the row is stranded — no Session exists yet, so
+  the expiry webhook never fires.
+- `count_seats_taken` counts `reserving` rows with **no `reserved_until` filter**, while
+  `refresh_product_seat_counts` filters on it. A stranded row therefore holds its seat
+  permanently *and* the two counts disagree, so the page offers a seat that checkout
+  refuses. That inconsistency is worth fixing on its own even if the flow stays.
+- Two writes and a webhook round-trip on every paid signup, plus a reservation lifetime
+  to tune.
+
+**Direction, if picked up:** create the participation when payment is confirmed
+(webhook) rather than reserving it up front, so an abandoned or failed checkout leaves
+nothing behind. Note the reserving row is not *only* a capacity hold — it is also the
+handle joining the Stripe session back to a participation, so removing it means deciding
+where that link lives instead (session metadata already carries gamer/product/customer).
+
+**Deliberately deferred:** the preference is to reintroduce this complexity when a
+product genuinely needs a seat cap, rather than carry it for a case that does not exist
+yet. Recorded so the reasoning survives — and so whoever re-enables seat caps knows this
+flow is what makes them safe.
+
 ### Localize the subscription line-item name on the Stripe Checkout page
 
 **Core problem:** a parent should see their subscription named in the locale they expect, whenever the club has a translation for it. Today they don't — on the Stripe Checkout page for a *subscription*, the headline **line item** shows the cached Stripe Product's name, which `pickTranslationName` (`src/lib/stripe/participation-prices.ts`) resolves English-first (`en → fi → translations[0]`) with **no viewer step**. So a Finnish parent who saw "Minecraft-kerho" throughout the app — and now gets Finnish Checkout chrome and a Finnish subscription *description* (both shipped on `feat/checkout-locale`) — still sees the **line item** in English. Two languages for the same club, stacked on one page.

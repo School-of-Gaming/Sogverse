@@ -578,6 +578,65 @@ describe("POST /api/checkout/products/create", () => {
     });
   });
 
+  it("rolls the reservation back when price resolution throws (single_payment)", async () => {
+    // A throw here is the dangerous case: no Checkout Session exists yet, so
+    // `checkout.session.expired` will never fire and nothing else reclaims the
+    // row. On a capped product that seat would be held forever.
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: PAID_CAMP });
+    mockAdminRpc
+      .mockResolvedValueOnce({
+        data: { kind: "reserving", participation_id: RESERVATION_ID },
+        error: null,
+      })
+      .mockResolvedValueOnce({ data: { kind: "expired" }, error: null });
+    // Once, not persistently: clearAllMocks() resets calls but keeps
+    // implementations, so a lingering rejection would leak into later tests.
+    mockComputeSinglePaymentAmount.mockRejectedValueOnce(
+      Object.assign(new Error("canceling statement due to statement timeout"), {
+        code: "57014",
+      }),
+    );
+
+    const res = await POST(
+      createRequest({ ...VALID_BODY, purchaseShape: "single_payment" }),
+    );
+    const data = await res.json();
+
+    expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation", {
+      p_reservation_id: RESERVATION_ID,
+    });
+    expect(mockStripeSessionCreate).not.toHaveBeenCalled();
+    // A server fault, reported as one — not the raw database text, and not the
+    // misleading status a Postgres error code would otherwise be mapped to.
+    expect(res.status).toBe(500);
+    expect(data.error).not.toContain("statement timeout");
+  });
+
+  it("rolls the reservation back when price resolution throws (subscription)", async () => {
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: PAID_CLUB });
+    mockAdminRpc
+      .mockResolvedValueOnce({
+        data: { kind: "reserving", participation_id: RESERVATION_ID },
+        error: null,
+      })
+      .mockResolvedValueOnce({ data: { kind: "expired" }, error: null });
+    mockGetOrCreateSubscriptionPrice.mockRejectedValueOnce(
+      new Error("db down"),
+    );
+
+    const res = await POST(
+      createRequest({ ...VALID_BODY, purchaseShape: "subscription_monthly" }),
+    );
+
+    expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation", {
+      p_reservation_id: RESERVATION_ID,
+    });
+    expect(mockStripeSessionCreate).not.toHaveBeenCalled();
+    expect(res.status).toBe(500);
+  });
+
   it("rolls the reservation back when Stripe returns a session without a URL", async () => {
     mockAuthenticatedCustomer();
     mockAdmin({ product: PAID_CAMP });

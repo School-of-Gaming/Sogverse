@@ -84,7 +84,7 @@ export async function getOrCreateSubscriptionPrice(
 ): Promise<SubscriptionPriceRow | null> {
   // Independent reads, so issue them together: the common case is now "read
   // both, compare, reuse", on the checkout hot path.
-  const [{ data: cached }, base] = await Promise.all([
+  const [{ data: cached, error: cachedErr }, base] = await Promise.all([
     admin
       .from("product_subscription_prices")
       .select("product_id, currency, stripe_price_id, unit_amount_cents")
@@ -93,6 +93,10 @@ export async function getOrCreateSubscriptionPrice(
       .maybeSingle(),
     loadBasePrice(admin, productId, currency),
   ]);
+  // Same rule as the catalogue read: a failed query is not an empty cache.
+  // Treating it as one would mint a duplicate Price and clobber a good row on
+  // every transient blip, so it fails closed too.
+  if (cachedErr) throw cachedErr;
 
   // Fail closed. Without a catalogue price there is nothing to price against,
   // and a cached Price is not a safe stand-in: it would sell a product the
