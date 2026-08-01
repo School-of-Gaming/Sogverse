@@ -13,7 +13,7 @@ import {
   entryNeedsAttention,
   isEditableEntry,
   isPlannableEntry,
-  newestRecordedEntryId,
+  newestPastEntryId,
   partitionFeedEntries,
   pastEntryWindow,
   planDraftFromEditorState,
@@ -361,10 +361,10 @@ describe("partitionFeedEntries", () => {
  * the report's own length or shape may enter into it, or two feeds that differ
  * only in how chatty last week's gedu was would behave differently.
  */
-describe("newestRecordedEntryId", () => {
+describe("newestPastEntryId", () => {
   it("names the first recorded session in the past run", () => {
     expect(
-      newestRecordedEntryId([
+      newestPastEntryId([
         past("p1", { report: "# Last week" }),
         past("p2", { report: "# The week before" }),
       ]),
@@ -374,26 +374,26 @@ describe("newestRecordedEntryId", () => {
   it("names it whether or not it carries a report at all", () => {
     // Positional, not a question about the writing: a bare, unwritten newest
     // session is still the newest session.
-    expect(newestRecordedEntryId([past("p1"), past("p2")])).toBe("p1");
+    expect(newestPastEntryId([past("p1"), past("p2")])).toBe("p1");
   });
 
   it("steps over pre-epoch gaps, which recorded nothing", () => {
     expect(
-      newestRecordedEntryId([noRecord("n1"), noRecord("n2"), past("p1")]),
+      newestPastEntryId([noRecord("n1"), noRecord("n2"), past("p1")]),
     ).toBe("p1");
   });
 
   it("names nothing for a feed with no past at all", () => {
-    expect(newestRecordedEntryId([])).toBeNull();
-    expect(newestRecordedEntryId([noRecord("n1")])).toBeNull();
+    expect(newestPastEntryId([])).toBeNull();
+    expect(newestPastEntryId([noRecord("n1")])).toBeNull();
   });
 
   it("moves to the new top when an older chunk is revealed beneath it", () => {
     // The past grows downward as chunks are revealed, so the exemption must
     // stay pinned to the head of the run rather than to a fixed index.
     const head = past("p1", { report: "# Last week" });
-    expect(newestRecordedEntryId([head])).toBe("p1");
-    expect(newestRecordedEntryId([head, past("p2"), past("p3")])).toBe("p1");
+    expect(newestPastEntryId([head])).toBe("p1");
+    expect(newestPastEntryId([head, past("p2"), past("p3")])).toBe("p1");
   });
 });
 

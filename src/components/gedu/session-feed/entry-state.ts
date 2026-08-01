@@ -361,18 +361,20 @@ export function partitionFeedEntries(
  * The newest session that actually ran, out of a feed's past run — the one
  * entry whose report the feed renders in full instead of clamping it.
  *
- * **Positional, not a judgement about the writing.** Whatever sits at the top
- * of the past is what the weekly loop opens the page to read: what happened
- * last time, read while prepping the next one or writing this one up. Charging
- * a click for the single report every gedu reads every week is a toll on the
- * only path all of them walk; every older report keeps its clamp, which is what
- * stops a term of write-ups becoming a wall.
+ * **Positional, not a judgement about the writing.** It says nothing about
+ * whether anything was recorded on the entry — an unmarked, unwritten week at
+ * the head of the past is still the answer. Whatever sits at the top of the past
+ * is what the weekly loop opens the page to read: what happened last time, read
+ * while prepping the next one or writing this one up. Charging a click for the
+ * single report every gedu reads every week is a toll on the only path all of
+ * them walk; every older report keeps its clamp, which is what stops a term of
+ * write-ups becoming a wall.
  *
  * Pre-epoch gaps are stepped over rather than counted — nothing was ever
  * recorded on them, so there is no report to leave open — and a feed with no
  * past at all answers `null`.
  */
-export function newestRecordedEntryId(
+export function newestPastEntryId(
   past: readonly SessionFeedEntry[],
 ): string | null {
   return past.find((entry) => entry.kind === "past")?.id ?? null;

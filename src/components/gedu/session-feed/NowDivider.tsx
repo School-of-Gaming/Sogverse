@@ -39,11 +39,18 @@ import { cn } from "@/lib/utils";
 export function NowDivider({
   count,
   open,
+  controls,
   onToggle,
 }: {
   /** How many future sessions sit behind the collapse. */
   count: number;
   open: boolean;
+  /**
+   * Id of the list this toggle changes the contents of. The revealed sessions
+   * are ordinary rows in the feed's one keyed run rather than the children of a
+   * container, so what the control names is the run itself.
+   */
+  controls: string;
   onToggle: () => void;
 }) {
   const t = useTranslations("gedu.sessionFeed");
@@ -62,6 +69,7 @@ export function NowDivider({
         type="button"
         onClick={onToggle}
         aria-expanded={open}
+        aria-controls={controls}
         className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-info/40 bg-info/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-info transition-colors hover:bg-info/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <ChevronUp

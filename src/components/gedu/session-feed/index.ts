@@ -18,7 +18,7 @@ export {
   entryNeedsAttention,
   isEditableEntry,
   isPlannableEntry,
-  newestRecordedEntryId,
+  newestPastEntryId,
   partitionFeedEntries,
   pastEntryWindow,
   planDraftFromEditorState,

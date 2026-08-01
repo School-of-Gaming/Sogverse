@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Check, ChevronDown, Minus, UserRound, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
@@ -33,6 +33,7 @@ export function AttendanceSummary({
 }) {
   const t = useTranslations("gedu.sessionFeed");
   const [open, setOpen] = useState(false);
+  const namesId = useId();
   const { present, marked, total, complete } = attendanceTally(
     roster,
     attendance,
@@ -46,6 +47,7 @@ export function AttendanceSummary({
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
+        aria-controls={namesId}
         className="flex items-center gap-1.5 rounded-sm text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <UserRound className="h-3.5 w-3.5" aria-hidden />
@@ -63,7 +65,7 @@ export function AttendanceSummary({
         />
       </button>
 
-      <CollapsibleRegion open={open}>
+      <CollapsibleRegion open={open} id={namesId}>
         <ul className="flex flex-wrap gap-1.5 pt-2">
           {roster.map((gamer) => {
             const mark = attendance[gamer.id];

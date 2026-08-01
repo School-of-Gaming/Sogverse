@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import { ChevronsDown } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -10,12 +10,13 @@ import { NowDivider } from "./NowDivider";
 import { SessionFeedItem } from "./SessionFeedItem";
 import {
   entryCompleteness,
-  newestRecordedEntryId,
+  newestPastEntryId,
   partitionFeedEntries,
   pastEntryWindow,
+  type SessionCompleteness,
 } from "./entry-state";
 import { withMonthDividers, type SessionFeedRow } from "./feed-rows";
-import { useViewportAnchor } from "./scroll-anchor";
+import { editToggleAnchor, useViewportAnchor } from "./scroll-anchor";
 import { formatMonthLabel, formatSessionLabels } from "./session-labels";
 import type {
   SessionEntryDraft,
@@ -96,15 +97,14 @@ interface SessionFeedProps {
  *   They are computed over the whole visible run, so revealing the future never
  *   produces the same month labelled twice.
  *
- * The same pinning covers **closing an editor**, and it anchors to the card
- * *below* the one being edited. When a gedu saves, their eye is already on the
- * next entry down — the one they are about to write up, or the week before the
- * one they just finished — and that is what has to stay put. Holding the edited
- * card's own top edge instead kept the header still and swept everything under
- * it up the screen, which is the half of the page the reader had moved on to.
- * The consequence is deliberate and worth naming: content *above* the edited
- * card moves instead. That is behind the reader — it is where they have been,
- * not where they are going — and it is the side of the trade that costs least.
+ * The same pinning covers **both directions of the editor toggle**, and the two
+ * anchor to different rows — see the anchoring module for which and why. Closing
+ * holds the card *below* the edited one, so the entry a gedu is moving on to
+ * stays put; the deliberate cost is that content *above* the edited card moves
+ * instead, which is behind the reader rather than ahead of them. Opening holds
+ * the clicked row itself, because only one editor is open at a time and opening
+ * one silently shuts another — a shut that takes its whole height out from above
+ * the button the cursor is still resting on.
  *
  * Which entry is open is the caller's state and saving is the caller's callback;
  * how much of the feed is revealed is this component's own, because it is pure
@@ -130,6 +130,8 @@ export function SessionFeed({
 
   const anchor = useViewportAnchor();
   const dividerRef = useRef<HTMLLIElement>(null);
+  /** Named so the divider's toggle can say which region it reveals into. */
+  const listId = useId();
   /**
    * Every entry's row element, so a save can anchor the card it happened on.
    * A map rather than one ref: which entry is being saved is only known when
@@ -144,7 +146,7 @@ export function SessionFeed({
   const pastWindow = pastEntryWindow(past.length, chunksRevealed);
 
   /** The one entry whose report renders in full — see the derivation's own note. */
-  const unclampedEntryId = useMemo(() => newestRecordedEntryId(past), [past]);
+  const unclampedEntryId = useMemo(() => newestPastEntryId(past), [past]);
 
   /**
    * One descending run of everything currently on screen — future sessions,
@@ -201,25 +203,14 @@ export function SessionFeed({
   };
 
   /**
-   * Hold the card *below* the edited one still while its editor collapses shut.
+   * Capture the anchor for an edit toggle, before the state change that runs it.
    *
-   * The card loses most of its height in one frame, and the reader's eye is on
-   * what comes next — so the anchor is the edited row's next sibling, not the
-   * row itself. Anchoring to the row itself kept its header on the pixel it was
-   * on and dragged the entire rest of the feed up past it, which is exactly the
-   * content somebody who just saved is moving on to.
-   *
-   * What this trades away, deliberately: everything *above* the edited card
-   * moves down instead. Holding both is impossible — the page lost height in
-   * the middle — and the half above the change is the half the reader has
-   * already been through.
-   *
-   * A last row has no sibling and gets no compensation, which is the honest
-   * answer: there is nothing below it to hold.
+   * Which row is held depends on the direction, and that choice lives with the
+   * anchoring arithmetic rather than here — this is the DOM half: hand over the
+   * live row map and let it pick.
    */
-  const anchorBelowEntry = (entryId: string) => {
-    const next = entryRows.current.get(entryId)?.nextElementSibling ?? null;
-    anchor.capture(next instanceof HTMLElement ? next : null);
+  const anchorEditToggle = (entryId: string, closing: boolean) => {
+    anchor.capture(editToggleAnchor(entryRows.current, entryId, closing));
   };
 
   const renderRow = (row: FeedRow) => {
@@ -229,6 +220,7 @@ export function SessionFeed({
           <NowDivider
             count={laterFuture.length}
             open={laterOpen}
+            controls={listId}
             onToggle={toggleLater}
           />
         </li>
@@ -252,6 +244,9 @@ export function SessionFeed({
     const { entry } = row;
     const editing = editingEntryId === entry.id;
     const prominent = entry.id === nextSession?.id;
+    // Computed once and used twice — the marker on the rail and the card's own
+    // badge are the same answer, and it costs a walk of the roster.
+    const completeness = entryCompleteness(entry, roster);
     return (
       <li
         key={row.key}
@@ -266,13 +261,14 @@ export function SessionFeed({
           className={cn(
             "absolute -left-6 h-2.5 w-2.5 -translate-x-1/2 rounded-full ring-4 ring-background",
             entry.kind === "no_record" ? "top-3.5" : "top-5",
-            markerTone(entry, roster, prominent),
+            markerTone(entry, completeness, prominent),
           )}
         />
         <SessionFeedItem
           entry={entry}
           roster={roster}
           prominent={prominent}
+          completeness={completeness}
           clampReport={entry.id !== unclampedEntryId}
           labels={formatSessionLabels(entry, {
             locale,
@@ -282,15 +278,15 @@ export function SessionFeed({
           })}
           editing={editing}
           onToggleEdit={() => {
-            if (editing) anchorBelowEntry(entry.id);
+            anchorEditToggle(entry.id, editing);
             onEditEntry(editing ? null : entry.id);
           }}
           onCancelEdit={() => {
-            anchorBelowEntry(entry.id);
+            anchorEditToggle(entry.id, true);
             onEditEntry(null);
           }}
           onSave={(draft) => {
-            anchorBelowEntry(entry.id);
+            anchorEditToggle(entry.id, true);
             onSaveEntry(entry.id, draft);
           }}
         />
@@ -302,7 +298,15 @@ export function SessionFeed({
     <div
       className={cn("relative space-y-3 border-l border-border pl-6", className)}
     >
-      <ol className="space-y-3">{rows.map(renderRow)}</ol>
+      {/* The divider's toggle names this list rather than a wrapper of its own:
+          the future entries it reveals are ordinary rows interleaved with month
+          labels in one keyed run, and boxing them into a container to point at
+          would break the very continuity the single list exists to give. What
+          the control changes is what this list holds, and that is what it
+          says. */}
+      <ol id={listId} className="space-y-3">
+        {rows.map(renderRow)}
+      </ol>
 
       {pastWindow.remaining > 0 && (
         // Appends beneath itself, so the button walks down the page with the
@@ -342,14 +346,14 @@ export function SessionFeed({
  */
 function markerTone(
   entry: SessionFeedEntry,
-  roster: readonly SessionFeedGamer[],
+  completeness: SessionCompleteness | null,
   prominent: boolean,
 ): string {
   switch (entry.kind) {
     case "future":
       return prominent ? "bg-info" : "bg-info/40";
     case "past":
-      switch (entryCompleteness(entry, roster)) {
+      switch (completeness) {
         case "needs_attention":
           return "bg-warning";
         case "complete":

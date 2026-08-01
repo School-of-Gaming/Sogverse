@@ -1,5 +1,6 @@
 "use client";
 
+import { useId, useRef } from "react";
 import { AlertTriangle, CheckCircle2, Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
@@ -11,10 +12,10 @@ import { AttendanceSummary } from "./AttendanceSummary";
 import { CollapsibleRegion } from "./CollapsibleRegion";
 import {
   editorStateFromEntry,
-  entryCompleteness,
   isEditableEntry,
   isPlannableEntry,
   planEditorStateFromEntry,
+  type SessionCompleteness,
 } from "./entry-state";
 import { SessionPlanEditor } from "./SessionPlanEditor";
 import { SessionRecordEditor } from "./SessionRecordEditor";
@@ -42,6 +43,14 @@ interface SessionFeedItemProps {
    * read.
    */
   clampReport?: boolean;
+  /**
+   * Where this entry sits on the completeness ladder, or `null` for the kinds
+   * the ladder does not apply to. Computed by the feed and handed down: the
+   * timeline marker beside this card needs the same answer, and walking the
+   * roster twice per row to reach it is a cost a fifty-week feed pays fifty
+   * times over.
+   */
+  completeness: SessionCompleteness | null;
   /** Whether this entry is the one currently expanded into an editor. */
   editing: boolean;
   /** Open this entry's editor (or close it if it is already open). */
@@ -107,6 +116,17 @@ interface SessionFeedItemProps {
  * entries get the record editor (attendance + notes), future ones get the
  * notes-only editor. No entry ever offers both, and neither carries a Join —
  * rooms are joined from the group surfaces, never from a session card.
+ *
+ * **Closing the editor hands focus back to the Edit button.** Save and Cancel
+ * live *inside* the region that goes `inert` the moment it shuts, so the element
+ * that was focused stops being focusable in the same frame and the browser drops
+ * focus to the document body — a keyboard user who saves lands at the top of the
+ * page and has to tab back through the whole feed. Focus is therefore moved to
+ * the control that opened the editor, which is where the user was before they
+ * opened it and is the only element on the card guaranteed to still be there
+ * afterwards. It is moved with `preventScroll`, because the card is at that
+ * moment losing most of its height under a scroll correction and a
+ * focus-triggered scroll would be one more thing for that correction to undo.
  */
 export function SessionFeedItem({
   entry,
@@ -114,6 +134,7 @@ export function SessionFeedItem({
   labels,
   prominent = false,
   clampReport = true,
+  completeness,
   editing,
   onToggleEdit,
   onCancelEdit,
@@ -122,7 +143,12 @@ export function SessionFeedItem({
   const t = useTranslations("gedu.sessionFeed");
   const recordable = isEditableEntry(entry);
   const plannable = isPlannableEntry(entry);
-  const completeness = entryCompleteness(entry, roster);
+  const editorId = useId();
+  const editButton = useRef<HTMLButtonElement>(null);
+
+  /** Called on every path that shuts the editor — save and cancel alike. */
+  const returnFocusToEditButton = () =>
+    editButton.current?.focus({ preventScroll: true });
 
   // Pre-epoch gaps aren't part of the story and aren't work — a single quiet
   // dashed line, deliberately not a card.
@@ -167,11 +193,13 @@ export function SessionFeedItem({
           )}
           {(recordable || plannable) && (
             <Button
+              ref={editButton}
               type="button"
               variant="ghost"
               size="sm"
               onClick={onToggleEdit}
               aria-expanded={editing}
+              aria-controls={editorId}
               className="-my-1 gap-1.5"
             >
               <Pencil className="h-3.5 w-3.5" aria-hidden />
@@ -190,24 +218,36 @@ export function SessionFeedItem({
       </CollapsibleRegion>
 
       {recordable && (
-        <CollapsibleRegion open={editing} instant>
+        <CollapsibleRegion open={editing} instant id={editorId}>
           <SessionRecordEditor
             open={editing}
             roster={roster}
             initialState={editorStateFromEntry(entry, roster)}
-            onCancel={onCancelEdit}
-            onSave={onSave}
+            onCancel={() => {
+              onCancelEdit();
+              returnFocusToEditButton();
+            }}
+            onSave={(draft) => {
+              onSave(draft);
+              returnFocusToEditButton();
+            }}
           />
         </CollapsibleRegion>
       )}
 
       {plannable && (
-        <CollapsibleRegion open={editing} instant>
+        <CollapsibleRegion open={editing} instant id={editorId}>
           <SessionPlanEditor
             open={editing}
             initialState={planEditorStateFromEntry(entry)}
-            onCancel={onCancelEdit}
-            onSave={onSave}
+            onCancel={() => {
+              onCancelEdit();
+              returnFocusToEditButton();
+            }}
+            onSave={(draft) => {
+              onSave(draft);
+              returnFocusToEditButton();
+            }}
           />
         </CollapsibleRegion>
       )}
@@ -258,8 +298,7 @@ function SessionEntryBody({
   switch (entry.kind) {
     case "future": {
       const hasNotes =
-        (entry.report !== null && entry.report.length > 0) ||
-        (entry.staffNote !== null && entry.staffNote.length > 0);
+        hasText(entry.report) || hasText(entry.staffNote);
       // The report renders bare, exactly as it does on a past entry — no
       // "Planned" heading over it. Written before the session and written after
       // it are the same field at two moments; labelling one of them made the
@@ -267,16 +306,7 @@ function SessionEntryBody({
       // attendance line, because nobody has been anywhere yet.
       return (
         <div className="space-y-3 pb-1 pt-3">
-          {entry.report !== null && entry.report.length > 0 && (
-            <SessionReport markdown={entry.report} clamped={clampReport} />
-          )}
-          {entry.staffNote !== null && entry.staffNote.length > 0 && (
-            <StaffNoteBlock>
-              <Markdown className="text-muted-foreground">
-                {entry.staffNote}
-              </Markdown>
-            </StaffNoteBlock>
-          )}
+          <WrittenFields entry={entry} clampReport={clampReport} />
           {/* A future session with nothing on it still needs a line, or the
               card is a bare date with no reason to exist on the page. */}
           {!hasNotes && (
@@ -299,16 +329,7 @@ function SessionEntryBody({
       return (
         <div className="space-y-3 pb-1 pt-3">
           <AttendanceSummary roster={roster} attendance={entry.attendance} />
-          {entry.report !== null && entry.report.length > 0 && (
-            <SessionReport markdown={entry.report} clamped={clampReport} />
-          )}
-          {entry.staffNote !== null && entry.staffNote.length > 0 && (
-            <StaffNoteBlock>
-              <Markdown className="text-muted-foreground">
-                {entry.staffNote}
-              </Markdown>
-            </StaffNoteBlock>
-          )}
+          <WrittenFields entry={entry} clampReport={clampReport} />
         </div>
       );
 
@@ -316,4 +337,42 @@ function SessionEntryBody({
       // Rendered as a bare line by the item shell — it never reaches here.
       return null;
   }
+}
+
+/**
+ * The two written halves of an entry — the family-facing report, then the
+ * gedu-only note in its padlocked panel.
+ *
+ * One component for both sides of the present, because they render identically
+ * on both: a note written on Sunday about Monday and one written on Tuesday
+ * about Monday are the same field at two moments, and the display used to say so
+ * twice in byte-identical markup. A future entry's "nothing written yet" line is
+ * not here, because a *past* entry with no report owes nothing and says nothing.
+ */
+function WrittenFields({
+  entry,
+  clampReport,
+}: {
+  entry: Extract<SessionFeedEntry, { kind: "future" | "past" }>;
+  clampReport: boolean;
+}) {
+  return (
+    <>
+      {hasText(entry.report) && (
+        <SessionReport markdown={entry.report} clamped={clampReport} />
+      )}
+      {hasText(entry.staffNote) && (
+        <StaffNoteBlock>
+          <Markdown className="text-muted-foreground">
+            {entry.staffNote}
+          </Markdown>
+        </StaffNoteBlock>
+      )}
+    </>
+  );
+}
+
+/** A nullable stored field that actually has something in it. */
+function hasText(value: string | null): value is string {
+  return value !== null && value.length > 0;
 }

@@ -78,6 +78,13 @@ interface RichNoteFieldProps {
  * is the half a gedu is paid on — but marking them says, at the exact moment
  * somebody is deciding whether to bother, that nobody minds if they don't. The
  * `Field` primitive keeps the capability for the forms that need it.
+ *
+ * **The hint is announced, not merely printed.** One of these fields is the
+ * gedu-only note, whose hint is the sentence saying families never see it — the
+ * single most important thing to know before typing into it. The writing
+ * surface is a contenteditable rather than an input, so it carries the
+ * association itself: the field generates the hint's id and the editor points at
+ * it.
  */
 export function RichNoteField({
   label,
@@ -90,17 +97,20 @@ export function RichNoteField({
 }: RichNoteFieldProps) {
   return (
     <Field label={label} hint={hint}>
-      {ready ? (
-        <RichTextEditor
-          key={seed}
-          initialValue={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          ariaLabel={label}
-        />
-      ) : (
-        <RichEditorPlaceholder />
-      )}
+      {({ hintId }) =>
+        ready ? (
+          <RichTextEditor
+            key={seed}
+            initialValue={value}
+            onChange={onChange}
+            placeholder={placeholder}
+            ariaLabel={label}
+            describedBy={hintId}
+          />
+        ) : (
+          <RichEditorPlaceholder />
+        )
+      }
     </Field>
   );
 }

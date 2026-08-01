@@ -36,17 +36,25 @@ import { cn } from "@/lib/utils";
 export function CollapsibleRegion({
   open,
   instant = false,
+  id,
   className,
   children,
 }: {
   open: boolean;
   /** Skip the open/close transition; the new height is final immediately. */
   instant?: boolean;
+  /**
+   * Id for the region, so the control that opens it can name it through
+   * `aria-controls`. A disclosure whose button says `aria-expanded` without
+   * saying *what* is expanded leaves assistive tech to guess from proximity.
+   */
+  id?: string;
   className?: string;
   children: React.ReactNode;
 }) {
   return (
     <div
+      id={id}
       inert={!open}
       className={cn(
         "grid",

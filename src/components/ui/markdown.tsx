@@ -16,6 +16,13 @@ import { cn } from "@/lib/utils";
  * text rather than dropped, so a stray table still shows its words instead of
  * silently deleting a paragraph of somebody's write-up.
  *
+ * **Links are not in the subset, and that is a policy rather than a limitation.**
+ * A report is written by a gedu and read by a family, so a link in one is this
+ * platform pointing a child's parent somewhere it does not control. The
+ * allow-list therefore has no `a` in it and the editor has no link button: a
+ * markdown link unwraps to its own label, which keeps the sentence readable and
+ * takes the destination away.
+ *
  * **No HTML passthrough.** Raw HTML in the source is ignored, which is the
  * library's default and is kept that way on purpose: enabling it would need
  * `rehype-raw` plus a sanitizer, and would put the first `dangerouslySetInnerHTML`
@@ -65,30 +72,37 @@ export function Markdown({
 }
 
 /**
- * The subset a report may render. Everything a gedu can produce from the
- * editor's toolbar is here, plus the inline marks a paste can bring with it.
- * Anything else is unwrapped to its text content.
+ * The subset a report may render — exactly what the editor's toolbar can
+ * produce, and nothing else. Anything outside it is unwrapped to its text
+ * content, which for most constructs means the words survive and the structure
+ * does not. Two consequences worth stating plainly:
+ *
+ * - **A link becomes its own label.** No `a`, by policy: a report goes to a
+ *   family, and this platform does not send them off-site.
+ * - **A childless element vanishes entirely.** An `img` has no text to unwrap
+ *   to, so it leaves nothing behind — the one case where "unwrapped, not
+ *   dropped" does not save anything, and there is nothing to save.
+ *
+ * `h4`–`h6` are not here either: the editor caps headings at three levels, so
+ * they are unreachable from the toolbar and a deeper one pasted in would flatten
+ * on the first save anyway. They unwrap to text like any other stranger.
  */
 const ALLOWED_ELEMENTS = [
   "p",
   "h1",
   "h2",
   "h3",
-  "h4",
-  "h5",
-  "h6",
   "strong",
   "em",
   "ul",
   "ol",
   "li",
-  "a",
   "br",
 ];
 
 const COMPONENTS = {
-  // The top three levels step down a size each; h4–h6 all land on the same
-  // quiet weight, because a session report six levels deep has other problems.
+  // The three levels step down a size each, so a writer can see which one they
+  // picked.
   h1: ({ children }: { children?: React.ReactNode }) => (
     <h3 className="pt-1 text-lg font-semibold leading-snug">{children}</h3>
   ),
@@ -100,9 +114,6 @@ const COMPONENTS = {
       {children}
     </h5>
   ),
-  h4: headingLeaf,
-  h5: headingLeaf,
-  h6: headingLeaf,
   p: ({ children }: { children?: React.ReactNode }) => (
     <p className="leading-relaxed">{children}</p>
   ),
@@ -118,22 +129,4 @@ const COMPONENTS = {
   strong: ({ children }: { children?: React.ReactNode }) => (
     <strong className="font-semibold">{children}</strong>
   ),
-  a: ({ children, href }: { children?: React.ReactNode; href?: string }) => (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer nofollow"
-      className="text-primary underline underline-offset-2"
-    >
-      {children}
-    </a>
-  ),
 };
-
-function headingLeaf({ children }: { children?: React.ReactNode }) {
-  return (
-    <p className="pt-1 text-sm font-medium leading-snug text-muted-foreground">
-      {children}
-    </p>
-  );
-}

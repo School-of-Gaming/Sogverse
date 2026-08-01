@@ -11,7 +11,12 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Placeholder } from "@tiptap/extensions";
-import { EditorContent, useEditor, type Editor } from "@tiptap/react";
+import {
+  EditorContent,
+  useEditor,
+  useEditorState,
+  type Editor,
+} from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Markdown as MarkdownExtension } from "tiptap-markdown";
 import { cn } from "@/lib/utils";
@@ -35,10 +40,16 @@ import { cn } from "@/lib/utils";
  * survive a one-third-width rail and a phone, and a toolbar that reflows to two
  * rows as the viewport narrows moves the writing surface underneath it.
  *
+ * **There is no link button, and that is a policy rather than an omission.** A
+ * report is written for a family to read, and this platform does not point them
+ * off-site — so links are off at the schema here and absent from the read-only
+ * renderer's allow-list, where a pasted one unwraps to its own label.
+ *
  * **Everything the toolbar cannot produce degrades rather than breaks.** Pasted
- * markdown goes through the same parser, so a table or a code fence arrives as
- * nodes the schema has no home for and is dropped to its text — the words
- * survive, the structure doesn't, and nothing throws.
+ * markdown genuinely goes through the same parser — plain text on the clipboard
+ * is parsed as markdown rather than inserted verbatim — so a table or a code
+ * fence arrives as nodes the schema has no home for and is dropped to its text:
+ * the words survive, the structure doesn't, and nothing throws.
  *
  * **Re-seeding is the caller's job, via `key`.** The editor owns its document
  * once mounted; handing it a new `initialValue` prop does nothing. A caller that
@@ -51,6 +62,7 @@ export function RichTextEditor({
   onChange,
   placeholder,
   ariaLabel,
+  describedBy,
   className,
   disabled = false,
 }: {
@@ -61,6 +73,12 @@ export function RichTextEditor({
   placeholder?: string;
   /** Accessible name for the writing surface. */
   ariaLabel: string;
+  /**
+   * Id of the element describing this field — the hint under a `Field`, which
+   * is otherwise rendered as text nothing points at. Read once, at mount, like
+   * every other editor attribute.
+   */
+  describedBy?: string;
   className?: string;
   disabled?: boolean;
 }) {
@@ -98,12 +116,21 @@ export function RichTextEditor({
         bulletListMarker: "-",
         linkify: false,
         breaks: false,
+        // Plain text arriving on the clipboard is parsed as markdown rather
+        // than pasted literally, so a write-up drafted elsewhere keeps its
+        // headings and lists instead of showing the writer their own `##`.
+        // Only plain text: a paste carrying HTML already has structure and
+        // goes through the schema's own parser.
+        transformPastedText: true,
       }),
     ],
     content: initialValue,
     editorProps: {
       attributes: {
         "aria-label": ariaLabel,
+        ...(describedBy === undefined
+          ? {}
+          : { "aria-describedby": describedBy }),
         role: "textbox",
         "aria-multiline": "true",
         class: cn(
@@ -129,7 +156,38 @@ export function RichTextEditor({
     onUpdate: ({ editor: instance }) => onChange(readMarkdown(instance)),
   });
 
-  // Built as data rather than as six near-identical JSX blocks: the toolbar is
+  /**
+   * Which of the seven marks the caret currently sits in, recomputed on every
+   * transaction.
+   *
+   * It has to be a subscription rather than a read taken during render: this
+   * editor is uncontrolled and a selection change produces no React state
+   * update, so a plain `editor.isActive(…)` in the render body would answer for
+   * whatever the document looked like at mount and never change again — Bold
+   * would stay unlit inside bold text, and toggling it with a collapsed cursor
+   * (a stored mark, with nothing else on screen to show for it) would give no
+   * feedback at all. `useEditorState` re-renders only when one of these seven
+   * booleans actually flips, so the subscription costs a comparison per
+   * transaction rather than a render per keystroke.
+   */
+  const activeTools =
+    useEditorState({
+      editor,
+      selector: ({ editor: instance }): Record<ToolbarToolKey, boolean> =>
+        instance === null
+          ? NOTHING_ACTIVE
+          : {
+              bold: instance.isActive("bold"),
+              italic: instance.isActive("italic"),
+              title: instance.isActive("heading", { level: 1 }),
+              heading: instance.isActive("heading", { level: 2 }),
+              subheading: instance.isActive("heading", { level: 3 }),
+              bulletList: instance.isActive("bulletList"),
+              orderedList: instance.isActive("orderedList"),
+            },
+    }) ?? NOTHING_ACTIVE;
+
+  // Built as data rather than as seven near-identical JSX blocks: the toolbar is
   // a list, the separators are where the list changes subject, and describing it
   // that way is what keeps "add a button" from meaning "paste twelve lines".
   const toolGroups: ToolbarTool[][] = [
@@ -138,14 +196,12 @@ export function RichTextEditor({
         key: "bold",
         label: t("bold"),
         icon: Bold,
-        active: editor?.isActive("bold") ?? false,
         run: () => editor?.chain().focus().toggleBold().run(),
       },
       {
         key: "italic",
         label: t("italic"),
         icon: Italic,
-        active: editor?.isActive("italic") ?? false,
         run: () => editor?.chain().focus().toggleItalic().run(),
       },
     ],
@@ -154,21 +210,18 @@ export function RichTextEditor({
         key: "title",
         label: t("title"),
         icon: Heading1,
-        active: editor?.isActive("heading", { level: 1 }) ?? false,
         run: () => editor?.chain().focus().toggleHeading({ level: 1 }).run(),
       },
       {
         key: "heading",
         label: t("heading"),
         icon: Heading2,
-        active: editor?.isActive("heading", { level: 2 }) ?? false,
         run: () => editor?.chain().focus().toggleHeading({ level: 2 }).run(),
       },
       {
         key: "subheading",
         label: t("subheading"),
         icon: Heading3,
-        active: editor?.isActive("heading", { level: 3 }) ?? false,
         run: () => editor?.chain().focus().toggleHeading({ level: 3 }).run(),
       },
     ],
@@ -177,20 +230,21 @@ export function RichTextEditor({
         key: "bulletList",
         label: t("bulletList"),
         icon: List,
-        active: editor?.isActive("bulletList") ?? false,
         run: () => editor?.chain().focus().toggleBulletList().run(),
       },
       {
         key: "orderedList",
         label: t("orderedList"),
         icon: ListOrdered,
-        active: editor?.isActive("orderedList") ?? false,
         run: () => editor?.chain().focus().toggleOrderedList().run(),
       },
     ],
   ];
 
-  const toolsDisabled = editor === null || !editor.isEditable;
+  // The `disabled` prop, not `editor.isEditable`: the editor's own flag is read
+  // during render and only changes through a method call, so a toolbar keyed to
+  // it would keep answering for the value the editor was constructed with.
+  const toolsDisabled = editor === null || disabled;
 
   return (
     <div
@@ -214,6 +268,7 @@ export function RichTextEditor({
               <ToolbarButton
                 key={tool.key}
                 tool={tool}
+                active={activeTools[tool.key]}
                 disabled={toolsDisabled}
               />
             ))}
@@ -226,19 +281,41 @@ export function RichTextEditor({
   );
 }
 
+/** The seven things the toolbar can toggle, and the keys the active map uses. */
+type ToolbarToolKey =
+  | "bold"
+  | "italic"
+  | "title"
+  | "heading"
+  | "subheading"
+  | "bulletList"
+  | "orderedList";
+
+/** What the toolbar shows before there is an editor to ask. */
+const NOTHING_ACTIVE: Record<ToolbarToolKey, boolean> = {
+  bold: false,
+  italic: false,
+  title: false,
+  heading: false,
+  subheading: false,
+  bulletList: false,
+  orderedList: false,
+};
+
 interface ToolbarTool {
-  key: string;
+  key: ToolbarToolKey;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  active: boolean;
   run: () => void;
 }
 
 function ToolbarButton({
   tool,
+  active,
   disabled,
 }: {
   tool: ToolbarTool;
+  active: boolean;
   disabled: boolean;
 }) {
   const Icon = tool.icon;
@@ -251,11 +328,11 @@ function ToolbarButton({
       onClick={tool.run}
       disabled={disabled}
       aria-label={tool.label}
-      aria-pressed={tool.active}
+      aria-pressed={active}
       title={tool.label}
       className={cn(
         "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
-        tool.active
+        active
           ? "bg-accent text-accent-foreground"
           : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
       )}

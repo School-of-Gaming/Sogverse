@@ -189,15 +189,18 @@ export function TwoAudienceNotesPanel({
             htmlFor={`${fieldId}-public`}
             hint={copy.publicHint}
           >
-            <Textarea
-              id={`${fieldId}-public`}
-              rows={4}
-              value={draft.publicNote}
-              placeholder={copy.publicPlaceholder}
-              onChange={(e) =>
-                setDraft((d) => ({ ...d, publicNote: e.target.value }))
-              }
-            />
+            {({ hintId }) => (
+              <Textarea
+                id={`${fieldId}-public`}
+                rows={4}
+                value={draft.publicNote}
+                placeholder={copy.publicPlaceholder}
+                aria-describedby={hintId}
+                onChange={(e) =>
+                  setDraft((d) => ({ ...d, publicNote: e.target.value }))
+                }
+              />
+            )}
           </Field>
 
           <StaffNoteBlock>
@@ -206,15 +209,18 @@ export function TwoAudienceNotesPanel({
               htmlFor={`${fieldId}-staff`}
               hint={copy.staffHint}
             >
-              <Textarea
-                id={`${fieldId}-staff`}
-                rows={3}
-                value={draft.staffNote}
-                placeholder={copy.staffPlaceholder}
-                onChange={(e) =>
-                  setDraft((d) => ({ ...d, staffNote: e.target.value }))
-                }
-              />
+              {({ hintId }) => (
+                <Textarea
+                  id={`${fieldId}-staff`}
+                  rows={3}
+                  value={draft.staffNote}
+                  placeholder={copy.staffPlaceholder}
+                  aria-describedby={hintId}
+                  onChange={(e) =>
+                    setDraft((d) => ({ ...d, staffNote: e.target.value }))
+                  }
+                />
+              )}
             </Field>
           </StaffNoteBlock>
 

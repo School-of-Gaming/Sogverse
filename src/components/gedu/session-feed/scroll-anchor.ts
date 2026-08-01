@@ -27,41 +27,61 @@ import { useCallback, useLayoutEffect, useRef } from "react";
  * dropped their transitions precisely so this could stay one pre-paint write.
  */
 
-/** What a compensation resolved to, given how far the page can actually move. */
-export interface ScrollCompensation {
-  /** Where the window should end up. Never negative. */
-  nextScrollY: number;
-  /**
-   * Pixels of the requested shift the page could not absorb — always zero
-   * unless the anchor was asked to move further up than the top of the
-   * document. Whatever is left over is a shift the reader will see.
-   */
-  shortfall: number;
-}
-
 /**
- * Where to scroll to hold an anchor still, and how much of that is impossible.
+ * Where to scroll to hold an anchor still — clamped at the top of the document,
+ * which is the one place the correction cannot be paid in full.
  *
  * **A page cannot scroll above its own top.** Collapsing the future horizon
  * removes height from above the divider, so holding the divider still means
  * giving that height back to the scroll position — and if the feed was already
- * near the top of the document, there is not enough scroll to give. The
- * remainder is a genuine shift, reported rather than hidden: nothing can be done
- * about it, and pretending it did not happen would make the one case that still
- * moves the hardest one to reason about. (The reveal direction never hits this:
- * the document grows by exactly the amount the scroll has to travel.)
+ * near the top of the document, there is not enough scroll to give. Whatever is
+ * left over is a genuine shift the reader will see, and there is nothing this or
+ * any other code can do about it; the honest thing is to name the case rather
+ * than to report a number nobody can act on. (The reveal direction never hits
+ * this: the document grows by exactly the amount the scroll has to travel.)
  *
- * Pure, because this is the only arithmetic in the anchoring and it is the half
- * worth pinning in a test — the rest is DOM measurement.
+ * Pure and returning one number, because this is the only arithmetic in the
+ * anchoring and it is the half worth pinning in a test — the rest is DOM
+ * measurement.
  */
 export function resolveScrollCompensation(
   currentScrollY: number,
   /** How far the anchor moved down the viewport; negative means it moved up. */
   shiftPx: number,
-): ScrollCompensation {
-  const requested = currentScrollY + shiftPx;
-  const nextScrollY = Math.max(requested, 0);
-  return { nextScrollY, shortfall: nextScrollY - requested };
+): number {
+  return Math.max(currentScrollY + shiftPx, 0);
+}
+
+/**
+ * Which element holds still when an entry's editor is toggled — and it is not
+ * the same element in both directions.
+ *
+ * **Closing anchors the row *below* the edited one.** The card loses most of its
+ * height in one frame and the reader's eye has already moved on to what comes
+ * next: the entry they are about to write up, or the week before the one they
+ * just finished. Holding the edited card's own top edge instead kept its header
+ * still and swept everything under it up the screen, which is precisely the half
+ * of the page somebody who just saved is reading. A last row has no sibling and
+ * gets no compensation, which is the honest answer — there is nothing below it
+ * to hold.
+ *
+ * **Opening anchors the clicked row itself.** Only one editor is open at a time,
+ * so opening entry A implicitly closes whatever B was open; if B sat above A,
+ * B's whole height vanishes from above the click target and A slides up the
+ * viewport with the cursor still where it was. Holding A's own row covers that
+ * and costs nothing in the ordinary case, where nothing was open and A's top
+ * edge does not move at all — the expansion grows downward *inside* the row.
+ */
+export function editToggleAnchor(
+  rows: ReadonlyMap<string, HTMLElement>,
+  entryId: string,
+  /** Whether this toggle is shutting the entry's editor rather than opening it. */
+  closing: boolean,
+): HTMLElement | null {
+  const row = rows.get(entryId) ?? null;
+  if (row === null || !closing) return row;
+  const next = row.nextElementSibling;
+  return next instanceof HTMLElement ? next : null;
 }
 
 interface PendingAnchor {
@@ -112,7 +132,7 @@ export function useViewportAnchor(): ViewportAnchor {
 
     const shift = anchor.element.getBoundingClientRect().top - anchor.top;
     if (shift === 0) return;
-    const { nextScrollY } = resolveScrollCompensation(window.scrollY, shift);
+    const nextScrollY = resolveScrollCompensation(window.scrollY, shift);
     // `instant`, never smooth: this is a correction for a movement that must
     // never be seen, not a navigation the reader should watch happen.
     window.scrollTo({ top: nextScrollY, behavior: "instant" });
