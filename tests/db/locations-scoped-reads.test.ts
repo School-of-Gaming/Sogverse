@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { LocationsService } from "@/services/locations/locations.service";
+import {
+  LocationsService,
+  LOCATION_BROWSE_PAGE_SIZE,
+} from "@/services/locations/locations.service";
 import { createAdminTestClient } from "./helpers";
 
 /**
@@ -16,8 +19,8 @@ import { createAdminTestClient } from "./helpers";
  * "nothing fetches the whole table" design.
  *
  * The France commune seed (migration 00133) is asserted here too, for the same
- * reason its own assertion block exists: a partial seed is a catalog entry that
- * resolves to no row, and it should fail in CI rather than in front of an admin.
+ * reason its own assertion block exists: a partial seed is a hole in the tree
+ * an admin browses, and it should fail in CI rather than in front of them.
  */
 describe("locations scoped reads", () => {
   let admin: SupabaseClient<Database>;
@@ -138,68 +141,99 @@ describe("locations scoped reads", () => {
     });
   });
 
-  describe("getSitesByParent", () => {
-    it("returns only the sites under the given municipality", async () => {
-      const [helsinki] = await service.resolveLocationsByCodes("FI", [
-        { type: "municipality", external_code: "091" },
-      ]);
-      const sites = await service.getSitesByParent(helsinki.id);
+  describe("getChildren", () => {
+    // The whole of browsing, and the one filter that is easy to get wrong: a
+    // country is a row with no parent, and `eq` against NULL matches nothing.
+    it("returns the countries when asked for the top of the tree", async () => {
+      const page = await service.getChildren(null);
 
-      expect(sites.every((site) => site.type === "site")).toBe(true);
-      expect(sites.every((site) => site.parent_id === helsinki.id)).toBe(true);
-    });
-  });
-
-  describe("resolveLocationsByCodes", () => {
-    // The reason the lookup carries `type`: France publishes its régions and
-    // its départements as separate files, and every région code is also a
-    // département code. '01' is région Guadeloupe and département Ain.
-    it("distinguishes a code reused across levels", async () => {
-      const rows = await service.resolveLocationsByCodes("FR", [
-        { type: "region", external_code: "01" },
-        { type: "district", external_code: "01" },
-      ]);
-
-      expect(rows).toHaveLength(2);
-      expect(
-        rows.map((row) => `${row.type}:${row.name}`).sort()
-      ).toEqual(["district:Ain", "region:Guadeloupe"]);
-    });
-
-    it("resolves a batch of commune codes to their rows", async () => {
-      const codes = ["59350", "75056", "2A004"];
-      const rows = await service.resolveLocationsByCodes(
-        "FR",
-        codes.map((external_code) => ({
-          type: "municipality" as const,
-          external_code,
-        }))
+      expect(page.rows.every((row) => row.parent_id === null)).toBe(true);
+      expect(page.rows.map((row) => row.type)).toEqual(
+        page.rows.map(() => "country"),
       );
-
-      expect(rows.map((row) => row.name).sort()).toEqual([
-        "Ajaccio",
-        "Lille",
-        "Paris",
-      ]);
+      expect(page.rows.map((row) => row.name).sort()).toContain("France");
     });
 
-    it("omits a code no row carries rather than failing", async () => {
-      const rows = await service.resolveLocationsByCodes("FR", [
-        { type: "municipality", external_code: "99999" },
+    it("returns one node's children and the true total behind the page", async () => {
+      const [france] = (await service.getChildren(null)).rows.filter(
+        (row) => row.country_code === "FR",
+      );
+      const page = await service.getChildren(france.id);
+
+      // France's 18 régions, comfortably inside one page.
+      expect(page.total).toBe(18);
+      expect(page.rows).toHaveLength(18);
+      expect(page.hasMore).toBe(false);
+      expect(page.rows.every((row) => row.parent_id === france.id)).toBe(true);
+    });
+
+    // The case pagination exists for: a French département has hundreds of
+    // communes, and the payload has to stay proportional to the screen.
+    it("pages a large fan-out and reports that more remains", async () => {
+      const { data: nord, error } = await admin
+        .from("locations")
+        .select("id")
+        .eq("country_code", "FR")
+        .eq("type", "district")
+        .eq("external_code", "59")
+        .single();
+      if (error) throw error;
+
+      const first = await service.getChildren(nord.id);
+
+      expect(first.total).toBeGreaterThan(LOCATION_BROWSE_PAGE_SIZE);
+      expect(first.rows).toHaveLength(LOCATION_BROWSE_PAGE_SIZE);
+      expect(first.hasMore).toBe(true);
+
+      const second = await service.getChildren(nord.id, { page: 1 });
+
+      expect(second.total).toBe(first.total);
+      // Consecutive, non-overlapping windows under a total order.
+      const ids = new Set([
+        ...first.rows.map((row) => row.id),
+        ...second.rows.map((row) => row.id),
       ]);
-      expect(rows).toEqual([]);
+      expect(ids.size).toBe(first.rows.length + second.rows.length);
+    });
+
+    it("answers an empty page for a leaf rather than failing", async () => {
+      const { data: lille, error } = await admin
+        .from("locations")
+        .select("id")
+        .eq("country_code", "FR")
+        .eq("type", "municipality")
+        .eq("external_code", "59350")
+        .single();
+      if (error) throw error;
+
+      const page = await service.getChildren(lille.id);
+
+      expect(page.rows).toEqual([]);
+      expect(page.total).toBe(0);
+      expect(page.hasMore).toBe(false);
     });
   });
 
   describe("getLocationsByIds", () => {
-    it("returns exactly the rows asked for, deduplicated", async () => {
-      const [lille] = await service.resolveLocationsByCodes("FR", [
-        { type: "municipality", external_code: "59350" },
-      ]);
+    it("returns exactly the rows asked for, deduplicated, with their chains", async () => {
+      const { data: lille, error } = await admin
+        .from("locations")
+        .select("id")
+        .eq("country_code", "FR")
+        .eq("type", "municipality")
+        .eq("external_code", "59350")
+        .single();
+      if (error) throw error;
 
       const rows = await service.getLocationsByIds([lille.id, lille.id]);
+
       expect(rows).toHaveLength(1);
       expect(rows[0].name).toBe("Lille");
+      expect(rows[0].ancestors.map((node) => node.name)).toEqual([
+        "Nord",
+        "Hauts-de-France",
+        "France",
+      ]);
     });
   });
 });

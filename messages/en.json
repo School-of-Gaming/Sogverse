@@ -386,7 +386,6 @@
         "newVenue": "New venue…",
         "newVenueTitle": "Open a new venue",
         "newVenueDescription": "Start with the municipality it sits in. Official names and codes come from each country’s statistical classification, so nothing above the venue itself is ever typed by hand.",
-        "newVenueUnresolved": "{name} has no location record in this environment yet, so a venue cannot be opened there.",
         "venuesIn": "Venues in {name}",
         "venuesInDescription": "Pick one that is already here, or add a new one.",
         "venuesHereEmpty": "No venues here yet.",
@@ -1135,15 +1134,10 @@
       "remove": "Remove {name}",
       "clearAll": "Clear all",
       "chooseAreas": "Choose areas",
-      "legacyHeading": "Venues and older entries",
-      "legacyNote": "Added before the catalog existed. You can remove them here, but not add more.",
-      "venueBadge": "Venue",
-      "legacyBadge": "Older entry",
       "loading": "Loading locations...",
       "save": "Save",
       "saving": "Saving...",
-      "saveError": "Failed to save coverage",
-      "unresolvedError": "Not in the location database yet: {names}. Remove them and save again."
+      "saveError": "Failed to save coverage"
     },
     "myGroups": {
       "counts": "{groupCount, plural, one {# group} other {# groups}} · {gamerCount, plural, one {# gamer} other {# gamers}}",
@@ -1637,24 +1631,24 @@
     }
   },
   "locations": {
-    "catalog": {
+    "picker": {
       "coverageTitle": "Choose the areas you cover",
       "coverageDescription": "Tick anything you can cover. Each tick covers everything inside it, so ticking a region already covers every municipality in it.",
-      "country": "Country",
-      "loading": "Loading the catalog",
-      "loadFailed": "The catalog could not be loaded. Check your connection and try again.",
-      "retry": "Try again",
-      "searchPlaceholder": "Search by name or official code…",
-      "searchingAll": "Searching the whole catalog: {country}",
-      "noResults": "Nothing in the catalog matches “{query}”.",
+      "searchPlaceholder": "Search anywhere by name or official code…",
+      "searchingEverywhere": "Searching every country",
+      "allCountries": "All countries",
+      "noResults": "Nothing matches “{query}”.",
+      "keepTyping": "Type at least {count} characters to search.",
+      "nothingHere": "Nothing here.",
       "showingSome": "Showing the first {shown} of {total} matches. Keep typing to narrow them down.",
+      "loadMore": "Show more",
       "browseInto": "Show what is inside {name}",
-      "nothingSelected": "Pick a municipality to continue.",
+      "nothingSelected": "Pick a place to continue.",
       "confirm": "Continue",
-      "tickedCount": "{count, plural, =0 {Nothing ticked} one {# area ticked} other {# areas ticked}}",
-      "done": "Done",
+      "confirming": "Opening…",
       "clearSearch": "Clear search",
-      "confirming": "Opening…"
+      "tickedCount": "{count, plural, =0 {Nothing ticked} one {# area ticked} other {# areas ticked}}",
+      "done": "Done"
     }
   },
   "minecraft": {

@@ -28,6 +28,9 @@ function locationRows(count: number, offset = 0): Location[] {
     name_i18n: null,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
+    // Derived by the database and never written by anything here; present
+    // because it is part of the row.
+    search_blob: null,
   }));
 }
 
@@ -384,6 +387,30 @@ describe("LocationsService.getLocationsByIds", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  // Every surface holding ids holds them to render them, and a bare name is
+  // ambiguous across countries — so the chain comes back with the row.
+  it("embeds the ancestor chain alongside each row", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestJson([
+        {
+          ...locationRows(1)[0],
+          parent: {
+            id: "region",
+            name: "Uusimaa",
+            parent: { id: "country", name: "Finland", parent: null },
+          },
+        },
+      ]),
+    );
+
+    const [row] = await service.getLocationsByIds(["a"]);
+
+    expect(row.ancestors.map((node) => node.name)).toEqual([
+      "Uusimaa",
+      "Finland",
+    ]);
+  });
+
   // Batching is what lets this skip the paged walk: a request asking for at
   // most 100 keys can come back with at most 100 rows, well under max_rows.
   it("batches a large selection and concatenates the batches", async () => {
@@ -412,7 +439,7 @@ describe("LocationsService.getLocationsByIds", () => {
   });
 });
 
-describe("LocationsService.resolveLocationsByCodes", () => {
+describe("LocationsService.getChildren", () => {
   let fetchMock: FetchMock;
   let service: LocationsService;
 
@@ -421,58 +448,152 @@ describe("LocationsService.resolveLocationsByCodes", () => {
     service = new LocationsService(createFetchStubbedClient(fetchMock));
   });
 
-  it("makes no request when nothing is ticked", async () => {
-    await expect(service.resolveLocationsByCodes("FR", [])).resolves.toEqual([]);
+  // A country is depth 0 of the tree: the rows with no parent. `eq` against
+  // null matches nothing in SQL, so this filter has to be `is.null` — getting
+  // it wrong yields an empty picker rather than an error.
+  it("asks for the parentless rows when browsing the top of the tree", async () => {
+    fetchMock.mockResolvedValue(postgrestPage(locationRows(2), { from: 0, total: 2 }));
+
+    await service.getChildren(null);
+
+    const url = requestedUrl(fetchMock.mock.calls[0][0]);
+    expect(url.searchParams.get("parent_id")).toBe("is.null");
+    expect(url.searchParams.get("order")).toBe("name.asc,id.asc");
+  });
+
+  it("asks for one node's children when browsing into it", async () => {
+    fetchMock.mockResolvedValue(postgrestPage(locationRows(3), { from: 0, total: 3 }));
+
+    await service.getChildren("region-1");
+
+    const url = requestedUrl(fetchMock.mock.calls[0][0]);
+    expect(url.searchParams.get("parent_id")).toBe("eq.region-1");
+  });
+
+  it("returns one page and reports the true total behind it", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestPage(locationRows(200), { from: 0, total: 812 }),
+    );
+
+    const page = await service.getChildren("district-1");
+
+    expect(page.rows).toHaveLength(200);
+    expect(page.total).toBe(812);
+    expect(page.hasMore).toBe(true);
+    // One request, not a walk: the payload is proportional to the screen.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks for the window the requested page names", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestPage(locationRows(200, 400), { from: 400, total: 812 }),
+    );
+
+    await service.getChildren("district-1", { page: 2 });
+
+    expect(requestedRanges(fetchMock)).toEqual(["400:200"]);
+  });
+
+  it("reports no further page once the total is reached", async () => {
+    fetchMock.mockResolvedValue(
+      postgrestPage(locationRows(12, 400), { from: 400, total: 412 }),
+    );
+
+    const page = await service.getChildren("district-1", { page: 2 });
+
+    expect(page.hasMore).toBe(false);
+  });
+});
+
+describe("LocationsService.searchLocations", () => {
+  let fetchMock: FetchMock;
+  let service: LocationsService;
+
+  beforeEach(() => {
+    fetchMock = vi.fn<typeof fetch>();
+    service = new LocationsService(createFetchStubbedClient(fetchMock));
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  function searchResponse(body: unknown): Response {
+    return new Response(JSON.stringify(body), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  // The floor is enforced in the database too. Applying it here as well is what
+  // stops a typist from spending a request per letter before a needle could
+  // mean anything.
+  it("does not call the server at all below the minimum needle length", async () => {
+    await expect(service.searchLocations("h")).resolves.toEqual({
+      total: 0,
+      results: [],
+    });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  // France reuses every one of its 18 région codes as a département code, so a
-  // code-only lookup would be ambiguous. The type has to be on the filter.
-  it("issues one request per type, each scoped to country and type", async () => {
-    // A fresh Response per call — a Response body is single-use and this test
-    // drives two requests.
-    fetchMock.mockImplementation(() => Promise.resolve(postgrestJson([])));
-
-    await service.resolveLocationsByCodes("FR", [
-      { type: "municipality", external_code: "59350" },
-      { type: "district", external_code: "59" },
-      { type: "municipality", external_code: "59009" },
-    ]);
-
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    const urls = fetchMock.mock.calls.map(([input]) => requestedUrl(input));
-    const seen = urls.map((url) => ({
-      country: url.searchParams.get("country_code"),
-      type: url.searchParams.get("type"),
-      codes: url.searchParams.get("external_code"),
-    }));
-    expect(seen).toEqual([
-      { country: "eq.FR", type: "eq.district", codes: "in.(59)" },
-      { country: "eq.FR", type: "eq.municipality", codes: "in.(59009,59350)" },
-    ]);
+  it("treats a whitespace-only needle as no search", async () => {
+    await expect(service.searchLocations("   ")).resolves.toEqual({
+      total: 0,
+      results: [],
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("merges the per-type results into one list", async () => {
-    fetchMock
-      .mockResolvedValueOnce(postgrestJson(locationRows(1, 0)))
-      .mockResolvedValueOnce(postgrestJson(locationRows(2, 1)));
+  it("sends the trimmed needle, the type filter and the cap as one stable URL", async () => {
+    fetchMock.mockResolvedValue(
+      searchResponse({ total: 0, results: [] }),
+    );
 
-    const result = await service.resolveLocationsByCodes("FI", [
-      { type: "region", external_code: "01" },
-      { type: "municipality", external_code: "091" },
-      { type: "municipality", external_code: "049" },
-    ]);
+    await service.searchLocations("  Lille ", {
+      types: ["municipality", "district"],
+      limit: 10,
+    });
 
-    expect(result.map((row) => row.id)).toEqual(["loc-0", "loc-1", "loc-2"]);
+    // The service asks for a same-origin path, so there is no origin to parse
+    // against here — a base is supplied purely to read the parts back out.
+    const url = new URL(String(fetchMock.mock.calls[0][0]), "https://example.test");
+    expect(url.pathname).toBe("/api/locations/search");
+    expect(url.searchParams.get("q")).toBe("Lille");
+    // One comma-separated parameter rather than repeated ones, so the same
+    // request is always the same URL and therefore the same cache entry.
+    expect(url.searchParams.get("types")).toBe("municipality,district");
+    expect(url.searchParams.get("limit")).toBe("10");
   });
 
-  it("throws rather than resolving half the ticks", async () => {
-    fetchMock.mockResolvedValue(postgrestError("nope"));
+  it("parses the ranked answer, chains and all", async () => {
+    fetchMock.mockResolvedValue(
+      searchResponse({
+        total: 47,
+        results: [
+          {
+            id: "lille",
+            name: "Lille",
+            name_i18n: null,
+            type: "municipality",
+            parent_id: "nord",
+            country_code: "FR",
+            external_code: "59350",
+            ancestors: [
+              { id: "nord", name: "Nord", name_i18n: null, type: "district" },
+            ],
+          },
+        ],
+      }),
+    );
 
-    await expect(
-      service.resolveLocationsByCodes("FR", [
-        { type: "municipality", external_code: "59350" },
-      ]),
-    ).rejects.toMatchObject({ message: "nope" });
+    const result = await service.searchLocations("lille");
+
+    expect(result.total).toBe(47);
+    expect(result.results[0].ancestors[0].name).toBe("Nord");
+  });
+
+  it("throws rather than returning a half-understood answer", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ error: "boom" }), { status: 500 }),
+    );
+
+    await expect(service.searchLocations("lille")).rejects.toThrow();
   });
 });

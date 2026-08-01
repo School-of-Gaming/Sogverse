@@ -11,37 +11,27 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  CatalogDialogShell,
-  CatalogPicker,
-} from "@/components/locations/catalog-picker";
+import { LocationPickerDialog } from "@/components/locations/location-browser";
+import type { LocationSummary } from "@/components/locations/location-picker-panel";
 import { LocationFormDialog } from "@/components/admin/location-form-dialog";
-import {
-  useCreateLocation,
-  useResolveLocationsByCodes,
-  useSitesByParent,
-} from "@/services/locations";
+import { useCreateLocation, useSitesByParent } from "@/services/locations";
 import { localizedLocationName } from "@/lib/locations/localized-name";
-import { useRevealAfter } from "@/hooks/use-reveal-after";
-import { cn } from "@/lib/utils";
 import type { Location } from "@/types";
 
 /**
  * Opening a venue somewhere the admin has never run anything.
  *
- * Two steps, because they answer two different questions with two different
- * sources. *Where in the world* is answered by the official catalog — browse
- * or search a country's classification, confirm one commune, and the spelling
- * and the official code are right by construction. *Which building* is
- * answered by the database, because a venue exists in no classification and
- * only an admin can name it.
+ * Two steps, because they answer two different questions. *Where in the world*
+ * is answered by browsing or searching the seeded hierarchy and confirming one
+ * municipality — the spelling and the official code are right by construction,
+ * because the thing confirmed is the row itself. *Which building* is answered
+ * by an admin naming a site under it, because a venue exists in no
+ * classification and nobody else can name it.
  *
- * Between the two sits a plain lookup: every commune is a seeded row, so the
- * confirmed catalog code resolves to the row that is about to be the venue's
- * parent. Nothing above a site is ever created here. A code with no row is a
- * refusal with the place named — on an environment where a country's rows have
- * not been loaded yet, that is exactly what an admin needs to be told, and
- * inventing the row instead would put an unofficial parent under the venue.
+ * There is nothing between the two any more. The picker hands back the row it
+ * was browsing, so the confirmed municipality *is* the venue's parent — no code
+ * to look up, and no way for the step to fail with a place that has no record.
+ * Nothing above a site is ever created here.
  */
 
 interface NewVenueDialogProps {
@@ -51,6 +41,9 @@ interface NewVenueDialogProps {
   onPick: (site: Location) => void;
 }
 
+/** The level a venue hangs off. Sites are only ever created under one of these. */
+const VENUE_PARENT_TYPES = ["municipality"] as const;
+
 export function NewVenueDialog({
   open,
   onOpenChange,
@@ -59,11 +52,10 @@ export function NewVenueDialog({
   const t = useTranslations("admin.products.locationPicker");
   const locale = useLocale();
 
-  /** The commune the catalog pick resolved to. Null means "still choosing". */
-  const [place, setPlace] = useState<Location | null>(null);
+  /** The municipality the picker confirmed. Null means "still choosing". */
+  const [place, setPlace] = useState<LocationSummary | null>(null);
   const [naming, setNaming] = useState(false);
 
-  const resolveByCodes = useResolveLocationsByCodes();
   const createLocation = useCreateLocation();
   const { data: sites, isLoading: sitesLoading } = useSitesByParent(place?.id);
 
@@ -84,40 +76,22 @@ export function NewVenueDialog({
 
   if (!place) {
     return (
-      <CatalogDialogShell
+      <LocationPickerDialog
         open={open}
         onOpenChange={(next) => {
           if (!next) close();
         }}
         title={t("newVenueTitle")}
         description={t("newVenueDescription")}
-      >
-        {({ catalog, country, countryLabel }) => (
-          <CatalogPicker
-            // A new catalog is a new search index, a new browse position and a
-            // new selection — all of which are the panel's own state.
-            key={country}
-            catalog={catalog}
-            countryLabel={countryLabel}
-            selection={{
-              mode: "single",
-              onConfirm: async (entry) => {
-                const rows = await resolveByCodes(country, [
-                  { type: entry.type, external_code: entry.code },
-                ]);
-                // A resolution that finds nothing comes back as an empty
-                // array, so this really can be undefined.
-                const row = rows.at(0);
-                if (!row) {
-                  throw new Error(t("newVenueUnresolved", { name: entry.name }));
-                }
-                setPlace(row);
-              },
-              onCancel: close,
-            }}
-          />
-        )}
-      </CatalogDialogShell>
+        pickableTypes={VENUE_PARENT_TYPES}
+        onConfirm={({ location }) => {
+          // The panel browses `locations` rows, so the confirmed pick is
+          // already the row. Nothing is fetched, resolved or created here —
+          // which is why this can resolve immediately.
+          setPlace(location);
+          return Promise.resolve();
+        }}
+      />
     );
   }
 
@@ -156,11 +130,11 @@ export function NewVenueDialog({
 
         <div className="space-y-4 py-4">
           {/* One fixed-height box across loading, empty and loaded, so the
-              buttons under it never move. */}
+              buttons under it never move. The read behind it is an indexed
+              lookup of one municipality's venues, so the loading state is the
+              empty box — there is nothing long enough to skeleton. */}
           <div className="h-[180px] overflow-y-auto rounded-md border border-input bg-background p-2">
-            {sitesLoading ? (
-              <VenueListSkeleton label={t("loading")} />
-            ) : sites && sites.length > 0 ? (
+            {sitesLoading ? null : sites && sites.length > 0 ? (
               <div className="space-y-0.5">
                 {sites.map((site) => (
                   <button
@@ -204,33 +178,5 @@ export function NewVenueDialog({
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-/**
- * Ghost rows for the venue box, invisible for the reveal delay: most communes
- * answer faster than that (and most answer "no venues"), and a full-box grey
- * pulse flashing before "no venues here yet" reads as breakage. The box
- * around this already has its fixed height, so the gate shifts nothing.
- */
-function VenueListSkeleton({ label }: { label: string }) {
-  const visible = useRevealAfter();
-  return (
-    <div
-      className={cn(
-        "space-y-2 p-1 transition-opacity duration-200",
-        visible ? "opacity-100" : "opacity-0",
-      )}
-      aria-label={label}
-      aria-busy="true"
-    >
-      {[82, 64, 73].map((width) => (
-        <div
-          key={width}
-          className="h-7 animate-pulse rounded bg-muted"
-          style={{ width: `${width}%` }}
-        />
-      ))}
-    </div>
   );
 }

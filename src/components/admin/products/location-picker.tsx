@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Landmark, MapPin, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRevealAfter } from "@/hooks/use-reveal-after";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,9 +36,9 @@ interface LocationPickerProps {
   onChange: (id: string | null) => void;
   /**
    * "site"         — only venues may be picked (in-person products). The list
-   *                  is the venues that exist; opening a new one starts from
-   *                  the official catalog, so the municipality above it is
-   *                  always an official row and never a typed name.
+   *                  is the venues that exist; opening a new one starts by
+   *                  browsing the hierarchy to a municipality, so the row above
+   *                  the venue is always a seeded one and never a typed name.
    * "municipality" — only Finnish municipalities may be picked. Used for online
    *                  municipality clubs (the municipality that funds the club).
    *                  No creation — the hierarchy is seeded.
@@ -50,11 +49,11 @@ interface LocationPickerProps {
 /**
  * Product-form location picker.
  *
- * Nothing here browses the `locations` table as a tree. Both modes read a
- * small, scoped slice of it — every venue, or one country's municipalities —
- * and the exhaustive geography an admin drills through to open a *new* venue
- * comes from the static catalog instead, which is the only thing that scales
- * to 34,875 French communes.
+ * Neither mode browses the hierarchy: both render a bounded set the form has
+ * already fetched — every venue, or one country's municipalities — grouped by
+ * the place above it, which is the view an admin picking a venue actually
+ * wants. Browsing the tree is what the "new venue" flow opens, and it is the
+ * tree picker that does it.
  */
 export function LocationPicker({ value, onChange, pickable }: LocationPickerProps) {
   return pickable === "site" ? (
@@ -90,7 +89,7 @@ function SitePicker({ value, onChange }: ModeProps) {
 
   const selected = sites?.find((site) => site.id === value);
 
-  if (!sites) return <PickerSkeleton label={t("loading")} compact={!!value} />;
+  if (!sites) return <PickerPlaceholder label={t("loading")} compact={!!value} />;
 
   if (selected && !browsing) {
     return (
@@ -174,7 +173,7 @@ function MunicipalityPicker({ value, onChange }: ModeProps) {
   const selected = municipalities?.find((row) => row.id === value);
 
   if (!municipalities)
-    return <PickerSkeleton label={t("loading")} compact={!!value} />;
+    return <PickerPlaceholder label={t("loading")} compact={!!value} />;
 
   if (selected && !browsing) {
     return (
@@ -317,30 +316,24 @@ function sortGroups(
 // ---------------------------------------------------------------------------
 
 /**
- * The list's height, with nothing readable or clickable in it. A placeholder
- * with no content constrains nothing when the real body replaces it — whereas
- * rendering the browse list first and swapping it for the selected-venue card
- * would move things the admin is already reading.
+ * The space the picker is about to occupy, held empty.
+ *
+ * There is nothing in it on purpose. Both reads behind this control are one
+ * bounded, indexed request — every venue, or one country's municipalities — so
+ * the state it is waiting on arrives within a frame or two; a skeleton would
+ * announce a wait that is over before it can be read. What does matter is the
+ * *size*: reserving it is what keeps the rest of the product form from jumping
+ * when the rows land, which is the layout rule's whole point.
+ *
+ * `compact` = the caller already knows a location is picked, so this will
+ * resolve into the small selected-state card rather than the browse list.
+ * Editing an existing product is the most common way in here, so sizing for the
+ * state it becomes is what actually holds the form still.
  */
-/**
- * `compact` = the caller already knows a location is picked, so the skeleton
- * will resolve into the small selected-state card, not the browse list. Sizing
- * the placeholder to the state it becomes is what keeps the rest of the
- * product form from jumping when the query lands — the layout rule's whole
- * point, and editing an existing product is the most common way in here.
- */
-function PickerSkeleton({ label, compact }: { label: string; compact: boolean }) {
-  // Gated per the house loading rule: switching a product from online to
-  // in-person mounts this over an often-cached sites query, and a ~100ms load
-  // painting a grey block reads as a flash, not a loading state.
-  const visible = useRevealAfter();
+function PickerPlaceholder({ label, compact }: { label: string; compact: boolean }) {
   return (
     <div
-      className={cn(
-        "animate-pulse rounded-md bg-muted transition-opacity duration-200",
-        compact ? "h-24" : "h-[460px]",
-        visible ? "opacity-100" : "opacity-0",
-      )}
+      className={cn("rounded-md", compact ? "h-24" : "h-[460px]")}
       aria-label={label}
       aria-busy="true"
     />

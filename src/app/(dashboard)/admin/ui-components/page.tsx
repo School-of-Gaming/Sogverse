@@ -62,8 +62,11 @@ import type {
   VoiceParticipant,
 } from "@/components/voice/hooks/types";
 import type { VoiceZone } from "@/types";
-import { CatalogPicker } from "@/components/locations/catalog-picker";
-import { catalogRefKey, type LocationCatalog } from "@/lib/locations/catalog";
+import {
+  LocationPickerPanel,
+  type LocationPick,
+  type LocationSummary,
+} from "@/components/locations/location-picker-panel";
 import {
   LocationList,
   type LocationListGroup,
@@ -1800,12 +1803,13 @@ export default function AdminUIComponentsPage() {
       {/* ============================================================ */}
       <Section title="Location List">
         <p className="text-sm text-muted-foreground">
-          The database-row counterpart to the catalog panel below. The catalog
-          browses an exhaustive static classification and never touches the
-          database; this browses the small set of rows that <em>are</em> in the
-          database and that no catalog contains or orders — the venues an admin
-          created, and the Finnish municipalities an online club can be funded
-          by. Both are small enough to search client-side in one pass.
+          The counterpart to the tree picker below, not a smaller version of it.
+          The picker browses the whole hierarchy a level at a time and searches
+          it on the server, because the hierarchy is far larger than any screen.
+          This renders a bounded set the surface has <em>already</em> fetched in
+          full and wants grouped — the venues an admin created, and the Finnish
+          municipalities an online club can be funded by. Grouping them by the
+          place above them is the thing a tree cannot do.
         </p>
         <p className="text-sm text-muted-foreground">
           Worth trying: matching a group header keeps every row under it (type{" "}
@@ -1818,33 +1822,33 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 9c: Catalog Picker                                    */}
+      {/* Section 9c: Location Picker                                   */}
       {/* ============================================================ */}
-      <Section title="Catalog Picker">
+      <Section title="Location Picker">
         <p className="text-sm text-muted-foreground">
-          One panel, two selection modes. In the real app it is handed one of the
-          shipped official catalogs — France&rsquo;s alone has 34,875 communes,
-          loaded as its own chunk behind a dynamic import — by a dialog that owns
-          the country switch, the loading skeleton and the retry. Here both modes
-          are fed the same five-commune fixture and fake handlers, no network:
-          the panel takes a catalog and a <code>selection</code> config as props
-          and owns nothing else, which is the separation-of-concerns check.
+          One panel, two selection modes. In the real app a container above it
+          owns the browse position, the debounced query and the two server reads
+          behind them — one level of children by parent, or a ranked top-N from
+          the search index — and hands the panel finished rows. Here both modes
+          are fed a fixture and fake handlers, no network at all: the panel takes
+          rows and a <code>selection</code> config as props and owns nothing
+          else, which is the separation-of-concerns check.
         </p>
         <p className="text-sm text-muted-foreground">
-          Worth trying: search is diacritic-insensitive, so{" "}
-          <code>nimes</code> finds N&icirc;mes; clearing the box drops back to
-          drill-down browsing; and in single mode the confirm button stays
-          disabled from the click until the parent swaps the view away, so the
-          action can&rsquo;t be fired twice.
+          Note what is <em>not</em> here: no country to choose first (a country
+          is simply the top level of the tree) and no loading skeleton. Both
+          reads behind the real panel are small indexed lookups, so the list box
+          — which already has its final height — just fills in.
         </p>
-        <SubSection title="Single mode (geography navigator)">
+        <SubSection title="Single mode (pick one place)">
           <p className="text-sm text-muted-foreground mb-3">
-            Confirming a commune writes nothing — every commune is already a
-            seeded row, so the product picker resolves the confirmed code to
-            that row and shows what is already there before offering to name a
-            new venue under it.
+            The rows are real table rows, so confirming one hands the caller the
+            row itself plus its ancestors — enough to write the foreign key and
+            render the place with its path, with nothing left to resolve. A row
+            of a pickable type is terminal: clicking it selects rather than
+            descends, so the level a caller asked for is where browsing stops.
           </p>
-          <CatalogPickerDemo />
+          <LocationPickerDemo />
         </SubSection>
         <SubSection title="Multi mode (gedu coverage)">
           <p className="text-sm text-muted-foreground mb-3">
@@ -1853,11 +1857,20 @@ export default function AdminUIComponentsPage() {
             then drilling into it shows Nord and Pas-de-Calais{" "}
             <em>unticked</em> — deliberately. Half-ticking them would say
             something the saved rows don&rsquo;t: one claim is one row, and
-            matching walks the ancestor chain to find it. Multi mode also indexes
-            the levels above the leaves, so searching <code>nord</code> finds the
-            département itself and not only communes spelled like it.
+            matching walks the ancestor chain to find it.
           </p>
-          <CatalogCoverageDemo />
+          <LocationCoverageDemo />
+        </SubSection>
+        <SubSection title="Searching">
+          <p className="text-sm text-muted-foreground mb-3">
+            The same panel, told it is showing search hits: each row carries the
+            path that tells two identically-named communes apart, and the status
+            line reports the true match count behind the rendered cap. In the
+            real app the ranking, the cap and that count all come from the
+            database — a prefix match beats an infix one however late in the
+            table it sits.
+          </p>
+          <LocationSearchDemo />
         </SubSection>
       </Section>
 
@@ -2145,64 +2158,88 @@ function LocationListDemo() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Catalog Picker Demo                                                */
+/*  Location Picker Demo                                               */
 /* ------------------------------------------------------------------ */
 
-// A miniature stand-in for src/lib/locations/catalog/fr.json: same shape, same
-// three levels, five communes instead of 34,875. Nîmes and Béziers are here on
-// purpose — they are what makes the diacritic folding visible.
-const CATALOG_FIXTURE: LocationCatalog = {
-  country: "FR",
-  source: "Fixture — not a real classification",
-  release: "2026",
-  generated: "2026-01-01",
-  levels: ["region", "district", "municipality"],
-  counts: [2, 4, 5],
-  tree: [
-    [
-      "32",
-      "Hauts-de-France",
-      [
-        [
-          "59",
-          "Nord",
-          [
-            ["59350", "Lille"],
-            ["59512", "Roubaix"],
-          ],
-        ],
-        ["62", "Pas-de-Calais", [["62041", "Arras"]]],
-      ],
-    ],
-    [
-      "76",
-      "Occitanie",
-      [
-        [
-          "30",
-          "Gard",
-          [["30189", "Nîmes"]],
-        ],
-        ["34", "Hérault", [["34032", "Béziers"]]],
-      ],
-    ],
-  ],
+// A miniature stand-in for the rows the browse query returns: same columns,
+// three levels, five communes instead of 35,000. Nîmes and Béziers are here on
+// purpose — they are what the real search's diacritic folding is for, and the
+// search demo below shows them found from an unaccented needle.
+const FR: LocationSummary = {
+  id: "fr",
+  name: "France",
+  name_i18n: null,
+  type: "country",
+  country_code: "FR",
 };
 
-function CatalogPickerDemo() {
-  const [added, setAdded] = useState<string | null>(null);
+function fixtureRow(
+  id: string,
+  name: string,
+  type: LocationSummary["type"],
+): LocationSummary {
+  return { id, name, name_i18n: null, type, country_code: "FR" };
+}
+
+const HDF = fixtureRow("32", "Hauts-de-France", "region");
+const OCC = fixtureRow("76", "Occitanie", "region");
+const NORD = fixtureRow("59", "Nord", "district");
+const GARD = fixtureRow("30", "Gard", "district");
+
+/** One level of the tree, keyed by the id of the node above it. */
+const LEVELS: Record<string, LocationSummary[]> = {
+  root: [FR],
+  fr: [HDF, OCC],
+  "32": [NORD, fixtureRow("62", "Pas-de-Calais", "district")],
+  "76": [GARD, fixtureRow("34", "Hérault", "district")],
+  "59": [fixtureRow("59350", "Lille", "municipality"), fixtureRow("59512", "Roubaix", "municipality")],
+  "62": [fixtureRow("62041", "Arras", "municipality")],
+  "30": [fixtureRow("30189", "Nîmes", "municipality")],
+  "34": [fixtureRow("34032", "Béziers", "municipality")],
+};
+
+/** Fixture search hits, each with the path a real hit carries. */
+const HITS: LocationPick[] = [
+  { location: fixtureRow("30189", "Nîmes", "municipality"), ancestors: [GARD, OCC, FR] },
+  { location: fixtureRow("34032", "Béziers", "municipality"), ancestors: [fixtureRow("34", "Hérault", "district"), OCC, FR] },
+];
+
+/**
+ * Drives the panel's browse half from the fixture tree above: the path is
+ * component state, and the rows are whatever level that path points at.
+ */
+function useFixtureBrowse() {
+  const [path, setPath] = useState<LocationSummary[]>([]);
+  const parentId = path.at(-1)?.id ?? "root";
+  const ancestors = [...path].reverse();
+  const rows = (LEVELS[parentId] ?? []).map((location) => ({ location, ancestors }));
+
+  return {
+    path,
+    onDrill: (row: LocationSummary) => setPath((current) => [...current, row]),
+    onOpenDepth: (depth: number) => setPath((current) => current.slice(0, depth)),
+    browse: { rows, total: rows.length, hasMore: false, loading: false },
+  };
+}
+
+const EMPTY_ROWS = { rows: [], total: 0, hasMore: false, loading: false };
+
+function LocationPickerDemo() {
+  const [query, setQuery] = useState("");
+  const [confirmed, setConfirmed] = useState<string | null>(null);
+  const fixture = useFixtureBrowse();
 
   // Mirrors the real flow: on success the parent swaps this view away, which
   // is why the picker never has to re-enable its confirm button.
-  if (added) {
+  if (confirmed) {
     return (
       <div className="space-y-3 rounded-md border border-input bg-card p-4">
         <p className="text-sm">
-          Confirmed <span className="font-medium">{added}</span> — the product
-          picker would now resolve that code to its seeded row and list the
-          venues already in it.
+          Confirmed <span className="font-medium">{confirmed}</span> — the venue
+          flow would now list the venues already in it, with that row as the
+          parent of any new one.
         </p>
-        <Button type="button" variant="outline" onClick={() => setAdded(null)}>
+        <Button type="button" variant="outline" onClick={() => setConfirmed(null)}>
           Pick another
         </Button>
       </div>
@@ -2211,43 +2248,57 @@ function CatalogPickerDemo() {
 
   return (
     <div className="max-w-2xl rounded-md border border-input bg-card p-4">
-      <CatalogPicker
-        catalog={CATALOG_FIXTURE}
-        countryLabel="France"
+      <LocationPickerPanel
+        path={fixture.path}
+        onDrill={fixture.onDrill}
+        onOpenDepth={fixture.onOpenDepth}
+        query={query}
+        onQueryChange={setQuery}
+        minQueryLength={2}
+        browse={fixture.browse}
+        search={EMPTY_ROWS}
         selection={{
           mode: "single",
-          onConfirm: (entry) =>
+          pickableTypes: ["municipality"],
+          onConfirm: (pick) =>
             new Promise<void>((resolve) =>
               setTimeout(() => {
-                setAdded(entry.name);
+                setConfirmed(pick.location.name);
                 resolve();
               }, 600),
             ),
-          onCancel: () => setAdded(null),
+          onCancel: () => setConfirmed(null),
         }}
       />
     </div>
   );
 }
 
-function CatalogCoverageDemo() {
+function LocationCoverageDemo() {
+  const [query, setQuery] = useState("");
   const [ticked, setTicked] = useState<ReadonlySet<string>>(new Set());
+  const fixture = useFixtureBrowse();
 
   return (
     <div className="space-y-2">
       <div className="max-w-2xl rounded-md border border-input bg-card p-4">
-        <CatalogPicker
-          catalog={CATALOG_FIXTURE}
-          countryLabel="France"
+        <LocationPickerPanel
+          path={fixture.path}
+          onDrill={fixture.onDrill}
+          onOpenDepth={fixture.onOpenDepth}
+          query={query}
+          onQueryChange={setQuery}
+          minQueryLength={2}
+          browse={fixture.browse}
+          search={EMPTY_ROWS}
           selection={{
             mode: "multi",
-            tickedKeys: ticked,
+            selectedIds: ticked,
             onToggle: (pick) =>
               setTicked((prev) => {
                 const next = new Set(prev);
-                const key = catalogRefKey(pick);
-                if (next.has(key)) next.delete(key);
-                else next.add(key);
+                if (next.has(pick.location.id)) next.delete(pick.location.id);
+                else next.add(pick.location.id);
                 return next;
               }),
             onDone: () => setTicked(new Set()),
@@ -2259,6 +2310,33 @@ function CatalogCoverageDemo() {
         &mdash; &ldquo;Done&rdquo; clears the demo&rsquo;s state; in the real app
         it closes the dialog and the caller&rsquo;s save commits the ticks.
       </p>
+    </div>
+  );
+}
+
+function LocationSearchDemo() {
+  // Held above the minimum length so the panel stays in its search branch: the
+  // point of this demo is the hit rows, not the transition into them.
+  const [query, setQuery] = useState("nimes");
+
+  return (
+    <div className="max-w-2xl rounded-md border border-input bg-card p-4">
+      <LocationPickerPanel
+        path={[]}
+        onDrill={() => {}}
+        onOpenDepth={() => {}}
+        query={query}
+        onQueryChange={setQuery}
+        minQueryLength={2}
+        browse={EMPTY_ROWS}
+        search={{ rows: HITS, total: 47, hasMore: false, loading: false }}
+        selection={{
+          mode: "single",
+          pickableTypes: ["municipality"],
+          onConfirm: () => Promise.resolve(),
+          onCancel: () => setQuery(""),
+        }}
+      />
     </div>
   );
 }

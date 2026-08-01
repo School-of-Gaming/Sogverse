@@ -16,9 +16,6 @@ import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
 import { CoverageAreasField } from "@/components/gedu/coverage-areas-field";
 import {
-  codeRefsOf,
-  matchResolvedRows,
-  pendingTicksByCountry,
   toggleCoverageTick,
   type CoverageTick,
 } from "@/components/gedu/coverage-ticks";
@@ -28,7 +25,6 @@ import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, SUPPORT_EMAIL } from "@/lib
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth } from "@/providers";
 import { useSpokenLanguages } from "@/services/users";
-import { useResolveLocationsByCodes } from "@/services/locations";
 import { readErrorMessage } from "@/lib/api/json-response";
 import type { SpokenLanguage } from "@/types";
 
@@ -50,7 +46,6 @@ export function RegisterGeduForm({
 }) {
   const t = useTranslations("auth");
   const c = useTranslations("common");
-  const coverageT = useTranslations("gedu.coverage");
   const locale = useLocale();
   const { navigateAfterAuth, status } = useAuthRedirect();
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
@@ -64,9 +59,10 @@ export function RegisterGeduForm({
   const [phone, setPhone] = useState("");
   const [spokenLanguages, setSpokenLanguages] = useState<string[]>([]);
   /**
-   * Coverage claims, keyed by catalog ref. The account does not exist yet, so
-   * these stay as catalog codes until submit resolves them to row ids — which
-   * anonymous callers may do, `locations` being anon-readable reference data.
+   * Coverage claims, keyed by `locations.id`. The picker browses the table
+   * itself — which anonymous callers may read, `locations` being public
+   * reference data — so a claim is already a row id here and submit sends it
+   * straight through.
    */
   const [coverage, setCoverage] = useState<ReadonlyMap<string, CoverageTick>>(
     new Map(),
@@ -76,7 +72,6 @@ export function RegisterGeduForm({
 
   const supabase = getClient();
   const { data: availableLanguages } = useSpokenLanguages({ initialData: initialSpokenLanguages });
-  const resolveByCodes = useResolveLocationsByCodes();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,35 +100,7 @@ export function RegisterGeduForm({
     // re-enable between the click and the navigation that follows success.
     setIsLoading(true);
 
-    // Resolve the ticked catalog codes to row ids *before* the account is
-    // created. Resolution is a lookup, not an assertion — a code with no row
-    // comes back absent — so a miss has to stop the submit here rather than
-    // leave a brand-new gedu holding a coverage set missing what they ticked.
-    let locationIds: string[];
-    try {
-      const resolvedIds: string[] = [];
-      const unresolved: CoverageTick[] = [];
-      for (const [country, pending] of pendingTicksByCountry(coverage)) {
-        const rows = await resolveByCodes(country, codeRefsOf(pending));
-        const matched = matchResolvedRows(pending, rows);
-        resolvedIds.push(...matched.ids);
-        unresolved.push(...matched.unresolved);
-      }
-      if (unresolved.length > 0) {
-        setError(
-          coverageT("unresolvedError", {
-            names: unresolved.map((tick) => tick.label).join(", "),
-          }),
-        );
-        setIsLoading(false);
-        return;
-      }
-      locationIds = resolvedIds;
-    } catch {
-      setError(c("unexpectedError"));
-      setIsLoading(false);
-      return;
-    }
+    const locationIds = [...coverage.keys()];
 
     try {
       const response = await fetch("/api/gedu/register", {
@@ -284,7 +251,16 @@ export function RegisterGeduForm({
             <CoverageAreasField
               ticks={coverage}
               onToggle={(pick) =>
-                setCoverage((current) => toggleCoverageTick(current, pick))
+                setCoverage((current) =>
+                  toggleCoverageTick(current, pick, locale),
+                )
+              }
+              onRemove={(locationId) =>
+                setCoverage((current) => {
+                  const next = new Map(current);
+                  next.delete(locationId);
+                  return next;
+                })
               }
               onClear={() => setCoverage(new Map())}
               disabled={isLoading}

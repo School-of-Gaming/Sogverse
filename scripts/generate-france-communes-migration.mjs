@@ -9,14 +9,15 @@
  * is written into the emitted migration's own header, which is where a future
  * reader will look.
  *
- * ## Reuse, not duplication
+ * ## Where the data comes from
  *
  * The COG download, CSV parse, TYPECOM filtering and orphan checks come from
- * `scripts/lib/location-classifications.mjs`, shared with the catalog
- * generator. That sharing is the point: the catalog a human browses and the row
- * the query engine resolves must carry the same name and the same code, and
- * building both from one parse makes that true by construction. Nothing about
- * names is decided here — INSEE's LIBELLE is the canonical French name.
+ * `scripts/lib/location-classifications.mjs`. That module used to have a second
+ * consumer emitting static per-country catalogs for the browser, and keeping a
+ * catalog name and a row name from drifting was why the parse lived in one
+ * place; the catalogs are gone and `locations.name` is now the only name of a
+ * place anything renders. Nothing about names is decided here — INSEE's LIBELLE
+ * is the canonical French name.
  *
  * ## Determinism
  *
@@ -25,8 +26,8 @@
  * that:
  *
  *   - Rows are sorted by INSEE code in **code-unit order** (a plain `<`
- *     comparison), not by the French collation the catalog uses. Collation
- *     depends on the ICU version bundled with Node; code-unit order does not.
+ *     comparison), never by a locale collation. Collation depends on the ICU
+ *     version bundled with Node; code-unit order does not.
  *     It also groups the file by département for free, since a commune code is
  *     prefixed by its département code.
  *   - Nothing run-dependent is written — no generation timestamp, no
@@ -143,14 +144,14 @@ const header = `-- Seeds every French commune: all ${EXPECTED_COMMUNES.toLocaleS
 --
 -- WHY THE WHOLE COUNTRY
 --
--- Human eyes read the catalog; the query engine reads the rows. The shipped
--- static catalog (src/lib/locations/catalog/fr.json) is the only thing UI
--- browsing, search and drill-down ever touch — exhaustive, code-split, cached,
--- anonymous-safe — and nothing ever ships this table to a client. The table
--- exists for server-side query logic: foreign-key integrity, ancestor-chain
--- CTEs, substitute matching, RLS-scoped gedu coverage reads. Those all want
--- every commune to *be* a row, so a gedu can claim one and a product can sit
--- under one without anything having to mint the row first.
+-- This table is the only copy of the geography, and everything reads it:
+-- foreign-key integrity, ancestor-chain CTEs, substitute matching, RLS-scoped
+-- gedu coverage reads, and the picker a human browses and searches. All of
+-- those want every commune to *be* a row, so a gedu can claim one and a product
+-- can sit under one without anything having to mint the row first. What keeps
+-- that affordable is not caching the table but never reading more of it than a
+-- screen shows — one level of children, or a ranked top-N from the search
+-- index.
 --
 -- This supersedes the earlier arrangement where a commune became a row the
 -- first time an admin picked it. Minting rows on demand made row existence a
@@ -169,9 +170,6 @@ const header = `-- Seeds every French commune: all ${EXPECTED_COMMUNES.toLocaleS
 -- which is the canonical native-language name per the locations name/name_i18n
 -- convention. No name_i18n entries — French *is* the canonical language for
 -- these rows, and the convention forbids duplicating \`name\` into it.
---
--- The catalog and this migration are generated from one parse of one download,
--- so a commune's catalog name and its row name cannot disagree.
 --
 -- REGENERATING
 --
@@ -237,9 +235,9 @@ for (let i = 0; i < communes.length; i += CHUNK_SIZE) {
 
 const assertion = `-- Fail the migration if the seed did not land whole.
 --
--- A partial commune seed is worse than none: the catalog would offer a place
--- that resolves to no row, and a coverage tick or a product site under it would
--- fail at write time with nothing pointing at the cause. All three checks are
+-- A partial commune seed is worse than none: it is a hole in the tree an admin
+-- browses and a gedu claims coverage over — places that simply are not there,
+-- with nothing pointing at the cause. All three checks are
 -- exact rather than "at least" — an FR municipality outside the ${FR.release} release
 -- means rows exist that this seed does not explain, which wants a human, not a
 -- pass.

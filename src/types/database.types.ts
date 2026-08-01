@@ -326,6 +326,7 @@ export type Database = {
           name: string
           name_i18n: Json | null
           parent_id: string | null
+          search_blob: string | null
           type: Database["public"]["Enums"]["location_type"]
           updated_at: string
         }
@@ -337,6 +338,7 @@ export type Database = {
           name: string
           name_i18n?: Json | null
           parent_id?: string | null
+          search_blob?: string | null
           type: Database["public"]["Enums"]["location_type"]
           updated_at?: string
         }
@@ -348,6 +350,7 @@ export type Database = {
           name?: string
           name_i18n?: Json | null
           parent_id?: string | null
+          search_blob?: string | null
           type?: Database["public"]["Enums"]["location_type"]
           updated_at?: string
         }
@@ -1478,6 +1481,7 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: boolean
       }
+      immutable_unaccent: { Args: { p_value: string }; Returns: string }
       is_admin: { Args: never; Returns: boolean }
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }
       is_voice_group_member: { Args: { p_group_id: string }; Returns: boolean }
@@ -1501,6 +1505,11 @@ export type Database = {
         Args: { p_participation_id: string }
         Returns: Json
       }
+      location_search_blob: {
+        Args: { p_external_code: string; p_name: string; p_name_i18n: Json }
+        Returns: string
+      }
+      location_search_separator: { Args: never; Returns: string }
       participation_state: {
         Args: {
           p_group_id: string
@@ -1534,6 +1543,14 @@ export type Database = {
           p_user_id: string
         }
         Returns: undefined
+      }
+      search_locations: {
+        Args: {
+          p_limit?: number
+          p_query: string
+          p_types?: Database["public"]["Enums"]["location_type"][]
+        }
+        Returns: Json
       }
       set_gedu_verified: {
         Args: { p_gedu_id: string; p_verified: boolean }

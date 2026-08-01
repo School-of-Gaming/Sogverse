@@ -191,14 +191,22 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/parent-pin.test.ts",
     why: "boolean about the caller's own PIN",
   },
+  search_locations: {
+    scopeTest: "tests/db/location-search.test.ts",
+    why: "SECURITY INVOKER over `locations` alone, so the caller's own RLS decides every row it can see exactly as a direct select would — it cannot answer with anything a plain read of that table would not already return, and the scope test proves an anonymous caller and a privileged one get the identical answer. Self-scoping by the same reading as can_read_product: the scope is the caller's, not a uid the arguments could aim elsewhere",
+  },
 };
 
 /**
- * Functions `anon` may execute. `can_read_product` is the sole member: the
- * product read policies are `TO anon, authenticated`, so anon evaluates the
- * predicate itself.
+ * Functions `anon` may execute.
+ *
+ * `can_read_product` is the product read policies' own predicate — those
+ * policies are `TO anon, authenticated`, so anon evaluates it itself.
+ * `search_locations` is reached by the public educator registration page before
+ * any account exists; it is SECURITY INVOKER over a table anon already holds
+ * SELECT on for every row, so it narrows that surface rather than widening it.
  */
-const ANON_ALLOWLIST = new Set(["can_read_product"]);
+const ANON_ALLOWLIST = new Set(["can_read_product", "search_locations"]);
 
 /**
  * check 1 exempts `assert_role` from the guard-first rule: it *is* the guard.

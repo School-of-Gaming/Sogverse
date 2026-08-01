@@ -3,19 +3,19 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRevealAfter } from "@/hooks/use-reveal-after";
 import { Input } from "@/components/ui/input";
-import { normalizeForSearch } from "@/lib/locations/catalog";
+import { foldForSearch } from "@/lib/locations/search-fold";
 
 /**
- * A searchable, grouped list of database rows the admin can pick one of.
+ * A searchable, grouped list of rows the admin can pick one of.
  *
- * This is the counterpart to the catalog panel, not a replacement for it. The
- * catalog browses an exhaustive static classification (34,875 French communes)
- * and never touches the database; this browses the handful of rows that *are*
- * in the database and that no catalog contains or orders — the venues an admin
- * created, and the Finnish municipalities an online club can be funded by.
- * Both are small enough to search client-side in one pass.
+ * This is the counterpart to the tree picker, not a replacement for it. The
+ * picker browses the whole hierarchy a level at a time and searches it on the
+ * server, because the hierarchy is far larger than any screen. This renders a
+ * bounded set the surface has *already* fetched in full and wants grouped — the
+ * venues that exist, and the Finnish municipalities an online club can be funded
+ * by. Both are small enough to search client-side in one pass, and grouping them
+ * by the place above them is what the tree cannot do.
  *
  * Purely presentational: it is handed finished groups and reports the id that
  * was clicked, which is what lets the /admin/ui-components demo drive it from
@@ -87,17 +87,15 @@ export function LocationList({
 }: LocationListProps) {
   const [query, setQuery] = useState("");
 
-  // Folding happens once per group/row rather than once per keystroke: the
-  // venue list is small today, but this is the same shape the catalog index
-  // uses and it costs nothing to be right about it.
+  // Folding happens once per group/row rather than once per keystroke.
   const index = useMemo(
     () =>
       groups.map((group) => ({
         group,
-        terms: group.searchTerms.map(normalizeForSearch),
+        terms: group.searchTerms.map(foldForSearch),
         rows: group.rows.map((row) => ({
           row,
-          terms: row.searchTerms.map(normalizeForSearch),
+          terms: row.searchTerms.map(foldForSearch),
         })),
       })),
     [groups],
@@ -106,7 +104,7 @@ export function LocationList({
   const trimmed = query.trim();
 
   const visible = useMemo(() => {
-    const folded = normalizeForSearch(query.trim());
+    const folded = foldForSearch(query.trim());
     if (!folded) return groups;
     return index.flatMap(({ group, terms, rows }) => {
       // A header match keeps the whole group — searching "Helsinki" should
@@ -149,8 +147,15 @@ export function LocationList({
           LIST_HEIGHT,
         )}
       >
+        {/* Nothing while loading. The rows behind this are one bounded,
+            indexed read — every venue, or one country's municipalities — so
+            the box simply fills in; a skeleton would be on screen for less
+            time than it takes to recognise as one. The box already has its
+            final height, so nothing under it moves either way. */}
         {loading ? (
-          <GhostRows label={labels.loading} />
+          <span className="sr-only" aria-busy="true">
+            {labels.loading}
+          </span>
         ) : visible.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">
             {trimmed ? labels.noResults(trimmed) : labels.empty}
@@ -198,30 +203,6 @@ export function LocationList({
       </div>
 
       {footer}
-    </div>
-  );
-}
-
-// Skeleton per the house loading rule: invisible for its reveal delay, so a
-// fast (cached) load never flashes grey; only a genuinely slow one shows it.
-function GhostRows({ label }: { label: string }) {
-  const visible = useRevealAfter();
-  return (
-    <div
-      className={cn(
-        "space-y-2 p-1 transition-opacity duration-200",
-        visible ? "opacity-100" : "opacity-0",
-      )}
-      aria-label={label}
-      aria-busy="true"
-    >
-      {[78, 62, 84, 57, 70].map((width) => (
-        <div
-          key={width}
-          className="h-7 animate-pulse rounded bg-muted"
-          style={{ width: `${width}%` }}
-        />
-      ))}
     </div>
   );
 }

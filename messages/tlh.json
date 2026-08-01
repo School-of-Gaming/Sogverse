@@ -431,7 +431,6 @@
         "newVenue": "Daq chu’…",
         "newVenueTitle": "Daq chu’ yIpoSmoH",
         "newVenueDescription": "veng yIwIv wa’DIch. Sep tetlh’a’vo’ pongmey mI’mey je tu’lu’, vaj Daq pong neH ghItlhlu’.",
-        "newVenueUnresolved": "{name} tetlhDaq ’oHbe’ vam ’u’Homvam; naDev Daq chu’ chenmoHlaHbe’lu’.",
         "venuesIn": "{name} DaqmeyDaj",
         "venuesInDescription": "tu’lu’bogh wa’ yIwIv ghap Daq chu’ yIchel.",
         "venuesHereEmpty": "naDev Daq tu’lu’be’.",
@@ -1180,15 +1179,10 @@
       "remove": "{name} yIteq",
       "clearAll": "Hoch yISay’moH",
       "chooseAreas": "Daqmey yIwIv",
-      "legacyHeading": "tetlh’a’Daq tu’lu’be’bogh Daqmey",
-      "legacyNote": "tetlh’a’ qonlu’pa’ chellu’pu’. DaH DateqlaH neH; chu’ DachellaHbe’.",
-      "venueBadge": "qach",
-      "legacyBadge": "tIQ",
       "loading": "Daqmey Huqtaw...",
       "save": "yIpol",
       "saving": "polchoH...",
-      "saveError": "pol Qapbe’",
-      "unresolvedError": "qawHaqDaq tu’lu’be’: {names}. tIteq ’ej yIpolqa’."
+      "saveError": "pol Qapbe’"
     },
     "myGroups": {
       "counts": "{groupCount, plural, one {1 ghom} other {# ghommey}} · {gamerCount, plural, one {1 Suvwl’} other {# Suvwl’pu’}}",
@@ -1594,24 +1588,24 @@
     }
   },
   "locations": {
-    "catalog": {
+    "picker": {
       "coverageTitle": "DaSo’laHbogh Daqmey yIwIv",
       "coverageDescription": "DaSo’laHbogh Hoch yIwIv. wa’ wIv qoDDaq Hoch So’lu’, vaj Sep DawIvDI’ vengmeyDaj Hoch DaSo’.",
-      "country": "Sep",
-      "loading": "tetlh’a’ laDlu’",
-      "loadFailed": "tetlh’a’ laDlaHbe’lu’. rarwI’lIj yI’ol ’ej yInIDqa’.",
-      "retry": "yInIDqa’",
-      "searchPlaceholder": "pong ghap mI’ yInej…",
-      "searchingAll": "tetlh’a’ naQ wInej: {country}",
-      "noResults": "pagh! ”{query}” rurbogh veng tu’lu’be’.",
-      "showingSome": "{total} veng tu’lu’. {shown} neH wI’ang. yIghItlhtaH ’ej yInej.",
+      "searchPlaceholder": "Hoch Sepmey: pong ghap mI’ yInej…",
+      "searchingEverywhere": "Hoch Sepmey wInej",
+      "allCountries": "Hoch Sepmey",
+      "noResults": "pagh! ”{query}” rurbogh Daq tu’lu’be’.",
+      "keepTyping": "{count} ghItlhmey yIghItlh ’ej nejwI’ vIchu’.",
+      "nothingHere": "naDev pagh tu’lu’.",
+      "showingSome": "{total} Daqmey tu’lu’. {shown} neH wI’ang. yIghItlhtaH ’ej yInej.",
+      "loadMore": "latlh yI’ang",
       "browseInto": "{name} qoDDaq nuq tu’lu’ — yI’ang",
-      "nothingSelected": "veng yIwIv ’ej yIruch.",
+      "nothingSelected": "Daq yIwIv ’ej yIruch.",
       "confirm": "yIruch",
-      "tickedCount": "{count, plural, =0 {pagh wIvlu’} one {# Daq wIvlu’} other {# Daqmey wIvlu’}}",
-      "done": "pItlh",
+      "confirming": "poSmoHtaH…",
       "clearSearch": "nejmey yIteq",
-      "confirming": "poSmoHtaH…"
+      "tickedCount": "{count, plural, =0 {pagh wIvlu’} one {# Daq wIvlu’} other {# Daqmey wIvlu’}}",
+      "done": "pItlh"
     }
   },
   "minecraft": {
