@@ -85,7 +85,9 @@ export function MinecraftUsernameRow({
       <div
         className={cn(
           "shrink-0 overflow-hidden rounded-sm bg-muted",
-          full ? "h-16 w-8" : "h-7 w-7",
+          // The bust keeps the figure's own 1:2 aspect — a taller box at the
+          // same ratio shows more of the body rather than a bigger head.
+          full ? "h-16 w-8" : "h-12 w-6",
         )}
       >
         {skinUrl === null ? (

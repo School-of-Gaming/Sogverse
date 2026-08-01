@@ -38,29 +38,24 @@ export function SessionFeedAlertBadge({
 
   if (variant === "corner") {
     return (
-      // The shared corner frame every overlaid card badge uses, plus this
-      // badge's own severity fill — the same warning amber the feed's
-      // per-entry alerts wear, so the dashboard's summary and the entries it
-      // summarises read as one signal.
-      //
-      // **Deliberately the circular form rather than the wider pill.** The
-      // frame hangs 8px off the card's edge and is 28px across, so its inner
-      // edge lands exactly on the card's own content edge — which is where the
-      // chevron-and-Live cluster starts. Circular, the two sit adjacent and
-      // neither is touched; the pill form (icon + words) would reach across the
-      // chevron and force the cluster to move for a sentence the aria-label
-      // already carries in full.
+      // The shared corner frame every overlaid card badge uses, with a solid
+      // severity fill — a bare number on a translucent wash read as decoration,
+      // not as an alert. The icon carries the "something is owed" meaning the
+      // count alone couldn't; the full sentence still travels via aria-label.
+      // Icon + count is the compact pill form; it ends where the card's
+      // content padding begins, sitting just above the chevron cluster.
       <div
         role="img"
         aria-label={label}
         title={label}
         className={cn(
           BADGE_FRAME,
-          "min-w-7 cursor-default px-1.5 text-xs font-semibold tabular-nums",
-          "border border-warning/50 bg-warning/15 text-warning",
+          "cursor-default gap-1 px-2 text-xs font-semibold tabular-nums",
+          "bg-warning text-warning-foreground",
           className,
         )}
       >
+        <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
         {count}
       </div>
     );
