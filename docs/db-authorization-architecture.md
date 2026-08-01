@@ -340,6 +340,19 @@ guarantees nothing escapes both.
    mode; check 5 is what polices it. 1+2+5 subsume the old grant-allowlist test, which
    was retired with them (§5 Phase 2).
 
+**What "self-scoping" admits, precisely.** The common case is a function keyed to
+`auth.uid()` on every read and write. The category is slightly wider than that, and the
+widening is deliberate rather than accidental: what it actually requires is that the
+*caller's own identity, not an argument, determines the answer's scope*. A `SECURITY
+INVOKER` function reading only tables the caller's RLS already governs qualifies — it
+cannot return a row a direct select would not, so there is no scope for an argument to
+aim it at someone else. Two members are of this second kind: the product read predicate
+the RLS policies evaluate, and the location search behind the public picker. Both are
+also `anon`-reachable, which is a separate allowlist and a separate decision. The
+requirement that each entry name a scope test is what keeps the widening honest — a
+function classified this way has to be *shown* answering identically regardless of who
+asks.
+
 ### 3.5 The RPC shape under this architecture
 
 A well-formed privileged write RPC, for reference when writing one:

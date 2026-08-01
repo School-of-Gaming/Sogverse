@@ -95,7 +95,13 @@ The pattern that works: hold a local `committing` boolean, flip it true *synchro
 
 Setting the flag *inside* `onSuccess` (or via a hook that does so) is too late and does not close the gap. The flag has to be live before any render after the click.
 
-**Rule: A loading skeleton stays invisible for its first ~250ms.** Skeletons are the right pattern for loads that genuinely take time — but most loads here resolve in well under 250ms (warm React Query cache, small scoped queries), and a skeleton that lives for a few frames reads as an ugly grey flash, not a loading state. Gate the skeleton's *visibility* (not its mount) on `useRevealAfter()` (`src/hooks/use-reveal-after.ts` — the delay is its default; don't pass a literal), inside a container that already has its final size per the layout rule: a fast load then shows calm nothing in a correctly-sized box, and a slow one still gets its skeleton. Pair the reveal with a ~200ms opacity fade so a load finishing just past the threshold sees a faint shimmer rather than a hard flash, and prefer structured ghosts (bars where rows will be) over one solid block when the skeleton does show.
+**Rule: the loading affordance is a property of the call, chosen when you write it — never something discovered at runtime.** You are the one writing the query. You know whether it is a cached read, an indexed lookup of a bounded set, or a heavy aggregate over a third party. That knowledge picks the affordance; a timer that waits to find out does not. There are three categories and nothing else:
+
+1. **Already cached, or resolvable synchronously** → **no loading state at all**, ever. React Query knows this for you, and it is the strongest signal available because it costs nothing.
+2. **A near-instant call that still needs a network hop** — a small, indexed, bounded read: one node's children, a top-N search, a row by id. It lands in a frame or two. Render **nothing**, inside a container that already has its final size. No skeleton, no spinner, no delay, no fade. If such a call is ever slow that is an anomaly to investigate, not the case to design for.
+3. **A perceptibly slow call** — a large payload, a heavy aggregate, a third-party round trip. Render a structured skeleton **immediately**, with no delay, because you already know it is coming. Prefer ghosts shaped like the content (bars where rows will be) over one solid block.
+
+**Corollary: if you cannot tell which category a call falls into, you do not yet understand the query — go and find out.** Hedging with a timer is what that uncertainty used to buy, and it bought a loading state that was wrong in both directions: a flash on the fast path, and dead air on the slow one. The container keeping its final size across loading and loaded is what the layout rule needs; the skeleton was never the part doing that work.
 
 ### Date & Time Formatting
 
