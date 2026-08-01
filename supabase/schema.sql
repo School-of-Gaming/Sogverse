@@ -775,10 +775,11 @@ begin
   insert into public.gamer_profiles (user_id, date_of_birth, gender)
   values (p_gamer_id, p_date_of_birth, p_gender);
 
-  -- Optional Minecraft link. A unique_violation here (the minecraft_uuid was
-  -- claimed between the route's pre-check and now) propagates as SQLSTATE 23505,
-  -- which the route maps to a 409 — and, being inside this transaction, aborts
-  -- the whole creation rather than leaving a half-built gamer.
+  -- Optional Minecraft link. Nothing here can reject a username: the account may
+  -- be shared with another Sogverse user, and an unresolvable one simply lands
+  -- with a null uuid. The insert is inside this transaction so a failure from any
+  -- other cause still aborts the whole creation rather than leaving a half-built
+  -- gamer.
   if p_minecraft_username is not null then
     insert into public.minecraft_accounts (user_id, minecraft_username, minecraft_uuid)
     values (p_gamer_id, p_minecraft_username, p_minecraft_uuid);
@@ -2342,9 +2343,9 @@ BEGIN
     SELECT p_user_id, unnest(p_location_ids);
   END IF;
 
-  -- Optional Minecraft account. The UNIQUE constraint on minecraft_uuid raises
-  -- here on a duplicate, aborting the transaction (the route pre-checks too, but
-  -- this closes the race).
+  -- Optional Minecraft account. A duplicate uuid is allowed (an educator may
+  -- share an account with someone else on the platform), so this insert has no
+  -- rejection path of its own.
   IF p_minecraft_username IS NOT NULL AND p_minecraft_username <> '' THEN
     INSERT INTO public.minecraft_accounts (user_id, minecraft_username, minecraft_uuid)
     VALUES (p_user_id, p_minecraft_username, NULLIF(p_minecraft_uuid, ''));
@@ -3521,14 +3522,6 @@ ALTER TABLE ONLY public.minecraft_accounts
 
 
 --
--- Name: minecraft_accounts minecraft_accounts_uuid_unique; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.minecraft_accounts
-    ADD CONSTRAINT minecraft_accounts_uuid_unique UNIQUE (minecraft_uuid);
-
-
---
 -- Name: parent_gamer parent_gamer_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3978,6 +3971,13 @@ CREATE INDEX idx_whatsapp_contacts_last_message ON public.whatsapp_contacts USIN
 --
 
 CREATE INDEX idx_whatsapp_messages_conversation ON public.whatsapp_messages USING btree (phone, created_at DESC);
+
+
+--
+-- Name: minecraft_accounts_uuid_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX minecraft_accounts_uuid_idx ON public.minecraft_accounts USING btree (minecraft_uuid);
 
 
 --
