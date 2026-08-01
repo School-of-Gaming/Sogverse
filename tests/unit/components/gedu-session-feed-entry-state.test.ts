@@ -8,6 +8,8 @@ import {
   countEntriesNeedingAttention,
   draftFromEditorState,
   editorStateFromEntry,
+  entryCompleteness,
+  entryIsComplete,
   entryNeedsAttention,
   isEditableEntry,
   isPlannableEntry,
@@ -50,7 +52,7 @@ function past(
     kind: "past",
     id,
     ...WHEN,
-    publicNote: null,
+    report: null,
     staffNote: null,
     attendance: {},
     ...fields,
@@ -72,7 +74,7 @@ function future(
     kind: "future",
     id,
     ...WHEN,
-    publicNote: null,
+    report: null,
     staffNote: null,
     ...fields,
   };
@@ -112,6 +114,109 @@ describe("isPlannableEntry", () => {
   });
 });
 
+/**
+ * The three-rung ladder. Its whole reason to exist is the middle rung: a report
+ * is optional, so its absence must never read as work owed — but a session that
+ * *has* one has to be distinguishable from one that has not, or there is nothing
+ * to aim at. Hence neutral in the middle and a green check on top.
+ */
+describe("entryCompleteness", () => {
+  it("climbs from unmarked, through marked, to marked-and-reported", () => {
+    expect(entryCompleteness(past("a"), ROSTER)).toBe("needs_attention");
+    expect(
+      entryCompleteness(past("b", { attendance: ALL_MARKED }), ROSTER),
+    ).toBe("recorded");
+    expect(
+      entryCompleteness(
+        past("c", { attendance: ALL_MARKED, report: "# Redstone week" }),
+        ROSTER,
+      ),
+    ).toBe("complete");
+  });
+
+  it("needs BOTH halves for the top rung", () => {
+    // A report with the roster unfinished is still outstanding work — the
+    // report never buys off the attendance.
+    expect(
+      entryCompleteness(past("d", { report: "# Redstone week" }), ROSTER),
+    ).toBe("needs_attention");
+  });
+
+  it("treats a gedu note as no part of the ladder", () => {
+    // The gedu note is a message to a colleague; families never see it, so it
+    // cannot be what makes a session complete for them.
+    expect(
+      entryCompleteness(
+        past("e", { attendance: ALL_MARKED, staffNote: "Watch Siiri." }),
+        ROSTER,
+      ),
+    ).toBe("recorded");
+  });
+
+  it("counts an empty-string report as no report", () => {
+    // A cleared editor saves as `""` before it collapses to null; the ladder
+    // must not read that as a written report on the way through.
+    expect(
+      entryCompleteness(
+        past("f", { attendance: ALL_MARKED, report: "" }),
+        ROSTER,
+      ),
+    ).toBe("recorded");
+  });
+
+  it("exempts skipped, future and pre-epoch entries entirely", () => {
+    // A skipped session is terminal: it did not run, so there is no roster to
+    // mark and nothing to report on. Ranking it would invent work.
+    expect(entryCompleteness(skipped("s", "Holiday"), ROSTER)).toBeNull();
+    expect(entryCompleteness(future("u"), ROSTER)).toBeNull();
+    expect(entryCompleteness(noRecord("n"), ROSTER)).toBeNull();
+  });
+
+  it("reopens when a child joins the group after the sheet was finished", () => {
+    // Measured against the *current* roster, never the stored map's keys —
+    // nobody has yet said whether the new child was there.
+    const entry = past("g", { attendance: ALL_MARKED, report: "# Week" });
+    expect(entryCompleteness(entry, ROSTER)).toBe("complete");
+    expect(
+      entryCompleteness(entry, [...ROSTER, { id: "d", firstName: "Linnéa" }]),
+    ).toBe("needs_attention");
+  });
+});
+
+describe("entryIsComplete", () => {
+  it("is the top rung and nothing else", () => {
+    expect(
+      entryIsComplete(
+        past("a", { attendance: ALL_MARKED, report: "# Week" }),
+        ROSTER,
+      ),
+    ).toBe(true);
+    expect(entryIsComplete(past("b", { attendance: ALL_MARKED }), ROSTER)).toBe(
+      false,
+    );
+    expect(entryIsComplete(past("c"), ROSTER)).toBe(false);
+    expect(entryIsComplete(skipped("s", null), ROSTER)).toBe(false);
+  });
+
+  it("is never true at the same time as needing attention", () => {
+    const entries: SessionFeedEntry[] = [
+      past("a"),
+      past("b", { attendance: ALL_MARKED }),
+      past("c", { attendance: ALL_MARKED, report: "# Week" }),
+      past("d", { report: "# Week" }),
+      skipped("s", null),
+      future("u"),
+      noRecord("n"),
+    ];
+    for (const entry of entries) {
+      expect(
+        entryIsComplete(entry, ROSTER) && entryNeedsAttention(entry, ROSTER),
+        entry.id,
+      ).toBe(false);
+    }
+  });
+});
+
 describe("entryNeedsAttention", () => {
   it("is exactly: past, not skipped, some of the roster still unmarked", () => {
     expect(entryNeedsAttention(past("g"), ROSTER)).toBe(true);
@@ -129,7 +234,7 @@ describe("entryNeedsAttention", () => {
     // The entry renders its notes *and* its alert.
     expect(
       entryNeedsAttention(
-        past("g", { publicNote: "Redstone week.", staffNote: "Watch Siiri." }),
+        past("g", { report: "Redstone week.", staffNote: "Watch Siiri." }),
         ROSTER,
       ),
     ).toBe(true);
@@ -187,7 +292,7 @@ describe("countEntriesNeedingAttention", () => {
     const entries: SessionFeedEntry[] = [
       future("u"),
       past("g1"),
-      past("g2", { publicNote: "Notes but no attendance." }),
+      past("g2", { report: "Notes but no attendance." }),
       past("g3", { attendance: { a: "present" } }),
       past("r", { attendance: ALL_MARKED }),
       noRecord("n"),
@@ -294,7 +399,7 @@ describe("pastEntryWindow", () => {
 describe("planEditorStateFromEntry / planDraftFromEditorState", () => {
   it("seeds a session with no notes on it with empty fields", () => {
     expect(planEditorStateFromEntry(future("f"))).toEqual({
-      publicNote: "",
+      report: "",
       staffNote: "",
     });
   });
@@ -303,12 +408,12 @@ describe("planEditorStateFromEntry / planDraftFromEditorState", () => {
     expect(
       planEditorStateFromEntry(
         future("f", {
-          publicNote: "Redstone follow-up.",
+          report: "Redstone follow-up.",
           staffNote: "Charge the laptop.",
         }),
       ),
     ).toEqual({
-      publicNote: "Redstone follow-up.",
+      report: "Redstone follow-up.",
       staffNote: "Charge the laptop.",
     });
   });
@@ -316,12 +421,12 @@ describe("planEditorStateFromEntry / planDraftFromEditorState", () => {
   it("trims both notes on the way out", () => {
     expect(
       planDraftFromEditorState({
-        publicNote: "  Harbour road.  ",
+        report: "  Harbour road.  ",
         staffNote: "  Pair Siiri with Aino.  ",
       }),
     ).toEqual({
       kind: "plan",
-      publicNote: "Harbour road.",
+      report: "Harbour road.",
       staffNote: "Pair Siiri with Aino.",
     });
   });
@@ -333,7 +438,7 @@ describe("applyPlanDraftToEntry", () => {
     expect(
       applyPlanDraftToEntry(entry, {
         kind: "plan",
-        publicNote: "Lighthouse week.",
+        report: "Lighthouse week.",
         staffNote: "Bring the spare mouse.",
       }),
     ).toEqual({
@@ -341,25 +446,25 @@ describe("applyPlanDraftToEntry", () => {
       id: "f",
       startsAt: START,
       endsAt: END,
-      publicNote: "Lighthouse week.",
+      report: "Lighthouse week.",
       staffNote: "Bring the spare mouse.",
     });
   });
 
   it("collapses cleared notes to null so their blocks stop rendering", () => {
-    const entry = future("f", { publicNote: "old", staffNote: "old" });
+    const entry = future("f", { report: "old", staffNote: "old" });
     expect(
       applyPlanDraftToEntry(entry, {
         kind: "plan",
-        publicNote: "",
+        report: "",
         staffNote: "",
       }),
-    ).toMatchObject({ publicNote: null, staffNote: null });
+    ).toMatchObject({ report: null, staffNote: null });
   });
 
   it("round-trips notes through the editor without losing anything", () => {
     const entry = future("f", {
-      publicNote: "Lighthouse week.",
+      report: "Lighthouse week.",
       staffNote: "Bring the spare mouse.",
     });
     expect(
@@ -445,7 +550,7 @@ describe("editorStateFromEntry", () => {
     expect(editorStateFromEntry(past("g"), ROSTER)).toEqual({
       didNotRun: false,
       attendance: {},
-      publicNote: "",
+      report: "",
       staffNote: "",
       skipReason: "",
     });
@@ -453,10 +558,10 @@ describe("editorStateFromEntry", () => {
 
   it("keeps an unmarked session's existing notes when it opens", () => {
     const state = editorStateFromEntry(
-      past("g", { publicNote: "Redstone week.", staffNote: "Watch Siiri." }),
+      past("g", { report: "Redstone week.", staffNote: "Watch Siiri." }),
       ROSTER,
     );
-    expect(state.publicNote).toBe("Redstone week.");
+    expect(state.report).toBe("Redstone week.");
     expect(state.staffNote).toBe("Watch Siiri.");
     expect(state.attendance).toEqual({});
   });
@@ -465,7 +570,7 @@ describe("editorStateFromEntry", () => {
     expect(
       editorStateFromEntry(
         past("r", {
-          publicNote: "We built a clock tower.",
+          report: "We built a clock tower.",
           attendance: ALL_MARKED,
         }),
         ROSTER,
@@ -473,7 +578,7 @@ describe("editorStateFromEntry", () => {
     ).toEqual({
       didNotRun: false,
       attendance: { a: "present", b: "absent", c: "present" },
-      publicNote: "We built a clock tower.",
+      report: "We built a clock tower.",
       staffNote: "",
       skipReason: "",
     });
@@ -509,7 +614,7 @@ describe("draftFromEditorState", () => {
   const base: SessionEditorState = {
     didNotRun: false,
     attendance: { a: "present", b: "present", c: "absent" },
-    publicNote: "  We finished the square.  ",
+    report: "  We finished the square.  ",
     staffNote: "  Watch Siiri.  ",
     skipReason: "  Winter break  ",
   };
@@ -518,7 +623,7 @@ describe("draftFromEditorState", () => {
     expect(draftFromEditorState(base, ROSTER)).toEqual({
       kind: "past",
       attendance: { a: "present", b: "present", c: "absent" },
-      publicNote: "We finished the square.",
+      report: "We finished the square.",
       staffNote: "Watch Siiri.",
     });
   });
@@ -531,7 +636,7 @@ describe("draftFromEditorState", () => {
     ).toEqual({
       kind: "past",
       attendance: { a: "present" },
-      publicNote: "We finished the square.",
+      report: "We finished the square.",
       staffNote: "Watch Siiri.",
     });
   });
@@ -554,13 +659,13 @@ describe("draftFromEditorState", () => {
   it("saves happily with no notes at all — they are the optional half", () => {
     expect(
       draftFromEditorState(
-        { ...base, publicNote: "  ", staffNote: "" },
+        { ...base, report: "  ", staffNote: "" },
         ROSTER,
       ),
     ).toEqual({
       kind: "past",
       attendance: { a: "present", b: "present", c: "absent" },
-      publicNote: "",
+      report: "",
       staffNote: "",
     });
   });
@@ -581,7 +686,7 @@ describe("applyDraftToEntry", () => {
       applyDraftToEntry(past("g"), {
         kind: "past",
         attendance: ALL_MARKED,
-        publicNote: "Redstone week.",
+        report: "Redstone week.",
         staffNote: "",
       }),
     ).toEqual({
@@ -589,7 +694,7 @@ describe("applyDraftToEntry", () => {
       id: "g",
       startsAt: START,
       endsAt: END,
-      publicNote: "Redstone week.",
+      report: "Redstone week.",
       // An emptied note collapses to null so its block stops rendering.
       staffNote: null,
       attendance: ALL_MARKED,
@@ -600,10 +705,10 @@ describe("applyDraftToEntry", () => {
     const saved = applyDraftToEntry(past("g"), {
       kind: "past",
       attendance: ALL_MARKED,
-      publicNote: "",
+      report: "",
       staffNote: "",
     });
-    expect(saved).toMatchObject({ publicNote: null, staffNote: null });
+    expect(saved).toMatchObject({ report: null, staffNote: null });
     expect(entryNeedsAttention(saved, ROSTER)).toBe(false);
   });
 
@@ -611,7 +716,7 @@ describe("applyDraftToEntry", () => {
     const saved = applyDraftToEntry(past("g"), {
       kind: "past",
       attendance: { a: "present" },
-      publicNote: "Half a roster and then the fire alarm went.",
+      report: "Half a roster and then the fire alarm went.",
       staffNote: "",
     });
     expect(saved).toMatchObject({ attendance: { a: "present" } });
@@ -620,7 +725,7 @@ describe("applyDraftToEntry", () => {
 
   it("turns a finished entry into a skipped one", () => {
     const entry = past("r", {
-      publicNote: "Redstone week.",
+      report: "Redstone week.",
       staffNote: "Watch Siiri.",
       attendance: ALL_MARKED,
     });
@@ -636,7 +741,7 @@ describe("applyDraftToEntry", () => {
 
   it("round-trips a finished entry through the editor without losing anything", () => {
     const entry = past("r", {
-      publicNote: "Redstone week.",
+      report: "Redstone week.",
       staffNote: "Watch Siiri.",
       attendance: ALL_MARKED,
     });

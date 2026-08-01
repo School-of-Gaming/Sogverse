@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { LaterSessionsBlock } from "./LaterSessionsBlock";
 import { SessionFeedItem } from "./SessionFeedItem";
 import {
-  entryNeedsAttention,
+  entryCompleteness,
   partitionFeedEntries,
   pastEntryWindow,
 } from "./entry-state";
@@ -216,11 +216,16 @@ export function SessionFeed({
  * nothing-owed rows all but disappear. A future session is only fully toned when
  * it is the next one — a later date is not a thing to walk into.
  *
- * The two loud markers are deliberately on **different hues**: info blue for
- * what is coming, warning amber for what is owed. When "next" was primary-toned
- * the rail read as one graded run of warm dots, and the single most useful thing
- * a glance down it can tell you — where the gaps are — was the thing hardest to
- * see.
+ * The loud markers are deliberately on **different hues** rather than different
+ * saturations of one: info blue for what is coming, warning amber for what is
+ * owed, success green for what is finished end to end. When "next" was
+ * primary-toned the rail read as one graded run of warm dots, and the single
+ * most useful thing a glance down it can tell you — where the gaps are — was the
+ * thing hardest to see.
+ *
+ * The middle rung of the ladder stays the neutral dot it always was. A session
+ * marked off but not yet reported on owes nothing, so its marker must not read
+ * as a third alert; the green is what the run of grey is measured against.
  */
 function markerTone(
   entry: SessionFeedEntry,
@@ -231,9 +236,14 @@ function markerTone(
     case "future":
       return prominent ? "bg-info" : "bg-info/40";
     case "past":
-      return entryNeedsAttention(entry, roster)
-        ? "bg-warning"
-        : "bg-muted-foreground/60";
+      switch (entryCompleteness(entry, roster)) {
+        case "needs_attention":
+          return "bg-warning";
+        case "complete":
+          return "bg-success";
+        default:
+          return "bg-muted-foreground/60";
+      }
     case "skipped":
     case "no_record":
       return "bg-muted-foreground/25";

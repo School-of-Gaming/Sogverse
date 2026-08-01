@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { attendanceTally, draftFromEditorState } from "./entry-state";
 import { AttendanceRoster } from "./AttendanceRoster";
 import { CollapsibleRegion } from "./CollapsibleRegion";
+import { SessionReportField } from "./SessionReportField";
 import { StaffNoteBlock } from "./StaffNoteBlock";
 import type {
   AttendanceMark,
@@ -80,10 +81,17 @@ export function SessionRecordEditor({
   // Re-seed on open, using React's documented "adjust state during render"
   // pattern rather than an effect — the reset lands in the same commit as the
   // expansion, so the editor never paints one frame of the stale draft.
+  //
+  // `opens` doubles as the rich editor's remount key and, at zero, as the signal
+  // that it has never been opened and so does not need to exist yet.
   const [wasOpen, setWasOpen] = useState(open);
+  const [opens, setOpens] = useState(open ? 1 : 0);
   if (open !== wasOpen) {
     setWasOpen(open);
-    if (open) setDraft(initialState);
+    if (open) {
+      setDraft(initialState);
+      setOpens((n) => n + 1);
+    }
   }
 
   const { marked, total } = attendanceTally(roster, draft.attendance);
@@ -147,22 +155,12 @@ export function SessionRecordEditor({
             </div>
           </div>
 
-          <Field
-            label={t("publicNoteLabel")}
-            htmlFor={`${fieldId}-public`}
-            optional
-            hint={t("publicNoteHint")}
-          >
-            <Textarea
-              id={`${fieldId}-public`}
-              rows={5}
-              value={draft.publicNote}
-              placeholder={t("publicNotePlaceholder")}
-              onChange={(e) =>
-                setDraft((d) => ({ ...d, publicNote: e.target.value }))
-              }
-            />
-          </Field>
+          <SessionReportField
+            value={initialState.report}
+            seed={opens}
+            ready={opens > 0}
+            onChange={(report) => setDraft((d) => ({ ...d, report }))}
+          />
 
           <StaffNoteBlock>
             <Field

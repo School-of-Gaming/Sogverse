@@ -24,9 +24,11 @@ import type {
  * session is always yesterday) would make the club's own name a lie half the
  * week.
  *
- * The note copy below is mock *data*, not UI copy — it stands in for what a
- * gedu would have typed, so it is not translated, exactly like the product
- * descriptions in the other fixture files.
+ * The report and note copy below is mock *data*, not UI copy — it stands in for
+ * what a gedu would have typed, so it is not translated, exactly like the
+ * product descriptions in the other fixture files. Reports are markdown, because
+ * that is how they are stored; gedu notes are plain text, because that is how
+ * they are written.
  */
 
 const TIMEZONE = "Europe/Helsinki";
@@ -99,19 +101,25 @@ export type SessionFeedCadence = "weekly" | "daily";
 export type EntrySpec =
   | {
       kind: "future";
-      /** Note families read. */
-      publicNote?: string;
-      /** Gedu note — a reminder for whoever runs it. */
+      /** The session report families read, as markdown. */
+      report?: string;
+      /** Gedu note — a reminder for whoever runs it. Plain text. */
       staffNote?: string;
     }
   | {
       kind: "past";
-      publicNote?: string;
+      /**
+       * The session report, as **markdown** — a title line, a section or two,
+       * usually a list. Real ones run 500–1500 characters, and several here are
+       * that long on purpose: the feed clamps a report to a few lines and offers
+       * to expand it, and a fixture full of one-liners would never exercise that.
+       */
+      report?: string;
       staffNote?: string;
       /**
        * Roster ids marked absent; everyone else is marked present. Omit every
        * attendance field and the sheet stays **wholly unmarked** — which is what
-       * makes the entry need attention, whether or not it carries a note.
+       * makes the entry need attention, whether or not it carries a report.
        */
       absent?: readonly string[];
       /** Attendance marked with the whole roster present. */
@@ -120,13 +128,87 @@ export type EntrySpec =
        * A **part-marked** sheet: only the ids listed here get a mark, everyone
        * else on the roster stays unmarked. This is the state a save can now
        * land in — a gedu interrupted three children into a roster of eight —
-       * and the entry it produces still needs attention, renders its notes, and
+       * and the entry it produces still needs attention, renders its report, and
        * reports its own progress.
        */
       partial?: { present?: readonly string[]; absent?: readonly string[] };
     }
   | { kind: "skipped"; reason?: string }
   | { kind: "no_record" };
+
+/* ------------------------------------------------------------------ */
+/*  Long-form reports                                                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Three full-length reports, written the way a gedu who has been given a rich
+ * editor actually writes: a title, a section or two, a list of what got built,
+ * and a sign-off aimed at the parent reading it on a phone.
+ *
+ * They are long — 700 to 1200 characters — because that is the length the
+ * feature was specified at, and because the feed's clamp only means anything
+ * against a report that overflows it. A fixture of tidy one-liners would render
+ * a "Read more" nowhere and quietly leave the whole interaction untested by eye.
+ *
+ * They stay inside the subset the editor's toolbar can produce — headings,
+ * paragraphs, bold, lists — so a reviewer can open one in the editor, look at
+ * it, save it unchanged, and get the same markdown back. Nothing here needs a
+ * table, and putting one in would only demonstrate the degrade path.
+ */
+const VILLAGE_SQUARE_REPORT = `# The village square is finished
+
+We finished the village square this week, and it finally looks like somewhere people live rather than a pile of blocks around a well.
+
+## What the group built
+
+- Aino's clock tower, which chimes on the hour after three goes at the redstone
+- A market row of four stalls, one per team, all of them roofed differently
+- The first hundred blocks of a proper road down towards the harbour
+
+The road was meant to be next week's job. Half the group split off and started it anyway, and got further than I expected — Oskar organised them into diggers and pavers without being asked to, which is the most useful thing that happened all evening.
+
+We ended with a tour where everyone showed one thing they had made. Nobody wanted to log off.
+
+**Next week:** the harbour itself. We will need a great deal of stone, so anyone who wants to mine ahead of time is very welcome to.`;
+
+const COMMAND_BLOCKS_REPORT = `# Command blocks and teleport pads
+
+A first look at command blocks this week. We built teleport pads that fire you across the map, which is exactly as popular as it sounds.
+
+## How it went
+
+Everyone got a working pad by the end. The interesting twenty minutes were the ones spent working out why one of them dropped you *inside* a mountain rather than on top of it — Väinö found it in the end: the coordinates were one block off, so the pad was aiming at solid stone.
+
+We talked about why that matters more than it looks. A command block does exactly what you tell it, and "exactly" is a much stricter word than most of the group is used to.
+
+**At home:** the pads are still in the world and safe to play with. If one of them stops working, the fix is almost always the coordinates rather than the block.`;
+
+const REDSTONE_WEEK_REPORT = `# Redstone week: item sorters
+
+We built item sorters from scratch this week — hoppers, comparators, the lot — and then broke them on purpose to work out what each part was actually doing.
+
+## The build
+
+- A hopper line feeding four labelled chests
+- Comparators reading the filter chests, which is the bit that does the sorting
+- An overflow chest at the end, so nothing is ever lost when a filter fills up
+
+The overflow was the hard part and Elias solved it on his own. He then spent the rest of the session teaching it to the rest of the table, which was better than anything I would have said about it.
+
+**Next week:** the sorters go into the storage room, and we find out whether they survive eight people using them at once.`;
+
+const BUILD_BATTLE_REPORT = `# Build battle: "somewhere you'd hide"
+
+Two teams, forty minutes, theme drawn out of a hat.
+
+## What we got
+
+- A hollowed-out mountain with a hidden lift running up the middle of it
+- A very convincing haystack with a full basement underneath
+
+Both teams spent the first five minutes arguing and the last five panicking, which is the correct shape for a build battle. The vote ended in a tie, and everyone agreed that this was the correct result.
+
+Worth saying that the mountain team split the work without being asked — two on the shell, one on the lift, one on the lighting — and finished with time to spare. That is a real skill and it is not one we have taught them.`;
 
 /**
  * The future horizon an open-ended weekly club shows: as many entries as the
@@ -147,13 +229,13 @@ export const CLUB_FUTURE_SPECS: readonly EntrySpec[] = [
   { kind: "future" },
   {
     kind: "future",
-    publicNote:
-      "Redstone follow-up: we'll wire the item sorters into the storage room and see whether the overflow fix survives eight people using it at once.",
+    report:
+      "# Redstone follow-up\n\nWe are wiring the item sorters into the storage room and finding out whether the overflow fix survives eight people using it at once.",
   },
   {
     kind: "future",
-    publicNote:
-      "We're finishing the harbour road and starting on the lighthouse at the end of it. Bring ideas for what should be inside it.",
+    report:
+      "# The lighthouse\n\nWe are finishing the harbour road and starting on the lighthouse at the end of it.\n\n**Bring:** ideas for what should be inside it. A library, a beacon room and a slide have all been suggested, and only one of those is structurally sensible.",
     staffNote:
       "Ask Siiri's group to pair her with Aino this week rather than leaving her to pick — she goes quiet when she has to choose.",
   },
@@ -162,20 +244,20 @@ export const CLUB_FUTURE_SPECS: readonly EntrySpec[] = [
 export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
   ...CLUB_FUTURE_SPECS,
 
+  // Marked off and reported — the top of the ladder, and the state the green
+  // check is for.
   {
     kind: "past",
     absent: [SESSION_FEED_GAMER_IDS.oskar],
-    publicNote:
-      "We finished the village square this week. Aino's clock tower finally chimes on the hour after three goes at the redstone, and half the group split off to dig a proper road down to the harbour. We ended with a tour where everyone showed one thing they had made — nobody wanted to log off.",
+    report: VILLAGE_SQUARE_REPORT,
   },
 
   // Written up on the night and never marked off — the case the whole model
-  // exists for: the notes render in full and the entry is still flagged,
+  // exists for: the report renders in full and the entry is still flagged,
   // because attendance is the mandatory half and it is missing.
   {
     kind: "past",
-    publicNote:
-      "Command blocks. We made teleport pads that fire you across the map, then spent twenty minutes working out why one of them dropped you inside a mountain. Väinö found it: the coordinates were a block off and the pad was aiming at solid stone.",
+    report: COMMAND_BLOCKS_REPORT,
   },
 
   // Started and abandoned: three children marked, five still unanswered. The
@@ -187,15 +269,14 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
       present: [SESSION_FEED_GAMER_IDS.aino, SESSION_FEED_GAMER_IDS.vaino],
       absent: [SESSION_FEED_GAMER_IDS.oskar],
     },
-    publicNote:
-      "Mob-proofing night: we lit the paths, walled the gaps and got through a whole session without losing anybody to a creeper.",
+    report:
+      "# Mob-proofing night\n\nWe lit the paths, walled the gaps and got through a whole session without losing anybody to a creeper — which has not happened before.",
   },
 
   {
     kind: "past",
     absent: [SESSION_FEED_GAMER_IDS.siiri, SESSION_FEED_GAMER_IDS.hilda],
-    publicNote:
-      "Redstone week. We built item sorters from scratch — hoppers, comparators, the lot — and then broke them on purpose to work out what each part was actually doing. Elias solved the overflow problem on his own and spent the rest of the session teaching it to the table. The sorters go into the storage room next time.",
+    report: REDSTONE_WEEK_REPORT,
     staffNote:
       "Siiri was quiet again and dropped out of the call twice without saying anything. Worth a word with her parents if it carries on. Two laptops also couldn't hear shared audio for the first ten minutes — check the room setup before next week.",
   },
@@ -205,11 +286,20 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
     reason: "Winter break — school closed, no session this week.",
   },
 
+  // The **middle rung**: every child marked, no report written. Nothing is owed
+  // here, so it wears no badge at all — neither the amber alert nor the green
+  // check. Its absence of a badge is what makes the other two mean anything.
   {
     kind: "past",
     allPresent: true,
-    publicNote:
-      "Build battle night: two teams, forty minutes, theme drawn out of a hat — \"somewhere you'd hide\". We got a hollowed-out mountain with a hidden lift, and a very convincing haystack with a basement under it. The vote ended in a tie, which everyone agreed was the correct result.",
+    staffNote:
+      "Ran short — the school hall overran and we lost the first fifteen minutes. Nothing worth writing home about, so no report this week.",
+  },
+
+  {
+    kind: "past",
+    allPresent: true,
+    report: BUILD_BATTLE_REPORT,
     staffNote:
       "Emil and Oskar are better on separate teams next time. It got competitive and there was some sniping in chat before I stepped in.",
   },
@@ -224,8 +314,8 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
       SESSION_FEED_GAMER_IDS.linnea,
       SESSION_FEED_GAMER_IDS.emil,
     ],
-    publicNote:
-      "A quieter week with a few away, so we used it for housekeeping: tidied up the spawn area, fixed the paths people kept falling off, and agreed some ground rules about building on each other's plots. Hilda started a shared library that anyone can add books to.",
+    report:
+      "# A housekeeping week\n\nA few were away, so we used the session to tidy up rather than start anything new.\n\n- Cleared and replanted the spawn area\n- Fixed the paths people kept falling off\n- Agreed some ground rules about building on each other's plots\n\nHilda started a shared library that anyone can add books to. It already has four, two of which are just the word \"hello\" repeated.",
   },
 
   // Before the epoch: nothing was ever expected here, so nothing is owed.
@@ -458,7 +548,7 @@ function toEntry(
         id,
         startsAt,
         endsAt,
-        publicNote: spec.publicNote ?? null,
+        report: spec.report ?? null,
         staffNote: spec.staffNote ?? null,
       };
     case "past":
@@ -467,7 +557,7 @@ function toEntry(
         id,
         startsAt,
         endsAt,
-        publicNote: spec.publicNote ?? null,
+        report: spec.report ?? null,
         staffNote: spec.staffNote ?? null,
         attendance: marksForSpec(spec),
       };

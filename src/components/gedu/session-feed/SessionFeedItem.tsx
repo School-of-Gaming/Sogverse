@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CalendarOff, Pencil } from "lucide-react";
+import { AlertTriangle, CalendarOff, CheckCircle2, Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,13 +10,14 @@ import { AttendanceSummary } from "./AttendanceSummary";
 import { CollapsibleRegion } from "./CollapsibleRegion";
 import {
   editorStateFromEntry,
-  entryNeedsAttention,
+  entryCompleteness,
   isEditableEntry,
   isPlannableEntry,
   planEditorStateFromEntry,
 } from "./entry-state";
 import { SessionPlanEditor } from "./SessionPlanEditor";
 import { SessionRecordEditor } from "./SessionRecordEditor";
+import { SessionReport } from "./SessionReport";
 import { StaffNoteBlock } from "./StaffNoteBlock";
 import type { SessionLabels } from "./session-labels";
 import type {
@@ -59,11 +60,18 @@ interface SessionFeedItemProps {
  * gesture for one state, which is exactly the state a gedu meets least often
  * and would have to relearn each time.
  *
- * A session needing attention says so with an alert icon and label on an
- * otherwise ordinary card. It used to wear a tinted background too; that made
- * the feed's most common transient state look like a failure, and on a gedu
- * catching up after half term it painted half the page amber. The icon carries
- * it. A pre-epoch gap is a bare dashed line with no card and no editor at all,
+ * **A past session wears one of three states, and only two of them say
+ * anything.** Attendance still owed is an alert icon and label on an otherwise
+ * ordinary card — it used to wear a tinted background too, which made the feed's
+ * most common transient state look like a failure and painted half the page
+ * amber for a gedu catching up after half term. Attendance finished with no
+ * report is deliberately silent: the report is optional, so a badge there would
+ * be a nag for work nobody owes. Attendance finished *and* a report written is
+ * the only state that earns a mark of its own, a green check, because it is the
+ * one the gedu is aiming at and nothing else on the card can tell them they have
+ * arrived. A skipped session sits outside the ladder entirely — it did not run.
+ *
+ * A pre-epoch gap is a bare dashed line with no card and no editor at all,
  * because nothing is owed for it and it must not compete with the narrative
  * around it.
  *
@@ -92,7 +100,7 @@ export function SessionFeedItem({
   const t = useTranslations("gedu.sessionFeed");
   const recordable = isEditableEntry(entry);
   const plannable = isPlannableEntry(entry);
-  const needsAttention = entryNeedsAttention(entry, roster);
+  const completeness = entryCompleteness(entry, roster);
 
   // Pre-epoch gaps aren't part of the story and aren't work — a single quiet
   // dashed line, deliberately not a card.
@@ -124,10 +132,16 @@ export function SessionFeedItem({
               {t("upcomingBadge")}
             </Badge>
           )}
-          {needsAttention && (
+          {completeness === "needs_attention" && (
             <span className="flex items-center gap-1.5 text-xs font-medium text-warning">
               <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
               {t("needsAttentionLabel")}
+            </span>
+          )}
+          {completeness === "complete" && (
+            <span className="flex items-center gap-1.5 text-xs font-medium text-success">
+              <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
+              {t("completeLabel")}
             </span>
           )}
           {entry.kind === "skipped" && (
@@ -223,18 +237,16 @@ function SessionEntryBody({
   switch (entry.kind) {
     case "future": {
       const hasNotes =
-        (entry.publicNote !== null && entry.publicNote.length > 0) ||
+        (entry.report !== null && entry.report.length > 0) ||
         (entry.staffNote !== null && entry.staffNote.length > 0);
-      // The public note renders bare, exactly as it does on a past entry — no
-      // "Planned" heading over it. A note written before the session and one
-      // written after it are the same note; labelling one of them made the feed
-      // claim a distinction the model does not have.
+      // The report renders bare, exactly as it does on a past entry — no
+      // "Planned" heading over it. Written before the session and written after
+      // it are the same field at two moments; labelling one of them made the
+      // feed claim a distinction the model does not have.
       return (
         <div className="space-y-3 pb-1 pt-3">
-          {entry.publicNote !== null && entry.publicNote.length > 0 && (
-            <p className="whitespace-pre-line text-sm leading-relaxed">
-              {entry.publicNote}
-            </p>
+          {entry.report !== null && entry.report.length > 0 && (
+            <SessionReport markdown={entry.report} />
           )}
           {entry.staffNote !== null && entry.staffNote.length > 0 && (
             <StaffNoteBlock>
@@ -253,8 +265,8 @@ function SessionEntryBody({
     }
 
     case "past":
-      // Notes and attendance are independent: a session can carry a full
-      // write-up and still owe its attendance, so the notes render either way.
+      // Report and attendance are independent: a session can carry a full
+      // report and still owe its attendance, so the report renders either way.
       // The attendance line is unconditional — a part-marked or wholly unmarked
       // sheet is exactly the case the gedu came back for, and its own headline
       // ("3 of 8 marked") says more than a sentence of prose could.
@@ -262,10 +274,8 @@ function SessionEntryBody({
       // in this region and the region clips its overflow to animate.
       return (
         <div className="space-y-3 pb-1 pt-3">
-          {entry.publicNote !== null && entry.publicNote.length > 0 && (
-            <p className="whitespace-pre-line text-sm leading-relaxed">
-              {entry.publicNote}
-            </p>
+          {entry.report !== null && entry.report.length > 0 && (
+            <SessionReport markdown={entry.report} />
           )}
           {entry.staffNote !== null && entry.staffNote.length > 0 && (
             <StaffNoteBlock>

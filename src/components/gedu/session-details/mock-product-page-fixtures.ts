@@ -181,8 +181,8 @@ const CAMP_FUTURE_SPECS: readonly EntrySpec[] = [
   { kind: "future" },
   {
     kind: "future",
-    publicNote:
-      "Day eight: showcase afternoon. Every team demos their finished course and we vote on the one nobody could beat.",
+    report:
+      "# Day eight: showcase afternoon\n\nEvery team demos their finished course, and we vote on the one nobody could beat.\n\n**Parents are welcome from 15:00** if you would like to come and be beaten by an obstacle course built by ten-year-olds.",
   },
   {
     kind: "future",
@@ -191,59 +191,63 @@ const CAMP_FUTURE_SPECS: readonly EntrySpec[] = [
   },
   {
     kind: "future",
-    publicNote:
-      "Day six: leaderboards. We wire the finish line up to a scoreboard so the course remembers who got round it fastest.",
+    report:
+      "# Day six: leaderboards\n\nWe wire the finish line up to a scoreboard so the course remembers who got round it fastest.",
   },
 ];
 
 /**
- * The camp's run so far — **every day recorded**, deliberately.
+ * The camp's run so far — every day written up bar the most recent one.
  *
- * The club scenario beside it is where the backlog lives; a camp that also
- * owed write-ups would leave the page with no scenario showing what "nothing
- * outstanding" looks like, and would give the dashboard two cards wearing the
- * same badge. A five-day camp whose Gedu is up to date is also simply the
- * common case: you write the day up at the end of the day, in the room.
+ * The club scenario beside it is where the *backlog* lives: five outstanding
+ * weeks, several ladder states, a year of history. The camp carries exactly one
+ * gap, and it is deliberately the freshest day — a gedu who ran a session
+ * yesterday afternoon and has not sat down with the register yet is the single
+ * most common way a session ends up owed, and it is the only way an in-person
+ * product ever shows an attention badge on the dashboard. Everything older is
+ * finished, which is also true to life: you write the day up at the end of the
+ * day, in the room, and it is only the newest one that is ever open.
  */
 const CAMP_SPECS: readonly EntrySpec[] = [
   ...CAMP_FUTURE_SPECS,
+  // Yesterday afternoon, register not yet done. The one outstanding session on
+  // this product, and the dashboard's in-person attention badge.
   {
     kind: "past",
-    absent: [SESSION_FEED_GAMER_IDS.siiri],
-    publicNote:
-      "Day five: playtesting. Every team handed their obby to another team and watched them fail at it, which is the most useful hour of the week. Three levels got quietly made easier straight afterwards.",
+    report:
+      "# Day five: playtesting\n\nEvery team handed their obby to another team and watched them fail at it, which is reliably the most useful hour of the week.\n\nThree levels got quietly made easier straight afterwards, and nobody admitted to it.",
   },
   {
     kind: "past",
     allPresent: true,
-    publicNote:
-      "Day four: sound and lighting. Neon needs neon, so we spent the afternoon on emissive parts and a soundtrack that loops without anyone noticing the seam.",
+    report:
+      "# Day four: sound and lighting\n\nNeon needs neon, so the afternoon went on emissive parts and a soundtrack that loops without anyone noticing the seam.\n\n## What changed\n\n- Every obstacle now lights its own approach, so you can see where you are going\n- A four-bar loop under the whole course, built by three of the group together\n- A very loud sound on the finish line, which was not my idea and is staying",
   },
   {
     kind: "past",
     allPresent: true,
-    publicNote:
-      "Day three: scripting. We wrote our first Lua — a checkpoint that saves where you got to — and then broke it on purpose to see what the error messages actually mean. Hilda ended up debugging two other tables' scripts.",
+    report:
+      "# Day three: our first scripts\n\nWe wrote our first Lua today — a checkpoint that saves where you got to — and then broke it on purpose to find out what the error messages actually mean.\n\n## How it went\n\nEveryone got a working checkpoint. The useful part was the breaking: a script that says `attempt to index nil` is not being rude, it is telling you that the thing you asked for is not there, and once that landed the group started reading the errors instead of calling me over.\n\nHilda finished early and ended up debugging two other tables' scripts, which she was very pleased about.\n\n**At home:** the place to look is the Output window at the bottom of Studio. Almost every problem is named there in plain words.",
     staffNote:
       "The room's laptops are slow to load Studio; start the machines ten minutes before the group arrives tomorrow.",
   },
   {
     kind: "past",
     absent: [SESSION_FEED_GAMER_IDS.oskar, SESSION_FEED_GAMER_IDS.emil],
-    publicNote:
-      "Day two: building. Teams of two, one obstacle each, all snapped together into one course by the end of the afternoon. It is unfair and much too long, which everyone considers the point.",
+    report:
+      "# Day two: building the course\n\nTeams of two, one obstacle each, all snapped together into a single course by the end of the afternoon.\n\nIt is unfair and much too long, which everyone considers to be the point.",
   },
   {
     kind: "past",
     absent: [SESSION_FEED_GAMER_IDS.hilda],
-    publicNote:
-      "Day one and a half: the group voted on a theme for the shared course. Neon city won by a distance, and half the afternoon went on arguing about whether lava counts as neon.",
+    report:
+      "# Day one and a half: picking a theme\n\nThe group voted on a theme for the shared course. Neon city won by a distance, and half the afternoon went on arguing about whether lava counts as neon.\n\nIt does not, and the ruling was extremely unpopular.",
   },
   {
     kind: "past",
     allPresent: true,
-    publicNote:
-      "Day one: everyone got a Roblox Studio account working, made a baseplate, and pushed a block off it. Names, ground rules, and who is sitting next to whom for the week.",
+    report:
+      "# Day one: getting started\n\nEveryone got a Roblox Studio account working, made a baseplate and pushed a block off it.\n\n- Names and ground rules\n- Who is sitting next to whom for the week\n- One baseplate each, and one block pushed off each\n\nA quiet start on purpose. Tomorrow we pick a theme and start building for real.",
   },
 ];
 
@@ -252,32 +256,128 @@ const CAMP_SPECS: readonly EntrySpec[] = [
 /* ------------------------------------------------------------------ */
 
 /**
- * Short recaps for the club's long run. Deliberately varied in length and shape
- * — a year of identically-phrased notes would make the feed look uniform and
- * hide the thing this history exists to test, which is whether 50+ real entries
- * stay readable and navigable.
+ * Reports for the club's long run, as **markdown**.
+ *
+ * Deliberately varied in length and shape. Half of them are two or three lines,
+ * because plenty of weeks genuinely are; the rest run to a title, a section and
+ * a list, at the 500–1500 characters a real report is specified at. That mix is
+ * the point: the feed clamps a report to a few lines and offers to expand it, so
+ * a history of uniformly short entries would render the clamp nowhere and a
+ * history of uniformly long ones would make it look like the normal state. Both
+ * lengths have to sit next to each other for the feed to be judged honestly.
+ *
+ * All of it stays inside the subset the editor's toolbar can produce — headings,
+ * paragraphs, bold, lists — so any of these can be opened in the editor and
+ * saved back unchanged.
  */
 const YEARLONG_RECAPS: readonly string[] = [
-  "Redstone doors week. Everyone built one that actually closes behind them, which took longer than anyone expected.",
-  "We started a survival world from scratch and got as far as a shared shelter and one very ambitious wheat field.",
-  "Nether trip. Two casualties, one full inventory of quartz, and a lot of shouting about ghasts.",
-  "Build battle: \"a shop that sells one thing\". We ended up with a shop that sells only ladders, and a florist.",
-  "Elytra course night. Väinö set the first time, then spent the rest of the session helping people beat it.",
-  "Villager trading. Nobody expected an hour on emeralds to be popular, and yet.",
-  "We rebuilt the spawn area properly with signs, so new members can find their way around without asking.",
-  "Minecart rails to the new mine. Emil worked out the powered-rail spacing and drew it on the whiteboard.",
-  "Free build with one rule: it has to be underwater. Two glass domes and a lot of drowning.",
-  "Aino ran the session herself for twenty minutes, teaching hopper clocks. She was better at it than I am.",
-  "Farming week. Automatic melon farm, half-working. Notes are in the Padlet for whoever picks it up.",
-  "Team challenge: build the other team's base from memory after ninety seconds looking at it.",
-  "Quiet session with a few away. We tidied storage, labelled chests and agreed a rule about borrowing tools.",
-  "Enchanting and bookshelves. Everyone left with at least one enchanted pickaxe and strong opinions about luck.",
-  "We took the group on a long walk to find a mesa. Found one, everyone immediately started digging into it.",
-  "Mob-proofing night. Lit the paths, walled the gaps, and lost nobody to a creeper for a whole session.",
-  "Redstone doorbell competition. Hilda's plays a full tune, which is either brilliant or a menace.",
-  "Big landscaping push on the harbour. Oskar organised the group into teams without being asked to.",
-  "Command block basics — just teleport pads for now, and a lot of accidental teleports into the ceiling.",
-  "End of term session: everyone gave a tour of one thing they made this term. Nobody wanted to log off.",
+  `# Redstone doors
+
+Everyone built a door that actually closes behind them, which took considerably longer than anyone expected.
+
+## The three that worked
+
+- A piston door two blocks wide, which is the classic and the fiddliest
+- A trapdoor bridge that folds away, built by Linnéa and copied by three others within the hour
+- One that opens on a pressure plate outside and *only* from outside, which its builder insists is a security feature
+
+The rest of the session went on the ones that did not work, which is where the learning is. The usual culprit is a repeater pointing the wrong way, and by the end most of the group was finding that themselves.`,
+  "# A fresh survival world\n\nWe started a survival world from scratch and got as far as a shared shelter and one very ambitious wheat field.\n\nThe shelter is not pretty. It is, however, lit, walled and large enough for everyone, which was the whole brief.",
+  `# Nether trip
+
+The first trip through the portal, and it went about as well as these ever do.
+
+## The tally
+
+- Two casualties, both recovered, both entirely their own fault
+- One full inventory of quartz
+- A great deal of shouting about ghasts
+
+We talked beforehand about leaving a marker at the portal and half the group did it. The half that did not spent twenty minutes finding their way back, which taught the point better than I could have.
+
+**Next week** we are staying on the surface. Several people have asked for a quieter session and I think they have earned one.`,
+  "# Build battle: a shop that sells one thing\n\nForty minutes, two teams, one very silly brief.\n\nWe ended up with a shop that sells only ladders — four floors of them, all reachable by ladder — and a florist that is genuinely lovely. The florist won and the ladder shop is still standing as a monument.",
+  `# Elytra course night
+
+Väinö set the first time round the course and then spent the rest of the session helping other people beat it, which is not what I expected and was much better than what I had planned.
+
+## What the group worked out
+
+- You go faster if you stop flapping and start diving
+- Firework rockets are a crutch and everyone used them anyway
+- The last gate is easier from above than from level with it
+
+Six of eight got round it in the end. The two who did not are, I am told, practising.`,
+  "# Villager trading\n\nNobody expected an hour on emeralds to be popular, and yet.\n\nBy the end the group had a working trading hall, an argument about whether restocking is cheating, and a shared spreadsheet of who sells what. The spreadsheet was not my idea.",
+  "# Spawn, rebuilt\n\nWe rebuilt the spawn area properly this week, with signs, so somebody joining for the first time can find their way around without having to ask.\n\n- A signposted junction where the four main paths meet\n- A noticeboard with the group's rules on it\n- A chest of starter tools that anyone may take from",
+  "# Minecart rails to the new mine\n\nEmil worked out the powered-rail spacing on his own, drew it on the whiteboard, and the rest of the group built to his diagram. The line runs the whole way now and only derails at one corner, which we will fix next time.",
+  `# Free build, one rule: underwater
+
+Two glass domes, one very long tunnel, and a great deal of drowning.
+
+## What came out of it
+
+- A dome with a working airlock, which took three attempts and a lot of patience
+- A tunnel joining the two domes, dug by four people from both ends at once
+- One conduit, built collectively, which makes the whole area breathable
+
+The drowning was mostly in the first twenty minutes, before anybody thought to bring doors. It stopped being funny at about the fifth time and the group started planning properly, which was the point.`,
+  "# Aino taught the session\n\nAino ran twenty minutes of this one herself, teaching hopper clocks to the rest of the group. She was better at it than I am — she had worked out that you explain what it is *for* before you explain what it does.",
+  "# Farming week\n\nAn automatic melon farm, currently half-working. The harvesting side is fine and the collection side eats about a third of the crop.\n\n**Notes for whoever picks it up:** the problem is almost certainly the hopper timing, not the pistons.",
+  `# Build the other team's base from memory
+
+Ninety seconds looking at it, then back to your own plot to rebuild it.
+
+## How it went
+
+Both teams got the shape right and the details spectacularly wrong. The blue team's version of the red team's tower had four windows instead of nine and a roof from an entirely different building.
+
+The interesting part was the second round, when both teams knew what was coming and started *deciding what to look at* rather than trying to see everything. That was the whole lesson and I did not have to say it out loud.`,
+  "# A quiet week\n\nA few away, so we tidied rather than built: storage sorted, chests labelled, and a rule agreed about borrowing tools from the shared chest.\n\nThe rule is that you may borrow anything, and you put it back. We will see.",
+  "# Enchanting and bookshelves\n\nEveryone left with at least one enchanted pickaxe and strong opinions about luck.\n\n- Fifteen bookshelves each, which is a lot of sugar cane\n- One shared enchanting room rather than eight separate ones\n- A long conversation about why the same level gives different results",
+  `# The long walk to a mesa
+
+We spent most of the session walking, which sounds like a wasted evening and was not.
+
+## What happened
+
+The group decided to find a mesa, worked out roughly which way to go, and set off together. Nobody wandered off, nobody got lost, and the two who ran ahead came back when they were asked to.
+
+We found one about ten minutes before the end, and everyone immediately started digging into it.
+
+**Next week:** we are going back with proper equipment, and we are building something there.`,
+  "# Mob-proofing night\n\nWe lit the paths, walled the gaps, and lost nobody to a creeper for an entire session, which is a first.\n\nThe method was simple and worth repeating at home: walk the route you actually use, and place a torch wherever it is dark enough to be a problem.",
+  "# Redstone doorbell competition\n\nSix entries, all of them working, one of them musical.\n\nHilda's plays a full tune when you stand on the plate outside. It is either brilliant or a menace and the group is split roughly down the middle.",
+  `# Landscaping the harbour
+
+A big push on the harbour this week — the biggest single piece of work the group has done together.
+
+## What got done
+
+- The sea wall finished along the whole eastern edge
+- Three jetties, one per team, all at the same height for once
+- The road from the village square finally joined up to it
+
+Oskar organised the group into teams without being asked to, assigned the jetties, and kept an eye on the heights so they would line up. He then did almost none of the digging, which he says was the plan.
+
+It is the first thing in the world that looks designed rather than accumulated.`,
+  "# Command block basics\n\nTeleport pads only for now, and a great many accidental teleports into the ceiling.\n\nWe stopped short of anything more complicated on purpose — one working idea understood properly beats three half-built ones.",
+  `# End of term
+
+Everyone gave a tour of one thing they made this term, and it took the whole session.
+
+## The tour
+
+- Aino's clock tower, which still chimes
+- Väinö's elytra course, now with a scoreboard
+- Elias's item sorters, running the storage room
+- Linnéa's folding bridge, copied by half the group since
+- Oskar's harbour, which is really everybody's harbour
+- Siiri's underwater dome, the one with the working airlock
+- Emil's rail line, still derailing at that one corner
+- Hilda's library, now containing forty-one books
+
+Nobody wanted to log off. Thank you for a very good term — we start again after the break.`,
 ];
 
 const YEARLONG_STAFF_NOTES: readonly string[] = [
@@ -307,17 +407,29 @@ const YEARLONG_SKIP_REASONS: readonly string[] = [
  * its own spec list rather than passing knobs into this one.
  *
  * The mix is what a real year looks like, and it covers every shape a past
- * session can take: mostly finished with a write-up, five holiday skips, two
- * bare gaps with nothing on them at all, one week whose notes were written but
- * whose roster was never touched, one week whose roster was *started and
- * abandoned* — the partial save — and two sessions from before any of this was
- * expected.
+ * session can take — including **all three rungs of the completeness ladder**,
+ * which is the thing the club scenario now has to prove:
+ *
+ * - *Needs attention* — two bare gaps with nothing on them, one week whose
+ *   report was written but whose roster was never touched, and one whose roster
+ *   was started and abandoned (the partial save).
+ * - *Recorded* — weeks marked off with no report written. Nothing is owed, so
+ *   they carry no badge at all, and that silence is what gives the other two
+ *   states their meaning.
+ * - *Complete* — the majority: marked off and reported, wearing the green check.
+ *
+ * Plus five holiday skips, which sit outside the ladder entirely, and two
+ * sessions from before any of this was expected.
  */
 function yearlongSpecs(): readonly EntrySpec[] {
   const SKIP_AT = new Set([6, 17, 18, 31, 44]);
   const OWED_AT = new Set([2, 12]);
-  const NOTES_BUT_NO_ATTENDANCE_AT = new Set([8]);
+  const REPORT_BUT_NO_ATTENDANCE_AT = new Set([8]);
   const PART_MARKED_AT = new Set([4]);
+  // Marked off, never reported on. Spread through the year rather than bunched,
+  // so the neutral middle rung is visible in the first screen of the feed and
+  // again deep into the scrollback.
+  const MARKED_BUT_NO_REPORT_AT = new Set([1, 9, 22, 37]);
   const past: EntrySpec[] = [];
 
   for (let index = 0; index < 53; index++) {
@@ -330,7 +442,7 @@ function yearlongSpecs(): readonly EntrySpec[] {
       // is still flagged, and it reads "4 of 8 marked" until someone finishes.
       past.push({
         kind: "past",
-        publicNote: YEARLONG_RECAPS[index % YEARLONG_RECAPS.length],
+        report: YEARLONG_RECAPS[index % YEARLONG_RECAPS.length],
         partial: {
           present: [
             SESSION_FEED_GAMER_IDS.aino,
@@ -349,10 +461,18 @@ function yearlongSpecs(): readonly EntrySpec[] {
       });
       continue;
     }
-    if (NOTES_BUT_NO_ATTENDANCE_AT.has(index)) {
+    if (REPORT_BUT_NO_ATTENDANCE_AT.has(index)) {
       past.push({
         kind: "past",
-        publicNote: YEARLONG_RECAPS[index % YEARLONG_RECAPS.length],
+        report: YEARLONG_RECAPS[index % YEARLONG_RECAPS.length],
+      });
+      continue;
+    }
+    if (MARKED_BUT_NO_REPORT_AT.has(index)) {
+      past.push({
+        kind: "past",
+        allPresent: true,
+        staffNote: YEARLONG_STAFF_NOTES[index % YEARLONG_STAFF_NOTES.length],
       });
       continue;
     }
@@ -364,7 +484,7 @@ function yearlongSpecs(): readonly EntrySpec[] {
         : undefined;
     past.push({
       kind: "past",
-      publicNote: YEARLONG_RECAPS[index % YEARLONG_RECAPS.length],
+      report: YEARLONG_RECAPS[index % YEARLONG_RECAPS.length],
       ...(index % 7 === 3
         ? { staffNote: YEARLONG_STAFF_NOTES[index % YEARLONG_STAFF_NOTES.length] }
         : {}),
@@ -382,13 +502,16 @@ const CLUB_SPECS = yearlongSpecs();
 const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
   /**
    * **The kitchen sink.** A remote weekly club a year and a bit into its run,
-   * carrying every state the feed can be in at once: fully-marked weeks with
-   * write-ups, holiday skips, bare gaps still owed, a week written up but never
-   * marked off, a week whose roster was started and abandoned, a pre-epoch tail
-   * nothing is owed for, a future horizon with notes on it, and three sister
-   * groups in the rail — one of them not staffed yet. Fifty-five weeks is also
-   * what makes the month dividers and the chunked "show earlier" reveal do any
-   * work at all.
+   * carrying every state the feed can be in at once: all three rungs of the
+   * completeness ladder (marked off *and* reported, marked off with no report,
+   * and still owing attendance), holiday skips, bare gaps, a week reported but
+   * never marked off, a week whose roster was started and abandoned, a pre-epoch
+   * tail nothing is owed for, a future horizon with reports already on it, and
+   * three sister groups in the rail — one of them not staffed yet. Fifty-five
+   * weeks is also what makes the month dividers and the chunked "show earlier"
+   * reveal do any work at all, and the reports themselves run from two lines to
+   * twelve so the feed's clamp is exercised beside reports short enough not to
+   * need it.
    */
   club: {
     productName: "Minecraft Monday Club",
@@ -438,6 +561,11 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
    * a weekly fixture never applies. In person means the product has a *venue*,
    * so this is the only scenario carrying site notes, and it means there is no
    * voice room anywhere on the page: no Join button is rendered at all.
+   *
+   * It owes exactly one session — yesterday's, register not yet done — which is
+   * what puts an attention badge on an in-person dashboard card. The club beside
+   * it carries the real backlog; one gap here is the difference between "a camp
+   * gedu who is on top of it" and "a card state nobody can see".
    */
   camp: {
     productName: "Roblox Builders Camp",

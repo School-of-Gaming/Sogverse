@@ -273,7 +273,7 @@ describe("CLUB_FUTURE_SPECS", () => {
   it("shows both planning fields, so neither renders only in theory", () => {
     expect(
       CLUB_FUTURE_SPECS.some(
-        (s) => s.kind === "future" && s.publicNote !== undefined,
+        (s) => s.kind === "future" && s.report !== undefined,
       ),
     ).toBe(true);
     expect(
@@ -316,14 +316,14 @@ describe("buildSessionFeedFixture", () => {
       specs: [
         {
           kind: "future",
-          publicNote: "Redstone follow-up.",
+          report: "Redstone follow-up.",
           staffNote: "Charge the spare laptop.",
         },
       ],
     });
     expect(entries[0]).toMatchObject({
       kind: "future",
-      publicNote: "Redstone follow-up.",
+      report: "Redstone follow-up.",
       staffNote: "Charge the spare laptop.",
     });
   });
@@ -334,7 +334,7 @@ describe("buildSessionFeedFixture", () => {
     });
     expect(entries[0]).toMatchObject({
       kind: "future",
-      publicNote: null,
+      report: null,
       staffNote: null,
     });
   });
@@ -343,11 +343,11 @@ describe("buildSessionFeedFixture", () => {
     // The spec has to *say* attendance was taken; omitting it is the untouched
     // state, not a shorthand for "everyone turned up" or for "nobody did".
     const { entries } = buildSessionFeedFixture(now, {
-      specs: [{ kind: "past", publicNote: "Notes, but nobody marked off." }],
+      specs: [{ kind: "past", report: "Notes, but nobody marked off." }],
     });
     expect(entries[0]).toMatchObject({
       kind: "past",
-      publicNote: "Notes, but nobody marked off.",
+      report: "Notes, but nobody marked off.",
       attendance: {},
     });
   });

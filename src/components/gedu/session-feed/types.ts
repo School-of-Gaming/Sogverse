@@ -39,14 +39,15 @@ interface SessionFeedEntryBase {
  * recent past one. Making it a kind of its own would let a caller hand over two
  * next sessions, or a next session below a past one.
  *
- * A future entry holds **notes only**. Attendance and a ran/didn't-run status
- * are records of what happened and only attach once the session is past; what a
- * gedu can say in advance is a note about what is coming (which families read)
- * and a reminder to themselves. The notes are the *same two notes* a past entry
- * carries — there is deliberately no planned-versus-recorded distinction in the
- * model or in the copy, because a note written before a session and one written
- * after it are the same field at two moments, and splitting them made every
- * caller decide which one a session sitting on today's date should show.
+ * A future entry holds **the two written fields only**. Attendance and a
+ * ran/didn't-run status are records of what happened and only attach once the
+ * session is past; what a gedu can say in advance is what is coming (which
+ * families read) and a reminder to themselves. They are the *same two fields* a
+ * past entry carries — there is deliberately no planned-versus-recorded
+ * distinction in the model or in the copy, because a report written before a
+ * session and one written after it are the same field at two moments, and
+ * splitting them made every caller decide which one a session sitting on today's
+ * date should show.
  *
  * A future entry carries **no voice state**, because no session card anywhere
  * renders a Join affordance: joining is a fact about a *room*, so it lives on
@@ -56,9 +57,12 @@ interface SessionFeedEntryBase {
  */
 export interface FutureSessionFeedEntry extends SessionFeedEntryBase {
   kind: "future";
-  /** Note families will read. `null` = unset. */
-  publicNote: string | null;
-  /** Gedu-only note — a reminder for whoever runs it. `null` = unset. */
+  /**
+   * The **session report** families will read, stored as markdown. `null` =
+   * unset.
+   */
+  report: string | null;
+  /** The **gedu note** — a reminder for whoever runs it. `null` = unset. */
   staffNote: string | null;
 }
 
@@ -68,8 +72,8 @@ export interface FutureSessionFeedEntry extends SessionFeedEntryBase {
  * There is deliberately **one** past kind rather than a "written up" one and a
  * separate "nothing here yet" one. The two would be the same row at two moments
  * in its life, and splitting them forces every caller to decide which to emit
- * for a session that has a note but no attendance — a state that genuinely
- * exists and has to render both its note *and* its alert.
+ * for a session that has a report but no attendance — a state that genuinely
+ * exists and has to render both its report *and* its alert.
  *
  * **Attendance is stored as the sparse per-gamer mark map, not as a list of the
  * present.** A save is allowed at any point — half a roster marked is a real
@@ -83,13 +87,19 @@ export interface FutureSessionFeedEntry extends SessionFeedEntryBase {
  * An empty map is a session nobody has started on; a map marking every roster
  * member "absent" is the very different claim that nobody turned up. Attendance
  * is the mandatory part — it doubles as the gedu's confirmation that they ran
- * the session, which is what they are paid on — and both notes are optional.
+ * the session, which is what they are paid on — and both written fields are
+ * optional. A past entry with its roster finished *and* a report written is the
+ * top of the completeness ladder; with the roster finished and no report it is
+ * simply done, and owes nothing.
  */
 export interface PastSessionFeedEntry extends SessionFeedEntryBase {
   kind: "past";
-  /** The entry body — later visible to parents and gamers. `null` = unset. */
-  publicNote: string | null;
-  /** Gedu + admin only. `null` (or empty) renders no gedu block at all. */
+  /**
+   * The **session report** — the entry body, later sent to parents and gamers.
+   * Stored as markdown; `null` = unset.
+   */
+  report: string | null;
+  /** The **gedu note** — gedu + admin only. `null` renders no block at all. */
   staffNote: string | null;
   /**
    * What has been said about each child so far, keyed by roster id. A roster
@@ -159,7 +169,7 @@ export type SessionRecordDraft =
   | {
       kind: "past";
       attendance: AttendanceMarks;
-      publicNote: string;
+      report: string;
       staffNote: string;
     }
   | { kind: "skipped"; reason: string };
@@ -167,7 +177,7 @@ export type SessionRecordDraft =
 /** What the future-session editor emits on save — notes, and nothing else. */
 export interface SessionPlanDraft {
   kind: "plan";
-  publicNote: string;
+  report: string;
   staffNote: string;
 }
 
@@ -188,7 +198,7 @@ export type SessionEntryDraft = SessionRecordDraft | SessionPlanDraft;
 export interface SessionEditorState {
   didNotRun: boolean;
   attendance: AttendanceMarks;
-  publicNote: string;
+  report: string;
   staffNote: string;
   skipReason: string;
 }
@@ -198,6 +208,6 @@ export interface SessionEditorState {
  * draft it produces, bar the tag.
  */
 export interface SessionPlanEditorState {
-  publicNote: string;
+  report: string;
   staffNote: string;
 }

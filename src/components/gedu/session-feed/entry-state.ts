@@ -40,31 +40,80 @@ export function isPlannableEntry(
 }
 
 /**
+ * How far up the completeness ladder a past session has got.
+ *
+ * Three rungs, and only the bottom one is enforced:
+ *
+ * - `needs_attention` — some of the current roster is still unmarked. This is
+ *   the one that is *owed*: attendance doubles as the gedu's confirmation that
+ *   they ran the session and is what they are paid on.
+ * - `recorded` — every child has an answer, and no report has been written. A
+ *   perfectly finished session as far as the platform is concerned, so it wears
+ *   no badge at all rather than a second nag.
+ * - `complete` — attendance finished *and* a report written for the families.
+ *   The target state, and the only one that gets a mark of its own.
+ *
+ * The middle rung is why this is a ladder rather than a boolean: a report is
+ * genuinely optional, so "not written yet" cannot be an alert, but it also
+ * cannot be indistinguishable from the finished article or there is nothing to
+ * aim at. Neutral in the middle, green at the top.
+ */
+export type SessionCompleteness = "needs_attention" | "recorded" | "complete";
+
+/**
+ * Where a feed entry sits on the ladder, or `null` for the entries the ladder
+ * does not apply to.
+ *
+ * A **future** session has nothing to be complete about, and a **skipped** one
+ * is already terminal — it did not run, so there is no roster to mark and no
+ * session to report on; ranking it would invent work that does not exist.
+ * A pre-epoch `no_record` gap is outside the enforcement window entirely.
+ *
+ * Everything is measured against the *current* roster, never the stored map's
+ * keys: a child who joined the group after a session was fully marked reopens
+ * it, which is the honest reading, since nobody has yet said whether that child
+ * was there.
+ */
+export function entryCompleteness(
+  entry: SessionFeedEntry,
+  roster: readonly SessionFeedGamer[],
+): SessionCompleteness | null {
+  if (entry.kind !== "past") return null;
+  if (!attendanceTally(roster, entry.attendance).complete) {
+    return "needs_attention";
+  }
+  return entry.report !== null && entry.report.length > 0
+    ? "complete"
+    : "recorded";
+}
+
+/**
  * Whether an entry is outstanding work — the alert state, derived rather than
  * stored.
  *
  * It means exactly one thing: **a past session, not skipped, some of whose
- * current roster has not been marked.** Notes have no say in it. Attendance
- * doubles as the gedu's confirmation that they ran the session and is what they
- * are paid on, so it is the mandatory half; a write-up is a nicety on top. A
- * past entry can therefore carry a full note and still be flagged, and it
- * renders both — the note as its body, the alert in its header.
+ * current roster has not been marked.** The report has no say in it. A past
+ * entry can therefore carry a full report and still be flagged, and it renders
+ * both — the report as its body, the alert in its header.
  *
  * **A partial save does not discharge it.** Saving is always allowed, so the
  * flag cannot be "has anything been recorded" or half a roster would silence
  * it; it stays up until the last child has an answer, which is precisely what
- * brings the gedu back to finish. And because it is measured against the
- * *current* roster, a child joining the group after a session was fully marked
- * reopens it — which is the honest reading, since nobody has said whether that
- * child was there.
+ * brings the gedu back to finish.
  */
 export function entryNeedsAttention(
   entry: SessionFeedEntry,
   roster: readonly SessionFeedGamer[],
 ): boolean {
-  return (
-    entry.kind === "past" && !attendanceTally(roster, entry.attendance).complete
-  );
+  return entryCompleteness(entry, roster) === "needs_attention";
+}
+
+/** Whether an entry has reached the top rung — marked off *and* reported. */
+export function entryIsComplete(
+  entry: SessionFeedEntry,
+  roster: readonly SessionFeedGamer[],
+): boolean {
+  return entryCompleteness(entry, roster) === "complete";
 }
 
 /** How many entries are the gedu's outstanding work — the alert-badge count. */
@@ -165,7 +214,7 @@ export function editorStateFromEntry(
       return {
         didNotRun: false,
         attendance: rosterScopedMarks(roster, entry.attendance),
-        publicNote: entry.publicNote ?? "",
+        report: entry.report ?? "",
         staffNote: entry.staffNote ?? "",
         skipReason: "",
       };
@@ -173,7 +222,7 @@ export function editorStateFromEntry(
       return {
         didNotRun: true,
         attendance: {},
-        publicNote: "",
+        report: "",
         staffNote: "",
         skipReason: entry.reason ?? "",
       };
@@ -201,7 +250,7 @@ export function draftFromEditorState(
   return {
     kind: "past",
     attendance: rosterScopedMarks(roster, state.attendance),
-    publicNote: state.publicNote.trim(),
+    report: state.report.trim(),
     staffNote: state.staffNote.trim(),
   };
 }
@@ -234,7 +283,7 @@ export function applyDraftToEntry(
     id,
     startsAt,
     endsAt,
-    publicNote: draft.publicNote.length > 0 ? draft.publicNote : null,
+    report: draft.report.length > 0 ? draft.report : null,
     staffNote: draft.staffNote.length > 0 ? draft.staffNote : null,
     attendance: draft.attendance,
   };
@@ -249,7 +298,7 @@ export function planEditorStateFromEntry(
   entry: FutureSessionFeedEntry,
 ): SessionPlanEditorState {
   return {
-    publicNote: entry.publicNote ?? "",
+    report: entry.report ?? "",
     staffNote: entry.staffNote ?? "",
   };
 }
@@ -260,7 +309,7 @@ export function planDraftFromEditorState(
 ): SessionPlanDraft {
   return {
     kind: "plan",
-    publicNote: state.publicNote.trim(),
+    report: state.report.trim(),
     staffNote: state.staffNote.trim(),
   };
 }
@@ -276,7 +325,7 @@ export function applyPlanDraftToEntry(
 ): FutureSessionFeedEntry {
   return {
     ...entry,
-    publicNote: draft.publicNote.length > 0 ? draft.publicNote : null,
+    report: draft.report.length > 0 ? draft.report : null,
     staffNote: draft.staffNote.length > 0 ? draft.staffNote : null,
   };
 }

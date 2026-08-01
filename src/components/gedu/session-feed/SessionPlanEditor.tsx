@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { planDraftFromEditorState } from "./entry-state";
+import { SessionReportField } from "./SessionReportField";
 import { StaffNoteBlock } from "./StaffNoteBlock";
 import type { SessionPlanDraft, SessionPlanEditorState } from "./types";
 
@@ -32,7 +33,7 @@ interface SessionPlanEditorProps {
  * happened. Offering either here would invite a gedu to pre-mark a room full of
  * children who haven't turned up yet.
  *
- * **The two note fields are labelled exactly as the past editor labels them**,
+ * **The two fields are labelled exactly as the past editor labels them**,
  * and that is deliberate rather than lazy. A note is a note: the same field, the
  * same audience, the same box — the only thing that changes is which side of the
  * session it was typed on. Giving the future one its own "planned" vocabulary
@@ -57,9 +58,15 @@ export function SessionPlanEditor({
   // pattern rather than an effect, so the reset lands in the same commit as the
   // expansion and no frame of the stale draft is ever painted.
   const [wasOpen, setWasOpen] = useState(open);
+  // Doubles as the rich editor's remount key and, at zero, as the signal that
+  // this entry has never been opened and needs no editor instance yet.
+  const [opens, setOpens] = useState(open ? 1 : 0);
   if (open !== wasOpen) {
     setWasOpen(open);
-    if (open) setDraft(initialState);
+    if (open) {
+      setDraft(initialState);
+      setOpens((n) => n + 1);
+    }
   }
 
   return (
@@ -67,22 +74,12 @@ export function SessionPlanEditor({
     // renders inside a collapsible region, which clips its overflow so the
     // open/close animation has something to reveal.
     <div className="space-y-4 pb-1 pt-4">
-      <Field
-        label={t("publicNoteLabel")}
-        htmlFor={`${fieldId}-public`}
-        optional
-        hint={t("publicNoteHint")}
-      >
-        <Textarea
-          id={`${fieldId}-public`}
-          rows={4}
-          value={draft.publicNote}
-          placeholder={t("publicNotePlaceholder")}
-          onChange={(e) =>
-            setDraft((d) => ({ ...d, publicNote: e.target.value }))
-          }
-        />
-      </Field>
+      <SessionReportField
+        value={initialState.report}
+        seed={opens}
+        ready={opens > 0}
+        onChange={(report) => setDraft((d) => ({ ...d, report }))}
+      />
 
       <StaffNoteBlock>
         <Field
