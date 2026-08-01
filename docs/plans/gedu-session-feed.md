@@ -201,20 +201,24 @@ Decisions from feedback round 8:
   once from the report's source text (same arithmetic server and client) and no
   post-mount measurement may add or remove it — a borderline report showing a
   slightly-eager or slightly-late control beats any pop-in. The measurement
-  machinery is deleted, not tuned.
+  machinery is deleted, not tuned. **Exception: the most recent past session’s
+  report renders unclamped** — the weekly prep read deserves zero clicks; only
+  older entries clamp. Display order unifies with the editor: **attendance line
+  first** (under the date header), then the report body, then the gedu note —
+  the mandatory act leads in both reading and writing.
 - **Save/cancel collapse is instant and scroll-anchored to the content below the
   edited card** — the reader's visual anchor is the next card down, and it must not
   move. Same pattern as the upward reveal (instant geometry + same-frame
-  compensation); the animated-collapse hold is deleted with it. Edit-open keeps
-  its downward animation.
+  compensation); the animated-collapse hold is deleted with it. Edit-open is
+  instant too — the editor no longer animates in either direction.
 - **The didn't-run/skip UI is deferred** with the substitute UI — same pile,
   same reasoning (tied to cancellation flows we're not designing now). Skip stays
   a schema intention; the mock renders and edits nothing of it.
 - **All upcoming sessions carry an info-toned "Future session" tag** (the next
   one keeps "Next session"); the now-divider gains visual weight — it must not be
-  missable. The `club` fixture becomes end-dated with **~40 future sessions** so
-  the upward-reveal is proven at realistic volume (end-dated products have no
-  8-occurrence cap).
+  missable. Volume is proven on the **camp** (~4 sessions/week over 4 weeks =
+  ~16 upcoming — the realistic dense case); the club keeps its natural
+  open-ended 8-occurrence horizon.
 - **"(optional)" markers are removed from all gedu-surface fields** (report, gedu
   notes, About-this-group) — technically optional must not read as skippable.
 - **The Gedu note becomes markdown too** (same editor, same renderer, same
