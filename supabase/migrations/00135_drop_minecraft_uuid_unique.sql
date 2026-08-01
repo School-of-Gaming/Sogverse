@@ -32,6 +32,51 @@ ALTER TABLE public.minecraft_accounts
 CREATE INDEX IF NOT EXISTS minecraft_accounts_uuid_idx
   ON public.minecraft_accounts (minecraft_uuid);
 
+-- Both statements above are conditional, and a conditional whose predicate does
+-- not match is indistinguishable from one that did its job — the only
+-- production discrepancy on record was a migration that took a branch its author
+-- did not expect. So assert the end state rather than trusting the branch: any
+-- unique index over minecraft_uuid still standing (under this constraint's name
+-- or another) and the drop did not achieve what it claims.
+
+DO $$
+DECLARE
+  leftover text;
+BEGIN
+  SELECT i.relname
+    INTO leftover
+    FROM pg_index x
+    JOIN pg_class i ON i.oid = x.indexrelid
+    JOIN pg_class t ON t.oid = x.indrelid
+    JOIN pg_namespace n ON n.oid = t.relnamespace
+    JOIN pg_attribute a
+      ON a.attrelid = t.oid AND a.attnum = ANY (x.indkey)
+   WHERE n.nspname = 'public'
+     AND t.relname = 'minecraft_accounts'
+     AND a.attname = 'minecraft_uuid'
+     AND x.indisunique
+   LIMIT 1;
+
+  IF leftover IS NOT NULL THEN
+    RAISE EXCEPTION
+      'minecraft_accounts.minecraft_uuid is still uniquely indexed by % — two users cannot share a Minecraft account until it is gone',
+      leftover;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+      FROM pg_class i
+      JOIN pg_namespace n ON n.oid = i.relnamespace
+     WHERE n.nspname = 'public'
+       AND i.relname = 'minecraft_accounts_uuid_idx'
+       AND i.relkind = 'i'
+  ) THEN
+    RAISE EXCEPTION
+      'minecraft_accounts_uuid_idx is missing — the uuid lookup would fall back to a sequential scan';
+  END IF;
+END;
+$$;
+
 -- Both account-creation RPCs carried comments explaining how a duplicate UUID
 -- surfaces from their Minecraft INSERT. That path no longer exists, so the
 -- comments are re-stated rather than left describing a constraint that is gone.

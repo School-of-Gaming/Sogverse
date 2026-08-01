@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient } from "./helpers";
+import { TEST_IDS } from "./constants";
 
 /**
  * Tests for the create_gamer() RPC (migration 00113) — the atomic
@@ -154,25 +155,16 @@ describe("create_gamer() atomic promotion", () => {
   });
 
   it("rolls back the entire promotion when a later statement fails", async () => {
-    const parent = await createCustomerUser("cg-rb-parent@test.local");
     const gamer = await createCustomerUser("cg-rb-child@test.local");
 
-    // Promote the would-be parent to a gamer first. Naming it as the parent then
-    // trips validate_parent_gamer_on_insert at the RPC's *last* statement —
-    // after the profile was promoted, the extension rows swapped, and the
-    // Minecraft row written. Exactly the mid-flight failure this asserts about.
-    const { error: setupError } = await admin.rpc("create_gamer", {
-      p_gamer_id: parent.id,
-      p_parent_id: (await createCustomerUser("cg-rb-grandparent@test.local")).id,
-      p_first_name: "NotAParent",
-      p_last_name: "Parentson",
-      p_date_of_birth: "2012-02-02",
-    });
-    expect(setupError).toBeNull();
-
+    // The seeded gedu is not a customer, so naming it as the parent trips
+    // validate_parent_gamer_on_insert at the RPC's *last* statement — after the
+    // profile was promoted, the extension rows swapped, and the Minecraft row
+    // written. Exactly the mid-flight failure this asserts about, and the
+    // precondition comes from the seed rather than from create_gamer itself.
     const { error } = await admin.rpc("create_gamer", {
       p_gamer_id: gamer.id,
-      p_parent_id: parent.id,
+      p_parent_id: TEST_IDS.GEDU,
       p_first_name: "Doomed",
       p_last_name: "Parentson",
       p_date_of_birth: "2016-03-03",

@@ -1,105 +1,75 @@
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
-import { createAdminClient } from "@/lib/supabase/admin";
 
-/** Normalize a Minecraft UUID to dashed 8-4-4-4-12 form. */
-function normalizeMcUuid(raw: string): string | null {
-  const hex = raw.replace(/-/g, "");
-  if (!/^[0-9a-f]{32}$/i.test(hex)) return null;
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`.toLowerCase();
-}
-
-export async function GET(request: Request) {
-  try {
-    // --- API key auth ---
-    const apiKey = process.env.MINECRAFT_SERVER_API_KEY;
-    if (!apiKey) {
-      console.error("MINECRAFT_SERVER_API_KEY is not configured");
-      return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
-    }
-
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Missing or invalid Authorization header" }, { status: 401 });
-    }
-
-    const token = authHeader.slice("Bearer ".length);
-    const tokenBuf = Buffer.from(token);
-    const keyBuf = Buffer.from(apiKey);
-    if (tokenBuf.length !== keyBuf.length || !timingSafeEqual(tokenBuf, keyBuf)) {
-      return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
-    }
-
-    // --- Validate UUID param ---
-    const { searchParams } = new URL(request.url);
-    const rawUuid = searchParams.get("uuid");
-    if (!rawUuid) {
-      return NextResponse.json({ error: "uuid query parameter is required" }, { status: 400 });
-    }
-
-    const uuid = normalizeMcUuid(rawUuid);
-    if (!uuid) {
-      return NextResponse.json({ error: "Invalid Minecraft UUID format" }, { status: 400 });
-    }
-
-    // --- Look up player ---
-    const admin = createAdminClient();
-
-    const { data: account, error: accountError } = await admin
-      .from("minecraft_accounts")
-      .select("user_id, profiles(id, first_name, role)")
-      .eq("minecraft_uuid", uuid)
-      .maybeSingle();
-
-    if (accountError) {
-      console.error("join-check: DB error looking up player:", accountError);
-      return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-    }
-
-    if (!account) {
-      return NextResponse.json({ error: "Unknown Minecraft player" }, { status: 404 });
-    }
-
-    const profile = account.profiles;
-    const role = profile.role;
-    const firstName = profile.first_name;
-
-    // --- Session access (gedu / gamer): pending migration to the current
-    //     product system. ---
-    //
-    // The original gating queried the legacy product / product_groups /
-    // group_enrollments tables, which have been dropped. It must be rebuilt
-    // against the current schema before this endpoint can authorize access:
-    //   * gamer → an active participations row on a product whose session
-    //             window (schedule_slots + subscribed holiday calendars) is
-    //             open right now, and only if the participation covers it.
-    //   * gedu  → a gedu_group_assignments row on such a product.
-    // The window math currently lives in @/lib/session-schedule, but it's
-    // shaped for a single-slot product (day_of_week/start_time); a product has
-    // multiple schedule_slots, so that helper needs reworking
-    // too. This endpoint was never wired in production, so it fails closed.
-    // 501 lets a future caller distinguish "not implemented" from "denied".
-    if (role === "gedu" || role === "gamer") {
-      return NextResponse.json(
-        {
-          error:
-            "Minecraft session access is pending migration to the current product system",
-          role,
-          firstName,
-        },
-        { status: 501 },
-      );
-    }
-
-    // Other roles (admin, customer) — no session-gated access
-    return NextResponse.json({
-      allowed: false,
-      role,
-      firstName,
-      reason: "No active session",
-    });
-  } catch (err) {
-    console.error("join-check error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+/**
+ * GET /api/minecraft/join-check — asks whether a Minecraft player may be on the
+ * server right now. Not implemented: it authenticates the caller, validates the
+ * UUID, and then answers 501 to every well-formed request.
+ *
+ * The original gating queried the legacy product / product_groups /
+ * group_enrollments tables, which have been dropped, so it has not been able to
+ * authorize anyone since — and it was never wired in production. What remains
+ * is the shell: the API-key check and the UUID format check, so the URL, its
+ * auth contract, and the public docs page describing it stay live while the
+ * gating is rebuilt.
+ *
+ * **When rebuilding, this is an entitlement question, not an identity one.**
+ * `minecraft_accounts.minecraft_uuid` is not unique: two Sogverse accounts may
+ * link the same Minecraft account (siblings share them), so a lookup by UUID
+ * returns a set of rows, not one. Ask "does anyone holding this UUID have
+ * access right now?" and allow if any of them qualifies — a single-row read
+ * breaks the moment a shared account appears. Nothing can tell the server
+ * *which* sibling is at the keyboard; a feature needing that needs its own
+ * mechanism, not a database constraint. Full spec in TODO.md.
+ */
+export function GET(request: Request) {
+  // --- API key auth ---
+  const apiKey = process.env.MINECRAFT_SERVER_API_KEY;
+  if (!apiKey) {
+    console.error("MINECRAFT_SERVER_API_KEY is not configured");
+    return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
   }
+
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return NextResponse.json(
+      { error: "Missing or invalid Authorization header" },
+      { status: 401 },
+    );
+  }
+
+  const token = authHeader.slice("Bearer ".length);
+  const tokenBuf = Buffer.from(token);
+  const keyBuf = Buffer.from(apiKey);
+  if (tokenBuf.length !== keyBuf.length || !timingSafeEqual(tokenBuf, keyBuf)) {
+    return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
+  }
+
+  // --- Validate UUID param ---
+  const { searchParams } = new URL(request.url);
+  const rawUuid = searchParams.get("uuid");
+  if (!rawUuid) {
+    return NextResponse.json(
+      { error: "uuid query parameter is required" },
+      { status: 400 },
+    );
+  }
+
+  if (!/^[0-9a-f]{32}$/i.test(rawUuid.replace(/-/g, ""))) {
+    return NextResponse.json(
+      { error: "Invalid Minecraft UUID format" },
+      { status: 400 },
+    );
+  }
+
+  // 501, not a denial: the caller has to be able to tell "Sogverse cannot answer
+  // this yet" from "this player is not allowed on", and fail closed without
+  // concluding the player was rejected.
+  return NextResponse.json(
+    {
+      error:
+        "Minecraft session access is pending migration to the current product system",
+    },
+    { status: 501 },
+  );
 }

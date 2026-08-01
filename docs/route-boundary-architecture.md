@@ -82,7 +82,7 @@ the wild — this taxonomy is exhaustive over today's surface, and §3.1 adopts 
 | `signed-token` | 1 | PIN reset: a signed token *is* the authorization; session-agnostic; deliberately admin-client |
 | `optional-auth` | 1 | Instant-room token: public, but silently elevates admin/verified-gedu to room owner; fails closed to guest. A `role-gated \| public` binary cannot express this route |
 | `webhook` | 4 | Three verifier strategies (Stripe signature, Meta HMAC + timing-safe compare, Discord Ed25519) plus Meta's GET challenge (plain `===` compare — recorded wart). All POST verifiers consume the **raw text body** before any JSON parse. Divergent error contracts: Stripe wants 5xx for retry; Meta must never 5xx or the endpoint is disabled |
-| `api-key` | 1 | Minecraft join-check: Bearer + timing-safe compare, server-to-server, fails closed 501 for unported roles |
+| `api-key` | 1 | Minecraft join-check: Bearer + timing-safe compare, server-to-server. Its gating is unbuilt, so it authenticates, validates, and fails closed 501 — it reaches no data at all |
 
 ### Existing primitives (the wrapper composes these; it replaces none of them)
 

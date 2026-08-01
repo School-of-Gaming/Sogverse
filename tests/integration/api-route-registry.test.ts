@@ -587,15 +587,16 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
+  // No adminClient entry: the session gating that read the database was removed
+  // when it became unportable, so the route reaches nothing. It authenticates,
+  // validates the uuid, and answers 501.
   "src/app/api/minecraft/join-check/route.ts": {
-    adminClient:
-      "server-to-server, authenticated by a shared API key rather than a user session",
     handlers: {
       GET: {
         posture: {
           kind: "api-key",
           reason:
-            "the game server calls this on player join; it has no user session to present. A bearer token compared in constant time is the authorization, and an unported role fails closed rather than being admitted",
+            "the game server calls this on player join; it has no user session to present. A bearer token compared in constant time is the authorization, and the endpoint fails closed — it admits nobody at all until the gating is rebuilt",
         },
         body: { kind: "none" },
         test: TESTS.minecraftJoinCheck,

@@ -548,7 +548,6 @@ src/app/api/gamers/[id]/route.ts,A,-,Auth Admin API (metadata + password updates
 src/app/api/gedu/register/route.ts,A,-,Auth Admin API (self-registration creates the auth user before any session exists)
 src/app/api/webhooks/stripe/products/route.ts,A,-,webhook; no session by construction
 src/app/api/webhooks/whatsapp/route.ts,A,-,webhook; no session by construction
-src/app/api/minecraft/join-check/route.ts,A,-,server-to-server, authenticated by a shared API key rather than a user session
 src/app/api/checkout/products/create/route.ts,A,-,caches a Stripe customer id onto the grant-locked billing table; an authenticated write path there would let a user point their billing row at someone else's Stripe customer
 src/app/api/parent/billing-portal/route.ts,A,-,same Stripe-customer helper as checkout
 src/app/api/family/list/route.ts,A,-,a gamer legitimately reads siblings beyond their own RLS view; the resolver is scoped to the verified caller's family

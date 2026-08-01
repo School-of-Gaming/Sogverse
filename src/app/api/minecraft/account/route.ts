@@ -18,10 +18,9 @@ export const PATCH = defineRoute({
   forbiddenMessage: "Only gamers and gedus can update their Minecraft username",
   body: updateMinecraftAccountBody,
 
-  // The codes this route mapped by hand are the shared table's answers already
-  // (a policy refusal is a 403). What changes is the fall-through, which used to
-  // be a blanket 500 with a fixed message and is now the shared table plus a
-  // logged generic message.
+  // Nothing is mapped by hand here any more: a policy refusal is the shared
+  // table's 403 already, and the fall-through that used to be a blanket 500 with
+  // a fixed message is now that table plus a logged generic message.
 
   handler: async ({ supabase, user, body }) => {
     const { minecraftUsername } = body;

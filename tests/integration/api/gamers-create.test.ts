@@ -340,33 +340,30 @@ describe("POST /api/gamers/create — atomic create_gamer RPC", () => {
     expect(mockDeleteUser).not.toHaveBeenCalled();
   });
 
-  it("deletes the orphaned auth user and returns a friendly 500 when the RPC fails", async () => {
-    mockRpc.mockResolvedValue({ error: { code: "P0001", message: "boom" } });
+  // 23505 is in this list on purpose. It used to be special-cased into a 409
+  // "already linked to another user", which was only ever reachable via the
+  // minecraft_uuid UNIQUE; with that constraint dropped, a unique violation here
+  // means some *other* constraint and must not be mislabelled as a Minecraft
+  // conflict. Pinning it alongside an ordinary failure is what keeps the
+  // special case from growing back.
+  it.each([
+    ["P0001", "boom"],
+    ["23505", "duplicate key"],
+  ])(
+    "deletes the orphaned auth user and returns a friendly 500 when the RPC fails with %s",
+    async (code, message) => {
+      mockRpc.mockResolvedValue({ error: { code, message } });
 
-    const response = await POST(createRequest(validBody));
-    const data = await response.json();
+      const response = await POST(createRequest(validBody));
+      const data = await response.json();
 
-    expect(response.status).toBe(500);
-    // The raw Postgres error text never reaches the client.
-    expect(data.error).not.toContain("boom");
-    expect(data.error).toBe("Something went wrong creating the gamer. Please try again.");
-    // No code on any failure — the client has one localized generic and uses it.
-    expect(data.code).toBeUndefined();
-    expect(mockDeleteUser).toHaveBeenCalledWith("new-gamer-id");
-  });
-
-  it("answers a unique violation generically rather than naming Minecraft", async () => {
-    // Nothing in create_gamer's Minecraft insert can raise 23505 any more, so a
-    // unique violation reaching here means some *other* constraint — which the
-    // route must not mislabel as a Minecraft conflict the way it used to.
-    mockRpc.mockResolvedValue({ error: { code: "23505", message: "duplicate key" } });
-
-    const response = await POST(createRequest(validBody));
-    const data = await response.json();
-
-    expect(response.status).toBe(500);
-    expect(data.error).toBe("Something went wrong creating the gamer. Please try again.");
-    expect(data.code).toBeUndefined();
-    expect(mockDeleteUser).toHaveBeenCalledWith("new-gamer-id");
-  });
+      expect(response.status).toBe(500);
+      // The raw Postgres error text never reaches the client.
+      expect(data.error).not.toContain(message);
+      expect(data.error).toBe("Something went wrong creating the gamer. Please try again.");
+      // No code on any failure — the client has one localized generic and uses it.
+      expect(data.code).toBeUndefined();
+      expect(mockDeleteUser).toHaveBeenCalledWith("new-gamer-id");
+    },
+  );
 });
