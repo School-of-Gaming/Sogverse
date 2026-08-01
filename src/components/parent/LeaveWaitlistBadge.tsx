@@ -5,7 +5,7 @@ import { AlertTriangle, MoreHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
-import { BADGE_FRAME } from "./session-card-badge";
+import { BADGE_FRAME } from "@/components/ui/card-corner-badge";
 
 /**
  * Corner button on a `WaitlistCard` that lets the parent give up their place in
