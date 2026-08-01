@@ -1022,6 +1022,9 @@
         "playerAllowed": "Pelaaja sallittu",
         "playerDenied": "Pelaaja estetty",
         "errorResponses": "Virheresponssit",
+        "notImplementedTitle": "Ei vielä toteutettu",
+        "notImplementedBody": "Istuntojen käyttöoikeustarkistusta rakennetaan parhaillaan uudelleen nykyisen tuotejärjestelmän pohjalta. Jokainen tunnistautunut ja oikein muotoiltu pyyntö palauttaa tällä hetkellä koodin 501 – yhtään pelaajaa ei päästetä sisään. Alla kuvatut vastaukset kertovat, millaisen rajapinnan tämä päätepiste palauttaa käyttöönoton jälkeen. Toteuta integraatio niiden mukaan, mutta varaudu siihen asti 501-vastaukseen.",
+        "error501": "Istuntojen käyttöoikeustarkistusta ei ole vielä rakennettu. Pyyntö oli kelvollinen ja tunnistautuminen onnistui, mutta pääsystä ei voida tehdä päätöstä – estä pääsy oletusarvoisesti äläkä tulkitse tätä epäämiseksi.",
         "deniedDescription": "Pelaaja löytyy Sogversesta, mutta hänellä ei ole aktiivista istuntoa juuri nyt. <code>endTime</code>-kenttää ei sisällytetä.",
         "fields": {
           "allowedTrue": "Pelaajalla on aktiivinen istunto juuri nyt.",

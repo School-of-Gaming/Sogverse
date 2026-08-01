@@ -48,15 +48,18 @@ describe("GET /api/minecraft/join-check", () => {
     expect(response.status).toBe(401);
   });
 
-  it("returns 401 for wrong API key", () => {
+  it("returns 401 for a wrong key of a different length", () => {
+    // Rejected by the length guard, before timingSafeEqual is reached.
     const response = GET(createRequest(MC_UUID_DASHED, "Bearer wrong-key"));
     expect(response.status).toBe(401);
   });
 
-  it("returns 401 for a key that is a prefix of the real one", () => {
-    // The length check guards timingSafeEqual, which throws on unequal buffers.
+  it("returns 401 for a wrong key of the SAME length", () => {
+    // The case that actually reaches timingSafeEqual — the other tests all stop
+    // at the length guard, so without this the constant-time compare is never
+    // executed and reordering the two could go unnoticed.
     const response = GET(
-      createRequest(MC_UUID_DASHED, `Bearer ${API_KEY.slice(0, 8)}`),
+      createRequest(MC_UUID_DASHED, `Bearer ${API_KEY.slice(0, -1)}X`),
     );
     expect(response.status).toBe(401);
   });

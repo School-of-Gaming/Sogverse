@@ -1022,6 +1022,9 @@
         "playerAllowed": "Spelaren tillåts",
         "playerDenied": "Spelaren nekas",
         "errorResponses": "Felsvar",
+        "notImplementedTitle": "Inte implementerat ännu",
+        "notImplementedBody": "Sessionsbehörigheten byggs fortfarande om mot det nuvarande produktsystemet. Varje autentiserad och korrekt utformad förfrågan svarar i dag med 501 – ingen spelare släpps in. Svaren nedan beskriver det kontrakt som slutpunkten kommer att returnera när den är i drift. Bygg mot dem, men räkna med 501 tills vidare.",
+        "error501": "Sessionsbehörigheten är inte byggd ännu. Förfrågan var giltig och autentiserad, men inget antagningsbeslut kan fattas – misslyckas stängt i stället för att tolka detta som ett avslag.",
         "deniedDescription": "Spelaren finns i Sogverse men har ingen aktiv session just nu. Inget <code>endTime</code> inkluderas.",
         "fields": {
           "allowedTrue": "Spelaren har en aktiv session just nu.",

@@ -7,10 +7,14 @@
  * Extends Error, so existing `err instanceof Error` handlers keep working
  * unchanged.
  *
- * No client currently branches on `code`: the one that did mapped a Minecraft
- * already-linked conflict that no longer exists. It is still carried because
- * the route layer populates it generically, so the next caller that needs to
- * distinguish two 4xx outcomes has it without a round trip.
+ * `code` is currently carried but unused at both ends, and it is worth knowing
+ * why before relying on it. No route passes one, so the wrapper's forwarding of
+ * it never fires; the codes a client actually receives (`PIN_REQUIRED`,
+ * `GEDU_UNVERIFIED`, `PIN_LOCKED`) are attached to hand-built responses by the
+ * role gate and the PIN route, and reach this class only where a service copies
+ * `code` off the response body. Nothing branches on the result — the one client
+ * that did was mapping a Minecraft already-linked conflict that no longer
+ * exists. The slot stays because the plumbing on both sides is already written.
  */
 export class ApiError extends Error {
   constructor(

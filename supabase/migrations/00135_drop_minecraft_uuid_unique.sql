@@ -33,11 +33,18 @@ CREATE INDEX IF NOT EXISTS minecraft_accounts_uuid_idx
   ON public.minecraft_accounts (minecraft_uuid);
 
 -- Both statements above are conditional, and a conditional whose predicate does
--- not match is indistinguishable from one that did its job — the only
--- production discrepancy on record was a migration that took a branch its author
--- did not expect. So assert the end state rather than trusting the branch: any
--- unique index over minecraft_uuid still standing (under this constraint's name
--- or another) and the drop did not achieve what it claims.
+-- not match is indistinguishable from one that did its job — the only production
+-- discrepancy on record was a migration that took a branch its author did not
+-- expect. So assert the end state rather than trusting the branch.
+--
+-- This runs once, when 00135 applies, and says nothing about later migrations:
+-- it is apply-time protection, not a standing invariant. It covers a unique index
+-- over minecraft_uuid under any name and in any position (so a composite counts,
+-- deliberately — anything unique touching this column deserves a human look).
+-- It does NOT cover a unique index over an *expression* of the column, nor an
+-- exclusion constraint; both could enforce uniqueness while passing here. Neither
+-- has ever existed on this table, and catching them would cost more query than
+-- the risk justifies — but do not read a pass here as "no uniqueness is possible".
 
 DO $$
 DECLARE
@@ -63,16 +70,25 @@ BEGIN
       leftover;
   END IF;
 
+  -- Same joins as above, not just a name lookup: CREATE INDEX IF NOT EXISTS
+  -- no-ops when *anything* already owns the name, so a relation of that name on
+  -- another table or another column would satisfy a bare name check while
+  -- leaving minecraft_uuid unindexed — the exact silent branch this guards.
   IF NOT EXISTS (
     SELECT 1
-      FROM pg_class i
-      JOIN pg_namespace n ON n.oid = i.relnamespace
+      FROM pg_index x
+      JOIN pg_class i ON i.oid = x.indexrelid
+      JOIN pg_class t ON t.oid = x.indrelid
+      JOIN pg_namespace n ON n.oid = t.relnamespace
+      JOIN pg_attribute a
+        ON a.attrelid = t.oid AND a.attnum = ANY (x.indkey)
      WHERE n.nspname = 'public'
+       AND t.relname = 'minecraft_accounts'
+       AND a.attname = 'minecraft_uuid'
        AND i.relname = 'minecraft_accounts_uuid_idx'
-       AND i.relkind = 'i'
   ) THEN
     RAISE EXCEPTION
-      'minecraft_accounts_uuid_idx is missing — the uuid lookup would fall back to a sequential scan';
+      'minecraft_accounts_uuid_idx is missing, or does not index public.minecraft_accounts.minecraft_uuid — the uuid lookup would fall back to a sequential scan';
   END IF;
 END;
 $$;
