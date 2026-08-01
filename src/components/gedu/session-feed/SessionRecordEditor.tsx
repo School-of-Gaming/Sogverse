@@ -16,10 +16,11 @@ import type {
 
 interface SessionRecordEditorProps {
   /**
-   * Whether the entry around this editor is currently expanded. The editor
-   * stays mounted while collapsed, so it re-seeds its draft on each opening —
-   * otherwise a cancelled edit would still be sitting there the next time it
-   * opened.
+   * Whether the entry around this editor is currently expanded. The editor stays
+   * mounted while collapsed — which keeps its fields alive across a close, not
+   * which animates one: the close is instant, because a scroll correction is
+   * chasing it. It therefore re-seeds its draft on each opening, or a cancelled
+   * edit would still be sitting there the next time it opened.
    */
   open: boolean;
   roster: readonly SessionFeedGamer[];

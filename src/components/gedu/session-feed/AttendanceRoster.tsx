@@ -14,7 +14,10 @@ import type { AttendanceMark, AttendanceMarks, SessionFeedGamer } from "./types"
  * said yet" to the person who wrote the code, and the whole record then means
  * whichever of those the reader assumed. Two mutually exclusive options that
  * both start unchosen make the distinction visible: an unmarked row is plainly
- * unanswered, and the editor above refuses to save until none are left.
+ * unanswered, and it stays that way through a save. **A partial sheet saves as
+ * itself** — the gedu interrupted three children in keeps their three marks, the
+ * other five stay unanswered rather than being padded into absences, and the
+ * entry goes on flagging itself until somebody finishes it.
  *
  * **The pills are `aria-pressed` toggle buttons, not radios.** A mark has to be
  * revertable — a gedu who taps Absent on the wrong child must be able to put

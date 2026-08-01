@@ -25,18 +25,20 @@ interface MinecraftUsernameRowProps {
    * **Promotion wires two things here**, and they are separate jobs: this prop
    * takes the live skin source (the app already renders skins from
    * `mc-heads.net`, which the CSP's `img-src` already allows — the *body* path,
-   * which is what the crop below assumes), and the caller drives `status` from
+   * which is what both sizes below assume), and the caller drives `status` from
    * the real Mojang check behind `GET /api/minecraft/verify`, which already
    * exists, is already public, and already returns the canonical casing plus the
    * account UUID.
    */
   skinUrl?: string | null;
   /**
-   * `"bust"` (default) crops the figure to a small fixed square — head and
-   * shoulders, the size a roster row can afford. `"full"` renders the whole
-   * body, for a surface with room to spend on it.
+   * How much room the figure gets. Both show the **whole** body — the figure's
+   * own 1:2 proportion is what both boxes are drawn at — so this is a scale, not
+   * a crop: `"row"` (default) is 24px wide, small enough to sit in a list row
+   * beside a name, and `"full"` is a third bigger for a surface with room to
+   * spend on it.
    */
-  size?: "bust" | "full";
+  size?: "row" | "full";
   className?: string;
 }
 
@@ -53,12 +55,14 @@ interface MinecraftUsernameRowProps {
  * flexes; every one of the four states renders at exactly the same size, and the
  * row is the same height before, during and after a check.
  *
- * **The skin is cropped, not re-rendered.** The existing skin source hands back a
- * full-body figure, which is a tall portrait and far too much vertical space for
- * a list row. Rather than introduce a second asset pipeline for heads, the same
- * image is cropped to its top by the box around it — `object-cover` on a square
- * with the position pinned to the top edge. One asset, two presentations, and the
- * `full` variant is the very same image with the crop taken off.
+ * **The skin is scaled, not re-rendered and not cropped.** The existing skin
+ * source hands back a full-body figure at 1:2, and both boxes here are drawn at
+ * that same proportion — so the whole child is on screen in a row, 24px wide and
+ * 48 tall, rather than a head cut out of one. That is deliberate: a Minecraft
+ * skin is a *costume*, and the half of it a child has actually chosen (the
+ * jacket, the tail, the boots) is below the shoulders. It also means no second
+ * asset pipeline for head renders, and that `full` is the very same image at a
+ * larger size rather than a different picture.
  *
  * **The status is announced, not only drawn.** Each icon is decorative and the
  * state travels to assistive tech through a polite live region, so a check
@@ -68,7 +72,7 @@ export function MinecraftUsernameRow({
   username,
   status = "idle",
   skinUrl = null,
-  size = "bust",
+  size = "row",
   className,
 }: MinecraftUsernameRowProps) {
   const t = useTranslations("minecraft");
@@ -85,25 +89,24 @@ export function MinecraftUsernameRow({
       <div
         className={cn(
           "shrink-0 overflow-hidden rounded-sm bg-muted",
-          // The bust keeps the figure's own 1:2 aspect — a taller box at the
-          // same ratio shows more of the body rather than a bigger head.
+          // Both are the figure's own 1:2 proportion, so neither crops: the
+          // taller box simply shows the same whole body larger.
           full ? "h-16 w-8" : "h-12 w-6",
         )}
       >
         {skinUrl === null ? (
           <PlaceholderSkin />
         ) : (
-          // eslint-disable-next-line @next/next/no-img-element -- a third-party skin render on an external host; next/image would proxy it for no gain on a 32px avatar, and the crop below needs the raw element
+          // eslint-disable-next-line @next/next/no-img-element -- a third-party skin render on an external host; next/image would proxy it for no gain on a 24px-wide figure, and the raw element is all this needs
           <img
             src={skinUrl}
             alt=""
             aria-hidden
-            // `object-top` is what turns a full-body render into a bust: the
-            // square box crops everything below the shoulders.
-            className={cn(
-              "h-full w-full",
-              full ? "object-contain" : "object-cover object-top",
-            )}
+            // `object-contain` in both sizes: the box already matches the
+            // render's proportion, so the figure fits it whole and a source
+            // that ever came back at a different ratio letterboxes rather than
+            // silently losing a child's feet.
+            className="h-full w-full object-contain"
           />
         )}
       </div>
@@ -155,8 +158,8 @@ export function MinecraftUsernameRow({
  * somebody's skin would be both a fixed size and a fixed palette. An inline SVG
  * costs nothing, scales to either variant, and is drawn in the current text
  * colour so it themes with everything around it. Its 16×32 grid is the same
- * proportion the real full-body render comes back at, which is what lets the
- * crop above behave identically against a placeholder and against a real skin.
+ * proportion the real full-body render comes back at, which is what lets the box
+ * above behave identically against a placeholder and against a real skin.
  */
 function PlaceholderSkin() {
   return (

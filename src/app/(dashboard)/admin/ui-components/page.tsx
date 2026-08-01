@@ -2150,10 +2150,18 @@ export default function AdminUIComponentsPage() {
           <strong>Reports are markdown, and the feed clamps them.</strong> A
           report renders formatted &mdash; title, sections, bold, lists &mdash;
           but a term of them would be a wall of prose, so anything past about six
-          lines fades out under a mask and offers <em>Read more</em>, which
-          expands in place and grows the card downward. A report short enough to
-          fit gets no control at all: whether one is offered comes from measuring
-          the rendered body, not from counting characters.
+          lines fades out under a mask and offers <em>Read more</em> above it,
+          which expands in place and grows the card downward. A report short
+          enough to fit gets no control at all. Whether one is offered is decided{" "}
+          <strong>from the source text</strong>, by arithmetic the server and the
+          browser both run over the markdown &mdash; block by block, charging
+          each one its wrapped width and each boundary its gap &mdash; and it is
+          never revised by a measurement afterwards. Nothing here measures
+          anything: a server cannot, and a control that arrived a hydration later
+          would shove the feed down as it landed. The price is a tolerance of
+          roughly <strong>one line either way</strong> on a report sitting right
+          at the boundary, which is bought deliberately for a page that never
+          reflows.
         </p>
         <p className="text-sm text-muted-foreground">
           Sessions still <em>ahead</em> of us carry planning fields only &mdash; a
@@ -2706,7 +2714,7 @@ function SessionReportDemo() {
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="space-y-2">
             <DemoCaption>
-              Rich editor — six buttons, fixed toolbar height
+              Rich editor — seven buttons, fixed toolbar height
             </DemoCaption>
             <RichTextEditor
               initialValue={DEMO_SHORT_REPORT}
@@ -2746,7 +2754,7 @@ const MINECRAFT_STATUSES: readonly {
 function MinecraftUsernameRowDemo() {
   return (
     <div className="space-y-8">
-      <SubSection title="Bust — every state at identical dimensions">
+      <SubSection title="Row — the whole figure at 24px, every state at identical dimensions">
         <div className="max-w-xs space-y-2 rounded-lg border p-4">
           {MINECRAFT_STATUSES.map(({ status, caption }) => (
             <div key={status} className="space-y-1">
@@ -2768,7 +2776,7 @@ function MinecraftUsernameRowDemo() {
         </div>
       </SubSection>
 
-      <SubSection title="Full — the same asset with the crop taken off">
+      <SubSection title="Full — the same asset, a third bigger">
         <div className="flex flex-wrap gap-6 rounded-lg border p-4">
           {MINECRAFT_STATUSES.map(({ status, caption }) => (
             <div key={status} className="w-44 space-y-1">

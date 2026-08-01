@@ -11,9 +11,11 @@ import type { SessionPlanDraft, SessionPlanEditorState } from "./types";
 interface SessionPlanEditorProps {
   /**
    * Whether the entry around this editor is expanded. It stays mounted while
-   * collapsed (that is what gives the close its animation), so it re-seeds its
-   * draft on each opening — otherwise a cancelled edit would still be sitting
-   * there next time.
+   * collapsed — the close is instant here, chased by a scroll correction that
+   * cannot follow a transition, so staying mounted is what keeps the fields
+   * alive rather than what gives them an animation. It therefore re-seeds its
+   * draft on each opening, or a cancelled edit would still be sitting there next
+   * time.
    */
   open: boolean;
   initialState: SessionPlanEditorState;
