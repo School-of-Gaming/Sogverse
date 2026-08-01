@@ -195,6 +195,39 @@ Decisions from feedback round 4:
   (it was already duplicated across the gedu cards before this feature tripled
   it), and the rail labels its gedu chips so they can't be misread as gamers.
 
+Decisions from feedback round 8:
+
+- **Clamp decisions never correct themselves.** The read-more affordance is decided
+  once from the report's source text (same arithmetic server and client) and no
+  post-mount measurement may add or remove it — a borderline report showing a
+  slightly-eager or slightly-late control beats any pop-in. The measurement
+  machinery is deleted, not tuned.
+- **Save/cancel collapse is instant and scroll-anchored to the content below the
+  edited card** — the reader's visual anchor is the next card down, and it must not
+  move. Same pattern as the upward reveal (instant geometry + same-frame
+  compensation); the animated-collapse hold is deleted with it. Edit-open keeps
+  its downward animation.
+- **The didn't-run/skip UI is deferred** with the substitute UI — same pile,
+  same reasoning (tied to cancellation flows we're not designing now). Skip stays
+  a schema intention; the mock renders and edits nothing of it.
+- **All upcoming sessions carry an info-toned "Future session" tag** (the next
+  one keeps "Next session"); the now-divider gains visual weight — it must not be
+  missable. The `club` fixture becomes end-dated with **~40 future sessions** so
+  the upward-reveal is proven at realistic volume (end-dated products have no
+  8-occurrence cap).
+- **"(optional)" markers are removed from all gedu-surface fields** (report, gedu
+  notes, About-this-group) — technically optional must not read as skippable.
+- **The Gedu note becomes markdown too** (same editor, same renderer, same
+  subset) — session-level at minimum.
+- **The dashboard attention badge overlays the card's top-right corner**,
+  following the existing parent-card payment-issue badge pattern; spacing between
+  the type-noun groups tightens; **section-pill labels decouple from section
+  headings** and stay short in every locale (the French "Instant Voice Room"
+  wrap is the tripwire case).
+- **Leaving a group voice room always returns to that product's page** — never
+  history-back to wherever the gedu came from. A wiring-step behavior (records
+  here so it isn't lost): simpler code, predictable flow.
+
 Decisions from feedback round 7:
 
 - **The future block becomes a "now divider" in one continuous feed.** No container
