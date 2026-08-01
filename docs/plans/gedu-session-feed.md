@@ -62,7 +62,10 @@ fixture-UUID rule.
    automatic email) and the **gedu note** (gedu + admin only). A note written under an
    assumption of privacy can never be retro-published (children's data). Both are
    markdown per the root rich-text rules; reports run ~500–1500 chars with light
-   formatting (title, headings, bold, lists).
+   formatting (title, headings, bold, lists). **Links are blocked by policy** —
+   gedus must not link parents or gamers off-site, so the renderer’s allow-list
+   excludes `a` and the editor’s schema has no link mark; a markdown link renders
+   as its plain text, on every surface including the future email.
 4. **Attendance is explicitly recorded, never implied, and saves partially.** A
    session's attendance is a per-gamer map of explicit marks (stored as an enum-ready
    status string — `late`/`excused` later are additive); an unmarked roster member is
