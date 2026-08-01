@@ -166,10 +166,9 @@ function MinecraftIdentityCell({
       setDraft(null);
     };
     return (
-      // `h-7` on the row and on every control in it: the editor is exactly as
-      // tall as the identity line it replaced, so opening it moves nothing.
-      {/* h-12 matches the display row below, so entering and leaving edit
-          mode never changes the roster row's height. */}
+      // `h-12` on the row matches the display row below, so entering and
+      // leaving edit mode never changes the roster row's height; the controls
+      // inside stay `h-7`, centered in it.
       <div className="flex h-12 items-center gap-1.5">
         <label className="sr-only" htmlFor={inputId}>
           {t("minecraftUsernameLabel")}
@@ -210,8 +209,8 @@ function MinecraftIdentityCell({
   }
 
   return (
-    // The row owns the h-12 — the skin fills it exactly, so the taller figure
-    // renders inside the row instead of spilling into its neighbours.
+    /* The row owns the h-12 — the skin fills it exactly, so the taller figure
+       renders inside the row instead of spilling into its neighbours. */
     <div className="group/mc flex h-12 min-w-0 items-center gap-1">
       {identity}
       <button
