@@ -1082,6 +1082,7 @@
     "yty": "Yty",
     "settings": "Inställningar",
     "instantVoiceRoom": "Direkt röstrum",
+    "instantVoiceRoomShort": "Röstrum",
     "waitlistBand": "På väntelistan",
     "scheduledBand": "Schemalagda"
   },

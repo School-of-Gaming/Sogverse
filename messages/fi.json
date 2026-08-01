@@ -1082,6 +1082,7 @@
     "yty": "Yty",
     "settings": "Asetukset",
     "instantVoiceRoom": "Pikaäänihuone",
+    "instantVoiceRoomShort": "Äänihuone",
     "waitlistBand": "Jonotuslistalla",
     "scheduledBand": "Aikataulussa"
   },

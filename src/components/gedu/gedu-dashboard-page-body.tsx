@@ -22,9 +22,12 @@ export function GeduDashboardPageBody({
 }) {
   const t = useTranslations("dashboardSections");
 
+  // The pill takes the short label, not the section heading: the chips sit in
+  // one rounded bar that has to survive a phone, and "Instant Voice Room" is
+  // three long words in French.
   const sections: DashboardSection[] = [
     { id: "sessions", label: t("upcomingSessions") },
-    { id: "instant-voice-room", label: t("instantVoiceRoom") },
+    { id: "instant-voice-room", label: t("instantVoiceRoomShort") },
   ];
 
   return (

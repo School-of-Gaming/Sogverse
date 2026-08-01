@@ -1082,6 +1082,7 @@
     "yty": "Yty",
     "settings": "Settings",
     "instantVoiceRoom": "Instant Voice Room",
+    "instantVoiceRoomShort": "Voice room",
     "waitlistBand": "On the waitlist",
     "scheduledBand": "Scheduled"
   },

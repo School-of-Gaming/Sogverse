@@ -81,12 +81,25 @@ export function GeduDashboardPageBodyDraft({
     (item) => item.assignment.productType,
   );
 
+  /**
+   * **Pill labels are their own strings, not the section headings reused.**
+   *
+   * The pill is a row of small chips in a rounded bar that has to fit on a
+   * phone; a heading is a line of its own on a wide page. Borrowing one for the
+   * other worked in English by luck — the type nouns happen to be one short
+   * word each — and broke the moment a locale disagreed: "Instant Voice Room"
+   * is *Salon vocal instantané* in French, which wrapped the pill onto two
+   * lines and pushed every other chip off the bar. So the nav gets its own
+   * short label per section, and a heading is free to be as long as it reads
+   * best. The type nouns pass the same key to both because in every locale they
+   * are already the shortest true word for the thing.
+   */
   const sections: DashboardSection[] = [
     ...activityGroups.map((group) => ({
       id: ACTIVITY_HEADING_KEY[group.type],
       label: t(ACTIVITY_HEADING_KEY[group.type]),
     })),
-    { id: "instant-voice-room", label: t("instantVoiceRoom") },
+    { id: "instant-voice-room", label: t("instantVoiceRoomShort") },
   ];
 
   return (
@@ -109,40 +122,47 @@ export function GeduDashboardPageBodyDraft({
           at the same page. */}
       <DashboardSectionPill sections={sections} ariaLabel={t("pageTitle")} />
 
+      {/* Two rhythms, because there are two kinds of gap here. The type nouns
+          are subgroups of one thing — the activities this gedu runs — so a full
+          section break between Clubs and Camps read as three unrelated pages
+          stacked up and put a screen of nothing between a gedu's two cards. The
+          instant room genuinely is a different section and keeps the wide gap. */}
       <div className="space-y-24 pb-24">
-        {activityGroups.length === 0 ? (
-          // No assignments at all: one unheaded section carrying the empty
-          // state, and no pill entry for it. A heading here would have to pick
-          // a noun, and every noun would be a lie about a gedu who runs none of
-          // them.
-          <section id={EMPTY_ACTIVITIES_SECTION_ID} className="scroll-mt-32">
-            <div className="mx-auto max-w-5xl">
-              <p className="text-muted-foreground">
-                {t("myGroupsEmptyStateGedu")}
-              </p>
-            </div>
-          </section>
-        ) : (
-          activityGroups.map((group) => (
-            <section
-              key={group.type}
-              id={ACTIVITY_HEADING_KEY[group.type]}
-              className="scroll-mt-32"
-            >
-              {/* `max-w-5xl`, not the family dashboards' `max-w-3xl`: this is a
-                  desktop surface, and three roll-up cards need the room. Every
-                  section shares the width so the headings line up down the
-                  page — two different `mx-auto` caps would read as a broken
-                  grid. */}
-              <div className="mx-auto max-w-5xl space-y-6">
-                <h2 className="text-3xl font-bold">
-                  {t(ACTIVITY_HEADING_KEY[group.type])}
-                </h2>
-                <GeduAssignmentsSectionView items={group.items} />
+        <div className="space-y-10">
+          {activityGroups.length === 0 ? (
+            // No assignments at all: one unheaded section carrying the empty
+            // state, and no pill entry for it. A heading here would have to pick
+            // a noun, and every noun would be a lie about a gedu who runs none of
+            // them.
+            <section id={EMPTY_ACTIVITIES_SECTION_ID} className="scroll-mt-32">
+              <div className="mx-auto max-w-5xl">
+                <p className="text-muted-foreground">
+                  {t("myGroupsEmptyStateGedu")}
+                </p>
               </div>
             </section>
-          ))
-        )}
+          ) : (
+            activityGroups.map((group) => (
+              <section
+                key={group.type}
+                id={ACTIVITY_HEADING_KEY[group.type]}
+                className="scroll-mt-32"
+              >
+                {/* `max-w-5xl`, not the family dashboards' `max-w-3xl`: this is a
+                    desktop surface, and three roll-up cards need the room. Every
+                    section shares the width so the headings line up down the
+                    page — two different `mx-auto` caps would read as a broken
+                    grid. */}
+                <div className="mx-auto max-w-5xl space-y-6">
+                  <h2 className="text-3xl font-bold">
+                    {t(ACTIVITY_HEADING_KEY[group.type])}
+                  </h2>
+                  <GeduAssignmentsSectionView items={group.items} />
+                </div>
+              </section>
+            ))
+          )}
+        </div>
 
         {/* Last section gets viewport-height min so clicking its pill can
             actually scroll it to the top — without this the page bottoms

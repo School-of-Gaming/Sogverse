@@ -1082,6 +1082,7 @@
     "yty": "Yty",
     "settings": "Paramètres",
     "instantVoiceRoom": "Salon vocal instantané",
+    "instantVoiceRoomShort": "Salle vocale",
     "waitlistBand": "En liste d’attente",
     "scheduledBand": "Programmé"
   },
