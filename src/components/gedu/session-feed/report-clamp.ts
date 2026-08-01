@@ -51,3 +51,95 @@ export function reportOverflows(
   if (clampHeightPx <= 0) return false;
   return naturalHeightPx > clampHeightPx + REPORT_CLAMP_TOLERANCE_PX;
 }
+
+/* ------------------------------------------------------------------ */
+/*  The first-paint estimate                                           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * How many characters of report body fit on one rendered line, assumed
+ * **generously**.
+ *
+ * A server has no layout: it cannot measure anything, so the only way a report
+ * can carry its "Read more" in the very first painted frame is to decide from
+ * the source text. This is the one number that decision turns on, and it is
+ * deliberately set at the wide end of what the reading column actually gives —
+ * a gedu surface is a desktop surface, and the feed's column is two thirds of a
+ * wide page at `text-sm`.
+ *
+ * Wide, because the two ways of being wrong are not equally bad. Under-counting
+ * lines means a borderline report gains its control when the measurement lands,
+ * which nudges the page down by one small row. Over-counting means a report
+ * that fits is painted with a fade over its last line and a control that
+ * reveals nothing — a visual lie, and a click that does nothing — and then loses
+ * both. So the estimate only claims a report overflows when even a generous
+ * line can't fit it.
+ */
+export const REPORT_ESTIMATED_CHARS_PER_LINE = 100;
+
+/**
+ * Lines the estimate must exceed the clamp by before it claims an overflow.
+ *
+ * The margin is what keeps the estimate on the safe side of its own error: a
+ * report the estimate puts at exactly the clamp's height is precisely the case
+ * it cannot call, so it declines to, and the measurement decides a frame later.
+ */
+export const REPORT_ESTIMATE_MARGIN_LINES = 2;
+
+/**
+ * Roughly how many lines a report's markdown renders to.
+ *
+ * Blocks (paragraphs, headings, list items) each start a line of their own and
+ * then wrap; everything else about markdown — emphasis, links, the heading
+ * markers themselves — is syntax that never reaches the rendered width, so it is
+ * stripped before counting. Inter-block spacing is deliberately *not* counted:
+ * ignoring it can only lower the estimate, which is the direction this is
+ * allowed to be wrong in.
+ *
+ * Pure and exported so the one judgement in the first-paint path is pinned in a
+ * test rather than buried in a component.
+ */
+export function estimateReportLines(markdown: string): number {
+  let lines = 0;
+  for (const block of markdown.split(/\n\s*\n/)) {
+    for (const rawLine of block.split("\n")) {
+      const text = stripMarkdownSyntax(rawLine);
+      if (text.length === 0) continue;
+      lines += Math.ceil(text.length / REPORT_ESTIMATED_CHARS_PER_LINE);
+    }
+  }
+  return lines;
+}
+
+/**
+ * Whether a report is long enough that it is worth painting its clamp
+ * affordances before anything has been measured.
+ *
+ * This is the render-time stand-in for `reportOverflows`, and it is only ever
+ * consulted until the real measurement arrives. It exists because a report is
+ * server-rendered long before any JavaScript runs: a control that only appears
+ * once the browser has measured is a control that lands after the reader is
+ * already looking at the text it belongs to.
+ */
+export function reportLikelyOverflows(markdown: string): boolean {
+  return (
+    estimateReportLines(markdown) >
+    REPORT_CLAMP_LINES + REPORT_ESTIMATE_MARGIN_LINES
+  );
+}
+
+/**
+ * A markdown line reduced to the text a reader actually sees on it.
+ *
+ * Only the leading block markers and the inline emphasis runs matter here —
+ * they are what would otherwise inflate a short heading or a bolded phrase into
+ * a line and a half of imagined width.
+ */
+function stripMarkdownSyntax(line: string): string {
+  return line
+    .replace(/^\s*#{1,6}\s+/, "")
+    .replace(/^\s*(?:[-*+]|\d+\.)\s+/, "")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/[*_`]/g, "")
+    .trim();
+}

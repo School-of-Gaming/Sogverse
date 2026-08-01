@@ -7,6 +7,7 @@ import { Markdown } from "@/components/ui/markdown";
 import { cn } from "@/lib/utils";
 import {
   REPORT_CLAMP_REM,
+  reportLikelyOverflows,
   reportOverflows,
 } from "./report-clamp";
 
@@ -27,12 +28,23 @@ import {
  * painted gradient, so it works on whatever surface the card is drawn on — and
  * the control sits directly beneath it.
  *
- * **A short report gets no control at all.** Whether one is offered comes from
- * measuring the rendered body against the height the clamp resolved to, not from
+ * **A short report gets no control at all.** Whether one is offered settles by
+ * measuring the rendered body against the height the clamp resolved to, not by
  * counting characters: markdown means the same 400 characters can be four lines
  * or fourteen depending on how many headings and list items are in it. The
  * measurement happens in a layout effect, before paint, so the control is never
  * seen to appear after the text it belongs to.
+ *
+ * **But the first frame is painted by a server, which cannot measure anything.**
+ * The renderer itself is in the page bundle — a report's formatted body is in
+ * the server HTML, and nothing about it is loaded on demand — so waiting for a
+ * measurement to decide the control would put the *body* on screen immediately
+ * and its control a whole hydration later, shoving everything under the card
+ * down as it arrived. So the control is seeded from an estimate taken off the
+ * markdown source, which both ends compute identically, and the measurement
+ * corrects it before the first client paint. The estimate is deliberately
+ * reluctant: it only claims an overflow it is sure of, so the correction can
+ * add a control but essentially never takes one away.
  */
 export function SessionReport({
   markdown,
@@ -79,7 +91,13 @@ export function SessionReport({
     return () => observer.disconnect();
   }, [measure]);
 
-  const overflowing = reportOverflows(naturalHeight, clampHeight);
+  // Measured once the clamp has a height; until then — the server render and
+  // the hydration render that must match it — the source-text estimate stands
+  // in, so an overflowing report is painted complete with its control.
+  const overflowing =
+    clampHeight > 0
+      ? reportOverflows(naturalHeight, clampHeight)
+      : reportLikelyOverflows(markdown);
   const clipped = overflowing && !expanded;
 
   return (
