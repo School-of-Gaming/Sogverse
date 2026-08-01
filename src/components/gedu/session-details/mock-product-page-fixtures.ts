@@ -1,4 +1,4 @@
-import { formatInTimeZone } from "date-fns-tz";
+import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import {
   CLUB_FUTURE_SPECS,
   SESSION_FEED_GAMER_IDS,
@@ -758,22 +758,41 @@ export function buildGeduProductPageFixture(
 }
 
 /**
- * A bare `YYYY-MM-DD` offset from today. Product start/end dates and dates of
- * birth are zoneless calendar dates, so they are pinned to UTC rather than
- * re-anchored to anyone's zone.
+ * A bare `YYYY-MM-DD` offset from today, **as today falls in the product's own
+ * zone**.
+ *
+ * Product start/end dates and dates of birth are zoneless calendar dates, but
+ * the offset has to be taken from a day that means something, and the day these
+ * are read against is the one the schedule is authored in. Stepping in UTC
+ * instead moved every date a day early for the evening hours between UTC and
+ * Helsinki midnight — enough to put an end-dated camp's boundary behind its own
+ * last session.
  */
 function calendarDate(now: Date, dayOffset: number): string {
-  const date = new Date(now.getTime());
-  date.setUTCDate(date.getUTCDate() + dayOffset);
-  return formatInTimeZone(date, "UTC", "yyyy-MM-dd");
+  const zoned = toZonedTime(now, SESSION_FEED_TIMEZONE);
+  zoned.setDate(zoned.getDate() + dayOffset);
+  return formatInTimeZone(
+    fromZonedTime(zoned, SESSION_FEED_TIMEZONE),
+    SESSION_FEED_TIMEZONE,
+    "yyyy-MM-dd",
+  );
 }
 
 /**
- * The eight feed regulars as roster rows. Ages, genders and Minecraft states
- * are spread across the group so the row component's every variant (verified,
- * entered-but-unverified, not linked) is on screen at once. Two children share
- * a parent email — that's the sibling case the copy-all-emails helper
- * de-duplicates.
+ * The eight feed regulars as roster rows. Ages, genders and Minecraft states are
+ * spread across the group so every shape this surface can produce is on screen
+ * at once.
+ *
+ * That is **two** rendered states, not three. The row draws a check for an
+ * account with a verified UUID and nothing at all otherwise, so a name typed in
+ * but never checked and no name at all land on the same treatment — the only
+ * difference between them is the text, one showing the username and the other
+ * the "none" placeholder. Both are here anyway, because that text is the thing a
+ * gedu reads. The row's other two states (a check in flight, a name Mojang does
+ * not know) can only come from a live lookup, which a preview never makes.
+ *
+ * Two children share a parent email — that's the sibling case the
+ * copy-all-emails helper de-duplicates.
  *
  * **Every child has a parent email**, because every child really does: a gamer
  * account is created by a parent who signed up with one. There is no

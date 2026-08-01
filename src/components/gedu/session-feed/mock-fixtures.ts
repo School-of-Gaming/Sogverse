@@ -416,6 +416,13 @@ export function countLeadingFutureSpecs(specs: readonly EntrySpec[]): number {
  * the past runs backwards beneath it — which is exactly the order the feed
  * renders, so no caller ever has to reverse a slice.
  *
+ * **A spec list with no future entries at all is dated entirely behind `now`.**
+ * It used to be floored at one, which quietly dated the newest of a purely
+ * historical run *in the future* — so a fixture asking for six past camp days
+ * got five past days and a sixth that had not happened, wearing past styling and
+ * an attendance sheet. Zero means zero: the run starts at the occurrence before
+ * the next one and walks back from there.
+ *
  * Pure and exported so the cadence arithmetic can be unit-tested without
  * rendering anything. Every step walks the calendar **in the source zone**
  * rather than adding a flat number of milliseconds: across a DST boundary a flat
@@ -461,11 +468,19 @@ export function sessionStartsForCadence(opts: {
       ? shiftZonedDays(from, -7, timeZone)
       : previousWeekdayStart(from, timeZone);
 
-  const futureLength = Math.min(Math.max(futureCount, 1), count);
+  const futureLength = Math.min(Math.max(futureCount, 0), count);
   const starts: Date[] = new Array<Date>(count);
-  starts[futureLength - 1] = next;
-  for (let i = futureLength - 2; i >= 0; i--) starts[i] = forward(starts[i + 1]);
-  for (let i = futureLength; i < count; i++) starts[i] = backward(starts[i - 1]);
+  if (futureLength === 0) {
+    // Nothing ahead of us: the head of the list is the occurrence *before* the
+    // next one, which is the most recent session that has actually happened.
+    starts[0] = backward(next);
+  } else {
+    starts[futureLength - 1] = next;
+    for (let i = futureLength - 2; i >= 0; i--) starts[i] = forward(starts[i + 1]);
+  }
+  for (let i = Math.max(futureLength, 1); i < count; i++) {
+    starts[i] = backward(starts[i - 1]);
+  }
   return starts;
 }
 

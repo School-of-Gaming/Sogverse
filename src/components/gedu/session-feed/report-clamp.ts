@@ -81,8 +81,26 @@ export const REPORT_HEADING_LINE_COST = 1.25;
  */
 export const REPORT_BLOCK_GAP_LINES = 0.35;
 
+/**
+ * The gap between two items of the *same* list, which is half the one between
+ * blocks: the renderer sets a list's items with `space-y-1` (a quarter rem
+ * against the same 1.42rem line box) and only spends `space-y-2` on the
+ * boundary between the list and whatever sits either side of it.
+ *
+ * Charging every list item the full block gap was the estimate's one systematic
+ * over-count, and lists are where it bit hardest — a write-up that opens with a
+ * title and then lists five things was credited with nearly a line it does not
+ * occupy, which is enough to offer a "Read more" over almost nothing. Splitting
+ * the two keeps the error inside the tolerance this file documents rather than
+ * spending most of it on the commonest shape a report takes.
+ */
+export const REPORT_LIST_GAP_LINES = 0.18;
+
 /** A markdown line that renders as a heading rather than as body copy. */
 const HEADING_LINE = /^\s*#{1,6}\s+/;
+
+/** A markdown line that renders as one item of a bulleted or numbered list. */
+const LIST_ITEM_LINE = /^\s*(?:[-*+]|\d+\.)\s+/;
 
 /**
  * Roughly how many body-copy lines a report's markdown renders to.
@@ -90,9 +108,11 @@ const HEADING_LINE = /^\s*#{1,6}\s+/;
  * Every non-blank source line is one rendered block — a paragraph, a heading, a
  * list item — because that is what both the editor's serialiser and the
  * fixtures emit; each one wraps according to its own width, and each boundary
- * between two of them costs a gap. The result is deliberately fractional: the
- * gaps are a real part of the height and rounding them away is exactly the
- * error this exists to correct.
+ * between two of them costs a gap. **Which** gap depends on what sits either
+ * side of it: two items of the same list are set tighter than two blocks are,
+ * so the boundary is charged the list gap only when both of its sides are list
+ * items. The result is deliberately fractional: the gaps are a real part of the
+ * height and rounding them away is exactly the error this exists to correct.
  *
  * Markdown syntax is stripped before anything is counted — the hashes, the
  * bullets, the emphasis runs and a link's target never reach the rendered
@@ -100,21 +120,31 @@ const HEADING_LINE = /^\s*#{1,6}\s+/;
  */
 export function estimateReportLines(markdown: string): number {
   let lines = 0;
-  let blocks = 0;
+  let gaps = 0;
+  /** `null` until the first rendered block, so nothing is charged above it. */
+  let previousWasListItem: boolean | null = null;
 
   for (const rawLine of markdown.split("\n")) {
     const isHeading = HEADING_LINE.test(rawLine);
+    const isListItem = LIST_ITEM_LINE.test(rawLine);
     const text = stripMarkdownSyntax(rawLine);
     if (text.length === 0) continue;
 
-    blocks += 1;
+    if (previousWasListItem !== null) {
+      gaps +=
+        previousWasListItem && isListItem
+          ? REPORT_LIST_GAP_LINES
+          : REPORT_BLOCK_GAP_LINES;
+    }
+    previousWasListItem = isListItem;
+
     lines += isHeading
       ? Math.ceil(text.length / REPORT_ESTIMATED_HEADING_CHARS_PER_LINE) *
         REPORT_HEADING_LINE_COST
       : Math.ceil(text.length / REPORT_ESTIMATED_CHARS_PER_LINE);
   }
 
-  return lines + Math.max(blocks - 1, 0) * REPORT_BLOCK_GAP_LINES;
+  return lines + gaps;
 }
 
 /**
@@ -135,7 +165,7 @@ export function reportOverflows(markdown: string): boolean {
 function stripMarkdownSyntax(line: string): string {
   return line
     .replace(HEADING_LINE, "")
-    .replace(/^\s*(?:[-*+]|\d+\.)\s+/, "")
+    .replace(LIST_ITEM_LINE, "")
     .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/[*_`]/g, "")
     .trim();

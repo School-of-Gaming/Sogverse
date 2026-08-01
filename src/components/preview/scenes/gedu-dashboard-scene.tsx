@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useLocale } from "next-intl";
 import { GeduDashboardPageBodyDraft } from "@/components/gedu/gedu-dashboard-page-body-draft";
 import {
@@ -18,6 +19,15 @@ import { useNow, useTimezone } from "@/providers";
  * instant-room panel renders its idle state with the create action inert — the
  * section has to be *there*, looking like itself, or the page stops reading as
  * the real dashboard; what it must not do is create a room.
+ *
+ * The fixture is built once from the first `useNow()` value and then held in
+ * state, the same way the product-page scene holds its own. Rebuilding it on
+ * every 30-second tick would rebuild every schedule slot off a new `now`, so the
+ * live card's session time would creep forward while somebody was looking at it
+ * — an unasked-for change to painted text, and a lot of work per tick to
+ * produce it. The card's live state still follows the clock, because the card
+ * derives that from `useNow()` itself; what is frozen is the schedule it is
+ * derived from, which is the half a fixture is standing in for.
  */
 export function GeduDashboardScene({
   scenario,
@@ -27,7 +37,9 @@ export function GeduDashboardScene({
   const now = useNow();
   const locale = resolveLocale(useLocale());
   const timeZone = useTimezone();
-  const fixture = buildGeduDashboardFixture(now, scenario, locale, timeZone);
+  const [fixture] = useState(() =>
+    buildGeduDashboardFixture(now, scenario, locale, timeZone),
+  );
 
   return (
     <GeduDashboardPageBodyDraft

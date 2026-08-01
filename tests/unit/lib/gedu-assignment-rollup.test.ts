@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   GEDU_ACTIVITY_TYPE_ORDER,
+  assignmentLiveness,
   geduActivityTypeOf,
   groupAssignmentsByType,
   rollUpGeduAssignments,
@@ -121,12 +122,42 @@ describe("rollUpGeduAssignments", () => {
       [row({ id: "p1", name: "Wednesday Club", weekday: 2 })],
       midSession,
     );
-    const { nextSessionStart, voiceIsOpen } = summaries[0];
+    const { nextSessionStart, nextSessionEnd } = summaries[0];
     expect(nextSessionStart).not.toBeNull();
     // The in-progress session is the soonest meaningful moment, so the card
     // shows it rather than skipping a week — and its window is open.
     expect(nextSessionStart!.getTime()).toBeLessThan(midSession.getTime());
-    expect(voiceIsOpen).toBe(true);
+    expect(assignmentLiveness(summaries[0], midSession)).toEqual({
+      inProgress: true,
+      voiceIsOpen: true,
+    });
+    // The end is what the card's start–end range label is built from, so a
+    // summary that carried a start and no end would render half a line.
+    expect(nextSessionEnd).not.toBeNull();
+    expect(nextSessionEnd!.getTime() - nextSessionStart!.getTime()).toBe(
+      90 * 60_000,
+    );
+    expect(nextSessionEnd!.getTime()).toBeGreaterThan(midSession.getTime());
+  });
+
+  it("carries the end of a session still ahead of us too", () => {
+    // Nothing about the range label depends on the session having started.
+    const summaries = rollUp(
+      [
+        row({
+          id: "p1",
+          name: "Friday Club",
+          weekday: 4,
+          durationMinutes: 120,
+        }),
+      ],
+      now,
+    );
+    const { nextSessionStart, nextSessionEnd } = summaries[0];
+    expect(nextSessionEnd).not.toBeNull();
+    expect(nextSessionEnd!.getTime() - nextSessionStart!.getTime()).toBe(
+      120 * 60_000,
+    );
   });
 
   it("reports no next session once an end-dated product has finished", () => {
@@ -143,7 +174,10 @@ describe("rollUpGeduAssignments", () => {
     );
     expect(summaries[0].nextSessionStart).toBeNull();
     expect(summaries[0].nextSessionEnd).toBeNull();
-    expect(summaries[0].voiceIsOpen).toBe(false);
+    expect(assignmentLiveness(summaries[0], now)).toEqual({
+      inProgress: false,
+      voiceIsOpen: false,
+    });
   });
 
   it("reports no next session for an assignment with no slots", () => {
@@ -189,6 +223,16 @@ describe("rollUpGeduAssignments", () => {
     expect(byId.get("p2")).toBe(0);
   });
 
+  it("hands a remote product the caller's own room href", () => {
+    const summaries = rollUp(
+      [row({ id: "p1", name: "Remote Club", isRemote: true })],
+      now,
+      { voiceHrefByProductId: { p1: "/voice/group/p1-group" } },
+    );
+    expect(summaries[0].hasVoiceRoom).toBe(true);
+    expect(summaries[0].voiceHref).toBe("/voice/group/p1-group");
+  });
+
   it("gives an in-person product an inert Join href", () => {
     const summaries = rollUp(
       [row({ id: "onsite", name: "Onsite Club", isRemote: false })],
@@ -208,27 +252,97 @@ describe("rollUpGeduAssignments", () => {
     expect(summaries[0].openHref).toBe("/preview/gedu-product/p1");
   });
 
-  it("never reports an open voice window on a product with no room", () => {
-    // A card lights up on this flag, so an in-person assignment reporting an
-    // open window would announce a room that does not exist. The window is a
-    // fact about a room, and an in-person product has none to be inside.
+  /**
+   * The footer's two answers to "where is this happening", and the invariant
+   * that keeps a card from claiming both: a venue is carried only by a product
+   * with no room, whatever the row underneath says.
+   */
+  it("carries an in-person product's venue through to the card", () => {
     const summaries = rollUp(
       [
         row({
           id: "onsite",
           name: "Onsite Camp",
           isRemote: false,
-          // Mid-session right now, which is exactly when the window would
-          // otherwise report itself open.
-          weekday: 2,
-          startTime: "10:30",
-          durationMinutes: 180,
+          siteName: "Sello Library, Espoo",
         }),
       ],
       now,
     );
     expect(summaries[0].hasVoiceRoom).toBe(false);
-    expect(summaries[0].voiceIsOpen).toBe(false);
+    expect(summaries[0].siteName).toBe("Sello Library, Espoo");
+  });
+
+  it("drops a venue from a remote product even when the row supplies one", () => {
+    // A product with a voice room has no building, and a card showing both
+    // would be claiming the group meets in two places at once.
+    const summaries = rollUp(
+      [
+        row({
+          id: "remote",
+          name: "Remote Club",
+          isRemote: true,
+          siteName: "Sello Library, Espoo",
+        }),
+      ],
+      now,
+    );
+    expect(summaries[0].hasVoiceRoom).toBe(true);
+    expect(summaries[0].siteName).toBeNull();
+  });
+
+  it("leaves a venue null on an in-person product that has none recorded", () => {
+    const summaries = rollUp(
+      [row({ id: "onsite", name: "Onsite Camp", isRemote: false })],
+      now,
+    );
+    expect(summaries[0].siteName).toBeNull();
+  });
+});
+
+/**
+ * Liveness is asked of the clock rather than baked into the summary, so that a
+ * card's gradient, badge and Join button can never be answering two different
+ * instants. These pin the three things that follow from that.
+ */
+describe("assignmentLiveness", () => {
+  const start = new Date("2026-02-11T14:30:00Z");
+  const end = new Date("2026-02-11T16:00:00Z");
+  const remote = { nextSessionStart: start, nextSessionEnd: end, hasVoiceRoom: true };
+
+  it("is quiet before the session, on both counts", () => {
+    // Well before the window opens, not merely before the start.
+    const early = new Date("2026-02-11T09:00:00Z");
+    expect(assignmentLiveness(remote, early)).toEqual({
+      inProgress: false,
+      voiceIsOpen: false,
+    });
+  });
+
+  it("reports in progress from the start instant onwards", () => {
+    expect(assignmentLiveness(remote, start).inProgress).toBe(true);
+    expect(
+      assignmentLiveness(remote, new Date("2026-02-11T15:00:00Z")).inProgress,
+    ).toBe(true);
+  });
+
+  it("never opens a window on a product with no room", () => {
+    // Mid-session, which is exactly when a room would report itself open.
+    const onsite = { ...remote, hasVoiceRoom: false };
+    const midSession = new Date("2026-02-11T15:00:00Z");
+    expect(assignmentLiveness(onsite, midSession)).toEqual({
+      inProgress: true,
+      voiceIsOpen: false,
+    });
+  });
+
+  it("says nothing is happening when nothing is scheduled", () => {
+    expect(
+      assignmentLiveness(
+        { nextSessionStart: null, nextSessionEnd: null, hasVoiceRoom: true },
+        start,
+      ),
+    ).toEqual({ inProgress: false, voiceIsOpen: false });
   });
 });
 

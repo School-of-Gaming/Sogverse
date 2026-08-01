@@ -10,7 +10,10 @@ import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import { useNow, useTimezone } from "@/providers";
 import { cn, formatDate, formatTime } from "@/lib/utils";
 import { formatSessionDateTimeRange } from "@/lib/session-format";
-import type { GeduAssignmentSummary } from "@/lib/gedu-assignment-rollup";
+import {
+  assignmentLiveness,
+  type GeduAssignmentSummary,
+} from "@/lib/gedu-assignment-rollup";
 
 interface GeduAssignmentCardProps {
   assignment: GeduAssignmentSummary;
@@ -48,10 +51,15 @@ interface GeduAssignmentCardProps {
  * - **The footer holds the Join on a remote product and the venue on an
  *   in-person one.** Those are the same question — where is this happening —
  *   answered the two ways a product can answer it, and they are exclusive by
- *   construction, so exactly one of them is always there. The venue is text with
- *   a pin, deliberately not a link: there is nothing to open, and a card whose
- *   bottom row is sometimes a button and sometimes a link would teach a click
- *   that only works half the time.
+ *   construction, so an assignment with a session ahead of it always has exactly
+ *   one of them. The venue is text with a pin, deliberately not a link: there is
+ *   nothing to open, and a card whose bottom row is sometimes a button and
+ *   sometimes a link would teach a click that only works half the time. **One
+ *   state genuinely leaves it empty**, and it is the honest answer rather than
+ *   an oversight: a remote assignment whose schedule has run out has no session
+ *   to join and no building to name, and the line above it already says there is
+ *   nothing scheduled. Padding that card with a placeholder would be inventing a
+ *   fact to fill a box.
  * - **The attention badge overlays the card's top-right corner**, following the
  *   pattern the family session cards already use for a payment problem. It rode
  *   the end of the cadence line for a while, which read fine on one card and
@@ -62,7 +70,21 @@ interface GeduAssignmentCardProps {
  * - **Liveness is the gradient and a badge in the top-right cluster**, next to
  *   the chevron. It replaced a "session in progress" line in the middle of the
  *   card, which was a whole row spent restating what the card's own colour
- *   already said, and which only ever existed on one card at a time.
+ *   already said, and which only ever existed on one card at a time. The badge's
+ *   **slot is always there** and the badge is merely hidden inside it until the
+ *   session starts: it is the one thing on this card that appears on a *clock
+ *   tick* rather than on something the reader did, so mounting it as a flex
+ *   sibling would have widened the corner cluster — and reflowed the product
+ *   name beside it, and possibly the row's height — while somebody was reading.
+ *   Reserving it costs one badge width in a corner, and since every card
+ *   reserves the same word, the grid stays uniform as a side effect.
+ *
+ * **Live is asked once, of one clock.** Whether the session has started and
+ * whether its room is open are two answers to the same question and are derived
+ * together from the same `now`. They used to come from two places — the window
+ * flag baked into the roll-up when it last ran, the in-progress test recomputed
+ * on every tick — so the tick that crossed a session's start lit the card up
+ * while its Join stayed locked.
  *
  * The **Live badge is green**, and deliberately not the tone of the gradient
  * behind it. The gradient is a wash — it says "this card is different" before a
@@ -118,7 +140,6 @@ export function GeduAssignmentCard({
     nextSessionStart,
     nextSessionEnd,
     hasVoiceRoom,
-    voiceIsOpen,
     voiceHref,
     openHref,
     attentionCount,
@@ -126,7 +147,7 @@ export function GeduAssignmentCard({
   } = assignment;
 
   const hasNext = nextSessionStart !== null && nextSessionEnd !== null;
-  const inProgress = hasNext && nextSessionStart.getTime() <= now.getTime();
+  const { inProgress, voiceIsOpen } = assignmentLiveness(assignment, now);
   // Lit when something is actually happening — a room the gedu can walk into,
   // or a session already running. An in-person product has no room and still
   // deserves the treatment while its session is on.
@@ -181,17 +202,26 @@ export function GeduAssignmentCard({
                 clear — "Live" is four characters in English and rather more in
                 Finnish. `shrink-0` keeps the long product name from squeezing it.
                 Neither element is interactive; the stretched link over the whole
-                card paints above both and receives the click. */}
+                card paints above both and receives the click.
+
+                The badge is always in the layout and only `invisible` until the
+                session starts: it is the one thing here that turns up on a clock
+                tick rather than on a click, and a badge mounting into a flex row
+                widens the cluster — which squeezes the product name beside it and,
+                through `items-stretch`, can move the row itself. `invisible` is
+                also `visibility: hidden`, so it leaves the accessibility tree
+                too and nothing announces a session that has not begun. */}
             <div className="flex shrink-0 items-center gap-2">
-              {live && (
-                <Badge
-                  variant="outline"
-                  className="gap-1 border-success/50 bg-success/10 px-2 py-0 text-[10px] uppercase tracking-wide text-success"
-                >
-                  <Radio className="h-3 w-3" aria-hidden />
-                  {t("liveBadge")}
-                </Badge>
-              )}
+              <Badge
+                variant="outline"
+                className={cn(
+                  "gap-1 border-success/50 bg-success/10 px-2 py-0 text-[10px] uppercase tracking-wide text-success",
+                  !live && "invisible",
+                )}
+              >
+                <Radio className="h-3 w-3" aria-hidden />
+                {t("liveBadge")}
+              </Badge>
               <ChevronRight
                 aria-hidden
                 className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5"

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { NavChevron } from "@/components/ui/nav-chevron";
-import { SessionFeedAlertBadge } from "@/components/gedu/session-feed";
 import { useTimezone } from "@/providers";
 import { formatDate, formatTime } from "@/lib/utils";
 
@@ -27,20 +26,12 @@ export interface UpcomingGroupSessionCardProps {
   sessionStart: Date;
   /** Where a click on the card navigates — the gedu's session-details page. */
   openGroupHref: string;
-  /**
-   * Past sessions of this product still needing a write-up. Renders the
-   * aggregate alert badge; zero or absent renders nothing. Drawn only on a
-   * product's first card in the list, so a weekly club doesn't repeat the same
-   * warning down eight rows.
-   */
-  alertCount?: number;
 }
 
 export function UpcomingGroupSessionCard({
   productName,
   sessionStart,
   openGroupHref,
-  alertCount = 0,
 }: UpcomingGroupSessionCardProps) {
   const t = useTranslations("gedu.myGroups");
   const locale = useLocale();
@@ -67,7 +58,6 @@ export function UpcomingGroupSessionCard({
             <p className="truncate text-sm font-medium">{productName}</p>
             <p className="text-xs text-muted-foreground">{`${dateLabel} · ${timeLabel}`}</p>
           </div>
-          <SessionFeedAlertBadge count={alertCount} className="shrink-0" />
           <span className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
             {t("viewDetails")}
             <NavChevron size="sm" />

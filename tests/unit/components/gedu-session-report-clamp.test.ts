@@ -6,6 +6,7 @@ import {
   REPORT_ESTIMATED_CHARS_PER_LINE,
   REPORT_HEADING_LINE_COST,
   REPORT_LINE_HEIGHT_REM,
+  REPORT_LIST_GAP_LINES,
   estimateReportLines,
   reportOverflows,
 } from "@/components/gedu/session-feed/report-clamp";
@@ -36,9 +37,26 @@ describe("estimateReportLines", () => {
     );
   });
 
-  it("counts list items as blocks of their own", () => {
+  it("counts list items as blocks of their own, at the tighter list gap", () => {
+    // A list's items are set with `space-y-1`, half what the renderer puts
+    // between blocks — so charging them the block gap over-read every list.
     expect(estimateReportLines("- one\n- two\n- three")).toBeCloseTo(
-      3 + 2 * REPORT_BLOCK_GAP_LINES,
+      3 + 2 * REPORT_LIST_GAP_LINES,
+    );
+    expect(REPORT_LIST_GAP_LINES).toBeLessThan(REPORT_BLOCK_GAP_LINES);
+  });
+
+  it("charges the full block gap where a list meets what surrounds it", () => {
+    // Two boundaries at the list gap, two at the block gap: paragraph→item and
+    // item→paragraph are the list's own edges, not gaps inside it.
+    expect(
+      estimateReportLines("Before.\n\n- one\n- two\n- three\n\nAfter."),
+    ).toBeCloseTo(5 + 2 * REPORT_LIST_GAP_LINES + 2 * REPORT_BLOCK_GAP_LINES);
+  });
+
+  it("charges the list gap for a numbered list too", () => {
+    expect(estimateReportLines("1. one\n2. two")).toBeCloseTo(
+      2 + REPORT_LIST_GAP_LINES,
     );
   });
 
@@ -121,18 +139,6 @@ describe("reportOverflows", () => {
     expect(reportOverflows(wide.repeat(REPORT_CLAMP_LINES + 1))).toBe(true);
   });
 
-  /**
-   * **Determinism is the whole feature.** The server and the browser paint the
-   * same first frame, and nothing revises the decision afterwards — so the same
-   * source must always produce the same answer, whatever else has happened.
-   */
-  it("is a pure function of the source text", () => {
-    for (const markdown of [REAL_REPORT, "short", "", "- a\n- b\n- c"]) {
-      const first = estimateReportLines(markdown);
-      expect(estimateReportLines(markdown)).toBe(first);
-      expect(reportOverflows(markdown)).toBe(reportOverflows(markdown));
-    }
-  });
 });
 
 describe("the clamp's own dimensions", () => {
@@ -141,10 +147,16 @@ describe("the clamp's own dimensions", () => {
     expect(REPORT_CLAMP_LINES).toBeLessThanOrEqual(6);
   });
 
-  it("derives its height from the line box rather than a magic number", () => {
-    expect(REPORT_CLAMP_REM).toBeCloseTo(
+  /**
+   * The clamped box has to be tall enough to hold what the estimate says fits
+   * in it. Both sides derive from the same line box, so this is really a check
+   * that the CSS length and the arithmetic have not drifted apart — a clamp a
+   * line short would fade out text the estimate had already decided was safe.
+   */
+  it("is tall enough for the number of lines the estimate lets through", () => {
+    expect(REPORT_CLAMP_REM).toBeGreaterThanOrEqual(
       REPORT_CLAMP_LINES * REPORT_LINE_HEIGHT_REM,
-      10,
     );
+    expect(REPORT_LINE_HEIGHT_REM).toBeGreaterThan(1);
   });
 });

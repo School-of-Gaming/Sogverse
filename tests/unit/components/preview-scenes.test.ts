@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { formatInTimeZone } from "date-fns-tz";
 import {
   PREVIEW_SCENES,
   findPreviewScene,
@@ -20,6 +21,7 @@ import {
   entryNeedsAttention,
 } from "@/components/gedu/session-feed";
 import {
+  assignmentLiveness,
   geduActivityTypeOf,
   type GeduActivityType,
 } from "@/lib/gedu-assignment-rollup";
@@ -89,6 +91,9 @@ describe("preview scene registry", () => {
    * a single-noun page is a shape the all-three page structurally cannot show.
    */
   it("keeps the gedu scenes down to their mutually-exclusive scenarios", () => {
+    // A ceiling, not an equality: this test is here to stop a scene creeping
+    // back up to a scenario per state, and pinning the exact count would also
+    // fail on the day somebody correctly *folds* two scenarios into one.
     const MAX_SCENARIOS: Record<string, number> = {
       "gedu-product": 2,
       "gedu-dashboard": 3,
@@ -96,7 +101,9 @@ describe("preview scene registry", () => {
     for (const surface of ["gedu-product", "gedu-dashboard"] as const) {
       const scene = findPreviewScene(surface);
       expect(scene).not.toBeNull();
-      expect(scene!.scenarios.length, surface).toBe(MAX_SCENARIOS[surface]);
+      expect(scene!.scenarios.length, surface).toBeLessThanOrEqual(
+        MAX_SCENARIOS[surface],
+      );
       for (const scenario of scene!.scenarios) {
         expect(scenario.description?.trim(), `${surface}/${scenario.slug}`)
           .toBeTruthy();
@@ -558,7 +565,9 @@ describe("the gedu dashboard scene puts every card state on one screen", () => {
   }
 
   it("has exactly one card mid-session, with its room open", () => {
-    const open = summaries().filter((a) => a.voiceIsOpen);
+    const open = summaries().filter(
+      (a) => assignmentLiveness(a, now).voiceIsOpen,
+    );
     expect(open).toHaveLength(1);
     expect(open[0].nextSessionStart!.getTime()).toBeLessThanOrEqual(
       now.getTime(),
@@ -595,17 +604,12 @@ describe("the gedu dashboard scene puts every card state on one screen", () => {
 
   it("has a remote card that is not live, so the locked Join is visible", () => {
     const locked = summaries().filter(
-      (a) => a.hasVoiceRoom && !a.voiceIsOpen && a.nextSessionStart !== null,
+      (a) =>
+        a.hasVoiceRoom &&
+        !assignmentLiveness(a, now).voiceIsOpen &&
+        a.nextSessionStart !== null,
     );
     expect(locked.length).toBeGreaterThan(0);
-  });
-
-  it("never claims an open voice window on a product with no room", () => {
-    for (const assignment of summaries()) {
-      if (!assignment.hasVoiceRoom) {
-        expect(assignment.voiceIsOpen, assignment.productName).toBe(false);
-      }
-    }
   });
 
   it("spans all three type nouns, so every heading renders", () => {
@@ -633,19 +637,16 @@ describe("the gedu dashboard scene puts every card state on one screen", () => {
    * **Every card's footer holds something.** It used to be a reserved zone that
    * stood empty on any product with no room, which bought uniform heights with
    * two bands of nothing. Now it is the Join on a remote product and the venue
-   * on an in-person one — the same question answered the two ways a product can
-   * answer it — and the two are exclusive, so exactly one is always available.
-   * A fixture that lost an in-person product's site name would put the hole
-   * straight back without failing anything else.
+   * on an in-person one. That the two are mutually exclusive is the roll-up's
+   * own rule and is pinned there; what is this fixture's job — and would put the
+   * hole straight back without failing anything else — is that each of its
+   * in-person cards actually names a building.
    */
-  it("gives every card something to put in its footer", () => {
-    for (const assignment of summaries()) {
-      if (assignment.hasVoiceRoom) {
-        // A room to join, and never a building as well.
-        expect(assignment.siteName, assignment.productName).toBeNull();
-      } else {
-        expect(assignment.siteName, assignment.productName).toBeTruthy();
-      }
+  it("names a venue on every in-person card", () => {
+    const onsite = summaries().filter((a) => !a.hasVoiceRoom);
+    expect(onsite.length).toBeGreaterThan(0);
+    for (const assignment of onsite) {
+      expect(assignment.siteName, assignment.productName).toBeTruthy();
     }
   });
 
@@ -687,11 +688,16 @@ describe("the clubs-only scenario fills the grid", () => {
   });
 
   it("spreads their next sessions across the week rather than stacking them", () => {
+    // Bucketed by the day these sessions fall on **in the club's own zone**.
+    // A UTC day boundary is nobody's day, and the evening `now` above sits on
+    // the far side of one — so two clubs on different Helsinki evenings would
+    // have looked like one day, and the spread this asserts would have been
+    // measured against the wrong calendar.
     const days = new Set(
       clubsOnly()
         .map((a) => a.nextSessionStart)
         .filter((d): d is Date => d !== null)
-        .map((d) => d.toISOString().slice(0, 10)),
+        .map((d) => formatInTimeZone(d, "Europe/Helsinki", "yyyy-MM-dd")),
     );
     expect(days.size).toBeGreaterThanOrEqual(5);
   });
@@ -700,7 +706,9 @@ describe("the clubs-only scenario fills the grid", () => {
     const cards = clubsOnly();
     expect(cards.filter((a) => a.attentionCount > 0).length).toBeGreaterThan(1);
     expect(cards.filter((a) => a.attentionCount === 0).length).toBeGreaterThan(1);
-    expect(cards.filter((a) => a.voiceIsOpen)).toHaveLength(1);
+    expect(
+      cards.filter((a) => assignmentLiveness(a, now).voiceIsOpen),
+    ).toHaveLength(1);
   });
 
   it("gives every one of them a distinct name", () => {

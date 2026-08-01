@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Markdown } from "@/components/ui/markdown";
@@ -20,8 +20,15 @@ import { REPORT_CLAMP_REM, reportOverflows } from "./report-clamp";
  * an invisible edge reads as a report that happens to stop there, and a reader
  * who thinks they have finished does not look for a control. So a collapsed
  * report that has more to give fades out over its last line — a mask, not a
- * painted gradient, so it works on whatever surface the card is drawn on — and
- * the control sits directly beneath it.
+ * painted gradient, so it works on whatever surface the card is drawn on.
+ *
+ * **The control sits *above* the body, not under it.** It used to sit
+ * underneath, which is where the eye finishes reading and is exactly why it was
+ * wrong: expanding inserts several lines between the text and the button, so the
+ * button the reader had just clicked shot down the page and whatever was beneath
+ * it went with it. A control above its own region is the only arrangement where
+ * a reveal grows away from everything already painted — the same arrangement the
+ * attendance disclosure on this card uses, so the two behave alike.
  *
  * **Nothing here measures anything.** Whether a control is offered is decided
  * from the markdown source, by arithmetic the server and the browser both run,
@@ -61,33 +68,24 @@ export function SessionReport({
 }) {
   const t = useTranslations("gedu.sessionFeed");
   const [expanded, setExpanded] = useState(false);
+  const bodyId = useId();
 
   const overflowing = clamped && reportOverflows(markdown);
   const clipped = overflowing && !expanded;
 
   return (
     <div className={className}>
-      <div
-        // A fixed rem length while clipped and no ceiling at all otherwise —
-        // never a measured pixel height, because measuring is what this
-        // component exists not to do.
-        style={clipped ? { maxHeight: `${REPORT_CLAMP_REM}rem` } : undefined}
-        className={cn(
-          clipped &&
-            "overflow-hidden [mask-image:linear-gradient(to_bottom,black_calc(100%-2.25rem),transparent)]",
-        )}
-      >
-        <Markdown>{markdown}</Markdown>
-      </div>
-
       {overflowing && (
         <button
           type="button"
           onClick={() => setExpanded((open) => !open)}
           aria-expanded={expanded}
-          className="mt-1.5 inline-flex items-center gap-1 rounded-sm text-xs font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-controls={bodyId}
+          className="mb-1.5 inline-flex items-center gap-1 rounded-sm text-xs font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {expanded ? t("showLess") : t("readMore")}
+          {/* The chevron points at where the change lands: down into the body
+              this control sits above, up to fold it back away. */}
           {expanded ? (
             <ChevronUp className="h-3.5 w-3.5" aria-hidden />
           ) : (
@@ -95,6 +93,26 @@ export function SessionReport({
           )}
         </button>
       )}
+
+      <div
+        id={bodyId}
+        // A fixed rem length while clipped and no ceiling at all otherwise —
+        // never a measured pixel height, because measuring is what this
+        // component exists not to do.
+        style={clipped ? { maxHeight: `${REPORT_CLAMP_REM}rem` } : undefined}
+        className={cn(
+          // The `black` in the mask is not a colour and is not themed: a
+          // mask-image is read for its **alpha** only, so the stop means "fully
+          // opaque here" and the transparent one means "fully faded there". Any
+          // opaque value would do the same job; nothing of it is ever painted,
+          // which is the whole reason a mask is used instead of a gradient
+          // overlay that would have to know the card's own background.
+          clipped &&
+            "overflow-hidden [mask-image:linear-gradient(to_bottom,black_calc(100%-2.25rem),transparent)]",
+        )}
+      >
+        <Markdown>{markdown}</Markdown>
+      </div>
     </div>
   );
 }

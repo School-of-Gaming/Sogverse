@@ -238,6 +238,32 @@ describe("sessionStartsForCadence — a future block", () => {
       expect(start.getTime()).toBeGreaterThan(now.getTime());
     }
   });
+
+  /**
+   * A spec list with no future entries at all. It used to be floored at one,
+   * which dated the newest of a purely historical run in the *future* — a
+   * past-styled entry, with an attendance sheet, on a day that had not happened.
+   */
+  it("dates a list with no future block entirely behind now", () => {
+    for (const cadence of ["weekly", "daily"] as const) {
+      const starts = sessionStartsForCadence({
+        now,
+        count: 4,
+        cadence,
+        weekday: 0,
+        startTime: "16:30",
+        timeZone: TZ,
+        futureCount: 0,
+      });
+      expect(starts, cadence).toHaveLength(4);
+      for (const start of starts) {
+        expect(start.getTime(), cadence).toBeLessThan(now.getTime());
+      }
+      for (let i = 1; i < starts.length; i++) {
+        expect(starts[i].getTime()).toBeLessThan(starts[i - 1].getTime());
+      }
+    }
+  });
 });
 
 describe("countLeadingFutureSpecs", () => {
@@ -424,6 +450,10 @@ describe("buildSessionFeedFixture", () => {
       expect(entry.endsAt.getTime() - entry.startsAt.getTime()).toBe(
         180 * 60 * 1000,
       );
+      // Every one of these specs is a *past* session, so every one of them has
+      // to have already happened — the list has no future block for the head of
+      // the run to be pushed into.
+      expect(entry.startsAt.getTime()).toBeLessThan(now.getTime());
     }
   });
 });

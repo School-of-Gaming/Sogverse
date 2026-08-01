@@ -1,4 +1,4 @@
-import { formatInTimeZone, toZonedTime } from "date-fns-tz";
+import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import { previewSceneHref } from "@/components/preview/href";
 import { countEntriesNeedingAttention } from "@/components/gedu/session-feed";
 import { SESSION_FEED_TIMEZONE } from "@/components/gedu/session-feed/mock-fixtures";
@@ -491,11 +491,22 @@ function pad2(value: number): string {
 }
 
 /**
- * A bare `YYYY-MM-DD` offset from today. A product's start date is a zoneless
- * calendar date, so it is pinned to UTC rather than re-anchored to a viewer.
+ * A bare `YYYY-MM-DD` offset from today, **as today falls in the product's own
+ * zone**.
+ *
+ * A product's start and end dates are zoneless calendar dates, and they are read
+ * back as boundaries on a schedule authored in the product's timezone — so
+ * "today" here has to mean today *there*. Stepping and formatting in UTC instead
+ * put the whole run a day early for every evening between about 21:00 UTC and
+ * Helsinki midnight, which is exactly when a fixture's live in-person event
+ * would find its own end date already behind it and quietly stop being live.
  */
 function calendarDate(now: Date, dayOffset: number): string {
-  const date = new Date(now.getTime());
-  date.setUTCDate(date.getUTCDate() + dayOffset);
-  return formatInTimeZone(date, "UTC", "yyyy-MM-dd");
+  const zoned = toZonedTime(now, SESSION_FEED_TIMEZONE);
+  zoned.setDate(zoned.getDate() + dayOffset);
+  return formatInTimeZone(
+    fromZonedTime(zoned, SESSION_FEED_TIMEZONE),
+    SESSION_FEED_TIMEZONE,
+    "yyyy-MM-dd",
+  );
 }

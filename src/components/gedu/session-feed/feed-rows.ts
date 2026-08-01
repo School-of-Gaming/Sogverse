@@ -37,6 +37,16 @@ export type SessionFeedRow<T extends { startsAt: Date }> =
  * deliberately no divider above the first entry: the top of the feed is the
  * current month, which the dates right there already say, and a leading divider
  * would push the newest session — the whole point of the surface — down a row.
+ *
+ * **A divider is keyed by the entry that introduces it, not by its month.** This
+ * function does not sort and does not reject an out-of-order run — it renders
+ * what it is given, which is the honest thing to do with a caller's ordering bug
+ * — and a run that leaves a month and comes back to it would then emit the same
+ * month key twice. Duplicate React keys inside one list are the kind of fault
+ * that shows up as a node being reused for the wrong row rather than as an
+ * error. An entry id is unique by the same requirement that lets the entry rows
+ * use it, and it is stable as the feed grows: revealing the future inserts rows
+ * above a divider without changing which entry introduced it.
  */
 export function withMonthDividers<T extends { id: string; startsAt: Date }>(
   entries: readonly T[],
@@ -48,7 +58,11 @@ export function withMonthDividers<T extends { id: string; startsAt: Date }>(
   for (const entry of entries) {
     const month = monthKey(entry.startsAt, timeZone);
     if (previousMonth !== null && month !== previousMonth) {
-      rows.push({ kind: "month", key: `month-${month}`, startsAt: entry.startsAt });
+      rows.push({
+        kind: "month",
+        key: `month-${entry.id}`,
+        startsAt: entry.startsAt,
+      });
     }
     rows.push({ kind: "entry", key: entry.id, entry });
     previousMonth = month;

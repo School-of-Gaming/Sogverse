@@ -37,15 +37,39 @@ describe("withMonthDividers", () => {
       ],
       "UTC",
     );
+    // A divider is keyed by the entry that introduces it, so `#month-mar2`
+    // reads as "the boundary landing above mar2".
     expect(rows.map((r) => (r.kind === "month" ? `#${r.key}` : r.key))).toEqual([
       "apr2",
       "apr1",
-      "#month-2026-03",
+      "#month-mar2",
       "mar2",
       "mar1",
-      "#month-2026-02",
+      "#month-feb1",
       "feb1",
     ]);
+  });
+
+  /**
+   * This function renders the order it is given and deliberately does not sort,
+   * so a caller's ordering bug can produce a run that leaves a month and comes
+   * back to it. Keying a divider by its month would then emit the same React key
+   * twice inside one list — which does not throw, it quietly reuses a node for
+   * the wrong row.
+   */
+  it("keeps every key unique even when the run revisits a month", () => {
+    const rows = withMonthDividers(
+      [
+        entry("mar-a", "2026-03-30T14:30:00Z"),
+        entry("feb-a", "2026-02-23T14:30:00Z"),
+        entry("mar-b", "2026-03-02T14:30:00Z"),
+        entry("feb-b", "2026-02-02T14:30:00Z"),
+      ],
+      "UTC",
+    );
+    const keys = rows.map((r) => r.key);
+    expect(new Set(keys).size).toBe(keys.length);
+    expect(rows.filter((r) => r.kind === "month")).toHaveLength(3);
   });
 
   it("labels the divider with the month being scrolled into", () => {
@@ -81,7 +105,7 @@ describe("withMonthDividers", () => {
       "UTC",
     );
     const keys = rows.filter((r) => r.kind === "month").map((r) => r.key);
-    expect(keys).toEqual(["month-2026-12"]);
+    expect(keys).toEqual(["month-dec"]);
   });
 
   it("puts the boundary where the *viewer* sees it, not where UTC does", () => {

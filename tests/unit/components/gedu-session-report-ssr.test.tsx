@@ -97,6 +97,19 @@ describe("a session report is whole in the server's HTML", () => {
     }
   });
 
+  /**
+   * The control precedes the body it opens, in the markup itself. That is the
+   * layout rule rather than a stylistic preference: a control *under* a
+   * collapsible region is pushed down the page by its own expansion, taking the
+   * cursor's target and everything below it with it.
+   */
+  it("puts the control above the body it expands", () => {
+    const html = serverHtml(LONG_REPORT);
+    expect(html.indexOf(messages.gedu.sessionFeed.readMore)).toBeLessThan(
+      html.indexOf("mask-image"),
+    );
+  });
+
   it("offers nothing on a report that fits", () => {
     const html = serverHtml(SHORT_REPORT);
     expect(html).toContain("without losing anybody to a creeper");

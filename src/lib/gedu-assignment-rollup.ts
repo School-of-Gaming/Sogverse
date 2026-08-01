@@ -75,15 +75,14 @@ export interface GeduAssignmentSummary {
    * product. **An in-person assignment renders no Join affordance**, rather
    * than a locked one: a locked button promises it will unlock, and a camp in a
    * library has no room behind it that ever will.
+   *
+   * Note what is *not* here: whether the room is open right now. That is a fact
+   * about the current instant, not about the assignment, and baking it into a
+   * summary built once per data change gave the card two clocks — a badge
+   * recomputed on every `useNow()` tick beside a Join button frozen at whatever
+   * the roll-up thought when it last ran. Ask `assignmentLiveness` instead.
    */
   hasVoiceRoom: boolean;
-  /**
-   * Whether that session's voice window is open right now. Always false without
-   * a room — an in-person assignment has no window to be inside, and a caller
-   * lighting a card up on this flag would otherwise announce a room that does
-   * not exist.
-   */
-  voiceIsOpen: boolean;
   /** Where the Join button navigates. `"#"` keeps it inert. */
   voiceHref: string;
   /**
@@ -145,10 +144,6 @@ export function rollUpGeduAssignments({
       nextSessionStart: next?.start ?? null,
       nextSessionEnd: next?.end ?? null,
       hasVoiceRoom,
-      voiceIsOpen:
-        hasVoiceRoom &&
-        next !== null &&
-        isVoiceWindowOpen(next.start, next.end, now),
       // Only meaningful when there is a room; an in-person assignment renders no
       // Join at all, so its href is never read.
       voiceHref: hasVoiceRoom
@@ -165,6 +160,49 @@ export function rollUpGeduAssignments({
 
   summaries.sort(bySoonestSession);
   return summaries;
+}
+
+/** Whether an assignment is happening right now, as of one instant. */
+export interface AssignmentLiveness {
+  /** The next session has already started — it is running as you look at it. */
+  inProgress: boolean;
+  /**
+   * The voice window around that session is open. Always false without a room:
+   * an in-person assignment has no window to be inside, and a card lighting up
+   * on this would be announcing a room that does not exist.
+   */
+  voiceIsOpen: boolean;
+}
+
+/**
+ * Whether an assignment is live, asked at the moment of asking.
+ *
+ * **A card has one clock.** Both halves of "is this happening now" are derived
+ * here from the same `now`, so the gradient, the Live badge and the Join button
+ * can never disagree — which is exactly what happened when the window flag was
+ * baked into the summary and the in-progress test was recomputed per tick: on
+ * the tick that crossed a session's start the card went live and its Join stayed
+ * locked until something else caused the roll-up to run again.
+ *
+ * Pure and instant-in, so the card, a preview fixture and a test all ask the
+ * same question the same way.
+ */
+export function assignmentLiveness(
+  assignment: Pick<
+    GeduAssignmentSummary,
+    "nextSessionStart" | "nextSessionEnd" | "hasVoiceRoom"
+  >,
+  now: Date,
+): AssignmentLiveness {
+  const { nextSessionStart, nextSessionEnd, hasVoiceRoom } = assignment;
+  if (nextSessionStart === null || nextSessionEnd === null) {
+    return { inProgress: false, voiceIsOpen: false };
+  }
+  return {
+    inProgress: nextSessionStart.getTime() <= now.getTime(),
+    voiceIsOpen:
+      hasVoiceRoom && isVoiceWindowOpen(nextSessionStart, nextSessionEnd, now),
+  };
 }
 
 /**
