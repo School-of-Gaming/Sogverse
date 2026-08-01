@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ChevronsDown } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useNow, useTimezone } from "@/providers";
 import { cn } from "@/lib/utils";
-import { LaterSessionsBlock } from "./LaterSessionsBlock";
+import { NowDivider } from "./NowDivider";
 import { SessionFeedItem } from "./SessionFeedItem";
 import {
   entryCompleteness,
@@ -14,12 +14,28 @@ import {
   pastEntryWindow,
 } from "./entry-state";
 import { withMonthDividers, type SessionFeedRow } from "./feed-rows";
+import { COLLAPSE_HOLD_MS, useViewportAnchor } from "./scroll-anchor";
 import { formatMonthLabel, formatSessionLabels } from "./session-labels";
 import type {
   SessionEntryDraft,
   SessionFeedEntry,
   SessionFeedGamer,
 } from "./types";
+
+/**
+ * The now-divider's React key.
+ *
+ * Constant, and that is the whole point: the divider moves down the list as the
+ * future is revealed above it, and a key that changed with its position would
+ * make React replace the element rather than move it — taking the node the
+ * scroll correction measures out from under it mid-toggle.
+ */
+const DIVIDER_KEY = "now-divider";
+
+/** Everything the feed renders as a row, in one keyed list. */
+type FeedRow =
+  | SessionFeedRow<SessionFeedEntry>
+  | { kind: "divider"; key: typeof DIVIDER_KEY };
 
 interface SessionFeedProps {
   /**
@@ -54,15 +70,35 @@ interface SessionFeedProps {
  * reads as a single continuous story rather than a stack of unrelated cards,
  * and the markers alone tell you where the gaps are before you read a word.
  *
- * Three things keep a long feed navigable without ever moving painted content:
+ * **It is one feed, with one boundary in it.** Everything renders as the same
+ * kind of row on the same rail — future sessions included. The only thing
+ * separating them from the past is a slim divider carrying the "N upcoming
+ * sessions" toggle, and that divider is the sole piece of chrome in the column.
+ * The future used to be a dashed container that grew downward inside itself,
+ * which quietly taught that a session ahead of you is a different kind of object
+ * from a session behind you. It is not: it has the same card, the same states
+ * and the same editor.
  *
- * - **Later future sessions collapse** behind one row above the next session,
- *   and reveal *inside* it — they are that block's contents, so it keeps the
- *   single rail marker and they render without one.
+ * Two things keep a long feed navigable without ever moving painted content:
+ *
+ * - **The future reveals upward with the viewport pinned.** Date order is never
+ *   violated, so expanding inserts sessions *above* the divider — which would
+ *   shove the whole page down. Instead the scroll is corrected by exactly the
+ *   height that appeared, in the same frame, before the browser paints: the
+ *   divider and everything under it stay on the pixel they were on, and the
+ *   future is read by scrolling up into it. Nothing animates on that reveal;
+ *   animating geometry against a scroll correction is how this pattern breaks.
  * - **The past opens on its recent slice** and older chunks are appended
- *   *below* on request, so the reveal grows away from everything being read.
+ *   *below* on request, so that reveal grows away from everything being read.
  * - **Month dividers** mark each boundary the scroll crosses, which is what
  *   turns a year of near-identical weekly dates back into something scannable.
+ *   They are computed over the whole visible run, so revealing the future never
+ *   produces the same month labelled twice.
+ *
+ * The same pinning covers **saving an editor**: the card shrinks back to its
+ * collapsed height under the button that was just clicked, so the entry's top
+ * edge is held through the collapse and the header the gedu is reading stays
+ * where they are reading it.
  *
  * Which entry is open is the caller's state and saving is the caller's callback;
  * how much of the feed is revealed is this component's own, because it is pure
@@ -86,24 +122,58 @@ export function SessionFeed({
   const [laterOpen, setLaterOpen] = useState(false);
   const [chunksRevealed, setChunksRevealed] = useState(0);
 
+  const anchor = useViewportAnchor();
+  const dividerRef = useRef<HTMLLIElement>(null);
+  /**
+   * Every entry's row element, so a save can anchor the card it happened on.
+   * A map rather than one ref: which entry is being saved is only known when
+   * the click arrives.
+   */
+  const entryRows = useRef(new Map<string, HTMLLIElement>());
+
   const { laterFuture, nextSession, past } = useMemo(
     () => partitionFeedEntries(entries),
     [entries],
   );
   const pastWindow = pastEntryWindow(past.length, chunksRevealed);
 
-  const mainRows = useMemo(() => {
-    const visible = past.slice(0, pastWindow.visible);
-    return withMonthDividers(
-      nextSession === null ? visible : [nextSession, ...visible],
-      timeZone,
-    );
-  }, [nextSession, past, pastWindow.visible, timeZone]);
+  /**
+   * One descending run of everything currently on screen — future sessions,
+   * month labels, the now-divider and the past — as a single keyed list.
+   *
+   * Single, for two reasons. A month boundary falling between the last future
+   * session and the next one is then labelled once, in the right place, rather
+   * than once on each side of the divider. And the divider **keeps its DOM
+   * node** across the toggle: it changes index when the future appears above
+   * it, and only a stable key inside one array makes React move that node
+   * instead of tearing it down and building another. The scroll correction
+   * measures that node before and after the state change, so a replaced node
+   * would leave it measuring a detached element — every rect zero, and the
+   * page thrown to a position nobody asked for.
+   */
+  const rows = useMemo((): FeedRow[] => {
+    const visible: SessionFeedEntry[] = [
+      ...(laterOpen ? laterFuture : []),
+      ...(nextSession === null ? [] : [nextSession]),
+      ...past.slice(0, pastWindow.visible),
+    ];
+    const dated = withMonthDividers(visible, timeZone);
+    if (laterFuture.length === 0 || nextSession === null) return dated;
 
-  const laterRows = useMemo(
-    () => withMonthDividers(laterFuture, timeZone),
-    [laterFuture, timeZone],
-  );
+    // Above the next session, and above the month label introducing it when
+    // there is one: a month heading belongs against the entries it names, not
+    // cut off from them by a boundary line.
+    const at = dated.findIndex(
+      (row) => row.kind === "entry" && row.entry.id === nextSession.id,
+    );
+    if (at < 0) return dated;
+    const insertAt = at > 0 && dated[at - 1].kind === "month" ? at - 1 : at;
+    return [
+      ...dated.slice(0, insertAt),
+      { kind: "divider", key: DIVIDER_KEY },
+      ...dated.slice(insertAt),
+    ];
+  }, [laterOpen, laterFuture, nextSession, past, pastWindow.visible, timeZone]);
 
   if (entries.length === 0) {
     return (
@@ -113,23 +183,48 @@ export function SessionFeed({
     );
   }
 
+  const toggleLater = () => {
+    // Captured before the state change, while the divider is still where the
+    // reader can see it. No hold: this reveal does not animate, so the geometry
+    // is final by the time the correction runs.
+    anchor.capture(dividerRef.current);
+    setLaterOpen((open) => !open);
+  };
+
   /**
-   * `onRail` is false for the rows revealed inside the collapsed future block.
-   * Those sessions are the *contents* of that block, which carries the rail
-   * marker for all of them; giving each one its own marker would push a row of
-   * dots into the block's padding, where they read as decoration rather than as
-   * points on the timeline.
+   * Hold the entry's own top edge across an editor collapsing shut. The card
+   * loses most of its height in one transition, and without this the header —
+   * the thing the gedu has just finished reading, sitting right under their
+   * cursor — is dragged up the screen by a save they did not expect to move
+   * anything. The hold runs through the transition, and stops the moment the
+   * reader scrolls.
    */
-  const renderRow = (row: SessionFeedRow<SessionFeedEntry>, onRail: boolean) => {
+  const anchorEntry = (entryId: string) => {
+    anchor.capture(entryRows.current.get(entryId) ?? null, {
+      holdMs: COLLAPSE_HOLD_MS,
+    });
+  };
+
+  const renderRow = (row: FeedRow) => {
+    if (row.kind === "divider") {
+      return (
+        <li key={row.key} ref={dividerRef}>
+          <NowDivider
+            count={laterFuture.length}
+            open={laterOpen}
+            onToggle={toggleLater}
+          />
+        </li>
+      );
+    }
+
     if (row.kind === "month") {
       return (
         <li key={row.key} className="relative pt-1">
-          {onRail && (
-            <span
-              aria-hidden
-              className="absolute -left-6 top-1/2 h-px w-3 -translate-x-1/2 bg-border"
-            />
-          )}
+          <span
+            aria-hidden
+            className="absolute -left-6 top-1/2 h-px w-3 -translate-x-1/2 bg-border"
+          />
           <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             {formatMonthLabel(row.startsAt, locale, timeZone)}
           </p>
@@ -141,17 +236,22 @@ export function SessionFeed({
     const editing = editingEntryId === entry.id;
     const prominent = entry.id === nextSession?.id;
     return (
-      <li key={row.key} className="relative">
-        {onRail && (
-          <span
-            aria-hidden
-            className={cn(
-              "absolute -left-6 h-2.5 w-2.5 -translate-x-1/2 rounded-full ring-4 ring-background",
-              entry.kind === "no_record" ? "top-3.5" : "top-5",
-              markerTone(entry, roster, prominent),
-            )}
-          />
-        )}
+      <li
+        key={row.key}
+        ref={(node) => {
+          if (node === null) entryRows.current.delete(entry.id);
+          else entryRows.current.set(entry.id, node);
+        }}
+        className="relative"
+      >
+        <span
+          aria-hidden
+          className={cn(
+            "absolute -left-6 h-2.5 w-2.5 -translate-x-1/2 rounded-full ring-4 ring-background",
+            entry.kind === "no_record" ? "top-3.5" : "top-5",
+            markerTone(entry, roster, prominent),
+          )}
+        />
         <SessionFeedItem
           entry={entry}
           roster={roster}
@@ -163,9 +263,18 @@ export function SessionFeed({
             now,
           })}
           editing={editing}
-          onToggleEdit={() => onEditEntry(editing ? null : entry.id)}
-          onCancelEdit={() => onEditEntry(null)}
-          onSave={(draft) => onSaveEntry(entry.id, draft)}
+          onToggleEdit={() => {
+            if (editing) anchorEntry(entry.id);
+            onEditEntry(editing ? null : entry.id);
+          }}
+          onCancelEdit={() => {
+            anchorEntry(entry.id);
+            onEditEntry(null);
+          }}
+          onSave={(draft) => {
+            anchorEntry(entry.id);
+            onSaveEntry(entry.id, draft);
+          }}
         />
       </li>
     );
@@ -175,21 +284,7 @@ export function SessionFeed({
     <div
       className={cn("relative space-y-3 border-l border-border pl-6", className)}
     >
-      {laterFuture.length > 0 && (
-        <LaterSessionsBlock
-          count={laterFuture.length}
-          open={laterOpen}
-          onToggle={() => setLaterOpen((o) => !o)}
-        >
-          <ol className="space-y-3">
-            {laterRows.map((row) => renderRow(row, false))}
-          </ol>
-        </LaterSessionsBlock>
-      )}
-
-      <ol className="space-y-3">
-        {mainRows.map((row) => renderRow(row, true))}
-      </ol>
+      <ol className="space-y-3">{rows.map(renderRow)}</ol>
 
       {pastWindow.remaining > 0 && (
         // Appends beneath itself, so the button walks down the page with the

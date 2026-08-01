@@ -1,4 +1,5 @@
 export { CollapsibleRegion } from "./CollapsibleRegion";
+export { NowDivider } from "./NowDivider";
 export { SessionFeed } from "./SessionFeed";
 export { SessionFeedAlertBadge } from "./SessionFeedAlertBadge";
 export { SessionReport } from "./SessionReport";
@@ -27,8 +28,15 @@ export type { AttendanceTally, SessionCompleteness } from "./entry-state";
 export {
   REPORT_CLAMP_LINES,
   REPORT_CLAMP_REM,
+  estimateReportLines,
+  reportLikelyOverflows,
   reportOverflows,
 } from "./report-clamp";
+export {
+  COLLAPSE_HOLD_MS,
+  resolveScrollCompensation,
+  useViewportAnchor,
+} from "./scroll-anchor";
 export type {
   AttendanceMark,
   AttendanceMarks,
