@@ -396,7 +396,47 @@ describe("club reports are markdown, at realistic lengths", () => {
     const lengths = clubReports().map((r) => r.length);
     expect(lengths.filter((n) => n >= 500).length).toBeGreaterThan(5);
     expect(lengths.filter((n) => n < 300).length).toBeGreaterThan(3);
-    expect(Math.max(...lengths)).toBeLessThan(1600);
+    expect(Math.max(...lengths)).toBeLessThan(2000);
+  });
+
+  /**
+   * The *dominant* shape a real report takes, and the one the clamp is
+   * therefore judged against: a dated title line and then several paragraphs of
+   * plain prose. Every other fixture here was written to exercise the renderer
+   * — a section, a list, a bolded line — which is a fair test of the renderer
+   * and a poor picture of what a gedu writes on a Monday evening. Losing this
+   * one would leave the feed reviewed entirely against demonstration copy.
+   */
+  it("leads with a full dated write-up, and makes it the longest one", () => {
+    // The newest past entry, so it is the first report on the page.
+    const { entries } = buildGeduProductPageFixture(now, "club");
+    const newest = entries.filter((e) => e.kind === "past")[0].report ?? "";
+
+    expect(newest.length).toBeGreaterThan(1400);
+    // A date, then a name for the session — `d.M.yyyy`, resolved from the
+    // occurrence it landed on rather than hardcoded.
+    expect(newest).toMatch(/^# \d{1,2}\.\d{1,2}\.\d{4} – \S/);
+    // Plain prose: no sections, no bullets. That is what makes it long without
+    // being a list of headings, which is the case the clamp has to survive.
+    expect(newest).not.toMatch(/^\s*## /m);
+    expect(newest).not.toMatch(/^\s*[-*] /m);
+    expect(newest.split(/\n\s*\n/).length).toBeGreaterThanOrEqual(7);
+
+    // And nothing in the year is longer. The recaps cycle over a 53-week run,
+    // so this same write-up lands on a second date whose numerals differ by a
+    // character or two — hence a tolerance rather than an exact maximum.
+    const longest = Math.max(...clubReports().map((r) => r.length));
+    expect(longest - newest.length).toBeLessThanOrEqual(2);
+  });
+
+  it("leaves no unresolved date placeholder in any report", () => {
+    for (const scenario of GEDU_PRODUCT_SCENARIOS) {
+      const { entries } = buildGeduProductPageFixture(now, scenario);
+      for (const entry of entries) {
+        if (entry.kind !== "past" && entry.kind !== "future") continue;
+        expect(entry.report ?? "", scenario).not.toContain("{date}");
+      }
+    }
   });
 
   /**
@@ -537,18 +577,84 @@ describe("the gedu dashboard scene puts every card state on one screen", () => {
     }
   });
 
-  it("narrows to a single type noun in the clubs-only scenario", () => {
-    const { assignments } = buildGeduDashboardFixture(
+  /**
+   * **Every card's footer holds something.** It used to be a reserved zone that
+   * stood empty on any product with no room, which bought uniform heights with
+   * two bands of nothing. Now it is the Join on a remote product and the venue
+   * on an in-person one — the same question answered the two ways a product can
+   * answer it — and the two are exclusive, so exactly one is always available.
+   * A fixture that lost an in-person product's site name would put the hole
+   * straight back without failing anything else.
+   */
+  it("gives every card something to put in its footer", () => {
+    for (const assignment of summaries()) {
+      if (assignment.hasVoiceRoom) {
+        // A room to join, and never a building as well.
+        expect(assignment.siteName, assignment.productName).toBeNull();
+      } else {
+        expect(assignment.siteName, assignment.productName).toBeTruthy();
+      }
+    }
+  });
+
+  it("names the camp's venue with the same string its product page does", () => {
+    const camp = summaries().find((a) => a.productType === "camp");
+    const { site } = buildGeduProductPageFixture(now, "camp");
+    expect(camp?.siteName).toBe(site?.name);
+  });
+});
+
+/**
+ * The clubs-only scenario stopped being only about the single-noun heading the
+ * moment the cards started tiling: two cards say nothing about how a grid wraps,
+ * and a gedu with a full timetable is exactly who meets the wrapping. Seven is
+ * what fills a three-column row and starts a second — and an uneven second row
+ * is the case worth looking at.
+ */
+describe("the clubs-only scenario fills the grid", () => {
+  const now = new Date("2026-02-11T20:00:00Z");
+
+  function clubsOnly() {
+    return buildGeduDashboardFixture(
       now,
       "clubs-only",
       "en",
       "Europe/Helsinki",
-    );
-    expect(assignments.length).toBeGreaterThan(1);
+    ).assignments.map((card) => card.assignment);
+  }
+
+  it("narrows to a single type noun", () => {
     const nouns = new Set(
-      assignments.map((a) => geduActivityTypeOf(a.assignment.productType)),
+      clubsOnly().map((a) => geduActivityTypeOf(a.productType)),
     );
     expect(nouns).toEqual(new Set(["club"]));
+  });
+
+  it("carries seven clubs, so the tiles wrap at two and at three columns", () => {
+    expect(clubsOnly()).toHaveLength(7);
+  });
+
+  it("spreads their next sessions across the week rather than stacking them", () => {
+    const days = new Set(
+      clubsOnly()
+        .map((a) => a.nextSessionStart)
+        .filter((d): d is Date => d !== null)
+        .map((d) => d.toISOString().slice(0, 10)),
+    );
+    expect(days.size).toBeGreaterThanOrEqual(5);
+  });
+
+  it("puts a backlog on some cards and not others, and one of them live", () => {
+    const cards = clubsOnly();
+    expect(cards.filter((a) => a.attentionCount > 0).length).toBeGreaterThan(1);
+    expect(cards.filter((a) => a.attentionCount === 0).length).toBeGreaterThan(1);
+    expect(cards.filter((a) => a.voiceIsOpen)).toHaveLength(1);
+  });
+
+  it("gives every one of them a distinct name", () => {
+    const names = clubsOnly().map((a) => a.productName);
+    expect(new Set(names).size).toBe(names.length);
+    for (const name of names) expect(name.trim()).not.toBe("");
   });
 
   it("only withholds verification in the scenario that is about it", () => {

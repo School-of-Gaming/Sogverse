@@ -1,4 +1,4 @@
-import { fromZonedTime, toZonedTime } from "date-fns-tz";
+import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import { getNextSessionStart } from "@/lib/enrollment";
 import type {
   AttendanceMark,
@@ -536,6 +536,26 @@ function wallDate(zoned: Date): string {
   return `${zoned.getFullYear()}-${month}-${day}`;
 }
 
+/**
+ * The placeholder a fixture report writes where its own session's date goes.
+ *
+ * Real reports open with a dated title line, and a fixture that hardcoded one
+ * would print a date next to a session card showing a different one — which
+ * looks like a bug rather than like sample copy. The specs are written before
+ * any date is known, so they leave a slot and the builder fills it in from the
+ * occurrence the report actually lands on.
+ */
+export const REPORT_DATE_PLACEHOLDER = "{date}";
+
+/** `d.M.yyyy` in the club's own zone — how a Finnish gedu writes a date. */
+function resolveReportDate(report: string | undefined, startsAt: Date): string | null {
+  if (report === undefined) return null;
+  return report.replaceAll(
+    REPORT_DATE_PLACEHOLDER,
+    formatInTimeZone(startsAt, TIMEZONE, "d.M.yyyy"),
+  );
+}
+
 function toEntry(
   spec: EntrySpec,
   base: { id: string; startsAt: Date; endsAt: Date },
@@ -548,7 +568,7 @@ function toEntry(
         id,
         startsAt,
         endsAt,
-        report: spec.report ?? null,
+        report: resolveReportDate(spec.report, startsAt),
         staffNote: spec.staffNote ?? null,
       };
     case "past":
@@ -557,7 +577,7 @@ function toEntry(
         id,
         startsAt,
         endsAt,
-        report: spec.report ?? null,
+        report: resolveReportDate(spec.report, startsAt),
         staffNote: spec.staffNote ?? null,
         attendance: marksForSpec(spec),
       };

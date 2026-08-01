@@ -101,20 +101,20 @@ export const PREVIEW_SCENES = [
     surface: "gedu-dashboard",
     title: "Gedu dashboard (draft)",
     description:
-      "The gedu dashboard rolled up to one card per group they run, grouped under the type nouns: next session with its Join state, the cadence in words, and an aggregate “needs attention” badge counted out of that product’s own feed. Every card is the same height whatever state it is in. The two scene-backed cards open the matching product-page scene.",
+      "The gedu dashboard rolled up to one card per group they run, grouped under the type nouns: next session, the cadence in words with an aggregate “needs attention” badge on the end of it, a Live badge in the corner while something is running, and a footer holding the Join on a remote product or the venue on an in-person one. Every card is the same height because every zone holds something, not because empty ones are padded. The two scene-backed cards open the matching product-page scene.",
     chrome: "dashboard",
     scenarios: [
       {
         slug: "default",
         label: "Working dashboard",
         description:
-          "All three type nouns, and the four card shapes that cover every state: a remote club live right now (Join lit), a remote club later this week (Join locked), an in-person camp owing a write-up (attention badge, no Join), and an in-person event running now (“session in progress”, still no Join). The last pairing is what proves the reserved footer keeps every card the same height.",
+          "All three type nouns, and the four card shapes that cover every state: a remote club live right now (Live badge, Join lit), a remote club later this week (Join locked), an in-person camp owing a write-up (attention badge, venue in the footer), and an in-person event running now (Live badge, venue, still no Join). The last pairing is what proves the footer zone is full on both kinds of product.",
       },
       {
         slug: "clubs-only",
         label: "Clubs only",
         description:
-          "The single-noun composition most gedus actually have: one “Clubs” heading and one pill entry, with the camp and event groups absent rather than empty.",
+          "The single-noun composition most gedus actually have — one “Clubs” heading, one pill entry, camps and events absent rather than empty — and seven clubs in it, so how the cards tile and wrap is visible at both the two-column and three-column widths. Their next sessions are spread across the week, a couple carry a backlog, and one is live.",
       },
       {
         slug: "unverified",
@@ -128,14 +128,14 @@ export const PREVIEW_SCENES = [
     surface: "gedu-product",
     title: "Gedu product page (draft)",
     description:
-      "The product page rebuilt around the session feed: the masthead, the standing notes row, the future horizon collapsed above the next session, the term running backwards behind month dividers, and the reference rail beside it. Every editor — write-up, forward plan, group notes, site notes — works against local state.",
+      "The product page rebuilt around the session feed: the masthead, the standing notes row, one continuous timeline with a “now” divider between the future and the past, the term running backwards behind month dividers, and the reference rail beside it. Expanding the future reveals it upward with the viewport pinned, so nothing already on screen moves. Every editor — write-up, forward plan, group notes, site notes — works against local state.",
     chrome: "dashboard",
     scenarios: [
       {
         slug: "club",
         label: "Club — remote, weekly",
         description:
-          "The kitchen sink. Fifty-five weeks of history behind month dividers and the chunked reveal, all three rungs of the completeness ladder (green-checked, quietly done, and still owed), reports from two lines to twelve so the clamp and its “Read more” are both on screen, holiday skips, a pre-epoch tail, and three sister groups in the rail including one nobody teaches yet.",
+          "The kitchen sink. Fifty-five weeks of history behind month dividers and the chunked reveal, all three rungs of the completeness ladder (green-checked, quietly done, and still owed), reports from two lines to a full dated write-up so the clamp and its “Read more” are both on screen from the first frame, holiday skips, a pre-epoch tail, and three sister groups in the rail including one nobody teaches yet.",
       },
       {
         slug: "camp",

@@ -270,7 +270,45 @@ const CAMP_SPECS: readonly EntrySpec[] = [
  * paragraphs, bold, lists — so any of these can be opened in the editor and
  * saved back unchanged.
  */
+/**
+ * **The shape a real report actually takes**, and the longest fixture here on
+ * purpose.
+ *
+ * Everything else in this file was written to exercise the *renderer* — a
+ * heading, a section, a list, a bolded line — which is useful and is not what a
+ * gedu produces on a Monday evening. A real one opens with the date and a name
+ * for the session, and then runs as half a dozen short paragraphs of plain
+ * prose: no sections, no bullets, a warm recap addressed to the parent who will
+ * read it on a phone, and a line at the end to close it off.
+ *
+ * It sits at the head of the club's history so it is the first report a reviewer
+ * meets, and at ~1600 characters it is comfortably the longest — which makes it,
+ * rather than a tidy demonstration list, the report the clamp and its "Read
+ * more" are judged against.
+ *
+ * The date is a placeholder the fixture builder fills in from the session this
+ * lands on, so the title always agrees with the card above it.
+ */
+const CASTLE_RECAP = `# {date} – Lohikäärmeen linna
+
+We spent the whole of this one on the castle, and it is finally the shape everyone has been arguing about since before the break.
+
+The towers went up first. Aino and Väinö took one each and agreed a height beforehand, which is the first time that has happened without me suggesting it — the two towers actually match, and you can see the difference from the road.
+
+Elias worked on the gate all evening. It opens on a lever hidden behind the left pillar, and he tested it about forty times before he let anybody else near it. It works every time now, which is more than can be said for most of the redstone in this world.
+
+Linnéa and Siiri built the great hall in the middle. They spent most of the session on the floor pattern rather than the walls, which sounded like a mistake and turned out not to be: the room reads as a proper hall the moment you walk into it, and nobody has said a word about the walls.
+
+Oskar and Emil took the outer wall, and had a long and serious disagreement about whether a castle needs a moat. It does not have one. The argument is not over.
+
+Hilda spent the session lighting the whole thing. It is the job nobody volunteers for and it is the reason the castle looks finished rather than half-built, so it is worth saying out loud that she picked it herself.
+
+We ended with everyone standing on top of the north tower looking down at it, which felt like the right way to finish.
+
+Thank you all — the castle stays in the world, so do go and walk around it during the week.`;
+
 const YEARLONG_RECAPS: readonly string[] = [
+  CASTLE_RECAP,
   `# Redstone doors
 
 Everyone built a door that actually closes behind them, which took considerably longer than anyone expected.
