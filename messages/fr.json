@@ -875,6 +875,8 @@
       "emailPlaceholder": "vous@exemple.com",
       "passwordPlaceholder": "Créez un mot de passe solide",
       "confirmPasswordPlaceholder": "Confirmez votre mot de passe",
+      "location": "Localisation",
+      "locationHint": "Nous permet de vous montrer les clubs près de chez vous. Vous pourrez l’ajouter ou la modifier plus tard.",
       "creatingAccount": "Création du compte...",
       "accountExists": "Un compte existe déjà avec cette adresse e-mail",
       "alreadyHaveAccount": "Vous avez déjà un compte ? <link>Connectez-vous</link>"
@@ -1561,12 +1563,17 @@
       "noResults": "Aucun résultat dans le catalogue pour « {query} ».",
       "showingSome": "Affichage des {shown} premiers résultats sur {total}. Continuez à saisir pour affiner.",
       "browseInto": "Afficher le contenu de {name}",
-      "nothingSelected": "Choisissez une commune pour continuer.",
+      "nothingSelected": "Choisissez un lieu pour continuer.",
       "confirm": "Continuer",
       "tickedCount": "{count, plural, =0 {Aucune zone cochée} one {# zone cochée} other {# zones cochées}}",
       "done": "Terminé",
       "clearSearch": "Effacer la recherche",
       "confirming": "Ouverture…"
+    },
+    "home": {
+      "choose": "Ajoutez votre localisation",
+      "dialogTitle": "Où habitez-vous ?",
+      "dialogDescription": "Parcourez la liste ou recherchez par nom."
     }
   },
   "minecraft": {
@@ -1718,7 +1725,9 @@
     "minecraftCleared": "Nom d’utilisateur Minecraft effacé.",
     "failedToUpdateMinecraft": "Échec de la mise à jour du nom d’utilisateur Minecraft.",
     "saveMinecraft": "Enregistrer le nom d’utilisateur Minecraft",
-    "spokenLanguages": "Langues parlées à la maison"
+    "spokenLanguages": "Langues parlées à la maison",
+    "location": "Localisation",
+    "locationHint": "Nous permet de vous montrer les clubs près de chez vous."
   },
   "voice": {
     "participants": "Participants",

@@ -1,4 +1,5 @@
 import type { LocationType } from "@/types";
+import fiCatalog from "./fi.json";
 import type { CatalogNode, LocationCatalog } from "./types";
 
 export type { CatalogNode, LocationCatalog } from "./types";
@@ -25,10 +26,30 @@ export function isCatalogCountry(
 }
 
 /**
- * One dynamic `import()` per country, so the bundler emits a chunk each and
- * none of them reaches the main bundle — France's file alone is ~890 KB of raw
- * JSON, which is the entire reason this is not a static import. On the server
- * the same call is a plain module load.
+ * Catalogs small enough to ship with the page that renders the picker, keyed
+ * by country. A bundled catalog is in memory before the user clicks anything,
+ * so its picker opens on the same frame and shows no loading state at all.
+ *
+ * The split is by size, and the two shipped countries sit either side of it by
+ * two orders of magnitude: Finland is 19 maakuntaa + 308 kuntaa — 6.8 KB raw,
+ * **2.8 KB gzipped**, cheaper than most of the icons on the page — while France
+ * is 34,875 communes at 890 KB raw / **286 KB gzipped**. Finland is free to
+ * carry everywhere; France would be the single largest thing on any page that
+ * so much as renders a location field, for a dialog most visitors never open.
+ *
+ * So: bundle what is cheap, `import()` what is not. Adding a country means
+ * measuring its file and putting it on the correct side of this line — a
+ * catalog only earns a place here if it is small enough that no one would think
+ * to lazy-load it.
+ */
+const BUNDLED: Partial<Record<CatalogCountry, unknown>> = {
+  FI: fiCatalog,
+};
+
+/**
+ * One dynamic `import()` per country not in `BUNDLED`, so the bundler emits a
+ * chunk each and none of them reaches the main bundle. On the server the same
+ * call is a plain module load.
  *
  * Typed as `unknown` deliberately. `resolveJsonModule` infers a structural type
  * from the literal file — mutable arrays of unions, not the readonly tuples
@@ -41,6 +62,25 @@ const LOADERS: Readonly<
   FI: () => import("./fi.json"),
   FR: () => import("./fr.json"),
 };
+
+/**
+ * The catalog for `country` if it ships bundled, else `null` — synchronously,
+ * with no promise to await and so no loading state to render.
+ *
+ * This is what lets a picker render its default country on the first frame. A
+ * caller checks here first and only falls back to `loadCatalog` for a country
+ * that answers `null`, which is the *only* path that needs a skeleton.
+ */
+export function getBundledCatalog(
+  country: CatalogCountry,
+): LocationCatalog | null {
+  const data = BUNDLED[country];
+  if (data === undefined) return null;
+  if (!isLocationCatalog(data)) {
+    throw new Error(`The ${country} location catalog is not a catalog`);
+  }
+  return data;
+}
 
 /**
  * Shallow shape check at the JSON boundary.
@@ -68,10 +108,17 @@ function isLocationCatalog(value: unknown): value is LocationCatalog {
   );
 }
 
-/** Load one country's catalog, refusing an asset that is not one. */
+/**
+ * Load one country's catalog, refusing an asset that is not one. A bundled
+ * country resolves from memory, so this is safe to call unconditionally — but
+ * prefer `getBundledCatalog` where the answer being synchronous is the point.
+ */
 export async function loadCatalog(
   country: CatalogCountry,
 ): Promise<LocationCatalog> {
+  const bundled = getBundledCatalog(country);
+  if (bundled) return bundled;
+
   const { default: data } = await LOADERS[country]();
   if (!isLocationCatalog(data)) {
     throw new Error(`The ${country} location catalog is not a catalog`);

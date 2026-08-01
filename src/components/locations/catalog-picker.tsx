@@ -21,6 +21,7 @@ import {
   CATALOG_COUNTRIES,
   buildCatalogIndex,
   catalogRefKey,
+  getBundledCatalog,
   isCatalogCountry,
   loadCatalog,
   normalizeForSearch,
@@ -514,7 +515,15 @@ export function CatalogDialogShell({
     country: CatalogCountry;
     catalog: LocationCatalog;
   } | null>(null);
-  const catalog = loaded?.country === country ? loaded.catalog : null;
+  /**
+   * A bundled country is already in memory, so it short-circuits the fetch
+   * entirely — the panel renders on the very first frame the dialog is open and
+   * no skeleton is ever mounted for it. The default country is bundled, so this
+   * is the path essentially every visitor takes.
+   */
+  const bundled = getBundledCatalog(country);
+  const catalog =
+    bundled ?? (loaded?.country === country ? loaded.catalog : null);
   // Which country's load failed, in the same "carries its country" shape as
   // `loaded` — switching country reads as "no error" without a clearing effect.
   const [errorFor, setErrorFor] = useState<CatalogCountry | null>(null);
@@ -614,12 +623,18 @@ export function CatalogDialogShell({
 }
 
 /**
- * The loading stand-in for the panel: same height, same internal layout
- * (search bar, breadcrumb line, list box with ghost rows, footer), instead of
- * one solid block — a 440px grey slab reads as a broken page, not a loading
- * one. It also stays *invisible for the reveal delay*: on a warm cache the
- * chunk lands faster than that, and flashing a skeleton for two frames is
- * worse than showing nothing in a box that already has its final size.
+ * The loading stand-in for the panel, mounted **only for a country whose
+ * catalog is not bundled** — today that is France alone, at 286 KB gzipped.
+ * A bundled country never reaches this component at all, so the default path
+ * has no loading state to flash rather than a well-hidden one.
+ *
+ * What is left here is a load that genuinely takes time, and it gets an honest
+ * skeleton: same height, same internal layout (search bar, breadcrumb line,
+ * list box with ghost rows, footer), instead of one solid block — a 440px grey
+ * slab reads as a broken page, not a loading one. The reveal delay still earns
+ * its place on *this* path, where a fast connection can land 286 KB inside it:
+ * that visitor gets a correctly-sized calm box, and only a genuinely slow one
+ * ever sees the ghosts.
  */
 function CatalogLoadingSkeleton({ label }: { label: string }) {
   const visible = useRevealAfter();

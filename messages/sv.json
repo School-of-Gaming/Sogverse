@@ -875,6 +875,8 @@
       "emailPlaceholder": "du@example.com",
       "passwordPlaceholder": "Skapa ett starkt lösenord",
       "confirmPasswordPlaceholder": "Bekräfta ditt lösenord",
+      "location": "Plats",
+      "locationHint": "Hjälper oss att visa klubbar nära dig. Du kan lägga till eller ändra den senare.",
       "creatingAccount": "Skapar konto...",
       "accountExists": "Ett konto med denna e-postadress finns redan",
       "alreadyHaveAccount": "Har du redan ett konto? <link>Logga in</link>"
@@ -1561,12 +1563,17 @@
       "noResults": "Ingenting i katalogen matchar ”{query}”.",
       "showingSome": "Visar de {shown} första av {total} träffar. Fortsätt skriva för att begränsa dem.",
       "browseInto": "Visa vad som finns i {name}",
-      "nothingSelected": "Välj en kommun för att fortsätta.",
+      "nothingSelected": "Välj en plats för att fortsätta.",
       "confirm": "Fortsätt",
       "tickedCount": "{count, plural, =0 {Inget ikryssat} one {# område ikryssat} other {# områden ikryssade}}",
       "done": "Klar",
       "clearSearch": "Rensa sökning",
       "confirming": "Öppnar…"
+    },
+    "home": {
+      "choose": "Lägg till din plats",
+      "dialogTitle": "Var bor du?",
+      "dialogDescription": "Bläddra i listan eller sök på namn."
     }
   },
   "minecraft": {
@@ -1718,7 +1725,9 @@
     "minecraftCleared": "Minecraft-användarnamn borttaget.",
     "failedToUpdateMinecraft": "Kunde inte uppdatera Minecraft-användarnamn.",
     "saveMinecraft": "Spara Minecraft-användarnamn",
-    "spokenLanguages": "Talade språk"
+    "spokenLanguages": "Talade språk",
+    "location": "Plats",
+    "locationHint": "Hjälper oss att visa klubbar nära dig."
   },
   "voice": {
     "participants": "Deltagare",

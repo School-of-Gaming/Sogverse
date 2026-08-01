@@ -3,6 +3,8 @@ import {
   CATALOG_SEARCH_LIMIT,
   buildCatalogIndex,
   catalogRefKey,
+  getBundledCatalog,
+  loadCatalog,
   isCatalogCountry,
   normalizeForSearch,
   searchCatalogIndex,
@@ -235,5 +237,35 @@ describe("searchCatalogIndex", () => {
 
     expect(entries).toHaveLength(CATALOG_SEARCH_LIMIT);
     expect(total).toBe(CATALOG_SEARCH_LIMIT * 3);
+  });
+});
+
+/**
+ * The bundling split is a size decision with a visible UI consequence: a
+ * bundled catalog is in memory before the dialog opens, so its picker renders
+ * on the first frame and mounts no loading state at all. These lock both ends
+ * of that — Finland really is bundled and really is a valid catalog (the shape
+ * guard runs against the committed asset here, not a fixture), and France
+ * really is not, because 286 KB gzipped in every page payload is the thing the
+ * dynamic import exists to prevent.
+ */
+describe("getBundledCatalog", () => {
+  it("returns Finland's real catalog synchronously", () => {
+    const fi = getBundledCatalog("FI");
+
+    expect(fi).not.toBeNull();
+    expect(fi?.country).toBe("FI");
+    // Finland skips `district`: maakunta → kunta, so the leaf the parent
+    // location field picks is the level immediately above a site.
+    expect(fi?.levels).toEqual(["region", "municipality"]);
+    expect(fi?.tree).toHaveLength(19);
+  });
+
+  it("leaves France to the dynamic import", () => {
+    expect(getBundledCatalog("FR")).toBeNull();
+  });
+
+  it("agrees with loadCatalog for a bundled country", async () => {
+    expect(await loadCatalog("FI")).toBe(getBundledCatalog("FI"));
   });
 });

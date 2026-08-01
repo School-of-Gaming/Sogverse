@@ -63,7 +63,8 @@ import type {
 } from "@/components/voice/hooks/types";
 import type { VoiceZone } from "@/types";
 import { CatalogPicker } from "@/components/locations/catalog-picker";
-import { catalogRefKey, type LocationCatalog } from "@/lib/locations/catalog";
+import { HomeLocationField } from "@/components/locations/home-location-field";
+import { catalogRefKey, type CatalogPick, type LocationCatalog } from "@/lib/locations/catalog";
 import {
   LocationList,
   type LocationListGroup,
@@ -1859,6 +1860,25 @@ export default function AdminUIComponentsPage() {
           </p>
           <CatalogCoverageDemo />
         </SubSection>
+        <SubSection title="Home location field (parent profile)">
+          <p className="text-sm text-muted-foreground mb-3">
+            The parent&rsquo;s own place: one optional municipality, on the
+            registration form and in settings. It reuses single mode, because
+            the catalog&rsquo;s leaf already <em>is</em> the level we want —
+            Finland&rsquo;s kunta, France&rsquo;s commune, the level immediately
+            above a site. Unlike the two panels above, this one opens the real
+            dialog, so the country switch and the retry are live here.
+          </p>
+          <p className="text-sm text-muted-foreground mb-3">
+            The box <em>is</em> the picker rather than a display row over a
+            &ldquo;choose&rdquo; button — one control, and no button caption
+            that has to guess what the viewer&rsquo;s country calls this level.
+            Finland is bundled (2.8 KB gzipped), so its list is on screen the
+            frame the dialog opens, with no skeleton; switching to France is the
+            one path that still loads, at 286 KB gzipped.
+          </p>
+          <HomeLocationFieldDemo />
+        </SubSection>
       </Section>
 
       {/* ============================================================ */}
@@ -2258,6 +2278,24 @@ function CatalogCoverageDemo() {
         Ticked: {ticked.size === 0 ? "(none)" : [...ticked].join(", ")}{" "}
         &mdash; &ldquo;Done&rdquo; clears the demo&rsquo;s state; in the real app
         it closes the dialog and the caller&rsquo;s save commits the ticks.
+      </p>
+    </div>
+  );
+}
+
+function HomeLocationFieldDemo() {
+  const [place, setPlace] = useState<CatalogPick | null>(null);
+
+  return (
+    <div className="max-w-md space-y-2 rounded-md border border-input bg-card p-4">
+      <HomeLocationField value={place} onChange={setPlace} />
+      <p className="text-xs text-muted-foreground">
+        Value:{" "}
+        {place
+          ? `${place.country}:${place.type}:${place.code} (${place.name})`
+          : "(none)"}{" "}
+        &mdash; the caller holds it and decides what committing means: a
+        registration submit, or a settings save.
       </p>
     </div>
   );

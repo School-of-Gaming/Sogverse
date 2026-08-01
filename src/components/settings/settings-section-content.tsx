@@ -14,6 +14,8 @@ import { MinecraftUsernameField } from "@/components/minecraft/minecraft-usernam
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
+import { HomeLocationField } from "@/components/locations/home-location-field";
+import type { CatalogPick } from "@/lib/locations/catalog";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
 import { useAuth } from "@/providers";
 import { isValidPhoneNumber } from "react-phone-number-input";
@@ -35,6 +37,7 @@ export function SettingsSectionContent({
   const showMinecraft = profile?.role === "gamer" || profile?.role === "gedu";
   const isGedu = profile?.role === "gedu";
   const isGamer = isGamerProfile(profile);
+  const isParent = profile?.role === "customer";
   const { data: mcAccount } = useMyMinecraftAccount();
   const updateMyMc = useUpdateMyMinecraft();
   const { data: availableLanguages } = useSpokenLanguages({
@@ -45,6 +48,10 @@ export function SettingsSectionContent({
   const [lastName, setLastName] = useState(profile?.last_name ?? "");
   const [phone, setPhone] = useState(profile?.phone ? `+${profile.phone}` : "");
   const [spokenLanguages, setSpokenLanguages] = useState<string[]>(profile?.spoken_languages ?? []);
+  // UI-only for now: there is no profile column behind this yet, so it starts
+  // empty on every load and `handleSaveProfile` deliberately leaves it out of
+  // the update. This pass is to see the flow before committing to a shape.
+  const [homeLocation, setHomeLocation] = useState<CatalogPick | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -223,6 +230,22 @@ export function SettingsSectionContent({
             selected={spokenLanguages}
             onChange={setSpokenLanguages}
           />
+
+          {isParent && (
+            <Field
+              label={t('location')}
+              htmlFor="homeLocation"
+              optional
+              hint={t('locationHint')}
+            >
+              <HomeLocationField
+                id="homeLocation"
+                value={homeLocation}
+                onChange={setHomeLocation}
+                disabled={isSaving}
+              />
+            </Field>
+          )}
 
           {!isGamer && (
             <Field label={c('email')}>

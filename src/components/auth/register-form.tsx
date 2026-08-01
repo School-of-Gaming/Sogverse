@@ -11,8 +11,10 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { HomeLocationField } from "@/components/locations/home-location-field";
 import { getClient } from "@/lib/supabase/client";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, SUPPORT_EMAIL } from "@/lib/constants";
+import type { CatalogPick } from "@/lib/locations/catalog";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth } from "@/providers";
 
@@ -27,16 +29,20 @@ const registerSchema = z.object({
   path: ["confirmPassword"],
 });
 
-export function RegisterForm() {
+export function RegisterForm({ redirect: redirectParam }: { redirect: string | null }) {
   const t = useTranslations('auth');
   const c = useTranslations('common');
-  const { redirect, status, navigateAfterAuth } = useAuthRedirect();
+  const { redirect, status, navigateAfterAuth } = useAuthRedirect(redirectParam);
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  // UI-only for now: the picked municipality is held here and deliberately not
+  // sent with the sign-up. There is no profile column behind it yet, and this
+  // pass exists to see the flow before committing to one.
+  const [homeLocation, setHomeLocation] = useState<CatalogPick | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -197,6 +203,19 @@ export function RegisterForm() {
               disabled={isLoading}
               required
               autoComplete="new-password"
+            />
+          </Field>
+          <Field
+            label={t('register.location')}
+            htmlFor="homeLocation"
+            optional
+            hint={t('register.locationHint')}
+          >
+            <HomeLocationField
+              id="homeLocation"
+              value={homeLocation}
+              onChange={setHomeLocation}
+              disabled={isLoading}
             />
           </Field>
         </CardContent>

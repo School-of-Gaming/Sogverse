@@ -920,6 +920,8 @@
       "emailPlaceholder": "SoH@example.com",
       "passwordPlaceholder": "HoS mu’mey yIchenmoH",
       "confirmPasswordPlaceholder": "mu’mey yIchel",
+      "location": "Daq",
+      "locationHint": "Daq DawIvDI’, SoHvaD Sum ghommey wI’ang. tugh DachoHlaH.",
       "creatingAccount": "account vIchenmoH...",
       "accountExists": "QIn’vamDaq account tu’lu’",
       "alreadyHaveAccount": "account DaHutlhpa’? <link>bI’el</link>"
@@ -1606,12 +1608,17 @@
       "noResults": "pagh! ”{query}” rurbogh veng tu’lu’be’.",
       "showingSome": "{total} veng tu’lu’. {shown} neH wI’ang. yIghItlhtaH ’ej yInej.",
       "browseInto": "{name} qoDDaq nuq tu’lu’ — yI’ang",
-      "nothingSelected": "veng yIwIv ’ej yIruch.",
+      "nothingSelected": "Daq yIwIv ’ej yIruch.",
       "confirm": "yIruch",
       "tickedCount": "{count, plural, =0 {pagh wIvlu’} one {# Daq wIvlu’} other {# Daqmey wIvlu’}}",
       "done": "pItlh",
       "clearSearch": "nejmey yIteq",
       "confirming": "poSmoHtaH…"
+    },
+    "home": {
+      "choose": "DaqlIj yIchel",
+      "dialogTitle": "nuqDaq bIDab?",
+      "dialogDescription": "tetlh yIlaD ghap pong yIlo’."
     }
   },
   "minecraft": {
@@ -1763,7 +1770,9 @@
     "minecraftCleared": "Minecraft lo’wI’ pong teqlu’.",
     "failedToUpdateMinecraft": "Minecraft lo’wI’ pong choH Dabe’lu’.",
     "saveMinecraft": "Minecraft lo’wI’ pong yISaH",
-    "spokenLanguages": "Holmey jatlhlu’"
+    "spokenLanguages": "Holmey jatlhlu’",
+    "location": "Daq",
+    "locationHint": "Daq DawIvDI’, SoHvaD Sum ghommey wI’ang."
   },
   "voice": {
     "participants": "toy’wI’pu’",

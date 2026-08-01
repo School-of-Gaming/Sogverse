@@ -875,6 +875,8 @@
       "emailPlaceholder": "you@example.com",
       "passwordPlaceholder": "Create a strong password",
       "confirmPasswordPlaceholder": "Confirm your password",
+      "location": "Location",
+      "locationHint": "Helps us show you clubs near you. You can add or change it later.",
       "creatingAccount": "Creating account...",
       "accountExists": "An account with this email already exists",
       "alreadyHaveAccount": "Already have an account? <link>Sign in</link>"
@@ -1649,12 +1651,17 @@
       "noResults": "Nothing in the catalog matches “{query}”.",
       "showingSome": "Showing the first {shown} of {total} matches. Keep typing to narrow them down.",
       "browseInto": "Show what is inside {name}",
-      "nothingSelected": "Pick a municipality to continue.",
+      "nothingSelected": "Pick a place to continue.",
       "confirm": "Continue",
       "tickedCount": "{count, plural, =0 {Nothing ticked} one {# area ticked} other {# areas ticked}}",
       "done": "Done",
       "clearSearch": "Clear search",
       "confirming": "Opening…"
+    },
+    "home": {
+      "choose": "Add your location",
+      "dialogTitle": "Where are you based?",
+      "dialogDescription": "Browse the list, or search by name."
     }
   },
   "minecraft": {
@@ -1806,7 +1813,9 @@
     "minecraftCleared": "Minecraft username cleared.",
     "failedToUpdateMinecraft": "Failed to update Minecraft username.",
     "saveMinecraft": "Save Minecraft Username",
-    "spokenLanguages": "Languages spoken"
+    "spokenLanguages": "Languages spoken",
+    "location": "Location",
+    "locationHint": "Helps us show you clubs near you."
   },
   "voice": {
     "participants": "Participants",

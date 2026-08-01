@@ -101,9 +101,19 @@ The module's surface is small and deliberately pure: which countries ship a cata
 `import()`-per-country loader, and readers for tick identity and search. Two things about
 it are load-bearing:
 
-- **Rule: a catalog is loaded through a dynamic `import()`, never a static one.** France's
-  JSON must never land in the main bundle; it is fetched as its own chunk the first time a
-  user opens a picker, and everything after that is client-side.
+- **Rule: whether a catalog is bundled or dynamically `import()`ed is decided by its size,
+  and a new country must be measured and placed on one side of that line.** The two shipped
+  countries sit two orders of magnitude apart — Finland is 2.8 KB gzipped, France 286 KB —
+  so Finland ships with whatever renders the picker and France is fetched as its own chunk
+  the first time someone selects it. Everything after the load is client-side either way.
+  A catalog only earns bundling if it is small enough that no one would think to lazy-load
+  it; anything else must never reach a page payload for a dialog most visitors never open.
+- **A bundled catalog is why the default picker has no loading state.** The country the
+  dialog opens on is bundled, so its list is already in memory and the panel renders on the
+  first frame — the skeleton is not merely hidden for a moment, it is never mounted. The
+  loading path exists for the countries that genuinely take time to arrive, and that is the
+  only place a reveal delay is doing real work. Prefer removing a loading state by making
+  the fast path synchronous over tuning how long it hides.
 - **A catalog node's identity is `(country, level, official code)`** — the same triple the
   table is unique on. That is what lets a UI which has only ever seen catalog entries hand
   a set of ticks to the row resolver without having read a row.
@@ -228,8 +238,9 @@ Two components, two different sources, and the difference is the whole architect
   funded by. Both are small enough to search client-side in one pass.
 - **`CatalogPicker`** (`src/components/locations/`) browses the **static catalog**: drill
   down by level or search the whole country instantly, with a shared dialog shell that
-  picks the country, loads its chunk, and holds one fixed height across loading, failure
-  and loaded. Search runs over a pre-normalized index built once per catalog,
+  picks the country, resolves its catalog (from memory when bundled, else loading its
+  chunk), and holds one fixed height across loading, failure and loaded. Search runs over
+  a pre-normalized index built once per catalog,
   diacritic-insensitive in both directions and matching official codes too, capped at a
   rendered-result budget with the true match count still reported. An empty query falls
   back to drill-down, so browse and search share one panel with no mode switch.
@@ -243,6 +254,22 @@ The catalog panel takes a **selection mode**:
   the caller resolves the code and carries on.
 - **multi** puts a checkbox on every level and additionally indexes the levels above the
   leaves, so a search finds a département and not only the communes spelled like it.
+
+### The parent's own location
+
+An optional single leaf on a parent's profile — the registration form and the settings
+page — collected with the same single mode, because the catalog's leaf already *is* the
+level wanted: the one immediately above a site, whatever the country calls it.
+
+**Rule: a control that picks a place is one control — the box showing the current value
+is itself the trigger — and its label is the generic "location".** Splitting the value and
+a "choose" button into two rows makes one control look like two, and forces the button
+caption to name the level being picked. Every such caption is wrong for somebody: a
+viewer's *locale* says which language to render, not which country they live in or what
+that country calls this level, so a Finnish-locale parent picking a French commune gets
+told to pick a kunta. Country-specific vocabulary belongs inside the dialog, after a
+country has actually been chosen — see the locale-vs-spoken-language distinction in the
+root `CLAUDE.md`, of which this is the same mistake in a third dimension.
 
 ### The product picker
 
