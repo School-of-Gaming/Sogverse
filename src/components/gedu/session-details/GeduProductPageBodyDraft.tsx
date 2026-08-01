@@ -5,7 +5,6 @@ import { Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { MaterialLink } from "@/components/ui/material-link";
-import { PadletLink } from "@/components/ui/padlet-link";
 import { PersonChipList } from "@/components/ui/person-chip";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import {
@@ -20,6 +19,7 @@ import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { cn } from "@/lib/utils";
 import { computeVoiceState } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
+import type { MinecraftCheckStatus } from "@/components/minecraft/minecraft-username-row";
 import type { GeduAssignedProduct, GeduAssignedProductGroup } from "@/types";
 import {
   CopyAllEmailsButton,
@@ -125,7 +125,7 @@ interface GeduProductPageBodyDraftProps {
    * Staff-only lesson/material URL, or `null` when unset. **Never render this on
    * a surface a parent or gamer can reach** — this page is gedu-only, which is
    * the only reason no visibility check happens here. At promotion it comes from
-   * the product's material column, alongside the family-facing Padlet.
+   * the product's material column.
    */
   materialUrl: string | null;
   /** The group's standing public note, independent of any session. */
@@ -158,6 +158,15 @@ interface GeduProductPageBodyDraftProps {
    * gedu write path; today the scene holds it in local state.
    */
   onSaveMinecraftUsername: (gamerId: string, username: string) => void;
+  /**
+   * In-flight or just-landed Mojang checks, keyed by gamer id. A roster member
+   * with no entry here shows the resting state derived from their account.
+   *
+   * It lives with whoever owns the save, because that is the only place that
+   * knows a check started. At promotion the same map comes from the verify
+   * mutation's state; today the scene fakes the latency.
+   */
+  minecraftStatuses?: Readonly<Record<string, MinecraftCheckStatus>>;
 }
 
 export function GeduProductPageBodyDraft({
@@ -179,6 +188,7 @@ export function GeduProductPageBodyDraft({
   onEditEntry,
   onSaveEntry,
   onSaveMinecraftUsername,
+  minecraftStatuses,
 }: GeduProductPageBodyDraftProps) {
   const t = useTranslations("gedu.sessionDetails");
   const locale = useLocale();
@@ -211,38 +221,43 @@ export function GeduProductPageBodyDraft({
     <div className="mx-auto max-w-7xl py-6 sm:py-10">
       <SessionDetailsBackLink />
 
-      <header className="mt-5 border-b border-border pb-5">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+      {/* The masthead is a two-column row on desktop: identity on the left,
+          the one outward action on the right. The Padlet used to sit up here
+          beside it — it is gone from this page for good. Session reports are
+          what families now read, so a link out to a third-party wall was a
+          second, staler answer to the same question, and leaving it would have
+          taught gedus to keep posting there. */}
+      <header className="mt-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-4 border-b border-border pb-5">
+        <div className="min-w-0">
           <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             {t(`typeLabel.${data.product.product_type}`)}
           </span>
-          {/* The two outward links sit beside the type label rather than
-              floating right of the title: both belong to the product, and the
-              product is now what the title says. */}
-          {data.product.padlet_url && (
-            <PadletLink href={data.product.padlet_url} />
+
+          <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
+            {productName}
+          </h1>
+
+          {assignedGroup && (
+            <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">
+                {assignedGroup.name || t("untitledGroup")}
+              </span>
+              {/* Punctuation between two translated strings, so it is a
+                  pseudo-element rather than a text node — it does not belong in
+                  the message files. */}
+              <span className="inline-flex items-center gap-1 before:mr-1 before:text-muted-foreground/50 before:content-['·']">
+                <Users className="h-4 w-4" aria-hidden />
+                {t("gamerCount", { count: assignedGroup.gamer_count })}
+              </span>
+            </p>
           )}
-          {materialUrl && <MaterialLink href={materialUrl} />}
         </div>
 
-        <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-          {productName}
-        </h1>
-
-        {assignedGroup && (
-          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">
-              {assignedGroup.name || t("untitledGroup")}
-            </span>
-            {/* Punctuation between two translated strings, so it is a
-                pseudo-element rather than a text node — it does not belong in
-                the message files. */}
-            <span className="inline-flex items-center gap-1 before:mr-1 before:text-muted-foreground/50 before:content-['·']">
-              <Users className="h-4 w-4" aria-hidden />
-              {t("gamerCount", { count: assignedGroup.gamer_count })}
-            </span>
-          </p>
-        )}
+        {/* Button-weight, not a chip. Fetching the materials is the first thing
+            a gedu does when they open this page before a session, and a small
+            tinted link tucked next to the type label read as metadata about the
+            product rather than as the errand they came to run. */}
+        {materialUrl && <MaterialLink href={materialUrl} variant="button" />}
       </header>
 
       {assignedGroup && (
@@ -324,6 +339,7 @@ export function GeduProductPageBodyDraft({
               opensDate={voiceState.opensDate}
               opensTime={voiceState.opensTime}
               onSaveMinecraftUsername={onSaveMinecraftUsername}
+              minecraftStatuses={minecraftStatuses}
             />
           )}
 
@@ -348,17 +364,44 @@ export function GeduProductPageBodyDraft({
  * One card in the rail. Tighter padding than a page card — the rail is a third
  * of the width, so every card that spends a page card's padding pushes the one
  * below it further down the first screen.
+ *
+ * The heading row takes an optional right-hand slot, and the group card uses it
+ * for its gamer count. That is the same treatment the peer rows below give their
+ * own counts, deliberately: a reader comparing "how big is my group" with "how
+ * big is the group I might cover" should find both numbers in the same corner.
  */
-function RailCard({ title, children }: { title: string; children: ReactNode }) {
+function RailCard({
+  title,
+  trailing,
+  children,
+}: {
+  title: string;
+  trailing?: ReactNode;
+  children: ReactNode;
+}) {
   return (
     <Card>
       <CardContent className="space-y-3 p-4">
-        <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-          {title}
-        </h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            {title}
+          </h2>
+          {trailing}
+        </div>
         {children}
       </CardContent>
     </Card>
+  );
+}
+
+/** The gamer-count line the group card and every peer row share. */
+function GamerCount({ count }: { count: number }) {
+  const t = useTranslations("gedu.sessionDetails");
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 text-[11px] tabular-nums text-muted-foreground">
+      <Users className="h-3 w-3" aria-hidden />
+      {t("gamerCount", { count })}
+    </span>
   );
 }
 
@@ -373,14 +416,16 @@ function RailCard({ title, children }: { title: string; children: ReactNode }) {
  * out: a gedu sees who is teaching alongside them, not the children in someone
  * else's group.
  *
- * **The row is two fixed lines, not a flow.** Line one is the group's name and
- * size with Join anchored hard right; line two is the gedu chips. They used to
- * share one wrapping flex row, which meant the layout was a function of how many
- * people happened to teach that group: one chip and Join sat neatly beside the
- * name, three chips and it wrapped underneath, four and it landed in the middle
- * of the chip run. Same card, three different shapes, none of them chosen.
- * Giving Join a line it always occupies makes every peer row the same row —
- * including a group with no gedus at all, where the chips line just says so.
+ * **The row is three fixed lines, not a flow.** Line one is the group's name on
+ * the left and its size hard right; line two is the gedu chips; line three is
+ * Join, centred, on a line of its own. Name and size used to share that first
+ * line *with* Join, and the chips could wrap up into it — so the layout was a
+ * function of how many people happened to teach that group: one chip and Join
+ * sat neatly beside the name, three chips and it wrapped underneath, four and it
+ * landed in the middle of the chip run. Same card, three different shapes, none
+ * of them chosen. Giving each of the three things a line it always occupies
+ * makes every peer row the same row, whatever is in it — including a group with
+ * no gedus at all, where the chips line just says so.
  *
  * A product with only one group still renders the card, saying so. The rail's
  * shape is then the same on every product a gedu opens, which is worth more than
@@ -412,22 +457,11 @@ function OtherGroupsRailCard({
               key={group.id}
               className="space-y-1.5 rounded-md border border-border bg-muted/30 p-2.5"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-baseline justify-between gap-2">
                 <p className="min-w-0 flex-1 truncate text-sm font-medium leading-tight">
                   {group.name || t("untitledGroup")}
                 </p>
-                <span className="inline-flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground">
-                  <Users className="h-3 w-3" aria-hidden />
-                  {t("gamerCount", { count: group.gamer_count })}
-                </span>
-                {isRemote && (
-                  <JoinVoiceButton
-                    voiceIsOpen={voiceIsOpen}
-                    voiceHref={ROUTES.voice.groupSession(group.id)}
-                    opensDate={opensDate}
-                    opensTime={opensTime}
-                  />
-                )}
+                <GamerCount count={group.gamer_count} />
               </div>
               {/* The chips are labelled, because the line above them already
                   carries a *gamer* count — an unlabelled row of faces next to
@@ -448,6 +482,16 @@ function OtherGroupsRailCard({
                   />
                 )}
               </div>
+              {isRemote && (
+                <div className="flex justify-center pt-0.5">
+                  <JoinVoiceButton
+                    voiceIsOpen={voiceIsOpen}
+                    voiceHref={ROUTES.voice.groupSession(group.id)}
+                    opensDate={opensDate}
+                    opensTime={opensTime}
+                  />
+                </div>
+              )}
             </li>
           ))}
         </ul>
@@ -460,12 +504,25 @@ function OtherGroupsRailCard({
  * This group: its own room's Join, the gedus teaching it, then every child with
  * their parent's email and the copy-all helper.
  *
+ * **It is titled "My Group", and it carries its size top-right.** "Group" was
+ * ambiguous on a page whose other rail card is called "Other groups" — the
+ * possessive is what makes the pair read as one distinction rather than as two
+ * unrelated headings. The count sits in the same corner every peer row puts its
+ * own, so "mine has eight, that one has six" is one horizontal glance rather
+ * than a hunt.
+ *
  * **The Join lives here, at the top of the card, and nowhere else on the page.**
  * A voice room belongs to a group, and this card is the group — so the button
  * sits above everything else in it, on a line of its own with the copy-all
  * helper beside it, where it is in the same place on every product a gedu opens
  * instead of migrating down the timeline as the term fills up. On an in-person
  * product it is simply absent: there is no room, so there is nothing to lock.
+ *
+ * **That action row is centred**, as is the copy-all row beneath it. Left-
+ * aligned, one or two buttons sat against the card's left edge with a third of
+ * the card empty beside them, which read as a layout that had run out rather
+ * than as a decision; centring makes the actions a band across the top of the
+ * card and matches the centred Join on every peer row below.
  *
  * **The roster renders open, with no disclosure.** It was collapsed in the
  * single-column draft for one reason — eight rows of children between the
@@ -482,6 +539,7 @@ function GroupRailCard({
   opensDate,
   opensTime,
   onSaveMinecraftUsername,
+  minecraftStatuses,
 }: {
   group: GeduAssignedProductGroup;
   isRemote: boolean;
@@ -489,6 +547,7 @@ function GroupRailCard({
   opensDate: string;
   opensTime: string;
   onSaveMinecraftUsername: (gamerId: string, username: string) => void;
+  minecraftStatuses?: Readonly<Record<string, MinecraftCheckStatus>>;
 }) {
   const t = useTranslations("gedu.sessionDetails");
   const roster = useMemo(() => group.roster ?? [], [group.roster]);
@@ -498,18 +557,23 @@ function GroupRailCard({
   );
 
   return (
-    <RailCard title={t("railGroupHeading")}>
-      {(isRemote || emails.length > 0) && (
-        <div className="flex flex-wrap items-center gap-2">
-          {isRemote && (
-            <JoinVoiceButton
-              voiceIsOpen={voiceIsOpen}
-              voiceHref={ROUTES.voice.groupSession(group.id)}
-              opensDate={opensDate}
-              opensTime={opensTime}
-            />
-          )}
-          {emails.length > 0 && <CopyAllEmailsButton emails={emails} />}
+    <RailCard
+      title={t("railGroupHeading")}
+      trailing={<GamerCount count={group.gamer_count} />}
+    >
+      {isRemote && (
+        <div className="flex justify-center">
+          <JoinVoiceButton
+            voiceIsOpen={voiceIsOpen}
+            voiceHref={ROUTES.voice.groupSession(group.id)}
+            opensDate={opensDate}
+            opensTime={opensTime}
+          />
+        </div>
+      )}
+      {emails.length > 0 && (
+        <div className="flex justify-center">
+          <CopyAllEmailsButton emails={emails} />
         </div>
       )}
 
@@ -537,6 +601,7 @@ function GroupRailCard({
                 key={g.gamer_id}
                 gamer={g}
                 onSaveMinecraftUsername={onSaveMinecraftUsername}
+                minecraftStatus={minecraftStatuses?.[g.gamer_id]}
               />
             ))}
           </ul>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { MinecraftCheckStatus } from "@/components/minecraft/minecraft-username-row";
 import {
   applyDraftToEntry,
   applyPlanDraftToEntry,
@@ -47,6 +48,20 @@ export function GeduProductPageScene({
   const [groupNotesEditing, setGroupNotesEditing] = useState(false);
   const [site, setSite] = useState(fixture.site);
   const [siteNotesEditing, setSiteNotesEditing] = useState(false);
+  const [minecraftStatuses, setMinecraftStatuses] = useState<
+    Record<string, MinecraftCheckStatus>
+  >({});
+
+  // Faked latency has to be cancellable, or a reviewer who navigates away
+  // mid-check leaves a timer setting state on an unmounted tree.
+  const pendingChecks = useRef(new Set<number>());
+  useEffect(() => {
+    const timers = pendingChecks.current;
+    return () => {
+      for (const timer of timers) window.clearTimeout(timer);
+      timers.clear();
+    };
+  }, []);
 
   // Which editor produced the draft is settled by the entry's own kind, not by
   // the caller: a plan can only land on a future session and a write-up only on
@@ -93,13 +108,29 @@ export function GeduProductPageScene({
   };
 
   /**
-   * A gedu correcting a mistyped Minecraft name. The real write is scoped to
-   * gamers in the gedu's own group, so the scene only ever touches this group's
-   * roster — and it clears `minecraft_uuid` alongside, because a verification
-   * belongs to the name it was issued for: keeping the old UUID would render the
-   * new, unchecked name in verified green.
+   * A gedu correcting a mistyped Minecraft name, **with the Mojang round trip
+   * faked at a realistic latency**.
+   *
+   * The point of doing it here rather than saving instantly is that the check is
+   * the whole reason the roster row was redesigned: a name goes in, a spinner
+   * sits in a slot that was already holding its space, and about a second later a
+   * tick or a cross lands in the same slot without anything moving. That sequence
+   * is impossible to judge from a static screenshot and trivial to get wrong, so
+   * the scene rehearses it.
+   *
+   * Validity stands in for Mojang with the format rule the real lookup applies
+   * before it ever calls out — three to sixteen letters, digits or underscores.
+   * Type `Steve_99` and it lands valid; type `nope!!` and it lands invalid, which
+   * is the cheapest way to see the failed state without inventing a fake account
+   * database.
+   *
+   * The write itself is scoped the way the real one will be — only the gedu's own
+   * group — and it clears `minecraft_uuid` while the check is in flight, because
+   * a verification belongs to the name it was issued for and keeping the old one
+   * would render a new, unchecked name in verified green.
    */
   const handleSaveMinecraftUsername = (gamerId: string, username: string) => {
+    const trimmed = username.trim();
     setData((prev) => ({
       ...prev,
       groups: prev.groups.map((group) =>
@@ -111,7 +142,7 @@ export function GeduProductPageScene({
                 member.gamer_id === gamerId
                   ? {
                       ...member,
-                      minecraft_username: username.length > 0 ? username : null,
+                      minecraft_username: trimmed.length > 0 ? trimmed : null,
                       minecraft_uuid: null,
                     }
                   : member,
@@ -119,6 +150,22 @@ export function GeduProductPageScene({
             },
       ),
     }));
+
+    // Cleared rather than checked: there is no name to look up, so the row goes
+    // straight back to its resting state.
+    if (trimmed.length === 0) {
+      setMinecraftStatuses(({ [gamerId]: _cleared, ...rest }) => rest);
+      return;
+    }
+
+    setMinecraftStatuses((prev) => ({ ...prev, [gamerId]: "checking" }));
+    const timer = window.setTimeout(() => {
+      setMinecraftStatuses((prev) => ({
+        ...prev,
+        [gamerId]: MOJANG_NAME_SHAPE.test(trimmed) ? "valid" : "invalid",
+      }));
+    }, SIMULATED_CHECK_MS);
+    pendingChecks.current.add(timer);
   };
 
   return (
@@ -141,6 +188,22 @@ export function GeduProductPageScene({
       onEditEntry={setEditingEntryId}
       onSaveEntry={handleSave}
       onSaveMinecraftUsername={handleSaveMinecraftUsername}
+      minecraftStatuses={minecraftStatuses}
     />
   );
 }
+
+/**
+ * Roughly what a Mojang lookup costs over a home connection. Long enough that
+ * the spinner is genuinely seen, short enough that nobody reviewing the page
+ * thinks it has hung.
+ */
+const SIMULATED_CHECK_MS = 800;
+
+/**
+ * The shape Mojang accepts, which is also the gate the real verify route applies
+ * before it ever calls out. It stands in for the account lookup here: any
+ * well-formed name is treated as a real account, and a malformed one fails —
+ * which is the state worth being able to see on demand.
+ */
+const MOJANG_NAME_SHAPE = /^[a-zA-Z0-9_]{3,16}$/;

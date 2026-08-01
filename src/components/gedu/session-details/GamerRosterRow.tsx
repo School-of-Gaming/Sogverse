@@ -7,7 +7,10 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Identicon } from "@/components/ui/identicon";
 import { Input } from "@/components/ui/input";
-import { MinecraftUsernameBadge } from "@/components/minecraft/minecraft-username-badge";
+import {
+  MinecraftUsernameRow,
+  type MinecraftCheckStatus,
+} from "@/components/minecraft/minecraft-username-row";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { cn, computeAge } from "@/lib/utils";
 import { useTimezone } from "@/providers";
@@ -30,6 +33,16 @@ interface GamerRosterRowProps {
    * A trimmed empty string means "clear it".
    */
   onSaveMinecraftUsername?: (gamerId: string, username: string) => void;
+  /**
+   * Where the Mojang check for this child's name has got to, when one is in
+   * flight or has just landed. Omitted, the row derives its own resting state
+   * from whether the account carries a verified UUID — which is what every row
+   * nobody has touched shows.
+   *
+   * The caller owns this rather than the row, because the check is one request
+   * per save and the owner of the save is the only one who knows when it started.
+   */
+  minecraftStatus?: MinecraftCheckStatus;
 }
 
 /**
@@ -50,18 +63,20 @@ interface GamerRosterRowProps {
  *
  * **Minecraft usernames are editable here.** Children mistype them, change them,
  * or never got round to entering one, and the gedu is the person who finds out —
- * mid-session, when the name doesn't match anyone on the server. So the badge
- * carries a pencil: quiet by default (muted, and only fully opaque on hover or
- * keyboard focus, so eight of them don't turn the rail into a toolbar), but
+ * mid-session, when the name doesn't match anyone on the server. So the identity
+ * line carries a pencil: quiet by default (muted, and only fully opaque on hover
+ * or keyboard focus, so eight of them don't turn the rail into a toolbar), but
  * always present rather than revealed on hover, since an affordance that only
  * exists under the cursor doesn't exist on a touchscreen. Opening it swaps the
- * badge for a small input *in place*, with Save and Cancel to its right; the row
- * below does not move, because the input is the same height as the badge it
- * replaced.
+ * line for a small input *in place*, with Save and Cancel to its right; nothing
+ * below moves, because the input is the same height as the line it replaced —
+ * and the same is true of the check that follows the save, which lands in a slot
+ * that was already holding its space.
  */
 export function GamerRosterRow({
   gamer,
   onSaveMinecraftUsername,
+  minecraftStatus,
 }: GamerRosterRowProps) {
   const t = useTranslations("gedu.sessionDetails");
   const timeZone = useTimezone();
@@ -90,8 +105,9 @@ export function GamerRosterRow({
               </span>
             )}
           </p>
-          <MinecraftUsernameField
+          <MinecraftIdentityCell
             gamer={gamer}
+            status={minecraftStatus}
             onSave={onSaveMinecraftUsername}
           />
         </div>
@@ -104,32 +120,45 @@ export function GamerRosterRow({
 }
 
 /**
- * The Minecraft badge, plus the inline editor it swaps for.
+ * The child's Minecraft identity — skin, username, check state — plus the inline
+ * editor it swaps for.
  *
  * The draft is seeded when the editor opens rather than held across closes, so
  * cancelling really discards. Save closes optimistically — the caller owns the
- * row, so the new username arrives back as a prop.
+ * row, so the new username arrives back as a prop, and so does whatever the
+ * check made of it.
+ *
+ * **The resting state is derived from the account, not remembered.** A row
+ * nobody has touched shows `valid` when the account carries a verified UUID and
+ * `idle` when it does not, so eight untouched rows are not eight rows claiming a
+ * check just ran. An explicit status from the caller wins, because that is a
+ * check that really is in flight or really did just land.
  */
-function MinecraftUsernameField({
+function MinecraftIdentityCell({
   gamer,
+  status,
   onSave,
 }: {
   gamer: GamerSessionRow;
+  status?: MinecraftCheckStatus;
   onSave?: (gamerId: string, username: string) => void;
 }) {
   const t = useTranslations("gedu.sessionDetails");
   const inputId = useId();
   const [draft, setDraft] = useState<string | null>(null);
 
-  if (onSave === undefined) {
-    return (
-      <MinecraftUsernameBadge
-        username={gamer.minecraft_username}
-        uuid={gamer.minecraft_uuid}
-        size="sm"
-      />
-    );
-  }
+  const resolvedStatus =
+    status ?? (gamer.minecraft_uuid !== null ? "valid" : "idle");
+
+  const identity = (
+    <MinecraftUsernameRow
+      username={gamer.minecraft_username}
+      status={resolvedStatus}
+      className="min-w-0 flex-1"
+    />
+  );
+
+  if (onSave === undefined) return identity;
 
   if (draft !== null) {
     const commit = () => {
@@ -137,7 +166,9 @@ function MinecraftUsernameField({
       setDraft(null);
     };
     return (
-      <div className="flex flex-wrap items-center gap-1.5">
+      // `h-7` on the row and on every control in it: the editor is exactly as
+      // tall as the identity line it replaced, so opening it moves nothing.
+      <div className="flex h-7 items-center gap-1.5">
         <label className="sr-only" htmlFor={inputId}>
           {t("minecraftUsernameLabel")}
         </label>
@@ -168,7 +199,7 @@ function MinecraftUsernameField({
           size="sm"
           onClick={() => setDraft(null)}
           aria-label={t("minecraftUsernameCancel")}
-          className="h-7 w-7 p-0"
+          className="h-7 w-7 shrink-0 p-0"
         >
           <X className="h-3.5 w-3.5" aria-hidden />
         </Button>
@@ -177,13 +208,8 @@ function MinecraftUsernameField({
   }
 
   return (
-    <div className="group/mc flex min-w-0 items-center gap-1">
-      <MinecraftUsernameBadge
-        username={gamer.minecraft_username}
-        uuid={gamer.minecraft_uuid}
-        size="sm"
-        className="min-w-0"
-      />
+    <div className="group/mc flex h-7 min-w-0 items-center gap-1">
+      {identity}
       <button
         type="button"
         onClick={() => setDraft(gamer.minecraft_username ?? "")}
