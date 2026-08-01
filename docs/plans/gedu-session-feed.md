@@ -202,9 +202,9 @@ Decisions from feedback round 7:
   sessions" row is the only boundary marker. **Expansion reveals upward with the
   viewport pinned** (chat-history pattern: measure the height delta, compensate
   scroll in the same frame) — the next session stays where the reader is and the
-  future is read by scrolling up. No height animation on the upward reveal
-  (animating against scroll anchoring is the complex half); revealed cards fade in
-  with opacity only. The same anchoring applies on **editor save-collapse**: the
+  future is read by scrolling up. No animation of any kind on the
+  reveal — instant in both directions; the scroll compensation is the whole
+  experience. The same anchoring applies on **editor save-collapse**: the
   saved card's header stays at its viewport position instead of jumping away.
 - **Reduced motion is respected everywhere** (the collapsible treatment's
   `motion-reduce` behavior is correct; the admin side panel that animates
