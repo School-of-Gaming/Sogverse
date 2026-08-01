@@ -1,12 +1,10 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { Field } from "@/components/ui/field";
-import { Textarea } from "@/components/ui/textarea";
 import { planDraftFromEditorState } from "./entry-state";
-import { SessionReportField } from "./SessionReportField";
+import { RichNoteField } from "./RichNoteField";
 import { StaffNoteBlock } from "./StaffNoteBlock";
 import type { SessionPlanDraft, SessionPlanEditorState } from "./types";
 
@@ -41,8 +39,10 @@ interface SessionPlanEditorProps {
  * different field from the one they would open on Tuesday, and left every
  * caller deciding which set of words a session sitting on today's date deserved.
  *
- * Both fields are optional; the Save/Cancel row stays pinned at the bottom so
- * neither textarea growing moves it.
+ * Both fields are technically optional and neither says so — a marker there
+ * would read as permission to skip the only two things this editor exists for.
+ * The Save/Cancel row stays pinned at the bottom so neither field growing under
+ * the writer moves it.
  */
 export function SessionPlanEditor({
   open,
@@ -51,7 +51,6 @@ export function SessionPlanEditor({
   onSave,
 }: SessionPlanEditorProps) {
   const t = useTranslations("gedu.sessionFeed");
-  const fieldId = useId();
   const [draft, setDraft] = useState<SessionPlanEditorState>(initialState);
 
   // Re-seed on open using React's documented "adjust state during render"
@@ -74,7 +73,10 @@ export function SessionPlanEditor({
     // renders inside a collapsible region, which clips its overflow so the
     // open/close animation has something to reveal.
     <div className="space-y-4 pb-1 pt-4">
-      <SessionReportField
+      <RichNoteField
+        label={t("reportLabel")}
+        hint={t("reportFormattingHint")}
+        placeholder={t("reportPlaceholder")}
         value={initialState.report}
         seed={opens}
         ready={opens > 0}
@@ -82,22 +84,15 @@ export function SessionPlanEditor({
       />
 
       <StaffNoteBlock>
-        <Field
+        <RichNoteField
           label={t("staffNoteFieldLabel")}
-          htmlFor={`${fieldId}-staff`}
-          optional
           hint={t("staffNoteHint")}
-        >
-          <Textarea
-            id={`${fieldId}-staff`}
-            rows={3}
-            value={draft.staffNote}
-            placeholder={t("staffNotePlaceholder")}
-            onChange={(e) =>
-              setDraft((d) => ({ ...d, staffNote: e.target.value }))
-            }
-          />
-        </Field>
+          placeholder={t("staffNotePlaceholder")}
+          value={initialState.staffNote}
+          seed={opens}
+          ready={opens > 0}
+          onChange={(staffNote) => setDraft((d) => ({ ...d, staffNote }))}
+        />
       </StaffNoteBlock>
 
       <div className="flex justify-end gap-2">

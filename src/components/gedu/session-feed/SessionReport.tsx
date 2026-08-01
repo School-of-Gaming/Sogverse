@@ -1,25 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Markdown } from "@/components/ui/markdown";
 import { cn } from "@/lib/utils";
-import {
-  REPORT_CLAMP_REM,
-  reportLikelyOverflows,
-  reportOverflows,
-} from "./report-clamp";
+import { REPORT_CLAMP_REM, reportOverflows } from "./report-clamp";
 
 /**
  * A session report in the feed: markdown, rendered formatted, clamped to a few
  * lines with an expand-in-place control underneath.
  *
  * **Clamped rather than truncated.** The whole report stays in the DOM and stays
- * rendered — the box around it is short. So expanding is a height animation on
- * content that is already laid out, with no second fetch, no re-render of the
- * body, and no reflow of the cards above: the card grows *downward*, exactly the
- * way the inline editor does.
+ * rendered — the box around it is short. So expanding costs no second fetch, no
+ * re-render of the body, and no reflow of anything above it: the card grows
+ * *downward*, exactly the way the inline editor does.
  *
  * **The clamp always says it is a clamp.** A block of text ending flush against
  * an invisible edge reads as a report that happens to stop there, and a reader
@@ -28,101 +23,61 @@ import {
  * painted gradient, so it works on whatever surface the card is drawn on — and
  * the control sits directly beneath it.
  *
- * **A short report gets no control at all.** Whether one is offered settles by
- * measuring the rendered body against the height the clamp resolved to, not by
- * counting characters: markdown means the same 400 characters can be four lines
- * or fourteen depending on how many headings and list items are in it. The
- * measurement happens in a layout effect, before paint, so the control is never
- * seen to appear after the text it belongs to.
+ * **Nothing here measures anything.** Whether a control is offered is decided
+ * from the markdown source, by arithmetic the server and the browser both run,
+ * and it is never revised afterwards. This component used to seed that decision
+ * from an estimate and correct it from a measured height in a layout effect,
+ * which is the textbook shape and was wrong for this surface: the *server's*
+ * HTML is on screen long before any of it runs, so a borderline report grew its
+ * "Read more" a whole hydration after the reader was already reading the text
+ * it belonged to — and shoved the rest of the feed down as it landed. A control
+ * that is occasionally a line eager or a line late beats one that appears out
+ * from under the cursor, so the estimate is the only authority and the whole
+ * correction path is gone.
  *
- * **But the first frame is painted by a server, which cannot measure anything.**
- * The renderer itself is in the page bundle — a report's formatted body is in
- * the server HTML, and nothing about it is loaded on demand — so waiting for a
- * measurement to decide the control would put the *body* on screen immediately
- * and its control a whole hydration later, shoving everything under the card
- * down as it arrived. So the control is seeded from an estimate taken off the
- * markdown source, which both ends compute identically, and the measurement
- * corrects it before the first client paint. The estimate is deliberately
- * reluctant: it only claims an overflow it is sure of, so the correction can
- * add a control but essentially never takes one away.
+ * **Expanding is instant, and deliberately not animated.** Animating it would
+ * mean knowing the report's natural height — which means measuring it, which is
+ * the thing this component no longer does. The reveal grows downward under a
+ * control the reader just clicked, which is the one direction a reflow is
+ * allowed to go.
  */
 export function SessionReport({
   markdown,
+  clamped = true,
   className,
 }: {
   markdown: string;
+  /**
+   * Whether this report may be collapsed at all.
+   *
+   * The **most recent past session** passes `false`: it is the one entry the
+   * weekly loop actually reads — what happened last time, read while writing up
+   * or prepping the next one — and making the reader spend a click to see the
+   * thing they came for is a toll on the common path. Every older report keeps
+   * the clamp, which is what stops a term of them becoming a wall.
+   */
+  clamped?: boolean;
   className?: string;
 }) {
   const t = useTranslations("gedu.sessionFeed");
-  const shellRef = useRef<HTMLDivElement>(null);
-  const bodyRef = useRef<HTMLDivElement>(null);
-
   const [expanded, setExpanded] = useState(false);
-  const [naturalHeight, setNaturalHeight] = useState(0);
-  /**
-   * The height the clamp resolves to, captured the first time this measures
-   * while collapsed and then kept. It cannot be re-read once expanded (the shell
-   * is by then as tall as its content), and it never changes — it is a fixed rem
-   * length that only the root font size could move.
-   */
-  const [clampHeight, setClampHeight] = useState(0);
 
-  const measure = useCallback(() => {
-    const shell = shellRef.current;
-    const body = bodyRef.current;
-    if (shell === null || body === null) return;
-    const clamped = shell.clientHeight;
-    setClampHeight((known) => (known === 0 ? clamped : known));
-    setNaturalHeight(body.scrollHeight);
-  }, []);
-
-  // Layout effect, not a plain one: the first measurement decides whether a
-  // control renders, and doing it after paint would put a button on screen a
-  // frame late, under a cursor already moving somewhere else.
-  useLayoutEffect(measure, [measure, markdown]);
-
-  // Fonts landing, a locale swap, or the rail narrowing all re-flow the body;
-  // an observer keeps the offer honest without polling.
-  useEffect(() => {
-    const body = bodyRef.current;
-    if (body === null) return;
-    const observer = new ResizeObserver(measure);
-    observer.observe(body);
-    return () => observer.disconnect();
-  }, [measure]);
-
-  // Measured once the clamp has a height; until then — the server render and
-  // the hydration render that must match it — the source-text estimate stands
-  // in, so an overflowing report is painted complete with its control.
-  const overflowing =
-    clampHeight > 0
-      ? reportOverflows(naturalHeight, clampHeight)
-      : reportLikelyOverflows(markdown);
+  const overflowing = clamped && reportOverflows(markdown);
   const clipped = overflowing && !expanded;
 
   return (
     <div className={className}>
       <div
-        ref={shellRef}
-        // `max-height` in px when open and rem when shut: both are lengths, so
-        // the transition interpolates either way, and the open value tracks the
-        // measured body rather than an over-guessed ceiling that would make the
-        // animation finish early and then jump.
-        style={{
-          maxHeight:
-            expanded && naturalHeight > 0
-              ? `${naturalHeight}px`
-              : `${REPORT_CLAMP_REM}rem`,
-        }}
+        // A fixed rem length while clipped and no ceiling at all otherwise —
+        // never a measured pixel height, because measuring is what this
+        // component exists not to do.
+        style={clipped ? { maxHeight: `${REPORT_CLAMP_REM}rem` } : undefined}
         className={cn(
-          "overflow-hidden transition-[max-height] duration-300 ease-in-out motion-reduce:transition-none",
           clipped &&
-            "[mask-image:linear-gradient(to_bottom,black_calc(100%-2.25rem),transparent)]",
+            "overflow-hidden [mask-image:linear-gradient(to_bottom,black_calc(100%-2.25rem),transparent)]",
         )}
       >
-        <div ref={bodyRef}>
-          <Markdown>{markdown}</Markdown>
-        </div>
+        <Markdown>{markdown}</Markdown>
       </div>
 
       {overflowing && (

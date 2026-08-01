@@ -291,10 +291,10 @@ describe("buildSessionFeedFixture", () => {
     const specs: readonly EntrySpec[] = [
       { kind: "future" },
       { kind: "past" },
-      { kind: "skipped", reason: "Public holiday" },
+      { kind: "no_record" },
     ];
     const { entries } = buildSessionFeedFixture(now, { specs });
-    expect(entries.map((e) => e.kind)).toEqual(["future", "past", "skipped"]);
+    expect(entries.map((e) => e.kind)).toEqual(["future", "past", "no_record"]);
   });
 
   it("dates the whole future block ahead of now, next session last", () => {

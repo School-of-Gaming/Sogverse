@@ -1,10 +1,11 @@
 "use client";
 
-import { AlertTriangle, CalendarOff, CheckCircle2, Pencil } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Markdown } from "@/components/ui/markdown";
 import { cn } from "@/lib/utils";
 import { AttendanceSummary } from "./AttendanceSummary";
 import { CollapsibleRegion } from "./CollapsibleRegion";
@@ -31,11 +32,16 @@ interface SessionFeedItemProps {
   roster: readonly SessionFeedGamer[];
   labels: SessionLabels;
   /**
-   * Whether this is the soonest session still ahead of us. Only the prominent
-   * entry wears the "next session" accent; every later future entry is a date
-   * with notes on it, not the one being walked into.
+   * Whether this is the soonest session still ahead of us. It changes the
+   * future tag's wording, not its weight — every future session is tagged.
    */
   prominent?: boolean;
+  /**
+   * Whether this entry's report may be clamped. The feed passes `false` for the
+   * most recent past session, whose write-up is what the weekly loop came to
+   * read.
+   */
+  clampReport?: boolean;
   /** Whether this entry is the one currently expanded into an editor. */
   editing: boolean;
   /** Open this entry's editor (or close it if it is already open). */
@@ -45,20 +51,33 @@ interface SessionFeedItemProps {
 }
 
 /**
- * One row of the feed: the session's date and state, its notes, and — for
- * everything that can still be written up or planned — the editor that expands
- * in place beneath it.
+ * One row of the feed: the session's date and state, what was recorded about
+ * it, and — for everything that can still be written up or planned — the editor
+ * that expands in place beneath it.
  *
  * The header carries the date and every control, and it is the one part that
  * never moves: the display body and the editor are two sibling collapsing
  * regions *below* it, so opening the editor grows the card downward instead of
  * sliding the button that was just clicked out from under the cursor.
  *
+ * **Neither direction animates.** Opening is instant because closing has to be
+ * — the close is chased by a scroll correction that holds the card *below* this
+ * one still, and a correction cannot chase a running transition — and a swap
+ * that animated one way and snapped the other would read as a bug rather than
+ * as a decision.
+ *
+ * **The body reads in the order the work is done: attendance, then the report,
+ * then the gedu note.** Attendance is the mandatory half and the only thing an
+ * entry can be flagged for, so it is the first line under the date rather than
+ * something found by scrolling past a write-up. The editor takes the same
+ * order, which means the collapsed card and the open one say the same things in
+ * the same sequence.
+ *
  * **One edit affordance, everywhere.** Every editable entry — past or future,
  * written up or not — opens through the same icon-and-text Edit button in the
- * same corner. A card whose whole header was the click target taught a different
- * gesture for one state, which is exactly the state a gedu meets least often
- * and would have to relearn each time.
+ * same corner. A card whose whole header was the click target taught a
+ * different gesture for one state, which is exactly the state a gedu meets
+ * least often and would have to relearn each time.
  *
  * **A past session wears one of three states, and only two of them say
  * anything.** Attendance still owed is an alert icon and label on an otherwise
@@ -69,29 +88,32 @@ interface SessionFeedItemProps {
  * be a nag for work nobody owes. Attendance finished *and* a report written is
  * the only state that earns a mark of its own, a green check, because it is the
  * one the gedu is aiming at and nothing else on the card can tell them they have
- * arrived. A skipped session sits outside the ladder entirely — it did not run.
+ * arrived.
  *
  * A pre-epoch gap is a bare dashed line with no card and no editor at all,
  * because nothing is owed for it and it must not compete with the narrative
  * around it.
  *
- * **The next session's accent is the info tone, not the primary one.** The two
- * signals in this feed sit inches apart — "this is the one coming up" and "this
- * one owes you work" — and primary is a warm brand tone close enough to the
- * warning amber that a column of cards read as one undifferentiated wash of
- * attention. Info is a blue: it separates on hue rather than on saturation, so
- * the two states are told apart at a glance and from across the room.
+ * **Every future session carries a tag, in the info tone.** The next one says
+ * so by name and the rest say "future session", and both are the same blue —
+ * the boundary between what has happened and what has not is the one thing a
+ * reader must never have to work out from a date. The tone is info rather than
+ * the primary brand one because the two signals in this feed sit inches apart
+ * ("this is coming up" and "this owes you work") and primary is close enough to
+ * the warning amber that a column of cards read as one wash of attention. Info
+ * separates on hue, so the two are told apart from across the room.
  *
  * Which editor opens follows the side of the present the entry is on: past
- * entries get the record editor (attendance + notes + didn't-run), future ones
- * get the notes-only editor. No entry ever offers both, and neither carries a
- * Join — rooms are joined from the group surfaces, never from a session card.
+ * entries get the record editor (attendance + notes), future ones get the
+ * notes-only editor. No entry ever offers both, and neither carries a Join —
+ * rooms are joined from the group surfaces, never from a session card.
  */
 export function SessionFeedItem({
   entry,
   roster,
   labels,
   prominent = false,
+  clampReport = true,
   editing,
   onToggleEdit,
   onCancelEdit,
@@ -118,18 +140,17 @@ export function SessionFeedItem({
       className={cn(
         "p-4 sm:p-5",
         entry.kind === "future" && prominent && "border-info/50",
-        entry.kind === "skipped" && "border-dashed bg-muted/30",
       )}
     >
       <div className="flex items-start justify-between gap-3">
         <SessionDateLine labels={labels} />
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-          {entry.kind === "future" && prominent && (
+          {entry.kind === "future" && (
             <Badge
               variant="outline"
               className="border-info/50 text-[10px] uppercase tracking-wide text-info"
             >
-              {t("upcomingBadge")}
+              {prominent ? t("upcomingBadge") : t("futureBadge")}
             </Badge>
           )}
           {completeness === "needs_attention" && (
@@ -142,12 +163,6 @@ export function SessionFeedItem({
             <span className="flex items-center gap-1.5 text-xs font-medium text-success">
               <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
               {t("completeLabel")}
-            </span>
-          )}
-          {entry.kind === "skipped" && (
-            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <CalendarOff className="h-3.5 w-3.5" aria-hidden />
-              {t("skippedLabel")}
             </span>
           )}
           {(recordable || plannable) && (
@@ -166,12 +181,16 @@ export function SessionFeedItem({
         </div>
       </div>
 
-      <CollapsibleRegion open={!editing}>
-        <SessionEntryBody entry={entry} roster={roster} />
+      <CollapsibleRegion open={!editing} instant>
+        <SessionEntryBody
+          entry={entry}
+          roster={roster}
+          clampReport={clampReport}
+        />
       </CollapsibleRegion>
 
       {recordable && (
-        <CollapsibleRegion open={editing}>
+        <CollapsibleRegion open={editing} instant>
           <SessionRecordEditor
             open={editing}
             roster={roster}
@@ -183,7 +202,7 @@ export function SessionFeedItem({
       )}
 
       {plannable && (
-        <CollapsibleRegion open={editing}>
+        <CollapsibleRegion open={editing} instant>
           <SessionPlanEditor
             open={editing}
             initialState={planEditorStateFromEntry(entry)}
@@ -228,9 +247,11 @@ function SessionDateLine({
 function SessionEntryBody({
   entry,
   roster,
+  clampReport,
 }: {
   entry: SessionFeedEntry;
   roster: readonly SessionFeedGamer[];
+  clampReport: boolean;
 }) {
   const t = useTranslations("gedu.sessionFeed");
 
@@ -242,17 +263,18 @@ function SessionEntryBody({
       // The report renders bare, exactly as it does on a past entry — no
       // "Planned" heading over it. Written before the session and written after
       // it are the same field at two moments; labelling one of them made the
-      // feed claim a distinction the model does not have.
+      // feed claim a distinction the model does not have. There is no
+      // attendance line, because nobody has been anywhere yet.
       return (
         <div className="space-y-3 pb-1 pt-3">
           {entry.report !== null && entry.report.length > 0 && (
-            <SessionReport markdown={entry.report} />
+            <SessionReport markdown={entry.report} clamped={clampReport} />
           )}
           {entry.staffNote !== null && entry.staffNote.length > 0 && (
             <StaffNoteBlock>
-              <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+              <Markdown className="text-muted-foreground">
                 {entry.staffNote}
-              </p>
+              </Markdown>
             </StaffNoteBlock>
           )}
           {/* A future session with nothing on it still needs a line, or the
@@ -265,34 +287,29 @@ function SessionEntryBody({
     }
 
     case "past":
-      // Report and attendance are independent: a session can carry a full
-      // report and still owe its attendance, so the report renders either way.
-      // The attendance line is unconditional — a part-marked or wholly unmarked
-      // sheet is exactly the case the gedu came back for, and its own headline
-      // ("3 of 8 marked") says more than a sentence of prose could.
-      // `pb-1` for the attendance disclosure's focus ring: it is the last thing
-      // in this region and the region clips its overflow to animate.
+      // Attendance leads: it is the mandatory half, and its own headline ("3 of
+      // 8 marked") says more about what this row still wants than a paragraph
+      // of prose could. It is unconditional — a part-marked or wholly unmarked
+      // sheet is exactly the case the gedu came back for.
+      //
+      // Report and attendance are otherwise independent: a session can carry a
+      // full report and still owe its register, so the report renders either
+      // way. `pb-1` is for the attendance disclosure's focus ring, since this
+      // region clips its own overflow.
       return (
         <div className="space-y-3 pb-1 pt-3">
+          <AttendanceSummary roster={roster} attendance={entry.attendance} />
           {entry.report !== null && entry.report.length > 0 && (
-            <SessionReport markdown={entry.report} />
+            <SessionReport markdown={entry.report} clamped={clampReport} />
           )}
           {entry.staffNote !== null && entry.staffNote.length > 0 && (
             <StaffNoteBlock>
-              <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+              <Markdown className="text-muted-foreground">
                 {entry.staffNote}
-              </p>
+              </Markdown>
             </StaffNoteBlock>
           )}
-          <AttendanceSummary roster={roster} attendance={entry.attendance} />
         </div>
-      );
-
-    case "skipped":
-      return (
-        <p className="pt-2 text-sm text-muted-foreground">
-          {entry.reason ?? t("skippedNoReason")}
-        </p>
       );
 
     case "no_record":

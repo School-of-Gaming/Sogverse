@@ -109,13 +109,6 @@ export interface PastSessionFeedEntry extends SessionFeedEntryBase {
   attendance: AttendanceMarks;
 }
 
-/** A session that did not happen — holiday, closure, nobody turned up. */
-export interface SkippedSessionFeedEntry extends SessionFeedEntryBase {
-  kind: "skipped";
-  /** Short free text. `null` renders the generic "no reason given" line. */
-  reason: string | null;
-}
-
 /**
  * A scheduled occurrence from before write-ups were expected (before the
  * enforcement epoch, or before the product started). Nothing is owed here, so
@@ -125,16 +118,24 @@ export interface NoRecordSessionFeedEntry extends SessionFeedEntryBase {
   kind: "no_record";
 }
 
+/**
+ * **There is no "skipped" kind**, and its absence is deliberate rather than an
+ * omission. A session that did not run — a holiday, a closure, nobody turning
+ * up — is a real thing the schema will eventually record, but recording it is
+ * inseparable from the cancellation flows that decide *who* may declare a
+ * session off and what that does to the family's billing, and none of that is
+ * designed yet. A mock that let a gedu tick "didn't run" would be inventing the
+ * half of the feature nobody has agreed to, so skip stays a schema intention
+ * with no trace anywhere in the UI: no display state, no editor control, no
+ * fixture.
+ */
 export type SessionFeedEntry =
   | FutureSessionFeedEntry
   | PastSessionFeedEntry
-  | SkippedSessionFeedEntry
   | NoRecordSessionFeedEntry;
 
-/** The past kinds whose entry can be expanded into the write-up editor. */
-export type EditableSessionFeedEntry =
-  | PastSessionFeedEntry
-  | SkippedSessionFeedEntry;
+/** The kind whose entry can be expanded into the write-up editor. */
+export type EditableSessionFeedEntry = PastSessionFeedEntry;
 
 /** How one roster member's attendance was recorded. */
 export type AttendanceMark = "present" | "absent";
@@ -157,22 +158,20 @@ export type AttendanceMarks = Readonly<
 >;
 
 /**
- * What the write-up editor emits on save — the same two-way split the past
- * display states have, so a caller maps it straight onto the entry it replaces.
+ * What the write-up editor emits on save, mapped straight onto the entry it
+ * replaces.
  *
- * The `past` branch carries the marks as they stand, however few of them there
- * are. There is no completeness precondition to encode, because there is no
- * completeness gate: a partial sheet is savable, and the entry it lands on
- * simply keeps saying it needs attention until the last child is marked.
+ * It carries the marks as they stand, however few of them there are. There is
+ * no completeness precondition to encode, because there is no completeness
+ * gate: a partial sheet is savable, and the entry it lands on simply keeps
+ * saying it needs attention until the last child is marked.
  */
-export type SessionRecordDraft =
-  | {
-      kind: "past";
-      attendance: AttendanceMarks;
-      report: string;
-      staffNote: string;
-    }
-  | { kind: "skipped"; reason: string };
+export interface SessionRecordDraft {
+  kind: "past";
+  attendance: AttendanceMarks;
+  report: string;
+  staffNote: string;
+}
 
 /** What the future-session editor emits on save — notes, and nothing else. */
 export interface SessionPlanDraft {
@@ -189,18 +188,11 @@ export interface SessionPlanDraft {
  */
 export type SessionEntryDraft = SessionRecordDraft | SessionPlanDraft;
 
-/**
- * The write-up editor's flat working state. Deliberately *not* a union: ticking
- * "this session didn't run" and ticking it back must not throw away a half-typed
- * write-up, so both branches stay alive side by side and only collapse into a
- * `SessionRecordDraft` at save time.
- */
+/** The write-up editor's flat working state: the sheet and the two notes. */
 export interface SessionEditorState {
-  didNotRun: boolean;
   attendance: AttendanceMarks;
   report: string;
   staffNote: string;
-  skipReason: string;
 }
 
 /**

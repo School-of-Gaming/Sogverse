@@ -84,6 +84,19 @@ interface TwoAudienceNotesPanelProps {
  * scope gets a quiet "add a note" affordance rather than an empty box shouting
  * for input — most groups genuinely have nothing standing to say.
  *
+ * **Neither field is marked "(optional)"**, though both are. On a gedu surface
+ * the marker reads as permission: it lands on somebody at the exact moment they
+ * are deciding whether to bother writing the thing, and tells them nobody
+ * minds. Every field on this side of the product drops it.
+ *
+ * **Both stay plain text**, unlike the session-level notes beside them, which
+ * are markdown. That is a deliberate stopping point rather than an oversight:
+ * this panel serves two scopes with one component and stores whatever it is
+ * given, so making it rich means the group note, the site note and both of
+ * their public halves all become markdown at once — four fields, two of them
+ * family-facing, on a schema that has not been asked about it. A standing note
+ * is also a paragraph about how a room works, not a write-up with sections.
+ *
  * It is presentational to the bone: it owns the text being typed and nothing
  * else. Which scope it is describing, what the strings say, and where a save
  * goes are all the caller's.
@@ -174,7 +187,6 @@ export function TwoAudienceNotesPanel({
           <Field
             label={copy.publicLabel}
             htmlFor={`${fieldId}-public`}
-            optional
             hint={copy.publicHint}
           >
             <Textarea
@@ -192,7 +204,6 @@ export function TwoAudienceNotesPanel({
             <Field
               label={copy.staffLabel}
               htmlFor={`${fieldId}-staff`}
-              optional
               hint={copy.staffHint}
             >
               <Textarea

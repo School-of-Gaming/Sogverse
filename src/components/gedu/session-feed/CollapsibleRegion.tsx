@@ -24,13 +24,24 @@ import { cn } from "@/lib/utils";
  * vertical padding would survive the collapse to `0fr` and leave a sliver of
  * content showing when the region is shut. Content whose **top or bottom** row
  * is focusable adds its own `pt-*`/`pb-*` for the same reason.
+ *
+ * **`instant` drops the transition and keeps everything else.** A region whose
+ * height change is being chased by a scroll correction cannot animate: the
+ * correction runs once, before paint, and geometry that is still moving after
+ * that would need it to re-run every frame. Such a region still wants this
+ * component for the rest of what it does — staying mounted while shut, going
+ * `inert`, clipping its own overflow — so the animation is a flag rather than a
+ * reason to hand-roll the region somewhere else.
  */
 export function CollapsibleRegion({
   open,
+  instant = false,
   className,
   children,
 }: {
   open: boolean;
+  /** Skip the open/close transition; the new height is final immediately. */
+  instant?: boolean;
   className?: string;
   children: React.ReactNode;
 }) {
@@ -38,7 +49,9 @@ export function CollapsibleRegion({
     <div
       inert={!open}
       className={cn(
-        "grid transition-[grid-template-rows,opacity] duration-200 ease-in-out motion-reduce:transition-none",
+        "grid",
+        !instant &&
+          "transition-[grid-template-rows,opacity] duration-200 ease-in-out motion-reduce:transition-none",
         open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
         className,
       )}

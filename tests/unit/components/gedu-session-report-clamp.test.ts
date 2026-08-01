@@ -1,90 +1,74 @@
 import { describe, expect, it } from "vitest";
 import {
+  REPORT_BLOCK_GAP_LINES,
   REPORT_CLAMP_LINES,
   REPORT_CLAMP_REM,
-  REPORT_CLAMP_TOLERANCE_PX,
   REPORT_ESTIMATED_CHARS_PER_LINE,
+  REPORT_HEADING_LINE_COST,
   REPORT_LINE_HEIGHT_REM,
   estimateReportLines,
-  reportLikelyOverflows,
   reportOverflows,
 } from "@/components/gedu/session-feed/report-clamp";
 
 /**
- * The clamp itself is a CSS length and a measured height; the only decision in
- * it — *is this report long enough to be worth collapsing* — is this comparison,
- * and it is the half that can be wrong without anything looking broken. A clamp
- * that offers "Read more" on a report with nothing hidden is a control that
- * reveals two pixels; one that never offers it hides the end of a write-up with
- * no way back.
- */
-describe("reportOverflows", () => {
-  const CLAMP = 136;
-
-  it("offers to expand a report taller than its clamp", () => {
-    expect(reportOverflows(CLAMP * 3, CLAMP)).toBe(true);
-  });
-
-  it("leaves a report that fits alone", () => {
-    expect(reportOverflows(40, CLAMP)).toBe(false);
-    expect(reportOverflows(CLAMP, CLAMP)).toBe(false);
-  });
-
-  it("absorbs a few pixels of rounding rather than offering a no-op reveal", () => {
-    // A list's last item carrying a hair of bottom margin, a heading's leading
-    // rounding up — none of that is hidden text, and a control that reveals it
-    // is worse than the two pixels it was protecting.
-    expect(reportOverflows(CLAMP + REPORT_CLAMP_TOLERANCE_PX, CLAMP)).toBe(false);
-    expect(reportOverflows(CLAMP + REPORT_CLAMP_TOLERANCE_PX + 1, CLAMP)).toBe(
-      true,
-    );
-  });
-
-  it("refuses to decide before the clamp has been measured", () => {
-    // Measurement is the authority once it exists; an unmeasured clamp hands
-    // the decision back to the caller rather than answering against zero. What
-    // the caller does with it until then is the estimate's job, below.
-    expect(reportOverflows(500, 0)).toBe(false);
-    expect(reportOverflows(0, 0)).toBe(false);
-  });
-});
-
-/**
- * The estimate is what a *server* decides with, and a server cannot measure
- * anything. Getting it roughly right is what keeps a report's "Read more" in
- * the frame the page is first painted in instead of a hydration later — and
- * getting its *bias* right is what keeps the correction from ever taking a
- * control back off the screen.
+ * The clamp is a CSS length; the only decision in it — *is this report long
+ * enough to be worth collapsing* — is this arithmetic, and it is the whole of
+ * it. There is no measurement anywhere to correct it, which is why it is worth
+ * pinning properly: a report that renders a "Read more" over nothing is a
+ * control that reveals two pixels, and one that never offers it hides the end
+ * of a write-up with no way back.
  */
 describe("estimateReportLines", () => {
   const line = "x".repeat(REPORT_ESTIMATED_CHARS_PER_LINE);
 
-  it("counts a block per paragraph and a line per wrap", () => {
+  it("counts a wrapped paragraph by its width, with no gaps inside it", () => {
     expect(estimateReportLines("short")).toBe(1);
     expect(estimateReportLines(`${line}${line}`)).toBe(2);
-    expect(estimateReportLines("one\n\ntwo\n\nthree")).toBe(3);
+    expect(estimateReportLines(`${line}${line}${line}`)).toBe(3);
   });
 
-  it("counts list items and headings as their own lines", () => {
-    expect(estimateReportLines("- one\n- two\n- three")).toBe(3);
-    expect(estimateReportLines("# Title\n\nA paragraph.")).toBe(2);
+  it("charges a gap between blocks, because the renderer draws one", () => {
+    // Three one-line paragraphs are not three lines tall — they are three lines
+    // and two `space-y-2` gaps. Ignoring that is the single biggest way a
+    // character-count estimate under-reads a real report.
+    expect(estimateReportLines("one\n\ntwo\n\nthree")).toBeCloseTo(
+      3 + 2 * REPORT_BLOCK_GAP_LINES,
+    );
+  });
+
+  it("counts list items as blocks of their own", () => {
+    expect(estimateReportLines("- one\n- two\n- three")).toBeCloseTo(
+      3 + 2 * REPORT_BLOCK_GAP_LINES,
+    );
+  });
+
+  it("charges a heading its larger line box", () => {
+    expect(estimateReportLines("# Title")).toBe(REPORT_HEADING_LINE_COST);
+    expect(estimateReportLines("# Title\n\nA paragraph.")).toBeCloseTo(
+      REPORT_HEADING_LINE_COST + 1 + REPORT_BLOCK_GAP_LINES,
+    );
   });
 
   it("does not let syntax inflate a line it never occupies", () => {
     // The hashes, the bullet and the emphasis runs are all markers the reader
     // never sees, so counting them would push short reports over the clamp.
-    expect(estimateReportLines("###### hi")).toBe(1);
+    expect(estimateReportLines("###### hi")).toBe(REPORT_HEADING_LINE_COST);
     expect(estimateReportLines("**bold** and *italic*")).toBe(1);
-    expect(estimateReportLines("[the label](https://example.com/very/long/url)"))
-      .toBe(1);
+    expect(
+      estimateReportLines("[the label](https://example.com/very/long/url)"),
+    ).toBe(1);
   });
 
-  it("ignores blank lines rather than counting them as content", () => {
+  it("ignores blank lines rather than counting them as content or as gaps", () => {
     expect(estimateReportLines("\n\n  \n\none\n\n\n")).toBe(1);
+  });
+
+  it("says nothing at all about an empty report", () => {
+    expect(estimateReportLines("")).toBe(0);
   });
 });
 
-describe("reportLikelyOverflows", () => {
+describe("reportOverflows", () => {
   /** A dated title and eight paragraphs — the shape a real report takes. */
   const REAL_REPORT = `# 9.2.2026 – The castle\n\n${[
     "We spent the whole of this one on the castle, and it is finally the shape everyone has been arguing about since before the break.",
@@ -98,36 +82,56 @@ describe("reportLikelyOverflows", () => {
   ].join("\n\n")}`;
 
   it("claims the overflow on a full write-up", () => {
-    expect(reportLikelyOverflows(REAL_REPORT)).toBe(true);
+    expect(reportOverflows(REAL_REPORT)).toBe(true);
   });
 
   it("leaves a two-line report alone", () => {
     expect(
-      reportLikelyOverflows(
+      reportOverflows(
         "# Mob-proofing night\n\nWe lit the paths, walled the gaps and lost nobody to a creeper.",
       ),
     ).toBe(false);
   });
 
-  /**
-   * The bias, which is the whole reason there is a margin at all. A report the
-   * estimate cannot call must come out `false`: the measurement can then *add*
-   * a control a frame later, which nudges the page down by one small row. The
-   * other direction — painting a fade and a control over a report with nothing
-   * hidden, then removing both — is a visual lie followed by a jump, and must
-   * not be reachable.
-   */
-  it("declines the call rather than guessing, right at the clamp", () => {
-    const atTheClamp = Array.from(
-      { length: REPORT_CLAMP_LINES },
-      (_, i) => `Paragraph ${i}.`,
-    ).join("\n\n");
-    expect(estimateReportLines(atTheClamp)).toBe(REPORT_CLAMP_LINES);
-    expect(reportLikelyOverflows(atTheClamp)).toBe(false);
+  it("says nothing about an empty report", () => {
+    expect(reportOverflows("")).toBe(false);
   });
 
-  it("says nothing about an empty report", () => {
-    expect(reportLikelyOverflows("")).toBe(false);
+  /**
+   * The boundary, and the reason the gaps are counted at all. Four short
+   * paragraphs genuinely fit inside a six-line box; five genuinely do not,
+   * because the four gaps between them are worth most of a line and a half. An
+   * estimate that counted lines alone would call both of them "under" and clip
+   * the fifth paragraph with no way to read it.
+   */
+  it("turns over between four short paragraphs and five", () => {
+    const paragraphs = (n: number) =>
+      Array.from({ length: n }, (_, i) => `Paragraph ${i}.`).join("\n\n");
+    expect(reportOverflows(paragraphs(4))).toBe(false);
+    expect(reportOverflows(paragraphs(5))).toBe(true);
+  });
+
+  /**
+   * One long paragraph is the other side of the same rule: no gaps, so it gets
+   * the whole budget and six lines of prose fit where five paragraphs did not.
+   */
+  it("gives an unbroken paragraph the whole budget", () => {
+    const wide = "x".repeat(REPORT_ESTIMATED_CHARS_PER_LINE);
+    expect(reportOverflows(wide.repeat(REPORT_CLAMP_LINES))).toBe(false);
+    expect(reportOverflows(wide.repeat(REPORT_CLAMP_LINES + 1))).toBe(true);
+  });
+
+  /**
+   * **Determinism is the whole feature.** The server and the browser paint the
+   * same first frame, and nothing revises the decision afterwards — so the same
+   * source must always produce the same answer, whatever else has happened.
+   */
+  it("is a pure function of the source text", () => {
+    for (const markdown of [REAL_REPORT, "short", "", "- a\n- b\n- c"]) {
+      const first = estimateReportLines(markdown);
+      expect(estimateReportLines(markdown)).toBe(first);
+      expect(reportOverflows(markdown)).toBe(reportOverflows(markdown));
+    }
   });
 });
 

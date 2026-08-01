@@ -10,11 +10,12 @@ import { NowDivider } from "./NowDivider";
 import { SessionFeedItem } from "./SessionFeedItem";
 import {
   entryCompleteness,
+  newestRecordedEntryId,
   partitionFeedEntries,
   pastEntryWindow,
 } from "./entry-state";
 import { withMonthDividers, type SessionFeedRow } from "./feed-rows";
-import { COLLAPSE_HOLD_MS, useViewportAnchor } from "./scroll-anchor";
+import { useViewportAnchor } from "./scroll-anchor";
 import { formatMonthLabel, formatSessionLabels } from "./session-labels";
 import type {
   SessionEntryDraft,
@@ -95,10 +96,15 @@ interface SessionFeedProps {
  *   They are computed over the whole visible run, so revealing the future never
  *   produces the same month labelled twice.
  *
- * The same pinning covers **saving an editor**: the card shrinks back to its
- * collapsed height under the button that was just clicked, so the entry's top
- * edge is held through the collapse and the header the gedu is reading stays
- * where they are reading it.
+ * The same pinning covers **closing an editor**, and it anchors to the card
+ * *below* the one being edited. When a gedu saves, their eye is already on the
+ * next entry down — the one they are about to write up, or the week before the
+ * one they just finished — and that is what has to stay put. Holding the edited
+ * card's own top edge instead kept the header still and swept everything under
+ * it up the screen, which is the half of the page the reader had moved on to.
+ * The consequence is deliberate and worth naming: content *above* the edited
+ * card moves instead. That is behind the reader — it is where they have been,
+ * not where they are going — and it is the side of the trade that costs least.
  *
  * Which entry is open is the caller's state and saving is the caller's callback;
  * how much of the feed is revealed is this component's own, because it is pure
@@ -136,6 +142,9 @@ export function SessionFeed({
     [entries],
   );
   const pastWindow = pastEntryWindow(past.length, chunksRevealed);
+
+  /** The one entry whose report renders in full — see the derivation's own note. */
+  const unclampedEntryId = useMemo(() => newestRecordedEntryId(past), [past]);
 
   /**
    * One descending run of everything currently on screen — future sessions,
@@ -192,17 +201,25 @@ export function SessionFeed({
   };
 
   /**
-   * Hold the entry's own top edge across an editor collapsing shut. The card
-   * loses most of its height in one transition, and without this the header —
-   * the thing the gedu has just finished reading, sitting right under their
-   * cursor — is dragged up the screen by a save they did not expect to move
-   * anything. The hold runs through the transition, and stops the moment the
-   * reader scrolls.
+   * Hold the card *below* the edited one still while its editor collapses shut.
+   *
+   * The card loses most of its height in one frame, and the reader's eye is on
+   * what comes next — so the anchor is the edited row's next sibling, not the
+   * row itself. Anchoring to the row itself kept its header on the pixel it was
+   * on and dragged the entire rest of the feed up past it, which is exactly the
+   * content somebody who just saved is moving on to.
+   *
+   * What this trades away, deliberately: everything *above* the edited card
+   * moves down instead. Holding both is impossible — the page lost height in
+   * the middle — and the half above the change is the half the reader has
+   * already been through.
+   *
+   * A last row has no sibling and gets no compensation, which is the honest
+   * answer: there is nothing below it to hold.
    */
-  const anchorEntry = (entryId: string) => {
-    anchor.capture(entryRows.current.get(entryId) ?? null, {
-      holdMs: COLLAPSE_HOLD_MS,
-    });
+  const anchorBelowEntry = (entryId: string) => {
+    const next = entryRows.current.get(entryId)?.nextElementSibling ?? null;
+    anchor.capture(next instanceof HTMLElement ? next : null);
   };
 
   const renderRow = (row: FeedRow) => {
@@ -256,6 +273,7 @@ export function SessionFeed({
           entry={entry}
           roster={roster}
           prominent={prominent}
+          clampReport={entry.id !== unclampedEntryId}
           labels={formatSessionLabels(entry, {
             locale,
             timeZone,
@@ -264,15 +282,15 @@ export function SessionFeed({
           })}
           editing={editing}
           onToggleEdit={() => {
-            if (editing) anchorEntry(entry.id);
+            if (editing) anchorBelowEntry(entry.id);
             onEditEntry(editing ? null : entry.id);
           }}
           onCancelEdit={() => {
-            anchorEntry(entry.id);
+            anchorBelowEntry(entry.id);
             onEditEntry(null);
           }}
           onSave={(draft) => {
-            anchorEntry(entry.id);
+            anchorBelowEntry(entry.id);
             onSaveEntry(entry.id, draft);
           }}
         />
@@ -339,7 +357,6 @@ function markerTone(
         default:
           return "bg-muted-foreground/60";
       }
-    case "skipped":
     case "no_record":
       return "bg-muted-foreground/25";
   }

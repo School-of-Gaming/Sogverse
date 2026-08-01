@@ -6,10 +6,27 @@
  * the thing a gedu is actually scanning for — buried inside it. Clamping to a
  * few lines keeps the feed a feed; expanding in place keeps the report a report.
  *
- * The numbers live here rather than inside the component because the decision of
- * *whether a report is long enough to be worth clamping* is a pure comparison,
- * and a pure comparison is the part worth pinning in a test. The component's job
- * is only to measure the two heights and animate between them.
+ * **The decision is taken once, from the source text, and never revised.** A
+ * report is painted by a server that cannot measure anything, so anything the
+ * first frame depends on has to be decidable without a browser. The obvious fix
+ * — seed from an estimate, correct from a measurement after mount — is worse
+ * than it looks: a borderline report then grows its "Read more" a frame after
+ * the reader is already looking at the text it belongs to, and everything below
+ * the card jumps down as it lands. There is no measurement anywhere in this
+ * file or in the component that uses it. The arithmetic below is the whole
+ * decision, it is pure, and the server and the browser run exactly the same one.
+ *
+ * **What it costs.** An estimate that is never corrected is sometimes wrong, and
+ * the two ways of being wrong are both accepted here:
+ *
+ * - a control that reveals only a line or two, on a report the estimate put
+ *   just over the clamp; or
+ * - a last line clipped by the fade with no control offered, on one it put just
+ *   under.
+ *
+ * Both are quiet, local and stable. Neither moves anything on the page. The
+ * tolerance is roughly **one line either way** on a report near the boundary,
+ * and that is bought deliberately in exchange for a page that never reflows.
  */
 
 /** Lines of a report the feed shows collapsed. */
@@ -25,107 +42,87 @@ export const REPORT_LINE_HEIGHT_REM = 0.875 * 1.625;
 /** The collapsed height of a report body, in rem. */
 export const REPORT_CLAMP_REM = REPORT_CLAMP_LINES * REPORT_LINE_HEIGHT_REM;
 
-/**
- * Slack, in CSS pixels, before a report counts as overflowing.
- *
- * Without it a report that ends a few pixels past the clamp — a list's last item
- * carrying a hair of bottom margin, a heading's leading rounding up — would grow
- * a "Read more" that reveals nothing, which is worse than the two pixels it was
- * protecting. Roughly a third of a line: enough to absorb rounding, far short of
- * hiding a line of actual text.
- */
-export const REPORT_CLAMP_TOLERANCE_PX = 8;
-
-/**
- * Whether a report is long enough to be worth collapsing.
- *
- * Both heights are measured from the DOM by the caller — the natural height of
- * the rendered markdown, and the height the clamp actually resolved to — so this
- * never has to guess at a root font size, and it keeps working under browser
- * zoom or a user font-size preference.
- */
-export function reportOverflows(
-  naturalHeightPx: number,
-  clampHeightPx: number,
-): boolean {
-  if (clampHeightPx <= 0) return false;
-  return naturalHeightPx > clampHeightPx + REPORT_CLAMP_TOLERANCE_PX;
-}
-
 /* ------------------------------------------------------------------ */
-/*  The first-paint estimate                                           */
+/*  The estimate                                                       */
 /* ------------------------------------------------------------------ */
 
 /**
- * How many characters of report body fit on one rendered line, assumed
- * **generously**.
+ * How many characters of report body fit on one rendered line.
  *
- * A server has no layout: it cannot measure anything, so the only way a report
- * can carry its "Read more" in the very first painted frame is to decide from
- * the source text. This is the one number that decision turns on, and it is
- * deliberately set at the wide end of what the reading column actually gives —
- * a gedu surface is a desktop surface, and the feed's column is two thirds of a
- * wide page at `text-sm`.
- *
- * Wide, because the two ways of being wrong are not equally bad. Under-counting
- * lines means a borderline report gains its control when the measurement lands,
- * which nudges the page down by one small row. Over-counting means a report
- * that fits is painted with a fade over its last line and a control that
- * reveals nothing — a visual lie, and a click that does nothing — and then loses
- * both. So the estimate only claims a report overflows when even a generous
- * line can't fit it.
+ * The feed's column is two thirds of a capped desktop workspace, less the
+ * timeline rail and the card's padding — a little under 800 CSS pixels at
+ * `text-sm`, which is around 105 characters of average Latin prose. Lines break
+ * at word boundaries, though, so a wrapped paragraph only ever *fills* about
+ * nine tenths of the width it is given, and counting the theoretical maximum
+ * would systematically under-count the lines a paragraph actually takes.
  */
-export const REPORT_ESTIMATED_CHARS_PER_LINE = 100;
+export const REPORT_ESTIMATED_CHARS_PER_LINE = 95;
 
 /**
- * Lines the estimate must exceed the clamp by before it claims an overflow.
- *
- * The margin is what keeps the estimate on the safe side of its own error: a
- * report the estimate puts at exactly the clamp's height is precisely the case
- * it cannot call, so it declines to, and the measurement decides a frame later.
+ * The same number for a heading, which renders a size or two up and therefore
+ * fits proportionally fewer characters on its line.
  */
-export const REPORT_ESTIMATE_MARGIN_LINES = 2;
+export const REPORT_ESTIMATED_HEADING_CHARS_PER_LINE = 72;
 
 /**
- * Roughly how many lines a report's markdown renders to.
+ * What one line of a heading costs against the body-copy line budget: its own
+ * larger line box, plus the small top padding the renderer gives every heading.
+ */
+export const REPORT_HEADING_LINE_COST = 1.25;
+
+/**
+ * The gap between two blocks, as a fraction of a body line.
  *
- * Blocks (paragraphs, headings, list items) each start a line of their own and
- * then wrap; everything else about markdown — emphasis, links, the heading
- * markers themselves — is syntax that never reaches the rendered width, so it is
- * stripped before counting. Inter-block spacing is deliberately *not* counted:
- * ignoring it can only lower the estimate, which is the direction this is
- * allowed to be wrong in.
+ * The renderer separates blocks with `space-y-2`, which is half a rem against a
+ * line box of about 1.42rem. It is the single biggest thing a naive
+ * character-count estimate misses: six one-line paragraphs are not six lines
+ * tall, they are six lines plus five gaps — comfortably past a six-line clamp —
+ * while one six-line paragraph fits exactly.
+ */
+export const REPORT_BLOCK_GAP_LINES = 0.35;
+
+/** A markdown line that renders as a heading rather than as body copy. */
+const HEADING_LINE = /^\s*#{1,6}\s+/;
+
+/**
+ * Roughly how many body-copy lines a report's markdown renders to.
  *
- * Pure and exported so the one judgement in the first-paint path is pinned in a
- * test rather than buried in a component.
+ * Every non-blank source line is one rendered block — a paragraph, a heading, a
+ * list item — because that is what both the editor's serialiser and the
+ * fixtures emit; each one wraps according to its own width, and each boundary
+ * between two of them costs a gap. The result is deliberately fractional: the
+ * gaps are a real part of the height and rounding them away is exactly the
+ * error this exists to correct.
+ *
+ * Markdown syntax is stripped before anything is counted — the hashes, the
+ * bullets, the emphasis runs and a link's target never reach the rendered
+ * width, so counting them would inflate short blocks into long ones.
  */
 export function estimateReportLines(markdown: string): number {
   let lines = 0;
-  for (const block of markdown.split(/\n\s*\n/)) {
-    for (const rawLine of block.split("\n")) {
-      const text = stripMarkdownSyntax(rawLine);
-      if (text.length === 0) continue;
-      lines += Math.ceil(text.length / REPORT_ESTIMATED_CHARS_PER_LINE);
-    }
+  let blocks = 0;
+
+  for (const rawLine of markdown.split("\n")) {
+    const isHeading = HEADING_LINE.test(rawLine);
+    const text = stripMarkdownSyntax(rawLine);
+    if (text.length === 0) continue;
+
+    blocks += 1;
+    lines += isHeading
+      ? Math.ceil(text.length / REPORT_ESTIMATED_HEADING_CHARS_PER_LINE) *
+        REPORT_HEADING_LINE_COST
+      : Math.ceil(text.length / REPORT_ESTIMATED_CHARS_PER_LINE);
   }
-  return lines;
+
+  return lines + Math.max(blocks - 1, 0) * REPORT_BLOCK_GAP_LINES;
 }
 
 /**
- * Whether a report is long enough that it is worth painting its clamp
- * affordances before anything has been measured.
- *
- * This is the render-time stand-in for `reportOverflows`, and it is only ever
- * consulted until the real measurement arrives. It exists because a report is
- * server-rendered long before any JavaScript runs: a control that only appears
- * once the browser has measured is a control that lands after the reader is
- * already looking at the text it belongs to.
+ * Whether a report is long enough to be worth collapsing — the one decision,
+ * taken from the source text and identical on the server and in the browser.
  */
-export function reportLikelyOverflows(markdown: string): boolean {
-  return (
-    estimateReportLines(markdown) >
-    REPORT_CLAMP_LINES + REPORT_ESTIMATE_MARGIN_LINES
-  );
+export function reportOverflows(markdown: string): boolean {
+  return estimateReportLines(markdown) > REPORT_CLAMP_LINES;
 }
 
 /**
@@ -137,7 +134,7 @@ export function reportLikelyOverflows(markdown: string): boolean {
  */
 function stripMarkdownSyntax(line: string): string {
   return line
-    .replace(/^\s*#{1,6}\s+/, "")
+    .replace(HEADING_LINE, "")
     .replace(/^\s*(?:[-*+]|\d+\.)\s+/, "")
     .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/[*_`]/g, "")

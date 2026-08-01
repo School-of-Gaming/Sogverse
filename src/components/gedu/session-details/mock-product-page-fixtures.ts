@@ -173,26 +173,60 @@ const JOONAS = { id: GEDU_IDS.joonas, firstName: "Joonas" } as const;
 const MARKUS = { id: GEDU_IDS.markus, firstName: "Markus" } as const;
 
 /**
- * A camp's future block: one entry per remaining day of the run, not the
- * open-ended cap. An end-dated product shows every occurrence to its end, and a
- * camp ends this week — so the collapsed later-block here holds days, not months.
+ * **The camp's future block, and the volume case for the whole feed.**
+ *
+ * Seventeen entries, so the now-divider reads "16 upcoming sessions" — the next
+ * one renders below the line, the rest sit behind it — and the upward reveal is
+ * exercised at the scale it will actually meet rather than against four rows
+ * where any implementation looks fine. That number is not arbitrary: an
+ * end-dated product bypasses the open-ended eight-occurrence cap entirely and
+ * emits every occurrence up to its end date, so a daily product with weeks left
+ * on it is the one shape in the catalogue that genuinely produces a long future,
+ * and it is the one worth proving the reveal against.
+ *
+ * It is written newest-first like every spec list, so this reads backwards: the
+ * last entry is the next session and the first is the final day of the run. Only
+ * a handful carry notes — a camp gedu plans two or three days ahead, not
+ * seventeen — which is also what keeps the collapsed block honest: most of what
+ * the reveal uncovers is bare dates, and the layout has to survive that.
  */
 const CAMP_FUTURE_SPECS: readonly EntrySpec[] = [
-  { kind: "future" },
   {
     kind: "future",
     report:
-      "# Day eight: showcase afternoon\n\nEvery team demos their finished course, and we vote on the one nobody could beat.\n\n**Parents are welcome from 15:00** if you would like to come and be beaten by an obstacle course built by ten-year-olds.",
+      "# Last day: showcase afternoon\n\nEvery team demos their finished course, and we vote on the one nobody could beat.\n\n**Parents are welcome from 15:00** if you would like to come and be beaten by an obstacle course built by ten-year-olds.",
   },
   {
     kind: "future",
     staffNote:
-      "Day seven is the short one — the hall is booked from 14:00, so wrap up by half past one and leave the machines on for the showcase.",
+      "The last day is the short one — the hall is booked from 14:00, so wrap up by half past one and leave the machines on for the showcase.",
+  },
+  { kind: "future" },
+  { kind: "future" },
+  { kind: "future" },
+  { kind: "future" },
+  { kind: "future" },
+  { kind: "future" },
+  { kind: "future" },
+  { kind: "future" },
+  { kind: "future" },
+  { kind: "future" },
+  { kind: "future" },
+  {
+    kind: "future",
+    report:
+      "# Leaderboards\n\nWe wire the finish line up to a scoreboard so the course remembers who got round it fastest.",
+  },
+  { kind: "future" },
+  {
+    kind: "future",
+    staffNote:
+      "**Before the group arrives:**\n\n- Start the machines ten minutes early, they are slow to load Studio\n- The projector adapter is in the drawer, not the cable on the table",
   },
   {
     kind: "future",
     report:
-      "# Day six: leaderboards\n\nWe wire the finish line up to a scoreboard so the course remembers who got round it fastest.",
+      "# Tomorrow: playtesting, round two\n\nEvery team hands their course to another team and watches them fail at it — the most useful hour of the week, and the one everybody asks to repeat.",
   },
 ];
 
@@ -211,7 +245,9 @@ const CAMP_FUTURE_SPECS: readonly EntrySpec[] = [
 const CAMP_SPECS: readonly EntrySpec[] = [
   ...CAMP_FUTURE_SPECS,
   // Yesterday afternoon, register not yet done. The one outstanding session on
-  // this product, and the dashboard's in-person attention badge.
+  // this product, and the dashboard's in-person attention badge. It is also the
+  // newest past entry, which makes it the report the feed renders **unclamped**
+  // — the one a gedu opens this page to re-read.
   {
     kind: "past",
     report:
@@ -426,14 +462,6 @@ const YEARLONG_STAFF_NOTES: readonly string[] = [
   "New member settled in fine but needs the ground rules repeating once more.",
 ];
 
-const YEARLONG_SKIP_REASONS: readonly string[] = [
-  "Autumn break — school closed, no session this week.",
-  "Christmas break, no session.",
-  "Public holiday, school closed.",
-  "Winter break week two.",
-  "Cancelled — heating failure at the venue.",
-];
-
 /**
  * The club's past: 53 dated sessions plus two pre-epoch lines.
  *
@@ -456,11 +484,11 @@ const YEARLONG_SKIP_REASONS: readonly string[] = [
  *   states their meaning.
  * - *Complete* — the majority: marked off and reported, wearing the green check.
  *
- * Plus five holiday skips, which sit outside the ladder entirely, and two
- * sessions from before any of this was expected.
+ * Plus two sessions from before any of this was expected. There are no holiday
+ * skips: a session that did not run has no entry kind, because declaring one off
+ * is part of the cancellation flows nobody has designed.
  */
 function yearlongSpecs(): readonly EntrySpec[] {
-  const SKIP_AT = new Set([6, 17, 18, 31, 44]);
   const OWED_AT = new Set([2, 12]);
   const REPORT_BUT_NO_ATTENDANCE_AT = new Set([8]);
   const PART_MARKED_AT = new Set([4]);
@@ -489,13 +517,6 @@ function yearlongSpecs(): readonly EntrySpec[] {
           ],
           absent: [SESSION_FEED_GAMER_IDS.linnea],
         },
-      });
-      continue;
-    }
-    if (SKIP_AT.has(index)) {
-      past.push({
-        kind: "skipped",
-        reason: YEARLONG_SKIP_REASONS[index % YEARLONG_SKIP_REASONS.length],
       });
       continue;
     }
@@ -542,7 +563,7 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
    * **The kitchen sink.** A remote weekly club a year and a bit into its run,
    * carrying every state the feed can be in at once: all three rungs of the
    * completeness ladder (marked off *and* reported, marked off with no report,
-   * and still owing attendance), holiday skips, bare gaps, a week reported but
+   * and still owing attendance), bare gaps, a week reported but
    * never marked off, a week whose roster was started and abandoned, a pre-epoch
    * tail nothing is owed for, a future horizon with reports already on it, and
    * three sister groups in the rail — one of them not staffed yet. Fifty-five
@@ -590,15 +611,24 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
   },
 
   /**
-   * **The other shape a product can be**: in person, and daily rather than
-   * weekly.
+   * **The other shape a product can be**: in person, daily rather than weekly,
+   * and end-dated.
    *
-   * Both halves are things the club scenario structurally cannot show. Daily
+   * All three are things the club scenario structurally cannot show. Daily
    * cadence packs the dates far tighter than a club ever does — consecutive
    * weekdays with a weekend gap through the middle — which is the layout stress
    * a weekly fixture never applies. In person means the product has a *venue*,
    * so this is the only scenario carrying site notes, and it means there is no
    * voice room anywhere on the page: no Join button is rendered at all.
+   *
+   * End-dated is the third, and it is why the **long future** lives here rather
+   * than on the club. An open-ended club's horizon is capped at eight
+   * occurrences by the same rule the parent dashboards use, so its divider can
+   * never say more than seven; an end-dated product ignores that cap and emits
+   * every occurrence to its end date. A camp with four weeks left is therefore
+   * the honest home for the feed's volume case — seventeen future entries, a
+   * divider reading "16 upcoming sessions", and an upward reveal proved against
+   * a screenful rather than against four rows.
    *
    * It owes exactly one session — yesterday's, register not yet done — which is
    * what puts an attention badge on an in-person dashboard card. The club beside
@@ -614,8 +644,12 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
     durationMinutes: 180,
     slots: CAMP_SLOTS,
     startedDaysAgo: 9,
-    // Four weekday sessions left, which can straddle a weekend.
-    endsInDays: 6,
+    // Four weeks out, which comfortably covers seventeen more weekday
+    // sessions however the run lines up against the weekends it straddles.
+    // What matters is only that the product *is* end-dated: that is what takes
+    // the eight-occurrence cap off the horizon and lets the future block be
+    // seventeen entries long.
+    endsInDays: 28,
     isRemote: false,
     site: {
       name: "Sello Library, Espoo",

@@ -26,9 +26,10 @@ import type {
  *
  * The report and note copy below is mock *data*, not UI copy — it stands in for
  * what a gedu would have typed, so it is not translated, exactly like the
- * product descriptions in the other fixture files. Reports are markdown, because
- * that is how they are stored; gedu notes are plain text, because that is how
- * they are written.
+ * product descriptions in the other fixture files. **Both** session fields are
+ * markdown now — the family-facing report and the gedu note — so a few of the
+ * notes carry the light structure a handover actually takes, and the rest stay
+ * one plain paragraph, which is also what a real one usually is.
  */
 
 const TIMEZONE = "Europe/Helsinki";
@@ -97,6 +98,11 @@ export type SessionFeedCadence = "weekly" | "daily";
  * flagged as owed, and everything older is a quiet "no record" line. That
  * boundary is the whole reason the two gap states look nothing alike — one is
  * work, the other is history.
+ *
+ * **There is no "skipped" spec**, because there is no skipped entry kind: a
+ * session that did not run is a real thing the schema will record one day and
+ * is inseparable from the cancellation and billing decisions nobody has made
+ * yet, so the mock renders and authors nothing of it.
  */
 export type EntrySpec =
   | {
@@ -133,7 +139,6 @@ export type EntrySpec =
        */
       partial?: { present?: readonly string[]; absent?: readonly string[] };
     }
-  | { kind: "skipped"; reason?: string }
   | { kind: "no_record" };
 
 /* ------------------------------------------------------------------ */
@@ -277,13 +282,10 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
     kind: "past",
     absent: [SESSION_FEED_GAMER_IDS.siiri, SESSION_FEED_GAMER_IDS.hilda],
     report: REDSTONE_WEEK_REPORT,
+    // Light structure, because the gedu note is markdown too now and a
+    // handover to whoever runs the room next is naturally a short list.
     staffNote:
-      "Siiri was quiet again and dropped out of the call twice without saying anything. Worth a word with her parents if it carries on. Two laptops also couldn't hear shared audio for the first ten minutes — check the room setup before next week.",
-  },
-
-  {
-    kind: "skipped",
-    reason: "Winter break — school closed, no session this week.",
+      "**Two things for next week:**\n\n- Siiri was quiet again and dropped out of the call twice without saying anything. Worth a word with her parents if it carries on.\n- Laptops 3 and 5 couldn't hear shared audio for the first ten minutes. Check the room setup before the group arrives.",
   },
 
   // The **middle rung**: every child marked, no report written. Nothing is owed
@@ -581,8 +583,6 @@ function toEntry(
         staffNote: spec.staffNote ?? null,
         attendance: marksForSpec(spec),
       };
-    case "skipped":
-      return { kind: "skipped", id, startsAt, endsAt, reason: spec.reason ?? null };
     case "no_record":
       return { kind: "no_record", id, startsAt, endsAt };
   }

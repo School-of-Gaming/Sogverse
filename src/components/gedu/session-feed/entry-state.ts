@@ -29,7 +29,7 @@ import type {
 export function isEditableEntry(
   entry: SessionFeedEntry,
 ): entry is EditableSessionFeedEntry {
-  return entry.kind === "past" || entry.kind === "skipped";
+  return entry.kind === "past";
 }
 
 /** Whether an entry can be expanded into the **notes-only** editor. */
@@ -64,10 +64,8 @@ export type SessionCompleteness = "needs_attention" | "recorded" | "complete";
  * Where a feed entry sits on the ladder, or `null` for the entries the ladder
  * does not apply to.
  *
- * A **future** session has nothing to be complete about, and a **skipped** one
- * is already terminal — it did not run, so there is no roster to mark and no
- * session to report on; ranking it would invent work that does not exist.
- * A pre-epoch `no_record` gap is outside the enforcement window entirely.
+ * A **future** session has nothing to be complete about, and a pre-epoch
+ * `no_record` gap is outside the enforcement window entirely.
  *
  * Everything is measured against the *current* roster, never the stored map's
  * keys: a child who joined the group after a session was fully marked reopens
@@ -91,8 +89,8 @@ export function entryCompleteness(
  * Whether an entry is outstanding work — the alert state, derived rather than
  * stored.
  *
- * It means exactly one thing: **a past session, not skipped, some of whose
- * current roster has not been marked.** The report has no say in it. A past
+ * It means exactly one thing: **a past session some of whose current roster has
+ * not been marked.** The report has no say in it. A past
  * entry can therefore carry a full report and still be flagged, and it renders
  * both — the report as its body, the alert in its header.
  *
@@ -209,28 +207,15 @@ export function editorStateFromEntry(
   entry: EditableSessionFeedEntry,
   roster: readonly SessionFeedGamer[],
 ): SessionEditorState {
-  switch (entry.kind) {
-    case "past":
-      return {
-        didNotRun: false,
-        attendance: rosterScopedMarks(roster, entry.attendance),
-        report: entry.report ?? "",
-        staffNote: entry.staffNote ?? "",
-        skipReason: "",
-      };
-    case "skipped":
-      return {
-        didNotRun: true,
-        attendance: {},
-        report: "",
-        staffNote: "",
-        skipReason: entry.reason ?? "",
-      };
-  }
+  return {
+    attendance: rosterScopedMarks(roster, entry.attendance),
+    report: entry.report ?? "",
+    staffNote: entry.staffNote ?? "",
+  };
 }
 
 /**
- * Collapse the editor's flat working state into the branch it saves as.
+ * Collapse the editor's working state into the draft it saves as.
  *
  * **It always produces a draft.** It used to refuse an incomplete sheet, and
  * that refusal cost more than it bought: the gedu who was interrupted halfway
@@ -244,9 +229,6 @@ export function draftFromEditorState(
   state: SessionEditorState,
   roster: readonly SessionFeedGamer[],
 ): SessionRecordDraft {
-  if (state.didNotRun) {
-    return { kind: "skipped", reason: state.skipReason.trim() };
-  }
   return {
     kind: "past",
     attendance: rosterScopedMarks(roster, state.attendance),
@@ -262,22 +244,13 @@ export function draftFromEditorState(
  * changes state.
  *
  * Empty text collapses back to `null` so a cleared note stops rendering its
- * block, and a skip with no typed reason falls back to the generic line.
+ * block.
  */
 export function applyDraftToEntry(
   entry: EditableSessionFeedEntry,
   draft: SessionRecordDraft,
 ): EditableSessionFeedEntry {
   const { id, startsAt, endsAt } = entry;
-  if (draft.kind === "skipped") {
-    return {
-      kind: "skipped",
-      id,
-      startsAt,
-      endsAt,
-      reason: draft.reason.length > 0 ? draft.reason : null,
-    };
-  }
   return {
     kind: "past",
     id,
@@ -382,6 +355,27 @@ export function partitionFeedEntries(
     nextSession: future.length > 0 ? future[future.length - 1] : null,
     past: entries.slice(future.length),
   };
+}
+
+/**
+ * The newest session that actually ran, out of a feed's past run — the one
+ * entry whose report the feed renders in full instead of clamping it.
+ *
+ * **Positional, not a judgement about the writing.** Whatever sits at the top
+ * of the past is what the weekly loop opens the page to read: what happened
+ * last time, read while prepping the next one or writing this one up. Charging
+ * a click for the single report every gedu reads every week is a toll on the
+ * only path all of them walk; every older report keeps its clamp, which is what
+ * stops a term of write-ups becoming a wall.
+ *
+ * Pre-epoch gaps are stepped over rather than counted — nothing was ever
+ * recorded on them, so there is no report to leave open — and a feed with no
+ * past at all answers `null`.
+ */
+export function newestRecordedEntryId(
+  past: readonly SessionFeedEntry[],
+): string | null {
+  return past.find((entry) => entry.kind === "past")?.id ?? null;
 }
 
 /**

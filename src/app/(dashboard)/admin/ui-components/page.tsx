@@ -2596,7 +2596,7 @@ function GeduSessionFeedDemo() {
         </div>
       </SubSection>
 
-      <SubSection title="Alert badge">
+      <SubSection title="Alert badge — inline">
         <div className="flex flex-wrap items-center gap-6">
           {[0, 1, 3, 12].map((count) => (
             <div key={count} className="flex flex-col items-start gap-2">
@@ -2604,6 +2604,30 @@ function GeduSessionFeedDemo() {
                 {count === 0 ? "0 — renders nothing" : `${count} outstanding`}
               </DemoCaption>
               <SessionFeedAlertBadge count={count} />
+            </div>
+          ))}
+        </div>
+      </SubSection>
+
+      <SubSection title="Alert badge — overlaid on a card corner">
+        <div className="grid gap-6 sm:grid-cols-3">
+          {[0, 3, 12].map((count) => (
+            <div key={count} className="space-y-2">
+              <DemoCaption>
+                {count === 0
+                  ? "0 — nothing on the corner"
+                  : `${count} outstanding`}
+              </DemoCaption>
+              {/* The badge is the card's *sibling* inside a plain `relative`
+                  shell — a card that clips its own overflow would otherwise cut
+                  the badge in half where it hangs off the edge. */}
+              <div className="relative">
+                <Card className="overflow-hidden p-4">
+                  <p className="text-sm font-medium">Minecraft Monday Club</p>
+                  <p className="text-xs text-muted-foreground">Monday A</p>
+                </Card>
+                <SessionFeedAlertBadge count={count} variant="corner" />
+              </div>
             </div>
           ))}
         </div>
@@ -2664,6 +2688,15 @@ function SessionReportDemo() {
             <DemoCaption>Short report — no control at all</DemoCaption>
             <Card className="p-4">
               <SessionReport markdown={DEMO_SHORT_REPORT} />
+            </Card>
+          </div>
+          <div className="space-y-2">
+            <DemoCaption>
+              Same long report, unclamped — what the newest past entry in the
+              feed gets, so the one report every gedu reads costs no click
+            </DemoCaption>
+            <Card className="p-4">
+              <SessionReport markdown={DEMO_LONG_REPORT} clamped={false} />
             </Card>
           </div>
         </div>

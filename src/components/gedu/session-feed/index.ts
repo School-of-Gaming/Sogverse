@@ -18,6 +18,7 @@ export {
   entryNeedsAttention,
   isEditableEntry,
   isPlannableEntry,
+  newestRecordedEntryId,
   partitionFeedEntries,
   pastEntryWindow,
   planDraftFromEditorState,
@@ -29,19 +30,15 @@ export {
   REPORT_CLAMP_LINES,
   REPORT_CLAMP_REM,
   estimateReportLines,
-  reportLikelyOverflows,
   reportOverflows,
 } from "./report-clamp";
-export {
-  COLLAPSE_HOLD_MS,
-  resolveScrollCompensation,
-  useViewportAnchor,
-} from "./scroll-anchor";
+export { resolveScrollCompensation, useViewportAnchor } from "./scroll-anchor";
 export type {
   AttendanceMark,
   AttendanceMarks,
   EditableSessionFeedEntry,
   FutureSessionFeedEntry,
+  NoRecordSessionFeedEntry,
   PastSessionFeedEntry,
   SessionEditorState,
   SessionEntryDraft,

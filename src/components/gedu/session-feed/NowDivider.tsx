@@ -15,6 +15,18 @@ import { cn } from "@/lib/utils";
  * feed entries with their own timeline markers, and this row is the only thing
  * marking the boundary they sit on. One boundary, one line, nothing framed.
  *
+ * **It is the single most important row in the column, and it is drawn like
+ * it.** This was a hairline rule and an 11px muted label — the same treatment
+ * the month boundaries get — and in a scroll of near-identical dated cards it
+ * was simply missed: readers went past the boundary between the future and the
+ * past without registering that they had crossed one, which is the one mistake
+ * this feed can make. So the rule is two pixels and tinted, the label is a
+ * bordered pill at body size rather than a whisper, and the whole row carries
+ * the **info** family — the same blue every future session's tag wears, because
+ * this is the edge of exactly that territory. It stays a rule and a pill: no
+ * background, no border around the row, nothing that could be taken for one
+ * more session card.
+ *
  * **The chevron points up, because that is where the sessions are.** The feed
  * runs newest-first, so the future is *above* this line and the reveal grows
  * upward into it. A chevron pointing down at a control that adds nothing below
@@ -37,25 +49,25 @@ export function NowDivider({
   const t = useTranslations("gedu.sessionFeed");
 
   return (
-    <div className="relative flex items-center gap-3 py-1">
+    <div className="relative flex items-center gap-3 py-2">
       {/* A tick on the rail rather than a dot: this is not a session, and a dot
-          here would read as one more point on the timeline. Same treatment the
-          month boundaries get, for the same reason. */}
+          here would read as one more point on the timeline. Toned and thicker
+          than the month ticks, so the rail says where the boundary is too. */}
       <span
         aria-hidden
-        className="absolute -left-6 top-1/2 h-px w-3 -translate-x-1/2 bg-border"
+        className="absolute -left-6 top-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-info/70"
       />
 
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-sm text-[11px] font-medium uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-info/40 bg-info/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-info transition-colors hover:bg-info/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <ChevronUp
           aria-hidden
           className={cn(
-            "h-3.5 w-3.5 transition-transform duration-200 motion-reduce:transition-none",
+            "h-4 w-4 transition-transform duration-200 motion-reduce:transition-none",
             open && "rotate-180",
           )}
         />
@@ -64,7 +76,7 @@ export function NowDivider({
 
       {/* The rule runs out to the edge from the label, so the boundary reads
           across the whole column without a box being drawn anywhere. */}
-      <span aria-hidden className="h-px flex-1 bg-border" />
+      <span aria-hidden className="h-0.5 flex-1 rounded-full bg-info/40" />
     </div>
   );
 }

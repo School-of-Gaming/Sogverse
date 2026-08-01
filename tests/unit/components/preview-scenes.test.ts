@@ -24,6 +24,7 @@ import {
   type GeduActivityType,
 } from "@/lib/gedu-assignment-rollup";
 import { PREVIEW_SCENARIOS } from "@/components/public/products/mock-detail-fixtures";
+import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
 
 /**
  * The preview registry is the only thing standing between a link on the style
@@ -273,10 +274,9 @@ describe("the club scenario stays the kitchen sink", () => {
     expect(past.length).toBeGreaterThan(50);
 
     const kinds = new Set(past.map((e) => e.kind));
-    // Skips and pre-epoch history alongside the ordinary weeks — otherwise the
-    // long-feed navigation is only exercised against one state.
+    // Pre-epoch history alongside the ordinary weeks — otherwise the long-feed
+    // navigation is only exercised against one state.
     expect(kinds).toContain("past");
-    expect(kinds).toContain("skipped");
     expect(kinds).toContain("no_record");
   });
 
@@ -359,6 +359,51 @@ describe("the camp scenario owes exactly its newest day", () => {
   it("still runs several days, so the daily cadence is visible", () => {
     const { entries } = buildGeduProductPageFixture(now, "camp");
     expect(entries.filter((e) => e.kind === "past").length).toBeGreaterThan(3);
+  });
+
+  /**
+   * **The camp is where the feed's volume lives**, and this is what makes it
+   * true rather than aspirational.
+   *
+   * The now-divider's count is every future entry bar the next one, which
+   * renders below the line — so seventeen future sessions is a divider reading
+   * "16 upcoming sessions", and an upward reveal proved against a screenful
+   * instead of against four rows. It has to be an **end-dated** product: an
+   * open-ended one is capped at eight occurrences by the same rule the family
+   * dashboards use, so a club's divider structurally cannot say more than
+   * seven, however the fixture is written.
+   */
+  it("carries a long future block, and is end-dated so it may", () => {
+    const { data, entries } = buildGeduProductPageFixture(now, "camp");
+    expect(data.product.end_date).not.toBeNull();
+
+    const future = entries.filter((e) => e.kind === "future");
+    expect(future.length).toBeGreaterThan(OPEN_ENDED_OCCURRENCE_CAP * 2);
+    // What the divider reads: everything ahead of us except the next session.
+    expect(future.length - 1).toBe(16);
+  });
+
+  it("leaves most of that future bare, so the reveal is not all prose", () => {
+    // A camp gedu plans two or three days ahead, not seventeen — and the
+    // collapsed block has to look right when most of what it holds is a date.
+    const { entries } = buildGeduProductPageFixture(now, "camp");
+    const future = entries.filter((e) => e.kind === "future");
+    const noted = future.filter(
+      (e) => e.report !== null || e.staffNote !== null,
+    );
+    expect(noted.length).toBeGreaterThan(0);
+    expect(noted.length).toBeLessThan(future.length / 2);
+  });
+
+  it("runs every future session inside its own end date", () => {
+    // An end-dated product emits occurrences up to its end and no further, so a
+    // fixture whose spec list outran its end date would be describing sessions
+    // the real expansion would never produce.
+    const { data, entries } = buildGeduProductPageFixture(now, "camp");
+    const endsAt = new Date(`${data.product.end_date}T23:59:59.999Z`);
+    for (const entry of entries) {
+      expect(entry.startsAt.getTime()).toBeLessThanOrEqual(endsAt.getTime());
+    }
   });
 });
 
@@ -472,12 +517,19 @@ describe("the club scenario shows every rung of the ladder", () => {
     expect(rungs).toContain("complete");
   });
 
-  it("leaves skipped sessions off the ladder entirely", () => {
-    const { entries, feedRoster } = buildGeduProductPageFixture(now, "club");
-    const skipped = entries.filter((e) => e.kind === "skipped");
-    expect(skipped.length).toBeGreaterThan(0);
-    for (const entry of skipped) {
-      expect(entryCompleteness(entry, feedRoster)).toBeNull();
+  /**
+   * The skip states went with the didn't-run editor: declaring a session off is
+   * inseparable from the cancellation and billing flows nobody has designed, so
+   * skip is a schema intention with no trace in the mock. A fixture quietly
+   * reintroducing one would put an unrenderable kind back into the feed.
+   */
+  it("authors no skipped session anywhere, in either scenario", () => {
+    const RENDERABLE = ["future", "past", "no_record"];
+    for (const scenario of GEDU_PRODUCT_SCENARIOS) {
+      const { entries } = buildGeduProductPageFixture(now, scenario);
+      for (const entry of entries) {
+        expect(RENDERABLE, `${scenario}/${entry.id}`).toContain(entry.kind);
+      }
     }
   });
 });

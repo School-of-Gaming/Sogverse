@@ -13,6 +13,7 @@ import {
   entryNeedsAttention,
   isEditableEntry,
   isPlannableEntry,
+  newestRecordedEntryId,
   partitionFeedEntries,
   pastEntryWindow,
   planDraftFromEditorState,
@@ -26,7 +27,6 @@ import type {
   SessionEditorState,
   SessionFeedEntry,
   SessionFeedGamer,
-  SkippedSessionFeedEntry,
 } from "@/components/gedu/session-feed/types";
 
 const ROSTER: SessionFeedGamer[] = [
@@ -58,9 +58,6 @@ function past(
     ...fields,
   };
 }
-function skipped(id: string, reason: string | null): SkippedSessionFeedEntry {
-  return { kind: "skipped", id, ...WHEN, reason };
-}
 function noRecord(id: string): NoRecordSessionFeedEntry {
   return { kind: "no_record", id, ...WHEN };
 }
@@ -81,10 +78,9 @@ function future(
 }
 
 describe("isEditableEntry", () => {
-  it("accepts the two past states that can still be edited", () => {
+  it("accepts a past session whether or not anything is recorded on it", () => {
     expect(isEditableEntry(past("r", { attendance: ALL_MARKED }))).toBe(true);
     expect(isEditableEntry(past("g"))).toBe(true);
-    expect(isEditableEntry(skipped("s", null))).toBe(true);
   });
 
   it("rejects future sessions and pre-epoch gaps", () => {
@@ -104,7 +100,6 @@ describe("isPlannableEntry", () => {
     const entries: SessionFeedEntry[] = [
       future("u"),
       past("r", { attendance: ALL_MARKED }),
-      skipped("s", null),
       past("g"),
       noRecord("n"),
     ];
@@ -164,10 +159,7 @@ describe("entryCompleteness", () => {
     ).toBe("recorded");
   });
 
-  it("exempts skipped, future and pre-epoch entries entirely", () => {
-    // A skipped session is terminal: it did not run, so there is no roster to
-    // mark and nothing to report on. Ranking it would invent work.
-    expect(entryCompleteness(skipped("s", "Holiday"), ROSTER)).toBeNull();
+  it("exempts future and pre-epoch entries entirely", () => {
     expect(entryCompleteness(future("u"), ROSTER)).toBeNull();
     expect(entryCompleteness(noRecord("n"), ROSTER)).toBeNull();
   });
@@ -195,7 +187,6 @@ describe("entryIsComplete", () => {
       false,
     );
     expect(entryIsComplete(past("c"), ROSTER)).toBe(false);
-    expect(entryIsComplete(skipped("s", null), ROSTER)).toBe(false);
   });
 
   it("is never true at the same time as needing attention", () => {
@@ -204,7 +195,6 @@ describe("entryIsComplete", () => {
       past("b", { attendance: ALL_MARKED }),
       past("c", { attendance: ALL_MARKED, report: "# Week" }),
       past("d", { report: "# Week" }),
-      skipped("s", null),
       future("u"),
       noRecord("n"),
     ];
@@ -218,12 +208,11 @@ describe("entryIsComplete", () => {
 });
 
 describe("entryNeedsAttention", () => {
-  it("is exactly: past, not skipped, some of the roster still unmarked", () => {
+  it("is exactly: a past session with some of the roster still unmarked", () => {
     expect(entryNeedsAttention(past("g"), ROSTER)).toBe(true);
     expect(entryNeedsAttention(past("r", { attendance: ALL_MARKED }), ROSTER)).toBe(
       false,
     );
-    expect(entryNeedsAttention(skipped("s", null), ROSTER)).toBe(false);
     expect(entryNeedsAttention(noRecord("n"), ROSTER)).toBe(false);
     expect(entryNeedsAttention(future("f"), ROSTER)).toBe(false);
   });
@@ -296,7 +285,6 @@ describe("countEntriesNeedingAttention", () => {
       past("g3", { attendance: { a: "present" } }),
       past("r", { attendance: ALL_MARKED }),
       noRecord("n"),
-      skipped("s", null),
     ];
     expect(countEntriesNeedingAttention(entries, ROSTER)).toBe(3);
   });
@@ -361,6 +349,51 @@ describe("partitionFeedEntries", () => {
       nextSession: null,
       past: [],
     });
+  });
+});
+
+/**
+ * The one report the feed renders in full. It is what the weekly loop opens the
+ * page for — what happened last time — so it costs no click, and everything
+ * older keeps its clamp so a term of write-ups never becomes a wall.
+ *
+ * The rule is **positional**, and that is the part worth pinning: nothing about
+ * the report's own length or shape may enter into it, or two feeds that differ
+ * only in how chatty last week's gedu was would behave differently.
+ */
+describe("newestRecordedEntryId", () => {
+  it("names the first recorded session in the past run", () => {
+    expect(
+      newestRecordedEntryId([
+        past("p1", { report: "# Last week" }),
+        past("p2", { report: "# The week before" }),
+      ]),
+    ).toBe("p1");
+  });
+
+  it("names it whether or not it carries a report at all", () => {
+    // Positional, not a question about the writing: a bare, unwritten newest
+    // session is still the newest session.
+    expect(newestRecordedEntryId([past("p1"), past("p2")])).toBe("p1");
+  });
+
+  it("steps over pre-epoch gaps, which recorded nothing", () => {
+    expect(
+      newestRecordedEntryId([noRecord("n1"), noRecord("n2"), past("p1")]),
+    ).toBe("p1");
+  });
+
+  it("names nothing for a feed with no past at all", () => {
+    expect(newestRecordedEntryId([])).toBeNull();
+    expect(newestRecordedEntryId([noRecord("n1")])).toBeNull();
+  });
+
+  it("moves to the new top when an older chunk is revealed beneath it", () => {
+    // The past grows downward as chunks are revealed, so the exemption must
+    // stay pinned to the head of the run rather than to a fixed index.
+    const head = past("p1", { report: "# Last week" });
+    expect(newestRecordedEntryId([head])).toBe("p1");
+    expect(newestRecordedEntryId([head, past("p2"), past("p3")])).toBe("p1");
   });
 });
 
@@ -548,11 +581,9 @@ describe("editorStateFromEntry", () => {
     // Never pre-ticked: a gedu must not be able to save a room they never
     // looked at as a room full of children who were present.
     expect(editorStateFromEntry(past("g"), ROSTER)).toEqual({
-      didNotRun: false,
       attendance: {},
       report: "",
       staffNote: "",
-      skipReason: "",
     });
   });
 
@@ -576,11 +607,9 @@ describe("editorStateFromEntry", () => {
         ROSTER,
       ),
     ).toEqual({
-      didNotRun: false,
       attendance: { a: "present", b: "absent", c: "present" },
       report: "We built a clock tower.",
       staffNote: "",
-      skipReason: "",
     });
   });
 
@@ -602,21 +631,13 @@ describe("editorStateFromEntry", () => {
     expect(state.attendance).toEqual({ a: "present" });
   });
 
-  it("opens a skipped session with the didn't-run branch already on", () => {
-    const state = editorStateFromEntry(skipped("s", "Winter break"), ROSTER);
-    expect(state.didNotRun).toBe(true);
-    expect(state.skipReason).toBe("Winter break");
-    expect(state.attendance).toEqual({});
-  });
 });
 
 describe("draftFromEditorState", () => {
   const base: SessionEditorState = {
-    didNotRun: false,
     attendance: { a: "present", b: "present", c: "absent" },
     report: "  We finished the square.  ",
     staffNote: "  Watch Siiri.  ",
-    skipReason: "  Winter break  ",
   };
 
   it("emits the past branch, trimmed, with the marks as they stand", () => {
@@ -670,14 +691,6 @@ describe("draftFromEditorState", () => {
     });
   });
 
-  it("emits the skipped branch without asking for attendance at all", () => {
-    expect(
-      draftFromEditorState(
-        { ...base, didNotRun: true, attendance: {} },
-        ROSTER,
-      ),
-    ).toEqual({ kind: "skipped", reason: "Winter break" });
-  });
 });
 
 describe("applyDraftToEntry", () => {
@@ -721,22 +734,6 @@ describe("applyDraftToEntry", () => {
     });
     expect(saved).toMatchObject({ attendance: { a: "present" } });
     expect(entryNeedsAttention(saved, ROSTER)).toBe(true);
-  });
-
-  it("turns a finished entry into a skipped one", () => {
-    const entry = past("r", {
-      report: "Redstone week.",
-      staffNote: "Watch Siiri.",
-      attendance: ALL_MARKED,
-    });
-    expect(applyDraftToEntry(entry, { kind: "skipped", reason: "" })).toEqual({
-      kind: "skipped",
-      id: "r",
-      startsAt: START,
-      endsAt: END,
-      // No typed reason falls back to the generic display line.
-      reason: null,
-    });
   });
 
   it("round-trips a finished entry through the editor without losing anything", () => {
