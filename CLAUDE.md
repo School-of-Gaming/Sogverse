@@ -132,6 +132,16 @@ A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoke
 
 **Rule: Never use hardcoded colors or raw Tailwind color classes (e.g. `text-sky-400`, `bg-red-500`).** All colors must come from CSS custom properties defined in `src/app/globals.css` and referenced via semantic Tailwind classes (`text-primary`, `bg-destructive`, etc.). For non-CSS contexts (email templates, canvas), use the hex constants in `src/lib/constants/colors.ts`. This ensures a single source of truth for colors and brand identity.
 
+### Authored rich text
+
+Some user-authored fields are stored as **markdown** rather than plain text, because markdown is the one format that renders in-app *and* converts cleanly into the email the same content is later sent as. Three rules govern it:
+
+**Rule: markdown is rendered through the shared `Markdown` component (`src/components/ui/markdown.tsx`), never by converting it to an HTML string.** There is no `dangerouslySetInnerHTML` anywhere in `src/`, and adding one behind a field any user can type into is how a stored-XSS hole ships. The renderer produces React elements, refuses raw HTML in the source, and takes an **allow-list** of elements — anything outside it is unwrapped to its text rather than dropped, so an unsupported construct shows its words instead of silently deleting a paragraph of somebody's writing.
+
+**Rule: the rendered subset and the editor's toolbar are the same subset.** Whatever the writer can produce is exactly what the reader can see styled — no more (an editor button whose output the renderer strips is a trap) and no less (a construct that renders but cannot be typed can only arrive by paste and will surprise whoever edits the field next). Widening one means widening the other in the same change.
+
+**Rule: markdown is edited as rich text, not as syntax.** The people writing these fields are not writing documentation; asking them to remember what `##` does is how a formatting feature ends up unused. The stored value stays markdown either way — the syntax is an implementation detail of the column, not something a writer should ever meet. The editor (`src/components/ui/rich-text-editor.tsx`) is headless and styled with semantic tokens like everything else, is loaded on demand, and is only instantiated once a field is actually opened: a page holding many collapsed editors must not construct one per field.
+
 ### UI Component Reference
 A living style guide is available at `/admin/ui-components` (admin login required). It shows every component variant, composite patterns, and the color palette. **Reference this page before creating new UI patterns.** The source at `src/app/(dashboard)/admin/ui-components/page.tsx` serves as copy-paste examples.
 
