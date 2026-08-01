@@ -76,19 +76,19 @@ fixture-UUID rule.
    attention"** (warning); attendance complete without a report → neutral; attendance
    complete AND report present → **"Complete"** (success check). "Needs attention" is
    the work queue; the check is the target state.
-6. **Roster accuracy splits into two cases, and only one needs schema help.**
-   A **recorded** session is self-describing: its attendance marks ARE the roster as
-   it was — names resolve from profiles by gamer id even after a child leaves the
-   group, so the record stays accurate forever with no history table. An
-   **unrecorded** past session needs a demanded-roster for the completeness check:
-   **current members who had joined by the session date** (`participations.signed_up_at`),
-   so a late joiner never reopens finished sessions. True enrollment-at-the-time for
-   *leavers* is unknowable today (participation rows are hard-deleted, `group_id`
-   mutates without history) — a child who left before recording is simply not
-   demanded, an accepted under-record. A participation-history table is deliberately
-   NOT part of this work. The mock uses the current roster (fixtures have no join
-   dates); the `entry-state.ts` doc comments describing current-roster as "the honest
-   reading" are superseded by this decision and must be rewritten at promotion.
+6. **No guessed rosters — an unrecorded session just isn't known.** A **recorded**
+   session is self-describing: its marks ARE the roster as it was (names resolve
+   from profiles by gamer id even after a child leaves), accurate forever with no
+   history table. An **unrecorded** past session makes no claim about who should
+   have been there — its alert means only "nothing recorded". Once marks exist,
+   completeness is judged against the **current roster** (the only roster there
+   is), which keeps the partial-save reminder working. There is deliberately NO
+   joined-by-date machinery, no participation-history table, and no
+   enrollment-at-the-time derivation — "who was enrolled then" is knowledge we
+   don't have and choose not to fake; it can be derived later if genuinely wanted.
+   **Accepted consequence, chosen with eyes open:** a child joining a long-running
+   group makes previously-complete past sessions read incomplete again. This is
+   exactly what the mock implements — the `entry-state.ts` doc comments stand.
 7. **Future sessions materialize for notes only.** A future occurrence's row may hold
    the report/note fields (forward planning, reminders); never attendance. There is no
    "planned vs recorded" distinction in copy — notes are notes, on both sides of now.
@@ -261,7 +261,7 @@ Predictable flow, simpler code.
    PR that ships step 4); the feed RPC and the per-assignment summary RPC per (16) —
    with db-test coverage for any Json-returning result schemas. The RPCs must supply
    what the fixtures promise: group name, per-group gamer count, **site name**, and
-   attention count on assignment summaries; roster rows with `signed_up_at` and
+   attention count on assignment summaries; roster rows with
    parent emails (**tighten the contract to non-null** — the backend guarantees it).
    Enumeration floors at **product start** (pre-epoch occurrences render muted, the
    chunked reveal absorbs long histories); the attendance RPC may take the reserved
