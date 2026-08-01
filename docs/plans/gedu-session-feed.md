@@ -195,6 +195,37 @@ Decisions from feedback round 4:
   (it was already duplicated across the gedu cards before this feature tripled
   it), and the rail labels its gedu chips so they can't be misread as gamers.
 
+Decisions from feedback round 7:
+
+- **The future block becomes a "now divider" in one continuous feed.** No container
+  card: expanded future sessions render identically to past ones; the "N upcoming
+  sessions" row is the only boundary marker. **Expansion reveals upward with the
+  viewport pinned** (chat-history pattern: measure the height delta, compensate
+  scroll in the same frame) — the next session stays where the reader is and the
+  future is read by scrolling up. No height animation on the upward reveal
+  (animating against scroll anchoring is the complex half); revealed cards fade in
+  with opacity only. The same anchoring applies on **editor save-collapse**: the
+  saved card's header stays at its viewport position instead of jumping away.
+- **Reduced motion is respected everywhere** (the collapsible treatment's
+  `motion-reduce` behavior is correct; the admin side panel that animates
+  regardless is the outlier to fix, not the precedent).
+- **Report rendering is synchronous with first paint** — only the rich editor may
+  be lazy-loaded; the markdown renderer must be in the page bundle so report
+  bodies and their Read-more affordance never pop in after mount.
+- **The toolbar gains Title (H1)** — real reports open with a title line —
+  rendered at report scale (the renderer already prevents page-title rivalry).
+  The report field drops its "(optional)" marker: technically optional, but the
+  UI must not encourage skipping it.
+- **Dashboard voids hold something real**: the footer slot renders Join on online
+  cards and the **site/location name** on in-person cards (the in-person
+  counterpart of "join"); badges live inline in an always-populated status row —
+  the attention count or a **Live badge** (left of the chevron), which replaces
+  the "Session in progress" line (the gradient already communicates liveness).
+  Uniform heights come from uniform zones, not padded emptiness.
+- `clubs-only` shows **7 clubs** so grid wrapping is visible; a fixture report is
+  modeled on the real example (date–title line, many short paragraphs, ~1600
+  chars, no lists).
+
 Decisions from feedback round 6:
 
 - **The public session field is a "Session report"; the gedu/admin field is a "Gedu
