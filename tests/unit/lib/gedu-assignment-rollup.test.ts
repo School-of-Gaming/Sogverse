@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  GEDU_ACTIVITY_TYPE_ORDER,
+  geduActivityTypeOf,
+  groupAssignmentsByType,
   rollUpGeduAssignments,
   type GeduAssignmentRow,
 } from "@/lib/gedu-assignment-rollup";
+import { Constants } from "@/types/database.types";
+import type { ProductType } from "@/types";
 
 /**
  * The roll-up is what replaced the dashboard's per-occurrence enumeration, so
@@ -199,5 +204,101 @@ describe("rollUpGeduAssignments", () => {
   it("uses the caller's per-product open href", () => {
     const summaries = rollUp([row({ id: "p1", name: "A" })], now);
     expect(summaries[0].openHref).toBe("/preview/gedu-product/p1");
+  });
+
+  it("never reports an open voice window on a product with no room", () => {
+    // A card lights up on this flag, so an in-person assignment reporting an
+    // open window would announce a room that does not exist. The window is a
+    // fact about a room, and an in-person product has none to be inside.
+    const summaries = rollUp(
+      [
+        row({
+          id: "onsite",
+          name: "Onsite Camp",
+          isRemote: false,
+          // Mid-session right now, which is exactly when the window would
+          // otherwise report itself open.
+          weekday: 2,
+          startTime: "10:30",
+          durationMinutes: 180,
+        }),
+      ],
+      now,
+    );
+    expect(summaries[0].hasVoiceRoom).toBe(false);
+    expect(summaries[0].voiceIsOpen).toBe(false);
+  });
+});
+
+/**
+ * The dashboard stopped having one umbrella heading and now renders one section
+ * per type noun. Which sections exist, and in what order, is entirely this
+ * function's answer — so an empty group leaking through would put a heading on
+ * the page with nothing under it, and a reordering would move a gedu's clubs
+ * below their events between two deploys.
+ */
+describe("geduActivityTypeOf", () => {
+  it("folds both club types into one noun", () => {
+    // A gedu standing in the room cannot tell a consumer club from a
+    // municipality one, and has no reason to: the difference is who pays.
+    expect(geduActivityTypeOf("consumer_club")).toBe("club");
+    expect(geduActivityTypeOf("municipality_club")).toBe("club");
+  });
+
+  it("maps the other two product types to themselves", () => {
+    expect(geduActivityTypeOf("camp")).toBe("camp");
+    expect(geduActivityTypeOf("event")).toBe("event");
+  });
+
+  it("covers every product type the schema can produce", () => {
+    // Derived from the generated enum rather than a hand-kept list, so a fifth
+    // product type fails here instead of silently falling out of the dashboard.
+    for (const type of Constants.public.Enums.product_type) {
+      expect(GEDU_ACTIVITY_TYPE_ORDER, type).toContain(geduActivityTypeOf(type));
+    }
+  });
+});
+
+describe("groupAssignmentsByType", () => {
+  const typed = (id: string, productType: ProductType) => ({ id, productType });
+  const typeOf = (item: { productType: ProductType }) => item.productType;
+
+  it("emits clubs, then camps, then events", () => {
+    const groups = groupAssignmentsByType(
+      [typed("e", "event"), typed("c", "camp"), typed("k", "consumer_club")],
+      typeOf,
+    );
+    expect(groups.map((g) => g.type)).toEqual(["club", "camp", "event"]);
+  });
+
+  it("skips the nouns a gedu does not run rather than emitting empties", () => {
+    // An empty heading on a personal dashboard reads as something missing; a
+    // club gedu should never learn that events exist.
+    const groups = groupAssignmentsByType(
+      [typed("k1", "consumer_club"), typed("k2", "municipality_club")],
+      typeOf,
+    );
+    expect(groups).toHaveLength(1);
+    expect(groups[0].type).toBe("club");
+    expect(groups[0].items.map((i) => i.id)).toEqual(["k1", "k2"]);
+  });
+
+  it("preserves the caller's order inside each group", () => {
+    // The roll-up already sorted soonest-first; regrouping must not reshuffle.
+    const groups = groupAssignmentsByType(
+      [
+        typed("k1", "consumer_club"),
+        typed("c1", "camp"),
+        typed("k2", "consumer_club"),
+        typed("c2", "camp"),
+      ],
+      typeOf,
+    );
+    expect(groups[0].items.map((i) => i.id)).toEqual(["k1", "k2"]);
+    expect(groups[1].items.map((i) => i.id)).toEqual(["c1", "c2"]);
+  });
+
+  it("returns nothing at all for a gedu with no assignments", () => {
+    expect(groupAssignmentsByType([], typeOf)).toEqual([]);
   });
 });

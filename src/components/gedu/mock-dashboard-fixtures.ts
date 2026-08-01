@@ -19,8 +19,8 @@ import {
 
 /**
  * Fixtures for the gedu dashboard preview scene — a plausible week for a gedu
- * running one remote club and one in-person camp, computed from a `now` the
- * caller supplies.
+ * running two remote clubs, an in-person camp and a one-day event, computed from
+ * a `now` the caller supplies.
  *
  * Nothing here is hand-written narrative. Assignment rows go through the same
  * roll-up adapter the live dashboard will use, and the recurring-schedule line
@@ -28,29 +28,46 @@ import {
  * the preview shows the real derivations (next occurrence including an
  * in-progress one, cadence in the viewer's zone) rather than a plausible
  * imitation of them. Only two fields are rewritten afterwards, and both because
- * a preview must not lead anywhere live: the Join button is made inert and every
- * card points at the matching product-page *scene*, so clicking through lands on
- * the feed the badge is talking about.
+ * a preview must not lead anywhere live: the Join button is made inert and the
+ * two scene-backed cards point at the matching product-page *scene*, so clicking
+ * through lands on the feed the badge is talking about.
  *
- * **The badge counts are derived, not authored.** Each assignment's
+ * **The badge counts are derived, not authored.** Each scene-backed assignment's
  * needs-attention number is counted out of the very feed its card links to, so a
- * card can never advertise a number the page behind it disagrees with.
+ * card can never advertise a number the page behind it disagrees with. The two
+ * demonstration cards have no feed behind them and carry none.
  */
 
 /**
- * **Two scenarios.** `default` is the working dashboard and carries everything
- * that can coexist on one: two assignments, one behind on write-ups and one
- * clear, one of them live *right now* so the open Join state is on screen
- * without anyone having to wait for a Monday. `unverified` is the only genuinely
- * exclusive variant — an account an admin has not approved yet, which swaps the
+ * **Three scenarios.**
+ *
+ * `default` is the working dashboard and carries everything that can coexist on
+ * one: all three type nouns, and the four card shapes that between them cover
+ * every state a card can be in —
+ *
+ * 1. a **remote club, live right now**, with its Join lit;
+ * 2. a **remote club later this week**, with the same Join in its locked form;
+ * 3. an **in-person camp owing a write-up**, carrying the attention badge and no
+ *    Join at all;
+ * 4. an **in-person event running right now**, which is the pairing that matters
+ *    — "session in progress" with no Join beside it, proving the reserved
+ *    footer zone holds the card's height open whether or not a button lands in
+ *    it.
+ *
+ * `clubs-only` is the single-noun composition: the same two clubs, one heading,
+ * one pill entry. It exists because "only non-empty types render" is a rule
+ * whose failure mode is invisible on a gedu who happens to run all three, and
+ * most gedus run clubs and nothing else.
+ *
+ * `unverified` is the account an admin has not approved yet, which swaps the
  * instant-room panel for a notice and cannot be true at the same time as the
  * panel being usable.
- *
- * There was a third, `all-clear`, showing zero outstanding badges. That state
- * lives inside `default` now, on the camp card: a scenario per badge value is a
- * scenario that will rot the first time the badge changes shape.
  */
-export const GEDU_DASHBOARD_SCENARIOS = ["default", "unverified"] as const;
+export const GEDU_DASHBOARD_SCENARIOS = [
+  "default",
+  "clubs-only",
+  "unverified",
+] as const;
 
 export type GeduDashboardScenario = (typeof GEDU_DASHBOARD_SCENARIOS)[number];
 
@@ -66,12 +83,19 @@ export interface GeduDashboardFixture {
 
 const MINECRAFT_PRODUCT_ID = "mock-dashboard-minecraft-club";
 const CAMP_PRODUCT_ID = "mock-dashboard-roblox-camp";
+const UPCOMING_CLUB_PRODUCT_ID = "mock-dashboard-fortnite-club";
+const EVENT_PRODUCT_ID = "mock-dashboard-lan-event";
 
 /**
  * Which product-page scene each dashboard card opens. The feeds behind these
- * scenes are also where the badge counts come from — so the two assignments are
- * the two product-page scenarios, and clicking a card lands on the very feed
+ * scenes are also where the badge counts come from — so these two assignments
+ * are the two product-page scenarios, and clicking either lands on the very feed
  * its badge was counted out of.
+ *
+ * The other two cards are on the page to show card *states*, not to be clicked
+ * through: they have no feed of their own, so their hrefs fall back to inert and
+ * their badges to zero rather than inventing a third and fourth fixture feed
+ * nobody would ever read.
  */
 const SCENE_BY_PRODUCT: Record<string, GeduProductScenario> = {
   [MINECRAFT_PRODUCT_ID]: "club",
@@ -85,7 +109,7 @@ export function buildGeduDashboardFixture(
   /** Viewer's IANA zone — the cadence line renders in it, like every time. */
   timeZone: string,
 ): GeduDashboardFixture {
-  const rows: GeduAssignmentRow[] = [
+  const clubRows: GeduAssignmentRow[] = [
     assignmentRow({
       now,
       id: MINECRAFT_PRODUCT_ID,
@@ -106,6 +130,26 @@ export function buildGeduDashboardFixture(
       groupName: "Monday A",
       groupGamerCount: 8,
     }),
+    assignmentRow({
+      now,
+      id: UPCOMING_CLUB_PRODUCT_ID,
+      name: "Fortnite Creative Club",
+      productType: "consumer_club",
+      // Remote and *not* running: the locked "Opens …" Join, which is what a
+      // gedu sees on six days out of seven and which the live card above can
+      // never show at the same time.
+      isRemote: true,
+      slots: [futureSlot(now, 3, "17:00", 90)],
+      startedDaysAgo: 35,
+      endsInDays: null,
+      groupCount: 2,
+      gamerCount: 14,
+      groupName: "Thursday B",
+      groupGamerCount: 7,
+    }),
+  ];
+
+  const otherRows: GeduAssignmentRow[] = [
     assignmentRow({
       now,
       id: CAMP_PRODUCT_ID,
@@ -129,7 +173,28 @@ export function buildGeduDashboardFixture(
       groupName: "Builders red",
       groupGamerCount: 8,
     }),
+    assignmentRow({
+      now,
+      id: EVENT_PRODUCT_ID,
+      name: "Winter LAN Afternoon",
+      productType: "event",
+      // In person **and** running right now — the card that proves the reserved
+      // footer holds. It says "session in progress" and renders no Join, so it
+      // sits at exactly the same height as the remote card two columns over
+      // that does render one.
+      isRemote: false,
+      slots: [liveNowSlot(now, 240)],
+      startedDaysAgo: 0,
+      endsInDays: 0,
+      groupCount: 2,
+      gamerCount: 18,
+      groupName: "Reds",
+      groupGamerCount: 9,
+    }),
   ];
+
+  const rows =
+    scenario === "clubs-only" ? clubRows : [...clubRows, ...otherRows];
 
   const assignments = rollUpGeduAssignments({
     rows,
@@ -183,8 +248,9 @@ export function buildGeduDashboardFixture(
 }
 
 /**
- * Count each product's outstanding sessions straight out of the feed its card
- * links to. Derived rather than authored so the two scenes can't drift.
+ * Count each scene-backed product's outstanding sessions straight out of the
+ * feed its card links to. Derived rather than authored so the two scenes can't
+ * drift.
  *
  * The count is taken against that feed's own roster, because "outstanding" now
  * means "some of this group is still unmarked" — a session with three of eight
@@ -237,7 +303,7 @@ function assignmentRow(opts: {
 
 /**
  * A weekly slot whose current occurrence started a few minutes ago, so the
- * assignment's voice window is open the moment the scene is opened.
+ * assignment is mid-session the moment the scene is opened.
  *
  * The wall clock is read **in the product's own zone** and floored to a quarter
  * hour, because that is where a schedule slot lives: a slot is a weekday plus a
@@ -260,6 +326,28 @@ function liveNowSlot(
     // `getDay()` is 0 = Sunday; schedule slots are 0 = Monday.
     weekday: (started.getDay() + 6) % 7,
     startTime: `${pad2(started.getHours())}:${pad2(started.getMinutes())}`,
+    durationMinutes,
+  };
+}
+
+/**
+ * A weekly slot a few days out, at a fixed clock face — the ordinary case, where
+ * the next session is a date to read rather than a room to walk into.
+ *
+ * The weekday is derived in the product's zone for the same reason the live slot
+ * is: a slot is a weekday there, not an offset from the viewer's today.
+ */
+function futureSlot(
+  now: Date,
+  daysAhead: number,
+  startTime: string,
+  durationMinutes: number,
+): GeduAssignmentRow["slots"][number] {
+  const target = toZonedTime(now, SESSION_FEED_TIMEZONE);
+  target.setDate(target.getDate() + daysAhead);
+  return {
+    weekday: (target.getDay() + 6) % 7,
+    startTime,
     durationMinutes,
   };
 }

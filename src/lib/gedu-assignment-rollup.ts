@@ -71,7 +71,12 @@ export interface GeduAssignmentSummary {
    * library has no room behind it that ever will.
    */
   hasVoiceRoom: boolean;
-  /** Whether that session's voice window is open right now. */
+  /**
+   * Whether that session's voice window is open right now. Always false without
+   * a room — an in-person assignment has no window to be inside, and a caller
+   * lighting a card up on this flag would otherwise announce a room that does
+   * not exist.
+   */
   voiceIsOpen: boolean;
   /** Where the Join button navigates. `"#"` keeps it inert. */
   voiceHref: string;
@@ -125,7 +130,9 @@ export function rollUpGeduAssignments({
       nextSessionEnd: next?.end ?? null,
       hasVoiceRoom,
       voiceIsOpen:
-        next !== null && isVoiceWindowOpen(next.start, next.end, now),
+        hasVoiceRoom &&
+        next !== null &&
+        isVoiceWindowOpen(next.start, next.end, now),
       // Only meaningful when there is a room; an in-person assignment renders no
       // Join at all, so its href is never read.
       voiceHref: hasVoiceRoom
@@ -167,6 +174,94 @@ function nextOccurrenceFor(
   });
 
   return occurrences[0] ?? null;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Grouping by type noun                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The nouns a gedu uses for the things they run.
+ *
+ * There are four product types and three nouns, because the two club types
+ * (`consumer_club` and `municipality_club`) differ only in who pays. A gedu
+ * standing in the room cannot tell them apart and has no reason to: both are a
+ * club, and splitting the dashboard by billing arrangement would be the product
+ * showing its accounting to the person teaching.
+ */
+export type GeduActivityType = "club" | "camp" | "event";
+
+/**
+ * The order the nouns appear in, which is deliberately not alphabetical.
+ *
+ * Clubs first because they are the standing commitment — the thing a gedu runs
+ * every week for a term, and the reason most of them open the dashboard at all.
+ * Camps next: intense, but a fortnight. Events last: occasional, and a gedu who
+ * has one is not usually opening the page for it.
+ */
+export const GEDU_ACTIVITY_TYPE_ORDER: readonly GeduActivityType[] = [
+  "club",
+  "camp",
+  "event",
+];
+
+/** Which noun a product type falls under. */
+export function geduActivityTypeOf(productType: ProductType): GeduActivityType {
+  switch (productType) {
+    case "consumer_club":
+    case "municipality_club":
+      return "club";
+    case "camp":
+      return "camp";
+    case "event":
+      return "event";
+  }
+}
+
+export interface GeduActivityGroup<T> {
+  type: GeduActivityType;
+  items: T[];
+}
+
+/**
+ * Split a gedu's assignments into one group per type noun, **skipping the types
+ * they do not run**.
+ *
+ * A gedu with three clubs and nothing else should see one heading, not one
+ * heading and two empty ones — an empty group on a personal dashboard reads as
+ * something missing rather than as something absent. So the shape of the page
+ * follows what the gedu actually has, and a camp gedu never learns that events
+ * exist.
+ *
+ * Order **within** a group is whatever the caller handed over, untouched, which
+ * is soonest-first out of the roll-up. Order **between** groups is fixed, so the
+ * page does not reshuffle its own headings between two gedus or between two
+ * terms for the same gedu.
+ *
+ * Generic over the row rather than tied to the card's shape: the grouping is a
+ * fact about product types, and making it know what a dashboard card looks like
+ * would drag a component's props into a pure module for no gain.
+ */
+export function groupAssignmentsByType<T>(
+  items: readonly T[],
+  productTypeOf: (item: T) => ProductType,
+): GeduActivityGroup<T>[] {
+  const buckets = new Map<GeduActivityType, T[]>();
+  for (const item of items) {
+    const type = geduActivityTypeOf(productTypeOf(item));
+    const bucket = buckets.get(type);
+    if (bucket === undefined) buckets.set(type, [item]);
+    else bucket.push(item);
+  }
+
+  const groups: GeduActivityGroup<T>[] = [];
+  for (const type of GEDU_ACTIVITY_TYPE_ORDER) {
+    const bucketed = buckets.get(type);
+    if (bucketed !== undefined && bucketed.length > 0) {
+      groups.push({ type, items: bucketed });
+    }
+  }
+  return groups;
 }
 
 /** Soonest first; assignments with no scheduled session last, then by name. */

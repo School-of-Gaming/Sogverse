@@ -2,7 +2,6 @@
 
 import { useLocale } from "next-intl";
 import { GeduDashboardPageBodyDraft } from "@/components/gedu/gedu-dashboard-page-body-draft";
-import { GeduAssignmentsSectionView } from "@/components/gedu/GeduAssignmentsSectionView";
 import {
   buildGeduDashboardFixture,
   type GeduDashboardScenario,
@@ -33,7 +32,7 @@ export function GeduDashboardScene({
   return (
     <GeduDashboardPageBodyDraft
       verified={fixture.verified}
-      groupsSection={<GeduAssignmentsSectionView items={fixture.assignments} />}
+      assignments={fixture.assignments}
       instantRoomCard={
         <CreateInstantRoomCardView
           createdCode={null}
