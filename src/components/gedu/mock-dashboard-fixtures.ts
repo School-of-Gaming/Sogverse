@@ -32,10 +32,12 @@ import {
  * two scene-backed cards point at the matching product-page *scene*, so clicking
  * through lands on the feed the badge is talking about.
  *
- * **The badge counts are derived, not authored.** Each scene-backed assignment's
- * needs-attention number is counted out of the very feed its card links to, so a
- * card can never advertise a number the page behind it disagrees with. The two
- * demonstration cards have no feed behind them and carry none.
+ * **The badge counts and the camp's venue are derived, not authored.** Each
+ * scene-backed assignment's needs-attention number is counted out of the very
+ * feed its card links to, and its site name is read off the same fixture the
+ * product page renders — so a card can never advertise a number or a building
+ * the page behind it disagrees with. The cards with no scene behind them carry
+ * authored values, because there is no page for them to disagree with.
  */
 
 /**
@@ -54,10 +56,13 @@ import {
  *    footer zone holds the card's height open whether or not a button lands in
  *    it.
  *
- * `clubs-only` is the single-noun composition: the same two clubs, one heading,
- * one pill entry. It exists because "only non-empty types render" is a rule
- * whose failure mode is invisible on a gedu who happens to run all three, and
- * most gedus run clubs and nothing else.
+ * `clubs-only` is the single-noun composition: one heading, one pill entry — and
+ * **seven clubs**, because the other thing it exists to show is the grid. Two
+ * cards tell you nothing about how the tiles wrap; seven fill a three-column
+ * row and start a second one, which is where an uneven last row, a ragged bottom
+ * edge or a card that grows on one breakpoint and not another actually becomes
+ * visible. Their next sessions are spread across the week and a couple carry a
+ * backlog, so the grid is not a row of identical tiles either.
  *
  * `unverified` is the account an admin has not approved yet, which swaps the
  * instant-room panel for a notice and cannot be true at the same time as the
@@ -87,6 +92,16 @@ const UPCOMING_CLUB_PRODUCT_ID = "mock-dashboard-fortnite-club";
 const EVENT_PRODUCT_ID = "mock-dashboard-lan-event";
 
 /**
+ * The venue the one-day event runs at.
+ *
+ * Authored rather than derived, because this card has no product-page scene
+ * behind it to read one off — and an in-person card without a venue would leave
+ * the footer zone this redesign exists to fill standing empty, which is the one
+ * thing the card must never do.
+ */
+const EVENT_SITE_NAME = "Kaapelitehdas, Helsinki";
+
+/**
  * Which product-page scene each dashboard card opens. The feeds behind these
  * scenes are also where the badge counts come from — so these two assignments
  * are the two product-page scenarios, and clicking either lands on the very feed
@@ -109,6 +124,9 @@ export function buildGeduDashboardFixture(
   /** Viewer's IANA zone — the cadence line renders in it, like every time. */
   timeZone: string,
 ): GeduDashboardFixture {
+  const { attention: sceneAttention, siteNames: sceneSiteNames } =
+    sceneBackedFacts(now);
+
   const clubRows: GeduAssignmentRow[] = [
     assignmentRow({
       now,
@@ -149,6 +167,91 @@ export function buildGeduDashboardFixture(
     }),
   ];
 
+  /**
+   * Five more clubs, on the `clubs-only` scenario only.
+   *
+   * They exist to fill the grid — seven cards wrap onto a second row at three
+   * columns and a fourth at two — so they are deliberately unalike: different
+   * days, different clock faces, different group sizes, and a couple of them
+   * carrying a backlog. Seven copies of one card would show that the grid lays
+   * out, and nothing about how it copes with what a real gedu's week looks like.
+   *
+   * None is scene-backed, so none links anywhere and their backlog counts are
+   * authored rather than counted out of a feed.
+   */
+  const extraClubRows: GeduAssignmentRow[] = [
+    assignmentRow({
+      now,
+      id: "mock-dashboard-roblox-club",
+      name: "Roblox Studio Club",
+      productType: "consumer_club",
+      isRemote: true,
+      slots: [futureSlot(now, 1, "15:00", 90)],
+      startedDaysAgo: 21,
+      endsInDays: null,
+      groupCount: 2,
+      gamerCount: 15,
+      groupName: "Tuesday A",
+      groupGamerCount: 8,
+    }),
+    assignmentRow({
+      now,
+      id: "mock-dashboard-rocket-league-club",
+      name: "Rocket League Club",
+      productType: "consumer_club",
+      isRemote: true,
+      slots: [futureSlot(now, 2, "17:30", 60)],
+      startedDaysAgo: 63,
+      endsInDays: null,
+      groupCount: 4,
+      gamerCount: 28,
+      groupName: "Wednesday C",
+      groupGamerCount: 6,
+    }),
+    assignmentRow({
+      now,
+      id: "mock-dashboard-stardew-club",
+      name: "Stardew Valley Co-op Club",
+      productType: "municipality_club",
+      isRemote: true,
+      slots: [futureSlot(now, 4, "16:00", 90)],
+      startedDaysAgo: 14,
+      endsInDays: null,
+      groupCount: 1,
+      gamerCount: 6,
+      groupName: "Friday A",
+      groupGamerCount: 6,
+    }),
+    assignmentRow({
+      now,
+      id: "mock-dashboard-terraria-club",
+      name: "Terraria Builders Club",
+      productType: "consumer_club",
+      isRemote: true,
+      slots: [futureSlot(now, 5, "13:00", 120)],
+      startedDaysAgo: 112,
+      endsInDays: null,
+      groupCount: 2,
+      gamerCount: 13,
+      groupName: "Saturday B",
+      groupGamerCount: 7,
+    }),
+    assignmentRow({
+      now,
+      id: "mock-dashboard-sims-club",
+      name: "Sims Storytellers Club",
+      productType: "municipality_club",
+      isRemote: true,
+      slots: [futureSlot(now, 6, "18:00", 90)],
+      startedDaysAgo: 42,
+      endsInDays: null,
+      groupCount: 3,
+      gamerCount: 19,
+      groupName: "Sunday A",
+      groupGamerCount: 9,
+    }),
+  ];
+
   const otherRows: GeduAssignmentRow[] = [
     assignmentRow({
       now,
@@ -172,16 +275,19 @@ export function buildGeduDashboardFixture(
       gamerCount: 23,
       groupName: "Builders red",
       groupGamerCount: 8,
+      // Read off the product-page scene this card opens, so the venue on the
+      // card and the venue in that page's site-notes panel are one string.
+      siteName: sceneSiteNames[CAMP_PRODUCT_ID] ?? null,
     }),
     assignmentRow({
       now,
       id: EVENT_PRODUCT_ID,
       name: "Winter LAN Afternoon",
       productType: "event",
-      // In person **and** running right now — the card that proves the reserved
-      // footer holds. It says "session in progress" and renders no Join, so it
-      // sits at exactly the same height as the remote card two columns over
-      // that does render one.
+      // In person **and** running right now — the pairing that matters. It
+      // wears the Live badge and renders no Join, and its footer holds the
+      // venue instead, so it sits at the same height as the remote card that
+      // does render one without either of them reserving empty space.
       isRemote: false,
       slots: [liveNowSlot(now, 240)],
       startedDaysAgo: 0,
@@ -190,17 +296,20 @@ export function buildGeduDashboardFixture(
       gamerCount: 18,
       groupName: "Reds",
       groupGamerCount: 9,
+      siteName: EVENT_SITE_NAME,
     }),
   ];
 
   const rows =
-    scenario === "clubs-only" ? clubRows : [...clubRows, ...otherRows];
+    scenario === "clubs-only"
+      ? [...clubRows, ...extraClubRows]
+      : [...clubRows, ...otherRows];
 
   const assignments = rollUpGeduAssignments({
     rows,
     now,
     locale,
-    attentionByProductId: outstandingByProduct(now),
+    attentionByProductId: { ...sceneAttention, ...AUTHORED_ATTENTION },
     hrefByProductId: Object.fromEntries(
       Object.entries(SCENE_BY_PRODUCT).map(([productId, sceneScenario]) => [
         productId,
@@ -248,21 +357,43 @@ export function buildGeduDashboardFixture(
 }
 
 /**
- * Count each scene-backed product's outstanding sessions straight out of the
- * feed its card links to. Derived rather than authored so the two scenes can't
- * drift.
+ * Backlog counts for the cards with no feed behind them.
  *
- * The count is taken against that feed's own roster, because "outstanding" now
- * means "some of this group is still unmarked" — a session with three of eight
- * marked counts, exactly as the card behind it says it does.
+ * Only the grid-filling clubs get one, and only two of them: a scenario where
+ * every card wears a badge says as little about the badge as one where none
+ * does, and the point of the seven-card grid is that the row is *uneven*.
  */
-function outstandingByProduct(now: Date): Record<string, number> {
-  const counts: Record<string, number> = {};
+const AUTHORED_ATTENTION: Readonly<Record<string, number>> = {
+  "mock-dashboard-rocket-league-club": 2,
+  "mock-dashboard-terraria-club": 5,
+};
+
+/**
+ * The two facts a scene-backed card must not be able to disagree with its own
+ * page about: how many sessions it owes, and which building it runs in.
+ *
+ * Both are read straight out of the fixture the linked product page renders.
+ * The count is taken against that feed's own roster, because "outstanding"
+ * means "some of this group is still unmarked" — a session with three of eight
+ * marked counts, exactly as the card behind it says it does. The site name is
+ * whatever the site-notes panel on that page is titled with, and is `null` for
+ * a remote product, which has no building at all.
+ */
+function sceneBackedFacts(now: Date): {
+  attention: Record<string, number>;
+  siteNames: Record<string, string | null>;
+} {
+  const attention: Record<string, number> = {};
+  const siteNames: Record<string, string | null> = {};
   for (const [productId, scenario] of Object.entries(SCENE_BY_PRODUCT)) {
-    const { entries, feedRoster } = buildGeduProductPageFixture(now, scenario);
-    counts[productId] = countEntriesNeedingAttention(entries, feedRoster);
+    const { entries, feedRoster, site } = buildGeduProductPageFixture(
+      now,
+      scenario,
+    );
+    attention[productId] = countEntriesNeedingAttention(entries, feedRoster);
+    siteNames[productId] = site?.name ?? null;
   }
-  return counts;
+  return { attention, siteNames };
 }
 
 function assignmentRow(opts: {
@@ -279,6 +410,8 @@ function assignmentRow(opts: {
   gamerCount: number;
   groupName: string;
   groupGamerCount: number;
+  /** The venue, on in-person products. Remote products have no building. */
+  siteName?: string | null;
 }): GeduAssignmentRow {
   return {
     product: {
@@ -297,6 +430,7 @@ function assignmentRow(opts: {
     gamerCount: opts.gamerCount,
     groupName: opts.groupName,
     groupGamerCount: opts.groupGamerCount,
+    siteName: opts.siteName ?? null,
     slots: opts.slots,
   };
 }

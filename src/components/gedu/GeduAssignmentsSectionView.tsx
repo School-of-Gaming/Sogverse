@@ -30,10 +30,13 @@ interface GeduAssignmentsSectionViewProps {
  * narrow. Sorting is untouched, and a grid reads soonest-first left-to-right the
  * same way a column reads it top-to-bottom.
  *
- * **The rows stretch.** Cards reserve their own variable zones so state cannot
- * change their height, but two cards can still differ by a line of cadence text;
- * letting the grid stretch them squares the row off, so the eye tracks along one
- * bottom edge instead of a ragged one.
+ * **The rows stretch.** A card's zones are uniform because each one is
+ * populated in every state, not because empty ones are padded — but two cards
+ * can still differ by a wrapped product name or a line of cadence text.
+ * Stretching squares the row off so the eye tracks along one bottom edge
+ * instead of a ragged one, and each card pins its own footer to the bottom, so
+ * the slack lands as breathing room inside the card rather than as a gap under
+ * its last real content.
  *
  * Every card is the same weight. The old section promoted its soonest occurrence
  * into a bigger card and demoted the rest to compact rows, which made sense when

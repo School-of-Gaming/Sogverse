@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarClock, ChevronRight, Users } from "lucide-react";
+import { CalendarClock, ChevronRight, MapPin, Radio, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { SessionFeedAlertBadge } from "@/components/gedu/session-feed";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
@@ -34,20 +35,45 @@ interface GeduAssignmentCardProps {
  * secondary line, one next-session line, the cadence in words rather than as a
  * list of dates, and the outstanding-write-up badge.
  *
- * **Every card is the same height, whatever state it is in.** A dashboard is
- * read as a grid, and a grid whose cells are different heights because one club
- * happens to owe a write-up and another happens to be live is a grid that
- * reshuffles itself every time a session starts or a register is finished. So
- * the two variable zones — the alert badge above and the Join below — always
- * occupy their space, empty or not, and the schedule block sits between them
- * with the footer pushed to the bottom. The empty zones are genuinely empty:
- * nothing to click, nothing to read out, just height.
+ * **Every card is the same height, and every zone holds something real.** A
+ * dashboard is read as a grid, and a grid whose cells are different heights
+ * because one club happens to owe a write-up and another happens to be live is a
+ * grid that reshuffles itself every time a session starts or a register is
+ * finished. The first answer to that was to reserve the variable zones and let
+ * them stand empty — which bought the uniformity at the cost of two bands of
+ * nothing on most cards, and made the common state look like the broken one. So
+ * the zones are uniform because they are *populated*, not because they are
+ * padded:
+ *
+ * - **The footer holds the Join on a remote product and the venue on an
+ *   in-person one.** Those are the same question — where is this happening —
+ *   answered the two ways a product can answer it, and they are exclusive by
+ *   construction, so exactly one of them is always there. The venue is text with
+ *   a pin, deliberately not a link: there is nothing to open, and a card whose
+ *   bottom row is sometimes a button and sometimes a link would teach a click
+ *   that only works half the time.
+ * - **The attention badge sits at the end of the cadence line** rather than in a
+ *   row of its own. The cadence is on every card, so the row is never empty, and
+ *   a backlog is a fact *about* this activity — it reads better beside "Mondays
+ *   16:30–18:00" than floating above it.
+ * - **Liveness is the gradient and a badge in the top-right cluster**, next to
+ *   the chevron. It replaced a "session in progress" line in the middle of the
+ *   card, which was a whole row spent restating what the card's own colour
+ *   already said, and which only ever existed on one card at a time.
+ *
+ * The **Live badge is green**, and deliberately not the tone of the gradient
+ * behind it. The gradient is a wash — it says "this card is different" before a
+ * word is read; the badge is the word. Green is the universal on-air signal and
+ * is the one semantic family free on this surface: amber is the attention badge
+ * two rows below it and must not be echoed, blue is "next up" in the session
+ * feed and would be a lie about something already running, and the brand tone is
+ * already spent on the wash itself.
  *
  * **Clickability comes from the card, not from a label.** There used to be an
  * "Open sessions" link in the bottom corner, which was a word doing a job that a
  * chevron, a pointer cursor and a hover state do better and in less space — and
  * which read as *the* target, when the whole card has always been one. Now the
- * chevron sits in the top-right corner where a "there is more inside this"
+ * chevron sits in the top-right cluster where a "there is more inside this"
  * marker belongs, the border brightens and the card lifts on hover or keyboard
  * focus, and the invisible stretched link over the whole card is what is
  * actually being clicked.
@@ -65,12 +91,11 @@ interface GeduAssignmentCardProps {
  * whenever you look at it, and never has to tick.
  *
  * The Join affordance lives here for a remote product, because this is the only
- * place a gedu meets their next session before opening it; an in-person one
- * renders none at all, since there is no room. Card and button are both real
- * anchors via a stretched link: the invisible link covers the card with an
- * `::after`, and the Join button is lifted above it with `relative z-10` so it
- * receives its own clicks. No `<a>` inside `<a>`, so middle-click and prefetch
- * both behave.
+ * place a gedu meets their next session before opening it. Card and button are
+ * both real anchors via a stretched link: the invisible link covers the card
+ * with an `::after`, and the Join button is lifted above it with `relative z-10`
+ * so it receives its own clicks. No `<a>` inside `<a>`, so middle-click and
+ * prefetch both behave.
  */
 export function GeduAssignmentCard({
   assignment,
@@ -94,6 +119,7 @@ export function GeduAssignmentCard({
     voiceHref,
     openHref,
     attentionCount,
+    siteName,
   } = assignment;
 
   const hasNext = nextSessionStart !== null && nextSessionEnd !== null;
@@ -116,8 +142,7 @@ export function GeduAssignmentCard({
       )}
     >
       <CardContent className="flex h-full flex-col gap-4 p-5">
-        {/* `pr-7` keeps the identity block clear of the corner chevron. */}
-        <div className="flex items-start justify-between gap-2 pr-7">
+        <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 space-y-1">
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               {d(`typeLabel.${productType}`)}
@@ -140,86 +165,101 @@ export function GeduAssignmentCard({
               </span>
             </p>
           </div>
-        </div>
 
-        {/* Reserved zone: the alert badge, or the height it would have taken.
-            An empty div rather than a hidden badge — there is no text to be
-            read out and nothing to receive a click, so it costs a screen reader
-            and a keyboard exactly nothing. */}
-        <div className="flex min-h-6 items-start">
-          {attentionCount > 0 && <SessionFeedAlertBadge count={attentionCount} />}
-        </div>
-
-        {/* Reserved zone: the next session, its in-progress line, or the
-            "nothing scheduled" fallback — all three at the same height, so a
-            session starting cannot grow the card it is on. */}
-        <div className="min-h-10 space-y-1">
-          {hasNext ? (
-            <>
-              <p className="text-sm">
-                {formatSessionDateTimeRange(
-                  nextSessionStart,
-                  nextSessionEnd,
-                  locale,
-                  timeZone,
-                )}
-              </p>
-              {/* The only non-absolute line left, and it isn't a date: "in
-                  progress" is a fact about right now that the date above cannot
-                  express, and it is what makes the lit Join beside it make
-                  sense. */}
-              {inProgress && (
-                <p className="text-xs text-muted-foreground">{t("inProgress")}</p>
-              )}
-            </>
-          ) : (
-            <p className="text-sm text-muted-foreground">{t("noNextSession")}</p>
-          )}
-        </div>
-
-        {/* The cadence in words. A roll-up card can't enumerate dates without
-            becoming the list it replaced, and "Mondays 16:30–18:00" tells the
-            gedu more per line than eight Mondays ever did. */}
-        {scheduleLines.length > 0 && (
-          <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
-            <CalendarClock className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-            <span className="min-w-0">
-              {scheduleLines.map((line) => (
-                <span key={line} className="block tabular-nums">
-                  {line}
-                </span>
-              ))}
-            </span>
+          {/* The top-right cluster: the live state, then the chevron. It is a
+              flex sibling of the identity block rather than an absolutely
+              positioned corner, so the badge can be as wide as its translation
+              needs without a hand-tuned right padding for the identity block to
+              clear — "Live" is four characters in English and rather more in
+              Finnish. `shrink-0` keeps the long product name from squeezing it.
+              Neither element is interactive; the stretched link over the whole
+              card paints above both and receives the click. */}
+          <div className="flex shrink-0 items-center gap-2">
+            {live && (
+              <Badge
+                variant="outline"
+                className="gap-1 border-success/50 bg-success/10 px-2 py-0 text-[10px] uppercase tracking-wide text-success"
+              >
+                <Radio className="h-3 w-3" aria-hidden />
+                {t("liveBadge")}
+              </Badge>
+            )}
+            <ChevronRight
+              aria-hidden
+              className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+            />
           </div>
-        )}
+        </div>
 
-        {/* Reserved zone, pinned to the bottom: the Join, or its height. An
-            in-person product never grows one, and a remote product's comes and
-            goes with the voice window — neither may move the card. */}
-        <div className="relative z-10 mt-auto flex min-h-9 items-end justify-center">
-          {hasNext && hasVoiceRoom && (
-            <JoinVoiceButton
-              voiceIsOpen={voiceIsOpen}
-              voiceHref={voiceHref}
-              opensDate={formatDate(nextSessionStart, locale, {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
+        {/* The next session as one absolute line, or the "nothing scheduled"
+            fallback. Both are a single line, so a session arriving or running
+            out cannot change the card's height. */}
+        <p className={cn("text-sm", !hasNext && "text-muted-foreground")}>
+          {hasNext
+            ? formatSessionDateTimeRange(
+                nextSessionStart,
+                nextSessionEnd,
+                locale,
                 timeZone,
-              })}
-              opensTime={formatTime(nextSessionStart, locale, timeZone)}
+              )
+            : t("noNextSession")}
+        </p>
+
+        {/* The cadence in words, with the backlog on the end of it. A roll-up
+            card can't enumerate dates without becoming the list it replaced,
+            and "Mondays 16:30–18:00" tells the gedu more per line than eight
+            Mondays ever did. The badge rides this row rather than owning one:
+            the cadence is always there, so there is never a hole where a badge
+            is not. */}
+        <div className="flex items-start justify-between gap-2">
+          {scheduleLines.length > 0 && (
+            <div className="flex min-w-0 items-start gap-1.5 text-xs text-muted-foreground">
+              <CalendarClock
+                className="mt-0.5 h-3.5 w-3.5 shrink-0"
+                aria-hidden
+              />
+              <span className="min-w-0">
+                {scheduleLines.map((line) => (
+                  <span key={line} className="block tabular-nums">
+                    {line}
+                  </span>
+                ))}
+              </span>
+            </div>
+          )}
+          {attentionCount > 0 && (
+            <SessionFeedAlertBadge
+              count={attentionCount}
+              className="shrink-0"
             />
           )}
         </div>
-      </CardContent>
 
-      {/* The chevron is decoration: it says "there is more inside this" and is
-          anchored to the corner, out of the flow, so no state below can push it.
-          The link beneath it is what is actually clicked. */}
-      <ChevronRight
-        aria-hidden
-        className="pointer-events-none absolute right-4 top-4 h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-      />
+        {/* Pinned to the bottom, and never empty: the room on a remote product,
+            the building on an in-person one. */}
+        <div className="relative z-10 mt-auto flex items-end justify-center">
+          {hasVoiceRoom
+            ? hasNext && (
+                <JoinVoiceButton
+                  voiceIsOpen={voiceIsOpen}
+                  voiceHref={voiceHref}
+                  opensDate={formatDate(nextSessionStart, locale, {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    timeZone,
+                  })}
+                  opensTime={formatTime(nextSessionStart, locale, timeZone)}
+                />
+              )
+            : siteName !== null && (
+                <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+                  <MapPin className="h-4 w-4 shrink-0" aria-hidden />
+                  <span className="truncate">{siteName}</span>
+                </span>
+              )}
+        </div>
+      </CardContent>
 
       {/* The whole card, as one link — an empty anchor stretched over it, named
           by the product it opens. The ring is inset because the card clips its

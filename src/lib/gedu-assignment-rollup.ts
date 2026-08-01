@@ -44,6 +44,12 @@ export interface GeduAssignmentRow extends MyAssignedProductSessionRow {
   groupName: string | null;
   /** Active participations in the gedu's own group — not the product total. */
   groupGamerCount: number;
+  /**
+   * The venue an in-person product runs at, or `null` for a remote one. Every
+   * in-person product has a location (the schema requires it), so `null` here
+   * means "no building involved" rather than "not loaded".
+   */
+  siteName: string | null;
 }
 
 /** One rolled-up card: an assignment, its next session, and its backlog. */
@@ -80,6 +86,16 @@ export interface GeduAssignmentSummary {
   voiceIsOpen: boolean;
   /** Where the Join button navigates. `"#"` keeps it inert. */
   voiceHref: string;
+  /**
+   * The venue an in-person assignment runs at, `null` for a remote one.
+   *
+   * It is the **in-person counterpart of the Join button**: the card's one
+   * outward-facing line, answering the question the gedu actually has about a
+   * product with no room — where am I going. The two are exclusive by
+   * construction, so one card zone holds whichever of them applies and is never
+   * empty on either kind of product.
+   */
+  siteName: string | null;
   /** Where a click anywhere on the card navigates — the product's feed. */
   openHref: string;
   /** Past sessions of this assignment still needing a write-up. */
@@ -138,6 +154,10 @@ export function rollUpGeduAssignments({
       voiceHref: hasVoiceRoom
         ? (voiceHrefByProductId?.[row.product.id] ?? "#")
         : "#",
+      // Never carried by a remote product, whatever the row says: a product
+      // with a voice room has no building, and a card showing both would be
+      // claiming the group meets in two places.
+      siteName: hasVoiceRoom ? null : row.siteName,
       openHref: hrefByProductId[row.product.id] ?? "#",
       attentionCount: attentionByProductId?.[row.product.id] ?? 0,
     } satisfies GeduAssignmentSummary;

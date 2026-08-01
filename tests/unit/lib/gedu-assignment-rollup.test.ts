@@ -28,6 +28,7 @@ function row(over: {
   startDate?: string | null;
   endDate?: string | null;
   isRemote?: boolean;
+  siteName?: string | null;
   slots?: GeduAssignmentRow["slots"];
 }): GeduAssignmentRow {
   return {
@@ -46,6 +47,7 @@ function row(over: {
     gamerCount: 14,
     groupName: `${over.name} A`,
     groupGamerCount: 7,
+    siteName: over.siteName ?? null,
     slots:
       over.slots ??
       [
