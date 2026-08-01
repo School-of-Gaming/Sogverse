@@ -108,6 +108,7 @@ import {
 import {
   SessionFeed,
   SessionFeedAlertBadge,
+  SessionReport,
   applyDraftToEntry,
   applyPlanDraftToEntry,
   countEntriesNeedingAttention,
@@ -116,6 +117,11 @@ import {
   type SessionEntryDraft,
   type SessionFeedEntry,
 } from "@/components/gedu/session-feed";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import {
+  MinecraftUsernameRow,
+  type MinecraftCheckStatus,
+} from "@/components/minecraft/minecraft-username-row";
 import {
   buildSessionFeedFixture,
   SESSION_FEED_CLUB_NAME,
@@ -2112,9 +2118,9 @@ export default function AdminUIComponentsPage() {
         <p className="text-sm text-muted-foreground -mt-2">
           A group&rsquo;s sessions as a reverse-chronological, blog-like scroll:
           the next session on top, then the term running backwards. Gedus record
-          attendance and two notes per session &mdash; a{" "}
-          <strong>public</strong> one that becomes the entry body families read,
-          and a <strong>Gedu-only</strong> one behind a padlocked, recessed
+          attendance and two written fields per session &mdash; the{" "}
+          <strong>session report</strong> that becomes the entry body families
+          read, and the <strong>Gedu note</strong> behind a padlocked, recessed
           panel so the two audiences can never blur. Sessions from before the
           enforcement epoch are bare &ldquo;no record&rdquo; lines with no alert
           and no editor, because nothing is owed for them. Every editable entry
@@ -2126,16 +2132,28 @@ export default function AdminUIComponentsPage() {
           reload.
         </p>
         <p className="text-sm text-muted-foreground">
-          <strong>Attendance is explicit and mandatory; notes are optional.</strong>{" "}
-          A past session&rsquo;s attendance is <em>null until recorded</em>, so
-          every roster row starts unmarked and Save stays disabled until each
-          child is explicitly present or absent &mdash; an untouched row must
-          never read as an absence. &ldquo;Mark all present&rdquo; keeps the
-          common case to one action. <em>Needs attention</em> therefore means
-          exactly one thing: past, not skipped, attendance unrecorded &mdash;
-          even when a full write-up is already there, which is why such an entry
-          renders its notes <em>and</em> its alert. The alert is an icon and a
-          label on an ordinary card, not a tinted one.
+          <strong>
+            A past session climbs a three-rung ladder, and only the bottom rung
+            is enforced.
+          </strong>{" "}
+          Attendance still unfinished is <em>Needs attention</em> &mdash; an
+          amber icon and label on an otherwise ordinary card, never a tinted one.
+          Attendance finished with no report is deliberately <em>silent</em>: the
+          report is optional, so a badge there would nag for work nobody owes.
+          Attendance finished <em>and</em> a report written earns the green{" "}
+          <em>Complete</em> check, and the timeline marker goes green with it.
+          Partial saves are allowed and stay flagged, so a gedu interrupted three
+          children into a roster of eight keeps their three marks. Skipped
+          sessions sit outside the ladder entirely.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          <strong>Reports are markdown, and the feed clamps them.</strong> A
+          report renders formatted &mdash; title, sections, bold, lists &mdash;
+          but a term of them would be a wall of prose, so anything past about six
+          lines fades out under a mask and offers <em>Read more</em>, which
+          expands in place and grows the card downward. A report short enough to
+          fit gets no control at all: whether one is offered comes from measuring
+          the rendered body, not from counting characters.
         </p>
         <p className="text-sm text-muted-foreground">
           Sessions still <em>ahead</em> of us carry planning fields only &mdash; a
@@ -2154,26 +2172,99 @@ export default function AdminUIComponentsPage() {
       {/* ============================================================ */}
       <Section title="Product links — family vs. Gedu">
         <p className="text-sm text-muted-foreground -mt-2">
-          A product carries two outward links with different audiences, and they
-          sit side by side in the product header. They are deliberately the{" "}
-          <em>same chip</em> &mdash; same shape, size and tone &mdash; because two
-          links to the same kind of thing on one line reading as two different
-          weights made one look like the important one. The <strong>Padlet</strong>{" "}
-          is the family-facing one; the <strong>materials</strong> link is
-          Gedu-only, and the difference is carried by its padlocked book glyph
-          and its hover title, not by a demoted tone. The material component
-          renders whatever href it is given and knows nothing about who is
-          looking:{" "}
+          A product carries outward links with different audiences. The{" "}
+          <strong>Padlet</strong> is the family-facing one; the{" "}
+          <strong>materials</strong> link is Gedu-only, carried by a padlocked
+          book glyph and a hover title. The material component renders whatever
+          href it is given and knows nothing about who is looking:{" "}
           <em>
             only render it on a gedu- or admin-only surface. Never hide it with
             CSS on a page a parent can reach
           </em>{" "}
           &mdash; the URL would still be in the HTML.
         </p>
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border p-4">
-          <PadletLink href="https://padlet.com/sog/minecraft-monday-club" />
-          <MaterialLink href="https://drive.sog.gg/minecraft-monday-club/lesson-plans" />
+        <p className="text-sm text-muted-foreground">
+          The material link has <strong>two weights</strong>, because it means two
+          different things in two places. In a row of a product&rsquo;s links it
+          is one entry among several and takes the quiet <code>chip</code> form.
+          On a gedu&rsquo;s own workspace it is the thing they came for &mdash; a
+          gedu opening the page before a session is going to fetch the material
+          &mdash; so there it takes the <code>button</code> form and reads as an
+          action rather than as metadata about the product. Both are the same
+          component: two implementations would drift in glyph, label and, worst of
+          all, in the staff-only warning that has to travel with the URL.
+        </p>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-4 rounded-lg border p-4">
+          <div className="flex flex-col items-start gap-2">
+            <DemoCaption>Padlet chip (family-facing)</DemoCaption>
+            <PadletLink href="https://padlet.com/sog/minecraft-monday-club" />
+          </div>
+          <div className="flex flex-col items-start gap-2">
+            <DemoCaption>Material chip (quiet)</DemoCaption>
+            <MaterialLink href="https://drive.sog.gg/minecraft-monday-club/lesson-plans" />
+          </div>
+          <div className="flex flex-col items-start gap-2">
+            <DemoCaption>Material button (prominent)</DemoCaption>
+            <MaterialLink
+              href="https://drive.sog.gg/minecraft-monday-club/lesson-plans"
+              variant="button"
+            />
+          </div>
         </div>
+      </Section>
+
+      {/* ============================================================ */}
+      {/* Section 18: Session report — rendering and writing            */}
+      {/* ============================================================ */}
+      <Section title="Session report — rendering and writing">
+        <p className="text-sm text-muted-foreground -mt-2">
+          A session report is stored as <strong>markdown</strong> &mdash; it is
+          what converts cleanly into the email these will eventually be sent as
+          &mdash; and is written in a small rich-text editor so a gedu at the end
+          of a session never has to know what <code>##</code> does. Two components
+          sit either side of that value: a reader that renders it clamped, and an
+          editor that round-trips it.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          The renderer allows a deliberately narrow subset, and enforces it as a{" "}
+          <em>whitelist</em>: headings, paragraphs, bold, italics and lists.
+          Anything outside it &mdash; a pasted table, an image, raw HTML &mdash;
+          is unwrapped to its text rather than dropped, so a stray construct shows
+          its words instead of silently deleting a paragraph of somebody&rsquo;s
+          write-up. Headings are scaled to the card they live in: an{" "}
+          <code>h1</code> typed in the editor is the writer naming their own
+          paragraph, not competing with the page title.
+        </p>
+        <SessionReportDemo />
+      </Section>
+
+      {/* ============================================================ */}
+      {/* Section 19: Minecraft username — fixed-geometry identity      */}
+      {/* ============================================================ */}
+      <Section title="Minecraft username — fixed-geometry identity">
+        <p className="text-sm text-muted-foreground -mt-2">
+          A child&rsquo;s Minecraft identity as one row: their skin, their
+          username, and a status slot for the Mojang lookup.{" "}
+          <strong>The geometry is the feature.</strong> Validating a username is
+          an async round trip, and the obvious implementation &mdash; show a
+          spinner, swap in a tick or a cross &mdash; moves everything to its right
+          twice per check. In a roster of eight, mid-session, that is eight rows
+          twitching while a gedu is trying to click one. So the skin is a fixed
+          square, the status is a fixed square, and the username is the only thing
+          between them that flexes. All four states below are exactly the same
+          size.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          The skin is <em>cropped, not re-rendered</em>: the skin source hands
+          back a full-body figure, and the <code>bust</code> variant is that same
+          image with a square box and <code>object-position: top</code> over it.
+          One asset, two presentations &mdash; the <code>full</code> variant is
+          the crop taken off. Everything here draws the bundled placeholder
+          figure, an inline SVG on the same 16&times;32 grid the real render uses,
+          so a fixture-driven page makes no network call and the crop behaves
+          identically either way.
+        </p>
+        <MinecraftUsernameRowDemo />
       </Section>
 
     </div>
@@ -2513,6 +2604,147 @@ function GeduSessionFeedDemo() {
                 {count === 0 ? "0 — renders nothing" : `${count} outstanding`}
               </DemoCaption>
               <SessionFeedAlertBadge count={count} />
+            </div>
+          ))}
+        </div>
+      </SubSection>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Session report — reader and writer                                 */
+/* ------------------------------------------------------------------ */
+
+/** Long enough to be clamped, and using every construct the toolbar produces. */
+const DEMO_LONG_REPORT = `# Redstone week: item sorters
+
+We built item sorters from scratch this week — hoppers, comparators, the lot — and then broke them on purpose to work out what each part was actually doing.
+
+## The build
+
+- A hopper line feeding four labelled chests
+- Comparators reading the filter chests, which is the bit that does the sorting
+- An overflow chest at the end, so nothing is ever lost when a filter fills up
+
+The overflow was the hard part and Elias solved it on his own. He then spent the rest of the session teaching it to the rest of the table, which was better than anything I would have said about it.
+
+**Next week:** the sorters go into the storage room, and we find out whether they survive eight people using them at once.`;
+
+/** Short enough that no control is offered at all. */
+const DEMO_SHORT_REPORT = `# Mob-proofing night
+
+We lit the paths, walled the gaps and got through a whole session without losing anybody to a creeper.`;
+
+/**
+ * The reader and the writer side by side, over the same value.
+ *
+ * The editor is wired to local state and shows its own markdown output beneath
+ * it, which is the one thing worth being able to see at a glance: a gedu never
+ * meets the syntax, so the only place to confirm the round trip is honest is
+ * here. Type a heading, watch the `##` appear in the serialised output, and the
+ * reader beside it renders the same thing back.
+ */
+function SessionReportDemo() {
+  const [markdown, setMarkdown] = useState(DEMO_SHORT_REPORT);
+
+  return (
+    <div className="space-y-8">
+      <SubSection title="Rendered in the feed — clamped, with expand in place">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="space-y-2">
+            <DemoCaption>
+              Long report — clamped, fades out, offers Read more
+            </DemoCaption>
+            <Card className="p-4">
+              <SessionReport markdown={DEMO_LONG_REPORT} />
+            </Card>
+          </div>
+          <div className="space-y-2">
+            <DemoCaption>Short report — no control at all</DemoCaption>
+            <Card className="p-4">
+              <SessionReport markdown={DEMO_SHORT_REPORT} />
+            </Card>
+          </div>
+        </div>
+      </SubSection>
+
+      <SubSection title="The editor, and what it stores">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="space-y-2">
+            <DemoCaption>
+              Rich editor — six buttons, fixed toolbar height
+            </DemoCaption>
+            <RichTextEditor
+              initialValue={DEMO_SHORT_REPORT}
+              onChange={setMarkdown}
+              ariaLabel="Session report"
+              placeholder="What the group built, played or figured out."
+            />
+          </div>
+          <div className="space-y-2">
+            <DemoCaption>
+              Serialised markdown — the value that is actually stored
+            </DemoCaption>
+            <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-input bg-muted/40 p-3 text-xs text-muted-foreground">
+              {markdown}
+            </pre>
+          </div>
+        </div>
+      </SubSection>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Minecraft username row                                             */
+/* ------------------------------------------------------------------ */
+
+const MINECRAFT_STATUSES: readonly {
+  status: MinecraftCheckStatus;
+  caption: string;
+}[] = [
+  { status: "idle", caption: "Idle — nobody has asked" },
+  { status: "checking", caption: "Checking — the lookup is in flight" },
+  { status: "valid", caption: "Valid — a real account" },
+  { status: "invalid", caption: "Invalid — no such account" },
+];
+
+function MinecraftUsernameRowDemo() {
+  return (
+    <div className="space-y-8">
+      <SubSection title="Bust — every state at identical dimensions">
+        <div className="max-w-xs space-y-2 rounded-lg border p-4">
+          {MINECRAFT_STATUSES.map(({ status, caption }) => (
+            <div key={status} className="space-y-1">
+              <DemoCaption>{caption}</DemoCaption>
+              <MinecraftUsernameRow username="EliasRedstone" status={status} />
+            </div>
+          ))}
+          <div className="space-y-1">
+            <DemoCaption>No username on the account</DemoCaption>
+            <MinecraftUsernameRow username={null} />
+          </div>
+          <div className="space-y-1">
+            <DemoCaption>A username with no upper bound</DemoCaption>
+            <MinecraftUsernameRow
+              username="GalaxyDestroyer9000"
+              status="valid"
+            />
+          </div>
+        </div>
+      </SubSection>
+
+      <SubSection title="Full — the same asset with the crop taken off">
+        <div className="flex flex-wrap gap-6 rounded-lg border p-4">
+          {MINECRAFT_STATUSES.map(({ status, caption }) => (
+            <div key={status} className="w-44 space-y-1">
+              <DemoCaption>{caption}</DemoCaption>
+              <MinecraftUsernameRow
+                username="EliasRedstone"
+                status={status}
+                size="full"
+              />
             </div>
           ))}
         </div>

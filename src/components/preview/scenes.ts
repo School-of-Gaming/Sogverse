@@ -101,14 +101,20 @@ export const PREVIEW_SCENES = [
     surface: "gedu-dashboard",
     title: "Gedu dashboard (draft)",
     description:
-      "The gedu dashboard rolled up to one card per group they run: next session with its Join state, the cadence in words, and an aggregate “needs attention” badge counted out of that product’s own feed. Cards open the matching product-page scene.",
+      "The gedu dashboard rolled up to one card per group they run, grouped under the type nouns: next session with its Join state, the cadence in words, and an aggregate “needs attention” badge counted out of that product’s own feed. Every card is the same height whatever state it is in. The two scene-backed cards open the matching product-page scene.",
     chrome: "dashboard",
     scenarios: [
       {
         slug: "default",
         label: "Working dashboard",
         description:
-          "Two assignments: a remote club mid-session right now (open Join, outstanding write-ups) and an in-person camp that is up to date (locked Join, no badge). Both Join states and both badge states on one screen.",
+          "All three type nouns, and the four card shapes that cover every state: a remote club live right now (Join lit), a remote club later this week (Join locked), an in-person camp owing a write-up (attention badge, no Join), and an in-person event running now (“session in progress”, still no Join). The last pairing is what proves the reserved footer keeps every card the same height.",
+      },
+      {
+        slug: "clubs-only",
+        label: "Clubs only",
+        description:
+          "The single-noun composition most gedus actually have: one “Clubs” heading and one pill entry, with the camp and event groups absent rather than empty.",
       },
       {
         slug: "unverified",
@@ -129,13 +135,13 @@ export const PREVIEW_SCENES = [
         slug: "club",
         label: "Club — remote, weekly",
         description:
-          "The kitchen sink. Fifty-five weeks of history behind month dividers and the chunked reveal, a week written up but never marked off, holiday skips, bare gaps still owed, a pre-epoch tail, a planned future session, and three sister groups in the rail including one nobody teaches yet.",
+          "The kitchen sink. Fifty-five weeks of history behind month dividers and the chunked reveal, all three rungs of the completeness ladder (green-checked, quietly done, and still owed), reports from two lines to twelve so the clamp and its “Read more” are both on screen, holiday skips, a pre-epoch tail, and three sister groups in the rail including one nobody teaches yet.",
       },
       {
         slug: "camp",
         label: "Camp — in person, daily",
         description:
-          "The two things the club cannot show: back-to-back weekday dates across a weekend, and a venue — so this is the scenario with site notes (shared by every product at that site) and with no voice room anywhere, every Join inert.",
+          "The two things the club cannot show: back-to-back weekday dates across a weekend, and a venue — so this is the scenario with site notes (shared by every product at that site) and with no voice room anywhere, every Join inert. It owes exactly one day, which is what puts an attention badge on an in-person dashboard card.",
       },
     ],
   },
