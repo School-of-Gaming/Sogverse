@@ -209,7 +209,6 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
             label={t('register.location')}
             htmlFor="homeLocation"
             optional
-            hint={t('register.locationHint')}
           >
             <HomeLocationField
               id="homeLocation"

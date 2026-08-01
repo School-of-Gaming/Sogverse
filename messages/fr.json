@@ -876,7 +876,6 @@
       "passwordPlaceholder": "Créez un mot de passe solide",
       "confirmPasswordPlaceholder": "Confirmez votre mot de passe",
       "location": "Localisation",
-      "locationHint": "Nous permet de vous montrer les clubs près de chez vous. Vous pourrez l’ajouter ou la modifier plus tard.",
       "creatingAccount": "Création du compte...",
       "accountExists": "Un compte existe déjà avec cette adresse e-mail",
       "alreadyHaveAccount": "Vous avez déjà un compte ? <link>Connectez-vous</link>"
@@ -1726,8 +1725,7 @@
     "failedToUpdateMinecraft": "Échec de la mise à jour du nom d’utilisateur Minecraft.",
     "saveMinecraft": "Enregistrer le nom d’utilisateur Minecraft",
     "spokenLanguages": "Langues parlées à la maison",
-    "location": "Localisation",
-    "locationHint": "Nous permet de vous montrer les clubs près de chez vous."
+    "location": "Localisation"
   },
   "voice": {
     "participants": "Participants",

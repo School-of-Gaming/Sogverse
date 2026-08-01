@@ -876,7 +876,6 @@
       "passwordPlaceholder": "Skapa ett starkt lösenord",
       "confirmPasswordPlaceholder": "Bekräfta ditt lösenord",
       "location": "Plats",
-      "locationHint": "Hjälper oss att visa klubbar nära dig. Du kan lägga till eller ändra den senare.",
       "creatingAccount": "Skapar konto...",
       "accountExists": "Ett konto med denna e-postadress finns redan",
       "alreadyHaveAccount": "Har du redan ett konto? <link>Logga in</link>"
@@ -1726,8 +1725,7 @@
     "failedToUpdateMinecraft": "Kunde inte uppdatera Minecraft-användarnamn.",
     "saveMinecraft": "Spara Minecraft-användarnamn",
     "spokenLanguages": "Talade språk",
-    "location": "Plats",
-    "locationHint": "Hjälper oss att visa klubbar nära dig."
+    "location": "Plats"
   },
   "voice": {
     "participants": "Deltagare",

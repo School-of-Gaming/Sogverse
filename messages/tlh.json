@@ -921,7 +921,6 @@
       "passwordPlaceholder": "HoS mu’mey yIchenmoH",
       "confirmPasswordPlaceholder": "mu’mey yIchel",
       "location": "Daq",
-      "locationHint": "Daq DawIvDI’, SoHvaD Sum ghommey wI’ang. tugh DachoHlaH.",
       "creatingAccount": "account vIchenmoH...",
       "accountExists": "QIn’vamDaq account tu’lu’",
       "alreadyHaveAccount": "account DaHutlhpa’? <link>bI’el</link>"
@@ -1771,8 +1770,7 @@
     "failedToUpdateMinecraft": "Minecraft lo’wI’ pong choH Dabe’lu’.",
     "saveMinecraft": "Minecraft lo’wI’ pong yISaH",
     "spokenLanguages": "Holmey jatlhlu’",
-    "location": "Daq",
-    "locationHint": "Daq DawIvDI’, SoHvaD Sum ghommey wI’ang."
+    "location": "Daq"
   },
   "voice": {
     "participants": "toy’wI’pu’",

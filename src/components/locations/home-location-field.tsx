@@ -70,20 +70,32 @@ export function HomeLocationField({
     <>
       <div
         className={cn(
+          // Each control carries its own focus ring rather than the box
+          // carrying one `focus-within` ring for both: with two adjacent
+          // targets, a ring around the whole box says something has focus
+          // without saying which, and tabbing looks like nothing happened.
           "flex h-[60px] items-center rounded-md border border-input bg-background",
-          "focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background",
           disabled && "opacity-50",
         )}
       >
         {/* The trigger and the clear button are siblings rather than nested:
             a button inside a button is invalid, and the same split is what
-            every two-affordance row in the catalog UI already does. */}
+            every two-affordance row in the catalog UI already does.
+
+            With nothing chosen the trigger takes the whole box and rounds on
+            both sides, so the hover fill reaches the border it is drawn inside.
+            Leaving the clear button's slot standing while empty cut the
+            highlight off ~40px short of the right edge, against nothing — it
+            read as a rendering fault rather than a reserved space. */}
         <button
           id={id}
           type="button"
           onClick={() => setOpen(true)}
           disabled={disabled}
-          className="flex h-full min-w-0 flex-1 items-center gap-2.5 rounded-l-md px-3 text-left outline-none hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed"
+          className={cn(
+            "flex h-full min-w-0 flex-1 items-center gap-2.5 px-3 text-left outline-none hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:cursor-not-allowed",
+            value ? "rounded-l-md" : "rounded-md",
+          )}
         >
           <MapPin
             className={cn(
@@ -107,22 +119,31 @@ export function HomeLocationField({
           )}
         </button>
 
-        {/* Reserved whether or not it is occupied, so the text column keeps one
-            width and choosing a place cannot reflow the line being read. */}
-        <span className="flex h-full w-10 shrink-0 items-center justify-center">
-          {value && (
-            <button
-              type="button"
-              onClick={() => onChange(null)}
-              disabled={disabled}
-              aria-label={c("clear")}
-              title={c("clear")}
-              className="rounded-full p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </span>
+        {/* Mounted only alongside a value. Reserving the slot while empty would
+            buy no layout stability: the box's whole contents are replaced when
+            a place is confirmed — placeholder line out, name and path in — so
+            there is no element on screen holding still for the width to
+            protect, and the swap follows the user's own confirmation.
+
+            The button *is* the column rather than a small circle centred in
+            one: padding around a 14px glyph gave a ~26px target, under both the
+            44px and 48px touch minimums, and a thumb that misses it hits the
+            trigger and opens the dialog instead — the opposite of the intent.
+            At the full 48×60 the whole right-hand region is the target, and
+            since there is no hover on touch, the visible glyph is the
+            affordance either way. */}
+        {value && (
+          <button
+            type="button"
+            onClick={() => onChange(null)}
+            disabled={disabled}
+            aria-label={c("clear")}
+            title={c("clear")}
+            className="flex h-full w-12 shrink-0 items-center justify-center rounded-r-md text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:cursor-not-allowed"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       <CatalogDialogShell

@@ -876,7 +876,6 @@
       "passwordPlaceholder": "Luo vahva salasana",
       "confirmPasswordPlaceholder": "Vahvista salasanasi",
       "location": "Sijainti",
-      "locationHint": "Näin voimme näyttää sinulle lähellä olevat kerhot. Voit lisätä tai vaihtaa sen myöhemmin.",
       "creatingAccount": "Luodaan tiliä...",
       "accountExists": "Tällä sähköpostiosoitteella on jo tili",
       "alreadyHaveAccount": "Onko sinulla jo tili? <link>Kirjaudu sisään</link>"
@@ -1726,8 +1725,7 @@
     "failedToUpdateMinecraft": "Minecraft-käyttäjänimen päivittäminen epäonnistui.",
     "saveMinecraft": "Tallenna Minecraft-käyttäjänimi",
     "spokenLanguages": "Puhutut kielet",
-    "location": "Sijainti",
-    "locationHint": "Näin voimme näyttää sinulle lähellä olevat kerhot."
+    "location": "Sijainti"
   },
   "voice": {
     "participants": "Osallistujat",

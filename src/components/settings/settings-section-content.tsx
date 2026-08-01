@@ -236,7 +236,6 @@ export function SettingsSectionContent({
               label={t('location')}
               htmlFor="homeLocation"
               optional
-              hint={t('locationHint')}
             >
               <HomeLocationField
                 id="homeLocation"
