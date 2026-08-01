@@ -206,8 +206,12 @@ Decisions from feedback round 6:
   bold, lists) and will later be emailed to parents automatically. They are stored
   as markdown (renders in-app, converts to email HTML); the feed renders them
   formatted but **clamped** (~5–6 lines with an expand-in-place "read more") so a
-  term of reports never becomes a wall of text. The mock's editor stays a plain
-  textarea over markdown; a WYSIWYG toolbar is a promotion-time component decision.
+  term of reports never becomes a wall of text. **The report editor is a real
+  WYSIWYG from the mock onward** — gedus see formatting as they type, never raw
+  markdown syntax (browsers offer no native rich textarea, so this needs a lib:
+  Tiptap StarterKit, headless and styled by our tokens, basics-only toolbar —
+  bold, italic, heading, lists — serializing to/from the canonical markdown).
+  The gedu-note field stays a plain textarea.
 - **Session completeness is a three-state ladder**: attendance incomplete → "Needs
   attention" (warning); attendance complete without a report → neutral; attendance
   complete AND report written → a green-check "Complete" state. The check is the
@@ -215,17 +219,22 @@ Decisions from feedback round 6:
 - **Dashboard groups cards under the type nouns** — "Clubs", "Camps", "Events" as
   subheadings (only non-empty types render), soonest-first within each; the section
   pill gains one entry per non-empty type. No umbrella heading ("My Activities" was
-  too generic; the nouns are the gedu's vocabulary).
+  too generic; the nouns are the gedu's vocabulary). Scenarios cover both
+  compositions: `default` carries all three types (including an event card) and a
+  `clubs-only` scenario shows the single-type dashboard.
 - **Dashboard cards are geometry-stable**: identical heights regardless of state —
   badge and join/footer zones are always reserved; clickability reads from a
   chevron + hover/focus elevation, not a label row ("Open sessions" removed).
 - **Rail cards**: "My Group" (renamed) gets the gamer count top-right and its Join +
   copy-emails rows center-aligned; Other-groups rows put name top-left, count
   top-right, Join centered on its own row.
-- **Minecraft username becomes a reusable fixed-geometry field**: skin head (existing
-  skin system) + username + a fixed async-status slot (checking → valid/invalid via
-  the existing Mojang validation), identical dimensions in every state so validation
-  and editing never reflow the row.
+- **Minecraft username becomes a reusable fixed-geometry field**: the existing skin
+  system renders the **full body** — the row uses a fixed **bust crop of that same
+  asset** (CSS crop, no new system) to stay compact, with the full-body render kept
+  as the component's large variant for roomier surfaces. Username + a fixed
+  async-status slot (checking → valid/invalid via the existing Mojang validation);
+  identical dimensions in every state so validation and editing never reflow the
+  row.
 - **The material link must be prominent** — a real button-weight affordance in the
   masthead, not a small chip; gedus are expected to fetch materials from it.
 
