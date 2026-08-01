@@ -21,7 +21,9 @@ three DB objects.
 Public, unauthenticated `/register-gedu` page → `POST /api/gedu/register`:
 
 1. Resolve the optional Minecraft username (Mojang HTTP) **before** creating the auth
-   user — the `minecraft_uuid` UNIQUE can reject it, and `createUser` is irreversible.
+   user — the format check is a 400, and `createUser` is irreversible. Resolution itself
+   can't refuse the registration: a name Mojang doesn't know is stored with a null uuid,
+   and one another account already holds is allowed (accounts may be shared).
 2. `admin.auth.admin.createUser` (`email_confirm: true` — email confirmation is disabled
    platform-wide). The new-user trigger seeds a `customer`-role profile.
 3. `register_gedu` RPC — one transaction: promote `customer`→`gedu`, swap

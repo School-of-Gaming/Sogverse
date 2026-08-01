@@ -19,7 +19,6 @@ import { usePinStatus, pinKeys } from "@/services/pin";
 import { PinUnlockFlow } from "@/components/pin";
 import { useRequiredAuth } from "@/providers/auth-provider";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
-import { ApiError } from "@/lib/api/api-error";
 import { cn } from "@/lib/utils";
 import {
   assembleGamerDateOfBirth,
@@ -210,19 +209,12 @@ function AddGamerForm({
       onCreated?.(result.gamerId);
       onOpenChange(false);
       // Intentionally not clearing `committing` — the dialog unmounts.
-    } catch (err) {
+    } catch {
       setCommitting(false);
-      // Map the route's machine-readable error code to a *localized* string.
-      // The route's own `message` is raw English (for logs); never show it.
-      // Anything without a known code — every 5xx, any unexpected throw — falls
-      // back to the localized generic.
-      const code =
-        err instanceof ApiError && !err.isServerError ? err.code : undefined;
-      setError(
-        code === "minecraft_already_linked"
-          ? t("minecraftAlreadyLinked")
-          : t("genericError"),
-      );
+      // The route's own `message` is raw English (for logs); never show it. No
+      // failure here is something the parent can act on, so they all get the one
+      // localized generic.
+      setError(t("genericError"));
     }
   }
 

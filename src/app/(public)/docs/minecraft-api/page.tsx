@@ -102,6 +102,20 @@ export default function MinecraftApiDocsPage() {
       <section className="mt-12">
         <h2 className="text-2xl font-semibold">{t('responses.heading')}</h2>
 
+        {/* The session gating queried product tables that have since been
+            dropped, so the endpoint answers 501 to every well-formed call today.
+            The contract below is what it will return once rebuilt — say so here
+            rather than let an integrator match against responses nothing can
+            currently produce. */}
+        <div className="mt-4 rounded-lg border border-warning/30 bg-warning/10 p-4">
+          <p className="text-sm font-medium text-warning">
+            {t('responses.notImplementedTitle')}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t('responses.notImplementedBody')}
+          </p>
+        </div>
+
         <div className="mt-6 space-y-6">
           {/* 200 Allowed */}
           <Card>
@@ -172,6 +186,14 @@ export default function MinecraftApiDocsPage() {
               <CardTitle className="text-base">{t('responses.errorResponses')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 shrink-0 rounded bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning">
+                  501
+                </span>
+                <p className="text-sm text-muted-foreground">
+                  {t('responses.error501')}
+                </p>
+              </div>
               <div className="flex items-start gap-3">
                 <span className="mt-0.5 shrink-0 rounded bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
                   401

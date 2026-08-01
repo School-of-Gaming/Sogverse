@@ -1067,6 +1067,9 @@
         "playerAllowed": "toy’wI’ ’eb",
         "playerDenied": "toy’wI’ bejbe’",
         "errorResponses": "Qagh jangmey",
+        "notImplementedTitle": "ghItlhlaHbe’ — chenmoHlu’taH",
+        "notImplementedBody": "reH chenmoHlu’taH nughom qImmey. DaHjaj Hoch tlhob QaQ jang 501 — pagh QujwI’ ’el. bIng jangmeydaj ’oH pIqDaq jangbogh Deghmey; tImaq, ’ach 501 yIloS.",
+        "error501": "nughom qImmey chenmoHlu’pu’be’. tlhob ’oH QaQ ’ej ngoq ’oH lu’, ’ach ’el wuq lujlaHbe’ — yIngaQmoH; qImHa’ghach ’oHbe’.",
         "deniedDescription": "toy’wI’ Sogverse tu’lu’ — DaH poH tu’be’lu’. <code>endTime</code> tu’be’lu’.",
         "fields": {
           "allowedTrue": "toy’wI’ DaH poH tu’lu’.",
@@ -1148,8 +1151,7 @@
       "firstNameTooLong": "wa’DIch pong tIn law’ cha’maH cha’ Hap law’.",
       "birthMonthRequired": "qoSlIj jar yIwIv!",
       "birthYearRequired": "qoSlIj DIS yIwIv!",
-      "genericError": "QujwI’ chelta’be’. yInIDqa’!",
-      "minecraftAlreadyLinked": "Minecraft De’wI’ ’oH latlh QujwI’ rurmoHlu’pu’. wa’ QujwI’ neH."
+      "genericError": "QujwI’ chelta’be’. yInIDqa’!"
     }
   },
   "selectProfile": {

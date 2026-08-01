@@ -1022,6 +1022,9 @@
         "playerAllowed": "Player Allowed",
         "playerDenied": "Player Denied",
         "errorResponses": "Error Responses",
+        "notImplementedTitle": "Not yet implemented",
+        "notImplementedBody": "The session gating is still being rebuilt against the current product system. Every authenticated, well-formed request answers 501 today — no player is admitted. The responses below describe the contract this endpoint will return once it is live; build against them, but expect 501 until then.",
+        "error501": "Session gating not yet built. The request was valid and authenticated, but no admission decision can be made — fail closed rather than treating this as a denial.",
         "deniedDescription": "The player exists in Sogverse but has no active session right now. No <code>endTime</code> is included.",
         "fields": {
           "allowedTrue": "Player has an active session right now.",
@@ -1103,8 +1106,7 @@
       "firstNameTooLong": "First name must be 32 characters or fewer.",
       "birthMonthRequired": "Pick a birth month.",
       "birthYearRequired": "Pick a birth year.",
-      "genericError": "Couldn’t add this gamer. Please try again.",
-      "minecraftAlreadyLinked": "This Minecraft account is already linked to another gamer."
+      "genericError": "Couldn’t add this gamer. Please try again."
     }
   },
   "selectProfile": {

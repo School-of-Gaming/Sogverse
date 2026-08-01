@@ -26,8 +26,7 @@ export const PATCH = defineRoute({
   //
   // Every write failure used to be returned as a 500 carrying the driver's or
   // GoTrue's own message. Those are logged now and answered through the shared
-  // table; the already-linked conflict keeps its copy because the status alone
-  // does not explain it.
+  // table.
 
   handler: async ({ supabase, user, params, body }) => {
     const gamerId = params.id;
@@ -114,17 +113,7 @@ export const PATCH = defineRoute({
         .from("minecraft_accounts")
         .upsert(mcUpsert, { onConflict: "user_id" });
 
-      if (mcError) {
-        if (mcError.code === "23505") {
-          return NextResponse.json(
-            {
-              error: "This Minecraft account is already linked to another user",
-            },
-            { status: 409 },
-          );
-        }
-        throw mcError;
-      }
+      if (mcError) throw mcError;
     }
 
     const { data: updatedProfile, error: fetchError } = await admin

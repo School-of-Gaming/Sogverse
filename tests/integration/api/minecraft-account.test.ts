@@ -168,32 +168,30 @@ describe("PATCH /api/minecraft/account", () => {
     expect(mockLookupMinecraftUser).not.toHaveBeenCalled();
   });
 
-  // -- UNIQUE constraint scenario (gedu setup retry flow) --
+  // -- Sharing a Minecraft account with another Sogverse user --
 
-  it("should return 409 with friendly message when minecraft_uuid conflicts", async () => {
+  it("should link a Minecraft account another user already holds", async () => {
+    // The minecraft_uuid UNIQUE is gone, so the same resolved uuid on a second
+    // account is an ordinary write with no conflict path of its own.
     mockAuthenticated("gedu-123", "gedu");
     mockLookupMinecraftUser.mockResolvedValue({
-      username: "TakenPlayer",
-      uuid: "already-claimed-uuid",
+      username: "SharedPlayer",
+      uuid: "shared-uuid",
     });
+    const { upsertMock } = mockUpsertSuccess();
 
-    const upsertMock = vi.fn().mockResolvedValue({
-      data: null,
-      error: {
-        message: 'duplicate key value violates unique constraint "minecraft_accounts_uuid_unique"',
-        code: "23505",
-      },
-    });
-    mockFrom.mockReturnValue({ upsert: upsertMock });
-
-    const response = await PATCH(createRequest({ minecraftUsername: "TakenPlayer" }));
+    const response = await PATCH(createRequest({ minecraftUsername: "SharedPlayer" }));
     const data = await response.json();
 
-    expect(response.status).toBe(409);
-    expect(data.error).toBe("This Minecraft account is already linked to another user");
+    expect(response.status).toBe(200);
+    expect(data.minecraft_uuid).toBe("shared-uuid");
+    expect(upsertMock).toHaveBeenCalledWith(
+      {
+        user_id: "gedu-123",
+        minecraft_username: "SharedPlayer",
+        minecraft_uuid: "shared-uuid",
+      },
+      { onConflict: "user_id" },
+    );
   });
-
-  // TODO: E2E test for full gedu setup retry flow (UNIQUE conflict → fix username → resubmit)
-  // Can't test at the route level — the bug spans the form's sequential API calls
-  // (minecraft save → password set). Needs Playwright with a real auth session.
 });

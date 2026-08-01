@@ -1022,6 +1022,9 @@
         "playerAllowed": "Joueur autorisé",
         "playerDenied": "Joueur refusé",
         "errorResponses": "Réponses d’erreur",
+        "notImplementedTitle": "Pas encore implémenté",
+        "notImplementedBody": "Le contrôle d’accès aux sessions est en cours de reconstruction sur le système de produits actuel. Toute requête authentifiée et bien formée renvoie aujourd’hui un 501 — aucun joueur n’est admis. Les réponses ci-dessous décrivent le contrat que ce point de terminaison renverra une fois en service : développez en vous y appuyant, mais attendez-vous à un 501 d’ici là.",
+        "error501": "Contrôle d’accès aux sessions pas encore construit. La requête était valide et authentifiée, mais aucune décision d’admission ne peut être prise — échouez en mode fermé plutôt que de traiter ceci comme un refus.",
         "deniedDescription": "Le joueur existe dans Sogverse mais n’a aucune session active en ce moment. Aucun <code>endTime</code> n’est renvoyé.",
         "fields": {
           "allowedTrue": "Le joueur a une session active en ce moment.",
@@ -1103,8 +1106,7 @@
       "firstNameTooLong": "Le prénom ne doit pas dépasser 32 caractères.",
       "birthMonthRequired": "Choisissez un mois de naissance.",
       "birthYearRequired": "Choisissez une année de naissance.",
-      "genericError": "Impossible d’ajouter ce joueur. Veuillez réessayer.",
-      "minecraftAlreadyLinked": "Ce compte Minecraft est déjà lié à un autre joueur."
+      "genericError": "Impossible d’ajouter ce joueur. Veuillez réessayer."
     }
   },
   "selectProfile": {
