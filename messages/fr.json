@@ -1155,7 +1155,8 @@
       "startsIn": "Commence dans {countdown}",
       "inProgress": "Session en cours",
       "viewDetails": "Voir les détails",
-      "noNextSession": "Aucune séance programmée"
+      "noNextSession": "Aucune séance programmée",
+      "liveBadge": "En direct"
     },
     "sessionDetails": {
       "back": "Retour à Mon SOG",
@@ -1290,7 +1291,8 @@
   "richText": {
     "bold": "Gras",
     "italic": "Italique",
-    "heading": "Titre",
+    "title": "Titre",
+    "heading": "Intertitre",
     "subheading": "Sous-titre",
     "bulletList": "Liste à puces",
     "orderedList": "Liste numérotée"

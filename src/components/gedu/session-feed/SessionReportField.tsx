@@ -65,6 +65,14 @@ interface SessionReportFieldProps {
  * The gedu note beside it deliberately stays a plain textarea. It is a couple of
  * lines to a colleague, nobody outside the team ever reads it, and a toolbar over
  * it would suggest it deserves the same care as the family-facing one.
+ *
+ * **It carries no "(optional)" marker, and that is a deliberate exception to the
+ * house convention.** A report genuinely is optional — nothing is blocked by its
+ * absence, and attendance is the half a gedu is paid on — but this is the field
+ * families read, and it is the field that replaced the Padlet. Marking it
+ * optional is the UI telling the writer, at the exact moment they are deciding
+ * whether to bother, that nobody minds if they don't. The gedu note beside it
+ * keeps its marker: nobody outside the team ever reads that one.
  */
 export function SessionReportField({
   value,
@@ -75,7 +83,7 @@ export function SessionReportField({
   const t = useTranslations("gedu.sessionFeed");
 
   return (
-    <Field label={t("reportLabel")} optional hint={t("reportFormattingHint")}>
+    <Field label={t("reportLabel")} hint={t("reportFormattingHint")}>
       {ready ? (
         <RichTextEditor
           key={seed}

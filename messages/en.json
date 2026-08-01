@@ -1155,7 +1155,8 @@
       "startsIn": "Starts in {countdown}",
       "inProgress": "Session in progress",
       "viewDetails": "View details",
-      "noNextSession": "No session scheduled"
+      "noNextSession": "No session scheduled",
+      "liveBadge": "Live"
     },
     "sessionDetails": {
       "back": "Back to My SOG",
@@ -1290,6 +1291,7 @@
   "richText": {
     "bold": "Bold",
     "italic": "Italic",
+    "title": "Title",
     "heading": "Heading",
     "subheading": "Subheading",
     "bulletList": "Bulleted list",

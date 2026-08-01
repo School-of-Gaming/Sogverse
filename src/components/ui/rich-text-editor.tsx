@@ -1,6 +1,14 @@
 "use client";
 
-import { Bold, Heading2, Heading3, Italic, List, ListOrdered } from "lucide-react";
+import {
+  Bold,
+  Heading1,
+  Heading2,
+  Heading3,
+  Italic,
+  List,
+  ListOrdered,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Placeholder } from "@tiptap/extensions";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
@@ -20,8 +28,8 @@ import { cn } from "@/lib/utils";
  * exists for never gets written. Storage stays markdown regardless: it is what
  * converts cleanly to the email these reports will eventually be sent as.
  *
- * **The toolbar is deliberately six buttons and cannot grow into a word
- * processor.** Bold, italic, two heading levels, two list kinds — exactly the
+ * **The toolbar is deliberately seven buttons and cannot grow into a word
+ * processor.** Bold, italic, three heading levels, two list kinds — exactly the
  * subset the read-only renderer styles, so nothing can be produced here that
  * renders as a surprise. They are icon-only and never wrap: this editor has to
  * survive a one-third-width rail and a phone, and a toolbar that reflows to two
@@ -75,7 +83,10 @@ export function RichTextEditor({
         strike: false,
         underline: false,
         link: false,
-        heading: { levels: [2, 3] },
+        // Three levels, because a real write-up opens with a title line and
+        // then sections under it. Anything deeper is switched off at the
+        // schema, so it cannot be typed, pasted or undone into existence.
+        heading: { levels: [1, 2, 3] },
       }),
       Placeholder.configure({ placeholder: placeholder ?? "" }),
       MarkdownExtension.configure({
@@ -102,6 +113,7 @@ export function RichTextEditor({
           // The rendered subset, styled with the same tokens the read-only
           // renderer uses — what you type is what the feed shows.
           "[&_p]:leading-relaxed [&_p:not(:first-child)]:mt-2",
+          "[&_h1]:mt-3 [&_h1]:text-lg [&_h1]:font-semibold [&_h1]:leading-snug",
           "[&_h2]:mt-3 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:leading-snug",
           "[&_h3]:mt-3 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:leading-snug [&_h3]:text-muted-foreground",
           "[&_ul]:mt-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mt-2 [&_ol]:list-decimal [&_ol]:pl-5",
@@ -138,6 +150,13 @@ export function RichTextEditor({
       },
     ],
     [
+      {
+        key: "title",
+        label: t("title"),
+        icon: Heading1,
+        active: editor?.isActive("heading", { level: 1 }) ?? false,
+        run: () => editor?.chain().focus().toggleHeading({ level: 1 }).run(),
+      },
       {
         key: "heading",
         label: t("heading"),
@@ -181,8 +200,8 @@ export function RichTextEditor({
         className,
       )}
     >
-      {/* `flex-nowrap` and a fixed height: six shrink-proof buttons is under
-          200px, so the row fits every width this editor is used at, and
+      {/* `flex-nowrap` and a fixed height: seven shrink-proof buttons is still
+          under 240px, so the row fits every width this editor is used at, and
           pinning the height means focusing or toggling a button can never
           change where the writing surface starts. */}
       <div className="flex h-10 flex-nowrap items-center gap-0.5 border-b border-input px-1">

@@ -1155,7 +1155,8 @@
       "startsIn": "Alkaa {countdown} kuluttua",
       "inProgress": "Istunto käynnissä",
       "viewDetails": "Näytä tiedot",
-      "noNextSession": "Ei kertoja aikataulussa"
+      "noNextSession": "Ei kertoja aikataulussa",
+      "liveBadge": "Käynnissä"
     },
     "sessionDetails": {
       "back": "Takaisin Omaan SOGiin",
@@ -1290,6 +1291,7 @@
   "richText": {
     "bold": "Lihavointi",
     "italic": "Kursivointi",
+    "title": "Pääotsikko",
     "heading": "Otsikko",
     "subheading": "Väliotsikko",
     "bulletList": "Luettelo",

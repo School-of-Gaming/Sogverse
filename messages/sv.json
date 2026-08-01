@@ -1155,7 +1155,8 @@
       "startsIn": "Börjar om {countdown}",
       "inProgress": "Pågående pass",
       "viewDetails": "Visa detaljer",
-      "noNextSession": "Inget tillfälle inbokat"
+      "noNextSession": "Inget tillfälle inbokat",
+      "liveBadge": "Pågår"
     },
     "sessionDetails": {
       "back": "Tillbaka till Min SOG",
@@ -1290,6 +1291,7 @@
   "richText": {
     "bold": "Fet stil",
     "italic": "Kursiv stil",
+    "title": "Titel",
     "heading": "Rubrik",
     "subheading": "Underrubrik",
     "bulletList": "Punktlista",

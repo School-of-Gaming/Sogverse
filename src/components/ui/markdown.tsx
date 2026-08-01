@@ -23,10 +23,17 @@ import { cn } from "@/lib/utils";
  *
  * **Headings are scaled to their context, not to the page.** A report renders
  * inside a card inside a feed, and an `h1` typed in the editor is the writer
- * naming their own paragraph — it is not competing with the page title. So every
+ * titling their own write-up — it is not competing with the page title. So every
  * heading level lands within a step or two of body copy; the hierarchy survives,
  * the shouting doesn't. Colours are semantic tokens throughout, so the same
  * markup reads correctly in both themes.
+ *
+ * **The top three levels are three different sizes**, because the editor offers
+ * three of them and a writer who picks between Title, Heading and Subheading
+ * has to be able to see which one they picked. Two levels sharing a size and
+ * differing only in colour made the choice invisible in the rendered report —
+ * and a real report opens with a title line, so the level that matters most was
+ * the one hardest to tell apart.
  */
 export function Markdown({
   children,
@@ -80,13 +87,13 @@ const ALLOWED_ELEMENTS = [
 ];
 
 const COMPONENTS = {
-  // The top three levels step down; h4–h6 all land on the same quiet weight,
-  // because a session report that is six levels deep has other problems.
+  // The top three levels step down a size each; h4–h6 all land on the same
+  // quiet weight, because a session report six levels deep has other problems.
   h1: ({ children }: { children?: React.ReactNode }) => (
-    <h3 className="pt-1 text-base font-semibold leading-snug">{children}</h3>
+    <h3 className="pt-1 text-lg font-semibold leading-snug">{children}</h3>
   ),
   h2: ({ children }: { children?: React.ReactNode }) => (
-    <h4 className="pt-1 text-sm font-semibold leading-snug">{children}</h4>
+    <h4 className="pt-1 text-base font-semibold leading-snug">{children}</h4>
   ),
   h3: ({ children }: { children?: React.ReactNode }) => (
     <h5 className="pt-1 text-sm font-semibold leading-snug text-muted-foreground">
