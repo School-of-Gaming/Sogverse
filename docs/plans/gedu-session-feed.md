@@ -282,8 +282,8 @@ Predictable flow, simpler code.
    remote municipality clubs carry a `location_id` by CHECK, so "has a location"
    would wrongly render site notes on them; and a stale-comment sweep (the scene
    description claiming holiday skips, the scene doc listing the removed didn't-run
-   editor, the voice route's claim that a caller already passes `?back=`, and the
-   `entry-state.ts` current-roster "honest reading" comments superseded by (6)).
+   editor, and the voice route's claim that a caller already passes `?back=` —
+   the `entry-state.ts` current-roster comments are CORRECT per (6) and stay).
 5. **Docs + cleanup.** One-session-per-day bet recorded (migration comment +
    `docs/products-architecture.md`); **supersede that doc's §Sessions wholesale**
    (it describes `(product_id, session_date)` keying, `session_overrides`, and
