@@ -76,11 +76,19 @@ fixture-UUID rule.
    attention"** (warning); attendance complete without a report → neutral; attendance
    complete AND report present → **"Complete"** (success check). "Needs attention" is
    the work queue; the check is the target state.
-6. **Completeness is judged against the roster as of the session date** (via
-   participation start dates), not the current roster — otherwise a child joining a
-   long-running club retroactively reopens every finished session. The mock uses the
-   current roster because fixtures have no join dates; this correction is
-   promotion-time work, not a mock defect.
+6. **Roster accuracy splits into two cases, and only one needs schema help.**
+   A **recorded** session is self-describing: its attendance marks ARE the roster as
+   it was — names resolve from profiles by gamer id even after a child leaves the
+   group, so the record stays accurate forever with no history table. An
+   **unrecorded** past session needs a demanded-roster for the completeness check:
+   **current members who had joined by the session date** (`participations.signed_up_at`),
+   so a late joiner never reopens finished sessions. True enrollment-at-the-time for
+   *leavers* is unknowable today (participation rows are hard-deleted, `group_id`
+   mutates without history) — a child who left before recording is simply not
+   demanded, an accepted under-record. A participation-history table is deliberately
+   NOT part of this work. The mock uses the current roster (fixtures have no join
+   dates); the `entry-state.ts` doc comments describing current-roster as "the honest
+   reading" are superseded by this decision and must be rewritten at promotion.
 7. **Future sessions materialize for notes only.** A future occurrence's row may hold
    the report/note fields (forward planning, reminders); never attendance. There is no
    "planned vs recorded" distinction in copy — notes are notes, on both sides of now.
@@ -105,10 +113,14 @@ fixture-UUID rule.
     persistent gedu note — standing information about the group, distinct from any
     session. Same two-audience rules. (Currently plain text in the mock; making them
     rich was deliberately not decided — see open questions.)
-13. **Product-level material URL** (gedu/admin only): lesson-material link for the
-    people running the product, rendered as a prominent button in the workspace
-    masthead. Families never see it. The family-facing Padlet URL dies with this
-    feature on gedu surfaces.
+13. **Product-level material URL** (gedu/admin only): a **new column** on products
+    (no Padlet backfill — the Padlet held family session notes, the material link is
+    lesson content; different things), populated via a URL field added to the
+    **existing admin product form**, rendered as a prominent button in the workspace
+    masthead. Families never see it. The Padlet link disappears from gedu surfaces
+    now; **dropping `padlet_url` entirely waits until the parent/gamer dashboards
+    are redone** to consume session reports — out of scope here, recorded so it
+    isn't forgotten.
 14. **Site notes surface for in-person products.** `site_details` (address +
     family-facing notes) and `site_staff_details` (gedu notes) already exist, keyed by
     `location_id`; every in-person product has a `location_id` (CHECK-enforced). The
@@ -117,9 +129,35 @@ fixture-UUID rule.
     only read policies on these tables — step 3 must add the write path** (policy or
     RPC, authorized via the gedu's assignment to a product at that site).
 15. **Gedus can edit a group member's Minecraft username** — needs its own write path
-    (scoped to gamers in the gedu's assigned group). Editing nulls the stored
-    `minecraft_uuid` (a Mojang verification belongs to the name it was issued for);
-    re-verification runs through the existing public `GET /api/minecraft/verify`.
+    (scoped to gamers in the gedu's assigned group), and it **mirrors the self-serve
+    route's behavior** (`PATCH /api/minecraft/account`): the save enters the loading
+    state, the server verifies against Mojang, and on success stores the canonical
+    username AND the returned UUID together with the verified status shown in the
+    field's fixed slot. The mock's null-the-uuid behavior is superseded by this — a
+    successful gedu edit lands verified, not pending.
+16. **Fetch architecture: the RPC returns data, TypeScript does the calendar math.**
+    The feed RPC returns the stored session rows, the roster (with `signed_up_at`),
+    and the schedule parameters for one (product, group); the client enumerates
+    occurrences (the shared expansion helpers, extended backward with their
+    documented DST-safe patterns) and merges rows over projections — the merge and
+    entry-kind derivation (from now / epoch / product start) live in a `src/lib`
+    module built in step 4. No schedule math in SQL. **One fetch loads the whole
+    history** — a weekly club running five years is ~260 sessions ≈ low hundreds of
+    KB worst case, and the UI already renders it in chunks — no server pagination.
+    The **dashboard** never fetches feeds: its per-assignment summary RPC (already
+    owed for group name, gamer count, site name) also returns the attention count.
+    Entry ids are `` `${groupId}:${sessionDate}` `` — stable across ticks and across a
+    gap materializing into a row.
+17. **In-flight saves grey out and disable, and never drop local state.** Reuse the
+    existing admin-product-details in-flight pattern: on save the editor's controls
+    grey/disable (committing flag live before the first post-click render, per the
+    root loading rule); on success the editor closes and the scroll anchor captures
+    *then* (not at click time); on failure the editor stays open, re-enables, and
+    the gedu's text is untouched so they can retry. Applies to every editor this
+    feature adds (record, plan, group/site notes, Minecraft username).
+18. **Concurrent edits are last-write-wins, accepted.** Multiple gedus can edit the
+    same session/group/site notes simultaneously; no locking, no merge — the later
+    save overwrites. Flag it in a comment at each write path as a known, chosen risk.
 
 ## The decision — UI (built; the scenes are the spec)
 
@@ -205,27 +243,54 @@ Predictable flow, simpler code.
 1. **UI mock — components.** DONE (session-feed components, style-guide demos).
 2. **Preview scenes.** DONE — registry, `/preview/[surface]/[scenario]`, the admin UI
    Previews page, the draft dashboard and workspace bodies, eight feedback rounds.
-3. **Schema + services.** Sessions table (unique `(group_id, session_date)`, snapshot
-   start/end, report + gedu-note markdown columns, audit columns; reserved concepts
-   for skip/substitute only if cheap), attendance table (session × gamer, status
-   string, partial-friendly), group-level note columns, product material-URL column;
-   grants + RLS + authorization-spine classification per the db rules; write paths
-   for **site notes** (14) and **Minecraft username** (15); backward occurrence
-   enumeration in the shared expansion helpers (they only walk forward today); the
-   epoch constant; RPCs for the feed window, record upsert, attendance marks — with
-   db-test coverage for any Json-returning result schemas. The feed RPC must supply
-   what the fixtures promise: group name + per-group gamer count on assignment rows,
-   roster with parent emails (backend-guaranteed non-null), participation start dates
-   for roster-as-of-session-date (6).
+3. **Schema + services.** Sessions table (unique `(group_id, session_date)`,
+   **server-derived** snapshot start/end — the server re-derives the instants from
+   the current schedule at materialization, the client sends only the date — report
+   + gedu-note markdown columns, audit columns; reserved concepts for
+   skip/substitute only if cheap), attendance table (session × gamer, status
+   string; **per-mark upsert**, revert-to-unmarked = row DELETE, so two gedus
+   marking different children never clobber each other), group-level note columns,
+   product material-URL column + the admin form field (13); grants + RLS +
+   authorization-spine classification per the db rules (while adding the site-note
+   policies, review the existing `GRANT SELECT ... TO anon` on `site_staff_details`);
+   write paths for **site notes** (14) and **Minecraft username** (15), each
+   commented with the last-write-wins acceptance (18); backward occurrence
+   enumeration in the shared expansion helpers (they only walk forward today;
+   holiday-blind per Constraints); the epoch constant (a **global** date constant in
+   `src/lib/constants/`, compared as a product-local date, its value chosen in the
+   PR that ships step 4); the feed RPC and the per-assignment summary RPC per (16) —
+   with db-test coverage for any Json-returning result schemas. The RPCs must supply
+   what the fixtures promise: group name, per-group gamer count, **site name**, and
+   attention count on assignment summaries; roster rows with `signed_up_at` and
+   parent emails (**tighten the contract to non-null** — the backend guarantees it).
+   Enumeration floors at **product start** (pre-epoch occurrences render muted, the
+   chunked reveal absorbs long histories); the attendance RPC may take the reserved
+   name `record_attendance` from `docs/products-architecture.md`.
 4. **Wiring (promotion).** The draft bodies become the live routes' bodies; the data
-   shells swap fixtures for services; layout does not change in this step. Includes:
-   the dashboard body replacing the live one, the workspace replacing the current
-   session-details page (deleting its outlier self-gutter), voice-exit-to-workspace
-   (see UI decisions), real Mojang verify + mc-heads skin wiring on the username
-   field, and the live Padlet link's removal from gedu surfaces.
+   shells swap fixtures for services; *pixel* layout does not change in this step,
+   but prop surfaces do: every editor gains the committing/error states of (17), and
+   the scroll anchor's capture moves to save-success. Includes: the merge/entry-kind
+   module of (16); the dashboard body replacing the live one; the workspace
+   replacing the current session-details page (deleting its outlier self-gutter);
+   **loading states designed to the root skeleton rules** (reveal-gated, structured
+   ghosts, final-size containers — new copy ×5 locales; the scenes never needed
+   them, so this is real new design inside this step); voice-exit-to-workspace via
+   `?back=` passed from the gedu Join call-sites (dashboard card, own-group rail,
+   peer rows — other roles' behavior unchanged); real Mojang verify + mc-heads skin
+   wiring on the username field per (15); the Padlet link's removal from gedu
+   surfaces; **site rendering gated on `is_remote`, not on location presence** —
+   remote municipality clubs carry a `location_id` by CHECK, so "has a location"
+   would wrongly render site notes on them; and a stale-comment sweep (the scene
+   description claiming holiday skips, the scene doc listing the removed didn't-run
+   editor, the voice route's claim that a caller already passes `?back=`, and the
+   `entry-state.ts` current-roster "honest reading" comments superseded by (6)).
 5. **Docs + cleanup.** One-session-per-day bet recorded (migration comment +
-   `docs/products-architecture.md`); TODO.md parent/gamer item updated to inherit
-   session reports (not the Padlet); this plan deleted.
+   `docs/products-architecture.md`); **supersede that doc's §Sessions wholesale**
+   (it describes `(product_id, session_date)` keying, `session_overrides`, and
+   reserves RPC names — rewrite it around this model, noting which reserved names
+   were consumed and which remain for the cancellation/substitution feature);
+   TODO.md parent/gamer item updated to inherit session reports (not the Padlet)
+   and to carry the eventual `padlet_url` drop; this plan deleted.
 
 ## Acceptance criteria
 
@@ -242,12 +307,17 @@ Predictable flow, simpler code.
 
 ## Constraints discovered while deciding
 
-- **Two divergent occurrence expansions exist:** the live dashboards' expansion
-  ignores the holiday calendar; the unmounted calendar component's honours it.
-  Harmless while sessions are ephemeral; the moment backward enumeration drives
-  "needs attention" alerts, holiday-ignorance produces false nags for breaks. The
-  holiday calendar remains out of scope — accepted, revisit when it lands (the
-  expansions must then unify, holiday-aware in both directions).
+- **Holidays are fully out of scope, everywhere in this feature — including the
+  write path.** THREE expansions/validators exist today: the live dashboards'
+  holiday-blind expansion, the unmounted calendar component's holiday-aware one,
+  and a server-side holiday-aware `product_has_session` (SECURITY DEFINER,
+  service_role-only). This feature's write validation must be **holiday-blind**
+  (weekday/schedule only — do NOT reuse `product_has_session`): with the skip UI
+  deferred, a holiday-aware validator rejecting a date the holiday-blind feed
+  offers would create a permanently unclearable "needs attention" alert. Accepted
+  consequence: a gedu may record a session on a listed holiday; false holiday gaps
+  may nag. Everything holiday-adjacent gets a careful review when that feature is
+  built — the expansions and validators must then unify.
 - The forward-occurrence helper only returns *future* starts; in-progress and
   backward walking need the DST-safe patterns documented in the shared helpers — a
   naive `now − 7×24h` is wrong on DST transition days.
