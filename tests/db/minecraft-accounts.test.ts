@@ -127,26 +127,40 @@ describe("minecraft_accounts RLS", () => {
     expect(data).toHaveLength(2);
   });
 
-  // -- UNIQUE constraint on minecraft_uuid --
+  // -- Two accounts may share one Minecraft account --
+  //
+  // minecraft_uuid carried a UNIQUE constraint until it was dropped. It forbade
+  // the case it was most often met with — siblings sharing one Minecraft account
+  // from two Sogverse accounts — while never answering the question that made
+  // uniqueness sound useful in the first place (which of them is playing).
 
-  it("rejects duplicate minecraft_uuid across users", async () => {
+  it("allows two users to hold the same minecraft_uuid", async () => {
     const sharedUuid = "069a79f4-44e9-4726-a5be-fca90e38aaf5";
 
     try {
-      // Set a UUID on the gamer's account
-      await admin
+      const { error: gamerError } = await admin
         .from("minecraft_accounts")
         .update({ minecraft_uuid: sharedUuid })
         .eq("user_id", TEST_IDS.GAMER);
 
-      // Try to set the same UUID on the gedu's account — should fail
-      const { error } = await admin
+      const { error: geduError } = await admin
         .from("minecraft_accounts")
         .update({ minecraft_uuid: sharedUuid })
         .eq("user_id", TEST_IDS.GEDU);
 
-      expect(error).not.toBeNull();
-      expect(error!.message).toContain("minecraft_accounts_uuid_unique");
+      expect(gamerError).toBeNull();
+      expect(geduError).toBeNull();
+
+      // Both rows really carry it — a reverse lookup by uuid returns a set, not
+      // a row, which is what a rebuilt join check has to be written against.
+      const { data } = await admin
+        .from("minecraft_accounts")
+        .select("user_id")
+        .eq("minecraft_uuid", sharedUuid);
+
+      expect(data?.map((r) => r.user_id).sort()).toEqual(
+        [TEST_IDS.GAMER, TEST_IDS.GEDU].sort(),
+      );
     } finally {
       // Reset both to NULL even if assertions fail
       await admin
@@ -154,17 +168,6 @@ describe("minecraft_accounts RLS", () => {
         .update({ minecraft_uuid: null })
         .in("user_id", [TEST_IDS.GAMER, TEST_IDS.GEDU]);
     }
-  });
-
-  it("allows multiple users with NULL minecraft_uuid", async () => {
-    // Both test accounts have NULL uuid — verify they coexist
-    const { data, error } = await admin
-      .from("minecraft_accounts")
-      .select("user_id, minecraft_uuid")
-      .is("minecraft_uuid", null);
-
-    expect(error).toBeNull();
-    expect(data!.length).toBeGreaterThanOrEqual(2);
   });
 
   // -- Writes: own row yes, anyone else's no, DELETE nobody --

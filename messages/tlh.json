@@ -1148,8 +1148,7 @@
       "firstNameTooLong": "wa’DIch pong tIn law’ cha’maH cha’ Hap law’.",
       "birthMonthRequired": "qoSlIj jar yIwIv!",
       "birthYearRequired": "qoSlIj DIS yIwIv!",
-      "genericError": "QujwI’ chelta’be’. yInIDqa’!",
-      "minecraftAlreadyLinked": "Minecraft De’wI’ ’oH latlh QujwI’ rurmoHlu’pu’. wa’ QujwI’ neH."
+      "genericError": "QujwI’ chelta’be’. yInIDqa’!"
     }
   },
   "selectProfile": {

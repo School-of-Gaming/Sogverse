@@ -118,17 +118,57 @@ describe("create_gamer() atomic promotion", () => {
     expect(mc).toMatchObject({ minecraft_username: "MaxCraft", minecraft_uuid: "cg-uuid-unique-1" });
   });
 
-  it("rolls back the entire promotion when the Minecraft UUID is already taken", async () => {
+  it("links a Minecraft account another user already holds", async () => {
+    // minecraft_uuid used to be UNIQUE, which made this the failure case below.
+    // Siblings sharing one Minecraft account across two Sogverse accounts is a
+    // supported shape now, so the second link is an ordinary insert.
+    const parent = await createCustomerUser("cg-share-parent@test.local");
+    const first = await createCustomerUser("cg-share-child-1@test.local");
+    const second = await createCustomerUser("cg-share-child-2@test.local");
+
+    const shared = { username: "SharedCraft", uuid: "cg-uuid-shared" };
+
+    for (const [gamer, name] of [[first, "Elder"], [second, "Younger"]] as const) {
+      const { error } = await admin.rpc("create_gamer", {
+        p_gamer_id: gamer.id,
+        p_parent_id: parent.id,
+        p_first_name: name,
+        p_last_name: "Parentson",
+        p_date_of_birth: "2014-01-20",
+        p_minecraft_username: shared.username,
+        p_minecraft_uuid: shared.uuid,
+      });
+      expect(error).toBeNull();
+    }
+
+    // A reverse lookup by uuid now answers with a set, which is the shape a
+    // rebuilt Minecraft join check has to be written against.
+    const { data: holders } = await admin
+      .from("minecraft_accounts")
+      .select("user_id")
+      .eq("minecraft_uuid", shared.uuid);
+
+    expect(holders?.map((r) => r.user_id).sort()).toEqual(
+      [first.id, second.id].sort(),
+    );
+  });
+
+  it("rolls back the entire promotion when a later statement fails", async () => {
     const parent = await createCustomerUser("cg-rb-parent@test.local");
     const gamer = await createCustomerUser("cg-rb-child@test.local");
 
-    // Pre-claim the UUID with an unrelated account so the RPC's minecraft
-    // insert hits the unique constraint partway through the transaction.
-    await admin.from("minecraft_accounts").insert({
-      user_id: parent.id,
-      minecraft_username: "Claimer",
-      minecraft_uuid: "cg-uuid-conflict",
+    // Promote the would-be parent to a gamer first. Naming it as the parent then
+    // trips validate_parent_gamer_on_insert at the RPC's *last* statement —
+    // after the profile was promoted, the extension rows swapped, and the
+    // Minecraft row written. Exactly the mid-flight failure this asserts about.
+    const { error: setupError } = await admin.rpc("create_gamer", {
+      p_gamer_id: parent.id,
+      p_parent_id: (await createCustomerUser("cg-rb-grandparent@test.local")).id,
+      p_first_name: "NotAParent",
+      p_last_name: "Parentson",
+      p_date_of_birth: "2012-02-02",
     });
+    expect(setupError).toBeNull();
 
     const { error } = await admin.rpc("create_gamer", {
       p_gamer_id: gamer.id,
@@ -137,14 +177,13 @@ describe("create_gamer() atomic promotion", () => {
       p_last_name: "Parentson",
       p_date_of_birth: "2016-03-03",
       p_minecraft_username: "DoomedCraft",
-      p_minecraft_uuid: "cg-uuid-conflict",
+      p_minecraft_uuid: "cg-uuid-doomed",
     });
 
-    // Surfaces the unique violation as SQLSTATE 23505 (the route maps it to 409).
-    expect(error?.code).toBe("23505");
+    expect(error?.message).toContain("Parent must be a customer account");
 
     // Nothing from the aborted transaction persisted: the profile is still a
-    // customer, its extension row intact, and no gamer/link rows exist.
+    // customer, its extension row intact, and no gamer/minecraft/link rows exist.
     const { data: profile } = await admin
       .from("profiles")
       .select("role, first_name")
@@ -165,6 +204,15 @@ describe("create_gamer() atomic promotion", () => {
       .eq("user_id", gamer.id)
       .maybeSingle();
     expect(gamerRow).toBeNull();
+
+    // The Minecraft insert is the statement immediately before the one that
+    // failed, so its absence is what proves the abort rolled back real work.
+    const { data: mcRow } = await admin
+      .from("minecraft_accounts")
+      .select("user_id")
+      .eq("user_id", gamer.id)
+      .maybeSingle();
+    expect(mcRow).toBeNull();
 
     const { data: link } = await admin
       .from("parent_gamer")

@@ -34,11 +34,9 @@ export const POST = defineRoute({
   forbiddenMessage: "Switch to a parent account to add a gamer.",
   body: createGamerBody,
 
-  // The body's hand-rolled `typeof` checks are now the shared schema. The RPC's
-  // only reachable unique violation is the Minecraft UUID race, which keeps its
-  // explicit 409 and its stable `code` because the client maps it; every other
-  // failure is logged and answered generically, which is what this route
-  // already did deliberately ("it's Postgres text the parent shouldn't see").
+  // The body's hand-rolled `typeof` checks are now the shared schema. Every RPC
+  // failure is logged and answered generically, which is what this route already
+  // did deliberately ("it's Postgres text the parent shouldn't see").
 
   handler: async ({ user, body }) => {
     const admin = createAdminClient();
@@ -85,10 +83,11 @@ export const POST = defineRoute({
       .single();
     const inheritedLastName = parentProfile?.last_name ?? "";
 
-    // Resolve Minecraft account BEFORE creating the auth user — the UNIQUE
-    // constraint on minecraft_uuid can reject this, and createUser burns the
-    // username irreversibly. By checking first, the parent can retry with a
-    // different Minecraft name without losing the gamer username.
+    // Resolve the optional Minecraft account before creating the auth user, so a
+    // Mojang outage costs nothing rather than an auth user created and then
+    // compensated away. Nothing here can reject the username: another Sogverse
+    // account may already hold it (siblings share accounts), and one Mojang
+    // can't resolve is stored as-typed with a null uuid.
     let resolvedMinecraft: { username: string; uuid: string | null } | null = null;
     if (minecraftUsername) {
       const mojang = await lookupMinecraftUser(minecraftUsername);
@@ -96,24 +95,6 @@ export const POST = defineRoute({
         username: minecraftUsername,
         uuid: mojang?.uuid ?? null,
       };
-
-      if (resolvedMinecraft.uuid) {
-        const { data: existingMc } = await admin
-          .from("minecraft_accounts")
-          .select("user_id")
-          .eq("minecraft_uuid", resolvedMinecraft.uuid)
-          .maybeSingle();
-
-        if (existingMc) {
-          return NextResponse.json(
-            {
-              error: "This Minecraft account is already linked to another user",
-              code: "minecraft_already_linked",
-            },
-            { status: 409 },
-          );
-        }
-      }
     }
 
     // Compose display_name for the Supabase auth dashboard label.
@@ -171,26 +152,10 @@ export const POST = defineRoute({
         // it before returning the error.
         await deleteOrphanedAuthUser(admin, gamerId);
 
-        // The only unique constraint create_gamer can hit is minecraft_uuid:
-        // the double-promote guard raises P0001 (not 23505) before any insert
-        // runs, and gamer_profiles/parent_gamer can't collide for a brand-new
-        // id. So a 23505 unambiguously means the minecraft_uuid race (claimed
-        // between our pre-check and the RPC's insert). Revisit this mapping if
-        // a future unique constraint is added inside the RPC.
-        if (rpcError.code === "23505") {
-          return NextResponse.json(
-            {
-              error: "This Minecraft account is already linked to another user",
-              code: "minecraft_already_linked",
-            },
-            { status: 409 },
-          );
-        }
-
-        // Anything else is an internal failure (a constraint, the promote
-        // guard's raise, a connection error). Log the raw error for debugging
-        // but never surface it: it's Postgres text the parent shouldn't see,
-        // and there's nothing actionable in it for them.
+        // Every failure here is internal (a constraint, the promote guard's
+        // raise, a connection error) — none of them is something the parent can
+        // act on. Log the raw error for debugging but never surface it: it's
+        // Postgres text the parent shouldn't see.
         console.error("create_gamer RPC failed", rpcError);
         return NextResponse.json(
           {

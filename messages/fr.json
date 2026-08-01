@@ -1103,8 +1103,7 @@
       "firstNameTooLong": "Le prénom ne doit pas dépasser 32 caractères.",
       "birthMonthRequired": "Choisissez un mois de naissance.",
       "birthYearRequired": "Choisissez une année de naissance.",
-      "genericError": "Impossible d’ajouter ce joueur. Veuillez réessayer.",
-      "minecraftAlreadyLinked": "Ce compte Minecraft est déjà lié à un autre joueur."
+      "genericError": "Impossible d’ajouter ce joueur. Veuillez réessayer."
     }
   },
   "selectProfile": {

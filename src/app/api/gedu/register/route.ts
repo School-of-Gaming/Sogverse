@@ -20,10 +20,9 @@ export const POST = defineRoute({
   body: registerGeduBody,
 
   // The promotion RPC's failure used to be returned to the registrant as a 500
-  // carrying its raw message. That is closed: the one outcome they can act on
-  // (the Minecraft account is taken) keeps its own copy, and everything else is
-  // logged and answered generically. Nothing here opts into disclosure, because
-  // an unauthenticated caller is the last one who should be shown database text.
+  // carrying its raw message. That is closed: it is logged and answered
+  // generically. Nothing here opts into disclosure, because an unauthenticated
+  // caller is the last one who should be shown database text.
 
   handler: async ({ body }) => {
     const {
@@ -56,10 +55,10 @@ export const POST = defineRoute({
 
     const admin = createAdminClient();
 
-    // Resolve Minecraft BEFORE creating the auth user — the UNIQUE constraint
-    // on minecraft_uuid can reject this, and createUser burns the email
-    // irreversibly. Checking first lets the gedu retry with a different name
-    // without an orphaned auth user.
+    // Resolve Minecraft before creating the auth user: the format check below
+    // is a 400, and createUser burns the email irreversibly. Whether Mojang
+    // knows the name doesn't gate anything — an unresolvable one is stored with
+    // a null uuid, and another account already holding it is allowed.
     let resolvedMc: { username: string; uuid: string | null } | null = null;
     const mcName = minecraftUsername?.trim();
     if (mcName) {
@@ -74,22 +73,6 @@ export const POST = defineRoute({
       }
       const mojang = await lookupMinecraftUser(mcName);
       resolvedMc = { username: mcName, uuid: mojang?.uuid ?? null };
-
-      if (resolvedMc.uuid) {
-        const { data: existingMc } = await admin
-          .from("minecraft_accounts")
-          .select("user_id")
-          .eq("minecraft_uuid", resolvedMc.uuid)
-          .maybeSingle();
-        if (existingMc) {
-          return NextResponse.json(
-            {
-              error: "This Minecraft account is already linked to another user",
-            },
-            { status: 409 },
-          );
-        }
-      }
     }
 
     // Step 1: create the auth user. The handle_new_user trigger seeds a
@@ -144,12 +127,6 @@ export const POST = defineRoute({
 
     if (rpcError) {
       await admin.auth.admin.deleteUser(userId);
-      if (rpcError.code === "23505") {
-        return NextResponse.json(
-          { error: "This Minecraft account is already linked to another user" },
-          { status: 409 },
-        );
-      }
       console.error("[gedu/register] register_gedu failed", rpcError);
       return NextResponse.json(
         { error: "Registration could not be completed. Please try again." },

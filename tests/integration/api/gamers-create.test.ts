@@ -60,13 +60,13 @@ const validBody = {
 
 /**
  * Configure admin.from() chain mocks for the pre-createUser phase.
- * Only needs to handle "profiles" (synthetic-email uniqueness check) and
- * "minecraft_accounts" (UUID uniqueness check) — tests that use this helper
- * stop before the post-createUser DB operations.
+ * Only needs to handle "profiles" (synthetic-email uniqueness check) — tests
+ * that use this helper stop before the post-createUser DB operations. The route
+ * never queries `minecraft_accounts` itself; a Minecraft link is written by the
+ * RPC and is not checked against anything.
  */
 function mockPreCreateChecks(config: {
   emailExists?: boolean;
-  uuidExists?: boolean;
   parentLastName?: string | null;
 }) {
   mockAdminFrom.mockImplementation((table: string) => {
@@ -87,18 +87,6 @@ function mockPreCreateChecks(config: {
               data: col.includes("last_name")
                 ? { last_name: config.parentLastName ?? "" }
                 : null,
-              error: null,
-            }),
-          }),
-        }),
-      };
-    }
-    if (table === "minecraft_accounts") {
-      return {
-        select: () => ({
-          eq: () => ({
-            maybeSingle: () => Promise.resolve({
-              data: config.uuidExists ? { user_id: "other-user" } : null,
               error: null,
             }),
           }),
@@ -177,84 +165,76 @@ describe("POST /api/gamers/create — DOB validation", () => {
   });
 });
 
-describe("POST /api/gamers/create — Minecraft UUID ordering", () => {
+describe("POST /api/gamers/create — Minecraft linking", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockIsValidMinecraftUsername.mockImplementation(
       (u: string) => /^[a-zA-Z0-9_]{3,16}$/.test(u),
     );
+    mockAuthenticated();
+    mockPreCreateChecks({ emailExists: false, parentLastName: "Parentson" });
+    mockCreateUser.mockResolvedValue({
+      data: { user: { id: "new-gamer-id" } },
+      error: null,
+    });
+    mockDeleteUser.mockResolvedValue({ error: null });
+    mockRpc.mockResolvedValue({ error: null });
   });
 
-  it("should return 409 when minecraft UUID is already taken, without creating auth user", async () => {
-    mockAuthenticated();
+  it("links a Minecraft account another Sogverse user already holds", async () => {
+    // The point of dropping the minecraft_uuid UNIQUE: two siblings sharing one
+    // Minecraft account on separate Sogverse accounts. The route asks Mojang who
+    // the name belongs to and writes it — it never asks whether anyone else has
+    // it, so there is nothing here that can refuse.
     mockLookupMinecraftUser.mockResolvedValue({
-      username: "TakenPlayer",
-      uuid: "already-claimed-uuid",
+      username: "SharedPlayer",
+      uuid: "shared-uuid",
     });
-    mockPreCreateChecks({ emailExists: false, uuidExists: true });
 
     const response = await POST(
-      createRequest({ ...validBody, minecraftUsername: "TakenPlayer" }),
-    );
-    const data = await response.json();
-
-    expect(response.status).toBe(409);
-    expect(data.error).toBe("This Minecraft account is already linked to another user");
-    expect(mockCreateUser).not.toHaveBeenCalled();
-  });
-
-  it("should proceed to createUser when minecraft UUID is available", async () => {
-    mockAuthenticated();
-    mockLookupMinecraftUser.mockResolvedValue({
-      username: "FreePlayer",
-      uuid: "available-uuid",
-    });
-    mockPreCreateChecks({ emailExists: false, uuidExists: false });
-    // Let createUser fail so we don't need to mock the rest of the flow
-    mockCreateUser.mockResolvedValue({
-      data: null,
-      error: { message: "mock-stop" },
-    });
-
-    await POST(
-      createRequest({ ...validBody, minecraftUsername: "FreePlayer" }),
+      createRequest({ ...validBody, minecraftUsername: "SharedPlayer" }),
     );
 
-    expect(mockCreateUser).toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    expect(mockRpc).toHaveBeenCalledWith(
+      "create_gamer",
+      expect.objectContaining({
+        p_minecraft_username: "SharedPlayer",
+        p_minecraft_uuid: "shared-uuid",
+      }),
+    );
+    // No lookup against the table at all — not for this or any other reason.
+    expect(mockAdminFrom).not.toHaveBeenCalledWith("minecraft_accounts");
   });
 
-  it("should skip UUID check when Mojang finds no account (null UUID)", async () => {
-    mockAuthenticated();
+  it("still links a username Mojang cannot resolve, with a null uuid", async () => {
     mockLookupMinecraftUser.mockResolvedValue(null);
-    mockPreCreateChecks({ emailExists: false });
-    mockCreateUser.mockResolvedValue({
-      data: null,
-      error: { message: "mock-stop" },
-    });
 
-    await POST(
+    const response = await POST(
       createRequest({ ...validBody, minecraftUsername: "unknown_player" }),
     );
 
-    // Mojang returned null → no UUID to check → no minecraft_accounts query
-    expect(mockCreateUser).toHaveBeenCalled();
-    expect(mockAdminFrom).toHaveBeenCalledWith("profiles");
-    expect(mockAdminFrom).not.toHaveBeenCalledWith("minecraft_accounts");
+    expect(response.status).toBe(200);
+    expect(mockRpc).toHaveBeenCalledWith(
+      "create_gamer",
+      expect.objectContaining({
+        p_minecraft_username: "unknown_player",
+        // Omitted rather than null — the RPC's params default to null and the
+        // generated Args type accepts undefined, not null.
+        p_minecraft_uuid: undefined,
+      }),
+    );
   });
 
-  it("should skip minecraft check entirely when no minecraft username provided", async () => {
-    mockAuthenticated();
-    mockPreCreateChecks({ emailExists: false });
-    mockCreateUser.mockResolvedValue({
-      data: null,
-      error: { message: "mock-stop" },
-    });
+  it("skips Mojang entirely when no minecraft username is provided", async () => {
+    const response = await POST(createRequest(validBody));
 
-    await POST(createRequest(validBody));
-
-    expect(mockCreateUser).toHaveBeenCalled();
+    expect(response.status).toBe(200);
     expect(mockLookupMinecraftUser).not.toHaveBeenCalled();
-    expect(mockAdminFrom).not.toHaveBeenCalledWith("minecraft_accounts");
+    expect(mockRpc).toHaveBeenCalledWith(
+      "create_gamer",
+      expect.objectContaining({ p_minecraft_username: undefined }),
+    );
   });
 });
 
@@ -370,27 +350,23 @@ describe("POST /api/gamers/create — atomic create_gamer RPC", () => {
     // The raw Postgres error text never reaches the client.
     expect(data.error).not.toContain("boom");
     expect(data.error).toBe("Something went wrong creating the gamer. Please try again.");
-    // No code on a 5xx — the client falls back to its localized generic.
+    // No code on any failure — the client has one localized generic and uses it.
     expect(data.code).toBeUndefined();
     expect(mockDeleteUser).toHaveBeenCalledWith("new-gamer-id");
   });
 
-  it("maps a 23505 unique violation to a 409 Minecraft conflict and rolls back", async () => {
-    // Pass the route's pre-createUser Minecraft checks so the conflict surfaces
-    // from the RPC (the race), not the pre-check.
-    mockIsValidMinecraftUsername.mockReturnValue(true);
-    mockLookupMinecraftUser.mockResolvedValue({ username: "RacedPlayer", uuid: "raced-uuid" });
+  it("answers a unique violation generically rather than naming Minecraft", async () => {
+    // Nothing in create_gamer's Minecraft insert can raise 23505 any more, so a
+    // unique violation reaching here means some *other* constraint — which the
+    // route must not mislabel as a Minecraft conflict the way it used to.
     mockRpc.mockResolvedValue({ error: { code: "23505", message: "duplicate key" } });
 
-    const response = await POST(
-      createRequest({ ...validBody, minecraftUsername: "RacedPlayer" }),
-    );
+    const response = await POST(createRequest(validBody));
     const data = await response.json();
 
-    expect(response.status).toBe(409);
-    expect(data.error).toBe("This Minecraft account is already linked to another user");
-    // Stable code the client maps to a localized string (never the English text).
-    expect(data.code).toBe("minecraft_already_linked");
+    expect(response.status).toBe(500);
+    expect(data.error).toBe("Something went wrong creating the gamer. Please try again.");
+    expect(data.code).toBeUndefined();
     expect(mockDeleteUser).toHaveBeenCalledWith("new-gamer-id");
   });
 });

@@ -15,8 +15,10 @@ vi.mock("@/lib/auth", () => ({
 const mockCreateUser = vi.fn();
 const mockDeleteUser = vi.fn();
 const mockRpc = vi.fn();
-const mockMinecraftLookupRow = vi.fn();
 
+// No `from` here on purpose: the route reaches the database only through the
+// promotion RPC. It used to query `minecraft_accounts` first to reject an
+// already-linked account; sharing one is allowed now, so that read is gone.
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
     auth: {
@@ -25,9 +27,6 @@ vi.mock("@/lib/supabase/admin", () => ({
         deleteUser: (...args: unknown[]) => mockDeleteUser(...args),
       },
     },
-    from: () => ({
-      select: () => ({ eq: () => ({ maybeSingle: () => mockMinecraftLookupRow() }) }),
-    }),
     rpc: (...args: unknown[]) => mockRpc(...args),
   }),
 }));
@@ -70,7 +69,6 @@ function registerRequest(body: unknown, rawBody?: string): Request {
 describe("POST /api/gedu/register", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockMinecraftLookupRow.mockResolvedValue({ data: null, error: null });
     mockLookupMinecraftUser.mockResolvedValue({ uuid: "mc-uuid-1" });
     mockCreateUser.mockResolvedValue({
       data: { user: { id: NEW_USER_ID } },
@@ -169,35 +167,36 @@ describe("POST /api/gedu/register", () => {
     expect(JSON.stringify(args)).not.toContain("admin");
   });
 
-  // -- Minecraft conflict --
+  // -- Minecraft --
 
-  it("returns 409 for an already-linked Minecraft account, without creating the user", async () => {
-    // Checked before createUser because createUser burns the email
-    // irreversibly — the registrant can retry with a different Minecraft name.
-    mockMinecraftLookupRow.mockResolvedValue({
-      data: { user_id: "someone-else" },
-      error: null,
-    });
+  it("registers an educator on a Minecraft account someone else already holds", async () => {
+    // Sharing is allowed, so there is no pre-check to fail and no conflict to
+    // report — the resolved name and uuid go straight to the RPC.
+    mockLookupMinecraftUser.mockResolvedValue({ uuid: "shared-uuid" });
 
     const response = await POST(
       registerRequest({ ...validBody, minecraftUsername: "Notch" }),
     );
 
-    expect(response.status).toBe(409);
-    expect(mockCreateUser).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    const args = asObject(mockRpc.mock.calls[0][1]);
+    expect(args.p_minecraft_username).toBe("Notch");
+    expect(args.p_minecraft_uuid).toBe("shared-uuid");
+    expect(mockDeleteUser).not.toHaveBeenCalled();
   });
 
-  it("returns 409 and deletes the auth user when the RPC loses the Minecraft race", async () => {
-    mockRpc.mockResolvedValue({
-      error: { code: "23505", message: "duplicate key minecraft_uuid" },
-    });
+  it("passes an empty uuid when Mojang cannot resolve the username", async () => {
+    // An unresolvable name is still recorded; the RPC NULLIFs the empty uuid.
+    mockLookupMinecraftUser.mockResolvedValue(null);
 
     const response = await POST(
       registerRequest({ ...validBody, minecraftUsername: "Notch" }),
     );
 
-    expect(response.status).toBe(409);
-    expect(mockDeleteUser).toHaveBeenCalledWith(NEW_USER_ID);
+    expect(response.status).toBe(200);
+    const args = asObject(mockRpc.mock.calls[0][1]);
+    expect(args.p_minecraft_username).toBe("Notch");
+    expect(args.p_minecraft_uuid).toBe("");
   });
 
   // -- Failure --

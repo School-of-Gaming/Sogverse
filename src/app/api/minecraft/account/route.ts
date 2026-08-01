@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { defineRoute } from "@/lib/api/define-route";
 import { lookupMinecraftUser } from "@/lib/mojang";
 import { updateMinecraftAccountBody } from "@/services/minecraft/minecraft.contracts";
@@ -19,10 +18,10 @@ export const PATCH = defineRoute({
   forbiddenMessage: "Only gamers and gedus can update their Minecraft username",
   body: updateMinecraftAccountBody,
 
-  // The two codes this route mapped by hand are the shared table's answers
-  // already: a unique violation is a 409 and a policy refusal is a 403. What
-  // changes is the fall-through, which used to be a blanket 500 with a fixed
-  // message and is now the shared table plus a logged generic message.
+  // The codes this route mapped by hand are the shared table's answers already
+  // (a policy refusal is a 403). What changes is the fall-through, which used to
+  // be a blanket 500 with a fixed message and is now the shared table plus a
+  // logged generic message.
 
   handler: async ({ supabase, user, body }) => {
     const { minecraftUsername } = body;
@@ -45,17 +44,7 @@ export const PATCH = defineRoute({
       .from("minecraft_accounts")
       .upsert(upsertData, { onConflict: "user_id" });
 
-    if (error) {
-      // The one code carrying copy the user needs: a bare "Conflict" would not
-      // tell them the account belongs to somebody else.
-      if (error.code === "23505") {
-        return NextResponse.json(
-          { error: "This Minecraft account is already linked to another user" },
-          { status: 409 },
-        );
-      }
-      throw error;
-    }
+    if (error) throw error;
 
     return {
       success: true,
