@@ -28,6 +28,12 @@ import { useSpokenLanguages } from "@/services/users";
 import { readErrorMessage } from "@/lib/api/json-response";
 import type { SpokenLanguage } from "@/types";
 
+/**
+ * A literal rather than a `useId()`, because the other fields on this form name
+ * their inputs the same way — one page, one form, one of each.
+ */
+const MINECRAFT_USERNAME_INPUT_ID = "register-gedu-minecraft-username";
+
 const registerGeduSchema = z.object({
   firstName: z.string().min(DISPLAY_NAME_MIN, `First name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `First name must be at most ${DISPLAY_NAME_MAX} characters`),
   lastName: z.string().min(DISPLAY_NAME_MIN, `Last name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `Last name must be at most ${DISPLAY_NAME_MAX} characters`),
@@ -231,12 +237,19 @@ export function RegisterGeduForm({
           </div>
           {/* First capture: nothing is saved yet, so the row opens straight
               into edit mode. The label belongs to the form, not the row — a
-              roster renders the same row with no label at all. */}
-          <Field label={g("label", { platform: GAME_PLATFORMS.minecraft.name })} optional>
+              roster renders the same row with no label at all — so the id is
+              handed down and the row drops its own sr-only label rather than
+              labelling the input twice. */}
+          <Field
+            label={g("label", { platform: GAME_PLATFORMS.minecraft.name })}
+            htmlFor={MINECRAFT_USERNAME_INPUT_ID}
+            optional
+          >
             <GameUsernameEditableRow
               platform="minecraft"
               username={minecraftUsername}
               autoEdit
+              inputId={MINECRAFT_USERNAME_INPUT_ID}
               onCommit={({ username }) => setMinecraftUsername(username)}
             />
           </Field>

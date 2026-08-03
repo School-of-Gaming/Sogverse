@@ -2804,9 +2804,43 @@ const VIEW_ONLY_ROWS: readonly {
  * While it is in flight `data` is undefined and the rows draw the stand-in in a
  * box that is already its final size, so nothing moves when the render lands.
  */
-function useRobloxDemoRenders(): Readonly<Record<GameFigure, string | null>> {
-  const { data } = useRobloxProfile(DEMO_USERNAME.roblox);
+function useRobloxDemoRenders(
+  live: boolean,
+): Readonly<Record<GameFigure, string | null>> {
+  // Disabled until asked for. A Roblox verification is three upstream calls
+  // against a bucket of sixty a minute shared by every IP the fleet has, and
+  // this page gets opened to look at buttons far more often than to look at
+  // Roblox — so it does not spend that budget on arrival.
+  const { data } = useRobloxProfile(live ? DEMO_USERNAME.roblox : null);
   return { full: data?.avatarUrl ?? null, head: data?.headshotUrl ?? null };
+}
+
+/**
+ * The button that spends the request.
+ *
+ * Stays a button once pressed, disabled with different words, so the row of
+ * controls keeps its height and the rows below it do not move when the renders
+ * land — the figure boxes were already at their final size, so the pictures
+ * simply appear.
+ */
+function RobloxLiveToggle({
+  live,
+  onLoad,
+}: {
+  live: boolean;
+  onLoad: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <Button variant="outline" size="sm" onClick={onLoad} disabled={live}>
+        {live ? "Real Roblox renders loaded" : "Load real Roblox renders"}
+      </Button>
+      <span className="text-xs text-muted-foreground">
+        Minecraft draws from the username with no lookup; Roblox needs a live
+        verification, so it stays on the stand-in until you ask.
+      </span>
+    </div>
+  );
 }
 
 /**
@@ -2828,25 +2862,29 @@ function demoFigureUrl(
 }
 
 function GameViewOnlyDemo() {
-  const renders = useRobloxDemoRenders();
+  const [live, setLive] = useState(false);
+  const renders = useRobloxDemoRenders(live);
 
   return (
-    <div className={cn(GAME_DEMO_GRID, "items-center gap-y-2")}>
-      <GameDemoHeader />
-      {VIEW_ONLY_ROWS.map(({ caption, named, externalId }) => (
-        <Fragment key={caption}>
-          <DemoCaption>{caption}</DemoCaption>
-          {DEMO_PLATFORMS.map((platform) => (
-            <GameUsernameRow
-              key={platform}
-              platform={platform}
-              username={named ? DEMO_USERNAME[platform] : null}
-              externalId={externalId[platform]}
-              avatarUrl={demoFigureUrl(platform, named, renders.full)}
-            />
-          ))}
-        </Fragment>
-      ))}
+    <div className="space-y-3">
+      <RobloxLiveToggle live={live} onLoad={() => setLive(true)} />
+      <div className={cn(GAME_DEMO_GRID, "items-center gap-y-2")}>
+        <GameDemoHeader />
+        {VIEW_ONLY_ROWS.map(({ caption, named, externalId }) => (
+          <Fragment key={caption}>
+            <DemoCaption>{caption}</DemoCaption>
+            {DEMO_PLATFORMS.map((platform) => (
+              <GameUsernameRow
+                key={platform}
+                platform={platform}
+                username={named ? DEMO_USERNAME[platform] : null}
+                externalId={externalId[platform]}
+                avatarUrl={demoFigureUrl(platform, named, renders.full)}
+              />
+            ))}
+          </Fragment>
+        ))}
+      </div>
     </div>
   );
 }
@@ -2940,38 +2978,42 @@ function GameEditableRowDemo() {
  * resolved by the demo.
  */
 function GameHeadRowDemo() {
-  const renders = useRobloxDemoRenders();
+  const [live, setLive] = useState(false);
+  const renders = useRobloxDemoRenders(live);
 
   return (
-    <div className={cn(GAME_DEMO_GRID, "items-center gap-y-2")}>
-      <GameDemoHeader />
-      {VIEW_ONLY_ROWS.map(({ caption, named, externalId }) => (
-        <Fragment key={caption}>
-          <DemoCaption>{caption}</DemoCaption>
-          {DEMO_PLATFORMS.map((platform) => (
-            <GameUsernameRow
-              key={platform}
-              platform={platform}
-              figure="head"
-              username={named ? DEMO_USERNAME[platform] : null}
-              externalId={externalId[platform]}
-              avatarUrl={demoFigureUrl(platform, named, renders.head)}
-            />
-          ))}
-        </Fragment>
-      ))}
+    <div className="space-y-3">
+      <RobloxLiveToggle live={live} onLoad={() => setLive(true)} />
+      <div className={cn(GAME_DEMO_GRID, "items-center gap-y-2")}>
+        <GameDemoHeader />
+        {VIEW_ONLY_ROWS.map(({ caption, named, externalId }) => (
+          <Fragment key={caption}>
+            <DemoCaption>{caption}</DemoCaption>
+            {DEMO_PLATFORMS.map((platform) => (
+              <GameUsernameRow
+                key={platform}
+                platform={platform}
+                figure="head"
+                username={named ? DEMO_USERNAME[platform] : null}
+                externalId={externalId[platform]}
+                avatarUrl={demoFigureUrl(platform, named, renders.head)}
+              />
+            ))}
+          </Fragment>
+        ))}
 
-      <DemoCaption>Checking</DemoCaption>
-      {DEMO_PLATFORMS.map((platform) => (
-        <GameUsernameRow
-          key={platform}
-          platform={platform}
-          figure="head"
-          username={DEMO_USERNAME[platform]}
-          status="checking"
-          avatarUrl={demoFigureUrl(platform, true, renders.head)}
-        />
-      ))}
+        <DemoCaption>Checking</DemoCaption>
+        {DEMO_PLATFORMS.map((platform) => (
+          <GameUsernameRow
+            key={platform}
+            platform={platform}
+            figure="head"
+            username={DEMO_USERNAME[platform]}
+            status="checking"
+            avatarUrl={demoFigureUrl(platform, true, renders.head)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

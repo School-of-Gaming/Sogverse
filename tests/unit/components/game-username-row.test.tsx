@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { fireEvent, render } from "@testing-library/react";
 import { GameUsernameRow } from "@/components/game-account/game-username-row";
 import {
-  GAME_FIGURE_HEIGHT,
+  gameFigureHeight,
   type GameAccountStatus,
   type GamePlatform,
 } from "@/components/game-account/platforms";
@@ -70,8 +70,8 @@ describe("GameUsernameRow", () => {
 
     for (const rendered of [minecraft, roblox]) {
       const { row, avatar } = boxes(rendered.container);
-      expect(row.className).toContain(GAME_FIGURE_HEIGHT.full);
-      expect(avatar.className).toContain(GAME_FIGURE_HEIGHT.full);
+      expect(row.className).toContain(gameFigureHeight("full"));
+      expect(avatar.className).toContain(gameFigureHeight("full"));
     }
 
     // Half the height for the 1:2 body, the full height for the 1:1 bust.
@@ -101,10 +101,10 @@ describe("GameUsernameRow", () => {
     expect(shapes[0]).toBe(shapes[1]);
     for (const rendering of rendered) {
       const { row, avatar } = boxes(rendering.container);
-      expect(row.className).toContain(GAME_FIGURE_HEIGHT.head);
-      expect(avatar.className).toContain(GAME_FIGURE_HEIGHT.head);
+      expect(row.className).toContain(gameFigureHeight("head"));
+      expect(avatar.className).toContain(gameFigureHeight("head"));
     }
-    expect(GAME_FIGURE_HEIGHT.head).not.toBe(GAME_FIGURE_HEIGHT.full);
+    expect(gameFigureHeight("head")).not.toBe(gameFigureHeight("full"));
   });
 
   // Minecraft can derive both renders from a name; the face is a different

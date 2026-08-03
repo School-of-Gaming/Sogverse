@@ -1,6 +1,6 @@
 export {
   GAME_PLATFORMS,
-  GAME_FIGURE_HEIGHT,
+  gameFigureHeight,
   gameAccountStatus,
   useVerifyGameAccount,
   type GameAccountExternalId,

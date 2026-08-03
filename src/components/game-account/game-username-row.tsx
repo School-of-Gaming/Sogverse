@@ -5,7 +5,7 @@ import { Check, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
-  GAME_FIGURE_HEIGHT,
+  gameFigureHeight,
   GAME_PLATFORMS,
   gameAccountStatus,
   type GameAccountExternalId,
@@ -75,7 +75,7 @@ export function GameAvatarBox({
     <div
       className={cn(
         "shrink-0 overflow-hidden rounded-sm bg-muted",
-        GAME_FIGURE_HEIGHT[figure],
+        gameFigureHeight(figure),
         model.widthClass,
       )}
     >
@@ -85,6 +85,11 @@ export function GameAvatarBox({
           src={resolvedUrl}
           alt=""
           aria-hidden
+          // A dense surface draws one of these per verified row — fifty-plus in
+          // the admin groups panel — and most of them are below the fold. The
+          // box is already at its final size, so deferring the fetch costs no
+          // layout and saves every request for a chip nobody scrolls to.
+          loading="lazy"
           onError={() => setFailedUrl(resolvedUrl)}
           // `object-contain`: the box already matches the render's proportion,
           // so the figure fits it whole.
@@ -194,7 +199,7 @@ export function GameUsernameRow({
     <div
       className={cn(
         "flex min-w-0 items-center gap-2",
-        GAME_FIGURE_HEIGHT[figure],
+        gameFigureHeight(figure),
         className,
       )}
     >

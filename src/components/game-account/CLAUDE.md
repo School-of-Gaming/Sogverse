@@ -108,10 +108,18 @@ whoever renders a list owns the lookup — and the naive shape of that is N
 requests against a thumbnails API rate-limited per IP across the whole serverless
 fleet, which a single roster can drain on its own. The API accepts many account
 ids per request (on the order of a hundred), so a roster resolves every headshot
-it needs in one call and hands each row its URL. Minecraft needs none of this: its
-host is addressable by username, so a Minecraft list costs zero lookups no matter
-how long it is. This is the shape to build the first production Roblox roster in;
-today only the style guide resolves anything, and it resolves one handle.
+it needs in one call and hands each row its URL. This is the shape to build the
+first production Roblox roster in; today only the style guide resolves anything,
+and it resolves one handle.
+
+**Minecraft escapes the *lookup* cost, not the *image* cost, and the difference
+matters at list scale.** Its host is addressable by username, so a Minecraft list
+of any length costs zero API calls — but every verified row still issues one
+image request to that host, and the admin groups panel can hold fifty-plus chips.
+The rows are `loading="lazy"`, so only what is scrolled to is fetched; that is
+the whole mitigation, and it is enough at the sizes we have. A surface planning
+on hundreds of simultaneously-visible figures needs a real answer (a sprite, a
+cached proxy, or not drawing figures at that density) rather than this sentence.
 
 **The URL a caller passes must match the figure it asked for**, which is why a
 verification hands back one render per figure rather than a single picture: the

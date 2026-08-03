@@ -3,7 +3,7 @@ import { useState } from "react";
 import { act, fireEvent, render } from "@testing-library/react";
 import { GameUsernameEditableRow } from "@/components/game-account/game-username-editable-row";
 import {
-  GAME_FIGURE_HEIGHT,
+  gameFigureHeight,
   gameAccountStatus,
   type GamePlatform,
 } from "@/components/game-account/platforms";
@@ -76,6 +76,15 @@ interface HarnessProps {
   autoEdit?: boolean;
   personName?: string;
   onCommit?: (username: string | null, externalId: string | number | null) => void;
+  /**
+   * Defer the prop update the way a real surface does.
+   *
+   * A synchronous harness stores the commit before the row can render once, so
+   * it can never see the row fall back to the old name mid-write — which is
+   * exactly how that bug hid. When set, the harness holds the value until the
+   * returned promise is resolved by the test.
+   */
+  deferCommit?: boolean;
 }
 
 /**
@@ -90,6 +99,7 @@ function Harness({
   autoEdit = false,
   personName,
   onCommit,
+  deferCommit = false,
 }: HarnessProps) {
   const [username, setUsername] = useState(initialUsername);
   const [externalId, setExternalId] = useState(initialExternalId);
@@ -102,13 +112,33 @@ function Harness({
       autoEdit={autoEdit}
       personName={personName}
       onCommit={(account) => {
-        setUsername(account.username);
-        setExternalId(account.externalId);
         onCommit?.(account.username, account.externalId);
+
+        const store = () => {
+          setUsername(account.username);
+          setExternalId(account.externalId);
+        };
+
+        if (!deferCommit) {
+          store();
+          return;
+        }
+
+        return new Promise<void>((resolve, reject) => {
+          settleCommit = () => {
+            store();
+            resolve();
+          };
+          failCommit = () => reject(new Error("the write was refused"));
+        });
       }}
     />
   );
 }
+
+/** Resolve / reject the deferred commit, at the moment the test chooses. */
+let settleCommit: () => void;
+let failCommit: () => void;
 
 function setup(props: Omit<HarnessProps, "onCommit"> = {}) {
   const onCommit = vi.fn();
@@ -172,9 +202,9 @@ describe("GameUsernameEditableRow", () => {
   it("keeps the row at the one game-account height in both modes", () => {
     const { container, openEditor } = setup({ initialUsername: "Notch" });
 
-    expect(shell(container).className).toContain(GAME_FIGURE_HEIGHT.full);
+    expect(shell(container).className).toContain(gameFigureHeight("full"));
     openEditor();
-    expect(shell(container).className).toContain(GAME_FIGURE_HEIGHT.full);
+    expect(shell(container).className).toContain(gameFigureHeight("full"));
   });
 
   /**
@@ -286,6 +316,108 @@ describe("GameUsernameEditableRow", () => {
 
     expect(mutateAsync).not.toHaveBeenCalled();
     expect(onCommit).toHaveBeenLastCalledWith(null, null);
+  });
+
+  /**
+   * The row is controlled, and a caller's write is a mutation, an invalidation
+   * and a refetch away from handing the new name back. Between the two it must
+   * keep showing what was committed — otherwise the sequence a person sees is
+   * "NewName", spinner, **"OldName"**, "NewName", and the flash of the old name
+   * reads as the save having failed.
+   *
+   * Needs the deferred harness: a synchronous one stores the value before the
+   * row can render once, which is precisely why this went unnoticed.
+   */
+  it("keeps the committed name on screen while the caller's write is in flight", async () => {
+    const { container, type, press } = setup({
+      initialUsername: "OldName",
+      initialExternalId: MOJANG_UUID,
+      deferCommit: true,
+    });
+
+    const pencil = container.querySelector("button");
+    if (!pencil) throw new Error("the pencil never rendered");
+    fireEvent.click(pencil);
+
+    type("newname");
+    press("Enter");
+    await act(async () => settle.resolve(lookupResult("minecraft", "NewName")));
+
+    // The lookup has landed and the caller has been told, but has not stored it.
+    expect(container.textContent).toContain("NewName");
+    expect(container.textContent).not.toContain("OldName");
+
+    await act(async () => {
+      settleCommit();
+    });
+
+    expect(container.textContent).toContain("NewName");
+  });
+
+  // A refused write means nothing was stored, so the row stops claiming the new
+  // name and goes back to the truth. It adds no message of its own — the surface
+  // that refused owns that explanation.
+  it("falls back to the stored name when the caller refuses the write", async () => {
+    const { container, type, press } = setup({
+      initialUsername: "OldName",
+      initialExternalId: MOJANG_UUID,
+      deferCommit: true,
+    });
+
+    const pencil = container.querySelector("button");
+    if (!pencil) throw new Error("the pencil never rendered");
+    fireEvent.click(pencil);
+
+    type("newname");
+    press("Enter");
+    await act(async () => settle.resolve(lookupResult("minecraft", "NewName")));
+    expect(container.textContent).toContain("NewName");
+
+    await act(async () => {
+      failCommit();
+    });
+
+    expect(container.textContent).toContain("OldName");
+    expect(container.textContent).not.toContain("NewName");
+  });
+
+  // Both paths that never reach a lookup used to leave the previous name on
+  // screen, because only the in-flight path put anything on hold.
+  it("shows a name the platform could never have, without waiting for the caller", () => {
+    const { container, type, press } = setup({
+      platform: "roblox",
+      initialUsername: "builderman",
+      initialExternalId: 156,
+      deferCommit: true,
+    });
+
+    const pencil = container.querySelector("button");
+    if (!pencil) throw new Error("the pencil never rendered");
+    fireEvent.click(pencil);
+
+    type("a_b_c");
+    press("Enter");
+
+    expect(container.textContent).toContain("a_b_c");
+    expect(container.textContent).not.toContain("builderman");
+  });
+
+  it("shows the cleared state immediately, without waiting for the caller", () => {
+    const { container, type, press } = setup({
+      initialUsername: "OldName",
+      initialExternalId: MOJANG_UUID,
+      deferCommit: true,
+    });
+
+    const pencil = container.querySelector("button");
+    if (!pencil) throw new Error("the pencil never rendered");
+    fireEvent.click(pencil);
+
+    type("   ");
+    press("Enter");
+
+    expect(container.textContent).not.toContain("OldName");
+    expect(container.textContent).toContain("(Unknown)");
   });
 
   /**

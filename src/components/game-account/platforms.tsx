@@ -2,7 +2,11 @@
 
 import type { ReactElement } from "react";
 import { Blocks, Pickaxe, type LucideIcon } from "lucide-react";
-import { isValidMinecraftUsername } from "@/lib/mojang";
+import {
+  isValidMinecraftUsername,
+  minecraftSkinBodyUrl,
+  minecraftSkinFaceUrl,
+} from "@/lib/mojang";
 import { isValidRobloxUsername } from "@/lib/roblox";
 import { useVerifyMinecraft } from "@/services/minecraft";
 import { useVerifyRoblox } from "@/services/roblox";
@@ -88,10 +92,24 @@ export type GameFigure = "full" | "head";
  * classes the Tailwind scanner has to see, so they are recomputed by hand rather
  * than by `calc`.
  */
-export const GAME_FIGURE_HEIGHT: Readonly<Record<GameFigure, string>> = {
+const FIGURE_HEIGHT: Readonly<Record<GameFigure, string>> = {
   full: "h-15",
   head: "h-8",
 };
+
+/**
+ * The height class for a figure.
+ *
+ * **A function rather than the record itself, and that is a guard rather than a
+ * taste.** `cn()` takes an object as a conditional-class map, so handing it the
+ * record whole type-checks and then silently emits `full head` as class names
+ * with no height at all — which is exactly what happened once, in a roster row
+ * whose comment claimed it pinned the height. A function is not a `ClassValue`,
+ * so the same slip is now a compile error instead of a layout bug nobody sees.
+ */
+export function gameFigureHeight(figure: GameFigure): string {
+  return FIGURE_HEIGHT[figure];
+}
 
 /**
  * The platform's own key for an account.
@@ -201,35 +219,6 @@ export interface GamePlatformDescriptor {
   /** A real handle on the platform, for the input's example placeholder. */
   usernameExample: string;
   avatar: GameAvatarModel;
-}
-
-/**
- * The Minecraft skin host, addressable by username.
- *
- * `img-src` in the proxy's CSP already allows this host. Encoded even though a
- * valid Minecraft username has nothing to encode — a row renders whatever is
- * stored, and a stored value is not a validated one.
- */
-function minecraftBodyUrl(username: string): string {
-  return `https://mc-heads.net/body/${encodeURIComponent(username)}`;
-}
-
-/**
- * The Minecraft face, from the same host and the same CSP allowance.
- *
- * **The flat face, not the isometric `/head` render.** The 3D one draws a cube
- * on the diagonal, which leaves roughly a quarter of its square frame as
- * transparent padding and puts aliased diagonal edges on every side — at 32px
- * that reads as a smudge. The flat face fills its frame edge to edge at 1:1,
- * which is also exactly what a Roblox headshot does, so the two platforms end up
- * with the same geometry in the compact figure instead of nearly the same.
- *
- * 96px for a 32px box: three times, so it stays crisp on a phone. A Minecraft
- * face is natively 8×8, so this is an honest nearest-neighbour upscale rather
- * than invented detail.
- */
-function minecraftFaceUrl(username: string): string {
-  return `https://mc-heads.net/avatar/${encodeURIComponent(username)}/96`;
 }
 
 /**
@@ -388,13 +377,13 @@ export const GAME_PLATFORMS: Readonly<
       full: {
         // Half the figure's height — the whole body's own 1:2 proportion.
         widthClass: "w-7.5",
-        urlFromUsername: minecraftBodyUrl,
+        urlFromUsername: minecraftSkinBodyUrl,
         Placeholder: MinecraftBodyPlaceholder,
       },
       head: {
         // Square, like every head render on every platform.
         widthClass: "w-8",
-        urlFromUsername: minecraftFaceUrl,
+        urlFromUsername: minecraftSkinFaceUrl,
         Placeholder: MinecraftFacePlaceholder,
       },
     },
@@ -460,8 +449,8 @@ export function useVerifyGameAccount(
         // Both derivable from the canonical name, so the row gets a real picture
         // out of a lookup that never mentioned one — whichever figure it draws.
         figureUrls: {
-          full: minecraftBodyUrl(profile.username),
-          head: minecraftFaceUrl(profile.username),
+          full: minecraftSkinBodyUrl(profile.username),
+          head: minecraftSkinFaceUrl(profile.username),
         },
         // Mojang has no second name: the handle is the only one there is.
         displayName: null,

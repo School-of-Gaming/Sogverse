@@ -103,6 +103,9 @@ export default function GamerDetailsPage() {
             ? String((error as { message: unknown }).message)
             : t('gamerDetail.failedUpdateMc');
       setMcError(message);
+      // Rethrown after the banner is set: the row is awaiting this, and a
+      // silent resolve would leave it showing a name nothing stored.
+      throw error;
     }
   };
 
@@ -256,7 +259,9 @@ export default function GamerDetailsPage() {
             username={mcAccount?.minecraft_username ?? null}
             externalId={mcAccount?.minecraft_uuid ?? null}
             personName={gamer.first_name}
-            onCommit={({ username }) => void handleSaveMc(username)}
+            // Returned, not voided: the row waits on the write before it lets
+            // go of the name it is showing.
+            onCommit={({ username }) => handleSaveMc(username)}
             className="max-w-sm"
           />
 

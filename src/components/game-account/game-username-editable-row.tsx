@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { GameAvatarBox, GameUsernameRow } from "./game-username-row";
 import {
   GAME_PLATFORMS,
-  GAME_FIGURE_HEIGHT,
+  gameFigureHeight,
   gameAccountStatus,
   useVerifyGameAccount,
   type GameAccountExternalId,
@@ -60,7 +60,7 @@ interface GameUsernameEditableRowProps {
    * and hands `username`/`externalId` back as props — this component renders the
    * in-flight name itself but does **not** own the committed one.
    */
-  onCommit: (account: CommittedGameAccount) => void;
+  onCommit: (account: CommittedGameAccount) => void | Promise<void>;
   /**
    * Open in edit mode on mount. What a register-style surface passes, where
    * there is nothing to view yet and the only thing to do is type. A roster
@@ -69,6 +69,16 @@ interface GameUsernameEditableRowProps {
   autoEdit?: boolean;
   /** Whose account this is, for the pencil's accessible name. Omitted where the answer is "yours". */
   personName?: string;
+  /**
+   * The id to give the editor's input, when the surface already renders a
+   * **visible** label for it and wants that label to point here.
+   *
+   * Supplying it also suppresses the row's own screen-reader-only label: two
+   * labels for one input is one too many, and the visible one is the better of
+   * the two because clicking it focuses the field. A surface with no visible
+   * label (a roster cell) leaves this off and gets the sr-only label instead.
+   */
+  inputId?: string;
   className?: string;
 }
 
@@ -112,12 +122,25 @@ export function GameUsernameEditableRow({
   onCommit,
   autoEdit = false,
   personName,
+  inputId: labelledInputId,
   className,
 }: GameUsernameEditableRowProps) {
   const t = useTranslations("gameAccount");
   const descriptor = GAME_PLATFORMS[platform];
   const verify = useVerifyGameAccount(platform);
-  const inputId = useId();
+  const generatedId = useId();
+  const inputId = labelledInputId ?? generatedId;
+
+  /**
+   * Whether the editor was opened by the person rather than by `autoEdit`.
+   *
+   * Focus follows the action: opening the editor with the pencil is a request to
+   * type, so the caret belongs in the field. `autoEdit` is not — it opens before
+   * anyone has done anything, and autofocusing there drags a register page's
+   * focus (and its scroll) down to the sixth field on load, past five the person
+   * has not filled in yet.
+   */
+  const [openedByPerson, setOpenedByPerson] = useState(false);
 
   // `null` is the closed editor — distinct from `""`, which is an open editor
   // someone has cleared. A boolean plus a string cannot tell those apart.
@@ -125,18 +148,31 @@ export function GameUsernameEditableRow({
     autoEdit ? (username ?? "") : null,
   );
   /**
-   * The committed name while its lookup is in flight.
+   * What this row committed, held until the caller's props catch up.
    *
-   * The row is controlled on `username`, and the caller does not learn the new
-   * name until the lookup settles — so without this the row would go on showing
-   * the *old* name while checking the new one. Non-null only during a flight.
+   * The row is controlled on `username`, but a caller's write is a mutation, an
+   * invalidation and a refetch away from handing the new name back — so without
+   * this the row would show the *old* name for the whole round trip: type
+   * "NewName", watch the spinner, watch "OldName" return, then finally
+   * "NewName". Held from the moment of commit until the prop agrees with it.
+   *
+   * A **box** rather than a bare string, because clearing a username commits
+   * `null` and that has to be distinguishable from "nothing is pending".
    */
-  const [pending, setPending] = useState<string | null>(null);
+  const [pending, setPending] = useState<{ username: string | null } | null>(
+    null,
+  );
   const [checking, setChecking] = useState(false);
   const [verified, setVerified] = useState<VerifiedGameAccount | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const shown = pending ?? username;
+  // The props have caught up, so the local copy retires. Adjusting state during
+  // render is React's own escape hatch for deriving from props, and it avoids
+  // the frame of stale text an effect would leave behind. Self-limiting: once
+  // cleared the condition cannot hold again until the next commit.
+  if (pending !== null && username === pending.username) setPending(null);
+
+  const shown = pending !== null ? pending.username : username;
 
   /**
    * The name this row currently owns, readable from an async continuation.
@@ -159,71 +195,91 @@ export function GameUsernameEditableRow({
       ? "verified"
       : gameAccountStatus(shown, externalId);
 
-  const settle = (account: CommittedGameAccount) => {
-    setChecking(false);
-    setPending(null);
-    onCommit(account);
+  const EMPTY_FIGURES = { full: null, head: null } as const;
+
+  /**
+   * Hand the outcome to the caller and wait for it to be stored.
+   *
+   * A caller that **rejects** has refused the write, so the row stops claiming a
+   * value nobody kept and falls back to whatever is actually stored. It does not
+   * add an error of its own: the surface that refused owns that explanation, and
+   * two messages for one failure is one too many.
+   */
+  const report = async (account: CommittedGameAccount) => {
+    try {
+      await onCommit(account);
+    } catch {
+      setPending(null);
+    }
   };
 
   const commit = async () => {
     if (draft === null) return;
-    const next = draft.trim();
+    const typed = draft.trim();
+    const committed = typed === "" ? null : typed;
 
     // Closed synchronously, before anything awaits: the tick unmounts with the
     // editor, so it cannot re-enable itself between the click and the outcome.
     setDraft(null);
     setError(null);
     setVerified(null);
-    owned.current = next === "" ? null : next;
+    owned.current = committed;
+    // On screen from this instant, on every path — a name that is about to be
+    // looked up, a name that cannot be, and a clear alike.
+    setPending({ username: committed });
 
-    if (next === "") {
-      onCommit({
+    if (committed === null) {
+      await report({
         username: null,
         externalId: null,
-        figureUrls: { full: null, head: null },
+        figureUrls: EMPTY_FIGURES,
         displayName: null,
       });
       return;
     }
 
     const unverifiedResult: CommittedGameAccount = {
-      username: next,
+      username: committed,
       externalId: null,
-      figureUrls: { full: null, head: null },
+      figureUrls: EMPTY_FIGURES,
       displayName: null,
     };
 
     // Nothing shaped like this can exist on the platform, so there is nothing to
     // look up. Saved anyway — an unverified name is still the child's answer —
     // and the reason is said out loud rather than swallowed.
-    if (!descriptor.isValidUsername(next)) {
+    if (!descriptor.isValidUsername(committed)) {
       setError(t("notFound", { platform: descriptor.name }));
-      onCommit(unverifiedResult);
+      await report(unverifiedResult);
       return;
     }
 
-    setPending(next);
     setChecking(true);
 
     try {
-      const account = await verify(next);
-      if (owned.current !== next) return;
+      const account = await verify(committed);
+      if (owned.current !== committed) return;
+      setChecking(false);
       setVerified(account);
       owned.current = account.username;
-      settle({
+      // The canonical casing is what was committed, so it is what the row holds
+      // and what the prop will eventually equal.
+      setPending({ username: account.username });
+      await report({
         username: account.username,
         externalId: account.externalId,
         figureUrls: account.figureUrls,
         displayName: account.displayName,
       });
     } catch (err) {
-      if (owned.current !== next) return;
+      if (owned.current !== committed) return;
+      setChecking(false);
       setError(
         err instanceof Error
           ? err.message
           : t("notFound", { platform: descriptor.name }),
       );
-      settle(unverifiedResult);
+      await report(unverifiedResult);
     }
   };
 
@@ -234,7 +290,7 @@ export function GameUsernameEditableRow({
         <div
           className={cn(
             "flex min-w-0 items-center gap-2",
-            GAME_FIGURE_HEIGHT[figure],
+            gameFigureHeight(figure),
           )}
         >
           <GameAvatarBox
@@ -244,17 +300,31 @@ export function GameUsernameEditableRow({
             avatarUrl={avatarUrl}
             verified={status === "verified"}
           />
-          <label className="sr-only" htmlFor={inputId}>
-            {t("usernameLabel", { platform: descriptor.name })}
-          </label>
+          {labelledInputId === undefined && (
+            <label className="sr-only" htmlFor={inputId}>
+              {t("usernameLabel", { platform: descriptor.name })}
+            </label>
+          )}
           <Input
             id={inputId}
-            autoFocus
+            autoFocus={openedByPerson}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
+            // Both gestures are **consumed**, not merely handled. This input
+            // lives inside a `<form>` on the register page, where a bare Enter
+            // is also HTML implicit submission — so committing a username would
+            // submit the whole registration, with the username not yet stored.
+            // Escape is stopped for the mirror reason: a dialog would take it as
+            // "close me" and throw away the edit the key was meant to cancel.
             onKeyDown={(e) => {
-              if (e.key === "Enter") void commit();
-              if (e.key === "Escape") setDraft(null);
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void commit();
+              }
+              if (e.key === "Escape") {
+                e.preventDefault();
+                setDraft(null);
+              }
             }}
             placeholder={t("placeholder", {
               example: descriptor.usernameExample,
@@ -292,7 +362,7 @@ export function GameUsernameEditableRow({
       <div
         className={cn(
           "group/game flex min-w-0 items-center gap-1",
-          GAME_FIGURE_HEIGHT[figure],
+          gameFigureHeight(figure),
         )}
       >
         <GameUsernameRow
@@ -310,7 +380,10 @@ export function GameUsernameEditableRow({
             away by locking the row. */}
         <button
           type="button"
-          onClick={() => setDraft(shown ?? "")}
+          onClick={() => {
+            setOpenedByPerson(true);
+            setDraft(shown ?? "");
+          }}
           aria-label={
             personName === undefined
               ? t("edit", { platform: descriptor.name })
