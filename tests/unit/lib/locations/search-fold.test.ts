@@ -1,18 +1,19 @@
 import { describe, it, expect } from "vitest";
 import { foldForSearch } from "@/lib/locations/search-fold";
+import { SEARCH_FOLD_CASES } from "../../../helpers/search-fold-cases";
 
 /**
  * The client-side fold, which exists only for the bounded lists a surface has
  * already fetched in full. The large search is the database's, and it folds the
- * same way — these cases are the shared contract stated on the side that can be
- * asserted without a Postgres, and their mirror images live in the DB suite.
+ * same way — the shared case table is the contract between them, asserted here
+ * against the TypeScript side and in the DB suite against the SQL side.
  */
 
 describe("foldForSearch", () => {
-  it("folds diacritics and case", () => {
-    expect(foldForSearch("Nîmes")).toBe("nimes");
-    expect(foldForSearch("Järvenpää")).toBe("jarvenpaa");
-    expect(foldForSearch("Côte-d'Or")).toBe("cote-d'or");
+  describe("the fold the database also has to produce", () => {
+    it.each(SEARCH_FOLD_CASES)("folds $what", ({ raw, folded }) => {
+      expect(foldForSearch(raw)).toBe(folded);
+    });
   });
 
   // The direction that is easy to forget: folding both the needle and the
@@ -26,8 +27,7 @@ describe("foldForSearch", () => {
     );
   });
 
-  it("leaves a string with nothing to fold alone", () => {
-    expect(foldForSearch("lille")).toBe("lille");
+  it("leaves an empty string alone", () => {
     expect(foldForSearch("")).toBe("");
   });
 });
