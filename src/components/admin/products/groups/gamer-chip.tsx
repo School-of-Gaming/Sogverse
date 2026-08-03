@@ -86,6 +86,11 @@ const ChipContent = memo(function ChipContent({
           // together — the face carries the same identity at roughly the height
           // of the text beside it.
           figure="head"
+          // A picture butting straight against the parent's name reads as
+          // cramped. The gap is the call site's, not the row's: only this chip
+          // and the admin user page want it, so the component stays unpadded and
+          // every other surface keeps its tight rhythm.
+          className="mt-2"
         />
       </div>
       <GripVertical className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
@@ -124,7 +129,9 @@ export function GamerChip({
       {...attributes}
       aria-disabled={isPending || undefined}
       className={cn(
-        "flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors",
+        // `py-2` rather than `py-1.5`: the chip carries a picture now, and the
+        // extra 2px a side is what keeps the stack from touching its own border.
+        "flex items-center gap-2 rounded-lg border px-2.5 py-2 text-xs font-medium transition-colors",
         isPending
           ? "cursor-progress border-border bg-muted text-foreground opacity-50"
           // Shared drag-cursor class (globals.css): grab on hover. The grabbing

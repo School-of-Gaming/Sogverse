@@ -21,11 +21,24 @@ contributing its own inconsistency.
 **The one permitted axis is `figure`: `"full"` or `"head"`** — how much of the
 character is drawn, and therefore how tall the row is. It is a density decision,
 not a size knob, and it exists because `full` was measurably too tall on two
-specific surfaces (a voice participant list and a profile detail line), not
-because a caller might fancy something smaller. Heights live in one exported
-record keyed by figure. **A third value needs a surface that measurably needs
-it** — the size-variant sprawl this directory removed once is exactly what a
-casual third value grows back into.
+specific surfaces, not because a caller might fancy something smaller. Heights
+live in one exported record keyed by figure. **A third value needs a surface that
+measurably needs it** — the size-variant sprawl this directory removed once is
+exactly what a casual third value grows back into.
+
+**`head` is for the two dense lists and nothing else: the voice participant row
+and the admin gamer chip.** Everything else takes the whole figure — settings,
+the parent's gamer detail, gedu registration, the admin user detail page, the
+gedu session roster. A profile header or a form has the room; a list of eight
+people in a rail does not. When a surface feels tight, check whether it is
+actually a dense list before reaching for `head`.
+
+**Rule: a surface that needs breathing room around the row buys it at the call
+site, never by padding the component.** Only two places have wanted it, and a
+margin on the row's own `className` is the whole fix there; baking spacing into
+the component would loosen every other surface's rhythm to solve two pages'
+problem, and the fixed-geometry promise is about the row's *box*, not about the
+air around it.
 
 Within `full` the figure's *width* is per-platform, because the render's
 proportion is (a whole body is 1:2, a bust is 1:1). **Within `head` it is not:**

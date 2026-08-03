@@ -3039,7 +3039,10 @@ function GameAccountDemo() {
         <p className="text-sm text-muted-foreground">
           Same row, same four states, <code>figure=&quot;head&quot;</code>: 32px
           instead of 60px, for a dense list where the whole character crowds out
-          what the list is about. Both platforms are <em>identical</em> here
+          what the list is about. Two surfaces use it &mdash; the voice
+          participant row and the gamer chip below. Everywhere else, including the
+          admin user detail page, keeps the whole figure. Both platforms are{" "}
+          <em>identical</em> here
           &mdash; a Minecraft face render and a Roblox headshot are both square,
           so the 1:2-vs-1:1 divergence that makes the full figure&rsquo;s box
           differ simply does not exist. Both draw a real picture: Minecraft
