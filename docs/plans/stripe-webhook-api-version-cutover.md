@@ -106,34 +106,54 @@ carrying a conservative status for a human to correct.
 
 Each stage must fully complete before the next starts.
 
-### Stage 1 — the tolerant code is live in production (prerequisite)
+The account has **one products endpoint per Stripe mode**: a test-mode endpoint
+pointing at the staging deployment, and a live-mode endpoint pointing at production.
+Both share the unpinned condition, so the swap happens **twice** — test mode first,
+as a zero-stakes rehearsal that is also a real fix, then live mode.
+
+### Stage 1 — the tolerant code is live where you are about to cut over (prerequisite)
 
 This stage is a **verifiable precondition**, not a task list — check it and move on if
-it already holds. Nothing in Stage 2 is safe until it does.
+it already holds. It gates each swap separately: **staging** (deploys from `dev`) must
+run the tolerant code before Stage 2, and **production** (released through the normal
+`/pr-dev-to-main` flow) before Stage 3. What has to be true of the deployed route,
+regardless of how it got there:
 
-1. Confirm the tolerant webhook code is merged to `dev` and released to
-   **production** through the normal release flow (`/pr-dev-to-main`). What has to be
-   true of the deployed route, regardless of how it got there:
-   - the invoice handler reads the subscription id from **both** its placements;
-   - the charge handler **fetches** the refund list when the payload embeds none, and
-     selects the newest refund not already in our ledger rather than simply the
-     newest;
-   - the subscription status written to `family_subscriptions` is translated through
-     an explicit whitelist, the write's error is checked, and an unmapped status is
-     loud (a throw on the update path, a logged degrade on the checkout path);
-   - the SDK is instantiated with an explicit `apiVersion`.
-2. Verify the deploy actually landed — not that the PR merged. The cutover below
-   changes what Stripe sends, so the code that receives it has to be the tolerant
-   version *in production* first.
+- the invoice handler reads the subscription id from **both** its placements;
+- the charge handler **fetches** the refund list when the payload embeds none, and
+  selects the newest refund not already in our ledger rather than simply the
+  newest;
+- the subscription status written to `family_subscriptions` is translated through
+  an explicit whitelist, the write's error is checked, and an unmapped status is
+  loud (a throw on the update path, a logged degrade on the checkout path);
+- the SDK is instantiated with an explicit `apiVersion`.
 
-### Stage 2 — cutover (live mode, ~15 minutes, any time after Stage 1)
+Verify the **deploy** actually landed — not that the PR merged. The cutover changes
+what Stripe sends, so the code that receives it has to be the tolerant version in
+the target environment first.
+
+### Stage 2 — rehearsal: swap the test-mode endpoint (staging)
+
+1. In Stripe **test mode**, note the old endpoint's exact enabled-event list and
+   URL, then create the new test-mode endpoint: same staging URL, `api_version` set
+   to the value pinned in `src/lib/stripe/client.ts`, same event list.
+2. Update `STRIPE_PRODUCTS_WEBHOOK_SECRET` for the staging environment in Vercel to
+   the new endpoint's signing secret (never paste secrets in the Vercel UI — pipe
+   via stdin with `tr -d '\n\r'`), and redeploy staging.
+3. Drive test events through the handled types (Workbench's "send test event", or
+   `stripe trigger` from the CLI — both fire test-mode events) and confirm the new
+   endpoint returns 200s. Then **disable** the old test-mode endpoint.
+4. **Any surprise here blocks Stage 3.** The rehearsal exists to surface it while
+   the stakes are zero — diagnose and fix before touching live mode.
+
+### Stage 3 — production cutover (live mode, ~15 minutes, after the prod release)
 
 Prerequisite for CLI use: the restricted live key needs the **Webhook Endpoints:
 Write** permission, and the CLI device key expires every 90 days — re-auth if stale.
 The Dashboard's Workbench "add destination" flow also allows choosing an API version
 at creation and works equally well.
 
-3. In Stripe (live mode), note the old endpoint's exact enabled-event list, then
+5. In Stripe (live mode), note the old endpoint's exact enabled-event list, then
    create the **new** endpoint: same URL
    (`https://sogverse.sog.gg/api/webhooks/stripe/products`), `api_version` set to the
    value pinned in `src/lib/stripe/client.ts`, and the same event list. The five
@@ -142,19 +162,20 @@ at creation and works equally well.
    `charge.refunded` — but mirror the old endpoint's list exactly if it differs.
    From this moment both endpoints receive every event; the new one's deliveries
    fail signature verification (expected — Stripe queues retries).
-4. Update `STRIPE_PRODUCTS_WEBHOOK_SECRET` in Vercel (Production, sensitive) to the
-   new endpoint's signing secret. Never paste secrets in the Vercel UI — pipe via
-   stdin with `tr -d '\n\r'`. Redeploy so the running app picks it up. **This deploy
-   is the cutover instant**: the new endpoint's deliveries (including its queued
-   retries) start succeeding; the old endpoint's start failing and retrying.
-5. Watch Workbench: the new endpoint returns 200s (the queued retries from step 3
+6. Update `STRIPE_PRODUCTS_WEBHOOK_SECRET` in Vercel (Production, sensitive) to the
+   new endpoint's signing secret — same stdin rule as above. Redeploy so the running
+   app picks it up. **This deploy is the cutover instant**: the new endpoint's
+   deliveries (including its queued retries) start succeeding; the old endpoint's
+   start failing and retrying.
+7. Watch Workbench: the new endpoint returns 200s (the queued retries from step 5
    flushing through count). Then **disable — do not delete — the old endpoint.**
    Disabled-not-deleted is the rollback lever.
 
-**Rollback at any point in Stage 2:** re-enable the old endpoint, restore the old
-secret in Vercel, redeploy. The tolerant code runs correctly against either endpoint,
-which is what makes rollback safe; events that failed during the wobble are retried
-by Stripe for ~3 days and can be resent manually from Workbench.
+**Rollback at any point in Stage 2 or 3:** re-enable the old endpoint, restore the
+old secret in the matching Vercel environment, redeploy. The tolerant code runs
+correctly against either endpoint, which is what makes rollback safe; events that
+failed during the wobble are retried by Stripe for ~3 days and can be resent manually
+from Workbench.
 
 #### What the payloads look like *after* the cutover — expect this, don't "fix" it
 
@@ -177,18 +198,18 @@ their fallbacks, which is easy to misread as one of them being broken:
 Acceptance below therefore wants a real refund observed after the cutover, and gets no
 signal at all from the `parent` branch.
 
-### Stage 3 — cleanup (unhurried, order within the stage is free)
+### Stage 4 — cleanup (unhurried, order within the stage is free)
 
-6. After the first successful **renewal** processes through the new endpoint (check a
-   `subscription_invoice` payment row appears and the family sub's period-end
-   advances), delete the disabled old endpoint.
-7. Audit the leftover pre-Sogverse endpoints on the account (Chargebee, WooCommerce,
+8. After the first successful **renewal** processes through the new live endpoint
+   (check a `subscription_invoice` payment row appears and the family sub's
+   period-end advances), delete the disabled old endpoints — both modes.
+9. Audit the leftover pre-Sogverse endpoints on the account (Chargebee, WooCommerce,
    Klaviyo). Confirm each is dead (delivery history empty / target domains defunct)
    and delete them.
-8. Optionally upgrade the account default API version via Workbench (preview +
-   72-hour rollback). With the endpoint and SDK both pinned this is cosmetic for
-   Sogverse — do it only after step 7 so no forgotten endpoint changes shape.
-9. Delete this plan file.
+10. Optionally upgrade the account default API version via Workbench (preview +
+    72-hour rollback). With the endpoints and SDK all pinned this is cosmetic for
+    Sogverse — do it only after step 9 so no forgotten endpoint changes shape.
+11. Delete this plan file.
 
 ## Acceptance criteria
 
@@ -198,8 +219,9 @@ signal at all from the `parent` branch.
   this pin it is the only one of the two whose read path changes at cutover (see
   "What the payloads look like after the cutover"). Where two refunds were issued
   against the same charge, check that **both** appear as rows.
-- Old endpoint deleted; `STRIPE_PRODUCTS_WEBHOOK_SECRET` holds the new secret;
-  exactly one products webhook endpoint remains on the account.
+- Old endpoints deleted; `STRIPE_PRODUCTS_WEBHOOK_SECRET` holds the matching new
+  secret in each Vercel environment; exactly one products webhook endpoint remains
+  **per mode** (test → staging, live → production), each pinned.
 - No `[stripe/products webhook]` errors in Vercel logs attributable to the cutover.
 - Legacy endpoints removed; plan file deleted.
 
