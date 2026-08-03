@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render } from "@testing-library/react";
+import { fireEvent, render } from "@testing-library/react";
 import {
   RobloxUsernameRow,
   type RobloxCheckStatus,
@@ -109,6 +109,41 @@ describe("RobloxUsernameRow", () => {
     expect(img?.getAttribute("alt")).toBe("");
   });
 
+  // The avatar is a slot like any other and must obey the resolved status. A
+  // real face beside "(Unknown)" would have the row asserting an identity it is
+  // simultaneously denying.
+  it("shows the placeholder, not a face, when the row resolves to unknown", () => {
+    const { container } = render(
+      <RobloxUsernameRow
+        username={null}
+        status="verified"
+        avatarUrl="https://tr.rbxcdn.com/abc/420/420/AvatarBust/Png"
+      />,
+    );
+
+    expect(container.querySelector("img")).toBeNull();
+    expect(boxes(container).avatar.querySelector("svg")).toBeTruthy();
+  });
+
+  it("falls back to the placeholder when the render fails to load", () => {
+    const { container } = render(
+      <RobloxUsernameRow
+        username="EliasBuilds"
+        status="verified"
+        avatarUrl="https://tr.rbxcdn.com/gone/420/420/AvatarBust/Png"
+      />,
+    );
+
+    const img = container.querySelector("img");
+    if (!img) throw new Error("the render never mounted");
+    // A dead CDN URL, or one a future CSP blocks, must not leave an empty square
+    // where a figure belongs.
+    fireEvent.error(img);
+
+    expect(container.querySelector("img")).toBeNull();
+    expect(boxes(container).avatar.querySelector("svg")).toBeTruthy();
+  });
+
   it("falls back to the muted placeholder copy with no username", () => {
     const { getByText } = render(<RobloxUsernameRow username={null} />);
 
@@ -134,7 +169,7 @@ describe("RobloxUsernameRow", () => {
   // The state that motivated the four-state rewrite: a saved name nobody
   // confirmed has to be visibly distinct from a confirmed one, and it earns that
   // by the tick being absent rather than by a glyph of its own — the treatment
-  // the standalone badge already uses on the voice room and admin product page.
+  // the house pattern uses for a saved-but-unconfirmed game account.
   it("draws unverified in amber with no icon, and verified in success with one", () => {
     const nameOf = (container: HTMLElement) =>
       Array.from(container.firstElementChild?.children ?? []).at(1);

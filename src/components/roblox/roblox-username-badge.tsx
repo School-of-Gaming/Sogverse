@@ -22,8 +22,10 @@ interface RobloxUsernameBadgeProps {
 }
 
 /**
- * Read-only display of a gamer's Roblox username and its verification state.
- * The single source of truth for the three states used across the app:
+ * Read-only display of a gamer's Roblox username and its verification state —
+ * the inline form, for a surface that wants the identity on one line rather than
+ * the avatar-bearing row. It is the one place these three states are styled, so
+ * a caller renders it instead of restating the colours:
  *   - verified (account id set) → success green + check
  *   - entered-but-unverified (username only) → warning amber
  *   - not provided (neither) → muted "(Unknown)"

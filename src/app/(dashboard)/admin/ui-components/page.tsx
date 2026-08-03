@@ -2609,7 +2609,7 @@ const ROBLOX_STATUSES: readonly {
   {
     status: "unverified",
     caption:
-      "We know, but it isn't verified — a saved name no lookup ever confirmed. Amber, and the tick simply absent: the same treatment the badge gives it in the voice room and on the admin product page.",
+      "We know, but it isn't verified — a saved name no lookup ever confirmed. Amber, with the tick simply absent rather than a glyph of its own: the house treatment for a saved-but-unconfirmed game account, matching the badge form below.",
   },
   {
     status: "unknown",

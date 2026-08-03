@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
@@ -55,6 +55,21 @@ export function RobloxUsernameField({
   } | null>(null);
   const [verifyError, setVerifyError] = useState<string | null>(null);
 
+  /**
+   * The live value, readable from an async continuation.
+   *
+   * `handleVerify` closes over `value` as it was at the moment of the click, and
+   * the input stays editable for the whole flight — so by the time a result
+   * lands, that captured string may be several keystrokes out of date. Comparing
+   * against it is what let a lookup write its answer over what someone was in the
+   * middle of typing. This ref is the only way the continuation can ask what the
+   * box says *now*.
+   */
+  const liveValue = useRef(value);
+  useEffect(() => {
+    liveValue.current = value;
+  }, [value]);
+
   // Derived, not stored: the result only stands while the input still says what
   // was checked, so typing one more character retires it without an effect.
   const isVerified = verified !== null && value === verified.username;
@@ -72,6 +87,17 @@ export function RobloxUsernameField({
         ? "unknown"
         : "unverified";
 
+  /**
+   * Whether a landed result is for a name the field no longer holds.
+   *
+   * Such a result is **discarded, not applied** — neither the profile nor the
+   * error. Applying it would either overwrite what is being typed or accuse the
+   * new name of a failure that belongs to the old one. `checking` is still
+   * cleared first, because the request really did finish; the row falls back to
+   * `unverified`, which is exactly what the new text is.
+   */
+  const isStale = (requested: string) => liveValue.current.trim() !== requested;
+
   const handleVerify = async () => {
     const username = value.trim();
     if (!username) return;
@@ -86,11 +112,15 @@ export function RobloxUsernameField({
       // One batched update: the button re-enables in the same render that shows
       // the result, never a frame earlier.
       setChecking(false);
+      if (isStale(username)) return;
       setVerified(profile);
-      // Roblox hands back the canonical casing; adopt it.
-      if (profile.username !== value) onChange(profile.username);
+      // Roblox hands back the canonical casing; adopt it. Compared against the
+      // live value, not the captured one — the captured one is what made this
+      // line overwrite the user's typing.
+      if (profile.username !== liveValue.current) onChange(profile.username);
     } catch (err) {
       setChecking(false);
+      if (isStale(username)) return;
       setVerifyError(err instanceof Error ? err.message : t("notFound"));
     }
   };

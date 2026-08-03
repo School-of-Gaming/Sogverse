@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
@@ -104,6 +105,17 @@ export function RobloxUsernameRow({
   const resolved: RobloxCheckStatus = username === null ? "unknown" : status;
   const unknown = resolved === "unknown";
 
+  // A render that fails to load falls back to the drawn figure rather than
+  // leaving an empty square. Keyed by url so a later, working src gets its own
+  // attempt instead of inheriting the previous one's failure.
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+
+  // The avatar obeys `resolved` like every other slot: an unknown row shows the
+  // placeholder even if a caller handed it a real URL, because a face beside
+  // "(Unknown)" claims an identity the row is simultaneously denying.
+  const showAvatar =
+    !unknown && avatarUrl !== null && avatarUrl !== failedUrl;
+
   return (
     <div
       className={cn(
@@ -120,20 +132,21 @@ export function RobloxUsernameRow({
           full ? "h-16 w-16" : "h-12 w-12",
         )}
       >
-        {avatarUrl === null ? (
-          <PlaceholderAvatar />
-        ) : (
+        {showAvatar ? (
           // eslint-disable-next-line @next/next/no-img-element -- a third-party avatar render on Roblox's CDN; next/image would proxy a 48px thumbnail for no gain, and the URL is short-lived so an optimizer cache would be working against us
           <img
             src={avatarUrl}
             alt=""
             aria-hidden
+            onError={() => setFailedUrl(avatarUrl)}
             // `object-contain` in both sizes: the box already matches the
             // render's 1:1 proportion, so the bust fits it whole and a source
             // that ever came back at a different ratio letterboxes rather than
             // silently cropping a child's face.
             className="h-full w-full object-contain"
           />
+        ) : (
+          <PlaceholderAvatar />
         )}
       </div>
 
@@ -151,11 +164,12 @@ export function RobloxUsernameRow({
       {/* The fixed slot. It occupies its square in every state, including the
           one that draws nothing, so a check landing cannot move the row.
 
-          `unverified` deliberately draws nothing here. It is the same treatment
-          the standalone badge gives the state on the voice room and the admin
-          product page — amber, and the check simply absent — so the two
-          components say the same thing about the same account. The missing tick
-          beside a name that carries one everywhere else is the signal. */}
+          `unverified` deliberately draws nothing here. It takes the house
+          treatment for a saved-but-unconfirmed game account — amber, with the
+          tick simply absent rather than a glyph of its own — which is also what
+          the standalone badge form renders, so the two agree about one account.
+          The missing tick beside a name that carries one elsewhere is the
+          signal; a second glyph would read as its own kind of failure. */}
       <span
         aria-hidden
         className="flex h-4 w-4 shrink-0 items-center justify-center"
