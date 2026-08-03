@@ -105,29 +105,11 @@ import {
   ManageBillingCardView,
   type BillingAccountSummary,
 } from "@/components/billing";
-import {
-  SessionFeed,
-  SessionFeedAlertBadge,
-  SessionReport,
-  applyDraftToEntry,
-  applyPlanDraftToEntry,
-  countEntriesNeedingAttention,
-  isEditableEntry,
-  isPlannableEntry,
-  type SessionEntryDraft,
-  type SessionFeedEntry,
-} from "@/components/gedu/session-feed";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {
   MinecraftUsernameRow,
   type MinecraftCheckStatus,
 } from "@/components/minecraft/minecraft-username-row";
-import {
-  buildSessionFeedFixture,
-  SESSION_FEED_CLUB_NAME,
-  SESSION_FEED_ROSTER,
-  SESSION_FEED_TIMEZONE,
-} from "@/components/gedu/session-feed/mock-fixtures";
 
 /**
  * Chip demo people. Real generated UUIDv4s, hardcoded: an identicon is hashed
@@ -2112,71 +2094,7 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 16: Gedu — Session Feed                                */}
-      {/* ============================================================ */}
-      <Section title="Gedu — Session Feed">
-        <p className="text-sm text-muted-foreground -mt-2">
-          A group&rsquo;s sessions as a reverse-chronological, blog-like scroll:
-          the next session on top, then the term running backwards. Gedus record
-          attendance and two written fields per session &mdash; the{" "}
-          <strong>session report</strong> that becomes the entry body families
-          read, and the <strong>Gedu note</strong> behind a padlocked, recessed
-          panel so the two audiences can never blur. Sessions from before the
-          enforcement epoch are bare &ldquo;no record&rdquo; lines with no alert
-          and no editor, because nothing is owed for them. Every editable entry
-          &mdash; past or future, recorded or not &mdash; opens through the same{" "}
-          <strong>Edit</strong> button, and expands in place: the header holding
-          the controls stays put and the editor grows downward beneath it.
-          Everything below is fixture-driven and edits live in local React state
-          &mdash; typing, marking and saving all work, nothing persists past a
-          reload.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          <strong>
-            A past session climbs a three-rung ladder, and only the bottom rung
-            is enforced.
-          </strong>{" "}
-          Attendance still unfinished is <em>Needs attention</em> &mdash; an
-          amber icon and label on an otherwise ordinary card, never a tinted one.
-          Attendance finished with no report is deliberately <em>silent</em>: the
-          report is optional, so a badge there would nag for work nobody owes.
-          Attendance finished <em>and</em> a report written earns the green{" "}
-          <em>Complete</em> check, and the timeline marker goes green with it.
-          Partial saves are allowed and stay flagged, so a gedu interrupted three
-          children into a roster of eight keeps their three marks. Skipped
-          sessions sit outside the ladder entirely.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          <strong>Reports are markdown, and the feed clamps them.</strong> A
-          report renders formatted &mdash; title, sections, bold, lists &mdash;
-          but a term of them would be a wall of prose, so anything past about six
-          lines fades out under a mask and offers <em>Read more</em> above it,
-          which expands in place and grows the card downward. A report short
-          enough to fit gets no control at all. Whether one is offered is decided{" "}
-          <strong>from the source text</strong>, by arithmetic the server and the
-          browser both run over the markdown &mdash; block by block, charging
-          each one its wrapped width and each boundary its gap &mdash; and it is
-          never revised by a measurement afterwards. Nothing here measures
-          anything: a server cannot, and a control that arrived a hydration later
-          would shove the feed down as it landed. The price is a tolerance of
-          roughly <strong>one line either way</strong> on a report sitting right
-          at the boundary, which is bought deliberately for a page that never
-          reflows.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Sessions still <em>ahead</em> of us carry planning fields only &mdash; a
-          forward note families read later and a reminder for whoever runs it.
-          Never attendance or didn&rsquo;t-run: those record what happened. Only
-          the next session is prominent; the rest of the horizon collapses behind
-          one &ldquo;N more upcoming sessions&rdquo; row above it. On a long
-          history the recent past renders and older chunks append below on
-          request, with month dividers marking each boundary the scroll crosses.
-        </p>
-        <GeduSessionFeedDemo />
-      </Section>
-
-      {/* ============================================================ */}
-      {/* Section 17: Product links — family vs. Gedu                   */}
+      {/* Section 16: Product links — family vs. Gedu                   */}
       {/* ============================================================ */}
       <Section title="Product links — family vs. Gedu">
         <p className="text-sm text-muted-foreground -mt-2">
@@ -2222,32 +2140,29 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 18: Session report — rendering and writing            */}
+      {/* Section 17: Rich text editor — authoring and what it stores   */}
       {/* ============================================================ */}
-      <Section title="Session report — rendering and writing">
+      <Section title="Rich text editor — authoring and what it stores">
         <p className="text-sm text-muted-foreground -mt-2">
-          A session report is stored as <strong>markdown</strong> &mdash; it is
-          what converts cleanly into the email these will eventually be sent as
-          &mdash; and is written in a small rich-text editor so a gedu at the end
-          of a session never has to know what <code>##</code> does. Two components
-          sit either side of that value: a reader that renders it clamped, and an
-          editor that round-trips it.
+          The shared authoring control for anywhere a person writes prose the app
+          stores. It round-trips <strong>markdown</strong> &mdash; the format that
+          converts cleanly into email &mdash; behind a small fixed toolbar, so a
+          writer never has to know what <code>##</code> does. The value below the
+          editor is exactly what gets persisted.
         </p>
         <p className="text-sm text-muted-foreground">
-          The renderer allows a deliberately narrow subset, and enforces it as a{" "}
-          <em>whitelist</em>: headings, paragraphs, bold, italics and lists.
-          Anything outside it &mdash; a pasted table, an image, raw HTML &mdash;
-          is unwrapped to its text rather than dropped, so a stray construct shows
-          its words instead of silently deleting a paragraph of somebody&rsquo;s
-          write-up. Headings are scaled to the card they live in: an{" "}
-          <code>h1</code> typed in the editor is the writer naming their own
-          paragraph, not competing with the page title.
+          The toolbar produces a deliberately narrow subset: headings, paragraphs,
+          bold, italics and lists. Whatever consumes the stored markdown is
+          expected to enforce that same subset as a <em>whitelist</em> on the way
+          out, unwrapping anything outside it to its text rather than dropping it,
+          so a pasted table or a stray tag shows its words instead of silently
+          deleting a paragraph of somebody&rsquo;s writing.
         </p>
-        <SessionReportDemo />
+        <RichTextEditorDemo />
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 19: Minecraft username — fixed-geometry identity      */}
+      {/* Section 18: Minecraft username — fixed-geometry identity      */}
       {/* ============================================================ */}
       <Section title="Minecraft username — fixed-geometry identity">
         <p className="text-sm text-muted-foreground -mt-2">
@@ -2533,183 +2448,31 @@ const BILLING_ACCOUNTS_SPLIT: BillingAccountSummary[] = [
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Section 16: Gedu — Session Feed                                     */
+/*  Rich text editor                                                   */
 /* ------------------------------------------------------------------ */
 
-/**
- * The feed rendered against the mock club, with both inline editors wired to
- * local state: marking each child present or absent, typing any note on a past
- * *or* a future session, and flipping "this session didn't run" all mutate the
- * fixture in place — so a flagged session really does turn into a finished one
- * (and the alert badge above it really does count down), while a half-marked
- * save really does stay flagged. Nothing persists — a reload puts the fixture
- * back.
- *
- * The fixture is built once from `useNow()` and then held in state: rebuilding
- * it on every 30s tick would throw away whatever the reviewer had just typed.
- *
- * There is no Join button anywhere in here, and there is nothing missing: the
- * feed's cards carry no voice affordance at all. Rooms are joined from the
- * product page's rail, which is a page-level composition rather than a
- * component, so it is reviewed in the preview scene instead.
- */
-function GeduSessionFeedDemo() {
-  const now = useNow();
-  const [entries, setEntries] = useState<SessionFeedEntry[]>(
-    () => buildSessionFeedFixture(now).entries,
-  );
-  const [editingId, setEditingId] = useState<string | null>(null);
-
-  const needingAttention = countEntriesNeedingAttention(
-    entries,
-    SESSION_FEED_ROSTER,
-  );
-
-  // A plan can only land on a future session and a write-up only on a past one,
-  // so the entry's own kind settles which apply runs; a mismatch leaves the
-  // entry untouched rather than corrupting it.
-  const handleSave = (entryId: string, draft: SessionEntryDraft) => {
-    setEntries((prev) =>
-      prev.map((entry) => {
-        if (entry.id !== entryId) return entry;
-        if (draft.kind === "plan") {
-          return isPlannableEntry(entry)
-            ? applyPlanDraftToEntry(entry, draft)
-            : entry;
-        }
-        return isEditableEntry(entry) ? applyDraftToEntry(entry, draft) : entry;
-      }),
-    );
-    setEditingId(null);
-  };
-
-  return (
-    <div className="space-y-8">
-      <SubSection title="Full feed (editor wired to local state)">
-        <div className="max-w-2xl space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h4 className="text-base font-semibold">
-              {SESSION_FEED_CLUB_NAME}
-            </h4>
-            <SessionFeedAlertBadge count={needingAttention} />
-          </div>
-          <SessionFeed
-            entries={entries}
-            roster={SESSION_FEED_ROSTER}
-            sourceTimeZone={SESSION_FEED_TIMEZONE}
-            editingEntryId={editingId}
-            onEditEntry={setEditingId}
-            onSaveEntry={handleSave}
-          />
-        </div>
-      </SubSection>
-
-      <SubSection title="Alert badge — inline">
-        <div className="flex flex-wrap items-center gap-6">
-          {[0, 1, 3, 12].map((count) => (
-            <div key={count} className="flex flex-col items-start gap-2">
-              <DemoCaption>
-                {count === 0 ? "0 — renders nothing" : `${count} outstanding`}
-              </DemoCaption>
-              <SessionFeedAlertBadge count={count} />
-            </div>
-          ))}
-        </div>
-      </SubSection>
-
-      <SubSection title="Alert badge — overlaid on a card corner">
-        <div className="grid gap-6 sm:grid-cols-3">
-          {[0, 3, 12].map((count) => (
-            <div key={count} className="space-y-2">
-              <DemoCaption>
-                {count === 0
-                  ? "0 — nothing on the corner"
-                  : `${count} outstanding`}
-              </DemoCaption>
-              {/* The badge is the card's *sibling* inside a plain `relative`
-                  shell — a card that clips its own overflow would otherwise cut
-                  the badge in half where it hangs off the edge. */}
-              <div className="relative">
-                <Card className="overflow-hidden p-4">
-                  <p className="text-sm font-medium">Minecraft Monday Club</p>
-                  <p className="text-xs text-muted-foreground">Monday A</p>
-                </Card>
-                <SessionFeedAlertBadge count={count} variant="corner" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </SubSection>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Session report — reader and writer                                 */
-/* ------------------------------------------------------------------ */
-
-/** Long enough to be clamped, and using every construct the toolbar produces. */
-const DEMO_LONG_REPORT = `# Redstone week: item sorters
-
-We built item sorters from scratch this week — hoppers, comparators, the lot — and then broke them on purpose to work out what each part was actually doing.
-
-## The build
-
-- A hopper line feeding four labelled chests
-- Comparators reading the filter chests, which is the bit that does the sorting
-- An overflow chest at the end, so nothing is ever lost when a filter fills up
-
-The overflow was the hard part and Elias solved it on his own. He then spent the rest of the session teaching it to the rest of the table, which was better than anything I would have said about it.
-
-**Next week:** the sorters go into the storage room, and we find out whether they survive eight people using them at once.`;
-
-/** Short enough that no control is offered at all. */
-const DEMO_SHORT_REPORT = `# Mob-proofing night
+/** Seeds the editor with every construct its toolbar produces. */
+const DEMO_MARKDOWN = `# Mob-proofing night
 
 We lit the paths, walled the gaps and got through a whole session without losing anybody to a creeper.`;
 
 /**
- * The reader and the writer side by side, over the same value.
+ * The writer, with its own serialised output beside it.
  *
- * The editor is wired to local state and shows its own markdown output beneath
- * it, which is the one thing worth being able to see at a glance: a gedu never
- * meets the syntax, so the only place to confirm the round trip is honest is
- * here. Type a heading, watch the `##` appear in the serialised output, and the
- * reader beside it renders the same thing back.
+ * Showing the stored markdown next to the editor is the one thing worth being
+ * able to see at a glance: a writer never meets the syntax, so this is the only
+ * place to confirm the round trip is honest. Type a heading, watch the `#`
+ * appear in the serialised output.
+ *
+ * How stored markdown *renders* is deliberately not demoed here — a renderer is
+ * only meaningful inside the surface that owns it, at that surface's width and
+ * clamping. Those live in the full-page preview scenes on `/admin/ui-previews`.
  */
-function SessionReportDemo() {
-  const [markdown, setMarkdown] = useState(DEMO_SHORT_REPORT);
+function RichTextEditorDemo() {
+  const [markdown, setMarkdown] = useState(DEMO_MARKDOWN);
 
   return (
     <div className="space-y-8">
-      <SubSection title="Rendered in the feed — clamped, with expand in place">
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="space-y-2">
-            <DemoCaption>
-              Long report — clamped, fades out, offers Read more
-            </DemoCaption>
-            <Card className="p-4">
-              <SessionReport markdown={DEMO_LONG_REPORT} />
-            </Card>
-          </div>
-          <div className="space-y-2">
-            <DemoCaption>Short report — no control at all</DemoCaption>
-            <Card className="p-4">
-              <SessionReport markdown={DEMO_SHORT_REPORT} />
-            </Card>
-          </div>
-          <div className="space-y-2">
-            <DemoCaption>
-              Same long report, unclamped — what the newest past entry in the
-              feed gets, so the one report every gedu reads costs no click
-            </DemoCaption>
-            <Card className="p-4">
-              <SessionReport markdown={DEMO_LONG_REPORT} clamped={false} />
-            </Card>
-          </div>
-        </div>
-      </SubSection>
-
       <SubSection title="The editor, and what it stores">
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="space-y-2">
@@ -2717,7 +2480,7 @@ function SessionReportDemo() {
               Rich editor — seven buttons, fixed toolbar height
             </DemoCaption>
             <RichTextEditor
-              initialValue={DEMO_SHORT_REPORT}
+              initialValue={DEMO_MARKDOWN}
               onChange={setMarkdown}
               ariaLabel="Session report"
               placeholder="What the group built, played or figured out."
