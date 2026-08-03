@@ -1233,7 +1233,8 @@
       "showEarlier": "{count, plural, one {Näytä # aiempi kerta} other {Näytä # aiempaa kertaa}}",
       "attendanceMarkedCount": "{marked}/{total} merkitty",
       "attendanceForGamer": "{name} – läsnäolo",
-      "saveFailed": "Tallennus epäonnistui. Yritä uudelleen."
+      "saveFailed": "Tallennus epäonnistui. Yritä uudelleen.",
+      "savePartiallyFailed": "Osa tämän kerran muutoksista ei tallentunut – tarkista läsnäololista ja yritä uudelleen."
     },
     "groupNotes": {
       "heading": "Tästä ryhmästä",

@@ -16,6 +16,7 @@ import {
   type SessionCompleteness,
 } from "./entry-state";
 import { withMonthDividers, type SessionFeedRow } from "./feed-rows";
+import { isPartialSessionSaveError } from "./partial-save";
 import { editToggleAnchor, useViewportAnchor } from "./scroll-anchor";
 import { formatMonthLabel, formatSessionLabels } from "./session-labels";
 import type {
@@ -272,11 +273,20 @@ export function SessionFeed({
     setCommittingEntryId(entryId);
     try {
       await onSaveEntry(entryId, draft);
-    } catch {
+    } catch (error) {
       // The message is ours rather than the thrown error's: a gedu cannot act
-      // on a Postgres code, and a refused write has exactly one useful reply.
+      // on a Postgres code. But *which* of ours matters, and it is the one thing
+      // the thrown error is allowed to decide. Saving a session is several
+      // writes, so it can half-succeed — and telling somebody nothing saved when
+      // four of five marks did sends them back to a sheet they now misread. The
+      // editor keeps the whole draft either way, and a retry re-sends the lot
+      // idempotently.
       setCommittingEntryId(null);
-      setSaveError(t("saveFailed"));
+      setSaveError(
+        isPartialSessionSaveError(error)
+          ? t("savePartiallyFailed")
+          : t("saveFailed"),
+      );
       return;
     }
     anchorEditToggle(entryId, true);

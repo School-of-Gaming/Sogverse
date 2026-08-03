@@ -462,9 +462,9 @@ function buildBaseProduct(
     location_id: locationFixture?.id ?? null,
     locations: locationFixture,
     padlet_url: null,
-    // Staff-only lesson material — no family surface renders it, so a public
-    // detail fixture that set one would be describing something unreachable.
-    material_url: null,
+    // There is deliberately no lesson-material field here. It moved off
+    // `products` into `product_staff_details` precisely so that no family-facing
+    // read path can reach it, and this fixture stands for one of those.
     signup_threshold: null,
     start_date: startDate,
     end_date: endDate,

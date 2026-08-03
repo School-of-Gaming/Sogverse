@@ -37,9 +37,13 @@ import type { GeduFeedSession } from "@/services/gedu-sessions/gedu-sessions.con
  *   next term must not retroactively rewrite what happened last term. A row the
  *   schedule no longer projects at all — a weekday move orphans one — still
  *   renders, for the same reason.
- * - **Kind comes from three dates, never from a column.** `now` splits future
- *   from past, the enforcement epoch splits owed from merely editable, and the
- *   product's start floors how far back the walk goes at all.
+ * - **Kind comes from dates, never from a column.** `now` against the session's
+ *   *start* splits future from past — which is what opens the record editor, and
+ *   why roll call works mid-session. `now` against its *end*, together with the
+ *   enforcement epoch, decides whether anything is owed: a session still running
+ *   is editable but not yet outstanding work, which is the same boundary the
+ *   dashboard's SQL count draws. The product's start floors how far back the
+ *   walk goes at all.
  *
  * Pure: no React, no network, no clock of its own. The caller passes `now`, so
  * SSR and the first client render agree and a test can stand anywhere in time.
@@ -206,16 +210,30 @@ export function buildGeduSessionFeed(
 }
 
 /**
- * Which kind of entry one date is, from the three dates that decide it.
+ * Which kind of entry one date is, from the dates that decide it.
  *
- * The pre-epoch branch is the one worth reading twice. A session dated before
- * the epoch with **nothing recorded on it** is a `no_record` line: nothing was
- * ever asked for, so it renders muted and never alerts — but it is still fully
- * editable, because a gedu is allowed to write up any session back to the
- * product's start. The moment anything *is* recorded on it, it becomes an
+ * **Editability turns on the start; being owed turns on the end.** A session
+ * that has begun is a past entry and opens its record editor from that instant,
+ * which is what makes roll call during the club work — the server accepts marks
+ * from the same moment. But nothing is *owed* until the session has actually
+ * finished: an hour that is still running is not yet work outstanding, and a
+ * warning rung against a session the gedu is in the middle of teaching is a nag
+ * for a job they have not had the chance to finish. That is also exactly where
+ * the dashboard badge draws its line, so the card and the badge agree.
+ *
+ * The pre-epoch branch is the other one worth reading twice. A session dated
+ * before the epoch with **nothing recorded on it** is a `no_record` line:
+ * nothing was ever asked for, so it renders muted and never alerts — but it is
+ * still fully editable, because a gedu is allowed to write up any session back
+ * to the product's start. The moment anything *is* recorded on it, it becomes an
  * ordinary past entry that simply never owes anything (`owed: false`), so the
  * warning rung of the ladder can never apply to it while the success rung
  * still can.
+ *
+ * Note which of the two questions the `no_record` test asks: the **epoch** one,
+ * not `owed`. A live session inside the enforcement era owes nothing yet, and
+ * collapsing it to a muted gap on that basis would take its editor away at
+ * precisely the moment the gedu wants it.
  */
 function toEntry(args: {
   id: string;
@@ -242,9 +260,12 @@ function toEntry(args: {
   // Both dates are product-local `YYYY-MM-DD`, so a lexicographic comparison is
   // a calendar one — and it is made in the product's own terms, which is the
   // only zone in which "the session's date" means anything.
-  const owed = date >= epoch;
+  const withinEnforcement = date >= epoch;
+  // The end instant, not the start: a session under way is editable but not yet
+  // owed. Same boundary the SQL attention count uses.
+  const finished = endsAt.getTime() <= now.getTime();
 
-  if (row === undefined && !owed) {
+  if (row === undefined && !withinEnforcement) {
     return { kind: "no_record", id, startsAt, endsAt };
   }
 
@@ -253,7 +274,7 @@ function toEntry(args: {
     id,
     startsAt,
     endsAt,
-    owed,
+    owed: withinEnforcement && finished,
     report: row?.report ?? null,
     staffNote: row?.gedu_note ?? null,
     attendance: row?.attendance ?? {},

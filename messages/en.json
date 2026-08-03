@@ -1233,7 +1233,8 @@
       "showEarlier": "{count, plural, one {Show # earlier session} other {Show # earlier sessions}}",
       "attendanceMarkedCount": "{marked} of {total} marked",
       "attendanceForGamer": "Attendance for {name}",
-      "saveFailed": "This session didn’t save. Try again."
+      "saveFailed": "This session didn’t save. Try again.",
+      "savePartiallyFailed": "Some of this session’s changes didn’t save — check the sheet and try again."
     },
     "groupNotes": {
       "heading": "About this group",

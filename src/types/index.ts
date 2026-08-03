@@ -92,6 +92,15 @@ export type Product = Database["public"]["Tables"]["products"]["Row"];
 export type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
 export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 
+// product_staff_details — the staff-only half of a product, split off `products`
+// because that table is readable by anon and by every parent, and PostgREST lets
+// a caller pick the columns it wants. Sparse: a product with nothing staff-only
+// recorded has no row here.
+export type ProductStaffDetails =
+  Database["public"]["Tables"]["product_staff_details"]["Row"];
+export type ProductStaffDetailsInsert =
+  Database["public"]["Tables"]["product_staff_details"]["Insert"];
+
 // schedule_slots
 export type ScheduleSlot = Database["public"]["Tables"]["schedule_slots"]["Row"];
 export type ScheduleSlotInsert = Database["public"]["Tables"]["schedule_slots"]["Insert"];

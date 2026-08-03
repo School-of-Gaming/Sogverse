@@ -54,7 +54,10 @@ const productDataBase = z.object({
   padlet_url: z.string().nullable(),
   // Gedu/admin-only lesson-material link. Deliberately NOT a rename of
   // padlet_url and never backfilled from it: the Padlet held family-facing
-  // session notes, while this is lesson content families must never see.
+  // session notes, while this is lesson content families must never see. It is
+  // still a field of the product *form*, but it is no longer a column on
+  // `products` — the RPC files it under `product_staff_details`, whose read
+  // grant no parent or anonymous visitor holds. Null (or blank) means no row.
   material_url: z.string().nullable(),
   location_id: z.string().nullable(),
   is_remote: z.boolean(),

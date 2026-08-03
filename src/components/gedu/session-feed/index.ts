@@ -27,6 +27,10 @@ export {
 } from "./entry-state";
 export type { AttendanceTally, SessionCompleteness } from "./entry-state";
 export {
+  PartialSessionSaveError,
+  isPartialSessionSaveError,
+} from "./partial-save";
+export {
   REPORT_CLAMP_LINES,
   REPORT_CLAMP_REM,
   estimateReportLines,

@@ -148,7 +148,7 @@ describe("buildGeduSessionFeed — entry kinds", () => {
     expect(next).not.toHaveProperty("attendance");
   });
 
-  it("marks a past session owed from the epoch onward, and never before it", () => {
+  it("marks a finished session owed from the epoch onward, and never before it", () => {
     const entries = build({ epoch: "2026-03-10", startDate: "2026-01-05" });
     expect(byDate(entries, "2026-03-16")).toMatchObject({
       kind: "past",
@@ -232,24 +232,65 @@ describe("buildGeduSessionFeed — records beat projections", () => {
   });
 });
 
+/**
+ * The two boundaries, and the gap between them.
+ *
+ * A session becomes **editable** at its start — that is the roll-call case, and
+ * it is why the entry sorts into the past the moment it begins. It becomes
+ * **owed** only at its end, which is the same line the dashboard's SQL count
+ * draws. So a session under way sits in between: a fully editable past entry
+ * that no badge and no amber marker may claim yet.
+ */
 describe("buildGeduSessionFeed — the in-progress session", () => {
-  it("appears exactly once, on the past side of the divider", () => {
-    // The forward walk surfaces a session still inside its voice window and the
-    // backward walk emits anything already started, so the same occurrence
-    // reaches the merge twice. It shares one date key, so it lands once.
-    const during = new Date("2026-03-16T15:00:00.000Z"); // Monday, mid-session
-    const entries = buildGeduSessionFeed({
+  /** Monday 16 March, mid-session (the slot runs 14:30–16:00 UTC). */
+  const DURING = new Date("2026-03-16T15:00:00.000Z");
+  /** The same Monday, one minute after the session ended. */
+  const JUST_AFTER = new Date("2026-03-16T16:01:00.000Z");
+
+  function at(now: Date) {
+    return buildGeduSessionFeed({
       groupId: GROUP,
       timezone: TZ,
       slots: [MONDAY_SLOT],
       startDate: "2026-01-05",
       endDate: null,
       sessions: [],
-      now: during,
+      now,
       epoch: EPOCH,
     });
+  }
+
+  it("appears exactly once, on the past side of the divider", () => {
+    // The forward walk surfaces a session still inside its voice window and the
+    // backward walk emits anything already started, so the same occurrence
+    // reaches the merge twice. It shares one date key, so it lands once.
+    const entries = at(DURING);
     expect(dates(entries).filter((d) => d === "2026-03-16")).toHaveLength(1);
     expect(byDate(entries, "2026-03-16")?.kind).toBe("past");
+  });
+
+  it("is editable but owes nothing while it is still running", () => {
+    // The gedu is standing in the room. They may take the register — that is the
+    // whole point of the entry being past — but there is nothing outstanding
+    // about a session whose hour has not run out.
+    expect(byDate(at(DURING), "2026-03-16")).toMatchObject({
+      kind: "past",
+      owed: false,
+    });
+  });
+
+  it("becomes owed the moment it ends", () => {
+    expect(byDate(at(JUST_AFTER), "2026-03-16")).toMatchObject({
+      kind: "past",
+      owed: true,
+    });
+  });
+
+  it("stays a real past entry rather than collapsing into a muted gap", () => {
+    // `no_record` is the *pre-epoch* answer, and it must not be reached by way
+    // of "owes nothing". Collapsing a live session into a gap would take its
+    // editor away at exactly the minute the gedu wants it.
+    expect(byDate(at(DURING), "2026-03-16")?.kind).not.toBe("no_record");
   });
 });
 

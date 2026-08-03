@@ -1233,7 +1233,8 @@
       "showEarlier": "{count, plural, one {Afficher # séance précédente} other {Afficher # séances précédentes}}",
       "attendanceMarkedCount": "{marked} sur {total} renseignés",
       "attendanceForGamer": "Présence de {name}",
-      "saveFailed": "Cette séance n’a pas été enregistrée. Réessayez."
+      "saveFailed": "Cette séance n’a pas été enregistrée. Réessayez.",
+      "savePartiallyFailed": "Certaines modifications de cette séance n’ont pas été enregistrées — vérifiez la feuille de présence et réessayez."
     },
     "groupNotes": {
       "heading": "À propos du groupe",

@@ -1233,7 +1233,8 @@
       "showEarlier": "{count, plural, one {Visa # tidigare tillfälle} other {Visa # tidigare tillfällen}}",
       "attendanceMarkedCount": "{marked} av {total} markerade",
       "attendanceForGamer": "Närvaro för {name}",
-      "saveFailed": "Tillfället sparades inte. Försök igen."
+      "saveFailed": "Tillfället sparades inte. Försök igen.",
+      "savePartiallyFailed": "En del av ändringarna för det här tillfället sparades inte – kontrollera närvarolistan och försök igen."
     },
     "groupNotes": {
       "heading": "Om gruppen",

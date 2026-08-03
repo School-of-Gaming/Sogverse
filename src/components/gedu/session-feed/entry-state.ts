@@ -22,8 +22,12 @@ import type {
 /**
  * Whether an entry can be expanded into the **write-up** editor.
  *
- * **Owed and editable are different questions, and only the first one is the
- * epoch's.** Every past session is editable, back to the product's start date:
+ * **Owed and editable are different questions, and they turn on different
+ * things.** Editability turns on the session's *start*: everything that has
+ * begun is editable, back to the product's start date, and a session under way
+ * is included on purpose — that is the roll-call case. Being owed turns on the
+ * epoch and the session's *end*, and lives on the entry's `owed` flag rather
+ * than here. Every past session is editable, back to the product's start date:
  * a gedu who wants to record attendance on a session from before the platform
  * started asking is doing something useful, and refusing them an editor to
  * enforce a deadline that was never set is the wrong shape of "no". So a
@@ -53,9 +57,11 @@ export function isPlannableEntry(
  *
  * Three rungs, and only the bottom one is enforced:
  *
- * - `needs_attention` — some of the current roster is still unmarked. This is
- *   the one that is *owed*: attendance doubles as the gedu's confirmation that
- *   they ran the session and is what they are paid on.
+ * - `needs_attention` — the session has **finished** and some of the current
+ *   roster is still unmarked. This is the one that is *owed*: attendance doubles
+ *   as the gedu's confirmation that they ran the session and is what they are
+ *   paid on. It cannot appear while a session is still running; the entry is
+ *   editable throughout, but nothing is outstanding until the hour is over.
  * - `recorded` — every child has an answer, and no report has been written. A
  *   perfectly finished session as far as the platform is concerned, so it wears
  *   no badge at all rather than a second nag.
@@ -76,11 +82,14 @@ export type SessionCompleteness = "needs_attention" | "recorded" | "complete";
  * A **future** session has nothing to be complete about, and a `no_record` gap
  * has nothing recorded on it and nothing owed for it.
  *
- * **A past session from before the enforcement epoch never reaches the warning
- * rung.** Its unfinished states land on the neutral middle rung instead: the
- * platform did not ask for that session, so an unfinished sheet on it is not
- * work outstanding and must not read as any. The top rung is still reachable —
- * somebody who goes back and finishes an old session earns the check for it.
+ * **An entry that owes nothing never reaches the warning rung.** Its unfinished
+ * states land on the neutral middle rung instead. Two sorts of entry are in that
+ * position, and the caller has already collapsed both into `owed`: a session
+ * from before the enforcement epoch, which the platform never asked for, and a
+ * session that has started but not yet **ended**, which the gedu is still in the
+ * middle of teaching. The top rung stays reachable for both — somebody who
+ * finishes an old session, or marks the room off before the hour is out, earns
+ * the check for it.
  *
  * Everything is measured against the *current* roster, never the stored map's
  * keys: a child who joined the group after a session was fully marked reopens
@@ -104,12 +113,14 @@ export function entryCompleteness(
  * Whether an entry is outstanding work — the alert state, derived rather than
  * stored.
  *
- * It means exactly one thing: **a past session, dated on or after the
- * enforcement epoch, some of whose current roster has not been marked.** The
+ * It means exactly one thing: **a session that has finished, dated on or after
+ * the enforcement epoch, some of whose current roster has not been marked.** The
  * report has no say in it. A past entry can therefore carry a full report and
  * still be flagged, and it renders both — the report as its body, the alert in
  * its header. A session older than the epoch is never flagged however little is
- * recorded on it, which is the whole of what the epoch does.
+ * recorded on it, which is the whole of what the epoch does — and a session
+ * still under way is not flagged either, because the hour it would be nagging
+ * about has not run out yet.
  *
  * **A partial save does not discharge it.** Saving is always allowed, so the
  * flag cannot be "has anything been recorded" or half a roster would silence

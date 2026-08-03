@@ -193,7 +193,16 @@ export const groupNotesResult = z.object({
   gedu_note: z.string().nullable(),
 });
 
-/** What `set_site_notes` hands back. */
+/**
+ * What `set_site_notes` hands back.
+ *
+ * `address` is a **read-back, never an input.** The RPC does not accept an
+ * address and never writes one — the venue address belongs to the location
+ * record and is an admin's to edit — so what comes back here is whatever was
+ * already stored, echoed so a caller can see the current value without a second
+ * round trip. It used to be a parameter, and that let a gedu's note save quietly
+ * revert an admin's correction with a stale cached copy.
+ */
 export const siteNotesResult = z.object({
   location_id: z.string(),
   address: z.string().nullable(),

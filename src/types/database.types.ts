@@ -749,6 +749,35 @@ export type Database = {
           },
         ]
       }
+      product_staff_details: {
+        Row: {
+          created_at: string
+          material_url: string | null
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          material_url?: string | null
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          material_url?: string | null
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_staff_details_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_subscription_prices: {
         Row: {
           created_at: string
@@ -831,7 +860,6 @@ export type Database = {
           is_remote: boolean
           is_visible: boolean
           location_id: string | null
-          material_url: string | null
           max_age: number
           min_age: number
           municipality_fee_cents: number | null
@@ -861,7 +889,6 @@ export type Database = {
           is_remote: boolean
           is_visible?: boolean
           location_id?: string | null
-          material_url?: string | null
           max_age: number
           min_age: number
           municipality_fee_cents?: number | null
@@ -891,7 +918,6 @@ export type Database = {
           is_remote?: boolean
           is_visible?: boolean
           location_id?: string | null
-          material_url?: string | null
           max_age?: number
           min_age?: number
           municipality_fee_cents?: number | null
@@ -1723,7 +1749,6 @@ export type Database = {
       }
       set_site_notes: {
         Args: {
-          p_address: string
           p_gedu_note: string
           p_location_id: string
           p_public_note: string

@@ -1278,7 +1278,8 @@
       "showEarlier": "{count, plural, one {# may’ qan yIcha’} other {# may’mey qan yIcha’}}",
       "attendanceMarkedCount": "{marked}/{total} ngu’ta’",
       "attendanceForGamer": "{name} pawwI’",
-      "saveFailed": "may’vam pollu’be’. yIboq."
+      "saveFailed": "may’vam pollu’be’. yIboq.",
+      "savePartiallyFailed": "may’vam qonta’ puS pollu’be’. tetlh yInuD ’ej yIboq."
     },
     "groupNotes": {
       "heading": "ghom’a’vam",

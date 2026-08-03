@@ -123,7 +123,6 @@ export function useSetSiteNotes(groupId: string) {
   return useMutation({
     mutationFn: (vars: {
       locationId: string;
-      address: string;
       publicNote: string;
       geduNote: string;
     }) => service.setSiteNotes(vars),

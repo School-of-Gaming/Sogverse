@@ -42,7 +42,12 @@ const START = new Date("2026-03-02T14:30:00.000Z");
 const END = new Date("2026-03-02T16:00:00.000Z");
 const WHEN = { startsAt: START, endsAt: END };
 
-/** A past session inside the enforcement window — write-ups owed. */
+/**
+ * A **finished** session inside the enforcement window — write-ups owed.
+ *
+ * Both halves matter: the merge sets `owed` only when the date is on or after
+ * the epoch *and* the session's end instant has passed.
+ */
 function past(
   id: string,
   fields: Partial<
@@ -60,7 +65,16 @@ function past(
     ...fields,
   };
 }
-/** The same session dated before the epoch: recordable, but owed nothing. */
+/**
+ * The same session with `owed` false: recordable, but nothing is asked of it.
+ *
+ * Two different sessions arrive here, and the derivations below cannot tell them
+ * apart because they do not need to — the merge collapses both into this one
+ * flag. One is dated before the enforcement epoch, so the platform never asked.
+ * The other has **started and not yet ended**, so the gedu is still in the room
+ * and the hour has not run out. Either way the warning rung is off and every
+ * other rung still applies.
+ */
 function unowedPast(
   id: string,
   fields: Partial<
@@ -207,10 +221,10 @@ describe("entryCompleteness", () => {
     expect(entryCompleteness(noRecord("n"), ROSTER)).toBeNull();
   });
 
-  it("never puts a pre-epoch session on the warning rung", () => {
-    // The epoch gates what is *owed*. An unfinished sheet on a session the
-    // platform never asked for is not outstanding work, so it lands neutral —
-    // whether or not it also carries a report.
+  it("never puts an entry that owes nothing on the warning rung", () => {
+    // An unfinished sheet on a session nobody is owed one for — pre-epoch, or
+    // still running — is not outstanding work, so it lands neutral, whether or
+    // not it also carries a report.
     expect(entryCompleteness(unowedPast("a"), ROSTER)).toBe("recorded");
     expect(
       entryCompleteness(unowedPast("b", { attendance: { a: "present" } }), ROSTER),
@@ -275,7 +289,7 @@ describe("entryIsComplete", () => {
 });
 
 describe("entryNeedsAttention", () => {
-  it("is exactly: a past session with some of the roster still unmarked", () => {
+  it("is exactly: a finished session with some of the roster still unmarked", () => {
     expect(entryNeedsAttention(past("g"), ROSTER)).toBe(true);
     expect(entryNeedsAttention(past("r", { attendance: ALL_MARKED }), ROSTER)).toBe(
       false,
@@ -345,6 +359,29 @@ describe("entryNeedsAttention", () => {
     expect(
       entryNeedsAttention(unowedPast("p", { attendance: { a: "present" } }), ROSTER),
     ).toBe(false);
+  });
+
+  it("never flags a session that has started but not yet ended", () => {
+    // The other thing `owed: false` means. A gedu part-way through the register
+    // of the club they are standing in has not failed to do anything yet, and
+    // the SQL count that feeds the dashboard badge waits for the end instant
+    // too — so an amber marker here would be the client disagreeing with the
+    // badge as well as nagging early.
+    expect(entryNeedsAttention(unowedPast("live"), ROSTER)).toBe(false);
+    expect(
+      entryNeedsAttention(
+        unowedPast("half", { attendance: { a: "present", b: "absent" } }),
+        ROSTER,
+      ),
+    ).toBe(false);
+  });
+
+  it("still flags it once the session has ended and the sheet is unfinished", () => {
+    // The transition the end boundary exists to make: same entry, same partial
+    // sheet, and the only thing that changed is that the hour ran out.
+    expect(
+      entryNeedsAttention(past("ended", { attendance: { a: "present" } }), ROSTER),
+    ).toBe(true);
   });
 
   it("never flags anything against an empty roster", () => {

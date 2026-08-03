@@ -6,9 +6,14 @@ import {
   attendanceMarkResult,
   geduAssignmentSummaries,
   geduGroupFeed,
+  siteNotesResult,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import { groupMemberMinecraftResult } from "@/services/minecraft/minecraft.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAnonTestClient,
+  createAuthenticatedClient,
+} from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
   createScheduleSlot,
@@ -82,6 +87,7 @@ const TOMORROW = dayOffset(1);
 
 describe("gedu session feed", () => {
   let admin: SupabaseClient<Database>;
+  let anon: SupabaseClient<Database>;
   let adminAuth: SupabaseClient<Database>;
   let customerAuth: SupabaseClient<Database>;
   let gamerAuth: SupabaseClient<Database>;
@@ -89,6 +95,7 @@ describe("gedu session feed", () => {
 
   beforeAll(async () => {
     admin = createAdminTestClient();
+    anon = createAnonTestClient();
     adminAuth = await createAuthenticatedClient(
       TEST_CREDENTIALS.ADMIN.email,
       TEST_CREDENTIALS.ADMIN.password,
@@ -249,8 +256,7 @@ describe("gedu session feed", () => {
 
         const siteNotes = await client.rpc("set_site_notes", {
           p_location_id: TEST_IDS.LOCATION_SITE,
-          p_address: "nope",
-          p_public_note: "",
+          p_public_note: "nope",
           p_gedu_note: "",
         });
         expect(siteNotes.error?.code).toBe("42501");
@@ -299,8 +305,7 @@ describe("gedu session feed", () => {
       // between them and the row, which is what makes it worth asserting.
       const { error } = await geduAuth.rpc("set_site_notes", {
         p_location_id: TEST_IDS.LOCATION_MUNICIPALITY,
-        p_address: "not my building",
-        p_public_note: "",
+        p_public_note: "not my building",
         p_gedu_note: "",
       });
       expect(error?.code).toBe("42501");
@@ -709,9 +714,15 @@ describe("gedu session feed", () => {
     });
 
     it("carries the site block on an in-person product", async () => {
+      // The address is an ADMIN's to write and is not a parameter of the RPC,
+      // so it has to be seeded through the service-role client.
+      await admin.from("site_details").upsert({
+        location_id: TEST_IDS.LOCATION_SITE,
+        address: "Leppavaarankatu 9",
+      });
+
       await geduAuth.rpc("set_site_notes", {
         p_location_id: TEST_IDS.LOCATION_SITE,
-        p_address: "Leppavaarankatu 9",
         p_public_note: "Drop-off is at the main entrance.",
         p_gedu_note: "Room key is at the info desk.",
       });
@@ -728,10 +739,10 @@ describe("gedu session feed", () => {
     });
 
     it("surfaces the gedu-only material link", async () => {
-      await admin
-        .from("products")
-        .update({ material_url: "https://drive.sog.gg/lesson-plans" })
-        .eq("id", PRODUCT_MINE);
+      await admin.from("product_staff_details").upsert({
+        product_id: PRODUCT_MINE,
+        material_url: "https://drive.sog.gg/lesson-plans",
+      });
 
       const { data } = await geduAuth.rpc("get_gedu_group_feed", {
         p_group_id: GROUP_MINE,
@@ -743,9 +754,21 @@ describe("gedu session feed", () => {
       );
 
       await admin
-        .from("products")
-        .update({ material_url: null })
-        .eq("id", PRODUCT_MINE);
+        .from("product_staff_details")
+        .delete()
+        .eq("product_id", PRODUCT_MINE);
+    });
+
+    it("reports a null material link when the product has no staff row", async () => {
+      // The row is sparse — most products have none — and its absence must read
+      // as "no lesson material" rather than breaking the LEFT JOIN's product.
+      const { data } = await geduAuth.rpc("get_gedu_group_feed", {
+        p_group_id: GROUP_MINE,
+      });
+      const feed = geduGroupFeed.parse(data);
+
+      expect(feed.product.material_url).toBeNull();
+      expect(feed.product.id).toBe(PRODUCT_MINE);
     });
   });
 
@@ -861,6 +884,193 @@ describe("gedu session feed", () => {
 
       const attendance = await geduAuth.from("session_attendance").select("*");
       expect(attendance.error).not.toBeNull();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // 8. The staff-only lesson link is unreachable by anyone it is not for
+  // -------------------------------------------------------------------------
+  //
+  // This block is the regression test for the reason product_staff_details
+  // exists. The link used to be a column on `products`, which carries an anon
+  // SELECT grant and a policy exposing every published, visible product — and
+  // PostgREST lets a caller name the columns it wants, so `?select=material_url`
+  // handed a gedu-only lesson plan to anonymous visitors and to every parent.
+  // The comment on the column said families must never see it; nothing enforced
+  // it. What follows asserts both halves of the fix: nobody it is not for can
+  // read it, and the one person it IS for still gets it.
+
+  describe("the staff-only lesson link", () => {
+    beforeEach(async () => {
+      await admin.from("product_staff_details").upsert({
+        product_id: PRODUCT_MINE,
+        material_url: "https://drive.sog.gg/secret-lesson-plans",
+      });
+      await admin
+        .from("products")
+        .update({ is_visible: true, status: "running" })
+        .eq("id", PRODUCT_MINE);
+    });
+
+    afterAll(async () => {
+      await admin
+        .from("product_staff_details")
+        .delete()
+        .eq("product_id", PRODUCT_MINE);
+    });
+
+    it("is not selectable off the products row by anyone, because it is not there", async () => {
+      // The shape of the original hole, pinned so it cannot come back: the
+      // column is gone, so naming it is an error rather than a leak. An anon
+      // visitor CAN read this product row — that is the point; it is published —
+      // and this is what they get when they ask for the link.
+      // The select string is not checked against the column list at compile
+      // time, which is precisely why this assertion is worth making at run time
+      // against a real Postgres: the query the attacker would send is the one
+      // being sent here, and the database is what refuses it.
+      const leaked = await anon
+        .from("products")
+        .select("id, material_url")
+        .eq("id", PRODUCT_MINE);
+      expect(leaked.error).not.toBeNull();
+
+      // And the row itself is genuinely reachable, so the assertion above is
+      // about the column and not about the product being invisible.
+      const visible = await anon
+        .from("products")
+        .select("id")
+        .eq("id", PRODUCT_MINE)
+        .maybeSingle();
+      expect(visible.data?.id).toBe(PRODUCT_MINE);
+    });
+
+    it("gives anon no read on the staff table at all", async () => {
+      // No grant, so PostgREST refuses before RLS is ever consulted — the
+      // stronger of the two guarantees, and the one the design leans on.
+      const { error } = await anon.from("product_staff_details").select("*");
+      expect(error).not.toBeNull();
+    });
+
+    it("gives a parent zero rows on the staff table", async () => {
+      // A parent DOES hold the table-level SELECT grant (admins write the row
+      // from their own browser client, so the grant is role-wide), which makes
+      // the admin-only RLS policy the only thing standing here. That is exactly
+      // why it is worth asserting rather than assuming.
+      const { data, error } = await customerAuth
+        .from("product_staff_details")
+        .select("*");
+      expect(error).toBeNull();
+      expect(data).toEqual([]);
+    });
+
+    it("gives a gamer zero rows on the staff table", async () => {
+      const { data, error } = await gamerAuth
+        .from("product_staff_details")
+        .select("*");
+      expect(error).toBeNull();
+      expect(data).toEqual([]);
+    });
+
+    it("gives an assigned gedu zero rows directly, and the link through the feed", async () => {
+      // Both halves in one test on purpose: the interesting claim is not that a
+      // gedu is locked out of the table, nor that the RPC answers — it is that
+      // the two are true AT ONCE. The RPC is SECURITY DEFINER and scoped to the
+      // groups they teach, which is the only path the link travels.
+      const direct = await geduAuth.from("product_staff_details").select("*");
+      expect(direct.data ?? []).toEqual([]);
+
+      const { data } = await geduAuth.rpc("get_gedu_group_feed", {
+        p_group_id: GROUP_MINE,
+      });
+      expect(geduGroupFeed.parse(data).product.material_url).toBe(
+        "https://drive.sog.gg/secret-lesson-plans",
+      );
+    });
+
+    it("lets an admin read it, since the form has to round-trip the value", async () => {
+      const { data, error } = await adminAuth
+        .from("product_staff_details")
+        .select("material_url")
+        .eq("product_id", PRODUCT_MINE)
+        .maybeSingle();
+      expect(error).toBeNull();
+      expect(data?.material_url).toBe(
+        "https://drive.sog.gg/secret-lesson-plans",
+      );
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // 9. set_site_notes does not touch the address
+  // -------------------------------------------------------------------------
+
+  describe("set_site_notes and the venue address", () => {
+    it("preserves an admin's address across a gedu's note save", async () => {
+      // The bug this pins: the RPC took an address, and the workspace echoed
+      // back its cached copy on every save — so a gedu writing a note against a
+      // page loaded before an admin's correction silently reverted it. There is
+      // now no parameter to send one through.
+      await admin.from("site_details").upsert({
+        location_id: TEST_IDS.LOCATION_SITE,
+        address: "Corrected by an admin 9",
+        notes: "Old note",
+      });
+
+      const { error } = await geduAuth.rpc("set_site_notes", {
+        p_location_id: TEST_IDS.LOCATION_SITE,
+        p_public_note: "New note from the gedu.",
+        p_gedu_note: "Key is at the desk.",
+      });
+      expect(error).toBeNull();
+
+      const { data: row } = await admin
+        .from("site_details")
+        .select("address, notes")
+        .eq("location_id", TEST_IDS.LOCATION_SITE)
+        .single();
+
+      expect(row?.address).toBe("Corrected by an admin 9");
+      expect(row?.notes).toBe("New note from the gedu.");
+    });
+
+    it("echoes the stored address back so the workspace can render it", async () => {
+      await admin.from("site_details").upsert({
+        location_id: TEST_IDS.LOCATION_SITE,
+        address: "Leppavaarankatu 9",
+      });
+
+      const { data } = await geduAuth.rpc("set_site_notes", {
+        p_location_id: TEST_IDS.LOCATION_SITE,
+        p_public_note: "Drop-off at the main entrance.",
+        p_gedu_note: "",
+      });
+
+      expect(siteNotesResult.parse(data).address).toBe("Leppavaarankatu 9");
+    });
+
+    it("leaves the address null when it materializes the row itself", async () => {
+      // First save at a building nobody has recorded an address for: "we have
+      // no address" is the honest state, not an empty string and not a guess.
+      await admin
+        .from("site_details")
+        .delete()
+        .eq("location_id", TEST_IDS.LOCATION_SITE);
+
+      const { data } = await geduAuth.rpc("set_site_notes", {
+        p_location_id: TEST_IDS.LOCATION_SITE,
+        p_public_note: "First note at this building.",
+        p_gedu_note: "",
+      });
+
+      expect(siteNotesResult.parse(data).address).toBeNull();
+
+      const { data: row } = await admin
+        .from("site_details")
+        .select("address, notes")
+        .eq("location_id", TEST_IDS.LOCATION_SITE)
+        .single();
+      expect(row?.address).toBeNull();
+      expect(row?.notes).toBe("First note at this building.");
     });
   });
 });

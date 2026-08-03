@@ -108,15 +108,21 @@ export interface PastSessionFeedEntry extends SessionFeedEntryBase {
    */
   attendance: AttendanceMarks;
   /**
-   * Whether a write-up is **owed** for this session — true from the enforcement
-   * epoch onward, false for everything older.
+   * Whether a write-up is **owed** for this session: dated from the enforcement
+   * epoch onward, **and** actually finished.
    *
-   * It gates the warning rung of the completeness ladder and nothing else. A
-   * session from before the platform started asking is fully recordable and
-   * fully editable; what it may never do is turn amber, or add to a dashboard
-   * badge, for work that was never expected. The success rung still applies:
-   * somebody who goes back and finishes an old session gets the green check for
-   * it.
+   * Two boundaries, both of which have to be past for the answer to be yes. A
+   * session older than the epoch is work the platform never asked for. A session
+   * that has started and not yet ended is work the gedu is in the middle of —
+   * they are standing in the room, and nothing is outstanding until the hour is
+   * out. The dashboard's SQL count draws the same end line, so the badge and the
+   * card can never disagree about which sessions are outstanding.
+   *
+   * It gates the warning rung of the completeness ladder and nothing else.
+   * Neither an old session nor a live one loses its editor — both are fully
+   * recordable, which is what makes roll call during the club work; what they
+   * may never do is turn amber for work nobody is owed yet. The success rung
+   * still applies to both: finish the sheet and the green check is earned.
    */
   owed: boolean;
 }
