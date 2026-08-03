@@ -4,7 +4,7 @@ import { Hourglass, RefreshCwOff } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useTimezone } from "@/providers";
 import { cn, formatDate } from "@/lib/utils";
-import { BADGE_FRAME } from "./session-card-badge";
+import { BADGE_FRAME } from "@/components/ui/card-corner-badge";
 
 /**
  * Muted corner pill shown on a session card when the parent has cancelled this

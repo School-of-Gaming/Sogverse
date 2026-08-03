@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import type { SessionAudience } from "@/types";
 import { cn } from "@/lib/utils";
 import { BillingService } from "@/services/billing";
-import { BADGE_FRAME } from "./session-card-badge";
+import { BADGE_FRAME } from "@/components/ui/card-corner-badge";
 
 /**
  * Circular corner alert that straddles the top-right corner of a session card

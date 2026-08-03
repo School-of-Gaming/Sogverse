@@ -1,19 +1,18 @@
 "use client";
 
 import { useMemo } from "react";
-import Link from "next/link";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { PadletLink } from "@/components/ui/padlet-link";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { computeVoiceState } from "@/lib/voice-window";
-import { ROUTES } from "@/lib/constants";
 import { useNow, useTimezone } from "@/providers";
 import { useGeduAssignedProduct } from "@/services/assignments";
 import type { GeduAssignedProduct } from "@/types";
 import { AssignedGroupCard } from "./AssignedGroupCard";
+import { SessionDetailsBackLink } from "./BackLink";
 import { PeerGroupCard } from "./PeerGroupCard";
 
 interface SessionDetailsPageProps {
@@ -42,7 +41,7 @@ export function SessionDetailsPage({ productId }: SessionDetailsPageProps) {
 
   return (
     <div className="container mx-auto max-w-5xl px-4 py-6 sm:py-10">
-      <BackLink />
+      <SessionDetailsBackLink />
 
       {isLoading ? (
         <LoadingState />
@@ -52,19 +51,6 @@ export function SessionDetailsPage({ productId }: SessionDetailsPageProps) {
         <Loaded data={data} />
       )}
     </div>
-  );
-}
-
-function BackLink() {
-  const t = useTranslations("gedu.sessionDetails");
-  return (
-    <Link
-      href={ROUTES.gedu.dashboard}
-      className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-    >
-      <ArrowLeft className="h-4 w-4" />
-      {t("back")}
-    </Link>
   );
 }
 

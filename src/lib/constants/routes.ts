@@ -179,6 +179,7 @@ export const ROUTES = {
     eventsNew: "/admin/events/new",
     voice: "/admin/voice",
     uiComponents: "/admin/ui-components",
+    uiPreviews: "/admin/ui-previews",
     testing: "/admin/testing",
     whatsapp: "/admin/whatsapp",
   },

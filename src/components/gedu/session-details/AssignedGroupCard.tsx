@@ -3,10 +3,12 @@
 import { useMemo } from "react";
 import { Check, Copy, Star, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Identicon } from "@/components/ui/identicon";
+import {
+  PersonChipList,
+  type PersonChipListPerson,
+} from "@/components/ui/person-chip";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
@@ -73,19 +75,7 @@ export function AssignedGroupCard({
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               {t("gedusLabel")}
             </p>
-            <div className="flex flex-wrap gap-1.5">
-              {group.gedus.map((g) => (
-                <span
-                  key={g.id}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2 py-1 text-xs"
-                >
-                  <Avatar className="h-5 w-5">
-                    <Identicon id={g.id} size={20} />
-                  </Avatar>
-                  <span className="leading-none">{g.first_name}</span>
-                </span>
-              ))}
-            </div>
+            <PersonChipList people={geduChipPeople(group.gedus)} />
           </div>
         )}
 
@@ -99,17 +89,10 @@ export function AssignedGroupCard({
             </>
           ) : (
             <>
-              {/* Two-column header — "Gamer" anchors the left half of each
-                  row (avatar + name + age/gender + Minecraft); "Parent
-                  email" anchors the right side. Single source of meaning
-                  for the column, so the rows themselves stay quiet. On
-                  mobile the rows stack and the header still reads as a
-                  pair of section labels. */}
-              <div className="hidden items-center justify-between px-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground sm:flex">
-                <span>{t("rosterGamerHeader")}</span>
-                <span>{t("rosterParentEmailHeader")}</span>
-              </div>
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground sm:hidden">
+              {/* One label, not a column header pair: a roster row is two
+                  stacked lines (identity, then the parent email) at every
+                  width, so there are no columns left to name. */}
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                 {t("gamersLabel")}
               </p>
               <ul className="space-y-1.5">
@@ -165,7 +148,12 @@ export function GroupCardHeader({
   );
 }
 
-function CopyAllEmailsButton({ emails }: { emails: string[] }) {
+/**
+ * "Copy all parent emails (7)" — one comma-separated list the gedu can paste
+ * straight into Gmail. Exported so the draft redesign's roster panel offers the
+ * same helper rather than growing a second copy of it.
+ */
+export function CopyAllEmailsButton({ emails }: { emails: string[] }) {
   const t = useTranslations("gedu.sessionDetails");
   const { copied, copy } = useCopyToClipboard();
 
@@ -190,10 +178,22 @@ function CopyAllEmailsButton({ emails }: { emails: string[] }) {
 }
 
 /**
+ * A group's gedus as person-chip rows. The DB row spells the field
+ * `first_name`; the shared chip primitive is not a gedu component and takes a
+ * plain `name`, so the adaptation happens once here rather than in each of the
+ * three surfaces that render these chips.
+ */
+export function geduChipPeople(
+  gedus: GeduAssignedProductGroup["gedus"],
+): PersonChipListPerson[] {
+  return gedus.map((gedu) => ({ id: gedu.id, name: gedu.first_name }));
+}
+
+/**
  * Strip nulls and de-duplicate so the same parent (e.g. two siblings in
  * the same group) only appears once in the pasted list.
  */
-function deduplicateEmails(emails: (string | null)[]): string[] {
+export function deduplicateEmails(emails: (string | null)[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const email of emails) {

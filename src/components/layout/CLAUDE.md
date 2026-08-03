@@ -20,6 +20,9 @@ Route-group wrappers:
 | `(auth)` | same as public, `<main>` centers its child |
 | `(dashboard)` | `<Header>` then `DashboardLayout`: `<div className="flex">` → `<Sidebar>` (admin only) + `<main min-w-0 flex-1>` |
 | `(voice)` | page renders its own voice header (also via `SiteHeaderShell`) then session UI; no app chrome |
+| `(preview)` | pass-through layout — **no chrome at all**; each admin-only preview scene composes the shell of the page it mocks (see below) |
+
+**Rule: the preview route group's layout stays a pass-through.** A full-page preview scene mocks a *specific* page, so it has to compose that page's chrome itself — a dashboard scene renders `Header` + `DashboardLayout` with no sidebar, a public scene renders `Header` + `main` + `Footer`. Putting any chrome in the group layout would either double-wrap a scene or force every scene into one role's shell, which is exactly what moving these routes out of the public group fixed. Adding a shell to a scene means naming it in the scene registry, not editing this layout.
 
 ## `--header-height`
 
@@ -38,6 +41,12 @@ The sidebar is `position: sticky; top: var(--header-height)` with an explicit `h
 ## `<main>` width
 
 The dashboard `<main>` needs `min-w-0` so the flex item shrinks to its assigned width instead of growing to fit its widest unbreakable child. Without it, a long word (e.g. a Finnish/Swedish compound on the settings page) pushes `<main>` past the viewport and produces a stray horizontal scroll on narrow widths. (The `flex-col` public/auth layouts don't hit this — width is their cross axis.)
+
+## The content gutter
+
+**Rule: the dashboard layout owns the horizontal content gutter; a dashboard page body must not add its own.** The layout wraps every dashboard page in a padded content container (currently `p-6`), and that padding is the gutter at every breakpoint. A page body therefore sets only its **max-width** (`mx-auto max-w-*`) and its **vertical rhythm** (`space-y-*`, `pb-*`), and accepts the horizontal space it is given — no `px-*`, and no `container` class, which brings its own padding and a second set of breakpoint-dependent max-widths that fight the one the page just declared. Two gutters do nothing visible on the wide viewport a page is usually designed at and quietly eat a third of a phone screen, which is exactly where a dashboard page has the least room to spare; and a page that pads itself can only be re-gutted by editing every page.
+
+The exception is a **deliberate full-screen bespoke layout** — a centered lock-screen panel, a split-pane tool — which owns its geometry end to end and is not a content page at all. Claiming the exception means being that bespoke; an ordinary content page that just wants different margins is not an exception, it is the rule being broken.
 
 ## Anchor links
 
