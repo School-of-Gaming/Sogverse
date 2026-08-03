@@ -26,6 +26,7 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     spoken_language_code: "en",
     image_path: "abc.png",
     padlet_url: null,
+    material_url: null,
     location_id: null,
     is_remote: true,
     status: "pending",

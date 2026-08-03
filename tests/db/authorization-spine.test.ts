@@ -93,6 +93,60 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "positive path is covered by get-gedu-assigned-product.test.ts.",
   },
 
+  // --- the session feed ----------------------------------------------------
+  //
+  // Every one of these opens with the gedu role guard and then asks a SECOND
+  // question — "do you teach this group / run anything at this building / does
+  // this child sit on your roster" — which a NULL argument can only answer no
+  // to. So the positive half of the matrix is unassertable here for the same
+  // reason it is on get_gedu_assigned_product, and for the same reason it is
+  // not a hole: each names the file that drives its permitted path against a
+  // real fixture.
+  get_gedu_group_feed: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "past the role guard, a NULL group is a group the caller does not teach, " +
+      "so the assignment half of the gate refuses with a second 42501. The " +
+      "positive path is covered by gedu-session-feed.test.ts.",
+  },
+  // The one that CAN be asserted positively: it takes no id at all, only the
+  // enforcement epoch, so a gedu with no assignments gets an empty list rather
+  // than a refusal.
+  get_my_gedu_assignment_summaries: { permittedRoles: ["gedu"] },
+  set_group_session_notes: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "the assignment half of the gate refuses a NULL group with a second " +
+      "42501. Positive path: gedu-session-feed.test.ts.",
+  },
+  record_attendance: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "refused twice over on NULL arguments — the caller teaches no NULL group, " +
+      "and no NULL child is on its roster. Positive path: " +
+      "gedu-session-feed.test.ts.",
+  },
+  set_group_notes: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "the assignment half of the gate refuses a NULL group with a second " +
+      "42501. Positive path: gedu-session-feed.test.ts.",
+  },
+  set_site_notes: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "the caller runs no product at a NULL location, so the site half of the " +
+      "gate refuses with a second 42501. Positive path: " +
+      "gedu-session-feed.test.ts.",
+  },
+  set_group_member_minecraft: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "no NULL child participates in a group the caller teaches, so the target " +
+      "half of the gate refuses with a second 42501. Positive path: " +
+      "gedu-session-feed.test.ts.",
+  },
+
   // --- the guard primitives themselves -------------------------------------
   // Exposed to `authenticated` because create_product / update_product are
   // SECURITY INVOKER, so their guard runs as the caller (see migration 00120).

@@ -166,6 +166,8 @@ export type CreateProductInput = {
   max_age: number;
   spoken_language_code: string;
   padlet_url: string | null;
+  /** Gedu/admin-only lesson material. Never rendered to a family. */
+  material_url: string | null;
   location_id: string | null;
   is_remote: boolean;
   status: ProductStatus;
@@ -206,6 +208,8 @@ export type UpdateProductInput = {
   max_age: number;
   spoken_language_code: string;
   padlet_url: string | null;
+  /** Gedu/admin-only lesson material. Never rendered to a family. */
+  material_url: string | null;
   location_id: string | null;
   is_remote: boolean;
   signup_threshold: number | null;

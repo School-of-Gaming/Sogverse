@@ -50,6 +50,7 @@ export type ValidationKey =
   | "siteRequired"
   | "scheduleRequired"
   | "padletInvalid"
+  | "materialUrlInvalid"
   | "startDateRequired"
   | "endDateRequired"
   | "thresholdInvalid"
@@ -132,6 +133,14 @@ export function validate(
       new URL(state.padletUrl);
     } catch {
       return err("padletInvalid");
+    }
+  }
+
+  if (state.materialUrl.trim()) {
+    try {
+      new URL(state.materialUrl);
+    } catch {
+      return err("materialUrlInvalid");
     }
   }
 
@@ -368,6 +377,7 @@ function buildSharedFields(
     max_age: maxAge,
     spoken_language_code: state.spokenLanguageCode,
     padlet_url: state.padletUrl.trim() || null,
+    material_url: state.materialUrl.trim() || null,
     location_id: state.locationId,
     is_remote: state.isRemote,
     signup_threshold:
@@ -623,6 +633,7 @@ export function existingFormState(
     activeLocale,
     topic: product.topic,
     padletUrl: product.padlet_url ?? "",
+    materialUrl: product.material_url ?? "",
     image: product.image_path ?? null,
     minAge: String(product.min_age),
     maxAge: String(product.max_age),

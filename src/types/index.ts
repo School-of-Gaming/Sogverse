@@ -260,6 +260,39 @@ export type GeduGroupAssignment = Database["public"]["Tables"]["gedu_group_assig
 export type GeduGroupAssignmentInsert = Database["public"]["Tables"]["gedu_group_assignments"]["Insert"];
 
 // ---------------------------------------------------------------------------
+// products — session records (the gedu session feed)
+// ---------------------------------------------------------------------------
+
+// group_sessions — one lazily materialized row per (group, product-local date).
+// Neither table grants anything to `authenticated`: every read and write goes
+// through the SECURITY DEFINER RPCs in src/services/gedu-sessions/, so these
+// aliases exist for the service-role side (db tests, admin tooling) rather than
+// for browser queries.
+export type GroupSession = Database["public"]["Tables"]["group_sessions"]["Row"];
+export type GroupSessionInsert = Database["public"]["Tables"]["group_sessions"]["Insert"];
+export type GroupSessionUpdate = Database["public"]["Tables"]["group_sessions"]["Update"];
+
+// session_attendance — one row per explicit mark. A roster member with NO row
+// is unanswered, which is why the status column has no "unmarked" member: that
+// state is the absence of a row, not a value.
+export type SessionAttendance = Database["public"]["Tables"]["session_attendance"]["Row"];
+export type SessionAttendanceInsert = Database["public"]["Tables"]["session_attendance"]["Insert"];
+
+// The attendance vocabulary is a text column with a CHECK rather than a
+// Postgres enum (adding 'late'/'excused' is expected), so there is no
+// Constants entry to derive from — the tuple in the contracts file is the
+// code-side source of truth. Re-exported here so consumers keep importing
+// their types from "@/types".
+export type {
+  AttendanceStatus,
+  GeduAssignmentSummary,
+  GeduFeedRosterEntry,
+  GeduFeedSession,
+  GeduFeedSite,
+  GeduGroupFeed,
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
+
+// ---------------------------------------------------------------------------
 // voice zones (00103) — the persisted half of the discrete-zone voice model.
 // See src/components/voice/CLAUDE.md for the discrete-zone voice model.
 // Lobby + the 4 Yty zones stay virtual/hardcoded on the client; only these

@@ -578,6 +578,28 @@ describe("buildCreateInput", () => {
     ).toBe("https://padlet.com/x");
   });
 
+  // The staff-facing sibling of the field above. It gets its own case rather
+  // than riding on the Padlet one because the two are separate columns with
+  // separate audiences, and a shared assertion would hide the day one of them
+  // stopped being emitted.
+  it("emits null material_url when blank, trims when set", () => {
+    const s = validConsumerState();
+    s.materialUrl = "";
+    expect(
+      buildCreateInput(s, "consumer_club", consumerConfig).material_url,
+    ).toBeNull();
+    s.materialUrl = "  https://drive.sog.gg/lesson-plans  ";
+    expect(
+      buildCreateInput(s, "consumer_club", consumerConfig).material_url,
+    ).toBe("https://drive.sog.gg/lesson-plans");
+  });
+
+  it("rejects a material_url that is not a valid URL", () => {
+    const s = validConsumerState();
+    s.materialUrl = "drive.sog.gg/lesson-plans";
+    expect(validate(s, consumerConfig)?.messageKey).toBe("materialUrlInvalid");
+  });
+
   it("emits null seat_count when free event is uncapped", () => {
     const s = validConsumerState();
     s.paidMode = "free";
@@ -732,6 +754,7 @@ function mockDetailRow(
     max_age: 12,
     spoken_language_code: "en",
     padlet_url: "https://padlet.com/x",
+    material_url: "https://drive.sog.gg/x",
     image_path: "products/original.png",
     start_date: "2026-09-01",
     end_date: null,

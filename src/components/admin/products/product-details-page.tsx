@@ -406,6 +406,19 @@ function OperationalFacts({
             </a>
           </Fact>
         )}
+
+        {product.material_url && (
+          <Fact icon={ExternalLink} label={t("detailsPage.fields.materialUrl")}>
+            <a
+              href={product.material_url}
+              target="_blank"
+              rel="noreferrer"
+              className="break-all text-primary underline-offset-2 hover:underline"
+            >
+              {product.material_url}
+            </a>
+          </Fact>
+        )}
       </CardContent>
     </Card>
   );

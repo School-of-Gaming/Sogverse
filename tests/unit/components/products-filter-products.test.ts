@@ -30,6 +30,7 @@ function row(overrides: {
     min_age: overrides.minAge ?? 7,
     max_age: overrides.maxAge ?? 17,
     padlet_url: null,
+    material_url: null,
     product_type: "consumer_club",
     refund_policy_days: null,
     primary_gedu_fee_cents: null,

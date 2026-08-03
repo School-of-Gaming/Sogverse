@@ -229,6 +229,7 @@
         "fields": {
           "topic": "Aihe",
           "padletUrl": "Padlet",
+          "materialUrl": "Oppimateriaali",
           "locales": "Kielet",
           "startDate": "Alkamispäivä",
           "endDate": "Päättymispäivä",
@@ -294,6 +295,7 @@
         "longDescription": "Pitkä kuvaus",
         "topic": "Aihe",
         "padletUrl": "Padlet-osoite",
+        "materialUrl": "Oppimateriaalin osoite",
         "minAge": "Alaikäraja",
         "maxAge": "Yläikäraja",
         "deliveredIn": "Toteutuksen kieli",
@@ -326,6 +328,7 @@
       "placeholders": {
         "selectTopic": "Valitse aihe…",
         "padletUrl": "https://padlet.com/...",
+        "materialUrl": "https://drive.sog.gg/...",
         "threshold": "esim. 8",
         "name": {
           "consumerClub": "esim. Minecraft Redstone -kerho",
@@ -440,6 +443,7 @@
         "shortDescription": "Yhden rivin esittely, joka näkyy selauskorteissa, listoissa ja tuotesivun yläosassa.",
         "longDescription": "Valinnainen. Näkyy vain tuotteen tuotesivulla. Koosta se otsikoista ja kappaleista.",
         "topicHint": "Tuotteen aihe — peli (kuten Minecraft tai Fortnite) tai aine (kuten webinaari).",
+        "materialUrlHint": "Valinnainen. Vain Geduille — perheet eivät näe tätä.",
         "padletHint": "Valinnainen. Jaetaan perheille ilmoittautumisen jälkeen.",
         "deliveredInHint": "Pääkieli, jota kerroilla käytetään.",
         "onlineNoLocation": "Verkossa ja avoin kaikille — sijaintia ei tarvita. Kaikki selailevat vanhemmat näkevät tämän asuinpaikasta riippumatta.",
@@ -474,6 +478,7 @@
         "municipalityRequired": "Kunta vaaditaan verkossa toteutettaville kuntakerhoille",
         "siteRequired": "Toimipiste vaaditaan paikan päällä toteutettaville tuotteille",
         "scheduleRequired": "Vähintään yksi aikatauluväli vaaditaan",
+        "materialUrlInvalid": "Oppimateriaalin osoitteen on oltava kelvollinen URL",
         "padletInvalid": "Padlet-osoitteen on oltava kelvollinen URL",
         "startDateRequired": "Alkupäivä vaaditaan",
         "endDateRequired": "Loppupäivä vaaditaan",

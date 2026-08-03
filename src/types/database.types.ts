@@ -293,6 +293,76 @@ export type Database = {
           },
         ]
       }
+      group_sessions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          did_not_run: boolean
+          ends_at: string
+          gedu_note: string | null
+          group_id: string
+          id: string
+          needs_substitute: boolean
+          report: string | null
+          session_date: string
+          starts_at: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          did_not_run?: boolean
+          ends_at: string
+          gedu_note?: string | null
+          group_id: string
+          id?: string
+          needs_substitute?: boolean
+          report?: string | null
+          session_date: string
+          starts_at: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          did_not_run?: boolean
+          ends_at?: string
+          gedu_note?: string | null
+          group_id?: string
+          id?: string
+          needs_substitute?: boolean
+          report?: string | null
+          session_date?: string
+          starts_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_sessions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_sessions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_sessions_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       holiday_calendars: {
         Row: {
           created_at: string
@@ -547,23 +617,29 @@ export type Database = {
       product_groups: {
         Row: {
           created_at: string
+          gedu_note: string | null
           id: string
           name: string
           product_id: string
+          public_note: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
+          gedu_note?: string | null
           id?: string
           name: string
           product_id: string
+          public_note?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
+          gedu_note?: string | null
           id?: string
           name?: string
           product_id?: string
+          public_note?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -755,6 +831,7 @@ export type Database = {
           is_remote: boolean
           is_visible: boolean
           location_id: string | null
+          material_url: string | null
           max_age: number
           min_age: number
           municipality_fee_cents: number | null
@@ -784,6 +861,7 @@ export type Database = {
           is_remote: boolean
           is_visible?: boolean
           location_id?: string | null
+          material_url?: string | null
           max_age: number
           min_age: number
           municipality_fee_cents?: number | null
@@ -813,6 +891,7 @@ export type Database = {
           is_remote?: boolean
           is_visible?: boolean
           location_id?: string | null
+          material_url?: string | null
           max_age?: number
           min_age?: number
           municipality_fee_cents?: number | null
@@ -969,6 +1048,55 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_attendance: {
+        Row: {
+          gamer_id: string
+          id: string
+          recorded_at: string
+          recorded_by: string | null
+          session_id: string
+          status: string
+        }
+        Insert: {
+          gamer_id: string
+          id?: string
+          recorded_at?: string
+          recorded_by?: string | null
+          session_id: string
+          status: string
+        }
+        Update: {
+          gamer_id?: string
+          id?: string
+          recorded_at?: string
+          recorded_by?: string | null
+          session_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_attendance_gamer_id_fkey"
+            columns: ["gamer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_attendance_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_attendance_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "group_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -1347,6 +1475,7 @@ export type Database = {
           p_is_remote: boolean
           p_is_visible?: boolean
           p_location_id?: string
+          p_material_url?: string
           p_max_age: number
           p_min_age: number
           p_municipality_fee_cents?: number
@@ -1373,15 +1502,25 @@ export type Database = {
         Args: { p_participation_id: string }
         Returns: Json
       }
+      derive_group_session_window: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: unknown
+      }
       effective_status: {
         Args: { p_product_id: string }
         Returns: Database["public"]["Enums"]["effective_product_status"]
       }
+      ensure_group_session: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: string
+      }
       expire_reservation: { Args: { p_reservation_id: string }; Returns: Json }
+      gedu_teaches_group: { Args: { p_group_id: string }; Returns: boolean }
       get_gedu_assigned_product: {
         Args: { p_product_id: string }
         Returns: Json
       }
+      get_gedu_group_feed: { Args: { p_group_id: string }; Returns: Json }
       get_my_assigned_products: {
         Args: never
         Returns: {
@@ -1420,6 +1559,10 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_my_gedu_assignment_summaries: {
+        Args: { p_epoch_date?: string }
+        Returns: Json
       }
       get_my_parents: {
         Args: never
@@ -1470,6 +1613,10 @@ export type Database = {
         Args: { p_participation_id: string }
         Returns: number
       }
+      group_session_date_is_writable: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: boolean
+      }
       has_active_participation_in_group: {
         Args: { p_group_id: string }
         Returns: boolean
@@ -1517,6 +1664,15 @@ export type Database = {
         Args: { p_group_id?: string; p_participation_id: string }
         Returns: Json
       }
+      record_attendance: {
+        Args: {
+          p_gamer_id: string
+          p_group_id: string
+          p_session_date: string
+          p_status: string
+        }
+        Returns: Json
+      }
       refresh_product_seat_counts: {
         Args: { p_product_id: string }
         Returns: undefined
@@ -1539,10 +1695,40 @@ export type Database = {
         Args: { p_gedu_id: string; p_verified: boolean }
         Returns: undefined
       }
+      set_group_member_minecraft: {
+        Args: {
+          p_gamer_id: string
+          p_minecraft_username: string
+          p_minecraft_uuid: string
+        }
+        Returns: Json
+      }
+      set_group_notes: {
+        Args: { p_gedu_note: string; p_group_id: string; p_public_note: string }
+        Returns: Json
+      }
+      set_group_session_notes: {
+        Args: {
+          p_gedu_note: string
+          p_group_id: string
+          p_report: string
+          p_session_date: string
+        }
+        Returns: Json
+      }
       set_my_pin: { Args: { p_pin: string }; Returns: undefined }
       set_pin_for_user: {
         Args: { p_pin: string; p_user_id: string }
         Returns: undefined
+      }
+      set_site_notes: {
+        Args: {
+          p_address: string
+          p_gedu_note: string
+          p_location_id: string
+          p_public_note: string
+        }
+        Returns: Json
       }
       submit_feedback: {
         Args: { p_message: string; p_user_id: string }
@@ -1560,6 +1746,7 @@ export type Database = {
           p_is_remote: boolean
           p_is_visible?: boolean
           p_location_id?: string
+          p_material_url?: string
           p_max_age: number
           p_min_age: number
           p_municipality_fee_cents?: number

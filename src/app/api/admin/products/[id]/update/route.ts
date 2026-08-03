@@ -178,6 +178,7 @@ export const POST = defineRoute({
       p_waitlist_enabled: body.waitlist_enabled,
       p_image_path: finalImagePath ?? undefined,
       p_padlet_url: body.padlet_url ?? undefined,
+      p_material_url: body.material_url ?? undefined,
       p_location_id: body.location_id ?? undefined,
       p_signup_threshold: body.signup_threshold ?? undefined,
       p_start_date: body.start_date ?? undefined,

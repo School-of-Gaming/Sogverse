@@ -93,6 +93,11 @@ export interface FormState {
   // is the unselected state the create form starts in.
   topic: ProductTopic | "";
   padletUrl: string;
+  // Lesson material for whoever teaches this product. Staff-facing: it is
+  // rendered in the gedu group workspace and on no family surface at all, which
+  // is what makes it a different field from padletUrl rather than a second name
+  // for it.
+  materialUrl: string;
   // File   — newly picked replacement (admin uploaded a fresh image).
   // string — existing image_path on the product (edit-mode load).
   // null   — no image, or admin cleared the existing one.
@@ -193,6 +198,7 @@ export function initialState(
     activeLocale: uiLocale,
     topic: "",
     padletUrl: "",
+    materialUrl: "",
     image: null,
     minAge: "7",
     maxAge: "12",

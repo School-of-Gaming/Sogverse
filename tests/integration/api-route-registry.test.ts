@@ -160,6 +160,7 @@ const TESTS = {
   forgotPassword: "tests/integration/auth/forgot-password.test.ts",
   gamersCreate: "tests/integration/api/gamers-create.test.ts",
   gamersUpdate: "tests/integration/api/gamers-update.test.ts",
+  geduGamerMinecraft: "tests/integration/api/gedu-gamer-minecraft.test.ts",
   geduRegister: "tests/integration/api/gedu-register.test.ts",
   minecraftAccount: "tests/integration/api/minecraft-account.test.ts",
   minecraftJoinCheck: "tests/integration/api/minecraft-join-check.test.ts",
@@ -553,6 +554,23 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: { kind: "role-gated", roles: ["customer"] },
         body: { kind: "json", schema: "createGamerBody" },
         test: TESTS.gamersCreate,
+      },
+    },
+  },
+
+  // --- Educator surfaces ---------------------------------------------------
+
+  // The role gate only establishes that the caller is an educator. WHICH
+  // children they may edit is decided by the RPC underneath, which re-derives
+  // the caller from auth.uid() and refuses any gamer who is not actively
+  // participating in a group that caller is assigned to — so the gamer id in
+  // the path names a target and grants nothing.
+  "src/app/api/gedu/gamers/[gamerId]/minecraft/route.ts": {
+    handlers: {
+      PATCH: {
+        posture: { kind: "role-gated", roles: ["gedu"] },
+        body: { kind: "json", schema: "updateGroupMemberMinecraftBody" },
+        test: TESTS.geduGamerMinecraft,
       },
     },
   },

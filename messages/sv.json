@@ -229,6 +229,7 @@
         "fields": {
           "topic": "Ämne",
           "padletUrl": "Padlet",
+          "materialUrl": "Lektionsmaterial",
           "locales": "Språk",
           "startDate": "Startdatum",
           "endDate": "Slutdatum",
@@ -294,6 +295,7 @@
         "longDescription": "Lång beskrivning",
         "topic": "Ämne",
         "padletUrl": "Padlet-URL",
+        "materialUrl": "URL till lektionsmaterial",
         "minAge": "Min ålder",
         "maxAge": "Max ålder",
         "deliveredIn": "Genomförs på",
@@ -326,6 +328,7 @@
       "placeholders": {
         "selectTopic": "Välj ett ämne…",
         "padletUrl": "https://padlet.com/...",
+        "materialUrl": "https://drive.sog.gg/...",
         "threshold": "t.ex. 8",
         "name": {
           "consumerClub": "t.ex. Minecraft Redstone-klubb",
@@ -440,6 +443,7 @@
         "shortDescription": "En enradig text som visas på bläddringskort, listor och högst upp på detaljsidan.",
         "longDescription": "Valfritt. Visas endast på produktens detaljsida. Bygg den av rubriker och stycken.",
         "topicHint": "Produktens ämne — ett spel (som Minecraft eller Fortnite) eller ett ämne (som webbinarium).",
+        "materialUrlHint": "Valfritt. Endast för Gedus — familjer ser aldrig detta.",
         "padletHint": "Valfritt. Delas med familjer efter att de anmält sig.",
         "deliveredInHint": "Det primära språk som används under tillfällena.",
         "onlineNoLocation": "Online och tillgänglig för alla — ingen plats behövs. Alla föräldrar som bläddrar ser detta, oavsett var de bor.",
@@ -474,6 +478,7 @@
         "municipalityRequired": "Kommun krävs för online-kommunklubbar",
         "siteRequired": "Lokal krävs för produkter på plats",
         "scheduleRequired": "Minst en schemarad krävs",
+        "materialUrlInvalid": "URL till lektionsmaterial måste vara en giltig URL",
         "padletInvalid": "Padlet-URL måste vara en giltig URL",
         "startDateRequired": "Startdatum krävs",
         "endDateRequired": "Slutdatum krävs",

@@ -229,6 +229,7 @@
         "fields": {
           "topic": "Thème",
           "padletUrl": "Padlet",
+          "materialUrl": "Matériel pédagogique",
           "locales": "Langues",
           "startDate": "Date de début",
           "endDate": "Date de fin",
@@ -294,6 +295,7 @@
         "longDescription": "Description longue",
         "topic": "Thème",
         "padletUrl": "URL Padlet",
+        "materialUrl": "URL du matériel pédagogique",
         "minAge": "Âge min.",
         "maxAge": "Âge max.",
         "deliveredIn": "Animé en",
@@ -326,6 +328,7 @@
       "placeholders": {
         "selectTopic": "Choisir un thème…",
         "padletUrl": "https://padlet.com/...",
+        "materialUrl": "https://drive.sog.gg/...",
         "threshold": "ex. 8",
         "name": {
           "consumerClub": "ex. Club Minecraft Redstone",
@@ -440,6 +443,7 @@
         "shortDescription": "Une accroche d’une ligne affichée sur les cartes du catalogue, dans les listes et en haut de la page de détail.",
         "longDescription": "Facultatif. Affiché uniquement sur la page de détail du produit. Construisez-le à partir de titres et de paragraphes.",
         "topicHint": "Le thème de ce produit — un jeu (comme Minecraft ou Fortnite) ou un sujet (comme un webinaire).",
+        "materialUrlHint": "Facultatif. Réservé aux Gedus — les familles ne le voient jamais.",
         "padletHint": "Facultatif. Partagé avec les familles après leur inscription.",
         "deliveredInHint": "La langue principale utilisée pendant les sessions.",
         "onlineNoLocation": "En ligne et accessible à tous — aucun lieu n’est nécessaire. Tout parent parcourant le catalogue le verra, où qu’il habite.",
@@ -474,6 +478,7 @@
         "municipalityRequired": "La commune est obligatoire pour les clubs municipaux en ligne",
         "siteRequired": "Le site est obligatoire pour les produits en présentiel",
         "scheduleRequired": "Au moins un créneau est requis",
+        "materialUrlInvalid": "L’URL du matériel pédagogique doit être une URL valide",
         "padletInvalid": "L’URL Padlet doit être une URL valide",
         "startDateRequired": "La date de début est obligatoire",
         "endDateRequired": "La date de fin est obligatoire",

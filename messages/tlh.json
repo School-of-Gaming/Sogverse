@@ -274,6 +274,7 @@
         "fields": {
           "topic": "Doch",
           "padletUrl": "Padlet",
+          "materialUrl": "ghojmoHmeH De’",
           "locales": "Hol",
           "startDate": "tagh jaj",
           "endDate": "rIn jaj",
@@ -339,6 +340,7 @@
         "longDescription": "QIn nI’",
         "topic": "Doch",
         "padletUrl": "Padlet URL",
+        "materialUrl": "ghojmoHmeH De’ URL",
         "minAge": "DIS mach",
         "maxAge": "DIS tIn",
         "deliveredIn": "Hol lo’lu’bogh",
@@ -371,6 +373,7 @@
       "placeholders": {
         "selectTopic": "Doch yIwIv…",
         "padletUrl": "https://padlet.com/...",
+        "materialUrl": "https://drive.sog.gg/...",
         "threshold": "e.g. 8",
         "name": {
           "consumerClub": "e.g. Minecraft Redstone ghomHom",
@@ -485,6 +488,7 @@
         "shortDescription": "wa’ tlhegh QIn. browse ’aqroSmeyDaq, tetlhmeyDaq, je ’aqroS tlhopDaq cha’lu’.",
         "longDescription": "vItlhutlh. Doch ’aqroSDaq neH cha’lu’. nargh je ’ay’mey lo’.",
         "topicHint": "Doch — Quj (Minecraft, Fortnite, je latlh) ghap paQDI’norgh (ja’chuq).",
+        "materialUrlHint": "vItlhutlh. Gedupu’vaD neH — ghu’pu’ luleghbe’.",
         "padletHint": "vItlhutlh. ghItlh ghu’pu’vaD.",
         "deliveredInHint": "qaStaHvISmeyDaq Hol pIn.",
         "onlineNoLocation": "rurmey — Daq poQbe’. Hoch vavmey nej Hoch lulegh, qo’Daq pagh.",
@@ -519,6 +523,7 @@
         "municipalityRequired": "veng poQ rurmey ghomHom veng",
         "siteRequired": "Daq poQ Daq pa’ De’mey",
         "scheduleRequired": "wa’ poH mach poQ",
+        "materialUrlInvalid": "ghojmoHmeH De’ URL val ’oHnIS",
         "padletInvalid": "Padlet URL val ’oHnIS",
         "startDateRequired": "jaj tagh poQ",
         "endDateRequired": "jaj van poQ",

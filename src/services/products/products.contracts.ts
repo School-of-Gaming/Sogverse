@@ -52,6 +52,10 @@ const productDataBase = z.object({
   max_age: z.number(),
   spoken_language_code: z.string(),
   padlet_url: z.string().nullable(),
+  // Gedu/admin-only lesson-material link. Deliberately NOT a rename of
+  // padlet_url and never backfilled from it: the Padlet held family-facing
+  // session notes, while this is lesson content families must never see.
+  material_url: z.string().nullable(),
   location_id: z.string().nullable(),
   is_remote: z.boolean(),
   signup_threshold: z.number().nullable(),
