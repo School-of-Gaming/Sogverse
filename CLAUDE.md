@@ -12,8 +12,7 @@ npm run lint             # ESLint
 npm run type-check       # TypeScript check (tsc --noEmit)
 npm run test             # Vitest unit tests
 npm run test:ui          # Vitest with UI
-npm run test:e2e         # Playwright E2E tests
-npm run test:e2e:ui      # Playwright with UI
+npm run test:smoke       # Build + smoke check (serves a production build, asserts headers/CSP)
 ```
 
 ## Architecture
@@ -246,7 +245,7 @@ always-on tripwires:
 
 ## Testing
 
-Tests are in `tests/`, split into `unit/`, `integration/`, `db/`, and `e2e/`. The
+Tests are in `tests/`, split into `unit/`, `integration/`, `db/`, and `smoke/`. The
 classification rules and the per-category conventions (DB test helpers, integration-test
 route-handler mocking, unit setup) live in **`tests/CLAUDE.md`** (auto-loads when you
 work under `tests/`). Two things worth knowing from anywhere:
@@ -256,6 +255,9 @@ work under `tests/`). Two things worth knowing from anywhere:
   branch, not locally.
 - **Shared mock factories live in `tests/mocks/`** — add new mocks there rather than
   duplicating across files.
+- **`smoke/` is the only CI job that builds the app**, and it asserts security headers
+  and the per-request CSP against a served production build over plain HTTP. No browser
+  is launched there; a test that needs one does not belong in that directory.
 - **A new API route has to be classified in the integration suite's route posture
   registry** — its auth posture (with a written reason for anything that is not
   role-gated), how it takes its body, and the test that exercises it. The registry's

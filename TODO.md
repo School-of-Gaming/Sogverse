@@ -211,16 +211,18 @@ The seam is `SUPPORTED_CURRENCIES` in `src/lib/constants/currency.ts`. To turn c
 
 ### E2E Tests with Local Supabase
 
-Current E2E tests only cover unauthenticated flows (page renders, redirects). Authenticated tests (admin-only pages, role-based routing, CRUD operations) need real Supabase Auth + Postgres but shouldn't depend on the remote instance.
+**There is no E2E suite right now.** The old one was deleted in August 2026: it asserted on marketing copy and unauthenticated redirects, so it churned on every copy edit while catching nothing. What survived is a build + smoke job — it builds the app, serves the production build, and asserts security headers and the per-request CSP over plain HTTP with no browser involved. This section is the plan for adding a *meaningful* browser suite back, from scratch; it is not a hardening of anything that exists.
+
+The coverage worth having is the authenticated half — admin-only pages, role-based routing, CRUD flows. That needs real Supabase Auth + Postgres, and shouldn't depend on the remote instance.
 
 **Approach:** Run `supabase start` in CI to spin up a local Supabase stack (Postgres, Auth, Storage) in Docker. Existing migration files are applied automatically, giving an identical schema. Test accounts are created via `supabase/seed.sql`.
 
 Setup tasks:
 - [ ] Add `supabase/seed.sql` with test accounts (admin, customer, gedu, gamer) using known passwords
 - [ ] Add `.env.test.local` with local Supabase URL/keys (`supabase start` prints these)
-- [ ] Create Playwright auth setup project that logs in via the UI and saves `storageState` per role
-- [ ] Update `playwright.config.ts` with auth setup project and role-specific test projects
-- [ ] Add GitHub Actions step: `supabase start` → `npm run dev` (with test env) → `npx playwright test`
+- [ ] Add a `tests/e2e/` directory and a Playwright project for it — the smoke config is deliberately browserless (one project, no device emulation, no retries, no browser install in CI), so browser tests need their own project rather than being folded into that one
+- [ ] Create a Playwright auth setup project that logs in via the UI and saves `storageState` per role
+- [ ] Add a CI job (separate from build + smoke, which must stay cheap): `supabase start` → build/serve with test env → run the browser projects, installing only the engines that job actually uses
 
 Test cases to add:
 - [ ] Admin can view `/admin/products` (sees "Products" heading)
