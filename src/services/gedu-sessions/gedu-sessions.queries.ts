@@ -2,27 +2,14 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
+import { geduSessionKeys } from "./gedu-sessions.keys";
 import { GeduSessionsService } from "./gedu-sessions.service";
 import type {
   AttendanceStatus,
   GeduAssignmentSummary,
 } from "./gedu-sessions.contracts";
 
-/**
- * React Query bindings for the gedu session feed.
- *
- * The key hierarchy is what makes the invalidations cheap to reason about: a
- * write to any part of one group's workspace invalidates that group's feed key,
- * and anything that can change a backlog also invalidates the dashboard summary
- * key — because the badge on the card and the alerts in the feed are two views
- * of one number and must never disagree.
- */
-export const geduSessionKeys = {
-  all: ["gedu-sessions"] as const,
-  feeds: () => [...geduSessionKeys.all, "feed"] as const,
-  feed: (groupId: string) => [...geduSessionKeys.feeds(), groupId] as const,
-  summaries: () => [...geduSessionKeys.all, "summaries"] as const,
-};
+/** React Query bindings for the gedu session feed. */
 
 /**
  * One group's whole workspace.
@@ -30,6 +17,12 @@ export const geduSessionKeys = {
  * A perceptibly heavy call by design — it carries a club's entire history — so
  * the surface built on it renders a structured skeleton immediately rather than
  * nothing.
+ *
+ * On a direct load of the workspace URL the skeleton is never seen: the route
+ * runs this same read server-side and hydrates the answer under this key, so
+ * the query is already resolved on the first render. The skeleton is what a
+ * client-side navigation, a refetch, or a failed prefetch still gets — which is
+ * why it stays.
  */
 export function useGeduGroupFeed(groupId: string | null) {
   const service = new GeduSessionsService(getClient());

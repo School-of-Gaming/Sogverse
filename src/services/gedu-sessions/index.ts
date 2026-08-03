@@ -1,6 +1,6 @@
 export { GeduSessionsService } from "./gedu-sessions.service";
+export { geduSessionKeys } from "./gedu-sessions.keys";
 export {
-  geduSessionKeys,
   useGeduAssignmentSummaries,
   useGeduGroupFeed,
   useRecordAttendance,

@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
-import { geduSessionKeys } from "@/services/gedu-sessions/gedu-sessions.queries";
+import { geduSessionKeys } from "@/services/gedu-sessions/gedu-sessions.keys";
 import { MinecraftService } from "./minecraft.service";
 
 export const minecraftKeys = {

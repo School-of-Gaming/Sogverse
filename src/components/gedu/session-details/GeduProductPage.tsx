@@ -49,6 +49,13 @@ import type { SiteNotesDraft } from "./SiteNotesPanel";
  * read.** They are the same children, but only one of the two is invalidated
  * when a gedu fixes a Minecraft username, and a roster that does not refresh
  * after its own edit is worse than a slightly indirect one.
+ *
+ * **Both reads are usually already answered before this renders.** The route's
+ * server half runs the same pair and hydrates them into the cache, so a direct
+ * load paints the finished workspace rather than the skeleton. Everything below
+ * is written as though it had not: the skeleton, the not-assigned state and the
+ * pending branches are what a client-side navigation, a refetch and a failed
+ * prefetch all still land on, and they stay exactly as they were.
  */
 export function GeduProductPage({ productId }: { productId: string }) {
   const { data: product, isPending: productPending } =

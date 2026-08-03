@@ -2,17 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
+import { assignmentKeys } from "./assignments.keys";
 import {
   AssignmentsService,
   type MyAssignedProductSessionRow,
 } from "./assignments.service";
-
-export const assignmentKeys = {
-  all: ["assignments"] as const,
-  myAssignedProducts: () => [...assignmentKeys.all, "my-assigned-products"] as const,
-  assignedProductDetail: (productId: string | undefined) =>
-    [...assignmentKeys.all, "assigned-product-detail", productId] as const,
-};
 
 /**
  * The signed-in gedu's assignment rows — one per (product, their group in it),
@@ -47,6 +41,12 @@ export function useMyAssignedProducts(options: {
  * (role = 'gedu' AND assigned to the product), so the user-bound client
  * is enough. Returns `null` from the service on 42501 so consumers can
  * render a "not your session" empty state instead of throwing.
+ *
+ * The workspace route runs this same read server-side and hydrates the answer
+ * under this key, so a direct load resolves on the first render with no fetch.
+ * There is no `initialData` parameter for that reason — the seeding reaches
+ * this hook through the cache rather than through the call site, which is what
+ * lets the route also seed the *second*, group-keyed read it unlocks.
  */
 export function useGeduAssignedProduct(productId: string | undefined) {
   const supabase = getClient();
