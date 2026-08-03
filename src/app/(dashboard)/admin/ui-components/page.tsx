@@ -2602,10 +2602,20 @@ const ROBLOX_STATUSES: readonly {
   status: RobloxCheckStatus;
   caption: string;
 }[] = [
-  { status: "idle", caption: "Idle — nobody has asked" },
-  { status: "checking", caption: "Checking — the lookup is in flight" },
-  { status: "valid", caption: "Valid — a real account" },
-  { status: "invalid", caption: "Invalid — no such account" },
+  {
+    status: "verified",
+    caption: "We know, and it's verified — a confirmed account id",
+  },
+  {
+    status: "unverified",
+    caption:
+      "We know, but it isn't verified — a saved name no lookup ever confirmed. Amber, and the tick simply absent: the same treatment the badge gives it in the voice room and on the admin product page.",
+  },
+  {
+    status: "unknown",
+    caption: "We don't know — no username on the account",
+  },
+  { status: "checking", caption: "Checking — a lookup is in flight" },
 ];
 
 function RobloxDemo() {
@@ -2620,12 +2630,18 @@ function RobloxDemo() {
             </div>
           ))}
           <div className="space-y-1">
-            <DemoCaption>No username on the account</DemoCaption>
-            <RobloxUsernameRow username={null} />
+            <DemoCaption>
+              A null username renders as unknown whatever the status claims —
+              the two can&rsquo;t disagree
+            </DemoCaption>
+            <RobloxUsernameRow username={null} status="verified" />
           </div>
           <div className="space-y-1">
             <DemoCaption>A username with no upper bound</DemoCaption>
-            <RobloxUsernameRow username="GalaxyDestroyer9000" status="valid" />
+            <RobloxUsernameRow
+              username="GalaxyDestroyer9000"
+              status="verified"
+            />
           </div>
         </div>
       </SubSection>

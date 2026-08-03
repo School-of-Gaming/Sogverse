@@ -59,13 +59,18 @@ export function RobloxUsernameField({
   // was checked, so typing one more character retires it without an effect.
   const isVerified = verified !== null && value === verified.username;
 
+  // A failed lookup is *not* its own row state: to the row, a name we could not
+  // confirm is simply unverified, and the reason lives in this field's own error
+  // copy below — the one place that actually knows it. Same for a name nobody
+  // has checked yet. So anything typed but unconfirmed reads as `unverified`,
+  // and an empty box is the only thing that reads as `unknown`.
   const status: RobloxCheckStatus = checking
     ? "checking"
     : isVerified
-      ? "valid"
-      : verifyError !== null
-        ? "invalid"
-        : "idle";
+      ? "verified"
+      : value.trim() === ""
+        ? "unknown"
+        : "unverified";
 
   const handleVerify = async () => {
     const username = value.trim();

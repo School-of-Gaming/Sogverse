@@ -16,6 +16,8 @@ vi.mock("next-intl", () => ({
         return `${params?.username} (verified)`;
       case "notFound":
         return "Roblox account not found.";
+      case "unverified":
+        return `${params?.username} (not yet verified)`;
       case "none":
         return "(Unknown)";
       default:
@@ -25,10 +27,10 @@ vi.mock("next-intl", () => ({
 }));
 
 const STATUSES: readonly RobloxCheckStatus[] = [
-  "idle",
+  "unknown",
+  "unverified",
+  "verified",
   "checking",
-  "valid",
-  "invalid",
 ];
 
 /**
@@ -94,7 +96,7 @@ describe("RobloxUsernameRow", () => {
     const { container } = render(
       <RobloxUsernameRow
         username="EliasBuilds"
-        status="valid"
+        status="verified"
         avatarUrl="https://tr.rbxcdn.com/abc/420/420/AvatarBust/Png"
       />,
     );
@@ -113,7 +115,7 @@ describe("RobloxUsernameRow", () => {
     expect(getByText("(Unknown)")).toBeTruthy();
   });
 
-  it("announces the state politely, and says nothing while idle", () => {
+  it("announces the state politely, and says nothing when unknown", () => {
     const live = (status: RobloxCheckStatus) => {
       const { container, unmount } = render(
         <RobloxUsernameRow username="EliasBuilds" status={status} />,
@@ -123,9 +125,40 @@ describe("RobloxUsernameRow", () => {
       return text;
     };
 
-    expect(live("idle")).toBe("");
+    expect(live("unknown")).toBe("");
     expect(live("checking")).toBe("Verifying...");
-    expect(live("valid")).toBe("EliasBuilds (verified)");
-    expect(live("invalid")).toBe("Roblox account not found.");
+    expect(live("verified")).toBe("EliasBuilds (verified)");
+    expect(live("unverified")).toBe("EliasBuilds (not yet verified)");
+  });
+
+  // The state that motivated the four-state rewrite: a saved name nobody
+  // confirmed has to be visibly distinct from a confirmed one, and it earns that
+  // by the tick being absent rather than by a glyph of its own — the treatment
+  // the standalone badge already uses on the voice room and admin product page.
+  it("draws unverified in amber with no icon, and verified in success with one", () => {
+    const nameOf = (container: HTMLElement) =>
+      Array.from(container.firstElementChild?.children ?? []).at(1);
+
+    const unverified = render(
+      <RobloxUsernameRow username="EliasBuilds" status="unverified" />,
+    );
+    expect(nameOf(unverified.container)?.className).toContain("text-warning");
+    expect(boxes(unverified.container).status.children.length).toBe(0);
+
+    const verified = render(
+      <RobloxUsernameRow username="EliasBuilds" status="verified" />,
+    );
+    expect(nameOf(verified.container)?.className).toContain("text-success");
+    expect(boxes(verified.container).status.children.length).toBe(1);
+  });
+
+  it("renders a null username as unknown even when the status disagrees", () => {
+    const { getByText, container } = render(
+      <RobloxUsernameRow username={null} status="verified" />,
+    );
+
+    expect(getByText("(Unknown)")).toBeTruthy();
+    // No tick: the row must not assert a confirmed account for a name it hasn't got.
+    expect(boxes(container).status.children.length).toBe(0);
   });
 });

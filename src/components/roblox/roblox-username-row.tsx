@@ -1,21 +1,40 @@
 "use client";
 
-import { Check, Loader2, X } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 /**
- * Where a username is in its journey through the Roblox lookup.
+ * What we hold about a child's Roblox identity. **Four states, and they are a
+ * total function of the account** — whether a username is saved, and whether a
+ * lookup ever returned an account id for it — plus the moment a lookup is in
+ * flight.
  *
- * `idle` is not "unknown" — it is the resting state of a name nobody has asked
- * about since the page loaded, which is most names most of the time.
+ * Every one of the four survives a reload, because each is a fact about the
+ * account rather than about this render. That is the property an earlier shape
+ * of this type lacked: it carried an `idle` ("nobody has asked yet") and an
+ * `invalid` ("Roblox said no such account"), and neither is a state an account
+ * can be *in*. `idle` described the component's own lifecycle and evaporated on
+ * refresh; `invalid` described the outcome of one lookup. A name that failed a
+ * lookup and a name nobody ever looked up are the same thing to anyone reading a
+ * roster — **not verified** — and the surface that ran the lookup is the one
+ * that should say why, in its own error copy, rather than encoding a transient
+ * verdict here.
  */
-export type RobloxCheckStatus = "idle" | "checking" | "valid" | "invalid";
+export type RobloxCheckStatus =
+  /** No username saved — we don't know. */
+  | "unknown"
+  /** A username, but no account id was ever obtained. */
+  | "unverified"
+  /** A username and a confirmed account id. */
+  | "verified"
+  /** A lookup is in flight. */
+  | "checking";
 
 interface RobloxUsernameRowProps {
   /** The username, or `null` when the child has never given one. */
   username: string | null;
-  /** Where the lookup has got to. Defaults to `idle`. */
+  /** What we hold about this identity. Defaults to `unknown`. */
   status?: RobloxCheckStatus;
   /**
    * The avatar render's URL. `null` (the default) draws the bundled placeholder
@@ -69,13 +88,21 @@ interface RobloxUsernameRowProps {
  */
 export function RobloxUsernameRow({
   username,
-  status = "idle",
+  status = "unknown",
   avatarUrl = null,
   size = "row",
   className,
 }: RobloxUsernameRowProps) {
   const t = useTranslations("roblox.account");
   const full = size === "full";
+
+  // A missing username *is* the unknown state, so the two cannot disagree: a
+  // caller that passes no name gets the unknown rendering whatever it claims in
+  // `status`, rather than a row asserting a confirmed account for a name that
+  // isn't there. Resolved once, here, so every slot below reads the same answer
+  // — deriving it per slot is how the tick once survived a null username.
+  const resolved: RobloxCheckStatus = username === null ? "unknown" : status;
+  const unknown = resolved === "unknown";
 
   return (
     <div
@@ -113,38 +140,46 @@ export function RobloxUsernameRow({
       <span
         className={cn(
           "min-w-0 flex-1 truncate text-[11px] leading-tight",
-          username === null && "text-muted-foreground",
-          status === "valid" && "text-success",
-          status === "invalid" && "text-destructive",
+          unknown && "text-muted-foreground",
+          resolved === "unverified" && "text-warning",
+          resolved === "verified" && "text-success",
         )}
       >
-        {username ?? t("none")}
+        {unknown ? t("none") : username}
       </span>
 
       {/* The fixed slot. It occupies its square in every state, including the
-          one that draws nothing, so a check landing cannot move the row. */}
+          one that draws nothing, so a check landing cannot move the row.
+
+          `unverified` deliberately draws nothing here. It is the same treatment
+          the standalone badge gives the state on the voice room and the admin
+          product page — amber, and the check simply absent — so the two
+          components say the same thing about the same account. The missing tick
+          beside a name that carries one everywhere else is the signal. */}
       <span
         aria-hidden
         className="flex h-4 w-4 shrink-0 items-center justify-center"
       >
-        {status === "checking" && (
+        {resolved === "checking" && (
           <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
         )}
-        {status === "valid" && <Check className="h-3.5 w-3.5 text-success" />}
-        {status === "invalid" && <X className="h-3.5 w-3.5 text-destructive" />}
+        {resolved === "verified" && <Check className="h-3.5 w-3.5 text-success" />}
       </span>
 
       {/* The state travels to assistive tech as words, once, rather than being
           re-read as part of the row every time the icon changes. Empty until
           there is something to say, so eight resting rows announce nothing. */}
+      {/* Narrowed on `username` itself rather than on `unknown`: the two say the
+          same thing, but only this form proves it to the compiler, and the
+          announcement is the one place that interpolates the name. */}
       <span aria-live="polite" className="sr-only">
-        {username === null || status === "idle"
+        {username === null || resolved === "unknown"
           ? ""
-          : status === "checking"
+          : resolved === "checking"
             ? t("verifying")
-            : status === "valid"
+            : resolved === "verified"
               ? t("verifiedUser", { username })
-              : t("notFound")}
+              : t("unverified", { username })}
       </span>
     </div>
   );
