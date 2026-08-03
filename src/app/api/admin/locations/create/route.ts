@@ -1,5 +1,8 @@
 import { defineRoute } from "@/lib/api/define-route";
-import { createLocationBody } from "@/services/locations/locations.contracts";
+import {
+  LOCATION_COLUMNS,
+  createLocationBody,
+} from "@/services/locations/locations.contracts";
 
 /**
  * POST /api/admin/locations/create
@@ -27,7 +30,9 @@ export const POST = defineRoute({
     const { data, error } = await supabase
       .from("locations")
       .insert(body)
-      .select()
+      // Named columns, not `select()`: the answer is parsed against
+      // `locationRow`, which does not carry the generated search fold.
+      .select(LOCATION_COLUMNS)
       .single();
 
     if (error) throw error;

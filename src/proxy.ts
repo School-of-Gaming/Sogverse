@@ -271,7 +271,24 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public folder files
      * - Next.js metadata file conventions (opengraph-image, sitemap.xml, robots.txt)
+     * - api/locations/search — see below, this one is load-bearing
+     *
+     * **Rule: a route whose response is marked publicly cacheable must not pass
+     * through here.** This proxy refreshes a near-expiry session and writes the
+     * new auth cookies onto whatever response it is handling. The location
+     * search route answers with `s-maxage=300` because its body depends only on
+     * the URL — but if the proxy attached a `Set-Cookie` to that same response,
+     * a shared cache holding it would hand one signed-in user's refreshed
+     * session to every anonymous requester of that URL. Concretely: a gedu
+     * whose token is inside the refresh margin types in the coverage picker,
+     * and the reply carries both their cookies and permission to cache.
+     *
+     * Vercel declines to cache a response carrying `Set-Cookie`, so this has
+     * never been reachable in production — but that is one vendor's behaviour
+     * standing between us and session disclosure, not a decision this repo
+     * made. Excluding the path makes it ours. The route needs nothing from the
+     * proxy anyway: it reads no cookies and builds its own anonymous client.
      */
-    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|sitemap\\.xml|robots\\.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|sitemap\\.xml|robots\\.txt|api/locations/search|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

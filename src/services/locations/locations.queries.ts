@@ -1,14 +1,21 @@
 "use client";
 
-import { useCallback } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import {
   LocationsService,
-  type LocationCodeRef,
   type LocationWithChain,
 } from "./locations.service";
-import type { Location, LocationInsert } from "@/types";
+import {
+  LOCATION_SEARCH_LIMIT,
+  LOCATION_SEARCH_MIN_QUERY,
+} from "./locations.contracts";
+import type { Location, LocationInsert, LocationType } from "@/types";
 
 /**
  * A cache key has to be a value, and the key-set lookups below take a *set*:
@@ -32,15 +39,16 @@ export const locationKeys = {
   sites: () => [...locationKeys.all, "sites"] as const,
   sitesByParent: (parentId: string) =>
     [...locationKeys.sites(), "by-parent", parentId] as const,
+  // Browsing is keyed by the node opened, with the root under its own key so
+  // "the countries" is a cache entry like any other level.
+  children: () => [...locationKeys.all, "children"] as const,
+  childrenOf: (parentId: string | null) =>
+    [...locationKeys.children(), parentId ?? "root"] as const,
+  search: () => [...locationKeys.all, "search"] as const,
+  searchFor: (query: string, types: readonly LocationType[] | undefined) =>
+    [...locationKeys.search(), query, types ? [...types].sort().join(",") : ""] as const,
   byIds: (ids: readonly string[]) =>
     [...locationKeys.all, "by-ids", keySet(ids)] as const,
-  byCodes: (countryCode: string, refs: readonly LocationCodeRef[]) =>
-    [
-      ...locationKeys.all,
-      "by-codes",
-      countryCode,
-      keySet(refs.map((ref) => `${ref.type}:${ref.external_code}`)),
-    ] as const,
 };
 
 export function useLocation(id: string) {
@@ -96,7 +104,73 @@ export function useSitesByParent(parentId: string | null | undefined) {
   });
 }
 
-/** Specific rows by id — coverage chips, a stored selection's display name. */
+/**
+ * How long a browsed or searched level stays fresh. Countries, regions and
+ * communes are seeded reference data that changes when a migration says so, and
+ * reopening the picker should not re-fetch the top of the tree; the one thing
+ * that does change under a user — a newly created venue — invalidates this key
+ * explicitly from the create mutation.
+ */
+const REFERENCE_DATA_STALE_MS = 5 * 60 * 1000;
+
+/**
+ * One level of the tree: the children of `parentId`, or the countries when it
+ * is null.
+ *
+ * Infinite rather than plain, because fan-out is a property of the data and not
+ * of the screen: a country has tens of children and a French département has
+ * hundreds, but nothing stops a future country from having thousands at one
+ * level, and the payload has to stay proportional to what is rendered. Pages
+ * accumulate rather than replace, so "load more" appends under rows the user is
+ * already reading instead of moving them.
+ *
+ * `parentId` of null is a real argument, not "not ready yet" — the root of the
+ * tree is what the picker opens on.
+ */
+export function useLocationChildren(parentId: string | null) {
+  const supabase = getClient();
+  const service = new LocationsService(supabase);
+
+  return useInfiniteQuery({
+    queryKey: locationKeys.childrenOf(parentId),
+    queryFn: ({ pageParam }) => service.getChildren(parentId, { page: pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.hasMore ? allPages.length : undefined,
+    staleTime: REFERENCE_DATA_STALE_MS,
+  });
+}
+
+/**
+ * Cross-country search. Below the minimum needle length the query never runs,
+ * which is what keeps a keystroke-driven box from firing a request per letter
+ * before it could match anything meaningful.
+ */
+export function useLocationSearch(
+  query: string,
+  options?: { types?: readonly LocationType[]; limit?: number },
+) {
+  const supabase = getClient();
+  const service = new LocationsService(supabase);
+  const needle = query.trim();
+  const types = options?.types;
+
+  return useQuery({
+    queryKey: locationKeys.searchFor(needle, types),
+    queryFn: () =>
+      service.searchLocations(needle, {
+        types,
+        limit: options?.limit ?? LOCATION_SEARCH_LIMIT,
+      }),
+    enabled: needle.length >= LOCATION_SEARCH_MIN_QUERY,
+    staleTime: REFERENCE_DATA_STALE_MS,
+    // The previous needle's hits stay on screen while the next one is in
+    // flight, so a list the user is reading is replaced rather than emptied.
+    placeholderData: (previous) => previous,
+  });
+}
+
+/** Specific rows by id, each with its chain — coverage chips, a stored pick. */
 export function useLocationsByIds(ids: readonly string[]) {
   const supabase = getClient();
   const service = new LocationsService(supabase);
@@ -105,37 +179,6 @@ export function useLocationsByIds(ids: readonly string[]) {
     queryKey: locationKeys.byIds(ids),
     queryFn: () => service.getLocationsByIds(ids),
   });
-}
-
-/**
- * Catalog entries → rows, on demand. What a code-only UI calls to get the ids
- * it needs to write a foreign key.
- *
- * Imperative rather than declarative: a save path only learns which codes it
- * needs at the moment the user commits, which is too late for a mounted query.
- * Returns a stable function that reads through the `locationKeys.byCodes`
- * cache entry.
- */
-export function useResolveLocationsByCodes() {
-  const queryClient = useQueryClient();
-
-  return useCallback(
-    (countryCode: string, refs: readonly LocationCodeRef[]) => {
-      // `getClient()` is the browser singleton, so building the service here
-      // rather than at render time costs nothing and keeps the callback stable.
-      const service = new LocationsService(getClient());
-      return queryClient.fetchQuery({
-        queryKey: locationKeys.byCodes(countryCode, refs),
-        queryFn: () => service.resolveLocationsByCodes(countryCode, refs),
-        // A commit asks the server, every time. The default one-minute
-        // staleness is right for a screen that re-renders; it is wrong here,
-        // where the interesting answer is "no row for this code" and a retry
-        // must be able to see that change rather than replay the cached miss.
-        staleTime: 0,
-      });
-    },
-    [queryClient],
-  );
 }
 
 export function useCreateLocation() {
@@ -147,7 +190,8 @@ export function useCreateLocation() {
     mutationFn: (location: LocationInsert) => service.createLocation(location),
     onSuccess: () => {
       // The only thing this route creates is a site, and a new site changes
-      // both the flat list and the per-municipality one.
+      // both the flat list and the per-municipality one — plus the browse level
+      // it was created under, which is now one row longer.
       //
       // RETURNED, not fired-and-forgotten: React Query awaits a promise
       // returned from onSuccess before resolving mutateAsync. The site picker
@@ -155,7 +199,10 @@ export function useCreateLocation() {
       // clears any selected id that is not in useSites() — so if mutateAsync
       // resolved while the sites cache was still the pre-create array, the
       // picker would select the new venue and immediately wipe it.
-      return queryClient.invalidateQueries({ queryKey: locationKeys.sites() });
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: locationKeys.sites() }),
+        queryClient.invalidateQueries({ queryKey: locationKeys.children() }),
+      ]);
     },
   });
 }
@@ -172,6 +219,9 @@ export function useUpdateLocation() {
       queryClient.invalidateQueries({ queryKey: locationKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: locationKeys.municipalities() });
       queryClient.invalidateQueries({ queryKey: locationKeys.sites() });
+      queryClient.invalidateQueries({ queryKey: locationKeys.children() });
+      // A rename changes what search matches, so every cached needle is stale.
+      queryClient.invalidateQueries({ queryKey: locationKeys.search() });
     },
   });
 }

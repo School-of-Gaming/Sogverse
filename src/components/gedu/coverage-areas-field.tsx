@@ -6,10 +6,10 @@
  * register-gedu form.
  *
  * It renders what is currently claimed as a fixed-height box of chips, and
- * opens the catalog dialog to change it. It holds no data of its own — the
- * caller owns the tick map and decides what committing means (a save button, or
- * a registration submit) — and the catalog itself is loaded by the dialog, so
- * nothing here is fetched until the user asks to browse.
+ * opens the picker to change it. It holds no data of its own — the caller owns
+ * the tick map and decides what committing means (a save button, or a
+ * registration submit) — and the picker fetches nothing until the user asks to
+ * browse.
  *
  * The chip box has a fixed height and scrolls internally: coverage arrives
  * after the first paint on the editor surfaces, and a growing list would
@@ -20,22 +20,19 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { CatalogCoverageDialog } from "@/components/locations/catalog-picker";
-import { catalogRefKey, type CatalogPick } from "@/lib/locations/catalog";
-import { cn } from "@/lib/utils";
-import {
-  sortedTicks,
-  type CoverageTick,
-  type LegacyCoverageRow,
-} from "./coverage-ticks";
+import { LocationCoverageDialog } from "@/components/locations/location-browser";
+import type { LocationPick } from "@/components/locations/location-picker-panel";
+import { sortedTicks, type CoverageTick } from "./coverage-ticks";
 
 interface CoverageAreasFieldProps {
   ticks: ReadonlyMap<string, CoverageTick>;
-  onToggle: (pick: CatalogPick) => void;
+  /** A row was ticked or unticked in the picker. */
+  onToggle: (pick: LocationPick) => void;
+  /** A chip's X was clicked. Separate from `onToggle` because a chip knows only
+   *  the row id it stands for, and inventing a whole pick to express that would
+   *  be a lie the caller cannot see through. */
+  onRemove: (locationId: string) => void;
   onClear: () => void;
-  /** Saved rows the catalog cannot show — venues and pre-catalog entries. */
-  legacy?: readonly LegacyCoverageRow[];
-  onRemoveLegacy?: (id: string) => void;
   disabled?: boolean;
   /** Saved coverage is still loading; the box shows a note instead of chips. */
   loading?: boolean;
@@ -44,9 +41,8 @@ interface CoverageAreasFieldProps {
 export function CoverageAreasField({
   ticks,
   onToggle,
+  onRemove,
   onClear,
-  legacy = [],
-  onRemoveLegacy,
   disabled,
   loading,
 }: CoverageAreasFieldProps) {
@@ -55,14 +51,13 @@ export function CoverageAreasField({
   const [open, setOpen] = useState(false);
 
   const rows = sortedTicks(ticks, locale);
-  const total = rows.length + legacy.length;
 
   return (
     <div className="space-y-3">
       <div className="rounded-md border">
         <div className="flex items-center justify-between border-b px-3 py-2">
           <span className="text-sm font-medium">
-            {t("selectedHeading", { count: total })}
+            {t("selectedHeading", { count: rows.length })}
           </span>
           <Button
             type="button"
@@ -78,56 +73,20 @@ export function CoverageAreasField({
         <div className="h-52 overflow-y-auto p-3">
           {loading ? (
             <p className="text-sm text-muted-foreground">{t("loading")}</p>
-          ) : total === 0 ? (
+          ) : rows.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("noneSelected")}</p>
           ) : (
-            <div className="space-y-3">
-              {rows.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {rows.map((tick) => (
-                    <CoverageChip
-                      key={catalogRefKey(tick.ref)}
-                      label={tick.label}
-                      detail={tick.detail}
-                      removeLabel={t("remove", { name: tick.label })}
-                      disabled={disabled}
-                      onRemove={() =>
-                        onToggle({
-                          ...tick.ref,
-                          name: tick.label,
-                          ancestors: [],
-                        })
-                      }
-                    />
-                  ))}
-                </div>
-              )}
-
-              {legacy.length > 0 && (
-                <div className="space-y-2 border-t pt-3">
-                  <p className="text-xs font-medium">{t("legacyHeading")}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {t("legacyNote")}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {legacy.map((row) => (
-                      <CoverageChip
-                        key={row.id}
-                        label={row.label}
-                        detail={
-                          row.kind === "venue"
-                            ? t("venueBadge")
-                            : t("legacyBadge")
-                        }
-                        removeLabel={t("remove", { name: row.label })}
-                        disabled={disabled || !onRemoveLegacy}
-                        onRemove={() => onRemoveLegacy?.(row.id)}
-                        muted
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
+            <div className="flex flex-wrap gap-2">
+              {rows.map((tick) => (
+                <CoverageChip
+                  key={tick.locationId}
+                  label={tick.label}
+                  detail={tick.detail}
+                  removeLabel={t("remove", { name: tick.label })}
+                  disabled={disabled}
+                  onRemove={() => onRemove(tick.locationId)}
+                />
+              ))}
             </div>
           )}
         </div>
@@ -146,10 +105,10 @@ export function CoverageAreasField({
         {t("chooseAreas")}
       </Button>
 
-      <CatalogCoverageDialog
+      <LocationCoverageDialog
         open={open}
         onOpenChange={setOpen}
-        tickedKeys={new Set(ticks.keys())}
+        selectedIds={new Set(ticks.keys())}
         onToggle={onToggle}
       />
     </div>
@@ -162,7 +121,6 @@ interface CoverageChipProps {
   removeLabel: string;
   onRemove: () => void;
   disabled?: boolean;
-  muted?: boolean;
 }
 
 function CoverageChip({
@@ -171,15 +129,9 @@ function CoverageChip({
   removeLabel,
   onRemove,
   disabled,
-  muted,
 }: CoverageChipProps) {
   return (
-    <span
-      className={cn(
-        "inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs",
-        muted ? "bg-muted text-muted-foreground" : "bg-background",
-      )}
-    >
+    <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border bg-background px-2.5 py-1 text-xs">
       <span className="truncate font-medium">{label}</span>
       {detail && (
         <span className="truncate text-muted-foreground">{detail}</span>

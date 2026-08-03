@@ -10,50 +10,31 @@
  * does not tick its départements; unticking a commune does not disturb any
  * ancestor tick. An empty selection is valid and means "remote-only".
  *
- * Saved rows arrive as `location_id`s, so the editor reads the rows themselves
- * to learn each one's `(country, type, official code)` and light up the
- * matching catalog node. Rows with no such identity — venues, and anything from
- * a country that ships no catalog — are shown as removable chips instead.
- *
- * Save resolves every newly ticked code back to a row id before writing. That
- * resolution can legitimately come up empty (a code whose row is not seeded on
- * this environment yet), and when it does the save is refused with the place
- * named, rather than quietly writing a coverage set missing a tick the gedu
- * just made.
+ * Saved rows arrive as `location_id`s and the picker browses rows, so a tick is
+ * a row id from the moment it is made to the moment it is written. There is no
+ * resolution step, no claim the editor can display but not store, and therefore
+ * no failure mode where a save is refused because a place the gedu just ticked
+ * turned out to have no row.
  */
 
 import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  useLocationsByIds,
-  useResolveLocationsByCodes,
-} from "@/services/locations";
+import { useLocationsByIds } from "@/services/locations";
 import { useGeduLocations, useSetGeduLocations } from "@/services/gedu-locations";
-import type { CatalogPick } from "@/lib/locations/catalog";
+import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { CoverageAreasField } from "./coverage-areas-field";
 import {
-  codeRefsOf,
-  matchResolvedRows,
-  pendingTicksByCountry,
   sameTickKeys,
-  splitCoverageRows,
+  sortedTicks,
+  ticksFromRows,
   toggleCoverageTick,
   type CoverageTick,
 } from "./coverage-ticks";
 
 interface GeduCoverageEditorProps {
   geduId: string;
-}
-
-/** One shared empty set, so the untouched render is referentially stable. */
-const EMPTY_IDS: ReadonlySet<string> = new Set();
-
-/** Everything the user has changed since load. `null` means "untouched". */
-interface CoverageDraft {
-  ticks: Map<string, CoverageTick>;
-  removedLegacyIds: Set<string>;
 }
 
 export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
@@ -69,17 +50,16 @@ export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
   const { data: locations, isLoading: locationsLoading } =
     useLocationsByIds(locationIds);
 
-  const resolveByCodes = useResolveLocationsByCodes();
   const setMutation = useSetGeduLocations();
 
   const saved = useMemo(
-    () => splitCoverageRows(locations ?? [], locale),
+    () => ticksFromRows(locations ?? [], locale),
     [locations, locale],
   );
 
   // Before the first edit the editor renders straight off the server set, so
   // the initial paint needs no setState-in-effect hop.
-  const [draft, setDraft] = useState<CoverageDraft | null>(null);
+  const [draft, setDraft] = useState<Map<string, CoverageTick> | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   /**
    * Set synchronously before the save starts. `mutation.isPending` flips false
@@ -89,46 +69,26 @@ export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
    */
   const [committing, setCommitting] = useState(false);
 
-  const ticks = draft?.ticks ?? saved.ticks;
-  const removedLegacyIds = draft?.removedLegacyIds ?? EMPTY_IDS;
-  const legacy = useMemo(
-    () => saved.legacy.filter((row) => !removedLegacyIds.has(row.id)),
-    [saved.legacy, removedLegacyIds],
-  );
+  const ticks = draft ?? saved;
+  const isDirty = draft !== null && !sameTickKeys(draft, saved);
 
-  const isDirty =
-    draft !== null &&
-    (!sameTickKeys(draft.ticks, saved.ticks) ||
-      draft.removedLegacyIds.size > 0);
-
-  function edit(change: (current: CoverageDraft) => CoverageDraft) {
+  function edit(
+    change: (current: Map<string, CoverageTick>) => Map<string, CoverageTick>,
+  ) {
     setSaveError(null);
-    setDraft((current) =>
-      change(
-        current ?? {
-          ticks: new Map(saved.ticks),
-          removedLegacyIds: new Set(),
-        },
-      ),
-    );
+    setDraft((current) => change(current ?? new Map(saved)));
   }
 
-  function handleToggle(pick: CatalogPick) {
-    edit((current) => ({
-      ...current,
-      ticks: toggleCoverageTick(current.ticks, pick),
-    }));
+  function handleToggle(pick: LocationPick) {
+    edit((current) => toggleCoverageTick(current, pick, locale));
   }
 
-  function handleClear() {
-    edit((current) => ({ ...current, ticks: new Map() }));
-  }
-
-  function handleRemoveLegacy(id: string) {
-    edit((current) => ({
-      ...current,
-      removedLegacyIds: new Set(current.removedLegacyIds).add(id),
-    }));
+  function handleRemove(locationId: string) {
+    edit((current) => {
+      const next = new Map(current);
+      next.delete(locationId);
+      return next;
+    });
   }
 
   async function handleSave() {
@@ -137,40 +97,13 @@ export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
     setCommitting(true);
 
     try {
-      const ids = new Set<string>();
-      for (const tick of ticks.values()) {
-        if (tick.locationId) ids.add(tick.locationId);
-      }
-      for (const row of legacy) ids.add(row.id);
-
-      // Newly ticked catalog nodes carry a code, not a row id. One request per
-      // country; a code with no row comes back absent, which is a refusal, not
-      // a silent drop.
-      const unresolved: CoverageTick[] = [];
-      for (const [country, pending] of pendingTicksByCountry(ticks)) {
-        const resolved = await resolveByCodes(country, codeRefsOf(pending));
-        const matched = matchResolvedRows(pending, resolved);
-        for (const id of matched.ids) ids.add(id);
-        unresolved.push(...matched.unresolved);
-      }
-
-      if (unresolved.length > 0) {
-        setSaveError(
-          t("unresolvedError", {
-            names: unresolved.map((tick) => tick.label).join(", "),
-          }),
-        );
-        setCommitting(false);
-        return;
-      }
-
       // The mutation's onSuccess returns the invalidate promise, so this
       // resolves only once the refetch has landed — dropping the draft here
       // cannot flash stale state. Both setStates are in the same event, so the
       // button goes straight from "saving" to disabled-because-clean.
       await setMutation.mutateAsync({
         geduId,
-        locationIds: Array.from(ids),
+        locationIds: sortedTicks(ticks, locale).map((tick) => tick.locationId),
       });
       setDraft(null);
       setCommitting(false);
@@ -191,9 +124,8 @@ export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
         <CoverageAreasField
           ticks={ticks}
           onToggle={handleToggle}
-          onClear={handleClear}
-          legacy={legacy}
-          onRemoveLegacy={handleRemoveLegacy}
+          onRemove={handleRemove}
+          onClear={() => edit(() => new Map())}
           disabled={committing}
           loading={rowsLoading || locationsLoading}
         />

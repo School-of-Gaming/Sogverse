@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { RegisterGeduForm } from "@/components/auth";
@@ -12,17 +11,26 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function RegisterGeduPage() {
+/** `?redirect=` is read server-side — see the note on the register page. */
+export default async function RegisterGeduPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ redirect?: string | string[] }>;
+}) {
   // Prefetch the spoken languages server-side so the checkboxes paint complete
   // on the first frame (layout-shift rule); the table is anon-readable, so this
   // works without a session. Coverage needs no prefetch: the field renders a
-  // fixed-height, initially-empty chip box, and the catalog behind its dialog
-  // is code-split and only fetched if the registrant opens it.
-  const spokenLanguages = await prefetchSpokenLanguages();
+  // fixed-height, initially-empty chip box, and opening its dialog reads one
+  // indexed level of the tree — nothing worth moving to the server.
+  const [spokenLanguages, { redirect }] = await Promise.all([
+    prefetchSpokenLanguages(),
+    searchParams,
+  ]);
 
   return (
-    <Suspense fallback={<div className="h-96 w-full max-w-2xl animate-pulse rounded-lg bg-card" />}>
-      <RegisterGeduForm initialSpokenLanguages={spokenLanguages} />
-    </Suspense>
+    <RegisterGeduForm
+      initialSpokenLanguages={spokenLanguages}
+      redirect={typeof redirect === "string" ? redirect : null}
+    />
   );
 }

@@ -2,7 +2,7 @@
 
 ## Cleanup
 
-- [ ] **Sweep pre-existing loading skeletons behind the 250ms reveal gate.** Root CLAUDE.md now has the rule (skeletons invisible for their first ~250ms via `useRevealAfter`, structured ghosts over solid blocks) and every skeleton born on the French-locale branch follows it — but ~14 older files still show instant solid-pulse placeholders (auth pages, admin users/product pages, parent gamer page, ProfileTiles, groups panel, gamer picker…). Each is a mechanical two-line change; batch them in one pass and eyeball each surface with a warm cache.
+- [ ] **Re-decide the ~14 pre-existing loading skeletons against the loading rule.** The ~250ms reveal gate is gone (root CLAUDE.md now picks the affordance from what the call *is*, not from a timer), and `useRevealAfter` went with it. Roughly fourteen files still paint an instant solid-pulse placeholder over reads nobody has classified: auth pages, admin users/product pages, parent gamer page, ProfileTiles, groups panel, gamer picker. Each needs the same one question asked — cached, small-and-indexed, or genuinely slow — and most will end up rendering nothing in a correctly-sized box, as the locations picker now does. This is a judgement pass, not a mechanical one; do it with the queries open, not the components.
 
 - [ ] **Per-participant volume slider — wiring removed; would be desktop-only if revived.** The discrete-zone redesign dropped the per-participant volume slider; the `element.volume`/`base` multiplier plumbing was then removed entirely when audio routing switched to a binary `element.muted` (zone in/out is the only control; see `src/lib/voice/audio-routing.ts`). **A volume slider can't work on iPhone:** iOS Safari ignores `element.volume` *and* the Web Audio `GainNode` path for WebRTC (volume is hardware-buttons-only), so a true per-participant volume would be desktop/iPad-only — reconsider whether it's worth a platform-split control before reviving it. To restore: bring back a per-remote multiplier (`isAudible` → a volume number on non-iOS), a `setParticipantVolume` action, and the slider; gate it off mobile.
 
@@ -97,13 +97,12 @@ line, so the helper returns null for them.
   `session-calendar-view.tsx` + `compute-product-sessions.ts` and their message
   keys for good.
 
-### Locations: catalog for browsing, seeded rows for the query engine
+### Locations: one seeded table, browsed and searched on the server
 
 Both countries are seeded complete and admins never hand-type a place name: everything above a `site` is seed data, and a site is the only row the app creates (see `src/services/locations/CLAUDE.md`). Follow-ups:
 
 - [ ] **`useUpdateLocation` + the `PATCH /api/admin/locations/[id]` route have no caller.** Nothing in the UI renames a location — the naming dialog is only ever opened in "add a site" mode — so the route, the hook and the dialog's edit mode (`src/services/locations/`, `src/components/admin/location-form-dialog.tsx`) are dead. Remove them, or repurpose if we add a site-rename affordance to the venue picker.
 - [ ] **Consider enforcing site-only creation server-side.** `POST /api/admin/locations/create` is the only route that inserts a location, and `createLocationBody` (`src/services/locations/locations.contracts.ts`) still accepts any `location_type` — the site-only restriction is UI-only, so a scripted admin call could still create a region or a municipality by hand and put an unofficial row in seeded reference data. Tighten the contract to `type === 'site'` if we want the invariant enforced at the API.
-- [ ] **Parent home location (future feature) — persistence decision made, not built.** When parents get to provide their location, the picker browses the public static catalogs (works for any commune, no admin involvement, no new access control). Persist the choice as a catalog reference (`country_code` + `external_code`) on the profile — a parent's home location is profile data, not shared reference data, so it needs no `locations` row of its own. The full seed means a real FK is *possible* if some table must one day reference it; that is a schema decision to take then, not now.
 - [ ] **Dead i18n keys in `admin.locations.*`.** `title`, `description`, `searchPlaceholder`, `noLocationsYet` and `noLocationsMatchSearch` have no consumer; the naming dialog still uses the rest of the namespace. `noLocationsYet` is also wrong on its face ("Add a country to get started" — you cannot). Prune them across all five `messages/*.json` when convenient.
 
 ### Unbounded list reads silently truncate at PostgREST's `max_rows`
@@ -239,7 +238,7 @@ Test cases to add:
 Several files define inline `selectClassName` strings that duplicate `<Input>` styling for native `<select>` elements. Extract a `components/ui/select.tsx` wrapper and replace the inline patterns.
 
 - [ ] Create `src/components/ui/select.tsx` wrapping a native `<select>` with Input-matching styles
-- [ ] Replace inline select styling wherever a local `selectClassName` string duplicates `<Input>`'s classes — today the catalog dialog's country picker and the add-gamer dialog, plus any other occurrences
+- [ ] Replace inline select styling wherever a local `selectClassName` string duplicates `<Input>`'s classes — today the add-gamer dialog, plus any other occurrences
 
 ### Optimize Product Images via `next/image`
 

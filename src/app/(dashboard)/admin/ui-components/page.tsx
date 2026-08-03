@@ -74,13 +74,15 @@ import type {
   VoiceRoomContextValue,
   VoiceParticipant,
 } from "@/components/voice/hooks/types";
-import type { VoiceZone } from "@/types";
-import { CatalogPicker } from "@/components/locations/catalog-picker";
-import { catalogRefKey, type LocationCatalog } from "@/lib/locations/catalog";
+import type { Json, VoiceZone } from "@/types";
 import {
-  LocationList,
-  type LocationListGroup,
-} from "@/components/admin/products/location-list";
+  LocationPickerPanel,
+  type LocationChainSummary,
+  type LocationPick,
+  type LocationSummary,
+} from "@/components/locations/location-picker-panel";
+import { HomeLocationField } from "@/components/locations/home-location-field";
+import type { LocationGroup } from "@/components/locations/location-groups";
 import {
   ProductBrowseCardView,
   type LocationLine,
@@ -1873,68 +1875,101 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 9b: Location List                                     */}
+      {/* Section 9b: Location Picker                                   */}
       {/* ============================================================ */}
-      <Section title="Location List">
+      <Section title="Location Picker">
         <p className="text-sm text-muted-foreground">
-          The database-row counterpart to the catalog panel below. The catalog
-          browses an exhaustive static classification and never touches the
-          database; this browses the small set of rows that <em>are</em> in the
-          database and that no catalog contains or orders — the venues an admin
-          created, and the Finnish municipalities an online club can be funded
-          by. Both are small enough to search client-side in one pass.
+          One panel, and every location control in the app is a configuration of
+          it. The axis being demonstrated here is the <code>scope</code>: what
+          the panel is showing <em>before the first keystroke</em>. In{" "}
+          <strong>tree</strong> scope it browses the hierarchy from the
+          countries down; in <strong>set</strong> scope it lists a bounded
+          collection the surface has already fetched, grouped under the place
+          above each row. These were two components until they were merged —
+          the search box, the selected-row highlight, the name-plus-muted-detail
+          row and the fixed-height box were each written twice.
         </p>
         <p className="text-sm text-muted-foreground">
-          Worth trying: matching a group header keeps every row under it (type{" "}
-          <code>helsinki</code> to list its venues), search is
-          diacritic-insensitive in both directions (<code>jarvenpaa</code> finds
-          Järvenpää), and the list holds one fixed height across loading, empty
-          and loaded so nothing under it moves.
-        </p>
-        <LocationListDemo />
-      </Section>
-
-      {/* ============================================================ */}
-      {/* Section 9c: Catalog Picker                                    */}
-      {/* ============================================================ */}
-      <Section title="Catalog Picker">
-        <p className="text-sm text-muted-foreground">
-          One panel, two selection modes. In the real app it is handed one of the
-          shipped official catalogs — France&rsquo;s alone has 34,875 communes,
-          loaded as its own chunk behind a dynamic import — by a dialog that owns
-          the country switch, the loading skeleton and the retry. Here both modes
-          are fed the same five-commune fixture and fake handlers, no network:
-          the panel takes a catalog and a <code>selection</code> config as props
-          and owns nothing else, which is the separation-of-concerns check.
+          In the real app a container above the panel owns the browse position,
+          the debounced query and the two server reads behind them — one level
+          of children by parent, or a ranked top-N from the search index. Here
+          every scope is fed a fixture and fake handlers, no network at all: the
+          panel takes rows and a <code>scope</code> config as props and owns
+          nothing else, which is the separation-of-concerns check.
         </p>
         <p className="text-sm text-muted-foreground">
-          Worth trying: search is diacritic-insensitive, so{" "}
-          <code>nimes</code> finds N&icirc;mes; clearing the box drops back to
-          drill-down browsing; and in single mode the confirm button stays
-          disabled from the click until the parent swaps the view away, so the
-          action can&rsquo;t be fired twice.
+          Note what is <em>not</em> here: no country to choose first (a country
+          is simply the top level of the tree) and no loading skeleton. Every
+          read behind the real panel is a small indexed lookup, so the list box
+          — which already has its final height — just fills in.
         </p>
-        <SubSection title="Single mode (geography navigator)">
+        <SubSection title="Tree scope, single mode (pick one place)">
           <p className="text-sm text-muted-foreground mb-3">
-            Confirming a commune writes nothing — every commune is already a
-            seeded row, so the product picker resolves the confirmed code to
-            that row and shows what is already there before offering to name a
-            new venue under it.
+            The rows are real table rows, so confirming one hands the caller the
+            row itself plus its ancestors — enough to write the foreign key and
+            render the place with its path, with nothing left to resolve. A row
+            of a pickable type is terminal: clicking it selects rather than
+            descends, so the level a caller asked for is where browsing stops.
           </p>
-          <CatalogPickerDemo />
+          <LocationPickerDemo />
         </SubSection>
-        <SubSection title="Multi mode (gedu coverage)">
+        <SubSection title="Tree scope, multi mode (gedu coverage)">
           <p className="text-sm text-muted-foreground mb-3">
             Every level is tickable and each tick is an independent &ldquo;I
             cover this whole subtree&rdquo; claim, so ticking Hauts-de-France and
             then drilling into it shows Nord and Pas-de-Calais{" "}
             <em>unticked</em> — deliberately. Half-ticking them would say
             something the saved rows don&rsquo;t: one claim is one row, and
-            matching walks the ancestor chain to find it. Multi mode also indexes
-            the levels above the leaves, so searching <code>nord</code> finds the
-            département itself and not only communes spelled like it.
+            matching walks the ancestor chain to find it.
           </p>
-          <CatalogCoverageDemo />
+          <LocationCoverageDemo />
+        </SubSection>
+        <SubSection title="Tree scope, searching">
+          <p className="text-sm text-muted-foreground mb-3">
+            The same panel, told it is showing search hits: each row carries the
+            path that tells two identically-named communes apart, and the status
+            line reports the true match count behind the rendered cap. In the
+            real app the ranking, the cap and that count all come from the
+            database — a prefix match beats an infix one however late in the
+            table it sits.
+          </p>
+          <LocationSearchDemo />
+        </SubSection>
+        <SubSection title="Set scope (the product form's two modes)">
+          <p className="text-sm text-muted-foreground mb-3">
+            The same panel again, handed finished groups instead of a level.
+            There is no breadcrumb (there is nothing to browse), no status line
+            (nothing was capped) and no confirm step — the panel sits inline in
+            the product form, so a click <em>is</em> the pick and the form owns
+            the commit. Filtering is local: the rows are already in memory, so a
+            keystroke costs no request and has no loading state.
+          </p>
+          <p className="text-sm text-muted-foreground mb-3">
+            Worth trying: matching a group header keeps every row under it (type{" "}
+            <code>helsinki</code> to list its venues), and the fold is
+            diacritic-insensitive in both directions (<code>jarvenpaa</code>{" "}
+            finds Järvenpää, and so does <code>järvenpää</code>) — the same fold
+            the database applies, pinned to it by a shared table of inputs in
+            the test suites.
+          </p>
+          <LocationSetDemo />
+        </SubSection>
+        <SubSection title="Home location field (parent profile)">
+          <p className="text-sm text-muted-foreground mb-3">
+            The parent&rsquo;s own place: one optional municipality, on the
+            registration form and in settings. It asks single mode for the
+            municipality level — Finland&rsquo;s kunta, France&rsquo;s commune,
+            the one directly above a venue. Unlike the panels above, this demo
+            opens the real dialog, so browsing and search here hit the database.
+          </p>
+          <p className="text-sm text-muted-foreground mb-3">
+            The box <em>is</em> the picker rather than a display row over a
+            &ldquo;choose&rdquo; button — one control, and no button caption
+            that has to guess what the viewer&rsquo;s country calls this level.
+            A confirmed pick is a row, so what comes back is a foreign key and a
+            path, with nothing left to resolve.
+          </p>
+          <HomeLocationFieldDemo />
         </SubSection>
       </Section>
 
@@ -2236,14 +2271,31 @@ export default function AdminUIComponentsPage() {
 /* ------------------------------------------------------------------ */
 
 /* ------------------------------------------------------------------ */
-/*  Location List Demo                                                 */
+/*  Location Set Demo                                                  */
 /* ------------------------------------------------------------------ */
+
+function venue(id: string, name: string, nameI18n: Json | null = null): LocationSummary {
+  return { id, name, name_i18n: nameI18n, type: "site", country_code: "FI" };
+}
+
+function place(
+  id: string,
+  name: string,
+  type: LocationSummary["type"],
+  nameI18n: Json | null = null,
+): LocationChainSummary {
+  return { id, name, name_i18n: nameI18n, type };
+}
+
+const UUSIMAA = place("uusimaa", "Uusimaa", "region", { sv: "Nyland" });
+const PIRKANMAA = place("pirkanmaa", "Pirkanmaa", "region");
+const FI = place("fi", "Suomi", "country");
 
 // Venues under their municipality, with the region as the header's context —
 // the exact shape the product picker's site mode builds from the scoped sites
 // read. Järvenpää is here so the diacritic folding is visible, and Helsinki
 // carries its Swedish name so a header search matches an alternate too.
-const VENUE_GROUPS: LocationListGroup[] = [
+const VENUE_GROUPS: LocationGroup[] = [
   {
     key: "helsinki",
     label: "Helsinki",
@@ -2251,16 +2303,12 @@ const VENUE_GROUPS: LocationListGroup[] = [
     searchTerms: ["Helsinki", "Helsingfors"],
     rows: [
       {
-        id: "hki-1",
-        name: "Itälahdenkatu 23 B",
-        detail: "",
-        searchTerms: ["Itälahdenkatu 23 B"],
+        location: venue("hki-1", "Itälahdenkatu 23 B"),
+        ancestors: [place("helsinki", "Helsinki", "municipality", { sv: "Helsingfors" }), UUSIMAA, FI],
       },
       {
-        id: "hki-2",
-        name: "Kalasataman kirjasto",
-        detail: "",
-        searchTerms: ["Kalasataman kirjasto"],
+        location: venue("hki-2", "Kalasataman kirjasto"),
+        ancestors: [place("helsinki", "Helsinki", "municipality", { sv: "Helsingfors" }), UUSIMAA, FI],
       },
     ],
   },
@@ -2271,10 +2319,8 @@ const VENUE_GROUPS: LocationListGroup[] = [
     searchTerms: ["Järvenpää"],
     rows: [
       {
-        id: "jp-1",
-        name: "Kirjasto",
-        detail: "",
-        searchTerms: ["Kirjasto"],
+        location: venue("jp-1", "Kirjasto"),
+        ancestors: [place("jarvenpaa", "Järvenpää", "municipality"), UUSIMAA, FI],
       },
     ],
   },
@@ -2282,67 +2328,70 @@ const VENUE_GROUPS: LocationListGroup[] = [
     key: "tampere",
     label: "Tampere",
     detail: "Pirkanmaa",
-    searchTerms: ["Tampere", "Tammerfors"],
+    searchTerms: ["Tampere"],
     rows: [
-      { id: "tre-1", name: "Sampola", detail: "", searchTerms: ["Sampola"] },
+      {
+        location: venue("tre-1", "Sampola"),
+        ancestors: [place("tampere", "Tampere", "municipality"), PIRKANMAA, FI],
+      },
     ],
   },
 ];
 
-const LIST_LABELS = {
+const SET_LABELS = {
   searchPlaceholder: "Search venues by name or municipality…",
-  clearSearch: "Clear search",
   empty: "No venues yet.",
-  noResults: (query: string) => `No locations match “${query}”.`,
-  loading: "Loading locations",
 };
 
-function LocationListDemo() {
+function LocationSetDemo() {
+  const [query, setQuery] = useState("");
   const [value, setValue] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [emptyQuery, setEmptyQuery] = useState("");
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
       <div className="space-y-2">
-        <h4 className="text-sm font-semibold">Loaded</h4>
-        <LocationList
-          groups={VENUE_GROUPS}
-          value={value}
-          onSelect={setValue}
-          labels={LIST_LABELS}
-          footer={
-            <Button type="button" variant="outline" size="sm">
-              New venue…
-            </Button>
-          }
+        <h4 className="text-sm font-semibold">A set with rows in it</h4>
+        <LocationPickerPanel
+          query={query}
+          onQueryChange={setQuery}
+          scope={{
+            kind: "set",
+            groups: VENUE_GROUPS,
+            value,
+            onSelect: (pick) => setValue(pick.location.id),
+            labels: SET_LABELS,
+            footer: (
+              <Button type="button" variant="outline" size="sm">
+                New venue…
+              </Button>
+            ),
+          }}
         />
         <p className="text-xs text-muted-foreground">
-          Selected: {value ?? "(none)"}
+          Selected: {value ?? "(none)"} &mdash; a click is the pick, so this is
+          the whole interaction. The caller gets the row and its chain back, not
+          just the id.
         </p>
       </div>
 
       <div className="space-y-2">
-        <h4 className="text-sm font-semibold">Loading / empty</h4>
+        <h4 className="text-sm font-semibold">Empty, and no results</h4>
         <p className="text-xs text-muted-foreground">
-          Both states occupy the same height as the loaded list, so the button
-          below never moves as rows arrive.
+          An empty set says so in the caller&rsquo;s words; a query that matches
+          nothing says that instead. Both occupy the same height as the loaded
+          list, so the button below never moves.
         </p>
-        <LocationList
-          groups={[]}
-          value={null}
-          onSelect={() => {}}
-          loading={loading}
-          labels={LIST_LABELS}
-          footer={
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setLoading((current) => !current)}
-            >
-              {loading ? "Show empty state" : "Show loading state"}
-            </Button>
-          }
+        <LocationPickerPanel
+          query={emptyQuery}
+          onQueryChange={setEmptyQuery}
+          scope={{
+            kind: "set",
+            groups: [],
+            value: null,
+            onSelect: () => {},
+            labels: SET_LABELS,
+          }}
         />
       </div>
     </div>
@@ -2350,64 +2399,93 @@ function LocationListDemo() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Catalog Picker Demo                                                */
+/*  Location Picker Demo                                               */
 /* ------------------------------------------------------------------ */
 
-// A miniature stand-in for src/lib/locations/catalog/fr.json: same shape, same
-// three levels, five communes instead of 34,875. Nîmes and Béziers are here on
-// purpose — they are what makes the diacritic folding visible.
-const CATALOG_FIXTURE: LocationCatalog = {
-  country: "FR",
-  source: "Fixture — not a real classification",
-  release: "2026",
-  generated: "2026-01-01",
-  levels: ["region", "district", "municipality"],
-  counts: [2, 4, 5],
-  tree: [
-    [
-      "32",
-      "Hauts-de-France",
-      [
-        [
-          "59",
-          "Nord",
-          [
-            ["59350", "Lille"],
-            ["59512", "Roubaix"],
-          ],
-        ],
-        ["62", "Pas-de-Calais", [["62041", "Arras"]]],
-      ],
-    ],
-    [
-      "76",
-      "Occitanie",
-      [
-        [
-          "30",
-          "Gard",
-          [["30189", "Nîmes"]],
-        ],
-        ["34", "Hérault", [["34032", "Béziers"]]],
-      ],
-    ],
-  ],
+// A miniature stand-in for the rows the browse query returns: same columns,
+// three levels, five communes instead of 35,000. Nîmes and Béziers are here on
+// purpose — they are what the real search's diacritic folding is for, and the
+// search demo below shows them found from an unaccented needle.
+const FR: LocationSummary = {
+  id: "fr",
+  name: "France",
+  name_i18n: null,
+  type: "country",
+  country_code: "FR",
 };
 
-function CatalogPickerDemo() {
-  const [added, setAdded] = useState<string | null>(null);
+function fixtureRow(
+  id: string,
+  name: string,
+  type: LocationSummary["type"],
+): LocationSummary {
+  return { id, name, name_i18n: null, type, country_code: "FR" };
+}
+
+const HDF = fixtureRow("32", "Hauts-de-France", "region");
+const OCC = fixtureRow("76", "Occitanie", "region");
+const NORD = fixtureRow("59", "Nord", "district");
+const GARD = fixtureRow("30", "Gard", "district");
+
+/** One level of the tree, keyed by the id of the node above it. */
+const LEVELS: Record<string, LocationSummary[]> = {
+  root: [FR],
+  fr: [HDF, OCC],
+  "32": [NORD, fixtureRow("62", "Pas-de-Calais", "district")],
+  "76": [GARD, fixtureRow("34", "Hérault", "district")],
+  "59": [fixtureRow("59350", "Lille", "municipality"), fixtureRow("59512", "Roubaix", "municipality")],
+  "62": [fixtureRow("62041", "Arras", "municipality")],
+  "30": [fixtureRow("30189", "Nîmes", "municipality")],
+  "34": [fixtureRow("34032", "Béziers", "municipality")],
+};
+
+/** Fixture search hits, each with the path a real hit carries. */
+const HITS: LocationPick[] = [
+  { location: fixtureRow("30189", "Nîmes", "municipality"), ancestors: [GARD, OCC, FR] },
+  { location: fixtureRow("34032", "Béziers", "municipality"), ancestors: [fixtureRow("34", "Hérault", "district"), OCC, FR] },
+];
+
+/**
+ * Drives the panel's browse half from the fixture tree above: the path is
+ * component state, and the rows are whatever level that path points at.
+ */
+function useFixtureBrowse() {
+  const [path, setPath] = useState<LocationChainSummary[]>([]);
+  const parentId = path.at(-1)?.id ?? "root";
+  const ancestors = [...path].reverse();
+  const rows = (LEVELS[parentId] ?? []).map((location) => ({ location, ancestors }));
+
+  return {
+    path,
+    // The same rule the real browser uses: a row's path is its ancestors
+    // reversed to root-first plus the row itself, which holds whether the row
+    // was browsed to or searched for. Appending instead would look right here —
+    // the fixture only browses — while being wrong in the app.
+    onDrill: (pick: LocationPick) =>
+      setPath([...[...pick.ancestors].reverse(), pick.location]),
+    onOpenDepth: (depth: number) => setPath((current) => current.slice(0, depth)),
+    browse: { rows, total: rows.length, hasMore: false, loading: false },
+  };
+}
+
+const EMPTY_ROWS = { rows: [], total: 0, hasMore: false, loading: false };
+
+function LocationPickerDemo() {
+  const [query, setQuery] = useState("");
+  const [confirmed, setConfirmed] = useState<string | null>(null);
+  const fixture = useFixtureBrowse();
 
   // Mirrors the real flow: on success the parent swaps this view away, which
   // is why the picker never has to re-enable its confirm button.
-  if (added) {
+  if (confirmed) {
     return (
       <div className="space-y-3 rounded-md border border-input bg-card p-4">
         <p className="text-sm">
-          Confirmed <span className="font-medium">{added}</span> — the product
-          picker would now resolve that code to its seeded row and list the
-          venues already in it.
+          Confirmed <span className="font-medium">{confirmed}</span> — the venue
+          flow would now list the venues already in it, with that row as the
+          parent of any new one.
         </p>
-        <Button type="button" variant="outline" onClick={() => setAdded(null)}>
+        <Button type="button" variant="outline" onClick={() => setConfirmed(null)}>
           Pick another
         </Button>
       </div>
@@ -2416,46 +2494,66 @@ function CatalogPickerDemo() {
 
   return (
     <div className="max-w-2xl rounded-md border border-input bg-card p-4">
-      <CatalogPicker
-        catalog={CATALOG_FIXTURE}
-        countryLabel="France"
-        selection={{
-          mode: "single",
-          onConfirm: (entry) =>
-            new Promise<void>((resolve) =>
-              setTimeout(() => {
-                setAdded(entry.name);
-                resolve();
-              }, 600),
-            ),
-          onCancel: () => setAdded(null),
+      <LocationPickerPanel
+        query={query}
+        onQueryChange={setQuery}
+        scope={{
+          kind: "tree",
+          path: fixture.path,
+          onDrill: fixture.onDrill,
+          onOpenDepth: fixture.onOpenDepth,
+          minQueryLength: 2,
+          browse: fixture.browse,
+          search: EMPTY_ROWS,
+          selection: {
+            mode: "single",
+            pickableTypes: ["municipality"],
+            onConfirm: (pick) =>
+              new Promise<void>((resolve) =>
+                setTimeout(() => {
+                  setConfirmed(pick.location.name);
+                  resolve();
+                }, 600),
+              ),
+            onCancel: () => setConfirmed(null),
+          },
         }}
       />
     </div>
   );
 }
 
-function CatalogCoverageDemo() {
+function LocationCoverageDemo() {
+  const [query, setQuery] = useState("");
   const [ticked, setTicked] = useState<ReadonlySet<string>>(new Set());
+  const fixture = useFixtureBrowse();
 
   return (
     <div className="space-y-2">
       <div className="max-w-2xl rounded-md border border-input bg-card p-4">
-        <CatalogPicker
-          catalog={CATALOG_FIXTURE}
-          countryLabel="France"
-          selection={{
-            mode: "multi",
-            tickedKeys: ticked,
-            onToggle: (pick) =>
-              setTicked((prev) => {
-                const next = new Set(prev);
-                const key = catalogRefKey(pick);
-                if (next.has(key)) next.delete(key);
-                else next.add(key);
-                return next;
-              }),
-            onDone: () => setTicked(new Set()),
+        <LocationPickerPanel
+          query={query}
+          onQueryChange={setQuery}
+          scope={{
+            kind: "tree",
+            path: fixture.path,
+            onDrill: fixture.onDrill,
+            onOpenDepth: fixture.onOpenDepth,
+            minQueryLength: 2,
+            browse: fixture.browse,
+            search: EMPTY_ROWS,
+            selection: {
+              mode: "multi",
+              selectedIds: ticked,
+              onToggle: (pick) =>
+                setTicked((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(pick.location.id)) next.delete(pick.location.id);
+                  else next.add(pick.location.id);
+                  return next;
+                }),
+              onDone: () => setTicked(new Set()),
+            },
           }}
         />
       </div>
@@ -2464,6 +2562,71 @@ function CatalogCoverageDemo() {
         &mdash; &ldquo;Done&rdquo; clears the demo&rsquo;s state; in the real app
         it closes the dialog and the caller&rsquo;s save commits the ticks.
       </p>
+    </div>
+  );
+}
+
+function LocationSearchDemo() {
+  // Held above the minimum length so the panel stays in its search branch: the
+  // point of this demo is the hit rows, not the transition into them.
+  const [query, setQuery] = useState("nimes");
+
+  return (
+    <div className="max-w-2xl rounded-md border border-input bg-card p-4">
+      <LocationPickerPanel
+        query={query}
+        onQueryChange={setQuery}
+        scope={{
+          kind: "tree",
+          path: [],
+          onDrill: () => {},
+          onOpenDepth: () => {},
+          minQueryLength: 2,
+          browse: EMPTY_ROWS,
+          search: { rows: HITS, total: 47, hasMore: false, loading: false },
+          selection: {
+            mode: "single",
+            pickableTypes: ["municipality"],
+            onConfirm: () => Promise.resolve(),
+            onCancel: () => setQuery(""),
+          },
+        }}
+      />
+    </div>
+  );
+}
+
+function HomeLocationFieldDemo() {
+  const [place, setPlace] = useState<LocationPick | null>(null);
+
+  return (
+    <div className="max-w-md space-y-4 rounded-md border border-input bg-card p-4">
+      <div className="space-y-2">
+        <HomeLocationField value={place} onChange={setPlace} />
+        <p className="text-xs text-muted-foreground">
+          Value:{" "}
+          {place ? `${place.location.id} (${place.location.name})` : "(none)"}{" "}
+          &mdash; a row id, so the caller has a foreign key to store and a path
+          to render without a second read. It decides what committing means: a
+          registration submit, or a settings save.
+        </p>
+      </div>
+
+      {/* The third state, which is the reason the prop is not just
+          `LocationPick | null`. It cannot be reached by clicking, because the
+          read it represents lands in a frame or two — so it is pinned here as a
+          fixture rather than demonstrated by waiting for one. */}
+      <div className="space-y-2">
+        <HomeLocationField value={undefined} onChange={() => {}} />
+        <p className="text-xs text-muted-foreground">
+          Value: <code>undefined</code> &mdash; a stored id whose row has not
+          arrived yet, as settings mounts. The box is silent at its final height
+          rather than showing the &ldquo;add your location&rdquo; prompt, which
+          would tell someone who has chosen a place that they have not, and be
+          clickable while it did so. Reading one row by id is an indexed lookup,
+          so there is no skeleton and no spinner here by design.
+        </p>
+      </div>
     </div>
   );
 }
