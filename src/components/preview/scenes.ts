@@ -130,7 +130,7 @@ export const PREVIEW_SCENES = [
         slug: "unverified",
         label: "Awaiting verification",
         description:
-          "The same assignments for an account an admin has not approved yet — the instant-room panel is replaced by the verification notice. The one state that cannot coexist with the default.",
+          "A brand-new account an admin has not approved yet: the instant-room panel is replaced by the verification notice, and there are no cards at all, because verification is what gates group assignment. So this is also the empty state — a “Clubs” heading with its pill entry and one line saying a group will appear here once one is assigned, because a gedu with no assignments has no noun of their own and clubs is the default. Neither half can coexist with the default scenario.",
       },
     ],
   },

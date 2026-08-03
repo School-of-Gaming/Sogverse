@@ -786,3 +786,37 @@ describe("the clubs-only scenario fills the grid", () => {
     }
   });
 });
+
+/**
+ * **The account awaiting verification is also the empty dashboard**, and that is
+ * not a convenience: verification is the gate on group assignment, so an
+ * unapproved gedu has nothing to be assigned to and could never see a card. The
+ * page with no cards on it appears nowhere else in the registry, so pinning the
+ * emptiness here is what stops a later fixture edit from quietly handing this
+ * scenario a card and taking the only preview of the empty state away.
+ */
+describe("the unverified scenario is the empty dashboard", () => {
+  const now = new Date("2026-02-11T20:00:00Z");
+
+  it("rolls up no assignments at all, so the body renders its empty state", () => {
+    const { assignments } = buildGeduDashboardFixture(
+      now,
+      "unverified",
+      "en",
+      "Europe/Helsinki",
+    );
+    expect(assignments).toEqual([]);
+  });
+
+  it("is the only scenario without cards — the others must stay populated", () => {
+    for (const scenario of GEDU_DASHBOARD_SCENARIOS) {
+      const { assignments } = buildGeduDashboardFixture(
+        now,
+        scenario,
+        "en",
+        "Europe/Helsinki",
+      );
+      expect(assignments.length === 0, scenario).toBe(scenario === "unverified");
+    }
+  });
+});

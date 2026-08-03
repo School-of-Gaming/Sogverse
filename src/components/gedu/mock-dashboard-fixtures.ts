@@ -72,7 +72,11 @@ import {
  *
  * `unverified` is the account an admin has not approved yet, which swaps the
  * instant-room panel for a notice and cannot be true at the same time as the
- * panel being usable.
+ * panel being usable. It carries **no assignments at all**, because that is the
+ * page the account it describes actually meets: verification is what gates group
+ * assignment, so a gedu waiting on it has nothing to be assigned to yet. It
+ * therefore doubles as the empty-state scenario — the unheaded section with the
+ * "when you're assigned to a group" line, which no other scenario can show.
  */
 export const GEDU_DASHBOARD_SCENARIOS = [
   "default",
@@ -342,10 +346,15 @@ export function buildGeduDashboardFixture(
     }),
   ];
 
+  // An unverified gedu has nothing assigned — verification is the gate on group
+  // assignment — so the scenario that shows the verification notice is also the
+  // one that shows the empty state, and no card is built for it.
   const rows =
-    scenario === "clubs-only"
-      ? [...clubRows, ...extraClubRows]
-      : [...clubRows, ...endedRows, ...otherRows];
+    scenario === "unverified"
+      ? []
+      : scenario === "clubs-only"
+        ? [...clubRows, ...extraClubRows]
+        : [...clubRows, ...endedRows, ...otherRows];
 
   const assignments = rollUpGeduAssignments({
     rows,

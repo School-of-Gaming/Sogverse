@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
 import {
   groupAssignmentsByType,
+  type GeduActivityGroup,
   type GeduActivityType,
 } from "@/lib/gedu-assignment-rollup";
 import {
@@ -23,8 +24,22 @@ const ACTIVITY_HEADING_KEY = {
   event: "events",
 } as const satisfies Record<GeduActivityType, string>;
 
-/** Anchor id for the empty state, which belongs to no type noun. */
-const EMPTY_ACTIVITIES_SECTION_ID = "activities";
+/**
+ * The noun an **empty** dashboard is headed with.
+ *
+ * A gedu with nothing assigned has no noun of their own, so the page has to pick
+ * one, and clubs is the default the rest of the product already assumes: it is
+ * the standing weekly commitment, the thing most gedus are brought on to run,
+ * and the first heading on every populated dashboard. Heading the empty page
+ * with it costs nothing if the first assignment turns out to be a camp — that
+ * gedu then sees a single "Camps" section, exactly as they would have either
+ * way — and it buys an empty dashboard that still reads as the dashboard:
+ * a heading, a pill entry beside the instant room, and the same section rhythm
+ * the page will have the moment somebody assigns them a group. The alternative,
+ * an unheaded paragraph floating above the voice room, reads as a page that
+ * failed to render rather than one with nothing in it yet.
+ */
+const EMPTY_DASHBOARD_ACTIVITY_TYPE: GeduActivityType = "club";
 
 /**
  * The gedu dashboard's page body — everything below the route's data shell.
@@ -51,7 +66,9 @@ const EMPTY_ACTIVITIES_SECTION_ID = "activities";
  *   then had to read every card's eyebrow to sort them. Only the nouns a gedu
  *   actually has are rendered, so a camp gedu never learns that events exist, and
  *   the section pill gains one entry per noun so the nav says the same words the
- *   headings do.
+ *   headings do. The single exception is the gedu who has none of them, whose
+ *   page is headed with the default noun rather than with nothing — see
+ *   `EMPTY_DASHBOARD_ACTIVITY_TYPE`.
  * - **The sections are wider than the family dashboards', and the cards tile.**
  *   Gedu surfaces are desktop-default, and a roll-up card is small — a gedu with
  *   three activities on a laptop met one narrow column and a screen and a half
@@ -85,6 +102,18 @@ export function GeduDashboardPageBody({
   );
 
   /**
+   * The sections the page is made of: one per noun the gedu actually runs, or a
+   * single empty one when they run none. Everything below reads from this and
+   * not from the groups — the pill, the headings and the bodies are three views
+   * of one list, so an empty dashboard cannot end up with a heading the nav has
+   * no entry for.
+   */
+  const activitySections: GeduActivityGroup<GeduAssignmentCardData>[] =
+    activityGroups.length === 0
+      ? [{ type: EMPTY_DASHBOARD_ACTIVITY_TYPE, items: [] }]
+      : activityGroups;
+
+  /**
    * **Pill labels are their own strings, not the section headings reused.**
    *
    * The pill is a row of small chips in a rounded bar that has to fit on a
@@ -98,7 +127,7 @@ export function GeduDashboardPageBody({
    * are already the shortest true word for the thing.
    */
   const sections: DashboardSection[] = [
-    ...activityGroups.map((group) => ({
+    ...activitySections.map((group) => ({
       id: ACTIVITY_HEADING_KEY[group.type],
       label: t(ACTIVITY_HEADING_KEY[group.type]),
     })),
@@ -132,39 +161,36 @@ export function GeduDashboardPageBody({
           instant room genuinely is a different section and keeps the wide gap. */}
       <div className="space-y-24 pb-24">
         <div className="space-y-10">
-          {activityGroups.length === 0 ? (
-            // No assignments at all: one unheaded section carrying the empty
-            // state, and no pill entry for it. A heading here would have to pick
-            // a noun, and every noun would be a lie about a gedu who runs none of
-            // them.
-            <section id={EMPTY_ACTIVITIES_SECTION_ID} className="scroll-mt-32">
-              <div className="mx-auto max-w-5xl">
-                <p className="text-muted-foreground">
-                  {t("myGroupsEmptyStateGedu")}
-                </p>
+          {activitySections.map((group) => (
+            <section
+              key={group.type}
+              id={ACTIVITY_HEADING_KEY[group.type]}
+              className="scroll-mt-32"
+            >
+              {/* `max-w-5xl`, not the family dashboards' `max-w-3xl`: this is a
+                  desktop surface, and three roll-up cards need the room. Every
+                  section shares the width so the headings line up down the
+                  page — two different `mx-auto` caps would read as a broken
+                  grid. */}
+              <div className="mx-auto max-w-5xl space-y-6">
+                <h2 className="text-3xl font-bold">
+                  {t(ACTIVITY_HEADING_KEY[group.type])}
+                </h2>
+                {/* Empty only on the dashboard of a gedu with nothing assigned
+                    at all — a populated section always has items, because the
+                    grouping drops the nouns nobody runs. The copy says a group
+                    will appear here rather than naming clubs, so the sentence
+                    stays true when the first assignment is a camp. */}
+                {group.items.length === 0 ? (
+                  <p className="text-muted-foreground">
+                    {t("myGroupsEmptyStateGedu")}
+                  </p>
+                ) : (
+                  <GeduAssignmentsSectionView items={group.items} />
+                )}
               </div>
             </section>
-          ) : (
-            activityGroups.map((group) => (
-              <section
-                key={group.type}
-                id={ACTIVITY_HEADING_KEY[group.type]}
-                className="scroll-mt-32"
-              >
-                {/* `max-w-5xl`, not the family dashboards' `max-w-3xl`: this is a
-                    desktop surface, and three roll-up cards need the room. Every
-                    section shares the width so the headings line up down the
-                    page — two different `mx-auto` caps would read as a broken
-                    grid. */}
-                <div className="mx-auto max-w-5xl space-y-6">
-                  <h2 className="text-3xl font-bold">
-                    {t(ACTIVITY_HEADING_KEY[group.type])}
-                  </h2>
-                  <GeduAssignmentsSectionView items={group.items} />
-                </div>
-              </section>
-            ))
-          )}
+          ))}
         </div>
 
         {/* Last section gets viewport-height min so clicking its pill can
