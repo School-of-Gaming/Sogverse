@@ -368,6 +368,19 @@ export function SettingsSectionContent({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            <GameUsernameEditableRow
+              platform="minecraft"
+              username={mcAccount?.minecraft_username ?? null}
+              externalId={mcAccount?.minecraft_uuid ?? null}
+              onCommit={({ username }) => void handleSaveMc(username)}
+              className="max-w-sm"
+            />
+
+            {/* Below the row, not above it. The outcome of a save arrives after
+                the save, so a banner above the row would push the row — the very
+                thing the person just used, and is still looking at — down the
+                page as it lands. Last thing in the last card on the page, so it
+                grows into empty space and moves nothing. */}
             {mcSuccess && (
               <div className="rounded-md bg-success/10 p-3 text-sm text-success">
                 {mcSuccess}
@@ -379,14 +392,6 @@ export function SettingsSectionContent({
                 {mcError}
               </div>
             )}
-
-            <GameUsernameEditableRow
-              platform="minecraft"
-              username={mcAccount?.minecraft_username ?? null}
-              externalId={mcAccount?.minecraft_uuid ?? null}
-              onCommit={({ username }) => void handleSaveMc(username)}
-              className="max-w-sm"
-            />
           </CardContent>
         </Card>
       )}
