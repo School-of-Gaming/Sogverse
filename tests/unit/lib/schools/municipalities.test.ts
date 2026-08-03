@@ -285,8 +285,6 @@ function municipality(
     external_code: null,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
-    // Derived by the database from the columns above; never read here.
-    search_blob: null,
     ancestors: [region, FINLAND],
   };
 }

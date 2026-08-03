@@ -10,6 +10,7 @@ import {
   readErrorMessage,
 } from "@/lib/api/json-response";
 import {
+  LOCATION_COLUMNS,
   LOCATION_SEARCH_LIMIT,
   LOCATION_SEARCH_MIN_QUERY,
   locationRow,
@@ -164,6 +165,11 @@ function normalizeKeys(keys: readonly string[]): string[] {
 // parent_id. The `locations!parent_id` form looks like the same thing but
 // PostgREST resolves it to the children — rows whose parent_id points back
 // here — and returns `[]` for any leaf.
+//
+// Every select below names its columns. `LOCATION_COLUMNS` (the contract) is
+// the whole row minus the generated search fold; `CHAIN_COLUMNS` is narrower
+// still, because an ancestor is rendered rather than picked and its timestamps
+// answer nothing a breadcrumb or a grouping header asks.
 // ---------------------------------------------------------------------------
 
 const CHAIN_COLUMNS = "id, name, name_i18n, type, parent_id, country_code, external_code";
@@ -200,7 +206,7 @@ const MUNICIPALITY_CHAIN_EMBED =
 function buildSitesQuery(supabase: AppSupabaseClient) {
   return supabase
     .from("locations")
-    .select(`*, ${SITE_CHAIN_EMBED}`, { count: "exact" })
+    .select(`${LOCATION_COLUMNS}, ${SITE_CHAIN_EMBED}`, { count: "exact" })
     .eq("type", "site")
     .order("name")
     .order("id");
@@ -212,7 +218,9 @@ function buildMunicipalitiesQuery(
 ) {
   return supabase
     .from("locations")
-    .select(`*, ${MUNICIPALITY_CHAIN_EMBED}`, { count: "exact" })
+    .select(`${LOCATION_COLUMNS}, ${MUNICIPALITY_CHAIN_EMBED}`, {
+      count: "exact",
+    })
     .eq("country_code", countryCode)
     .eq("type", "municipality")
     .order("name")
@@ -281,7 +289,7 @@ export class LocationsService {
   async getLocation(id: string): Promise<Location> {
     const { data, error } = await this.supabase
       .from("locations")
-      .select("*")
+      .select(LOCATION_COLUMNS)
       .eq("id", id)
       .single();
 
@@ -335,7 +343,7 @@ export class LocationsService {
     return readPage(page, LOCATION_BROWSE_PAGE_SIZE, (from, to) => {
       const base = this.supabase
         .from("locations")
-        .select("*", { count: "exact" });
+        .select(LOCATION_COLUMNS, { count: "exact" });
       // `.is(column, null)` and `.eq(column, value)` are different filters, not
       // one with a nullable argument: `eq` against null matches nothing.
       const scoped =
@@ -390,7 +398,7 @@ export class LocationsService {
     return walkPages("getSitesByParent", (from, to) =>
       this.supabase
         .from("locations")
-        .select("*", { count: "exact" })
+        .select(LOCATION_COLUMNS, { count: "exact" })
         .eq("type", "site")
         .eq("parent_id", parentId)
         .order("name")
@@ -423,7 +431,7 @@ export class LocationsService {
     for (const batch of chunkKeys(wanted)) {
       const { data, error } = await this.supabase
         .from("locations")
-        .select(`*, ${SITE_CHAIN_EMBED}`)
+        .select(`${LOCATION_COLUMNS}, ${SITE_CHAIN_EMBED}`)
         .in("id", batch)
         .order("name")
         .order("id");

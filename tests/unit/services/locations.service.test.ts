@@ -28,9 +28,6 @@ function locationRows(count: number, offset = 0): Location[] {
     name_i18n: null,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
-    // Derived by the database and never written by anything here; present
-    // because it is part of the row.
-    search_blob: null,
   }));
 }
 
@@ -596,4 +593,52 @@ describe("LocationsService.searchLocations", () => {
 
     await expect(service.searchLocations("lille")).rejects.toThrow();
   });
+});
+
+// Every read of `locations` names its columns. `*` drags the generated
+// `search_blob` fold along — the longest value on a row, on every row of a
+// 200-row browse page, and read by nothing outside the database. The `Location`
+// alias states that intent but cannot enforce it: `select("*")` returns a wider
+// row, and assigning a wider row to a narrower type compiles happily. So the
+// enforcement is here, over every read the service has.
+
+describe("LocationsService column discipline", () => {
+  let fetchMock: FetchMock;
+  let service: LocationsService;
+
+  beforeEach(() => {
+    fetchMock = vi.fn<typeof fetch>();
+    service = new LocationsService(createFetchStubbedClient(fetchMock));
+  });
+
+  const reads: [string, (service: LocationsService) => Promise<unknown>][] = [
+    ["getLocation", (s) => s.getLocation("loc-0")],
+    ["getChildren (root)", (s) => s.getChildren(null)],
+    ["getChildren (node)", (s) => s.getChildren("loc-0")],
+    ["getSites", (s) => s.getSites()],
+    ["getSitesByParent", (s) => s.getSitesByParent("loc-0")],
+    ["getMunicipalitiesByCountry", (s) => s.getMunicipalitiesByCountry("FI")],
+    ["getLocationsByIds", (s) => s.getLocationsByIds(["loc-0"])],
+  ];
+
+  it.each(reads)(
+    "%s names its columns and omits the search fold",
+    async (_name, read) => {
+      fetchMock.mockResolvedValue(postgrestJson(locationRows(1)));
+
+      await read(service);
+
+      const select =
+        requestedUrl(fetchMock.mock.calls[0][0]).searchParams.get("select") ??
+        "";
+
+      // Not `*` at the top level, and not `*` inside an embed either.
+      expect(select).not.toContain("*");
+      expect(select).not.toContain("search_blob");
+      // Anchors the two negatives: a select asking for nothing recognisable
+      // would satisfy them both.
+      expect(select).toContain("external_code");
+      expect(select).toContain("created_at");
+    },
+  );
 });

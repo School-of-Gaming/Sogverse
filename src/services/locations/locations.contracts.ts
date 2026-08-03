@@ -38,11 +38,26 @@ export const locationRow = z.object({
   external_code: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
-  // Derived, never written: the folded search terms the database maintains for
-  // this row. It is here only because the row type includes it — a route that
-  // selects the row selects this too. Nothing reads it outside the database.
-  search_blob: z.string().nullable(),
 });
+
+/**
+ * The columns every read of `locations` names, matching `locationRow` above.
+ *
+ * Spelled out rather than `*` because `*` drags the generated `search_blob`
+ * fold along: it is the longest value on a row, a browse page is 200 rows, and
+ * nothing outside the database ever reads it — the index does. It used to ride
+ * the wire for exactly that reason, which is also the only reason it was ever
+ * in the contract.
+ *
+ * A literal, not a join of `locationRow`'s keys. The Supabase client infers a
+ * response's shape from the *type* of the select string, and any string built
+ * at runtime widens to `string` and takes the whole row type down with it.
+ * Keeping the two in step is therefore a manual job — but a drifted list fails
+ * loudly, at the `parseJsonResponse` call and at the row types in the service,
+ * rather than silently.
+ */
+export const LOCATION_COLUMNS =
+  "id, name, name_i18n, type, parent_id, country_code, external_code, created_at, updated_at";
 
 // ---------------------------------------------------------------------------
 // Search
