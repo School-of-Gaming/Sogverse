@@ -2369,15 +2369,33 @@ function HomeLocationFieldDemo() {
   const [place, setPlace] = useState<LocationPick | null>(null);
 
   return (
-    <div className="max-w-md space-y-2 rounded-md border border-input bg-card p-4">
-      <HomeLocationField value={place} onChange={setPlace} />
-      <p className="text-xs text-muted-foreground">
-        Value:{" "}
-        {place ? `${place.location.id} (${place.location.name})` : "(none)"}{" "}
-        &mdash; a row id, so the caller has a foreign key to store and a path to
-        render without a second read. It decides what committing means: a
-        registration submit, or a settings save.
-      </p>
+    <div className="max-w-md space-y-4 rounded-md border border-input bg-card p-4">
+      <div className="space-y-2">
+        <HomeLocationField value={place} onChange={setPlace} />
+        <p className="text-xs text-muted-foreground">
+          Value:{" "}
+          {place ? `${place.location.id} (${place.location.name})` : "(none)"}{" "}
+          &mdash; a row id, so the caller has a foreign key to store and a path
+          to render without a second read. It decides what committing means: a
+          registration submit, or a settings save.
+        </p>
+      </div>
+
+      {/* The third state, which is the reason the prop is not just
+          `LocationPick | null`. It cannot be reached by clicking, because the
+          read it represents lands in a frame or two — so it is pinned here as a
+          fixture rather than demonstrated by waiting for one. */}
+      <div className="space-y-2">
+        <HomeLocationField value={undefined} onChange={() => {}} />
+        <p className="text-xs text-muted-foreground">
+          Value: <code>undefined</code> &mdash; a stored id whose row has not
+          arrived yet, as settings mounts. The box is silent at its final height
+          rather than showing the &ldquo;add your location&rdquo; prompt, which
+          would tell someone who has chosen a place that they have not, and be
+          clickable while it did so. Reading one row by id is an indexed lookup,
+          so there is no skeleton and no spinner here by design.
+        </p>
+      </div>
     </div>
   );
 }

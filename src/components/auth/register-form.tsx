@@ -16,6 +16,7 @@ import { getClient } from "@/lib/supabase/client";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, SUPPORT_EMAIL } from "@/lib/constants";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
+import { useUpdateProfile } from "@/services/users";
 import { useAuth } from "@/providers";
 
 const registerSchema = z.object({
@@ -34,14 +35,12 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
   const c = useTranslations('common');
   const { redirect, status, navigateAfterAuth } = useAuthRedirect(redirectParam);
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
+  const updateProfile = useUpdateProfile();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  // UI-only for now: the picked municipality is held here and deliberately not
-  // sent with the sign-up. There is no profile column behind it yet, and this
-  // pass exists to see the flow before committing to one.
   const [homeLocation, setHomeLocation] = useState<LocationPick | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -98,6 +97,50 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
           setError(t('register.accountExists'));
           setIsLoading(false);
           return;
+        }
+
+        // The optional home location, persisted as a second write rather than
+        // through sign-up metadata.
+        //
+        // WHY NOT METADATA. The profile row is created by the handle_new_user
+        // trigger from raw_user_meta_data, so the alternative was to pass the
+        // id there and have the trigger resolve it. That trigger is the one
+        // function in the schema that assigns roles, it runs SECURITY DEFINER
+        // (so it writes past RLS entirely), and it has a test suite whose whole
+        // subject is that client-supplied metadata cannot influence what it
+        // grants. Teaching it to read one more caller-supplied key — a foreign
+        // key, which it would then have to resolve-not-assert so a stale id
+        // degraded to null instead of aborting the account — is real surface
+        // added to the most sensitive object here, to save one request.
+        //
+        // Writing it from the client instead reuses the authorization path the
+        // settings page already uses and the DB suite already covers: a
+        // column-level UPDATE grant on profiles.home_location_id, plus an RLS
+        // policy where actor and target are the same row. Nothing new is
+        // trusted.
+        //
+        // WHAT IT COSTS. This needs a session the moment signUp returns, which
+        // is true under auto-confirm and false if email confirmation is ever
+        // switched on. Both Supabase projects run mailer_autoconfirm today, and
+        // the flow below already depends on that far harder than this does —
+        // navigateAfterAuth sends a brand-new parent to an authenticated route.
+        // So the session check is explicit rather than assumed: no session
+        // means the location is skipped, not lost to a request that 401s.
+        if (homeLocation && data.session) {
+          try {
+            await updateProfile.mutateAsync({
+              userId: data.user.id,
+              updates: { home_location_id: homeLocation.location.id },
+            });
+          } catch (locationError) {
+            // Never fatal. The account exists, the field is optional, and it is
+            // re-pickable from settings — stranding someone on the registration
+            // form over it would be strictly worse than losing it.
+            console.error(
+              "[register] could not save the home location",
+              locationError,
+            );
+          }
         }
 
         // New parent accounts have no gamers yet, but we still send them

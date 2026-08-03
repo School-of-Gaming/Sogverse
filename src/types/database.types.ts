@@ -864,6 +864,7 @@ export type Database = {
           currency: string | null
           email: string
           first_name: string
+          home_location_id: string | null
           id: string
           last_name: string
           locale: string | null
@@ -877,6 +878,7 @@ export type Database = {
           currency?: string | null
           email: string
           first_name: string
+          home_location_id?: string | null
           id: string
           last_name?: string
           locale?: string | null
@@ -890,6 +892,7 @@ export type Database = {
           currency?: string | null
           email?: string
           first_name?: string
+          home_location_id?: string | null
           id?: string
           last_name?: string
           locale?: string | null
@@ -898,7 +901,15 @@ export type Database = {
           spoken_languages?: string[]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_home_location_id_fkey"
+            columns: ["home_location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       refunds: {
         Row: {
@@ -1409,6 +1420,7 @@ export type Database = {
           currency: string | null
           email: string
           first_name: string
+          home_location_id: string | null
           id: string
           last_name: string
           locale: string | null
@@ -1431,6 +1443,7 @@ export type Database = {
           currency: string | null
           email: string
           first_name: string
+          home_location_id: string | null
           id: string
           last_name: string
           locale: string | null

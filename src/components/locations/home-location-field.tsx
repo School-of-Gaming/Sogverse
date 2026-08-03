@@ -30,6 +30,20 @@
  * is mounted only alongside a value — nothing survives the swap between those
  * two states, so there is no width to reserve, and reserving one only left a
  * dead column that the hover fill stopped short of.
+ *
+ * ## Three states, not two
+ *
+ * `undefined` is "the saved value has not arrived yet" and `null` is "nothing
+ * is chosen"; a caller with no stored value to read (the registration form)
+ * simply never passes the first. The distinction earns its keep on settings,
+ * where a saved id is known before the row behind it is: reading a location by
+ * id is a bounded indexed lookup that lands in a frame or two, so the box
+ * renders empty at its final height and fills in — no skeleton and no spinner,
+ * which is the loading rule's category for a call like this one. What it must
+ * not do is render the "add your location" prompt in the meantime: that is a
+ * different claim (you have not chosen one) shown to someone who has, and it is
+ * clickable, so a fast user opens the picker over a value that was about to
+ * appear.
  */
 
 import { useState } from "react";
@@ -52,7 +66,12 @@ const PATH_SEPARATOR = ", ";
 const PICKABLE_TYPES: readonly LocationType[] = ["municipality"];
 
 interface HomeLocationFieldProps {
-  value: LocationPick | null;
+  /**
+   * The chosen place, `null` for none, or `undefined` while a stored value is
+   * still being read. See the note above: the third state exists so the box can
+   * stay silent rather than claim nothing is chosen.
+   */
+  value: LocationPick | null | undefined;
   onChange: (value: LocationPick | null) => void;
   /** Associates the trigger with the `Field` label wrapping it. */
   id?: string;
@@ -113,10 +132,15 @@ export function HomeLocationField({
                 {homeLocationPath(value, locale)}
               </span>
             </span>
-          ) : (
+          ) : value === null ? (
             <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
               {t("choose")}
             </span>
+          ) : (
+            // Resolving. Deliberately empty rather than a skeleton: the box is
+            // already at its final height and the read behind it is one row by
+            // primary key.
+            <span className="min-w-0 flex-1" />
           )}
         </button>
 

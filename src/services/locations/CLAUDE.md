@@ -156,9 +156,16 @@ should find nothing, not everything.
 The fold is **stored, not an index expression**, and deliberately: needles shorter than
 three characters yield no trigram, so those queries are a sequential scan, and re-folding
 tens of thousands of jsonb documents on every such keystroke is a second or more. Against
-a stored column the same scan is a plain text comparison. The cost is that the column
-rides along in `select(*)` responses; the rows that reach a browser are counted in
-hundreds, so that is the cheaper side of the trade. Nothing outside the database reads it.
+a stored column the same scan is a plain text comparison.
+
+**Rule: nothing outside the database reads the fold, and no read selects it.** It is the
+longest value on a row and a browse page is hundreds of rows, so `select("*")` was paying
+for it on every drill. Every read here names its columns instead, from one shared literal
+in the contracts module, and the row alias the application uses excludes the column
+outright — so a consumer cannot come to depend on it without first putting it back in
+three places. The alias states the intent; it cannot enforce it, because `*` returns a
+wider row and a wider row assigns to a narrower type without complaint, so the enforcement
+is a unit test that sweeps every read and fails on a `*` or a mention of the fold.
 
 ### Ranking
 
@@ -357,6 +364,29 @@ browsing, so there is no second code path and no flag saying which kind of row t
 
 An optional single row on a parent's profile — asked for on the registration form, edited
 from settings — picked at the **municipality** level, the one directly above a venue.
+Stored as `profiles.home_location_id`, a nullable foreign key pointing straight at the
+`locations` row the picker was showing when it was confirmed.
+
+A real FK rather than a loose reference (a country code plus an official statistical code)
+because the picker browses the table itself: a pick is already a row id at the moment it
+is made, so there is nothing to resolve at save time, no way for a save to be refused
+because the place has no record, and no ambiguity — where a bare official code is ambiguous
+by construction in France, an id is not.
+
+**Rule: the reference deletes to NULL, not RESTRICT — and that is a trade, not a
+default.** Official classifications merge and retire places between annual releases, and
+reconciling one is a hand-written migration. Profile data must never be the reason a
+superseded reference row cannot be removed, because the person doing the reconciliation is
+not the person who can decide where that family should now point. The cost is real and
+accepted: a merge silently empties that parent's pick, with nothing telling them or us.
+That is tolerable only because the field is optional, gates nothing, and is re-pickable in
+two clicks — it would be the wrong answer for anything carrying an entitlement, and it is
+the opposite of the tree's own `parent_id`, which stays RESTRICT because orphaning the
+hierarchy corrupts every ancestor walk.
+
+The level is a UI decision, not a constraint: nothing in the schema pins the referenced
+row's type, because doing so needs a trigger on the profile write and there is no privilege
+behind the column to justify one. The picker's `pickableTypes` is the gate.
 
 **Rule: a control that picks a place is one control — the box showing the current value is
 itself the trigger — and its label is the generic "location".** Splitting the value and a
@@ -367,6 +397,31 @@ that country calls this level, so a Finnish-locale parent picking a French commu
 told to pick a kunta. Country-specific vocabulary belongs inside the dialog, below the
 country they chose — this is the locale-vs-spoken-language distinction in the root
 `CLAUDE.md`, in a third dimension.
+
+**Rule: the field distinguishes "nothing chosen" from "not read yet", and shows nothing
+for the second.** Settings knows the saved id before it has the row behind it, and the
+prompt inviting someone to add a location is a false claim to show to someone who already
+has one — a clickable one, which opens the picker over a value about to appear. The keyed
+read is one row by primary key, so the box simply stays silent at its final height and
+fills in: no skeleton, no spinner, per the loading rule. The same distinction governs the
+save: an unresolved value is omitted from the update rather than written as null, so a save
+made before the read lands cannot wipe a location the user was never shown.
+
+**Rule: writing it is a plain profile update, not sign-up metadata.** Registration persists
+it with a second write after the account exists, on the same column grant and the same
+self-scoped RLS policy the settings page uses. The alternative — passing the id through
+sign-up metadata for the new-user trigger to read — would teach the one function that
+assigns roles, running past RLS, to consume another caller-supplied value, and would need
+it to resolve-not-assert so a stale id degraded to null instead of aborting account
+creation. That is real surface on the most sensitive object in the schema to save one
+request. The write depends on a session existing when sign-up returns, which is what
+auto-confirm gives us and what the rest of that flow already assumes far harder (a new
+parent is sent straight to an authenticated route); the session is therefore checked
+explicitly rather than presumed.
+
+**Rule: a failed location write never blocks the account.** It is logged and the
+registration proceeds. The account exists by then, the field is optional, and settings can
+set it later — stranding someone mid-signup over it would be strictly worse than losing it.
 
 ### The product picker
 
