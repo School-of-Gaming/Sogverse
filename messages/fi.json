@@ -1683,6 +1683,7 @@
     }
   },
   "gameAccount": {
+    "label": "{platform}-käyttäjänimi",
     "usernameLabel": "{platform}-käyttäjänimi",
     "placeholder": "esim. {example}",
     "verifying": "Vahvistetaan...",
@@ -1694,19 +1695,6 @@
     "editFor": "Muokkaa pelaajan {name} {platform}-käyttäjänimeä",
     "save": "Tallenna",
     "cancel": "Peruuta"
-  },
-  "minecraft": {
-    "label": "Minecraft-käyttäjänimi",
-    "placeholder": "esim. Steve",
-    "verify": "Vahvista",
-    "verifying": "Vahvistetaan...",
-    "notFound": "Minecraft-tiliä ei löytynyt. Tarkista käyttäjänimi ja yritä uudelleen.",
-    "mcHeadsAttribution": "Ulkoasu renderöity palvelulla <link>mc-heads.net</link>",
-    "verified": "Vahvistettu",
-    "verifiedUser": "{username} (vahvistettu)",
-    "unverified": "{username} (ei vielä vahvistettu)",
-    "notProvided": "Ei annettu",
-    "none": "(ei tiedossa)"
   },
   "parent": {
     "placeholders": {
@@ -1813,8 +1801,7 @@
       },
       "minecraft": {
         "title": "Minecraft-tili",
-        "description": "Linkitä Minecraft Java Editionin käyttäjänimi pelinsisäisiä ominaisuuksia varten.",
-        "save": "Tallenna Minecraft-käyttäjänimi"
+        "description": "Linkitä Minecraft Java Editionin käyttäjänimi pelinsisäisiä ominaisuuksia varten."
       },
       "mcSaved": "Minecraft-käyttäjänimi tallennettu!",
       "mcCleared": "Minecraft-käyttäjänimi poistettu",
@@ -1843,7 +1830,6 @@
     "minecraftSaved": "Minecraft-käyttäjänimi tallennettu!",
     "minecraftCleared": "Minecraft-käyttäjänimi poistettu.",
     "failedToUpdateMinecraft": "Minecraft-käyttäjänimen päivittäminen epäonnistui.",
-    "saveMinecraft": "Tallenna Minecraft-käyttäjänimi",
     "spokenLanguages": "Puhutut kielet",
     "location": "Sijainti"
   },
@@ -2502,17 +2488,6 @@
     }
   },
   "roblox": {
-    "account": {
-      "label": "Roblox-käyttäjänimi",
-      "placeholder": "esim. builderman",
-      "verify": "Vahvista",
-      "verifying": "Vahvistetaan...",
-      "notFound": "Roblox-tiliä ei löytynyt. Tarkista käyttäjänimi ja yritä uudelleen.",
-      "verifiedUser": "{username} (vahvistettu)",
-      "unverified": "{username} (ei vielä vahvistettu)",
-      "displayName": "Näkyy pelissä nimellä {displayName}",
-      "none": "(ei tiedossa)"
-    },
     "hero": {
       "title": "Rakenna<br></br><primary>Pelaa</primary><br></br><secondary>Omista</secondary>",
       "subtitle": "Ilmainen Roblox-pelisuunnitteluohjelma nuorille – järjestäjinä Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa.",

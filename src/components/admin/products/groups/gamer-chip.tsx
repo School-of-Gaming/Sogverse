@@ -6,7 +6,7 @@ import { GripVertical, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
-import { MinecraftUsernameBadge } from "@/components/minecraft/minecraft-username-badge";
+import { GameUsernameRow } from "@/components/game-account";
 import { computeAge, cn } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import type { GenderType } from "@/types";
@@ -77,10 +77,10 @@ const ChipContent = memo(function ChipContent({
             <span className="truncate">{parentName}</span>
           </p>
         )}
-        <MinecraftUsernameBadge
+        <GameUsernameRow
+          platform="minecraft"
           username={minecraftUsername}
-          uuid={minecraftUuid}
-          size="sm"
+          externalId={minecraftUuid}
         />
       </div>
       <GripVertical className="h-3 w-3 flex-shrink-0 text-muted-foreground" />

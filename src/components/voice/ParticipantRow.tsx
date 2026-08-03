@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
-import { MinecraftUsernameBadge } from "@/components/minecraft/minecraft-username-badge";
+import { GameUsernameRow } from "@/components/game-account";
 import { cn } from "@/lib/utils";
 import type { VoiceRole } from "./hooks/types";
 
@@ -17,7 +17,7 @@ export interface ParticipantRowData {
   /**
    * The participant's Minecraft username/UUID (group rooms only). `null` =
    * linked-but-unset → "(Unknown)"; `undefined` = no Minecraft context
-   * (instant rooms) → badge hidden. See VoiceParticipant.
+   * (instant rooms) → the identity row is hidden entirely. See VoiceParticipant.
    */
   minecraftUsername?: string | null;
   minecraftUuid?: string | null;
@@ -46,7 +46,7 @@ export function ParticipantRow({
   onLock,
 }: ParticipantRowProps) {
   const showModMenu = isModView && !p.isLocal && !p.isOwner;
-  // Show the Minecraft badge for gedu/gamer participants, but only when the
+  // Show the Minecraft identity for gedu/gamer participants, but only when the
   // token actually carried Minecraft context (group rooms). `undefined` ==
   // no context (instant rooms) → hide; `null` == linked-but-unset → render
   // "(Unknown)". See mapParticipant.
@@ -68,19 +68,20 @@ export function ParticipantRow({
         </Avatar>
       </div>
 
-      {/* Name + badges — takes all the flexible width; the name truncates while
-          the badges stay intact. The moderation controls no longer sit here, so
-          there's nothing to crowd the Minecraft username on a narrow screen. */}
+      {/* Name + game identity — takes all the flexible width; the name truncates
+          while the identity row keeps its fixed geometry. The moderation controls
+          no longer sit here, so there's nothing to crowd the username on a narrow
+          screen. */}
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <span className="truncate text-sm font-medium">
           {p.userName}
         </span>
         {showMinecraft && (
-          <MinecraftUsernameBadge
+          <GameUsernameRow
+            platform="minecraft"
             username={p.minecraftUsername ?? null}
-            uuid={p.minecraftUuid ?? null}
-            size="sm"
-            className="shrink-0"
+            externalId={p.minecraftUuid ?? null}
+            className="w-40 shrink-0"
           />
         )}
       </div>

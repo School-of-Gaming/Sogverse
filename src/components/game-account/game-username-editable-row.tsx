@@ -229,6 +229,7 @@ export function GameUsernameEditableRow({
             platform={platform}
             username={shown}
             avatarUrl={avatarUrl}
+            verified={status === "verified"}
           />
           <label className="sr-only" htmlFor={inputId}>
             {t("usernameLabel", { platform: descriptor.name })}

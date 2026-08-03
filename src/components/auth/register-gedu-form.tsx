@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
+import { GAME_PLATFORMS, GameUsernameEditableRow } from "@/components/game-account";
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
 import { CoverageAreasField } from "@/components/gedu/coverage-areas-field";
@@ -47,6 +47,7 @@ export function RegisterGeduForm({
   redirect: string | null;
 }) {
   const t = useTranslations("auth");
+  const g = useTranslations("gameAccount");
   const c = useTranslations("common");
   const locale = useLocale();
   const { navigateAfterAuth, status } = useAuthRedirect(redirect);
@@ -57,7 +58,7 @@ export function RegisterGeduForm({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [minecraftUsername, setMinecraftUsername] = useState("");
+  const [minecraftUsername, setMinecraftUsername] = useState<string | null>(null);
   const [phone, setPhone] = useState("");
   const [spokenLanguages, setSpokenLanguages] = useState<string[]>([]);
   /**
@@ -117,7 +118,7 @@ export function RegisterGeduForm({
           spokenLanguages,
           locale,
           locationIds,
-          minecraftUsername: minecraftUsername.trim() || undefined,
+          minecraftUsername: minecraftUsername ?? undefined,
         }),
       });
 
@@ -228,12 +229,17 @@ export function RegisterGeduForm({
               />
             </Field>
           </div>
-          <MinecraftUsernameField
-            value={minecraftUsername}
-            onChange={setMinecraftUsername}
-            disabled={isLoading}
-            optional
-          />
+          {/* First capture: nothing is saved yet, so the row opens straight
+              into edit mode. The label belongs to the form, not the row — a
+              roster renders the same row with no label at all. */}
+          <Field label={g("label", { platform: GAME_PLATFORMS.minecraft.name })} optional>
+            <GameUsernameEditableRow
+              platform="minecraft"
+              username={minecraftUsername}
+              autoEdit
+              onCommit={({ username }) => setMinecraftUsername(username)}
+            />
+          </Field>
           <Field label={c("phoneNumber")} htmlFor="phone" optional>
             <InternationalPhoneInput
               id="phone"

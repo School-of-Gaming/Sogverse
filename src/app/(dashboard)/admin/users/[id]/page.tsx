@@ -21,7 +21,7 @@ import { MinecraftService } from "@/services/minecraft";
 import { ParticipationsService } from "@/services/participations";
 import type { AdminGamerParticipationRow } from "@/services/participations";
 import { GeduProfilesService, type GeduVerification } from "@/services/gedu/gedu-profiles.service";
-import { MinecraftUsernameBadge } from "@/components/minecraft/minecraft-username-badge";
+import { GameUsernameRow } from "@/components/game-account";
 import type { ParticipationStatus, ProductType } from "@/types";
 
 /** Status → semantic badge classes (no raw Tailwind colors — see CLAUDE.md). */
@@ -233,7 +233,12 @@ export default async function AdminUserDetailPage({
               </p>
             )}
             {showMinecraft && (
-              <MinecraftUsernameBadge username={mcUsername} uuid={mcUuid} size="base" />
+              <GameUsernameRow
+                platform="minecraft"
+                username={mcUsername}
+                externalId={mcUuid}
+                className="max-w-xs"
+              />
             )}
             <div className="mt-2 flex items-center gap-3">
               <Badge className={ROLE_BADGE_STYLES[profile.role]}>

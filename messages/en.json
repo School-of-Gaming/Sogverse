@@ -1657,17 +1657,6 @@
     }
   },
   "roblox": {
-    "account": {
-      "label": "Roblox Username",
-      "placeholder": "e.g. builderman",
-      "verify": "Verify",
-      "verifying": "Verifying...",
-      "notFound": "Roblox account not found. Check the username and try again.",
-      "verifiedUser": "{username} (verified)",
-      "unverified": "{username} (not yet verified)",
-      "displayName": "Shown in-game as {displayName}",
-      "none": "(Unknown)"
-    },
     "hero": {
       "title": "Build It<br></br><primary>Play It</primary><br></br><secondary>Own It</secondary>",
       "subtitle": "A free Roblox game design programme for teens — brought to you by Lynx Educate and School of Gaming, in partnership with Roblox.",
@@ -1782,6 +1771,7 @@
     }
   },
   "gameAccount": {
+    "label": "{platform} Username",
     "usernameLabel": "{platform} username",
     "placeholder": "e.g. {example}",
     "verifying": "Verifying...",
@@ -1793,19 +1783,6 @@
     "editFor": "Edit {platform} username for {name}",
     "save": "Save",
     "cancel": "Cancel"
-  },
-  "minecraft": {
-    "label": "Minecraft Username",
-    "placeholder": "e.g. Steve",
-    "verify": "Verify",
-    "verifying": "Verifying...",
-    "notFound": "Minecraft account not found. Check the username and try again.",
-    "mcHeadsAttribution": "Skin rendered by <link>mc-heads.net</link>",
-    "verified": "Verified",
-    "verifiedUser": "{username} (verified)",
-    "unverified": "{username} (not yet verified)",
-    "notProvided": "Not provided",
-    "none": "(Unknown)"
   },
   "parent": {
     "placeholders": {
@@ -1912,8 +1889,7 @@
       },
       "minecraft": {
         "title": "Minecraft Account",
-        "description": "Link a Minecraft Java Edition username for in-game features.",
-        "save": "Save Minecraft Username"
+        "description": "Link a Minecraft Java Edition username for in-game features."
       },
       "mcSaved": "Minecraft username saved!",
       "mcCleared": "Minecraft username cleared",
@@ -1942,7 +1918,6 @@
     "minecraftSaved": "Minecraft username saved!",
     "minecraftCleared": "Minecraft username cleared.",
     "failedToUpdateMinecraft": "Failed to update Minecraft username.",
-    "saveMinecraft": "Save Minecraft Username",
     "spokenLanguages": "Languages spoken",
     "location": "Location"
   },

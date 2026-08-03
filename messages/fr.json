@@ -1683,6 +1683,7 @@
     }
   },
   "gameAccount": {
+    "label": "Nom d’utilisateur {platform}",
     "usernameLabel": "Nom d’utilisateur {platform}",
     "placeholder": "ex. {example}",
     "verifying": "Vérification...",
@@ -1694,19 +1695,6 @@
     "editFor": "Modifier le nom d’utilisateur {platform} de {name}",
     "save": "Enregistrer",
     "cancel": "Annuler"
-  },
-  "minecraft": {
-    "label": "Nom d’utilisateur Minecraft",
-    "placeholder": "ex. Steve",
-    "verify": "Vérifier",
-    "verifying": "Vérification...",
-    "notFound": "Compte Minecraft introuvable. Vérifiez le nom d’utilisateur et réessayez.",
-    "mcHeadsAttribution": "Skin rendu par <link>mc-heads.net</link>",
-    "verified": "Vérifié",
-    "verifiedUser": "{username} (vérifié)",
-    "unverified": "{username} (pas encore vérifié)",
-    "notProvided": "Non renseigné",
-    "none": "(Inconnu)"
   },
   "parent": {
     "placeholders": {
@@ -1813,8 +1801,7 @@
       },
       "minecraft": {
         "title": "Compte Minecraft",
-        "description": "Associez un nom d’utilisateur Minecraft Java Edition pour les fonctionnalités en jeu.",
-        "save": "Enregistrer le nom d’utilisateur Minecraft"
+        "description": "Associez un nom d’utilisateur Minecraft Java Edition pour les fonctionnalités en jeu."
       },
       "mcSaved": "Nom d’utilisateur Minecraft enregistré !",
       "mcCleared": "Nom d’utilisateur Minecraft effacé",
@@ -1843,7 +1830,6 @@
     "minecraftSaved": "Nom d’utilisateur Minecraft enregistré !",
     "minecraftCleared": "Nom d’utilisateur Minecraft effacé.",
     "failedToUpdateMinecraft": "Échec de la mise à jour du nom d’utilisateur Minecraft.",
-    "saveMinecraft": "Enregistrer le nom d’utilisateur Minecraft",
     "spokenLanguages": "Langues parlées à la maison",
     "location": "Localisation"
   },
@@ -2502,17 +2488,6 @@
     }
   },
   "roblox": {
-    "account": {
-      "label": "Nom d’utilisateur Roblox",
-      "placeholder": "ex. builderman",
-      "verify": "Vérifier",
-      "verifying": "Vérification...",
-      "notFound": "Compte Roblox introuvable. Vérifiez le nom d’utilisateur et réessayez.",
-      "verifiedUser": "{username} (vérifié)",
-      "unverified": "{username} (pas encore vérifié)",
-      "displayName": "Affiché en jeu sous le nom {displayName}",
-      "none": "(Inconnu)"
-    },
     "hero": {
       "title": "Construisez<br></br><primary>Jouez</primary><br></br><secondary>Publiez</secondary>",
       "subtitle": "Un programme gratuit de création de jeux Roblox pour les ados, proposé par Lynx Educate et School of Gaming, en partenariat avec Roblox.",

@@ -19,7 +19,7 @@ import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { cn } from "@/lib/utils";
 import { computeVoiceState } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
-import type { MinecraftCheckStatus } from "@/components/minecraft/minecraft-username-row";
+import type { GameAccountStatus } from "@/components/game-account";
 import type { GeduAssignedProduct, GeduAssignedProductGroup } from "@/types";
 import {
   CopyAllEmailsButton,
@@ -177,7 +177,7 @@ interface GeduProductPageBodyProps {
    * It lives with whoever owns the save, because that is the only place that
    * knows a check started.
    */
-  minecraftStatuses?: Readonly<Record<string, MinecraftCheckStatus>>;
+  minecraftStatuses?: Readonly<Record<string, GameAccountStatus>>;
 }
 
 export function GeduProductPageBody({
@@ -584,7 +584,7 @@ function GroupRailCard({
     gamerId: string,
     username: string,
   ) => void | Promise<void>;
-  minecraftStatuses?: Readonly<Record<string, MinecraftCheckStatus>>;
+  minecraftStatuses?: Readonly<Record<string, GameAccountStatus>>;
 }) {
   const t = useTranslations("gedu.sessionDetails");
   const roster = useMemo(() => group.roster ?? [], [group.roster]);

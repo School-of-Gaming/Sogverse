@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 import {
   GAME_PLATFORMS,
   GAME_ROW_HEIGHT,
+  gameAccountStatus,
+  type GameAccountExternalId,
   type GameAccountStatus,
   type GamePlatform,
 } from "./platforms";
@@ -25,11 +27,18 @@ export function GameAvatarBox({
   platform,
   username,
   avatarUrl,
+  verified,
 }: {
   platform: GamePlatform;
   /** `null` draws the stand-in. See the row's `avatarUrl` for the three meanings. */
   username: string | null;
   avatarUrl?: string | null;
+  /**
+   * Whether the platform has confirmed this name belongs to a real account.
+   * **Gates derivation only** — an explicitly handed-in URL is always drawn,
+   * because whoever resolved it knows what they resolved.
+   */
+  verified: boolean;
 }) {
   const descriptor = GAME_PLATFORMS[platform];
 
@@ -41,10 +50,18 @@ export function GameAvatarBox({
   // Omitted means "let the platform decide"; an explicit `null` means "draw the
   // placeholder". Distinguishing the two is what lets one prop serve a live
   // Minecraft row and a fixture on the same component.
+  //
+  // **Derivation additionally requires a confirmed account.** The skin host
+  // resolves by *name*, and an unverified string is only a name somebody typed —
+  // so deriving from it would quietly draw whichever stranger happens to own
+  // that name beside a child's. A confirmed account is the evidence that the two
+  // are the same person; without it the row keeps the drawn stand-in.
   const resolvedUrl =
     avatarUrl !== undefined
       ? avatarUrl
-      : username !== null && descriptor.avatar.urlFromUsername !== null
+      : verified &&
+          username !== null &&
+          descriptor.avatar.urlFromUsername !== null
         ? descriptor.avatar.urlFromUsername(username)
         : null;
 
@@ -84,7 +101,17 @@ interface GameUsernameRowProps {
   platform: GamePlatform;
   /** The username, or `null` when the child has never given one. */
   username: string | null;
-  /** What we hold about this identity. Defaults to `unknown`. */
+  /**
+   * The platform's account key, when a lookup ever confirmed one. **Presence is
+   * the whole of "verified"** — nothing reads the value — so most callers hand
+   * over the two columns they already hold and never think about status at all.
+   */
+  externalId?: GameAccountExternalId | null;
+  /**
+   * A status that overrides the one derived from the account. For a lookup that
+   * really is in flight; everything else leaves it off. A caller reaching for
+   * this to *assert* verified is describing an account, and should pass the key.
+   */
   status?: GameAccountStatus;
   /**
    * The render's URL, and it has **three** meanings, not two:
@@ -136,7 +163,8 @@ interface GameUsernameRowProps {
 export function GameUsernameRow({
   platform,
   username,
-  status = "unknown",
+  externalId = null,
+  status,
   avatarUrl,
   className,
 }: GameUsernameRowProps) {
@@ -147,7 +175,10 @@ export function GameUsernameRow({
   // `status`, rather than a row asserting a confirmed account for a name that
   // isn't there. Resolved once, here, so every slot below reads the same answer
   // — deriving it per slot is how the tick once survived a null username.
-  const resolved: GameAccountStatus = username === null ? "unknown" : status;
+  const resolved: GameAccountStatus =
+    username === null
+      ? "unknown"
+      : (status ?? gameAccountStatus(username, externalId));
   const unknown = resolved === "unknown";
 
   return (
@@ -165,6 +196,7 @@ export function GameUsernameRow({
         platform={platform}
         username={unknown ? null : username}
         avatarUrl={avatarUrl}
+        verified={resolved === "verified"}
       />
 
       <span

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
-import type { MinecraftCheckStatus } from "@/components/minecraft/minecraft-username-row";
+import type { GameAccountStatus } from "@/components/game-account";
 import {
   PartialSessionSaveError,
   type SessionEntryDraft,
@@ -142,7 +142,7 @@ function Workspace({
   const [groupNotesEditing, setGroupNotesEditing] = useState(false);
   const [siteNotesEditing, setSiteNotesEditing] = useState(false);
   const [minecraftStatuses, setMinecraftStatuses] = useState<
-    Record<string, MinecraftCheckStatus>
+    Record<string, GameAccountStatus>
   >({});
 
   const setSessionNotes = useSetSessionNotes(groupId);
@@ -349,7 +349,7 @@ function Workspace({
    * The route resolves the name server-side and stores the canonical spelling
    * with the UUID, so a save that finds an account lands **verified** — the
    * status here is read off what came back rather than guessed at, and a name
-   * Mojang does not know lands `invalid` with the name still saved. A clear
+   * Mojang does not know lands `unverified` with the name still saved. A clear
    * needs no lookup and no status at all.
    */
   const handleSaveMinecraftUsername = async (
@@ -372,7 +372,7 @@ function Workspace({
       });
       setMinecraftStatuses((prev) => ({
         ...prev,
-        [gamerId]: result.minecraft_uuid === null ? "invalid" : "valid",
+        [gamerId]: result.minecraft_uuid === null ? "unverified" : "verified",
       }));
     } catch (error) {
       // A refused write says nothing about the name, so the row goes back to

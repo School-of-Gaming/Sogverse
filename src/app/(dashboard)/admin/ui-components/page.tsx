@@ -111,12 +111,12 @@ import {
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {
   GAME_PLATFORMS,
-  GAME_ROW_HEIGHT,
-  gameAccountStatus,
   GameUsernameEditableRow,
   GameUsernameRow,
   type GamePlatform,
 } from "@/components/game-account";
+import { GamerChip } from "@/components/admin/products/groups/gamer-chip";
+import { DndContext } from "@dnd-kit/core";
 import { AddGamerFormCard } from "@/components/family";
 import { cn } from "@/lib/utils";
 
@@ -2797,10 +2797,7 @@ function GameViewOnlyDemo() {
               key={platform}
               platform={platform}
               username={named ? DEMO_USERNAME[platform] : null}
-              status={gameAccountStatus(
-                named ? DEMO_USERNAME[platform] : null,
-                externalId[platform],
-              )}
+              externalId={externalId[platform]}
             />
           ))}
         </Fragment>
@@ -2924,217 +2921,6 @@ function AddGamerDialogDemo() {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  TEMPORARY — mobile fit-check exploration. Delete with its section.  */
-/* ------------------------------------------------------------------ */
-
-/**
- * A fixed CSS-pixel viewport, to eyeball whether a composition fits a phone.
- *
- * Not a device mock — no notch, no status bar, no chrome. The frame is exactly
- * the CSS viewport a page would get, and the `usable` caption is what is left of
- * it once the browser's own chrome is taken off, which is the number that
- * actually decides whether something scrolls.
- */
-function PhoneFrame({
-  label,
-  width,
-  height,
-  usable,
-  children,
-}: {
-  label: string;
-  width: number;
-  height: number;
-  usable: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-2">
-      <DemoCaption>{label}</DemoCaption>
-      <p className="text-xs text-muted-foreground">
-        {width}&times;{height} CSS px &middot; usable {usable}
-      </p>
-      <div
-        className="relative overflow-hidden rounded-lg border-2 border-border bg-muted"
-        style={{ width, height }}
-      >
-        <div className="absolute inset-0 flex items-start justify-center overflow-y-auto p-4">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/**
- * The add-gamer dialog's content inventory, rebuilt with the real primitives,
- * plus the two game username rows the owner is asking about.
- *
- * **This is a deliberate replica, not the real card**, and that is the one thing
- * to know about it. The real `AddGamerFormCard` has no slot for extra fields and
- * should not grow one for an exploration, so the existing fields here are
- * height-accurate stand-ins (same `Field`, same 40px controls, same spacing) and
- * only the two game rows are the real components. It answers "does this stack
- * fit" honestly; it is not a component demo and must be deleted with the
- * question.
- */
-function AddGamerMobileFitBody() {
-  const [accounts, setAccounts] =
-    useState<Readonly<Record<GamePlatform, DemoAccount>>>(EMPTY_ACCOUNTS);
-
-  return (
-    <DialogContent className="max-h-full overflow-y-auto">
-      <DialogHeader>
-        <DialogTitle>Add a gamer</DialogTitle>
-      </DialogHeader>
-
-      <div className="space-y-4 py-4">
-        <Field label="First name">
-          <Input placeholder="Aino" readOnly />
-        </Field>
-
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Birth month">
-            <Input placeholder="March" readOnly />
-          </Field>
-          <Field label="Birth year">
-            <Input placeholder="2014" readOnly />
-          </Field>
-        </div>
-
-        <Field label="Gender" optional>
-          {/* grid-cols-1 until sm — three stacked 40px buttons on a phone, which
-              is 160px of the budget and the single biggest item in it. */}
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <Button variant="outline" type="button">
-              Boy
-            </Button>
-            <Button variant="outline" type="button">
-              Girl
-            </Button>
-            <Button variant="outline" type="button">
-              Non-binary
-            </Button>
-          </div>
-        </Field>
-
-        {DEMO_PLATFORMS.map((platform) => (
-          <div key={platform} className="space-y-1.5">
-            <Label htmlFor={undefined}>
-              {GAME_PLATFORMS[platform].name} username
-            </Label>
-            <GameUsernameEditableRow
-              platform={platform}
-              username={accounts[platform].username}
-              externalId={accounts[platform].externalId}
-              autoEdit
-              onCommit={({ username, externalId }) =>
-                setAccounts((prev) => ({
-                  ...prev,
-                  [platform]: { username, externalId },
-                }))
-              }
-            />
-          </div>
-        ))}
-      </div>
-
-      <DialogFooter className="gap-2">
-        <Button type="button" variant="outline">
-          Cancel
-        </Button>
-        <Button type="button">Add gamer</Button>
-      </DialogFooter>
-    </DialogContent>
-  );
-}
-
-/** The measured stack, so the verdict is arithmetic rather than an impression. */
-const FIT_BUDGET: readonly { part: string; px: number }[] = [
-  { part: "Dialog inset (p-4, both edges)", px: 32 },
-  { part: "Card padding (p-6, both edges)", px: 48 },
-  { part: "Title", px: 18 },
-  { part: "Field stack padding (py-4)", px: 32 },
-  { part: "First name", px: 64 },
-  { part: "Birth month + year", px: 64 },
-  { part: "Gender (3 stacked buttons under sm)", px: 160 },
-  { part: "Minecraft username (label + row)", px: 84 },
-  { part: "Roblox username (label + row)", px: 84 },
-  { part: "Gaps between the 5 field blocks (space-y-4)", px: 64 },
-  { part: "Footer (2 stacked buttons + mt-6)", px: 112 },
-];
-
-const FIT_TOTAL = FIT_BUDGET.reduce((sum, row) => sum + row.px, 0);
-
-function AddGamerMobileFitCheck() {
-  return (
-    <div className="space-y-6 rounded-lg border border-warning/40 p-4">
-      <div className="space-y-2">
-        <p className="text-sm font-semibold text-warning">
-          Temporary exploration — not a component demo. Delete this card once the
-          question is answered.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          The question: could <em>both</em> game usernames live in the add-gamer
-          dialog without a phone having to scroll? The two rows below are the real
-          component at <code>{GAME_ROW_HEIGHT}</code>; everything else is a
-          height-accurate stand-in for what the real dialog already asks for.
-        </p>
-      </div>
-
-      <div className="flex flex-wrap items-start gap-6">
-        <PhoneFrame
-          label="iPhone SE class — the worst case"
-          width={375}
-          height={667}
-          usable="567–607px after browser chrome"
-        >
-          <AddGamerMobileFitBody />
-        </PhoneFrame>
-        <PhoneFrame
-          label="Modern phone class"
-          width={390}
-          height={844}
-          usable="744–784px after browser chrome"
-        >
-          <AddGamerMobileFitBody />
-        </PhoneFrame>
-      </div>
-
-      <div className="max-w-md space-y-1">
-        <DemoCaption>The budget</DemoCaption>
-        <table className="w-full text-xs text-muted-foreground">
-          <tbody>
-            {FIT_BUDGET.map(({ part, px }) => (
-              <tr key={part} className="border-b border-border/40">
-                <td className="py-1 pr-4">{part}</td>
-                <td className="py-1 text-right tabular-nums">{px}px</td>
-              </tr>
-            ))}
-            <tr className="font-semibold text-foreground">
-              <td className="py-1 pr-4">Total</td>
-              <td className="py-1 text-right tabular-nums">{FIT_TOTAL}px</td>
-            </tr>
-          </tbody>
-        </table>
-        <p className="pt-2 text-xs text-muted-foreground">
-          <strong className="text-warning">
-            Verdict: a modern phone yes, just; the SE class no.
-          </strong>{" "}
-          {FIT_TOTAL}px against 744&ndash;784px usable on a modern phone &mdash;
-          it clears if the browser chrome takes 82px or less and scrolls if it
-          takes more &mdash; and against 567&ndash;607px on the SE class, where it
-          is short by roughly 155&ndash;195px. Dropping the input row and the
-          Verify button bought 100px of that. The next 96px is sitting in the
-          gender buttons, which stack until <code>sm</code>; three across would
-          put both frames comfortably clear.
-        </p>
-      </div>
-    </div>
-  );
-}
-
 function GameAccountDemo() {
   return (
     <div className="space-y-8">
@@ -3180,9 +2966,101 @@ function GameAccountDemo() {
         <AddGamerDialogDemo />
       </SubSection>
 
-      <SubSection title="Mobile fit-check (temporary)">
-        <AddGamerMobileFitCheck />
+      <SubSection title="In the admin gamer chip — one of the tight surfaces">
+        <p className="text-sm text-muted-foreground">
+          The chip is the draggable roster token in the product groups panel, and
+          it appears in four places: the group columns, the waitlist card, the
+          unassigned card and the drag overlay. It stacks name, age/gender, parent
+          and now the identity row inside a narrow rail, which makes it the surface
+          most likely to strain under a 60px row. Drag is live &mdash; the chips
+          below are real, and there is nowhere to drop them.
+        </p>
+        <GamerChipDemo />
       </SubSection>
+    </div>
+  );
+}
+
+/**
+ * Chip fixtures. The ids are real generated UUIDv4s, hardcoded: an identicon is
+ * hashed out of the id's hex bytes, so a readable stand-in renders a degenerate
+ * square and a freshly generated one gives the same child a different face on
+ * every reload.
+ */
+const CHIP_GAMERS = {
+  aino: "3f5f2c9a-1d7e-4c8b-9a2f-6b1e0c4d8a37",
+  joonas: "c81b47e2-9f30-4a15-8d6c-2e7b5a091f4d",
+  petra: "7d2a6e13-5c84-4b09-a7f1-38e9c0b2d654",
+} as const;
+
+function GamerChipDemo() {
+  return (
+    // The chip is a dnd-kit draggable, so it needs the context its real parents
+    // give it. There are no droppables here — picking one up and letting go puts
+    // it back, which is all this demo needs.
+    <DndContext>
+      <GamerChipRow />
+    </DndContext>
+  );
+}
+
+function GamerChipRow() {
+  return (
+    <div className="flex flex-wrap items-start gap-6">
+      {/* The real rail width in the groups panel, so the chip is judged at the
+          size it actually renders at rather than stretched across the page. */}
+      <div className="w-64 space-y-2 rounded-lg border p-3">
+        <DemoCaption>In a group column (w-64, the real rail)</DemoCaption>
+        <GamerChip
+          participationId="demo-1"
+          gamerId={CHIP_GAMERS.aino}
+          firstName="Aino"
+          dateOfBirth="2014-03-11"
+          gender="girl"
+          parentFirstName="Sanna"
+          parentLastName="Virtanen"
+          minecraftUsername="Notch"
+          minecraftUuid="8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6"
+        />
+        <GamerChip
+          participationId="demo-2"
+          gamerId={CHIP_GAMERS.joonas}
+          firstName="Joonas"
+          dateOfBirth="2012-09-02"
+          gender="boy"
+          parentFirstName="Petra"
+          parentLastName="Nieminen"
+          minecraftUsername="jeb_"
+          minecraftUuid={null}
+        />
+        <GamerChip
+          participationId="demo-3"
+          gamerId={CHIP_GAMERS.petra}
+          firstName="Petra"
+          dateOfBirth={null}
+          gender={null}
+          parentFirstName={null}
+          parentLastName={null}
+          minecraftUsername={null}
+          minecraftUuid={null}
+        />
+      </div>
+
+      <div className="w-64 space-y-2 rounded-lg border p-3">
+        <DemoCaption>Mid-save — greyed and undraggable</DemoCaption>
+        <GamerChip
+          participationId="demo-4"
+          gamerId={CHIP_GAMERS.aino}
+          firstName="Aino"
+          dateOfBirth="2014-03-11"
+          gender="girl"
+          parentFirstName="Sanna"
+          parentLastName="Virtanen"
+          minecraftUsername="Notch"
+          minecraftUuid="8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6"
+          isPending
+        />
+      </div>
     </div>
   );
 }

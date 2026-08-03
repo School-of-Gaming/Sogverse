@@ -197,6 +197,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | System | Location |
 |---|---|
 | Layout & scrolling | `src/components/layout/` |
+| Game accounts (Minecraft, Roblox) | `src/components/game-account/` |
 | Billing portal | `src/services/billing/` |
 | Parent PIN | `src/services/pin/` |
 | i18n | `src/i18n/` |

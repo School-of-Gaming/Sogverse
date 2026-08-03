@@ -1728,6 +1728,7 @@
     }
   },
   "gameAccount": {
+    "label": "{platform} lo’wI’ pong",
     "usernameLabel": "{platform} lo’wI’ pong",
     "placeholder": "e.g. {example}",
     "verifying": "vIchel...",
@@ -1739,19 +1740,6 @@
     "editFor": "{name} {platform} pong yIchoH",
     "save": "yIpol",
     "cancel": "yIqIl"
-  },
-  "minecraft": {
-    "label": "Minecraft lo’wI’ pong",
-    "placeholder": "e.g. Steve",
-    "verify": "yIchel",
-    "verifying": "vIchel...",
-    "notFound": "Minecraft account tu’be’lu’. pong yIchel je yIboq.",
-    "mcHeadsAttribution": "Haj <link>mc-heads.net</link> chenmoH",
-    "verified": "chellu’",
-    "verifiedUser": "{username} (chellu’)",
-    "unverified": "{username} (chelbe’lu’)",
-    "notProvided": "ngeHbe’lu’",
-    "none": "(Sovbe’lu’)"
   },
   "parent": {
     "placeholders": {
@@ -1858,8 +1846,7 @@
       },
       "minecraft": {
         "title": "Minecraft Account",
-        "description": "Minecraft Java Edition lo’wI’ pong jonmoH — toy’a’ Qu’meyvaH.",
-        "save": "Minecraft lo’wI’ pong yISaH"
+        "description": "Minecraft Java Edition lo’wI’ pong jonmoH — toy’a’ Qu’meyvaH."
       },
       "mcSaved": "Minecraft lo’wI’ pong Sahlu’! Qapla’!",
       "mcCleared": "Minecraft lo’wI’ pong teqlu’",
@@ -1888,7 +1875,6 @@
     "minecraftSaved": "Minecraft lo’wI’ pong Sahlu’! Qapla’!",
     "minecraftCleared": "Minecraft lo’wI’ pong teqlu’.",
     "failedToUpdateMinecraft": "Minecraft lo’wI’ pong choH Dabe’lu’.",
-    "saveMinecraft": "Minecraft lo’wI’ pong yISaH",
     "spokenLanguages": "Holmey jatlhlu’",
     "location": "Daq"
   },
@@ -2547,17 +2533,6 @@
     }
   },
   "roblox": {
-    "account": {
-      "label": "Roblox lo’wI’ pong",
-      "placeholder": "e.g. builderman",
-      "verify": "yIchel",
-      "verifying": "vIchel...",
-      "notFound": "Roblox account tu’be’lu’. pong yIchel je yIboq.",
-      "verifiedUser": "{username} (chellu’)",
-      "unverified": "{username} (chelbe’lu’)",
-      "displayName": "QujDaq {displayName} ponglu’",
-      "none": "(Sovbe’lu’)"
-    },
     "hero": {
       "title": "yIchen<br></br><primary>yItIv</primary><br></br><secondary>yIghaj</secondary>",
       "subtitle": "Roblox qetlh chenmoHmeH ghojmoH — Huch Hutlh! loDHompu’ be’Hompu’vaD. Lynx Educate, School of Gaming, je Roblox boqwI’pu’.",

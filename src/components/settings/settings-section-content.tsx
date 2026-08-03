@@ -10,7 +10,7 @@ import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
-import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
+import { GameUsernameEditableRow } from "@/components/game-account";
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
@@ -107,16 +107,8 @@ export function SettingsSectionContent({
     ? homeLocationEdit.pick
     : savedHomeLocation;
 
-  const [minecraftUsername, setMinecraftUsername] = useState("");
-  const [mcInitialized, setMcInitialized] = useState(false);
-  const [isSavingMc, setIsSavingMc] = useState(false);
   const [mcSuccess, setMcSuccess] = useState<string | null>(null);
   const [mcError, setMcError] = useState<string | null>(null);
-
-  if (mcAccount !== undefined && !mcInitialized) {
-    setMinecraftUsername(mcAccount?.minecraft_username ?? "");
-    setMcInitialized(true);
-  }
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -176,13 +168,21 @@ export function SettingsSectionContent({
     router.push("/reset-password");
   };
 
-  const handleSaveMc = async () => {
-    setIsSavingMc(true);
+  /**
+   * Committing the row *is* saving it — there is no separate Save button, because
+   * the row's own commit already asked the question one would have answered.
+   *
+   * The row has verified the name against Mojang by the time this runs, so what
+   * arrives is the canonical casing; the route re-runs the lookup server-side
+   * anyway, because a client-verified name is not evidence. The mutation
+   * invalidates the account query, which feeds the row its new props — the loop
+   * that keeps this component from holding a second copy of the username.
+   */
+  const handleSaveMc = async (mcValue: string | null) => {
     setMcSuccess(null);
     setMcError(null);
 
     try {
-      const mcValue = minecraftUsername.trim() || null;
       await updateMyMc.mutateAsync(mcValue);
       setMcSuccess(
         mcValue
@@ -197,8 +197,6 @@ export function SettingsSectionContent({
             ? String((error as { message: unknown }).message)
             : t('failedToUpdateMinecraft');
       setMcError(message);
-    } finally {
-      setIsSavingMc(false);
     }
   };
 
@@ -382,20 +380,13 @@ export function SettingsSectionContent({
               </div>
             )}
 
-            <form onSubmit={(e) => { e.preventDefault(); handleSaveMc(); }} className="space-y-6">
-              <MinecraftUsernameField
-                value={minecraftUsername}
-                onChange={setMinecraftUsername}
-                disabled={isSavingMc}
-              />
-
-              <Button
-                type="submit"
-                disabled={isSavingMc}
-              >
-                {isSavingMc ? c('saving') : t('saveMinecraft')}
-              </Button>
-            </form>
+            <GameUsernameEditableRow
+              platform="minecraft"
+              username={mcAccount?.minecraft_username ?? null}
+              externalId={mcAccount?.minecraft_uuid ?? null}
+              onCommit={({ username }) => void handleSaveMc(username)}
+              className="max-w-sm"
+            />
           </CardContent>
         </Card>
       )}
