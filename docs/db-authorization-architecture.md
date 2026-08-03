@@ -153,13 +153,16 @@ the verification spine treats each kind differently:
   predicate is not a hole *there*, but it is a trap for any consumer that is not a policy;
   wrap a disjunction whose first term can be NULL in `COALESCE(…, false)`.
 - **The participation state machine** (the waitlist-join, participation-create,
-  participation-cancel and reservation-confirm functions): granted to **service_role
+  participation-cancel and paid-confirmation functions): granted to **service_role
   only** — not callable by `authenticated` at all. Phase 3 put guarded,
   `authenticated`-facing entry points in front of the ones a signed-in user may
   legitimately drive, and left the engines themselves service_role-only. The ones
   that remain reachable *only* by service_role are the ones whose callers genuinely
-  have no session: the Stripe webhook's cancel and confirm paths, and checkout's
-  reservation handling.
+  have no session: the Stripe webhook's cancel and confirm paths, and the checkout
+  route's pre-payment validation. The confirmation function is the sharpest of
+  these — its arguments are trusted precisely because we wrote them into the
+  Checkout Session ourselves, so an `authenticated` grant would be handing a caller
+  a free seat.
 
 Several of these are `LANGUAGE sql`, where "first statement" has no meaning — all
 current `sql`-language functions are predicates or self-scoping helpers, which is

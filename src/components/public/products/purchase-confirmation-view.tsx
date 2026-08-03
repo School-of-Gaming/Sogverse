@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { CheckCircle2, Hourglass } from "lucide-react";
+import { CheckCircle2, Clock, Hourglass, Info, Loader2 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { formatCurrencyFromCents } from "@/lib/utils";
@@ -242,6 +242,144 @@ function priceText(
     case "unavailable":
       return null;
   }
+}
+
+/**
+ * Which of the three "paid, but no order to show" states the page is in. All
+ * three follow a Stripe payment that succeeded, so none of them may read as an
+ * error, and none of them may suggest the money is at risk.
+ *
+ * - `finalizing` — the webhook that creates the seat hasn't landed yet. Stripe
+ *   waits up to ten seconds on it before redirecting, so this needs the endpoint
+ *   to have failed or run long. Resolves on its own, usually within a frame or
+ *   two of arriving.
+ * - `timedOut` — it still hasn't landed after the wait the wrapper allows.
+ *   Spinning forever under "this only takes a moment" would be a lie, so the
+ *   page stops and says where to look instead.
+ * - `duplicatePayment` — the seat was already taken, so the payment was refused
+ *   as a duplicate and no row will ever carry this session. Waiting is a dead
+ *   end here by construction, not by bad luck.
+ */
+export type ConfirmationNoticeKind =
+  | "finalizing"
+  | "timedOut"
+  | "duplicatePayment";
+
+/**
+ * The presentational half of those states: data-only, no fetching and no
+ * timers, so it renders identically from a page and from a fixture. The waiting
+ * and the deciding live in `PurchaseConfirmationFinalizing`.
+ *
+ * Mirrors the confirmed layout — same container, same width, same card rhythm.
+ * Nothing here survives into the confirmed view; the whole panel is replaced, so
+ * there is no position for anything to shift from.
+ */
+export function PurchaseConfirmationNotice({
+  kind,
+}: {
+  kind: ConfirmationNoticeKind;
+}) {
+  const t = useTranslations("purchaseConfirmation");
+  const isFinalizing = kind === "finalizing";
+
+  // Written out per kind rather than built from the kind string, so every
+  // message key in this component is greppable from the messages files.
+  const copy =
+    kind === "finalizing"
+      ? {
+          heading: t("finalizing.heading"),
+          subheading: t("finalizing.subheading"),
+          body: t("finalizing.reassurance"),
+        }
+      : kind === "timedOut"
+        ? {
+            heading: t("timedOut.heading"),
+            subheading: t("timedOut.subheading"),
+            body: t("timedOut.body"),
+          }
+        : {
+            heading: t("duplicatePayment.heading"),
+            subheading: t("duplicatePayment.subheading"),
+            body: t("duplicatePayment.body"),
+          };
+
+  return (
+    <div className="container mx-auto px-4 py-8 sm:py-12">
+      <div className="mx-auto max-w-2xl">
+        <div className="flex flex-col items-center text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+            {isFinalizing ? (
+              <Loader2 className="h-7 w-7 animate-spin text-primary" />
+            ) : kind === "timedOut" ? (
+              <Clock className="h-7 w-7 text-primary" />
+            ) : (
+              <Info className="h-7 w-7 text-primary" />
+            )}
+          </div>
+          <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
+            {copy.heading}
+          </h1>
+          <p className="mt-2 text-muted-foreground">{copy.subheading}</p>
+        </div>
+
+        {isFinalizing ? (
+          <>
+            {/* Ghosts shaped like the summary card that replaces them. */}
+            <Card className="mt-8">
+              <CardContent className="space-y-3 p-5 sm:p-6">
+                <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+                <div className="h-16 animate-pulse rounded-lg bg-muted" />
+                <div className="h-4 animate-pulse rounded bg-muted" />
+                <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+              </CardContent>
+            </Card>
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              {copy.body}
+            </p>
+          </>
+        ) : (
+          <>
+            <Card className="mt-8">
+              <CardContent className="space-y-3 p-5 sm:p-6 text-sm">
+                <p>{copy.body}</p>
+                <p className="text-muted-foreground">
+                  {t.rich("supportLine", {
+                    email: SUPPORT_EMAIL,
+                    link: (chunks) => (
+                      <a
+                        href={`mailto:${SUPPORT_EMAIL}`}
+                        className="text-primary hover:underline"
+                      >
+                        {chunks}
+                      </a>
+                    ),
+                  })}
+                </p>
+              </CardContent>
+            </Card>
+
+            <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-center">
+              <Link
+                href={ROUTES.shop}
+                className={buttonVariants({
+                  variant: "outline",
+                  className: "sm:min-w-[180px]",
+                })}
+              >
+                {t("keepBrowsing")}
+              </Link>
+              <Link
+                href={ROUTES.customer.dashboard}
+                className={buttonVariants({ className: "sm:min-w-[180px]" })}
+              >
+                {t("goToDashboard")}
+              </Link>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
 
 // Direct-link / stale-link case (no id, RLS miss, or load error). Kept

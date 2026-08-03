@@ -17,17 +17,18 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  *
  * Counts the rollup tracks:
  *   - active_count     — status = 'active'
- *   - reserving_count  — status = 'reserving' AND reserved_until > NOW()
- *                        (note: the seat-math RPC counts ALL reserving rows;
- *                         the rollup is the time-filtered "still live" view)
  *   - waitlist_count   — status = 'waitlisted'
+ *
+ * The rollup and the capacity gate now read the same rows: a seat is held by an
+ * active participation and nothing else. There used to be a third count for
+ * pre-payment holds, filtered by a deadline the gate ignored — the disagreement
+ * that let an expired hold destroy a seat while showing the page a free one.
  */
 
 const PRODUCT_TRIG = "00000000-0000-0000-0000-0000000005c1";
 
 interface RollupRow {
   active_count: number;
-  reserving_count: number;
   waitlist_count: number;
 }
 
@@ -37,7 +38,7 @@ async function readRollup(
 ): Promise<RollupRow> {
   const { data, error } = await admin
     .from("product_seat_counts")
-    .select("active_count, reserving_count, waitlist_count")
+    .select("active_count, waitlist_count")
     .eq("product_id", productId)
     .single();
   if (error) throw new Error(`readRollup failed: ${error.message}`);
@@ -70,7 +71,6 @@ describe("product_seat_counts trigger", () => {
     const counts = await readRollup(admin, PRODUCT_TRIG);
     expect(counts).toEqual({
       active_count: 0,
-      reserving_count: 0,
       waitlist_count: 0,
     });
   });
@@ -85,43 +85,6 @@ describe("product_seat_counts trigger", () => {
 
     expect(await readRollup(admin, PRODUCT_TRIG)).toEqual({
       active_count: 1,
-      reserving_count: 0,
-      waitlist_count: 0,
-    });
-  });
-
-  it("inserting a live reserving row increments reserving_count", async () => {
-    await admin.from("participations").insert({
-      product_id: PRODUCT_TRIG,
-      gamer_id: TEST_IDS.GAMER,
-      customer_id: TEST_IDS.CUSTOMER,
-      status: "reserving",
-      reserved_until: new Date(Date.now() + 30 * 60_000).toISOString(),
-    });
-
-    expect(await readRollup(admin, PRODUCT_TRIG)).toEqual({
-      active_count: 0,
-      reserving_count: 1,
-      waitlist_count: 0,
-    });
-  });
-
-  it("an expired reserving row does NOT count toward reserving_count", async () => {
-    // The rollup is the "is the seat live right now?" view — used by
-    // the parent's seat-counter UI. The seat-math RPC uses a different
-    // function (count_seats_taken) that holds the seat regardless of
-    // reserved_until. The two views diverge intentionally.
-    await admin.from("participations").insert({
-      product_id: PRODUCT_TRIG,
-      gamer_id: TEST_IDS.GAMER,
-      customer_id: TEST_IDS.CUSTOMER,
-      status: "reserving",
-      reserved_until: new Date(Date.now() - 60_000).toISOString(),
-    });
-
-    expect(await readRollup(admin, PRODUCT_TRIG)).toEqual({
-      active_count: 0,
-      reserving_count: 0,
       waitlist_count: 0,
     });
   });
@@ -137,37 +100,37 @@ describe("product_seat_counts trigger", () => {
 
     expect(await readRollup(admin, PRODUCT_TRIG)).toEqual({
       active_count: 0,
-      reserving_count: 0,
       waitlist_count: 1,
     });
   });
 
-  it("transition reserving → active swaps the count", async () => {
+  it("transition waitlisted → active swaps the count", async () => {
+    // The one status change that happens in production: an admin promotes a
+    // waitlisted gamer into a seat.
     const { data: inserted } = await admin
       .from("participations")
       .insert({
         product_id: PRODUCT_TRIG,
         gamer_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
-        status: "reserving",
-        reserved_until: new Date(Date.now() + 30 * 60_000).toISOString(),
+        status: "waitlisted",
+        waitlisted_at: new Date().toISOString(),
       })
       .select("id")
       .single();
 
-    expect(await readRollup(admin, PRODUCT_TRIG)).toMatchObject({
-      reserving_count: 1,
+    expect(await readRollup(admin, PRODUCT_TRIG)).toEqual({
       active_count: 0,
+      waitlist_count: 1,
     });
 
     await admin
       .from("participations")
-      .update({ status: "active", reserved_until: null })
+      .update({ status: "active", waitlisted_at: null })
       .eq("id", inserted!.id);
 
     expect(await readRollup(admin, PRODUCT_TRIG)).toEqual({
       active_count: 1,
-      reserving_count: 0,
       waitlist_count: 0,
     });
   });
@@ -191,7 +154,6 @@ describe("product_seat_counts trigger", () => {
 
     expect(await readRollup(admin, PRODUCT_TRIG)).toEqual({
       active_count: 0,
-      reserving_count: 0,
       waitlist_count: 0,
     });
   });
@@ -214,22 +176,20 @@ describe("product_seat_counts trigger", () => {
 
     expect(await readRollup(admin, PRODUCT_TRIG)).toEqual({
       active_count: 0,
-      reserving_count: 0,
       waitlist_count: 0,
     });
   });
 
-  it("counts compose correctly with mixed statuses", async () => {
-    // Two actives, one live reserving, one expired reserving (excluded
-    // from the rollup), one completed (excluded from every count). Builds
-    // up the table mutation-by-mutation rather than a bulk insert to
-    // exercise the AFTER-INSERT trigger on each row.
+  it("counts compose correctly across statuses", async () => {
+    // One active, one waitlisted, built up mutation-by-mutation rather than as
+    // a bulk insert so the AFTER-INSERT trigger fires on each row.
     //
-    // We don't include a 'waitlisted' row here — the partial unique
-    // index `(product_id, gamer_id) WHERE status IN (active, waitlisted,
-    // completed)` would conflict with the active rows already on both
-    // seeded gamers. Waitlisted increments are covered by the dedicated
-    // test above.
+    // Two rows is the ceiling here, and the constraint is real rather than
+    // laziness: the partial unique index `(product_id, gamer_id) WHERE status
+    // IN (active, waitlisted, completed)` allows one row per gamer per product
+    // across every status the rollup can count, and the seed data carries two
+    // gamers. There is no longer a status outside that index to stack extra
+    // rows with.
     await admin.from("participations").insert({
       product_id: PRODUCT_TRIG,
       gamer_id: TEST_IDS.GAMER,
@@ -240,29 +200,13 @@ describe("product_seat_counts trigger", () => {
       product_id: PRODUCT_TRIG,
       gamer_id: TEST_IDS.GAMER_2,
       customer_id: TEST_IDS.CUSTOMER,
-      status: "active",
-    });
-    await admin.from("participations").insert({
-      // Same gamer as the first row but reserving — the partial unique
-      // index excludes 'reserving' so this is allowed.
-      product_id: PRODUCT_TRIG,
-      gamer_id: TEST_IDS.GAMER,
-      customer_id: TEST_IDS.CUSTOMER_2,
-      status: "reserving",
-      reserved_until: new Date(Date.now() + 30 * 60_000).toISOString(),
-    });
-    await admin.from("participations").insert({
-      product_id: PRODUCT_TRIG,
-      gamer_id: TEST_IDS.GAMER_2,
-      customer_id: TEST_IDS.CUSTOMER_2,
-      status: "reserving",
-      reserved_until: new Date(Date.now() - 60_000).toISOString(),
+      status: "waitlisted",
+      waitlisted_at: new Date().toISOString(),
     });
 
     expect(await readRollup(admin, PRODUCT_TRIG)).toEqual({
-      active_count: 2,
-      reserving_count: 1,
-      waitlist_count: 0,
+      active_count: 1,
+      waitlist_count: 1,
     });
   });
 });

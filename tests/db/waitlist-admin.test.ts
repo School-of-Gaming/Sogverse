@@ -241,8 +241,9 @@ describe("waitlist — admin read + promote/demote + self position", () => {
     // leave_my_waitlist_spot, cascading family_subscriptions and leaving the
     // subscription billing with nothing in the database to cancel it.
     //
-    // Seeded directly: create_participation on a paid club goes to 'reserving'
-    // pending Stripe, and the state under test is an already-seated member.
+    // Seeded directly: create_participation on a paid club writes no row at all
+    // (the seat is created when Stripe confirms payment), and the state under
+    // test is an already-seated member.
     const { data: seeded } = await admin
       .from("participations")
       .insert({

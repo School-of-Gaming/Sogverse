@@ -988,6 +988,22 @@
       "description": "Linkki saattaa olla vanha tai puutteellinen. Ostoksesi löytyvät aina Oma SOG -sivulta.",
       "cta": "Siirry Oma SOG -sivulle"
     },
+    "finalizing": {
+      "heading": "Maksu vastaanotettu",
+      "subheading": "Viimeistelemme ilmoittautumista — tämä kestää vain hetken.",
+      "reassurance": "Voit huoletta jäädä tälle sivulle. Ilmoittautuminen näkyy myös Oma SOG -sivulla."
+    },
+    "timedOut": {
+      "heading": "Tämä kestää odotettua kauemmin",
+      "subheading": "Maksu onnistui, ja se on tallessa.",
+      "body": "Emme ole vielä saaneet ilmoittautumista valmiiksi. Sen pitäisi näkyä Oma SOG -sivulla pian — käy katsomassa, ja kerro meille, jos se ei ilmesty."
+    },
+    "duplicatePayment": {
+      "heading": "Ilmoittautuminen on jo tehty",
+      "subheading": "Tällä lapsella on jo paikka tässä tuotteessa.",
+      "body": "Tämä maksu ei ole luonut toista ilmoittautumista. Ota yhteyttä, niin selvitämme ylimääräisen veloituksen kanssasi."
+    },
+    "supportLine": "Tarvitsetko apua? Lähetä meille sähköpostia osoitteeseen <link>{email}</link>.",
     "waitlist": {
       "heading": "Olet jonotuslistalla",
       "subheading": "{gamer} on jonotuslistalla – {product}. Ilmoitamme heti, kun paikka vapautuu.",

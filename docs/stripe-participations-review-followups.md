@@ -29,11 +29,11 @@ Inconsistent with every other status-shaped column in this migration. Loses type
 
 These will fire eventually, but not today. Defer-able with care.
 
-### Realtime rollup `reserving_count` and `count_seats_taken` disagree
+### ~~Realtime rollup `reserving_count` and `count_seats_taken` disagree~~ (resolved)
 
-00039:469 (rollup uses `reserved_until > NOW()`) vs 00041:25-30 (RPC dropped the time check, status alone holds the seat). Each query individually looks correct — together they diverge. Browse page fed by the rollup eventually shows "seats available" while `create_participation` returns `kind='full'`. UX glitch: parent clicks → mid-click flip to waitlist.
+The rollup counted a pre-payment hold only while its deadline was in the future; the capacity RPC counted every hold regardless. The browse page showed "seats available" while checkout answered "full", permanently, with no way for a parent to tell why.
 
-**Fix:** make the rollup match RPC semantics — `COUNT(*) FILTER (WHERE status = 'reserving')` with no time filter.
+**Resolved** by removing the pre-payment hold entirely: a paid participation is created when Stripe confirms payment, so the only thing that holds a seat is an active row, and both the rollup and the gate count exactly that. Left here because the shape of the bug — two queries each individually correct, counting the same thing differently — is the one to watch for if a seat hold is ever reintroduced.
 
 ### `invoice.subscription` is deprecated on newer Stripe API versions
 

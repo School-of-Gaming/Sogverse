@@ -1,7 +1,11 @@
 import { notFound } from "next/navigation";
 import { isGeduDashboardScenario } from "@/components/gedu/mock-dashboard-fixtures";
 import { isGeduProductScenario } from "@/components/gedu/session-details/mock-product-page-fixtures";
-import { isPreviewScenario } from "@/components/public/products/mock-detail-fixtures";
+import {
+  findConfirmationNotice,
+  isPreviewScenario,
+} from "@/components/public/products/mock-detail-fixtures";
+import { PurchaseConfirmationNotice } from "@/components/public/products/purchase-confirmation-view";
 import type { PreviewSurface } from "./scenes";
 import { GeduDashboardScene } from "./scenes/gedu-dashboard-scene";
 import { GeduProductPageScene } from "./scenes/gedu-product-page-scene";
@@ -30,6 +34,11 @@ const SCENE_RENDERERS: Record<
     return <ProductDetailScene scenario={scenario} />;
   },
   confirmation: (scenario) => {
+    // The paid no-order states need no fixture — the notice component takes
+    // only which state it is — so they mount directly rather than through the
+    // fixture-building scene.
+    const notice = findConfirmationNotice(scenario);
+    if (notice) return <PurchaseConfirmationNotice kind={notice.kind} />;
     if (!isPreviewScenario(scenario)) notFound();
     return <PurchaseConfirmationScene scenario={scenario} />;
   },

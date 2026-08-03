@@ -114,12 +114,10 @@ export function ProductDetailPage({
     };
   })();
 
-  // Seat math feeds active+reserving for the seat-left pill. Reserving rows
-  // count against the seat too — they're held for 30 min while the parent
-  // is in Stripe Checkout. The threshold check uses the same number; the
-  // small over-count for in-flight reservations is acceptable.
-  const participationsCount =
-    (myCount?.activeCount ?? 0) + (myCount?.reservingCount ?? 0);
+  // Seats are held by active participations alone — the seat-left pill and the
+  // threshold check both read that one number, and so does the capacity gate in
+  // the database. A parent part-way through Stripe Checkout holds no seat.
+  const participationsCount = myCount?.activeCount ?? 0;
 
   const state = deriveRegistrationState({
     product,

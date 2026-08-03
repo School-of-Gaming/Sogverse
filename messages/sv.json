@@ -988,6 +988,22 @@
       "description": "Länken kan vara gammal eller ofullständig. Dina köp finns alltid i Min SOG.",
       "cta": "Gå till Min SOG"
     },
+    "finalizing": {
+      "heading": "Betalningen är mottagen",
+      "subheading": "Vi slutför anmälan — det tar bara ett ögonblick.",
+      "reassurance": "Du kan lugnt stanna kvar på den här sidan. Anmälan visas också i Min SOG."
+    },
+    "timedOut": {
+      "heading": "Det här tar längre tid än väntat",
+      "subheading": "Din betalning gick igenom och är i tryggt förvar.",
+      "body": "Vi har inte hunnit göra klart anmälan än. Den bör dyka upp i Min SOG inom kort — titta gärna där, och hör av dig om den inte kommer."
+    },
+    "duplicatePayment": {
+      "heading": "Redan anmäld",
+      "subheading": "Det här barnet har redan en plats på den här produkten.",
+      "body": "Den här betalningen har inte skapat någon andra anmälan. Hör av dig, så tittar vårt team på den extra debiteringen tillsammans med dig."
+    },
+    "supportLine": "Behöver du hjälp? Mejla oss på <link>{email}</link>.",
     "waitlist": {
       "heading": "Du står på väntelistan",
       "subheading": "{gamer} står på väntelistan för {product}. Vi hör av oss så snart en plats blir ledig.",

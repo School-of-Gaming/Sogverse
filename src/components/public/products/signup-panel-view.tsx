@@ -57,9 +57,10 @@ export type AuthState =
  * from `useParticipationCounts(...).myGamerStates` and threads it onto each
  * gamer in the `ready` auth state.
  *
- * `reserving` is intentionally not part of this union — the movie-ticket
- * reservation model treats a held seat as the parent's to retry against
- * (they just click Sign Up again), not as an "already signed up" state.
+ * Those two are the only states that lock a child out of the picker. A parent
+ * part-way through Stripe Checkout has no row at all — a paid seat is created
+ * when the payment lands — so an abandoned checkout leaves the child selectable
+ * and the parent simply clicks Sign Up again.
  */
 export type MyParticipationState = "waitlisted" | "active";
 

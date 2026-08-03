@@ -26,10 +26,12 @@ import {
  * `active` or `waitlisted` participation on becomes readable, regardless
  * of `is_visible` / status.
  *
- * `reserving` rows are intentionally excluded — pre-payment Stripe
- * holds shouldn't grant a 30-min peek at a hidden product. This file
- * pins that with a positive control (active/waitlisted DO grant access)
- * and a negative one (reserving does NOT).
+ * The carve-out is exactly those two statuses and nothing else. This file pins
+ * that with a positive control (active/waitlisted DO grant access) and a
+ * negative one: a row in any other status does NOT. `reserving` plays the
+ * negative role — it is a retired status now (paid seats are created at payment
+ * confirmation, so nothing writes it), which makes it the cleanest stand-in for
+ * "some status the policy has no opinion about".
  */
 
 const HIDDEN_ACTIVE_PRODUCT = "00000000-0000-0000-0000-0000000005e5";
@@ -76,7 +78,7 @@ describe("products purchaser-read RLS (00047)", () => {
     // Four products, all hidden. The participation kind is the only
     // axis that varies between them — we want to assert that just the
     // policy's status-filter discriminates active/waitlisted access
-    // from reserving/none.
+    // from any-other-status/none.
     for (const id of ALL_PRODUCTS) {
       await createTestProduct(admin, { id, isVisible: false, seatCount: 10 });
     }
@@ -104,7 +106,6 @@ describe("products purchaser-read RLS (00047)", () => {
         gamer_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "reserving",
-        reserved_until: new Date(Date.now() + 30 * 60_000).toISOString(),
       },
     ]);
     if (seed.error) throw seed.error;
@@ -172,10 +173,9 @@ describe("products purchaser-read RLS (00047)", () => {
   // ---------------------------------------------------------------------------
 
   it("customer with only a reserving row CANNOT SELECT the hidden product", async () => {
-    // Reserving = pre-payment Stripe Checkout hold. Anyone can create
-    // one by clicking Sign Up, so admitting it would trade the privacy
-    // benefit of `is_visible = false` for a 30-min observation window
-    // against any logged-in customer.
+    // The policy names active and waitlisted; a row in any other status is a
+    // row the carve-out has nothing to say about, and `is_visible = false`
+    // keeps its privacy meaning.
     const { data, error } = await customerClient
       .from("products")
       .select("id")

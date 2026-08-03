@@ -988,6 +988,22 @@
       "description": "Ce lien est peut-être ancien ou incomplet. Vos achats restent toujours disponibles dans Mon SOG.",
       "cta": "Aller à Mon SOG"
     },
+    "finalizing": {
+      "heading": "Paiement reçu",
+      "subheading": "Nous finalisons l’inscription — cela ne prend qu’un instant.",
+      "reassurance": "Vous pouvez rester sur cette page en toute tranquillité. Votre inscription apparaîtra aussi dans Mon SOG."
+    },
+    "timedOut": {
+      "heading": "Cela prend plus de temps que prévu",
+      "subheading": "Votre paiement a bien été effectué et il est en sécurité.",
+      "body": "Nous n’avons pas encore fini de préparer l’inscription. Elle devrait apparaître dans Mon SOG sous peu — allez y jeter un œil, et dites-le-nous si elle n’arrive pas."
+    },
+    "duplicatePayment": {
+      "heading": "Déjà inscrit",
+      "subheading": "Cet enfant a déjà une place sur ce produit.",
+      "body": "Ce paiement n’a pas créé de seconde inscription. Contactez-nous : notre équipe examinera ce prélèvement supplémentaire avec vous."
+    },
+    "supportLine": "Besoin d’aide ? Écrivez-nous à <link>{email}</link>.",
     "waitlist": {
       "heading": "Vous êtes sur la liste d’attente",
       "subheading": "{gamer} est sur la liste d’attente pour {product}. Nous vous préviendrons dès qu’une place se libère.",

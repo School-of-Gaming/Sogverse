@@ -272,6 +272,10 @@ const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
   ["participations", "customer_id"],
   ["participations", "gamer_id"],
   ["participations", "group_id"],
+  // The Checkout Session that paid for the seat: writable, it would let one
+  // family point a seat at another family's payment — and it is what the paid
+  // confirmation page and the webhook's own replay check both key on.
+  ["participations", "stripe_checkout_session_id"],
   // Money.
   ["payments", "amount_cents"],
   ["refunds", "amount_cents"],
@@ -283,7 +287,6 @@ const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
   ["family_subscriptions", "stripe_customer_id"],
   // Seat accounting — the rollup the capacity gate reads.
   ["product_seat_counts", "active_count"],
-  ["product_seat_counts", "reserving_count"],
   ["product_seat_counts", "waitlist_count"],
   // The parent PIN hash.
   ["customer_profiles", "pin_hash"],

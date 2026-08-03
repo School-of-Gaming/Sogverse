@@ -68,11 +68,10 @@ export function ProductBrowseCard({
 
   const tr = resolveTranslation(product.product_translations, uiLocale);
 
-  // Seat math feeds active+reserving — reserving rows hold the seat for
-  // 30 min during Stripe Checkout. The threshold check uses the same
-  // count; small over-count for in-flight reservations is acceptable.
-  const participationsCount =
-    (counts?.activeCount ?? 0) + (counts?.reservingCount ?? 0);
+  // Seats are held by active participations alone. A parent part-way through
+  // Stripe Checkout holds nothing — the row is created when the payment lands —
+  // so this count and the capacity gate in the database read the same rows.
+  const participationsCount = counts?.activeCount ?? 0;
 
   const state = deriveRegistrationState({
     product,
