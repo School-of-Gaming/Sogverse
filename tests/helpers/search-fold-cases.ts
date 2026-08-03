@@ -23,13 +23,20 @@
  * difference is unreachable; asserting it would only pin an accident.
  *
  * **Latin letters with no canonical decomposition** — `œ`, `ø`, `æ`, `ł`, `ß`.
- * Postgres's `unaccent` dictionary expands these by rule; NFD normalization has
- * nothing to decompose, so the TypeScript fold leaves them alone. That *is* a
- * divergence, and it is out of reach rather than fixed: the TypeScript fold runs
- * only over admin-created venue names and one country's municipalities, and
- * neither Finland's nor France's official classifications spell a municipality
- * with one. Anything folded on both sides — every accent in Finnish, Swedish and
- * French — is below.
+ * Postgres's `unaccent` dictionary expands these by rule (`œ`→`oe`, `ø`→`o`,
+ * `æ`→`ae`, `ł`→`l`, `ß`→`ss`); NFD normalization has nothing to decompose, so
+ * the TypeScript fold leaves them alone. That *is* a real divergence, and it is
+ * out of reach rather than fixed — but for a narrower reason than "no place is
+ * spelled that way", which is false: **109 French communes carry one** (Annœullin,
+ * Babœuf, Beaumont-Pied-de-Bœuf). What puts it out of reach is *which rows reach
+ * the TypeScript fold at all* — only admin-created venue names and Finland's
+ * municipalities, none of which is spelled with one. France's communes are
+ * searched exclusively in Postgres, which folds them correctly.
+ *
+ * So this is a tripwire, not a settled question: **the day a set-scope picker
+ * holds French communes, the divergence goes live** and `foldForSearch` needs
+ * explicit replacements before it does. Anything folded identically on both
+ * sides — every accent in Finnish, Swedish and French — is below.
  */
 
 export interface SearchFoldCase {
