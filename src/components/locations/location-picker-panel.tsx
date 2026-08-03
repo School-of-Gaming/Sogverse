@@ -207,7 +207,15 @@ export function LocationPickerPanel({
   const tree = scope.kind === "tree";
 
   return (
-    <div className={cn("flex flex-col gap-3", tree && LOCATION_PANEL_HEIGHT)}>
+    <div
+      className={cn(
+        // A flex column only where the height is pinned and the list has to
+        // take up the slack. The set scope stacks instead: its list carries its
+        // own height, and a flex column would stretch the caller's footer
+        // button to the full width of the form rather than to its label.
+        tree ? cn("flex flex-col gap-3", LOCATION_PANEL_HEIGHT) : "space-y-3",
+      )}
+    >
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
