@@ -113,8 +113,10 @@ import {
   GAME_PLATFORMS,
   GameUsernameEditableRow,
   GameUsernameRow,
+  type GameFigure,
   type GamePlatform,
 } from "@/components/game-account";
+import { useRobloxProfile } from "@/services/roblox";
 import { GamerChip } from "@/components/admin/products/groups/gamer-chip";
 import { DndContext } from "@dnd-kit/core";
 import { AddGamerFormCard } from "@/components/family";
@@ -2787,7 +2789,47 @@ const VIEW_ONLY_ROWS: readonly {
   },
 ];
 
+/**
+ * The demo's own Roblox renders, resolved the way a real surface would.
+ *
+ * Minecraft rows need nothing: the row derives a body or a face straight from a
+ * username. Roblox has no username-addressable endpoint, so a picture has to be
+ * looked up server-side and handed *in* — and a demo that skipped that step
+ * showed a permanent stand-in beside a real Minecraft skin, which is a false
+ * picture of the component rather than an honest one.
+ *
+ * So the demo does what a production caller does. **The lookup belongs here, not
+ * in the row** — the row stays fixture-pure and takes a URL. Both demos call
+ * this with the same handle, so React Query serves one request for the pair.
+ * While it is in flight `data` is undefined and the rows draw the stand-in in a
+ * box that is already its final size, so nothing moves when the render lands.
+ */
+function useRobloxDemoRenders(): Readonly<Record<GameFigure, string | null>> {
+  const { data } = useRobloxProfile(DEMO_USERNAME.roblox);
+  return { full: data?.avatarUrl ?? null, head: data?.headshotUrl ?? null };
+}
+
+/**
+ * What to hand the row for one fixture cell.
+ *
+ * `undefined` for Minecraft — the three meanings of `avatarUrl` make that "let
+ * the platform derive it", which is exactly right. For Roblox it is the resolved
+ * URL, or `null` for the row that has no username at all: an unknown row draws
+ * the stand-in whatever it is handed, and passing a face to it would be asking
+ * the component to contradict itself.
+ */
+function demoFigureUrl(
+  platform: GamePlatform,
+  named: boolean,
+  resolved: string | null,
+): string | null | undefined {
+  if (platform === "minecraft") return undefined;
+  return named ? resolved : null;
+}
+
 function GameViewOnlyDemo() {
+  const renders = useRobloxDemoRenders();
+
   return (
     <div className={cn(GAME_DEMO_GRID, "items-center gap-y-2")}>
       <GameDemoHeader />
@@ -2800,6 +2842,7 @@ function GameViewOnlyDemo() {
               platform={platform}
               username={named ? DEMO_USERNAME[platform] : null}
               externalId={externalId[platform]}
+              avatarUrl={demoFigureUrl(platform, named, renders.full)}
             />
           ))}
         </Fragment>
@@ -2892,14 +2935,13 @@ function GameEditableRowDemo() {
 }
 
 /**
- * The compact figure, in every state, on both platforms.
- *
- * Minecraft draws real faces here (it can derive them from a name); Roblox draws
- * the stand-in, because a headshot has to be resolved server-side — which is the
- * honest picture of what each platform gives a surface that only holds a
- * username.
+ * The compact figure, in every state, on both platforms — both showing a real
+ * picture, the Minecraft face derived from the name and the Roblox headshot
+ * resolved by the demo.
  */
 function GameHeadRowDemo() {
+  const renders = useRobloxDemoRenders();
+
   return (
     <div className={cn(GAME_DEMO_GRID, "items-center gap-y-2")}>
       <GameDemoHeader />
@@ -2913,6 +2955,7 @@ function GameHeadRowDemo() {
               figure="head"
               username={named ? DEMO_USERNAME[platform] : null}
               externalId={externalId[platform]}
+              avatarUrl={demoFigureUrl(platform, named, renders.head)}
             />
           ))}
         </Fragment>
@@ -2926,6 +2969,7 @@ function GameHeadRowDemo() {
           figure="head"
           username={DEMO_USERNAME[platform]}
           status="checking"
+          avatarUrl={demoFigureUrl(platform, true, renders.head)}
         />
       ))}
     </div>
@@ -2980,10 +3024,13 @@ function GameAccountDemo() {
 
       <SubSection title="2. View, no editing here">
         <p className="text-sm text-muted-foreground">
-          Minecraft derives its skin from the username; Roblox cannot &mdash;
-          there is no username-addressable endpoint, so a Roblox avatar has to be
-          handed in by whoever resolved it server-side, and the drawn stand-in is
-          what a row without one shows.
+          Real pictures on both sides. Minecraft derives its skin from the
+          username, so the row needs nothing; Roblox has no username-addressable
+          endpoint, so <em>this demo</em> resolves the handle through the same
+          lookup a production surface would use and hands the URL to the row. The
+          row itself stays fixture-pure &mdash; it takes a picture, it never goes
+          and finds one. The stand-in is what the last row shows, because it has
+          no username to resolve.
         </p>
         <GameViewOnlyDemo />
       </SubSection>
@@ -2995,8 +3042,10 @@ function GameAccountDemo() {
           what the list is about. Both platforms are <em>identical</em> here
           &mdash; a Minecraft face render and a Roblox headshot are both square,
           so the 1:2-vs-1:1 divergence that makes the full figure&rsquo;s box
-          differ simply does not exist. Minecraft derives its face from the
-          username; Roblox needs its headshot handed in, exactly as with the bust.
+          differ simply does not exist. Both draw a real picture: Minecraft
+          derives its face from the username, and the demo resolves the Roblox
+          headshot from the same lookup as the section above &mdash; one request
+          for the pair, because they ask for the same handle.
         </p>
         <GameHeadRowDemo />
       </SubSection>

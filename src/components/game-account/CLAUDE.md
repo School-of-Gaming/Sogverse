@@ -89,6 +89,17 @@ render costs two server hops behind a per-IP rate limit — so an omitted prop c
 only mean the placeholder, and a real one has to be handed in by whoever resolved
 it server-side. A resolved Roblox URL is short-lived and must never be persisted.
 
+**Rule: a surface showing many Roblox identities resolves them in one batched
+call, not one per row.** The row takes a picture and never goes and finds one, so
+whoever renders a list owns the lookup — and the naive shape of that is N
+requests against a thumbnails API rate-limited per IP across the whole serverless
+fleet, which a single roster can drain on its own. The API accepts many account
+ids per request (on the order of a hundred), so a roster resolves every headshot
+it needs in one call and hands each row its URL. Minecraft needs none of this: its
+host is addressable by username, so a Minecraft list costs zero lookups no matter
+how long it is. This is the shape to build the first production Roblox roster in;
+today only the style guide resolves anything, and it resolves one handle.
+
 **The URL a caller passes must match the figure it asked for**, which is why a
 verification hands back one render per figure rather than a single picture: the
 lookup resolves both in the same round trip, and the row picks the one it is
