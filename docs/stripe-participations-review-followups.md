@@ -41,12 +41,16 @@ The rollup counted a pre-payment hold only while its deadline was in the future;
 
 Two fields the products webhook depends on have moved between Stripe API versions, and each was read from exactly one of its two homes:
 
-- **The invoice's subscription id.** Top-level `subscription` up to API `2024-09-30.acacia`; `parent.subscription_details.subscription` from that version on. Read from the old place only, so on a newer version every renewal `invoice.paid` became an early return and renewals stopped being recorded.
+- **The invoice's subscription id.** Top-level `subscription` up to and including API `2025-02-24.acacia`; `parent.subscription_details.subscription` from `2025-03-31.basil` on, where the top-level field is gone. Read from the top level only, so on a basil-or-later version every renewal `invoice.paid` became an early return and renewals stopped being recorded.
 - **The charge's refund list.** Stripe stopped auto-expanding `refunds` on the Charge object in API `2022-11-15`, and a webhook event object is never expanded regardless — so from that version on the field is simply absent. Read as "no refunds to record", so refunds stopped being recorded.
 
 Both were the same shape of failure and the worst kind: no error, a 200 back to Stripe, and rows quietly missing.
 
-**Resolved** by reading both placements — newer location first, falling back to the older — and by fetching the refund list when the payload carries none. The integration suite now exercises each of these events in **both** payload shapes, with each fixture carrying the field in exactly one place, so a handler that reads only one location fails.
+Note that the two do **not** move together, which is why neither can be described as simply "the old shape" or "the new shape". At the version outbound calls are pinned to, the invoice arrives in the *earlier* of its two shapes while the charge arrives in the *later* of its two. Name each case for where the field sits, not for an era.
+
+**Resolved** by reading both placements — newer location first, falling back to the older — and by fetching the refund list when the payload carries none. The integration suite exercises each of these events in **both** shapes, with each fixture carrying the field in exactly one place, so a handler that reads only one location fails.
+
+**A trap inside the fix, worth stating as a rule: a value fetched to stand in for a missing event field is *live state*, not the snapshot the event described.** The refund fetch reads the charge's current refund list, so two refunds landing close together make both deliveries see both refunds — and "take the newest" then records the second twice (the duplicate silently refused by the UNIQUE constraint) and the first never, understating the refunded total with no error anywhere. The fetch has to select the newest entry **not already in our ledger**, which also makes a replay a no-op for free. Any future fetch-on-absence fallback for a list-shaped field needs the same treatment; a single-item fetch is the bug.
 
 **The correction worth keeping:** the original write-up proposed pinning `apiVersion` on the SDK constructor as the fix. It is not one. **The constructor's `apiVersion` governs outbound calls only — the shape of an incoming webhook payload is decided by the API version pinned on the webhook endpoint, or by the Stripe account default while that endpoint is unpinned.** The two move independently, and the endpoint's version can change without any deploy of ours, so a handler cannot assume either shape and has to read both. Pinning the constructor is still worth doing (see below), just for a different reason.
 

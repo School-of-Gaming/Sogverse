@@ -163,12 +163,8 @@ async function handleCheckoutCompleted(
         customerId,
         gamerId,
         productId,
-        paymentIntent:
-          typeof session.payment_intent === "string"
-            ? session.payment_intent
-            : null,
-        subscription:
-          typeof session.subscription === "string" ? session.subscription : null,
+        paymentIntent: expandableId(session.payment_intent),
+        subscription: expandableId(session.subscription),
         amountCents: session.amount_total ?? 0,
         currency,
       },
@@ -207,10 +203,8 @@ async function handleCheckoutCompleted(
       amountCents: session.amount_total ?? 0,
       currency,
       purpose: "reservation_duplicate",
-      stripePaymentIntentId:
-        typeof session.payment_intent === "string" ? session.payment_intent : null,
-      stripeInvoiceId:
-        typeof session.invoice === "string" ? session.invoice : null,
+      stripePaymentIntentId: expandableId(session.payment_intent),
+      stripeInvoiceId: expandableId(session.invoice),
       metadata: {
         gamerId,
         productId,
@@ -257,7 +251,9 @@ async function handleCheckoutCompleted(
       currency,
       // Translated, not passed through — the column's CHECK accepts a narrower
       // set than Stripe reports, and a sub created on a trial arrives `trialing`.
-      status: familySubscriptionStatusFor(sub),
+      // Degrading, not throwing: see the note on the function itself for why this
+      // path cannot afford the throw the update path wants.
+      status: statusForNewSubscription(sub, event.id),
       current_period_end:
         periodEnd !== null ? new Date(periodEnd * 1000).toISOString() : null,
     });
@@ -275,10 +271,8 @@ async function handleCheckoutCompleted(
     amountCents: session.amount_total ?? 0,
     currency,
     purpose: paymentPurposeFor(purchaseShape),
-    stripePaymentIntentId:
-      typeof session.payment_intent === "string" ? session.payment_intent : null,
-    stripeInvoiceId:
-      typeof session.invoice === "string" ? session.invoice : null,
+    stripePaymentIntentId: expandableId(session.payment_intent),
+    stripeInvoiceId: expandableId(session.invoice),
     metadata: {
       gamerId,
       productId,
@@ -292,23 +286,25 @@ async function handleCheckoutCompleted(
  * The subscription an invoice was raised for, read from both places Stripe has
  * kept it.
  *
- * Up to API `2024-09-30.acacia` the id sat at the top level as `subscription`;
- * from that version on it hangs off `parent.subscription_details.subscription`
- * and the top-level field is gone. Which one a delivery carries is decided by the
- * webhook endpoint's own API version, so neither can be assumed — read the newer
- * location first and fall back to the older, and a renewal is recorded under
- * either. Reading only one is a silent failure: the handler returns early, the
- * route answers 200, and renewals simply stop being recorded.
+ * Up to and including API `2025-02-24.acacia` the id sits at the top level as
+ * `subscription`. In `2025-03-31.basil` it moved under
+ * `parent.subscription_details.subscription` and the top-level field is gone.
+ * Which one a delivery carries is decided by the webhook endpoint's own API
+ * version, so neither can be assumed — read the newer location first and fall
+ * back to the older, and a renewal is recorded under either. Reading only one is
+ * a silent failure: the handler returns early, the route answers 200, and
+ * renewals simply stop being recorded.
  *
  * Both fields are expandable, so each can arrive as an id string or as the
  * object; webhook payloads never expand, but the object form costs one line.
  */
 function invoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
   // A widening assertion, not a reinterpretation: the installed SDK types
-  // describe exactly one API version, which for `Stripe.Invoice` is the one that
-  // still has top-level `subscription` and no `parent` at all. The intersection
-  // adds the newer field as optional without contradicting anything the SDK
-  // says, so the runtime check below is what decides which shape arrived.
+  // describe exactly one API version — the one this codebase pins outbound calls
+  // to — and at that version `Stripe.Invoice` still has top-level `subscription`
+  // and no `parent` at all. The intersection adds the newer field as optional
+  // without contradicting anything the SDK says, so the runtime check below is
+  // what decides which shape arrived.
   const { parent } = invoice as Stripe.Invoice & {
     parent?: {
       subscription_details?: {
@@ -384,7 +380,7 @@ async function handleSubscriptionUpdated(
   const { error } = await admin
     .from("family_subscriptions")
     .update({
-      status: familySubscriptionStatusFor(sub),
+      status: statusForSubscriptionUpdate(sub),
       current_period_end:
         periodEnd !== null
           ? new Date(periodEnd * 1000).toISOString()
@@ -419,6 +415,10 @@ type FamilySubscriptionStatus =
  *   `trialing`           → `active`     A trial is a live subscription as far as
  *                                       anything downstream is concerned: the
  *                                       seat is held and the sessions show up.
+ *                                       Overridden to `canceling` when the sub is
+ *                                       set to lapse — see below, and note that
+ *                                       this table alone would have swallowed
+ *                                       that case.
  *   `unpaid`             → `cancelled`  Stripe has exhausted its retries and
  *                                       stopped trying to collect.
  *   `incomplete_expired` → `cancelled`  The first payment never completed and the
@@ -455,29 +455,91 @@ const FAMILY_SUBSCRIPTION_STATUS: Record<
 } satisfies Record<Stripe.Subscription.Status, FamilySubscriptionStatus>;
 
 /**
- * The status to store for a Stripe subscription.
+ * The status to store for a Stripe subscription, or `null` when Stripe sent one
+ * nothing maps to. Callers decide what a miss costs them — see the two wrappers
+ * below, which answer that differently on purpose.
  *
- * A subscription Stripe still reports as `active` but that is set to lapse at the
- * period end is `canceling` to us — the distinction Stripe draws with a boolean,
- * we draw with a status, because it is what the parent's "ending soon" badge and
- * the access-until date key on.
- *
- * An unrecognised status throws rather than being written or skipped. The write
- * would be rejected by the CHECK anyway, and throwing turns that into a 500 that
- * Stripe retries and that shows up in the logs — the alternative is the bug this
- * replaced, where the row kept a stale status and nobody found out.
+ * A subscription set to lapse at the period end is `canceling` to us: the
+ * distinction Stripe draws with a boolean, we draw with a status, because it is
+ * what the parent's "ending soon" badge and the access-until date key on. It has
+ * to cover `trialing` as well as `active` — Stripe leaves a cancelling
+ * subscription at `trialing` for the rest of its trial, and with `trialing`
+ * mapping to `active` a parent who cancels mid-trial would otherwise read as
+ * plainly active, with no badge and no end date. `past_due` is deliberately not
+ * included: the parent-facing badges treat "ending soon" and "payment problem" as
+ * mutually exclusive, and a failing card is the more urgent of the two.
  */
-function familySubscriptionStatusFor(
+function mapSubscriptionStatus(
+  sub: Stripe.Subscription,
+): FamilySubscriptionStatus | null {
+  if (
+    sub.cancel_at_period_end &&
+    (sub.status === "active" || sub.status === "trialing")
+  ) {
+    return "canceling";
+  }
+  return FAMILY_SUBSCRIPTION_STATUS[sub.status] ?? null;
+}
+
+/**
+ * The status for the `customer.subscription.updated` path, where an unmapped
+ * status **throws**.
+ *
+ * Nothing is stranded by that throw: the status update is the only write the
+ * handler has pending, so a 500 leaves the row exactly as it was, Stripe retries,
+ * and the failure is in the logs. That is strictly better than the bug this
+ * replaced, where a rejected write was swallowed and the row kept a stale status
+ * forever under a 200.
+ */
+function statusForSubscriptionUpdate(
   sub: Stripe.Subscription,
 ): FamilySubscriptionStatus {
-  if (sub.status === "active" && sub.cancel_at_period_end) return "canceling";
-  const mapped = FAMILY_SUBSCRIPTION_STATUS[sub.status];
-  if (mapped === undefined) {
+  const mapped = mapSubscriptionStatus(sub);
+  if (mapped === null) {
     throw new Error(
       `Unknown Stripe subscription status '${sub.status}' on ${sub.id} — no family_subscriptions.status maps to it`,
     );
   }
   return mapped;
+}
+
+/**
+ * The status for the checkout path, where an unmapped status **degrades** instead
+ * of throwing.
+ *
+ * The asymmetry with the update path is the point. Here the throw would land
+ * mid-sequence: the Stripe subscription is already live and charging, and the
+ * payment row — this handler's commit marker — has not been written yet. Stripe's
+ * retry would re-read the same unmapped status and fail again, forever, so the
+ * subscription would be left with no `family_subscriptions` row at all: renewals
+ * drop in the invoice handler, and a cancellation finds nothing to tear the
+ * participation down with. That is the exact state the write-ordering comment
+ * further up this file exists to prevent, and a status we failed to translate is
+ * not a good enough reason to enter it.
+ *
+ * So: log loudly enough to be found, store `incomplete`, and let the payment row
+ * land. `incomplete` is the safe corner of the vocabulary — it does not claim the
+ * subscription is healthy, does not raise a payment-problem badge at a parent for
+ * something that may be fine, and does not end anything. A human correcting the
+ * row afterwards is a small job; reconstructing an untracked live subscription is
+ * not.
+ *
+ * Reachability, since it is not obvious: with outbound calls pinned, the retrieve
+ * that feeds this cannot return a status the pinned version does not define — so
+ * today this is unreachable. It stops being unreachable the moment the pin moves,
+ * and that is precisely when nobody will be thinking about this function.
+ */
+function statusForNewSubscription(
+  sub: Stripe.Subscription,
+  eventId: string,
+): FamilySubscriptionStatus {
+  const mapped = mapSubscriptionStatus(sub);
+  if (mapped !== null) return mapped;
+  console.error(
+    "[stripe/products webhook] unmapped Stripe subscription status on a new subscription — stored as 'incomplete', correct the row by hand",
+    { subscription: sub.id, stripeStatus: sub.status, eventId },
+  );
+  return "incomplete";
 }
 
 // Stripe API: `current_period_end` lives on the subscription in older API
@@ -533,9 +595,7 @@ async function handleChargeRefunded(
   event: Stripe.ChargeRefundedEvent,
 ) {
   const charge = event.data.object;
-  const paymentIntentId = typeof charge.payment_intent === "string"
-    ? charge.payment_intent
-    : null;
+  const paymentIntentId = expandableId(charge.payment_intent);
   if (!paymentIntentId) return;
 
   const { data: payment } = await admin
@@ -545,29 +605,25 @@ async function handleChargeRefunded(
     .maybeSingle();
   if (!payment) return;
 
-  // The refund this event is about is the newest one on the charge: each
-  // `charge.refunded` delivery corresponds to exactly one refund creation, and
-  // Stripe returns refunds newest-first. Take that one and only that one —
-  // `refunds` is UNIQUE on BOTH stripe_event_id and stripe_refund_id, so
-  // inserting several rows under a single event id would silently fail all but
-  // the first.
+  // Exactly one refund is recorded per event, and it must be the one this event
+  // is about. `refunds` is UNIQUE on BOTH stripe_event_id and stripe_refund_id, so
+  // recording several under a single event id would silently fail all but the
+  // first — the row count per delivery is not a stylistic choice.
   //
-  // Where it comes from depends on the delivered payload. `charge.refunds` is
-  // populated only when the list was expanded, and Stripe stopped auto-expanding
-  // it on the Charge object in API `2022-11-15` — a webhook event object is never
-  // expanded either way, so from that version on the field is simply absent and
-  // the list has to be fetched. Treating absent as "nothing to record" is the
-  // trap: refunds stop being written and the route still answers 200.
+  // Which refund that is depends on where the list came from, and the two sources
+  // are not equivalent.
   const expanded = charge.refunds?.data ?? [];
-  const candidates =
+  const latest =
     expanded.length > 0
-      ? expanded
-      : (await stripe.refunds.list({ charge: charge.id, limit: 1 })).data;
-  // `.at()` rather than `[0]` so the empty case is typed rather than assumed: the
-  // fetch above can legitimately come back empty (a refund reversed between the
-  // event being queued and this read leaves the charge with none), and there is
-  // nothing to record when it does.
-  const latest = candidates.at(0);
+      ? // A payload that carries the list carries a *snapshot taken when the event
+        // was created*, so its head is unambiguously this event's refund. This is
+        // the pre-`2022-11-15` shape, where Stripe still auto-expanded `refunds`
+        // on the Charge; from that version on the field is absent from event
+        // payloads entirely (a webhook event object is never expanded), which is
+        // what the fetch below exists for. Reading absent as "nothing to record"
+        // is the trap: refunds stop being written and the route answers 200.
+        expanded.at(0)
+      : await newestUnrecordedRefund(admin, charge.id);
   if (latest === undefined) return;
 
   // Idempotency: UNIQUE on stripe_refund_id. INSERT and swallow duplicates.
@@ -583,6 +639,52 @@ async function handleChargeRefunded(
   if (error && error.code !== "23505") {
     throw error;
   }
+}
+
+/**
+ * The newest refund on a charge that our ledger does not already hold.
+ *
+ * This is the fetch path, and after the endpoint is pinned it is the *only* path,
+ * so the difference from the expanded one matters. A fetch reads Stripe's **live**
+ * state, not a snapshot of it, and the naive "take the newest" loses a refund
+ * whenever two land close together: both deliveries fetch the second refund, the
+ * second insert is refused by UNIQUE on `stripe_refund_id` and swallowed as a
+ * duplicate, and the first refund is never recorded at all. Nothing errors, the
+ * route answers 200 twice, and the refunded total is quietly understated — which
+ * is a money-shaped bug in the direction of our own favour.
+ *
+ * So the newest is not what we want; the newest *unrecorded* one is. Stripe
+ * returns refunds newest-first, so this asks for a page of them, subtracts the ids
+ * we already hold, and takes the head of what is left. One row per event still,
+ * and two events over two refunds record both regardless of the order they arrive
+ * in. A page is deliberately not `limit: 1` — that limit is the bug.
+ *
+ * A replay is handled by the same subtraction rather than by a separate guard: on
+ * a redelivery every refund we have already recorded is filtered out, so a replay
+ * of the only refund on a charge finds nothing left and writes nothing.
+ */
+async function newestUnrecordedRefund(
+  admin: Admin,
+  chargeId: string,
+): Promise<Stripe.Refund | undefined> {
+  // Stripe's default page size (10) with no explicit limit. Ten refunds racing on
+  // one charge is not a thing; one refund racing a second one is.
+  const { data: live } = await stripe.refunds.list({ charge: chargeId });
+  if (live.length === 0) return undefined;
+
+  const { data: recorded, error } = await admin
+    .from("refunds")
+    .select("stripe_refund_id")
+    .in(
+      "stripe_refund_id",
+      live.map((refund) => refund.id),
+    );
+  // Thrown, not shrugged off: an unreadable ledger cannot tell us what is missing
+  // from it, and guessing here is how a refund gets dropped. A 500 buys a retry.
+  if (error) throw error;
+
+  const alreadyHeld = new Set(recorded.map((row) => row.stripe_refund_id));
+  return live.find((refund) => !alreadyHeld.has(refund.id));
 }
 
 interface InsertPaymentParams {

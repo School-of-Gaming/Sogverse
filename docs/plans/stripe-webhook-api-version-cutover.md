@@ -41,13 +41,14 @@ real trials, so the `trialing` variant of the status bug is reachable today.
 
 ## The decision
 
-1. **Make the webhook code tolerant of both payload shapes** (old and new locations
-   for each moved field), fix the status mapping with an explicit whitelist that
-   throws on unknown values, stop swallowing the status write's error, and pin the
-   SDK constructor's `apiVersion` for outbound calls. — **Done**, on branch
-   `fix/stripe-webhook-hardening` (single commit on top of `dev`), together with test
-   fixtures exercising both shapes and the correction to
-   `docs/stripe-participations-review-followups.md`.
+1. **Make the webhook code tolerant of both payload shapes** (both locations for each
+   moved field, and a fetch when a list-shaped field is absent — selecting the newest
+   entry not already in our ledger, never simply the newest), fix the status mapping
+   with an explicit whitelist, stop swallowing the status write's error, make an
+   unmapped status loud, and pin the SDK constructor's `apiVersion` for outbound
+   calls. — **Done**; see Stage 1 for the precondition this creates and how to verify
+   it, together with test fixtures exercising both shapes of each moved field and the
+   correction to `docs/stripe-participations-review-followups.md`.
 2. **Recreate the webhook endpoint pinned to the same version the SDK is pinned to**
    (`2025-02-24.acacia` — authoritatively, whatever apiVersion literal
    `src/lib/stripe/client.ts` pins at cutover time; the two must match). Endpoint
@@ -69,9 +70,18 @@ parent-facing payment-problem surfaces key on, so a paused sub is visible to som
 rather than silent. Cost: that parent sees "payment problem" wording for something an
 admin did deliberately. Accepted; revisit only if we ever start pausing
 intentionally. (Also mapped: `trialing` → `active`, `unpaid` → `cancelled`,
-`incomplete_expired` → `cancelled`, `canceled` → `cancelled`; anything unmapped
-throws so the route 500s and Stripe retries — a loud failure instead of the old
-silent one.)
+`incomplete_expired` → `cancelled`, `canceled` → `cancelled`. A subscription set to
+lapse at period end is `canceling` — from `trialing` as well as from `active`, because
+Stripe leaves a cancelling sub at `trialing` for the rest of its trial; not from
+`past_due`, where the payment problem is the more urgent thing to surface.)
+
+An unmapped status is loud, but **not identically loud on both write paths**, and the
+difference is deliberate: the status-update path throws (a 500 leaves the row untouched
+and Stripe retries), while the checkout path logs and stores `incomplete`. On the
+checkout path a throw would land mid-sequence — the Stripe subscription is already live
+and the payment row not yet written — so a retry that keeps failing would leave a live
+subscription with no `family_subscriptions` row at all, which is worse than a row
+carrying a conservative status for a human to correct.
 
 ## Rejected alternatives
 
@@ -96,14 +106,25 @@ silent one.)
 
 Each stage must fully complete before the next starts.
 
-### Stage 1 — land the code
+### Stage 1 — the tolerant code is live in production (prerequisite)
 
-1. Review the branch `fix/stripe-webhook-hardening` (includes the `paused` mapping
-   above) and merge it to `dev`. Push — CI runs the DB tests that cannot run
-   locally.
-2. Release to **production** through the normal release flow (`/pr-dev-to-main`).
-   The cutover below must not begin until the tolerant code is what production is
-   actually running — verify the deploy landed.
+This stage is a **verifiable precondition**, not a task list — check it and move on if
+it already holds. Nothing in Stage 2 is safe until it does.
+
+1. Confirm the tolerant webhook code is merged to `dev` and released to
+   **production** through the normal release flow (`/pr-dev-to-main`). What has to be
+   true of the deployed route, regardless of how it got there:
+   - the invoice handler reads the subscription id from **both** its placements;
+   - the charge handler **fetches** the refund list when the payload embeds none, and
+     selects the newest refund not already in our ledger rather than simply the
+     newest;
+   - the subscription status written to `family_subscriptions` is translated through
+     an explicit whitelist, the write's error is checked, and an unmapped status is
+     loud (a throw on the update path, a logged degrade on the checkout path);
+   - the SDK is instantiated with an explicit `apiVersion`.
+2. Verify the deploy actually landed — not that the PR merged. The cutover below
+   changes what Stripe sends, so the code that receives it has to be the tolerant
+   version *in production* first.
 
 ### Stage 2 — cutover (live mode, ~15 minutes, any time after Stage 1)
 
@@ -135,6 +156,27 @@ secret in Vercel, redeploy. The tolerant code runs correctly against either endp
 which is what makes rollback safe; events that failed during the wobble are retried
 by Stripe for ~3 days and can be resent manually from Workbench.
 
+#### What the payloads look like *after* the cutover — expect this, don't "fix" it
+
+Pinned at `2025-02-24.acacia`, the two tolerant reads land on **opposite** sides of
+their fallbacks, which is easy to misread as one of them being broken:
+
+- **Invoices still arrive with the subscription id at the top level** (`subscription`).
+  That field only moves under `parent.subscription_details` in `2025-03-31.basil`, one
+  version later. So the `parent` branch stays **dormant at this pin — and that is
+  correct, not dead code.** It is what makes a later pin bump a no-op, and Stripe
+  delivers *replayed* historical events in the shape they were created under, so both
+  branches have permanent value. Do not delete it for being uncovered in production
+  logs.
+- **Charges arrive with no `refunds` list at all.** That changed back in `2022-11-15`,
+  so from the moment of cutover the fetch path is the **only** path — a refund that
+  fails to record after this point is a real defect, not a shape fallback quietly
+  covering for one. This is the read that goes from never-exercised to
+  always-exercised at the cutover instant, so it is the one to watch first.
+
+Acceptance below therefore wants a real refund observed after the cutover, and gets no
+signal at all from the `parent` branch.
+
 ### Stage 3 — cleanup (unhurried, order within the stage is free)
 
 6. After the first successful **renewal** processes through the new endpoint (check a
@@ -152,7 +194,10 @@ by Stripe for ~3 days and can be resent manually from Workbench.
 
 - New endpoint live, pinned to the SDK's version, returning 200s on real traffic —
   including at least one renewal invoice and (when one next occurs) one refund,
-  each visible as a correct row in our DB.
+  each visible as a correct row in our DB. The refund is the load-bearing one: at
+  this pin it is the only one of the two whose read path changes at cutover (see
+  "What the payloads look like after the cutover"). Where two refunds were issued
+  against the same charge, check that **both** appear as rows.
 - Old endpoint deleted; `STRIPE_PRODUCTS_WEBHOOK_SECRET` holds the new secret;
   exactly one products webhook endpoint remains on the account.
 - No `[stripe/products webhook]` errors in Vercel logs attributable to the cutover.
