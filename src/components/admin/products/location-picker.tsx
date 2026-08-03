@@ -3,22 +3,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { Landmark, MapPin, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRevealAfter } from "@/hooks/use-reveal-after";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   useMunicipalitiesByCountry,
   useSites,
   type LocationChainNode,
-  type LocationWithChain,
 } from "@/services/locations";
 import { useSiteDetails } from "@/services/products";
-import {
-  localizedLocationName,
-  localizedNameAlternates,
-} from "@/lib/locations/localized-name";
+import { LocationPickerPanel } from "@/components/locations/location-picker-panel";
+import { groupLocationsByParent } from "@/components/locations/location-groups";
+import { withoutCountry } from "@/lib/locations/ancestor-chain";
+import { localizedLocationName } from "@/lib/locations/localized-name";
+import { shouldDropStoredPick } from "@/lib/locations/stored-pick";
 import type { Location } from "@/types";
-import { LocationList, type LocationListGroup } from "./location-list";
 import { NewVenueDialog } from "./new-venue-dialog";
 import { SiteNotesEditor } from "./site-notes-editor";
 
@@ -37,9 +35,9 @@ interface LocationPickerProps {
   onChange: (id: string | null) => void;
   /**
    * "site"         — only venues may be picked (in-person products). The list
-   *                  is the venues that exist; opening a new one starts from
-   *                  the official catalog, so the municipality above it is
-   *                  always an official row and never a typed name.
+   *                  is the venues that exist; opening a new one starts by
+   *                  browsing the hierarchy to a municipality, so the row above
+   *                  the venue is always a seeded one and never a typed name.
    * "municipality" — only Finnish municipalities may be picked. Used for online
    *                  municipality clubs (the municipality that funds the club).
    *                  No creation — the hierarchy is seeded.
@@ -48,13 +46,18 @@ interface LocationPickerProps {
 }
 
 /**
- * Product-form location picker.
+ * Product-form location picker: two configurations of the shared panel, plus
+ * the three things that are genuinely this form's own.
  *
- * Nothing here browses the `locations` table as a tree. Both modes read a
- * small, scoped slice of it — every venue, or one country's municipalities —
- * and the exhaustive geography an admin drills through to open a *new* venue
- * comes from the static catalog instead, which is the only thing that scales
- * to 34,875 French communes.
+ * Both modes put the panel in its **set** scope — a bounded collection the form
+ * has already fetched (every venue, or one country's municipalities) grouped by
+ * the place above it, which is the view an admin picking a venue actually
+ * wants. Browsing the tree is what the "new venue" flow opens, and that is the
+ * same panel in its tree scope.
+ *
+ * What lives here and nowhere else: the card a chosen place collapses to (with
+ * its site notes), the hint line under the list, and the effect that drops a
+ * stored `location_id` the mode would no longer accept.
  */
 export function LocationPicker({ value, onChange, pickable }: LocationPickerProps) {
   return pickable === "site" ? (
@@ -74,23 +77,26 @@ function SitePicker({ value, onChange }: ModeProps) {
   const locale = useLocale();
   const [browsing, setBrowsing] = useState(false);
   const [newVenueOpen, setNewVenueOpen] = useState(false);
+  const [query, setQuery] = useState("");
 
   const { data: sites } = useSites();
 
   // Clear a pick that is not a venue any more (a deleted row, or a legacy
-  // product pinned above site level). `sites` is undefined until the query
-  // lands, and "not loaded yet" must never be mistaken for "not a venue" —
-  // that would wipe a valid location_id while editing an existing product.
+  // product pinned above site level). "Not loaded yet" must never be mistaken
+  // for "not a venue" — that would wipe a valid location_id while editing an
+  // existing product — which is the whole of what the guard decides.
   useEffect(() => {
-    if (!value || !sites) return;
-    if (!sites.some((site) => site.id === value)) onChange(null);
+    if (shouldDropStoredPick(value, sites)) onChange(null);
   }, [value, sites, onChange]);
 
-  const groups = useMemo(() => groupSitesByParent(sites ?? [], locale), [sites, locale]);
+  const groups = useMemo(
+    () => groupLocationsByParent(sites ?? [], locale, ""),
+    [sites, locale],
+  );
 
   const selected = sites?.find((site) => site.id === value);
 
-  if (!sites) return <PickerSkeleton label={t("loading")} compact={!!value} />;
+  if (!sites) return <PickerPlaceholder label={t("loading")} compact={!!value} />;
 
   if (selected && !browsing) {
     return (
@@ -104,32 +110,34 @@ function SitePicker({ value, onChange }: ModeProps) {
 
   return (
     <div className="space-y-3">
-      <LocationList
-        groups={groups}
-        value={value}
-        onSelect={(id) => {
-          onChange(id);
-          setBrowsing(false);
+      <LocationPickerPanel
+        query={query}
+        onQueryChange={setQuery}
+        scope={{
+          kind: "set",
+          groups,
+          value,
+          onSelect: (pick) => {
+            onChange(pick.location.id);
+            setBrowsing(false);
+          },
+          labels: {
+            searchPlaceholder: t("searchSites"),
+            empty: t("noVenues"),
+          },
+          footer: (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setNewVenueOpen(true)}
+            >
+              <Landmark className="h-3.5 w-3.5" />
+              {t("newVenue")}
+            </Button>
+          ),
         }}
-        labels={{
-          searchPlaceholder: t("searchSites"),
-          clearSearch: t("clearSearch"),
-          empty: t("noVenues"),
-          noResults: (query) => t("noResults", { query }),
-          loading: t("loading"),
-        }}
-        footer={
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="gap-1.5"
-            onClick={() => setNewVenueOpen(true)}
-          >
-            <Landmark className="h-3.5 w-3.5" />
-            {t("newVenue")}
-          </Button>
-        }
       />
 
       <PickerHint
@@ -155,26 +163,27 @@ function MunicipalityPicker({ value, onChange }: ModeProps) {
   const t = useTranslations("admin.products.locationPicker");
   const locale = useLocale();
   const [browsing, setBrowsing] = useState(false);
+  const [query, setQuery] = useState("");
 
   const { data: municipalities } = useMunicipalitiesByCountry(MUNI_COUNTRY_CODE);
 
   // The query returns exactly the pickable set, so "not in it" covers both
   // invalid shapes at once: a legacy pick anchored to a region or a country,
-  // and a municipality outside Finland. Either way the admin re-picks.
+  // and a municipality outside Finland. Either way the admin re-picks — and,
+  // as above, only once the set has actually arrived.
   useEffect(() => {
-    if (!value || !municipalities) return;
-    if (!municipalities.some((row) => row.id === value)) onChange(null);
+    if (shouldDropStoredPick(value, municipalities)) onChange(null);
   }, [value, municipalities, onChange]);
 
   const groups = useMemo(
-    () => groupMunicipalitiesByRegion(municipalities ?? [], locale, t("ungrouped")),
+    () => groupLocationsByParent(municipalities ?? [], locale, t("ungrouped")),
     [municipalities, locale, t],
   );
 
   const selected = municipalities?.find((row) => row.id === value);
 
   if (!municipalities)
-    return <PickerSkeleton label={t("loading")} compact={!!value} />;
+    return <PickerPlaceholder label={t("loading")} compact={!!value} />;
 
   if (selected && !browsing) {
     return (
@@ -188,19 +197,21 @@ function MunicipalityPicker({ value, onChange }: ModeProps) {
 
   return (
     <div className="space-y-3">
-      <LocationList
-        groups={groups}
-        value={value}
-        onSelect={(id) => {
-          onChange(id);
-          setBrowsing(false);
-        }}
-        labels={{
-          searchPlaceholder: t("searchMunicipalities"),
-          clearSearch: t("clearSearch"),
-          empty: t("noMunicipalities"),
-          noResults: (query) => t("noResults", { query }),
-          loading: t("loading"),
+      <LocationPickerPanel
+        query={query}
+        onQueryChange={setQuery}
+        scope={{
+          kind: "set",
+          groups,
+          value,
+          onSelect: (pick) => {
+            onChange(pick.location.id);
+            setBrowsing(false);
+          },
+          labels: {
+            searchPlaceholder: t("searchMunicipalities"),
+            empty: t("noMunicipalities"),
+          },
         }}
       />
 
@@ -214,133 +225,28 @@ function MunicipalityPicker({ value, onChange }: ModeProps) {
 }
 
 // ---------------------------------------------------------------------------
-// Grouping
-// ---------------------------------------------------------------------------
-
-/** The chain minus the country row, nearest first. */
-function meaningfulAncestors(ancestors: LocationChainNode[]): LocationChainNode[] {
-  return ancestors.filter((node) => node.type !== "country");
-}
-
-function searchTermsOf(node: { name: string; name_i18n: Location["name_i18n"] }) {
-  return [node.name, ...localizedNameAlternates(node)];
-}
-
-/**
- * Venues under the place they sit in. `ancestors[0]` is the municipality
- * whatever the country's depth, and the rest of the chain becomes the header's
- * context so the region is visible without opening anything.
- */
-function groupSitesByParent(
-  sites: LocationWithChain[],
-  locale: string,
-): LocationListGroup[] {
-  const groups = new Map<string, LocationListGroup>();
-
-  for (const site of sites) {
-    const chain = meaningfulAncestors(site.ancestors);
-    // `.at()` rather than `[0]`: the chain really can be empty (a site whose
-    // parent row is missing), and index access would type that away.
-    const parent = chain.at(0);
-    const rest = chain.slice(1);
-    const key = parent?.id ?? "__none__";
-    let group = groups.get(key);
-    if (!group) {
-      group = {
-        key,
-        label: parent ? localizedLocationName(parent, locale) : "",
-        detail: rest
-          .map((node) => localizedLocationName(node, locale))
-          .join(ANCESTOR_SEPARATOR),
-        searchTerms: parent ? searchTermsOf(parent) : [],
-        rows: [],
-      };
-      groups.set(key, group);
-    }
-    group.rows.push({
-      id: site.id,
-      name: localizedLocationName(site, locale),
-      detail: "",
-      searchTerms: searchTermsOf(site),
-    });
-  }
-
-  return sortGroups([...groups.values()], locale);
-}
-
-/** Finland's municipalities under their maakunta. */
-function groupMunicipalitiesByRegion(
-  municipalities: LocationWithChain[],
-  locale: string,
-  ungroupedLabel: string,
-): LocationListGroup[] {
-  const groups = new Map<string, LocationListGroup>();
-
-  for (const municipality of municipalities) {
-    const region = meaningfulAncestors(municipality.ancestors).at(0);
-    const key = region?.id ?? "__none__";
-    let group = groups.get(key);
-    if (!group) {
-      group = {
-        key,
-        label: region ? localizedLocationName(region, locale) : ungroupedLabel,
-        detail: "",
-        searchTerms: region ? searchTermsOf(region) : [],
-        rows: [],
-      };
-      groups.set(key, group);
-    }
-    group.rows.push({
-      id: municipality.id,
-      name: localizedLocationName(municipality, locale),
-      detail: "",
-      searchTerms: searchTermsOf(municipality),
-    });
-  }
-
-  return sortGroups([...groups.values()], locale);
-}
-
-/** Alphabetical in the viewer's collation, headers and rows alike. */
-function sortGroups(
-  groups: LocationListGroup[],
-  locale: string,
-): LocationListGroup[] {
-  for (const group of groups) {
-    group.rows.sort((a, b) => a.name.localeCompare(b.name, locale));
-  }
-  return groups.sort((a, b) => a.label.localeCompare(b.label, locale));
-}
-
-// ---------------------------------------------------------------------------
 // Shared bits
 // ---------------------------------------------------------------------------
 
 /**
- * The list's height, with nothing readable or clickable in it. A placeholder
- * with no content constrains nothing when the real body replaces it — whereas
- * rendering the browse list first and swapping it for the selected-venue card
- * would move things the admin is already reading.
+ * The space the picker is about to occupy, held empty.
+ *
+ * There is nothing in it on purpose. Both reads behind this control are one
+ * bounded, indexed request — every venue, or one country's municipalities — so
+ * the state it is waiting on arrives within a frame or two; a skeleton would
+ * announce a wait that is over before it can be read. What does matter is the
+ * *size*: reserving it is what keeps the rest of the product form from jumping
+ * when the rows land, which is the layout rule's whole point.
+ *
+ * `compact` = the caller already knows a location is picked, so this will
+ * resolve into the small selected-state card rather than the browse list.
+ * Editing an existing product is the most common way in here, so sizing for the
+ * state it becomes is what actually holds the form still.
  */
-/**
- * `compact` = the caller already knows a location is picked, so the skeleton
- * will resolve into the small selected-state card, not the browse list. Sizing
- * the placeholder to the state it becomes is what keeps the rest of the
- * product form from jumping when the query lands — the layout rule's whole
- * point, and editing an existing product is the most common way in here.
- */
-function PickerSkeleton({ label, compact }: { label: string; compact: boolean }) {
-  // Gated per the house loading rule: switching a product from online to
-  // in-person mounts this over an often-cached sites query, and a ~100ms load
-  // painting a grey block reads as a flash, not a loading state.
-  const visible = useRevealAfter();
+function PickerPlaceholder({ label, compact }: { label: string; compact: boolean }) {
   return (
     <div
-      className={cn(
-        "animate-pulse rounded-md bg-muted transition-opacity duration-200",
-        compact ? "h-24" : "h-[460px]",
-        visible ? "opacity-100" : "opacity-0",
-      )}
+      className={cn("rounded-md", compact ? "h-24" : "h-[460px]")}
       aria-label={label}
       aria-busy="true"
     />
@@ -390,7 +296,7 @@ function SelectedLocationCard({
   // picks we skip the fetch.
   const { data: details } = useSiteDetails(isSite ? location.id : null);
   // Root first, so it reads "Uusimaa · Helsinki" the way a breadcrumb does.
-  const chain = meaningfulAncestors(ancestors).slice().reverse();
+  const chain = withoutCountry(ancestors).reverse();
 
   return (
     <div className="space-y-2">

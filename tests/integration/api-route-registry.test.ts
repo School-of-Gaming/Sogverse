@@ -162,6 +162,7 @@ const TESTS = {
   gamersUpdate: "tests/integration/api/gamers-update.test.ts",
   geduGamerMinecraft: "tests/integration/api/gedu-gamer-minecraft.test.ts",
   geduRegister: "tests/integration/api/gedu-register.test.ts",
+  locationsSearch: "tests/integration/api/locations-search.test.ts",
   minecraftAccount: "tests/integration/api/minecraft-account.test.ts",
   minecraftJoinCheck: "tests/integration/api/minecraft-join-check.test.ts",
   minecraftVerify: "tests/integration/api/minecraft-verify.test.ts",
@@ -174,6 +175,7 @@ const TESTS = {
   productsParticipationsTransition:
     "tests/integration/api/products-participations-transition.test.ts",
   productsUpdate: "tests/integration/api/products-update.test.ts",
+  robloxVerify: "tests/integration/api/roblox-verify.test.ts",
   sendTestEmail: "tests/integration/api/send-test-email.test.ts",
   signout: "tests/integration/auth/signout.test.ts",
   stripeWebhook: "tests/integration/api/stripe-webhook-products.test.ts",
@@ -593,6 +595,22 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
+  // --- Locations -----------------------------------------------------------
+
+  "src/app/api/locations/search/route.ts": {
+    handlers: {
+      GET: {
+        posture: {
+          kind: "public",
+          reason:
+            "the educator registration page asks an applicant where they can work before any account exists, so search cannot require a session. It reads only the locations reference table, every row of which anon may already SELECT directly under that table's own policy — the route narrows that surface rather than widening it, and bounds the needle length and page size on the way in. It reads no session at all, which is what lets its answer be cached and shared",
+        },
+        body: { kind: "none" },
+        test: TESTS.locationsSearch,
+      },
+    },
+  },
+
   // --- Minecraft -----------------------------------------------------------
 
   "src/app/api/minecraft/account/route.ts": {
@@ -649,6 +667,22 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: { kind: "role-gated", roles: ["customer"] },
         body: { kind: "json", schema: "leaveWaitlistBody" },
         test: TESTS.waitlist,
+      },
+    },
+  },
+
+  // --- Roblox --------------------------------------------------------------
+
+  "src/app/api/roblox/verify/route.ts": {
+    handlers: {
+      GET: {
+        posture: {
+          kind: "public",
+          reason:
+            "a read-only passthrough to Roblox's public username lookup — no database access and no secrets. It mirrors the Minecraft verify route: a username is checked before any account exists, so it cannot require a session",
+        },
+        body: { kind: "none" },
+        test: TESTS.robloxVerify,
       },
     },
   },

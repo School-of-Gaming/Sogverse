@@ -24,6 +24,17 @@ export interface LocationFormValues {
 }
 
 /**
+ * What "add a child under this" needs to know about the parent: which row, what
+ * to call it, and which country's level names apply below it. Declared as its
+ * own shape rather than the whole row so a caller holding a picked place — which
+ * is a browse row or a search hit, not a full select — can pass it directly.
+ */
+export type LocationFormParent = Pick<
+  Location,
+  "id" | "name" | "name_i18n" | "type" | "country_code"
+>;
+
+/**
  * The one dialog for naming a location by hand. Two modes remain — rename an
  * existing row, or add a child under a parent — and in practice the child is
  * always a `site`.
@@ -43,7 +54,7 @@ interface LocationFormDialogProps {
   /** When set, the dialog is in "edit" mode. */
   initialValues?: Location;
   /** When adding a child, this is the parent location. */
-  parent?: Location | null;
+  parent?: LocationFormParent | null;
 }
 
 export function LocationFormDialog({

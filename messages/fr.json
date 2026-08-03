@@ -360,8 +360,6 @@
         "subject": "Sujets"
       },
       "locationPicker": {
-        "clearSearch": "Effacer la recherche",
-        "noResults": "Aucun lieu ne correspond à « {query} ».",
         "hintSite": "Choisissez le site où cela se déroule. Vous en ouvrez un nouveau ? Partez de sa commune.",
         "hintMunicipality": "Choisissez la commune finlandaise concernée par ce club — celle qui le finance. Les sites et les autres pays ne sont pas proposés ici.",
         "change": "Changer",
@@ -389,7 +387,6 @@
         "newVenue": "Nouveau site…",
         "newVenueTitle": "Ouvrir un nouveau site",
         "newVenueDescription": "Commencez par la commune où il se trouve. Les noms et les codes officiels proviennent de la classification statistique de chaque pays : rien au-dessus du site lui-même n’est saisi à la main.",
-        "newVenueUnresolved": "{name} n’a pas encore d’enregistrement de lieu dans cet environnement : impossible d’y ouvrir un site.",
         "venuesIn": "Sites à {name}",
         "venuesInDescription": "Choisissez-en un qui existe déjà, ou ajoutez-en un nouveau.",
         "venuesHereEmpty": "Aucun site ici pour l’instant.",
@@ -880,6 +877,7 @@
       "emailPlaceholder": "vous@exemple.com",
       "passwordPlaceholder": "Créez un mot de passe solide",
       "confirmPasswordPlaceholder": "Confirmez votre mot de passe",
+      "location": "Localisation",
       "creatingAccount": "Création du compte...",
       "accountExists": "Un compte existe déjà avec cette adresse e-mail",
       "alreadyHaveAccount": "Vous avez déjà un compte ? <link>Connectez-vous</link>"
@@ -995,6 +993,22 @@
       "description": "Ce lien est peut-être ancien ou incomplet. Vos achats restent toujours disponibles dans Mon SOG.",
       "cta": "Aller à Mon SOG"
     },
+    "finalizing": {
+      "heading": "Paiement reçu",
+      "subheading": "Nous finalisons l’inscription — cela ne prend qu’un instant.",
+      "reassurance": "Vous pouvez rester sur cette page en toute tranquillité. Votre inscription apparaîtra aussi dans Mon SOG."
+    },
+    "timedOut": {
+      "heading": "Cela prend plus de temps que prévu",
+      "subheading": "Votre paiement a bien été effectué et il est en sécurité.",
+      "body": "Nous n’avons pas encore fini de préparer l’inscription. Elle devrait apparaître dans Mon SOG sous peu — allez y jeter un œil, et dites-le-nous si elle n’arrive pas."
+    },
+    "duplicatePayment": {
+      "heading": "Déjà inscrit",
+      "subheading": "Cet enfant a déjà une place sur ce produit.",
+      "body": "Ce paiement n’a pas créé de seconde inscription. Contactez-nous : notre équipe examinera ce prélèvement supplémentaire avec vous."
+    },
+    "supportLine": "Besoin d’aide ? Écrivez-nous à <link>{email}</link>.",
     "waitlist": {
       "heading": "Vous êtes sur la liste d’attente",
       "subheading": "{gamer} est sur la liste d’attente pour {product}. Nous vous préviendrons dès qu’une place se libère.",
@@ -1147,15 +1161,10 @@
       "remove": "Retirer {name}",
       "clearAll": "Tout effacer",
       "chooseAreas": "Choisir des zones",
-      "legacyHeading": "Lieux et anciennes entrées",
-      "legacyNote": "Ajoutés avant l’existence du catalogue. Vous pouvez les retirer ici, mais pas en ajouter d’autres.",
-      "venueBadge": "Lieu",
-      "legacyBadge": "Ancienne entrée",
       "loading": "Chargement des lieux...",
       "save": "Enregistrer",
       "saving": "Enregistrement...",
-      "saveError": "Échec de l’enregistrement des zones d’intervention",
-      "unresolvedError": "Pas encore dans la base des lieux : {names}. Retirez-les puis enregistrez à nouveau."
+      "saveError": "Échec de l’enregistrement des zones d’intervention"
     },
     "myGroups": {
       "counts": "{groupCount, plural, one {# groupe} other {# groupes}} · {gamerCount, plural, one {# joueur} other {# joueurs}}",
@@ -1648,24 +1657,29 @@
     }
   },
   "locations": {
-    "catalog": {
+    "picker": {
       "coverageTitle": "Choisissez les zones que vous couvrez",
       "coverageDescription": "Cochez tout ce que vous pouvez couvrir. Chaque case cochée couvre tout ce qu’elle contient : cocher une région couvre déjà toutes ses communes.",
-      "country": "Pays",
-      "loading": "Chargement du catalogue",
-      "loadFailed": "Impossible de charger le catalogue. Vérifiez votre connexion et réessayez.",
-      "retry": "Réessayer",
-      "searchPlaceholder": "Rechercher par nom ou par code officiel…",
-      "searchingAll": "Recherche dans tout le catalogue : {country}",
-      "noResults": "Aucun résultat dans le catalogue pour « {query} ».",
+      "searchPlaceholder": "Rechercher par nom ou code…",
+      "searchingEverywhere": "Recherche dans tous les pays",
+      "allCountries": "Tous les pays",
+      "noResults": "Aucun résultat pour « {query} ».",
+      "keepTyping": "Saisissez au moins {count} caractères pour lancer la recherche.",
+      "nothingHere": "Rien ici.",
       "showingSome": "Affichage des {shown} premiers résultats sur {total}. Continuez à saisir pour affiner.",
+      "loadMore": "Afficher plus",
       "browseInto": "Afficher le contenu de {name}",
-      "nothingSelected": "Choisissez une commune pour continuer.",
+      "nothingSelected": "Choisissez un lieu pour continuer.",
       "confirm": "Continuer",
-      "tickedCount": "{count, plural, =0 {Aucune zone cochée} one {# zone cochée} other {# zones cochées}}",
-      "done": "Terminé",
+      "confirming": "Ouverture…",
       "clearSearch": "Effacer la recherche",
-      "confirming": "Ouverture…"
+      "tickedCount": "{count, plural, =0 {Aucune zone cochée} one {# zone cochée} other {# zones cochées}}",
+      "done": "Terminé"
+    },
+    "home": {
+      "choose": "Ajoutez votre localisation",
+      "dialogTitle": "Où habitez-vous ?",
+      "dialogDescription": "Parcourez la liste ou recherchez par nom."
     }
   },
   "minecraft": {
@@ -1817,7 +1831,8 @@
     "minecraftCleared": "Nom d’utilisateur Minecraft effacé.",
     "failedToUpdateMinecraft": "Échec de la mise à jour du nom d’utilisateur Minecraft.",
     "saveMinecraft": "Enregistrer le nom d’utilisateur Minecraft",
-    "spokenLanguages": "Langues parlées à la maison"
+    "spokenLanguages": "Langues parlées à la maison",
+    "location": "Localisation"
   },
   "voice": {
     "participants": "Participants",
@@ -2474,6 +2489,17 @@
     }
   },
   "roblox": {
+    "account": {
+      "label": "Nom d’utilisateur Roblox",
+      "placeholder": "ex. builderman",
+      "verify": "Vérifier",
+      "verifying": "Vérification...",
+      "notFound": "Compte Roblox introuvable. Vérifiez le nom d’utilisateur et réessayez.",
+      "verifiedUser": "{username} (vérifié)",
+      "unverified": "{username} (pas encore vérifié)",
+      "displayName": "Affiché en jeu sous le nom {displayName}",
+      "none": "(Inconnu)"
+    },
     "hero": {
       "title": "Construisez<br></br><primary>Jouez</primary><br></br><secondary>Publiez</secondary>",
       "subtitle": "Un programme gratuit de création de jeux Roblox pour les ados, proposé par Lynx Educate et School of Gaming, en partenariat avec Roblox.",

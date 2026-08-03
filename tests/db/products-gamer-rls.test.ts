@@ -27,7 +27,8 @@ import {
  *
  * Mirrors `products-purchaser-rls.test.ts`, keyed on `gamer_id` instead
  * of `customer_id`: active/waitlisted grant the gamer read of a hidden
- * product; reserving / no-participation do not.
+ * product; any other status / no participation do not. (`reserving` stands in
+ * for "any other status" — it is a retired value nothing writes any more.)
  */
 
 const HIDDEN_ACTIVE_PRODUCT = "00000000-0000-0000-0000-0000000005e1";
@@ -107,7 +108,6 @@ describe("products gamer-read RLS (00067)", () => {
         gamer_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "reserving",
-        reserved_until: new Date(Date.now() + 30 * 60_000).toISOString(),
       },
     ]);
     if (seed.error) throw seed.error;

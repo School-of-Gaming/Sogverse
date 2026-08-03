@@ -91,13 +91,24 @@ export const ROUTES = {
   /** Public storefront product-detail URL (`/shop/[id]`, any product type). */
   shopProduct: publicProductHref,
   /**
-   * Post-purchase confirmation page, keyed by the participation just created
-   * (Stripe `success_url` and the free-signup redirect both land here). The
+   * Post-signup confirmation page, keyed by a participation that already
+   * exists — free events, municipality registrations, and waitlist joins. The
    * static `/shop/confirmation` segment outranks the `/shop/[id]` dynamic
    * route in the App Router, so the opaque product ids it serves never collide.
    */
   shopConfirmation: (participationId: string) =>
     `/shop/confirmation?p=${participationId}`,
+  /**
+   * The same page for a paid signup, keyed by the Stripe Checkout Session
+   * instead. A paid participation is created only once payment is confirmed, so
+   * there is no participation id to put in `success_url` at the moment the
+   * session is built — the session id is the only handle that exists then, and
+   * the page resolves it back to the row. Build the `success_url` with Stripe's
+   * literal `{CHECKOUT_SESSION_ID}` placeholder, which Stripe substitutes on
+   * redirect.
+   */
+  shopPaidConfirmation: (sessionId: string) =>
+    `/shop/confirmation?session_id=${sessionId}`,
   /** "Back to listing" URL — `/shop` with the type's category pre-selected. */
   shopBrowse: shopBrowseHref,
   yty: "/#yty",

@@ -3,9 +3,14 @@ import { POST } from "@/app/api/webhooks/stripe/products/route";
 
 // --- Mocks ---
 
-const { mockConstructEvent, mockSubscriptionsRetrieve } = vi.hoisted(() => ({
+const {
+  mockConstructEvent,
+  mockSubscriptionsRetrieve,
+  mockSubscriptionsCancel,
+} = vi.hoisted(() => ({
   mockConstructEvent: vi.fn(),
   mockSubscriptionsRetrieve: vi.fn(),
+  mockSubscriptionsCancel: vi.fn(),
 }));
 
 vi.mock("stripe", () => {
@@ -16,7 +21,10 @@ vi.mock("stripe", () => {
     vi.fn(function () {
       return {
         webhooks: { constructEvent: mockConstructEvent },
-        subscriptions: { retrieve: mockSubscriptionsRetrieve },
+        subscriptions: {
+          retrieve: mockSubscriptionsRetrieve,
+          cancel: mockSubscriptionsCancel,
+        },
       };
     }),
     {
@@ -39,7 +47,8 @@ vi.mock("@/lib/supabase/admin", () => ({
 
 // --- Fixtures ---
 
-const RESERVATION_ID = "11111111-1111-1111-1111-111111111111";
+const PARTICIPATION_ID = "11111111-1111-1111-1111-111111111111";
+const SESSION_ID = "cs_test_session_1";
 const PRODUCT_ID = "22222222-2222-2222-2222-222222222222";
 const GAMER_ID = "33333333-3333-3333-3333-333333333333";
 const CUSTOMER_ID = "44444444-4444-4444-4444-444444444444";
@@ -70,7 +79,7 @@ function createCompletedEvent(overrides: Partial<{
     type: "checkout.session.completed",
     data: {
       object: {
-        id: "cs_test_session_1",
+        id: SESSION_ID,
         payment_status: "paid",
         amount_total: overrides.amountTotal ?? 10000,
         payment_intent: overrides.paymentIntent ?? "pi_test_1",
@@ -78,7 +87,6 @@ function createCompletedEvent(overrides: Partial<{
         invoice: overrides.invoice ?? null,
         customer: overrides.customer ?? "cus_test_1",
         metadata: {
-          reservationId: RESERVATION_ID,
           productId: PRODUCT_ID,
           gamerId: GAMER_ID,
           customerId: CUSTOMER_ID,
@@ -96,7 +104,6 @@ type AdminInserts = {
   payments: Record<string, unknown>[];
   refunds: Record<string, unknown>[];
   family_subscriptions: Record<string, unknown>[];
-  participations_deletes: { id: string; status: string }[];
 };
 
 type AdminMockOptions = {
@@ -121,7 +128,6 @@ function mockAdmin(opts: AdminMockOptions = {}) {
     payments: [],
     refunds: [],
     family_subscriptions: [],
-    participations_deletes: [],
   };
 
   mockAdminFrom.mockImplementation((table: string) => {
@@ -173,27 +179,9 @@ function mockAdmin(opts: AdminMockOptions = {}) {
         },
       };
     }
-    if (table === "participations") {
-      // Only the duplicate_payment branch deletes from this table; capture
-      // the (id, status) filter so tests can assert what was released.
-      return {
-        delete: () => ({
-          eq: (col: string, val: string) => {
-            const filter: { id: string; status: string } = { id: "", status: "" };
-            if (col === "id") filter.id = val;
-            else if (col === "status") filter.status = val;
-            return {
-              eq: (col2: string, val2: string) => {
-                if (col2 === "id") filter.id = val2;
-                else if (col2 === "status") filter.status = val2;
-                inserts.participations_deletes.push(filter);
-                return Promise.resolve({ data: null, error: null });
-              },
-            };
-          },
-        }),
-      };
-    }
+    // `participations` deliberately has no entry: the handler reaches that
+    // table only through confirm_paid_participation, never with a direct write.
+    // A table appearing here that shouldn't should fail loudly.
     throw new Error(`Unexpected table in admin mock: ${table}`);
   });
 
@@ -227,13 +215,13 @@ describe("POST /api/webhooks/stripe/products", () => {
   });
 
   describe("checkout.session.completed — happy path", () => {
-    it("flips reserving → active and writes a payments row for a single_payment", async () => {
+    it("creates the participation and writes a payments row for a single_payment", async () => {
       mockConstructEvent.mockReturnValue(createCompletedEvent());
       const inserts = mockAdmin();
       mockAdminRpc.mockResolvedValue({
         data: {
           kind: "confirmed",
-          participation_id: RESERVATION_ID,
+          participation_id: PARTICIPATION_ID,
           idempotent: false,
         },
         error: null,
@@ -242,8 +230,11 @@ describe("POST /api/webhooks/stripe/products", () => {
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
 
-      expect(mockAdminRpc).toHaveBeenCalledWith("confirm_reservation", {
-        p_reservation_id: RESERVATION_ID,
+      expect(mockAdminRpc).toHaveBeenCalledWith("confirm_paid_participation", {
+        p_product_id: PRODUCT_ID,
+        p_gamer_id: GAMER_ID,
+        p_customer_id: CUSTOMER_ID,
+        p_checkout_session_id: SESSION_ID,
       });
       expect(inserts.payments).toHaveLength(1);
       expect(inserts.payments[0]).toMatchObject({
@@ -270,7 +261,7 @@ describe("POST /api/webhooks/stripe/products", () => {
       mockAdminRpc.mockResolvedValue({
         data: {
           kind: "confirmed",
-          participation_id: RESERVATION_ID,
+          participation_id: PARTICIPATION_ID,
           idempotent: false,
         },
         error: null,
@@ -297,7 +288,7 @@ describe("POST /api/webhooks/stripe/products", () => {
       expect(inserts.family_subscriptions).toHaveLength(1);
       expect(inserts.family_subscriptions[0]).toMatchObject({
         customer_id: CUSTOMER_ID,
-        participation_id: RESERVATION_ID,
+        participation_id: PARTICIPATION_ID,
         stripe_subscription_id: "sub_new_1",
         stripe_price_id: "price_test_1",
         currency: "eur",
@@ -319,7 +310,7 @@ describe("POST /api/webhooks/stripe/products", () => {
       mockAdminRpc.mockResolvedValue({
         data: {
           kind: "confirmed",
-          participation_id: RESERVATION_ID,
+          participation_id: PARTICIPATION_ID,
           idempotent: false,
         },
         error: null,
@@ -381,9 +372,11 @@ describe("POST /api/webhooks/stripe/products", () => {
 
     it("skips when required metadata is missing", async () => {
       const event = createCompletedEvent();
-      // Force an incomplete metadata payload.
+      // Force an incomplete metadata payload. The metadata is now the only
+      // thing naming who the seat is for, so a missing field has to stop the
+      // handler rather than have it guess.
       (event.data.object as { metadata: Record<string, string | undefined> })
-        .metadata.reservationId = undefined;
+        .metadata.gamerId = undefined;
       mockConstructEvent.mockReturnValue(event);
       mockAdmin();
 
@@ -393,8 +386,11 @@ describe("POST /api/webhooks/stripe/products", () => {
     });
   });
 
-  describe("checkout.session.completed — orphan", () => {
-    it("logs and writes nothing when confirm_reservation returns orphan", async () => {
+  describe("checkout.session.completed — unexpected RPC shape", () => {
+    it("returns 500 so Stripe retries when the RPC answers with an unknown kind", async () => {
+      // There is no 'orphan' outcome any more — nothing exists before payment
+      // to go missing. A kind this handler doesn't know is a real mismatch
+      // between route and database, so it must not be swallowed as a 200.
       mockConstructEvent.mockReturnValue(createCompletedEvent());
       const inserts = mockAdmin();
       mockAdminRpc.mockResolvedValue({
@@ -404,36 +400,32 @@ describe("POST /api/webhooks/stripe/products", () => {
       const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       const res = await POST(createWebhookRequest());
-      expect(res.status).toBe(200);
-
+      expect(res.status).toBe(500);
       expect(inserts.payments).toHaveLength(0);
-      expect(inserts.refunds).toHaveLength(0);
-      expect(errorSpy).toHaveBeenCalledWith(
-        expect.stringContaining("orphan confirmation"),
-        expect.objectContaining({ reservationId: RESERVATION_ID }),
-      );
       errorSpy.mockRestore();
     });
   });
 
   describe("checkout.session.completed — duplicate_payment", () => {
-    it("logs, records the duplicate payment, and releases the orphan reserving row", async () => {
-      const EXISTING_PARTICIPATION_ID = "55555555-5555-5555-5555-555555555555";
+    const EXISTING_PARTICIPATION_ID = "55555555-5555-5555-5555-555555555555";
+
+    function duplicatePayment() {
+      mockAdminRpc.mockResolvedValue({
+        data: {
+          kind: "duplicate_payment",
+          existing_participation_id: EXISTING_PARTICIPATION_ID,
+          existing_status: "active",
+        },
+        error: null,
+      });
+    }
+
+    it("logs and records the duplicate payment for a single payment, with no Stripe cancel", async () => {
       mockConstructEvent.mockReturnValue(
         createCompletedEvent({ id: "evt_completed_2", paymentIntent: "pi_dup_1" }),
       );
       const inserts = mockAdmin();
-      mockAdminRpc.mockResolvedValue({
-        data: {
-          kind: "duplicate_payment",
-          reservation_id: RESERVATION_ID,
-          existing_participation_id: EXISTING_PARTICIPATION_ID,
-          product_id: PRODUCT_ID,
-          gamer_id: GAMER_ID,
-          customer_id: CUSTOMER_ID,
-        },
-        error: null,
-      });
+      duplicatePayment();
       const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       const res = await POST(createWebhookRequest());
@@ -443,7 +435,6 @@ describe("POST /api/webhooks/stripe/products", () => {
       expect(errorSpy).toHaveBeenCalledWith(
         expect.stringContaining("duplicate payment detected"),
         expect.objectContaining({
-          reservationId: RESERVATION_ID,
           existingParticipationId: EXISTING_PARTICIPATION_ID,
           eventId: "evt_completed_2",
           customerId: CUSTOMER_ID,
@@ -462,12 +453,76 @@ describe("POST /api/webhooks/stripe/products", () => {
         customer_id: CUSTOMER_ID,
       });
 
-      // Orphan reserving row released so it doesn't permanently hold a seat.
-      expect(inserts.participations_deletes).toHaveLength(1);
-      expect(inserts.participations_deletes[0]).toEqual({
-        id: RESERVATION_ID,
-        status: "reserving",
+      // One-off charge: nothing recurring to stop, so no Stripe call. The
+      // refund stays a manual admin action.
+      expect(mockSubscriptionsCancel).not.toHaveBeenCalled();
+
+      errorSpy.mockRestore();
+    });
+
+    it("cancels the duplicate Stripe subscription so it stops recurring", async () => {
+      // By the time this event fires the second subscription is live and will
+      // bill again next month. No family_subscriptions row is written for it,
+      // so nothing else in the system would ever stop it: renewals drop in the
+      // invoice handler and a cancellation finds no row to tear down. Refunding
+      // one invoice does not stop the next one — the sub has to be cancelled.
+      mockConstructEvent.mockReturnValue(
+        createCompletedEvent({
+          id: "evt_completed_dup_sub",
+          paymentIntent: null,
+          subscription: "sub_duplicate_1",
+          invoice: "in_dup_1",
+          purchaseShape: "subscription_monthly",
+        }),
+      );
+      const inserts = mockAdmin();
+      duplicatePayment();
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+
+      expect(mockSubscriptionsCancel).toHaveBeenCalledWith("sub_duplicate_1");
+      // The duplicate charge is still recorded for the manual refund, and no
+      // subscription row is written — the sub is going away.
+      expect(inserts.payments).toHaveLength(1);
+      expect(inserts.payments[0]).toMatchObject({
+        purpose: "reservation_duplicate",
       });
+      expect(inserts.family_subscriptions).toHaveLength(0);
+
+      errorSpy.mockRestore();
+    });
+
+    it("still records the duplicate charge, loudly, when the cancel fails", async () => {
+      // A cancel is not safely repeatable, so this branch must not throw for a
+      // free Stripe retry: it would loop, and nothing would ever be recorded.
+      // The charge lands either way and the failure joins the log the admin is
+      // already reading.
+      mockConstructEvent.mockReturnValue(
+        createCompletedEvent({
+          id: "evt_completed_dup_sub_fail",
+          paymentIntent: null,
+          subscription: "sub_duplicate_2",
+          invoice: "in_dup_2",
+          purchaseShape: "subscription_monthly",
+        }),
+      );
+      const inserts = mockAdmin();
+      duplicatePayment();
+      mockSubscriptionsCancel.mockRejectedValueOnce(
+        new Error("Stripe is unreachable"),
+      );
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+
+      expect(inserts.payments).toHaveLength(1);
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining("could not cancel the duplicate subscription"),
+        expect.objectContaining({ subscription: "sub_duplicate_2" }),
+      );
 
       errorSpy.mockRestore();
     });
@@ -488,36 +543,30 @@ describe("POST /api/webhooks/stripe/products", () => {
   });
 
   describe("checkout.session.expired", () => {
-    it("calls expire_reservation with the metadata reservation id", async () => {
+    it("is an unhandled event — an abandoned session leaves nothing behind", async () => {
+      // Nothing is written before payment, so an expiring session has no seat
+      // to reclaim. The event falls through to the default arm and is answered
+      // 200 without touching the database.
       mockConstructEvent.mockReturnValue({
         id: "evt_expired_1",
         type: "checkout.session.expired",
         data: {
           object: {
             id: "cs_expired_1",
-            metadata: { reservationId: RESERVATION_ID },
+            metadata: {
+              productId: PRODUCT_ID,
+              gamerId: GAMER_ID,
+              customerId: CUSTOMER_ID,
+            },
           },
         },
       });
-      mockAdminRpc.mockResolvedValue({ data: { kind: "expired" }, error: null });
-
-      const res = await POST(createWebhookRequest());
-      expect(res.status).toBe(200);
-      expect(mockAdminRpc).toHaveBeenCalledWith("expire_reservation", {
-        p_reservation_id: RESERVATION_ID,
-      });
-    });
-
-    it("is a no-op when the metadata reservation id is missing", async () => {
-      mockConstructEvent.mockReturnValue({
-        id: "evt_expired_2",
-        type: "checkout.session.expired",
-        data: { object: { id: "cs_expired_2", metadata: {} } },
-      });
+      mockAdmin();
 
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
       expect(mockAdminRpc).not.toHaveBeenCalled();
+      expect(mockAdminFrom).not.toHaveBeenCalled();
     });
   });
 
@@ -532,7 +581,7 @@ describe("POST /api/webhooks/stripe/products", () => {
 
     it("tears the participation down via cancel_participation when we own the sub", async () => {
       mockConstructEvent.mockReturnValue(createDeletedEvent("sub_live_1"));
-      mockAdmin({ famSubRow: { participation_id: RESERVATION_ID } });
+      mockAdmin({ famSubRow: { participation_id: PARTICIPATION_ID } });
       mockAdminRpc.mockResolvedValue({
         data: { kind: "cancelled" },
         error: null,
@@ -544,7 +593,7 @@ describe("POST /api/webhooks/stripe/products", () => {
       // Stripe already cancelled the sub — we only tear down our DB. Deleting
       // the participation CASCADEs the family_subscriptions row away.
       expect(mockAdminRpc).toHaveBeenCalledWith("cancel_participation", {
-        p_participation_id: RESERVATION_ID,
+        p_participation_id: PARTICIPATION_ID,
         p_reason: "subscription_cancelled",
       });
     });

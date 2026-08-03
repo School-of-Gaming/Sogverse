@@ -360,8 +360,6 @@
         "subject": "Subjects"
       },
       "locationPicker": {
-        "clearSearch": "Clear search",
-        "noResults": "No locations match “{query}”.",
         "hintSite": "Pick the venue this runs at. Opening a new one? Start from its municipality.",
         "hintMunicipality": "Pick the Finnish municipality this club is for — the one that funds it. Sites and other countries aren’t options here.",
         "change": "Change",
@@ -389,7 +387,6 @@
         "newVenue": "New venue…",
         "newVenueTitle": "Open a new venue",
         "newVenueDescription": "Start with the municipality it sits in. Official names and codes come from each country’s statistical classification, so nothing above the venue itself is ever typed by hand.",
-        "newVenueUnresolved": "{name} has no location record in this environment yet, so a venue cannot be opened there.",
         "venuesIn": "Venues in {name}",
         "venuesInDescription": "Pick one that is already here, or add a new one.",
         "venuesHereEmpty": "No venues here yet.",
@@ -880,6 +877,7 @@
       "emailPlaceholder": "you@example.com",
       "passwordPlaceholder": "Create a strong password",
       "confirmPasswordPlaceholder": "Confirm your password",
+      "location": "Location",
       "creatingAccount": "Creating account...",
       "accountExists": "An account with this email already exists",
       "alreadyHaveAccount": "Already have an account? <link>Sign in</link>"
@@ -995,6 +993,22 @@
       "description": "This link may be old or incomplete. Your purchases are always available in My SOG.",
       "cta": "Go to My SOG"
     },
+    "finalizing": {
+      "heading": "Payment received",
+      "subheading": "We’re finalizing the signup — this only takes a moment.",
+      "reassurance": "You can safely stay on this page. Your signup will also appear in My SOG."
+    },
+    "timedOut": {
+      "heading": "This is taking longer than expected",
+      "subheading": "Your payment went through, and it is safe.",
+      "body": "We have not finished setting the signup up yet. It should appear in My SOG shortly — have a look there, and let us know if it has not turned up."
+    },
+    "duplicatePayment": {
+      "heading": "Already signed up",
+      "subheading": "This child already has a place on this product.",
+      "body": "This payment has not created a second signup. Get in touch and our team will look into the extra charge with you."
+    },
+    "supportLine": "Need a hand? Email us at <link>{email}</link>.",
     "waitlist": {
       "heading": "You’re on the waitlist",
       "subheading": "{gamer} is on the waitlist for {product}. We’ll let you know if a seat opens.",
@@ -1147,15 +1161,10 @@
       "remove": "Remove {name}",
       "clearAll": "Clear all",
       "chooseAreas": "Choose areas",
-      "legacyHeading": "Venues and older entries",
-      "legacyNote": "Added before the catalog existed. You can remove them here, but not add more.",
-      "venueBadge": "Venue",
-      "legacyBadge": "Older entry",
       "loading": "Loading locations...",
       "save": "Save",
       "saving": "Saving...",
-      "saveError": "Failed to save coverage",
-      "unresolvedError": "Not in the location database yet: {names}. Remove them and save again."
+      "saveError": "Failed to save coverage"
     },
     "myGroups": {
       "counts": "{groupCount, plural, one {# group} other {# groups}} · {gamerCount, plural, one {# gamer} other {# gamers}}",
@@ -1648,6 +1657,17 @@
     }
   },
   "roblox": {
+    "account": {
+      "label": "Roblox Username",
+      "placeholder": "e.g. builderman",
+      "verify": "Verify",
+      "verifying": "Verifying...",
+      "notFound": "Roblox account not found. Check the username and try again.",
+      "verifiedUser": "{username} (verified)",
+      "unverified": "{username} (not yet verified)",
+      "displayName": "Shown in-game as {displayName}",
+      "none": "(Unknown)"
+    },
     "hero": {
       "title": "Build It<br></br><primary>Play It</primary><br></br><secondary>Own It</secondary>",
       "subtitle": "A free Roblox game design programme for teens — brought to you by Lynx Educate and School of Gaming, in partnership with Roblox.",
@@ -1736,24 +1756,29 @@
     }
   },
   "locations": {
-    "catalog": {
+    "picker": {
       "coverageTitle": "Choose the areas you cover",
       "coverageDescription": "Tick anything you can cover. Each tick covers everything inside it, so ticking a region already covers every municipality in it.",
-      "country": "Country",
-      "loading": "Loading the catalog",
-      "loadFailed": "The catalog could not be loaded. Check your connection and try again.",
-      "retry": "Try again",
-      "searchPlaceholder": "Search by name or official code…",
-      "searchingAll": "Searching the whole catalog: {country}",
-      "noResults": "Nothing in the catalog matches “{query}”.",
+      "searchPlaceholder": "Search by name or code…",
+      "searchingEverywhere": "Searching every country",
+      "allCountries": "All countries",
+      "noResults": "Nothing matches “{query}”.",
+      "keepTyping": "Type at least {count} characters to search.",
+      "nothingHere": "Nothing here.",
       "showingSome": "Showing the first {shown} of {total} matches. Keep typing to narrow them down.",
+      "loadMore": "Show more",
       "browseInto": "Show what is inside {name}",
-      "nothingSelected": "Pick a municipality to continue.",
+      "nothingSelected": "Pick a place to continue.",
       "confirm": "Continue",
-      "tickedCount": "{count, plural, =0 {Nothing ticked} one {# area ticked} other {# areas ticked}}",
-      "done": "Done",
+      "confirming": "Opening…",
       "clearSearch": "Clear search",
-      "confirming": "Opening…"
+      "tickedCount": "{count, plural, =0 {Nothing ticked} one {# area ticked} other {# areas ticked}}",
+      "done": "Done"
+    },
+    "home": {
+      "choose": "Add your location",
+      "dialogTitle": "Where are you based?",
+      "dialogDescription": "Browse the list, or search by name."
     }
   },
   "minecraft": {
@@ -1905,7 +1930,8 @@
     "minecraftCleared": "Minecraft username cleared.",
     "failedToUpdateMinecraft": "Failed to update Minecraft username.",
     "saveMinecraft": "Save Minecraft Username",
-    "spokenLanguages": "Languages spoken"
+    "spokenLanguages": "Languages spoken",
+    "location": "Location"
   },
   "voice": {
     "participants": "Participants",

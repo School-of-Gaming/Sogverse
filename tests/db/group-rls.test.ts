@@ -215,8 +215,9 @@ describe("product_groups + gedu_group_assignments RLS", () => {
 
 // ---------------------------------------------------------------------------
 // Non-active participations don't grant ongoing visibility (00051).
-// v2's participation_status enum is ('reserving', 'active', 'waitlisted',
-// 'completed') — no 'cancelled'. The realistic leak is a former participant
+// The participation_status enum is ('reserving', 'active', 'waitlisted',
+// 'completed') — no 'cancelled', and 'reserving' is retired. The realistic leak
+// is a former participant
 // of a finished product retaining visibility into its current group/Gedu
 // structure, which the migration closes by gating on status = 'active'.
 // Uses its own product fixture so the active-state assertions above keep

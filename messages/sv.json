@@ -360,8 +360,6 @@
         "subject": "Ämnen"
       },
       "locationPicker": {
-        "clearSearch": "Rensa sökning",
-        "noResults": "Inga platser matchar ”{query}”.",
         "hintSite": "Välj lokalen där detta hålls. Öppnar du en ny? Börja med kommunen.",
         "hintMunicipality": "Välj den finländska kommun som klubben gäller — den som finansierar den. Lokaler och andra länder kan inte väljas här.",
         "change": "Ändra",
@@ -389,7 +387,6 @@
         "newVenue": "Ny lokal…",
         "newVenueTitle": "Öppna en ny lokal",
         "newVenueDescription": "Börja med kommunen den ligger i. Officiella namn och koder kommer från varje lands statistiska klassificering, så ingenting ovanför själva lokalen skrivs för hand.",
-        "newVenueUnresolved": "{name} har ännu ingen platspost i den här miljön, så det går inte att öppna en lokal där.",
         "venuesIn": "Lokaler i {name}",
         "venuesInDescription": "Välj en som redan finns, eller lägg till en ny.",
         "venuesHereEmpty": "Inga lokaler här ännu.",
@@ -880,6 +877,7 @@
       "emailPlaceholder": "du@example.com",
       "passwordPlaceholder": "Skapa ett starkt lösenord",
       "confirmPasswordPlaceholder": "Bekräfta ditt lösenord",
+      "location": "Plats",
       "creatingAccount": "Skapar konto...",
       "accountExists": "Ett konto med denna e-postadress finns redan",
       "alreadyHaveAccount": "Har du redan ett konto? <link>Logga in</link>"
@@ -995,6 +993,22 @@
       "description": "Länken kan vara gammal eller ofullständig. Dina köp finns alltid i Min SOG.",
       "cta": "Gå till Min SOG"
     },
+    "finalizing": {
+      "heading": "Betalningen är mottagen",
+      "subheading": "Vi slutför anmälan — det tar bara ett ögonblick.",
+      "reassurance": "Du kan lugnt stanna kvar på den här sidan. Anmälan visas också i Min SOG."
+    },
+    "timedOut": {
+      "heading": "Det här tar längre tid än väntat",
+      "subheading": "Din betalning gick igenom och är i tryggt förvar.",
+      "body": "Vi har inte hunnit göra klart anmälan än. Den bör dyka upp i Min SOG inom kort — titta gärna där, och hör av dig om den inte kommer."
+    },
+    "duplicatePayment": {
+      "heading": "Redan anmäld",
+      "subheading": "Det här barnet har redan en plats på den här produkten.",
+      "body": "Den här betalningen har inte skapat någon andra anmälan. Hör av dig, så tittar vårt team på den extra debiteringen tillsammans med dig."
+    },
+    "supportLine": "Behöver du hjälp? Mejla oss på <link>{email}</link>.",
     "waitlist": {
       "heading": "Du står på väntelistan",
       "subheading": "{gamer} står på väntelistan för {product}. Vi hör av oss så snart en plats blir ledig.",
@@ -1147,15 +1161,10 @@
       "remove": "Ta bort {name}",
       "clearAll": "Rensa alla",
       "chooseAreas": "Välj områden",
-      "legacyHeading": "Platser och äldre poster",
-      "legacyNote": "Tillagda innan katalogen fanns. Du kan ta bort dem här, men inte lägga till fler.",
-      "venueBadge": "Plats",
-      "legacyBadge": "Äldre post",
       "loading": "Laddar platser...",
       "save": "Spara",
       "saving": "Sparar...",
-      "saveError": "Kunde inte spara",
-      "unresolvedError": "Finns ännu inte i platsdatabasen: {names}. Ta bort dem och spara igen."
+      "saveError": "Kunde inte spara"
     },
     "myGroups": {
       "counts": "{groupCount, plural, one {# grupp} other {# grupper}} · {gamerCount, plural, one {# spelare} other {# spelare}}",
@@ -1648,24 +1657,29 @@
     }
   },
   "locations": {
-    "catalog": {
+    "picker": {
       "coverageTitle": "Välj de områden du täcker",
       "coverageDescription": "Kryssa i allt du kan täcka. Varje kryss täcker allt som ligger inuti, så ett kryss för ett landskap täcker redan alla dess kommuner.",
-      "country": "Land",
-      "loading": "Katalogen laddas",
-      "loadFailed": "Katalogen kunde inte läsas in. Kontrollera din anslutning och försök igen.",
-      "retry": "Försök igen",
-      "searchPlaceholder": "Sök på namn eller officiell kod…",
-      "searchingAll": "Söker i hela katalogen: {country}",
-      "noResults": "Ingenting i katalogen matchar ”{query}”.",
+      "searchPlaceholder": "Sök på namn eller kod…",
+      "searchingEverywhere": "Söker i alla länder",
+      "allCountries": "Alla länder",
+      "noResults": "Ingenting matchar ”{query}”.",
+      "keepTyping": "Skriv minst {count} tecken för att söka.",
+      "nothingHere": "Ingenting här.",
       "showingSome": "Visar de {shown} första av {total} träffar. Fortsätt skriva för att begränsa dem.",
+      "loadMore": "Visa fler",
       "browseInto": "Visa vad som finns i {name}",
-      "nothingSelected": "Välj en kommun för att fortsätta.",
+      "nothingSelected": "Välj en plats för att fortsätta.",
       "confirm": "Fortsätt",
-      "tickedCount": "{count, plural, =0 {Inget ikryssat} one {# område ikryssat} other {# områden ikryssade}}",
-      "done": "Klar",
+      "confirming": "Öppnar…",
       "clearSearch": "Rensa sökning",
-      "confirming": "Öppnar…"
+      "tickedCount": "{count, plural, =0 {Inget ikryssat} one {# område ikryssat} other {# områden ikryssade}}",
+      "done": "Klar"
+    },
+    "home": {
+      "choose": "Lägg till din plats",
+      "dialogTitle": "Var bor du?",
+      "dialogDescription": "Bläddra i listan eller sök på namn."
     }
   },
   "minecraft": {
@@ -1817,7 +1831,8 @@
     "minecraftCleared": "Minecraft-användarnamn borttaget.",
     "failedToUpdateMinecraft": "Kunde inte uppdatera Minecraft-användarnamn.",
     "saveMinecraft": "Spara Minecraft-användarnamn",
-    "spokenLanguages": "Talade språk"
+    "spokenLanguages": "Talade språk",
+    "location": "Plats"
   },
   "voice": {
     "participants": "Deltagare",
@@ -2474,6 +2489,17 @@
     }
   },
   "roblox": {
+    "account": {
+      "label": "Roblox-användarnamn",
+      "placeholder": "t.ex. builderman",
+      "verify": "Verifiera",
+      "verifying": "Verifierar...",
+      "notFound": "Roblox-kontot hittades inte. Kontrollera användarnamnet och försök igen.",
+      "verifiedUser": "{username} (verifierad)",
+      "unverified": "{username} (ännu inte verifierad)",
+      "displayName": "Visas i spelet som {displayName}",
+      "none": "(okänt)"
+    },
     "hero": {
       "title": "Bygg<br></br><primary>Spela</primary><br></br><secondary>Äg det</secondary>",
       "subtitle": "Ett gratis Roblox-speldesignprogram för tonåringar — från Lynx Educate och School of Gaming, i samarbete med Roblox.",

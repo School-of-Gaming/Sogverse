@@ -7,8 +7,8 @@ on:
 
 # Read-only by default so the write grant on test-db (for the dev-only schema
 # snapshot commit) is an actual narrowing. Without this the repository default
-# applies to every job, and on a repo set to "read and write" the lint, test, e2e
-# and deploy jobs would each hold contents:write for no reason.
+# applies to every job, and on a repo set to "read and write" the lint, test,
+# build-smoke and deploy jobs would each hold contents:write for no reason.
 permissions:
   contents: read
 
@@ -89,8 +89,13 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
 
-  e2e:
-    name: E2E Tests
+  # The only job that builds the app, and the only one that exercises a real
+  # served production build: the smoke spec asserts the security headers and the
+  # per-request CSP nonce against actual HTTP responses from `npm run start`.
+  # Playwright is used purely as an HTTP client here (its request fixture), so no
+  # browser binaries are installed and none are needed.
+  build-smoke:
+    name: Build & Smoke
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -104,15 +109,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # CI runs chromium only. `--with-deps` for webkit intermittently hangs for
-      # 10-20 min on GitHub-hosted runners (apt-get hits slow/unhealthy mirrors for
-      # webkit's system libs) — a known, unresolved upstream issue. Installing just
-      # chromium sidesteps that path. The full engine matrix (firefox/webkit/mobile)
-      # still lives in playwright.config.ts for local runs; CI scopes to chromium
-      # via --project below. Revisit cross-browser when the e2e suite is hardened.
-      - name: Install Playwright browsers
-        run: npx playwright install chromium --with-deps
-
       - name: Build application
         run: npm run build
         env:
@@ -123,8 +119,8 @@ jobs:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
 
-      - name: Run E2E tests
-        run: npm run test:e2e -- --project=chromium
+      - name: Run smoke tests
+        run: npm run test:smoke
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -132,14 +128,6 @@ jobs:
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
-
-      - name: Upload Playwright report
-        uses: actions/upload-artifact@v6
-        if: always()
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 30
 
   test-db:
     name: Database Tests
@@ -165,17 +153,25 @@ jobs:
           version: ${{ env.SUPABASE_CLI_VERSION }}
 
       # The DB tests only exercise Postgres via PostgREST + GoTrue (see
-      # tests/db/helpers.ts) — they never touch edge functions, studio, imgproxy,
-      # vector, or logflare. Excluding those avoids booting the edge-runtime
-      # container, whose boot-time Deno download intermittently fails the tail-end
-      # health check with `Error status 502` (known upstream flake: supabase/cli
-      # #3775, #2893, #4535) and fails the whole job on a stack the tests don't use.
-      # --ignore-health-check is the documented backstop for that 502; the kept
-      # containers come up fine. Also cuts start time from ~5 min to ~40-60s.
-      # (realtime/storage/inbucket are unused too and could be excluded for more
-      # speed, but they're not the flaky one, so we keep them — minimal blast radius.)
+      # tests/db/helpers.ts) — so only those two, kong (which routes to them),
+      # postgres itself, and supavisor (the pooler fronting the exposed db port the
+      # CLI applies migrations through) get to boot. Everything else is excluded:
+      #
+      # - edge-runtime is the flaky one — its boot-time Deno download intermittently
+      #   fails the tail-end health check with `Error status 502` (known upstream
+      #   flake: supabase/cli #3775, #2893, #4535) and fails the whole job on a
+      #   container the tests never touch. --ignore-health-check is the documented
+      #   backstop for that 502; the kept containers come up fine.
+      # - realtime, storage-api, postgres-meta, mailpit, studio, imgproxy, vector,
+      #   logflare are simply unused. Mailpit is safe to drop because local auth
+      #   autoconfirms (enable_confirmations = false in supabase/config.toml), so
+      #   GoTrue never contacts SMTP on any path a test exercises.
+      #
+      # Together the exclusions cut boot from ~5 min (full stack) to well under it;
+      # the full-stack baseline and per-container drift move around with runner
+      # weather, so treat the step's own timing in the run as the current number.
       - name: Start local Supabase
-        run: supabase start -x edge-runtime,studio,imgproxy,vector,logflare --ignore-health-check
+        run: supabase start -x edge-runtime,studio,imgproxy,vector,logflare,realtime,storage-api,postgres-meta,mailpit --ignore-health-check
 
       - name: Run database tests
         run: npm run test:db
@@ -283,16 +279,16 @@ jobs:
             echo "::warning::lost a race pushing the regenerated schema.sql to dev; the next schema-changing push will regenerate it"
           fi
 
-      - name: Stop local Supabase
-        if: always()
-        run: supabase stop
+      # No `supabase stop`: the runner is ephemeral and gets destroyed right after
+      # this job, so tearing the stack down (~19s) protected nothing. The schema
+      # snapshot above is dumped while the stack is still up either way.
 
   # Deploy job only runs on push to main, after CI passes
   # Vercel handles preview/staging deploys for dev automatically via GitHub integration
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: [lint-and-typecheck, test, test-db, e2e]
+    needs: [lint-and-typecheck, test, test-db, build-smoke]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment:
       name: production

@@ -81,13 +81,13 @@ the whole `gedu-profiles` key on success.
 ## Coverage field reuse
 
 The register form and the settings/admin coverage editor render the same coverage field
-(`../../components/gedu/`) — a fixed-height box of claim chips plus the shared catalog
-dialog, with identical positive-selection semantics (one tick is one independent "I cover
+(`../../components/gedu/`) — a fixed-height box of claim chips plus the shared location
+picker, with identical positive-selection semantics (one tick is one independent "I cover
 this subtree" claim; ticking a parent never touches its descendants). The editor wraps it
 with a Save button (immediate `gedu_locations` mutation); the register form collects the
 selection into the atomic `register_gedu` call instead.
 
-Both hold ticks as catalog codes and resolve them to `locations` row ids only at commit —
-the register form because no account exists yet, the editor because a freshly ticked node
-has never been a row to it. Resolution is a lookup, so **a code that resolves to nothing
-must fail the commit with the place named**, never be dropped from the set being written.
+Both hold ticks as `locations` row ids, because the picker browses that table and a
+ticked node is already a row. Nothing is resolved at commit, and there is no claim the
+field can display but cannot store — which is why the register form can collect coverage
+before an account exists at all (the table is anon-readable reference data).

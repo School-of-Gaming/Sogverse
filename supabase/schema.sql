@@ -94,6 +94,13 @@ CREATE TYPE public.participation_status AS ENUM (
 
 
 --
+-- Name: TYPE participation_status; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.participation_status IS 'Participation lifecycle. ''reserving'' is RETIRED (2026-08, migration 00139): paid participations are created at payment confirmation, so nothing writes it. PostgreSQL cannot drop an enum value, hence it remains listed.';
+
+
+--
 -- Name: payment_purpose; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -634,85 +641,73 @@ $$;
 
 
 --
--- Name: confirm_reservation(uuid); Type: FUNCTION; Schema: public; Owner: -
+-- Name: confirm_paid_participation(uuid, uuid, uuid, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.confirm_reservation(p_reservation_id uuid) RETURNS jsonb
+CREATE FUNCTION public.confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
 DECLARE
-  v_product_id   UUID;
-  v_gamer_id     UUID;
-  v_customer_id  UUID;
-  v_status       public.participation_status;
-  v_conflict_id  UUID;
+  v_conflict_id      UUID;
+  v_conflict_session TEXT;
+  v_conflict_status  public.participation_status;
+  v_participation_id UUID;
 BEGIN
-  SELECT product_id, gamer_id, customer_id, status
-    INTO v_product_id, v_gamer_id, v_customer_id, v_status
-    FROM public.participations
-    WHERE id = p_reservation_id
-    FOR UPDATE;
-
+  PERFORM 1 FROM public.products WHERE id = p_product_id FOR UPDATE;
   IF NOT FOUND THEN
-    RETURN jsonb_build_object('kind', 'orphan');
+    RAISE EXCEPTION 'product % does not exist', p_product_id
+      USING ERRCODE = 'no_data_found';
   END IF;
 
-  -- Idempotent replay of the same reservation's webhook.
-  IF v_status = 'active' THEN
-    RETURN jsonb_build_object(
-      'kind', 'confirmed',
-      'participation_id', p_reservation_id,
-      'product_id', v_product_id,
-      'gamer_id', v_gamer_id,
-      'customer_id', v_customer_id,
-      'idempotent', TRUE
-    );
-  END IF;
-
-  IF v_status <> 'reserving' THEN
-    RETURN jsonb_build_object('kind', 'orphan');
-  END IF;
-
-  -- Pre-check the partial UNIQUE: is there another non-reserving row for
-  -- this (product, gamer)? If so, the parent already has a confirmed seat
-  -- (or waitlist position) from a different reservation, and this Stripe
-  -- payment is a duplicate. Return early so the route layer can refund.
-  SELECT id
-    INTO v_conflict_id
+  -- Pre-check the partial UNIQUE on (product_id, gamer_id): under the gate lock
+  -- this decides the outcome, and the index itself is left as the backstop.
+  SELECT id, status, stripe_checkout_session_id
+    INTO v_conflict_id, v_conflict_status, v_conflict_session
     FROM public.participations
-    WHERE product_id = v_product_id
-      AND gamer_id   = v_gamer_id
-      AND id        <> p_reservation_id
+    WHERE product_id = p_product_id
+      AND gamer_id   = p_gamer_id
       AND status    IN ('active', 'waitlisted', 'completed')
     LIMIT 1;
 
   IF v_conflict_id IS NOT NULL THEN
+    IF v_conflict_session IS NOT NULL
+       AND v_conflict_session = p_checkout_session_id THEN
+      RETURN jsonb_build_object(
+        'kind', 'confirmed',
+        'participation_id', v_conflict_id,
+        'idempotent', TRUE
+      );
+    END IF;
+
     RETURN jsonb_build_object(
       'kind', 'duplicate_payment',
-      'reservation_id', p_reservation_id,
       'existing_participation_id', v_conflict_id,
-      'product_id', v_product_id,
-      'gamer_id', v_gamer_id,
-      'customer_id', v_customer_id
+      'existing_status', v_conflict_status::text
     );
   END IF;
 
-  UPDATE public.participations
-     SET status = 'active',
-         reserved_until = NULL
-   WHERE id = p_reservation_id;
+  INSERT INTO public.participations (
+    product_id, gamer_id, customer_id, status, stripe_checkout_session_id
+  ) VALUES (
+    p_product_id, p_gamer_id, p_customer_id, 'active', p_checkout_session_id
+  )
+  RETURNING id INTO v_participation_id;
 
   RETURN jsonb_build_object(
     'kind', 'confirmed',
-    'participation_id', p_reservation_id,
-    'product_id', v_product_id,
-    'gamer_id', v_gamer_id,
-    'customer_id', v_customer_id,
+    'participation_id', v_participation_id,
     'idempotent', FALSE
   );
 END;
 $$;
+
+
+--
+-- Name: FUNCTION confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text) IS 'Creates the active participation for a paid signup once Stripe confirms payment. service_role only — the arguments come from Checkout Session metadata we wrote. Returns kind=confirmed with participation_id (idempotent=true when this same session already bought the seat), or kind=duplicate_payment with existing_participation_id when a different payment already put this gamer on this product.';
 
 
 --
@@ -726,21 +721,6 @@ CREATE FUNCTION public.count_active_seats(p_product_id uuid) RETURNS integer
   SELECT COUNT(*)::INTEGER
     FROM public.participations
     WHERE product_id = p_product_id AND status = 'active';
-$$;
-
-
---
--- Name: count_seats_taken(uuid); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.count_seats_taken(p_product_id uuid) RETURNS integer
-    LANGUAGE sql STABLE SECURITY DEFINER
-    SET search_path TO ''
-    AS $$
-  SELECT COUNT(*)::INTEGER
-    FROM public.participations
-    WHERE product_id = p_product_id
-      AND status IN ('active', 'reserving');
 $$;
 
 
@@ -808,7 +788,6 @@ DECLARE
   v_existing_id           UUID;
   v_existing_status       public.participation_status;
   v_participation_id      UUID;
-  v_reserved_until        TIMESTAMPTZ;
   v_is_parent             BOOLEAN;
 BEGIN
   SELECT * INTO v_product FROM public.products WHERE id = p_product_id FOR UPDATE;
@@ -850,14 +829,19 @@ BEGIN
       USING ERRCODE = 'check_violation';
   END IF;
 
+  -- The already-enrolled gate. Its status list has to match the one
+  -- `confirm_paid_participation` conflicts on, or a signup can pass here, take
+  -- the parent's money, and then be refused at confirmation with nothing to
+  -- show for it. 'completed' is the member that was missing: nothing writes
+  -- that status today, so the gap was unreachable rather than harmless.
   SELECT id, status INTO v_existing_id, v_existing_status
     FROM public.participations
     WHERE product_id = p_product_id
       AND gamer_id = p_gamer_id
-      AND status IN ('active', 'waitlisted')
+      AND status IN ('active', 'waitlisted', 'completed')
     LIMIT 1;
   IF v_existing_id IS NOT NULL THEN
-    RAISE EXCEPTION 'gamer % already has a % participation on this product', p_gamer_id, v_existing_status
+    RAISE EXCEPTION 'gamer % already has a participation on this product (status: %)', p_gamer_id, v_existing_status
       USING ERRCODE = 'unique_violation';
   END IF;
 
@@ -866,7 +850,7 @@ BEGIN
   -- honored — earlier versions only checked the cap on paid signups, so a free
   -- product with seat_count=20 silently accepted the 21st signup.
   IF v_product.seat_count IS NOT NULL THEN
-    v_seats_taken := public.count_seats_taken(p_product_id);
+    v_seats_taken := public.count_active_seats(p_product_id);
     IF v_seats_taken >= v_product.seat_count THEN
       RETURN jsonb_build_object('kind', 'full');
     END IF;
@@ -889,9 +873,9 @@ BEGIN
     );
   END IF;
 
-  -- Municipality clubs are invoiced off-platform: no Stripe, no reservation.
-  -- Mirrors the free branch (instant active), gated on billing_mode so a paid
-  -- product can never be registered without payment.
+  -- Municipality clubs are invoiced off-platform: no Stripe, nothing to
+  -- confirm later. Mirrors the free branch (instant active), gated on
+  -- billing_mode so a paid product can never be registered without payment.
   IF p_purchase_shape = 'external' THEN
     IF v_product.billing_mode <> 'external_contract' THEN
       RAISE EXCEPTION 'product is not externally contracted'
@@ -909,19 +893,12 @@ BEGIN
     );
   END IF;
 
-  v_reserved_until := NOW() + INTERVAL '30 minutes';
-  INSERT INTO public.participations (
-    product_id, gamer_id, customer_id, status, reserved_until
-  ) VALUES (
-    p_product_id, p_gamer_id, p_customer_id, 'reserving', v_reserved_until
-  )
-  RETURNING id INTO v_participation_id;
-
-  RETURN jsonb_build_object(
-    'kind', 'reserving',
-    'participation_id', v_participation_id,
-    'reserved_until', v_reserved_until
-  );
+  -- Paid shapes (subscription_monthly, single_payment). Everything above has
+  -- passed, so this signup is one the platform would accept — but no row is
+  -- written until the money arrives. The caller creates the Stripe Checkout
+  -- Session next; if the parent abandons it, nothing was left behind to clean
+  -- up. `confirm_paid_participation` writes the row from the webhook.
+  RETURN jsonb_build_object('kind', 'validated');
 END;
 $$;
 
@@ -1195,34 +1172,6 @@ $$;
 
 
 --
--- Name: expire_reservation(uuid); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.expire_reservation(p_reservation_id uuid) RETURNS jsonb
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO ''
-    AS $$
-DECLARE
-  v_product_id UUID;
-  v_status     public.participation_status;
-BEGIN
-  SELECT product_id, status INTO v_product_id, v_status
-    FROM public.participations WHERE id = p_reservation_id;
-
-  IF NOT FOUND OR v_status <> 'reserving' THEN
-    RETURN jsonb_build_object('kind', 'noop');
-  END IF;
-
-  PERFORM 1 FROM public.products WHERE id = v_product_id FOR UPDATE;
-
-  DELETE FROM public.participations WHERE id = p_reservation_id AND status = 'reserving';
-
-  RETURN jsonb_build_object('kind', 'expired');
-END;
-$$;
-
-
---
 -- Name: get_gedu_assigned_product(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1448,6 +1397,7 @@ CREATE TABLE public.profiles (
     locale text,
     first_name text NOT NULL,
     last_name text DEFAULT ''::text NOT NULL,
+    home_location_id uuid,
     CONSTRAINT profiles_first_name_len CHECK (((char_length(first_name) >= 2) AND (char_length(first_name) <= 32))),
     CONSTRAINT profiles_last_name_len CHECK ((char_length(last_name) <= 32)),
     CONSTRAINT profiles_phone_e164 CHECK ((phone ~ '^\d{7,15}$'::text))
@@ -1473,6 +1423,13 @@ COMMENT ON COLUMN public.profiles.spoken_languages IS 'Human languages the user 
 --
 
 COMMENT ON COLUMN public.profiles.locale IS 'BCP-47-style UI locale code (en, fi, sv, ...). Null = auto-detect from cookie/Accept-Language. Distinct from spoken_languages, which is the user''s human-language fluency.';
+
+
+--
+-- Name: COLUMN profiles.home_location_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.profiles.home_location_id IS 'Optional municipality-level locations row: where this parent''s family lives. ON DELETE SET NULL by choice — a merged or retired reference row empties this reference rather than blocking its removal, at the cost of silently clearing the parent''s pick. Acceptable only because the field is optional and carries no entitlement.';
 
 
 --
@@ -1879,6 +1836,25 @@ $$;
 
 
 --
+-- Name: immutable_unaccent(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.immutable_unaccent(p_value text) RETURNS text
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    SET search_path TO ''
+    AS $$
+  SELECT extensions.unaccent('extensions.unaccent'::regdictionary, p_value);
+$$;
+
+
+--
+-- Name: FUNCTION immutable_unaccent(p_value text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.immutable_unaccent(p_value text) IS 'Diacritic-stripping fold, declared IMMUTABLE so it may be used in a generated column. unaccent() itself is STABLE because it resolves a dictionary by name; pinning the dictionary makes the result depend on nothing but the input. If the extensions.unaccent dictionary is ever redefined, locations.search_blob must be recomputed and its index rebuilt.';
+
+
+--
 -- Name: is_admin(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2151,6 +2127,64 @@ COMMENT ON FUNCTION public.leave_my_waitlist_spot(p_participation_id uuid) IS 'G
 
 
 --
+-- Name: location_search_blob(text, jsonb, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.location_search_blob(p_name text, p_name_i18n jsonb, p_external_code text) RETURNS text
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    SET search_path TO ''
+    AS $$
+  SELECT coalesce(
+    public.location_search_separator()
+      || string_agg(term, public.location_search_separator() ORDER BY term)
+      || public.location_search_separator(),
+    public.location_search_separator()
+  )
+  FROM (
+    SELECT DISTINCT lower(public.immutable_unaccent(btrim(raw.value))) AS term
+      FROM (
+             SELECT p_name
+             UNION ALL
+             -- Alternates only. `name` is never duplicated into name_i18n, so
+             -- the keys are irrelevant here; only the values are searchable.
+             SELECT alternate.value
+               FROM jsonb_each_text(coalesce(p_name_i18n, '{}'::jsonb)) AS alternate
+             UNION ALL
+             SELECT p_external_code
+           ) AS raw(value)
+     WHERE raw.value IS NOT NULL
+       AND btrim(raw.value) <> ''
+  ) AS terms;
+$$;
+
+
+--
+-- Name: FUNCTION location_search_blob(p_name text, p_name_i18n jsonb, p_external_code text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.location_search_blob(p_name text, p_name_i18n jsonb, p_external_code text) IS 'Every searchable string for a location row — canonical name, each name_i18n alternate, the official code — folded to lowercase without diacritics and joined with the separator around each term. Backs the generated locations.search_blob column.';
+
+
+--
+-- Name: location_search_separator(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.location_search_separator() RETURNS text
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    SET search_path TO ''
+    AS $$
+  SELECT chr(31);
+$$;
+
+
+--
+-- Name: FUNCTION location_search_separator(); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.location_search_separator() IS 'The term delimiter inside locations.search_blob: U+001F UNIT SEPARATOR. A term-prefix match is "contains separator || needle"; an exact term match is "contains separator || needle || separator".';
+
+
+--
 -- Name: participation_state(public.participation_status, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2279,24 +2313,21 @@ CREATE FUNCTION public.refresh_product_seat_counts(p_product_id uuid) RETURNS vo
     AS $$
 DECLARE
   v_active     INTEGER;
-  v_reserving  INTEGER;
   v_waitlist   INTEGER;
 BEGIN
   SELECT
     COUNT(*) FILTER (WHERE status = 'active'),
-    COUNT(*) FILTER (WHERE status = 'reserving' AND reserved_until > NOW()),
     COUNT(*) FILTER (WHERE status = 'waitlisted')
-    INTO v_active, v_reserving, v_waitlist
+    INTO v_active, v_waitlist
     FROM public.participations
     WHERE product_id = p_product_id;
 
   INSERT INTO public.product_seat_counts (
-    product_id, active_count, reserving_count, waitlist_count, updated_at
+    product_id, active_count, waitlist_count, updated_at
   )
-  VALUES (p_product_id, v_active, v_reserving, v_waitlist, NOW())
+  VALUES (p_product_id, v_active, v_waitlist, NOW())
   ON CONFLICT (product_id) DO UPDATE SET
     active_count    = EXCLUDED.active_count,
-    reserving_count = EXCLUDED.reserving_count,
     waitlist_count  = EXCLUDED.waitlist_count,
     updated_at      = EXCLUDED.updated_at;
 END;
@@ -2352,6 +2383,136 @@ BEGIN
   END IF;
 END;
 $$;
+
+
+--
+-- Name: search_locations(text, public.location_type[], integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.search_locations(p_query text, p_types public.location_type[] DEFAULT NULL::public.location_type[], p_limit integer DEFAULT 20) RETURNS jsonb
+    LANGUAGE sql STABLE
+    SET search_path TO ''
+    AS $$
+WITH RECURSIVE
+probe AS (
+  SELECT
+    folded.needle,
+    -- LIKE metacharacters in the needle are escaped, not stripped: a user typing
+    -- "%" should find nothing rather than everything.
+    replace(replace(replace(folded.needle, '\', '\\'), '%', '\%'), '_', '\_') AS pattern,
+    char_length(folded.needle) >= 2 AS runnable,
+    -- The cap is the server's, not the caller's. Clamped rather than rejected so
+    -- an out-of-range limit degrades to a sane page instead of an error.
+    least(greatest(coalesce(p_limit, 20), 1), 50) AS cap
+  FROM (
+    SELECT lower(public.immutable_unaccent(btrim(coalesce(p_query, '')))) AS needle
+  ) AS folded
+),
+matched AS (
+  SELECT
+    l.id, l.name, l.name_i18n, l.type, l.parent_id, l.country_code, l.external_code,
+    CASE
+      -- A term IS the needle.
+      WHEN l.search_blob LIKE (SELECT '%' || public.location_search_separator() || pattern || public.location_search_separator() || '%' FROM probe) THEN 0
+      -- A term STARTS WITH the needle. A prefix hit found late in the scan
+      -- therefore still outranks an infix hit found early, which is the whole
+      -- point of ranking rather than filtering.
+      WHEN l.search_blob LIKE (SELECT '%' || public.location_search_separator() || pattern || '%' FROM probe) THEN 1
+      ELSE 2
+    END AS match_rank
+  FROM public.locations l
+  -- Scalar subqueries rather than a join to `probe`: each becomes an InitPlan
+  -- evaluated once, which is what lets the planner treat the pattern as a
+  -- runtime constant and consider the trigram index.
+  WHERE (SELECT runnable FROM probe)
+    AND l.search_blob LIKE (SELECT '%' || pattern || '%' FROM probe)
+    AND (p_types IS NULL OR l.type = ANY (p_types))
+),
+page AS (
+  SELECT m.*
+    FROM matched m
+   -- A total order, so the page is stable: rank, then broadest level first,
+   -- then name, then id to break the homonym ties France is full of.
+   --
+   -- Breadth is spelled out rather than taken from the enum's declared order,
+   -- which sorts municipality before district and is therefore backwards for
+   -- France, where a district IS the departement above the communes. Ordering
+   -- by the enum buried all nine 'haute' departements behind 41 communes, past
+   -- the default page of 20 — and search does not paginate, so they could not
+   -- be reached at all.
+   ORDER BY m.match_rank,
+            CASE m.type
+             WHEN 'country'      THEN 0
+             WHEN 'region'       THEN 1
+             WHEN 'district'     THEN 2
+             WHEN 'municipality' THEN 3
+             ELSE 4
+           END,
+            m.name, m.id
+   LIMIT (SELECT cap FROM probe)
+),
+-- The chain of every hit on this page, at most `cap` rows walking at most a
+-- handful of levels. Bounded by depth as well as by the parent FK in case a
+-- hand-made row ever forms a cycle.
+walk AS (
+  SELECT p.id AS anchor_id, p.parent_id AS node_id, 1 AS depth
+    FROM page p
+  UNION ALL
+  SELECT w.anchor_id, up.parent_id, w.depth + 1
+    FROM walk w
+    JOIN public.locations up ON up.id = w.node_id
+   WHERE w.depth < 10
+),
+chains AS (
+  SELECT w.anchor_id,
+         jsonb_agg(
+           jsonb_build_object(
+             'id', a.id,
+             'name', a.name,
+             'name_i18n', a.name_i18n,
+             'type', a.type
+           ) ORDER BY w.depth
+         ) AS ancestors
+    FROM walk w
+    JOIN public.locations a ON a.id = w.node_id
+   GROUP BY w.anchor_id
+)
+SELECT jsonb_build_object(
+  'total', (SELECT count(*) FROM matched),
+  'results', coalesce((
+    SELECT jsonb_agg(
+      jsonb_build_object(
+        'id',            p.id,
+        'name',          p.name,
+        'name_i18n',     p.name_i18n,
+        'type',          p.type,
+        'parent_id',     p.parent_id,
+        'country_code',  p.country_code,
+        'external_code', p.external_code,
+        -- Nearest first, matching every other ancestor chain in this codebase.
+        'ancestors',     coalesce(c.ancestors, '[]'::jsonb)
+      ) ORDER BY p.match_rank,
+                 CASE p.type
+             WHEN 'country'      THEN 0
+             WHEN 'region'       THEN 1
+             WHEN 'district'     THEN 2
+             WHEN 'municipality' THEN 3
+             ELSE 4
+           END,
+                 p.name, p.id
+    )
+      FROM page p
+      LEFT JOIN chains c ON c.anchor_id = p.id
+  ), '[]'::jsonb)
+);
+$$;
+
+
+--
+-- Name: FUNCTION search_locations(p_query text, p_types public.location_type[], p_limit integer); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer) IS 'Cross-country location search: diacritic-insensitive both ways, matching canonical names, name_i18n alternates and official codes. Returns {total, results[]} where results carry each hit''s ancestor chain nearest-first, ranked exact > term-prefix > infix and capped server-side. SECURITY INVOKER, so the caller''s RLS on locations applies unchanged; needles shorter than two characters return an empty result without reading the table.';
 
 
 --
@@ -2534,8 +2695,8 @@ CREATE FUNCTION public.trg_seed_product_seat_counts() RETURNS trigger
     AS $$
 BEGIN
   INSERT INTO public.product_seat_counts (
-    product_id, active_count, reserving_count, waitlist_count
-  ) VALUES (NEW.id, 0, 0, 0)
+    product_id, active_count, waitlist_count
+  ) VALUES (NEW.id, 0, 0)
   ON CONFLICT (product_id) DO NOTHING;
   RETURN NEW;
 END;
@@ -3020,6 +3181,7 @@ CREATE TABLE public.locations (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     name_i18n jsonb,
     external_code text,
+    search_blob text GENERATED ALWAYS AS (public.location_search_blob(name, name_i18n, external_code)) STORED,
     CONSTRAINT locations_no_self_parent CHECK ((parent_id IS DISTINCT FROM id))
 );
 
@@ -3036,6 +3198,13 @@ COMMENT ON COLUMN public.locations.name_i18n IS 'Locale -> display-name override
 --
 
 COMMENT ON COLUMN public.locations.external_code IS 'Official statistical code for this location in its national classification: INSEE Code officiel géographique code for FR rows (région / département / commune), Statistics Finland region (maakunta) or municipality (kunta) code for FI rows. NULL on admin-created sites, which exist in no national classification. Unique per (country_code, type) — France reuses the same code across levels.';
+
+
+--
+-- Name: COLUMN locations.search_blob; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.locations.search_blob IS 'Derived, never written: the row''s folded searchable terms, separator-delimited. Read only by public.search_locations; it is present in select(*) responses and carries no information the other columns do not.';
 
 
 --
@@ -3074,15 +3243,21 @@ CREATE TABLE public.participations (
     gamer_id uuid NOT NULL,
     customer_id uuid NOT NULL,
     status public.participation_status NOT NULL,
-    reserved_until timestamp with time zone,
     signed_up_at timestamp with time zone DEFAULT now() NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     waitlisted_at timestamp with time zone,
+    stripe_checkout_session_id text,
     CONSTRAINT chk_participations_no_self_signup CHECK ((gamer_id <> customer_id)),
-    CONSTRAINT chk_participations_reserving_has_until CHECK (((status <> 'reserving'::public.participation_status) OR (reserved_until IS NOT NULL))),
     CONSTRAINT chk_participations_waitlisted_has_timestamp CHECK (((status <> 'waitlisted'::public.participation_status) OR (waitlisted_at IS NOT NULL)))
 );
+
+
+--
+-- Name: COLUMN participations.stripe_checkout_session_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.stripe_checkout_session_id IS 'Stripe Checkout Session that paid for this seat. NULL for no-charge seats (free, municipality, admin enrollment, waitlist) and for rows predating the create-on-confirmation flow.';
 
 
 --
@@ -3152,11 +3327,9 @@ CREATE TABLE public.product_prices (
 CREATE TABLE public.product_seat_counts (
     product_id uuid NOT NULL,
     active_count integer DEFAULT 0 NOT NULL,
-    reserving_count integer DEFAULT 0 NOT NULL,
     waitlist_count integer DEFAULT 0 NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT product_seat_counts_active_count_check CHECK ((active_count >= 0)),
-    CONSTRAINT product_seat_counts_reserving_count_check CHECK ((reserving_count >= 0)),
     CONSTRAINT product_seat_counts_waitlist_count_check CHECK ((waitlist_count >= 0))
 );
 
@@ -3785,6 +3958,13 @@ CREATE INDEX idx_locations_parent ON public.locations USING btree (parent_id);
 
 
 --
+-- Name: idx_locations_search_blob; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_locations_search_blob ON public.locations USING gin (search_blob extensions.gin_trgm_ops);
+
+
+--
 -- Name: idx_locations_type; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3831,13 +4011,6 @@ CREATE INDEX idx_participations_gamer ON public.participations USING btree (game
 --
 
 CREATE INDEX idx_participations_group ON public.participations USING btree (group_id) WHERE (group_id IS NOT NULL);
-
-
---
--- Name: idx_participations_reserving_live; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_participations_reserving_live ON public.participations USING btree (product_id, reserved_until) WHERE (status = 'reserving'::public.participation_status);
 
 
 --
@@ -3939,6 +4112,13 @@ CREATE INDEX idx_profiles_email ON public.profiles USING btree (email) WHERE (em
 
 
 --
+-- Name: idx_profiles_home_location_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_profiles_home_location_id ON public.profiles USING btree (home_location_id) WHERE (home_location_id IS NOT NULL);
+
+
+--
 -- Name: idx_profiles_role; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3992,6 +4172,13 @@ CREATE UNIQUE INDEX uq_locations_external_code ON public.locations USING btree (
 --
 
 CREATE UNIQUE INDEX uq_participations_active_or_waitlisted ON public.participations USING btree (product_id, gamer_id) WHERE (status = ANY (ARRAY['active'::public.participation_status, 'waitlisted'::public.participation_status, 'completed'::public.participation_status]));
+
+
+--
+-- Name: uq_participations_checkout_session; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_participations_checkout_session ON public.participations USING btree (stripe_checkout_session_id) WHERE (stripe_checkout_session_id IS NOT NULL);
 
 
 --
@@ -4131,7 +4318,7 @@ CREATE TRIGGER trg_participations_refresh_counts_ins AFTER INSERT ON public.part
 -- Name: participations trg_participations_refresh_counts_upd; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trg_participations_refresh_counts_upd AFTER UPDATE OF status, reserved_until, product_id ON public.participations FOR EACH ROW EXECUTE FUNCTION public.trg_refresh_product_seat_counts();
+CREATE TRIGGER trg_participations_refresh_counts_upd AFTER UPDATE OF status, product_id ON public.participations FOR EACH ROW EXECUTE FUNCTION public.trg_refresh_product_seat_counts();
 
 
 --
@@ -4451,6 +4638,14 @@ ALTER TABLE ONLY public.products
 
 ALTER TABLE ONLY public.products
     ADD CONSTRAINT products_spoken_language_code_fkey FOREIGN KEY (spoken_language_code) REFERENCES public.spoken_languages(code) ON DELETE RESTRICT;
+
+
+--
+-- Name: profiles profiles_home_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.profiles
+    ADD CONSTRAINT profiles_home_location_id_fkey FOREIGN KEY (home_location_id) REFERENCES public.locations(id) ON DELETE SET NULL;
 
 
 --
@@ -5419,11 +5614,11 @@ GRANT ALL ON FUNCTION public.cancel_participation(p_participation_id uuid, p_rea
 
 
 --
--- Name: FUNCTION confirm_reservation(p_reservation_id uuid); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.confirm_reservation(p_reservation_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.confirm_reservation(p_reservation_id uuid) TO service_role;
+REVOKE ALL ON FUNCTION public.confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text) TO service_role;
 
 
 --
@@ -5432,14 +5627,6 @@ GRANT ALL ON FUNCTION public.confirm_reservation(p_reservation_id uuid) TO servi
 
 REVOKE ALL ON FUNCTION public.count_active_seats(p_product_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.count_active_seats(p_product_id uuid) TO service_role;
-
-
---
--- Name: FUNCTION count_seats_taken(p_product_id uuid); Type: ACL; Schema: public; Owner: -
---
-
-REVOKE ALL ON FUNCTION public.count_seats_taken(p_product_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.count_seats_taken(p_product_id uuid) TO service_role;
 
 
 --
@@ -5490,14 +5677,6 @@ GRANT ALL ON FUNCTION public.effective_status(p_product_id uuid) TO service_role
 
 REVOKE ALL ON FUNCTION public.ensure_product_keeps_at_least_one_translation() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.ensure_product_keeps_at_least_one_translation() TO service_role;
-
-
---
--- Name: FUNCTION expire_reservation(p_reservation_id uuid); Type: ACL; Schema: public; Owner: -
---
-
-REVOKE ALL ON FUNCTION public.expire_reservation(p_reservation_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.expire_reservation(p_reservation_id uuid) TO service_role;
 
 
 --
@@ -5560,6 +5739,13 @@ GRANT UPDATE(first_name) ON TABLE public.profiles TO authenticated;
 --
 
 GRANT UPDATE(last_name) ON TABLE public.profiles TO authenticated;
+
+
+--
+-- Name: COLUMN profiles.home_location_id; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(home_location_id) ON TABLE public.profiles TO authenticated;
 
 
 --
@@ -5662,6 +5848,16 @@ GRANT ALL ON FUNCTION public.has_active_participation_on_product(p_product_id uu
 
 
 --
+-- Name: FUNCTION immutable_unaccent(p_value text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.immutable_unaccent(p_value text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.immutable_unaccent(p_value text) TO anon;
+GRANT ALL ON FUNCTION public.immutable_unaccent(p_value text) TO authenticated;
+GRANT ALL ON FUNCTION public.immutable_unaccent(p_value text) TO service_role;
+
+
+--
 -- Name: FUNCTION is_admin(); Type: ACL; Schema: public; Owner: -
 --
 
@@ -5721,6 +5917,25 @@ GRANT ALL ON FUNCTION public.leave_my_waitlist_spot(p_participation_id uuid) TO 
 
 
 --
+-- Name: FUNCTION location_search_blob(p_name text, p_name_i18n jsonb, p_external_code text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.location_search_blob(p_name text, p_name_i18n jsonb, p_external_code text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.location_search_blob(p_name text, p_name_i18n jsonb, p_external_code text) TO authenticated;
+GRANT ALL ON FUNCTION public.location_search_blob(p_name text, p_name_i18n jsonb, p_external_code text) TO service_role;
+
+
+--
+-- Name: FUNCTION location_search_separator(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.location_search_separator() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.location_search_separator() TO anon;
+GRANT ALL ON FUNCTION public.location_search_separator() TO authenticated;
+GRANT ALL ON FUNCTION public.location_search_separator() TO service_role;
+
+
+--
 -- Name: FUNCTION participation_state(p_status public.participation_status, p_group_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
@@ -5768,6 +5983,16 @@ GRANT ALL ON FUNCTION public.refresh_product_seat_counts(p_product_id uuid) TO s
 
 REVOKE ALL ON FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text) TO service_role;
+
+
+--
+-- Name: FUNCTION search_locations(p_query text, p_types public.location_type[], p_limit integer); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer) TO anon;
+GRANT ALL ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer) TO authenticated;
+GRANT ALL ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer) TO service_role;
 
 
 --

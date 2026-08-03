@@ -14,13 +14,26 @@ import { MinecraftUsernameField } from "@/components/minecraft/minecraft-usernam
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
+import { HomeLocationField } from "@/components/locations/home-location-field";
+import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
 import { useAuth } from "@/providers";
 import { isValidPhoneNumber } from "react-phone-number-input";
 import { useUpdateProfile, useSpokenLanguages } from "@/services/users";
+import { useLocationsByIds, type LocationWithChain } from "@/services/locations";
 import { toE164Digits } from "@/lib/utils";
 import { useMyMinecraftAccount, useUpdateMyMinecraft } from "@/services/minecraft";
 import { isGamerProfile, type ProfileUpdate, type SpokenLanguage } from "@/types";
+
+/**
+ * A keyed location read, as the picker's own value shape. The two are already
+ * the same information — a row plus its ancestors, nearest first — so this only
+ * renames the row half; there is nothing to look up and nothing to reconcile.
+ */
+function toLocationPick(row: LocationWithChain | undefined): LocationPick | null {
+  if (!row) return null;
+  return { location: row, ancestors: row.ancestors };
+}
 
 export function SettingsSectionContent({
   initialSpokenLanguages,
@@ -35,6 +48,7 @@ export function SettingsSectionContent({
   const showMinecraft = profile?.role === "gamer" || profile?.role === "gedu";
   const isGedu = profile?.role === "gedu";
   const isGamer = isGamerProfile(profile);
+  const isParent = profile?.role === "customer";
   const { data: mcAccount } = useMyMinecraftAccount();
   const updateMyMc = useUpdateMyMinecraft();
   const { data: availableLanguages } = useSpokenLanguages({
@@ -48,6 +62,50 @@ export function SettingsSectionContent({
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // ---------------------------------------------------------------------
+  // The parent's own location
+  //
+  // Stored as a single `locations` id on the profile. The row behind it —
+  // and the ancestor chain that renders its path — comes from one keyed read,
+  // which is exactly the shape the picker hands back, so a place restored from
+  // the database and a place just chosen are the same value to the field.
+  // ---------------------------------------------------------------------
+  // `isParent` is `profile?.role === "customer"`, which narrows `profile` to
+  // non-null here — the field is only ever mounted for a parent anyway.
+  const savedHomeLocationId = isParent ? profile.home_location_id : null;
+  const { data: savedHomeLocationRows } = useLocationsByIds(
+    savedHomeLocationId ? [savedHomeLocationId] : [],
+  );
+
+  /**
+   * The saved value: `undefined` until the row lands, `null` once we know there
+   * is none. With no id stored there is nothing to wait for, so that case
+   * resolves synchronously and the field never blinks through an empty box on
+   * its way to the prompt.
+   *
+   * A stored id that matches no row also lands here as `null` — a keyed read is
+   * a lookup, not an assertion, and `ON DELETE SET NULL` means this should not
+   * happen. Rendering it as "not chosen" is the honest answer either way.
+   */
+  const savedHomeLocation: LocationPick | null | undefined =
+    savedHomeLocationId === null
+      ? null
+      : savedHomeLocationRows === undefined
+        ? undefined
+        : toLocationPick(savedHomeLocationRows[0]);
+
+  /**
+   * Any edit made on top of the saved value. Wrapped rather than held as a bare
+   * `LocationPick | null`, because `null` is a real edit — the user cleared the
+   * field — and would otherwise be indistinguishable from "no edit yet".
+   */
+  const [homeLocationEdit, setHomeLocationEdit] = useState<{
+    pick: LocationPick | null;
+  } | null>(null);
+  const homeLocation = homeLocationEdit
+    ? homeLocationEdit.pick
+    : savedHomeLocation;
 
   const [minecraftUsername, setMinecraftUsername] = useState("");
   const [mcInitialized, setMcInitialized] = useState(false);
@@ -89,6 +147,15 @@ export function SettingsSectionContent({
         phone: toE164Digits(phone),
         spoken_languages: spokenLanguages,
       };
+
+      // Only when we know what the current value is. An unresolved read is
+      // `undefined`, and writing `null` for it would clear a location the user
+      // never touched and has not even been shown yet — omitting the key leaves
+      // it alone. A cleared field is `null` and does have to be written.
+      if (isParent && homeLocation !== undefined) {
+        updates.home_location_id = homeLocation?.location.id ?? null;
+      }
+
       await updateProfile.mutateAsync({ userId: user.id, updates });
       await refreshProfile();
       setSuccessMessage(t('profileUpdated'));
@@ -223,6 +290,21 @@ export function SettingsSectionContent({
             selected={spokenLanguages}
             onChange={setSpokenLanguages}
           />
+
+          {isParent && (
+            <Field
+              label={t('location')}
+              htmlFor="homeLocation"
+              optional
+            >
+              <HomeLocationField
+                id="homeLocation"
+                value={homeLocation}
+                onChange={(pick) => setHomeLocationEdit({ pick })}
+                disabled={isSaving}
+              />
+            </Field>
+          )}
 
           {!isGamer && (
             <Field label={c('email')}>

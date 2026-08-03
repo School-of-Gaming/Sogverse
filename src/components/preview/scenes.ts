@@ -1,4 +1,7 @@
-import { PREVIEW_SCENARIOS } from "@/components/public/products/mock-detail-fixtures";
+import {
+  CONFIRMATION_NOTICE_SCENARIOS,
+  PREVIEW_SCENARIOS,
+} from "@/components/public/products/mock-detail-fixtures";
 
 /**
  * The **full-page preview scene registry**.
@@ -93,9 +96,16 @@ export const PREVIEW_SCENES = [
     surface: "confirmation",
     title: "Purchase confirmation",
     description:
-      "The post-signup summary, reached in the preview by clicking the CTA on the matching product scene.",
+      "The post-signup summary, reached in the preview by clicking the CTA on the matching product scene — plus the three paid states with no order to show, where the page arrived before (or instead of) the row the webhook writes.",
     chrome: "public",
-    scenarios: PRODUCT_SCENARIOS,
+    scenarios: [
+      ...PRODUCT_SCENARIOS,
+      ...CONFIRMATION_NOTICE_SCENARIOS.map(({ slug, label, description }) => ({
+        slug,
+        label: `Paid, no order — ${label}`,
+        description,
+      })),
+    ],
   },
   {
     surface: "gedu-dashboard",

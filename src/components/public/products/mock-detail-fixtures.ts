@@ -11,7 +11,10 @@ import {
   type RegistrationState,
 } from "./derive-registration-state";
 import type { AuthState, MyParticipationState } from "./signup-panel-view";
-import type { SignupOutcome } from "./purchase-confirmation-view";
+import type {
+  ConfirmationNoticeKind,
+  SignupOutcome,
+} from "./purchase-confirmation-view";
 
 // Synthetic fixtures, one per curated preview scenario. The mental model: each
 // scenario IS a mocked product. The /admin/ui-components card and the
@@ -290,6 +293,51 @@ export const PREVIEW_SCENARIOS: {
 
 export function isPreviewScenario(s: string): s is PreviewScenario {
   return s in SCENARIOS;
+}
+
+// The three states the paid confirmation page lands in when there is no order
+// row to show yet (or ever). Not product scenarios — no fixture builds them,
+// `PurchaseConfirmationNotice` takes only which state it is — but their slugs
+// live here so the scene registry (data-only, no React) and the scene renderer
+// read one list. All three follow a payment that *succeeded*, which is why
+// none of them may read as an error.
+export const CONFIRMATION_NOTICE_SCENARIOS = [
+  {
+    slug: "paid-finalizing",
+    kind: "finalizing",
+    label: "Finalizing — webhook not landed yet",
+    description:
+      "The bounded waiting state: payment received, order row not written yet. On the live page a wrapper polls and swaps this out; here it just holds.",
+  },
+  {
+    slug: "paid-timed-out",
+    kind: "timedOut",
+    label: "Timed out — stopped waiting",
+    description:
+      "The poll bound ran out. The copy stops promising “a moment” and says where the signup will appear and how to reach us.",
+  },
+  {
+    slug: "paid-duplicate",
+    kind: "duplicatePayment",
+    label: "Duplicate payment — seat already taken",
+    description:
+      "A second payment for a product the gamer already holds a spot on. No row will ever carry this session, so waiting would never resolve.",
+  },
+] as const satisfies readonly {
+  slug: string;
+  kind: ConfirmationNoticeKind;
+  label: string;
+  description: string;
+}[];
+
+export type ConfirmationNoticeScenario =
+  (typeof CONFIRMATION_NOTICE_SCENARIOS)[number]["slug"];
+
+/** The notice entry for a slug, or null when the slug is a product scenario. */
+export function findConfirmationNotice(
+  s: string,
+): (typeof CONFIRMATION_NOTICE_SCENARIOS)[number] | null {
+  return CONFIRMATION_NOTICE_SCENARIOS.find((n) => n.slug === s) ?? null;
 }
 
 // CTA kind for a scenario without needing the wall clock — a countdown is

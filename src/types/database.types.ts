@@ -396,6 +396,7 @@ export type Database = {
           name: string
           name_i18n: Json | null
           parent_id: string | null
+          search_blob: string | null
           type: Database["public"]["Enums"]["location_type"]
           updated_at: string
         }
@@ -407,6 +408,7 @@ export type Database = {
           name: string
           name_i18n?: Json | null
           parent_id?: string | null
+          search_blob?: string | null
           type: Database["public"]["Enums"]["location_type"]
           updated_at?: string
         }
@@ -418,6 +420,7 @@ export type Database = {
           name?: string
           name_i18n?: Json | null
           parent_id?: string | null
+          search_blob?: string | null
           type?: Database["public"]["Enums"]["location_type"]
           updated_at?: string
         }
@@ -504,9 +507,9 @@ export type Database = {
           group_id: string | null
           id: string
           product_id: string
-          reserved_until: string | null
           signed_up_at: string
           status: Database["public"]["Enums"]["participation_status"]
+          stripe_checkout_session_id: string | null
           updated_at: string
           waitlisted_at: string | null
         }
@@ -517,9 +520,9 @@ export type Database = {
           group_id?: string | null
           id?: string
           product_id: string
-          reserved_until?: string | null
           signed_up_at?: string
           status: Database["public"]["Enums"]["participation_status"]
+          stripe_checkout_session_id?: string | null
           updated_at?: string
           waitlisted_at?: string | null
         }
@@ -530,9 +533,9 @@ export type Database = {
           group_id?: string | null
           id?: string
           product_id?: string
-          reserved_until?: string | null
           signed_up_at?: string
           status?: Database["public"]["Enums"]["participation_status"]
+          stripe_checkout_session_id?: string | null
           updated_at?: string
           waitlisted_at?: string | null
         }
@@ -721,21 +724,18 @@ export type Database = {
         Row: {
           active_count: number
           product_id: string
-          reserving_count: number
           updated_at: string
           waitlist_count: number
         }
         Insert: {
           active_count?: number
           product_id: string
-          reserving_count?: number
           updated_at?: string
           waitlist_count?: number
         }
         Update: {
           active_count?: number
           product_id?: string
-          reserving_count?: number
           updated_at?: string
           waitlist_count?: number
         }
@@ -966,6 +966,7 @@ export type Database = {
           currency: string | null
           email: string
           first_name: string
+          home_location_id: string | null
           id: string
           last_name: string
           locale: string | null
@@ -979,6 +980,7 @@ export type Database = {
           currency?: string | null
           email: string
           first_name: string
+          home_location_id?: string | null
           id: string
           last_name?: string
           locale?: string | null
@@ -992,6 +994,7 @@ export type Database = {
           currency?: string | null
           email?: string
           first_name?: string
+          home_location_id?: string | null
           id?: string
           last_name?: string
           locale?: string | null
@@ -1000,7 +1003,15 @@ export type Database = {
           spoken_languages?: string[]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_home_location_id_fkey"
+            columns: ["home_location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       refunds: {
         Row: {
@@ -1465,9 +1476,16 @@ export type Database = {
         Args: { p_participation_id: string; p_reason: string }
         Returns: Json
       }
-      confirm_reservation: { Args: { p_reservation_id: string }; Returns: Json }
+      confirm_paid_participation: {
+        Args: {
+          p_checkout_session_id: string
+          p_customer_id: string
+          p_gamer_id: string
+          p_product_id: string
+        }
+        Returns: Json
+      }
       count_active_seats: { Args: { p_product_id: string }; Returns: number }
-      count_seats_taken: { Args: { p_product_id: string }; Returns: number }
       create_gamer: {
         Args: {
           p_date_of_birth: string
@@ -1540,7 +1558,6 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: string
       }
-      expire_reservation: { Args: { p_reservation_id: string }; Returns: Json }
       gedu_teaches_group: { Args: { p_group_id: string }; Returns: boolean }
       get_gedu_assigned_product: {
         Args: { p_product_id: string }
@@ -1571,6 +1588,7 @@ export type Database = {
           currency: string | null
           email: string
           first_name: string
+          home_location_id: string | null
           id: string
           last_name: string
           locale: string | null
@@ -1597,6 +1615,7 @@ export type Database = {
           currency: string | null
           email: string
           first_name: string
+          home_location_id: string | null
           id: string
           last_name: string
           locale: string | null
@@ -1651,6 +1670,7 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: boolean
       }
+      immutable_unaccent: { Args: { p_value: string }; Returns: string }
       is_admin: { Args: never; Returns: boolean }
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }
       is_voice_group_member: { Args: { p_group_id: string }; Returns: boolean }
@@ -1674,6 +1694,11 @@ export type Database = {
         Args: { p_participation_id: string }
         Returns: Json
       }
+      location_search_blob: {
+        Args: { p_external_code: string; p_name: string; p_name_i18n: Json }
+        Returns: string
+      }
+      location_search_separator: { Args: never; Returns: string }
       participation_state: {
         Args: {
           p_group_id: string
@@ -1716,6 +1741,14 @@ export type Database = {
           p_user_id: string
         }
         Returns: undefined
+      }
+      search_locations: {
+        Args: {
+          p_limit?: number
+          p_query: string
+          p_types?: Database["public"]["Enums"]["location_type"][]
+        }
+        Returns: Json
       }
       set_gedu_verified: {
         Args: { p_gedu_id: string; p_verified: boolean }

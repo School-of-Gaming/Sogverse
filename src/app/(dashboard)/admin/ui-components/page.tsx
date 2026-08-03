@@ -74,13 +74,15 @@ import type {
   VoiceRoomContextValue,
   VoiceParticipant,
 } from "@/components/voice/hooks/types";
-import type { VoiceZone } from "@/types";
-import { CatalogPicker } from "@/components/locations/catalog-picker";
-import { catalogRefKey, type LocationCatalog } from "@/lib/locations/catalog";
+import type { Json, VoiceZone } from "@/types";
 import {
-  LocationList,
-  type LocationListGroup,
-} from "@/components/admin/products/location-list";
+  LocationPickerPanel,
+  type LocationChainSummary,
+  type LocationPick,
+  type LocationSummary,
+} from "@/components/locations/location-picker-panel";
+import { HomeLocationField } from "@/components/locations/home-location-field";
+import type { LocationGroup } from "@/components/locations/location-groups";
 import {
   ProductBrowseCardView,
   type LocationLine,
@@ -105,29 +107,17 @@ import {
   ManageBillingCardView,
   type BillingAccountSummary,
 } from "@/components/billing";
-import {
-  SessionFeed,
-  SessionFeedAlertBadge,
-  SessionReport,
-  applyDraftToEntry,
-  applyPlanDraftToEntry,
-  countEntriesNeedingAttention,
-  isEditableEntry,
-  isPlannableEntry,
-  type SessionEntryDraft,
-  type SessionFeedEntry,
-} from "@/components/gedu/session-feed";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {
   MinecraftUsernameRow,
   type MinecraftCheckStatus,
 } from "@/components/minecraft/minecraft-username-row";
 import {
-  buildSessionFeedFixture,
-  SESSION_FEED_CLUB_NAME,
-  SESSION_FEED_ROSTER,
-  SESSION_FEED_TIMEZONE,
-} from "@/components/gedu/session-feed/mock-fixtures";
+  RobloxUsernameRow,
+  type RobloxCheckStatus,
+} from "@/components/roblox/roblox-username-row";
+import { RobloxUsernameBadge } from "@/components/roblox/roblox-username-badge";
+import { RobloxUsernameField } from "@/components/roblox/roblox-username-field";
 
 /**
  * Chip demo people. Real generated UUIDv4s, hardcoded: an identicon is hashed
@@ -1885,68 +1875,101 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 9b: Location List                                     */}
+      {/* Section 9b: Location Picker                                   */}
       {/* ============================================================ */}
-      <Section title="Location List">
+      <Section title="Location Picker">
         <p className="text-sm text-muted-foreground">
-          The database-row counterpart to the catalog panel below. The catalog
-          browses an exhaustive static classification and never touches the
-          database; this browses the small set of rows that <em>are</em> in the
-          database and that no catalog contains or orders — the venues an admin
-          created, and the Finnish municipalities an online club can be funded
-          by. Both are small enough to search client-side in one pass.
+          One panel, and every location control in the app is a configuration of
+          it. The axis being demonstrated here is the <code>scope</code>: what
+          the panel is showing <em>before the first keystroke</em>. In{" "}
+          <strong>tree</strong> scope it browses the hierarchy from the
+          countries down; in <strong>set</strong> scope it lists a bounded
+          collection the surface has already fetched, grouped under the place
+          above each row. These were two components until they were merged —
+          the search box, the selected-row highlight, the name-plus-muted-detail
+          row and the fixed-height box were each written twice.
         </p>
         <p className="text-sm text-muted-foreground">
-          Worth trying: matching a group header keeps every row under it (type{" "}
-          <code>helsinki</code> to list its venues), search is
-          diacritic-insensitive in both directions (<code>jarvenpaa</code> finds
-          Järvenpää), and the list holds one fixed height across loading, empty
-          and loaded so nothing under it moves.
-        </p>
-        <LocationListDemo />
-      </Section>
-
-      {/* ============================================================ */}
-      {/* Section 9c: Catalog Picker                                    */}
-      {/* ============================================================ */}
-      <Section title="Catalog Picker">
-        <p className="text-sm text-muted-foreground">
-          One panel, two selection modes. In the real app it is handed one of the
-          shipped official catalogs — France&rsquo;s alone has 34,875 communes,
-          loaded as its own chunk behind a dynamic import — by a dialog that owns
-          the country switch, the loading skeleton and the retry. Here both modes
-          are fed the same five-commune fixture and fake handlers, no network:
-          the panel takes a catalog and a <code>selection</code> config as props
-          and owns nothing else, which is the separation-of-concerns check.
+          In the real app a container above the panel owns the browse position,
+          the debounced query and the two server reads behind them — one level
+          of children by parent, or a ranked top-N from the search index. Here
+          every scope is fed a fixture and fake handlers, no network at all: the
+          panel takes rows and a <code>scope</code> config as props and owns
+          nothing else, which is the separation-of-concerns check.
         </p>
         <p className="text-sm text-muted-foreground">
-          Worth trying: search is diacritic-insensitive, so{" "}
-          <code>nimes</code> finds N&icirc;mes; clearing the box drops back to
-          drill-down browsing; and in single mode the confirm button stays
-          disabled from the click until the parent swaps the view away, so the
-          action can&rsquo;t be fired twice.
+          Note what is <em>not</em> here: no country to choose first (a country
+          is simply the top level of the tree) and no loading skeleton. Every
+          read behind the real panel is a small indexed lookup, so the list box
+          — which already has its final height — just fills in.
         </p>
-        <SubSection title="Single mode (geography navigator)">
+        <SubSection title="Tree scope, single mode (pick one place)">
           <p className="text-sm text-muted-foreground mb-3">
-            Confirming a commune writes nothing — every commune is already a
-            seeded row, so the product picker resolves the confirmed code to
-            that row and shows what is already there before offering to name a
-            new venue under it.
+            The rows are real table rows, so confirming one hands the caller the
+            row itself plus its ancestors — enough to write the foreign key and
+            render the place with its path, with nothing left to resolve. A row
+            of a pickable type is terminal: clicking it selects rather than
+            descends, so the level a caller asked for is where browsing stops.
           </p>
-          <CatalogPickerDemo />
+          <LocationPickerDemo />
         </SubSection>
-        <SubSection title="Multi mode (gedu coverage)">
+        <SubSection title="Tree scope, multi mode (gedu coverage)">
           <p className="text-sm text-muted-foreground mb-3">
             Every level is tickable and each tick is an independent &ldquo;I
             cover this whole subtree&rdquo; claim, so ticking Hauts-de-France and
             then drilling into it shows Nord and Pas-de-Calais{" "}
             <em>unticked</em> — deliberately. Half-ticking them would say
             something the saved rows don&rsquo;t: one claim is one row, and
-            matching walks the ancestor chain to find it. Multi mode also indexes
-            the levels above the leaves, so searching <code>nord</code> finds the
-            département itself and not only communes spelled like it.
+            matching walks the ancestor chain to find it.
           </p>
-          <CatalogCoverageDemo />
+          <LocationCoverageDemo />
+        </SubSection>
+        <SubSection title="Tree scope, searching">
+          <p className="text-sm text-muted-foreground mb-3">
+            The same panel, told it is showing search hits: each row carries the
+            path that tells two identically-named communes apart, and the status
+            line reports the true match count behind the rendered cap. In the
+            real app the ranking, the cap and that count all come from the
+            database — a prefix match beats an infix one however late in the
+            table it sits.
+          </p>
+          <LocationSearchDemo />
+        </SubSection>
+        <SubSection title="Set scope (the product form's two modes)">
+          <p className="text-sm text-muted-foreground mb-3">
+            The same panel again, handed finished groups instead of a level.
+            There is no breadcrumb (there is nothing to browse), no status line
+            (nothing was capped) and no confirm step — the panel sits inline in
+            the product form, so a click <em>is</em> the pick and the form owns
+            the commit. Filtering is local: the rows are already in memory, so a
+            keystroke costs no request and has no loading state.
+          </p>
+          <p className="text-sm text-muted-foreground mb-3">
+            Worth trying: matching a group header keeps every row under it (type{" "}
+            <code>helsinki</code> to list its venues), and the fold is
+            diacritic-insensitive in both directions (<code>jarvenpaa</code>{" "}
+            finds Järvenpää, and so does <code>järvenpää</code>) — the same fold
+            the database applies, pinned to it by a shared table of inputs in
+            the test suites.
+          </p>
+          <LocationSetDemo />
+        </SubSection>
+        <SubSection title="Home location field (parent profile)">
+          <p className="text-sm text-muted-foreground mb-3">
+            The parent&rsquo;s own place: one optional municipality, on the
+            registration form and in settings. It asks single mode for the
+            municipality level — Finland&rsquo;s kunta, France&rsquo;s commune,
+            the one directly above a venue. Unlike the panels above, this demo
+            opens the real dialog, so browsing and search here hit the database.
+          </p>
+          <p className="text-sm text-muted-foreground mb-3">
+            The box <em>is</em> the picker rather than a display row over a
+            &ldquo;choose&rdquo; button — one control, and no button caption
+            that has to guess what the viewer&rsquo;s country calls this level.
+            A confirmed pick is a row, so what comes back is a foreign key and a
+            path, with nothing left to resolve.
+          </p>
+          <HomeLocationFieldDemo />
         </SubSection>
       </Section>
 
@@ -2112,74 +2135,7 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 16: Gedu — Session Feed                                */}
-      {/* ============================================================ */}
-      <Section title="Gedu — Session Feed">
-        <p className="text-sm text-muted-foreground -mt-2">
-          A group&rsquo;s sessions as a reverse-chronological, blog-like scroll:
-          the next session on top, then the term running backwards. Gedus record
-          attendance and two written fields per session &mdash; the{" "}
-          <strong>session report</strong> that becomes the entry body families
-          read, and the <strong>Gedu note</strong> behind a padlocked, recessed
-          panel so the two audiences can never blur. Sessions from before the
-          enforcement epoch are bare &ldquo;no record&rdquo; lines with no alert,
-          because nothing is <em>owed</em> for them &mdash; they still open the
-          same record editor as any other past session, because the epoch gates
-          what is asked for, not what may be written. Every editable entry
-          &mdash; past or future, recorded or not &mdash; opens through the same{" "}
-          <strong>Edit</strong> button, and expands in place: the header holding
-          the controls stays put and the editor grows downward beneath it.
-          Everything below is fixture-driven and edits live in local React state
-          &mdash; typing, marking and saving all work, nothing persists past a
-          reload.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          <strong>
-            A past session climbs a three-rung ladder, and only the bottom rung
-            is enforced.
-          </strong>{" "}
-          Attendance still unfinished is <em>Needs attention</em> &mdash; an
-          amber icon and label on an otherwise ordinary card, never a tinted one.
-          Attendance finished with no report is deliberately <em>silent</em>: the
-          report is optional, so a badge there would nag for work nobody owes.
-          Attendance finished <em>and</em> a report written earns the green{" "}
-          <em>Complete</em> check, and the timeline marker goes green with it.
-          Partial saves are allowed and stay flagged, so a gedu interrupted three
-          children into a roster of eight keeps their three marks. A session
-          older than the epoch sits outside the bottom rung only: it can never
-          turn amber, and it can still earn the green check.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          <strong>Reports are markdown, and the feed clamps them.</strong> A
-          report renders formatted &mdash; title, sections, bold, lists &mdash;
-          but a term of them would be a wall of prose, so anything past about six
-          lines fades out under a mask and offers <em>Read more</em> above it,
-          which expands in place and grows the card downward. A report short
-          enough to fit gets no control at all. Whether one is offered is decided{" "}
-          <strong>from the source text</strong>, by arithmetic the server and the
-          browser both run over the markdown &mdash; block by block, charging
-          each one its wrapped width and each boundary its gap &mdash; and it is
-          never revised by a measurement afterwards. Nothing here measures
-          anything: a server cannot, and a control that arrived a hydration later
-          would shove the feed down as it landed. The price is a tolerance of
-          roughly <strong>one line either way</strong> on a report sitting right
-          at the boundary, which is bought deliberately for a page that never
-          reflows.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Sessions still <em>ahead</em> of us carry planning fields only &mdash; a
-          forward note families read later and a reminder for whoever runs it.
-          Never attendance: that records what happened. Only
-          the next session is prominent; the rest of the horizon collapses behind
-          one &ldquo;N more upcoming sessions&rdquo; row above it. On a long
-          history the recent past renders and older chunks append below on
-          request, with month dividers marking each boundary the scroll crosses.
-        </p>
-        <GeduSessionFeedDemo />
-      </Section>
-
-      {/* ============================================================ */}
-      {/* Section 17: Product links — family vs. Gedu                   */}
+      {/* Section 16: Product links — family vs. Gedu                   */}
       {/* ============================================================ */}
       <Section title="Product links — family vs. Gedu">
         <p className="text-sm text-muted-foreground -mt-2">
@@ -2225,32 +2181,29 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 18: Session report — rendering and writing            */}
+      {/* Section 17: Rich text editor — authoring and what it stores   */}
       {/* ============================================================ */}
-      <Section title="Session report — rendering and writing">
+      <Section title="Rich text editor — authoring and what it stores">
         <p className="text-sm text-muted-foreground -mt-2">
-          A session report is stored as <strong>markdown</strong> &mdash; it is
-          what converts cleanly into the email these will eventually be sent as
-          &mdash; and is written in a small rich-text editor so a gedu at the end
-          of a session never has to know what <code>##</code> does. Two components
-          sit either side of that value: a reader that renders it clamped, and an
-          editor that round-trips it.
+          The shared authoring control for anywhere a person writes prose the app
+          stores. It round-trips <strong>markdown</strong> &mdash; the format that
+          converts cleanly into email &mdash; behind a small fixed toolbar, so a
+          writer never has to know what <code>##</code> does. The value below the
+          editor is exactly what gets persisted.
         </p>
         <p className="text-sm text-muted-foreground">
-          The renderer allows a deliberately narrow subset, and enforces it as a{" "}
-          <em>whitelist</em>: headings, paragraphs, bold, italics and lists.
-          Anything outside it &mdash; a pasted table, an image, raw HTML &mdash;
-          is unwrapped to its text rather than dropped, so a stray construct shows
-          its words instead of silently deleting a paragraph of somebody&rsquo;s
-          write-up. Headings are scaled to the card they live in: an{" "}
-          <code>h1</code> typed in the editor is the writer naming their own
-          paragraph, not competing with the page title.
+          The toolbar produces a deliberately narrow subset: headings, paragraphs,
+          bold, italics and lists. Whatever consumes the stored markdown is
+          expected to enforce that same subset as a <em>whitelist</em> on the way
+          out, unwrapping anything outside it to its text rather than dropping it,
+          so a pasted table or a stray tag shows its words instead of silently
+          deleting a paragraph of somebody&rsquo;s writing.
         </p>
-        <SessionReportDemo />
+        <RichTextEditorDemo />
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 19: Minecraft username — fixed-geometry identity      */}
+      {/* Section 18: Minecraft username — fixed-geometry identity      */}
       {/* ============================================================ */}
       <Section title="Minecraft username — fixed-geometry identity">
         <p className="text-sm text-muted-foreground -mt-2">
@@ -2278,6 +2231,37 @@ export default function AdminUIComponentsPage() {
         <MinecraftUsernameRowDemo />
       </Section>
 
+      {/* ============================================================ */}
+      {/* Section 19: Roblox                                            */}
+      {/* ============================================================ */}
+      <Section title="Roblox">
+        <p className="text-sm text-muted-foreground -mt-2">
+          The same fixed-geometry identity row as Minecraft, re-cut for Roblox.
+          Two things about Roblox force the change.{" "}
+          <strong>Every thumbnail is square</strong> &mdash; the API rejects a
+          non-square size outright &mdash; so the 1:2 box the Minecraft row draws
+          has no equivalent here. And <strong>the render is the bust</strong>, not
+          the full body: inside a square frame the full-body variant puts the
+          figure at 27% of the frame and 40% of its width, a small person adrift
+          in transparent padding, while the bust fills 88% and 98%. The Minecraft
+          component&rsquo;s argument for a whole body &mdash; a skin is a costume,
+          and the chosen half is below the shoulders &mdash; simply cannot survive
+          a 1:1 frame.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Everything else is deliberately identical. The avatar is a fixed square,
+          the status is a fixed square, and the username is the only thing between
+          them that flexes, so a lookup landing never moves the row. The
+          fixture-driven rows below draw a bundled inline SVG rather than
+          fetching, on the same 1:1 grid the real render uses &mdash; so the box
+          behaves the same against a placeholder and against a real avatar. The
+          live sub-section is the proof: the bust that arrives from{" "}
+          <code>/api/roblox/verify</code> lands in a slot that was already holding
+          its space.
+        </p>
+        <RobloxDemo />
+      </Section>
+
     </div>
   );
 }
@@ -2287,14 +2271,31 @@ export default function AdminUIComponentsPage() {
 /* ------------------------------------------------------------------ */
 
 /* ------------------------------------------------------------------ */
-/*  Location List Demo                                                 */
+/*  Location Set Demo                                                  */
 /* ------------------------------------------------------------------ */
+
+function venue(id: string, name: string, nameI18n: Json | null = null): LocationSummary {
+  return { id, name, name_i18n: nameI18n, type: "site", country_code: "FI" };
+}
+
+function place(
+  id: string,
+  name: string,
+  type: LocationSummary["type"],
+  nameI18n: Json | null = null,
+): LocationChainSummary {
+  return { id, name, name_i18n: nameI18n, type };
+}
+
+const UUSIMAA = place("uusimaa", "Uusimaa", "region", { sv: "Nyland" });
+const PIRKANMAA = place("pirkanmaa", "Pirkanmaa", "region");
+const FI = place("fi", "Suomi", "country");
 
 // Venues under their municipality, with the region as the header's context —
 // the exact shape the product picker's site mode builds from the scoped sites
 // read. Järvenpää is here so the diacritic folding is visible, and Helsinki
 // carries its Swedish name so a header search matches an alternate too.
-const VENUE_GROUPS: LocationListGroup[] = [
+const VENUE_GROUPS: LocationGroup[] = [
   {
     key: "helsinki",
     label: "Helsinki",
@@ -2302,16 +2303,12 @@ const VENUE_GROUPS: LocationListGroup[] = [
     searchTerms: ["Helsinki", "Helsingfors"],
     rows: [
       {
-        id: "hki-1",
-        name: "Itälahdenkatu 23 B",
-        detail: "",
-        searchTerms: ["Itälahdenkatu 23 B"],
+        location: venue("hki-1", "Itälahdenkatu 23 B"),
+        ancestors: [place("helsinki", "Helsinki", "municipality", { sv: "Helsingfors" }), UUSIMAA, FI],
       },
       {
-        id: "hki-2",
-        name: "Kalasataman kirjasto",
-        detail: "",
-        searchTerms: ["Kalasataman kirjasto"],
+        location: venue("hki-2", "Kalasataman kirjasto"),
+        ancestors: [place("helsinki", "Helsinki", "municipality", { sv: "Helsingfors" }), UUSIMAA, FI],
       },
     ],
   },
@@ -2322,10 +2319,8 @@ const VENUE_GROUPS: LocationListGroup[] = [
     searchTerms: ["Järvenpää"],
     rows: [
       {
-        id: "jp-1",
-        name: "Kirjasto",
-        detail: "",
-        searchTerms: ["Kirjasto"],
+        location: venue("jp-1", "Kirjasto"),
+        ancestors: [place("jarvenpaa", "Järvenpää", "municipality"), UUSIMAA, FI],
       },
     ],
   },
@@ -2333,67 +2328,70 @@ const VENUE_GROUPS: LocationListGroup[] = [
     key: "tampere",
     label: "Tampere",
     detail: "Pirkanmaa",
-    searchTerms: ["Tampere", "Tammerfors"],
+    searchTerms: ["Tampere"],
     rows: [
-      { id: "tre-1", name: "Sampola", detail: "", searchTerms: ["Sampola"] },
+      {
+        location: venue("tre-1", "Sampola"),
+        ancestors: [place("tampere", "Tampere", "municipality"), PIRKANMAA, FI],
+      },
     ],
   },
 ];
 
-const LIST_LABELS = {
+const SET_LABELS = {
   searchPlaceholder: "Search venues by name or municipality…",
-  clearSearch: "Clear search",
   empty: "No venues yet.",
-  noResults: (query: string) => `No locations match “${query}”.`,
-  loading: "Loading locations",
 };
 
-function LocationListDemo() {
+function LocationSetDemo() {
+  const [query, setQuery] = useState("");
   const [value, setValue] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [emptyQuery, setEmptyQuery] = useState("");
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
       <div className="space-y-2">
-        <h4 className="text-sm font-semibold">Loaded</h4>
-        <LocationList
-          groups={VENUE_GROUPS}
-          value={value}
-          onSelect={setValue}
-          labels={LIST_LABELS}
-          footer={
-            <Button type="button" variant="outline" size="sm">
-              New venue…
-            </Button>
-          }
+        <h4 className="text-sm font-semibold">A set with rows in it</h4>
+        <LocationPickerPanel
+          query={query}
+          onQueryChange={setQuery}
+          scope={{
+            kind: "set",
+            groups: VENUE_GROUPS,
+            value,
+            onSelect: (pick) => setValue(pick.location.id),
+            labels: SET_LABELS,
+            footer: (
+              <Button type="button" variant="outline" size="sm">
+                New venue…
+              </Button>
+            ),
+          }}
         />
         <p className="text-xs text-muted-foreground">
-          Selected: {value ?? "(none)"}
+          Selected: {value ?? "(none)"} &mdash; a click is the pick, so this is
+          the whole interaction. The caller gets the row and its chain back, not
+          just the id.
         </p>
       </div>
 
       <div className="space-y-2">
-        <h4 className="text-sm font-semibold">Loading / empty</h4>
+        <h4 className="text-sm font-semibold">Empty, and no results</h4>
         <p className="text-xs text-muted-foreground">
-          Both states occupy the same height as the loaded list, so the button
-          below never moves as rows arrive.
+          An empty set says so in the caller&rsquo;s words; a query that matches
+          nothing says that instead. Both occupy the same height as the loaded
+          list, so the button below never moves.
         </p>
-        <LocationList
-          groups={[]}
-          value={null}
-          onSelect={() => {}}
-          loading={loading}
-          labels={LIST_LABELS}
-          footer={
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setLoading((current) => !current)}
-            >
-              {loading ? "Show empty state" : "Show loading state"}
-            </Button>
-          }
+        <LocationPickerPanel
+          query={emptyQuery}
+          onQueryChange={setEmptyQuery}
+          scope={{
+            kind: "set",
+            groups: [],
+            value: null,
+            onSelect: () => {},
+            labels: SET_LABELS,
+          }}
         />
       </div>
     </div>
@@ -2401,64 +2399,93 @@ function LocationListDemo() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Catalog Picker Demo                                                */
+/*  Location Picker Demo                                               */
 /* ------------------------------------------------------------------ */
 
-// A miniature stand-in for src/lib/locations/catalog/fr.json: same shape, same
-// three levels, five communes instead of 34,875. Nîmes and Béziers are here on
-// purpose — they are what makes the diacritic folding visible.
-const CATALOG_FIXTURE: LocationCatalog = {
-  country: "FR",
-  source: "Fixture — not a real classification",
-  release: "2026",
-  generated: "2026-01-01",
-  levels: ["region", "district", "municipality"],
-  counts: [2, 4, 5],
-  tree: [
-    [
-      "32",
-      "Hauts-de-France",
-      [
-        [
-          "59",
-          "Nord",
-          [
-            ["59350", "Lille"],
-            ["59512", "Roubaix"],
-          ],
-        ],
-        ["62", "Pas-de-Calais", [["62041", "Arras"]]],
-      ],
-    ],
-    [
-      "76",
-      "Occitanie",
-      [
-        [
-          "30",
-          "Gard",
-          [["30189", "Nîmes"]],
-        ],
-        ["34", "Hérault", [["34032", "Béziers"]]],
-      ],
-    ],
-  ],
+// A miniature stand-in for the rows the browse query returns: same columns,
+// three levels, five communes instead of 35,000. Nîmes and Béziers are here on
+// purpose — they are what the real search's diacritic folding is for, and the
+// search demo below shows them found from an unaccented needle.
+const FR: LocationSummary = {
+  id: "fr",
+  name: "France",
+  name_i18n: null,
+  type: "country",
+  country_code: "FR",
 };
 
-function CatalogPickerDemo() {
-  const [added, setAdded] = useState<string | null>(null);
+function fixtureRow(
+  id: string,
+  name: string,
+  type: LocationSummary["type"],
+): LocationSummary {
+  return { id, name, name_i18n: null, type, country_code: "FR" };
+}
+
+const HDF = fixtureRow("32", "Hauts-de-France", "region");
+const OCC = fixtureRow("76", "Occitanie", "region");
+const NORD = fixtureRow("59", "Nord", "district");
+const GARD = fixtureRow("30", "Gard", "district");
+
+/** One level of the tree, keyed by the id of the node above it. */
+const LEVELS: Record<string, LocationSummary[]> = {
+  root: [FR],
+  fr: [HDF, OCC],
+  "32": [NORD, fixtureRow("62", "Pas-de-Calais", "district")],
+  "76": [GARD, fixtureRow("34", "Hérault", "district")],
+  "59": [fixtureRow("59350", "Lille", "municipality"), fixtureRow("59512", "Roubaix", "municipality")],
+  "62": [fixtureRow("62041", "Arras", "municipality")],
+  "30": [fixtureRow("30189", "Nîmes", "municipality")],
+  "34": [fixtureRow("34032", "Béziers", "municipality")],
+};
+
+/** Fixture search hits, each with the path a real hit carries. */
+const HITS: LocationPick[] = [
+  { location: fixtureRow("30189", "Nîmes", "municipality"), ancestors: [GARD, OCC, FR] },
+  { location: fixtureRow("34032", "Béziers", "municipality"), ancestors: [fixtureRow("34", "Hérault", "district"), OCC, FR] },
+];
+
+/**
+ * Drives the panel's browse half from the fixture tree above: the path is
+ * component state, and the rows are whatever level that path points at.
+ */
+function useFixtureBrowse() {
+  const [path, setPath] = useState<LocationChainSummary[]>([]);
+  const parentId = path.at(-1)?.id ?? "root";
+  const ancestors = [...path].reverse();
+  const rows = (LEVELS[parentId] ?? []).map((location) => ({ location, ancestors }));
+
+  return {
+    path,
+    // The same rule the real browser uses: a row's path is its ancestors
+    // reversed to root-first plus the row itself, which holds whether the row
+    // was browsed to or searched for. Appending instead would look right here —
+    // the fixture only browses — while being wrong in the app.
+    onDrill: (pick: LocationPick) =>
+      setPath([...[...pick.ancestors].reverse(), pick.location]),
+    onOpenDepth: (depth: number) => setPath((current) => current.slice(0, depth)),
+    browse: { rows, total: rows.length, hasMore: false, loading: false },
+  };
+}
+
+const EMPTY_ROWS = { rows: [], total: 0, hasMore: false, loading: false };
+
+function LocationPickerDemo() {
+  const [query, setQuery] = useState("");
+  const [confirmed, setConfirmed] = useState<string | null>(null);
+  const fixture = useFixtureBrowse();
 
   // Mirrors the real flow: on success the parent swaps this view away, which
   // is why the picker never has to re-enable its confirm button.
-  if (added) {
+  if (confirmed) {
     return (
       <div className="space-y-3 rounded-md border border-input bg-card p-4">
         <p className="text-sm">
-          Confirmed <span className="font-medium">{added}</span> — the product
-          picker would now resolve that code to its seeded row and list the
-          venues already in it.
+          Confirmed <span className="font-medium">{confirmed}</span> — the venue
+          flow would now list the venues already in it, with that row as the
+          parent of any new one.
         </p>
-        <Button type="button" variant="outline" onClick={() => setAdded(null)}>
+        <Button type="button" variant="outline" onClick={() => setConfirmed(null)}>
           Pick another
         </Button>
       </div>
@@ -2467,46 +2494,66 @@ function CatalogPickerDemo() {
 
   return (
     <div className="max-w-2xl rounded-md border border-input bg-card p-4">
-      <CatalogPicker
-        catalog={CATALOG_FIXTURE}
-        countryLabel="France"
-        selection={{
-          mode: "single",
-          onConfirm: (entry) =>
-            new Promise<void>((resolve) =>
-              setTimeout(() => {
-                setAdded(entry.name);
-                resolve();
-              }, 600),
-            ),
-          onCancel: () => setAdded(null),
+      <LocationPickerPanel
+        query={query}
+        onQueryChange={setQuery}
+        scope={{
+          kind: "tree",
+          path: fixture.path,
+          onDrill: fixture.onDrill,
+          onOpenDepth: fixture.onOpenDepth,
+          minQueryLength: 2,
+          browse: fixture.browse,
+          search: EMPTY_ROWS,
+          selection: {
+            mode: "single",
+            pickableTypes: ["municipality"],
+            onConfirm: (pick) =>
+              new Promise<void>((resolve) =>
+                setTimeout(() => {
+                  setConfirmed(pick.location.name);
+                  resolve();
+                }, 600),
+              ),
+            onCancel: () => setConfirmed(null),
+          },
         }}
       />
     </div>
   );
 }
 
-function CatalogCoverageDemo() {
+function LocationCoverageDemo() {
+  const [query, setQuery] = useState("");
   const [ticked, setTicked] = useState<ReadonlySet<string>>(new Set());
+  const fixture = useFixtureBrowse();
 
   return (
     <div className="space-y-2">
       <div className="max-w-2xl rounded-md border border-input bg-card p-4">
-        <CatalogPicker
-          catalog={CATALOG_FIXTURE}
-          countryLabel="France"
-          selection={{
-            mode: "multi",
-            tickedKeys: ticked,
-            onToggle: (pick) =>
-              setTicked((prev) => {
-                const next = new Set(prev);
-                const key = catalogRefKey(pick);
-                if (next.has(key)) next.delete(key);
-                else next.add(key);
-                return next;
-              }),
-            onDone: () => setTicked(new Set()),
+        <LocationPickerPanel
+          query={query}
+          onQueryChange={setQuery}
+          scope={{
+            kind: "tree",
+            path: fixture.path,
+            onDrill: fixture.onDrill,
+            onOpenDepth: fixture.onOpenDepth,
+            minQueryLength: 2,
+            browse: fixture.browse,
+            search: EMPTY_ROWS,
+            selection: {
+              mode: "multi",
+              selectedIds: ticked,
+              onToggle: (pick) =>
+                setTicked((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(pick.location.id)) next.delete(pick.location.id);
+                  else next.add(pick.location.id);
+                  return next;
+                }),
+              onDone: () => setTicked(new Set()),
+            },
           }}
         />
       </div>
@@ -2515,6 +2562,71 @@ function CatalogCoverageDemo() {
         &mdash; &ldquo;Done&rdquo; clears the demo&rsquo;s state; in the real app
         it closes the dialog and the caller&rsquo;s save commits the ticks.
       </p>
+    </div>
+  );
+}
+
+function LocationSearchDemo() {
+  // Held above the minimum length so the panel stays in its search branch: the
+  // point of this demo is the hit rows, not the transition into them.
+  const [query, setQuery] = useState("nimes");
+
+  return (
+    <div className="max-w-2xl rounded-md border border-input bg-card p-4">
+      <LocationPickerPanel
+        query={query}
+        onQueryChange={setQuery}
+        scope={{
+          kind: "tree",
+          path: [],
+          onDrill: () => {},
+          onOpenDepth: () => {},
+          minQueryLength: 2,
+          browse: EMPTY_ROWS,
+          search: { rows: HITS, total: 47, hasMore: false, loading: false },
+          selection: {
+            mode: "single",
+            pickableTypes: ["municipality"],
+            onConfirm: () => Promise.resolve(),
+            onCancel: () => setQuery(""),
+          },
+        }}
+      />
+    </div>
+  );
+}
+
+function HomeLocationFieldDemo() {
+  const [place, setPlace] = useState<LocationPick | null>(null);
+
+  return (
+    <div className="max-w-md space-y-4 rounded-md border border-input bg-card p-4">
+      <div className="space-y-2">
+        <HomeLocationField value={place} onChange={setPlace} />
+        <p className="text-xs text-muted-foreground">
+          Value:{" "}
+          {place ? `${place.location.id} (${place.location.name})` : "(none)"}{" "}
+          &mdash; a row id, so the caller has a foreign key to store and a path
+          to render without a second read. It decides what committing means: a
+          registration submit, or a settings save.
+        </p>
+      </div>
+
+      {/* The third state, which is the reason the prop is not just
+          `LocationPick | null`. It cannot be reached by clicking, because the
+          read it represents lands in a frame or two — so it is pinned here as a
+          fixture rather than demonstrated by waiting for one. */}
+      <div className="space-y-2">
+        <HomeLocationField value={undefined} onChange={() => {}} />
+        <p className="text-xs text-muted-foreground">
+          Value: <code>undefined</code> &mdash; a stored id whose row has not
+          arrived yet, as settings mounts. The box is silent at its final height
+          rather than showing the &ldquo;add your location&rdquo; prompt, which
+          would tell someone who has chosen a place that they have not, and be
+          clickable while it did so. Reading one row by id is an indexed lookup,
+          so there is no skeleton and no spinner here by design.
+        </p>
+      </div>
     </div>
   );
 }
@@ -2536,186 +2648,31 @@ const BILLING_ACCOUNTS_SPLIT: BillingAccountSummary[] = [
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Section 16: Gedu — Session Feed                                     */
+/*  Rich text editor                                                   */
 /* ------------------------------------------------------------------ */
 
-/**
- * The feed rendered against the mock club, with both inline editors wired to
- * local state: marking each child present or absent, typing any note on a past
- * *or* a future session, and flipping "this session didn't run" all mutate the
- * fixture in place — so a flagged session really does turn into a finished one
- * (and the alert badge above it really does count down), while a half-marked
- * save really does stay flagged. Nothing persists — a reload puts the fixture
- * back.
- *
- * The fixture is built once from `useNow()` and then held in state: rebuilding
- * it on every 30s tick would throw away whatever the reviewer had just typed.
- *
- * There is no Join button anywhere in here, and there is nothing missing: the
- * feed's cards carry no voice affordance at all. Rooms are joined from the
- * product page's rail, which is a page-level composition rather than a
- * component, so it is reviewed in the preview scene instead.
- */
-function GeduSessionFeedDemo() {
-  const now = useNow();
-  const [entries, setEntries] = useState<SessionFeedEntry[]>(
-    () => buildSessionFeedFixture(now).entries,
-  );
-  const [editingId, setEditingId] = useState<string | null>(null);
-
-  const needingAttention = countEntriesNeedingAttention(
-    entries,
-    SESSION_FEED_ROSTER,
-  );
-
-  // A plan can only land on a future session and a write-up only on a past one,
-  // so the entry's own kind settles which apply runs; a mismatch leaves the
-  // entry untouched rather than corrupting it.
-  //
-  // It does not close the editor. The feed does that itself once the save it
-  // was handed has settled — immediately here, a round trip later on the live
-  // page.
-  const handleSave = (entryId: string, draft: SessionEntryDraft) => {
-    setEntries((prev) =>
-      prev.map((entry) => {
-        if (entry.id !== entryId) return entry;
-        if (draft.kind === "plan") {
-          return isPlannableEntry(entry)
-            ? applyPlanDraftToEntry(entry, draft)
-            : entry;
-        }
-        return isEditableEntry(entry) ? applyDraftToEntry(entry, draft) : entry;
-      }),
-    );
-  };
-
-  return (
-    <div className="space-y-8">
-      <SubSection title="Full feed (editor wired to local state)">
-        <div className="max-w-2xl space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h4 className="text-base font-semibold">
-              {SESSION_FEED_CLUB_NAME}
-            </h4>
-            <SessionFeedAlertBadge count={needingAttention} />
-          </div>
-          <SessionFeed
-            entries={entries}
-            roster={SESSION_FEED_ROSTER}
-            sourceTimeZone={SESSION_FEED_TIMEZONE}
-            editingEntryId={editingId}
-            onEditEntry={setEditingId}
-            onSaveEntry={handleSave}
-          />
-        </div>
-      </SubSection>
-
-      <SubSection title="Alert badge — inline">
-        <div className="flex flex-wrap items-center gap-6">
-          {[0, 1, 3, 12].map((count) => (
-            <div key={count} className="flex flex-col items-start gap-2">
-              <DemoCaption>
-                {count === 0 ? "0 — renders nothing" : `${count} outstanding`}
-              </DemoCaption>
-              <SessionFeedAlertBadge count={count} />
-            </div>
-          ))}
-        </div>
-      </SubSection>
-
-      <SubSection title="Alert badge — overlaid on a card corner">
-        <div className="grid gap-6 sm:grid-cols-3">
-          {[0, 3, 12].map((count) => (
-            <div key={count} className="space-y-2">
-              <DemoCaption>
-                {count === 0
-                  ? "0 — nothing on the corner"
-                  : `${count} outstanding`}
-              </DemoCaption>
-              {/* The badge is the card's *sibling* inside a plain `relative`
-                  shell — a card that clips its own overflow would otherwise cut
-                  the badge in half where it hangs off the edge. */}
-              <div className="relative">
-                <Card className="overflow-hidden p-4">
-                  <p className="text-sm font-medium">Minecraft Monday Club</p>
-                  <p className="text-xs text-muted-foreground">Monday A</p>
-                </Card>
-                <SessionFeedAlertBadge count={count} variant="corner" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </SubSection>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Session report — reader and writer                                 */
-/* ------------------------------------------------------------------ */
-
-/** Long enough to be clamped, and using every construct the toolbar produces. */
-const DEMO_LONG_REPORT = `# Redstone week: item sorters
-
-We built item sorters from scratch this week — hoppers, comparators, the lot — and then broke them on purpose to work out what each part was actually doing.
-
-## The build
-
-- A hopper line feeding four labelled chests
-- Comparators reading the filter chests, which is the bit that does the sorting
-- An overflow chest at the end, so nothing is ever lost when a filter fills up
-
-The overflow was the hard part and Elias solved it on his own. He then spent the rest of the session teaching it to the rest of the table, which was better than anything I would have said about it.
-
-**Next week:** the sorters go into the storage room, and we find out whether they survive eight people using them at once.`;
-
-/** Short enough that no control is offered at all. */
-const DEMO_SHORT_REPORT = `# Mob-proofing night
+/** Seeds the editor with every construct its toolbar produces. */
+const DEMO_MARKDOWN = `# Mob-proofing night
 
 We lit the paths, walled the gaps and got through a whole session without losing anybody to a creeper.`;
 
 /**
- * The reader and the writer side by side, over the same value.
+ * The writer, with its own serialised output beside it.
  *
- * The editor is wired to local state and shows its own markdown output beneath
- * it, which is the one thing worth being able to see at a glance: a gedu never
- * meets the syntax, so the only place to confirm the round trip is honest is
- * here. Type a heading, watch the `##` appear in the serialised output, and the
- * reader beside it renders the same thing back.
+ * Showing the stored markdown next to the editor is the one thing worth being
+ * able to see at a glance: a writer never meets the syntax, so this is the only
+ * place to confirm the round trip is honest. Type a heading, watch the `#`
+ * appear in the serialised output.
+ *
+ * How stored markdown *renders* is deliberately not demoed here — a renderer is
+ * only meaningful inside the surface that owns it, at that surface's width and
+ * clamping. Those live in the full-page preview scenes on `/admin/ui-previews`.
  */
-function SessionReportDemo() {
-  const [markdown, setMarkdown] = useState(DEMO_SHORT_REPORT);
+function RichTextEditorDemo() {
+  const [markdown, setMarkdown] = useState(DEMO_MARKDOWN);
 
   return (
     <div className="space-y-8">
-      <SubSection title="Rendered in the feed — clamped, with expand in place">
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="space-y-2">
-            <DemoCaption>
-              Long report — clamped, fades out, offers Read more
-            </DemoCaption>
-            <Card className="p-4">
-              <SessionReport markdown={DEMO_LONG_REPORT} />
-            </Card>
-          </div>
-          <div className="space-y-2">
-            <DemoCaption>Short report — no control at all</DemoCaption>
-            <Card className="p-4">
-              <SessionReport markdown={DEMO_SHORT_REPORT} />
-            </Card>
-          </div>
-          <div className="space-y-2">
-            <DemoCaption>
-              Same long report, unclamped — what the newest past entry in the
-              feed gets, so the one report every gedu reads costs no click
-            </DemoCaption>
-            <Card className="p-4">
-              <SessionReport markdown={DEMO_LONG_REPORT} clamped={false} />
-            </Card>
-          </div>
-        </div>
-      </SubSection>
-
       <SubSection title="The editor, and what it stores">
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="space-y-2">
@@ -2723,7 +2680,7 @@ function SessionReportDemo() {
               Rich editor — seven buttons, fixed toolbar height
             </DemoCaption>
             <RichTextEditor
-              initialValue={DEMO_SHORT_REPORT}
+              initialValue={DEMO_MARKDOWN}
               onChange={setMarkdown}
               ariaLabel="Session report"
               placeholder="What the group built, played or figured out."
@@ -2797,6 +2754,128 @@ function MinecraftUsernameRowDemo() {
         </div>
       </SubSection>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Roblox                                                             */
+/* ------------------------------------------------------------------ */
+
+const ROBLOX_STATUSES: readonly {
+  status: RobloxCheckStatus;
+  caption: string;
+}[] = [
+  {
+    status: "verified",
+    caption: "We know, and it's verified — a confirmed account id",
+  },
+  {
+    status: "unverified",
+    caption:
+      "We know, but it isn't verified — a saved name no lookup ever confirmed. Amber, with the tick simply absent rather than a glyph of its own: the house treatment for a saved-but-unconfirmed game account, matching the badge form below.",
+  },
+  {
+    status: "unknown",
+    caption: "We don't know — no username on the account",
+  },
+  { status: "checking", caption: "Checking — a lookup is in flight" },
+];
+
+function RobloxDemo() {
+  return (
+    <div className="space-y-8">
+      <SubSection title="Row — the bust at 48px, every state at identical dimensions">
+        <div className="max-w-xs space-y-2 rounded-lg border p-4">
+          {ROBLOX_STATUSES.map(({ status, caption }) => (
+            <div key={status} className="space-y-1">
+              <DemoCaption>{caption}</DemoCaption>
+              <RobloxUsernameRow username="EliasBuilds" status={status} />
+            </div>
+          ))}
+          <div className="space-y-1">
+            <DemoCaption>
+              A null username renders as unknown whatever the status claims —
+              the two can&rsquo;t disagree
+            </DemoCaption>
+            <RobloxUsernameRow username={null} status="verified" />
+          </div>
+          <div className="space-y-1">
+            <DemoCaption>A username with no upper bound</DemoCaption>
+            <RobloxUsernameRow
+              username="GalaxyDestroyer9000"
+              status="verified"
+            />
+          </div>
+        </div>
+      </SubSection>
+
+      <SubSection title="Full — the same asset, a third bigger">
+        <div className="flex flex-wrap gap-6 rounded-lg border p-4">
+          {ROBLOX_STATUSES.map(({ status, caption }) => (
+            <div key={status} className="w-44 space-y-1">
+              <DemoCaption>{caption}</DemoCaption>
+              <RobloxUsernameRow
+                username="EliasBuilds"
+                status={status}
+                size="full"
+              />
+            </div>
+          ))}
+        </div>
+      </SubSection>
+
+      <SubSection title="Badge — the read-only line, three states">
+        <div className="flex flex-wrap gap-8 rounded-lg border p-4">
+          <div className="space-y-1">
+            <DemoCaption>Verified — the handle resolved to an account</DemoCaption>
+            <RobloxUsernameBadge username="EliasBuilds" userId={68306362} />
+          </div>
+          <div className="space-y-1">
+            <DemoCaption>Entered, never checked</DemoCaption>
+            <RobloxUsernameBadge username="EliasBuilds" userId={null} />
+          </div>
+          <div className="space-y-1">
+            <DemoCaption>Nothing on the account</DemoCaption>
+            <RobloxUsernameBadge username={null} userId={null} />
+          </div>
+          <div className="space-y-1">
+            <DemoCaption>Verified at size=&quot;base&quot;</DemoCaption>
+            <RobloxUsernameBadge
+              username="EliasBuilds"
+              userId={68306362}
+              size="base"
+            />
+          </div>
+        </div>
+      </SubSection>
+
+      <RobloxLiveLookupDemo />
+    </div>
+  );
+}
+
+/**
+ * The one demo on this page that really talks to the network.
+ *
+ * `/api/roblox/verify` is public, so it answers from here, and the avatar it
+ * resolves is a real render off Roblox's CDN. `Roblox` and `builderman` both
+ * exist; anything shaped like a username but unclaimed comes back invalid.
+ */
+function RobloxLiveLookupDemo() {
+  const [username, setUsername] = useState("builderman");
+
+  return (
+    <SubSection title="Live — this one really calls /api/roblox/verify">
+      <div className="max-w-xl space-y-3 rounded-lg border p-4">
+        <p className="text-xs text-muted-foreground">
+          Try <code>Roblox</code> or <code>builderman</code>. The identity row is
+          drawn at its final size before you press anything, so the bust that
+          arrives lands in space that was already reserved — nothing on this page
+          moves when it does.
+        </p>
+        <RobloxUsernameField value={username} onChange={setUsername} />
+      </div>
+    </SubSection>
   );
 }
 

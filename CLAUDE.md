@@ -12,8 +12,7 @@ npm run lint             # ESLint
 npm run type-check       # TypeScript check (tsc --noEmit)
 npm run test             # Vitest unit tests
 npm run test:ui          # Vitest with UI
-npm run test:e2e         # Playwright E2E tests
-npm run test:e2e:ui      # Playwright with UI
+npm run test:smoke       # Build + smoke check (serves a production build, asserts headers/CSP)
 ```
 
 ## Architecture
@@ -105,7 +104,13 @@ The pattern that works: hold a local `committing` boolean, flip it true *synchro
 
 Setting the flag *inside* `onSuccess` (or via a hook that does so) is too late and does not close the gap. The flag has to be live before any render after the click.
 
-**Rule: A loading skeleton stays invisible for its first ~250ms.** Skeletons are the right pattern for loads that genuinely take time — but most loads here resolve in well under 250ms (warm React Query cache, small scoped queries), and a skeleton that lives for a few frames reads as an ugly grey flash, not a loading state. Gate the skeleton's *visibility* (not its mount) on `useRevealAfter()` (`src/hooks/use-reveal-after.ts` — the delay is its default; don't pass a literal), inside a container that already has its final size per the layout rule: a fast load then shows calm nothing in a correctly-sized box, and a slow one still gets its skeleton. Pair the reveal with a ~200ms opacity fade so a load finishing just past the threshold sees a faint shimmer rather than a hard flash, and prefer structured ghosts (bars where rows will be) over one solid block when the skeleton does show.
+**Rule: the loading affordance is a property of the call, chosen when you write it — never something discovered at runtime.** You are the one writing the query. You know whether it is a cached read, an indexed lookup of a bounded set, or a heavy aggregate over a third party. That knowledge picks the affordance; a timer that waits to find out does not. There are three categories and nothing else:
+
+1. **Already cached, or resolvable synchronously** → **no loading state at all**, ever. React Query knows this for you, and it is the strongest signal available because it costs nothing.
+2. **A near-instant call that still needs a network hop** — a small, indexed, bounded read: one node's children, a top-N search, a row by id. It lands in a frame or two. Render **nothing**, inside a container that already has its final size. No skeleton, no spinner, no delay, no fade. If such a call is ever slow that is an anomaly to investigate, not the case to design for.
+3. **A perceptibly slow call** — a large payload, a heavy aggregate, a third-party round trip. Render a structured skeleton **immediately**, with no delay, because you already know it is coming. Prefer ghosts shaped like the content (bars where rows will be) over one solid block.
+
+**Corollary: if you cannot tell which category a call falls into, you do not yet understand the query — go and find out.** Hedging with a timer is what that uncertainty used to buy, and it bought a loading state that was wrong in both directions: a flash on the fast path, and dead air on the slow one. The container keeping its final size across loading and loaded is what the layout rule needs; the skeleton was never the part doing that work.
 
 ### Date & Time Formatting
 
@@ -160,6 +165,8 @@ A living style guide is available at `/admin/ui-components` (admin login require
 2. **A separation-of-concerns check.** It's a UI-only surface, so a component that's cleanly demoable here is one whose business logic lives elsewhere (in a provider/hook/service) and that just consumes data + actions. If a component is *painful* to demo — needs real network calls, can't be driven by fixtures — that difficulty is the smell signal that UI and business logic are too coupled; fix the coupling rather than forcing the demo.
 
 **When to add a demo here:** when you build or substantially restyle a reusable component or composite pattern, add (or update) its demo so the next person can iterate on it in isolation. **When not to:** one-off page-specific layouts, or anything that can't render without live side effects — if you can't construct a plausible fixture for it, treat that as a design smell first, not a reason to wire real logic into the page.
+
+**Rule: a surface a preview scene already renders in context does not also get a style-guide section.** Two homes for one thing is worse than either alone, and it is the style guide's copy that goes stale — the scene is what gets opened when the design is actually reviewed. The test is whether the piece means anything standing on its own. A component reused across surfaces earns its section: no single page owns it, and the style guide is the only place to see all its states side by side. A whole page body, a feed, a panel that appears in exactly one composition does not — it needs that page's width, chrome and scrolling before it can be judged at all. Demo that as a scene, and let the style guide keep only the genuinely reusable pieces it is built from.
 
 **Rule: a fixture id that feeds an identicon-style avatar must be a real, generated UUID, hardcoded as a literal.** The identicon is a pattern derived from the id's hex bytes, so a readable stand-in like `"mock-gamer-aino"` doesn't render a different-looking avatar — it renders a degenerate one (the non-hex characters parse to nothing, and the grid collapses), which quietly makes every avatar-bearing demo a false picture of the real thing. Generate the UUIDs once (`node -e "console.log(crypto.randomUUID())"`) and paste them in; **never** call a UUID generator at module load or render time, because the same person would then get a different face on every reload, which destroys the stability a fixture exists to provide and makes screenshots unreproducible. Where a spec or scenario needs to refer to a fixture person, give the ids a named map so the readable name lives in the key and the UUID stays the value.
 
@@ -238,7 +245,7 @@ always-on tripwires:
 
 ## Testing
 
-Tests are in `tests/`, split into `unit/`, `integration/`, `db/`, and `e2e/`. The
+Tests are in `tests/`, split into `unit/`, `integration/`, `db/`, and `smoke/`. The
 classification rules and the per-category conventions (DB test helpers, integration-test
 route-handler mocking, unit setup) live in **`tests/CLAUDE.md`** (auto-loads when you
 work under `tests/`). Two things worth knowing from anywhere:
@@ -248,6 +255,9 @@ work under `tests/`). Two things worth knowing from anywhere:
   branch, not locally.
 - **Shared mock factories live in `tests/mocks/`** — add new mocks there rather than
   duplicating across files.
+- **`smoke/` is the only CI job that builds the app**, and it asserts security headers
+  and the per-request CSP against a served production build over plain HTTP. No browser
+  is launched there; a test that needs one does not belong in that directory.
 - **A new API route has to be classified in the integration suite's route posture
   registry** — its auth posture (with a written reason for anything that is not
   role-gated), how it takes its body, and the test that exercises it. The registry's

@@ -9,7 +9,14 @@ import {
   parseJsonResponse,
   readErrorMessage,
 } from "@/lib/api/json-response";
-import { locationRow } from "./locations.contracts";
+import {
+  LOCATION_COLUMNS,
+  LOCATION_SEARCH_LIMIT,
+  LOCATION_SEARCH_MIN_QUERY,
+  locationRow,
+  locationSearchResult,
+} from "./locations.contracts";
+import type { z } from "zod";
 
 /**
  * PostgREST caps every response at its `max_rows` setting (1000 on this
@@ -99,6 +106,44 @@ async function walkPages<Row>(
   );
 }
 
+/**
+ * One page of a list read, for a caller that wants a screenful rather than
+ * everything.
+ *
+ * The sibling of `walkPages`, and it exists for the opposite reason: the walk
+ * is for reads whose *whole* result a surface needs (one country's
+ * municipalities to group, every venue to list), and this is for browsing,
+ * where the payload has to stay proportional to what is on screen no matter how
+ * many children a node has. Both share the same two disciplines — `count:
+ * "exact"` so the caller learns the true size, and a total order on the query so
+ * a page boundary cannot duplicate or drop a row.
+ */
+export interface LocationsPage<Row> {
+  rows: Row[];
+  /** How many rows the filter matches in total, across every page. */
+  total: number;
+  /** Whether another page exists after this one. */
+  hasMore: boolean;
+}
+
+/** How many children one browse request returns. */
+export const LOCATION_BROWSE_PAGE_SIZE = 200;
+
+async function readPage<Row>(
+  page: number,
+  pageSize: number,
+  fetchPage: PageFetcher<Row>,
+): Promise<LocationsPage<Row>> {
+  const from = page * pageSize;
+  const { data, error, count } = await fetchPage(from, from + pageSize - 1);
+  if (error) throw error;
+
+  // `count` is only absent if the caller forgot `count: "exact"`; falling back
+  // to what arrived keeps the shape total rather than making the type lie.
+  const total = count ?? from + data.length;
+  return { rows: data, total, hasMore: from + data.length < total };
+}
+
 /** Split a key list into `in.(…)`-sized batches, preserving order. */
 function chunkKeys(keys: readonly string[]): string[][] {
   const chunks: string[][] = [];
@@ -113,18 +158,6 @@ function normalizeKeys(keys: readonly string[]): string[] {
   return [...new Set(keys)].sort();
 }
 
-/**
- * Identifies one row by the pair the shipped catalogs are keyed on. A catalog
- * entry carries a code and its level, and `(country_code, type, external_code)`
- * is the unique key on the table, so the two line up exactly — which is what
- * lets a UI that ticks catalog entries resolve them to ids without ever having
- * seen a row.
- */
-export interface LocationCodeRef {
-  type: LocationType;
-  external_code: string;
-}
-
 // ---------------------------------------------------------------------------
 // The chain-carrying queries.
 //
@@ -132,6 +165,11 @@ export interface LocationCodeRef {
 // parent_id. The `locations!parent_id` form looks like the same thing but
 // PostgREST resolves it to the children — rows whose parent_id points back
 // here — and returns `[]` for any leaf.
+//
+// Every select below names its columns. `LOCATION_COLUMNS` (the contract) is
+// the whole row minus the generated search fold; `CHAIN_COLUMNS` is narrower
+// still, because an ancestor is rendered rather than picked and its timestamps
+// answer nothing a breadcrumb or a grouping header asks.
 // ---------------------------------------------------------------------------
 
 const CHAIN_COLUMNS = "id, name, name_i18n, type, parent_id, country_code, external_code";
@@ -168,7 +206,7 @@ const MUNICIPALITY_CHAIN_EMBED =
 function buildSitesQuery(supabase: AppSupabaseClient) {
   return supabase
     .from("locations")
-    .select(`*, ${SITE_CHAIN_EMBED}`, { count: "exact" })
+    .select(`${LOCATION_COLUMNS}, ${SITE_CHAIN_EMBED}`, { count: "exact" })
     .eq("type", "site")
     .order("name")
     .order("id");
@@ -180,7 +218,9 @@ function buildMunicipalitiesQuery(
 ) {
   return supabase
     .from("locations")
-    .select(`*, ${MUNICIPALITY_CHAIN_EMBED}`, { count: "exact" })
+    .select(`${LOCATION_COLUMNS}, ${MUNICIPALITY_CHAIN_EMBED}`, {
+      count: "exact",
+    })
     .eq("country_code", countryCode)
     .eq("type", "municipality")
     .order("name")
@@ -249,7 +289,7 @@ export class LocationsService {
   async getLocation(id: string): Promise<Location> {
     const { data, error } = await this.supabase
       .from("locations")
-      .select("*")
+      .select(LOCATION_COLUMNS)
       .eq("id", id)
       .single();
 
@@ -284,14 +324,81 @@ export class LocationsService {
   }
 
   /**
-   * The sites under one municipality — what an admin sees after drilling the
-   * catalog down to a commune and resolving it to a row.
+   * The children of one node, or the countries when `parentId` is null.
+   *
+   * This is the whole of browsing. A country is simply depth 0 of the tree —
+   * the rows with no parent — so opening the picker and opening a région are
+   * the same request against the same index, and no surface has to know which
+   * country a user is heading for before they start.
+   *
+   * Paged rather than walked: a French département has hundreds of communes and
+   * a future country could have thousands, and the payload has to stay
+   * proportional to the screen rather than to the node.
+   */
+  async getChildren(
+    parentId: string | null,
+    options?: { page?: number },
+  ): Promise<LocationsPage<Location>> {
+    const page = options?.page ?? 0;
+    return readPage(page, LOCATION_BROWSE_PAGE_SIZE, (from, to) => {
+      const base = this.supabase
+        .from("locations")
+        .select(LOCATION_COLUMNS, { count: "exact" });
+      // `.is(column, null)` and `.eq(column, value)` are different filters, not
+      // one with a nullable argument: `eq` against null matches nothing.
+      const scoped =
+        parentId === null
+          ? base.is("parent_id", null)
+          : base.eq("parent_id", parentId);
+      return scoped.order("name").order("id").range(from, to);
+    });
+  }
+
+  /**
+   * Cross-country search, ranked and capped by the database.
+   *
+   * Goes through the API route rather than the injected client — the one read
+   * in this service that does. It is the only location read a signed-out
+   * visitor makes on every keystroke, so it is the only one where a shared
+   * cache in front of the database is worth a route: the route bounds the
+   * needle and the page size before anything reaches Postgres, and identical
+   * queries from different visitors are answered without a round trip. The
+   * injected client is deliberately unused here, as it is by the write methods.
+   */
+  async searchLocations(
+    query: string,
+    options?: { types?: readonly LocationType[]; limit?: number },
+  ): Promise<z.infer<typeof locationSearchResult>> {
+    const needle = query.trim();
+    // The same floor the database enforces, applied before a request exists at
+    // all. A caller under it is not an error, it is a search that has not
+    // started — so it answers like one.
+    if (needle.length < LOCATION_SEARCH_MIN_QUERY) {
+      return { total: 0, results: [] };
+    }
+
+    const params = new URLSearchParams({ q: needle });
+    if (options?.types?.length) params.set("types", options.types.join(","));
+    params.set("limit", String(options?.limit ?? LOCATION_SEARCH_LIMIT));
+
+    const response = await fetch(`/api/locations/search?${params.toString()}`);
+    if (!response.ok) {
+      throw new Error(
+        await readErrorMessage(response, "Failed to search locations"),
+      );
+    }
+    return parseJsonResponse(response, locationSearchResult);
+  }
+
+  /**
+   * The sites under one municipality — the venues an admin sees once they have
+   * drilled the tree down to a place.
    */
   async getSitesByParent(parentId: string): Promise<Location[]> {
     return walkPages("getSitesByParent", (from, to) =>
       this.supabase
         .from("locations")
-        .select("*", { count: "exact" })
+        .select(LOCATION_COLUMNS, { count: "exact" })
         .eq("type", "site")
         .eq("parent_id", parentId)
         .order("name")
@@ -301,23 +408,30 @@ export class LocationsService {
   }
 
   /**
-   * Fetch specific rows by id — coverage chips, a saved product's location,
-   * anything holding ids rather than codes.
+   * Fetch specific rows by id, each with its ancestor chain — a stored
+   * selection's display name and path, a gedu's saved coverage.
+   *
+   * The chain rides along because every surface that holds ids holds them to
+   * render them, and a name with no path is ambiguous the moment two countries
+   * are in play: France has several communes called Saint-Martin, and Finland
+   * and France both have a Nord-adjacent everything.
    *
    * Batched rather than paged: each request asks for at most
    * `KEY_LOOKUP_CHUNK_SIZE` keys and so can receive at most that many rows,
    * which is comfortably under `max_rows`. Missing ids are simply absent from
    * the result; this is a lookup, not an assertion.
    */
-  async getLocationsByIds(ids: readonly string[]): Promise<Location[]> {
+  async getLocationsByIds(
+    ids: readonly string[],
+  ): Promise<LocationWithChain[]> {
     const wanted = normalizeKeys(ids);
     if (wanted.length === 0) return [];
 
-    const rows: Location[] = [];
+    const rows: RawChainRow[] = [];
     for (const batch of chunkKeys(wanted)) {
       const { data, error } = await this.supabase
         .from("locations")
-        .select("*")
+        .select(`${LOCATION_COLUMNS}, ${SITE_CHAIN_EMBED}`)
         .in("id", batch)
         .order("name")
         .order("id");
@@ -325,51 +439,7 @@ export class LocationsService {
       if (error) throw error;
       rows.push(...data);
     }
-    return rows;
-  }
-
-  /**
-   * Resolve catalog entries — `(type, official code)` pairs — to the rows they
-   * name, so a UI that only ever handled catalog codes can write foreign keys.
-   *
-   * One request per distinct `type`, because the table's key is the triple
-   * `(country_code, type, external_code)` and France reuses each of its 18
-   * région codes as a département code: a code-only lookup would be ambiguous
-   * by construction. Codes go through `.in()` rather than a hand-built `or()`
-   * string — the query builder quotes them, an interpolated filter would not.
-   *
-   * Same batching as `getLocationsByIds`, and the same non-assertion: a code
-   * with no row is absent from the result rather than an error, so the caller
-   * decides whether that is a stale tick or a bug.
-   */
-  async resolveLocationsByCodes(
-    countryCode: string,
-    refs: readonly LocationCodeRef[],
-  ): Promise<Location[]> {
-    const byType = new Map<LocationType, string[]>();
-    for (const { type, external_code } of refs) {
-      byType.set(type, [...(byType.get(type) ?? []), external_code]);
-    }
-
-    const rows: Location[] = [];
-    // Sorted so the request sequence depends only on the input set, not on the
-    // order the caller happened to build it in.
-    for (const type of [...byType.keys()].sort()) {
-      for (const batch of chunkKeys(normalizeKeys(byType.get(type) ?? []))) {
-        const { data, error } = await this.supabase
-          .from("locations")
-          .select("*")
-          .eq("country_code", countryCode)
-          .eq("type", type)
-          .in("external_code", batch)
-          .order("name")
-          .order("id");
-
-        if (error) throw error;
-        rows.push(...data);
-      }
-    }
-    return rows;
+    return rows.map(flattenChain);
   }
 
   // `locations` writes go through the admin API. `authenticated` holds INSERT

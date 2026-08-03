@@ -1,259 +1,245 @@
 import { describe, it, expect } from "vitest";
 import {
-  codeRefsOf,
-  matchResolvedRows,
-  pendingTicksByCountry,
   sameTickKeys,
   sortedTicks,
-  splitCoverageRows,
+  ticksFromRows,
   toggleCoverageTick,
   type CoverageTick,
 } from "@/components/gedu/coverage-ticks";
-import { catalogRefKey, type CatalogPick } from "@/lib/locations/catalog";
-import type { Location } from "@/types";
+import type { LocationPick } from "@/components/locations/location-picker-panel";
+import type { LocationWithChain } from "@/services/locations";
 
 /**
- * Coverage is positive selection: one tick is one claim and one row, and no
- * tick ever implies another. These lock the three things that could silently
- * corrupt a gedu's coverage — a tick that cascades, a saved row the catalog
- * cannot show being dropped instead of surfaced, and a code with no row being
- * written off rather than refused.
+ * The coverage editor's pure half.
+ *
+ * What matters is the *semantics of a tick*: one tick is one independent claim
+ * and one row, nothing cascades in either direction, and an empty selection is
+ * a valid answer rather than an unsaved one. Everything a tick needs is now a
+ * row id, so the identity questions this file used to answer — which country's
+ * code, at which level, and does a row exist for it — have no equivalent.
  */
 
-function loc(over: Partial<Location> & Pick<Location, "id">): Location {
+function chainNode(id: string, name: string, type: LocationWithChain["type"]) {
   return {
-    name: over.id,
+    id,
+    name,
     name_i18n: null,
-    type: "municipality",
+    type,
     parent_id: null,
+    country_code: "FI",
+    external_code: null,
+  };
+}
+
+function savedRow(
+  id: string,
+  name: string,
+  type: LocationWithChain["type"],
+  ancestors: LocationWithChain["ancestors"] = [],
+): LocationWithChain {
+  return {
+    id,
+    name,
+    name_i18n: null,
+    type,
+    parent_id: ancestors[0]?.id ?? null,
     country_code: "FI",
     external_code: null,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
-    ...over,
+    ancestors,
   };
 }
 
-function pick(over: Partial<CatalogPick> = {}): CatalogPick {
+function pick(
+  id: string,
+  name: string,
+  type: LocationPick["location"]["type"],
+  ancestors: LocationPick["ancestors"] = [],
+): LocationPick {
   return {
-    country: "FR",
-    type: "district",
-    code: "59",
-    name: "Nord",
-    ancestors: ["Hauts-de-France"],
-    ...over,
+    location: { id, name, name_i18n: null, type, country_code: "FI" },
+    ancestors,
   };
 }
 
-describe("splitCoverageRows", () => {
-  const rows: Location[] = [
-    loc({
-      id: "helsinki",
-      name: "Helsinki",
-      name_i18n: { sv: "Helsingfors" },
-      country_code: "FI",
-      external_code: "091",
-    }),
-    loc({
-      id: "nord",
-      name: "Nord",
-      type: "district",
-      country_code: "FR",
-      external_code: "59",
-    }),
-    loc({ id: "sampola", name: "Sampola", type: "site" }),
-    loc({
-      id: "suomi",
-      name: "Suomi",
-      type: "country",
-      country_code: "FI",
-      external_code: "FI",
-    }),
-    loc({
-      id: "leeds",
-      name: "Leeds",
-      country_code: "GB",
-      external_code: "E08000035",
-    }),
-  ];
+describe("ticksFromRows", () => {
+  it("keys every saved row by its id, whatever kind of place it is", () => {
+    // The catalog era split saved rows into "tickable" and "legacy" chips a
+    // gedu could remove but never re-add — venues, country rows, anything from
+    // a country with no shipped catalog. Browsing the table itself removed the
+    // distinction: they are all rows, and all of them tick.
+    const ticks = ticksFromRows(
+      [
+        savedRow("m1", "Helsinki", "municipality"),
+        savedRow("s1", "Kirjasto", "site"),
+        savedRow("c1", "Finland", "country"),
+      ],
+      "en",
+    );
 
-  it("turns a coded row into a tick keyed the way the catalog is", () => {
-    const { ticks } = splitCoverageRows(rows, "fi");
-
-    expect([...ticks.keys()]).toEqual([
-      "FI:municipality:091",
-      "FR:district:59",
-    ]);
-    expect(ticks.get("FI:municipality:091")).toEqual({
-      ref: { country: "FI", type: "municipality", code: "091" },
-      label: "Helsinki",
-      detail: "",
-      locationId: "helsinki",
-    });
+    expect([...ticks.keys()].sort()).toEqual(["c1", "m1", "s1"]);
   });
 
-  it("labels a tick in the viewer's locale", () => {
-    const { ticks } = splitCoverageRows(rows, "sv");
-    expect(ticks.get("FI:municipality:091")?.label).toBe("Helsingfors");
+  it("renders each chip with the path above it, country dropped", () => {
+    const ticks = ticksFromRows(
+      [
+        savedRow("m1", "Helsinki", "municipality", [
+          chainNode("r1", "Uusimaa", "region"),
+          chainNode("c1", "Finland", "country"),
+        ]),
+      ],
+      "en",
+    );
+
+    // Root-first, and without the country: "Uusimaa", not "Finland · Uusimaa".
+    expect(ticks.get("m1")?.detail).toBe("Uusimaa");
   });
 
-  it("surfaces a site as a venue chip rather than dropping it", () => {
-    const { legacy } = splitCoverageRows(rows, "fi");
-    expect(legacy).toContainEqual({
-      id: "sampola",
-      label: "Sampola",
-      kind: "venue",
-    });
-  });
+  it("renders the name in the viewer's locale", () => {
+    const row = savedRow("m1", "Helsinki", "municipality");
+    const ticks = ticksFromRows(
+      [{ ...row, name_i18n: { sv: "Helsingfors" } }],
+      "sv",
+    );
 
-  it("keeps a country row and a catalog-less country as chips", () => {
-    // Neither has a catalog node to render a tick on: a country row is above
-    // the catalog's top level, and GB ships no catalog at all.
-    const { legacy, ticks } = splitCoverageRows(rows, "fi");
-    const ids = legacy.map((row) => row.id);
-
-    expect(ids).toContain("suomi");
-    expect(ids).toContain("leeds");
-    expect(ticks.has("FI:country:FI")).toBe(false);
+    expect(ticks.get("m1")?.label).toBe("Helsingfors");
   });
 });
 
 describe("toggleCoverageTick", () => {
-  it("ticks exactly the node clicked, and nothing under or over it", () => {
-    const region = pick({ type: "region", code: "32", name: "Hauts-de-France", ancestors: [] });
-    const after = toggleCoverageTick(new Map(), region);
+  it("adds a row that was not ticked", () => {
+    const next = toggleCoverageTick(
+      new Map(),
+      pick("m1", "Helsinki", "municipality"),
+      "en",
+    );
 
-    expect([...after.keys()]).toEqual(["FR:region:32"]);
-    // The département inside it is untouched — one claim is one row.
-    expect(after.has("FR:district:59")).toBe(false);
+    expect(next.get("m1")?.label).toBe("Helsinki");
   });
 
-  it("unticks only the node clicked", () => {
-    const region = pick({ type: "region", code: "32", name: "Hauts-de-France", ancestors: [] });
-    const district = pick();
+  it("removes a row that was", () => {
+    const first = toggleCoverageTick(
+      new Map(),
+      pick("m1", "Helsinki", "municipality"),
+      "en",
+    );
+    const second = toggleCoverageTick(
+      first,
+      pick("m1", "Helsinki", "municipality"),
+      "en",
+    );
 
-    let ticks = toggleCoverageTick(new Map(), region);
-    ticks = toggleCoverageTick(ticks, district);
-    ticks = toggleCoverageTick(ticks, region);
-
-    expect([...ticks.keys()]).toEqual(["FR:district:59"]);
+    expect(second.size).toBe(0);
   });
 
-  it("carries the catalog name and path so a chip renders before anything resolves", () => {
-    const ticks = toggleCoverageTick(new Map(), pick());
-    expect(ticks.get("FR:district:59")).toEqual({
-      ref: { country: "FR", type: "district", code: "59" },
-      label: "Nord",
-      detail: "Hauts-de-France",
-      locationId: null,
-    });
+  it("never mutates the map it was given", () => {
+    const before = new Map<string, CoverageTick>();
+    toggleCoverageTick(before, pick("m1", "Helsinki", "municipality"), "en");
+
+    expect(before.size).toBe(0);
   });
 
-  it("does not mutate the input map", () => {
-    const start = new Map<string, CoverageTick>();
-    toggleCoverageTick(start, pick());
-    expect(start.size).toBe(0);
-  });
-});
+  // The claim semantics, in the one place they can be asserted without a DOM:
+  // ticking a parent adds exactly one entry, and nothing about its descendants.
+  it("ticking a region claims the region and nothing else", () => {
+    const next = toggleCoverageTick(
+      new Map(),
+      pick("r1", "Uusimaa", "region"),
+      "en",
+    );
 
-describe("pendingTicksByCountry", () => {
-  it("groups only the ticks with no row id, by country", () => {
-    let ticks = splitCoverageRows(
-      [loc({ id: "helsinki", country_code: "FI", external_code: "091" })],
-      "fi",
-    ).ticks;
-    ticks = toggleCoverageTick(ticks, pick());
+    expect([...next.keys()]).toEqual(["r1"]);
+  });
+
+  it("unticking a municipality leaves an ancestor's claim alone", () => {
+    let ticks = toggleCoverageTick(
+      new Map(),
+      pick("r1", "Uusimaa", "region"),
+      "en",
+    );
     ticks = toggleCoverageTick(
       ticks,
-      pick({ country: "FI", type: "region", code: "01", name: "Uusimaa" }),
+      pick("m1", "Helsinki", "municipality"),
+      "en",
+    );
+    ticks = toggleCoverageTick(
+      ticks,
+      pick("m1", "Helsinki", "municipality"),
+      "en",
     );
 
-    const pending = pendingTicksByCountry(ticks);
-
-    expect([...pending.keys()].sort()).toEqual(["FI", "FR"]);
-    // The saved Helsinki tick already has its id and needs no resolution.
-    expect(pending.get("FI")?.map((t) => t.ref.code)).toEqual(["01"]);
-    expect(codeRefsOf(pending.get("FR") ?? [])).toEqual([
-      { type: "district", external_code: "59" },
-    ]);
+    expect([...ticks.keys()]).toEqual(["r1"]);
   });
-});
 
-describe("matchResolvedRows", () => {
-  const pending = [
-    toggleCoverageTick(new Map(), pick()).get("FR:district:59")!,
-    toggleCoverageTick(
+  it("carries the picked row's path onto the chip", () => {
+    const next = toggleCoverageTick(
       new Map(),
-      pick({ type: "municipality", code: "59350", name: "Lille" }),
-    ).get("FR:municipality:59350")!,
-  ];
+      pick("m1", "Helsinki", "municipality", [
+        { id: "r1", name: "Uusimaa", name_i18n: null, type: "region" },
+        { id: "c1", name: "Finland", name_i18n: null, type: "country" },
+      ]),
+      "en",
+    );
 
-  it("pairs a row back to its tick on the full key", () => {
-    const rows = [
-      loc({ id: "nord-row", type: "district", country_code: "FR", external_code: "59" }),
-      loc({
-        id: "lille-row",
-        type: "municipality",
-        country_code: "FR",
-        external_code: "59350",
-      }),
-    ];
-
-    expect(matchResolvedRows(pending, rows)).toEqual({
-      ids: ["nord-row", "lille-row"],
-      unresolved: [],
-    });
-  });
-
-  it("reports a code with no row instead of dropping the tick", () => {
-    // The realistic case: French communes are seeded at release, so a commune
-    // ticked before then resolves to nothing. Saving must refuse, not write a
-    // coverage set quietly missing it.
-    const rows = [
-      loc({ id: "nord-row", type: "district", country_code: "FR", external_code: "59" }),
-    ];
-
-    const result = matchResolvedRows(pending, rows);
-
-    expect(result.ids).toEqual(["nord-row"]);
-    expect(result.unresolved.map((t) => t.label)).toEqual(["Lille"]);
-  });
-
-  it("does not let a same-coded row of another level satisfy a tick", () => {
-    // "59" is a département code here; a région row carrying it is a different
-    // place, and France really does reuse every région code that way.
-    const rows = [
-      loc({ id: "region-row", type: "region", country_code: "FR", external_code: "59" }),
-    ];
-
-    expect(matchResolvedRows([pending[0]], rows).unresolved).toHaveLength(1);
+    expect(next.get("m1")?.detail).toBe("Uusimaa");
   });
 });
 
-describe("sortedTicks / sameTickKeys", () => {
-  it("orders by the label the user reads", () => {
-    let ticks = toggleCoverageTick(new Map(), pick({ code: "62", name: "Pas-de-Calais" }));
-    ticks = toggleCoverageTick(ticks, pick());
-    expect(sortedTicks(ticks, "fr").map((t) => t.label)).toEqual([
-      "Nord",
-      "Pas-de-Calais",
-    ]);
-  });
-
-  it("compares by key, so a re-tick of the same place is not a change", () => {
-    const saved = splitCoverageRows(
-      [loc({ id: "helsinki", country_code: "FI", external_code: "091" })],
-      "fi",
-    ).ticks;
-
-    const key = catalogRefKey({ country: "FI", type: "municipality", code: "091" });
-    const retouched = toggleCoverageTick(
-      toggleCoverageTick(saved, pick({ country: "FI", type: "municipality", code: "091", name: "Helsinki" })),
-      pick({ country: "FI", type: "municipality", code: "091", name: "Helsinki" }),
+describe("sortedTicks", () => {
+  it("orders by the label the user reads, not by id", () => {
+    let ticks = toggleCoverageTick(
+      new Map(),
+      pick("z", "Espoo", "municipality"),
+      "en",
+    );
+    ticks = toggleCoverageTick(ticks, pick("a", "Vantaa", "municipality"), "en");
+    ticks = toggleCoverageTick(
+      ticks,
+      pick("m", "Helsinki", "municipality"),
+      "en",
     );
 
-    expect(retouched.has(key)).toBe(true);
-    expect(sameTickKeys(saved, retouched)).toBe(true);
-    expect(sameTickKeys(saved, new Map())).toBe(false);
+    expect(sortedTicks(ticks, "en").map((tick) => tick.label)).toEqual([
+      "Espoo",
+      "Helsinki",
+      "Vantaa",
+    ]);
+  });
+});
+
+describe("sameTickKeys", () => {
+  it("compares the places claimed, not the order they were claimed in", () => {
+    let a = toggleCoverageTick(
+      new Map(),
+      pick("m1", "Helsinki", "municipality"),
+      "en",
+    );
+    a = toggleCoverageTick(a, pick("m2", "Espoo", "municipality"), "en");
+
+    let b = toggleCoverageTick(
+      new Map(),
+      pick("m2", "Espoo", "municipality"),
+      "en",
+    );
+    b = toggleCoverageTick(b, pick("m1", "Helsinki", "municipality"), "en");
+
+    expect(sameTickKeys(a, b)).toBe(true);
+  });
+
+  it("sees a dropped claim", () => {
+    const a = toggleCoverageTick(
+      new Map(),
+      pick("m1", "Helsinki", "municipality"),
+      "en",
+    );
+
+    expect(sameTickKeys(a, new Map())).toBe(false);
+  });
+
+  // Two empty selections are equal, which is what keeps the save button
+  // disabled for a gedu who is deliberately remote-only.
+  it("treats two empty selections as the same", () => {
+    expect(sameTickKeys(new Map(), new Map())).toBe(true);
   });
 });

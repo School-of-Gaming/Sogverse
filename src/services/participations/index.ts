@@ -17,6 +17,7 @@ export {
   useMyUpcomingSessions,
   useMyWaitlist,
   useParticipationCounts,
+  useCheckoutConfirmation,
   useCreateParticipation,
   useJoinWaitlist,
   useLeaveWaitlist,

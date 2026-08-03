@@ -24,8 +24,6 @@ export interface HierarchyLevel {
 export interface CountryConfig {
   code: string;
   name: string;
-  /** Country name in supported languages (falls back to `name` for unlisted locales). */
-  nameI18n?: Partial<Record<SupportedLocale, string>>;
   hierarchy: HierarchyLevel[];
 }
 
@@ -42,7 +40,6 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
   {
     code: "FI",
     name: "Finland",
-    nameI18n: { fi: "Suomi" },
     hierarchy: [
       { type: "region", label: "Region", pluralLabel: "Regions", i18n: { fi: { label: "Maakunta", pluralLabel: "Maakunnat" } } },
       { type: "municipality", label: "Municipality", pluralLabel: "Municipalities", i18n: { fi: { label: "Kunta", pluralLabel: "Kunnat" } } },
@@ -52,7 +49,6 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
   {
     code: "FR",
     name: "France",
-    nameI18n: { fr: "France" },
     // France uses the `district` level Finland skips: région → département →
     // commune. `fr` is a supported UI locale, so every level carries its French
     // label pair per the rule in src/services/locations/CLAUDE.md.
@@ -86,7 +82,6 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
   {
     code: "SE",
     name: "Sweden",
-    nameI18n: { sv: "Sverige" },
     hierarchy: [
       { type: "region", label: "County", pluralLabel: "Counties", i18n: { sv: { label: "Län", pluralLabel: "Län" } } },
       { type: "municipality", label: "Municipality", pluralLabel: "Municipalities", i18n: { sv: { label: "Kommun", pluralLabel: "Kommuner" } } },
@@ -151,11 +146,3 @@ export function getChildLevel(
   return config.hierarchy[idx + 1];
 }
 
-/** Get the country display name, respecting locale. */
-export function getCountryName(config: CountryConfig, locale?: string): string {
-  if (config.nameI18n && isSupportedLocale(locale)) {
-    const localized = config.nameI18n[locale];
-    if (localized) return localized;
-  }
-  return config.name;
-}

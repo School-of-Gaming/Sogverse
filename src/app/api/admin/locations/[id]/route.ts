@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { defineRoute } from "@/lib/api/define-route";
-import { updateLocationBody } from "@/services/locations/locations.contracts";
+import {
+  LOCATION_COLUMNS,
+  updateLocationBody,
+} from "@/services/locations/locations.contracts";
 
 /**
  * PATCH /api/admin/locations/[id]
@@ -29,7 +32,9 @@ export const PATCH = defineRoute({
       .from("locations")
       .update(body)
       .eq("id", params.id)
-      .select()
+      // See ../create/route.ts — named columns so the answer matches
+      // `locationRow`, which drops the generated search fold.
+      .select(LOCATION_COLUMNS)
       .single();
 
     if (error) throw error;

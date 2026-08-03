@@ -92,15 +92,36 @@ export type JoinWaitlistResponse = z.infer<typeof joinWaitlistResponse>;
 
 /**
  * `create_participation` RPC result (Json in codegen; structure from
- * supabase/schema.sql). The id/until fields stay optional here because the
- * route turns their absence into a controlled 500 per kind — the schema
- * checks structure, the route checks the per-kind invariants.
+ * supabase/schema.sql). `validated` is the paid outcome: every rule passed, but
+ * no row was written — a paid participation is created at payment confirmation,
+ * so an abandoned checkout leaves nothing behind. The no-charge shapes still
+ * come back with a row. `participation_id` stays optional because the route
+ * turns its absence into a controlled 500 per kind — the schema checks
+ * structure, the route checks the per-kind invariants.
  */
 export const createParticipationRpcResult = z.object({
-  kind: z.enum(["free_active", "external_active", "reserving", "full"]),
+  kind: z.enum(["free_active", "external_active", "validated", "full"]),
   participation_id: z.string().optional(),
-  reserved_until: z.string().optional(),
 });
+
+/**
+ * `confirm_paid_participation` RPC result (Json in codegen; structure from
+ * supabase/schema.sql). Called from the Stripe webhook once payment lands:
+ * `confirmed` carries the row it just created, `duplicate_payment` names the row
+ * that was already there — the parent paid twice for one (product, gamer), and
+ * the route records the charge and cancels a live subscription rather than
+ * writing a second seat.
+ */
+export const confirmPaidParticipationRpcResult = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("confirmed"),
+    participation_id: z.string(),
+  }),
+  z.object({
+    kind: z.literal("duplicate_payment"),
+    existing_participation_id: z.string(),
+  }),
+]);
 
 /** `join_waitlist` RPC result (Json in codegen; structure from schema.sql). */
 export const joinWaitlistRpcResult = z.object({

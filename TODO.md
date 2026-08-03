@@ -6,7 +6,7 @@
 
 - [ ] **`DashboardSectionPill` hardcodes the header offset in three places, against the layout doc's own rule.** `sticky top-20` (`src/components/layout/dashboard-section-pill.tsx`), the `REFERENCE_OFFSET_PX = 144` scroll-spy constant, and every consuming section's `scroll-mt-32` all encode header-height-derived numbers as literals; the component's own comment admits the coupling ("keep these in sync"). The home pill and the product-detail sticky rail derive from `--header-height` correctly — converge this one on the same variable (`top-[var(--header-height)+...]`-style arbitrary values) so a header resize can't strand it.
 
-- [ ] **Sweep pre-existing loading skeletons behind the 250ms reveal gate.** Root CLAUDE.md now has the rule (skeletons invisible for their first ~250ms via `useRevealAfter`, structured ghosts over solid blocks) and every skeleton born on the French-locale branch follows it — but ~14 older files still show instant solid-pulse placeholders (auth pages, admin users/product pages, parent gamer page, ProfileTiles, groups panel, gamer picker…). Each is a mechanical two-line change; batch them in one pass and eyeball each surface with a warm cache.
+- [ ] **Re-decide the ~14 pre-existing loading skeletons against the loading rule.** The ~250ms reveal gate is gone (root CLAUDE.md now picks the affordance from what the call *is*, not from a timer), and `useRevealAfter` went with it. Roughly fourteen files still paint an instant solid-pulse placeholder over reads nobody has classified: auth pages, admin users/product pages, parent gamer page, ProfileTiles, groups panel, gamer picker. Each needs the same one question asked — cached, small-and-indexed, or genuinely slow — and most will end up rendering nothing in a correctly-sized box, as the locations picker now does. This is a judgement pass, not a mechanical one; do it with the queries open, not the components.
 
 - [ ] **Per-participant volume slider — wiring removed; would be desktop-only if revived.** The discrete-zone redesign dropped the per-participant volume slider; the `element.volume`/`base` multiplier plumbing was then removed entirely when audio routing switched to a binary `element.muted` (zone in/out is the only control; see `src/lib/voice/audio-routing.ts`). **A volume slider can't work on iPhone:** iOS Safari ignores `element.volume` *and* the Web Audio `GainNode` path for WebRTC (volume is hardware-buttons-only), so a true per-participant volume would be desktop/iPad-only — reconsider whether it's worth a platform-split control before reviving it. To restore: bring back a per-remote multiplier (`isAudible` → a volume number on non-iOS), a `setParticipantVolume` action, and the slider; gate it off mobile.
 
@@ -34,7 +34,8 @@
     - **(B) Root fix — move to `vite@8`:** this dissolves the conflict at the source (analytics' `vite@^8` peer is then satisfied). It's a coordinated bump: `@vitejs/plugin-react@6` *requires* `vite@8`, and `vitest@4` accepts `vite 6/7/8`, so it's **`vitest 3→4` + `plugin-react 5→6` + `vite 7→8` together**. Bonus: `vitest@4` also unblocks `vitest-mock-extended@4`. **Caution:** we already tried and rolled this exact combo back once — commit `b35234e` (2026-04-23) "Downgrade vitest 4 → 3 and plugin-react 6 → 5 to end lockfile drift" — so budget time to resolve whatever that drift was.
 - [ ] Add CHECK constraints to `profiles.locale` (`IN ('en', 'fi', 'sv', 'tlh')`) and `profiles.currency` (`IN ('EUR', 'SEK', 'USD', 'GBP')`) — both are plain text columns with app-level validation only
 - [ ] **Enforce required `last_name` on the parent register API and `profiles.last_name` column.** `RegisterForm` now marks last name `required` (UX-only), but `supabase.auth.signUp` accepts any `options.data` payload and the `profiles.last_name` column is nullable — a scripted/API caller can still create a parent account with no last name. Tighten the server side to match: add a NOT NULL + length check on `profiles.last_name` (after backfilling any existing nulls — check whether the trigger that creates the profile row from `auth.users.raw_user_meta_data` needs adjusting too), and validate the field in whatever server-side path handles parent signup.
-- [ ] **No rate-limiting / bot protection on the public gedu endpoints — accepted for now, don't let it get lost.** Self-registration added two unauthenticated surfaces: `POST /api/gedu/register` (creates an auth user + profile + `gedu_profiles` row per call — a bulk account-creation / resource-exhaustion vector) and `GET /api/minecraft/verify` (was role-gated, now public because `/register-gedu` calls it before any account exists — an open, unauthenticated proxy to Mojang's username→UUID API; hammering it can exhaust Mojang's per-IP rate limit and break Minecraft verification for *all* users). Both are read/write-light and the registration shape mirrors the existing public parent `/register`, so the risk is accepted today. Mitigations when revisited: an IP rate-limit (and/or a CAPTCHA on registration) in front of both routes; a short-TTL cache on the Mojang lookup so repeated probes don't fan out to Mojang. Unverified gedus can't reach any child data (access keys off `gedu_group_assignments`, which the verification gate blocks), so the registration spam is a resource/cleanup concern, not a data-exposure one.
+- [ ] **No rate-limiting / bot protection on the public gedu endpoints — accepted for now, don't let it get lost.** Self-registration added two unauthenticated surfaces: `POST /api/gedu/register` (creates an auth user + profile + `gedu_profiles` row per call — a bulk account-creation / resource-exhaustion vector) and `GET /api/minecraft/verify` (was role-gated, now public because `/register-gedu` calls it before any account exists — an open, unauthenticated proxy to Mojang's username→UUID API; hammering it can exhaust Mojang's per-IP rate limit and break Minecraft verification for *all* users). Both are read/write-light and the registration shape mirrors the existing public parent `/register`, so the risk is accepted today. Mitigations when revisited: an IP rate-limit (and/or a CAPTCHA on registration) in front of both routes; a short-TTL cache on the Mojang lookup so repeated probes don't fan out to Mojang.
+  - **`GET /api/roblox/verify` is now a third such surface, and it is the sharpest of them — treat it first when this is revisited.** It is the same shape as the Minecraft one (public because a username is checked before any account exists) but it is worse in three specific ways. One inbound request fans out to **two** upstream calls — username→id, then id→avatar — so it amplifies 2×. The avatar hop is rate-limited to **60 requests per minute per IP**, and a serverless fleet shares its egress IPs, so our whole deployment draws on one bucket that a modest script can drain; the route deliberately keeps the browser off that hop, which means we absorb all of it. And there is no cache, so probing one username repeatedly fans out every time. The consequence of exhausting it is degraded rather than broken — the avatar resolver returns `null` and verification still succeeds without a picture — but a short-TTL cache keyed on the username buys more here than anywhere else on this list. Unverified gedus can't reach any child data (access keys off `gedu_group_assignments`, which the verification gate blocks), so the registration spam is a resource/cleanup concern, not a data-exposure one.
 - [ ] **Stop logging expected conditions at `error` level — they drown out real errors in Vercel's `level:error` view.** A two-week sweep of prod/staging `level:error` logs (2026-06-30) was 20-for-20 benign, all routine conditions emitted as errors. Signal-to-noise only; nothing here is a reliability problem. The offenders:
   - **Daily.co "room not found" 404s.** `dailyFetch` (`src/lib/daily.ts:51`) does a blanket `console.error` on *any* non-OK response, before throwing — even when the caller expects the 404 and handles it. `getDailyRoom` (`daily.ts:109`) catches the throw and returns null, so the 404 is fully absorbed, but the error line already fired. This fires for `/api/voice/instant/exists` (the existence check itself — returns 404 by design) and for `/api/voice/token` (the GET half of `getOrCreateDailyRoom`'s get-or-create — room doesn't exist yet, gets created, route returns 200). Fix: don't `console.error` inside `dailyFetch` for statuses the caller branches on (esp. 404); let the caller decide, or pass a flag to suppress.
   - **`AuthApiError: Invalid Refresh Token: Refresh Token Not Found`** from `serverless-middleware` (the proxy) on `/`, `/reset-password`, `/select-profile`. Routine `@supabase/ssr` dual-refresh: a visitor arrives with a stale/expired refresh-token cookie, the server refresh fails, they're treated as logged-out (responses are 200/307). Also its sibling `Too many concurrent token refresh requests` (409 conflict) — the browser/middleware refresh race. Drop both to `warn`/`info` where the proxy catches them.
@@ -58,7 +59,6 @@
   **Why this matters beyond token cost:** the bigger win is *relevance routing* — when I'm working on tokens code, the token rules load alongside the file and are the first thing I see; when I'm not, they're not in my way. Today every rule is mixed together at root and competes for attention. Estimated drop in always-on context: ~1.5–2k tokens.
 
   **How to verify after splitting:** open a file in each target subtree, check that `/context` shows the nested CLAUDE.md as loaded and the root file is correspondingly leaner. Confirm a sample rule (e.g., the `apply_group_changes` RPC rule) no longer appears in a fresh-session context dump until a `src/services/groups/*` file is touched.
-- [ ] **Cancel the live Stripe subscription when a subscription Checkout is abandoned (orphan / duplicate-payment).** In `src/app/api/webhooks/stripe/products/route.ts` `handleCheckoutCompleted`, by the time `checkout.session.completed` fires for a subscription the Stripe sub is already live and recurring. Two branches bail out without recording a `family_subscriptions` row *and without cancelling the sub*: `confirmJson.kind === "orphan"` (reservation row missing/in an unexpected status — admin interference) and `kind === "duplicate_payment"` (parent paid two Stripe sessions for the same product×gamer). Result: Stripe keeps charging the parent every month for a club with no participation, `handleInvoicePaid` silently drops every renewal (no `famSub` row to match), and `customer.subscription.deleted` finds no row to tear down. Pre-existing, but the per-participation model widened the exposure — every subscription signup is now its own standalone recurring sub (the old shared-family-sub model only created a fresh Checkout sub for the *first* club in a currency; later clubs were inline `subscriptions.update` adds that never hit this path). **Fix:** in both branches, when `isSubscription && typeof session.subscription === "string"`, call `stripe.subscriptions.cancel(session.subscription)` before returning (keep the duplicate-payment `console.error` so admin still gets alerted). Rare in practice, but it's a silent recurring overcharge of a real customer — a refund of one invoice doesn't stop it, the sub itself has to be cancelled.
 - [ ] **Whitelist the Stripe status before writing `family_subscriptions.status`, and stop swallowing that update's error.** In `src/app/api/webhooks/stripe/products/route.ts`, the `customer.subscription.updated` handler writes Stripe's `status` through verbatim (only special-casing `active` + `cancel_at_period_end` → `canceling`), but the column's CHECK accepts just `active | past_due | cancelled | incomplete | canceling`. Stripe's `trialing`, `unpaid`, `paused` and `incomplete_expired` all violate it — and unlike the sibling writes in the same file, this update never destructures/checks `error`, so a CHECK violation silently no-ops, the route returns 200, Stripe never retries, and the row keeps a stale status forever. **Not exposed today (verified 2026-07-27 against the live account):** the failed-payment end-action is *cancel*, so dunning exhaustion fires `customer.subscription.deleted` (3 subs carry cancellation reason `payment_failed`) and there are **zero** `unpaid` subs. It goes live the moment that Dashboard setting is flipped to "mark as unpaid", or a sub is paused — and the damage is worse than a stale string: freeing a seat runs only off `subscription.deleted`, so a churned child would keep an `active` participation indefinitely while the row still read `past_due`. Benign version of the same bug already reachable: for a `trialing` sub (migrated subs carry real trials), an update event during the trial fails the CHECK, so `current_period_end` silently stops tracking. **Fix:** map the Stripe status onto the allowed set before the update (`trialing` → `active`, `unpaid`/`incomplete_expired` → `cancelled`, decide `paused` deliberately), and check the returned error and throw, like the other writes do. Pairs with the ops constraint in `docs/stripe.md`.
 - [ ] **Harden the Stripe renewal webhook against an API-version change (code fix), and eventually modernize the account version deliberately.** The Stripe account default API version is `2019-12-03` — inherited from the pre-Sogverse School-of-Gaming account (it still carries the old Chargebee, WooCommerce, and Klaviyo webhook endpoints). Stripe keeps old versions working indefinitely, so nothing is broken by being old; the hazard is a *future* upgrade.
   - **Two "silent bombs" — both in `src/app/api/webhooks/stripe/products/route.ts`, both fail the same way (no error, just missing rows). Field shapes verified against Stripe's changelog 2026-07-01.**
@@ -100,13 +100,12 @@ line, so the helper returns null for them.
   `session-calendar-view.tsx` + `compute-product-sessions.ts` and their message
   keys for good.
 
-### Locations: catalog for browsing, seeded rows for the query engine
+### Locations: one seeded table, browsed and searched on the server
 
 Both countries are seeded complete and admins never hand-type a place name: everything above a `site` is seed data, and a site is the only row the app creates (see `src/services/locations/CLAUDE.md`). Follow-ups:
 
 - [ ] **`useUpdateLocation` + the `PATCH /api/admin/locations/[id]` route have no caller.** Nothing in the UI renames a location — the naming dialog is only ever opened in "add a site" mode — so the route, the hook and the dialog's edit mode (`src/services/locations/`, `src/components/admin/location-form-dialog.tsx`) are dead. Remove them, or repurpose if we add a site-rename affordance to the venue picker.
 - [ ] **Consider enforcing site-only creation server-side.** `POST /api/admin/locations/create` is the only route that inserts a location, and `createLocationBody` (`src/services/locations/locations.contracts.ts`) still accepts any `location_type` — the site-only restriction is UI-only, so a scripted admin call could still create a region or a municipality by hand and put an unofficial row in seeded reference data. Tighten the contract to `type === 'site'` if we want the invariant enforced at the API.
-- [ ] **Parent home location (future feature) — persistence decision made, not built.** When parents get to provide their location, the picker browses the public static catalogs (works for any commune, no admin involvement, no new access control). Persist the choice as a catalog reference (`country_code` + `external_code`) on the profile — a parent's home location is profile data, not shared reference data, so it needs no `locations` row of its own. The full seed means a real FK is *possible* if some table must one day reference it; that is a schema decision to take then, not now.
 - [ ] **Dead i18n keys in `admin.locations.*`.** `title`, `description`, `searchPlaceholder`, `noLocationsYet` and `noLocationsMatchSearch` have no consumer; the naming dialog still uses the rest of the namespace. `noLocationsYet` is also wrong on its face ("Add a country to get started" — you cannot). Prune them across all five `messages/*.json` when convenient.
 
 ### Unbounded list reads silently truncate at PostgREST's `max_rows`
@@ -123,57 +122,6 @@ Now unlocked by the one-Stripe-sub-per-participation model (each consumer-club s
 
 - [ ] Decide the rule for **threshold-start** clubs (no fixed `start_date`): simplest is to charge immediately as today (there's no date to anchor to); deferring those would need a job that anchors the sub when the product flips to `running`. See the AskUserQuestion discussion that scoped this.
 - [ ] Parent-facing checkout copy must make "you won't be charged until {date}" explicit.
-
-### `count_seats_taken` and the seat-count rollup disagree over expired reservations
-
-- [ ] `count_seats_taken` counts `status IN ('active','reserving')` with **no
-      `reserved_until` filter**, while `refresh_product_seat_counts` — the rollup the
-      parent-facing counter reads — filters `reserved_until > NOW()`. So an expired
-      reservation is invisible on the page but still occupies a seat in the RPC that
-      gates signup: the product advertises a free seat and checkout answers "full",
-      permanently, with no way for a parent to tell why.
-
-Independent of the reservation-flow rewrite below and worth fixing either way — it is
-what turns any stranded reserving row from a temporary blemish into a destroyed seat. The
-fix is a one-line predicate change in the RPC (`AND (status = 'active' OR reserved_until
-> NOW())`), plus a db test that an expired reservation stops counting. Only bites capped
-products, so it is currently latent — see the entry below for why nothing is capped today.
-
-### Simplify the reserve → confirm checkout flow (it pays for a cap nothing uses)
-
-A paid signup currently takes a seat in two stages: `create_participation` inserts a
-`status='reserving'` row, the Checkout Session carries that row's id in its metadata, and
-Stripe's `checkout.session.completed` webhook flips it to `active` (or
-`checkout.session.expired` deletes it). The reserving stage exists to stop a popular
-product overselling while parents sit on the Stripe page.
-
-**The premise no longer holds.** Seat caps are locked off in the admin form for every
-product type except municipality clubs (`formLocksFor` in
-`src/components/admin/products/form-locks.ts` — "every product launches uncapped"), and
-municipality clubs are free/external-contract, so they never reach Stripe Checkout at
-all. In prod today every consumer club is uncapped, there are no municipality clubs, and
-the only capped products are a handful of paid camps that pre-date the lock and have
-already finished. So the overselling this protects against cannot currently happen on
-any sellable product.
-
-**What it costs while dormant:**
-- Every failure between reserving and creating the Checkout Session must remember to
-  release the seat by hand. Miss one and the row is stranded — no Session exists yet, so
-  the expiry webhook never fires.
-- A stranded row holds its seat permanently, because of the seat-count bug below.
-- Two writes and a webhook round-trip on every paid signup, plus a reservation lifetime
-  to tune.
-
-**Direction, if picked up:** create the participation when payment is confirmed
-(webhook) rather than reserving it up front, so an abandoned or failed checkout leaves
-nothing behind. Note the reserving row is not *only* a capacity hold — it is also the
-handle joining the Stripe session back to a participation, so removing it means deciding
-where that link lives instead (session metadata already carries gamer/product/customer).
-
-**Deliberately deferred:** the preference is to reintroduce this complexity when a
-product genuinely needs a seat cap, rather than carry it for a case that does not exist
-yet. Recorded so the reasoning survives — and so whoever re-enables seat caps knows this
-flow is what makes them safe.
 
 ### Localize the subscription line-item name on the Stripe Checkout page
 
@@ -215,16 +163,18 @@ The seam is `SUPPORTED_CURRENCIES` in `src/lib/constants/currency.ts`. To turn c
 
 ### E2E Tests with Local Supabase
 
-Current E2E tests only cover unauthenticated flows (page renders, redirects). Authenticated tests (admin-only pages, role-based routing, CRUD operations) need real Supabase Auth + Postgres but shouldn't depend on the remote instance.
+**There is no E2E suite right now.** The old one was deleted in August 2026: it asserted on marketing copy and unauthenticated redirects, so it churned on every copy edit while catching nothing. What survived is a build + smoke job — it builds the app, serves the production build, and asserts security headers and the per-request CSP over plain HTTP with no browser involved. This section is the plan for adding a *meaningful* browser suite back, from scratch; it is not a hardening of anything that exists.
+
+The coverage worth having is the authenticated half — admin-only pages, role-based routing, CRUD flows. That needs real Supabase Auth + Postgres, and shouldn't depend on the remote instance.
 
 **Approach:** Run `supabase start` in CI to spin up a local Supabase stack (Postgres, Auth, Storage) in Docker. Existing migration files are applied automatically, giving an identical schema. Test accounts are created via `supabase/seed.sql`.
 
 Setup tasks:
 - [ ] Add `supabase/seed.sql` with test accounts (admin, customer, gedu, gamer) using known passwords
 - [ ] Add `.env.test.local` with local Supabase URL/keys (`supabase start` prints these)
-- [ ] Create Playwright auth setup project that logs in via the UI and saves `storageState` per role
-- [ ] Update `playwright.config.ts` with auth setup project and role-specific test projects
-- [ ] Add GitHub Actions step: `supabase start` → `npm run dev` (with test env) → `npx playwright test`
+- [ ] Add a `tests/e2e/` directory and a Playwright project for it — the smoke config is deliberately browserless (one project, no device emulation, no retries, no browser install in CI), so browser tests need their own project rather than being folded into that one
+- [ ] Create a Playwright auth setup project that logs in via the UI and saves `storageState` per role
+- [ ] Add a CI job (separate from build + smoke, which must stay cheap): `supabase start` → build/serve with test env → run the browser projects, installing only the engines that job actually uses
 
 Test cases to add:
 - [ ] Admin can view `/admin/products` (sees "Products" heading)
@@ -242,7 +192,7 @@ Test cases to add:
 Several files define inline `selectClassName` strings that duplicate `<Input>` styling for native `<select>` elements. Extract a `components/ui/select.tsx` wrapper and replace the inline patterns.
 
 - [ ] Create `src/components/ui/select.tsx` wrapping a native `<select>` with Input-matching styles
-- [ ] Replace inline select styling wherever a local `selectClassName` string duplicates `<Input>`'s classes — today the catalog dialog's country picker and the add-gamer dialog, plus any other occurrences
+- [ ] Replace inline select styling wherever a local `selectClassName` string duplicates `<Input>`'s classes — today the add-gamer dialog, plus any other occurrences
 
 ### Optimize Product Images via `next/image`
 
