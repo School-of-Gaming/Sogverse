@@ -919,6 +919,7 @@
       "emailPlaceholder": "SoH@example.com",
       "passwordPlaceholder": "HoS mu’mey yIchenmoH",
       "confirmPasswordPlaceholder": "mu’mey yIchel",
+      "location": "Daq",
       "creatingAccount": "account vIchenmoH...",
       "accountExists": "QIn’vamDaq account tu’lu’",
       "alreadyHaveAccount": "account DaHutlhpa’? <link>bI’el</link>"
@@ -1606,6 +1607,11 @@
       "clearSearch": "nejmey yIteq",
       "tickedCount": "{count, plural, =0 {pagh wIvlu’} one {# Daq wIvlu’} other {# Daqmey wIvlu’}}",
       "done": "pItlh"
+    },
+    "home": {
+      "choose": "DaqlIj yIchel",
+      "dialogTitle": "nuqDaq bIDab?",
+      "dialogDescription": "tetlh yIlaD ghap pong yIlo’."
     }
   },
   "minecraft": {
@@ -1757,7 +1763,8 @@
     "minecraftCleared": "Minecraft lo’wI’ pong teqlu’.",
     "failedToUpdateMinecraft": "Minecraft lo’wI’ pong choH Dabe’lu’.",
     "saveMinecraft": "Minecraft lo’wI’ pong yISaH",
-    "spokenLanguages": "Holmey jatlhlu’"
+    "spokenLanguages": "Holmey jatlhlu’",
+    "location": "Daq"
   },
   "voice": {
     "participants": "toy’wI’pu’",

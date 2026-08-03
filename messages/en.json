@@ -874,6 +874,7 @@
       "emailPlaceholder": "you@example.com",
       "passwordPlaceholder": "Create a strong password",
       "confirmPasswordPlaceholder": "Confirm your password",
+      "location": "Location",
       "creatingAccount": "Creating account...",
       "accountExists": "An account with this email already exists",
       "alreadyHaveAccount": "Already have an account? <link>Sign in</link>"
@@ -1649,6 +1650,11 @@
       "clearSearch": "Clear search",
       "tickedCount": "{count, plural, =0 {Nothing ticked} one {# area ticked} other {# areas ticked}}",
       "done": "Done"
+    },
+    "home": {
+      "choose": "Add your location",
+      "dialogTitle": "Where are you based?",
+      "dialogDescription": "Browse the list, or search by name."
     }
   },
   "minecraft": {
@@ -1800,7 +1806,8 @@
     "minecraftCleared": "Minecraft username cleared.",
     "failedToUpdateMinecraft": "Failed to update Minecraft username.",
     "saveMinecraft": "Save Minecraft Username",
-    "spokenLanguages": "Languages spoken"
+    "spokenLanguages": "Languages spoken",
+    "location": "Location"
   },
   "voice": {
     "participants": "Participants",

@@ -41,13 +41,15 @@ const registerGeduSchema = z.object({
 
 export function RegisterGeduForm({
   initialSpokenLanguages,
+  redirect,
 }: {
   initialSpokenLanguages: SpokenLanguage[];
+  redirect: string | null;
 }) {
   const t = useTranslations("auth");
   const c = useTranslations("common");
   const locale = useLocale();
-  const { navigateAfterAuth, status } = useAuthRedirect();
+  const { navigateAfterAuth, status } = useAuthRedirect(redirect);
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
 
   const [firstName, setFirstName] = useState("");

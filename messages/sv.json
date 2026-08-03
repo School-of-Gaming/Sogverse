@@ -874,6 +874,7 @@
       "emailPlaceholder": "du@example.com",
       "passwordPlaceholder": "Skapa ett starkt lösenord",
       "confirmPasswordPlaceholder": "Bekräfta ditt lösenord",
+      "location": "Plats",
       "creatingAccount": "Skapar konto...",
       "accountExists": "Ett konto med denna e-postadress finns redan",
       "alreadyHaveAccount": "Har du redan ett konto? <link>Logga in</link>"
@@ -1561,6 +1562,11 @@
       "clearSearch": "Rensa sökning",
       "tickedCount": "{count, plural, =0 {Inget ikryssat} one {# område ikryssat} other {# områden ikryssade}}",
       "done": "Klar"
+    },
+    "home": {
+      "choose": "Lägg till din plats",
+      "dialogTitle": "Var bor du?",
+      "dialogDescription": "Bläddra i listan eller sök på namn."
     }
   },
   "minecraft": {
@@ -1712,7 +1718,8 @@
     "minecraftCleared": "Minecraft-användarnamn borttaget.",
     "failedToUpdateMinecraft": "Kunde inte uppdatera Minecraft-användarnamn.",
     "saveMinecraft": "Spara Minecraft-användarnamn",
-    "spokenLanguages": "Talade språk"
+    "spokenLanguages": "Talade språk",
+    "location": "Plats"
   },
   "voice": {
     "participants": "Deltagare",

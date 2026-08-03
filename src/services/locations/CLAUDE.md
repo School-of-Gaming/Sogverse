@@ -346,6 +346,28 @@ makes the claim; a separate affordance opens the row. Someone looking for Helsin
 **Rule: a `site` row is a leaf.** Nothing is ever parented under one, so the panel treats
 that structurally rather than asking.
 
+**Rule: drilling into a row sets the breadcrumb to that row's ancestors, reversed, plus
+the row — never appends to wherever the breadcrumb already was.** Appending is right only
+while browsing, where the walk *is* the ancestry, and silently wrong from a search hit,
+which was never walked to: it leaves the breadcrumb claiming a Helsinki school sits
+directly beneath the root. Rebuilding is correct both ways and reduces to appending while
+browsing, so there is no second code path and no flag saying which kind of row this was.
+
+### The parent's own location
+
+An optional single row on a parent's profile — asked for on the registration form, edited
+from settings — picked at the **municipality** level, the one directly above a venue.
+
+**Rule: a control that picks a place is one control — the box showing the current value is
+itself the trigger — and its label is the generic "location".** Splitting the value and a
+"choose" button across two rows makes one control look like two and forces the button
+caption to name the level being picked. Every such caption is wrong for somebody: a
+viewer's *locale* says which language to render, not which country they live in or what
+that country calls this level, so a Finnish-locale parent picking a French commune gets
+told to pick a kunta. Country-specific vocabulary belongs inside the dialog, below the
+country they chose — this is the locale-vs-spoken-language distinction in the root
+`CLAUDE.md`, in a third dimension.
+
 ### The product picker
 
 In-person products pick a **site**; online municipality clubs pick a **Finnish

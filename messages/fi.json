@@ -874,6 +874,7 @@
       "emailPlaceholder": "sinä@example.com",
       "passwordPlaceholder": "Luo vahva salasana",
       "confirmPasswordPlaceholder": "Vahvista salasanasi",
+      "location": "Sijainti",
       "creatingAccount": "Luodaan tiliä...",
       "accountExists": "Tällä sähköpostiosoitteella on jo tili",
       "alreadyHaveAccount": "Onko sinulla jo tili? <link>Kirjaudu sisään</link>"
@@ -1561,6 +1562,11 @@
       "clearSearch": "Tyhjennä haku",
       "tickedCount": "{count, plural, =0 {Ei merkintöjä} one {# alue merkitty} other {# aluetta merkitty}}",
       "done": "Valmis"
+    },
+    "home": {
+      "choose": "Lisää sijaintisi",
+      "dialogTitle": "Missä asut?",
+      "dialogDescription": "Selaa luetteloa tai hae nimellä."
     }
   },
   "minecraft": {
@@ -1712,7 +1718,8 @@
     "minecraftCleared": "Minecraft-käyttäjänimi poistettu.",
     "failedToUpdateMinecraft": "Minecraft-käyttäjänimen päivittäminen epäonnistui.",
     "saveMinecraft": "Tallenna Minecraft-käyttäjänimi",
-    "spokenLanguages": "Puhutut kielet"
+    "spokenLanguages": "Puhutut kielet",
+    "location": "Sijainti"
   },
   "voice": {
     "participants": "Osallistujat",

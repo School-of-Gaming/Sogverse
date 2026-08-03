@@ -68,6 +68,7 @@ import {
   type LocationPick,
   type LocationSummary,
 } from "@/components/locations/location-picker-panel";
+import { HomeLocationField } from "@/components/locations/home-location-field";
 import {
   LocationList,
   type LocationListGroup,
@@ -1873,6 +1874,23 @@ export default function AdminUIComponentsPage() {
           </p>
           <LocationSearchDemo />
         </SubSection>
+        <SubSection title="Home location field (parent profile)">
+          <p className="text-sm text-muted-foreground mb-3">
+            The parent&rsquo;s own place: one optional municipality, on the
+            registration form and in settings. It asks single mode for the
+            municipality level — Finland&rsquo;s kunta, France&rsquo;s commune,
+            the one directly above a venue. Unlike the panels above, this demo
+            opens the real dialog, so browsing and search here hit the database.
+          </p>
+          <p className="text-sm text-muted-foreground mb-3">
+            The box <em>is</em> the picker rather than a display row over a
+            &ldquo;choose&rdquo; button — one control, and no button caption
+            that has to guess what the viewer&rsquo;s country calls this level.
+            A confirmed pick is a row, so what comes back is a foreign key and a
+            path, with nothing left to resolve.
+          </p>
+          <HomeLocationFieldDemo />
+        </SubSection>
       </Section>
 
       {/* ============================================================ */}
@@ -2343,6 +2361,23 @@ function LocationSearchDemo() {
           onCancel: () => setQuery(""),
         }}
       />
+    </div>
+  );
+}
+
+function HomeLocationFieldDemo() {
+  const [place, setPlace] = useState<LocationPick | null>(null);
+
+  return (
+    <div className="max-w-md space-y-2 rounded-md border border-input bg-card p-4">
+      <HomeLocationField value={place} onChange={setPlace} />
+      <p className="text-xs text-muted-foreground">
+        Value:{" "}
+        {place ? `${place.location.id} (${place.location.name})` : "(none)"}{" "}
+        &mdash; a row id, so the caller has a foreign key to store and a path to
+        render without a second read. It decides what committing means: a
+        registration submit, or a settings save.
+      </p>
     </div>
   );
 }

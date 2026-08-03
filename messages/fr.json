@@ -874,6 +874,7 @@
       "emailPlaceholder": "vous@exemple.com",
       "passwordPlaceholder": "Créez un mot de passe solide",
       "confirmPasswordPlaceholder": "Confirmez votre mot de passe",
+      "location": "Localisation",
       "creatingAccount": "Création du compte...",
       "accountExists": "Un compte existe déjà avec cette adresse e-mail",
       "alreadyHaveAccount": "Vous avez déjà un compte ? <link>Connectez-vous</link>"
@@ -1561,6 +1562,11 @@
       "clearSearch": "Effacer la recherche",
       "tickedCount": "{count, plural, =0 {Aucune zone cochée} one {# zone cochée} other {# zones cochées}}",
       "done": "Terminé"
+    },
+    "home": {
+      "choose": "Ajoutez votre localisation",
+      "dialogTitle": "Où habitez-vous ?",
+      "dialogDescription": "Parcourez la liste ou recherchez par nom."
     }
   },
   "minecraft": {
@@ -1712,7 +1718,8 @@
     "minecraftCleared": "Nom d’utilisateur Minecraft effacé.",
     "failedToUpdateMinecraft": "Échec de la mise à jour du nom d’utilisateur Minecraft.",
     "saveMinecraft": "Enregistrer le nom d’utilisateur Minecraft",
-    "spokenLanguages": "Langues parlées à la maison"
+    "spokenLanguages": "Langues parlées à la maison",
+    "location": "Localisation"
   },
   "voice": {
     "participants": "Participants",

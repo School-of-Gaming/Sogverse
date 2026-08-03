@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { LoginForm } from "@/components/auth";
@@ -15,10 +14,12 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function LoginPage() {
-  return (
-    <Suspense fallback={<div className="h-96 w-full max-w-lg animate-pulse rounded-lg bg-card" />}>
-      <LoginForm />
-    </Suspense>
-  );
+/** `?redirect=` is read server-side — see the note on the register page. */
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ redirect?: string | string[] }>;
+}) {
+  const { redirect } = await searchParams;
+  return <LoginForm redirect={typeof redirect === "string" ? redirect : null} />;
 }
