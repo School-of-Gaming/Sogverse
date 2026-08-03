@@ -1134,7 +1134,8 @@
     "instantVoiceRoom": "tugh Daq",
     "instantVoiceRoomShort": "QIch Daq",
     "waitlistBand": "loS tetlhDaq",
-    "scheduledBand": "ghoSqep’a’mey"
+    "scheduledBand": "ghoSqep’a’mey",
+    "loadingAssignments": "ghom’a’meyraj raghmeyraj Qu’meyraj je laDlu’…"
   },
   "family": {
     "addGamer": "QujwI’ chel",
@@ -1217,8 +1218,6 @@
         "camp": "wa’leSvam",
         "event": "Soqbogh"
       },
-      "yourGroupBadge": "ghom’a’lIj",
-      "otherGroupsHeading": "may’vam latlh ghommey",
       "railOtherGroupsHeading": "latlh ghommey",
       "noOtherGroups": "may’vamDaq latlh ghom tu’lu’be’.",
       "railGroupHeading": "ghom’a’wIj",
@@ -1243,7 +1242,9 @@
       "copyParentEmail": "vavnI’ QInHom yI’aQ {email}",
       "emailCopied": "QInHom ’aQpu’",
       "copyAllParentEmails": "Hoch vavnI’ QInHommey yI’aQ ({count})",
-      "allEmailsCopied": "Hoch vavnI’ QInHommey ’aQpu’"
+      "allEmailsCopied": "Hoch vavnI’ QInHommey ’aQpu’",
+      "loadingWorkspace": "ghom’a’vam may’mey laDlu’…",
+      "minecraftSaveFailed": "pong pollu’be’. yIboq."
     },
     "sessionFeed": {
       "upcomingBadge": "may’ veb",
@@ -1275,7 +1276,8 @@
       "laterSessions": "{count, plural, one {# may’ veb} other {# may’mey veb}}",
       "showEarlier": "{count, plural, one {# may’ qan yIcha’} other {# may’mey qan yIcha’}}",
       "attendanceMarkedCount": "{marked}/{total} ngu’ta’",
-      "attendanceForGamer": "{name} pawwI’"
+      "attendanceForGamer": "{name} pawwI’",
+      "saveFailed": "may’vam pollu’be’. yIboq."
     },
     "groupNotes": {
       "heading": "ghom’a’vam",
@@ -1289,7 +1291,8 @@
       "publicPlaceholder": "chay’ Qap ghom’a’vam? nuq taH may’mey Hoch?",
       "staffLabel": "Gedupu’vaD qonta’",
       "staffHint": "Gedupu’ che’wI’pu’ je neH bIH lulegh. qorDu’ luleghbe’ not.",
-      "staffPlaceholder": "ghom’a’vam ’ang taHbogh De’: latlh Gedupu’ luSovnIS."
+      "staffPlaceholder": "ghom’a’vam ’ang taHbogh De’: latlh Gedupu’ luSovnIS.",
+      "saveFailed": "qonta’ pollu’be’. yIboq."
     },
     "siteNotes": {
       "heading": "Daq qonta’",
@@ -1305,7 +1308,8 @@
       "publicPlaceholder": "nuq lojmIt Dalo’? nuqDaq DaloS? nuq Daqem?",
       "staffLabel": "Gedupu’vaD qonta’",
       "staffHint": "Gedupu’ che’wI’pu’ je neH bIH lulegh. qorDu’ luleghbe’ not.",
-      "staffPlaceholder": "ngaQHa’moHwI’mey, jan, pa’ Do’Ha’ghach — Daqvamvo’ Gedu veb SovnIS."
+      "staffPlaceholder": "ngaQHa’moHwI’mey, jan, pa’ Do’Ha’ghach — Daqvamvo’ Gedu veb SovnIS.",
+      "saveFailed": "Daq qonta’ pollu’be’. yIboq."
     }
   },
   "groups": {

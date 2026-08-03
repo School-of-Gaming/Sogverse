@@ -2122,8 +2122,10 @@ export default function AdminUIComponentsPage() {
           <strong>session report</strong> that becomes the entry body families
           read, and the <strong>Gedu note</strong> behind a padlocked, recessed
           panel so the two audiences can never blur. Sessions from before the
-          enforcement epoch are bare &ldquo;no record&rdquo; lines with no alert
-          and no editor, because nothing is owed for them. Every editable entry
+          enforcement epoch are bare &ldquo;no record&rdquo; lines with no alert,
+          because nothing is <em>owed</em> for them &mdash; they still open the
+          same record editor as any other past session, because the epoch gates
+          what is asked for, not what may be written. Every editable entry
           &mdash; past or future, recorded or not &mdash; opens through the same{" "}
           <strong>Edit</strong> button, and expands in place: the header holding
           the controls stays put and the editor grows downward beneath it.
@@ -2143,8 +2145,9 @@ export default function AdminUIComponentsPage() {
           Attendance finished <em>and</em> a report written earns the green{" "}
           <em>Complete</em> check, and the timeline marker goes green with it.
           Partial saves are allowed and stay flagged, so a gedu interrupted three
-          children into a roster of eight keeps their three marks. Skipped
-          sessions sit outside the ladder entirely.
+          children into a roster of eight keeps their three marks. A session
+          older than the epoch sits outside the bottom rung only: it can never
+          turn amber, and it can still earn the green check.
         </p>
         <p className="text-sm text-muted-foreground">
           <strong>Reports are markdown, and the feed clamps them.</strong> A
@@ -2166,7 +2169,7 @@ export default function AdminUIComponentsPage() {
         <p className="text-sm text-muted-foreground">
           Sessions still <em>ahead</em> of us carry planning fields only &mdash; a
           forward note families read later and a reminder for whoever runs it.
-          Never attendance or didn&rsquo;t-run: those record what happened. Only
+          Never attendance: that records what happened. Only
           the next session is prominent; the rest of the horizon collapses behind
           one &ldquo;N more upcoming sessions&rdquo; row above it. On a long
           history the recent past renders and older chunks append below on
@@ -2568,6 +2571,10 @@ function GeduSessionFeedDemo() {
   // A plan can only land on a future session and a write-up only on a past one,
   // so the entry's own kind settles which apply runs; a mismatch leaves the
   // entry untouched rather than corrupting it.
+  //
+  // It does not close the editor. The feed does that itself once the save it
+  // was handed has settled — immediately here, a round trip later on the live
+  // page.
   const handleSave = (entryId: string, draft: SessionEntryDraft) => {
     setEntries((prev) =>
       prev.map((entry) => {
@@ -2580,7 +2587,6 @@ function GeduSessionFeedDemo() {
         return isEditableEntry(entry) ? applyDraftToEntry(entry, draft) : entry;
       }),
     );
-    setEditingId(null);
   };
 
   return (

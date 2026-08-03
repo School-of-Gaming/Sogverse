@@ -10,6 +10,7 @@ import type {
   AttendanceMarks,
   EditableSessionFeedEntry,
   FutureSessionFeedEntry,
+  PastSessionFeedEntry,
   SessionEditorState,
   SessionFeedEntry,
   SessionFeedGamer,
@@ -21,15 +22,23 @@ import type {
 /**
  * Whether an entry can be expanded into the **write-up** editor.
  *
- * `future` can't: it hasn't happened, so there is nothing to record — it gets
- * the notes-only editor instead. `no_record` can't either — it sits before the
- * enforcement epoch, so nothing is owed and offering an editor would invite
- * busywork on sessions we deliberately stopped asking about.
+ * **Owed and editable are different questions, and only the first one is the
+ * epoch's.** Every past session is editable, back to the product's start date:
+ * a gedu who wants to record attendance on a session from before the platform
+ * started asking is doing something useful, and refusing them an editor to
+ * enforce a deadline that was never set is the wrong shape of "no". So a
+ * pre-epoch `no_record` gap opens the same editor as last week's session — it
+ * simply keeps its muted rendering and never alerts, because *nothing is owed*
+ * for it.
+ *
+ * `future` is the one exclusion, and it has nothing to do with the epoch:
+ * attendance is a record of what happened, so a session that has not happened
+ * cannot take one. It gets the notes-only editor instead.
  */
 export function isEditableEntry(
   entry: SessionFeedEntry,
 ): entry is EditableSessionFeedEntry {
-  return entry.kind === "past";
+  return entry.kind === "past" || entry.kind === "no_record";
 }
 
 /** Whether an entry can be expanded into the **notes-only** editor. */
@@ -64,8 +73,14 @@ export type SessionCompleteness = "needs_attention" | "recorded" | "complete";
  * Where a feed entry sits on the ladder, or `null` for the entries the ladder
  * does not apply to.
  *
- * A **future** session has nothing to be complete about, and a pre-epoch
- * `no_record` gap is outside the enforcement window entirely.
+ * A **future** session has nothing to be complete about, and a `no_record` gap
+ * has nothing recorded on it and nothing owed for it.
+ *
+ * **A past session from before the enforcement epoch never reaches the warning
+ * rung.** Its unfinished states land on the neutral middle rung instead: the
+ * platform did not ask for that session, so an unfinished sheet on it is not
+ * work outstanding and must not read as any. The top rung is still reachable —
+ * somebody who goes back and finishes an old session earns the check for it.
  *
  * Everything is measured against the *current* roster, never the stored map's
  * keys: a child who joined the group after a session was fully marked reopens
@@ -78,7 +93,7 @@ export function entryCompleteness(
 ): SessionCompleteness | null {
   if (entry.kind !== "past") return null;
   if (!attendanceTally(roster, entry.attendance).complete) {
-    return "needs_attention";
+    return entry.owed ? "needs_attention" : "recorded";
   }
   return entry.report !== null && entry.report.length > 0
     ? "complete"
@@ -89,10 +104,12 @@ export function entryCompleteness(
  * Whether an entry is outstanding work — the alert state, derived rather than
  * stored.
  *
- * It means exactly one thing: **a past session some of whose current roster has
- * not been marked.** The report has no say in it. A past
- * entry can therefore carry a full report and still be flagged, and it renders
- * both — the report as its body, the alert in its header.
+ * It means exactly one thing: **a past session, dated on or after the
+ * enforcement epoch, some of whose current roster has not been marked.** The
+ * report has no say in it. A past entry can therefore carry a full report and
+ * still be flagged, and it renders both — the report as its body, the alert in
+ * its header. A session older than the epoch is never flagged however little is
+ * recorded on it, which is the whole of what the epoch does.
  *
  * **A partial save does not discharge it.** Saving is always allowed, so the
  * flag cannot be "has anything been recorded" or half a roster would silence
@@ -103,6 +120,8 @@ export function entryNeedsAttention(
   entry: SessionFeedEntry,
   roster: readonly SessionFeedGamer[],
 ): boolean {
+  // Reads the ladder rather than re-deriving it, so the epoch exemption above
+  // is applied exactly once and the badge can never disagree with the card.
   return entryCompleteness(entry, roster) === "needs_attention";
 }
 
@@ -196,6 +215,11 @@ export function rosterScopedMarks(
  * reopens the sheet on those three marks with the other five still unanswered,
  * rather than on a blank sheet or on five invented absences.
  *
+ * A pre-epoch gap seeds an empty sheet with empty notes, because that is
+ * exactly what it is: an occurrence nobody has ever written anything against.
+ * It is the same blank editor a never-touched recent session opens on, which is
+ * the point — the epoch changes what is *asked for*, not what the editor is.
+ *
  * Nothing is ever pre-ticked, and there is no shortcut anywhere that fills the
  * blanks in. Pre-ticking everyone present — or offering one button that does —
  * would be the convenient thing to do and is exactly what this model exists to
@@ -207,6 +231,9 @@ export function editorStateFromEntry(
   entry: EditableSessionFeedEntry,
   roster: readonly SessionFeedGamer[],
 ): SessionEditorState {
+  if (entry.kind === "no_record") {
+    return { attendance: {}, report: "", staffNote: "" };
+  }
   return {
     attendance: rosterScopedMarks(roster, entry.attendance),
     report: entry.report ?? "",
@@ -243,19 +270,26 @@ export function draftFromEditorState(
  * whole point of the inline editor: the feed keeps its shape and one row
  * changes state.
  *
+ * **A pre-epoch gap saved into becomes an ordinary past entry that owes
+ * nothing.** That is the same transition the server-backed merge makes when the
+ * row it just wrote comes back: the gap stops being a gap the moment there is
+ * something on it, and it carries `owed: false` forward so finishing an old
+ * session can never turn it amber.
+ *
  * Empty text collapses back to `null` so a cleared note stops rendering its
  * block.
  */
 export function applyDraftToEntry(
   entry: EditableSessionFeedEntry,
   draft: SessionRecordDraft,
-): EditableSessionFeedEntry {
+): PastSessionFeedEntry {
   const { id, startsAt, endsAt } = entry;
   return {
     kind: "past",
     id,
     startsAt,
     endsAt,
+    owed: entry.kind === "past" ? entry.owed : false,
     report: draft.report.length > 0 ? draft.report : null,
     staffNote: draft.staffNote.length > 0 ? draft.staffNote : null,
     attendance: draft.attendance,

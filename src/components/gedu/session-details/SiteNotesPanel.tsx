@@ -23,7 +23,7 @@ interface SiteNotesPanelProps {
   staffNote: string | null;
   editing: boolean;
   onEditingChange: (editing: boolean) => void;
-  onSave: (draft: SiteNotesDraft) => void;
+  onSave: (draft: SiteNotesDraft) => void | Promise<void>;
 }
 
 /**
@@ -71,6 +71,7 @@ export function SiteNotesPanel({
         staffLabel: t("staffLabel"),
         staffHint: t("staffHint"),
         staffPlaceholder: t("staffPlaceholder"),
+        saveFailed: t("saveFailed"),
       }}
       caption={
         <p className="mt-1 flex items-start gap-1.5 text-xs text-muted-foreground">

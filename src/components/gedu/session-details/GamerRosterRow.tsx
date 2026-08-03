@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { Check, Copy, Pencil, X } from "lucide-react";
+import { Check, Copy, Loader2, Pencil, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
   type MinecraftCheckStatus,
 } from "@/components/minecraft/minecraft-username-row";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { minecraftSkinBodyUrl } from "@/lib/mojang";
 import { cn, computeAge } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import type { GamerSessionRow } from "./types";
@@ -31,8 +32,15 @@ interface GamerRosterRowProps {
    * listening for it.
    *
    * A trimmed empty string means "clear it".
+   *
+   * **Awaited.** The inline editor greys out for the round trip and closes only
+   * once the write has landed; a rejection leaves it open with the typed name
+   * still in the box.
    */
-  onSaveMinecraftUsername?: (gamerId: string, username: string) => void;
+  onSaveMinecraftUsername?: (
+    gamerId: string,
+    username: string,
+  ) => void | Promise<void>;
   /**
    * Where the Mojang check for this child's name has got to, when one is in
    * flight or has just landed. Omitted, the row derives its own resting state
@@ -71,7 +79,9 @@ interface GamerRosterRowProps {
  * line for a small input *in place*, with Save and Cancel to its right; nothing
  * below moves, because the input is the same height as the line it replaced —
  * and the same is true of the check that follows the save, which lands in a slot
- * that was already holding its space.
+ * that was already holding its space. The one thing that does add height is the
+ * line saying a save was refused, and that is a direct answer to the button the
+ * gedu just pressed rather than something arriving on the data's own schedule.
  */
 export function GamerRosterRow({
   gamer,
@@ -124,15 +134,24 @@ export function GamerRosterRow({
  * editor it swaps for.
  *
  * The draft is seeded when the editor opens rather than held across closes, so
- * cancelling really discards. Save closes optimistically — the caller owns the
- * row, so the new username arrives back as a prop, and so does whatever the
- * check made of it.
+ * cancelling really discards. **Save holds the editor open, greyed, until the
+ * write has landed** — the round trip includes a Mojang lookup, so it is a real
+ * wait rather than a formality — and closes only then; the new username and the
+ * verified state arrive back as props, because the caller owns the row. A
+ * refused write leaves the editor open with the typed name still in the box and
+ * one line saying it did not save.
  *
  * **The resting state is derived from the account, not remembered.** A row
  * nobody has touched shows `valid` when the account carries a verified UUID and
  * `idle` when it does not, so eight untouched rows are not eight rows claiming a
  * check just ran. An explicit status from the caller wins, because that is a
  * check that really is in flight or really did just land.
+ *
+ * **The skin is fetched only for a verified account.** A UUID is the platform's
+ * one piece of evidence that the name belongs to a real player, and the render
+ * host resolves by *name* — so drawing a figure for an unverified string would
+ * quietly show a stranger's costume next to a child's name whenever the two
+ * happened to collide. Unverified rows keep the bundled placeholder.
  */
 function MinecraftIdentityCell({
   gamer,
@@ -141,11 +160,13 @@ function MinecraftIdentityCell({
 }: {
   gamer: GamerSessionRow;
   status?: MinecraftCheckStatus;
-  onSave?: (gamerId: string, username: string) => void;
+  onSave?: (gamerId: string, username: string) => void | Promise<void>;
 }) {
   const t = useTranslations("gedu.sessionDetails");
   const inputId = useId();
   const [draft, setDraft] = useState<string | null>(null);
+  const [committing, setCommitting] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const resolvedStatus =
     status ?? (gamer.minecraft_uuid !== null ? "valid" : "idle");
@@ -154,6 +175,11 @@ function MinecraftIdentityCell({
     <MinecraftUsernameRow
       username={gamer.minecraft_username}
       status={resolvedStatus}
+      skinUrl={
+        gamer.minecraft_uuid !== null && gamer.minecraft_username !== null
+          ? minecraftSkinBodyUrl(gamer.minecraft_username)
+          : null
+      }
       className="min-w-0 flex-1"
     />
   );
@@ -161,49 +187,79 @@ function MinecraftIdentityCell({
   if (onSave === undefined) return identity;
 
   if (draft !== null) {
-    const commit = () => {
-      onSave(gamer.gamer_id, draft.trim());
+    /**
+     * `committing` is flipped before the caller's write is reached, so the
+     * button cannot be pressed twice, and it is cleared only where the gedu
+     * needs it back — the failure path — or in the same commit that closes the
+     * editor for good.
+     */
+    const commit = async () => {
+      if (committing) return;
+      setFailed(false);
+      setCommitting(true);
+      try {
+        await onSave(gamer.gamer_id, draft.trim());
+      } catch {
+        setCommitting(false);
+        setFailed(true);
+        return;
+      }
+      setCommitting(false);
       setDraft(null);
     };
     return (
-      // `h-12` on the row matches the display row below, so entering and
-      // leaving edit mode never changes the roster row's height; the controls
-      // inside stay `h-7`, centered in it.
-      <div className="flex h-12 items-center gap-1.5">
-        <label className="sr-only" htmlFor={inputId}>
-          {t("minecraftUsernameLabel")}
-        </label>
-        <Input
-          id={inputId}
-          autoFocus
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") commit();
-            if (e.key === "Escape") setDraft(null);
-          }}
-          placeholder={t("minecraftUsernamePlaceholder")}
-          className="h-7 w-40 min-w-0 flex-1 px-2 py-0 text-xs"
-        />
-        <Button
-          type="button"
-          size="sm"
-          onClick={commit}
-          className="h-7 gap-1 px-2 text-xs"
-        >
-          <Check className="h-3.5 w-3.5" aria-hidden />
-          {t("minecraftUsernameSave")}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => setDraft(null)}
-          aria-label={t("minecraftUsernameCancel")}
-          className="h-7 w-7 shrink-0 p-0"
-        >
-          <X className="h-3.5 w-3.5" aria-hidden />
-        </Button>
+      <div className="space-y-1">
+        {/* `h-12` on the row matches the display row below, so entering and
+            leaving edit mode never changes the roster row's height; the
+            controls inside stay `h-7`, centered in it. */}
+        <div className="flex h-12 items-center gap-1.5">
+          <label className="sr-only" htmlFor={inputId}>
+            {t("minecraftUsernameLabel")}
+          </label>
+          <Input
+            id={inputId}
+            autoFocus
+            value={draft}
+            disabled={committing}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void commit();
+              if (e.key === "Escape" && !committing) setDraft(null);
+            }}
+            placeholder={t("minecraftUsernamePlaceholder")}
+            className="h-7 w-40 min-w-0 flex-1 px-2 py-0 text-xs"
+          />
+          <Button
+            type="button"
+            size="sm"
+            disabled={committing}
+            onClick={() => void commit()}
+            className="h-7 gap-1 px-2 text-xs"
+          >
+            {committing ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+            ) : (
+              <Check className="h-3.5 w-3.5" aria-hidden />
+            )}
+            {t("minecraftUsernameSave")}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={committing}
+            onClick={() => setDraft(null)}
+            aria-label={t("minecraftUsernameCancel")}
+            className="h-7 w-7 shrink-0 p-0"
+          >
+            <X className="h-3.5 w-3.5" aria-hidden />
+          </Button>
+        </div>
+        {failed && (
+          <p role="alert" className="text-[11px] text-destructive">
+            {t("minecraftSaveFailed")}
+          </p>
+        )}
       </div>
     );
   }

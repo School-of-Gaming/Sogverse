@@ -107,12 +107,32 @@ export interface PastSessionFeedEntry extends SessionFeedEntryBase {
    * nobody has recorded anything for.
    */
   attendance: AttendanceMarks;
+  /**
+   * Whether a write-up is **owed** for this session — true from the enforcement
+   * epoch onward, false for everything older.
+   *
+   * It gates the warning rung of the completeness ladder and nothing else. A
+   * session from before the platform started asking is fully recordable and
+   * fully editable; what it may never do is turn amber, or add to a dashboard
+   * badge, for work that was never expected. The success rung still applies:
+   * somebody who goes back and finishes an old session gets the green check for
+   * it.
+   */
+  owed: boolean;
 }
 
 /**
- * A scheduled occurrence from before write-ups were expected (before the
- * enforcement epoch, or before the product started). Nothing is owed here, so
- * it renders as a quiet placeholder with no alert treatment and no editor.
+ * A pre-epoch scheduled occurrence with **nothing recorded on it** — a session
+ * from before the platform began asking for write-ups.
+ *
+ * Nothing is owed here, so it renders as a quiet muted placeholder and never
+ * alerts. **It is still editable**, and that is the distinction this kind
+ * exists to hold: *owed* and *editable* are two different questions, and the
+ * epoch answers only the first. A gedu may open any past session back to the
+ * product's start and record attendance, a report and a note on it — this one
+ * included, through the same record editor every past entry uses. Once anything
+ * is recorded, the merge stops emitting it as a gap and it becomes an ordinary
+ * past entry whose `owed` flag is false.
  */
 export interface NoRecordSessionFeedEntry extends SessionFeedEntryBase {
   kind: "no_record";
@@ -134,8 +154,21 @@ export type SessionFeedEntry =
   | PastSessionFeedEntry
   | NoRecordSessionFeedEntry;
 
-/** The kind whose entry can be expanded into the write-up editor. */
-export type EditableSessionFeedEntry = PastSessionFeedEntry;
+/**
+ * The kinds that can be expanded into the write-up editor — everything on the
+ * past side of now, whether or not anything is owed for it.
+ *
+ * Both past kinds are in here because **editability is not the epoch's
+ * business**. The epoch decides what the platform asks for; what a gedu is
+ * *allowed* to record reaches back to the product's own start date, so a
+ * pre-epoch gap opens the same editor as last week's session. Only `future` is
+ * excluded, and for a reason the epoch has nothing to do with: attendance is a
+ * record of something that happened, so a session that has not happened gets
+ * the notes-only editor instead.
+ */
+export type EditableSessionFeedEntry =
+  | PastSessionFeedEntry
+  | NoRecordSessionFeedEntry;
 
 /** How one roster member's attendance was recorded. */
 export type AttendanceMark = "present" | "absent";

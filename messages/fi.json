@@ -1089,7 +1089,8 @@
     "instantVoiceRoom": "Pikaäänihuone",
     "instantVoiceRoomShort": "Äänihuone",
     "waitlistBand": "Jonotuslistalla",
-    "scheduledBand": "Aikataulussa"
+    "scheduledBand": "Aikataulussa",
+    "loadingAssignments": "Ladataan kerhojasi, leirejäsi ja tapahtumiasi."
   },
   "family": {
     "addGamer": "Lisää pelaaja",
@@ -1172,8 +1173,6 @@
         "camp": "Leiri",
         "event": "Tapahtuma"
       },
-      "yourGroupBadge": "Oma ryhmä",
-      "otherGroupsHeading": "Muut session ryhmät",
       "railOtherGroupsHeading": "Muut ryhmät",
       "noOtherGroups": "Tässä sessiossa ei ole muita ryhmiä.",
       "railGroupHeading": "Oma ryhmä",
@@ -1198,7 +1197,9 @@
       "copyParentEmail": "Kopioi vanhemman sähköposti {email}",
       "emailCopied": "Sähköposti kopioitu",
       "copyAllParentEmails": "Kopioi kaikki vanhempien sähköpostit ({count})",
-      "allEmailsCopied": "Kaikki vanhempien sähköpostit kopioitu"
+      "allEmailsCopied": "Kaikki vanhempien sähköpostit kopioitu",
+      "loadingWorkspace": "Ladataan tämän ryhmän kertoja.",
+      "minecraftSaveFailed": "Käyttäjänimen tallennus epäonnistui. Yritä uudelleen."
     },
     "sessionFeed": {
       "upcomingBadge": "Seuraava kerta",
@@ -1230,7 +1231,8 @@
       "laterSessions": "{count, plural, one {# tuleva kerta} other {# tulevaa kertaa}}",
       "showEarlier": "{count, plural, one {Näytä # aiempi kerta} other {Näytä # aiempaa kertaa}}",
       "attendanceMarkedCount": "{marked}/{total} merkitty",
-      "attendanceForGamer": "{name} – läsnäolo"
+      "attendanceForGamer": "{name} – läsnäolo",
+      "saveFailed": "Tallennus epäonnistui. Yritä uudelleen."
     },
     "groupNotes": {
       "heading": "Tästä ryhmästä",
@@ -1244,7 +1246,8 @@
       "publicPlaceholder": "Miten tämä ryhmä toimii ja mitä siirtyy kerrasta toiseen…",
       "staffLabel": "Muistiinpano Geduille",
       "staffHint": "Vain Gedut ja ylläpitäjät näkevät tämän, perheet eivät koskaan.",
-      "staffPlaceholder": "Pysyvät asiat, jotka toisen Gedun on hyvä tietää tästä ryhmästä."
+      "staffPlaceholder": "Pysyvät asiat, jotka toisen Gedun on hyvä tietää tästä ryhmästä.",
+      "saveFailed": "Muistiinpanojen tallennus epäonnistui. Yritä uudelleen."
     },
     "siteNotes": {
       "heading": "Toimipaikan muistiinpanot",
@@ -1260,7 +1263,8 @@
       "publicPlaceholder": "Mistä ovesta sisään, missä odotetaan, mitä otetaan mukaan…",
       "staffLabel": "Muistiinpano Geduille",
       "staffHint": "Vain Gedut ja ylläpitäjät näkevät tämän, perheet eivät koskaan.",
-      "staffPlaceholder": "Avaimet, välineet, tilan erityispiirteet — mitä seuraavan Gedun on hyvä tietää tästä toimipaikasta."
+      "staffPlaceholder": "Avaimet, välineet, tilan erityispiirteet — mitä seuraavan Gedun on hyvä tietää tästä toimipaikasta.",
+      "saveFailed": "Toimipaikan muistiinpanojen tallennus epäonnistui. Yritä uudelleen."
     }
   },
   "groups": {

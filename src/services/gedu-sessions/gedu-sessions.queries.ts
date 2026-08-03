@@ -3,7 +3,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { GeduSessionsService } from "./gedu-sessions.service";
-import type { AttendanceStatus } from "./gedu-sessions.contracts";
+import type {
+  AttendanceStatus,
+  GeduAssignmentSummary,
+} from "./gedu-sessions.contracts";
 
 /**
  * React Query bindings for the gedu session feed.
@@ -38,13 +41,25 @@ export function useGeduGroupFeed(groupId: string | null) {
   });
 }
 
-/** Every assignment card's facts, including its outstanding-work count. */
-export function useGeduAssignmentSummaries() {
+/**
+ * Every assignment card's facts, including its outstanding-work count.
+ *
+ * `initialData` is how the dashboard normally gets it: the route prefetches the
+ * same RPC server-side, so the cards paint complete on first frame rather than
+ * filling their group names and badges in a beat later. It is optional because
+ * a prefetch can fail, and a card grid built on half the facts is worse than
+ * one skeleton — without it the hook fetches and the page shows its loading
+ * state, which is the honest answer to not knowing yet.
+ */
+export function useGeduAssignmentSummaries(options?: {
+  initialData?: GeduAssignmentSummary[];
+}) {
   const service = new GeduSessionsService(getClient());
 
   return useQuery({
     queryKey: geduSessionKeys.summaries(),
     queryFn: () => service.getMyAssignmentSummaries(),
+    initialData: options?.initialData,
   });
 }
 

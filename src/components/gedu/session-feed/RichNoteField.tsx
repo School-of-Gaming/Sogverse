@@ -52,6 +52,13 @@ interface RichNoteFieldProps {
    * existence once its entry has actually been opened — and then stays.
    */
   ready: boolean;
+  /**
+   * Grey the field out and refuse input — the in-flight state of the editor
+   * around it. The text stays exactly where it is: a save that fails has to
+   * hand the writer back what they wrote, so this locks the field rather than
+   * clearing or unmounting it.
+   */
+  disabled?: boolean;
   onChange: (markdown: string) => void;
 }
 
@@ -93,6 +100,7 @@ export function RichNoteField({
   value,
   seed,
   ready,
+  disabled = false,
   onChange,
 }: RichNoteFieldProps) {
   return (
@@ -106,6 +114,7 @@ export function RichNoteField({
             placeholder={placeholder}
             ariaLabel={label}
             describedBy={hintId}
+            disabled={disabled}
           />
         ) : (
           <RichEditorPlaceholder />

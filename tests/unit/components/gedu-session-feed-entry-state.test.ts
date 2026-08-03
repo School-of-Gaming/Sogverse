@@ -42,6 +42,7 @@ const START = new Date("2026-03-02T14:30:00.000Z");
 const END = new Date("2026-03-02T16:00:00.000Z");
 const WHEN = { startsAt: START, endsAt: END };
 
+/** A past session inside the enforcement window — write-ups owed. */
 function past(
   id: string,
   fields: Partial<
@@ -55,8 +56,18 @@ function past(
     report: null,
     staffNote: null,
     attendance: {},
+    owed: true,
     ...fields,
   };
+}
+/** The same session dated before the epoch: recordable, but owed nothing. */
+function unowedPast(
+  id: string,
+  fields: Partial<
+    Omit<PastSessionFeedEntry, "kind" | "id" | "startsAt" | "endsAt" | "owed">
+  > = {},
+): PastSessionFeedEntry {
+  return past(id, { ...fields, owed: false });
 }
 function noRecord(id: string): NoRecordSessionFeedEntry {
   return { kind: "no_record", id, ...WHEN };
@@ -77,15 +88,32 @@ function future(
   };
 }
 
+/**
+ * Editability is **not** the epoch's business, and this is where the two
+ * questions are held apart. What is *owed* stops at the enforcement epoch; what
+ * can be *recorded* reaches back to the product's start date, so a pre-epoch
+ * gap opens the very same editor last week's session does. The only exclusion
+ * is the future, and it has nothing to do with the epoch: attendance is a
+ * record of what happened.
+ */
 describe("isEditableEntry", () => {
   it("accepts a past session whether or not anything is recorded on it", () => {
     expect(isEditableEntry(past("r", { attendance: ALL_MARKED }))).toBe(true);
     expect(isEditableEntry(past("g"))).toBe(true);
   });
 
-  it("rejects future sessions and pre-epoch gaps", () => {
+  it("accepts a pre-epoch gap — nothing is owed, everything is editable", () => {
+    expect(isEditableEntry(noRecord("n"))).toBe(true);
+  });
+
+  it("accepts a pre-epoch session somebody went back and recorded", () => {
+    expect(isEditableEntry(unowedPast("o", { attendance: ALL_MARKED }))).toBe(
+      true,
+    );
+  });
+
+  it("rejects future sessions, and only those", () => {
     expect(isEditableEntry(future("u"))).toBe(false);
-    expect(isEditableEntry(noRecord("n"))).toBe(false);
   });
 });
 
@@ -101,10 +129,25 @@ describe("isPlannableEntry", () => {
       future("u"),
       past("r", { attendance: ALL_MARKED }),
       past("g"),
+      unowedPast("o"),
       noRecord("n"),
     ];
     for (const entry of entries) {
       expect(isEditableEntry(entry) && isPlannableEntry(entry)).toBe(false);
+    }
+  });
+
+  it("covers every entry between them — nothing opens no editor at all", () => {
+    const entries: SessionFeedEntry[] = [
+      future("u"),
+      past("g"),
+      unowedPast("o"),
+      noRecord("n"),
+    ];
+    for (const entry of entries) {
+      expect(isEditableEntry(entry) || isPlannableEntry(entry), entry.id).toBe(
+        true,
+      );
     }
   });
 });
@@ -159,9 +202,33 @@ describe("entryCompleteness", () => {
     ).toBe("recorded");
   });
 
-  it("exempts future and pre-epoch entries entirely", () => {
+  it("exempts future entries and untouched pre-epoch gaps entirely", () => {
     expect(entryCompleteness(future("u"), ROSTER)).toBeNull();
     expect(entryCompleteness(noRecord("n"), ROSTER)).toBeNull();
+  });
+
+  it("never puts a pre-epoch session on the warning rung", () => {
+    // The epoch gates what is *owed*. An unfinished sheet on a session the
+    // platform never asked for is not outstanding work, so it lands neutral —
+    // whether or not it also carries a report.
+    expect(entryCompleteness(unowedPast("a"), ROSTER)).toBe("recorded");
+    expect(
+      entryCompleteness(unowedPast("b", { attendance: { a: "present" } }), ROSTER),
+    ).toBe("recorded");
+    expect(
+      entryCompleteness(unowedPast("c", { report: "# From memory" }), ROSTER),
+    ).toBe("recorded");
+  });
+
+  it("still lets a pre-epoch session reach the top rung", () => {
+    // Somebody who goes back and finishes an old session gets the check for it.
+    // Only the warning rung is switched off, not the whole ladder.
+    expect(
+      entryCompleteness(
+        unowedPast("d", { attendance: ALL_MARKED, report: "# From memory" }),
+        ROSTER,
+      ),
+    ).toBe("complete");
   });
 
   it("reopens when a child joins the group after the sheet was finished", () => {
@@ -271,6 +338,15 @@ describe("entryNeedsAttention", () => {
     expect(entryNeedsAttention(entry, grown)).toBe(true);
   });
 
+  it("never flags a session from before the enforcement epoch", () => {
+    // Nothing was ever asked of it, so however little is recorded it is not
+    // outstanding work — and it must not add to a dashboard badge either.
+    expect(entryNeedsAttention(unowedPast("o"), ROSTER)).toBe(false);
+    expect(
+      entryNeedsAttention(unowedPast("p", { attendance: { a: "present" } }), ROSTER),
+    ).toBe(false);
+  });
+
   it("never flags anything against an empty roster", () => {
     expect(entryNeedsAttention(past("g"), [])).toBe(false);
   });
@@ -284,6 +360,7 @@ describe("countEntriesNeedingAttention", () => {
       past("g2", { report: "Notes but no attendance." }),
       past("g3", { attendance: { a: "present" } }),
       past("r", { attendance: ALL_MARKED }),
+      unowedPast("o"),
       noRecord("n"),
     ];
     expect(countEntriesNeedingAttention(entries, ROSTER)).toBe(3);
@@ -631,6 +708,15 @@ describe("editorStateFromEntry", () => {
     expect(state.attendance).toEqual({ a: "present" });
   });
 
+  it("opens a pre-epoch gap on a blank sheet with blank notes", () => {
+    // It is exactly what it says it is: an occurrence nobody has ever written
+    // anything against. The editor is the same one, seeded with nothing.
+    expect(editorStateFromEntry(noRecord("n"), ROSTER)).toEqual({
+      attendance: {},
+      report: "",
+      staffNote: "",
+    });
+  });
 });
 
 describe("draftFromEditorState", () => {
@@ -707,6 +793,9 @@ describe("applyDraftToEntry", () => {
       id: "g",
       startsAt: START,
       endsAt: END,
+      // Carried through untouched: saving a session does not change whether it
+      // was ever asked for.
+      owed: true,
       report: "Redstone week.",
       // An emptied note collapses to null so its block stops rendering.
       staffNote: null,
@@ -747,6 +836,20 @@ describe("applyDraftToEntry", () => {
       ROSTER,
     );
     expect(applyDraftToEntry(entry, draft)).toEqual(entry);
+  });
+
+  it("turns a pre-epoch gap into a past entry that owes nothing", () => {
+    // The same transition the server-backed merge makes once the row exists:
+    // it stops being a gap, and it carries `owed: false` forward so finishing
+    // an old session can never turn it amber.
+    const saved = applyDraftToEntry(noRecord("n"), {
+      kind: "past",
+      attendance: { a: "present" },
+      report: "# From memory",
+      staffNote: "",
+    });
+    expect(saved).toMatchObject({ kind: "past", owed: false });
+    expect(entryNeedsAttention(saved, ROSTER)).toBe(false);
   });
 
   it("round-trips a partial entry through the editor without filling it in", () => {

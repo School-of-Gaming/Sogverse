@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef } from "react";
+import { useId } from "react";
 import { AlertTriangle, CheckCircle2, Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +53,25 @@ interface SessionFeedItemProps {
   completeness: SessionCompleteness | null;
   /** Whether this entry is the one currently expanded into an editor. */
   editing: boolean;
+  /**
+   * Whether this entry's editor is mid-save. Owned by the feed, because the
+   * feed is what runs the save and what closes the editor once it lands.
+   */
+  committing: boolean;
+  /** Why this entry's last save was refused, or `null`. */
+  saveError: string | null;
+  /**
+   * Hand the Edit button up to the feed as it mounts.
+   *
+   * The feed is what shuts this editor — on cancel, and on a save that has
+   * landed — so the feed is also what has to put focus back on the control that
+   * opened it. Save and Cancel live *inside* the region that goes `inert` the
+   * moment it shuts, so the focused element stops being focusable in the same
+   * frame and the browser drops focus to the document body; a keyboard user who
+   * saved would land at the top of the page and have to tab back through the
+   * whole feed.
+   */
+  registerEditButton: (node: HTMLButtonElement | null) => void;
   /** Open this entry's editor (or close it if it is already open). */
   onToggleEdit: () => void;
   onCancelEdit: () => void;
@@ -99,9 +118,14 @@ interface SessionFeedItemProps {
  * one the gedu is aiming at and nothing else on the card can tell them they have
  * arrived.
  *
- * A pre-epoch gap is a bare dashed line with no card and no editor at all,
- * because nothing is owed for it and it must not compete with the narrative
- * around it.
+ * **A pre-epoch gap is a bare dashed line that still opens an editor.** It gets
+ * no card and no alert, because nothing is owed for it and it must not compete
+ * with the narrative around it — but *owed* and *editable* are different
+ * questions, and a gedu who wants to write up a session from before the
+ * platform started asking is welcome to. So the line carries the same Edit
+ * affordance every other entry does, in a quieter weight, and expands into the
+ * same record editor. The moment anything is saved on it, it stops being a gap
+ * and renders as an ordinary past entry that owes nothing.
  *
  * **Every future session carries a tag, in the info tone.** The next one says
  * so by name and the rest say "future session", and both are the same blue —
@@ -117,16 +141,12 @@ interface SessionFeedItemProps {
  * notes-only editor. No entry ever offers both, and neither carries a Join —
  * rooms are joined from the group surfaces, never from a session card.
  *
- * **Closing the editor hands focus back to the Edit button.** Save and Cancel
- * live *inside* the region that goes `inert` the moment it shuts, so the element
- * that was focused stops being focusable in the same frame and the browser drops
- * focus to the document body — a keyboard user who saves lands at the top of the
- * page and has to tab back through the whole feed. Focus is therefore moved to
- * the control that opened the editor, which is where the user was before they
- * opened it and is the only element on the card guaranteed to still be there
- * afterwards. It is moved with `preventScroll`, because the card is at that
- * moment losing most of its height under a scroll correction and a
- * focus-triggered scroll would be one more thing for that correction to undo.
+ * **Closing the editor hands focus back to the Edit button, and the feed does
+ * it.** The reason it is not done here is that this component no longer decides
+ * when the editor shuts: a save closes it only once the write has landed, which
+ * only the feed knows about. So the button is handed upward as it mounts and
+ * the feed restores focus on both closing paths. Why it has to be restored at
+ * all is above, on `registerEditButton`.
  */
 export function SessionFeedItem({
   entry,
@@ -136,6 +156,9 @@ export function SessionFeedItem({
   clampReport = true,
   completeness,
   editing,
+  committing,
+  saveError,
+  registerEditButton,
   onToggleEdit,
   onCancelEdit,
   onSave,
@@ -144,19 +167,50 @@ export function SessionFeedItem({
   const recordable = isEditableEntry(entry);
   const plannable = isPlannableEntry(entry);
   const editorId = useId();
-  const editButton = useRef<HTMLButtonElement>(null);
 
-  /** Called on every path that shuts the editor — save and cancel alike. */
-  const returnFocusToEditButton = () =>
-    editButton.current?.focus({ preventScroll: true });
+  const recordEditor = recordable && (
+    <CollapsibleRegion open={editing} instant id={editorId}>
+      <SessionRecordEditor
+        open={editing}
+        roster={roster}
+        initialState={editorStateFromEntry(entry, roster)}
+        committing={committing}
+        error={saveError}
+        onCancel={onCancelEdit}
+        onSave={onSave}
+      />
+    </CollapsibleRegion>
+  );
 
   // Pre-epoch gaps aren't part of the story and aren't work — a single quiet
-  // dashed line, deliberately not a card.
+  // dashed line, deliberately not a card. The Edit affordance is on it anyway,
+  // because nothing about the epoch says this session cannot be written up.
   if (entry.kind === "no_record") {
     return (
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-md border border-dashed border-border/60 px-3 py-2 text-xs text-muted-foreground">
-        <SessionDateLine labels={labels} muted />
-        <span>{t("noRecordLabel")}</span>
+      <div className="rounded-md border border-dashed border-border/60 px-3 py-2 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          <SessionDateLine labels={labels} muted />
+          <div className="flex items-center gap-2">
+            <span>{t("noRecordLabel")}</span>
+            <Button
+              ref={registerEditButton}
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onToggleEdit}
+              aria-expanded={editing}
+              aria-controls={editorId}
+              // Shorter and quieter than the card's Edit button: this row is a
+              // 2rem line, and a full-size control in it would make the muted
+              // gaps the tallest rows in the feed.
+              className="-my-1 h-6 gap-1 px-2 text-[11px]"
+            >
+              <Pencil className="h-3 w-3" aria-hidden />
+              {t("edit")}
+            </Button>
+          </div>
+        </div>
+        {recordEditor}
       </div>
     );
   }
@@ -193,7 +247,7 @@ export function SessionFeedItem({
           )}
           {(recordable || plannable) && (
             <Button
-              ref={editButton}
+              ref={registerEditButton}
               type="button"
               variant="ghost"
               size="sm"
@@ -217,37 +271,17 @@ export function SessionFeedItem({
         />
       </CollapsibleRegion>
 
-      {recordable && (
-        <CollapsibleRegion open={editing} instant id={editorId}>
-          <SessionRecordEditor
-            open={editing}
-            roster={roster}
-            initialState={editorStateFromEntry(entry, roster)}
-            onCancel={() => {
-              onCancelEdit();
-              returnFocusToEditButton();
-            }}
-            onSave={(draft) => {
-              onSave(draft);
-              returnFocusToEditButton();
-            }}
-          />
-        </CollapsibleRegion>
-      )}
+      {recordEditor}
 
       {plannable && (
         <CollapsibleRegion open={editing} instant id={editorId}>
           <SessionPlanEditor
             open={editing}
             initialState={planEditorStateFromEntry(entry)}
-            onCancel={() => {
-              onCancelEdit();
-              returnFocusToEditButton();
-            }}
-            onSave={(draft) => {
-              onSave(draft);
-              returnFocusToEditButton();
-            }}
+            committing={committing}
+            error={saveError}
+            onCancel={onCancelEdit}
+            onSave={onSave}
           />
         </CollapsibleRegion>
       )}

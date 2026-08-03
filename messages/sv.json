@@ -1089,7 +1089,8 @@
     "instantVoiceRoom": "Direkt röstrum",
     "instantVoiceRoomShort": "Röstrum",
     "waitlistBand": "På väntelistan",
-    "scheduledBand": "Schemalagda"
+    "scheduledBand": "Schemalagda",
+    "loadingAssignments": "Laddar dina klubbar, läger och evenemang."
   },
   "family": {
     "addGamer": "Lägg till gamer",
@@ -1172,8 +1173,6 @@
         "camp": "Läger",
         "event": "Evenemang"
       },
-      "yourGroupBadge": "Din grupp",
-      "otherGroupsHeading": "Andra grupper i denna session",
       "railOtherGroupsHeading": "Andra grupper",
       "noOtherGroups": "Inga andra grupper i denna session.",
       "railGroupHeading": "Min grupp",
@@ -1198,7 +1197,9 @@
       "copyParentEmail": "Kopiera förälderns e-post {email}",
       "emailCopied": "E-post kopierad",
       "copyAllParentEmails": "Kopiera alla förälder-e-postadresser ({count})",
-      "allEmailsCopied": "Alla förälder-e-postadresser kopierade"
+      "allEmailsCopied": "Alla förälder-e-postadresser kopierade",
+      "loadingWorkspace": "Laddar gruppens tillfällen.",
+      "minecraftSaveFailed": "Användarnamnet sparades inte. Försök igen."
     },
     "sessionFeed": {
       "upcomingBadge": "Nästa tillfälle",
@@ -1230,7 +1231,8 @@
       "laterSessions": "{count, plural, one {# kommande tillfälle} other {# kommande tillfällen}}",
       "showEarlier": "{count, plural, one {Visa # tidigare tillfälle} other {Visa # tidigare tillfällen}}",
       "attendanceMarkedCount": "{marked} av {total} markerade",
-      "attendanceForGamer": "Närvaro för {name}"
+      "attendanceForGamer": "Närvaro för {name}",
+      "saveFailed": "Tillfället sparades inte. Försök igen."
     },
     "groupNotes": {
       "heading": "Om gruppen",
@@ -1244,7 +1246,8 @@
       "publicPlaceholder": "Hur gruppen fungerar, vad som följer med mellan tillfällena…",
       "staffLabel": "Anteckning till Gedus",
       "staffHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
-      "staffPlaceholder": "Sådant som en annan Gedu bör veta om gruppen över tid."
+      "staffPlaceholder": "Sådant som en annan Gedu bör veta om gruppen över tid.",
+      "saveFailed": "Anteckningarna sparades inte. Försök igen."
     },
     "siteNotes": {
       "heading": "Anteckningar om platsen",
@@ -1260,7 +1263,8 @@
       "publicPlaceholder": "Vilken dörr man använder, var man väntar, vad man tar med…",
       "staffLabel": "Anteckning till Gedus",
       "staffHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
-      "staffPlaceholder": "Nycklar, utrustning, lokalens egenheter — vad nästa Gedu på plats behöver veta."
+      "staffPlaceholder": "Nycklar, utrustning, lokalens egenheter — vad nästa Gedu på plats behöver veta.",
+      "saveFailed": "Anteckningarna om platsen sparades inte. Försök igen."
     }
   },
   "groups": {

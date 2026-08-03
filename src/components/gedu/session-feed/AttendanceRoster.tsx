@@ -35,10 +35,17 @@ import type { AttendanceMark, AttendanceMarks, SessionFeedGamer } from "./types"
 export function AttendanceRoster({
   roster,
   attendance,
+  disabled = false,
   onMark,
 }: {
   roster: readonly SessionFeedGamer[];
   attendance: AttendanceMarks;
+  /**
+   * Lock every pill while the sheet is being saved. The marks stay on screen
+   * exactly as they are — a save that fails gives the gedu back the sheet they
+   * had, not a blank one.
+   */
+  disabled?: boolean;
   /** `undefined` clears the mark, returning the row to unanswered. */
   onMark: (gamerId: string, mark: AttendanceMark | undefined) => void;
 }) {
@@ -72,6 +79,7 @@ export function AttendanceRoster({
             >
               <MarkOption
                 pressed={mark === "present"}
+                disabled={disabled}
                 onToggle={() => toggle("present")}
                 label={t("presentLabel")}
                 icon={<Check className="h-3 w-3" aria-hidden />}
@@ -79,6 +87,7 @@ export function AttendanceRoster({
               />
               <MarkOption
                 pressed={mark === "absent"}
+                disabled={disabled}
                 onToggle={() => toggle("absent")}
                 label={t("absentLabel")}
                 icon={<X className="h-3 w-3" aria-hidden />}
@@ -101,12 +110,14 @@ export function AttendanceRoster({
 
 function MarkOption({
   pressed,
+  disabled,
   onToggle,
   label,
   icon,
   pressedClassName,
 }: {
   pressed: boolean;
+  disabled: boolean;
   onToggle: () => void;
   label: string;
   icon: React.ReactNode;
@@ -116,10 +127,12 @@ function MarkOption({
     <button
       type="button"
       aria-pressed={pressed}
+      disabled={disabled}
       onClick={onToggle}
       className={cn(
         "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "disabled:cursor-not-allowed disabled:opacity-50",
         pressed
           ? cn("font-semibold", pressedClassName)
           : "border-border text-muted-foreground hover:text-foreground",

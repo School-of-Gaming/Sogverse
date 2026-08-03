@@ -1089,7 +1089,8 @@
     "instantVoiceRoom": "Instant Voice Room",
     "instantVoiceRoomShort": "Voice room",
     "waitlistBand": "On the waitlist",
-    "scheduledBand": "Scheduled"
+    "scheduledBand": "Scheduled",
+    "loadingAssignments": "Loading your clubs, camps and events."
   },
   "family": {
     "addGamer": "Add Gamer",
@@ -1172,8 +1173,6 @@
         "camp": "Camp",
         "event": "Event"
       },
-      "yourGroupBadge": "Your group",
-      "otherGroupsHeading": "Other groups in this session",
       "railOtherGroupsHeading": "Other groups",
       "noOtherGroups": "No other groups in this session.",
       "railGroupHeading": "My Group",
@@ -1198,7 +1197,9 @@
       "copyParentEmail": "Copy parent email {email}",
       "emailCopied": "Email copied",
       "copyAllParentEmails": "Copy all parent emails ({count})",
-      "allEmailsCopied": "All parent emails copied"
+      "allEmailsCopied": "All parent emails copied",
+      "loadingWorkspace": "Loading this group’s sessions.",
+      "minecraftSaveFailed": "That username didn’t save. Try again."
     },
     "sessionFeed": {
       "upcomingBadge": "Next session",
@@ -1230,7 +1231,8 @@
       "laterSessions": "{count, plural, one {# upcoming session} other {# upcoming sessions}}",
       "showEarlier": "{count, plural, one {Show # earlier session} other {Show # earlier sessions}}",
       "attendanceMarkedCount": "{marked} of {total} marked",
-      "attendanceForGamer": "Attendance for {name}"
+      "attendanceForGamer": "Attendance for {name}",
+      "saveFailed": "This session didn’t save. Try again."
     },
     "groupNotes": {
       "heading": "About this group",
@@ -1244,7 +1246,8 @@
       "publicPlaceholder": "How this group works, what carries over between sessions…",
       "staffLabel": "Gedu note",
       "staffHint": "Only Gedus and admins can see this. Families never do.",
-      "staffPlaceholder": "Standing things another Gedu should know about this group."
+      "staffPlaceholder": "Standing things another Gedu should know about this group.",
+      "saveFailed": "These notes didn’t save. Try again."
     },
     "siteNotes": {
       "heading": "Site notes",
@@ -1260,7 +1263,8 @@
       "publicPlaceholder": "Which door to use, where to wait, what to bring…",
       "staffLabel": "Gedu note",
       "staffHint": "Only Gedus and admins can see this. Families never do.",
-      "staffPlaceholder": "Keys, kit, room quirks — what the next Gedu at this site needs to know."
+      "staffPlaceholder": "Keys, kit, room quirks — what the next Gedu at this site needs to know.",
+      "saveFailed": "These site notes didn’t save. Try again."
     }
   },
   "groups": {

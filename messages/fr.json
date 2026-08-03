@@ -1089,7 +1089,8 @@
     "instantVoiceRoom": "Salon vocal instantané",
     "instantVoiceRoomShort": "Salle vocale",
     "waitlistBand": "En liste d’attente",
-    "scheduledBand": "Programmé"
+    "scheduledBand": "Programmé",
+    "loadingAssignments": "Chargement de vos clubs, camps et événements."
   },
   "family": {
     "addGamer": "Ajouter un joueur",
@@ -1172,8 +1173,6 @@
         "camp": "Camp",
         "event": "Événement"
       },
-      "yourGroupBadge": "Votre groupe",
-      "otherGroupsHeading": "Autres groupes de cette session",
       "railOtherGroupsHeading": "Autres groupes",
       "noOtherGroups": "Aucun autre groupe dans cette session.",
       "railGroupHeading": "Mon groupe",
@@ -1198,7 +1197,9 @@
       "copyParentEmail": "Copier l’e-mail du parent {email}",
       "emailCopied": "E-mail copié",
       "copyAllParentEmails": "Copier tous les e-mails des parents ({count})",
-      "allEmailsCopied": "Tous les e-mails des parents ont été copiés"
+      "allEmailsCopied": "Tous les e-mails des parents ont été copiés",
+      "loadingWorkspace": "Chargement des séances de ce groupe.",
+      "minecraftSaveFailed": "Ce nom d’utilisateur n’a pas été enregistré. Réessayez."
     },
     "sessionFeed": {
       "upcomingBadge": "Prochaine séance",
@@ -1230,7 +1231,8 @@
       "laterSessions": "{count, plural, one {# séance à venir} other {# séances à venir}}",
       "showEarlier": "{count, plural, one {Afficher # séance précédente} other {Afficher # séances précédentes}}",
       "attendanceMarkedCount": "{marked} sur {total} renseignés",
-      "attendanceForGamer": "Présence de {name}"
+      "attendanceForGamer": "Présence de {name}",
+      "saveFailed": "Cette séance n’a pas été enregistrée. Réessayez."
     },
     "groupNotes": {
       "heading": "À propos du groupe",
@@ -1244,7 +1246,8 @@
       "publicPlaceholder": "Comment ce groupe fonctionne, ce qui se poursuit d’une séance à l’autre…",
       "staffLabel": "Note pour les Gedus",
       "staffHint": "Visible uniquement par les Gedus et les admins. Jamais par les familles.",
-      "staffPlaceholder": "Ce qu’un autre Gedu doit savoir en permanence sur ce groupe."
+      "staffPlaceholder": "Ce qu’un autre Gedu doit savoir en permanence sur ce groupe.",
+      "saveFailed": "Ces notes n’ont pas été enregistrées. Réessayez."
     },
     "siteNotes": {
       "heading": "Notes sur le lieu",
@@ -1260,7 +1263,8 @@
       "publicPlaceholder": "Par quelle porte entrer, où attendre, quoi apporter…",
       "staffLabel": "Note pour les Gedus",
       "staffHint": "Visible uniquement par les Gedus et les admins. Jamais par les familles.",
-      "staffPlaceholder": "Clés, matériel, particularités de la salle — ce que le prochain Gedu sur place doit savoir."
+      "staffPlaceholder": "Clés, matériel, particularités de la salle — ce que le prochain Gedu sur place doit savoir.",
+      "saveFailed": "Ces notes sur le lieu n’ont pas été enregistrées. Réessayez."
     }
   },
   "groups": {

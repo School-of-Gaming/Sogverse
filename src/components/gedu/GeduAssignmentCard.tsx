@@ -274,6 +274,12 @@ export function GeduAssignmentCard({
                       timeZone,
                     })}
                     opensTime={formatTime(nextSessionStart, locale, timeZone)}
+                    // Leaving the room lands on the group's workspace, not back
+                    // on this grid: what a gedu does after a session is write it
+                    // up, and the feed is where that happens. It is the same
+                    // href the card itself opens, so the two agree by
+                    // construction.
+                    backHref={openHref}
                   />
                 )
               : siteName !== null && (

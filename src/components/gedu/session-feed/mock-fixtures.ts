@@ -93,11 +93,12 @@ export type SessionFeedCadence = "weekly" | "daily";
  * session; the leading run of `future` specs is the feed's future horizon, the
  * last of them is the next session, and everything after that is the past.
  *
- * In the default club run the enforcement epoch sits just above the two closing
- * `no_record` lines: everything newer either has its attendance finished or is
- * flagged as owed, and everything older is a quiet "no record" line. That
- * boundary is the whole reason the two gap states look nothing alike — one is
- * work, the other is history.
+ * In the default club run the enforcement epoch sits above the closing tail:
+ * everything newer either has its attendance finished or is flagged as owed,
+ * and everything older is either a quiet "no record" line or — for the one
+ * somebody went back and wrote up — an ordinary past entry that never turns
+ * amber. That boundary is the whole reason the gap states look nothing alike:
+ * one is work, the other is history, and both are editable.
  *
  * **There is no "skipped" spec**, because there is no skipped entry kind: a
  * session that did not run is a real thing the schema will record one day and
@@ -138,6 +139,18 @@ export type EntrySpec =
        * reports its own progress.
        */
       partial?: { present?: readonly string[]; absent?: readonly string[] };
+      /**
+       * Whether a write-up is **owed** for this session. Defaults to `true`,
+       * which is what a session inside the enforcement window is.
+       *
+       * `false` is the pre-epoch session somebody went back and recorded
+       * anyway: it renders as an ordinary past entry, it can still reach the
+       * green check, and its unfinished states stay neutral because nothing was
+       * ever asked of it. A fixture needs at least one, or the epoch's effect is
+       * invisible on a page where it is only ever expressed as an *absence* of
+       * amber.
+       */
+      owed?: boolean;
     }
   | { kind: "no_record" };
 
@@ -320,7 +333,21 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
       "# A housekeeping week\n\nA few were away, so we used the session to tidy up rather than start anything new.\n\n- Cleared and replanted the spawn area\n- Fixed the paths people kept falling off\n- Agreed some ground rules about building on each other's plots\n\nHilda started a shared library that anyone can add books to. It already has four, two of which are just the word \"hello\" repeated.",
   },
 
-  // Before the epoch: nothing was ever expected here, so nothing is owed.
+  // Before the epoch, and recorded anyway: a gedu went back over an old
+  // session. It renders as a normal past entry and wears no alert, because the
+  // platform never asked for it — the one state that proves the epoch gates
+  // what is *owed* rather than what is editable.
+  {
+    kind: "past",
+    owed: false,
+    partial: { present: [SESSION_FEED_GAMER_IDS.aino] },
+    report: `# Before we kept records
+
+Written up long after the fact, from memory and the world save. Half the register is guesswork, so it stays half-marked.`,
+  },
+
+  // Before the epoch and untouched: nothing was ever expected here, so nothing
+  // is owed — and it still opens the same editor as any other past session.
   { kind: "no_record" },
   { kind: "no_record" },
 ];
@@ -594,6 +621,7 @@ function toEntry(
         id,
         startsAt,
         endsAt,
+        owed: spec.owed ?? true,
         report: resolveReportDate(spec.report, startsAt),
         staffNote: spec.staffNote ?? null,
         attendance: marksForSpec(spec),
