@@ -1682,6 +1682,22 @@
       "dialogDescription": "Selaa luetteloa tai hae nimellä."
     }
   },
+  "gameAccount": {
+    "label": "{platform}-käyttäjänimi",
+    "usernameLabel": "{platform}-käyttäjänimi",
+    "placeholder": "esim. {example}",
+    "verify": "Vahvista",
+    "verifying": "Vahvistetaan...",
+    "notFound": "{platform}-tiliä ei löytynyt. Tarkista käyttäjänimi ja yritä uudelleen.",
+    "verifiedUser": "{username} (vahvistettu)",
+    "unverified": "{username} (ei vielä vahvistettu)",
+    "displayName": "Näkyy pelissä nimellä {displayName}",
+    "none": "(ei tiedossa)",
+    "edit": "Muokkaa {platform}-käyttäjänimeä",
+    "editFor": "Muokkaa pelaajan {name} {platform}-käyttäjänimeä",
+    "save": "Tallenna",
+    "cancel": "Peruuta"
+  },
   "minecraft": {
     "label": "Minecraft-käyttäjänimi",
     "placeholder": "esim. Steve",

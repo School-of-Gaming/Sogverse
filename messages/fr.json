@@ -1682,6 +1682,22 @@
       "dialogDescription": "Parcourez la liste ou recherchez par nom."
     }
   },
+  "gameAccount": {
+    "label": "Nom d’utilisateur {platform}",
+    "usernameLabel": "Nom d’utilisateur {platform}",
+    "placeholder": "ex. {example}",
+    "verify": "Vérifier",
+    "verifying": "Vérification...",
+    "notFound": "Compte {platform} introuvable. Vérifiez le nom d’utilisateur et réessayez.",
+    "verifiedUser": "{username} (vérifié)",
+    "unverified": "{username} (pas encore vérifié)",
+    "displayName": "Affiché en jeu sous le nom {displayName}",
+    "none": "(Inconnu)",
+    "edit": "Modifier le nom d’utilisateur {platform}",
+    "editFor": "Modifier le nom d’utilisateur {platform} de {name}",
+    "save": "Enregistrer",
+    "cancel": "Annuler"
+  },
   "minecraft": {
     "label": "Nom d’utilisateur Minecraft",
     "placeholder": "ex. Steve",

@@ -1727,6 +1727,22 @@
       "dialogDescription": "tetlh yIlaD ghap pong yIlo’."
     }
   },
+  "gameAccount": {
+    "label": "{platform} lo’wI’ pong",
+    "usernameLabel": "{platform} lo’wI’ pong",
+    "placeholder": "e.g. {example}",
+    "verify": "yIchel",
+    "verifying": "vIchel...",
+    "notFound": "{platform} account tu’be’lu’. pong yIchel je yIboq.",
+    "verifiedUser": "{username} (chellu’)",
+    "unverified": "{username} (chelbe’lu’)",
+    "displayName": "QujDaq {displayName} ponglu’",
+    "none": "(Sovbe’lu’)",
+    "edit": "{platform} pong yIchoH",
+    "editFor": "{name} {platform} pong yIchoH",
+    "save": "yIpol",
+    "cancel": "yIqIl"
+  },
   "minecraft": {
     "label": "Minecraft lo’wI’ pong",
     "placeholder": "e.g. Steve",

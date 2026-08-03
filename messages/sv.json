@@ -1682,6 +1682,22 @@
       "dialogDescription": "Bläddra i listan eller sök på namn."
     }
   },
+  "gameAccount": {
+    "label": "{platform}-användarnamn",
+    "usernameLabel": "{platform}-användarnamn",
+    "placeholder": "t.ex. {example}",
+    "verify": "Verifiera",
+    "verifying": "Verifierar...",
+    "notFound": "{platform}-kontot hittades inte. Kontrollera användarnamnet och försök igen.",
+    "verifiedUser": "{username} (verifierad)",
+    "unverified": "{username} (ännu inte verifierad)",
+    "displayName": "Visas i spelet som {displayName}",
+    "none": "(okänt)",
+    "edit": "Redigera {platform}-användarnamn",
+    "editFor": "Redigera {platform}-användarnamn för {name}",
+    "save": "Spara",
+    "cancel": "Avbryt"
+  },
   "minecraft": {
     "label": "Minecraft-användarnamn",
     "placeholder": "t.ex. Steve",

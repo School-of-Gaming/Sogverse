@@ -3,6 +3,7 @@
 
 import {
   createContext,
+  Fragment,
   useContext,
   useEffect,
   useRef,
@@ -109,15 +110,14 @@ import {
 } from "@/components/billing";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {
-  MinecraftUsernameRow,
-  type MinecraftCheckStatus,
-} from "@/components/minecraft/minecraft-username-row";
-import {
-  RobloxUsernameRow,
-  type RobloxCheckStatus,
-} from "@/components/roblox/roblox-username-row";
-import { RobloxUsernameBadge } from "@/components/roblox/roblox-username-badge";
-import { RobloxUsernameField } from "@/components/roblox/roblox-username-field";
+  GAME_PLATFORMS,
+  GameUsernameBadge,
+  GameUsernameEditableRow,
+  GameUsernameField,
+  GameUsernameRow,
+  type GameAccountStatus,
+  type GamePlatform,
+} from "@/components/game-account";
 
 /**
  * Chip demo people. Real generated UUIDv4s, hardcoded: an identicon is hashed
@@ -2203,63 +2203,42 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 18: Minecraft username — fixed-geometry identity      */}
+      {/* Section 18: Game account — one identity, any platform         */}
       {/* ============================================================ */}
-      <Section title="Minecraft username — fixed-geometry identity">
+      <Section title="Game account — one identity, any platform">
         <p className="text-sm text-muted-foreground -mt-2">
-          A child&rsquo;s Minecraft identity as one row: their skin, their
-          username, and a status slot for the Mojang lookup.{" "}
-          <strong>The geometry is the feature.</strong> Validating a username is
-          an async round trip, and the obvious implementation &mdash; show a
-          spinner, swap in a tick or a cross &mdash; moves everything to its right
-          twice per check. In a roster of eight, mid-session, that is eight rows
-          twitching while a gedu is trying to click one. So the skin is a fixed
-          square, the status is a fixed square, and the username is the only thing
-          between them that flexes. All four states below are exactly the same
-          size.
+          One component set for a child&rsquo;s identity on a game platform,
+          parameterised by <code>platform</code>. Everything a platform does
+          differently &mdash; its icon, its username rule, the proportion of its
+          figure, whether a figure can be derived from a name at all, its verify
+          route&rsquo;s result shape &mdash; lives in a{" "}
+          <strong>descriptor</strong> in{" "}
+          <code>components/game-account/platforms.tsx</code>, and the components
+          render from it. The alternative, which this replaces, was a forked tree
+          per platform: three files each, already drifting, disagreeing about the
+          status vocabulary and about whether a stale lookup could overwrite what
+          someone was typing.
         </p>
         <p className="text-sm text-muted-foreground">
-          The skin is <em>cropped, not re-rendered</em>: the skin source hands
-          back a full-body figure, and the <code>bust</code> variant is that same
-          image with a square box and <code>object-position: top</code> over it.
-          One asset, two presentations &mdash; the <code>full</code> variant is
-          the crop taken off. Everything here draws the bundled placeholder
-          figure, an inline SVG on the same 16&times;32 grid the real render uses,
-          so a fixture-driven page makes no network call and the crop behaves
-          identically either way.
-        </p>
-        <MinecraftUsernameRowDemo />
-      </Section>
-
-      {/* ============================================================ */}
-      {/* Section 19: Roblox                                            */}
-      {/* ============================================================ */}
-      <Section title="Roblox">
-        <p className="text-sm text-muted-foreground -mt-2">
-          The same fixed-geometry identity row as Minecraft, re-cut for Roblox.
-          Two things about Roblox force the change.{" "}
-          <strong>Every thumbnail is square</strong> &mdash; the API rejects a
-          non-square size outright &mdash; so the 1:2 box the Minecraft row draws
-          has no equivalent here. And <strong>the render is the bust</strong>, not
-          the full body: inside a square frame the full-body variant puts the
-          figure at 27% of the frame and 40% of its width, a small person adrift
-          in transparent padding, while the bust fills 88% and 98%. The Minecraft
-          component&rsquo;s argument for a whole body &mdash; a skin is a costume,
-          and the chosen half is below the shoulders &mdash; simply cannot survive
-          a 1:1 frame.
+          <strong>Four states, and they are facts about the account</strong> plus
+          one in-flight moment: a saved username, and whether a lookup ever
+          returned an account id for it. Each survives a reload. There is
+          deliberately no <em>invalid</em> &mdash; a name that failed a lookup and
+          a name nobody ever looked up are the same thing to whoever reads a
+          roster, <em>not verified</em>, and the surface that ran the lookup owns
+          the error copy explaining why.
         </p>
         <p className="text-sm text-muted-foreground">
-          Everything else is deliberately identical. The avatar is a fixed square,
+          <strong>The geometry is the feature.</strong> The figure is a fixed box,
           the status is a fixed square, and the username is the only thing between
-          them that flexes, so a lookup landing never moves the row. The
-          fixture-driven rows below draw a bundled inline SVG rather than
-          fetching, on the same 1:1 grid the real render uses &mdash; so the box
-          behaves the same against a placeholder and against a real avatar. The
-          live sub-section is the proof: the bust that arrives from{" "}
-          <code>/api/roblox/verify</code> lands in a slot that was already holding
-          its space.
+          them that flexes &mdash; so a lookup landing never moves the row, and
+          eight roster rows do not twitch under a game educator&rsquo;s cursor
+          mid-session. The box is drawn at the platform&rsquo;s own render
+          proportion, 1:2 for a Minecraft body and 1:1 for a Roblox bust, so{" "}
+          <code>full</code> is the very same asset drawn larger rather than a
+          second picture from a second pipeline.
         </p>
-        <RobloxDemo />
+        <GameAccountDemo />
       </Section>
 
     </div>
@@ -2701,155 +2680,227 @@ function RichTextEditorDemo() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Minecraft username row                                             */
+/*  Game account — one identity, any platform                          */
 /* ------------------------------------------------------------------ */
 
-const MINECRAFT_STATUSES: readonly {
-  status: MinecraftCheckStatus;
-  caption: string;
+/**
+ * Both platforms, everywhere. The whole point of the descriptor is that a
+ * component takes one platform and the caller composes — so every matrix below
+ * is the same component rendered twice, never a second component.
+ */
+const DEMO_PLATFORMS: readonly GamePlatform[] = ["minecraft", "roblox"];
+
+/**
+ * A real handle on each platform, so the live section below actually resolves
+ * and the Minecraft rows can derive a real skin from the name.
+ */
+const DEMO_USERNAME: Readonly<Record<GamePlatform, string>> = {
+  minecraft: "Notch",
+  roblox: "builderman",
+};
+
+const DEMO_STATUSES: readonly {
+  status: GameAccountStatus;
+  note: string;
 }[] = [
-  { status: "idle", caption: "Idle — nobody has asked" },
-  { status: "checking", caption: "Checking — the lookup is in flight" },
-  { status: "valid", caption: "Valid — a real account" },
-  { status: "invalid", caption: "Invalid — no such account" },
+  {
+    status: "unknown",
+    note: "No username saved. The muted placeholder copy, and the figure stays drawn — a face here would claim an identity the row is denying.",
+  },
+  {
+    status: "unverified",
+    note: "A saved name no lookup ever confirmed. Amber, with the tick simply absent rather than a glyph of its own: the missing tick is the signal.",
+  },
+  {
+    status: "verified",
+    note: "A saved name and a confirmed account key. Success green plus the tick.",
+  },
+  {
+    status: "checking",
+    note: "A lookup is in flight. The spinner sits in the square the tick will land in, so nothing moves when it does.",
+  },
 ];
 
-function MinecraftUsernameRowDemo() {
+/**
+ * The status matrix: four states down, both platforms across, one size per
+ * instance. Everything here passes `avatarUrl={null}` — a fixture surface must
+ * not reach a third-party host on load, and on Minecraft leaving the prop off
+ * *is* a network request.
+ */
+function GameRowMatrix({ size }: { size: "row" | "full" }) {
   return (
-    <div className="space-y-8">
-      <SubSection title="Row — the whole figure at 24px, every state at identical dimensions">
-        <div className="max-w-xs space-y-2 rounded-lg border p-4">
-          {MINECRAFT_STATUSES.map(({ status, caption }) => (
-            <div key={status} className="space-y-1">
-              <DemoCaption>{caption}</DemoCaption>
-              <MinecraftUsernameRow username="EliasRedstone" status={status} />
-            </div>
-          ))}
-          <div className="space-y-1">
-            <DemoCaption>No username on the account</DemoCaption>
-            <MinecraftUsernameRow username={null} />
-          </div>
-          <div className="space-y-1">
-            <DemoCaption>A username with no upper bound</DemoCaption>
-            <MinecraftUsernameRow
-              username="GalaxyDestroyer9000"
-              status="valid"
-            />
-          </div>
-        </div>
-      </SubSection>
+    <div className="grid grid-cols-[14rem_1fr_1fr] items-start gap-x-8 gap-y-5 rounded-lg border p-4">
+      <div />
+      {DEMO_PLATFORMS.map((platform) => (
+        <DemoCaption key={platform}>{GAME_PLATFORMS[platform].name}</DemoCaption>
+      ))}
 
-      <SubSection title="Full — the same asset, a third bigger">
-        <div className="flex flex-wrap gap-6 rounded-lg border p-4">
-          {MINECRAFT_STATUSES.map(({ status, caption }) => (
-            <div key={status} className="w-44 space-y-1">
-              <DemoCaption>{caption}</DemoCaption>
-              <MinecraftUsernameRow
-                username="EliasRedstone"
-                status={status}
-                size="full"
-              />
-            </div>
+      {DEMO_STATUSES.map(({ status, note }) => (
+        <Fragment key={status}>
+          <div className="space-y-1">
+            <DemoCaption>{status}</DemoCaption>
+            <p className="text-xs text-muted-foreground">{note}</p>
+          </div>
+          {DEMO_PLATFORMS.map((platform) => (
+            <GameUsernameRow
+              key={platform}
+              platform={platform}
+              // The unknown state is what a null username *is*, so it is shown
+              // the honest way: by having no username, not by asserting a state.
+              username={status === "unknown" ? null : DEMO_USERNAME[platform]}
+              status={status}
+              avatarUrl={null}
+              size={size}
+            />
           ))}
-        </div>
-      </SubSection>
+        </Fragment>
+      ))}
     </div>
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Roblox                                                             */
-/* ------------------------------------------------------------------ */
-
-const ROBLOX_STATUSES: readonly {
-  status: RobloxCheckStatus;
+const BADGE_STATES: readonly {
   caption: string;
+  /** Whether this row has a saved handle at all — false is the "(Unknown)" row. */
+  named: boolean;
+  externalId: Readonly<Record<GamePlatform, string | number | null>>;
 }[] = [
   {
-    status: "verified",
-    caption: "We know, and it's verified — a confirmed account id",
+    caption: "Verified — the handle resolved to an account",
+    named: true,
+    externalId: {
+      minecraft: "8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6",
+      roblox: 68306362,
+    },
   },
   {
-    status: "unverified",
-    caption:
-      "We know, but it isn't verified — a saved name no lookup ever confirmed. Amber, with the tick simply absent rather than a glyph of its own: the house treatment for a saved-but-unconfirmed game account, matching the badge form below.",
+    caption: "Entered, never checked",
+    named: true,
+    externalId: { minecraft: null, roblox: null },
   },
   {
-    status: "unknown",
-    caption: "We don't know — no username on the account",
+    caption: "Nothing on the account",
+    named: false,
+    externalId: { minecraft: null, roblox: null },
   },
-  { status: "checking", caption: "Checking — a lookup is in flight" },
 ];
 
-function RobloxDemo() {
+/**
+ * The badge matrix.
+ *
+ * Only the last row has no username, so it is the one that renders "(Unknown)";
+ * the first two share a handle and differ only in whether an account key is
+ * present — which is the whole of what "verified" means to this component. It
+ * never reads the key's value, which is how a dashed Mojang UUID and a Roblox
+ * integer sit in one prop without being pretended to be the same kind of thing.
+ */
+function GameBadgeMatrix({ size }: { size: "sm" | "base" }) {
   return (
-    <div className="space-y-8">
-      <SubSection title="Row — the bust at 48px, every state at identical dimensions">
-        <div className="max-w-xs space-y-2 rounded-lg border p-4">
-          {ROBLOX_STATUSES.map(({ status, caption }) => (
-            <div key={status} className="space-y-1">
-              <DemoCaption>{caption}</DemoCaption>
-              <RobloxUsernameRow username="EliasBuilds" status={status} />
-            </div>
-          ))}
-          <div className="space-y-1">
-            <DemoCaption>
-              A null username renders as unknown whatever the status claims —
-              the two can&rsquo;t disagree
-            </DemoCaption>
-            <RobloxUsernameRow username={null} status="verified" />
-          </div>
-          <div className="space-y-1">
-            <DemoCaption>A username with no upper bound</DemoCaption>
-            <RobloxUsernameRow
-              username="GalaxyDestroyer9000"
-              status="verified"
+    <div className="grid grid-cols-[14rem_1fr_1fr] items-center gap-x-8 gap-y-4 rounded-lg border p-4">
+      <div />
+      {DEMO_PLATFORMS.map((platform) => (
+        <DemoCaption key={platform}>{GAME_PLATFORMS[platform].name}</DemoCaption>
+      ))}
+
+      {BADGE_STATES.map(({ caption, named, externalId }) => (
+        <Fragment key={caption}>
+          <DemoCaption>{caption}</DemoCaption>
+          {DEMO_PLATFORMS.map((platform) => (
+            <GameUsernameBadge
+              key={platform}
+              platform={platform}
+              username={named ? DEMO_USERNAME[platform] : null}
+              externalId={externalId[platform]}
+              size={size}
             />
-          </div>
-        </div>
-      </SubSection>
-
-      <SubSection title="Full — the same asset, a third bigger">
-        <div className="flex flex-wrap gap-6 rounded-lg border p-4">
-          {ROBLOX_STATUSES.map(({ status, caption }) => (
-            <div key={status} className="w-44 space-y-1">
-              <DemoCaption>{caption}</DemoCaption>
-              <RobloxUsernameRow
-                username="EliasBuilds"
-                status={status}
-                size="full"
-              />
-            </div>
           ))}
-        </div>
-      </SubSection>
+        </Fragment>
+      ))}
+    </div>
+  );
+}
 
-      <SubSection title="Badge — the read-only line, three states">
-        <div className="flex flex-wrap gap-8 rounded-lg border p-4">
-          <div className="space-y-1">
-            <DemoCaption>Verified — the handle resolved to an account</DemoCaption>
-            <RobloxUsernameBadge username="EliasBuilds" userId={68306362} />
-          </div>
-          <div className="space-y-1">
-            <DemoCaption>Entered, never checked</DemoCaption>
-            <RobloxUsernameBadge username="EliasBuilds" userId={null} />
-          </div>
-          <div className="space-y-1">
-            <DemoCaption>Nothing on the account</DemoCaption>
-            <RobloxUsernameBadge username={null} userId={null} />
-          </div>
-          <div className="space-y-1">
-            <DemoCaption>Verified at size=&quot;base&quot;</DemoCaption>
-            <RobloxUsernameBadge
-              username="EliasBuilds"
-              userId={68306362}
-              size="base"
-            />
-          </div>
-        </div>
-      </SubSection>
+/**
+ * The editable roster, driven entirely by local state — no network, no service.
+ *
+ * Saving deliberately **clears the account key**: a name somebody has just typed
+ * has not been checked, so the row drops from verified to unverified in front of
+ * you. That is the status derivation doing its job, and it is the behaviour a
+ * real roster wants — the alternative is a row that goes on claiming a
+ * confirmed account for a name nobody confirmed.
+ */
+const EDITABLE_SEED: readonly {
+  key: string;
+  platform: GamePlatform;
+  person: string;
+  username: string | null;
+  externalId: string | number | null;
+}[] = [
+  {
+    key: "aino",
+    platform: "minecraft",
+    person: "Aino",
+    username: "EliasRedstone",
+    externalId: "8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6",
+  },
+  {
+    key: "joonas",
+    platform: "minecraft",
+    person: "Joonas",
+    username: "JaaKarhu",
+    externalId: null,
+  },
+  {
+    key: "petra",
+    platform: "roblox",
+    person: "Petra",
+    username: "EliasBuilds",
+    externalId: 68306362,
+  },
+  {
+    key: "markus",
+    platform: "roblox",
+    person: "Markus",
+    username: null,
+    externalId: null,
+  },
+];
 
-      <RobloxLiveLookupDemo />
+function GameEditableRowDemo() {
+  const [rows, setRows] = useState(EDITABLE_SEED);
+
+  const save = (key: string, username: string) =>
+    setRows((prev) =>
+      prev.map((row) =>
+        row.key === key
+          ? {
+              ...row,
+              username: username === "" ? null : username,
+              // Newly typed, therefore unchecked.
+              externalId: null,
+            }
+          : row,
+      ),
+    );
+
+  return (
+    <div className="max-w-xl divide-y rounded-lg border">
+      {rows.map((row) => (
+        <div key={row.key} className="flex items-center gap-3 px-4 py-1">
+          <span className="w-16 shrink-0 text-xs text-muted-foreground">
+            {row.person}
+          </span>
+          <GameUsernameEditableRow
+            platform={row.platform}
+            username={row.username}
+            externalId={row.externalId}
+            avatarUrl={null}
+            personName={row.person}
+            onSave={(username) => save(row.key, username)}
+            className="min-w-0 flex-1"
+          />
+        </div>
+      ))}
     </div>
   );
 }
@@ -2857,25 +2908,172 @@ function RobloxDemo() {
 /**
  * The one demo on this page that really talks to the network.
  *
- * `/api/roblox/verify` is public, so it answers from here, and the avatar it
- * resolves is a real render off Roblox's CDN. `Roblox` and `builderman` both
- * exist; anything shaped like a username but unclaimed comes back invalid.
+ * Both verify routes are public, so they answer from here. `Notch` and
+ * `builderman` exist; anything shaped like a username but unclaimed comes back
+ * not-found, and the row falls to unverified while the reason renders as this
+ * field's own error copy underneath.
  */
-function RobloxLiveLookupDemo() {
-  const [username, setUsername] = useState("builderman");
+function GameLiveLookupDemo() {
+  const [minecraft, setMinecraft] = useState("Notch");
+  const [roblox, setRoblox] = useState("builderman");
 
   return (
-    <SubSection title="Live — this one really calls /api/roblox/verify">
-      <div className="max-w-xl space-y-3 rounded-lg border p-4">
-        <p className="text-xs text-muted-foreground">
-          Try <code>Roblox</code> or <code>builderman</code>. The identity row is
-          drawn at its final size before you press anything, so the bust that
-          arrives lands in space that was already reserved — nothing on this page
-          moves when it does.
+    <div className="grid gap-6 rounded-lg border p-4 lg:grid-cols-2">
+      <GameUsernameField
+        platform="minecraft"
+        value={minecraft}
+        onChange={setMinecraft}
+      />
+      <GameUsernameField
+        platform="roblox"
+        value={roblox}
+        onChange={setRoblox}
+      />
+    </div>
+  );
+}
+
+function GameAccountDemo() {
+  return (
+    <div className="space-y-8">
+      <SubSection title="The three categories">
+        <div className="grid gap-3 rounded-lg border p-4 text-sm text-muted-foreground md:grid-cols-3">
+          <p>
+            <strong className="text-foreground">1. First capture.</strong> No
+            username has ever been set &mdash; a register page. The{" "}
+            <code>Field</code>: input, Verify button, and an identity row that is
+            present from first paint at its final size.
+          </p>
+          <p>
+            <strong className="text-foreground">
+              2. Display, not editable here.
+            </strong>{" "}
+            The <code>Row</code> when there is room for a figure, the{" "}
+            <code>Badge</code> when there is room for one line. Two densities of
+            the same fact.
+          </p>
+          <p>
+            <strong className="text-foreground">
+              3. Display, editable in place.
+            </strong>{" "}
+            The <code>EditableRow</code>: a pencil that swaps the row for an
+            input at the same height, so a roster does not reflow around whoever
+            is being edited.
+          </p>
+        </div>
+      </SubSection>
+
+      <SubSection title="Badge — the compact line, three states">
+        <p className="text-sm text-muted-foreground">
+          There is no <code>checking</code> here, and that is a decision rather
+          than an omission: the badge is for a chip, a roster cell, a detail line
+          &mdash; none of which is a place a lookup is run from. The surface that
+          runs one renders the row, which owns a fixed square for the spinner.
         </p>
-        <RobloxUsernameField value={username} onChange={setUsername} />
-      </div>
-    </SubSection>
+        <GameBadgeMatrix size="sm" />
+      </SubSection>
+
+      <SubSection title="Badge at size=base — the standalone detail line">
+        <GameBadgeMatrix size="base" />
+      </SubSection>
+
+      <SubSection title="Row — every state at identical dimensions">
+        <p className="text-sm text-muted-foreground">
+          Both columns are the same component. The box proportion is the
+          platform&rsquo;s, from its descriptor &mdash; 1:2 for a Minecraft body,
+          1:1 for a Roblox bust &mdash; and within a column every one of the four
+          states renders at exactly the same size.
+        </p>
+        <GameRowMatrix size="row" />
+      </SubSection>
+
+      <SubSection title="Row at size=full — the same asset, a third bigger">
+        <GameRowMatrix size="full" />
+      </SubSection>
+
+      <SubSection title="Figures — placeholder, derived, and handed in">
+        <p className="text-sm text-muted-foreground">
+          <code>avatarUrl</code> has three meanings, not two. A string draws that
+          image. An explicit <code>null</code> draws the bundled inline SVG and
+          does not go looking &mdash; what every fixture above passes, because a
+          style-guide page must not reach a third-party host on load. Omitting
+          the prop lets the platform decide, and <em>that is the divergence</em>:
+          Minecraft skins hang off a host addressable by username, so a row
+          holding a name already holds everything it needs, while Roblox has no
+          such endpoint &mdash; an avatar there costs two server hops behind a
+          per-IP rate limit and has to be handed in by whoever resolved it.
+        </p>
+        <div className="grid grid-cols-[14rem_1fr_1fr] items-start gap-x-8 gap-y-5 rounded-lg border p-4">
+          <div />
+          {DEMO_PLATFORMS.map((platform) => (
+            <DemoCaption key={platform}>
+              {GAME_PLATFORMS[platform].name}
+            </DemoCaption>
+          ))}
+
+          <div className="space-y-1">
+            <DemoCaption>avatarUrl={"{null}"}</DemoCaption>
+            <p className="text-xs text-muted-foreground">
+              The drawn figure, on the same grid the real render comes back at.
+            </p>
+          </div>
+          {DEMO_PLATFORMS.map((platform) => (
+            <GameUsernameRow
+              key={platform}
+              platform={platform}
+              username={DEMO_USERNAME[platform]}
+              status="verified"
+              avatarUrl={null}
+              size="full"
+            />
+          ))}
+
+          <div className="space-y-1">
+            <DemoCaption>prop omitted</DemoCaption>
+            <p className="text-xs text-muted-foreground">
+              Minecraft derives a real skin from the name and fetches it. Roblox
+              cannot, so it stays on the placeholder &mdash; the same prop, two
+              honest answers.
+            </p>
+          </div>
+          {DEMO_PLATFORMS.map((platform) => (
+            <GameUsernameRow
+              key={platform}
+              platform={platform}
+              username={DEMO_USERNAME[platform]}
+              status="verified"
+              size="full"
+            />
+          ))}
+        </div>
+      </SubSection>
+
+      <SubSection title="Editable in place — the pencil, working against local state">
+        <p className="text-sm text-muted-foreground">
+          Enter commits, Escape cancels, and the draft is seeded when the editor
+          opens rather than held across closes, so cancelling really discards.
+          Display and edit are both <code>h-12</code>: opening an editor is a
+          change the person asked for and may replace what is under them, but the
+          rows around it asked for nothing and must not move. Saving clears the
+          account key, so a freshly typed name honestly drops to amber.
+        </p>
+        <GameEditableRowDemo />
+      </SubSection>
+
+      <SubSection title="First capture — live, these really call the verify routes">
+        <p className="text-sm text-muted-foreground">
+          Try <code>Notch</code> or <code>jeb_</code> on the left,{" "}
+          <code>Roblox</code> or <code>builderman</code> on the right. Each
+          identity row is drawn at its final size before you press anything, so
+          the figure that arrives lands in space already reserved and nothing on
+          this page moves. The spinner is the row&rsquo;s status square, not the
+          button; the button is held disabled for the whole flight by a flag set
+          synchronously before the call, so it cannot flicker back between the
+          request resolving and the result rendering.
+        </p>
+        <GameLiveLookupDemo />
+      </SubSection>
+    </div>
   );
 }
 
