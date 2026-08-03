@@ -1,6 +1,6 @@
 # Testing
 
-Tests live here in four categories — `unit/`, `integration/`, `db/`, and `e2e/` — plus
+Tests live here in four categories — `unit/`, `integration/`, `db/`, and `smoke/` — plus
 two support dirs: `mocks/` (shared mock factories — add new mocks here rather than
 duplicating across files) and `helpers/`. Two Vitest configs drive them:
 `vitest.config.mts` (jsdom, runs `unit/` + `integration/`) and `vitest.config.db.mts`
@@ -13,10 +13,28 @@ duplicating across files) and `helpers/`. Two Vitest configs drive them:
 | **unit** | Pure functions, service classes with injected mock dependencies, mapping/transform logic | `.test.ts`, Vitest |
 | **integration** | Route handlers (import real POST/PATCH/GET), proxy, auth flows — full request pipeline with mocked external deps | `.test.ts`, Vitest |
 | **db** | RPCs, constraints, RLS policies against real Postgres | `.test.ts`, Vitest (`vitest.config.db.mts`) |
-| **e2e** | Playwright browser tests against running dev server | `.spec.ts`, Playwright |
+| **smoke** | Assertions on the HTTP responses of a served production build — headers, CSP | `.spec.ts`, Playwright |
 
-`npm run test` runs `unit/` + `integration/` (the jsdom config). `npm run test:e2e`
+`npm run test` runs `unit/` + `integration/` (the jsdom config). `npm run test:smoke`
 runs Playwright.
+
+## The smoke check is a build gate first
+
+`smoke/` is the only place we build the app and serve it. Playwright's config starts the
+production server, so the check fails if the build breaks or the server refuses to boot —
+and that gate is most of its value. The assertions on top of it are the ones that can
+only be made against a real response: the static security headers, and the per-request
+CSP nonce the proxy generates (which is absent in dev, so nothing else can verify it).
+
+**It uses Playwright's request fixture only — never a browser.** That is deliberate, and
+it is what keeps the job cheap: no engine matrix, no device emulation, no browser
+binaries to install in CI, no retries, because HTTP header assertions are deterministic.
+A spec here that needs a `page` does not belong here.
+
+There was a browser-driven suite before, asserting on marketing copy and unauthenticated
+redirects; it was deleted in August 2026 for churning on every copy edit while catching
+nothing. `TODO.md` holds the plan for a real browser suite against a local Supabase stack
+— that would be a new category, not an addition to this one.
 
 ## DB tests run in CI, not locally
 
