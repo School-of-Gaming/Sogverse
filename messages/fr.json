@@ -357,8 +357,6 @@
         "subject": "Sujets"
       },
       "locationPicker": {
-        "clearSearch": "Effacer la recherche",
-        "noResults": "Aucun lieu ne correspond à « {query} ».",
         "hintSite": "Choisissez le site où cela se déroule. Vous en ouvrez un nouveau ? Partez de sa commune.",
         "hintMunicipality": "Choisissez la commune finlandaise concernée par ce club — celle qui le finance. Les sites et les autres pays ne sont pas proposés ici.",
         "change": "Changer",

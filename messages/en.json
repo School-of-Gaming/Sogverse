@@ -357,8 +357,6 @@
         "subject": "Subjects"
       },
       "locationPicker": {
-        "clearSearch": "Clear search",
-        "noResults": "No locations match “{query}”.",
         "hintSite": "Pick the venue this runs at. Opening a new one? Start from its municipality.",
         "hintMunicipality": "Pick the Finnish municipality this club is for — the one that funds it. Sites and other countries aren’t options here.",
         "change": "Change",

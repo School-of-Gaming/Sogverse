@@ -357,8 +357,6 @@
         "subject": "Ämnen"
       },
       "locationPicker": {
-        "clearSearch": "Rensa sökning",
-        "noResults": "Inga platser matchar ”{query}”.",
         "hintSite": "Välj lokalen där detta hålls. Öppnar du en ny? Börja med kommunen.",
         "hintMunicipality": "Välj den finländska kommun som klubben gäller — den som finansierar den. Lokaler och andra länder kan inte väljas här.",
         "change": "Ändra",

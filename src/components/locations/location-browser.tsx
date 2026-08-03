@@ -76,41 +76,44 @@ export function LocationBrowser({
 
   return (
     <LocationPickerPanel
-      path={path}
-      // A row's full path is its ancestors reversed to root-first, then the row
-      // itself — and that is true however the row was found, which is why the
-      // path is rebuilt rather than appended to. Browsing, it reduces to
-      // appending, because a browse row's ancestors *are* the current
-      // breadcrumb. Searching, it is the only thing that can be right: nobody
-      // drilled through Finland and Uusimaa to reach a school in Helsinki, so
-      // appending would leave the breadcrumb claiming the school sits directly
-      // under every country.
-      onDrill={(pick) =>
-        setPath([...[...pick.ancestors].reverse(), pick.location])
-      }
-      onOpenDepth={(depth) => setPath((current) => current.slice(0, depth))}
       query={query}
       onQueryChange={setQuery}
-      minQueryLength={LOCATION_SEARCH_MIN_QUERY}
-      browse={{
-        rows: browseRows,
-        total: level.data?.pages.at(-1)?.total ?? browseRows.length,
-        hasMore: level.hasNextPage,
-        onLoadMore: () => void level.fetchNextPage(),
-        // Only the first page's absence is a loading state: a later page
-        // appends under rows already on screen and must not blank them.
-        loading: level.isPending,
+      scope={{
+        kind: "tree",
+        path,
+        // A row's full path is its ancestors reversed to root-first, then the
+        // row itself — and that is true however the row was found, which is why
+        // the path is rebuilt rather than appended to. Browsing, it reduces to
+        // appending, because a browse row's ancestors *are* the current
+        // breadcrumb. Searching, it is the only thing that can be right: nobody
+        // drilled through Finland and Uusimaa to reach a school in Helsinki, so
+        // appending would leave the breadcrumb claiming the school sits
+        // directly under every country.
+        onDrill: (pick) =>
+          setPath([...[...pick.ancestors].reverse(), pick.location]),
+        onOpenDepth: (depth) => setPath((current) => current.slice(0, depth)),
+        minQueryLength: LOCATION_SEARCH_MIN_QUERY,
+        browse: {
+          rows: browseRows,
+          total: level.data?.pages.at(-1)?.total ?? browseRows.length,
+          hasMore: level.hasNextPage,
+          onLoadMore: () => void level.fetchNextPage(),
+          // Only the first page's absence is a loading state: a later page
+          // appends under rows already on screen and must not blank them.
+          loading: level.isPending,
+        },
+        search: {
+          rows: searchRows,
+          total: search.data?.total ?? 0,
+          hasMore: false,
+          // Pending only while there is nothing at all to show. Once a needle
+          // has hits they stay on screen through the next keystroke's debounce
+          // and request — the list the user is reading is replaced, never
+          // emptied.
+          loading: search.isPending,
+        },
+        selection,
       }}
-      search={{
-        rows: searchRows,
-        total: search.data?.total ?? 0,
-        hasMore: false,
-        // Pending only while there is nothing at all to show. Once a needle has
-        // hits they stay on screen through the next keystroke's debounce and
-        // request — the list the user is reading is replaced, never emptied.
-        loading: search.isPending,
-      }}
-      selection={selection}
     />
   );
 }

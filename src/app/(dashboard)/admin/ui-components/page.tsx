@@ -61,7 +61,7 @@ import type {
   VoiceRoomContextValue,
   VoiceParticipant,
 } from "@/components/voice/hooks/types";
-import type { VoiceZone } from "@/types";
+import type { Json, VoiceZone } from "@/types";
 import {
   LocationPickerPanel,
   type LocationChainSummary,
@@ -69,10 +69,7 @@ import {
   type LocationSummary,
 } from "@/components/locations/location-picker-panel";
 import { HomeLocationField } from "@/components/locations/home-location-field";
-import {
-  LocationList,
-  type LocationListGroup,
-} from "@/components/admin/products/location-list";
+import type { LocationGroup } from "@/components/locations/location-groups";
 import {
   ProductBrowseCardView,
   type LocationLine,
@@ -1801,48 +1798,35 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 9b: Location List                                     */}
-      {/* ============================================================ */}
-      <Section title="Location List">
-        <p className="text-sm text-muted-foreground">
-          The counterpart to the tree picker below, not a smaller version of it.
-          The picker browses the whole hierarchy a level at a time and searches
-          it on the server, because the hierarchy is far larger than any screen.
-          This renders a bounded set the surface has <em>already</em> fetched in
-          full and wants grouped — the venues an admin created, and the Finnish
-          municipalities an online club can be funded by. Grouping them by the
-          place above them is the thing a tree cannot do.
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Worth trying: matching a group header keeps every row under it (type{" "}
-          <code>helsinki</code> to list its venues), search is
-          diacritic-insensitive in both directions (<code>jarvenpaa</code> finds
-          Järvenpää), and the list holds one fixed height across loading, empty
-          and loaded so nothing under it moves.
-        </p>
-        <LocationListDemo />
-      </Section>
-
-      {/* ============================================================ */}
-      {/* Section 9c: Location Picker                                   */}
+      {/* Section 9b: Location Picker                                   */}
       {/* ============================================================ */}
       <Section title="Location Picker">
         <p className="text-sm text-muted-foreground">
-          One panel, two selection modes. In the real app a container above it
-          owns the browse position, the debounced query and the two server reads
-          behind them — one level of children by parent, or a ranked top-N from
-          the search index — and hands the panel finished rows. Here both modes
-          are fed a fixture and fake handlers, no network at all: the panel takes
-          rows and a <code>selection</code> config as props and owns nothing
-          else, which is the separation-of-concerns check.
+          One panel, and every location control in the app is a configuration of
+          it. The axis being demonstrated here is the <code>scope</code>: what
+          the panel is showing <em>before the first keystroke</em>. In{" "}
+          <strong>tree</strong> scope it browses the hierarchy from the
+          countries down; in <strong>set</strong> scope it lists a bounded
+          collection the surface has already fetched, grouped under the place
+          above each row. These were two components until they were merged —
+          the search box, the selected-row highlight, the name-plus-muted-detail
+          row and the fixed-height box were each written twice.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          In the real app a container above the panel owns the browse position,
+          the debounced query and the two server reads behind them — one level
+          of children by parent, or a ranked top-N from the search index. Here
+          every scope is fed a fixture and fake handlers, no network at all: the
+          panel takes rows and a <code>scope</code> config as props and owns
+          nothing else, which is the separation-of-concerns check.
         </p>
         <p className="text-sm text-muted-foreground">
           Note what is <em>not</em> here: no country to choose first (a country
-          is simply the top level of the tree) and no loading skeleton. Both
-          reads behind the real panel are small indexed lookups, so the list box
+          is simply the top level of the tree) and no loading skeleton. Every
+          read behind the real panel is a small indexed lookup, so the list box
           — which already has its final height — just fills in.
         </p>
-        <SubSection title="Single mode (pick one place)">
+        <SubSection title="Tree scope, single mode (pick one place)">
           <p className="text-sm text-muted-foreground mb-3">
             The rows are real table rows, so confirming one hands the caller the
             row itself plus its ancestors — enough to write the foreign key and
@@ -1852,7 +1836,7 @@ export default function AdminUIComponentsPage() {
           </p>
           <LocationPickerDemo />
         </SubSection>
-        <SubSection title="Multi mode (gedu coverage)">
+        <SubSection title="Tree scope, multi mode (gedu coverage)">
           <p className="text-sm text-muted-foreground mb-3">
             Every level is tickable and each tick is an independent &ldquo;I
             cover this whole subtree&rdquo; claim, so ticking Hauts-de-France and
@@ -1863,7 +1847,7 @@ export default function AdminUIComponentsPage() {
           </p>
           <LocationCoverageDemo />
         </SubSection>
-        <SubSection title="Searching">
+        <SubSection title="Tree scope, searching">
           <p className="text-sm text-muted-foreground mb-3">
             The same panel, told it is showing search hits: each row carries the
             path that tells two identically-named communes apart, and the status
@@ -1873,6 +1857,25 @@ export default function AdminUIComponentsPage() {
             table it sits.
           </p>
           <LocationSearchDemo />
+        </SubSection>
+        <SubSection title="Set scope (the product form's two modes)">
+          <p className="text-sm text-muted-foreground mb-3">
+            The same panel again, handed finished groups instead of a level.
+            There is no breadcrumb (there is nothing to browse), no status line
+            (nothing was capped) and no confirm step — the panel sits inline in
+            the product form, so a click <em>is</em> the pick and the form owns
+            the commit. Filtering is local: the rows are already in memory, so a
+            keystroke costs no request and has no loading state.
+          </p>
+          <p className="text-sm text-muted-foreground mb-3">
+            Worth trying: matching a group header keeps every row under it (type{" "}
+            <code>helsinki</code> to list its venues), and the fold is
+            diacritic-insensitive in both directions (<code>jarvenpaa</code>{" "}
+            finds Järvenpää, and so does <code>järvenpää</code>) — the same fold
+            the database applies, pinned to it by a shared table of inputs in
+            the test suites.
+          </p>
+          <LocationSetDemo />
         </SubSection>
         <SubSection title="Home location field (parent profile)">
           <p className="text-sm text-muted-foreground mb-3">
@@ -2063,14 +2066,31 @@ export default function AdminUIComponentsPage() {
 /* ------------------------------------------------------------------ */
 
 /* ------------------------------------------------------------------ */
-/*  Location List Demo                                                 */
+/*  Location Set Demo                                                  */
 /* ------------------------------------------------------------------ */
+
+function venue(id: string, name: string, nameI18n: Json | null = null): LocationSummary {
+  return { id, name, name_i18n: nameI18n, type: "site", country_code: "FI" };
+}
+
+function place(
+  id: string,
+  name: string,
+  type: LocationSummary["type"],
+  nameI18n: Json | null = null,
+): LocationChainSummary {
+  return { id, name, name_i18n: nameI18n, type };
+}
+
+const UUSIMAA = place("uusimaa", "Uusimaa", "region", { sv: "Nyland" });
+const PIRKANMAA = place("pirkanmaa", "Pirkanmaa", "region");
+const FI = place("fi", "Suomi", "country");
 
 // Venues under their municipality, with the region as the header's context —
 // the exact shape the product picker's site mode builds from the scoped sites
 // read. Järvenpää is here so the diacritic folding is visible, and Helsinki
 // carries its Swedish name so a header search matches an alternate too.
-const VENUE_GROUPS: LocationListGroup[] = [
+const VENUE_GROUPS: LocationGroup[] = [
   {
     key: "helsinki",
     label: "Helsinki",
@@ -2078,16 +2098,12 @@ const VENUE_GROUPS: LocationListGroup[] = [
     searchTerms: ["Helsinki", "Helsingfors"],
     rows: [
       {
-        id: "hki-1",
-        name: "Itälahdenkatu 23 B",
-        detail: "",
-        searchTerms: ["Itälahdenkatu 23 B"],
+        location: venue("hki-1", "Itälahdenkatu 23 B"),
+        ancestors: [place("helsinki", "Helsinki", "municipality", { sv: "Helsingfors" }), UUSIMAA, FI],
       },
       {
-        id: "hki-2",
-        name: "Kalasataman kirjasto",
-        detail: "",
-        searchTerms: ["Kalasataman kirjasto"],
+        location: venue("hki-2", "Kalasataman kirjasto"),
+        ancestors: [place("helsinki", "Helsinki", "municipality", { sv: "Helsingfors" }), UUSIMAA, FI],
       },
     ],
   },
@@ -2098,10 +2114,8 @@ const VENUE_GROUPS: LocationListGroup[] = [
     searchTerms: ["Järvenpää"],
     rows: [
       {
-        id: "jp-1",
-        name: "Kirjasto",
-        detail: "",
-        searchTerms: ["Kirjasto"],
+        location: venue("jp-1", "Kirjasto"),
+        ancestors: [place("jarvenpaa", "Järvenpää", "municipality"), UUSIMAA, FI],
       },
     ],
   },
@@ -2109,67 +2123,70 @@ const VENUE_GROUPS: LocationListGroup[] = [
     key: "tampere",
     label: "Tampere",
     detail: "Pirkanmaa",
-    searchTerms: ["Tampere", "Tammerfors"],
+    searchTerms: ["Tampere"],
     rows: [
-      { id: "tre-1", name: "Sampola", detail: "", searchTerms: ["Sampola"] },
+      {
+        location: venue("tre-1", "Sampola"),
+        ancestors: [place("tampere", "Tampere", "municipality"), PIRKANMAA, FI],
+      },
     ],
   },
 ];
 
-const LIST_LABELS = {
+const SET_LABELS = {
   searchPlaceholder: "Search venues by name or municipality…",
-  clearSearch: "Clear search",
   empty: "No venues yet.",
-  noResults: (query: string) => `No locations match “${query}”.`,
-  loading: "Loading locations",
 };
 
-function LocationListDemo() {
+function LocationSetDemo() {
+  const [query, setQuery] = useState("");
   const [value, setValue] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [emptyQuery, setEmptyQuery] = useState("");
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
       <div className="space-y-2">
-        <h4 className="text-sm font-semibold">Loaded</h4>
-        <LocationList
-          groups={VENUE_GROUPS}
-          value={value}
-          onSelect={setValue}
-          labels={LIST_LABELS}
-          footer={
-            <Button type="button" variant="outline" size="sm">
-              New venue…
-            </Button>
-          }
+        <h4 className="text-sm font-semibold">A set with rows in it</h4>
+        <LocationPickerPanel
+          query={query}
+          onQueryChange={setQuery}
+          scope={{
+            kind: "set",
+            groups: VENUE_GROUPS,
+            value,
+            onSelect: (pick) => setValue(pick.location.id),
+            labels: SET_LABELS,
+            footer: (
+              <Button type="button" variant="outline" size="sm">
+                New venue…
+              </Button>
+            ),
+          }}
         />
         <p className="text-xs text-muted-foreground">
-          Selected: {value ?? "(none)"}
+          Selected: {value ?? "(none)"} &mdash; a click is the pick, so this is
+          the whole interaction. The caller gets the row and its chain back, not
+          just the id.
         </p>
       </div>
 
       <div className="space-y-2">
-        <h4 className="text-sm font-semibold">Loading / empty</h4>
+        <h4 className="text-sm font-semibold">Empty, and no results</h4>
         <p className="text-xs text-muted-foreground">
-          Both states occupy the same height as the loaded list, so the button
-          below never moves as rows arrive.
+          An empty set says so in the caller&rsquo;s words; a query that matches
+          nothing says that instead. Both occupy the same height as the loaded
+          list, so the button below never moves.
         </p>
-        <LocationList
-          groups={[]}
-          value={null}
-          onSelect={() => {}}
-          loading={loading}
-          labels={LIST_LABELS}
-          footer={
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setLoading((current) => !current)}
-            >
-              {loading ? "Show empty state" : "Show loading state"}
-            </Button>
-          }
+        <LocationPickerPanel
+          query={emptyQuery}
+          onQueryChange={setEmptyQuery}
+          scope={{
+            kind: "set",
+            groups: [],
+            value: null,
+            onSelect: () => {},
+            labels: SET_LABELS,
+          }}
         />
       </div>
     </div>
@@ -2273,25 +2290,28 @@ function LocationPickerDemo() {
   return (
     <div className="max-w-2xl rounded-md border border-input bg-card p-4">
       <LocationPickerPanel
-        path={fixture.path}
-        onDrill={fixture.onDrill}
-        onOpenDepth={fixture.onOpenDepth}
         query={query}
         onQueryChange={setQuery}
-        minQueryLength={2}
-        browse={fixture.browse}
-        search={EMPTY_ROWS}
-        selection={{
-          mode: "single",
-          pickableTypes: ["municipality"],
-          onConfirm: (pick) =>
-            new Promise<void>((resolve) =>
-              setTimeout(() => {
-                setConfirmed(pick.location.name);
-                resolve();
-              }, 600),
-            ),
-          onCancel: () => setConfirmed(null),
+        scope={{
+          kind: "tree",
+          path: fixture.path,
+          onDrill: fixture.onDrill,
+          onOpenDepth: fixture.onOpenDepth,
+          minQueryLength: 2,
+          browse: fixture.browse,
+          search: EMPTY_ROWS,
+          selection: {
+            mode: "single",
+            pickableTypes: ["municipality"],
+            onConfirm: (pick) =>
+              new Promise<void>((resolve) =>
+                setTimeout(() => {
+                  setConfirmed(pick.location.name);
+                  resolve();
+                }, 600),
+              ),
+            onCancel: () => setConfirmed(null),
+          },
         }}
       />
     </div>
@@ -2307,25 +2327,28 @@ function LocationCoverageDemo() {
     <div className="space-y-2">
       <div className="max-w-2xl rounded-md border border-input bg-card p-4">
         <LocationPickerPanel
-          path={fixture.path}
-          onDrill={fixture.onDrill}
-          onOpenDepth={fixture.onOpenDepth}
           query={query}
           onQueryChange={setQuery}
-          minQueryLength={2}
-          browse={fixture.browse}
-          search={EMPTY_ROWS}
-          selection={{
-            mode: "multi",
-            selectedIds: ticked,
-            onToggle: (pick) =>
-              setTicked((prev) => {
-                const next = new Set(prev);
-                if (next.has(pick.location.id)) next.delete(pick.location.id);
-                else next.add(pick.location.id);
-                return next;
-              }),
-            onDone: () => setTicked(new Set()),
+          scope={{
+            kind: "tree",
+            path: fixture.path,
+            onDrill: fixture.onDrill,
+            onOpenDepth: fixture.onOpenDepth,
+            minQueryLength: 2,
+            browse: fixture.browse,
+            search: EMPTY_ROWS,
+            selection: {
+              mode: "multi",
+              selectedIds: ticked,
+              onToggle: (pick) =>
+                setTicked((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(pick.location.id)) next.delete(pick.location.id);
+                  else next.add(pick.location.id);
+                  return next;
+                }),
+              onDone: () => setTicked(new Set()),
+            },
           }}
         />
       </div>
@@ -2346,19 +2369,22 @@ function LocationSearchDemo() {
   return (
     <div className="max-w-2xl rounded-md border border-input bg-card p-4">
       <LocationPickerPanel
-        path={[]}
-        onDrill={() => {}}
-        onOpenDepth={() => {}}
         query={query}
         onQueryChange={setQuery}
-        minQueryLength={2}
-        browse={EMPTY_ROWS}
-        search={{ rows: HITS, total: 47, hasMore: false, loading: false }}
-        selection={{
-          mode: "single",
-          pickableTypes: ["municipality"],
-          onConfirm: () => Promise.resolve(),
-          onCancel: () => setQuery(""),
+        scope={{
+          kind: "tree",
+          path: [],
+          onDrill: () => {},
+          onOpenDepth: () => {},
+          minQueryLength: 2,
+          browse: EMPTY_ROWS,
+          search: { rows: HITS, total: 47, hasMore: false, loading: false },
+          selection: {
+            mode: "single",
+            pickableTypes: ["municipality"],
+            onConfirm: () => Promise.resolve(),
+            onCancel: () => setQuery(""),
+          },
         }}
       />
     </div>

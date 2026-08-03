@@ -357,8 +357,6 @@
         "subject": "Aineet"
       },
       "locationPicker": {
-        "clearSearch": "Tyhjennä haku",
-        "noResults": "Hakuehdolla ”{query}” ei löytynyt sijainteja.",
         "hintSite": "Valitse toimipiste, jossa tämä järjestetään. Avaatko uuden? Aloita sen kunnasta.",
         "hintMunicipality": "Valitse kunta, jolle tämä kerho on tarkoitettu — se kunta, joka sen rahoittaa. Toimipisteet ja muut maat eivät ole valittavissa.",
         "change": "Vaihda",

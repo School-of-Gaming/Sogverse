@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { ChevronRight, Search, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
@@ -14,27 +14,50 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { withoutCountry } from "@/lib/locations/ancestor-chain";
 import { localizedLocationName } from "@/lib/locations/localized-name";
+import {
+  filterLocationGroups,
+  indexLocationGroups,
+  type LocationGroup,
+} from "./location-groups";
 import type { Json, LocationType } from "@/types";
 
 /**
- * Browse and search places, over rows the caller supplies.
+ * The one panel every location picker in this app is a configuration of.
  *
- * Purely presentational: it is handed the level it is showing, the hits for the
- * current query, and a `selection` config, and it reports what was clicked. It
- * makes no network call and holds no data — which is what lets the
- * /admin/ui-components demo drive it from a handful of fixture rows, and what
+ * Purely presentational: it is handed rows and handlers and reports what was
+ * clicked. It makes no network call and holds no data — which is what lets the
+ * /admin/ui-components demos drive every configuration from fixtures, and what
  * keeps the paging, debouncing and caching in one place above it.
  *
- * ## Browsing is the tree, and a country is depth 0 of it
+ * ## The axis: what the panel is showing before the first keystroke
  *
- * There is no country to pick first. The panel opens on the rows with no
- * parent — the countries — and every step down is the same request against the
- * same index. Search is cross-country from the first keystroke for the same
- * reason: nothing here is sharded by country, so nothing has to be chosen
- * before a user can type.
+ * There used to be two components here, and everything they had in common was
+ * written twice — the search box, the selected-row highlight, the name-plus-
+ * muted-detail row, the fixed-height box with its empty and no-results states.
+ * What was actually different is one thing, and it is the `scope`:
  *
- * ## The two selection modes
+ * **tree** browses the hierarchy. It opens on the rows with no parent — the
+ * countries — and every step down is the same request against the same index.
+ * There is no country to pick first, and search is cross-country from the first
+ * keystroke for the same reason: nothing is sharded by country, so nothing has
+ * to be chosen before a user can type. A pick is staged and then confirmed,
+ * because the panel is a dialog the caller opened to answer one question.
+ *
+ * **set** lists a bounded collection the surface has *already* fetched in full,
+ * grouped under the place above each row. An admin picking a venue usually does
+ * not know which municipality it is in, and should not have to walk Finland →
+ * Uusimaa → Helsinki to find one; the rows are hundreds, not thousands, so they
+ * are filtered in the browser with no request and no loading state. It renders
+ * inline in a form rather than in a dialog, so a click *is* the pick — the form
+ * around it owns the commit, and there is nothing here to confirm.
+ *
+ * Everything else is shared: the row rendering, the chains, the fixed height,
+ * the search box and its clear button. In tree scope the selection mode is a
+ * further axis on top.
+ *
+ * ## The two selection modes (tree scope)
  *
  * **single** confirms exactly one row, of one of the `pickableTypes`. A row of
  * a pickable type is terminal — clicking it selects it rather than descending
@@ -49,8 +72,15 @@ import type { Json, LocationType } from "@/types";
  * ancestor's row, not by rows of their own. An empty selection is valid.
  */
 
-/** Fixed body height, so the panel never resizes as results come and go. */
+/** Fixed body height for the tree scope, so the panel never resizes as results come and go. */
 export const LOCATION_PANEL_HEIGHT = "h-[440px]";
+
+/**
+ * Fixed list height for the set scope. The panel is inline in a form there
+ * rather than filling a dialog, so the *list* is what is pinned and the chrome
+ * around it belongs to the form.
+ */
+const LOCATION_SET_HEIGHT = "h-[340px]";
 
 /** Punctuation between a place and its path — not copy, so not translated. */
 const PATH_SEPARATOR = " — ";
@@ -119,7 +149,9 @@ export interface LocationPanelRows {
   loading: boolean;
 }
 
-interface LocationPickerPanelProps {
+/** Browse the hierarchy, a level at a time, searching it on the server. */
+export interface LocationTreeScope {
+  kind: "tree";
   /** Nodes drilled into, root first. Empty means "at the top of the tree". */
   path: readonly LocationChainSummary[];
   /**
@@ -130,8 +162,6 @@ interface LocationPickerPanelProps {
   onDrill: (pick: LocationPick) => void;
   /** Go back to a breadcrumb position: `depth` is how many nodes to keep. */
   onOpenDepth: (depth: number) => void;
-  query: string;
-  onQueryChange: (query: string) => void;
   /** How many characters search needs before it runs. */
   minQueryLength: number;
   /** The current level. Ignored while a search is running. */
@@ -141,20 +171,100 @@ interface LocationPickerPanelProps {
   selection: LocationSelection;
 }
 
+/** List a bounded set the caller already holds, grouped and filtered in memory. */
+export interface LocationSetScope {
+  kind: "set";
+  groups: readonly LocationGroup[];
+  /**
+   * What this set *is*, in the caller's words. The tree's placeholder and empty
+   * state are universal ("search by name or code", "nothing here"); a set's are
+   * not — "no venues yet" and "no municipalities are available" are different
+   * claims about different collections, and only the caller knows which.
+   */
+  labels: { searchPlaceholder: string; empty: string };
+  /** The picked row, when it is one of these. */
+  value: string | null;
+  /** A click is the pick: the form around this panel owns the commit. */
+  onSelect: (pick: LocationPick) => void;
+  /** Rendered under the list — e.g. the "new venue" affordance. */
+  footer?: ReactNode;
+}
+
+export type LocationScope = LocationTreeScope | LocationSetScope;
+
+interface LocationPickerPanelProps {
+  query: string;
+  onQueryChange: (query: string) => void;
+  scope: LocationScope;
+}
+
 export function LocationPickerPanel({
-  path,
-  onDrill,
-  onOpenDepth,
   query,
   onQueryChange,
-  minQueryLength,
-  browse,
-  search,
-  selection,
+  scope,
 }: LocationPickerPanelProps) {
+  const t = useTranslations("locations.picker");
+  const tree = scope.kind === "tree";
+
+  return (
+    <div className={cn("flex flex-col gap-3", tree && LOCATION_PANEL_HEIGHT)}>
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+          placeholder={
+            scope.kind === "set"
+              ? scope.labels.searchPlaceholder
+              : t("searchPlaceholder")
+          }
+          className="pl-10"
+          // Only the tree scope opens in a dialog the user asked for; the set
+          // scope sits inside a form, where stealing focus on mount would jump
+          // the admin out of whatever field they were filling in.
+          autoFocus={tree}
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={() => onQueryChange("")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+            aria-label={t("clearSearch")}
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+
+      {scope.kind === "tree" ? (
+        <TreeScopeBody
+          scope={scope}
+          query={query}
+          onQueryChange={onQueryChange}
+        />
+      ) : (
+        <SetScopeBody scope={scope} query={query} />
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Tree scope                                                         */
+/* ------------------------------------------------------------------ */
+
+interface TreeScopeBodyProps {
+  scope: LocationTreeScope;
+  query: string;
+  onQueryChange: (query: string) => void;
+}
+
+function TreeScopeBody({ scope, query, onQueryChange }: TreeScopeBodyProps) {
   const t = useTranslations("locations.picker");
   const c = useTranslations("common");
   const locale = useLocale();
+
+  const { path, selection, minQueryLength } = scope;
 
   const [selected, setSelected] = useState<LocationPick | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -169,7 +279,7 @@ export function LocationPickerPanel({
 
   const trimmed = query.trim();
   const searching = trimmed.length >= minQueryLength;
-  const active = searching ? search : browse;
+  const active = searching ? scope.search : scope.browse;
 
   function isPickable(row: LocationSummary): boolean {
     return (
@@ -198,7 +308,7 @@ export function LocationPickerPanel({
 
   /** Drilling from a search hit jumps the breadcrumb to where that hit lives. */
   function handleDrill(pick: LocationPick) {
-    onDrill(pick);
+    scope.onDrill(pick);
     if (searching) onQueryChange("");
   }
 
@@ -228,8 +338,7 @@ export function LocationPickerPanel({
     // name would be noise; a search hit's is the only thing telling two
     // identically-named communes apart.
     const detail = searching
-      ? pick.ancestors
-          .filter((node) => node.type !== "country")
+      ? withoutCountry(pick.ancestors)
           .map((node) => localizedLocationName(node, locale))
           .join(", ")
       : "";
@@ -264,28 +373,7 @@ export function LocationPickerPanel({
   }
 
   return (
-    <div className={cn("flex flex-col gap-3", LOCATION_PANEL_HEIGHT)}>
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={query}
-          onChange={(e) => onQueryChange(e.target.value)}
-          placeholder={t("searchPlaceholder")}
-          className="pl-10"
-          autoFocus
-        />
-        {query && (
-          <button
-            type="button"
-            onClick={() => onQueryChange("")}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-            aria-label={t("clearSearch")}
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        )}
-      </div>
-
+    <>
       {/* Breadcrumb. Always rendered — it is the browse position when idle and
           the "you are searching everywhere" note while typing — so the list
           below it never moves. */}
@@ -296,7 +384,7 @@ export function LocationPickerPanel({
           <>
             <button
               type="button"
-              onClick={() => onOpenDepth(0)}
+              onClick={() => scope.onOpenDepth(0)}
               className="rounded underline-offset-2 hover:text-foreground hover:underline"
             >
               {t("allCountries")}
@@ -306,7 +394,7 @@ export function LocationPickerPanel({
                 <ChevronRight className="h-3 w-3" />
                 <button
                   type="button"
-                  onClick={() => onOpenDepth(depth + 1)}
+                  onClick={() => scope.onOpenDepth(depth + 1)}
                   className="rounded underline-offset-2 hover:text-foreground hover:underline"
                 >
                   {localizedLocationName(node, locale)}
@@ -391,15 +479,92 @@ export function LocationPickerPanel({
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
+/* ------------------------------------------------------------------ */
+/*  Set scope                                                          */
+/* ------------------------------------------------------------------ */
+
+function SetScopeBody({
+  scope,
+  query,
+}: {
+  scope: LocationSetScope;
+  query: string;
+}) {
+  const t = useTranslations("locations.picker");
+  const locale = useLocale();
+
+  // Folding happens once per group and row rather than once per keystroke.
+  const index = useMemo(() => indexLocationGroups(scope.groups), [scope.groups]);
+  const trimmed = query.trim();
+  const visible = useMemo(
+    () => filterLocationGroups(index, trimmed),
+    [index, trimmed],
+  );
+
+  return (
+    <>
+      {/* The rows behind this are one bounded, indexed read — every venue, or
+          one country's municipalities — and the filtering is local, so there is
+          no loading state to render and no request a keystroke can be waiting
+          on. The box has its final height from the first frame either way. */}
+      <div
+        className={cn(
+          "overflow-y-auto rounded-md border border-input bg-background p-2",
+          LOCATION_SET_HEIGHT,
+        )}
+      >
+        {visible.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            {trimmed ? t("noResults", { query: trimmed }) : scope.labels.empty}
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {visible.map((group) => (
+              <div key={group.key} className="space-y-0.5">
+                <div className="px-2 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {group.label}
+                  {group.detail && (
+                    <span className="font-normal normal-case tracking-normal">
+                      {PATH_SEPARATOR}
+                      {group.detail}
+                    </span>
+                  )}
+                </div>
+                {group.rows.map((pick) => (
+                  <PickRow
+                    key={pick.location.id}
+                    name={localizedLocationName(pick.location, locale)}
+                    // Every row here sits under a header that already says
+                    // where it is, so repeating the path would be noise.
+                    detail=""
+                    selected={pick.location.id === scope.value}
+                    onClick={() => scope.onSelect(pick)}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {scope.footer}
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Rows                                                               */
+/* ------------------------------------------------------------------ */
+
 function SelectedLine({ pick }: { pick: LocationPick }) {
   const locale = useLocale();
-  const path = pick.ancestors
-    .filter((node) => node.type !== "country")
-    .map((node) => localizedLocationName(node, locale));
+  const path = withoutCountry(pick.ancestors).map((node) =>
+    localizedLocationName(node, locale),
+  );
 
   return (
     <span>
@@ -424,7 +589,7 @@ interface PickRowProps {
   onClick: () => void;
 }
 
-/** Single mode: the whole row is one button — drill in, or select the row. */
+/** The whole row is one button — drill in, or take the row. */
 function PickRow({
   name,
   detail,

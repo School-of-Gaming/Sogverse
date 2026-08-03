@@ -18,11 +18,16 @@ is not caching the table but never asking for more of it than a screen shows:
 - **Browsing** fetches the children of the node the user opened, one page at a time. A
   country is depth 0 of the same tree, so opening the picker and opening a région are the
   same request against the same index.
-- **Search** is a ranked, capped, server-side query returning a top-N plus the true match
-  count. Nothing is filtered in the browser.
+- **Searching the hierarchy** is a ranked, capped, server-side query returning a top-N
+  plus the true match count. Nothing that could match the whole table is filtered in the
+  browser.
 - **The bounded lists** a surface genuinely needs in full — every venue, one country's
-  municipalities — are read whole and grouped client-side, because they are hundreds of
-  rows and grouping them by the place above them is a view the tree cannot give.
+  municipalities — are read whole and grouped client-side. They are hundreds of rows, and
+  the reason to have them whole is *not* that the tree cannot show them: a site is a
+  browsable leaf under its municipality, and searching returns it with its full ancestor
+  chain. It is that an admin picking a venue usually knows the building's name and not
+  its kunta, and should not have to walk Finland → Uusimaa → Helsinki to find one. Once
+  such a set is in memory, narrowing it is a substring test rather than a round trip.
 
 The payload is therefore O(what is rendered) and constant as countries are added.
 
@@ -152,6 +157,21 @@ query time — which is the good outcome, but only if you recognise it.
 
 **Rule: LIKE metacharacters in a needle are escaped, not stripped.** A user typing `%`
 should find nothing, not everything.
+
+**Rule: the fold exists twice, and a shared table of inputs pins the two together.** The
+database folds the stored side and the needle; the browser folds again, in TypeScript,
+for the bounded sets it filters in memory — which is right, because a set already on the
+client should narrow without a request or a loading state. What is not right is two
+implementations agreeing only by habit: the failure is silent and asymmetric, one picker
+quietly ceasing to match "Nîmes" while the other still does. So the expectations live in
+one fixture that both suites assert against — the unit suite against the TypeScript fold,
+the DB suite against the SQL one — and a change to either that is not a change to the
+other fails a build. The known boundary is Latin letters with no canonical decomposition
+(`œ`, `ø`, `æ`, `ł`): `unaccent` expands them by rule and NFD normalization has nothing to
+decompose, so the two genuinely differ there. It is out of reach rather than fixed —
+neither official classification spells a municipality with one, and the TypeScript fold
+never sees anything else — and the fixture says so rather than leaving it to be
+rediscovered.
 
 The fold is **stored, not an index expression**, and deliberately: needles shorter than
 three characters yield no trigram, so those queries are a sequential scan, and re-folding
@@ -314,29 +334,46 @@ every cached search needle, since a rename changes what search matches.
 
 ## Picking a place (UI)
 
-Two components, and the difference between them is what each is asked to show.
+**One panel** (`src/components/locations/`), and every control that picks a place is a
+configuration of it: a presentational panel plus, for the browsing configurations, a
+container that owns the browse position, the debounced query and the two server reads.
 
-- **The tree picker** (`src/components/locations/`) browses and searches the hierarchy: a
-  presentational panel plus a container that owns the browse position, the debounced
-  query and the two server reads. It opens on the countries and drills down; typing
-  searches everywhere from the first keystroke past the minimum length; clearing the box
-  drops back to where the user was browsing, so browse and search share one panel with no
-  mode switch.
-- **The grouped list** (`src/components/admin/products/`) renders a bounded set the
-  surface has already fetched in full, grouped under headers, searched client-side in one
-  pass. It exists for the two views a tree cannot give: the venues that exist grouped by
-  the municipality above them, and the Finnish municipalities an online club can be funded
-  by.
+It was two components once, and everything they had in common was written twice — the
+search box and its clear button, the selected-row highlight, the name-plus-muted-detail
+row, the fixed-height box with its empty and no-results branches, a separator constant
+declared in both. What was genuinely different is one axis, the **scope**: what the panel
+is showing *before the first keystroke*.
 
-Both are presentational and fixture-driven in the `/admin/ui-components` style guide: they
-hold no business logic, so data and handlers are injected.
+- **tree** browses the hierarchy. It opens on the rows with no parent — the countries —
+  and drills down; typing searches everywhere from the first keystroke past the minimum
+  length; clearing the box drops back to where the user was browsing, so browse and
+  search share one panel with no mode switch. A pick is staged and then confirmed,
+  because the panel is a dialog opened to answer one question. Used by the new-venue
+  flow, gedu coverage, and the parent's own location.
+- **set** lists a bounded collection the caller has already fetched in full, grouped
+  under the place above each row and narrowed in memory. Used by the product form's venue
+  and municipality modes. It renders inline in a form rather than in a dialog, so a click
+  *is* the pick: the form around it owns the commit, and there is nothing here to
+  confirm.
+
+**Rule: the set scope is not a view the tree cannot give — it answers a different
+question, and any justification of it in the other terms is stale.** The tree can reach
+every venue: a site is a browsable leaf under its municipality, the breadcrumb shows the
+municipality while browsing, and a search hit arrives with its whole ancestor chain. What
+browsing cannot do is answer "which venues exist" to someone who does not know where to
+look, which is the ordinary case when an admin opens a club in a building they know by
+name. That is the whole of why the second scope exists.
+
+Both scopes are presentational and fixture-driven in the `/admin/ui-components` style
+guide, in one section with the scope as the axis being demonstrated: the panel holds no
+business logic, so data and handlers are injected.
 
 **Rule: there is no country to choose before browsing.** The country dropdown and the
 "default country" concept existed only because the data was sharded one file per country;
 with the tree served from one table they would be a step that answers nothing. A user
 looking for Tampere types "Tampere".
 
-The panel takes a **selection mode**:
+The tree scope takes a **selection mode**:
 
 - **single** confirms exactly one row, of one of the caller's `pickableTypes`. A row of a
   pickable type is *terminal* — clicking it selects rather than descends — so the level a
@@ -426,9 +463,11 @@ set it later — stranding someone mid-signup over it would be strictly worse th
 ### The product picker
 
 In-person products pick a **site**; online municipality clubs pick a **Finnish
-municipality**. Neither mode browses the tree — both render a bounded, already-fetched set
-grouped by the place above it, because an admin picking a venue wants the venues, not a
-path to them.
+municipality**. Both modes are the same panel in its **set** scope — a bounded,
+already-fetched collection grouped by the place above it — because an admin picking a
+venue wants the venues, not a path to them. What lives in the product form itself and
+nowhere else is the card a chosen place collapses to (with its site notes), the hint line
+under the list, and the clear-on-invalid guard below.
 
 Opening a venue somewhere new is a two-step flow, because it answers two questions from
 two sources: *where in the world* is answered by browsing or searching the hierarchy and
@@ -439,9 +478,18 @@ the venue's parent.
 **Rule: the online-muni municipality restriction is UI-enforced.** The DB trigger still
 permits a country or region for online muni clubs (it predates the rule), so the picker is
 the gate — it offers only Finland's municipalities and clears a stored pick that is not
-one, nudging a re-pick on legacy rows. A picker that cannot tell "still loading" from
-"invalid" must not clear anything: wiping a valid `location_id` while editing a product is
-worse than showing it a moment late.
+one, nudging a re-pick on legacy rows.
+
+**Rule: a picker that cannot tell "still loading" from "invalid" must not clear
+anything.** Wiping a valid `location_id` while editing a product is worse than showing it
+a moment late, and the two states are one frame apart: the pickable set arrives
+asynchronously, so a guard that asks only "is the value in the set" treats the frame
+before it lands as proof the value is bad, and the next save writes the loss. The
+distinction is therefore explicit — the set being *absent* is never an answer, only a set
+that arrived and does not contain the value is — and the decision is a named function with
+its own test rather than a condition inline in an effect, because it is exactly the kind
+of thing that reads fine in review. The same three-state shape governs the parent's own
+location field, for the same reason.
 
 ### Loading
 
