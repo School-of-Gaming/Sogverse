@@ -1040,6 +1040,17 @@
       "subheading": "ghItlh wIrInmoHtaH — puS poH neH ‘oH.",
       "reassurance": "naDev yIloS. My SOG-Daq je ghItlhlIj Daleghbej."
     },
+    "timedOut": {
+      "heading": "poH tIn law’ pIH poH tIn puS",
+      "subheading": "DIlmeH mIw Qappu’. Hutlhbe’ Huch.",
+      "body": "ghItlh wIrInmoHpu’be’. tugh My SOG-Daq ’oH Dalegh net pIH — pa’ yIbej, ’ej chegh­be’chugh, maH yIja’."
+    },
+    "duplicatePayment": {
+      "heading": "ghItlh qaSpu’ net Sov",
+      "subheading": "Doch vamDaq quS ghaj puq.",
+      "body": "cha’DIch ghItlh chenmoHbe’ DIlmeH mIw vam. maH yIQIH: Huch tIn law’ wInej ’ej SoH wIQaH."
+    },
+    "supportLine": "QaH DaneH’a’? <link>{email}</link>-Daq maH yIQIH.",
     "waitlist": {
       "heading": "loS tetlhDaq SoH",
       "subheading": "{gamer} loS tetlhDaq: {product}. quS poSDI’, SoH wIja’.",

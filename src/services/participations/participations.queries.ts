@@ -5,6 +5,7 @@ import { useEffect, useMemo } from "react";
 import { useLocale } from "next-intl";
 import { getClient } from "@/lib/supabase/client";
 import { resolveLocale } from "@/lib/constants/locales";
+import { CONFIRMATION_POLL_INTERVAL_MS } from "@/lib/constants/participations";
 import {
   expandUpcomingSessions,
   type UpcomingSessionEntry,
@@ -157,17 +158,26 @@ export function useParticipationCounts(
  * is not there on the server render — the webhook that writes it normally lands
  * before Stripe redirects, so in the ordinary case this hook never runs at all.
  *
- * Polls every two seconds and stops the moment the row exists; the caller
+ * Polls on a fixed interval and stops the moment the row exists; the caller
  * refreshes the server render from there, which unmounts this. No `staleTime`
  * games: the whole point is to see a write that happened elsewhere.
+ *
+ * `enabled` is how the caller ends the wait. This hook deliberately owns no
+ * clock — how long to keep asking is the caller's decision, and it is not
+ * open-ended (see the finalizing component).
  */
-export function useCheckoutConfirmation(checkoutSessionId: string) {
+export function useCheckoutConfirmation(
+  checkoutSessionId: string,
+  options?: { enabled?: boolean },
+) {
   const supabase = getClient();
   const service = new ParticipationsService(supabase);
   return useQuery({
     queryKey: participationKeys.byCheckoutSession(checkoutSessionId),
     queryFn: () => service.getConfirmationByCheckoutSession(checkoutSessionId),
-    refetchInterval: (query) => (query.state.data ? false : 2000),
+    enabled: options?.enabled ?? true,
+    refetchInterval: (query) =>
+      query.state.data ? false : CONFIRMATION_POLL_INTERVAL_MS,
   });
 }
 

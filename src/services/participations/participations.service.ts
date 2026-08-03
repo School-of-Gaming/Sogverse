@@ -580,6 +580,31 @@ export class ParticipationsService {
   }
 
   /**
+   * Does this gamer already hold a spot on this product? Asked by the paid
+   * confirmation page when the session it arrived with bought nothing, to tell
+   * the two reasons for that apart: the webhook has not landed yet (wait), or
+   * the payment was refused as a duplicate because the seat was already taken
+   * (there will never be a row for this session, so waiting is a dead end).
+   *
+   * Mirrors the status set the confirmation RPC conflicts on, so the page's
+   * answer and the database's decision cannot drift. RLS-scoped like every read
+   * here — the caller has already been checked to be the session's purchaser, so
+   * the row is theirs to see.
+   */
+  async hasSeatOnProduct(productId: string, gamerId: string): Promise<boolean> {
+    const { data, error } = await this.supabase
+      .from("participations")
+      .select("id")
+      .eq("product_id", productId)
+      .eq("gamer_id", gamerId)
+      .in("status", ["active", "waitlisted", "completed"])
+      .maybeSingle();
+
+    if (error) throw error;
+    return data !== null;
+  }
+
+  /**
    * The caller's 1-based position on a product's waitlist for one of their own
    * waitlisted participations — the "you're #N" read for the post-join summary
    * (and, later, the parent/gamer dashboards). Recomputed live from

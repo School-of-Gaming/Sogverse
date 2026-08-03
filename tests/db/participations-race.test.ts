@@ -180,6 +180,38 @@ describe("participations race + idempotency", () => {
       // Covers the 'full' kind of the same contract schema (no id).
       expect(createParticipationRpcResult.parse(second.data).kind).toBe("full");
     });
+
+    it.each(["active", "waitlisted", "completed"] as const)(
+      "refuses a signup when the gamer already holds a %s row",
+      async (status) => {
+        // These three are exactly the statuses `confirm_paid_participation`
+        // conflicts on, and the two lists have to stay identical: a status this
+        // gate lets through but the confirmation refuses would take a parent's
+        // money and then hand them nothing. `completed` is the one that was
+        // missing — unreachable today, since nothing writes it, which is why it
+        // needs a test rather than a bug report.
+        const { error: seedErr } = await admin.from("participations").insert({
+          product_id: PRODUCT_RACE_1SEAT,
+          gamer_id: TEST_IDS.GAMER,
+          customer_id: TEST_IDS.CUSTOMER,
+          status,
+          waitlisted_at:
+            status === "waitlisted" ? new Date().toISOString() : null,
+        });
+        expect(seedErr).toBeNull();
+
+        const again = await admin.rpc("create_participation", {
+          p_product_id: PRODUCT_RACE_1SEAT,
+          p_gamer_id: TEST_IDS.GAMER,
+          p_customer_id: TEST_IDS.CUSTOMER,
+          p_purchase_shape: "subscription_monthly",
+          p_currency: "eur",
+        });
+        // 23505 is what the checkout route maps to a 409.
+        expect(again.error?.code).toBe("23505");
+        expect(again.error?.message).toContain(status);
+      },
+    );
   });
 
   // ---------------------------------------------------------------------------

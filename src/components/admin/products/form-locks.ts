@@ -26,7 +26,18 @@ interface FormLocks {
   consumerClubStartDateToday: boolean;
   /** Holiday-calendar selection is shown as "coming soon" instead of editable. */
   holidayCalendars: boolean;
-  /** Seat limits off — every product launches uncapped (no seat count). */
+  /**
+   * Seat limits off — every product launches uncapped (no seat count).
+   *
+   * Unlocking this for a **paid** type is not just a UI change. Capacity is
+   * checked before Stripe Checkout and nothing is held while the parent pays —
+   * the seat is created when the payment lands — so two parents checking out at
+   * once on the last seat both pass the gate and both get one. Whoever unlocks
+   * it for a paid type has to re-decide the capacity hold first; migration 00139
+   * records why the previous hold was removed and what it cost. Municipality
+   * clubs are unlocked below and are unaffected: they never reach Checkout, so
+   * their signup is gated and created in the same locked transaction.
+   */
   seatCount: boolean;
   /** Waitlist is forced off. */
   waitlist: boolean;

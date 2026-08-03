@@ -95,12 +95,17 @@ import {
   scheduleCardLines,
 } from "@/components/public/products/format-product-schedule";
 import {
+  buildConfirmationFixture,
   buildScenarioFixture,
   scenarioFilledSeats,
   scenarioHasDetailPage,
   PREVIEW_SCENARIOS,
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
+import {
+  PurchaseConfirmationNotice,
+  PurchaseConfirmationView,
+} from "@/components/public/products/purchase-confirmation-view";
 import {
   ManageBillingCardView,
   type BillingAccountSummary,
@@ -1271,6 +1276,93 @@ function SeatAvailabilityDemo() {
   );
 }
 
+// Every state the post-signup page can land in, driven by fixtures alone.
+//
+// The two "order" states reuse the same confirmation fixture the /preview
+// scenes do, so this page and the full-page preview can't drift. The three
+// notice states need no fixture at all — `PurchaseConfirmationNotice` takes only
+// which state it is, because the copy is the entire component.
+//
+// The reason the notices are demoable here is the split: the live page mounts a
+// wrapper that owns the poll and the timeout clock and hands this component the
+// answer. Nothing below makes a network call or starts a timer, so the states
+// that are hardest to reach in the real app — a webhook that never lands, a
+// payment refused as a duplicate — are the easiest ones to look at here.
+function PurchaseConfirmationDemo() {
+  const enrolled = buildConfirmationFixture("camp-open");
+  const waitlisted = buildConfirmationFixture("muni-full-waitlist");
+
+  return (
+    <div className="space-y-8">
+      <SubSection title="The order">
+        <div className="space-y-8">
+          <div className="flex flex-col gap-2">
+            <DemoCaption>Enrolled — a paid signup that landed</DemoCaption>
+            <div className="rounded-md border">
+              <PurchaseConfirmationView
+                product={enrolled.product}
+                gamerName={enrolled.gamerName}
+                outcome={enrolled.outcome}
+                waitlistPosition={enrolled.waitlistPosition}
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <DemoCaption>
+              Waitlisted — no charge, and the &ldquo;you&rsquo;re #N&rdquo; line
+            </DemoCaption>
+            <div className="rounded-md border">
+              <PurchaseConfirmationView
+                product={waitlisted.product}
+                gamerName={waitlisted.gamerName}
+                outcome="waitlisted"
+                waitlistPosition={waitlisted.waitlistPosition ?? 3}
+              />
+            </div>
+          </div>
+        </div>
+      </SubSection>
+
+      <SubSection title="Paid, but no order to show">
+        <p className="max-w-prose text-sm text-muted-foreground">
+          All three follow a payment that <em>succeeded</em>, so none of them may
+          read as an error or suggest the money is at risk. Finalizing resolves
+          on its own; the other two are terminal and hand the parent somewhere to
+          go.
+        </p>
+        <div className="space-y-8">
+          <div className="flex flex-col gap-2">
+            <DemoCaption>
+              Finalizing — the webhook hasn&rsquo;t landed yet; polls, then
+              swaps itself out
+            </DemoCaption>
+            <div className="rounded-md border">
+              <PurchaseConfirmationNotice kind="finalizing" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <DemoCaption>
+              Timed out — the wait ran out; stop spinning and say where to look
+            </DemoCaption>
+            <div className="rounded-md border">
+              <PurchaseConfirmationNotice kind="timedOut" />
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <DemoCaption>
+              Duplicate payment — the seat was already taken, so no row will ever
+              arrive
+            </DemoCaption>
+            <div className="rounded-md border">
+              <PurchaseConfirmationNotice kind="duplicatePayment" />
+            </div>
+          </div>
+        </div>
+      </SubSection>
+    </div>
+  );
+}
+
 function ProductsDemo() {
   // Group scenarios into subsections by product type, preserving SCENARIO_ORDER
   // (the list is already laid out so each group is contiguous).
@@ -2058,6 +2150,24 @@ export default function AdminUIComponentsPage() {
           surfaces worth eyeballing.
         </p>
         <ProductsDemo />
+      </Section>
+
+      {/* ============================================================ */}
+      {/* Section 12b: Purchase Confirmation                             */}
+      {/* ============================================================ */}
+      <Section title="Purchase Confirmation">
+        <p className="text-sm text-muted-foreground -mt-2">
+          Where a parent lands straight after signing up. A paid seat is created
+          by the Stripe webhook rather than before Checkout, so this page can
+          arrive before the thing it is meant to show — which is why it has five
+          states rather than one. Every one of them is rendered here from
+          fixtures: the presentational component takes only data, and the polling
+          and the timeout clock live in a wrapper that isn&rsquo;t on this page.
+          That is what makes the states nobody can reproduce on demand — a
+          webhook that never lands, a second payment for a seat already taken —
+          the easy ones to iterate on.
+        </p>
+        <PurchaseConfirmationDemo />
       </Section>
 
       {/* ============================================================ */}

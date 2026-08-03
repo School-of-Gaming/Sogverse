@@ -17,6 +17,7 @@ import {
   getOrCreateSubscriptionPrice,
 } from "@/lib/stripe/participation-prices";
 import { getOrCreateStripeCustomer } from "@/lib/stripe/customer";
+import { CHECKOUT_SESSION_LIFETIME_MINUTES } from "@/lib/constants/participations";
 import { getOrigin } from "@/lib/url";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -232,9 +233,13 @@ export const POST = defineRoute({
         currency,
       };
 
-      // No `expires_at`: Stripe's 24h default is fine now that the session holds
-      // no seat. It used to be pinned to the reservation lifetime because the
-      // expiry webhook was what released the seat.
+      // This no longer pins a reservation lifetime — nothing is held, and the
+      // expiry event isn't even handled. It bounds a *stale tab*: the Session
+      // freezes the amount at creation, so leaving it payable for Stripe's
+      // 24h default means a forgotten tab can pay yesterday's price and create
+      // a participation long after the parent last looked at the product.
+      const expiresAt =
+        Math.floor(Date.now() / 1000) + CHECKOUT_SESSION_LIFETIME_MINUTES * 60;
 
       // Adaptive Pricing presents each customer their local currency and lets
       // Stripe convert, while the Session/PaymentIntent still report our EUR
@@ -259,6 +264,7 @@ export const POST = defineRoute({
         // onto the Customer, which Stripe Tax needs to locate the customer.
         automatic_tax: { enabled: true },
         customer_update: { address: "auto" },
+        expires_at: expiresAt,
         metadata,
         success_url: successUrl,
         cancel_url: cancelUrl,

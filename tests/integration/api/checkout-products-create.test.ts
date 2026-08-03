@@ -562,8 +562,13 @@ describe("POST /api/checkout/products/create", () => {
     );
     // Cancel bounces straight back to the product page so the parent can retry.
     expect(params.cancel_url).toBe(`http://localhost:3000/shop/${PRODUCT_ID}`);
-    // No expires_at: the session holds no seat, so Stripe's 24h default is fine.
-    expect(params.expires_at).toBeUndefined();
+    // `expires_at` no longer pins a reservation lifetime — nothing is held — but
+    // it still bounds a stale tab, because the Session freezes the amount at
+    // creation. Thirty minutes is Stripe's floor; assert the window rather than
+    // an exact second, since the clock moves between the call and the assertion.
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    expect(params.expires_at).toBeGreaterThan(nowSeconds + 29 * 60);
+    expect(params.expires_at).toBeLessThanOrEqual(nowSeconds + 30 * 60);
     expect(mockComputeSinglePaymentAmount).toHaveBeenCalledWith(
       expect.anything(),
       PRODUCT_ID,

@@ -132,14 +132,19 @@ BEGIN
       USING ERRCODE = 'check_violation';
   END IF;
 
+  -- The already-enrolled gate. Its status list has to match the one
+  -- `confirm_paid_participation` conflicts on, or a signup can pass here, take
+  -- the parent's money, and then be refused at confirmation with nothing to
+  -- show for it. 'completed' is the member that was missing: nothing writes
+  -- that status today, so the gap was unreachable rather than harmless.
   SELECT id, status INTO v_existing_id, v_existing_status
     FROM public.participations
     WHERE product_id = p_product_id
       AND gamer_id = p_gamer_id
-      AND status IN ('active', 'waitlisted')
+      AND status IN ('active', 'waitlisted', 'completed')
     LIMIT 1;
   IF v_existing_id IS NOT NULL THEN
-    RAISE EXCEPTION 'gamer % already has a % participation on this product', p_gamer_id, v_existing_status
+    RAISE EXCEPTION 'gamer % already has a participation on this product (status: %)', p_gamer_id, v_existing_status
       USING ERRCODE = 'unique_violation';
   END IF;
 

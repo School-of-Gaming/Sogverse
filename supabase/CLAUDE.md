@@ -265,5 +265,5 @@ invert relative to lock-acquisition order: two concurrent `join_waitlist` calls 
 derived waitlist rank 1 this way. `clock_timestamp()` reads the wall clock at the
 statement — run under the lock it executes after the prior transaction committed, so
 stamps follow real serialization order (keep an `id` tiebreaker for sub-tick ties).
-`now()` stays correct for deadlines and defaults (`reserved_until`, `signed_up_at`) where
-cross-row ordering doesn't matter.
+`now()` stays correct for deadlines and defaults (`signed_up_at`) where cross-row
+ordering doesn't matter.

@@ -995,6 +995,17 @@
       "subheading": "We’re finalizing the signup — this only takes a moment.",
       "reassurance": "You can safely stay on this page. Your signup will also appear in My SOG."
     },
+    "timedOut": {
+      "heading": "This is taking longer than expected",
+      "subheading": "Your payment went through, and it is safe.",
+      "body": "We have not finished setting the signup up yet. It should appear in My SOG shortly — have a look there, and let us know if it has not turned up."
+    },
+    "duplicatePayment": {
+      "heading": "Already signed up",
+      "subheading": "This child already has a place on this product.",
+      "body": "This payment has not created a second signup. Get in touch and our team will look into the extra charge with you."
+    },
+    "supportLine": "Need a hand? Email us at <link>{email}</link>.",
     "waitlist": {
       "heading": "You’re on the waitlist",
       "subheading": "{gamer} is on the waitlist for {product}. We’ll let you know if a seat opens.",
