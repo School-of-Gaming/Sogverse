@@ -3022,14 +3022,15 @@ function GameAccountDemo() {
         <AddGamerDialogDemo />
       </SubSection>
 
-      <SubSection title="In the admin gamer chip — one of the tight surfaces">
+      <SubSection title="In the admin gamer chip">
         <p className="text-sm text-muted-foreground">
           The chip is the draggable roster token in the product groups panel, and
           it appears in four places: the group columns, the waitlist card, the
           unassigned card and the drag overlay. It stacks name, age/gender, parent
-          and now the identity row inside a narrow rail, which makes it the surface
-          most likely to strain under a 60px row. Drag is live &mdash; the chips
-          below are real, and there is nowhere to drop them.
+          and the identity row inside a narrow rail, so it takes the compact
+          figure: the whole body was taller than the other three lines put
+          together. Drag is live &mdash; the chips below are real, and there is
+          nowhere to drop them.
         </p>
         <GamerChipDemo />
       </SubSection>

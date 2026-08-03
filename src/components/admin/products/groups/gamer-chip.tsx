@@ -81,6 +81,11 @@ const ChipContent = memo(function ChipContent({
           platform="minecraft"
           username={minecraftUsername}
           externalId={minecraftUuid}
+          // The compact figure. The chip is a stack of four short lines in a
+          // 16rem rail, and the whole body was taller than the other three put
+          // together — the face carries the same identity at roughly the height
+          // of the text beside it.
+          figure="head"
         />
       </div>
       <GripVertical className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
