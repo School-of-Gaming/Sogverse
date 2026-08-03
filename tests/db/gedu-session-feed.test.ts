@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import {
   SUPPORTED_ATTENDANCE_STATUSES,
+  attendanceMarkResult,
   geduAssignmentSummaries,
   geduGroupFeed,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
@@ -33,8 +34,9 @@ import {
  *      where the attacker fails the role check as well proves much less than
  *      one where only the target check stands between them and the row.
  *
- * Plus the two rules that are easy to state and easy to lose: attendance is
- * past-only, and a mark is written ONE AT A TIME so two gedus recording
+ * Plus the two rules that are easy to state and easy to lose: attendance opens
+ * at the session's scheduled start (roll call during the session, never
+ * before it), and a mark is written ONE AT A TIME so two gedus recording
  * different children cannot clobber each other.
  *
  * Layout. PRODUCT_MINE is a seven-day-a-week schedule owned by GEDU through
@@ -368,7 +370,7 @@ describe("gedu session feed", () => {
   });
 
   // -------------------------------------------------------------------------
-  // 4. Write validation — loose, holiday-blind, past-only for attendance
+  // 4. Write validation — loose, holiday-blind, start-gated for attendance
   // -------------------------------------------------------------------------
 
   describe("write validation", () => {
@@ -404,16 +406,41 @@ describe("gedu session feed", () => {
       expect(data).not.toBeNull();
     });
 
-    it("refuses attendance on a session that has not finished", async () => {
+    it("refuses attendance on a session that has not started", async () => {
       const { error } = await geduAuth.rpc("record_attendance", {
         p_group_id: GROUP_MINE,
         p_session_date: TOMORROW,
         p_gamer_id: TEST_IDS.GAMER,
         p_status: "present",
       });
-      // Past-only, and the server is what enforces it — a client that forgot
-      // would otherwise record who attended a session nobody has run.
+      // Marks open at the scheduled START, and the server is what enforces it —
+      // a client that forgot would otherwise record who attended a session
+      // nobody has run. (During the session is fine: see the roll-call case.)
       expect(error?.code).toBe("23514");
+    });
+
+    it("accepts attendance during a session that is under way", async () => {
+      // The roll-call pattern: the gedu starts the club, calls the roster, and
+      // records attendance right there, while they can see who is in the room.
+      // Materialize the row directly with a window straddling `now` — the RPC
+      // reuses an existing row's snapshot instants rather than re-deriving, so
+      // this stands at any hour the suite runs, unlike the fixture slot.
+      const { error: seedError } = await admin.from("group_sessions").insert({
+        group_id: GROUP_MINE,
+        session_date: TODAY,
+        starts_at: new Date(Date.now() - 30 * 60_000).toISOString(),
+        ends_at: new Date(Date.now() + 30 * 60_000).toISOString(),
+      });
+      expect(seedError).toBeNull();
+
+      const { data, error } = await geduAuth.rpc("record_attendance", {
+        p_group_id: GROUP_MINE,
+        p_session_date: TODAY,
+        p_gamer_id: TEST_IDS.GAMER,
+        p_status: "present",
+      });
+      expect(error).toBeNull();
+      expect(attendanceMarkResult.parse(data).status).toBe("present");
     });
 
     it("refuses a status outside the supported vocabulary", async () => {
