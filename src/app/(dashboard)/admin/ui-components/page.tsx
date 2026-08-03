@@ -114,7 +114,6 @@ import {
   GAME_ROW_HEIGHT,
   gameAccountStatus,
   GameUsernameEditableRow,
-  GameUsernameField,
   GameUsernameRow,
   type GamePlatform,
 } from "@/components/game-account";
@@ -2682,10 +2681,8 @@ const DEMO_USERNAME: Readonly<Record<GamePlatform, string>> = {
  * per platform.
  *
  * Shared so the identity rows line up vertically down the whole section. The
- * three demos exist to be *compared* — they are three presentations of one
- * thing — and three different container widths made that impossible: the field
- * read as a larger species than the rows below it purely because it sat in a
- * wider box.
+ * three demos exist to be *compared* — they are three presentations of one row —
+ * and three different container widths made that impossible.
  */
 const GAME_DEMO_GRID =
   "grid max-w-4xl grid-cols-[9rem_minmax(0,1fr)_minmax(0,1fr)] gap-x-8 rounded-lg border p-4";
@@ -2702,23 +2699,56 @@ function GameDemoHeader() {
   );
 }
 
+/** One person's accounts, as a surface would hold them. */
+type DemoAccount = { username: string | null; externalId: string | number | null };
+
+const EMPTY_ACCOUNTS: Readonly<Record<GamePlatform, DemoAccount>> = {
+  minecraft: { username: null, externalId: null },
+  roblox: { username: null, externalId: null },
+};
+
+/**
+ * First capture: the same row, opened straight into edit mode.
+ *
+ * A register form has nothing to view yet, so `autoEdit` puts the input where
+ * the name will be. Live — both verify routes are public, and committing is what
+ * runs the lookup.
+ */
 function GameFirstCaptureDemo() {
-  const [minecraft, setMinecraft] = useState("Notch");
-  const [roblox, setRoblox] = useState("builderman");
-  const value = { minecraft, roblox };
-  const setValue = { minecraft: setMinecraft, roblox: setRoblox };
+  const [accounts, setAccounts] =
+    useState<Readonly<Record<GamePlatform, DemoAccount>>>(EMPTY_ACCOUNTS);
 
   return (
     <div className={cn(GAME_DEMO_GRID, "items-start gap-y-3")}>
       <GameDemoHeader />
       <DemoCaption>Nothing saved yet</DemoCaption>
       {DEMO_PLATFORMS.map((platform) => (
-        <GameUsernameField
-          key={platform}
-          platform={platform}
-          value={value[platform]}
-          onChange={setValue[platform]}
-        />
+        <div key={platform} className="space-y-1.5">
+          {/* The label is the surface's, not the row's — a roster wants no label
+              at all, so the component does not carry one. */}
+          <Label htmlFor={undefined}>
+            {GAME_PLATFORMS[platform].name} username
+          </Label>
+          <GameUsernameEditableRow
+            platform={platform}
+            username={accounts[platform].username}
+            externalId={accounts[platform].externalId}
+            autoEdit
+            onCommit={({ username, externalId }) =>
+              setAccounts((prev) => ({
+                ...prev,
+                [platform]: { username, externalId },
+              }))
+            }
+          />
+          <p className="text-[11px] text-muted-foreground">
+            committed:{" "}
+            <code>
+              {accounts[platform].username ?? "null"} /{" "}
+              {String(accounts[platform].externalId ?? "null")}
+            </code>
+          </p>
+        </div>
       ))}
     </div>
   );
@@ -2728,7 +2758,7 @@ function GameFirstCaptureDemo() {
  * The three fixture rows for the read-only demo: one account we have confirmed,
  * one saved name nobody ever checked, one child who has never given a name. The
  * fourth state, `checking`, is not a fixture — it belongs to a lookup in flight,
- * so it is met by pressing Verify in the first demo rather than posed here.
+ * so it is met by committing in the demos either side of this one.
  */
 const VIEW_ONLY_ROWS: readonly {
   caption: string;
@@ -2780,19 +2810,18 @@ function GameViewOnlyDemo() {
 }
 
 /**
- * The editable roster, driven entirely by local state — no network, no service.
+ * The editable roster, driven by local state — and by the real verify routes,
+ * because committing is what runs the lookup.
  *
  * One person per row, both platforms across, so the columns line up with the two
- * demos above. Saving deliberately **clears the account key**: a name somebody
- * has just typed has not been checked, so the row drops from verified to
- * unverified in front of you, and the skin re-derives for the new name.
+ * demos above. Commit a name and watch the status square: the spinner sits where
+ * the tick will land, and a skin arrives into the box that was already holding
+ * its space.
  */
-type EditableAccount = { username: string | null; externalId: string | number | null };
-
 const EDITABLE_SEED: readonly {
   key: string;
   person: string;
-  accounts: Readonly<Record<GamePlatform, EditableAccount>>;
+  accounts: Readonly<Record<GamePlatform, DemoAccount>>;
 }[] = [
   {
     key: "aino",
@@ -2826,27 +2855,21 @@ const EDITABLE_SEED: readonly {
 function GameEditableRowDemo() {
   const [rows, setRows] = useState(EDITABLE_SEED);
 
-  const save = (key: string, platform: GamePlatform, username: string) =>
+  const commit = (
+    key: string,
+    platform: GamePlatform,
+    account: DemoAccount,
+  ) =>
     setRows((prev) =>
       prev.map((row) =>
         row.key === key
-          ? {
-              ...row,
-              accounts: {
-                ...row.accounts,
-                [platform]: {
-                  username: username === "" ? null : username,
-                  // Newly typed, therefore unchecked.
-                  externalId: null,
-                },
-              },
-            }
+          ? { ...row, accounts: { ...row.accounts, [platform]: account } }
           : row,
       ),
     );
 
   return (
-    <div className={cn(GAME_DEMO_GRID, "items-center gap-y-1")}>
+    <div className={cn(GAME_DEMO_GRID, "items-start gap-y-1")}>
       <GameDemoHeader />
       {rows.map((row) => (
         <Fragment key={row.key}>
@@ -2858,7 +2881,9 @@ function GameEditableRowDemo() {
               username={row.accounts[platform].username}
               externalId={row.accounts[platform].externalId}
               personName={row.person}
-              onSave={(username) => save(row.key, platform, username)}
+              onCommit={({ username, externalId }) =>
+                commit(row.key, platform, { username, externalId })
+              }
             />
           ))}
         </Fragment>
@@ -2942,26 +2967,21 @@ function PhoneFrame({
   );
 }
 
-/** One height-accurate stand-in for a field the real dialog already has. */
-function MockField({ label, children }: { label: string; children: React.ReactNode }) {
-  return <Field label={label}>{children}</Field>;
-}
-
 /**
  * The add-gamer dialog's content inventory, rebuilt with the real primitives,
- * plus the two game username fields the owner is asking about.
+ * plus the two game username rows the owner is asking about.
  *
  * **This is a deliberate replica, not the real card**, and that is the one thing
  * to know about it. The real `AddGamerFormCard` has no slot for extra fields and
  * should not grow one for an exploration, so the existing fields here are
  * height-accurate stand-ins (same `Field`, same 40px controls, same spacing) and
- * only the two game fields are the real components. It answers "does this
- * stack fit" honestly; it is not a component demo and must be deleted with the
+ * only the two game rows are the real components. It answers "does this stack
+ * fit" honestly; it is not a component demo and must be deleted with the
  * question.
  */
 function AddGamerMobileFitBody() {
-  const [minecraft, setMinecraft] = useState("");
-  const [roblox, setRoblox] = useState("");
+  const [accounts, setAccounts] =
+    useState<Readonly<Record<GamePlatform, DemoAccount>>>(EMPTY_ACCOUNTS);
 
   return (
     <DialogContent className="max-h-full overflow-y-auto">
@@ -2970,17 +2990,17 @@ function AddGamerMobileFitBody() {
       </DialogHeader>
 
       <div className="space-y-4 py-4">
-        <MockField label="First name">
+        <Field label="First name">
           <Input placeholder="Aino" readOnly />
-        </MockField>
+        </Field>
 
         <div className="grid grid-cols-2 gap-3">
-          <MockField label="Birth month">
+          <Field label="Birth month">
             <Input placeholder="March" readOnly />
-          </MockField>
-          <MockField label="Birth year">
+          </Field>
+          <Field label="Birth year">
             <Input placeholder="2014" readOnly />
-          </MockField>
+          </Field>
         </div>
 
         <Field label="Gender" optional>
@@ -2999,18 +3019,25 @@ function AddGamerMobileFitBody() {
           </div>
         </Field>
 
-        <GameUsernameField
-          platform="minecraft"
-          value={minecraft}
-          onChange={setMinecraft}
-          optional
-        />
-        <GameUsernameField
-          platform="roblox"
-          value={roblox}
-          onChange={setRoblox}
-          optional
-        />
+        {DEMO_PLATFORMS.map((platform) => (
+          <div key={platform} className="space-y-1.5">
+            <Label htmlFor={undefined}>
+              {GAME_PLATFORMS[platform].name} username
+            </Label>
+            <GameUsernameEditableRow
+              platform={platform}
+              username={accounts[platform].username}
+              externalId={accounts[platform].externalId}
+              autoEdit
+              onCommit={({ username, externalId }) =>
+                setAccounts((prev) => ({
+                  ...prev,
+                  [platform]: { username, externalId },
+                }))
+              }
+            />
+          </div>
+        ))}
       </div>
 
       <DialogFooter className="gap-2">
@@ -3032,8 +3059,8 @@ const FIT_BUDGET: readonly { part: string; px: number }[] = [
   { part: "First name", px: 64 },
   { part: "Birth month + year", px: 64 },
   { part: "Gender (3 stacked buttons under sm)", px: 160 },
-  { part: "Minecraft username field", px: 134 },
-  { part: "Roblox username field", px: 134 },
+  { part: "Minecraft username (label + row)", px: 84 },
+  { part: "Roblox username (label + row)", px: 84 },
   { part: "Gaps between the 5 field blocks (space-y-4)", px: 64 },
   { part: "Footer (2 stacked buttons + mt-6)", px: 112 },
 ];
@@ -3049,11 +3076,10 @@ function AddGamerMobileFitCheck() {
           question is answered.
         </p>
         <p className="text-sm text-muted-foreground">
-          The question: could <em>both</em> game username fields live in the
-          add-gamer dialog without a phone having to scroll? The two fields below
-          are the real components at{" "}
-          <code>{GAME_ROW_HEIGHT}</code>; everything else is a height-accurate
-          stand-in for what the real dialog already asks for.
+          The question: could <em>both</em> game usernames live in the add-gamer
+          dialog without a phone having to scroll? The two rows below are the real
+          component at <code>{GAME_ROW_HEIGHT}</code>; everything else is a
+          height-accurate stand-in for what the real dialog already asks for.
         </p>
       </div>
 
@@ -3093,15 +3119,16 @@ function AddGamerMobileFitCheck() {
           </tbody>
         </table>
         <p className="pt-2 text-xs text-muted-foreground">
-          <strong className="text-destructive">Verdict: it does not fit.</strong>{" "}
-          {FIT_TOTAL}px against 567&ndash;607px usable on the SE class (short by
-          roughly 255&ndash;295px) and 744&ndash;784px on a modern phone (short by
-          roughly 78&ndash;118px). Dropping to one game field brings it to{" "}
-          {FIT_TOTAL - 150}px, which clears a modern phone and still misses the
-          SE. The two biggest levers are not the row height: the gender buttons
-          cost 160px because they stack until <code>sm</code>, and each game field
-          spends 74px on its label and input before the {GAME_ROW_HEIGHT} identity
-          row. Going back to <code>h-12</code> would save only 24px in total.
+          <strong className="text-warning">
+            Verdict: a modern phone yes, just; the SE class no.
+          </strong>{" "}
+          {FIT_TOTAL}px against 744&ndash;784px usable on a modern phone &mdash;
+          it clears if the browser chrome takes 82px or less and scrolls if it
+          takes more &mdash; and against 567&ndash;607px on the SE class, where it
+          is short by roughly 155&ndash;195px. Dropping the input row and the
+          Verify button bought 100px of that. The next 96px is sitting in the
+          gender buttons, which stack until <code>sm</code>; three across would
+          put both frames comfortably clear.
         </p>
       </div>
     </div>
@@ -3113,12 +3140,11 @@ function GameAccountDemo() {
     <div className="space-y-8">
       <SubSection title="1. First time entering a username (register)">
         <p className="text-sm text-muted-foreground">
-          Live &mdash; both verify routes are public, so these really call them.
-          Try <code>Notch</code> or <code>jeb_</code> on the left,{" "}
-          <code>Roblox</code> or <code>builderman</code> on the right. The
-          identity row is drawn at its final size before you press anything, so
-          the skin that arrives lands in space already reserved and nothing on the
-          page moves; the spinner is the row&rsquo;s own status square.
+          The same row, opened straight into edit mode &mdash; there is nothing to
+          view yet, so the input sits where the name will be. Live: committing
+          <em> is </em>the verification, so press Enter or the tick and watch the
+          status square. The label above each row belongs to the surface, not to
+          the component; a roster wants none.
         </p>
         <GameFirstCaptureDemo />
       </SubSection>
@@ -3135,10 +3161,11 @@ function GameAccountDemo() {
 
       <SubSection title="3. View and edit, in place">
         <p className="text-sm text-muted-foreground">
-          Enter commits, Escape cancels. Display and edit are the same height, so
-          the rows around the one being edited never move. Saving clears the
-          account key &mdash; a freshly typed name has not been checked, so it
-          honestly drops to amber.
+          The same component as demo 1 without <code>autoEdit</code>. Enter
+          commits, Escape cancels, and a commit runs the real lookup: the name
+          appears immediately, the spinner sits in the square the tick will land
+          in, and a failed lookup leaves the name saved as unverified with the
+          reason underneath.
         </p>
         <GameEditableRowDemo />
       </SubSection>

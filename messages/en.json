@@ -1782,15 +1782,12 @@
     }
   },
   "gameAccount": {
-    "label": "{platform} Username",
     "usernameLabel": "{platform} username",
     "placeholder": "e.g. {example}",
-    "verify": "Verify",
     "verifying": "Verifying...",
     "notFound": "{platform} account not found. Check the username and try again.",
     "verifiedUser": "{username} (verified)",
     "unverified": "{username} (not yet verified)",
-    "displayName": "Shown in-game as {displayName}",
     "none": "(Unknown)",
     "edit": "Edit {platform} username",
     "editFor": "Edit {platform} username for {name}",

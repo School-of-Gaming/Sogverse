@@ -11,6 +11,74 @@ import {
   type GamePlatform,
 } from "./platforms";
 
+/**
+ * The figure's fixed box: the platform's height and width, and either the real
+ * render or the drawn stand-in inside it.
+ *
+ * Exported to its sibling rather than to the world. The editable row swaps the
+ * *name* for an input and keeps everything else, so the box has to be one piece
+ * of markup both use — a second copy of it would be the first thing to drift,
+ * and a row whose skin jumps size the moment you click the pencil is precisely
+ * the inconsistency this directory exists to remove.
+ */
+export function GameAvatarBox({
+  platform,
+  username,
+  avatarUrl,
+}: {
+  platform: GamePlatform;
+  /** `null` draws the stand-in. See the row's `avatarUrl` for the three meanings. */
+  username: string | null;
+  avatarUrl?: string | null;
+}) {
+  const descriptor = GAME_PLATFORMS[platform];
+
+  // A render that fails to load falls back to the drawn figure rather than
+  // leaving an empty box. Keyed by url so a later, working src gets its own
+  // attempt instead of inheriting the previous one's failure.
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+
+  // Omitted means "let the platform decide"; an explicit `null` means "draw the
+  // placeholder". Distinguishing the two is what lets one prop serve a live
+  // Minecraft row and a fixture on the same component.
+  const resolvedUrl =
+    avatarUrl !== undefined
+      ? avatarUrl
+      : username !== null && descriptor.avatar.urlFromUsername !== null
+        ? descriptor.avatar.urlFromUsername(username)
+        : null;
+
+  const showImage =
+    username !== null && resolvedUrl !== null && resolvedUrl !== failedUrl;
+
+  const { Placeholder } = descriptor.avatar;
+
+  return (
+    <div
+      className={cn(
+        "shrink-0 overflow-hidden rounded-sm bg-muted",
+        GAME_ROW_HEIGHT,
+        descriptor.avatar.widthClass,
+      )}
+    >
+      {showImage ? (
+        // eslint-disable-next-line @next/next/no-img-element -- a third-party skin/avatar render on an external host; next/image would proxy a 60px thumbnail for no gain, and a Roblox URL is short-lived so an optimizer cache would be working against us
+        <img
+          src={resolvedUrl}
+          alt=""
+          aria-hidden
+          onError={() => setFailedUrl(resolvedUrl)}
+          // `object-contain`: the box already matches the render's proportion,
+          // so the figure fits it whole.
+          className="h-full w-full object-contain"
+        />
+      ) : (
+        <Placeholder />
+      )}
+    </div>
+  );
+}
+
 interface GameUsernameRowProps {
   /** Which platform this identity is on. Everything platform-shaped is read from its descriptor. */
   platform: GamePlatform;
@@ -39,8 +107,15 @@ interface GameUsernameRowProps {
 }
 
 /**
- * A child's identity on one game platform as one row: their figure, their
+ * A child's identity on one game platform, read-only: their figure, their
  * username, and a status slot that never changes size.
+ *
+ * **One row shape, and this is it.** Viewing, capturing for the first time and
+ * editing are the same three boxes at the same height — figure, name, status —
+ * because they are the same fact being shown, and a surface that met the
+ * identity as a tall input-plus-button form and then as a compact row would be
+ * showing two things. The editable sibling swaps the middle box for an input and
+ * changes nothing else.
  *
  * **The geometry is the feature.** Validating a username is an async round trip,
  * and the obvious implementation — show a spinner while it runs, swap in a tick
@@ -48,18 +123,11 @@ interface GameUsernameRowProps {
  * check. In a roster of eight, mid-session, that is eight rows twitching while a
  * game educator is trying to click one of them. So the figure is a fixed box,
  * the status is a fixed square, and the username is the only thing between them
- * that flexes; every one of the four states renders at exactly the same size,
- * and the row is the same height before, during and after a check.
+ * that flexes; every one of the four states renders at exactly the same size.
  *
- * **One height, and there is no other.** The row has no size variant, on either
- * platform, in any state — a game identity is one thing that renders one way,
- * and the moment it can be two heights a surface has to choose, two surfaces
- * choose differently, and the component that exists to stop rows twitching
- * starts contributing its own inconsistency. Only the box's *width* is the
- * platform's to set, and only because the render's proportion is: 1:2 for a
- * Minecraft body, 1:1 for a Roblox bust. `object-contain` then fits the whole
- * image inside it, so a source that ever came back at a different ratio
- * letterboxes rather than silently losing a child's feet or face.
+ * **One height, and there is no other.** No size variant, on either platform, in
+ * any state. Only the box's *width* is the platform's to set, and only because
+ * the render's proportion is: 1:2 for a Minecraft body, 1:1 for a Roblox bust.
  *
  * **The status is announced, not only drawn.** Each icon is decorative and the
  * state travels to assistive tech through a polite live region, so a check
@@ -73,7 +141,6 @@ export function GameUsernameRow({
   className,
 }: GameUsernameRowProps) {
   const t = useTranslations("gameAccount");
-  const descriptor = GAME_PLATFORMS[platform];
 
   // A missing username *is* the unknown state, so the two cannot disagree: a
   // caller that passes no name gets the unknown rendering whatever it claims in
@@ -83,28 +150,6 @@ export function GameUsernameRow({
   const resolved: GameAccountStatus = username === null ? "unknown" : status;
   const unknown = resolved === "unknown";
 
-  // A render that fails to load falls back to the drawn figure rather than
-  // leaving an empty box. Keyed by url so a later, working src gets its own
-  // attempt instead of inheriting the previous one's failure.
-  const [failedUrl, setFailedUrl] = useState<string | null>(null);
-
-  // Omitted means "let the platform decide"; an explicit `null` means "draw the
-  // placeholder". Distinguishing the two is what lets one prop serve a live
-  // Minecraft row and a fixture on the same component.
-  const resolvedUrl =
-    avatarUrl !== undefined
-      ? avatarUrl
-      : username !== null && descriptor.avatar.urlFromUsername !== null
-        ? descriptor.avatar.urlFromUsername(username)
-        : null;
-
-  // The figure obeys `resolved` like every other slot: an unknown row shows the
-  // placeholder even if a caller handed it a real URL, because a face beside
-  // "(Unknown)" claims an identity the row is simultaneously denying.
-  const showImage = !unknown && resolvedUrl !== null && resolvedUrl !== failedUrl;
-
-  const { Placeholder } = descriptor.avatar;
-
   return (
     <div
       className={cn(
@@ -113,32 +158,18 @@ export function GameUsernameRow({
         className,
       )}
     >
-      <div
-        className={cn(
-          "shrink-0 overflow-hidden rounded-sm bg-muted",
-          GAME_ROW_HEIGHT,
-          descriptor.avatar.widthClass,
-        )}
-      >
-        {showImage ? (
-          // eslint-disable-next-line @next/next/no-img-element -- a third-party skin/avatar render on an external host; next/image would proxy a 48px thumbnail for no gain, and a Roblox URL is short-lived so an optimizer cache would be working against us
-          <img
-            src={resolvedUrl}
-            alt=""
-            aria-hidden
-            onError={() => setFailedUrl(resolvedUrl)}
-            // `object-contain`: the box already matches the render's
-            // proportion, so the figure fits it whole.
-            className="h-full w-full object-contain"
-          />
-        ) : (
-          <Placeholder />
-        )}
-      </div>
+      {/* The figure obeys `resolved` like every other slot: an unknown row shows
+          the placeholder even if a caller handed it a real URL, because a face
+          beside "(Unknown)" claims an identity the row is denying. */}
+      <GameAvatarBox
+        platform={platform}
+        username={unknown ? null : username}
+        avatarUrl={avatarUrl}
+      />
 
       <span
         className={cn(
-          "min-w-0 flex-1 truncate text-[11px] leading-tight",
+          "min-w-0 flex-1 truncate text-xs leading-tight",
           unknown && "text-muted-foreground",
           resolved === "unverified" && "text-warning",
           resolved === "verified" && "text-success",
@@ -152,10 +183,9 @@ export function GameUsernameRow({
 
           `unverified` deliberately draws nothing here. It takes the house
           treatment for a saved-but-unconfirmed game account — amber, with the
-          tick simply absent rather than a glyph of its own — which is also what
-          the badge form renders, so the two agree about one account. The missing
-          tick beside a name that carries one elsewhere is the signal; a second
-          glyph would read as its own kind of failure. */}
+          tick simply absent rather than a glyph of its own. The missing tick
+          beside a name that carries one elsewhere is the signal; a second glyph
+          would read as its own kind of failure. */}
       <span
         aria-hidden
         className="flex h-4 w-4 shrink-0 items-center justify-center"
