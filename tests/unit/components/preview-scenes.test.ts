@@ -21,6 +21,7 @@ import {
   entryNeedsAttention,
 } from "@/components/gedu/session-feed";
 import {
+  assignmentEndedOn,
   assignmentLiveness,
   geduActivityTypeOf,
   type GeduActivityType,
@@ -574,11 +575,11 @@ describe("the gedu dashboard scene puts every card state on one screen", () => {
     );
   });
 
-  it("puts four cards on the page, with and without a backlog", () => {
+  it("puts five cards on the page, with and without a backlog", () => {
     const counts = summaries()
       .map((a) => a.attentionCount)
       .sort((a, b) => a - b);
-    expect(counts).toHaveLength(4);
+    expect(counts).toHaveLength(5);
     // Both badge states have to be on screen: the empty slot is reserved
     // geometry, and it is only proved by a card that leaves it empty next to
     // one that fills it.
@@ -654,6 +655,54 @@ describe("the gedu dashboard scene puts every card state on one screen", () => {
     const camp = summaries().find((a) => a.productType === "camp");
     const { site } = buildGeduProductPageFixture(now, "camp");
     expect(camp?.siteName).toBe(site?.name);
+  });
+
+  /**
+   * **The finished run is a card state, so the page has to hold one.** It is
+   * the state the "No session scheduled" line used to libel as a scheduling
+   * fault, and every part of the treatment that replaced it — the muted tones,
+   * the missing next-session line, the "Ended …" date in the footer, the badge
+   * that stays loud — is invisible on a page where nothing has ended.
+   */
+  it("carries exactly one card whose run is over", () => {
+    const ended = summaries().filter((a) => assignmentEndedOn(a, now) !== null);
+    expect(ended).toHaveLength(1);
+    // A date to name in the footer, and no next session to contradict it.
+    expect(ended[0].endDate).not.toBeNull();
+    expect(ended[0].nextSessionStart).toBeNull();
+  });
+
+  /**
+   * Remote on purpose: this is the card that used to have an *empty* footer —
+   * no room to join, no building to name — which is exactly where the end date
+   * now goes. An ended in-person card would only have swapped one line for
+   * another.
+   */
+  it("makes the ended card the remote one, so the end date fills a footer that was empty", () => {
+    const ended = summaries().filter((a) => assignmentEndedOn(a, now) !== null);
+    expect(ended[0].hasVoiceRoom).toBe(true);
+    expect(ended[0].siteName).toBeNull();
+  });
+
+  it("leaves the ended card a backlog, so the badge is visibly undimmed", () => {
+    const ended = summaries().filter((a) => assignmentEndedOn(a, now) !== null);
+    expect(ended[0].attentionCount).toBeGreaterThan(0);
+  });
+
+  /**
+   * The demotion has to be visible on the page, not only in the roll-up's own
+   * unit tests — which is why the ended card is a *club*, sharing a heading with
+   * two live ones instead of sitting alone under a noun of its own.
+   */
+  it("puts the ended card last inside its own type group", () => {
+    const clubs = summaries().filter(
+      (a) => geduActivityTypeOf(a.productType) === "club",
+    );
+    expect(clubs.length).toBeGreaterThan(1);
+    expect(assignmentEndedOn(clubs[clubs.length - 1], now)).not.toBeNull();
+    for (const club of clubs.slice(0, -1)) {
+      expect(assignmentEndedOn(club, now), club.productName).toBeNull();
+    }
   });
 });
 

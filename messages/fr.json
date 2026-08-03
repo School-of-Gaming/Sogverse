@@ -1163,6 +1163,7 @@
       "inProgress": "Session en cours",
       "viewDetails": "Voir les détails",
       "noNextSession": "Aucune séance programmée",
+      "endedOn": "Terminé le {date}",
       "liveBadge": "En direct"
     },
     "sessionDetails": {

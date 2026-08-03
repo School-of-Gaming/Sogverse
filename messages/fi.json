@@ -1163,6 +1163,7 @@
       "inProgress": "Istunto käynnissä",
       "viewDetails": "Näytä tiedot",
       "noNextSession": "Ei kertoja aikataulussa",
+      "endedOn": "Päättyi {date}",
       "liveBadge": "Käynnissä"
     },
     "sessionDetails": {

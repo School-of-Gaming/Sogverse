@@ -1208,6 +1208,7 @@
       "inProgress": "qaStaH tay’",
       "viewDetails": "De’ yIbej",
       "noNextSession": "may’ nabta’ tu’lu’be’",
+      "endedOn": "{date} rIntaH",
       "liveBadge": "qaStaH"
     },
     "sessionDetails": {

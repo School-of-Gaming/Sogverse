@@ -1163,6 +1163,7 @@
       "inProgress": "Pågående pass",
       "viewDetails": "Visa detaljer",
       "noNextSession": "Inget tillfälle inbokat",
+      "endedOn": "Avslutades {date}",
       "liveBadge": "Pågår"
     },
     "sessionDetails": {

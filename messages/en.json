@@ -1163,6 +1163,7 @@
       "inProgress": "Session in progress",
       "viewDetails": "View details",
       "noNextSession": "No session scheduled",
+      "endedOn": "Ended {date}",
       "liveBadge": "Live"
     },
     "sessionDetails": {

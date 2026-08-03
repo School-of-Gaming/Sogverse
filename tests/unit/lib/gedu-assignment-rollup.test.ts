@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   GEDU_ACTIVITY_TYPE_ORDER,
+  assignmentEndedOn,
   assignmentLiveness,
   geduActivityTypeOf,
   groupAssignmentsByType,
@@ -178,6 +179,26 @@ describe("rollUpGeduAssignments", () => {
       inProgress: false,
       voiceIsOpen: false,
     });
+    // …and that emptiness is explained rather than left as an anomaly: the card
+    // reads the same last day back off the summary and says so.
+    expect(assignmentEndedOn(summaries[0], now)).toBe("2025-06-13");
+  });
+
+  it("carries the product's last day and zone through to the card", () => {
+    // The pair the ended test needs. Neither half answers it alone, so a
+    // summary that dropped either would leave the card unable to ask.
+    const summaries = rollUp(
+      [row({ id: "camp", name: "Camp", endDate: "2026-06-13" })],
+      now,
+    );
+    expect(summaries[0].endDate).toBe("2026-06-13");
+    expect(summaries[0].timezone).toBe(TZ);
+  });
+
+  it("leaves an open-ended club with no last day at all", () => {
+    const summaries = rollUp([row({ id: "p1", name: "Club" })], now);
+    expect(summaries[0].endDate).toBeNull();
+    expect(assignmentEndedOn(summaries[0], now)).toBeNull();
   });
 
   it("reports no next session for an assignment with no slots", () => {
@@ -210,6 +231,75 @@ describe("rollUpGeduAssignments", () => {
       now,
     );
     expect(summaries.map((s) => s.productId)).toEqual(["mon", "none"]);
+  });
+
+  /**
+   * A finished run has nothing to contribute to "what am I doing next", which is
+   * the question this ordering answers — but it is not gone, because its
+   * workspace is where the historic records live and an outstanding write-up on
+   * it is still owed. So it is demoted, not dropped.
+   */
+  it("puts every ended assignment below every live one", () => {
+    const summaries = rollUp(
+      [
+        row({
+          id: "done",
+          name: "Finished Camp",
+          startDate: "2025-06-02",
+          endDate: "2025-06-13",
+        }),
+        row({ id: "mon", name: "Monday", weekday: 0 }),
+        row({ id: "thu", name: "Thursday", weekday: 3 }),
+      ],
+      now,
+    );
+    expect(summaries.map((s) => s.productId)).toEqual(["thu", "mon", "done"]);
+  });
+
+  it("sorts an ended assignment below even an unscheduled live one", () => {
+    // "Nothing scheduled" is a gap somebody may still fill; "ended" never is.
+    const summaries = rollUp(
+      [
+        row({
+          id: "done",
+          name: "Finished Camp",
+          startDate: "2025-06-02",
+          endDate: "2025-06-13",
+        }),
+        row({ id: "none", name: "Unscheduled", slots: [] }),
+      ],
+      now,
+    );
+    expect(summaries.map((s) => s.productId)).toEqual(["none", "done"]);
+  });
+
+  it("orders the ended run most-recently-ended first", () => {
+    // Last term's club before the one from two years ago: the recent one is the
+    // paperwork a gedu is still finishing, the old one is archive.
+    const summaries = rollUp(
+      [
+        row({ id: "old", name: "Old", startDate: "2024-01-08", endDate: "2024-05-31" }),
+        row({ id: "recent", name: "Recent", startDate: "2025-09-01", endDate: "2025-12-19" }),
+        row({ id: "middle", name: "Middle", startDate: "2025-01-06", endDate: "2025-06-13" }),
+      ],
+      now,
+    );
+    expect(summaries.map((s) => s.productId)).toEqual([
+      "recent",
+      "middle",
+      "old",
+    ]);
+  });
+
+  it("breaks a same-day tie between two ended runs by name", () => {
+    const summaries = rollUp(
+      [
+        row({ id: "b", name: "Bravo", startDate: "2025-01-06", endDate: "2025-06-13" }),
+        row({ id: "a", name: "Alfa", startDate: "2025-01-06", endDate: "2025-06-13" }),
+      ],
+      now,
+    );
+    expect(summaries.map((s) => s.productId)).toEqual(["a", "b"]);
   });
 
   it("takes the attention count from the caller and defaults it to zero", () => {
@@ -343,6 +433,87 @@ describe("assignmentLiveness", () => {
         start,
       ),
     ).toEqual({ inProgress: false, voiceIsOpen: false });
+  });
+});
+
+/**
+ * Whether a run is over is the one thing standing between a card that reads as
+ * history and a card that reads as a scheduling fault, and it turns on a
+ * calendar date's day ending — which is a different instant in every zone. These
+ * pin the boundary itself.
+ */
+describe("assignmentEndedOn", () => {
+  const helsinki = (endDate: string | null) => ({
+    endDate,
+    timezone: "Europe/Helsinki",
+    nextSessionStart: null,
+  });
+
+  it("says nothing about a run with no last day", () => {
+    expect(
+      assignmentEndedOn(helsinki(null), new Date("2026-02-11T09:00:00Z")),
+    ).toBeNull();
+  });
+
+  it("keeps a run alive on its own last day, right to the end of it", () => {
+    // 13 Jun 2025, 23:58 Helsinki — still the last day, so still running.
+    expect(
+      assignmentEndedOn(
+        helsinki("2025-06-13"),
+        new Date("2025-06-13T20:58:00Z"),
+      ),
+    ).toBeNull();
+  });
+
+  it("ends it once that day is over, and names the day", () => {
+    // 14 Jun 2025, 00:02 Helsinki — one minute past.
+    expect(
+      assignmentEndedOn(
+        helsinki("2025-06-13"),
+        new Date("2025-06-13T21:02:00Z"),
+      ),
+    ).toBe("2025-06-13");
+  });
+
+  /**
+   * The day ends where the schedule lives. A viewer somewhere else does not get
+   * to retire a Helsinki club early or keep it alive late — otherwise the same
+   * card would be history for one gedu and current for the gedu beside them.
+   */
+  it("ends the day in the product's zone, not the viewer's", () => {
+    // 13 Jun 2025 22:30 UTC: already the 14th in Helsinki (UTC+3), still the
+    // 13th in New York. The Helsinki product is over; the New York one is not.
+    const instant = new Date("2025-06-13T22:30:00Z");
+    expect(assignmentEndedOn(helsinki("2025-06-13"), instant)).toBe("2025-06-13");
+    expect(
+      assignmentEndedOn(
+        {
+          endDate: "2025-06-13",
+          timezone: "America/New_York",
+          nextSessionStart: null,
+        },
+        instant,
+      ),
+    ).toBeNull();
+  });
+
+  /**
+   * The one case the date test alone gets wrong: a session that starts on the
+   * final day and is still running after that day's midnight. The run is past
+   * its end date and demonstrably not over, and a card calling it history would
+   * be withholding the Join from a session somebody is sitting in.
+   */
+  it("is not over while one of its own sessions is still in flight", () => {
+    expect(
+      assignmentEndedOn(
+        {
+          endDate: "2025-06-13",
+          timezone: "Europe/Helsinki",
+          nextSessionStart: new Date("2025-06-13T20:00:00Z"),
+        },
+        new Date("2025-06-13T21:10:00Z"),
+      ),
+    ).toBeNull();
   });
 });
 
