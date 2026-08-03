@@ -110,6 +110,12 @@ import {
   MinecraftUsernameRow,
   type MinecraftCheckStatus,
 } from "@/components/minecraft/minecraft-username-row";
+import {
+  RobloxUsernameRow,
+  type RobloxCheckStatus,
+} from "@/components/roblox/roblox-username-row";
+import { RobloxUsernameBadge } from "@/components/roblox/roblox-username-badge";
+import { RobloxUsernameField } from "@/components/roblox/roblox-username-field";
 
 /**
  * Chip demo people. Real generated UUIDv4s, hardcoded: an identicon is hashed
@@ -2190,6 +2196,37 @@ export default function AdminUIComponentsPage() {
         <MinecraftUsernameRowDemo />
       </Section>
 
+      {/* ============================================================ */}
+      {/* Section 19: Roblox                                            */}
+      {/* ============================================================ */}
+      <Section title="Roblox">
+        <p className="text-sm text-muted-foreground -mt-2">
+          The same fixed-geometry identity row as Minecraft, re-cut for Roblox.
+          Two things about Roblox force the change.{" "}
+          <strong>Every thumbnail is square</strong> &mdash; the API rejects a
+          non-square size outright &mdash; so the 1:2 box the Minecraft row draws
+          has no equivalent here. And <strong>the render is the bust</strong>, not
+          the full body: inside a square frame the full-body variant puts the
+          figure at 27% of the frame and 40% of its width, a small person adrift
+          in transparent padding, while the bust fills 88% and 98%. The Minecraft
+          component&rsquo;s argument for a whole body &mdash; a skin is a costume,
+          and the chosen half is below the shoulders &mdash; simply cannot survive
+          a 1:1 frame.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Everything else is deliberately identical. The avatar is a fixed square,
+          the status is a fixed square, and the username is the only thing between
+          them that flexes, so a lookup landing never moves the row. The
+          fixture-driven rows below draw a bundled inline SVG rather than
+          fetching, on the same 1:1 grid the real render uses &mdash; so the box
+          behaves the same against a placeholder and against a real avatar. The
+          live sub-section is the proof: the bust that arrives from{" "}
+          <code>/api/roblox/verify</code> lands in a slot that was already holding
+          its space.
+        </p>
+        <RobloxDemo />
+      </Section>
+
     </div>
   );
 }
@@ -2554,6 +2591,112 @@ function MinecraftUsernameRowDemo() {
         </div>
       </SubSection>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Roblox                                                             */
+/* ------------------------------------------------------------------ */
+
+const ROBLOX_STATUSES: readonly {
+  status: RobloxCheckStatus;
+  caption: string;
+}[] = [
+  { status: "idle", caption: "Idle — nobody has asked" },
+  { status: "checking", caption: "Checking — the lookup is in flight" },
+  { status: "valid", caption: "Valid — a real account" },
+  { status: "invalid", caption: "Invalid — no such account" },
+];
+
+function RobloxDemo() {
+  return (
+    <div className="space-y-8">
+      <SubSection title="Row — the bust at 48px, every state at identical dimensions">
+        <div className="max-w-xs space-y-2 rounded-lg border p-4">
+          {ROBLOX_STATUSES.map(({ status, caption }) => (
+            <div key={status} className="space-y-1">
+              <DemoCaption>{caption}</DemoCaption>
+              <RobloxUsernameRow username="EliasBuilds" status={status} />
+            </div>
+          ))}
+          <div className="space-y-1">
+            <DemoCaption>No username on the account</DemoCaption>
+            <RobloxUsernameRow username={null} />
+          </div>
+          <div className="space-y-1">
+            <DemoCaption>A username with no upper bound</DemoCaption>
+            <RobloxUsernameRow username="GalaxyDestroyer9000" status="valid" />
+          </div>
+        </div>
+      </SubSection>
+
+      <SubSection title="Full — the same asset, a third bigger">
+        <div className="flex flex-wrap gap-6 rounded-lg border p-4">
+          {ROBLOX_STATUSES.map(({ status, caption }) => (
+            <div key={status} className="w-44 space-y-1">
+              <DemoCaption>{caption}</DemoCaption>
+              <RobloxUsernameRow
+                username="EliasBuilds"
+                status={status}
+                size="full"
+              />
+            </div>
+          ))}
+        </div>
+      </SubSection>
+
+      <SubSection title="Badge — the read-only line, three states">
+        <div className="flex flex-wrap gap-8 rounded-lg border p-4">
+          <div className="space-y-1">
+            <DemoCaption>Verified — the handle resolved to an account</DemoCaption>
+            <RobloxUsernameBadge username="EliasBuilds" userId={68306362} />
+          </div>
+          <div className="space-y-1">
+            <DemoCaption>Entered, never checked</DemoCaption>
+            <RobloxUsernameBadge username="EliasBuilds" userId={null} />
+          </div>
+          <div className="space-y-1">
+            <DemoCaption>Nothing on the account</DemoCaption>
+            <RobloxUsernameBadge username={null} userId={null} />
+          </div>
+          <div className="space-y-1">
+            <DemoCaption>Verified at size=&quot;base&quot;</DemoCaption>
+            <RobloxUsernameBadge
+              username="EliasBuilds"
+              userId={68306362}
+              size="base"
+            />
+          </div>
+        </div>
+      </SubSection>
+
+      <RobloxLiveLookupDemo />
+    </div>
+  );
+}
+
+/**
+ * The one demo on this page that really talks to the network.
+ *
+ * `/api/roblox/verify` is public, so it answers from here, and the avatar it
+ * resolves is a real render off Roblox's CDN. `Roblox` and `builderman` both
+ * exist; anything shaped like a username but unclaimed comes back invalid.
+ */
+function RobloxLiveLookupDemo() {
+  const [username, setUsername] = useState("builderman");
+
+  return (
+    <SubSection title="Live — this one really calls /api/roblox/verify">
+      <div className="max-w-xl space-y-3 rounded-lg border p-4">
+        <p className="text-xs text-muted-foreground">
+          Try <code>Roblox</code> or <code>builderman</code>. The identity row is
+          drawn at its final size before you press anything, so the bust that
+          arrives lands in space that was already reserved — nothing on this page
+          moves when it does.
+        </p>
+        <RobloxUsernameField value={username} onChange={setUsername} />
+      </div>
+    </SubSection>
   );
 }
 

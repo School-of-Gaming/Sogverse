@@ -74,8 +74,10 @@ function buildCspHeader(nonce: string): string {
       ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`
       : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co",
     "style-src 'self' 'unsafe-inline'",
-    // mc-heads.net renders the Minecraft skin body avatar in MinecraftUsernameField (settings page for gamers/gedus)
-    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net`,
+    // mc-heads.net renders the Minecraft skin body avatar in MinecraftUsernameField (settings page for gamers/gedus).
+    // tr.rbxcdn.com serves the Roblox avatar bust render — the thumbnails API hands back that one
+    // host for every completed render, so it is named rather than wildcarded across *.rbxcdn.com.
+    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net https://tr.rbxcdn.com`,
     "font-src 'self'",
     // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io",
