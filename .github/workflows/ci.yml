@@ -153,17 +153,25 @@ jobs:
           version: ${{ env.SUPABASE_CLI_VERSION }}
 
       # The DB tests only exercise Postgres via PostgREST + GoTrue (see
-      # tests/db/helpers.ts) — they never touch edge functions, studio, imgproxy,
-      # vector, or logflare. Excluding those avoids booting the edge-runtime
-      # container, whose boot-time Deno download intermittently fails the tail-end
-      # health check with `Error status 502` (known upstream flake: supabase/cli
-      # #3775, #2893, #4535) and fails the whole job on a stack the tests don't use.
-      # --ignore-health-check is the documented backstop for that 502; the kept
-      # containers come up fine. Also cuts start time from ~5 min to ~40-60s.
-      # (realtime/storage/inbucket are unused too and could be excluded for more
-      # speed, but they're not the flaky one, so we keep them — minimal blast radius.)
+      # tests/db/helpers.ts) — so only those two, kong (which routes to them),
+      # postgres itself, and supavisor (the pooler fronting the exposed db port the
+      # CLI applies migrations through) get to boot. Everything else is excluded:
+      #
+      # - edge-runtime is the flaky one — its boot-time Deno download intermittently
+      #   fails the tail-end health check with `Error status 502` (known upstream
+      #   flake: supabase/cli #3775, #2893, #4535) and fails the whole job on a
+      #   container the tests never touch. --ignore-health-check is the documented
+      #   backstop for that 502; the kept containers come up fine.
+      # - realtime, storage-api, postgres-meta, mailpit, studio, imgproxy, vector,
+      #   logflare are simply unused. Mailpit is safe to drop because local auth
+      #   autoconfirms (enable_confirmations = false in supabase/config.toml), so
+      #   GoTrue never contacts SMTP on any path a test exercises.
+      #
+      # Together the exclusions cut boot from ~5 min (full stack) to well under it;
+      # the full-stack baseline and per-container drift move around with runner
+      # weather, so treat the step's own timing in the run as the current number.
       - name: Start local Supabase
-        run: supabase start -x edge-runtime,studio,imgproxy,vector,logflare --ignore-health-check
+        run: supabase start -x edge-runtime,studio,imgproxy,vector,logflare,realtime,storage-api,postgres-meta,mailpit --ignore-health-check
 
       - name: Run database tests
         run: npm run test:db
@@ -271,9 +279,9 @@ jobs:
             echo "::warning::lost a race pushing the regenerated schema.sql to dev; the next schema-changing push will regenerate it"
           fi
 
-      - name: Stop local Supabase
-        if: always()
-        run: supabase stop
+      # No `supabase stop`: the runner is ephemeral and gets destroyed right after
+      # this job, so tearing the stack down (~19s) protected nothing. The schema
+      # snapshot above is dumped while the stack is still up either way.
 
   # Deploy job only runs on push to main, after CI passes
   # Vercel handles preview/staging deploys for dev automatically via GitHub integration
