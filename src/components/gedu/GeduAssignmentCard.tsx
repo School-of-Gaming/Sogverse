@@ -16,7 +16,6 @@ import { SessionFeedAlertBadge } from "@/components/gedu/session-feed";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import { useNow, useTimezone } from "@/providers";
 import { cn, formatDate, formatDateOnly, formatTime } from "@/lib/utils";
-import { formatSessionDateTimeRange } from "@/lib/session-format";
 import {
   assignmentEndedOn,
   assignmentLiveness,
@@ -41,9 +40,9 @@ interface GeduAssignmentCardProps {
  * This is a roll-up, not a session. The dashboard used to list every upcoming
  * occurrence, which meant eight nearly identical rows for one weekly club; now
  * that the product page's feed owns per-session detail, the dashboard answers a
- * shorter question — which activities do I run, which is next, and where am I
- * behind. So the card carries the product's identity, the group's identity as a
- * secondary line, one next-session line, the cadence in words rather than as a
+ * shorter question — which activities do I run, when does each one run, and
+ * where am I behind. So the card carries the product's identity, the group's
+ * identity as a secondary line, the product's schedule in words rather than as a
  * list of dates, and the outstanding-write-up badge.
  *
  * **Every card is the same height, and every zone holds something real.** A
@@ -55,6 +54,13 @@ interface GeduAssignmentCardProps {
  * nothing on most cards, and made the common state look like the broken one. So
  * the zones are uniform because they are *populated*, not because they are
  * padded:
+ *
+ * The rows are the same rows in every state — identity, schedule, footer — which
+ * is what makes two cards the same height without either of them holding a gap.
+ * A grid row stretches, so an odd one out is invisible until it is the card
+ * alone on the last row with nothing to stretch against; that is where a
+ * difference of a couple of lines stops reading as a shorter card and starts
+ * reading as a broken one.
  *
  * - **The footer holds the Join on a remote product and the venue on an
  *   in-person one.** Those are the same question — where is this happening —
@@ -70,9 +76,13 @@ interface GeduAssignmentCardProps {
  *   it. **One state still genuinely leaves the footer empty**, and it is the
  *   honest answer rather than an oversight: a remote assignment whose schedule
  *   has run out with no end date to report has no session to join, no building
- *   to name and no day to point at, and the line above it already says there is
- *   nothing scheduled. Padding that card with a placeholder would be inventing a
- *   fact to fill a box.
+ *   to name and no day to point at. Padding that card with a placeholder would
+ *   be inventing a fact to fill a box. **The row keeps the Join's own height in
+ *   every one of those states**, which is the one piece of geometry here that is
+ *   reserved rather than filled — and it has to be, because the alternatives are
+ *   a button and a line of text, and nothing can make a line of text as tall as
+ *   a button. Left to its content, the card whose answer is text stood a
+ *   button's worth shorter than the card beside it.
  * - **The attention badge overlays the card's top-right corner**, following the
  *   pattern the family session cards already use for a payment problem. It rode
  *   the end of the cadence line for a while, which read fine on one card and
@@ -121,12 +131,21 @@ interface GeduAssignmentCardProps {
  * thing — and "Group A" identifies it to nobody, while "Minecraft Monday Club"
  * identifies it immediately.
  *
- * **The next session is an absolute date, with no countdown under it.** A
- * relative line ("starts in 2 days, 5 hours") reads as more precise than the
- * date it sits beneath while being harder to act on: a gedu checking a dashboard
- * is deciding what to do on a *day*, and days are what a calendar, a colleague
- * and a parent all speak in. The date is also stable — it says the same thing
- * whenever you look at it, and never has to tick.
+ * **The card states the schedule; the Join states the next session.** They are
+ * two different questions and each is answered once. A gedu sweeping this page
+ * is placing an activity in their week — "Mondays 16:30–18:00" is what does
+ * that, and it is the same sentence the product's public page and the admin's
+ * details page show, from the same formatter. The next session is a fact about
+ * one imminent evening, and the affordance that acts on it already carries it:
+ * the locked Join reads "Opens Thu 12 Feb at 17:00", and once the session starts
+ * the corner badge says so. The card used to print that date and time in its own
+ * row as well, directly above a button repeating it.
+ *
+ * Nothing here is relative. A countdown ("starts in 2 days, 5 hours") reads as
+ * more precise than a date while being harder to act on: a gedu is deciding what
+ * to do on a *day*, and days are what a calendar, a colleague and a parent all
+ * speak in. A schedule is more stable still — it says the same thing whenever
+ * you look at it, and never has to tick.
  *
  * The Join affordance lives here for a remote product, because this is the only
  * place a gedu meets their next session before opening it. Card and button are
@@ -138,17 +157,11 @@ interface GeduAssignmentCardProps {
  * **A finished run is quiet history, not a scheduling fault.** Once a product's
  * last day is behind it there is always no next session, which read as the
  * anomaly state — "No session scheduled", in the slot where every other card
- * names a date — when in fact it is the ordinary and permanent end of a
- * perfectly normal run. Three things change on such a card, and each of them is
- * a subtraction:
+ * named a date — when in fact it is the ordinary and permanent end of a
+ * perfectly normal run. Two things change on such a card, and both are
+ * subtractions:
  *
- * - **The next-session line goes**, rather than being reworded. Its whole job is
- *   to name the next session, and there is not going to be one; a line saying so
- *   spends the card's most prominent row restating what the footer says with a
- *   date attached. Nothing survives that removal into the ended card — an ended
- *   card is never a live card a moment later — so no space is held for it, and
- *   the grid squares its own rows off by stretching regardless.
- * - **The type label, name, group and cadence all drop a tone.** A gedu sweeping
+ * - **The type label, name, group and schedule all drop a tone.** A gedu sweeping
  *   this page is looking for what is still running, and the finished runs have
  *   to fall back out of that sweep without falling out of the page. They keep
  *   their chevron, their hover lift and their focus ring at full strength,
@@ -306,56 +319,62 @@ export function GeduAssignmentCard({
             </div>
           </div>
 
-          {/* The next session as one absolute line, or the "nothing scheduled"
-              fallback. Both are a single line, so a session arriving or running
-              out cannot change the card's height.
+          {/* The product's schedule, in words — the cadence for a club, the date
+              range and running days for a camp, the day and time for an event.
+              It is the same formatter the public browse cards and the "When &
+              where" rows use, so a product's schedule reads identically wherever
+              it appears, in the viewer's zone wherever it appears.
 
-              A finished run renders neither. It has no next session and never
-              will again, so the fallback would be reporting a permanent fact as
-              a scheduling gap — in the row a reader looks at first. The line
-              simply is not part of this card, and the footer's date is what
-              stands where a reader would have gone looking for it. */}
-          {endedOn === null && (
-            <p className={cn("text-sm", !hasNext && "text-muted-foreground")}>
-              {hasNext
-                ? formatSessionDateTimeRange(
-                    nextSessionStart,
-                    nextSessionEnd,
-                    locale,
-                    timeZone,
-                  )
-                : t("noNextSession")}
-            </p>
-          )}
+              **It replaced the next session's own date and time**, which was the
+              card saying twice what the Join button beneath it already said
+              exactly — and saying it in the row a gedu reads first, where the
+              question is which of my activities is this rather than when is the
+              very next one. The next session is not lost: on a remote product the
+              locked Join names it ("Opens Thu 12 Feb at 17:00"), and on a live
+              one the badge in the corner says it is happening now.
 
-          {/* The cadence in words. A roll-up card can't enumerate dates without
-              becoming the list it replaced, and "Mondays 16:30–18:00" tells the
-              gedu more per line than eight Mondays ever did. */}
-          {scheduleLines.length > 0 && (
-            <div
-              className={cn(
-                "flex min-w-0 items-start gap-1.5 text-xs text-muted-foreground",
-                endedOn !== null && "text-muted-foreground/70",
-              )}
-            >
-              <CalendarClock className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-              <span className="min-w-0">
-                {scheduleLines.map((line) => (
+              **The row is always here**, and holds the "nothing scheduled" line
+              on a product with no slots yet, so the card cannot lose a row to a
+              missing schedule. That is not a reserved space — a schedule is a
+              fact every product has an answer to, and "none set" is the answer
+              for a product still being put together. */}
+          <div
+            className={cn(
+              "flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground",
+              endedOn !== null && "text-muted-foreground/70",
+            )}
+          >
+            <CalendarClock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <span className="min-w-0">
+              {scheduleLines.length > 0 ? (
+                scheduleLines.map((line) => (
                   <span key={line} className="block tabular-nums">
                     {line}
                   </span>
-                ))}
-              </span>
-            </div>
-          )}
+                ))
+              ) : (
+                <span className="block">{t("noNextSession")}</span>
+              )}
+            </span>
+          </div>
 
           {/* Pinned to the bottom: the day it ended on a finished run, the room
               on a remote product, the building on an in-person one. Three flat
               conditions rather than one nested chain — they are mutually
               exclusive by construction, and the end date wins over both of the
               others because a run that is over has neither a session left to
-              join nor a venue anyone is travelling to. */}
-          <div className="relative z-10 mt-auto flex items-end justify-center">
+              join nor a venue anyone is travelling to.
+
+              `min-h-9` is the Join button's own height (`size="sm"`), held by the
+              row whatever lands in it. Without it the footer is as tall as its
+              content, so a card whose answer is a line of text — a venue, the
+              day a run ended — sits a button's worth shorter than the card
+              beside it. Inside a grid row that is invisible (the row stretches
+              and the difference lands as padding), which is exactly why it went
+              unnoticed: it shows up on the card that ends up alone on the last
+              row, where there is nothing to stretch against and an ended club
+              reads as a clipped version of a real card. */}
+          <div className="relative z-10 mt-auto flex min-h-9 items-center justify-center">
             {endedOn !== null && (
               // Date-only and UTC-pinned, via the shared bare-date formatter: an
               // end date is a calendar date with no clock face on it, so it must
