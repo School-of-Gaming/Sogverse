@@ -174,6 +174,7 @@ const TESTS = {
   productsParticipationsTransition:
     "tests/integration/api/products-participations-transition.test.ts",
   productsUpdate: "tests/integration/api/products-update.test.ts",
+  robloxVerify: "tests/integration/api/roblox-verify.test.ts",
   sendTestEmail: "tests/integration/api/send-test-email.test.ts",
   signout: "tests/integration/auth/signout.test.ts",
   stripeWebhook: "tests/integration/api/stripe-webhook-products.test.ts",
@@ -648,6 +649,22 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: { kind: "role-gated", roles: ["customer"] },
         body: { kind: "json", schema: "leaveWaitlistBody" },
         test: TESTS.waitlist,
+      },
+    },
+  },
+
+  // --- Roblox --------------------------------------------------------------
+
+  "src/app/api/roblox/verify/route.ts": {
+    handlers: {
+      GET: {
+        posture: {
+          kind: "public",
+          reason:
+            "a read-only passthrough to Roblox's public username lookup — no database access and no secrets. It mirrors the Minecraft verify route: a username is checked before any account exists, so it cannot require a session",
+        },
+        body: { kind: "none" },
+        test: TESTS.robloxVerify,
       },
     },
   },

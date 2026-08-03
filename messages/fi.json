@@ -2462,6 +2462,17 @@
     }
   },
   "roblox": {
+    "account": {
+      "label": "Roblox-käyttäjänimi",
+      "placeholder": "esim. builderman",
+      "verify": "Vahvista",
+      "verifying": "Vahvistetaan...",
+      "notFound": "Roblox-tiliä ei löytynyt. Tarkista käyttäjänimi ja yritä uudelleen.",
+      "verifiedUser": "{username} (vahvistettu)",
+      "unverified": "{username} (ei vielä vahvistettu)",
+      "displayName": "Näkyy pelissä nimellä {displayName}",
+      "none": "(ei tiedossa)"
+    },
     "hero": {
       "title": "Rakenna<br></br><primary>Pelaa</primary><br></br><secondary>Omista</secondary>",
       "subtitle": "Ilmainen Roblox-pelisuunnitteluohjelma nuorille – järjestäjinä Lynx Educate ja School of Gaming yhteistyössä Robloxin kanssa.",

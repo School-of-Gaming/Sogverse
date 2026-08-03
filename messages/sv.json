@@ -2462,6 +2462,17 @@
     }
   },
   "roblox": {
+    "account": {
+      "label": "Roblox-användarnamn",
+      "placeholder": "t.ex. builderman",
+      "verify": "Verifiera",
+      "verifying": "Verifierar...",
+      "notFound": "Roblox-kontot hittades inte. Kontrollera användarnamnet och försök igen.",
+      "verifiedUser": "{username} (verifierad)",
+      "unverified": "{username} (ännu inte verifierad)",
+      "displayName": "Visas i spelet som {displayName}",
+      "none": "(okänt)"
+    },
     "hero": {
       "title": "Bygg<br></br><primary>Spela</primary><br></br><secondary>Äg det</secondary>",
       "subtitle": "Ett gratis Roblox-speldesignprogram för tonåringar — från Lynx Educate och School of Gaming, i samarbete med Roblox.",

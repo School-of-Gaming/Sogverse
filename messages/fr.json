@@ -2462,6 +2462,17 @@
     }
   },
   "roblox": {
+    "account": {
+      "label": "Nom d’utilisateur Roblox",
+      "placeholder": "ex. builderman",
+      "verify": "Vérifier",
+      "verifying": "Vérification...",
+      "notFound": "Compte Roblox introuvable. Vérifiez le nom d’utilisateur et réessayez.",
+      "verifiedUser": "{username} (vérifié)",
+      "unverified": "{username} (pas encore vérifié)",
+      "displayName": "Affiché en jeu sous le nom {displayName}",
+      "none": "(Inconnu)"
+    },
     "hero": {
       "title": "Construisez<br></br><primary>Jouez</primary><br></br><secondary>Publiez</secondary>",
       "subtitle": "Un programme gratuit de création de jeux Roblox pour les ados, proposé par Lynx Educate et School of Gaming, en partenariat avec Roblox.",

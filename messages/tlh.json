@@ -2507,6 +2507,17 @@
     }
   },
   "roblox": {
+    "account": {
+      "label": "Roblox lo’wI’ pong",
+      "placeholder": "e.g. builderman",
+      "verify": "yIchel",
+      "verifying": "vIchel...",
+      "notFound": "Roblox account tu’be’lu’. pong yIchel je yIboq.",
+      "verifiedUser": "{username} (chellu’)",
+      "unverified": "{username} (chelbe’lu’)",
+      "displayName": "QujDaq {displayName} ponglu’",
+      "none": "(Sovbe’lu’)"
+    },
     "hero": {
       "title": "yIchen<br></br><primary>yItIv</primary><br></br><secondary>yIghaj</secondary>",
       "subtitle": "Roblox qetlh chenmoHmeH ghojmoH — Huch Hutlh! loDHompu’ be’Hompu’vaD. Lynx Educate, School of Gaming, je Roblox boqwI’pu’.",
