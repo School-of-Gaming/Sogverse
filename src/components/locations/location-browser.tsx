@@ -12,9 +12,9 @@ import type { Location, LocationType } from "@/types";
 import {
   LocationPickerPanel,
   LocationPickerShell,
+  type LocationChainSummary,
   type LocationPick,
   type LocationSelection,
-  type LocationSummary,
 } from "./location-picker-panel";
 
 /**
@@ -46,7 +46,7 @@ export function LocationBrowser({
   searchTypes,
 }: LocationBrowserProps) {
   /** Nodes drilled into, root first. Empty means "at the top of the tree". */
-  const [path, setPath] = useState<LocationSummary[]>([]);
+  const [path, setPath] = useState<LocationChainSummary[]>([]);
   const [query, setQuery] = useState("");
 
   const debounced = useDebouncedValue(query);
@@ -77,7 +77,17 @@ export function LocationBrowser({
   return (
     <LocationPickerPanel
       path={path}
-      onDrill={(row) => setPath((current) => [...current, row])}
+      // A row's full path is its ancestors reversed to root-first, then the row
+      // itself — and that is true however the row was found, which is why the
+      // path is rebuilt rather than appended to. Browsing, it reduces to
+      // appending, because a browse row's ancestors *are* the current
+      // breadcrumb. Searching, it is the only thing that can be right: nobody
+      // drilled through Finland and Uusimaa to reach a school in Helsinki, so
+      // appending would leave the breadcrumb claiming the school sits directly
+      // under every country.
+      onDrill={(pick) =>
+        setPath([...[...pick.ancestors].reverse(), pick.location])
+      }
       onOpenDepth={(depth) => setPath((current) => current.slice(0, depth))}
       query={query}
       onQueryChange={setQuery}

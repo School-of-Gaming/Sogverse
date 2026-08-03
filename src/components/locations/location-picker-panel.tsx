@@ -121,9 +121,13 @@ export interface LocationPanelRows {
 
 interface LocationPickerPanelProps {
   /** Nodes drilled into, root first. Empty means "at the top of the tree". */
-  path: readonly LocationSummary[];
-  /** Descend into a row. */
-  onDrill: (row: LocationSummary) => void;
+  path: readonly LocationChainSummary[];
+  /**
+   * Descend into a row. The whole pick is handed over, not just the row: a hit
+   * reached by search was never drilled through, so its ancestors are the only
+   * record of where it lives and the caller needs them to place the breadcrumb.
+   */
+  onDrill: (pick: LocationPick) => void;
   /** Go back to a breadcrumb position: `depth` is how many nodes to keep. */
   onOpenDepth: (depth: number) => void;
   query: string;
@@ -194,7 +198,7 @@ export function LocationPickerPanel({
 
   /** Drilling from a search hit jumps the breadcrumb to where that hit lives. */
   function handleDrill(pick: LocationPick) {
-    onDrill(pick.location);
+    onDrill(pick);
     if (searching) onQueryChange("");
   }
 

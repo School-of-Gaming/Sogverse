@@ -64,6 +64,7 @@ import type {
 import type { VoiceZone } from "@/types";
 import {
   LocationPickerPanel,
+  type LocationChainSummary,
   type LocationPick,
   type LocationSummary,
 } from "@/components/locations/location-picker-panel";
@@ -2209,14 +2210,19 @@ const HITS: LocationPick[] = [
  * component state, and the rows are whatever level that path points at.
  */
 function useFixtureBrowse() {
-  const [path, setPath] = useState<LocationSummary[]>([]);
+  const [path, setPath] = useState<LocationChainSummary[]>([]);
   const parentId = path.at(-1)?.id ?? "root";
   const ancestors = [...path].reverse();
   const rows = (LEVELS[parentId] ?? []).map((location) => ({ location, ancestors }));
 
   return {
     path,
-    onDrill: (row: LocationSummary) => setPath((current) => [...current, row]),
+    // The same rule the real browser uses: a row's path is its ancestors
+    // reversed to root-first plus the row itself, which holds whether the row
+    // was browsed to or searched for. Appending instead would look right here —
+    // the fixture only browses — while being wrong in the app.
+    onDrill: (pick: LocationPick) =>
+      setPath([...[...pick.ancestors].reverse(), pick.location]),
     onOpenDepth: (depth: number) => setPath((current) => current.slice(0, depth)),
     browse: { rows, total: rows.length, hasMore: false, loading: false },
   };

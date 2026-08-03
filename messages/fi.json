@@ -1546,7 +1546,7 @@
     "picker": {
       "coverageTitle": "Valitse alueet, jotka katat",
       "coverageDescription": "Merkitse kaikki, jotka voit kattaa. Jokainen merkintä kattaa myös kaiken sen sisällä, joten maakunnan merkitseminen kattaa jo kaikki sen kunnat.",
-      "searchPlaceholder": "Hae mistä tahansa nimellä tai virallisella koodilla…",
+      "searchPlaceholder": "Hae nimellä tai koodilla…",
       "searchingEverywhere": "Haetaan kaikista maista",
       "allCountries": "Kaikki maat",
       "noResults": "Hakua ”{query}” vastaavaa ei löydy.",

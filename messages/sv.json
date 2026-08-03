@@ -1546,7 +1546,7 @@
     "picker": {
       "coverageTitle": "Välj de områden du täcker",
       "coverageDescription": "Kryssa i allt du kan täcka. Varje kryss täcker allt som ligger inuti, så ett kryss för ett landskap täcker redan alla dess kommuner.",
-      "searchPlaceholder": "Sök överallt på namn eller officiell kod…",
+      "searchPlaceholder": "Sök på namn eller kod…",
       "searchingEverywhere": "Söker i alla länder",
       "allCountries": "Alla länder",
       "noResults": "Ingenting matchar ”{query}”.",

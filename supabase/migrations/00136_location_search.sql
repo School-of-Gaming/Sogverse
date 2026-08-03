@@ -292,17 +292,38 @@ COMMENT ON FUNCTION public.search_locations(text, public.location_type[], intege
 -- Grants
 -- ---------------------------------------------------------------------------
 
--- The folding primitives are not part of anyone's API. They are reachable from
--- the generated column (whose expression was privilege-checked once, at ALTER
--- TABLE time) and from search_locations, neither of which needs a caller to hold
--- EXECUTE — so they stay off the authenticated/anon surface entirely.
+-- The folding primitives are nobody's API, but they are still reached down two
+-- privilege-checked paths, and a caller needs EXECUTE on both:
+--
+--   * `search_locations` is SECURITY INVOKER, so its body runs as the *caller*.
+--     It folds the needle with immutable_unaccent and builds its LIKE patterns
+--     from location_search_separator, so every role allowed to search needs
+--     EXECUTE on those two. Granting the wrapper alone yields 42501 on the
+--     first call.
+--   * a generated column's expression is evaluated during INSERT/UPDATE **with
+--     the privileges of the writing role** — not once at ALTER TABLE time — so
+--     any role that may write to `locations` needs EXECUTE on
+--     location_search_blob (and transitively on the two it calls).
+--     `authenticated` holds INSERT and UPDATE here under admin_manage_locations,
+--     so without this an admin cannot create a venue or rename a row.
+--
+-- Granting them widens nothing. All three are pure functions of their
+-- arguments: they read no table, hold no privilege of their own, and reveal
+-- nothing a caller did not already pass in.
 REVOKE ALL ON FUNCTION public.immutable_unaccent(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.immutable_unaccent(text) TO anon;
+GRANT EXECUTE ON FUNCTION public.immutable_unaccent(text) TO authenticated;
 GRANT ALL ON FUNCTION public.immutable_unaccent(text) TO service_role;
 
 REVOKE ALL ON FUNCTION public.location_search_separator() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.location_search_separator() TO anon;
+GRANT EXECUTE ON FUNCTION public.location_search_separator() TO authenticated;
 GRANT ALL ON FUNCTION public.location_search_separator() TO service_role;
 
+-- Not granted to `anon`: anon never writes to `locations`, and nothing on the
+-- read path calls this one.
 REVOKE ALL ON FUNCTION public.location_search_blob(text, jsonb, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.location_search_blob(text, jsonb, text) TO authenticated;
 GRANT ALL ON FUNCTION public.location_search_blob(text, jsonb, text) TO service_role;
 
 -- Search is anon-reachable on purpose: /register-gedu asks an applicant where
@@ -349,6 +370,23 @@ BEGIN
   SELECT public.search_locations('helsingfors', NULL, 5) INTO v_hits;
   IF (v_hits -> 'total')::integer < 1 THEN
     RAISE EXCEPTION 'locations: search_locations found nothing for a seeded alternate name';
+  END IF;
+
+  -- Every function the two invoker-privileged paths reach, checked per role.
+  -- The assertions above all run as the migration's owner, which holds
+  -- everything — so they pass just as happily when anon and authenticated hold
+  -- nothing, and a search that 42501s for every real caller looks like a clean
+  -- migration. This is the check that does not.
+  IF NOT has_function_privilege('anon', 'public.search_locations(text, public.location_type[], integer)', 'EXECUTE')
+     OR NOT has_function_privilege('anon', 'public.immutable_unaccent(text)', 'EXECUTE')
+     OR NOT has_function_privilege('anon', 'public.location_search_separator()', 'EXECUTE') THEN
+    RAISE EXCEPTION 'locations: anon cannot execute the whole search path — SECURITY INVOKER needs every function in the body granted, not just the entry point';
+  END IF;
+
+  IF NOT has_function_privilege('authenticated', 'public.location_search_blob(text, jsonb, text)', 'EXECUTE')
+     OR NOT has_function_privilege('authenticated', 'public.immutable_unaccent(text)', 'EXECUTE')
+     OR NOT has_function_privilege('authenticated', 'public.location_search_separator()', 'EXECUTE') THEN
+    RAISE EXCEPTION 'locations: authenticated cannot execute the search_blob generation expression — every write to locations would fail';
   END IF;
 END;
 $$;
