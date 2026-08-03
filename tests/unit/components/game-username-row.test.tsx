@@ -109,13 +109,51 @@ describe("GameUsernameRow", () => {
 
   // Minecraft can derive both renders from a name; the face is a different
   // endpoint from the body, so head mode must not silently draw the body.
+  // Verified, because derivation is gated on a confirmed account.
   it("derives the face, not the body, when Minecraft draws a head", () => {
     const { container } = render(
-      <GameUsernameRow platform="minecraft" username="Notch" figure="head" />,
+      <GameUsernameRow
+        platform="minecraft"
+        username="Notch"
+        status="verified"
+        figure="head"
+      />,
     );
 
     expect(container.querySelector("img")?.getAttribute("src")).toBe(
       "https://mc-heads.net/avatar/Notch/96",
+    );
+  });
+
+  /**
+   * Derivation is evidence-gated, and this is the case that motivates it: the
+   * skin host resolves by *name*, so a name nobody has confirmed is just a
+   * string somebody typed. Drawing from it would put whichever stranger owns
+   * that name beside a child's row.
+   */
+  it("refuses to derive a figure for an unverified name", () => {
+    const { container } = render(
+      <GameUsernameRow platform="minecraft" username="Notch" />,
+    );
+
+    expect(container.querySelector("img")).toBeNull();
+    expect(boxes(container).avatar.querySelector("svg")).toBeTruthy();
+  });
+
+  // A handed-in URL is drawn whatever the status: whoever resolved it knows what
+  // they resolved, and the gate is only about guessing from a name.
+  it("still draws a render that was handed in for an unverified account", () => {
+    const { container } = render(
+      <GameUsernameRow
+        platform="roblox"
+        username="builderman"
+        avatarUrl="https://tr.rbxcdn.com/abc/100/100/AvatarHeadshot/Png"
+        figure="head"
+      />,
+    );
+
+    expect(container.querySelector("img")?.getAttribute("src")).toBe(
+      "https://tr.rbxcdn.com/abc/100/100/AvatarHeadshot/Png",
     );
   });
 
