@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { GameUsernameRow } from "./game-username-row";
+import { cn } from "@/lib/utils";
 import {
   GAME_PLATFORMS,
+  GAME_ROW_HEIGHT,
   useVerifyGameAccount,
   type GameAccountStatus,
   type GamePlatform,
@@ -181,7 +183,7 @@ export function GameUsernameField({
       {/* The fixed slot. Present from first paint at its final height, so the
           figure and the check land into space that was already reserved for
           them and the error line below never moves. */}
-      <div className="flex h-12 items-center gap-3">
+      <div className={cn("flex items-center gap-3", GAME_ROW_HEIGHT)}>
         <GameUsernameRow
           platform={platform}
           username={value.trim() ? value.trim() : null}

@@ -1,7 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { fireEvent, render } from "@testing-library/react";
 import { GameUsernameEditableRow } from "@/components/game-account/game-username-editable-row";
-import { gameAccountStatus } from "@/components/game-account/platforms";
+import {
+  GAME_ROW_HEIGHT,
+  gameAccountStatus,
+} from "@/components/game-account/platforms";
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, params?: Record<string, string>) => {
@@ -82,16 +85,16 @@ describe("GameUsernameEditableRow", () => {
    * change the person asked for and may replace what is under their cursor, but
    * the roster rows *around* it asked for nothing and must not move.
    */
-  it("keeps the row exactly h-12 in both display and edit mode", () => {
+  it("keeps the row at the one game-account height in both display and edit mode", () => {
     const { container, pencil } = setup();
 
-    expect(shell(container).className).toContain("h-12");
+    expect(shell(container).className).toContain(GAME_ROW_HEIGHT);
 
     const button = pencil();
     if (!button) throw new Error("the pencil never rendered");
     fireEvent.click(button);
 
-    expect(shell(container).className).toContain("h-12");
+    expect(shell(container).className).toContain(GAME_ROW_HEIGHT);
   });
 
   it("derives the resting status from the account, with no caller needing to say so", () => {

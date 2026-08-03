@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   GAME_PLATFORMS,
-  type GameAccountRowSize,
+  GAME_ROW_HEIGHT,
   type GameAccountStatus,
   type GamePlatform,
 } from "./platforms";
@@ -35,12 +35,6 @@ interface GameUsernameRowProps {
    * surface and the wrong one for a fixture, so a fixture passes `null`.
    */
   avatarUrl?: string | null;
-  /**
-   * How much room the figure gets. Both sizes show the same asset, so this is a
-   * scale and never a crop; the proportion of the box is the platform's, from
-   * its descriptor.
-   */
-  size?: GameAccountRowSize;
   className?: string;
 }
 
@@ -57,12 +51,15 @@ interface GameUsernameRowProps {
  * that flexes; every one of the four states renders at exactly the same size,
  * and the row is the same height before, during and after a check.
  *
- * **The figure is scaled, never re-rendered and never cropped.** The box is
- * drawn at the platform's own render proportion — 1:2 for a Minecraft body, 1:1
- * for a Roblox bust — so `object-contain` fits the whole image inside it and a
- * source that ever came back at a different ratio letterboxes rather than
- * silently losing a child's feet or face. `full` is the very same asset drawn
- * larger, not a second picture from a second pipeline.
+ * **One height, and there is no other.** The row has no size variant, on either
+ * platform, in any state — a game identity is one thing that renders one way,
+ * and the moment it can be two heights a surface has to choose, two surfaces
+ * choose differently, and the component that exists to stop rows twitching
+ * starts contributing its own inconsistency. Only the box's *width* is the
+ * platform's to set, and only because the render's proportion is: 1:2 for a
+ * Minecraft body, 1:1 for a Roblox bust. `object-contain` then fits the whole
+ * image inside it, so a source that ever came back at a different ratio
+ * letterboxes rather than silently losing a child's feet or face.
  *
  * **The status is announced, not only drawn.** Each icon is decorative and the
  * state travels to assistive tech through a polite live region, so a check
@@ -73,12 +70,10 @@ export function GameUsernameRow({
   username,
   status = "unknown",
   avatarUrl,
-  size = "row",
   className,
 }: GameUsernameRowProps) {
   const t = useTranslations("gameAccount");
   const descriptor = GAME_PLATFORMS[platform];
-  const full = size === "full";
 
   // A missing username *is* the unknown state, so the two cannot disagree: a
   // caller that passes no name gets the unknown rendering whatever it claims in
@@ -114,14 +109,15 @@ export function GameUsernameRow({
     <div
       className={cn(
         "flex min-w-0 items-center gap-2",
-        full && "items-start",
+        GAME_ROW_HEIGHT,
         className,
       )}
     >
       <div
         className={cn(
           "shrink-0 overflow-hidden rounded-sm bg-muted",
-          descriptor.avatar.boxClass[size],
+          GAME_ROW_HEIGHT,
+          descriptor.avatar.widthClass,
         )}
       >
         {showImage ? (
@@ -131,8 +127,8 @@ export function GameUsernameRow({
             alt=""
             aria-hidden
             onError={() => setFailedUrl(resolvedUrl)}
-            // `object-contain` in both sizes: the box already matches the
-            // render's proportion, so the figure fits it whole.
+            // `object-contain`: the box already matches the render's
+            // proportion, so the figure fits it whole.
             className="h-full w-full object-contain"
           />
         ) : (

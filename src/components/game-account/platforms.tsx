@@ -55,11 +55,16 @@ export type GameAccountStatus =
   | "checking";
 
 /**
- * The row's two sizes. The same asset at two scales, never two assets and never
- * a crop: `"row"` sits in a list beside a name, `"full"` is a third bigger for a
- * surface with room to spend on it.
+ * **The height of a game account. Every one of them, everywhere.**
+ *
+ * There is deliberately no size variant, on any component here. A game identity
+ * is one thing that renders one way — in a register form, in a roster, on a
+ * detail page, mid-edit — and the moment it can be two heights, a surface has to
+ * choose, two surfaces choose differently, and a component that exists to stop
+ * rows twitching starts contributing its own inconsistency. Fixed geometry
+ * across the four states was never the whole rule; this is the rest of it.
  */
-export type GameAccountRowSize = "row" | "full";
+export const GAME_ROW_HEIGHT = "h-12";
 
 /**
  * The platform's own key for an account.
@@ -106,15 +111,15 @@ export interface VerifiedGameAccount {
 /** How a platform's figure is sourced and drawn. */
 export interface GameAvatarModel {
   /**
-   * The fixed box the figure occupies, per size, as Tailwind classes.
-   *
-   * Per-platform because the render's own proportion is: a Minecraft skin comes
-   * back as a whole body at 1:2, a Roblox thumbnail is 1:1 and the API refuses
-   * any other ratio. The box is drawn at the render's proportion so
-   * `object-contain` fits the figure whole — a shared box would have to crop one
-   * platform or letterbox the other.
+   * How wide the figure's box is, as a Tailwind class. **The height is not
+   * configurable** — every game account is `GAME_ROW_HEIGHT` tall — so this is
+   * the one dimension a platform gets a say in, and it says only what the
+   * render's own proportion is: a Minecraft skin comes back as a whole body at
+   * 1:2, a Roblox thumbnail is 1:1 and the API refuses any other ratio. The box
+   * is drawn at that proportion so `object-contain` fits the figure whole; a
+   * shared width would have to crop one platform or letterbox the other.
    */
-  boxClass: Readonly<Record<GameAccountRowSize, string>>;
+  widthClass: string;
   /**
    * Derives a render URL from a username, on the platforms whose image host is
    * addressable by name, and `null` where it is not.
@@ -133,10 +138,10 @@ export interface GameAvatarModel {
    *
    * A preview or style-guide surface must not reach a third-party host on load,
    * and a data-URI PNG would be both a fixed size and a fixed palette. An inline
-   * SVG costs nothing, scales to either variant, and is drawn in the current text
-   * colour so it themes with everything around it. Each one is on the same grid
-   * its platform's real render comes back at, which is what lets the box behave
-   * identically against a placeholder and against a real image.
+   * SVG costs nothing and is drawn in the current text colour so it themes with
+   * everything around it. Each one is on the same grid its platform's real
+   * render comes back at, which is what lets the box behave identically against
+   * a placeholder and against a real image.
    */
   Placeholder: () => ReactElement;
 }
@@ -248,8 +253,8 @@ export const GAME_PLATFORMS: Readonly<
     isValidUsername: isValidMinecraftUsername,
     usernameExample: "Steve",
     avatar: {
-      // 1:2 in both sizes — the figure's own proportion, so neither crops.
-      boxClass: { row: "h-12 w-6", full: "h-16 w-8" },
+      // Half the row's height — the whole-body figure's own 1:2 proportion.
+      widthClass: "w-6",
       urlFromUsername: minecraftSkinUrl,
       Placeholder: MinecraftPlaceholder,
     },
@@ -261,8 +266,8 @@ export const GAME_PLATFORMS: Readonly<
     isValidUsername: isValidRobloxUsername,
     usernameExample: "builderman",
     avatar: {
-      // 1:1 in both sizes — the taller box shows the same bust larger.
-      boxClass: { row: "h-12 w-12", full: "h-16 w-16" },
+      // Square with the row's height — the bust render's own 1:1 proportion.
+      widthClass: "w-12",
       urlFromUsername: null,
       Placeholder: RobloxPlaceholder,
     },

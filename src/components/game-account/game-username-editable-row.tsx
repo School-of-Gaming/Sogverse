@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { GameUsernameRow } from "./game-username-row";
 import {
   GAME_PLATFORMS,
+  GAME_ROW_HEIGHT,
   gameAccountStatus,
   type GameAccountExternalId,
   type GameAccountStatus,
@@ -54,11 +55,12 @@ interface GameUsernameEditableRowProps {
  * a surface that already holds the value — a roster a game educator is fixing a
  * typo in mid-session, a detail page.
  *
- * **Both states are `h-12`, so toggling edit mode never changes the row's
- * height.** The controls inside the editor are `h-7`, centred in it. Swapping a
- * display row for an editor is a change the user asked for, so it is allowed to
- * replace what is there — but the rows *around* it in a roster did not ask for
- * anything, and a taller editor would push every one of them down the page.
+ * **Both states are the one game-account height, so toggling edit mode never
+ * changes the row's height.** The controls inside the editor are `h-7`, centred
+ * in it. Swapping a display row for an editor is a change the user asked for, so
+ * it is allowed to replace what is there — but the rows *around* it in a roster
+ * did not ask for anything, and a taller editor would push every one of them
+ * down the page.
  *
  * The draft is seeded when the editor opens rather than held across closes, so
  * cancelling really discards. Enter commits, Escape cancels. Saving closes
@@ -89,7 +91,9 @@ export function GameUsernameEditableRow({
     };
 
     return (
-      <div className={cn("flex h-12 items-center gap-1.5", className)}>
+      <div
+        className={cn("flex items-center gap-1.5", GAME_ROW_HEIGHT, className)}
+      >
         <label className="sr-only" htmlFor={inputId}>
           {t("usernameLabel", { platform: descriptor.name })}
         </label>
@@ -131,11 +135,10 @@ export function GameUsernameEditableRow({
   }
 
   return (
-    // The row owns the h-12 — the figure fills it exactly, so the taller variant
-    // renders inside the row instead of spilling into its neighbours.
     <div
       className={cn(
-        "group/game flex h-12 min-w-0 items-center gap-1",
+        "group/game flex min-w-0 items-center gap-1",
+        GAME_ROW_HEIGHT,
         className,
       )}
     >

@@ -1,9 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { fireEvent, render } from "@testing-library/react";
 import { GameUsernameRow } from "@/components/game-account/game-username-row";
-import type {
-  GameAccountStatus,
-  GamePlatform,
+import {
+  GAME_ROW_HEIGHT,
+  type GameAccountStatus,
+  type GamePlatform,
 } from "@/components/game-account/platforms";
 
 // The row only reads the "gameAccount" namespace. Stub useTranslations so the
@@ -49,42 +50,32 @@ function boxes(container: HTMLElement) {
   if (!avatar || !name || !status) {
     throw new Error("the row lost one of its slots");
   }
-  return { avatar, name, status };
+  return { row, avatar, name, status };
 }
 
 describe("GameUsernameRow", () => {
-  it("draws each platform's own box proportion — 1:2 for a Minecraft body, 1:1 for a Roblox bust", () => {
+  /**
+   * There is no size variant, and this is the test that says so. Both platforms
+   * are the same height everywhere; only the box's width differs, and only
+   * because the render's proportion does — 1:2 for a Minecraft body, 1:1 for a
+   * Roblox bust.
+   */
+  it("gives both platforms the same height, and lets only the width differ", () => {
     const minecraft = render(
       <GameUsernameRow platform="minecraft" username="Notch" avatarUrl={null} />,
     );
-    expect(boxes(minecraft.container).avatar.className).toContain("h-12 w-6");
-
     const roblox = render(
       <GameUsernameRow platform="roblox" username="builderman" avatarUrl={null} />,
     );
-    expect(boxes(roblox.container).avatar.className).toContain("h-12 w-12");
-  });
 
-  it("scales the same proportion for size='full' on both platforms", () => {
-    const minecraft = render(
-      <GameUsernameRow
-        platform="minecraft"
-        username="Notch"
-        avatarUrl={null}
-        size="full"
-      />,
-    );
-    expect(boxes(minecraft.container).avatar.className).toContain("h-16 w-8");
+    for (const rendered of [minecraft, roblox]) {
+      const { row, avatar } = boxes(rendered.container);
+      expect(row.className).toContain(GAME_ROW_HEIGHT);
+      expect(avatar.className).toContain(GAME_ROW_HEIGHT);
+    }
 
-    const roblox = render(
-      <GameUsernameRow
-        platform="roblox"
-        username="builderman"
-        avatarUrl={null}
-        size="full"
-      />,
-    );
-    expect(boxes(roblox.container).avatar.className).toContain("h-16 w-16");
+    expect(boxes(minecraft.container).avatar.className).toContain("w-6");
+    expect(boxes(roblox.container).avatar.className).toContain("w-12");
   });
 
   it.each(PLATFORMS)(
