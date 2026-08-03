@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import { getLocale } from "next-intl/server";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { stripe } from "@/lib/stripe/client";
 import { getOrCreateStripeCustomer } from "@/lib/stripe/customer";
 import { getPortalConfigurationId } from "@/lib/stripe/portal-configuration";
 import { getOrigin } from "@/lib/url";
@@ -18,8 +19,6 @@ import {
   resolveParticipationStripeCustomerId,
 } from "@/services/billing/billing.server";
 import type { AppSupabaseClient } from "@/types";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 /**
  * Which Stripe customer this session opens, and whether to land the parent on

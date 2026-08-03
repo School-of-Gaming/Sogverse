@@ -7,16 +7,20 @@ const {
   mockConstructEvent,
   mockSubscriptionsRetrieve,
   mockSubscriptionsCancel,
+  mockRefundsList,
 } = vi.hoisted(() => ({
   mockConstructEvent: vi.fn(),
   mockSubscriptionsRetrieve: vi.fn(),
   mockSubscriptionsCancel: vi.fn(),
+  mockRefundsList: vi.fn(),
 }));
 
 vi.mock("stripe", () => {
   // Object.assign produces the intersection type, so `errors` rides along
   // without any cast. The route only ever does `new Stripe(...)` and uses
-  // the two nested methods.
+  // the nested methods below. `refunds.list` is one of them: on any API version
+  // from 2022-11-15 on, a `charge.refunded` event carries no expanded refund
+  // list and the handler has to fetch it.
   const StripeMock = Object.assign(
     vi.fn(function () {
       return {
@@ -25,6 +29,7 @@ vi.mock("stripe", () => {
           retrieve: mockSubscriptionsRetrieve,
           cancel: mockSubscriptionsCancel,
         },
+        refunds: { list: mockRefundsList },
       };
     }),
     {
@@ -52,6 +57,10 @@ const SESSION_ID = "cs_test_session_1";
 const PRODUCT_ID = "22222222-2222-2222-2222-222222222222";
 const GAMER_ID = "33333333-3333-3333-3333-333333333333";
 const CUSTOMER_ID = "44444444-4444-4444-4444-444444444444";
+const FAM_SUB_ROW_ID = "66666666-6666-6666-6666-666666666666";
+const PAYMENT_ROW_ID = "77777777-7777-7777-7777-777777777777";
+const SUB_ID = "sub_live_1";
+const CHARGE_ID = "ch_test_1";
 
 function createWebhookRequest(): Request {
   return new Request("http://localhost:3000/api/webhooks/stripe/products", {
@@ -98,17 +107,139 @@ function createCompletedEvent(overrides: Partial<{
   };
 }
 
+/**
+ * Which API-version shape a delivery is written in. The webhook *endpoint's*
+ * pinned version decides this, not the version our own client sends outbound, so
+ * both shapes are live possibilities for the same deployed code and both are
+ * exercised below.
+ *
+ *   `legacy` — up to and including Stripe API `2024-09-30.acacia` for invoices,
+ *              and before `2022-11-15` for charges.
+ *   `current` — from those versions on.
+ */
+type PayloadShape = "legacy" | "current";
+
+/**
+ * An `invoice.paid` renewal.
+ *
+ * Each fixture carries the subscription id in **exactly one** of the two places
+ * Stripe has kept it, which is what makes the pair meaningful: a fixture with
+ * both would pass even for a handler that reads only whichever field it happens
+ * to prefer.
+ */
+function createInvoicePaidEvent(overrides: {
+  shape: PayloadShape;
+  id?: string;
+  subscription?: string;
+  billingReason?: string;
+  amountPaid?: number;
+}) {
+  const subscription = overrides.subscription ?? SUB_ID;
+  return {
+    id: overrides.id ?? "evt_invoice_1",
+    type: "invoice.paid",
+    data: {
+      object: {
+        id: "in_renewal_1",
+        amount_paid: overrides.amountPaid ?? 4900,
+        currency: "eur",
+        billing_reason: overrides.billingReason ?? "subscription_cycle",
+        ...(overrides.shape === "legacy"
+          ? { subscription }
+          : { parent: { subscription_details: { subscription } } }),
+      },
+    },
+  };
+}
+
+/**
+ * A `charge.refunded` event.
+ *
+ * The `legacy` shape carries the expanded refund list inline, which is what
+ * Stripe sent before API `2022-11-15`. The `current` shape omits `refunds`
+ * entirely — Stripe stopped auto-expanding it on the Charge, and an event object
+ * is never expanded — so the handler has to go and fetch it.
+ */
+function createChargeRefundedEvent(overrides: {
+  shape: PayloadShape;
+  id?: string;
+  paymentIntent?: string | null;
+  refunds?: { id: string; amount: number }[];
+}) {
+  const refunds = overrides.refunds ?? [{ id: "re_test_1", amount: 4900 }];
+  return {
+    id: overrides.id ?? "evt_refund_1",
+    type: "charge.refunded",
+    data: {
+      object: {
+        id: CHARGE_ID,
+        payment_intent:
+          overrides.paymentIntent === undefined
+            ? "pi_test_1"
+            : overrides.paymentIntent,
+        ...(overrides.shape === "legacy"
+          ? { refunds: { object: "list", data: refunds } }
+          : {}),
+      },
+    },
+  };
+}
+
+/**
+ * A `customer.subscription.updated` event.
+ *
+ * `status` is deliberately a plain string: the point of several of these tests is
+ * a status the route's mapping table does not know, which Stripe's own union type
+ * would refuse to express. `current_period_end` sits at the top level (the older
+ * placement) while the item carries none, which also exercises the route reading
+ * whichever side has it.
+ */
+function createSubscriptionUpdatedEvent(overrides: {
+  status: string;
+  id?: string;
+  subscription?: string;
+  cancelAtPeriodEnd?: boolean;
+  currentPeriodEnd?: number;
+}) {
+  return {
+    id: overrides.id ?? "evt_sub_updated_1",
+    type: "customer.subscription.updated",
+    data: {
+      object: {
+        id: overrides.subscription ?? SUB_ID,
+        status: overrides.status,
+        cancel_at_period_end: overrides.cancelAtPeriodEnd ?? false,
+        current_period_end: overrides.currentPeriodEnd ?? 1900000000,
+        items: { data: [{ id: "si_1", price: { id: "price_test_1" } }] },
+      },
+    },
+  };
+}
+
 // --- Mock builder for the admin client ---
 
 type AdminInserts = {
   payments: Record<string, unknown>[];
   refunds: Record<string, unknown>[];
   family_subscriptions: Record<string, unknown>[];
+  /**
+   * Payloads passed to `family_subscriptions` UPDATE. Separate from the inserts
+   * above because the subscription-updated handler only ever updates, and what it
+   * writes into `status` is the thing under test.
+   */
+  familySubscriptionUpdates: Record<string, unknown>[];
 };
 
 type AdminMockOptions = {
   /** Returned from the payments idempotency check (event-id dedup). */
   existingPayment?: { id: string } | null;
+  /**
+   * Returned from the payments lookup by `stripe_payment_intent_id` — the row a
+   * refund is attached to. Keyed separately from `existingPayment` because the
+   * refund handler and the dedup guard read the same table through different
+   * columns and want opposite answers in the same test.
+   */
+  paymentByIntent?: { id: string; amount_cents: number } | null;
   /**
    * Returned from a `family_subscriptions` SELECT lookup. The deleted/updated/
    * invoice handlers look the row up by stripe_subscription_id; the
@@ -121,6 +252,12 @@ type AdminMockOptions = {
    * retries. When set, the row is not captured in `inserts`.
    */
   famSubInsertError?: { code: string; message: string } | null;
+  /**
+   * Error returned from the `family_subscriptions` UPDATE. A rejected status is
+   * exactly what this looks like in production (the column's CHECK refuses the
+   * value), and it must reach the caller as a 500 rather than being dropped.
+   */
+  famSubUpdateError?: { code: string; message: string } | null;
 };
 
 function mockAdmin(opts: AdminMockOptions = {}) {
@@ -128,15 +265,26 @@ function mockAdmin(opts: AdminMockOptions = {}) {
     payments: [],
     refunds: [],
     family_subscriptions: [],
+    familySubscriptionUpdates: [],
   };
 
   mockAdminFrom.mockImplementation((table: string) => {
     if (table === "payments") {
       return {
+        // The column decides the answer: the handlers dedup on
+        // `stripe_event_id` and find the refunded payment on
+        // `stripe_payment_intent_id`, and conflating the two would make the
+        // refund tests pass for the wrong reason.
         select: () => ({
-          eq: () => ({
+          eq: (column: string) => ({
             maybeSingle: () =>
-              Promise.resolve({ data: opts.existingPayment ?? null, error: null }),
+              Promise.resolve({
+                data:
+                  column === "stripe_payment_intent_id"
+                    ? (opts.paymentByIntent ?? null)
+                    : (opts.existingPayment ?? null),
+                error: null,
+              }),
           }),
         }),
         insert: (row: Record<string, unknown>) => ({
@@ -177,6 +325,15 @@ function mockAdmin(opts: AdminMockOptions = {}) {
           inserts.family_subscriptions.push(row);
           return Promise.resolve({ error: null });
         },
+        update: (row: Record<string, unknown>) => ({
+          eq: () => {
+            if (opts.famSubUpdateError) {
+              return Promise.resolve({ error: opts.famSubUpdateError });
+            }
+            inserts.familySubscriptionUpdates.push(row);
+            return Promise.resolve({ error: null });
+          },
+        }),
       };
     }
     // `participations` deliberately has no entry: the handler reaches that
@@ -605,6 +762,349 @@ describe("POST /api/webhooks/stripe/products", () => {
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
       expect(mockAdminRpc).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("invoice.paid — renewals, in both payload shapes", () => {
+    // The renewal hot loop: every live subscription fires this once a period, and
+    // the row it writes is the only record that the money arrived. The two shapes
+    // are the same event as delivered by an old and a new webhook endpoint
+    // version, so a handler that reads one and not the other stops recording
+    // renewals the moment the endpoint's version moves — silently, with a 200.
+    const RENEWAL_FAM_SUB = {
+      id: FAM_SUB_ROW_ID,
+      customer_id: CUSTOMER_ID,
+      currency: "eur",
+    };
+
+    it("records the renewal payment when the subscription id is top-level (legacy shape)", async () => {
+      mockConstructEvent.mockReturnValue(
+        createInvoicePaidEvent({ shape: "legacy", id: "evt_invoice_legacy" }),
+      );
+      const inserts = mockAdmin({ famSubRow: RENEWAL_FAM_SUB });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+
+      expect(inserts.payments).toHaveLength(1);
+      expect(inserts.payments[0]).toMatchObject({
+        stripe_event_id: "evt_invoice_legacy",
+        // Read from the family-sub row, never from invoice metadata — the row is
+        // what ties this Stripe subscription to a customer of ours.
+        customer_id: CUSTOMER_ID,
+        amount_cents: 4900,
+        currency: "eur",
+        purpose: "subscription_invoice",
+        stripe_invoice_id: "in_renewal_1",
+        metadata: { stripeSubscriptionId: SUB_ID, billingReason: "subscription_cycle" },
+      });
+    });
+
+    it("records the renewal payment when the subscription id is under parent.subscription_details (current shape)", async () => {
+      mockConstructEvent.mockReturnValue(
+        createInvoicePaidEvent({ shape: "current", id: "evt_invoice_current" }),
+      );
+      const inserts = mockAdmin({ famSubRow: RENEWAL_FAM_SUB });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+
+      expect(inserts.payments).toHaveLength(1);
+      expect(inserts.payments[0]).toMatchObject({
+        stripe_event_id: "evt_invoice_current",
+        customer_id: CUSTOMER_ID,
+        purpose: "subscription_invoice",
+        // The id has to have been found under `parent` — the fixture carries no
+        // top-level `subscription` at all, so a handler reading only the old
+        // location would have bailed before writing anything.
+        metadata: { stripeSubscriptionId: SUB_ID, billingReason: "subscription_cycle" },
+      });
+    });
+
+    it("skips the first-period invoice, which checkout.session.completed already recorded", async () => {
+      mockConstructEvent.mockReturnValue(
+        createInvoicePaidEvent({
+          shape: "current",
+          billingReason: "subscription_create",
+        }),
+      );
+      const inserts = mockAdmin({ famSubRow: RENEWAL_FAM_SUB });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.payments).toHaveLength(0);
+    });
+
+    it("is a no-op for a subscription we have no row for", async () => {
+      mockConstructEvent.mockReturnValue(
+        createInvoicePaidEvent({ shape: "current", subscription: "sub_foreign" }),
+      );
+      const inserts = mockAdmin({ famSubRow: null });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.payments).toHaveLength(0);
+    });
+
+    it("writes nothing on a replay, where the event id is already recorded", async () => {
+      mockConstructEvent.mockReturnValue(
+        createInvoicePaidEvent({ shape: "legacy" }),
+      );
+      const inserts = mockAdmin({
+        famSubRow: RENEWAL_FAM_SUB,
+        existingPayment: { id: PAYMENT_ROW_ID },
+      });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.payments).toHaveLength(0);
+    });
+  });
+
+  describe("charge.refunded — in both payload shapes", () => {
+    const REFUNDED_PAYMENT = { id: PAYMENT_ROW_ID, amount_cents: 4900 };
+
+    it("records the refund from the expanded list when the payload carries one (legacy shape)", async () => {
+      mockConstructEvent.mockReturnValue(
+        createChargeRefundedEvent({
+          shape: "legacy",
+          id: "evt_refund_legacy",
+          refunds: [{ id: "re_legacy_1", amount: 4900 }],
+        }),
+      );
+      const inserts = mockAdmin({ paymentByIntent: REFUNDED_PAYMENT });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+
+      expect(inserts.refunds).toHaveLength(1);
+      expect(inserts.refunds[0]).toMatchObject({
+        payment_id: PAYMENT_ROW_ID,
+        amount_cents: 4900,
+        reason: "admin_refund",
+        stripe_refund_id: "re_legacy_1",
+        stripe_event_id: "evt_refund_legacy",
+      });
+      // The list was already in hand — no reason to ask Stripe for it.
+      expect(mockRefundsList).not.toHaveBeenCalled();
+    });
+
+    it("fetches the refund when the payload has no expanded list (current shape)", async () => {
+      // This is the regression that matters: Stripe stopped auto-expanding
+      // `refunds` on the Charge in API 2022-11-15 and never expands nested
+      // objects on an event, so from that version on the field is simply absent.
+      // Reading it as "no refunds" made every refund vanish under a 200.
+      mockConstructEvent.mockReturnValue(
+        createChargeRefundedEvent({ shape: "current", id: "evt_refund_current" }),
+      );
+      const inserts = mockAdmin({ paymentByIntent: REFUNDED_PAYMENT });
+      mockRefundsList.mockResolvedValue({
+        data: [{ id: "re_fetched_1", amount: 2500 }],
+      });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+
+      expect(mockRefundsList).toHaveBeenCalledWith({
+        charge: CHARGE_ID,
+        limit: 1,
+      });
+      expect(inserts.refunds).toHaveLength(1);
+      expect(inserts.refunds[0]).toMatchObject({
+        payment_id: PAYMENT_ROW_ID,
+        amount_cents: 2500,
+        stripe_refund_id: "re_fetched_1",
+        stripe_event_id: "evt_refund_current",
+      });
+    });
+
+    it("records nothing when the charge turns out to have no refund at all", async () => {
+      mockConstructEvent.mockReturnValue(
+        createChargeRefundedEvent({ shape: "current" }),
+      );
+      const inserts = mockAdmin({ paymentByIntent: REFUNDED_PAYMENT });
+      mockRefundsList.mockResolvedValue({ data: [] });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.refunds).toHaveLength(0);
+    });
+
+    it("is a no-op for a charge whose payment we never recorded", async () => {
+      mockConstructEvent.mockReturnValue(
+        createChargeRefundedEvent({ shape: "current" }),
+      );
+      const inserts = mockAdmin({ paymentByIntent: null });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.refunds).toHaveLength(0);
+      // No payment row to attach to, so there is nothing to look up in Stripe.
+      expect(mockRefundsList).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("customer.subscription.updated — status mapping", () => {
+    // `family_subscriptions.status` has a CHECK accepting only
+    // active | past_due | cancelled | incomplete | canceling. Stripe's own status
+    // set is wider and spells cancellation differently, so every value is
+    // translated before it is written. Passing one through verbatim used to
+    // produce a rejected write whose error was dropped: the row kept its old
+    // status and the route answered 200.
+    const OURS = { id: FAM_SUB_ROW_ID };
+
+    it("maps trialing onto active", async () => {
+      mockConstructEvent.mockReturnValue(
+        createSubscriptionUpdatedEvent({ status: "trialing" }),
+      );
+      const inserts = mockAdmin({ famSubRow: OURS });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.familySubscriptionUpdates).toHaveLength(1);
+      expect(inserts.familySubscriptionUpdates[0]).toMatchObject({
+        status: "active",
+        current_period_end: new Date(1900000000 * 1000).toISOString(),
+      });
+    });
+
+    it("maps unpaid onto cancelled", async () => {
+      mockConstructEvent.mockReturnValue(
+        createSubscriptionUpdatedEvent({ status: "unpaid" }),
+      );
+      const inserts = mockAdmin({ famSubRow: OURS });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.familySubscriptionUpdates[0]).toMatchObject({
+        status: "cancelled",
+      });
+    });
+
+    it("maps Stripe's 'canceled' onto our 'cancelled'", async () => {
+      // One l versus two. Verbatim, this alone violated the CHECK.
+      mockConstructEvent.mockReturnValue(
+        createSubscriptionUpdatedEvent({ status: "canceled" }),
+      );
+      const inserts = mockAdmin({ famSubRow: OURS });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.familySubscriptionUpdates[0]).toMatchObject({
+        status: "cancelled",
+      });
+    });
+
+    it("keeps active + cancel_at_period_end as canceling", async () => {
+      // The pre-existing special case: Stripe draws this distinction with a
+      // boolean, we draw it with a status, and the parent's "ending soon" badge
+      // keys on ours.
+      mockConstructEvent.mockReturnValue(
+        createSubscriptionUpdatedEvent({
+          status: "active",
+          cancelAtPeriodEnd: true,
+        }),
+      );
+      const inserts = mockAdmin({ famSubRow: OURS });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.familySubscriptionUpdates[0]).toMatchObject({
+        status: "canceling",
+      });
+    });
+
+    it("returns 500 for a status nothing maps to, rather than writing a rejected value", async () => {
+      // A status Stripe adds that this route has never heard of. A 500 is the
+      // right answer: Stripe retries it and it shows up in the logs, where the
+      // alternative — pass it through, ignore the rejected write — left the row
+      // stale and said nothing.
+      mockConstructEvent.mockReturnValue(
+        createSubscriptionUpdatedEvent({ status: "hibernating" }),
+      );
+      const inserts = mockAdmin({ famSubRow: OURS });
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(500);
+      expect(inserts.familySubscriptionUpdates).toHaveLength(0);
+      errorSpy.mockRestore();
+    });
+
+    it("propagates a failed update as a 500 instead of dropping it", async () => {
+      // The second half of the same bug: the update's error was never read, so
+      // any rejected write — a CHECK violation, a dropped connection — presented
+      // as success.
+      mockConstructEvent.mockReturnValue(
+        createSubscriptionUpdatedEvent({ status: "past_due" }),
+      );
+      mockAdmin({
+        famSubRow: OURS,
+        famSubUpdateError: { code: "23514", message: "check constraint violated" },
+      });
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(500);
+      errorSpy.mockRestore();
+    });
+
+    it("ignores a subscription we have no row for", async () => {
+      mockConstructEvent.mockReturnValue(
+        createSubscriptionUpdatedEvent({
+          status: "unpaid",
+          subscription: "sub_foreign",
+        }),
+      );
+      const inserts = mockAdmin({ famSubRow: null });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.familySubscriptionUpdates).toHaveLength(0);
+    });
+  });
+
+  describe("checkout.session.completed — subscription status is mapped too", () => {
+    it("stores a trialing subscription as active", async () => {
+      // The same translation is needed on the insert path: a club sold with a
+      // trial arrives `trialing` from subscriptions.retrieve, and verbatim that
+      // is a CHECK violation — which here throws and 500-loops rather than
+      // no-opping, because this write's error *is* checked.
+      mockConstructEvent.mockReturnValue(
+        createCompletedEvent({
+          paymentIntent: null,
+          subscription: "sub_trial_1",
+          invoice: "in_trial_1",
+          purchaseShape: "subscription_monthly",
+        }),
+      );
+      const inserts = mockAdmin();
+      mockAdminRpc.mockResolvedValue({
+        data: {
+          kind: "confirmed",
+          participation_id: PARTICIPATION_ID,
+          idempotent: false,
+        },
+        error: null,
+      });
+      mockSubscriptionsRetrieve.mockResolvedValue({
+        id: "sub_trial_1",
+        status: "trialing",
+        cancel_at_period_end: false,
+        items: {
+          data: [
+            { id: "si_1", price: { id: "price_test_1" }, current_period_end: 1900000000 },
+          ],
+        },
+      });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.family_subscriptions).toHaveLength(1);
+      expect(inserts.family_subscriptions[0]).toMatchObject({
+        stripe_subscription_id: "sub_trial_1",
+        status: "active",
+      });
     });
   });
 });

@@ -1,9 +1,7 @@
 import "server-only";
-import Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { stripe } from "@/lib/stripe/client";
 import type { Database } from "@/types";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 /**
  * Find or create a Stripe Customer for a customer profile.

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
+import type Stripe from "stripe";
+import { stripe } from "@/lib/stripe/client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { confirmPaidParticipationRpcResult } from "@/services/participations/participations.contracts";
 import type { Json, PaymentPurpose } from "@/types";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const webhookSecret = process.env.STRIPE_PRODUCTS_WEBHOOK_SECRET!;
 
 // Webhook idempotency: every payments / refunds row carries the
@@ -12,6 +12,13 @@ const webhookSecret = process.env.STRIPE_PRODUCTS_WEBHOOK_SECRET!;
 //
 // Errors during writes return 500 so Stripe retries. Unhandled event types
 // return 200 — quieter than 4xx and Stripe will stop retrying.
+//
+// The payload shapes below are governed by the API version pinned on the *Stripe
+// endpoint* (or, while the endpoint is unpinned, by the account default) — never
+// by the version our own client sends with outbound calls. The two move
+// independently, and the endpoint's version can change without a deploy, so
+// every field Stripe has relocated across versions is read from both places.
+// See `src/lib/stripe/client.ts` for the outbound half of this split.
 
 export async function POST(request: Request) {
   const body = await request.text();
@@ -248,7 +255,9 @@ async function handleCheckoutCompleted(
       stripe_customer_id: stripeCustomerId,
       stripe_price_id: sub.items.data[0]?.price.id ?? null,
       currency,
-      status: sub.status,
+      // Translated, not passed through — the column's CHECK accepts a narrower
+      // set than Stripe reports, and a sub created on a trial arrives `trialing`.
+      status: familySubscriptionStatusFor(sub),
       current_period_end:
         periodEnd !== null ? new Date(periodEnd * 1000).toISOString() : null,
     });
@@ -279,14 +288,51 @@ async function handleCheckoutCompleted(
   });
 }
 
+/**
+ * The subscription an invoice was raised for, read from both places Stripe has
+ * kept it.
+ *
+ * Up to API `2024-09-30.acacia` the id sat at the top level as `subscription`;
+ * from that version on it hangs off `parent.subscription_details.subscription`
+ * and the top-level field is gone. Which one a delivery carries is decided by the
+ * webhook endpoint's own API version, so neither can be assumed — read the newer
+ * location first and fall back to the older, and a renewal is recorded under
+ * either. Reading only one is a silent failure: the handler returns early, the
+ * route answers 200, and renewals simply stop being recorded.
+ *
+ * Both fields are expandable, so each can arrive as an id string or as the
+ * object; webhook payloads never expand, but the object form costs one line.
+ */
+function invoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
+  // A widening assertion, not a reinterpretation: the installed SDK types
+  // describe exactly one API version, which for `Stripe.Invoice` is the one that
+  // still has top-level `subscription` and no `parent` at all. The intersection
+  // adds the newer field as optional without contradicting anything the SDK
+  // says, so the runtime check below is what decides which shape arrived.
+  const { parent } = invoice as Stripe.Invoice & {
+    parent?: {
+      subscription_details?: {
+        subscription?: string | Stripe.Subscription | null;
+      } | null;
+    } | null;
+  };
+  return (
+    expandableId(parent?.subscription_details?.subscription) ??
+    expandableId(invoice.subscription)
+  );
+}
+
+/** An expandable Stripe reference as an id, whichever form it arrived in. */
+function expandableId(
+  value: string | { id: string } | null | undefined,
+): string | null {
+  if (typeof value === "string") return value;
+  return value?.id ?? null;
+}
+
 async function handleInvoicePaid(admin: Admin, event: Stripe.InvoicePaidEvent) {
   const invoice = event.data.object;
-  // `subscription` is an expandable field; webhook payloads carry the
-  // un-expanded id string, but handle the object form for type completeness.
-  const subId =
-    typeof invoice.subscription === "string"
-      ? invoice.subscription
-      : (invoice.subscription?.id ?? null);
+  const subId = invoiceSubscriptionId(invoice);
   // First-period invoices come in via checkout.session.completed.
   if (!subId || invoice.billing_reason === "subscription_create") return;
   const { data: famSub } = await admin
@@ -335,19 +381,103 @@ async function handleSubscriptionUpdated(
   if (!ours) return;
 
   const periodEnd = currentPeriodEndOf(sub);
-  await admin
+  const { error } = await admin
     .from("family_subscriptions")
     .update({
-      status:
-        sub.status === "active" && sub.cancel_at_period_end
-          ? "canceling"
-          : sub.status,
+      status: familySubscriptionStatusFor(sub),
       current_period_end:
         periodEnd !== null
           ? new Date(periodEnd * 1000).toISOString()
           : null,
     })
     .eq("id", ours.id);
+  // Checked, like every other write in this route. It used to be dropped, which
+  // turned a rejected status into a no-op the route still answered 200 to: the
+  // row silently kept its previous status forever and nothing anywhere said so.
+  if (error) throw error;
+}
+
+/**
+ * The `family_subscriptions.status` vocabulary. A CHECK constraint enforces this
+ * exact set, so a value outside it is not a wrong-looking row — it is a rejected
+ * write.
+ */
+type FamilySubscriptionStatus =
+  | "active"
+  | "past_due"
+  | "cancelled"
+  | "incomplete"
+  | "canceling";
+
+/**
+ * Stripe's subscription statuses onto ours.
+ *
+ * Stripe's set is wider than the CHECK accepts, and it does not even agree on
+ * spelling (`canceled` there, `cancelled` here), so every status is translated
+ * rather than passed through. The mappings that are not identity:
+ *
+ *   `trialing`           → `active`     A trial is a live subscription as far as
+ *                                       anything downstream is concerned: the
+ *                                       seat is held and the sessions show up.
+ *   `unpaid`             → `cancelled`  Stripe has exhausted its retries and
+ *                                       stopped trying to collect.
+ *   `incomplete_expired` → `cancelled`  The first payment never completed and the
+ *                                       subscription can no longer be paid.
+ *   `paused`             → `past_due`   We never pause a subscription on purpose,
+ *                                       so this can only arrive from a hand
+ *                                       action in the Stripe dashboard. `past_due`
+ *                                       is the nearest thing we model — not
+ *                                       collecting, seat retained — and it is what
+ *                                       raises the parent's payment-problem badge,
+ *                                       which is the outcome we want for a
+ *                                       subscription that has quietly stopped
+ *                                       billing.
+ *
+ * The two type positions do different jobs and both are load-bearing. The
+ * `satisfies` clause is the completeness check: a status added to the SDK's union
+ * fails the build here until it is given a home. The declared type is looser on
+ * purpose — Stripe can start sending a status the *installed* SDK has never heard
+ * of, which arrives as a string outside the union, so a lookup miss is real at
+ * runtime even though the compiler cannot see it from the object literal.
+ */
+const FAMILY_SUBSCRIPTION_STATUS: Record<
+  string,
+  FamilySubscriptionStatus | undefined
+> = {
+  active: "active",
+  past_due: "past_due",
+  canceled: "cancelled",
+  unpaid: "cancelled",
+  incomplete: "incomplete",
+  incomplete_expired: "cancelled",
+  trialing: "active",
+  paused: "past_due",
+} satisfies Record<Stripe.Subscription.Status, FamilySubscriptionStatus>;
+
+/**
+ * The status to store for a Stripe subscription.
+ *
+ * A subscription Stripe still reports as `active` but that is set to lapse at the
+ * period end is `canceling` to us — the distinction Stripe draws with a boolean,
+ * we draw with a status, because it is what the parent's "ending soon" badge and
+ * the access-until date key on.
+ *
+ * An unrecognised status throws rather than being written or skipped. The write
+ * would be rejected by the CHECK anyway, and throwing turns that into a 500 that
+ * Stripe retries and that shows up in the logs — the alternative is the bug this
+ * replaced, where the row kept a stale status and nobody found out.
+ */
+function familySubscriptionStatusFor(
+  sub: Stripe.Subscription,
+): FamilySubscriptionStatus {
+  if (sub.status === "active" && sub.cancel_at_period_end) return "canceling";
+  const mapped = FAMILY_SUBSCRIPTION_STATUS[sub.status];
+  if (mapped === undefined) {
+    throw new Error(
+      `Unknown Stripe subscription status '${sub.status}' on ${sub.id} — no family_subscriptions.status maps to it`,
+    );
+  }
+  return mapped;
 }
 
 // Stripe API: `current_period_end` lives on the subscription in older API
@@ -415,15 +545,30 @@ async function handleChargeRefunded(
     .maybeSingle();
   if (!payment) return;
 
-  // Pull the refund object from charge.refunds (the most recent one).
-  // Each `charge.refunded` event corresponds to exactly one refund creation,
-  // and Stripe sorts refunds.data newest-first — so data[0] is the refund this
-  // event is about. Don't iterate refunds.data here: refunds has UNIQUE on
-  // BOTH stripe_event_id AND stripe_refund_id, and looping would try to INSERT
-  // multiple rows sharing the same event_id, silently failing all but the first.
-  const refunds = charge.refunds;
-  if (!refunds || refunds.data.length === 0) return;
-  const latest = refunds.data[0];
+  // The refund this event is about is the newest one on the charge: each
+  // `charge.refunded` delivery corresponds to exactly one refund creation, and
+  // Stripe returns refunds newest-first. Take that one and only that one —
+  // `refunds` is UNIQUE on BOTH stripe_event_id and stripe_refund_id, so
+  // inserting several rows under a single event id would silently fail all but
+  // the first.
+  //
+  // Where it comes from depends on the delivered payload. `charge.refunds` is
+  // populated only when the list was expanded, and Stripe stopped auto-expanding
+  // it on the Charge object in API `2022-11-15` — a webhook event object is never
+  // expanded either way, so from that version on the field is simply absent and
+  // the list has to be fetched. Treating absent as "nothing to record" is the
+  // trap: refunds stop being written and the route still answers 200.
+  const expanded = charge.refunds?.data ?? [];
+  const candidates =
+    expanded.length > 0
+      ? expanded
+      : (await stripe.refunds.list({ charge: charge.id, limit: 1 })).data;
+  // `.at()` rather than `[0]` so the empty case is typed rather than assumed: the
+  // fetch above can legitimately come back empty (a refund reversed between the
+  // event being queued and this read leaves the charge with none), and there is
+  // nothing to record when it does.
+  const latest = candidates.at(0);
+  if (latest === undefined) return;
 
   // Idempotency: UNIQUE on stripe_refund_id. INSERT and swallow duplicates.
   const { error } = await admin

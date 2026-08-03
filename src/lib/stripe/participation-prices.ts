@@ -1,12 +1,10 @@
 import "server-only";
-import Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import { DEFAULT_LOCALE } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+import { stripe } from "@/lib/stripe/client";
 
 interface ProductPrice {
   price_cents: number;

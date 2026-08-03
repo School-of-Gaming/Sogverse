@@ -1,4 +1,4 @@
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { ParticipationsService } from "@/services/participations";
 import { ProductsService } from "@/services/products";
@@ -9,10 +9,9 @@ import {
   type SignupOutcome,
 } from "@/components/public/products/purchase-confirmation-view";
 import { PurchaseConfirmationFinalizing } from "@/components/public/products/purchase-confirmation-finalizing";
+import { stripe } from "@/lib/stripe/client";
 import type { ParticipationConfirmation } from "@/services/participations";
 import type { AppSupabaseClient, ProductBrowseRow } from "@/types";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 // Post-signup summary page, reached two ways.
 //
