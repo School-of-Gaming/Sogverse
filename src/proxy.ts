@@ -237,11 +237,11 @@ export async function proxy(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // /preview/* are admin-only mock surfaces linked from /admin/ui-components.
-  // They live in the (public) layout group so the page renders in the
-  // parent-facing chrome (header + footer, no admin sidebar) — but only
-  // admins should be able to reach them. Non-admins bounce to their own
-  // dashboard; unauthenticated users were already redirected to /login above.
+  // /preview/* are admin-only mock surfaces indexed on /admin/ui-previews:
+  // full pages rendered from fixtures, each composing the chrome of the role
+  // whose page it mocks. Only admins should be able to reach them. Non-admins
+  // bounce to their own dashboard; unauthenticated users were already
+  // redirected to /login above. The prefix match covers every future scene.
   if (pathname.startsWith("/preview/") && userRole !== "admin") {
     return redirect(new URL(ROLE_DASHBOARD_PATHS[userRole], request.url));
   }

@@ -6,13 +6,16 @@ import {
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
 
-interface ConfirmationPreviewClientProps {
-  scenario: PreviewScenario;
-}
-
-export function ConfirmationPreviewClient({
+/**
+ * The post-signup summary for a scenario — what a parent sees straight after
+ * paying (or joining the waiting list). A client component because the fixture
+ * build can resolve live countdown timestamps.
+ */
+export function PurchaseConfirmationScene({
   scenario,
-}: ConfirmationPreviewClientProps) {
+}: {
+  scenario: PreviewScenario;
+}) {
   const { product, gamerName, outcome, waitlistPosition } =
     buildConfirmationFixture(scenario);
   return (

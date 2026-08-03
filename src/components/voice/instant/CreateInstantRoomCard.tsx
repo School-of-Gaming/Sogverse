@@ -2,26 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Mic } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
-import { RoomLinkChip } from "./RoomLinkChip";
+import { CreateInstantRoomCardView } from "./CreateInstantRoomCardView";
 
 /**
  * Dashboard panel for moderators to spin up a fresh instant voice room.
  *
- * Two states. Idle: a single centred "Create voice room" button under the
- * heading. After create: the shared `RoomLinkChip` (click to copy) and a
- * "Join" button that navigates the mod into the room. The mod can paste
- * the URL anywhere (chat, email) before joining.
+ * This is the data half only — the create/join round trips and the router
+ * navigation. The markup lives in `CreateInstantRoomCardView`, which takes the
+ * whole panel state as props.
  *
  * The committing-state pattern (local `creating` flag set synchronously
  * before the fetch and never cleared on success) ensures the button stays
@@ -67,42 +57,13 @@ export function CreateInstantRoomCard() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Mic className="h-5 w-5" />
-          {createdCode ? t("ready") : t("title")}
-        </CardTitle>
-        <CardDescription>{t("subtitle")}</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col items-center justify-center gap-4 py-10">
-        {createdCode ? (
-          <>
-            <RoomLinkChip code={createdCode} />
-            <Button
-              onClick={handleJoin}
-              disabled={joining}
-              size="lg"
-              className="mt-2 gap-2"
-            >
-              {joining && <Loader2 className="h-4 w-4 animate-spin" />}
-              {t("join")}
-            </Button>
-          </>
-        ) : (
-          <Button
-            onClick={handleCreate}
-            disabled={creating}
-            size="lg"
-            className="gap-2"
-          >
-            {creating && <Loader2 className="h-4 w-4 animate-spin" />}
-            {creating ? t("creating") : t("createButton")}
-          </Button>
-        )}
-
-        {error && <p className="text-sm text-destructive">{error}</p>}
-      </CardContent>
-    </Card>
+    <CreateInstantRoomCardView
+      createdCode={createdCode}
+      creating={creating}
+      joining={joining}
+      error={error}
+      onCreate={() => void handleCreate()}
+      onJoin={handleJoin}
+    />
   );
 }

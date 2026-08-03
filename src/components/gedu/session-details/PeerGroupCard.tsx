@@ -1,13 +1,12 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Identicon } from "@/components/ui/identicon";
+import { PersonChipList } from "@/components/ui/person-chip";
 import { ROUTES } from "@/lib/constants";
 import type { GeduAssignedProductGroup } from "@/types";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
-import { GroupCardHeader } from "./AssignedGroupCard";
+import { GroupCardHeader, geduChipPeople } from "./AssignedGroupCard";
 
 interface PeerGroupCardProps {
   group: GeduAssignedProductGroup;
@@ -62,19 +61,7 @@ export function PeerGroupCard({
           {group.gedus.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("noGedus")}</p>
           ) : (
-            <div className="flex flex-wrap gap-1.5">
-              {group.gedus.map((g) => (
-                <span
-                  key={g.id}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2 py-1 text-xs"
-                >
-                  <Avatar className="h-5 w-5">
-                    <Identicon id={g.id} size={20} />
-                  </Avatar>
-                  <span className="leading-none">{g.first_name}</span>
-                </span>
-              ))}
-            </div>
+            <PersonChipList people={geduChipPeople(group.gedus)} />
           )}
         </div>
       </CardContent>
