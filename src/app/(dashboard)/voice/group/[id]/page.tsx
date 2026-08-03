@@ -25,12 +25,13 @@ export async function generateMetadata(): Promise<Metadata> {
  * does the role + assignment authorization and decides moderator rights.
  *
  * `backHref` defaults to the viewer's role-specific dashboard so leaving
- * the room lands them where their Sessions section lives. Callers can
- * override that by passing a `?back=<internal path>` query — used by the
- * gedu session-details page so leaving the voice room returns to the
- * product page the gedu launched from, not the top-level dashboard. The
- * value is run through `resolveInternalPath`, which accepts it only if it
- * resolves to a same-origin path (rejecting `//host`, `/\host`, absolute
+ * the room lands them where their Sessions section lives. A `?back=<internal
+ * path>` query overrides it, and the shared Join button puts one on every
+ * link it renders: normally the page the user launched from, and on gedu
+ * surfaces the group's own workspace, so a gedu leaving a room lands on the
+ * feed they are about to write up rather than wherever they happened to click
+ * Join. The value is run through `resolveInternalPath`, which accepts it only
+ * if it resolves to a same-origin path (rejecting `//host`, `/\host`, absolute
  * URLs, etc.) so this surface can't be turned into an open redirect —
  * `backHref` is fed straight to `window.location.href` on leave. Customers
  * are excluded —

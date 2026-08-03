@@ -229,6 +229,7 @@
         "fields": {
           "topic": "Aihe",
           "padletUrl": "Padlet",
+          "materialUrl": "Oppimateriaali",
           "locales": "Kielet",
           "startDate": "Alkamispäivä",
           "endDate": "Päättymispäivä",
@@ -294,6 +295,7 @@
         "longDescription": "Pitkä kuvaus",
         "topic": "Aihe",
         "padletUrl": "Padlet-osoite",
+        "materialUrl": "Oppimateriaalin osoite",
         "minAge": "Alaikäraja",
         "maxAge": "Yläikäraja",
         "deliveredIn": "Toteutuksen kieli",
@@ -326,6 +328,7 @@
       "placeholders": {
         "selectTopic": "Valitse aihe…",
         "padletUrl": "https://padlet.com/...",
+        "materialUrl": "https://drive.sog.gg/...",
         "threshold": "esim. 8",
         "name": {
           "consumerClub": "esim. Minecraft Redstone -kerho",
@@ -437,6 +440,7 @@
         "shortDescription": "Yhden rivin esittely, joka näkyy selauskorteissa, listoissa ja tuotesivun yläosassa.",
         "longDescription": "Valinnainen. Näkyy vain tuotteen tuotesivulla. Koosta se otsikoista ja kappaleista.",
         "topicHint": "Tuotteen aihe — peli (kuten Minecraft tai Fortnite) tai aine (kuten webinaari).",
+        "materialUrlHint": "Valinnainen. Vain Geduille — perheet eivät näe tätä.",
         "padletHint": "Valinnainen. Jaetaan perheille ilmoittautumisen jälkeen.",
         "deliveredInHint": "Pääkieli, jota kerroilla käytetään.",
         "onlineNoLocation": "Verkossa ja avoin kaikille — sijaintia ei tarvita. Kaikki selailevat vanhemmat näkevät tämän asuinpaikasta riippumatta.",
@@ -471,6 +475,7 @@
         "municipalityRequired": "Kunta vaaditaan verkossa toteutettaville kuntakerhoille",
         "siteRequired": "Toimipiste vaaditaan paikan päällä toteutettaville tuotteille",
         "scheduleRequired": "Vähintään yksi aikatauluväli vaaditaan",
+        "materialUrlInvalid": "Oppimateriaalin osoitteen on oltava kelvollinen URL",
         "padletInvalid": "Padlet-osoitteen on oltava kelvollinen URL",
         "startDateRequired": "Alkupäivä vaaditaan",
         "endDateRequired": "Loppupäivä vaaditaan",
@@ -1098,7 +1103,8 @@
     "instantVoiceRoom": "Pikaäänihuone",
     "instantVoiceRoomShort": "Äänihuone",
     "waitlistBand": "Jonotuslistalla",
-    "scheduledBand": "Aikataulussa"
+    "scheduledBand": "Aikataulussa",
+    "loadingAssignments": "Ladataan kerhojasi, leirejäsi ja tapahtumiasi."
   },
   "family": {
     "addGamer": "Lisää pelaaja",
@@ -1166,6 +1172,7 @@
       "inProgress": "Istunto käynnissä",
       "viewDetails": "Näytä tiedot",
       "noNextSession": "Ei kertoja aikataulussa",
+      "endedOn": "Päättyi {date}",
       "liveBadge": "Käynnissä"
     },
     "sessionDetails": {
@@ -1176,8 +1183,6 @@
         "camp": "Leiri",
         "event": "Tapahtuma"
       },
-      "yourGroupBadge": "Oma ryhmä",
-      "otherGroupsHeading": "Muut session ryhmät",
       "railOtherGroupsHeading": "Muut ryhmät",
       "noOtherGroups": "Tässä sessiossa ei ole muita ryhmiä.",
       "railGroupHeading": "Oma ryhmä",
@@ -1202,7 +1207,9 @@
       "copyParentEmail": "Kopioi vanhemman sähköposti {email}",
       "emailCopied": "Sähköposti kopioitu",
       "copyAllParentEmails": "Kopioi kaikki vanhempien sähköpostit ({count})",
-      "allEmailsCopied": "Kaikki vanhempien sähköpostit kopioitu"
+      "allEmailsCopied": "Kaikki vanhempien sähköpostit kopioitu",
+      "loadingWorkspace": "Ladataan tämän ryhmän kertoja.",
+      "minecraftSaveFailed": "Käyttäjänimen tallennus epäonnistui. Yritä uudelleen."
     },
     "sessionFeed": {
       "upcomingBadge": "Seuraava kerta",
@@ -1234,7 +1241,9 @@
       "laterSessions": "{count, plural, one {# tuleva kerta} other {# tulevaa kertaa}}",
       "showEarlier": "{count, plural, one {Näytä # aiempi kerta} other {Näytä # aiempaa kertaa}}",
       "attendanceMarkedCount": "{marked}/{total} merkitty",
-      "attendanceForGamer": "{name} – läsnäolo"
+      "attendanceForGamer": "{name} – läsnäolo",
+      "saveFailed": "Tallennus epäonnistui. Yritä uudelleen.",
+      "savePartiallyFailed": "Osa tämän kerran muutoksista ei tallentunut – tarkista läsnäololista ja yritä uudelleen."
     },
     "groupNotes": {
       "heading": "Tästä ryhmästä",
@@ -1248,7 +1257,8 @@
       "publicPlaceholder": "Miten tämä ryhmä toimii ja mitä siirtyy kerrasta toiseen…",
       "staffLabel": "Muistiinpano Geduille",
       "staffHint": "Vain Gedut ja ylläpitäjät näkevät tämän, perheet eivät koskaan.",
-      "staffPlaceholder": "Pysyvät asiat, jotka toisen Gedun on hyvä tietää tästä ryhmästä."
+      "staffPlaceholder": "Pysyvät asiat, jotka toisen Gedun on hyvä tietää tästä ryhmästä.",
+      "saveFailed": "Muistiinpanojen tallennus epäonnistui. Yritä uudelleen."
     },
     "siteNotes": {
       "heading": "Toimipaikan muistiinpanot",
@@ -1264,7 +1274,8 @@
       "publicPlaceholder": "Mistä ovesta sisään, missä odotetaan, mitä otetaan mukaan…",
       "staffLabel": "Muistiinpano Geduille",
       "staffHint": "Vain Gedut ja ylläpitäjät näkevät tämän, perheet eivät koskaan.",
-      "staffPlaceholder": "Avaimet, välineet, tilan erityispiirteet — mitä seuraavan Gedun on hyvä tietää tästä toimipaikasta."
+      "staffPlaceholder": "Avaimet, välineet, tilan erityispiirteet — mitä seuraavan Gedun on hyvä tietää tästä toimipaikasta.",
+      "saveFailed": "Toimipaikan muistiinpanojen tallennus epäonnistui. Yritä uudelleen."
     }
   },
   "groups": {

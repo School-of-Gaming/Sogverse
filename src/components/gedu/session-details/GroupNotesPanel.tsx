@@ -14,7 +14,7 @@ interface GroupNotesPanelProps {
   staffNote: string | null;
   editing: boolean;
   onEditingChange: (editing: boolean) => void;
-  onSave: (draft: GroupNotesDraft) => void;
+  onSave: (draft: GroupNotesDraft) => void | Promise<void>;
 }
 
 /**
@@ -50,6 +50,7 @@ export function GroupNotesPanel({
         staffLabel: t("staffLabel"),
         staffHint: t("staffHint"),
         staffPlaceholder: t("staffPlaceholder"),
+        saveFailed: t("saveFailed"),
       }}
       publicNote={publicNote}
       staffNote={staffNote}

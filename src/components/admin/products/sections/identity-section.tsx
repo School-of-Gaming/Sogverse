@@ -257,6 +257,27 @@ export function IdentitySection({
           onChange={(e) => setState({ ...state, padletUrl: e.target.value })}
         />
       </Field>
+
+      {/*
+        Staff-facing, and the hint says so, because the field sitting directly
+        above it is the family-facing one and the two are a trap for anyone
+        filling the form quickly. This link reaches game educators only — it is
+        rendered in their group workspace and on no parent or gamer surface.
+      */}
+      <Field
+        label={t("labels.materialUrl")}
+        htmlFor="p-material"
+        optional
+        hint={t("hints.materialUrlHint")}
+      >
+        <Input
+          id="p-material"
+          type="url"
+          placeholder={t("placeholders.materialUrl")}
+          value={state.materialUrl}
+          onChange={(e) => setState({ ...state, materialUrl: e.target.value })}
+        />
+      </Field>
     </FormSection>
   );
 }

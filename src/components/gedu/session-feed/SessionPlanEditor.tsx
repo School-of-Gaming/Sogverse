@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
 import { planDraftFromEditorState } from "./entry-state";
 import { RichNoteField } from "./RichNoteField";
+import { EditorActionRow } from "./SessionRecordEditor";
 import { StaffNoteBlock } from "./StaffNoteBlock";
 import type { SessionPlanDraft, SessionPlanEditorState } from "./types";
 
@@ -19,6 +19,10 @@ interface SessionPlanEditorProps {
    */
   open: boolean;
   initialState: SessionPlanEditorState;
+  /** A save is in flight — both fields and both buttons lock until it lands. */
+  committing: boolean;
+  /** Why the last save was refused, or `null`. Keeps the editor open. */
+  error: string | null;
   onCancel: () => void;
   onSave: (draft: SessionPlanDraft) => void;
 }
@@ -49,6 +53,8 @@ interface SessionPlanEditorProps {
 export function SessionPlanEditor({
   open,
   initialState,
+  committing,
+  error,
   onCancel,
   onSave,
 }: SessionPlanEditorProps) {
@@ -82,6 +88,7 @@ export function SessionPlanEditor({
         value={initialState.report}
         seed={opens}
         ready={opens > 0}
+        disabled={committing}
         onChange={(report) => setDraft((d) => ({ ...d, report }))}
       />
 
@@ -93,22 +100,17 @@ export function SessionPlanEditor({
           value={initialState.staffNote}
           seed={opens}
           ready={opens > 0}
+          disabled={committing}
           onChange={(staffNote) => setDraft((d) => ({ ...d, staffNote }))}
         />
       </StaffNoteBlock>
 
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={onCancel}>
-          {t("cancel")}
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          onClick={() => onSave(planDraftFromEditorState(draft))}
-        >
-          {t("save")}
-        </Button>
-      </div>
+      <EditorActionRow
+        committing={committing}
+        error={error}
+        onCancel={onCancel}
+        onSave={() => onSave(planDraftFromEditorState(draft))}
+      />
     </div>
   );
 }

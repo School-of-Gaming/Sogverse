@@ -484,9 +484,11 @@ const YEARLONG_STAFF_NOTES: readonly string[] = [
  *   states their meaning.
  * - *Complete* — the majority: marked off and reported, wearing the green check.
  *
- * Plus two sessions from before any of this was expected. There are no holiday
- * skips: a session that did not run has no entry kind, because declaring one off
- * is part of the cancellation flows nobody has designed.
+ * Plus a pre-epoch tail: one session somebody went back and wrote up (an
+ * ordinary past entry that never turns amber) and two nobody ever touched
+ * (quiet placeholder lines that still open the record editor). There are no
+ * holiday skips: a session that did not run has no entry kind, because
+ * declaring one off is part of the cancellation flows nobody has designed.
  */
 function yearlongSpecs(): readonly EntrySpec[] {
   const OWED_AT = new Set([2, 12]);
@@ -551,7 +553,24 @@ function yearlongSpecs(): readonly EntrySpec[] {
     });
   }
 
-  return [...CLUB_FUTURE_SPECS, ...past, { kind: "no_record" }, { kind: "no_record" }];
+  return [
+    ...CLUB_FUTURE_SPECS,
+    ...past,
+    // Before the epoch and written up anyway — a gedu going back over an old
+    // term. It renders as an ordinary past entry with a half-finished register
+    // and wears no alert at all, which is the only way to see on this page that
+    // the epoch gates what is *owed* rather than what can be edited.
+    {
+      kind: "past",
+      owed: false,
+      partial: { present: [SESSION_FEED_GAMER_IDS.aino] },
+      report: `# Before we kept records
+
+Written up from memory and the world save, long after the fact. Half the register is guesswork, so it stays half-marked — and nothing is asking for the rest.`,
+    },
+    { kind: "no_record" },
+    { kind: "no_record" },
+  ];
 }
 
 const CLUB_SPECS = yearlongSpecs();

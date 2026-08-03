@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState, type ReactNode } from "react";
-import { Pencil, Plus } from "lucide-react";
+import { Loader2, Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,6 +37,8 @@ export interface TwoAudienceNotesCopy {
   staffLabel: string;
   staffHint: string;
   staffPlaceholder: string;
+  /** One line for a refused save. Scope-specific, like everything else here. */
+  saveFailed: string;
 }
 
 interface TwoAudienceNotesPanelProps {
@@ -54,7 +56,13 @@ interface TwoAudienceNotesPanelProps {
   staffNote: string | null;
   editing: boolean;
   onEditingChange: (editing: boolean) => void;
-  onSave: (draft: TwoAudienceNotesDraft) => void;
+  /**
+   * Persist both notes. **Awaited**: the panel greys itself out for the round
+   * trip, closes only once the write has landed, and on a rejection stays open
+   * with both textareas exactly as they were. A synchronous handler resolves
+   * immediately and the panel behaves as it always did.
+   */
+  onSave: (draft: TwoAudienceNotesDraft) => void | Promise<void>;
 }
 
 /**
@@ -97,9 +105,17 @@ interface TwoAudienceNotesPanelProps {
  * family-facing, on a schema that has not been asked about it. A standing note
  * is also a paragraph about how a room works, not a write-up with sections.
  *
- * It is presentational to the bone: it owns the text being typed and nothing
- * else. Which scope it is describing, what the strings say, and where a save
- * goes are all the caller's.
+ * **A save in flight greys both fields and both buttons, and never drops what
+ * was typed.** The panel closes only once the write has landed; a refused one
+ * leaves it open, re-enabled, with the text untouched and one line saying so.
+ * That matters more here than almost anywhere else on the page, because the
+ * site scope's fields are shared by every product at the venue — retyping two
+ * paragraphs somebody had just finished is a good way to get them typed
+ * shorter the second time.
+ *
+ * It owns the text being typed, whether a save is in the air, and nothing else.
+ * Which scope it is describing, what the strings say, and where a save goes are
+ * all the caller's.
  */
 export function TwoAudienceNotesPanel({
   copy,
@@ -116,17 +132,43 @@ export function TwoAudienceNotesPanel({
     publicNote: publicNote ?? "",
     staffNote: staffNote ?? "",
   });
+  const [committing, setCommitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Re-seed on open with React's "adjust state during render" pattern, so a
   // cancelled edit is gone the next time the editor opens and no frame of the
-  // stale draft is ever painted.
+  // stale draft is ever painted. A stale failure message goes with it.
   const [wasEditing, setWasEditing] = useState(editing);
   if (editing !== wasEditing) {
     setWasEditing(editing);
     if (editing) {
       setDraft({ publicNote: publicNote ?? "", staffNote: staffNote ?? "" });
+      setError(null);
     }
   }
+
+  /**
+   * `committing` is flipped **before** the caller's write is reached, so no
+   * render between the click and the disabled state can leave Save clickable.
+   * It is cleared on the failure path — where the gedu needs it back — and in
+   * the same commit as the close, where the region shuts around it anyway.
+   */
+  const handleSave = async () => {
+    setError(null);
+    setCommitting(true);
+    try {
+      await onSave({
+        publicNote: draft.publicNote.trim(),
+        staffNote: draft.staffNote.trim(),
+      });
+    } catch {
+      setCommitting(false);
+      setError(copy.saveFailed);
+      return;
+    }
+    setCommitting(false);
+    onEditingChange(false);
+  };
 
   const hasPublic = publicNote !== null && publicNote.length > 0;
   const hasStaff = staffNote !== null && staffNote.length > 0;
@@ -144,6 +186,7 @@ export function TwoAudienceNotesPanel({
           type="button"
           variant="ghost"
           size="sm"
+          disabled={committing}
           onClick={() => onEditingChange(!editing)}
           aria-expanded={editing}
           className="-my-1 gap-1.5"
@@ -196,6 +239,7 @@ export function TwoAudienceNotesPanel({
                 value={draft.publicNote}
                 placeholder={copy.publicPlaceholder}
                 aria-describedby={hintId}
+                disabled={committing}
                 onChange={(e) =>
                   setDraft((d) => ({ ...d, publicNote: e.target.value }))
                 }
@@ -216,6 +260,7 @@ export function TwoAudienceNotesPanel({
                   value={draft.staffNote}
                   placeholder={copy.staffPlaceholder}
                   aria-describedby={hintId}
+                  disabled={committing}
                   onChange={(e) =>
                     setDraft((d) => ({ ...d, staffNote: e.target.value }))
                   }
@@ -224,11 +269,21 @@ export function TwoAudienceNotesPanel({
             </Field>
           </StaffNoteBlock>
 
+          {/* The failure line sits above the buttons, where the eye already is
+              after a click, rather than under a row that may be the last thing
+              inside a collapsible region. */}
+          {error !== null && (
+            <p role="alert" className="text-right text-xs text-destructive">
+              {error}
+            </p>
+          )}
+
           <div className="flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
               size="sm"
+              disabled={committing}
               onClick={() => onEditingChange(false)}
             >
               {copy.cancel}
@@ -236,13 +291,13 @@ export function TwoAudienceNotesPanel({
             <Button
               type="button"
               size="sm"
-              onClick={() =>
-                onSave({
-                  publicNote: draft.publicNote.trim(),
-                  staffNote: draft.staffNote.trim(),
-                })
-              }
+              disabled={committing}
+              onClick={() => void handleSave()}
+              className="gap-1.5"
             >
+              {committing && (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+              )}
               {copy.save}
             </Button>
           </div>

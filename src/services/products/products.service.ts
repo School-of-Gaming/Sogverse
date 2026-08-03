@@ -66,11 +66,18 @@ function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
     .maybeSingle();
 }
 
+// The admin form is the one read path allowed to see the staff-only half of a
+// product, so it is the one query that embeds `product_staff_details`. The embed
+// is a to-one (its product_id is both primary and foreign key) and it is sparse —
+// a product with no lesson link has no row, which arrives here as `null`. The
+// family-facing queries above deliberately do not embed it: `products` is
+// anon-readable and the whole point of the separate table is that a `select=*`
+// against it cannot reach the link.
 function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
   return supabase
     .from("products")
     .select(
-      "*, product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_holiday_calendars(calendar_id, holiday_calendars(name))",
+      "*, product_staff_details(material_url), product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type)), product_holiday_calendars(calendar_id, holiday_calendars(name))",
     )
     .eq("id", id)
     .maybeSingle();
@@ -166,6 +173,12 @@ export type CreateProductInput = {
   max_age: number;
   spoken_language_code: string;
   padlet_url: string | null;
+  /**
+   * Gedu/admin-only lesson material. Never rendered to a family — and not a
+   * column on `products`, which is anon-readable by column selection. The RPC
+   * files it in `product_staff_details`; blank or null means no row there.
+   */
+  material_url: string | null;
   location_id: string | null;
   is_remote: boolean;
   status: ProductStatus;
@@ -206,6 +219,12 @@ export type UpdateProductInput = {
   max_age: number;
   spoken_language_code: string;
   padlet_url: string | null;
+  /**
+   * Gedu/admin-only lesson material. Never rendered to a family — and not a
+   * column on `products`, which is anon-readable by column selection. The RPC
+   * files it in `product_staff_details`; blank or null means no row there.
+   */
+  material_url: string | null;
   location_id: string | null;
   is_remote: boolean;
   signup_threshold: number | null;

@@ -406,6 +406,22 @@ function OperationalFacts({
             </a>
           </Fact>
         )}
+
+        {/* Staff-only, and it lives on its own embedded row for exactly that
+            reason — `products` is anon-readable by column selection, so the
+            lesson link cannot be a column on it. */}
+        {product.product_staff_details?.material_url && (
+          <Fact icon={ExternalLink} label={t("detailsPage.fields.materialUrl")}>
+            <a
+              href={product.product_staff_details.material_url}
+              target="_blank"
+              rel="noreferrer"
+              className="break-all text-primary underline-offset-2 hover:underline"
+            >
+              {product.product_staff_details.material_url}
+            </a>
+          </Fact>
+        )}
       </CardContent>
     </Card>
   );

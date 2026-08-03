@@ -1,4 +1,6 @@
+import { parseJsonResponse, readErrorMessage } from "@/lib/api/json-response";
 import type { MinecraftAccount, AppSupabaseClient } from "@/types";
+import { minecraftAccountWriteResult } from "./minecraft.contracts";
 
 export class MinecraftService {
   constructor(private supabase: AppSupabaseClient) {}
@@ -55,5 +57,44 @@ export class MinecraftService {
       const data = await response.json();
       throw new Error(data.error || "Failed to update Minecraft username");
     }
+  }
+
+  /**
+   * A gedu correcting the Minecraft username of a child in a group they teach.
+   *
+   * Deliberately a separate method from `updateMyMinecraft` rather than a flag
+   * on it: the two hit different routes with different authorization, and one
+   * of them names a target while the other cannot. Collapsing them would put a
+   * "whose account is this" branch inside a method whose safety comes from not
+   * having one.
+   *
+   * The route resolves the name against Mojang before writing, so the result
+   * carries the canonical spelling and the UUID — a successful save lands
+   * verified, and the caller renders that state from what comes back rather
+   * than guessing at it.
+   */
+  async updateGroupMemberMinecraft(
+    gamerId: string,
+    minecraftUsername: string | null,
+  ) {
+    const response = await fetch(
+      `/api/gedu/gamers/${encodeURIComponent(gamerId)}/minecraft`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ minecraftUsername }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        await readErrorMessage(
+          response,
+          "Failed to update the Minecraft username",
+        ),
+      );
+    }
+
+    return parseJsonResponse(response, minecraftAccountWriteResult);
   }
 }

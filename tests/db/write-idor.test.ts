@@ -175,6 +175,40 @@ const CASES: Record<string, IdorCase> = {
       ),
   },
 
+  product_staff_details: {
+    // The sharp attacker, and the reason this row exists at all. A gedu is the
+    // one non-admin who is *meant* to see this link — the feed RPC hands it to
+    // them — so "can read it through the RPC" must not become "can rewrite it
+    // through the table". Anything weaker (a customer, a gamer) would be
+    // refused for having no business here at all, which proves less.
+    attacker: "gedu",
+    why: "a gedu legitimately reads this link through the feed RPC; only the admin-only policy stops them writing the row",
+    probe: async (admin) =>
+      (
+        await admin
+          .from("product_staff_details")
+          .select("*")
+          .eq("product_id", PRODUCT)
+          .maybeSingle()
+      ).data,
+    update: async (client) =>
+      outcomeOf(
+        await client
+          .from("product_staff_details")
+          .update({ material_url: "https://evil.example/defaced" })
+          .eq("product_id", PRODUCT)
+          .select("product_id")
+      ),
+    remove: async (client) =>
+      outcomeOf(
+        await client
+          .from("product_staff_details")
+          .delete()
+          .eq("product_id", PRODUCT)
+          .select("product_id")
+      ),
+  },
+
   product_translations: {
     attacker: "customer2",
     why: "public-facing copy on someone else's product",
@@ -595,6 +629,10 @@ describe("write-path IDOR (§3.4 check 3)", () => {
     await admin
       .from("product_prices")
       .insert({ product_id: PRODUCT, currency: "eur", price_cents: 4000 });
+    await admin.from("product_staff_details").insert({
+      product_id: PRODUCT,
+      material_url: "https://drive.sog.gg/idor-fixture",
+    });
     await admin.from("product_translations").insert({
       product_id: PRODUCT,
       locale: "en",

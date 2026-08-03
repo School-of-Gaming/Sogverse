@@ -64,6 +64,26 @@ export interface GeduAssignmentSummary {
   /** Gamers in the gedu's own group. */
   groupGamerCount: number;
   /**
+   * The product's last day as a bare `YYYY-MM-DD` calendar date, or `null` on an
+   * open-ended run that has no last day at all.
+   *
+   * Kept as the raw string rather than an instant because that is what it is: a
+   * zoneless calendar date, rendered date-only and UTC-pinned wherever it is
+   * shown. Whether that day is already behind us is a question about the current
+   * instant, so it is asked of the clock rather than baked in here — see
+   * `assignmentEndedOn`.
+   */
+  endDate: string | null;
+  /**
+   * The zone `endDate` is a date **in** — the product's own, which is where its
+   * calendar days begin and end.
+   *
+   * It rides along with the date because the pair is what the ended test needs
+   * and neither half answers it alone: a bare date cannot say when its day is
+   * over, and a zone has nothing to be over.
+   */
+  timezone: string;
+  /**
    * Start of the soonest session still worth showing, or `null` once the
    * schedule has run out (a finished camp, a club with no slots).
    */
@@ -116,9 +136,9 @@ export interface RollUpArgs {
 /**
  * Roll assignment rows up into one summary each, **sorted by soonest next
  * session ascending** so a live or imminent session floats to the top and an
- * assignment with nothing scheduled sinks to the bottom. Sorting here rather
- * than in the view keeps the section presentational and makes the order
- * testable.
+ * assignment with nothing scheduled sinks to the bottom — with every finished
+ * run below all of them. Sorting here rather than in the view keeps the section
+ * presentational and makes the order testable.
  */
 export function rollUpGeduAssignments({
   rows,
@@ -141,6 +161,8 @@ export function rollUpGeduAssignments({
       productType: row.product.productType,
       groupName: row.groupName,
       groupGamerCount: row.groupGamerCount,
+      endDate: row.product.endDate,
+      timezone: row.product.timezone,
       nextSessionStart: next?.start ?? null,
       nextSessionEnd: next?.end ?? null,
       hasVoiceRoom,
@@ -158,8 +180,63 @@ export function rollUpGeduAssignments({
     } satisfies GeduAssignmentSummary;
   });
 
-  summaries.sort(bySoonestSession);
-  return summaries;
+  // Endedness is resolved once per assignment and carried through the sort
+  // rather than recomputed inside the comparator: it is a zone-aware date parse,
+  // and a comparator runs it O(n log n) times to answer the same question about
+  // the same instant every time.
+  const ranked = summaries.map((summary) => ({
+    summary,
+    endedOn: assignmentEndedOn(summary, now),
+  }));
+  ranked.sort(byRunThenSoonestSession);
+  return ranked.map((entry) => entry.summary);
+}
+
+/**
+ * The product's last day, **if the run is over** — and `null` otherwise, which
+ * covers both a run still going and an open-ended one that has no last day at
+ * all.
+ *
+ * One function rather than a boolean and a date, because the two are the same
+ * answer: an assignment that has ended always has a date to name, and one with
+ * no date to name has not ended. Returning the date makes that true in the types
+ * as well as in prose, so no caller ever has to assert its way past a `null` it
+ * has already tested.
+ *
+ * **Over means two things, and it needs both.** The last day has to be behind
+ * us, *and* the occurrence walk has to have nothing left — which is the
+ * observation the whole ended state grew out of: a product always has a session
+ * scheduled unless it has finished. The second clause is redundant on every
+ * ordinary run and decisive on one case, a session that starts on the final day
+ * and is still running after that day's midnight. Without it a card could be
+ * "ended" and mid-session at once — gradient lit, Join withheld, an end date
+ * under a session somebody is sitting in. With it the two states are exclusive
+ * by construction, which is what lets the card drop its next-session line
+ * outright rather than reasoning about which of them wins.
+ *
+ * The day ends **in the product's own zone**, not the viewer's, and via the same
+ * cutoff the occurrence walk bounds itself with — so "past the end date" means
+ * the identical instant to both of them. An end date is a calendar date on the
+ * schedule it bounds: a Helsinki club is over when Helsinki's last day is over,
+ * and a viewer in Tokyo does not get to retire it seven hours early.
+ *
+ * Asked of the clock rather than baked into the summary, for the same reason
+ * liveness is: it is a fact about the current instant, and a summary built once
+ * per data change would hold yesterday's answer.
+ */
+export function assignmentEndedOn(
+  assignment: Pick<
+    GeduAssignmentSummary,
+    "endDate" | "timezone" | "nextSessionStart"
+  >,
+  now: Date,
+): string | null {
+  const { endDate, timezone, nextSessionStart } = assignment;
+  if (endDate === null || nextSessionStart !== null) return null;
+  const lastMoment = endDateToCutoff(endDate, timezone);
+  return lastMoment !== null && lastMoment.getTime() < now.getTime()
+    ? endDate
+    : null;
 }
 
 /** Whether an assignment is happening right now, as of one instant. */
@@ -292,9 +369,9 @@ export interface GeduActivityGroup<T> {
  * exist.
  *
  * Order **within** a group is whatever the caller handed over, untouched, which
- * is soonest-first out of the roll-up. Order **between** groups is fixed, so the
- * page does not reshuffle its own headings between two gedus or between two
- * terms for the same gedu.
+ * is soonest-first out of the roll-up with the finished runs beneath. Order
+ * **between** groups is fixed, so the page does not reshuffle its own headings
+ * between two gedus or between two terms for the same gedu.
  *
  * Generic over the row rather than tied to the card's shape: the grouping is a
  * fact about product types, and making it know what a dashboard card looks like
@@ -320,6 +397,43 @@ export function groupAssignmentsByType<T>(
     }
   }
   return groups;
+}
+
+/** A summary paired with the ended test's answer, resolved once. */
+interface RankedAssignment {
+  summary: GeduAssignmentSummary;
+  /** The last day of a finished run, or `null` while it is still going. */
+  endedOn: string | null;
+}
+
+/**
+ * **Every finished run sorts below every live one**, and only then does the
+ * soonest-session order apply within each half.
+ *
+ * A gedu opening this page is deciding what to do next, and a run that is over
+ * has nothing to contribute to that decision — but it is not gone either: the
+ * workspace behind the card is where its attendance and write-ups live, and an
+ * outstanding one is still owed. So an ended assignment is demoted rather than
+ * dropped, and it lands in a run of its own at the foot of its type group.
+ *
+ * Inside that run the order is **most recently ended first**, which is the order
+ * a gedu remembers them in: last term's club is the one they are still finishing
+ * paperwork for, and the one from two years ago is archive. The dates are bare
+ * `YYYY-MM-DD` strings, so a plain string comparison is already chronological
+ * and needs no parsing to sort by.
+ */
+function byRunThenSoonestSession(
+  a: RankedAssignment,
+  b: RankedAssignment,
+): number {
+  if ((a.endedOn === null) !== (b.endedOn === null)) {
+    return a.endedOn === null ? -1 : 1;
+  }
+  if (a.endedOn !== null && b.endedOn !== null) {
+    if (a.endedOn !== b.endedOn) return a.endedOn < b.endedOn ? 1 : -1;
+    return a.summary.productName.localeCompare(b.summary.productName);
+  }
+  return bySoonestSession(a.summary, b.summary);
 }
 
 /** Soonest first; assignments with no scheduled session last, then by name. */

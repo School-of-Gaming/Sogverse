@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { Inter, Press_Start_2P } from "next/font/google";
+import { Press_Start_2P } from "next/font/google";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { Providers } from "@/providers";
 import { getUserWithProfile } from "@/lib/supabase/server";
@@ -8,11 +8,6 @@ import { resolveTimezone, TIMEZONE_COOKIE_NAME } from "@/lib/timezone";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
 
 const pressStart2P = Press_Start_2P({
   weight: "400",
@@ -70,7 +65,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} className="dark" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${pressStart2P.variable} antialiased bg-background text-foreground`}
+        className={`${pressStart2P.variable} antialiased bg-background text-foreground`}
       >
         <Providers
           initialUser={userWithProfile?.user ?? null}

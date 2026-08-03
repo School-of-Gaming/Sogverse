@@ -16,6 +16,7 @@ import {
   type SessionCompleteness,
 } from "./entry-state";
 import { withMonthDividers, type SessionFeedRow } from "./feed-rows";
+import { isPartialSessionSaveError } from "./partial-save";
 import { editToggleAnchor, useViewportAnchor } from "./scroll-anchor";
 import { formatMonthLabel, formatSessionLabels } from "./session-labels";
 import type {
@@ -59,7 +60,17 @@ interface SessionFeedProps {
   editingEntryId: string | null;
   /** Ask to expand an entry's editor, or `null` to collapse whatever is open. */
   onEditEntry: (entryId: string | null) => void;
-  onSaveEntry: (entryId: string, draft: SessionEntryDraft) => void;
+  /**
+   * Persist one entry's edit. **Awaited**, and that is the whole contract: the
+   * feed keeps the editor open and disabled until this settles, closes it only
+   * when it resolves, and leaves it open with the gedu's text intact when it
+   * rejects. A synchronous handler (a preview scene over local state) resolves
+   * immediately and the sequence collapses to what it always was.
+   */
+  onSaveEntry: (
+    entryId: string,
+    draft: SessionEntryDraft,
+  ) => void | Promise<void>;
   className?: string;
 }
 
@@ -106,10 +117,19 @@ interface SessionFeedProps {
  * one silently shuts another — a shut that takes its whole height out from above
  * the button the cursor is still resting on.
  *
- * Which entry is open is the caller's state and saving is the caller's callback;
- * how much of the feed is revealed is this component's own, because it is pure
- * view state that no shell needs to know about. Nothing here fetches, mutates,
- * or sorts.
+ * **The save is awaited here, and the anchor is captured when it lands — not
+ * when the button was clicked.** An editor that closed on the click would take
+ * its own height out of the page while the write was still in the air, and the
+ * scroll correction would then be measuring against a layout that had already
+ * settled by the time the row came back. So the editor stays open and disabled
+ * for the round trip, the anchor is read in the instant before the close, and a
+ * refused write closes nothing at all: the sheet, both notes and the error line
+ * stay where the gedu can retry them.
+ *
+ * Which entry is open is the caller's state and persisting is the caller's
+ * callback; how much of the feed is revealed, whether a save is in flight, and
+ * where focus lands afterwards are this component's own. Nothing here fetches,
+ * mutates, or sorts.
  */
 export function SessionFeed({
   entries,
@@ -127,6 +147,15 @@ export function SessionFeed({
 
   const [laterOpen, setLaterOpen] = useState(false);
   const [chunksRevealed, setChunksRevealed] = useState(0);
+  /**
+   * The entry whose save is in the air, and why the last one failed.
+   *
+   * One of each rather than a map, because only one editor can be open at a
+   * time — so only one save can ever be in flight and only one error can ever
+   * be on screen.
+   */
+  const [committingEntryId, setCommittingEntryId] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const anchor = useViewportAnchor();
   const dividerRef = useRef<HTMLLIElement>(null);
@@ -138,6 +167,8 @@ export function SessionFeed({
    * the click arrives.
    */
   const entryRows = useRef(new Map<string, HTMLLIElement>());
+  /** Each entry's Edit button, so focus can be put back where it started. */
+  const editButtons = useRef(new Map<string, HTMLButtonElement>());
 
   const { laterFuture, nextSession, past } = useMemo(
     () => partitionFeedEntries(entries),
@@ -213,6 +244,57 @@ export function SessionFeed({
     anchor.capture(editToggleAnchor(entryRows.current, entryId, closing));
   };
 
+  /**
+   * Shut an entry's editor: anchor first (while the old layout is still on
+   * screen), then hand focus back to the control that opened it.
+   *
+   * `preventScroll`, because the card is at that moment losing most of its
+   * height under the correction above and a focus-triggered scroll would be one
+   * more thing for that correction to undo.
+   */
+  const closeEditor = (entryId: string) => {
+    anchorEditToggle(entryId, true);
+    setSaveError(null);
+    onEditEntry(null);
+    editButtons.current.get(entryId)?.focus({ preventScroll: true });
+  };
+
+  /**
+   * Persist one entry, holding the editor open across the round trip.
+   *
+   * `committingEntryId` is set **synchronously, before the caller's mutation
+   * is reached**, so there is no render between the click and the disabled
+   * state in which Save is clickable a second time. It is cleared only in the
+   * same commit as the close (where the region goes `inert` anyway) or on the
+   * failure path, which is precisely where the gedu needs the button back.
+   */
+  const saveEntry = async (entryId: string, draft: SessionEntryDraft) => {
+    setSaveError(null);
+    setCommittingEntryId(entryId);
+    try {
+      await onSaveEntry(entryId, draft);
+    } catch (error) {
+      // The message is ours rather than the thrown error's: a gedu cannot act
+      // on a Postgres code. But *which* of ours matters, and it is the one thing
+      // the thrown error is allowed to decide. Saving a session is several
+      // writes, so it can half-succeed — and telling somebody nothing saved when
+      // four of five marks did sends them back to a sheet they now misread. The
+      // editor keeps the whole draft either way, and a retry re-sends the lot
+      // idempotently.
+      setCommittingEntryId(null);
+      setSaveError(
+        isPartialSessionSaveError(error)
+          ? t("savePartiallyFailed")
+          : t("saveFailed"),
+      );
+      return;
+    }
+    anchorEditToggle(entryId, true);
+    setCommittingEntryId(null);
+    onEditEntry(null);
+    editButtons.current.get(entryId)?.focus({ preventScroll: true });
+  };
+
   const renderRow = (row: FeedRow) => {
     if (row.kind === "divider") {
       return (
@@ -277,18 +359,23 @@ export function SessionFeed({
             now,
           })}
           editing={editing}
+          committing={committingEntryId === entry.id}
+          saveError={editing ? saveError : null}
+          registerEditButton={(node) => {
+            if (node === null) editButtons.current.delete(entry.id);
+            else editButtons.current.set(entry.id, node);
+          }}
           onToggleEdit={() => {
-            anchorEditToggle(entry.id, editing);
-            onEditEntry(editing ? null : entry.id);
+            if (editing) {
+              closeEditor(entry.id);
+              return;
+            }
+            anchorEditToggle(entry.id, false);
+            setSaveError(null);
+            onEditEntry(entry.id);
           }}
-          onCancelEdit={() => {
-            anchorEditToggle(entry.id, true);
-            onEditEntry(null);
-          }}
-          onSave={(draft) => {
-            anchorEditToggle(entry.id, true);
-            onSaveEntry(entry.id, draft);
-          }}
+          onCancelEdit={() => closeEditor(entry.id)}
+          onSave={(draft) => void saveEntry(entry.id, draft)}
         />
       </li>
     );

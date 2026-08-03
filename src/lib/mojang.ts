@@ -45,3 +45,21 @@ export async function lookupMinecraftUser(
 export function isValidMinecraftUsername(username: string): boolean {
   return USERNAME_RE.test(username);
 }
+
+/**
+ * Where a child's full-body skin render comes from.
+ *
+ * A third-party host (`mc-heads.net`) that the CSP's `img-src` already allows —
+ * it renders whatever skin the account is currently wearing, which is the whole
+ * point: a costume a child changes on Tuesday shows up here on Wednesday
+ * without us storing a byte of it.
+ *
+ * Named here rather than spelled out at each call site because the host is the
+ * CSP-coupled part: a surface that reaches for a different one renders a blocked
+ * image and nothing on screen says why. The `body` path (rather than a head
+ * crop) is deliberate too — the half of a skin a child actually chose is below
+ * the shoulders — and every box drawn for it assumes the 1:2 figure it returns.
+ */
+export function minecraftSkinBodyUrl(username: string): string {
+  return `https://mc-heads.net/body/${encodeURIComponent(username)}`;
+}

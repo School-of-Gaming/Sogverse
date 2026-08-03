@@ -25,20 +25,18 @@ import {
   CopyAllEmailsButton,
   deduplicateEmails,
   geduChipPeople,
-} from "./AssignedGroupCard";
+} from "./roster-helpers";
 import { SessionDetailsBackLink } from "./BackLink";
 import { GamerRosterRow } from "./GamerRosterRow";
 import { GroupNotesPanel, type GroupNotesDraft } from "./GroupNotesPanel";
 import { SiteNotesPanel, type SiteNotesDraft } from "./SiteNotesPanel";
 
 /**
- * **Draft** redesign of the gedu's product page: the assigned group's
- * *workspace*, with the session feed as its spine. Rendered today only by a
- * full-page preview scene; at promotion it becomes the body of
- * `/gedu/clubs|camps|events/[id]` and the live shell swaps fixtures for the
- * product query. It deliberately takes everything as props — no query, no clock
- * of its own beyond the shared providers — which is what lets one body serve
- * both shells.
+ * The gedu's product page: the assigned group's *workspace*, with the session
+ * feed as its spine. It is the body of `/gedu/clubs|camps|events/[id]`, and the
+ * same body a full-page preview scene renders over fixtures. It deliberately
+ * takes everything as props — no query, no clock of its own beyond the shared
+ * providers — which is what lets one body serve both shells.
  *
  * The shape, and why:
  *
@@ -110,7 +108,7 @@ export interface ProductSite {
   staffNote: string | null;
 }
 
-interface GeduProductPageBodyDraftProps {
+interface GeduProductPageBodyProps {
   data: GeduAssignedProduct;
   /**
    * Newest first: the future sessions inside the horizon (furthest away first,
@@ -124,8 +122,7 @@ interface GeduProductPageBodyDraftProps {
   /**
    * Staff-only lesson/material URL, or `null` when unset. **Never render this on
    * a surface a parent or gamer can reach** — this page is gedu-only, which is
-   * the only reason no visibility check happens here. At promotion it comes from
-   * the product's material column.
+   * the only reason no visibility check happens here.
    */
   materialUrl: string | null;
   /** The group's standing public note, independent of any session. */
@@ -134,42 +131,56 @@ interface GeduProductPageBodyDraftProps {
   groupStaffNote: string | null;
   groupNotesEditing: boolean;
   onGroupNotesEditingChange: (editing: boolean) => void;
-  onSaveGroupNotes: (draft: GroupNotesDraft) => void;
+  /** Persist the group's notes. Awaited by the panel — see its own note. */
+  onSaveGroupNotes: (draft: GroupNotesDraft) => void | Promise<void>;
   /**
-   * The venue an in-person product runs at, or `null` for a remote one. Every
-   * in-person product has a site (the schema requires it), and nothing on a
-   * remote product does — so this prop being null is exactly "no building
-   * involved", not "we didn't load it".
+   * The venue an in-person product runs at, or `null` for a remote one.
    *
-   * At promotion it comes from the product's location joined to its
-   * family-facing details (address + note) and its staff-only note.
+   * **The question is `is_remote`, never "does it have a location".** A remote
+   * municipality club carries a `location_id` by CHECK — the town it is run
+   * for — so a caller testing for a location would put a door code and a
+   * caretaker's name on a club that meets in a voice room. The workspace's data
+   * source resolves the site itself and hands over `null` for anything remote,
+   * so this prop being null is exactly "no building involved", never "we didn't
+   * load it".
    */
   site: ProductSite | null;
   siteNotesEditing: boolean;
   onSiteNotesEditingChange: (editing: boolean) => void;
-  onSaveSiteNotes: (draft: SiteNotesDraft) => void;
+  /** Persist the venue's shared notes. Awaited by the panel. */
+  onSaveSiteNotes: (draft: SiteNotesDraft) => void | Promise<void>;
   editingEntryId: string | null;
   onEditEntry: (entryId: string | null) => void;
-  onSaveEntry: (entryId: string, draft: SessionEntryDraft) => void;
+  /**
+   * Persist one session's edit. **Awaited by the feed**, which holds the editor
+   * open and disabled until it settles and closes it only on success.
+   */
+  onSaveEntry: (
+    entryId: string,
+    draft: SessionEntryDraft,
+  ) => void | Promise<void>;
   /**
    * Save a roster member's Minecraft username. A gedu is the person who finds
    * out a name is wrong — mid-session, when the server doesn't recognise it —
-   * so the roster is where it gets fixed. At promotion this calls the scoped
-   * gedu write path; today the scene holds it in local state.
+   * so the roster is where it gets fixed. Awaited by the roster row: the write
+   * makes a Mojang lookup on the way through, so the row stays disabled for a
+   * real round trip.
    */
-  onSaveMinecraftUsername: (gamerId: string, username: string) => void;
+  onSaveMinecraftUsername: (
+    gamerId: string,
+    username: string,
+  ) => void | Promise<void>;
   /**
    * In-flight or just-landed Mojang checks, keyed by gamer id. A roster member
    * with no entry here shows the resting state derived from their account.
    *
    * It lives with whoever owns the save, because that is the only place that
-   * knows a check started. At promotion the same map comes from the verify
-   * mutation's state; today the scene fakes the latency.
+   * knows a check started.
    */
   minecraftStatuses?: Readonly<Record<string, MinecraftCheckStatus>>;
 }
 
-export function GeduProductPageBodyDraft({
+export function GeduProductPageBody({
   data,
   entries,
   feedRoster,
@@ -189,7 +200,7 @@ export function GeduProductPageBodyDraft({
   onSaveEntry,
   onSaveMinecraftUsername,
   minecraftStatuses,
-}: GeduProductPageBodyDraftProps) {
+}: GeduProductPageBodyProps) {
   const t = useTranslations("gedu.sessionDetails");
   const locale = useLocale();
   const uiLocale = resolveLocale(locale);
@@ -208,6 +219,20 @@ export function GeduProductPageBodyDraft({
   const voiceState = useMemo(
     () => computeVoiceState({ product: data.product, now, locale, timeZone }),
     [data.product, now, locale, timeZone],
+  );
+
+  /**
+   * Where leaving a voice room lands — this workspace, always.
+   *
+   * Named rather than left to the Join button's "wherever you clicked from"
+   * default, and named as a route rather than read off the current pathname, so
+   * every Join on this product agrees: the peer rows send you here too, which
+   * is the point of covering somebody's room for ten minutes rather than
+   * inheriting their page.
+   */
+  const workspaceHref = ROUTES.gedu.assignedProduct(
+    data.product.product_type,
+    data.product.id,
   );
 
   return (
@@ -338,6 +363,7 @@ export function GeduProductPageBodyDraft({
               voiceIsOpen={voiceState.voiceIsOpen}
               opensDate={voiceState.opensDate}
               opensTime={voiceState.opensTime}
+              backHref={workspaceHref}
               onSaveMinecraftUsername={onSaveMinecraftUsername}
               minecraftStatuses={minecraftStatuses}
             />
@@ -349,6 +375,7 @@ export function GeduProductPageBodyDraft({
             voiceIsOpen={voiceState.voiceIsOpen}
             opensDate={voiceState.opensDate}
             opensTime={voiceState.opensTime}
+            backHref={workspaceHref}
           />
         </aside>
       </div>
@@ -437,12 +464,15 @@ function OtherGroupsRailCard({
   voiceIsOpen,
   opensDate,
   opensTime,
+  backHref,
 }: {
   peerGroups: readonly GeduAssignedProductGroup[];
   isRemote: boolean;
   voiceIsOpen: boolean;
   opensDate: string;
   opensTime: string;
+  /** Where leaving a peer's room lands — this workspace, not theirs. */
+  backHref: string;
 }) {
   const t = useTranslations("gedu.sessionDetails");
 
@@ -489,6 +519,7 @@ function OtherGroupsRailCard({
                     voiceHref={ROUTES.voice.groupSession(group.id)}
                     opensDate={opensDate}
                     opensTime={opensTime}
+                    backHref={backHref}
                   />
                 </div>
               )}
@@ -538,6 +569,7 @@ function GroupRailCard({
   voiceIsOpen,
   opensDate,
   opensTime,
+  backHref,
   onSaveMinecraftUsername,
   minecraftStatuses,
 }: {
@@ -546,7 +578,12 @@ function GroupRailCard({
   voiceIsOpen: boolean;
   opensDate: string;
   opensTime: string;
-  onSaveMinecraftUsername: (gamerId: string, username: string) => void;
+  /** Where leaving this group's room lands — back on this workspace. */
+  backHref: string;
+  onSaveMinecraftUsername: (
+    gamerId: string,
+    username: string,
+  ) => void | Promise<void>;
   minecraftStatuses?: Readonly<Record<string, MinecraftCheckStatus>>;
 }) {
   const t = useTranslations("gedu.sessionDetails");
@@ -568,6 +605,7 @@ function GroupRailCard({
             voiceHref={ROUTES.voice.groupSession(group.id)}
             opensDate={opensDate}
             opensTime={opensTime}
+            backHref={backHref}
           />
         </div>
       )}

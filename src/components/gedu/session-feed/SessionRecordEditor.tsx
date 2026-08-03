@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { attendanceTally, draftFromEditorState } from "./entry-state";
@@ -25,6 +26,19 @@ interface SessionRecordEditorProps {
   open: boolean;
   roster: readonly SessionFeedGamer[];
   initialState: SessionEditorState;
+  /**
+   * A save is in flight. Every control greys out and stays that way until the
+   * write actually lands — the flag is owned by whoever runs the mutation and
+   * is live before the first render after the click, so there is no frame in
+   * which Save is clickable a second time.
+   */
+  committing: boolean;
+  /**
+   * What went wrong with the last save, or `null`. Its presence is the reason
+   * the editor is still open: a refused write leaves the sheet and both notes
+   * exactly as the gedu left them so the retry costs nothing.
+   */
+  error: string | null;
   onCancel: () => void;
   onSave: (draft: SessionRecordDraft) => void;
 }
@@ -65,11 +79,19 @@ interface SessionRecordEditorProps {
  *
  * The Save/Cancel row is pinned at the bottom, so neither field growing under
  * the writer moves the buttons they are heading for.
+ *
+ * **A save in flight greys the whole editor and never drops what was typed.**
+ * The sheet, both notes and both buttons lock together — half a locked editor
+ * invites an edit that the in-flight write will not carry — and on failure the
+ * editor stays exactly where it is, re-enabled, with the text untouched and one
+ * line saying so. The only thing that closes this editor is a save that landed.
  */
 export function SessionRecordEditor({
   open,
   roster,
   initialState,
+  committing,
+  error,
   onCancel,
   onSave,
 }: SessionRecordEditorProps) {
@@ -135,6 +157,7 @@ export function SessionRecordEditor({
           <AttendanceRoster
             roster={roster}
             attendance={draft.attendance}
+            disabled={committing}
             onMark={markGamer}
           />
         </div>
@@ -147,6 +170,7 @@ export function SessionRecordEditor({
         value={initialState.report}
         seed={opens}
         ready={opens > 0}
+        disabled={committing}
         onChange={(report) => setDraft((d) => ({ ...d, report }))}
       />
 
@@ -161,15 +185,70 @@ export function SessionRecordEditor({
           value={initialState.staffNote}
           seed={opens}
           ready={opens > 0}
+          disabled={committing}
           onChange={(staffNote) => setDraft((d) => ({ ...d, staffNote }))}
         />
       </StaffNoteBlock>
 
+      <EditorActionRow
+        committing={committing}
+        error={error}
+        onCancel={onCancel}
+        onSave={handleSave}
+      />
+    </div>
+  );
+}
+
+/**
+ * The Save/Cancel row both session editors end on, with the failure line above
+ * it.
+ *
+ * **The error sits above the buttons, not below them.** It is the answer to the
+ * click that was just made, and the eye is already at the bottom of the editor;
+ * putting it under the row would leave it below the fold of a collapsible
+ * region on the exact card somebody is trying to save. Nothing else moves when
+ * it appears: the editor grows downward inside its own region, which the reader
+ * asked for by pressing Save.
+ */
+export function EditorActionRow({
+  committing,
+  error,
+  onCancel,
+  onSave,
+}: {
+  committing: boolean;
+  error: string | null;
+  onCancel: () => void;
+  onSave: () => void;
+}) {
+  const t = useTranslations("gedu.sessionFeed");
+
+  return (
+    <div className="space-y-2">
+      {error !== null && (
+        <p role="alert" className="text-right text-xs text-destructive">
+          {error}
+        </p>
+      )}
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={committing}
+          onClick={onCancel}
+        >
           {t("cancel")}
         </Button>
-        <Button type="button" size="sm" onClick={handleSave}>
+        <Button
+          type="button"
+          size="sm"
+          disabled={committing}
+          onClick={onSave}
+          className="gap-1.5"
+        >
+          {committing && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />}
           {t("save")}
         </Button>
       </div>

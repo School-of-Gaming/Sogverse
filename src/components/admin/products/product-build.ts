@@ -50,6 +50,7 @@ export type ValidationKey =
   | "siteRequired"
   | "scheduleRequired"
   | "padletInvalid"
+  | "materialUrlInvalid"
   | "startDateRequired"
   | "endDateRequired"
   | "thresholdInvalid"
@@ -75,6 +76,31 @@ function err(
   values?: Record<string, string | number>,
 ): ValidationFailure {
   return values !== undefined ? { messageKey, values } : { messageKey };
+}
+
+/**
+ * Whether a string is a link we are willing to store and later render as an
+ * `href` — parseable **and** on the web.
+ *
+ * The scheme check is the part doing the security work. `new URL()` alone
+ * accepts `javascript:alert(1)`, `data:text/html,…` and `vbscript:…` as
+ * perfectly valid URLs, and both fields it guards end up as the `href` of an
+ * anchor an admin or a gedu clicks — so parseability on its own is a stored-XSS
+ * hole with an extra step. Nothing legitimate is lost: these are links to a
+ * Padlet board and to a lesson-plan drive, and both are `https://`.
+ *
+ * An allow-list, deliberately, rather than a block-list of the schemes we happen
+ * to know are dangerous — the browser knows more schemes than we do, and the
+ * next one is not going to announce itself.
+ */
+function isWebUrl(value: string): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(value.trim());
+  } catch {
+    return false;
+  }
+  return parsed.protocol === "http:" || parsed.protocol === "https:";
 }
 
 /**
@@ -127,12 +153,12 @@ export function validate(
 
   if (state.scheduleSlots.length === 0) return err("scheduleRequired");
 
-  if (state.padletUrl.trim()) {
-    try {
-      new URL(state.padletUrl);
-    } catch {
-      return err("padletInvalid");
-    }
+  if (state.padletUrl.trim() && !isWebUrl(state.padletUrl)) {
+    return err("padletInvalid");
+  }
+
+  if (state.materialUrl.trim() && !isWebUrl(state.materialUrl)) {
+    return err("materialUrlInvalid");
   }
 
   const usesDate = startModeUsesDate(state.startMode);
@@ -368,6 +394,7 @@ function buildSharedFields(
     max_age: maxAge,
     spoken_language_code: state.spokenLanguageCode,
     padlet_url: state.padletUrl.trim() || null,
+    material_url: state.materialUrl.trim() || null,
     location_id: state.locationId,
     is_remote: state.isRemote,
     signup_threshold:
@@ -623,6 +650,9 @@ export function existingFormState(
     activeLocale,
     topic: product.topic,
     padletUrl: product.padlet_url ?? "",
+    // Staff-only, so it rides in on its own embedded row rather than on the
+    // product itself. No row at all is the ordinary "no lesson link" case.
+    materialUrl: product.product_staff_details?.material_url ?? "",
     image: product.image_path ?? null,
     minAge: String(product.min_age),
     maxAge: String(product.max_age),

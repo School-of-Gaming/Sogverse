@@ -44,14 +44,20 @@ import {
  * **Three scenarios.**
  *
  * `default` is the working dashboard and carries everything that can coexist on
- * one: all three type nouns, and the four card shapes that between them cover
+ * one: all three type nouns, and the five card shapes that between them cover
  * every state a card can be in —
  *
  * 1. a **remote club, live right now**, with its Join lit;
  * 2. a **remote club later this week**, with the same Join in its locked form;
- * 3. an **in-person camp owing a write-up**, carrying the attention badge and no
+ * 3. a **club whose run has ended**, muted, with no next-session line, an
+ *    "Ended …" date where its Join used to be, and a backlog badge still at full
+ *    strength — the one card that has to prove a finished run reads as history
+ *    without reading as broken. It is deliberately a *club*, so it sorts beneath
+ *    the two live ones under the same heading and the demotion is visible on the
+ *    page rather than only in a test;
+ * 4. an **in-person camp owing a write-up**, carrying the attention badge and no
  *    Join at all;
- * 4. an **in-person event running right now**, which is the pairing that matters
+ * 5. an **in-person event running right now**, which is the pairing that matters
  *    — "session in progress" with no Join beside it, proving the reserved
  *    footer zone holds the card's height open whether or not a button lands in
  *    it.
@@ -90,6 +96,7 @@ const MINECRAFT_PRODUCT_ID = "mock-dashboard-minecraft-club";
 const CAMP_PRODUCT_ID = "mock-dashboard-roblox-camp";
 const UPCOMING_CLUB_PRODUCT_ID = "mock-dashboard-fortnite-club";
 const EVENT_PRODUCT_ID = "mock-dashboard-lan-event";
+const ENDED_CLUB_PRODUCT_ID = "mock-dashboard-splatoon-club";
 
 /**
  * The venue the one-day event runs at.
@@ -252,6 +259,41 @@ export function buildGeduDashboardFixture(
     }),
   ];
 
+  /**
+   * Last term's club, finished six weeks ago and still owing three write-ups.
+   *
+   * **Remote on purpose.** An ended in-person product would have swapped one
+   * footer line for another and proved little; a remote one is the card that
+   * used to have *nothing* in its footer at all — a schedule run out, no room to
+   * join, no building to name — and it is exactly the card the "No session
+   * scheduled" line was libelling as a scheduling fault. It is also the pairing
+   * that matters for the badge: three sessions still owed on a run nobody is
+   * going back to, on the one card whose text is otherwise muted, so the badge
+   * is visibly the thing that did *not* fade.
+   *
+   * The slot is authored rather than derived from `now` — a run that finished
+   * has a weekday it *ran* on, and deriving one from today would make last
+   * term's cadence line follow the day the scene happens to be opened. The
+   * dates stay relative to `now` for the opposite reason: "ended" is a fact
+   * about the present, and a hardcoded last day would quietly stop being past.
+   */
+  const endedRows: GeduAssignmentRow[] = [
+    assignmentRow({
+      now,
+      id: ENDED_CLUB_PRODUCT_ID,
+      name: "Splatoon Squid Club",
+      productType: "consumer_club",
+      isRemote: true,
+      slots: [{ weekday: 3, startTime: "17:00", durationMinutes: 90 }],
+      startedDaysAgo: 160,
+      endsInDays: -46,
+      groupCount: 2,
+      gamerCount: 16,
+      groupName: "Thursday A",
+      groupGamerCount: 8,
+    }),
+  ];
+
   const otherRows: GeduAssignmentRow[] = [
     assignmentRow({
       now,
@@ -303,7 +345,7 @@ export function buildGeduDashboardFixture(
   const rows =
     scenario === "clubs-only"
       ? [...clubRows, ...extraClubRows]
-      : [...clubRows, ...otherRows];
+      : [...clubRows, ...endedRows, ...otherRows];
 
   const assignments = rollUpGeduAssignments({
     rows,
@@ -359,13 +401,19 @@ export function buildGeduDashboardFixture(
 /**
  * Backlog counts for the cards with no feed behind them.
  *
- * Only the grid-filling clubs get one, and only two of them: a scenario where
- * every card wears a badge says as little about the badge as one where none
- * does, and the point of the seven-card grid is that the row is *uneven*.
+ * Two of the grid-filling clubs get one, and no more: a scenario where every
+ * card wears a badge says as little about the badge as one where none does, and
+ * the point of the seven-card grid is that the row is *uneven*.
+ *
+ * The ended club gets one for the opposite reason — it is the whole argument
+ * for keeping the badge on a finished run. Attendance owed does not expire when
+ * a term does, and on the one card whose own text is muted the badge has to
+ * still be the loudest thing on it.
  */
 const AUTHORED_ATTENTION: Readonly<Record<string, number>> = {
   "mock-dashboard-rocket-league-club": 2,
   "mock-dashboard-terraria-club": 5,
+  [ENDED_CLUB_PRODUCT_ID]: 3,
 };
 
 /**
@@ -404,7 +452,10 @@ function assignmentRow(opts: {
   isRemote: boolean;
   slots: GeduAssignmentRow["slots"];
   startedDaysAgo: number;
-  /** Days after `now` the product ends, or `null` for an ongoing club. */
+  /**
+   * Days after `now` the product ends, or `null` for an ongoing club. Negative
+   * puts the last day in the past, which is what makes a card an ended one.
+   */
   endsInDays: number | null;
   groupCount: number;
   gamerCount: number;

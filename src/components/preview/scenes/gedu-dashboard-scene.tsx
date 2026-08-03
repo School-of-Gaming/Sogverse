@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useLocale } from "next-intl";
-import { GeduDashboardPageBodyDraft } from "@/components/gedu/gedu-dashboard-page-body-draft";
+import { GeduDashboardPageBody } from "@/components/gedu/gedu-dashboard-page-body";
 import {
   buildGeduDashboardFixture,
   type GeduDashboardScenario,
@@ -42,7 +42,7 @@ export function GeduDashboardScene({
   );
 
   return (
-    <GeduDashboardPageBodyDraft
+    <GeduDashboardPageBody
       verified={fixture.verified}
       assignments={fixture.assignments}
       instantRoomCard={

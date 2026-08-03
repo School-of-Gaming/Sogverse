@@ -108,6 +108,15 @@ export type Product = Database["public"]["Tables"]["products"]["Row"];
 export type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
 export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 
+// product_staff_details — the staff-only half of a product, split off `products`
+// because that table is readable by anon and by every parent, and PostgREST lets
+// a caller pick the columns it wants. Sparse: a product with nothing staff-only
+// recorded has no row here.
+export type ProductStaffDetails =
+  Database["public"]["Tables"]["product_staff_details"]["Row"];
+export type ProductStaffDetailsInsert =
+  Database["public"]["Tables"]["product_staff_details"]["Insert"];
+
 // schedule_slots
 export type ScheduleSlot = Database["public"]["Tables"]["schedule_slots"]["Row"];
 export type ScheduleSlotInsert = Database["public"]["Tables"]["schedule_slots"]["Insert"];
@@ -274,6 +283,39 @@ export type ProductGroupUpdate = Database["public"]["Tables"]["product_groups"][
 // gedu_group_assignments
 export type GeduGroupAssignment = Database["public"]["Tables"]["gedu_group_assignments"]["Row"];
 export type GeduGroupAssignmentInsert = Database["public"]["Tables"]["gedu_group_assignments"]["Insert"];
+
+// ---------------------------------------------------------------------------
+// products — session records (the gedu session feed)
+// ---------------------------------------------------------------------------
+
+// group_sessions — one lazily materialized row per (group, product-local date).
+// Neither table grants anything to `authenticated`: every read and write goes
+// through the SECURITY DEFINER RPCs in src/services/gedu-sessions/, so these
+// aliases exist for the service-role side (db tests, admin tooling) rather than
+// for browser queries.
+export type GroupSession = Database["public"]["Tables"]["group_sessions"]["Row"];
+export type GroupSessionInsert = Database["public"]["Tables"]["group_sessions"]["Insert"];
+export type GroupSessionUpdate = Database["public"]["Tables"]["group_sessions"]["Update"];
+
+// session_attendance — one row per explicit mark. A roster member with NO row
+// is unanswered, which is why the status column has no "unmarked" member: that
+// state is the absence of a row, not a value.
+export type SessionAttendance = Database["public"]["Tables"]["session_attendance"]["Row"];
+export type SessionAttendanceInsert = Database["public"]["Tables"]["session_attendance"]["Insert"];
+
+// The attendance vocabulary is a text column with a CHECK rather than a
+// Postgres enum (adding 'late'/'excused' is expected), so there is no
+// Constants entry to derive from — the tuple in the contracts file is the
+// code-side source of truth. Re-exported here so consumers keep importing
+// their types from "@/types".
+export type {
+  AttendanceStatus,
+  GeduAssignmentSummary,
+  GeduFeedRosterEntry,
+  GeduFeedSession,
+  GeduFeedSite,
+  GeduGroupFeed,
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 
 // ---------------------------------------------------------------------------
 // voice zones (00103) — the persisted half of the discrete-zone voice model.

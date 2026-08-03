@@ -78,6 +78,13 @@ describe("Access Control", () => {
       // table works). Grants enable the underlying commands; RLS restricts
       // authorisation. Stripped at cutover when the  suffix is removed.
       ["products", new Set(["INSERT", "UPDATE", "DELETE"])],
+      // The staff-only half of a product (the gedu lesson-material link), split
+      // off `products` because that table is anon-readable by column selection.
+      // create_product / update_product are SECURITY INVOKER, so the row is
+      // written by the admin's own client and the grant has to be here; the
+      // admin-only RLS policy is what actually authorizes it. DELETE because
+      // clearing the link removes the row rather than storing a NULL.
+      ["product_staff_details", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["schedule_slots", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["product_prices", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["holiday_calendars", new Set(["INSERT", "UPDATE", "DELETE"])],

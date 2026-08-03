@@ -109,16 +109,16 @@ export const PREVIEW_SCENES = [
   },
   {
     surface: "gedu-dashboard",
-    title: "Gedu dashboard (draft)",
+    title: "Gedu dashboard",
     description:
-      "The gedu dashboard rolled up to one card per group they run, grouped under the type nouns: next session, the cadence in words with an aggregate “needs attention” badge on the end of it, a Live badge in the corner while something is running, and a footer holding the Join on a remote product or the venue on an in-person one. Every card is the same height because every zone holds something, not because empty ones are padded. The two scene-backed cards open the matching product-page scene.",
+      "The gedu dashboard rolled up to one card per group they run, grouped under the type nouns: next session, the cadence in words with an aggregate “needs attention” badge on the end of it, a Live badge in the corner while something is running, and a footer holding the Join on a remote product, the venue on an in-person one, or the day it ended on a finished run. Every card is the same height because every zone holds something, not because empty ones are padded. The two scene-backed cards open the matching product-page scene.",
     chrome: "dashboard",
     scenarios: [
       {
         slug: "default",
         label: "Working dashboard",
         description:
-          "All three type nouns, and the four card shapes that cover every state: a remote club live right now (Live badge, Join lit), a remote club later this week (Join locked), an in-person camp owing a write-up (attention badge, venue in the footer), and an in-person event running now (Live badge, venue, still no Join). The last pairing is what proves the footer zone is full on both kinds of product.",
+          "All three type nouns, and the five card shapes that cover every state: a remote club live right now (Live badge, Join lit), a remote club later this week (Join locked), a club whose run has ended (muted, no next-session line, an “Ended …” date where the Join was, backlog badge undimmed), an in-person camp owing a write-up (attention badge, venue in the footer), and an in-person event running now (Live badge, venue, still no Join). The ended club sits under the same heading as the two live ones and below both, so the demotion is visible on the page; the last pairing is what proves the footer zone is full on both kinds of product.",
       },
       {
         slug: "clubs-only",
@@ -136,7 +136,7 @@ export const PREVIEW_SCENES = [
   },
   {
     surface: "gedu-product",
-    title: "Gedu product page (draft)",
+    title: "Gedu product page",
     description:
       "The product page rebuilt around the session feed: the masthead, the standing notes row, one continuous timeline with a “now” divider between the future and the past, the term running backwards behind month dividers, and the reference rail beside it. Expanding the future reveals it upward with the viewport pinned, so nothing already on screen moves. Every editor — write-up, forward plan, group notes, site notes — works against local state.",
     chrome: "dashboard",
@@ -145,7 +145,7 @@ export const PREVIEW_SCENES = [
         slug: "club",
         label: "Club — remote, weekly",
         description:
-          "The kitchen sink. Fifty-five weeks of history behind month dividers and the chunked reveal, all three rungs of the completeness ladder (green-checked, quietly done, and still owed), reports from two lines to a full dated write-up so the clamp and its “Read more” are both on screen from the first frame, holiday skips, a pre-epoch tail, and three sister groups in the rail including one nobody teaches yet.",
+          "The kitchen sink. Fifty-five weeks of history behind month dividers and the chunked reveal, all three rungs of the completeness ladder (green-checked, quietly done, and still owed), reports from two lines to a full dated write-up so the clamp and its “Read more” are both on screen from the first frame, and three sister groups in the rail including one nobody teaches yet. At the bottom, the pre-epoch tail: a session somebody went back and wrote up (an ordinary entry that never turns amber) and two nobody has touched — quiet placeholder lines that still open the record editor, because the epoch gates what is owed, not what can be edited.",
       },
       {
         slug: "camp",

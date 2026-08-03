@@ -229,6 +229,7 @@
         "fields": {
           "topic": "Ämne",
           "padletUrl": "Padlet",
+          "materialUrl": "Lektionsmaterial",
           "locales": "Språk",
           "startDate": "Startdatum",
           "endDate": "Slutdatum",
@@ -294,6 +295,7 @@
         "longDescription": "Lång beskrivning",
         "topic": "Ämne",
         "padletUrl": "Padlet-URL",
+        "materialUrl": "URL till lektionsmaterial",
         "minAge": "Min ålder",
         "maxAge": "Max ålder",
         "deliveredIn": "Genomförs på",
@@ -326,6 +328,7 @@
       "placeholders": {
         "selectTopic": "Välj ett ämne…",
         "padletUrl": "https://padlet.com/...",
+        "materialUrl": "https://drive.sog.gg/...",
         "threshold": "t.ex. 8",
         "name": {
           "consumerClub": "t.ex. Minecraft Redstone-klubb",
@@ -437,6 +440,7 @@
         "shortDescription": "En enradig text som visas på bläddringskort, listor och högst upp på detaljsidan.",
         "longDescription": "Valfritt. Visas endast på produktens detaljsida. Bygg den av rubriker och stycken.",
         "topicHint": "Produktens ämne — ett spel (som Minecraft eller Fortnite) eller ett ämne (som webbinarium).",
+        "materialUrlHint": "Valfritt. Endast för Gedus — familjer ser aldrig detta.",
         "padletHint": "Valfritt. Delas med familjer efter att de anmält sig.",
         "deliveredInHint": "Det primära språk som används under tillfällena.",
         "onlineNoLocation": "Online och tillgänglig för alla — ingen plats behövs. Alla föräldrar som bläddrar ser detta, oavsett var de bor.",
@@ -471,6 +475,7 @@
         "municipalityRequired": "Kommun krävs för online-kommunklubbar",
         "siteRequired": "Lokal krävs för produkter på plats",
         "scheduleRequired": "Minst en schemarad krävs",
+        "materialUrlInvalid": "URL till lektionsmaterial måste vara en giltig URL",
         "padletInvalid": "Padlet-URL måste vara en giltig URL",
         "startDateRequired": "Startdatum krävs",
         "endDateRequired": "Slutdatum krävs",
@@ -1098,7 +1103,8 @@
     "instantVoiceRoom": "Direkt röstrum",
     "instantVoiceRoomShort": "Röstrum",
     "waitlistBand": "På väntelistan",
-    "scheduledBand": "Schemalagda"
+    "scheduledBand": "Schemalagda",
+    "loadingAssignments": "Laddar dina klubbar, läger och evenemang."
   },
   "family": {
     "addGamer": "Lägg till gamer",
@@ -1166,6 +1172,7 @@
       "inProgress": "Pågående pass",
       "viewDetails": "Visa detaljer",
       "noNextSession": "Inget tillfälle inbokat",
+      "endedOn": "Avslutades {date}",
       "liveBadge": "Pågår"
     },
     "sessionDetails": {
@@ -1176,8 +1183,6 @@
         "camp": "Läger",
         "event": "Evenemang"
       },
-      "yourGroupBadge": "Din grupp",
-      "otherGroupsHeading": "Andra grupper i denna session",
       "railOtherGroupsHeading": "Andra grupper",
       "noOtherGroups": "Inga andra grupper i denna session.",
       "railGroupHeading": "Min grupp",
@@ -1202,7 +1207,9 @@
       "copyParentEmail": "Kopiera förälderns e-post {email}",
       "emailCopied": "E-post kopierad",
       "copyAllParentEmails": "Kopiera alla förälder-e-postadresser ({count})",
-      "allEmailsCopied": "Alla förälder-e-postadresser kopierade"
+      "allEmailsCopied": "Alla förälder-e-postadresser kopierade",
+      "loadingWorkspace": "Laddar gruppens tillfällen.",
+      "minecraftSaveFailed": "Användarnamnet sparades inte. Försök igen."
     },
     "sessionFeed": {
       "upcomingBadge": "Nästa tillfälle",
@@ -1234,7 +1241,9 @@
       "laterSessions": "{count, plural, one {# kommande tillfälle} other {# kommande tillfällen}}",
       "showEarlier": "{count, plural, one {Visa # tidigare tillfälle} other {Visa # tidigare tillfällen}}",
       "attendanceMarkedCount": "{marked} av {total} markerade",
-      "attendanceForGamer": "Närvaro för {name}"
+      "attendanceForGamer": "Närvaro för {name}",
+      "saveFailed": "Tillfället sparades inte. Försök igen.",
+      "savePartiallyFailed": "En del av ändringarna för det här tillfället sparades inte – kontrollera närvarolistan och försök igen."
     },
     "groupNotes": {
       "heading": "Om gruppen",
@@ -1248,7 +1257,8 @@
       "publicPlaceholder": "Hur gruppen fungerar, vad som följer med mellan tillfällena…",
       "staffLabel": "Anteckning till Gedus",
       "staffHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
-      "staffPlaceholder": "Sådant som en annan Gedu bör veta om gruppen över tid."
+      "staffPlaceholder": "Sådant som en annan Gedu bör veta om gruppen över tid.",
+      "saveFailed": "Anteckningarna sparades inte. Försök igen."
     },
     "siteNotes": {
       "heading": "Anteckningar om platsen",
@@ -1264,7 +1274,8 @@
       "publicPlaceholder": "Vilken dörr man använder, var man väntar, vad man tar med…",
       "staffLabel": "Anteckning till Gedus",
       "staffHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
-      "staffPlaceholder": "Nycklar, utrustning, lokalens egenheter — vad nästa Gedu på plats behöver veta."
+      "staffPlaceholder": "Nycklar, utrustning, lokalens egenheter — vad nästa Gedu på plats behöver veta.",
+      "saveFailed": "Anteckningarna om platsen sparades inte. Försök igen."
     }
   },
   "groups": {

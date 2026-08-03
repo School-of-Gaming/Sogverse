@@ -10,7 +10,7 @@ import {
   type SessionEntryDraft,
   type SessionFeedEntry,
 } from "@/components/gedu/session-feed";
-import { GeduProductPageBodyDraft } from "@/components/gedu/session-details/GeduProductPageBodyDraft";
+import { GeduProductPageBody } from "@/components/gedu/session-details/GeduProductPageBody";
 import type { GroupNotesDraft } from "@/components/gedu/session-details/GroupNotesPanel";
 import {
   buildGeduProductPageFixture,
@@ -19,16 +19,20 @@ import {
 import { useNow } from "@/providers";
 
 /**
- * The gedu's product page redesigned around the session feed.
+ * The gedu's product page built around the session feed, over fixtures.
  *
  * Every editor is fully live against local state: marking each child present or
  * absent (including saving half a roster and coming back to it), typing both
- * session notes on a past *or* a future session, marking a session as not run,
- * writing the group's standing notes — and, on an in-person product, the venue's
- * shared ones — plus correcting a child's Minecraft username from the roster. A
- * flagged session turning into a finished one, and a part-marked one staying
- * flagged, are the two most important things to feel before this gets wired to a
- * database. Nothing persists past a reload.
+ * session notes on a past *or* a future session — pre-epoch ones included,
+ * which open the same record editor — writing the group's standing notes, and,
+ * on an in-person product, the venue's shared ones, plus correcting a child's
+ * Minecraft username from the roster. A flagged session turning into a finished
+ * one, and a part-marked one staying flagged, are the two most important things
+ * to feel here. Nothing persists past a reload.
+ *
+ * Every save resolves immediately, so the in-flight and failure states the live
+ * page has are not what this scene is for; what it rehearses is the shape of
+ * the page and the feel of the editors.
  *
  * The fixture is built once from the first `useNow()` value and then held in
  * state — rebuilding it on the 30-second tick would throw away whatever the
@@ -67,6 +71,10 @@ export function GeduProductPageScene({
   // the caller: a plan can only land on a future session and a write-up only on
   // a past one, so a mismatch leaves the entry exactly as it was rather than
   // corrupting it into a state the feed can't render.
+  //
+  // It does not close the editor. The feed does that itself, once the save it
+  // was handed has settled — which for a scene is immediately, and for the live
+  // page is a round trip later.
   const handleSave = (entryId: string, draft: SessionEntryDraft) => {
     setEntries((prev) =>
       prev.map((entry) => {
@@ -79,7 +87,6 @@ export function GeduProductPageScene({
         return isEditableEntry(entry) ? applyDraftToEntry(entry, draft) : entry;
       }),
     );
-    setEditingEntryId(null);
   };
 
   const handleSaveGroupNotes = (draft: GroupNotesDraft) => {
@@ -124,10 +131,13 @@ export function GeduProductPageScene({
    * is the cheapest way to see the failed state without inventing a fake account
    * database.
    *
-   * The write itself is scoped the way the real one will be — only the gedu's own
-   * group — and it clears `minecraft_uuid` while the check is in flight, because
-   * a verification belongs to the name it was issued for and keeping the old one
-   * would render a new, unchecked name in verified green.
+   * The write is scoped the way the real one is — only the gedu's own group —
+   * and it clears `minecraft_uuid` **while the check is in flight**, because a
+   * verification belongs to the name it was issued for and keeping the old one
+   * would render a new, unchecked name in verified green. A check that comes
+   * back valid then lands a UUID, matching what the live route does: the server
+   * resolves the name against Mojang before writing, so a successful gedu edit
+   * ends up *verified* rather than pending.
    */
   const handleSaveMinecraftUsername = (gamerId: string, username: string) => {
     const trimmed = username.trim();
@@ -160,16 +170,33 @@ export function GeduProductPageScene({
 
     setMinecraftStatuses((prev) => ({ ...prev, [gamerId]: "checking" }));
     const timer = window.setTimeout(() => {
+      const verified = MOJANG_NAME_SHAPE.test(trimmed);
       setMinecraftStatuses((prev) => ({
         ...prev,
-        [gamerId]: MOJANG_NAME_SHAPE.test(trimmed) ? "valid" : "invalid",
+        [gamerId]: verified ? "valid" : "invalid",
+      }));
+      if (!verified) return;
+      setData((prev) => ({
+        ...prev,
+        groups: prev.groups.map((group) =>
+          group.id !== prev.my_group_id || group.roster === null
+            ? group
+            : {
+                ...group,
+                roster: group.roster.map((member) =>
+                  member.gamer_id === gamerId
+                    ? { ...member, minecraft_uuid: SIMULATED_CHECK_UUID }
+                    : member,
+                ),
+              },
+        ),
       }));
     }, SIMULATED_CHECK_MS);
     pendingChecks.current.add(timer);
   };
 
   return (
-    <GeduProductPageBodyDraft
+    <GeduProductPageBody
       data={data}
       entries={entries}
       feedRoster={fixture.feedRoster}
@@ -207,3 +234,14 @@ const SIMULATED_CHECK_MS = 800;
  * which is the state worth being able to see on demand.
  */
 const MOJANG_NAME_SHAPE = /^[a-zA-Z0-9_]{3,16}$/;
+
+/**
+ * The UUID a passed check lands, standing in for the one Mojang would return.
+ *
+ * A real generated UUIDv4 rather than a readable string: the roster row treats
+ * a non-null UUID as proof the name is verified, and the fixtures elsewhere in
+ * this feature all hold themselves to looking like the thing they stand in for.
+ * A scene never fetches the skin it unlocks — the bundled placeholder figure is
+ * what a preview draws, because a preview must not reach a third-party host.
+ */
+const SIMULATED_CHECK_UUID = "0f0f7f2c-1a5b-4a2a-9d0f-6a2f2b6f4b1e";

@@ -1,16 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarClock, ChevronRight, MapPin, Radio, Users } from "lucide-react";
+import {
+  CalendarClock,
+  CalendarOff,
+  ChevronRight,
+  MapPin,
+  Radio,
+  Users,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { SessionFeedAlertBadge } from "@/components/gedu/session-feed";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import { useNow, useTimezone } from "@/providers";
-import { cn, formatDate, formatTime } from "@/lib/utils";
+import { cn, formatDate, formatDateOnly, formatTime } from "@/lib/utils";
 import { formatSessionDateTimeRange } from "@/lib/session-format";
 import {
+  assignmentEndedOn,
   assignmentLiveness,
   type GeduAssignmentSummary,
 } from "@/lib/gedu-assignment-rollup";
@@ -54,10 +62,15 @@ interface GeduAssignmentCardProps {
  *   construction, so an assignment with a session ahead of it always has exactly
  *   one of them. The venue is text with a pin, deliberately not a link: there is
  *   nothing to open, and a card whose bottom row is sometimes a button and
- *   sometimes a link would teach a click that only works half the time. **One
- *   state genuinely leaves it empty**, and it is the honest answer rather than
- *   an oversight: a remote assignment whose schedule has run out has no session
- *   to join and no building to name, and the line above it already says there is
+ *   sometimes a link would teach a click that only works half the time. **A run
+ *   that is over answers a third way**: the day it ended. Both of the usual
+ *   answers have stopped being true — there is no session left to join, and the
+ *   building a finished camp used to meet in is no longer the card's headline
+ *   fact — while "when did this stop" becomes the one thing worth knowing about
+ *   it. **One state still genuinely leaves the footer empty**, and it is the
+ *   honest answer rather than an oversight: a remote assignment whose schedule
+ *   has run out with no end date to report has no session to join, no building
+ *   to name and no day to point at, and the line above it already says there is
  *   nothing scheduled. Padding that card with a placeholder would be inventing a
  *   fact to fill a box.
  * - **The attention badge overlays the card's top-right corner**, following the
@@ -121,6 +134,34 @@ interface GeduAssignmentCardProps {
  * with an `::after`, and the Join button is lifted above it with `relative z-10`
  * so it receives its own clicks. No `<a>` inside `<a>`, so middle-click and
  * prefetch both behave.
+ *
+ * **A finished run is quiet history, not a scheduling fault.** Once a product's
+ * last day is behind it there is always no next session, which read as the
+ * anomaly state — "No session scheduled", in the slot where every other card
+ * names a date — when in fact it is the ordinary and permanent end of a
+ * perfectly normal run. Three things change on such a card, and each of them is
+ * a subtraction:
+ *
+ * - **The next-session line goes**, rather than being reworded. Its whole job is
+ *   to name the next session, and there is not going to be one; a line saying so
+ *   spends the card's most prominent row restating what the footer says with a
+ *   date attached. Nothing survives that removal into the ended card — an ended
+ *   card is never a live card a moment later — so no space is held for it, and
+ *   the grid squares its own rows off by stretching regardless.
+ * - **The type label, name, group and cadence all drop a tone.** A gedu sweeping
+ *   this page is looking for what is still running, and the finished runs have
+ *   to fall back out of that sweep without falling out of the page. They keep
+ *   their chevron, their hover lift and their focus ring at full strength,
+ *   because the workspace behind them is exactly where the historic records
+ *   live and it is the whole reason the card is still here.
+ * - **The gradient never lights.** It follows liveness, and liveness is false by
+ *   construction on a run with no session left, so this is not a special case so
+ *   much as a consequence — but it is the difference a reader actually sees.
+ *
+ * **The attention badge is the one thing that does not fade.** Attendance owed
+ * on a finished club is still owed, the epoch rules already exempt the history
+ * nobody is expected to backfill, and the badge is how a gedu finds what is
+ * left. Muting it would hide the only reason to hurry to an ended card.
  */
 export function GeduAssignmentCard({
   assignment,
@@ -147,6 +188,10 @@ export function GeduAssignmentCard({
   } = assignment;
 
   const hasNext = nextSessionStart !== null && nextSessionEnd !== null;
+  // The day the run finished, or `null` while it is still going. Non-null *is*
+  // the ended state — one value, so the footer never has to assert its way past
+  // a date it has already tested.
+  const endedOn = assignmentEndedOn(assignment, now);
   const { inProgress, voiceIsOpen } = assignmentLiveness(assignment, now);
   // Lit when something is actually happening — a room the gedu can walk into,
   // or a session already running. An in-person product has no room and still
@@ -173,16 +218,37 @@ export function GeduAssignmentCard({
         <CardContent className="flex h-full flex-col gap-4 p-5">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              <p
+                className={cn(
+                  "text-xs font-medium uppercase tracking-wider text-muted-foreground",
+                  endedOn !== null && "text-muted-foreground/70",
+                )}
+              >
                 {d(`typeLabel.${productType}`)}
               </p>
-              <p className="text-lg font-semibold leading-tight">{productName}</p>
+              {/* The identity keeps its weight and loses its tone on a finished
+                  run: a gedu looking for last term's club still has to read the
+                  name, they just must not trip over it while looking for this
+                  term's. */}
+              <p
+                className={cn(
+                  "text-lg font-semibold leading-tight",
+                  endedOn !== null && "text-muted-foreground",
+                )}
+              >
+                {productName}
+              </p>
               {/* The group as one quiet line, not a name plus a bordered pill:
                   the pill gave the gamer count the visual weight of a status
                   badge sitting next to real ones, and a roster size is not a
                   status. */}
               <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">
+                <span
+                  className={cn(
+                    "font-medium",
+                    endedOn === null && "text-foreground",
+                  )}
+                >
                   {groupName ?? d("untitledGroup")}
                 </span>
                 {/* The separator is a pseudo-element, not a text node: it is
@@ -210,18 +276,29 @@ export function GeduAssignmentCard({
                 widens the cluster — which squeezes the product name beside it and,
                 through `items-stretch`, can move the row itself. `invisible` is
                 also `visibility: hidden`, so it leaves the accessibility tree
-                too and nothing announces a session that has not begun. */}
+                too and nothing announces a session that has not begun.
+
+                A finished run is the one card that does not reserve it, because
+                it is the one card the badge can never land on: nothing of that
+                run is left to start. Holding the slot open there would be a gap
+                waiting on something that is not coming, and the width is better
+                spent on the product name — which is what a gedu is reading an
+                ended card for. Nothing moves as a result: endedness is settled
+                before the card first paints and does not turn over under a
+                reader the way a session start does. */}
             <div className="flex shrink-0 items-center gap-2">
-              <Badge
-                variant="outline"
-                className={cn(
-                  "gap-1 border-success/50 bg-success/10 px-2 py-0 text-[10px] uppercase tracking-wide text-success",
-                  !live && "invisible",
-                )}
-              >
-                <Radio className="h-3 w-3" aria-hidden />
-                {t("liveBadge")}
-              </Badge>
+              {endedOn === null && (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "gap-1 border-success/50 bg-success/10 px-2 py-0 text-[10px] uppercase tracking-wide text-success",
+                    !live && "invisible",
+                  )}
+                >
+                  <Radio className="h-3 w-3" aria-hidden />
+                  {t("liveBadge")}
+                </Badge>
+              )}
               <ChevronRight
                 aria-hidden
                 className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5"
@@ -231,23 +308,36 @@ export function GeduAssignmentCard({
 
           {/* The next session as one absolute line, or the "nothing scheduled"
               fallback. Both are a single line, so a session arriving or running
-              out cannot change the card's height. */}
-          <p className={cn("text-sm", !hasNext && "text-muted-foreground")}>
-            {hasNext
-              ? formatSessionDateTimeRange(
-                  nextSessionStart,
-                  nextSessionEnd,
-                  locale,
-                  timeZone,
-                )
-              : t("noNextSession")}
-          </p>
+              out cannot change the card's height.
+
+              A finished run renders neither. It has no next session and never
+              will again, so the fallback would be reporting a permanent fact as
+              a scheduling gap — in the row a reader looks at first. The line
+              simply is not part of this card, and the footer's date is what
+              stands where a reader would have gone looking for it. */}
+          {endedOn === null && (
+            <p className={cn("text-sm", !hasNext && "text-muted-foreground")}>
+              {hasNext
+                ? formatSessionDateTimeRange(
+                    nextSessionStart,
+                    nextSessionEnd,
+                    locale,
+                    timeZone,
+                  )
+                : t("noNextSession")}
+            </p>
+          )}
 
           {/* The cadence in words. A roll-up card can't enumerate dates without
               becoming the list it replaced, and "Mondays 16:30–18:00" tells the
               gedu more per line than eight Mondays ever did. */}
           {scheduleLines.length > 0 && (
-            <div className="flex min-w-0 items-start gap-1.5 text-xs text-muted-foreground">
+            <div
+              className={cn(
+                "flex min-w-0 items-start gap-1.5 text-xs text-muted-foreground",
+                endedOn !== null && "text-muted-foreground/70",
+              )}
+            >
               <CalendarClock className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
               <span className="min-w-0">
                 {scheduleLines.map((line) => (
@@ -259,29 +349,49 @@ export function GeduAssignmentCard({
             </div>
           )}
 
-          {/* Pinned to the bottom, and never empty: the room on a remote product,
-              the building on an in-person one. */}
+          {/* Pinned to the bottom: the day it ended on a finished run, the room
+              on a remote product, the building on an in-person one. Three flat
+              conditions rather than one nested chain — they are mutually
+              exclusive by construction, and the end date wins over both of the
+              others because a run that is over has neither a session left to
+              join nor a venue anyone is travelling to. */}
           <div className="relative z-10 mt-auto flex items-end justify-center">
-            {hasVoiceRoom
-              ? hasNext && (
-                  <JoinVoiceButton
-                    voiceIsOpen={voiceIsOpen}
-                    voiceHref={voiceHref}
-                    opensDate={formatDate(nextSessionStart, locale, {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                      timeZone,
-                    })}
-                    opensTime={formatTime(nextSessionStart, locale, timeZone)}
-                  />
-                )
-              : siteName !== null && (
-                  <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4 shrink-0" aria-hidden />
-                    <span className="truncate">{siteName}</span>
-                  </span>
-                )}
+            {endedOn !== null && (
+              // Date-only and UTC-pinned, via the shared bare-date formatter: an
+              // end date is a calendar date with no clock face on it, so it must
+              // read the same everywhere rather than tipping a day either side
+              // of a viewer's midnight.
+              <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+                <CalendarOff className="h-4 w-4 shrink-0" aria-hidden />
+                <span className="truncate">
+                  {t("endedOn", { date: formatDateOnly(endedOn, locale) })}
+                </span>
+              </span>
+            )}
+            {endedOn === null && hasVoiceRoom && hasNext && (
+              <JoinVoiceButton
+                voiceIsOpen={voiceIsOpen}
+                voiceHref={voiceHref}
+                opensDate={formatDate(nextSessionStart, locale, {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                  timeZone,
+                })}
+                opensTime={formatTime(nextSessionStart, locale, timeZone)}
+                // Leaving the room lands on the group's workspace, not back on
+                // this grid: what a gedu does after a session is write it up,
+                // and the feed is where that happens. It is the same href the
+                // card itself opens, so the two agree by construction.
+                backHref={openHref}
+              />
+            )}
+            {endedOn === null && !hasVoiceRoom && siteName !== null && (
+              <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+                <MapPin className="h-4 w-4 shrink-0" aria-hidden />
+                <span className="truncate">{siteName}</span>
+              </span>
+            )}
           </div>
         </CardContent>
 

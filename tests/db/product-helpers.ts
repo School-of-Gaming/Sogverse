@@ -34,6 +34,10 @@ import { TEST_IDS } from "./constants";
  *   5f4, 5f5       waitlist-self-service.test.ts
  *   5f6            waitlist-admin.test.ts (its consumer_club product, for the
  *                  demote refusal; the file's muni product is 5c7)
+ *
+ * The 5xx block has no tidy sub-range left below 5ff, so allocation continues
+ * in 6xx (`...0000000006XX`):
+ *   601-606        gedu-session-feed.test.ts (three products, three groups)
  */
 
 export interface ProductOptions {

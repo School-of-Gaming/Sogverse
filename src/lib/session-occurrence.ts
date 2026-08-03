@@ -211,3 +211,110 @@ export function enumerateRowOccurrences(args: {
   out.sort((a, b) => a.start.getTime() - b.start.getTime());
   return Number.isFinite(cap) ? out.slice(0, cap) : out;
 }
+
+/**
+ * Step a search point back exactly one calendar week **in `timezone`**.
+ *
+ * The DST-safe counterpart of a flat `point - 7×24h`, and the reason this is a
+ * named helper rather than an inline subtraction: on a transition week the flat
+ * arithmetic lands an hour either side of the previous week's slot, which is
+ * enough for `getNextSessionStart` to skip an occurrence or emit the same one
+ * twice. `toZonedTime` returns a Date whose LOCAL fields read the wall clock in
+ * `timezone`, so `setDate(... - 7)` subtracts seven calendar days *there*, and
+ * the `fromZonedTime` round-trip converts back to the correct instant whatever
+ * the system zone is.
+ */
+function stepBackOneWeek(point: Date, timezone: string): Date {
+  const zoned = toZonedTime(point, timezone);
+  zoned.setDate(zoned.getDate() - 7);
+  return fromZonedTime(zoned, timezone);
+}
+
+/**
+ * Walk a row's slots **backward** from `now`, emitting every occurrence whose
+ * start falls at or after `floor`.
+ *
+ * The forward helpers above only ever answer "what is coming", which is all the
+ * dashboards ever needed: an occurrence with nothing recorded against it had no
+ * reason to exist once it was over. A session feed is the opposite question —
+ * it is a history, read newest-first — so it needs the same slots walked the
+ * other way, and it needs the walk to be as DST-safe as the forward one.
+ *
+ * **Holiday-blind, deliberately.** It expands weekday slots and nothing else,
+ * matching the live dashboards' expansion rather than the calendar component's
+ * holiday-aware one. A feed that hid a listed holiday while the write path
+ * still accepted a record for it (or vice versa) would produce sessions a gedu
+ * can neither see nor clear.
+ *
+ * The walk is bounded twice over — by `floor` and by `maxOccurrences` — because
+ * a schedule with no start date would otherwise be an unbounded loop, and an
+ * unbounded loop in an expansion helper is how this codebase once pegged a
+ * renderer at 100% CPU.
+ *
+ * Returns ascending (oldest first), matching `enumerateRowOccurrences`; a feed
+ * that wants newest-first reverses it, so the two helpers can be concatenated
+ * before either is ordered for display.
+ */
+export function enumeratePastRowOccurrences(args: {
+  slots: SlotShape[];
+  timezone: string;
+  now: Date;
+  /**
+   * Oldest instant worth emitting — the product's start boundary, floored by
+   * whatever else the caller cares about. Occurrences starting before this are
+   * not emitted.
+   */
+  floor: Date;
+  /** Latest instant the product runs, if it is end-dated. */
+  endBoundary: Date | null;
+  /** Hard stop per slot, so a bad `floor` cannot become an infinite walk. */
+  maxOccurrences: number;
+}): Array<{ start: Date; end: Date }> {
+  const { slots, timezone, now, floor, endBoundary, maxOccurrences } = args;
+  const out: Array<{ start: Date; end: Date }> = [];
+
+  for (const slot of slots) {
+    const schedule = {
+      dayOfWeek: slot.weekday,
+      startTime: slot.startTime,
+      timezone,
+    };
+    const durationMs = slot.durationMinutes * 60_000;
+
+    // `getNextSessionStart` is strictly forward-looking, so the way to find the
+    // most recent past occurrence is to ask it from a week ago and step back a
+    // week at a time. Starting from `now` itself would return the *next* one.
+    let searchPoint = stepBackOneWeek(now, timezone);
+    let emitted = 0;
+
+    while (emitted < maxOccurrences) {
+      const start = getNextSessionStart(schedule, { now: searchPoint });
+      if (start.getTime() < floor.getTime()) break;
+
+      const withinRun =
+        endBoundary === null || start.getTime() <= endBoundary.getTime();
+      // An occurrence still in the future (or past the product's end) is not
+      // this walk's business, but it must not stop it either: the first
+      // candidate can land after `now` when the slot's day is later this week.
+      if (start.getTime() < now.getTime() && withinRun) {
+        out.push({ start, end: new Date(start.getTime() + durationMs) });
+        emitted += 1;
+      }
+
+      searchPoint = stepBackOneWeek(searchPoint, timezone);
+    }
+  }
+
+  out.sort((a, b) => a.start.getTime() - b.start.getTime());
+  return out;
+}
+
+/**
+ * How far back a single slot is ever walked in one call.
+ *
+ * Ten years of weekly sessions — comfortably past the oldest club that could
+ * exist and far short of anything that costs a frame. It is a guard rail, not a
+ * product horizon: the real bound is the product's start date, and every caller
+ * is expected to pass one.
+ */
+export const MAX_PAST_OCCURRENCES_PER_SLOT = 520;

@@ -160,6 +160,49 @@ describe("validate", () => {
       s.padletUrl = "";
       expect(validate(s, consumerConfig)).toBeNull();
     });
+
+    // Both link fields end up as the `href` of an anchor somebody clicks, so
+    // "parses as a URL" is not the bar — `new URL()` is perfectly happy with a
+    // script URI, and storing one is a stored-XSS hole with an extra step. The
+    // rule is an allow-list of the two web schemes, and these are the cases that
+    // hold it there.
+    const HOSTILE_SCHEMES = [
+      "javascript:alert(1)",
+      // Uppercased, because the URL parser normalizes the scheme and a
+      // hand-rolled `startsWith("javascript:")` check would not.
+      "JavaScript:alert(1)",
+      "data:text/html,<script>alert(1)</script>",
+      "vbscript:msgbox(1)",
+      // Parses fine and is not the web: a file path is not a lesson plan.
+      "file:///etc/passwd",
+    ];
+
+    for (const hostile of HOSTILE_SCHEMES) {
+      it(`rejects ${hostile.split(":")[0]}: as a padlet URL`, () => {
+        const s = validConsumerState();
+        s.padletUrl = hostile;
+        expect(validate(s, consumerConfig)?.messageKey).toBe("padletInvalid");
+      });
+
+      it(`rejects ${hostile.split(":")[0]}: as a material URL`, () => {
+        const s = validConsumerState();
+        s.materialUrl = hostile;
+        expect(validate(s, consumerConfig)?.messageKey).toBe(
+          "materialUrlInvalid",
+        );
+      });
+    }
+
+    it("accepts http and https on both link fields", () => {
+      // The allow-list has to stay an allow-list of *two*: dropping plain http
+      // would break every link an admin has already saved.
+      for (const scheme of ["http", "https"]) {
+        const s = validConsumerState();
+        s.padletUrl = `${scheme}://padlet.com/x`;
+        s.materialUrl = `${scheme}://drive.sog.gg/lesson-plans`;
+        expect(validate(s, consumerConfig), scheme).toBeNull();
+      }
+    });
   });
 
   describe("audience", () => {
@@ -578,6 +621,28 @@ describe("buildCreateInput", () => {
     ).toBe("https://padlet.com/x");
   });
 
+  // The staff-facing sibling of the field above. It gets its own case rather
+  // than riding on the Padlet one because the two are separate columns with
+  // separate audiences, and a shared assertion would hide the day one of them
+  // stopped being emitted.
+  it("emits null material_url when blank, trims when set", () => {
+    const s = validConsumerState();
+    s.materialUrl = "";
+    expect(
+      buildCreateInput(s, "consumer_club", consumerConfig).material_url,
+    ).toBeNull();
+    s.materialUrl = "  https://drive.sog.gg/lesson-plans  ";
+    expect(
+      buildCreateInput(s, "consumer_club", consumerConfig).material_url,
+    ).toBe("https://drive.sog.gg/lesson-plans");
+  });
+
+  it("rejects a material_url that is not a valid URL", () => {
+    const s = validConsumerState();
+    s.materialUrl = "drive.sog.gg/lesson-plans";
+    expect(validate(s, consumerConfig)?.messageKey).toBe("materialUrlInvalid");
+  });
+
   it("emits null seat_count when free event is uncapped", () => {
     const s = validConsumerState();
     s.paidMode = "free";
@@ -732,6 +797,8 @@ function mockDetailRow(
     max_age: 12,
     spoken_language_code: "en",
     padlet_url: "https://padlet.com/x",
+    // The lesson link rides on its own staff-only row, not on the product.
+    product_staff_details: { material_url: "https://drive.sog.gg/x" },
     image_path: "products/original.png",
     start_date: "2026-09-01",
     end_date: null,
