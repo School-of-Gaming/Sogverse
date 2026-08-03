@@ -94,6 +94,13 @@ CREATE TYPE public.participation_status AS ENUM (
 
 
 --
+-- Name: TYPE participation_status; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.participation_status IS 'Participation lifecycle. ''reserving'' is RETIRED (2026-08, migration 00139): paid participations are created at payment confirmation, so nothing writes it. PostgreSQL cannot drop an enum value, hence it remains listed.';
+
+
+--
 -- Name: payment_purpose; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -634,85 +641,73 @@ $$;
 
 
 --
--- Name: confirm_reservation(uuid); Type: FUNCTION; Schema: public; Owner: -
+-- Name: confirm_paid_participation(uuid, uuid, uuid, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.confirm_reservation(p_reservation_id uuid) RETURNS jsonb
+CREATE FUNCTION public.confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
 DECLARE
-  v_product_id   UUID;
-  v_gamer_id     UUID;
-  v_customer_id  UUID;
-  v_status       public.participation_status;
-  v_conflict_id  UUID;
+  v_conflict_id      UUID;
+  v_conflict_session TEXT;
+  v_conflict_status  public.participation_status;
+  v_participation_id UUID;
 BEGIN
-  SELECT product_id, gamer_id, customer_id, status
-    INTO v_product_id, v_gamer_id, v_customer_id, v_status
-    FROM public.participations
-    WHERE id = p_reservation_id
-    FOR UPDATE;
-
+  PERFORM 1 FROM public.products WHERE id = p_product_id FOR UPDATE;
   IF NOT FOUND THEN
-    RETURN jsonb_build_object('kind', 'orphan');
+    RAISE EXCEPTION 'product % does not exist', p_product_id
+      USING ERRCODE = 'no_data_found';
   END IF;
 
-  -- Idempotent replay of the same reservation's webhook.
-  IF v_status = 'active' THEN
-    RETURN jsonb_build_object(
-      'kind', 'confirmed',
-      'participation_id', p_reservation_id,
-      'product_id', v_product_id,
-      'gamer_id', v_gamer_id,
-      'customer_id', v_customer_id,
-      'idempotent', TRUE
-    );
-  END IF;
-
-  IF v_status <> 'reserving' THEN
-    RETURN jsonb_build_object('kind', 'orphan');
-  END IF;
-
-  -- Pre-check the partial UNIQUE: is there another non-reserving row for
-  -- this (product, gamer)? If so, the parent already has a confirmed seat
-  -- (or waitlist position) from a different reservation, and this Stripe
-  -- payment is a duplicate. Return early so the route layer can refund.
-  SELECT id
-    INTO v_conflict_id
+  -- Pre-check the partial UNIQUE on (product_id, gamer_id): under the gate lock
+  -- this decides the outcome, and the index itself is left as the backstop.
+  SELECT id, status, stripe_checkout_session_id
+    INTO v_conflict_id, v_conflict_status, v_conflict_session
     FROM public.participations
-    WHERE product_id = v_product_id
-      AND gamer_id   = v_gamer_id
-      AND id        <> p_reservation_id
+    WHERE product_id = p_product_id
+      AND gamer_id   = p_gamer_id
       AND status    IN ('active', 'waitlisted', 'completed')
     LIMIT 1;
 
   IF v_conflict_id IS NOT NULL THEN
+    IF v_conflict_session IS NOT NULL
+       AND v_conflict_session = p_checkout_session_id THEN
+      RETURN jsonb_build_object(
+        'kind', 'confirmed',
+        'participation_id', v_conflict_id,
+        'idempotent', TRUE
+      );
+    END IF;
+
     RETURN jsonb_build_object(
       'kind', 'duplicate_payment',
-      'reservation_id', p_reservation_id,
       'existing_participation_id', v_conflict_id,
-      'product_id', v_product_id,
-      'gamer_id', v_gamer_id,
-      'customer_id', v_customer_id
+      'existing_status', v_conflict_status::text
     );
   END IF;
 
-  UPDATE public.participations
-     SET status = 'active',
-         reserved_until = NULL
-   WHERE id = p_reservation_id;
+  INSERT INTO public.participations (
+    product_id, gamer_id, customer_id, status, stripe_checkout_session_id
+  ) VALUES (
+    p_product_id, p_gamer_id, p_customer_id, 'active', p_checkout_session_id
+  )
+  RETURNING id INTO v_participation_id;
 
   RETURN jsonb_build_object(
     'kind', 'confirmed',
-    'participation_id', p_reservation_id,
-    'product_id', v_product_id,
-    'gamer_id', v_gamer_id,
-    'customer_id', v_customer_id,
+    'participation_id', v_participation_id,
     'idempotent', FALSE
   );
 END;
 $$;
+
+
+--
+-- Name: FUNCTION confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text) IS 'Creates the active participation for a paid signup once Stripe confirms payment. service_role only — the arguments come from Checkout Session metadata we wrote. Returns kind=confirmed with participation_id (idempotent=true when this same session already bought the seat), or kind=duplicate_payment with existing_participation_id when a different payment already put this gamer on this product.';
 
 
 --
@@ -726,21 +721,6 @@ CREATE FUNCTION public.count_active_seats(p_product_id uuid) RETURNS integer
   SELECT COUNT(*)::INTEGER
     FROM public.participations
     WHERE product_id = p_product_id AND status = 'active';
-$$;
-
-
---
--- Name: count_seats_taken(uuid); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.count_seats_taken(p_product_id uuid) RETURNS integer
-    LANGUAGE sql STABLE SECURITY DEFINER
-    SET search_path TO ''
-    AS $$
-  SELECT COUNT(*)::INTEGER
-    FROM public.participations
-    WHERE product_id = p_product_id
-      AND status IN ('active', 'reserving');
 $$;
 
 
@@ -808,7 +788,6 @@ DECLARE
   v_existing_id           UUID;
   v_existing_status       public.participation_status;
   v_participation_id      UUID;
-  v_reserved_until        TIMESTAMPTZ;
   v_is_parent             BOOLEAN;
 BEGIN
   SELECT * INTO v_product FROM public.products WHERE id = p_product_id FOR UPDATE;
@@ -850,14 +829,19 @@ BEGIN
       USING ERRCODE = 'check_violation';
   END IF;
 
+  -- The already-enrolled gate. Its status list has to match the one
+  -- `confirm_paid_participation` conflicts on, or a signup can pass here, take
+  -- the parent's money, and then be refused at confirmation with nothing to
+  -- show for it. 'completed' is the member that was missing: nothing writes
+  -- that status today, so the gap was unreachable rather than harmless.
   SELECT id, status INTO v_existing_id, v_existing_status
     FROM public.participations
     WHERE product_id = p_product_id
       AND gamer_id = p_gamer_id
-      AND status IN ('active', 'waitlisted')
+      AND status IN ('active', 'waitlisted', 'completed')
     LIMIT 1;
   IF v_existing_id IS NOT NULL THEN
-    RAISE EXCEPTION 'gamer % already has a % participation on this product', p_gamer_id, v_existing_status
+    RAISE EXCEPTION 'gamer % already has a participation on this product (status: %)', p_gamer_id, v_existing_status
       USING ERRCODE = 'unique_violation';
   END IF;
 
@@ -866,7 +850,7 @@ BEGIN
   -- honored — earlier versions only checked the cap on paid signups, so a free
   -- product with seat_count=20 silently accepted the 21st signup.
   IF v_product.seat_count IS NOT NULL THEN
-    v_seats_taken := public.count_seats_taken(p_product_id);
+    v_seats_taken := public.count_active_seats(p_product_id);
     IF v_seats_taken >= v_product.seat_count THEN
       RETURN jsonb_build_object('kind', 'full');
     END IF;
@@ -889,9 +873,9 @@ BEGIN
     );
   END IF;
 
-  -- Municipality clubs are invoiced off-platform: no Stripe, no reservation.
-  -- Mirrors the free branch (instant active), gated on billing_mode so a paid
-  -- product can never be registered without payment.
+  -- Municipality clubs are invoiced off-platform: no Stripe, nothing to
+  -- confirm later. Mirrors the free branch (instant active), gated on
+  -- billing_mode so a paid product can never be registered without payment.
   IF p_purchase_shape = 'external' THEN
     IF v_product.billing_mode <> 'external_contract' THEN
       RAISE EXCEPTION 'product is not externally contracted'
@@ -909,19 +893,12 @@ BEGIN
     );
   END IF;
 
-  v_reserved_until := NOW() + INTERVAL '30 minutes';
-  INSERT INTO public.participations (
-    product_id, gamer_id, customer_id, status, reserved_until
-  ) VALUES (
-    p_product_id, p_gamer_id, p_customer_id, 'reserving', v_reserved_until
-  )
-  RETURNING id INTO v_participation_id;
-
-  RETURN jsonb_build_object(
-    'kind', 'reserving',
-    'participation_id', v_participation_id,
-    'reserved_until', v_reserved_until
-  );
+  -- Paid shapes (subscription_monthly, single_payment). Everything above has
+  -- passed, so this signup is one the platform would accept — but no row is
+  -- written until the money arrives. The caller creates the Stripe Checkout
+  -- Session next; if the parent abandons it, nothing was left behind to clean
+  -- up. `confirm_paid_participation` writes the row from the webhook.
+  RETURN jsonb_build_object('kind', 'validated');
 END;
 $$;
 
@@ -1190,34 +1167,6 @@ BEGIN
   RAISE EXCEPTION
     'Each product must keep at least one translation'
     USING ERRCODE = 'check_violation';
-END;
-$$;
-
-
---
--- Name: expire_reservation(uuid); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.expire_reservation(p_reservation_id uuid) RETURNS jsonb
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO ''
-    AS $$
-DECLARE
-  v_product_id UUID;
-  v_status     public.participation_status;
-BEGIN
-  SELECT product_id, status INTO v_product_id, v_status
-    FROM public.participations WHERE id = p_reservation_id;
-
-  IF NOT FOUND OR v_status <> 'reserving' THEN
-    RETURN jsonb_build_object('kind', 'noop');
-  END IF;
-
-  PERFORM 1 FROM public.products WHERE id = v_product_id FOR UPDATE;
-
-  DELETE FROM public.participations WHERE id = p_reservation_id AND status = 'reserving';
-
-  RETURN jsonb_build_object('kind', 'expired');
 END;
 $$;
 
@@ -2364,24 +2313,21 @@ CREATE FUNCTION public.refresh_product_seat_counts(p_product_id uuid) RETURNS vo
     AS $$
 DECLARE
   v_active     INTEGER;
-  v_reserving  INTEGER;
   v_waitlist   INTEGER;
 BEGIN
   SELECT
     COUNT(*) FILTER (WHERE status = 'active'),
-    COUNT(*) FILTER (WHERE status = 'reserving' AND reserved_until > NOW()),
     COUNT(*) FILTER (WHERE status = 'waitlisted')
-    INTO v_active, v_reserving, v_waitlist
+    INTO v_active, v_waitlist
     FROM public.participations
     WHERE product_id = p_product_id;
 
   INSERT INTO public.product_seat_counts (
-    product_id, active_count, reserving_count, waitlist_count, updated_at
+    product_id, active_count, waitlist_count, updated_at
   )
-  VALUES (p_product_id, v_active, v_reserving, v_waitlist, NOW())
+  VALUES (p_product_id, v_active, v_waitlist, NOW())
   ON CONFLICT (product_id) DO UPDATE SET
     active_count    = EXCLUDED.active_count,
-    reserving_count = EXCLUDED.reserving_count,
     waitlist_count  = EXCLUDED.waitlist_count,
     updated_at      = EXCLUDED.updated_at;
 END;
@@ -2749,8 +2695,8 @@ CREATE FUNCTION public.trg_seed_product_seat_counts() RETURNS trigger
     AS $$
 BEGIN
   INSERT INTO public.product_seat_counts (
-    product_id, active_count, reserving_count, waitlist_count
-  ) VALUES (NEW.id, 0, 0, 0)
+    product_id, active_count, waitlist_count
+  ) VALUES (NEW.id, 0, 0)
   ON CONFLICT (product_id) DO NOTHING;
   RETURN NEW;
 END;
@@ -3297,15 +3243,21 @@ CREATE TABLE public.participations (
     gamer_id uuid NOT NULL,
     customer_id uuid NOT NULL,
     status public.participation_status NOT NULL,
-    reserved_until timestamp with time zone,
     signed_up_at timestamp with time zone DEFAULT now() NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     waitlisted_at timestamp with time zone,
+    stripe_checkout_session_id text,
     CONSTRAINT chk_participations_no_self_signup CHECK ((gamer_id <> customer_id)),
-    CONSTRAINT chk_participations_reserving_has_until CHECK (((status <> 'reserving'::public.participation_status) OR (reserved_until IS NOT NULL))),
     CONSTRAINT chk_participations_waitlisted_has_timestamp CHECK (((status <> 'waitlisted'::public.participation_status) OR (waitlisted_at IS NOT NULL)))
 );
+
+
+--
+-- Name: COLUMN participations.stripe_checkout_session_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.stripe_checkout_session_id IS 'Stripe Checkout Session that paid for this seat. NULL for no-charge seats (free, municipality, admin enrollment, waitlist) and for rows predating the create-on-confirmation flow.';
 
 
 --
@@ -3375,11 +3327,9 @@ CREATE TABLE public.product_prices (
 CREATE TABLE public.product_seat_counts (
     product_id uuid NOT NULL,
     active_count integer DEFAULT 0 NOT NULL,
-    reserving_count integer DEFAULT 0 NOT NULL,
     waitlist_count integer DEFAULT 0 NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT product_seat_counts_active_count_check CHECK ((active_count >= 0)),
-    CONSTRAINT product_seat_counts_reserving_count_check CHECK ((reserving_count >= 0)),
     CONSTRAINT product_seat_counts_waitlist_count_check CHECK ((waitlist_count >= 0))
 );
 
@@ -4064,13 +4014,6 @@ CREATE INDEX idx_participations_group ON public.participations USING btree (grou
 
 
 --
--- Name: idx_participations_reserving_live; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_participations_reserving_live ON public.participations USING btree (product_id, reserved_until) WHERE (status = 'reserving'::public.participation_status);
-
-
---
 -- Name: idx_participations_waitlisted; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4232,6 +4175,13 @@ CREATE UNIQUE INDEX uq_participations_active_or_waitlisted ON public.participati
 
 
 --
+-- Name: uq_participations_checkout_session; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_participations_checkout_session ON public.participations USING btree (stripe_checkout_session_id) WHERE (stripe_checkout_session_id IS NOT NULL);
+
+
+--
 -- Name: voice_private_zone_occupants_group_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -4368,7 +4318,7 @@ CREATE TRIGGER trg_participations_refresh_counts_ins AFTER INSERT ON public.part
 -- Name: participations trg_participations_refresh_counts_upd; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trg_participations_refresh_counts_upd AFTER UPDATE OF status, reserved_until, product_id ON public.participations FOR EACH ROW EXECUTE FUNCTION public.trg_refresh_product_seat_counts();
+CREATE TRIGGER trg_participations_refresh_counts_upd AFTER UPDATE OF status, product_id ON public.participations FOR EACH ROW EXECUTE FUNCTION public.trg_refresh_product_seat_counts();
 
 
 --
@@ -5664,11 +5614,11 @@ GRANT ALL ON FUNCTION public.cancel_participation(p_participation_id uuid, p_rea
 
 
 --
--- Name: FUNCTION confirm_reservation(p_reservation_id uuid); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.confirm_reservation(p_reservation_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.confirm_reservation(p_reservation_id uuid) TO service_role;
+REVOKE ALL ON FUNCTION public.confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text) TO service_role;
 
 
 --
@@ -5677,14 +5627,6 @@ GRANT ALL ON FUNCTION public.confirm_reservation(p_reservation_id uuid) TO servi
 
 REVOKE ALL ON FUNCTION public.count_active_seats(p_product_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.count_active_seats(p_product_id uuid) TO service_role;
-
-
---
--- Name: FUNCTION count_seats_taken(p_product_id uuid); Type: ACL; Schema: public; Owner: -
---
-
-REVOKE ALL ON FUNCTION public.count_seats_taken(p_product_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.count_seats_taken(p_product_id uuid) TO service_role;
 
 
 --
@@ -5735,14 +5677,6 @@ GRANT ALL ON FUNCTION public.effective_status(p_product_id uuid) TO service_role
 
 REVOKE ALL ON FUNCTION public.ensure_product_keeps_at_least_one_translation() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.ensure_product_keeps_at_least_one_translation() TO service_role;
-
-
---
--- Name: FUNCTION expire_reservation(p_reservation_id uuid); Type: ACL; Schema: public; Owner: -
---
-
-REVOKE ALL ON FUNCTION public.expire_reservation(p_reservation_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.expire_reservation(p_reservation_id uuid) TO service_role;
 
 
 --
