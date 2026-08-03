@@ -18,10 +18,18 @@ import type { Database } from "@/types/database.types";
  * reasons, all of them about that:
  *
  *  1. **A shared cache.** The response depends only on the URL — never on who
- *     asked — so a CDN can answer the popular needles without a database round
- *     trip at all. Places are reference data; five minutes of staleness costs
- *     nothing, and `stale-while-revalidate` means even an expired entry is
- *     served instantly while it refreshes behind the request.
+ *     asked — so a CDN can answer the popular needles without querying
+ *     `locations` at all. Places are reference data; five minutes of staleness
+ *     costs nothing, and `stale-while-revalidate` means even an expired entry
+ *     is served instantly while it refreshes behind the request.
+ *
+ *     Worth being exact about what a cache hit saves, because it is less than
+ *     it looks: this path is excluded from the proxy (deliberately — see the
+ *     matcher's note on cacheable responses), so an anonymous keystroke really
+ *     does cost nothing. An authenticated one still pays whatever the rest of
+ *     the app charges it, and three of the four callers are authenticated. The
+ *     public educator registration page is the surface this was built for, and
+ *     it is the one that gets the full benefit.
  *  2. **Bounds applied before Postgres sees anything.** The query schema
  *     refuses a needle under the minimum length and a page size over the cap,
  *     so a hand-rolled request cannot turn the search into a bulk export or a

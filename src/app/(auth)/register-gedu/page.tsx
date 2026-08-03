@@ -20,8 +20,8 @@ export default async function RegisterGeduPage({
   // Prefetch the spoken languages server-side so the checkboxes paint complete
   // on the first frame (layout-shift rule); the table is anon-readable, so this
   // works without a session. Coverage needs no prefetch: the field renders a
-  // fixed-height, initially-empty chip box, and the default country's catalog
-  // is bundled, so opening its dialog fetches nothing.
+  // fixed-height, initially-empty chip box, and opening its dialog reads one
+  // indexed level of the tree — nothing worth moving to the server.
   const [spokenLanguages, { redirect }] = await Promise.all([
     prefetchSpokenLanguages(),
     searchParams,
