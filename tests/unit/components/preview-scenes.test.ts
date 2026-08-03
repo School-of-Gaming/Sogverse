@@ -25,7 +25,10 @@ import {
   geduActivityTypeOf,
   type GeduActivityType,
 } from "@/lib/gedu-assignment-rollup";
-import { PREVIEW_SCENARIOS } from "@/components/public/products/mock-detail-fixtures";
+import {
+  CONFIRMATION_NOTICE_SCENARIOS,
+  PREVIEW_SCENARIOS,
+} from "@/components/public/products/mock-detail-fixtures";
 import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
 
 /**
@@ -124,7 +127,12 @@ describe("registry scenarios match their fixtures", () => {
   it("public product surfaces", () => {
     const productSlugs = PREVIEW_SCENARIOS.map((s) => s.slug);
     expect(slugsFor("products")).toEqual(productSlugs);
-    expect(slugsFor("confirmation")).toEqual(productSlugs);
+    // The confirmation surface carries the product scenarios plus the paid
+    // no-order notice states, which no product fixture backs.
+    expect(slugsFor("confirmation")).toEqual([
+      ...productSlugs,
+      ...CONFIRMATION_NOTICE_SCENARIOS.map((n) => n.slug),
+    ]);
   });
 });
 
