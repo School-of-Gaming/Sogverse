@@ -74,8 +74,9 @@ describe("GameUsernameRow", () => {
       expect(avatar.className).toContain(GAME_ROW_HEIGHT);
     }
 
-    expect(boxes(minecraft.container).avatar.className).toContain("w-6");
-    expect(boxes(roblox.container).avatar.className).toContain("w-12");
+    // Half the height for the 1:2 body, the full height for the 1:1 bust.
+    expect(boxes(minecraft.container).avatar.className).toContain("w-7.5");
+    expect(boxes(roblox.container).avatar.className).toContain("w-15");
   });
 
   it.each(PLATFORMS)(

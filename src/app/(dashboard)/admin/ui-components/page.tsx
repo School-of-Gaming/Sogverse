@@ -111,12 +111,15 @@ import {
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {
   GAME_PLATFORMS,
+  GAME_ROW_HEIGHT,
   gameAccountStatus,
   GameUsernameEditableRow,
   GameUsernameField,
   GameUsernameRow,
   type GamePlatform,
 } from "@/components/game-account";
+import { AddGamerFormCard } from "@/components/family";
+import { cn } from "@/lib/utils";
 
 /**
  * Chip demo people. Real generated UUIDv4s, hardcoded: an identicon is hashed
@@ -2675,6 +2678,53 @@ const DEMO_USERNAME: Readonly<Record<GamePlatform, string>> = {
 };
 
 /**
+ * The one grid all three demos are laid out on: a label column, then a column
+ * per platform.
+ *
+ * Shared so the identity rows line up vertically down the whole section. The
+ * three demos exist to be *compared* — they are three presentations of one
+ * thing — and three different container widths made that impossible: the field
+ * read as a larger species than the rows below it purely because it sat in a
+ * wider box.
+ */
+const GAME_DEMO_GRID =
+  "grid max-w-4xl grid-cols-[9rem_minmax(0,1fr)_minmax(0,1fr)] gap-x-8 rounded-lg border p-4";
+
+/** The header row every demo grid opens with. */
+function GameDemoHeader() {
+  return (
+    <>
+      <div />
+      {DEMO_PLATFORMS.map((platform) => (
+        <DemoCaption key={platform}>{GAME_PLATFORMS[platform].name}</DemoCaption>
+      ))}
+    </>
+  );
+}
+
+function GameFirstCaptureDemo() {
+  const [minecraft, setMinecraft] = useState("Notch");
+  const [roblox, setRoblox] = useState("builderman");
+  const value = { minecraft, roblox };
+  const setValue = { minecraft: setMinecraft, roblox: setRoblox };
+
+  return (
+    <div className={cn(GAME_DEMO_GRID, "items-start gap-y-3")}>
+      <GameDemoHeader />
+      <DemoCaption>Nothing saved yet</DemoCaption>
+      {DEMO_PLATFORMS.map((platform) => (
+        <GameUsernameField
+          key={platform}
+          platform={platform}
+          value={value[platform]}
+          onChange={setValue[platform]}
+        />
+      ))}
+    </div>
+  );
+}
+
+/**
  * The three fixture rows for the read-only demo: one account we have confirmed,
  * one saved name nobody ever checked, one child who has never given a name. The
  * fourth state, `checking`, is not a fixture — it belongs to a lookup in flight,
@@ -2705,116 +2755,10 @@ const VIEW_ONLY_ROWS: readonly {
   },
 ];
 
-/**
- * The editable roster, driven entirely by local state — no network, no service.
- *
- * Saving deliberately **clears the account key**: a name somebody has just typed
- * has not been checked, so the row drops from verified to unverified in front of
- * you, and the skin re-derives for the new name.
- */
-const EDITABLE_SEED: readonly {
-  key: string;
-  platform: GamePlatform;
-  person: string;
-  username: string | null;
-  externalId: string | number | null;
-}[] = [
-  {
-    key: "aino",
-    platform: "minecraft",
-    person: "Aino",
-    username: "Notch",
-    externalId: "8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6",
-  },
-  {
-    key: "joonas",
-    platform: "minecraft",
-    person: "Joonas",
-    username: "jeb_",
-    externalId: null,
-  },
-  {
-    key: "petra",
-    platform: "roblox",
-    person: "Petra",
-    username: "builderman",
-    externalId: 68306362,
-  },
-  {
-    key: "markus",
-    platform: "roblox",
-    person: "Markus",
-    username: null,
-    externalId: null,
-  },
-];
-
-function GameEditableRowDemo() {
-  const [rows, setRows] = useState(EDITABLE_SEED);
-
-  const save = (key: string, username: string) =>
-    setRows((prev) =>
-      prev.map((row) =>
-        row.key === key
-          ? {
-              ...row,
-              username: username === "" ? null : username,
-              // Newly typed, therefore unchecked.
-              externalId: null,
-            }
-          : row,
-      ),
-    );
-
-  return (
-    <div className="max-w-xl divide-y rounded-lg border">
-      {rows.map((row) => (
-        <div key={row.key} className="flex items-center gap-3 px-4 py-1">
-          <span className="w-16 shrink-0 text-xs text-muted-foreground">
-            {row.person}
-          </span>
-          <GameUsernameEditableRow
-            platform={row.platform}
-            username={row.username}
-            externalId={row.externalId}
-            personName={row.person}
-            onSave={(username) => save(row.key, username)}
-            className="min-w-0 flex-1"
-          />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function GameFirstCaptureDemo() {
-  const [minecraft, setMinecraft] = useState("Notch");
-  const [roblox, setRoblox] = useState("builderman");
-
-  return (
-    <div className="grid gap-6 rounded-lg border p-4 lg:grid-cols-2">
-      <GameUsernameField
-        platform="minecraft"
-        value={minecraft}
-        onChange={setMinecraft}
-      />
-      <GameUsernameField
-        platform="roblox"
-        value={roblox}
-        onChange={setRoblox}
-      />
-    </div>
-  );
-}
-
 function GameViewOnlyDemo() {
   return (
-    <div className="grid grid-cols-[12rem_1fr_1fr] items-center gap-x-8 gap-y-2 rounded-lg border p-4">
-      <div />
-      {DEMO_PLATFORMS.map((platform) => (
-        <DemoCaption key={platform}>{GAME_PLATFORMS[platform].name}</DemoCaption>
-      ))}
-
+    <div className={cn(GAME_DEMO_GRID, "items-center gap-y-2")}>
+      <GameDemoHeader />
       {VIEW_ONLY_ROWS.map(({ caption, named, externalId }) => (
         <Fragment key={caption}>
           <DemoCaption>{caption}</DemoCaption>
@@ -2831,6 +2775,335 @@ function GameViewOnlyDemo() {
           ))}
         </Fragment>
       ))}
+    </div>
+  );
+}
+
+/**
+ * The editable roster, driven entirely by local state — no network, no service.
+ *
+ * One person per row, both platforms across, so the columns line up with the two
+ * demos above. Saving deliberately **clears the account key**: a name somebody
+ * has just typed has not been checked, so the row drops from verified to
+ * unverified in front of you, and the skin re-derives for the new name.
+ */
+type EditableAccount = { username: string | null; externalId: string | number | null };
+
+const EDITABLE_SEED: readonly {
+  key: string;
+  person: string;
+  accounts: Readonly<Record<GamePlatform, EditableAccount>>;
+}[] = [
+  {
+    key: "aino",
+    person: "Aino",
+    accounts: {
+      minecraft: {
+        username: "Notch",
+        externalId: "8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6",
+      },
+      roblox: { username: "builderman", externalId: 68306362 },
+    },
+  },
+  {
+    key: "joonas",
+    person: "Joonas",
+    accounts: {
+      minecraft: { username: "jeb_", externalId: null },
+      roblox: { username: null, externalId: null },
+    },
+  },
+  {
+    key: "petra",
+    person: "Petra",
+    accounts: {
+      minecraft: { username: null, externalId: null },
+      roblox: { username: "Roblox", externalId: 1 },
+    },
+  },
+];
+
+function GameEditableRowDemo() {
+  const [rows, setRows] = useState(EDITABLE_SEED);
+
+  const save = (key: string, platform: GamePlatform, username: string) =>
+    setRows((prev) =>
+      prev.map((row) =>
+        row.key === key
+          ? {
+              ...row,
+              accounts: {
+                ...row.accounts,
+                [platform]: {
+                  username: username === "" ? null : username,
+                  // Newly typed, therefore unchecked.
+                  externalId: null,
+                },
+              },
+            }
+          : row,
+      ),
+    );
+
+  return (
+    <div className={cn(GAME_DEMO_GRID, "items-center gap-y-1")}>
+      <GameDemoHeader />
+      {rows.map((row) => (
+        <Fragment key={row.key}>
+          <DemoCaption>{row.person}</DemoCaption>
+          {DEMO_PLATFORMS.map((platform) => (
+            <GameUsernameEditableRow
+              key={platform}
+              platform={platform}
+              username={row.accounts[platform].username}
+              externalId={row.accounts[platform].externalId}
+              personName={row.person}
+              onSave={(username) => save(row.key, platform, username)}
+            />
+          ))}
+        </Fragment>
+      ))}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Add-gamer dialog (real components, inert)                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The submit, defanged. Resolves after a beat with a fixed id so the committing
+ * state is actually visible, and creates nothing — the real mutation is the one
+ * prop `AddGamerFormCard` takes rather than a hook it reaches for, precisely so
+ * this page can hand it something inert.
+ */
+function inertCreateGamer(): Promise<{ gamerId: string }> {
+  return new Promise((resolve) =>
+    setTimeout(
+      () => resolve({ gamerId: "1a8e1e2a-32f6-4c6f-9a6a-9d0f2a1b7c44" }),
+      700,
+    ),
+  );
+}
+
+function AddGamerDialogDemo() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="rounded-lg border p-4">
+      <Button onClick={() => setOpen(true)}>Open the add-gamer dialog</Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <AddGamerFormCard onOpenChange={setOpen} onCreate={inertCreateGamer} />
+      </Dialog>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  TEMPORARY — mobile fit-check exploration. Delete with its section.  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * A fixed CSS-pixel viewport, to eyeball whether a composition fits a phone.
+ *
+ * Not a device mock — no notch, no status bar, no chrome. The frame is exactly
+ * the CSS viewport a page would get, and the `usable` caption is what is left of
+ * it once the browser's own chrome is taken off, which is the number that
+ * actually decides whether something scrolls.
+ */
+function PhoneFrame({
+  label,
+  width,
+  height,
+  usable,
+  children,
+}: {
+  label: string;
+  width: number;
+  height: number;
+  usable: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-2">
+      <DemoCaption>{label}</DemoCaption>
+      <p className="text-xs text-muted-foreground">
+        {width}&times;{height} CSS px &middot; usable {usable}
+      </p>
+      <div
+        className="relative overflow-hidden rounded-lg border-2 border-border bg-muted"
+        style={{ width, height }}
+      >
+        <div className="absolute inset-0 flex items-start justify-center overflow-y-auto p-4">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** One height-accurate stand-in for a field the real dialog already has. */
+function MockField({ label, children }: { label: string; children: React.ReactNode }) {
+  return <Field label={label}>{children}</Field>;
+}
+
+/**
+ * The add-gamer dialog's content inventory, rebuilt with the real primitives,
+ * plus the two game username fields the owner is asking about.
+ *
+ * **This is a deliberate replica, not the real card**, and that is the one thing
+ * to know about it. The real `AddGamerFormCard` has no slot for extra fields and
+ * should not grow one for an exploration, so the existing fields here are
+ * height-accurate stand-ins (same `Field`, same 40px controls, same spacing) and
+ * only the two game fields are the real components. It answers "does this
+ * stack fit" honestly; it is not a component demo and must be deleted with the
+ * question.
+ */
+function AddGamerMobileFitBody() {
+  const [minecraft, setMinecraft] = useState("");
+  const [roblox, setRoblox] = useState("");
+
+  return (
+    <DialogContent className="max-h-full overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle>Add a gamer</DialogTitle>
+      </DialogHeader>
+
+      <div className="space-y-4 py-4">
+        <MockField label="First name">
+          <Input placeholder="Aino" readOnly />
+        </MockField>
+
+        <div className="grid grid-cols-2 gap-3">
+          <MockField label="Birth month">
+            <Input placeholder="March" readOnly />
+          </MockField>
+          <MockField label="Birth year">
+            <Input placeholder="2014" readOnly />
+          </MockField>
+        </div>
+
+        <Field label="Gender" optional>
+          {/* grid-cols-1 until sm — three stacked 40px buttons on a phone, which
+              is 160px of the budget and the single biggest item in it. */}
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <Button variant="outline" type="button">
+              Boy
+            </Button>
+            <Button variant="outline" type="button">
+              Girl
+            </Button>
+            <Button variant="outline" type="button">
+              Non-binary
+            </Button>
+          </div>
+        </Field>
+
+        <GameUsernameField
+          platform="minecraft"
+          value={minecraft}
+          onChange={setMinecraft}
+          optional
+        />
+        <GameUsernameField
+          platform="roblox"
+          value={roblox}
+          onChange={setRoblox}
+          optional
+        />
+      </div>
+
+      <DialogFooter className="gap-2">
+        <Button type="button" variant="outline">
+          Cancel
+        </Button>
+        <Button type="button">Add gamer</Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+
+/** The measured stack, so the verdict is arithmetic rather than an impression. */
+const FIT_BUDGET: readonly { part: string; px: number }[] = [
+  { part: "Dialog inset (p-4, both edges)", px: 32 },
+  { part: "Card padding (p-6, both edges)", px: 48 },
+  { part: "Title", px: 18 },
+  { part: "Field stack padding (py-4)", px: 32 },
+  { part: "First name", px: 64 },
+  { part: "Birth month + year", px: 64 },
+  { part: "Gender (3 stacked buttons under sm)", px: 160 },
+  { part: "Minecraft username field", px: 134 },
+  { part: "Roblox username field", px: 134 },
+  { part: "Gaps between the 5 field blocks (space-y-4)", px: 64 },
+  { part: "Footer (2 stacked buttons + mt-6)", px: 112 },
+];
+
+const FIT_TOTAL = FIT_BUDGET.reduce((sum, row) => sum + row.px, 0);
+
+function AddGamerMobileFitCheck() {
+  return (
+    <div className="space-y-6 rounded-lg border border-warning/40 p-4">
+      <div className="space-y-2">
+        <p className="text-sm font-semibold text-warning">
+          Temporary exploration — not a component demo. Delete this card once the
+          question is answered.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          The question: could <em>both</em> game username fields live in the
+          add-gamer dialog without a phone having to scroll? The two fields below
+          are the real components at{" "}
+          <code>{GAME_ROW_HEIGHT}</code>; everything else is a height-accurate
+          stand-in for what the real dialog already asks for.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap items-start gap-6">
+        <PhoneFrame
+          label="iPhone SE class — the worst case"
+          width={375}
+          height={667}
+          usable="567–607px after browser chrome"
+        >
+          <AddGamerMobileFitBody />
+        </PhoneFrame>
+        <PhoneFrame
+          label="Modern phone class"
+          width={390}
+          height={844}
+          usable="744–784px after browser chrome"
+        >
+          <AddGamerMobileFitBody />
+        </PhoneFrame>
+      </div>
+
+      <div className="max-w-md space-y-1">
+        <DemoCaption>The budget</DemoCaption>
+        <table className="w-full text-xs text-muted-foreground">
+          <tbody>
+            {FIT_BUDGET.map(({ part, px }) => (
+              <tr key={part} className="border-b border-border/40">
+                <td className="py-1 pr-4">{part}</td>
+                <td className="py-1 text-right tabular-nums">{px}px</td>
+              </tr>
+            ))}
+            <tr className="font-semibold text-foreground">
+              <td className="py-1 pr-4">Total</td>
+              <td className="py-1 text-right tabular-nums">{FIT_TOTAL}px</td>
+            </tr>
+          </tbody>
+        </table>
+        <p className="pt-2 text-xs text-muted-foreground">
+          <strong className="text-destructive">Verdict: it does not fit.</strong>{" "}
+          {FIT_TOTAL}px against 567&ndash;607px usable on the SE class (short by
+          roughly 255&ndash;295px) and 744&ndash;784px on a modern phone (short by
+          roughly 78&ndash;118px). Dropping to one game field brings it to{" "}
+          {FIT_TOTAL - 150}px, which clears a modern phone and still misses the
+          SE. The two biggest levers are not the row height: the gender buttons
+          cost 160px because they stack until <code>sm</code>, and each game field
+          spends 74px on its label and input before the {GAME_ROW_HEIGHT} identity
+          row. Going back to <code>h-12</code> would save only 24px in total.
+        </p>
+      </div>
     </div>
   );
 }
@@ -2868,6 +3141,20 @@ function GameAccountDemo() {
           honestly drops to amber.
         </p>
         <GameEditableRowDemo />
+      </SubSection>
+
+      <SubSection title="Where it would land — the add-gamer dialog">
+        <p className="text-sm text-muted-foreground">
+          The real dialog, inert: the create call is a prop rather than a hook, so
+          this page hands it something that resolves after a beat and writes
+          nothing. The PIN gate in front of it is skipped &mdash; it is a
+          conditional on one query with nothing of its own to look at.
+        </p>
+        <AddGamerDialogDemo />
+      </SubSection>
+
+      <SubSection title="Mobile fit-check (temporary)">
+        <AddGamerMobileFitCheck />
       </SubSection>
     </div>
   );

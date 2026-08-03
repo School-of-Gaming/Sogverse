@@ -20,6 +20,7 @@ import { PinUnlockFlow } from "@/components/pin";
 import { useRequiredAuth } from "@/providers/auth-provider";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import type { CreateGamerInput } from "@/types";
 import {
   assembleGamerDateOfBirth,
   gamerBirthYearOptions,
@@ -140,15 +141,56 @@ function GatePlaceholder({ error, onClose }: { error: boolean; onClose: () => vo
   );
 }
 
+/** Resolves the two side effects from hooks and puts the card in a dialog. */
 function AddGamerForm({
   onOpenChange,
   onCreated,
 }: Omit<AddGamerDialogProps, "open">) {
+  const { user } = useRequiredAuth();
+  const createGamer = useCreateGamer();
+
+  return (
+    <Dialog open onOpenChange={onOpenChange}>
+      <AddGamerFormCard
+        onOpenChange={onOpenChange}
+        onCreated={onCreated}
+        onCreate={(input) => createGamer.mutateAsync({ parentId: user.id, input })}
+      />
+    </Dialog>
+  );
+}
+
+/**
+ * The dialog's card — everything from the title to the footer — with its one
+ * side effect as a prop rather than a hook.
+ *
+ * Split out for a single reason: the style guide has to be able to render this
+ * exact card without a PIN-unlocked session and without a submit that really
+ * creates a child. `onCreate` is the whole seam; production passes the mutation
+ * and gets precisely what it had before, and a fixture surface passes something
+ * inert. **The `<Dialog>` portal deliberately stays outside it**, because a
+ * portal escapes to `document.body` — a demo that wants this card inside a
+ * simulated phone viewport cannot use one, and the card is the part worth
+ * looking at anyway.
+ *
+ * `className` merges into the card, so a caller measuring it inside a frame can
+ * scope the height cap to that frame instead of the real viewport. Production
+ * passes nothing and keeps the `90vh` cap.
+ */
+export function AddGamerFormCard({
+  onCreate,
+  onOpenChange,
+  onCreated,
+  className,
+}: {
+  onCreate: (input: CreateGamerInput) => Promise<{ gamerId: string }>;
+  onOpenChange: (open: boolean) => void;
+  onCreated?: (gamerId: string) => void;
+  className?: string;
+}) {
   const t = useTranslations("family.addGamerForm");
   const c = useTranslations("common");
   const locale = useLocale();
-  const { user } = useRequiredAuth();
-  const createGamer = useCreateGamer();
 
   const [firstName, setFirstName] = useState("");
   const [month, setMonth] = useState<string>("");
@@ -198,13 +240,10 @@ function AddGamerForm({
     const dateOfBirth = assembleGamerDateOfBirth(Number(year), Number(month));
 
     try {
-      const result = await createGamer.mutateAsync({
-        parentId: user.id,
-        input: {
-          firstName: trimmedName,
-          dateOfBirth,
-          gender,
-        },
+      const result = await onCreate({
+        firstName: trimmedName,
+        dateOfBirth,
+        gender,
       });
       onCreated?.(result.gamerId);
       onOpenChange(false);
@@ -225,113 +264,113 @@ function AddGamerForm({
     "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
   return (
-    <Dialog open onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
-        </DialogHeader>
+    <DialogContent
+      className={cn("max-h-[90vh] overflow-y-auto sm:max-w-lg", className)}
+    >
+      <DialogHeader>
+        <DialogTitle>{t("title")}</DialogTitle>
+      </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
-            {error && (
-              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                {error}
-              </div>
-            )}
-
-            <Field label={t("firstNameLabel")} htmlFor="add-gamer-first-name">
-              <Input
-                id="add-gamer-first-name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder={t("firstNamePlaceholder")}
-                disabled={committing}
-                autoFocus
-                autoComplete="off"
-                required
-                minLength={DISPLAY_NAME_MIN}
-                maxLength={DISPLAY_NAME_MAX}
-              />
-            </Field>
-
-            <div className="grid grid-cols-2 gap-3">
-              <Field label={t("birthMonthLabel")} htmlFor="add-gamer-month">
-                <select
-                  id="add-gamer-month"
-                  value={month}
-                  onChange={(e) => setMonth(e.target.value)}
-                  disabled={committing}
-                  className={selectClassName}
-                  required
-                >
-                  <option value="">{t("birthMonthPlaceholder")}</option>
-                  {months.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <Field label={t("birthYearLabel")} htmlFor="add-gamer-year">
-                <select
-                  id="add-gamer-year"
-                  value={year}
-                  onChange={(e) => setYear(e.target.value)}
-                  disabled={committing}
-                  className={selectClassName}
-                  required
-                >
-                  <option value="">{t("birthYearPlaceholder")}</option>
-                  {years.map((y) => (
-                    <option key={y} value={y}>
-                      {y}
-                    </option>
-                  ))}
-                </select>
-              </Field>
+      <form onSubmit={handleSubmit}>
+        <div className="space-y-4 py-4">
+          {error && (
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              {error}
             </div>
+          )}
 
-            <Field label={t("genderLabel")} optional>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <GenderButton
-                  selected={gender === "boy"}
-                  disabled={committing}
-                  onClick={() => setGender(gender === "boy" ? null : "boy")}
-                  label={t("genderBoy")}
-                />
-                <GenderButton
-                  selected={gender === "girl"}
-                  disabled={committing}
-                  onClick={() => setGender(gender === "girl" ? null : "girl")}
-                  label={t("genderGirl")}
-                />
-                <GenderButton
-                  selected={gender === "non_binary"}
-                  disabled={committing}
-                  onClick={() => setGender(gender === "non_binary" ? null : "non_binary")}
-                  label={t("genderNonBinary")}
-                />
-              </div>
+          <Field label={t("firstNameLabel")} htmlFor="add-gamer-first-name">
+            <Input
+              id="add-gamer-first-name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder={t("firstNamePlaceholder")}
+              disabled={committing}
+              autoFocus
+              autoComplete="off"
+              required
+              minLength={DISPLAY_NAME_MIN}
+              maxLength={DISPLAY_NAME_MAX}
+            />
+          </Field>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={t("birthMonthLabel")} htmlFor="add-gamer-month">
+              <select
+                id="add-gamer-month"
+                value={month}
+                onChange={(e) => setMonth(e.target.value)}
+                disabled={committing}
+                className={selectClassName}
+                required
+              >
+                <option value="">{t("birthMonthPlaceholder")}</option>
+                {months.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label={t("birthYearLabel")} htmlFor="add-gamer-year">
+              <select
+                id="add-gamer-year"
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                disabled={committing}
+                className={selectClassName}
+                required
+              >
+                <option value="">{t("birthYearPlaceholder")}</option>
+                {years.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
             </Field>
           </div>
 
-          <DialogFooter className="gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={committing}
-            >
-              {c("cancel")}
-            </Button>
-            <Button type="submit" disabled={committing}>
-              {committing && <Loader2 className="animate-spin" />}
-              {committing ? t("submitting") : t("submit")}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+          <Field label={t("genderLabel")} optional>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <GenderButton
+                selected={gender === "boy"}
+                disabled={committing}
+                onClick={() => setGender(gender === "boy" ? null : "boy")}
+                label={t("genderBoy")}
+              />
+              <GenderButton
+                selected={gender === "girl"}
+                disabled={committing}
+                onClick={() => setGender(gender === "girl" ? null : "girl")}
+                label={t("genderGirl")}
+              />
+              <GenderButton
+                selected={gender === "non_binary"}
+                disabled={committing}
+                onClick={() => setGender(gender === "non_binary" ? null : "non_binary")}
+                label={t("genderNonBinary")}
+              />
+            </div>
+          </Field>
+        </div>
+
+        <DialogFooter className="gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={committing}
+          >
+            {c("cancel")}
+          </Button>
+          <Button type="submit" disabled={committing}>
+            {committing && <Loader2 className="animate-spin" />}
+            {committing ? t("submitting") : t("submit")}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
   );
 }
 

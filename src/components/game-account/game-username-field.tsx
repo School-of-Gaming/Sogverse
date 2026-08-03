@@ -192,7 +192,11 @@ export function GameUsernameField({
           // lookup resolved. Leaving the prop off would let a Minecraft row go
           // and fetch a skin for half-typed text on every keystroke.
           avatarUrl={isVerified ? verified.avatarUrl : null}
-          className="w-64 max-w-full"
+          // Fills the field rather than sitting in a fixed 16rem box. The row is
+          // the same component the read-only and editable surfaces render, and a
+          // width of its own here made it the one place it did not line up with
+          // them — and made it overflow a narrow column instead of truncating.
+          className="min-w-0 flex-1"
         />
         {isVerified && verified.displayName !== null && (
           <span className="min-w-0 truncate text-xs text-muted-foreground">

@@ -63,8 +63,13 @@ export type GameAccountStatus =
  * choose, two surfaces choose differently, and a component that exists to stop
  * rows twitching starts contributing its own inconsistency. Fixed geometry
  * across the four states was never the whole rule; this is the rest of it.
+ *
+ * 60px, on Tailwind's default `--spacing` of 0.25rem. Every figure width in the
+ * registry below is derived from this number and its platform's proportion, so
+ * changing it here is the whole change — but the widths are literal classes the
+ * Tailwind scanner has to see, so they are recomputed by hand, not by `calc`.
  */
-export const GAME_ROW_HEIGHT = "h-12";
+export const GAME_ROW_HEIGHT = "h-15";
 
 /**
  * The platform's own key for an account.
@@ -254,7 +259,8 @@ export const GAME_PLATFORMS: Readonly<
     usernameExample: "Steve",
     avatar: {
       // Half the row's height — the whole-body figure's own 1:2 proportion.
-      widthClass: "w-6",
+      // 30px against the row's 60.
+      widthClass: "w-7.5",
       urlFromUsername: minecraftSkinUrl,
       Placeholder: MinecraftPlaceholder,
     },
@@ -267,7 +273,7 @@ export const GAME_PLATFORMS: Readonly<
     usernameExample: "builderman",
     avatar: {
       // Square with the row's height — the bust render's own 1:1 proportion.
-      widthClass: "w-12",
+      widthClass: "w-15",
       urlFromUsername: null,
       Placeholder: RobloxPlaceholder,
     },

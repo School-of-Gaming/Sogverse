@@ -2,7 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useState } from "react";
 import { act, fireEvent, render } from "@testing-library/react";
 import { GameUsernameField } from "@/components/game-account/game-username-field";
-import type { GamePlatform } from "@/components/game-account/platforms";
+import {
+  GAME_ROW_HEIGHT,
+  type GamePlatform,
+} from "@/components/game-account/platforms";
 
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, params?: Record<string, string>) => {
@@ -226,7 +229,10 @@ describe("GameUsernameField", () => {
     (platform) => {
       const { container } = setup(platform);
 
-      const slot = container.querySelector(".h-12");
+      // Read off the constant, not a literal: the slot's whole job is to be the
+      // height the row will land at, so a test naming its own number would go
+      // on passing while the two drifted apart.
+      const slot = container.querySelector(`.${GAME_ROW_HEIGHT}`);
       expect(slot).toBeTruthy();
       // Empty box, and the row inside it is already rendering the unknown state.
       expect(slot?.textContent).toContain("(Unknown)");
