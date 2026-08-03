@@ -292,6 +292,23 @@ function RobloxBustPlaceholder() {
 }
 
 /**
+ * **The head stand-ins are drawn harder than the full-figure ones, deliberately.**
+ *
+ * They are the same colour on the same box — `muted-foreground` over `muted` —
+ * but a quarter of the area, and contrast that reads fine across 60px of body
+ * reads as an empty tinted square across 32px. The first version used the full
+ * figures' opacities and was reported as "doesn't show anything": it *was*
+ * rendering, it just had no area left to carry a faint step. Smaller marks need
+ * more contrast to say the same thing, so the silhouettes sit around 0.55 and
+ * the features are drawn at full strength.
+ *
+ * If either of these is ever restyled, the thing to preserve is legibility at
+ * 32px against `bg-muted` in **both** themes — the box is lighter than the page
+ * in dark mode and darker in light, so a stand-in that leans on one of those
+ * disappears in the other.
+ */
+
+/**
  * The Minecraft face: the 8×8 grid the real flat render is drawn on.
  *
  * Square and edge to edge, because that is what the face endpoint returns — so
@@ -305,10 +322,17 @@ function MinecraftFacePlaceholder() {
       aria-hidden
       focusable="false"
     >
-      <rect x="0" y="0" width="8" height="8" fill="currentColor" opacity="0.4" />
-      <rect x="1.5" y="3" width="1.5" height="1.5" fill="currentColor" />
-      <rect x="5" y="3" width="1.5" height="1.5" fill="currentColor" />
-      <rect x="2.5" y="5.5" width="3" height="1" fill="currentColor" opacity="0.7" />
+      <rect x="0" y="0" width="8" height="8" fill="currentColor" opacity="0.55" />
+      <rect x="1.4" y="2.75" width="1.8" height="1.8" fill="currentColor" />
+      <rect x="4.8" y="2.75" width="1.8" height="1.8" fill="currentColor" />
+      <rect
+        x="2.1"
+        y="5.3"
+        width="3.8"
+        height="1.3"
+        fill="currentColor"
+        opacity="0.85"
+      />
     </svg>
   );
 }
@@ -327,24 +351,24 @@ function RobloxHeadPlaceholder() {
       focusable="false"
     >
       <rect
-        x="1.5"
-        y="1.5"
-        width="13"
-        height="13"
-        rx="3"
+        x="1"
+        y="1"
+        width="14"
+        height="14"
+        rx="3.5"
         fill="currentColor"
-        opacity="0.4"
+        opacity="0.55"
       />
-      <rect x="4.5" y="6" width="2.2" height="2.6" rx="0.6" fill="currentColor" />
-      <rect x="9.3" y="6" width="2.2" height="2.6" rx="0.6" fill="currentColor" />
+      <rect x="3.9" y="5.4" width="2.8" height="3.3" rx="0.8" fill="currentColor" />
+      <rect x="9.3" y="5.4" width="2.8" height="3.3" rx="0.8" fill="currentColor" />
       <rect
-        x="5.5"
-        y="10.5"
-        width="5"
-        height="1.4"
-        rx="0.7"
+        x="4.9"
+        y="10.8"
+        width="6.2"
+        height="1.8"
+        rx="0.9"
         fill="currentColor"
-        opacity="0.7"
+        opacity="0.85"
       />
     </svg>
   );

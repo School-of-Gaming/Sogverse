@@ -119,16 +119,48 @@ describe("GameUsernameRow", () => {
     );
   });
 
-  // Roblox has no username-addressable endpoint for either figure, so an
-  // omitted prop is the placeholder in head mode too.
+  /**
+   * Roblox has no username-addressable endpoint for either figure, so a row
+   * holding only a username draws the stand-in — in head mode as much as in
+   * full. This is the state that was reported as showing nothing: it always
+   * rendered, but at 32px it was too faint to read as a picture.
+   */
   it("stays on the drawn stand-in for a Roblox head with nothing handed in", () => {
     const { container } = render(
       <GameUsernameRow platform="roblox" username="builderman" figure="head" />,
     );
 
     expect(container.querySelector("img")).toBeNull();
-    expect(boxes(container).avatar.querySelector("svg")).toBeTruthy();
+    const svg = boxes(container).avatar.querySelector("svg");
+    expect(svg).toBeTruthy();
+    // A silhouette plus features, not one lone shape.
+    expect(svg?.querySelectorAll("rect").length).toBeGreaterThan(1);
   });
+
+  /**
+   * The stand-ins are `muted-foreground` on a `muted` box, and a head has a
+   * quarter of a full figure's area — so the head silhouettes have to be drawn
+   * harder to survive the shrink. Pinned as a number because the bug it prevents
+   * is invisible to every other assertion here: the SVG renders, has the right
+   * size and the right colour, and still reads as an empty square.
+   */
+  it.each(PLATFORMS)(
+    "draws the head stand-in's silhouette strongly enough to read at 32px (%s)",
+    (platform) => {
+      const { container } = render(
+        <GameUsernameRow
+          platform={platform}
+          username={null}
+          figure="head"
+          avatarUrl={null}
+        />,
+      );
+
+      const silhouette = boxes(container).avatar.querySelector("svg rect");
+      const opacity = Number(silhouette?.getAttribute("opacity") ?? "1");
+      expect(opacity).toBeGreaterThanOrEqual(0.5);
+    },
+  );
 
   it.each(PLATFORMS)(
     "keeps the figure box and the status slot identical in every state (%s)",
