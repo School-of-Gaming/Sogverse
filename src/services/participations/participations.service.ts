@@ -190,7 +190,7 @@ function buildGamerParticipationsQuery(
  * `buildGamerParticipationsQuery`. Powers the admin user-detail page's
  * "Assigned products" surface, where an admin views every product a gamer (or
  * a parent's gamers) is signed up to — across all statuses (active /
- * waitlisted / reserving / completed), so support can see exactly what state
+ * waitlisted / completed), so support can see exactly what state
  * each gamer is in. Reachable only for admins via the
  * `admin_full_access_participations` RLS policy.
  */
@@ -204,7 +204,6 @@ export type AdminGamerParticipationRow = QueryData<
 export interface ParticipationCounts {
   productId: string;
   activeCount: number;
-  reservingCount: number;
   waitlistCount: number;
   /**
    * Per-gamer signup state for the logged-in customer's children on this
@@ -212,10 +211,9 @@ export interface ParticipationCounts {
    * the map. The detail page's signup form uses this to disable each
    * already-signed-up child in the picker and label them in place.
    *
-   * `reserving` is deliberately excluded — the movie-ticket reservation model
-   * treats a held seat as the parent's to retry against (they just click Sign
-   * Up again), so a reserving gamer stays selectable. See
-   * docs/products-architecture.md "Movie-ticket reservation model".
+   * A parent part-way through Stripe Checkout has no row at all, so their
+   * gamer stays selectable — which is what we want: an abandoned checkout must
+   * leave the child free to try again.
    */
   myGamerStates: Record<string, "active" | "waitlisted">;
 }
@@ -234,6 +232,12 @@ export type CreateParticipationInput = {
  * the product row can't: which product, who it's for, and the row's status.
  */
 export interface ParticipationConfirmation {
+  /**
+   * The row's own id. Carried because the page can arrive holding a Stripe
+   * Checkout Session id instead, and the waitlist-position read needs the
+   * participation.
+   */
+  participationId: string;
   status: ParticipationStatus;
   productId: string;
   /** Gamer's first name (or username fallback); null → page shows "Your child". */
@@ -452,7 +456,7 @@ export class ParticipationsService {
 
     const { data: countsData, error: countsErr } = await this.supabase
       .from("product_seat_counts")
-      .select("product_id, active_count, reserving_count, waitlist_count")
+      .select("product_id, active_count, waitlist_count")
       .in("product_id", productIds);
     if (countsErr) throw countsErr;
 
@@ -462,7 +466,6 @@ export class ParticipationsService {
       countsByProduct.set(id, {
         productId: id,
         activeCount: row?.active_count ?? 0,
-        reservingCount: row?.reserving_count ?? 0,
         waitlistCount: row?.waitlist_count ?? 0,
         myGamerStates: {},
       });
@@ -506,11 +509,9 @@ export class ParticipationsService {
    * forged `?p=` link), which the page renders as a friendly "couldn't find
    * that order" fallback.
    *
-   * Status is returned but NOT gated on. After Stripe Checkout the redirect
-   * waits on our webhook (`confirm_reservation` has run → 'active'), and free
-   * signups arrive 'active' — but every field the page displays lives on the
-   * row from creation, so a rare still-'reserving' row renders identically. We
-   * don't poll.
+   * Status is returned but NOT gated on: the row exists before the page is ever
+   * linked to (a free or municipality signup activates in the same request, a
+   * waitlist join likewise), so whatever status it carries is the one to show.
    */
   async getConfirmation(
     participationId: string,
@@ -519,7 +520,7 @@ export class ParticipationsService {
       .from("participations")
       .select(
         `
-          status, product_id,
+          id, status, product_id,
           gamer:profiles!participations_gamer_id_fkey(first_name)
         `,
       )
@@ -530,6 +531,48 @@ export class ParticipationsService {
     if (!data) return null;
 
     return {
+      participationId: data.id,
+      status: data.status,
+      productId: data.product_id,
+      gamerName: data.gamer.first_name || null,
+    };
+  }
+
+  /**
+   * The same read for a paid signup, which arrives holding a Stripe Checkout
+   * Session id instead of a participation id — the row did not exist when the
+   * `success_url` was built, so there was nothing else to key it on. The row
+   * records the session that bought it, which is what closes the loop.
+   *
+   * Same RLS gate as the sibling above (`customer_id = auth.uid()`, or the
+   * gamer's own row), so a session id belonging to someone else reads as null
+   * rather than as anyone's order.
+   *
+   * Null is NOT the same "stale link" answer here: the webhook creates the row,
+   * and Stripe waits up to ten seconds on it before redirecting, so null almost
+   * always means "not written *yet*". The page shows a finalizing state and
+   * polls this until it lands, rather than telling a parent who just paid that
+   * their order could not be found.
+   */
+  async getConfirmationByCheckoutSession(
+    checkoutSessionId: string,
+  ): Promise<ParticipationConfirmation | null> {
+    const { data, error } = await this.supabase
+      .from("participations")
+      .select(
+        `
+          id, status, product_id,
+          gamer:profiles!participations_gamer_id_fkey(first_name)
+        `,
+      )
+      .eq("stripe_checkout_session_id", checkoutSessionId)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+
+    return {
+      participationId: data.id,
       status: data.status,
       productId: data.product_id,
       gamerName: data.gamer.first_name || null,
@@ -762,11 +805,11 @@ function mergeGamerSignupState(
   // Priority order: active > waitlisted. A gamer can hold more than one row on
   // a product (e.g. a stale waitlisted row plus a fresh active one); the
   // strongest state wins so the picker shows "Signed up" over "On waitlist".
-  // `reserving` and any other status are ignored — only placed/waitlisted rows
+  // `completed` and any other status are ignored — only placed/waitlisted rows
   // lock a child out of the picker.
   if (current === "active" || rowStatus === "active") return "active";
   if (current === "waitlisted" || rowStatus === "waitlisted") return "waitlisted";
   // `current` is narrowed to `undefined` here (both states returned above), and
-  // `rowStatus` is something we don't lock on (reserving/other) — no change.
+  // `rowStatus` is something we don't lock on (completed/other) — no change.
   return null;
 }

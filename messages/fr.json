@@ -990,6 +990,11 @@
       "description": "Ce lien est peut-être ancien ou incomplet. Vos achats restent toujours disponibles dans Mon SOG.",
       "cta": "Aller à Mon SOG"
     },
+    "finalizing": {
+      "heading": "Paiement reçu",
+      "subheading": "Nous finalisons l’inscription — cela ne prend qu’un instant.",
+      "reassurance": "Vous pouvez rester sur cette page en toute tranquillité. Votre inscription apparaîtra aussi dans Mon SOG."
+    },
     "waitlist": {
       "heading": "Vous êtes sur la liste d’attente",
       "subheading": "{gamer} est sur la liste d’attente pour {product}. Nous vous préviendrons dès qu’une place se libère.",

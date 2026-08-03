@@ -17,7 +17,6 @@ import {
   getOrCreateSubscriptionPrice,
 } from "@/lib/stripe/participation-prices";
 import { getOrCreateStripeCustomer } from "@/lib/stripe/customer";
-import { RESERVATION_LIFETIME_MINUTES } from "@/lib/constants/participations";
 import { getOrigin } from "@/lib/url";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -140,13 +139,12 @@ export const POST = defineRoute({
       );
     }
 
-    // Each click is an independent reservation. If the parent abandoned a
-    // previous Stripe session, that row stays in the seat-count until Stripe
-    // fires `checkout.session.expired` (~30 min) and the webhook deletes it.
-    // The schema's unique index on (product_id, gamer_id) excludes 'reserving',
-    // so multiple held rows for the same parent/gamer coexist fine. Pay-twice
-    // is bounded by the unique index firing on the second confirm — see the
-    // webhook for the 23505 catch.
+    // For a paid shape this call only *validates* — it runs every signup rule
+    // (parent-of, lifecycle, registration window, currency, already-enrolled,
+    // seat cap) under the product gate lock and writes nothing. The row is
+    // created from the Stripe webhook once payment lands, so a parent who
+    // abandons Checkout leaves nothing behind and there is no seat to release.
+    // The no-charge shapes (free, external) still activate here and now.
     const { data: rpcResult, error: rpcErr } = await admin.rpc(
       "create_participation",
       {
@@ -195,22 +193,11 @@ export const POST = defineRoute({
           };
     }
 
-    // kind === 'reserving'
-    if (!rpcJson.participation_id) {
-      throw new ApiError(
-        "create_participation returned reserving with no reservation id",
-        500,
-      );
-    }
-    const reservationId = rpcJson.participation_id;
-
-    // Everything from here to the redirect runs with a seat already held, and
-    // the reservation is reclaimed by exactly two things: an explicit rollback,
-    // or Stripe's `checkout.session.expired` webhook. Until the Checkout Session
-    // exists there is nothing for Stripe to expire, so any escape from this
-    // block has to release the seat itself — `count_seats_taken` counts
-    // reserving rows regardless of `reserved_until`, so a stranded row holds a
-    // capped product's seat for good.
+    // kind === 'validated' — the signup is acceptable and nothing was written.
+    // Nothing below this line needs unwinding on failure: an escape from the
+    // block leaves the database exactly as it was, so the try/catch exists only
+    // to keep raw Stripe/PostgREST text away from a parent (this route
+    // discloses its error messages) and to answer with a deliberate status.
     try {
       const stripeCustomerId = await getOrCreateStripeCustomer(admin, user.id);
 
@@ -222,21 +209,22 @@ export const POST = defineRoute({
       // is independently cancelable from the Stripe portal.
 
       const origin = getOrigin(request);
-      // Success lands on the dedicated purchase-confirmation page, keyed by this
-      // reservation id. By the time Stripe redirects, the
-      // `checkout.session.completed` webhook has already confirmed the
-      // reservation (Stripe waits up to 10s for our endpoint before redirecting),
-      // so the row is 'active' — but every field the page shows lives on the row
-      // from creation, so the page renders correctly even in the rare case the
-      // redirect beats the webhook. No polling, no `?signup=` flag.
-      const successUrl = `${origin}${ROUTES.shopConfirmation(reservationId)}`;
-      // Cancel bounces straight back to the product page so the parent can retry.
-      // We do NOT free the seat — the reserving row stays held until either
-      // Stripe fires session.completed (→ confirm) or session.expired (→ expire).
+      // Success lands on the confirmation page keyed by the Checkout Session,
+      // not by a participation — there is no participation yet, and the session
+      // id is the only handle both ends share. `{CHECKOUT_SESSION_ID}` is
+      // Stripe's literal placeholder, substituted at redirect time; it must
+      // reach Stripe unencoded. The page resolves it back to the row the webhook
+      // wrote (Stripe waits up to 10s on our endpoint before redirecting, so it
+      // is almost always there) and shows a finalizing state if it is not.
+      const successUrl = `${origin}${ROUTES.shopPaidConfirmation("{CHECKOUT_SESSION_ID}")}`;
+      // Cancel bounces straight back to the product page so the parent can
+      // retry. Nothing to undo — no row was written.
       const cancelUrl = `${origin}${ROUTES.shopProduct(productId)}`;
 
+      // The metadata IS the link between this session and the participation the
+      // webhook will create. Nothing else carries it, so every field here is
+      // load-bearing rather than informational.
       const metadata = {
-        reservationId,
         customerId: user.id,
         gamerId,
         productId,
@@ -244,11 +232,9 @@ export const POST = defineRoute({
         currency,
       };
 
-      // Stripe Checkout's session expiry IS our reservation lifetime: Stripe
-      // refuses payment past `expires_at` and fires checkout.session.expired,
-      // which our webhook turns into expire_reservation.
-      const expiresAt =
-        Math.floor(Date.now() / 1000) + RESERVATION_LIFETIME_MINUTES * 60;
+      // No `expires_at`: Stripe's 24h default is fine now that the session holds
+      // no seat. It used to be pinned to the reservation lifetime because the
+      // expiry webhook was what released the seat.
 
       // Adaptive Pricing presents each customer their local currency and lets
       // Stripe convert, while the Session/PaymentIntent still report our EUR
@@ -273,7 +259,6 @@ export const POST = defineRoute({
         // onto the Customer, which Stripe Tax needs to locate the customer.
         automatic_tax: { enabled: true },
         customer_update: { address: "auto" },
-        expires_at: expiresAt,
         metadata,
         success_url: successUrl,
         cancel_url: cancelUrl,
@@ -339,7 +324,6 @@ export const POST = defineRoute({
 
       return { status: "redirect" as const, checkoutUrl: session.url };
     } catch (error) {
-      await rollbackReservation(admin, reservationId);
       // Deliberate status and message. This route discloses error text to the
       // parent, so a raw PostgREST or Stripe string must not reach them — and a
       // driver's error code would otherwise be mapped to a misleading status.
@@ -363,20 +347,4 @@ async function pickGamerName(
     .eq("id", gamerId)
     .maybeSingle();
   return data?.first_name || "your child";
-}
-
-async function rollbackReservation(
-  admin: ReturnType<typeof createAdminClient>,
-  reservationId: string,
-): Promise<void> {
-  const { error } = await admin.rpc("expire_reservation", {
-    p_reservation_id: reservationId,
-  });
-  if (error) {
-    console.error(
-      "[checkout/products] failed to roll back reservation:",
-      reservationId,
-      error,
-    );
-  }
 }

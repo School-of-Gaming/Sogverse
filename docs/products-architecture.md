@@ -41,11 +41,14 @@ The four share ~80% of the operational model (schedule, location, topic, languag
 
 The rules to honour; the *enforcement* lives in the SQL/code.
 
-### Seat gate & reservation
+### Seat gate & the create-on-payment rule
 
 - **The product-row lock is the signup gate.** Every participation mutation begins `SELECT 1 FROM products WHERE id = $1 FOR UPDATE`, so concurrent create/cancel/promote on one product serialize and seat math is race-free. **Never `SKIP LOCKED` / `NOWAIT`** — callers must wait to see consistent post-commit state.
-- **A seat is held by a `reserving` participation row, created before Stripe** (the "movie-ticket" model). Paid signup inserts `status='reserving'` under the lock, then sends the parent to Stripe; the webhook flips it to `active` (`confirm_reservation`) or expiry deletes it (`expire_reservation`). Seat counting includes `active + reserving`.
-- **Status — not a timer — holds the seat.** Seat math ignores `reserved_until`; the row is held until confirm/expire fire (Stripe guarantees they're mutually exclusive for a session). Counting reserving rows by a timer reintroduced a boundary race. Trade-off: a never-delivered `expired` webhook strands the row (rare, manual cleanup).
+- **A paid participation is created when the money arrives, never before.** The pre-Checkout call under the lock *validates* the signup (parent-of, lifecycle, registration window, currency, already-enrolled, seat cap) and writes nothing; the Stripe `checkout.session.completed` webhook creates the `active` row. An abandoned, expired or failed checkout therefore leaves nothing in the database, and no path has a seat to release by hand. The no-charge shapes (free event, municipality registration) still activate in the same request as the validation, because there is nothing to wait for.
+- **One number holds a seat: `status = 'active'`.** The capacity gate, the rollup the parent-facing counter reads, and the seat-left pill all count that and only that. They used to disagree — a pre-payment hold counted in one and not the other — and the gap turned a stranded hold into a permanently destroyed seat.
+- **A paid participation records the Checkout Session that bought it.** That single column carries two loads: it lets the confirmation page resolve a Stripe `success_url` back to a seat, and it lets a redelivered webhook tell its own earlier work from a genuine second payment. Without it the two are indistinguishable, and the retry path — the handler writes its payment row last on purpose, so a failed write leaves no commit marker and Stripe re-runs it — would read its own row as a duplicate charge and cancel a paying customer's live subscription.
+- **A second payment for one (product, gamer) is answered, not stored.** The confirmation RPC returns a duplicate verdict naming the row that is already there; the webhook records the charge for a manual refund and, for a subscription, cancels it at Stripe — refunding one invoice would not stop the next one.
+- **This is a deliberate simplification, and re-enabling seat caps is what would undo it.** A pre-payment hold protects a capped product from overselling while parents sit on the Stripe page. Caps are locked off in the admin form for every type except municipality clubs, and those are invoiced off-platform and never reach Checkout — so today no sellable product can oversell. Whoever unlocks caps on a paid type should expect to reintroduce a hold, and should read this section as the record of what it costs.
 - **No client-supplied prices.** The client sends `(product_id, gamer_id, purchase_shape, currency)`; the server recomputes the charge from the stored base price every time.
 
 ### Billing
@@ -133,7 +136,7 @@ Two parallel entry points, **never cross-linked** — one canonical URL per prod
 
 Names by purpose — **read the signatures and bodies in `schema.sql`**. All `SECURITY DEFINER`, gate-locked where they touch seats or money.
 
-- **Participation lifecycle:** `create_participation`, `confirm_reservation`, `expire_reservation`, `join_waitlist`, `promote_from_waitlist`, `demote_to_waitlist`, `get_waitlist_position`, `get_my_waitlist_positions`, `leave_my_waitlist_spot`, `cancel_participation`.
+- **Participation lifecycle:** `create_participation`, `confirm_paid_participation`, `join_waitlist`, `promote_from_waitlist`, `demote_to_waitlist`, `get_waitlist_position`, `get_my_waitlist_positions`, `leave_my_waitlist_spot`, `cancel_participation`.
 - **Groups:** `apply_group_changes` (the sole write path for groups / gedu assignments / `participations.group_id`) + the read `get_product_groups_with_details` (groups + unassigned + waitlist snapshot).
 - **Sessions / lifecycle** (several still unbuilt — check code): `product_has_session`, `cancel_session`, `reschedule_session`, `request_substitute` / `assign_substitute`, `record_attendance`, `start_product`, `cancel_product`, `finalize_completed_products`.
 - **Effective status:** `effective_status(product_id)` — SQL twin of the TS helper.

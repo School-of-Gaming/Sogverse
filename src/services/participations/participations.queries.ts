@@ -34,6 +34,8 @@ export const participationKeys = {
     [...participationKeys.all, "my-waitlist", audience] as const,
   countsByProducts: (productIds: string[]) =>
     [...participationKeys.all, "counts", { productIds: [...productIds].sort() }] as const,
+  byCheckoutSession: (checkoutSessionId: string) =>
+    [...participationKeys.all, "checkout-session", checkoutSessionId] as const,
 };
 
 /**
@@ -146,6 +148,26 @@ export function useParticipationCounts(
     queryFn: () => service.getParticipationCounts(productIds),
     enabled: productIds.length > 0,
     initialData: options?.initialData,
+  });
+}
+
+/**
+ * Waits for the participation a paid Checkout Session bought to appear. Only
+ * the confirmation page's finalizing state mounts this, and only when the row
+ * is not there on the server render — the webhook that writes it normally lands
+ * before Stripe redirects, so in the ordinary case this hook never runs at all.
+ *
+ * Polls every two seconds and stops the moment the row exists; the caller
+ * refreshes the server render from there, which unmounts this. No `staleTime`
+ * games: the whole point is to see a write that happened elsewhere.
+ */
+export function useCheckoutConfirmation(checkoutSessionId: string) {
+  const supabase = getClient();
+  const service = new ParticipationsService(supabase);
+  return useQuery({
+    queryKey: participationKeys.byCheckoutSession(checkoutSessionId),
+    queryFn: () => service.getConfirmationByCheckoutSession(checkoutSessionId),
+    refetchInterval: (query) => (query.state.data ? false : 2000),
   });
 }
 

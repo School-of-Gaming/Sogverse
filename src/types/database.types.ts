@@ -434,9 +434,9 @@ export type Database = {
           group_id: string | null
           id: string
           product_id: string
-          reserved_until: string | null
           signed_up_at: string
           status: Database["public"]["Enums"]["participation_status"]
+          stripe_checkout_session_id: string | null
           updated_at: string
           waitlisted_at: string | null
         }
@@ -447,9 +447,9 @@ export type Database = {
           group_id?: string | null
           id?: string
           product_id: string
-          reserved_until?: string | null
           signed_up_at?: string
           status: Database["public"]["Enums"]["participation_status"]
+          stripe_checkout_session_id?: string | null
           updated_at?: string
           waitlisted_at?: string | null
         }
@@ -460,9 +460,9 @@ export type Database = {
           group_id?: string | null
           id?: string
           product_id?: string
-          reserved_until?: string | null
           signed_up_at?: string
           status?: Database["public"]["Enums"]["participation_status"]
+          stripe_checkout_session_id?: string | null
           updated_at?: string
           waitlisted_at?: string | null
         }
@@ -645,21 +645,18 @@ export type Database = {
         Row: {
           active_count: number
           product_id: string
-          reserving_count: number
           updated_at: string
           waitlist_count: number
         }
         Insert: {
           active_count?: number
           product_id: string
-          reserving_count?: number
           updated_at?: string
           waitlist_count?: number
         }
         Update: {
           active_count?: number
           product_id?: string
-          reserving_count?: number
           updated_at?: string
           waitlist_count?: number
         }
@@ -1311,9 +1308,16 @@ export type Database = {
         Args: { p_participation_id: string; p_reason: string }
         Returns: Json
       }
-      confirm_reservation: { Args: { p_reservation_id: string }; Returns: Json }
+      confirm_paid_participation: {
+        Args: {
+          p_checkout_session_id: string
+          p_customer_id: string
+          p_gamer_id: string
+          p_product_id: string
+        }
+        Returns: Json
+      }
       count_active_seats: { Args: { p_product_id: string }; Returns: number }
-      count_seats_taken: { Args: { p_product_id: string }; Returns: number }
       create_gamer: {
         Args: {
           p_date_of_birth: string
@@ -1377,7 +1381,6 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: Database["public"]["Enums"]["effective_product_status"]
       }
-      expire_reservation: { Args: { p_reservation_id: string }; Returns: Json }
       get_gedu_assigned_product: {
         Args: { p_product_id: string }
         Returns: Json

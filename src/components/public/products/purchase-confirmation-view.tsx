@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { CheckCircle2, Hourglass } from "lucide-react";
+import { CheckCircle2, Hourglass, Loader2 } from "lucide-react";
+import { useCheckoutConfirmation } from "@/services/participations";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
@@ -242,6 +245,69 @@ function priceText(
     case "unavailable":
       return null;
   }
+}
+
+/**
+ * The paid-signup edge path: Stripe took the money and redirected here, but the
+ * participation our webhook creates hasn't landed yet. Stripe waits up to ten
+ * seconds on the webhook before redirecting, so this is rare — it needs the
+ * endpoint to have failed or run long — but the parent has just been charged,
+ * and "we couldn't find that order" is the wrong thing to say to them.
+ *
+ * A perceptibly-slow wait known in advance, so the structured pending state
+ * renders immediately rather than after a delay, and it mirrors the confirmed
+ * layout: same container, same width, same card rhythm. Nothing here survives
+ * into the confirmed view — the whole panel is replaced — so there is no
+ * position for anything to shift from.
+ *
+ * The poll is a plain refetch of the row by session id; the moment it appears,
+ * `router.refresh()` re-runs the page's server render and this component is
+ * gone. Refreshing (rather than rendering the confirmation from here) keeps one
+ * code path for the confirmed view.
+ */
+export function PurchaseConfirmationFinalizing({
+  checkoutSessionId,
+}: {
+  checkoutSessionId: string;
+}) {
+  const t = useTranslations("purchaseConfirmation");
+  const router = useRouter();
+  const { data } = useCheckoutConfirmation(checkoutSessionId);
+
+  useEffect(() => {
+    if (data) router.refresh();
+  }, [data, router]);
+
+  return (
+    <div className="container mx-auto px-4 py-8 sm:py-12">
+      <div className="mx-auto max-w-2xl">
+        <div className="flex flex-col items-center text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+            <Loader2 className="h-7 w-7 animate-spin text-primary" />
+          </div>
+          <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
+            {t("finalizing.heading")}
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            {t("finalizing.subheading")}
+          </p>
+        </div>
+
+        <Card className="mt-8">
+          <CardContent className="space-y-3 p-5 sm:p-6">
+            <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+            <div className="h-16 animate-pulse rounded-lg bg-muted" />
+            <div className="h-4 animate-pulse rounded bg-muted" />
+            <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+          </CardContent>
+        </Card>
+
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          {t("finalizing.reassurance")}
+        </p>
+      </div>
+    </div>
+  );
 }
 
 // Direct-link / stale-link case (no id, RLS miss, or load error). Kept

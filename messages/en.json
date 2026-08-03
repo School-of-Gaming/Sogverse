@@ -990,6 +990,11 @@
       "description": "This link may be old or incomplete. Your purchases are always available in My SOG.",
       "cta": "Go to My SOG"
     },
+    "finalizing": {
+      "heading": "Payment received",
+      "subheading": "We’re finalizing the signup — this only takes a moment.",
+      "reassurance": "You can safely stay on this page. Your signup will also appear in My SOG."
+    },
     "waitlist": {
       "heading": "You’re on the waitlist",
       "subheading": "{gamer} is on the waitlist for {product}. We’ll let you know if a seat opens.",

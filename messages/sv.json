@@ -990,6 +990,11 @@
       "description": "Länken kan vara gammal eller ofullständig. Dina köp finns alltid i Min SOG.",
       "cta": "Gå till Min SOG"
     },
+    "finalizing": {
+      "heading": "Betalningen är mottagen",
+      "subheading": "Vi slutför anmälan — det tar bara ett ögonblick.",
+      "reassurance": "Du kan lugnt stanna kvar på den här sidan. Anmälan visas också i Min SOG."
+    },
     "waitlist": {
       "heading": "Du står på väntelistan",
       "subheading": "{gamer} står på väntelistan för {product}. Vi hör av oss så snart en plats blir ledig.",

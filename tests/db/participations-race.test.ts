@@ -10,6 +10,7 @@ import {
 import { z } from "zod";
 import { getString, getNumber } from "../helpers/json";
 import {
+  confirmPaidParticipationRpcResult,
   createParticipationRpcResult,
   joinWaitlistRpcResult,
 } from "@/services/participations/participations.contracts";
@@ -29,14 +30,12 @@ import {
  */
 
 const PRODUCT_RACE_1SEAT  = "00000000-0000-0000-0000-0000000005b1";
-const PRODUCT_EXPIRED_RES = "00000000-0000-0000-0000-0000000005b2";
 const PRODUCT_CONFIRM     = "00000000-0000-0000-0000-0000000005b3";
 const PRODUCT_WAITLIST    = "00000000-0000-0000-0000-0000000005b4";
 const PRODUCT_FREE_CAP    = "00000000-0000-0000-0000-0000000005b5";
 
 const ALL_TEST_PRODUCTS = [
   PRODUCT_RACE_1SEAT,
-  PRODUCT_EXPIRED_RES,
   PRODUCT_CONFIRM,
   PRODUCT_WAITLIST,
   PRODUCT_FREE_CAP,
@@ -75,10 +74,10 @@ describe("participations race + idempotency", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // Concurrent reservations
+  // Concurrent paid confirmations
   // ---------------------------------------------------------------------------
 
-  describe("create_participation — concurrent reservations on a 1-seat product", () => {
+  describe("confirm_paid_participation — concurrent payments on a 1-seat product", () => {
     beforeAll(async () => {
       await createTestProduct(admin, {
         id: PRODUCT_RACE_1SEAT,
@@ -89,23 +88,26 @@ describe("participations race + idempotency", () => {
     // 20 iterations is plenty to surface a missing FOR UPDATE lock — when
     // the lock is removed locally the test fails on the first or second
     // round. We don't need the plan's 30; CI time is real.
-    it("two parallel calls with distinct gamers: one reserves, one is full", async () => {
+    it("two parallel confirmations for the same gamer: one seat, one duplicate_payment", async () => {
+      // The race that matters now that the seat is created at payment time: a
+      // parent completes two Stripe sessions for the same (product, gamer) at
+      // once. Exactly one may become a seat; the other must come back as a
+      // duplicate the webhook can refund, never as a second row and never as a
+      // unique-violation the webhook would retry forever.
       const ITERATIONS = 20;
       for (let i = 0; i < ITERATIONS; i++) {
         const [a, b] = await Promise.all([
-          admin.rpc("create_participation", {
+          admin.rpc("confirm_paid_participation", {
             p_product_id: PRODUCT_RACE_1SEAT,
             p_gamer_id: TEST_IDS.GAMER,
             p_customer_id: TEST_IDS.CUSTOMER,
-            p_purchase_shape: "subscription_monthly",
-            p_currency: "eur",
+            p_checkout_session_id: `cs_race_${i}_a`,
           }),
-          admin.rpc("create_participation", {
+          admin.rpc("confirm_paid_participation", {
             p_product_id: PRODUCT_RACE_1SEAT,
-            p_gamer_id: TEST_IDS.GAMER_2,
+            p_gamer_id: TEST_IDS.GAMER,
             p_customer_id: TEST_IDS.CUSTOMER,
-            p_purchase_shape: "subscription_monthly",
-            p_currency: "eur",
+            p_checkout_session_id: `cs_race_${i}_b`,
           }),
         ]);
 
@@ -116,8 +118,16 @@ describe("participations race + idempotency", () => {
           getString(a.data, "kind"),
           getString(b.data, "kind"),
         ].sort();
+        expect(kinds, `iteration ${i}`).toEqual([
+          "confirmed",
+          "duplicate_payment",
+        ]);
 
-        expect(kinds, `iteration ${i}`).toEqual(["full", "reserving"]);
+        const { data: rows } = await admin
+          .from("participations")
+          .select("id")
+          .eq("product_id", PRODUCT_RACE_1SEAT);
+        expect(rows?.length, `iteration ${i}: row count`).toBe(1);
 
         // Reset for the next iteration so we always start from a clean
         // 0/1 seat state.
@@ -128,25 +138,37 @@ describe("participations race + idempotency", () => {
       }
     }, 30_000);
 
-    it("a held reserving row counts toward seat capacity", async () => {
-      // Take the seat with one gamer, then verify a second attempt with
-      // a different gamer returns 'full' even though the first row is
-      // 'reserving' (not 'active').
-      const first = await admin.rpc("create_participation", {
+    it("create_participation validates a paid signup without writing a row", async () => {
+      // The seat cap is checked before Stripe, but nothing is stored: an
+      // abandoned checkout has to leave the product exactly as it was.
+      const validated = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_RACE_1SEAT,
         p_gamer_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
       });
-      // Parse both through the contract schema the checkout route depends on
-      // (createParticipationRpcResult), so this real RPC output is the CI
-      // guard that participations.contracts.ts stays true to Postgres. This
-      // test covers both relevant kinds: 'reserving' (carries participation_id)
-      // and 'full' (no id).
-      expect(createParticipationRpcResult.parse(first.data).kind).toBe(
-        "reserving",
-      );
+      // Parsed through the contract schema the checkout route depends on
+      // (createParticipationRpcResult), so this real RPC output is the CI guard
+      // that participations.contracts.ts stays true to Postgres.
+      const parsed = createParticipationRpcResult.parse(validated.data);
+      expect(parsed.kind).toBe("validated");
+      expect(parsed.participation_id).toBeUndefined();
+
+      const { data: rows } = await admin
+        .from("participations")
+        .select("id")
+        .eq("product_id", PRODUCT_RACE_1SEAT);
+      expect(rows ?? []).toEqual([]);
+    });
+
+    it("an active seat fills the product for everyone else", async () => {
+      await admin.rpc("confirm_paid_participation", {
+        p_product_id: PRODUCT_RACE_1SEAT,
+        p_gamer_id: TEST_IDS.GAMER,
+        p_customer_id: TEST_IDS.CUSTOMER,
+        p_checkout_session_id: "cs_fills_the_seat",
+      });
 
       const second = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_RACE_1SEAT,
@@ -155,90 +177,16 @@ describe("participations race + idempotency", () => {
         p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
       });
+      // Covers the 'full' kind of the same contract schema (no id).
       expect(createParticipationRpcResult.parse(second.data).kind).toBe("full");
     });
   });
 
   // ---------------------------------------------------------------------------
-  // Reservation expiry
+  // confirm_paid_participation
   // ---------------------------------------------------------------------------
 
-  describe("expire_reservation", () => {
-    beforeAll(async () => {
-      await createTestProduct(admin, {
-        id: PRODUCT_EXPIRED_RES,
-        seatCount: 1,
-      });
-    });
-
-    it("deletes a reserving row and frees the seat", async () => {
-      const created = await admin.rpc("create_participation", {
-        p_product_id: PRODUCT_EXPIRED_RES,
-        p_gamer_id: TEST_IDS.GAMER,
-        p_customer_id: TEST_IDS.CUSTOMER,
-        p_purchase_shape: "subscription_monthly",
-        p_currency: "eur",
-      });
-      const reservationId = getString(created.data, "participation_id");
-
-      const expired = await admin.rpc("expire_reservation", {
-        p_reservation_id: reservationId,
-      });
-      expect(getString(expired.data, "kind")).toBe("expired");
-
-      // Row is gone.
-      const { data: row } = await admin
-        .from("participations")
-        .select("id")
-        .eq("id", reservationId)
-        .maybeSingle();
-      expect(row).toBeNull();
-
-      // Seat is free — a new reservation succeeds.
-      const next = await admin.rpc("create_participation", {
-        p_product_id: PRODUCT_EXPIRED_RES,
-        p_gamer_id: TEST_IDS.GAMER_2,
-        p_customer_id: TEST_IDS.CUSTOMER,
-        p_purchase_shape: "subscription_monthly",
-        p_currency: "eur",
-      });
-      expect(getString(next.data, "kind")).toBe("reserving");
-    });
-
-    it("is a no-op on an already-confirmed (active) row", async () => {
-      // Insert an active row directly — no reserving lifecycle.
-      const { data: inserted, error } = await admin
-        .from("participations")
-        .insert({
-          product_id: PRODUCT_EXPIRED_RES,
-          gamer_id: TEST_IDS.GAMER,
-          customer_id: TEST_IDS.CUSTOMER,
-          status: "active",
-        })
-        .select("id")
-        .single();
-      expect(error).toBeNull();
-
-      const result = await admin.rpc("expire_reservation", {
-        p_reservation_id: inserted!.id,
-      });
-      expect(getString(result.data, "kind")).toBe("noop");
-
-      // Active row is still there.
-      const { data: row } = await admin
-        .from("participations")
-        .select("status")
-        .eq("id", inserted!.id)
-        .single();
-      expect(row?.status).toBe("active");
-    });
-  });
-
-  // ---------------------------------------------------------------------------
-  // confirm_reservation
-  // ---------------------------------------------------------------------------
-
-  describe("confirm_reservation", () => {
+  describe("confirm_paid_participation", () => {
     beforeAll(async () => {
       await createTestProduct(admin, {
         id: PRODUCT_CONFIRM,
@@ -246,70 +194,112 @@ describe("participations race + idempotency", () => {
       });
     });
 
-    it("flips reserving → active", async () => {
-      const created = await admin.rpc("create_participation", {
+    it("creates an active row and records the session that bought it", async () => {
+      const result = await admin.rpc("confirm_paid_participation", {
         p_product_id: PRODUCT_CONFIRM,
         p_gamer_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
-        p_purchase_shape: "subscription_monthly",
-        p_currency: "eur",
+        p_checkout_session_id: "cs_confirm_1",
       });
-      const reservationId = getString(created.data, "participation_id");
-
-      const confirmed = await admin.rpc("confirm_reservation", {
-        p_reservation_id: reservationId,
-      });
-      const body = z
-        .object({ kind: z.string(), idempotent: z.boolean().optional() })
-        .parse(confirmed.data);
+      const body = confirmPaidParticipationRpcResult.parse(result.data);
       expect(body.kind).toBe("confirmed");
-      expect(body.idempotent).toBe(false);
+      const participationId =
+        body.kind === "confirmed" ? body.participation_id : "";
 
       const { data: row } = await admin
         .from("participations")
-        .select("status, reserved_until")
-        .eq("id", reservationId)
+        .select("status, customer_id, stripe_checkout_session_id")
+        .eq("id", participationId)
         .single();
       expect(row?.status).toBe("active");
-      expect(row?.reserved_until).toBeNull();
+      expect(row?.customer_id).toBe(TEST_IDS.CUSTOMER);
+      expect(row?.stripe_checkout_session_id).toBe("cs_confirm_1");
     });
 
-    it("returns idempotent confirmed when the row is already active", async () => {
-      // Insert directly as active (skip reserving).
-      const { data: inserted } = await admin
+    it("is idempotent for a redelivery of the same Checkout Session", async () => {
+      // The webhook writes its payment row last, so a failure after the seat is
+      // created leaves no commit marker and Stripe re-runs the whole handler.
+      // That re-run must get its own row back — not a duplicate verdict, which
+      // would cancel a paying customer's live subscription.
+      const first = await admin.rpc("confirm_paid_participation", {
+        p_product_id: PRODUCT_CONFIRM,
+        p_gamer_id: TEST_IDS.GAMER,
+        p_customer_id: TEST_IDS.CUSTOMER,
+        p_checkout_session_id: "cs_replay_1",
+      });
+      const second = await admin.rpc("confirm_paid_participation", {
+        p_product_id: PRODUCT_CONFIRM,
+        p_gamer_id: TEST_IDS.GAMER,
+        p_customer_id: TEST_IDS.CUSTOMER,
+        p_checkout_session_id: "cs_replay_1",
+      });
+
+      const a = confirmPaidParticipationRpcResult.parse(first.data);
+      const b = confirmPaidParticipationRpcResult.parse(second.data);
+      expect(a.kind).toBe("confirmed");
+      expect(b.kind).toBe("confirmed");
+      expect(b.kind === "confirmed" && b.participation_id).toBe(
+        a.kind === "confirmed" && a.participation_id,
+      );
+      expect(
+        z.object({ idempotent: z.boolean() }).parse(second.data).idempotent,
+      ).toBe(true);
+
+      const { data: rows } = await admin
+        .from("participations")
+        .select("id")
+        .eq("product_id", PRODUCT_CONFIRM)
+        .eq("gamer_id", TEST_IDS.GAMER);
+      expect(rows?.length).toBe(1);
+    });
+
+    it("returns duplicate_payment when a different session already bought the seat", async () => {
+      // Two Stripe sessions completed for one (product, gamer) — the parent
+      // paid on the original tab and again on a retry tab. The second must not
+      // raise on the partial UNIQUE; it must come back as a duplicate so the
+      // webhook records the charge and cancels the second subscription instead
+      // of looping on Stripe retries.
+      const first = await admin.rpc("confirm_paid_participation", {
+        p_product_id: PRODUCT_CONFIRM,
+        p_gamer_id: TEST_IDS.GAMER,
+        p_customer_id: TEST_IDS.CUSTOMER,
+        p_checkout_session_id: "cs_dup_first",
+      });
+      const firstBody = confirmPaidParticipationRpcResult.parse(first.data);
+
+      const second = await admin.rpc("confirm_paid_participation", {
+        p_product_id: PRODUCT_CONFIRM,
+        p_gamer_id: TEST_IDS.GAMER,
+        p_customer_id: TEST_IDS.CUSTOMER,
+        p_checkout_session_id: "cs_dup_second",
+      });
+      const secondBody = confirmPaidParticipationRpcResult.parse(second.data);
+
+      expect(secondBody.kind).toBe("duplicate_payment");
+      expect(
+        secondBody.kind === "duplicate_payment" &&
+          secondBody.existing_participation_id,
+      ).toBe(firstBody.kind === "confirmed" && firstBody.participation_id);
+
+      // Still exactly one seat.
+      const { data: rows } = await admin
+        .from("participations")
+        .select("id")
+        .eq("product_id", PRODUCT_CONFIRM)
+        .eq("gamer_id", TEST_IDS.GAMER);
+      expect(rows?.length).toBe(1);
+    });
+
+    it("returns duplicate_payment when the gamer is already on the waitlist", async () => {
+      // Nothing stops a parent joining the waitlist while a checkout is in
+      // flight — there is no row to block them any more. The payment then lands
+      // on a gamer who already holds a spot on the product, which is the same
+      // "two claims, one seat" situation and gets the same answer.
+      const { data: waitlisted } = await admin
         .from("participations")
         .insert({
           product_id: PRODUCT_CONFIRM,
           gamer_id: TEST_IDS.GAMER_2,
-          customer_id: TEST_IDS.CUSTOMER,
-          status: "active",
-        })
-        .select("id")
-        .single();
-
-      const result = await admin.rpc("confirm_reservation", {
-        p_reservation_id: inserted!.id,
-      });
-      const body = z
-        .object({ kind: z.string(), idempotent: z.boolean().optional() })
-        .parse(result.data);
-      expect(body.kind).toBe("confirmed");
-      expect(body.idempotent).toBe(true);
-    });
-
-    it("returns orphan when the reservation row does not exist", async () => {
-      const result = await admin.rpc("confirm_reservation", {
-        p_reservation_id: "00000000-0000-0000-0000-000000000fff",
-      });
-      expect(getString(result.data, "kind")).toBe("orphan");
-    });
-
-    it("returns orphan for a row in waitlisted state", async () => {
-      const { data: inserted } = await admin
-        .from("participations")
-        .insert({
-          product_id: PRODUCT_CONFIRM,
-          gamer_id: TEST_IDS.GAMER,
           customer_id: TEST_IDS.CUSTOMER,
           status: "waitlisted",
           waitlisted_at: new Date().toISOString(),
@@ -317,61 +307,27 @@ describe("participations race + idempotency", () => {
         .select("id")
         .single();
 
-      const result = await admin.rpc("confirm_reservation", {
-        p_reservation_id: inserted!.id,
+      const result = await admin.rpc("confirm_paid_participation", {
+        p_product_id: PRODUCT_CONFIRM,
+        p_gamer_id: TEST_IDS.GAMER_2,
+        p_customer_id: TEST_IDS.CUSTOMER,
+        p_checkout_session_id: "cs_waitlist_clash",
       });
-      expect(getString(result.data, "kind")).toBe("orphan");
+      const body = confirmPaidParticipationRpcResult.parse(result.data);
+      expect(body.kind).toBe("duplicate_payment");
+      expect(
+        body.kind === "duplicate_payment" && body.existing_participation_id,
+      ).toBe(waitlisted!.id);
     });
 
-    it("returns duplicate_payment when another active row exists for the same (product, gamer)", async () => {
-      // The "already signed up" guard in create_participation only blocks
-      // active/waitlisted — a parent who clicks-abandons-clicks-again can
-      // legitimately have two reserving rows. If both Stripe sessions
-      // complete, the second confirm must NOT raise on the partial UNIQUE;
-      // it must return duplicate_payment so the webhook can record the
-      // duplicate charge instead of looping on Stripe retries.
-      const { data: active } = await admin
-        .from("participations")
-        .insert({
-          product_id: PRODUCT_CONFIRM,
-          gamer_id: TEST_IDS.GAMER,
-          customer_id: TEST_IDS.CUSTOMER,
-          status: "active",
-        })
-        .select("id")
-        .single();
-
-      const { data: reserving } = await admin
-        .from("participations")
-        .insert({
-          product_id: PRODUCT_CONFIRM,
-          gamer_id: TEST_IDS.GAMER,
-          customer_id: TEST_IDS.CUSTOMER,
-          status: "reserving",
-          reserved_until: new Date(Date.now() + 30 * 60_000).toISOString(),
-        })
-        .select("id")
-        .single();
-
-      const result = await admin.rpc("confirm_reservation", {
-        p_reservation_id: reserving!.id,
+    it("raises for a product that does not exist", async () => {
+      const result = await admin.rpc("confirm_paid_participation", {
+        p_product_id: "00000000-0000-0000-0000-000000000fff",
+        p_gamer_id: TEST_IDS.GAMER,
+        p_customer_id: TEST_IDS.CUSTOMER,
+        p_checkout_session_id: "cs_no_product",
       });
-      const body = z
-        .object({
-          kind: z.string(),
-          existing_participation_id: z.string().optional(),
-        })
-        .parse(result.data);
-      expect(body.kind).toBe("duplicate_payment");
-      expect(body.existing_participation_id).toBe(active!.id);
-
-      // Reserving row left untouched — webhook is responsible for deleting it.
-      const { data: row } = await admin
-        .from("participations")
-        .select("status")
-        .eq("id", reserving!.id)
-        .single();
-      expect(row?.status).toBe("reserving");
+      expect(result.error).not.toBeNull();
     });
   });
 

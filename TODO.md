@@ -54,7 +54,6 @@
   **Why this matters beyond token cost:** the bigger win is *relevance routing* — when I'm working on tokens code, the token rules load alongside the file and are the first thing I see; when I'm not, they're not in my way. Today every rule is mixed together at root and competes for attention. Estimated drop in always-on context: ~1.5–2k tokens.
 
   **How to verify after splitting:** open a file in each target subtree, check that `/context` shows the nested CLAUDE.md as loaded and the root file is correspondingly leaner. Confirm a sample rule (e.g., the `apply_group_changes` RPC rule) no longer appears in a fresh-session context dump until a `src/services/groups/*` file is touched.
-- [ ] **Cancel the live Stripe subscription when a subscription Checkout is abandoned (orphan / duplicate-payment).** In `src/app/api/webhooks/stripe/products/route.ts` `handleCheckoutCompleted`, by the time `checkout.session.completed` fires for a subscription the Stripe sub is already live and recurring. Two branches bail out without recording a `family_subscriptions` row *and without cancelling the sub*: `confirmJson.kind === "orphan"` (reservation row missing/in an unexpected status — admin interference) and `kind === "duplicate_payment"` (parent paid two Stripe sessions for the same product×gamer). Result: Stripe keeps charging the parent every month for a club with no participation, `handleInvoicePaid` silently drops every renewal (no `famSub` row to match), and `customer.subscription.deleted` finds no row to tear down. Pre-existing, but the per-participation model widened the exposure — every subscription signup is now its own standalone recurring sub (the old shared-family-sub model only created a fresh Checkout sub for the *first* club in a currency; later clubs were inline `subscriptions.update` adds that never hit this path). **Fix:** in both branches, when `isSubscription && typeof session.subscription === "string"`, call `stripe.subscriptions.cancel(session.subscription)` before returning (keep the duplicate-payment `console.error` so admin still gets alerted). Rare in practice, but it's a silent recurring overcharge of a real customer — a refund of one invoice doesn't stop it, the sub itself has to be cancelled.
 - [ ] **Whitelist the Stripe status before writing `family_subscriptions.status`, and stop swallowing that update's error.** In `src/app/api/webhooks/stripe/products/route.ts`, the `customer.subscription.updated` handler writes Stripe's `status` through verbatim (only special-casing `active` + `cancel_at_period_end` → `canceling`), but the column's CHECK accepts just `active | past_due | cancelled | incomplete | canceling`. Stripe's `trialing`, `unpaid`, `paused` and `incomplete_expired` all violate it — and unlike the sibling writes in the same file, this update never destructures/checks `error`, so a CHECK violation silently no-ops, the route returns 200, Stripe never retries, and the row keeps a stale status forever. **Not exposed today (verified 2026-07-27 against the live account):** the failed-payment end-action is *cancel*, so dunning exhaustion fires `customer.subscription.deleted` (3 subs carry cancellation reason `payment_failed`) and there are **zero** `unpaid` subs. It goes live the moment that Dashboard setting is flipped to "mark as unpaid", or a sub is paused — and the damage is worse than a stale string: freeing a seat runs only off `subscription.deleted`, so a churned child would keep an `active` participation indefinitely while the row still read `past_due`. Benign version of the same bug already reachable: for a `trialing` sub (migrated subs carry real trials), an update event during the trial fails the CHECK, so `current_period_end` silently stops tracking. **Fix:** map the Stripe status onto the allowed set before the update (`trialing` → `active`, `unpaid`/`incomplete_expired` → `cancelled`, decide `paused` deliberately), and check the returned error and throw, like the other writes do. Pairs with the ops constraint in `docs/stripe.md`.
 - [ ] **Harden the Stripe renewal webhook against an API-version change (code fix), and eventually modernize the account version deliberately.** The Stripe account default API version is `2019-12-03` — inherited from the pre-Sogverse School-of-Gaming account (it still carries the old Chargebee, WooCommerce, and Klaviyo webhook endpoints). Stripe keeps old versions working indefinitely, so nothing is broken by being old; the hazard is a *future* upgrade.
   - **Two "silent bombs" — both in `src/app/api/webhooks/stripe/products/route.ts`, both fail the same way (no error, just missing rows). Field shapes verified against Stripe's changelog 2026-07-01.**
@@ -119,57 +118,6 @@ Now unlocked by the one-Stripe-sub-per-participation model (each consumer-club s
 
 - [ ] Decide the rule for **threshold-start** clubs (no fixed `start_date`): simplest is to charge immediately as today (there's no date to anchor to); deferring those would need a job that anchors the sub when the product flips to `running`. See the AskUserQuestion discussion that scoped this.
 - [ ] Parent-facing checkout copy must make "you won't be charged until {date}" explicit.
-
-### `count_seats_taken` and the seat-count rollup disagree over expired reservations
-
-- [ ] `count_seats_taken` counts `status IN ('active','reserving')` with **no
-      `reserved_until` filter**, while `refresh_product_seat_counts` — the rollup the
-      parent-facing counter reads — filters `reserved_until > NOW()`. So an expired
-      reservation is invisible on the page but still occupies a seat in the RPC that
-      gates signup: the product advertises a free seat and checkout answers "full",
-      permanently, with no way for a parent to tell why.
-
-Independent of the reservation-flow rewrite below and worth fixing either way — it is
-what turns any stranded reserving row from a temporary blemish into a destroyed seat. The
-fix is a one-line predicate change in the RPC (`AND (status = 'active' OR reserved_until
-> NOW())`), plus a db test that an expired reservation stops counting. Only bites capped
-products, so it is currently latent — see the entry below for why nothing is capped today.
-
-### Simplify the reserve → confirm checkout flow (it pays for a cap nothing uses)
-
-A paid signup currently takes a seat in two stages: `create_participation` inserts a
-`status='reserving'` row, the Checkout Session carries that row's id in its metadata, and
-Stripe's `checkout.session.completed` webhook flips it to `active` (or
-`checkout.session.expired` deletes it). The reserving stage exists to stop a popular
-product overselling while parents sit on the Stripe page.
-
-**The premise no longer holds.** Seat caps are locked off in the admin form for every
-product type except municipality clubs (`formLocksFor` in
-`src/components/admin/products/form-locks.ts` — "every product launches uncapped"), and
-municipality clubs are free/external-contract, so they never reach Stripe Checkout at
-all. In prod today every consumer club is uncapped, there are no municipality clubs, and
-the only capped products are a handful of paid camps that pre-date the lock and have
-already finished. So the overselling this protects against cannot currently happen on
-any sellable product.
-
-**What it costs while dormant:**
-- Every failure between reserving and creating the Checkout Session must remember to
-  release the seat by hand. Miss one and the row is stranded — no Session exists yet, so
-  the expiry webhook never fires.
-- A stranded row holds its seat permanently, because of the seat-count bug below.
-- Two writes and a webhook round-trip on every paid signup, plus a reservation lifetime
-  to tune.
-
-**Direction, if picked up:** create the participation when payment is confirmed
-(webhook) rather than reserving it up front, so an abandoned or failed checkout leaves
-nothing behind. Note the reserving row is not *only* a capacity hold — it is also the
-handle joining the Stripe session back to a participation, so removing it means deciding
-where that link lives instead (session metadata already carries gamer/product/customer).
-
-**Deliberately deferred:** the preference is to reintroduce this complexity when a
-product genuinely needs a seat cap, rather than carry it for a case that does not exist
-yet. Recorded so the reasoning survives — and so whoever re-enables seat caps knows this
-flow is what makes them safe.
 
 ### Localize the subscription line-item name on the Stripe Checkout page
 
