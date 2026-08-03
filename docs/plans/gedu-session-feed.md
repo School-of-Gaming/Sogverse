@@ -99,10 +99,22 @@ fixture-UUID rule.
    needs-substitute flag. Both relate to cancellation/substitution flows deliberately
    left undesigned; the schema may reserve the concepts, the mock renders and edits
    nothing of them.
-9. **Enforcement epoch:** a constant in code, set when the feature ships. Work owed
-   starts at `max(product start, epoch)` — pre-existing clubs owe nothing for their
-   history; pre-epoch gaps render muted, never as alerts. Not a column, not
-   admin-configurable.
+9. **Enforcement epoch:** a constant in code, value **2026-08-31** (decided
+   2026-08-03). Work owed starts at `max(product start, epoch)` — pre-existing clubs
+   owe nothing for their history. Not a column, not admin-configurable.
+   **The epoch gates only what is owed and flagged, never what is editable**
+   (product-owner tweak, 2026-08-03, superseding the mock's no-editor treatment of
+   pre-epoch entries): gedus can record attendance, reports, and gedu notes on any
+   past session back to the product start, pre-epoch included, with the same
+   editors as any past session. But a session dated before the epoch never shows
+   "Needs attention", never counts into the dashboard attention badge, and its
+   incomplete states render neutral — an unrecorded pre-epoch occurrence keeps its
+   muted quiet-placeholder rendering (never an alert), it just expands into the
+   record editor like any other past entry. Once recorded, a pre-epoch session
+   renders as a normal past entry whose warning rung simply never applies (the
+   "Complete" success state may still show). The mock's `isEditableEntry` /
+   `NoRecordSessionFeedEntry` no-editor doc comments are superseded on this point
+   and are updated in step 4.
 10. **Permissions:** any gedu assigned to a group edits that group's sessions,
     attendance, and notes; admins can override anything (admin UI out of scope).
     Peer-group feeds are not visible in v1 — the schema must not block opening read
@@ -260,11 +272,12 @@ Predictable flow, simpler code.
    commented with the last-write-wins acceptance (18); backward occurrence
    enumeration in the shared expansion helpers (they only walk forward today;
    holiday-blind per Constraints); the epoch constant (a **global** date constant in
-   `src/lib/constants/`, compared as a product-local date, its value chosen in the
-   PR that ships step 4); the feed RPC and the per-assignment summary RPC per (16) —
+   `src/lib/constants/`, compared as a product-local date, value **2026-08-31**
+   per (9)); the feed RPC and the per-assignment summary RPC per (16) —
    with db-test coverage for any Json-returning result schemas. The RPCs must supply
    what the fixtures promise: group name, per-group gamer count, **site name**, and
-   attention count on assignment summaries; roster rows with
+   attention count on assignment summaries — the attention count covering only
+   sessions dated on/after the epoch per (9); roster rows with
    parent emails (**tighten the contract to non-null** — the backend guarantees it).
    Enumeration floors at **product start** (pre-epoch occurrences render muted, the
    chunked reveal absorbs long histories); the attendance RPC may take the reserved
@@ -283,7 +296,12 @@ Predictable flow, simpler code.
    wiring on the username field per (15); the Padlet link's removal from gedu
    surfaces; **site rendering gated on `is_remote`, not on location presence** —
    remote municipality clubs carry a `location_id` by CHECK, so "has a location"
-   would wrongly render site notes on them; and a stale-comment sweep (the scene
+   would wrongly render site notes on them; **the pre-epoch editability tweak of
+   (9)** — `no_record` entries become expandable into the record editor (attendance
+   past-only as ever), `isEditableEntry` and the `NoRecordSessionFeedEntry` /
+   `isEditableEntry` doc comments and their unit tests updated to the
+   owed-vs-editable distinction, muted rendering and never-alerting kept; and a
+   stale-comment sweep (the scene
    description claiming holiday skips, the scene doc listing the removed didn't-run
    editor, and the voice route's claim that a caller already passes `?back=` —
    the `entry-state.ts` current-roster comments are CORRECT per (6) and stay).
@@ -302,7 +320,8 @@ Predictable flow, simpler code.
 - **Step 3:** db tests green in CI, including the authorization spine for every new
   object and write-IDOR coverage for the new write paths.
 - **Step 4:** a gedu can, against real data — open any past session of their group
-  back to `max(start, epoch)`; record attendance partially and completely; write and
+  back to the product start (alerts and badges accruing only from the epoch
+  onward, per (9)); record attendance partially and completely; write and
   edit rich reports and gedu notes; edit group/site notes and a member's Minecraft
   username; see gaps, ladders, and dashboard badges that agree with the feed; join
   their own and peer rooms from group surfaces only; and leave a voice room onto the

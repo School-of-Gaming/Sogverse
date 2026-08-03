@@ -1477,7 +1477,7 @@ GRANT ALL ON FUNCTION public.update_product(
 -- match is indistinguishable from one that did its job, and the only production
 -- discrepancy on record was a migration that took a branch its author did not
 -- expect. So assert the end state rather than trusting the branch. This runs
--- once, when 00136 applies: apply-time protection, not a standing invariant.
+-- once, when 00138 applies: apply-time protection, not a standing invariant.
 DO $$
 BEGIN
   IF EXISTS (
