@@ -76,6 +76,27 @@ describe("the location search fold, as the database computes it", () => {
     });
   });
 
+  /**
+   * The separator is not decoration: it is what makes a prefix test different
+   * from an infix one, because a term-prefix match is "contains separator then
+   * needle". If it ever stopped being a character that cannot occur in a place
+   * name, a name containing it would forge a term boundary and rank as an exact
+   * match on something it merely contains.
+   */
+  it("delimits terms with a control character no place name can contain", async () => {
+    const { data, error } = await admin.rpc("location_search_separator");
+    if (error) throw error;
+
+    expect(data).toBe(SEPARATOR);
+    expect(data).toHaveLength(1);
+    // A control character, so it cannot appear in a name, a code, or anything
+    // a user can type into the search box.
+    expect(data.charCodeAt(0)).toBeLessThan(32);
+
+    // And the blob really is built with it, rather than merely agreeing on it.
+    expect(await blobOf("Nimes")).toBe(`${data}nimes${data}`);
+  });
+
   it("folds the canonical name, the alternates and the official code alike", async () => {
     // The three sources a blob is built from at once — a Finnish name, its
     // Swedish alternate, and a code whose letters have to be lowercased — each

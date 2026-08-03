@@ -103,7 +103,7 @@ describe("locations scoped reads", () => {
 
       expect(helsinki?.ancestors.map((node) => node.name)).toEqual([
         "Uusimaa",
-        "Finland",
+        "Suomi",
       ]);
     });
 
@@ -125,13 +125,13 @@ describe("locations scoped reads", () => {
       const sites = await service.getSites();
       const school = sites.find((site) => site.name === "Test School");
 
-      // Nearest first, and it stops at the country: Finland is a root row, so
+      // Nearest first, and it stops at the country: Suomi is a root row, so
       // the fourth embed level really does come back null. The depth is there
       // for France's extra `district` level, not for Finland.
       expect(school?.ancestors.map((node) => node.name)).toEqual([
         "Helsinki",
         "Uusimaa",
-        "Finland",
+        "Suomi",
       ]);
       expect(school?.ancestors.map((node) => node.type)).toEqual([
         "municipality",

@@ -348,7 +348,17 @@ INVOKER` function reading only tables the caller's RLS already governs qualifies
 cannot return a row a direct select would not, so there is no scope for an argument to
 aim it at someone else. Two members are of this second kind: the product read predicate
 the RLS policies evaluate, and the location search behind the public picker. Both are
-also `anon`-reachable, which is a separate allowlist and a separate decision. The
+also `anon`-reachable, which is a separate allowlist and a separate decision.
+
+There is a third and widest kind, and it is worth naming so it is not mistaken for an
+oversight: **a function that reads no table at all.** The location search's fold
+primitives — strip diacritics, return the term separator, join a row's searchable strings
+— are pure functions of their arguments, holding no privilege and returning nothing the
+caller did not pass in. There is no scope for an argument to aim because there is no data
+behind them. They are granted rather than hidden because both paths that reach them are
+checked as the *caller*: a `SECURITY INVOKER` function calling them, and a generated
+column whose expression Postgres evaluates under the privileges of whoever writes the row.
+Revoking them hides nothing — it only makes the feature fail closed. The
 requirement that each entry name a scope test is what keeps the widening honest — a
 function classified this way has to be *shown* answering identically regardless of who
 asks.

@@ -195,6 +195,31 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/location-search.test.ts",
     why: "SECURITY INVOKER over `locations` alone, so the caller's own RLS decides every row it can see exactly as a direct select would — it cannot answer with anything a plain read of that table would not already return, and the scope test proves an anonymous caller and a privileged one get the identical answer. Self-scoping by the same reading as can_read_product: the scope is the caller's, not a uid the arguments could aim elsewhere",
   },
+  // The three fold primitives below are a third shape the category has to
+  // admit, and the widest reading of it: they read *no table at all*. Each is a
+  // pure function of its arguments — strip diacritics, return a constant
+  // separator, join a row's searchable strings — holding no privilege and
+  // exposing nothing a caller did not pass in. There is no scope to escape
+  // because there is no data behind them.
+  //
+  // They are granted rather than hidden because both paths that reach them are
+  // privilege-checked as the *caller*: `search_locations` is SECURITY INVOKER
+  // and folds its needle with them, and `locations.search_blob` is a generated
+  // column whose expression Postgres evaluates under the privileges of whoever
+  // writes the row. Revoking them does not hide anything; it only makes search
+  // fail with 42501 and blocks every admin write to `locations`.
+  immutable_unaccent: {
+    scopeTest: "tests/db/search-fold-agreement.test.ts",
+    why: "pure text→text fold, reads nothing; reachable because search_locations is SECURITY INVOKER and folds the needle with it",
+  },
+  location_search_separator: {
+    scopeTest: "tests/db/search-fold-agreement.test.ts",
+    why: "returns one constant control character, reads nothing; reachable because search_locations builds its LIKE patterns from it",
+  },
+  location_search_blob: {
+    scopeTest: "tests/db/search-fold-agreement.test.ts",
+    why: "folds the strings it is handed into one delimited blob, reads nothing; reachable because the locations.search_blob generated column evaluates it under the writing role's privileges, so an admin creating a venue needs it",
+  },
 };
 
 /**
@@ -205,8 +230,20 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
  * `search_locations` is reached by the public educator registration page before
  * any account exists; it is SECURITY INVOKER over a table anon already holds
  * SELECT on for every row, so it narrows that surface rather than widening it.
+ *
+ * `immutable_unaccent` and `location_search_separator` are here because
+ * `search_locations` calls them and runs as its caller — granting the entry
+ * point alone yields 42501 on the first anonymous search. Both are pure
+ * functions over their arguments that read no table, so anon reaching them
+ * exposes nothing; `location_search_blob` is deliberately *not* here, because
+ * only the write path needs it and anon never writes to `locations`.
  */
-const ANON_ALLOWLIST = new Set(["can_read_product", "search_locations"]);
+const ANON_ALLOWLIST = new Set([
+  "can_read_product",
+  "search_locations",
+  "immutable_unaccent",
+  "location_search_separator",
+]);
 
 /**
  * check 1 exempts `assert_role` from the guard-first rule: it *is* the guard.
