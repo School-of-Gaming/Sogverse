@@ -81,6 +81,11 @@ export function ParticipantRow({
             platform="minecraft"
             username={p.minecraftUsername ?? null}
             externalId={p.minecraftUuid ?? null}
+            // The compact figure. A participant list is dense by nature and the
+            // full body made every row half again as tall while outweighing the
+            // identicon beside it — the face carries the same identity at the
+            // identicon's own size.
+            figure="head"
             className="w-40 shrink-0"
           />
         )}

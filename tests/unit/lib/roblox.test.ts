@@ -4,6 +4,7 @@ import {
   lookupRobloxUser,
   lookupRobloxProfile,
   resolveRobloxAvatarUrl,
+  resolveRobloxHeadshotUrl,
 } from "@/lib/roblox";
 
 /**
@@ -208,52 +209,129 @@ describe("resolveRobloxAvatarUrl", () => {
   });
 });
 
+describe("resolveRobloxHeadshotUrl", () => {
+  // A different endpoint and a different size from the bust — the compact figure
+  // is 32px, so asking for the smallest accepted size would be soft on a phone.
+  it("asks the headshot endpoint for a size that covers a 32px box on a 3x display", async () => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({
+        data: [
+          {
+            targetId: 3,
+            state: "Completed",
+            imageUrl: "https://tr.rbxcdn.com/h/100/100/AvatarHeadshot/Png",
+          },
+        ],
+      }),
+    );
+
+    await expect(resolveRobloxHeadshotUrl(3)).resolves.toBe(
+      "https://tr.rbxcdn.com/h/100/100/AvatarHeadshot/Png",
+    );
+
+    const requested = String(mockFetch.mock.calls[0]?.[0]);
+    expect(requested).toContain("avatar-headshot");
+    expect(requested).toContain("size=100x100");
+  });
+
+  // Same degradation as the bust: a picture is decoration on a verification.
+  it("returns null when the render is pending, blocked, or the service refuses", async () => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({ data: [{ targetId: 3, state: "Pending", imageUrl: "" }] }),
+    );
+    await expect(resolveRobloxHeadshotUrl(3)).resolves.toBeNull();
+
+    mockFetch.mockRejectedValueOnce(new Error("ECONNRESET"));
+    await expect(resolveRobloxHeadshotUrl(3)).resolves.toBeNull();
+  });
+});
+
 describe("lookupRobloxProfile", () => {
-  it("resolves the account and its avatar in one call", async () => {
-    mockFetch
-      .mockResolvedValueOnce(
-        jsonResponse({
-          data: [{ id: 156, name: "builderman", displayName: "builderman" }],
-        }),
-      )
-      .mockResolvedValueOnce(
-        jsonResponse({
-          data: [
-            {
-              targetId: 156,
-              state: "Completed",
-              imageUrl: "https://tr.rbxcdn.com/xyz/420/420/AvatarBust/Png",
-            },
-          ],
-        }),
+  /**
+   * The two thumbnail calls are issued together, so their completion order is
+   * not ours to predict — the stub answers on the URL rather than on call order.
+   */
+  function stubLookup(options: {
+    account?: { id: number; name: string; displayName: string } | null;
+    bust?: string | null;
+    headshot?: string | null;
+  }) {
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes("avatar-headshot")) {
+        return Promise.resolve(
+          jsonResponse({
+            data: [
+              options.headshot
+                ? { targetId: 1, state: "Completed", imageUrl: options.headshot }
+                : { targetId: 1, state: "Blocked", imageUrl: "" },
+            ],
+          }),
+        );
+      }
+      if (url.includes("avatar-bust")) {
+        return Promise.resolve(
+          jsonResponse({
+            data: [
+              options.bust
+                ? { targetId: 1, state: "Completed", imageUrl: options.bust }
+                : { targetId: 1, state: "Blocked", imageUrl: "" },
+            ],
+          }),
+        );
+      }
+      return Promise.resolve(
+        jsonResponse({ data: options.account ? [options.account] : [] }),
       );
+    });
+  }
+
+  it("resolves the account and both renders in one call", async () => {
+    stubLookup({
+      account: { id: 156, name: "builderman", displayName: "builderman" },
+      bust: "https://tr.rbxcdn.com/xyz/420/420/AvatarBust/Png",
+      headshot: "https://tr.rbxcdn.com/xyz/100/100/AvatarHeadshot/Png",
+    });
 
     await expect(lookupRobloxProfile("BUILDERMAN")).resolves.toEqual({
       username: "builderman",
       userId: 156,
       displayName: "builderman",
       avatarUrl: "https://tr.rbxcdn.com/xyz/420/420/AvatarBust/Png",
+      headshotUrl: "https://tr.rbxcdn.com/xyz/100/100/AvatarHeadshot/Png",
     });
   });
 
-  it("still resolves the profile when the avatar is unavailable", async () => {
-    mockFetch
-      .mockResolvedValueOnce(
-        jsonResponse({
-          data: [{ id: 7, name: "NoPicture", displayName: "No Picture" }],
-        }),
-      )
-      .mockResolvedValueOnce(
-        jsonResponse({
-          data: [{ targetId: 7, state: "Blocked", imageUrl: "" }],
-        }),
-      );
+  it("still resolves the profile when neither render is available", async () => {
+    stubLookup({
+      account: { id: 7, name: "NoPicture", displayName: "No Picture" },
+      bust: null,
+      headshot: null,
+    });
 
     await expect(lookupRobloxProfile("NoPicture")).resolves.toEqual({
       username: "NoPicture",
       userId: 7,
       displayName: "No Picture",
       avatarUrl: null,
+      headshotUrl: null,
+    });
+  });
+
+  // Each render is its own upstream call, so one being moderated or pending says
+  // nothing about the other.
+  it("degrades the two renders independently", async () => {
+    stubLookup({
+      account: { id: 9, name: "HalfThere", displayName: "Half There" },
+      bust: "https://tr.rbxcdn.com/abc/420/420/AvatarBust/Png",
+      headshot: null,
+    });
+
+    await expect(lookupRobloxProfile("HalfThere")).resolves.toEqual({
+      username: "HalfThere",
+      userId: 9,
+      displayName: "Half There",
+      avatarUrl: "https://tr.rbxcdn.com/abc/420/420/AvatarBust/Png",
+      headshotUrl: null,
     });
   });
 

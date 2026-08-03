@@ -12,13 +12,27 @@ row, and the gedu session roster.
 | `GameUsernameRow` | Read-only. Figure, username, status square. |
 | `GameUsernameEditableRow` | Set a username for the first time *or* change one. |
 
-**Rule: there is one row shape and one height, and no variant of either.** No
-compact badge, no `size` prop, no skin-less form. A game identity is one thing
-that renders one way, and the moment it can be two heights or two densities a
-surface has to choose, two surfaces choose differently, and the component that
-exists to stop rows twitching starts contributing its own inconsistency. The
-height lives in one exported constant; only the figure's *width* is per-platform,
-and only because the render's proportion is (a whole body is 1:2, a bust is 1:1).
+**Rule: there is one row shape, and no size knob on it.** No compact badge, no
+`size` prop, no skin-less form. A game identity renders one way, and the moment
+it can be arbitrarily resized a surface has to choose, two surfaces choose
+differently, and the component that exists to stop rows twitching starts
+contributing its own inconsistency.
+
+**The one permitted axis is `figure`: `"full"` or `"head"`** — how much of the
+character is drawn, and therefore how tall the row is. It is a density decision,
+not a size knob, and it exists because `full` was measurably too tall on two
+specific surfaces (a voice participant list and a profile detail line), not
+because a caller might fancy something smaller. Heights live in one exported
+record keyed by figure. **A third value needs a surface that measurably needs
+it** — the size-variant sprawl this directory removed once is exactly what a
+casual third value grows back into.
+
+Within `full` the figure's *width* is per-platform, because the render's
+proportion is (a whole body is 1:2, a bust is 1:1). **Within `head` it is not:**
+a Minecraft face render and a Roblox headshot are both square, so the compact row
+has identical geometry on both platforms. That is the variant's quiet win, and it
+is worth preserving — a per-platform head width would be reintroducing a
+divergence that does not exist upstream.
 
 **Rule: first capture is the same row, opened.** A surface with nothing saved
 passes `autoEdit` and gets the row already in edit mode, with the input where the
@@ -68,12 +82,21 @@ platforms is the caller's business, not the component's.
 explicit `null` draws the bundled inline SVG and does not go looking — what every
 fixture surface passes, because a style-guide or preview page must not reach a
 third-party host on load. **Omitting it lets the platform decide, and on
-Minecraft that is a network request**: its skin host is addressable by username,
-so a row holding a name already holds everything it needs. Roblox has no such
-endpoint — an avatar there costs two server hops behind a per-IP rate limit — so
-an omitted prop can only mean the placeholder, and a real one has to be handed in
-by whoever resolved it server-side. A resolved Roblox URL is short-lived and must
-never be persisted.
+Minecraft that is a network request**: its skin host is addressable by username
+for the body *and* the face alike, so a row holding a name already holds
+everything it needs for either figure. Roblox has no such endpoint — either
+render costs two server hops behind a per-IP rate limit — so an omitted prop can
+only mean the placeholder, and a real one has to be handed in by whoever resolved
+it server-side. A resolved Roblox URL is short-lived and must never be persisted.
+
+**The URL a caller passes must match the figure it asked for**, which is why a
+verification hands back one render per figure rather than a single picture: the
+lookup resolves both in the same round trip, and the row picks the one it is
+drawing. For Minecraft the compact render is the **flat face**, not the isometric
+head — the 3D one leaves roughly a quarter of its square frame as transparent
+padding and puts aliased diagonals on every edge, which at 32px reads as a
+smudge, and it would break the identical-geometry property by not filling its
+frame the way a Roblox headshot does.
 
 ## Wiring a save
 

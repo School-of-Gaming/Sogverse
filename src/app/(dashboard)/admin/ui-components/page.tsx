@@ -506,9 +506,11 @@ function DialogDemo() {
 /*  Participant Card Demo                                              */
 /* ------------------------------------------------------------------ */
 
-// Roles + Minecraft fields exercise every badge state: gedu/gamer rows show
-// the badge (verified / unverified / "(Unknown)"), while non-gedu/gamer rows
-// (and rows with `minecraftUsername === undefined`) show none.
+// Roles + Minecraft fields exercise every identity state: gedu/gamer rows show
+// the compact identity row (verified / unverified / "(Unknown)"), while
+// non-gedu/gamer rows (and rows with `minecraftUsername === undefined`) show
+// none. Five of them, because the point of the compact figure is density —
+// one row cannot show whether a list breathes.
 const DEMO_PARTICIPANTS = [
   {
     userId: "4babfc78-d197-496e-860d-48f1207f5bc6",
@@ -2889,6 +2891,47 @@ function GameEditableRowDemo() {
   );
 }
 
+/**
+ * The compact figure, in every state, on both platforms.
+ *
+ * Minecraft draws real faces here (it can derive them from a name); Roblox draws
+ * the stand-in, because a headshot has to be resolved server-side — which is the
+ * honest picture of what each platform gives a surface that only holds a
+ * username.
+ */
+function GameHeadRowDemo() {
+  return (
+    <div className={cn(GAME_DEMO_GRID, "items-center gap-y-2")}>
+      <GameDemoHeader />
+      {VIEW_ONLY_ROWS.map(({ caption, named, externalId }) => (
+        <Fragment key={caption}>
+          <DemoCaption>{caption}</DemoCaption>
+          {DEMO_PLATFORMS.map((platform) => (
+            <GameUsernameRow
+              key={platform}
+              platform={platform}
+              figure="head"
+              username={named ? DEMO_USERNAME[platform] : null}
+              externalId={externalId[platform]}
+            />
+          ))}
+        </Fragment>
+      ))}
+
+      <DemoCaption>Checking</DemoCaption>
+      {DEMO_PLATFORMS.map((platform) => (
+        <GameUsernameRow
+          key={platform}
+          platform={platform}
+          figure="head"
+          username={DEMO_USERNAME[platform]}
+          status="checking"
+        />
+      ))}
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /*  Add-gamer dialog (real components, inert)                          */
 /* ------------------------------------------------------------------ */
@@ -2943,6 +2986,19 @@ function GameAccountDemo() {
           what a row without one shows.
         </p>
         <GameViewOnlyDemo />
+      </SubSection>
+
+      <SubSection title="2b. The compact figure — head instead of full">
+        <p className="text-sm text-muted-foreground">
+          Same row, same four states, <code>figure=&quot;head&quot;</code>: 32px
+          instead of 60px, for a dense list where the whole character crowds out
+          what the list is about. Both platforms are <em>identical</em> here
+          &mdash; a Minecraft face render and a Roblox headshot are both square,
+          so the 1:2-vs-1:1 divergence that makes the full figure&rsquo;s box
+          differ simply does not exist. Minecraft derives its face from the
+          username; Roblox needs its headshot handed in, exactly as with the bust.
+        </p>
+        <GameHeadRowDemo />
       </SubSection>
 
       <SubSection title="3. View and edit, in place">

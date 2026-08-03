@@ -5,11 +5,12 @@ import { Check, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
+  GAME_FIGURE_HEIGHT,
   GAME_PLATFORMS,
-  GAME_ROW_HEIGHT,
   gameAccountStatus,
   type GameAccountExternalId,
   type GameAccountStatus,
+  type GameFigure,
   type GamePlatform,
 } from "./platforms";
 
@@ -25,11 +26,13 @@ import {
  */
 export function GameAvatarBox({
   platform,
+  figure,
   username,
   avatarUrl,
   verified,
 }: {
   platform: GamePlatform;
+  figure: GameFigure;
   /** `null` draws the stand-in. See the row's `avatarUrl` for the three meanings. */
   username: string | null;
   avatarUrl?: string | null;
@@ -40,7 +43,7 @@ export function GameAvatarBox({
    */
   verified: boolean;
 }) {
-  const descriptor = GAME_PLATFORMS[platform];
+  const model = GAME_PLATFORMS[platform].avatar[figure];
 
   // A render that fails to load falls back to the drawn figure rather than
   // leaving an empty box. Keyed by url so a later, working src gets its own
@@ -59,23 +62,21 @@ export function GameAvatarBox({
   const resolvedUrl =
     avatarUrl !== undefined
       ? avatarUrl
-      : verified &&
-          username !== null &&
-          descriptor.avatar.urlFromUsername !== null
-        ? descriptor.avatar.urlFromUsername(username)
+      : verified && username !== null && model.urlFromUsername !== null
+        ? model.urlFromUsername(username)
         : null;
 
   const showImage =
     username !== null && resolvedUrl !== null && resolvedUrl !== failedUrl;
 
-  const { Placeholder } = descriptor.avatar;
+  const { Placeholder } = model;
 
   return (
     <div
       className={cn(
         "shrink-0 overflow-hidden rounded-sm bg-muted",
-        GAME_ROW_HEIGHT,
-        descriptor.avatar.widthClass,
+        GAME_FIGURE_HEIGHT[figure],
+        model.widthClass,
       )}
     >
       {showImage ? (
@@ -130,6 +131,13 @@ interface GameUsernameRowProps {
    * surface and the wrong one for a fixture, so a fixture passes `null`.
    */
   avatarUrl?: string | null;
+  /**
+   * How much of the character to draw, and therefore how tall the row is.
+   * `"full"` (default) is the whole body or bust; `"head"` is the compact face,
+   * for a dense list where the full figure crowds out what the list is about.
+   * A caller passing `avatarUrl` must pass the render matching this.
+   */
+  figure?: GameFigure;
   className?: string;
 }
 
@@ -166,6 +174,7 @@ export function GameUsernameRow({
   externalId = null,
   status,
   avatarUrl,
+  figure = "full",
   className,
 }: GameUsernameRowProps) {
   const t = useTranslations("gameAccount");
@@ -185,7 +194,7 @@ export function GameUsernameRow({
     <div
       className={cn(
         "flex min-w-0 items-center gap-2",
-        GAME_ROW_HEIGHT,
+        GAME_FIGURE_HEIGHT[figure],
         className,
       )}
     >
@@ -194,6 +203,7 @@ export function GameUsernameRow({
           beside "(Unknown)" claims an identity the row is denying. */}
       <GameAvatarBox
         platform={platform}
+        figure={figure}
         username={unknown ? null : username}
         avatarUrl={avatarUrl}
         verified={resolved === "verified"}

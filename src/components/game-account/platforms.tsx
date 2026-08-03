@@ -55,21 +55,43 @@ export type GameAccountStatus =
   | "checking";
 
 /**
- * **The height of a game account. Every one of them, everywhere.**
+ * How much of the character the row draws.
  *
- * There is deliberately no size variant, on any component here. A game identity
- * is one thing that renders one way — in a register form, in a roster, on a
- * detail page, mid-edit — and the moment it can be two heights, a surface has to
- * choose, two surfaces choose differently, and a component that exists to stop
- * rows twitching starts contributing its own inconsistency. Fixed geometry
- * across the four states was never the whole rule; this is the rest of it.
+ * **One knob, two values, and it is a density choice rather than a size knob.**
+ * `full` is the whole character — a Minecraft body, a Roblox bust — for a surface
+ * with room to spend on it. `head` is the face alone, for a dense list where a
+ * 60px figure crowds out the thing the list is actually about; it exists because
+ * `full` was measurably too tall in the voice room and the admin detail line, not
+ * because a caller might fancy something smaller.
  *
- * 60px, on Tailwind's default `--spacing` of 0.25rem. Every figure width in the
- * registry below is derived from this number and its platform's proportion, so
- * changing it here is the whole change — but the widths are literal classes the
- * Tailwind scanner has to see, so they are recomputed by hand, not by `calc`.
+ * **In `head` mode both platforms have identical geometry**, which is the quiet
+ * win: a Minecraft face render and a Roblox headshot are both square, so the
+ * 1:2-vs-1:1 divergence that forces `full`'s box to differ per platform simply
+ * does not exist here.
+ *
+ * Anything beyond these two is the size-variant sprawl this directory removed
+ * once already. A third value needs a surface that measurably needs it.
  */
-export const GAME_ROW_HEIGHT = "h-15";
+export type GameFigure = "full" | "head";
+
+/**
+ * **The height of a game account, per figure. Every one of them, everywhere.**
+ *
+ * Within a figure there is no size variant, on any component here: a game
+ * identity renders one way, and the moment one figure can be two heights a
+ * surface has to choose, two surfaces choose differently, and a component that
+ * exists to stop rows twitching starts contributing its own inconsistency.
+ *
+ * 60px and 32px, on Tailwind's default `--spacing` of 0.25rem. Every figure width
+ * in the registry below is derived from its height and its platform's proportion,
+ * so changing a number here is the whole change — but the widths are literal
+ * classes the Tailwind scanner has to see, so they are recomputed by hand rather
+ * than by `calc`.
+ */
+export const GAME_FIGURE_HEIGHT: Readonly<Record<GameFigure, string>> = {
+  full: "h-15",
+  head: "h-8",
+};
 
 /**
  * The platform's own key for an account.
@@ -96,11 +118,12 @@ export interface VerifiedGameAccount {
   /** The account key the lookup confirmed. */
   externalId: GameAccountExternalId;
   /**
-   * A render for the account, or `null` when the platform has none to give.
+   * One render per figure, so a caller hands the row the picture that matches the
+   * figure it is drawing. `null` where the platform has none to give.
    * **Short-lived-resolvable, never a value to persist** on the platforms that
    * hand back a CDN URL — the JSON naming it is `no-cache` upstream.
    */
-  avatarUrl: string | null;
+  figureUrls: Readonly<Record<GameFigure, string | null>>;
   /**
    * What other players see in-game, when the platform has such a name *and* it
    * differs from the handle. `null` on a platform where the handle is the only
@@ -113,29 +136,29 @@ export interface VerifiedGameAccount {
   displayName: string | null;
 }
 
-/** How a platform's figure is sourced and drawn. */
-export interface GameAvatarModel {
+/** How one figure of one platform is sourced and drawn. */
+export interface GameFigureModel {
   /**
-   * How wide the figure's box is, as a Tailwind class. **The height is not
-   * configurable** — every game account is `GAME_ROW_HEIGHT` tall — so this is
-   * the one dimension a platform gets a say in, and it says only what the
-   * render's own proportion is: a Minecraft skin comes back as a whole body at
-   * 1:2, a Roblox thumbnail is 1:1 and the API refuses any other ratio. The box
-   * is drawn at that proportion so `object-contain` fits the figure whole; a
-   * shared width would have to crop one platform or letterbox the other.
+   * How wide this figure's box is, as a Tailwind class. **The height is not the
+   * platform's to choose** — it is `GAME_FIGURE_HEIGHT[figure]` — so width is the
+   * one dimension a descriptor gets a say in, and it says only what the render's
+   * own proportion is. A Minecraft body comes back at 1:2 and a Roblox bust at
+   * 1:1, so `full` differs; both platforms' heads are square, so `head` does not.
+   * The box is drawn at the render's proportion so `object-contain` fits the
+   * figure whole; a shared width would crop one platform or letterbox the other.
    */
   widthClass: string;
   /**
-   * Derives a render URL from a username, on the platforms whose image host is
-   * addressable by name, and `null` where it is not.
+   * Derives this figure's render URL from a username, on the platforms whose
+   * image host is addressable by name, and `null` where it is not.
    *
    * This is the sharpest divergence between the two. Minecraft skins hang off a
-   * host that takes the username straight in an `<img src>`, so a row holding a
-   * name already holds everything it needs. Roblox has no such endpoint — the
-   * legacy direct-image routes 404 — so an avatar costs two server hops
-   * (username → numeric id → CDN URL) behind a rate limit that a serverless
-   * fleet shares per IP. A Roblox avatar therefore has to be handed *in* by
-   * whoever already resolved it, which is why this is `null` there.
+   * host that takes the username straight in an `<img src>` — for the body and
+   * for the face alike — so a row holding a name already holds everything it
+   * needs. Roblox has no such endpoint (the legacy direct-image routes 404), so
+   * either render costs two server hops behind a rate limit that a serverless
+   * fleet shares per IP, and has to be handed *in* by whoever already resolved
+   * it. That is why this is `null` for both Roblox figures.
    */
   urlFromUsername: ((username: string) => string) | null;
   /**
@@ -150,6 +173,9 @@ export interface GameAvatarModel {
    */
   Placeholder: () => ReactElement;
 }
+
+/** Both figures of one platform. */
+export type GameAvatarModel = Readonly<Record<GameFigure, GameFigureModel>>;
 
 /** Everything one platform does differently, in one object. */
 export interface GamePlatformDescriptor {
@@ -184,8 +210,26 @@ export interface GamePlatformDescriptor {
  * valid Minecraft username has nothing to encode — a row renders whatever is
  * stored, and a stored value is not a validated one.
  */
-function minecraftSkinUrl(username: string): string {
+function minecraftBodyUrl(username: string): string {
   return `https://mc-heads.net/body/${encodeURIComponent(username)}`;
+}
+
+/**
+ * The Minecraft face, from the same host and the same CSP allowance.
+ *
+ * **The flat face, not the isometric `/head` render.** The 3D one draws a cube
+ * on the diagonal, which leaves roughly a quarter of its square frame as
+ * transparent padding and puts aliased diagonal edges on every side — at 32px
+ * that reads as a smudge. The flat face fills its frame edge to edge at 1:1,
+ * which is also exactly what a Roblox headshot does, so the two platforms end up
+ * with the same geometry in the compact figure instead of nearly the same.
+ *
+ * 96px for a 32px box: three times, so it stays crisp on a phone. A Minecraft
+ * face is natively 8×8, so this is an honest nearest-neighbour upscale rather
+ * than invented detail.
+ */
+function minecraftFaceUrl(username: string): string {
+  return `https://mc-heads.net/avatar/${encodeURIComponent(username)}/96`;
 }
 
 /**
@@ -195,7 +239,7 @@ function minecraftSkinUrl(username: string): string {
  * and the half of it a child has actually chosen (the jacket, the tail, the
  * boots) is below the shoulders.
  */
-function MinecraftPlaceholder() {
+function MinecraftBodyPlaceholder() {
   return (
     <svg
       viewBox="0 0 16 32"
@@ -227,7 +271,7 @@ function MinecraftPlaceholder() {
  * small person adrift in transparent padding. The bust fills 88% and 98%, so the
  * same box shows a face instead of a speck.
  */
-function RobloxPlaceholder() {
+function RobloxBustPlaceholder() {
   return (
     <svg
       viewBox="0 0 16 16"
@@ -247,6 +291,65 @@ function RobloxPlaceholder() {
   );
 }
 
+/**
+ * The Minecraft face: the 8×8 grid the real flat render is drawn on.
+ *
+ * Square and edge to edge, because that is what the face endpoint returns — so
+ * the box behaves identically against this and against a real face.
+ */
+function MinecraftFacePlaceholder() {
+  return (
+    <svg
+      viewBox="0 0 8 8"
+      className="h-full w-full text-muted-foreground"
+      aria-hidden
+      focusable="false"
+    >
+      <rect x="0" y="0" width="8" height="8" fill="currentColor" opacity="0.4" />
+      <rect x="1.5" y="3" width="1.5" height="1.5" fill="currentColor" />
+      <rect x="5" y="3" width="1.5" height="1.5" fill="currentColor" />
+      <rect x="2.5" y="5.5" width="3" height="1" fill="currentColor" opacity="0.7" />
+    </svg>
+  );
+}
+
+/**
+ * The Roblox head: the same square frame, drawn the way a Roblox headshot fills
+ * it — rounded rather than Minecraft's hard-edged cube, so the compact row still
+ * says which platform it is about with no picture and no icon.
+ */
+function RobloxHeadPlaceholder() {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      className="h-full w-full text-muted-foreground"
+      aria-hidden
+      focusable="false"
+    >
+      <rect
+        x="1.5"
+        y="1.5"
+        width="13"
+        height="13"
+        rx="3"
+        fill="currentColor"
+        opacity="0.4"
+      />
+      <rect x="4.5" y="6" width="2.2" height="2.6" rx="0.6" fill="currentColor" />
+      <rect x="9.3" y="6" width="2.2" height="2.6" rx="0.6" fill="currentColor" />
+      <rect
+        x="5.5"
+        y="10.5"
+        width="5"
+        height="1.4"
+        rx="0.7"
+        fill="currentColor"
+        opacity="0.7"
+      />
+    </svg>
+  );
+}
+
 /** The descriptor registry. One entry per platform, and the only place a platform's quirks are written down. */
 export const GAME_PLATFORMS: Readonly<
   Record<GamePlatform, GamePlatformDescriptor>
@@ -258,11 +361,18 @@ export const GAME_PLATFORMS: Readonly<
     isValidUsername: isValidMinecraftUsername,
     usernameExample: "Steve",
     avatar: {
-      // Half the row's height — the whole-body figure's own 1:2 proportion.
-      // 30px against the row's 60.
-      widthClass: "w-7.5",
-      urlFromUsername: minecraftSkinUrl,
-      Placeholder: MinecraftPlaceholder,
+      full: {
+        // Half the figure's height — the whole body's own 1:2 proportion.
+        widthClass: "w-7.5",
+        urlFromUsername: minecraftBodyUrl,
+        Placeholder: MinecraftBodyPlaceholder,
+      },
+      head: {
+        // Square, like every head render on every platform.
+        widthClass: "w-8",
+        urlFromUsername: minecraftFaceUrl,
+        Placeholder: MinecraftFacePlaceholder,
+      },
     },
   },
   roblox: {
@@ -272,10 +382,17 @@ export const GAME_PLATFORMS: Readonly<
     isValidUsername: isValidRobloxUsername,
     usernameExample: "builderman",
     avatar: {
-      // Square with the row's height — the bust render's own 1:1 proportion.
-      widthClass: "w-15",
-      urlFromUsername: null,
-      Placeholder: RobloxPlaceholder,
+      full: {
+        // Square with the figure's height — the bust render's own 1:1 proportion.
+        widthClass: "w-15",
+        urlFromUsername: null,
+        Placeholder: RobloxBustPlaceholder,
+      },
+      head: {
+        widthClass: "w-8",
+        urlFromUsername: null,
+        Placeholder: RobloxHeadPlaceholder,
+      },
     },
   },
 };
@@ -316,9 +433,12 @@ export function useVerifyGameAccount(
       return {
         username: profile.username,
         externalId: profile.uuid,
-        // Derivable from the canonical name, so the field gets a real skin out
-        // of a lookup that never mentioned one.
-        avatarUrl: minecraftSkinUrl(profile.username),
+        // Both derivable from the canonical name, so the row gets a real picture
+        // out of a lookup that never mentioned one — whichever figure it draws.
+        figureUrls: {
+          full: minecraftBodyUrl(profile.username),
+          head: minecraftFaceUrl(profile.username),
+        },
         // Mojang has no second name: the handle is the only one there is.
         displayName: null,
       };
@@ -328,7 +448,9 @@ export function useVerifyGameAccount(
     return {
       username: profile.username,
       externalId: profile.userId,
-      avatarUrl: profile.avatarUrl,
+      // Resolved server-side, both in the one round trip — neither is derivable
+      // here, and each degrades to null on its own.
+      figureUrls: { full: profile.avatarUrl, head: profile.headshotUrl },
       // A display name identical to the handle is not a second line; it is the
       // same line twice.
       displayName:

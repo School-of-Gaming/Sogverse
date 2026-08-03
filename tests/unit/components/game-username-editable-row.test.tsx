@@ -3,7 +3,7 @@ import { useState } from "react";
 import { act, fireEvent, render } from "@testing-library/react";
 import { GameUsernameEditableRow } from "@/components/game-account/game-username-editable-row";
 import {
-  GAME_ROW_HEIGHT,
+  GAME_FIGURE_HEIGHT,
   gameAccountStatus,
   type GamePlatform,
 } from "@/components/game-account/platforms";
@@ -172,9 +172,9 @@ describe("GameUsernameEditableRow", () => {
   it("keeps the row at the one game-account height in both modes", () => {
     const { container, openEditor } = setup({ initialUsername: "Notch" });
 
-    expect(shell(container).className).toContain(GAME_ROW_HEIGHT);
+    expect(shell(container).className).toContain(GAME_FIGURE_HEIGHT.full);
     openEditor();
-    expect(shell(container).className).toContain(GAME_ROW_HEIGHT);
+    expect(shell(container).className).toContain(GAME_FIGURE_HEIGHT.full);
   });
 
   /**

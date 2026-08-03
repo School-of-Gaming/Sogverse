@@ -237,6 +237,9 @@ export default async function AdminUserDetailPage({
                 platform="minecraft"
                 username={mcUsername}
                 externalId={mcUuid}
+                // One line among several in a profile header, so it takes the
+                // compact figure rather than standing a whole body beside them.
+                figure="head"
                 className="max-w-xs"
               />
             )}

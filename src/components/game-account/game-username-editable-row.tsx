@@ -9,11 +9,12 @@ import { cn } from "@/lib/utils";
 import { GameAvatarBox, GameUsernameRow } from "./game-username-row";
 import {
   GAME_PLATFORMS,
-  GAME_ROW_HEIGHT,
+  GAME_FIGURE_HEIGHT,
   gameAccountStatus,
   useVerifyGameAccount,
   type GameAccountExternalId,
   type GameAccountStatus,
+  type GameFigure,
   type GamePlatform,
   type VerifiedGameAccount,
 } from "./platforms";
@@ -30,8 +31,11 @@ import {
 export interface CommittedGameAccount {
   username: string | null;
   externalId: GameAccountExternalId | null;
-  /** Short-lived where a platform returns one; never a value to persist. */
-  avatarUrl: string | null;
+  /**
+   * One render per figure, so a caller can draw whichever it needs. Short-lived
+   * where a platform returns one; never a value to persist.
+   */
+  figureUrls: Readonly<Record<GameFigure, string | null>>;
   /**
    * The in-game display name where the platform has one. Not rendered here — the
    * row has one line and the handle is the identifying one — but reported, so a
@@ -49,6 +53,8 @@ interface GameUsernameEditableRowProps {
   externalId?: GameAccountExternalId | null;
   /** Passed through to the figure; the three meanings are documented on the row. */
   avatarUrl?: string | null;
+  /** How much of the character to draw. Defaults to the whole figure. */
+  figure?: GameFigure;
   /**
    * Called once per commit with what the commit settled on. The caller stores it
    * and hands `username`/`externalId` back as props — this component renders the
@@ -102,6 +108,7 @@ export function GameUsernameEditableRow({
   username,
   externalId = null,
   avatarUrl,
+  figure = "full",
   onCommit,
   autoEdit = false,
   personName,
@@ -173,7 +180,7 @@ export function GameUsernameEditableRow({
       onCommit({
         username: null,
         externalId: null,
-        avatarUrl: null,
+        figureUrls: { full: null, head: null },
         displayName: null,
       });
       return;
@@ -182,7 +189,7 @@ export function GameUsernameEditableRow({
     const unverifiedResult: CommittedGameAccount = {
       username: next,
       externalId: null,
-      avatarUrl: null,
+      figureUrls: { full: null, head: null },
       displayName: null,
     };
 
@@ -206,7 +213,7 @@ export function GameUsernameEditableRow({
       settle({
         username: account.username,
         externalId: account.externalId,
-        avatarUrl: account.avatarUrl,
+        figureUrls: account.figureUrls,
         displayName: account.displayName,
       });
     } catch (err) {
@@ -224,9 +231,15 @@ export function GameUsernameEditableRow({
     return (
       <div className={cn("min-w-0", className)}>
         {/* Same height, same figure, same gap — only the middle box changes. */}
-        <div className={cn("flex min-w-0 items-center gap-2", GAME_ROW_HEIGHT)}>
+        <div
+          className={cn(
+            "flex min-w-0 items-center gap-2",
+            GAME_FIGURE_HEIGHT[figure],
+          )}
+        >
           <GameAvatarBox
             platform={platform}
+            figure={figure}
             username={shown}
             avatarUrl={avatarUrl}
             verified={status === "verified"}
@@ -279,14 +292,15 @@ export function GameUsernameEditableRow({
       <div
         className={cn(
           "group/game flex min-w-0 items-center gap-1",
-          GAME_ROW_HEIGHT,
+          GAME_FIGURE_HEIGHT[figure],
         )}
       >
         <GameUsernameRow
           platform={platform}
           username={shown}
           status={status}
-          avatarUrl={isVerified ? verified.avatarUrl : avatarUrl}
+          figure={figure}
+          avatarUrl={isVerified ? verified.figureUrls[figure] : avatarUrl}
           className="min-w-0 flex-1"
         />
         {/* Deliberately **not** disabled while a lookup is out. Someone who

@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { fireEvent, render } from "@testing-library/react";
 import { GameUsernameRow } from "@/components/game-account/game-username-row";
 import {
-  GAME_ROW_HEIGHT,
+  GAME_FIGURE_HEIGHT,
   type GameAccountStatus,
   type GamePlatform,
 } from "@/components/game-account/platforms";
@@ -70,13 +70,64 @@ describe("GameUsernameRow", () => {
 
     for (const rendered of [minecraft, roblox]) {
       const { row, avatar } = boxes(rendered.container);
-      expect(row.className).toContain(GAME_ROW_HEIGHT);
-      expect(avatar.className).toContain(GAME_ROW_HEIGHT);
+      expect(row.className).toContain(GAME_FIGURE_HEIGHT.full);
+      expect(avatar.className).toContain(GAME_FIGURE_HEIGHT.full);
     }
 
     // Half the height for the 1:2 body, the full height for the 1:1 bust.
     expect(boxes(minecraft.container).avatar.className).toContain("w-7.5");
     expect(boxes(roblox.container).avatar.className).toContain("w-15");
+  });
+
+  /**
+   * The compact figure's whole point: it is shorter, and the per-platform
+   * proportion divergence disappears. A Minecraft face render and a Roblox
+   * headshot are both square, so unlike the full figure these two boxes are
+   * identical rather than merely the same height.
+   */
+  it("draws a shorter, identically square box on both platforms in head mode", () => {
+    const rendered = PLATFORMS.map((platform) =>
+      render(
+        <GameUsernameRow
+          platform={platform}
+          username="Notch"
+          figure="head"
+          avatarUrl={null}
+        />,
+      ),
+    );
+
+    const shapes = rendered.map((r) => boxes(r.container).avatar.className);
+    expect(shapes[0]).toBe(shapes[1]);
+    for (const rendering of rendered) {
+      const { row, avatar } = boxes(rendering.container);
+      expect(row.className).toContain(GAME_FIGURE_HEIGHT.head);
+      expect(avatar.className).toContain(GAME_FIGURE_HEIGHT.head);
+    }
+    expect(GAME_FIGURE_HEIGHT.head).not.toBe(GAME_FIGURE_HEIGHT.full);
+  });
+
+  // Minecraft can derive both renders from a name; the face is a different
+  // endpoint from the body, so head mode must not silently draw the body.
+  it("derives the face, not the body, when Minecraft draws a head", () => {
+    const { container } = render(
+      <GameUsernameRow platform="minecraft" username="Notch" figure="head" />,
+    );
+
+    expect(container.querySelector("img")?.getAttribute("src")).toBe(
+      "https://mc-heads.net/avatar/Notch/96",
+    );
+  });
+
+  // Roblox has no username-addressable endpoint for either figure, so an
+  // omitted prop is the placeholder in head mode too.
+  it("stays on the drawn stand-in for a Roblox head with nothing handed in", () => {
+    const { container } = render(
+      <GameUsernameRow platform="roblox" username="builderman" figure="head" />,
+    );
+
+    expect(container.querySelector("img")).toBeNull();
+    expect(boxes(container).avatar.querySelector("svg")).toBeTruthy();
   });
 
   it.each(PLATFORMS)(

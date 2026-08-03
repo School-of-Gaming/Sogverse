@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Identicon } from "@/components/ui/identicon";
 import { Input } from "@/components/ui/input";
 import {
-  GAME_ROW_HEIGHT,
+  GAME_FIGURE_HEIGHT,
   GameUsernameRow,
   type GameAccountStatus,
 } from "@/components/game-account";
@@ -211,7 +211,7 @@ function MinecraftIdentityCell({
             the controls inside stay `h-7`, centered in it. Read off the constant
             rather than restated, because that height belongs to the shared row
             and has already changed once. */}
-        <div className={cn("flex items-center gap-1.5", GAME_ROW_HEIGHT)}>
+        <div className={cn("flex items-center gap-1.5", GAME_FIGURE_HEIGHT.full)}>
           <label className="sr-only" htmlFor={inputId}>
             {t("minecraftUsernameLabel")}
           </label>
@@ -269,7 +269,7 @@ function MinecraftIdentityCell({
     <div
       className={cn(
         "group/mc flex min-w-0 items-center gap-1",
-        GAME_ROW_HEIGHT,
+        GAME_FIGURE_HEIGHT,
       )}
     >
       {identity}
