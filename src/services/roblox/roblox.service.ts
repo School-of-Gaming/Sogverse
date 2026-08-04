@@ -1,5 +1,6 @@
 import { parseJsonResponse, readErrorMessage } from "@/lib/api/json-response";
 import type { AppSupabaseClient, RobloxAccount } from "@/types";
+import type { GameFigure } from "@/lib/constants/game-platforms";
 import {
   robloxAvatarsResponse,
   robloxProfileResponse,
@@ -75,14 +76,25 @@ export class RobloxService {
    * cost is per *request*, not per id, so the batch is the only shape a roster
    * can afford and having a second single-id entry point would be an invitation
    * to write the N-request version by accident.
+   *
+   * `figures` is the other half of that cost — one upstream request each — so a
+   * caller names the figures it will actually draw rather than taking all of
+   * them and discarding the rest.
    */
   async resolveRenders(
     userIds: readonly number[],
-  ): Promise<Record<string, RobloxRenderUrls>> {
+    figures: readonly GameFigure[],
+  ): Promise<Partial<Record<string, RobloxRenderUrls>>> {
+    // `Partial` because a record lookup is not the guarantee a bare
+    // `Record<string, T>` claims: every string would type as present. The route
+    // does promise an entry per requested id, and saying so in the type here
+    // would move that promise's enforcement to the caller, where nothing checks
+    // it — so callers get an honest `| undefined` and handle the miss.
     if (userIds.length === 0) return {};
 
     const response = await fetch(
-      `/api/roblox/avatars?userIds=${encodeURIComponent(userIds.join(","))}`,
+      `/api/roblox/avatars?userIds=${encodeURIComponent(userIds.join(","))}` +
+        `&figures=${encodeURIComponent(figures.join(","))}`,
     );
 
     if (!response.ok) {

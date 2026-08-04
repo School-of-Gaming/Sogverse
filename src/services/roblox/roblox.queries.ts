@@ -2,9 +2,11 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
+import { robloxRenderUrl } from "@/lib/roblox";
+import type { GameFigure } from "@/lib/constants/game-platforms";
 import type { RobloxAccount } from "@/types";
 import { RobloxService } from "./roblox.service";
-import type { RobloxProfileResponse, RobloxRenderUrls } from "./roblox.contracts";
+import type { RobloxProfileResponse } from "./roblox.contracts";
 
 /**
  * Three branches under one root, and the split is load-bearing.
@@ -32,8 +34,12 @@ export const robloxKeys = {
   myAccount: () => [...robloxKeys.accounts(), "me"] as const,
   account: (userId: string) => [...robloxKeys.accounts(), userId] as const,
   renders: () => [...robloxKeys.all, "render"] as const,
-  render: (robloxUserId: number) =>
-    [...robloxKeys.renders(), robloxUserId] as const,
+  // Keyed by figure as well as id: a cache entry holds the figure that was
+  // asked for and nothing else, so a surface drawing a headshot must not read
+  // an entry resolved for the full figure and find a null it would misread as
+  // "no picture".
+  render: (robloxUserId: number, figure: GameFigure) =>
+    [...robloxKeys.renders(), robloxUserId, figure] as const,
 };
 
 /**
@@ -101,16 +107,23 @@ export function useRobloxAccount(
  * that bucket — the failure mode the batch route was built to avoid. A roster
  * collects its ids and asks the service for all of them at once.
  */
-export function useRobloxRender(robloxUserId: number | null) {
+export function useRobloxRender(
+  robloxUserId: number | null,
+  figure: GameFigure = "full",
+) {
   const supabase = getClient();
   const service = new RobloxService(supabase);
 
-  return useQuery<RobloxRenderUrls | null>({
-    queryKey: robloxKeys.render(robloxUserId ?? 0),
+  // The URL for the figure asked for, not the whole set: the other field would
+  // be `null` because it was never requested, and a call site reading it would
+  // take that for "Roblox has no picture".
+  return useQuery<string | null>({
+    queryKey: robloxKeys.render(robloxUserId ?? 0, figure),
     queryFn: async () => {
       if (robloxUserId === null) return null;
-      const renders = await service.resolveRenders([robloxUserId]);
-      return renders[String(robloxUserId)] ?? null;
+      const renders = await service.resolveRenders([robloxUserId], [figure]);
+      const resolved = renders[String(robloxUserId)];
+      return resolved === undefined ? null : robloxRenderUrl(resolved, figure);
     },
     enabled: robloxUserId !== null,
     staleTime: RENDER_STALE_TIME,

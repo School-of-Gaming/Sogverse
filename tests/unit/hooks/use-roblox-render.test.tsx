@@ -79,13 +79,13 @@ describe("useRobloxRender", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(result.current.data).toEqual({
-      avatarUrl: "bust",
-      headshotUrl: "head",
-    });
-    // The id goes to the avatars route, not to the username-based verify one.
+    // The URL for the figure asked for, not the whole set — reading a field
+    // that was never requested would take its `null` for "no picture".
+    expect(result.current.data).toBe("bust");
+    // The id goes to the avatars route, not to the username-based verify one,
+    // and it names the one figure this row draws.
     expect(String(mockFetch.mock.calls[0][0])).toBe(
-      "/api/roblox/avatars?userIds=156",
+      "/api/roblox/avatars?userIds=156&figures=full",
     );
   });
 
@@ -123,10 +123,55 @@ describe("useRobloxRender", () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(result.current.data).toEqual({
-      avatarUrl: null,
-      headshotUrl: null,
+    expect(result.current.data).toBeNull();
+  });
+
+  it("asks for the head, and reads the headshot, when that is the figure", async () => {
+    mockFetch.mockResolvedValue(
+      rendersResponse({
+        renders: { "156": { avatarUrl: null, headshotUrl: "head" } },
+      }),
+    );
+
+    const { result } = renderHook(() => useRobloxRender(156, "head"), {
+      wrapper: wrapper(),
     });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data).toBe("head");
+    expect(String(mockFetch.mock.calls[0][0])).toContain("figures=head");
+  });
+
+  it("caches per figure, so a head request does not read a full-figure entry", async () => {
+    // The two entries hold different pictures. Sharing a key would hand the
+    // compact row the bust entry's `null` headshot and call it "no picture".
+    mockFetch
+      .mockResolvedValueOnce(
+        rendersResponse({
+          renders: { "156": { avatarUrl: "bust", headshotUrl: null } },
+        }),
+      )
+      .mockResolvedValueOnce(
+        rendersResponse({
+          renders: { "156": { avatarUrl: null, headshotUrl: "head" } },
+        }),
+      );
+
+    const sharedWrapper = wrapper();
+    const full = renderHook(() => useRobloxRender(156, "full"), {
+      wrapper: sharedWrapper,
+    });
+    await waitFor(() => expect(full.result.current.isSuccess).toBe(true));
+
+    const head = renderHook(() => useRobloxRender(156, "head"), {
+      wrapper: sharedWrapper,
+    });
+    await waitFor(() => expect(head.result.current.isSuccess).toBe(true));
+
+    expect(full.result.current.data).toBe("bust");
+    expect(head.result.current.data).toBe("head");
+    expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
   it("keys the cache on the id, so two rows on one account cost one request", async () => {
@@ -147,10 +192,7 @@ describe("useRobloxRender", () => {
     });
     await waitFor(() => expect(second.result.current.isSuccess).toBe(true));
 
-    expect(second.result.current.data).toEqual({
-      avatarUrl: "bust",
-      headshotUrl: "head",
-    });
+    expect(second.result.current.data).toBe("bust");
     // Resolved once per id per session — the render URL only changes when
     // somebody redesigns their avatar, which a mounted page need not notice.
     expect(mockFetch).toHaveBeenCalledTimes(1);

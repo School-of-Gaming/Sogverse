@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, User, Gamepad2 } from "lucide-react";
+import { ArrowLeft, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,21 +11,10 @@ import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
-import {
-  GAME_PLATFORMS,
-  GameUsernameEditableRow,
-  robloxAccountId,
-  type GameAccountExternalId,
-  type GamePlatform,
-} from "@/components/game-account";
-import {
-  useMyGamers,
-  useUpdateGamer,
-  useGamerProfile,
-  type GamerUpdate,
-} from "@/services/gamers";
+import { GameAccountCard } from "@/components/game-account";
+import { useMyGamers, useUpdateGamer, useGamerProfile } from "@/services/gamers";
 import { useMinecraftAccount } from "@/services/minecraft";
-import { useRobloxAccount, useRobloxRender } from "@/services/roblox";
+import { useRobloxAccount } from "@/services/roblox";
 import { ROUTES, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { computeAge } from "@/lib/utils";
 import { useTimezone } from "@/providers";
@@ -247,113 +236,5 @@ export default function GamerDetailsPage() {
       />
 
     </div>
-  );
-}
-
-/**
- * One platform's card on a child's page. The two platforms render the identical
- * thing, so they are the identical component: the only per-platform inputs are
- * the copy, the two stored columns, and which field of the gamer update to send.
- *
- * `onSave` is a prop rather than a hook so the card stays presentational and the
- * two instances cannot drift into two slightly different save behaviours.
- */
-function GameAccountCard({
-  platform,
-  title,
-  description,
-  personName,
-  username,
-  externalId,
-  onSave,
-}: {
-  platform: GamePlatform;
-  title: string;
-  description: string;
-  /** Whose account this is, for the pencil's accessible name. */
-  personName: string;
-  username: string | null;
-  externalId: GameAccountExternalId | null;
-  onSave: (username: GamerUpdate["minecraftUsername"]) => Promise<unknown>;
-}) {
-  const g = useTranslations('gameAccount');
-  const [error, setError] = useState<string | null>(null);
-  const name = GAME_PLATFORMS[platform].name;
-  // `null` for Minecraft (the row derives its skin from the name) and for an
-  // unverified Roblox handle — no stored id to resolve, and looking the *name*
-  // up instead could draw whichever stranger happens to own it.
-  const { data: render } = useRobloxRender(robloxAccountId(platform, externalId));
-
-  /**
-   * Committing the row *is* saving it — the row has already checked the name
-   * against the platform, so what arrives is the canonical casing. The mutation
-   * invalidates the gamer and account queries, which feed the row its new props.
-   *
-   * **No success sentence.** The row is the receipt: the new name is on screen,
-   * the tick lands beside it, the skin arrives in the box. Saying so again in
-   * words underneath announces something already visible and makes the ordinary
-   * path the noisy one. Only a failure gets a sentence, because a failure is the
-   * one outcome the row cannot show on its own.
-   */
-  const handleCommit = async (value: string | null) => {
-    // Cleared first, so a retry after a failure does not leave the old reason
-    // sitting under a row that has since succeeded.
-    setError(null);
-
-    try {
-      await onSave(value);
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : typeof err === "object" && err !== null && "message" in err
-            ? String((err as { message: unknown }).message)
-            : g('saveFailed', { platform: name });
-      setError(message);
-      // Rethrown after the banner is set: the row is awaiting this, and a
-      // silent resolve would leave it showing a name nothing stored.
-      throw err;
-    }
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <Gamepad2 className="h-5 w-5" />
-          <CardTitle>{title}</CardTitle>
-        </div>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <GameUsernameEditableRow
-          platform={platform}
-          username={username}
-          externalId={externalId}
-          personName={personName}
-          // Minecraft omits it and derives its skin from the name. Roblox hands
-          // in what the by-id lookup resolved — or `null` while it is in flight,
-          // which draws the silhouette in a box already at its final size, so
-          // the picture lands without moving anything.
-          avatarUrl={platform === "roblox" ? (render?.avatarUrl ?? null) : undefined}
-          // Returned, not voided: the row waits on the write before it lets
-          // go of the name it is showing.
-          onCommit={({ username: committed }) => handleCommit(committed)}
-          className="max-w-sm"
-        />
-
-        {/* Failures only, and below the row rather than above it. A banner above
-            would push the row — the very thing the person just used, and is
-            still looking at — down the page as it lands. What it does push is
-            the card below, and only ever because this person just committed
-            something here and it did not take. On the ordinary path nothing
-            appears at all and nothing moves. */}
-        {error && (
-          <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-            {error}
-          </div>
-        )}
-      </CardContent>
-    </Card>
   );
 }

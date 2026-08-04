@@ -10,6 +10,14 @@ child, a gedu editing a child on their own roster, and an admin editing anyone.
 The admin one is the widest and is the only one that can reach an account it has
 no relationship to — see "Wiring a save" for what authorizes it.
 
+**The gedu surface is Minecraft-only, and that is a gap rather than a decision.**
+Its write goes through an RPC that names Minecraft columns, so a gedu looking at
+a roster can fix a child's Minecraft handle and cannot touch their Roblox one —
+and the roster does not draw a Roblox figure either, because a list needs the
+batched by-id resolution rather than a lookup per row. Every other surface treats
+the two platforms identically. Closing it is tracked in `TODO.md`; until then,
+do not read "a gedu can edit a roster member's identity" as covering both.
+
 Both platforms are **persisted**, in one table each keyed by the profile
 (`minecraft_accounts`, `roblox_accounts`), and the two are independent
 throughout: a person may have given one handle, both, or neither, and no surface
@@ -24,6 +32,16 @@ across two Sogverse accounts is a supported shape.
 |---|---|
 | `GameUsernameRow` | Read-only. Figure, username, status square. |
 | `GameUsernameEditableRow` | Set a username for the first time *or* change one. |
+| `GameAccountField` | An editable row **wired to a save** — its picture, and the one sentence a failure gets. |
+| `GameAccountCard` | That field inside a titled card, for a page giving each platform one. |
+
+The first two are how an identity is *drawn*; the second two are how a surface
+that owns one connects it to storage. **A surface that saves a game username
+composes `GameAccountField` and supplies `onSave` — it does not wire a row up
+itself.** Three pages did exactly that once, each with its own copy of the same
+error handling, the same silhouette-vs-render decision and the same rethrow, and
+the copies had already started to differ. The field is where a rule about saving
+gets applied once instead of two times out of three.
 
 **Rule: there is one row shape, and no size knob on it.** No compact badge, no
 `size` prop, no skin-less form. A game identity renders one way, and the moment
@@ -216,7 +234,9 @@ row. A failure is different in kind, because it is the one outcome the row canno
 show on its own: the name is still there, saved and unverified, and only a
 sentence can say why it did not take.
 
-Every card here therefore holds one `error` string and no success state, cleared
+**That is a property of the shared field rather than a habit each page keeps**,
+which is the point of it being shared: the field holds one `error` string and no
+success state, cleared
 at the start of each commit so a retry does not leave a stale reason under a row
 that has since succeeded. The slot sits **below** the row — a banner above would
 push the very thing the person just used — and on the ordinary path it renders
@@ -231,7 +251,8 @@ one could not have been looked up there.
 **Rule: a write path that names a target must authorize the target, not just the
 actor.** Three of the four write paths cannot name one at all — the self-serve
 routes derive the row from `auth.uid()`, which is most of what makes them safe —
-and the two that can (the gedu's group-member edit, the admin's user edit) each
+and the two that can (the gedu's Minecraft-only group-member edit, the admin's
+user edit) each
 answer it differently: the gedu's is settled inside the database by an RPC that
 re-derives what that caller may touch, and the admin's is settled in the route,
 which refuses an id naming nobody and an id naming an account that cannot hold a

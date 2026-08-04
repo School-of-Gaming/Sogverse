@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { defineRoute } from "@/lib/api/define-route";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { lookupMinecraftUser, isValidMinecraftUsername } from "@/lib/mojang";
-import { lookupRobloxProfile, isValidRobloxUsername } from "@/lib/roblox";
+import { lookupMinecraftUser } from "@/lib/mojang";
+import { lookupRobloxProfile } from "@/lib/roblox";
 import { toE164Digits } from "@/lib/utils";
 import { resolveLocale } from "@/lib/constants/locales";
 import { registerGeduBody } from "@/services/gedu/gedu-registration.contracts";
@@ -57,32 +57,17 @@ export const POST = defineRoute({
 
     const admin = createAdminClient();
 
-    // Resolve the game handles before creating the auth user: the format checks
-    // below are 400s, and createUser burns the email irreversibly. Whether the
-    // platform knows the name doesn't gate anything — an unresolvable one is
-    // stored with a null account key, and another account already holding it is
-    // allowed.
-    const mcName = minecraftUsername?.trim();
-    if (mcName && !isValidMinecraftUsername(mcName)) {
-      return NextResponse.json(
-        {
-          error:
-            "Invalid Minecraft username. Must be 3-16 characters: letters, numbers, underscores.",
-        },
-        { status: 400 },
-      );
-    }
-
-    const robloxName = robloxUsername?.trim();
-    if (robloxName && !isValidRobloxUsername(robloxName)) {
-      return NextResponse.json(
-        {
-          error:
-            "Invalid Roblox username. Must be 3-20 characters: letters, numbers, and at most one underscore, not at either end.",
-        },
-        { status: 400 },
-      );
-    }
+    // Both handles arrived already validated: the body schema composes each
+    // platform's real username rule with the `''` sentinel, so a malformed name
+    // was a 400 before this handler ran — and before `createUser` burned the
+    // email irreversibly, which is what made the ordering matter. All that is
+    // left here is to read "absent" out of the three shapes it can take.
+    //
+    // Whether the platform *knows* the name still gates nothing: an unresolvable
+    // one is stored with a null account key, and another account already holding
+    // it is allowed.
+    const mcName = minecraftUsername || null;
+    const robloxName = robloxUsername || null;
 
     // Two unrelated third parties, so the lookups run together rather than in
     // sequence — an educator who gave both handles waits for the slower one.

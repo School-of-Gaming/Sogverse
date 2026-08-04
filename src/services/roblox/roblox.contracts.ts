@@ -1,5 +1,14 @@
 import { z } from "zod";
 import { isValidRobloxUsername, ROBLOX_THUMBNAIL_BATCH_MAX } from "@/lib/roblox";
+import {
+  SUPPORTED_GAME_FIGURES,
+  type GameFigure,
+} from "@/lib/constants/game-platforms";
+
+/** Narrows a raw query-string token to a figure, straight off the tuple. */
+function isSupportedGameFigure(value: string): value is GameFigure {
+  return (SUPPORTED_GAME_FIGURES as readonly string[]).includes(value);
+}
 
 /**
  * The wire shapes of the Roblox lookup, shared by both ends: the route parses
@@ -96,7 +105,20 @@ export const robloxAvatarsQuery = z.object({
         return z.NEVER;
       }
 
-      const ids: number[] = [];
+      // **Capped on what was SENT, before deduping.** Checking the deduped set
+      // instead would let an arbitrarily long query string through as long as it
+      // repeated itself — thousands of parts to split, trim and parse per
+      // request, for a cap that is supposed to bound the work. The limit is a
+      // statement about the request, so it is measured on the request.
+      if (parts.length > ROBLOX_THUMBNAIL_BATCH_MAX) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `At most ${ROBLOX_THUMBNAIL_BATCH_MAX} account ids per request`,
+        });
+        return z.NEVER;
+      }
+
+      const ids = new Set<number>();
       for (const part of parts) {
         // `Number` rather than `parseInt`: parseInt("12abc") is 12, which would
         // quietly accept a malformed id and ask upstream about the wrong one.
@@ -108,20 +130,54 @@ export const robloxAvatarsQuery = z.object({
           });
           return z.NEVER;
         }
-        if (!ids.includes(value)) ids.push(value);
+        ids.add(value);
       }
 
-      if (ids.length > ROBLOX_THUMBNAIL_BATCH_MAX) {
+      return [...ids];
+    })
+    .pipe(z.array(robloxUserIdValue)),
+
+  /**
+   * Which figures to resolve. **One upstream request each**, so this is the
+   * knob that decides what the call costs against a rate limit the whole fleet
+   * shares — which is why it defaults to the full figure alone rather than to
+   * everything. A dense roster that draws headshots asks for `head`; a surface
+   * drawing both asks for both and knowingly pays twice.
+   */
+  figures: z
+    .string()
+    .optional()
+    .transform((raw, ctx) => {
+      if (raw === undefined || raw.trim() === "") return ["full" as GameFigure];
+
+      const parts = raw
+        .split(",")
+        .map((part) => part.trim())
+        .filter((part) => part !== "");
+
+      const figures = new Set<GameFigure>();
+      for (const part of parts) {
+        if (!isSupportedGameFigure(part)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `"${part}" is not a figure`,
+          });
+          return z.NEVER;
+        }
+        figures.add(part);
+      }
+
+      if (figures.size === 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `At most ${ROBLOX_THUMBNAIL_BATCH_MAX} account ids per request`,
+          message: "figures must name at least one figure",
         });
         return z.NEVER;
       }
 
-      return ids;
+      return [...figures];
     })
-    .pipe(z.array(robloxUserIdValue)),
+    .pipe(z.array(z.enum(SUPPORTED_GAME_FIGURES))),
 });
 
 /**

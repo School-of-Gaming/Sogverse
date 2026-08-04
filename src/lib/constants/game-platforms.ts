@@ -16,3 +16,14 @@ export const SUPPORTED_GAME_PLATFORMS = ["minecraft", "roblox"] as const;
 
 /** One game platform. Derived, so it cannot disagree with the tuple above. */
 export type GamePlatform = (typeof SUPPORTED_GAME_PLATFORMS)[number];
+
+/**
+ * How much of the character a row draws. Here rather than beside the components
+ * for the same reason as the platforms: the avatar route takes a figure on its
+ * query string, so the wire schema needs the list and cannot reach the component
+ * module for it.
+ */
+export const SUPPORTED_GAME_FIGURES = ["full", "head"] as const;
+
+/** One figure. Derived, so it cannot disagree with the tuple above. */
+export type GameFigure = (typeof SUPPORTED_GAME_FIGURES)[number];

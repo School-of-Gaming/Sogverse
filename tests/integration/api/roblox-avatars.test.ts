@@ -31,12 +31,15 @@ vi.mock("@/lib/roblox", async (importOriginal) => {
   };
 });
 
-function createRequest(userIds?: string): Request {
-  const url =
-    userIds === undefined
-      ? "http://localhost:3000/api/roblox/avatars"
-      : `http://localhost:3000/api/roblox/avatars?userIds=${encodeURIComponent(userIds)}`;
-  return new Request(url, { method: "GET" });
+function createRequest(userIds?: string, figures?: string): Request {
+  const params = new URLSearchParams();
+  if (userIds !== undefined) params.set("userIds", userIds);
+  if (figures !== undefined) params.set("figures", figures);
+  const query = params.toString();
+  return new Request(
+    `http://localhost:3000/api/roblox/avatars${query ? `?${query}` : ""}`,
+    { method: "GET" },
+  );
 }
 
 function mockAuthenticated() {
@@ -152,8 +155,100 @@ describe("GET /api/roblox/avatars", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(mockResolveRobloxRenders).toHaveBeenCalledWith([156]);
+    expect(mockResolveRobloxRenders).toHaveBeenCalledWith([156], ["full"]);
     expect(Object.keys(data.renders)).toEqual(["156"]);
+  });
+
+  it("caps on what was SENT, not on what survives deduping", async () => {
+    // A repeated id still costs the request a parse. Capping the deduped set
+    // would let an arbitrarily long query string through as long as it repeated
+    // itself — a cap that is supposed to bound the work, not bounding it.
+    mockAuthenticated();
+    const repeated = Array.from(
+      { length: ROBLOX_THUMBNAIL_BATCH_MAX + 1 },
+      () => "156",
+    ).join(",");
+
+    const response = await GET(createRequest(repeated));
+
+    expect(response.status).toBe(400);
+    expect(mockResolveRobloxRenders).not.toHaveBeenCalled();
+  });
+
+  // -- Figures --
+
+  it("asks for the full figure alone when none is named", async () => {
+    // The default is the cheap one on purpose: one upstream request rather than
+    // two, and every surface drawing a stored account today draws this figure.
+    mockAuthenticated();
+    mockResolveRobloxRenders.mockResolvedValue(
+      renders({ 156: { avatarUrl: BUST, headshotUrl: null } }),
+    );
+
+    await GET(createRequest("156"));
+
+    expect(mockResolveRobloxRenders).toHaveBeenCalledWith([156], ["full"]);
+  });
+
+  it("passes through the figures a caller names", async () => {
+    mockAuthenticated();
+    mockResolveRobloxRenders.mockResolvedValue(
+      renders({ 156: { avatarUrl: BUST, headshotUrl: HEAD } }),
+    );
+
+    await GET(createRequest("156", "full,head"));
+
+    expect(mockResolveRobloxRenders).toHaveBeenCalledWith(
+      [156],
+      ["full", "head"],
+    );
+  });
+
+  it("accepts the head alone", async () => {
+    mockAuthenticated();
+    mockResolveRobloxRenders.mockResolvedValue(
+      renders({ 156: { avatarUrl: null, headshotUrl: HEAD } }),
+    );
+
+    const response = await GET(createRequest("156", "head"));
+
+    expect(response.status).toBe(200);
+    expect(mockResolveRobloxRenders).toHaveBeenCalledWith([156], ["head"]);
+  });
+
+  it("collapses a figure named twice", async () => {
+    mockAuthenticated();
+    mockResolveRobloxRenders.mockResolvedValue(
+      renders({ 156: { avatarUrl: BUST, headshotUrl: null } }),
+    );
+
+    await GET(createRequest("156", "full,full"));
+
+    expect(mockResolveRobloxRenders).toHaveBeenCalledWith([156], ["full"]);
+  });
+
+  it.each(["body", "FULL", "full,body", "0"])(
+    "returns 400 for figures=%o",
+    async (bad) => {
+      mockAuthenticated();
+
+      const response = await GET(createRequest("156", bad));
+
+      expect(response.status).toBe(400);
+      expect(mockResolveRobloxRenders).not.toHaveBeenCalled();
+    },
+  );
+
+  it("treats an empty figures param as unset rather than as an error", async () => {
+    mockAuthenticated();
+    mockResolveRobloxRenders.mockResolvedValue(
+      renders({ 156: { avatarUrl: BUST, headshotUrl: null } }),
+    );
+
+    const response = await GET(createRequest("156", ""));
+
+    expect(response.status).toBe(200);
+    expect(mockResolveRobloxRenders).toHaveBeenCalledWith([156], ["full"]);
   });
 
   // -- Answers --
@@ -187,7 +282,10 @@ describe("GET /api/roblox/avatars", () => {
     expect(response.status).toBe(200);
     // One upstream call for the set, not one per id — the whole point.
     expect(mockResolveRobloxRenders).toHaveBeenCalledTimes(1);
-    expect(mockResolveRobloxRenders).toHaveBeenCalledWith([156, 1, 68306362]);
+    expect(mockResolveRobloxRenders).toHaveBeenCalledWith(
+      [156, 1, 68306362],
+      ["full"],
+    );
     expect(Object.keys(data.renders).sort()).toEqual(
       ["1", "156", "68306362"].sort(),
     );

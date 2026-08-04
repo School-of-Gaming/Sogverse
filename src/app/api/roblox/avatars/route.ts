@@ -12,10 +12,14 @@ import {
  * **This is the load-time path, and the verify route is the capture-time one.**
  * They look similar and are not: verification starts from a name nobody has
  * confirmed and must spend a hop turning it into an id, while this starts from
- * an id already stored against a profile — the fact, rather than the label. That
- * saves a third of the upstream calls per view, and it is what makes the cost
- * independent of how many identities are on screen: two requests whether the
- * page shows one account or a hundred.
+ * an id already stored against a profile — the fact, rather than the label.
+ *
+ * The cost is **one upstream request per figure**, independent of how many ids
+ * are asked for: one request whether the page shows one account or a hundred.
+ * `figures` therefore defaults to the full figure alone rather than to
+ * everything — every surface drawing a stored account today draws that one, and
+ * resolving a headshot beside it doubled the spend to fetch a picture nothing
+ * rendered.
  *
  * **Authenticated, unlike the verify route, and deliberately so.** Verification
  * has to be public because a username is checked before any account exists.
@@ -40,7 +44,7 @@ export const GET = defineRoute({
   response: robloxAvatarsResponse,
 
   handler: async ({ query }) => {
-    const resolved = await resolveRobloxRenders(query.userIds);
+    const resolved = await resolveRobloxRenders(query.userIds, query.figures);
 
     // Every requested id gets an entry, including the ones with no picture — a
     // caller has to be able to tell "asked, and there is none" from "not asked",

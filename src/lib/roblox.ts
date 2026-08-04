@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { GameFigure } from "@/lib/constants/game-platforms";
 
 /**
  * Roblox account lookup — the counterpart to `mojang.ts`.
@@ -148,6 +149,10 @@ export async function lookupRobloxUser(
 ): Promise<Omit<RobloxProfile, "avatarUrl" | "headshotUrl"> | null> {
   if (!isValidRobloxUsername(username)) return null;
 
+  // Never throws, for the same reason the thumbnail path does not: every caller
+  // treats the answer as optional and stores an unresolvable name unverified. A
+  // connection-level rejection is "no answer", and letting it propagate would
+  // turn a Roblox outage into a 500 on every write path that saves a username.
   const res = await fetch(ROBLOX_USERS_API, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -155,8 +160,8 @@ export async function lookupRobloxUser(
       usernames: [username],
       excludeBannedUsers: true,
     }),
-  });
-  if (!res.ok) return null;
+  }).catch(() => null);
+  if (!res?.ok) return null;
 
   // External API — anything that isn't the expected shape counts as not found.
   const parsed = usernamesResponse.safeParse(await res.json().catch(() => null));
@@ -238,7 +243,15 @@ async function resolveRobloxThumbnails(
   return resolved;
 }
 
-/** Both renders of one account. */
+/**
+ * The renders of one account.
+ *
+ * **Both keys are always present, and a `null` means one of two things** — the
+ * figure was not asked for, or it was and Roblox had no picture. The caller
+ * chose the figures, so it is the one party that can already tell those apart,
+ * and giving the shape a stable set of keys is worth more here than encoding a
+ * distinction its only reader already knows.
+ */
 export interface RobloxRenders {
   /** The bust render, for the full figure. */
   avatarUrl: string | null;
@@ -246,42 +259,75 @@ export interface RobloxRenders {
   headshotUrl: string | null;
 }
 
+/** Which endpoint, at which size, feeding which field. One entry per figure. */
+const FIGURE_SOURCES: Readonly<
+  Record<GameFigure, { api: string; size: string; field: keyof RobloxRenders }>
+> = {
+  full: {
+    api: ROBLOX_AVATAR_API,
+    size: ROBLOX_AVATAR_SIZE,
+    field: "avatarUrl",
+  },
+  head: {
+    api: ROBLOX_HEADSHOT_API,
+    size: ROBLOX_HEADSHOT_SIZE,
+    field: "headshotUrl",
+  },
+};
+
 /**
- * Both renders for many accounts, **by account id**, in two upstream requests
- * regardless of how many ids are asked for.
+ * The requested renders for many accounts, **by account id**, in **one upstream
+ * request per figure** regardless of how many ids are asked for.
  *
  * This is the production path for a *stored* account, and it is deliberately not
  * the one verification uses. A saved account already carries the numeric id, so
  * the username→id hop is not merely optimisable — it is meaningless, because the
- * id is the fact and the name is the label. Skipping it takes a page view from
- * three upstream calls to two, and makes the cost independent of how many
- * identities are on screen.
+ * id is the fact and the name is the label.
  *
- * The two figures are fetched together rather than in sequence: they are
- * independent reads, each one request against the shared bucket, so the count is
- * fixed either way and there is no reason to pay for it twice in latency.
+ * **The figures are a parameter because the cost is per figure**, and every
+ * surface drawing a stored account today draws the full figure alone. Resolving
+ * the headshot alongside it doubled the spend against a 60-per-minute-per-IP
+ * bucket to fetch a picture nothing rendered. A caller that needs both (a dense
+ * roster) asks for both and pays two; a caller that needs one pays one. Where
+ * more than one figure *is* asked for they are fetched together rather than in
+ * sequence — independent reads, so the request count is fixed either way and
+ * there is no reason to pay for it twice in latency.
  */
 export async function resolveRobloxRenders(
   userIds: readonly number[],
+  figures: readonly GameFigure[],
 ): Promise<Map<number, RobloxRenders>> {
-  const [busts, headshots] = await Promise.all([
-    resolveRobloxThumbnails(ROBLOX_AVATAR_API, userIds, ROBLOX_AVATAR_SIZE),
-    resolveRobloxThumbnails(
-      ROBLOX_HEADSHOT_API,
-      userIds,
-      ROBLOX_HEADSHOT_SIZE,
-    ),
-  ]);
+  // Deduped: asking for the same figure twice would spend a second request
+  // against the shared bucket to overwrite a field with itself.
+  const wanted = [...new Set(figures)];
+
+  const resolvedPerFigure = await Promise.all(
+    wanted.map(async (figure) => {
+      const source = FIGURE_SOURCES[figure];
+      return {
+        field: source.field,
+        urls: await resolveRobloxThumbnails(source.api, userIds, source.size),
+      };
+    }),
+  );
 
   return new Map(
-    userIds.map((id) => [
-      id,
-      {
-        avatarUrl: busts.get(id) ?? null,
-        headshotUrl: headshots.get(id) ?? null,
-      },
-    ]),
+    userIds.map((id) => {
+      const renders: RobloxRenders = { avatarUrl: null, headshotUrl: null };
+      for (const { field, urls } of resolvedPerFigure) {
+        renders[field] = urls.get(id) ?? null;
+      }
+      return [id, renders];
+    }),
   );
+}
+
+/** The URL for one figure out of a resolved set. */
+export function robloxRenderUrl(
+  renders: RobloxRenders,
+  figure: GameFigure,
+): string | null {
+  return renders[FIGURE_SOURCES[figure].field];
 }
 
 /** The bust render — the full figure's picture. */
