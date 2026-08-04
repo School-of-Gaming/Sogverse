@@ -42,11 +42,12 @@ interface FormLocks {
    *
    * **A free event clears that same bar and is still locked — deliberately.**
    * It was unlocked once and walked back. The seat gate was never the blocker;
-   * the parent-facing shop was. A capped event that fills up reads exactly like
-   * an open one while a family is browsing — the seat bar is muni-only and the
-   * full-with-waitlist call to action is the same generic one an open product
-   * shows — so unlocking the cap let an admin publish a page with no way to say
-   * it was full. The re-lock is a product decision, not a safety one, and it is
+   * the parent-facing *browse card* was. A capped event that fills up reads
+   * exactly like an open one in the listings — the card's seat bar is muni-only
+   * and its full-with-waitlist call to action is the same generic one an open
+   * product shows — so unlocking the cap let an admin publish a product no
+   * family could tell was full before clicking into it. The re-lock is a
+   * product decision, not a safety one, and it is
    * meant to lift again: TODO.md, "Event seat caps + waitlist: re-locked until
    * the shop surface can express fullness", is the list of what has to exist
    * first.

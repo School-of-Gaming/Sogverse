@@ -257,37 +257,6 @@ export function initialState(
 // section components. Single-line booleans like `usesDate` are derived inline
 // where they're consumed.
 
-/**
- * Switch the seat-limit radio, dropping the waitlist when the cap goes away.
- *
- * **A control that stops rendering has not stopped submitting.** The waitlist
- * checkbox only shows behind a cap, but the build writes `waitlist_enabled`
- * unconditionally — so "cap it, tick the waitlist, change your mind, save"
- * stored a waitlisted product with no cap for a queue to ever form behind. The
- * same click that hides the checkbox therefore clears it; hiding is not
- * clearing, and the invisible half of the pair is the one nobody can catch by
- * looking.
- *
- * The seat count is deliberately *kept*. It sits in the same hidden block, but
- * it is inert while uncapped (the build reads `null` and validate skips it), and
- * an admin toggling back to Limited sees the number they typed still there —
- * which is the point of a radio pair rather than a destructive switch. The
- * waitlist flag has no such defence: nothing downstream ignores it.
- *
- * The reflow this causes is user-initiated, so the layout rule permits it.
- */
-export function withSeatLimitMode(
-  state: FormState,
-  mode: SeatLimitMode,
-): FormState {
-  const uncapped = mode === "unlimited";
-  return {
-    ...state,
-    uncapped,
-    waitlistEnabled: uncapped ? false : state.waitlistEnabled,
-  };
-}
-
 export function effectivePricingShape(
   config: ProductTypeConfig,
 ): "monthly" | "upfront_total" {

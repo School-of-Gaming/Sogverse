@@ -449,7 +449,7 @@
         "thresholdWithDate": "If fewer than this many parents sign up by the start date, you’ll need to cancel and refund from the product’s page.",
         "timezoneFixedHelsinki": "Times are in Europe/Helsinki. Parents see them converted to their local timezone automatically.",
         "holidayHint": "No session will run on any date from the selected calendars. Edit a calendar once and every product using it updates automatically.",
-        "billingHint": "Free events can have a seat limit. Paid events run without one for now.",
+        "billingHint": "Either way, events run without a seat limit for now.",
         "freeDetail": "No charge. Anyone can join with one click.",
         "paidDetail": "One-time charge at signup.",
         "paidByMunicipality": "No customer billing inside this system. School of Gaming invoices the municipality directly.",

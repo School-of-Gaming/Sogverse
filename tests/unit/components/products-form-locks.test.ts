@@ -1,9 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { formLocksFor } from "@/components/admin/products/form-locks";
-import {
-  initialState,
-  withSeatLimitMode,
-} from "@/components/admin/products/product-form-state";
+import { initialState } from "@/components/admin/products/product-form-state";
 import {
   PRODUCT_TYPE_CONFIG,
   type ProductTypeConfig,
@@ -17,10 +14,9 @@ import {
 // unlock is reverted until the shop can render a full event — see TODO.md — and
 // these tests pin the re-locked matrix so it cannot drift back by accident.)
 //
-// Alongside it, `withSeatLimitMode` is the seat-limit radio's handler, and it
-// carries the rule a hidden control needs: choosing Unlimited must clear the
-// waitlist flag the checkbox set, because the build submits that flag whether or
-// not the checkbox is on screen.
+// The capacity *payload* rules that pair with these locks — an uncapped product
+// never submitting a waitlist, and a stored capped event surviving a re-save —
+// live with the builder they belong to, in products-build.test.ts.
 
 const consumerConfig = PRODUCT_TYPE_CONFIG.consumer_club;
 const muniConfig = PRODUCT_TYPE_CONFIG.municipality_club;
@@ -131,56 +127,5 @@ describe("initialState capacity defaults", () => {
     // The free/paid radio no longer moves any lock, but it is still the form's
     // billing choice and free is still where an event begins.
     expect(initialState(eventConfig, "en").paidMode).toBe("free");
-  });
-});
-
-describe("withSeatLimitMode", () => {
-  it("clears the waitlist when the cap is removed", () => {
-    // The checkbox only renders behind a cap, but the build submits
-    // `waitlist_enabled` unconditionally — so without this a "cap it, tick the
-    // waitlist, change your mind" pass saved a waitlisted, uncapped product.
-    const capped = {
-      ...initialState(muniConfig, "en"),
-      uncapped: false,
-      seatCount: "25",
-      waitlistEnabled: true,
-    };
-
-    const unlimited = withSeatLimitMode(capped, "unlimited");
-
-    expect(unlimited.uncapped).toBe(true);
-    expect(unlimited.waitlistEnabled).toBe(false);
-  });
-
-  it("keeps the typed seat count so toggling back restores it", () => {
-    // The seat count is inert while uncapped (the build reads null), so there is
-    // nothing to clear — and the admin can see it, unlike the checkbox.
-    const capped = {
-      ...initialState(muniConfig, "en"),
-      uncapped: false,
-      seatCount: "25",
-      waitlistEnabled: true,
-    };
-
-    const roundTrip = withSeatLimitMode(
-      withSeatLimitMode(capped, "unlimited"),
-      "limited",
-    );
-
-    expect(roundTrip.uncapped).toBe(false);
-    expect(roundTrip.seatCount).toBe("25");
-  });
-
-  it("leaves an existing waitlist choice alone when picking Limited", () => {
-    const uncapped = {
-      ...initialState(muniConfig, "en"),
-      uncapped: true,
-      waitlistEnabled: true,
-    };
-
-    expect(withSeatLimitMode(uncapped, "limited")).toEqual({
-      ...uncapped,
-      uncapped: false,
-    });
   });
 });

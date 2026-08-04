@@ -355,7 +355,20 @@ function buildSharedFields(
   const minAge = Number(state.minAge);
   const maxAge = Number(state.maxAge);
   // Uncapped (no seat limit) → null for any product type; otherwise the count.
+  //
+  // The waitlist is derived from the same answer rather than submitted as the
+  // admin last left it. A waitlist is the queue *behind a cap*, so `seat_count
+  // null, waitlist_enabled true` is not a configuration — it is a queue with
+  // nothing to queue for, and the form can produce one without anybody seeing
+  // it: the checkbox renders only while capped, so ticking it and then choosing
+  // Unlimited leaves a flag on screen nowhere. Deriving here rather than
+  // clearing in the radio handler puts one gate on the write instead of one on
+  // each path to it, which also means an already-stranded row (a tick from
+  // before this rule, or the column's own default) is corrected by the next
+  // save of anything at all. The state flag is deliberately left alone, so an
+  // admin toggling Unlimited and back finds their tick still there.
   const seat = state.uncapped ? null : Number(state.seatCount);
+  const waitlist = state.uncapped ? false : state.waitlistEnabled;
 
   let finalSlots = state.scheduleSlots;
   if (config.scheduleShape === "single_date" && state.startDate) {
@@ -417,7 +430,7 @@ function buildSharedFields(
           : state.endDate || null,
     timezone: FIXED_TIMEZONE,
     seat_count: seat,
-    waitlist_enabled: state.waitlistEnabled,
+    waitlist_enabled: waitlist,
     registration_opens_at: resolveRegistrationOpensAt(state),
     is_visible: state.isVisible,
     schedule_slots: finalSlots,

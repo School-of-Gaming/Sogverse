@@ -354,10 +354,12 @@ function UnauthenticatedOverlay({
           className: "w-full text-base",
         })}
       >
-        {/* Keyed by type like every other action word on this panel — the sign-in
-            button names the same action the signed-in CTA will, so "register" on
-            an event (where the verb is "join" everywhere else) was the one place
-            the panel changed vocabulary on the way through the door. */}
+        {/* Keyed by type like the panel's other action words, so this button can
+            name the action the signed-in CTA will. Only the event mismatch is
+            fixed here — it said "register" where every other word on an event
+            panel says "join". Clubs and camps still pair "Enrol"/"Sign up" with
+            "Sign in to register"; that is left as-is on purpose, as a copy
+            decision to make on its own rather than a mechanical sweep. */}
         {t(`ctaSignIn.${productType}`)}
       </Link>
       <Link

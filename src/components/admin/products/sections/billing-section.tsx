@@ -12,7 +12,6 @@ import { PricingBlock } from "../pricing-block";
 import {
   SEAT_LIMIT_MODE_VALUES,
   effectivePricingShape,
-  withSeatLimitMode,
   type FormState,
 } from "../product-form-state";
 import {
@@ -144,7 +143,9 @@ export function BillingSection({
                   name="seatLimitMode"
                   checked={active}
                   disabled={lockSeat}
-                  onChange={() => setState(withSeatLimitMode(state, mode))}
+                  onChange={() =>
+                    setState({ ...state, uncapped: mode === "unlimited" })
+                  }
                   className="mt-1 h-4 w-4"
                 />
                 <div className="min-w-0 flex-1">
@@ -188,6 +189,11 @@ export function BillingSection({
         </Field>
       )}
 
+      {/* The waitlist is the queue behind a cap, so the toggle only exists while
+          one is set — and picking Unlimited deliberately leaves the flag alone
+          rather than clearing it, so toggling back restores the admin's tick.
+          What stops that hidden `true` reaching the database is the build, which
+          derives `waitlist_enabled` from the cap instead of copying this flag. */}
       {!state.uncapped && (
         <label
           className={cn(

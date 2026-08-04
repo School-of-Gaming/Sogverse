@@ -449,7 +449,7 @@
         "thresholdWithDate": "Si moins de parents que ce nombre se sont inscrits à la date de début, vous devrez annuler et rembourser depuis la page du produit.",
         "timezoneFixedHelsinki": "Les horaires sont exprimés en heure Europe/Helsinki. Les parents les voient automatiquement convertis dans leur fuseau horaire.",
         "holidayHint": "Aucune session n’aura lieu aux dates issues des calendriers sélectionnés. Modifiez un calendrier une fois et tous les produits qui l’utilisent se mettent à jour automatiquement.",
-        "billingHint": "Les événements gratuits peuvent avoir une limite de places. Les événements payants fonctionnent sans limite pour l’instant.",
+        "billingHint": "Quel que soit le choix, les événements fonctionnent sans limite de places pour l’instant.",
         "freeDetail": "Aucun frais. Tout le monde peut participer en un clic.",
         "paidDetail": "Paiement unique à l’inscription.",
         "paidByMunicipality": "Aucune facturation client dans ce système. School of Gaming facture directement la commune.",
