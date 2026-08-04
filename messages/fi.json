@@ -1383,8 +1383,7 @@
       "openClubs": "Tarjoamme myös kaikille avoimia kerhoja, joihin pelaaja voi liittyä asuinpaikasta riippumatta."
     },
     "municipality": {
-      "heading": "{name} – kerhot",
-      "subheading": "{name} – viikoittaiset kerhot, joissa pelaajasi pelaa, rakentaa ja luo uusien kavereiden ja Gedun kanssa."
+      "heading": "{name} – kerhot"
     }
   },
   "productBrowse": {

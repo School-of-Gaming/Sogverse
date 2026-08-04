@@ -1383,8 +1383,7 @@
       "openClubs": "Vi har också klubbar som är öppna för alla, som en spelare kan gå med i oavsett var hen bor."
     },
     "municipality": {
-      "heading": "Klubbar från {name}",
-      "subheading": "Veckovisa klubbar som {name} erbjuder, där din spelare spelar, bygger och skapar med nya vänner och en Gedu som verkligen fattar."
+      "heading": "Klubbar från {name}"
     }
   },
   "productBrowse": {

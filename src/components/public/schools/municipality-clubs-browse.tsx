@@ -77,9 +77,6 @@ export function MunicipalityClubsBrowse({
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
           {t("heading", { name: municipalityName })}
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-          {t("subheading", { name: municipalityName })}
-        </p>
       </header>
 
       <div className="mx-auto mt-8 max-w-6xl">
