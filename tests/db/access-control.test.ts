@@ -69,6 +69,10 @@ describe("Access Control", () => {
       // row from auth.uid(), so actor and target are the same check. No DELETE:
       // unlinking clears the columns rather than removing the row.
       ["minecraft_accounts", new Set(["INSERT", "UPDATE"])],
+      // The same shape one platform over (00144). RLS derives the target row
+      // from auth.uid(), so actor and target are the same check, and there is
+      // no DELETE for the same reason: unlinking clears the columns.
+      ["roblox_accounts", new Set(["INSERT", "UPDATE"])],
       // Gedus write their own coverage rows directly from the browser
       // (setForGedu uses DELETE + INSERT). RLS enforces self-only access
       // and the role-is-gedu check on WITH CHECK.

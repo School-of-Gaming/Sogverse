@@ -54,6 +54,10 @@ export type GeduProfileUpdate = Database["public"]["Tables"]["gedu_profiles"]["U
 export type MinecraftAccount = Database["public"]["Tables"]["minecraft_accounts"]["Row"];
 export type MinecraftAccountUpdate = Database["public"]["Tables"]["minecraft_accounts"]["Update"];
 
+// roblox_accounts
+export type RobloxAccount = Database["public"]["Tables"]["roblox_accounts"]["Row"];
+export type RobloxAccountUpdate = Database["public"]["Tables"]["roblox_accounts"]["Update"];
+
 // parent_gamer
 export type ParentGamer = Database["public"]["Tables"]["parent_gamer"]["Row"];
 export type ParentGamerInsert = Database["public"]["Tables"]["parent_gamer"]["Insert"];
@@ -530,6 +534,7 @@ export interface CreateGamerInput {
   dateOfBirth: string;
   gender?: "boy" | "girl" | "non_binary" | null;
   minecraftUsername?: string;
+  robloxUsername?: string;
 }
 
 export interface LoginCredentials {

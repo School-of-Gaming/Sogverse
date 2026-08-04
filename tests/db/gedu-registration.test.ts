@@ -40,10 +40,15 @@ describe("gedu registration + verification RPCs", () => {
 
   describe("register_gedu", () => {
     let createdUserId: string | null = null;
+    let gameAccountUserId: string | null = null;
 
     afterAll(async () => {
-      // Cascade-deletes profiles, gedu_profiles, gedu_locations, minecraft.
+      // Cascade-deletes profiles, gedu_profiles, gedu_locations and both
+      // game-account rows.
       if (createdUserId) await admin.auth.admin.deleteUser(createdUserId);
+      if (gameAccountUserId) {
+        await admin.auth.admin.deleteUser(gameAccountUserId);
+      }
     });
 
     it("atomically promotes a new customer profile into an unverified gedu", async () => {
@@ -68,6 +73,8 @@ describe("gedu registration + verification RPCs", () => {
         p_location_ids: [TEST_IDS.LOCATION_REGION],
         p_minecraft_username: "",
         p_minecraft_uuid: "",
+        p_roblox_username: "",
+        p_roblox_user_id: "",
       });
       expect(rpcError).toBeNull();
 
@@ -108,6 +115,76 @@ describe("gedu registration + verification RPCs", () => {
       ]);
     });
 
+    it("links both game accounts, NULLIFing the empty-string sentinels", async () => {
+      // Every optional text argument this RPC takes uses '' for "absent" — the
+      // generated Args types are non-null — and the Roblox account id rides the
+      // same convention as text rather than inventing a second one. What this
+      // asserts is that the cast on the other side really produces the number.
+      const email = `gedu-games-${Date.now()}@test.local`;
+      const { data: created } = await admin.auth.admin.createUser({
+        email,
+        password: "testpassword123",
+        email_confirm: true,
+        user_metadata: { first_name: "Games", last_name: "Tester" },
+      });
+      gameAccountUserId = created.user!.id;
+
+      const { error } = await admin.rpc("register_gedu", {
+        p_user_id: gameAccountUserId,
+        p_first_name: "Games",
+        p_last_name: "Tester",
+        p_locale: "en",
+        p_phone: "",
+        p_spoken_languages: [],
+        p_location_ids: [],
+        p_minecraft_username: "GeduCraft",
+        // Absent → NULL, while the username above is still recorded.
+        p_minecraft_uuid: "",
+        p_roblox_username: "GeduBlox",
+        p_roblox_user_id: "8589934592",
+      });
+      expect(error).toBeNull();
+
+      const { data: mc } = await admin
+        .from("minecraft_accounts")
+        .select("minecraft_username, minecraft_uuid")
+        .eq("user_id", gameAccountUserId)
+        .single();
+      expect(mc).toMatchObject({
+        minecraft_username: "GeduCraft",
+        minecraft_uuid: null,
+      });
+
+      const { data: roblox } = await admin
+        .from("roblox_accounts")
+        .select("roblox_username, roblox_user_id")
+        .eq("user_id", gameAccountUserId)
+        .single();
+      expect(roblox).toMatchObject({
+        roblox_username: "GeduBlox",
+        // Past 2^31 — the column is bigint, as Roblox's int64 ids require.
+        roblox_user_id: 8_589_934_592,
+      });
+    });
+
+    it("writes no game-account rows when both sentinels are empty", async () => {
+      // The educator from the first test gave neither handle. An empty row would
+      // be indistinguishable from a cleared one, so there must be no row at all.
+      const { data: mc } = await admin
+        .from("minecraft_accounts")
+        .select("user_id")
+        .eq("user_id", createdUserId!)
+        .maybeSingle();
+      expect(mc).toBeNull();
+
+      const { data: roblox } = await admin
+        .from("roblox_accounts")
+        .select("user_id")
+        .eq("user_id", createdUserId!)
+        .maybeSingle();
+      expect(roblox).toBeNull();
+    });
+
     it("refuses to operate on a profile that is not a fresh customer", async () => {
       // The seeded gedu is already a gedu — the role guard must reject it.
       const { error } = await admin.rpc("register_gedu", {
@@ -120,6 +197,8 @@ describe("gedu registration + verification RPCs", () => {
         p_location_ids: [],
         p_minecraft_username: "",
         p_minecraft_uuid: "",
+        p_roblox_username: "",
+        p_roblox_user_id: "",
       });
       expect(error).not.toBeNull();
     });
