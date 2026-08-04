@@ -18,8 +18,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /**
  * Server-prefetch everything the storefront's first frame needs with the
- * viewer's RLS-scoped client: every shop-surfaced product (clubs + camps in
- * one fetch), the seat counts keyed on those ids, and the spoken-language
+ * viewer's RLS-scoped client: every shop-surfaced product (clubs + camps +
+ * events in one fetch), the seat counts keyed on those ids, and the spoken-language
  * reference set (the filter strip's Language row). The results seed React Query
  * via `initialData` (ShopBrowse → ProductBrowsePage → ProductBrowseFilters) so
  * the grid and filters paint fully on the first frame — no spinner, no row

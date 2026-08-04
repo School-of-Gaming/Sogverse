@@ -23,8 +23,9 @@ import type { ProductBrowseRow, ProductType } from "@/types";
 //   `schedule_slots` falls on a selected day. OR semantics across the set
 //   (a parent picking Mon AND Wed expects clubs meeting on either). Empty
 //   means "any day". This is a Clubs-only filter — the chip row is hidden for
-//   Camps and the caller passes `[]` there (see `product-browse-page.tsx`),
-//   so camps with weekday slots are never narrowed by it.
+//   Camps and Events and the caller passes `[]` there (see
+//   `product-browse-page.tsx`), so a camp or event with weekday slots is never
+//   narrowed by it.
 //
 // Filters AND together: a product must pass every active filter.
 // Empty filter values are no-ops, so unset filters always pass.
@@ -53,8 +54,9 @@ export const EMPTY_FILTERS: BrowseFilters = {
 
 // Single source of truth for "does the day-of-week filter apply to this product
 // type". Only types with a recurring weekly schedule (clubs) qualify — camps
-// run over a date range, so even though their slots carry weekdays the filter
-// is neither offered nor applied for them. Both the filter-row visibility
+// run over a date range and events happen once, so even though their slots
+// carry weekdays the filter is neither offered nor applied for them. Both the
+// filter-row visibility
 // (`product-browse-filters.tsx`, via the category's product type) and the
 // filter application (`product-browse-page.tsx`, via the browse type) gate on
 // this, so the two can't drift.
