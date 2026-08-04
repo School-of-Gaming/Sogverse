@@ -209,6 +209,54 @@ export const PREVIEW_SCENES = [
       },
     ],
   },
+  {
+    surface: "parent-club",
+    title: "Family product page — parent",
+    description:
+      "The page a parent opens from My SOG for one enrollment: gamer-scoped (“Minecraft Builders Club, for Aino”), single column, mobile-first, and read-only end to end. The masthead answers when and where — schedule, Join or address — the notes card answers what is always true here, and the same session feed the gedu workspace runs on answers what happened, with this child's attendance mark on it and nothing about anybody else's. Everything a family may not see is structurally absent rather than filtered: no staff notes, no roster, no peer groups, no material link.",
+    chrome: "dashboard",
+    scenarios: [
+      {
+        slug: "active-club",
+        label: "Club — remote, session in progress",
+        description:
+          "The kitchen sink, and the only scenario with a live room: a session running right now, so the Join is lit and the top entry says “Happening now” instead of “Next session”. Six more sessions collapsed above the divider (the upward reveal, judged against a screenful), four months of history behind it with month dividers and the chunked reveal, and the six past states worth seeing together — the long recap at the head rendered in full, an ordinary present week, a week this child was not at, a second long report far enough down to keep its “Read more”, a week written up with nobody marked, and a week with nothing on it at all.",
+      },
+      {
+        slug: "in-person-club",
+        label: "Club — in person",
+        description:
+          "The venue shape: an address under the schedule, a second standing note about the building, and no Join anywhere — not a locked one, because there is no room behind it and a locked button promises an unlock.",
+      },
+      {
+        slug: "camp",
+        label: "Camp — finished",
+        description:
+          "A run that is over. A UTC-pinned date range beside the weekday times, no future block and therefore no divider at all, and — although the camp was remote — no Join either, since there is no next session for a room to open for. The feed is history end to end.",
+      },
+      {
+        slug: "new-club",
+        label: "Club — nothing has happened yet",
+        description:
+          "The page a family lands on the week they buy a place: eight sessions ahead, a locked Join, and an empty past. The only way to judge the feed when the divider has nothing under it — which is why the column says so rather than simply stopping.",
+      },
+    ],
+  },
+  {
+    surface: "gamer-club",
+    title: "Family product page — gamer",
+    description:
+      "The same body and the same fixtures as the parent's page, rendered for the child whose page it is. Three things differ and they are the whole of the variant: no attendance marks anywhere (whether they turned up is a signal for the adult paying for the club, not something a child's own page should tell them), the identity line carries their group rather than “for Aino”, and the empty states speak to them instead of about them.",
+    chrome: "dashboard",
+    scenarios: [
+      {
+        slug: "active-club",
+        label: "Club — remote, session in progress",
+        description:
+          "Deliberately the one scenario. The variant is about voice and attendance, not about the shapes a product can be in, and both are visible here — the venue, the finished run and the empty past all behave identically to the parent's copy beside it.",
+      },
+    ],
+  },
 ] as const satisfies readonly PreviewSceneMeta[];
 
 export type PreviewScene = (typeof PREVIEW_SCENES)[number];

@@ -352,21 +352,53 @@ export function applyPlanDraftToEntry(
 /*  Shaping the feed                                                   */
 /* ------------------------------------------------------------------ */
 
-export interface FeedPartition {
+/**
+ * The minimum an entry has to be for the structural helpers below to shape it:
+ * an identity and which side of the present it is on.
+ *
+ * **These helpers are generic on purpose.** The gedu's workspace feed and the
+ * family's read-only feed are two renderings of one *grammar* — a descending run
+ * whose leading future block collapses behind a divider, whose newest past entry
+ * is the one read in full, and whose older past is revealed in chunks. The
+ * entries themselves are deliberately different types (a family entry cannot
+ * hold a staff note or another child's marks, and that is enforced by its
+ * shape), so sharing the arithmetic means being generic over the entry rather
+ * than over the feed. A second copy of this walk would be the thing that lets
+ * the two feeds quietly disagree about where "next" is.
+ */
+interface FeedShapedEntry {
+  id: string;
+  kind: string;
+}
+
+/** A generic feed entry narrowed to the future side of the present. */
+type FutureOf<T extends FeedShapedEntry> = Extract<T, { kind: "future" }>;
+
+export interface FeedPartition<T extends FeedShapedEntry> {
   /**
    * Future sessions beyond the next one, still in the caller's descending
    * order (furthest away first). These collapse behind one row above the next
    * session, so the feed opens on "what's next and what just happened" rather
    * than on two months of empty calendar.
    */
-  laterFuture: FutureSessionFeedEntry[];
+  laterFuture: FutureOf<T>[];
   /**
    * The soonest session still ahead of us — the prominent entry at the head of
    * the feed. `null` once a product's schedule has run out.
    */
-  nextSession: FutureSessionFeedEntry | null;
+  nextSession: FutureOf<T> | null;
   /** Everything that has already happened, still descending. */
-  past: SessionFeedEntry[];
+  past: T[];
+}
+
+/**
+ * Whether an entry sits on the future side of the present, for any feed's own
+ * entry union. The gedu-specific `isPlannableEntry` above answers the same
+ * question about *its* union and additionally means "this can be planned"; this
+ * one is purely structural, which is what the shared shaping needs.
+ */
+function isFutureEntry<T extends FeedShapedEntry>(entry: T): entry is FutureOf<T> {
+  return entry.kind === "future";
 }
 
 /**
@@ -384,14 +416,14 @@ export interface FeedPartition {
  * part of the past block, which keeps the rendered order honest instead of
  * silently reshuffling the story.
  */
-export function partitionFeedEntries(
-  entries: readonly SessionFeedEntry[],
-): FeedPartition {
+export function partitionFeedEntries<T extends FeedShapedEntry>(
+  entries: readonly T[],
+): FeedPartition<T> {
   // Collected by walking rather than sliced-and-cast, so the narrowing is the
   // loop's own and no assertion has to be trusted.
-  const future: FutureSessionFeedEntry[] = [];
+  const future: FutureOf<T>[] = [];
   for (const entry of entries) {
-    if (!isPlannableEntry(entry)) break;
+    if (!isFutureEntry(entry)) break;
     future.push(entry);
   }
 
@@ -418,9 +450,12 @@ export function partitionFeedEntries(
  * Pre-epoch gaps are stepped over rather than counted — nothing was ever
  * recorded on them, so there is no report to leave open — and a feed with no
  * past at all answers `null`.
+ *
+ * Generic for the reason given on the partition above: both feeds want the same
+ * answer about entries of their own shape, and only one of them may own it.
  */
-export function newestPastEntryId(
-  past: readonly SessionFeedEntry[],
+export function newestPastEntryId<T extends FeedShapedEntry>(
+  past: readonly T[],
 ): string | null {
   return past.find((entry) => entry.kind === "past")?.id ?? null;
 }

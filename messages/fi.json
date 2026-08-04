@@ -1140,6 +1140,34 @@
       "genericError": "Pelaajan lisääminen epäonnistui. Yritä uudelleen."
     }
   },
+  "familyProduct": {
+    "back": "Takaisin Omaan SOGiin",
+    "typeLabel": {
+      "consumer_club": "Kerho",
+      "municipality_club": "Kerho",
+      "camp": "Leiri",
+      "event": "Tapahtuma"
+    },
+    "forGamer": "Pelaaja: {name}",
+    "scheduleLabel": "Milloin",
+    "venueLabel": "Missä",
+    "gedusLabelCustomer": "Lapsesi Gedut",
+    "gedusLabelGamer": "Omat Gedut",
+    "aboutHeading": "Tietoa ryhmästä",
+    "venueNoteHeading": "Paikassa {site}",
+    "feedHeading": "Kerrat",
+    "liveBadge": "Käynnissä nyt",
+    "nextSessionBadge": "Seuraava kerta",
+    "futureBadge": "Tuleva kerta",
+    "attendancePresent": "Paikalla",
+    "attendanceNotPresent": "Ei paikalla",
+    "noWriteUp": "Ei koostetta",
+    "emptyPastCustomer": "Täällä ei ole vielä tapahtunut mitään. Kun ryhmä alkaa kokoontua, jokaisesta kerrasta kirjoitetaan kooste tähän.",
+    "emptyPastGamer": "Täällä ei ole vielä mitään. Ensimmäisen kerran jälkeen kaikki tekemänne näkyy tässä.",
+    "emptyFeedCustomer": "Tällä ei ole vielä yhtään kertaa.",
+    "emptyFeedGamer": "Sinulla ei ole vielä yhtään kertaa tässä.",
+    "showEarlier": "{count, plural, one {Näytä # aiempi kerta} other {Näytä # aiempaa kertaa}}"
+  },
   "selectProfile": {
     "title": "Kuka astuu Sogverseen?"
   },

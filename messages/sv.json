@@ -1140,6 +1140,34 @@
       "genericError": "Det gick inte att lägga till gamern. Försök igen."
     }
   },
+  "familyProduct": {
+    "back": "Tillbaka till Min SOG",
+    "typeLabel": {
+      "consumer_club": "Klubb",
+      "municipality_club": "Klubb",
+      "camp": "Läger",
+      "event": "Evenemang"
+    },
+    "forGamer": "för {name}",
+    "scheduleLabel": "När",
+    "venueLabel": "Var",
+    "gedusLabelCustomer": "Ditt barns Geduer",
+    "gedusLabelGamer": "Dina Geduer",
+    "aboutHeading": "Om gruppen",
+    "venueNoteHeading": "På {site}",
+    "feedHeading": "Tillfällen",
+    "liveBadge": "Pågår nu",
+    "nextSessionBadge": "Nästa tillfälle",
+    "futureBadge": "Kommande tillfälle",
+    "attendancePresent": "Närvarande",
+    "attendanceNotPresent": "Inte närvarande",
+    "noWriteUp": "Ingen sammanfattning",
+    "emptyPastCustomer": "Inget har hänt här än. När gruppen börjar träffas sammanfattas varje tillfälle här nedanför.",
+    "emptyPastGamer": "Inget här än. Efter ditt första tillfälle dyker allt ni hittar på upp här nedanför.",
+    "emptyFeedCustomer": "Det finns inga tillfällen här än.",
+    "emptyFeedGamer": "Du har inga tillfällen här än.",
+    "showEarlier": "{count, plural, one {Visa # tidigare tillfälle} other {Visa # tidigare tillfällen}}"
+  },
   "selectProfile": {
     "title": "Vem ska in i Sogverse?"
   },
