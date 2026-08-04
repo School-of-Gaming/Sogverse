@@ -107,6 +107,38 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
   },
 };
 
+// ===== The free/paid choice =====
+//
+// Lives here rather than with the form's other chooser tuples because it is
+// the one chooser that feeds a *derivation* the non-form layers need too: the
+// lock resolver reads it, and putting the resolver's dependency in the form
+// state module would make the two import each other. This module has no
+// dependencies of its own, so it can sit under both.
+
+// Listed as a module-level constant so the lint rule against literal strings
+// (i18n) doesn't fire for these structural keys — same reason as the chooser
+// tuples in product-form-state.ts.
+export const PAID_MODE_VALUES = ["paid", "free"] as const;
+
+export type PaidMode = (typeof PAID_MODE_VALUES)[number];
+
+/**
+ * Which billing mode is actually in force, given the type's billing option and
+ * (for the one type that offers a choice) the admin's free/paid pick. Every
+ * type but `event` pins its mode, so `paidMode` is ignored for them.
+ */
+export function effectiveBillingMode(
+  config: ProductTypeConfig,
+  paidMode: PaidMode,
+): BillingMode {
+  if (config.billing.mode === "free_or_paid") {
+    return paidMode === "free" ? "free" : "paid";
+  }
+  return config.billing.mode === "external_contract"
+    ? "external_contract"
+    : "paid";
+}
+
 export function productTypeFromSlug(slug: string): ProductType | null {
   const entry = Object.values(PRODUCT_TYPE_CONFIG).find(
     (c) => c.routeSlug === slug

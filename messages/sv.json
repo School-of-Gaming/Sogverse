@@ -452,7 +452,7 @@
         "thresholdWithDate": "Om färre än så här många föräldrar anmäler sig till startdatumet behöver du ställa in den och återbetala från produktsidan.",
         "timezoneFixedHelsinki": "Tider är i tidszonen Europe/Helsinki. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
         "holidayHint": "Inget tillfälle körs på något datum från de valda kalendrarna. Redigera en kalender en gång och alla produkter som använder den uppdateras automatiskt.",
-        "billingHint": "Gratis evenemang behöver ingen platsgräns. Betalda har alltid en.",
+        "billingHint": "Gratis evenemang kan ha en platsgräns. Betalda körs tills vidare utan.",
         "freeDetail": "Ingen avgift. Alla kan delta med ett klick.",
         "paidDetail": "Engångsavgift vid anmälan.",
         "paidByMunicipality": "Ingen kundfakturering inom detta system. School of Gaming fakturerar kommunen direkt.",
@@ -461,6 +461,7 @@
         "seatHint": "När fullt går nya anmälningar till väntelistan.",
         "visibleHint": "Avmarkera medan du fortfarande arbetar på produkten, eller för att stoppa nya anmälningar. Det döljer bara produkten för nya föräldrar — föräldrar och gamers som redan är anmälda ser den och sina tillfällen på sin My SOG-sida.",
         "seatLimitHint": "Begränsa antalet deltagare eller kör utan gräns.",
+        "seatLimitPaidEvent": "Betalda evenemang körs tills vidare utan platsgräns — en plats kan inte reserveras medan en förälder betalar. Byt till gratis för att begränsa det här evenemanget.",
         "holidayComingSoon": "Lovkalendrar kommer snart. Tills vidare körs varje schemalagt tillfälle.",
         "startDateToday": "Låst till dagens datum tills vidare.",
         "startDateLocked": "Startdatumet är låst tills vidare."

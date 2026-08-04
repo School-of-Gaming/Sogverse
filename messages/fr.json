@@ -452,7 +452,7 @@
         "thresholdWithDate": "Si moins de parents que ce nombre se sont inscrits à la date de début, vous devrez annuler et rembourser depuis la page du produit.",
         "timezoneFixedHelsinki": "Les horaires sont exprimés en heure Europe/Helsinki. Les parents les voient automatiquement convertis dans leur fuseau horaire.",
         "holidayHint": "Aucune session n’aura lieu aux dates issues des calendriers sélectionnés. Modifiez un calendrier une fois et tous les produits qui l’utilisent se mettent à jour automatiquement.",
-        "billingHint": "Les événements gratuits peuvent ne pas avoir de limite de places. Les événements payants ont toujours un nombre de places défini.",
+        "billingHint": "Les événements gratuits peuvent avoir une limite de places. Les événements payants fonctionnent sans limite pour l’instant.",
         "freeDetail": "Aucun frais. Tout le monde peut participer en un clic.",
         "paidDetail": "Paiement unique à l’inscription.",
         "paidByMunicipality": "Aucune facturation client dans ce système. School of Gaming facture directement la commune.",
@@ -461,6 +461,7 @@
         "seatHint": "Une fois complet, les nouvelles inscriptions passent en liste d’attente.",
         "visibleHint": "Décochez pendant que vous préparez encore le produit, ou pour arrêter les nouvelles inscriptions. Cela ne masque le produit qu’aux nouveaux parents — les parents et les joueurs déjà inscrits continuent de le voir, ainsi que leurs sessions, sur leur page Mon SOG.",
         "seatLimitHint": "Plafonnez le nombre de joueurs, ou fonctionnez sans limite.",
+        "seatLimitPaidEvent": "Les événements payants fonctionnent sans limite de places pour l’instant : une place ne peut pas être réservée pendant qu’un parent paie. Passez en gratuit pour plafonner cet événement.",
         "holidayComingSoon": "Les calendriers de vacances arrivent bientôt. Pour l’instant, toutes les sessions programmées ont lieu.",
         "startDateToday": "Verrouillée sur la date du jour pour le moment.",
         "startDateLocked": "La date de début est verrouillée pour le moment."

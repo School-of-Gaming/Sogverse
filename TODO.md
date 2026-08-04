@@ -308,3 +308,19 @@ its leave affordance has a backend. Two open questions remain:
   and reappears as a session card. If the answer is ever "a seat opened — claim it by
   {date}" rather than "you're in", that's a new card state (offer + expiry +
   accept/decline) and it's much cheaper to design before the card hardens.
+- [ ] **A waitlist can now be stranded on a paid product, and promoting from it grants
+  a free seat.** The admin product form unlocks the seat cap and waitlist for *free*
+  events (safe: a free signup validates the cap and writes its row in one locked
+  transaction, never touching Checkout) and re-locks them the moment the event is
+  switched to Paid. The switch clears the cap in the form, but it cannot clear rows
+  already in the database: a live free capped event that has accumulated `waitlisted`
+  participations, flipped to Paid and saved, keeps them. Two consequences — families
+  still get a queue position from the position RPCs for a product whose waitlist the
+  admin can no longer see a control for, and `promote_from_waitlist` has no
+  billing-mode guard, so promoting one of those rows creates an `active` seat on a
+  paid product with no payment and no subscription. Reachable only through that
+  free→paid flip today, so it is narrow, not urgent. Candidate fix is a guard in
+  `promote_from_waitlist` refusing any product whose `billing_mode` is not `free` or
+  `external_contract` — a migration, which is why it wasn't done alongside the form
+  change. Decide at the same time what the admin is *supposed* to do with a stranded
+  queue (drain it before the switch, or refuse the switch while rows exist).
