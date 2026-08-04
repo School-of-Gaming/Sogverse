@@ -39,18 +39,20 @@ The rollup counted a pre-payment hold only while its deadline was in the future;
 
 ### ~~Webhook payloads read from one API version's field placement~~ (resolved)
 
-Two fields the products webhook depends on have moved between Stripe API versions, and each was read from exactly one of its two homes:
+Two fields the products webhook depended on have moved between Stripe API versions, and each was read from exactly one of its two homes:
 
 - **The invoice's subscription id.** Top-level `subscription` up to and including API `2025-02-24.acacia`; `parent.subscription_details.subscription` from `2025-03-31.basil` on, where the top-level field is gone. Read from the top level only, so on a basil-or-later version every renewal `invoice.paid` became an early return and renewals stopped being recorded.
 - **The charge's refund list.** Stripe stopped auto-expanding `refunds` on the Charge object in API `2022-11-15`, and a webhook event object is never expanded regardless — so from that version on the field is simply absent. Read as "no refunds to record", so refunds stopped being recorded.
 
 Both were the same shape of failure and the worst kind: no error, a 200 back to Stripe, and rows quietly missing.
 
-Note that the two do **not** move together, which is why neither can be described as simply "the old shape" or "the new shape". At the version outbound calls are pinned to, the invoice arrives in the *earlier* of its two shapes while the charge arrives in the *later* of its two. Name each case for where the field sits, not for an era.
+Note that the two did **not** move together, which is why neither could be described as simply "the old shape" or "the new shape". At the version outbound calls are pinned to, an invoice arrives in the *earlier* of its two shapes while a charge arrives in the *later* of its two. Name each case for where the field sits, not for an era.
 
-**Resolved** by reading both placements — newer location first, falling back to the older — and by fetching the refund list when the payload carries none. The integration suite exercises each of these events in **both** shapes, with each fixture carrying the field in exactly one place, so a handler that reads only one location fails.
+**Resolved for the invoice** by reading both placements — newer location first, falling back to the older. The integration suite exercises `invoice.paid` in **both** shapes, with each fixture carrying the field in exactly one place, so a handler that reads only one location fails.
 
-**A trap inside the fix, worth stating as a rule: a value fetched to stand in for a missing event field is *live state*, not the snapshot the event described.** The refund fetch reads the charge's current refund list, so two refunds landing close together make both deliveries see both refunds — and "take the newest" then records the second twice (the duplicate silently refused by the UNIQUE constraint) and the first never, understating the refunded total with no error anywhere. The fetch has to select the newest entry **not already in our ledger**, which also makes a replay a no-op for free. Any future fetch-on-absence fallback for a list-shaped field needs the same treatment; a single-item fetch is the bug.
+**Resolved for the charge by deleting the feature.** The only reader of the refund list was a handler that wrote a local `refunds` ledger, and that ledger was write-only: nothing in the application ever read a row back out of it. Table and handler were both dropped (2026-08-04), and `charge.refunded` is now answered 200 as an unhandled event type like any other. Stripe is the system of record for refunds, retains them indefinitely, and every column of the old ledger was copied from a Stripe object, so the data is fully backfillable if a reader is ever built. **Do not treat the bullet above as an open instruction — there is no refund path to fix, and reinstating one is a product decision, not a bug fix.**
+
+**A trap that lived inside the deleted fix, worth keeping as a rule: a value fetched to stand in for a missing event field is *live state*, not the snapshot the event described.** The refund fetch read the charge's current refund list, so two refunds landing close together made both deliveries see both refunds — and "take the newest" then recorded the second twice (the duplicate silently refused by a UNIQUE constraint) and the first never, understating the refunded total with no error anywhere. The fix was to select the newest entry **not already recorded**, which also made a replay a no-op for free. Any future fetch-on-absence fallback for a list-shaped field needs the same treatment; a single-item fetch is the bug.
 
 **The correction worth keeping:** the original write-up proposed pinning `apiVersion` on the SDK constructor as the fix. It is not one. **The constructor's `apiVersion` governs outbound calls only — the shape of an incoming webhook payload is decided by the API version pinned on the webhook endpoint, or by the Stripe account default while that endpoint is unpinned.** The two move independently, and the endpoint's version can change without any deploy of ours, so a handler cannot assume either shape and has to read both. Pinning the constructor is still worth doing (see below), just for a different reason.
 
@@ -88,7 +90,7 @@ The read-only stub was **deleted** (migration 00116), not fixed. We decided agai
 
 ### Webhook tests for the recurring-revenue hot loop — mostly closed
 
-`tests/integration/api/stripe-webhook-products.test.ts` now covers `invoice.paid` (both payload shapes, the `subscription_create` filter, the replay dedup, `customer_id` read from the family-sub row rather than invoice metadata), `charge.refunded` (both payload shapes, including the fetch when nothing is expanded), and `customer.subscription.updated` (the status mapping and both halves of the silent-write bug).
+`tests/integration/api/stripe-webhook-products.test.ts` now covers `invoice.paid` (both payload shapes, the `subscription_create` filter, the replay dedup, `customer_id` read from the family-sub row rather than invoice metadata) and `customer.subscription.updated` (the status mapping and both halves of the silent-write bug). It once covered `charge.refunded` too; those cases went with the handler when the refunds ledger was dropped.
 
 **The rule those tests encode, for whoever adds the next one:** a payload field Stripe has relocated between API versions gets a fixture per placement, and each fixture carries the field in **exactly one** of them. A fixture holding both passes for a handler that reads only whichever it happens to prefer, which is the entire failure mode being guarded against.
 
@@ -97,11 +99,11 @@ Still open:
 - **Replay where the confirm RPC reports it recognised its own earlier work** — the dedup-bypassed-but-idempotent path.
 - **Unknown event types return 200** — easy regression catcher.
 
-### RLS IDOR test skipped for `family_subscriptions`
+### ~~RLS IDOR test skipped for `family_subscriptions`~~ (resolved)
 
-`tests/db/participations-rls.test.ts`. The comment dismisses a cross-customer test for `family_subscriptions` on the assumption that the participation ownership chain protects it. That's wrong for `family_subscriptions.stripe_customer_id` (direct PII, keyed on its own `customer_id` column, not via participations).
+The file's comment used to dismiss a cross-customer test for `family_subscriptions` on the assumption that the participation ownership chain protected it. That was wrong for `family_subscriptions.stripe_customer_id`: it is keyed on the table's own `customer_id` column rather than reached through participations, and it is the capability the billing-portal route turns into a Stripe session with saved cards and invoice history.
 
-**Fix:** add a cross-customer test mirroring the symmetric refunds test that's already in this file. The helpers exist.
+**Resolved** — the cross-customer cases are in the participations RLS test file now, including the lookups by `participation_id` and by `stripe_customer_id` with the application's own `customer_id` filter deliberately removed, so the policy has to refuse on its own.
 
 ---
 

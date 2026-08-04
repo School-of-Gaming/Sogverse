@@ -1013,44 +1013,6 @@ export type Database = {
           },
         ]
       }
-      refunds: {
-        Row: {
-          amount_cents: number
-          created_at: string
-          id: string
-          payment_id: string
-          reason: Database["public"]["Enums"]["refund_reason"]
-          stripe_event_id: string
-          stripe_refund_id: string
-        }
-        Insert: {
-          amount_cents: number
-          created_at?: string
-          id?: string
-          payment_id: string
-          reason: Database["public"]["Enums"]["refund_reason"]
-          stripe_event_id: string
-          stripe_refund_id: string
-        }
-        Update: {
-          amount_cents?: number
-          created_at?: string
-          id?: string
-          payment_id?: string
-          reason?: Database["public"]["Enums"]["refund_reason"]
-          stripe_event_id?: string
-          stripe_refund_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "refunds_payment_id_fkey"
-            columns: ["payment_id"]
-            isOneToOne: false
-            referencedRelation: "payments"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       schedule_slots: {
         Row: {
           created_at: string
@@ -1857,13 +1819,6 @@ export type Database = {
         | "fortnite"
         | "webinar"
       product_type: "consumer_club" | "municipality_club" | "camp" | "event"
-      refund_reason:
-        | "session_cancelled_in_window"
-        | "admin_refund"
-        | "product_cancelled"
-        | "subscription_item_removed"
-        | "subscription_period_proration"
-        | "duplicate_payment"
       user_role: "admin" | "customer" | "gamer" | "gedu"
     }
     CompositeTypes: {
@@ -2019,14 +1974,6 @@ export const Constants = {
         "webinar",
       ],
       product_type: ["consumer_club", "municipality_club", "camp", "event"],
-      refund_reason: [
-        "session_cancelled_in_window",
-        "admin_refund",
-        "product_cancelled",
-        "subscription_item_removed",
-        "subscription_period_proration",
-        "duplicate_payment",
-      ],
       user_role: ["admin", "customer", "gamer", "gedu"],
     },
   },

@@ -18,12 +18,10 @@ tracks the account default, whatever it becomes. The Dashboard *displays*
 
 Stripe's Workbench actively prompts anyone with Dashboard access to upgrade the
 account version. Accepting that prompt instantly changes the payload shape of every
-unpinned endpoint. On newer versions, two fields the webhook reads move or disappear
-(the invoice's subscription id moves under `parent.subscription_details`; the charge's
-`refunds` list is no longer embedded in event payloads at all), and the old code's
-guards turned "field missing" into a silent early return with a 200 — so renewals and
-refunds would simply stop being recorded, with no error anywhere and Stripe never
-retrying.
+unpinned endpoint. On newer versions a field the webhook reads moves — the invoice's
+subscription id goes under `parent.subscription_details` — and the old code's guards
+turned "field missing" into a silent early return with a 200, so renewals would simply
+stop being recorded, with no error anywhere and Stripe never retrying.
 
 Separately, the same route wrote Stripe's subscription status strings through verbatim
 into a column whose CHECK constraint accepts only
@@ -35,20 +33,19 @@ CHECK and silently no-opped.
 ## Scale
 
 Every paying customer. The failure mode is not an outage but silent ledger drift:
-`family_subscriptions` rows stop tracking reality, refunds go unrecorded, and a
-churned child could keep an active seat indefinitely. Migrated subscriptions carry
-real trials, so the `trialing` variant of the status bug is reachable today.
+`family_subscriptions` rows stop tracking reality and a churned child could keep an
+active seat indefinitely. Migrated subscriptions carry real trials, so the `trialing`
+variant of the status bug is reachable today.
 
 ## The decision
 
-1. **Make the webhook code tolerant of both payload shapes** (both locations for each
-   moved field, and a fetch when a list-shaped field is absent — selecting the newest
-   entry not already in our ledger, never simply the newest), fix the status mapping
-   with an explicit whitelist, stop swallowing the status write's error, make an
-   unmapped status loud, and pin the SDK constructor's `apiVersion` for outbound
-   calls. — **Done**; see Stage 1 for the precondition this creates and how to verify
-   it, together with test fixtures exercising both shapes of each moved field and the
-   correction to `docs/stripe-participations-review-followups.md`.
+1. **Make the webhook code tolerant of both payload shapes** (both locations for the
+   moved field), fix the status mapping with an explicit whitelist, stop swallowing the
+   status write's error, make an unmapped status loud, and pin the SDK constructor's
+   `apiVersion` for outbound calls. — **Done**; see Stage 1 for the precondition this
+   creates and how to verify it, together with test fixtures exercising both shapes of
+   the moved field and the correction to
+   `docs/stripe-participations-review-followups.md`.
 2. **Recreate the webhook endpoint pinned to the same version the SDK is pinned to**
    (`2025-02-24.acacia` — authoritatively, whatever apiVersion literal
    `src/lib/stripe/client.ts` pins at cutover time; the two must match). Endpoint
@@ -57,10 +54,18 @@ real trials, so the `trialing` variant of the status bug is reachable today.
 3. **Cut over by switching the signing secret**, with a brief two-endpoint overlap.
    No quiet window is required or attempted: Stripe fires events on its own schedule
    (renewals, dunning), so a guaranteed-quiet window does not exist — and the route
-   is replay-safe by design (event-id dedup guards before payment writes, UNIQUE
-   constraints on `stripe_event_id`/`stripe_refund_id`, deletion handler treats a
-   missing row as an already-processed replay), so a duplicated delivery during the
-   overlap is harmless.
+   is replay-safe by design (event-id dedup guards before payment writes, a UNIQUE
+   constraint on `payments.stripe_event_id`, deletion handler treats a missing row as
+   an already-processed replay), so a duplicated delivery during the overlap is
+   harmless.
+4. **The refunds ledger is gone, and `charge.refunded` is no longer handled.** The
+   `refunds` table was write-only — the webhook wrote it and nothing ever read it back
+   — so the table, the handler and the fetch path described in earlier revisions of
+   this plan were all removed (2026-08-04). Stripe is the system of record for refunds,
+   retains them indefinitely, and every column of the old ledger was copied from a
+   Stripe object, so it is fully backfillable if a reader is ever built. Nothing in the
+   cutover depends on a refund any more; do not go looking for the refund path, and do
+   not reinstate it as part of this plan.
 
 ### Status-mapping decision embedded in the branch
 
@@ -91,8 +96,8 @@ carrying a conservative status for a human to correct.
   `apiVersion` governs outbound API calls only; webhook payload shape is decided by
   the endpoint's pinned version (or the account default while unpinned). The two move
   independently. (An earlier doc claimed otherwise; the branch corrects it.)
-- **Flip the account default version first.** Breaks renewals and refund recording in
-  prod instantly and silently while the old code is live. The account flip is now the
+- **Flip the account default version first.** Breaks renewal recording in prod
+  instantly and silently while the old code is live. The account flip is now the
   *last, optional* step, made cosmetic by the endpoint pin.
 - **Wait for a quiet window with no events.** Not a real thing — renewal invoices and
   subscription lifecycle events fire on Stripe's clock regardless of site traffic.
@@ -100,7 +105,7 @@ carrying a conservative status for a human to correct.
 - **Write the handlers new-shape-only.** Rejected: the both-shapes code costs almost
   nothing, keeps a rollback to the old endpoint safe, and Stripe delivers *replayed*
   historical events in the payload shape they were created with — old-shape events
-  exist forever, so the fallbacks retain permanent value. Do not strip them later.
+  exist forever, so the fallback retains permanent value. Do not strip it later.
 
 ## Steps
 
@@ -120,9 +125,6 @@ run the tolerant code before Stage 2, and **production** (released through the n
 regardless of how it got there:
 
 - the invoice handler reads the subscription id from **both** its placements;
-- the charge handler **fetches** the refund list when the payload embeds none, and
-  selects the newest refund not already in our ledger rather than simply the
-  newest;
 - the subscription status written to `family_subscriptions` is translated through
   an explicit whitelist, the write's error is checked, and an unmapped status is
   loud (a throw on the update path, a logged degrade on the checkout path);
@@ -132,7 +134,20 @@ Verify the **deploy** actually landed — not that the PR merged. The cutover ch
 what Stripe sends, so the code that receives it has to be the tolerant version in
 the target environment first.
 
-### Stage 2 — rehearsal: swap the test-mode endpoint (staging)
+### Stage 2 — rehearsal: swap the test-mode endpoint (staging) — DONE 2026-08-04
+
+**This stage is complete; the steps below are kept as the record of what was done.**
+The new pinned test-mode endpoint is `we_1U0cUCCD5Q5ECgrcpTkY9xnU` — live, verified
+returning 200s on driven test events, and pointing at the staging deployment. The old
+unpinned test-mode endpoint `we_1TTLtcCD5Q5ECgrcNRT1EcKe` is **disabled, not deleted**
+(step 8 in Stage 4 deletes it). Nothing surprising surfaced, so Stage 3 is unblocked.
+Start reading at Stage 3.
+
+One detail to expect and not be alarmed by: the new test-mode endpoint was created
+before the refunds ledger was dropped, so it still subscribes to `charge.refunded`. That
+is harmless — the route answers 200 for it like any unhandled type — and its event list
+can be trimmed whenever convenient. The **live** endpoint in Stage 3 is created without
+it from the start.
 
 1. In Stripe **test mode**, note the old endpoint's exact enabled-event list and
    URL, then create the new test-mode endpoint: same staging URL, `api_version` set
@@ -156,12 +171,16 @@ at creation and works equally well.
 5. In Stripe (live mode), note the old endpoint's exact enabled-event list, then
    create the **new** endpoint: same URL
    (`https://sogverse.sog.gg/api/webhooks/stripe/products`), `api_version` set to the
-   value pinned in `src/lib/stripe/client.ts`, and the same event list. The five
-   events the route handles: `checkout.session.completed`, `invoice.paid`,
-   `customer.subscription.updated`, `customer.subscription.deleted`,
-   `charge.refunded` — but mirror the old endpoint's list exactly if it differs.
-   From this moment both endpoints receive every event; the new one's deliveries
-   fail signature verification (expected — Stripe queues retries).
+   value pinned in `src/lib/stripe/client.ts`, and **exactly the four events the route
+   handles**: `checkout.session.completed`, `invoice.paid`,
+   `customer.subscription.updated`, `customer.subscription.deleted`. Create it
+   **without `charge.refunded`** — the handler and its ledger are gone (see decision 4),
+   so subscribing to it would only pay for deliveries the route answers 200 and
+   discards. Note that this means the new endpoints deliberately **no longer mirror the
+   old endpoints' event lists**: the old ones carry `charge.refunded` and the new ones
+   must not. That is the one intended divergence — mirror the old list for anything
+   else that differs. From this moment both endpoints receive their events; the new
+   one's deliveries fail signature verification (expected — Stripe queues retries).
 6. Update `STRIPE_PRODUCTS_WEBHOOK_SECRET` in Vercel (Production, sensitive) to the
    new endpoint's signing secret — same stdin rule as above. Redeploy so the running
    app picks it up. **This deploy is the cutover instant**: the new endpoint's
@@ -179,8 +198,8 @@ from Workbench.
 
 #### What the payloads look like *after* the cutover — expect this, don't "fix" it
 
-Pinned at `2025-02-24.acacia`, the two tolerant reads land on **opposite** sides of
-their fallbacks, which is easy to misread as one of them being broken:
+Pinned at `2025-02-24.acacia`, the one remaining tolerant read lands on the *earlier*
+side of its fallback, which is easy to misread as the other branch being dead code:
 
 - **Invoices still arrive with the subscription id at the top level** (`subscription`).
   That field only moves under `parent.subscription_details` in `2025-03-31.basil`, one
@@ -189,14 +208,9 @@ their fallbacks, which is easy to misread as one of them being broken:
   delivers *replayed* historical events in the shape they were created under, so both
   branches have permanent value. Do not delete it for being uncovered in production
   logs.
-- **Charges arrive with no `refunds` list at all.** That changed back in `2022-11-15`,
-  so from the moment of cutover the fetch path is the **only** path — a refund that
-  fails to record after this point is a real defect, not a shape fallback quietly
-  covering for one. This is the read that goes from never-exercised to
-  always-exercised at the cutover instant, so it is the one to watch first.
 
-Acceptance below therefore wants a real refund observed after the cutover, and gets no
-signal at all from the `parent` branch.
+The consequence for acceptance: the `parent` branch gives no signal at all after the
+cutover, so a renewal processing correctly is the observation to wait for.
 
 ### Stage 4 — cleanup (unhurried, order within the stage is free)
 
@@ -214,11 +228,8 @@ signal at all from the `parent` branch.
 ## Acceptance criteria
 
 - New endpoint live, pinned to the SDK's version, returning 200s on real traffic —
-  including at least one renewal invoice and (when one next occurs) one refund,
-  each visible as a correct row in our DB. The refund is the load-bearing one: at
-  this pin it is the only one of the two whose read path changes at cutover (see
-  "What the payloads look like after the cutover"). Where two refunds were issued
-  against the same charge, check that **both** appear as rows.
+  including at least one renewal invoice, visible as a correct `subscription_invoice`
+  payment row with the family sub's period-end advanced.
 - Old endpoints deleted; `STRIPE_PRODUCTS_WEBHOOK_SECRET` holds the matching new
   secret in each Vercel environment; exactly one products webhook endpoint remains
   **per mode** (test → staging, live → production), each pinned.
@@ -232,12 +243,13 @@ signal at all from the `parent` branch.
   but is not one.
 - Webhook payload shape follows the **endpoint/account** version; the SDK
   constructor's `apiVersion` affects outbound calls only.
-- Stripe never auto-expands nested objects in event payloads on any version
-  (`charge.refunds` present in 2019 payloads is legacy behaviour) — hence the
-  fetch-on-absence fallback rather than a shape read.
+- Stripe never auto-expands nested objects in event payloads on any version. A list
+  field embedded in a 2019-era payload is legacy behaviour, not something to rely on:
+  any handler that needs a nested collection has to fetch it, not read it off the
+  event.
 - Replayed/resent events are delivered in the shape of the version they were
   **created** under, so old-shape events remain deliverable forever — the
-  both-shapes fallbacks in the route are permanent, not transitional.
+  both-shapes fallback in the route is permanent, not transitional.
 - The app verifies exactly one signing secret at a time, so the env-var switch is
   atomic and the two-endpoint overlap produces at most duplicate deliveries, which
   the route's idempotency absorbs (a duplicated event is a wasted query, not a
@@ -246,5 +258,5 @@ signal at all from the `parent` branch.
   from Workbench — the safety net under every step above.
 - The SDK types describe payload shapes for the *types'* version, not the wire
   version actually delivered — they can claim fields that are absent at runtime (and
-  vice versa). The branch's tests pin behaviour with explicit fixtures for both
-  shapes precisely because the compiler cannot.
+  vice versa). The tests pin behaviour with explicit fixtures for both shapes of the
+  moved field precisely because the compiler cannot.

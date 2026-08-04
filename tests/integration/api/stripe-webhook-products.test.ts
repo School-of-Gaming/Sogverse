@@ -7,20 +7,16 @@ const {
   mockConstructEvent,
   mockSubscriptionsRetrieve,
   mockSubscriptionsCancel,
-  mockRefundsList,
 } = vi.hoisted(() => ({
   mockConstructEvent: vi.fn(),
   mockSubscriptionsRetrieve: vi.fn(),
   mockSubscriptionsCancel: vi.fn(),
-  mockRefundsList: vi.fn(),
 }));
 
 vi.mock("stripe", () => {
   // Object.assign produces the intersection type, so `errors` rides along
   // without any cast. The route only ever does `new Stripe(...)` and uses
-  // the nested methods below. `refunds.list` is one of them: on any API version
-  // from 2022-11-15 on, a `charge.refunded` event carries no expanded refund
-  // list and the handler has to fetch it.
+  // the nested methods below.
   const StripeMock = Object.assign(
     vi.fn(function () {
       return {
@@ -29,7 +25,6 @@ vi.mock("stripe", () => {
           retrieve: mockSubscriptionsRetrieve,
           cancel: mockSubscriptionsCancel,
         },
-        refunds: { list: mockRefundsList },
       };
     }),
     {
@@ -60,7 +55,6 @@ const CUSTOMER_ID = "44444444-4444-4444-4444-444444444444";
 const FAM_SUB_ROW_ID = "66666666-6666-6666-6666-666666666666";
 const PAYMENT_ROW_ID = "77777777-7777-7777-7777-777777777777";
 const SUB_ID = "sub_live_1";
-const CHARGE_ID = "ch_test_1";
 
 function createWebhookRequest(): Request {
   return new Request("http://localhost:3000/api/webhooks/stripe/products", {
@@ -109,11 +103,9 @@ function createCompletedEvent(overrides: Partial<{
 
 // Which payload shape a delivery arrives in is decided by the API version pinned
 // on the webhook *endpoint*, not by the version our own client sends outbound. The
-// two fields below moved at different versions, so they are named for **where the
-// field sits** rather than for an era — an "old"/"new" axis would be a lie about
-// one of them, because at the version this codebase pins to
-// (`2025-02-24.acacia`) the invoice arrives in the *earlier* of its two shapes
-// while the charge arrives in the *later* of its two.
+// placement below is named for **where the field sits** rather than for an era: at
+// the version this codebase pins to (`2025-02-24.acacia`) an invoice arrives in the
+// *earlier* of its two shapes, so an "old"/"new" axis would read backwards.
 
 /**
  * Where an invoice carries its subscription id.
@@ -128,19 +120,6 @@ function createCompletedEvent(overrides: Partial<{
  *                 eventually move.
  */
 type InvoiceSubscriptionPlacement = "top-level" | "parent";
-
-/**
- * Whether a charge event embeds its refund list.
- *
- *   `expanded` — `refunds` present inline, which is what Stripe sent before
- *                `2022-11-15`. Our current unpinned endpoint resolves to a 2019
- *                version, so this is the shape in production *today*.
- *   `absent`   — no `refunds` at all: Stripe stopped auto-expanding it on the
- *                Charge, and an event object is never expanded. **This is what
- *                will arrive once the endpoint is pinned**, which makes the fetch
- *                path the only path from that moment on.
- */
-type ChargeRefundsPresence = "expanded" | "absent";
 
 /**
  * An `invoice.paid` renewal.
@@ -170,32 +149,6 @@ function createInvoicePaidEvent(overrides: {
         ...(overrides.placement === "top-level"
           ? { subscription }
           : { parent: { subscription_details: { subscription } } }),
-      },
-    },
-  };
-}
-
-/** A `charge.refunded` event, with or without its refund list embedded. */
-function createChargeRefundedEvent(overrides: {
-  refunds: ChargeRefundsPresence;
-  id?: string;
-  paymentIntent?: string | null;
-  embedded?: { id: string; amount: number }[];
-}) {
-  const embedded = overrides.embedded ?? [{ id: "re_test_1", amount: 4900 }];
-  return {
-    id: overrides.id ?? "evt_refund_1",
-    type: "charge.refunded",
-    data: {
-      object: {
-        id: CHARGE_ID,
-        payment_intent:
-          overrides.paymentIntent === undefined
-            ? "pi_test_1"
-            : overrides.paymentIntent,
-        ...(overrides.refunds === "expanded"
-          ? { refunds: { object: "list", data: embedded } }
-          : {}),
       },
     },
   };
@@ -236,7 +189,6 @@ function createSubscriptionUpdatedEvent(overrides: {
 
 type AdminInserts = {
   payments: Record<string, unknown>[];
-  refunds: Record<string, unknown>[];
   family_subscriptions: Record<string, unknown>[];
   /**
    * Payloads passed to `family_subscriptions` UPDATE. Separate from the inserts
@@ -249,13 +201,6 @@ type AdminInserts = {
 type AdminMockOptions = {
   /** Returned from the payments idempotency check (event-id dedup). */
   existingPayment?: { id: string } | null;
-  /**
-   * Returned from the payments lookup by `stripe_payment_intent_id` — the row a
-   * refund is attached to. Keyed separately from `existingPayment` because the
-   * refund handler and the dedup guard read the same table through different
-   * columns and want opposite answers in the same test.
-   */
-  paymentByIntent?: { id: string; amount_cents: number } | null;
   /**
    * Returned from a `family_subscriptions` SELECT lookup. The deleted/updated/
    * invoice handlers look the row up by stripe_subscription_id; the
@@ -279,7 +224,6 @@ type AdminMockOptions = {
 function mockAdmin(opts: AdminMockOptions = {}) {
   const inserts: AdminInserts = {
     payments: [],
-    refunds: [],
     family_subscriptions: [],
     familySubscriptionUpdates: [],
   };
@@ -287,18 +231,13 @@ function mockAdmin(opts: AdminMockOptions = {}) {
   mockAdminFrom.mockImplementation((table: string) => {
     if (table === "payments") {
       return {
-        // The column decides the answer: the handlers dedup on
-        // `stripe_event_id` and find the refunded payment on
-        // `stripe_payment_intent_id`, and conflating the two would make the
-        // refund tests pass for the wrong reason.
+        // Both handlers read this table for one reason only — the
+        // `stripe_event_id` dedup guard — so one answer covers every SELECT.
         select: () => ({
-          eq: (column: string) => ({
+          eq: () => ({
             maybeSingle: () =>
               Promise.resolve({
-                data:
-                  column === "stripe_payment_intent_id"
-                    ? (opts.paymentByIntent ?? null)
-                    : (opts.existingPayment ?? null),
+                data: opts.existingPayment ?? null,
                 error: null,
               }),
           }),
@@ -312,40 +251,6 @@ function mockAdmin(opts: AdminMockOptions = {}) {
             },
           }),
         }),
-      };
-    }
-    if (table === "refunds") {
-      return {
-        // Reads back what this mock has already captured, so a test can drive two
-        // deliveries against one ledger and have the second see the first's row.
-        // That accumulation is the whole point of "newest *unrecorded* refund":
-        // without it the selection cannot be exercised at all.
-        select: () => ({
-          in: (column: string, values: string[]) =>
-            Promise.resolve({
-              data: inserts.refunds.filter((row) =>
-                values.includes(String(row[column])),
-              ),
-              error: null,
-            }),
-        }),
-        insert: (row: Record<string, unknown>) => {
-          // The real table is UNIQUE on stripe_refund_id, and that constraint is
-          // exactly what turned "always take the newest" into a lost refund —
-          // the second delivery's insert was refused and swallowed. Simulate it,
-          // or a test cannot tell a recorded refund from a rejected one.
-          const duplicate = inserts.refunds.some(
-            (existing) => existing.stripe_refund_id === row.stripe_refund_id,
-          );
-          if (duplicate) {
-            return Promise.resolve({
-              data: null,
-              error: { code: "23505", message: "duplicate key" },
-            });
-          }
-          inserts.refunds.push(row);
-          return Promise.resolve({ data: null, error: null });
-        },
       };
     }
     if (table === "family_subscriptions") {
@@ -444,7 +349,6 @@ describe("POST /api/webhooks/stripe/products", () => {
         purpose: "single_payment",
         stripe_payment_intent_id: "pi_test_1",
       });
-      expect(inserts.refunds).toHaveLength(0);
     });
 
     it("writes a per-participation family_subscriptions row on subscription completion", async () => {
@@ -906,151 +810,6 @@ describe("POST /api/webhooks/stripe/products", () => {
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
       expect(inserts.payments).toHaveLength(0);
-    });
-  });
-
-  describe("charge.refunded — embedded list or fetched", () => {
-    const REFUNDED_PAYMENT = { id: PAYMENT_ROW_ID, amount_cents: 4900 };
-
-    it("records the refund from the embedded list when the payload carries one", async () => {
-      mockConstructEvent.mockReturnValue(
-        createChargeRefundedEvent({
-          refunds: "expanded",
-          id: "evt_refund_embedded",
-          embedded: [{ id: "re_embedded_1", amount: 4900 }],
-        }),
-      );
-      const inserts = mockAdmin({ paymentByIntent: REFUNDED_PAYMENT });
-
-      const res = await POST(createWebhookRequest());
-      expect(res.status).toBe(200);
-
-      expect(inserts.refunds).toHaveLength(1);
-      expect(inserts.refunds[0]).toMatchObject({
-        payment_id: PAYMENT_ROW_ID,
-        amount_cents: 4900,
-        reason: "admin_refund",
-        stripe_refund_id: "re_embedded_1",
-        stripe_event_id: "evt_refund_embedded",
-      });
-      // An embedded list is a snapshot from event-creation time, so its head is
-      // unambiguously this event's refund — no reason to ask Stripe for anything.
-      expect(mockRefundsList).not.toHaveBeenCalled();
-    });
-
-    it("fetches the refund when the payload embeds no list", async () => {
-      // The regression that matters: Stripe stopped auto-expanding `refunds` on
-      // the Charge in API 2022-11-15 and never expands nested objects on an event,
-      // so from that version on the field is simply absent. Reading it as "no
-      // refunds" made every refund vanish under a 200.
-      mockConstructEvent.mockReturnValue(
-        createChargeRefundedEvent({ refunds: "absent", id: "evt_refund_fetched" }),
-      );
-      const inserts = mockAdmin({ paymentByIntent: REFUNDED_PAYMENT });
-      mockRefundsList.mockResolvedValue({
-        data: [{ id: "re_fetched_1", amount: 2500 }],
-      });
-
-      const res = await POST(createWebhookRequest());
-      expect(res.status).toBe(200);
-
-      // A page, not `limit: 1`. A single-item fetch is what loses a refund when
-      // two land close together — see the next test.
-      expect(mockRefundsList).toHaveBeenCalledWith({ charge: CHARGE_ID });
-      expect(inserts.refunds).toHaveLength(1);
-      expect(inserts.refunds[0]).toMatchObject({
-        payment_id: PAYMENT_ROW_ID,
-        amount_cents: 2500,
-        stripe_refund_id: "re_fetched_1",
-        stripe_event_id: "evt_refund_fetched",
-      });
-    });
-
-    it("records both refunds when two land close together and both events fetch live state", async () => {
-      // The money-shaped bug this guards. A fetch reads Stripe's *live* refund
-      // list, not a snapshot, so by the time either event is processed both
-      // refunds are already there. "Take the newest" makes both deliveries pick
-      // re_second: the second insert is refused by UNIQUE on stripe_refund_id and
-      // swallowed as a duplicate, re_first is never recorded, and the refunded
-      // total is quietly understated with two 200s and no error anywhere.
-      //
-      // Both deliveries run against ONE admin mock on purpose — the ledger has to
-      // accumulate for the second call to see what the first wrote.
-      const inserts = mockAdmin({ paymentByIntent: REFUNDED_PAYMENT });
-      // Newest first, as Stripe returns them.
-      mockRefundsList.mockResolvedValue({
-        data: [
-          { id: "re_second", amount: 1000 },
-          { id: "re_first", amount: 2000 },
-        ],
-      });
-
-      mockConstructEvent.mockReturnValue(
-        createChargeRefundedEvent({ refunds: "absent", id: "evt_refund_a" }),
-      );
-      expect((await POST(createWebhookRequest())).status).toBe(200);
-
-      mockConstructEvent.mockReturnValue(
-        createChargeRefundedEvent({ refunds: "absent", id: "evt_refund_b" }),
-      );
-      expect((await POST(createWebhookRequest())).status).toBe(200);
-
-      // One row per event, two events, two distinct refunds — the full amount.
-      expect(inserts.refunds).toHaveLength(2);
-      expect(inserts.refunds.map((row) => row.stripe_refund_id)).toEqual([
-        "re_second",
-        "re_first",
-      ]);
-      expect(inserts.refunds.map((row) => row.stripe_event_id)).toEqual([
-        "evt_refund_a",
-        "evt_refund_b",
-      ]);
-      expect(
-        inserts.refunds.reduce((sum, row) => sum + Number(row.amount_cents), 0),
-      ).toBe(3000);
-    });
-
-    it("writes nothing on a replay whose refund is already in the ledger", async () => {
-      // The same subtraction that fixes the race handles a redelivery: everything
-      // we already hold is filtered out, so a replay of the only refund on a
-      // charge finds nothing left to record and needs no separate guard.
-      const inserts = mockAdmin({ paymentByIntent: REFUNDED_PAYMENT });
-      mockRefundsList.mockResolvedValue({
-        data: [{ id: "re_only", amount: 4900 }],
-      });
-      mockConstructEvent.mockReturnValue(
-        createChargeRefundedEvent({ refunds: "absent", id: "evt_refund_replay" }),
-      );
-
-      expect((await POST(createWebhookRequest())).status).toBe(200);
-      expect((await POST(createWebhookRequest())).status).toBe(200);
-
-      expect(inserts.refunds).toHaveLength(1);
-    });
-
-    it("records nothing when the charge turns out to have no refund at all", async () => {
-      mockConstructEvent.mockReturnValue(
-        createChargeRefundedEvent({ refunds: "absent" }),
-      );
-      const inserts = mockAdmin({ paymentByIntent: REFUNDED_PAYMENT });
-      mockRefundsList.mockResolvedValue({ data: [] });
-
-      const res = await POST(createWebhookRequest());
-      expect(res.status).toBe(200);
-      expect(inserts.refunds).toHaveLength(0);
-    });
-
-    it("is a no-op for a charge whose payment we never recorded", async () => {
-      mockConstructEvent.mockReturnValue(
-        createChargeRefundedEvent({ refunds: "absent" }),
-      );
-      const inserts = mockAdmin({ paymentByIntent: null });
-
-      const res = await POST(createWebhookRequest());
-      expect(res.status).toBe(200);
-      expect(inserts.refunds).toHaveLength(0);
-      // No payment row to attach to, so there is nothing to look up in Stripe.
-      expect(mockRefundsList).not.toHaveBeenCalled();
     });
   });
 

@@ -58,7 +58,7 @@ The rules to honour; the *enforcement* lives in the SQL/code.
 - **One purchase option per type, decided by the product** (not a menu): consumer club → monthly subscription; camp / paid event → single upfront; free event → no checkout; muni → the `external` shape (instant `active`, invoiced off-platform, no Stripe). `free` and `external` are the two no-charge shapes, each gated on its matching `billing_mode`.
 - **One Stripe subscription per (gamer, club)** — one `family_subscriptions` row each (the "family" name is historical; a row is one child in one club). Buys: always-Checkout (the trust moment), per-club cancel via Stripe's portal, and future deferred billing.
 - **Club cancellation is portal-only.** No in-app cancel action. Parent cancels in Stripe's hosted portal → `customer.subscription.deleted` webhook → `cancel_participation` hard-deletes the participation (CASCADEs the sub row). Webhook-driven and idempotent; the app never calls Stripe back on that path.
-- **Keep pricing/checkout code simple first** — prefer Stripe's built-ins (proration, `billing_cycle_anchor`, coupons) over re-implementing its math. Non-negotiable regardless: webhook idempotency (`stripe_event_id` unique on every `payments`/`refunds` row), `FOR UPDATE` seat counting, every money movement recorded, server-recomputed prices.
+- **Keep pricing/checkout code simple first** — prefer Stripe's built-ins (proration, `billing_cycle_anchor`, coupons) over re-implementing its math. Non-negotiable regardless: webhook idempotency (`stripe_event_id` unique on every `payments` row), `FOR UPDATE` seat counting, every incoming money movement recorded, server-recomputed prices. Refunds are the one money movement we do **not** record locally — they were a write-only ledger and the table was dropped; Stripe is the system of record for them.
 
 ### Seat hold vs club access (partly forward-looking)
 
@@ -122,7 +122,7 @@ A participation carries **two independent rights**: the **seat hold** (occupies 
 
 - **Admin = full access** on every table. **Writes are RPC-gated** — tables mutated by `SECURITY DEFINER` RPCs grant no INSERT/UPDATE/DELETE to `authenticated`.
 - **Parents never see** `product_groups`, the per-group gedu roster, `site_staff_details`, a session's gedu note or its attendance, or a product's gedu-only lesson-material link. The parent-facing gedu list is `DISTINCT gedu_id` across the product's groups.
-- **Gamers have no payment visibility**; customers see their own `payments`/`refunds`/`family_subscriptions` via `customer_id = auth.uid()`.
+- **Gamers have no payment visibility**; customers see their own `payments`/`family_subscriptions` via `customer_id = auth.uid()`.
 - **Gedus read products regardless of `is_visible`/`status`** (they may be assigned to a draft or cancelled one).
 - `product_subscription_prices` (Stripe Price IDs) is not a public catalog — parents only see the computed display price from `product_prices`.
 - Enforced by the catalog checks in `tests/db/access-control.test.ts` (RLS on every table; only allowlisted functions callable by anon/authenticated).

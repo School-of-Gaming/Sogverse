@@ -332,7 +332,6 @@ const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
   ["participations", "stripe_checkout_session_id"],
   // Money.
   ["payments", "amount_cents"],
-  ["refunds", "amount_cents"],
   ["family_subscriptions", "status"],
   ["family_subscriptions", "current_period_end"],
   // Not money, but a capability: the billing-portal route turns this id into a

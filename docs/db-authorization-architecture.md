@@ -188,8 +188,8 @@ large one.
 ### Sensitive tables (grant-locked today)
 
 Writes revoked from `authenticated`, `SELECT` granted only: participations, payments,
-refunds, family subscriptions, feedback submissions, gedu group assignments, product
-groups, per-product seat counts. The subscription-price catalog has no `authenticated`
+family subscriptions, feedback submissions, gedu group assignments, product groups,
+per-product seat counts. The subscription-price catalog has no `authenticated`
 grant at all. When adding a table that holds money, seats, or enrollment state,
 grant-lock it by default.
 
@@ -223,9 +223,9 @@ What the DB test suite covers (don't rebuild this — extend it):
   bidirectional allowlist; `anon` holds no table write grant. The *function*-grant
   allowlists it used to carry were retired when the spine subsumed them.
 - **Behavioral, handwritten per-target**: SELECT-side IDOR tests (customer A cannot read
-  customer B's rows) for participations, payments, refunds, groups, and products; the
-  per-RPC happy-path and business-rule tests. These are the fixture-bearing coverage the
-  fixture-free matrix cannot replace.
+  customer B's rows) for participations, payments, family subscriptions, groups, and
+  products; the per-RPC happy-path and business-rule tests. These are the fixture-bearing
+  coverage the fixture-free matrix cannot replace.
 - **Substrate**: `tests/db/helpers.ts` signs in as any seeded role (admin, customer,
   second customer, gedu, gamer) with deterministic UUIDs, hands out an `anon` client and
   a raw access token, and can post an RPC call straight to PostgREST (which is how the

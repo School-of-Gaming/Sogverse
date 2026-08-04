@@ -7,8 +7,8 @@ import type { Json, PaymentPurpose } from "@/types";
 
 const webhookSecret = process.env.STRIPE_PRODUCTS_WEBHOOK_SECRET!;
 
-// Webhook idempotency: every payments / refunds row carries the
-// stripe_event_id; UNIQUE constraints catch duplicate deliveries.
+// Webhook idempotency: every payments row carries the stripe_event_id; a UNIQUE
+// constraint catches duplicate deliveries.
 //
 // Errors during writes return 500 so Stripe retries. Unhandled event types
 // return 200 — quieter than 4xx and Stripe will stop retrying.
@@ -58,9 +58,11 @@ export async function POST(request: Request) {
         await handleSubscriptionDeleted(admin, event);
         break;
 
-      case "charge.refunded":
-        await handleChargeRefunded(admin, event);
-        break;
+      // No `charge.refunded` case on purpose either: it used to write a local
+      // refunds ledger that nothing ever read back, so both the ledger and the
+      // handler were removed. Stripe is the system of record for refunds and
+      // retains them indefinitely, so the data is backfillable if a reader is
+      // ever built. The event now falls through to the default below.
 
       default:
         // Unhandled type — fine.
@@ -588,103 +590,6 @@ async function handleSubscriptionDeleted(
     p_reason: "subscription_cancelled",
   });
   if (error) throw error;
-}
-
-async function handleChargeRefunded(
-  admin: Admin,
-  event: Stripe.ChargeRefundedEvent,
-) {
-  const charge = event.data.object;
-  const paymentIntentId = expandableId(charge.payment_intent);
-  if (!paymentIntentId) return;
-
-  const { data: payment } = await admin
-    .from("payments")
-    .select("id, amount_cents")
-    .eq("stripe_payment_intent_id", paymentIntentId)
-    .maybeSingle();
-  if (!payment) return;
-
-  // Exactly one refund is recorded per event, and it must be the one this event
-  // is about. `refunds` is UNIQUE on BOTH stripe_event_id and stripe_refund_id, so
-  // recording several under a single event id would silently fail all but the
-  // first — the row count per delivery is not a stylistic choice.
-  //
-  // Which refund that is depends on where the list came from, and the two sources
-  // are not equivalent.
-  const expanded = charge.refunds?.data ?? [];
-  const latest =
-    expanded.length > 0
-      ? // A payload that carries the list carries a *snapshot taken when the event
-        // was created*, so its head is unambiguously this event's refund. This is
-        // the pre-`2022-11-15` shape, where Stripe still auto-expanded `refunds`
-        // on the Charge; from that version on the field is absent from event
-        // payloads entirely (a webhook event object is never expanded), which is
-        // what the fetch below exists for. Reading absent as "nothing to record"
-        // is the trap: refunds stop being written and the route answers 200.
-        expanded.at(0)
-      : await newestUnrecordedRefund(admin, charge.id);
-  if (latest === undefined) return;
-
-  // Idempotency: UNIQUE on stripe_refund_id. INSERT and swallow duplicates.
-  const { error } = await admin
-    .from("refunds")
-    .insert({
-      payment_id: payment.id,
-      amount_cents: latest.amount,
-      reason: "admin_refund",
-      stripe_refund_id: latest.id,
-      stripe_event_id: event.id,
-    });
-  if (error && error.code !== "23505") {
-    throw error;
-  }
-}
-
-/**
- * The newest refund on a charge that our ledger does not already hold.
- *
- * This is the fetch path, and after the endpoint is pinned it is the *only* path,
- * so the difference from the expanded one matters. A fetch reads Stripe's **live**
- * state, not a snapshot of it, and the naive "take the newest" loses a refund
- * whenever two land close together: both deliveries fetch the second refund, the
- * second insert is refused by UNIQUE on `stripe_refund_id` and swallowed as a
- * duplicate, and the first refund is never recorded at all. Nothing errors, the
- * route answers 200 twice, and the refunded total is quietly understated — which
- * is a money-shaped bug in the direction of our own favour.
- *
- * So the newest is not what we want; the newest *unrecorded* one is. Stripe
- * returns refunds newest-first, so this asks for a page of them, subtracts the ids
- * we already hold, and takes the head of what is left. One row per event still,
- * and two events over two refunds record both regardless of the order they arrive
- * in. A page is deliberately not `limit: 1` — that limit is the bug.
- *
- * A replay is handled by the same subtraction rather than by a separate guard: on
- * a redelivery every refund we have already recorded is filtered out, so a replay
- * of the only refund on a charge finds nothing left and writes nothing.
- */
-async function newestUnrecordedRefund(
-  admin: Admin,
-  chargeId: string,
-): Promise<Stripe.Refund | undefined> {
-  // Stripe's default page size (10) with no explicit limit. Ten refunds racing on
-  // one charge is not a thing; one refund racing a second one is.
-  const { data: live } = await stripe.refunds.list({ charge: chargeId });
-  if (live.length === 0) return undefined;
-
-  const { data: recorded, error } = await admin
-    .from("refunds")
-    .select("stripe_refund_id")
-    .in(
-      "stripe_refund_id",
-      live.map((refund) => refund.id),
-    );
-  // Thrown, not shrugged off: an unreadable ledger cannot tell us what is missing
-  // from it, and guessing here is how a refund gets dropped. A 500 buys a retry.
-  if (error) throw error;
-
-  const alreadyHeld = new Set(recorded.map((row) => row.stripe_refund_id));
-  return live.find((refund) => !alreadyHeld.has(refund.id));
 }
 
 interface InsertPaymentParams {

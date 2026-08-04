@@ -11,18 +11,22 @@ import {
 
 /**
  * Cross-customer RLS coverage for the financial tables in the v2
- * participations system. We collapse six tables into one file so the
+ * participations system. We collapse several tables into one file so the
  * IDOR shape — "customer A must not see customer B's row" — is asserted
- * once per table without copying boilerplate setup six times.
+ * once per table without copying boilerplate setup per table.
  *
  * Tables under test:
  *   - participations          — direct customer_id ownership
  *   - payments                — direct customer_id ownership
- *   - refunds                 — ownership inherited via payment_id
  *   - family_subscriptions    — direct customer_id ownership
  *   - product_seat_counts     — public-readable rollup; assert anon CAN read
  *   - (writes against all tables) — confirm only admin role can mutate;
  *                                   customers must go through SECURITY DEFINER RPCs
+ *
+ * A `refunds` table used to sit here too, covering ownership inherited through
+ * `payment_id`. It was a write-only ledger — one Stripe webhook handler wrote it
+ * and nothing read it — so the table, the handler and these cases were all
+ * dropped together; Stripe is the system of record for refunds.
  *
  * `family_subscriptions` was once excluded from this file, on the reasoning
  * that its rows held nothing a parent could harvest from another parent beyond
@@ -61,7 +65,7 @@ function createAnonClient(): SupabaseClient<Database> {
   });
 }
 
-describe("v2 participations / payments / refunds RLS", () => {
+describe("v2 participations / payments / family subscriptions RLS", () => {
   let admin: SupabaseClient<Database>;
   let customerClient: SupabaseClient<Database>;
   let customer2Client: SupabaseClient<Database>;
@@ -72,8 +76,6 @@ describe("v2 participations / payments / refunds RLS", () => {
   let customer2ParticipationId: string;
   let customerPaymentId: string;
   let customer2PaymentId: string;
-  let customerRefundId: string;
-  let customer2RefundId: string;
   let customerSubRowId: string;
   let customer2SubRowId: string;
 
@@ -94,10 +96,6 @@ describe("v2 participations / payments / refunds RLS", () => {
     // insert the participation row directly with arbitrary gamer — RLS
     // policies don't re-validate parent-gamer at the row level (the RPC
     // does that, and we're testing RLS reads here, not the RPC).
-    await admin
-      .from("refunds")
-      .delete()
-      .in("stripe_event_id", ["evt_rls_a", "evt_rls_b"]);
     await admin
       .from("payments")
       .delete()
@@ -172,35 +170,6 @@ describe("v2 participations / payments / refunds RLS", () => {
     if (payB.error) throw payB.error;
     customer2PaymentId = payB.data.id;
 
-    // Refunds linked to each payment.
-    const refA = await admin
-      .from("refunds")
-      .insert({
-        payment_id: customerPaymentId,
-        amount_cents: 1000,
-        reason: "admin_refund",
-        stripe_refund_id: "re_rls_a",
-        stripe_event_id: "evt_rls_a",
-      })
-      .select("id")
-      .single();
-    if (refA.error) throw refA.error;
-    customerRefundId = refA.data.id;
-
-    const refB = await admin
-      .from("refunds")
-      .insert({
-        payment_id: customer2PaymentId,
-        amount_cents: 2000,
-        reason: "admin_refund",
-        stripe_refund_id: "re_rls_b",
-        stripe_event_id: "evt_rls_b",
-      })
-      .select("id")
-      .single();
-    if (refB.error) throw refB.error;
-    customer2RefundId = refB.data.id;
-
     // family_subscriptions — one per participation. The Stripe customer ids
     // are distinct per family, which is what the cross-customer cases below
     // key off: reading the other family's row hands over their portal.
@@ -236,11 +205,6 @@ describe("v2 participations / payments / refunds RLS", () => {
   });
 
   afterAll(async () => {
-    // refunds doesn't cascade from anything we own — delete first.
-    await admin
-      .from("refunds")
-      .delete()
-      .in("stripe_event_id", ["evt_rls_a", "evt_rls_b"]);
     await admin
       .from("payments")
       .delete()
@@ -367,49 +331,6 @@ describe("v2 participations / payments / refunds RLS", () => {
         stripe_event_id: "evt_rls_forge",
       });
       expect(error).not.toBeNull();
-    });
-  });
-
-  // ---------------------------------------------------------------------------
-  // refunds (ownership inherited via payment_id)
-  // ---------------------------------------------------------------------------
-
-  describe("refunds", () => {
-    it("customer can SELECT a refund linked to their own payment", async () => {
-      const { data, error } = await customerClient
-        .from("refunds")
-        .select("id, amount_cents")
-        .eq("id", customerRefundId)
-        .maybeSingle();
-      expect(error).toBeNull();
-      expect(data?.amount_cents).toBe(1000);
-    });
-
-    it("customer cannot SELECT a refund linked to another customer's payment", async () => {
-      const { data, error } = await customerClient
-        .from("refunds")
-        .select("id")
-        .eq("id", customer2RefundId);
-      expect(error).toBeNull();
-      expect(data).toEqual([]);
-    });
-
-    it("the symmetric assertion holds for customer 2", async () => {
-      // Verifies that customer 2's refund is selectable by customer 2 —
-      // catches a regression where the policy USING clause is over-tight.
-      const { data, error } = await customer2Client
-        .from("refunds")
-        .select("id, amount_cents")
-        .eq("id", customer2RefundId)
-        .maybeSingle();
-      expect(error).toBeNull();
-      expect(data?.amount_cents).toBe(2000);
-    });
-
-    it("anon SELECT returns no rows (RLS blocks)", async () => {
-      const { data, error } = await anonClient.from("refunds").select("id");
-      expect(error).toBeNull();
-      expect(data).toEqual([]);
     });
   });
 

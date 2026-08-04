@@ -219,7 +219,6 @@ export type { ProductBrowseRow } from "@/services/products/products.service";
 // Enums
 export type ParticipationStatus = Database["public"]["Enums"]["participation_status"];
 export type PaymentPurpose = Database["public"]["Enums"]["payment_purpose"];
-export type RefundReason = Database["public"]["Enums"]["refund_reason"];
 export type EffectiveProductStatusDB = Database["public"]["Enums"]["effective_product_status"];
 
 // participations
@@ -253,10 +252,6 @@ export type PurchaseShape =
 // payments
 export type Payment = Database["public"]["Tables"]["payments"]["Row"];
 export type PaymentInsert = Database["public"]["Tables"]["payments"]["Insert"];
-
-// refunds
-export type Refund = Database["public"]["Tables"]["refunds"]["Row"];
-export type RefundInsert = Database["public"]["Tables"]["refunds"]["Insert"];
 
 // family_subscriptions — one Stripe subscription per (gamer, club) participation.
 // "Family" is historical: a row is one gamer in one club, not a family's whole bill.
