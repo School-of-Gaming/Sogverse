@@ -1135,6 +1135,34 @@
       "genericError": "Couldn’t add this gamer. Please try again."
     }
   },
+  "familyProduct": {
+    "back": "Back to My SOG",
+    "typeLabel": {
+      "consumer_club": "Club",
+      "municipality_club": "Club",
+      "camp": "Camp",
+      "event": "Event"
+    },
+    "forGamer": "for {name}",
+    "scheduleLabel": "When",
+    "venueLabel": "Where",
+    "gedusLabelCustomer": "Your child’s Gedus",
+    "gedusLabelGamer": "Your Gedus",
+    "aboutHeading": "About this group",
+    "venueNoteHeading": "At {site}",
+    "feedHeading": "Sessions",
+    "liveBadge": "Happening now",
+    "nextSessionBadge": "Next session",
+    "futureBadge": "Upcoming",
+    "attendancePresent": "Present",
+    "attendanceNotPresent": "Not present",
+    "noWriteUp": "No write-up",
+    "emptyPastCustomer": "Nothing has happened here yet. Every session gets written up below once the group starts meeting.",
+    "emptyPastGamer": "Nothing here yet. Everything you get up to shows up below after your first session.",
+    "emptyFeedCustomer": "There are no sessions on this one yet.",
+    "emptyFeedGamer": "You have no sessions on this one yet.",
+    "showEarlier": "{count, plural, one {Show # earlier session} other {Show # earlier sessions}}"
+  },
   "selectProfile": {
     "title": "Who is entering Sogverse?"
   },

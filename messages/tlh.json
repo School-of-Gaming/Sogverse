@@ -1180,6 +1180,34 @@
       "genericError": "QujwI’ chelta’be’. yInIDqa’!"
     }
   },
+  "familyProduct": {
+    "back": "jIH SOGDaq yIchegh",
+    "typeLabel": {
+      "consumer_club": "ghom’a’",
+      "municipality_club": "ghom’a’",
+      "camp": "wa’leSvam",
+      "event": "Soqbogh"
+    },
+    "forGamer": "{name}vaD",
+    "scheduleLabel": "ghorgh",
+    "venueLabel": "nuqDaq",
+    "gedusLabelCustomer": "puqlI’ Gedupu’",
+    "gedusLabelGamer": "Gedupu’lI’",
+    "aboutHeading": "ghom’a’vam De’",
+    "venueNoteHeading": "{site}Daq",
+    "feedHeading": "may’mey",
+    "liveBadge": "DaH qaS",
+    "nextSessionBadge": "may’ veb",
+    "futureBadge": "may’ pIq",
+    "attendancePresent": "pawpu’",
+    "attendanceNotPresent": "pawbe’",
+    "noWriteUp": "qonta’ tu’lu’be’",
+    "emptyPastCustomer": "pagh qaSpu’. ghom’a’ qaSDI’, may’ Hoch qonlu’ ’ej naDev cha’lu’.",
+    "emptyPastGamer": "DaH pagh tu’lu’. may’ wa’DIch ta’DI’, Hoch Data’bogh naDev cha’lu’.",
+    "emptyFeedCustomer": "naDev may’mey tu’lu’be’.",
+    "emptyFeedGamer": "may’mey Dajmey tu’lu’be’.",
+    "showEarlier": "{count, plural, one {# may’ qan yIcha’} other {# may’mey qan yIcha’}}"
+  },
   "selectProfile": {
     "title": "Sogverse ’el ’Iv?"
   },

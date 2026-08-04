@@ -26,6 +26,14 @@ export {
   rosterScopedMarks,
 } from "./entry-state";
 export type { AttendanceTally, SessionCompleteness } from "./entry-state";
+// The row shaping and the date/time labels are role-agnostic: they take
+// anything with an id and an instant, and the family's read-only feed runs on
+// exactly the same month boundaries and the same viewer-zone labels as the
+// gedu's workspace feed does.
+export { monthKey, withMonthDividers } from "./feed-rows";
+export type { SessionFeedRow } from "./feed-rows";
+export { formatMonthLabel, formatSessionLabels } from "./session-labels";
+export type { SessionLabels } from "./session-labels";
 export {
   PartialSessionSaveError,
   isPartialSessionSaveError,

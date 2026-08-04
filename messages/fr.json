@@ -1135,6 +1135,34 @@
       "genericError": "Impossible d’ajouter ce joueur. Veuillez réessayer."
     }
   },
+  "familyProduct": {
+    "back": "Retour à Mon SOG",
+    "typeLabel": {
+      "consumer_club": "Club",
+      "municipality_club": "Club",
+      "camp": "Camp",
+      "event": "Événement"
+    },
+    "forGamer": "pour {name}",
+    "scheduleLabel": "Quand",
+    "venueLabel": "Où",
+    "gedusLabelCustomer": "Les Gedus de votre enfant",
+    "gedusLabelGamer": "Vos Gedus",
+    "aboutHeading": "À propos du groupe",
+    "venueNoteHeading": "À {site}",
+    "feedHeading": "Séances",
+    "liveBadge": "En cours",
+    "nextSessionBadge": "Prochaine séance",
+    "futureBadge": "Séance à venir",
+    "attendancePresent": "Présent",
+    "attendanceNotPresent": "Pas présent",
+    "noWriteUp": "Aucun compte rendu",
+    "emptyPastCustomer": "Rien ne s’est encore passé ici. Dès que le groupe commencera à se réunir, chaque séance sera racontée ci-dessous.",
+    "emptyPastGamer": "Rien ici pour l’instant. Après ta première séance, tout ce que vous faites apparaîtra ci-dessous.",
+    "emptyFeedCustomer": "Il n’y a pas encore de séances ici.",
+    "emptyFeedGamer": "Tu n’as pas encore de séances ici.",
+    "showEarlier": "{count, plural, one {Afficher # séance précédente} other {Afficher # séances précédentes}}"
+  },
   "selectProfile": {
     "title": "Qui entre dans le Sogverse ?"
   },

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { isFamilyProductScenario } from "@/components/family/product-page/mock-fixtures";
 import { isGeduDashboardScenario } from "@/components/gedu/mock-dashboard-fixtures";
 import { isGeduProductScenario } from "@/components/gedu/session-details/mock-product-page-fixtures";
 import {
@@ -7,6 +8,7 @@ import {
 } from "@/components/public/products/mock-detail-fixtures";
 import { PurchaseConfirmationNotice } from "@/components/public/products/purchase-confirmation-view";
 import type { PreviewSurface } from "./scenes";
+import { FamilyProductPageScene } from "./scenes/family-product-page-scene";
 import { GeduDashboardScene } from "./scenes/gedu-dashboard-scene";
 import { GeduProductPageScene } from "./scenes/gedu-product-page-scene";
 import { ProductDetailScene } from "./scenes/product-detail-scene";
@@ -49,6 +51,18 @@ const SCENE_RENDERERS: Record<
   "gedu-product": (scenario) => {
     if (!isGeduProductScenario(scenario)) notFound();
     return <GeduProductPageScene scenario={scenario} />;
+  },
+  // Two surfaces, one body and one set of fixtures. The audience is the whole
+  // difference between them, which is exactly what the pair of scenes is for:
+  // opening both in adjacent tabs is how you check that the gamer's copy is the
+  // parent's minus attendance and nothing else has quietly drifted.
+  "parent-club": (scenario) => {
+    if (!isFamilyProductScenario(scenario)) notFound();
+    return <FamilyProductPageScene audience="customer" scenario={scenario} />;
+  },
+  "gamer-club": (scenario) => {
+    if (!isFamilyProductScenario(scenario)) notFound();
+    return <FamilyProductPageScene audience="gamer" scenario={scenario} />;
   },
 };
 
