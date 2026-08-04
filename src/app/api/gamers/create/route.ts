@@ -4,6 +4,7 @@ import { defineRoute } from "@/lib/api/define-route";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateGamerEmail } from "@/lib/utils";
 import { lookupMinecraftUser } from "@/lib/mojang";
+import { lookupRobloxProfile } from "@/lib/roblox";
 import { createGamerBody } from "@/services/gamers/gamers.contracts";
 import type { GenderType } from "@/types";
 
@@ -40,7 +41,13 @@ export const POST = defineRoute({
 
   handler: async ({ user, body }) => {
     const admin = createAdminClient();
-    const { firstName, dateOfBirth, gender: providedGender, minecraftUsername } = body;
+    const {
+      firstName,
+      dateOfBirth,
+      gender: providedGender,
+      minecraftUsername,
+      robloxUsername,
+    } = body;
 
     const dobDate = new Date(dateOfBirth + "T00:00:00");
     if (isNaN(dobDate.getTime()) || dobDate > new Date()) {
@@ -83,19 +90,29 @@ export const POST = defineRoute({
       .single();
     const inheritedLastName = parentProfile?.last_name ?? "";
 
-    // Resolve the optional Minecraft account before creating the auth user, so a
-    // Mojang outage costs nothing rather than an auth user created and then
-    // compensated away. Nothing here can reject the username: another Sogverse
-    // account may already hold it (siblings share accounts), and one Mojang
-    // can't resolve is stored as-typed with a null uuid.
-    let resolvedMinecraft: { username: string; uuid: string | null } | null = null;
-    if (minecraftUsername) {
-      const mojang = await lookupMinecraftUser(minecraftUsername);
-      resolvedMinecraft = {
-        username: minecraftUsername,
-        uuid: mojang?.uuid ?? null,
-      };
-    }
+    // Resolve the optional game accounts before creating the auth user, so a
+    // Mojang or Roblox outage costs nothing rather than an auth user created and
+    // then compensated away. Nothing here can reject a username: another
+    // Sogverse account may already hold it (siblings share accounts), and one
+    // the platform can't resolve is stored as-typed with a null account key.
+    //
+    // The two lookups are independent reads of two unrelated third parties, so
+    // they run together — a child with both handles waits for the slower one
+    // rather than for the sum.
+    const [resolvedMinecraft, resolvedRoblox] = await Promise.all([
+      minecraftUsername
+        ? lookupMinecraftUser(minecraftUsername).then((mojang) => ({
+            username: minecraftUsername,
+            uuid: mojang?.uuid ?? null,
+          }))
+        : null,
+      robloxUsername
+        ? lookupRobloxProfile(robloxUsername).then((profile) => ({
+            username: robloxUsername,
+            userId: profile?.userId ?? null,
+          }))
+        : null,
+    ]);
 
     // Compose display_name for the Supabase auth dashboard label.
     const composedDisplayName = [firstName, inheritedLastName]
@@ -140,10 +157,13 @@ export const POST = defineRoute({
         p_date_of_birth: dateOfBirth,
         // Omit (→ undefined) rather than pass null: the RPC params default to
         // null, and the generated Args type accepts undefined, not null. A null
-        // Mojang UUID still inserts a Minecraft row (username present, uuid null).
+        // account key still inserts the row (username present, key null) on
+        // either platform.
         p_gender: gender ?? undefined,
         p_minecraft_username: resolvedMinecraft?.username ?? undefined,
         p_minecraft_uuid: resolvedMinecraft?.uuid ?? undefined,
+        p_roblox_username: resolvedRoblox?.username ?? undefined,
+        p_roblox_user_id: resolvedRoblox?.userId ?? undefined,
       });
 
       if (rpcError) {

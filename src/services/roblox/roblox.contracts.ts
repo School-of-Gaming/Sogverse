@@ -23,6 +23,25 @@ export const robloxUsernameValue = z
   .refine(isValidRobloxUsername, { message: INVALID_USERNAME_MESSAGE })
   .nullable();
 
+/** Request body of PATCH /api/roblox/account — link or unlink one's own. */
+export const updateRobloxAccountBody = z.object({
+  robloxUsername: robloxUsernameValue,
+});
+
+/**
+ * What the Roblox write path answers with.
+ *
+ * The account id is a number rather than a string, and that is the one place
+ * this contract cannot mirror its Minecraft counterpart: Mojang's key is a
+ * dashed UUID and Roblox's is an int64, and the column types follow suit. Null
+ * when no lookup confirmed the account — presence is the whole of "verified".
+ */
+export const robloxAccountWriteResult = z.object({
+  success: z.literal(true),
+  roblox_username: z.string().nullable(),
+  roblox_user_id: z.number().int().positive().nullable(),
+});
+
 /** Query string of GET /api/roblox/verify — the public Roblox lookup. */
 export const verifyRobloxQuery = z.object({
   username: z

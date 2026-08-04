@@ -28,6 +28,18 @@ vi.mock("@/lib/mojang", () => ({
     mockIsValidMinecraftUsername(...args),
 }));
 
+// Only the network hop is replaced: `isValidRobloxUsername` is a pure regex the
+// body schema imports, and mocking it would stop the format rule this route
+// really enforces from being exercised here at all.
+const mockLookupRobloxProfile = vi.fn();
+vi.mock("@/lib/roblox", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/roblox")>();
+  return {
+    ...actual,
+    lookupRobloxProfile: (...args: unknown[]) => mockLookupRobloxProfile(...args),
+  };
+});
+
 // --- Helpers ---
 
 function mockUnauthenticated() {
@@ -424,5 +436,145 @@ describe("PATCH /api/gamers/[id]", () => {
 
     expect(response.status).toBe(400);
     expect(data.error).toContain("Invalid Minecraft username");
+  });
+
+  // -- Roblox username --
+
+  it("should accept robloxUsername as sole update field", async () => {
+    mockAuthenticated("customer-123");
+    mockParentGamerLookup(true);
+    mockLookupRobloxProfile.mockResolvedValue({
+      username: "builderman",
+      userId: 156,
+      displayName: "builderman",
+      avatarUrl: null,
+      headshotUrl: null,
+    });
+
+    // Admin calls: role check → roblox_accounts upsert → profiles final fetch.
+    const roleCheck = mockTargetProfile("gamer");
+    const robloxUpsert = {
+      upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
+    const fetch = mockProfileFetch({
+      id: GAMER_ID,
+      first_name: "Existing",
+      role: "gamer",
+    });
+
+    let callCount = 0;
+    mockAdminFrom.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) return roleCheck;
+      if (callCount === 2) return robloxUpsert;
+      return fetch;
+    });
+
+    const [req, ctx] = createRequest(GAMER_ID, {
+      robloxUsername: "builderman",
+    });
+    const response = await PATCH(req, ctx);
+
+    expect(response.status).toBe(200);
+    expect(mockLookupRobloxProfile).toHaveBeenCalledWith("builderman");
+    expect(robloxUpsert.upsert).toHaveBeenCalledWith(
+      {
+        user_id: GAMER_ID,
+        roblox_username: "builderman",
+        roblox_user_id: 156,
+      },
+      { onConflict: "user_id" },
+    );
+    // The parent named no Minecraft key, so that link is left entirely alone.
+    expect(mockLookupMinecraftUser).not.toHaveBeenCalled();
+  });
+
+  it("should store a handle Roblox cannot resolve with a null account id", async () => {
+    mockAuthenticated("customer-123");
+    mockParentGamerLookup(true);
+    mockLookupRobloxProfile.mockResolvedValue(null);
+
+    const roleCheck = mockTargetProfile("gamer");
+    const robloxUpsert = {
+      upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
+    const fetch = mockProfileFetch({
+      id: GAMER_ID,
+      first_name: "Existing",
+      role: "gamer",
+    });
+
+    let callCount = 0;
+    mockAdminFrom.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) return roleCheck;
+      if (callCount === 2) return robloxUpsert;
+      return fetch;
+    });
+
+    const [req, ctx] = createRequest(GAMER_ID, {
+      robloxUsername: "nobody_here",
+    });
+    const response = await PATCH(req, ctx);
+
+    expect(response.status).toBe(200);
+    expect(robloxUpsert.upsert).toHaveBeenCalledWith(
+      {
+        user_id: GAMER_ID,
+        roblox_username: "nobody_here",
+        roblox_user_id: null,
+      },
+      { onConflict: "user_id" },
+    );
+  });
+
+  it("should clear roblox fields when robloxUsername is null", async () => {
+    mockAuthenticated("customer-123");
+    mockParentGamerLookup(true);
+
+    const roleCheck = mockTargetProfile("gamer");
+    const robloxUpsert = {
+      upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
+    const fetch = mockProfileFetch({
+      id: GAMER_ID,
+      first_name: "Existing",
+      role: "gamer",
+    });
+
+    let callCount = 0;
+    mockAdminFrom.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) return roleCheck;
+      if (callCount === 2) return robloxUpsert;
+      return fetch;
+    });
+
+    const [req, ctx] = createRequest(GAMER_ID, { robloxUsername: null });
+    const response = await PATCH(req, ctx);
+
+    expect(response.status).toBe(200);
+    expect(robloxUpsert.upsert).toHaveBeenCalledWith(
+      {
+        user_id: GAMER_ID,
+        roblox_username: null,
+        roblox_user_id: null,
+      },
+      { onConflict: "user_id" },
+    );
+    // Nothing to look up when clearing.
+    expect(mockLookupRobloxProfile).not.toHaveBeenCalled();
+  });
+
+  it("should return 400 for invalid roblox username format", async () => {
+    mockAuthenticated("customer-123");
+
+    // Two underscores; Roblox allows at most one, never at either end.
+    const [req, ctx] = createRequest(GAMER_ID, { robloxUsername: "a_b_c" });
+    const response = await PATCH(req, ctx);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("Invalid Roblox username");
   });
 });

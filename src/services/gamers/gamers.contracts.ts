@@ -2,6 +2,7 @@ import { z } from "zod";
 import { Constants } from "@/types";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { minecraftUsernameValue } from "@/services/minecraft/minecraft.contracts";
+import { robloxUsernameValue } from "@/services/roblox/roblox.contracts";
 
 /**
  * Request contracts for the gamer-account API. Both write routes used to check
@@ -31,14 +32,17 @@ export const createGamerBody = z.object({
   gender: z
     .union([z.enum(Constants.public.Enums.gender_type), z.literal(""), z.null()])
     .optional(),
+  // Both game identities are optional and independent: a parent may give one,
+  // both, or neither, and each carries its own platform's format rule.
   minecraftUsername: minecraftUsernameValue.optional(),
+  robloxUsername: robloxUsernameValue.optional(),
 });
 
 /**
  * Request body of PATCH /api/gamers/[id]. Every field is optional because the
  * parent edits one thing at a time, but sending none of them is a no-op the
- * route refuses rather than silently accepts. An explicit `null` Minecraft
- * username unlinks; an absent key leaves the link alone.
+ * route refuses rather than silently accepts. An explicit `null` game username
+ * unlinks that platform; an absent key leaves the link alone.
  */
 export const updateGamerBody = z
   .object({
@@ -48,14 +52,16 @@ export const updateGamerBody = z
       .min(6, "Password must be at least 6 characters")
       .optional(),
     minecraftUsername: minecraftUsernameValue.optional(),
+    robloxUsername: robloxUsernameValue.optional(),
   })
   .refine(
     (body) =>
       body.firstName !== undefined ||
       body.password !== undefined ||
-      body.minecraftUsername !== undefined,
+      body.minecraftUsername !== undefined ||
+      body.robloxUsername !== undefined,
     {
       message:
-        "At least one of firstName, password, or minecraftUsername is required",
+        "At least one of firstName, password, minecraftUsername, or robloxUsername is required",
     },
   );

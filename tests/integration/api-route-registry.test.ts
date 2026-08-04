@@ -175,6 +175,7 @@ const TESTS = {
   productsParticipationsTransition:
     "tests/integration/api/products-participations-transition.test.ts",
   productsUpdate: "tests/integration/api/products-update.test.ts",
+  robloxAccount: "tests/integration/api/roblox-account.test.ts",
   robloxVerify: "tests/integration/api/roblox-verify.test.ts",
   sendTestEmail: "tests/integration/api/send-test-email.test.ts",
   signout: "tests/integration/auth/signout.test.ts",
@@ -672,6 +673,16 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   },
 
   // --- Roblox --------------------------------------------------------------
+
+  "src/app/api/roblox/account/route.ts": {
+    handlers: {
+      PATCH: {
+        posture: { kind: "role-gated", roles: ["gamer", "gedu"] },
+        body: { kind: "json", schema: "updateRobloxAccountBody" },
+        test: TESTS.robloxAccount,
+      },
+    },
+  },
 
   "src/app/api/roblox/verify/route.ts": {
     handlers: {

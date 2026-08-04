@@ -5,9 +5,9 @@ import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
  * Request body for public gedu self-registration (`POST /api/gedu/register`).
  * Shared by the route (which validates with it) and the register-gedu form.
  *
- * Optional text fields are sent through as-is (the form posts `""` for empty
- * phone/Minecraft); the `register_gedu` RPC NULLIFs them server-side. Language
- * and location ids are validated for *shape* here — the DB (the
+ * Optional text fields are sent through as-is (the form posts `""` for an empty
+ * phone or game handle); the `register_gedu` RPC NULLIFs them server-side.
+ * Language and location ids are validated for *shape* here — the DB (the
  * validate_profile_languages trigger and the locations FK) is the source of
  * truth for whether the values actually exist.
  */
@@ -29,6 +29,7 @@ export const registerGeduBody = z.object({
   locale: z.string().optional(),
   locationIds: z.array(z.string().uuid()).default([]),
   minecraftUsername: z.string().optional(),
+  robloxUsername: z.string().optional(),
 });
 
 export type RegisterGeduBody = z.infer<typeof registerGeduBody>;

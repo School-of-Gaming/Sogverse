@@ -2,6 +2,21 @@ import type { Profile, ParentGamer, CreateGamerInput, GamerProfile, AppSupabaseC
 import { isGamerProfile } from "@/types";
 import { ApiError } from "@/lib/api/api-error";
 
+/**
+ * What a parent may change about one of their gamers, one field at a time.
+ *
+ * Named rather than inlined because the mutation hook and this method have to
+ * agree on it exactly — they drifted once already, and a game platform added to
+ * one but not the other is a field the UI can set and the request never carries.
+ * A `null` game username unlinks that platform; an absent key leaves it alone.
+ */
+export interface GamerUpdate {
+  firstName?: string;
+  password?: string;
+  minecraftUsername?: string | null;
+  robloxUsername?: string | null;
+}
+
 export class GamerService {
   constructor(private supabase: AppSupabaseClient) {}
 
@@ -77,6 +92,7 @@ export class GamerService {
         dateOfBirth: input.dateOfBirth,
         gender: input.gender,
         minecraftUsername: input.minecraftUsername,
+        robloxUsername: input.robloxUsername,
       }),
     });
 
@@ -95,7 +111,7 @@ export class GamerService {
 
   async updateGamer(
     gamerId: string,
-    updates: { firstName?: string; password?: string; minecraftUsername?: string | null },
+    updates: GamerUpdate,
   ): Promise<Profile> {
     const response = await fetch(`/api/gamers/${gamerId}`, {
       method: "PATCH",

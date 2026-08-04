@@ -1,4 +1,4 @@
-export { GamerService } from "./gamers.service";
+export { GamerService, type GamerUpdate } from "./gamers.service";
 export {
   gamerKeys,
   useMyGamers,
