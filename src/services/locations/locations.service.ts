@@ -299,10 +299,10 @@ export class LocationsService {
 
   /**
    * Every municipality of one country, each carrying its ancestor chain.
-   * Drives the `/schools` list and the online municipality-club picker, both
-   * Finland-only today (308 rows) — but the same call for France is 34,875, so
-   * this is a paged walk, not a select. The chain is what lets both surfaces
-   * show (and group by) the region without a second read.
+   * Drives the `/schools` list, Finland-only today (308 rows) — but the same
+   * call for France is 34,875, so this is a paged walk, not a select. The
+   * chain is what lets the surface show (and group by) the region without a
+   * second read.
    */
   async getMunicipalitiesByCountry(
     countryCode: string,

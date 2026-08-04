@@ -62,7 +62,7 @@ export function useLocation(id: string) {
   });
 }
 
-/** Every municipality of one country — the /schools list, the FI club picker. */
+/** Every municipality of one country. No UI caller today (see TODO.md). */
 export function useMunicipalitiesByCountry(
   countryCode: string,
   options?: { initialData?: LocationWithChain[] },

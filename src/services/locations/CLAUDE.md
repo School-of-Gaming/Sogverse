@@ -22,13 +22,19 @@ is not caching the table but never asking for more of it than a screen shows:
   plus the true match count. Nothing that could match the whole table is filtered in the
   browser.
 - **The bounded lists** a surface genuinely needs in full — one country's municipalities,
-  one municipality's venues — are read whole and grouped or listed client-side. What makes
-  such a list legitimate is that something *outside the geography* bounds it: a
-  municipality club is funded by one Finnish kunta and by nothing else, and a venue list is
-  the children of one confirmed row. Both stay in the hundreds however many countries are
-  added, and once such a set is in memory, narrowing it is a substring test rather than a
-  round trip. A list bounded by nothing but "this is all anyone has created so far" is the
-  shape to be suspicious of — the venue picker was one, and is a tree dialog now.
+  one municipality's venues — are read whole and listed client-side. What makes such a
+  list legitimate is that something *outside the geography* bounds it: a municipality club
+  is funded by one Finnish kunta and by nothing else, and a venue list is the children of
+  one confirmed row. Both stay in the hundreds however many countries are added. A list
+  bounded by nothing but "this is all anyone has created so far" is the shape to be
+  suspicious of — the venue picker was one, and is a tree dialog now.
+
+  **Being bounded earns a list the right to be read whole; it does not make it the right
+  way to *pick* from.** Both bounded lists above are read by pages that render the whole
+  collection as their content — a directory, a venue list inside a confirmed place — and
+  no picker fetches one any more. Finland's 308 kuntaa were the last that did, and the
+  tree dialog reaches any of them in three keystrokes against an index that also covers
+  the 34,875 it never held.
 
 The payload is therefore O(what is rendered) and constant as countries are added.
 
@@ -160,14 +166,18 @@ query time — which is the good outcome, but only if you recognise it.
 should find nothing, not everything.
 
 **Rule: the fold exists twice, and a shared table of inputs pins the two together.** The
-database folds the stored side and the needle; the browser folds again, in TypeScript,
-for the bounded sets it filters in memory — which is right, because a set already on the
-client should narrow without a request or a loading state. What is not right is two
-implementations agreeing only by habit: the failure is silent and asymmetric, one picker
-quietly ceasing to match "Nîmes" while the other still does. So the expectations live in
-one fixture that both suites assert against — the unit suite against the TypeScript fold,
-the DB suite against the SQL one — and a change to either that is not a change to the
-other fails a build. The known boundary is Latin letters with no canonical decomposition
+database folds the stored side and the needle; a TypeScript fold exists alongside it for
+any set narrowed in the browser, because a set already on the client should narrow
+without a request or a loading state. What is not right is two implementations agreeing
+only by habit: the failure is silent and asymmetric, one surface quietly ceasing to match
+"Nîmes" while the other still does. So the expectations live in one fixture that both
+suites assert against — the unit suite against the TypeScript fold, the DB suite against
+the SQL one — and a change to either that is not a change to the other fails a build.
+Worth knowing while reading that: **no shipped surface currently narrows a set in the
+browser**, the last one having become a tree dialog, so the TypeScript fold is at present
+pinned by its tests alone; `TODO.md` carries what retiring it would cost and why it was
+not retired as a drive-by. The known boundary is Latin letters with no canonical
+decomposition
 (`œ`, `ø`, `æ`, `ł`): `unaccent` expands them by rule and NFD normalization has nothing to
 decompose, so the two genuinely differ there. It is out of reach rather than fixed —
 neither official classification spells a municipality with one, and the TypeScript fold
@@ -265,9 +275,12 @@ so the caller knows whether to offer another page. Pages accumulate rather than 
 so "load more" appends under rows the user is already reading.
 
 **Whole-list reads** — one country's municipalities; one municipality's venues. A surface
-needs these in full because something outside the table bounds them, and it groups or
-lists whatever it gets. There is also a read of *every* site, which no surface renders any
-more; `TODO.md` carries what retiring it would cost.
+needs these in full because something outside the table bounds them, and it lists whatever
+it gets. Both are read by pages that *render* the collection rather than by pickers
+choosing from it: the public municipality directory, and the venue list inside a confirmed
+municipality. There is also a read of *every* site, which no surface renders at all, and
+the browser hook wrapping the municipality read has likewise lost its last caller;
+`TODO.md` carries what retiring either would cost.
 
 **Rule: any list read that could exceed PostgREST's `max_rows` pages through `.range()`
 until a page comes back short, and asks for `count: "exact"` so the walk can check what it
@@ -338,50 +351,74 @@ every cached search needle, since a rename changes what search matches.
 ## Picking a place (UI)
 
 **One panel** (`src/components/locations/`), and every control that picks a place is a
-configuration of it: a presentational panel plus, for the browsing configurations, a
-container that owns the browse position, the debounced query and the two server reads.
+configuration of it: a presentational panel plus a container that owns the browse
+position, the debounced query and the two server reads.
 
-It was two components once, and everything they had in common was written twice — the
-search box and its clear button, the selected-row highlight, the name-plus-muted-detail
-row, the fixed-height box with its empty and no-results branches, a separator constant
-declared in both. What was genuinely different is one axis, the **scope**: what the panel
-is showing *before the first keystroke*.
+The panel browses the hierarchy. It opens on the rows with no parent — the countries — and
+drills down; typing searches everywhere from the first keystroke past the minimum length;
+clearing the box drops back to where the user was browsing, so browse and search share one
+panel with no mode switch. A pick is staged and then confirmed, because the panel is a
+dialog opened to answer one question. Every picker uses it: both product-form fields, gedu
+coverage, and the parent's own location.
 
-- **tree** browses the hierarchy. It opens on the rows with no parent — the countries —
-  and drills down; typing searches everywhere from the first keystroke past the minimum
-  length; clearing the box drops back to where the user was browsing, so browse and
-  search share one panel with no mode switch. A pick is staged and then confirmed,
-  because the panel is a dialog opened to answer one question. Used by the venue picker,
-  gedu coverage, and the parent's own location.
-- **set** lists a bounded collection the caller has already fetched in full, grouped
-  under the place above each row and narrowed in memory. One consumer: the product form's
-  **municipality** mode, where an online municipality club picks the Finnish kunta funding
-  it. It renders inline in a form rather than in a dialog, so a click *is* the pick: the
-  form around it owns the commit, and there is nothing here to confirm.
+**Rule: a picker browses the table; it never fetches a collection to choose from.** There
+was a second configuration once — a bounded set the caller had already read whole, grouped
+under the place above each row and narrowed in memory — and it is gone with its last
+consumer. Both collections that ever had one lost the argument for different reasons, and
+both are worth keeping in mind before anyone builds it again. The **venue** list was never
+legitimately bounded: it was every `site` row, small only because of what had been created
+so far, read as Finland-only by accident and with no answer at all for a country whose
+venues nobody had opened yet. Finland's **municipalities** genuinely were bounded — the
+*funding rule* is the bound, so "every option" is a few hundred rows that do not grow when
+a country is added — and the mode still went, because being bounded is not the same as
+being the right thing to pick from: three keystrokes against the search index reach any
+kunta faster than a scroll through a grouped list of all of them, and the same index also
+covers the 34,875 communes the list could never hold. What the set scope cost while it
+lived is the shape of the argument: a whole branch of the panel, a grouping module, and a
+second in-memory fold that had to be pinned to the database's by a shared fixture.
 
-**Rule: the set scope needs a bound that comes from outside the geography.** Finland's
-municipalities qualify because the *funding rule* is the bound — a municipality club is
-paid for by one Finnish kunta — so "every option" is a few hundred rows that do not grow
-when a country is added, and holding them whole buys grouping by region and a keystroke
-that costs no request. What does not qualify is a collection that is small only because of
-what has been created so far. The venue picker used to be exactly that: a flat list of
-every `site` row, which read as Finland-only by accident, would have had to become a
-paged cross-country list the first time a venue existed elsewhere, and had no answer at
-all for a country whose venues nobody had opened yet. Its one real strength — finding a
-building by name without knowing its kunta — is now the search index's, which does it
-across every country, so the mode moved to the tree dialog and the set scope kept the one
-collection it can honestly claim.
+**Rule: a collection can be worth reading whole and still not be worth a picker.** A
+municipality's venues, and the public municipality directory, are both read in full and
+rendered in full — that is a page showing its content, not a control choosing from it. If
+a picker ever needs a set-shaped panel again, the way back is to build it against that
+caller rather than to keep an unused one warm.
 
-Both scopes are presentational and fixture-driven in the `/admin/ui-components` style
-guide, in one section with the scope as the axis being demonstrated: the panel holds no
-business logic, so data and handlers are injected.
+The panel is presentational and fixture-driven in the `/admin/ui-components` style guide:
+it holds no business logic, so data and handlers are injected.
 
 **Rule: there is no country to choose before browsing.** The country dropdown and the
 "default country" concept existed only because the data was sharded one file per country;
 with the tree served from one table they would be a step that answers nothing. A user
 looking for Tampere types "Tampere".
 
-The tree scope takes a **selection mode**:
+**A caller that already knows the country may say so, and it means two things at once.**
+It seeds the breadcrumb — the dialog opens *inside* that country, listing its regions
+rather than the world's countries — and it bounds what is offered, browsing and searching
+alike. The seed is a *starting position*, not a floor: the breadcrumb's root entry still
+walks back up, because trapping someone below a node they can see named above them is
+worse than opening a level too high. Two properties keep it honest. The seed row is read
+from the browse level at the root of the tree, which is the same request the panel makes
+when someone clicks back up to "all countries" — one cache entry serving both, so the seed
+can never disagree with what browsing shows. And **nothing waits on it**: until it lands
+there is no seed and the dialog simply opens at the root, which is why the seed is a
+derived fallback rather than an effect that writes state. An effect could land *after* the
+user had already navigated and drag them back out of the level they opened.
+
+**Rule: a country restriction is applied to every row before the panel sees it, so the
+answer is "not offered" rather than "refused afterwards".** Browsing is exact — every
+level is read in full, so filtering a level cannot hide anything the user could otherwise
+have reached. **Search is not, and the gap is worth stating plainly**: the server ranks and
+caps the page *before* a client-side filter can run, so a needle matching many rows
+elsewhere can push every wanted row off the page and leave the box empty on a needle that
+does match. The "showing N of M" total is the true cross-country match count for the same
+reason — never lower than the number of rows the picker would offer, so it can only
+over-prompt someone to narrow their needle rather than claim a complete list, but not the
+number a reader would assume it is. Closing that properly means a country parameter on the
+search function itself; until then the seeded browse path, not search, is the sound route
+to a restricted country's rows, and the clear-on-invalid guard is what makes the
+restriction binding rather than advisory.
+
+The panel takes a **selection mode**:
 
 - **single** confirms exactly one row, of one of the caller's `pickableTypes`. A row of a
   pickable type is *terminal* — clicking it selects rather than descends — so the level a
@@ -471,15 +508,14 @@ set it later — stranding someone mid-signup over it would be strictly worse th
 ### The product picker
 
 In-person products pick a **site**; online municipality clubs pick a **Finnish
-municipality**. Two levels, and deliberately two different controls, because the two
-collections are bounded by different things — see the set-scope rule above. What lives in
-the product form itself and nowhere else is the card a chosen place collapses to (with its
-site notes) and the clear-on-invalid guard below.
+municipality**. Two levels of one hierarchy, and **one control in two configurations** —
+both fields are the tree dialog, the same one gedu coverage and a parent's own location
+open, and both look identical until it is open: a compact affordance when empty, a card
+with a "change" affordance when set. What differs is what the dialog will accept back and
+where it starts. What lives in the product form itself and nowhere else is that card (with
+its site notes, for a venue) and the clear-on-invalid guard below.
 
-**The venue field is the tree dialog** — the same dialog gedu coverage and a parent's own
-location open. Its empty state is one compact control that opens it; a chosen venue
-collapses to the card, whose "change" affordance reopens it. Inside, one configuration
-serves both ways of knowing where a venue is:
+**The venue field** stops at no country and offers two ways of knowing where a venue is:
 
 - **Searching reaches a site directly.** Sites are in the search index carrying their full
   ancestor chain, so an admin who knows the building's name types it and confirms the hit.
@@ -502,10 +538,26 @@ building* from an admin naming a site under it. There is nothing between the two
 confirmed pick is the row, so it is already the venue's parent — and nothing above a site
 is ever created.
 
-**Rule: the online-muni municipality restriction is UI-enforced.** The DB trigger still
-permits a country or region for online muni clubs (it predates the rule), so the picker is
-the gate — it offers only Finland's municipalities and clears a stored pick that is not
-one, nudging a re-pick on legacy rows.
+**The municipality field is the same dialog with the municipality level terminal and
+nothing after it.** Confirming a municipality *is* the answer here, which is exactly the
+half the venue flow does not have: there is no venue list, no create affordance, and
+nothing to name, because everything above a site is seeded. It opens with Finland already
+in the breadcrumb, so the first screen is the maakunnat rather than the world's countries,
+and an admin who would rather type does — the search box is the same one, against the same
+index.
+
+**Rule: the online-muni municipality restriction is UI-enforced, in three places, and each
+one covers what the next cannot.** The DB trigger still permits a country or a region for
+online muni clubs (it predates the rule), so the picker is the gate. *Browsing* offers no
+country but Finland, at the root as well as below it, so the restriction holds even for
+someone who walks back up past the seeded breadcrumb. *Search* drops hits from elsewhere
+before they reach the panel — sound as far as it goes, with the honest caveat recorded
+above that the server's cap is applied before that filter, so a needle crowded out by
+foreign matches goes quiet rather than wrong. And the *clear-on-invalid guard* refuses a
+stored id that is not a Finnish municipality, which is the only one of the three that can
+say anything about a row saved before the other two existed — a legacy club anchored to a
+region, or to the country itself. That last one is what makes the restriction binding
+rather than advisory, and it is why the guard takes the country as well as the level.
 
 **Rule: a picker that cannot tell "still loading" from "invalid" must not clear
 anything.** Wiping a valid `location_id` while editing a product is worse than showing it
@@ -519,27 +571,45 @@ own location field, for the same reason. The everyday trigger is not exotic: tog
 municipality club from online to in-person carries a municipality id into a field that now
 accepts only venues.
 
-**Corollary: the two modes ask different questions, and "no answer" is not the same
-absence in both — so they are two named functions, not one.** The municipality mode holds
-the whole pickable set, so membership of it *is* the question and only a set that has
-arrived can answer it. The venue mode holds no set — its rows are the whole hierarchy — so
-it looks the stored id up by key and asks what came back, which makes a key with **no
-row** a resolved answer (the venue was deleted) rather than the absent case; there, absent
-means the *read* has not landed. Collapsing the two gets one of them wrong in a way
-nothing would report: read as a set, a missing row is "not fetched" and a dangling id
-survives forever; read as a lookup, an empty set is "deleted" and a valid pick is wiped.
+**Corollary: both modes now ask the same question, of a keyed read — one named function,
+and the shape of the answer is the reason it is that one.** Neither field holds a
+collection to test membership of; both look the stored id up by key and ask what came
+back. That makes a key with **no row** a *resolved* answer (the venue was deleted) rather
+than the absent case, where absent means the *read* has not landed. The distinction is not
+cosmetic and it is why a set-shaped guard cannot be substituted: read as a set, a missing
+row is "not fetched" and a dangling id survives forever; read as a lookup, an empty set is
+"deleted" and a valid pick is wiped. A set-shaped guard did live here while one field
+listed a set, and went with it — leaving it behind would have left the wrong one within
+reach of a call site that looked plausible.
+
+**The two modes differ in what they accept, not in how they ask.** The venue field takes
+one level in any country; the municipality field takes one level in one country. That
+extra constraint is a *business* one — a French commune is a perfectly well-formed
+municipality row that the funding rule still refuses — so it rides as an optional country
+alongside the accepted levels rather than as a second function.
 
 ### Loading
 
 **Every read in this feature is a small indexed lookup, so none of them gets a loading
 affordance.** One level of children by `parent_id`, a capped top-N from the search index,
-one municipality's venues, one row by primary key, a bounded list to group — each lands in
-a frame or two. Every box has its final height from the first frame and fills in: no
-skeleton, no spinner and no delay anywhere here. The venue card is the shape to copy: the
-stored id is known synchronously, so the card and its "change" affordance are on screen
-and usable from the first frame while the name and the path fill in — the card's own
-height never changes, which is the part that matters and the extent of what it claims.
-The root `CLAUDE.md` states the general rule this is an instance of; a skeleton
+one municipality's venues, one row by primary key, one country's municipalities for a
+directory page — each lands in a frame or two. Every box has its final height from the
+first frame and fills in: no skeleton, no spinner and no delay anywhere here. The chosen-
+place card is the shape to copy: the stored id is known synchronously, so the card and its
+"change" affordance are on screen and usable from the first frame while the name and the
+path fill in — the card's own height never changes, which is the part that matters and the
+extent of what it claims.
+
+**Corollary: anything in that card whose *height* would otherwise depend on the read has
+to be settled without it.** The name and the path are single lines with their heights
+reserved, which is enough for them. A wrapping paragraph is not so easily reserved, so the
+note explaining that a municipality club has no physical venue is written to depend on the
+*mode* rather than on the row — it says nothing the mode does not already determine, and
+in exchange it is on screen from the first frame at its final height. Interpolating the
+municipality's name into it would have been nicer to read and would have made the card's
+height a function of a network response, with the rest of the form underneath it.
+
+The root `CLAUDE.md` states the general rule all of this is an instance of; a skeleton
 reappearing in this directory means a read has changed shape, and that is the thing to
 look at.
 
