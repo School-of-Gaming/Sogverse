@@ -107,14 +107,16 @@ const GROUP_ID = "mock-family-group";
 /* ------------------------------------------------------------------ */
 
 /**
- * The longest report here, and the one the feed renders **unclamped** — it sits
- * at the head of the past, which is the entry a family opens this page to read.
+ * The longest report here, at the head of the past — the entry a family opens
+ * this page to read.
  *
  * It is written the way a real one is rather than the way a renderer test is: a
  * dated title, then half a dozen short paragraphs of plain prose addressed to
  * the parent who will read it on a phone, and a line at the end to close it off.
- * At ~1500 characters it is comfortably past the clamp, which is the point —
- * seeing it in full is how you can tell the unclamped rule is doing anything.
+ * At ~1500 characters it is the honest test of the no-clamp rule: the family
+ * feed renders every report in full (the gedu clamps because their feed is a
+ * work queue; here the reports are the page), so this is the fixture that shows
+ * what a long week actually costs the page.
  */
 const CASTLE_RECAP = `# The castle is finished
 
@@ -131,8 +133,8 @@ We ended with everyone standing on top of the north tower looking down at it, wh
 Thank you all — the castle stays in the world, so do go and walk around it during the week.`;
 
 /**
- * The clamp's other half: long enough to overflow, sitting far enough down the
- * feed to keep its "Read more". Headings and a list rather than plain prose, so
+ * A second long report deeper in the feed, so scrolling the history shows what
+ * back-to-back full write-ups read like. Headings and a list rather than plain prose, so
  * the two long reports on the page are not the same shape.
  */
 const NETHER_TRIP = `# The first trip through the portal
@@ -208,7 +210,8 @@ type FamilyEntrySpec =
  * 1. the long recap, at the head of the past, rendered in full;
  * 2. an ordinary week, present, short report;
  * 3. **a session this child was not at** — the muted neutral mark;
- * 4. the second long report, far enough down to keep its "Read more";
+ * 4. the second long report, deeper in the history, rendered in full like
+ *    everything else;
  * 5. a week with a report and **no mark at all**, which renders the write-up
  *    and says nothing about attendance, because nobody said anything;
  * 6. a week with **nothing on it**, the quiet dashed line.

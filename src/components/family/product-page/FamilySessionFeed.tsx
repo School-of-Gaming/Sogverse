@@ -8,7 +8,6 @@ import {
   NowDivider,
   formatMonthLabel,
   formatSessionLabels,
-  newestPastEntryId,
   partitionFeedEntries,
   pastEntryWindow,
   useViewportAnchor,
@@ -112,9 +111,6 @@ export function FamilySessionFeed({
     [entries],
   );
   const pastWindow = pastEntryWindow(past.length, chunksRevealed);
-
-  /** The one report rendered in full — the newest session that actually ran. */
-  const unclampedEntryId = useMemo(() => newestPastEntryId(past), [past]);
 
   /**
    * One descending run of everything currently on screen — future sessions,
@@ -222,7 +218,6 @@ export function FamilySessionFeed({
             entry.startsAt.getTime() <= now.getTime() &&
             now.getTime() < entry.endsAt.getTime()
           }
-          clampReport={entry.id !== unclampedEntryId}
           showAttendance={showAttendance}
           labels={formatSessionLabels(entry, {
             locale,

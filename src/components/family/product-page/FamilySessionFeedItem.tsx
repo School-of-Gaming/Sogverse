@@ -31,11 +31,6 @@ interface FamilySessionFeedItemProps {
    */
   live: boolean;
   /**
-   * Whether this entry's report may be clamped. The feed passes `false` for the
-   * newest past session — the one a family opens this page to read.
-   */
-  clampReport: boolean;
-  /**
    * Whether to render the child's attendance mark at all.
    *
    * `false` on the gamer's own copy of this page. The mark is a parent-facing
@@ -52,8 +47,13 @@ interface FamilySessionFeedItemProps {
  * and — on the parent's copy — whether this child was there.
  *
  * It is the gedu row's read-only sibling and shares its grammar deliberately:
- * same card, same date line, same clamped report with the control above it, same
- * quiet dashed line for a session nobody wrote up. What it does not share is
+ * same card, same date line, same quiet dashed line for a session nobody wrote
+ * up. One deliberate divergence: **reports render in full, never clamped.** The
+ * gedu clamps because their feed is a work queue — attendance sheets and
+ * editors that last month's prose must not bury. Here the reports *are* the
+ * page, the reader edits nothing, and the chunked past reveal already bounds
+ * how much lands at once — so a Read-more would only put a tap between a
+ * family and the thing they came to read. What it also does not share is
  * everything that made the gedu's row a workspace — no editor, no completeness
  * ladder, no amber "owed" state, no roster. Those are staff workflow, and a
  * family reading amber warnings about paperwork they cannot do anything about
@@ -69,7 +69,6 @@ export function FamilySessionFeedItem({
   labels,
   prominent,
   live,
-  clampReport,
   showAttendance,
 }: FamilySessionFeedItemProps) {
   const t = useTranslations("familyProduct");
@@ -151,7 +150,7 @@ export function FamilySessionFeedItem({
       {hasReport && (
         <SessionReport
           markdown={entry.report ?? ""}
-          clamped={clampReport}
+          clamped={false}
           className="pt-3"
         />
       )}

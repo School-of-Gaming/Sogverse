@@ -226,7 +226,7 @@ export const PREVIEW_SCENES = [
         slug: "active-club",
         label: "Club — remote, session in progress",
         description:
-          "The kitchen sink, and the only scenario with a live room: a session running right now, so the Join is lit and the top entry says “Happening now” instead of “Next session”. Six more sessions collapsed above the divider (the upward reveal, judged against a screenful), four months of history behind it with month dividers and the chunked reveal, and the six past states worth seeing together — the long recap at the head rendered in full, an ordinary present week, a week this child was not at, a second long report far enough down to keep its “Read more”, a week written up with nobody marked, and a week with nothing on it at all.",
+          "The kitchen sink, and the only scenario with a live room: a session running right now, so the Join is lit and the top entry says “Happening now” instead of “Next session”. Six more sessions collapsed above the divider (the upward reveal, judged against a screenful), four months of history behind it with month dividers and the chunked reveal, and the past states worth seeing together — every report rendered in full, never clamped (the reports are what a family comes for; the gedu's Read-more belongs to their work queue): the long recap at the head, an ordinary present week, a week this child was not at, a second long write-up deeper down showing what back-to-back full reports cost the scroll, a week written up with nobody marked, and a week with nothing on it at all.",
       },
       {
         slug: "in-person-club",
