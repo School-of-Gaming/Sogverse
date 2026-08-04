@@ -165,13 +165,6 @@ export function PurchaseConfirmationView({
                   {pricingOption.kind === "upfront" && (
                     <li>{t("next.oneTime")}</li>
                   )}
-                  {pricingOption.kind === "upfront" &&
-                    product.refund_policy_days != null &&
-                    product.refund_policy_days > 0 && (
-                      <li>
-                        {t("next.refund", { days: product.refund_policy_days })}
-                      </li>
-                    )}
                 </>
               )}
             </ul>

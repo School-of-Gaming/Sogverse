@@ -987,8 +987,7 @@
     "next": {
       "placement": "Vi placerar {gamer} i en grupp med en spelpedagog. Tillfällena visas sedan under Min SOG.",
       "subscription": "Du faktureras varje månad. Du kan hantera eller avsluta när som helst från Min SOG.",
-      "oneTime": "Detta var en engångsbetalning – det finns inget mer att betala.",
-      "refund": "Kostnadsfri avbokning inom {days} dagar efter ditt köp."
+      "oneTime": "Detta var en engångsbetalning – det finns inget mer att betala."
     },
     "goToDashboard": "Gå till Min SOG",
     "keepBrowsing": "Fortsätt bläddra",

@@ -805,7 +805,6 @@ function mockDetailRow(
     signup_threshold: null,
     seat_count: 10,
     waitlist_enabled: false,
-    refund_policy_days: null,
     primary_gedu_fee_cents: null,
     assistant_gedu_fee_cents: null,
     municipality_fee_cents: null,

@@ -987,8 +987,7 @@
     "next": {
       "placement": "Nous placerons {gamer} dans un groupe avec un animateur. Les sessions apparaîtront ensuite dans Mon SOG.",
       "subscription": "Vous serez prélevé chaque mois. Vous pouvez gérer ou résilier à tout moment depuis Mon SOG.",
-      "oneTime": "Il s’agissait d’un paiement unique — il n’y a plus rien à régler.",
-      "refund": "Annulation gratuite dans les {days} jours suivant votre achat."
+      "oneTime": "Il s’agissait d’un paiement unique — il n’y a plus rien à régler."
     },
     "goToDashboard": "Aller à Mon SOG",
     "keepBrowsing": "Continuer à explorer",

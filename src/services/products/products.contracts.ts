@@ -40,10 +40,7 @@ const priceInput = z.object({
   price_cents: z.number(),
 });
 
-/**
- * Fields shared by create and update. `refund_policy_days` is accepted for
- * non-UI callers (the RPCs support it) but the admin form never sends it.
- */
+/** Fields shared by create and update. */
 const productDataBase = z.object({
   billing_mode: z.enum(Constants.public.Enums.billing_mode),
   translations: z.array(productTranslationInput),
@@ -72,7 +69,6 @@ const productDataBase = z.object({
   schedule_slots: z.array(scheduleSlotInput),
   prices: z.array(priceInput),
   holiday_calendar_ids: z.array(z.string()),
-  refund_policy_days: z.number().nullable().optional(),
   // Per-session operating fees, a single EUR amount in integer cents. State is
   // derived from the value (the form enforces it): null = unknown/none,
   // 0 = volunteer (free), > 0 = a real fee. Gedu fees are int >= 0 here; the
