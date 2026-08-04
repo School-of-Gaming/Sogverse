@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildCreateInput,
+  buildUpdateInput,
   cloneFormState,
   existingFormState,
   validate,
@@ -771,6 +772,87 @@ describe("fees", () => {
     expect(state.primaryGeduFee).toEqual({ status: "fee", amount: "25.00" });
     expect(state.assistantGeduFee).toEqual({ status: "volunteer", amount: "" });
     expect(state.municipalityFee).toEqual({ status: "unknown", amount: "" });
+  });
+});
+
+// The waitlist is the queue *behind* a cap, so `seat_count null` +
+// `waitlist_enabled true` is not a configuration — it is a queue with nothing to
+// queue for. The form can produce that pairing without anyone seeing it (the
+// checkbox renders only while capped), so the payload derives the flag from the
+// cap rather than copying the form's. These pin both directions of that.
+describe("waitlist_enabled is derived from the cap, not copied", () => {
+  it("submits no waitlist on an uncapped product, whatever the flag says", () => {
+    const s = validConsumerState();
+    s.uncapped = true;
+    s.seatCount = "";
+    s.waitlistEnabled = true; // ticked while capped, then switched to Unlimited
+
+    const out = buildCreateInput(s, "consumer_club", consumerConfig);
+
+    expect(out.seat_count).toBeNull();
+    expect(out.waitlist_enabled).toBe(false);
+  });
+
+  it("corrects an already-stranded stored row on the next save", () => {
+    // Rows predating this rule — and the column's own default — can hold the
+    // pairing. Deriving on write means any later save of anything heals it,
+    // rather than re-persisting the lie until someone edits the seat controls.
+    const state = existingFormState(
+      mockDetailRow({ seat_count: null, waitlist_enabled: true }),
+      consumerConfig,
+      "en",
+    );
+    expect(state.waitlistEnabled).toBe(true); // shown as stored, not wiped on load
+
+    expect(buildUpdateInput(state, consumerConfig).waitlist_enabled).toBe(false);
+  });
+
+  it("restores the tick when the admin toggles Unlimited and back", () => {
+    // The radio only moves `uncapped`, so the flag survives the detour — the
+    // point of deriving on write rather than clearing in the handler.
+    const capped = validConsumerState();
+    capped.waitlistEnabled = true;
+
+    const unlimited = { ...capped, uncapped: true };
+    expect(buildCreateInput(unlimited, "consumer_club", consumerConfig)
+      .waitlist_enabled).toBe(false);
+
+    const limitedAgain = { ...unlimited, uncapped: false };
+    const out = buildCreateInput(limitedAgain, "consumer_club", consumerConfig);
+    expect(out.waitlist_enabled).toBe(true);
+    expect(out.seat_count).toBe(10);
+  });
+
+  it("re-saves a stored capped event with its cap and waitlist intact", () => {
+    // The invariant the event re-lock rests on: the form can no longer *create*
+    // a capped event, and it must not quietly decap one created while the
+    // controls were unlocked. The seat controls render disabled; a save of any
+    // other field has to round-trip both values untouched. (The healing above
+    // is scoped to uncapped rows — this row is capped, so nothing is derived
+    // away.)
+    const state = existingFormState(
+      mockDetailRow({
+        product_type: "event",
+        billing_mode: "free",
+        seat_count: 25,
+        waitlist_enabled: true,
+        end_date: "2026-09-01",
+        schedule_slots: [
+          { weekday: 1, start_time: "18:00", duration_minutes: 90 },
+        ],
+      }),
+      eventConfig,
+      "en",
+    );
+    expect(state.uncapped).toBe(false);
+    expect(state.seatCount).toBe("25");
+    expect(state.waitlistEnabled).toBe(true);
+
+    expect(validate(state, eventConfig)).toBeNull();
+
+    const out = buildUpdateInput(state, eventConfig);
+    expect(out.seat_count).toBe(25);
+    expect(out.waitlist_enabled).toBe(true);
   });
 });
 

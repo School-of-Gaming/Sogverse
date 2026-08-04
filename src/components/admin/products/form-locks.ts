@@ -9,7 +9,8 @@
 //
 // Locks can also lift per product — see `formLocksFor()` below, which unlocks
 // the seat-count / waitlist / registration-window trio for municipality clubs
-// and part of it for events, while keeping them locked everywhere else.
+// and the registration window alone for events, while keeping them locked
+// everywhere else.
 //
 // Defaults that pair with these locks live in `initialState` (product-form-state.ts);
 // the disabling lives in the individual section components. Both read the
@@ -17,8 +18,7 @@
 //
 // Typed as `boolean` (not literal `true`) on purpose: these are toggles, so the
 // `lock ? … : …` branches in the form are genuine conditionals, not dead code.
-import { effectiveBillingMode } from "./product-type-config";
-import type { PaidMode, ProductTypeConfig } from "./product-type-config";
+import type { ProductTypeConfig } from "./product-type-config";
 
 interface FormLocks {
   /** Start trigger is pinned to "On a specific date" (no threshold launches). */
@@ -36,9 +36,21 @@ interface FormLocks {
    * the last seat both pass the gate and both get one. A cap is therefore only
    * safe where the signup never reaches Checkout: the no-charge shapes validate
    * the cap and write the `active` row in the *same* locked transaction, so
-   * there is no window to oversell in. That is why municipality clubs (invoiced
-   * off-platform) and **free** events are unlocked below while a **paid** event
-   * is not — the free/paid switch flips this lock mid-form.
+   * there is no window to oversell in. Municipality clubs are invoiced
+   * off-platform and never go near Checkout, which is why they are unlocked
+   * below.
+   *
+   * **A free event clears that same bar and is still locked — deliberately.**
+   * It was unlocked once and walked back. The seat gate was never the blocker;
+   * the parent-facing *browse card* was. A capped event that fills up reads
+   * exactly like an open one in the listings — the card's seat bar is muni-only
+   * and its full-with-waitlist call to action is the same generic one an open
+   * product shows — so unlocking the cap let an admin publish a product no
+   * family could tell was full before clicking into it. The re-lock is a
+   * product decision, not a safety one, and it is
+   * meant to lift again: TODO.md, "Event seat caps + waitlist: re-locked until
+   * the shop surface can express fullness", is the list of what has to exist
+   * first.
    *
    * Whoever unlocks it for a shape that does reach Checkout has to re-decide
    * the capacity hold first; migration 00139 records why the previous hold was
@@ -67,32 +79,26 @@ export const FORM_LOCKS: FormLocks = {
  * that decides which products have which features — the form sections and
  * `initialState` resolve through it rather than reading FORM_LOCKS directly.
  *
- * It takes the type config plus the **raw free/paid form state** because one
- * lock genuinely depends on the billing mode: seats (and with them the
- * waitlist) are safe wherever signup can't be interleaved with a Stripe
- * Checkout, which is a fact about the money, not the type. An event's radio
- * moves that mode while the form is open, so the locks re-resolve every render.
- *
- * **Resolving the effective mode is deliberately done in here, not by the
- * caller.** A resolved-mode parameter would have the same type as the config's
- * own `defaultBillingMode`, so passing that instead would compile — and quietly
- * unlock the cap on a paid event, which is the exact failure this file exists
- * to prevent. Taking the state the caller actually holds makes the wrong call
- * unrepresentable.
- *
  *   - **Municipality clubs** — seats, waitlist and the registration window are
- *     all signed off. Always `external_contract`, so `paidMode` is moot here.
- *   - **Events** — the registration window is signed off unconditionally: the
- *     scheduled ticket drop only sets `registration_opens_at`, and the
- *     parent-facing state machine already renders a pre-open countdown for it.
- *     Seats and the waitlist unlock only while the event is **free**; picking
- *     Paid re-locks them (see the `seatCount` doc above for why).
+ *     all signed off.
+ *   - **Events** — the registration window, and nothing else: the scheduled
+ *     ticket drop only sets `registration_opens_at`, and the parent-facing
+ *     state machine already renders a pre-open countdown for it.
  *   - **Everything else** keeps the global pre-prod locks.
+ *
+ * **It is a pure function of the type config, and that is the shape the
+ * re-lock restored.** It briefly took the form's live free/paid state as a
+ * second argument, back when a *free* event could be capped and picking Paid
+ * had to re-lock the control mid-form. That unlock is reverted (the `seatCount`
+ * doc above says why, and TODO.md carries the conditions for lifting it again),
+ * so the parameter went with it rather than being left as one nothing reads —
+ * an ignored argument is worse than none, because a caller passing the wrong
+ * thing gets the right answer and never learns. Restoring the unlock means
+ * restoring the parameter in the same change: the line between a safe cap and
+ * an overselling one is drawn by the money, which is form state, not by the
+ * product type.
  */
-export function formLocksFor(
-  config: ProductTypeConfig,
-  paidMode: PaidMode,
-): FormLocks {
+export function formLocksFor(config: ProductTypeConfig): FormLocks {
   if (config.productType === "municipality_club") {
     return {
       ...FORM_LOCKS,
@@ -102,13 +108,7 @@ export function formLocksFor(
     };
   }
   if (config.productType === "event") {
-    const capacityIsSafe = effectiveBillingMode(config, paidMode) === "free";
-    return {
-      ...FORM_LOCKS,
-      seatCount: !capacityIsSafe,
-      waitlist: !capacityIsSafe,
-      registrationTiming: false,
-    };
+    return { ...FORM_LOCKS, registrationTiming: false };
   }
   return FORM_LOCKS;
 }

@@ -494,7 +494,7 @@
         "thresholdWithDate": "jaj taghDaq ghItlh law’ pumchugh, De’ Daq tlhotlh ’ej Huch chegh.",
         "timezoneFixedHelsinki": "poHmey Europe/Helsinki Daq. vavmey Daq poHchaj choHlu’.",
         "holidayHint": "jajmey Do’ qaStaHvIS pagh qaS. wa’ jajmey Do’ DachoHchugh, Hoch ghor De’.",
-        "billingHint": "Huch pagh Qu’ pa’ mI’ Sub ghajlaH. DaH Huch Qu’ pa’ mI’ Sub ghajlaHbe’.",
+        "billingHint": "nuq DawIv ’e’ vISaHbe’ — DaH pa’ mI’ Sub ghajbe’ Qu’mey.",
         "freeDetail": "Huch pagh. Hoch wa’ chu’wI’ lo’.",
         "paidDetail": "ghItlh wa’ Huch.",
         "paidByMunicipality": "QumDaq vavmey Huch pagh. School of Gaming veng nIDqu’.",
@@ -503,7 +503,6 @@
         "seatHint": "tebDI’, ghItlh chu’mey tetlh teb Daq jaH.",
         "visibleHint": "DochlIj DachenmoHtaHvIS, ghap ghItlh chu’ DamevmeH, yIchu’Ha’. vav chu’vo’ neH Doch So’ — ghoStaHbogh vavpu’ QujwI’pu’ je Doch Qu’chaj je My SOG HaqwI’chajDaq luleghtaH.",
         "seatLimitHint": "pa’ mI’ yIgheS pagh Sub Hutlh yIqaw.",
-        "seatLimitPaidEvent": "DaH Huch Qu’ pa’ mI’ Sub ghajlaHbe’ — DIltaHvIS vav, pa’ pollaHbe’lu’. pa’ mI’ Sub DaneHchugh, Qu’ Huch pagh yIchoH.",
         "holidayComingSoon": "jaj Do’ De’wI’ tugh chol. DaH Hoch ghum qaS.",
         "startDateToday": "DaHjaj Daq poSmoHlu’pu’.",
         "startDateLocked": "DaH taghDaq poSmoHlu’pu’."
@@ -1570,7 +1569,12 @@
       "ctaAllSet": "bIghuHrup",
       "ctaAgreeRules": "chutmey yIlaj",
       "ctaWaitlist": "tetlh DaqaD",
-      "ctaSignIn": "qonmeH yI’el",
+      "ctaSignIn": {
+        "consumer_club": "qonmeH yI’el",
+        "municipality_club": "qonmeH yI’el",
+        "camp": "qonmeH yI’el",
+        "event": "muvmeH yI’el"
+      },
       "ctaCreateAccount": "Account chu’ chenmoH",
       "gamerAlreadySignedUp": {
         "consumer_club": "muvpu’",

@@ -449,7 +449,7 @@
         "thresholdWithDate": "Jos vanhempia ilmoittautuu vähemmän kuin tämä alkupäivään mennessä, sinun täytyy perua ja palauttaa maksut tuotesivulta.",
         "timezoneFixedHelsinki": "Ajat ovat aikavyöhykkeellä Europe/Helsinki. Vanhemmat näkevät ne automaattisesti omalla aikavyöhykkeellään.",
         "holidayHint": "Yksikään kerta ei pidetä valittujen kalenterien päivinä. Muokkaa kalenteria kerran ja kaikki sitä käyttävät tuotteet päivittyvät automaattisesti.",
-        "billingHint": "Ilmaisilla tapahtumilla voi olla paikkaraja. Maksullisilla ei toistaiseksi ole.",
+        "billingHint": "Valinnasta riippumatta tapahtumilla ei ole toistaiseksi paikkarajaa.",
         "freeDetail": "Ei maksua. Kuka tahansa voi liittyä yhdellä klikkauksella.",
         "paidDetail": "Kertamaksu ilmoittautumisen yhteydessä.",
         "paidByMunicipality": "Ei asiakaslaskutusta tämän järjestelmän sisällä. School of Gaming laskuttaa kuntaa suoraan.",
@@ -458,7 +458,6 @@
         "seatHint": "Kun täynnä, uudet ilmoittautujat menevät jonotuslistalle.",
         "visibleHint": "Poista valinta, kun tuote on vielä tekeillä tai kun haluat lopettaa uudet ilmoittautumiset. Tämä piilottaa tuotteen vain uusilta vanhemmilta — jo ilmoittautuneet vanhemmat ja pelaajat näkevät sen ja kertansa edelleen My SOG -sivullaan.",
         "seatLimitHint": "Rajaa osallistujamäärä tai pidä se rajattomana.",
-        "seatLimitPaidEvent": "Maksullisilla tapahtumilla ei toistaiseksi voi olla paikkarajaa, koska paikkaa ei voi pitää varattuna maksun ajan. Vaihda tapahtuma ilmaiseksi, jos haluat rajata paikkamäärän.",
         "holidayComingSoon": "Lomakalenterit tulevat pian. Toistaiseksi jokainen aikataulutettu kerta pidetään.",
         "startDateToday": "Lukittu toistaiseksi tähän päivään.",
         "startDateLocked": "Aloituspäivä on toistaiseksi lukittu."
@@ -1525,7 +1524,12 @@
       "ctaAllSet": "Olet valmis",
       "ctaAgreeRules": "Hyväksy säännöt",
       "ctaWaitlist": "Liity jonotuslistalle",
-      "ctaSignIn": "Kirjaudu sisään ilmoittautuaksesi",
+      "ctaSignIn": {
+        "consumer_club": "Kirjaudu sisään ilmoittautuaksesi",
+        "municipality_club": "Kirjaudu sisään ilmoittautuaksesi",
+        "camp": "Kirjaudu sisään ilmoittautuaksesi",
+        "event": "Kirjaudu sisään liittyäksesi"
+      },
       "ctaCreateAccount": "Luo tili",
       "gamerAlreadySignedUp": {
         "consumer_club": "Jo ilmoitettu",

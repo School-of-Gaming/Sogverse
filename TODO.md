@@ -309,3 +309,52 @@ its leave affordance has a backend. Two open questions remain:
   and reappears as a session card. If the answer is ever "a seat opened — claim it by
   {date}" rather than "you're in", that's a new card state (offer + expiry +
   accept/decline) and it's much cheaper to design before the card hardens.
+
+## Event seat caps + waitlist: re-locked until the shop surface can express fullness
+
+The admin product form briefly unlocked the seat cap and the waitlist toggle for **free**
+events, then re-locked them (`src/components/admin/products/form-locks.ts`; events keep
+their `registrationTiming` unlock). The seat gate was never the blocker — a free signup
+validates the cap and writes its `active` row in one locked transaction, never touching
+Stripe Checkout, exactly like a municipality registration. The blocker is the
+**parent-facing shop**: nothing on the browse card or the pre-open panel can say a
+non-muni product is full, so an admin capping an event would publish a page that fills up
+and still reads as open. Unlocking again is a shop change first and a one-line form change
+second.
+
+- [ ] **A fullness affordance on the browse card for capped non-muni products.** Today the
+  seat bar is muni-only, and the `full_waitlist` state renders the same generic "View" CTA
+  an open product does — a full event with a waitlist is visually identical to one with
+  seats left. Whether that becomes the seat bar generalised, a state-aware CTA, or a
+  fullness pill is the open design question. **Constraint from the owner: the card must
+  *not* carry a "waitlist available" line for products that aren't capped** — the
+  affordance is for the full state, not an always-on advertisement of the waitlist.
+- [ ] **The card's seat hint shows capacity, not seats left.** "{count} seats" prints the
+  cap, so on a full product it prints a number that is exactly wrong. It has to be
+  seats-remaining (and say something else at zero).
+- [ ] **The pre-open → open panel swap mounts the seat bar above the CTA, late.** The
+  panel's open/pre-open decision rides a 30-second `useNow` tick, so up to 30s after
+  registration opens the seat bar appears *above* the Join button that just went live,
+  shoving it down under the cursor. That is a data-schedule shift, which the layout rule
+  in `CLAUDE.md` forbids outright — the seat bar's box has to be settled before the button
+  becomes clickable, not inserted after it.
+- [ ] **Waitlist purchase-confirmation copy is club-shaped.** It tells the parent their
+  gamer is queued "for the whole term", which is nonsense for a single-date event. Key it
+  by product type like the panel's other action strings, in all five locales.
+- [ ] **No capped / full / waitlist event fixtures exist in the style guide**, so none of
+  the above can be signed off visually before it is wired. Add the states (capped with
+  seats left, full with a waitlist, full without one) to the card and panel demos.
+- [ ] **Optional hardening, raised in review, both cheap and both currently unreachable:**
+  a lifecycle/billing-mode guard on `join_waitlist` (a migration — nothing stops a row
+  joining the queue of a product that can no longer honour it), and a visible error on the
+  `'full'` race outcome (the signup path can lose the last seat between the gate and the
+  write, and the panel currently just re-enables the button saying nothing).
+- [ ] **The form-side change, once the above lands.** Give `formLocksFor` back its
+  free/paid parameter so the lock can track the money instead of the type, unlock
+  `seatCount`/`waitlist` for free events only, and restore the free→paid handler that
+  clears a cap the flip is about to lock away. Both were deleted in the re-lock rather than
+  left inert; their unit tests are in `tests/unit/components/products-form-locks.test.ts`
+  and git history has the originals. Also re-decide `promote_from_waitlist`'s missing
+  billing-mode guard at that point: with a cappable type whose billing mode can change
+  under a live queue, promoting a stranded row would grant an unpaid seat on a paid
+  product (see the seat-gate section of `docs/products-architecture.md`).

@@ -321,6 +321,7 @@ function FormOrAuth(props: FormOrAuthProps) {
     case "unauthenticated":
       return (
         <UnauthenticatedOverlay
+          productType={props.productType}
           signInHref={props.authState.signInHref}
           createAccountHref={props.authState.createAccountHref}
         />
@@ -335,9 +336,11 @@ function FormOrAuth(props: FormOrAuthProps) {
 }
 
 function UnauthenticatedOverlay({
+  productType,
   signInHref,
   createAccountHref,
 }: {
+  productType: ProductType;
   signInHref: string;
   createAccountHref: string;
 }) {
@@ -351,7 +354,13 @@ function UnauthenticatedOverlay({
           className: "w-full text-base",
         })}
       >
-        {t("ctaSignIn")}
+        {/* Keyed by type like the panel's other action words, so this button can
+            name the action the signed-in CTA will. Only the event mismatch is
+            fixed here — it said "register" where every other word on an event
+            panel says "join". Clubs and camps still pair "Enrol"/"Sign up" with
+            "Sign in to register"; that is left as-is on purpose, as a copy
+            decision to make on its own rather than a mechanical sweep. */}
+        {t(`ctaSignIn.${productType}`)}
       </Link>
       <Link
         href={createAccountHref}

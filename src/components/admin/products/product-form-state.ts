@@ -181,9 +181,8 @@ export function initialState(
     config.billing.mode === "free_or_paid" ? "free" : "paid";
   // The locks in effect for a brand-new product of this type, resolved through
   // the same function the sections use — never FORM_LOCKS directly, so there is
-  // one place deciding. An event starts free, so its seat controls resolve
-  // *unlocked* from the very first render (see form-locks.ts).
-  const locks = formLocksFor(config, initialPaidMode);
+  // one place deciding.
+  const locks = formLocksFor(config);
   // Consumer clubs launch starting today while the start-date control is
   // locked. Helsinki-local "today" — the form is fixed to FIXED_TIMEZONE —
   // never UTC (see CLAUDE.md "Date & Time Formatting").
@@ -194,16 +193,16 @@ export function initialState(
   // Whether a fresh product of this type starts *capped*. Only one type does: a
   // municipality club is contracted for a specific number of places, so it
   // starts capped + waitlisted and the blank seatCount below forces the admin to
-  // type the contracted figure. A free event may be capped but usually isn't, so
-  // it starts open like every other type and a cap is opt-in.
+  // type the contracted figure. Every other type starts open — the rest have the
+  // seat controls locked off entirely.
   //
-  // The `!locks.seatCount` conjunct is redundant today — muni is unconditionally
-  // unlocked, so it is always true here — and is kept as a tripwire rather than
-  // simplified away. A capped default behind a *locked* seat control is a broken
-  // form, not merely a wrong default: it renders a fresh product as capped with a
-  // blank, disabled seat count, which validate() then refuses with no way for the
-  // admin to fix it. If muni is ever re-locked, this pins it back to uncapped
-  // instead.
+  // The `!locks.seatCount` conjunct is redundant today — muni is the one type
+  // that unlocks the cap, so it is always true here — and is kept as a tripwire
+  // rather than simplified away. A capped default behind a *locked* seat control
+  // is a broken form, not merely a wrong default: it renders a fresh product as
+  // capped with a blank, disabled seat count, which validate() then refuses with
+  // no way for the admin to fix it. If muni is ever re-locked, this pins it back
+  // to uncapped instead.
   const startsCapped =
     !locks.seatCount && config.productType === "municipality_club";
   return {
@@ -257,34 +256,6 @@ export function initialState(
 // Multi-line and/or used by both the parent (validate/submit) and individual
 // section components. Single-line booleans like `usesDate` are derived inline
 // where they're consumed.
-
-/**
- * Switch the free/paid radio, dropping any capacity the new mode locks away.
- *
- * Only events have this radio, and it moves the seat/waitlist locks with it
- * (form-locks.ts): a free event may be capped, a paid one may not. Flipping to
- * paid while a cap is set would otherwise strand the product — a seat count the
- * admin can see, can no longer edit, and would keep submitting on every save.
- * So the same click that re-locks the control clears what it locked away, and
- * the seat count is blanked rather than remembered: a stale number silently
- * reappearing on a later switch back to free is a worse surprise than retyping
- * it. This is an explicit admin action, which is what makes dropping stored
- * data acceptable here and *not* on load (`existingFormState` shows a stored
- * cap as-is, behind the locked control).
- *
- * The section reflow it causes — the seat-count input and waitlist toggle
- * disappearing — is likewise user-initiated, so the layout rule permits it.
- */
-export function withPaidMode(
-  state: FormState,
-  config: ProductTypeConfig,
-  paidMode: PaidMode,
-): FormState {
-  const next: FormState = { ...state, paidMode };
-  const locks = formLocksFor(config, paidMode);
-  if (!locks.seatCount) return next;
-  return { ...next, uncapped: true, seatCount: "", waitlistEnabled: false };
-}
 
 export function effectivePricingShape(
   config: ProductTypeConfig,
