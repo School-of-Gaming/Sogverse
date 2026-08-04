@@ -135,8 +135,11 @@ export function SettingsSectionContent({
         return;
       }
 
+      // Both names trimmed on the way out. This write goes straight to Supabase
+      // from the browser — no route, no contract — so nothing downstream will
+      // strip whitespace the field picked up.
       const updates: ProfileUpdate = {
-        first_name: firstName,
+        first_name: firstName.trim(),
         last_name: lastName.trim(),
         phone: toE164Digits(phone),
         spoken_languages: spokenLanguages,
