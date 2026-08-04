@@ -139,6 +139,90 @@ describe("roblox_accounts RLS", () => {
     expect(data).toHaveLength(2);
   });
 
+  // -- Admin writes anyone's row --
+  //
+  // The admin user page edits these in place, on the admin's OWN user-bound
+  // client — no service-role anywhere in that path. So `admin_full_access_*`
+  // being a `FOR ALL` policy is not decoration: it is the only thing permitting
+  // the write, and if it were ever narrowed to SELECT the feature would fail
+  // closed with nothing else to catch it.
+
+  it("admin can update another user's roblox account", async () => {
+    const { error } = await adminClient
+      .from("roblox_accounts")
+      .update({ roblox_username: "AdminFixed", roblox_user_id: 156 })
+      .eq("user_id", TEST_IDS.GAMER);
+
+    expect(error).toBeNull();
+
+    const { data } = await admin
+      .from("roblox_accounts")
+      .select("roblox_username, roblox_user_id")
+      .eq("user_id", TEST_IDS.GAMER)
+      .single();
+
+    expect(data).toMatchObject({
+      roblox_username: "AdminFixed",
+      roblox_user_id: 156,
+    });
+
+    await admin
+      .from("roblox_accounts")
+      .update({
+        roblox_username: SEED.ROBLOX_USERNAME_GAMER,
+        roblox_user_id: null,
+      })
+      .eq("user_id", TEST_IDS.GAMER);
+  });
+
+  it("admin can insert a roblox account for a user who has none", async () => {
+    // The route upserts, so the first save for an account that never had a
+    // handle is an INSERT naming somebody else's id — the statement the
+    // self-write WITH CHECK refuses and the admin policy has to allow.
+    await admin.from("roblox_accounts").delete().eq("user_id", TEST_IDS.GAMER_2);
+
+    try {
+      const { error } = await adminClient
+        .from("roblox_accounts")
+        .insert({ user_id: TEST_IDS.GAMER_2, roblox_username: "AdminAdded" });
+
+      expect(error).toBeNull();
+
+      const { data } = await admin
+        .from("roblox_accounts")
+        .select("roblox_username")
+        .eq("user_id", TEST_IDS.GAMER_2)
+        .single();
+
+      expect(data!.roblox_username).toBe("AdminAdded");
+    } finally {
+      await admin
+        .from("roblox_accounts")
+        .delete()
+        .eq("user_id", TEST_IDS.GAMER_2);
+    }
+  });
+
+  it("admin still cannot delete a roblox account — there is no grant", async () => {
+    // Unlinking clears the columns; the row itself only ever goes with the
+    // profile. The admin policy is `FOR ALL`, so this is the *grant* refusing,
+    // which is a stronger guarantee than a policy and worth pinning separately.
+    const { error } = await adminClient
+      .from("roblox_accounts")
+      .delete()
+      .eq("user_id", TEST_IDS.GAMER);
+
+    expect(error).not.toBeNull();
+
+    const { data } = await admin
+      .from("roblox_accounts")
+      .select("user_id")
+      .eq("user_id", TEST_IDS.GAMER)
+      .maybeSingle();
+
+    expect(data).not.toBeNull();
+  });
+
   // -- Two accounts may share one Roblox account --
   //
   // The column is born without a UNIQUE for the reason 00135 dropped Minecraft's:

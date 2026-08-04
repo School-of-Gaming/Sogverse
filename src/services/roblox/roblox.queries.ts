@@ -2,22 +2,26 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
+import type { RobloxAccount } from "@/types";
 import { RobloxService } from "./roblox.service";
-import type { RobloxProfileResponse } from "./roblox.contracts";
+import type { RobloxProfileResponse, RobloxRenderUrls } from "./roblox.contracts";
 
 /**
- * Two branches under one root, and the split is load-bearing.
+ * Three branches under one root, and the split is load-bearing.
  *
  * `accounts` holds what we have **stored** — rows out of `roblox_accounts`,
- * cheap indexed reads by primary key. `profiles` holds what Roblox **told us** —
- * a lookup that costs three upstream calls against a budget of sixty a minute
- * shared by every IP the serverless fleet has.
+ * cheap indexed reads by primary key. `profiles` holds a **name** resolved at
+ * capture time, three upstream calls deep. `renders` holds the pictures for an
+ * **id** we already stored, which is the cheap two-call path and the one every
+ * page load uses.
  *
  * A save invalidates `accounts` and never the root, precisely because the root
- * would drag every mounted lookup into a refetch and spend that budget to
- * re-learn an answer nothing changed. Lookups are keyed by the **lowercased**
- * username: the Roblox lookup is case-insensitive, so `Builderman` and
- * `builderman` are the same account and must not occupy two cache entries.
+ * would drag every mounted lookup into a refetch and spend a budget of sixty
+ * requests a minute — shared by every IP the serverless fleet has — to re-learn
+ * answers nothing changed. Lookups are keyed by the **lowercased** username: the
+ * Roblox lookup is case-insensitive, so `Builderman` and `builderman` are the
+ * same account and must not occupy two cache entries. Renders are keyed by the
+ * numeric id, which has no such ambiguity.
  */
 export const robloxKeys = {
   all: ["roblox"] as const,
@@ -27,7 +31,21 @@ export const robloxKeys = {
   accounts: () => [...robloxKeys.all, "account"] as const,
   myAccount: () => [...robloxKeys.accounts(), "me"] as const,
   account: (userId: string) => [...robloxKeys.accounts(), userId] as const,
+  renders: () => [...robloxKeys.all, "render"] as const,
+  render: (robloxUserId: number) =>
+    [...robloxKeys.renders(), robloxUserId] as const,
 };
+
+/**
+ * A render URL stays good for as long as anyone is looking at the page.
+ *
+ * The JSON naming it is `no-cache` upstream, but the URL it hands back addresses
+ * an immutable image — it only changes when the person redesigns their avatar,
+ * which is not something a page open in another tab needs to notice. So this is
+ * resolved once per id per session and never re-fetched, which is the difference
+ * between one request and one per remount on a page an admin clicks through.
+ */
+const RENDER_STALE_TIME = Infinity;
 
 /**
  * The caller's own saved handle. A keyed read of one row by primary key — it
@@ -43,8 +61,15 @@ export function useMyRobloxAccount() {
   });
 }
 
-/** Somebody else's saved handle — a parent reading their own child's row. */
-export function useRobloxAccount(userId: string) {
+/**
+ * Somebody else's saved handle — a parent reading their own child's row, or an
+ * admin reading anyone's. Seed `initialData` from a server fetch where the page
+ * already has the row, so it paints complete on the first frame.
+ */
+export function useRobloxAccount(
+  userId: string,
+  options?: { initialData?: RobloxAccount | null },
+) {
   const supabase = getClient();
   const service = new RobloxService(supabase);
 
@@ -52,6 +77,44 @@ export function useRobloxAccount(userId: string) {
     queryKey: robloxKeys.account(userId),
     queryFn: () => service.getRobloxAccount(userId),
     enabled: !!userId,
+    initialData: options?.initialData,
+  });
+}
+
+/**
+ * The renders for one **stored, verified** account, drawn on page load.
+ *
+ * Takes the numeric id rather than the handle, and that is the whole design: an
+ * account we saved carries the id, so the name→id hop is not just avoidable but
+ * meaningless — the id is the fact and the name is only its label. `null`
+ * disables the query, which is what an *unverified* row passes, because a handle
+ * nobody confirmed has no id and resolving the name instead could draw whichever
+ * stranger happens to own it. The silhouette is the correct picture there.
+ *
+ * **Never retried.** A picture is decoration; a failed fetch degrades to the
+ * silhouette and the person still sees the name and the tick. Retrying would
+ * spend three more requests against the exact per-IP bucket this path exists to
+ * conserve, to redraw something nobody is waiting on.
+ *
+ * **Singular on purpose, and a list must not map it over rows.** The upstream
+ * cost is per request, not per id, so N rows calling this is N requests against
+ * that bucket — the failure mode the batch route was built to avoid. A roster
+ * collects its ids and asks the service for all of them at once.
+ */
+export function useRobloxRender(robloxUserId: number | null) {
+  const supabase = getClient();
+  const service = new RobloxService(supabase);
+
+  return useQuery<RobloxRenderUrls | null>({
+    queryKey: robloxKeys.render(robloxUserId ?? 0),
+    queryFn: async () => {
+      if (robloxUserId === null) return null;
+      const renders = await service.resolveRenders([robloxUserId]);
+      return renders[String(robloxUserId)] ?? null;
+    },
+    enabled: robloxUserId !== null,
+    staleTime: RENDER_STALE_TIME,
+    retry: false,
   });
 }
 

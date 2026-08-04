@@ -1,8 +1,10 @@
 import { parseJsonResponse, readErrorMessage } from "@/lib/api/json-response";
 import type { AppSupabaseClient, RobloxAccount } from "@/types";
 import {
+  robloxAvatarsResponse,
   robloxProfileResponse,
   type RobloxProfileResponse,
+  type RobloxRenderUrls,
 } from "./roblox.contracts";
 
 /**
@@ -64,6 +66,36 @@ export class RobloxService {
         await readErrorMessage(response, "Failed to update Roblox username"),
       );
     }
+  }
+
+  /**
+   * The renders for accounts we already hold the ids of.
+   *
+   * **Takes a list, always**, even where today's callers pass one: the upstream
+   * cost is per *request*, not per id, so the batch is the only shape a roster
+   * can afford and having a second single-id entry point would be an invitation
+   * to write the N-request version by accident.
+   */
+  async resolveRenders(
+    userIds: readonly number[],
+  ): Promise<Record<string, RobloxRenderUrls>> {
+    if (userIds.length === 0) return {};
+
+    const response = await fetch(
+      `/api/roblox/avatars?userIds=${encodeURIComponent(userIds.join(","))}`,
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        await readErrorMessage(response, "Failed to resolve Roblox avatars"),
+      );
+    }
+
+    const { renders } = await parseJsonResponse(
+      response,
+      robloxAvatarsResponse,
+    );
+    return renders;
   }
 
   /**

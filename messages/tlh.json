@@ -725,6 +725,10 @@
       "unassignedGroup": "ghom Sambe’",
       "needsGroup": "ghom poQlu’",
       "untitledProduct": "Doch pong Hutlh",
+      "gameAccounts": {
+        "title": "QujmeH tetlh",
+        "description": "QujwI’ pong yIchoH ghap yIcher. bIpolDI’ pong chel Qu’qoq."
+      },
       "participationStatus": {
         "active": "vangtaH",
         "waitlisted": "loStaH",

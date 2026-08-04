@@ -177,53 +177,135 @@ export async function lookupRobloxUser(
 }
 
 /**
- * Resolve one thumbnail render for an account id.
+ * How many account ids one thumbnail request may carry.
  *
- * **Never throws.** The picture is the decoration on a verification, not the
- * verification — a rate-limited, moderated, or simply-down thumbnail service
- * must degrade to "no picture", not fail the lookup that owns it. Every failure
- * mode, including a rejected fetch, comes back as `null`.
+ * The endpoint takes a batch on the order of a hundred, and that is the whole
+ * reason a list is affordable: the cost that matters is the *request* count
+ * against a 60-per-minute-per-IP bucket the entire serverless fleet shares, not
+ * the number of ids inside one. A caller asking for more than this is refused
+ * rather than silently truncated — a half-answered roster is worse than a clear
+ * error, because the missing rows look like accounts with no avatar.
  */
-async function resolveRobloxThumbnail(
+export const ROBLOX_THUMBNAIL_BATCH_MAX = 100;
+
+/**
+ * Resolve one kind of thumbnail for many account ids, in **one** request.
+ *
+ * **Never throws, and degrades per id.** The picture is decoration, not
+ * identity: a rate-limited, moderated, or simply-down thumbnail service must
+ * come back as "no picture" for the ids it could not answer, never as a failure
+ * of the call that asked. Every failure mode — a rejected fetch, a non-OK
+ * status, an unparseable body, an id the response simply omits — lands as a
+ * `null` against that id.
+ */
+async function resolveRobloxThumbnails(
   api: string,
-  userId: number,
+  userIds: readonly number[],
   size: string,
-): Promise<string | null> {
+): Promise<Map<number, string | null>> {
+  const resolved = new Map<number, string | null>(
+    userIds.map((id) => [id, null]),
+  );
+  if (userIds.length === 0) return resolved;
+
   const url =
-    `${api}?userIds=${userId}&size=${size}&format=Png&isCircular=false`;
+    `${api}?userIds=${userIds.join(",")}&size=${size}` +
+    `&format=Png&isCircular=false`;
 
   const res = await fetch(url, {
     // The JSON itself is `no-cache` upstream and names a URL we treat as
     // short-lived, so there is nothing here worth a cached read.
     cache: "no-store",
   }).catch(() => null);
-  if (!res?.ok) return null;
+  if (!res?.ok) return resolved;
 
   const parsed = avatarResponse.safeParse(await res.json().catch(() => null));
-  if (!parsed.success) return null;
+  if (!parsed.success) return resolved;
 
-  const thumbnail = parsed.data.data.at(0);
-  // "Pending" (never rendered) and "Blocked" (moderated) both mean there is no
-  // picture to show, and both come back with `imageUrl: ""` — so the empty
-  // string is checked too, rather than trusted to follow from the state.
-  if (!thumbnail || thumbnail.state !== "Completed") return null;
-  return thumbnail.imageUrl ? thumbnail.imageUrl : null;
+  for (const thumbnail of parsed.data.data) {
+    // Keyed by the id the *response* names rather than by position: the endpoint
+    // does not promise to answer in the order it was asked, and a positional
+    // read would hand one child another child's face — the one failure mode here
+    // that is worse than no picture at all.
+    if (!resolved.has(thumbnail.targetId)) continue;
+    // "Pending" (never rendered) and "Blocked" (moderated) both mean there is no
+    // picture to show, and both come back with `imageUrl: ""` — so the empty
+    // string is checked too, rather than trusted to follow from the state.
+    if (thumbnail.state !== "Completed") continue;
+    resolved.set(thumbnail.targetId, thumbnail.imageUrl || null);
+  }
+
+  return resolved;
+}
+
+/** Both renders of one account. */
+export interface RobloxRenders {
+  /** The bust render, for the full figure. */
+  avatarUrl: string | null;
+  /** The headshot render, for the compact figure. */
+  headshotUrl: string | null;
+}
+
+/**
+ * Both renders for many accounts, **by account id**, in two upstream requests
+ * regardless of how many ids are asked for.
+ *
+ * This is the production path for a *stored* account, and it is deliberately not
+ * the one verification uses. A saved account already carries the numeric id, so
+ * the username→id hop is not merely optimisable — it is meaningless, because the
+ * id is the fact and the name is the label. Skipping it takes a page view from
+ * three upstream calls to two, and makes the cost independent of how many
+ * identities are on screen.
+ *
+ * The two figures are fetched together rather than in sequence: they are
+ * independent reads, each one request against the shared bucket, so the count is
+ * fixed either way and there is no reason to pay for it twice in latency.
+ */
+export async function resolveRobloxRenders(
+  userIds: readonly number[],
+): Promise<Map<number, RobloxRenders>> {
+  const [busts, headshots] = await Promise.all([
+    resolveRobloxThumbnails(ROBLOX_AVATAR_API, userIds, ROBLOX_AVATAR_SIZE),
+    resolveRobloxThumbnails(
+      ROBLOX_HEADSHOT_API,
+      userIds,
+      ROBLOX_HEADSHOT_SIZE,
+    ),
+  ]);
+
+  return new Map(
+    userIds.map((id) => [
+      id,
+      {
+        avatarUrl: busts.get(id) ?? null,
+        headshotUrl: headshots.get(id) ?? null,
+      },
+    ]),
+  );
 }
 
 /** The bust render — the full figure's picture. */
-export function resolveRobloxAvatarUrl(userId: number): Promise<string | null> {
-  return resolveRobloxThumbnail(ROBLOX_AVATAR_API, userId, ROBLOX_AVATAR_SIZE);
+export async function resolveRobloxAvatarUrl(
+  userId: number,
+): Promise<string | null> {
+  const resolved = await resolveRobloxThumbnails(
+    ROBLOX_AVATAR_API,
+    [userId],
+    ROBLOX_AVATAR_SIZE,
+  );
+  return resolved.get(userId) ?? null;
 }
 
 /** The headshot render — the compact figure's picture. */
-export function resolveRobloxHeadshotUrl(
+export async function resolveRobloxHeadshotUrl(
   userId: number,
 ): Promise<string | null> {
-  return resolveRobloxThumbnail(
+  const resolved = await resolveRobloxThumbnails(
     ROBLOX_HEADSHOT_API,
-    userId,
+    [userId],
     ROBLOX_HEADSHOT_SIZE,
   );
+  return resolved.get(userId) ?? null;
 }
 
 /**

@@ -680,6 +680,10 @@
       "unassignedGroup": "Ei ryhmää määritetty",
       "needsGroup": "Tarvitsee ryhmän",
       "untitledProduct": "Nimetön tuote",
+      "gameAccounts": {
+        "title": "Pelitilit",
+        "description": "Aseta tai korjaa tämän tilin pelikäyttäjänimet. Tallennus tarkistaa nimen pelialustalta."
+      },
       "participationStatus": {
         "active": "Aktiivinen",
         "waitlisted": "Jonossa",

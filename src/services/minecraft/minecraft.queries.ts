@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { geduSessionKeys } from "@/services/gedu-sessions/gedu-sessions.keys";
+import type { MinecraftAccount } from "@/types";
 import { MinecraftService } from "./minecraft.service";
 
 export const minecraftKeys = {
@@ -21,7 +22,15 @@ export function useMyMinecraftAccount() {
   });
 }
 
-export function useMinecraftAccount(userId: string) {
+/**
+ * Somebody else's saved handle — a parent reading their own child's row, or an
+ * admin reading anyone's. Seed `initialData` from a server fetch where the page
+ * already has the row, so it paints complete on the first frame.
+ */
+export function useMinecraftAccount(
+  userId: string,
+  options?: { initialData?: MinecraftAccount | null },
+) {
   const supabase = getClient();
   const service = new MinecraftService(supabase);
 
@@ -29,6 +38,7 @@ export function useMinecraftAccount(userId: string) {
     queryKey: minecraftKeys.account(userId),
     queryFn: () => service.getMinecraftAccount(userId),
     enabled: !!userId,
+    initialData: options?.initialData,
   });
 }
 

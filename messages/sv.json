@@ -680,6 +680,10 @@
       "unassignedGroup": "Ingen grupp tilldelad",
       "needsGroup": "Behöver en grupp",
       "untitledProduct": "Namnlös produkt",
+      "gameAccounts": {
+        "title": "Spelkonton",
+        "description": "Ange eller korrigera kontots spelanvändarnamn. Sparandet kontrollerar namnet hos plattformen."
+      },
       "participationStatus": {
         "active": "Aktiv",
         "waitlisted": "På väntelista",

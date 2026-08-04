@@ -2790,7 +2790,7 @@ const VIEW_ONLY_ROWS: readonly {
 ];
 
 /**
- * The demo's own Roblox renders, resolved the way a real surface would.
+ * The demo's own Roblox renders.
  *
  * Minecraft rows need nothing: the row derives a body or a face straight from a
  * username. Roblox has no username-addressable endpoint, so a picture has to be
@@ -2798,11 +2798,17 @@ const VIEW_ONLY_ROWS: readonly {
  * showed a permanent stand-in beside a real Minecraft skin, which is a false
  * picture of the component rather than an honest one.
  *
- * So the demo does what a production caller does. **The lookup belongs here, not
- * in the row** — the row stays fixture-pure and takes a URL. Both demos call
- * this with the same handle, so React Query serves one request for the pair.
- * While it is in flight `data` is undefined and the rows draw the stand-in in a
- * box that is already its final size, so nothing moves when the render lands.
+ * **It resolves by handle, which a production surface does not.** A real surface
+ * is looking at a *stored* account and goes straight to the by-id route: two
+ * upstream calls, batchable, no username hop. This page has fixtures rather than
+ * rows, so the only thing it holds is a handle — which makes verification the
+ * only lookup available to it, and is why it is behind a button.
+ *
+ * **The lookup belongs here, not in the row** — the row stays fixture-pure and
+ * takes a URL. Both demos call this with the same handle, so React Query serves
+ * one request for the pair. While it is in flight `data` is undefined and the
+ * rows draw the stand-in in a box that is already its final size, so nothing
+ * moves when the render lands.
  */
 function useRobloxDemoRenders(
   live: boolean,
@@ -3068,11 +3074,14 @@ function GameAccountDemo() {
         <p className="text-sm text-muted-foreground">
           Real pictures on both sides. Minecraft derives its skin from the
           username, so the row needs nothing; Roblox has no username-addressable
-          endpoint, so <em>this demo</em> resolves the handle through the same
-          lookup a production surface would use and hands the URL to the row. The
-          row itself stays fixture-pure &mdash; it takes a picture, it never goes
-          and finds one. The stand-in is what the last row shows, because it has
-          no username to resolve.
+          endpoint, so somebody has to resolve one server-side and hand the URL
+          in. The row itself stays fixture-pure &mdash; it takes a picture, it
+          never goes and finds one. The stand-in is what the last row shows,
+          because it has no username to resolve. <em>This demo</em> resolves by
+          handle, behind the button, because fixtures are all it has; a real
+          surface holds a <em>stored</em> account and resolves by its numeric id
+          instead &mdash; two upstream calls rather than three, and one call for
+          a whole roster rather than one per row.
         </p>
         <GameViewOnlyDemo />
       </SubSection>

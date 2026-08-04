@@ -14,6 +14,7 @@ import { Identicon } from "@/components/ui/identicon";
 import {
   GAME_PLATFORMS,
   GameUsernameEditableRow,
+  robloxAccountId,
   type GameAccountExternalId,
   type GamePlatform,
 } from "@/components/game-account";
@@ -24,7 +25,7 @@ import {
   type GamerUpdate,
 } from "@/services/gamers";
 import { useMinecraftAccount } from "@/services/minecraft";
-import { useRobloxAccount } from "@/services/roblox";
+import { useRobloxAccount, useRobloxRender } from "@/services/roblox";
 import { ROUTES, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { computeAge } from "@/lib/utils";
 import { useTimezone } from "@/providers";
@@ -279,6 +280,10 @@ function GameAccountCard({
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const name = GAME_PLATFORMS[platform].name;
+  // `null` for Minecraft (the row derives its skin from the name) and for an
+  // unverified Roblox handle — no stored id to resolve, and looking the *name*
+  // up instead could draw whichever stranger happens to own it.
+  const { data: render } = useRobloxRender(robloxAccountId(platform, externalId));
 
   /**
    * Committing the row *is* saving it — the row has already checked the name
@@ -323,12 +328,11 @@ function GameAccountCard({
           username={username}
           externalId={externalId}
           personName={personName}
-          // Explicitly nothing rather than "let the platform decide": a Roblox
-          // render is not addressable by username and costs two rate-limited
-          // server hops, so a saved handle draws the silhouette until the person
-          // commits it again and the lookup hands the picture to the row.
-          // Minecraft passes nothing and derives its skin from the name.
-          avatarUrl={platform === "roblox" ? null : undefined}
+          // Minecraft omits it and derives its skin from the name. Roblox hands
+          // in what the by-id lookup resolved — or `null` while it is in flight,
+          // which draws the silhouette in a box already at its final size, so
+          // the picture lands without moving anything.
+          avatarUrl={platform === "roblox" ? (render?.avatarUrl ?? null) : undefined}
           // Returned, not voided: the row waits on the write before it lets
           // go of the name it is showing.
           onCommit={({ username: committed }) => handleCommit(committed)}

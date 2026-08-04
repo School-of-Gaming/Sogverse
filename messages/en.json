@@ -680,6 +680,10 @@
       "unassignedGroup": "No group assigned",
       "needsGroup": "Needs group assignment",
       "untitledProduct": "Untitled product",
+      "gameAccounts": {
+        "title": "Game accounts",
+        "description": "Set or correct this account's game usernames. Saving checks the name with the platform."
+      },
       "participationStatus": {
         "active": "Active",
         "waitlisted": "Waitlisted",

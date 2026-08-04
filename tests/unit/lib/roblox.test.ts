@@ -5,6 +5,7 @@ import {
   lookupRobloxProfile,
   resolveRobloxAvatarUrl,
   resolveRobloxHeadshotUrl,
+  resolveRobloxRenders,
 } from "@/lib/roblox";
 
 /**
@@ -251,32 +252,34 @@ describe("lookupRobloxProfile", () => {
    * The two thumbnail calls are issued together, so their completion order is
    * not ours to predict — the stub answers on the URL rather than on call order.
    */
+  /**
+   * Both thumbnail stubs answer under the **account's own id**, which is what
+   * Roblox does. They used to answer under a hardcoded `targetId: 1` and still
+   * passed, because the resolver read the first entry positionally; it now
+   * matches on the id, so a fixture that lied about which account it was
+   * describing would be ignored — correctly. Keeping the id honest here is what
+   * makes these cases about the profile lookup rather than about that detail.
+   */
   function stubLookup(options: {
     account?: { id: number; name: string; displayName: string } | null;
     bust?: string | null;
     headshot?: string | null;
   }) {
+    const targetId = options.account?.id ?? 0;
+    const thumbnail = (imageUrl: string | null | undefined) =>
+      imageUrl
+        ? { targetId, state: "Completed", imageUrl }
+        : { targetId, state: "Blocked", imageUrl: "" };
+
     mockFetch.mockImplementation((url: string) => {
       if (url.includes("avatar-headshot")) {
         return Promise.resolve(
-          jsonResponse({
-            data: [
-              options.headshot
-                ? { targetId: 1, state: "Completed", imageUrl: options.headshot }
-                : { targetId: 1, state: "Blocked", imageUrl: "" },
-            ],
-          }),
+          jsonResponse({ data: [thumbnail(options.headshot)] }),
         );
       }
       if (url.includes("avatar-bust")) {
         return Promise.resolve(
-          jsonResponse({
-            data: [
-              options.bust
-                ? { targetId: 1, state: "Completed", imageUrl: options.bust }
-                : { targetId: 1, state: "Blocked", imageUrl: "" },
-            ],
-          }),
+          jsonResponse({ data: [thumbnail(options.bust)] }),
         );
       }
       return Promise.resolve(
@@ -340,5 +343,132 @@ describe("lookupRobloxProfile", () => {
 
     await expect(lookupRobloxProfile("definitelynobody")).resolves.toBeNull();
     expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("resolveRobloxRenders", () => {
+  /**
+   * The load-time path for accounts we already stored the id of. What matters
+   * here is not that a URL comes back — it is that the cost stays two requests
+   * however many ids are asked for, that each id degrades on its own, and that
+   * an answer is matched to the id the *response* names rather than to its
+   * position in it.
+   */
+  it("resolves many ids in two upstream calls, one per figure", async () => {
+    mockFetch
+      .mockResolvedValueOnce(
+        jsonResponse({
+          data: [
+            { targetId: 1, state: "Completed", imageUrl: "bust-1" },
+            { targetId: 2, state: "Completed", imageUrl: "bust-2" },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          data: [
+            { targetId: 1, state: "Completed", imageUrl: "head-1" },
+            { targetId: 2, state: "Completed", imageUrl: "head-2" },
+          ],
+        }),
+      );
+
+    const renders = await resolveRobloxRenders([1, 2]);
+
+    // Two requests for two ids — and it would still be two for a hundred.
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(mockFetch.mock.calls[0][0]).toContain("userIds=1,2");
+    expect(mockFetch.mock.calls[1][0]).toContain("userIds=1,2");
+    expect(renders.get(1)).toEqual({
+      avatarUrl: "bust-1",
+      headshotUrl: "head-1",
+    });
+    expect(renders.get(2)).toEqual({
+      avatarUrl: "bust-2",
+      headshotUrl: "head-2",
+    });
+  });
+
+  it("matches each answer to the id the response names, not to its position", async () => {
+    // The endpoint does not promise to answer in the order it was asked. A
+    // positional read here would hand one child another child's face, which is
+    // the one failure mode worse than showing no picture at all.
+    mockFetch
+      .mockResolvedValueOnce(
+        jsonResponse({
+          data: [
+            { targetId: 2, state: "Completed", imageUrl: "bust-2" },
+            { targetId: 1, state: "Completed", imageUrl: "bust-1" },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ data: [] }));
+
+    const renders = await resolveRobloxRenders([1, 2]);
+
+    expect(renders.get(1)?.avatarUrl).toBe("bust-1");
+    expect(renders.get(2)?.avatarUrl).toBe("bust-2");
+  });
+
+  it("ignores an id nobody asked about", async () => {
+    mockFetch
+      .mockResolvedValueOnce(
+        jsonResponse({
+          data: [
+            { targetId: 1, state: "Completed", imageUrl: "bust-1" },
+            { targetId: 999, state: "Completed", imageUrl: "bust-999" },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ data: [] }));
+
+    const renders = await resolveRobloxRenders([1]);
+
+    expect(renders.has(999)).toBe(false);
+    expect(renders.size).toBe(1);
+  });
+
+  it("degrades per id and per figure rather than failing the call", async () => {
+    mockFetch
+      .mockResolvedValueOnce(
+        jsonResponse({
+          data: [
+            { targetId: 1, state: "Completed", imageUrl: "bust-1" },
+            { targetId: 2, state: "Blocked", imageUrl: "" },
+          ],
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          data: [{ targetId: 2, state: "Completed", imageUrl: "head-2" }],
+        }),
+      );
+
+    const renders = await resolveRobloxRenders([1, 2]);
+
+    // A moderated bust, a headshot the response simply omitted: each is null on
+    // its own and neither takes the other down with it.
+    expect(renders.get(1)).toEqual({ avatarUrl: "bust-1", headshotUrl: null });
+    expect(renders.get(2)).toEqual({ avatarUrl: null, headshotUrl: "head-2" });
+  });
+
+  it("answers for every requested id when the service is down entirely", async () => {
+    // Rate limited, unreachable, or answering nonsense — the caller still gets
+    // an entry per id, so a row can tell "there is no picture" from "not yet"
+    // and settle on the silhouette instead of waiting forever.
+    mockFetch.mockResolvedValueOnce(jsonResponse({ errors: [] }, 429));
+    mockFetch.mockRejectedValueOnce(new Error("ECONNRESET"));
+
+    const renders = await resolveRobloxRenders([1, 2]);
+
+    expect(renders.get(1)).toEqual({ avatarUrl: null, headshotUrl: null });
+    expect(renders.get(2)).toEqual({ avatarUrl: null, headshotUrl: null });
+  });
+
+  it("spends no request at all on an empty list", async () => {
+    const renders = await resolveRobloxRenders([]);
+
+    expect(renders.size).toBe(0);
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 });

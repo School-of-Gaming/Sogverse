@@ -680,6 +680,10 @@
       "unassignedGroup": "Aucun groupe attribué",
       "needsGroup": "Doit être affecté à un groupe",
       "untitledProduct": "Produit sans titre",
+      "gameAccounts": {
+        "title": "Comptes de jeu",
+        "description": "Définissez ou corrigez les noms d’utilisateur de jeu de ce compte. L’enregistrement vérifie le nom auprès de la plateforme."
+      },
       "participationStatus": {
         "active": "Actif",
         "waitlisted": "En liste d’attente",

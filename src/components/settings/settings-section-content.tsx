@@ -13,6 +13,7 @@ import { Identicon } from "@/components/ui/identicon";
 import {
   GAME_PLATFORMS,
   GameUsernameEditableRow,
+  robloxAccountId,
   type GameAccountExternalId,
   type GamePlatform,
 } from "@/components/game-account";
@@ -28,7 +29,7 @@ import { useUpdateProfile, useSpokenLanguages } from "@/services/users";
 import { useLocationsByIds, type LocationWithChain } from "@/services/locations";
 import { toE164Digits } from "@/lib/utils";
 import { useMyMinecraftAccount, useUpdateMyMinecraft } from "@/services/minecraft";
-import { useMyRobloxAccount, useUpdateMyRoblox } from "@/services/roblox";
+import { useMyRobloxAccount, useRobloxRender, useUpdateMyRoblox } from "@/services/roblox";
 import { isGamerProfile, type ProfileUpdate, type SpokenLanguage } from "@/types";
 
 /**
@@ -409,6 +410,10 @@ function GameAccountCard({
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const name = GAME_PLATFORMS[platform].name;
+  // `null` for Minecraft (the row derives its skin from the name) and for an
+  // unverified Roblox handle — no stored id to resolve, and looking the *name*
+  // up instead could draw whichever stranger happens to own it.
+  const { data: render } = useRobloxRender(robloxAccountId(platform, externalId));
 
   /**
    * Committing the row *is* saving it — there is no separate Save button, because
@@ -458,13 +463,11 @@ function GameAccountCard({
           platform={platform}
           username={username}
           externalId={externalId}
-          // Explicitly nothing rather than "let the platform decide", which on
-          // Roblox would mean the same stand-in anyway: its renders are not
-          // addressable by username and cost two rate-limited server hops, so a
-          // saved handle draws the silhouette until the person commits it again
-          // and the lookup hands the picture straight to the row. Minecraft
-          // passes nothing and derives its skin from the name.
-          avatarUrl={platform === "roblox" ? null : undefined}
+          // Minecraft omits it and derives its skin from the name. Roblox hands
+          // in what the by-id lookup resolved — or `null` while it is in flight,
+          // which draws the silhouette in a box already at its final size, so
+          // the picture lands without moving anything.
+          avatarUrl={platform === "roblox" ? (render?.avatarUrl ?? null) : undefined}
           // Returned, not voided: the row waits on the write before it lets go
           // of the name it is showing.
           onCommit={({ username: committed }) => handleCommit(committed)}

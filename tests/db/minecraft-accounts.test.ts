@@ -127,6 +127,87 @@ describe("minecraft_accounts RLS", () => {
     expect(data).toHaveLength(2);
   });
 
+  // -- Admin writes anyone's row --
+  //
+  // The admin user page edits these in place, on the admin's OWN user-bound
+  // client — no service-role anywhere in that path. So `admin_full_access_*`
+  // being a `FOR ALL` policy is not decoration: it is the only thing permitting
+  // the write, and if it were ever narrowed to SELECT the feature would fail
+  // closed with nothing else to catch it.
+
+  it("admin can update another user's minecraft account", async () => {
+    const { error } = await adminClient
+      .from("minecraft_accounts")
+      .update({ minecraft_username: "AdminFixed" })
+      .eq("user_id", TEST_IDS.GAMER);
+
+    expect(error).toBeNull();
+
+    const { data } = await admin
+      .from("minecraft_accounts")
+      .select("minecraft_username")
+      .eq("user_id", TEST_IDS.GAMER)
+      .single();
+
+    expect(data!.minecraft_username).toBe("AdminFixed");
+
+    await admin
+      .from("minecraft_accounts")
+      .update({ minecraft_username: SEED.MINECRAFT_USERNAME_GAMER })
+      .eq("user_id", TEST_IDS.GAMER);
+  });
+
+  it("admin can insert a minecraft account for a user who has none", async () => {
+    // The route upserts, so the first save for an account that never had a
+    // handle is an INSERT naming somebody else's id — the statement the
+    // self-write WITH CHECK refuses and the admin policy has to allow.
+    await admin
+      .from("minecraft_accounts")
+      .delete()
+      .eq("user_id", TEST_IDS.GAMER_2);
+
+    try {
+      const { error } = await adminClient
+        .from("minecraft_accounts")
+        .insert({ user_id: TEST_IDS.GAMER_2, minecraft_username: "AdminAdded" });
+
+      expect(error).toBeNull();
+
+      const { data } = await admin
+        .from("minecraft_accounts")
+        .select("minecraft_username")
+        .eq("user_id", TEST_IDS.GAMER_2)
+        .single();
+
+      expect(data!.minecraft_username).toBe("AdminAdded");
+    } finally {
+      await admin
+        .from("minecraft_accounts")
+        .delete()
+        .eq("user_id", TEST_IDS.GAMER_2);
+    }
+  });
+
+  it("admin still cannot delete a minecraft account — there is no grant", async () => {
+    // Unlinking clears the columns; the row itself only ever goes with the
+    // profile. The admin policy is `FOR ALL`, so this is the *grant* refusing,
+    // which is a stronger guarantee than a policy and worth pinning separately.
+    const { error } = await adminClient
+      .from("minecraft_accounts")
+      .delete()
+      .eq("user_id", TEST_IDS.GAMER);
+
+    expect(error).not.toBeNull();
+
+    const { data } = await admin
+      .from("minecraft_accounts")
+      .select("user_id")
+      .eq("user_id", TEST_IDS.GAMER)
+      .maybeSingle();
+
+    expect(data).not.toBeNull();
+  });
+
   // -- Two accounts may share one Minecraft account --
   //
   // minecraft_uuid carried a UNIQUE constraint until it was dropped. It forbade

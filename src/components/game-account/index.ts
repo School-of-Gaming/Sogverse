@@ -2,6 +2,7 @@ export {
   GAME_PLATFORMS,
   gameFigureHeight,
   gameAccountStatus,
+  robloxAccountId,
   useVerifyGameAccount,
   type GameAccountExternalId,
   type GameAccountStatus,
