@@ -35,14 +35,18 @@ const TIMEZONE = "Europe/Helsinki";
  * `in-person-club` is the venue shape, which is the one arrangement where the
  * page has an address and no Join at all. `camp` is a finished, end-dated
  * product: no future block, no divider, and a remote room that will never open
- * again. `new-club` is the page before anything has happened in it, which is
- * the only way to judge the feed with an empty past.
+ * again. `locked-join` is the page in its resting state — the locked button
+ * naming its open time, which is what a family sees all week outside the voice
+ * window, and the one Join state no other scenario can show (active-club's room
+ * is deliberately live). It is dressed as a brand-new club, so the empty past
+ * comes along incidentally — not because "no history yet" is a state that
+ * needs designing for, but because a locked Join needed a page to live on.
  */
 export const FAMILY_PRODUCT_SCENARIOS = [
   "active-club",
   "in-person-club",
   "camp",
-  "new-club",
+  "locked-join",
 ] as const;
 
 export type FamilyProductScenario = (typeof FAMILY_PRODUCT_SCENARIOS)[number];
@@ -481,7 +485,7 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
    * divider. The Join is locked, which is what a family sees for all but the
    * five minutes before each session.
    */
-  "new-club": {
+  "locked-join": {
     productName: "Minecraft Starters Club",
     productType: "consumer_club",
     cadence: "weekly",

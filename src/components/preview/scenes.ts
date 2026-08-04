@@ -241,10 +241,10 @@ export const PREVIEW_SCENES = [
           "A run that is over. A UTC-pinned date range beside the weekday times, no future block and therefore no divider at all, and — although the camp was remote — no Join either, since there is no next session for a room to open for. The feed is history end to end.",
       },
       {
-        slug: "new-club",
-        label: "Club — nothing has happened yet",
+        slug: "locked-join",
+        label: "Club — Join locked",
         description:
-          "The page a family lands on the week they buy a place: eight sessions ahead, a locked Join, and an empty past. The only way to judge the feed when the divider has nothing under it — which is why the column says so rather than simply stopping.",
+          "The page in its resting state: the Join locked and naming its open time, which is what a family sees all week outside the voice window — and the one Join state no other scenario can show, since active-club's room is deliberately live. Dressed as a brand-new club, so the empty past comes along incidentally; the button flips open on the shared clock when the window arrives, no reload.",
       },
     ],
   },
