@@ -47,8 +47,11 @@ checkout.session.expired
 invoice.paid
 customer.subscription.updated
 customer.subscription.deleted
-charge.refunded
 ```
+
+(`charge.refunded` was deliberately removed from the lists and commands here when the
+write-only refunds ledger was dropped — the route answers it 200 unhandled, so
+subscribing to it only produces noise.)
 
 ### Two traps in the commands below
 
@@ -74,8 +77,7 @@ stripe webhook_endpoints create \
   -d "enabled_events[]=checkout.session.expired" \
   -d "enabled_events[]=invoice.paid" \
   -d "enabled_events[]=customer.subscription.updated" \
-  -d "enabled_events[]=customer.subscription.deleted" \
-  -d "enabled_events[]=charge.refunded"
+  -d "enabled_events[]=customer.subscription.deleted"
 
 # Capture the whsec_... from the response, then:
 printf '%s' 'whsec_...' | vercel env add STRIPE_PRODUCTS_WEBHOOK_SECRET preview --sensitive
@@ -106,8 +108,7 @@ stripe webhook_endpoints create --live \
   -d "enabled_events[]=checkout.session.expired" \
   -d "enabled_events[]=invoice.paid" \
   -d "enabled_events[]=customer.subscription.updated" \
-  -d "enabled_events[]=customer.subscription.deleted" \
-  -d "enabled_events[]=charge.refunded"
+  -d "enabled_events[]=customer.subscription.deleted"
 
 # Capture the live whsec_... and store it in Vercel production
 printf '%s' 'whsec_...' | vercel env add STRIPE_PRODUCTS_WEBHOOK_SECRET production --sensitive
