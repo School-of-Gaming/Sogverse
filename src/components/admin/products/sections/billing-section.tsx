@@ -14,6 +14,7 @@ import {
   SEAT_LIMIT_MODE_VALUES,
   effectiveBillingMode,
   effectivePricingShape,
+  withPaidMode,
   type FormState,
 } from "../product-form-state";
 import type { ProductTypeConfig } from "../product-type-config";
@@ -37,13 +38,22 @@ export function BillingSection({
   const pricingShape = effectivePricingShape(config);
   const showExternalInfo = billingMode === "external_contract";
 
-  // Seats: every product type may be capped or uncapped (no seat count). The
-  // chooser and the waitlist toggle are pre-prod-locked for every type except
-  // municipality clubs (form-locks.ts) — defaulted to "no seat limit" /
-  // waitlist off in initialState wherever they're still locked.
-  const locks = formLocksFor(config.productType);
+  // Seats: any product may be capped or uncapped (no seat count). The chooser
+  // and the waitlist toggle are pre-prod-locked except where a signup can't be
+  // interleaved with a Stripe Checkout — municipality clubs and free events
+  // (form-locks.ts). The lock therefore moves with the free/paid radio above,
+  // which is why the effective billing mode is threaded into the resolver
+  // rather than the product type alone.
+  const locks = formLocksFor(config.productType, billingMode);
   const lockSeat = locks.seatCount;
   const lockWaitlist = locks.waitlist;
+  // Say *why* the control greyed out, but only where the admin can see it move:
+  // on an event, picking Paid is what locked it. Elsewhere the lock is a
+  // constant of the type and needs no running commentary.
+  const seatLimitHint =
+    lockSeat && config.productType === "event"
+      ? t("hints.seatLimitPaidEvent")
+      : t("hints.seatLimitHint");
 
   return (
     <FormSection
@@ -70,7 +80,9 @@ export function BillingSection({
                     type="radio"
                     name="paidMode"
                     checked={active}
-                    onChange={() => setState({ ...state, paidMode: mode })}
+                    onChange={() =>
+                      setState(withPaidMode(state, config, mode))
+                    }
                     className="mt-1"
                   />
                   <div className="min-w-0 flex-1">
@@ -118,7 +130,7 @@ export function BillingSection({
         </Field>
       )}
 
-      <Field label={t("labels.seatLimit")} hint={t("hints.seatLimitHint")}>
+      <Field label={t("labels.seatLimit")} hint={seatLimitHint}>
         <div className="grid gap-3 sm:grid-cols-2">
           {SEAT_LIMIT_MODE_VALUES.map((mode) => {
             const active = state.uncapped === (mode === "unlimited");
@@ -160,6 +172,12 @@ export function BillingSection({
         </div>
       </Field>
 
+      {/* Only reachable while a cap is set, which the chooser above normally
+          keeps in step with the lock. The one way in with the lock on is an
+          edit form loaded from a stored capped row whose type/billing mode is
+          no longer allowed one — the value is shown rather than wiped, so the
+          input has to carry the lock too or it would be the one editable half
+          of a locked pair. */}
       {!state.uncapped && (
         <Field
           label={t("labels.seatCount")}
@@ -171,6 +189,7 @@ export function BillingSection({
             type="number"
             min="1"
             value={state.seatCount}
+            disabled={lockSeat}
             onChange={(e) =>
               setState({ ...state, seatCount: e.target.value })
             }

@@ -8,12 +8,13 @@ import { Field } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 import { useHolidayCalendars } from "@/services/products";
 import { FormSection, InfoCallout } from "../form-primitives";
-import { FORM_LOCKS } from "../form-locks";
+import { formLocksFor } from "../form-locks";
 import { HolidayCalendarOption } from "../holiday-calendar-option";
 import { ScheduleSlotsEditor } from "../schedule-slots-editor";
 import {
   END_DATE_MODE_VALUES,
   FIXED_TIMEZONE,
+  effectiveBillingMode,
   startModeUsesDate,
   startModeUsesThreshold,
   type FormState,
@@ -36,15 +37,20 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
   const usesThreshold = startModeUsesThreshold(state.startMode);
   const showHolidayCalendars = config.hasHolidayCalendars;
 
-  // Pre-prod UI locks (see form-locks.ts). The start trigger is pinned to the
-  // type's default ("On a specific date") and the consumer-club start date is
-  // frozen — to today on a fresh form (set in initialState), to the saved date
-  // on edit/clone. Word the hint to match the actual value so an edit form
-  // doesn't claim "today" for a past date.
-  const lockStartMode = FORM_LOCKS.startMode;
+  // Pre-prod UI locks, resolved through form-locks.ts like every other section
+  // — none of the three below lift for any product today, but reading the
+  // constant directly would put a second decision-maker next to the resolver.
+  // The start trigger is pinned to the type's default ("On a specific date")
+  // and the consumer-club start date is frozen — to today on a fresh form (set
+  // in initialState), to the saved date on edit/clone. Word the hint to match
+  // the actual value so an edit form doesn't claim "today" for a past date.
+  const locks = formLocksFor(
+    productType,
+    effectiveBillingMode(config, state.paidMode),
+  );
+  const lockStartMode = locks.startMode;
   const lockStartDate =
-    FORM_LOCKS.consumerClubStartDateToday &&
-    productType === "consumer_club";
+    locks.consumerClubStartDateToday && productType === "consumer_club";
   const lockedToToday =
     lockStartDate &&
     state.startDate ===
@@ -283,7 +289,7 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
           optional
           hint={t("hints.holidayHint")}
         >
-          {FORM_LOCKS.holidayCalendars ? (
+          {locks.holidayCalendars ? (
             <InfoCallout text={t("hints.holidayComingSoon")} />
           ) : (
             <div className="space-y-2">

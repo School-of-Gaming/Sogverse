@@ -7,17 +7,17 @@
 // enforces nothing here. Flip a flag to `false` (and the disabled wiring that
 // reads it falls away, restoring the full control) when the feature ships.
 //
-// Locks can also ship per product type — see `formLocksFor()` below, which
-// unlocks the seat-count / waitlist / registration-window trio for municipality
-// clubs while keeping them locked everywhere else.
+// Locks can also lift per product — see `formLocksFor()` below, which unlocks
+// the seat-count / waitlist / registration-window trio for municipality clubs
+// and part of it for events, while keeping them locked everywhere else.
 //
 // Defaults that pair with these locks live in `initialState` (product-form-state.ts);
 // the disabling lives in the individual section components. Both read the
-// *resolved* locks for the product type, never FORM_LOCKS directly.
+// *resolved* locks for the product, never FORM_LOCKS directly.
 //
 // Typed as `boolean` (not literal `true`) on purpose: these are toggles, so the
 // `lock ? … : …` branches in the form are genuine conditionals, not dead code.
-import type { ProductType } from "@/types";
+import type { BillingMode, ProductType } from "@/types";
 
 interface FormLocks {
   /** Start trigger is pinned to "On a specific date" (no threshold launches). */
@@ -27,21 +27,28 @@ interface FormLocks {
   /** Holiday-calendar selection is shown as "coming soon" instead of editable. */
   holidayCalendars: boolean;
   /**
-   * Seat limits off — every product launches uncapped (no seat count).
+   * Seat limits off — the product launches uncapped (no seat count).
    *
-   * Unlocking this for a **paid** type is not just a UI change. Capacity is
-   * checked before Stripe Checkout and nothing is held while the parent pays —
-   * the seat is created when the payment lands — so two parents checking out at
-   * once on the last seat both pass the gate and both get one. Whoever unlocks
-   * it for a paid type has to re-decide the capacity hold first; migration 00139
-   * records why the previous hold was removed and what it cost. Municipality
-   * clubs are unlocked below and are unaffected: they never reach Checkout, so
-   * their signup is gated and created in the same locked transaction.
+   * **This lock tracks the money, not the product type.** Capacity is checked
+   * before Stripe Checkout and nothing is held while the parent pays — the seat
+   * is created when the payment lands — so two parents checking out at once on
+   * the last seat both pass the gate and both get one. A cap is therefore only
+   * safe where the signup never reaches Checkout: the no-charge shapes validate
+   * the cap and write the `active` row in the *same* locked transaction, so
+   * there is no window to oversell in. That is why municipality clubs (invoiced
+   * off-platform) and **free** events are unlocked below while a **paid** event
+   * is not — the free/paid switch flips this lock mid-form.
+   *
+   * Whoever unlocks it for a shape that does reach Checkout has to re-decide
+   * the capacity hold first; migration 00139 records why the previous hold was
+   * removed and what it cost, and `docs/products-architecture.md` §"Seat gate &
+   * the create-on-payment rule" is the standing record of the trade.
    */
   seatCount: boolean;
-  /** Waitlist is forced off. */
+  /** Waitlist is forced off. Rides with `seatCount` — a waitlist only exists
+   *  behind a cap, so it is unlocked exactly where a cap is. */
   waitlist: boolean;
-  /** Registration always opens immediately. */
+  /** Registration always opens immediately (no scheduled ticket drop). */
   registrationTiming: boolean;
 }
 
@@ -55,19 +62,44 @@ export const FORM_LOCKS: FormLocks = {
 };
 
 /**
- * The locks in effect for a given product type. Seat limits, the waitlist, and
- * the registration window are signed off for **municipality clubs**, so those
- * three are unlocked there; every other type keeps the global pre-prod locks
- * until the features ship platform-wide. The form sections and `initialState`
- * resolve through this rather than reading FORM_LOCKS directly, so a single
- * place decides which types have which features.
+ * The locks in effect for the product being edited. This is the single place
+ * that decides which products have which features — the form sections and
+ * `initialState` resolve through it rather than reading FORM_LOCKS directly.
+ *
+ * It takes the **effective billing mode** as well as the type because one lock
+ * genuinely depends on it: seats (and with them the waitlist) are safe wherever
+ * signup can't be interleaved with a Stripe Checkout, which is a fact about the
+ * money, not the type. Callers hold that mode as live form state — an event's
+ * free/paid radio moves it — so they resolve it first and pass it in, and the
+ * locks re-resolve on every render.
+ *
+ *   - **Municipality clubs** — seats, waitlist and the registration window are
+ *     all signed off. Always `external_contract`, so the mode is moot here.
+ *   - **Events** — the registration window is signed off unconditionally: the
+ *     scheduled ticket drop only sets `registration_opens_at`, and the
+ *     parent-facing state machine already renders a pre-open countdown for it.
+ *     Seats and the waitlist unlock only while the event is **free**; picking
+ *     Paid re-locks them (see the `seatCount` doc above for why).
+ *   - **Everything else** keeps the global pre-prod locks.
  */
-export function formLocksFor(productType: ProductType): FormLocks {
+export function formLocksFor(
+  productType: ProductType,
+  billingMode: BillingMode,
+): FormLocks {
   if (productType === "municipality_club") {
     return {
       ...FORM_LOCKS,
       seatCount: false,
       waitlist: false,
+      registrationTiming: false,
+    };
+  }
+  if (productType === "event") {
+    const capacityIsSafe = billingMode === "free";
+    return {
+      ...FORM_LOCKS,
+      seatCount: !capacityIsSafe,
+      waitlist: !capacityIsSafe,
       registrationTiming: false,
     };
   }
