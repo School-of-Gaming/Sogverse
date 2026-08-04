@@ -39,14 +39,11 @@ function publicProductHref(productId: string): string {
  * pre-selected. The `category` query param name and values mirror
  * `use-shop-category.ts` (the parser) — keep the two in sync.
  *
- * Types the shop doesn't surface fall back to the bare `/shop`:
- * - `municipality_club` — excluded from the storefront. A muni club opened from
- *   its `/schools/<slug>` listing overrides the back link to return there (see
- *   the municipality branch in `product-detail-page-body.tsx`); this fallback
- *   only applies to a muni club reached by a bare `/shop/<id>` link with no
- *   municipality context.
- * - `event` — intentionally deferred from this version of the shop (see
- *   `shop-browse.tsx`).
+ * `municipality_club` is the one type the shop doesn't surface, so it falls back
+ * to the bare `/shop`. A muni club opened from its `/schools/<slug>` listing
+ * overrides the back link to return there (see the municipality branch in
+ * `product-detail-page-body.tsx`); this fallback only applies to a muni club
+ * reached by a bare `/shop/<id>` link with no municipality context.
  */
 function shopBrowseHref(productType: ProductType): string {
   switch (productType) {
@@ -54,8 +51,9 @@ function shopBrowseHref(productType: ProductType): string {
       return "/shop?category=clubs";
     case "camp":
       return "/shop?category=camps";
-    case "municipality_club":
     case "event":
+      return "/shop?category=events";
+    case "municipality_club":
       return "/shop";
   }
 }

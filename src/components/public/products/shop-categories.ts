@@ -7,27 +7,28 @@
 // `use-shop-category.ts`, so existing client imports keep working.
 //
 // The shop browses one product category at a time — the parent must pick one
-// (Clubs or Camps); there is no "all" view. State lives in the `?category=`
-// query param so a chosen view is shareable/bookmarkable and survives the
-// back button. Defaults to "clubs" when the param is absent or unrecognized.
+// (Clubs, Camps or Events); there is no "all" view. State lives in the
+// `?category=` query param so a chosen view is shareable/bookmarkable and
+// survives the back button. Defaults to "clubs" when the param is absent or
+// unrecognized.
 //
-// Events are intentionally NOT a category in this version (see shop-browse.tsx).
 // The `category` param name + values are mirrored by the back-link helpers in
 // `routes.ts` (ROUTES.shopBrowse) — keep the two in sync.
 
 import type { ProductType } from "@/types";
 
-export const SHOP_CATEGORIES = ["clubs", "camps"] as const;
+export const SHOP_CATEGORIES = ["clubs", "camps", "events"] as const;
 export type ShopCategory = (typeof SHOP_CATEGORIES)[number];
 export const DEFAULT_SHOP_CATEGORY: ShopCategory = "clubs";
 
-// Each shop category maps to exactly one product type. Municipality clubs and
-// events are deliberately absent — they are not surfaced in the storefront
-// (see shop-browse.tsx). SHOP_PRODUCT_TYPES is the set fetched for the browse
+// Each shop category maps to exactly one product type. Municipality clubs are
+// deliberately absent — they are discovered location-first from `/schools`, not
+// from the storefront. SHOP_PRODUCT_TYPES is the set fetched for the browse
 // grid; the selected category filters that set down client-side.
 export const CATEGORY_TYPE: Record<ShopCategory, ProductType> = {
   clubs: "consumer_club",
   camps: "camp",
+  events: "event",
 };
 export const SHOP_PRODUCT_TYPES: ProductType[] = Object.values(CATEGORY_TYPE);
 

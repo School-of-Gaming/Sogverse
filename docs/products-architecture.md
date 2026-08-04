@@ -20,7 +20,7 @@ Adjacent systems have their own colocated docs: `src/services/locations/CLAUDE.m
 | `billing_mode` | `paid` | `external_contract` | `paid` | `paid` or `free` |
 | Schedule | Recurring, open-ended | Recurring, term-bounded | Recurring, camp-bounded | One-off |
 | Capacity | Seat-capped | Seat-capped | Seat-capped | Capped or uncapped |
-| Discovery | `/shop` | `/schools` | `/shop` | not browseable |
+| Discovery | `/shop` | `/schools` | `/shop` | `/shop` |
 
 The four share ~80% of the operational model (schedule, location, topic, language, age range, gedus, participation, attendance, notes, waitlist, and — online only — a voice room). They differ on **pricing shape** and **schedule shape**, captured as small orthogonal fields rather than separate tables.
 
@@ -133,7 +133,7 @@ A participation carries **two independent rights**: the **seat hold** (occupies 
 
 Two parallel entry points, **never cross-linked** — one canonical URL per product, produced by a single `productDetailPath`-style helper:
 
-- **`/shop`** — consumer browse (`/shop/[id]` detail). Covers consumer clubs and camps behind a required Clubs|Camps type filter. **Events are not surfaced; muni clubs are excluded.**
+- **`/shop`** — consumer browse (`/shop/[id]` detail). Covers consumer clubs, camps and events behind a required Clubs|Camps|Events type filter. **Muni clubs are excluded** — they need a location to be discovered by, which this surface doesn't collect.
 - **`/schools`** — municipality discovery, location-first (`/schools` → `/schools/[municipalityName]` → `/schools/[municipalityName]/[id]`). Lists only `municipality_club` rows that are `is_visible` + pending/running.
 
 **Rule: a discovery surface that doesn't collect a location can't surface muni clubs.** Every product has `registration_opens_at` (the "ticket drop"); the detail page is pre-open (countdown) / open / closed-or-waitlist.
