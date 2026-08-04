@@ -33,21 +33,81 @@ import {
  * tens of regions, a French département a few hundred communes), but the payload
  * has to stay proportional to the screen rather than to the fan-out, because
  * nothing stops a future country from having thousands of children at one level.
+ *
+ * ## Starting somewhere other than the root
+ *
+ * A caller that already knows which country it is asking about can hand over a
+ * breadcrumb to open on. It is a *starting position*, not a floor: the
+ * breadcrumb's root entry still walks back up, because a picker that traps the
+ * user below a node they can see named above them is worse than one that opens
+ * a level higher. The seed is applied by *derivation* rather than by an effect
+ * — the path is whatever the user has navigated to, falling back to the seed
+ * until they navigate at all — so a seed that arrives late cannot yank someone
+ * out of a level they already opened, and a seed that never arrives simply
+ * leaves the picker at the root.
+ *
+ * ## Restricting to one country
+ *
+ * `countryCode` is a caller's business rule (a municipality club is funded by a
+ * Finnish kunta and by nothing else), applied to *every* row this container
+ * hands the panel — browsed or searched — so the restriction is "not offered"
+ * rather than "refused afterwards". Its honest limitation is in the search
+ * half: the server ranks and caps the page **before** this filter runs, so a
+ * needle matching many rows in other countries can push the wanted ones off the
+ * page entirely, and the "showing N of M" total is the true cross-country match
+ * count rather than the count of rows this picker would offer. That direction
+ * is the safe one — the number is never lower than the truth, so it can only
+ * over-prompt an admin to narrow their needle, never claim a complete list —
+ * but it is not the number a reader would assume. Closing the gap properly
+ * means a country parameter on the search function itself; browsing, which is
+ * exhaustive at every level, is unaffected.
  */
+
+/** Stable identity for "no seed", so the derived path does not churn. */
+const NO_PATH: readonly LocationChainSummary[] = [];
+
+/** Whether a row belongs to the country a caller restricted the picker to. */
+function inCountry(
+  row: { country_code: string | null },
+  countryCode: string | undefined,
+): boolean {
+  return countryCode === undefined || row.country_code === countryCode;
+}
 
 interface LocationBrowserProps {
   selection: LocationSelection;
   /** Restrict search hits to these types. Browsing always shows every level. */
   searchTypes?: readonly LocationType[];
+  /**
+   * The breadcrumb to open on, root first, until the user navigates. Absent (or
+   * empty) opens at the top of the tree.
+   */
+  initialPath?: readonly LocationChainSummary[];
+  /** Offer only rows in this country, browsing and searching alike. */
+  countryCode?: string;
 }
 
 export function LocationBrowser({
   selection,
   searchTypes,
+  initialPath,
+  countryCode,
 }: LocationBrowserProps) {
-  /** Nodes drilled into, root first. Empty means "at the top of the tree". */
-  const [path, setPath] = useState<LocationChainSummary[]>([]);
+  /**
+   * Where the user has navigated to, root first — `null` until they navigate at
+   * all, which is what lets the seed below win without an effect and lose to
+   * any click that came first. `[]` is a real answer here ("they went back to
+   * the top"), and is deliberately not the same value as `null`.
+   */
+  const [userPath, setUserPath] = useState<readonly LocationChainSummary[] | null>(
+    null,
+  );
   const [query, setQuery] = useState("");
+
+  const path = useMemo(
+    () => userPath ?? initialPath ?? NO_PATH,
+    [userPath, initialPath],
+  );
 
   const debounced = useDebouncedValue(query);
   const parentId = path.at(-1)?.id ?? null;
@@ -62,16 +122,19 @@ export function LocationBrowser({
     const ancestors = [...path].reverse();
     return (level.data?.pages ?? [])
       .flatMap((page) => page.rows)
+      .filter((row: Location) => inCountry(row, countryCode))
       .map((row: Location) => ({ location: row, ancestors }));
-  }, [level.data, path]);
+  }, [level.data, path, countryCode]);
 
   const searchRows = useMemo<LocationPick[]>(
     () =>
-      (search.data?.results ?? []).map((hit) => ({
-        location: hit,
-        ancestors: hit.ancestors,
-      })),
-    [search.data],
+      (search.data?.results ?? [])
+        .filter((hit) => inCountry(hit, countryCode))
+        .map((hit) => ({
+          location: hit,
+          ancestors: hit.ancestors,
+        })),
+    [search.data, countryCode],
   );
 
   return (
@@ -79,7 +142,6 @@ export function LocationBrowser({
       query={query}
       onQueryChange={setQuery}
       scope={{
-        kind: "tree",
         path,
         // A row's full path is its ancestors reversed to root-first, then the
         // row itself — and that is true however the row was found, which is why
@@ -90,8 +152,8 @@ export function LocationBrowser({
         // appending would leave the breadcrumb claiming the school sits
         // directly under every country.
         onDrill: (pick) =>
-          setPath([...[...pick.ancestors].reverse(), pick.location]),
-        onOpenDepth: (depth) => setPath((current) => current.slice(0, depth)),
+          setUserPath([...[...pick.ancestors].reverse(), pick.location]),
+        onOpenDepth: (depth) => setUserPath(path.slice(0, depth)),
         minQueryLength: LOCATION_SEARCH_MIN_QUERY,
         browse: {
           rows: browseRows,
@@ -125,6 +187,10 @@ interface LocationPickerDialogProps {
   description: string;
   /** Types a row may be confirmed as. */
   pickableTypes: readonly LocationType[];
+  /** Breadcrumb to open on, root first. Absent opens at the top of the tree. */
+  initialPath?: readonly LocationChainSummary[];
+  /** Offer only rows in this country, browsing and searching alike. */
+  countryCode?: string;
   onConfirm: (pick: LocationPick) => Promise<unknown>;
 }
 
@@ -139,6 +205,8 @@ export function LocationPickerDialog({
   title,
   description,
   pickableTypes,
+  initialPath,
+  countryCode,
   onConfirm,
 }: LocationPickerDialogProps) {
   return (
@@ -150,6 +218,8 @@ export function LocationPickerDialog({
     >
       <LocationBrowser
         searchTypes={pickableTypes}
+        initialPath={initialPath}
+        countryCode={countryCode}
         selection={{
           mode: "single",
           pickableTypes,
