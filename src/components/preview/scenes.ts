@@ -136,7 +136,7 @@ export const PREVIEW_SCENES = [
         slug: "new-family",
         label: "New account — no gamers yet",
         description:
-          "The dashboard minutes after registering: no children linked, so the child sections give way to one dashed card whose full-strength add button is the page's whole next step. The pill holds only Billing and Help, billing is in its ordinary single-button form, and nothing anywhere reads as an error — the page has nothing yet, not something missing.",
+          "The dashboard minutes after registering: no children linked, so the child sections give way to one “My Gamers” section holding the dashed card whose full-strength add button is the page's whole next step. The pill reads Gamers · Billing · Help — the empty state is still a section the nav can point at, not a card floating above Billing — and the moment the first child is added, that heading becomes their name. Billing is in its ordinary single-button form, and nothing anywhere reads as an error.",
       },
       {
         slug: "no-enrollments",

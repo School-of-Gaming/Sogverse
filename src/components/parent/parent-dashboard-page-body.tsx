@@ -54,6 +54,9 @@ function gamerSectionId(gamer: ParentDashboardGamer): string {
   return `gamer-${gamer.id}`;
 }
 
+/** The section id the no-children-yet empty state scrolls to. */
+const EMPTY_GAMERS_SECTION_ID = "gamers";
+
 /**
  * The parent dashboard's page body — everything below the route's data shell.
  *
@@ -110,18 +113,23 @@ export function ParentDashboardPageBody({
   const t = useTranslations("dashboardSections");
   const f = useTranslations("family");
 
-  const firstGamerId = gamers[0] ? gamerSectionId(gamers[0]) : null;
   const namedGamerEntries = gamers.length <= MAX_NAMED_GAMER_PILL_ENTRIES;
 
-  const gamerSections: DashboardSection[] = namedGamerEntries
-    ? gamers.map((gamer) => ({
-        id: gamerSectionId(gamer),
-        label: gamer.firstName,
-        truncateLabel: true,
-      }))
-    : firstGamerId === null
-      ? []
-      : [{ id: firstGamerId, label: t("myGamersShort") }];
+  // With no children yet, the empty state is still a *section* — "Gamers",
+  // with its own pill entry — rather than a card floating unattached while the
+  // scroll-spy highlights Billing beneath it. The moment the first child is
+  // added, the heading becomes their name and the pill follows; a one-time
+  // renaming the parent themselves just caused.
+  const gamerSections: DashboardSection[] =
+    gamers.length === 0
+      ? [{ id: EMPTY_GAMERS_SECTION_ID, label: t("myGamersShort") }]
+      : namedGamerEntries
+        ? gamers.map((gamer) => ({
+            id: gamerSectionId(gamer),
+            label: gamer.firstName,
+            truncateLabel: true,
+          }))
+        : [{ id: gamerSectionId(gamers[0]), label: t("myGamersShort") }];
 
   const sections: DashboardSection[] = [
     ...gamerSections,
@@ -151,12 +159,17 @@ export function ParentDashboardPageBody({
       <div className="space-y-24 pb-24">
         {gamers.length === 0 ? (
           // The brand-new parent: no children linked yet, so the page's one job
-          // is getting the first one added. The add affordance is promoted to
-          // full strength here — the quiet-tile reasoning below only holds when
-          // there are children above it competing for the first read.
-          <div className="mx-auto max-w-3xl">
-            <NoGamersCard />
-          </div>
+          // is getting the first one added. Still a full section — heading and
+          // pill entry — so the nav has somewhere honest to point; and the add
+          // affordance is promoted to full strength here, because the
+          // quiet-tile reasoning below only holds when there are children
+          // above it competing for the first read.
+          <section id={EMPTY_GAMERS_SECTION_ID} className="scroll-mt-32">
+            <div className="mx-auto max-w-3xl space-y-6">
+              <h2 className="text-3xl font-bold">{t("myGamers")}</h2>
+              <NoGamersCard />
+            </div>
+          </section>
         ) : (
         <div className="space-y-16">
           {gamers.map((gamer) => (
