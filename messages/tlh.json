@@ -1744,8 +1744,6 @@
     "editFor": "{name} {platform} pong yIchoH",
     "save": "yIpol",
     "cancel": "yIqIl",
-    "saved": "{platform} lo’wI’ pong Sahlu’! Qapla’!",
-    "cleared": "{platform} lo’wI’ pong teqlu’.",
     "saveFailed": "{platform} lo’wI’ pong choH Dabe’lu’."
   },
   "parent": {

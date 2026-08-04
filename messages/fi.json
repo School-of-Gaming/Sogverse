@@ -1699,8 +1699,6 @@
     "editFor": "Muokkaa pelaajan {name} {platform}-käyttäjänimeä",
     "save": "Tallenna",
     "cancel": "Peruuta",
-    "saved": "{platform}-käyttäjänimi tallennettu!",
-    "cleared": "{platform}-käyttäjänimi poistettu.",
     "saveFailed": "{platform}-käyttäjänimen päivittäminen epäonnistui."
   },
   "parent": {

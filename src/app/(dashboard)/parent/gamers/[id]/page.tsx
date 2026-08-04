@@ -277,7 +277,6 @@ function GameAccountCard({
   onSave: (username: GamerUpdate["minecraftUsername"]) => Promise<unknown>;
 }) {
   const g = useTranslations('gameAccount');
-  const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const name = GAME_PLATFORMS[platform].name;
   // `null` for Minecraft (the row derives its skin from the name) and for an
@@ -289,16 +288,20 @@ function GameAccountCard({
    * Committing the row *is* saving it — the row has already checked the name
    * against the platform, so what arrives is the canonical casing. The mutation
    * invalidates the gamer and account queries, which feed the row its new props.
+   *
+   * **No success sentence.** The row is the receipt: the new name is on screen,
+   * the tick lands beside it, the skin arrives in the box. Saying so again in
+   * words underneath announces something already visible and makes the ordinary
+   * path the noisy one. Only a failure gets a sentence, because a failure is the
+   * one outcome the row cannot show on its own.
    */
   const handleCommit = async (value: string | null) => {
-    setSuccess(null);
+    // Cleared first, so a retry after a failure does not leave the old reason
+    // sitting under a row that has since succeeded.
     setError(null);
 
     try {
       await onSave(value);
-      setSuccess(
-        value ? g('saved', { platform: name }) : g('cleared', { platform: name }),
-      );
     } catch (err: unknown) {
       const message =
         err instanceof Error
@@ -339,17 +342,12 @@ function GameAccountCard({
           className="max-w-sm"
         />
 
-        {/* Below the row, not above it. The outcome of a save arrives after the
-            save, so a banner above the row would push the row — the very thing
-            the person just used, and is still looking at — down the page as it
-            lands. What it does push is the card below, and only ever because
-            this person just committed something in this card. */}
-        {success && (
-          <div className="rounded-md bg-success/10 p-3 text-sm text-success">
-            {success}
-          </div>
-        )}
-
+        {/* Failures only, and below the row rather than above it. A banner above
+            would push the row — the very thing the person just used, and is
+            still looking at — down the page as it lands. What it does push is
+            the card below, and only ever because this person just committed
+            something here and it did not take. On the ordinary path nothing
+            appears at all and nothing moves. */}
         {error && (
           <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
             {error}

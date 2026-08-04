@@ -206,6 +206,22 @@ canonical username if the lookup confirmed one, the typed name if it did not,
 let that mutation's own invalidation feed the row its new props. That loop is
 what keeps a calling surface from holding a second copy of the username.
 
+**Rule: a save that worked says so by changing the row, and a surface adds no
+sentence of its own. Only a failure gets one.** The row is the receipt — the new
+name is on screen, the tick lands beside it, the picture arrives in the box — and
+a banner underneath repeating that in words is a second announcement of something
+already visible. It also gets the emphasis backwards: it makes the ordinary path
+the noisy one, on surfaces where an admin or a parent may save several times in a
+row. A failure is different in kind, because it is the one outcome the row cannot
+show on its own: the name is still there, saved and unverified, and only a
+sentence can say why it did not take.
+
+Every card here therefore holds one `error` string and no success state, cleared
+at the start of each commit so a retry does not leave a stale reason under a row
+that has since succeeded. The slot sits **below** the row — a banner above would
+push the very thing the person just used — and on the ordinary path it renders
+nothing at all, so nothing moves.
+
 A server route that persists a username re-runs the platform lookup itself. That
 is not redundant with the row's check: a client-verified name is not evidence. On
 Roblox it is also the only honest way to obtain the account key at all — neither

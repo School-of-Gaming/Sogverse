@@ -1699,8 +1699,6 @@
     "editFor": "Modifier le nom d’utilisateur {platform} de {name}",
     "save": "Enregistrer",
     "cancel": "Annuler",
-    "saved": "Nom d’utilisateur {platform} enregistré !",
-    "cleared": "Nom d’utilisateur {platform} effacé.",
     "saveFailed": "Échec de la mise à jour du nom d’utilisateur {platform}."
   },
   "parent": {

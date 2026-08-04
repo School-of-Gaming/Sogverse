@@ -1699,8 +1699,6 @@
     "editFor": "Redigera {platform}-användarnamn för {name}",
     "save": "Spara",
     "cancel": "Avbryt",
-    "saved": "{platform}-användarnamn sparat!",
-    "cleared": "{platform}-användarnamn borttaget.",
     "saveFailed": "Kunde inte uppdatera {platform}-användarnamn."
   },
   "parent": {

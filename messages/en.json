@@ -1787,8 +1787,6 @@
     "editFor": "Edit {platform} username for {name}",
     "save": "Save",
     "cancel": "Cancel",
-    "saved": "{platform} username saved!",
-    "cleared": "{platform} username cleared.",
     "saveFailed": "Failed to update {platform} username."
   },
   "parent": {

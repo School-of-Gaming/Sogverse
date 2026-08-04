@@ -59,15 +59,22 @@ export function UserGameAccountsCard({
   });
   const updateGameAccount = useUpdateUserGameAccount();
 
-  // One banner for the card rather than one per row. The sentence names its own
-  // platform, so a single slot at the bottom says everything two would — and it
-  // sits below both rows, so the outcome of a save never pushes the row that was
-  // just used.
-  const [success, setSuccess] = useState<string | null>(null);
+  /**
+   * One failure slot for the card rather than one per row. The sentence names
+   * its own platform, so a single slot at the bottom says everything two would
+   * — and it sits below both rows, so nothing that appears there pushes the row
+   * that was just used.
+   *
+   * **Failures only.** A save that worked is already on screen: the name
+   * changed, the tick landed, the picture arrived. A sentence repeating that is
+   * a second announcement of something visible, and it makes the ordinary path
+   * — the one an admin takes every time — the noisy one.
+   */
   const [error, setError] = useState<string | null>(null);
 
   const commit = async (platform: GamePlatform, username: string | null) => {
-    setSuccess(null);
+    // Cleared first, so a retry after a failure does not leave the old reason
+    // sitting under a row that has since succeeded.
     setError(null);
     const name = GAME_PLATFORMS[platform].name;
 
@@ -81,11 +88,6 @@ export function UserGameAccountsCard({
             ? { platform: "minecraft", username }
             : { platform: "roblox", username },
       });
-      setSuccess(
-        username
-          ? g("saved", { platform: name })
-          : g("cleared", { platform: name }),
-      );
     } catch (err: unknown) {
       setError(
         err instanceof Error
@@ -127,12 +129,6 @@ export function UserGameAccountsCard({
             onCommit={(username) => commit("roblox", username)}
           />
         </div>
-
-        {success && (
-          <div className="rounded-md bg-success/10 p-3 text-sm text-success">
-            {success}
-          </div>
-        )}
 
         {error && (
           <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
