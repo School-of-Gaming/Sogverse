@@ -46,12 +46,15 @@ import type { Json, LocationType } from "@/types";
  * because the panel is a dialog the caller opened to answer one question.
  *
  * **set** lists a bounded collection the surface has *already* fetched in full,
- * grouped under the place above each row. An admin picking a venue usually does
- * not know which municipality it is in, and should not have to walk Finland →
- * Uusimaa → Helsinki to find one; the rows are hundreds, not thousands, so they
- * are filtered in the browser with no request and no loading state. It renders
- * inline in a form rather than in a dialog, so a click *is* the pick — the form
- * around it owns the commit, and there is nothing here to confirm.
+ * grouped under the place above each row. It earns its keep only where
+ * something outside the geography bounds the collection — one country's
+ * municipalities, because an online municipality club is funded by one Finnish
+ * kunta and by nothing else — so the rows are hundreds however many countries
+ * exist, and they are filtered in the browser with no request and no loading
+ * state. It renders inline in a form rather than in a dialog, so a click *is*
+ * the pick — the form around it owns the commit, and there is nothing here to
+ * confirm. A collection that is small only because of what has been created so
+ * far is not one of these: the venue picker was, and is a tree dialog now.
  *
  * Everything else is shared: the row rendering, the chains, the fixed height,
  * the search box and its clear button. In tree scope the selection mode is a
@@ -186,8 +189,6 @@ export interface LocationSetScope {
   value: string | null;
   /** A click is the pick: the form around this panel owns the commit. */
   onSelect: (pick: LocationPick) => void;
-  /** Rendered under the list — e.g. the "new venue" affordance. */
-  footer?: ReactNode;
 }
 
 export type LocationScope = LocationTreeScope | LocationSetScope;
@@ -209,8 +210,7 @@ export function LocationPickerPanel({
   return (
     // A flex column only where the height is pinned and the list has to take up
     // the slack. The set scope stacks instead: its list carries its own height,
-    // and a flex column would stretch the caller's footer button to the full
-    // width of the form rather than to its label.
+    // so there is no slack to distribute and nothing for a column to stretch.
     <div
       className={
         tree ? cn("flex flex-col gap-3", LOCATION_PANEL_HEIGHT) : "space-y-3"
@@ -514,53 +514,49 @@ function SetScopeBody({
   );
 
   return (
-    <>
-      {/* The rows behind this are one bounded, indexed read — every venue, or
-          one country's municipalities — and the filtering is local, so there is
-          no loading state to render and no request a keystroke can be waiting
-          on. The box has its final height from the first frame either way. */}
-      <div
-        className={cn(
-          "overflow-y-auto rounded-md border border-input bg-background p-2",
-          LOCATION_SET_HEIGHT,
-        )}
-      >
-        {visible.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            {trimmed ? t("noResults", { query: trimmed }) : scope.labels.empty}
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {visible.map((group) => (
-              <div key={group.key} className="space-y-0.5">
-                <div className="px-2 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {group.label}
-                  {group.detail && (
-                    <span className="font-normal normal-case tracking-normal">
-                      {PATH_SEPARATOR}
-                      {group.detail}
-                    </span>
-                  )}
-                </div>
-                {group.rows.map((pick) => (
-                  <PickRow
-                    key={pick.location.id}
-                    name={localizedLocationName(pick.location, locale)}
-                    // Every row here sits under a header that already says
-                    // where it is, so repeating the path would be noise.
-                    detail=""
-                    selected={pick.location.id === scope.value}
-                    onClick={() => scope.onSelect(pick)}
-                  />
-                ))}
+    // The rows behind this are one bounded, indexed read — one country's
+    // municipalities — and the filtering is local, so there is no loading state
+    // to render and no request a keystroke can be waiting on. The box has its
+    // final height from the first frame either way.
+    <div
+      className={cn(
+        "overflow-y-auto rounded-md border border-input bg-background p-2",
+        LOCATION_SET_HEIGHT,
+      )}
+    >
+      {visible.length === 0 ? (
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          {trimmed ? t("noResults", { query: trimmed }) : scope.labels.empty}
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {visible.map((group) => (
+            <div key={group.key} className="space-y-0.5">
+              <div className="px-2 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {group.label}
+                {group.detail && (
+                  <span className="font-normal normal-case tracking-normal">
+                    {PATH_SEPARATOR}
+                    {group.detail}
+                  </span>
+                )}
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {scope.footer}
-    </>
+              {group.rows.map((pick) => (
+                <PickRow
+                  key={pick.location.id}
+                  name={localizedLocationName(pick.location, locale)}
+                  // Every row here sits under a header that already says
+                  // where it is, so repeating the path would be noise.
+                  detail=""
+                  selected={pick.location.id === scope.value}
+                  onClick={() => scope.onSelect(pick)}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
