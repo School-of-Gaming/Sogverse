@@ -135,10 +135,18 @@ export function GamerDashboardPageBody({
                   // Same dashed grammar as the parent page's empty cards: the
                   // section keeps the shape it will have the moment something
                   // lands in it, and nothing about it reads as a fault.
+                  //
+                  // Its own copy rather than the sessions list's empty state:
+                  // that line promises a voice room for a session that is coming
+                  // up, and on a dashboard with no enrollments at all there is
+                  // no session and no room. This one says the true thing — ask a
+                  // parent, and pick something together — which is also the only
+                  // action available, since nothing on a child's account can
+                  // book anything.
                   <Card className="border-dashed">
                     <CardContent className="py-8 text-center">
                       <p className="text-sm text-muted-foreground">
-                        {s("upcomingSessionsEmptyStateGamer")}
+                        {t("emptyDashboard")}
                       </p>
                     </CardContent>
                   </Card>

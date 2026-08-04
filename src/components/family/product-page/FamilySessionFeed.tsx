@@ -16,6 +16,7 @@ import {
 } from "@/components/gedu/session-feed";
 import { cn } from "@/lib/utils";
 import { useNow, useTimezone } from "@/providers";
+import type { SessionAudience } from "@/types";
 import { FamilySessionFeedItem } from "./FamilySessionFeedItem";
 import type { FamilySessionEntry } from "./types";
 
@@ -51,7 +52,7 @@ interface FamilySessionFeedProps {
   /** Whether to render the child's attendance mark — see the item's own note. */
   showAttendance: boolean;
   /** Which of the two empty-state voices to speak in when there is no past. */
-  audience: "customer" | "gamer";
+  audience: SessionAudience;
   className?: string;
 }
 

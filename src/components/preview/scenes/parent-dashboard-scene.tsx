@@ -18,10 +18,13 @@ import { useNow, useTimezone } from "@/providers";
  * The parent dashboard as a parent meets it: a section per child, one card per
  * enrollment, then billing and help.
  *
- * Every section is the real presentational component over fixtures. The billing
- * card renders its idle state with the portal action inert — the section has to
- * be *there*, looking like itself, or the page stops reading as the real
- * dashboard; what it must not do is open a Stripe session.
+ * Every section is the real presentational component over fixtures, and every
+ * action the page has is passed a no-op — the billing card's Manage buttons, the
+ * add-gamer affordances, and the payment badge that hangs off a failing card's
+ * corner. Each has to be *there*, looking like itself and clickable, or the page
+ * stops reading as the real dashboard; what none of them may do is reach a
+ * backend. Browsing the shop is the exception and needs no handler: it is plain
+ * navigation to a public page, so the empty-state card links there for real.
  *
  * The fixture is built once from the first `useNow()` value and then held in
  * state, the same way the gedu scene holds its own. Rebuilding it on every
@@ -48,6 +51,8 @@ export function ParentDashboardScene({
     <ParentDashboardPageBody
       gamers={fixture.gamers}
       billingCard={<FixtureBillingCard accounts={fixture.accounts} />}
+      onAddGamer={noop}
+      onOpenPortal={noop}
     />
   );
 }

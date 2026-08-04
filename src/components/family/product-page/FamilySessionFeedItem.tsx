@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
   SessionReport,
+  type AttendanceMark,
   type SessionLabels,
 } from "@/components/gedu/session-feed";
 import { cn } from "@/lib/utils";
@@ -182,7 +183,7 @@ export function FamilySessionFeedItem({
  * register is not a fact about a child, and a family shown "not marked" would
  * read it as one.
  */
-function AttendanceMarkChip({ mark }: { mark: "present" | "absent" }) {
+function AttendanceMarkChip({ mark }: { mark: AttendanceMark }) {
   const t = useTranslations("familyProduct");
   const present = mark === "present";
 

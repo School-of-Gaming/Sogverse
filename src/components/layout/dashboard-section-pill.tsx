@@ -99,7 +99,13 @@ export function DashboardSectionPill({
               href={`#${id}`}
               onClick={(e) => handleClick(e, id)}
               aria-current={activeSection === id ? "location" : undefined}
+              // A truncated entry is the one case where the visible text is not
+              // the whole name. `title` recovers it on a pointer and nowhere
+              // else — a phone has no hover, which is exactly where the bar is
+              // tightest — so the full name is given to assistive tech
+              // outright rather than left inside a tooltip nobody can open.
               title={truncateLabel ? label : undefined}
+              aria-label={truncateLabel ? label : undefined}
               className={cn(
                 "block rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-300 ease-[cubic-bezier(0.65,0,0.35,1)] sm:px-4 sm:text-sm",
                 truncateLabel && "max-w-24 truncate",

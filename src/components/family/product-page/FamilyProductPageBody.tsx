@@ -323,6 +323,11 @@ export function FamilyProductPageBody({
   );
 }
 
+/** A nullable stored field that actually has something in it. */
+function nonEmpty(value: string | null): string | null {
+  return value !== null && value.length > 0 ? value : null;
+}
+
 /**
  * One standing note: a micro-heading and the paragraph under it.
  *
@@ -332,11 +337,6 @@ export function FamilyProductPageBody({
  * cannot produce. `whitespace-pre-line` keeps the paragraph breaks somebody
  * typed.
  */
-/** A nullable stored field that actually has something in it. */
-function nonEmpty(value: string | null): string | null {
-  return value !== null && value.length > 0 ? value : null;
-}
-
 function NoteBlock({ heading, body }: { heading: string; body: string }) {
   return (
     <div>

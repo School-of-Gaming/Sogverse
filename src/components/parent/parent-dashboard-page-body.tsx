@@ -104,11 +104,29 @@ const EMPTY_GAMERS_SECTION_ID = "gamers";
 export function ParentDashboardPageBody({
   gamers,
   billingCard,
+  onAddGamer,
+  onOpenPortal,
 }: {
   /** The parent's children, in the order their sections appear. */
   gamers: readonly ParentDashboardGamer[];
   /** The Stripe portal card. A node, so the shell owns its actions. */
   billingCard: React.ReactNode;
+  /**
+   * Open the add-gamer flow. The body owns *where* the two add affordances sit
+   * — the quiet tile after the last child, and the full-strength button on the
+   * no-children card — and nothing about what adding a child involves, which is
+   * a dialog with a form and a mutation behind it. The live shell passes the
+   * dialog's opener; a preview scene passes a no-op. Optional so the prop can
+   * be here before the shell that fills it, which is what keeps the signature
+   * from changing at promotion.
+   */
+  onAddGamer?: () => void;
+  /**
+   * Open Stripe's Customer Portal for a failing card, intercepting the corner
+   * badge's own click. Same reason as above: the live page passes nothing and
+   * the badge opens a real portal session, a preview passes a no-op.
+   */
+  onOpenPortal?: () => void;
 }) {
   const t = useTranslations("dashboardSections");
   const f = useTranslations("family");
@@ -167,86 +185,90 @@ export function ParentDashboardPageBody({
           <section id={EMPTY_GAMERS_SECTION_ID} className="scroll-mt-32">
             <div className="mx-auto max-w-3xl space-y-6">
               <h2 className="text-3xl font-bold">{t("myGamers")}</h2>
-              <NoGamersCard />
+              <NoGamersCard onAddGamer={onAddGamer} />
             </div>
           </section>
         ) : (
-        <div className="space-y-16">
-          {gamers.map((gamer) => (
-            <section
-              key={gamer.id}
-              id={gamerSectionId(gamer)}
-              className="scroll-mt-32"
-            >
-              {/* `max-w-3xl`, the family surfaces' width: these pages are
-                  designed for a phone first and the column is what widens on a
-                  laptop, not the number of columns. Every section shares the cap
-                  so the headings line up down the page. */}
-              <div className="mx-auto max-w-3xl space-y-6">
-                {/* The heading is a real heading row, not a decorated label: the
-                    face is how a parent finds their child's block while
-                    scrolling past three of them, and it is the same identicon
-                    the tile strip used, so nothing about recognising a child
-                    changed — only where it happens. */}
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10 shrink-0">
-                    <Identicon id={gamer.id} size={40} />
-                  </Avatar>
-                  <h2 className="min-w-0 break-words text-3xl font-bold">
-                    {gamer.firstName}
-                  </h2>
-                  {/* The identity page — name, game accounts — kept as a quiet
-                      affordance beside the heading: managing a child is a
-                      sometimes action, and a loud button here would compete
-                      with the cards for the first thing read. `ml-auto` so a
-                      long name wraps against the heading's space, not the
-                      link's. */}
-                  <Link
-                    href={`${ROUTES.customer.gamers}/${gamer.id}`}
-                    aria-label={f("manageGamerAria", { name: gamer.firstName })}
-                    className={buttonVariants({
-                      variant: "ghost",
-                      size: "sm",
-                      className: "ml-auto shrink-0 text-muted-foreground",
-                    })}
-                  >
-                    <UserCog className="h-4 w-4" aria-hidden />
-                    {f("manageGamer")}
-                  </Link>
-                </div>
-
-                {gamer.enrollments.length === 0 ? (
-                  <EmptyGamerCard firstName={gamer.firstName} />
-                ) : (
-                  <div className="space-y-3">
-                    {gamer.enrollments.map((enrollment) => (
-                      <EnrollmentCard
-                        key={enrollment.participationId}
-                        enrollment={enrollment}
-                        audience="customer"
-                        gamerFirstName={gamer.firstName}
-                      />
-                    ))}
+          <div className="space-y-16">
+            {gamers.map((gamer) => (
+              <section
+                key={gamer.id}
+                id={gamerSectionId(gamer)}
+                className="scroll-mt-32"
+              >
+                {/* `max-w-3xl`, the family surfaces' width: these pages are
+                    designed for a phone first and the column is what widens on
+                    a laptop, not the number of columns. Every section shares the
+                    cap so the headings line up down the page. */}
+                <div className="mx-auto max-w-3xl space-y-6">
+                  {/* The heading is a real heading row, not a decorated label:
+                      the face is how a parent finds their child's block while
+                      scrolling past three of them, and it is the same identicon
+                      the tile strip used, so nothing about recognising a child
+                      changed — only where it happens. */}
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10 shrink-0">
+                      <Identicon id={gamer.id} size={40} />
+                    </Avatar>
+                    <h2 className="min-w-0 break-words text-3xl font-bold">
+                      {gamer.firstName}
+                    </h2>
+                    {/* The identity page — name, game accounts — kept as a quiet
+                        affordance beside the heading: managing a child is a
+                        sometimes action, and a loud button here would compete
+                        with the cards for the first thing read. `ml-auto` so a
+                        long name wraps against the heading's space, not the
+                        link's. */}
+                    <Link
+                      href={`${ROUTES.customer.gamers}/${gamer.id}`}
+                      aria-label={f("manageGamerAria", {
+                        name: gamer.firstName,
+                      })}
+                      className={buttonVariants({
+                        variant: "ghost",
+                        size: "sm",
+                        className: "ml-auto shrink-0 text-muted-foreground",
+                      })}
+                    >
+                      <UserCog className="h-4 w-4" aria-hidden />
+                      {f("manageGamer")}
+                    </Link>
                   </div>
-                )}
-              </div>
-            </section>
-          ))}
 
-          {/* Adding a child sits after the last of them, deliberately quiet: it
-              is a once-a-year action, and a full-strength button at the top of a
-              page about the children you already have would compete with them
-              for the first thing read. */}
-          <div className="mx-auto max-w-3xl">
-            <button
-              type="button"
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-muted-foreground/40 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <UserPlus className="h-4 w-4" aria-hidden />
-              {f("addGamer")}
-            </button>
+                  {gamer.enrollments.length === 0 ? (
+                    <EmptyGamerCard firstName={gamer.firstName} />
+                  ) : (
+                    <div className="space-y-3">
+                      {gamer.enrollments.map((enrollment) => (
+                        <EnrollmentCard
+                          key={enrollment.participationId}
+                          enrollment={enrollment}
+                          audience="customer"
+                          gamerFirstName={gamer.firstName}
+                          onOpenPortal={onOpenPortal}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </section>
+            ))}
+
+            {/* Adding a child sits after the last of them, deliberately quiet:
+                it is a once-a-year action, and a full-strength button at the top
+                of a page about the children you already have would compete with
+                them for the first thing read. */}
+            <div className="mx-auto max-w-3xl">
+              <button
+                type="button"
+                onClick={onAddGamer}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-muted-foreground/40 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <UserPlus className="h-4 w-4" aria-hidden />
+                {f("addGamer")}
+              </button>
+            </div>
           </div>
-        </div>
         )}
 
         <section id="billing" className="scroll-mt-32">
@@ -271,23 +293,16 @@ export function ParentDashboardPageBody({
 }
 
 /**
- * A child who is signed up for nothing yet.
- *
- * Dashed and quiet rather than an alarm: nothing is wrong, there is simply
- * nothing to show, and the one useful thing the page can do is point at the
- * shop. It is a card so the section has the same shape it will have the moment
- * something lands in it — a heading with a card under it — rather than a
- * paragraph floating where a card is about to appear.
- */
-/**
  * The whole dashboard before the first child exists.
  *
  * Same dashed, quiet grammar as the per-child empty card — nothing is wrong,
  * there is simply nothing yet — but the add button is full strength rather
  * than a muted tile, because on this page it is not competing with anything:
- * it *is* the next step.
+ * it *is* the next step. The copy names the shop as the step *after* that one
+ * and offers no link to it: a family with no child yet has nothing to enroll,
+ * so a browse button here would send them somewhere they cannot finish.
  */
-function NoGamersCard() {
+function NoGamersCard({ onAddGamer }: { onAddGamer?: () => void }) {
   const t = useTranslations("parent.enrollment");
   const f = useTranslations("family");
 
@@ -297,7 +312,11 @@ function NoGamersCard() {
         <p className="max-w-prose text-sm text-muted-foreground">
           {t("noGamers")}
         </p>
-        <button type="button" className={buttonVariants({ size: "default" })}>
+        <button
+          type="button"
+          onClick={onAddGamer}
+          className={buttonVariants({ size: "default" })}
+        >
           <UserPlus className="h-4 w-4" aria-hidden />
           {f("addGamer")}
         </button>
@@ -306,6 +325,20 @@ function NoGamersCard() {
   );
 }
 
+/**
+ * A child who is signed up for nothing yet.
+ *
+ * Dashed and quiet rather than an alarm: nothing is wrong, there is simply
+ * nothing to show, and the one useful thing the page can do is point at the
+ * shop. It is a card so the section has the same shape it will have the moment
+ * something lands in it — a heading with a card under it — rather than a
+ * paragraph floating where a card is about to appear.
+ *
+ * The CTA is a real `Link` to the storefront rather than a handler the shell
+ * passes down: browsing is plain navigation to a public page, so it works
+ * identically in a preview scene and after promotion, and routing it through a
+ * prop would only give the live page a chance to forget to pass one.
+ */
 function EmptyGamerCard({ firstName }: { firstName: string }) {
   const t = useTranslations("parent.enrollment");
 
@@ -315,12 +348,12 @@ function EmptyGamerCard({ firstName }: { firstName: string }) {
         <p className="max-w-prose text-sm text-muted-foreground">
           {t("emptyState", { name: firstName })}
         </p>
-        <button
-          type="button"
+        <Link
+          href={ROUTES.shop}
           className={buttonVariants({ size: "sm", variant: "outline" })}
         >
           {t("emptyStateCta")}
-        </button>
+        </Link>
       </CardContent>
     </Card>
   );

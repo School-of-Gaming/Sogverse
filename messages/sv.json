@@ -1183,7 +1183,8 @@
   },
   "gamer": {
     "welcome": "Välkommen, spelare!",
-    "subtitle": "Redo att spela och lära dig?"
+    "subtitle": "Redo att spela och lära dig?",
+    "emptyDashboard": "Inget här än. Be en förälder titta på klubbarna och lägren tillsammans med dig, så väljer ni något ihop."
   },
   "gedu": {
     "coverage": {
@@ -1761,8 +1762,10 @@
       "forLabel": "För {name}",
       "positionLabel": "Din plats i kön",
       "positionValue": "nr {position}",
-      "reassuranceCustomer": "Plats {position} i kön — vi mejlar så snart en plats blir ledig.",
-      "reassuranceGamer": "Du är på plats {position} i kön — vi mejlar en förälder så snart en plats blir ledig.",
+      "reassuranceCustomer": "Vi mejlar så snart en plats blir ledig.",
+      "reassuranceGamer": "Vi mejlar en förälder så snart en plats blir ledig.",
+      "footerReassuranceCustomer": "Plats {position} i kön — vi mejlar så snart en plats blir ledig.",
+      "footerReassuranceGamer": "Du är på plats {position} i kön — vi mejlar en förälder så snart en plats blir ledig.",
       "leave": {
         "trigger": "Lämna väntelistan",
         "confirmTitle": "Lämna väntelistan?",

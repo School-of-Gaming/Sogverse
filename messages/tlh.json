@@ -1228,7 +1228,8 @@
   },
   "gamer": {
     "welcome": "nuqneH, toy’wI’!",
-    "subtitle": "DaH yItoy’ je yIghoj?"
+    "subtitle": "DaH yItoy’ je yIghoj?",
+    "emptyDashboard": "naDev pagh tu’lu’. SoSlI’ vavlI’ joq yIrI’, ’ej ghom’a’ qoj raQ yIwIv — batlh yIghoj!"
   },
   "gedu": {
     "coverage": {
@@ -1806,8 +1807,10 @@
       "forLabel": "{name}vaD",
       "positionLabel": "DaqlIj",
       "positionValue": "{position}DIch",
-      "reassuranceCustomer": "tlheghDaq {position}DIch SoH — quS poSDI’, QInHom wIngeH.",
-      "reassuranceGamer": "tlheghDaq {position}DIch SoH — quS poSDI’, SoSlI’ vavlI’ je wIja’.",
+      "reassuranceCustomer": "quS poSDI’, QInHom wIngeH.",
+      "reassuranceGamer": "quS poSDI’, SoSlI’ vavlI’ je wIja’.",
+      "footerReassuranceCustomer": "tlheghDaq {position}DIch SoH — quS poSDI’, QInHom wIngeH.",
+      "footerReassuranceGamer": "tlheghDaq {position}DIch SoH — quS poSDI’, SoSlI’ vavlI’ je wIja’.",
       "leave": {
         "trigger": "tlhegh yImej",
         "confirmTitle": "tlhegh Damejqang’a’?",

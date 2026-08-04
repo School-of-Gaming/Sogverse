@@ -1183,7 +1183,8 @@
   },
   "gamer": {
     "welcome": "Welcome, Gamer!",
-    "subtitle": "Ready to play and learn?"
+    "subtitle": "Ready to play and learn?",
+    "emptyDashboard": "Nothing here yet. Ask a parent to look at the clubs and camps with you, and pick one together."
   },
   "gedu": {
     "coverage": {
@@ -1849,8 +1850,10 @@
       "forLabel": "For {name}",
       "positionLabel": "Your position",
       "positionValue": "#{position}",
-      "reassuranceCustomer": "You’re #{position} in line — we’ll email you the moment a seat opens.",
-      "reassuranceGamer": "You’re #{position} in line — we’ll email a parent as soon as a seat opens.",
+      "reassuranceCustomer": "We’ll email you the moment a seat opens.",
+      "reassuranceGamer": "We’ll email a parent as soon as a seat opens.",
+      "footerReassuranceCustomer": "You’re #{position} in line — we’ll email you the moment a seat opens.",
+      "footerReassuranceGamer": "You’re #{position} in line — we’ll email a parent as soon as a seat opens.",
       "leave": {
         "trigger": "Leave waitlist",
         "confirmTitle": "Leave the waitlist?",

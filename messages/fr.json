@@ -1183,7 +1183,8 @@
   },
   "gamer": {
     "welcome": "Bienvenue, joueur !",
-    "subtitle": "Envie de jouer et d’apprendre ?"
+    "subtitle": "Envie de jouer et d’apprendre ?",
+    "emptyDashboard": "Rien ici pour l’instant. Demande à un parent de regarder les clubs et les camps avec toi, et choisissez-en un ensemble."
   },
   "gedu": {
     "coverage": {
@@ -1761,8 +1762,10 @@
       "forLabel": "Pour {name}",
       "positionLabel": "Votre position",
       "positionValue": "n° {position}",
-      "reassuranceCustomer": "Position {position} dans la file — nous vous enverrons un e-mail dès qu’une place se libère.",
-      "reassuranceGamer": "Tu es en position {position} dans la file — nous enverrons un e-mail à un parent dès qu’une place se libère.",
+      "reassuranceCustomer": "Nous vous enverrons un e-mail dès qu’une place se libère.",
+      "reassuranceGamer": "Nous enverrons un e-mail à un parent dès qu’une place se libère.",
+      "footerReassuranceCustomer": "Position {position} dans la file — nous vous enverrons un e-mail dès qu’une place se libère.",
+      "footerReassuranceGamer": "Tu es en position {position} dans la file — nous enverrons un e-mail à un parent dès qu’une place se libère.",
       "leave": {
         "trigger": "Quitter la liste d’attente",
         "confirmTitle": "Quitter la liste d’attente ?",

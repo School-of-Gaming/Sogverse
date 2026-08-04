@@ -45,19 +45,24 @@ import { SubscriptionEndingBadge } from "./SubscriptionEndingBadge";
  *   first name, so repeating "For Aino" on each of Aino's three cards was the
  *   page saying the same word four times down one column. On the gamer's own
  *   dashboard there was never anyone else it could belong to.
- * - **The footer answers "where is this happening", and always has an answer.**
- *   A remote product answers with the Join button (lit inside its window, locked
- *   and naming the next session outside it); an in-person one with its venue and
- *   a pin; a waitlisted one with the family's place in line and what happens
- *   when a seat opens; a finished one with the day it ended. Those are exclusive
- *   by construction, so the row is populated in every state rather than reserved
- *   and left standing empty in most of them.
+ * - **The footer answers "where is this happening" — and is absent when there is
+ *   no answer.** A remote product answers with the Join button (lit inside its
+ *   window, locked and naming the next session outside it); an in-person one
+ *   with its venue and a pin; a waitlisted one with the family's place in line
+ *   and what happens when a seat opens; a finished one with the day it ended.
+ *   Those are exclusive by construction, so the row is populated rather than
+ *   reserved — and on the one card where every branch comes up empty (a running
+ *   enrollment whose product has no schedule slots yet, so there is no session
+ *   for a Join to name and no venue to name instead) the row is not drawn at
+ *   all. The schedule row above it has already said "No schedule set yet", which
+ *   is the whole of what that card knows; an empty flex row underneath would add
+ *   a band of nothing to say it a second time.
  * - **The Live badge's slot is reserved; nothing else is.** It is the one thing
  *   here that appears on a *clock tick* rather than on something the reader did,
  *   so mounting it as a flex sibling would widen the corner cluster and reflow
  *   the product name beside it mid-read. Everything else on the card is settled
- *   before it first paints. The slot is dropped entirely on the two cards the
- *   badge can never land on — a finished run, and a waitlist place with no
+ *   before it first paints. The slot is dropped entirely on the cards the badge
+ *   can never land on — a finished run, a waitlist place, and anything with no
  *   session to start — because holding space for something that cannot come is
  *   its own defect.
  *
@@ -86,28 +91,57 @@ import { SubscriptionEndingBadge } from "./SubscriptionEndingBadge";
  * ended — while the card keeps its hover, its focus ring and its link at full
  * strength, because the record behind it is the whole reason it is still here.
  */
-export function EnrollmentCard({
-  enrollment,
-  audience,
-  gamerFirstName,
-}: {
+interface EnrollmentCardCommonProps {
   enrollment: FamilyEnrollmentSummary;
   /**
-   * Whose dashboard this renders on. Both corner badges are parent-only —
-   * billing is a parent concern, so a gamer's card never carries the payment
-   * or subscription-ending badge — and the waitlist footer speaks to the
-   * parent or to the child accordingly.
+   * Open Stripe's Customer Portal instead of the badge doing it itself. The
+   * live parent dashboard passes nothing and gets the real portal session; a
+   * preview scene passes a no-op, which is what keeps a fixture page from
+   * POSTing. Parent-only by construction — a gamer's card carries no badge to
+   * click.
    */
-  audience: SessionAudience;
-  /**
-   * The child this enrollment belongs to. **Never rendered on the card's face**
-   * — the section heading owns the child — and used only inside the
-   * subscription-ending badge's tooltip, which has to name whose last session it
-   * is talking about. Omitted on the gamer's own dashboard, where that badge
-   * never renders.
-   */
-  gamerFirstName?: string;
-}) {
+  onOpenPortal?: () => void;
+}
+
+/**
+ * Who the card is for, and what that audience obliges the caller to know.
+ *
+ * The two audiences are not the same props with one of them optional: the
+ * parent's card can carry a subscription-ending badge, and that badge's tooltip
+ * has to name **whose** last session it is talking about, so a customer card
+ * without a child's name is not a card with a missing nicety — it is a card that
+ * cannot be rendered. The gamer's card can never show that badge at all, so the
+ * name has nowhere to go and the prop does not exist there. Discriminating on
+ * `audience` is what lets the compiler say so, and what removes the fallback
+ * that used to put a *product* name in a person's slot when the caller forgot.
+ */
+export type EnrollmentCardProps = EnrollmentCardCommonProps &
+  (
+    | {
+        /**
+         * The child's own dashboard. No billing anywhere on it — neither corner
+         * badge renders — and the waitlist footer speaks *to* the child.
+         */
+        audience: Extract<SessionAudience, "gamer">;
+      }
+    | {
+        /**
+         * The parent's dashboard: corner badges live here, and the waitlist
+         * footer speaks *about* the child.
+         */
+        audience: Extract<SessionAudience, "customer">;
+        /**
+         * The child this enrollment belongs to. **Never rendered on the card's
+         * face** — the section heading owns the child — and used only inside the
+         * subscription-ending badge's tooltip, which has to name whose last
+         * session it is.
+         */
+        gamerFirstName: string;
+      }
+  );
+
+export function EnrollmentCard(props: EnrollmentCardProps) {
+  const { enrollment, audience, onOpenPortal } = props;
   const t = useTranslations("parent.enrollment");
   const w = useTranslations("parent.waitlist");
   const locale = useLocale();
@@ -135,9 +169,22 @@ export function EnrollmentCard({
   const { inProgress, voiceIsOpen } = enrollmentLiveness(enrollment, now);
   const live = voiceIsOpen || inProgress;
   const hasNext = nextSessionStart !== null && nextSessionEnd !== null;
-  // The two cards a Live badge can never land on. Reserving its width there
-  // would be a hole held open for something that is not coming.
-  const canGoLive = endedOn === null && !waitlisted;
+  /** Holding a seat, with the run still going: neither over nor in the queue. */
+  const running = endedOn === null && !waitlisted;
+  // The cards a Live badge can never land on. Reserving its width there would
+  // be a hole held open for something that is not coming — which includes a
+  // running enrollment with nothing on its schedule, since a badge that turns
+  // on when a session starts needs a session to start.
+  const canGoLive = running && hasNext;
+  // Whether the footer has anything to say, asked before it is drawn. The four
+  // branches below are exclusive by construction, and on the one card where
+  // none of them lands — a running enrollment whose product has no slots yet —
+  // the row is left out rather than rendered empty.
+  const hasFooter =
+    endedOn !== null ||
+    waitlisted ||
+    (running && hasVoiceRoom && hasNext) ||
+    (running && !hasVoiceRoom && siteName !== null);
 
   return (
     // A plain `relative` shell so the corner badge can hang off the card's edge
@@ -242,61 +289,61 @@ export function EnrollmentCard({
               there is no grid row to square off, and every branch below puts
               something real in the row. Holding a button's worth of height under
               a single line of venue text would be dead space on the majority of
-              cards. */}
-          <div className="relative z-10 flex items-center justify-center">
-            {endedOn !== null && (
-              // Date-only and UTC-pinned: an end date is a calendar date with no
-              // clock face on it, so it must read the same everywhere rather
-              // than tipping a day either side of a viewer's midnight.
-              <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
-                <CalendarOff className="h-4 w-4 shrink-0" aria-hidden />
-                <span className="truncate">
-                  {t("endedOn", { date: formatDateOnly(endedOn, locale) })}
+              cards — and where no branch lands at all, the row itself does not
+              render. */}
+          {hasFooter && (
+            <div className="relative z-10 flex items-center justify-center">
+              {endedOn !== null && (
+                // Date-only and UTC-pinned: an end date is a calendar date with no
+                // clock face on it, so it must read the same everywhere rather
+                // than tipping a day either side of a viewer's midnight.
+                <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+                  <CalendarOff className="h-4 w-4 shrink-0" aria-hidden />
+                  <span className="truncate">
+                    {t("endedOn", { date: formatDateOnly(endedOn, locale) })}
+                  </span>
                 </span>
-              </span>
-            )}
-            {endedOn === null && waitlisted && (
-              // The place in line leads the sentence, in body text rather than
-              // on the corner: the corner is this product's grammar for "this
-              // needs attention", and a queue position is information, not a
-              // fault. `tabular-nums` so the digits keep their width when
-              // somebody ahead gives up their spot — the one number on this
-              // page that can change while a parent is looking at it.
-              <span className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
-                <Hourglass className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                <span className="min-w-0 tabular-nums">
-                  {w(
-                    audience === "gamer"
-                      ? "reassuranceGamer"
-                      : "reassuranceCustomer",
-                    { position: waitlistPosition },
-                  )}
+              )}
+              {endedOn === null && waitlisted && (
+                // The place in line leads the sentence, in body text rather than
+                // on the corner: the corner is this product's grammar for "this
+                // needs attention", and a queue position is information, not a
+                // fault. `tabular-nums` so the digits keep their width when
+                // somebody ahead gives up their spot — the one number on this
+                // page that can change while a parent is looking at it.
+                <span className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
+                  <Hourglass className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                  <span className="min-w-0 tabular-nums">
+                    {w(
+                      audience === "gamer"
+                        ? "footerReassuranceGamer"
+                        : "footerReassuranceCustomer",
+                      { position: waitlistPosition },
+                    )}
+                  </span>
                 </span>
-              </span>
-            )}
-            {endedOn === null && !waitlisted && hasVoiceRoom && hasNext && (
-              <JoinVoiceButton
-                voiceIsOpen={voiceIsOpen}
-                voiceHref={voiceHref}
-                opensDate={formatDate(nextSessionStart, locale, {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                  timeZone,
-                })}
-                opensTime={formatTime(nextSessionStart, locale, timeZone)}
-              />
-            )}
-            {endedOn === null &&
-              !waitlisted &&
-              !hasVoiceRoom &&
-              siteName !== null && (
+              )}
+              {running && hasVoiceRoom && hasNext && (
+                <JoinVoiceButton
+                  voiceIsOpen={voiceIsOpen}
+                  voiceHref={voiceHref}
+                  opensDate={formatDate(nextSessionStart, locale, {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    timeZone,
+                  })}
+                  opensTime={formatTime(nextSessionStart, locale, timeZone)}
+                />
+              )}
+              {running && !hasVoiceRoom && siteName !== null && (
                 <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
                   <MapPin className="h-4 w-4 shrink-0" aria-hidden />
                   <span className="truncate">{siteName}</span>
                 </span>
               )}
-          </div>
+            </div>
+          )}
         </CardContent>
 
         {/* The whole card, as one link — an empty anchor stretched over it, named
@@ -319,18 +366,19 @@ export function EnrollmentCard({
 
       {/* Outside the card, over its corner, so neither ever eats a click meant
           for the card body. Parent-only, one at a time, most actionable first. */}
-      {audience === "customer" && paymentProblem ? (
+      {props.audience === "customer" && paymentProblem ? (
         <PaymentProblemBadge
           participationId={participationId}
-          audience={audience}
+          audience="customer"
           showAlert
+          onOpenPortal={onOpenPortal}
         />
-      ) : audience === "customer" && cancellation ? (
+      ) : props.audience === "customer" && cancellation ? (
         <SubscriptionEndingBadge
           accessUntil={cancellation.accessUntil}
           lastSessionStart={cancellation.lastSessionStart}
           isLastSession={cancellation.isLastSession}
-          gamerFirstName={gamerFirstName ?? productName}
+          gamerFirstName={props.gamerFirstName}
         />
       ) : null}
     </div>
