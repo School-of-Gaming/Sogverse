@@ -94,14 +94,13 @@ export function ProductBrowseCard({
 
   // Muni clubs tell the whole seat story through the footer bar ("11 / 15
   // seats"), so the meta-row capacity hint would just repeat it — suppress it
-  // there. Other products keep the capacity / waitlist hint.
+  // there. Other products show their capacity; an uncapped product shows
+  // nothing (waitlist availability is a detail-page concern).
   const seatsHint: SeatsHint | null = isMuniClub
     ? null
     : product.seat_count !== null
       ? { kind: "capacity", count: product.seat_count }
-      : product.waitlist_enabled
-        ? { kind: "waitlist" }
-        : null;
+      : null;
 
   // Muni clubs are externally funded — show a seat-fill bar in the footer
   // instead of a price. `total: null` (no seat count set yet) leaves the

@@ -1361,14 +1361,12 @@ function ScenarioBrowseCard({
 
   // Same rule as the production adapter: muni clubs tell the seat story through
   // the footer bar, so they suppress the capacity hint; everything else shows
-  // its capacity (or "waitlist available" when uncapped but waitlisted).
+  // its capacity, and an uncapped product shows nothing.
   const seatsHint: SeatsHint | null = isMuniClub
     ? null
     : product.seat_count !== null
       ? { kind: "capacity", count: product.seat_count }
-      : product.waitlist_enabled
-        ? { kind: "waitlist" }
-        : null;
+      : null;
 
   // Muni clubs swap the price for a seat-fill bar; the fill comes from the
   // scenario's authored state so the bar and the card agree.
