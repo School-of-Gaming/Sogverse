@@ -11,7 +11,7 @@ import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
-import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
+import { GameUsernameEditableRow } from "@/components/game-account";
 import { useMyGamers, useUpdateGamer, useGamerProfile } from "@/services/gamers";
 import { useMinecraftAccount } from "@/services/minecraft";
 import { ROUTES, DISPLAY_NAME_MAX } from "@/lib/constants";
@@ -34,10 +34,8 @@ export default function GamerDetailsPage() {
   const [firstName, setFirstName] = useState("");
   const [profileInitialized, setProfileInitialized] = useState(false);
 
-  // Minecraft form state
-  const [minecraftUsername, setMinecraftUsername] = useState("");
-  const [mcInitialized, setMcInitialized] = useState(false);
-  const [isSavingMc, setIsSavingMc] = useState(false);
+  // Minecraft feedback state. The username itself is not held here — the row is
+  // fed straight from the account query and reports its commits back.
   const [mcSuccess, setMcSuccess] = useState<string | null>(null);
   const [mcError, setMcError] = useState<string | null>(null);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -48,12 +46,6 @@ export default function GamerDetailsPage() {
   if (gamer && !profileInitialized) {
     setFirstName(gamer.first_name);
     setProfileInitialized(true);
-  }
-
-  // Initialize minecraft username once account data loads
-  if (mcAccount !== undefined && !mcInitialized) {
-    setMinecraftUsername(mcAccount?.minecraft_username ?? "");
-    setMcInitialized(true);
   }
 
   const handleSaveProfile = async () => {
@@ -82,15 +74,18 @@ export default function GamerDetailsPage() {
     }
   };
 
-  const handleSaveMc = async () => {
+  /**
+   * Committing the row *is* saving it — the row has already checked the name
+   * against Mojang, so what arrives is the canonical casing. The mutation
+   * invalidates the gamer and account queries, which feed the row its new props.
+   */
+  const handleSaveMc = async (mcValue: string | null) => {
     if (!gamer) return;
 
-    setIsSavingMc(true);
     setMcSuccess(null);
     setMcError(null);
 
     try {
-      const mcValue = minecraftUsername.trim() || null;
       await updateGamer.mutateAsync({
         gamerId: gamer.id,
         updates: { minecraftUsername: mcValue },
@@ -108,8 +103,9 @@ export default function GamerDetailsPage() {
             ? String((error as { message: unknown }).message)
             : t('gamerDetail.failedUpdateMc');
       setMcError(message);
-    } finally {
-      setIsSavingMc(false);
+      // Rethrown after the banner is set: the row is awaiting this, and a
+      // silent resolve would leave it showing a name nothing stored.
+      throw error;
     }
   };
 
@@ -258,6 +254,22 @@ export default function GamerDetailsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          <GameUsernameEditableRow
+            platform="minecraft"
+            username={mcAccount?.minecraft_username ?? null}
+            externalId={mcAccount?.minecraft_uuid ?? null}
+            personName={gamer.first_name}
+            // Returned, not voided: the row waits on the write before it lets
+            // go of the name it is showing.
+            onCommit={({ username }) => handleSaveMc(username)}
+            className="max-w-sm"
+          />
+
+          {/* Below the row, not above it. The outcome of a save arrives after the
+              save, so a banner above the row would push the row — the very thing
+              the person just used, and is still looking at — down the page as it
+              lands. Last thing in the last card on the page, so it grows into
+              empty space and moves nothing. */}
           {mcSuccess && (
             <div className="rounded-md bg-success/10 p-3 text-sm text-success">
               {mcSuccess}
@@ -269,21 +281,6 @@ export default function GamerDetailsPage() {
               {mcError}
             </div>
           )}
-
-          <form onSubmit={(e) => { e.preventDefault(); handleSaveMc(); }} className="space-y-6">
-            <MinecraftUsernameField
-              value={minecraftUsername}
-              onChange={setMinecraftUsername}
-              disabled={isSavingMc}
-            />
-
-            <Button
-              type="submit"
-              disabled={isSavingMc}
-            >
-              {isSavingMc ? c('saving') : t('gamerDetail.minecraft.save')}
-            </Button>
-          </form>
         </CardContent>
       </Card>
 

@@ -63,3 +63,23 @@ export function isValidMinecraftUsername(username: string): boolean {
 export function minecraftSkinBodyUrl(username: string): string {
   return `https://mc-heads.net/body/${encodeURIComponent(username)}`;
 }
+
+/**
+ * The same skin's **face**, for the compact figure — the flat 2D crop, not the
+ * isometric `head` render.
+ *
+ * Kept beside the body URL because they are the same coupling: one host, one CSP
+ * allowance, one place to look when either stops rendering.
+ *
+ * The flat face fills its square frame edge to edge, which is what makes the
+ * compact row identical on Minecraft and Roblox — a Roblox headshot fills its
+ * frame the same way. The isometric render would not: it draws a cube on the
+ * diagonal, leaving roughly a quarter of the frame transparent and every edge
+ * aliased, which at 32px reads as a smudge.
+ *
+ * 96px for a 32px box, so it stays crisp at 3×. A face is natively 8×8, so this
+ * is an honest nearest-neighbour upscale rather than invented detail.
+ */
+export function minecraftSkinFaceUrl(username: string): string {
+  return `https://mc-heads.net/avatar/${encodeURIComponent(username)}/96`;
+}

@@ -6,7 +6,7 @@ import { GripVertical, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
-import { MinecraftUsernameBadge } from "@/components/minecraft/minecraft-username-badge";
+import { GameUsernameRow } from "@/components/game-account";
 import { computeAge, cn } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import type { GenderType } from "@/types";
@@ -77,10 +77,20 @@ const ChipContent = memo(function ChipContent({
             <span className="truncate">{parentName}</span>
           </p>
         )}
-        <MinecraftUsernameBadge
+        <GameUsernameRow
+          platform="minecraft"
           username={minecraftUsername}
-          uuid={minecraftUuid}
-          size="sm"
+          externalId={minecraftUuid}
+          // The compact figure. The chip is a stack of four short lines in a
+          // 16rem rail, and the whole body was taller than the other three put
+          // together — the face carries the same identity at roughly the height
+          // of the text beside it.
+          figure="head"
+          // A picture butting straight against the parent's name reads as
+          // cramped. The gap is the call site's, not the row's: only this chip
+          // and the admin user page want it, so the component stays unpadded and
+          // every other surface keeps its tight rhythm.
+          className="mt-2"
         />
       </div>
       <GripVertical className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
@@ -119,7 +129,9 @@ export function GamerChip({
       {...attributes}
       aria-disabled={isPending || undefined}
       className={cn(
-        "flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors",
+        // `py-2` rather than `py-1.5`: the chip carries a picture now, and the
+        // extra 2px a side is what keeps the stack from touching its own border.
+        "flex items-center gap-2 rounded-lg border px-2.5 py-2 text-xs font-medium transition-colors",
         isPending
           ? "cursor-progress border-border bg-muted text-foreground opacity-50"
           // Shared drag-cursor class (globals.css): grab on hover. The grabbing

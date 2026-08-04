@@ -10,7 +10,7 @@ import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
-import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
+import { GameUsernameEditableRow } from "@/components/game-account";
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
@@ -107,16 +107,8 @@ export function SettingsSectionContent({
     ? homeLocationEdit.pick
     : savedHomeLocation;
 
-  const [minecraftUsername, setMinecraftUsername] = useState("");
-  const [mcInitialized, setMcInitialized] = useState(false);
-  const [isSavingMc, setIsSavingMc] = useState(false);
   const [mcSuccess, setMcSuccess] = useState<string | null>(null);
   const [mcError, setMcError] = useState<string | null>(null);
-
-  if (mcAccount !== undefined && !mcInitialized) {
-    setMinecraftUsername(mcAccount?.minecraft_username ?? "");
-    setMcInitialized(true);
-  }
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -176,13 +168,21 @@ export function SettingsSectionContent({
     router.push("/reset-password");
   };
 
-  const handleSaveMc = async () => {
-    setIsSavingMc(true);
+  /**
+   * Committing the row *is* saving it — there is no separate Save button, because
+   * the row's own commit already asked the question one would have answered.
+   *
+   * The row has verified the name against Mojang by the time this runs, so what
+   * arrives is the canonical casing; the route re-runs the lookup server-side
+   * anyway, because a client-verified name is not evidence. The mutation
+   * invalidates the account query, which feeds the row its new props — the loop
+   * that keeps this component from holding a second copy of the username.
+   */
+  const handleSaveMc = async (mcValue: string | null) => {
     setMcSuccess(null);
     setMcError(null);
 
     try {
-      const mcValue = minecraftUsername.trim() || null;
       await updateMyMc.mutateAsync(mcValue);
       setMcSuccess(
         mcValue
@@ -197,8 +197,9 @@ export function SettingsSectionContent({
             ? String((error as { message: unknown }).message)
             : t('failedToUpdateMinecraft');
       setMcError(message);
-    } finally {
-      setIsSavingMc(false);
+      // Rethrown after the banner is set: the row is awaiting this, and a
+      // silent resolve would leave it showing a name nothing stored.
+      throw error;
     }
   };
 
@@ -368,8 +369,43 @@ export function SettingsSectionContent({
             <CardDescription>
               {t('minecraftDescription')}
             </CardDescription>
+            {/* A courtesy credit, not a licence condition — mc-heads asks for
+                nothing and encourages this. One home is enough for a thank-you,
+                and this is the page where a person is looking at their own skin,
+                so it is the one that earns it. An anchor is fine here: the
+                no-off-site-links rule governs staff-authored copy shown to
+                families, not the app's own chrome. */}
+            <p className="text-xs text-muted-foreground">
+              {t.rich('mcHeadsAttribution', {
+                link: (chunks) => (
+                  <a
+                    href="https://mc-heads.net"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-foreground"
+                  >
+                    {chunks}
+                  </a>
+                ),
+              })}
+            </p>
           </CardHeader>
           <CardContent className="space-y-6">
+            <GameUsernameEditableRow
+              platform="minecraft"
+              username={mcAccount?.minecraft_username ?? null}
+              externalId={mcAccount?.minecraft_uuid ?? null}
+              // Returned, not voided: the row waits on the write before it lets
+              // go of the name it is showing.
+              onCommit={({ username }) => handleSaveMc(username)}
+              className="max-w-sm"
+            />
+
+            {/* Below the row, not above it. The outcome of a save arrives after
+                the save, so a banner above the row would push the row — the very
+                thing the person just used, and is still looking at — down the
+                page as it lands. Last thing in the last card on the page, so it
+                grows into empty space and moves nothing. */}
             {mcSuccess && (
               <div className="rounded-md bg-success/10 p-3 text-sm text-success">
                 {mcSuccess}
@@ -381,21 +417,6 @@ export function SettingsSectionContent({
                 {mcError}
               </div>
             )}
-
-            <form onSubmit={(e) => { e.preventDefault(); handleSaveMc(); }} className="space-y-6">
-              <MinecraftUsernameField
-                value={minecraftUsername}
-                onChange={setMinecraftUsername}
-                disabled={isSavingMc}
-              />
-
-              <Button
-                type="submit"
-                disabled={isSavingMc}
-              >
-                {isSavingMc ? c('saving') : t('saveMinecraft')}
-              </Button>
-            </form>
           </CardContent>
         </Card>
       )}

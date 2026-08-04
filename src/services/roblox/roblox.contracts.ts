@@ -39,7 +39,10 @@ export const robloxProfileResponse = z.object({
   username: z.string(),
   userId: z.number().int().positive(),
   displayName: z.string(),
+  /** The bust render, for the full figure. */
   avatarUrl: z.string().nullable(),
+  /** The headshot render, for the compact figure. */
+  headshotUrl: z.string().nullable(),
 });
 
 export type RobloxProfileResponse = z.infer<typeof robloxProfileResponse>;

@@ -34,6 +34,7 @@ const PROFILE = {
   userId: 156,
   displayName: "builderman",
   avatarUrl: "https://tr.rbxcdn.com/abc/420/420/AvatarBust/Png",
+  headshotUrl: "https://tr.rbxcdn.com/abc/100/100/AvatarHeadshot/Png",
 };
 
 // --- Tests ---
@@ -78,7 +79,7 @@ describe("GET /api/roblox/verify", () => {
     expect(data.error).toContain("No Roblox account found");
   });
 
-  it("returns the account and its avatar in one response", async () => {
+  it("returns the account and both renders in one response", async () => {
     mockLookupRobloxProfile.mockResolvedValue(PROFILE);
 
     const response = await GET(createRequest("BUILDERMAN"));
@@ -90,14 +91,31 @@ describe("GET /api/roblox/verify", () => {
     expect(mockLookupRobloxProfile).toHaveBeenCalledWith("BUILDERMAN");
   });
 
-  it("serves a profile whose avatar could not be resolved", async () => {
-    mockLookupRobloxProfile.mockResolvedValue({ ...PROFILE, avatarUrl: null });
+  it("serves a profile whose renders could not be resolved", async () => {
+    mockLookupRobloxProfile.mockResolvedValue({
+      ...PROFILE,
+      avatarUrl: null,
+      headshotUrl: null,
+    });
 
     const response = await GET(createRequest("builderman"));
     const data = await response.json();
 
-    // A pending or moderated avatar must not fail the verification.
+    // A pending or moderated render must not fail the verification, and that
+    // holds for each independently — the two are separate upstream calls.
     expect(response.status).toBe(200);
     expect(data.avatarUrl).toBeNull();
+    expect(data.headshotUrl).toBeNull();
+  });
+
+  it("serves a profile where only one of the two renders resolved", async () => {
+    mockLookupRobloxProfile.mockResolvedValue({ ...PROFILE, headshotUrl: null });
+
+    const response = await GET(createRequest("builderman"));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.avatarUrl).toBe(PROFILE.avatarUrl);
+    expect(data.headshotUrl).toBeNull();
   });
 });

@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Identicon } from "@/components/ui/identicon";
 import { Input } from "@/components/ui/input";
 import {
-  MinecraftUsernameRow,
-  type MinecraftCheckStatus,
-} from "@/components/minecraft/minecraft-username-row";
+  gameFigureHeight,
+  GameUsernameRow,
+  type GameAccountStatus,
+} from "@/components/game-account";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { minecraftSkinBodyUrl } from "@/lib/mojang";
 import { cn, computeAge } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import type { GamerSessionRow } from "./types";
@@ -50,7 +50,7 @@ interface GamerRosterRowProps {
    * The caller owns this rather than the row, because the check is one request
    * per save and the owner of the save is the only one who knows when it started.
    */
-  minecraftStatus?: MinecraftCheckStatus;
+  minecraftStatus?: GameAccountStatus;
 }
 
 /**
@@ -141,17 +141,20 @@ export function GamerRosterRow({
  * refused write leaves the editor open with the typed name still in the box and
  * one line saying it did not save.
  *
- * **The resting state is derived from the account, not remembered.** A row
- * nobody has touched shows `valid` when the account carries a verified UUID and
- * `idle` when it does not, so eight untouched rows are not eight rows claiming a
- * check just ran. An explicit status from the caller wins, because that is a
- * check that really is in flight or really did just land.
+ * **The resting state and the figure belong to the shared row now.** It derives
+ * the state from the account's own columns, so eight untouched rows are not
+ * eight rows claiming a check just ran, and it draws a real skin only for a
+ * verified account — the render host resolves by *name*, so a figure for an
+ * unconfirmed string could quietly show a stranger's costume beside a child's
+ * name. An explicit status from the caller still wins, because that is a check
+ * that really is in flight or really did just land.
  *
- * **The skin is fetched only for a verified account.** A UUID is the platform's
- * one piece of evidence that the name belongs to a real player, and the render
- * host resolves by *name* — so drawing a figure for an unverified string would
- * quietly show a stranger's costume next to a child's name whenever the two
- * happened to collide. Unverified rows keep the bundled placeholder.
+ * **The lookup stays on the server here, unlike every other editable surface.**
+ * The write this row awaits resolves the name against Mojang on its way through
+ * and answers with what was stored, so a client-side check in front of it would
+ * be the same question asked twice and the same rate limit paid twice. That is
+ * why this cell keeps its own editor instead of the shared editable row, which
+ * owns its verification — the two are different flows, not two spellings of one.
  */
 function MinecraftIdentityCell({
   gamer,
@@ -159,7 +162,7 @@ function MinecraftIdentityCell({
   onSave,
 }: {
   gamer: GamerSessionRow;
-  status?: MinecraftCheckStatus;
+  status?: GameAccountStatus;
   onSave?: (gamerId: string, username: string) => void | Promise<void>;
 }) {
   const t = useTranslations("gedu.sessionDetails");
@@ -168,18 +171,12 @@ function MinecraftIdentityCell({
   const [committing, setCommitting] = useState(false);
   const [failed, setFailed] = useState(false);
 
-  const resolvedStatus =
-    status ?? (gamer.minecraft_uuid !== null ? "valid" : "idle");
-
   const identity = (
-    <MinecraftUsernameRow
+    <GameUsernameRow
+      platform="minecraft"
       username={gamer.minecraft_username}
-      status={resolvedStatus}
-      skinUrl={
-        gamer.minecraft_uuid !== null && gamer.minecraft_username !== null
-          ? minecraftSkinBodyUrl(gamer.minecraft_username)
-          : null
-      }
+      externalId={gamer.minecraft_uuid}
+      status={status}
       className="min-w-0 flex-1"
     />
   );
@@ -209,10 +206,12 @@ function MinecraftIdentityCell({
     };
     return (
       <div className="space-y-1">
-        {/* `h-12` on the row matches the display row below, so entering and
-            leaving edit mode never changes the roster row's height; the
-            controls inside stay `h-7`, centered in it. */}
-        <div className="flex h-12 items-center gap-1.5">
+        {/* The shared figure height, the same one the display row below uses, so
+            entering and leaving edit mode never changes the roster row's height;
+            the controls inside stay `h-7`, centered in it. Read off the constant
+            rather than restated, because that height belongs to the shared row
+            and has already changed once. */}
+        <div className={cn("flex items-center gap-1.5", gameFigureHeight("full"))}>
           <label className="sr-only" htmlFor={inputId}>
             {t("minecraftUsernameLabel")}
           </label>
@@ -265,9 +264,14 @@ function MinecraftIdentityCell({
   }
 
   return (
-    /* The row owns the h-12 — the skin fills it exactly, so the taller figure
-       renders inside the row instead of spilling into its neighbours. */
-    <div className="group/mc flex h-12 min-w-0 items-center gap-1">
+    /* The row owns the height — the figure fills it exactly, so it renders
+       inside the row instead of spilling into its neighbours. */
+    <div
+      className={cn(
+        "group/mc flex min-w-0 items-center gap-1",
+        gameFigureHeight("full"),
+      )}
+    >
       {identity}
       <button
         type="button"

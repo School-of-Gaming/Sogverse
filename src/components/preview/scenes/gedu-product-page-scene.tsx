@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { MinecraftCheckStatus } from "@/components/minecraft/minecraft-username-row";
+import type { GameAccountStatus } from "@/components/game-account";
 import {
   applyDraftToEntry,
   applyPlanDraftToEntry,
@@ -53,7 +53,7 @@ export function GeduProductPageScene({
   const [site, setSite] = useState(fixture.site);
   const [siteNotesEditing, setSiteNotesEditing] = useState(false);
   const [minecraftStatuses, setMinecraftStatuses] = useState<
-    Record<string, MinecraftCheckStatus>
+    Record<string, GameAccountStatus>
   >({});
 
   // Faked latency has to be cancellable, or a reviewer who navigates away
@@ -173,7 +173,7 @@ export function GeduProductPageScene({
       const verified = MOJANG_NAME_SHAPE.test(trimmed);
       setMinecraftStatuses((prev) => ({
         ...prev,
-        [gamerId]: verified ? "valid" : "invalid",
+        [gamerId]: verified ? "verified" : "unverified",
       }));
       if (!verified) return;
       setData((prev) => ({

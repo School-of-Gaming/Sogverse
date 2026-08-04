@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
+import { GAME_PLATFORMS, GameUsernameEditableRow } from "@/components/game-account";
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
 import { CoverageAreasField } from "@/components/gedu/coverage-areas-field";
@@ -27,6 +27,12 @@ import { useAuth } from "@/providers";
 import { useSpokenLanguages } from "@/services/users";
 import { readErrorMessage } from "@/lib/api/json-response";
 import type { SpokenLanguage } from "@/types";
+
+/**
+ * A literal rather than a `useId()`, because the other fields on this form name
+ * their inputs the same way — one page, one form, one of each.
+ */
+const MINECRAFT_USERNAME_INPUT_ID = "register-gedu-minecraft-username";
 
 const registerGeduSchema = z.object({
   firstName: z.string().min(DISPLAY_NAME_MIN, `First name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `First name must be at most ${DISPLAY_NAME_MAX} characters`),
@@ -47,6 +53,7 @@ export function RegisterGeduForm({
   redirect: string | null;
 }) {
   const t = useTranslations("auth");
+  const g = useTranslations("gameAccount");
   const c = useTranslations("common");
   const locale = useLocale();
   const { navigateAfterAuth, status } = useAuthRedirect(redirect);
@@ -57,7 +64,7 @@ export function RegisterGeduForm({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [minecraftUsername, setMinecraftUsername] = useState("");
+  const [minecraftUsername, setMinecraftUsername] = useState<string | null>(null);
   const [phone, setPhone] = useState("");
   const [spokenLanguages, setSpokenLanguages] = useState<string[]>([]);
   /**
@@ -117,7 +124,7 @@ export function RegisterGeduForm({
           spokenLanguages,
           locale,
           locationIds,
-          minecraftUsername: minecraftUsername.trim() || undefined,
+          minecraftUsername: minecraftUsername ?? undefined,
         }),
       });
 
@@ -228,12 +235,24 @@ export function RegisterGeduForm({
               />
             </Field>
           </div>
-          <MinecraftUsernameField
-            value={minecraftUsername}
-            onChange={setMinecraftUsername}
-            disabled={isLoading}
+          {/* First capture: nothing is saved yet, so the row opens straight
+              into edit mode. The label belongs to the form, not the row — a
+              roster renders the same row with no label at all — so the id is
+              handed down and the row drops its own sr-only label rather than
+              labelling the input twice. */}
+          <Field
+            label={g("label", { platform: GAME_PLATFORMS.minecraft.name })}
+            htmlFor={MINECRAFT_USERNAME_INPUT_ID}
             optional
-          />
+          >
+            <GameUsernameEditableRow
+              platform="minecraft"
+              username={minecraftUsername}
+              autoEdit
+              inputId={MINECRAFT_USERNAME_INPUT_ID}
+              onCommit={({ username }) => setMinecraftUsername(username)}
+            />
+          </Field>
           <Field label={c("phoneNumber")} htmlFor="phone" optional>
             <InternationalPhoneInput
               id="phone"

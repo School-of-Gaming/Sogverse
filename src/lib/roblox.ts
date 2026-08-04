@@ -30,12 +30,31 @@ const ROBLOX_USERS_API = "https://users.roblox.com/v1/usernames/users";
 const ROBLOX_AVATAR_API = "https://thumbnails.roblox.com/v1/users/avatar-bust";
 
 /**
+ * The **headshot** render — the compact figure, for surfaces where a bust is too
+ * tall to earn its space.
+ *
+ * Its one design virtue is that it is square *and so is Minecraft's face render*:
+ * the 1:2-vs-1:1 divergence that forces the full figure's box to differ per
+ * platform simply does not exist here, so the compact row has identical geometry
+ * on both platforms.
+ */
+const ROBLOX_HEADSHOT_API =
+  "https://thumbnails.roblox.com/v1/users/avatar-headshot";
+
+/**
  * The render size we ask for. Only certain square sizes are accepted (48, 60,
  * 100, 150, 180, 352, 420, 720). 180 is the smallest of them that still covers
  * our largest box (64px) on a 3× display, so it is sharp everywhere we draw it
  * without shipping a 420px PNG to a thumbnail slot.
  */
 const ROBLOX_AVATAR_SIZE = "180x180";
+
+/**
+ * The headshot's size. The compact box is 32px, so 100 is the smallest accepted
+ * size that still covers it on a 3× display — asking for 48 would be soft on
+ * every phone.
+ */
+const ROBLOX_HEADSHOT_SIZE = "100x100";
 
 /**
  * The username→id response. Roblox answers a miss with **HTTP 200 and an empty
@@ -104,6 +123,12 @@ export interface RobloxProfile {
    * `cache-control: no-cache` even though the URL it names is immutable.
    */
   avatarUrl: string | null;
+  /**
+   * The same account's headshot render, for the compact figure. Same
+   * short-lived, never-persisted rules as `avatarUrl`, and the same degradation:
+   * `null` rather than a failed verification.
+   */
+  headshotUrl: string | null;
 }
 
 export function isValidRobloxUsername(username: string): boolean {
@@ -120,7 +145,7 @@ export function isValidRobloxUsername(username: string): boolean {
  */
 export async function lookupRobloxUser(
   username: string,
-): Promise<Omit<RobloxProfile, "avatarUrl"> | null> {
+): Promise<Omit<RobloxProfile, "avatarUrl" | "headshotUrl"> | null> {
   if (!isValidRobloxUsername(username)) return null;
 
   const res = await fetch(ROBLOX_USERS_API, {
@@ -152,19 +177,20 @@ export async function lookupRobloxUser(
 }
 
 /**
- * Resolve a bust avatar render for an account id.
+ * Resolve one thumbnail render for an account id.
  *
- * **Never throws.** The avatar is the decoration on a verification, not the
+ * **Never throws.** The picture is the decoration on a verification, not the
  * verification — a rate-limited, moderated, or simply-down thumbnail service
  * must degrade to "no picture", not fail the lookup that owns it. Every failure
  * mode, including a rejected fetch, comes back as `null`.
  */
-export async function resolveRobloxAvatarUrl(
+async function resolveRobloxThumbnail(
+  api: string,
   userId: number,
+  size: string,
 ): Promise<string | null> {
   const url =
-    `${ROBLOX_AVATAR_API}?userIds=${userId}` +
-    `&size=${ROBLOX_AVATAR_SIZE}&format=Png&isCircular=false`;
+    `${api}?userIds=${userId}&size=${size}&format=Png&isCircular=false`;
 
   const res = await fetch(url, {
     // The JSON itself is `no-cache` upstream and names a URL we treat as
@@ -184,12 +210,36 @@ export async function resolveRobloxAvatarUrl(
   return thumbnail.imageUrl ? thumbnail.imageUrl : null;
 }
 
+/** The bust render — the full figure's picture. */
+export function resolveRobloxAvatarUrl(userId: number): Promise<string | null> {
+  return resolveRobloxThumbnail(ROBLOX_AVATAR_API, userId, ROBLOX_AVATAR_SIZE);
+}
+
+/** The headshot render — the compact figure's picture. */
+export function resolveRobloxHeadshotUrl(
+  userId: number,
+): Promise<string | null> {
+  return resolveRobloxThumbnail(
+    ROBLOX_HEADSHOT_API,
+    userId,
+    ROBLOX_HEADSHOT_SIZE,
+  );
+}
+
 /**
- * The whole verification in one call: username → account → avatar.
+ * The whole verification in one call: username → account → both renders.
  *
- * Both hops happen server-side so the client makes one round trip and never
- * touches the tightly rate-limited thumbnail service itself. A missing avatar
- * degrades to `avatarUrl: null` rather than failing the verification.
+ * Every hop happens server-side so the client makes one round trip and never
+ * touches the tightly rate-limited thumbnail service itself. A missing render
+ * degrades to `null` rather than failing the verification.
+ *
+ * **The two thumbnails are fetched together, not in sequence.** They are
+ * independent reads of the same account and each is one request against a
+ * 60-per-minute-per-IP budget the whole serverless fleet shares — so the cost
+ * that matters is the count, which is fixed either way, and there is no reason
+ * to pay for it twice over in latency. This does take one verification from two
+ * upstream calls to three; the cache that this rate limit has been asking for is
+ * tracked in TODO.md.
  */
 export async function lookupRobloxProfile(
   username: string,
@@ -197,8 +247,10 @@ export async function lookupRobloxProfile(
   const account = await lookupRobloxUser(username);
   if (!account) return null;
 
-  return {
-    ...account,
-    avatarUrl: await resolveRobloxAvatarUrl(account.userId),
-  };
+  const [avatarUrl, headshotUrl] = await Promise.all([
+    resolveRobloxAvatarUrl(account.userId),
+    resolveRobloxHeadshotUrl(account.userId),
+  ]);
+
+  return { ...account, avatarUrl, headshotUrl };
 }

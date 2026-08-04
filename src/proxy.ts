@@ -74,7 +74,9 @@ function buildCspHeader(nonce: string): string {
       ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`
       : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co",
     "style-src 'self' 'unsafe-inline'",
-    // mc-heads.net renders the Minecraft skin body avatar in MinecraftUsernameField (settings page for gamers/gedus).
+    // mc-heads.net renders the Minecraft skin body, which the shared game-account
+    // row derives straight from a username — so it loads anywhere an identity is
+    // shown (settings, rosters, the admin panel, the voice room).
     // tr.rbxcdn.com serves the Roblox avatar bust render — the thumbnails API hands back that one
     // host for every completed render, so it is named rather than wildcarded across *.rbxcdn.com.
     `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net https://tr.rbxcdn.com`,
