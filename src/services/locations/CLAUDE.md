@@ -21,13 +21,14 @@ is not caching the table but never asking for more of it than a screen shows:
 - **Searching the hierarchy** is a ranked, capped, server-side query returning a top-N
   plus the true match count. Nothing that could match the whole table is filtered in the
   browser.
-- **The bounded lists** a surface genuinely needs in full — every venue, one country's
-  municipalities — are read whole and grouped client-side. They are hundreds of rows, and
-  the reason to have them whole is *not* that the tree cannot show them: a site is a
-  browsable leaf under its municipality, and searching returns it with its full ancestor
-  chain. It is that an admin picking a venue usually knows the building's name and not
-  its kunta, and should not have to walk Finland → Uusimaa → Helsinki to find one. Once
-  such a set is in memory, narrowing it is a substring test rather than a round trip.
+- **The bounded lists** a surface genuinely needs in full — one country's municipalities,
+  one municipality's venues — are read whole and grouped or listed client-side. What makes
+  such a list legitimate is that something *outside the geography* bounds it: a
+  municipality club is funded by one Finnish kunta and by nothing else, and a venue list is
+  the children of one confirmed row. Both stay in the hundreds however many countries are
+  added, and once such a set is in memory, narrowing it is a substring test rather than a
+  round trip. A list bounded by nothing but "this is all anyone has created so far" is the
+  shape to be suspicious of — the venue picker was one, and is a tree dialog now.
 
 The payload is therefore O(what is rendered) and constant as countries are added.
 
@@ -263,8 +264,10 @@ The reads come in three shapes.
 so the caller knows whether to offer another page. Pages accumulate rather than replace,
 so "load more" appends under rows the user is already reading.
 
-**Whole-list reads** — one country's municipalities, every site. These a surface genuinely
-needs in full, to group.
+**Whole-list reads** — one country's municipalities; one municipality's venues. A surface
+needs these in full because something outside the table bounds them, and it groups or
+lists whatever it gets. There is also a read of *every* site, which no surface renders any
+more; `TODO.md` carries what retiring it would cost.
 
 **Rule: any list read that could exceed PostgREST's `max_rows` pages through `.range()`
 until a page comes back short, and asks for `count: "exact"` so the walk can check what it
@@ -348,21 +351,26 @@ is showing *before the first keystroke*.
   and drills down; typing searches everywhere from the first keystroke past the minimum
   length; clearing the box drops back to where the user was browsing, so browse and
   search share one panel with no mode switch. A pick is staged and then confirmed,
-  because the panel is a dialog opened to answer one question. Used by the new-venue
-  flow, gedu coverage, and the parent's own location.
+  because the panel is a dialog opened to answer one question. Used by the venue picker,
+  gedu coverage, and the parent's own location.
 - **set** lists a bounded collection the caller has already fetched in full, grouped
-  under the place above each row and narrowed in memory. Used by the product form's venue
-  and municipality modes. It renders inline in a form rather than in a dialog, so a click
-  *is* the pick: the form around it owns the commit, and there is nothing here to
-  confirm.
+  under the place above each row and narrowed in memory. One consumer: the product form's
+  **municipality** mode, where an online municipality club picks the Finnish kunta funding
+  it. It renders inline in a form rather than in a dialog, so a click *is* the pick: the
+  form around it owns the commit, and there is nothing here to confirm.
 
-**Rule: the set scope is not a view the tree cannot give — it answers a different
-question, and any justification of it in the other terms is stale.** The tree can reach
-every venue: a site is a browsable leaf under its municipality, the breadcrumb shows the
-municipality while browsing, and a search hit arrives with its whole ancestor chain. What
-browsing cannot do is answer "which venues exist" to someone who does not know where to
-look, which is the ordinary case when an admin opens a club in a building they know by
-name. That is the whole of why the second scope exists.
+**Rule: the set scope needs a bound that comes from outside the geography.** Finland's
+municipalities qualify because the *funding rule* is the bound — a municipality club is
+paid for by one Finnish kunta — so "every option" is a few hundred rows that do not grow
+when a country is added, and holding them whole buys grouping by region and a keystroke
+that costs no request. What does not qualify is a collection that is small only because of
+what has been created so far. The venue picker used to be exactly that: a flat list of
+every `site` row, which read as Finland-only by accident, would have had to become a
+paged cross-country list the first time a venue existed elsewhere, and had no answer at
+all for a country whose venues nobody had opened yet. Its one real strength — finding a
+building by name without knowing its kunta — is now the search index's, which does it
+across every country, so the mode moved to the tree dialog and the set scope kept the one
+collection it can honestly claim.
 
 Both scopes are presentational and fixture-driven in the `/admin/ui-components` style
 guide, in one section with the scope as the axis being demonstrated: the panel holds no
@@ -463,17 +471,36 @@ set it later — stranding someone mid-signup over it would be strictly worse th
 ### The product picker
 
 In-person products pick a **site**; online municipality clubs pick a **Finnish
-municipality**. Both modes are the same panel in its **set** scope — a bounded,
-already-fetched collection grouped by the place above it — because an admin picking a
-venue wants the venues, not a path to them. What lives in the product form itself and
-nowhere else is the card a chosen place collapses to (with its site notes), the hint line
-under the list, and the clear-on-invalid guard below.
+municipality**. Two levels, and deliberately two different controls, because the two
+collections are bounded by different things — see the set-scope rule above. What lives in
+the product form itself and nowhere else is the card a chosen place collapses to (with its
+site notes) and the clear-on-invalid guard below.
 
-Opening a venue somewhere new is a two-step flow, because it answers two questions from
-two sources: *where in the world* is answered by browsing or searching the hierarchy and
-confirming one municipality, and *which building* by an admin naming a site under it.
-There is nothing between the two steps: the confirmed pick is the row, so it is already
-the venue's parent.
+**The venue field is the tree dialog** — the same dialog gedu coverage and a parent's own
+location open. Its empty state is one compact control that opens it; a chosen venue
+collapses to the card, whose "change" affordance reopens it. Inside, one configuration
+serves both ways of knowing where a venue is:
+
+- **Searching reaches a site directly.** Sites are in the search index carrying their full
+  ancestor chain, so an admin who knows the building's name types it and confirms the hit.
+  One step, in every country, rather than only where a list had been built up.
+- **Browsing walks down to a municipality and stops there.** Confirming one is not the
+  answer but the *next question*: the dialog then lists the venues in that municipality
+  and offers to name a new one.
+
+**Rule: a site is confirmable but never browsable *to*, and the asymmetry is the design
+rather than a gap in it.** The panel's rule is that a row of a pickable type is terminal,
+so offering both levels makes a municipality terminal as well — which is exactly right
+here, because confirming a municipality *means* "show me the venues here", and that
+screen is the only one that can also carry the create affordance. Letting the tree drill
+through a municipality to its sites would take creation off the only screen with anywhere
+to put it, to reach rows search already reaches in one step.
+
+Opening a venue somewhere new is therefore still two steps, because it still answers two
+questions from two sources: *where in the world* from the seeded hierarchy, *which
+building* from an admin naming a site under it. There is nothing between the two — the
+confirmed pick is the row, so it is already the venue's parent — and nothing above a site
+is ever created.
 
 **Rule: the online-muni municipality restriction is UI-enforced.** The DB trigger still
 permits a country or region for online muni clubs (it predates the rule), so the picker is
@@ -482,22 +509,35 @@ one, nudging a re-pick on legacy rows.
 
 **Rule: a picker that cannot tell "still loading" from "invalid" must not clear
 anything.** Wiping a valid `location_id` while editing a product is worse than showing it
-a moment late, and the two states are one frame apart: the pickable set arrives
-asynchronously, so a guard that asks only "is the value in the set" treats the frame
-before it lands as proof the value is bad, and the next save writes the loss. The
-distinction is therefore explicit — the set being *absent* is never an answer, only a set
-that arrived and does not contain the value is — and the decision is a named function with
-its own test rather than a condition inline in an effect, because it is exactly the kind
-of thing that reads fine in review. The same three-state shape governs the parent's own
-location field, for the same reason.
+a moment late, and the two states are one frame apart: whatever the control checks the
+value against arrives asynchronously, so a guard that answers before it is there treats
+that frame as proof the value is bad, and the next save writes the loss. The distinction
+is therefore explicit — *absent* is never an answer — and the decision is a named function
+with its own test rather than a condition inline in an effect, because it is exactly the
+kind of thing that reads fine in review. The same three-state shape governs the parent's
+own location field, for the same reason. The everyday trigger is not exotic: toggling a
+municipality club from online to in-person carries a municipality id into a field that now
+accepts only venues.
+
+**Corollary: the two modes ask different questions, and "no answer" is not the same
+absence in both — so they are two named functions, not one.** The municipality mode holds
+the whole pickable set, so membership of it *is* the question and only a set that has
+arrived can answer it. The venue mode holds no set — its rows are the whole hierarchy — so
+it looks the stored id up by key and asks what came back, which makes a key with **no
+row** a resolved answer (the venue was deleted) rather than the absent case; there, absent
+means the *read* has not landed. Collapsing the two gets one of them wrong in a way
+nothing would report: read as a set, a missing row is "not fetched" and a dangling id
+survives forever; read as a lookup, an empty set is "deleted" and a valid pick is wiped.
 
 ### Loading
 
 **Every read in this feature is a small indexed lookup, so none of them gets a loading
 affordance.** One level of children by `parent_id`, a capped top-N from the search index,
-one municipality's venues, a bounded list to group — each lands in a frame or two. Every
-box has its final height from the first frame and fills in: no skeleton, no spinner and no
-delay anywhere here. The root `CLAUDE.md` states the general rule this is an instance of;
+one municipality's venues, one row by primary key, a bounded list to group — each lands in
+a frame or two. Every box has its final height from the first frame and fills in: no
+skeleton, no spinner and no delay anywhere here. The venue card is the shape to copy: the
+stored id is known synchronously, so the card and its "change" affordance are on screen
+and usable from the first frame while the name and the path fill in. The root `CLAUDE.md` states the general rule this is an instance of;
 a skeleton reappearing in this directory means a read has changed shape, and that is the
 thing to look at.
 

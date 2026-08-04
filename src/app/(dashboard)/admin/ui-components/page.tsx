@@ -1895,6 +1895,16 @@ export default function AdminUIComponentsPage() {
           row and the fixed-height box were each written twice.
         </p>
         <p className="text-sm text-muted-foreground">
+          The tree scope is where almost everything happens: gedu coverage, a
+          parent&rsquo;s own location, and the product form&rsquo;s venue field.
+          The set scope has one consumer left — the product form&rsquo;s
+          municipality mode — because a set only earns its keep when something{" "}
+          <em>outside the geography</em> bounds it, and &ldquo;the Finnish
+          municipality funding this club&rdquo; does. The venue field used to be
+          a set too, over every <code>site</code> row; it was bounded by nothing
+          but what had been created so far, so it moved to the dialog.
+        </p>
+        <p className="text-sm text-muted-foreground">
           In the real app a container above the panel owns the browse position,
           the debounced query and the two server reads behind them — one level
           of children by parent, or a ranked top-N from the search index. Here
@@ -1938,9 +1948,21 @@ export default function AdminUIComponentsPage() {
             database — a prefix match beats an infix one however late in the
             table it sits.
           </p>
+          <p className="text-sm text-muted-foreground mb-3">
+            This one is configured the way the product form&rsquo;s venue dialog
+            configures it: <code>municipality</code> and <code>site</code> are
+            both pickable, so the venue &ldquo;Gymnase municipal de Nîmes&rdquo;
+            is confirmable straight from a search. The caller reads the type to
+            decide what the confirmation meant — a site is the answer, a
+            municipality is the next question (&ldquo;show me the venues
+            here&rdquo;, which is also the only screen that can offer to create
+            one). That is why a site is confirmable but never browsable to:
+            making a municipality terminal is exactly what stops the tree
+            walking past the screen that carries creation.
+          </p>
           <LocationSearchDemo />
         </SubSection>
-        <SubSection title="Set scope (the product form's two modes)">
+        <SubSection title="Set scope (the municipality-club picker)">
           <p className="text-sm text-muted-foreground mb-3">
             The same panel again, handed finished groups instead of a level.
             There is no breadcrumb (there is nothing to browse), no status line
@@ -1951,11 +1973,12 @@ export default function AdminUIComponentsPage() {
           </p>
           <p className="text-sm text-muted-foreground mb-3">
             Worth trying: matching a group header keeps every row under it (type{" "}
-            <code>helsinki</code> to list its venues), and the fold is
-            diacritic-insensitive in both directions (<code>jarvenpaa</code>{" "}
-            finds Järvenpää, and so does <code>järvenpää</code>) — the same fold
-            the database applies, pinned to it by a shared table of inputs in
-            the test suites.
+            <code>uusimaa</code> to list the whole region, or{" "}
+            <code>nyland</code>, since a header matches its alternates too), and
+            the fold is diacritic-insensitive in both directions (
+            <code>jarvenpaa</code> finds Järvenpää, and so does{" "}
+            <code>järvenpää</code>) — the same fold the database applies, pinned
+            to it by a shared table of inputs in the test suites.
           </p>
           <LocationSetDemo />
         </SubSection>
@@ -2233,8 +2256,12 @@ export default function AdminUIComponentsPage() {
 /*  Location Set Demo                                                  */
 /* ------------------------------------------------------------------ */
 
-function venue(id: string, name: string, nameI18n: Json | null = null): LocationSummary {
-  return { id, name, name_i18n: nameI18n, type: "site", country_code: "FI" };
+function municipality(
+  id: string,
+  name: string,
+  nameI18n: Json | null = null,
+): LocationSummary {
+  return { id, name, name_i18n: nameI18n, type: "municipality", country_code: "FI" };
 }
 
 function place(
@@ -2250,56 +2277,45 @@ const UUSIMAA = place("uusimaa", "Uusimaa", "region", { sv: "Nyland" });
 const PIRKANMAA = place("pirkanmaa", "Pirkanmaa", "region");
 const FI = place("fi", "Suomi", "country");
 
-// Venues under their municipality, with the region as the header's context —
-// the exact shape the product picker's site mode builds from the scoped sites
-// read. Järvenpää is here so the diacritic folding is visible, and Helsinki
-// carries its Swedish name so a header search matches an alternate too.
-const VENUE_GROUPS: LocationGroup[] = [
+// Finland's municipalities under their region — the exact shape the product
+// form's municipality mode builds from the whole-country read. A region's own
+// header has no context above it once the country is dropped, hence the empty
+// `detail`. Järvenpää is here so the diacritic folding is visible, and Helsinki
+// carries its Swedish name so a row search matches an alternate too.
+const MUNICIPALITY_GROUPS: LocationGroup[] = [
   {
-    key: "helsinki",
-    label: "Helsinki",
-    detail: "Uusimaa",
-    searchTerms: ["Helsinki", "Helsingfors"],
+    key: "uusimaa",
+    label: "Uusimaa",
+    detail: "",
+    searchTerms: ["Uusimaa", "Nyland"],
     rows: [
       {
-        location: venue("hki-1", "Itälahdenkatu 23 B"),
-        ancestors: [place("helsinki", "Helsinki", "municipality", { sv: "Helsingfors" }), UUSIMAA, FI],
+        location: municipality("helsinki", "Helsinki", { sv: "Helsingfors" }),
+        ancestors: [UUSIMAA, FI],
       },
       {
-        location: venue("hki-2", "Kalasataman kirjasto"),
-        ancestors: [place("helsinki", "Helsinki", "municipality", { sv: "Helsingfors" }), UUSIMAA, FI],
-      },
-    ],
-  },
-  {
-    key: "jarvenpaa",
-    label: "Järvenpää",
-    detail: "Uusimaa",
-    searchTerms: ["Järvenpää"],
-    rows: [
-      {
-        location: venue("jp-1", "Kirjasto"),
-        ancestors: [place("jarvenpaa", "Järvenpää", "municipality"), UUSIMAA, FI],
+        location: municipality("jarvenpaa", "Järvenpää"),
+        ancestors: [UUSIMAA, FI],
       },
     ],
   },
   {
-    key: "tampere",
-    label: "Tampere",
-    detail: "Pirkanmaa",
-    searchTerms: ["Tampere"],
+    key: "pirkanmaa",
+    label: "Pirkanmaa",
+    detail: "",
+    searchTerms: ["Pirkanmaa"],
     rows: [
       {
-        location: venue("tre-1", "Sampola"),
-        ancestors: [place("tampere", "Tampere", "municipality"), PIRKANMAA, FI],
+        location: municipality("tampere", "Tampere"),
+        ancestors: [PIRKANMAA, FI],
       },
     ],
   },
 ];
 
 const SET_LABELS = {
-  searchPlaceholder: "Search venues by name or municipality…",
-  empty: "No venues yet.",
+  searchPlaceholder: "Search municipalities…",
+  empty: "No municipalities are available.",
 };
 
 function LocationSetDemo() {
@@ -2316,15 +2332,10 @@ function LocationSetDemo() {
           onQueryChange={setQuery}
           scope={{
             kind: "set",
-            groups: VENUE_GROUPS,
+            groups: MUNICIPALITY_GROUPS,
             value,
             onSelect: (pick) => setValue(pick.location.id),
             labels: SET_LABELS,
-            footer: (
-              <Button type="button" variant="outline" size="sm">
-                New venue…
-              </Button>
-            ),
           }}
         />
         <p className="text-xs text-muted-foreground">
@@ -2398,10 +2409,20 @@ const LEVELS: Record<string, LocationSummary[]> = {
   "34": [fixtureRow("34032", "Béziers", "municipality")],
 };
 
-/** Fixture search hits, each with the path a real hit carries. */
+const NIMES = fixtureRow("30189", "Nîmes", "municipality");
+
+/**
+ * Fixture search hits for the needle "nimes", each with the path a real hit
+ * carries. The third is a venue rather than a commune, and it is the whole
+ * point of the search demo's configuration: the product form's venue dialog
+ * makes `site` pickable alongside `municipality`, so an admin who knows the
+ * building's name confirms it here in one step instead of walking down to its
+ * commune first. Both types rank against the same needle.
+ */
 const HITS: LocationPick[] = [
-  { location: fixtureRow("30189", "Nîmes", "municipality"), ancestors: [GARD, OCC, FR] },
+  { location: NIMES, ancestors: [GARD, OCC, FR] },
   { location: fixtureRow("34032", "Béziers", "municipality"), ancestors: [fixtureRow("34", "Hérault", "district"), OCC, FR] },
+  { location: fixtureRow("s-30189-1", "Gymnase municipal de Nîmes", "site"), ancestors: [NIMES, GARD, OCC, FR] },
 ];
 
 /**
@@ -2545,7 +2566,10 @@ function LocationSearchDemo() {
           search: { rows: HITS, total: 47, hasMore: false, loading: false },
           selection: {
             mode: "single",
-            pickableTypes: ["municipality"],
+            // The venue dialog's own configuration: two confirmable types, and
+            // the caller decides what each one meant — a site is the answer, a
+            // municipality is "show me the venues here".
+            pickableTypes: ["municipality", "site"],
             onConfirm: () => Promise.resolve(),
             onCancel: () => setQuery(""),
           },

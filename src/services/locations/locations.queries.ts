@@ -190,15 +190,13 @@ export function useCreateLocation() {
     mutationFn: (location: LocationInsert) => service.createLocation(location),
     onSuccess: () => {
       // The only thing this route creates is a site, and a new site changes
-      // both the flat list and the per-municipality one — plus the browse level
-      // it was created under, which is now one row longer.
+      // the per-municipality venue list it landed in — plus the browse level it
+      // was created under, which is now one row longer.
       //
       // RETURNED, not fired-and-forgotten: React Query awaits a promise
-      // returned from onSuccess before resolving mutateAsync. The site picker
-      // auto-selects the created id the moment the dialog closes, and it also
-      // clears any selected id that is not in useSites() — so if mutateAsync
-      // resolved while the sites cache was still the pre-create array, the
-      // picker would select the new venue and immediately wipe it.
+      // returned from onSuccess before resolving mutateAsync, so the venue
+      // dialog cannot hand a freshly created id back to a form whose caches
+      // still describe the world before it existed.
       return Promise.all([
         queryClient.invalidateQueries({ queryKey: locationKeys.sites() }),
         queryClient.invalidateQueries({ queryKey: locationKeys.children() }),
