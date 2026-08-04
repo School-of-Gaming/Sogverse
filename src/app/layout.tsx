@@ -7,6 +7,7 @@ import { getUserWithProfile } from "@/lib/supabase/server";
 import { resolveTimezone, TIMEZONE_COOKIE_NAME } from "@/lib/timezone";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
+import { LayoutShiftTripwire } from "@/components/dev/layout-shift-tripwire";
 import "./globals.css";
 
 const pressStart2P = Press_Start_2P({
@@ -84,6 +85,10 @@ export default async function RootLayout({
               container; no inner element should set h-screen overflow-auto. */}
           {children}
         </Providers>
+        {/* Diagnostic for the intermittent ~20-40px post-load shift — logs
+            browser-attributed layout shifts and scroll-residue landings to
+            the console. Dev builds only; remove when convicted (TODO.md). */}
+        {process.env.NODE_ENV === "development" && <LayoutShiftTripwire />}
         <SpeedInsights />
         <Analytics />
       </body>

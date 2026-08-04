@@ -711,10 +711,10 @@ $$;
 
 
 --
--- Name: create_gamer(uuid, uuid, text, text, date, public.gender_type, text, text); Type: FUNCTION; Schema: public; Owner: -
+-- Name: create_gamer(uuid, uuid, text, text, date, public.gender_type, text, text, text, bigint); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type DEFAULT NULL::public.gender_type, p_minecraft_username text DEFAULT NULL::text, p_minecraft_uuid text DEFAULT NULL::text) RETURNS void
+CREATE FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type DEFAULT NULL::public.gender_type, p_minecraft_username text DEFAULT NULL::text, p_minecraft_uuid text DEFAULT NULL::text, p_roblox_username text DEFAULT NULL::text, p_roblox_user_id bigint DEFAULT NULL::bigint) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -749,6 +749,14 @@ begin
   if p_minecraft_username is not null then
     insert into public.minecraft_accounts (user_id, minecraft_username, minecraft_uuid)
     values (p_gamer_id, p_minecraft_username, p_minecraft_uuid);
+  end if;
+
+  -- Optional Roblox link, on exactly the same terms: a shared account is fine,
+  -- a handle Roblox could not resolve lands with a null account id, and the two
+  -- platforms are independent — a child may have given one, both, or neither.
+  if p_roblox_username is not null then
+    insert into public.roblox_accounts (user_id, roblox_username, roblox_user_id)
+    values (p_gamer_id, p_roblox_username, p_roblox_user_id);
   end if;
 
   -- Link to the parent. The validate_parent_gamer_on_insert trigger re-checks
@@ -2909,10 +2917,10 @@ $$;
 
 
 --
--- Name: register_gedu(uuid, text, text, text, text, text[], uuid[], text, text); Type: FUNCTION; Schema: public; Owner: -
+-- Name: register_gedu(uuid, text, text, text, text, text[], uuid[], text, text, text, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text) RETURNS void
+CREATE FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id text) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
@@ -2954,6 +2962,15 @@ BEGIN
   IF p_minecraft_username IS NOT NULL AND p_minecraft_username <> '' THEN
     INSERT INTO public.minecraft_accounts (user_id, minecraft_username, minecraft_uuid)
     VALUES (p_user_id, p_minecraft_username, NULLIF(p_minecraft_uuid, ''));
+  END IF;
+
+  -- Optional Roblox account, on the same terms. The account id arrives as text
+  -- carrying the same '' sentinel and is cast once here; a non-numeric value
+  -- would raise, which is correct — the only caller resolves it from Roblox's
+  -- own answer, so anything else is a bug rather than a user's typo.
+  IF p_roblox_username IS NOT NULL AND p_roblox_username <> '' THEN
+    INSERT INTO public.roblox_accounts (user_id, roblox_username, roblox_user_id)
+    VALUES (p_user_id, p_roblox_username, NULLIF(p_roblox_user_id, '')::bigint);
   END IF;
 END;
 $$;
@@ -4289,6 +4306,38 @@ CREATE TABLE public.products (
 
 
 --
+-- Name: roblox_accounts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.roblox_accounts (
+    user_id uuid NOT NULL,
+    roblox_username text,
+    roblox_user_id bigint
+);
+
+
+--
+-- Name: TABLE roblox_accounts; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.roblox_accounts IS 'One row per Sogverse account that has given a Roblox handle. Mirrors minecraft_accounts: the row key IS the profile, unlinking clears the columns rather than deleting the row, and two accounts may hold the same Roblox account (siblings share).';
+
+
+--
+-- Name: COLUMN roblox_accounts.roblox_username; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.roblox_accounts.roblox_username IS 'The handle as Roblox spells it when a lookup confirmed one, or as the person typed it when no lookup could. Never rejected for being taken: a shared account is legitimate.';
+
+
+--
+-- Name: COLUMN roblox_accounts.roblox_user_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.roblox_accounts.roblox_user_id IS 'Roblox''s int64 account id, present only when a lookup confirmed the account — its presence is the whole of "verified". Deliberately NOT unique: siblings sharing one Roblox account across two Sogverse accounts is supported, exactly as it is for Minecraft (00135).';
+
+
+--
 -- Name: schedule_slots; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -4691,6 +4740,14 @@ ALTER TABLE ONLY public.products
 
 ALTER TABLE ONLY public.profiles
     ADD CONSTRAINT profiles_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: roblox_accounts roblox_accounts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.roblox_accounts
+    ADD CONSTRAINT roblox_accounts_pkey PRIMARY KEY (user_id);
 
 
 --
@@ -5612,6 +5669,14 @@ ALTER TABLE ONLY public.profiles
 
 
 --
+-- Name: roblox_accounts roblox_accounts_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.roblox_accounts
+    ADD CONSTRAINT roblox_accounts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
 -- Name: schedule_slots schedule_slots_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -5890,6 +5955,13 @@ CREATE POLICY admin_full_access_products ON public.products TO authenticated USI
 --
 
 CREATE POLICY admin_full_access_profiles ON public.profiles TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
+
+
+--
+-- Name: roblox_accounts admin_full_access_roblox_accounts; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY admin_full_access_roblox_accounts ON public.roblox_accounts TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
@@ -6183,6 +6255,13 @@ CREATE POLICY parents_read_linked_gamer_profiles ON public.gamer_profiles FOR SE
 
 
 --
+-- Name: roblox_accounts parents_read_linked_gamer_roblox; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY parents_read_linked_gamer_roblox ON public.roblox_accounts FOR SELECT TO authenticated USING (public.is_parent_of(user_id));
+
+
+--
 -- Name: profiles parents_view_linked_gamers; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -6314,6 +6393,12 @@ CREATE POLICY read_schedule_slots_via_product ON public.schedule_slots FOR SELEC
 
 
 --
+-- Name: roblox_accounts; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.roblox_accounts ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: schedule_slots; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -6351,6 +6436,13 @@ CREATE POLICY users_insert_own_minecraft_account ON public.minecraft_accounts FO
 
 
 --
+-- Name: roblox_accounts users_insert_own_roblox_account; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY users_insert_own_roblox_account ON public.roblox_accounts FOR INSERT TO authenticated WITH CHECK ((user_id = ( SELECT auth.uid() AS uid)));
+
+
+--
 -- Name: feedback_submissions users_read_own_feedback; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -6365,6 +6457,13 @@ CREATE POLICY users_read_own_minecraft_account ON public.minecraft_accounts FOR 
 
 
 --
+-- Name: roblox_accounts users_read_own_roblox_account; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY users_read_own_roblox_account ON public.roblox_accounts FOR SELECT TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid)));
+
+
+--
 -- Name: minecraft_accounts users_update_own_minecraft_account; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -6376,6 +6475,13 @@ CREATE POLICY users_update_own_minecraft_account ON public.minecraft_accounts FO
 --
 
 CREATE POLICY users_update_own_profile ON public.profiles FOR UPDATE TO authenticated USING ((id = ( SELECT auth.uid() AS uid))) WITH CHECK (((id = ( SELECT auth.uid() AS uid)) AND (role = ( SELECT public.get_user_role() AS get_user_role))));
+
+
+--
+-- Name: roblox_accounts users_update_own_roblox_account; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY users_update_own_roblox_account ON public.roblox_accounts FOR UPDATE TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((user_id = ( SELECT auth.uid() AS uid)));
 
 
 --
@@ -6606,11 +6712,11 @@ GRANT ALL ON FUNCTION public.count_active_seats(p_product_id uuid) TO service_ro
 
 
 --
--- Name: FUNCTION create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text) TO service_role;
+REVOKE ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint) TO service_role;
 
 
 --
@@ -7013,11 +7119,11 @@ GRANT ALL ON FUNCTION public.refresh_product_seat_counts(p_product_id uuid) TO s
 
 
 --
--- Name: FUNCTION register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id text); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text) TO service_role;
+REVOKE ALL ON FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id text) TO service_role;
 
 
 --
@@ -7399,6 +7505,14 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_translations TO authen
 GRANT SELECT ON TABLE public.products TO anon;
 GRANT ALL ON TABLE public.products TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.products TO authenticated;
+
+
+--
+-- Name: TABLE roblox_accounts; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON TABLE public.roblox_accounts TO service_role;
+GRANT SELECT,INSERT,UPDATE ON TABLE public.roblox_accounts TO authenticated;
 
 
 --
