@@ -1694,7 +1694,10 @@
     "edit": "Modifier le nom d’utilisateur {platform}",
     "editFor": "Modifier le nom d’utilisateur {platform} de {name}",
     "save": "Enregistrer",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "saved": "Nom d’utilisateur {platform} enregistré !",
+    "cleared": "Nom d’utilisateur {platform} effacé.",
+    "saveFailed": "Échec de la mise à jour du nom d’utilisateur {platform}."
   },
   "parent": {
     "placeholders": {
@@ -1803,9 +1806,10 @@
         "title": "Compte Minecraft",
         "description": "Associez un nom d’utilisateur Minecraft Java Edition pour les fonctionnalités en jeu."
       },
-      "mcSaved": "Nom d’utilisateur Minecraft enregistré !",
-      "mcCleared": "Nom d’utilisateur Minecraft effacé",
-      "failedUpdateMc": "Échec de la mise à jour du nom d’utilisateur Minecraft"
+      "roblox": {
+        "title": "Compte Roblox",
+        "description": "Associez un nom d’utilisateur Roblox pour les fonctionnalités en jeu."
+      }
     },
     "switchToGamer": {
       "title": "Passer au profil de {name} pour rejoindre {productName} ?",
@@ -1827,10 +1831,9 @@
     "changePin": "Modifier le code PIN",
     "minecraftAccount": "Compte Minecraft",
     "minecraftDescription": "Associez votre compte Minecraft Java Edition",
+    "robloxAccount": "Compte Roblox",
+    "robloxDescription": "Associez votre compte Roblox",
     "mcHeadsAttribution": "Skins rendus par <link>mc-heads.net</link>",
-    "minecraftSaved": "Nom d’utilisateur Minecraft enregistré !",
-    "minecraftCleared": "Nom d’utilisateur Minecraft effacé.",
-    "failedToUpdateMinecraft": "Échec de la mise à jour du nom d’utilisateur Minecraft.",
     "spokenLanguages": "Langues parlées à la maison",
     "location": "Localisation"
   },

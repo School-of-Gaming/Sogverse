@@ -1,9 +1,17 @@
 # Game accounts (Minecraft, Roblox)
 
 A child's identity on a game platform, wherever it is shown. **Two components and
-one row shape** cover every surface: `/settings`, the parent's gamer detail, gedu
-registration, the admin user page, the admin gamer chip, the voice participant
-row, and the gedu session roster.
+one row shape** cover every surface: `/settings`, the parent's gamer detail, the
+add-gamer dialog, gedu registration, the admin user page, the admin gamer chip,
+the voice participant row, and the gedu session roster.
+
+Both platforms are **persisted**, in one table each keyed by the profile
+(`minecraft_accounts`, `roblox_accounts`), and the two are independent
+throughout: a person may have given one handle, both, or neither, and no surface
+treats one as implying the other. The account keys are deliberately *not* one
+value space — a dashed Mojang UUID in a text column, a Roblox int64 in a bigint
+one — and neither column is unique, because siblings sharing one game account
+across two Sogverse accounts is a supported shape.
 
 ## The shape
 
@@ -53,6 +61,16 @@ name will be. A labelled input with a Verify button beside it and a preview row
 underneath was the previous design and is explicitly rejected — it made a
 register page meet the identity as a different, taller species than every other
 page did.
+
+**`autoEdit` is about what the surface is for, not about whether anything is
+saved, and it never buys height.** Both modes declare the same height at the same
+node, so opening a row costs nothing and closing one saves nothing — which means
+the choice is only ever about how much the surface appears to be asking for. A
+registration page opens its rows because typing a name is most of what that page
+is: nothing is competing for the attention. A form whose subject is something
+else — the add-gamer dialog, whose job is a name and a birthday — leaves them
+closed, because two open text inputs among four fields read as two more things
+being demanded rather than two things on offer. The pencil is the invitation.
 
 **Rule: committing is verifying.** There is no Verify control, because a second
 control asking "is that real?" is the question the commit already asks. Enter or
@@ -109,6 +127,17 @@ render costs two server hops behind a per-IP rate limit — so an omitted prop c
 only mean the placeholder, and a real one has to be handed in by whoever resolved
 it server-side. A resolved Roblox URL is short-lived and must never be persisted.
 
+**The visible consequence, and it is deliberate: a stored Roblox handle draws the
+silhouette on arrival, while a stored Minecraft one draws a skin.** A surface
+holding one identity could resolve it on load, and none of them do — a saved
+handle nobody has re-verified would spend three upstream calls per page view (and
+the query layer's retries on top, for a handle the platform no longer knows), on
+a budget the whole fleet shares, to decorate a row that already says what it
+knows. The picture does appear the moment someone commits the name, because the
+lookup that verifies it hands both renders straight to the row. Anything that
+wants pictures on load needs the batched, server-side shape described below, not
+a per-row lookup bolted onto a page.
+
 **Rule: a surface showing many Roblox identities resolves them in one batched
 call, not one per row.** The row takes a picture and never goes and finds one, so
 whoever renders a list owns the lookup — and the naive shape of that is N
@@ -150,7 +179,26 @@ let that mutation's own invalidation feed the row its new props. That loop is
 what keeps a calling surface from holding a second copy of the username.
 
 A server route that persists a username re-runs the platform lookup itself. That
-is not redundant with the row's check: a client-verified name is not evidence.
+is not redundant with the row's check: a client-verified name is not evidence. On
+Roblox it is also the only honest way to obtain the account key at all — neither
+of that platform's APIs is reachable from a browser, so a number arriving from
+one could not have been looked up there.
+
+**Rule: a route stores the name it was sent and takes only the account key from
+its own lookup.** The row already adopted the canonical casing before it
+committed, so what reaches the server is what the person meant; a route that
+quietly rewrote the name would be answering a question nobody asked it, and would
+make the value in the database depend on when the lookup last ran. A name the
+platform cannot resolve is stored all the same, with a null key — an unverified
+name is still the child's answer, which is the whole of why `unverified` is a
+state and a failed lookup is not.
+
+**Rule: a mutation invalidates the stored rows, never a platform's whole cache
+root.** The two branches under a platform's key hierarchy are not alike: one
+holds rows we saved (indexed reads by primary key) and the other holds what the
+platform told us (three upstream calls against a shared per-IP budget on Roblox).
+Invalidating the root drags every mounted lookup into a refetch to re-learn an
+answer the save did not change.
 
 ## Testing
 

@@ -3106,12 +3106,18 @@ function GameAccountDemo() {
         <GameEditableRowDemo />
       </SubSection>
 
-      <SubSection title="Where it would land — the add-gamer dialog">
+      <SubSection title="4. Where both rows land — the add-gamer dialog">
         <p className="text-sm text-muted-foreground">
           The real dialog, inert: the create call is a prop rather than a hook, so
           this page hands it something that resolves after a beat and writes
           nothing. The PIN gate in front of it is skipped &mdash; it is a
-          conditional on one query with nothing of its own to look at.
+          conditional on one query with nothing of its own to look at. Both game
+          rows are the real thing and both commits run the real lookup; only the
+          submit is defanged. They sit <em>closed</em> rather than opened, unlike
+          the register form in demo 1 &mdash; the same row costs the same height
+          either way, so the choice is about how much the dialog appears to be
+          asking for. The gender buttons are three across at every width, which is
+          what pays for the two rows fitting on a phone.
         </p>
         <AddGamerDialogDemo />
       </SubSection>

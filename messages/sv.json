@@ -1694,7 +1694,10 @@
     "edit": "Redigera {platform}-användarnamn",
     "editFor": "Redigera {platform}-användarnamn för {name}",
     "save": "Spara",
-    "cancel": "Avbryt"
+    "cancel": "Avbryt",
+    "saved": "{platform}-användarnamn sparat!",
+    "cleared": "{platform}-användarnamn borttaget.",
+    "saveFailed": "Kunde inte uppdatera {platform}-användarnamn."
   },
   "parent": {
     "placeholders": {
@@ -1803,9 +1806,10 @@
         "title": "Minecraft-konto",
         "description": "Koppla ett Minecraft Java Edition-användarnamn för funktioner i spelet."
       },
-      "mcSaved": "Minecraft-användarnamn sparat!",
-      "mcCleared": "Minecraft-användarnamn borttaget",
-      "failedUpdateMc": "Kunde inte uppdatera Minecraft-användarnamn"
+      "roblox": {
+        "title": "Roblox-konto",
+        "description": "Koppla ett Roblox-användarnamn för funktioner i spelet."
+      }
     },
     "switchToGamer": {
       "title": "Byt till {name}s profil för att gå med i {productName}?",
@@ -1827,10 +1831,9 @@
     "changePin": "Byt PIN",
     "minecraftAccount": "Minecraft-konto",
     "minecraftDescription": "Koppla ditt Minecraft Java Edition-konto",
+    "robloxAccount": "Roblox-konto",
+    "robloxDescription": "Koppla ditt Roblox-konto",
     "mcHeadsAttribution": "Skins renderade av <link>mc-heads.net</link>",
-    "minecraftSaved": "Minecraft-användarnamn sparat!",
-    "minecraftCleared": "Minecraft-användarnamn borttaget.",
-    "failedToUpdateMinecraft": "Kunde inte uppdatera Minecraft-användarnamn.",
     "spokenLanguages": "Talade språk",
     "location": "Plats"
   },
