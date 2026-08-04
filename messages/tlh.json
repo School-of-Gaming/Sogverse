@@ -1133,6 +1133,7 @@
     "pageTitle": "jIH SOG",
     "myFamily": "qorDu’wIj",
     "myGamers": "jIH toy’wI’pu’",
+    "myGamersShort": "toy’wI’pu’",
     "upcomingSessions": "ghoSqep’a’",
     "upcomingSessionsEmptyStateGamer": "raghlIj qaS, naDev jatlh pa’Daq Gedu jupmey je yIghoS!",
     "upcomingSessionsEmptyStateParent": "puqlIj raghDaj qaS, naDev jatlh pa’Daq Gedu jupmey je ghoSchoH!",
@@ -1744,6 +1745,20 @@
   "parent": {
     "placeholders": {
       "myGamersHint": "QunwI’Daj qelmeH toy’wI’ yIwIv."
+    },
+    "enrollment": {
+      "typeLabel": {
+        "consumer_club": "ghom’a’",
+        "municipality_club": "ghom’a’",
+        "camp": "wa’leSvam",
+        "event": "Soqbogh"
+      },
+      "liveBadge": "qaStaH",
+      "noSchedule": "poH nabta’ tu’lu’be’",
+      "endedOn": "{date} rIntaH",
+      "waitlistBadgeLabel": "loStaHwI’ tlhegh — {position}DIch",
+      "emptyState": "{name} Suvbe’taH. ghom’a’mey tIbej ’ej wa’ yIwIv!",
+      "emptyStateCta": "ghom’a’mey raghmey je tIbej"
     },
     "nextSession": {
       "title": "{name} veb may’",

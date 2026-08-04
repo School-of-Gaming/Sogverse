@@ -108,6 +108,60 @@ export const PREVIEW_SCENES = [
     ],
   },
   {
+    surface: "parent-dashboard",
+    title: "Parent dashboard",
+    description:
+      "The parent dashboard reorganised around the children rather than around the sessions: a section per child, headed by their identicon and first name, with one card per enrollment beneath it — soonest session first, finished runs muted at the bottom. The cards carry no child's name, because the heading above them already does; the type noun is the eyebrow, the schedule is the shared formatter's sentence, and the footer holds the Join on a remote product, the venue on an in-person one, the waitlist reassurance on a place in line, or the day a finished run ended. The My Gamers tile strip is gone — the headings absorbed it, and adding a child is one quiet tile after the last section. Every action is inert.",
+    chrome: "dashboard",
+    scenarios: [
+      {
+        slug: "typical",
+        label: "One child, one club",
+        description:
+          "The page most parents actually open: one heading, one card, a locked Join naming the next session, and the billing card in its ordinary single-button form. It is here so the design can be judged on the common case — a dashboard that reads well with four cards and looks abandoned with one has failed at its main job.",
+      },
+      {
+        slug: "busy-family",
+        label: "Two children, every badge",
+        description:
+          "Everything that can coexist on one page. Aino has a remote club running right now — lit gradient, Live badge, Join open — with a failing card on the corner over the top of it, plus a waitlist place carrying its number and the line about what happens when a seat opens. Her brother, whose name is long enough to test both the heading and the nav chip, has an in-person camp naming its venue where a Join would be and a club winding down with the muted “Won’t renew” badge. Two Stripe customers, so the billing card is in its split form with a button each.",
+      },
+      {
+        slug: "seven-gamers",
+        label: "Seven children — pill under load",
+        description:
+          "Past four children the section pill stops naming them one by one and collapses to a single “Gamers” chip, so this is where that threshold and the seven headings behind it can be judged together. One of the seven is signed up for nothing, which is the only place the quiet empty-state card appears.",
+      },
+      {
+        slug: "finished-camp",
+        label: "A finished camp",
+        description:
+          "The demotion, which is only legible next to something live: a camp that ended a fortnight ago sits below the club that is still running, its type label, name and schedule all a tone down, its Live slot dropped entirely (nothing of that run is left to start), and the day it ended in the footer where its venue used to be.",
+      },
+    ],
+  },
+  {
+    surface: "gamer-dashboard",
+    title: "Gamer dashboard",
+    description:
+      "The child's own dashboard with the same enrollment cards, self-scoped: no attribution anywhere, grouped under the type nouns they actually have rather than by person, and with a section pill that names those nouns plus Yty. The welcome header and the Yty grid are unchanged. Money and queue decisions are absent by design — a payment problem renders in the non-interactive “ask a parent” voice, and there is no way to give up a waitlist place.",
+    chrome: "dashboard",
+    scenarios: [
+      {
+        slug: "typical",
+        label: "One club",
+        description:
+          "A single noun, a single card, camps and events absent rather than empty — the composition most gamers have.",
+      },
+      {
+        slug: "camp-and-club",
+        label: "A club and a camp",
+        description:
+          "The two-noun page, with the two footer shapes side by side: a club running right now with its Join lit, and an in-person camp naming its venue. The club also carries the kid-facing payment badge, which shows the same alert a parent sees and tells the child to ask one.",
+      },
+    ],
+  },
+  {
     surface: "gedu-dashboard",
     title: "Gedu dashboard",
     description:

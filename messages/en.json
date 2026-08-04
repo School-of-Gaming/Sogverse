@@ -1088,6 +1088,7 @@
     "pageTitle": "My SOG",
     "myFamily": "My Family",
     "myGamers": "My Gamers",
+    "myGamersShort": "Gamers",
     "upcomingSessions": "Sessions",
     "upcomingSessionsEmptyStateGamer": "When your next session is coming up, this is where you’ll join the voice room with your Gedu and friends.",
     "upcomingSessionsEmptyStateParent": "When your child’s next session is coming up, this is where they’ll join the voice room with their Gedu and friends.",
@@ -1787,6 +1788,20 @@
   "parent": {
     "placeholders": {
       "myGamersHint": "Select a gamer to manage their account."
+    },
+    "enrollment": {
+      "typeLabel": {
+        "consumer_club": "Club",
+        "municipality_club": "Club",
+        "camp": "Camp",
+        "event": "Event"
+      },
+      "liveBadge": "Live",
+      "noSchedule": "No schedule set yet",
+      "endedOn": "Ended {date}",
+      "waitlistBadgeLabel": "On the waitlist — number {position} in line",
+      "emptyState": "{name} isn’t signed up for anything yet. Take a look at what’s on and pick something together.",
+      "emptyStateCta": "Browse clubs and camps"
     },
     "nextSession": {
       "title": "{name}’s next session",

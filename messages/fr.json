@@ -1088,6 +1088,7 @@
     "pageTitle": "Mon SOG",
     "myFamily": "Ma famille",
     "myGamers": "Mes joueurs",
+    "myGamersShort": "Joueurs",
     "upcomingSessions": "Sessions",
     "upcomingSessionsEmptyStateGamer": "Ta prochaine session apparaîtra ici — avec le lien pour rejoindre ton Gedu et tes amis.",
     "upcomingSessionsEmptyStateParent": "Quand la prochaine session de votre enfant approchera, c’est ici qu’il rejoindra le salon vocal avec son Gedu et ses amis.",
@@ -1699,6 +1700,20 @@
   "parent": {
     "placeholders": {
       "myGamersHint": "Sélectionnez un joueur pour gérer son compte."
+    },
+    "enrollment": {
+      "typeLabel": {
+        "consumer_club": "Club",
+        "municipality_club": "Club",
+        "camp": "Camp",
+        "event": "Événement"
+      },
+      "liveBadge": "En direct",
+      "noSchedule": "Horaires à venir",
+      "endedOn": "Terminé le {date}",
+      "waitlistBadgeLabel": "Sur liste d’attente — n° {position} dans la file",
+      "emptyState": "{name} n’a encore rien de prévu. Regardez ensemble ce qui est proposé.",
+      "emptyStateCta": "Voir les clubs et les camps"
     },
     "nextSession": {
       "title": "Prochaine session de {name}",

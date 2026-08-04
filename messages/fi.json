@@ -1088,6 +1088,7 @@
     "pageTitle": "Oma SOG",
     "myFamily": "Perheeni",
     "myGamers": "Pelaajani",
+    "myGamersShort": "Pelaajat",
     "upcomingSessions": "Tapaamiset",
     "upcomingSessionsEmptyStateGamer": "Kun seuraava tapaamisesi lähestyy, täältä pääset liittymään ryhmän omalle puhekanavalle.",
     "upcomingSessionsEmptyStateParent": "Kun lapsesi seuraavan tapaamisen aika koittaa, ilmestyy tähän painike, josta pääsette sisään puhekanaville.",
@@ -1699,6 +1700,20 @@
   "parent": {
     "placeholders": {
       "myGamersHint": "Valitse pelaaja hallitaksesi hänen tiliään."
+    },
+    "enrollment": {
+      "typeLabel": {
+        "consumer_club": "Kerho",
+        "municipality_club": "Kerho",
+        "camp": "Leiri",
+        "event": "Tapahtuma"
+      },
+      "liveBadge": "Käynnissä",
+      "noSchedule": "Aikataulua ei ole vielä sovittu",
+      "endedOn": "Päättyi {date}",
+      "waitlistBadgeLabel": "Jonotuslistalla — sija {position}",
+      "emptyState": "{name} ei ole vielä ilmoittautunut mihinkään. Katsokaa yhdessä, mitä tarjolla on.",
+      "emptyStateCta": "Selaa kerhoja ja leirejä"
     },
     "nextSession": {
       "title": "{name}: seuraava sessio",

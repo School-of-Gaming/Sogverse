@@ -1088,6 +1088,7 @@
     "pageTitle": "Min SOG",
     "myFamily": "Min familj",
     "myGamers": "Mina spelare",
+    "myGamersShort": "Spelare",
     "upcomingSessions": "Träffar",
     "upcomingSessionsEmptyStateGamer": "När din nästa träff börjar är det här du går in i röstrummet med din Gedu och dina vänner.",
     "upcomingSessionsEmptyStateParent": "När ditt barns nästa träff börjar är det här hen går in i röstrummet med sin Gedu och sina vänner.",
@@ -1699,6 +1700,20 @@
   "parent": {
     "placeholders": {
       "myGamersHint": "Välj en spelare för att hantera kontot."
+    },
+    "enrollment": {
+      "typeLabel": {
+        "consumer_club": "Klubb",
+        "municipality_club": "Klubb",
+        "camp": "Läger",
+        "event": "Evenemang"
+      },
+      "liveBadge": "Pågår",
+      "noSchedule": "Inget schema ännu",
+      "endedOn": "Avslutades {date}",
+      "waitlistBadgeLabel": "I kön — plats {position}",
+      "emptyState": "{name} är inte anmäld till något ännu. Titta tillsammans på vad som finns.",
+      "emptyStateCta": "Bläddra bland klubbar och läger"
     },
     "nextSession": {
       "title": "{name}s nästa pass",
