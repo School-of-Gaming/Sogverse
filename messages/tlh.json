@@ -1158,6 +1158,8 @@
   },
   "family": {
     "addGamer": "QujwI’ chel",
+    "manageGamer": "yISeH",
+    "manageGamerAria": "{name} yISeH",
     "switchFailed": "qaSbe’ QunwI’ choH",
     "loadFailed": "qorDu’ polHa’lu’pu’",
     "switchToParentToAddGamer": {
@@ -1789,8 +1791,8 @@
       "liveBadge": "qaStaH",
       "noSchedule": "poH nabta’ tu’lu’be’",
       "endedOn": "{date} rIntaH",
-      "waitlistBadgeLabel": "loStaHwI’ tlhegh — {position}DIch",
       "emptyState": "{name} Suvbe’taH. ghom’a’mey tIbej ’ej wa’ yIwIv!",
+      "noGamers": "naDev QujwI’ tu’be’lu’. QujwI’ wa’DIch yIchel, ghIq ghom’a’ qoj raQ bowIv!",
       "emptyStateCta": "ghom’a’mey raghmey je tIbej"
     },
     "nextSession": {
@@ -1806,8 +1808,8 @@
       "forLabel": "{name}vaD",
       "positionLabel": "DaqlIj",
       "positionValue": "{position}DIch",
-      "reassuranceCustomer": "quS poSDI’, QInHom wIngeH.",
-      "reassuranceGamer": "quS poSDI’, SoSlI’ vavlI’ je wIja’.",
+      "reassuranceCustomer": "tlheghDaq {position}DIch SoH — quS poSDI’, QInHom wIngeH.",
+      "reassuranceGamer": "tlheghDaq {position}DIch SoH — quS poSDI’, SoSlI’ vavlI’ je wIja’.",
       "leave": {
         "trigger": "tlhegh yImej",
         "confirmTitle": "tlhegh Damejqang’a’?",

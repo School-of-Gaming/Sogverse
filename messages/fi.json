@@ -1113,6 +1113,8 @@
   },
   "family": {
     "addGamer": "Lisää pelaaja",
+    "manageGamer": "Hallitse",
+    "manageGamerAria": "Hallitse pelaajaa {name}",
     "switchFailed": "Tilin vaihtaminen epäonnistui",
     "loadFailed": "Perheen lataaminen epäonnistui",
     "switchToParentToAddGamer": {
@@ -1744,8 +1746,8 @@
       "liveBadge": "Käynnissä",
       "noSchedule": "Aikataulua ei ole vielä sovittu",
       "endedOn": "Päättyi {date}",
-      "waitlistBadgeLabel": "Jonotuslistalla — sija {position}",
       "emptyState": "{name} ei ole vielä ilmoittautunut mihinkään. Katsokaa yhdessä, mitä tarjolla on.",
+      "noGamers": "Täällä ei ole vielä pelaajia. Lisää ensimmäinen pelaaja ja valitkaa sitten yhdessä kerho tai leiri.",
       "emptyStateCta": "Selaa kerhoja ja leirejä"
     },
     "nextSession": {
@@ -1761,8 +1763,8 @@
       "forLabel": "Pelaaja: {name}",
       "positionLabel": "Sijasi jonossa",
       "positionValue": "{position}.",
-      "reassuranceCustomer": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
-      "reassuranceGamer": "Lähetämme vanhemmallesi sähköpostia heti, kun paikka vapautuu.",
+      "reassuranceCustomer": "Jonossa sijalla {position} — lähetämme sähköpostia heti, kun paikka vapautuu.",
+      "reassuranceGamer": "Olet jonossa sijalla {position} — lähetämme vanhemmallesi sähköpostia heti, kun paikka vapautuu.",
       "leave": {
         "trigger": "Poistu jonotuslistalta",
         "confirmTitle": "Poistutaanko jonotuslistalta?",

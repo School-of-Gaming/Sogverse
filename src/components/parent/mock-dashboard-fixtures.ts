@@ -24,7 +24,13 @@ import type { ParentDashboardGamer } from "./parent-dashboard-page-body";
  */
 
 /**
- * **Four scenarios.**
+ * **Three scenarios — one per mutually exclusive page state.**
+ *
+ * Card states are not page states: live, waitlisted, in-person, finished,
+ * failing, winding down, and empty can all coexist on one page under different
+ * children, so they share a scenario rather than each owning one. What cannot
+ * coexist is the pill's two shapes and the common case's calm, so those are the
+ * three.
  *
  * `typical` is the family the product is actually built for: one child, one
  * club, nothing wrong. It is the page most parents open, and it is here so the
@@ -32,30 +38,40 @@ import type { ParentDashboardGamer } from "./parent-dashboard-page-body";
  * a dashboard that reads well with four cards and looks empty with one has
  * failed at its main job.
  *
- * `busy-family` carries everything that can coexist on one page: two children,
- * both kinds of product, and all three corner badges. It is where the card
- * states are read against each other — a remote club live right now with a
- * failing card, a waitlist place with no session to join, an in-person camp
- * naming its venue where the Join would be, and a club winding down. The second
- * child's name is deliberately long, because a section heading and a nav chip
- * are the two places user content gets to decide the layout, and a family is
- * free to enter any name they like.
+ * `busy-family` is everything else at once, on exactly **three** children — the
+ * most the pill will name one by one, so this is also the widest the bar ever
+ * gets before the collapse. Across the three: a remote club live right now with
+ * a failing card beside a waitlist place with no session to join; an in-person
+ * camp naming its venue where the Join would be, beside a club winding down and
+ * a finished camp sitting muted *below* them (the demotion has to read as
+ * history without reading as broken, and that is only visible next to something
+ * live); and a child signed up for nothing, which is where the empty-state card
+ * is judged. One name is deliberately long, because a section heading and a nav
+ * chip are the two places user content gets to decide the layout. Billing
+ * carries two Stripe customers — the migrated-family shape, and the only one
+ * where the card grows a button per account.
  *
- * `seven-gamers` is the pill under load. Past four children the nav stops naming
- * them one by one, so this is the scenario that shows the collapse and the
- * seven headings it collapses — and one of the seven is signed up for nothing,
- * which is the only place the empty-state card can be seen.
+ * `seven-gamers` is the pill past the limit. Above three children the nav stops
+ * naming them one by one, so this is the scenario that shows the collapse and
+ * the seven headings it collapses.
  *
- * `finished-camp` is the demotion: a camp that ended a fortnight ago, muted,
- * with the day it ended where its venue used to be, sitting *below* the club
- * that is still running. A finished run has to read as history without reading
- * as broken, and that is only visible next to a live one.
+ * `new-family` is the account before the first child exists — the page a parent
+ * meets minutes after registering. No sections, no add-tile-after-the-last:
+ * one dashed card whose add button is the page's whole next step, with billing
+ * in its ordinary single-button form and help beneath.
+ *
+ * `no-enrollments` is the step after that: children linked, nothing booked for
+ * any of them. Every section renders its per-child empty card pointing at the
+ * shop, and the page has to read as an invitation rather than a fault — this is
+ * the state every real family passes through between adding their gamers and
+ * their first purchase.
  */
 export const PARENT_DASHBOARD_SCENARIOS = [
   "typical",
   "busy-family",
   "seven-gamers",
-  "finished-camp",
+  "new-family",
+  "no-enrollments",
 ] as const;
 
 export type ParentDashboardScenario =
@@ -202,7 +218,30 @@ export function buildParentDashboardFixture(
               endsInDays: null,
               cancelledAccessInDays: 18,
             },
+            {
+              participationId: "mock-enrollment-summer-camp",
+              productName: "Summer Roblox Camp",
+              productType: "camp",
+              isRemote: false,
+              slots: [0, 1, 2, 3, 4].map((weekday) => ({
+                weekday,
+                startTime: "10:00",
+                durationMinutes: 180,
+              })),
+              // Ends in the past, so the walk finds nothing left and the card
+              // becomes the finished one, sorting below the two still running.
+              // The dates stay relative to `now` because "ended" is a fact
+              // about the present — a hardcoded last day would quietly stop
+              // being past.
+              startedDaysAgo: 19,
+              endsInDays: -12,
+              siteName: CAMP_SITE_NAME,
+            },
           ]),
+          // The child signed up for nothing — the empty-state card's home, and
+          // a real thing in a family this size, where one has just finished a
+          // term and nothing has been booked yet.
+          gamer(clock, GAMER_IDS.otso, "Otso", []),
         ],
         // Two Stripe customers — the shape a family migrated from the old
         // platform ends up with, and the only one where the billing card grows
@@ -224,6 +263,20 @@ export function buildParentDashboardFixture(
             ],
           },
         ],
+      };
+
+    case "new-family":
+      return { gamers: [], accounts: [] };
+
+    case "no-enrollments":
+      // Two children so the repetition is visible — one empty section could
+      // read as a one-off, two show the page's whole posture in this state.
+      return {
+        gamers: [
+          gamer(clock, GAMER_IDS.aino, "Aino", []),
+          gamer(clock, GAMER_IDS.otso, "Otso", []),
+        ],
+        accounts: [],
       };
 
     case "seven-gamers":
@@ -253,9 +306,9 @@ export function buildParentDashboardFixture(
           gamer(clock, GAMER_IDS.linnea, "Linnea", [
             club(now, "mock-seven-linnea", "Stardew Valley Co-op Club", 4, "16:00"),
           ]),
-          // The one child signed up for nothing — the only place the empty-state
-          // card appears, and a real thing in a family this size, where one has
-          // just finished a term and nothing has been booked yet.
+          // Signed up for nothing, like Otso in `busy-family` — kept empty here
+          // too because seven full sections would bury the thing this scenario
+          // exists to show, which is the nav above them.
           gamer(clock, GAMER_IDS.otso, "Otso", []),
           gamer(clock, GAMER_IDS.venla, "Venla", [
             club(now, "mock-seven-venla", "Terraria Builders Club", 6, "18:00"),
@@ -276,48 +329,6 @@ export function buildParentDashboardFixture(
         ],
       };
 
-    case "finished-camp":
-      return {
-        gamers: [
-          gamer(clock, GAMER_IDS.aino, "Aino", [
-            {
-              participationId: "mock-enrollment-minecraft-club",
-              productName: "Minecraft Explorers Club",
-              productType: "consumer_club",
-              isRemote: true,
-              slots: [futureSlot(now, 2, "17:00", 90)],
-              startedDaysAgo: 35,
-              endsInDays: null,
-            },
-            {
-              participationId: "mock-enrollment-summer-camp",
-              productName: "Summer Roblox Camp",
-              productType: "camp",
-              isRemote: false,
-              slots: [0, 1, 2, 3, 4].map((weekday) => ({
-                weekday,
-                startTime: "10:00",
-                durationMinutes: 180,
-              })),
-              // Ends in the past, so the walk finds nothing left and the card
-              // becomes the finished one. The dates stay relative to `now`
-              // because "ended" is a fact about the present — a hardcoded last
-              // day would quietly stop being past.
-              startedDaysAgo: 19,
-              endsInDays: -12,
-              siteName: CAMP_SITE_NAME,
-            },
-          ]),
-        ],
-        accounts: [
-          {
-            stripeCustomerId: "cus_mock_single",
-            covers: [
-              { gamerFirstName: "Aino", productName: "Minecraft Explorers Club" },
-            ],
-          },
-        ],
-      };
   }
 }
 

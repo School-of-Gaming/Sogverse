@@ -52,12 +52,11 @@ const EMPTY_DASHBOARD_ACTIVITY_TYPE: GeduActivityType = "club";
  *   group on a personal page reads as something missing rather than absent.
  * - **Nothing on any card attributes it to anyone.** There is nobody else it
  *   could belong to.
- * - **No affordance that spends money or gives up a place.** A failing card
- *   still shows in the corner, because a child turning up to a session that is
- *   about to lapse deserves to know something is up — but it says "ask a parent"
- *   and does nothing when pressed. A waitlist place shows its number and offers
- *   no way to leave the queue: that is a decision with a cost, and it is not
- *   this account's to make.
+ * - **No money at all.** Billing is a parent concern: a payment problem or a
+ *   subscription winding down never badges a child's card here — the corner
+ *   badges are parent-only by construction. A waitlist place shows its number
+ *   in the footer and offers no way to leave the queue: that is a decision
+ *   with a cost, and it is not this account's to make.
  */
 export function GamerDashboardPageBody({
   enrollments,
@@ -133,9 +132,16 @@ export function GamerDashboardPageBody({
                   {s(ACTIVITY_HEADING_KEY[group.type])}
                 </h2>
                 {group.items.length === 0 ? (
-                  <p className="text-muted-foreground">
-                    {s("upcomingSessionsEmptyStateGamer")}
-                  </p>
+                  // Same dashed grammar as the parent page's empty cards: the
+                  // section keeps the shape it will have the moment something
+                  // lands in it, and nothing about it reads as a fault.
+                  <Card className="border-dashed">
+                    <CardContent className="py-8 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        {s("upcomingSessionsEmptyStateGamer")}
+                      </p>
+                    </CardContent>
+                  </Card>
                 ) : (
                   <div className="space-y-3">
                     {group.items.map((enrollment) => (

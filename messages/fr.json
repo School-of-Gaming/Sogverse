@@ -1113,6 +1113,8 @@
   },
   "family": {
     "addGamer": "Ajouter un joueur",
+    "manageGamer": "Gérer",
+    "manageGamerAria": "Gérer le profil de {name}",
     "switchFailed": "Échec du changement de compte",
     "loadFailed": "Échec du chargement de la famille",
     "switchToParentToAddGamer": {
@@ -1744,8 +1746,8 @@
       "liveBadge": "En direct",
       "noSchedule": "Horaires à venir",
       "endedOn": "Terminé le {date}",
-      "waitlistBadgeLabel": "Sur liste d’attente — n° {position} dans la file",
       "emptyState": "{name} n’a encore rien de prévu. Regardez ensemble ce qui est proposé.",
+      "noGamers": "Pas encore de joueur ici. Ajoutez votre premier joueur, puis choisissez ensemble un club ou un camp.",
       "emptyStateCta": "Voir les clubs et les camps"
     },
     "nextSession": {
@@ -1761,8 +1763,8 @@
       "forLabel": "Pour {name}",
       "positionLabel": "Votre position",
       "positionValue": "n° {position}",
-      "reassuranceCustomer": "Nous vous enverrons un e-mail dès qu’une place se libère.",
-      "reassuranceGamer": "Nous enverrons un e-mail à un parent dès qu’une place se libère.",
+      "reassuranceCustomer": "Position {position} dans la file — nous vous enverrons un e-mail dès qu’une place se libère.",
+      "reassuranceGamer": "Tu es en position {position} dans la file — nous enverrons un e-mail à un parent dès qu’une place se libère.",
       "leave": {
         "trigger": "Quitter la liste d’attente",
         "confirmTitle": "Quitter la liste d’attente ?",

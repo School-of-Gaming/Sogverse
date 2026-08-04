@@ -1113,6 +1113,8 @@
   },
   "family": {
     "addGamer": "Lägg till gamer",
+    "manageGamer": "Hantera",
+    "manageGamerAria": "Hantera {name}",
     "switchFailed": "Det gick inte att byta konto",
     "loadFailed": "Det gick inte att läsa in familjen",
     "switchToParentToAddGamer": {
@@ -1744,8 +1746,8 @@
       "liveBadge": "Pågår",
       "noSchedule": "Inget schema ännu",
       "endedOn": "Avslutades {date}",
-      "waitlistBadgeLabel": "I kön — plats {position}",
       "emptyState": "{name} är inte anmäld till något ännu. Titta tillsammans på vad som finns.",
+      "noGamers": "Inga gamers här ännu. Lägg till din första gamer och välj sedan en klubb eller ett läger tillsammans.",
       "emptyStateCta": "Bläddra bland klubbar och läger"
     },
     "nextSession": {
@@ -1761,8 +1763,8 @@
       "forLabel": "För {name}",
       "positionLabel": "Din plats i kön",
       "positionValue": "nr {position}",
-      "reassuranceCustomer": "Vi mejlar så snart en plats blir ledig.",
-      "reassuranceGamer": "Vi mejlar en förälder så snart en plats blir ledig.",
+      "reassuranceCustomer": "Plats {position} i kön — vi mejlar så snart en plats blir ledig.",
+      "reassuranceGamer": "Du är på plats {position} i kön — vi mejlar en förälder så snart en plats blir ledig.",
       "leave": {
         "trigger": "Lämna väntelistan",
         "confirmTitle": "Lämna väntelistan?",

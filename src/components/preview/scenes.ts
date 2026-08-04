@@ -111,7 +111,7 @@ export const PREVIEW_SCENES = [
     surface: "parent-dashboard",
     title: "Parent dashboard",
     description:
-      "The parent dashboard reorganised around the children rather than around the sessions: a section per child, headed by their identicon and first name, with one card per enrollment beneath it — soonest session first, finished runs muted at the bottom. The cards carry no child's name, because the heading above them already does; the type noun is the eyebrow, the schedule is the shared formatter's sentence, and the footer holds the Join on a remote product, the venue on an in-person one, the waitlist reassurance on a place in line, or the day a finished run ended. The My Gamers tile strip is gone — the headings absorbed it, and adding a child is one quiet tile after the last section. Every action is inert.",
+      "The parent dashboard reorganised around the children rather than around the sessions: a section per child, headed by their identicon, first name and a quiet Manage link to their identity page, with one card per enrollment beneath it — soonest session first, finished runs muted at the bottom. The cards carry no child's name, because the heading above them already does; the type noun is the eyebrow, the schedule is the shared formatter's sentence, and the footer holds the Join on a remote product, the venue on an in-person one, the place in line and what happens when a seat opens on a waitlisted one, or the day a finished run ended. A waitlisted card is the one card that is not a link — there is no page behind it yet — and the corner is reserved for genuine problems. The My Gamers tile strip is gone — the headings absorbed it, and adding a child is one quiet tile after the last section. Every action is inert.",
     chrome: "dashboard",
     scenarios: [
       {
@@ -122,21 +122,27 @@ export const PREVIEW_SCENES = [
       },
       {
         slug: "busy-family",
-        label: "Two children, every badge",
+        label: "Three children, every card state",
         description:
-          "Everything that can coexist on one page. Aino has a remote club running right now — lit gradient, Live badge, Join open — with a failing card on the corner over the top of it, plus a waitlist place carrying its number and the line about what happens when a seat opens. Her brother, whose name is long enough to test both the heading and the nav chip, has an in-person camp naming its venue where a Join would be and a club winding down with the muted “Won’t renew” badge. Two Stripe customers, so the billing card is in its split form with a button each.",
+          "Everything that is not mutually exclusive, on one page — and exactly three children, so the pill is also at its named-entry limit, the widest it ever gets before collapsing (four forced sideways scrolling on an iPhone-width viewport). Aino has a remote club running right now — lit gradient, Live badge, Join open — with a failing card on the corner over the top of it, plus a waitlisted club whose footer carries her place in line and which links nowhere. Her brother, whose name is long enough to test both the heading and the nav chip, has an in-person camp naming its venue where a Join would be, a club winding down with the muted “Won’t renew” badge, and last summer’s camp sitting muted below both — the demotion is only legible next to something live. Otso is signed up for nothing, which is where the quiet empty-state card appears. Two Stripe customers, so the billing card is in its split form with a button each.",
       },
       {
         slug: "seven-gamers",
-        label: "Seven children — pill under load",
+        label: "Seven children — pill collapsed",
         description:
-          "Past four children the section pill stops naming them one by one and collapses to a single “Gamers” chip, so this is where that threshold and the seven headings behind it can be judged together. One of the seven is signed up for nothing, which is the only place the quiet empty-state card appears.",
+          "Past three children the section pill stops naming them one by one and collapses to a single “Gamers” chip, so this is where the collapse and the seven headings behind it can be judged together.",
       },
       {
-        slug: "finished-camp",
-        label: "A finished camp",
+        slug: "new-family",
+        label: "New account — no gamers yet",
         description:
-          "The demotion, which is only legible next to something live: a camp that ended a fortnight ago sits below the club that is still running, its type label, name and schedule all a tone down, its Live slot dropped entirely (nothing of that run is left to start), and the day it ended in the footer where its venue used to be.",
+          "The dashboard minutes after registering: no children linked, so the child sections give way to one dashed card whose full-strength add button is the page's whole next step. The pill holds only Billing and Help, billing is in its ordinary single-button form, and nothing anywhere reads as an error — the page has nothing yet, not something missing.",
+      },
+      {
+        slug: "no-enrollments",
+        label: "Gamers added, nothing booked",
+        description:
+          "The step after new-family and the state every real family passes through before their first purchase: two children, each section holding only the dashed empty card pointing at the shop. The page has to read as an invitation to book something, not as a dashboard that failed to load.",
       },
     ],
   },
@@ -144,20 +150,20 @@ export const PREVIEW_SCENES = [
     surface: "gamer-dashboard",
     title: "Gamer dashboard",
     description:
-      "The child's own dashboard with the same enrollment cards, self-scoped: no attribution anywhere, grouped under the type nouns they actually have rather than by person, and with a section pill that names those nouns plus Yty. The welcome header and the Yty grid are unchanged. Money and queue decisions are absent by design — a payment problem renders in the non-interactive “ask a parent” voice, and there is no way to give up a waitlist place.",
+      "The child's own dashboard with the same enrollment cards, self-scoped: no attribution anywhere, grouped under the type nouns they actually have rather than by person, and with a section pill that names those nouns plus Yty. The welcome header and the Yty grid are unchanged. Money is absent entirely — billing is a parent concern, so no payment or subscription badge ever renders here — and there is no way to give up a waitlist place.",
     chrome: "dashboard",
     scenarios: [
       {
         slug: "typical",
-        label: "One club",
+        label: "A club, a queue, a camp",
         description:
-          "A single noun, a single card, camps and events absent rather than empty — the composition most gamers have.",
+          "One page carrying every card state a gamer can meet: a club running right now with its Join lit, a club they are queued for — the waitlist sentence in the child's voice, no link on the card — and an in-person camp naming its venue where the Join would be. Two type nouns with events absent rather than empty; the single-noun composition is the same mechanism the gedu dashboard's clubs-only scenario already shows.",
       },
       {
-        slug: "camp-and-club",
-        label: "A club and a camp",
+        slug: "empty",
+        label: "Nothing booked yet",
         description:
-          "The two-noun page, with the two footer shapes side by side: a club running right now with its Join lit, and an in-person camp naming its venue. The club also carries the kid-facing payment badge, which shows the same alert a parent sees and tells the child to ask one.",
+          "The child with no enrollments: the welcome, a single “Clubs” heading over the quiet dashed card — the same convention the gedu's empty dashboard uses — and the Yty grid, which is theirs regardless. The copy tells them to ask a parent, because nothing on this account can book anything.",
       },
     ],
   },

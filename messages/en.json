@@ -1113,6 +1113,8 @@
   },
   "family": {
     "addGamer": "Add Gamer",
+    "manageGamer": "Manage",
+    "manageGamerAria": "Manage {name}",
     "switchFailed": "Failed to switch accounts",
     "loadFailed": "Failed to load family",
     "switchToParentToAddGamer": {
@@ -1832,8 +1834,8 @@
       "liveBadge": "Live",
       "noSchedule": "No schedule set yet",
       "endedOn": "Ended {date}",
-      "waitlistBadgeLabel": "On the waitlist — number {position} in line",
       "emptyState": "{name} isn’t signed up for anything yet. Take a look at what’s on and pick something together.",
+      "noGamers": "No gamers here yet. Add your first gamer, then pick a club or camp together.",
       "emptyStateCta": "Browse clubs and camps"
     },
     "nextSession": {
@@ -1849,8 +1851,8 @@
       "forLabel": "For {name}",
       "positionLabel": "Your position",
       "positionValue": "#{position}",
-      "reassuranceCustomer": "We’ll email you the moment a seat opens.",
-      "reassuranceGamer": "We’ll email a parent as soon as a seat opens.",
+      "reassuranceCustomer": "You’re #{position} in line — we’ll email you the moment a seat opens.",
+      "reassuranceGamer": "You’re #{position} in line — we’ll email a parent as soon as a seat opens.",
       "leave": {
         "trigger": "Leave waitlist",
         "confirmTitle": "Leave the waitlist?",

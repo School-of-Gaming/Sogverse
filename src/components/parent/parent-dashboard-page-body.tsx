@@ -1,12 +1,14 @@
 "use client";
 
-import { UserPlus } from "lucide-react";
+import Link from "next/link";
+import { UserCog, UserPlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
 import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
+import { ROUTES } from "@/lib/constants";
 import { EnrollmentCard } from "./EnrollmentCard";
 import { ParentHelpSection } from "./ParentHelpSection";
 import type { FamilyEnrollmentSummary } from "./enrollment-rollup";
@@ -31,13 +33,21 @@ export interface ParentDashboardGamer {
 /**
  * Above this many children the pill stops naming them one by one.
  *
- * Four fits on a phone alongside Billing and Help; five does not, and the fifth
- * child is exactly the family least able to afford a nav bar that has to be
- * scrolled sideways to be read. Past the threshold the entries collapse to a
- * single "Gamers" chip aimed at the first child's section — from there the page
- * itself is the index, which is what a long list wants anyway.
+ * Three fits on a typical parent's phone alongside Billing and Help; four
+ * forces the bar into sideways scrolling (measured on an iPhone 12 Pro's
+ * 390px), and the fourth child is exactly the family least able to afford a
+ * nav that has to be scrolled to be read. Past the threshold the entries
+ * collapse to a single "Gamers" chip aimed at the first child's section — from
+ * there the page itself is the index, which is what a long list wants anyway.
+ *
+ * The cap is a fixed count rather than a measurement on purpose: the server
+ * has to render the pill's final shape on first paint, so the decision must be
+ * arithmetic both ends run identically. A breakpoint-doubled pill (named list
+ * on desktop, collapsed on phone, toggled by CSS alone) is the legitimate way
+ * to make this width-aware if the desktop trade ever hurts — measuring and
+ * correcting after hydration is not.
  */
-const MAX_NAMED_GAMER_PILL_ENTRIES = 4;
+const MAX_NAMED_GAMER_PILL_ENTRIES = 3;
 
 /** The section id one child's block scrolls to. */
 function gamerSectionId(gamer: ParentDashboardGamer): string {
@@ -65,10 +75,11 @@ function gamerSectionId(gamer: ParentDashboardGamer): string {
  * - **The My Gamers row is absorbed into those headings.** It was a strip of
  *   avatars whose only job was to get you to a child, sitting above a list that
  *   then told you nothing about which child anything belonged to. The headings
- *   do both jobs at once and the strip has nothing left to do. Adding a child is
- *   the one thing it still owned, and that is now a single tile after the last
- *   section — where a parent looks when they have finished reading about the
- *   children they already have.
+ *   do both jobs at once and the strip has nothing left to do. The tile's link
+ *   to the child's identity page survives as a quiet Manage affordance on the
+ *   heading row, and adding a child — the one other thing the strip owned — is
+ *   now a single tile after the last section, where a parent looks when they
+ *   have finished reading about the children they already have.
  * - **A card is an enrollment, not an occurrence.** A weekly club used to emit
  *   one card per upcoming session; now it emits one, with the cadence in words
  *   and the next session named by the Join button. A waitlist place is a card in
@@ -138,6 +149,15 @@ export function ParentDashboardPageBody({
           them read as several unrelated pages stacked up. Billing and help
           genuinely are different sections and keep the wide gap. */}
       <div className="space-y-24 pb-24">
+        {gamers.length === 0 ? (
+          // The brand-new parent: no children linked yet, so the page's one job
+          // is getting the first one added. The add affordance is promoted to
+          // full strength here — the quiet-tile reasoning below only holds when
+          // there are children above it competing for the first read.
+          <div className="mx-auto max-w-3xl">
+            <NoGamersCard />
+          </div>
+        ) : (
         <div className="space-y-16">
           {gamers.map((gamer) => (
             <section
@@ -162,6 +182,24 @@ export function ParentDashboardPageBody({
                   <h2 className="min-w-0 break-words text-3xl font-bold">
                     {gamer.firstName}
                   </h2>
+                  {/* The identity page — name, game accounts — kept as a quiet
+                      affordance beside the heading: managing a child is a
+                      sometimes action, and a loud button here would compete
+                      with the cards for the first thing read. `ml-auto` so a
+                      long name wraps against the heading's space, not the
+                      link's. */}
+                  <Link
+                    href={`${ROUTES.customer.gamers}/${gamer.id}`}
+                    aria-label={f("manageGamerAria", { name: gamer.firstName })}
+                    className={buttonVariants({
+                      variant: "ghost",
+                      size: "sm",
+                      className: "ml-auto shrink-0 text-muted-foreground",
+                    })}
+                  >
+                    <UserCog className="h-4 w-4" aria-hidden />
+                    {f("manageGamer")}
+                  </Link>
                 </div>
 
                 {gamer.enrollments.length === 0 ? (
@@ -196,6 +234,7 @@ export function ParentDashboardPageBody({
             </button>
           </div>
         </div>
+        )}
 
         <section id="billing" className="scroll-mt-32">
           <div className="mx-auto max-w-3xl space-y-6">
@@ -227,6 +266,33 @@ export function ParentDashboardPageBody({
  * something lands in it — a heading with a card under it — rather than a
  * paragraph floating where a card is about to appear.
  */
+/**
+ * The whole dashboard before the first child exists.
+ *
+ * Same dashed, quiet grammar as the per-child empty card — nothing is wrong,
+ * there is simply nothing yet — but the add button is full strength rather
+ * than a muted tile, because on this page it is not competing with anything:
+ * it *is* the next step.
+ */
+function NoGamersCard() {
+  const t = useTranslations("parent.enrollment");
+  const f = useTranslations("family");
+
+  return (
+    <Card className="border-dashed">
+      <CardContent className="flex flex-col items-center gap-4 py-10 text-center">
+        <p className="max-w-prose text-sm text-muted-foreground">
+          {t("noGamers")}
+        </p>
+        <button type="button" className={buttonVariants({ size: "default" })}>
+          <UserPlus className="h-4 w-4" aria-hidden />
+          {f("addGamer")}
+        </button>
+      </CardContent>
+    </Card>
+  );
+}
+
 function EmptyGamerCard({ firstName }: { firstName: string }) {
   const t = useTranslations("parent.enrollment");
 

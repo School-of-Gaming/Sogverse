@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
-import { BADGE_FRAME } from "@/components/ui/card-corner-badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import { useNow, useTimezone } from "@/providers";
@@ -49,9 +48,9 @@ import { SubscriptionEndingBadge } from "./SubscriptionEndingBadge";
  * - **The footer answers "where is this happening", and always has an answer.**
  *   A remote product answers with the Join button (lit inside its window, locked
  *   and naming the next session outside it); an in-person one with its venue and
- *   a pin; a waitlisted one with the line telling the family what happens when a
- *   seat opens; a finished one with the day it ended. Those are exclusive by
- *   construction, so the row is populated in every state rather than reserved
+ *   a pin; a waitlisted one with the family's place in line and what happens
+ *   when a seat opens; a finished one with the day it ended. Those are exclusive
+ *   by construction, so the row is populated in every state rather than reserved
  *   and left standing empty in most of them.
  * - **The Live badge's slot is reserved; nothing else is.** It is the one thing
  *   here that appears on a *clock tick* rather than on something the reader did,
@@ -62,17 +61,25 @@ import { SubscriptionEndingBadge } from "./SubscriptionEndingBadge";
  *   session to start — because holding space for something that cannot come is
  *   its own defect.
  *
- * **One corner badge at a time, by severity.** A failing card outranks a
- * waitlist place outranks a subscription winding down; in practice they barely
- * co-occur (a waitlisted enrollment has no live subscription to fail), and where
- * they could, the one the family has to act on wins the corner. The badge is a
- * *sibling* of the Card, not a child — a card that clips its own overflow would
- * otherwise cut it in half.
+ * **The corner is for problems, and only the parent's problems.** Across the
+ * product the corner badge means "this needs attention" — the payment badge
+ * here, the backlog badge on a gedu's card — so nothing that is merely a
+ * *status* may wear it: the waitlist place lives in the footer sentence, where
+ * it reads as information rather than a fault. A failing card outranks a
+ * subscription winding down for the slot, and neither renders on the gamer's
+ * own dashboard at all — billing is a parent concern, and a child's card must
+ * not carry an alarm the child cannot act on. The badge is a *sibling* of the
+ * Card, not a child — a card that clips its own overflow would otherwise cut it
+ * in half.
  *
- * **The whole card is one link.** An invisible stretched anchor covers it, the
- * chevron marks that there is more inside, and the Join button lifts itself
- * above the anchor so it keeps receiving its own clicks. No `<a>` inside `<a>`,
- * so middle-click and prefetch both behave.
+ * **The whole card is one link — except a waitlisted one, which is no link at
+ * all.** A family in the queue has no access to the product's page yet, so the
+ * card drops the stretched anchor, the chevron and the hover lift together:
+ * nothing about it may promise "there is more inside" when there is not. On the
+ * cards that do link, an invisible stretched anchor covers the card, the chevron
+ * marks that there is more inside, and the Join button lifts itself above the
+ * anchor so it keeps receiving its own clicks. No `<a>` inside `<a>`, so
+ * middle-click and prefetch both behave.
  *
  * **A finished run is quiet history, not a fault.** Its identity and schedule
  * drop a tone, its gradient can never light, and the footer names the day it
@@ -86,9 +93,10 @@ export function EnrollmentCard({
 }: {
   enrollment: FamilyEnrollmentSummary;
   /**
-   * Whose dashboard this renders on. Drives the payment badge's voice — a
-   * parent gets the clickable money badge, a gamer a non-interactive "ask a
-   * parent" alert — and gates the parent-only subscription-ending badge.
+   * Whose dashboard this renders on. Both corner badges are parent-only —
+   * billing is a parent concern, so a gamer's card never carries the payment
+   * or subscription-ending badge — and the waitlist footer speaks to the
+   * parent or to the child accordingly.
    */
   audience: SessionAudience;
   /**
@@ -138,7 +146,8 @@ export function EnrollmentCard({
       <Card
         className={cn(
           "group relative overflow-hidden transition-[border-color,box-shadow]",
-          "hover:border-primary/40 hover:shadow-lg focus-within:border-primary/40 focus-within:shadow-lg",
+          !waitlisted &&
+            "hover:border-primary/40 hover:shadow-lg focus-within:border-primary/40 focus-within:shadow-lg",
           live &&
             "border-primary/40 bg-gradient-to-r from-primary/5 to-transparent",
         )}
@@ -187,10 +196,12 @@ export function EnrollmentCard({
                   {t("liveBadge")}
                 </Badge>
               )}
-              <ChevronRight
-                aria-hidden
-                className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-              />
+              {!waitlisted && (
+                <ChevronRight
+                  aria-hidden
+                  className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                />
+              )}
             </div>
           </div>
 
@@ -245,13 +256,20 @@ export function EnrollmentCard({
               </span>
             )}
             {endedOn === null && waitlisted && (
+              // The place in line leads the sentence, in body text rather than
+              // on the corner: the corner is this product's grammar for "this
+              // needs attention", and a queue position is information, not a
+              // fault. `tabular-nums` so the digits keep their width when
+              // somebody ahead gives up their spot — the one number on this
+              // page that can change while a parent is looking at it.
               <span className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
                 <Hourglass className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                <span className="min-w-0">
+                <span className="min-w-0 tabular-nums">
                   {w(
                     audience === "gamer"
                       ? "reassuranceGamer"
                       : "reassuranceCustomer",
+                    { position: waitlistPosition },
                   )}
                 </span>
               </span>
@@ -285,28 +303,29 @@ export function EnrollmentCard({
             by the product it opens. The ring is inset because the card clips its
             own overflow, so keyboard focus lights the card's edge rather than
             being shaved off it. Sits below the Join, which lifts itself with
-            `z-10` to keep receiving its own clicks. */}
-        <Link
-          href={openHref}
-          onClick={(e) => {
-            if (openHref === "#") e.preventDefault();
-          }}
-          aria-label={productName}
-          className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-        />
+            `z-10` to keep receiving its own clicks. A waitlisted card renders no
+            anchor at all — there is no page behind it yet. */}
+        {!waitlisted && (
+          <Link
+            href={openHref}
+            onClick={(e) => {
+              if (openHref === "#") e.preventDefault();
+            }}
+            aria-label={productName}
+            className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          />
+        )}
       </Card>
 
-      {/* Outside the card, over its corner, so none of these ever eats a click
-          meant for the card body. One at a time, most actionable first. */}
-      {paymentProblem ? (
+      {/* Outside the card, over its corner, so neither ever eats a click meant
+          for the card body. Parent-only, one at a time, most actionable first. */}
+      {audience === "customer" && paymentProblem ? (
         <PaymentProblemBadge
           participationId={participationId}
           audience={audience}
           showAlert
         />
-      ) : waitlistPosition !== null ? (
-        <WaitlistPositionBadge position={waitlistPosition} />
-      ) : cancellation && audience === "customer" ? (
+      ) : audience === "customer" && cancellation ? (
         <SubscriptionEndingBadge
           accessUntil={cancellation.accessUntil}
           lastSessionStart={cancellation.lastSessionStart}
@@ -314,40 +333,6 @@ export function EnrollmentCard({
           gamerFirstName={gamerFirstName ?? productName}
         />
       ) : null}
-    </div>
-  );
-}
-
-/**
- * The family's place in line, on the card's corner — "#3".
- *
- * Amber rather than red: a waitlist place is not a problem to fix, it is a
- * state to be aware of, and the corner's red is spoken for by the one badge that
- * *is* a problem. `tabular-nums` keeps the digits from reflowing the pill when
- * somebody ahead in the queue gives up their spot, which is the one number on
- * these pages that can change while a parent is looking at it.
- *
- * Non-interactive on both surfaces. Giving up a place is a decision with a cost
- * — you rejoin at the back — so it belongs behind the product's own page and its
- * confirmation dialog, not on a badge a thumb can brush past on a phone.
- */
-function WaitlistPositionBadge({ position }: { position: number }) {
-  const t = useTranslations("parent.waitlist");
-  const e = useTranslations("parent.enrollment");
-  const label = e("waitlistBadgeLabel", { position });
-
-  return (
-    <div
-      role="img"
-      aria-label={label}
-      title={label}
-      className={cn(
-        BADGE_FRAME,
-        "cursor-default gap-1 bg-warning px-2 text-xs font-semibold tabular-nums text-warning-foreground",
-      )}
-    >
-      <Hourglass className="h-3.5 w-3.5 shrink-0" aria-hidden />
-      {t("positionValue", { position })}
     </div>
   );
 }
