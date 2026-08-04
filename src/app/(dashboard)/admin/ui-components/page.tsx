@@ -2348,9 +2348,12 @@ function LocationSetDemo() {
       <div className="space-y-2">
         <h4 className="text-sm font-semibold">Empty, and no results</h4>
         <p className="text-xs text-muted-foreground">
-          An empty set says so in the caller&rsquo;s words; a query that matches
-          nothing says that instead. Both occupy the same height as the loaded
-          list, so the button below never moves.
+          An empty set says so in the caller&rsquo;s words &mdash; the panel
+          cannot know whether &ldquo;nothing here&rdquo; means no venues or no
+          municipalities &mdash; while a query that matches nothing says that
+          instead, and names the needle. Both occupy exactly the height the
+          loaded list does, so whatever the form puts under this panel sits
+          still across all three.
         </p>
         <LocationPickerPanel
           query={emptyQuery}

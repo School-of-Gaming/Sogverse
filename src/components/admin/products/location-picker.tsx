@@ -109,16 +109,25 @@ function SitePicker({ value, onChange }: ModeProps) {
   // the everyday one — a municipality club toggled from online to in-person,
   // which leaves a municipality id in a field that now takes only venues.
   // "Not read yet" must never be mistaken for either.
+  const dropping = shouldDropStoredRow(value, row, VENUE_TYPES);
+
   useEffect(() => {
-    if (shouldDropStoredRow(value, row, VENUE_TYPES)) onChange(null);
-  }, [value, row, onChange]);
+    if (dropping) onChange(null);
+  }, [dropping, onChange]);
 
   return (
     <>
-      {value === null ? (
-        // Nothing is stored, so nothing is pending and this is final from the
-        // first frame: a compact affordance, not a panel-sized hole. The panel
-        // it used to hold lives in the dialog now.
+      {/* Read the guard's own verdict rather than waiting for the effect it
+          drives. An effect runs *after* the paint that made it true, so gating
+          only on `value` shows one frame of a card the guard has already
+          condemned — on the online-to-in-person toggle that frame is a
+          municipality rendered as a venue, pill and all, which is a thing that
+          cannot exist. One predicate, read in both places, and there is no
+          frame to see. */}
+      {value === null || dropping ? (
+        // Nothing is stored (or nothing valid is), so nothing is pending and
+        // this is final from the first frame: a compact affordance, not a
+        // panel-sized hole. The panel it used to hold lives in the dialog now.
         <ChoosePlaceButton
           label={t("chooseVenue")}
           onClick={() => setPicking(true)}
@@ -311,10 +320,12 @@ interface SelectedLocationCardProps {
  * What a chosen place collapses to: its name, its path, an affordance to change
  * it, and — for a venue — the two tiers of site notes.
  *
- * The card is at its final size from the first frame and fills the text in, per
- * the loading rule: the read behind it is one row by primary key, so a skeleton
- * would be gone before it could be read, and the "Change" button is live
- * immediately because it needs nothing from the read.
+ * The card itself is at its final size from the first frame and fills the text
+ * in, per the loading rule: the read behind it is one row by primary key, so a
+ * skeleton would be gone before it could be read, and the "Change" button is
+ * live immediately because it needs nothing from the read. The notes editors
+ * stacked under it are a separate read with a settle of their own, older than
+ * this control and untouched by it.
  */
 function SelectedLocationCard({
   locationId,
@@ -350,8 +361,11 @@ function SelectedLocationCard({
             <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
             <div className="min-w-0">
               {/* Both lines keep their height while the row is resolving, so
-                  the name and the path appear in place rather than growing the
-                  card under whatever is below it. */}
+                  the name and the path appear *in place* and the card's own
+                  height never changes. That claim stops at the card: the notes
+                  editors below it grow when their own read lands, which is a
+                  pre-existing settle this reserves nothing for and does not
+                  pretend to fix. */}
               <div className="flex min-h-6 items-center gap-2">
                 {location && (
                   <>
@@ -393,15 +407,35 @@ function SelectedLocationCard({
         </div>
       </div>
 
+      {/*
+        The `key` is load-bearing and must not be "simplified" away.
+
+        A notes editor holds its open/closed state and its draft text in local
+        state, seeded once at mount. Since the picker became an overlay, this
+        card is no longer unmounted while a different venue is being chosen —
+        so without a key an editor left open across a venue change survives the
+        change with the *old* venue's draft in it, pointed at the *new*
+        `locationId`. Saving then writes one building's address and notes onto
+        another's, and `site_details` / `site_staff_details` are per-site rows
+        shared by every product at that site, so the damage is not confined to
+        the product being edited.
+
+        Keying on the id makes a venue change a remount, which is what drops
+        the stale draft. Anything else — resetting from props, an effect that
+        syncs the draft — reintroduces the same class of bug the first time
+        someone edits one of the two pieces of state and not the other.
+      */}
       {showNotes && (
         <>
           <SiteNotesEditor
+            key={`member-${locationId}`}
             locationId={locationId}
             tier="member"
             address={details?.member?.address ?? null}
             notes={details?.member?.notes ?? null}
           />
           <SiteNotesEditor
+            key={`staff-${locationId}`}
             locationId={locationId}
             tier="staff"
             notes={details?.staff?.notes ?? null}

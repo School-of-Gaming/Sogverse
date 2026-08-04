@@ -537,9 +537,11 @@ one municipality's venues, one row by primary key, a bounded list to group — e
 a frame or two. Every box has its final height from the first frame and fills in: no
 skeleton, no spinner and no delay anywhere here. The venue card is the shape to copy: the
 stored id is known synchronously, so the card and its "change" affordance are on screen
-and usable from the first frame while the name and the path fill in. The root `CLAUDE.md` states the general rule this is an instance of;
-a skeleton reappearing in this directory means a read has changed shape, and that is the
-thing to look at.
+and usable from the first frame while the name and the path fill in — the card's own
+height never changes, which is the part that matters and the extent of what it claims.
+The root `CLAUDE.md` states the general rule this is an instance of; a skeleton
+reappearing in this directory means a read has changed shape, and that is the thing to
+look at.
 
 ## Per-country labels & hierarchy config
 
@@ -619,8 +621,13 @@ foreign-key violation instead of letting the write through.
 
 **Rule: an in-person product pins to a `site` (leaf) location — never to a municipality,
 region or country.** This gives the ancestor-walk matcher a well-defined start point.
-Defence in depth: the product form's zod rule disables submit until a leaf is chosen; the
-CHECK + trigger are the DB backstop.
+Defence in depth, and each layer stops something the next one cannot: the picker only ever
+hands the form a `site`, because that is the only type its venue flow completes on; the
+clear-on-invalid guard drops a stored id that resolves to anything else, which is what
+catches a product whose delivery mode was toggled after it was saved; the form refuses to
+submit while the field is empty, so a dropped pick cannot be saved as nothing; and the
+CHECK plus the `BEFORE INSERT/UPDATE` trigger are the backstop that binds every writer,
+including one that never touched the form.
 
 **Rule: `is_remote` and `spoken_language_code` on `products` are NOT NULL with no
 DEFAULT — admins must explicitly pick both on every product.** No silent default at any
