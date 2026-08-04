@@ -201,9 +201,10 @@ function MunicipalityPicker({ value, onChange }: ModeProps) {
  * The Finland row comes from the browse read at the root of the tree — the same
  * request the panel makes when someone clicks back up to "all countries", so it
  * is one cache entry serving both and can never disagree with what browsing
- * shows. Nothing waits on it: until it lands there is no seed, the dialog opens
- * at the root with Finland the only country in it, and one click reaches the
- * same place. That degradation is deliberate, and it is why the seed is a
+ * shows. Nothing waits on it: while the read is pending there is no seed and
+ * the dialog opens at the (empty) root; the moment it resolves, the seed and
+ * the root's rows land in the same render, so no one-country root list is ever
+ * on screen. That degradation is deliberate, and it is why the seed is a
  * derived fallback rather than an effect that writes state — an effect could
  * land after the admin had already navigated and drag them back.
  *

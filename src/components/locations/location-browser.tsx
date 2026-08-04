@@ -66,7 +66,14 @@ import {
 /** Stable identity for "no seed", so the derived path does not churn. */
 const NO_PATH: readonly LocationChainSummary[] = [];
 
-/** Whether a row belongs to the country a caller restricted the picker to. */
+/**
+ * Whether a row belongs to the country a caller restricted the picker to.
+ *
+ * A row with a null `country_code` is refused. Every seeded row carries its
+ * code, so nothing is hidden today — but admin-created `site` rows don't (the
+ * create route never sets it), so country-scoping the *venue* dialog would
+ * silently hide every admin-created venue until sites get a backfilled code.
+ */
 function inCountry(
   row: { country_code: string | null },
   countryCode: string | undefined,

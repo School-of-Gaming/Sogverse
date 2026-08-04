@@ -2386,7 +2386,7 @@ function LocationCoverageDemo() {
           query={query}
           onQueryChange={setQuery}
           scope={{
-              path: fixture.path,
+            path: fixture.path,
             onDrill: fixture.onDrill,
             onOpenDepth: fixture.onOpenDepth,
             minQueryLength: 2,
