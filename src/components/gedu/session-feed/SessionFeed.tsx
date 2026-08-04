@@ -6,19 +6,21 @@ import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useNow, useTimezone } from "@/providers";
 import { cn } from "@/lib/utils";
-import { NowDivider } from "./NowDivider";
-import { SessionFeedItem } from "./SessionFeedItem";
 import {
-  entryCompleteness,
+  NowDivider,
+  editToggleAnchor,
+  formatMonthLabel,
+  formatSessionLabels,
   newestPastEntryId,
   partitionFeedEntries,
   pastEntryWindow,
-  type SessionCompleteness,
-} from "./entry-state";
-import { withMonthDividers, type SessionFeedRow } from "./feed-rows";
+  useViewportAnchor,
+  withMonthDividers,
+  type SessionFeedRow,
+} from "@/components/session-feed";
+import { SessionFeedItem } from "./SessionFeedItem";
+import { entryCompleteness, type SessionCompleteness } from "./entry-state";
 import { isPartialSessionSaveError } from "./partial-save";
-import { editToggleAnchor, useViewportAnchor } from "./scroll-anchor";
-import { formatMonthLabel, formatSessionLabels } from "./session-labels";
 import type {
   SessionEntryDraft,
   SessionFeedEntry,

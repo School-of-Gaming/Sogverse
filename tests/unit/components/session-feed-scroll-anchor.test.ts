@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   editToggleAnchor,
   resolveScrollCompensation,
-} from "@/components/gedu/session-feed/scroll-anchor";
+} from "@/components/session-feed/scroll-anchor";
 
 /**
  * The feed changes height where the reader is not looking — the future horizon

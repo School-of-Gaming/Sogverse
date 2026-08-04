@@ -7,6 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Markdown } from "@/components/ui/markdown";
+import {
+  SessionReport,
+  type SessionLabels,
+} from "@/components/session-feed";
 import { cn } from "@/lib/utils";
 import { AttendanceSummary } from "./AttendanceSummary";
 import { CollapsibleRegion } from "./CollapsibleRegion";
@@ -19,9 +23,7 @@ import {
 } from "./entry-state";
 import { SessionPlanEditor } from "./SessionPlanEditor";
 import { SessionRecordEditor } from "./SessionRecordEditor";
-import { SessionReport } from "./SessionReport";
 import { StaffNoteBlock } from "./StaffNoteBlock";
-import type { SessionLabels } from "./session-labels";
 import type {
   SessionEntryDraft,
   SessionFeedEntry,

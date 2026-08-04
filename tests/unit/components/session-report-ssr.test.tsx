@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/../messages/en.json";
-import { SessionReport } from "@/components/gedu/session-feed/SessionReport";
-import { reportOverflows } from "@/components/gedu/session-feed/report-clamp";
+import { SessionReport } from "@/components/session-feed/SessionReport";
+import { reportOverflows } from "@/components/session-feed/report-clamp";
 
 /**
  * **A report has to be complete in the frame the server paints, and it has to
@@ -89,7 +89,7 @@ describe("a session report is whole in the server's HTML", () => {
   it("carries the Read more control and the fade on an overflowing report", () => {
     for (const report of [LONG_REPORT, LONG_LIST_REPORT]) {
       const html = serverHtml(report);
-      expect(html).toContain(messages.gedu.sessionFeed.readMore);
+      expect(html).toContain(messages.sessionFeed.readMore);
       expect(html).toContain('aria-expanded="false"');
       // The clamp says it is a clamp from the first frame too, or the reader
       // sees prose ending flush against an invisible edge and stops looking.
@@ -105,7 +105,7 @@ describe("a session report is whole in the server's HTML", () => {
    */
   it("puts the control above the body it expands", () => {
     const html = serverHtml(LONG_REPORT);
-    expect(html.indexOf(messages.gedu.sessionFeed.readMore)).toBeLessThan(
+    expect(html.indexOf(messages.sessionFeed.readMore)).toBeLessThan(
       html.indexOf("mask-image"),
     );
   });
@@ -113,7 +113,7 @@ describe("a session report is whole in the server's HTML", () => {
   it("offers nothing on a report that fits", () => {
     const html = serverHtml(SHORT_REPORT);
     expect(html).toContain("without losing anybody to a creeper");
-    expect(html).not.toContain(messages.gedu.sessionFeed.readMore);
+    expect(html).not.toContain(messages.sessionFeed.readMore);
     expect(html).not.toContain("mask-image");
   });
 
@@ -125,7 +125,7 @@ describe("a session report is whole in the server's HTML", () => {
   it("renders an unclamped report whole, with no control and no fade", () => {
     const html = serverHtml(LONG_REPORT, false);
     expect(html).toContain("do go and walk around it during the week");
-    expect(html).not.toContain(messages.gedu.sessionFeed.readMore);
+    expect(html).not.toContain(messages.sessionFeed.readMore);
     expect(html).not.toContain("mask-image");
   });
 
@@ -139,7 +139,7 @@ describe("a session report is whole in the server's HTML", () => {
     for (const report of [LONG_REPORT, LONG_LIST_REPORT, SHORT_REPORT, ""]) {
       const offered = reportOverflows(report);
       const html = serverHtml(report);
-      expect(html.includes(messages.gedu.sessionFeed.readMore), report).toBe(
+      expect(html.includes(messages.sessionFeed.readMore), report).toBe(
         offered,
       );
       expect(html.includes("mask-image"), report).toBe(offered);

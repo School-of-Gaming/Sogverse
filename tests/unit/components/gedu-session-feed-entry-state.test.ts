@@ -1,7 +1,5 @@
 import { describe, it, expect } from "vitest";
 import {
-  FEED_INITIAL_PAST_ENTRIES,
-  FEED_PAST_CHUNK_SIZE,
   applyDraftToEntry,
   applyPlanDraftToEntry,
   attendanceTally,
@@ -13,9 +11,6 @@ import {
   entryNeedsAttention,
   isEditableEntry,
   isPlannableEntry,
-  newestPastEntryId,
-  partitionFeedEntries,
-  pastEntryWindow,
   planDraftFromEditorState,
   planEditorStateFromEntry,
   rosterScopedMarks,
@@ -405,141 +400,6 @@ describe("countEntriesNeedingAttention", () => {
 
   it("is zero for an empty feed", () => {
     expect(countEntriesNeedingAttention([], ROSTER)).toBe(0);
-  });
-});
-
-describe("partitionFeedEntries", () => {
-  it("reads the next session off position — the last of the leading future run", () => {
-    const entries: SessionFeedEntry[] = [
-      future("f3"),
-      future("f2"),
-      future("f1"),
-      past("p1", { attendance: ALL_MARKED }),
-      noRecord("p2"),
-    ];
-    const { laterFuture, nextSession, past: pastRows } =
-      partitionFeedEntries(entries);
-    expect(laterFuture.map((e) => e.id)).toEqual(["f3", "f2"]);
-    expect(nextSession?.id).toBe("f1");
-    expect(pastRows.map((e) => e.id)).toEqual(["p1", "p2"]);
-  });
-
-  it("has no later block when only one session is ahead", () => {
-    const { laterFuture, nextSession, past: pastRows } = partitionFeedEntries([
-      future("f1"),
-      past("p1"),
-    ]);
-    expect(laterFuture).toEqual([]);
-    expect(nextSession?.id).toBe("f1");
-    expect(pastRows.map((e) => e.id)).toEqual(["p1"]);
-  });
-
-  it("returns no next session for a feed whose schedule has run out", () => {
-    const { laterFuture, nextSession, past: pastRows } = partitionFeedEntries([
-      past("p1"),
-      noRecord("p2"),
-    ]);
-    expect(laterFuture).toEqual([]);
-    expect(nextSession).toBeNull();
-    expect(pastRows).toHaveLength(2);
-  });
-
-  it("leaves a stray out-of-order future entry in the past block", () => {
-    // The feed sorts nothing, so a caller's ordering bug must render in the
-    // order it was given rather than being silently reshuffled.
-    const { laterFuture, nextSession, past: pastRows } = partitionFeedEntries([
-      future("f1"),
-      past("p1"),
-      future("stray"),
-    ]);
-    expect(laterFuture).toEqual([]);
-    expect(nextSession?.id).toBe("f1");
-    expect(pastRows.map((e) => e.id)).toEqual(["p1", "stray"]);
-  });
-
-  it("is empty all round for an empty feed", () => {
-    expect(partitionFeedEntries([])).toEqual({
-      laterFuture: [],
-      nextSession: null,
-      past: [],
-    });
-  });
-});
-
-/**
- * The one report the feed renders in full. It is what the weekly loop opens the
- * page for — what happened last time — so it costs no click, and everything
- * older keeps its clamp so a term of write-ups never becomes a wall.
- *
- * The rule is **positional**, and that is the part worth pinning: nothing about
- * the report's own length or shape may enter into it, or two feeds that differ
- * only in how chatty last week's gedu was would behave differently.
- */
-describe("newestPastEntryId", () => {
-  it("names the first recorded session in the past run", () => {
-    expect(
-      newestPastEntryId([
-        past("p1", { report: "# Last week" }),
-        past("p2", { report: "# The week before" }),
-      ]),
-    ).toBe("p1");
-  });
-
-  it("names it whether or not it carries a report at all", () => {
-    // Positional, not a question about the writing: a bare, unwritten newest
-    // session is still the newest session.
-    expect(newestPastEntryId([past("p1"), past("p2")])).toBe("p1");
-  });
-
-  it("steps over pre-epoch gaps, which recorded nothing", () => {
-    expect(
-      newestPastEntryId([noRecord("n1"), noRecord("n2"), past("p1")]),
-    ).toBe("p1");
-  });
-
-  it("names nothing for a feed with no past at all", () => {
-    expect(newestPastEntryId([])).toBeNull();
-    expect(newestPastEntryId([noRecord("n1")])).toBeNull();
-  });
-
-  it("moves to the new top when an older chunk is revealed beneath it", () => {
-    // The past grows downward as chunks are revealed, so the exemption must
-    // stay pinned to the head of the run rather than to a fixed index.
-    const head = past("p1", { report: "# Last week" });
-    expect(newestPastEntryId([head])).toBe("p1");
-    expect(newestPastEntryId([head, past("p2"), past("p3")])).toBe("p1");
-  });
-});
-
-describe("pastEntryWindow", () => {
-  it("opens on the recent slice and reports the rest as remaining", () => {
-    const total = 55;
-    expect(pastEntryWindow(total, 0)).toEqual({
-      visible: FEED_INITIAL_PAST_ENTRIES,
-      remaining: total - FEED_INITIAL_PAST_ENTRIES,
-    });
-  });
-
-  it("reveals one chunk per click, cumulatively", () => {
-    const total = 55;
-    expect(pastEntryWindow(total, 1).visible).toBe(
-      FEED_INITIAL_PAST_ENTRIES + FEED_PAST_CHUNK_SIZE,
-    );
-    expect(pastEntryWindow(total, 2).visible).toBe(
-      FEED_INITIAL_PAST_ENTRIES + 2 * FEED_PAST_CHUNK_SIZE,
-    );
-  });
-
-  it("never exceeds the total, and reaches zero remaining", () => {
-    const total = 12;
-    expect(pastEntryWindow(total, 1)).toEqual({ visible: 12, remaining: 0 });
-    expect(pastEntryWindow(total, 99)).toEqual({ visible: 12, remaining: 0 });
-  });
-
-  it("hides the control for a term short enough to render whole", () => {
-    expect(pastEntryWindow(FEED_INITIAL_PAST_ENTRIES, 0).remaining).toBe(0);
-    expect(pastEntryWindow(3, 0)).toEqual({ visible: 3, remaining: 0 });
-    expect(pastEntryWindow(0, 0)).toEqual({ visible: 0, remaining: 0 });
   });
 });
 

@@ -1254,8 +1254,6 @@
       "noRecordLabel": "Ei kirjausta",
       "emptyFeed": "Tällä ryhmällä ei ole vielä kertoja.",
       "noNotesYet": "Tälle kerralle ei ole vielä muistiinpanoja.",
-      "readMore": "Lue lisää",
-      "showLess": "Näytä vähemmän",
       "attendanceSummary": "{present}/{total} paikalla",
       "presentLabel": "Paikalla",
       "absentLabel": "Poissa",
@@ -1272,7 +1270,6 @@
       "save": "Tallenna",
       "cancel": "Peruuta",
       "alertBadge": "{count, plural, one {# kerta vaatii huomiota} other {# kertaa vaatii huomiota}}",
-      "laterSessions": "{count, plural, one {# tuleva kerta} other {# tulevaa kertaa}}",
       "showEarlier": "{count, plural, one {Näytä # aiempi kerta} other {Näytä # aiempaa kertaa}}",
       "attendanceMarkedCount": "{marked}/{total} merkitty",
       "attendanceForGamer": "{name} – läsnäolo",
@@ -1311,6 +1308,11 @@
       "staffPlaceholder": "Avaimet, välineet, tilan erityispiirteet — mitä seuraavan Gedun on hyvä tietää tästä toimipaikasta.",
       "saveFailed": "Toimipaikan muistiinpanojen tallennus epäonnistui. Yritä uudelleen."
     }
+  },
+  "sessionFeed": {
+    "readMore": "Lue lisää",
+    "showLess": "Näytä vähemmän",
+    "laterSessions": "{count, plural, one {# tuleva kerta} other {# tulevaa kertaa}}"
   },
   "groups": {
     "title": "Ryhmät",

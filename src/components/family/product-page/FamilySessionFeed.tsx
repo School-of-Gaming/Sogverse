@@ -13,7 +13,7 @@ import {
   useViewportAnchor,
   withMonthDividers,
   type SessionFeedRow,
-} from "@/components/gedu/session-feed";
+} from "@/components/session-feed";
 import { cn } from "@/lib/utils";
 import { useNow, useTimezone } from "@/providers";
 import type { SessionAudience } from "@/types";

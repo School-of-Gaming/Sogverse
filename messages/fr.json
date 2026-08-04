@@ -1254,8 +1254,6 @@
       "noRecordLabel": "Aucun compte rendu",
       "emptyFeed": "Ce groupe n’a pas encore de séances.",
       "noNotesYet": "Aucune note pour cette séance pour l’instant.",
-      "readMore": "Lire la suite",
-      "showLess": "Réduire",
       "attendanceSummary": "{present} présents sur {total}",
       "presentLabel": "Présent",
       "absentLabel": "Absent",
@@ -1272,7 +1270,6 @@
       "save": "Enregistrer",
       "cancel": "Annuler",
       "alertBadge": "{count, plural, one {# séance à traiter} other {# séances à traiter}}",
-      "laterSessions": "{count, plural, one {# séance à venir} other {# séances à venir}}",
       "showEarlier": "{count, plural, one {Afficher # séance précédente} other {Afficher # séances précédentes}}",
       "attendanceMarkedCount": "{marked} sur {total} renseignés",
       "attendanceForGamer": "Présence de {name}",
@@ -1311,6 +1308,11 @@
       "staffPlaceholder": "Clés, matériel, particularités de la salle — ce que le prochain Gedu sur place doit savoir.",
       "saveFailed": "Ces notes sur le lieu n’ont pas été enregistrées. Réessayez."
     }
+  },
+  "sessionFeed": {
+    "readMore": "Lire la suite",
+    "showLess": "Réduire",
+    "laterSessions": "{count, plural, one {# séance à venir} other {# séances à venir}}"
   },
   "groups": {
     "title": "Groupes",

@@ -9,7 +9,7 @@ import {
   REPORT_LIST_GAP_LINES,
   estimateReportLines,
   reportOverflows,
-} from "@/components/gedu/session-feed/report-clamp";
+} from "@/components/session-feed/report-clamp";
 
 /**
  * The clamp is a CSS length; the only decision in it — *is this report long

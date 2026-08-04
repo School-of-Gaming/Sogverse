@@ -1254,8 +1254,6 @@
       "noRecordLabel": "No record",
       "emptyFeed": "This group has no sessions yet.",
       "noNotesYet": "No notes on this one yet.",
-      "readMore": "Read more",
-      "showLess": "Show less",
       "attendanceSummary": "{present} of {total} present",
       "presentLabel": "Present",
       "absentLabel": "Absent",
@@ -1272,7 +1270,6 @@
       "save": "Save",
       "cancel": "Cancel",
       "alertBadge": "{count, plural, one {# session needs attention} other {# sessions need attention}}",
-      "laterSessions": "{count, plural, one {# upcoming session} other {# upcoming sessions}}",
       "showEarlier": "{count, plural, one {Show # earlier session} other {Show # earlier sessions}}",
       "attendanceMarkedCount": "{marked} of {total} marked",
       "attendanceForGamer": "Attendance for {name}",
@@ -1311,6 +1308,11 @@
       "staffPlaceholder": "Keys, kit, room quirks — what the next Gedu at this site needs to know.",
       "saveFailed": "These site notes didn’t save. Try again."
     }
+  },
+  "sessionFeed": {
+    "readMore": "Read more",
+    "showLess": "Show less",
+    "laterSessions": "{count, plural, one {# upcoming session} other {# upcoming sessions}}"
   },
   "groups": {
     "title": "Groups",

@@ -16,13 +16,20 @@
  * compile-time fact instead of a rule somebody has to remember. Anything that
  * would have to be stripped on the way in has no field to be stripped from.
  *
+ * **The separation is structural on the component side too.** This module builds
+ * its feed out of the shared session-feed module, which contains no staff-note
+ * component, no attendance roster and no editor at all — so a family page cannot
+ * import one by reaching for a neighbouring export. The workspace's own module
+ * is never imported from anywhere under `components/family/`, and that is the
+ * invariant worth keeping rather than a habit worth following.
+ *
  * Presentation types, deliberately independent of any table: the feed mixes
  * sessions that have a stored record with occurrences that only exist as an
  * *absence*, exactly as the gedu's does. Whoever feeds the page reconciles the
  * schedule against the stored records and emits one entry per occurrence.
  */
 
-import type { AttendanceMark } from "@/components/gedu/session-feed";
+import type { AttendanceMark } from "@/components/session-feed";
 
 interface FamilySessionEntryBase {
   /**

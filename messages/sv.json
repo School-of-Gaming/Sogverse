@@ -1254,8 +1254,6 @@
       "noRecordLabel": "Ingen anteckning",
       "emptyFeed": "Den här gruppen har inga tillfällen än.",
       "noNotesYet": "Inga anteckningar för det här tillfället än.",
-      "readMore": "Läs mer",
-      "showLess": "Visa mindre",
       "attendanceSummary": "{present} av {total} närvarande",
       "presentLabel": "Närvarande",
       "absentLabel": "Frånvarande",
@@ -1272,7 +1270,6 @@
       "save": "Spara",
       "cancel": "Avbryt",
       "alertBadge": "{count, plural, one {# tillfälle behöver åtgärd} other {# tillfällen behöver åtgärd}}",
-      "laterSessions": "{count, plural, one {# kommande tillfälle} other {# kommande tillfällen}}",
       "showEarlier": "{count, plural, one {Visa # tidigare tillfälle} other {Visa # tidigare tillfällen}}",
       "attendanceMarkedCount": "{marked} av {total} markerade",
       "attendanceForGamer": "Närvaro för {name}",
@@ -1311,6 +1308,11 @@
       "staffPlaceholder": "Nycklar, utrustning, lokalens egenheter — vad nästa Gedu på plats behöver veta.",
       "saveFailed": "Anteckningarna om platsen sparades inte. Försök igen."
     }
+  },
+  "sessionFeed": {
+    "readMore": "Läs mer",
+    "showLess": "Visa mindre",
+    "laterSessions": "{count, plural, one {# kommande tillfälle} other {# kommande tillfällen}}"
   },
   "groups": {
     "title": "Grupper",

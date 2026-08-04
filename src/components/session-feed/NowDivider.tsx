@@ -53,7 +53,7 @@ export function NowDivider({
   controls: string;
   onToggle: () => void;
 }) {
-  const t = useTranslations("gedu.sessionFeed");
+  const t = useTranslations("sessionFeed");
 
   return (
     <div className="relative flex items-center gap-3 py-2">

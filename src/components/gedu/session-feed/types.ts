@@ -8,7 +8,14 @@
  * *absence* (a scheduled occurrence nobody has recorded). Whoever feeds the
  * component reconciles the schedule against the stored records and emits one
  * entry per occurrence.
+ *
+ * **This is the workspace's entry union and nothing else.** A family reads the
+ * same sessions through a shape of its own, carrying a report, one child's mark
+ * and no way to express a gedu note or another child's attendance; the pieces
+ * both shapes are built from live in `@/components/session-feed`.
  */
+
+import type { AttendanceMark } from "@/components/session-feed";
 
 /** One child on the group's roster, as the attendance editor needs them. */
 export interface SessionFeedGamer {
@@ -175,9 +182,6 @@ export type SessionFeedEntry =
 export type EditableSessionFeedEntry =
   | PastSessionFeedEntry
   | NoRecordSessionFeedEntry;
-
-/** How one roster member's attendance was recorded. */
-export type AttendanceMark = "present" | "absent";
 
 /**
  * Per-gamer marks, keyed by roster id — both the editor's working state and the

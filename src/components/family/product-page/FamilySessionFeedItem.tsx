@@ -8,7 +8,7 @@ import {
   SessionReport,
   type AttendanceMark,
   type SessionLabels,
-} from "@/components/gedu/session-feed";
+} from "@/components/session-feed";
 import { cn } from "@/lib/utils";
 import type { FamilySessionEntry } from "./types";
 

@@ -6,6 +6,12 @@
  * the thing a gedu is actually scanning for — buried inside it. Clamping to a
  * few lines keeps the feed a feed; expanding in place keeps the report a report.
  *
+ * **The numbers below are calibrated against the surface that clamps**, which is
+ * the gedu's workspace column: a capped desktop width, less the timeline rail
+ * and the card's padding. A feed that renders its reports whole never consults
+ * any of this, so a narrower column elsewhere does not put the estimate wrong —
+ * it puts it out of play.
+ *
  * **The decision is taken once, from the source text, and never revised.** A
  * report is painted by a server that cannot measure anything, so anything the
  * first frame depends on has to be decidable without a browser. The obvious fix

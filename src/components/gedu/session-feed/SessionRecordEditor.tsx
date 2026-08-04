@@ -4,12 +4,12 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import type { AttendanceMark } from "@/components/session-feed";
 import { attendanceTally, draftFromEditorState } from "./entry-state";
 import { AttendanceRoster } from "./AttendanceRoster";
 import { RichNoteField } from "./RichNoteField";
 import { StaffNoteBlock } from "./StaffNoteBlock";
 import type {
-  AttendanceMark,
   SessionEditorState,
   SessionFeedGamer,
   SessionRecordDraft,

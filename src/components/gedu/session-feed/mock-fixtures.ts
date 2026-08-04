@@ -1,7 +1,7 @@
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import { getNextSessionStart } from "@/lib/enrollment";
+import type { AttendanceMark } from "@/components/session-feed";
 import type {
-  AttendanceMark,
   AttendanceMarks,
   SessionFeedEntry,
   SessionFeedGamer,

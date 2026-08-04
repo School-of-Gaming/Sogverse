@@ -1,12 +1,19 @@
 /**
- * Pure derivations over the session feed. Everything here is a plain function
- * of its arguments — no React, no clock, no network — so the feed components
- * stay presentational and the same helpers can back an optimistic cache update
- * once the feed is wired to real data.
+ * Pure derivations over the **gedu's** session feed — the completeness ladder,
+ * the attendance counts and both editors' state. Everything here is a plain
+ * function of its arguments — no React, no clock, no network — so the feed
+ * components stay presentational and the same helpers can back an optimistic
+ * cache update once the feed is wired to real data.
+ *
+ * All of it is workspace-only, which is why it is here rather than in the shared
+ * feed module: what is owed, what has been recorded and what may be edited are
+ * facts about staff work. The feed's *structural* arithmetic — which entries are
+ * ahead of now, which one is next, how much of the past is on screen — is shared
+ * with the family's read-only feed and lives in `@/components/session-feed`.
  */
 
+import type { AttendanceMark } from "@/components/session-feed";
 import type {
-  AttendanceMark,
   AttendanceMarks,
   EditableSessionFeedEntry,
   FutureSessionFeedEntry,
@@ -346,154 +353,4 @@ export function applyPlanDraftToEntry(
     report: draft.report.length > 0 ? draft.report : null,
     staffNote: draft.staffNote.length > 0 ? draft.staffNote : null,
   };
-}
-
-/* ------------------------------------------------------------------ */
-/*  Shaping the feed                                                   */
-/* ------------------------------------------------------------------ */
-
-/**
- * The minimum an entry has to be for the structural helpers below to shape it:
- * an identity and which side of the present it is on.
- *
- * **These helpers are generic on purpose.** The gedu's workspace feed and the
- * family's read-only feed are two renderings of one *grammar* — a descending run
- * whose leading future block collapses behind a divider, whose newest past entry
- * is the one read in full, and whose older past is revealed in chunks. The
- * entries themselves are deliberately different types (a family entry cannot
- * hold a staff note or another child's marks, and that is enforced by its
- * shape), so sharing the arithmetic means being generic over the entry rather
- * than over the feed. A second copy of this walk would be the thing that lets
- * the two feeds quietly disagree about where "next" is.
- */
-interface FeedShapedEntry {
-  id: string;
-  kind: string;
-}
-
-/** A generic feed entry narrowed to the future side of the present. */
-type FutureOf<T extends FeedShapedEntry> = Extract<T, { kind: "future" }>;
-
-export interface FeedPartition<T extends FeedShapedEntry> {
-  /**
-   * Future sessions beyond the next one, still in the caller's descending
-   * order (furthest away first). These collapse behind one row above the next
-   * session, so the feed opens on "what's next and what just happened" rather
-   * than on two months of empty calendar.
-   */
-  laterFuture: FutureOf<T>[];
-  /**
-   * The soonest session still ahead of us — the prominent entry at the head of
-   * the feed. `null` once a product's schedule has run out.
-   */
-  nextSession: FutureOf<T> | null;
-  /** Everything that has already happened, still descending. */
-  past: T[];
-}
-
-/**
- * Whether an entry sits on the future side of the present, for any feed's own
- * entry union. The gedu-specific `isPlannableEntry` above answers the same
- * question about *its* union and additionally means "this can be planned"; this
- * one is purely structural, which is what the shared shaping needs.
- */
-function isFutureEntry<T extends FeedShapedEntry>(entry: T): entry is FutureOf<T> {
-  return entry.kind === "future";
-}
-
-/**
- * Split a descending feed into its three structural parts.
- *
- * The feed is handed to us strictly newest-first, so the future sessions are
- * the leading run and the next session is the *last* of them — the one closest
- * to now, sitting directly above the most recent past entry. Reading "next" off
- * position rather than off a flag is what guarantees the collapsed later-block
- * reads continuously down into the prominent entry beneath it, with global date
- * order never violated.
- *
- * Any future entry appearing *after* a past one would be a caller ordering bug;
- * it stays where it was put (this function does not sort) and simply counts as
- * part of the past block, which keeps the rendered order honest instead of
- * silently reshuffling the story.
- */
-export function partitionFeedEntries<T extends FeedShapedEntry>(
-  entries: readonly T[],
-): FeedPartition<T> {
-  // Collected by walking rather than sliced-and-cast, so the narrowing is the
-  // loop's own and no assertion has to be trusted.
-  const future: FutureOf<T>[] = [];
-  for (const entry of entries) {
-    if (!isFutureEntry(entry)) break;
-    future.push(entry);
-  }
-
-  return {
-    laterFuture: future.slice(0, Math.max(future.length - 1, 0)),
-    nextSession: future.length > 0 ? future[future.length - 1] : null,
-    past: entries.slice(future.length),
-  };
-}
-
-/**
- * The newest session that actually ran, out of a feed's past run — the one
- * entry whose report the feed renders in full instead of clamping it.
- *
- * **Positional, not a judgement about the writing.** It says nothing about
- * whether anything was recorded on the entry — an unmarked, unwritten week at
- * the head of the past is still the answer. Whatever sits at the top of the past
- * is what the weekly loop opens the page to read: what happened last time, read
- * while prepping the next one or writing this one up. Charging a click for the
- * single report every gedu reads every week is a toll on the only path all of
- * them walk; every older report keeps its clamp, which is what stops a term of
- * write-ups becoming a wall.
- *
- * Pre-epoch gaps are stepped over rather than counted — nothing was ever
- * recorded on them, so there is no report to leave open — and a feed with no
- * past at all answers `null`.
- *
- * Generic for the reason given on the partition above: both feeds want the same
- * answer about entries of their own shape, and only one of them may own it.
- */
-export function newestPastEntryId<T extends FeedShapedEntry>(
-  past: readonly T[],
-): string | null {
-  return past.find((entry) => entry.kind === "past")?.id ?? null;
-}
-
-/**
- * How many past entries the feed renders before the reader asks for more.
- *
- * A year-old club is 50+ sessions and the newest is always the one being read,
- * so the feed opens on the recent past and everything older waits behind a
- * reveal at the bottom.
- */
-export const FEED_INITIAL_PAST_ENTRIES = 10;
-
-/** How many more past entries each "show earlier sessions" click reveals. */
-export const FEED_PAST_CHUNK_SIZE = 10;
-
-export interface PastEntryWindow {
-  /** How many of the past entries to render, newest first. */
-  visible: number;
-  /** How many are still hidden — zero means the control renders nothing. */
-  remaining: number;
-}
-
-/**
- * Which slice of the past is on screen after `chunksRevealed` clicks.
- *
- * Revealing appends *below* what is already painted, so nothing the reader is
- * looking at moves — which is the only reason a chunked reveal is allowed to
- * exist here rather than paginating (paging would swap the whole column out
- * from under them).
- */
-export function pastEntryWindow(
-  totalPast: number,
-  chunksRevealed: number,
-): PastEntryWindow {
-  const requested =
-    FEED_INITIAL_PAST_ENTRIES +
-    Math.max(chunksRevealed, 0) * FEED_PAST_CHUNK_SIZE;
-  const visible = Math.min(Math.max(totalPast, 0), requested);
-  return { visible, remaining: Math.max(totalPast, 0) - visible };
 }
