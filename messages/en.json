@@ -1915,6 +1915,7 @@
     "changePin": "Change PIN",
     "minecraftAccount": "Minecraft Account",
     "minecraftDescription": "Link your Minecraft Java Edition account",
+    "mcHeadsAttribution": "Skins rendered by <link>mc-heads.net</link>",
     "minecraftSaved": "Minecraft username saved!",
     "minecraftCleared": "Minecraft username cleared.",
     "failedToUpdateMinecraft": "Failed to update Minecraft username.",

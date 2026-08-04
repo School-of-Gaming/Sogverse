@@ -1827,6 +1827,7 @@
     "changePin": "Byt PIN",
     "minecraftAccount": "Minecraft-konto",
     "minecraftDescription": "Koppla ditt Minecraft Java Edition-konto",
+    "mcHeadsAttribution": "Skins renderade av <link>mc-heads.net</link>",
     "minecraftSaved": "Minecraft-användarnamn sparat!",
     "minecraftCleared": "Minecraft-användarnamn borttaget.",
     "failedToUpdateMinecraft": "Kunde inte uppdatera Minecraft-användarnamn.",

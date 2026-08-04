@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { Blocks, Pickaxe, type LucideIcon } from "lucide-react";
 import {
   isValidMinecraftUsername,
   minecraftSkinBodyUrl,
@@ -205,12 +204,6 @@ export interface GamePlatformDescriptor {
    */
   name: string;
   /**
-   * The glyph that says which platform a line is about, so callers never prefix
-   * a `"Minecraft:"` label of their own. Always decorative: the state travels in
-   * words through the accessible name.
-   */
-  Icon: LucideIcon;
-  /**
    * The platform's own username rule. Imported from the module that also runs
    * the lookup, so the field and the server agree by construction rather than by
    * two copies of a regex agreeing today.
@@ -370,7 +363,6 @@ export const GAME_PLATFORMS: Readonly<
   minecraft: {
     platform: "minecraft",
     name: "Minecraft",
-    Icon: Pickaxe,
     isValidUsername: isValidMinecraftUsername,
     usernameExample: "Steve",
     avatar: {
@@ -391,7 +383,6 @@ export const GAME_PLATFORMS: Readonly<
   roblox: {
     platform: "roblox",
     name: "Roblox",
-    Icon: Blocks,
     isValidUsername: isValidRobloxUsername,
     usernameExample: "builderman",
     avatar: {

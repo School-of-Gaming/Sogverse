@@ -80,10 +80,17 @@ for a lookup a caller is running itself.
 
 ## Platform descriptors
 
-Everything a platform does differently lives in one descriptor: its icon, its
-username rule (imported from the module that also runs the lookup, so the field
-and the server agree by construction), its figure's width and drawn placeholder,
-and its verify adapter. Components are generic and render from it.
+Everything a platform does differently lives in one descriptor: its username rule
+(imported from the module that also runs the lookup, so the field and the server
+agree by construction), its figure's width and drawn placeholder, and its verify
+adapter. Components are generic and render from it.
+
+**The figure is the only thing that says which platform a row is about.** There
+is no platform glyph beside the name — there was one, and once every row carried
+a skin it was labelling something the picture already said. That is why the drawn
+stand-ins differ in shape between platforms rather than sharing one generic
+figure: a row with no picture yet still has to answer the question, and the
+silhouette is now the only thing left to answer it with.
 
 **Rule: components take a single platform.** A surface may end up showing only
 the identity that matters for the product in front of the child; composing across

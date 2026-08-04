@@ -1827,6 +1827,7 @@
     "changePin": "Modifier le code PIN",
     "minecraftAccount": "Compte Minecraft",
     "minecraftDescription": "Associez votre compte Minecraft Java Edition",
+    "mcHeadsAttribution": "Skins rendus par <link>mc-heads.net</link>",
     "minecraftSaved": "Nom d’utilisateur Minecraft enregistré !",
     "minecraftCleared": "Nom d’utilisateur Minecraft effacé.",
     "failedToUpdateMinecraft": "Échec de la mise à jour du nom d’utilisateur Minecraft.",

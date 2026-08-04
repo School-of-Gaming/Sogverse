@@ -369,6 +369,26 @@ export function SettingsSectionContent({
             <CardDescription>
               {t('minecraftDescription')}
             </CardDescription>
+            {/* A courtesy credit, not a licence condition — mc-heads asks for
+                nothing and encourages this. One home is enough for a thank-you,
+                and this is the page where a person is looking at their own skin,
+                so it is the one that earns it. An anchor is fine here: the
+                no-off-site-links rule governs staff-authored copy shown to
+                families, not the app's own chrome. */}
+            <p className="text-xs text-muted-foreground">
+              {t.rich('mcHeadsAttribution', {
+                link: (chunks) => (
+                  <a
+                    href="https://mc-heads.net"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-foreground"
+                  >
+                    {chunks}
+                  </a>
+                ),
+              })}
+            </p>
           </CardHeader>
           <CardContent className="space-y-6">
             <GameUsernameEditableRow

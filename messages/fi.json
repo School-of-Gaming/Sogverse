@@ -1827,6 +1827,7 @@
     "changePin": "Vaihda PIN",
     "minecraftAccount": "Minecraft-tili",
     "minecraftDescription": "Linkitä Minecraft Java Edition -tilisi",
+    "mcHeadsAttribution": "Ulkoasut renderöi <link>mc-heads.net</link>",
     "minecraftSaved": "Minecraft-käyttäjänimi tallennettu!",
     "minecraftCleared": "Minecraft-käyttäjänimi poistettu.",
     "failedToUpdateMinecraft": "Minecraft-käyttäjänimen päivittäminen epäonnistui.",
