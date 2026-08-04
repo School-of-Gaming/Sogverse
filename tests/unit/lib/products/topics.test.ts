@@ -1,18 +1,16 @@
 import { describe, it, expect } from "vitest";
+import messages from "@/../messages/en.json";
 import { Constants } from "@/types/database.types";
 import {
   PRODUCT_TOPICS,
   PRODUCT_TOPIC_VALUES,
   GAME_TOPICS,
-  SUBJECT_TOPICS,
   MUNICIPALITY_BROWSE_TOPICS,
-  GAME_TOPIC_CHIPS,
   MUNICIPALITY_TOPIC_CHIPS,
-  isGameTopic,
 } from "@/lib/products/topics";
 
-// The topic module is the one place where the generated enum and hand-written
-// display data have to agree, and the compiler only checks one direction of
+// The topic module is where the generated enum, hand-written display data and
+// the message catalog have to agree, and the compiler only checks some of
 // that. `PRODUCT_TOPICS` is `satisfies Record<ProductTopic, TopicMeta>`, so a
 // missing key there IS a type error — but `PRODUCT_TOPIC_VALUES` is only
 // `satisfies readonly ProductTopic[]`, which checks that every element is a
@@ -21,18 +19,23 @@ import {
 // That asymmetry is the trap this file exists for: a new enum value added to
 // the DB and given a `PRODUCT_TOPICS` entry, but forgotten in the ordering
 // tuple, type-checks and tests green while silently never appearing in the
-// admin picker, the shop chips or the municipality chips. Nothing else in the
-// suite touches the tuple, so without this it fails as "the new topic just
-// isn't there", found by hand, in review or later.
+// admin picker, the shop chips or the municipality chips.
+//
+// Everything here asserts a link the compiler does not make. Restating a
+// derivation back to itself (that `GAME_TOPICS` contains only games, say, when
+// it is defined as a filter for exactly that) is not a test — it cannot fail
+// short of someone deleting the line, and it makes the file look better covered
+// than it is.
 
 describe("product topics", () => {
-  it("lists every enum value exactly once in display order", () => {
-    const fromDb = [...Constants.public.Enums.product_topic];
-
+  it("contains exactly the enum's values, each exactly once", () => {
     // Set-equal, order-independent: the tuple's order is a deliberate display
     // choice (games first, then subjects) and is NOT the enum's own order,
-    // which is just the order values were added to the type.
-    expect([...PRODUCT_TOPIC_VALUES].sort()).toEqual([...fromDb].sort());
+    // which is just the order values were added to the type. So the ordering
+    // is intentionally unchecked here — only membership is.
+    expect([...PRODUCT_TOPIC_VALUES].sort()).toEqual(
+      [...Constants.public.Enums.product_topic].sort(),
+    );
     expect(new Set(PRODUCT_TOPIC_VALUES).size).toBe(
       PRODUCT_TOPIC_VALUES.length,
     );
@@ -42,14 +45,6 @@ describe("product topics", () => {
     for (const topic of Constants.public.Enums.product_topic) {
       expect(PRODUCT_TOPICS[topic]).toBeDefined();
     }
-  });
-
-  it("splits cleanly into games and subjects with nothing left over", () => {
-    expect([...GAME_TOPICS, ...SUBJECT_TOPICS].sort()).toEqual(
-      [...PRODUCT_TOPIC_VALUES].sort(),
-    );
-    expect(GAME_TOPICS.every(isGameTopic)).toBe(true);
-    expect(SUBJECT_TOPICS.some(isGameTopic)).toBe(false);
   });
 
   it("gives every game a non-empty label and exactly one way to get it", () => {
@@ -80,19 +75,46 @@ describe("product topics", () => {
     }
   });
 
-  it("surfaces every topic but webinar on the municipality page", () => {
-    expect([...MUNICIPALITY_BROWSE_TOPICS].sort()).toEqual(
-      PRODUCT_TOPIC_VALUES.filter((t) => t !== "webinar").sort(),
-    );
+  // Nothing else binds GAME_TOPICS to the message catalog. The card resolves
+  // `gameInfo.games.<topic>.<key>` through a template literal, which the
+  // compiler checks against the *shape* of en.json — but a game whose entry is
+  // absent from every locale alike is not a type error and is not a translation
+  // parity error either, because check-translations.mjs measures the other
+  // locales against en and a gap present in all of them is uniform. The
+  // failure that leaks is the worst-looking kind: a parent reads the literal
+  // string "gameInfo.games.pokemon_go.description" on the product page, in
+  // every language at once. en is the catalog that has to actually hold the
+  // prose; the checker fans it out from there.
+  it("gives every game its English prose under productDetail.gameInfo.games", () => {
+    const games: Record<string, Record<string, string> | undefined> =
+      messages.productDetail.gameInfo.games;
+
+    for (const topic of GAME_TOPICS) {
+      const entry = games[topic];
+      expect(
+        entry,
+        `messages/en.json has no productDetail.gameInfo.games.${topic}`,
+      ).toBeDefined();
+
+      for (const key of ["description", "note", "linkLabel"] as const) {
+        const value = entry?.[key];
+        expect(
+          value,
+          `messages/en.json is missing gameInfo.games.${topic}.${key}`,
+        ).toBeTypeOf("string");
+        expect(
+          value?.trim().length ?? 0,
+          `messages/en.json has a blank gameInfo.games.${topic}.${key}`,
+        ).toBeGreaterThan(0);
+      }
+    }
   });
 
-  it("covers every game with a shop chip and every browse topic with a municipality chip", () => {
-    expect(GAME_TOPIC_CHIPS.flatMap((c) => c.topics).sort()).toEqual(
-      [...GAME_TOPICS].sort(),
-    );
-
-    // The municipality chips collapse the Minecraft editions behind one chip,
-    // so assert coverage of the union rather than a chip-per-topic count.
+  it("covers every browseable topic with exactly one municipality chip", () => {
+    // MINECRAFT_TOPICS is hand-maintained inside the module and collapses the
+    // three editions behind one chip, so this is the one chip assertion that
+    // isn't self-referential: a new Minecraft edition added to the enum but not
+    // to that list would surface as its own stray chip beside the group.
     expect(MUNICIPALITY_TOPIC_CHIPS.flatMap((c) => c.topics).sort()).toEqual(
       [...MUNICIPALITY_BROWSE_TOPICS].sort(),
     );

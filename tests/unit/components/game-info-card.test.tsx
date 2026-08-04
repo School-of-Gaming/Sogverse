@@ -83,12 +83,13 @@ describe("GameInfoCard", () => {
     const hrefs = Array.from(container.querySelectorAll("a")).map((a) =>
       a.getAttribute("href"),
     );
-    // Mobile-only: exactly the two app stores, no PC or console link.
-    expect(hrefs).toHaveLength(2);
-    expect(hrefs.some((h) => h?.includes("apps.apple.com"))).toBe(true);
-    expect(hrefs.some((h) => h?.includes("play.google.com"))).toBe(true);
-    // Region-neutral — a hardcoded country would send most parents to the
-    // wrong store (the same rule the Minecraft links follow).
-    expect(hrefs.some((h) => h?.includes("/us/"))).toBe(false);
+    // Mobile-only, and the exact links matter: both forms are region-neutral
+    // and redirect to the visitor's local store, so a country segment creeping
+    // into either one would send most parents somewhere they can't buy. These
+    // are stable literals in topics.ts, so assert them rather than the host.
+    expect(hrefs).toEqual([
+      "https://apps.apple.com/app/id1094591345",
+      "https://play.google.com/store/apps/details?id=com.nianticlabs.pokemongo",
+    ]);
   });
 });
