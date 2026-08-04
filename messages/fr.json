@@ -1164,8 +1164,6 @@
     "attendancePresent": "Présent",
     "attendanceNotPresent": "Pas présent",
     "noWriteUp": "Aucun compte rendu",
-    "emptyPastCustomer": "Rien ne s’est encore passé ici. Dès que le groupe commencera à se réunir, chaque séance sera racontée ci-dessous.",
-    "emptyPastGamer": "Rien ici pour l’instant. Après ta première séance, tout ce que vous faites apparaîtra ci-dessous.",
     "emptyFeedCustomer": "Il n’y a pas encore de séances ici.",
     "emptyFeedGamer": "Tu n’as pas encore de séances ici.",
     "showEarlier": "{count, plural, one {Afficher # séance précédente} other {Afficher # séances précédentes}}"

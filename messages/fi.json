@@ -1164,8 +1164,6 @@
     "attendancePresent": "Paikalla",
     "attendanceNotPresent": "Ei paikalla",
     "noWriteUp": "Ei koostetta",
-    "emptyPastCustomer": "Täällä ei ole vielä tapahtunut mitään. Kun ryhmä alkaa kokoontua, jokaisesta kerrasta kirjoitetaan kooste tähän.",
-    "emptyPastGamer": "Täällä ei ole vielä mitään. Ensimmäisen kerran jälkeen kaikki tekemänne näkyy tässä.",
     "emptyFeedCustomer": "Tällä ei ole vielä yhtään kertaa.",
     "emptyFeedGamer": "Sinulla ei ole vielä yhtään kertaa tässä.",
     "showEarlier": "{count, plural, one {Näytä # aiempi kerta} other {Näytä # aiempaa kertaa}}"

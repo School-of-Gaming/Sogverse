@@ -1164,8 +1164,6 @@
     "attendancePresent": "Närvarande",
     "attendanceNotPresent": "Inte närvarande",
     "noWriteUp": "Ingen sammanfattning",
-    "emptyPastCustomer": "Inget har hänt här än. När gruppen börjar träffas sammanfattas varje tillfälle här nedanför.",
-    "emptyPastGamer": "Inget här än. Efter ditt första tillfälle dyker allt ni hittar på upp här nedanför.",
     "emptyFeedCustomer": "Det finns inga tillfällen här än.",
     "emptyFeedGamer": "Du har inga tillfällen här än.",
     "showEarlier": "{count, plural, one {Visa # tidigare tillfälle} other {Visa # tidigare tillfällen}}"

@@ -238,16 +238,10 @@ export function FamilySessionFeed({
         {rows.map(renderRow)}
       </ol>
 
-      {/* A club that has not met yet still renders its divider, because it
-          genuinely has upcoming sessions — so without this the column would
-          simply stop at a boundary line with nothing under it, which reads as
-          the page having failed to load the rest. */}
-      {past.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          {t(audience === "gamer" ? "emptyPastGamer" : "emptyPastCustomer")}
-        </p>
-      )}
-
+      {/* No placeholder under the divider when there is no history: a timeline
+          that starts fresh simply ends there, which reads as a club that has
+          not met yet — absence, not a fault — and there is no action a line of
+          copy could prompt. */}
       {pastWindow.remaining > 0 && (
         // Appends beneath itself, so the button walks down the page with the
         // reveal instead of pushing the story the reader is in.

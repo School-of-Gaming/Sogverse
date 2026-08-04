@@ -1209,8 +1209,6 @@
     "attendancePresent": "pawpu’",
     "attendanceNotPresent": "pawbe’",
     "noWriteUp": "qonta’ tu’lu’be’",
-    "emptyPastCustomer": "pagh qaSpu’. ghom’a’ qaSDI’, may’ Hoch qonlu’ ’ej naDev cha’lu’.",
-    "emptyPastGamer": "DaH pagh tu’lu’. may’ wa’DIch ta’DI’, Hoch Data’bogh naDev cha’lu’.",
     "emptyFeedCustomer": "naDev may’mey tu’lu’be’.",
     "emptyFeedGamer": "may’mey Dajmey tu’lu’be’.",
     "showEarlier": "{count, plural, one {# may’ qan yIcha’} other {# may’mey qan yIcha’}}"

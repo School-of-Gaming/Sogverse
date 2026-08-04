@@ -479,11 +479,11 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
   },
 
   /**
-   * **The page before anything has happened in it** — bought last week, first
-   * session still to come. The only way to judge the feed with an empty past,
-   * and the reason the column says so rather than simply stopping under the
-   * divider. The Join is locked, which is what a family sees for all but the
-   * five minutes before each session.
+   * **The resting-state Join** — locked and naming its open time, which is
+   * what a family sees all week outside the voice window and what no other
+   * scenario can show. Dressed as a club bought last week with its first
+   * session still to come, so the feed also happens to demonstrate that an
+   * empty history simply ends at the divider — absence, not a placeholder.
    */
   "locked-join": {
     productName: "Minecraft Starters Club",
