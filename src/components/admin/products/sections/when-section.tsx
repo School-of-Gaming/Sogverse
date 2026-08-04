@@ -14,7 +14,6 @@ import { ScheduleSlotsEditor } from "../schedule-slots-editor";
 import {
   END_DATE_MODE_VALUES,
   FIXED_TIMEZONE,
-  effectiveBillingMode,
   startModeUsesDate,
   startModeUsesThreshold,
   type FormState,
@@ -44,10 +43,7 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
   // and the consumer-club start date is frozen — to today on a fresh form (set
   // in initialState), to the saved date on edit/clone. Word the hint to match
   // the actual value so an edit form doesn't claim "today" for a past date.
-  const locks = formLocksFor(
-    productType,
-    effectiveBillingMode(config, state.paidMode),
-  );
+  const locks = formLocksFor(config, state.paidMode);
   const lockStartMode = locks.startMode;
   const lockStartDate =
     locks.consumerClubStartDateToday && productType === "consumer_club";

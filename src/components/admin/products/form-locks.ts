@@ -17,7 +17,8 @@
 //
 // Typed as `boolean` (not literal `true`) on purpose: these are toggles, so the
 // `lock ? … : …` branches in the form are genuine conditionals, not dead code.
-import type { BillingMode, ProductType } from "@/types";
+import { effectiveBillingMode } from "./product-type-config";
+import type { PaidMode, ProductTypeConfig } from "./product-type-config";
 
 interface FormLocks {
   /** Start trigger is pinned to "On a specific date" (no threshold launches). */
@@ -66,15 +67,21 @@ export const FORM_LOCKS: FormLocks = {
  * that decides which products have which features — the form sections and
  * `initialState` resolve through it rather than reading FORM_LOCKS directly.
  *
- * It takes the **effective billing mode** as well as the type because one lock
- * genuinely depends on it: seats (and with them the waitlist) are safe wherever
- * signup can't be interleaved with a Stripe Checkout, which is a fact about the
- * money, not the type. Callers hold that mode as live form state — an event's
- * free/paid radio moves it — so they resolve it first and pass it in, and the
- * locks re-resolve on every render.
+ * It takes the type config plus the **raw free/paid form state** because one
+ * lock genuinely depends on the billing mode: seats (and with them the
+ * waitlist) are safe wherever signup can't be interleaved with a Stripe
+ * Checkout, which is a fact about the money, not the type. An event's radio
+ * moves that mode while the form is open, so the locks re-resolve every render.
+ *
+ * **Resolving the effective mode is deliberately done in here, not by the
+ * caller.** A resolved-mode parameter would have the same type as the config's
+ * own `defaultBillingMode`, so passing that instead would compile — and quietly
+ * unlock the cap on a paid event, which is the exact failure this file exists
+ * to prevent. Taking the state the caller actually holds makes the wrong call
+ * unrepresentable.
  *
  *   - **Municipality clubs** — seats, waitlist and the registration window are
- *     all signed off. Always `external_contract`, so the mode is moot here.
+ *     all signed off. Always `external_contract`, so `paidMode` is moot here.
  *   - **Events** — the registration window is signed off unconditionally: the
  *     scheduled ticket drop only sets `registration_opens_at`, and the
  *     parent-facing state machine already renders a pre-open countdown for it.
@@ -83,10 +90,10 @@ export const FORM_LOCKS: FormLocks = {
  *   - **Everything else** keeps the global pre-prod locks.
  */
 export function formLocksFor(
-  productType: ProductType,
-  billingMode: BillingMode,
+  config: ProductTypeConfig,
+  paidMode: PaidMode,
 ): FormLocks {
-  if (productType === "municipality_club") {
+  if (config.productType === "municipality_club") {
     return {
       ...FORM_LOCKS,
       seatCount: false,
@@ -94,8 +101,8 @@ export function formLocksFor(
       registrationTiming: false,
     };
   }
-  if (productType === "event") {
-    const capacityIsSafe = billingMode === "free";
+  if (config.productType === "event") {
+    const capacityIsSafe = effectiveBillingMode(config, paidMode) === "free";
     return {
       ...FORM_LOCKS,
       seatCount: !capacityIsSafe,

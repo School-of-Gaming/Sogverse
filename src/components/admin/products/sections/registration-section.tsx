@@ -10,7 +10,6 @@ import {
   HOUR_OPTIONS,
   MINUTE_OPTIONS,
   REGISTRATION_OPENS_MODE_VALUES,
-  effectiveBillingMode,
   type FormState,
 } from "../product-form-state";
 import type { ProductTypeConfig } from "../product-type-config";
@@ -31,13 +30,8 @@ export function RegistrationSection({
   // Pre-prod UI lock (see form-locks.ts): registration always opens immediately
   // and the chooser is pinned to "Right away" — except on municipality clubs
   // and events, where the scheduled ticket drop is signed off and the chooser
-  // is editable. Free/paid doesn't bear on this lock, but the resolver takes
-  // the effective billing mode for the locks that do, so pass it here too
-  // rather than let a second call site guess which arguments matter.
-  const lockTiming = formLocksFor(
-    config.productType,
-    effectiveBillingMode(config, state.paidMode),
-  ).registrationTiming;
+  // is editable.
+  const lockTiming = formLocksFor(config, state.paidMode).registrationTiming;
 
   return (
     <FormSection

@@ -10,13 +10,15 @@ import { FormSection } from "../form-primitives";
 import { formLocksFor } from "../form-locks";
 import { PricingBlock } from "../pricing-block";
 import {
-  PAID_MODE_VALUES,
   SEAT_LIMIT_MODE_VALUES,
-  effectiveBillingMode,
   effectivePricingShape,
   withPaidMode,
   type FormState,
 } from "../product-form-state";
+import {
+  PAID_MODE_VALUES,
+  effectiveBillingMode,
+} from "../product-type-config";
 import type { ProductTypeConfig } from "../product-type-config";
 
 interface BillingSectionProps {
@@ -44,7 +46,7 @@ export function BillingSection({
   // (form-locks.ts). The lock therefore moves with the free/paid radio above,
   // which is why the effective billing mode is threaded into the resolver
   // rather than the product type alone.
-  const locks = formLocksFor(config.productType, billingMode);
+  const locks = formLocksFor(config, state.paidMode);
   const lockSeat = locks.seatCount;
   const lockWaitlist = locks.waitlist;
   // Say *why* the control greyed out, but only where the admin can see it move:

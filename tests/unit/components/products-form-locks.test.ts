@@ -4,53 +4,57 @@ import {
   initialState,
   withPaidMode,
 } from "@/components/admin/products/product-form-state";
-import { PRODUCT_TYPE_CONFIG } from "@/components/admin/products/product-type-config";
-import type { BillingMode, ProductType } from "@/types";
+import {
+  PRODUCT_TYPE_CONFIG,
+  type PaidMode,
+  type ProductTypeConfig,
+} from "@/components/admin/products/product-type-config";
 
 // `formLocksFor` decides, in one place, which pre-prod controls the admin
-// product form leaves editable. It is a pure function of (product type,
-// effective billing mode), and the billing-mode half is the interesting one:
-// an event's free/paid radio is live form state, so the seat and waitlist
-// locks move underneath the admin mid-form. These tests pin the whole matrix,
-// the initialState defaults that pair with it, and the free→paid transition
-// that has to clear a cap it is about to lock away.
+// product form leaves editable. It is a pure function of (type config, free/paid
+// form state), and the billing half is the interesting one: an event's free/paid
+// radio is live form state, so the seat and waitlist locks move underneath the
+// admin mid-form. These tests pin the whole matrix, the initialState defaults
+// that pair with it, and the free→paid transition that has to clear a cap it is
+// about to lock away.
 
 const consumerConfig = PRODUCT_TYPE_CONFIG.consumer_club;
 const muniConfig = PRODUCT_TYPE_CONFIG.municipality_club;
 const campConfig = PRODUCT_TYPE_CONFIG.camp;
 const eventConfig = PRODUCT_TYPE_CONFIG.event;
 
-/** Every (type, billing mode) pair the resolver can legitimately be asked
- *  about — used by the sweeps that assert a lock never lifts. */
-const EVERY_CASE: ReadonlyArray<[ProductType, BillingMode]> = [
-  ["consumer_club", "paid"],
-  ["municipality_club", "external_contract"],
-  ["camp", "paid"],
-  ["event", "free"],
-  ["event", "paid"],
+/** Every (config, paid mode) pair the resolver can be asked about — used by
+ *  the sweeps that assert a lock never lifts. Types that pin their billing
+ *  mode ignore the second element, so one entry each is enough. */
+const EVERY_CASE: ReadonlyArray<[ProductTypeConfig, PaidMode]> = [
+  [consumerConfig, "paid"],
+  [muniConfig, "paid"],
+  [campConfig, "paid"],
+  [eventConfig, "free"],
+  [eventConfig, "paid"],
 ];
 
 describe("formLocksFor", () => {
   describe("municipality clubs", () => {
     it("unlocks seats, waitlist and the registration window", () => {
-      const locks = formLocksFor("municipality_club", "external_contract");
+      const locks = formLocksFor(muniConfig, "paid");
       expect(locks.seatCount).toBe(false);
       expect(locks.waitlist).toBe(false);
       expect(locks.registrationTiming).toBe(false);
     });
 
-    it("ignores the billing mode — a muni club is always off-platform", () => {
+    it("ignores the paid mode — a muni club is always off-platform", () => {
       // Guards against a future edit that gates the muni branch on the mode
       // and silently re-locks the one type these features shipped for.
-      for (const mode of ["external_contract", "paid", "free"] as const) {
-        expect(formLocksFor("municipality_club", mode).seatCount).toBe(false);
+      for (const mode of ["paid", "free"] as const) {
+        expect(formLocksFor(muniConfig, mode).seatCount).toBe(false);
       }
     });
   });
 
   describe("events", () => {
     it("unlocks seats and the waitlist while free", () => {
-      const locks = formLocksFor("event", "free");
+      const locks = formLocksFor(eventConfig, "free");
       expect(locks.seatCount).toBe(false);
       expect(locks.waitlist).toBe(false);
     });
@@ -58,7 +62,7 @@ describe("formLocksFor", () => {
     it("locks seats and the waitlist once paid", () => {
       // A paid signup validates the cap and then leaves for Stripe Checkout
       // with nothing held, so two parents can both take the last seat.
-      const locks = formLocksFor("event", "paid");
+      const locks = formLocksFor(eventConfig, "paid");
       expect(locks.seatCount).toBe(true);
       expect(locks.waitlist).toBe(true);
     });
@@ -66,15 +70,24 @@ describe("formLocksFor", () => {
     it("unlocks the registration window regardless of billing mode", () => {
       // The scheduled ticket drop only writes registration_opens_at, which the
       // parent-facing state machine already honours with a pre-open countdown.
-      expect(formLocksFor("event", "free").registrationTiming).toBe(false);
-      expect(formLocksFor("event", "paid").registrationTiming).toBe(false);
+      expect(formLocksFor(eventConfig, "free").registrationTiming).toBe(false);
+      expect(formLocksFor(eventConfig, "paid").registrationTiming).toBe(false);
+    });
+
+    it("does not treat the type's default billing mode as the live one", () => {
+      // An event's config declares defaultBillingMode "free". The resolver takes
+      // the *form's* free/paid state, so a paid event stays locked no matter
+      // what the type defaults to — the whole reason the effective mode is
+      // resolved inside the resolver rather than handed to it.
+      expect(eventConfig.defaultBillingMode).toBe("free");
+      expect(formLocksFor(eventConfig, "paid").seatCount).toBe(true);
     });
   });
 
   describe("consumer clubs and camps", () => {
     it("keeps the whole pre-prod set locked", () => {
-      for (const type of ["consumer_club", "camp"] as const) {
-        const locks = formLocksFor(type, "paid");
+      for (const config of [consumerConfig, campConfig]) {
+        const locks = formLocksFor(config, "paid");
         expect(locks.seatCount).toBe(true);
         expect(locks.waitlist).toBe(true);
         expect(locks.registrationTiming).toBe(true);
@@ -86,8 +99,8 @@ describe("formLocksFor", () => {
     it("stays on for every type and billing mode", () => {
       // No product lifts these today; the When section resolves them through
       // this function anyway so there is only ever one decision-maker.
-      for (const [type, mode] of EVERY_CASE) {
-        const locks = formLocksFor(type, mode);
+      for (const [config, mode] of EVERY_CASE) {
+        const locks = formLocksFor(config, mode);
         expect(locks.startMode).toBe(true);
         expect(locks.consumerClubStartDateToday).toBe(true);
         expect(locks.holidayCalendars).toBe(true);
@@ -97,8 +110,8 @@ describe("formLocksFor", () => {
 
   describe("the waitlist rides with the seat cap", () => {
     it("is unlocked in exactly the cases a cap is", () => {
-      for (const [type, mode] of EVERY_CASE) {
-        const locks = formLocksFor(type, mode);
+      for (const [config, mode] of EVERY_CASE) {
+        const locks = formLocksFor(config, mode);
         expect(locks.waitlist).toBe(locks.seatCount);
       }
     });

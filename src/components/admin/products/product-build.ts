@@ -24,18 +24,21 @@ import type {
 import { parseLongDescription } from "@/types";
 import type { ProductType } from "@/types";
 import {
-  effectiveBillingMode,
   effectivePricingShape,
   FIXED_TIMEZONE,
   locationPickerMode,
   startModeUsesDate,
   startModeUsesThreshold,
   type FormState,
-  type PaidMode,
   type RegistrationOpensMode,
   type TranslationDraft,
 } from "./product-form-state";
-import type { ProductTypeConfig, StartMode } from "./product-type-config";
+import { effectiveBillingMode } from "./product-type-config";
+import type {
+  PaidMode,
+  ProductTypeConfig,
+  StartMode,
+} from "./product-type-config";
 
 // Constrained to the actual keys under `admin.products.errors` so the
 // caller's t(`errors.${messageKey}`) typechecks without a cast.
