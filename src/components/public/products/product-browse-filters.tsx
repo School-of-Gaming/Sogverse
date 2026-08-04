@@ -217,8 +217,8 @@ export function ProductBrowseFilters({
             schedule, camps run over a date range, events happen once. Rendered
             last so toggling the Type chip to Camps or Events removes the row
             without shifting any row above it. Chip labels show the short
-            weekday on phones and the full
-            name from `sm:` up — both come from Intl via `formatWeekday`. */}
+            weekday on phones and the full name from `sm:` up — both come from
+            Intl via `formatWeekday`. */}
         {daysFilter && (
           <FilterRow label={t("days")}>
             {WEEKDAYS.map((w) => (

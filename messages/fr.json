@@ -1393,16 +1393,19 @@
   "productBrowse": {
     "headings": {
       "consumer_club": "Nos clubs",
-      "camp": "Nos camps"
+      "camp": "Nos camps",
+      "event": "Nos événements"
     },
     "subheadings": {
       "consumer_club": "Des clubs hebdomadaires où votre joueur retrouve des amis, un animateur qui capte vraiment, et le jeu qu’il adore.",
-      "camp": "Des vacances scolaires qui deviennent de vraies aventures de jeu — de nouveaux amis, des compétences concrètes, et un animateur qui embarque avec eux."
+      "camp": "Des vacances scolaires qui deviennent de vraies aventures de jeu — de nouveaux amis, des compétences concrètes, et un animateur qui embarque avec eux.",
+      "event": "Des rendez-vous ponctuels autour du jeu — tournois, démos et rencontres, avec un animateur aux commandes."
     },
     "filters": {
       "type": "Type",
       "typeClubs": "Clubs",
       "typeCamps": "Camps",
+      "typeEvents": "Événements",
       "topic": "Jeu",
       "subject": "Sujet",
       "format": "Format",

@@ -56,10 +56,9 @@ export const EMPTY_FILTERS: BrowseFilters = {
 // type". Only types with a recurring weekly schedule (clubs) qualify — camps
 // run over a date range and events happen once, so even though their slots
 // carry weekdays the filter is neither offered nor applied for them. Both the
-// filter-row visibility
-// (`product-browse-filters.tsx`, via the category's product type) and the
-// filter application (`product-browse-page.tsx`, via the browse type) gate on
-// this, so the two can't drift.
+// filter-row visibility (`product-browse-filters.tsx`, via the category's
+// product type) and the filter application (`product-browse-page.tsx`, via the
+// browse type) gate on this, so the two can't drift.
 export function productTypeSupportsDayFilter(type: ProductType): boolean {
   return type === "consumer_club" || type === "municipality_club";
 }
