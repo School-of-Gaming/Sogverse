@@ -151,20 +151,6 @@ CREATE TYPE public.product_type AS ENUM (
 
 
 --
--- Name: refund_reason; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.refund_reason AS ENUM (
-    'session_cancelled_in_window',
-    'admin_refund',
-    'product_cancelled',
-    'subscription_item_removed',
-    'subscription_period_proration',
-    'duplicate_payment'
-);
-
-
---
 -- Name: user_role; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -4303,22 +4289,6 @@ CREATE TABLE public.products (
 
 
 --
--- Name: refunds; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.refunds (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    payment_id uuid NOT NULL,
-    amount_cents integer NOT NULL,
-    reason public.refund_reason NOT NULL,
-    stripe_refund_id text NOT NULL,
-    stripe_event_id text NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT refunds_amount_cents_check CHECK ((amount_cents >= 0))
-);
-
-
---
 -- Name: schedule_slots; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -4724,30 +4694,6 @@ ALTER TABLE ONLY public.profiles
 
 
 --
--- Name: refunds refunds_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.refunds
-    ADD CONSTRAINT refunds_pkey PRIMARY KEY (id);
-
-
---
--- Name: refunds refunds_stripe_event_id_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.refunds
-    ADD CONSTRAINT refunds_stripe_event_id_key UNIQUE (stripe_event_id);
-
-
---
--- Name: refunds refunds_stripe_refund_id_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.refunds
-    ADD CONSTRAINT refunds_stripe_refund_id_key UNIQUE (stripe_refund_id);
-
-
---
 -- Name: schedule_slots schedule_slots_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -5079,13 +5025,6 @@ CREATE INDEX idx_profiles_home_location_id ON public.profiles USING btree (home_
 --
 
 CREATE INDEX idx_profiles_role ON public.profiles USING btree (role);
-
-
---
--- Name: idx_refunds_payment; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_refunds_payment ON public.refunds USING btree (payment_id);
 
 
 --
@@ -5673,14 +5612,6 @@ ALTER TABLE ONLY public.profiles
 
 
 --
--- Name: refunds refunds_payment_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.refunds
-    ADD CONSTRAINT refunds_payment_id_fkey FOREIGN KEY (payment_id) REFERENCES public.payments(id) ON DELETE RESTRICT;
-
-
---
 -- Name: schedule_slots schedule_slots_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -5962,13 +5893,6 @@ CREATE POLICY admin_full_access_profiles ON public.profiles TO authenticated USI
 
 
 --
--- Name: refunds admin_full_access_refunds; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY admin_full_access_refunds ON public.refunds TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
-
-
---
 -- Name: schedule_slots admin_full_access_schedule_slots; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -6062,15 +5986,6 @@ CREATE POLICY customer_select_own_participations ON public.participations FOR SE
 --
 
 CREATE POLICY customer_select_own_payments ON public.payments FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'customer'::public.user_role) AND (customer_id = ( SELECT auth.uid() AS uid))));
-
-
---
--- Name: refunds customer_select_own_refunds; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY customer_select_own_refunds ON public.refunds FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'customer'::public.user_role) AND (EXISTS ( SELECT 1
-   FROM public.payments p
-  WHERE ((p.id = refunds.payment_id) AND (p.customer_id = ( SELECT auth.uid() AS uid)))))));
 
 
 --
@@ -6397,12 +6312,6 @@ CREATE POLICY read_products ON public.products FOR SELECT TO authenticated, anon
 
 CREATE POLICY read_schedule_slots_via_product ON public.schedule_slots FOR SELECT TO authenticated, anon USING (public.can_read_product(product_id));
 
-
---
--- Name: refunds; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE public.refunds ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: schedule_slots; Type: ROW SECURITY; Schema: public; Owner: -
@@ -7490,15 +7399,6 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_translations TO authen
 GRANT SELECT ON TABLE public.products TO anon;
 GRANT ALL ON TABLE public.products TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.products TO authenticated;
-
-
---
--- Name: TABLE refunds; Type: ACL; Schema: public; Owner: -
---
-
-GRANT SELECT ON TABLE public.refunds TO anon;
-GRANT ALL ON TABLE public.refunds TO service_role;
-GRANT SELECT ON TABLE public.refunds TO authenticated;
 
 
 --

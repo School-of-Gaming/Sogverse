@@ -680,6 +680,10 @@
       "unassignedGroup": "No group assigned",
       "needsGroup": "Needs group assignment",
       "untitledProduct": "Untitled product",
+      "gameAccounts": {
+        "title": "Game accounts",
+        "description": "Set or correct this account's game usernames. Saving checks the name with the platform."
+      },
       "participationStatus": {
         "active": "Active",
         "waitlisted": "Waitlisted",
@@ -1783,7 +1787,8 @@
     "edit": "Edit {platform} username",
     "editFor": "Edit {platform} username for {name}",
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "saveFailed": "Failed to update {platform} username."
   },
   "parent": {
     "placeholders": {
@@ -1906,9 +1911,10 @@
         "title": "Minecraft Account",
         "description": "Link a Minecraft Java Edition username for in-game features."
       },
-      "mcSaved": "Minecraft username saved!",
-      "mcCleared": "Minecraft username cleared",
-      "failedUpdateMc": "Failed to update Minecraft username"
+      "roblox": {
+        "title": "Roblox Account",
+        "description": "Link a Roblox username for in-game features."
+      }
     },
     "switchToGamer": {
       "title": "Switch to {name}’s profile to join {productName}?",
@@ -1930,10 +1936,9 @@
     "changePin": "Change PIN",
     "minecraftAccount": "Minecraft Account",
     "minecraftDescription": "Link your Minecraft Java Edition account",
+    "robloxAccount": "Roblox Account",
+    "robloxDescription": "Link your Roblox account",
     "mcHeadsAttribution": "Skins rendered by <link>mc-heads.net</link>",
-    "minecraftSaved": "Minecraft username saved!",
-    "minecraftCleared": "Minecraft username cleared.",
-    "failedToUpdateMinecraft": "Failed to update Minecraft username.",
     "spokenLanguages": "Languages spoken",
     "location": "Location"
   },

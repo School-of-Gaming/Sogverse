@@ -1,4 +1,5 @@
 export * from "./currency";
+export * from "./game-platforms";
 export * from "./locales";
 export * from "./roles";
 export * from "./routes";

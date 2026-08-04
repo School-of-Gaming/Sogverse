@@ -34,6 +34,18 @@ vi.mock("@/lib/mojang", () => ({
   isValidMinecraftUsername: (...args: unknown[]) => mockIsValidMinecraftUsername(...args),
 }));
 
+// Only the network hop is replaced. `isValidRobloxUsername` is a pure regex the
+// body schema imports, and a mocked validator would mean the format rule this
+// route actually enforces is never exercised here.
+const mockLookupRobloxProfile = vi.fn();
+vi.mock("@/lib/roblox", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/roblox")>();
+  return {
+    ...actual,
+    lookupRobloxProfile: (...args: unknown[]) => mockLookupRobloxProfile(...args),
+  };
+});
+
 // --- Helpers ---
 
 function mockAuthenticated(userId = "customer-123") {
@@ -234,6 +246,122 @@ describe("POST /api/gamers/create — Minecraft linking", () => {
     expect(mockRpc).toHaveBeenCalledWith(
       "create_gamer",
       expect.objectContaining({ p_minecraft_username: undefined }),
+    );
+  });
+});
+
+describe("POST /api/gamers/create — Roblox linking", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockIsValidMinecraftUsername.mockImplementation(
+      (u: string) => /^[a-zA-Z0-9_]{3,16}$/.test(u),
+    );
+    mockAuthenticated();
+    mockPreCreateChecks({ emailExists: false, parentLastName: "Parentson" });
+    mockCreateUser.mockResolvedValue({
+      data: { user: { id: "new-gamer-id" } },
+      error: null,
+    });
+    mockDeleteUser.mockResolvedValue({ error: null });
+    mockRpc.mockResolvedValue({ error: null });
+  });
+
+  it("resolves the handle server-side and passes the numeric account id", async () => {
+    mockLookupRobloxProfile.mockResolvedValue({
+      username: "builderman",
+      userId: 156,
+      displayName: "builderman",
+      avatarUrl: null,
+      headshotUrl: null,
+    });
+
+    const response = await POST(
+      createRequest({ ...validBody, robloxUsername: "builderman" }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockRpc).toHaveBeenCalledWith(
+      "create_gamer",
+      expect.objectContaining({
+        p_roblox_username: "builderman",
+        p_roblox_user_id: 156,
+      }),
+    );
+  });
+
+  it("still links a handle Roblox cannot resolve, with no account id", async () => {
+    mockLookupRobloxProfile.mockResolvedValue(null);
+
+    const response = await POST(
+      createRequest({ ...validBody, robloxUsername: "nobody_here" }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockRpc).toHaveBeenCalledWith(
+      "create_gamer",
+      expect.objectContaining({
+        p_roblox_username: "nobody_here",
+        // Omitted rather than null — the RPC's params default to null and the
+        // generated Args type accepts undefined, not null.
+        p_roblox_user_id: undefined,
+      }),
+    );
+  });
+
+  it("skips Roblox entirely when no handle is provided", async () => {
+    const response = await POST(createRequest(validBody));
+
+    expect(response.status).toBe(200);
+    expect(mockLookupRobloxProfile).not.toHaveBeenCalled();
+    expect(mockRpc).toHaveBeenCalledWith(
+      "create_gamer",
+      expect.objectContaining({ p_roblox_username: undefined }),
+    );
+  });
+
+  it("rejects a handle the Roblox format rule refuses, before any account exists", async () => {
+    // Two underscores — `auth.roblox.com` allows at most one, and the shared
+    // validator the body schema imports is the same rule the lookup uses.
+    const response = await POST(
+      createRequest({ ...validBody, robloxUsername: "a_b_c" }),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("Roblox");
+    expect(mockCreateUser).not.toHaveBeenCalled();
+  });
+
+  it("carries both platforms through in one call", async () => {
+    mockLookupMinecraftUser.mockResolvedValue({
+      username: "Notch",
+      uuid: "mc-uuid",
+    });
+    mockLookupRobloxProfile.mockResolvedValue({
+      username: "builderman",
+      userId: 156,
+      displayName: "builderman",
+      avatarUrl: null,
+      headshotUrl: null,
+    });
+
+    const response = await POST(
+      createRequest({
+        ...validBody,
+        minecraftUsername: "Notch",
+        robloxUsername: "builderman",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockRpc).toHaveBeenCalledWith(
+      "create_gamer",
+      expect.objectContaining({
+        p_minecraft_username: "Notch",
+        p_minecraft_uuid: "mc-uuid",
+        p_roblox_username: "builderman",
+        p_roblox_user_id: 156,
+      }),
     );
   });
 });

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, Lock, Gamepad2, LogOut } from "lucide-react";
+import { User, Lock, LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
-import { GameUsernameEditableRow } from "@/components/game-account";
+import { GameAccountCard } from "@/components/game-account";
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
@@ -23,6 +23,7 @@ import { useUpdateProfile, useSpokenLanguages } from "@/services/users";
 import { useLocationsByIds, type LocationWithChain } from "@/services/locations";
 import { toE164Digits } from "@/lib/utils";
 import { useMyMinecraftAccount, useUpdateMyMinecraft } from "@/services/minecraft";
+import { useMyRobloxAccount, useUpdateMyRoblox } from "@/services/roblox";
 import { isGamerProfile, type ProfileUpdate, type SpokenLanguage } from "@/types";
 
 /**
@@ -45,12 +46,16 @@ export function SettingsSectionContent({
   const { user, profile, refreshProfile } = useAuth();
   const updateProfile = useUpdateProfile();
   const router = useRouter();
-  const showMinecraft = profile?.role === "gamer" || profile?.role === "gedu";
+  // Game identities belong to the people who play: a child and the educator
+  // running the session. A parent's own account has none.
+  const showGameAccounts = profile?.role === "gamer" || profile?.role === "gedu";
   const isGedu = profile?.role === "gedu";
   const isGamer = isGamerProfile(profile);
   const isParent = profile?.role === "customer";
   const { data: mcAccount } = useMyMinecraftAccount();
   const updateMyMc = useUpdateMyMinecraft();
+  const { data: robloxAccount } = useMyRobloxAccount();
+  const updateMyRoblox = useUpdateMyRoblox();
   const { data: availableLanguages } = useSpokenLanguages({
     initialData: initialSpokenLanguages,
   });
@@ -106,9 +111,6 @@ export function SettingsSectionContent({
   const homeLocation = homeLocationEdit
     ? homeLocationEdit.pick
     : savedHomeLocation;
-
-  const [mcSuccess, setMcSuccess] = useState<string | null>(null);
-  const [mcError, setMcError] = useState<string | null>(null);
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -166,41 +168,6 @@ export function SettingsSectionContent({
 
   const handleChangePassword = () => {
     router.push("/reset-password");
-  };
-
-  /**
-   * Committing the row *is* saving it — there is no separate Save button, because
-   * the row's own commit already asked the question one would have answered.
-   *
-   * The row has verified the name against Mojang by the time this runs, so what
-   * arrives is the canonical casing; the route re-runs the lookup server-side
-   * anyway, because a client-verified name is not evidence. The mutation
-   * invalidates the account query, which feeds the row its new props — the loop
-   * that keeps this component from holding a second copy of the username.
-   */
-  const handleSaveMc = async (mcValue: string | null) => {
-    setMcSuccess(null);
-    setMcError(null);
-
-    try {
-      await updateMyMc.mutateAsync(mcValue);
-      setMcSuccess(
-        mcValue
-          ? t('minecraftSaved')
-          : t('minecraftCleared'),
-      );
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : typeof error === "object" && error !== null && "message" in error
-            ? String((error as { message: unknown }).message)
-            : t('failedToUpdateMinecraft');
-      setMcError(message);
-      // Rethrown after the banner is set: the row is awaiting this, and a
-      // silent resolve would leave it showing a name nothing stored.
-      throw error;
-    }
   };
 
   return (
@@ -359,67 +326,50 @@ export function SettingsSectionContent({
 
       {isGedu && user && <GeduCoverageEditor geduId={user.id} />}
 
-      {showMinecraft && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Gamepad2 className="h-5 w-5" />
-              <CardTitle>{t('minecraftAccount')}</CardTitle>
-            </div>
-            <CardDescription>
-              {t('minecraftDescription')}
-            </CardDescription>
-            {/* A courtesy credit, not a licence condition — mc-heads asks for
-                nothing and encourages this. One home is enough for a thank-you,
-                and this is the page where a person is looking at their own skin,
-                so it is the one that earns it. An anchor is fine here: the
-                no-off-site-links rule governs staff-authored copy shown to
-                families, not the app's own chrome. */}
-            <p className="text-xs text-muted-foreground">
-              {t.rich('mcHeadsAttribution', {
-                link: (chunks) => (
-                  <a
-                    href="https://mc-heads.net"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline hover:text-foreground"
-                  >
-                    {chunks}
-                  </a>
-                ),
-              })}
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <GameUsernameEditableRow
-              platform="minecraft"
-              username={mcAccount?.minecraft_username ?? null}
-              externalId={mcAccount?.minecraft_uuid ?? null}
-              // Returned, not voided: the row waits on the write before it lets
-              // go of the name it is showing.
-              onCommit={({ username }) => handleSaveMc(username)}
-              className="max-w-sm"
-            />
+      {showGameAccounts && (
+        <>
+          <GameAccountCard
+            platform="minecraft"
+            title={t('minecraftAccount')}
+            description={t('minecraftDescription')}
+            username={mcAccount?.minecraft_username ?? null}
+            externalId={mcAccount?.minecraft_uuid ?? null}
+            onSave={(value) => updateMyMc.mutateAsync(value)}
+            note={
+              /* A courtesy credit, not a licence condition — mc-heads asks for
+                 nothing and encourages this. One home is enough for a thank-you,
+                 and this is the page where a person is looking at their own skin,
+                 so it is the one that earns it. An anchor is fine here: the
+                 no-off-site-links rule governs staff-authored copy shown to
+                 families, not the app's own chrome. */
+              <p className="text-xs text-muted-foreground">
+                {t.rich('mcHeadsAttribution', {
+                  link: (chunks) => (
+                    <a
+                      href="https://mc-heads.net"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-foreground"
+                    >
+                      {chunks}
+                    </a>
+                  ),
+                })}
+              </p>
+            }
+          />
 
-            {/* Below the row, not above it. The outcome of a save arrives after
-                the save, so a banner above the row would push the row — the very
-                thing the person just used, and is still looking at — down the
-                page as it lands. Last thing in the last card on the page, so it
-                grows into empty space and moves nothing. */}
-            {mcSuccess && (
-              <div className="rounded-md bg-success/10 p-3 text-sm text-success">
-                {mcSuccess}
-              </div>
-            )}
-
-            {mcError && (
-              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                {mcError}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          <GameAccountCard
+            platform="roblox"
+            title={t('robloxAccount')}
+            description={t('robloxDescription')}
+            username={robloxAccount?.roblox_username ?? null}
+            externalId={robloxAccount?.roblox_user_id ?? null}
+            onSave={(value) => updateMyRoblox.mutateAsync(value)}
+          />
+        </>
       )}
     </div>
   );
 }
+

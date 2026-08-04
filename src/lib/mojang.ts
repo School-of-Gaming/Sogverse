@@ -20,14 +20,24 @@ function formatUuid(hex: string): string {
 /**
  * Look up a Minecraft Java account by username via the Mojang API.
  * Returns the correctly-cased username + dashed UUID, or null if not found.
+ *
+ * **Never throws.** Every caller treats the answer as optional — a name Mojang
+ * cannot resolve is still stored, with a null uuid, because it is the child's
+ * answer either way. A rejected fetch (DNS failure, connection reset, Mojang
+ * simply down) is that same "no answer" and has to arrive as one: letting it
+ * propagate would turn an outage at a third party into a 500 on every write path
+ * that saves a username, including gamer creation and educator registration,
+ * where the account itself has nothing to do with Minecraft.
  */
 export async function lookupMinecraftUser(
   username: string,
 ): Promise<MojangProfile | null> {
   if (!USERNAME_RE.test(username)) return null;
 
-  const res = await fetch(`${MOJANG_API}/${encodeURIComponent(username)}`);
-  if (!res.ok) return null;
+  const res = await fetch(`${MOJANG_API}/${encodeURIComponent(username)}`).catch(
+    () => null,
+  );
+  if (!res?.ok) return null;
 
   // External API — anything that isn't the expected shape (including the
   // empty 204 body Mojang uses for "no such user") counts as not found.

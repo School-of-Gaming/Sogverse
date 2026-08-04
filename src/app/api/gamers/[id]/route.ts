@@ -3,6 +3,7 @@ import { z } from "zod";
 import { defineRoute } from "@/lib/api/define-route";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { lookupMinecraftUser } from "@/lib/mojang";
+import { lookupRobloxProfile } from "@/lib/roblox";
 import { updateGamerBody } from "@/services/gamers/gamers.contracts";
 
 /**
@@ -114,6 +115,28 @@ export const PATCH = defineRoute({
         .upsert(mcUpsert, { onConflict: "user_id" });
 
       if (mcError) throw mcError;
+    }
+
+    // The same shape one platform over. The two are independent: a parent may
+    // send either key, both, or neither, and an absent key leaves that
+    // platform's link untouched.
+    if (body.robloxUsername !== undefined) {
+      const username = body.robloxUsername;
+      const robloxUpsert =
+        username === null
+          ? { user_id: gamerId, roblox_username: null, roblox_user_id: null }
+          : {
+              user_id: gamerId,
+              roblox_username: username,
+              roblox_user_id:
+                (await lookupRobloxProfile(username))?.userId ?? null,
+            };
+
+      const { error: robloxError } = await admin
+        .from("roblox_accounts")
+        .upsert(robloxUpsert, { onConflict: "user_id" });
+
+      if (robloxError) throw robloxError;
     }
 
     const { data: updatedProfile, error: fetchError } = await admin

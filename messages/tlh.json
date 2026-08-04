@@ -725,6 +725,10 @@
       "unassignedGroup": "ghom Sambe’",
       "needsGroup": "ghom poQlu’",
       "untitledProduct": "Doch pong Hutlh",
+      "gameAccounts": {
+        "title": "QujmeH tetlh",
+        "description": "QujwI’ pong yIchoH ghap yIcher. bIpolDI’ pong chel Qu’qoq."
+      },
       "participationStatus": {
         "active": "vangtaH",
         "waitlisted": "loStaH",
@@ -1740,7 +1744,8 @@
     "edit": "{platform} pong yIchoH",
     "editFor": "{name} {platform} pong yIchoH",
     "save": "yIpol",
-    "cancel": "yIqIl"
+    "cancel": "yIqIl",
+    "saveFailed": "{platform} lo’wI’ pong choH Dabe’lu’."
   },
   "parent": {
     "placeholders": {
@@ -1863,9 +1868,10 @@
         "title": "Minecraft Account",
         "description": "Minecraft Java Edition lo’wI’ pong jonmoH — toy’a’ Qu’meyvaH."
       },
-      "mcSaved": "Minecraft lo’wI’ pong Sahlu’! Qapla’!",
-      "mcCleared": "Minecraft lo’wI’ pong teqlu’",
-      "failedUpdateMc": "Minecraft lo’wI’ pong choH Dabe’lu’"
+      "roblox": {
+        "title": "Roblox Account",
+        "description": "Roblox lo’wI’ pong jonmoH — toy’a’ Qu’meyvaH."
+      }
     },
     "switchToGamer": {
       "title": "{name}vaD pong yIchoH ’ej {productName}vaD yIghaj?",
@@ -1887,10 +1893,9 @@
     "changePin": "PIN yIchoH",
     "minecraftAccount": "Minecraft Account",
     "minecraftDescription": "Minecraft Java Edition account jonmoH",
+    "robloxAccount": "Roblox Account",
+    "robloxDescription": "Roblox account jonmoH",
     "mcHeadsAttribution": "Haj <link>mc-heads.net</link> chenmoH",
-    "minecraftSaved": "Minecraft lo’wI’ pong Sahlu’! Qapla’!",
-    "minecraftCleared": "Minecraft lo’wI’ pong teqlu’.",
-    "failedToUpdateMinecraft": "Minecraft lo’wI’ pong choH Dabe’lu’.",
     "spokenLanguages": "Holmey jatlhlu’",
     "location": "Daq"
   },

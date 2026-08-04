@@ -29,10 +29,11 @@ import { readErrorMessage } from "@/lib/api/json-response";
 import type { SpokenLanguage } from "@/types";
 
 /**
- * A literal rather than a `useId()`, because the other fields on this form name
+ * Literals rather than `useId()`s, because the other fields on this form name
  * their inputs the same way — one page, one form, one of each.
  */
 const MINECRAFT_USERNAME_INPUT_ID = "register-gedu-minecraft-username";
+const ROBLOX_USERNAME_INPUT_ID = "register-gedu-roblox-username";
 
 const registerGeduSchema = z.object({
   firstName: z.string().min(DISPLAY_NAME_MIN, `First name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `First name must be at most ${DISPLAY_NAME_MAX} characters`),
@@ -65,6 +66,7 @@ export function RegisterGeduForm({
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [minecraftUsername, setMinecraftUsername] = useState<string | null>(null);
+  const [robloxUsername, setRobloxUsername] = useState<string | null>(null);
   const [phone, setPhone] = useState("");
   const [spokenLanguages, setSpokenLanguages] = useState<string[]>([]);
   /**
@@ -125,6 +127,7 @@ export function RegisterGeduForm({
           locale,
           locationIds,
           minecraftUsername: minecraftUsername ?? undefined,
+          robloxUsername: robloxUsername ?? undefined,
         }),
       });
 
@@ -235,24 +238,44 @@ export function RegisterGeduForm({
               />
             </Field>
           </div>
-          {/* First capture: nothing is saved yet, so the row opens straight
-              into edit mode. The label belongs to the form, not the row — a
-              roster renders the same row with no label at all — so the id is
-              handed down and the row drops its own sr-only label rather than
-              labelling the input twice. */}
-          <Field
-            label={g("label", { platform: GAME_PLATFORMS.minecraft.name })}
-            htmlFor={MINECRAFT_USERNAME_INPUT_ID}
-            optional
-          >
-            <GameUsernameEditableRow
-              platform="minecraft"
-              username={minecraftUsername}
-              autoEdit
-              inputId={MINECRAFT_USERNAME_INPUT_ID}
-              onCommit={({ username }) => setMinecraftUsername(username)}
-            />
-          </Field>
+          {/* First capture on both platforms: nothing is saved yet, so each row
+              opens straight into edit mode. The label belongs to the form, not
+              the row — a roster renders the same row with no label at all — so
+              the id is handed down and the row drops its own sr-only label
+              rather than labelling the input twice.
+
+              Side by side at the same breakpoint as the name and password
+              pairs, because they are the same kind of pair: two independent
+              optional answers, neither of which is more important than the
+              other. Stacked below `sm`, like everything else on this form. */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label={g("label", { platform: GAME_PLATFORMS.minecraft.name })}
+              htmlFor={MINECRAFT_USERNAME_INPUT_ID}
+              optional
+            >
+              <GameUsernameEditableRow
+                platform="minecraft"
+                username={minecraftUsername}
+                autoEdit
+                inputId={MINECRAFT_USERNAME_INPUT_ID}
+                onCommit={({ username }) => setMinecraftUsername(username)}
+              />
+            </Field>
+            <Field
+              label={g("label", { platform: GAME_PLATFORMS.roblox.name })}
+              htmlFor={ROBLOX_USERNAME_INPUT_ID}
+              optional
+            >
+              <GameUsernameEditableRow
+                platform="roblox"
+                username={robloxUsername}
+                autoEdit
+                inputId={ROBLOX_USERNAME_INPUT_ID}
+                onCommit={({ username }) => setRobloxUsername(username)}
+              />
+            </Field>
+          </div>
           <Field label={c("phoneNumber")} htmlFor="phone" optional>
             <InternationalPhoneInput
               id="phone"
