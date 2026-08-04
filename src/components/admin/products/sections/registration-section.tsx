@@ -31,7 +31,7 @@ export function RegistrationSection({
   // and the chooser is pinned to "Right away" — except on municipality clubs
   // and events, where the scheduled ticket drop is signed off and the chooser
   // is editable.
-  const lockTiming = formLocksFor(config, state.paidMode).registrationTiming;
+  const lockTiming = formLocksFor(config).registrationTiming;
 
   return (
     <FormSection

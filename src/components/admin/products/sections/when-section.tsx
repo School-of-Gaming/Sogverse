@@ -43,7 +43,7 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
   // and the consumer-club start date is frozen — to today on a fresh form (set
   // in initialState), to the saved date on edit/clone. Word the hint to match
   // the actual value so an edit form doesn't claim "today" for a past date.
-  const locks = formLocksFor(config, state.paidMode);
+  const locks = formLocksFor(config);
   const lockStartMode = locks.startMode;
   const lockStartDate =
     locks.consumerClubStartDateToday && productType === "consumer_club";

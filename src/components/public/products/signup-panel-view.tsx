@@ -321,6 +321,7 @@ function FormOrAuth(props: FormOrAuthProps) {
     case "unauthenticated":
       return (
         <UnauthenticatedOverlay
+          productType={props.productType}
           signInHref={props.authState.signInHref}
           createAccountHref={props.authState.createAccountHref}
         />
@@ -335,9 +336,11 @@ function FormOrAuth(props: FormOrAuthProps) {
 }
 
 function UnauthenticatedOverlay({
+  productType,
   signInHref,
   createAccountHref,
 }: {
+  productType: ProductType;
   signInHref: string;
   createAccountHref: string;
 }) {
@@ -351,7 +354,11 @@ function UnauthenticatedOverlay({
           className: "w-full text-base",
         })}
       >
-        {t("ctaSignIn")}
+        {/* Keyed by type like every other action word on this panel — the sign-in
+            button names the same action the signed-in CTA will, so "register" on
+            an event (where the verb is "join" everywhere else) was the one place
+            the panel changed vocabulary on the way through the door. */}
+        {t(`ctaSignIn.${productType}`)}
       </Link>
       <Link
         href={createAccountHref}

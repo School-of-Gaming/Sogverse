@@ -458,7 +458,6 @@
         "seatHint": "Une fois complet, les nouvelles inscriptions passent en liste d’attente.",
         "visibleHint": "Décochez pendant que vous préparez encore le produit, ou pour arrêter les nouvelles inscriptions. Cela ne masque le produit qu’aux nouveaux parents — les parents et les joueurs déjà inscrits continuent de le voir, ainsi que leurs sessions, sur leur page Mon SOG.",
         "seatLimitHint": "Plafonnez le nombre de joueurs, ou fonctionnez sans limite.",
-        "seatLimitPaidEvent": "Les événements payants fonctionnent sans limite de places pour l’instant : une place ne peut pas être réservée pendant qu’un parent paie. Passez en gratuit pour plafonner cet événement.",
         "holidayComingSoon": "Les calendriers de vacances arrivent bientôt. Pour l’instant, toutes les sessions programmées ont lieu.",
         "startDateToday": "Verrouillée sur la date du jour pour le moment.",
         "startDateLocked": "La date de début est verrouillée pour le moment."
@@ -1532,7 +1531,12 @@
       "ctaAllSet": "Tout est prêt",
       "ctaAgreeRules": "Acceptez les règles",
       "ctaWaitlist": "Rejoindre la liste d’attente",
-      "ctaSignIn": "Connectez-vous pour vous inscrire",
+      "ctaSignIn": {
+        "consumer_club": "Connectez-vous pour vous inscrire",
+        "municipality_club": "Connectez-vous pour vous inscrire",
+        "camp": "Connectez-vous pour vous inscrire",
+        "event": "Connectez-vous pour participer"
+      },
       "ctaCreateAccount": "Créer un compte",
       "gamerAlreadySignedUp": {
         "consumer_club": "Déjà inscrit",

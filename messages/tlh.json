@@ -503,7 +503,6 @@
         "seatHint": "tebDI’, ghItlh chu’mey tetlh teb Daq jaH.",
         "visibleHint": "DochlIj DachenmoHtaHvIS, ghap ghItlh chu’ DamevmeH, yIchu’Ha’. vav chu’vo’ neH Doch So’ — ghoStaHbogh vavpu’ QujwI’pu’ je Doch Qu’chaj je My SOG HaqwI’chajDaq luleghtaH.",
         "seatLimitHint": "pa’ mI’ yIgheS pagh Sub Hutlh yIqaw.",
-        "seatLimitPaidEvent": "DaH Huch Qu’ pa’ mI’ Sub ghajlaHbe’ — DIltaHvIS vav, pa’ pollaHbe’lu’. pa’ mI’ Sub DaneHchugh, Qu’ Huch pagh yIchoH.",
         "holidayComingSoon": "jaj Do’ De’wI’ tugh chol. DaH Hoch ghum qaS.",
         "startDateToday": "DaHjaj Daq poSmoHlu’pu’.",
         "startDateLocked": "DaH taghDaq poSmoHlu’pu’."
@@ -1577,7 +1576,12 @@
       "ctaAllSet": "bIghuHrup",
       "ctaAgreeRules": "chutmey yIlaj",
       "ctaWaitlist": "tetlh DaqaD",
-      "ctaSignIn": "qonmeH yI’el",
+      "ctaSignIn": {
+        "consumer_club": "qonmeH yI’el",
+        "municipality_club": "qonmeH yI’el",
+        "camp": "qonmeH yI’el",
+        "event": "muvmeH yI’el"
+      },
       "ctaCreateAccount": "Account chu’ chenmoH",
       "gamerAlreadySignedUp": {
         "consumer_club": "muvpu’",

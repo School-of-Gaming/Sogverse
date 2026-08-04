@@ -458,7 +458,6 @@
         "seatHint": "När fullt går nya anmälningar till väntelistan.",
         "visibleHint": "Avmarkera medan du fortfarande arbetar på produkten, eller för att stoppa nya anmälningar. Det döljer bara produkten för nya föräldrar — föräldrar och gamers som redan är anmälda ser den och sina tillfällen på sin My SOG-sida.",
         "seatLimitHint": "Begränsa antalet deltagare eller kör utan gräns.",
-        "seatLimitPaidEvent": "Betalda evenemang körs tills vidare utan platsgräns — en plats kan inte reserveras medan en förälder betalar. Byt till gratis för att begränsa det här evenemanget.",
         "holidayComingSoon": "Lovkalendrar kommer snart. Tills vidare körs varje schemalagt tillfälle.",
         "startDateToday": "Låst till dagens datum tills vidare.",
         "startDateLocked": "Startdatumet är låst tills vidare."
@@ -1532,7 +1531,12 @@
       "ctaAllSet": "Du är klar",
       "ctaAgreeRules": "Godkänn reglerna",
       "ctaWaitlist": "Gå med på väntelistan",
-      "ctaSignIn": "Logga in för att anmäla",
+      "ctaSignIn": {
+        "consumer_club": "Logga in för att anmäla",
+        "municipality_club": "Logga in för att anmäla",
+        "camp": "Logga in för att anmäla",
+        "event": "Logga in för att gå med"
+      },
       "ctaCreateAccount": "Skapa konto",
       "gamerAlreadySignedUp": {
         "consumer_club": "Redan anmäld",
