@@ -1383,8 +1383,7 @@
       "openClubs": "We also run clubs that are open to everyone, which a gamer can join wherever they live."
     },
     "municipality": {
-      "heading": "{name} Clubs",
-      "subheading": "Weekly clubs offered by {name}, where your gamer plays, builds, and creates with new friends and a Gedu who actually gets it."
+      "heading": "{name} Clubs"
     }
   },
   "productBrowse": {

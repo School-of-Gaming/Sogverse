@@ -1383,8 +1383,7 @@
       "openClubs": "Nous proposons aussi des clubs ouverts à tous, qu’un joueur peut rejoindre où qu’il habite."
     },
     "municipality": {
-      "heading": "Clubs de {name}",
-      "subheading": "Clubs hebdomadaires proposés par {name}, où votre joueur joue, construit et crée avec de nouveaux amis et un animateur qui capte vraiment."
+      "heading": "Clubs de {name}"
     }
   },
   "productBrowse": {
