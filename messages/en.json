@@ -1476,6 +1476,11 @@
           "description": "Fortnite is a colourful, cartoon-style online game where players team up and compete in short, round-based matches. It’s hugely popular and very social — kids play together with friends. The look is bright and non-realistic (no blood or gore), though matches are competitive and played online with others.",
           "note": "Fortnite is free to download and play — you don’t buy the game itself. Your child creates a free Epic Games account to play. Some optional extras (outfits and such) cost money, which you can limit with parental controls.",
           "linkLabel": "Get Fortnite"
+        },
+        "pokemon_go": {
+          "description": "Pokémon GO is played outdoors, on a phone. Creatures appear on a map of the real world, and children walk to parks, streets and landmarks to find and collect them. It’s about collecting rather than fighting — the appeal is exploring, filling up a Pokédex and comparing finds with friends. Most of the playing happens on foot, so it tends to get children moving.",
+          "note": "Pokémon GO is free to download and play — you don’t buy the game itself. Your child needs a phone or tablet with GPS and a mobile data connection, plus a free account. There are optional in-app purchases, which you can limit with parental controls. Because it’s played outdoors in real places, it’s worth agreeing in advance where your child may go and whether an adult comes along.",
+          "linkLabel": "Where to get it"
         }
       }
     },

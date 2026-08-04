@@ -69,4 +69,27 @@ describe("GameInfoCard", () => {
       "https://www.fortnite.com/",
     );
   });
+
+  it("renders Pokémon GO as the two mobile stores, at PEGI 3", () => {
+    const { getByText, container } = render(
+      <GameInfoCard topic="pokemon_go" />,
+    );
+
+    // The accented é and the all-caps GO are Niantic's branding, and the label
+    // is a literal — so this asserts the exact string, not a normalized one.
+    expect(getByText("Pokémon GO")).toBeTruthy();
+    expect(getByText("PEGI 3")).toBeTruthy();
+
+    const hrefs = Array.from(container.querySelectorAll("a")).map((a) =>
+      a.getAttribute("href"),
+    );
+    // Mobile-only, and the exact links matter: both forms are region-neutral
+    // and redirect to the visitor's local store, so a country segment creeping
+    // into either one would send most parents somewhere they can't buy. These
+    // are stable literals in topics.ts, so assert them rather than the host.
+    expect(hrefs).toEqual([
+      "https://apps.apple.com/app/id1094591345",
+      "https://play.google.com/store/apps/details?id=com.nianticlabs.pokemongo",
+    ]);
+  });
 });

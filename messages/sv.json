@@ -1476,6 +1476,11 @@
           "description": "Fortnite är ett färgglatt onlinespel i tecknad stil där spelare bildar lag och tävlar i korta matcher, omgång för omgång. Det är enormt populärt och väldigt socialt, och barn spelar tillsammans med vänner. Stilen är ljus och orealistisk, utan blod eller våld, även om matcherna är tävlingsinriktade och spelas online med andra.",
           "note": "Fortnite är gratis att ladda ner och spela – du köper inte själva spelet. Ditt barn skapar ett gratis Epic Games-konto för att spela. Vissa valfria extrasaker, som utstyrslar, kostar pengar, och du kan begränsa dem med föräldrakontroller.",
           "linkLabel": "Skaffa Fortnite"
+        },
+        "pokemon_go": {
+          "description": "Pokémon GO spelas utomhus, på en telefon. Varelser dyker upp på en karta över den verkliga världen, och barnen går till parker, gator och landmärken för att hitta och samla dem. Det handlar om att samla snarare än att slåss – det roliga är att utforska, fylla sin Pokédex och jämföra fynd med kompisar. Det mesta av spelandet sker till fots, så spelet får barn att röra på sig.",
+          "note": "Pokémon GO är gratis att ladda ner och spela – du köper inte själva spelet. Ditt barn behöver en telefon eller surfplatta med GPS och mobildata, samt ett gratis konto. Det finns valfria köp i appen, som du kan begränsa med föräldrakontroller. Eftersom spelet spelas utomhus på riktiga platser är det bra att i förväg komma överens om var barnet får röra sig och om en vuxen följer med.",
+          "linkLabel": "Var du laddar ner det"
         }
       }
     },

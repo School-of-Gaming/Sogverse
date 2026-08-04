@@ -1521,6 +1521,11 @@
           "description": "Fortnite ’oH ’IH, na’rural online Quj’e’, ghochDaq ghom chenmoH ’ej tlhup ngajbogh ghochmeyDaq Suvchuq. tlhIng’a’ Suy’, tlhIngan jaj rur – juppu’ tlhej puqpu’. wovbogh ’ej teHbe’bogh ’IH (’Iw ghobe’, SuvwI’Hey ghobe’), ’ach qugh Suvmey, latlhpu’ tlhej online.",
           "note": "Fortnite yISuqmeH DIl HInobbe’ – Quj naQ yIje’be’. Epic Games-Daq HInob tlhab chenmoH puqlI’. wejwI’ DachmeH (Sut latlh je) Huch poQlu’, ’ach SoH yI’el lojmIt.",
           "linkLabel": "Fortnite yISuq"
+        },
+        "pokemon_go": {
+          "description": "Pokémon GO QujmeH juHlIj yImej – Hurgh yIghoS! qo’ teH chartDaq Ha’DIbaHmey chenlu’, ’ej Sammeh yIt puqpu’: wIchmey, Hemey, Daq Dunmey je. Suvbe’lu’ – qemlu’ neH. Pokédex yIteb ’ej juppu’ tlhej SammeH yIqel. Qujchugh puq, yItnIS – vaj vIHmoH Quj.",
+          "note": "Pokémon GO yISuqmeH DIl HInobbe’ – Quj naQ yIje’be’. GPS ghajbogh jabbI’ID jan mobile-data je poQlu’, ’ej tlhab De’wI’ pong chenmoH. wejwI’ DachmeH Huch poQlu’, ’ach SoH yI’el lojmIt. Hurgh Qujlu’, Daq teHDaq – vaj yIqel: nuqDaq jaHlaH puqlI’, ’ej ghaH tlhej’a’ nuv tIn?",
+          "linkLabel": "nuqDaq Suqlu’"
         }
       }
     },
