@@ -82,9 +82,16 @@ import { SubscriptionEndingBadge } from "./SubscriptionEndingBadge";
  * card drops the stretched anchor, the chevron and the hover lift together:
  * nothing about it may promise "there is more inside" when there is not. On the
  * cards that do link, an invisible stretched anchor covers the card, the chevron
- * marks that there is more inside, and the Join button lifts itself above the
- * anchor so it keeps receiving its own clicks. No `<a>` inside `<a>`, so
- * middle-click and prefetch both behave.
+ * marks that there is more inside, and the Join button — and *only* the Join
+ * button — lifts itself above the anchor so it keeps receiving its own clicks.
+ * No `<a>` inside `<a>`, so middle-click and prefetch both behave.
+ *
+ * **The footer is part of the card.** Lifting the whole footer row rather than
+ * the button was the easy version of that and quietly cost a click target: the
+ * venue name, the ended-on date and the waitlist sentence rode up with it, so
+ * the bottom strip of every card without a Join swallowed clicks and did
+ * nothing. Only the button is interactive, so only the button sits above the
+ * anchor.
  *
  * **A finished run is quiet history, not a fault.** Its identity and schedule
  * drop a tone, its gradient can never light, and the footer names the day it
@@ -290,9 +297,17 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               something real in the row. Holding a button's worth of height under
               a single line of venue text would be dead space on the majority of
               cards — and where no branch lands at all, the row itself does not
-              render. */}
+              render.
+
+              **Nothing here is lifted above the card's stretched link except the
+              Join itself.** The lift used to sit on the row, which also lifted
+              the venue name, the ended-on date and the waitlist sentence — none
+              of them a control — and turned the bottom strip of most cards into
+              a dead zone. The button is the only thing in the row with a click
+              of its own to receive, so it is the only thing that takes the
+              `z-10`. */}
           {hasFooter && (
-            <div className="relative z-10 flex items-center justify-center">
+            <div className="flex items-center justify-center">
               {endedOn !== null && (
                 // Date-only and UTC-pinned: an end date is a calendar date with no
                 // clock face on it, so it must read the same everywhere rather
@@ -324,17 +339,21 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                 </span>
               )}
               {running && hasVoiceRoom && hasNext && (
-                <JoinVoiceButton
-                  voiceIsOpen={voiceIsOpen}
-                  voiceHref={voiceHref}
-                  opensDate={formatDate(nextSessionStart, locale, {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                    timeZone,
-                  })}
-                  opensTime={formatTime(nextSessionStart, locale, timeZone)}
-                />
+                // The one thing in the footer that owns its clicks, so the one
+                // thing lifted above the stretched link covering the card.
+                <span className="relative z-10">
+                  <JoinVoiceButton
+                    voiceIsOpen={voiceIsOpen}
+                    voiceHref={voiceHref}
+                    opensDate={formatDate(nextSessionStart, locale, {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                      timeZone,
+                    })}
+                    opensTime={formatTime(nextSessionStart, locale, timeZone)}
+                  />
+                </span>
               )}
               {running && !hasVoiceRoom && siteName !== null && (
                 <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">

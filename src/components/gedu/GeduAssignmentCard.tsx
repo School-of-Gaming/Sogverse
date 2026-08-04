@@ -149,10 +149,16 @@ interface GeduAssignmentCardProps {
  *
  * The Join affordance lives here for a remote product, because this is the only
  * place a gedu meets their next session before opening it. Card and button are
- * both real anchors via a stretched link: the invisible link covers the card
- * with an `::after`, and the Join button is lifted above it with `relative z-10`
- * so it receives its own clicks. No `<a>` inside `<a>`, so middle-click and
- * prefetch both behave.
+ * both real anchors: the invisible stretched link covers the whole card, and the
+ * Join button — and *only* the Join button — is lifted above it with `relative
+ * z-10` so it receives its own clicks. No `<a>` inside `<a>`, so middle-click
+ * and prefetch both behave.
+ *
+ * **The footer is part of the card.** Lifting the whole footer row rather than
+ * the button was the easy version of that and quietly cost a click target: the
+ * venue name and the ended-on date rode up with it, so the bottom strip of every
+ * card without a Join swallowed clicks and did nothing. Nothing in the footer
+ * but the button is interactive, so nothing else may sit above the link.
  *
  * **A finished run is quiet history, not a scheduling fault.** Once a product's
  * last day is behind it there is always no next session, which read as the
@@ -373,8 +379,16 @@ export function GeduAssignmentCard({
               and the difference lands as padding), which is exactly why it went
               unnoticed: it shows up on the card that ends up alone on the last
               row, where there is nothing to stretch against and an ended club
-              reads as a clipped version of a real card. */}
-          <div className="relative z-10 mt-auto flex min-h-9 items-center justify-center">
+              reads as a clipped version of a real card.
+
+              **Nothing in this row is lifted above the card's stretched link
+              except the Join itself.** The lift used to sit on the row, which
+              also lifted the venue name and the ended-on date — neither of which
+              is a control — and made the bottom strip of most cards a dead zone
+              where a click hit nothing at all. The button is the only thing here
+              with a click of its own to receive, so it is the only thing that
+              takes the `z-10`. */}
+          <div className="mt-auto flex min-h-9 items-center justify-center">
             {endedOn !== null && (
               // Date-only and UTC-pinned, via the shared bare-date formatter: an
               // end date is a calendar date with no clock face on it, so it must
@@ -388,22 +402,26 @@ export function GeduAssignmentCard({
               </span>
             )}
             {endedOn === null && hasVoiceRoom && hasNext && (
-              <JoinVoiceButton
-                voiceIsOpen={voiceIsOpen}
-                voiceHref={voiceHref}
-                opensDate={formatDate(nextSessionStart, locale, {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                  timeZone,
-                })}
-                opensTime={formatTime(nextSessionStart, locale, timeZone)}
-                // Leaving the room lands on the group's workspace, not back on
-                // this grid: what a gedu does after a session is write it up,
-                // and the feed is where that happens. It is the same href the
-                // card itself opens, so the two agree by construction.
-                backHref={openHref}
-              />
+              // The one thing in the footer that owns its clicks, so the one
+              // thing lifted above the stretched link covering the card.
+              <span className="relative z-10">
+                <JoinVoiceButton
+                  voiceIsOpen={voiceIsOpen}
+                  voiceHref={voiceHref}
+                  opensDate={formatDate(nextSessionStart, locale, {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    timeZone,
+                  })}
+                  opensTime={formatTime(nextSessionStart, locale, timeZone)}
+                  // Leaving the room lands on the group's workspace, not back
+                  // on this grid: what a gedu does after a session is write it
+                  // up, and the feed is where that happens. It is the same href
+                  // the card itself opens, so the two agree by construction.
+                  backHref={openHref}
+                />
+              </span>
             )}
             {endedOn === null && !hasVoiceRoom && siteName !== null && (
               <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
