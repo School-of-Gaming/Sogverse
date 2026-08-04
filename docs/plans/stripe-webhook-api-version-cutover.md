@@ -143,11 +143,10 @@ unpinned test-mode endpoint `we_1TTLtcCD5Q5ECgrcNRT1EcKe` is **disabled, not del
 (step 8 in Stage 4 deletes it). Nothing surprising surfaced, so Stage 3 is unblocked.
 Start reading at Stage 3.
 
-One detail to expect and not be alarmed by: the new test-mode endpoint was created
-before the refunds ledger was dropped, so it still subscribes to `charge.refunded`. That
-is harmless — the route answers 200 for it like any unhandled type — and its event list
-can be trimmed whenever convenient. The **live** endpoint in Stage 3 is created without
-it from the start.
+The new test-mode endpoint was created before the refunds ledger was dropped and
+briefly subscribed to `charge.refunded`; its event list was trimmed the same day, so
+it now carries five events (the four handled plus `checkout.session.expired`). The
+**live** endpoint in Stage 3 is created without `charge.refunded` from the start.
 
 1. In Stripe **test mode**, note the old endpoint's exact enabled-event list and
    URL, then create the new test-mode endpoint: same staging URL, `api_version` set
