@@ -1393,11 +1393,6 @@
       "camp": "Nos camps",
       "event": "Nos événements"
     },
-    "subheadings": {
-      "consumer_club": "Des clubs hebdomadaires où votre joueur retrouve des amis, un animateur qui capte vraiment, et le jeu qu’il adore.",
-      "camp": "Des vacances scolaires qui deviennent de vraies aventures de jeu — de nouveaux amis, des compétences concrètes, et un animateur qui embarque avec eux.",
-      "event": "Des rendez-vous ponctuels autour du jeu — tournois, démos et rencontres, avec un animateur aux commandes."
-    },
     "filters": {
       "type": "Type",
       "typeClubs": "Clubs",
@@ -1422,7 +1417,6 @@
       "externalContract": "Financé par votre commune",
       "notAvailableInCurrency": "Pas en {currency}",
       "seatsCapacity": "{count, plural, one {# place} other {# places}}",
-      "waitlistAvailable": "Liste d’attente disponible",
       "endedNote": "Celui-ci est terminé — le prochain arrive bientôt !",
       "viewDetails": "Voir",
       "manage": "Gérer",

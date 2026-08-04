@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Users, Hourglass, MapPin, Globe } from "lucide-react";
+import { Users, MapPin, Globe } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LanguageFlag } from "@/components/ui/language-flag";
@@ -34,7 +34,7 @@ export interface ProductBrowseCardViewProps {
    */
   scheduleLines: readonly string[];
   ageLine: string;
-  /** Pre-formatted "{count} seats" / "Waitlist available" / null. */
+  /** Pre-formatted "{count} seats", or null when there's no capacity to show. */
   seatsHint: SeatsHint | null;
   /**
    * Single-line location/format label. Always present on browse cards so
@@ -75,9 +75,7 @@ export type LocationLine = {
   label: string;
 };
 
-export type SeatsHint =
-  | { kind: "capacity"; count: number }
-  | { kind: "waitlist" };
+export type SeatsHint = { kind: "capacity"; count: number };
 
 export function ProductBrowseCardView({
   name,
@@ -221,18 +219,10 @@ export function ProductBrowseCardView({
 function SeatsHintLine({ hint }: { hint: SeatsHint | null }) {
   const t = useTranslations("productBrowse.card");
   if (!hint) return null;
-  if (hint.kind === "capacity") {
-    return (
-      <span className="inline-flex items-center gap-1">
-        <Users className="h-3 w-3" aria-hidden />
-        {t("seatsCapacity", { count: hint.count })}
-      </span>
-    );
-  }
   return (
     <span className="inline-flex items-center gap-1">
-      <Hourglass className="h-3 w-3" aria-hidden />
-      {t("waitlistAvailable")}
+      <Users className="h-3 w-3" aria-hidden />
+      {t("seatsCapacity", { count: hint.count })}
     </span>
   );
 }

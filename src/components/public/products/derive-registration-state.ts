@@ -64,8 +64,8 @@ export type RegistrationState =
   | {
       kind: "open";
       /**
-       * `null` when there is no cap — the card layer renders
-       * "Waitlist available" if the product supports it, otherwise nothing.
+       * `null` when there is no cap — the card layer then renders no
+       * capacity hint at all.
        */
       seatCount: number | null;
       /** `null` until participations ships. */

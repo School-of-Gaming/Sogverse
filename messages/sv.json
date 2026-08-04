@@ -1393,11 +1393,6 @@
       "camp": "Våra läger",
       "event": "Våra evenemang"
     },
-    "subheadings": {
-      "consumer_club": "Veckovisa klubbar där din spelare spelar sina favoritspel med nya vänner och en Gedu som verkligen fattar.",
-      "camp": "Skollov förvandlade till spelfyllda äventyr – nya vänner, riktiga färdigheter och en Gedu med på resan.",
-      "event": "Enstaka speltillfällen – turneringar, uppvisningar och träffar, med en Gedu som håller i trådarna."
-    },
     "filters": {
       "type": "Typ",
       "typeClubs": "Klubbar",
@@ -1422,7 +1417,6 @@
       "externalContract": "Finansieras av din kommun",
       "notAvailableInCurrency": "Inte i {currency}",
       "seatsCapacity": "{count, plural, one {# plats} other {# platser}}",
-      "waitlistAvailable": "Väntelista finns",
       "endedNote": "Den här är slut — håll utkik efter nästa.",
       "viewDetails": "Visa",
       "manage": "Hantera",

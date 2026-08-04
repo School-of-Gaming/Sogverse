@@ -1393,11 +1393,6 @@
       "camp": "Leirimme",
       "event": "Tapahtumamme"
     },
-    "subheadings": {
-      "consumer_club": "Viikoittaiset kerhot, joissa pelaajasi pelaa lempipelejään uusien kavereiden ja Gedun kanssa.",
-      "camp": "Koululomat täynnä peliseikkailuja – uusia kavereita, oikeita taitoja ja Gedu mukana matkassa.",
-      "event": "Kertaluonteisia pelitapahtumia – turnauksia, näytöksiä ja tapaamisia, joissa Gedu pitää langat käsissään."
-    },
     "filters": {
       "type": "Tyyppi",
       "typeClubs": "Kerhot",
@@ -1422,7 +1417,6 @@
       "externalContract": "Kuntasi rahoittama",
       "notAvailableInCurrency": "Ei valuutassa {currency}",
       "seatsCapacity": "{count, plural, one {# paikka} other {# paikkaa}}",
-      "waitlistAvailable": "Jonotuslista käytössä",
       "endedNote": "Tämä on päättynyt – seuraava on tulossa pian.",
       "viewDetails": "Katso",
       "manage": "Hallitse",

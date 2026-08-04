@@ -23,8 +23,8 @@ interface ProductBrowsePageProps {
   initialSpokenLanguages: SpokenLanguage[];
 }
 
-// Heading + subheading copy live under productBrowse.headings/subheadings,
-// keyed on the browseType. We resolve to literal keys here (rather than
+// Heading copy lives under productBrowse.headings, keyed on the
+// browseType. We resolve to literal keys here (rather than
 // templating with the type name) so next-intl's typed t() call narrows
 // to a known message path. The shop browses consumer clubs, camps and events,
 // so those are the three heading keys; municipality_club never reaches a browse
@@ -47,20 +47,6 @@ function headingFor(t: ReturnType<typeof useTranslations<"productBrowse">>, key:
       return t("headings.camp");
     case "event":
       return t("headings.event");
-  }
-}
-
-function subheadingFor(
-  t: ReturnType<typeof useTranslations<"productBrowse">>,
-  key: HeadingKey,
-): string {
-  switch (key) {
-    case "consumer_club":
-      return t("subheadings.consumer_club");
-    case "camp":
-      return t("subheadings.camp");
-    case "event":
-      return t("subheadings.event");
   }
 }
 
@@ -114,9 +100,6 @@ export function ProductBrowsePage({
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
           {headingFor(t, headingKey)}
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-          {subheadingFor(t, headingKey)}
-        </p>
       </header>
 
       <div className="mx-auto mt-8 max-w-6xl">
