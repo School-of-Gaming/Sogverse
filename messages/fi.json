@@ -1431,6 +1431,7 @@
       "manage": "Hallitse",
       "fullDisabled": "Täynnä",
       "alreadyStarted": "Käynnissä",
+      "alreadyEnded": "Päättynyt",
       "online": "Verkossa"
     },
     "empty": {

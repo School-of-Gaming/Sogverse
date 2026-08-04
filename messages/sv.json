@@ -1431,6 +1431,7 @@
       "manage": "Hantera",
       "fullDisabled": "Fullt",
       "alreadyStarted": "Pågår",
+      "alreadyEnded": "Avslutat",
       "online": "Online"
     },
     "empty": {

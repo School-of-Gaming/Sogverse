@@ -1,4 +1,5 @@
 import { effectiveStatus } from "@/lib/products/effective-status";
+import { dateTimeInstant } from "@/lib/schedule-occurrence";
 import type { ProductType, Product } from "@/types";
 
 // Registration state for the parent-facing browse + purchased cards.
@@ -17,8 +18,13 @@ import type { ProductType, Product } from "@/types";
 // Decision tree (top-down, first match wins):
 //   ended         ← effectiveStatus in { completed, expired, cancelled }
 //   closed_pre    ← registration_opens_at > now
-//   running_late  ← effectiveStatus = running AND product_type in
-//                   { camp, event }
+//   running_late  ← effectiveStatus = running AND either
+//                     product_type = camp (locks at local midnight on
+//                     start_date — a cohort starts together), or
+//                     product_type = event AND now >= the event's end
+//                     instant (start_date + its slot's start_time +
+//                     duration_minutes, read in product.timezone). An event
+//                     with no slot falls back to the camp rule.
 //   pending_thr   ← raw status = pending AND signup_threshold IS NOT NULL
 //                   AND participations_count < signup_threshold
 //   full_waitlist ← seat_count IS NOT NULL
@@ -32,7 +38,15 @@ import type { ProductType, Product } from "@/types";
 export type RegistrationState =
   | { kind: "ended" }
   | { kind: "closed_pre"; opensAt: string }
-  | { kind: "running_late" }
+  | {
+      kind: "running_late";
+      /**
+       * Which flavour of "too late" this is, so the CTA label can say it.
+       * `underway` — a camp mid-term (or an event we can't time, see the
+       * zero-slot fallback). `over` — an event whose session has finished.
+       */
+      phase: "underway" | "over";
+    }
   | {
       kind: "pending_thr";
       threshold: number;
@@ -61,6 +75,11 @@ export type RegistrationState =
 
 // Lifecycle-relevant columns. Keeping the input narrow lets callers
 // project a smaller select without losing type-safety.
+//
+// `schedule_slots` is the one joined field: an event's registration closes at
+// the moment its session ends, which needs the slot's clock time. Structural,
+// not the full row type, so any select carrying at least these two columns
+// (the browse and detail queries both do) satisfies it.
 export type RegistrationStateInputs = Pick<
   Product,
   | "status"
@@ -72,7 +91,12 @@ export type RegistrationStateInputs = Pick<
   | "seat_count"
   | "waitlist_enabled"
   | "product_type"
->;
+> & {
+  schedule_slots: readonly {
+    start_time: string;
+    duration_minutes: number;
+  }[];
+};
 
 export interface DeriveRegistrationStateArgs {
   product: RegistrationStateInputs;
@@ -87,6 +111,31 @@ const LATE_JOIN_LOCKED: Record<ProductType, boolean> = {
   camp: true,
   event: true,
 };
+
+/**
+ * The absolute instant an event finishes: its single schedule slot's
+ * wall-clock start on `start_date`, read in the product's own timezone, plus
+ * the slot duration. Returns `null` when the row can't be timed — no
+ * start_date, or no slot (the admin form requires one, so this is a
+ * type-level possibility rather than a real one) — and the caller then falls
+ * back to the date-only camp rule.
+ *
+ * An event is single-date with exactly one slot, so `schedule_slots[0]` is
+ * the whole schedule; the weekday on it is derived from `start_date` and adds
+ * nothing here.
+ */
+function eventEndInstant(product: RegistrationStateInputs): Date | null {
+  if (product.start_date === null || product.schedule_slots.length === 0) {
+    return null;
+  }
+  const slot = product.schedule_slots[0];
+  const start = dateTimeInstant(
+    product.start_date,
+    slot.start_time,
+    product.timezone,
+  );
+  return new Date(start.getTime() + slot.duration_minutes * 60_000);
+}
 
 export function deriveRegistrationState({
   product,
@@ -103,10 +152,24 @@ export function deriveRegistrationState({
     return { kind: "closed_pre", opensAt: product.registration_opens_at };
   }
 
-  // Camps/events lock late joins once running. Clubs allow drop-in late
-  // joins (the "running_late" state never fires for them).
+  // Camps and events lock late joins; clubs allow drop-in late joins (the
+  // "running_late" state never fires for them). The two locked types differ
+  // in *when*: a camp is a cohort that starts together, so it locks at local
+  // midnight on start_date the moment effectiveStatus flips to running. An
+  // event is one session — someone can still usefully sign up an hour before
+  // the doors open, so it stays joinable (normal seat/waitlist rules apply)
+  // right up to the instant the session ends. The server-side
+  // `create_participation` gate accepts pending OR running, so it already
+  // permits everything this window allows.
   if (status === "running" && LATE_JOIN_LOCKED[product.product_type]) {
-    return { kind: "running_late" };
+    const endsAt =
+      product.product_type === "event" ? eventEndInstant(product) : null;
+    if (endsAt === null) return { kind: "running_late", phase: "underway" };
+    if (now.getTime() >= endsAt.getTime()) {
+      return { kind: "running_late", phase: "over" };
+    }
+    // Event still to finish — fall through to the seat-cap / open logic so a
+    // full event shows full_waitlist / full_closed rather than "open".
   }
 
   // Threshold-bearing pending products that haven't met their threshold
@@ -144,9 +207,9 @@ export function deriveRegistrationState({
 // How a state's browse-card CTA behaves:
 //   "primary"  → a working "View" button into the detail page (something to do
 //                there: sign up, watch the threshold, join the waitlist).
-//   "disabled" → a dead end — full with no waitlist, or a camp/event already
-//                underway; the detail page has nothing actionable, so the
-//                parent isn't sent on a round-trip.
+//   "disabled" → a dead end — full with no waitlist, a camp already underway,
+//                or an event already over; the detail page has nothing
+//                actionable, so the parent isn't sent on a round-trip.
 //   null       → no button at all (ended).
 //
 // Lives next to the state it switches on so the CTA component

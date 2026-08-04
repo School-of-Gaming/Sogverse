@@ -32,10 +32,18 @@ export function useRegistrationCta(
   if (kind === null) return null;
   if (kind === "disabled") {
     // Two states share the disabled outline button; the label says which —
-    // "Full" (no seats) vs. "Already started" (camp/event underway).
-    const labelText =
-      state.kind === "running_late" ? t("alreadyStarted") : t("fullDisabled");
-    return { kind, labelText };
+    // "Full" (no seats) vs. a timing lock. The timing lock reads differently
+    // per product: a camp is mid-term ("Already started"), whereas an event
+    // stays joinable until its session ends, so by the time it locks the
+    // event is finished ("Already over").
+    if (state.kind !== "running_late") {
+      return { kind, labelText: t("fullDisabled") };
+    }
+    return {
+      kind,
+      labelText:
+        state.phase === "over" ? t("alreadyEnded") : t("alreadyStarted"),
+    };
   }
   return { kind, labelText: t("viewDetails") };
 }

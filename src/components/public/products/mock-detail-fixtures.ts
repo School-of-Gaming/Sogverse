@@ -27,7 +27,11 @@ import type {
 //   • Consumer club — a subscription club (open) + an ended product.
 //   • Municipality club — the full seat-fill range, plus the pre-launch
 //     countdown across the three auth states a parent can be in.
-//   • Event — a free product.
+//   • Event — a free product, plus the same event once it's over. Camps and
+//     events lock late joins at different moments (a camp from local midnight
+//     on its start date, an event only once its session has finished), and the
+//     disabled CTA says so — "Already started" vs. "Already over" — so both
+//     labels need somewhere to be looked at.
 //
 // Most scenarios author their registration `state` directly so they stay
 // deterministic regardless of the wall clock. The countdown scenarios are the
@@ -47,7 +51,8 @@ export type PreviewScenario =
   | "muni-opens-with-gamers"
   | "camp-open"
   | "camp-running"
-  | "free-event";
+  | "free-event"
+  | "event-over";
 
 // Which signed-in shape the panel renders against. `signed-out` → the auth
 // overlay (sign in / create account); `no-gamers` → a `ready` customer whose
@@ -234,7 +239,7 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     waitlistEnabled: false,
     priceCentsEur: 25000,
     auth: "signed-in-with-gamers",
-    state: { kind: "running_late" },
+    state: { kind: "running_late", phase: "underway" },
   },
   "free-event": {
     label: "Free — open",
@@ -250,6 +255,25 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
       seatsLeft: null,
       waitlistEnabled: false,
     },
+  },
+  "event-over": {
+    // The same evening event after it finished. An event stays joinable right
+    // through its session, so the only late-join lock it ever shows is this
+    // one — hence a different label from the camp above ("Already over", not
+    // "Already started"). Same dead-end treatment: disabled button, no detail
+    // page behind it. It stays on the browse grid until its end_date rolls
+    // over, which is the window this card represents.
+    label: "Already over",
+    productType: "event",
+    billingMode: "free",
+    // No cap, like its open sibling: `scenarioFilledSeats` only derives a
+    // filled count from open/full states, so a capped fixture in a late-join
+    // state would draw an empty seat bar on a finished event.
+    seatCount: null,
+    waitlistEnabled: false,
+    priceCentsEur: null,
+    auth: "signed-in-with-gamers",
+    state: { kind: "running_late", phase: "over" },
   },
 };
 
@@ -270,6 +294,7 @@ const SCENARIO_ORDER: PreviewScenario[] = [
   "camp-open",
   "camp-running",
   "free-event",
+  "event-over",
 ];
 
 // Subsection heading per product type (the type context the short labels omit).

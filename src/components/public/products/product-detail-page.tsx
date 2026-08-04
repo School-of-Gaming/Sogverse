@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
+import { useNow } from "@/providers";
 import { useAuth } from "@/providers/auth-provider";
 import { useProductDetail } from "@/services/products";
 import { useMyGamers } from "@/services/gamers";
@@ -46,6 +47,13 @@ export function ProductDetailPage({
 
   const { user, profile, isLoading: authLoading } = useAuth();
   const isCustomer = profile?.role === "customer";
+
+  // Ticking clock (30s), server-seeded so SSR and the first client render
+  // agree — same source the browse card derives its state from. An event's
+  // registration closes at the instant its session ends, which can land while
+  // this page is open; a one-shot `new Date()` would leave a stale signup
+  // panel up until the visitor reloaded.
+  const now = useNow();
 
   const { data: product, isLoading: productLoading, isError } =
     useProductDetail(productId);
@@ -121,7 +129,7 @@ export function ProductDetailPage({
 
   const state = deriveRegistrationState({
     product,
-    now: new Date(),
+    now,
     participationsCount,
   });
 

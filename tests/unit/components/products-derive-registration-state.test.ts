@@ -21,11 +21,34 @@ function product(
     seat_count: null,
     waitlist_enabled: false,
     product_type: "consumer_club",
+    schedule_slots: [],
     ...over,
   };
 }
 
 const NOW = new Date("2026-04-29T12:00:00Z");
+
+// A single 18:00–20:00 Helsinki slot on 2026-04-29 (a Wednesday, weekday 2 in
+// the 0=Mon schema — the deriver doesn't read weekday, but the fixture stays
+// truthful). Helsinki is UTC+3 in April, so the event runs
+// 15:00Z → 17:00Z and its end instant is 2026-04-29T17:00:00Z. Every `now`
+// below is written as an explicit UTC instant so the assertions don't depend
+// on the machine's zone.
+const EVENT_DATE = "2026-04-29";
+const EVENT_SLOT = [
+  { weekday: 2, start_time: "18:00:00", duration_minutes: 120 },
+];
+
+function event(over: Partial<RegistrationStateInputs> = {}) {
+  return product({
+    product_type: "event",
+    status: "running",
+    start_date: EVENT_DATE,
+    end_date: EVENT_DATE,
+    schedule_slots: EVENT_SLOT,
+    ...over,
+  });
+}
 
 describe("deriveRegistrationState", () => {
   it("ended → completed product (end_date in past)", () => {
@@ -89,21 +112,126 @@ describe("deriveRegistrationState", () => {
       now: NOW,
       participationsCount: 0,
     });
-    expect(state.kind).toBe("running_late");
+    expect(state).toEqual({ kind: "running_late", phase: "underway" });
   });
 
-  it("running_late → event that already started locks late joins", () => {
+  it("event stays open on its own day before the session starts", () => {
+    // 09:00Z = 12:00 Helsinki, six hours before the 18:00 doors. The old
+    // date-only lock closed this at local midnight.
     const state = deriveRegistrationState({
-      product: product({
-        product_type: "event",
-        status: "running",
-        start_date: "2026-04-29",
-        end_date: "2026-04-29",
-      }),
-      now: NOW,
+      product: event(),
+      now: new Date("2026-04-29T09:00:00Z"),
       participationsCount: 0,
     });
-    expect(state.kind).toBe("running_late");
+    expect(state.kind).toBe("open");
+  });
+
+  it("event stays open while the session is running", () => {
+    // 16:00Z = 19:00 Helsinki — one hour into an 18:00–20:00 event.
+    const state = deriveRegistrationState({
+      product: event(),
+      now: new Date("2026-04-29T16:00:00Z"),
+      participationsCount: 0,
+    });
+    expect(state.kind).toBe("open");
+  });
+
+  it("a full event during its window is full_closed, not open", () => {
+    const state = deriveRegistrationState({
+      product: event({ seat_count: 10, waitlist_enabled: false }),
+      now: new Date("2026-04-29T16:00:00Z"),
+      participationsCount: 10,
+    });
+    expect(state.kind).toBe("full_closed");
+  });
+
+  it("a full event during its window offers the waitlist when enabled", () => {
+    const state = deriveRegistrationState({
+      product: event({ seat_count: 10, waitlist_enabled: true }),
+      now: new Date("2026-04-29T16:00:00Z"),
+      participationsCount: 10,
+    });
+    expect(state.kind).toBe("full_waitlist");
+  });
+
+  it("event locks at exactly its end instant", () => {
+    // 18:00 Helsinki + 120 min = 20:00 Helsinki = 17:00Z. The boundary is
+    // inclusive: at the end instant the event is over.
+    const state = deriveRegistrationState({
+      product: event(),
+      now: new Date("2026-04-29T17:00:00Z"),
+      participationsCount: 0,
+    });
+    expect(state).toEqual({ kind: "running_late", phase: "over" });
+  });
+
+  it("event is a dead end after it ends, still on its own day", () => {
+    // 20:00Z = 23:00 Helsinki — the event is over but end_date hasn't passed
+    // locally, so effectiveStatus is still `running` (not `completed`).
+    const state = deriveRegistrationState({
+      product: event(),
+      now: new Date("2026-04-29T20:00:00Z"),
+      participationsCount: 0,
+    });
+    expect(state).toEqual({ kind: "running_late", phase: "over" });
+  });
+
+  it("event with no schedule slot falls back to the midnight lock", () => {
+    // Schema-impossible (the admin form requires a slot) but type-possible:
+    // with nothing to time against, the camp rule applies — locked from
+    // local midnight on start_date.
+    const state = deriveRegistrationState({
+      product: event({ schedule_slots: [] }),
+      now: new Date("2026-04-29T09:00:00Z"),
+      participationsCount: 0,
+    });
+    expect(state).toEqual({ kind: "running_late", phase: "underway" });
+  });
+
+  it("camps ignore schedule slots — locked from midnight on start_date", () => {
+    // Same 18:00 slot, same "before doors" instant as the open-event case
+    // above; a camp is a cohort that starts together, so it stays locked.
+    const state = deriveRegistrationState({
+      product: product({
+        product_type: "camp",
+        status: "running",
+        start_date: EVENT_DATE,
+        end_date: "2026-05-03",
+        schedule_slots: EVENT_SLOT,
+      }),
+      now: new Date("2026-04-29T09:00:00Z"),
+      participationsCount: 0,
+    });
+    expect(state).toEqual({ kind: "running_late", phase: "underway" });
+  });
+
+  it("an event whose slot crosses local midnight closes at midnight, not at its end instant", () => {
+    // 23:00 Helsinki + 180 min ends at 02:00 the NEXT local day, but
+    // `effectiveStatus` compares end_date date-only, so the row is already
+    // `completed` by then and the CTA is `ended` — the end-instant window is
+    // clipped at midnight. The server-side gate stops at the same moment, so
+    // both ends agree. Pinned here because the doc claims it.
+    const lateNightSlot = [
+      { weekday: 2, start_time: "23:00:00", duration_minutes: 180 },
+    ];
+    const lateNight = event({ schedule_slots: lateNightSlot });
+    // 21:00Z = 00:00 Helsinki on 04-30 — one hour into the session, two hours
+    // before its end instant.
+    const state = deriveRegistrationState({
+      product: lateNight,
+      now: new Date("2026-04-29T21:00:00Z"),
+      participationsCount: 0,
+    });
+    expect(state.kind).toBe("ended");
+  });
+
+  it("an event whose end_date has passed is ended, not running_late", () => {
+    const state = deriveRegistrationState({
+      product: event(),
+      now: new Date("2026-04-30T09:00:00Z"),
+      participationsCount: 0,
+    });
+    expect(state.kind).toBe("ended");
   });
 
   it("clubs do NOT lock late joins when running — drop in any time", () => {
@@ -265,8 +393,13 @@ describe("deriveRegistrationState", () => {
 });
 
 describe("registrationCtaKind", () => {
-  it("running_late → disabled (a started camp/event shows the dead-end button)", () => {
-    expect(registrationCtaKind({ kind: "running_late" })).toBe("disabled");
+  it("running_late → disabled, whichever phase (started camp / finished event)", () => {
+    expect(
+      registrationCtaKind({ kind: "running_late", phase: "underway" }),
+    ).toBe("disabled");
+    expect(registrationCtaKind({ kind: "running_late", phase: "over" })).toBe(
+      "disabled",
+    );
   });
 
   it("full_closed → disabled (full with no waitlist is a dead end too)", () => {
