@@ -1428,6 +1428,7 @@
       "manage": "Manage",
       "fullDisabled": "Full",
       "alreadyStarted": "Already started",
+      "alreadyEnded": "Already over",
       "online": "Online"
     },
     "empty": {
