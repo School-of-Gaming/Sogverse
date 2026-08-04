@@ -69,4 +69,26 @@ describe("GameInfoCard", () => {
       "https://www.fortnite.com/",
     );
   });
+
+  it("renders Pokémon GO as the two mobile stores, at PEGI 3", () => {
+    const { getByText, container } = render(
+      <GameInfoCard topic="pokemon_go" />,
+    );
+
+    // The accented é and the all-caps GO are Niantic's branding, and the label
+    // is a literal — so this asserts the exact string, not a normalized one.
+    expect(getByText("Pokémon GO")).toBeTruthy();
+    expect(getByText("PEGI 3")).toBeTruthy();
+
+    const hrefs = Array.from(container.querySelectorAll("a")).map((a) =>
+      a.getAttribute("href"),
+    );
+    // Mobile-only: exactly the two app stores, no PC or console link.
+    expect(hrefs).toHaveLength(2);
+    expect(hrefs.some((h) => h?.includes("apps.apple.com"))).toBe(true);
+    expect(hrefs.some((h) => h?.includes("play.google.com"))).toBe(true);
+    // Region-neutral — a hardcoded country would send most parents to the
+    // wrong store (the same rule the Minecraft links follow).
+    expect(hrefs.some((h) => h?.includes("/us/"))).toBe(false);
+  });
 });

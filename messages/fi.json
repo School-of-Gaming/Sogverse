@@ -1484,6 +1484,11 @@
           "description": "Fortnite on värikäs ja piirrosmainen verkkopeli, jossa pelaajat muodostavat joukkueita ja kilpailevat lyhyissä, eräpohjaisissa otteluissa. Se on erittäin suosittu ja hyvin sosiaalinen, ja lapset pelaavat yhdessä kavereiden kanssa. Ulkoasu on kirkas ja epärealistinen, eikä siinä ole verta eikä väkivaltaa, vaikka ottelut ovat kilpailullisia ja niitä pelataan verkossa muiden kanssa.",
           "note": "Fortnite on ilmainen ladata ja pelata – itse peliä ei osteta. Lapsesi luo pelaamista varten ilmaisen Epic Games -tilin. Jotkin valinnaiset lisät, kuten asut, maksavat, ja voit rajoittaa niitä lapsilukon asetuksilla.",
           "linkLabel": "Hanki Fortnite"
+        },
+        "pokemon_go": {
+          "description": "Pokémon GO on ulkona pelattava puhelinpeli. Olennot ilmestyvät kartalle oikeisiin paikkoihin, ja lapset kävelevät puistoihin, kaduille ja nähtävyyksille etsimään ja keräämään niitä. Pelissä keräillään eikä taistella – kiinnostavinta on tutkiminen, Pokédexin täydentäminen ja löytöjen vertailu kavereiden kanssa. Suurin osa pelaamisesta tapahtuu jalan, joten peli saa lapset liikkeelle.",
+          "note": "Pokémon GO on ilmainen ladata ja pelata – itse peliä ei osteta. Lapsesi tarvitsee puhelimen tai tabletin, jossa on GPS ja mobiilidatayhteys, sekä ilmaisen käyttäjätilin. Peli sisältää valinnaisia ostoksia, joita voi rajoittaa lapsilukon asetuksilla. Koska peliä pelataan ulkona oikeissa paikoissa, kannattaa sopia etukäteen, missä lapsi saa liikkua ja kulkeeko aikuinen mukana.",
+          "linkLabel": "Mistä sen saa"
         }
       }
     },

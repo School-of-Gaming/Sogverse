@@ -1484,6 +1484,11 @@
           "description": "Fortnite est un jeu en ligne coloré, au style cartoon, où les joueurs font équipe et s’affrontent dans des parties courtes. Il est extrêmement populaire et très social — les enfants y jouent ensemble entre amis. L’esthétique est vive et non réaliste (ni sang ni scènes gore), même si les parties sont compétitives et se jouent en ligne avec d’autres.",
           "note": "Fortnite est gratuit à télécharger et à jouer — vous n’achetez pas le jeu lui-même. Votre enfant crée un compte Epic Games gratuit pour jouer. Certains extras facultatifs (tenues et autres) sont payants, ce que vous pouvez limiter avec le contrôle parental.",
           "linkLabel": "Obtenir Fortnite"
+        },
+        "pokemon_go": {
+          "description": "Pokémon GO se joue dehors, sur un téléphone. Des créatures apparaissent sur une carte du monde réel, et les enfants marchent jusqu’aux parcs, aux rues et aux monuments pour les trouver et les collectionner. Le jeu repose sur la collection plutôt que sur le combat — l’intérêt est d’explorer, de compléter son Pokédex et de comparer ses trouvailles avec ses amis. L’essentiel du jeu se fait à pied, ce qui fait bouger les enfants.",
+          "note": "Pokémon GO est gratuit à télécharger et à jouer — vous n’achetez pas le jeu lui-même. Votre enfant a besoin d’un téléphone ou d’une tablette avec GPS et connexion mobile, ainsi que d’un compte gratuit. Le jeu propose des achats facultatifs, que vous pouvez limiter avec le contrôle parental. Comme on y joue dehors, dans de vrais lieux, mieux vaut convenir à l’avance des endroits où votre enfant peut aller et de la présence ou non d’un adulte.",
+          "linkLabel": "Où se le procurer"
         }
       }
     },
