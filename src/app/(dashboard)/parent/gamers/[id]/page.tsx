@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, User, Gamepad2 } from "lucide-react";
+import { ArrowLeft, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,9 +11,10 @@ import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
-import { GameUsernameEditableRow } from "@/components/game-account";
+import { GameAccountCard } from "@/components/game-account";
 import { useMyGamers, useUpdateGamer, useGamerProfile } from "@/services/gamers";
 import { useMinecraftAccount } from "@/services/minecraft";
+import { useRobloxAccount } from "@/services/roblox";
 import { ROUTES, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { computeAge } from "@/lib/utils";
 import { useTimezone } from "@/providers";
@@ -25,6 +26,7 @@ export default function GamerDetailsPage() {
   const timeZone = useTimezone();
   const { data: gamers, isLoading } = useMyGamers();
   const { data: mcAccount } = useMinecraftAccount(id);
+  const { data: robloxAccount } = useRobloxAccount(id);
   const { data: gamerProfile } = useGamerProfile(id);
   const updateGamer = useUpdateGamer();
 
@@ -34,10 +36,6 @@ export default function GamerDetailsPage() {
   const [firstName, setFirstName] = useState("");
   const [profileInitialized, setProfileInitialized] = useState(false);
 
-  // Minecraft feedback state. The username itself is not held here — the row is
-  // fed straight from the account query and reports its commits back.
-  const [mcSuccess, setMcSuccess] = useState<string | null>(null);
-  const [mcError, setMcError] = useState<string | null>(null);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
@@ -71,41 +69,6 @@ export default function GamerDetailsPage() {
       setProfileError(message);
     } finally {
       setIsSavingProfile(false);
-    }
-  };
-
-  /**
-   * Committing the row *is* saving it — the row has already checked the name
-   * against Mojang, so what arrives is the canonical casing. The mutation
-   * invalidates the gamer and account queries, which feed the row its new props.
-   */
-  const handleSaveMc = async (mcValue: string | null) => {
-    if (!gamer) return;
-
-    setMcSuccess(null);
-    setMcError(null);
-
-    try {
-      await updateGamer.mutateAsync({
-        gamerId: gamer.id,
-        updates: { minecraftUsername: mcValue },
-      });
-      setMcSuccess(
-        mcValue
-          ? t('gamerDetail.mcSaved')
-          : t('gamerDetail.mcCleared'),
-      );
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : typeof error === "object" && error !== null && "message" in error
-            ? String((error as { message: unknown }).message)
-            : t('gamerDetail.failedUpdateMc');
-      setMcError(message);
-      // Rethrown after the banner is set: the row is awaiting this, and a
-      // silent resolve would leave it showing a name nothing stored.
-      throw error;
     }
   };
 
@@ -242,47 +205,35 @@ export default function GamerDetailsPage() {
         </CardContent>
       </Card>
 
-      {/* Minecraft Account */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Gamepad2 className="h-5 w-5" />
-            <CardTitle>{t('gamerDetail.minecraft.title')}</CardTitle>
-          </div>
-          <CardDescription>
-            {t('gamerDetail.minecraft.description')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <GameUsernameEditableRow
-            platform="minecraft"
-            username={mcAccount?.minecraft_username ?? null}
-            externalId={mcAccount?.minecraft_uuid ?? null}
-            personName={gamer.first_name}
-            // Returned, not voided: the row waits on the write before it lets
-            // go of the name it is showing.
-            onCommit={({ username }) => handleSaveMc(username)}
-            className="max-w-sm"
-          />
+      <GameAccountCard
+        platform="minecraft"
+        title={t('gamerDetail.minecraft.title')}
+        description={t('gamerDetail.minecraft.description')}
+        personName={gamer.first_name}
+        username={mcAccount?.minecraft_username ?? null}
+        externalId={mcAccount?.minecraft_uuid ?? null}
+        onSave={(minecraftUsername) =>
+          updateGamer.mutateAsync({
+            gamerId: gamer.id,
+            updates: { minecraftUsername },
+          })
+        }
+      />
 
-          {/* Below the row, not above it. The outcome of a save arrives after the
-              save, so a banner above the row would push the row — the very thing
-              the person just used, and is still looking at — down the page as it
-              lands. Last thing in the last card on the page, so it grows into
-              empty space and moves nothing. */}
-          {mcSuccess && (
-            <div className="rounded-md bg-success/10 p-3 text-sm text-success">
-              {mcSuccess}
-            </div>
-          )}
-
-          {mcError && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {mcError}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <GameAccountCard
+        platform="roblox"
+        title={t('gamerDetail.roblox.title')}
+        description={t('gamerDetail.roblox.description')}
+        personName={gamer.first_name}
+        username={robloxAccount?.roblox_username ?? null}
+        externalId={robloxAccount?.roblox_user_id ?? null}
+        onSave={(robloxUsername) =>
+          updateGamer.mutateAsync({
+            gamerId: gamer.id,
+            updates: { robloxUsername },
+          })
+        }
+      />
 
     </div>
   );

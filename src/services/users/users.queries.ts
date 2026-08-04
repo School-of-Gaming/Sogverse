@@ -3,6 +3,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { UsersService } from "./users.service";
+import { minecraftKeys } from "@/services/minecraft/minecraft.queries";
+import { robloxKeys } from "@/services/roblox/roblox.queries";
+import type { AdminGameAccountBody } from "./users.contracts";
 import type { ProfileUpdate, UserRole, SpokenLanguage } from "@/types";
 
 const userKeys = {
@@ -69,6 +72,40 @@ export function useUpdateProfile() {
     onSuccess: (data, { userId }) => {
       queryClient.invalidateQueries({ queryKey: userKeys.detail(userId) });
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    },
+  });
+}
+
+/**
+ * An admin editing another account's game username.
+ *
+ * Invalidates the **stored-row** branch of whichever platform was written, and
+ * nothing else. Not the platform root: that also holds the resolved pictures,
+ * which cost upstream requests against a shared per-IP budget and did not change
+ * because a name did. The account query underneath the admin page's rows is what
+ * refetches, which is what feeds the row its new props.
+ */
+export function useUpdateUserGameAccount() {
+  const queryClient = useQueryClient();
+  const supabase = getClient();
+  const service = new UsersService(supabase);
+
+  return useMutation({
+    mutationFn: ({
+      userId,
+      edit,
+    }: {
+      userId: string;
+      edit: AdminGameAccountBody;
+    }) => service.updateUserGameAccount(userId, edit),
+    onSuccess: (_result, { userId, edit }) => {
+      if (edit.platform === "minecraft") {
+        queryClient.invalidateQueries({
+          queryKey: minecraftKeys.account(userId),
+        });
+      } else {
+        queryClient.invalidateQueries({ queryKey: robloxKeys.account(userId) });
+      }
     },
   });
 }

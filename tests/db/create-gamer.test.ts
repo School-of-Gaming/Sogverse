@@ -23,6 +23,7 @@ describe("create_gamer() atomic promotion", () => {
       await admin.from("parent_gamer").delete().eq("gamer_id", userId);
       await admin.from("parent_gamer").delete().eq("parent_id", userId);
       await admin.from("minecraft_accounts").delete().eq("user_id", userId);
+      await admin.from("roblox_accounts").delete().eq("user_id", userId);
       await admin.from("gamer_profiles").delete().eq("user_id", userId);
       await admin.from("customer_profiles").delete().eq("user_id", userId);
       await admin.from("profiles").delete().eq("id", userId);
@@ -154,6 +155,123 @@ describe("create_gamer() atomic promotion", () => {
     );
   });
 
+  it("links an optional Roblox account in the same transaction", async () => {
+    const parent = await createCustomerUser("cg-rbx-parent@test.local");
+    const gamer = await createCustomerUser("cg-rbx-child@test.local");
+
+    const { error } = await admin.rpc("create_gamer", {
+      p_gamer_id: gamer.id,
+      p_parent_id: parent.id,
+      p_first_name: "Max",
+      p_last_name: "Parentson",
+      p_date_of_birth: "2014-01-20",
+      p_roblox_username: "MaxBlox",
+      // Past 2^31, so this also pins that the column is bigint rather than
+      // integer — Roblox ids are int64 and an integer column would start
+      // refusing real accounts years from now with no warning.
+      p_roblox_user_id: 8_589_934_592,
+    });
+    expect(error).toBeNull();
+
+    const { data: roblox } = await admin
+      .from("roblox_accounts")
+      .select("roblox_username, roblox_user_id")
+      .eq("user_id", gamer.id)
+      .single();
+    expect(roblox).toMatchObject({
+      roblox_username: "MaxBlox",
+      roblox_user_id: 8_589_934_592,
+    });
+  });
+
+  it("links both platforms, or neither, independently", async () => {
+    const parent = await createCustomerUser("cg-both-parent@test.local");
+    const both = await createCustomerUser("cg-both-child@test.local");
+    const neither = await createCustomerUser("cg-neither-child@test.local");
+
+    const { error: bothError } = await admin.rpc("create_gamer", {
+      p_gamer_id: both.id,
+      p_parent_id: parent.id,
+      p_first_name: "Both",
+      p_last_name: "Parentson",
+      p_date_of_birth: "2014-01-20",
+      p_minecraft_username: "BothCraft",
+      p_minecraft_uuid: "cg-uuid-both",
+      p_roblox_username: "BothBlox",
+      p_roblox_user_id: 4242,
+    });
+    expect(bothError).toBeNull();
+
+    const { error: neitherError } = await admin.rpc("create_gamer", {
+      p_gamer_id: neither.id,
+      p_parent_id: parent.id,
+      p_first_name: "Neither",
+      p_last_name: "Parentson",
+      p_date_of_birth: "2014-01-20",
+    });
+    expect(neitherError).toBeNull();
+
+    const { data: bothMc } = await admin
+      .from("minecraft_accounts")
+      .select("user_id")
+      .eq("user_id", both.id)
+      .maybeSingle();
+    const { data: bothRoblox } = await admin
+      .from("roblox_accounts")
+      .select("user_id")
+      .eq("user_id", both.id)
+      .maybeSingle();
+    expect(bothMc).not.toBeNull();
+    expect(bothRoblox).not.toBeNull();
+
+    // A child with no game handles gets no rows at all, on either platform —
+    // an empty row would be indistinguishable from a cleared one.
+    const { data: neitherMc } = await admin
+      .from("minecraft_accounts")
+      .select("user_id")
+      .eq("user_id", neither.id)
+      .maybeSingle();
+    const { data: neitherRoblox } = await admin
+      .from("roblox_accounts")
+      .select("user_id")
+      .eq("user_id", neither.id)
+      .maybeSingle();
+    expect(neitherMc).toBeNull();
+    expect(neitherRoblox).toBeNull();
+  });
+
+  it("links a Roblox account another user already holds", async () => {
+    // Born without a UNIQUE, for the reason 00135 dropped Minecraft's: siblings
+    // sharing one game account across two Sogverse accounts is supported.
+    const parent = await createCustomerUser("cg-rbx-share-parent@test.local");
+    const first = await createCustomerUser("cg-rbx-share-1@test.local");
+    const second = await createCustomerUser("cg-rbx-share-2@test.local");
+
+    const sharedId = 68306362;
+
+    for (const [gamer, name] of [[first, "Elder"], [second, "Younger"]] as const) {
+      const { error } = await admin.rpc("create_gamer", {
+        p_gamer_id: gamer.id,
+        p_parent_id: parent.id,
+        p_first_name: name,
+        p_last_name: "Parentson",
+        p_date_of_birth: "2014-01-20",
+        p_roblox_username: "SharedBlox",
+        p_roblox_user_id: sharedId,
+      });
+      expect(error).toBeNull();
+    }
+
+    const { data: holders } = await admin
+      .from("roblox_accounts")
+      .select("user_id")
+      .eq("roblox_user_id", sharedId);
+
+    expect(holders?.map((r) => r.user_id).sort()).toEqual(
+      [first.id, second.id].sort(),
+    );
+  });
+
   it("rolls back the entire promotion when a later statement fails", async () => {
     const gamer = await createCustomerUser("cg-rb-child@test.local");
 
@@ -170,6 +288,8 @@ describe("create_gamer() atomic promotion", () => {
       p_date_of_birth: "2016-03-03",
       p_minecraft_username: "DoomedCraft",
       p_minecraft_uuid: "cg-uuid-doomed",
+      p_roblox_username: "DoomedBlox",
+      p_roblox_user_id: 777,
     });
 
     expect(error?.message).toContain("Parent must be a customer account");
@@ -197,14 +317,22 @@ describe("create_gamer() atomic promotion", () => {
       .maybeSingle();
     expect(gamerRow).toBeNull();
 
-    // The Minecraft insert is the statement immediately before the one that
-    // failed, so its absence is what proves the abort rolled back real work.
+    // The two game-account inserts are the statements immediately before the
+    // one that failed, so their absence is what proves the abort rolled back
+    // real work.
     const { data: mcRow } = await admin
       .from("minecraft_accounts")
       .select("user_id")
       .eq("user_id", gamer.id)
       .maybeSingle();
     expect(mcRow).toBeNull();
+
+    const { data: robloxRow } = await admin
+      .from("roblox_accounts")
+      .select("user_id")
+      .eq("user_id", gamer.id)
+      .maybeSingle();
+    expect(robloxRow).toBeNull();
 
     const { data: link } = await admin
       .from("parent_gamer")

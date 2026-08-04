@@ -566,6 +566,27 @@ const CASES: Record<string, IdorCase> = {
       ),
   },
 
+  roblox_accounts: {
+    attacker: "customer",
+    why: "the linked *parent* may read their gamer's Roblox row — the self-write policies must still keep them from editing it",
+    probe: async (admin) =>
+      (
+        await admin
+          .from("roblox_accounts")
+          .select("*")
+          .eq("user_id", TEST_IDS.GAMER)
+          .maybeSingle()
+      ).data,
+    update: async (client) =>
+      outcomeOf(
+        await client
+          .from("roblox_accounts")
+          .update({ roblox_username: "Defaced" })
+          .eq("user_id", TEST_IDS.GAMER)
+          .select("user_id")
+      ),
+  },
+
   profiles: {
     attacker: "customer2",
     why: "column-granted UPDATE still has to be scoped to the caller's own row",
@@ -703,11 +724,16 @@ describe("write-path IDOR (§3.4 check 3)", () => {
       .from("whatsapp_contacts")
       .insert({ phone: WHATSAPP_PHONE, wa_name: "IDOR fixture" });
 
-    // The gamer's Minecraft row: owned by the gamer, readable by their linked
-    // parent, and therefore the sharp attacker's target. Seeded here rather than
-    // relied on from seed.sql because minecraft-accounts.test.ts deletes it.
+    // The gamer's game-identity rows: owned by the gamer, readable by their
+    // linked parent, and therefore the sharp attacker's target. Seeded here
+    // rather than relied on from seed.sql because the two per-platform RLS
+    // tests delete them.
     await admin.from("minecraft_accounts").upsert(
       { user_id: TEST_IDS.GAMER, minecraft_username: "IDOR fixture" },
+      { onConflict: "user_id" },
+    );
+    await admin.from("roblox_accounts").upsert(
+      { user_id: TEST_IDS.GAMER, roblox_username: "IDORfixture" },
       { onConflict: "user_id" },
     );
   });

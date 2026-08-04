@@ -1,8 +1,47 @@
 import type { Profile, ProfileUpdate, UserRole, ParentGamer, SpokenLanguage, AppSupabaseClient } from "@/types";
 import { escapeLikePattern } from "@/lib/utils";
+import { parseJsonResponse, readErrorMessage } from "@/lib/api/json-response";
+import {
+  adminGameAccountWriteResult,
+  type AdminGameAccountBody,
+  type AdminGameAccountWriteResult,
+} from "./users.contracts";
 
 export class UsersService {
   constructor(private supabase: AppSupabaseClient) {}
+
+  /**
+   * An admin setting or clearing another account's game username.
+   *
+   * Deliberately a separate method from the two self-serve ones rather than a
+   * flag on them: those cannot name a target at all, which is most of what makes
+   * them safe, and collapsing them would put a "whose account is this" branch
+   * inside a method whose safety comes from not having one.
+   *
+   * The route resolves the handle against the platform before writing, so a
+   * successful save lands *verified* and the result carries the account key.
+   */
+  async updateUserGameAccount(
+    userId: string,
+    edit: AdminGameAccountBody,
+  ): Promise<AdminGameAccountWriteResult> {
+    const response = await fetch(
+      `/api/admin/users/${encodeURIComponent(userId)}/game-account`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(edit),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        await readErrorMessage(response, "Failed to update the game username"),
+      );
+    }
+
+    return parseJsonResponse(response, adminGameAccountWriteResult);
+  }
 
   /**
    * Reference set of spoken (human) languages from the `spoken_languages`

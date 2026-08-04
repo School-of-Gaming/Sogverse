@@ -40,6 +40,15 @@ vi.mock("@/lib/mojang", async (importOriginal) => {
   };
 });
 
+const mockLookupRobloxProfile = vi.fn();
+vi.mock("@/lib/roblox", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/roblox")>();
+  return {
+    ...actual,
+    lookupRobloxProfile: (...args: unknown[]) => mockLookupRobloxProfile(...args),
+  };
+});
+
 import { POST } from "@/app/api/gedu/register/route";
 import { asObject, getString } from "../../helpers/json";
 
@@ -70,6 +79,13 @@ describe("POST /api/gedu/register", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockLookupMinecraftUser.mockResolvedValue({ uuid: "mc-uuid-1" });
+    mockLookupRobloxProfile.mockResolvedValue({
+      username: "builderman",
+      userId: 156,
+      displayName: "builderman",
+      avatarUrl: null,
+      headshotUrl: null,
+    });
     mockCreateUser.mockResolvedValue({
       data: { user: { id: NEW_USER_ID } },
       error: null,
@@ -197,6 +213,58 @@ describe("POST /api/gedu/register", () => {
     const args = asObject(mockRpc.mock.calls[0][1]);
     expect(args.p_minecraft_username).toBe("Notch");
     expect(args.p_minecraft_uuid).toBe("");
+  });
+
+  // -- Roblox --
+  //
+  // Same shape one platform over, with one difference that matters: the account
+  // id is an int64, and it reaches the RPC as *text* because '' is this
+  // function's sentinel for every absent optional argument and a bigint
+  // parameter could not carry it.
+
+  it("returns 400 for a malformed Roblox username, before creating anything", async () => {
+    const response = await POST(
+      // Two underscores — Roblox permits at most one, never at either end.
+      registerRequest({ ...validBody, robloxUsername: "a_b_c" }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockCreateUser).not.toHaveBeenCalled();
+  });
+
+  it("passes the resolved Roblox account id as a decimal string", async () => {
+    const response = await POST(
+      registerRequest({ ...validBody, robloxUsername: "builderman" }),
+    );
+
+    expect(response.status).toBe(200);
+    const args = asObject(mockRpc.mock.calls[0][1]);
+    expect(args.p_roblox_username).toBe("builderman");
+    expect(args.p_roblox_user_id).toBe("156");
+  });
+
+  it("passes an empty account id when Roblox cannot resolve the handle", async () => {
+    mockLookupRobloxProfile.mockResolvedValue(null);
+
+    const response = await POST(
+      registerRequest({ ...validBody, robloxUsername: "nobody_here" }),
+    );
+
+    expect(response.status).toBe(200);
+    const args = asObject(mockRpc.mock.calls[0][1]);
+    expect(args.p_roblox_username).toBe("nobody_here");
+    expect(args.p_roblox_user_id).toBe("");
+  });
+
+  it("passes both sentinels when the educator gave no game handles at all", async () => {
+    const response = await POST(registerRequest(validBody));
+
+    expect(response.status).toBe(200);
+    expect(mockLookupRobloxProfile).not.toHaveBeenCalled();
+    const args = asObject(mockRpc.mock.calls[0][1]);
+    expect(args.p_roblox_username).toBe("");
+    expect(args.p_roblox_user_id).toBe("");
+    expect(args.p_minecraft_username).toBe("");
   });
 
   // -- Failure --

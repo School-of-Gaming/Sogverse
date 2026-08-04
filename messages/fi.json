@@ -680,6 +680,10 @@
       "unassignedGroup": "Ei ryhmää määritetty",
       "needsGroup": "Tarvitsee ryhmän",
       "untitledProduct": "Nimetön tuote",
+      "gameAccounts": {
+        "title": "Pelitilit",
+        "description": "Aseta tai korjaa tämän tilin pelikäyttäjänimet. Tallennus tarkistaa nimen pelialustalta."
+      },
       "participationStatus": {
         "active": "Aktiivinen",
         "waitlisted": "Jonossa",
@@ -1694,7 +1698,8 @@
     "edit": "Muokkaa {platform}-käyttäjänimeä",
     "editFor": "Muokkaa pelaajan {name} {platform}-käyttäjänimeä",
     "save": "Tallenna",
-    "cancel": "Peruuta"
+    "cancel": "Peruuta",
+    "saveFailed": "{platform}-käyttäjänimen päivittäminen epäonnistui."
   },
   "parent": {
     "placeholders": {
@@ -1803,9 +1808,10 @@
         "title": "Minecraft-tili",
         "description": "Linkitä Minecraft Java Editionin käyttäjänimi pelinsisäisiä ominaisuuksia varten."
       },
-      "mcSaved": "Minecraft-käyttäjänimi tallennettu!",
-      "mcCleared": "Minecraft-käyttäjänimi poistettu",
-      "failedUpdateMc": "Minecraft-käyttäjänimen päivittäminen epäonnistui"
+      "roblox": {
+        "title": "Roblox-tili",
+        "description": "Linkitä Roblox-käyttäjänimi pelinsisäisiä ominaisuuksia varten."
+      }
     },
     "switchToGamer": {
       "title": "Vaihda käyttäjän {name} profiiliin ja liity ryhmään {productName}?",
@@ -1827,10 +1833,9 @@
     "changePin": "Vaihda PIN",
     "minecraftAccount": "Minecraft-tili",
     "minecraftDescription": "Linkitä Minecraft Java Edition -tilisi",
+    "robloxAccount": "Roblox-tili",
+    "robloxDescription": "Linkitä Roblox-tilisi",
     "mcHeadsAttribution": "Ulkoasut renderöi <link>mc-heads.net</link>",
-    "minecraftSaved": "Minecraft-käyttäjänimi tallennettu!",
-    "minecraftCleared": "Minecraft-käyttäjänimi poistettu.",
-    "failedToUpdateMinecraft": "Minecraft-käyttäjänimen päivittäminen epäonnistui.",
     "spokenLanguages": "Puhutut kielet",
     "location": "Sijainti"
   },

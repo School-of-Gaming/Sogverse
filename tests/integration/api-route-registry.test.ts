@@ -175,6 +175,9 @@ const TESTS = {
   productsParticipationsTransition:
     "tests/integration/api/products-participations-transition.test.ts",
   productsUpdate: "tests/integration/api/products-update.test.ts",
+  adminUserGameAccount: "tests/integration/api/admin-user-game-account.test.ts",
+  robloxAccount: "tests/integration/api/roblox-account.test.ts",
+  robloxAvatars: "tests/integration/api/roblox-avatars.test.ts",
   robloxVerify: "tests/integration/api/roblox-verify.test.ts",
   sendTestEmail: "tests/integration/api/send-test-email.test.ts",
   signout: "tests/integration/auth/signout.test.ts",
@@ -212,6 +215,16 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: ADMIN_ONLY,
         body: { kind: "json", schema: "createLocationBody" },
         test: TESTS.adminLocations,
+      },
+    },
+  },
+
+  "src/app/api/admin/users/[id]/game-account/route.ts": {
+    handlers: {
+      PATCH: {
+        posture: ADMIN_ONLY,
+        body: { kind: "json", schema: "adminGameAccountBody" },
+        test: TESTS.adminUserGameAccount,
       },
     },
   },
@@ -672,6 +685,30 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   },
 
   // --- Roblox --------------------------------------------------------------
+
+  "src/app/api/roblox/account/route.ts": {
+    handlers: {
+      PATCH: {
+        posture: { kind: "role-gated", roles: ["gamer", "gedu"] },
+        body: { kind: "json", schema: "updateRobloxAccountBody" },
+        test: TESTS.robloxAccount,
+      },
+    },
+  },
+
+  "src/app/api/roblox/avatars/route.ts": {
+    handlers: {
+      GET: {
+        posture: {
+          kind: "any-authenticated",
+          reason:
+            "it takes Roblox account ids and answers with Roblox CDN URLs — both the platform's own public data — and reads no Sogverse row at all, so no role is more entitled to an answer than another and there is nothing here to own. What a session protects is not the data but the budget: the thumbnails API is rate limited to 60 requests a minute per IP across the whole serverless fleet, and an open route would be a free thumbnail proxy draining it",
+        },
+        body: { kind: "none" },
+        test: TESTS.robloxAvatars,
+      },
+    },
+  },
 
   "src/app/api/roblox/verify/route.ts": {
     handlers: {

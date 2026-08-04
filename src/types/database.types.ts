@@ -1013,6 +1013,32 @@ export type Database = {
           },
         ]
       }
+      roblox_accounts: {
+        Row: {
+          roblox_user_id: number | null
+          roblox_username: string | null
+          user_id: string
+        }
+        Insert: {
+          roblox_user_id?: number | null
+          roblox_username?: string | null
+          user_id: string
+        }
+        Update: {
+          roblox_user_id?: number | null
+          roblox_username?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roblox_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schedule_slots: {
         Row: {
           created_at: string
@@ -1458,6 +1484,8 @@ export type Database = {
           p_minecraft_username?: string
           p_minecraft_uuid?: string
           p_parent_id: string
+          p_roblox_user_id?: number
+          p_roblox_username?: string
         }
         Returns: undefined
       }
@@ -1699,6 +1727,8 @@ export type Database = {
           p_minecraft_username: string
           p_minecraft_uuid: string
           p_phone: string
+          p_roblox_user_id: string
+          p_roblox_username: string
           p_spoken_languages: string[]
           p_user_id: string
         }

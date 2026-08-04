@@ -33,4 +33,8 @@ export const TEST_CREDENTIALS = {
 export const SEED = {
   MINECRAFT_USERNAME_GEDU: "TestGedu",
   MINECRAFT_USERNAME_GAMER: "TestGamer",
+  // Roblox permits at most one underscore and none at either end, so these
+  // cannot mirror the Minecraft names character for character.
+  ROBLOX_USERNAME_GEDU: "TestGeduRoblox",
+  ROBLOX_USERNAME_GAMER: "TestGamerRoblox",
 } as const;

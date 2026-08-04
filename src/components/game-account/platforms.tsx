@@ -7,6 +7,7 @@ import {
   minecraftSkinFaceUrl,
 } from "@/lib/mojang";
 import { isValidRobloxUsername } from "@/lib/roblox";
+import type { GamePlatform } from "@/lib/constants/game-platforms";
 import { useVerifyMinecraft } from "@/services/minecraft";
 import { useVerifyRoblox } from "@/services/roblox";
 
@@ -28,7 +29,13 @@ import { useVerifyRoblox } from "@/services/roblox";
  * several platforms is the caller's business, not the component's.
  */
 
-export type GamePlatform = "minecraft" | "roblox";
+/**
+ * Re-exported rather than declared, so the registry below and the zod schemas on
+ * the wire cannot disagree about what a platform is. The tuple itself lives in a
+ * React-free module — an API route has to name a platform too, and it cannot
+ * import this one.
+ */
+export type { GamePlatform };
 
 /**
  * What we hold about a child's identity on one platform. **Four states, and they
@@ -415,6 +422,25 @@ export function gameAccountStatus(
 ): GameAccountStatus {
   if (username === null) return "unknown";
   return externalId === null ? "unverified" : "verified";
+}
+
+/**
+ * The Roblox account id a generic row is holding, or `null` when there isn't one.
+ *
+ * Three surfaces render both platforms from one component and each needs to ask
+ * the same question before it can resolve a picture: *is this a Roblox row, and
+ * has it been verified?* Written out three times it would be three chances to
+ * write `externalId as number`, which is exactly the cast that would let a
+ * Mojang UUID reach an endpoint expecting an int64. The `typeof` check is what
+ * makes the narrowing real rather than asserted, and it doubles as the verified
+ * gate: an unverified row has no id, so it gets `null` and keeps its silhouette.
+ */
+export function robloxAccountId(
+  platform: GamePlatform,
+  externalId: GameAccountExternalId | null | undefined,
+): number | null {
+  if (platform !== "roblox") return null;
+  return typeof externalId === "number" ? externalId : null;
 }
 
 /**

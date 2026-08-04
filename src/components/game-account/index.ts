@@ -2,6 +2,7 @@ export {
   GAME_PLATFORMS,
   gameFigureHeight,
   gameAccountStatus,
+  robloxAccountId,
   useVerifyGameAccount,
   type GameAccountExternalId,
   type GameAccountStatus,
@@ -21,3 +22,11 @@ export {
   GameUsernameEditableRow,
   type CommittedGameAccount,
 } from "./game-username-editable-row";
+// The two rows are how an identity is *drawn*; these two are how a surface that
+// owns one wires it to a save. The field is the unit — row, picture, and the one
+// sentence a failure gets — and the card is that field with a title on it.
+export {
+  GameAccountCard,
+  GameAccountField,
+  type GameAccountSave,
+} from "./game-account-card";
