@@ -40,7 +40,6 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     waitlist_enabled: true,
     // Already past — reverse transform should pick `immediately`.
     registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
-    refund_policy_days: null,
     primary_gedu_fee_cents: null,
     assistant_gedu_fee_cents: null,
     municipality_fee_cents: null,

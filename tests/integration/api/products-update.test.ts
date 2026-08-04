@@ -94,7 +94,6 @@ const validBody = {
   waitlist_enabled: false,
   registration_opens_at: "2026-01-01T00:00:00Z",
   is_visible: true,
-  refund_policy_days: null,
   schedule_slots: [{ weekday: 1, start_time: "16:00", duration_minutes: 90 }],
   prices: [],
   holiday_calendar_ids: [],

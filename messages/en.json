@@ -987,8 +987,7 @@
     "next": {
       "placement": "We’ll place {gamer} in a group with a game educator. The sessions will then appear under My SOG.",
       "subscription": "You’ll be billed every month. You can manage or cancel anytime from My SOG.",
-      "oneTime": "This was a one-time payment — there’s nothing more to pay.",
-      "refund": "Free cancellation within {days} days of your purchase."
+      "oneTime": "This was a one-time payment — there’s nothing more to pay."
     },
     "goToDashboard": "Go to My SOG",
     "keepBrowsing": "Keep browsing",

@@ -525,7 +525,6 @@ function buildBaseProduct(
     // the value just needs to be valid. Events get Fortnite, the rest
     // Minecraft Java.
     topic: productType === "event" ? "fortnite" : "minecraft_java",
-    refund_policy_days: null,
     primary_gedu_fee_cents: null,
     assistant_gedu_fee_cents: null,
     municipality_fee_cents: null,

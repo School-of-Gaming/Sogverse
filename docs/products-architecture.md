@@ -24,7 +24,7 @@ Adjacent systems have their own colocated docs: `src/services/locations/CLAUDE.m
 
 The four share ~80% of the operational model (schedule, location, topic, language, age range, gedus, participation, attendance, notes, waitlist, and — online only — a voice room). They differ on **pricing shape** and **schedule shape**, captured as small orthogonal fields rather than separate tables.
 
-**Rule: branch on the orthogonal fields (`billing_mode`, schedule shape, `seat_count`, refund policy), never on `product_type`.** `product_type` is a label for UI and filtering only. (This is what lets a future on-platform muni billing mode slot in without per-type switches everywhere.)
+**Rule: branch on the orthogonal fields (`billing_mode`, schedule shape, `seat_count`), never on `product_type`.** `product_type` is a label for UI and filtering only. (This is what lets a future on-platform muni billing mode slot in without per-type switches everywhere.)
 
 ---
 
@@ -185,7 +185,7 @@ Names by purpose — **read the signatures and bodies in `schema.sql`**. All `SE
 
 Things another agent would get wrong without this written down (the code doesn't announce them):
 
-- **`update_product` nulls any editable column the form doesn't send** (it defaults every column to NULL). A field in the schema but not in `buildSharedFields` (e.g. `refund_policy_days`) gets wiped on the next edit. Fix shape: pass through unsent fields like `image_path` does.
+- **`update_product` nulls any editable column the form doesn't send.** It assigns *every* editable column on every call and each of its parameters defaults to NULL, so "not sent" and "clear this" are the same instruction. Any column on `products` that the admin form's payload doesn't carry therefore holds its seeded value only until someone edits that product, then silently becomes NULL — and because the form never showed the field, nobody sees it happen. Adding a column to the table is not enough; it has to reach the RPC too. Fix shape: the route re-reads the current value from the row and passes it back through, which is how the image path survives an edit that doesn't touch it.
 - **The signup CTA stays active when no `product_prices` row exists for the viewer's currency.** The form validates all currencies but the DB doesn't enforce it; gate the CTA on price availability.
 - **Events flip to "already started" at 00:00 on `start_date`**, not at the slot time (`effectiveStatus` goes `running` at local midnight). For events, combine `start_date` with the first slot's `start_time`. Correct for camps (cohort starts together).
 - **The session cancellation/substitution ops, the lifecycle RPCs, admin participation removal, and the grace-access gates are spec'd but unbuilt** — verify in code before relying on them. (Session *records* — attendance, reports, gedu notes — did ship; see §Sessions.)

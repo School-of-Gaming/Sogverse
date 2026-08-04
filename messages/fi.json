@@ -987,8 +987,7 @@
     "next": {
       "placement": "{gamer} sijoitetaan ryhmään, jossa toimii peliohjaaja. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
       "subscription": "Maksu veloitetaan kuukausittain. Voit hallita tai peruuttaa tilauksen milloin tahansa Oma SOG -sivulla.",
-      "oneTime": "Tämä oli kertamaksu – muuta maksettavaa ei ole.",
-      "refund": "Maksuton peruutus {days} päivän kuluessa ostosta."
+      "oneTime": "Tämä oli kertamaksu – muuta maksettavaa ei ole."
     },
     "goToDashboard": "Siirry Oma SOG -sivulle",
     "keepBrowsing": "Jatka selailua",

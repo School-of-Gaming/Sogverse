@@ -31,7 +31,6 @@ function row(overrides: {
     max_age: overrides.maxAge ?? 17,
     padlet_url: null,
     product_type: "consumer_club",
-    refund_policy_days: null,
     primary_gedu_fee_cents: null,
     assistant_gedu_fee_cents: null,
     municipality_fee_cents: null,
