@@ -361,12 +361,10 @@
         "subject": "Ämnen"
       },
       "locationPicker": {
-        "hintSite": "Välj lokalen där detta hålls. Öppnar du en ny? Börja med kommunen.",
         "hintMunicipality": "Välj den finländska kommun som klubben gäller — den som finansierar den. Lokaler och andra länder kan inte väljas här.",
         "change": "Ändra",
         "edit": "Redigera",
-        "cancel": "Avbryt",
-        "noVenueHint": "Ingen fysisk lokal. Föräldrar i {name} ser denna klubb när de bläddrar.",
+        "noVenueHint": "Ingen fysisk lokal. Föräldrar i den här kommunen ser klubben när de bläddrar.",
         "memberNotesLabel": "Medlemssynliga anteckningar",
         "memberNotesFieldLabel": "Anteckningar för föräldrar och spelare",
         "memberNotesPlaceholder": "Adressdetaljer, parkering, tillgänglighet — allt föräldrar behöver veta.",
@@ -379,15 +377,11 @@
         "addressPlaceholder": "Gata, postnummer, ort",
         "noMemberNotes": "Inga medlemssynliga anteckningar för denna lokal.",
         "noStaffNotes": "Inga personalanteckningar för denna lokal.",
-        "searchSites": "Sök lokal på namn eller kommun…",
-        "searchMunicipalities": "Sök kommun…",
-        "noVenues": "Inga lokaler ännu. Använd ”Ny lokal” för att lägga till den första.",
-        "noMunicipalities": "Inga kommuner är tillgängliga.",
-        "ungrouped": "Annanstans",
-        "loading": "Platser laddas",
-        "newVenue": "Ny lokal…",
-        "newVenueTitle": "Öppna en ny lokal",
-        "newVenueDescription": "Börja med kommunen den ligger i. Officiella namn och koder kommer från varje lands statistiska klassificering, så ingenting ovanför själva lokalen skrivs för hand.",
+        "chooseMunicipality": "Välj en kommun",
+        "municipalityPickerTitle": "Välj en kommun",
+        "chooseVenue": "Välj en lokal",
+        "venuePickerTitle": "Välj en lokal",
+        "venuePickerDescription": "Sök lokalen på namn så hittar du den direkt, eller bläddra ner till kommunen och se lokalerna där. Finns lokalen inte ännu kan du öppna en ny.",
         "venuesIn": "Lokaler i {name}",
         "venuesInDescription": "Välj en som redan finns, eller lägg till en ny.",
         "venuesHereEmpty": "Inga lokaler här ännu.",
@@ -453,7 +447,7 @@
         "thresholdWithDate": "Om färre än så här många föräldrar anmäler sig till startdatumet behöver du ställa in den och återbetala från produktsidan.",
         "timezoneFixedHelsinki": "Tider är i tidszonen Europe/Helsinki. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
         "holidayHint": "Inget tillfälle körs på något datum från de valda kalendrarna. Redigera en kalender en gång och alla produkter som använder den uppdateras automatiskt.",
-        "billingHint": "Gratis evenemang behöver ingen platsgräns. Betalda har alltid en.",
+        "billingHint": "Oavsett vilket körs evenemang tills vidare utan platsgräns.",
         "freeDetail": "Ingen avgift. Alla kan delta med ett klick.",
         "paidDetail": "Engångsavgift vid anmälan.",
         "paidByMunicipality": "Ingen kundfakturering inom detta system. School of Gaming fakturerar kommunen direkt.",
@@ -988,8 +982,7 @@
     "next": {
       "placement": "Vi placerar {gamer} i en grupp med en Gedu. Tillfällena visas sedan under Min SOG.",
       "subscription": "Du faktureras varje månad. Du kan hantera eller avsluta när som helst från Min SOG.",
-      "oneTime": "Detta var en engångsbetalning – det finns inget mer att betala.",
-      "refund": "Kostnadsfri avbokning inom {days} dagar efter ditt köp."
+      "oneTime": "Detta var en engångsbetalning – det finns inget mer att betala."
     },
     "goToDashboard": "Gå till Min SOG",
     "keepBrowsing": "Fortsätt bläddra",
@@ -1413,23 +1406,20 @@
       "openClubs": "Vi har också klubbar som är öppna för alla, som en spelare kan gå med i oavsett var hen bor."
     },
     "municipality": {
-      "heading": "Klubbar från {name}",
-      "subheading": "Veckovisa klubbar som {name} erbjuder, där din spelare spelar, bygger och skapar med nya vänner och en Gedu som verkligen fattar."
+      "heading": "Klubbar från {name}"
     }
   },
   "productBrowse": {
     "headings": {
       "consumer_club": "Våra klubbar",
-      "camp": "Våra läger"
-    },
-    "subheadings": {
-      "consumer_club": "Veckovisa klubbar där din spelare spelar sina favoritspel med nya vänner och en Gedu som verkligen fattar.",
-      "camp": "Skollov förvandlade till spelfyllda äventyr – nya vänner, riktiga färdigheter och en Gedu med på resan."
+      "camp": "Våra läger",
+      "event": "Våra evenemang"
     },
     "filters": {
       "type": "Typ",
       "typeClubs": "Klubbar",
       "typeCamps": "Läger",
+      "typeEvents": "Evenemang",
       "topic": "Spel",
       "subject": "Ämne",
       "format": "Format",
@@ -1449,12 +1439,12 @@
       "externalContract": "Finansieras av din kommun",
       "notAvailableInCurrency": "Inte i {currency}",
       "seatsCapacity": "{count, plural, one {# plats} other {# platser}}",
-      "waitlistAvailable": "Väntelista finns",
       "endedNote": "Den här är slut — håll utkik efter nästa.",
       "viewDetails": "Visa",
       "manage": "Hantera",
       "fullDisabled": "Fullt",
       "alreadyStarted": "Pågår",
+      "alreadyEnded": "Avslutat",
       "online": "Online"
     },
     "empty": {
@@ -1510,6 +1500,11 @@
           "description": "Fortnite är ett färgglatt onlinespel i tecknad stil där spelare bildar lag och tävlar i korta matcher, omgång för omgång. Det är enormt populärt och väldigt socialt, och barn spelar tillsammans med vänner. Stilen är ljus och orealistisk, utan blod eller våld, även om matcherna är tävlingsinriktade och spelas online med andra.",
           "note": "Fortnite är gratis att ladda ner och spela – du köper inte själva spelet. Ditt barn skapar ett gratis Epic Games-konto för att spela. Vissa valfria extrasaker, som utstyrslar, kostar pengar, och du kan begränsa dem med föräldrakontroller.",
           "linkLabel": "Skaffa Fortnite"
+        },
+        "pokemon_go": {
+          "description": "Pokémon GO spelas utomhus, på en telefon. Varelser dyker upp på en karta över den verkliga världen, och barnen går till parker, gator och landmärken för att hitta och samla dem. Det handlar om att samla snarare än att slåss – det roliga är att utforska, fylla sin Pokédex och jämföra fynd med kompisar. Det mesta av spelandet sker till fots, så spelet får barn att röra på sig.",
+          "note": "Pokémon GO är gratis att ladda ner och spela – du köper inte själva spelet. Ditt barn behöver en telefon eller surfplatta med GPS och mobildata, samt ett gratis konto. Det finns valfria köp i appen, som du kan begränsa med föräldrakontroller. Eftersom spelet spelas utomhus på riktiga platser är det bra att i förväg komma överens om var barnet får röra sig och om en vuxen följer med.",
+          "linkLabel": "Var du laddar ner det"
         }
       }
     },
@@ -1558,7 +1553,12 @@
       "ctaAllSet": "Du är klar",
       "ctaAgreeRules": "Godkänn reglerna",
       "ctaWaitlist": "Gå med på väntelistan",
-      "ctaSignIn": "Logga in för att anmäla",
+      "ctaSignIn": {
+        "consumer_club": "Logga in för att anmäla",
+        "municipality_club": "Logga in för att anmäla",
+        "camp": "Logga in för att anmäla",
+        "event": "Logga in för att gå med"
+      },
       "ctaCreateAccount": "Skapa konto",
       "gamerAlreadySignedUp": {
         "consumer_club": "Redan anmäld",

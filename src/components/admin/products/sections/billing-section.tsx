@@ -10,12 +10,14 @@ import { FormSection } from "../form-primitives";
 import { formLocksFor } from "../form-locks";
 import { PricingBlock } from "../pricing-block";
 import {
-  PAID_MODE_VALUES,
   SEAT_LIMIT_MODE_VALUES,
-  effectiveBillingMode,
   effectivePricingShape,
   type FormState,
 } from "../product-form-state";
+import {
+  PAID_MODE_VALUES,
+  effectiveBillingMode,
+} from "../product-type-config";
 import type { ProductTypeConfig } from "../product-type-config";
 
 interface BillingSectionProps {
@@ -37,11 +39,11 @@ export function BillingSection({
   const pricingShape = effectivePricingShape(config);
   const showExternalInfo = billingMode === "external_contract";
 
-  // Seats: every product type may be capped or uncapped (no seat count). The
-  // chooser and the waitlist toggle are pre-prod-locked for every type except
-  // municipality clubs (form-locks.ts) — defaulted to "no seat limit" /
-  // waitlist off in initialState wherever they're still locked.
-  const locks = formLocksFor(config.productType);
+  // Seats: any product may be capped or uncapped (no seat count). The chooser
+  // and the waitlist toggle are pre-prod-locked for every type but municipality
+  // clubs (form-locks.ts), so the lock is a constant of the product being
+  // edited — it does not move while the form is open.
+  const locks = formLocksFor(config);
   const lockSeat = locks.seatCount;
   const lockWaitlist = locks.waitlist;
 
@@ -160,6 +162,12 @@ export function BillingSection({
         </div>
       </Field>
 
+      {/* Only reachable while a cap is set, which the chooser above normally
+          keeps in step with the lock. The one way in with the lock on is an
+          edit form loaded from a stored capped row whose type is no longer
+          allowed one — the value is shown rather than wiped, so the input has
+          to carry the lock too or it would be the one editable half of a locked
+          pair. */}
       {!state.uncapped && (
         <Field
           label={t("labels.seatCount")}
@@ -171,6 +179,7 @@ export function BillingSection({
             type="number"
             min="1"
             value={state.seatCount}
+            disabled={lockSeat}
             onChange={(e) =>
               setState({ ...state, seatCount: e.target.value })
             }
@@ -180,6 +189,11 @@ export function BillingSection({
         </Field>
       )}
 
+      {/* The waitlist is the queue behind a cap, so the toggle only exists while
+          one is set — and picking Unlimited deliberately leaves the flag alone
+          rather than clearing it, so toggling back restores the admin's tick.
+          What stops that hidden `true` reaching the database is the build, which
+          derives `waitlist_enabled` from the cap instead of copying this flag. */}
       {!state.uncapped && (
         <label
           className={cn(

@@ -27,10 +27,21 @@
  *    a nonzero landing is expected there).
  *
  * Everything is mirrored into `window.__layoutShiftLog` (ring buffer,
- * newest last) so the evidence survives until you look. Console lines are
- * prefixed `[tripwire]`; shift entries are collapsed groups — expand one
- * and the logged nodes are live references you can right-click and reveal
- * in the Elements panel.
+ * newest last) so the evidence survives until you look, and
+ * `copy(window.__layoutShiftReport())` in the console puts the whole
+ * buffer on the clipboard as plain text — paste that straight into a
+ * Claude session for investigation. Console lines are prefixed
+ * `[tripwire]`; each shift logs as ONE flat multi-line string (the dev
+ * log forwarder flattens console groups and drops their contents, so
+ * grouped output loses exactly the source attributions that matter),
+ * followed by the source nodes as live references you can reveal in the
+ * Elements panel. Shifts with no recent input — the hunted kind, since
+ * the bug strikes on data's schedule, not the user's — log at warn level
+ * and are tagged UNPROMPTED so they stand out from navigation noise.
+ * Every entry records the viewport size at observation time: shift
+ * `value` is a fraction of the viewport, so the same pixel shift scores
+ * wildly differently in a narrow window, and rect forensics are
+ * unreadable without knowing the frame they happened in.
  */
 
 import { useEffect } from "react";
@@ -49,6 +60,13 @@ interface LayoutShiftEntry extends PerformanceEntry {
   sources: LayoutShiftAttribution[];
 }
 
+interface ShiftSource {
+  label: string;
+  node: Node | null;
+  previousRect: DOMRectReadOnly;
+  currentRect: DOMRectReadOnly;
+}
+
 type TripwireLogEntry =
   | {
       kind: "shift";
@@ -56,12 +74,9 @@ type TripwireLogEntry =
       time: number;
       value: number;
       hadRecentInput: boolean;
-      sources: {
-        label: string;
-        node: Node | null;
-        previousRect: DOMRectReadOnly;
-        currentRect: DOMRectReadOnly;
-      }[];
+      /** `${innerWidth}x${innerHeight}` when the shift was observed. */
+      viewport: string;
+      sources: ShiftSource[];
     }
   | {
       kind: "landing";
@@ -73,6 +88,8 @@ type TripwireLogEntry =
 declare global {
   interface Window {
     __layoutShiftLog?: TripwireLogEntry[];
+    /** Plain-text dump of the ring buffer — `copy(window.__layoutShiftReport())`. */
+    __layoutShiftReport?: () => string;
   }
 }
 
@@ -105,6 +122,41 @@ function fmtRect(r: DOMRectReadOnly): string {
   return `${Math.round(r.x)},${Math.round(r.y)} ${Math.round(r.width)}x${Math.round(r.height)}`;
 }
 
+// dx AND dy: the layout-shift API attributes purely horizontal movement
+// too (a sidebar column growing shoves <main> sideways), and a dy-only
+// line prints `dy=0px` for exactly those — hiding the signal.
+function fmtSource(s: ShiftSource): string {
+  const dx = Math.round(s.currentRect.x - s.previousRect.x);
+  const dy = Math.round(s.currentRect.y - s.previousRect.y);
+  return `  ${s.label}\n    dx=${dx}px dy=${dy}px  ${fmtRect(s.previousRect)} -> ${fmtRect(s.currentRect)}`;
+}
+
+function fmtShiftHeader(e: Extract<TripwireLogEntry, { kind: "shift" }>): string {
+  return (
+    `layout shift @${e.time}ms value=${e.value.toFixed(4)} viewport=${e.viewport}` +
+    (e.hadRecentInput
+      ? " (recent input — likely user-caused)"
+      : " (UNPROMPTED — no recent input)")
+  );
+}
+
+function buildReport(): string {
+  const log = window.__layoutShiftLog ?? [];
+  const lines = [
+    `[tripwire report] ${new Date().toISOString()} url=${window.location.href} ` +
+      `viewport=${window.innerWidth}x${window.innerHeight} dpr=${window.devicePixelRatio}`,
+    `${log.length} entries, oldest first (cap ${LOG_CAP}; includes sub-threshold shifts the console omitted)`,
+  ];
+  for (const e of log) {
+    if (e.kind === "landing") {
+      lines.push(`@${e.time}ms landing ${e.pathname} scrollY=${e.scrollY}px (soft-nav scroll residue)`);
+    } else {
+      lines.push(fmtShiftHeader(e), ...e.sources.map(fmtSource));
+    }
+  }
+  return lines.join("\n");
+}
+
 // Narrowing predicate instead of an `as` cast: the observer below only
 // subscribes to the "layout-shift" entry type, and that check is exactly
 // what makes the narrowing safe.
@@ -120,42 +172,42 @@ let lastLandingPathname: string | null = null;
 
 function installShiftObserver() {
   if (observerInstalled) return;
+  window.__layoutShiftReport = buildReport;
   if (!PerformanceObserver.supportedEntryTypes.includes("layout-shift")) {
     return; // Chromium-only API; silently inert elsewhere.
   }
   observerInstalled = true;
+  console.log(
+    "[tripwire] armed — run copy(window.__layoutShiftReport()) for a paste-ready report",
+  );
 
   const observer = new PerformanceObserver((list) => {
     for (const shift of list.getEntries()) {
       if (!isLayoutShift(shift)) continue;
-      const sources = shift.sources.map((s) => ({
-        label: describeNode(s.node),
-        node: s.node,
-        previousRect: s.previousRect,
-        currentRect: s.currentRect,
-      }));
-      pushLog({
-        kind: "shift",
+      const entry = {
+        kind: "shift" as const,
         time: Math.round(shift.startTime),
         value: shift.value,
         hadRecentInput: shift.hadRecentInput,
-        sources,
-      });
+        viewport: `${window.innerWidth}x${window.innerHeight}`,
+        sources: shift.sources.map((s) => ({
+          label: describeNode(s.node),
+          node: s.node,
+          previousRect: s.previousRect,
+          currentRect: s.currentRect,
+        })),
+      };
+      pushLog(entry);
 
       if (shift.value < CONSOLE_MIN_VALUE) continue;
-      console.groupCollapsed(
-        `[tripwire] layout shift @${Math.round(shift.startTime)}ms ` +
-          `value=${shift.value.toFixed(4)}` +
-          (shift.hadRecentInput ? " (recent input — likely user-caused)" : ""),
-      );
-      for (const s of sources) {
-        const dy = Math.round(s.currentRect.y - s.previousRect.y);
-        console.log(
-          `${s.label}\n  dy=${dy}px  ${fmtRect(s.previousRect)} -> ${fmtRect(s.currentRect)}`,
-          s.node,
-        );
-      }
-      console.groupEnd();
+      // One flat string, not console.group: the dev log forwarder
+      // flattens groups and drops their contents, so grouped output
+      // reaches the terminal as a bare header with no attribution. The
+      // nodes ride along as a trailing arg for Elements-panel inspection.
+      const text = `[tripwire] ${fmtShiftHeader(entry)}\n${entry.sources.map(fmtSource).join("\n")}`;
+      const nodes = entry.sources.map((s) => s.node);
+      if (entry.hadRecentInput) console.log(text, nodes);
+      else console.warn(text, nodes);
     }
   });
   observer.observe({ type: "layout-shift", buffered: true });

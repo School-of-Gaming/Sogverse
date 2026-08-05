@@ -361,12 +361,10 @@
         "subject": "Aineet"
       },
       "locationPicker": {
-        "hintSite": "Valitse toimipiste, jossa tämä järjestetään. Avaatko uuden? Aloita sen kunnasta.",
         "hintMunicipality": "Valitse kunta, jolle tämä kerho on tarkoitettu — se kunta, joka sen rahoittaa. Toimipisteet ja muut maat eivät ole valittavissa.",
         "change": "Vaihda",
         "edit": "Muokkaa",
-        "cancel": "Peruuta",
-        "noVenueHint": "Ei fyysistä toimipaikkaa. Kunnan {name} vanhemmat näkevät tämän kerhon selatessaan.",
+        "noVenueHint": "Ei fyysistä toimipaikkaa. Tämän kunnan vanhemmat näkevät kerhon selatessaan.",
         "memberNotesLabel": "Jäsenille näkyvät tiedot",
         "memberNotesFieldLabel": "Vanhemmille ja pelaajille näkyvät tiedot",
         "memberNotesPlaceholder": "Osoitetiedot, parkkipaikka, esteettömyys — kaikki mitä vanhempien on hyvä tietää.",
@@ -379,15 +377,11 @@
         "addressPlaceholder": "Katu, postinumero, kaupunki",
         "noMemberNotes": "Ei jäsenille näkyviä tietoja tälle toimipisteelle.",
         "noStaffNotes": "Ei henkilökunnan tietoja tälle toimipisteelle.",
-        "searchSites": "Hae toimipistettä nimellä tai kunnalla…",
-        "searchMunicipalities": "Hae kuntaa…",
-        "noVenues": "Ei vielä toimipisteitä. Avaa ensimmäinen kohdasta ”Uusi toimipiste”.",
-        "noMunicipalities": "Kuntia ei ole saatavilla.",
-        "ungrouped": "Muualla",
-        "loading": "Ladataan sijainteja",
-        "newVenue": "Uusi toimipiste…",
-        "newVenueTitle": "Avaa uusi toimipiste",
-        "newVenueDescription": "Aloita kunnasta, jossa toimipiste sijaitsee. Viralliset nimet ja koodit tulevat kunkin maan tilastoluokituksesta, joten toimipisteen yläpuolella mitään ei kirjoiteta käsin.",
+        "chooseMunicipality": "Valitse kunta",
+        "municipalityPickerTitle": "Valitse kunta",
+        "chooseVenue": "Valitse toimipiste",
+        "venuePickerTitle": "Valitse toimipiste",
+        "venuePickerDescription": "Hae toimipistettä nimellä, niin löydät sen suoraan, tai selaa sen kuntaan asti ja katso siellä olevat toimipisteet. Jos toimipistettä ei vielä ole, voit avata uuden.",
         "venuesIn": "Toimipisteet kunnassa {name}",
         "venuesInDescription": "Valitse jokin olemassa oleva tai lisää uusi.",
         "venuesHereEmpty": "Täällä ei ole vielä toimipisteitä.",
@@ -453,7 +447,7 @@
         "thresholdWithDate": "Jos vanhempia ilmoittautuu vähemmän kuin tämä alkupäivään mennessä, sinun täytyy perua ja palauttaa maksut tuotesivulta.",
         "timezoneFixedHelsinki": "Ajat ovat aikavyöhykkeellä Europe/Helsinki. Vanhemmat näkevät ne automaattisesti omalla aikavyöhykkeellään.",
         "holidayHint": "Yksikään kerta ei pidetä valittujen kalenterien päivinä. Muokkaa kalenteria kerran ja kaikki sitä käyttävät tuotteet päivittyvät automaattisesti.",
-        "billingHint": "Ilmaisilla tapahtumilla ei tarvitse olla paikkarajaa. Maksullisilla on aina.",
+        "billingHint": "Valinnasta riippumatta tapahtumilla ei ole toistaiseksi paikkarajaa.",
         "freeDetail": "Ei maksua. Kuka tahansa voi liittyä yhdellä klikkauksella.",
         "paidDetail": "Kertamaksu ilmoittautumisen yhteydessä.",
         "paidByMunicipality": "Ei asiakaslaskutusta tämän järjestelmän sisällä. School of Gaming laskuttaa kuntaa suoraan.",
@@ -988,8 +982,7 @@
     "next": {
       "placement": "{gamer} sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
       "subscription": "Maksu veloitetaan kuukausittain. Voit hallita tai peruuttaa tilauksen milloin tahansa Oma SOG -sivulla.",
-      "oneTime": "Tämä oli kertamaksu – muuta maksettavaa ei ole.",
-      "refund": "Maksuton peruutus {days} päivän kuluessa ostosta."
+      "oneTime": "Tämä oli kertamaksu – muuta maksettavaa ei ole."
     },
     "goToDashboard": "Siirry Oma SOG -sivulle",
     "keepBrowsing": "Jatka selailua",
@@ -1413,23 +1406,20 @@
       "openClubs": "Tarjoamme myös kaikille avoimia kerhoja, joihin pelaaja voi liittyä asuinpaikasta riippumatta."
     },
     "municipality": {
-      "heading": "{name} – kerhot",
-      "subheading": "{name} – viikoittaiset kerhot, joissa pelaajasi pelaa, rakentaa ja luo uusien kavereiden ja Gedun kanssa."
+      "heading": "{name} – kerhot"
     }
   },
   "productBrowse": {
     "headings": {
       "consumer_club": "Kerhomme",
-      "camp": "Leirimme"
-    },
-    "subheadings": {
-      "consumer_club": "Viikoittaiset kerhot, joissa pelaajasi pelaa lempipelejään uusien kavereiden ja Gedun kanssa.",
-      "camp": "Koululomat täynnä peliseikkailuja – uusia kavereita, oikeita taitoja ja Gedu mukana matkassa."
+      "camp": "Leirimme",
+      "event": "Tapahtumamme"
     },
     "filters": {
       "type": "Tyyppi",
       "typeClubs": "Kerhot",
       "typeCamps": "Leirit",
+      "typeEvents": "Tapahtumat",
       "topic": "Peli",
       "subject": "Aihe",
       "format": "Muoto",
@@ -1449,12 +1439,12 @@
       "externalContract": "Kuntasi rahoittama",
       "notAvailableInCurrency": "Ei valuutassa {currency}",
       "seatsCapacity": "{count, plural, one {# paikka} other {# paikkaa}}",
-      "waitlistAvailable": "Jonotuslista käytössä",
       "endedNote": "Tämä on päättynyt – seuraava on tulossa pian.",
       "viewDetails": "Katso",
       "manage": "Hallitse",
       "fullDisabled": "Täynnä",
       "alreadyStarted": "Käynnissä",
+      "alreadyEnded": "Päättynyt",
       "online": "Verkossa"
     },
     "empty": {
@@ -1510,6 +1500,11 @@
           "description": "Fortnite on värikäs ja piirrosmainen verkkopeli, jossa pelaajat muodostavat joukkueita ja kilpailevat lyhyissä, eräpohjaisissa otteluissa. Se on erittäin suosittu ja hyvin sosiaalinen, ja lapset pelaavat yhdessä kavereiden kanssa. Ulkoasu on kirkas ja epärealistinen, eikä siinä ole verta eikä väkivaltaa, vaikka ottelut ovat kilpailullisia ja niitä pelataan verkossa muiden kanssa.",
           "note": "Fortnite on ilmainen ladata ja pelata – itse peliä ei osteta. Lapsesi luo pelaamista varten ilmaisen Epic Games -tilin. Jotkin valinnaiset lisät, kuten asut, maksavat, ja voit rajoittaa niitä lapsilukon asetuksilla.",
           "linkLabel": "Hanki Fortnite"
+        },
+        "pokemon_go": {
+          "description": "Pokémon GO on ulkona pelattava puhelinpeli. Olennot ilmestyvät kartalle oikeisiin paikkoihin, ja lapset kävelevät puistoihin, kaduille ja nähtävyyksille etsimään ja keräämään niitä. Pelissä keräillään eikä taistella – kiinnostavinta on tutkiminen, Pokédexin täydentäminen ja löytöjen vertailu kavereiden kanssa. Suurin osa pelaamisesta tapahtuu jalan, joten peli saa lapset liikkeelle.",
+          "note": "Pokémon GO on ilmainen ladata ja pelata – itse peliä ei osteta. Lapsesi tarvitsee puhelimen tai tabletin, jossa on GPS ja mobiilidatayhteys, sekä ilmaisen käyttäjätilin. Peli sisältää valinnaisia ostoksia, joita voi rajoittaa lapsilukon asetuksilla. Koska peliä pelataan ulkona oikeissa paikoissa, kannattaa sopia etukäteen, missä lapsi saa liikkua ja kulkeeko aikuinen mukana.",
+          "linkLabel": "Mistä sen saa"
         }
       }
     },
@@ -1558,7 +1553,12 @@
       "ctaAllSet": "Olet valmis",
       "ctaAgreeRules": "Hyväksy säännöt",
       "ctaWaitlist": "Liity jonotuslistalle",
-      "ctaSignIn": "Kirjaudu sisään ilmoittautuaksesi",
+      "ctaSignIn": {
+        "consumer_club": "Kirjaudu sisään ilmoittautuaksesi",
+        "municipality_club": "Kirjaudu sisään ilmoittautuaksesi",
+        "camp": "Kirjaudu sisään ilmoittautuaksesi",
+        "event": "Kirjaudu sisään liittyäksesi"
+      },
       "ctaCreateAccount": "Luo tili",
       "gamerAlreadySignedUp": {
         "consumer_club": "Jo ilmoitettu",

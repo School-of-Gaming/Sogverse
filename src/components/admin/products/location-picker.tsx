@@ -1,63 +1,83 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Landmark, MapPin, Pencil } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { MapPin, Pencil } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
-  useMunicipalitiesByCountry,
-  useSites,
-  type LocationChainNode,
+  useLocationChildren,
+  useLocationsByIds,
+  type LocationWithChain,
 } from "@/services/locations";
 import { useSiteDetails } from "@/services/products";
-import { LocationPickerPanel } from "@/components/locations/location-picker-panel";
-import { groupLocationsByParent } from "@/components/locations/location-groups";
+import { LocationPickerDialog } from "@/components/locations/location-browser";
+import type { LocationChainSummary } from "@/components/locations/location-picker-panel";
 import { withoutCountry } from "@/lib/locations/ancestor-chain";
 import { localizedLocationName } from "@/lib/locations/localized-name";
-import { shouldDropStoredPick } from "@/lib/locations/stored-pick";
-import type { Location } from "@/types";
-import { NewVenueDialog } from "./new-venue-dialog";
+import {
+  shouldDropStoredRow,
+  type AcceptedLocation,
+} from "@/lib/locations/stored-pick";
+import { VenuePickerDialog } from "./venue-picker-dialog";
 import { SiteNotesEditor } from "./site-notes-editor";
 
 type PickableMode = "site" | "municipality";
 
 const ANCESTOR_SEPARATOR = " · ";
 
-// Online municipality clubs anchor to a Finnish municipality only. The DB
-// trigger still permits country/region (it predates this UI rule), so the
-// enforcement lives here: the only rows offered are Finland's municipalities,
-// and a pick outside that set is cleared on load.
+/**
+ * Online municipality clubs anchor to a Finnish municipality only — the kunta
+ * that funds the club. The DB trigger still permits a country or a region (it
+ * predates this UI rule), so the picker is the gate, in three places that each
+ * stop something the next one cannot: the dialog opens *inside* Finland and
+ * offers no other country's rows while browsing, search hits from elsewhere are
+ * dropped before the panel sees them, and the guard clears a stored id that is
+ * not a Finnish municipality — which is what catches a row saved before any of
+ * that existed.
+ */
 const MUNI_COUNTRY_CODE = "FI";
+
+/** The one level an in-person product may pin to, in any country. */
+const VENUE_ACCEPTS: AcceptedLocation = { types: ["site"] };
+
+/** The one level, and the one country, an online municipality club may pin to. */
+const MUNI_ACCEPTS: AcceptedLocation = {
+  types: ["municipality"],
+  countryCode: MUNI_COUNTRY_CODE,
+};
 
 interface LocationPickerProps {
   value: string | null;
   onChange: (id: string | null) => void;
   /**
-   * "site"         — only venues may be picked (in-person products). The list
-   *                  is the venues that exist; opening a new one starts by
-   *                  browsing the hierarchy to a municipality, so the row above
-   *                  the venue is always a seeded one and never a typed name.
-   * "municipality" — only Finnish municipalities may be picked. Used for online
-   *                  municipality clubs (the municipality that funds the club).
-   *                  No creation — the hierarchy is seeded.
+   * "site"         — only venues may be picked (in-person products). Picking
+   *                  one opens the shared tree dialog: search reaches a venue
+   *                  by name in one step, browsing walks down to a municipality
+   *                  and lists the venues in it, and a venue that does not
+   *                  exist yet is named there.
+   * "municipality" — only Finnish municipalities may be picked (the kunta that
+   *                  funds an online municipality club). The same tree dialog,
+   *                  opened at Finland and scoped to it, and confirming the
+   *                  municipality *is* the answer — there is no second step and
+   *                  nothing to create, because the hierarchy is seeded.
    */
   pickable: PickableMode;
 }
 
 /**
- * Product-form location picker: two configurations of the shared panel, plus
- * the three things that are genuinely this form's own.
+ * Product-form location picker: two modes that pick two different levels of one
+ * hierarchy, through one dialog.
  *
- * Both modes put the panel in its **set** scope — a bounded collection the form
- * has already fetched (every venue, or one country's municipalities) grouped by
- * the place above it, which is the view an admin picking a venue actually
- * wants. Browsing the tree is what the "new venue" flow opens, and that is the
- * same panel in its tree scope.
+ * Both modes open the shared tree dialog — the same one gedu coverage and a
+ * parent's own location use — and differ only in what they will accept back and
+ * where they start. Neither fetches a collection to choose from: sites exist in
+ * every country the hierarchy covers, and Finland's kuntaa, while genuinely
+ * bounded, are reached faster by typing three letters than by scrolling a
+ * grouped list of all of them.
  *
  * What lives here and nowhere else: the card a chosen place collapses to (with
- * its site notes), the hint line under the list, and the effect that drops a
- * stored `location_id` the mode would no longer accept.
+ * its site notes, for a venue), and the guard that drops a stored `location_id`
+ * the current mode would no longer accept.
  */
 export function LocationPicker({ value, onChange, pickable }: LocationPickerProps) {
   return pickable === "site" ? (
@@ -72,155 +92,167 @@ interface ModeProps {
   onChange: (id: string | null) => void;
 }
 
+/**
+ * The row behind the stored id. The id is known synchronously; the row is one
+ * keyed lookup.
+ *
+ * Three states, and the middle one is the whole point. `undefined` is "the read
+ * has not landed"; `null` is a resolved "there is no such row" — a deleted
+ * venue — which a set-membership check could never tell apart from the first.
+ * Nothing stored resolves to `null` without a read at all.
+ */
+function useStoredRow(value: string | null): LocationWithChain | null | undefined {
+  const { data: rows } = useLocationsByIds(value ? [value] : []);
+  if (!value) return null;
+  if (rows === undefined) return undefined;
+  return rows[0] ?? null;
+}
+
 function SitePicker({ value, onChange }: ModeProps) {
   const t = useTranslations("admin.products.locationPicker");
-  const locale = useLocale();
-  const [browsing, setBrowsing] = useState(false);
-  const [newVenueOpen, setNewVenueOpen] = useState(false);
-  const [query, setQuery] = useState("");
+  const [picking, setPicking] = useState(false);
 
-  const { data: sites } = useSites();
+  const row = useStoredRow(value);
 
-  // Clear a pick that is not a venue any more (a deleted row, or a legacy
-  // product pinned above site level). "Not loaded yet" must never be mistaken
-  // for "not a venue" — that would wipe a valid location_id while editing an
-  // existing product — which is the whole of what the guard decides.
+  // Clear a pick this field would not accept: a venue that was deleted, or —
+  // the everyday one — a municipality club toggled from online to in-person,
+  // which leaves a municipality id in a field that now takes only venues.
+  // "Not read yet" must never be mistaken for either.
+  const dropping = shouldDropStoredRow(value, row, VENUE_ACCEPTS);
+
   useEffect(() => {
-    if (shouldDropStoredPick(value, sites)) onChange(null);
-  }, [value, sites, onChange]);
-
-  const groups = useMemo(
-    () => groupLocationsByParent(sites ?? [], locale, ""),
-    [sites, locale],
-  );
-
-  const selected = sites?.find((site) => site.id === value);
-
-  if (!sites) return <PickerPlaceholder label={t("loading")} compact={!!value} />;
-
-  if (selected && !browsing) {
-    return (
-      <SelectedLocationCard
-        location={selected}
-        ancestors={selected.ancestors}
-        onEdit={() => setBrowsing(true)}
-      />
-    );
-  }
+    if (dropping) onChange(null);
+  }, [dropping, onChange]);
 
   return (
-    <div className="space-y-3">
-      <LocationPickerPanel
-        query={query}
-        onQueryChange={setQuery}
-        scope={{
-          kind: "set",
-          groups,
-          value,
-          onSelect: (pick) => {
-            onChange(pick.location.id);
-            setBrowsing(false);
-          },
-          labels: {
-            searchPlaceholder: t("searchSites"),
-            empty: t("noVenues"),
-          },
-          footer: (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              onClick={() => setNewVenueOpen(true)}
-            >
-              <Landmark className="h-3.5 w-3.5" />
-              {t("newVenue")}
-            </Button>
-          ),
-        }}
+    <>
+      <ChosenPlace
+        value={value}
+        dropping={dropping}
+        row={row}
+        emptyLabel={t("chooseVenue")}
+        withNotes
+        onOpen={() => setPicking(true)}
       />
 
-      <PickerHint
-        hint={t("hintSite")}
-        onCancel={selected ? () => setBrowsing(false) : undefined}
-        cancelLabel={t("cancel")}
-      />
-
-      <NewVenueDialog
-        open={newVenueOpen}
-        onOpenChange={setNewVenueOpen}
-        onPick={(site) => {
-          setNewVenueOpen(false);
-          onChange(site.id);
-          setBrowsing(false);
+      <VenuePickerDialog
+        open={picking}
+        onOpenChange={setPicking}
+        onPick={(siteId) => {
+          setPicking(false);
+          onChange(siteId);
         }}
       />
-    </div>
+    </>
   );
 }
 
 function MunicipalityPicker({ value, onChange }: ModeProps) {
   const t = useTranslations("admin.products.locationPicker");
-  const locale = useLocale();
-  const [browsing, setBrowsing] = useState(false);
-  const [query, setQuery] = useState("");
+  const [picking, setPicking] = useState(false);
 
-  const { data: municipalities } = useMunicipalitiesByCountry(MUNI_COUNTRY_CODE);
+  const row = useStoredRow(value);
 
-  // The query returns exactly the pickable set, so "not in it" covers both
-  // invalid shapes at once: a legacy pick anchored to a region or a country,
-  // and a municipality outside Finland. Either way the admin re-picks — and,
-  // as above, only once the set has actually arrived.
+  // The same guard as the venue field, asked a different question: this one
+  // also refuses a right-level row in the wrong country. Both invalid shapes
+  // land on it — a legacy pick anchored to a region or a country, and a
+  // municipality outside Finland — and neither can be answered before the read
+  // has landed.
+  const dropping = shouldDropStoredRow(value, row, MUNI_ACCEPTS);
+
   useEffect(() => {
-    if (shouldDropStoredPick(value, municipalities)) onChange(null);
-  }, [value, municipalities, onChange]);
-
-  const groups = useMemo(
-    () => groupLocationsByParent(municipalities ?? [], locale, t("ungrouped")),
-    [municipalities, locale, t],
-  );
-
-  const selected = municipalities?.find((row) => row.id === value);
-
-  if (!municipalities)
-    return <PickerPlaceholder label={t("loading")} compact={!!value} />;
-
-  if (selected && !browsing) {
-    return (
-      <SelectedLocationCard
-        location={selected}
-        ancestors={selected.ancestors}
-        onEdit={() => setBrowsing(true)}
-      />
-    );
-  }
+    if (dropping) onChange(null);
+  }, [dropping, onChange]);
 
   return (
-    <div className="space-y-3">
-      <LocationPickerPanel
-        query={query}
-        onQueryChange={setQuery}
-        scope={{
-          kind: "set",
-          groups,
-          value,
-          onSelect: (pick) => {
-            onChange(pick.location.id);
-            setBrowsing(false);
-          },
-          labels: {
-            searchPlaceholder: t("searchMunicipalities"),
-            empty: t("noMunicipalities"),
-          },
-        }}
+    <>
+      <ChosenPlace
+        value={value}
+        dropping={dropping}
+        row={row}
+        emptyLabel={t("chooseMunicipality")}
+        withNotes={false}
+        onOpen={() => setPicking(true)}
       />
 
-      <PickerHint
-        hint={t("hintMunicipality")}
-        onCancel={selected ? () => setBrowsing(false) : undefined}
-        cancelLabel={t("cancel")}
+      <MunicipalityPickerDialog
+        open={picking}
+        onOpenChange={setPicking}
+        onPick={(municipalityId) => {
+          setPicking(false);
+          onChange(municipalityId);
+        }}
       />
-    </div>
+    </>
+  );
+}
+
+/**
+ * The municipality flow, which is the tree dialog and nothing else.
+ *
+ * Two things configure it. **`pickableTypes` is municipality alone**, so a
+ * municipality row is terminal — confirming one is the answer rather than the
+ * next question, which is the whole difference from the venue flow, where a
+ * confirmed municipality opens a venue list because a building still has to be
+ * named. **The country is both a starting point and a bound**: the dialog opens
+ * with Finland already in the breadcrumb, listing its maakunnat, and no other
+ * country's rows are offered by browsing or by search.
+ *
+ * The Finland row comes from the browse read at the root of the tree — the same
+ * request the panel makes when someone clicks back up to "all countries", so it
+ * is one cache entry serving both and can never disagree with what browsing
+ * shows. Nothing waits on it: while the read is pending there is no seed and
+ * the dialog opens at the (empty) root; the moment it resolves, the seed and
+ * the root's rows land in the same render, so no one-country root list is ever
+ * on screen. That degradation is deliberate, and it is why the seed is a
+ * derived fallback rather than an effect that writes state — an effect could
+ * land after the admin had already navigated and drag them back.
+ *
+ * The read is issued from *here* rather than from inside the dialog, so it is in
+ * flight while the form is being filled in and the seed is already there when
+ * the dialog opens. It costs one indexed request for the two country rows, on a
+ * key the dialog would ask for anyway.
+ */
+function MunicipalityPickerDialog({
+  open,
+  onOpenChange,
+  onPick,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onPick: (municipalityId: string) => void;
+}) {
+  const t = useTranslations("admin.products.locationPicker");
+
+  const countries = useLocationChildren(null);
+  const initialPath = useMemo<readonly LocationChainSummary[] | undefined>(() => {
+    const country = (countries.data?.pages ?? [])
+      .flatMap((page) => page.rows)
+      .find((row) => row.country_code === MUNI_COUNTRY_CODE);
+    // One node, and it is that row's own ancestry: a country has no ancestors,
+    // so "the row's ancestors reversed, plus the row" is exactly `[country]`.
+    // The breadcrumb is rebuilt from a row rather than appended to, here as
+    // everywhere, so a seeded path and a drilled one are the same shape.
+    return country ? [country] : undefined;
+  }, [countries.data]);
+
+  return (
+    <LocationPickerDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t("municipalityPickerTitle")}
+      description={t("hintMunicipality")}
+      pickableTypes={MUNI_ACCEPTS.types}
+      countryCode={MUNI_COUNTRY_CODE}
+      initialPath={initialPath}
+      onConfirm={({ location }) => {
+        // Nothing is fetched, resolved or created: the panel browses `locations`
+        // rows, so the confirmed pick already *is* the row. The confirm button
+        // stays disabled through this, because the caller swaps the view away.
+        onPick(location.id);
+        return Promise.resolve();
+      }}
+    />
   );
 }
 
@@ -228,75 +260,128 @@ function MunicipalityPicker({ value, onChange }: ModeProps) {
 // Shared bits
 // ---------------------------------------------------------------------------
 
+interface ChosenPlaceProps {
+  value: string | null;
+  /** The guard's verdict on `value`, read directly rather than via its effect. */
+  dropping: boolean;
+  row: LocationWithChain | null | undefined;
+  /** What the empty state's control says. */
+  emptyLabel: string;
+  /** Whether a pick in this mode carries site notes. */
+  withNotes: boolean;
+  onOpen: () => void;
+}
+
 /**
- * The space the picker is about to occupy, held empty.
+ * The field itself: a compact control when nothing is chosen, the card when
+ * something is.
  *
- * There is nothing in it on purpose. Both reads behind this control are one
- * bounded, indexed request — every venue, or one country's municipalities — so
- * the state it is waiting on arrives within a frame or two; a skeleton would
- * announce a wait that is over before it can be read. What does matter is the
- * *size*: reserving it is what keeps the rest of the product form from jumping
- * when the rows land, which is the layout rule's whole point.
- *
- * `compact` = the caller already knows a location is picked, so this will
- * resolve into the small selected-state card rather than the browse list.
- * Editing an existing product is the most common way in here, so sizing for the
- * state it becomes is what actually holds the form still.
+ * The guard's own verdict decides which, rather than the effect it drives. An
+ * effect runs *after* the paint that made it true, so gating only on `value`
+ * shows one frame of a card the guard has already condemned — on the
+ * online-to-in-person toggle that frame is a municipality rendered as a venue,
+ * pill and all, which is a thing that cannot exist. One predicate, read in both
+ * places, and there is no frame to see.
  */
-function PickerPlaceholder({ label, compact }: { label: string; compact: boolean }) {
+function ChosenPlace({
+  value,
+  dropping,
+  row,
+  emptyLabel,
+  withNotes,
+  onOpen,
+}: ChosenPlaceProps) {
+  if (value === null || dropping) {
+    // Nothing is stored (or nothing valid is), so nothing is pending and this
+    // is final from the first frame: a compact affordance, not a panel-sized
+    // hole. The panel this used to hold lives in a dialog now.
+    return <ChoosePlaceButton label={emptyLabel} onClick={onOpen} />;
+  }
   return (
-    <div
-      className={cn("rounded-md", compact ? "h-24" : "h-[460px]")}
-      aria-label={label}
-      aria-busy="true"
+    <SelectedLocationCard
+      locationId={value}
+      location={row ?? undefined}
+      withNotes={withNotes}
+      onEdit={onOpen}
     />
   );
 }
 
-interface PickerHintProps {
-  hint: string;
-  onCancel?: () => void;
-  cancelLabel: string;
-}
-
-function PickerHint({ hint, onCancel, cancelLabel }: PickerHintProps) {
+/**
+ * The empty state of either field: one compact control that opens the dialog.
+ *
+ * Deliberately not a reserved panel-sized box. The browse panel lives in a
+ * dialog, so there is nothing here that could ever grow into that space, and
+ * holding it open would be dead space rather than a shift avoided — the field
+ * that replaces this control when a place is chosen is a card, and the swap
+ * between the two is a user's own click.
+ */
+function ChoosePlaceButton({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick: () => void;
+}) {
   return (
-    <div className="flex items-center justify-between text-xs">
-      <span className="text-muted-foreground">{hint}</span>
-      {onCancel && (
-        <button
-          type="button"
-          onClick={onCancel}
-          className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-        >
-          {cancelLabel}
-        </button>
-      )}
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center gap-2.5 rounded-md border border-input bg-background px-3 py-3 text-left outline-none hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+    >
+      <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
+      <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+        {label}
+      </span>
+    </button>
   );
 }
 
 interface SelectedLocationCardProps {
-  location: Location;
-  /** The row's chain, nearest first, as the scoped reads return it. */
-  ancestors: LocationChainNode[];
+  /** The stored id — known before the row behind it is. */
+  locationId: string;
+  /**
+   * The row and its chain, nearest first, or `undefined` while the keyed read
+   * is still in flight. Both modes render this card before their row lands.
+   */
+  location: LocationWithChain | undefined;
+  /**
+   * Whether this field's picks carry site notes. A property of the *mode*, not
+   * of the row, so it is known synchronously — which matters twice over:
+   * inferring it from a row that has not arrived would either fetch site
+   * details for a municipality or push the rest of the form down a frame later.
+   */
+  withNotes: boolean;
   onEdit: () => void;
 }
 
+/**
+ * What a chosen place collapses to: its name, its path, an affordance to change
+ * it, and — for a venue — the two tiers of site notes.
+ *
+ * The card is at its final size from the first frame and fills the text in, per
+ * the loading rule: the read behind it is one row by primary key, so a skeleton
+ * would be gone before it could be read, and the "Change" button is live
+ * immediately because it needs nothing from the read. Everything whose *height*
+ * the read could otherwise change is either reserved (the name and path lines)
+ * or does not depend on it at all (the municipality note, which is a fact about
+ * the mode). The notes editors stacked under the card are a separate read with
+ * a settle of their own, older than this control and untouched by it.
+ */
 function SelectedLocationCard({
+  locationId,
   location,
-  ancestors,
+  withNotes,
   onEdit,
 }: SelectedLocationCardProps) {
   const t = useTranslations("admin.products.locationPicker");
   const locale = useLocale();
-  const selectedName = localizedLocationName(location, locale);
-  const isSite = location.type === "site";
-  // Only sites have site_details / site_staff_details rows. For municipality
-  // picks we skip the fetch.
-  const { data: details } = useSiteDetails(isSite ? location.id : null);
+
+  // Only sites have site_details / site_staff_details rows, so a municipality
+  // pick skips the fetch outright.
+  const { data: details } = useSiteDetails(withNotes ? locationId : null);
   // Root first, so it reads "Uusimaa · Helsinki" the way a breadcrumb does.
-  const chain = withoutCountry(ancestors).reverse();
+  const chain = location ? withoutCountry(location.ancestors).reverse() : [];
 
   return (
     <div className="space-y-2">
@@ -305,24 +390,40 @@ function SelectedLocationCard({
           <div className="flex min-w-0 items-start gap-3">
             <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{selectedName}</span>
-                {!isSite && (
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                    {location.type}
-                  </span>
+              {/* Both lines keep their height while the row is resolving, so
+                  the name and the path appear *in place* and the card's own
+                  height never changes. That claim stops at the card: the notes
+                  editors below it grow when their own read lands, which is a
+                  pre-existing settle this reserves nothing for and does not
+                  pretend to fix. */}
+              <div className="flex min-h-6 items-center gap-2">
+                {location && (
+                  <>
+                    <span className="font-medium">
+                      {localizedLocationName(location, locale)}
+                    </span>
+                    {!withNotes && (
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                        {location.type}
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
-              {chain.length > 0 && (
-                <div className="mt-0.5 text-xs text-muted-foreground">
-                  {chain
-                    .map((node) => localizedLocationName(node, locale))
-                    .join(ANCESTOR_SEPARATOR)}
-                </div>
-              )}
-              {!isSite && (
+              <div className="mt-0.5 min-h-4 text-xs text-muted-foreground">
+                {chain
+                  .map((node) => localizedLocationName(node, locale))
+                  .join(ANCESTOR_SEPARATOR)}
+              </div>
+              {/* Rendered from the first frame, because it says what picking a
+                  municipality *means* and that is settled by the mode. It
+                  deliberately does not name the kunta: the name is a few pixels
+                  above it, and interpolating it would make this paragraph's
+                  height depend on a read — the one thing the card must not
+                  allow, since it wraps and the form sits underneath. */}
+              {!withNotes && (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  {t("noVenueHint", { name: selectedName })}
+                  {t("noVenueHint")}
                 </p>
               )}
             </div>
@@ -340,16 +441,36 @@ function SelectedLocationCard({
         </div>
       </div>
 
-      {isSite && (
+      {/*
+        The `key` is load-bearing and must not be "simplified" away.
+
+        A notes editor holds its open/closed state and its draft text in local
+        state, seeded once at mount. Since the picker became an overlay, this
+        card is no longer unmounted while a different venue is being chosen —
+        so without a key an editor left open across a venue change survives the
+        change with the *old* venue's draft in it, pointed at the *new*
+        `locationId`. Saving then writes one building's address and notes onto
+        another's, and `site_details` / `site_staff_details` are per-site rows
+        shared by every product at that site, so the damage is not confined to
+        the product being edited.
+
+        Keying on the id makes a venue change a remount, which is what drops
+        the stale draft. Anything else — resetting from props, an effect that
+        syncs the draft — reintroduces the same class of bug the first time
+        someone edits one of the two pieces of state and not the other.
+      */}
+      {withNotes && (
         <>
           <SiteNotesEditor
-            locationId={location.id}
+            key={`member-${locationId}`}
+            locationId={locationId}
             tier="member"
             address={details?.member?.address ?? null}
             notes={details?.member?.notes ?? null}
           />
           <SiteNotesEditor
-            locationId={location.id}
+            key={`staff-${locationId}`}
+            locationId={locationId}
             tier="staff"
             notes={details?.staff?.notes ?? null}
           />

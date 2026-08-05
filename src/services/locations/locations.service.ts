@@ -112,8 +112,8 @@ async function walkPages<Row>(
  *
  * The sibling of `walkPages`, and it exists for the opposite reason: the walk
  * is for reads whose *whole* result a surface needs (one country's
- * municipalities to group, every venue to list), and this is for browsing,
- * where the payload has to stay proportional to what is on screen no matter how
+ * municipalities to group, one municipality's venues to list), and this is for
+ * browsing, where the payload has to stay proportional to what is on screen no matter how
  * many children a node has. Both share the same two disciplines — `count:
  * "exact"` so the caller learns the true size, and a total order on the query so
  * a page boundary cannot duplicate or drop a row.
@@ -180,6 +180,10 @@ const CHAIN_COLUMNS = "id, name, name_i18n, type, parent_id, country_code, exter
  * under kunta → maakunta → Suomi (so its fourth level comes back null, since a
  * country row has no parent).
  *
+ * The keyed read uses it, because a key set is whatever a caller stored and a
+ * stored pick can be a site — so it has to ask for the depth of the deepest
+ * row it might be handed rather than the depth of a level it chose.
+ *
  * Spelled out rather than generated, because the depth has to be visible in the
  * *type* of the select string: the client infers the response shape from the
  * literal, and a runtime-built string collapses it to `string` and takes the
@@ -202,15 +206,6 @@ const MUNICIPALITY_CHAIN_EMBED =
   `parent:parent_id(${CHAIN_COLUMNS}, ` +
   `parent:parent_id(${CHAIN_COLUMNS}, ` +
   `parent:parent_id(${CHAIN_COLUMNS})))`;
-
-function buildSitesQuery(supabase: AppSupabaseClient) {
-  return supabase
-    .from("locations")
-    .select(`${LOCATION_COLUMNS}, ${SITE_CHAIN_EMBED}`, { count: "exact" })
-    .eq("type", "site")
-    .order("name")
-    .order("id");
-}
 
 function buildMunicipalitiesQuery(
   supabase: AppSupabaseClient,
@@ -299,10 +294,10 @@ export class LocationsService {
 
   /**
    * Every municipality of one country, each carrying its ancestor chain.
-   * Drives the `/schools` list and the online municipality-club picker, both
-   * Finland-only today (308 rows) — but the same call for France is 34,875, so
-   * this is a paged walk, not a select. The chain is what lets both surfaces
-   * show (and group by) the region without a second read.
+   * Drives the `/schools` list, Finland-only today (308 rows) — but the same
+   * call for France is 34,875, so this is a paged walk, not a select. The
+   * chain is what lets the surface show (and group by) the region without a
+   * second read.
    */
   async getMunicipalitiesByCountry(
     countryCode: string,
@@ -311,14 +306,6 @@ export class LocationsService {
       "getMunicipalitiesByCountry",
       (from, to) =>
         buildMunicipalitiesQuery(this.supabase, countryCode).range(from, to),
-    );
-    return rows.map(flattenChain);
-  }
-
-  /** Every site, each carrying its ancestor chain. */
-  async getSites(): Promise<LocationWithChain[]> {
-    const rows = await walkPages<RawChainRow>("getSites", (from, to) =>
-      buildSitesQuery(this.supabase).range(from, to),
     );
     return rows.map(flattenChain);
   }

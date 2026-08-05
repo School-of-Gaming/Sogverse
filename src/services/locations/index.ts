@@ -16,8 +16,6 @@ export {
   useLocation,
   useLocationChildren,
   useLocationSearch,
-  useMunicipalitiesByCountry,
-  useSites,
   useSitesByParent,
   useLocationsByIds,
   useCreateLocation,

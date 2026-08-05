@@ -361,12 +361,10 @@
         "subject": "Sujets"
       },
       "locationPicker": {
-        "hintSite": "Choisissez le site où cela se déroule. Vous en ouvrez un nouveau ? Partez de sa commune.",
         "hintMunicipality": "Choisissez la commune finlandaise concernée par ce club — celle qui le finance. Les sites et les autres pays ne sont pas proposés ici.",
         "change": "Changer",
         "edit": "Modifier",
-        "cancel": "Annuler",
-        "noVenueHint": "Aucun lieu physique. Les parents de {name} verront ce club lorsqu’ils parcourront le catalogue.",
+        "noVenueHint": "Aucun lieu physique. Les parents de cette commune verront le club lorsqu’ils parcourront le catalogue.",
         "memberNotesLabel": "Notes visibles par les membres",
         "memberNotesFieldLabel": "Notes affichées aux parents et aux joueurs",
         "memberNotesPlaceholder": "Détails d’adresse, stationnement, accessibilité — tout ce que les parents doivent savoir.",
@@ -379,15 +377,11 @@
         "addressPlaceholder": "Rue, code postal, ville",
         "noMemberNotes": "Aucune note visible par les membres pour ce site.",
         "noStaffNotes": "Aucune note interne pour ce site.",
-        "searchSites": "Rechercher un site par nom ou par commune…",
-        "searchMunicipalities": "Rechercher une commune…",
-        "noVenues": "Aucun site pour l’instant. Utilisez « Nouveau site » pour créer le premier.",
-        "noMunicipalities": "Aucune commune disponible.",
-        "ungrouped": "Ailleurs",
-        "loading": "Chargement des lieux",
-        "newVenue": "Nouveau site…",
-        "newVenueTitle": "Ouvrir un nouveau site",
-        "newVenueDescription": "Commencez par la commune où il se trouve. Les noms et les codes officiels proviennent de la classification statistique de chaque pays : rien au-dessus du site lui-même n’est saisi à la main.",
+        "chooseMunicipality": "Choisir une commune",
+        "municipalityPickerTitle": "Choisir une commune",
+        "chooseVenue": "Choisir un site",
+        "venuePickerTitle": "Choisir un site",
+        "venuePickerDescription": "Recherchez le site par son nom pour le trouver directement, ou descendez jusqu’à sa commune pour voir les sites qui s’y trouvent. S’il n’existe pas encore, ouvrez-en un nouveau.",
         "venuesIn": "Sites à {name}",
         "venuesInDescription": "Choisissez-en un qui existe déjà, ou ajoutez-en un nouveau.",
         "venuesHereEmpty": "Aucun site ici pour l’instant.",
@@ -453,7 +447,7 @@
         "thresholdWithDate": "Si moins de parents que ce nombre se sont inscrits à la date de début, vous devrez annuler et rembourser depuis la page du produit.",
         "timezoneFixedHelsinki": "Les horaires sont exprimés en heure Europe/Helsinki. Les parents les voient automatiquement convertis dans leur fuseau horaire.",
         "holidayHint": "Aucune session n’aura lieu aux dates issues des calendriers sélectionnés. Modifiez un calendrier une fois et tous les produits qui l’utilisent se mettent à jour automatiquement.",
-        "billingHint": "Les événements gratuits peuvent ne pas avoir de limite de places. Les événements payants ont toujours un nombre de places défini.",
+        "billingHint": "Quel que soit le choix, les événements fonctionnent sans limite de places pour l’instant.",
         "freeDetail": "Aucun frais. Tout le monde peut participer en un clic.",
         "paidDetail": "Paiement unique à l’inscription.",
         "paidByMunicipality": "Aucune facturation client dans ce système. School of Gaming facture directement la commune.",
@@ -988,8 +982,7 @@
     "next": {
       "placement": "Nous placerons {gamer} dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
       "subscription": "Vous serez prélevé chaque mois. Vous pouvez gérer ou résilier à tout moment depuis Mon SOG.",
-      "oneTime": "Il s’agissait d’un paiement unique — il n’y a plus rien à régler.",
-      "refund": "Annulation gratuite dans les {days} jours suivant votre achat."
+      "oneTime": "Il s’agissait d’un paiement unique — il n’y a plus rien à régler."
     },
     "goToDashboard": "Aller à Mon SOG",
     "keepBrowsing": "Continuer à explorer",
@@ -1413,23 +1406,20 @@
       "openClubs": "Nous proposons aussi des clubs ouverts à tous, qu’un joueur peut rejoindre où qu’il habite."
     },
     "municipality": {
-      "heading": "Clubs de {name}",
-      "subheading": "Clubs hebdomadaires proposés par {name}, où votre joueur joue, construit et crée avec de nouveaux amis et un animateur qui capte vraiment."
+      "heading": "Clubs de {name}"
     }
   },
   "productBrowse": {
     "headings": {
       "consumer_club": "Nos clubs",
-      "camp": "Nos camps"
-    },
-    "subheadings": {
-      "consumer_club": "Des clubs hebdomadaires où votre joueur retrouve des amis, un animateur qui capte vraiment, et le jeu qu’il adore.",
-      "camp": "Des vacances scolaires qui deviennent de vraies aventures de jeu — de nouveaux amis, des compétences concrètes, et un animateur qui embarque avec eux."
+      "camp": "Nos camps",
+      "event": "Nos événements"
     },
     "filters": {
       "type": "Type",
       "typeClubs": "Clubs",
       "typeCamps": "Camps",
+      "typeEvents": "Événements",
       "topic": "Jeu",
       "subject": "Sujet",
       "format": "Format",
@@ -1449,12 +1439,12 @@
       "externalContract": "Financé par votre commune",
       "notAvailableInCurrency": "Pas en {currency}",
       "seatsCapacity": "{count, plural, one {# place} other {# places}}",
-      "waitlistAvailable": "Liste d’attente disponible",
       "endedNote": "Celui-ci est terminé — le prochain arrive bientôt !",
       "viewDetails": "Voir",
       "manage": "Gérer",
       "fullDisabled": "Complet",
       "alreadyStarted": "Déjà commencé",
+      "alreadyEnded": "Déjà terminé",
       "online": "En ligne"
     },
     "empty": {
@@ -1510,6 +1500,11 @@
           "description": "Fortnite est un jeu en ligne coloré, au style cartoon, où les joueurs font équipe et s’affrontent dans des parties courtes. Il est extrêmement populaire et très social — les enfants y jouent ensemble entre amis. L’esthétique est vive et non réaliste (ni sang ni scènes gore), même si les parties sont compétitives et se jouent en ligne avec d’autres.",
           "note": "Fortnite est gratuit à télécharger et à jouer — vous n’achetez pas le jeu lui-même. Votre enfant crée un compte Epic Games gratuit pour jouer. Certains extras facultatifs (tenues et autres) sont payants, ce que vous pouvez limiter avec le contrôle parental.",
           "linkLabel": "Obtenir Fortnite"
+        },
+        "pokemon_go": {
+          "description": "Pokémon GO se joue dehors, sur un téléphone. Des créatures apparaissent sur une carte du monde réel, et les enfants marchent jusqu’aux parcs, aux rues et aux monuments pour les trouver et les collectionner. Le jeu repose sur la collection plutôt que sur le combat — l’intérêt est d’explorer, de compléter son Pokédex et de comparer ses trouvailles avec ses amis. L’essentiel du jeu se fait à pied, ce qui fait bouger les enfants.",
+          "note": "Pokémon GO est gratuit à télécharger et à jouer — vous n’achetez pas le jeu lui-même. Votre enfant a besoin d’un téléphone ou d’une tablette avec GPS et connexion mobile, ainsi que d’un compte gratuit. Le jeu propose des achats facultatifs, que vous pouvez limiter avec le contrôle parental. Comme on y joue dehors, dans de vrais lieux, mieux vaut convenir à l’avance des endroits où votre enfant peut aller et de la présence ou non d’un adulte.",
+          "linkLabel": "Où se le procurer"
         }
       }
     },
@@ -1558,7 +1553,12 @@
       "ctaAllSet": "Tout est prêt",
       "ctaAgreeRules": "Acceptez les règles",
       "ctaWaitlist": "Rejoindre la liste d’attente",
-      "ctaSignIn": "Connectez-vous pour vous inscrire",
+      "ctaSignIn": {
+        "consumer_club": "Connectez-vous pour vous inscrire",
+        "municipality_club": "Connectez-vous pour vous inscrire",
+        "camp": "Connectez-vous pour vous inscrire",
+        "event": "Connectez-vous pour participer"
+      },
       "ctaCreateAccount": "Créer un compte",
       "gamerAlreadySignedUp": {
         "consumer_club": "Déjà inscrit",

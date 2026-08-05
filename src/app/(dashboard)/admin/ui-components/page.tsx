@@ -75,7 +75,7 @@ import type {
   VoiceRoomContextValue,
   VoiceParticipant,
 } from "@/components/voice/hooks/types";
-import type { Json, VoiceZone } from "@/types";
+import type { VoiceZone } from "@/types";
 import {
   LocationPickerPanel,
   type LocationChainSummary,
@@ -83,7 +83,6 @@ import {
   type LocationSummary,
 } from "@/components/locations/location-picker-panel";
 import { HomeLocationField } from "@/components/locations/home-location-field";
-import type { LocationGroup } from "@/components/locations/location-groups";
 import {
   ProductBrowseCardView,
   type LocationLine,
@@ -1361,14 +1360,12 @@ function ScenarioBrowseCard({
 
   // Same rule as the production adapter: muni clubs tell the seat story through
   // the footer bar, so they suppress the capacity hint; everything else shows
-  // its capacity (or "waitlist available" when uncapped but waitlisted).
+  // its capacity, and an uncapped product shows nothing.
   const seatsHint: SeatsHint | null = isMuniClub
     ? null
     : product.seat_count !== null
       ? { kind: "capacity", count: product.seat_count }
-      : product.waitlist_enabled
-        ? { kind: "waitlist" }
-        : null;
+      : null;
 
   // Muni clubs swap the price for a seat-fill bar; the fill comes from the
   // scenario's authored state so the bar and the card agree.
@@ -1885,14 +1882,20 @@ export default function AdminUIComponentsPage() {
       <Section title="Location Picker">
         <p className="text-sm text-muted-foreground">
           One panel, and every location control in the app is a configuration of
-          it. The axis being demonstrated here is the <code>scope</code>: what
-          the panel is showing <em>before the first keystroke</em>. In{" "}
-          <strong>tree</strong> scope it browses the hierarchy from the
-          countries down; in <strong>set</strong> scope it lists a bounded
-          collection the surface has already fetched, grouped under the place
-          above each row. These were two components until they were merged —
-          the search box, the selected-row highlight, the name-plus-muted-detail
-          row and the fixed-height box were each written twice.
+          it: it browses the hierarchy from the countries down, searches it from
+          the first keystroke, and stops at whatever level the caller made
+          pickable. It once had a second, &ldquo;set&rdquo; scope — a bounded,
+          pre-fetched collection grouped under the place above each row — but
+          every surface that used one (the flat every-venue list, the Finnish
+          municipality list) now reaches the same rows through this tree, so the
+          panel has one shape and the demos below show its states.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Its consumers: gedu coverage, a parent&rsquo;s own location, and the
+          product form&rsquo;s venue and municipality fields — the last two as
+          dialogs, configured by <code>pickableTypes</code> (a venue pick stops
+          at <code>site</code>, a municipality pick at{" "}
+          <code>municipality</code>, seeded at Finland).
         </p>
         <p className="text-sm text-muted-foreground">
           In the real app a container above the panel owns the browse position,
@@ -1908,7 +1911,7 @@ export default function AdminUIComponentsPage() {
           read behind the real panel is a small indexed lookup, so the list box
           — which already has its final height — just fills in.
         </p>
-        <SubSection title="Tree scope, single mode (pick one place)">
+        <SubSection title="Single mode (pick one place)">
           <p className="text-sm text-muted-foreground mb-3">
             The rows are real table rows, so confirming one hands the caller the
             row itself plus its ancestors — enough to write the foreign key and
@@ -1916,9 +1919,18 @@ export default function AdminUIComponentsPage() {
             of a pickable type is terminal: clicking it selects rather than
             descends, so the level a caller asked for is where browsing stops.
           </p>
+          <p className="text-sm text-muted-foreground mb-3">
+            Two things a caller can do are deliberately <em>not</em> visible
+            here, because they belong to the data container rather than to this
+            panel: opening the breadcrumb already inside a country, and
+            restricting every row offered to one country. The product form&rsquo;s
+            municipality field uses both — it opens on Finland&rsquo;s maakunnat
+            and will not offer a French commune — and both are fed by the same
+            browse and search reads this demo replaces with fixtures.
+          </p>
           <LocationPickerDemo />
         </SubSection>
-        <SubSection title="Tree scope, multi mode (gedu coverage)">
+        <SubSection title="Multi mode (gedu coverage)">
           <p className="text-sm text-muted-foreground mb-3">
             Every level is tickable and each tick is an independent &ldquo;I
             cover this whole subtree&rdquo; claim, so ticking Hauts-de-France and
@@ -1929,7 +1941,7 @@ export default function AdminUIComponentsPage() {
           </p>
           <LocationCoverageDemo />
         </SubSection>
-        <SubSection title="Tree scope, searching">
+        <SubSection title="Searching">
           <p className="text-sm text-muted-foreground mb-3">
             The same panel, told it is showing search hits: each row carries the
             path that tells two identically-named communes apart, and the status
@@ -1938,26 +1950,19 @@ export default function AdminUIComponentsPage() {
             database — a prefix match beats an infix one however late in the
             table it sits.
           </p>
+          <p className="text-sm text-muted-foreground mb-3">
+            This one is configured the way the product form&rsquo;s venue dialog
+            configures it: <code>municipality</code> and <code>site</code> are
+            both pickable, so the venue &ldquo;Gymnase municipal de Nîmes&rdquo;
+            is confirmable straight from a search. The caller reads the type to
+            decide what the confirmation meant — a site is the answer, a
+            municipality is the next question (&ldquo;show me the venues
+            here&rdquo;, which is also the only screen that can offer to create
+            one). That is why a site is confirmable but never browsable to:
+            making a municipality terminal is exactly what stops the tree
+            walking past the screen that carries creation.
+          </p>
           <LocationSearchDemo />
-        </SubSection>
-        <SubSection title="Set scope (the product form's two modes)">
-          <p className="text-sm text-muted-foreground mb-3">
-            The same panel again, handed finished groups instead of a level.
-            There is no breadcrumb (there is nothing to browse), no status line
-            (nothing was capped) and no confirm step — the panel sits inline in
-            the product form, so a click <em>is</em> the pick and the form owns
-            the commit. Filtering is local: the rows are already in memory, so a
-            keystroke costs no request and has no loading state.
-          </p>
-          <p className="text-sm text-muted-foreground mb-3">
-            Worth trying: matching a group header keeps every row under it (type{" "}
-            <code>helsinki</code> to list its venues), and the fold is
-            diacritic-insensitive in both directions (<code>jarvenpaa</code>{" "}
-            finds Järvenpää, and so does <code>järvenpää</code>) — the same fold
-            the database applies, pinned to it by a shared table of inputs in
-            the test suites.
-          </p>
-          <LocationSetDemo />
         </SubSection>
         <SubSection title="Home location field (parent profile)">
           <p className="text-sm text-muted-foreground mb-3">
@@ -2230,134 +2235,6 @@ export default function AdminUIComponentsPage() {
 /* ------------------------------------------------------------------ */
 
 /* ------------------------------------------------------------------ */
-/*  Location Set Demo                                                  */
-/* ------------------------------------------------------------------ */
-
-function venue(id: string, name: string, nameI18n: Json | null = null): LocationSummary {
-  return { id, name, name_i18n: nameI18n, type: "site", country_code: "FI" };
-}
-
-function place(
-  id: string,
-  name: string,
-  type: LocationSummary["type"],
-  nameI18n: Json | null = null,
-): LocationChainSummary {
-  return { id, name, name_i18n: nameI18n, type };
-}
-
-const UUSIMAA = place("uusimaa", "Uusimaa", "region", { sv: "Nyland" });
-const PIRKANMAA = place("pirkanmaa", "Pirkanmaa", "region");
-const FI = place("fi", "Suomi", "country");
-
-// Venues under their municipality, with the region as the header's context —
-// the exact shape the product picker's site mode builds from the scoped sites
-// read. Järvenpää is here so the diacritic folding is visible, and Helsinki
-// carries its Swedish name so a header search matches an alternate too.
-const VENUE_GROUPS: LocationGroup[] = [
-  {
-    key: "helsinki",
-    label: "Helsinki",
-    detail: "Uusimaa",
-    searchTerms: ["Helsinki", "Helsingfors"],
-    rows: [
-      {
-        location: venue("hki-1", "Itälahdenkatu 23 B"),
-        ancestors: [place("helsinki", "Helsinki", "municipality", { sv: "Helsingfors" }), UUSIMAA, FI],
-      },
-      {
-        location: venue("hki-2", "Kalasataman kirjasto"),
-        ancestors: [place("helsinki", "Helsinki", "municipality", { sv: "Helsingfors" }), UUSIMAA, FI],
-      },
-    ],
-  },
-  {
-    key: "jarvenpaa",
-    label: "Järvenpää",
-    detail: "Uusimaa",
-    searchTerms: ["Järvenpää"],
-    rows: [
-      {
-        location: venue("jp-1", "Kirjasto"),
-        ancestors: [place("jarvenpaa", "Järvenpää", "municipality"), UUSIMAA, FI],
-      },
-    ],
-  },
-  {
-    key: "tampere",
-    label: "Tampere",
-    detail: "Pirkanmaa",
-    searchTerms: ["Tampere"],
-    rows: [
-      {
-        location: venue("tre-1", "Sampola"),
-        ancestors: [place("tampere", "Tampere", "municipality"), PIRKANMAA, FI],
-      },
-    ],
-  },
-];
-
-const SET_LABELS = {
-  searchPlaceholder: "Search venues by name or municipality…",
-  empty: "No venues yet.",
-};
-
-function LocationSetDemo() {
-  const [query, setQuery] = useState("");
-  const [value, setValue] = useState<string | null>(null);
-  const [emptyQuery, setEmptyQuery] = useState("");
-
-  return (
-    <div className="grid gap-6 md:grid-cols-2">
-      <div className="space-y-2">
-        <h4 className="text-sm font-semibold">A set with rows in it</h4>
-        <LocationPickerPanel
-          query={query}
-          onQueryChange={setQuery}
-          scope={{
-            kind: "set",
-            groups: VENUE_GROUPS,
-            value,
-            onSelect: (pick) => setValue(pick.location.id),
-            labels: SET_LABELS,
-            footer: (
-              <Button type="button" variant="outline" size="sm">
-                New venue…
-              </Button>
-            ),
-          }}
-        />
-        <p className="text-xs text-muted-foreground">
-          Selected: {value ?? "(none)"} &mdash; a click is the pick, so this is
-          the whole interaction. The caller gets the row and its chain back, not
-          just the id.
-        </p>
-      </div>
-
-      <div className="space-y-2">
-        <h4 className="text-sm font-semibold">Empty, and no results</h4>
-        <p className="text-xs text-muted-foreground">
-          An empty set says so in the caller&rsquo;s words; a query that matches
-          nothing says that instead. Both occupy the same height as the loaded
-          list, so the button below never moves.
-        </p>
-        <LocationPickerPanel
-          query={emptyQuery}
-          onQueryChange={setEmptyQuery}
-          scope={{
-            kind: "set",
-            groups: [],
-            value: null,
-            onSelect: () => {},
-            labels: SET_LABELS,
-          }}
-        />
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 /*  Location Picker Demo                                               */
 /* ------------------------------------------------------------------ */
 
@@ -2398,10 +2275,20 @@ const LEVELS: Record<string, LocationSummary[]> = {
   "34": [fixtureRow("34032", "Béziers", "municipality")],
 };
 
-/** Fixture search hits, each with the path a real hit carries. */
+const NIMES = fixtureRow("30189", "Nîmes", "municipality");
+
+/**
+ * Fixture search hits for the needle "nimes", each with the path a real hit
+ * carries. The third is a venue rather than a commune, and it is the whole
+ * point of the search demo's configuration: the product form's venue dialog
+ * makes `site` pickable alongside `municipality`, so an admin who knows the
+ * building's name confirms it here in one step instead of walking down to its
+ * commune first. Both types rank against the same needle.
+ */
 const HITS: LocationPick[] = [
-  { location: fixtureRow("30189", "Nîmes", "municipality"), ancestors: [GARD, OCC, FR] },
+  { location: NIMES, ancestors: [GARD, OCC, FR] },
   { location: fixtureRow("34032", "Béziers", "municipality"), ancestors: [fixtureRow("34", "Hérault", "district"), OCC, FR] },
+  { location: fixtureRow("s-30189-1", "Gymnase municipal de Nîmes", "site"), ancestors: [NIMES, GARD, OCC, FR] },
 ];
 
 /**
@@ -2457,7 +2344,6 @@ function LocationPickerDemo() {
         query={query}
         onQueryChange={setQuery}
         scope={{
-          kind: "tree",
           path: fixture.path,
           onDrill: fixture.onDrill,
           onOpenDepth: fixture.onOpenDepth,
@@ -2494,7 +2380,6 @@ function LocationCoverageDemo() {
           query={query}
           onQueryChange={setQuery}
           scope={{
-            kind: "tree",
             path: fixture.path,
             onDrill: fixture.onDrill,
             onOpenDepth: fixture.onOpenDepth,
@@ -2536,7 +2421,6 @@ function LocationSearchDemo() {
         query={query}
         onQueryChange={setQuery}
         scope={{
-          kind: "tree",
           path: [],
           onDrill: () => {},
           onOpenDepth: () => {},
@@ -2545,7 +2429,10 @@ function LocationSearchDemo() {
           search: { rows: HITS, total: 47, hasMore: false, loading: false },
           selection: {
             mode: "single",
-            pickableTypes: ["municipality"],
+            // The venue dialog's own configuration: two confirmable types, and
+            // the caller decides what each one meant — a site is the answer, a
+            // municipality is "show me the venues here".
+            pickableTypes: ["municipality", "site"],
             onConfirm: () => Promise.resolve(),
             onCancel: () => setQuery(""),
           },

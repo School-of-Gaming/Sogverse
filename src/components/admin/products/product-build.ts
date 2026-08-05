@@ -23,19 +23,23 @@ import type {
 } from "@/services/products";
 import { parseLongDescription } from "@/types";
 import type { ProductType } from "@/types";
+import { formLocksFor } from "./form-locks";
 import {
-  effectiveBillingMode,
   effectivePricingShape,
   FIXED_TIMEZONE,
   locationPickerMode,
   startModeUsesDate,
   startModeUsesThreshold,
   type FormState,
-  type PaidMode,
   type RegistrationOpensMode,
   type TranslationDraft,
 } from "./product-form-state";
-import type { ProductTypeConfig, StartMode } from "./product-type-config";
+import { effectiveBillingMode } from "./product-type-config";
+import type {
+  PaidMode,
+  ProductTypeConfig,
+  StartMode,
+} from "./product-type-config";
 
 // Constrained to the actual keys under `admin.products.errors` so the
 // caller's t(`errors.${messageKey}`) typechecks without a cast.
@@ -352,7 +356,20 @@ function buildSharedFields(
   const minAge = Number(state.minAge);
   const maxAge = Number(state.maxAge);
   // Uncapped (no seat limit) → null for any product type; otherwise the count.
+  //
+  // The waitlist is derived from the same answer rather than submitted as the
+  // admin last left it. A waitlist is the queue *behind a cap*, so `seat_count
+  // null, waitlist_enabled true` is not a configuration — it is a queue with
+  // nothing to queue for, and the form can produce one without anybody seeing
+  // it: the checkbox renders only while capped, so ticking it and then choosing
+  // Unlimited leaves a flag on screen nowhere. Deriving here rather than
+  // clearing in the radio handler puts one gate on the write instead of one on
+  // each path to it, which also means an already-stranded row (a tick from
+  // before this rule, or the column's own default) is corrected by the next
+  // save of anything at all. The state flag is deliberately left alone, so an
+  // admin toggling Unlimited and back finds their tick still there.
   const seat = state.uncapped ? null : Number(state.seatCount);
+  const waitlist = state.uncapped ? false : state.waitlistEnabled;
 
   let finalSlots = state.scheduleSlots;
   if (config.scheduleShape === "single_date" && state.startDate) {
@@ -414,7 +431,7 @@ function buildSharedFields(
           : state.endDate || null,
     timezone: FIXED_TIMEZONE,
     seat_count: seat,
-    waitlist_enabled: state.waitlistEnabled,
+    waitlist_enabled: waitlist,
     registration_opens_at: resolveRegistrationOpensAt(state),
     is_visible: state.isVisible,
     schedule_slots: finalSlots,
@@ -570,7 +587,9 @@ function inferStartMode(
  *     the date/hour/minute fields populated from the timestamp in
  *     Helsinki TZ). In the past ⇒ "immediately" (the form will re-resolve
  *     to a fresh now() at submit; harmless because the timestamp is
- *     already in the past).
+ *     already in the past). A type whose chooser is locked always derives
+ *     "immediately" regardless of the stored value — see the comment at the
+ *     derivation for why the row does not get a vote there.
  *   - `groups` is empty; the section is UI-only on both create and edit.
  *   - `activeLocale` follows the same fallback chain `resolveTranslation`
  *     uses for display: the admin's UI locale → en → first available. With
@@ -630,8 +649,20 @@ export function existingFormState(
   // Registration mode: future ⇒ scheduled with fields populated; past ⇒
   // immediately (date/hour/minute fall back to defaults — they aren't
   // shown when mode is immediately).
+  //
+  // Unless the type's chooser is locked, in which case the stored timestamp
+  // does not get a vote: a locked type has exactly one legal answer, so
+  // deriving `scheduled` from the row would render the form in a state the
+  // admin cannot leave — both radios disabled, pinned to the option the lock
+  // exists to forbid, with the date fields (which are *not* disabled) the only
+  // thing they can touch. Locked types can still hold a future drop: rows
+  // written before the lock, or during a window when it was lifted (events had
+  // one). Forcing `immediately` here means the next save of anything at all
+  // normalises the row, the same heal-on-write shape the seat/waitlist pairing
+  // uses in `buildSharedFields`.
   const opensAt = new Date(product.registration_opens_at);
-  const isFuture = opensAt.getTime() > Date.now();
+  const isFuture =
+    opensAt.getTime() > Date.now() && !formLocksFor(config).registrationTiming;
   const mode: RegistrationOpensMode = isFuture ? "scheduled" : "immediately";
   const opensDate = isFuture
     ? formatInTimeZone(opensAt, FIXED_TIMEZONE, "yyyy-MM-dd")

@@ -5,9 +5,9 @@ import type { ProductTopic } from "@/types";
 // pure function of the enum value and lives here in code.
 //
 // Two label rules:
-//   - Games (the Minecraft editions, Fortnite) are brand proper nouns:
-//     identical in every locale, so their labels are literals here and never
-//     go through i18n.
+//   - Games (the Minecraft editions, Fortnite, Pokémon GO) are brand proper
+//     nouns: identical in every locale, so their labels are literals here and
+//     never go through i18n.
 //   - Subjects (Webinar) localize, so they carry a key into the next-intl
 //     `topics` message namespace (resolved by useTopicLabel).
 //
@@ -22,9 +22,10 @@ import type { ProductTopic } from "@/types";
 // note, the link/heading label — lives in the productDetail.gameInfo message
 // namespace, keyed by topic. Subjects (Webinar) have no game facts.
 //
-// A game points either to a single "get it" page (`url`) or — for Minecraft
-// Bedrock, which is the same game sold in a different store on every device — to
-// a list of per-platform `stores`. A store's `name` is a brand/store proper noun
+// A game points either to a single "get it" page (`url`) or — where there is no
+// single page to send a parent to, because the game is installed per-device from
+// that device's own store (Minecraft Bedrock, Pokémon GO) — to a list of
+// per-platform `stores`. A store's `name` is a brand/store proper noun
 // (Xbox, App Store, Windows PC) and is NOT translated, same rule as game labels.
 type GameStore = { name: string; url: string };
 type TopicMeta =
@@ -119,15 +120,47 @@ export const PRODUCT_TOPICS = {
     pegi: 12,
     url: "https://www.fortnite.com/",
   },
+  pokemon_go: {
+    kind: "game",
+    label: "Pokémon GO",
+    pegi: 7,
+    // Mobile-only and free to install, so — like Bedrock — there is no single
+    // page to send a parent to: they install it on the phone or tablet the child
+    // will actually play on. Two stores rather than Bedrock's seven, because
+    // Pokémon GO has no PC or console version at all.
+    //
+    // Both forms are region-neutral and redirect to the visitor's local store,
+    // the same rule as the Minecraft links above: Apple's id-only URL 301s to
+    // /<geo>/app/pokemon-go/id1094591345, and Google Play resolves the package
+    // id per-region. Neither hardcodes a country.
+    stores: [
+      { name: "App Store", url: "https://apps.apple.com/app/id1094591345" },
+      {
+        name: "Google Play",
+        url: "https://play.google.com/store/apps/details?id=com.nianticlabs.pokemongo",
+      },
+    ],
+  },
   webinar: { kind: "subject", labelKey: "webinar" },
 } as const satisfies Record<ProductTopic, TopicMeta>;
 
-// Display order for pickers and filter chips: games first, then subjects.
+// Display order for pickers and filter chips: games first, then subjects. This
+// is hand-ordered rather than derived from the generated `Constants` tuple,
+// because the enum's own order is just the order values were added to the type
+// (pokemon_go was appended in 00148, so it sorts after the webinar subject) —
+// which is not an order anyone should be shown.
+//
+// The cost of hand-ordering is that `satisfies readonly ProductTopic[]` checks
+// every element IS a topic but not that every topic is listed, so a new enum
+// value omitted here type-checks fine and simply never appears in the admin
+// picker or any filter chip. A unit test asserts this tuple covers the enum,
+// because the compiler will not.
 export const PRODUCT_TOPIC_VALUES = [
   "minecraft_java",
   "minecraft_education",
   "minecraft_bedrock",
   "fortnite",
+  "pokemon_go",
   "webinar",
 ] as const satisfies readonly ProductTopic[];
 
@@ -189,7 +222,8 @@ const MINECRAFT_TOPICS: readonly ProductTopic[] = [
 ];
 
 // Municipality topic chips: the Minecraft editions as one "Minecraft" chip,
-// then every remaining browseable topic (Fortnite, future subjects) on its own.
+// then every remaining browseable topic (Fortnite, Pokémon GO, future subjects)
+// on its own.
 export const MUNICIPALITY_TOPIC_CHIPS: readonly TopicFilterChip[] = [
   { key: "minecraft", topics: MINECRAFT_TOPICS, label: "Minecraft" },
   ...MUNICIPALITY_BROWSE_TOPICS.filter(

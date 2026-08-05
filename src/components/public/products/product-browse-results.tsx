@@ -26,7 +26,7 @@ interface ProductBrowseResultsProps {
   counts: ParticipationCounts[];
   /** Whether the Days filter applies to this scope — the single source for it.
    *  Drives `filterProducts` here and, forwarded as `daysFilter`, the filter
-   *  strip's Days row. Clubs are recurring-weekly; camps are not. */
+   *  strip's Days row. Clubs are recurring-weekly; camps and events are not. */
   supportsDays: boolean;
   /** Forwarded verbatim to `<ProductBrowseFilters>`. The Days flag is *not*
    *  here — it's derived from `supportsDays` so the two can't drift. */

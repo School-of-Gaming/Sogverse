@@ -184,7 +184,6 @@ export const POST = defineRoute({
       p_start_date: body.start_date ?? undefined,
       p_end_date: body.end_date ?? undefined,
       p_seat_count: body.seat_count ?? undefined,
-      p_refund_policy_days: body.refund_policy_days ?? undefined,
       p_schedule_slots: body.schedule_slots,
       p_prices: body.prices,
       p_holiday_calendar_ids: body.holiday_calendar_ids,

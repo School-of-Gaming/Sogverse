@@ -39,8 +39,8 @@ interface ProductBrowseFiltersProps {
   /** Server-prefetched spoken-language set so the Language row paints with the
    *  rest of the strip instead of popping in after its own fetch resolves. */
   initialSpokenLanguages: SpokenLanguage[];
-  /** Lead with the Clubs|Camps Type row. The shop does; the per-municipality
-   *  page hides it (everything there is a club). Default true. */
+  /** Lead with the Clubs|Camps|Events Type row. The shop does; the
+   *  per-municipality page hides it (everything there is a club). Default true. */
   showTypeFilter?: boolean;
   /** Topic chips to offer. The shop shows one chip per game (`GAME_TOPIC_CHIPS`,
    *  the default); the municipality page passes a broader subject set with the
@@ -50,7 +50,8 @@ interface ProductBrowseFiltersProps {
    *  ("Game", shop default) or `"subject"` ("Subject", municipality page). */
   topicLabelKey?: "topic" | "subject";
   /** Whether the Days row applies, forwarded from `<ProductBrowseResults>`'s
-   *  `supportsDays` (its single source). True for clubs, false for camps. */
+   *  `supportsDays` (its single source). True for clubs, false for camps and
+   *  events. */
   daysFilter: boolean;
 }
 
@@ -67,8 +68,8 @@ export function ProductBrowseFilters({
   const { data: spokenLanguages } = useSpokenLanguages({
     initialData: initialSpokenLanguages,
   });
-  // Product category (Clubs | Camps) is a required, mutually-exclusive choice
-  // — it leads the filter card as the "Type" row. Unlike the other filters it
+  // Product category (Clubs | Camps | Events) is a required, mutually-exclusive
+  // choice — it leads the filter card as the "Type" row. Unlike the other filters it
   // lives in its own URL param (useShopCategory) and is never empty; Clear
   // below leaves it untouched.
   const { category, setCategory } = useShopCategory();
@@ -91,7 +92,7 @@ export function ProductBrowseFilters({
 
   // The Days row only applies to clubs (`daysFilter`, from the host's
   // `supportsDays`). A `?days=` carried over from Clubs lingers in the URL on
-  // Camps by design, but it shouldn't light up Clear there — so only count
+  // Camps/Events by design, but it shouldn't light up Clear there — so only count
   // selected days toward Clear when the filter is actually active here.
   const showClear = hasNonDayFilters || (daysFilter && selectedDays.length > 0);
 
@@ -132,6 +133,11 @@ export function ProductBrowseFilters({
               label={t("typeCamps")}
               active={category === "camps"}
               onToggle={() => setCategory("camps")}
+            />
+            <Chip
+              label={t("typeEvents")}
+              active={category === "events"}
+              onToggle={() => setCategory("events")}
             />
           </FilterRow>
         )}
@@ -208,10 +214,11 @@ export function ProductBrowseFilters({
         </FilterRow>
 
         {/* Days is a Clubs-only filter: clubs meet on a recurring weekly
-            schedule, camps run over a date range. Rendered last so toggling
-            the Type chip to Camps removes the row without shifting any row
-            above it. Chip labels show the short weekday on phones and the full
-            name from `sm:` up — both come from Intl via `formatWeekday`. */}
+            schedule, camps run over a date range, events happen once. Rendered
+            last so toggling the Type chip to Camps or Events removes the row
+            without shifting any row above it. Chip labels show the short
+            weekday on phones and the full name from `sm:` up — both come from
+            Intl via `formatWeekday`. */}
         {daysFilter && (
           <FilterRow label={t("days")}>
             {WEEKDAYS.map((w) => (

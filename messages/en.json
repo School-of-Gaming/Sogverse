@@ -361,12 +361,10 @@
         "subject": "Subjects"
       },
       "locationPicker": {
-        "hintSite": "Pick the venue this runs at. Opening a new one? Start from its municipality.",
         "hintMunicipality": "Pick the Finnish municipality this club is for — the one that funds it. Sites and other countries aren’t options here.",
         "change": "Change",
         "edit": "Edit",
-        "cancel": "Cancel",
-        "noVenueHint": "No physical venue. Parents in {name} will see this club when they browse.",
+        "noVenueHint": "No physical venue. Parents in this municipality will see the club when they browse.",
         "memberNotesLabel": "Member-visible notes",
         "memberNotesFieldLabel": "Notes shown to parents and gamers",
         "memberNotesPlaceholder": "Address details, parking, accessibility — anything parents need to know.",
@@ -379,15 +377,11 @@
         "addressPlaceholder": "Street, postal code, city",
         "noMemberNotes": "No member-visible notes for this site.",
         "noStaffNotes": "No staff notes for this site.",
-        "searchSites": "Search venues by name or municipality…",
-        "searchMunicipalities": "Search municipalities…",
-        "noVenues": "No venues yet. Use “New venue” to open the first one.",
-        "noMunicipalities": "No municipalities are available.",
-        "ungrouped": "Elsewhere",
-        "loading": "Loading locations",
-        "newVenue": "New venue…",
-        "newVenueTitle": "Open a new venue",
-        "newVenueDescription": "Start with the municipality it sits in. Official names and codes come from each country’s statistical classification, so nothing above the venue itself is ever typed by hand.",
+        "chooseMunicipality": "Choose a municipality",
+        "municipalityPickerTitle": "Choose a municipality",
+        "chooseVenue": "Choose a venue",
+        "venuePickerTitle": "Choose a venue",
+        "venuePickerDescription": "Search the venue by name to find it in one step, or browse down to its municipality to see the venues there. If it isn’t there yet, open a new one.",
         "venuesIn": "Venues in {name}",
         "venuesInDescription": "Pick one that is already here, or add a new one.",
         "venuesHereEmpty": "No venues here yet.",
@@ -453,7 +447,7 @@
         "thresholdWithDate": "If fewer than this many parents sign up by the start date, you’ll need to cancel and refund from the product’s page.",
         "timezoneFixedHelsinki": "Times are in Europe/Helsinki. Parents see them converted to their local timezone automatically.",
         "holidayHint": "No session will run on any date from the selected calendars. Edit a calendar once and every product using it updates automatically.",
-        "billingHint": "Free events can have no seat limit. Paid events always have a seat count.",
+        "billingHint": "Either way, events run without a seat limit for now.",
         "freeDetail": "No charge. Anyone can join with one click.",
         "paidDetail": "One-time charge at signup.",
         "paidByMunicipality": "No customer billing inside this system. School of Gaming invoices the municipality directly.",
@@ -988,8 +982,7 @@
     "next": {
       "placement": "We’ll place {gamer} in a group with a Gedu. The sessions will then appear under My SOG.",
       "subscription": "You’ll be billed every month. You can manage or cancel anytime from My SOG.",
-      "oneTime": "This was a one-time payment — there’s nothing more to pay.",
-      "refund": "Free cancellation within {days} days of your purchase."
+      "oneTime": "This was a one-time payment — there’s nothing more to pay."
     },
     "goToDashboard": "Go to My SOG",
     "keepBrowsing": "Keep browsing",
@@ -1413,23 +1406,20 @@
       "openClubs": "We also run clubs that are open to everyone, which a gamer can join wherever they live."
     },
     "municipality": {
-      "heading": "{name} Clubs",
-      "subheading": "Weekly clubs offered by {name}, where your gamer plays, builds, and creates with new friends and a Gedu who actually gets it."
+      "heading": "{name} Clubs"
     }
   },
   "productBrowse": {
     "headings": {
       "consumer_club": "Our Clubs",
-      "camp": "Our Camps"
-    },
-    "subheadings": {
-      "consumer_club": "Weekly clubs where your gamer plays the games they love with new friends and a Gedu who actually gets it.",
-      "camp": "School breaks turned into game-filled adventures — new friends, real skills, and a Gedu along for the ride."
+      "camp": "Our Camps",
+      "event": "Our Events"
     },
     "filters": {
       "type": "Type",
       "typeClubs": "Clubs",
       "typeCamps": "Camps",
+      "typeEvents": "Events",
       "topic": "Game",
       "subject": "Subject",
       "format": "Format",
@@ -1449,12 +1439,12 @@
       "externalContract": "Funded by your municipality",
       "notAvailableInCurrency": "Not in {currency}",
       "seatsCapacity": "{count, plural, one {# seat} other {# seats}}",
-      "waitlistAvailable": "Waitlist available",
       "endedNote": "This one’s wrapped — keep an eye out for the next one.",
       "viewDetails": "View",
       "manage": "Manage",
       "fullDisabled": "Full",
       "alreadyStarted": "Already started",
+      "alreadyEnded": "Already over",
       "online": "Online"
     },
     "empty": {
@@ -1510,6 +1500,11 @@
           "description": "Fortnite is a colourful, cartoon-style online game where players team up and compete in short, round-based matches. It’s hugely popular and very social — kids play together with friends. The look is bright and non-realistic (no blood or gore), though matches are competitive and played online with others.",
           "note": "Fortnite is free to download and play — you don’t buy the game itself. Your child creates a free Epic Games account to play. Some optional extras (outfits and such) cost money, which you can limit with parental controls.",
           "linkLabel": "Get Fortnite"
+        },
+        "pokemon_go": {
+          "description": "Pokémon GO is played outdoors, on a phone. Creatures appear on a map of the real world, and children walk to parks, streets and landmarks to find and collect them. It’s about collecting rather than fighting — the appeal is exploring, filling up a Pokédex and comparing finds with friends. Most of the playing happens on foot, so it tends to get children moving.",
+          "note": "Pokémon GO is free to download and play — you don’t buy the game itself. Your child needs a phone or tablet with GPS and a mobile data connection, plus a free account. There are optional in-app purchases, which you can limit with parental controls. Because it’s played outdoors in real places, it’s worth agreeing in advance where your child may go and whether an adult comes along.",
+          "linkLabel": "Where to get it"
         }
       }
     },
@@ -1558,7 +1553,12 @@
       "ctaAllSet": "You’re all set",
       "ctaAgreeRules": "Agree to the rules",
       "ctaWaitlist": "Join the waitlist",
-      "ctaSignIn": "Sign in to register",
+      "ctaSignIn": {
+        "consumer_club": "Sign in to register",
+        "municipality_club": "Sign in to register",
+        "camp": "Sign in to register",
+        "event": "Sign in to join"
+      },
       "ctaCreateAccount": "Create account",
       "gamerAlreadySignedUp": {
         "consumer_club": "Already enrolled",

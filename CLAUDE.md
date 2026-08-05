@@ -186,7 +186,7 @@ The style guide demos components; a *page-level* change has to be judged as a pa
 
 ### Customer Enrollment & Billing
 
-See `docs/products-architecture.md` for the purchase / participation flow, the billing model (monthly family subscriptions for clubs, single upfront payments for camps/events), and refund windows.
+See `docs/products-architecture.md` for the purchase / participation flow and the billing model (monthly family subscriptions for clubs, single upfront payments for camps/events).
 
 ### Voice Chat (Daily.co)
 

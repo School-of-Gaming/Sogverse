@@ -23,19 +23,20 @@ interface ProductBrowsePageProps {
   initialSpokenLanguages: SpokenLanguage[];
 }
 
-// Heading + subheading copy live under productBrowse.headings/subheadings,
-// keyed on the browseType. We resolve to literal keys here (rather than
+// Heading copy lives under productBrowse.headings, keyed on the
+// browseType. We resolve to literal keys here (rather than
 // templating with the type name) so next-intl's typed t() call narrows
-// to a known message path. The shop only ever browses consumer clubs and
-// camps, so those are the only two heading keys; municipality_club and event
-// never reach a browse grid but must appear in the Record to keep it total
-// over ProductType — they map to consumer-club copy and are never looked up.
-type HeadingKey = "consumer_club" | "camp";
+// to a known message path. The shop browses consumer clubs, camps and events,
+// so those are the three heading keys; municipality_club never reaches a browse
+// grid (it is discovered from `/schools`) but must appear in the Record to keep
+// it total over ProductType — it maps to consumer-club copy and is never
+// looked up.
+type HeadingKey = "consumer_club" | "camp" | "event";
 const HEADING_KEYS: Record<ProductType, HeadingKey> = {
   consumer_club: "consumer_club",
   municipality_club: "consumer_club",
   camp: "camp",
-  event: "consumer_club",
+  event: "event",
 };
 
 function headingFor(t: ReturnType<typeof useTranslations<"productBrowse">>, key: HeadingKey): string {
@@ -44,18 +45,8 @@ function headingFor(t: ReturnType<typeof useTranslations<"productBrowse">>, key:
       return t("headings.consumer_club");
     case "camp":
       return t("headings.camp");
-  }
-}
-
-function subheadingFor(
-  t: ReturnType<typeof useTranslations<"productBrowse">>,
-  key: HeadingKey,
-): string {
-  switch (key) {
-    case "consumer_club":
-      return t("subheadings.consumer_club");
-    case "camp":
-      return t("subheadings.camp");
+    case "event":
+      return t("headings.event");
   }
 }
 
@@ -98,8 +89,8 @@ export function ProductBrowsePage({
   );
 
   // Days is a Clubs-only filter (recurring weekly schedule). Camps run over a
-  // date range, so even though their slots carry weekdays we never narrow them
-  // by day.
+  // date range and events happen once, so even though their slots carry
+  // weekdays we never narrow them by day.
   const supportsDays = productTypeSupportsDayFilter(browseType);
   const headingKey = HEADING_KEYS[browseType];
 
@@ -109,9 +100,6 @@ export function ProductBrowsePage({
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
           {headingFor(t, headingKey)}
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-          {subheadingFor(t, headingKey)}
-        </p>
       </header>
 
       <div className="mx-auto mt-8 max-w-6xl">

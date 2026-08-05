@@ -406,12 +406,10 @@
         "subject": "paQDI’norgh"
       },
       "locationPicker": {
-        "hintSite": "Daq wIlo’bogh yIwIv. Daq chu’’a’? veng yIwIv wa’DIch.",
         "hintMunicipality": "veng yIwIv — Huch nob veng. Daqmey latlh Sepmey je luwIvlaHbe’.",
         "change": "choH",
         "edit": "choH",
-        "cancel": "pegh",
-        "noVenueHint": "Daq pagh. {name} vavmey De’ cha’.",
+        "noVenueHint": "Daq pagh. veng vavmey neH luleghlu’.",
         "memberNotesLabel": "ghom De’ (vavmey je ghItlh)",
         "memberNotesFieldLabel": "vavmey je ghItlh De’",
         "memberNotesPlaceholder": "Daq mIw, mIv pa’, baH — vavmey poQ.",
@@ -424,15 +422,11 @@
         "addressPlaceholder": "He, postnumber, veng",
         "noMemberNotes": "ghom De’ pagh.",
         "noStaffNotes": "Qu’ De’ pagh.",
-        "searchSites": "Daq yInej — pong ghap veng…",
-        "searchMunicipalities": "veng yInej…",
-        "noVenues": "Daqmey tu’lu’be’. ”Daq chu’” yIlo’ ’ej wa’DIch yIchenmoH.",
-        "noMunicipalities": "vengmey tu’lu’be’.",
-        "ungrouped": "latlhDaq",
-        "loading": "Daqmey laDlu’",
-        "newVenue": "Daq chu’…",
-        "newVenueTitle": "Daq chu’ yIpoSmoH",
-        "newVenueDescription": "veng yIwIv wa’DIch. Sep tetlh’a’vo’ pongmey mI’mey je tu’lu’, vaj Daq pong neH ghItlhlu’.",
+        "chooseMunicipality": "veng yIwIv",
+        "municipalityPickerTitle": "veng yIwIv",
+        "chooseVenue": "Daq yIwIv",
+        "venuePickerTitle": "Daq yIwIv",
+        "venuePickerDescription": "Daq pong DaSovchugh yInej, tugh Datu’. DaSovbe’chugh, veng yISam ’ej pa’ Daqmey yIlegh. pagh Daq tu’lu’chugh, Daq chu’ yIchenmoH.",
         "venuesIn": "{name} DaqmeyDaj",
         "venuesInDescription": "tu’lu’bogh wa’ yIwIv ghap Daq chu’ yIchel.",
         "venuesHereEmpty": "naDev Daq tu’lu’be’.",
@@ -498,7 +492,7 @@
         "thresholdWithDate": "jaj taghDaq ghItlh law’ pumchugh, De’ Daq tlhotlh ’ej Huch chegh.",
         "timezoneFixedHelsinki": "poHmey Europe/Helsinki Daq. vavmey Daq poHchaj choHlu’.",
         "holidayHint": "jajmey Do’ qaStaHvIS pagh qaS. wa’ jajmey Do’ DachoHchugh, Hoch ghor De’.",
-        "billingHint": "Huch pagh Qu’ pa’ mI’ Sub poQbe’. Huch Qu’ pa’ mI’ Sub poQ.",
+        "billingHint": "nuq DawIv ’e’ vISaHbe’ — DaH pa’ mI’ Sub ghajbe’ Qu’mey.",
         "freeDetail": "Huch pagh. Hoch wa’ chu’wI’ lo’.",
         "paidDetail": "ghItlh wa’ Huch.",
         "paidByMunicipality": "QumDaq vavmey Huch pagh. School of Gaming veng nIDqu’.",
@@ -1033,8 +1027,7 @@
     "next": {
       "placement": "Gedu tlhej ghomDaq {gamer} wIlanpu’. My SOG-Daq Qu’mey legh.",
       "subscription": "Hoch jar DaDIlnIS. My SOG-Daq Dajondaq ghap Damevmeh laH.",
-      "oneTime": "wa’logh neH DIl — latlh DIl Hutlh.",
-      "refund": "{days} jaj qaSpa’, wagh Hutlh Damevchugh laH."
+      "oneTime": "wa’logh neH DIl — latlh DIl Hutlh."
     },
     "goToDashboard": "My SOG yIghoS",
     "keepBrowsing": "yIqIm taH",
@@ -1458,23 +1451,20 @@
       "openClubs": "Hoch lumuvlaH ghomHommaj ’op je; nuqDaq yIn pelaaja ’e’ qelbe’."
     },
     "municipality": {
-      "heading": "{name} ghomHommey",
-      "subheading": "{name} ghomHommey: Hoch hogh Quj, chen ’ej chenmoH pelaajalI’, chu’ juppu’ ’ej Gedu pIn’a’ tlhej."
+      "heading": "{name} ghomHommey"
     }
   },
   "productBrowse": {
     "headings": {
       "consumer_club": "ghom’a’meymaj",
-      "camp": "raghmeymaj"
-    },
-    "subheadings": {
-      "consumer_club": "Hoch hogh ghom’a’: QujmeyDaj Quj puqlI’, juppu’ tlhej, ghoj’wI’ qoqDaq.",
-      "camp": "QongDaq lopno’ raghmey: Qujmey, juppu’, ghoj’wI’pu’ Dun."
+      "camp": "raghmeymaj",
+      "event": "wanI’meymaj"
     },
     "filters": {
       "type": "mIw",
       "typeClubs": "ghom’a’mey",
       "typeCamps": "raghmey",
+      "typeEvents": "wanI’mey",
       "topic": "Quj",
       "subject": "qech",
       "format": "rurmeH",
@@ -1494,12 +1484,12 @@
       "externalContract": "yejquv DIl",
       "notAvailableInCurrency": "{currency} ghajbe’",
       "seatsCapacity": "{count, plural, one {# quS} other {# quS}}",
-      "waitlistAvailable": "loS tetlh tu’lu’",
       "endedNote": "rInpu’ – veb yIloS.",
       "viewDetails": "yIlegh",
       "manage": "yIche’",
       "fullDisabled": "buy’",
       "alreadyStarted": "taghpu’",
+      "alreadyEnded": "rIntaH",
       "online": "QumDaq"
     },
     "empty": {
@@ -1555,6 +1545,11 @@
           "description": "Fortnite ’oH ’IH, na’rural online Quj’e’, ghochDaq ghom chenmoH ’ej tlhup ngajbogh ghochmeyDaq Suvchuq. tlhIng’a’ Suy’, tlhIngan jaj rur – juppu’ tlhej puqpu’. wovbogh ’ej teHbe’bogh ’IH (’Iw ghobe’, SuvwI’Hey ghobe’), ’ach qugh Suvmey, latlhpu’ tlhej online.",
           "note": "Fortnite yISuqmeH DIl HInobbe’ – Quj naQ yIje’be’. Epic Games-Daq HInob tlhab chenmoH puqlI’. wejwI’ DachmeH (Sut latlh je) Huch poQlu’, ’ach SoH yI’el lojmIt.",
           "linkLabel": "Fortnite yISuq"
+        },
+        "pokemon_go": {
+          "description": "Pokémon GO QujmeH juHlIj yImej – Hurgh yIghoS! qo’ teH chartDaq Ha’DIbaHmey chenlu’, ’ej Sammeh yIt puqpu’: wIchmey, Hemey, Daq Dunmey je. Suvbe’lu’ – qemlu’ neH. Pokédex yIteb ’ej juppu’ tlhej SammeH yIqel. Qujchugh puq, yItnIS – vaj vIHmoH Quj.",
+          "note": "Pokémon GO yISuqmeH DIl HInobbe’ – Quj naQ yIje’be’. GPS ghajbogh jabbI’ID jan mobile-data je poQlu’, ’ej tlhab De’wI’ pong chenmoH. wejwI’ DachmeH Huch poQlu’, ’ach SoH yI’el lojmIt. Hurgh Qujlu’, Daq teHDaq – vaj yIqel: nuqDaq jaHlaH puqlI’, ’ej ghaH tlhej’a’ nuv tIn?",
+          "linkLabel": "nuqDaq Suqlu’"
         }
       }
     },
@@ -1603,7 +1598,12 @@
       "ctaAllSet": "bIghuHrup",
       "ctaAgreeRules": "chutmey yIlaj",
       "ctaWaitlist": "tetlh DaqaD",
-      "ctaSignIn": "qonmeH yI’el",
+      "ctaSignIn": {
+        "consumer_club": "qonmeH yI’el",
+        "municipality_club": "qonmeH yI’el",
+        "camp": "qonmeH yI’el",
+        "event": "muvmeH yI’el"
+      },
       "ctaCreateAccount": "Account chu’ chenmoH",
       "gamerAlreadySignedUp": {
         "consumer_club": "muvpu’",

@@ -1,6 +1,8 @@
+import { formatInTimeZone } from "date-fns-tz";
 import { describe, it, expect } from "vitest";
 import {
   buildCreateInput,
+  buildUpdateInput,
   cloneFormState,
   existingFormState,
   validate,
@@ -774,6 +776,138 @@ describe("fees", () => {
   });
 });
 
+// The waitlist is the queue *behind* a cap, so `seat_count null` +
+// `waitlist_enabled true` is not a configuration — it is a queue with nothing to
+// queue for. The form can produce that pairing without anyone seeing it (the
+// checkbox renders only while capped), so the payload derives the flag from the
+// cap rather than copying the form's. These pin both directions of that.
+describe("waitlist_enabled is derived from the cap, not copied", () => {
+  it("submits no waitlist on an uncapped product, whatever the flag says", () => {
+    const s = validConsumerState();
+    s.uncapped = true;
+    s.seatCount = "";
+    s.waitlistEnabled = true; // ticked while capped, then switched to Unlimited
+
+    const out = buildCreateInput(s, "consumer_club", consumerConfig);
+
+    expect(out.seat_count).toBeNull();
+    expect(out.waitlist_enabled).toBe(false);
+  });
+
+  it("corrects an already-stranded stored row on the next save", () => {
+    // Rows predating this rule — and the column's own default — can hold the
+    // pairing. Deriving on write means any later save of anything heals it,
+    // rather than re-persisting the lie until someone edits the seat controls.
+    const state = existingFormState(
+      mockDetailRow({ seat_count: null, waitlist_enabled: true }),
+      consumerConfig,
+      "en",
+    );
+    expect(state.waitlistEnabled).toBe(true); // shown as stored, not wiped on load
+
+    expect(buildUpdateInput(state, consumerConfig).waitlist_enabled).toBe(false);
+  });
+
+  it("restores the tick when the admin toggles Unlimited and back", () => {
+    // The radio only moves `uncapped`, so the flag survives the detour — the
+    // point of deriving on write rather than clearing in the handler.
+    const capped = validConsumerState();
+    capped.waitlistEnabled = true;
+
+    const unlimited = { ...capped, uncapped: true };
+    expect(buildCreateInput(unlimited, "consumer_club", consumerConfig)
+      .waitlist_enabled).toBe(false);
+
+    const limitedAgain = { ...unlimited, uncapped: false };
+    const out = buildCreateInput(limitedAgain, "consumer_club", consumerConfig);
+    expect(out.waitlist_enabled).toBe(true);
+    expect(out.seat_count).toBe(10);
+  });
+
+  it("re-saves a stored capped event with its cap and waitlist intact", () => {
+    // The invariant the event re-lock rests on: the form can no longer *create*
+    // a capped event, and it must not quietly decap one created while the
+    // controls were unlocked. The seat controls render disabled; a save of any
+    // other field has to round-trip both values untouched. (The healing above
+    // is scoped to uncapped rows — this row is capped, so nothing is derived
+    // away.)
+    const state = existingFormState(
+      mockDetailRow({
+        product_type: "event",
+        billing_mode: "free",
+        seat_count: 25,
+        waitlist_enabled: true,
+        end_date: "2026-09-01",
+        schedule_slots: [
+          { weekday: 1, start_time: "18:00", duration_minutes: 90 },
+        ],
+      }),
+      eventConfig,
+      "en",
+    );
+    expect(state.uncapped).toBe(false);
+    expect(state.seatCount).toBe("25");
+    expect(state.waitlistEnabled).toBe(true);
+
+    expect(validate(state, eventConfig)).toBeNull();
+
+    const out = buildUpdateInput(state, eventConfig);
+    expect(out.seat_count).toBe(25);
+    expect(out.waitlist_enabled).toBe(true);
+  });
+
+  it("normalises a locked type's future drop back to Right away", () => {
+    // Deliberately the *opposite* call to the capped-event case above, and the
+    // difference is what the lock means. A stored cap is data with money behind
+    // it, so a re-lock must not silently decap a product families already see.
+    // A registration window is the lock's own subject: "locked to Right away"
+    // is not a statement about new events, it is what the type means. Deriving
+    // `scheduled` here would also strand the form — both radios disabled on the
+    // forbidden option, with only the date fields live.
+    const future = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    const state = existingFormState(
+      mockDetailRow({ product_type: "event", registration_opens_at: future }),
+      eventConfig,
+      "en",
+    );
+    expect(state.registrationOpensMode).toBe("immediately");
+
+    const before = Date.now();
+    const out = buildUpdateInput(state, eventConfig);
+    expect(new Date(out.registration_opens_at).getTime()).toBeGreaterThanOrEqual(
+      before,
+    );
+  });
+
+  it("still derives a scheduled drop where the chooser is unlocked", () => {
+    // Municipality clubs are the one type that keeps the window, so the stored
+    // timestamp must still round-trip into the pickers there. The instant is
+    // pinned relative to *now* rather than to a literal date: a hardcoded
+    // future timestamp is only in the future until it isn't, and this assertion
+    // needs one that always is. 08:15Z is read back through the fixed Helsinki
+    // zone, so the expected clock face is derived the same way rather than
+    // hardcoded — the offset is +2 or +3 depending on where the 30-day hop
+    // lands relative to DST.
+    const opensAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    opensAt.setUTCHours(8, 15, 0, 0);
+    const state = existingFormState(
+      mockDetailRow({
+        product_type: "municipality_club",
+        registration_opens_at: opensAt.toISOString(),
+      }),
+      muniConfig,
+      "en",
+    );
+    expect(state.registrationOpensMode).toBe("scheduled");
+    expect(state.registrationOpensDate).toBe(
+      formatInTimeZone(opensAt, "Europe/Helsinki", "yyyy-MM-dd"),
+    );
+    expect(
+      `${state.registrationOpensHour}:${state.registrationOpensMinute}`,
+    ).toBe(formatInTimeZone(opensAt, "Europe/Helsinki", "HH:mm"));
+  });
+});
+
 // A fully-populated detail row to clone from. Visible, with an image, two
 // locale names, prices, a schedule, and a real start date — so the clone's
 // "copy everything except the image, append the suffix to names" contract
@@ -805,7 +939,6 @@ function mockDetailRow(
     signup_threshold: null,
     seat_count: 10,
     waitlist_enabled: false,
-    refund_policy_days: null,
     primary_gedu_fee_cents: null,
     assistant_gedu_fee_cents: null,
     municipality_fee_cents: null,

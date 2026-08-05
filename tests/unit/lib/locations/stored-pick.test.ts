@@ -1,74 +1,171 @@
 import { describe, it, expect } from "vitest";
-import { shouldDropStoredPick } from "@/lib/locations/stored-pick";
+import {
+  shouldDropStoredRow,
+  type AcceptedLocation,
+} from "@/lib/locations/stored-pick";
+import type { LocationType } from "@/types";
 
 /**
  * The clear-on-invalid decision, on its own.
  *
  * The product form drops a stored `location_id` the current mode would no
- * longer accept — a deleted venue, a legacy product pinned above site level, a
+ * longer accept: a deleted venue, a legacy product pinned above site level, a
  * municipality outside the one country an online municipality club may be
- * funded by. That is right, and it is one frame away from being a data-loss
- * bug: the pickable set arrives asynchronously, so a guard that reads "not in
- * the set" without first asking whether the set is *there* wipes a valid venue
- * the moment an admin opens an existing product for editing, and the next save
- * writes the wipe.
+ * funded by, and a municipality club toggled from online to in-person, which
+ * leaves a municipality id in a field that now takes only venues. That is
+ * right, and it is one frame away from being a data-loss bug: whatever the
+ * control checks against arrives asynchronously, so a guard that answers before
+ * it is there wipes a valid location the moment an admin opens an existing
+ * product for editing, and the next save writes the wipe.
  *
  * These cases exist so that failure is a red test rather than a review someone
- * has to catch. The undefined cases are the load-bearing ones.
+ * has to catch. The `undefined` cases are the load-bearing ones — and so is the
+ * case separating `undefined` from `null`, because those are the two answers a
+ * keyed lookup can give that look alike and mean opposite things.
  */
 
-const HELSINKI = { id: "loc-hki" };
-const TAMPERE = { id: "loc-tre" };
+const VENUES: AcceptedLocation = { types: ["site"] };
+const FI_MUNICIPALITIES: AcceptedLocation = {
+  types: ["municipality"],
+  countryCode: "FI",
+};
 
-describe("shouldDropStoredPick", () => {
-  describe("while the pickable set has not arrived", () => {
-    // The whole point. "Not loaded yet" is not an answer, and must never be
-    // read as "not a venue".
-    it("keeps a stored value when the set is undefined", () => {
-      expect(shouldDropStoredPick("loc-hki", undefined)).toBe(false);
-    });
+function row(id: string, type: LocationType, countryCode: string | null = "FI") {
+  return { id, type, country_code: countryCode };
+}
 
-    it("keeps it however plausible the value looks", () => {
-      expect(shouldDropStoredPick("a-venue-that-was-deleted", undefined)).toBe(
-        false,
-      );
+describe("shouldDropStoredRow (one row by id)", () => {
+  describe("while the keyed read has not landed", () => {
+    it("keeps a stored value when the row is undefined", () => {
+      expect(shouldDropStoredRow("loc-hki", undefined, VENUES)).toBe(false);
     });
 
     // A read that failed also leaves the data undefined, and dropping the value
     // on a network blip would be worse than showing it a moment late.
     it("does not distinguish a pending read from a failed one", () => {
-      expect(shouldDropStoredPick("loc-hki", undefined)).toBe(false);
+      expect(
+        shouldDropStoredRow("a-venue-that-was-deleted", undefined, VENUES),
+      ).toBe(false);
+    });
+
+    // The country constraint is no more able to answer early than the level
+    // one: an unread row is not a foreign row.
+    it("keeps a value when a country-constrained read has not landed", () => {
+      expect(shouldDropStoredRow("loc-hki", undefined, FI_MUNICIPALITIES)).toBe(
+        false,
+      );
     });
   });
 
-  describe("once the set has arrived", () => {
-    it("keeps a value that is in it", () => {
-      expect(shouldDropStoredPick("loc-hki", [HELSINKI, TAMPERE])).toBe(false);
+  describe("once the read has landed", () => {
+    it("keeps a row of an accepted type", () => {
+      expect(
+        shouldDropStoredRow("loc-hki", row("loc-hki", "site"), VENUES),
+      ).toBe(false);
     });
 
-    it("drops a value that is not", () => {
-      expect(shouldDropStoredPick("loc-deleted", [HELSINKI, TAMPERE])).toBe(
-        true,
+    // The everyday case: a municipality club toggled from online to in-person
+    // carries its municipality id into a field that only takes venues.
+    it("drops a row at a level this control does not accept", () => {
+      expect(
+        shouldDropStoredRow("loc-hki", row("loc-hki", "municipality"), VENUES),
+      ).toBe(true);
+    });
+
+    // The distinction this guard's shape exists for. A key with no row is a
+    // resolved answer — the venue was deleted — where a set-membership check
+    // could only ever see "absent" and would keep a dangling id forever.
+    it("drops a value the read found no row for", () => {
+      expect(shouldDropStoredRow("loc-gone", null, VENUES)).toBe(true);
+    });
+
+    it("accepts any of several types when the control offers several", () => {
+      const both: AcceptedLocation = { types: ["municipality", "site"] };
+      expect(shouldDropStoredRow("a", row("a", "site"), both)).toBe(false);
+      expect(shouldDropStoredRow("a", row("a", "municipality"), both)).toBe(
+        false,
       );
+      expect(shouldDropStoredRow("a", row("a", "region"), both)).toBe(true);
+    });
+  });
+
+  describe("with a country constraint", () => {
+    it("keeps a right-level row in the right country", () => {
+      expect(
+        shouldDropStoredRow(
+          "loc-hki",
+          row("loc-hki", "municipality", "FI"),
+          FI_MUNICIPALITIES,
+        ),
+      ).toBe(false);
     });
 
-    // An empty array is a real answer — no venues exist — and is not the same
-    // shape as undefined, however alike they look at a call site.
-    it("drops a value when the set arrived empty", () => {
-      expect(shouldDropStoredPick("loc-hki", [])).toBe(true);
+    // A French commune is a perfectly well-formed municipality row. It is the
+    // *funding rule* that refuses it, which is why the constraint is a business
+    // one rather than a shape one.
+    it("drops a right-level row in the wrong country", () => {
+      expect(
+        shouldDropStoredRow(
+          "loc-nimes",
+          row("loc-nimes", "municipality", "FR"),
+          FI_MUNICIPALITIES,
+        ),
+      ).toBe(true);
     });
+
+    // Legacy data the DB trigger still permits for online muni clubs: a club
+    // anchored to a region, or to the country row itself.
+    it("drops a Finnish row above the accepted level", () => {
+      expect(
+        shouldDropStoredRow(
+          "loc-uusimaa",
+          row("loc-uusimaa", "region", "FI"),
+          FI_MUNICIPALITIES,
+        ),
+      ).toBe(true);
+    });
+
+    // The column is denormalised onto every row, so a null there is a broken
+    // row rather than a country-less place — and it still cannot satisfy "must
+    // be FI".
+    it("drops a row with no country when one is required", () => {
+      expect(
+        shouldDropStoredRow(
+          "loc-orphan",
+          row("loc-orphan", "municipality", null),
+          FI_MUNICIPALITIES,
+        ),
+      ).toBe(true);
+    });
+
+    // Without the constraint the same row is fine anywhere, which is what the
+    // venue field wants: a school in Lille is as good a venue as one in Espoo.
+    it("ignores the country when the control does not constrain it", () => {
+      expect(
+        shouldDropStoredRow("loc-fr", row("loc-fr", "site", "FR"), VENUES),
+      ).toBe(false);
+      expect(
+        shouldDropStoredRow("loc-null", row("loc-null", "site", null), VENUES),
+      ).toBe(false);
+    });
+  });
+
+  // A read that answered about a different id has said nothing about this one,
+  // so it falls back to the absent case rather than to a verdict — the same
+  // side of the line every other unresolved state lands on.
+  it("treats a row for some other id as no answer at all", () => {
+    expect(
+      shouldDropStoredRow("loc-hki", row("loc-tre", "municipality"), VENUES),
+    ).toBe(false);
   });
 
   describe("when nothing is stored", () => {
-    it("has nothing to drop for null", () => {
-      expect(shouldDropStoredPick(null, [HELSINKI])).toBe(false);
-      expect(shouldDropStoredPick(null, [])).toBe(false);
-      expect(shouldDropStoredPick(null, undefined)).toBe(false);
-    });
-
-    it("has nothing to drop for undefined or an empty id", () => {
-      expect(shouldDropStoredPick(undefined, [])).toBe(false);
-      expect(shouldDropStoredPick("", [])).toBe(false);
+    it("has nothing to drop", () => {
+      expect(shouldDropStoredRow(null, null, VENUES)).toBe(false);
+      expect(shouldDropStoredRow(null, undefined, VENUES)).toBe(false);
+      expect(shouldDropStoredRow(undefined, null, VENUES)).toBe(false);
+      expect(shouldDropStoredRow("", null, VENUES)).toBe(false);
+      expect(shouldDropStoredRow(null, null, FI_MUNICIPALITIES)).toBe(false);
     });
   });
 });

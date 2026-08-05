@@ -29,8 +29,8 @@ export function RegistrationSection({
 
   // Pre-prod UI lock (see form-locks.ts): registration always opens immediately
   // and the chooser is pinned to "Right away" — except on municipality clubs,
-  // where the registration window is signed off and the chooser is editable.
-  const lockTiming = formLocksFor(config.productType).registrationTiming;
+  // where the scheduled ticket drop is signed off and the chooser is editable.
+  const lockTiming = formLocksFor(config).registrationTiming;
 
   return (
     <FormSection

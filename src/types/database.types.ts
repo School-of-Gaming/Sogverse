@@ -866,7 +866,6 @@ export type Database = {
           padlet_url: string | null
           primary_gedu_fee_cents: number | null
           product_type: Database["public"]["Enums"]["product_type"]
-          refund_policy_days: number | null
           registration_opens_at: string
           seat_count: number | null
           signup_threshold: number | null
@@ -895,7 +894,6 @@ export type Database = {
           padlet_url?: string | null
           primary_gedu_fee_cents?: number | null
           product_type: Database["public"]["Enums"]["product_type"]
-          refund_policy_days?: number | null
           registration_opens_at: string
           seat_count?: number | null
           signup_threshold?: number | null
@@ -924,7 +922,6 @@ export type Database = {
           padlet_url?: string | null
           primary_gedu_fee_cents?: number | null
           product_type?: Database["public"]["Enums"]["product_type"]
-          refund_policy_days?: number | null
           registration_opens_at?: string
           seat_count?: number | null
           signup_threshold?: number | null
@@ -1517,7 +1514,6 @@ export type Database = {
           p_prices?: Json
           p_primary_gedu_fee_cents?: number
           p_product_type: Database["public"]["Enums"]["product_type"]
-          p_refund_policy_days?: number
           p_registration_opens_at: string
           p_schedule_slots?: Json
           p_seat_count?: number
@@ -1803,7 +1799,6 @@ export type Database = {
           p_padlet_url?: string
           p_prices?: Json
           p_primary_gedu_fee_cents?: number
-          p_refund_policy_days?: number
           p_registration_opens_at: string
           p_schedule_slots?: Json
           p_seat_count?: number
@@ -1848,6 +1843,7 @@ export type Database = {
         | "minecraft_bedrock"
         | "fortnite"
         | "webinar"
+        | "pokemon_go"
       product_type: "consumer_club" | "municipality_club" | "camp" | "event"
       user_role: "admin" | "customer" | "gamer" | "gedu"
     }
@@ -2002,6 +1998,7 @@ export const Constants = {
         "minecraft_bedrock",
         "fortnite",
         "webinar",
+        "pokemon_go",
       ],
       product_type: ["consumer_club", "municipality_club", "camp", "event"],
       user_role: ["admin", "customer", "gamer", "gedu"],

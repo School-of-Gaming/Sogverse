@@ -1,33 +1,96 @@
 /**
- * Whether a stored `location_id` should be dropped because it is no longer one
- * of the rows this control is willing to offer.
+ * Whether a stored `location_id` should be dropped because it is no longer a
+ * row this control is willing to offer.
  *
- * The two shapes it exists for are both real: a venue that was deleted, and a
- * legacy product pinned above site level or at a municipality outside the one
- * country an online municipality club may be funded by. The DB trigger permits
- * more than the UI does, so the picker is the gate — it offers only the valid
- * set, and clears a pick outside it so the admin re-picks.
+ * The shapes this exists for are all real: a venue that was deleted, a legacy
+ * product pinned above site level, a municipality outside the one country an
+ * online municipality club may be funded by, and — the everyday one — a
+ * municipality club toggled from online to in-person, which leaves a
+ * municipality id in a field that now accepts only venues. The DB trigger
+ * permits more than the UI does, so the picker is the gate: it clears a pick it
+ * would never itself have offered, and the admin re-picks.
  *
  * **Rule: a control that cannot tell "still loading" from "invalid" must not
- * clear anything.** The pickable set arrives asynchronously, and the whole
- * failure mode this guards is a single frame in which the set is not there yet:
- * treat that frame as "not in the set" and editing an existing product silently
- * wipes its venue, with the form then saving the wipe. `undefined` therefore
- * means "no answer yet" and is never an answer — which also covers a read that
- * failed outright, where dropping the value would be worse still. Only a set
- * that has actually arrived, and actually does not contain the value, is
- * grounds to drop it.
+ * clear anything.** Whatever a control checks against arrives asynchronously,
+ * and the whole failure mode this guards is a single frame in which it is not
+ * there yet: treat that frame as an answer and editing an existing product
+ * silently wipes its location, with the next save writing the loss. `undefined`
+ * therefore means "no answer yet" and is never an answer — which also covers a
+ * read that failed outright, where dropping the value would be worse still.
  *
- * A separate function rather than an inline condition because it is the whole
- * of the decision, and a decision worth a test is worth naming.
+ * **One function, because every control that picks a place now asks the same
+ * question.** They all reach their rows through the tree dialog, which browses
+ * the whole hierarchy and fetches no collection to test membership of — so the
+ * question is never "is this id in the set I hold" but "what did this id turn
+ * out to be", asked of a keyed read. The difference between the two is not
+ * cosmetic, and it lands squarely on `null`: for a keyed read a key with **no
+ * row** is a *resolved* answer — the row is gone — while for a set the same
+ * absence is indistinguishable from "not fetched". A set-shaped guard would
+ * therefore keep a dangling id forever, and a keyed-shaped one reading a set
+ * would wipe a valid pick. The set-shaped guard that used to live here went
+ * with the last set-shaped picker, rather than being left behind to be reached
+ * for by accident.
+ *
+ * A named function rather than a condition inline in an effect, because it is
+ * the whole of the decision, and a decision worth a test is worth naming.
  */
-export function shouldDropStoredPick(
+
+import type { LocationType } from "@/types";
+
+/**
+ * What a control will accept back from its own keyed read.
+ *
+ * `types` is a shape constraint — which levels of the hierarchy this field may
+ * point at. `countryCode` is a *business* one, and it has exactly one caller:
+ * an online municipality club is funded by a Finnish kunta and by nothing else,
+ * so a French commune is a perfectly well-formed municipality row that this
+ * field must still refuse. Omitting it accepts those levels in every country,
+ * which is what the venue field wants.
+ */
+export interface AcceptedLocation {
+  /** The levels this control accepts. */
+  types: readonly LocationType[];
+  /** ISO 3166-1 alpha-2. Omitted means "any country". */
+  countryCode?: string;
+}
+
+/**
+ * The keyed form, and the only form: the control has looked the stored id up on
+ * its own rather than fetching a collection to test membership of.
+ *
+ * The three answers the caller has to distinguish before calling:
+ * `undefined` — the read has not landed; `null` — it landed and there is no
+ * such row; a row — it landed and here it is.
+ */
+export function shouldDropStoredRow(
   /** The stored id. Nothing stored is nothing to drop. */
   value: string | null | undefined,
-  /** Every row the control would accept, or `undefined` until they arrive. */
-  pickable: readonly { id: string }[] | undefined,
+  /**
+   * What the keyed read said about it. `undefined` while in flight, `null` for
+   * a resolved "no such row" — a lookup, not an assertion, so a missing key is
+   * an answer and not an error.
+   */
+  row:
+    | { id: string; type: LocationType; country_code: string | null }
+    | null
+    | undefined,
+  accepted: AcceptedLocation,
 ): boolean {
   if (!value) return false;
-  if (pickable === undefined) return false;
-  return !pickable.some((row) => row.id === value);
+  if (row === undefined) return false;
+  // The row is gone — a deleted venue. This is the case a set-membership check
+  // could never separate from "not fetched yet".
+  if (row === null) return true;
+  // A read that answered about some other id has told us nothing about this
+  // one, so it falls back to the absent case rather than to a verdict.
+  if (row.id !== value) return false;
+  if (!accepted.types.includes(row.type)) return true;
+  // A row at the right level in the wrong country. Only the online-muni field
+  // asks this, and it is the case the seeded browse path and the country-scoped
+  // search exist to stop anyone reaching in the first place — this catches what
+  // was already stored before either of them was there.
+  return (
+    accepted.countryCode !== undefined &&
+    row.country_code !== accepted.countryCode
+  );
 }
