@@ -8,9 +8,8 @@
 // reads it falls away, restoring the full control) when the feature ships.
 //
 // Locks can also lift per product — see `formLocksFor()` below, which unlocks
-// the seat-count / waitlist / registration-window trio for municipality clubs
-// and the registration window alone for events, while keeping them locked
-// everywhere else.
+// the seat-count / waitlist / registration-window trio for municipality clubs,
+// and keeps them locked everywhere else.
 //
 // Defaults that pair with these locks live in `initialState` (product-form-state.ts);
 // the disabling lives in the individual section components. Both read the
@@ -81,10 +80,15 @@ export const FORM_LOCKS: FormLocks = {
  *
  *   - **Municipality clubs** — seats, waitlist and the registration window are
  *     all signed off.
- *   - **Events** — the registration window, and nothing else: the scheduled
- *     ticket drop only sets `registration_opens_at`, and the parent-facing
- *     state machine already renders a pre-open countdown for it.
- *   - **Everything else** keeps the global pre-prod locks.
+ *   - **Everything else** keeps the global pre-prod locks. Events briefly
+ *     unlocked the registration window (the scheduled ticket drop writes only
+ *     `registration_opens_at`, which the parent-facing state machine already
+ *     renders a pre-open countdown for) and that is reverted: a consumer-facing
+ *     product opens for signup right away, and an event is no different from a
+ *     club or a camp in that respect. Leaving the chooser editable made "when
+ *     does registration open?" a question an admin had to answer on every
+ *     event, next to a date field that means something else entirely — and the
+ *     wrong answer there is invisible until a family cannot sign up.
  *
  * **It is a pure function of the type config, and that is the shape the
  * re-lock restored.** It briefly took the form's live free/paid state as a
@@ -106,9 +110,6 @@ export function formLocksFor(config: ProductTypeConfig): FormLocks {
       waitlist: false,
       registrationTiming: false,
     };
-  }
-  if (config.productType === "event") {
-    return { ...FORM_LOCKS, registrationTiming: false };
   }
   return FORM_LOCKS;
 }

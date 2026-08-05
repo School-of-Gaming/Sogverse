@@ -7,12 +7,14 @@ import {
 } from "@/components/admin/products/product-type-config";
 
 // `formLocksFor` decides, in one place, which pre-prod controls the admin
-// product form leaves editable. It is a pure function of the type config: seats
-// and the waitlist are signed off for municipality clubs alone, and events add
-// only the registration window. (Seats/waitlist were briefly unlocked for *free*
-// events too, which made the resolver depend on live free/paid form state; that
-// unlock is reverted until the shop can render a full event — see TODO.md — and
-// these tests pin the re-locked matrix so it cannot drift back by accident.)
+// product form leaves editable. It is a pure function of the type config, and
+// municipality clubs are the only type that lifts anything: seats, the waitlist
+// and the registration window, all three. Events briefly lifted two of those and
+// both are reverted — seats/waitlist for *free* events (which made the resolver
+// depend on live free/paid form state, and waits on the shop being able to render
+// a full event — see TODO.md), and the registration window (an event opens for
+// signup right away, same as a club or a camp). These tests pin the re-locked
+// matrix so neither can drift back by accident.
 //
 // The capacity *payload* rules that pair with these locks — an uncapped product
 // never submitting a waitlist, and a stored capped event surviving a re-save —
@@ -52,10 +54,13 @@ describe("formLocksFor", () => {
   });
 
   describe("events", () => {
-    it("unlocks the registration window", () => {
-      // The scheduled ticket drop only writes registration_opens_at, which the
-      // parent-facing state machine already honours with a pre-open countdown.
-      expect(formLocksFor(eventConfig).registrationTiming).toBe(false);
+    it("keeps the registration window locked", () => {
+      // Re-locked: an event opens for signup right away, same as a club or a
+      // camp. It was briefly editable (the scheduled drop writes only
+      // registration_opens_at, which the parent-facing state machine honours
+      // with a pre-open countdown) and that put a second, easily-confused date
+      // question on every event form.
+      expect(formLocksFor(eventConfig).registrationTiming).toBe(true);
     });
 
     it("keeps seats and the waitlist locked", () => {
@@ -75,6 +80,18 @@ describe("formLocksFor", () => {
         expect(locks.seatCount).toBe(true);
         expect(locks.waitlist).toBe(true);
         expect(locks.registrationTiming).toBe(true);
+      }
+    });
+  });
+
+  describe("the registration window", () => {
+    it("is unlocked for municipality clubs alone", () => {
+      // Every consumer-facing shape (club, camp, event) opens for signup right
+      // away; the scheduled drop exists for the one type that is contracted and
+      // invoiced off-platform.
+      for (const config of EVERY_CONFIG) {
+        const unlocked = !formLocksFor(config).registrationTiming;
+        expect(unlocked).toBe(config === muniConfig);
       }
     });
   });

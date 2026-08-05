@@ -1,3 +1,4 @@
+import { formatInTimeZone } from "date-fns-tz";
 import { describe, it, expect } from "vitest";
 import {
   buildCreateInput,
@@ -853,6 +854,57 @@ describe("waitlist_enabled is derived from the cap, not copied", () => {
     const out = buildUpdateInput(state, eventConfig);
     expect(out.seat_count).toBe(25);
     expect(out.waitlist_enabled).toBe(true);
+  });
+
+  it("normalises a locked type's future drop back to Right away", () => {
+    // Deliberately the *opposite* call to the capped-event case above, and the
+    // difference is what the lock means. A stored cap is data with money behind
+    // it, so a re-lock must not silently decap a product families already see.
+    // A registration window is the lock's own subject: "locked to Right away"
+    // is not a statement about new events, it is what the type means. Deriving
+    // `scheduled` here would also strand the form — both radios disabled on the
+    // forbidden option, with only the date fields live.
+    const future = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    const state = existingFormState(
+      mockDetailRow({ product_type: "event", registration_opens_at: future }),
+      eventConfig,
+      "en",
+    );
+    expect(state.registrationOpensMode).toBe("immediately");
+
+    const before = Date.now();
+    const out = buildUpdateInput(state, eventConfig);
+    expect(new Date(out.registration_opens_at).getTime()).toBeGreaterThanOrEqual(
+      before,
+    );
+  });
+
+  it("still derives a scheduled drop where the chooser is unlocked", () => {
+    // Municipality clubs are the one type that keeps the window, so the stored
+    // timestamp must still round-trip into the pickers there. The instant is
+    // pinned relative to *now* rather than to a literal date: a hardcoded
+    // future timestamp is only in the future until it isn't, and this assertion
+    // needs one that always is. 08:15Z is read back through the fixed Helsinki
+    // zone, so the expected clock face is derived the same way rather than
+    // hardcoded — the offset is +2 or +3 depending on where the 30-day hop
+    // lands relative to DST.
+    const opensAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    opensAt.setUTCHours(8, 15, 0, 0);
+    const state = existingFormState(
+      mockDetailRow({
+        product_type: "municipality_club",
+        registration_opens_at: opensAt.toISOString(),
+      }),
+      muniConfig,
+      "en",
+    );
+    expect(state.registrationOpensMode).toBe("scheduled");
+    expect(state.registrationOpensDate).toBe(
+      formatInTimeZone(opensAt, "Europe/Helsinki", "yyyy-MM-dd"),
+    );
+    expect(
+      `${state.registrationOpensHour}:${state.registrationOpensMinute}`,
+    ).toBe(formatInTimeZone(opensAt, "Europe/Helsinki", "HH:mm"));
   });
 });
 
