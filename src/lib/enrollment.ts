@@ -28,7 +28,7 @@ export function getNextSessionStart(
   // Convert: jsDay = (dayOfWeek + 1) % 7
   const targetJsDay = (schedule.dayOfWeek + 1) % 7;
 
-  // Try days 0..6 ahead of "today in the source timezone" to find the next
+  // Try days 0..7 ahead of "today in the source timezone" to find the next
   // occurrence. `toZonedTime` returns a Date whose *local* fields (getDay,
   // getDate, getHours, ...) read the wall-clock in the source TZ — NOT the
   // UTC fields. Using getUTC* here silently works on a UTC server (Vercel
@@ -41,11 +41,24 @@ export function getNextSessionStart(
   // renderer at 100% CPU. Regression: tests/unit/lib/enrollment-tz.test.ts.
   const zonedNow = toZonedTime(now, schedule.timezone);
   for (let offset = 0; offset <= 7; offset++) {
-    const candidate = new Date(zonedNow.getTime() + offset * 86_400_000);
-
-    const jsDay = candidate.getDay();
-    if (jsDay !== targetJsDay && offset < 7) continue;
-    if (jsDay !== targetJsDay) continue;
+    // Candidates step by *calendar date* — year-month-day plus an offset,
+    // which the Date constructor normalizes as pure calendar arithmetic —
+    // anchored at noon so no zone's DST transition can move the date.
+    // Stepping the instant by 24-hour increments instead assumes every
+    // local day is 24 hours: on the 25-hour fall-back day the same date
+    // shows up at two offsets, and the second match bypasses the offset-0
+    // past-guard below and returns an already-finished start as "next";
+    // on the 23-hour spring-forward day a date can be skipped outright,
+    // losing that week's session. Both fire only when the *runtime* zone
+    // crosses the transition mid-walk — invisible on UTC CI, live in every
+    // Finnish browser. Regression: tests/unit/lib/enrollment-dst.test.ts.
+    const candidate = new Date(
+      zonedNow.getFullYear(),
+      zonedNow.getMonth(),
+      zonedNow.getDate() + offset,
+      12,
+    );
+    if (candidate.getDay() !== targetJsDay) continue;
 
     // Found the right weekday — build the wall-clock datetime and convert to UTC
     const year = candidate.getFullYear();

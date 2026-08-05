@@ -110,21 +110,6 @@ Both countries are seeded complete and admins never hand-type a place name: ever
 - [ ] **The `/schools` product fetch is unbounded, and its row budget is consumed by clubs that have already ended.** `listVisibleByTypes` (`src/services/products/products.service.ts`) fetches every visible municipality club with no paging; both `/schools` and `/schools/<slug>` use it and narrow client-side. Past 1000 the oldest clubs vanish from their municipality's page, the index stops flagging that municipality, and the municipality page's `notFound()` gate can fire. This arrives sooner than live-club count suggests: the SQL filter keeps `status in ('pending','running')` while the "this club has ended" judgement runs in JS *after* the fetch (nothing flips stored status), so every past term's clubs keep occupying rows of the 1000 while contributing nothing to the render. Push the ended-club predicate into the query, and page the read. Staging was at 50 visible muni clubs and prod at 20 on 2026-07-30, so this is the less urgent of the two.
 - [ ] **`/schools/<slug>` ships every municipality club in the country to render one municipality's cards.** The per-municipality page deliberately prefetches *all* visible muni clubs — that is what lets `initialProducts` seed the `["municipality_club"]` React Query cache exactly and keeps the client refetch flicker-free — then narrows in the browser. Measured on 2026-07-30: 50 clubs = 92.6 KB of JSON (~1.85 KB/club) inside a 249 KB page. Fine at that size, and 500 clubs would still only be ~925 KB, so this is waste rather than danger. But 1.85 KB/club is a floor: `product_translations(*)` pulls `long_description` for every locale, and only 3 of 130 translations have one today, so real marketing copy across five locales inflates it severalfold. Scope the fetch to the one municipality server-side (it then needs its own query key — the shared all-clubs key is exactly what the current approach buys) and stop selecting `long_description`, which no browse card renders.
 
-### Next-occurrence resolver returns a past session on the DST-end day
-
-- [ ] Once a year, on the night clocks fall back, the local day is 25 hours long and the
-  shared next-occurrence walk (`getNextSessionStart` and the occurrence enumeration in
-  `src/lib/session-occurrence.ts`) can match the same weekday twice — returning **last
-  week's already-finished session as "next"**. On that one day, upcoming-session lists and
-  locked-Join labels across all roles can name a session that already happened. Found
-  2026-08-04 by sweeping fixtures across a year of `now` values. The bug is not a wrong
-  conversion (all conversions go through `date-fns-tz`) but wrong arithmetic between
-  conversions: the walk steps candidate days by fixed 24-hour increments on instants,
-  which assumes every local day is 24 hours. Fix: iterate **calendar dates in the
-  product's zone** (year-month-day never skips or repeats) and convert each candidate to
-  an instant at the end — plus a regression test pinned to the fall-back date. One shared
-  helper, so one fix covers every surface; keep it that way.
-
 ### Deferred billing for future-start clubs
 
 Now unlocked by the one-Stripe-sub-per-participation model (each consumer-club signup is its own sub — see `docs/products-architecture.md`, "Billing"). Because every sub stands alone, a signup for a club whose `start_date` is in the future can defer its **first charge** to that date without affecting any of the family's other clubs — set `subscription_data.billing_cycle_anchor` (or `trial_end`) to the product's start moment on the Checkout Session in `src/app/api/checkout/products/create/route.ts`. €0 today, first full charge on the start date. This was impossible on the old shared family sub (one anchor for the whole family). Not built yet — deliberately deferred.
