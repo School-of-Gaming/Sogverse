@@ -165,24 +165,23 @@ query time — which is the good outcome, but only if you recognise it.
 **Rule: LIKE metacharacters in a needle are escaped, not stripped.** A user typing `%`
 should find nothing, not everything.
 
-**Rule: the fold exists twice, and a shared table of inputs pins the two together.** The
-database folds the stored side and the needle; a TypeScript fold exists alongside it for
-any set narrowed in the browser, because a set already on the client should narrow
-without a request or a loading state. What is not right is two implementations agreeing
-only by habit: the failure is silent and asymmetric, one surface quietly ceasing to match
-"Nîmes" while the other still does. So the expectations live in one fixture that both
-suites assert against — the unit suite against the TypeScript fold, the DB suite against
-the SQL one — and a change to either that is not a change to the other fails a build.
-Worth knowing while reading that: **no shipped surface currently narrows a set in the
-browser**, the last one having become a tree dialog, so the TypeScript fold is at present
-pinned by its tests alone; `TODO.md` carries what retiring it would cost and why it was
-not retired as a drive-by. The known boundary is Latin letters with no canonical
-decomposition
-(`œ`, `ø`, `æ`, `ł`): `unaccent` expands them by rule and NFD normalization has nothing to
-decompose, so the two genuinely differ there. It is out of reach rather than fixed —
-neither official classification spells a municipality with one, and the TypeScript fold
-never sees anything else — and the fixture says so rather than leaving it to be
-rediscovered.
+**Rule: the fold exists once, in SQL, and nothing outside the database folds anything.**
+The same expression computes the stored side and the needle, so both halves of a match
+come out of one place and cannot drift apart. There was a second fold in TypeScript, for
+sets narrowed in the browser, and it went with the last surface that narrowed one — which
+is the shape to keep in mind if a client-side filter is ever proposed again: two
+implementations of one rule agree only by habit, and the failure is silent and
+asymmetric, one surface quietly ceasing to match "Nîmes" while the other still does. A
+surface that wants to filter places asks the search index, which is a request against a
+capped, ranked, indexed query rather than a second definition of what a match is.
+
+What the SQL fold must produce is pinned by a table of **literal** input/output pairs the
+DB suite asserts against — literals precisely because an expectation recomputed by a
+second implementation of the same rule proves only that two pieces of code agree, where a
+literal says what the fold *is*. The known boundary is Latin letters with no canonical
+decomposition (`œ`, `ø`, `æ`, `ł`, `ß`): `unaccent` expands those by rule from a
+dictionary nobody here authors, so the table leaves them out and says so rather than
+pinning someone else's expansion list.
 
 The fold is **stored, not an index expression**, and deliberately: needles shorter than
 three characters yield no trigram, so those queries are a sequential scan, and re-folding
@@ -274,13 +273,14 @@ The reads come in three shapes.
 so the caller knows whether to offer another page. Pages accumulate rather than replace,
 so "load more" appends under rows the user is already reading.
 
-**Whole-list reads** — one country's municipalities; one municipality's venues. A surface
-needs these in full because something outside the table bounds them, and it lists whatever
-it gets. Both are read by pages that *render* the collection rather than by pickers
-choosing from it: the public municipality directory, and the venue list inside a confirmed
-municipality. There is also a read of *every* site, which no surface renders at all, and
-the browser hook wrapping the municipality read has likewise lost its last caller;
-`TODO.md` carries what retiring either would cost.
+**Whole-list reads** — one country's municipalities; one municipality's venues. Those two
+and no others. A surface needs these in full because something outside the table bounds
+them, and it lists whatever it gets. Both are read by pages that *render* the collection
+rather than by pickers choosing from it: the public municipality directory, and the venue
+list inside a confirmed municipality. The municipality read is server-side only — the
+directory pages that need it are server components, and there is deliberately no browser
+hook over it, because a read of a whole country is not something a client surface should
+be able to reach for casually.
 
 **Rule: any list read that could exceed PostgREST's `max_rows` pages through `.range()`
 until a page comes back short, and asks for `count: "exact"` so the walk can check what it
@@ -309,12 +309,15 @@ would otherwise make position-dependent. Reverse it for a root-first breadcrumb.
 search RPC returns the same shape, so a place found by searching and a place found by
 browsing are one thing to every consumer.
 
-Two embed depths exist because they answer different questions: a site needs four levels
-(commune → département → région → country), a municipality needs three. Each embedded
-level is an indexed lookup per row and the municipality query runs over 34,875 rows for
-France, so it asks for the depth it needs and no more. The depths are spelled out as
-literal select strings rather than built at runtime — the client infers the response shape
-from the literal, and a computed string collapses it to `string`.
+Two embed depths exist because they answer different questions. The **keyed** read asks
+for four levels, the deepest chain any supported country has (commune → département →
+région → country), because a key set is whatever a caller stored and a stored pick can be
+a site — the deepest row in the tree. The **municipality list** read asks for three, which
+is all a municipality has. Each embedded level is an indexed lookup per row and that list
+query runs over 34,875 rows for France, so it asks for the depth it needs and no more. The
+depths are spelled out as literal select strings rather than built at runtime — the client
+infers the response shape from the literal, and a computed string collapses it to
+`string`.
 
 **Rule: the parent embed is written in the `parent:parent_id(…)` column-name form.** The
 `locations!parent_id` form looks equivalent and resolves to the *children* instead,
@@ -344,9 +347,11 @@ ancestor — a missing ancestor is a seeding problem and must surface as one. Ty
 duplicate spellings are therefore structurally impossible above site level.
 
 **Rule: mutations invalidate via the key hierarchy** — a created site invalidates the
-sites key (the parent of the per-municipality key, so both refresh) *and* the browse level
-it landed in; a rename invalidates the row's detail key, the lists that render it, and
-every cached search needle, since a rename changes what search matches.
+sites key, which is a grouping key with no query of its own sitting above the
+per-municipality venue lists, so every one of them refreshes without the mutation having
+to know which municipality the row landed in; it also invalidates the browse level it
+landed in. A rename invalidates the row's detail key, the lists that render it, and every
+cached search needle, since a rename changes what search matches.
 
 ## Picking a place (UI)
 
@@ -374,8 +379,10 @@ a country is added — and the mode still went, because being bounded is not the
 being the right thing to pick from: three keystrokes against the search index reach any
 kunta faster than a scroll through a grouped list of all of them, and the same index also
 covers the 34,875 communes the list could never hold. What the set scope cost while it
-lived is the shape of the argument: a whole branch of the panel, a grouping module, and a
-second in-memory fold that had to be pinned to the database's by a shared fixture.
+lived is the shape of the argument: a whole branch of the panel, a grouping module, a flat
+read of every venue there was, and a second in-memory fold that had to be pinned to the
+database's by a shared fixture. All of it is deleted — the fold included, so the database
+is now the only thing in the system that knows how a place name folds.
 
 **Rule: a collection can be worth reading whole and still not be worth a picker.** A
 municipality's venues, and the public municipality directory, are both read in full and

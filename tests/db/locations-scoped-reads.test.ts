@@ -6,6 +6,7 @@ import {
   LOCATION_BROWSE_PAGE_SIZE,
 } from "@/services/locations/locations.service";
 import { createAdminTestClient } from "./helpers";
+import { TEST_IDS } from "./constants";
 
 /**
  * The scoped location reads, against a real PostgREST.
@@ -120,27 +121,6 @@ describe("locations scoped reads", () => {
     });
   });
 
-  describe("getSites", () => {
-    it("flattens the chain PostgREST has to resolve four levels deep", async () => {
-      const sites = await service.getSites();
-      const school = sites.find((site) => site.name === "Test School");
-
-      // Nearest first, and it stops at the country: Suomi is a root row, so
-      // the fourth embed level really does come back null. The depth is there
-      // for France's extra `district` level, not for Finland.
-      expect(school?.ancestors.map((node) => node.name)).toEqual([
-        "Helsinki",
-        "Uusimaa",
-        "Suomi",
-      ]);
-      expect(school?.ancestors.map((node) => node.type)).toEqual([
-        "municipality",
-        "region",
-        "country",
-      ]);
-    });
-  });
-
   describe("getChildren", () => {
     // The whole of browsing, and the one filter that is easy to get wrong: a
     // country is a row with no parent, and `eq` against NULL matches nothing.
@@ -233,6 +213,31 @@ describe("locations scoped reads", () => {
         "Nord",
         "Hauts-de-France",
         "France",
+      ]);
+    });
+
+    // The keyed read carries the deepest embed in the service — four ancestor
+    // levels — and a site is the row that needs all of it. Only a live
+    // PostgREST can say whether an embed nested that deep on a self-referential
+    // FK resolves at all, which is why this assertion is here rather than over
+    // the fake transport upstairs.
+    it("resolves a site's chain, four embed levels deep", async () => {
+      const rows = await service.getLocationsByIds([TEST_IDS.LOCATION_SITE]);
+
+      // Nearest first, and it stops at the country: Suomi is a root row, so
+      // the fourth embed level really does come back null. The depth is there
+      // for France's extra `district` level, not for Finland.
+      expect(rows).toHaveLength(1);
+      expect(rows[0].name).toBe("Test School");
+      expect(rows[0].ancestors.map((node) => node.name)).toEqual([
+        "Helsinki",
+        "Uusimaa",
+        "Suomi",
+      ]);
+      expect(rows[0].ancestors.map((node) => node.type)).toEqual([
+        "municipality",
+        "region",
+        "country",
       ]);
     });
   });

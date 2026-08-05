@@ -46,9 +46,11 @@ function requestedRanges(fetchMock: FetchMock): string[] {
 // official classifications — France alone is 34,875 communes — so no list read
 // is bounded by construction, and PostgREST enforces `max_rows` by returning a
 // short page rather than an error. These cases pin the walk's behaviour once,
-// through `getSites`; the per-method suites below only assert their own filters.
+// through `getMunicipalitiesByCountry` — the read the walk exists for, since one
+// country really is 34 pages of it; the per-method suites below only assert
+// their own filters.
 
-describe("LocationsService paged walk (via getSites)", () => {
+describe("LocationsService paged walk (via getMunicipalitiesByCountry)", () => {
   let fetchMock: FetchMock;
   let service: LocationsService;
 
@@ -60,7 +62,7 @@ describe("LocationsService paged walk (via getSites)", () => {
   it("stops after one request when the first page comes back short", async () => {
     fetchMock.mockResolvedValue(postgrestJson(locationRows(120)));
 
-    const result = await service.getSites();
+    const result = await service.getMunicipalitiesByCountry("FR");
 
     expect(result).toHaveLength(120);
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -71,7 +73,7 @@ describe("LocationsService paged walk (via getSites)", () => {
       postgrestPage(locationRows(120), { from: 0, total: 120 }),
     );
 
-    await expect(service.getSites()).resolves.toHaveLength(120);
+    await expect(service.getMunicipalitiesByCountry("FR")).resolves.toHaveLength(120);
   });
 
   it("throws when the walk ends short of the server-reported total", async () => {
@@ -82,7 +84,7 @@ describe("LocationsService paged walk (via getSites)", () => {
       postgrestPage(locationRows(500), { from: 0, total: 1500 }),
     );
 
-    await expect(service.getSites()).rejects.toThrow(
+    await expect(service.getMunicipalitiesByCountry("FR")).rejects.toThrow(
       /500 of 1500 rows/,
     );
   });
@@ -102,7 +104,7 @@ describe("LocationsService paged walk (via getSites)", () => {
         }),
       );
 
-    await expect(service.getSites()).rejects.toThrow(/1600 of 2600 rows/);
+    await expect(service.getMunicipalitiesByCountry("FR")).rejects.toThrow(/1600 of 2600 rows/);
   });
 
   // The bug this guards: PostgREST enforces max_rows by returning a short page,
@@ -130,7 +132,7 @@ describe("LocationsService paged walk (via getSites)", () => {
         }),
       );
 
-    const result = await service.getSites();
+    const result = await service.getMunicipalitiesByCountry("FR");
 
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(result).toHaveLength(2 * PAGE_SIZE + 37);
@@ -144,7 +146,7 @@ describe("LocationsService paged walk (via getSites)", () => {
       .mockResolvedValueOnce(postgrestJson(locationRows(PAGE_SIZE, 0)))
       .mockResolvedValueOnce(postgrestJson(locationRows(1, PAGE_SIZE)));
 
-    await service.getSites();
+    await service.getMunicipalitiesByCountry("FR");
 
     expect(requestedRanges(fetchMock)).toEqual(["0:1000", "1000:1000"]);
   });
@@ -154,7 +156,7 @@ describe("LocationsService paged walk (via getSites)", () => {
   it("orders by name and then id so paging is stable across requests", async () => {
     fetchMock.mockResolvedValue(postgrestJson([]));
 
-    await service.getSites();
+    await service.getMunicipalitiesByCountry("FR");
 
     const url = requestedUrl(fetchMock.mock.calls[0][0]);
     expect(url.searchParams.get("order")).toBe("name.asc,id.asc");
@@ -163,7 +165,7 @@ describe("LocationsService paged walk (via getSites)", () => {
   it("stops immediately when a page comes back exactly empty", async () => {
     fetchMock.mockResolvedValue(postgrestJson([]));
 
-    await expect(service.getSites()).resolves.toEqual([]);
+    await expect(service.getMunicipalitiesByCountry("FR")).resolves.toEqual([]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -172,7 +174,7 @@ describe("LocationsService paged walk (via getSites)", () => {
       .mockResolvedValueOnce(postgrestJson(locationRows(PAGE_SIZE, 0)))
       .mockResolvedValueOnce(postgrestError("boom"));
 
-    await expect(service.getSites()).rejects.toMatchObject({
+    await expect(service.getMunicipalitiesByCountry("FR")).rejects.toMatchObject({
       message: "boom",
     });
     expect(fetchMock).toHaveBeenCalledTimes(2);
@@ -186,7 +188,7 @@ describe("LocationsService paged walk (via getSites)", () => {
     const page = locationRows(PAGE_SIZE);
     fetchMock.mockImplementation(() => Promise.resolve(postgrestJson(page)));
 
-    await expect(service.getSites()).rejects.toThrow(
+    await expect(service.getMunicipalitiesByCountry("FR")).rejects.toThrow(
       /range filter is not being applied/
     );
   });
@@ -214,10 +216,10 @@ describe("LocationsService.getMunicipalitiesByCountry", () => {
     expect(url.searchParams.get("order")).toBe("name.asc,id.asc");
   });
 
-  // One level shallower than the site query, and that is the point: this one
+  // One level shallower than the keyed read, and that is the point: this one
   // runs over 34,875 rows for France, so it asks for the depth a municipality
   // actually has (département -> région -> pays) and no more.
-  it("embeds three ancestor levels, not the site query's four", async () => {
+  it("embeds three ancestor levels, not the keyed read's four", async () => {
     fetchMock.mockResolvedValue(postgrestJson([]));
 
     await service.getMunicipalitiesByCountry("FR");
@@ -248,94 +250,6 @@ describe("LocationsService.getMunicipalitiesByCountry", () => {
       "Finland",
     ]);
     expect(municipality.ancestors[0]).not.toHaveProperty("parent");
-  });
-
-  it("pages through a country the size of France", async () => {
-    fetchMock
-      .mockResolvedValueOnce(postgrestJson(locationRows(PAGE_SIZE, 0)))
-      .mockResolvedValueOnce(postgrestJson(locationRows(PAGE_SIZE, PAGE_SIZE)))
-      .mockResolvedValueOnce(postgrestJson(locationRows(12, 2 * PAGE_SIZE)));
-
-    const result = await service.getMunicipalitiesByCountry("FR");
-
-    expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(result).toHaveLength(2 * PAGE_SIZE + 12);
-    expect(requestedRanges(fetchMock)).toEqual([
-      "0:1000",
-      "1000:1000",
-      "2000:1000",
-    ]);
-  });
-
-  it("throws rather than returning a truncated list when the total disagrees", async () => {
-    fetchMock.mockResolvedValue(
-      postgrestPage(locationRows(400), { from: 0, total: 34875 }),
-    );
-
-    await expect(service.getMunicipalitiesByCountry("FR")).rejects.toThrow(
-      /400 of 34875 rows/,
-    );
-  });
-});
-
-describe("LocationsService.getSites", () => {
-  let fetchMock: FetchMock;
-  let service: LocationsService;
-
-  beforeEach(() => {
-    fetchMock = vi.fn<typeof fetch>();
-    service = new LocationsService(createFetchStubbedClient(fetchMock));
-  });
-
-  it("selects sites with four embedded ancestor levels", async () => {
-    fetchMock.mockResolvedValue(postgrestJson([]));
-
-    await service.getSites();
-
-    const url = requestedUrl(fetchMock.mock.calls[0][0]);
-    expect(url.searchParams.get("type")).toBe("eq.site");
-    // Four levels is the deepest chain any supported country has: a French
-    // site sits under commune -> département -> région -> France.
-    const select = url.searchParams.get("select") ?? "";
-    expect(select.split("parent:parent_id(")).toHaveLength(5);
-  });
-
-  // The embed comes back as a nest of `parent` objects; consumers want an
-  // array, nearest first, so `ancestors[0]` is the municipality whatever the
-  // country's depth. The walk also has to stop at the first null parent —
-  // Finland's chain is one level shorter than France's.
-  it("flattens the embedded parent nest into a nearest-first chain", async () => {
-    fetchMock.mockResolvedValue(
-      postgrestJson([
-        {
-          ...locationRows(1)[0],
-          type: "site",
-          parent: {
-            id: "muni",
-            name: "Helsinki",
-            parent: { id: "region", name: "Uusimaa", parent: null },
-          },
-        },
-      ]),
-    );
-
-    const [site] = await service.getSites();
-
-    expect(site.ancestors.map((node) => node.name)).toEqual([
-      "Helsinki",
-      "Uusimaa",
-    ]);
-    // The nesting key itself is gone — a consumer reads the array, not a nest.
-    expect(site.ancestors[0]).not.toHaveProperty("parent");
-  });
-
-  it("pages, so a long venue list cannot silently truncate", async () => {
-    fetchMock
-      .mockResolvedValueOnce(postgrestJson(locationRows(PAGE_SIZE, 0)))
-      .mockResolvedValueOnce(postgrestJson(locationRows(3, PAGE_SIZE)));
-
-    await expect(service.getSites()).resolves.toHaveLength(PAGE_SIZE + 3);
-    expect(requestedRanges(fetchMock)).toEqual(["0:1000", "1000:1000"]);
   });
 });
 
@@ -384,17 +298,41 @@ describe("LocationsService.getLocationsByIds", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  // A key set is whatever a caller stored, and a stored pick can be a site —
+  // the deepest row in the tree — so this read asks for four ancestor levels
+  // rather than the three a municipality needs. Under-asking would silently
+  // truncate a French venue's chain at its région.
+  it("asks for four embedded ancestor levels, the deepest chain any country has", async () => {
+    fetchMock.mockResolvedValue(postgrestJson([]));
+
+    await service.getLocationsByIds(["a"]);
+
+    const select =
+      requestedUrl(fetchMock.mock.calls[0][0]).searchParams.get("select") ?? "";
+    expect(select.split("parent:parent_id(")).toHaveLength(5);
+  });
+
   // Every surface holding ids holds them to render them, and a bare name is
-  // ambiguous across countries — so the chain comes back with the row.
-  it("embeds the ancestor chain alongside each row", async () => {
+  // ambiguous across countries — so the chain comes back with the row. The
+  // embed arrives as a nest of `parent` objects and consumers want an array,
+  // nearest first, so `ancestors[0]` is the level immediately above whatever
+  // the country's depth. The flatten also has to stop at the first null parent:
+  // a Finnish site's chain is one level shorter than a French one's, so the
+  // fourth embed level comes back null rather than missing.
+  it("flattens a site's embedded parent nest into a nearest-first chain", async () => {
     fetchMock.mockResolvedValue(
       postgrestJson([
         {
           ...locationRows(1)[0],
+          type: "site",
           parent: {
-            id: "region",
-            name: "Uusimaa",
-            parent: { id: "country", name: "Finland", parent: null },
+            id: "muni",
+            name: "Helsinki",
+            parent: {
+              id: "region",
+              name: "Uusimaa",
+              parent: { id: "country", name: "Suomi", parent: null },
+            },
           },
         },
       ]),
@@ -403,9 +341,12 @@ describe("LocationsService.getLocationsByIds", () => {
     const [row] = await service.getLocationsByIds(["a"]);
 
     expect(row.ancestors.map((node) => node.name)).toEqual([
+      "Helsinki",
       "Uusimaa",
-      "Finland",
+      "Suomi",
     ]);
+    // The nesting key itself is gone — a consumer reads the array, not a nest.
+    expect(row.ancestors[0]).not.toHaveProperty("parent");
   });
 
   // Batching is what lets this skip the paged walk: a request asking for at
@@ -615,7 +556,6 @@ describe("LocationsService column discipline", () => {
     ["getLocation", (s) => s.getLocation("loc-0")],
     ["getChildren (root)", (s) => s.getChildren(null)],
     ["getChildren (node)", (s) => s.getChildren("loc-0")],
-    ["getSites", (s) => s.getSites()],
     ["getSitesByParent", (s) => s.getSitesByParent("loc-0")],
     ["getMunicipalitiesByCountry", (s) => s.getMunicipalitiesByCountry("FI")],
     ["getLocationsByIds", (s) => s.getLocationsByIds(["loc-0"])],

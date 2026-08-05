@@ -2,19 +2,18 @@ import { describe, it, expect, beforeAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import type { Json } from "@/types";
-import { foldForSearch } from "@/lib/locations/search-fold";
 import { SEARCH_FOLD_CASES } from "../helpers/search-fold-cases";
 import { createAdminTestClient } from "./helpers";
 
 /**
- * The SQL half of the two-fold contract.
+ * The location search fold, pinned to a table of literals.
  *
- * Location search folds twice: once in Postgres, over the stored blob and the
- * needle, and once in TypeScript, for the bounded sets filtered in the browser.
- * The shared case table says what both must produce; the unit suite asserts the
- * TypeScript side, and this asserts the database's — so a change to either that
- * is not a change to the other fails a build instead of silently making a place
- * findable in one picker and not the other.
+ * The fold lives in Postgres and only in Postgres: it computes the stored blob
+ * every row is findable by, and it folds the needle the search function is
+ * given. Both halves of a match therefore come out of the same expression, so
+ * what needs asserting is not that two implementations agree but that this one
+ * still does what it is supposed to — hence a shared case table of literal
+ * input/output pairs rather than an oracle that recomputes the answer.
  *
  * The oracle is `location_search_blob` rather than `immutable_unaccent`, and
  * deliberately: the blob applies `lower(immutable_unaccent(btrim(...)))`, which
@@ -22,6 +21,12 @@ import { createAdminTestClient } from "./helpers";
  * function applies to a needle. Testing the unaccent wrapper alone would leave
  * the lowercasing — half the fold, and the half an alphabetic INSEE code depends
  * on — unasserted.
+ *
+ * This is also the scope test the DB authorization spine names for all three
+ * fold primitives, which is the other reason it asserts the blob end to end:
+ * what makes them safe to expose is that they read no table and answer purely
+ * from their arguments, and a blob built from nothing but what was passed in is
+ * that property made visible.
  *
  * Service role, because `location_search_blob` is granted to the roles that
  * write `locations` rather than to `anon`; the folding itself is a pure function
@@ -64,15 +69,10 @@ describe("the location search fold, as the database computes it", () => {
     return data;
   }
 
-  describe("agrees with the TypeScript fold", () => {
+  describe("folds to what the case table says", () => {
     it.each(SEARCH_FOLD_CASES)("on $what", async ({ raw, folded }) => {
       // One name in, so the blob is exactly that one term, wrapped.
-      const inSql = await blobOf(raw);
-
-      // Both sides against the shared expectation, one assertion each, so a
-      // failure names which half drifted rather than only that they differ.
-      expect(inSql).toBe(wrapped(folded));
-      expect(foldForSearch(raw)).toBe(folded);
+      expect(await blobOf(raw)).toBe(wrapped(folded));
     });
   });
 
@@ -100,11 +100,13 @@ describe("the location search fold, as the database computes it", () => {
   it("folds the canonical name, the alternates and the official code alike", async () => {
     // The three sources a blob is built from at once — a Finnish name, its
     // Swedish alternate, and a code whose letters have to be lowercased — each
-    // ending up as the same term the browser's fold would have produced.
+    // ending up as its own wrapped term rather than one of the three being
+    // carried through raw. Spelled out, for the same reason the case table is:
+    // an expected value computed by re-folding proves nothing about the fold.
     const blob = await blobOf("Järvenpää", { sv: "Träskända" }, "2A004");
 
-    for (const source of ["Järvenpää", "Träskända", "2A004"]) {
-      expect(blob).toContain(wrapped(foldForSearch(source)));
+    for (const term of ["jarvenpaa", "traskanda", "2a004"]) {
+      expect(blob).toContain(wrapped(term));
     }
   });
 });
