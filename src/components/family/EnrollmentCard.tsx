@@ -8,6 +8,7 @@ import {
   Hourglass,
   MapPin,
   Radio,
+  RefreshCwOff,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +18,6 @@ import { useNow, useTimezone } from "@/providers";
 import { cn, formatDate, formatDateOnly, formatTime } from "@/lib/utils";
 import type { SessionAudience } from "@/types";
 import { PaymentProblemBadge } from "@/components/parent/PaymentProblemBadge";
-import { SubscriptionEndingBadge } from "@/components/parent/SubscriptionEndingBadge";
 import {
   enrollmentEndedOn,
   enrollmentLiveness,
@@ -74,12 +74,14 @@ import {
  *   session to start — because holding space for something that cannot come is
  *   its own defect.
  *
- * **The corner is for problems, and only the parent's problems.** Across the
- * product the corner badge means "this needs attention" — the payment badge
- * here, the backlog badge on a gedu's card — so nothing that is merely a
- * *status* may wear it: the waitlist place lives in the footer sentence, where
- * it reads as information rather than a fault. A failing card outranks a
- * subscription winding down for the slot, and neither renders on the gamer's
+ * **The corner means exactly one thing: an alarm the parent can act on.**
+ * Across the product the corner badge means "this needs attention" — the
+ * payment badge here, the backlog badge on a gedu's card — so nothing that is
+ * merely *information* may wear it. The waitlist place lives in the footer
+ * sentence, and the parent's own cancellation lives as a quiet won't-renew
+ * line under the schedule: a cancellation is confirmation that their action
+ * was fulfilled, not a problem to fix, and dressing it as an alarm would make
+ * the corner mean two things. Neither billing signal renders on the gamer's
  * own dashboard at all — billing is a parent concern, and a child's card must
  * not carry an alarm the child cannot act on. The badge is a *sibling* of the
  * Card, not a child — a card that clips its own overflow would otherwise cut it
@@ -118,48 +120,22 @@ interface EnrollmentCardCommonProps {
   onOpenPortal?: () => void;
 }
 
-/**
- * Who the card is for, and what that audience obliges the caller to know.
- *
- * The two audiences are not the same props with one of them optional: the
- * parent's card can carry a subscription-ending badge, and that badge's tooltip
- * has to name **whose** last session it is talking about, so a customer card
- * without a child's name is not a card with a missing nicety — it is a card that
- * cannot be rendered. The gamer's card can never show that badge at all, so the
- * name has nowhere to go and the prop does not exist there. Discriminating on
- * `audience` is what lets the compiler say so, and what removes the fallback
- * that used to put a *product* name in a person's slot when the caller forgot.
- */
-export type EnrollmentCardProps = EnrollmentCardCommonProps &
-  (
-    | {
-        /**
-         * The child's own dashboard. No billing anywhere on it — neither corner
-         * badge renders — and the waitlist footer speaks *to* the child.
-         */
-        audience: Extract<SessionAudience, "gamer">;
-      }
-    | {
-        /**
-         * The parent's dashboard: corner badges live here, and the waitlist
-         * footer speaks *about* the child.
-         */
-        audience: Extract<SessionAudience, "customer">;
-        /**
-         * The child this enrollment belongs to. **Never rendered on the card's
-         * face** — the section heading owns the child — and used only inside the
-         * subscription-ending badge's tooltip, which has to name whose last
-         * session it is.
-         */
-        gamerFirstName: string;
-      }
-  );
+export interface EnrollmentCardProps extends EnrollmentCardCommonProps {
+  /**
+   * Whose dashboard this renders on. Billing never reaches the child's card —
+   * the payment corner badge and the won't-renew line are parent-only — and
+   * the waitlist footer speaks *to* the child on their own page, *about* them
+   * on the parent's.
+   */
+  audience: SessionAudience;
+}
 
 export function EnrollmentCard(props: EnrollmentCardProps) {
   const { enrollment, audience, onOpenPortal } = props;
   const p = useTranslations("productType");
   const c = useTranslations("activityCard");
   const b = useTranslations("sessionBadge");
+  const f = useTranslations("familyEnrollment");
   const w = useTranslations("parent.waitlist");
   const locale = useLocale();
   const timeZone = useTimezone();
@@ -297,6 +273,31 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
             </span>
           </div>
 
+          {/* The parent's own cancellation, as information rather than an
+              alarm: the corner means "this needs your attention", and a
+              membership the parent themselves wound down is confirmation, not
+              a problem — so it reads as a quiet line under the schedule, the
+              same demotion the waitlist position made for the same reason. The
+              date is the last session, never the billing period end — a parent
+              tracks sessions, not billing instants. The line exists only on a
+              cancelled card ("populated, not padded"), so cards differ in
+              height by state; it cannot appear mid-read except as the direct
+              echo of the parent cancelling in the portal they just came from. */}
+          {audience === "customer" && cancellation !== null && running && (
+            <p className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
+              <RefreshCwOff className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+              <span className="min-w-0">
+                {f("wontRenew", {
+                  date: formatDate(cancellation.lastSessionStart, locale, {
+                    month: "short",
+                    day: "numeric",
+                    timeZone,
+                  }),
+                })}
+              </span>
+            </p>
+          )}
+
           {/* Four flat conditions rather than a nested chain — they are mutually
               exclusive by construction, and a run that is over has neither a
               session left to join nor a venue anybody is travelling to, so the
@@ -393,23 +394,18 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
         )}
       </Card>
 
-      {/* Outside the card, over its corner, so neither ever eats a click meant
-          for the card body. Parent-only, one at a time, most actionable first. */}
-      {props.audience === "customer" && paymentProblem ? (
+      {/* Outside the card, over its corner, so it never eats a click meant for
+          the card body. The corner carries exactly one thing: an alarm the
+          parent can act on. Information — the waitlist position, the
+          won't-renew line — lives in the card body instead. */}
+      {audience === "customer" && paymentProblem && (
         <PaymentProblemBadge
           participationId={participationId}
           audience="customer"
           showAlert
           onOpenPortal={onOpenPortal}
         />
-      ) : props.audience === "customer" && cancellation ? (
-        <SubscriptionEndingBadge
-          accessUntil={cancellation.accessUntil}
-          lastSessionStart={cancellation.lastSessionStart}
-          isLastSession={cancellation.isLastSession}
-          gamerFirstName={props.gamerFirstName}
-        />
-      ) : null}
+      )}
     </div>
   );
 }

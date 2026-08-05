@@ -1145,6 +1145,7 @@
   },
   "familyEnrollment": {
     "emptyState": "{name} n’a encore rien de prévu. Regardez ensemble ce qui est proposé.",
+    "wontRenew": "Non renouvelé — dernière session le {date}",
     "noGamers": "Pas encore de joueur ici. Ajoutez votre premier joueur, puis choisissez ensemble un club ou un camp.",
     "emptyStateCta": "Voir les clubs et les camps"
   },

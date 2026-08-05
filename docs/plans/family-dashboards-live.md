@@ -97,9 +97,12 @@ family touchpoint). This replaces both family dashboards outright.
   import nothing from `src/components/gedu/`). Shared strings live in shared namespaces
   (`sessionFeed`, the shared product-type labels), per the copy rule: share where the roles
   want the same thing, split only where their mindsets differ.
-- **The Padlet "Reports" link disappears from family surfaces** (it dies with the old
-  session cards). The `padlet_url` column itself stays — its removal is a separate
-  product/comms decision, not this plan's.
+- **Padlet is retired entirely, as this plan's final act.** The family "Reports" link dies
+  with the old session cards, and once the in-app reports are fully implemented and live,
+  the cleanup step removes `padlet_url` end to end: the column (migration), the product
+  definition surfaces that edit it (admin product forms), and any remaining UI or types
+  that reference it. Deliberately sequenced last — the replacement must be shipped and
+  working before the old thing is deleted.
 - **`group_sessions.did_not_run` and `.needs_substitute` are dropped.** They were reserved
   for a cancellation feature that was cut from the gedu UI and is not being built now;
   the backend stops advertising it. (Verify nothing reads them, then drop in this plan's
@@ -279,7 +282,10 @@ independently verifiable.
       waitlist-entry adapter (`src/lib/waitlist-entries.ts`-shaped) if the step-2 mapping
       replaced their last consumers. The DST-bug caveat applies to whatever resolver
       survives.
-    - The Padlet "Reports" affordance and its keys.
+    - Padlet, end to end: the family "Reports" affordance and its keys, the
+      `padlet_url` column (its own small migration — after the club pages are live and
+      verified), the admin product-form field that edits it, and the regenerated types.
+      This is deliberately the last deletion in the plan.
     - Orphaned keys: `gamer.welcome` (the nameless greeting, kept alive only by the live
       route's own copy of the page — the draft body reads `gamer.welcomeNamed`), the old
       waitlist card's position/reassurance strings, the old empty
@@ -295,9 +301,9 @@ independently verifiable.
     decision, the planned-absence future, the one-fetch + scroll-sentinel contract) and
     register it in the root `CLAUDE.md` documentation table. **Rewrite** the paragraph in
     `docs/products-architecture.md` that asserts the family-facing half isn't built — this
-    plan falsifies it. Resolve the partly-completed TODO.md entries this work touches: the
-    family read lands (delete that half), the `padlet_url` retirement remains parked
-    (leave a precise remnant naming what is left and why). **Delete this plan file last.**
+    plan falsifies it. Resolve the TODO.md entries this work completes — including the
+    `padlet_url` retirement, which this plan now finishes rather than parks. **Delete this
+    plan file last.**
 
 ## Acceptance criteria
 

@@ -261,7 +261,6 @@ export function ParentDashboardPageBody({
                           key={enrollment.participationId}
                           enrollment={enrollment}
                           audience="customer"
-                          gamerFirstName={gamer.firstName}
                           onOpenPortal={onOpenPortal}
                         />
                       ))}

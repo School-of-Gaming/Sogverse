@@ -1190,6 +1190,7 @@
   },
   "familyEnrollment": {
     "emptyState": "{name} Suvbe’taH. ghom’a’mey tIbej ’ej wa’ yIwIv!",
+    "wontRenew": "qaSqa’be’ — Qu’ Qav {date}",
     "noGamers": "naDev QujwI’ tu’be’lu’. QujwI’ wa’DIch yIchel, ghIq ghom’a’ qoj raQ bowIv!",
     "emptyStateCta": "ghom’a’mey raghmey je tIbej"
   },
