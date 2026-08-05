@@ -46,6 +46,11 @@ export function FamilyProductPageScene({
       isRemote={fixture.isRemote}
       gamer={fixture.gamer}
       groupName={fixture.groupName}
+      // Passed on both audiences deliberately: the body is what decides a child
+      // never sees a billing notice, and a scene that withheld the props would
+      // be proving the scene's own conditional rather than the page's.
+      paymentProblem={fixture.paymentProblem}
+      cancellation={fixture.cancellation}
       gedus={fixture.gedus}
       groupPublicNote={fixture.groupPublicNote}
       venue={fixture.venue}

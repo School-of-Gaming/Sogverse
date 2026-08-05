@@ -14,6 +14,10 @@ import {
   GEDU_PRODUCT_SCENARIOS,
   buildGeduProductPageFixture,
 } from "@/components/gedu/session-details/mock-product-page-fixtures";
+import {
+  FAMILY_PRODUCT_SCENARIOS,
+  buildFamilyProductPageFixture,
+} from "@/components/family/product-page/mock-fixtures";
 import { SESSION_FEED_ROSTER } from "@/components/gedu/session-feed/mock-fixtures";
 import {
   attendanceTally,
@@ -120,6 +124,16 @@ describe("registry scenarios match their fixtures", () => {
 
   it("gedu product page", () => {
     expect(slugsFor("gedu-product")).toEqual([...GEDU_PRODUCT_SCENARIOS]);
+  });
+
+  it("family product page, both audiences", () => {
+    // The parent's scene enumerates every scenario; the gamer's deliberately
+    // carries one, because its variant is about attendance and voice rather
+    // than about the shapes a product can be in.
+    expect(slugsFor("parent-club")).toEqual([...FAMILY_PRODUCT_SCENARIOS]);
+    for (const slug of slugsFor("gamer-club")) {
+      expect(FAMILY_PRODUCT_SCENARIOS).toContain(slug);
+    }
   });
 
   it("public product surfaces", () => {
@@ -846,5 +860,50 @@ describe("the unverified scenario is the empty dashboard", () => {
       );
       expect(assignments.length === 0, scenario).toBe(scenario === "unverified");
     }
+  });
+});
+
+/**
+ * The club page's two billing states are the only things on it that are
+ * parent-only *and* exceptional, so between them the scenarios have to show
+ * each exactly once — and never both at once, which is a state Stripe cannot
+ * produce (`past_due` and `canceling` are exclusive) and which the page would
+ * therefore be inventing.
+ */
+describe("the family club page's billing states", () => {
+  const now = new Date("2026-02-11T09:00:00Z");
+  const fixtures = FAMILY_PRODUCT_SCENARIOS.map((scenario) => ({
+    scenario,
+    fixture: buildFamilyProductPageFixture(now, scenario),
+  }));
+
+  it("shows each of them somewhere, and never together", () => {
+    expect(fixtures.filter((f) => f.fixture.paymentProblem)).toHaveLength(1);
+    expect(
+      fixtures.filter((f) => f.fixture.cancellation !== null),
+    ).toHaveLength(1);
+    for (const { scenario, fixture } of fixtures) {
+      expect(
+        fixture.paymentProblem && fixture.cancellation !== null,
+        scenario,
+      ).toBe(false);
+    }
+  });
+
+  it("names a last session the feed actually contains", () => {
+    // The notice says "her last session is …", so a date the timeline does not
+    // have would be the page disagreeing with itself.
+    const cancelled = fixtures.find((f) => f.fixture.cancellation !== null);
+    expect(cancelled).toBeDefined();
+    const { accessUntil, lastSessionStart } = cancelled!.fixture.cancellation!;
+    expect(lastSessionStart).not.toBeNull();
+    expect(lastSessionStart!.getTime()).toBeLessThanOrEqual(
+      accessUntil.getTime(),
+    );
+    expect(
+      cancelled!.fixture.entries.some(
+        (entry) => entry.startsAt.getTime() === lastSessionStart!.getTime(),
+      ),
+    ).toBe(true);
   });
 });

@@ -590,8 +590,8 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
    * never marked off, a week whose roster was started and abandoned, a pre-epoch
    * tail nothing is owed for, a future horizon with reports already on it, and
    * three sister groups in the rail — one of them not staffed yet. Fifty-five
-   * weeks is also what makes the month dividers and the chunked "show earlier"
-   * reveal do any work at all, and the reports themselves run from two lines to
+   * weeks is also what makes the month dividers and the scroll-fed history do
+   * any work at all, and the reports themselves run from two lines to
    * twelve so the feed's clamp is exercised beside reports short enough not to
    * need it.
    */

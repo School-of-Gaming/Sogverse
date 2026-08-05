@@ -205,7 +205,7 @@ export const PREVIEW_SCENES = [
         slug: "club",
         label: "Club — remote, weekly",
         description:
-          "The kitchen sink. Fifty-five weeks of history behind month dividers and the chunked reveal, both states a card can wear and every way into them (green-checked with register and report both in; amber for a register left unfinished, and amber again for a week marked off but never written up — the report is owed work, not a bonus), reports from two lines to a full dated write-up so the clamp and its “Read more” are both on screen from the first frame, and three sister groups in the rail including one nobody teaches yet. At the bottom, the pre-epoch tail: a session somebody went back and wrote up (an ordinary entry that never turns amber, and the one place the neutral marker survives) and two nobody has touched — quiet placeholder lines that still open the record editor, because the epoch gates what is owed, not what can be edited.",
+          "The kitchen sink. Fifty-five weeks of history behind month dividers, arriving as you scroll, both states a card can wear and every way into them (green-checked with register and report both in; amber for a register left unfinished, and amber again for a week marked off but never written up — the report is owed work, not a bonus), reports from two lines to a full dated write-up so the clamp and its “Read more” are both on screen from the first frame, and three sister groups in the rail including one nobody teaches yet. At the bottom, the pre-epoch tail: a session somebody went back and wrote up (an ordinary entry that never turns amber, and the one place the neutral marker survives) and two nobody has touched — quiet placeholder lines that still open the record editor, because the epoch gates what is owed, not what can be edited.",
       },
       {
         slug: "camp",
@@ -219,20 +219,20 @@ export const PREVIEW_SCENES = [
     surface: "parent-club",
     title: "Family product page — parent",
     description:
-      "The page a parent opens from My SOG for one enrollment: gamer-scoped (“Minecraft Builders Club, for Aino”), single column, mobile-first, and read-only end to end. The masthead answers when and where — schedule, Join or address — the notes card answers what is always true here, and the same session feed the gedu workspace runs on answers what happened, with this child's attendance mark on it and nothing about anybody else's. Everything a family may not see is structurally absent rather than filtered: no staff notes, no roster, no peer groups, no material link.",
+      "The page a parent opens from My SOG for one enrollment: gamer-scoped (“Minecraft Builders Club, for Aino”, with her group on the line beneath), single column, mobile-first, and read-only end to end. The masthead answers when and where — schedule, Join or address — a notice under it says so when the enrollment has a billing problem, the notes card answers what is always true here, and the same session feed the gedu workspace runs on answers what happened, with this child's attendance mark on it and nothing about anybody else's. Everything a family may not see is structurally absent rather than filtered: no staff notes, no roster, no peer groups, no material link.",
     chrome: "dashboard",
     scenarios: [
       {
         slug: "active-club",
         label: "Club — remote, session in progress",
         description:
-          "The kitchen sink, and the only scenario with a live room: a session running right now, so the Join is lit and the top entry says “Happening now” instead of “Next session”. Six more sessions collapsed above the divider (the upward reveal, judged against a screenful), four months of history behind it with month dividers and the chunked reveal, and the past states worth seeing together — every report rendered in full, never clamped (the reports are what a family comes for; the gedu's Read-more belongs to their work queue): the long recap at the head, an ordinary present week, a week this child was not at, a second long write-up deeper down showing what back-to-back full reports cost the scroll, a week written up with nobody marked, and a week with nothing on it at all.",
+          "The kitchen sink, and the only scenario with a live room: a session running right now, so the Join is lit and the top entry says “Happening now” instead of “Next session”. It is also the cancelled membership — the muted “won't renew” line under the masthead naming the last covered session, which is not an alarm because nothing is wrong; the gamer's copy of this same scenario shows no such line at all. Six more sessions collapsed above the divider (the upward reveal, judged against a screenful), four months of history behind it with month dividers and the scroll-fed past, and the past states worth seeing together — every report rendered in full, never clamped (the reports are what a family comes for; the gedu's Read-more belongs to their work queue): the long recap at the head, an ordinary present week, a week this child was not at, a second long write-up deeper down showing what back-to-back full reports cost the scroll, a week written up with nobody marked, and a week with nothing on it at all.",
       },
       {
         slug: "in-person-club",
         label: "Club — in person",
         description:
-          "The venue shape: an address under the schedule, a second standing note about the building, and no Join anywhere — not a locked one, because there is no room behind it and a locked button promises an unlock.",
+          "The venue shape: an address under the schedule, a second standing note about the building, and no Join anywhere — not a locked one, because there is no room behind it and a locked button promises an unlock. It also carries the failing card, so the destructive notice has the top of a page with no Join competing for it.",
       },
       {
         slug: "camp",

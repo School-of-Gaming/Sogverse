@@ -2,7 +2,14 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { ArrowLeft, CalendarDays, MapPin } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  CalendarDays,
+  MapPin,
+  RefreshCwOff,
+  type LucideIcon,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +21,7 @@ import {
   renderScheduleLinesForDetail,
 } from "@/components/public/products/format-product-schedule";
 import { ROUTES } from "@/lib/constants";
+import { cn, formatDate } from "@/lib/utils";
 import { computeVoiceState } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
 import type { SessionAudience } from "@/types";
@@ -60,6 +68,13 @@ import type {
  *   completeness states, no amber warnings, no editors. Those are the gedu's
  *   workflow, and a family shown warnings about paperwork they cannot do would
  *   be reading the platform's problems instead of their child's club.
+ * - **The enrollment's own problems are the exception, and they are the
+ *   parent's.** A failing card or a membership winding down is not platform
+ *   paperwork — it is a fact about this family's place in this club, and a
+ *   parent who tapped through from a badged dashboard card must not land on a
+ *   page that reads as though nothing is wrong. One notice, under the masthead,
+ *   destructive when something needs fixing and neutral when it is only the
+ *   confirmation of something they asked for. The child's copy carries neither.
  *
  * **What is structurally absent, and stays that way:** staff notes of any scope,
  * the group roster, any other child's name or attendance, parent emails, the
@@ -68,10 +83,11 @@ import type {
  * shape the privacy line takes.
  *
  * One body serves both audiences. The gamer's copy is the parent's minus the
- * attendance marks and the "for Alex" attribution (it is their own page; the
- * identity line carries their group instead), with the empty states in their own
- * voice. That is three small conditionals against two near-identical forks, and
- * the fork is how the two drift.
+ * attendance marks, the "for Alex" attribution and the billing notices, with the
+ * empty states in their own voice; the group name is on both, under the product
+ * name that is the page's primary identity either way. That is a handful of
+ * small conditionals against two near-identical forks, and the fork is how the
+ * two drift.
  */
 export interface FamilyProductPageBodyProps {
   /**
@@ -97,8 +113,35 @@ export interface FamilyProductPageBodyProps {
   isRemote: boolean;
   /** The child this page is about. */
   gamer: { id: string; firstName: string };
-  /** The group they are in. Shown to the gamer as their identity line. */
+  /**
+   * The group they are in — a secondary identity line on both copies of the
+   * page. A default name ("Group A") is expected and fine: it is still the
+   * word a gedu will use on the phone.
+   */
   groupName: string;
+  /**
+   * Whether the subscription behind this enrollment is failing (`past_due`).
+   *
+   * **Parent variant only**, and presentational: the page states the problem
+   * and points at the dashboard's billing section rather than opening a portal
+   * itself, so a card that badges a problem and the page it opens can never
+   * disagree about whether there is one. A child's copy never renders it —
+   * billing is not theirs to act on, and an alarm they cannot answer is worse
+   * than silence.
+   */
+  paymentProblem?: boolean;
+  /**
+   * Set when the parent has cancelled this club's subscription. Parent variant
+   * only, for the same reason as above.
+   *
+   * **What it does not yet do is clamp the feed.** A cancelled enrollment must
+   * eventually show nothing past its paid window — the card's next session, the
+   * dashboard sort and this page's future block all stop at the same instant —
+   * and that clamping belongs with whoever resolves the occurrences, which is
+   * the data shell this page does not have yet. This prop only makes the state
+   * *visible*; entries arrive already clamped or they do not.
+   */
+  cancellation?: FamilyProductCancellation | null;
   /** Who teaches this group — first names only, as identicon chips. */
   gedus: readonly FamilyProductGedu[];
   /** The group's standing note for families, plain text. `null` = none. */
@@ -121,6 +164,26 @@ export interface FamilyProductPageBodyProps {
   entries: readonly FamilySessionEntry[];
   /** The zone the schedule was authored in; the feed renders in the viewer's. */
   sourceTimeZone: string;
+}
+
+/**
+ * A subscription the parent has cancelled, as this page reads it.
+ *
+ * It is the participation-level half of what the dashboard's corner badge
+ * carries — the badge additionally knows whether *that card* is the final
+ * session, which is a per-occurrence fact and means nothing on a page about the
+ * whole enrollment.
+ */
+export interface FamilyProductCancellation {
+  /** The instant paid access ends. */
+  accessUntil: Date;
+  /**
+   * Start of the final covered session, or `null` when the window closes with
+   * nothing left on the schedule. The two cases get different sentences: naming
+   * a last session is what a parent tracks, and an access date is what is left
+   * to say when there is no session to name.
+   */
+  lastSessionStart: Date | null;
 }
 
 /**
@@ -147,6 +210,8 @@ export function FamilyProductPageBody({
   isRemote,
   gamer,
   groupName,
+  paymentProblem = false,
+  cancellation = null,
   gedus,
   groupPublicNote,
   venue,
@@ -207,23 +272,34 @@ export function FamilyProductPageBody({
           {productName}
         </h1>
 
-        {/* The identity line, and the one place the two audiences genuinely
-            need different words. A parent is looking at one of several pages
-            and has to know whose it is; a gamer is on their own page, where
-            "for you" would be noise — so theirs names the group instead, which
-            is the only other identity this page has. */}
-        {isParent ? (
+        {/* The identity lines. The product name above is the page's primary
+            identity on both copies; what differs is what a reader needs
+            *beside* it. A parent is looking at one of several pages and has to
+            know whose it is, so theirs leads with the child; a gamer is on
+            their own page, where "for you" would be noise.
+            **Both then name the group.** It is the other identity this page
+            has, it is what a gedu says on the phone ("Aino is in Builders A"),
+            and a default like "Group A" is an acceptable answer — a line that
+            says little is not the same as a line that misleads, and a parent
+            who has never seen the name is exactly who needs to. It sits under
+            the child rather than beside her: two facts on one line would have
+            made an avatar, a name and a group read as one long sentence. */}
+        {isParent && (
           <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
             <Avatar className="h-6 w-6">
               <Identicon id={gamer.id} size={24} />
             </Avatar>
             <span>{t("forGamer", { name: gamer.firstName })}</span>
           </p>
-        ) : (
-          <p className="mt-2 text-sm font-medium text-muted-foreground">
-            {groupName}
-          </p>
         )}
+        <p
+          className={cn(
+            "text-sm font-medium text-muted-foreground",
+            isParent ? "mt-1" : "mt-2",
+          )}
+        >
+          {groupName}
+        </p>
 
         {/* Icon plus a screen-reader label rather than a visible one: on a
             360px viewport a "When" label above two schedule lines costs a line
@@ -272,6 +348,37 @@ export function FamilyProductPageBody({
           </div>
         )}
       </header>
+
+      {/* Directly under the masthead, above everything the page is otherwise
+          about: a parent who tapped through from an alarmed card must not land
+          on a page that acts as though nothing is wrong. One at a time and most
+          actionable first — the two states are mutually exclusive in Stripe
+          anyway (`past_due` and `canceling` cannot both hold), so the ordering
+          is belt and braces rather than a real choice.
+
+          Nothing here is a control. The card's corner badge owns the portal;
+          this page states the fact and names where the fix lives, which keeps
+          the page presentational and keeps one action in one place. */}
+      {isParent && paymentProblem ? (
+        <ProblemNotice tone="destructive" icon={AlertTriangle}>
+          {t("paymentProblemNotice", { name: gamer.firstName })}
+        </ProblemNotice>
+      ) : isParent && cancellation !== null ? (
+        <ProblemNotice tone="muted" icon={RefreshCwOff}>
+          {cancellation.lastSessionStart === null
+            ? t("cancellationNoticeNoSession", {
+                date: noticeDate(cancellation.accessUntil, locale, timeZone),
+              })
+            : t("cancellationNotice", {
+                name: gamer.firstName,
+                date: noticeDate(
+                  cancellation.lastSessionStart,
+                  locale,
+                  timeZone,
+                ),
+              })}
+        </ProblemNotice>
+      ) : null}
 
       {/* Who is teaching this child, first names and faces, directly under the
           masthead. It is the page's trust signal and it belongs above the
@@ -326,6 +433,63 @@ export function FamilyProductPageBody({
 /** A nullable stored field that actually has something in it. */
 function nonEmpty(value: string | null): string | null {
   return value !== null && value.length > 0 ? value : null;
+}
+
+/**
+ * The date a notice names, in the viewer's zone.
+ *
+ * Both instants a notice can carry have a clock face behind them — a session
+ * start, and the moment paid access lapses — so they convert like every other
+ * instant on this page. The clock face itself is dropped: a parent tracks the
+ * *day* their child's last session falls on, and printing 18:30 beside it
+ * invites the question of whether the membership ends mid-session.
+ */
+function noticeDate(instant: Date, locale: string, timeZone: string): string {
+  return formatDate(instant, locale, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    timeZone,
+  });
+}
+
+/**
+ * One line about something wrong with the enrollment, under the masthead.
+ *
+ * **Two tones, and the difference between them is whether anybody has to do
+ * anything.** A failing card is destructive: the club stops if it is not fixed,
+ * and the page should say so in the colour the rest of the product uses for
+ * exactly that. A cancellation is neutral and muted, because it is not a fault
+ * at all — it is confirmation that something the parent themselves asked for has
+ * been done, and dressing it in alarm colours would tell them they had made a
+ * mistake.
+ *
+ * A line rather than a card: a card here would compete with the standing notes
+ * card below it, which is a different kind of thing (what is always true) from
+ * this (what is true right now and shouldn't be).
+ */
+function ProblemNotice({
+  tone,
+  icon: Icon,
+  children,
+}: {
+  tone: "destructive" | "muted";
+  icon: LucideIcon;
+  children: React.ReactNode;
+}) {
+  return (
+    <p
+      className={cn(
+        "mt-5 flex items-start gap-2 rounded-md border px-3 py-2.5 text-sm",
+        tone === "destructive"
+          ? "border-destructive/40 bg-destructive/10 text-destructive"
+          : "border-border bg-muted/40 text-muted-foreground",
+      )}
+    >
+      <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+      <span className="min-w-0">{children}</span>
+    </p>
+  );
 }
 
 /**

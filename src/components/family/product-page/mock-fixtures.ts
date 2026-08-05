@@ -1,7 +1,10 @@
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import { getNextSessionStart } from "@/lib/enrollment";
 import type { AttendanceMark } from "@/components/session-feed";
-import type { FamilyProductSchedule } from "./FamilyProductPageBody";
+import type {
+  FamilyProductCancellation,
+  FamilyProductSchedule,
+} from "./FamilyProductPageBody";
 import type {
   FamilyProductGedu,
   FamilyProductVenue,
@@ -61,6 +64,10 @@ export interface FamilyProductPageFixture {
   isRemote: boolean;
   gamer: { id: string; firstName: string };
   groupName: string;
+  /** The parent-only payment-problem notice. Never true beside a cancellation. */
+  paymentProblem: boolean;
+  /** The parent-only "won't renew" notice, or `null` on a healthy enrollment. */
+  cancellation: FamilyProductCancellation | null;
   gedus: readonly FamilyProductGedu[];
   groupPublicNote: string | null;
   venue: FamilyProductVenue | null;
@@ -206,8 +213,8 @@ type FamilyEntrySpec =
 /**
  * The active club's run: seven sessions ahead (so the divider reads "6 upcoming
  * sessions" and the reveal is judged against a screenful) and sixteen behind,
- * which is four months and therefore three or four month dividers plus the
- * chunked "show earlier" control.
+ * which is four months and therefore three or four month dividers plus a
+ * history the scroll sentinel has to feed in more than one chunk.
  *
  * The first six past entries are the states worth seeing side by side:
  *
@@ -388,6 +395,16 @@ interface ScenarioConfig {
   groupPublicNote: string | null;
   venue: FamilyProductVenue | null;
   /**
+   * The parent-only billing states, both of which the gamer's copy of this page
+   * must render nothing for. Only one scenario carries each: they are mutually
+   * exclusive on one enrollment (Stripe cannot be `past_due` and `canceling` at
+   * once), and a page carrying neither is the ordinary case every other scenario
+   * is showing.
+   */
+  paymentProblem?: boolean;
+  /** Days from `now` that paid access runs out, when the parent has cancelled. */
+  cancelledAccessInDays?: number | null;
+  /**
    * Whether the product's `start_date` is the day of its first *listed*
    * session rather than the day of its oldest one. A club a family has just
    * bought into has not started yet, and the boundary is what makes its voice
@@ -421,6 +438,13 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
     groupPublicNote:
       "Builders A is our redstone-heavy group. The shared world carries across every session, so anything Aino builds stays there for next week — scroll back through the sessions below to see what the group has made since it started.",
     venue: null,
+    // The membership winding down, on the club rather than the camp: a camp is
+    // bought outright and has no subscription to not-renew, so a "won't renew"
+    // line there would be describing something that cannot happen. The parent's
+    // copy of this page shows the neutral notice; the gamer's copy renders the
+    // same scenario and must show nothing, which is what makes this the right
+    // scenario to hang it on.
+    cancelledAccessInDays: 24,
   },
 
   /**
@@ -448,13 +472,17 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
       publicNote:
         "Drop-off and pick-up are at the main entrance on Leppävaarankatu. Come up to the second floor and the group room is on the right, past the study desks. There is a water fountain outside the room, and the café downstairs closes at 16:00.",
     },
+    // The failing card, on the one scenario with no Join anywhere: the
+    // destructive notice then has the top of the page to itself, which is where
+    // it has to be legible, and the two states never appear on one page.
+    paymentProblem: true,
   },
 
   /**
    * **A product whose run is over.** Five consecutive weekdays, all of them
    * behind us, so the feed is history end to end: no future block, no divider,
-   * and no "show earlier" either, since five entries fit inside the opening
-   * slice. It is remote, which makes it the one scenario proving that a
+   * and nothing for the scroll sentinel to reveal either, since five entries fit
+   * inside the opening slice. It is remote, which makes it the one scenario proving that a
    * *finished* remote product renders no Join — a locked button promises an
    * unlock, and this room will never open again.
    */
@@ -555,6 +583,23 @@ export function buildFamilyProductPageFixture(
     isRemote: config.isRemote,
     gamer: AINO,
     groupName: config.groupName,
+    paymentProblem: config.paymentProblem === true,
+    cancellation:
+      config.cancelledAccessInDays === undefined ||
+      config.cancelledAccessInDays === null
+        ? null
+        : {
+            accessUntil: new Date(
+              now.getTime() + config.cancelledAccessInDays * 86_400_000,
+            ),
+            // The last covered session is the last one the paid window reaches.
+            // Derived from the run rather than authored, so the notice cannot
+            // name a date the feed above it disagrees with.
+            lastSessionStart: lastStartWithin(
+              starts,
+              new Date(now.getTime() + config.cancelledAccessInDays * 86_400_000),
+            ),
+          },
     gedus: config.gedus,
     groupPublicNote: config.groupPublicNote,
     venue: config.venue,
@@ -562,6 +607,21 @@ export function buildFamilyProductPageFixture(
     entries,
     sourceTimeZone: TIMEZONE,
   };
+}
+
+/**
+ * The last session start at or before an instant — the final session a paid
+ * window still covers.
+ *
+ * The starts run newest first, so the *first* one inside the window is the
+ * latest of them. A window that closes before every remaining session (or a run
+ * with none ahead) answers `null`, which is the case the notice has its own
+ * sentence for.
+ */
+function lastStartWithin(starts: readonly Date[], until: Date): Date | null {
+  return (
+    starts.find((start) => start.getTime() <= until.getTime()) ?? null
+  );
 }
 
 /** How many of a spec list's leading entries are future sessions. */

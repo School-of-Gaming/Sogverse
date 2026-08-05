@@ -1179,7 +1179,10 @@
     "attendanceNotPresent": "Pas présent",
     "noWriteUp": "Aucun compte rendu",
     "emptyFeedCustomer": "Il n’y a pas encore de séances ici.",
-    "emptyFeedGamer": "Tu n’as pas encore de séances ici."
+    "emptyFeedGamer": "Tu n’as pas encore de séances ici.",
+    "paymentProblemNotice": "Le paiement de ce club pose problème — mettez votre carte à jour dans Facturation sur Mon SOG pour conserver la place de {name}.",
+    "cancellationNotice": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. La dernière session de {name} est le {date}.",
+    "cancellationNoticeNoSession": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. L’accès reste ouvert jusqu’au {date}."
   },
   "selectProfile": {
     "title": "Qui entre dans le Sogverse ?"

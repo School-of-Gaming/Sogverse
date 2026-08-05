@@ -110,26 +110,31 @@ export function newestPastEntryId<T extends FeedShapedEntry>(
 }
 
 /**
- * How many past entries the feed renders before the reader asks for more.
+ * How many past entries the feed renders before the reader scrolls for more.
  *
  * A year-old club is 50+ sessions and the newest is always the one being read,
- * so the feed opens on the recent past and everything older waits behind a
- * reveal at the bottom.
+ * so the feed opens on the recent past and everything older waits just below
+ * the fold. It is a *rendering* window and never a fetching one — the whole
+ * history is already in memory — so the size is chosen for how much a browser
+ * should paint at once, not for what a round trip costs.
  */
 export const FEED_INITIAL_PAST_ENTRIES = 10;
 
-/** How many more past entries each "show earlier sessions" click reveals. */
+/** How many more past entries each reveal adds as the reader reaches them. */
 export const FEED_PAST_CHUNK_SIZE = 10;
 
 export interface PastEntryWindow {
   /** How many of the past entries to render, newest first. */
   visible: number;
-  /** How many are still hidden — zero means the control renders nothing. */
+  /**
+   * How many are still hidden — zero means the whole history is on screen and
+   * there is nothing left for the feed's scroll sentinel to watch for.
+   */
   remaining: number;
 }
 
 /**
- * Which slice of the past is on screen after `chunksRevealed` clicks.
+ * Which slice of the past is on screen after `chunksRevealed` reveals.
  *
  * Revealing appends *below* what is already painted, so nothing the reader is
  * looking at moves — which is the only reason a chunked reveal is allowed to

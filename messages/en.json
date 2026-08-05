@@ -1179,7 +1179,10 @@
     "attendanceNotPresent": "Not present",
     "noWriteUp": "No write-up",
     "emptyFeedCustomer": "There are no sessions on this one yet.",
-    "emptyFeedGamer": "You have no sessions on this one yet."
+    "emptyFeedGamer": "You have no sessions on this one yet.",
+    "paymentProblemNotice": "There’s a problem with the payment for this club — update your card under Billing on My SOG to keep {name}’s place.",
+    "cancellationNotice": "You canceled this membership — it won’t renew. {name}’s last session is {date}.",
+    "cancellationNoticeNoSession": "You canceled this membership — it won’t renew. Access runs through {date}."
   },
   "selectProfile": {
     "title": "Who is entering Sogverse?"

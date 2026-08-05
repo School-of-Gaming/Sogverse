@@ -1179,7 +1179,10 @@
     "attendanceNotPresent": "Ei paikalla",
     "noWriteUp": "Ei koostetta",
     "emptyFeedCustomer": "Tällä ei ole vielä yhtään kertaa.",
-    "emptyFeedGamer": "Sinulla ei ole vielä yhtään kertaa tässä."
+    "emptyFeedGamer": "Sinulla ei ole vielä yhtään kertaa tässä.",
+    "paymentProblemNotice": "Tämän kerhon maksussa on ongelma – päivitä korttitietosi Oman SOGin Laskutus-osiossa, jotta {name} säilyttää paikkansa.",
+    "cancellationNotice": "Peruit tämän jäsenyyden – se ei uusiudu. {name}: viimeinen kerta on {date}.",
+    "cancellationNoticeNoSession": "Peruit tämän jäsenyyden – se ei uusiudu. Käyttöoikeus jatkuu {date} asti."
   },
   "selectProfile": {
     "title": "Kuka astuu Sogverseen?"

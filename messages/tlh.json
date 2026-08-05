@@ -1224,7 +1224,10 @@
     "attendanceNotPresent": "pawbe’",
     "noWriteUp": "qonta’ tu’lu’be’",
     "emptyFeedCustomer": "naDev may’mey tu’lu’be’.",
-    "emptyFeedGamer": "may’mey Dajmey tu’lu’be’."
+    "emptyFeedGamer": "may’mey Dajmey tu’lu’be’.",
+    "paymentProblemNotice": "ghom’a’vam Huch Qob! jIH SOGDaq Huch DIl DaSDIq yIchoH, {name} Daq yItaHmoH.",
+    "cancellationNotice": "may’morgh DanatlhHa’pu’! qaSqa’be’. {name} Qu’ Qav ’oH {date}’e’.",
+    "cancellationNoticeNoSession": "may’morgh DanatlhHa’pu’! qaSqa’be’. {date} tlhab SoH."
   },
   "selectProfile": {
     "title": "Sogverse ’el ’Iv?"

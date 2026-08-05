@@ -1179,7 +1179,10 @@
     "attendanceNotPresent": "Inte närvarande",
     "noWriteUp": "Ingen sammanfattning",
     "emptyFeedCustomer": "Det finns inga tillfällen här än.",
-    "emptyFeedGamer": "Du har inga tillfällen här än."
+    "emptyFeedGamer": "Du har inga tillfällen här än.",
+    "paymentProblemNotice": "Det är problem med betalningen för den här klubben – uppdatera ditt kort under Fakturering på Min SOG så att {name} behåller sin plats.",
+    "cancellationNotice": "Du har sagt upp medlemskapet — det förnyas inte. {name}s sista pass är {date}.",
+    "cancellationNoticeNoSession": "Du har sagt upp medlemskapet — det förnyas inte. Du har tillgång till {date}."
   },
   "selectProfile": {
     "title": "Vem ska in i Sogverse?"
