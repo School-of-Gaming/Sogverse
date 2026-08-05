@@ -102,7 +102,7 @@ describe("the schedule is the card's timing row", () => {
     // The one case with nothing to say, so the row says that rather than
     // collapsing and taking a line off the card's height.
     const html = cardHtml({ ...lockedRemoteCard, scheduleLines: [] });
-    expect(html).toContain(messages.gedu.myGroups.noNextSession);
+    expect(html).toContain(messages.activityCard.noSchedule);
   });
 });
 
@@ -130,5 +130,44 @@ describe("every card is the same height whatever its footer holds", () => {
     const html = cardHtml(onsiteCard);
     expect(html).toContain(onsiteCard.assignment.siteName!);
     expect(html).not.toContain(messages.voiceButton.joinVoice);
+  });
+});
+
+/**
+ * The two things in the corner cluster that are not the card's own content: a
+ * badge that turns on with the clock, and a badge that is the whole reason a
+ * gedu is sweeping the grid. Each has one rule, and each rule was wrong once.
+ */
+describe("the corner", () => {
+  it("holds the Live slot only where the badge could ever land", () => {
+    // Reserved on a card with a session ahead of it — invisible rather than
+    // absent, because it turns on with the clock and a badge mounting into the
+    // flex row would squeeze the product name beside it mid-read.
+    const held = cardHtml(lockedRemoteCard);
+    expect(held).toContain(messages.sessionBadge.live);
+    expect(held).toContain("invisible");
+
+    // Dropped where nothing is left to start: a finished run, and equally a
+    // card whose schedule has nothing on it. Space held for something that
+    // cannot come is its own defect.
+    expect(cardHtml(endedCard)).not.toContain(messages.sessionBadge.live);
+    const unscheduled = cardHtml({
+      ...lockedRemoteCard,
+      assignment: {
+        ...lockedRemoteCard.assignment,
+        nextSessionStart: null,
+        nextSessionEnd: null,
+      },
+    });
+    expect(unscheduled).not.toContain(messages.sessionBadge.live);
+  });
+
+  it("makes the attention badge open the card it sits on", () => {
+    // It paints *above* the card's stretched link, so a non-interactive badge
+    // there is a dead zone on the exact spot the sweep tells a gedu to tap.
+    const badged = cardFor((c) => c.assignment.attentionCount > 0);
+    const html = cardHtml(badged);
+    expect(html).toMatch(/<a[^>]*aria-label="[^"]*attention[^"]*"/);
+    expect(html).not.toContain("cursor-default");
   });
 });

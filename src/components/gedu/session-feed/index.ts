@@ -1,12 +1,21 @@
+/**
+ * The gedu's **workspace** session feed: the editors, the attendance roster, the
+ * derivations that say what a session still owes, the gedu-note block and the
+ * badges that count outstanding work.
+ *
+ * Everything a family surface may also render — the row shaping, the viewer-zone
+ * labels, the scroll anchoring, the now-divider and the report body — lives in
+ * `@/components/session-feed` and is deliberately **not** re-exported here.
+ * Callers import it from there directly, so this barrel stays the answer to one
+ * question: what does staff-only look like. A family page reaching for a feed
+ * primitive never has a path that could also hand it a gedu note.
+ */
+
 export { CollapsibleRegion } from "./CollapsibleRegion";
-export { NowDivider } from "./NowDivider";
 export { SessionFeed } from "./SessionFeed";
 export { SessionFeedAlertBadge } from "./SessionFeedAlertBadge";
-export { SessionReport } from "./SessionReport";
 export { StaffNoteBlock } from "./StaffNoteBlock";
 export {
-  FEED_INITIAL_PAST_ENTRIES,
-  FEED_PAST_CHUNK_SIZE,
   applyDraftToEntry,
   applyPlanDraftToEntry,
   attendanceTally,
@@ -18,9 +27,6 @@ export {
   entryNeedsAttention,
   isEditableEntry,
   isPlannableEntry,
-  newestPastEntryId,
-  partitionFeedEntries,
-  pastEntryWindow,
   planDraftFromEditorState,
   planEditorStateFromEntry,
   rosterScopedMarks,
@@ -30,15 +36,7 @@ export {
   PartialSessionSaveError,
   isPartialSessionSaveError,
 } from "./partial-save";
-export {
-  REPORT_CLAMP_LINES,
-  REPORT_CLAMP_REM,
-  estimateReportLines,
-  reportOverflows,
-} from "./report-clamp";
-export { resolveScrollCompensation, useViewportAnchor } from "./scroll-anchor";
 export type {
-  AttendanceMark,
   AttendanceMarks,
   EditableSessionFeedEntry,
   FutureSessionFeedEntry,

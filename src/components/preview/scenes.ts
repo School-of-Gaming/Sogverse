@@ -108,6 +108,66 @@ export const PREVIEW_SCENES = [
     ],
   },
   {
+    surface: "parent-dashboard",
+    title: "Parent dashboard",
+    description:
+      "The parent dashboard reorganised around the children rather than around the sessions: a section per child, headed by their identicon, first name and a quiet Manage link to their identity page, with one card per enrollment beneath it — soonest session first, finished runs muted at the bottom. The cards carry no child's name, because the heading above them already does; the type noun is the eyebrow, the schedule is the shared formatter's sentence, and the footer holds the Join on a remote product, the venue on an in-person one, the place in line and what happens when a seat opens on a waitlisted one, or the day a finished run ended. A waitlisted card is the one card that is not a link — there is no page behind it yet — and the corner is reserved for genuine problems. The My Gamers tile strip is gone — the headings absorbed it, and adding a child is one quiet tile after the last section. Every action is inert.",
+    chrome: "dashboard",
+    scenarios: [
+      {
+        slug: "typical",
+        label: "One child, one club",
+        description:
+          "The page most parents actually open: one heading, one card, a locked Join naming the next session, and the billing card in its ordinary single-button form. It is here so the design can be judged on the common case — a dashboard that reads well with four cards and looks abandoned with one has failed at its main job.",
+      },
+      {
+        slug: "busy-family",
+        label: "Three children, every card state",
+        description:
+          "Everything that is not mutually exclusive, on one page — and exactly three children, so the pill is also at its named-entry limit, the widest it ever gets before collapsing (four forced sideways scrolling on an iPhone-width viewport). Aino has a remote club running right now — lit gradient, Live badge, Join open — with a failing card on the corner over the top of it, plus a waitlisted club whose footer carries her place in line and which links nowhere. Her brother, whose name is long enough to test both the heading and the nav chip, has an in-person camp naming its venue where a Join would be, a club winding down with the quiet won’t-renew line under its schedule (information in the body, never an alarm on the corner), and last summer’s camp sitting muted below both — the demotion is only legible next to something live. Otso is signed up for nothing, which is where the quiet empty-state card appears. Two Stripe customers, so the billing card is in its split form with a button each.",
+      },
+      {
+        slug: "seven-gamers",
+        label: "Seven children — pill collapsed",
+        description:
+          "Past three children the section pill stops naming them one by one and collapses to a single “Gamers” chip, so this is where the collapse and the seven headings behind it can be judged together.",
+      },
+      {
+        slug: "new-family",
+        label: "New account — no gamers yet",
+        description:
+          "The dashboard minutes after registering: no children linked, so the child sections give way to one “My Gamers” section holding the dashed card whose full-strength add button is the page's whole next step. The pill reads Gamers · Billing · Help — the empty state is still a section the nav can point at, not a card floating above Billing — and the moment the first child is added, that heading becomes their name. Billing is in its ordinary single-button form, and nothing anywhere reads as an error.",
+      },
+      {
+        slug: "no-enrollments",
+        label: "Gamers added, nothing booked",
+        description:
+          "The step after new-family and the state every real family passes through before their first purchase: two children, each section holding only the dashed empty card pointing at the shop. The page has to read as an invitation to book something, not as a dashboard that failed to load.",
+      },
+    ],
+  },
+  {
+    surface: "gamer-dashboard",
+    title: "Gamer dashboard",
+    description:
+      "The child's own dashboard with the same enrollment cards, self-scoped: no attribution anywhere, grouped under the type nouns they actually have rather than by person, and with a section pill that names those nouns plus Yty. The hero greets the child by name — this was the one page in the product that said the same thing to every child on it — and the Yty grid is unchanged. Money is absent entirely — billing is a parent concern, so no payment or subscription badge ever renders here — and there is no way to give up a waitlist place.",
+    chrome: "dashboard",
+    scenarios: [
+      {
+        slug: "typical",
+        label: "A club, a queue, a camp",
+        description:
+          "One page carrying every card state a gamer can meet: a club running right now with its Join lit, a club they are queued for — the waitlist sentence in the child's voice, no link on the card — and an in-person camp naming its venue where the Join would be. Two type nouns with events absent rather than empty; the single-noun composition is the same mechanism the gedu dashboard's clubs-only scenario already shows.",
+      },
+      {
+        slug: "empty",
+        label: "Nothing booked yet",
+        description:
+          "The child with no enrollments: the greeting by name, a single “Clubs” heading over the quiet dashed card — the same convention the gedu's empty dashboard uses — and the Yty grid, which is theirs regardless. The copy tells them to ask a parent, because nothing on this account can book anything.",
+      },
+    ],
+  },
+  {
     surface: "gedu-dashboard",
     title: "Gedu dashboard",
     description:
@@ -145,13 +205,61 @@ export const PREVIEW_SCENES = [
         slug: "club",
         label: "Club — remote, weekly",
         description:
-          "The kitchen sink. Fifty-five weeks of history behind month dividers and the chunked reveal, all three rungs of the completeness ladder (green-checked, quietly done, and still owed), reports from two lines to a full dated write-up so the clamp and its “Read more” are both on screen from the first frame, and three sister groups in the rail including one nobody teaches yet. At the bottom, the pre-epoch tail: a session somebody went back and wrote up (an ordinary entry that never turns amber) and two nobody has touched — quiet placeholder lines that still open the record editor, because the epoch gates what is owed, not what can be edited.",
+          "The kitchen sink. Fifty-five weeks of history behind month dividers, arriving as you scroll, both states a card can wear and every way into them (green-checked with register and report both in; amber for a register left unfinished, and amber again for a week marked off but never written up — the report is owed work, not a bonus), reports from two lines to a full dated write-up so the clamp and its “Read more” are both on screen from the first frame, and three sister groups in the rail including one nobody teaches yet. At the bottom, the pre-epoch tail: a session somebody went back and wrote up (an ordinary entry that never turns amber, and the one place the neutral marker survives) and two nobody has touched — quiet placeholder lines that still open the record editor, because the epoch gates what is owed, not what can be edited.",
       },
       {
         slug: "camp",
         label: "Camp — in person, daily",
         description:
-          "The two things the club cannot show: back-to-back weekday dates across a weekend, and a venue — so this is the scenario with site notes (shared by every product at that site) and with no voice room anywhere, every Join inert. It owes exactly one day, which is what puts an attention badge on an in-person dashboard card.",
+          "The two things the club cannot show: back-to-back weekday dates across a weekend, and a venue — so this is the scenario with site notes (shared by every product at that site) and with no voice room anywhere, every Join inert. It owes exactly one day — yesterday's register — because every other day of the run has both its register and its report in; that single gap is what puts an attention badge on an in-person dashboard card.",
+      },
+    ],
+  },
+  {
+    surface: "parent-club",
+    title: "Family product page — parent",
+    description:
+      "The page a parent opens from My SOG for one enrollment: gamer-scoped (“Minecraft Builders Club, for Aino”, with her group on the line beneath), single column, mobile-first, and read-only end to end. The masthead answers when and where — schedule, Join or address — a notice under it says so when the enrollment has a billing problem, the notes card answers what is always true here, and the same session feed the gedu workspace runs on answers what happened, with this child's attendance mark on it and nothing about anybody else's. Everything a family may not see is structurally absent rather than filtered: no staff notes, no roster, no peer groups, no material link.",
+    chrome: "dashboard",
+    scenarios: [
+      {
+        slug: "active-club",
+        label: "Club — remote, session in progress",
+        description:
+          "The kitchen sink, and the only scenario with a live room: a session running right now, so the Join is lit and the top entry says “Live” instead of “Next session” — the same word the cards on both dashboards use, because it is the same state. It is also the cancelled membership — the muted “won't renew” line under the masthead naming the last covered session, which is not an alarm because nothing is wrong; the gamer's copy of this same scenario shows no such line at all. Six more sessions collapsed above the divider (the upward reveal, judged against a screenful), four months of history behind it with month dividers and the scroll-fed past, and the past states worth seeing together — every report rendered in full, never clamped (the reports are what a family comes for; the gedu's Read-more belongs to their work queue): the long recap at the head, an ordinary present week, a week this child was not at, a second long write-up deeper down showing what back-to-back full reports cost the scroll, a week written up with nobody marked, and a week with nothing on it at all.",
+      },
+      {
+        slug: "in-person-club",
+        label: "Club — in person",
+        description:
+          "The venue shape: an address under the schedule, a second standing note about the building, and no Join anywhere — not a locked one, because there is no room behind it and a locked button promises an unlock. It also carries the failing card, so the destructive notice has the top of a page with no Join competing for it.",
+      },
+      {
+        slug: "camp",
+        label: "Camp — finished",
+        description:
+          "A run that is over. A UTC-pinned date range beside the weekday times, no future block and therefore no divider at all, and — although the camp was remote — no Join either, since there is no next session for a room to open for. The feed is history end to end.",
+      },
+      {
+        slug: "locked-join",
+        label: "Club — Join locked",
+        description:
+          "The page in its resting state: the Join locked and naming its open time, which is what a family sees all week outside the voice window — and the one Join state no other scenario can show, since active-club's room is deliberately live. Dressed as a brand-new club, so the empty past comes along incidentally; the button flips open on the shared clock when the window arrives, no reload.",
+      },
+    ],
+  },
+  {
+    surface: "gamer-club",
+    title: "Family product page — gamer",
+    description:
+      "The same body and the same fixtures as the parent's page, rendered for the child whose page it is. Three things differ and they are the whole of the variant: no attendance marks anywhere (whether they turned up is a signal for the adult paying for the club, not something a child's own page should tell them), the identity line carries their group rather than “for Aino”, and the empty states speak to them instead of about them.",
+    chrome: "dashboard",
+    scenarios: [
+      {
+        slug: "active-club",
+        label: "Club — remote, session in progress",
+        description:
+          "Deliberately the one scenario. The variant is about voice and attendance, not about the shapes a product can be in, and both are visible here — the venue, the finished run and the empty past all behave identically to the parent's copy beside it.",
       },
     ],
   },

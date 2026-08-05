@@ -99,7 +99,8 @@
     "roleAdmin": "Ylläpitäjä",
     "roleParent": "Vanhempi",
     "roleGamer": "Pelaaja",
-    "roleGedu": "Gedu"
+    "roleGedu": "Gedu",
+    "gedus": "Gedut"
   },
   "about": {
     "hero": {
@@ -393,7 +394,7 @@
       },
       "fees": {
         "sectionTitle": "Kertakohtaiset palkkiot ja maksut",
-        "sectionDescription": "Mitä maksamme pelikasvattajille (Gedu) jokaiselta kerralta ja — kuntakerhojen osalta — mitä kunta maksaa meille. Nämä ovat sisäisiä lukuja, erillään siitä mitä vanhemmat maksavat yllä.",
+        "sectionDescription": "Mitä maksamme Geduille jokaiselta kerralta ja — kuntakerhojen osalta — mitä kunta maksaa meille. Nämä ovat sisäisiä lukuja, erillään siitä mitä vanhemmat maksavat yllä.",
         "primaryGeduLabel": "Vastaavan Gedun palkkio",
         "primaryGeduHint": "Maksetaan vastaavalle Gedulle jokaiselta kerralta. Valitse Ei tiedossa, jos asetat sen myöhemmin, tai Vapaaehtoinen, jos hän ohjaa ilmaiseksi.",
         "assistantGeduLabel": "Avustavan Gedun palkkio",
@@ -688,7 +689,7 @@
         "title": "Vahvistus",
         "verified": "Vahvistettu",
         "unverified": "Ei vahvistettu",
-        "unverifiedNote": "Tätä pelikasvattajaa ei ole vielä vahvistettu. Häntä ei voi liittää ryhmään ennen vahvistusta.",
+        "unverifiedNote": "Tätä Gedua ei ole vielä vahvistettu. Häntä ei voi liittää ryhmään ennen vahvistusta.",
         "verifiedOn": "Vahvistettu {date}",
         "verifiedByOn": "Vahvistanut {name} {date}",
         "verifyAction": "Vahvista",
@@ -777,7 +778,7 @@
       "networkError": "Verkkovirhe",
       "geduGroups": "Gedu-ryhmät",
       "addGroup": "Lisää ryhmä",
-      "noGroups": "Ei vielä Gedu-ryhmiä. Lisää ryhmä määrittääksesi pelikasvattajan.",
+      "noGroups": "Ei vielä Gedu-ryhmiä. Lisää ryhmä määrittääksesi Gedun.",
       "selectGeduForGroup": "Valitse Gedu luodaksesi uuden ryhmän.",
       "group": "Ryhmä",
       "groupNumber": "Ryhmä {number}",
@@ -979,7 +980,7 @@
     },
     "nextTitle": "Mitä seuraavaksi tapahtuu",
     "next": {
-      "placement": "{gamer} sijoitetaan ryhmään, jossa toimii peliohjaaja. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
+      "placement": "{gamer} sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
       "subscription": "Maksu veloitetaan kuukausittain. Voit hallita tai peruuttaa tilauksen milloin tahansa Oma SOG -sivulla.",
       "oneTime": "Tämä oli kertamaksu – muuta maksettavaa ei ole."
     },
@@ -1047,7 +1048,7 @@
           "role": "Pelaajan rooli Sogversessa.",
           "firstName": "Pelaajan etunimi.",
           "endTime": "Milloin istuntoikkuna sulkeutuu (sisältää 5 minuutin puskurin suunnitellun lopun jälkeen). Käytä tätä ajoittaaksesi poiston tai uudelleentarkistuksen.",
-          "reason": "Ihmisluettava kuvaus: tuotteen nimi ja kasvattajan nimi."
+          "reason": "Ihmisluettava kuvaus: tuotteen nimi ja Gedun nimi."
         },
         "error401": "Puuttuva, virheellinen tai kelvoton API-avain.",
         "error400": "Puuttuva tai kelvoton <code>uuid</code>-kyselyparametri.",
@@ -1072,7 +1073,7 @@
     "subtitle": "Jaa ajatuksesi kanssamme",
     "sendFeedback": "Lähetä palaute",
     "feedbackDescription": "Kuulemme mielellämme palautettasi, ehdotuksiasi tai virheilmoituksiasi.",
-    "gamerReplyNote": "Pelikasvattajasi saattaa palata asiaasi seuraavan kerran aikana.",
+    "gamerReplyNote": "Gedusi saattaa palata asiaasi seuraavan kerran aikana.",
     "message": "Viesti",
     "placeholder": "Jaa ajatuksesi, ehdotuksesi tai ilmoita virheestä...",
     "charactersNeeded": "{count} merkkiä vielä tarvitaan",
@@ -1085,6 +1086,7 @@
     "pageTitle": "Oma SOG",
     "myFamily": "Perheeni",
     "myGamers": "Pelaajani",
+    "myGamersShort": "Pelaajat",
     "upcomingSessions": "Tapaamiset",
     "upcomingSessionsEmptyStateGamer": "Kun seuraava tapaamisesi lähestyy, täältä pääset liittymään ryhmän omalle puhekanavalle.",
     "upcomingSessionsEmptyStateParent": "Kun lapsesi seuraavan tapaamisen aika koittaa, ilmestyy tähän painike, josta pääsette sisään puhekanaville.",
@@ -1105,6 +1107,8 @@
   },
   "family": {
     "addGamer": "Lisää pelaaja",
+    "manageGamer": "Hallitse",
+    "manageGamerAria": "Hallitse pelaajaa {name}",
     "switchFailed": "Tilin vaihtaminen epäonnistui",
     "loadFailed": "Perheen lataaminen epäonnistui",
     "switchToParentToAddGamer": {
@@ -1132,6 +1136,29 @@
       "genericError": "Pelaajan lisääminen epäonnistui. Yritä uudelleen."
     }
   },
+  "familyEnrollment": {
+    "emptyState": "{name} ei ole vielä ilmoittautunut mihinkään. Katsokaa yhdessä, mitä tarjolla on.",
+    "wontRenew": "Ei uusiudu — viimeinen kerta {date}",
+    "noGamers": "Täällä ei ole vielä pelaajia. Lisää ensimmäinen pelaaja ja valitkaa sitten yhdessä kerho tai leiri.",
+    "emptyStateCta": "Selaa kerhoja ja leirejä"
+  },
+  "familyProduct": {
+    "back": "Takaisin Omaan SOGiin",
+    "forGamer": "Pelaaja: {name}",
+    "scheduleLabel": "Milloin",
+    "venueLabel": "Missä",
+    "aboutHeading": "Tietoa ryhmästä",
+    "venueNoteHeading": "Paikassa {site}",
+    "feedHeading": "Kerrat",
+    "attendancePresent": "Paikalla",
+    "attendanceNotPresent": "Ei paikalla",
+    "noWriteUp": "Ei koostetta",
+    "emptyFeedCustomer": "Tällä ei ole vielä yhtään kertaa.",
+    "emptyFeedGamer": "Täällä ei ole vielä mitään. Jokainen pelaamasi kerta näkyy täällä jälkeenpäin.",
+    "paymentProblemNotice": "Tämän kerhon maksussa on ongelma – päivitä korttitietosi Oman SOGin Laskutus-osiossa, jotta {name} säilyttää paikkansa.",
+    "cancellationNotice": "Peruit tämän jäsenyyden – se ei uusiudu. {name}: viimeinen kerta on {date}.",
+    "cancellationNoticeNoSession": "Peruit tämän jäsenyyden – se ei uusiudu. Käyttöoikeus jatkuu {date} asti."
+  },
   "selectProfile": {
     "title": "Kuka astuu Sogverseen?"
   },
@@ -1147,12 +1174,14 @@
   },
   "gamer": {
     "welcome": "Tervetuloa, pelaaja!",
-    "subtitle": "Valmis pelaamaan ja oppimaan?"
+    "welcomeNamed": "Tervetuloa, {name}!",
+    "subtitle": "Valmis pelaamaan ja oppimaan?",
+    "emptyDashboard": "Täällä ei ole vielä mitään. Pyydä vanhempaasi katsomaan kerhoja ja leirejä kanssasi, niin voitte valita jotain yhdessä."
   },
   "gedu": {
     "coverage": {
       "title": "Kattamasi alueet",
-      "remoteOnlyNote": "Käytetään sijaisen etsimiseen, kun toinen kasvattaja ei pääse pitämään kerhoaan. Jätä tyhjäksi, jos toimit vain etänä.",
+      "remoteOnlyNote": "Käytetään sijaisen etsimiseen, kun toinen Gedu ei pääse pitämään kerhoaan. Jätä tyhjäksi, jos toimit vain etänä.",
       "selectedHeading": "Valitut ({count})",
       "noneSelected": "Ei valittuja alueita",
       "remove": "Poista {name}",
@@ -1163,27 +1192,11 @@
       "saving": "Tallennetaan...",
       "saveError": "Tallennus epäonnistui"
     },
-    "myGroups": {
-      "counts": "{groupCount, plural, one {# ryhmä} other {# ryhmää}} · {gamerCount, plural, one {# pelaaja} other {# pelaajaa}}",
-      "startsIn": "Alkaa {countdown} kuluttua",
-      "inProgress": "Istunto käynnissä",
-      "viewDetails": "Näytä tiedot",
-      "noNextSession": "Ei kertoja aikataulussa",
-      "endedOn": "Päättyi {date}",
-      "liveBadge": "Käynnissä"
-    },
     "sessionDetails": {
       "back": "Takaisin Omaan SOGiin",
-      "typeLabel": {
-        "consumer_club": "Kerho",
-        "municipality_club": "Kerho",
-        "camp": "Leiri",
-        "event": "Tapahtuma"
-      },
       "railOtherGroupsHeading": "Muut ryhmät",
       "noOtherGroups": "Tässä sessiossa ei ole muita ryhmiä.",
       "railGroupHeading": "Oma ryhmä",
-      "gedusLabel": "Gedut",
       "noGedus": "Ryhmälle ei ole määritetty Geduja.",
       "gamersLabel": "Pelaajat",
       "gamerCount": "{count, plural, one {# pelaaja} other {# pelaajaa}}",
@@ -1209,16 +1222,12 @@
       "minecraftSaveFailed": "Käyttäjänimen tallennus epäonnistui. Yritä uudelleen."
     },
     "sessionFeed": {
-      "upcomingBadge": "Seuraava kerta",
-      "futureBadge": "Tuleva kerta",
       "edit": "Muokkaa",
       "needsAttentionLabel": "Vaatii huomiota",
       "completeLabel": "Valmis",
       "noRecordLabel": "Ei kirjausta",
       "emptyFeed": "Tällä ryhmällä ei ole vielä kertoja.",
       "noNotesYet": "Tälle kerralle ei ole vielä muistiinpanoja.",
-      "readMore": "Lue lisää",
-      "showLess": "Näytä vähemmän",
       "attendanceSummary": "{present}/{total} paikalla",
       "presentLabel": "Paikalla",
       "absentLabel": "Poissa",
@@ -1235,8 +1244,6 @@
       "save": "Tallenna",
       "cancel": "Peruuta",
       "alertBadge": "{count, plural, one {# kerta vaatii huomiota} other {# kertaa vaatii huomiota}}",
-      "laterSessions": "{count, plural, one {# tuleva kerta} other {# tulevaa kertaa}}",
-      "showEarlier": "{count, plural, one {Näytä # aiempi kerta} other {Näytä # aiempaa kertaa}}",
       "attendanceMarkedCount": "{marked}/{total} merkitty",
       "attendanceForGamer": "{name} – läsnäolo",
       "saveFailed": "Tallennus epäonnistui. Yritä uudelleen.",
@@ -1274,6 +1281,26 @@
       "staffPlaceholder": "Avaimet, välineet, tilan erityispiirteet — mitä seuraavan Gedun on hyvä tietää tästä toimipaikasta.",
       "saveFailed": "Toimipaikan muistiinpanojen tallennus epäonnistui. Yritä uudelleen."
     }
+  },
+  "productType": {
+    "consumer_club": "Kerho",
+    "municipality_club": "Kerho",
+    "camp": "Leiri",
+    "event": "Tapahtuma"
+  },
+  "activityCard": {
+    "endedOn": "Päättyi {date}",
+    "noSchedule": "Aikataulua ei ole vielä sovittu"
+  },
+  "sessionBadge": {
+    "live": "Käynnissä",
+    "nextSession": "Seuraava kerta",
+    "upcoming": "Tuleva kerta"
+  },
+  "sessionFeed": {
+    "readMore": "Lue lisää",
+    "showLess": "Näytä vähemmän",
+    "laterSessions": "{count, plural, one {vielä # tuleva kerta} other {vielä # tulevaa kertaa}}"
   },
   "groups": {
     "title": "Ryhmät",
@@ -1720,6 +1747,8 @@
       "positionValue": "{position}.",
       "reassuranceCustomer": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
       "reassuranceGamer": "Lähetämme vanhemmallesi sähköpostia heti, kun paikka vapautuu.",
+      "footerReassuranceCustomer": "Jonossa sijalla {position} — lähetämme sähköpostia heti, kun paikka vapautuu.",
+      "footerReassuranceGamer": "Olet jonossa sijalla {position} — lähetämme vanhemmallesi sähköpostia heti, kun paikka vapautuu.",
       "leave": {
         "trigger": "Poistu jonotuslistalta",
         "confirmTitle": "Poistutaanko jonotuslistalta?",
@@ -1735,7 +1764,7 @@
       "tooltipSameDay": "Peruit tämän jäsenyyden – se ei uusiudu. {name}: viimeinen kerta on {lastSession}."
     },
     "awaiting": {
-      "customer": "{name} on mukana! Ohjaaja sijoittaa hänet ryhmään ennen ensimmäisen session alkua.",
+      "customer": "{name} on mukana! Gedu sijoittaa hänet ryhmään ennen ensimmäisen session alkua.",
       "gamer": "Olet mukana! Sijoitamme sinut ryhmääsi ennen seuraavan session alkua."
     },
     "help": {
@@ -1886,7 +1915,7 @@
     "chooseIcon": "Kuvake",
     "chooseColor": "Väri",
     "makePrivate": "Yksityinen alue",
-    "makePrivateHint": "Vain ohjaajat voivat sijoittaa pelaajia tänne, ja heidän äänensä ja videonsa pysyvät täysin yksityisinä.",
+    "makePrivateHint": "Vain moderaattorit voivat sijoittaa pelaajia tänne, ja heidän äänensä ja videonsa pysyvät täysin yksityisinä.",
     "deleteZoneTitle": "Poistetaanko tämä alue?",
     "deleteZoneDescription": "Kaikki tällä alueella olevat siirtyvät takaisin kerhotilaan.",
     "deleteZoneConfirm": "Poista alue",
@@ -2014,14 +2043,14 @@
       },
       "createPage": {
         "title": "Luo pikaäänihuone",
-        "subtitle": "Yhdellä napsautuksella → uusi huone ja jaettava linkki. Käytä spontaaneihin kahdenkeskisiin keskusteluihin tai kasvattajien koordinointiin ajastetun tapaamisen ulkopuolella tai sen lisäksi.",
+        "subtitle": "Yhdellä napsautuksella → uusi huone ja jaettava linkki. Käytä spontaaneihin kahdenkeskisiin keskusteluihin tai Gedujen väliseen koordinointiin ajastetun tapaamisen ulkopuolella tai sen lisäksi.",
         "createButton": "Käynnistä pikahuone",
         "creating": "Luodaan…",
         "createFailed": "Huoneen luonti epäonnistui. Yritä uudelleen.",
         "ready": "Huoneesi on valmis",
         "join": "Liity",
         "unverifiedTitle": "Odottaa vahvistusta",
-        "unverifiedBody": "Ylläpitäjän on vahvistettava kasvattajatilisi, ennen kuin voit luoda äänihuoneita. Voit käynnistää huoneen tästä heti, kun tilisi on vahvistettu."
+        "unverifiedBody": "Ylläpitäjän on vahvistettava Gedu-tilisi, ennen kuin voit luoda äänihuoneita. Voit käynnistää huoneen tästä heti, kun tilisi on vahvistettu."
       }
     }
   },

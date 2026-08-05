@@ -27,7 +27,10 @@ import { BADGE_FRAME } from "@/components/ui/card-corner-badge";
  *   wasn't failing and the real one would go on to involuntary cancellation.
  *   The route resolves the participation's own customer, and — since the badge
  *   only ever renders for a failing card — lands them straight on Stripe's
- *   card-update form.
+ *   card-update form. A caller may intercept that click with `onOpenPortal`,
+ *   the same shape `JoinVoiceButton` uses for its own navigation: a fixture page
+ *   passes a no-op and gets a badge that looks exactly like the real one and
+ *   opens nothing.
  * - **Gamer** (`audience="gamer"`): informational only. Billing is the parent's
  *   job, so the gamer never sees money — just the alert icon and a tooltip
  *   telling them to ask a parent. Rendered as a non-interactive element: no
@@ -69,11 +72,19 @@ export function PaymentProblemBadge({
   audience = "customer",
   /** Parent only: show an alert icon next to the card icon (prominent cards). */
   showAlert = false,
+  /**
+   * Handle the click instead of opening a portal session. When present the
+   * badge calls it and does nothing else — no fetch, no committing state, no
+   * navigation — which is how a fixture-driven preview renders the real badge
+   * without a real POST behind it. Mirrors `JoinVoiceButton`'s `onJoinClick`.
+   */
+  onOpenPortal,
   className,
 }: {
   participationId: string;
   audience?: SessionAudience;
   showAlert?: boolean;
+  onOpenPortal?: () => void;
   className?: string;
 }) {
   const t = useTranslations("parent.billing.alert");
@@ -96,6 +107,12 @@ export function PaymentProblemBadge({
 
   const handleClick = async () => {
     if (opening) return;
+    // An intercepting caller owns the outcome entirely, so nothing here spins:
+    // the committing flag exists to cover a navigation this branch never makes.
+    if (onOpenPortal) {
+      onOpenPortal();
+      return;
+    }
     setOpening(true);
     try {
       const url = await new BillingService().createPortalSession({

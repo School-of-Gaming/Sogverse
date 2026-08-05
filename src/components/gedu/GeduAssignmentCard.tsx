@@ -16,11 +16,8 @@ import { SessionFeedAlertBadge } from "@/components/gedu/session-feed";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import { useNow, useTimezone } from "@/providers";
 import { cn, formatDate, formatDateOnly, formatTime } from "@/lib/utils";
-import {
-  assignmentEndedOn,
-  assignmentLiveness,
-  type GeduAssignmentSummary,
-} from "@/lib/gedu-assignment-rollup";
+import { runEndedOn, runLiveness } from "@/lib/product-run";
+import type { GeduAssignmentSummary } from "@/lib/gedu-assignment-rollup";
 
 interface GeduAssignmentCardProps {
   assignment: GeduAssignmentSummary;
@@ -89,18 +86,23 @@ interface GeduAssignmentCardProps {
  *   badly across a grid: a gedu opening this page is not reading cards, they
  *   are sweeping for the one that owes them something, and a pill buried in a
  *   row of small grey type is not findable in a sweep. On the corner it is,
- *   from across a screen of six.
+ *   from across a screen of six. **It is a link to the same place the card
+ *   opens**, because it sits above the card's stretched anchor rather than
+ *   inside it: a mark that swallowed the click on the exact spot the sweep
+ *   sends a gedu to tap was a dead zone in the one place that could least
+ *   afford one.
  * - **Liveness is the gradient and a badge in the top-right cluster**, next to
  *   the chevron. It replaced a "session in progress" line in the middle of the
  *   card, which was a whole row spent restating what the card's own colour
  *   already said, and which only ever existed on one card at a time. The badge's
- *   **slot is always there** and the badge is merely hidden inside it until the
- *   session starts: it is the one thing on this card that appears on a *clock
- *   tick* rather than on something the reader did, so mounting it as a flex
- *   sibling would have widened the corner cluster — and reflowed the product
- *   name beside it, and possibly the row's height — while somebody was reading.
- *   Reserving it costs one badge width in a corner, and since every card
- *   reserves the same word, the grid stays uniform as a side effect.
+ *   **slot is reserved on every card that could ever wear it**, and the badge is
+ *   merely hidden inside it until the session starts: it is the one thing on this
+ *   card that appears on a *clock tick* rather than on something the reader did,
+ *   so mounting it as a flex sibling would have widened the corner cluster — and
+ *   reflowed the product name beside it, and possibly the row's height — while
+ *   somebody was reading. The cards it can never land on — a finished run, and
+ *   an assignment with no session scheduled at all — drop the slot outright,
+ *   because space held for something that is not coming is its own defect.
  *
  * **Live is asked once, of one clock.** Whether the session has started and
  * whether its room is open are two answers to the same question and are derived
@@ -149,17 +151,27 @@ interface GeduAssignmentCardProps {
  *
  * The Join affordance lives here for a remote product, because this is the only
  * place a gedu meets their next session before opening it. Card and button are
- * both real anchors via a stretched link: the invisible link covers the card
- * with an `::after`, and the Join button is lifted above it with `relative z-10`
- * so it receives its own clicks. No `<a>` inside `<a>`, so middle-click and
- * prefetch both behave.
+ * both real anchors: the invisible stretched link covers the whole card, and the
+ * Join button — and *only* the Join button — is lifted above it with `relative
+ * z-10` so it receives its own clicks. No `<a>` inside `<a>`, so middle-click
+ * and prefetch both behave.
  *
- * **A finished run is quiet history, not a scheduling fault.** Once a product's
- * last day is behind it there is always no next session, which read as the
- * anomaly state — "No session scheduled", in the slot where every other card
- * named a date — when in fact it is the ordinary and permanent end of a
- * perfectly normal run. Two things change on such a card, and both are
- * subtractions:
+ * **The footer is part of the card.** Lifting the whole footer row rather than
+ * the button was the easy version of that and quietly cost a click target: the
+ * venue name and the ended-on date rode up with it, so the bottom strip of every
+ * card without a Join swallowed clicks and did nothing. Nothing in the footer
+ * but the button is interactive, so nothing else may sit above the link.
+ *
+ * **A finished run is quiet history, not a scheduling fault.** This card used to
+ * name the next session in the row that now carries the schedule, so a product
+ * whose last day was behind it read as the anomaly state — a "no session"
+ * line where every other card named a date — when in fact it is the ordinary
+ * and permanent end of a perfectly normal run. The row answers what the
+ * *product* meets like, which a finished run still has an answer to, and the
+ * fallback beneath it ("No schedule set yet", the same line the family card
+ * shows) now belongs only to the card that genuinely has nothing to say: a
+ * product with no slots on it yet. Two things change on a finished card, and
+ * both are subtractions:
  *
  * - **The type label, name, group and schedule all drop a tone.** A gedu sweeping
  *   this page is looking for what is still running, and the finished runs have
@@ -171,8 +183,9 @@ interface GeduAssignmentCardProps {
  *   construction on a run with no session left, so this is not a special case so
  *   much as a consequence — but it is the difference a reader actually sees.
  *
- * **The attention badge is the one thing that does not fade.** Attendance owed
- * on a finished club is still owed, the epoch rules already exempt the history
+ * **The attention badge is the one thing that does not fade.** A register or a
+ * write-up owed on a finished club is still owed — a parent reads last term's
+ * report as readily as last week's — the epoch rules already exempt the history
  * nobody is expected to backfill, and the badge is how a gedu finds what is
  * left. Muting it would hide the only reason to hurry to an ended card.
  */
@@ -180,7 +193,9 @@ export function GeduAssignmentCard({
   assignment,
   scheduleLines,
 }: GeduAssignmentCardProps) {
-  const t = useTranslations("gedu.myGroups");
+  const p = useTranslations("productType");
+  const c = useTranslations("activityCard");
+  const b = useTranslations("sessionBadge");
   const d = useTranslations("gedu.sessionDetails");
   const locale = useLocale();
   const timeZone = useTimezone();
@@ -204,8 +219,14 @@ export function GeduAssignmentCard({
   // The day the run finished, or `null` while it is still going. Non-null *is*
   // the ended state — one value, so the footer never has to assert its way past
   // a date it has already tested.
-  const endedOn = assignmentEndedOn(assignment, now);
-  const { inProgress, voiceIsOpen } = assignmentLiveness(assignment, now);
+  const endedOn = runEndedOn(assignment, now);
+  // The cards a Live badge can never land on. Reserving its width there would
+  // be a hole held open for something that is not coming: a badge that turns
+  // on when a session starts needs a session to start, and `hasNext` already
+  // covers the finished run too — `runEndedOn` only ever answers "ended" when
+  // no next session exists, so a card with one is never ended.
+  const canGoLive = hasNext;
+  const { inProgress, voiceIsOpen } = runLiveness(assignment, now);
   // Lit when something is actually happening — a room the gedu can walk into,
   // or a session already running. An in-person product has no room and still
   // deserves the treatment while its session is on.
@@ -237,7 +258,7 @@ export function GeduAssignmentCard({
                   endedOn !== null && "text-muted-foreground/70",
                 )}
               >
-                {d(`typeLabel.${productType}`)}
+                {p(productType)}
               </p>
               {/* The identity keeps its weight and loses its tone on a finished
                   run: a gedu looking for last term's club still has to read the
@@ -291,16 +312,16 @@ export function GeduAssignmentCard({
                 also `visibility: hidden`, so it leaves the accessibility tree
                 too and nothing announces a session that has not begun.
 
-                A finished run is the one card that does not reserve it, because
-                it is the one card the badge can never land on: nothing of that
-                run is left to start. Holding the slot open there would be a gap
-                waiting on something that is not coming, and the width is better
-                spent on the product name — which is what a gedu is reading an
-                ended card for. Nothing moves as a result: endedness is settled
-                before the card first paints and does not turn over under a
-                reader the way a session start does. */}
+                The cards the badge can never land on do not reserve it: a
+                finished run, and an assignment with no session on its schedule
+                at all. Holding the slot open there would be a gap waiting on
+                something that is not coming, and the width is better spent on
+                the product name — which is what a gedu is reading such a card
+                for. Nothing moves as a result: both facts are settled before the
+                card first paints and neither turns over under a reader the way a
+                session start does. */}
             <div className="flex shrink-0 items-center gap-2">
-              {endedOn === null && (
+              {canGoLive && (
                 <Badge
                   variant="outline"
                   className={cn(
@@ -309,7 +330,7 @@ export function GeduAssignmentCard({
                   )}
                 >
                   <Radio className="h-3 w-3" aria-hidden />
-                  {t("liveBadge")}
+                  {b("live")}
                 </Badge>
               )}
               <ChevronRight
@@ -353,7 +374,7 @@ export function GeduAssignmentCard({
                   </span>
                 ))
               ) : (
-                <span className="block">{t("noNextSession")}</span>
+                <span className="block">{c("noSchedule")}</span>
               )}
             </span>
           </div>
@@ -373,8 +394,16 @@ export function GeduAssignmentCard({
               and the difference lands as padding), which is exactly why it went
               unnoticed: it shows up on the card that ends up alone on the last
               row, where there is nothing to stretch against and an ended club
-              reads as a clipped version of a real card. */}
-          <div className="relative z-10 mt-auto flex min-h-9 items-center justify-center">
+              reads as a clipped version of a real card.
+
+              **Nothing in this row is lifted above the card's stretched link
+              except the Join itself.** The lift used to sit on the row, which
+              also lifted the venue name and the ended-on date — neither of which
+              is a control — and made the bottom strip of most cards a dead zone
+              where a click hit nothing at all. The button is the only thing here
+              with a click of its own to receive, so it is the only thing that
+              takes the `z-10`. */}
+          <div className="mt-auto flex min-h-9 items-center justify-center">
             {endedOn !== null && (
               // Date-only and UTC-pinned, via the shared bare-date formatter: an
               // end date is a calendar date with no clock face on it, so it must
@@ -383,27 +412,31 @@ export function GeduAssignmentCard({
               <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
                 <CalendarOff className="h-4 w-4 shrink-0" aria-hidden />
                 <span className="truncate">
-                  {t("endedOn", { date: formatDateOnly(endedOn, locale) })}
+                  {c("endedOn", { date: formatDateOnly(endedOn, locale) })}
                 </span>
               </span>
             )}
             {endedOn === null && hasVoiceRoom && hasNext && (
-              <JoinVoiceButton
-                voiceIsOpen={voiceIsOpen}
-                voiceHref={voiceHref}
-                opensDate={formatDate(nextSessionStart, locale, {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                  timeZone,
-                })}
-                opensTime={formatTime(nextSessionStart, locale, timeZone)}
-                // Leaving the room lands on the group's workspace, not back on
-                // this grid: what a gedu does after a session is write it up,
-                // and the feed is where that happens. It is the same href the
-                // card itself opens, so the two agree by construction.
-                backHref={openHref}
-              />
+              // The one thing in the footer that owns its clicks, so the one
+              // thing lifted above the stretched link covering the card.
+              <span className="relative z-10">
+                <JoinVoiceButton
+                  voiceIsOpen={voiceIsOpen}
+                  voiceHref={voiceHref}
+                  opensDate={formatDate(nextSessionStart, locale, {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    timeZone,
+                  })}
+                  opensTime={formatTime(nextSessionStart, locale, timeZone)}
+                  // Leaving the room lands on the group's workspace, not back
+                  // on this grid: what a gedu does after a session is write it
+                  // up, and the feed is where that happens. It is the same href
+                  // the card itself opens, so the two agree by construction.
+                  backHref={openHref}
+                />
+              </span>
             )}
             {endedOn === null && !hasVoiceRoom && siteName !== null && (
               <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
@@ -429,10 +462,16 @@ export function GeduAssignmentCard({
         />
       </Card>
 
-      {/* Outside the card, over its corner. It is not inside the stretched
-          link's stacking context, so it never eats a click meant for the card
-          — which is right: the badge is a mark, not a control. */}
-      <SessionFeedAlertBadge count={attentionCount} variant="corner" />
+      {/* Outside the card, over its corner — so it sits *above* the stretched
+          link rather than inside it, and a click landing on it would hit
+          nothing at all. It is therefore a link to the card's own target: the
+          corner is exactly where the sweep model tells a gedu to tap, and the
+          one thing that must not happen there is nothing. */}
+      <SessionFeedAlertBadge
+        count={attentionCount}
+        variant="corner"
+        href={openHref}
+      />
     </div>
   );
 }

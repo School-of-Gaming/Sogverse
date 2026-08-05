@@ -14,18 +14,19 @@ import {
   GEDU_PRODUCT_SCENARIOS,
   buildGeduProductPageFixture,
 } from "@/components/gedu/session-details/mock-product-page-fixtures";
+import {
+  FAMILY_PRODUCT_SCENARIOS,
+  buildFamilyProductPageFixture,
+} from "@/components/family/product-page/mock-fixtures";
 import { SESSION_FEED_ROSTER } from "@/components/gedu/session-feed/mock-fixtures";
 import {
+  attendanceTally,
   countEntriesNeedingAttention,
   entryCompleteness,
   entryNeedsAttention,
 } from "@/components/gedu/session-feed";
-import {
-  assignmentEndedOn,
-  assignmentLiveness,
-  geduActivityTypeOf,
-  type GeduActivityType,
-} from "@/lib/gedu-assignment-rollup";
+import { activityTypeOf, type ActivityType } from "@/lib/activity-type";
+import { runEndedOn, runLiveness } from "@/lib/product-run";
 import {
   CONFIRMATION_NOTICE_SCENARIOS,
   PREVIEW_SCENARIOS,
@@ -123,6 +124,16 @@ describe("registry scenarios match their fixtures", () => {
 
   it("gedu product page", () => {
     expect(slugsFor("gedu-product")).toEqual([...GEDU_PRODUCT_SCENARIOS]);
+  });
+
+  it("family product page, both audiences", () => {
+    // The parent's scene enumerates every scenario; the gamer's deliberately
+    // carries one, because its variant is about attendance and voice rather
+    // than about the shapes a product can be in.
+    expect(slugsFor("parent-club")).toEqual([...FAMILY_PRODUCT_SCENARIOS]);
+    for (const slug of slugsFor("gamer-club")) {
+      expect(FAMILY_PRODUCT_SCENARIOS).toContain(slug);
+    }
   });
 
   it("public product surfaces", () => {
@@ -383,7 +394,7 @@ describe("the camp scenario owes exactly its newest day", () => {
    *
    * The now-divider's count is every future entry bar the next one, which
    * renders below the line — so seventeen future sessions is a divider reading
-   * "16 upcoming sessions", and an upward reveal proved against a screenful
+   * "16 more upcoming sessions", and an upward reveal proved against a screenful
    * instead of against four rows. It has to be an **end-dated** product: an
    * open-ended one is capped at eight occurrences by the same rule the family
    * dashboards use, so a club's divider structurally cannot say more than
@@ -517,20 +528,51 @@ describe("club reports are markdown, at realistic lengths", () => {
 });
 
 /**
- * The completeness ladder has three rungs and the club scenario is where all
- * three are meant to be visible at once. The middle one is the fragile one: it
- * is the *absence* of a badge, so nothing else in the app fails if it stops
- * being represented.
+ * A past session says one of two things or nothing at all, and the club
+ * scenario is where all three are meant to be visible at once. The silence is
+ * the fragile one: it is the *absence* of a badge, so nothing else in the app
+ * fails if it stops being represented.
  */
-describe("the club scenario shows every rung of the ladder", () => {
+describe("the club scenario shows every state a past session can wear", () => {
   const now = new Date("2026-02-11T09:00:00Z");
 
-  it("carries needs-attention, recorded and complete entries", () => {
+  it("carries flagged, complete and silent entries", () => {
     const { entries, feedRoster } = buildGeduProductPageFixture(now, "club");
-    const rungs = entries.map((e) => entryCompleteness(e, feedRoster));
-    expect(rungs).toContain("needs_attention");
-    expect(rungs).toContain("recorded");
-    expect(rungs).toContain("complete");
+    const states = entries.map((e) => entryCompleteness(e, feedRoster));
+    expect(states).toContain("needs_attention");
+    expect(states).toContain("complete");
+    // The pre-epoch entry somebody went back and half-wrote-up: unfinished and
+    // owed nothing, so it is the one past card on the page that stays neutral.
+    const silentPast = entries.filter(
+      (e) => e.kind === "past" && entryCompleteness(e, feedRoster) === null,
+    );
+    expect(silentPast.length).toBeGreaterThan(0);
+  });
+
+  /**
+   * Both routes to amber, side by side. They render identically and mean
+   * different things, and only one of them is new — a fixture that quietly lost
+   * the marked-but-unreported case would take the whole reversal off the page
+   * without failing anything above.
+   */
+  it("flags a week for a missing register and a week for a missing report", () => {
+    const { entries, feedRoster } = buildGeduProductPageFixture(now, "club");
+    const flagged = entries.filter(
+      (e) => entryCompleteness(e, feedRoster) === "needs_attention",
+    );
+
+    const missingRegister = flagged.filter(
+      (e) => e.kind === "past" && !attendanceTally(feedRoster, e.attendance).complete,
+    );
+    const missingReport = flagged.filter(
+      (e) =>
+        e.kind === "past" &&
+        attendanceTally(feedRoster, e.attendance).complete &&
+        (e.report ?? "").trim() === "",
+    );
+
+    expect(missingRegister.length).toBeGreaterThan(0);
+    expect(missingReport.length).toBeGreaterThan(0);
   });
 
   /**
@@ -575,7 +617,7 @@ describe("the gedu dashboard scene puts every card state on one screen", () => {
 
   it("has exactly one card mid-session, with its room open", () => {
     const open = summaries().filter(
-      (a) => assignmentLiveness(a, now).voiceIsOpen,
+      (a) => runLiveness(a, now).voiceIsOpen,
     );
     expect(open).toHaveLength(1);
     expect(open[0].nextSessionStart!.getTime()).toBeLessThanOrEqual(
@@ -615,15 +657,15 @@ describe("the gedu dashboard scene puts every card state on one screen", () => {
     const locked = summaries().filter(
       (a) =>
         a.hasVoiceRoom &&
-        !assignmentLiveness(a, now).voiceIsOpen &&
+        !runLiveness(a, now).voiceIsOpen &&
         a.nextSessionStart !== null,
     );
     expect(locked.length).toBeGreaterThan(0);
   });
 
   it("spans all three type nouns, so every heading renders", () => {
-    const nouns = new Set<GeduActivityType>(
-      summaries().map((a) => geduActivityTypeOf(a.productType)),
+    const nouns = new Set<ActivityType>(
+      summaries().map((a) => activityTypeOf(a.productType)),
     );
     expect(nouns).toEqual(new Set(["club", "camp", "event"]));
   });
@@ -667,13 +709,13 @@ describe("the gedu dashboard scene puts every card state on one screen", () => {
 
   /**
    * **The finished run is a card state, so the page has to hold one.** It is
-   * the state the "No session scheduled" line used to libel as a scheduling
+   * the state the card’s old "no session" line used to libel as a scheduling
    * fault, and every part of the treatment that replaced it — the muted tones,
    * the missing next-session line, the "Ended …" date in the footer, the badge
    * that stays loud — is invisible on a page where nothing has ended.
    */
   it("carries exactly one card whose run is over", () => {
-    const ended = summaries().filter((a) => assignmentEndedOn(a, now) !== null);
+    const ended = summaries().filter((a) => runEndedOn(a, now) !== null);
     expect(ended).toHaveLength(1);
     // A date to name in the footer, and no next session to contradict it.
     expect(ended[0].endDate).not.toBeNull();
@@ -687,13 +729,13 @@ describe("the gedu dashboard scene puts every card state on one screen", () => {
    * another.
    */
   it("makes the ended card the remote one, so the end date fills a footer that was empty", () => {
-    const ended = summaries().filter((a) => assignmentEndedOn(a, now) !== null);
+    const ended = summaries().filter((a) => runEndedOn(a, now) !== null);
     expect(ended[0].hasVoiceRoom).toBe(true);
     expect(ended[0].siteName).toBeNull();
   });
 
   it("leaves the ended card a backlog, so the badge is visibly undimmed", () => {
-    const ended = summaries().filter((a) => assignmentEndedOn(a, now) !== null);
+    const ended = summaries().filter((a) => runEndedOn(a, now) !== null);
     expect(ended[0].attentionCount).toBeGreaterThan(0);
   });
 
@@ -704,12 +746,12 @@ describe("the gedu dashboard scene puts every card state on one screen", () => {
    */
   it("puts the ended card last inside its own type group", () => {
     const clubs = summaries().filter(
-      (a) => geduActivityTypeOf(a.productType) === "club",
+      (a) => activityTypeOf(a.productType) === "club",
     );
     expect(clubs.length).toBeGreaterThan(1);
-    expect(assignmentEndedOn(clubs[clubs.length - 1], now)).not.toBeNull();
+    expect(runEndedOn(clubs[clubs.length - 1], now)).not.toBeNull();
     for (const club of clubs.slice(0, -1)) {
-      expect(assignmentEndedOn(club, now), club.productName).toBeNull();
+      expect(runEndedOn(club, now), club.productName).toBeNull();
     }
   });
 });
@@ -735,7 +777,7 @@ describe("the clubs-only scenario fills the grid", () => {
 
   it("narrows to a single type noun", () => {
     const nouns = new Set(
-      clubsOnly().map((a) => geduActivityTypeOf(a.productType)),
+      clubsOnly().map((a) => activityTypeOf(a.productType)),
     );
     expect(nouns).toEqual(new Set(["club"]));
   });
@@ -764,7 +806,7 @@ describe("the clubs-only scenario fills the grid", () => {
     expect(cards.filter((a) => a.attentionCount > 0).length).toBeGreaterThan(1);
     expect(cards.filter((a) => a.attentionCount === 0).length).toBeGreaterThan(1);
     expect(
-      cards.filter((a) => assignmentLiveness(a, now).voiceIsOpen),
+      cards.filter((a) => runLiveness(a, now).voiceIsOpen),
     ).toHaveLength(1);
   });
 
@@ -818,5 +860,50 @@ describe("the unverified scenario is the empty dashboard", () => {
       );
       expect(assignments.length === 0, scenario).toBe(scenario === "unverified");
     }
+  });
+});
+
+/**
+ * The club page's two billing states are the only things on it that are
+ * parent-only *and* exceptional, so between them the scenarios have to show
+ * each exactly once — and never both at once, which is a state Stripe cannot
+ * produce (`past_due` and `canceling` are exclusive) and which the page would
+ * therefore be inventing.
+ */
+describe("the family club page's billing states", () => {
+  const now = new Date("2026-02-11T09:00:00Z");
+  const fixtures = FAMILY_PRODUCT_SCENARIOS.map((scenario) => ({
+    scenario,
+    fixture: buildFamilyProductPageFixture(now, scenario),
+  }));
+
+  it("shows each of them somewhere, and never together", () => {
+    expect(fixtures.filter((f) => f.fixture.paymentProblem)).toHaveLength(1);
+    expect(
+      fixtures.filter((f) => f.fixture.cancellation !== null),
+    ).toHaveLength(1);
+    for (const { scenario, fixture } of fixtures) {
+      expect(
+        fixture.paymentProblem && fixture.cancellation !== null,
+        scenario,
+      ).toBe(false);
+    }
+  });
+
+  it("names a last session the feed actually contains", () => {
+    // The notice says "her last session is …", so a date the timeline does not
+    // have would be the page disagreeing with itself.
+    const cancelled = fixtures.find((f) => f.fixture.cancellation !== null);
+    expect(cancelled).toBeDefined();
+    const { accessUntil, lastSessionStart } = cancelled!.fixture.cancellation!;
+    expect(lastSessionStart).not.toBeNull();
+    expect(lastSessionStart!.getTime()).toBeLessThanOrEqual(
+      accessUntil.getTime(),
+    );
+    expect(
+      cancelled!.fixture.entries.some(
+        (entry) => entry.startsAt.getTime() === lastSessionStart!.getTime(),
+      ),
+    ).toBe(true);
   });
 });

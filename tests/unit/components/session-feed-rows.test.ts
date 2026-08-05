@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   monthKey,
   withMonthDividers,
-} from "@/components/gedu/session-feed/feed-rows";
+} from "@/components/session-feed/feed-rows";
 
 /**
  * Month dividers exist to make a year-long feed scannable, so what matters is

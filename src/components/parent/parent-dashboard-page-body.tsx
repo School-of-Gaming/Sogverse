@@ -1,0 +1,388 @@
+"use client";
+
+import Link from "next/link";
+import { UserCog, UserPlus } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Avatar } from "@/components/ui/avatar";
+import { buttonVariants } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Identicon } from "@/components/ui/identicon";
+import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
+import { EnrollmentCard } from "@/components/family/EnrollmentCard";
+import type { FamilyEnrollmentSummary } from "@/components/family/enrollment-rollup";
+import { ROUTES } from "@/lib/constants";
+import { ParentHelpSection } from "./ParentHelpSection";
+
+/**
+ * One child, with everything they are signed up for. Enrollments arrive
+ * **already sorted** — soonest session first, finished runs beneath — because
+ * the ordering is a fact about the data and belongs with whoever built it, not
+ * with the component drawing it.
+ */
+export interface ParentDashboardGamer {
+  /**
+   * The gamer's profile id. It seeds the identicon, so it has to be the real
+   * UUID: the pattern is derived from the id's hex bytes, and a readable
+   * stand-in renders a degenerate grid rather than a different face.
+   */
+  id: string;
+  firstName: string;
+  enrollments: readonly FamilyEnrollmentSummary[];
+}
+
+/**
+ * Above this many children the pill stops naming them one by one.
+ *
+ * Three fits on a typical parent's phone alongside Billing and Help; four
+ * forces the bar into sideways scrolling (measured on an iPhone 12 Pro's
+ * 390px), and the fourth child is exactly the family least able to afford a
+ * nav that has to be scrolled to be read. Past the threshold the entries
+ * collapse to a single "Gamers" chip aimed at the first child's section — from
+ * there the page itself is the index, which is what a long list wants anyway.
+ *
+ * The cap is a fixed count rather than a measurement on purpose: the server
+ * has to render the pill's final shape on first paint, so the decision must be
+ * arithmetic both ends run identically. A breakpoint-doubled pill (named list
+ * on desktop, collapsed on phone, toggled by CSS alone) is the legitimate way
+ * to make this width-aware if the desktop trade ever hurts — measuring and
+ * correcting after hydration is not.
+ */
+const MAX_NAMED_GAMER_PILL_ENTRIES = 3;
+
+/** The section id one child's block scrolls to. */
+function gamerSectionId(gamer: ParentDashboardGamer): string {
+  return `gamer-${gamer.id}`;
+}
+
+/** The section id the no-children-yet empty state scrolls to. */
+const EMPTY_GAMERS_SECTION_ID = "gamers";
+
+/**
+ * The parent dashboard's page body — everything below the route's data shell.
+ *
+ * It lives apart from `app/(dashboard)/parent/page.tsx` so the page is only a
+ * data shell (auth, prefetch) and the body is a plain component: that is what
+ * lets a full-page preview scene render the dashboard exactly as a parent meets
+ * it, with fixtures in place of the server reads.
+ *
+ * Three changes from the page it replaces, and the first drives the other two:
+ *
+ * - **The page is organised by child, not by kind of thing.** It used to be a
+ *   row of gamer tiles, then one flat list of every session in the family, then
+ *   billing, then help — so a parent with two children read one column of cards
+ *   that alternated between them and carried a name on each card to say which
+ *   was which. A parent does not think "what is my family's next session", they
+ *   think "what is Aino doing this week". So each child gets a section of their
+ *   own, headed by their face and their name, and every card under it is
+ *   theirs by position rather than by a label.
+ * - **The My Gamers row is absorbed into those headings.** It was a strip of
+ *   avatars whose only job was to get you to a child, sitting above a list that
+ *   then told you nothing about which child anything belonged to. The headings
+ *   do both jobs at once and the strip has nothing left to do. The tile's link
+ *   to the child's identity page survives as a quiet Manage affordance on the
+ *   heading row, and adding a child — the one other thing the strip owned — is
+ *   now a single tile after the last section, where a parent looks when they
+ *   have finished reading about the children they already have.
+ * - **A card is an enrollment, not an occurrence.** A weekly club used to emit
+ *   one card per upcoming session; now it emits one, with the cadence in words
+ *   and the next session named by the Join button. A waitlist place is a card in
+ *   the same list rather than a separate band above it — the family is *in*
+ *   something either way, and splitting the page by our own status column asked
+ *   the parent to learn it.
+ *
+ * The section pill names each child in turn, so the nav says the same words the
+ * headings do — up to the point where a large family would push it off a phone
+ * screen, at which point it says "Gamers" once. Names are user content, so those
+ * entries are width-capped: no single name gets to decide how wide the bar is.
+ *
+ * The billing card arrives as a **node** while the children arrive as **data**.
+ * That split is not an inconsistency: billing is one section with backend
+ * actions behind it, so a shell can hand it over finished, whereas the shape of
+ * the page — how many sections there are and what they are called — is derived
+ * from the family, and no single node can express it.
+ */
+export function ParentDashboardPageBody({
+  gamers,
+  billingCard,
+  onAddGamer,
+  onOpenPortal,
+}: {
+  /** The parent's children, in the order their sections appear. */
+  gamers: readonly ParentDashboardGamer[];
+  /** The Stripe portal card. A node, so the shell owns its actions. */
+  billingCard: React.ReactNode;
+  /**
+   * Open the add-gamer flow. The body owns *where* the two add affordances sit
+   * — the quiet tile after the last child, and the full-strength button on the
+   * no-children card — and nothing about what adding a child involves, which is
+   * a dialog with a form and a mutation behind it. The live shell passes the
+   * dialog's opener; a preview scene passes a no-op. Optional so the prop can
+   * be here before the shell that fills it, which is what keeps the signature
+   * from changing at promotion.
+   */
+  onAddGamer?: () => void;
+  /**
+   * Open Stripe's Customer Portal for a failing card, intercepting the corner
+   * badge's own click. Same reason as above: the live page passes nothing and
+   * the badge opens a real portal session, a preview passes a no-op.
+   */
+  onOpenPortal?: () => void;
+}) {
+  const t = useTranslations("dashboardSections");
+  const f = useTranslations("family");
+
+  const namedGamerEntries = gamers.length <= MAX_NAMED_GAMER_PILL_ENTRIES;
+
+  // With no children yet, the empty state is still a *section* — "Gamers",
+  // with its own pill entry — rather than a card floating unattached while the
+  // scroll-spy highlights Billing beneath it. The moment the first child is
+  // added, the heading becomes their name and the pill follows; a one-time
+  // renaming the parent themselves just caused.
+  const gamerSections: DashboardSection[] =
+    gamers.length === 0
+      ? [{ id: EMPTY_GAMERS_SECTION_ID, label: t("myGamersShort") }]
+      : namedGamerEntries
+        ? gamers.map((gamer) => ({
+            id: gamerSectionId(gamer),
+            label: gamer.firstName,
+            truncateLabel: true,
+          }))
+        : [{ id: gamerSectionId(gamers[0]), label: t("myGamersShort") }];
+
+  const sections: DashboardSection[] = [
+    ...gamerSections,
+    { id: "billing", label: t("billing") },
+    { id: "help", label: t("help") },
+  ];
+
+  return (
+    <>
+      {/* Visually-hidden page title — the sections below are equal-weight h2s
+          under it, and the section pill is the visual nav. Read from
+          `dashboardSections` rather than `metadata`: the metadata namespace is
+          server-only (stripped before the client provider), and page copy
+          belongs in a page namespace regardless — `metadata` names documents,
+          not headings. */}
+      <h1 className="sr-only">{t("pageTitle")}</h1>
+
+      {/* The pill names the page rather than any one section: with the heading
+          set varying per family, borrowing the first section's label would make
+          the nav's accessible name a child's first name. */}
+      <DashboardSectionPill sections={sections} ariaLabel={t("pageTitle")} />
+
+      {/* Two rhythms, because there are two kinds of gap here. The children are
+          subgroups of one thing — this family — so a full section break between
+          them read as several unrelated pages stacked up. Billing and help
+          genuinely are different sections and keep the wide gap. */}
+      <div className="space-y-24 pb-24">
+        {gamers.length === 0 ? (
+          // The brand-new parent: no children linked yet, so the page's one job
+          // is getting the first one added. Still a full section — heading and
+          // pill entry — so the nav has somewhere honest to point; and the add
+          // affordance is promoted to full strength here, because the
+          // quiet-tile reasoning below only holds when there are children
+          // above it competing for the first read.
+          <section
+            id={EMPTY_GAMERS_SECTION_ID}
+            aria-labelledby={`${EMPTY_GAMERS_SECTION_ID}-heading`}
+            className="scroll-mt-32"
+          >
+            <div className="mx-auto max-w-3xl space-y-6">
+              <h2
+                id={`${EMPTY_GAMERS_SECTION_ID}-heading`}
+                className="text-3xl font-bold"
+              >
+                {t("myGamers")}
+              </h2>
+              <NoGamersCard onAddGamer={onAddGamer} />
+            </div>
+          </section>
+        ) : (
+          <div className="space-y-16">
+            {gamers.map((gamer) => (
+              <section
+                key={gamer.id}
+                id={gamerSectionId(gamer)}
+                // Named by the heading that carries the child's name — which is
+                // the only thing distinguishing one of these sections from the
+                // next, and which a screen-reader user tabbing the cards would
+                // otherwise never be told.
+                aria-labelledby={`${gamerSectionId(gamer)}-heading`}
+                className="scroll-mt-32"
+              >
+                {/* `max-w-3xl`, the family surfaces' width: these pages are
+                    designed for a phone first and the column is what widens on
+                    a laptop, not the number of columns. Every section shares the
+                    cap so the headings line up down the page. */}
+                <div className="mx-auto max-w-3xl space-y-6">
+                  {/* The heading is a real heading row, not a decorated label:
+                      the face is how a parent finds their child's block while
+                      scrolling past three of them, and it is the same identicon
+                      the tile strip used, so nothing about recognising a child
+                      changed — only where it happens. */}
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10 shrink-0">
+                      <Identicon id={gamer.id} size={40} />
+                    </Avatar>
+                    <h2
+                      id={`${gamerSectionId(gamer)}-heading`}
+                      className="min-w-0 break-words text-3xl font-bold"
+                    >
+                      {gamer.firstName}
+                    </h2>
+                    {/* The identity page — name, game accounts — kept as a quiet
+                        affordance beside the heading: managing a child is a
+                        sometimes action, and a loud button here would compete
+                        with the cards for the first thing read. `ml-auto` so a
+                        long name wraps against the heading's space, not the
+                        link's. */}
+                    <Link
+                      href={`${ROUTES.customer.gamers}/${gamer.id}`}
+                      aria-label={f("manageGamerAria", {
+                        name: gamer.firstName,
+                      })}
+                      className={buttonVariants({
+                        variant: "ghost",
+                        size: "sm",
+                        className: "ml-auto shrink-0 text-muted-foreground",
+                      })}
+                    >
+                      <UserCog className="h-4 w-4" aria-hidden />
+                      {f("manageGamer")}
+                    </Link>
+                  </div>
+
+                  {gamer.enrollments.length === 0 ? (
+                    <EmptyGamerCard firstName={gamer.firstName} />
+                  ) : (
+                    <div className="space-y-3">
+                      {gamer.enrollments.map((enrollment) => (
+                        <EnrollmentCard
+                          key={enrollment.participationId}
+                          enrollment={enrollment}
+                          audience="customer"
+                          onOpenPortal={onOpenPortal}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </section>
+            ))}
+
+            {/* Adding a child sits after the last of them, deliberately quiet:
+                it is a once-a-year action, and a full-strength button at the top
+                of a page about the children you already have would compete with
+                them for the first thing read. */}
+            <div className="mx-auto max-w-3xl">
+              <button
+                type="button"
+                onClick={onAddGamer}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-muted-foreground/40 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <UserPlus className="h-4 w-4" aria-hidden />
+                {f("addGamer")}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <section
+          id="billing"
+          aria-labelledby="billing-heading"
+          className="scroll-mt-32"
+        >
+          <div className="mx-auto max-w-3xl space-y-6">
+            <h2 id="billing-heading" className="text-3xl font-bold">
+              {t("billing")}
+            </h2>
+            {billingCard}
+          </div>
+        </section>
+
+        {/* Last section gets viewport-height min so clicking its pill can
+            actually scroll it to the top — without this the page bottoms out
+            mid-scroll and the heading stays in the middle of the viewport. */}
+        <section
+          id="help"
+          aria-labelledby="help-heading"
+          className="scroll-mt-32 min-h-[calc(100svh-9rem)]"
+        >
+          <div className="mx-auto max-w-3xl space-y-6">
+            <h2 id="help-heading" className="text-3xl font-bold">
+              {t("help")}
+            </h2>
+            <ParentHelpSection />
+          </div>
+        </section>
+      </div>
+    </>
+  );
+}
+
+/**
+ * The whole dashboard before the first child exists.
+ *
+ * Same dashed, quiet grammar as the per-child empty card — nothing is wrong,
+ * there is simply nothing yet — but the add button is full strength rather
+ * than a muted tile, because on this page it is not competing with anything:
+ * it *is* the next step. The copy names the shop as the step *after* that one
+ * and offers no link to it: a family with no child yet has nothing to enroll,
+ * so a browse button here would send them somewhere they cannot finish.
+ */
+function NoGamersCard({ onAddGamer }: { onAddGamer?: () => void }) {
+  const t = useTranslations("familyEnrollment");
+  const f = useTranslations("family");
+
+  return (
+    <Card className="border-dashed">
+      <CardContent className="flex flex-col items-center gap-4 py-10 text-center">
+        <p className="max-w-prose text-sm text-muted-foreground">
+          {t("noGamers")}
+        </p>
+        <button
+          type="button"
+          onClick={onAddGamer}
+          className={buttonVariants({ size: "default" })}
+        >
+          <UserPlus className="h-4 w-4" aria-hidden />
+          {f("addGamer")}
+        </button>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * A child who is signed up for nothing yet.
+ *
+ * Dashed and quiet rather than an alarm: nothing is wrong, there is simply
+ * nothing to show, and the one useful thing the page can do is point at the
+ * shop. It is a card so the section has the same shape it will have the moment
+ * something lands in it — a heading with a card under it — rather than a
+ * paragraph floating where a card is about to appear.
+ *
+ * The CTA is a real `Link` to the storefront rather than a handler the shell
+ * passes down: browsing is plain navigation to a public page, so it works
+ * identically in a preview scene and after promotion, and routing it through a
+ * prop would only give the live page a chance to forget to pass one.
+ */
+function EmptyGamerCard({ firstName }: { firstName: string }) {
+  const t = useTranslations("familyEnrollment");
+
+  return (
+    <Card className="border-dashed">
+      <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
+        <p className="max-w-prose text-sm text-muted-foreground">
+          {t("emptyState", { name: firstName })}
+        </p>
+        <Link
+          href={ROUTES.shop}
+          className={buttonVariants({ size: "sm", variant: "outline" })}
+        >
+          {t("emptyStateCta")}
+        </Link>
+      </CardContent>
+    </Card>
+  );
+}

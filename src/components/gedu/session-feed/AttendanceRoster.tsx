@@ -3,7 +3,8 @@
 import { Check, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import type { AttendanceMark, AttendanceMarks, SessionFeedGamer } from "./types";
+import type { AttendanceMark } from "@/components/session-feed";
+import type { AttendanceMarks, SessionFeedGamer } from "./types";
 
 /**
  * The per-gamer attendance sheet: one row per child, each with an explicit

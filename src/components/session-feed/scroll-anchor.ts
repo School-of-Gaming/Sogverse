@@ -6,14 +6,16 @@ import { useCallback, useLayoutEffect, useRef } from "react";
  * Pinning a chosen element to the pixel it was already on while the page around
  * it changes height.
  *
- * The feed changes height in two places where the change happens *outside* what
- * the reader is looking at, and both would otherwise shove the page under them:
- * the future horizon reveals upward (its sessions are inserted above the
- * divider, because global date order is never violated), and an entry's editor
- * collapses on save or cancel (the card loses most of its height under the
- * button that was just clicked). Neither is a scroll the reader asked for, so
- * neither may happen: the fix is to move the scroll position by exactly as much
- * as the geometry moved, in the same frame, so nothing painted appears to move.
+ * A feed changes height in two places where the change happens *outside* what
+ * the reader is looking at, and both would otherwise shove the page under them.
+ * The first belongs to every feed: the future horizon reveals upward, its
+ * sessions inserted above the divider because global date order is never
+ * violated. The second belongs only to a feed with editors in it: an entry's
+ * editor collapses on save or cancel, and the card loses most of its height
+ * under the button that was just clicked. Neither is a scroll the reader asked
+ * for, so neither may happen: the fix is to move the scroll position by exactly
+ * as much as the geometry moved, in the same frame, so nothing painted appears
+ * to move.
  *
  * This is the chat-history pattern, and the shape of it is always the same:
  * measure the anchor's viewport position *before* the state change (in the

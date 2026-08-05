@@ -1,13 +1,19 @@
 import { notFound } from "next/navigation";
+import { isFamilyProductScenario } from "@/components/family/product-page/mock-fixtures";
+import { isGamerDashboardScenario } from "@/components/gamer/mock-dashboard-fixtures";
 import { isGeduDashboardScenario } from "@/components/gedu/mock-dashboard-fixtures";
 import { isGeduProductScenario } from "@/components/gedu/session-details/mock-product-page-fixtures";
+import { isParentDashboardScenario } from "@/components/parent/mock-dashboard-fixtures";
 import {
   findConfirmationNotice,
   isPreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
 import { PurchaseConfirmationNotice } from "@/components/public/products/purchase-confirmation-view";
 import type { PreviewSurface } from "./scenes";
+import { FamilyProductPageScene } from "./scenes/family-product-page-scene";
+import { GamerDashboardScene } from "./scenes/gamer-dashboard-scene";
 import { GeduDashboardScene } from "./scenes/gedu-dashboard-scene";
+import { ParentDashboardScene } from "./scenes/parent-dashboard-scene";
 import { GeduProductPageScene } from "./scenes/gedu-product-page-scene";
 import { ProductDetailScene } from "./scenes/product-detail-scene";
 import { PurchaseConfirmationScene } from "./scenes/purchase-confirmation-scene";
@@ -42,6 +48,14 @@ const SCENE_RENDERERS: Record<
     if (!isPreviewScenario(scenario)) notFound();
     return <PurchaseConfirmationScene scenario={scenario} />;
   },
+  "parent-dashboard": (scenario) => {
+    if (!isParentDashboardScenario(scenario)) notFound();
+    return <ParentDashboardScene scenario={scenario} />;
+  },
+  "gamer-dashboard": (scenario) => {
+    if (!isGamerDashboardScenario(scenario)) notFound();
+    return <GamerDashboardScene scenario={scenario} />;
+  },
   "gedu-dashboard": (scenario) => {
     if (!isGeduDashboardScenario(scenario)) notFound();
     return <GeduDashboardScene scenario={scenario} />;
@@ -49,6 +63,18 @@ const SCENE_RENDERERS: Record<
   "gedu-product": (scenario) => {
     if (!isGeduProductScenario(scenario)) notFound();
     return <GeduProductPageScene scenario={scenario} />;
+  },
+  // Two surfaces, one body and one set of fixtures. The audience is the whole
+  // difference between them, which is exactly what the pair of scenes is for:
+  // opening both in adjacent tabs is how you check that the gamer's copy is the
+  // parent's minus attendance and nothing else has quietly drifted.
+  "parent-club": (scenario) => {
+    if (!isFamilyProductScenario(scenario)) notFound();
+    return <FamilyProductPageScene audience="customer" scenario={scenario} />;
+  },
+  "gamer-club": (scenario) => {
+    if (!isFamilyProductScenario(scenario)) notFound();
+    return <FamilyProductPageScene audience="gamer" scenario={scenario} />;
   },
 };
 

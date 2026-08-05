@@ -32,9 +32,15 @@ import { cn } from "@/lib/utils";
  * upward into it. A chevron pointing down at a control that adds nothing below
  * it would be pointing at the past.
  *
- * The row says "N upcoming sessions" rather than "N later sessions": in a feed
- * that runs future-to-past, "later" is ambiguous about which direction it means,
- * and this line is exactly where that ambiguity costs the most.
+ * **The count says "N more upcoming sessions", and every word of that is load-
+ * bearing.** "Later sessions" was the first attempt and it fails on direction: in
+ * a feed that runs future-to-past, "later" is ambiguous about which way it
+ * points, and this line is exactly where that ambiguity costs the most. Naming
+ * the direction fixed that and left a second ambiguity behind it — the next
+ * session is already on screen *below* this row, so a bare "3 upcoming sessions"
+ * is read by half the people who see it as three including the one they can see.
+ * "More" is what settles it: the number counts what is hidden, and the row is a
+ * control that reveals exactly that many.
  */
 export function NowDivider({
   count,
@@ -53,7 +59,7 @@ export function NowDivider({
   controls: string;
   onToggle: () => void;
 }) {
-  const t = useTranslations("gedu.sessionFeed");
+  const t = useTranslations("sessionFeed");
 
   return (
     <div className="relative flex items-center gap-3 py-2">

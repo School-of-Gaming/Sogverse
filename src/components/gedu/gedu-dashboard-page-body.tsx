@@ -2,44 +2,12 @@
 
 import { useTranslations } from "next-intl";
 import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
-import {
-  groupAssignmentsByType,
-  type GeduActivityGroup,
-  type GeduActivityType,
-} from "@/lib/gedu-assignment-rollup";
+import { ACTIVITY_HEADING_KEY, activityTypeSections } from "@/lib/activity-type";
 import {
   GeduAssignmentsSectionView,
   type GeduAssignmentCardData,
 } from "./GeduAssignmentsSectionView";
 import { UnverifiedVoiceNotice } from "./unverified-voice-notice";
-
-/**
- * The message key naming each type noun, which doubles as the anchor id its
- * section scrolls to. `satisfies` rather than an annotation so the values stay
- * literal and the compiler checks them against the message catalogue.
- */
-const ACTIVITY_HEADING_KEY = {
-  club: "clubs",
-  camp: "camps",
-  event: "events",
-} as const satisfies Record<GeduActivityType, string>;
-
-/**
- * The noun an **empty** dashboard is headed with.
- *
- * A gedu with nothing assigned has no noun of their own, so the page has to pick
- * one, and clubs is the default the rest of the product already assumes: it is
- * the standing weekly commitment, the thing most gedus are brought on to run,
- * and the first heading on every populated dashboard. Heading the empty page
- * with it costs nothing if the first assignment turns out to be a camp — that
- * gedu then sees a single "Camps" section, exactly as they would have either
- * way — and it buys an empty dashboard that still reads as the dashboard:
- * a heading, a pill entry beside the instant room, and the same section rhythm
- * the page will have the moment somebody assigns them a group. The alternative,
- * an unheaded paragraph floating above the voice room, reads as a page that
- * failed to render rather than one with nothing in it yet.
- */
-const EMPTY_DASHBOARD_ACTIVITY_TYPE: GeduActivityType = "club";
 
 /**
  * The gedu dashboard's page body — everything below the route's data shell.
@@ -67,8 +35,8 @@ const EMPTY_DASHBOARD_ACTIVITY_TYPE: GeduActivityType = "club";
  *   actually has are rendered, so a camp gedu never learns that events exist, and
  *   the section pill gains one entry per noun so the nav says the same words the
  *   headings do. The single exception is the gedu who has none of them, whose
- *   page is headed with the default noun rather than with nothing — see
- *   `EMPTY_DASHBOARD_ACTIVITY_TYPE`.
+ *   page is headed with the default noun rather than with nothing — which is the
+ *   shared type-noun section helper's rule, not this page's.
  * - **The sections are wider than the family dashboards', and the cards tile.**
  *   Gedu surfaces are desktop-default, and a roll-up card is small — a gedu with
  *   three activities on a laptop met one narrow column and a screen and a half
@@ -96,22 +64,16 @@ export function GeduDashboardPageBody({
 }) {
   const t = useTranslations("dashboardSections");
 
-  const activityGroups = groupAssignmentsByType(
+  /**
+   * The sections the page is made of: one per noun the gedu actually runs, or a
+   * single empty one when they run none. Everything below reads from this — the
+   * pill, the headings and the bodies are three views of one list, so an empty
+   * dashboard cannot end up with a heading the nav has no entry for.
+   */
+  const activitySections = activityTypeSections(
     assignments,
     (item) => item.assignment.productType,
   );
-
-  /**
-   * The sections the page is made of: one per noun the gedu actually runs, or a
-   * single empty one when they run none. Everything below reads from this and
-   * not from the groups — the pill, the headings and the bodies are three views
-   * of one list, so an empty dashboard cannot end up with a heading the nav has
-   * no entry for.
-   */
-  const activitySections: GeduActivityGroup<GeduAssignmentCardData>[] =
-    activityGroups.length === 0
-      ? [{ type: EMPTY_DASHBOARD_ACTIVITY_TYPE, items: [] }]
-      : activityGroups;
 
   /**
    * **Pill labels are their own strings, not the section headings reused.**
@@ -165,6 +127,11 @@ export function GeduDashboardPageBody({
             <section
               key={group.type}
               id={ACTIVITY_HEADING_KEY[group.type]}
+              // Named by its own heading: a `<section>` is only a landmark once
+              // it has an accessible name, and without one a screen-reader user
+              // tabbing the cards is told nothing about which run of them they
+              // are in.
+              aria-labelledby={`${ACTIVITY_HEADING_KEY[group.type]}-heading`}
               className="scroll-mt-32"
             >
               {/* `max-w-5xl`, not the family dashboards' `max-w-3xl`: this is a
@@ -173,7 +140,10 @@ export function GeduDashboardPageBody({
                   page — two different `mx-auto` caps would read as a broken
                   grid. */}
               <div className="mx-auto max-w-5xl space-y-6">
-                <h2 className="text-3xl font-bold">
+                <h2
+                  id={`${ACTIVITY_HEADING_KEY[group.type]}-heading`}
+                  className="text-3xl font-bold"
+                >
                   {t(ACTIVITY_HEADING_KEY[group.type])}
                 </h2>
                 {/* Empty only on the dashboard of a gedu with nothing assigned
@@ -199,10 +169,13 @@ export function GeduDashboardPageBody({
             viewport. Same shape as the parent dashboard's last section. */}
         <section
           id="instant-voice-room"
+          aria-labelledby="instant-voice-room-heading"
           className="scroll-mt-32 min-h-[calc(100svh-9rem)]"
         >
           <div className="mx-auto max-w-5xl space-y-6">
-            <h2 className="text-3xl font-bold">{t("instantVoiceRoom")}</h2>
+            <h2 id="instant-voice-room-heading" className="text-3xl font-bold">
+              {t("instantVoiceRoom")}
+            </h2>
             {verified ? instantRoomCard : <UnverifiedVoiceNotice />}
           </div>
         </section>

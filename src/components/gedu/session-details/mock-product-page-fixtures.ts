@@ -175,7 +175,7 @@ const MARKUS = { id: GEDU_IDS.markus, firstName: "Markus" } as const;
 /**
  * **The camp's future block, and the volume case for the whole feed.**
  *
- * Seventeen entries, so the now-divider reads "16 upcoming sessions" — the next
+ * Seventeen entries, so the now-divider reads "16 more upcoming sessions" — the next
  * one renders below the line, the rest sit behind it — and the upward reveal is
  * exercised at the scale it will actually meet rather than against four rows
  * where any implementation looks fine. That number is not arbitrary: an
@@ -233,9 +233,10 @@ const CAMP_FUTURE_SPECS: readonly EntrySpec[] = [
 /**
  * The camp's run so far — every day written up bar the most recent one.
  *
- * The club scenario beside it is where the *backlog* lives: five outstanding
- * weeks, several ladder states, a year of history. The camp carries exactly one
- * gap, and it is deliberately the freshest day — a gedu who ran a session
+ * The club scenario beside it is where the *backlog* lives: outstanding weeks of
+ * both kinds — registers unfinished and write-ups never written — and a year of
+ * history. The camp carries exactly one gap, and it is deliberately the
+ * freshest day — a gedu who ran a session
  * yesterday afternoon and has not sat down with the register yet is the single
  * most common way a session ends up owed, and it is the only way an in-person
  * product ever shows an attention badge on the dashboard. Everything older is
@@ -473,30 +474,33 @@ const YEARLONG_STAFF_NOTES: readonly string[] = [
  * its own spec list rather than passing knobs into this one.
  *
  * The mix is what a real year looks like, and it covers every shape a past
- * session can take — including **all three rungs of the completeness ladder**,
- * which is the thing the club scenario now has to prove:
+ * session can take — including **every way a session can be flagged**, which is
+ * the thing the club scenario has to prove:
  *
- * - *Needs attention* — two bare gaps with nothing on them, one week whose
- *   report was written but whose roster was never touched, and one whose roster
- *   was started and abandoned (the partial save).
- * - *Recorded* — weeks marked off with no report written. Nothing is owed, so
- *   they carry no badge at all, and that silence is what gives the other two
- *   states their meaning.
+ * - *Needs attention, register missing* — two bare gaps with nothing on them,
+ *   one week whose report was written but whose roster was never touched, and
+ *   one whose roster was started and abandoned (the partial save).
+ * - *Needs attention, report missing* — weeks marked off to the last child and
+ *   never written up. These used to be the silent middle of a three-rung ladder;
+ *   they are amber now, because the report is what a family opens the page for
+ *   and a week without one is a week they were told nothing about.
  * - *Complete* — the majority: marked off and reported, wearing the green check.
  *
  * Plus a pre-epoch tail: one session somebody went back and wrote up (an
- * ordinary past entry that never turns amber) and two nobody ever touched
- * (quiet placeholder lines that still open the record editor). There are no
- * holiday skips: a session that did not run has no entry kind, because
- * declaring one off is part of the cancellation flows nobody has designed.
+ * ordinary past entry that never turns amber, and the only place on this page
+ * the neutral marker still appears) and two nobody ever touched (quiet
+ * placeholder lines that still open the record editor). There are no holiday
+ * skips: a session that did not run has no entry kind, because declaring one off
+ * is part of the cancellation flows nobody has designed.
  */
 function yearlongSpecs(): readonly EntrySpec[] {
   const OWED_AT = new Set([2, 12]);
   const REPORT_BUT_NO_ATTENDANCE_AT = new Set([8]);
   const PART_MARKED_AT = new Set([4]);
-  // Marked off, never reported on. Spread through the year rather than bunched,
-  // so the neutral middle rung is visible in the first screen of the feed and
-  // again deep into the scrollback.
+  // Marked off, never reported on — the other way to be flagged. Spread through
+  // the year rather than bunched, so the case is visible in the first screen of
+  // the feed and again deep into the scrollback, sitting beside the
+  // unmarked-register cases it must not be mistaken for.
   const MARKED_BUT_NO_REPORT_AT = new Set([1, 9, 22, 37]);
   const past: EntrySpec[] = [];
 
@@ -580,14 +584,14 @@ const CLUB_SPECS = yearlongSpecs();
 const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
   /**
    * **The kitchen sink.** A remote weekly club a year and a bit into its run,
-   * carrying every state the feed can be in at once: all three rungs of the
-   * completeness ladder (marked off *and* reported, marked off with no report,
-   * and still owing attendance), bare gaps, a week reported but
+   * carrying every state the feed can be in at once: sessions finished on both
+   * halves (marked off *and* reported), sessions flagged for a missing report,
+   * sessions flagged for a missing register, bare gaps, a week reported but
    * never marked off, a week whose roster was started and abandoned, a pre-epoch
    * tail nothing is owed for, a future horizon with reports already on it, and
    * three sister groups in the rail — one of them not staffed yet. Fifty-five
-   * weeks is also what makes the month dividers and the chunked "show earlier"
-   * reveal do any work at all, and the reports themselves run from two lines to
+   * weeks is also what makes the month dividers and the scroll-fed history do
+   * any work at all, and the reports themselves run from two lines to
    * twelve so the feed's clamp is exercised beside reports short enough not to
    * need it.
    */
@@ -646,11 +650,13 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
    * never say more than seven; an end-dated product ignores that cap and emits
    * every occurrence to its end date. A camp with four weeks left is therefore
    * the honest home for the feed's volume case — seventeen future entries, a
-   * divider reading "16 upcoming sessions", and an upward reveal proved against
+   * divider reading "16 more upcoming sessions", and an upward reveal proved against
    * a screenful rather than against four rows.
    *
    * It owes exactly one session — yesterday's, register not yet done — which is
-   * what puts an attention badge on an in-person dashboard card. The club beside
+   * what puts an attention badge on an in-person dashboard card. Every other day
+   * of the run carries both halves, register and report, which is what keeps the
+   * count at one now that a missing write-up is owed work too. The club beside
    * it carries the real backlog; one gap here is the difference between "a camp
    * gedu who is on top of it" and "a card state nobody can see".
    */

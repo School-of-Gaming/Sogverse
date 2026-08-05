@@ -99,7 +99,8 @@
     "roleAdmin": "Admin",
     "roleParent": "vav/SoS",
     "roleGamer": "toy’wI’",
-    "roleGedu": "Gedu"
+    "roleGedu": "Gedu",
+    "gedus": "Gedupu’"
   },
   "about": {
     "hero": {
@@ -1024,7 +1025,7 @@
     },
     "nextTitle": "qaStaHvIS",
     "next": {
-      "placement": "ghojmoHwI’ tlhej ghomDaq {gamer} wIlanpu’. My SOG-Daq Qu’mey legh.",
+      "placement": "Gedu tlhej ghomDaq {gamer} wIlanpu’. My SOG-Daq Qu’mey legh.",
       "subscription": "Hoch jar DaDIlnIS. My SOG-Daq Dajondaq ghap Damevmeh laH.",
       "oneTime": "wa’logh neH DIl — latlh DIl Hutlh."
     },
@@ -1130,6 +1131,7 @@
     "pageTitle": "jIH SOG",
     "myFamily": "qorDu’wIj",
     "myGamers": "jIH toy’wI’pu’",
+    "myGamersShort": "toy’wI’pu’",
     "upcomingSessions": "ghoSqep’a’",
     "upcomingSessionsEmptyStateGamer": "raghlIj qaS, naDev jatlh pa’Daq Gedu jupmey je yIghoS!",
     "upcomingSessionsEmptyStateParent": "puqlIj raghDaj qaS, naDev jatlh pa’Daq Gedu jupmey je ghoSchoH!",
@@ -1150,6 +1152,8 @@
   },
   "family": {
     "addGamer": "QujwI’ chel",
+    "manageGamer": "yISeH",
+    "manageGamerAria": "{name} yISeH",
     "switchFailed": "qaSbe’ QunwI’ choH",
     "loadFailed": "qorDu’ polHa’lu’pu’",
     "switchToParentToAddGamer": {
@@ -1177,6 +1181,29 @@
       "genericError": "QujwI’ chelta’be’. yInIDqa’!"
     }
   },
+  "familyEnrollment": {
+    "emptyState": "{name} Suvbe’taH. ghom’a’mey tIbej ’ej wa’ yIwIv!",
+    "wontRenew": "qaSqa’be’ — Qu’ Qav {date}",
+    "noGamers": "naDev QujwI’ tu’be’lu’. QujwI’ wa’DIch yIchel, ghIq ghom’a’ qoj raQ bowIv!",
+    "emptyStateCta": "ghom’a’mey raghmey je tIbej"
+  },
+  "familyProduct": {
+    "back": "jIH SOGDaq yIchegh",
+    "forGamer": "{name}vaD",
+    "scheduleLabel": "ghorgh",
+    "venueLabel": "nuqDaq",
+    "aboutHeading": "ghom’a’vam De’",
+    "venueNoteHeading": "{site}Daq",
+    "feedHeading": "may’mey",
+    "attendancePresent": "pawpu’",
+    "attendanceNotPresent": "pawbe’",
+    "noWriteUp": "qonta’ tu’lu’be’",
+    "emptyFeedCustomer": "naDev may’mey tu’lu’be’.",
+    "emptyFeedGamer": "naDev pagh tu’lu’. may’ Hoch DaSuvbogh naDev leghlu’ — batlh yIQuj!",
+    "paymentProblemNotice": "ghom’a’vam Huch Qob! jIH SOGDaq Huch DIl DaSDIq yIchoH, {name} Daq yItaHmoH.",
+    "cancellationNotice": "may’morgh DanatlhHa’pu’! qaSqa’be’. {name} Qu’ Qav ’oH {date}’e’.",
+    "cancellationNoticeNoSession": "may’morgh DanatlhHa’pu’! qaSqa’be’. {date} tlhab SoH."
+  },
   "selectProfile": {
     "title": "Sogverse ’el ’Iv?"
   },
@@ -1192,7 +1219,9 @@
   },
   "gamer": {
     "welcome": "nuqneH, toy’wI’!",
-    "subtitle": "DaH yItoy’ je yIghoj?"
+    "welcomeNamed": "nuqneH, {name}!",
+    "subtitle": "DaH yItoy’ je yIghoj?",
+    "emptyDashboard": "naDev pagh tu’lu’. SoSlI’ vavlI’ joq yIrI’, ’ej ghom’a’ qoj raQ yIwIv — batlh yIghoj!"
   },
   "gedu": {
     "coverage": {
@@ -1208,27 +1237,11 @@
       "saving": "polchoH...",
       "saveError": "pol Qapbe’"
     },
-    "myGroups": {
-      "counts": "{groupCount, plural, one {1 ghom} other {# ghommey}} · {gamerCount, plural, one {1 Suvwl’} other {# Suvwl’pu’}}",
-      "startsIn": "{countdown} qaSchoH",
-      "inProgress": "qaStaH tay’",
-      "viewDetails": "De’ yIbej",
-      "noNextSession": "may’ nabta’ tu’lu’be’",
-      "endedOn": "{date} rIntaH",
-      "liveBadge": "qaStaH"
-    },
     "sessionDetails": {
       "back": "jIH SOGDaq yIchegh",
-      "typeLabel": {
-        "consumer_club": "ghom’a’",
-        "municipality_club": "ghom’a’",
-        "camp": "wa’leSvam",
-        "event": "Soqbogh"
-      },
       "railOtherGroupsHeading": "latlh ghommey",
       "noOtherGroups": "may’vamDaq latlh ghom tu’lu’be’.",
       "railGroupHeading": "ghom’a’wIj",
-      "gedusLabel": "Gedupu’",
       "noGedus": "Gedu tu’lu’be’.",
       "gamersLabel": "Suvwl’pu’",
       "gamerCount": "{count, plural, one {1 Suvwl’} other {# Suvwl’pu’}}",
@@ -1254,16 +1267,12 @@
       "minecraftSaveFailed": "pong pollu’be’. yIboq."
     },
     "sessionFeed": {
-      "upcomingBadge": "may’ veb",
-      "futureBadge": "may’ pIq",
       "edit": "yIchoH",
       "needsAttentionLabel": "Datu’nIS",
       "completeLabel": "rInpu’",
       "noRecordLabel": "qonta’ tu’lu’be’",
       "emptyFeed": "ghom’a’vam may’mey tu’lu’be’.",
       "noNotesYet": "may’vamvaD qonta’ tu’lu’be’ DaH.",
-      "readMore": "latlh yIlaD",
-      "showLess": "puS yIcha’",
       "attendanceSummary": "{present}/{total} pawpu’",
       "presentLabel": "pawpu’",
       "absentLabel": "pawbe’",
@@ -1280,8 +1289,6 @@
       "save": "yIpol",
       "cancel": "yIqIl",
       "alertBadge": "{count, plural, one {# may’ Datu’nIS} other {# may’mey Datu’nIS}}",
-      "laterSessions": "{count, plural, one {# may’ veb} other {# may’mey veb}}",
-      "showEarlier": "{count, plural, one {# may’ qan yIcha’} other {# may’mey qan yIcha’}}",
       "attendanceMarkedCount": "{marked}/{total} ngu’ta’",
       "attendanceForGamer": "{name} pawwI’",
       "saveFailed": "may’vam pollu’be’. yIboq.",
@@ -1319,6 +1326,26 @@
       "staffPlaceholder": "ngaQHa’moHwI’mey, jan, pa’ Do’Ha’ghach — Daqvamvo’ Gedu veb SovnIS.",
       "saveFailed": "Daq qonta’ pollu’be’. yIboq."
     }
+  },
+  "productType": {
+    "consumer_club": "ghom’a’",
+    "municipality_club": "ghom’a’",
+    "camp": "wa’leSvam",
+    "event": "Soqbogh"
+  },
+  "activityCard": {
+    "endedOn": "{date} rIntaH",
+    "noSchedule": "poH nabta’ tu’lu’be’"
+  },
+  "sessionBadge": {
+    "live": "qaStaH",
+    "nextSession": "may’ veb",
+    "upcoming": "may’ pIq"
+  },
+  "sessionFeed": {
+    "readMore": "latlh yIlaD",
+    "showLess": "puS yIcha’",
+    "laterSessions": "{count, plural, one {# may’ veb latlh} other {# may’mey veb latlh}}"
   },
   "groups": {
     "title": "ghom’a’mey",
@@ -1765,6 +1792,8 @@
       "positionValue": "{position}DIch",
       "reassuranceCustomer": "quS poSDI’, QInHom wIngeH.",
       "reassuranceGamer": "quS poSDI’, SoSlI’ vavlI’ je wIja’.",
+      "footerReassuranceCustomer": "tlheghDaq {position}DIch SoH — quS poSDI’, QInHom wIngeH.",
+      "footerReassuranceGamer": "tlheghDaq {position}DIch SoH — quS poSDI’, SoSlI’ vavlI’ je wIja’.",
       "leave": {
         "trigger": "tlhegh yImej",
         "confirmTitle": "tlhegh Damejqang’a’?",
@@ -2066,7 +2095,7 @@
         "ready": "DaqlIj pIm",
         "join": "yImuv",
         "unverifiedTitle": "tobtaHvIS ngoq",
-        "unverifiedBody": "Daq DachenmoH ’e’ DapoQ pa’, ghojmoHwI’ SoH ’e’ lutob qum. tobchugh, naDev tugh Daq yIchen ’e’ DalaH!"
+        "unverifiedBody": "Daq DachenmoH ’e’ DapoQ pa’, Gedu SoH ’e’ lutob qum. tobchugh, naDev tugh Daq yIchen ’e’ DalaH!"
       }
     }
   },

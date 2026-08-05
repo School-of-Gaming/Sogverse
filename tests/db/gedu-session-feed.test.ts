@@ -773,6 +773,26 @@ describe("gedu session feed", () => {
   });
 
   describe("get_my_gedu_assignment_summaries", () => {
+    /**
+     * Mark every current roster member present on each of `dates`.
+     *
+     * GROUP_MINE's roster is one child, which is what makes "the whole roster
+     * is answered" cheap to reach here — and reaching it is the point: the
+     * register half of the count has to be *satisfied* before the report half
+     * can be observed on its own.
+     */
+    async function markWholeRoster(dates: readonly string[]): Promise<void> {
+      for (const date of dates) {
+        const { error } = await geduAuth.rpc("record_attendance", {
+          p_group_id: GROUP_MINE,
+          p_session_date: date,
+          p_gamer_id: TEST_IDS.GAMER,
+          p_status: "present",
+        });
+        expect(error).toBeNull();
+      }
+    }
+
     it("returns one entry per assignment, parsed through the contract schema", async () => {
       const { data, error } = await geduAuth.rpc(
         "get_my_gedu_assignment_summaries",
@@ -809,13 +829,61 @@ describe("gedu session feed", () => {
       expect(mine?.attention_count).toBe(2);
     });
 
-    it("stops counting a session once every roster member is marked", async () => {
+    /**
+     * The count is a two-part test and this is the half that used not to exist.
+     *
+     * A session marked off to the last child with nothing written for the
+     * families used to count as finished. It does not any more: the report is
+     * what a family opens their page to read, so a week without one is a week
+     * they were told nothing about, and it stays on the gedu's list. Marking
+     * the register alone therefore moves nothing.
+     */
+    it("keeps counting a fully-marked session that has no report", async () => {
+      await markWholeRoster([TWO_DAYS_AGO, YESTERDAY]);
+
+      const { data } = await geduAuth.rpc("get_my_gedu_assignment_summaries", {
+        p_epoch_date: TWO_DAYS_AGO,
+      });
+      const summaries = geduAssignmentSummaries.parse(data);
+
+      expect(
+        summaries.find((s) => s.group_id === GROUP_MINE)?.attention_count,
+      ).toBe(2);
+    });
+
+    /**
+     * And the mirror image: a report with the register untouched is just as
+     * outstanding. Neither half buys off the other, which is the whole content
+     * of "either one alone keeps it on the list".
+     */
+    it("keeps counting a reported session whose register is untouched", async () => {
       for (const date of [TWO_DAYS_AGO, YESTERDAY]) {
-        await geduAuth.rpc("record_attendance", {
+        await geduAuth.rpc("set_group_session_notes", {
           p_group_id: GROUP_MINE,
           p_session_date: date,
-          p_gamer_id: TEST_IDS.GAMER,
-          p_status: "present",
+          p_report: "We built a clock tower.",
+          p_gedu_note: "",
+        });
+      }
+
+      const { data } = await geduAuth.rpc("get_my_gedu_assignment_summaries", {
+        p_epoch_date: TWO_DAYS_AGO,
+      });
+      const summaries = geduAssignmentSummaries.parse(data);
+
+      expect(
+        summaries.find((s) => s.group_id === GROUP_MINE)?.attention_count,
+      ).toBe(2);
+    });
+
+    it("stops counting a session once it is both marked and reported", async () => {
+      await markWholeRoster([TWO_DAYS_AGO, YESTERDAY]);
+      for (const date of [TWO_DAYS_AGO, YESTERDAY]) {
+        await geduAuth.rpc("set_group_session_notes", {
+          p_group_id: GROUP_MINE,
+          p_session_date: date,
+          p_report: "We built a clock tower.",
+          p_gedu_note: "",
         });
       }
 
@@ -827,6 +895,74 @@ describe("gedu session feed", () => {
       expect(
         summaries.find((s) => s.group_id === GROUP_MINE)?.attention_count,
       ).toBe(0);
+    });
+
+    /**
+     * A report of nothing but whitespace is not a report. The write path trims
+     * and collapses an emptied field back to NULL, so this is defence against a
+     * row that got there another way — and the client's derivation trims for the
+     * same reason, so the badge and the feed cannot disagree over a blank line.
+     *
+     * The two rows deliberately cover different whitespace classes: plain
+     * spaces, and a newline/tab mixture. Space-only is the one class bare
+     * btrim() strips, so a test using only spaces would keep passing if 00150's
+     * character-list form regressed to 00149's — the newline row is the pin
+     * that holds the SQL to JavaScript's String.trim().
+     */
+    it("treats a whitespace-only report as no report at all", async () => {
+      await markWholeRoster([TWO_DAYS_AGO, YESTERDAY]);
+      await admin
+        .from("group_sessions")
+        .update({ report: "   " })
+        .eq("group_id", GROUP_MINE)
+        .eq("session_date", TWO_DAYS_AGO);
+      await admin
+        .from("group_sessions")
+        .update({ report: "\n\t\n" })
+        .eq("group_id", GROUP_MINE)
+        .eq("session_date", YESTERDAY);
+
+      const { data } = await geduAuth.rpc("get_my_gedu_assignment_summaries", {
+        p_epoch_date: TWO_DAYS_AGO,
+      });
+      const summaries = geduAssignmentSummaries.parse(data);
+
+      expect(
+        summaries.find((s) => s.group_id === GROUP_MINE)?.attention_count,
+      ).toBe(2);
+    });
+
+    /**
+     * The owed gate is untouched by the two-part test, and this is where that is
+     * pinned from the other side.
+     *
+     * Today's session has started (23:00 UTC, an hour long) but has not ended,
+     * and it has neither a register nor a report. Under a rule that only asked
+     * "is anything missing" it would be the third outstanding session here. It
+     * is not counted, because nothing is owed until the hour is over — exactly
+     * as before, and exactly as the client's own derivation says.
+     */
+    it("never counts a session that has not finished, however empty", async () => {
+      async function countFrom(epoch: string): Promise<number | undefined> {
+        const { data } = await geduAuth.rpc(
+          "get_my_gedu_assignment_summaries",
+          { p_epoch_date: epoch },
+        );
+        return geduAssignmentSummaries
+          .parse(data)
+          .find((s) => s.group_id === GROUP_MINE)?.attention_count;
+      }
+
+      // Floored at today, the only occurrence in range is today's — which
+      // started at 23:00 and ends at tomorrow's midnight. It has no register
+      // and no report, so under a rule that asked only "is anything missing"
+      // it would be outstanding. Nothing is owed until the hour is over.
+      expect(await countFrom(TODAY)).toBe(0);
+
+      // Drop the floor by one day and the same call finds exactly one: the
+      // difference between the two answers is the end-instant boundary, and
+      // nothing else moved.
+      expect(await countFrom(YESTERDAY)).toBe(1);
     });
 
     it("owes nothing for sessions before the epoch, however incomplete", async () => {

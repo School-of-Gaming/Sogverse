@@ -145,9 +145,11 @@ export type GeduFeedSite = z.infer<typeof geduFeedSite>;
  * One dashboard card's worth of assignment facts.
  *
  * `attention_count` is computed server-side against the same holiday-blind
- * weekday expansion the client uses, floored at `max(product start, epoch)`.
- * The dashboard deliberately never fetches a feed to derive it — a page of
- * cards would otherwise be a page of history downloads.
+ * weekday expansion the client uses, floored at `max(product start, epoch)`, and
+ * counts a finished session until **both** halves are in: every current roster
+ * member marked, and a non-empty report written. The dashboard deliberately
+ * never fetches a feed to derive it — a page of cards would otherwise be a page
+ * of history downloads.
  */
 export const geduAssignmentSummary = z.object({
   product_id: z.string(),

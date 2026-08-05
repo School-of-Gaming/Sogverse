@@ -8,7 +8,14 @@
  * *absence* (a scheduled occurrence nobody has recorded). Whoever feeds the
  * component reconciles the schedule against the stored records and emits one
  * entry per occurrence.
+ *
+ * **This is the workspace's entry union and nothing else.** A family reads the
+ * same sessions through a shape of its own, carrying a report, one child's mark
+ * and no way to express a gedu note or another child's attendance; the pieces
+ * both shapes are built from live in `@/components/session-feed`.
  */
+
+import type { AttendanceMark } from "@/components/session-feed";
 
 /** One child on the group's roster, as the attendance editor needs them. */
 export interface SessionFeedGamer {
@@ -85,12 +92,15 @@ export interface FutureSessionFeedEntry extends SessionFeedEntryBase {
  * still flagged, with the marks already made intact.
  *
  * An empty map is a session nobody has started on; a map marking every roster
- * member "absent" is the very different claim that nobody turned up. Attendance
- * is the mandatory part — it doubles as the gedu's confirmation that they ran
- * the session, which is what they are paid on — and both written fields are
- * optional. A past entry with its roster finished *and* a report written is the
- * top of the completeness ladder; with the roster finished and no report it is
- * simply done, and owes nothing.
+ * member "absent" is the very different claim that nobody turned up.
+ *
+ * **Two of the three fields are owed, and the gedu note is the odd one out.**
+ * Attendance doubles as the gedu's confirmation that they ran the session, which
+ * is what they are paid on; the report is what the families open their page to
+ * read, so an owed session without one has told them nothing. Both have to be
+ * there before the entry is finished. The gedu note is a message to a colleague
+ * that nobody outside staff ever sees, so it is genuinely optional and is no
+ * part of the answer.
  */
 export interface PastSessionFeedEntry extends SessionFeedEntryBase {
   kind: "past";
@@ -118,11 +128,11 @@ export interface PastSessionFeedEntry extends SessionFeedEntryBase {
    * out. The dashboard's SQL count draws the same end line, so the badge and the
    * card can never disagree about which sessions are outstanding.
    *
-   * It gates the warning rung of the completeness ladder and nothing else.
-   * Neither an old session nor a live one loses its editor — both are fully
-   * recordable, which is what makes roll call during the club work; what they
-   * may never do is turn amber for work nobody is owed yet. The success rung
-   * still applies to both: finish the sheet and the green check is earned.
+   * It gates the amber warning and nothing else. Neither an old session nor a
+   * live one loses its editor — both are fully recordable, which is what makes
+   * roll call during the club work; what they may never do is turn amber for
+   * work nobody is owed yet. The green check still applies to both: finish the
+   * sheet, write the report, and it is earned.
    */
   owed: boolean;
 }
@@ -176,9 +186,6 @@ export type EditableSessionFeedEntry =
   | PastSessionFeedEntry
   | NoRecordSessionFeedEntry;
 
-/** How one roster member's attendance was recorded. */
-export type AttendanceMark = "present" | "absent";
-
 /**
  * Per-gamer marks, keyed by roster id — both the editor's working state and the
  * shape a past entry stores.
@@ -200,10 +207,12 @@ export type AttendanceMarks = Readonly<
  * What the write-up editor emits on save, mapped straight onto the entry it
  * replaces.
  *
- * It carries the marks as they stand, however few of them there are. There is
- * no completeness precondition to encode, because there is no completeness
- * gate: a partial sheet is savable, and the entry it lands on simply keeps
- * saying it needs attention until the last child is marked.
+ * It carries the marks as they stand, however few of them there are, and the
+ * report as it stands, empty or not. There is no completeness precondition to
+ * encode, because there is no completeness gate: a partial sheet is savable and
+ * so is a session with nothing written, and the entry it lands on simply keeps
+ * saying it needs attention until the last child is marked *and* a report is on
+ * it.
  */
 export interface SessionRecordDraft {
   kind: "past";

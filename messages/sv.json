@@ -99,7 +99,8 @@
     "roleAdmin": "Administratör",
     "roleParent": "Förälder",
     "roleGamer": "Spelare",
-    "roleGedu": "Gedu"
+    "roleGedu": "Gedu",
+    "gedus": "Geduer"
   },
   "about": {
     "hero": {
@@ -393,11 +394,11 @@
       },
       "fees": {
         "sectionTitle": "Arvoden per tillfälle",
-        "sectionDescription": "Vad vi betalar spelpedagogerna (Gedu) per tillfälle och — för kommunklubbar — vad kommunen betalar oss. Detta är interna siffror, skilda från vad föräldrar betalar ovan.",
+        "sectionDescription": "Vad vi betalar Geduerna per tillfälle och — för kommunklubbar — vad kommunen betalar oss. Detta är interna siffror, skilda från vad föräldrar betalar ovan.",
         "primaryGeduLabel": "Huvud-Gedu-arvode",
-        "primaryGeduHint": "Betalas till den ledande spelpedagogen per tillfälle. Välj Okänt om du anger det senare, eller Volontär om hen leder gratis.",
+        "primaryGeduHint": "Betalas till den ledande Gedun per tillfälle. Välj Okänt om du anger det senare, eller Volontär om hen leder gratis.",
         "assistantGeduLabel": "Assisterande Gedu-arvode",
-        "assistantGeduHint": "Betalas till en assisterande spelpedagog per tillfälle. Välj Inget om det inte finns någon assistent.",
+        "assistantGeduHint": "Betalas till en assisterande Gedu per tillfälle. Välj Inget om det inte finns någon assistent.",
         "municipalityLabel": "Kommunavgift",
         "municipalityHint": "Vad kommunen betalar oss per tillfälle. Välj Okänt om du anger det senare.",
         "amountLabel": "Belopp per tillfälle i euro",
@@ -688,7 +689,7 @@
         "title": "Verifiering",
         "verified": "Verifierad",
         "unverified": "Inte verifierad",
-        "unverifiedNote": "Den här spelfostraren har inte verifierats ännu. Hen kan inte tilldelas en grupp förrän du verifierar hen.",
+        "unverifiedNote": "Den här Gedun har inte verifierats ännu. Hen kan inte tilldelas en grupp förrän du verifierar hen.",
         "verifiedOn": "Verifierad {date}",
         "verifiedByOn": "Verifierad av {name} {date}",
         "verifyAction": "Verifiera",
@@ -777,7 +778,7 @@
       "networkError": "Nätverksfel",
       "geduGroups": "Gedu-grupper",
       "addGroup": "Lägg till grupp",
-      "noGroups": "Inga Gedu-grupper ännu. Lägg till en grupp för att tilldela en spelfostrare.",
+      "noGroups": "Inga Gedu-grupper ännu. Lägg till en grupp för att tilldela en Gedu.",
       "selectGeduForGroup": "Välj en Gedu för att skapa en ny grupp.",
       "group": "Grupp",
       "groupNumber": "Grupp {number}",
@@ -979,7 +980,7 @@
     },
     "nextTitle": "Vad händer nu",
     "next": {
-      "placement": "Vi placerar {gamer} i en grupp med en spelpedagog. Tillfällena visas sedan under Min SOG.",
+      "placement": "Vi placerar {gamer} i en grupp med en Gedu. Tillfällena visas sedan under Min SOG.",
       "subscription": "Du faktureras varje månad. Du kan hantera eller avsluta när som helst från Min SOG.",
       "oneTime": "Detta var en engångsbetalning – det finns inget mer att betala."
     },
@@ -1047,7 +1048,7 @@
           "role": "Spelarens roll i Sogverse.",
           "firstName": "Spelarens förnamn.",
           "endTime": "När sessionsfönstret stängs (inkluderar en 5-minuters buffert efter schemalagt slut). Använd detta för att schemalägga en kick eller ny kontroll.",
-          "reason": "Läsbar beskrivning: produktnamn och utbildarens namn."
+          "reason": "Läsbar beskrivning: produktnamn och Geduns namn."
         },
         "error401": "Saknad, felformaterad eller ogiltig API-nyckel.",
         "error400": "Saknad eller ogiltig <code>uuid</code>-frågeparameter.",
@@ -1072,7 +1073,7 @@
     "subtitle": "Dela dina tankar med oss",
     "sendFeedback": "Skicka feedback",
     "feedbackDescription": "Vi vill gärna höra din feedback, dina förslag eller felrapporter.",
-    "gamerReplyNote": "Din utbildare kan följa upp med dig under nästa session.",
+    "gamerReplyNote": "Din Gedu kan följa upp med dig under nästa session.",
     "message": "Meddelande",
     "placeholder": "Dela dina tankar, förslag eller rapportera ett fel...",
     "charactersNeeded": "{count} tecken till behövs",
@@ -1085,6 +1086,7 @@
     "pageTitle": "Min SOG",
     "myFamily": "Min familj",
     "myGamers": "Mina spelare",
+    "myGamersShort": "Spelare",
     "upcomingSessions": "Träffar",
     "upcomingSessionsEmptyStateGamer": "När din nästa träff börjar är det här du går in i röstrummet med din Gedu och dina vänner.",
     "upcomingSessionsEmptyStateParent": "När ditt barns nästa träff börjar är det här hen går in i röstrummet med sin Gedu och sina vänner.",
@@ -1105,6 +1107,8 @@
   },
   "family": {
     "addGamer": "Lägg till gamer",
+    "manageGamer": "Hantera",
+    "manageGamerAria": "Hantera {name}",
     "switchFailed": "Det gick inte att byta konto",
     "loadFailed": "Det gick inte att läsa in familjen",
     "switchToParentToAddGamer": {
@@ -1132,6 +1136,29 @@
       "genericError": "Det gick inte att lägga till gamern. Försök igen."
     }
   },
+  "familyEnrollment": {
+    "emptyState": "{name} är inte anmäld till något ännu. Titta tillsammans på vad som finns.",
+    "wontRenew": "Förnyas inte — sista passet {date}",
+    "noGamers": "Inga gamers här ännu. Lägg till din första gamer och välj sedan en klubb eller ett läger tillsammans.",
+    "emptyStateCta": "Bläddra bland klubbar och läger"
+  },
+  "familyProduct": {
+    "back": "Tillbaka till Min SOG",
+    "forGamer": "för {name}",
+    "scheduleLabel": "När",
+    "venueLabel": "Var",
+    "aboutHeading": "Om gruppen",
+    "venueNoteHeading": "På {site}",
+    "feedHeading": "Tillfällen",
+    "attendancePresent": "Närvarande",
+    "attendanceNotPresent": "Inte närvarande",
+    "noWriteUp": "Ingen sammanfattning",
+    "emptyFeedCustomer": "Det finns inga tillfällen här än.",
+    "emptyFeedGamer": "Inget här än. Varje tillfälle du spelar dyker upp här efteråt.",
+    "paymentProblemNotice": "Det är problem med betalningen för den här klubben – uppdatera ditt kort under Fakturering på Min SOG så att {name} behåller sin plats.",
+    "cancellationNotice": "Du har sagt upp medlemskapet — det förnyas inte. {name}s sista pass är {date}.",
+    "cancellationNoticeNoSession": "Du har sagt upp medlemskapet — det förnyas inte. Du har tillgång till {date}."
+  },
   "selectProfile": {
     "title": "Vem ska in i Sogverse?"
   },
@@ -1147,12 +1174,14 @@
   },
   "gamer": {
     "welcome": "Välkommen, spelare!",
-    "subtitle": "Redo att spela och lära dig?"
+    "welcomeNamed": "Välkommen, {name}!",
+    "subtitle": "Redo att spela och lära dig?",
+    "emptyDashboard": "Inget här än. Be en förälder titta på klubbarna och lägren tillsammans med dig, så väljer ni något ihop."
   },
   "gedu": {
     "coverage": {
       "title": "Områden du täcker",
-      "remoteOnlyNote": "Används för att matcha dig som vikarie när en annan utbildare inte kan hålla sin klubb. Lämna tomt om du bara vikarierar på distans.",
+      "remoteOnlyNote": "Används för att matcha dig som vikarie när en annan Gedu inte kan hålla sin klubb. Lämna tomt om du bara vikarierar på distans.",
       "selectedHeading": "Valda ({count})",
       "noneSelected": "Inga områden valda",
       "remove": "Ta bort {name}",
@@ -1163,27 +1192,11 @@
       "saving": "Sparar...",
       "saveError": "Kunde inte spara"
     },
-    "myGroups": {
-      "counts": "{groupCount, plural, one {# grupp} other {# grupper}} · {gamerCount, plural, one {# spelare} other {# spelare}}",
-      "startsIn": "Börjar om {countdown}",
-      "inProgress": "Pågående pass",
-      "viewDetails": "Visa detaljer",
-      "noNextSession": "Inget tillfälle inbokat",
-      "endedOn": "Avslutades {date}",
-      "liveBadge": "Pågår"
-    },
     "sessionDetails": {
       "back": "Tillbaka till Min SOG",
-      "typeLabel": {
-        "consumer_club": "Klubb",
-        "municipality_club": "Klubb",
-        "camp": "Läger",
-        "event": "Evenemang"
-      },
       "railOtherGroupsHeading": "Andra grupper",
       "noOtherGroups": "Inga andra grupper i denna session.",
       "railGroupHeading": "Min grupp",
-      "gedusLabel": "Geduer",
       "noGedus": "Inga Geduer tilldelade.",
       "gamersLabel": "Spelare",
       "gamerCount": "{count, plural, one {# spelare} other {# spelare}}",
@@ -1209,16 +1222,12 @@
       "minecraftSaveFailed": "Användarnamnet sparades inte. Försök igen."
     },
     "sessionFeed": {
-      "upcomingBadge": "Nästa tillfälle",
-      "futureBadge": "Kommande tillfälle",
       "edit": "Redigera",
       "needsAttentionLabel": "Behöver åtgärd",
       "completeLabel": "Klart",
       "noRecordLabel": "Ingen anteckning",
       "emptyFeed": "Den här gruppen har inga tillfällen än.",
       "noNotesYet": "Inga anteckningar för det här tillfället än.",
-      "readMore": "Läs mer",
-      "showLess": "Visa mindre",
       "attendanceSummary": "{present} av {total} närvarande",
       "presentLabel": "Närvarande",
       "absentLabel": "Frånvarande",
@@ -1235,8 +1244,6 @@
       "save": "Spara",
       "cancel": "Avbryt",
       "alertBadge": "{count, plural, one {# tillfälle behöver åtgärd} other {# tillfällen behöver åtgärd}}",
-      "laterSessions": "{count, plural, one {# kommande tillfälle} other {# kommande tillfällen}}",
-      "showEarlier": "{count, plural, one {Visa # tidigare tillfälle} other {Visa # tidigare tillfällen}}",
       "attendanceMarkedCount": "{marked} av {total} markerade",
       "attendanceForGamer": "Närvaro för {name}",
       "saveFailed": "Tillfället sparades inte. Försök igen.",
@@ -1274,6 +1281,26 @@
       "staffPlaceholder": "Nycklar, utrustning, lokalens egenheter — vad nästa Gedu på plats behöver veta.",
       "saveFailed": "Anteckningarna om platsen sparades inte. Försök igen."
     }
+  },
+  "productType": {
+    "consumer_club": "Klubb",
+    "municipality_club": "Klubb",
+    "camp": "Läger",
+    "event": "Evenemang"
+  },
+  "activityCard": {
+    "endedOn": "Avslutades {date}",
+    "noSchedule": "Inget schema ännu"
+  },
+  "sessionBadge": {
+    "live": "Pågår",
+    "nextSession": "Nästa tillfälle",
+    "upcoming": "Kommande tillfälle"
+  },
+  "sessionFeed": {
+    "readMore": "Läs mer",
+    "showLess": "Visa mindre",
+    "laterSessions": "{count, plural, one {ytterligare # kommande tillfälle} other {ytterligare # kommande tillfällen}}"
   },
   "groups": {
     "title": "Grupper",
@@ -1720,6 +1747,8 @@
       "positionValue": "nr {position}",
       "reassuranceCustomer": "Vi mejlar så snart en plats blir ledig.",
       "reassuranceGamer": "Vi mejlar en förälder så snart en plats blir ledig.",
+      "footerReassuranceCustomer": "Plats {position} i kön — vi mejlar så snart en plats blir ledig.",
+      "footerReassuranceGamer": "Du är på plats {position} i kön — vi mejlar en förälder så snart en plats blir ledig.",
       "leave": {
         "trigger": "Lämna väntelistan",
         "confirmTitle": "Lämna väntelistan?",
@@ -1735,7 +1764,7 @@
       "tooltipSameDay": "Du har sagt upp medlemskapet — det förnyas inte. {name}s sista pass är {lastSession}."
     },
     "awaiting": {
-      "customer": "{name} är med! Ledaren placerar hen i en grupp innan det första passet börjar.",
+      "customer": "{name} är med! Gedun placerar hen i en grupp innan det första passet börjar.",
       "gamer": "Du är med! Vi placerar dig i din grupp innan nästa pass börjar."
     },
     "help": {
@@ -2014,14 +2043,14 @@
       },
       "createPage": {
         "title": "Starta ett direkt röstrum",
-        "subtitle": "Ett tryck → nytt rum & delbar länk. Använd för spontana en-mot-en-samtal eller utbildarsamordning utöver det schemalagda mötet.",
+        "subtitle": "Ett tryck → nytt rum & delbar länk. Använd för spontana en-mot-en-samtal eller Gedu-samordning utöver det schemalagda mötet.",
         "createButton": "Starta direkt rum",
         "creating": "Skapar…",
         "createFailed": "Kunde inte skapa rummet. Försök igen.",
         "ready": "Ditt rum är redo",
         "join": "Gå med",
         "unverifiedTitle": "Inväntar verifiering",
-        "unverifiedBody": "En administratör måste verifiera ditt utbildarkonto innan du kan skapa röstrum. Du kan starta ett här så snart du är verifierad."
+        "unverifiedBody": "En administratör måste verifiera ditt Gedu-konto innan du kan skapa röstrum. Du kan starta ett här så snart du är verifierad."
       }
     }
   },

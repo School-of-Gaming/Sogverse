@@ -1,7 +1,7 @@
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import { getNextSessionStart } from "@/lib/enrollment";
+import type { AttendanceMark } from "@/components/session-feed";
 import type {
-  AttendanceMark,
   AttendanceMarks,
   SessionFeedEntry,
   SessionFeedGamer,
@@ -94,11 +94,12 @@ export type SessionFeedCadence = "weekly" | "daily";
  * last of them is the next session, and everything after that is the past.
  *
  * In the default club run the enforcement epoch sits above the closing tail:
- * everything newer either has its attendance finished or is flagged as owed,
- * and everything older is either a quiet "no record" line or — for the one
- * somebody went back and wrote up — an ordinary past entry that never turns
- * amber. That boundary is the whole reason the gap states look nothing alike:
- * one is work, the other is history, and both are editable.
+ * everything newer is either finished on both halves — register complete and a
+ * report written — or flagged as owed, and everything older is either a quiet
+ * "no record" line or — for the one somebody went back and wrote up — an
+ * ordinary past entry that never turns amber however unfinished it is. That
+ * boundary is the whole reason the gap states look nothing alike: one is work,
+ * the other is history, and both are editable.
  *
  * **There is no "skipped" spec**, because there is no skipped entry kind: a
  * session that did not run is a real thing the schema will record one day and
@@ -301,14 +302,16 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
       "**Two things for next week:**\n\n- Siiri was quiet again and dropped out of the call twice without saying anything. Worth a word with her parents if it carries on.\n- Laptops 3 and 5 couldn't hear shared audio for the first ten minutes. Check the room setup before the group arrives.",
   },
 
-  // The **middle rung**: every child marked, no report written. Nothing is owed
-  // here, so it wears no badge at all — neither the amber alert nor the green
-  // check. Its absence of a badge is what makes the other two mean anything.
+  // Marked off to the last child and never written up — and **flagged for it**.
+  // This is the state the change to the rules is about: the register is
+  // finished, so the old model called this session done, but the families whose
+  // page renders the report see a blank week. The gedu note here is not a
+  // substitute, because nobody outside staff can read it.
   {
     kind: "past",
     allPresent: true,
     staffNote:
-      "Ran short — the school hall overran and we lost the first fifteen minutes. Nothing worth writing home about, so no report this week.",
+      "Ran short — the school hall overran and we lost the first fifteen minutes. Still owe the write-up for this one.",
   },
 
   {

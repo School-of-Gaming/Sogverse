@@ -27,8 +27,8 @@ import { REPORT_CLAMP_REM, reportOverflows } from "./report-clamp";
  * wrong: expanding inserts several lines between the text and the button, so the
  * button the reader had just clicked shot down the page and whatever was beneath
  * it went with it. A control above its own region is the only arrangement where
- * a reveal grows away from everything already painted — the same arrangement the
- * attendance disclosure on this card uses, so the two behave alike.
+ * a reveal grows away from everything already painted — the same arrangement
+ * every other disclosure in a feed row uses, so they all behave alike.
  *
  * **Nothing here measures anything.** Whether a control is offered is decided
  * from the markdown source, by arithmetic the server and the browser both run,
@@ -57,16 +57,18 @@ export function SessionReport({
   /**
    * Whether this report may be collapsed at all.
    *
-   * The **most recent past session** passes `false`: it is the one entry the
-   * weekly loop actually reads — what happened last time, read while writing up
-   * or prepping the next one — and making the reader spend a click to see the
-   * thing they came for is a toll on the common path. Every older report keeps
-   * the clamp, which is what stops a term of them becoming a wall.
+   * A clamp is worth its click only where the reports are *in the way* of what
+   * the reader came for. On a workspace feed they are: it is a work queue of
+   * attendance sheets and editors that last month's prose must not bury, so
+   * everything is clamped bar the newest past session — the one entry the weekly
+   * loop actually reads, where charging a click for the thing they came for is a
+   * toll on the only path everybody walks. On a family's feed the reports *are*
+   * the page, so nothing is clamped at all.
    */
   clamped?: boolean;
   className?: string;
 }) {
-  const t = useTranslations("gedu.sessionFeed");
+  const t = useTranslations("sessionFeed");
   const [expanded, setExpanded] = useState(false);
   const bodyId = useId();
 

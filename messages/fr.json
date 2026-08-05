@@ -99,7 +99,8 @@
     "roleAdmin": "Administrateur",
     "roleParent": "Parent",
     "roleGamer": "Joueur",
-    "roleGedu": "Gedu"
+    "roleGedu": "Gedu",
+    "gedus": "Gedus"
   },
   "about": {
     "hero": {
@@ -393,11 +394,11 @@
       },
       "fees": {
         "sectionTitle": "Montants par session",
-        "sectionDescription": "Ce que nous versons aux éducateurs de jeu à chaque session et — pour les clubs municipaux — ce que la commune nous verse. Ce sont des chiffres internes, distincts de ce que paient les parents ci-dessus.",
+        "sectionDescription": "Ce que nous versons aux Gedus à chaque session et — pour les clubs municipaux — ce que la commune nous verse. Ce sont des chiffres internes, distincts de ce que paient les parents ci-dessus.",
         "primaryGeduLabel": "Rémunération du Gedu principal",
-        "primaryGeduHint": "Versée à l’éducateur de jeu principal pour chaque session. Choisissez Inconnu si vous la définirez plus tard, ou Bénévole s’il anime gratuitement.",
+        "primaryGeduHint": "Versée au Gedu principal pour chaque session. Choisissez Inconnu si vous la définirez plus tard, ou Bénévole s’il anime gratuitement.",
         "assistantGeduLabel": "Rémunération du Gedu assistant",
-        "assistantGeduHint": "Versée à un éducateur assistant pour chaque session. Choisissez Aucune s’il n’y a pas d’assistant.",
+        "assistantGeduHint": "Versée à un Gedu assistant pour chaque session. Choisissez Aucune s’il n’y a pas d’assistant.",
         "municipalityLabel": "Montant facturé à la commune",
         "municipalityHint": "Ce que la commune nous verse par session. Choisissez Inconnu si vous le définirez plus tard.",
         "amountLabel": "Montant par session en euros",
@@ -688,7 +689,7 @@
         "title": "Vérification",
         "verified": "Vérifié",
         "unverified": "Non vérifié",
-        "unverifiedNote": "Cet éducateur de jeu n’a pas encore été vérifié. Il ne peut pas être affecté à un groupe tant que vous ne l’avez pas vérifié.",
+        "unverifiedNote": "Ce Gedu n’a pas encore été vérifié. Il ne peut pas être affecté à un groupe tant que vous ne l’avez pas vérifié.",
         "verifiedOn": "Vérifié le {date}",
         "verifiedByOn": "Vérifié par {name} le {date}",
         "verifyAction": "Vérifier",
@@ -777,7 +778,7 @@
       "networkError": "Erreur réseau",
       "geduGroups": "Groupes de Gedus",
       "addGroup": "Ajouter un groupe",
-      "noGroups": "Aucun groupe de gedu pour l’instant. Ajoutez un groupe pour y affecter un éducateur de jeu.",
+      "noGroups": "Aucun groupe de Gedu pour l’instant. Ajoutez un groupe pour y affecter un Gedu.",
       "selectGeduForGroup": "Sélectionnez un gedu pour créer un nouveau groupe.",
       "group": "Groupe",
       "groupNumber": "Groupe {number}",
@@ -979,7 +980,7 @@
     },
     "nextTitle": "La suite",
     "next": {
-      "placement": "Nous placerons {gamer} dans un groupe avec un animateur. Les sessions apparaîtront ensuite dans Mon SOG.",
+      "placement": "Nous placerons {gamer} dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
       "subscription": "Vous serez prélevé chaque mois. Vous pouvez gérer ou résilier à tout moment depuis Mon SOG.",
       "oneTime": "Il s’agissait d’un paiement unique — il n’y a plus rien à régler."
     },
@@ -1047,7 +1048,7 @@
           "role": "Le rôle du joueur dans Sogverse.",
           "firstName": "Le prénom du joueur.",
           "endTime": "Moment où la fenêtre de session se ferme (comprend une marge de 5 minutes après la fin prévue). À utiliser pour programmer une exclusion ou une nouvelle vérification.",
-          "reason": "Description lisible : le nom du produit et le nom de l’éducateur."
+          "reason": "Description lisible : le nom du produit et le nom du Gedu."
         },
         "error401": "Clé d’API absente, mal formée ou invalide.",
         "error400": "Paramètre de requête <code>uuid</code> absent ou invalide.",
@@ -1072,7 +1073,7 @@
     "subtitle": "Partagez votre avis avec nous",
     "sendFeedback": "Envoyer un retour",
     "feedbackDescription": "Nous serions ravis de recevoir vos retours, suggestions ou signalements de bugs.",
-    "gamerReplyNote": "Ton éducateur pourra en reparler avec toi lors de ta prochaine session.",
+    "gamerReplyNote": "Ton Gedu pourra en reparler avec toi lors de ta prochaine session.",
     "message": "Message",
     "placeholder": "Partagez votre avis, vos suggestions, ou signalez un bug...",
     "charactersNeeded": "Encore {count} caractères requis",
@@ -1085,6 +1086,7 @@
     "pageTitle": "Mon SOG",
     "myFamily": "Ma famille",
     "myGamers": "Mes joueurs",
+    "myGamersShort": "Joueurs",
     "upcomingSessions": "Sessions",
     "upcomingSessionsEmptyStateGamer": "Ta prochaine session apparaîtra ici — avec le lien pour rejoindre ton Gedu et tes amis.",
     "upcomingSessionsEmptyStateParent": "Quand la prochaine session de votre enfant approchera, c’est ici qu’il rejoindra le salon vocal avec son Gedu et ses amis.",
@@ -1105,6 +1107,8 @@
   },
   "family": {
     "addGamer": "Ajouter un joueur",
+    "manageGamer": "Gérer",
+    "manageGamerAria": "Gérer le profil de {name}",
     "switchFailed": "Échec du changement de compte",
     "loadFailed": "Échec du chargement de la famille",
     "switchToParentToAddGamer": {
@@ -1132,6 +1136,29 @@
       "genericError": "Impossible d’ajouter ce joueur. Veuillez réessayer."
     }
   },
+  "familyEnrollment": {
+    "emptyState": "{name} n’a encore rien de prévu. Regardez ensemble ce qui est proposé.",
+    "wontRenew": "Non renouvelé — dernière session le {date}",
+    "noGamers": "Pas encore de joueur ici. Ajoutez votre premier joueur, puis choisissez ensemble un club ou un camp.",
+    "emptyStateCta": "Voir les clubs et les camps"
+  },
+  "familyProduct": {
+    "back": "Retour à Mon SOG",
+    "forGamer": "pour {name}",
+    "scheduleLabel": "Quand",
+    "venueLabel": "Où",
+    "aboutHeading": "À propos du groupe",
+    "venueNoteHeading": "À {site}",
+    "feedHeading": "Séances",
+    "attendancePresent": "Présent",
+    "attendanceNotPresent": "Pas présent",
+    "noWriteUp": "Aucun compte rendu",
+    "emptyFeedCustomer": "Il n’y a pas encore de séances ici.",
+    "emptyFeedGamer": "Rien ici pour l’instant. Chaque séance que tu joues apparaîtra ici ensuite.",
+    "paymentProblemNotice": "Le paiement de ce club pose problème — mettez votre carte à jour dans Facturation sur Mon SOG pour conserver la place de {name}.",
+    "cancellationNotice": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. La dernière session de {name} est le {date}.",
+    "cancellationNoticeNoSession": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. L’accès reste ouvert jusqu’au {date}."
+  },
   "selectProfile": {
     "title": "Qui entre dans le Sogverse ?"
   },
@@ -1147,7 +1174,9 @@
   },
   "gamer": {
     "welcome": "Bienvenue, joueur !",
-    "subtitle": "Envie de jouer et d’apprendre ?"
+    "welcomeNamed": "Bienvenue, {name} !",
+    "subtitle": "Envie de jouer et d’apprendre ?",
+    "emptyDashboard": "Rien ici pour l’instant. Demande à un parent de regarder les clubs et les camps avec toi, et choisissez-en un ensemble."
   },
   "gedu": {
     "coverage": {
@@ -1163,27 +1192,11 @@
       "saving": "Enregistrement...",
       "saveError": "Échec de l’enregistrement des zones d’intervention"
     },
-    "myGroups": {
-      "counts": "{groupCount, plural, one {# groupe} other {# groupes}} · {gamerCount, plural, one {# joueur} other {# joueurs}}",
-      "startsIn": "Commence dans {countdown}",
-      "inProgress": "Session en cours",
-      "viewDetails": "Voir les détails",
-      "noNextSession": "Aucune séance programmée",
-      "endedOn": "Terminé le {date}",
-      "liveBadge": "En direct"
-    },
     "sessionDetails": {
       "back": "Retour à Mon SOG",
-      "typeLabel": {
-        "consumer_club": "Club",
-        "municipality_club": "Club",
-        "camp": "Camp",
-        "event": "Événement"
-      },
       "railOtherGroupsHeading": "Autres groupes",
       "noOtherGroups": "Aucun autre groupe dans cette session.",
       "railGroupHeading": "Mon groupe",
-      "gedusLabel": "Gedus",
       "noGedus": "Aucun Gedu affecté.",
       "gamersLabel": "Joueurs",
       "gamerCount": "{count, plural, one {# joueur} other {# joueurs}}",
@@ -1209,16 +1222,12 @@
       "minecraftSaveFailed": "Ce nom d’utilisateur n’a pas été enregistré. Réessayez."
     },
     "sessionFeed": {
-      "upcomingBadge": "Prochaine séance",
-      "futureBadge": "Séance à venir",
       "edit": "Modifier",
       "needsAttentionLabel": "À traiter",
       "completeLabel": "Terminé",
       "noRecordLabel": "Aucun compte rendu",
       "emptyFeed": "Ce groupe n’a pas encore de séances.",
       "noNotesYet": "Aucune note pour cette séance pour l’instant.",
-      "readMore": "Lire la suite",
-      "showLess": "Réduire",
       "attendanceSummary": "{present} présents sur {total}",
       "presentLabel": "Présent",
       "absentLabel": "Absent",
@@ -1235,8 +1244,6 @@
       "save": "Enregistrer",
       "cancel": "Annuler",
       "alertBadge": "{count, plural, one {# séance à traiter} other {# séances à traiter}}",
-      "laterSessions": "{count, plural, one {# séance à venir} other {# séances à venir}}",
-      "showEarlier": "{count, plural, one {Afficher # séance précédente} other {Afficher # séances précédentes}}",
       "attendanceMarkedCount": "{marked} sur {total} renseignés",
       "attendanceForGamer": "Présence de {name}",
       "saveFailed": "Cette séance n’a pas été enregistrée. Réessayez.",
@@ -1274,6 +1281,26 @@
       "staffPlaceholder": "Clés, matériel, particularités de la salle — ce que le prochain Gedu sur place doit savoir.",
       "saveFailed": "Ces notes sur le lieu n’ont pas été enregistrées. Réessayez."
     }
+  },
+  "productType": {
+    "consumer_club": "Club",
+    "municipality_club": "Club",
+    "camp": "Camp",
+    "event": "Événement"
+  },
+  "activityCard": {
+    "endedOn": "Terminé le {date}",
+    "noSchedule": "Horaires à venir"
+  },
+  "sessionBadge": {
+    "live": "En direct",
+    "nextSession": "Prochaine séance",
+    "upcoming": "Séance à venir"
+  },
+  "sessionFeed": {
+    "readMore": "Lire la suite",
+    "showLess": "Réduire",
+    "laterSessions": "{count, plural, one {encore # séance à venir} other {encore # séances à venir}}"
   },
   "groups": {
     "title": "Groupes",
@@ -1720,6 +1747,8 @@
       "positionValue": "n° {position}",
       "reassuranceCustomer": "Nous vous enverrons un e-mail dès qu’une place se libère.",
       "reassuranceGamer": "Nous enverrons un e-mail à un parent dès qu’une place se libère.",
+      "footerReassuranceCustomer": "Position {position} dans la file — nous vous enverrons un e-mail dès qu’une place se libère.",
+      "footerReassuranceGamer": "Tu es en position {position} dans la file — nous enverrons un e-mail à un parent dès qu’une place se libère.",
       "leave": {
         "trigger": "Quitter la liste d’attente",
         "confirmTitle": "Quitter la liste d’attente ?",
@@ -1735,7 +1764,7 @@
       "tooltipSameDay": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. La dernière session de {name} est le {lastSession}."
     },
     "awaiting": {
-      "customer": "{name} est inscrit ! Son animateur le placera dans un groupe avant le début de la première session.",
+      "customer": "{name} est inscrit ! Son Gedu le placera dans un groupe avant le début de la première session.",
       "gamer": "Ton inscription est complète ! Nous te placerons dans ton groupe avant le début de la prochaine session."
     },
     "help": {
@@ -2021,7 +2050,7 @@
         "ready": "Votre salon est prêt",
         "join": "Rejoindre",
         "unverifiedTitle": "En attente de vérification",
-        "unverifiedBody": "Un administrateur doit vérifier votre compte d’éducateur avant que vous puissiez créer des salons vocaux. Vous pourrez en lancer un ici dès que vous serez vérifié."
+        "unverifiedBody": "Un administrateur doit vérifier votre compte Gedu avant que vous puissiez créer des salons vocaux. Vous pourrez en lancer un ici dès que vous serez vérifié."
       }
     }
   },
