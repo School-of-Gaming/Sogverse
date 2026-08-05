@@ -902,6 +902,12 @@ describe("gedu session feed", () => {
      * and collapses an emptied field back to NULL, so this is defence against a
      * row that got there another way — and the client's derivation trims for the
      * same reason, so the badge and the feed cannot disagree over a blank line.
+     *
+     * The two rows deliberately cover different whitespace classes: plain
+     * spaces, and a newline/tab mixture. Space-only is the one class bare
+     * btrim() strips, so a test using only spaces would keep passing if 00150's
+     * character-list form regressed to 00149's — the newline row is the pin
+     * that holds the SQL to JavaScript's String.trim().
      */
     it("treats a whitespace-only report as no report at all", async () => {
       await markWholeRoster([TWO_DAYS_AGO, YESTERDAY]);
@@ -909,7 +915,12 @@ describe("gedu session feed", () => {
         .from("group_sessions")
         .update({ report: "   " })
         .eq("group_id", GROUP_MINE)
-        .in("session_date", [TWO_DAYS_AGO, YESTERDAY]);
+        .eq("session_date", TWO_DAYS_AGO);
+      await admin
+        .from("group_sessions")
+        .update({ report: "\n\t\n" })
+        .eq("group_id", GROUP_MINE)
+        .eq("session_date", YESTERDAY);
 
       const { data } = await geduAuth.rpc("get_my_gedu_assignment_summaries", {
         p_epoch_date: TWO_DAYS_AGO,

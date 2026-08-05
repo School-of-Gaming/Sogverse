@@ -71,6 +71,29 @@ const eslintConfig = defineConfig([
       }],
     },
   },
+  {
+    // The family-surface privacy line, made mechanical. Family components may
+    // never import gedu workspace code: the staff note, the roster and the
+    // completeness ladder must stay structurally unreachable from anything a
+    // parent or child renders. The shared, role-agnostic feed pieces live in
+    // @/components/session-feed — import those instead. Stated in prose in the
+    // three barrel headers; enforced here so it fails the build, like the
+    // route posture registry and the authorization spine enforce theirs.
+    files: [
+      "src/components/family/**/*.{ts,tsx}",
+      "src/components/parent/**/*.{ts,tsx}",
+      "src/components/gamer/**/*.{ts,tsx}",
+    ],
+    rules: {
+      "no-restricted-imports": ["error", {
+        patterns: [{
+          group: ["@/components/gedu/*"],
+          message:
+            "Family surfaces must not import gedu workspace code — the privacy line is structural. Shared feed pieces live in @/components/session-feed.",
+        }],
+      }],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

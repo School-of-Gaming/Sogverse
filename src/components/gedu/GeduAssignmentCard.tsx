@@ -221,10 +221,11 @@ export function GeduAssignmentCard({
   // a date it has already tested.
   const endedOn = runEndedOn(assignment, now);
   // The cards a Live badge can never land on. Reserving its width there would
-  // be a hole held open for something that is not coming — which is a finished
-  // run and, for the same reason, an assignment with nothing on its schedule:
-  // a badge that turns on when a session starts needs a session to start.
-  const canGoLive = endedOn === null && hasNext;
+  // be a hole held open for something that is not coming: a badge that turns
+  // on when a session starts needs a session to start, and `hasNext` already
+  // covers the finished run too — `runEndedOn` only ever answers "ended" when
+  // no next session exists, so a card with one is never ended.
+  const canGoLive = hasNext;
   const { inProgress, voiceIsOpen } = runLiveness(assignment, now);
   // Lit when something is actually happening — a room the gedu can walk into,
   // or a session already running. An in-person product has no room and still

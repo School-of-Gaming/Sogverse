@@ -78,7 +78,10 @@ export function FamilySessionFeedItem({
 
   const attendance =
     entry.kind === "past" && showAttendance ? entry.attendance : null;
-  const hasReport = entry.report !== null && entry.report.length > 0;
+  // Trimmed, matching the gedu side's rule: a report of whitespace is no
+  // report, and must fall through to the quiet dashed line rather than
+  // rendering a full card around an empty body.
+  const hasReport = entry.report !== null && entry.report.trim().length > 0;
 
   // Nothing written and nothing to say about who was there — the one row that
   // is not a card. It still carries its date, because the session did happen
