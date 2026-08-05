@@ -1,4 +1,4 @@
-import { getNextSessionStart } from "@/lib/enrollment";
+import { getNextSessionStart, stepBackOneWeek } from "@/lib/enrollment";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 
 /** Whether a gamer enrolled before the session started (i.e., they've paid for it). */
@@ -40,10 +40,15 @@ export function computeSessionWindow(
 
   const nextStart = getNextSessionStart(sched, { now });
 
-  // Check the previous occurrence using timezone-aware lookup (not raw UTC
-  // subtraction, which is off by ±1 hour across DST transitions).
+  // Search for the previous occurrence from one calendar week back in the
+  // schedule's zone — never a flat `now - 7×24h`, which lands an hour off
+  // the local week boundary on the week after a DST transition. After
+  // spring-forward the flat point sits *before* last week's wall-clock
+  // start, so the lookup resolves last week's finished session instead of
+  // the one in progress and the room reads closed for the entire live
+  // session. Regression: the DST cases in tests/unit/session-schedule.test.ts.
   const prevStart = getNextSessionStart(sched, {
-    now: new Date(now.getTime() - 7 * 24 * 60 * 60_000),
+    now: stepBackOneWeek(now, schedule.timezone),
   });
 
   const prevWindowOpens = new Date(prevStart.getTime() - beforeMs);

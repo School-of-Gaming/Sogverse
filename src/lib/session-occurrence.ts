@@ -1,5 +1,5 @@
-import { fromZonedTime, toZonedTime } from "date-fns-tz";
-import { getNextSessionStart } from "@/lib/enrollment";
+import { fromZonedTime } from "date-fns-tz";
+import { getNextSessionStart, stepBackOneWeek } from "@/lib/enrollment";
 
 /**
  * Shared building blocks for resolving "what session does this slot
@@ -31,17 +31,14 @@ export interface SlotShape {
  * Mirroring `computeSessionWindow`, we check the prev-week candidate
  * explicitly.
  *
- * Why the DST-safe back-step: a flat `now - 7×24h` lands one hour off
- * on the DST-transition Wednesday (Helsinki EET→EEST is the live
- * example) — the back-stepped point sits *after* last week's slot
- * start in local time, so `getNextSessionStart` returns last week's
- * already-finished session and the in-window check fails. Today's
- * in-progress session disappears from the dashboard. `toZonedTime`
- * returns a Date whose LOCAL methods read the wall-clock in
- * `timezone`, so manipulating via `setDate(... - 7)` subtracts 7
- * calendar days in tz; the `fromZonedTime` round-trip back gives the
- * correct UTC instant regardless of system tz. Regression coverage
- * lives in `tests/unit/lib/upcoming-sessions.test.ts`.
+ * Why the DST-safe back-step (`stepBackOneWeek`): a flat `now - 7×24h`
+ * lands one hour off on the DST-transition Wednesday (Helsinki
+ * EET→EEST is the live example) — the back-stepped point sits *after*
+ * last week's slot start in local time, so `getNextSessionStart`
+ * returns last week's already-finished session and the in-window check
+ * fails. Today's in-progress session disappears from the dashboard.
+ * Regression coverage lives in
+ * `tests/unit/lib/upcoming-sessions.test.ts`.
  *
  * Returns null when the product hasn't started yet
  * (`startBoundary > now`) — no prev-week occurrence can be in
@@ -68,11 +65,9 @@ export function getCurrentInProgressOccurrence(args: {
   };
   const durationMs = slot.durationMinutes * 60_000;
 
-  const zonedWeekAgo = toZonedTime(now, timezone);
-  zonedWeekAgo.setDate(zonedWeekAgo.getDate() - 7);
-  const prevSearchPoint = fromZonedTime(zonedWeekAgo, timezone);
-
-  const prevStart = getNextSessionStart(schedule, { now: prevSearchPoint });
+  const prevStart = getNextSessionStart(schedule, {
+    now: stepBackOneWeek(now, timezone),
+  });
   const prevEnd = new Date(prevStart.getTime() + durationMs);
 
   const withinWindow = prevEnd.getTime() + windowCloseMs > now.getTime();
@@ -210,24 +205,6 @@ export function enumerateRowOccurrences(args: {
 
   out.sort((a, b) => a.start.getTime() - b.start.getTime());
   return Number.isFinite(cap) ? out.slice(0, cap) : out;
-}
-
-/**
- * Step a search point back exactly one calendar week **in `timezone`**.
- *
- * The DST-safe counterpart of a flat `point - 7×24h`, and the reason this is a
- * named helper rather than an inline subtraction: on a transition week the flat
- * arithmetic lands an hour either side of the previous week's slot, which is
- * enough for `getNextSessionStart` to skip an occurrence or emit the same one
- * twice. `toZonedTime` returns a Date whose LOCAL fields read the wall clock in
- * `timezone`, so `setDate(... - 7)` subtracts seven calendar days *there*, and
- * the `fromZonedTime` round-trip converts back to the correct instant whatever
- * the system zone is.
- */
-function stepBackOneWeek(point: Date, timezone: string): Date {
-  const zoned = toZonedTime(point, timezone);
-  zoned.setDate(zoned.getDate() - 7);
-  return fromZonedTime(zoned, timezone);
 }
 
 /**

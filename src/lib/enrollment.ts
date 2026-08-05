@@ -80,6 +80,26 @@ export function getNextSessionStart(
 }
 
 /**
+ * Step an instant back exactly one calendar week **in `timezone`**.
+ *
+ * The DST-safe counterpart of a flat `point - 7×24h`, and the required way
+ * to derive a previous-occurrence search point for `getNextSessionStart`:
+ * on the week after a transition, the flat arithmetic lands an hour off
+ * the local week boundary, which is enough for the walk to resolve the
+ * wrong week's occurrence — after spring-forward it lands *before* last
+ * week's wall-clock start, so a live in-progress session resolves to last
+ * week's finished one. `toZonedTime` returns a Date whose LOCAL fields
+ * read the wall clock in `timezone`, so `setDate(... - 7)` subtracts
+ * seven calendar days *there*, and the `fromZonedTime` round-trip
+ * converts back to the correct instant whatever the runtime zone is.
+ */
+export function stepBackOneWeek(point: Date, timezone: string): Date {
+  const zoned = toZonedTime(point, timezone);
+  zoned.setDate(zoned.getDate() - 7);
+  return fromZonedTime(zoned, timezone);
+}
+
+/**
  * Format a millisecond duration as a human-friendly countdown string.
  *
  * - 1+ days  → "3 days"
