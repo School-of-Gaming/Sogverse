@@ -86,18 +86,23 @@ interface GeduAssignmentCardProps {
  *   badly across a grid: a gedu opening this page is not reading cards, they
  *   are sweeping for the one that owes them something, and a pill buried in a
  *   row of small grey type is not findable in a sweep. On the corner it is,
- *   from across a screen of six.
+ *   from across a screen of six. **It is a link to the same place the card
+ *   opens**, because it sits above the card's stretched anchor rather than
+ *   inside it: a mark that swallowed the click on the exact spot the sweep
+ *   sends a gedu to tap was a dead zone in the one place that could least
+ *   afford one.
  * - **Liveness is the gradient and a badge in the top-right cluster**, next to
  *   the chevron. It replaced a "session in progress" line in the middle of the
  *   card, which was a whole row spent restating what the card's own colour
  *   already said, and which only ever existed on one card at a time. The badge's
- *   **slot is always there** and the badge is merely hidden inside it until the
- *   session starts: it is the one thing on this card that appears on a *clock
- *   tick* rather than on something the reader did, so mounting it as a flex
- *   sibling would have widened the corner cluster — and reflowed the product
- *   name beside it, and possibly the row's height — while somebody was reading.
- *   Reserving it costs one badge width in a corner, and since every card
- *   reserves the same word, the grid stays uniform as a side effect.
+ *   **slot is reserved on every card that could ever wear it**, and the badge is
+ *   merely hidden inside it until the session starts: it is the one thing on this
+ *   card that appears on a *clock tick* rather than on something the reader did,
+ *   so mounting it as a flex sibling would have widened the corner cluster — and
+ *   reflowed the product name beside it, and possibly the row's height — while
+ *   somebody was reading. The cards it can never land on — a finished run, and
+ *   an assignment with no session scheduled at all — drop the slot outright,
+ *   because space held for something that is not coming is its own defect.
  *
  * **Live is asked once, of one clock.** Whether the session has started and
  * whether its room is open are two answers to the same question and are derived
@@ -209,6 +214,11 @@ export function GeduAssignmentCard({
   // the ended state — one value, so the footer never has to assert its way past
   // a date it has already tested.
   const endedOn = runEndedOn(assignment, now);
+  // The cards a Live badge can never land on. Reserving its width there would
+  // be a hole held open for something that is not coming — which is a finished
+  // run and, for the same reason, an assignment with nothing on its schedule:
+  // a badge that turns on when a session starts needs a session to start.
+  const canGoLive = endedOn === null && hasNext;
   const { inProgress, voiceIsOpen } = runLiveness(assignment, now);
   // Lit when something is actually happening — a room the gedu can walk into,
   // or a session already running. An in-person product has no room and still
@@ -295,16 +305,16 @@ export function GeduAssignmentCard({
                 also `visibility: hidden`, so it leaves the accessibility tree
                 too and nothing announces a session that has not begun.
 
-                A finished run is the one card that does not reserve it, because
-                it is the one card the badge can never land on: nothing of that
-                run is left to start. Holding the slot open there would be a gap
-                waiting on something that is not coming, and the width is better
-                spent on the product name — which is what a gedu is reading an
-                ended card for. Nothing moves as a result: endedness is settled
-                before the card first paints and does not turn over under a
-                reader the way a session start does. */}
+                The cards the badge can never land on do not reserve it: a
+                finished run, and an assignment with no session on its schedule
+                at all. Holding the slot open there would be a gap waiting on
+                something that is not coming, and the width is better spent on
+                the product name — which is what a gedu is reading such a card
+                for. Nothing moves as a result: both facts are settled before the
+                card first paints and neither turns over under a reader the way a
+                session start does. */}
             <div className="flex shrink-0 items-center gap-2">
-              {endedOn === null && (
+              {canGoLive && (
                 <Badge
                   variant="outline"
                   className={cn(
@@ -445,10 +455,16 @@ export function GeduAssignmentCard({
         />
       </Card>
 
-      {/* Outside the card, over its corner. It is not inside the stretched
-          link's stacking context, so it never eats a click meant for the card
-          — which is right: the badge is a mark, not a control. */}
-      <SessionFeedAlertBadge count={attentionCount} variant="corner" />
+      {/* Outside the card, over its corner — so it sits *above* the stretched
+          link rather than inside it, and a click landing on it would hit
+          nothing at all. It is therefore a link to the card's own target: the
+          corner is exactly where the sweep model tells a gedu to tap, and the
+          one thing that must not happen there is nothing. */}
+      <SessionFeedAlertBadge
+        count={attentionCount}
+        variant="corner"
+        href={openHref}
+      />
     </div>
   );
 }
