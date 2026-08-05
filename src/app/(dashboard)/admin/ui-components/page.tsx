@@ -1882,24 +1882,20 @@ export default function AdminUIComponentsPage() {
       <Section title="Location Picker">
         <p className="text-sm text-muted-foreground">
           One panel, and every location control in the app is a configuration of
-          it. The axis being demonstrated here is the <code>scope</code>: what
-          the panel is showing <em>before the first keystroke</em>. In{" "}
-          <strong>tree</strong> scope it browses the hierarchy from the
-          countries down; in <strong>set</strong> scope it lists a bounded
-          collection the surface has already fetched, grouped under the place
-          above each row. These were two components until they were merged —
-          the search box, the selected-row highlight, the name-plus-muted-detail
-          row and the fixed-height box were each written twice.
+          it: it browses the hierarchy from the countries down, searches it from
+          the first keystroke, and stops at whatever level the caller made
+          pickable. It once had a second, &ldquo;set&rdquo; scope — a bounded,
+          pre-fetched collection grouped under the place above each row — but
+          every surface that used one (the flat every-venue list, the Finnish
+          municipality list) now reaches the same rows through this tree, so the
+          panel has one shape and the demos below show its states.
         </p>
         <p className="text-sm text-muted-foreground">
-          The tree scope is where almost everything happens: gedu coverage, a
-          parent&rsquo;s own location, and the product form&rsquo;s venue field.
-          The set scope has one consumer left — the product form&rsquo;s
-          municipality mode — because a set only earns its keep when something{" "}
-          <em>outside the geography</em> bounds it, and &ldquo;the Finnish
-          municipality funding this club&rdquo; does. The venue field used to be
-          a set too, over every <code>site</code> row; it was bounded by nothing
-          but what had been created so far, so it moved to the dialog.
+          Its consumers: gedu coverage, a parent&rsquo;s own location, and the
+          product form&rsquo;s venue and municipality fields — the last two as
+          dialogs, configured by <code>pickableTypes</code> (a venue pick stops
+          at <code>site</code>, a municipality pick at{" "}
+          <code>municipality</code>, seeded at Finland).
         </p>
         <p className="text-sm text-muted-foreground">
           In the real app a container above the panel owns the browse position,

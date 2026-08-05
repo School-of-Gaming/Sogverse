@@ -303,9 +303,11 @@ its leave affordance has a backend. Two open questions remain:
   this is a note, not a bug — but if manual sending ever slips, soften the copy
   rather than leave the promise standing.
 - [ ] **Decide what promotion looks like to a parent.** `promote_from_waitlist`
-  flips the row to `active` with no payment step, so for a paid club it grants a free
-  seat, and from the parent's side the card silently disappears from the waitlist band
-  and reappears as a session card. If the answer is ever "a seat opened — claim it by
+  flips the row to `active` with no payment step, and from the parent's side the card
+  silently disappears from the waitlist band and reappears as a session card. (The
+  "free seat on a paid product" hazard this could imply is unreachable today — caps are
+  muni-only and a muni club can't become paid; it's recorded as part of the cap unlock's
+  cost in the re-lock section below.) If the answer is ever "a seat opened — claim it by
   {date}" rather than "you're in", that's a new card state (offer + expiry +
   accept/decline) and it's much cheaper to design before the card hardens.
 
@@ -331,12 +333,14 @@ second.
 - [ ] **The card's seat hint shows capacity, not seats left.** "{count} seats" prints the
   cap, so on a full product it prints a number that is exactly wrong. It has to be
   seats-remaining (and say something else at zero).
-- [ ] **The pre-open → open panel swap mounts the seat bar above the CTA, late.** The
-  panel's open/pre-open decision rides a 30-second `useNow` tick, so up to 30s after
-  registration opens the seat bar appears *above* the Join button that just went live,
-  shoving it down under the cursor. That is a data-schedule shift, which the layout rule
-  in `CLAUDE.md` forbids outright — the seat bar's box has to be settled before the button
-  becomes clickable, not inserted after it.
+- [ ] **The pre-open → open panel swap mounts the seat bar above the CTA, late — and the
+  two halves flip on different clocks.** The countdown enables the button on its own
+  1-second tick, but the panel-variant swap that mounts the seat bar rides the 30-second
+  `useNow` tick — so the Join button goes live within a second of the drop and the seat
+  bar is then inserted *above* it up to 29s later, shoving it down under the cursor. That
+  is a data-schedule shift, which the layout rule in `CLAUDE.md` forbids outright — the
+  seat bar's box has to be settled before the button becomes clickable, not inserted
+  after it.
 - [ ] **Waitlist purchase-confirmation copy is club-shaped.** It tells the parent their
   gamer is queued "for the whole term", which is nonsense for a single-date event. Key it
   by product type like the panel's other action strings, in all five locales.

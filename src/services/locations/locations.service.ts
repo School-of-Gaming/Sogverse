@@ -113,8 +113,7 @@ async function walkPages<Row>(
  * The sibling of `walkPages`, and it exists for the opposite reason: the walk
  * is for reads whose *whole* result a surface needs (one country's
  * municipalities to group, one municipality's venues to list), and this is for
- * browsing,
- * where the payload has to stay proportional to what is on screen no matter how
+ * browsing, where the payload has to stay proportional to what is on screen no matter how
  * many children a node has. Both share the same two disciplines — `count:
  * "exact"` so the caller learns the true size, and a total order on the query so
  * a page boundary cannot duplicate or drop a row.

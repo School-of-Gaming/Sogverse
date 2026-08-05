@@ -302,7 +302,7 @@ page. A key with no row is simply absent from the result — a lookup, not an as
 
 ### Rows with their chains
 
-The list and keyed reads embed the ancestor chain via the FK on `parent_id` and flatten it
+The municipality list and the keyed reads embed the ancestor chain via the FK on `parent_id` (the per-municipality venue list needs no chain — its rows all share the parent the caller asked for) and flatten it
 to a row plus `ancestors`, **nearest first**. Nearest-first is the point: `ancestors[0]` is
 the level immediately above whatever the country, which France's extra `district` level
 would otherwise make position-dependent. Reverse it for a root-first breadcrumb. The

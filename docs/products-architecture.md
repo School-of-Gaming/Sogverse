@@ -19,7 +19,7 @@ Adjacent systems have their own colocated docs: `src/services/locations/CLAUDE.m
 | Who pays | Parent, monthly | Municipality, off-platform | Parent, upfront | Parent upfront, or free |
 | `billing_mode` | `paid` | `external_contract` | `paid` | `paid` or `free` |
 | Schedule | Recurring, open-ended | Recurring, term-bounded | Recurring, camp-bounded | One-off |
-| Capacity | Seat-capped | Seat-capped | Seat-capped | Capped or uncapped |
+| Capacity | Seat-capped | Seat-capped | Seat-capped | Uncapped (cap re-locked; see §Seat gate) |
 | Discovery | `/shop` | `/schools` | `/shop` | `/shop` |
 
 The four share ~80% of the operational model (schedule, location, topic, language, age range, gedus, participation, attendance, notes, waitlist, and — online only — a voice room). They differ on **pricing shape** and **schedule shape**, captured as small orthogonal fields rather than separate tables.
@@ -109,7 +109,7 @@ A participation carries **two independent rights**: the **seat hold** (occupies 
 
 - **Effective status is derived, not cron-driven.** `status` stores admin facts only (`draft`, `pending`, `cancelled`, the `running` override); `pending → running` (start_date reached AND any threshold met) and `running → completed` (end_date passed) are computed at read time. **The TS helper (`effective-status.ts`) and the SQL `effective_status()` twin must stay in lockstep** — RLS/list filters call the SQL form.
 - **`draft` means incomplete** (mandatory fields unfilled), not "hidden" or "unpublished"; draft rows get constraint escape hatches. **`draft` implies hidden** (DB-enforced). `is_visible` is otherwise orthogonal to status.
-- The only manual lifecycle lever is `start_product` (the under-threshold override) — spec'd, not yet built. Cancellation fires refunds per type.
+- The only manual lifecycle lever is `start_product` (the under-threshold override) — spec'd, not yet built. Cancellation has no built flow either; any refunds it implies are manual, in Stripe (see §Seat gate — no state may promise one).
 
 ### Topic, location, voice
 
