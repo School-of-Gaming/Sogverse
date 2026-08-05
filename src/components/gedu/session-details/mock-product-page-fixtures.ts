@@ -175,7 +175,7 @@ const MARKUS = { id: GEDU_IDS.markus, firstName: "Markus" } as const;
 /**
  * **The camp's future block, and the volume case for the whole feed.**
  *
- * Seventeen entries, so the now-divider reads "16 upcoming sessions" — the next
+ * Seventeen entries, so the now-divider reads "16 more upcoming sessions" — the next
  * one renders below the line, the rest sit behind it — and the upward reveal is
  * exercised at the scale it will actually meet rather than against four rows
  * where any implementation looks fine. That number is not arbitrary: an
@@ -650,7 +650,7 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
    * never say more than seven; an end-dated product ignores that cap and emits
    * every occurrence to its end date. A camp with four weeks left is therefore
    * the honest home for the feed's volume case — seventeen future entries, a
-   * divider reading "16 upcoming sessions", and an upward reveal proved against
+   * divider reading "16 more upcoming sessions", and an upward reveal proved against
    * a screenful rather than against four rows.
    *
    * It owes exactly one session — yesterday's, register not yet done — which is

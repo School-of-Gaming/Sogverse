@@ -30,10 +30,11 @@ import {
  *
  * It lives with the family components rather than the parent's because both
  * dashboards render it: a card the child's page draws is not a parent component
- * that the child's page borrows. Its copy sits in the shared `familyEnrollment`
- * namespace for the same reason — a string both audiences read cannot live under
- * one role's namespace, or an edit to the parent's wording silently rewrites
- * what a child sees.
+ * that the child's page borrows. Its copy sits in role-neutral namespaces for
+ * the same reason, and then one step further — the type noun, the "ended" date,
+ * the "no schedule" line and the Live badge are the *same* keys the gedu's
+ * assignment card reads, because they are the same concepts and a duplicate is
+ * a drift waiting to happen.
  *
  * It is the family-side sibling of the gedu dashboard's assignment card and
  * borrows that card's grammar wholesale, because the two answer the same shaped
@@ -156,7 +157,9 @@ export type EnrollmentCardProps = EnrollmentCardCommonProps &
 
 export function EnrollmentCard(props: EnrollmentCardProps) {
   const { enrollment, audience, onOpenPortal } = props;
-  const t = useTranslations("familyEnrollment");
+  const p = useTranslations("productType");
+  const c = useTranslations("activityCard");
+  const b = useTranslations("sessionBadge");
   const w = useTranslations("parent.waitlist");
   const locale = useLocale();
   const timeZone = useTimezone();
@@ -222,7 +225,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                   endedOn !== null && "text-muted-foreground/70",
                 )}
               >
-                {t(`typeLabel.${productType}`)}
+                {p(productType)}
               </p>
               {/* The identity keeps its weight and loses its tone on a finished
                   run: a parent looking for last term's camp still has to read
@@ -254,7 +257,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                   )}
                 >
                   <Radio className="h-3 w-3" aria-hidden />
-                  {t("liveBadge")}
+                  {b("live")}
                 </Badge>
               )}
               {!waitlisted && (
@@ -289,7 +292,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                   </span>
                 ))
               ) : (
-                <span className="block">{t("noSchedule")}</span>
+                <span className="block">{c("noSchedule")}</span>
               )}
             </span>
           </div>
@@ -322,7 +325,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                 <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
                   <CalendarOff className="h-4 w-4 shrink-0" aria-hidden />
                   <span className="truncate">
-                    {t("endedOn", { date: formatDateOnly(endedOn, locale) })}
+                    {c("endedOn", { date: formatDateOnly(endedOn, locale) })}
                   </span>
                 </span>
               )}

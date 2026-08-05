@@ -38,9 +38,12 @@ family touchpoint). This replaces both family dashboards outright.
   (gamer × product) beneath, sorted running → waitlisted → finished, soonest session first.
   The My Gamers tile strip is absorbed by the headings; add-gamer is a quiet tile after the
   last section (full-strength card when there are no gamers at all).
-- **Gamer dashboard keeps its welcome header and Yty grid**, and replaces the session list
+- **Gamer dashboard keeps its greeting header and Yty grid**, and replaces the session list
   with the same enrollment cards grouped under dynamic type nouns (gedu convention: empty
-  nouns are absent, an empty account is headed "Clubs").
+  nouns are absent, an empty account is headed "Clubs"). The greeting now **names the
+  child** — the draft body takes a `firstName` prop and renders `gamer.welcomeNamed`, so
+  the promoting shell has to resolve the signed-in gamer's first name and pass it in. The
+  live route still renders the nameless `gamer.welcome`; that key dies in the cleanup step.
 - **The enrollment card states the schedule, not the next session** (shared schedule
   formatter); the next session lives in the Join button's locked label and the Live badge.
   Corner badges are **parent-only** — a child's card never carries a billing alarm. A
@@ -277,7 +280,9 @@ independently verifiable.
       replaced their last consumers. The DST-bug caveat applies to whatever resolver
       survives.
     - The Padlet "Reports" affordance and its keys.
-    - Orphaned keys: the old waitlist card's position/reassurance strings, the old empty
+    - Orphaned keys: `gamer.welcome` (the nameless greeting, kept alive only by the live
+      route's own copy of the page — the draft body reads `gamer.welcomeNamed`), the old
+      waitlist card's position/reassurance strings, the old empty
       states, and anything else the deleted components alone consumed
       (`npm run check-translations` plus a key-grep pass keep the five files honest).
     - Style-guide demos (`/admin/ui-components`) of deleted components: remove them, and

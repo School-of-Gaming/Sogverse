@@ -11,7 +11,7 @@ import { YTY_ELEMENTS } from "@/lib/constants/yty";
 /**
  * The gamer dashboard's page body — everything below the route's data shell.
  *
- * The welcome header and the Yty grid are untouched; the session list is what
+ * The Yty grid is untouched; the session list is what
  * changed, and it changed the same way the parent's did. One card per
  * enrollment, in the same grammar, so a child and their parent are looking at
  * the same object described the same way — which matters here more than it looks
@@ -28,6 +28,12 @@ import { YTY_ELEMENTS } from "@/lib/constants/yty";
  *   group on a personal page reads as something missing rather than absent.
  * - **Nothing on any card attributes it to anyone.** There is nobody else it
  *   could belong to.
+ * - **The greeting says the child's name.** This was the one page in the product
+ *   that did not know who was reading it — it said "Welcome, Gamer!" to every
+ *   child on the platform, on the one surface that belongs to exactly one of
+ *   them. The name arrives as a prop rather than being read from a session here,
+ *   so the body stays presentational and the shell around it decides where the
+ *   name comes from.
  * - **No money at all.** Billing is a parent concern: a payment problem or a
  *   subscription winding down never badges a child's card here — the corner
  *   badges are parent-only by construction. A waitlist place shows its number
@@ -35,8 +41,11 @@ import { YTY_ELEMENTS } from "@/lib/constants/yty";
  *   with a cost, and it is not this account's to make.
  */
 export function GamerDashboardPageBody({
+  firstName,
   enrollments,
 }: {
+  /** The child's own first name, for the greeting. */
+  firstName: string;
   /** This gamer's enrollments, already sorted soonest-session-first. */
   enrollments: readonly FamilyEnrollmentSummary[];
 }) {
@@ -67,9 +76,9 @@ export function GamerDashboardPageBody({
   return (
     <>
       {/* Visually-hidden page title. The welcome line below is a greeting, not
-          the document's heading — it says the same thing to every gamer and
-          names nothing — so the sections stay equal-weight h2s under one silent
-          h1, matching the parent and gedu dashboards. */}
+          the document's heading — it names the reader rather than the page — so
+          the sections stay equal-weight h2s under one silent h1, matching the
+          parent and gedu dashboards. */}
       <h1 className="sr-only">{s("pageTitle")}</h1>
 
       <div className="space-y-12 pb-24">
@@ -81,9 +90,11 @@ export function GamerDashboardPageBody({
           {/* Two-size pattern matching the public Home heading:
               font-display (Press Start 2P) is monospaced ~1em-wide, so a
               long Finnish word like "Tervetuloa," overflows mobile at
-              text-3xl. break-words is a safety net for longer translations. */}
+              text-3xl. break-words is a safety net for longer translations —
+              and now for the name too, which is the longest thing that can
+              land in this line and the one part of it no translator controls. */}
           <h2 className="font-display text-xl font-bold text-primary break-words md:text-3xl">
-            {t("welcome")}
+            {t("welcomeNamed", { name: firstName })}
           </h2>
           <p className="text-muted-foreground">{t("subtitle")}</p>
         </div>

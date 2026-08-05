@@ -96,7 +96,7 @@ export interface NextSessionCardProps {
    * (`voiceIsOpen` styling + "in progress"), but the Join button is always
    * gated: a future session shows the locked "Opens …" label, and an
    * in-progress one shows a disabled "matching with a Gedu" button (there's
-   * no room to join until placement). A friendly "you're in — your instructor
+   * no room to join until placement). A friendly "you're in — your Gedu
    * will place you in a group" caption appears beneath it either way, so a
    * fresh purchase reads as "we're on it" rather than an empty section.
    * Defaults to `false`.
@@ -104,7 +104,7 @@ export interface NextSessionCardProps {
   awaiting?: boolean;
   /**
    * Whose dashboard this renders on. Only the `awaiting` caption differs:
-   * `"customer"` speaks *about* the child ("{name} is in! Their instructor
+   * `"customer"` speaks *about* the child ("{name} is in! Their Gedu
    * will place them…"), `"gamer"` speaks *to* the child ("you're all signed
    * up! We'll put you in your group…"). Mirrors the audience split the empty
    * state already uses. Defaults to `"customer"`.
@@ -215,8 +215,8 @@ export function NextSessionCard({
           </div>
 
           {/* Purchased-but-not-yet-placed: the Join button above stays
-              disabled, this explains *why* in a reassuring, human way — the
-              instructor will sort the gamer into a group before the session.
+              disabled, this explains *why* in a reassuring, human way — a Gedu
+              will sort the gamer into a group before the session.
               Deliberately static (no animation): placement can take up to a day,
               so a pulsing/loading cue would wrongly imply it's seconds away. */}
           {awaiting && (

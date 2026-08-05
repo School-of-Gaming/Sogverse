@@ -162,12 +162,16 @@ interface GeduAssignmentCardProps {
  * card without a Join swallowed clicks and did nothing. Nothing in the footer
  * but the button is interactive, so nothing else may sit above the link.
  *
- * **A finished run is quiet history, not a scheduling fault.** Once a product's
- * last day is behind it there is always no next session, which read as the
- * anomaly state — "No session scheduled", in the slot where every other card
- * named a date — when in fact it is the ordinary and permanent end of a
- * perfectly normal run. Two things change on such a card, and both are
- * subtractions:
+ * **A finished run is quiet history, not a scheduling fault.** This card used to
+ * name the next session in the row that now carries the schedule, so a product
+ * whose last day was behind it read as the anomaly state — a "no session"
+ * line where every other card named a date — when in fact it is the ordinary
+ * and permanent end of a perfectly normal run. The row answers what the
+ * *product* meets like, which a finished run still has an answer to, and the
+ * fallback beneath it ("No schedule set yet", the same line the family card
+ * shows) now belongs only to the card that genuinely has nothing to say: a
+ * product with no slots on it yet. Two things change on a finished card, and
+ * both are subtractions:
  *
  * - **The type label, name, group and schedule all drop a tone.** A gedu sweeping
  *   this page is looking for what is still running, and the finished runs have
@@ -189,7 +193,9 @@ export function GeduAssignmentCard({
   assignment,
   scheduleLines,
 }: GeduAssignmentCardProps) {
-  const t = useTranslations("gedu.myGroups");
+  const p = useTranslations("productType");
+  const c = useTranslations("activityCard");
+  const b = useTranslations("sessionBadge");
   const d = useTranslations("gedu.sessionDetails");
   const locale = useLocale();
   const timeZone = useTimezone();
@@ -251,7 +257,7 @@ export function GeduAssignmentCard({
                   endedOn !== null && "text-muted-foreground/70",
                 )}
               >
-                {d(`typeLabel.${productType}`)}
+                {p(productType)}
               </p>
               {/* The identity keeps its weight and loses its tone on a finished
                   run: a gedu looking for last term's club still has to read the
@@ -323,7 +329,7 @@ export function GeduAssignmentCard({
                   )}
                 >
                   <Radio className="h-3 w-3" aria-hidden />
-                  {t("liveBadge")}
+                  {b("live")}
                 </Badge>
               )}
               <ChevronRight
@@ -367,7 +373,7 @@ export function GeduAssignmentCard({
                   </span>
                 ))
               ) : (
-                <span className="block">{t("noNextSession")}</span>
+                <span className="block">{c("noSchedule")}</span>
               )}
             </span>
           </div>
@@ -405,7 +411,7 @@ export function GeduAssignmentCard({
               <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
                 <CalendarOff className="h-4 w-4 shrink-0" aria-hidden />
                 <span className="truncate">
-                  {t("endedOn", { date: formatDateOnly(endedOn, locale) })}
+                  {c("endedOn", { date: formatDateOnly(endedOn, locale) })}
                 </span>
               </span>
             )}

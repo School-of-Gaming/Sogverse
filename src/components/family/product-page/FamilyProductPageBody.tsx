@@ -221,6 +221,8 @@ export function FamilyProductPageBody({
   sourceTimeZone,
 }: FamilyProductPageBodyProps) {
   const t = useTranslations("familyProduct");
+  const p = useTranslations("productType");
+  const g = useTranslations("common");
   const locale = useLocale();
   const timeZone = useTimezone();
   const now = useNow();
@@ -265,7 +267,7 @@ export function FamilyProductPageBody({
 
       <header className="mt-5 border-b border-border pb-5">
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          {t(`typeLabel.${schedule.product_type}`)}
+          {p(schedule.product_type)}
         </span>
 
         <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
@@ -383,11 +385,19 @@ export function FamilyProductPageBody({
       {/* Who is teaching this child, first names and faces, directly under the
           masthead. It is the page's trust signal and it belongs above the
           notes and the feed for that reason: "who has my kid for ninety
-          minutes" is answered before anything else on the page is read. */}
+          minutes" is answered before anything else on the page is read.
+
+          **The label is the bare plural, on both copies of the page and on the
+          gedu's own.** It used to be possessive — "Your child's Gedus" for a
+          parent — on a masthead three lines above that already says "for Aino",
+          so the possessive was restating what the reader had just read. Naming
+          the child in it would have been worse still: a possessive built around
+          a name has to inflect the name in half the locales we ship, which is a
+          translation trap for no gain at all. */}
       {gedus.length > 0 && (
         <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2">
           <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            {t(isParent ? "gedusLabelCustomer" : "gedusLabelGamer")}
+            {g("gedus")}
           </span>
           <PersonChipList
             people={gedus.map((g) => ({ id: g.id, name: g.firstName }))}

@@ -30,11 +30,19 @@ import type { SupportedLocale } from "@/lib/constants/locales";
  * (a one-noun page renders one heading, not empty sections) is the same
  * mechanism the gedu dashboard already proves.
  *
- * `empty` is the child with nothing booked yet: the welcome, one "Clubs"
+ * `empty` is the child with nothing booked yet: the greeting, one "Clubs"
  * heading over the quiet empty card — the same convention the gedu's empty
  * dashboard uses — and the Yty grid, which is theirs regardless.
  */
 export const GAMER_DASHBOARD_SCENARIOS = ["typical", "empty"] as const;
+
+/**
+ * Whose dashboard this is. The same child the parent scene's busy family leads
+ * with, holding the same club, so the two scenes can be read side by side as
+ * one family's two views of one evening — and so the greeting is checked
+ * against a real name rather than a placeholder.
+ */
+export const GAMER_DASHBOARD_FIRST_NAME = "Aino";
 
 export type GamerDashboardScenario = (typeof GAMER_DASHBOARD_SCENARIOS)[number];
 

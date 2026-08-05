@@ -102,7 +102,7 @@ describe("the schedule is the card's timing row", () => {
     // The one case with nothing to say, so the row says that rather than
     // collapsing and taking a line off the card's height.
     const html = cardHtml({ ...lockedRemoteCard, scheduleLines: [] });
-    expect(html).toContain(messages.gedu.myGroups.noNextSession);
+    expect(html).toContain(messages.activityCard.noSchedule);
   });
 });
 
@@ -144,13 +144,13 @@ describe("the corner", () => {
     // absent, because it turns on with the clock and a badge mounting into the
     // flex row would squeeze the product name beside it mid-read.
     const held = cardHtml(lockedRemoteCard);
-    expect(held).toContain(messages.gedu.myGroups.liveBadge);
+    expect(held).toContain(messages.sessionBadge.live);
     expect(held).toContain("invisible");
 
     // Dropped where nothing is left to start: a finished run, and equally a
     // card whose schedule has nothing on it. Space held for something that
     // cannot come is its own defect.
-    expect(cardHtml(endedCard)).not.toContain(messages.gedu.myGroups.liveBadge);
+    expect(cardHtml(endedCard)).not.toContain(messages.sessionBadge.live);
     const unscheduled = cardHtml({
       ...lockedRemoteCard,
       assignment: {
@@ -159,7 +159,7 @@ describe("the corner", () => {
         nextSessionEnd: null,
       },
     });
-    expect(unscheduled).not.toContain(messages.gedu.myGroups.liveBadge);
+    expect(unscheduled).not.toContain(messages.sessionBadge.live);
   });
 
   it("makes the attention badge open the card it sits on", () => {

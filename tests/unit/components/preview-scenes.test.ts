@@ -394,7 +394,7 @@ describe("the camp scenario owes exactly its newest day", () => {
    *
    * The now-divider's count is every future entry bar the next one, which
    * renders below the line — so seventeen future sessions is a divider reading
-   * "16 upcoming sessions", and an upward reveal proved against a screenful
+   * "16 more upcoming sessions", and an upward reveal proved against a screenful
    * instead of against four rows. It has to be an **end-dated** product: an
    * open-ended one is capped at eight occurrences by the same rule the family
    * dashboards use, so a club's divider structurally cannot say more than
@@ -709,7 +709,7 @@ describe("the gedu dashboard scene puts every card state on one screen", () => {
 
   /**
    * **The finished run is a card state, so the page has to hold one.** It is
-   * the state the "No session scheduled" line used to libel as a scheduling
+   * the state the card’s old "no session" line used to libel as a scheduling
    * fault, and every part of the treatment that replaced it — the muted tones,
    * the missing next-session line, the "Ended …" date in the footer, the badge
    * that stays loud — is invisible on a page where nothing has ended.

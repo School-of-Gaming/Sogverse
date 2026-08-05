@@ -74,6 +74,7 @@ export function FamilySessionFeedItem({
   showAttendance,
 }: FamilySessionFeedItemProps) {
   const t = useTranslations("familyProduct");
+  const b = useTranslations("sessionBadge");
 
   const attendance =
     entry.kind === "past" && showAttendance ? entry.attendance : null;
@@ -139,10 +140,10 @@ export function FamilySessionFeedItem({
             )}
           >
             {live
-              ? t("liveBadge")
+              ? b("live")
               : prominent
-                ? t("nextSessionBadge")
-                : t("futureBadge")}
+                ? b("nextSession")
+                : b("upcoming")}
           </Badge>
         )}
 

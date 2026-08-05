@@ -99,7 +99,8 @@
     "roleAdmin": "Admin",
     "roleParent": "Parent",
     "roleGamer": "Gamer",
-    "roleGedu": "Gedu"
+    "roleGedu": "Gedu",
+    "gedus": "Gedus"
   },
   "about": {
     "hero": {
@@ -399,11 +400,11 @@
       },
       "fees": {
         "sectionTitle": "Per-session fees",
-        "sectionDescription": "What we pay the game educators each session, and — for municipality clubs — what the municipality pays us. These are internal figures, separate from what parents pay above.",
+        "sectionDescription": "What we pay the Gedus each session, and — for municipality clubs — what the municipality pays us. These are internal figures, separate from what parents pay above.",
         "primaryGeduLabel": "Primary Gedu fee",
-        "primaryGeduHint": "Paid to the lead game educator per session. Choose Unknown if you’ll set it later, or Volunteer if they run it for free.",
+        "primaryGeduHint": "Paid to the lead Gedu per session. Choose Unknown if you’ll set it later, or Volunteer if they run it for free.",
         "assistantGeduLabel": "Assistant Gedu fee",
-        "assistantGeduHint": "Paid to an assistant educator per session. Choose None if there’s no assistant.",
+        "assistantGeduHint": "Paid to an assistant Gedu per session. Choose None if there’s no assistant.",
         "municipalityLabel": "Municipality fee",
         "municipalityHint": "What the municipality pays us per session. Choose Unknown if you’ll set it later.",
         "amountLabel": "Fee per session in euros",
@@ -694,7 +695,7 @@
         "title": "Verification",
         "verified": "Verified",
         "unverified": "Not verified",
-        "unverifiedNote": "This game educator hasn’t been verified yet. They can’t be assigned to a group until you verify them.",
+        "unverifiedNote": "This Gedu hasn’t been verified yet. They can’t be assigned to a group until you verify them.",
         "verifiedOn": "Verified on {date}",
         "verifiedByOn": "Verified by {name} on {date}",
         "verifyAction": "Verify",
@@ -783,7 +784,7 @@
       "networkError": "Network error",
       "geduGroups": "Gedu Groups",
       "addGroup": "Add Group",
-      "noGroups": "No gedu groups yet. Add a group to assign a game educator.",
+      "noGroups": "No Gedu groups yet. Add a group to assign a Gedu.",
       "selectGeduForGroup": "Select a gedu to create a new group.",
       "group": "Group",
       "groupNumber": "Group {number}",
@@ -985,7 +986,7 @@
     },
     "nextTitle": "What happens next",
     "next": {
-      "placement": "We’ll place {gamer} in a group with a game educator. The sessions will then appear under My SOG.",
+      "placement": "We’ll place {gamer} in a group with a Gedu. The sessions will then appear under My SOG.",
       "subscription": "You’ll be billed every month. You can manage or cancel anytime from My SOG.",
       "oneTime": "This was a one-time payment — there’s nothing more to pay.",
       "refund": "Free cancellation within {days} days of your purchase."
@@ -1054,7 +1055,7 @@
           "role": "The player’s role in Sogverse.",
           "firstName": "The player’s first name.",
           "endTime": "When the session window closes (includes a 5-minute buffer after the scheduled end). Use this to schedule a kick or re-check.",
-          "reason": "Human-readable description: the product name and educator name."
+          "reason": "Human-readable description: the product name and Gedu name."
         },
         "error401": "Missing, malformed, or invalid API key.",
         "error400": "Missing or invalid <code>uuid</code> query parameter.",
@@ -1079,7 +1080,7 @@
     "subtitle": "Share your thoughts with us",
     "sendFeedback": "Send Feedback",
     "feedbackDescription": "We’d love to hear your feedback, suggestions, or bug reports.",
-    "gamerReplyNote": "Your educator may follow up with you during your next session.",
+    "gamerReplyNote": "Your Gedu may follow up with you during your next session.",
     "message": "Message",
     "placeholder": "Share your thoughts, suggestions, or report a bug...",
     "charactersNeeded": "{count} more characters needed",
@@ -1143,43 +1144,23 @@
     }
   },
   "familyEnrollment": {
-    "typeLabel": {
-      "consumer_club": "Club",
-      "municipality_club": "Club",
-      "camp": "Camp",
-      "event": "Event"
-    },
-    "liveBadge": "Live",
-    "noSchedule": "No schedule set yet",
-    "endedOn": "Ended {date}",
     "emptyState": "{name} isn’t signed up for anything yet. Take a look at what’s on and pick something together.",
     "noGamers": "No gamers here yet. Add your first gamer, then pick a club or camp together.",
     "emptyStateCta": "Browse clubs and camps"
   },
   "familyProduct": {
     "back": "Back to My SOG",
-    "typeLabel": {
-      "consumer_club": "Club",
-      "municipality_club": "Club",
-      "camp": "Camp",
-      "event": "Event"
-    },
     "forGamer": "for {name}",
     "scheduleLabel": "When",
     "venueLabel": "Where",
-    "gedusLabelCustomer": "Your child’s Gedus",
-    "gedusLabelGamer": "Your Gedus",
     "aboutHeading": "About this group",
     "venueNoteHeading": "At {site}",
     "feedHeading": "Sessions",
-    "liveBadge": "Happening now",
-    "nextSessionBadge": "Next session",
-    "futureBadge": "Upcoming",
     "attendancePresent": "Present",
     "attendanceNotPresent": "Not present",
     "noWriteUp": "No write-up",
     "emptyFeedCustomer": "There are no sessions on this one yet.",
-    "emptyFeedGamer": "You have no sessions on this one yet.",
+    "emptyFeedGamer": "Nothing here yet. Every session you play turns up here afterwards.",
     "paymentProblemNotice": "There’s a problem with the payment for this club — update your card under Billing on My SOG to keep {name}’s place.",
     "cancellationNotice": "You canceled this membership — it won’t renew. {name}’s last session is {date}.",
     "cancellationNoticeNoSession": "You canceled this membership — it won’t renew. Access runs through {date}."
@@ -1199,6 +1180,7 @@
   },
   "gamer": {
     "welcome": "Welcome, Gamer!",
+    "welcomeNamed": "Welcome, {name}!",
     "subtitle": "Ready to play and learn?",
     "emptyDashboard": "Nothing here yet. Ask a parent to look at the clubs and camps with you, and pick one together."
   },
@@ -1216,23 +1198,11 @@
       "saving": "Saving...",
       "saveError": "Failed to save coverage"
     },
-    "myGroups": {
-      "noNextSession": "No session scheduled",
-      "endedOn": "Ended {date}",
-      "liveBadge": "Live"
-    },
     "sessionDetails": {
       "back": "Back to My SOG",
-      "typeLabel": {
-        "consumer_club": "Club",
-        "municipality_club": "Club",
-        "camp": "Camp",
-        "event": "Event"
-      },
       "railOtherGroupsHeading": "Other groups",
       "noOtherGroups": "No other groups in this session.",
       "railGroupHeading": "My Group",
-      "gedusLabel": "Gedus",
       "noGedus": "No Gedus assigned.",
       "gamersLabel": "Gamers",
       "gamerCount": "{count, plural, one {# gamer} other {# gamers}}",
@@ -1258,8 +1228,6 @@
       "minecraftSaveFailed": "That username didn’t save. Try again."
     },
     "sessionFeed": {
-      "upcomingBadge": "Next session",
-      "futureBadge": "Future session",
       "edit": "Edit",
       "needsAttentionLabel": "Needs attention",
       "completeLabel": "Complete",
@@ -1320,10 +1288,25 @@
       "saveFailed": "These site notes didn’t save. Try again."
     }
   },
+  "productType": {
+    "consumer_club": "Club",
+    "municipality_club": "Club",
+    "camp": "Camp",
+    "event": "Event"
+  },
+  "activityCard": {
+    "endedOn": "Ended {date}",
+    "noSchedule": "No schedule set yet"
+  },
+  "sessionBadge": {
+    "live": "Live",
+    "nextSession": "Next session",
+    "upcoming": "Upcoming"
+  },
   "sessionFeed": {
     "readMore": "Read more",
     "showLess": "Show less",
-    "laterSessions": "{count, plural, one {# upcoming session} other {# upcoming sessions}}"
+    "laterSessions": "{count, plural, one {# more upcoming session} other {# more upcoming sessions}}"
   },
   "groups": {
     "title": "Groups",
@@ -1868,7 +1851,7 @@
       "tooltipSameDay": "You canceled this membership — it won’t renew. {name}’s last session is {lastSession}."
     },
     "awaiting": {
-      "customer": "{name} is in! Their instructor will place them in a group before the first session starts.",
+      "customer": "{name} is in! Their Gedu will place them in a group before the first session starts.",
       "gamer": "You’re all signed up! We’ll put you in your group before the next session begins."
     },
     "help": {
@@ -2154,7 +2137,7 @@
         "ready": "Your room is ready",
         "join": "Join",
         "unverifiedTitle": "Awaiting verification",
-        "unverifiedBody": "An admin needs to verify your educator account before you can create voice rooms. You’ll be able to start one here as soon as you’re verified."
+        "unverifiedBody": "An admin needs to verify your Gedu account before you can create voice rooms. You’ll be able to start one here as soon as you’re verified."
       }
     }
   },

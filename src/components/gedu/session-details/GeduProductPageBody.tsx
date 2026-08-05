@@ -217,6 +217,7 @@ export function GeduProductPageBody({
   minecraftStatuses,
 }: GeduProductPageBodyProps) {
   const t = useTranslations("gedu.sessionDetails");
+  const p = useTranslations("productType");
   const locale = useLocale();
   const uiLocale = resolveLocale(locale);
   const timeZone = useTimezone();
@@ -270,7 +271,7 @@ export function GeduProductPageBody({
       <header className="mt-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-4 border-b border-border pb-5">
         <div className="min-w-0">
           <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            {t(`typeLabel.${data.product.product_type}`)}
+            {p(data.product.product_type)}
           </span>
 
           <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
@@ -496,6 +497,7 @@ function OtherGroupsRailCard({
   backHref: string;
 }) {
   const t = useTranslations("gedu.sessionDetails");
+  const g = useTranslations("common");
 
   return (
     <RailCard title={t("railOtherGroupsHeading")}>
@@ -520,7 +522,7 @@ function OtherGroupsRailCard({
                   this card is knowing whose room you would be covering. */}
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                  {t("gedusLabel")}
+                  {g("gedus")}
                 </span>
                 {group.gedus.length === 0 ? (
                   <span className="text-[11px] text-muted-foreground">
@@ -608,6 +610,7 @@ function GroupRailCard({
   minecraftStatuses?: Readonly<Record<string, GameAccountStatus>>;
 }) {
   const t = useTranslations("gedu.sessionDetails");
+  const g = useTranslations("common");
   const roster = useMemo(() => group.roster ?? [], [group.roster]);
   const emails = useMemo(
     () => deduplicateEmails(roster.map((r) => r.parent_email)),
@@ -638,7 +641,7 @@ function GroupRailCard({
 
       <div className="space-y-1.5">
         <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-          {t("gedusLabel")}
+          {g("gedus")}
         </p>
         {group.gedus.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("noGedus")}</p>

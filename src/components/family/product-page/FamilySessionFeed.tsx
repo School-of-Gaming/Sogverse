@@ -52,8 +52,11 @@ interface FamilySessionFeedProps {
  * is toned, behind it is neutral.
  *
  * The empty case is this component's own, because the sentence differs by
- * audience: a parent is told there are no sessions on this one yet, a child is
- * told they have none. A club with a future and *no history* gets no such line:
+ * audience — not in what it says but in who it sounds like. A parent is told
+ * there are no sessions on this one yet; a child is told the same fact in the
+ * voice their own dashboard uses, which is short sentences that explain what
+ * will happen rather than adult idiom about what has not.
+ * A club with a future and *no history* gets no such line:
  * a timeline that starts fresh simply ends at the divider, which reads as a club
  * that has not met yet — absence, not a fault — and there is no action a line of
  * copy could prompt.

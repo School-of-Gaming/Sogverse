@@ -173,6 +173,7 @@ export function SessionFeedItem({
   onSave,
 }: SessionFeedItemProps) {
   const t = useTranslations("gedu.sessionFeed");
+  const b = useTranslations("sessionBadge");
   const recordable = isEditableEntry(entry);
   const plannable = isPlannableEntry(entry);
   const editorId = useId();
@@ -239,7 +240,7 @@ export function SessionFeedItem({
               variant="outline"
               className="border-info/50 text-[10px] uppercase tracking-wide text-info"
             >
-              {prominent ? t("upcomingBadge") : t("futureBadge")}
+              {prominent ? b("nextSession") : b("upcoming")}
             </Badge>
           )}
           {completeness === "needs_attention" && (

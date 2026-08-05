@@ -150,7 +150,7 @@ export const PREVIEW_SCENES = [
     surface: "gamer-dashboard",
     title: "Gamer dashboard",
     description:
-      "The child's own dashboard with the same enrollment cards, self-scoped: no attribution anywhere, grouped under the type nouns they actually have rather than by person, and with a section pill that names those nouns plus Yty. The welcome header and the Yty grid are unchanged. Money is absent entirely — billing is a parent concern, so no payment or subscription badge ever renders here — and there is no way to give up a waitlist place.",
+      "The child's own dashboard with the same enrollment cards, self-scoped: no attribution anywhere, grouped under the type nouns they actually have rather than by person, and with a section pill that names those nouns plus Yty. The hero greets the child by name — this was the one page in the product that said the same thing to every child on it — and the Yty grid is unchanged. Money is absent entirely — billing is a parent concern, so no payment or subscription badge ever renders here — and there is no way to give up a waitlist place.",
     chrome: "dashboard",
     scenarios: [
       {
@@ -163,7 +163,7 @@ export const PREVIEW_SCENES = [
         slug: "empty",
         label: "Nothing booked yet",
         description:
-          "The child with no enrollments: the welcome, a single “Clubs” heading over the quiet dashed card — the same convention the gedu's empty dashboard uses — and the Yty grid, which is theirs regardless. The copy tells them to ask a parent, because nothing on this account can book anything.",
+          "The child with no enrollments: the greeting by name, a single “Clubs” heading over the quiet dashed card — the same convention the gedu's empty dashboard uses — and the Yty grid, which is theirs regardless. The copy tells them to ask a parent, because nothing on this account can book anything.",
       },
     ],
   },
@@ -226,7 +226,7 @@ export const PREVIEW_SCENES = [
         slug: "active-club",
         label: "Club — remote, session in progress",
         description:
-          "The kitchen sink, and the only scenario with a live room: a session running right now, so the Join is lit and the top entry says “Happening now” instead of “Next session”. It is also the cancelled membership — the muted “won't renew” line under the masthead naming the last covered session, which is not an alarm because nothing is wrong; the gamer's copy of this same scenario shows no such line at all. Six more sessions collapsed above the divider (the upward reveal, judged against a screenful), four months of history behind it with month dividers and the scroll-fed past, and the past states worth seeing together — every report rendered in full, never clamped (the reports are what a family comes for; the gedu's Read-more belongs to their work queue): the long recap at the head, an ordinary present week, a week this child was not at, a second long write-up deeper down showing what back-to-back full reports cost the scroll, a week written up with nobody marked, and a week with nothing on it at all.",
+          "The kitchen sink, and the only scenario with a live room: a session running right now, so the Join is lit and the top entry says “Live” instead of “Next session” — the same word the cards on both dashboards use, because it is the same state. It is also the cancelled membership — the muted “won't renew” line under the masthead naming the last covered session, which is not an alarm because nothing is wrong; the gamer's copy of this same scenario shows no such line at all. Six more sessions collapsed above the divider (the upward reveal, judged against a screenful), four months of history behind it with month dividers and the scroll-fed past, and the past states worth seeing together — every report rendered in full, never clamped (the reports are what a family comes for; the gedu's Read-more belongs to their work queue): the long recap at the head, an ordinary present week, a week this child was not at, a second long write-up deeper down showing what back-to-back full reports cost the scroll, a week written up with nobody marked, and a week with nothing on it at all.",
       },
       {
         slug: "in-person-club",
