@@ -70,7 +70,7 @@ describe("GameInfoCard", () => {
     );
   });
 
-  it("renders Pokémon GO as the two mobile stores, at PEGI 3", () => {
+  it("renders Pokémon GO as the two mobile stores, at PEGI 7", () => {
     const { getByText, container } = render(
       <GameInfoCard topic="pokemon_go" />,
     );
@@ -78,7 +78,7 @@ describe("GameInfoCard", () => {
     // The accented é and the all-caps GO are Niantic's branding, and the label
     // is a literal — so this asserts the exact string, not a normalized one.
     expect(getByText("Pokémon GO")).toBeTruthy();
-    expect(getByText("PEGI 3")).toBeTruthy();
+    expect(getByText("PEGI 7")).toBeTruthy();
 
     const hrefs = Array.from(container.querySelectorAll("a")).map((a) =>
       a.getAttribute("href"),

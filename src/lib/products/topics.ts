@@ -123,7 +123,7 @@ export const PRODUCT_TOPICS = {
   pokemon_go: {
     kind: "game",
     label: "Pokémon GO",
-    pegi: 3,
+    pegi: 7,
     // Mobile-only and free to install, so — like Bedrock — there is no single
     // page to send a parent to: they install it on the phone or tablet the child
     // will actually play on. Two stores rather than Bedrock's seven, because
