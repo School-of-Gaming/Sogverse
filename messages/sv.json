@@ -655,6 +655,7 @@
       "all": "Alla",
       "noFilterResults": "Inga användare matchar dina filter.",
       "noUsers": "Inga användare hittades.",
+      "searchCapped": "Endast de {shown} senaste av {total} träffar tas med. Förfina sökningen för att se resten.",
       "backToUsers": "Tillbaka till användare",
       "userNotFound": "Användaren hittades inte.",
       "joined": "Gick med",

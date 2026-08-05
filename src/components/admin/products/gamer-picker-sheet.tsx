@@ -42,6 +42,10 @@ export function GamerPickerSheet({
   onAddGamer,
 }: GamerPickerSheetProps) {
   const t = useTranslations("admin.products.gamerPicker");
+  // The capped-search notice is the same statement about the same query this
+  // sheet already runs (the shared user search), so it reuses that string
+  // rather than keeping a second copy of it in five locale files.
+  const tUsers = useTranslations("admin.users");
   const [search, setSearch] = useState("");
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   // Gamers added in the current session — shows the "Added" affordance even
@@ -113,11 +117,23 @@ export function GamerPickerSheet({
   const isSearchActive = search.trim().length >= 2;
   const isLoading = isSearchActive ? isSearching : isLoadingAll;
 
+  // This sheet narrows the search hits much harder than the admin users list
+  // does — only families with at least one linked gamer survive — so a capped
+  // page of 20 that happens to contain none renders "no results" while hundreds
+  // matched. The cap keeps the *newest* matches, so the family being looked for
+  // can be an old one and reported as nonexistent. Hence the notice below is
+  // rendered in the empty branch as much as beside results: empty is where the
+  // omission reads as an answer.
+  const cappedSearch =
+    isSearchActive && !isLoading && searchResults && searchResults.total > searchResults.results.length
+      ? { shown: searchResults.results.length, total: searchResults.total }
+      : null;
+
   // Build the parent blocks to render. When searching, the base list is the
   // search hit set: matched customers stay; matched gamers pull in their
   // parents. When not searching, every customer with ≥1 linked gamer renders.
   const parentBlocks = useMemo<ParentBlock[]>(() => {
-    const baseUsers = isSearchActive ? searchResults : allUsers;
+    const baseUsers = isSearchActive ? searchResults?.results : allUsers;
     if (!baseUsers) return [];
 
     const seenParentIds = new Set<string>();
@@ -217,25 +233,34 @@ export function GamerPickerSheet({
                 />
               ))}
             </div>
-          ) : parentBlocks.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              {isSearchActive ? t("noSearchResults") : t("noParents")}
-            </p>
           ) : (
-            <div className="space-y-4">
-              {parentBlocks.map(({ parent, gamers }) => (
-                <ParentBlockRow
-                  key={parent.id}
-                  parent={parent}
-                  gamers={gamers}
-                  enrolledGamerIds={enrolledGamerIds}
-                  addedIds={addedIds}
-                  pendingIds={pendingIds}
-                  errorById={errorById}
-                  onAdd={handleAdd}
-                />
-              ))}
-            </div>
+            <>
+              {parentBlocks.length === 0 ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">
+                  {isSearchActive ? t("noSearchResults") : t("noParents")}
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {parentBlocks.map(({ parent, gamers }) => (
+                    <ParentBlockRow
+                      key={parent.id}
+                      parent={parent}
+                      gamers={gamers}
+                      enrolledGamerIds={enrolledGamerIds}
+                      addedIds={addedIds}
+                      pendingIds={pendingIds}
+                      errorById={errorById}
+                      onAdd={handleAdd}
+                    />
+                  ))}
+                </div>
+              )}
+              {cappedSearch && (
+                <p className="pt-4 text-center text-xs text-muted-foreground">
+                  {tUsers("searchCapped", cappedSearch)}
+                </p>
+              )}
+            </>
           )}
         </SheetBody>
       </SheetContent>

@@ -282,19 +282,18 @@ directory pages that need it are server components, and there is deliberately no
 hook over it, because a read of a whole country is not something a client surface should
 be able to reach for casually.
 
-**Rule: any list read that could exceed PostgREST's `max_rows` pages through `.range()`
-until a page comes back short, and asks for `count: "exact"` so the walk can check what it
-collected against the server's total.** `max_rows` is enforced by *truncating* the
-response, not by erroring, so an unbounded select is indistinguishable from a complete
-one; and if the cap is ever lowered below the page size then every page is short and a
-naive walk silently returns a fraction of the rows. The shared paging primitive in this
-directory implements both halves — use it rather than hand-rolling a loop.
+**Paged reads here follow the shared discipline documented in `src/lib/supabase/`** —
+which reads must walk, the exact-count requirement (enforced by the primitive itself), the
+total-order rule, and the accepted offset race. This directory is where that primitive
+started, and it now serves every service whose list reads can outgrow the cap; use it
+rather than hand-rolling a loop.
 
-**Rule: a paged read must impose a *total* order.** `name` alone is not one — DROM name
-collisions and homonymous communes are both real — so order by `name` then `id`, or rows
-shift between requests and the walk both duplicates and drops them. This binds the
-one-page-at-a-time reads exactly as hard as the walking ones: a page boundary under a
-partial order silently drops rows a user was about to scroll to.
+**What is locations-specific is *which* order is total here: `name` then `id`.** `name`
+alone is not one — every French DROM has a région and a département of the same name, and
+homonymous communes are common — so a read ordered by `name` alone shifts rows between
+requests and both duplicates and drops them across a page boundary. This binds the
+one-page-at-a-time browse reads exactly as hard as the walking ones: a page boundary under
+a partial order silently drops rows a user was about to scroll to.
 
 **Keyed reads** — rows by id. These chunk their keys into `in.(…)` batches sized well
 under `max_rows` and so cannot be truncated by construction; that is *why* they do not

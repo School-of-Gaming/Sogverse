@@ -37,10 +37,28 @@ export function useGeduProfile(
   });
 }
 
-/** Convenience: the same data keyed by gedu id for O(1) lookup in lists/pickers. */
-export function useGeduVerificationMap(): Map<string, GeduVerification> {
-  const { data } = useGeduProfiles();
-  return useMemo(() => new Map((data ?? []).map((g) => [g.user_id, g])), [data]);
+/**
+ * The same data keyed by gedu id for O(1) lookup in lists and pickers.
+ *
+ * `isError` travels with the map because an absent entry is ambiguous on its
+ * own: it means "this gedu is not verified" only when the read succeeded, and
+ * "we do not know" when it failed. Callers that *assert* a state to the reader
+ * (a badge) must say nothing while `isError`; callers that *gate* an action can
+ * keep failing closed, which is the safe direction for a gate and the wrong one
+ * for a claim.
+ */
+export interface GeduVerificationLookup {
+  map: Map<string, GeduVerification>;
+  isError: boolean;
+}
+
+export function useGeduVerificationMap(): GeduVerificationLookup {
+  const { data, isError } = useGeduProfiles();
+  const map = useMemo(
+    () => new Map((data ?? []).map((g) => [g.user_id, g])),
+    [data],
+  );
+  return useMemo(() => ({ map, isError }), [map, isError]);
 }
 
 export function useSetGeduVerified() {

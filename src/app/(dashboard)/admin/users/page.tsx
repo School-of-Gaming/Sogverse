@@ -28,8 +28,20 @@ export default function AdminUsersPage() {
   ];
 
   const isSearchActive = searchQuery.length >= 2;
-  const baseUsers = isSearchActive ? searchResults : allUsers;
+  const baseUsers = isSearchActive ? searchResults?.results : allUsers;
   const isLoading = isSearchActive ? isSearching : isLoadingAll;
+
+  // Search is capped server-side, so a full page of hits and a complete answer
+  // look identical without this. Rendered *below* whichever branch is showing:
+  // it appears as a search resolves, which is data's own schedule rather than
+  // the user's, so it must not push anything already painted (CLAUDE.md layout
+  // rule). It has to survive the empty branch too — a role filter or the
+  // gamer→parent collapse can empty the display while the search was capped,
+  // and "no users match" with no further word is exactly the lie this prevents.
+  const cappedSearch =
+    isSearchActive && searchResults && searchResults.total > searchResults.results.length
+      ? { shown: searchResults.results.length, total: searchResults.total }
+      : null;
 
   // Build maps from ALL users (not just search results) so gamer nesting always works
   const allUsersById = useMemo(
@@ -164,26 +176,41 @@ export default function AdminUsersPage() {
                 </div>
               ))}
             </div>
-          ) : users && users.length > 0 ? (
-            <div className="space-y-4">
-              {users.map((user) => (
-                <UserRow
-                  key={user.id}
-                  user={user}
-                  linkedGamers={parentToGamers.get(user.id)}
-                  unverified={
-                    user.role === "gedu" &&
-                    !(verification.get(user.id)?.verified ?? false)
-                  }
-                />
-              ))}
-            </div>
           ) : (
-            <div className="py-8 text-center text-muted-foreground">
-              {searchQuery || roleFilter
-                ? t('noFilterResults')
-                : t('noUsers')}
-            </div>
+            <>
+              {users && users.length > 0 ? (
+                <div className="space-y-4">
+                  {users.map((user) => (
+                    <UserRow
+                      key={user.id}
+                      user={user}
+                      linkedGamers={parentToGamers.get(user.id)}
+                      // An absent entry means "unverified" only when the read
+                      // succeeded. If it failed we know nothing about anyone, so
+                      // the badge is withheld rather than asserted — printing
+                      // "Unverified" across every gedu is the precise wrong
+                      // answer, not a degraded one.
+                      unverified={
+                        !verification.isError &&
+                        user.role === "gedu" &&
+                        !(verification.map.get(user.id)?.verified ?? false)
+                      }
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="py-8 text-center text-muted-foreground">
+                  {searchQuery || roleFilter
+                    ? t('noFilterResults')
+                    : t('noUsers')}
+                </div>
+              )}
+              {cappedSearch && (
+                <p className="pt-4 text-center text-sm text-muted-foreground">
+                  {t('searchCapped', cappedSearch)}
+                </p>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

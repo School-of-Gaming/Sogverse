@@ -655,6 +655,7 @@
       "all": "Tous",
       "noFilterResults": "Aucun utilisateur ne correspond à vos filtres.",
       "noUsers": "Aucun utilisateur trouvé.",
+      "searchCapped": "Seules les {shown} correspondances les plus récentes sur {total} sont prises en compte. Affinez la recherche pour voir les autres.",
       "backToUsers": "Retour aux utilisateurs",
       "userNotFound": "Utilisateur introuvable.",
       "joined": "Inscrit le",

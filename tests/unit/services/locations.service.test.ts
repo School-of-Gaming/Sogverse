@@ -15,8 +15,6 @@ import {
 // PostgREST request, the mock answers with canned wire responses, and the
 // client parses them — so the full read path is exercised with no casts.
 
-const PAGE_SIZE = 1000;
-
 function locationRows(count: number, offset = 0): Location[] {
   return Array.from({ length: count }, (_, i) => ({
     id: `loc-${offset + i}`,
@@ -42,157 +40,10 @@ function requestedRanges(fetchMock: FetchMock): string[] {
   });
 }
 
-// The paged walk every list read shares. `locations` is fully seeded from the
-// official classifications — France alone is 34,875 communes — so no list read
-// is bounded by construction, and PostgREST enforces `max_rows` by returning a
-// short page rather than an error. These cases pin the walk's behaviour once,
-// through `getMunicipalitiesByCountry` — the read the walk exists for, since one
-// country really is 34 pages of it; the per-method suites below only assert
-// their own filters.
-
-describe("LocationsService paged walk (via getMunicipalitiesByCountry)", () => {
-  let fetchMock: FetchMock;
-  let service: LocationsService;
-
-  beforeEach(() => {
-    fetchMock = vi.fn<typeof fetch>();
-    service = new LocationsService(createFetchStubbedClient(fetchMock));
-  });
-
-  it("stops after one request when the first page comes back short", async () => {
-    fetchMock.mockResolvedValue(postgrestJson(locationRows(120)));
-
-    const result = await service.getMunicipalitiesByCountry("FR");
-
-    expect(result).toHaveLength(120);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("accepts a short page whose Content-Range total confirms it is the whole table", async () => {
-    fetchMock.mockResolvedValue(
-      postgrestPage(locationRows(120), { from: 0, total: 120 }),
-    );
-
-    await expect(service.getMunicipalitiesByCountry("FR")).resolves.toHaveLength(120);
-  });
-
-  it("throws when the walk ends short of the server-reported total", async () => {
-    // The scenario the count guards: max_rows lowered below our page size, so
-    // every page comes back short and "short page ⇒ done" would silently
-    // return a truncated table. Content-Range still reports the true total.
-    fetchMock.mockResolvedValue(
-      postgrestPage(locationRows(500), { from: 0, total: 1500 }),
-    );
-
-    await expect(service.getMunicipalitiesByCountry("FR")).rejects.toThrow(
-      /500 of 1500 rows/,
-    );
-  });
-
-  it("throws when a LATER page ends the walk short of the total", async () => {
-    // Multi-page variant: full first page (count captured there), short second
-    // page that still leaves the walk below the reported total. Guards the
-    // accumulation across pages, not just the single-page capture.
-    fetchMock
-      .mockResolvedValueOnce(
-        postgrestPage(locationRows(PAGE_SIZE, 0), { from: 0, total: 2600 }),
-      )
-      .mockResolvedValueOnce(
-        postgrestPage(locationRows(600, PAGE_SIZE), {
-          from: PAGE_SIZE,
-          total: 2600,
-        }),
-      );
-
-    await expect(service.getMunicipalitiesByCountry("FR")).rejects.toThrow(/1600 of 2600 rows/);
-  });
-
-  // The bug this guards: PostgREST enforces max_rows by returning a short page,
-  // not an error, so an unbounded select silently truncated at 1000 rows.
-  // Real Content-Range totals on every page (count: "exact" sends one per
-  // page), so the count reconciliation is exercised in multi-page mode too —
-  // with bare postgrestJson responses the guard never arms and deleting it
-  // would keep every test green.
-  it("keeps paging while pages come back full, and concatenates them in order", async () => {
-    const TOTAL = 2 * PAGE_SIZE + 37;
-    fetchMock
-      .mockResolvedValueOnce(
-        postgrestPage(locationRows(PAGE_SIZE, 0), { from: 0, total: TOTAL }),
-      )
-      .mockResolvedValueOnce(
-        postgrestPage(locationRows(PAGE_SIZE, PAGE_SIZE), {
-          from: PAGE_SIZE,
-          total: TOTAL,
-        }),
-      )
-      .mockResolvedValueOnce(
-        postgrestPage(locationRows(37, 2 * PAGE_SIZE), {
-          from: 2 * PAGE_SIZE,
-          total: TOTAL,
-        }),
-      );
-
-    const result = await service.getMunicipalitiesByCountry("FR");
-
-    expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(result).toHaveLength(2 * PAGE_SIZE + 37);
-    expect(result[0]?.id).toBe("loc-0");
-    expect(result[PAGE_SIZE]?.id).toBe(`loc-${PAGE_SIZE}`);
-    expect(result.at(-1)?.id).toBe(`loc-${2 * PAGE_SIZE + 36}`);
-  });
-
-  it("requests consecutive, non-overlapping windows", async () => {
-    fetchMock
-      .mockResolvedValueOnce(postgrestJson(locationRows(PAGE_SIZE, 0)))
-      .mockResolvedValueOnce(postgrestJson(locationRows(1, PAGE_SIZE)));
-
-    await service.getMunicipalitiesByCountry("FR");
-
-    expect(requestedRanges(fetchMock)).toEqual(["0:1000", "1000:1000"]);
-  });
-
-  // A page boundary is only meaningful under a total order. `name` is not one:
-  // every French DROM has a région and a département of the same name.
-  it("orders by name and then id so paging is stable across requests", async () => {
-    fetchMock.mockResolvedValue(postgrestJson([]));
-
-    await service.getMunicipalitiesByCountry("FR");
-
-    const url = requestedUrl(fetchMock.mock.calls[0][0]);
-    expect(url.searchParams.get("order")).toBe("name.asc,id.asc");
-  });
-
-  it("stops immediately when a page comes back exactly empty", async () => {
-    fetchMock.mockResolvedValue(postgrestJson([]));
-
-    await expect(service.getMunicipalitiesByCountry("FR")).resolves.toEqual([]);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("throws on the first failing page instead of returning a partial list", async () => {
-    fetchMock
-      .mockResolvedValueOnce(postgrestJson(locationRows(PAGE_SIZE, 0)))
-      .mockResolvedValueOnce(postgrestError("boom"));
-
-    await expect(service.getMunicipalitiesByCountry("FR")).rejects.toMatchObject({
-      message: "boom",
-    });
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-  });
-
-  // If the range filter is ever dropped server-side, every page looks full and
-  // a naive loop never terminates. The walk must give up loudly instead.
-  it("gives up loudly rather than paging forever when pages never go short", async () => {
-    // A fresh Response per call — a Response body is single-use, and this is
-    // the one test that drives the service through many requests.
-    const page = locationRows(PAGE_SIZE);
-    fetchMock.mockImplementation(() => Promise.resolve(postgrestJson(page)));
-
-    await expect(service.getMunicipalitiesByCountry("FR")).rejects.toThrow(
-      /range filter is not being applied/
-    );
-  });
-});
+// The paged walk itself is specified in tests/unit/lib/supabase/paging.test.ts —
+// termination, the count reconciliation and the runaway guard all live with the
+// primitive. What belongs here is the shape of each read: its filters, its
+// total order, and the columns it names.
 
 // The scoped reads that replace fetching the whole table.
 
@@ -206,7 +57,9 @@ describe("LocationsService.getMunicipalitiesByCountry", () => {
   });
 
   it("asks only for that country's municipalities, in a total order", async () => {
-    fetchMock.mockResolvedValue(postgrestJson(locationRows(308)));
+    fetchMock.mockResolvedValue(
+      postgrestPage(locationRows(308), { from: 0, total: 308 }),
+    );
 
     await service.getMunicipalitiesByCountry("FI");
 
@@ -220,7 +73,7 @@ describe("LocationsService.getMunicipalitiesByCountry", () => {
   // runs over 34,875 rows for France, so it asks for the depth a municipality
   // actually has (département -> région -> pays) and no more.
   it("embeds three ancestor levels, not the keyed read's four", async () => {
-    fetchMock.mockResolvedValue(postgrestJson([]));
+    fetchMock.mockResolvedValue(postgrestPage([], { from: 0, total: 0 }));
 
     await service.getMunicipalitiesByCountry("FR");
 
@@ -231,16 +84,19 @@ describe("LocationsService.getMunicipalitiesByCountry", () => {
 
   it("flattens the embedded parent nest into a nearest-first chain", async () => {
     fetchMock.mockResolvedValue(
-      postgrestJson([
-        {
-          ...locationRows(1)[0],
-          parent: {
-            id: "region",
-            name: "Uusimaa",
-            parent: { id: "country", name: "Finland", parent: null },
+      postgrestPage(
+        [
+          {
+            ...locationRows(1)[0],
+            parent: {
+              id: "region",
+              name: "Uusimaa",
+              parent: { id: "country", name: "Finland", parent: null },
+            },
           },
-        },
-      ]),
+        ],
+        { from: 0, total: 1 },
+      ),
     );
 
     const [municipality] = await service.getMunicipalitiesByCountry("FI");
@@ -263,7 +119,9 @@ describe("LocationsService.getSitesByParent", () => {
   });
 
   it("filters to sites under exactly that municipality", async () => {
-    fetchMock.mockResolvedValue(postgrestJson(locationRows(2)));
+    fetchMock.mockResolvedValue(
+      postgrestPage(locationRows(2), { from: 0, total: 2 }),
+    );
 
     await service.getSitesByParent("muni-1");
 
@@ -564,7 +422,9 @@ describe("LocationsService column discipline", () => {
   it.each(reads)(
     "%s names its columns and omits the search fold",
     async (_name, read) => {
-      fetchMock.mockResolvedValue(postgrestJson(locationRows(1)));
+      fetchMock.mockResolvedValue(
+        postgrestPage(locationRows(1), { from: 0, total: 1 }),
+      );
 
       await read(service);
 
