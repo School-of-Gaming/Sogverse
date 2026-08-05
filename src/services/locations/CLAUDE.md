@@ -287,8 +287,9 @@ until a page comes back short, and asks for `count: "exact"` so the walk can che
 collected against the server's total.** `max_rows` is enforced by *truncating* the
 response, not by erroring, so an unbounded select is indistinguishable from a complete
 one; and if the cap is ever lowered below the page size then every page is short and a
-naive walk silently returns a fraction of the rows. The shared paging primitive in this
-directory implements both halves — use it rather than hand-rolling a loop.
+naive walk silently returns a fraction of the rows. The shared paging primitive in
+`src/lib/supabase/` implements both halves — it started here and now serves every service
+whose list reads can outgrow the cap, so use it rather than hand-rolling a loop.
 
 **Rule: a paged read must impose a *total* order.** `name` alone is not one — DROM name
 collisions and homonymous communes are both real — so order by `name` then `id`, or rows

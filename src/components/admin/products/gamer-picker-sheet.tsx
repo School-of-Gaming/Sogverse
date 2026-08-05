@@ -117,7 +117,7 @@ export function GamerPickerSheet({
   // search hit set: matched customers stay; matched gamers pull in their
   // parents. When not searching, every customer with ≥1 linked gamer renders.
   const parentBlocks = useMemo<ParentBlock[]>(() => {
-    const baseUsers = isSearchActive ? searchResults : allUsers;
+    const baseUsers = isSearchActive ? searchResults?.results : allUsers;
     if (!baseUsers) return [];
 
     const seenParentIds = new Set<string>();

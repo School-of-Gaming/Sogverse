@@ -1,4 +1,4 @@
-export { UsersService } from "./users.service";
+export { UsersService, type UserSearchResult } from "./users.service";
 export {
   useProfile,
   useUsers,

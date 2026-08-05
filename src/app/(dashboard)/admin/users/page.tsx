@@ -28,8 +28,17 @@ export default function AdminUsersPage() {
   ];
 
   const isSearchActive = searchQuery.length >= 2;
-  const baseUsers = isSearchActive ? searchResults : allUsers;
+  const baseUsers = isSearchActive ? searchResults?.results : allUsers;
   const isLoading = isSearchActive ? isSearching : isLoadingAll;
+
+  // Search is capped server-side, so a full page of hits and a complete answer
+  // look identical without this. Rendered *below* the list: it appears as a
+  // search resolves, which is data's own schedule rather than the user's, so it
+  // must not push anything already painted (CLAUDE.md layout rule).
+  const cappedSearch =
+    isSearchActive && searchResults && searchResults.total > searchResults.results.length
+      ? { shown: searchResults.results.length, total: searchResults.total }
+      : null;
 
   // Build maps from ALL users (not just search results) so gamer nesting always works
   const allUsersById = useMemo(
@@ -177,6 +186,11 @@ export default function AdminUsersPage() {
                   }
                 />
               ))}
+              {cappedSearch && (
+                <p className="pt-2 text-center text-sm text-muted-foreground">
+                  {t('searchCapped', cappedSearch)}
+                </p>
+              )}
             </div>
           ) : (
             <div className="py-8 text-center text-muted-foreground">
