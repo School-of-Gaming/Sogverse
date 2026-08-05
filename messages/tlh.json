@@ -1187,6 +1187,20 @@
       "genericError": "QujwI’ chelta’be’. yInIDqa’!"
     }
   },
+  "familyEnrollment": {
+    "typeLabel": {
+      "consumer_club": "ghom’a’",
+      "municipality_club": "ghom’a’",
+      "camp": "wa’leSvam",
+      "event": "Soqbogh"
+    },
+    "liveBadge": "qaStaH",
+    "noSchedule": "poH nabta’ tu’lu’be’",
+    "endedOn": "{date} rIntaH",
+    "emptyState": "{name} Suvbe’taH. ghom’a’mey tIbej ’ej wa’ yIwIv!",
+    "noGamers": "naDev QujwI’ tu’be’lu’. QujwI’ wa’DIch yIchel, ghIq ghom’a’ qoj raQ bowIv!",
+    "emptyStateCta": "ghom’a’mey raghmey je tIbej"
+  },
   "familyProduct": {
     "back": "jIH SOGDaq yIchegh",
     "typeLabel": {
@@ -1246,10 +1260,6 @@
       "saveError": "pol Qapbe’"
     },
     "myGroups": {
-      "counts": "{groupCount, plural, one {1 ghom} other {# ghommey}} · {gamerCount, plural, one {1 Suvwl’} other {# Suvwl’pu’}}",
-      "startsIn": "{countdown} qaSchoH",
-      "inProgress": "qaStaH tay’",
-      "viewDetails": "De’ yIbej",
       "noNextSession": "may’ nabta’ tu’lu’be’",
       "endedOn": "{date} rIntaH",
       "liveBadge": "qaStaH"
@@ -1315,11 +1325,11 @@
       "save": "yIpol",
       "cancel": "yIqIl",
       "alertBadge": "{count, plural, one {# may’ Datu’nIS} other {# may’mey Datu’nIS}}",
-      "showEarlier": "{count, plural, one {# may’ qan yIcha’} other {# may’mey qan yIcha’}}",
       "attendanceMarkedCount": "{marked}/{total} ngu’ta’",
       "attendanceForGamer": "{name} pawwI’",
       "saveFailed": "may’vam pollu’be’. yIboq.",
-      "savePartiallyFailed": "may’vam qonta’ puS pollu’be’. tetlh yInuD ’ej yIboq."
+      "savePartiallyFailed": "may’vam qonta’ puS pollu’be’. tetlh yInuD ’ej yIboq.",
+      "showEarlier": "{count, plural, one {# may’ qan yIcha’} other {# may’mey qan yIcha’}}"
     },
     "groupNotes": {
       "heading": "ghom’a’vam",
@@ -1781,20 +1791,6 @@
   "parent": {
     "placeholders": {
       "myGamersHint": "QunwI’Daj qelmeH toy’wI’ yIwIv."
-    },
-    "enrollment": {
-      "typeLabel": {
-        "consumer_club": "ghom’a’",
-        "municipality_club": "ghom’a’",
-        "camp": "wa’leSvam",
-        "event": "Soqbogh"
-      },
-      "liveBadge": "qaStaH",
-      "noSchedule": "poH nabta’ tu’lu’be’",
-      "endedOn": "{date} rIntaH",
-      "emptyState": "{name} Suvbe’taH. ghom’a’mey tIbej ’ej wa’ yIwIv!",
-      "noGamers": "naDev QujwI’ tu’be’lu’. QujwI’ wa’DIch yIchel, ghIq ghom’a’ qoj raQ bowIv!",
-      "emptyStateCta": "ghom’a’mey raghmey je tIbej"
     },
     "nextSession": {
       "title": "{name} veb may’",

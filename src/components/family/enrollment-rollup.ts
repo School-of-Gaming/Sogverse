@@ -1,10 +1,6 @@
-import {
-  assignmentEndedOn,
-  assignmentLiveness,
-  type AssignmentLiveness,
-} from "@/lib/gedu-assignment-rollup";
+import { runEndedOn, runLiveness, type RunLiveness } from "@/lib/product-run";
 import type { ProductType } from "@/types";
-import type { SessionCancellation } from "./session-card-badge";
+import type { SessionCancellation } from "@/components/parent/session-card-badge";
 
 /**
  * One **enrollment** — a family's participation in one product — rolled up to
@@ -95,7 +91,7 @@ export function enrollmentEndedOn(
   >,
   now: Date,
 ): string | null {
-  return assignmentEndedOn(enrollment, now);
+  return runEndedOn(enrollment, now);
 }
 
 /**
@@ -109,8 +105,8 @@ export function enrollmentLiveness(
     "nextSessionStart" | "nextSessionEnd" | "hasVoiceRoom"
   >,
   now: Date,
-): AssignmentLiveness {
-  return assignmentLiveness(enrollment, now);
+): RunLiveness {
+  return runLiveness(enrollment, now);
 }
 
 /**

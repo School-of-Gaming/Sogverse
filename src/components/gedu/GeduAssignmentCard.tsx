@@ -16,11 +16,8 @@ import { SessionFeedAlertBadge } from "@/components/gedu/session-feed";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import { useNow, useTimezone } from "@/providers";
 import { cn, formatDate, formatDateOnly, formatTime } from "@/lib/utils";
-import {
-  assignmentEndedOn,
-  assignmentLiveness,
-  type GeduAssignmentSummary,
-} from "@/lib/gedu-assignment-rollup";
+import { runEndedOn, runLiveness } from "@/lib/product-run";
+import type { GeduAssignmentSummary } from "@/lib/gedu-assignment-rollup";
 
 interface GeduAssignmentCardProps {
   assignment: GeduAssignmentSummary;
@@ -211,8 +208,8 @@ export function GeduAssignmentCard({
   // The day the run finished, or `null` while it is still going. Non-null *is*
   // the ended state — one value, so the footer never has to assert its way past
   // a date it has already tested.
-  const endedOn = assignmentEndedOn(assignment, now);
-  const { inProgress, voiceIsOpen } = assignmentLiveness(assignment, now);
+  const endedOn = runEndedOn(assignment, now);
+  const { inProgress, voiceIsOpen } = runLiveness(assignment, now);
   // Lit when something is actually happening — a room the gedu can walk into,
   // or a session already running. An in-person product has no room and still
   // deserves the treatment while its session is on.

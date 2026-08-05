@@ -1142,6 +1142,20 @@
       "genericError": "Couldn’t add this gamer. Please try again."
     }
   },
+  "familyEnrollment": {
+    "typeLabel": {
+      "consumer_club": "Club",
+      "municipality_club": "Club",
+      "camp": "Camp",
+      "event": "Event"
+    },
+    "liveBadge": "Live",
+    "noSchedule": "No schedule set yet",
+    "endedOn": "Ended {date}",
+    "emptyState": "{name} isn’t signed up for anything yet. Take a look at what’s on and pick something together.",
+    "noGamers": "No gamers here yet. Add your first gamer, then pick a club or camp together.",
+    "emptyStateCta": "Browse clubs and camps"
+  },
   "familyProduct": {
     "back": "Back to My SOG",
     "typeLabel": {
@@ -1201,10 +1215,6 @@
       "saveError": "Failed to save coverage"
     },
     "myGroups": {
-      "counts": "{groupCount, plural, one {# group} other {# groups}} · {gamerCount, plural, one {# gamer} other {# gamers}}",
-      "startsIn": "Starts in {countdown}",
-      "inProgress": "Session in progress",
-      "viewDetails": "View details",
       "noNextSession": "No session scheduled",
       "endedOn": "Ended {date}",
       "liveBadge": "Live"
@@ -1270,11 +1280,11 @@
       "save": "Save",
       "cancel": "Cancel",
       "alertBadge": "{count, plural, one {# session needs attention} other {# sessions need attention}}",
-      "showEarlier": "{count, plural, one {Show # earlier session} other {Show # earlier sessions}}",
       "attendanceMarkedCount": "{marked} of {total} marked",
       "attendanceForGamer": "Attendance for {name}",
       "saveFailed": "This session didn’t save. Try again.",
-      "savePartiallyFailed": "Some of this session’s changes didn’t save — check the sheet and try again."
+      "savePartiallyFailed": "Some of this session’s changes didn’t save — check the sheet and try again.",
+      "showEarlier": "{count, plural, one {Show # earlier session} other {Show # earlier sessions}}"
     },
     "groupNotes": {
       "heading": "About this group",
@@ -1824,20 +1834,6 @@
   "parent": {
     "placeholders": {
       "myGamersHint": "Select a gamer to manage their account."
-    },
-    "enrollment": {
-      "typeLabel": {
-        "consumer_club": "Club",
-        "municipality_club": "Club",
-        "camp": "Camp",
-        "event": "Event"
-      },
-      "liveBadge": "Live",
-      "noSchedule": "No schedule set yet",
-      "endedOn": "Ended {date}",
-      "emptyState": "{name} isn’t signed up for anything yet. Take a look at what’s on and pick something together.",
-      "noGamers": "No gamers here yet. Add your first gamer, then pick a club or camp together.",
-      "emptyStateCta": "Browse clubs and camps"
     },
     "nextSession": {
       "title": "{name}’s next session",

@@ -1142,6 +1142,20 @@
       "genericError": "Impossible d’ajouter ce joueur. Veuillez réessayer."
     }
   },
+  "familyEnrollment": {
+    "typeLabel": {
+      "consumer_club": "Club",
+      "municipality_club": "Club",
+      "camp": "Camp",
+      "event": "Événement"
+    },
+    "liveBadge": "En direct",
+    "noSchedule": "Horaires à venir",
+    "endedOn": "Terminé le {date}",
+    "emptyState": "{name} n’a encore rien de prévu. Regardez ensemble ce qui est proposé.",
+    "noGamers": "Pas encore de joueur ici. Ajoutez votre premier joueur, puis choisissez ensemble un club ou un camp.",
+    "emptyStateCta": "Voir les clubs et les camps"
+  },
   "familyProduct": {
     "back": "Retour à Mon SOG",
     "typeLabel": {
@@ -1201,10 +1215,6 @@
       "saveError": "Échec de l’enregistrement des zones d’intervention"
     },
     "myGroups": {
-      "counts": "{groupCount, plural, one {# groupe} other {# groupes}} · {gamerCount, plural, one {# joueur} other {# joueurs}}",
-      "startsIn": "Commence dans {countdown}",
-      "inProgress": "Session en cours",
-      "viewDetails": "Voir les détails",
       "noNextSession": "Aucune séance programmée",
       "endedOn": "Terminé le {date}",
       "liveBadge": "En direct"
@@ -1270,11 +1280,11 @@
       "save": "Enregistrer",
       "cancel": "Annuler",
       "alertBadge": "{count, plural, one {# séance à traiter} other {# séances à traiter}}",
-      "showEarlier": "{count, plural, one {Afficher # séance précédente} other {Afficher # séances précédentes}}",
       "attendanceMarkedCount": "{marked} sur {total} renseignés",
       "attendanceForGamer": "Présence de {name}",
       "saveFailed": "Cette séance n’a pas été enregistrée. Réessayez.",
-      "savePartiallyFailed": "Certaines modifications de cette séance n’ont pas été enregistrées — vérifiez la feuille de présence et réessayez."
+      "savePartiallyFailed": "Certaines modifications de cette séance n’ont pas été enregistrées — vérifiez la feuille de présence et réessayez.",
+      "showEarlier": "{count, plural, one {Afficher # séance précédente} other {Afficher # séances précédentes}}"
     },
     "groupNotes": {
       "heading": "À propos du groupe",
@@ -1736,20 +1746,6 @@
   "parent": {
     "placeholders": {
       "myGamersHint": "Sélectionnez un joueur pour gérer son compte."
-    },
-    "enrollment": {
-      "typeLabel": {
-        "consumer_club": "Club",
-        "municipality_club": "Club",
-        "camp": "Camp",
-        "event": "Événement"
-      },
-      "liveBadge": "En direct",
-      "noSchedule": "Horaires à venir",
-      "endedOn": "Terminé le {date}",
-      "emptyState": "{name} n’a encore rien de prévu. Regardez ensemble ce qui est proposé.",
-      "noGamers": "Pas encore de joueur ici. Ajoutez votre premier joueur, puis choisissez ensemble un club ou un camp.",
-      "emptyStateCta": "Voir les clubs et les camps"
     },
     "nextSession": {
       "title": "Prochaine session de {name}",

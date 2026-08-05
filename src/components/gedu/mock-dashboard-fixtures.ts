@@ -1,5 +1,9 @@
-import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import { previewSceneHref } from "@/components/preview/href";
+import {
+  calendarDate,
+  futureSlot,
+  liveNowSlot,
+} from "@/components/preview/fixture-clock";
 import { countEntriesNeedingAttention } from "@/components/gedu/session-feed";
 import { SESSION_FEED_TIMEZONE } from "@/components/gedu/session-feed/mock-fixtures";
 import {
@@ -151,7 +155,7 @@ export function buildGeduDashboardFixture(
       // is always mid-session when the scene is opened. Its cadence line then
       // reads as whatever weekday you happen to look on, which is the honest
       // consequence and costs less than a Join button nobody can ever see lit.
-      slots: [liveNowSlot(now, 90)],
+      slots: [liveNowSlot(now, 90, SESSION_FEED_TIMEZONE)],
       startedDaysAgo: 84,
       endsInDays: null,
       groupCount: 3,
@@ -168,7 +172,7 @@ export function buildGeduDashboardFixture(
       // gedu sees on six days out of seven and which the live card above can
       // never show at the same time.
       isRemote: true,
-      slots: [futureSlot(now, 3, "17:00", 90)],
+      slots: [futureSlot(now, 3, "17:00", 90, SESSION_FEED_TIMEZONE)],
       startedDaysAgo: 35,
       endsInDays: null,
       groupCount: 2,
@@ -197,7 +201,7 @@ export function buildGeduDashboardFixture(
       name: "Roblox Studio Club",
       productType: "consumer_club",
       isRemote: true,
-      slots: [futureSlot(now, 1, "15:00", 90)],
+      slots: [futureSlot(now, 1, "15:00", 90, SESSION_FEED_TIMEZONE)],
       startedDaysAgo: 21,
       endsInDays: null,
       groupCount: 2,
@@ -211,7 +215,7 @@ export function buildGeduDashboardFixture(
       name: "Rocket League Club",
       productType: "consumer_club",
       isRemote: true,
-      slots: [futureSlot(now, 2, "17:30", 60)],
+      slots: [futureSlot(now, 2, "17:30", 60, SESSION_FEED_TIMEZONE)],
       startedDaysAgo: 63,
       endsInDays: null,
       groupCount: 4,
@@ -225,7 +229,7 @@ export function buildGeduDashboardFixture(
       name: "Stardew Valley Co-op Club",
       productType: "municipality_club",
       isRemote: true,
-      slots: [futureSlot(now, 4, "16:00", 90)],
+      slots: [futureSlot(now, 4, "16:00", 90, SESSION_FEED_TIMEZONE)],
       startedDaysAgo: 14,
       endsInDays: null,
       groupCount: 1,
@@ -239,7 +243,7 @@ export function buildGeduDashboardFixture(
       name: "Terraria Builders Club",
       productType: "consumer_club",
       isRemote: true,
-      slots: [futureSlot(now, 5, "13:00", 120)],
+      slots: [futureSlot(now, 5, "13:00", 120, SESSION_FEED_TIMEZONE)],
       startedDaysAgo: 112,
       endsInDays: null,
       groupCount: 2,
@@ -253,7 +257,7 @@ export function buildGeduDashboardFixture(
       name: "Sims Storytellers Club",
       productType: "municipality_club",
       isRemote: true,
-      slots: [futureSlot(now, 6, "18:00", 90)],
+      slots: [futureSlot(now, 6, "18:00", 90, SESSION_FEED_TIMEZONE)],
       startedDaysAgo: 42,
       endsInDays: null,
       groupCount: 3,
@@ -335,7 +339,7 @@ export function buildGeduDashboardFixture(
       // venue instead, so it sits at the same height as the remote card that
       // does render one without either of them reserving empty space.
       isRemote: false,
-      slots: [liveNowSlot(now, 240)],
+      slots: [liveNowSlot(now, 240, SESSION_FEED_TIMEZONE)],
       startedDaysAgo: 0,
       endsInDays: 0,
       groupCount: 2,
@@ -479,9 +483,11 @@ function assignmentRow(opts: {
     product: {
       id: opts.id,
       timezone: SESSION_FEED_TIMEZONE,
-      startDate: calendarDate(opts.now, -opts.startedDaysAgo),
+      startDate: calendarDate(opts.now, -opts.startedDaysAgo, SESSION_FEED_TIMEZONE),
       endDate:
-        opts.endsInDays === null ? null : calendarDate(opts.now, opts.endsInDays),
+        opts.endsInDays === null
+          ? null
+          : calendarDate(opts.now, opts.endsInDays, SESSION_FEED_TIMEZONE),
       padletUrl: null,
       isRemote: opts.isRemote,
       productType: opts.productType,
@@ -495,80 +501,4 @@ function assignmentRow(opts: {
     siteName: opts.siteName ?? null,
     slots: opts.slots,
   };
-}
-
-/**
- * A weekly slot whose current occurrence started a few minutes ago, so the
- * assignment is mid-session the moment the scene is opened.
- *
- * The wall clock is read **in the product's own zone** and floored to a quarter
- * hour, because that is where a schedule slot lives: a slot is a weekday plus a
- * clock face in the product's timezone, not an instant, and deriving one from
- * the viewer's zone would put the session on the wrong day either side of
- * midnight. Flooring only ever moves the start earlier, so the session stays in
- * progress, and it keeps the cadence line reading like a real schedule
- * ("16:30–18:00") instead of an arbitrary minute.
- */
-function liveNowSlot(
-  now: Date,
-  durationMinutes: number,
-): GeduAssignmentRow["slots"][number] {
-  const started = toZonedTime(
-    new Date(now.getTime() - 25 * 60_000),
-    SESSION_FEED_TIMEZONE,
-  );
-  started.setMinutes(Math.floor(started.getMinutes() / 15) * 15, 0, 0);
-  return {
-    // `getDay()` is 0 = Sunday; schedule slots are 0 = Monday.
-    weekday: (started.getDay() + 6) % 7,
-    startTime: `${pad2(started.getHours())}:${pad2(started.getMinutes())}`,
-    durationMinutes,
-  };
-}
-
-/**
- * A weekly slot a few days out, at a fixed clock face — the ordinary case, where
- * the next session is a date to read rather than a room to walk into.
- *
- * The weekday is derived in the product's zone for the same reason the live slot
- * is: a slot is a weekday there, not an offset from the viewer's today.
- */
-function futureSlot(
-  now: Date,
-  daysAhead: number,
-  startTime: string,
-  durationMinutes: number,
-): GeduAssignmentRow["slots"][number] {
-  const target = toZonedTime(now, SESSION_FEED_TIMEZONE);
-  target.setDate(target.getDate() + daysAhead);
-  return {
-    weekday: (target.getDay() + 6) % 7,
-    startTime,
-    durationMinutes,
-  };
-}
-
-function pad2(value: number): string {
-  return String(value).padStart(2, "0");
-}
-
-/**
- * A bare `YYYY-MM-DD` offset from today, **as today falls in the product's own
- * zone**.
- *
- * A product's start and end dates are zoneless calendar dates, and they are read
- * back as boundaries on a schedule authored in the product's timezone — so
- * "today" here has to mean today *there*. Stepping and formatting in UTC instead
- * put the whole run a day early for every evening between about 21:00 UTC and
- * Helsinki midnight, which is exactly when a fixture's live in-person event
- * would find its own end date already behind it and quietly stop being live.
- */
-function calendarDate(now: Date, dayOffset: number): string {
-  const zoned = toZonedTime(now, SESSION_FEED_TIMEZONE);
-  zoned.setDate(zoned.getDate() + dayOffset);
-  return formatInTimeZone(
-    fromZonedTime(zoned, SESSION_FEED_TIMEZONE),
-    SESSION_FEED_TIMEZONE,
-    "yyyy-MM-dd",
-  );
 }

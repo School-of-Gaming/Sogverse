@@ -16,17 +16,24 @@ import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import { useNow, useTimezone } from "@/providers";
 import { cn, formatDate, formatDateOnly, formatTime } from "@/lib/utils";
 import type { SessionAudience } from "@/types";
+import { PaymentProblemBadge } from "@/components/parent/PaymentProblemBadge";
+import { SubscriptionEndingBadge } from "@/components/parent/SubscriptionEndingBadge";
 import {
   enrollmentEndedOn,
   enrollmentLiveness,
   type FamilyEnrollmentSummary,
 } from "./enrollment-rollup";
-import { PaymentProblemBadge } from "./PaymentProblemBadge";
-import { SubscriptionEndingBadge } from "./SubscriptionEndingBadge";
 
 /**
  * One card per **enrollment** on the family dashboards — the parent's, under the
  * child's own heading, and the gamer's, under the type noun.
+ *
+ * It lives with the family components rather than the parent's because both
+ * dashboards render it: a card the child's page draws is not a parent component
+ * that the child's page borrows. Its copy sits in the shared `familyEnrollment`
+ * namespace for the same reason — a string both audiences read cannot live under
+ * one role's namespace, or an edit to the parent's wording silently rewrites
+ * what a child sees.
  *
  * It is the family-side sibling of the gedu dashboard's assignment card and
  * borrows that card's grammar wholesale, because the two answer the same shaped
@@ -149,7 +156,7 @@ export type EnrollmentCardProps = EnrollmentCardCommonProps &
 
 export function EnrollmentCard(props: EnrollmentCardProps) {
   const { enrollment, audience, onOpenPortal } = props;
-  const t = useTranslations("parent.enrollment");
+  const t = useTranslations("familyEnrollment");
   const w = useTranslations("parent.waitlist");
   const locale = useLocale();
   const timeZone = useTimezone();

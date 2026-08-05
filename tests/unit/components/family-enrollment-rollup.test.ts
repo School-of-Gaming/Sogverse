@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   sortFamilyEnrollments,
   type FamilyEnrollmentSummary,
-} from "@/components/parent/enrollment-rollup";
+} from "@/components/family/enrollment-rollup";
 
 /**
  * The order of a child's cards is the order their week actually runs, and it is

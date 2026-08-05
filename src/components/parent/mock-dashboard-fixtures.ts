@@ -1,12 +1,12 @@
-import type { SupportedLocale } from "@/lib/constants/locales";
-import { sortFamilyEnrollments } from "./enrollment-rollup";
+import { sortFamilyEnrollments } from "@/components/family/enrollment-rollup";
 import {
+  FIXTURE_TIMEZONE,
   buildEnrollmentFixture,
-  futureSlot,
-  liveNowSlot,
   type EnrollmentFixtureSpec,
   type FixtureClock,
-} from "./mock-enrollment-fixtures";
+} from "@/components/family/mock-enrollment-fixtures";
+import { futureSlot, liveNowSlot } from "@/components/preview/fixture-clock";
+import type { SupportedLocale } from "@/lib/constants/locales";
 import type { ParentDashboardGamer } from "./parent-dashboard-page-body";
 
 /**
@@ -143,7 +143,7 @@ export function buildParentDashboardFixture(
               productName: "Minecraft Explorers Club",
               productType: "consumer_club",
               isRemote: true,
-              slots: [futureSlot(now, 3, "17:00", 90)],
+              slots: [futureSlot(now, 3, "17:00", 90, FIXTURE_TIMEZONE)],
               startedDaysAgo: 35,
               endsInDays: null,
             },
@@ -171,7 +171,7 @@ export function buildParentDashboardFixture(
               // Anchored to `now`: the lit Join is true for a couple of hours a
               // week, so the card that owns the room is always mid-session when
               // the scene is opened.
-              slots: [liveNowSlot(now, 90)],
+              slots: [liveNowSlot(now, 90, FIXTURE_TIMEZONE)],
               startedDaysAgo: 84,
               endsInDays: null,
               // A live session *and* a failing card at once — the pairing that
@@ -183,7 +183,7 @@ export function buildParentDashboardFixture(
               productName: "Fortnite Creative Club",
               productType: "consumer_club",
               isRemote: true,
-              slots: [futureSlot(now, 4, "17:00", 90)],
+              slots: [futureSlot(now, 4, "17:00", 90, FIXTURE_TIMEZONE)],
               startedDaysAgo: 21,
               endsInDays: null,
               waitlistPosition: 3,
@@ -213,7 +213,7 @@ export function buildParentDashboardFixture(
               productName: "Rocket League Club",
               productType: "municipality_club",
               isRemote: true,
-              slots: [futureSlot(now, 2, "16:30", 60)],
+              slots: [futureSlot(now, 2, "16:30", 60, FIXTURE_TIMEZONE)],
               startedDaysAgo: 63,
               endsInDays: null,
               cancelledAccessInDays: 18,
@@ -297,7 +297,7 @@ export function buildParentDashboardFixture(
               productName: "Winter LAN Afternoon",
               productType: "event",
               isRemote: false,
-              slots: [futureSlot(now, 5, "13:00", 240)],
+              slots: [futureSlot(now, 5, "13:00", 240, FIXTURE_TIMEZONE)],
               startedDaysAgo: -5,
               endsInDays: 5,
               siteName: "Kaapelitehdas, Helsinki",
@@ -362,7 +362,7 @@ function club(
     productName,
     productType: "consumer_club",
     isRemote: true,
-    slots: [futureSlot(now, daysAhead, startTime, 90)],
+    slots: [futureSlot(now, daysAhead, startTime, 90, FIXTURE_TIMEZONE)],
     startedDaysAgo: 28,
     endsInDays: null,
   };

@@ -3,34 +3,10 @@
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
-import { EnrollmentCard } from "@/components/parent/EnrollmentCard";
-import type { FamilyEnrollmentSummary } from "@/components/parent/enrollment-rollup";
+import { EnrollmentCard } from "@/components/family/EnrollmentCard";
+import type { FamilyEnrollmentSummary } from "@/components/family/enrollment-rollup";
+import { ACTIVITY_HEADING_KEY, activityTypeSections } from "@/lib/activity-type";
 import { YTY_ELEMENTS } from "@/lib/constants/yty";
-import {
-  groupAssignmentsByType,
-  type GeduActivityGroup,
-  type GeduActivityType,
-} from "@/lib/gedu-assignment-rollup";
-
-/**
- * The message key naming each type noun, which doubles as the anchor id its
- * section scrolls to. `satisfies` rather than an annotation so the values stay
- * literal and the compiler checks them against the message catalogue.
- */
-const ACTIVITY_HEADING_KEY = {
-  club: "clubs",
-  camp: "camps",
-  event: "events",
-} as const satisfies Record<GeduActivityType, string>;
-
-/**
- * The noun an **empty** dashboard is headed with — clubs, the standing weekly
- * commitment and the first heading on every populated page. A gamer with nothing
- * yet still gets a heading, a pill entry and the page's rhythm, rather than a
- * paragraph floating above the Yty grid, which reads as a page that failed to
- * render rather than one with nothing in it yet.
- */
-const EMPTY_DASHBOARD_ACTIVITY_TYPE: GeduActivityType = "club";
 
 /**
  * The gamer dashboard's page body — everything below the route's data shell.
@@ -68,21 +44,17 @@ export function GamerDashboardPageBody({
   const s = useTranslations("dashboardSections");
   const yty = useTranslations("yty");
 
-  const activityGroups = groupAssignmentsByType(
+  /**
+   * The sections the page is made of: one per noun this gamer actually has, or
+   * a single empty one when they have none — the gedu dashboard's rule, from
+   * the same shared helper. The pill, the headings and the bodies all read from
+   * this one list, so an empty dashboard cannot end up with a heading the nav
+   * has no entry for.
+   */
+  const activitySections = activityTypeSections(
     enrollments,
     (enrollment) => enrollment.productType,
   );
-
-  /**
-   * The sections the page is made of: one per noun this gamer actually has, or
-   * a single empty one when they have none. The pill, the headings and the
-   * bodies all read from this one list, so an empty dashboard cannot end up
-   * with a heading the nav has no entry for.
-   */
-  const activitySections: GeduActivityGroup<FamilyEnrollmentSummary>[] =
-    activityGroups.length === 0
-      ? [{ type: EMPTY_DASHBOARD_ACTIVITY_TYPE, items: [] }]
-      : activityGroups;
 
   const sections: DashboardSection[] = [
     ...activitySections.map((group) => ({
@@ -125,10 +97,18 @@ export function GamerDashboardPageBody({
             <section
               key={group.type}
               id={ACTIVITY_HEADING_KEY[group.type]}
+              // Named by its own heading: a `<section>` is only a landmark once
+              // it has an accessible name, and without one a screen-reader user
+              // tabbing the cards is told nothing about which run of them they
+              // are in.
+              aria-labelledby={`${ACTIVITY_HEADING_KEY[group.type]}-heading`}
               className="scroll-mt-32"
             >
               <div className="mx-auto max-w-3xl space-y-6">
-                <h2 className="text-3xl font-bold">
+                <h2
+                  id={`${ACTIVITY_HEADING_KEY[group.type]}-heading`}
+                  className="text-3xl font-bold"
+                >
                   {s(ACTIVITY_HEADING_KEY[group.type])}
                 </h2>
                 {group.items.length === 0 ? (
@@ -169,9 +149,15 @@ export function GamerDashboardPageBody({
         {/* Last section gets viewport-height min so clicking its pill can
             actually scroll it to the top — without this the page bottoms out
             mid-scroll and the heading stays in the middle of the viewport. */}
-        <section id="yty" className="scroll-mt-32 min-h-[calc(100svh-9rem)]">
+        <section
+          id="yty"
+          aria-labelledby="yty-heading"
+          className="scroll-mt-32 min-h-[calc(100svh-9rem)]"
+        >
           <div className="mx-auto max-w-3xl space-y-6">
-            <h2 className="text-3xl font-bold">{s("yty")}</h2>
+            <h2 id="yty-heading" className="text-3xl font-bold">
+              {s("yty")}
+            </h2>
             <div className="grid grid-cols-2 gap-4">
               {YTY_ELEMENTS.map((el) => (
                 <Card

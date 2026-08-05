@@ -1,14 +1,14 @@
 import {
   sortFamilyEnrollments,
   type FamilyEnrollmentSummary,
-} from "@/components/parent/enrollment-rollup";
+} from "@/components/family/enrollment-rollup";
 import {
+  FIXTURE_TIMEZONE,
   buildEnrollmentFixture,
-  futureSlot,
-  liveNowSlot,
   type EnrollmentFixtureSpec,
   type FixtureClock,
-} from "@/components/parent/mock-enrollment-fixtures";
+} from "@/components/family/mock-enrollment-fixtures";
+import { futureSlot, liveNowSlot } from "@/components/preview/fixture-clock";
 import type { SupportedLocale } from "@/lib/constants/locales";
 
 /**
@@ -67,7 +67,7 @@ export function buildGamerDashboardFixture(
       productName: "Minecraft Explorers Club",
       productType: "consumer_club",
       isRemote: true,
-      slots: [liveNowSlot(now, 90)],
+      slots: [liveNowSlot(now, 90, FIXTURE_TIMEZONE)],
       startedDaysAgo: 84,
       endsInDays: null,
     },
@@ -76,7 +76,7 @@ export function buildGamerDashboardFixture(
       productName: "Fortnite Creative Club",
       productType: "consumer_club",
       isRemote: true,
-      slots: [futureSlot(now, 4, "17:00", 90)],
+      slots: [futureSlot(now, 4, "17:00", 90, FIXTURE_TIMEZONE)],
       startedDaysAgo: 21,
       endsInDays: null,
       waitlistPosition: 3,

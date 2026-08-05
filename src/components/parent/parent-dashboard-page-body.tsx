@@ -8,10 +8,10 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
 import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
+import { EnrollmentCard } from "@/components/family/EnrollmentCard";
+import type { FamilyEnrollmentSummary } from "@/components/family/enrollment-rollup";
 import { ROUTES } from "@/lib/constants";
-import { EnrollmentCard } from "./EnrollmentCard";
 import { ParentHelpSection } from "./ParentHelpSection";
-import type { FamilyEnrollmentSummary } from "./enrollment-rollup";
 
 /**
  * One child, with everything they are signed up for. Enrollments arrive
@@ -182,9 +182,18 @@ export function ParentDashboardPageBody({
           // affordance is promoted to full strength here, because the
           // quiet-tile reasoning below only holds when there are children
           // above it competing for the first read.
-          <section id={EMPTY_GAMERS_SECTION_ID} className="scroll-mt-32">
+          <section
+            id={EMPTY_GAMERS_SECTION_ID}
+            aria-labelledby={`${EMPTY_GAMERS_SECTION_ID}-heading`}
+            className="scroll-mt-32"
+          >
             <div className="mx-auto max-w-3xl space-y-6">
-              <h2 className="text-3xl font-bold">{t("myGamers")}</h2>
+              <h2
+                id={`${EMPTY_GAMERS_SECTION_ID}-heading`}
+                className="text-3xl font-bold"
+              >
+                {t("myGamers")}
+              </h2>
               <NoGamersCard onAddGamer={onAddGamer} />
             </div>
           </section>
@@ -194,6 +203,11 @@ export function ParentDashboardPageBody({
               <section
                 key={gamer.id}
                 id={gamerSectionId(gamer)}
+                // Named by the heading that carries the child's name — which is
+                // the only thing distinguishing one of these sections from the
+                // next, and which a screen-reader user tabbing the cards would
+                // otherwise never be told.
+                aria-labelledby={`${gamerSectionId(gamer)}-heading`}
                 className="scroll-mt-32"
               >
                 {/* `max-w-3xl`, the family surfaces' width: these pages are
@@ -210,7 +224,10 @@ export function ParentDashboardPageBody({
                     <Avatar className="h-10 w-10 shrink-0">
                       <Identicon id={gamer.id} size={40} />
                     </Avatar>
-                    <h2 className="min-w-0 break-words text-3xl font-bold">
+                    <h2
+                      id={`${gamerSectionId(gamer)}-heading`}
+                      className="min-w-0 break-words text-3xl font-bold"
+                    >
                       {gamer.firstName}
                     </h2>
                     {/* The identity page — name, game accounts — kept as a quiet
@@ -271,9 +288,15 @@ export function ParentDashboardPageBody({
           </div>
         )}
 
-        <section id="billing" className="scroll-mt-32">
+        <section
+          id="billing"
+          aria-labelledby="billing-heading"
+          className="scroll-mt-32"
+        >
           <div className="mx-auto max-w-3xl space-y-6">
-            <h2 className="text-3xl font-bold">{t("billing")}</h2>
+            <h2 id="billing-heading" className="text-3xl font-bold">
+              {t("billing")}
+            </h2>
             {billingCard}
           </div>
         </section>
@@ -281,9 +304,15 @@ export function ParentDashboardPageBody({
         {/* Last section gets viewport-height min so clicking its pill can
             actually scroll it to the top — without this the page bottoms out
             mid-scroll and the heading stays in the middle of the viewport. */}
-        <section id="help" className="scroll-mt-32 min-h-[calc(100svh-9rem)]">
+        <section
+          id="help"
+          aria-labelledby="help-heading"
+          className="scroll-mt-32 min-h-[calc(100svh-9rem)]"
+        >
           <div className="mx-auto max-w-3xl space-y-6">
-            <h2 className="text-3xl font-bold">{t("help")}</h2>
+            <h2 id="help-heading" className="text-3xl font-bold">
+              {t("help")}
+            </h2>
             <ParentHelpSection />
           </div>
         </section>
@@ -303,7 +332,7 @@ export function ParentDashboardPageBody({
  * so a browse button here would send them somewhere they cannot finish.
  */
 function NoGamersCard({ onAddGamer }: { onAddGamer?: () => void }) {
-  const t = useTranslations("parent.enrollment");
+  const t = useTranslations("familyEnrollment");
   const f = useTranslations("family");
 
   return (
@@ -340,7 +369,7 @@ function NoGamersCard({ onAddGamer }: { onAddGamer?: () => void }) {
  * prop would only give the live page a chance to forget to pass one.
  */
 function EmptyGamerCard({ firstName }: { firstName: string }) {
-  const t = useTranslations("parent.enrollment");
+  const t = useTranslations("familyEnrollment");
 
   return (
     <Card className="border-dashed">

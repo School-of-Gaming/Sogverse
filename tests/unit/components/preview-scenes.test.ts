@@ -21,12 +21,8 @@ import {
   entryCompleteness,
   entryNeedsAttention,
 } from "@/components/gedu/session-feed";
-import {
-  assignmentEndedOn,
-  assignmentLiveness,
-  geduActivityTypeOf,
-  type GeduActivityType,
-} from "@/lib/gedu-assignment-rollup";
+import { activityTypeOf, type ActivityType } from "@/lib/activity-type";
+import { runEndedOn, runLiveness } from "@/lib/product-run";
 import {
   CONFIRMATION_NOTICE_SCENARIOS,
   PREVIEW_SCENARIOS,
@@ -607,7 +603,7 @@ describe("the gedu dashboard scene puts every card state on one screen", () => {
 
   it("has exactly one card mid-session, with its room open", () => {
     const open = summaries().filter(
-      (a) => assignmentLiveness(a, now).voiceIsOpen,
+      (a) => runLiveness(a, now).voiceIsOpen,
     );
     expect(open).toHaveLength(1);
     expect(open[0].nextSessionStart!.getTime()).toBeLessThanOrEqual(
@@ -647,15 +643,15 @@ describe("the gedu dashboard scene puts every card state on one screen", () => {
     const locked = summaries().filter(
       (a) =>
         a.hasVoiceRoom &&
-        !assignmentLiveness(a, now).voiceIsOpen &&
+        !runLiveness(a, now).voiceIsOpen &&
         a.nextSessionStart !== null,
     );
     expect(locked.length).toBeGreaterThan(0);
   });
 
   it("spans all three type nouns, so every heading renders", () => {
-    const nouns = new Set<GeduActivityType>(
-      summaries().map((a) => geduActivityTypeOf(a.productType)),
+    const nouns = new Set<ActivityType>(
+      summaries().map((a) => activityTypeOf(a.productType)),
     );
     expect(nouns).toEqual(new Set(["club", "camp", "event"]));
   });
@@ -705,7 +701,7 @@ describe("the gedu dashboard scene puts every card state on one screen", () => {
    * that stays loud — is invisible on a page where nothing has ended.
    */
   it("carries exactly one card whose run is over", () => {
-    const ended = summaries().filter((a) => assignmentEndedOn(a, now) !== null);
+    const ended = summaries().filter((a) => runEndedOn(a, now) !== null);
     expect(ended).toHaveLength(1);
     // A date to name in the footer, and no next session to contradict it.
     expect(ended[0].endDate).not.toBeNull();
@@ -719,13 +715,13 @@ describe("the gedu dashboard scene puts every card state on one screen", () => {
    * another.
    */
   it("makes the ended card the remote one, so the end date fills a footer that was empty", () => {
-    const ended = summaries().filter((a) => assignmentEndedOn(a, now) !== null);
+    const ended = summaries().filter((a) => runEndedOn(a, now) !== null);
     expect(ended[0].hasVoiceRoom).toBe(true);
     expect(ended[0].siteName).toBeNull();
   });
 
   it("leaves the ended card a backlog, so the badge is visibly undimmed", () => {
-    const ended = summaries().filter((a) => assignmentEndedOn(a, now) !== null);
+    const ended = summaries().filter((a) => runEndedOn(a, now) !== null);
     expect(ended[0].attentionCount).toBeGreaterThan(0);
   });
 
@@ -736,12 +732,12 @@ describe("the gedu dashboard scene puts every card state on one screen", () => {
    */
   it("puts the ended card last inside its own type group", () => {
     const clubs = summaries().filter(
-      (a) => geduActivityTypeOf(a.productType) === "club",
+      (a) => activityTypeOf(a.productType) === "club",
     );
     expect(clubs.length).toBeGreaterThan(1);
-    expect(assignmentEndedOn(clubs[clubs.length - 1], now)).not.toBeNull();
+    expect(runEndedOn(clubs[clubs.length - 1], now)).not.toBeNull();
     for (const club of clubs.slice(0, -1)) {
-      expect(assignmentEndedOn(club, now), club.productName).toBeNull();
+      expect(runEndedOn(club, now), club.productName).toBeNull();
     }
   });
 });
@@ -767,7 +763,7 @@ describe("the clubs-only scenario fills the grid", () => {
 
   it("narrows to a single type noun", () => {
     const nouns = new Set(
-      clubsOnly().map((a) => geduActivityTypeOf(a.productType)),
+      clubsOnly().map((a) => activityTypeOf(a.productType)),
     );
     expect(nouns).toEqual(new Set(["club"]));
   });
@@ -796,7 +792,7 @@ describe("the clubs-only scenario fills the grid", () => {
     expect(cards.filter((a) => a.attentionCount > 0).length).toBeGreaterThan(1);
     expect(cards.filter((a) => a.attentionCount === 0).length).toBeGreaterThan(1);
     expect(
-      cards.filter((a) => assignmentLiveness(a, now).voiceIsOpen),
+      cards.filter((a) => runLiveness(a, now).voiceIsOpen),
     ).toHaveLength(1);
   });
 

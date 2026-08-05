@@ -1,12 +1,12 @@
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { runEndedOn } from "@/lib/product-run";
 import {
   endDateToCutoff,
   enumerateRowOccurrences,
   startDateToCutoff,
 } from "@/lib/session-occurrence";
-import { isVoiceWindowOpen } from "@/lib/voice-window";
 import type { MyAssignedProductSessionRow } from "@/services/assignments";
 import type { ProductType } from "@/types";
 
@@ -28,6 +28,13 @@ import type { ProductType } from "@/types";
  * collapsed to its first element instead of being handed on as a list. A
  * recurring-schedule line replaces the enumerated dates, so the reader still
  * learns the cadence without reading eight rows to infer it.
+ *
+ * **What is gedu-specific is what is left here.** Whether a run has finished and
+ * whether it is live are facts about a *product*, and which type noun a product
+ * falls under is a fact about the schema — a family surface asks all three of the
+ * same questions about the same rows. Those derivations live in the neutral
+ * modules beside this one (`product-run`, `activity-type`) and are consumed here;
+ * only the assignment-shaped roll-up and its ordering are the gedu's own.
  */
 
 /**
@@ -70,8 +77,8 @@ export interface GeduAssignmentSummary {
    * Kept as the raw string rather than an instant because that is what it is: a
    * zoneless calendar date, rendered date-only and UTC-pinned wherever it is
    * shown. Whether that day is already behind us is a question about the current
-   * instant, so it is asked of the clock rather than baked in here — see
-   * `assignmentEndedOn`.
+   * instant, so it is asked of the clock through the shared run-state
+   * derivations rather than baked in here.
    */
   endDate: string | null;
   /**
@@ -100,7 +107,8 @@ export interface GeduAssignmentSummary {
    * about the current instant, not about the assignment, and baking it into a
    * summary built once per data change gave the card two clocks — a badge
    * recomputed on every `useNow()` tick beside a Join button frozen at whatever
-   * the roll-up thought when it last ran. Ask `assignmentLiveness` instead.
+   * the roll-up thought when it last ran. Ask the shared liveness derivation
+   * instead, at the moment of asking.
    */
   hasVoiceRoom: boolean;
   /** Where the Join button navigates. `"#"` keeps it inert. */
@@ -186,100 +194,10 @@ export function rollUpGeduAssignments({
   // the same instant every time.
   const ranked = summaries.map((summary) => ({
     summary,
-    endedOn: assignmentEndedOn(summary, now),
+    endedOn: runEndedOn(summary, now),
   }));
   ranked.sort(byRunThenSoonestSession);
   return ranked.map((entry) => entry.summary);
-}
-
-/**
- * The product's last day, **if the run is over** — and `null` otherwise, which
- * covers both a run still going and an open-ended one that has no last day at
- * all.
- *
- * One function rather than a boolean and a date, because the two are the same
- * answer: an assignment that has ended always has a date to name, and one with
- * no date to name has not ended. Returning the date makes that true in the types
- * as well as in prose, so no caller ever has to assert its way past a `null` it
- * has already tested.
- *
- * **Over means two things, and it needs both.** The last day has to be behind
- * us, *and* the occurrence walk has to have nothing left — which is the
- * observation the whole ended state grew out of: a product always has a session
- * scheduled unless it has finished. The second clause is redundant on every
- * ordinary run and decisive on one case, a session that starts on the final day
- * and is still running after that day's midnight. Without it a card could be
- * "ended" and mid-session at once — gradient lit, Join withheld, an end date
- * under a session somebody is sitting in. With it the two states are exclusive
- * by construction, which is what lets the card drop its next-session line
- * outright rather than reasoning about which of them wins.
- *
- * The day ends **in the product's own zone**, not the viewer's, and via the same
- * cutoff the occurrence walk bounds itself with — so "past the end date" means
- * the identical instant to both of them. An end date is a calendar date on the
- * schedule it bounds: a Helsinki club is over when Helsinki's last day is over,
- * and a viewer in Tokyo does not get to retire it seven hours early.
- *
- * Asked of the clock rather than baked into the summary, for the same reason
- * liveness is: it is a fact about the current instant, and a summary built once
- * per data change would hold yesterday's answer.
- */
-export function assignmentEndedOn(
-  assignment: Pick<
-    GeduAssignmentSummary,
-    "endDate" | "timezone" | "nextSessionStart"
-  >,
-  now: Date,
-): string | null {
-  const { endDate, timezone, nextSessionStart } = assignment;
-  if (endDate === null || nextSessionStart !== null) return null;
-  const lastMoment = endDateToCutoff(endDate, timezone);
-  return lastMoment !== null && lastMoment.getTime() < now.getTime()
-    ? endDate
-    : null;
-}
-
-/** Whether an assignment is happening right now, as of one instant. */
-export interface AssignmentLiveness {
-  /** The next session has already started — it is running as you look at it. */
-  inProgress: boolean;
-  /**
-   * The voice window around that session is open. Always false without a room:
-   * an in-person assignment has no window to be inside, and a card lighting up
-   * on this would be announcing a room that does not exist.
-   */
-  voiceIsOpen: boolean;
-}
-
-/**
- * Whether an assignment is live, asked at the moment of asking.
- *
- * **A card has one clock.** Both halves of "is this happening now" are derived
- * here from the same `now`, so the gradient, the Live badge and the Join button
- * can never disagree — which is exactly what happened when the window flag was
- * baked into the summary and the in-progress test was recomputed per tick: on
- * the tick that crossed a session's start the card went live and its Join stayed
- * locked until something else caused the roll-up to run again.
- *
- * Pure and instant-in, so the card, a preview fixture and a test all ask the
- * same question the same way.
- */
-export function assignmentLiveness(
-  assignment: Pick<
-    GeduAssignmentSummary,
-    "nextSessionStart" | "nextSessionEnd" | "hasVoiceRoom"
-  >,
-  now: Date,
-): AssignmentLiveness {
-  const { nextSessionStart, nextSessionEnd, hasVoiceRoom } = assignment;
-  if (nextSessionStart === null || nextSessionEnd === null) {
-    return { inProgress: false, voiceIsOpen: false };
-  }
-  return {
-    inProgress: nextSessionStart.getTime() <= now.getTime(),
-    voiceIsOpen:
-      hasVoiceRoom && isVoiceWindowOpen(nextSessionStart, nextSessionEnd, now),
-  };
 }
 
 /**
@@ -309,94 +227,6 @@ function nextOccurrenceFor(
   });
 
   return occurrences[0] ?? null;
-}
-
-/* ------------------------------------------------------------------ */
-/*  Grouping by type noun                                              */
-/* ------------------------------------------------------------------ */
-
-/**
- * The nouns a gedu uses for the things they run.
- *
- * There are four product types and three nouns, because the two club types
- * (`consumer_club` and `municipality_club`) differ only in who pays. A gedu
- * standing in the room cannot tell them apart and has no reason to: both are a
- * club, and splitting the dashboard by billing arrangement would be the product
- * showing its accounting to the person teaching.
- */
-export type GeduActivityType = "club" | "camp" | "event";
-
-/**
- * The order the nouns appear in, which is deliberately not alphabetical.
- *
- * Clubs first because they are the standing commitment — the thing a gedu runs
- * every week for a term, and the reason most of them open the dashboard at all.
- * Camps next: intense, but a fortnight. Events last: occasional, and a gedu who
- * has one is not usually opening the page for it.
- */
-export const GEDU_ACTIVITY_TYPE_ORDER: readonly GeduActivityType[] = [
-  "club",
-  "camp",
-  "event",
-];
-
-/** Which noun a product type falls under. */
-export function geduActivityTypeOf(productType: ProductType): GeduActivityType {
-  switch (productType) {
-    case "consumer_club":
-    case "municipality_club":
-      return "club";
-    case "camp":
-      return "camp";
-    case "event":
-      return "event";
-  }
-}
-
-export interface GeduActivityGroup<T> {
-  type: GeduActivityType;
-  items: T[];
-}
-
-/**
- * Split a gedu's assignments into one group per type noun, **skipping the types
- * they do not run**.
- *
- * A gedu with three clubs and nothing else should see one heading, not one
- * heading and two empty ones — an empty group on a personal dashboard reads as
- * something missing rather than as something absent. So the shape of the page
- * follows what the gedu actually has, and a camp gedu never learns that events
- * exist.
- *
- * Order **within** a group is whatever the caller handed over, untouched, which
- * is soonest-first out of the roll-up with the finished runs beneath. Order
- * **between** groups is fixed, so the page does not reshuffle its own headings
- * between two gedus or between two terms for the same gedu.
- *
- * Generic over the row rather than tied to the card's shape: the grouping is a
- * fact about product types, and making it know what a dashboard card looks like
- * would drag a component's props into a pure module for no gain.
- */
-export function groupAssignmentsByType<T>(
-  items: readonly T[],
-  productTypeOf: (item: T) => ProductType,
-): GeduActivityGroup<T>[] {
-  const buckets = new Map<GeduActivityType, T[]>();
-  for (const item of items) {
-    const type = geduActivityTypeOf(productTypeOf(item));
-    const bucket = buckets.get(type);
-    if (bucket === undefined) buckets.set(type, [item]);
-    else bucket.push(item);
-  }
-
-  const groups: GeduActivityGroup<T>[] = [];
-  for (const type of GEDU_ACTIVITY_TYPE_ORDER) {
-    const bucketed = buckets.get(type);
-    if (bucketed !== undefined && bucketed.length > 0) {
-      groups.push({ type, items: bucketed });
-    }
-  }
-  return groups;
 }
 
 /** A summary paired with the ended test's answer, resolved once. */

@@ -1142,6 +1142,20 @@
       "genericError": "Det gick inte att lägga till gamern. Försök igen."
     }
   },
+  "familyEnrollment": {
+    "typeLabel": {
+      "consumer_club": "Klubb",
+      "municipality_club": "Klubb",
+      "camp": "Läger",
+      "event": "Evenemang"
+    },
+    "liveBadge": "Pågår",
+    "noSchedule": "Inget schema ännu",
+    "endedOn": "Avslutades {date}",
+    "emptyState": "{name} är inte anmäld till något ännu. Titta tillsammans på vad som finns.",
+    "noGamers": "Inga gamers här ännu. Lägg till din första gamer och välj sedan en klubb eller ett läger tillsammans.",
+    "emptyStateCta": "Bläddra bland klubbar och läger"
+  },
   "familyProduct": {
     "back": "Tillbaka till Min SOG",
     "typeLabel": {
@@ -1201,10 +1215,6 @@
       "saveError": "Kunde inte spara"
     },
     "myGroups": {
-      "counts": "{groupCount, plural, one {# grupp} other {# grupper}} · {gamerCount, plural, one {# spelare} other {# spelare}}",
-      "startsIn": "Börjar om {countdown}",
-      "inProgress": "Pågående pass",
-      "viewDetails": "Visa detaljer",
       "noNextSession": "Inget tillfälle inbokat",
       "endedOn": "Avslutades {date}",
       "liveBadge": "Pågår"
@@ -1270,11 +1280,11 @@
       "save": "Spara",
       "cancel": "Avbryt",
       "alertBadge": "{count, plural, one {# tillfälle behöver åtgärd} other {# tillfällen behöver åtgärd}}",
-      "showEarlier": "{count, plural, one {Visa # tidigare tillfälle} other {Visa # tidigare tillfällen}}",
       "attendanceMarkedCount": "{marked} av {total} markerade",
       "attendanceForGamer": "Närvaro för {name}",
       "saveFailed": "Tillfället sparades inte. Försök igen.",
-      "savePartiallyFailed": "En del av ändringarna för det här tillfället sparades inte – kontrollera närvarolistan och försök igen."
+      "savePartiallyFailed": "En del av ändringarna för det här tillfället sparades inte – kontrollera närvarolistan och försök igen.",
+      "showEarlier": "{count, plural, one {Visa # tidigare tillfälle} other {Visa # tidigare tillfällen}}"
     },
     "groupNotes": {
       "heading": "Om gruppen",
@@ -1736,20 +1746,6 @@
   "parent": {
     "placeholders": {
       "myGamersHint": "Välj en spelare för att hantera kontot."
-    },
-    "enrollment": {
-      "typeLabel": {
-        "consumer_club": "Klubb",
-        "municipality_club": "Klubb",
-        "camp": "Läger",
-        "event": "Evenemang"
-      },
-      "liveBadge": "Pågår",
-      "noSchedule": "Inget schema ännu",
-      "endedOn": "Avslutades {date}",
-      "emptyState": "{name} är inte anmäld till något ännu. Titta tillsammans på vad som finns.",
-      "noGamers": "Inga gamers här ännu. Lägg till din första gamer och välj sedan en klubb eller ett läger tillsammans.",
-      "emptyStateCta": "Bläddra bland klubbar och läger"
     },
     "nextSession": {
       "title": "{name}s nästa pass",

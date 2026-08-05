@@ -1142,6 +1142,20 @@
       "genericError": "Pelaajan lisääminen epäonnistui. Yritä uudelleen."
     }
   },
+  "familyEnrollment": {
+    "typeLabel": {
+      "consumer_club": "Kerho",
+      "municipality_club": "Kerho",
+      "camp": "Leiri",
+      "event": "Tapahtuma"
+    },
+    "liveBadge": "Käynnissä",
+    "noSchedule": "Aikataulua ei ole vielä sovittu",
+    "endedOn": "Päättyi {date}",
+    "emptyState": "{name} ei ole vielä ilmoittautunut mihinkään. Katsokaa yhdessä, mitä tarjolla on.",
+    "noGamers": "Täällä ei ole vielä pelaajia. Lisää ensimmäinen pelaaja ja valitkaa sitten yhdessä kerho tai leiri.",
+    "emptyStateCta": "Selaa kerhoja ja leirejä"
+  },
   "familyProduct": {
     "back": "Takaisin Omaan SOGiin",
     "typeLabel": {
@@ -1201,10 +1215,6 @@
       "saveError": "Tallennus epäonnistui"
     },
     "myGroups": {
-      "counts": "{groupCount, plural, one {# ryhmä} other {# ryhmää}} · {gamerCount, plural, one {# pelaaja} other {# pelaajaa}}",
-      "startsIn": "Alkaa {countdown} kuluttua",
-      "inProgress": "Istunto käynnissä",
-      "viewDetails": "Näytä tiedot",
       "noNextSession": "Ei kertoja aikataulussa",
       "endedOn": "Päättyi {date}",
       "liveBadge": "Käynnissä"
@@ -1270,11 +1280,11 @@
       "save": "Tallenna",
       "cancel": "Peruuta",
       "alertBadge": "{count, plural, one {# kerta vaatii huomiota} other {# kertaa vaatii huomiota}}",
-      "showEarlier": "{count, plural, one {Näytä # aiempi kerta} other {Näytä # aiempaa kertaa}}",
       "attendanceMarkedCount": "{marked}/{total} merkitty",
       "attendanceForGamer": "{name} – läsnäolo",
       "saveFailed": "Tallennus epäonnistui. Yritä uudelleen.",
-      "savePartiallyFailed": "Osa tämän kerran muutoksista ei tallentunut – tarkista läsnäololista ja yritä uudelleen."
+      "savePartiallyFailed": "Osa tämän kerran muutoksista ei tallentunut – tarkista läsnäololista ja yritä uudelleen.",
+      "showEarlier": "{count, plural, one {Näytä # aiempi kerta} other {Näytä # aiempaa kertaa}}"
     },
     "groupNotes": {
       "heading": "Tästä ryhmästä",
@@ -1736,20 +1746,6 @@
   "parent": {
     "placeholders": {
       "myGamersHint": "Valitse pelaaja hallitaksesi hänen tiliään."
-    },
-    "enrollment": {
-      "typeLabel": {
-        "consumer_club": "Kerho",
-        "municipality_club": "Kerho",
-        "camp": "Leiri",
-        "event": "Tapahtuma"
-      },
-      "liveBadge": "Käynnissä",
-      "noSchedule": "Aikataulua ei ole vielä sovittu",
-      "endedOn": "Päättyi {date}",
-      "emptyState": "{name} ei ole vielä ilmoittautunut mihinkään. Katsokaa yhdessä, mitä tarjolla on.",
-      "noGamers": "Täällä ei ole vielä pelaajia. Lisää ensimmäinen pelaaja ja valitkaa sitten yhdessä kerho tai leiri.",
-      "emptyStateCta": "Selaa kerhoja ja leirejä"
     },
     "nextSession": {
       "title": "{name}: seuraava sessio",

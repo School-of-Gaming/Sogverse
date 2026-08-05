@@ -1,15 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
-  GEDU_ACTIVITY_TYPE_ORDER,
-  assignmentEndedOn,
-  assignmentLiveness,
-  geduActivityTypeOf,
-  groupAssignmentsByType,
   rollUpGeduAssignments,
   type GeduAssignmentRow,
 } from "@/lib/gedu-assignment-rollup";
-import { Constants } from "@/types/database.types";
-import type { ProductType } from "@/types";
+// The roll-up's output is what the card asks its run-state questions of, so the
+// two are exercised together here — the derivations' own boundaries are pinned
+// beside them, in the shared module's test.
+import { runEndedOn, runLiveness } from "@/lib/product-run";
 
 /**
  * The roll-up is what replaced the dashboard's per-occurrence enumeration, so
@@ -128,7 +125,7 @@ describe("rollUpGeduAssignments", () => {
     // The in-progress session is the soonest meaningful moment, so the card
     // shows it rather than skipping a week — and its window is open.
     expect(nextSessionStart!.getTime()).toBeLessThan(midSession.getTime());
-    expect(assignmentLiveness(summaries[0], midSession)).toEqual({
+    expect(runLiveness(summaries[0], midSession)).toEqual({
       inProgress: true,
       voiceIsOpen: true,
     });
@@ -175,13 +172,13 @@ describe("rollUpGeduAssignments", () => {
     );
     expect(summaries[0].nextSessionStart).toBeNull();
     expect(summaries[0].nextSessionEnd).toBeNull();
-    expect(assignmentLiveness(summaries[0], now)).toEqual({
+    expect(runLiveness(summaries[0], now)).toEqual({
       inProgress: false,
       voiceIsOpen: false,
     });
     // …and that emptiness is explained rather than left as an anomaly: the card
     // reads the same last day back off the summary and says so.
-    expect(assignmentEndedOn(summaries[0], now)).toBe("2025-06-13");
+    expect(runEndedOn(summaries[0], now)).toBe("2025-06-13");
   });
 
   it("carries the product's last day and zone through to the card", () => {
@@ -198,7 +195,7 @@ describe("rollUpGeduAssignments", () => {
   it("leaves an open-ended club with no last day at all", () => {
     const summaries = rollUp([row({ id: "p1", name: "Club" })], now);
     expect(summaries[0].endDate).toBeNull();
-    expect(assignmentEndedOn(summaries[0], now)).toBeNull();
+    expect(runEndedOn(summaries[0], now)).toBeNull();
   });
 
   it("reports no next session for an assignment with no slots", () => {
@@ -387,205 +384,5 @@ describe("rollUpGeduAssignments", () => {
       now,
     );
     expect(summaries[0].siteName).toBeNull();
-  });
-});
-
-/**
- * Liveness is asked of the clock rather than baked into the summary, so that a
- * card's gradient, badge and Join button can never be answering two different
- * instants. These pin the three things that follow from that.
- */
-describe("assignmentLiveness", () => {
-  const start = new Date("2026-02-11T14:30:00Z");
-  const end = new Date("2026-02-11T16:00:00Z");
-  const remote = { nextSessionStart: start, nextSessionEnd: end, hasVoiceRoom: true };
-
-  it("is quiet before the session, on both counts", () => {
-    // Well before the window opens, not merely before the start.
-    const early = new Date("2026-02-11T09:00:00Z");
-    expect(assignmentLiveness(remote, early)).toEqual({
-      inProgress: false,
-      voiceIsOpen: false,
-    });
-  });
-
-  it("reports in progress from the start instant onwards", () => {
-    expect(assignmentLiveness(remote, start).inProgress).toBe(true);
-    expect(
-      assignmentLiveness(remote, new Date("2026-02-11T15:00:00Z")).inProgress,
-    ).toBe(true);
-  });
-
-  it("never opens a window on a product with no room", () => {
-    // Mid-session, which is exactly when a room would report itself open.
-    const onsite = { ...remote, hasVoiceRoom: false };
-    const midSession = new Date("2026-02-11T15:00:00Z");
-    expect(assignmentLiveness(onsite, midSession)).toEqual({
-      inProgress: true,
-      voiceIsOpen: false,
-    });
-  });
-
-  it("says nothing is happening when nothing is scheduled", () => {
-    expect(
-      assignmentLiveness(
-        { nextSessionStart: null, nextSessionEnd: null, hasVoiceRoom: true },
-        start,
-      ),
-    ).toEqual({ inProgress: false, voiceIsOpen: false });
-  });
-});
-
-/**
- * Whether a run is over is the one thing standing between a card that reads as
- * history and a card that reads as a scheduling fault, and it turns on a
- * calendar date's day ending — which is a different instant in every zone. These
- * pin the boundary itself.
- */
-describe("assignmentEndedOn", () => {
-  const helsinki = (endDate: string | null) => ({
-    endDate,
-    timezone: "Europe/Helsinki",
-    nextSessionStart: null,
-  });
-
-  it("says nothing about a run with no last day", () => {
-    expect(
-      assignmentEndedOn(helsinki(null), new Date("2026-02-11T09:00:00Z")),
-    ).toBeNull();
-  });
-
-  it("keeps a run alive on its own last day, right to the end of it", () => {
-    // 13 Jun 2025, 23:58 Helsinki — still the last day, so still running.
-    expect(
-      assignmentEndedOn(
-        helsinki("2025-06-13"),
-        new Date("2025-06-13T20:58:00Z"),
-      ),
-    ).toBeNull();
-  });
-
-  it("ends it once that day is over, and names the day", () => {
-    // 14 Jun 2025, 00:02 Helsinki — one minute past.
-    expect(
-      assignmentEndedOn(
-        helsinki("2025-06-13"),
-        new Date("2025-06-13T21:02:00Z"),
-      ),
-    ).toBe("2025-06-13");
-  });
-
-  /**
-   * The day ends where the schedule lives. A viewer somewhere else does not get
-   * to retire a Helsinki club early or keep it alive late — otherwise the same
-   * card would be history for one gedu and current for the gedu beside them.
-   */
-  it("ends the day in the product's zone, not the viewer's", () => {
-    // 13 Jun 2025 22:30 UTC: already the 14th in Helsinki (UTC+3), still the
-    // 13th in New York. The Helsinki product is over; the New York one is not.
-    const instant = new Date("2025-06-13T22:30:00Z");
-    expect(assignmentEndedOn(helsinki("2025-06-13"), instant)).toBe("2025-06-13");
-    expect(
-      assignmentEndedOn(
-        {
-          endDate: "2025-06-13",
-          timezone: "America/New_York",
-          nextSessionStart: null,
-        },
-        instant,
-      ),
-    ).toBeNull();
-  });
-
-  /**
-   * The one case the date test alone gets wrong: a session that starts on the
-   * final day and is still running after that day's midnight. The run is past
-   * its end date and demonstrably not over, and a card calling it history would
-   * be withholding the Join from a session somebody is sitting in.
-   */
-  it("is not over while one of its own sessions is still in flight", () => {
-    expect(
-      assignmentEndedOn(
-        {
-          endDate: "2025-06-13",
-          timezone: "Europe/Helsinki",
-          nextSessionStart: new Date("2025-06-13T20:00:00Z"),
-        },
-        new Date("2025-06-13T21:10:00Z"),
-      ),
-    ).toBeNull();
-  });
-});
-
-/**
- * The dashboard stopped having one umbrella heading and now renders one section
- * per type noun. Which sections exist, and in what order, is entirely this
- * function's answer — so an empty group leaking through would put a heading on
- * the page with nothing under it, and a reordering would move a gedu's clubs
- * below their events between two deploys.
- */
-describe("geduActivityTypeOf", () => {
-  it("folds both club types into one noun", () => {
-    // A gedu standing in the room cannot tell a consumer club from a
-    // municipality one, and has no reason to: the difference is who pays.
-    expect(geduActivityTypeOf("consumer_club")).toBe("club");
-    expect(geduActivityTypeOf("municipality_club")).toBe("club");
-  });
-
-  it("maps the other two product types to themselves", () => {
-    expect(geduActivityTypeOf("camp")).toBe("camp");
-    expect(geduActivityTypeOf("event")).toBe("event");
-  });
-
-  it("covers every product type the schema can produce", () => {
-    // Derived from the generated enum rather than a hand-kept list, so a fifth
-    // product type fails here instead of silently falling out of the dashboard.
-    for (const type of Constants.public.Enums.product_type) {
-      expect(GEDU_ACTIVITY_TYPE_ORDER, type).toContain(geduActivityTypeOf(type));
-    }
-  });
-});
-
-describe("groupAssignmentsByType", () => {
-  const typed = (id: string, productType: ProductType) => ({ id, productType });
-  const typeOf = (item: { productType: ProductType }) => item.productType;
-
-  it("emits clubs, then camps, then events", () => {
-    const groups = groupAssignmentsByType(
-      [typed("e", "event"), typed("c", "camp"), typed("k", "consumer_club")],
-      typeOf,
-    );
-    expect(groups.map((g) => g.type)).toEqual(["club", "camp", "event"]);
-  });
-
-  it("skips the nouns a gedu does not run rather than emitting empties", () => {
-    // An empty heading on a personal dashboard reads as something missing; a
-    // club gedu should never learn that events exist.
-    const groups = groupAssignmentsByType(
-      [typed("k1", "consumer_club"), typed("k2", "municipality_club")],
-      typeOf,
-    );
-    expect(groups).toHaveLength(1);
-    expect(groups[0].type).toBe("club");
-    expect(groups[0].items.map((i) => i.id)).toEqual(["k1", "k2"]);
-  });
-
-  it("preserves the caller's order inside each group", () => {
-    // The roll-up already sorted soonest-first; regrouping must not reshuffle.
-    const groups = groupAssignmentsByType(
-      [
-        typed("k1", "consumer_club"),
-        typed("c1", "camp"),
-        typed("k2", "consumer_club"),
-        typed("c2", "camp"),
-      ],
-      typeOf,
-    );
-    expect(groups[0].items.map((i) => i.id)).toEqual(["k1", "k2"]);
-    expect(groups[1].items.map((i) => i.id)).toEqual(["c1", "c2"]);
-  });
-
-  it("returns nothing at all for a gedu with no assignments", () => {
-    expect(groupAssignmentsByType([], typeOf)).toEqual([]);
   });
 });
