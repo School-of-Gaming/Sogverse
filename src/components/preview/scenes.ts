@@ -205,13 +205,13 @@ export const PREVIEW_SCENES = [
         slug: "club",
         label: "Club — remote, weekly",
         description:
-          "The kitchen sink. Fifty-five weeks of history behind month dividers and the chunked reveal, all three rungs of the completeness ladder (green-checked, quietly done, and still owed), reports from two lines to a full dated write-up so the clamp and its “Read more” are both on screen from the first frame, and three sister groups in the rail including one nobody teaches yet. At the bottom, the pre-epoch tail: a session somebody went back and wrote up (an ordinary entry that never turns amber) and two nobody has touched — quiet placeholder lines that still open the record editor, because the epoch gates what is owed, not what can be edited.",
+          "The kitchen sink. Fifty-five weeks of history behind month dividers and the chunked reveal, both states a card can wear and every way into them (green-checked with register and report both in; amber for a register left unfinished, and amber again for a week marked off but never written up — the report is owed work, not a bonus), reports from two lines to a full dated write-up so the clamp and its “Read more” are both on screen from the first frame, and three sister groups in the rail including one nobody teaches yet. At the bottom, the pre-epoch tail: a session somebody went back and wrote up (an ordinary entry that never turns amber, and the one place the neutral marker survives) and two nobody has touched — quiet placeholder lines that still open the record editor, because the epoch gates what is owed, not what can be edited.",
       },
       {
         slug: "camp",
         label: "Camp — in person, daily",
         description:
-          "The two things the club cannot show: back-to-back weekday dates across a weekend, and a venue — so this is the scenario with site notes (shared by every product at that site) and with no voice room anywhere, every Join inert. It owes exactly one day, which is what puts an attention badge on an in-person dashboard card.",
+          "The two things the club cannot show: back-to-back weekday dates across a weekend, and a venue — so this is the scenario with site notes (shared by every product at that site) and with no voice room anywhere, every Join inert. It owes exactly one day — yesterday's register — because every other day of the run has both its register and its report in; that single gap is what puts an attention badge on an in-person dashboard card.",
       },
     ],
   },

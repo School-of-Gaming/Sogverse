@@ -16,6 +16,7 @@ import {
 } from "@/components/gedu/session-details/mock-product-page-fixtures";
 import { SESSION_FEED_ROSTER } from "@/components/gedu/session-feed/mock-fixtures";
 import {
+  attendanceTally,
   countEntriesNeedingAttention,
   entryCompleteness,
   entryNeedsAttention,
@@ -517,20 +518,51 @@ describe("club reports are markdown, at realistic lengths", () => {
 });
 
 /**
- * The completeness ladder has three rungs and the club scenario is where all
- * three are meant to be visible at once. The middle one is the fragile one: it
- * is the *absence* of a badge, so nothing else in the app fails if it stops
- * being represented.
+ * A past session says one of two things or nothing at all, and the club
+ * scenario is where all three are meant to be visible at once. The silence is
+ * the fragile one: it is the *absence* of a badge, so nothing else in the app
+ * fails if it stops being represented.
  */
-describe("the club scenario shows every rung of the ladder", () => {
+describe("the club scenario shows every state a past session can wear", () => {
   const now = new Date("2026-02-11T09:00:00Z");
 
-  it("carries needs-attention, recorded and complete entries", () => {
+  it("carries flagged, complete and silent entries", () => {
     const { entries, feedRoster } = buildGeduProductPageFixture(now, "club");
-    const rungs = entries.map((e) => entryCompleteness(e, feedRoster));
-    expect(rungs).toContain("needs_attention");
-    expect(rungs).toContain("recorded");
-    expect(rungs).toContain("complete");
+    const states = entries.map((e) => entryCompleteness(e, feedRoster));
+    expect(states).toContain("needs_attention");
+    expect(states).toContain("complete");
+    // The pre-epoch entry somebody went back and half-wrote-up: unfinished and
+    // owed nothing, so it is the one past card on the page that stays neutral.
+    const silentPast = entries.filter(
+      (e) => e.kind === "past" && entryCompleteness(e, feedRoster) === null,
+    );
+    expect(silentPast.length).toBeGreaterThan(0);
+  });
+
+  /**
+   * Both routes to amber, side by side. They render identically and mean
+   * different things, and only one of them is new — a fixture that quietly lost
+   * the marked-but-unreported case would take the whole reversal off the page
+   * without failing anything above.
+   */
+  it("flags a week for a missing register and a week for a missing report", () => {
+    const { entries, feedRoster } = buildGeduProductPageFixture(now, "club");
+    const flagged = entries.filter(
+      (e) => entryCompleteness(e, feedRoster) === "needs_attention",
+    );
+
+    const missingRegister = flagged.filter(
+      (e) => e.kind === "past" && !attendanceTally(feedRoster, e.attendance).complete,
+    );
+    const missingReport = flagged.filter(
+      (e) =>
+        e.kind === "past" &&
+        attendanceTally(feedRoster, e.attendance).complete &&
+        (e.report ?? "").trim() === "",
+    );
+
+    expect(missingRegister.length).toBeGreaterThan(0);
+    expect(missingReport.length).toBeGreaterThan(0);
   });
 
   /**

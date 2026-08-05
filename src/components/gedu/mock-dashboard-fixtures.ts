@@ -415,9 +415,10 @@ export function buildGeduDashboardFixture(
  * the point of the seven-card grid is that the row is *uneven*.
  *
  * The ended club gets one for the opposite reason — it is the whole argument
- * for keeping the badge on a finished run. Attendance owed does not expire when
- * a term does, and on the one card whose own text is muted the badge has to
- * still be the loudest thing on it.
+ * for keeping the badge on a finished run. Neither half expires when a term
+ * does: the register is still the record of who was there, and a family reads
+ * last term's write-up as readily as last week's. On the one card whose own text
+ * is muted the badge has to still be the loudest thing on it.
  */
 const AUTHORED_ATTENTION: Readonly<Record<string, number>> = {
   "mock-dashboard-rocket-league-club": 2,
@@ -431,10 +432,11 @@ const AUTHORED_ATTENTION: Readonly<Record<string, number>> = {
  *
  * Both are read straight out of the fixture the linked product page renders.
  * The count is taken against that feed's own roster, because "outstanding"
- * means "some of this group is still unmarked" — a session with three of eight
- * marked counts, exactly as the card behind it says it does. The site name is
- * whatever the site-notes panel on that page is titled with, and is `null` for
- * a remote product, which has no building at all.
+ * means "this owed session is missing its register or its report" — a session
+ * with three of eight marked counts, and so does one marked off to the last
+ * child with nothing written for the families, exactly as the card behind it
+ * says they do. The site name is whatever the site-notes panel on that page is
+ * titled with, and is `null` for a remote product, which has no building at all.
  */
 function sceneBackedFacts(now: Date): {
   attention: Record<string, number>;

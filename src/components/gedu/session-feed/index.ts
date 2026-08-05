@@ -1,7 +1,7 @@
 /**
  * The gedu's **workspace** session feed: the editors, the attendance roster, the
- * completeness ladder, the gedu-note block and the badges that count outstanding
- * work.
+ * derivations that say what a session still owes, the gedu-note block and the
+ * badges that count outstanding work.
  *
  * Everything a family surface may also render — the row shaping, the viewer-zone
  * labels, the scroll anchoring, the now-divider and the report body — lives in

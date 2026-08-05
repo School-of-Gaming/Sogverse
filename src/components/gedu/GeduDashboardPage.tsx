@@ -35,16 +35,20 @@ import type { GeduAssignmentCardData } from "./GeduAssignmentsSectionView";
  * derived from — and they are the same rows every other gedu surface reads. The
  * summary RPC carries the three facts that belong to the assignment rather than
  * the product: the gedu's own group's name, how many children are in it, and
- * how many past sessions of it are still owed. Joining them here rather than
- * fusing the two RPCs keeps the expensive half (a per-assignment attention
- * count over the whole schedule) in one function that only this page calls.
+ * how many past sessions of it still owe a register or a report. Joining them
+ * here rather than fusing the two RPCs keeps the expensive half (a
+ * per-assignment attention count over the whole schedule) in one function that
+ * only this page calls.
  *
  * **The dashboard never fetches a feed.** A page of six cards would otherwise
  * be six clubs' entire histories downloaded to render six numbers. The count
  * comes back with the summary, computed server-side against the same
- * holiday-blind weekday expansion the workspace's feed uses and floored at the
- * same epoch, so the badge on the card and the alerts in the feed behind it are
- * two views of one number.
+ * holiday-blind weekday expansion the workspace's feed uses, floored at the same
+ * epoch and applying the same two-part test — a finished session is owed until
+ * its register is complete **and** a report has been written — so the badge on
+ * the card and the alerts in the feed behind it are two views of one number. The
+ * report half is the newer of the two conditions and is the one to check first
+ * if they ever disagree.
  *
  * Both reads are server-prefetched by the route, so the ordinary visit paints
  * complete on the first frame with no loading state at all.

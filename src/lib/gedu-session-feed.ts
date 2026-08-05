@@ -216,8 +216,8 @@ export function buildGeduSessionFeed(
  * that has begun is a past entry and opens its record editor from that instant,
  * which is what makes roll call during the club work — the server accepts marks
  * from the same moment. But nothing is *owed* until the session has actually
- * finished: an hour that is still running is not yet work outstanding, and a
- * warning rung against a session the gedu is in the middle of teaching is a nag
+ * finished: an hour that is still running is not yet work outstanding, and an
+ * amber warning against a session the gedu is in the middle of teaching is a nag
  * for a job they have not had the chance to finish. That is also exactly where
  * the dashboard badge draws its line, so the card and the badge agree.
  *
@@ -227,8 +227,7 @@ export function buildGeduSessionFeed(
  * still fully editable, because a gedu is allowed to write up any session back
  * to the product's start. The moment anything *is* recorded on it, it becomes an
  * ordinary past entry that simply never owes anything (`owed: false`), so the
- * warning rung of the ladder can never apply to it while the success rung
- * still can.
+ * amber warning can never apply to it while the green check still can.
  *
  * Note which of the two questions the `no_record` test asks: the **epoch** one,
  * not `owed`. A live session inside the enforcement era owes nothing yet, and

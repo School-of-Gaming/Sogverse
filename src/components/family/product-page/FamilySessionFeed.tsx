@@ -81,7 +81,7 @@ interface FamilySessionFeedProps {
  * future never labels the same month twice.
  *
  * The markers on the rail carry no state here. On the gedu's feed they encode
- * the completeness ladder — what is owed, what is finished — which is staff
+ * what a session still owes and what is finished, which is staff
  * workflow; for a family a session is a session, and a rail that graded them
  * would be inventing a hierarchy between weeks of their child's club. The one
  * distinction the rail keeps is the one the divider already makes: ahead of now

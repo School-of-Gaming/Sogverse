@@ -10,7 +10,7 @@
  * "next" is or on what a month boundary looks like.
  *
  * **What is not here is the point of the split.** The gedu's workspace — the
- * editors, the attendance roster, the completeness ladder, the gedu-note block —
+ * editors, the attendance roster, what a session still owes, the gedu-note block —
  * stays in `@/components/gedu/session-feed`, and a family surface imports from
  * this module only. That is a structural guarantee rather than a convention: a
  * family page cannot render a gedu note by accident, because there is no such

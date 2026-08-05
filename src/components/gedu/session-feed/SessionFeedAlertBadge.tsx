@@ -7,8 +7,8 @@ import { BADGE_FRAME } from "@/components/ui/card-corner-badge";
 import { cn } from "@/lib/utils";
 
 /**
- * "3 sessions need attention" — the aggregate of a group's past sessions whose
- * attendance is still unrecorded.
+ * "3 sessions need attention" — the aggregate of a group's owed past sessions
+ * still missing their register, their report, or both.
  *
  * Renders nothing at zero. A badge that says "0 sessions need attention" is
  * worse than no badge: it trains the eye to skip the spot where the real

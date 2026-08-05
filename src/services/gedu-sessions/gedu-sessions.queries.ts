@@ -70,9 +70,8 @@ export function useSetSessionNotes(groupId: string) {
       void queryClient.invalidateQueries({
         queryKey: geduSessionKeys.feed(groupId),
       });
-      // A report is the top rung of the completeness ladder, so writing one can
-      // move a session from "recorded" to "complete" — which the card's badge
-      // is counting.
+      // A report is half of what a session owes, so writing one can be what
+      // clears the session's alert — which the card's badge is counting.
       void queryClient.invalidateQueries({
         queryKey: geduSessionKeys.summaries(),
       });

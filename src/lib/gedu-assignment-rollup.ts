@@ -117,7 +117,7 @@ export interface GeduAssignmentSummary {
   siteName: string | null;
   /** Where a click anywhere on the card navigates — the product's feed. */
   openHref: string;
-  /** Past sessions of this assignment still needing a write-up. */
+  /** Owed past sessions still missing their register, their report, or both. */
   attentionCount: number;
 }
 
@@ -125,7 +125,7 @@ export interface RollUpArgs {
   rows: readonly GeduAssignmentRow[];
   now: Date;
   locale: SupportedLocale;
-  /** Outstanding write-ups per product id; missing means none. */
+  /** Outstanding sessions per product id; missing means none. */
   attentionByProductId?: Readonly<Record<string, number>>;
   /** Where each assignment's card navigates, by product id. */
   hrefByProductId: Readonly<Record<string, string>>;

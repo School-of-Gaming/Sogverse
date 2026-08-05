@@ -429,9 +429,12 @@ export function SessionFeed({
  * most useful thing a glance down it can tell you — where the gaps are — was the
  * thing hardest to see.
  *
- * The middle rung of the ladder stays the neutral dot it always was. A session
- * marked off but not yet reported on owes nothing, so its marker must not read
- * as a third alert; the green is what the run of grey is measured against.
+ * The neutral dot is what is left when a past session says nothing about
+ * itself: a pre-epoch week, a session still under way, an unfinished sheet on a
+ * group with nobody in it. A session marked off but never written up is **not**
+ * one of them any more — the report is owed work now, so that dot is amber like
+ * any other gap. The run of grey is what the green and the amber are measured
+ * against, and it is the run that shrinks when the standard rises.
  */
 function markerTone(
   entry: SessionFeedEntry,

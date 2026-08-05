@@ -46,11 +46,10 @@ interface SessionFeedItemProps {
    */
   clampReport?: boolean;
   /**
-   * Where this entry sits on the completeness ladder, or `null` for the kinds
-   * the ladder does not apply to. Computed by the feed and handed down: the
-   * timeline marker beside this card needs the same answer, and walking the
-   * roster twice per row to reach it is a cost a fifty-week feed pays fifty
-   * times over.
+   * What this entry's header says about itself, or `null` when it says nothing.
+   * Computed by the feed and handed down: the timeline marker beside this card
+   * needs the same answer, and walking the roster twice per row to reach it is a
+   * cost a fifty-week feed pays fifty times over.
    */
   completeness: SessionCompleteness | null;
   /** Whether this entry is the one currently expanded into an editor. */
@@ -97,11 +96,12 @@ interface SessionFeedItemProps {
  * as a decision.
  *
  * **The body reads in the order the work is done: attendance, then the report,
- * then the gedu note.** Attendance is the mandatory half and the only thing an
- * entry can be flagged for, so it is the first line under the date rather than
- * something found by scrolling past a write-up. The editor takes the same
- * order, which means the collapsed card and the open one say the same things in
- * the same sequence.
+ * then the gedu note.** Attendance and the report are both owed, but attendance
+ * is the one whose state cannot be read off the body — a missing report is
+ * visibly missing, whereas "5 of 8 marked" has to be counted for you — so it is
+ * the first line under the date rather than something found by scrolling past a
+ * write-up. The editor takes the same order, which means the collapsed card and
+ * the open one say the same things in the same sequence.
  *
  * **One edit affordance, everywhere.** Every editable entry — past or future,
  * written up or not — opens through the same icon-and-text Edit button in the
@@ -109,16 +109,23 @@ interface SessionFeedItemProps {
  * different gesture for one state, which is exactly the state a gedu meets
  * least often and would have to relearn each time.
  *
- * **A past session wears one of three states, and only two of them say
- * anything.** Attendance still owed is an alert icon and label on an otherwise
- * ordinary card — it used to wear a tinted background too, which made the feed's
- * most common transient state look like a failure and painted half the page
- * amber for a gedu catching up after half term. Attendance finished with no
- * report is deliberately silent: the report is optional, so a badge there would
- * be a nag for work nobody owes. Attendance finished *and* a report written is
- * the only state that earns a mark of its own, a green check, because it is the
- * one the gedu is aiming at and nothing else on the card can tell them they have
- * arrived.
+ * **A past session says one of two things, or nothing.** An owed session missing
+ * either half — a register that is not finished, a report that was never written
+ * — is an alert icon and label on an otherwise ordinary card. It used to wear a
+ * tinted background too, which made the feed's most common transient state look
+ * like a failure and painted half the page amber for a gedu catching up after
+ * half term. Both halves present is the one state that earns a mark of its own,
+ * a green check, because it is what the gedu is aiming at and nothing else on the
+ * card can tell them they have arrived. Everything else is silent: a future
+ * session, a pre-epoch gap, a session still running, an unfinished session
+ * nobody is owed one for.
+ *
+ * **The report counts as owed work, and that reverses an earlier call.** A
+ * marked-off session with nothing written used to be deliberately silent, on the
+ * argument that the report was optional and a badge would nag for work nobody
+ * owed. The family surfaces render the report as the main thing a parent comes
+ * to read, so a session without one is missing the half that faces outward — and
+ * a card that says nothing about it is hiding the more visible of the two gaps.
  *
  * **A pre-epoch gap is a bare dashed line that still opens an editor.** It gets
  * no card and no alert, because nothing is owed for it and it must not compete
@@ -383,7 +390,9 @@ function SessionEntryBody({
  * on both: a note written on Sunday about Monday and one written on Tuesday
  * about Monday are the same field at two moments, and the display used to say so
  * twice in byte-identical markup. A future entry's "nothing written yet" line is
- * not here, because a *past* entry with no report owes nothing and says nothing.
+ * not here, because a past entry says the same thing a different way — the
+ * missing report is one of the two gaps its header is already alerting on, and a
+ * second line in the body restating it would be the same nag twice.
  */
 function WrittenFields({
   entry,

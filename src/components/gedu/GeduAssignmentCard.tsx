@@ -177,8 +177,9 @@ interface GeduAssignmentCardProps {
  *   construction on a run with no session left, so this is not a special case so
  *   much as a consequence — but it is the difference a reader actually sees.
  *
- * **The attention badge is the one thing that does not fade.** Attendance owed
- * on a finished club is still owed, the epoch rules already exempt the history
+ * **The attention badge is the one thing that does not fade.** A register or a
+ * write-up owed on a finished club is still owed — a parent reads last term's
+ * report as readily as last week's — the epoch rules already exempt the history
  * nobody is expected to backfill, and the badge is how a gedu finds what is
  * left. Muting it would hide the only reason to hurry to an ended card.
  */

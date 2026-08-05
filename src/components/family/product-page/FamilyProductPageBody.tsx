@@ -57,7 +57,7 @@ import type {
  *   *ended* also renders no Join, for the same reason: there is no next session
  *   for it to open for.
  * - **Nothing on this page is editable and nothing on it is owed.** No
- *   completeness ladder, no amber states, no editors. Those are the gedu's
+ *   completeness states, no amber warnings, no editors. Those are the gedu's
  *   workflow, and a family shown warnings about paperwork they cannot do would
  *   be reading the platform's problems instead of their child's club.
  *

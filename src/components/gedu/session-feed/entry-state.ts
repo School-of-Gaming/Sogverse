@@ -1,6 +1,6 @@
 /**
- * Pure derivations over the **gedu's** session feed — the completeness ladder,
- * the attendance counts and both editors' state. Everything here is a plain
+ * Pure derivations over the **gedu's** session feed — what a past session still
+ * owes, the attendance counts and both editors' state. Everything here is a plain
  * function of its arguments — no React, no clock, no network — so the feed
  * components stay presentational and the same helpers can back an optimistic
  * cache update once the feed is wired to real data.
@@ -60,45 +60,54 @@ export function isPlannableEntry(
 }
 
 /**
- * How far up the completeness ladder a past session has got.
+ * What a past session says about itself, or nothing at all.
  *
- * Three rungs, and only the bottom one is enforced:
+ * Two states, because two is how many a card can usefully wear:
  *
- * - `needs_attention` — the session has **finished** and some of the current
- *   roster is still unmarked. This is the one that is *owed*: attendance doubles
- *   as the gedu's confirmation that they ran the session and is what they are
- *   paid on. It cannot appear while a session is still running; the entry is
- *   editable throughout, but nothing is outstanding until the hour is over.
- * - `recorded` — every child has an answer, and no report has been written. A
- *   perfectly finished session as far as the platform is concerned, so it wears
- *   no badge at all rather than a second nag.
- * - `complete` — attendance finished *and* a report written for the families.
- *   The target state, and the only one that gets a mark of its own.
+ * - `needs_attention` — the session is **owed** and one of its two halves is
+ *   missing. Amber, and the count behind every alert badge.
+ * - `complete` — every child on the current roster has an answer *and* a report
+ *   has been written for the families. The target state, and the green check.
  *
- * The middle rung is why this is a ladder rather than a boolean: a report is
- * genuinely optional, so "not written yet" cannot be an alert, but it also
- * cannot be indistinguishable from the finished article or there is nothing to
- * aim at. Neutral in the middle, green at the top.
+ * **Both halves are owed work, and that is a deliberate reversal.** The report
+ * used to be optional: a session marked off with nothing written sat on a silent
+ * middle rung, on the argument that a badge there would nag somebody for work
+ * they did not owe. The family surfaces settled that argument the other way. The
+ * report is what a parent opens their child's page to read — it *is* the
+ * product of the session as far as they are concerned — so a session nobody
+ * wrote up is a session whose most visible half is missing, and the gedu's own
+ * feed has to say so. The register still doubles as the ran-confirmation the
+ * gedu is paid on; the report is now the other thing the platform asks for, and
+ * neither buys off the other.
+ *
+ * There is no third value, because the third thing a card can do is say nothing,
+ * and `null` already means that.
  */
-export type SessionCompleteness = "needs_attention" | "recorded" | "complete";
+export type SessionCompleteness = "needs_attention" | "complete";
 
 /**
- * Where a feed entry sits on the ladder, or `null` for the entries the ladder
- * does not apply to.
+ * What a feed entry's header shows, or `null` when it shows nothing.
  *
- * A **future** session has nothing to be complete about, and a `no_record` gap
- * has nothing recorded on it and nothing owed for it.
+ * Three sorts of entry are silent. A **future** session has nothing to be
+ * complete about and a `no_record` gap has nothing on it and nothing owed for
+ * it — neither is a past session at all. The third is a past session that is
+ * unfinished but **owes nothing**, and the caller has already collapsed two
+ * cases into that one flag: a session from before the enforcement epoch, which
+ * the platform never asked for, and a session that has started but not yet
+ * **ended**, which the gedu is still in the middle of teaching. Both stay
+ * neutral however little is on them, and both can still reach `complete` —
+ * somebody who goes back and finishes an old session earns the check for it.
  *
- * **An entry that owes nothing never reaches the warning rung.** Its unfinished
- * states land on the neutral middle rung instead. Two sorts of entry are in that
- * position, and the caller has already collapsed both into `owed`: a session
- * from before the enforcement epoch, which the platform never asked for, and a
- * session that has started but not yet **ended**, which the gedu is still in the
- * middle of teaching. The top rung stays reachable for both — somebody who
- * finishes an old session, or marks the room off before the hour is out, earns
- * the check for it.
+ * **A group with nobody in it is never flagged.** There is no register to finish
+ * and no family to write to, so an empty roster must not turn into a backlog of
+ * one alert per week — the same exemption the dashboard's server-side count
+ * applies, and the two have to agree or the badge and the feed behind it tell
+ * different stories. It is only the *warning* that is suppressed: a week that
+ * was finished while the group still had children in it keeps its check when
+ * the last of them leaves, rather than a whole year of history going grey the
+ * day a club empties out.
  *
- * Everything is measured against the *current* roster, never the stored map's
+ * Attendance is measured against the *current* roster, never the stored map's
  * keys: a child who joined the group after a session was fully marked reopens
  * it, which is the honest reading, since nobody has yet said whether that child
  * was there.
@@ -108,12 +117,23 @@ export function entryCompleteness(
   roster: readonly SessionFeedGamer[],
 ): SessionCompleteness | null {
   if (entry.kind !== "past") return null;
-  if (!attendanceTally(roster, entry.attendance).complete) {
-    return entry.owed ? "needs_attention" : "recorded";
-  }
-  return entry.report !== null && entry.report.length > 0
-    ? "complete"
-    : "recorded";
+  const finished =
+    attendanceTally(roster, entry.attendance).complete && hasReport(entry.report);
+  if (finished) return "complete";
+  return entry.owed && roster.length > 0 ? "needs_attention" : null;
+}
+
+/**
+ * Whether a stored report field actually carries a write-up.
+ *
+ * `null`, `""` and a field holding nothing but whitespace are the same answer:
+ * nobody has written anything. The editor trims on the way out and collapses an
+ * emptied field back to `null`, so the middle two are transient — but a value
+ * can still arrive here untrimmed (a draft mid-save, a row written before that
+ * collapse existed), and a space is not a session report.
+ */
+function hasReport(report: string | null): boolean {
+  return report !== null && report.trim().length > 0;
 }
 
 /**
@@ -121,29 +141,30 @@ export function entryCompleteness(
  * stored.
  *
  * It means exactly one thing: **a session that has finished, dated on or after
- * the enforcement epoch, some of whose current roster has not been marked.** The
- * report has no say in it. A past entry can therefore carry a full report and
- * still be flagged, and it renders both — the report as its body, the alert in
- * its header. A session older than the epoch is never flagged however little is
- * recorded on it, which is the whole of what the epoch does — and a session
- * still under way is not flagged either, because the hour it would be nagging
- * about has not run out yet.
+ * the enforcement epoch, whose register is unfinished or whose report has not
+ * been written.** Either gap on its own is enough, so an entry carrying a full
+ * report with half a roster unmarked is flagged, and so is one marked off to the
+ * last child with nothing written for the families. A session older than the
+ * epoch is never flagged however little is on it, which is the whole of what the
+ * epoch does — and a session still under way is not flagged either, because the
+ * hour it would be nagging about has not run out yet.
  *
  * **A partial save does not discharge it.** Saving is always allowed, so the
  * flag cannot be "has anything been recorded" or half a roster would silence
- * it; it stays up until the last child has an answer, which is precisely what
- * brings the gedu back to finish.
+ * it; it stays up until the last child has an answer and the write-up is in,
+ * which is precisely what brings the gedu back to finish.
  */
 export function entryNeedsAttention(
   entry: SessionFeedEntry,
   roster: readonly SessionFeedGamer[],
 ): boolean {
-  // Reads the ladder rather than re-deriving it, so the epoch exemption above
-  // is applied exactly once and the badge can never disagree with the card.
+  // Reads the state rather than re-deriving it, so the epoch and empty-roster
+  // exemptions above are applied exactly once and the badge can never disagree
+  // with the card.
   return entryCompleteness(entry, roster) === "needs_attention";
 }
 
-/** Whether an entry has reached the top rung — marked off *and* reported. */
+/** Whether an entry has reached the target state — marked off *and* reported. */
 export function entryIsComplete(
   entry: SessionFeedEntry,
   roster: readonly SessionFeedGamer[],
