@@ -191,10 +191,6 @@ family touchpoint). This replaces both family dashboards outright.
 - **Proxy needs no change** for the new routes — it gates by role-prefix scan, so
   `/parent/**` and `/gamer/**` are already covered (the gedu club routes needed nothing
   either).
-- **A known, out-of-scope bug**: the next-occurrence resolver returns the *previous* week's
-  session once a year on the DST-end day (25-hour local day). It predates this work and
-  affects the old lists too. Do not silently fold a fix into the port — it needs its own
-  change with its own tests.
 - **Beware a name collision during cleanup**: there is an unrelated admin
   `waitlist-card.tsx` under `src/components/admin/products/groups/` — it stays.
 
@@ -280,8 +276,7 @@ independently verifiable.
       surfaces share some tiles — check before deleting).
     - The per-occurrence expansion library (`src/lib/upcoming-sessions.ts`-shaped) and the
       waitlist-entry adapter (`src/lib/waitlist-entries.ts`-shaped) if the step-2 mapping
-      replaced their last consumers. The DST-bug caveat applies to whatever resolver
-      survives.
+      replaced their last consumers.
     - Padlet, end to end: the family "Reports" affordance and its keys, the
       `padlet_url` column (its own small migration — after the club pages are live and
       verified), the admin product-form field that edits it, and the regenerated types.
