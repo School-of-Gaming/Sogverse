@@ -7,10 +7,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
-import {
-  LocationsService,
-  type LocationWithChain,
-} from "./locations.service";
+import { LocationsService } from "./locations.service";
 import {
   LOCATION_SEARCH_LIMIT,
   LOCATION_SEARCH_MIN_QUERY,
@@ -31,11 +28,9 @@ export const locationKeys = {
   all: ["locations"] as const,
   details: () => [...locationKeys.all, "detail"] as const,
   detail: (id: string) => [...locationKeys.details(), id] as const,
-  municipalities: () => [...locationKeys.all, "municipalities"] as const,
-  municipalitiesByCountry: (countryCode: string) =>
-    [...locationKeys.municipalities(), countryCode] as const,
-  // `sites()` is the parent of `sitesByParent`, so invalidating it after a site
-  // is created refreshes both the flat list and every per-municipality view.
+  // A grouping key with no query of its own: `sites()` is the parent of
+  // `sitesByParent`, so invalidating it after a site is created refreshes every
+  // per-municipality venue list at once, whichever one the new row landed in.
   sites: () => [...locationKeys.all, "sites"] as const,
   sitesByParent: (parentId: string) =>
     [...locationKeys.sites(), "by-parent", parentId] as const,
@@ -59,33 +54,6 @@ export function useLocation(id: string) {
     queryKey: locationKeys.detail(id),
     queryFn: () => service.getLocation(id),
     enabled: !!id,
-  });
-}
-
-/** Every municipality of one country. No UI caller today (see TODO.md). */
-export function useMunicipalitiesByCountry(
-  countryCode: string,
-  options?: { initialData?: LocationWithChain[] },
-) {
-  const supabase = getClient();
-  const service = new LocationsService(supabase);
-
-  return useQuery({
-    queryKey: locationKeys.municipalitiesByCountry(countryCode),
-    queryFn: () => service.getMunicipalitiesByCountry(countryCode),
-    enabled: !!countryCode,
-    initialData: options?.initialData,
-  });
-}
-
-/** Every site with its ancestor chain, for a grouped venue list. */
-export function useSites() {
-  const supabase = getClient();
-  const service = new LocationsService(supabase);
-
-  return useQuery({
-    queryKey: locationKeys.sites(),
-    queryFn: () => service.getSites(),
   });
 }
 
@@ -215,7 +183,6 @@ export function useUpdateLocation() {
       service.updateLocation(id, updates),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: locationKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: locationKeys.municipalities() });
       queryClient.invalidateQueries({ queryKey: locationKeys.sites() });
       queryClient.invalidateQueries({ queryKey: locationKeys.children() });
       // A rename changes what search matches, so every cached needle is stale.

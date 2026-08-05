@@ -1,42 +1,32 @@
 /**
- * The inputs the two location search folds have to agree on.
+ * What the location search fold has to produce, written down as literals.
  *
- * There are two folds, deliberately. The database folds every searchable string
- * into a stored, indexed column and folds the needle the same way, because it is
- * the only thing that can rank and cap a search over 35,000 communes. The
- * browser folds again, in TypeScript, for the bounded sets a surface has already
- * fetched in full — filtering a few hundred rows in memory costs no request and
- * has no loading state, and paying a round trip for it would be silly.
+ * There is exactly one fold, in Postgres: it folds every searchable string into
+ * a stored, indexed column and folds the needle the same way, which is what
+ * lets one query rank and cap a search over 35,000 communes. Nothing outside
+ * the database folds anything — no surface narrows a set of places in the
+ * browser, so no second implementation exists to drift from this one.
  *
- * They agree today. Nothing about having two implementations makes them agree
- * tomorrow, and the failure is silent in the worst way: "Nîmes" keeps matching
- * in one picker and quietly stops in the other, with no error anywhere. So the
- * expectations live here, once, and both suites assert against them — the unit
- * suite against `foldForSearch`, the DB suite against the SQL fold, in CI where
- * a real Postgres exists. A change to either side that is not a change to the
- * other now fails a build.
+ * That is why the expectations are spelled out here as literal input/output
+ * pairs rather than computed. An assertion that re-derives the answer from a
+ * second implementation of the same rule proves only that two pieces of code
+ * agree; a table of literals says what the fold *is*, so quietly swapping the
+ * unaccent dictionary or dropping the lowercasing fails rather than being
+ * recomputed into agreement.
  *
  * ## What is deliberately not in here
  *
- * **Whitespace.** The SQL side `btrim`s before folding and the TypeScript side
- * does not — its callers trim the query first. Nothing stored is padded, so the
- * difference is unreachable; asserting it would only pin an accident.
+ * **Whitespace.** The fold `btrim`s before folding and nothing stored is padded,
+ * so the trimming is unreachable in practice; asserting it would only pin an
+ * accident.
  *
  * **Latin letters with no canonical decomposition** — `œ`, `ø`, `æ`, `ł`, `ß`.
  * Postgres's `unaccent` dictionary expands these by rule (`œ`→`oe`, `ø`→`o`,
- * `æ`→`ae`, `ł`→`l`, `ß`→`ss`); NFD normalization has nothing to decompose, so
- * the TypeScript fold leaves them alone. That *is* a real divergence, and it is
- * out of reach rather than fixed — but for a narrower reason than "no place is
- * spelled that way", which is false: **109 French communes carry one** (Annœullin,
- * Babœuf, Beaumont-Pied-de-Bœuf). What puts it out of reach is *which rows reach
- * the TypeScript fold at all* — only admin-created venue names and Finland's
- * municipalities, none of which is spelled with one. France's communes are
- * searched exclusively in Postgres, which folds them correctly.
- *
- * So this is a tripwire, not a settled question: **the day a set-scope picker
- * holds French communes, the divergence goes live** and `foldForSearch` needs
- * explicit replacements before it does. Anything folded identically on both
- * sides — every accent in Finnish, Swedish and French — is below.
+ * `æ`→`ae`, `ł`→`l`, `ß`→`ss`), and **109 French communes carry one**
+ * (Annœullin, Babœuf, Beaumont-Pied-de-Bœuf). They are left out because they
+ * pin the *dictionary's* expansion table rather than this fold's own rule, and
+ * that table is the one thing here nobody in this repo authors. Every accent
+ * that decomposes canonically — Finnish, Swedish and French alike — is below.
  */
 
 export interface SearchFoldCase {
