@@ -52,16 +52,31 @@ import { SiteNotesPanel, type SiteNotesDraft } from "./SiteNotesPanel";
  *   theirs: the gedu arrived by clicking it, and the page *is* it.
  * - **Desktop is two columns**, because a gedu surface is a desktop surface.
  *   The main column is the timeline capped at a reading width; the third of the
- *   width beside it is a reference rail. Below `lg` it all stacks in DOM order —
- *   masthead, timeline, rail — so the phone keeps the weekly loop (read last
- *   week, join, write up) first and the reference material after it.
- * - **The standing notes are a full-width row under the masthead**, not a rail
- *   card. They answer "what is always true here" — how the shared world works,
- *   who the siblings are, which door the group comes in through — which is what
- *   somebody needs *before* they start reading sessions. They span the whole
- *   container rather than being capped at the timeline's reading width: capped,
- *   they sat in the left third of a wide workspace with the rest of the row
- *   blank, which read as a rendering fault rather than as a choice.
+ *   width beside it is a reference rail.
+ * - **On a phone the rail comes first**, before the standing notes and the feed:
+ *   masthead → rail → notes → timeline. What a gedu wants from this page on a
+ *   phone is the Join, and the Join lives on the group's rail card; a phone
+ *   layout that put a term of sessions between them made the one urgent thing
+ *   the last thing reachable. The timeline is a scroll either way, so it loses
+ *   nothing by sitting under the two short blocks above it.
+ * - **That order is the DOM's, not a CSS reordering**, so reading order, tab
+ *   order and visual order agree on the surface where the mistake would be
+ *   invisible. The desktop arrangement is bought by *placing* the three blocks
+ *   explicitly in the grid instead — notes across the top, timeline in the wide
+ *   column, rail beside it. **The trade is real and it is on the desktop side**:
+ *   a keyboard user there reaches the rail's Join and roster before the notes
+ *   and the feed, which is up and to the right of where they started. It is the
+ *   better half to spend, because the rail holds this page's one action and its
+ *   reference material — a defensible first stop — whereas a phone whose reading
+ *   order disagreed with its single visible column would have no second column
+ *   to make the disagreement legible.
+ * - **The standing notes are a full-width row**, not a rail card. They answer
+ *   "what is always true here" — how the shared world works, who the siblings
+ *   are, which door the group comes in through — which is what somebody needs
+ *   *before* they start reading sessions. They span the whole container rather
+ *   than being capped at the timeline's reading width: capped, they sat in the
+ *   left third of a wide workspace with the rest of the row blank, which read as
+ *   a rendering fault rather than as a choice.
  * - **An in-person product also carries its site's notes**, beside the group's
  *   own on the same row and inside the same card — a bordered column, not a
  *   second card, because a card inside a card says "different kind of thing"
@@ -285,74 +300,18 @@ export function GeduProductPageBody({
         {materialUrl && <MaterialLink href={materialUrl} variant="button" />}
       </header>
 
-      {assignedGroup && (
-        // One card spanning the container, holding one panel per scope. The
-        // site panel is a bordered column beside the group's rather than a card
-        // of its own: nesting a card inside a card announces a change of kind,
-        // and these are two instances of the same kind of thing — standing
-        // notes, differing only in what they are standing on.
-        <Card className="mt-6">
-          <CardContent className="p-4 sm:p-5">
-            <div
-              className={cn(
-                "grid gap-5",
-                site !== null && "lg:grid-cols-2 lg:gap-8",
-              )}
-            >
-              <GroupNotesPanel
-                publicNote={groupPublicNote}
-                staffNote={groupStaffNote}
-                editing={groupNotesEditing}
-                onEditingChange={onGroupNotesEditingChange}
-                onSave={onSaveGroupNotes}
-              />
-              {site !== null && (
-                <div className="border-t border-border pt-5 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
-                  <SiteNotesPanel
-                    siteName={site.name}
-                    address={site.address}
-                    publicNote={site.publicNote}
-                    staffNote={site.staffNote}
-                    editing={siteNotesEditing}
-                    onEditingChange={onSiteNotesEditingChange}
-                    onSave={onSaveSiteNotes}
-                  />
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="mt-6 grid items-start gap-6 lg:grid-cols-3 lg:gap-8">
-        <div className="min-w-0 space-y-4 lg:col-span-2">
-          {assignedGroup ? (
-            // No reading-width cap of its own. The column it sits in is already
-            // two thirds of a capped page, and capping again left a band of
-            // dead space down the middle of the workspace between the feed and
-            // the rail — which read as a rendering fault, not as typography.
-            <SessionFeed
-              entries={entries}
-              roster={feedRoster}
-              sourceTimeZone={sourceTimeZone}
-              editingEntryId={editingEntryId}
-              onEditEntry={onEditEntry}
-              onSaveEntry={onSaveEntry}
-            />
-          ) : (
-            <Card>
-              <CardContent className="p-6 text-sm text-muted-foreground">
-                {t("noAssignedGroup")}
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
+      {/* One grid for everything below the masthead, so the phone gets the
+          order the desk does not: rail, then standing notes, then the feed.
+          DOM order **is** that order — nothing here is reordered by CSS — and
+          the desktop arrangement is bought by placing three items explicitly
+          instead: notes across the top, feed in the wide column, rail beside
+          it. See the component note for the trade that buys. */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-3 lg:items-start lg:gap-8">
         {/* Static, not sticky. An eight-child roster plus the peer rows is
             taller than a viewport, so pinning the column would need an inner
             scroll pane beside the document scroll — a second scrollbar, and a
             column that stops agreeing with the page it sits next to. */}
-        <aside className="min-w-0 space-y-4">
+        <aside className="min-w-0 space-y-4 lg:col-start-3 lg:row-start-2">
           {/* This group before the peers: the roster and its parent emails are
               what a gedu reaches for during their own session, and the peer
               rows only matter when somebody asks for cover. */}
@@ -378,6 +337,68 @@ export function GeduProductPageBody({
             backHref={workspaceHref}
           />
         </aside>
+
+        {assignedGroup && (
+          // One card spanning the container, holding one panel per scope. The
+          // site panel is a bordered column beside the group's rather than a
+          // card of its own: nesting a card inside a card announces a change of
+          // kind, and these are two instances of the same kind of thing —
+          // standing notes, differing only in what they are standing on.
+          <Card className="lg:col-span-3 lg:row-start-1">
+            <CardContent className="p-4 sm:p-5">
+              <div
+                className={cn(
+                  "grid gap-5",
+                  site !== null && "lg:grid-cols-2 lg:gap-8",
+                )}
+              >
+                <GroupNotesPanel
+                  publicNote={groupPublicNote}
+                  staffNote={groupStaffNote}
+                  editing={groupNotesEditing}
+                  onEditingChange={onGroupNotesEditingChange}
+                  onSave={onSaveGroupNotes}
+                />
+                {site !== null && (
+                  <div className="border-t border-border pt-5 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+                    <SiteNotesPanel
+                      siteName={site.name}
+                      address={site.address}
+                      publicNote={site.publicNote}
+                      staffNote={site.staffNote}
+                      editing={siteNotesEditing}
+                      onEditingChange={onSiteNotesEditingChange}
+                      onSave={onSaveSiteNotes}
+                    />
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="min-w-0 space-y-4 lg:col-span-2 lg:col-start-1 lg:row-start-2">
+          {assignedGroup ? (
+            // No reading-width cap of its own. The column it sits in is already
+            // two thirds of a capped page, and capping again left a band of
+            // dead space down the middle of the workspace between the feed and
+            // the rail — which read as a rendering fault, not as typography.
+            <SessionFeed
+              entries={entries}
+              roster={feedRoster}
+              sourceTimeZone={sourceTimeZone}
+              editingEntryId={editingEntryId}
+              onEditEntry={onEditEntry}
+              onSaveEntry={onSaveEntry}
+            />
+          ) : (
+            <Card>
+              <CardContent className="p-6 text-sm text-muted-foreground">
+                {t("noAssignedGroup")}
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -555,13 +576,13 @@ function OtherGroupsRailCard({
  * than as a decision; centring makes the actions a band across the top of the
  * card and matches the centred Join on every peer row below.
  *
- * **The roster renders open, with no disclosure.** It was collapsed in the
- * single-column draft for one reason — eight rows of children between the
- * masthead and the feed pushed the newest session most of a screen down. Out
- * here that reason is gone: nothing the gedu reads sits below the rail on
- * desktop, and on mobile the rail is already past the whole timeline, so the
- * roster's height costs a scroll rather than a displacement. A reference column
- * that hides its reference data behind a click isn't one.
+ * **The roster renders open, with no disclosure.** A reference column that hides
+ * its reference data behind a click isn't one, and on desktop it costs nothing:
+ * nothing the gedu reads sits below the rail. On a phone, where this card now
+ * comes *before* the timeline, its height is a scroll on the way to the feed —
+ * which is the price of having the Join within reach, and it is paid in the
+ * right order: the Join and the copy-all row sit above the roster inside this
+ * card, so the two urgent things are still the first two things.
  */
 function GroupRailCard({
   group,
