@@ -111,6 +111,17 @@ export type SessionCompleteness = "needs_attention" | "complete";
  * keys: a child who joined the group after a session was fully marked reopens
  * it, which is the honest reading, since nobody has yet said whether that child
  * was there.
+ *
+ * **A pre-session plan discharges the report half, and that is accepted, not
+ * enforced away.** The plan editor and the write-up editor deliberately share
+ * one field — the plan is the skeleton the write-up grows from — so a session
+ * whose text was written *before* it ran reads as reported here and in the
+ * dashboard's SQL twin, and that same text is what the family page shows for
+ * the session until the gedu revises it. The platform cannot tell a plan from
+ * a write-up and does not try: updating the text after the session into what
+ * actually happened is the gedu's professional responsibility (owner decision,
+ * 2026-08-05). What the machine asks after is the field being non-empty;
+ * what fills it honestly is the job.
  */
 export function entryCompleteness(
   entry: SessionFeedEntry,
