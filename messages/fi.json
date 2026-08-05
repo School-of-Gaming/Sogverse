@@ -655,7 +655,7 @@
       "all": "Kaikki",
       "noFilterResults": "Suodattimiasi vastaavia käyttäjiä ei löytynyt.",
       "noUsers": "Käyttäjiä ei löytynyt.",
-      "searchCapped": "Näytetään {shown} osumaa {total} osumasta. Tarkenna hakua nähdäksesi loput.",
+      "searchCapped": "Mukana on vain {shown} uusinta osumaa {total} osumasta. Tarkenna hakua nähdäksesi loput.",
       "backToUsers": "Takaisin käyttäjiin",
       "userNotFound": "Käyttäjää ei löytynyt.",
       "joined": "Liittynyt",

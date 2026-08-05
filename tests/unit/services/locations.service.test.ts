@@ -57,7 +57,9 @@ describe("LocationsService.getMunicipalitiesByCountry", () => {
   });
 
   it("asks only for that country's municipalities, in a total order", async () => {
-    fetchMock.mockResolvedValue(postgrestJson(locationRows(308)));
+    fetchMock.mockResolvedValue(
+      postgrestPage(locationRows(308), { from: 0, total: 308 }),
+    );
 
     await service.getMunicipalitiesByCountry("FI");
 
@@ -71,7 +73,7 @@ describe("LocationsService.getMunicipalitiesByCountry", () => {
   // runs over 34,875 rows for France, so it asks for the depth a municipality
   // actually has (département -> région -> pays) and no more.
   it("embeds three ancestor levels, not the keyed read's four", async () => {
-    fetchMock.mockResolvedValue(postgrestJson([]));
+    fetchMock.mockResolvedValue(postgrestPage([], { from: 0, total: 0 }));
 
     await service.getMunicipalitiesByCountry("FR");
 
@@ -82,16 +84,19 @@ describe("LocationsService.getMunicipalitiesByCountry", () => {
 
   it("flattens the embedded parent nest into a nearest-first chain", async () => {
     fetchMock.mockResolvedValue(
-      postgrestJson([
-        {
-          ...locationRows(1)[0],
-          parent: {
-            id: "region",
-            name: "Uusimaa",
-            parent: { id: "country", name: "Finland", parent: null },
+      postgrestPage(
+        [
+          {
+            ...locationRows(1)[0],
+            parent: {
+              id: "region",
+              name: "Uusimaa",
+              parent: { id: "country", name: "Finland", parent: null },
+            },
           },
-        },
-      ]),
+        ],
+        { from: 0, total: 1 },
+      ),
     );
 
     const [municipality] = await service.getMunicipalitiesByCountry("FI");
@@ -114,7 +119,9 @@ describe("LocationsService.getSitesByParent", () => {
   });
 
   it("filters to sites under exactly that municipality", async () => {
-    fetchMock.mockResolvedValue(postgrestJson(locationRows(2)));
+    fetchMock.mockResolvedValue(
+      postgrestPage(locationRows(2), { from: 0, total: 2 }),
+    );
 
     await service.getSitesByParent("muni-1");
 
@@ -415,7 +422,9 @@ describe("LocationsService column discipline", () => {
   it.each(reads)(
     "%s names its columns and omits the search fold",
     async (_name, read) => {
-      fetchMock.mockResolvedValue(postgrestJson(locationRows(1)));
+      fetchMock.mockResolvedValue(
+        postgrestPage(locationRows(1), { from: 0, total: 1 }),
+      );
 
       await read(service);
 

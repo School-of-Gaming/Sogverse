@@ -655,7 +655,7 @@
       "all": "All",
       "noFilterResults": "No users match your filters.",
       "noUsers": "No users found.",
-      "searchCapped": "Showing {shown} of {total} matches. Narrow the search to see the rest.",
+      "searchCapped": "Only the {shown} newest of {total} matches are included. Narrow the search to see the rest.",
       "backToUsers": "Back to Users",
       "userNotFound": "User not found.",
       "joined": "Joined",

@@ -39,7 +39,10 @@ export type PageFetcher<Row> = (
  * done" safe: `max_rows` is a dashboard setting nothing in this repo controls,
  * and if it ever drops below `PAGE_SIZE` then *every* page is short and a naive
  * walk returns a silently truncated list. Comparing what we collected against
- * the server-reported total turns that into a thrown error.
+ * the server-reported total turns that into a thrown error — so a caller who
+ * omits the count would disarm the one guard this module exists to provide.
+ * That is refused rather than tolerated: the first page must report a total or
+ * the walk throws.
  *
  * The caller's query must also impose a **total** order or rows shift between
  * requests and the walk both duplicates and drops them. The column a surface
@@ -48,6 +51,18 @@ export type PageFetcher<Row> = (
  * and two accounts created in the same transaction share a `created_at`. So a
  * total order is the sort key the surface wants followed by a unique
  * tiebreaker — the primary key.
+ *
+ * **Accepted limitation: pages are offset-based, so a concurrent write can
+ * shift them mid-walk.** A row inserted ahead of the walk's cursor (a fresh
+ * signup, under a newest-first order) pushes every later row down one position,
+ * so the next page re-reads one row the previous page already collected and
+ * skips the one that moved across the boundary. The count reconciliation cannot
+ * see this — the walk still ends with the number of rows the server promised —
+ * and the duplicated row can go on to collide as a React key wherever the list
+ * is rendered. Keyset paging would close it and is deliberately not implemented:
+ * these reads are rare, idempotent, and refetched by the query cache, so the
+ * exposure is at most one wrong row for one load, self-correcting on the next
+ * fetch. That is the accepted tolerance, React-key collision included.
  */
 export async function walkPages<Row>(
   label: string,
@@ -61,6 +76,17 @@ export async function walkPages<Row>(
     const { data, error, count } = await fetchPage(from, from + PAGE_SIZE - 1);
 
     if (error) throw error;
+
+    // PostgREST always populates the count when `count: "exact"` was asked for,
+    // so a null here means the caller did not ask — and without a total the
+    // reconciliation below never arms, which puts the silent truncation
+    // straight back. Refuse on the first page rather than walk half-guarded.
+    if (page === 0 && count === null) {
+      throw new Error(
+        `${label}: the page query reported no total — a walked read must select with { count: "exact" }, otherwise a truncated result is indistinguishable from a complete one`,
+      );
+    }
+
     all.push(...data);
     expected = count ?? expected;
 

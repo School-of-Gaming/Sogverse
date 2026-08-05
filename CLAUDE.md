@@ -206,6 +206,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Parent PIN | `src/services/pin/` |
 | i18n | `src/i18n/` |
 | Email templates | `src/lib/email-templates/` |
+| Supabase clients & paged list reads | `src/lib/supabase/` |
 | Locations | `src/services/locations/` |
 | WhatsApp | `src/services/whatsapp/` |
 | Session feeds — shared gedu/family machinery | `src/components/session-feed/` |

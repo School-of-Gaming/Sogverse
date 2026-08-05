@@ -59,16 +59,29 @@ describe("walkPages", () => {
   });
 
   it("stops after one request when the first page comes back short", async () => {
-    fetchMock.mockResolvedValue(postgrestJson(rows(120)));
+    fetchMock.mockResolvedValue(postgrestPage(rows(120), { from: 0, total: 120 }));
 
     await expect(walk(supabase)).resolves.toHaveLength(120);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("stops immediately when a page comes back exactly empty", async () => {
-    fetchMock.mockResolvedValue(postgrestJson([]));
+    fetchMock.mockResolvedValue(postgrestPage([], { from: 0, total: 0 }));
 
     await expect(walk(supabase)).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  // Without a total the reconciliation below can never arm, so a walk that
+  // proceeded would be exactly as truncation-blind as the plain select this
+  // module replaced. A caller who drops `count: "exact"` gets told, not served.
+  it("refuses to walk at all when the first page reports no total", async () => {
+    fetchMock.mockResolvedValue(postgrestJson(rows(120)));
+
+    await expect(walk(supabase)).rejects.toThrow(
+      /test read: the page query reported no total/,
+    );
+    // Refused on the first page — it does not collect a half-guarded list first.
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -102,9 +115,12 @@ describe("walkPages", () => {
   });
 
   it("requests consecutive, non-overlapping windows", async () => {
+    const TOTAL = PAGE_SIZE + 1;
     fetchMock
-      .mockResolvedValueOnce(postgrestJson(rows(PAGE_SIZE, 0)))
-      .mockResolvedValueOnce(postgrestJson(rows(1, PAGE_SIZE)));
+      .mockResolvedValueOnce(postgrestPage(rows(PAGE_SIZE, 0), { from: 0, total: TOTAL }))
+      .mockResolvedValueOnce(
+        postgrestPage(rows(1, PAGE_SIZE), { from: PAGE_SIZE, total: TOTAL }),
+      );
 
     await walk(supabase);
 
@@ -137,9 +153,13 @@ describe("walkPages", () => {
   // a naive loop never terminates. The walk must give up loudly instead.
   it("gives up loudly rather than paging forever when pages never go short", async () => {
     // A fresh Response per call — a Response body is single-use, and this is the
-    // one case that drives the walk through many requests.
+    // one case that drives the walk through many requests. The total is far
+    // beyond reach, so the count guard never fires and the page cap is what has
+    // to stop it.
     const page = rows(PAGE_SIZE);
-    fetchMock.mockImplementation(() => Promise.resolve(postgrestJson(page)));
+    fetchMock.mockImplementation(() =>
+      Promise.resolve(postgrestPage(page, { from: 0, total: 10_000_000 })),
+    );
 
     await expect(walk(supabase)).rejects.toThrow(
       /still receiving full pages after 100 requests — the range filter is not being applied/,
@@ -148,7 +168,9 @@ describe("walkPages", () => {
 
   it("throws on the first failing page instead of returning a partial list", async () => {
     fetchMock
-      .mockResolvedValueOnce(postgrestJson(rows(PAGE_SIZE, 0)))
+      .mockResolvedValueOnce(
+        postgrestPage(rows(PAGE_SIZE, 0), { from: 0, total: 5000 }),
+      )
       .mockResolvedValueOnce(postgrestError("boom"));
 
     await expect(walk(supabase)).rejects.toMatchObject({ message: "boom" });
