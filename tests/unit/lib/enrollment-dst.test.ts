@@ -33,7 +33,10 @@ describe("getNextSessionStart — DST transition days (runtime TZ = Europe/Helsi
   });
 
   afterAll(() => {
-    process.env.TZ = originalTZ;
+    // Assigning `undefined` to a process.env key writes the literal string
+    // "undefined" (resolved zone: Etc/Unknown) — delete instead.
+    if (originalTZ === undefined) delete process.env.TZ;
+    else process.env.TZ = originalTZ;
   });
 
   it("does not return a finished session on the fall-back day (25-hour day)", () => {
@@ -75,18 +78,28 @@ describe("getNextSessionStart — DST transition days (runtime TZ = Europe/Helsi
 
   it("returns a strictly-future start for every weekday across the whole fall-back day", () => {
     // Sweep `now` across all 25 hours of the fall-back day for every
-    // weekday slot, at the slot time (00:15) most exposed to the repeated-
-    // date bug. The strictly-future contract is what the occurrence
-    // enumeration in src/lib/session-occurrence.ts leans on.
+    // weekday, at three slot times: 00:15 (most exposed to the repeated-
+    // date bug), 03:30 (inside the repeated hour itself), and 18:00 (a
+    // realistic session time). The strictly-future contract is what the
+    // occurrence enumeration in src/lib/session-occurrence.ts leans on.
+    //
+    // Known, accepted limit: a slot whose wall clock sits inside the
+    // repeated hour (03:00–03:59 on the fall-back day) is ambiguous, and
+    // fromZonedTime resolves it to the *first* (EEST) instance; once that
+    // has passed, the walk offers next week's occurrence, never the
+    // second instance of the repeated hour. No real session sits in that
+    // band, so only the strictly-future invariant is asserted here.
     const dayStart = new Date("2026-10-24T21:00:00Z"); // Sun 00:00 EEST
     for (let hour = 0; hour < 25; hour++) {
       const now = new Date(dayStart.getTime() + hour * 3_600_000 + 30 * 60_000);
       for (let dayOfWeek = 0; dayOfWeek <= 6; dayOfWeek++) {
-        const result = getNextSessionStart(
-          { dayOfWeek, startTime: "00:15", timezone: "Europe/Helsinki" },
-          { now },
-        );
-        expect(result.getTime()).toBeGreaterThan(now.getTime());
+        for (const startTime of ["00:15", "03:30", "18:00"]) {
+          const result = getNextSessionStart(
+            { dayOfWeek, startTime, timezone: "Europe/Helsinki" },
+            { now },
+          );
+          expect(result.getTime()).toBeGreaterThan(now.getTime());
+        }
       }
     }
   });

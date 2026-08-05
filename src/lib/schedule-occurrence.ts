@@ -66,23 +66,19 @@ export function nextOccurrenceInstant(
   let daysAhead = (targetIso - todayIso + 7) % 7;
   if (daysAhead === 0) daysAhead = 7; // strictly the NEXT occurrence
 
-  // Step by calendar date — year-month-day plus an offset, which the Date
-  // constructor normalizes as pure calendar arithmetic — anchored at noon so
-  // no runtime zone's DST shift can move the date. Stepping the instant by
-  // 24-hour increments instead repeats or skips a date when the runtime zone
-  // crosses a DST transition mid-walk (see the anti-pattern in CLAUDE.md and
-  // the same fix in enrollment.ts).
+  // Step by calendar date on a UTC-pinned Date (`Date.UTC` + `getUTC*` —
+  // UTC has no DST, so day arithmetic there is exact on any runtime).
+  // Stepping the zoned instant by 24-hour increments instead repeats or
+  // skips a date when the runtime zone crosses a DST transition mid-walk
+  // (see the anti-pattern in CLAUDE.md and the same fix in enrollment.ts).
   const refDate = new Date(
-    zonedNow.getFullYear(),
-    zonedNow.getMonth(),
-    zonedNow.getDate() + daysAhead,
-    12,
+    Date.UTC(zonedNow.getFullYear(), zonedNow.getMonth(), zonedNow.getDate() + daysAhead),
   );
   const { hours, minutes } = splitTime(startTime);
   return buildInstant(
-    refDate.getFullYear(),
-    refDate.getMonth() + 1,
-    refDate.getDate(),
+    refDate.getUTCFullYear(),
+    refDate.getUTCMonth() + 1,
+    refDate.getUTCDate(),
     hours,
     minutes,
     sourceTz,

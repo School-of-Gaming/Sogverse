@@ -35,35 +35,33 @@ export function getNextSessionStart(
   // prod) and breaks on every non-UTC environment: a dev laptop in another
   // zone, and crucially, every user's browser during client-side hydration
   // of useMyUpcomingSessions. The day-of-week match shifts by the local
-  // offset, the function returns a past occurrence, and the
-  // enumerateOccurrences while-loop in src/lib/upcoming-sessions.ts (which
-  // only escapes via `start > endBoundary`) spins forever, pegging the
-  // renderer at 100% CPU. Regression: tests/unit/lib/enrollment-tz.test.ts.
+  // offset, the function returns a past occurrence, and the occurrence-
+  // enumeration loop in src/lib/session-occurrence.ts (which only escapes
+  // via `start > endBoundary`) spins forever, pegging the renderer at
+  // 100% CPU. Regression: tests/unit/lib/enrollment-tz.test.ts.
   const zonedNow = toZonedTime(now, schedule.timezone);
   for (let offset = 0; offset <= 7; offset++) {
-    // Candidates step by *calendar date* — year-month-day plus an offset,
-    // which the Date constructor normalizes as pure calendar arithmetic —
-    // anchored at noon so no zone's DST transition can move the date.
-    // Stepping the instant by 24-hour increments instead assumes every
-    // local day is 24 hours: on the 25-hour fall-back day the same date
-    // shows up at two offsets, and the second match bypasses the offset-0
-    // past-guard below and returns an already-finished start as "next";
-    // on the 23-hour spring-forward day a date can be skipped outright,
-    // losing that week's session. Both fire only when the *runtime* zone
-    // crosses the transition mid-walk — invisible on UTC CI, live in every
-    // Finnish browser. Regression: tests/unit/lib/enrollment-dst.test.ts.
+    // Candidates step by *calendar date*: the wall-clock year-month-day is
+    // read from `zonedNow`'s local fields, then stepped on a UTC-pinned
+    // Date (`Date.UTC` + `getUTC*` — UTC has no DST, so day arithmetic
+    // there is exact calendar arithmetic on any runtime). Stepping the
+    // zoned instant by 24-hour increments instead assumes every local day
+    // is 24 hours: on the 25-hour fall-back day the same date shows up at
+    // two offsets, and the second match bypasses the offset-0 past-guard
+    // below and returns an already-finished start as "next"; on the
+    // 23-hour spring-forward day a date can be skipped outright, losing
+    // that week's session. Both fire only when the *runtime* zone crosses
+    // the transition mid-walk — invisible on UTC CI, live in every Finnish
+    // browser. Regression: tests/unit/lib/enrollment-dst.test.ts.
     const candidate = new Date(
-      zonedNow.getFullYear(),
-      zonedNow.getMonth(),
-      zonedNow.getDate() + offset,
-      12,
+      Date.UTC(zonedNow.getFullYear(), zonedNow.getMonth(), zonedNow.getDate() + offset),
     );
-    if (candidate.getDay() !== targetJsDay) continue;
+    if (candidate.getUTCDay() !== targetJsDay) continue;
 
     // Found the right weekday — build the wall-clock datetime and convert to UTC
-    const year = candidate.getFullYear();
-    const month = pad(candidate.getMonth() + 1);
-    const day = pad(candidate.getDate());
+    const year = candidate.getUTCFullYear();
+    const month = pad(candidate.getUTCMonth() + 1);
+    const day = pad(candidate.getUTCDate());
     const wallStr = `${year}-${month}-${day}T${pad(hours)}:${pad(minutes)}:00`;
     const utcDate = fromZonedTime(wallStr, schedule.timezone);
 
@@ -73,10 +71,11 @@ export function getNextSessionStart(
     return utcDate;
   }
 
-  // Fallback: shouldn't reach here, but try next week
-  return getNextSessionStart(schedule, {
-    now: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
-  });
+  // Unreachable: offsets 0..6 cover every weekday, and offset 7 covers the
+  // one case where the target weekday sat at offset 0 with its start
+  // already past. A thrown invariant, not a silent "+7×24h and retry" —
+  // that fallback was itself the instant arithmetic this function bans.
+  throw new Error("getNextSessionStart: no candidate weekday matched");
 }
 
 /**
@@ -88,15 +87,25 @@ export function getNextSessionStart(
  * the local week boundary, which is enough for the walk to resolve the
  * wrong week's occurrence — after spring-forward it lands *before* last
  * week's wall-clock start, so a live in-progress session resolves to last
- * week's finished one. `toZonedTime` returns a Date whose LOCAL fields
- * read the wall clock in `timezone`, so `setDate(... - 7)` subtracts
- * seven calendar days *there*, and the `fromZonedTime` round-trip
- * converts back to the correct instant whatever the runtime zone is.
+ * week's finished one.
+ *
+ * The wall clock is read from `toZonedTime`'s local fields, the -7 runs
+ * as UTC-pinned calendar arithmetic, and the wall clock is rebuilt in
+ * `timezone`. Deliberately not `setDate(-7)` on the zoned Date: that is a
+ * runtime-local Date, and mutating one silently normalizes a wall clock
+ * that lands in the *runtime* zone's DST gap, handing back an instant an
+ * hour late. UTC has no gaps. Regression:
+ * tests/unit/lib/enrollment-tz.test.ts.
  */
 export function stepBackOneWeek(point: Date, timezone: string): Date {
   const zoned = toZonedTime(point, timezone);
-  zoned.setDate(zoned.getDate() - 7);
-  return fromZonedTime(zoned, timezone);
+  const ref = new Date(
+    Date.UTC(zoned.getFullYear(), zoned.getMonth(), zoned.getDate() - 7),
+  );
+  const wallStr =
+    `${ref.getUTCFullYear()}-${pad(ref.getUTCMonth() + 1)}-${pad(ref.getUTCDate())}` +
+    `T${pad(zoned.getHours())}:${pad(zoned.getMinutes())}:${pad(zoned.getSeconds())}`;
+  return fromZonedTime(wallStr, timezone);
 }
 
 /**

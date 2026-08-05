@@ -31,7 +31,10 @@ describe("schedule-occurrence — non-UTC runtime regression (TZ = Australia/Syd
   });
 
   afterAll(() => {
-    process.env.TZ = originalTZ;
+    // Assigning `undefined` to a process.env key writes the literal string
+    // "undefined" (resolved zone: Etc/Unknown) — delete instead.
+    if (originalTZ === undefined) delete process.env.TZ;
+    else process.env.TZ = originalTZ;
   });
 
   it("viewerWeekdayIndex re-groups a Helsinki evening slot to the viewer's next day", () => {
