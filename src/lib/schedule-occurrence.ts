@@ -10,7 +10,14 @@ import { fromZonedTime, toZonedTime } from "date-fns-tz";
 // `utils.ts`, to keep this module dependency-free.
 //
 // Weekday convention: schema stores 0=Mon..6=Sun (per redesign §5.1); JS
-// `getUTCDay()` is 0=Sun..6=Sat, so the two helpers below convert between them.
+// `getDay()` is 0=Sun..6=Sat, so the two helpers below convert between them.
+//
+// Accessor discipline: `toZonedTime` returns a Date whose *local* fields
+// (getDay, getDate, getHours, ...) read the wall clock in the target zone.
+// The getUTC* fields only agree with that on a UTC runtime — in any non-UTC
+// environment (every user's browser) they read the wall clock shifted by the
+// runtime offset, which crosses midnight for early/late slots and lands on
+// the wrong weekday. Same rule as `getNextSessionStart` in enrollment.ts.
 
 function splitTime(time: string): { hours: number; minutes: number } {
   const [hours, minutes] = time.split(":").map(Number);
@@ -54,14 +61,19 @@ export function nextOccurrenceInstant(
   now: Date,
 ): Date {
   const zonedNow = toZonedTime(now, sourceTz);
-  // toZonedTime returns a Date whose UTC fields represent wall-clock in the
-  // source zone, so getUTCDay() gives the current weekday there.
-  const todayIso = zonedNow.getUTCDay(); // 0=Sun..6=Sat
+  const todayIso = zonedNow.getDay(); // 0=Sun..6=Sat — local fields, see header
   const targetIso = dayOfWeek === 6 ? 0 : dayOfWeek + 1; // Mon=0..Sun=6 → Sun=0..Sat=6
   let daysAhead = (targetIso - todayIso + 7) % 7;
   if (daysAhead === 0) daysAhead = 7; // strictly the NEXT occurrence
 
-  const refDate = new Date(zonedNow.getTime() + daysAhead * 86_400_000);
+  // Step by calendar date on a UTC-pinned Date (`Date.UTC` + `getUTC*` —
+  // UTC has no DST, so day arithmetic there is exact on any runtime).
+  // Stepping the zoned instant by 24-hour increments instead repeats or
+  // skips a date when the runtime zone crosses a DST transition mid-walk
+  // (see the anti-pattern in CLAUDE.md and the same fix in enrollment.ts).
+  const refDate = new Date(
+    Date.UTC(zonedNow.getFullYear(), zonedNow.getMonth(), zonedNow.getDate() + daysAhead),
+  );
   const { hours, minutes } = splitTime(startTime);
   return buildInstant(
     refDate.getUTCFullYear(),
@@ -97,6 +109,6 @@ export function dateTimeInstant(
  */
 export function viewerWeekdayIndex(instant: Date, timeZone: string): number {
   const zoned = toZonedTime(instant, timeZone);
-  const iso = zoned.getUTCDay(); // 0=Sun..6=Sat
+  const iso = zoned.getDay(); // 0=Sun..6=Sat — local fields, see header
   return iso === 0 ? 6 : iso - 1; // Sun=0..Sat=6 → Mon=0..Sun=6
 }
