@@ -114,6 +114,10 @@ export function SessionFeed({
   const [committingEntryId, setCommittingEntryId] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  // This feed's own anchor, for the editor toggle; the shell keeps a separate
+  // one for the divider's reveal. Two are safe because a capture is made in a
+  // click handler and one click drives one of them — they can never have a
+  // pending measurement at the same time.
   const anchor = useViewportAnchor();
   /**
    * Every entry's row element, so a save can anchor the card it happened on.
