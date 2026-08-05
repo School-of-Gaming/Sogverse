@@ -1179,8 +1179,7 @@
     "attendanceNotPresent": "Not present",
     "noWriteUp": "No write-up",
     "emptyFeedCustomer": "There are no sessions on this one yet.",
-    "emptyFeedGamer": "You have no sessions on this one yet.",
-    "showEarlier": "{count, plural, one {Show # earlier session} other {Show # earlier sessions}}"
+    "emptyFeedGamer": "You have no sessions on this one yet."
   },
   "selectProfile": {
     "title": "Who is entering Sogverse?"
@@ -1283,8 +1282,7 @@
       "attendanceMarkedCount": "{marked} of {total} marked",
       "attendanceForGamer": "Attendance for {name}",
       "saveFailed": "This session didn’t save. Try again.",
-      "savePartiallyFailed": "Some of this session’s changes didn’t save — check the sheet and try again.",
-      "showEarlier": "{count, plural, one {Show # earlier session} other {Show # earlier sessions}}"
+      "savePartiallyFailed": "Some of this session’s changes didn’t save — check the sheet and try again."
     },
     "groupNotes": {
       "heading": "About this group",

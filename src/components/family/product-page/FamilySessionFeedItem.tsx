@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
+  ATTENDANCE_TONE,
   SessionReport,
   type AttendanceMark,
   type SessionLabels,
@@ -163,20 +164,16 @@ export function FamilySessionFeedItem({
  * Whether this child was at this session — and the most carefully toned thing
  * on the page.
  *
- * **"Present" is a small positive; "Not present" is muted and neutral, never
- * destructive.** The reason is in the data, not in the design: the attendance
- * enum is currently `present | absent` and nothing more, so an absence the
- * parent arranged in advance (a holiday, an appointment, an ill child kept at
- * home) is stored identically to a child who simply never turned up. A red or
- * warning-toned mark would have this page editorialise a distinction it cannot
- * actually make, and it would do so to the parent who arranged the absence
- * themselves.
+ * **The tone is the shared one**, not a decision made here: "present" is a small
+ * positive, "not present" is muted and neutral and never destructive, and the
+ * reason lives with the token map along with what happens to it when a
+ * `planned_absent` value lands. The glyph is this chip's own, because this set
+ * has two states and the gedu's register has three — the dash is free here and
+ * spoken for there.
  *
- * A `planned_absent` value — marked by the parent, in advance, from the future
- * row above — is a planned addition to that enum. When it lands, this single
- * neutral mark splits into two calmer and more specific renderings ("Away —
- * let us know" versus something the family told us about beforehand), and the
- * wording chosen here stops having to cover both cases at once.
+ * The *wording* still has to cover both kinds of absence at once, since the enum
+ * cannot yet tell an arranged one from a no-show; that is the same constraint
+ * the tone is chosen under, and it eases in the same change.
  *
  * **An unmarked session renders nothing at all**, which is why there is no third
  * branch here: the caller passes `null` and no chip exists. A gap in the gedu's
@@ -191,7 +188,7 @@ function AttendanceMarkChip({ mark }: { mark: AttendanceMark }) {
     <span
       className={cn(
         "inline-flex shrink-0 items-center gap-1.5 text-xs font-medium",
-        present ? "text-success" : "text-muted-foreground",
+        ATTENDANCE_TONE[mark].text,
       )}
     >
       {present ? (

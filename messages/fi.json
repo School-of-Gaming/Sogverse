@@ -1179,8 +1179,7 @@
     "attendanceNotPresent": "Ei paikalla",
     "noWriteUp": "Ei koostetta",
     "emptyFeedCustomer": "Tällä ei ole vielä yhtään kertaa.",
-    "emptyFeedGamer": "Sinulla ei ole vielä yhtään kertaa tässä.",
-    "showEarlier": "{count, plural, one {Näytä # aiempi kerta} other {Näytä # aiempaa kertaa}}"
+    "emptyFeedGamer": "Sinulla ei ole vielä yhtään kertaa tässä."
   },
   "selectProfile": {
     "title": "Kuka astuu Sogverseen?"
@@ -1283,8 +1282,7 @@
       "attendanceMarkedCount": "{marked}/{total} merkitty",
       "attendanceForGamer": "{name} – läsnäolo",
       "saveFailed": "Tallennus epäonnistui. Yritä uudelleen.",
-      "savePartiallyFailed": "Osa tämän kerran muutoksista ei tallentunut – tarkista läsnäololista ja yritä uudelleen.",
-      "showEarlier": "{count, plural, one {Näytä # aiempi kerta} other {Näytä # aiempaa kertaa}}"
+      "savePartiallyFailed": "Osa tämän kerran muutoksista ei tallentunut – tarkista läsnäololista ja yritä uudelleen."
     },
     "groupNotes": {
       "heading": "Tästä ryhmästä",

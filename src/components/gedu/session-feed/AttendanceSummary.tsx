@@ -3,6 +3,10 @@
 import { useId, useState } from "react";
 import { Check, ChevronDown, Minus, UserRound, X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import {
+  ATTENDANCE_TONE,
+  attendanceMarkState,
+} from "@/components/session-feed";
 import { cn } from "@/lib/utils";
 import { attendanceTally } from "./entry-state";
 import type { AttendanceMarks, SessionFeedGamer } from "./types";
@@ -69,18 +73,19 @@ export function AttendanceSummary({
         <ul className="flex flex-wrap gap-1.5 pt-2">
           {roster.map((gamer) => {
             const mark = attendance[gamer.id];
+            // The colours are the shared mark tones — the same map the family's
+            // own chip reads, so "present is a small positive and absent is
+            // neutral, never destructive" is decided once for both surfaces. The
+            // glyph below stays this set's own: three states here against the
+            // family's two, so the dash is spent on the unanswered one.
+            const tone = ATTENDANCE_TONE[attendanceMarkState(mark)];
             return (
               <li
                 key={gamer.id}
                 className={cn(
                   "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs",
-                  mark === "present" && "border-success/40 text-success",
-                  mark === "absent" && "border-border text-muted-foreground",
-                  // Unmarked is the state still asking for something, so it is
-                  // the one that keeps a dashed edge instead of settling into
-                  // the row of answered chips beside it.
-                  mark === undefined &&
-                    "border-dashed border-border/70 text-muted-foreground/70",
+                  tone.border,
+                  tone.text,
                 )}
               >
                 <MarkGlyph mark={mark} />

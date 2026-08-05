@@ -1179,8 +1179,7 @@
     "attendanceNotPresent": "Inte närvarande",
     "noWriteUp": "Ingen sammanfattning",
     "emptyFeedCustomer": "Det finns inga tillfällen här än.",
-    "emptyFeedGamer": "Du har inga tillfällen här än.",
-    "showEarlier": "{count, plural, one {Visa # tidigare tillfälle} other {Visa # tidigare tillfällen}}"
+    "emptyFeedGamer": "Du har inga tillfällen här än."
   },
   "selectProfile": {
     "title": "Vem ska in i Sogverse?"
@@ -1283,8 +1282,7 @@
       "attendanceMarkedCount": "{marked} av {total} markerade",
       "attendanceForGamer": "Närvaro för {name}",
       "saveFailed": "Tillfället sparades inte. Försök igen.",
-      "savePartiallyFailed": "En del av ändringarna för det här tillfället sparades inte – kontrollera närvarolistan och försök igen.",
-      "showEarlier": "{count, plural, one {Visa # tidigare tillfälle} other {Visa # tidigare tillfällen}}"
+      "savePartiallyFailed": "En del av ändringarna för det här tillfället sparades inte – kontrollera närvarolistan och försök igen."
     },
     "groupNotes": {
       "heading": "Om gruppen",

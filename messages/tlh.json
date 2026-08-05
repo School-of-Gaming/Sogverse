@@ -1224,8 +1224,7 @@
     "attendanceNotPresent": "pawbe’",
     "noWriteUp": "qonta’ tu’lu’be’",
     "emptyFeedCustomer": "naDev may’mey tu’lu’be’.",
-    "emptyFeedGamer": "may’mey Dajmey tu’lu’be’.",
-    "showEarlier": "{count, plural, one {# may’ qan yIcha’} other {# may’mey qan yIcha’}}"
+    "emptyFeedGamer": "may’mey Dajmey tu’lu’be’."
   },
   "selectProfile": {
     "title": "Sogverse ’el ’Iv?"
@@ -1328,8 +1327,7 @@
       "attendanceMarkedCount": "{marked}/{total} ngu’ta’",
       "attendanceForGamer": "{name} pawwI’",
       "saveFailed": "may’vam pollu’be’. yIboq.",
-      "savePartiallyFailed": "may’vam qonta’ puS pollu’be’. tetlh yInuD ’ej yIboq.",
-      "showEarlier": "{count, plural, one {# may’ qan yIcha’} other {# may’mey qan yIcha’}}"
+      "savePartiallyFailed": "may’vam qonta’ puS pollu’be’. tetlh yInuD ’ej yIboq."
     },
     "groupNotes": {
       "heading": "ghom’a’vam",

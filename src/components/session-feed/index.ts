@@ -5,9 +5,10 @@
  * A session feed is one grammar rendered by three roles: a descending run of
  * dated sessions, a boundary between what is still to come and what has already
  * happened, month labels down a rail, and a report a reader can open. The row
- * shaping, the viewer-zone labels, the scroll anchoring and the report body are
- * that grammar, and they live here so the surfaces cannot drift apart on where
- * "next" is or on what a month boundary looks like.
+ * shaping, the viewer-zone labels, the scroll anchoring, the report body and the
+ * **shell that assembles them into a timeline** are that grammar, and they live
+ * here so the surfaces cannot drift apart on where "next" is, on what a month
+ * boundary looks like, or on how the past arrives.
  *
  * **What is not here is the point of the split.** The gedu's workspace — the
  * editors, the attendance roster, what a session still owes, the gedu-note block —
@@ -25,6 +26,14 @@
 
 export { NowDivider } from "./NowDivider";
 export { SessionReport } from "./SessionReport";
+export { SessionFeedShell } from "./SessionFeedShell";
+export type { SessionFeedRowContext } from "./SessionFeedShell";
+export {
+  ATTENDANCE_TONE,
+  attendanceMarkState,
+  type AttendanceMarkState,
+  type AttendanceTone,
+} from "./attendance-tone";
 export {
   FEED_INITIAL_PAST_ENTRIES,
   FEED_PAST_CHUNK_SIZE,
