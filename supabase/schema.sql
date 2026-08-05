@@ -1819,7 +1819,7 @@ BEGIN
             -- The epoch floors THIS COUNT and nothing else. A pre-epoch session
             -- is fully recordable — a gedu may take its attendance and write it
             -- up — it simply never becomes work the platform asks for. That is
-            -- why the write validator below has no epoch floor of its own.
+            -- why the write validator has no epoch floor of its own.
             SELECT d::date AS session_date
               FROM generate_series(
                      GREATEST(
@@ -1850,22 +1850,37 @@ BEGIN
                AND (p.start_date IS NULL OR gs.session_date >= p.start_date)
           ) AS occurrence
          WHERE roster.roster_size > 0
-           -- "Needs attention" means exactly this: some of the CURRENT roster
-           -- has no answer yet. Measured against the current roster, never
-           -- against the stored map's keys — which is why a child joining a
-           -- long-running group reopens previously-complete sessions. That is
-           -- the honest reading and it is chosen with eyes open.
+           -- "Needs attention" is two questions joined by OR, and either one
+           -- alone keeps the session on the list.
            AND (
-             SELECT COUNT(*)
-               FROM public.session_attendance att
-               JOIN public.group_sessions gs2 ON gs2.id = att.session_id
-               JOIN public.participations part2
-                 ON part2.gamer_id = att.gamer_id
-                AND part2.group_id = g.id
-                AND part2.status   = 'active'::public.participation_status
-              WHERE gs2.group_id     = g.id
-                AND gs2.session_date = occurrence.session_date
-           ) < roster.roster_size
+             -- (1) Some of the CURRENT roster has no answer yet. Measured
+             -- against the current roster, never against the stored map's keys
+             -- — which is why a child joining a long-running group reopens
+             -- previously-complete sessions. That is the honest reading and it
+             -- is chosen with eyes open.
+             (
+               SELECT COUNT(*)
+                 FROM public.session_attendance att
+                 JOIN public.group_sessions gs2 ON gs2.id = att.session_id
+                 JOIN public.participations part2
+                   ON part2.gamer_id = att.gamer_id
+                  AND part2.group_id = g.id
+                  AND part2.status   = 'active'::public.participation_status
+                WHERE gs2.group_id     = g.id
+                  AND gs2.session_date = occurrence.session_date
+             ) < roster.roster_size
+             -- (2) Nothing has been written for the families. NOT EXISTS rather
+             -- than a LEFT JOIN's NULL test, so a date with no materialized row
+             -- at all — the common case for a session nobody has touched — is
+             -- the same answer as a row holding a blank report.
+             OR NOT EXISTS (
+               SELECT 1
+                 FROM public.group_sessions gs3
+                WHERE gs3.group_id     = g.id
+                  AND gs3.session_date = occurrence.session_date
+                  AND btrim(COALESCE(gs3.report, ''), E' \t\r\n\v\f') <> ''
+             )
+           )
       ) AS owed ON true
 
      WHERE a.gedu_id = v_uid
@@ -1878,7 +1893,7 @@ $$;
 -- Name: FUNCTION get_my_gedu_assignment_summaries(p_epoch_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date) IS 'One row per gedu assignment for the dashboard cards: group name, that group''s gamer count, the venue name on in-person products, and how many past sessions still owe attendance. The enforcement epoch travels in as an argument because it is a code constant, not a column.';
+COMMENT ON FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date) IS 'One row per gedu assignment for the dashboard cards: group name, that group''s gamer count, the venue name on in-person products, and how many past sessions still owe a register or a family-facing report. A finished session on or after the epoch counts until BOTH are in. The enforcement epoch travels in as an argument because it is a code constant, not a column.';
 
 
 --
