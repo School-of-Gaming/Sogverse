@@ -1140,6 +1140,9 @@
   "familyEnrollment": {
     "emptyState": "{name} är inte anmäld till något ännu. Titta tillsammans på vad som finns.",
     "wontRenew": "Förnyas inte — sista passet {date}",
+    "wontRenewLastSession": "Förnyas inte — det här är sista passet, {date}",
+    "awaitingCustomer": "Anmälan är klar — vi letar upp en Gedu och en grupp före första passet.",
+    "awaitingGamer": "Du är anmäld — vi letar upp en Gedu och en grupp åt dig före ditt första pass.",
     "noGamers": "Inga gamers här ännu. Lägg till din första gamer och välj sedan en klubb eller ett läger tillsammans.",
     "emptyStateCta": "Bläddra bland klubbar och läger"
   },

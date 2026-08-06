@@ -1185,6 +1185,9 @@
   "familyEnrollment": {
     "emptyState": "{name} Suvbe’taH. ghom’a’mey tIbej ’ej wa’ yIwIv!",
     "wontRenew": "qaSqa’be’ — Qu’ Qav {date}",
+    "wontRenewLastSession": "qaSqa’be’ — Qu’ Qav ’oH {date}’e’",
+    "awaitingCustomer": "DamuvmoHpu’! Qu’ wa’DIch qaSpa’, Gedu ghom je wISamlI’.",
+    "awaitingGamer": "bImuvpu’! Qu’ wa’DIch qaSpa’, Gedu ghom je DISamlI’.",
     "noGamers": "naDev QujwI’ tu’be’lu’. QujwI’ wa’DIch yIchel, ghIq ghom’a’ qoj raQ bowIv!",
     "emptyStateCta": "ghom’a’mey raghmey je tIbej"
   },

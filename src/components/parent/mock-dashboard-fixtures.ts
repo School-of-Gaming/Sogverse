@@ -188,6 +188,23 @@ export function buildParentDashboardFixture(
               endsInDays: null,
               waitlistPosition: 3,
             },
+            {
+              // Bought yesterday, nobody placed yet. It sits on the same child
+              // as the waitlist place on purpose: the two are the only inert
+              // cards on the page and the one thing that must be legible at a
+              // glance is that they are *not* the same news. One says the seat
+              // is yours and we are arranging it; the other says there is no
+              // seat. If the blue tone and the two footer sentences do not
+              // carry that difference here, they carry it nowhere.
+              participationId: "mock-enrollment-terraria-awaiting",
+              productName: "Terraria Builders Club",
+              productType: "consumer_club",
+              isRemote: true,
+              slots: [futureSlot(now, 5, "16:00", 90, FIXTURE_TIMEZONE)],
+              startedDaysAgo: 1,
+              endsInDays: null,
+              awaiting: true,
+            },
           ]),
           // A long name on purpose: the heading and the nav chip are the two
           // places user content decides the layout.

@@ -90,6 +90,21 @@ export function buildGamerDashboardFixture(
       waitlistPosition: 3,
     },
     {
+      // The unplaced seat, on the child's own page. Worth having here as well
+      // as on the parent's: this is the one card state whose copy is genuinely
+      // rewritten for the child rather than merely re-toned, and it is the card
+      // most likely to be met by a *new* gamer — the account is a day old, the
+      // purchase has landed, and nothing has a group yet.
+      participationId: "mock-gamer-terraria-awaiting",
+      productName: "Terraria Builders Club",
+      productType: "consumer_club",
+      isRemote: true,
+      slots: [futureSlot(now, 5, "16:00", 90, FIXTURE_TIMEZONE)],
+      startedDaysAgo: 1,
+      endsInDays: null,
+      awaiting: true,
+    },
+    {
       participationId: "mock-gamer-roblox-camp",
       productName: "Roblox Builders Camp",
       productType: "camp",
