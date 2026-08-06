@@ -21,19 +21,19 @@ a day later is this command having failed.
 
 ## Phase 1 — Set up
 
-Run these from the **main checkout** (`C:/Users/Kyle/work/Sogverse`). If the
+Run these from the **main checkout** — the repository root, not a worktree. If the
 session is already inside a worktree, stop and say so: a worktree-isolated
 session cannot create or modify another worktree, and the guard will refuse.
 
-1. **Verify the base — the latest `dev`, unless Kyle has said otherwise for this
-   piece of work.** That is a standing repo rule (see the Branching section of the
+1. **Verify the base — the latest `dev`, unless the user has said otherwise for
+   this piece of work.** That is a standing repo rule (see the Branching section of the
    root `CLAUDE.md`), and this is the step that actually enforces it: no setting
    can, because no setting fetches. `git fetch origin dev`, confirm local `dev`
    matches `origin/dev`, fast-forward if behind. Never `main` — it trails `dev` by
    hundreds of commits.
 
-   If he has named a different base, use it and say back which base you used, so a
-   deliberate choice and a mistake never look the same in the transcript.
+   If they have named a different base, use it and say back which base you used,
+   so a deliberate choice and a mistake never look the same in the transcript.
 
 2. **Create the worktree**, branching from `dev` explicitly:
 
@@ -61,10 +61,11 @@ session cannot create or modify another worktree, and the guard will refuse.
 
 ## Phase 2 — Build (interactive)
 
-This phase is a conversation, not a batch job. Kyle starts with a task, project,
-plan, or bug; work on it, bring decisions and anything surprising to him as they
-come up, and expect several rounds of feedback and fixes before either of you is
-satisfied. Do not rush toward landing — Phase 5 begins only when he says so.
+This phase is a conversation, not a batch job. The user starts with a task,
+project, plan, or bug; work on it, bring decisions and anything surprising back to
+them as they come up, and expect several rounds of feedback and fixes before
+either of you is satisfied. Do not rush toward landing — Phase 5 begins only when
+they say so.
 
 Before reporting any piece of work complete:
 
@@ -83,15 +84,16 @@ Multiline commit messages go through the Bash tool with a heredoc and
 
 ## Phase 3 — Preview (only when a UI change needs looking at)
 
-Kyle runs his own dev server on the main checkout and watches it. It serves
-`dev`, so it cannot show a worktree branch — that is the *only* reason to start
-another one.
+Assume a dev server is already running on the main checkout and being watched. It
+serves `dev`, so it cannot show a worktree branch — and that is the *only* reason
+to start a second one.
 
-- Pick a free port at 3002 or above. **Never 3000 or 3001** — those are his.
-  Verify the port is free before binding.
+- **Never restart, kill, or otherwise disturb a server you did not start.**
+- Pick a port no one is already on, and verify it is free before binding rather
+  than assuming. Next's default is 3000, so treat that and the next port or two as
+  taken.
 - Start it backgrounded: `npx next dev --turbopack -p <port>`.
-- Never restart, kill, or otherwise touch his server.
-- Give him the specific URLs worth opening, not just the root.
+- Report the specific URLs worth opening, not just the root.
 
 ---
 
@@ -105,14 +107,14 @@ cannot be redirected into another one, even by calling `EnterWorktree` first.
 Tell it explicitly that it is already in the right directory.
 
 Then **assess the findings before relaying them**. Say which you accept, which
-you think are wrong and why, and which are judgement calls for Kyle. A review
+you think are wrong and why, and which are judgement calls for the user. A review
 relayed without an opinion has moved the work no further forward.
 
 ---
 
 ## Phase 5 — Land
 
-**Only on Kyle's explicit instruction to merge.** Not when the work looks done,
+**Only on the user's explicit instruction to merge.** Not when the work looks done,
 not when review comes back clean.
 
 Order matters — several of these steps block the next one if skipped.
@@ -124,8 +126,8 @@ Order matters — several of these steps block the next one if skipped.
    port, which then blocks worktree removal and looks like a git error. Verify:
    `Get-NetTCPConnection -State Listen -LocalPort <port>`. If it is still
    listening, kill the owning PID — but confirm first that the PID owns only that
-   port, since Kyle's own servers are running. Afterwards re-check that his ports
-   are still up.
+   port — the user may well have servers of their own running. Afterwards re-check
+   that their ports are still up.
 
 3. **Delete the copied `.env.local`** from the worktree.
 
