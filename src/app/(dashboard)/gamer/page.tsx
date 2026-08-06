@@ -17,27 +17,33 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-/** See `parent/page.tsx` for the rationale on this prefetch shape. */
-async function getInitialSessionRows(): Promise<MyUpcomingSessionRow[]> {
+/**
+ * See `parent/page.tsx` for the rationale on this prefetch shape — including
+ * why failure answers `null` rather than `[]`. An empty seed is stamped as
+ * freshly fetched and never asked about again, so flattening a transient
+ * failure into one told a child they were signed up for nothing and then left
+ * that on screen.
+ */
+async function getInitialSessionRows(): Promise<MyUpcomingSessionRow[] | null> {
   try {
     const supabase = await createClient();
     const service = new ParticipationsService(supabase);
     return await service.getMyUpcomingSessions("gamer");
   } catch {
-    return [];
+    return null;
   }
 }
 
 /** The waitlisted rows, read-only for this audience: a child can see where they
  *  are in a queue and cannot leave it. Same prefetch shape and the same
- *  `[]`-on-failure fallback as the sessions read above. */
-async function getInitialWaitlistRows(): Promise<MyWaitlistRow[]> {
+ *  `null`-on-failure fallback as the sessions read above. */
+async function getInitialWaitlistRows(): Promise<MyWaitlistRow[] | null> {
   try {
     const supabase = await createClient();
     const service = new ParticipationsService(supabase);
     return await service.getMyWaitlistEntries("gamer");
   } catch {
-    return [];
+    return null;
   }
 }
 

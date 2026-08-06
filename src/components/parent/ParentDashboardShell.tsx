@@ -47,9 +47,16 @@ export function ParentDashboardShell({
   initialFamily,
   billingCard,
 }: {
-  initialSessionRows: MyUpcomingSessionRow[];
-  initialWaitlistRows: MyWaitlistRow[];
-  initialFamily: FamilyMember[];
+  /*
+   * `null` on any of the three means that prefetch failed, and the roll-up hook
+   * turns it into a stale seed so the client goes and asks again. Flattening it
+   * to `[]` here would throw away the only thing distinguishing "signed up for
+   * nothing" from "we could not find out" — and the dashboard would settle on
+   * the first while meaning the second.
+   */
+  initialSessionRows: MyUpcomingSessionRow[] | null;
+  initialWaitlistRows: MyWaitlistRow[] | null;
+  initialFamily: FamilyMember[] | null;
   /** The Stripe portal card, rendered by the server component above. */
   billingCard: React.ReactNode;
 }) {

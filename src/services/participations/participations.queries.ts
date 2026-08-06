@@ -132,10 +132,18 @@ export function useMyWaitlist(
  * built by the same locale- and zone-aware roll-up, so they consume the row
  * rather than this read's own adapter. One query key, one cache entry, one
  * fetch.
+ *
+ * `initialDataUpdatedAt` carries the same meaning it does on the sessions hook:
+ * pass `0` when the seed is a failure fallback rather than an answer, so it
+ * arrives stale and the client fetches instead of trusting it for a minute.
  */
 export function useMyWaitlistRows(
   audience: SessionAudience,
-  options: { initialData: MyWaitlistRow[] },
+  options: {
+    initialData: MyWaitlistRow[];
+    /** Pass `0` when `initialData` is a failure fallback rather than an answer. */
+    initialDataUpdatedAt?: number;
+  },
 ): MyWaitlistRow[] {
   const supabase = getClient();
   const service = new ParticipationsService(supabase);
@@ -144,6 +152,7 @@ export function useMyWaitlistRows(
     queryKey: participationKeys.myWaitlist(audience),
     queryFn: () => service.getMyWaitlistEntries(audience),
     initialData: options.initialData,
+    initialDataUpdatedAt: options.initialDataUpdatedAt,
   }).data;
 }
 
