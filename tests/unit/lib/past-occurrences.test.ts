@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { formatInTimeZone } from "date-fns-tz";
 import {
+  MAX_FUTURE_OCCURRENCES_PER_SLOT,
   MAX_PAST_OCCURRENCES_PER_SLOT,
   enumeratePastRowOccurrences,
+  enumerateRowOccurrences,
 } from "@/lib/session-occurrence";
 
 /**
@@ -182,5 +184,53 @@ describe("enumeratePastRowOccurrences", () => {
       expect(formatInTimeZone(occurrence.start, HELSINKI, "HH:mm")).toBe("16:30");
       expect(formatInTimeZone(occurrence.end, HELSINKI, "HH:mm")).toBe("18:00");
     }
+  });
+});
+
+/**
+ * The forward walker's own guard rail, tested beside its backward sibling's
+ * because they exist for the same reason.
+ *
+ * `cap: Infinity` means "let the end boundary decide", and every caller today
+ * does supply one — a product's end date, or a cancelled subscription's
+ * paid-through instant. But that invariant lived in the call sites rather than
+ * next to the `while` it protected, so a future caller pairing `Infinity` with
+ * a null boundary would have hung the render rather than failed a test. This is
+ * that test.
+ */
+describe("enumerateRowOccurrences — the uncapped walk is still bounded", () => {
+  it("terminates on the per-slot ceiling when nothing else stops it", () => {
+    const occurrences = enumerateRowOccurrences({
+      slots: [{ weekday: 2, startTime: "16:00", durationMinutes: 90 }],
+      timezone: HELSINKI,
+      now: new Date("2026-04-15T18:00:00Z"),
+      startBoundary: null,
+      // The combination that used to run forever: no bound on either side.
+      endBoundary: null,
+      cap: Number.POSITIVE_INFINITY,
+      windowCloseMs: 0,
+    });
+
+    expect(occurrences).toHaveLength(MAX_FUTURE_OCCURRENCES_PER_SLOT);
+  });
+
+  it("leaves an ordinary bounded walk exactly where it was", () => {
+    // Three Wednesdays, ended by the boundary rather than by the ceiling —
+    // proving the guard rail sits far enough out to be invisible in real use.
+    const occurrences = enumerateRowOccurrences({
+      slots: [{ weekday: 2, startTime: "16:00", durationMinutes: 90 }],
+      timezone: HELSINKI,
+      now: new Date("2026-04-15T18:00:00Z"),
+      startBoundary: null,
+      endBoundary: new Date("2026-05-07T00:00:00Z"),
+      cap: Number.POSITIVE_INFINITY,
+      windowCloseMs: 0,
+    });
+
+    expect(datesIn(occurrences, HELSINKI)).toEqual([
+      "2026-04-22",
+      "2026-04-29",
+      "2026-05-06",
+    ]);
   });
 });

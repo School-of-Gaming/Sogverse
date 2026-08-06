@@ -123,6 +123,32 @@ export function endDateToCutoff(
 export const OPEN_ENDED_OCCURRENCE_CAP = 8;
 
 /**
+ * How far forward a single slot is ever walked in one call.
+ *
+ * The mirror of `MAX_PAST_OCCURRENCES_PER_SLOT` below, and the same number for
+ * the same reason: ten years of weekly sessions is comfortably past any product
+ * that could exist and far short of anything that costs a frame. It is a guard
+ * rail, not a product horizon — the real bound is the caller's `endBoundary`,
+ * and every caller asking for an uncapped walk is expected to pass one.
+ */
+export const MAX_FUTURE_OCCURRENCES_PER_SLOT = 520;
+
+/**
+ * The earlier of two optional UTC cutoffs — typically a product's own end date
+ * and a cancelled subscription's paid-through instant. `null` on one side means
+ * "no bound there", so the other wins; both null means unbounded.
+ *
+ * Lives here, beside the `*DateToCutoff` helpers whose output it composes,
+ * because both family dashboards clamp a cancelled enrollment with it and a
+ * verbatim copy in each was a semantic fix waiting to land in only one of them.
+ */
+export function earlierBoundary(a: Date | null, b: Date | null): Date | null {
+  if (a === null) return b;
+  if (b === null) return a;
+  return a.getTime() <= b.getTime() ? a : b;
+}
+
+/**
  * Expand one row's slots into the concrete (start, end) pairs the
  * dashboards consume. Shared between `expandUpcomingSessions`
  * (parent/gamer) and `expandAssignedSessionsToCards` (gedu) — the only
@@ -138,6 +164,17 @@ export const OPEN_ENDED_OCCURRENCE_CAP = 8;
  *
  * `cap = Infinity` means "no cap" — used for end-dated products where
  * the date range is the natural bound.
+ *
+ * **`Infinity` is bounded here, not by the caller's good behaviour.** An
+ * uncapped walk terminates only when `endBoundary` stops it, so `cap:
+ * Infinity` paired with a null boundary is an infinite loop. Every caller
+ * today does supply a boundary alongside `Infinity` — a product's end date,
+ * or a cancelled subscription's paid-through instant — but that invariant
+ * lived in five call sites and nowhere near the `while` it protects, so it
+ * was one refactor away from being false. `MAX_FUTURE_OCCURRENCES_PER_SLOT`
+ * enforces it where the loop is, exactly as `maxOccurrences` does for the
+ * backward walker below; an unbounded loop in an expansion helper is how
+ * this codebase once pegged a renderer at 100% CPU.
  */
 export function enumerateRowOccurrences(args: {
   slots: SlotShape[];
@@ -151,7 +188,13 @@ export function enumerateRowOccurrences(args: {
   const { slots, timezone, now, startBoundary, endBoundary, cap, windowCloseMs } =
     args;
   const out: Array<{ start: Date; end: Date }> = [];
-  const perSlotCap = Number.isFinite(cap) ? cap : Number.POSITIVE_INFINITY;
+  // The requested cap, floored by the hard ceiling. A finite `cap` is almost
+  // always far below it, so the ceiling only ever bites on an uncapped walk
+  // whose `endBoundary` failed to stop it — which is the case it exists for.
+  const perSlotCap = Math.min(
+    Number.isFinite(cap) ? cap : Number.POSITIVE_INFINITY,
+    MAX_FUTURE_OCCURRENCES_PER_SLOT,
+  );
 
   // If the product hasn't started yet (start_date is in the future), pin
   // the future-iteration cursor to "just before start_date" so the

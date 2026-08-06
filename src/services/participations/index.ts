@@ -2,6 +2,7 @@ export { ParticipationsService } from "./participations.service";
 export type {
   MyUpcomingSessionRow,
   MyWaitlistRow,
+  ProductSiteName,
   AdminGamerParticipationRow,
   ParticipationCounts,
   ParticipationConfirmation,

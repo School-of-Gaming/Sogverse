@@ -1140,6 +1140,9 @@
   "familyEnrollment": {
     "emptyState": "{name} isn’t signed up for anything yet. Take a look at what’s on and pick something together.",
     "wontRenew": "Won’t renew — last session {date}",
+    "wontRenewLastSession": "Won’t renew — this is the last session, {date}",
+    "awaitingCustomer": "Signed up — we’re matching them with a Gedu and a group before the first session.",
+    "awaitingGamer": "You’re signed up — we’re matching you with a Gedu and a group before your first session.",
     "noGamers": "No gamers here yet. Add your first gamer, then pick a club or camp together.",
     "emptyStateCta": "Browse clubs and camps"
   },

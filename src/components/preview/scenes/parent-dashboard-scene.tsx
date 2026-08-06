@@ -53,6 +53,14 @@ export function ParentDashboardScene({
       billingCard={<FixtureBillingCard accounts={fixture.accounts} />}
       onAddGamer={noop}
       onOpenPortal={noop}
+      // Both are inert *handlers* rather than omitted props, and the difference
+      // is visible: an absent `onLeaveWaitlist` would draw no leave link at all,
+      // and an absent `onJoinClick` would turn the lit Join back into a plain
+      // link. The scene has to show the affordances a parent really meets, so
+      // it passes something — and what it passes does nothing. The confirm
+      // dialog in front of the leave is pure UI and works for real.
+      onJoinClick={noop}
+      onLeaveWaitlist={noop}
     />
   );
 }
