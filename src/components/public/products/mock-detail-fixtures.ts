@@ -5,11 +5,7 @@ import type {
 } from "@/types";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import type { ProductDetailRow } from "@/services/products";
-import {
-  registrationCtaKind,
-  type RegistrationCtaKind,
-  type RegistrationState,
-} from "./derive-registration-state";
+import type { RegistrationState } from "./derive-registration-state";
 import type { AuthState, MyParticipationState } from "./signup-panel-view";
 import type {
   ConfirmationNoticeKind,
@@ -52,6 +48,7 @@ export type PreviewScenario =
   | "muni-almost-full"
   | "muni-full-closed"
   | "muni-full-waitlist"
+  | "muni-uncapped"
   | "muni-opens-10s"
   | "muni-opens-signed-out"
   | "muni-opens-no-gamers"
@@ -198,6 +195,27 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     auth: "signed-in-with-gamers",
     state: { kind: "full_waitlist", seatCount: 15 },
   },
+  "muni-uncapped": {
+    // A municipality club whose contracted number of places has not been
+    // entered yet. The seat bar renders nothing at all without a cap, which
+    // leaves the CTA the only thing in the footer row — the one case the
+    // footer's `ml-auto` exists for, and before this branch the one case where
+    // the CTA slid to the left-hand edge. Every other muni scenario pins a seat
+    // count, which is exactly why nobody saw it.
+    label: "No cap set — footer left empty",
+    productType: "municipality_club",
+    billingMode: "external_contract",
+    seatCount: null,
+    waitlistEnabled: false,
+    priceCentsEur: null,
+    auth: "signed-in-with-gamers",
+    state: {
+      kind: "open",
+      seatCount: null,
+      seatsLeft: null,
+      waitlistEnabled: false,
+    },
+  },
   "muni-opens-10s": {
     label: "Opens in 10 seconds (live)",
     productType: "municipality_club",
@@ -332,6 +350,7 @@ const SCENARIO_ORDER: PreviewScenario[] = [
   "muni-almost-full",
   "muni-full-closed",
   "muni-full-waitlist",
+  "muni-uncapped",
   "muni-opens-10s",
   "muni-opens-signed-out",
   "muni-opens-no-gamers",
@@ -413,24 +432,16 @@ export function findConfirmationNotice(
 
 // CTA kind for a scenario without needing the wall clock — a countdown is
 // always `closed_pre`, which is a primary "View" CTA.
-function configCtaKind(c: ScenarioConfig): RegistrationCtaKind {
-  return "opensInMs" in c ? "primary" : registrationCtaKind(c.state);
-}
-
-// Whether a scenario's *card* opens its detail page — the flag the UI
-// Components grid uses to decide which demo cards are live links. Only openable
-// states are: a parent can never reach the detail page of a full/closed or
-// ended product from the shop. Single-sourced from `registrationCtaKind` so it
-// never drifts from the card's own rule.
+// There is deliberately no "does this scenario's card link anywhere" helper.
+// The demo grid hands every scenario its href and lets the card decide from the
+// state, which is the same split the shop makes — a second copy of that rule
+// here could only ever drift from the first.
 //
-// This is not the same question as "does a preview page exist for this
-// scenario". Every scenario is previewable full-page from the UI Previews list
-// (the scene registry maps the whole of `PREVIEW_SCENARIOS`) — the closed
+// Note also that a card being inert says nothing about whether a preview page
+// exists: every scenario is previewable full-page from the UI Previews list,
+// because the scene registry maps the whole of `PREVIEW_SCENARIOS`. The closed
 // states especially, since no card links to them and that page is the only way
 // to look at one.
-export function scenarioHasDetailPage(slug: PreviewScenario): boolean {
-  return configCtaKind(SCENARIOS[slug]) === "primary";
-}
 
 // Seats already taken on a scenario — the count the municipality seat-fill bar
 // reads. Derived from the authored state so the bar and the card's state stay

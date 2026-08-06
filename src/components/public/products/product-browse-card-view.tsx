@@ -61,12 +61,15 @@ export interface ProductBrowseCardViewProps {
   seatBar?: SeatBarValue;
   state: RegistrationState;
   /**
-   * Detail-page URL. The whole card surface links here — but only when `state`
-   * is one the detail page can do something with; on a dead-end state the card
-   * is inert and this is ignored, so passing it is never a promise that the
-   * card will open.
+   * Detail-page URL. Required, and deliberately so: whether the card opens is
+   * this component's decision, taken from `state`, not the caller's. On a
+   * dead-end state the card is inert and this goes unused — so passing it is
+   * never a promise that the card will open, and withholding it was never a way
+   * to stop one. Making it optional only created a fourth combination (an
+   * openable state with no href) that would render as inert with the wrong
+   * word; required, that combination cannot be expressed.
    */
-  detailHref?: string;
+  detailHref: string;
 }
 
 export type SeatBarValue = {
@@ -112,13 +115,9 @@ export function ProductBrowseCardView({
   // a card cannot look openable without being openable. The shape this replaced
   // gated the hover on `detailHref` alone, which the adapter always supplies, so
   // a full-no-waitlist card brightened its border under the cursor and then
-  // swallowed the click.
-  //
-  // Note the converse is not enforced and cannot be from here: an openable state
-  // handed no `detailHref` falls into the inert branch and renders a muted
-  // "View" that does nothing. No caller does that — the adapter defaults the
-  // href and the style guide derives it from this same rule — so this is a note
-  // for whoever adds the next caller, not a live defect.
+  // swallowed the click. `detailHref` being required is what closes the other
+  // direction: with no way to withhold it, there is no openable state that can
+  // arrive here without somewhere to go.
   const openHref = cta?.kind === "primary" ? detailHref : undefined;
 
   return (
@@ -279,11 +278,13 @@ export function ProductBrowseCardView({
           control whose visible label is absent from its accessible name is
           unreachable by voice — "click View" matches nothing (WCAG 2.5.3, Label
           in Name). The product name still carries the meaning, so it follows
-          rather than being replaced. */}
+          rather than being replaced. The joining goes through a message rather
+          than string concatenation: the separator and the word order are as
+          translatable as the words either side of them. */}
       {openHref && cta && (
         <Link
           href={openHref}
-          aria-label={`${cta.labelText} — ${name}`}
+          aria-label={t("cardLink", { action: cta.labelText, name })}
           className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
         />
       )}

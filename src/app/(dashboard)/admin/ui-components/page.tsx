@@ -99,7 +99,6 @@ import {
 import {
   buildScenarioFixture,
   scenarioFilledSeats,
-  scenarioHasDetailPage,
   PREVIEW_SCENARIOS,
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
@@ -1328,11 +1327,11 @@ function ScenarioBrowseCard({
   const topicLabel = useTopicLabel();
 
   const { product, state } = buildScenarioFixture(slug);
-  // Only openable states navigate; the rest (full/closed, ended) render an
-  // inert card, so they get no detail href.
-  const detailHref = scenarioHasDetailPage(slug)
-    ? `/preview/products/${slug}`
-    : undefined;
+  // Every scenario passes its href; the card decides whether to use it, from
+  // the state, exactly as it does in the shop. Withholding it here used to
+  // double as a way of saying "this one is inert", which was the style guide
+  // second-guessing the component about the one thing the component owns.
+  const detailHref = `/preview/products/${slug}`;
   const tr = resolveTranslation(product.product_translations, uiLocale);
   const isMuniClub = product.product_type === "municipality_club";
 

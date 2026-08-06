@@ -1442,6 +1442,7 @@
       "seatsCapacity": "{count, plural, one {# paikka} other {# paikkaa}}",
       "endedNote": "Tämä on päättynyt – seuraava on tulossa pian.",
       "viewDetails": "Katso",
+      "cardLink": "{action} — {name}",
       "manage": "Hallitse",
       "fullDisabled": "Täynnä",
       "alreadyStarted": "Käynnissä",

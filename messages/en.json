@@ -1442,6 +1442,7 @@
       "seatsCapacity": "{count, plural, one {# seat} other {# seats}}",
       "endedNote": "This one’s wrapped — keep an eye out for the next one.",
       "viewDetails": "View",
+      "cardLink": "{action} — {name}",
       "manage": "Manage",
       "fullDisabled": "Full",
       "alreadyStarted": "Already started",
