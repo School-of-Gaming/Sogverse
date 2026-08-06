@@ -121,25 +121,6 @@ export function ProductBrowseCardView({
   // for whoever adds the next caller, not a live defect.
   const openHref = cta?.kind === "primary" ? detailHref : undefined;
 
-  // How the footer row aligns its two sides, which depends on what is actually
-  // in them. The right is always one line of type; the left is a line of type
-  // for a price, but a *block* for a muni club's two-row seat bar or a free
-  // product's chip.
-  //
-  // Type against type wants baselines. That is exact at any pair of sizes —
-  // the price is `text-base` and the label `text-sm`, so their line boxes are
-  // 24px and 20px, and aligning either edge or the centres leaves the baselines
-  // a pixel or so apart: the kind of miss you see without being able to name.
-  // Baselines have nothing to tune and stay right if either size changes.
-  //
-  // Type against a block wants centres, because a block has no baseline worth
-  // meeting. CSS still hands one out — synthesised from the bottom edge when
-  // the box's own children are centred rather than baseline-aligned — so
-  // asking for baselines here does not fail loudly, it just quietly pins the
-  // label to the foot of the progress bar instead of the line of text above
-  // it. Centring is the honest answer for a box.
-  const footerLeftIsType = seatBar === undefined && price.kind !== "free";
-
   return (
     <Card
       className={cn(
@@ -225,12 +206,20 @@ export function ProductBrowseCardView({
               {t("endedNote")}
             </p>
           ) : (
-            <div
-              className={cn(
-                "flex justify-between gap-6",
-                footerLeftIsType ? "items-baseline" : "items-center",
-              )}
-            >
+            /* Two pieces, and neither takes its position from the other. The
+               left states what the product costs or how full it is; the right
+               states whether you can open it. Both are anchored to the card —
+               centred in this row, at their own end of it — so the layout does
+               not change shape when the left slot swaps a price for a two-row
+               seat bar, or holds nothing at all.
+
+               Aligning them to *each other* was the mistake this replaces.
+               Baselines are exact when both sides are type, but they stop being
+               available the moment one side is a block, which forces the rule to
+               branch on what the data happens to be — and worse, it anchors the
+               CTA to the price, so the two read as one phrase that has drifted
+               apart. They are not one phrase. */
+            <div className="flex items-center justify-between gap-6">
               {/* Muni clubs swap the price for a seat-availability bar;
                   everything else keeps the price. `seatBar` present (even with a
                   null total) is the muni signal — a null total renders nothing,
