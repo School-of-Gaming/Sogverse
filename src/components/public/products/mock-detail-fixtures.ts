@@ -40,6 +40,7 @@ import type {
 
 export type PreviewScenario =
   | "consumer-club"
+  | "consumer-club-threshold"
   | "muni-empty"
   | "muni-filling"
   | "muni-almost-full"
@@ -119,6 +120,22 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
       seatsLeft: null,
       waitlistEnabled: false,
     },
+  },
+  "consumer-club-threshold": {
+    // The last reachable state without a card of its own. A club that needs a
+    // minimum intake before it can run sits here until the signups arrive, and
+    // it is deliberately undramatic: threshold handling is deferred, so there
+    // is no meter and no countdown, and the card is an ordinary openable one
+    // carrying an ordinary "View". That sameness *is* the thing to eyeball —
+    // it is why the state is easy to forget exists.
+    label: "€45/mo — awaiting threshold",
+    productType: "consumer_club",
+    billingMode: "paid",
+    seatCount: null,
+    waitlistEnabled: false,
+    priceCentsEur: 4500,
+    auth: "signed-in-with-gamers",
+    state: { kind: "pending_thr", threshold: 6, count: 2 },
   },
   "muni-empty": {
     label: "15 / 15 seats",
@@ -282,6 +299,7 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
 // the subsections come out in this order.
 const SCENARIO_ORDER: PreviewScenario[] = [
   "consumer-club",
+  "consumer-club-threshold",
   "muni-empty",
   "muni-filling",
   "muni-almost-full",
@@ -543,7 +561,12 @@ function buildBaseProduct(
     // There is deliberately no lesson-material field here. It moved off
     // `products` into `product_staff_details` precisely so that no family-facing
     // read path can reach it, and this fixture stands for one of those.
-    signup_threshold: null,
+    // Taken from the authored state rather than pinned null, so a
+    // threshold-pending scenario's row agrees with the state sitting beside it
+    // — the card reads the state, but a row claiming no threshold while the
+    // state names one is a fixture that contradicts itself, and the next
+    // person to build a surface off `product` inherits the contradiction.
+    signup_threshold: state.kind === "pending_thr" ? state.threshold : null,
     start_date: startDate,
     end_date: endDate,
     timezone: "Europe/Helsinki",

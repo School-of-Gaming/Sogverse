@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Users, MapPin, Globe } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { NavChevron } from "@/components/ui/nav-chevron";
@@ -115,6 +114,25 @@ export function ProductBrowseCardView({
   const openHref =
     !isEnded && cta?.kind === "primary" ? detailHref : undefined;
 
+  // How the footer row aligns its two sides, which depends on what is actually
+  // in them. The right is always one line of type; the left is a line of type
+  // for a price, but a *block* for a muni club's two-row seat bar or a free
+  // product's chip.
+  //
+  // Type against type wants baselines. That is exact at any pair of sizes —
+  // the price is `text-base` and the label `text-sm`, so their line boxes are
+  // 24px and 20px, and aligning either edge or the centres leaves the baselines
+  // a pixel or so apart: the kind of miss you see without being able to name.
+  // Baselines have nothing to tune and stay right if either size changes.
+  //
+  // Type against a block wants centres, because a block has no baseline worth
+  // meeting. CSS still hands one out — synthesised from the bottom edge when
+  // the box's own children are centred rather than baseline-aligned — so
+  // asking for baselines here does not fail loudly, it just quietly pins the
+  // label to the foot of the progress bar instead of the line of text above
+  // it. Centring is the honest answer for a box.
+  const footerLeftIsType = seatBar === undefined && price.kind !== "free";
+
   return (
     <Card
       className={cn(
@@ -200,17 +218,12 @@ export function ProductBrowseCardView({
               {t("endedNote")}
             </p>
           ) : (
-            /* `min-h-9` is the disabled Button's own height, held by the row
-               whatever lands in it. The openable cards now answer with a line
-               of text, and nothing makes a line of text as tall as a button —
-               so without this a card that opens would stand shorter than the
-               "Full" card beside it. Inside a stretched grid row that is
-               invisible (the row equalises and the difference lands as
-               padding), which is exactly how it goes unnoticed; it shows up on
-               the card left alone on the last row, where there is nothing to
-               stretch against. Same reservation, and for the same reason, as
-               the gedu assignment card's footer. */
-            <div className="flex min-h-9 items-end justify-between gap-6">
+            <div
+              className={cn(
+                "flex justify-between gap-6",
+                footerLeftIsType ? "items-baseline" : "items-center",
+              )}
+            >
               {/* Muni clubs swap the price for a seat-availability bar;
                   everything else keeps the price. `seatBar` present (even with a
                   null total) is the muni signal — a null total renders nothing,
@@ -239,26 +252,44 @@ export function ProductBrowseCardView({
                   a grid of twenty cards is twenty tab stops rather than forty
                   with every destination announced twice.
 
-                  A dead end keeps its real Button, because there the slot is
-                  not an action at all — it is the only place the card says
-                  "Full" or "Already started". A muni club has the seat bar to
-                  say that; a camp or an event has nothing else. */}
+                  A dead end answers in the same place at the same size, but
+                  muted and without the chevron — see below. That slot is not an
+                  action there at all: it is the only place the card says "Full"
+                  or "Already started". A muni club has the seat bar to say that;
+                  a camp or an event has nothing else. */}
               {cta &&
                 (openHref ? (
-                  <span className="inline-flex shrink-0 items-center gap-0.5 text-sm font-medium text-primary">
+                  /* `items-baseline` inside, so the text participates in
+                     baseline alignment and this span reports *its* baseline to
+                     the row outside. An `inline-flex` whose items are centred
+                     has no baseline to report and the spec falls back to
+                     synthesising one from the box edge, which would quietly
+                     undo the row's alignment. The chevron then takes
+                     `self-center` to stay centred on the line rather than
+                     hanging off the baseline by its bottom edge. */
+                  <span className="inline-flex shrink-0 items-baseline gap-0.5 whitespace-nowrap text-sm font-medium text-primary">
                     {cta.labelText}
-                    <NavChevron size="sm" className="text-primary" />
+                    <NavChevron
+                      size="sm"
+                      className="self-center text-primary"
+                    />
                   </span>
                 ) : (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={cta.kind === "disabled" ? "outline" : "default"}
-                    disabled={cta.kind === "disabled"}
-                    className="whitespace-nowrap"
-                  >
+                  /* A dead end states a fact; it does not offer an action, so it
+                     is not shaped like one. As a button it was the heaviest mark
+                     on the card — a boxed, bordered "Full" shouting next to a
+                     quiet "View", which had the emphasis exactly backwards: the
+                     card you cannot open drew the eye over the card you can.
+                     Muted text says the same words and ranks them correctly, and
+                     the absence of the chevron is what distinguishes the two
+                     cases, in the same place, at the same size.
+
+                     The label has to stay: the seat bar deliberately prints no
+                     "Full" chip of its own, on the grounds that the label beside
+                     it already says so. */
+                  <span className="shrink-0 whitespace-nowrap text-sm text-muted-foreground">
                     {cta.labelText}
-                  </Button>
+                  </span>
                 ))}
             </div>
           )}

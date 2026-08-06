@@ -34,6 +34,42 @@ import type { ProductType, Product } from "@/types";
 //                   AND participations_count >= seat_count
 //                   AND NOT waitlist_enabled
 //   open          ← otherwise
+//
+// How these states reach a card — there are two routes, and telling them
+// apart matters more than it looks.
+//
+// A browse row is filtered twice on its way to becoming a card: the query asks
+// only for visible products whose stored status is pending or running (so
+// draft, cancelled and completed never arrive at all), and the service then
+// drops anything whose effective status has already reached completed or
+// expired. Every state above except `ended` survives both and can arrive in a
+// response.
+//
+// `ended` cannot. It requires an effective status of completed, expired or
+// cancelled, and between them those two filters exclude all three, so no fetch
+// ever hands a browse card an ended product. It is still reachable, and its
+// rendering branch is live code: this function is called with `useNow()`,
+// which ticks every 30 seconds, so a shop tab left open past a product's local
+// midnight re-derives `ended` in place, under a card already on screen, with
+// no refetch anywhere in between.
+//
+// So: never reason "the list filters that out, therefore a card cannot see
+// it" about anything derived from `useNow()`. The filter runs once, at fetch.
+// This function runs every tick, for as long as the tab is open. That
+// inference has already come close to deleting this state as dead code.
+//
+// The same tick moves other states under a reader mid-visit: closed_pre → open
+// when registration opens, open → running_late when a camp reaches its start
+// date or an event's session ends, running_late → ended at the local midnight
+// after. None of those is something the reader asked for, which makes them
+// changes on data's own schedule — free to repaint a card, but not to resize
+// one (see the layout rules in the root CLAUDE.md).
+//
+// One known exception, left deliberately: the ended branch swaps the footer's
+// whole row for a single line, so a card does shrink at midnight and the grid
+// below it moves. It costs one card, once in its life, on a tab that happens
+// to be open at the time — small enough not to be worth restructuring the
+// footer for, but a real exception rather than an oversight.
 
 export type RegistrationState =
   | { kind: "ended" }
