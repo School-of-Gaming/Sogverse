@@ -65,6 +65,13 @@ export interface EnrollmentFixtureSpec {
   siteName?: string | null;
   /** 1-based place in line, when this enrollment is a waitlist place. */
   waitlistPosition?: number | null;
+  /**
+   * The seat is paid for and nobody has been placed in a group yet. Mutually
+   * exclusive with `waitlistPosition` by construction — a waitlisted family has
+   * no seat to be unplaced in — and the builder does not police it, because a
+   * fixture that set both would be describing a row the database cannot hold.
+   */
+  awaiting?: boolean;
   /** The subscription behind this enrollment is `past_due`. */
   paymentProblem?: boolean;
   /**
@@ -136,6 +143,7 @@ export function buildEnrollmentFixture(
     endDate,
     timezone: FIXTURE_TIMEZONE,
     waitlistPosition,
+    awaiting: spec.awaiting ?? false,
     paymentProblem: spec.paymentProblem ?? false,
     cancellation:
       cancelledAccessInDays === null

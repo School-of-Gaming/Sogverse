@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
 import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
 import { EnrollmentCard } from "@/components/family/EnrollmentCard";
-import type { FamilyEnrollmentSummary } from "@/components/family/enrollment-rollup";
+import type { FamilyGamerEnrollments } from "@/components/family/enrollment-rollup";
 import { ROUTES } from "@/lib/constants";
 import { ParentHelpSection } from "./ParentHelpSection";
 
@@ -18,17 +18,13 @@ import { ParentHelpSection } from "./ParentHelpSection";
  * **already sorted** — soonest session first, finished runs beneath — because
  * the ordering is a fact about the data and belongs with whoever built it, not
  * with the component drawing it.
+ *
+ * An alias rather than a second declaration: this is exactly what the roll-up
+ * emits, and two identical interfaces either side of one hand-off is a drift
+ * waiting to happen. The name stays because the prop is the parent page's own
+ * vocabulary; the shape belongs to the roll-up.
  */
-export interface ParentDashboardGamer {
-  /**
-   * The gamer's profile id. It seeds the identicon, so it has to be the real
-   * UUID: the pattern is derived from the id's hex bytes, and a readable
-   * stand-in renders a degenerate grid rather than a different face.
-   */
-  id: string;
-  firstName: string;
-  enrollments: readonly FamilyEnrollmentSummary[];
-}
+export type ParentDashboardGamer = FamilyGamerEnrollments;
 
 /**
  * Above this many children the pill stops naming them one by one.

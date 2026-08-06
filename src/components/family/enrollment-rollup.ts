@@ -1,4 +1,23 @@
+import {
+  formatProductSchedule,
+  scheduleCardLines,
+} from "@/components/public/products/format-product-schedule";
+import { ROUTES } from "@/lib/constants";
+import type { SupportedLocale } from "@/lib/constants/locales";
+import { VOICE_CONFIG } from "@/lib/constants/voice";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { localizedLocationName } from "@/lib/locations/localized-name";
 import { runEndedOn, runLiveness, type RunLiveness } from "@/lib/product-run";
+import {
+  endDateToCutoff,
+  enumerateRowOccurrences,
+  startDateToCutoff,
+} from "@/lib/session-occurrence";
+import type { FamilyMember } from "@/services/family";
+import type {
+  MyUpcomingSessionRow,
+  MyWaitlistRow,
+} from "@/services/participations";
 import type { ProductType } from "@/types";
 import type { SessionCancellation } from "@/components/parent/session-card-badge";
 
@@ -63,6 +82,23 @@ export interface FamilyEnrollmentSummary {
    * — so it is a state of this summary rather than a separate band.
    */
   waitlistPosition: number | null;
+  /**
+   * The seat is bought and paid for and nobody has been put in a group yet
+   * (`group_id IS NULL`) — the state between a purchase landing and an admin
+   * placing the child with a Gedu, which can take a day.
+   *
+   * A first-class state rather than a variation on running, because *nothing*
+   * behind this enrollment exists yet: no group means no voice room, no feed
+   * and no page, so the card carries no Join, no link and no chevron — the
+   * same inertness a waitlist place has, arrived at for the same reason. It is
+   * distinct from a waitlist place in the one way that matters to the family:
+   * the seat is theirs, and the schedule on the card is one they will actually
+   * be attending.
+   *
+   * Never true at the same time as `waitlistPosition !== null`: a waitlisted
+   * row has no seat to be unplaced in.
+   */
+  awaiting: boolean;
   /** The subscription behind this enrollment is `past_due`. */
   paymentProblem: boolean;
   /** Set when the parent has cancelled this club's subscription. */
@@ -176,4 +212,360 @@ export function sortFamilyEnrollments(
   });
 
   return ranked.map((entry) => entry.enrollment);
+}
+
+// ---------------------------------------------------------------------------
+// Service rows → summaries
+// ---------------------------------------------------------------------------
+
+/**
+ * **The roll-up runs client-side, not in the data shell**, and that is a
+ * constraint rather than a convenience.
+ *
+ * Two of the fields it produces are functions of things a server cannot know
+ * once and be done with. `scheduleLines` is rendered in the *viewer's* zone and
+ * locale, and `nextSessionStart` has to advance as sessions start and finish —
+ * a summary built once at request time would go on naming a session the family
+ * is already sitting in. So the server prefetches the **rows**, and a client
+ * hook runs this mapping over them against the shared 30-second clock.
+ *
+ * What is emphatically *not* produced here is anything about whether a room is
+ * open right now. Liveness is derived per tick from `useNow()` and the shared
+ * voice-window arithmetic, by the card itself; a summary carrying an `isOpen`
+ * boolean gives one card two clocks, which is a bug this codebase has already
+ * fixed once on the gedu side.
+ */
+export interface FamilyRollUpArgs {
+  /** `status='active'` rows — placed and unplaced alike. */
+  sessionRows: readonly MyUpcomingSessionRow[];
+  /** `status='waitlisted'` rows, each with its live place in line. */
+  waitlistRows: readonly MyWaitlistRow[];
+  /** The instant every derivation is anchored to — the shared clock's tick. */
+  now: Date;
+  /** Viewer's UI locale, for the product name and the venue name. */
+  locale: SupportedLocale;
+  /** Viewer's IANA zone — the schedule sentence is stated in it. */
+  timeZone: string;
+  /**
+   * Where a card's stretched link goes, per enrollment.
+   *
+   * A seam rather than a computed href: the family product page does not exist
+   * yet, and a mapping that named a route before there was one behind it would
+   * be manufacturing a link that 404s. Everything unresolved collapses to `"#"`,
+   * which the card already renders as a real anchor that goes nowhere. The
+   * shell that adds the routes fills this in; nothing else about the mapping
+   * changes when it does.
+   *
+   * Never consulted for a waitlist place or an unplaced seat — neither has a
+   * page behind it, and the card refuses to be a link at all in both states.
+   */
+  openHref?: (enrollment: {
+    participationId: string;
+    productType: ProductType;
+  }) => string;
+}
+
+/** One enrollment, with the child it belongs to — the grouping's raw material. */
+export interface FamilyEnrollmentEntry {
+  gamerId: string;
+  enrollment: FamilyEnrollmentSummary;
+}
+
+/** One child's section of a family dashboard: who they are, and what they are in. */
+export interface FamilyGamerEnrollments {
+  /**
+   * The gamer's profile id. It seeds the identicon, so it has to be the real
+   * UUID — the pattern is derived from the id's hex bytes.
+   */
+  id: string;
+  firstName: string;
+  /** Already sorted: running, then waiting, then finished. */
+  enrollments: readonly FamilyEnrollmentSummary[];
+}
+
+/**
+ * Every enrollment the two reads describe, as flat summaries tagged with whose
+ * they are — **one list, not two bands**.
+ *
+ * The unification is the point. A family holding a seat and a family holding a
+ * place in line are both *in* something; splitting the page by our own `status`
+ * column asked a parent to learn the distinction before they could read their
+ * own dashboard. The two reads stay separate because their failure semantics
+ * differ, and they meet here, once, in memory.
+ *
+ * Order is not meaningful — `sortFamilyEnrollments` decides that, per child.
+ */
+export function toFamilyEnrollments(
+  args: FamilyRollUpArgs,
+): FamilyEnrollmentEntry[] {
+  return [
+    ...args.sessionRows.map((row) => ({
+      gamerId: row.gamer.id,
+      enrollment: sessionSummary(row, args),
+    })),
+    ...args.waitlistRows.map((row) => ({
+      gamerId: row.gamer.id,
+      enrollment: waitlistSummary(row, args),
+    })),
+  ];
+}
+
+/**
+ * The parent dashboard's whole shape: one section per child, in the order the
+ * sections appear, each carrying that child's sorted cards.
+ *
+ * **The family read includes the reader**, and one linked parent may see
+ * another, so the list is filtered to `role === 'gamer'` before anything else
+ * happens — a parent is not a section on their own dashboard, and the identicon
+ * heading would be their own face.
+ *
+ * Children are ordered by **first name**. There is no meaningful order in the
+ * data — no birth order is recorded and a purchase order would reshuffle the
+ * page every time a club was bought — and the one thing a parent scrolling for
+ * a particular child needs is that the sections are where they were yesterday.
+ *
+ * A child with nothing booked still gets a section: their absence from the rows
+ * is exactly the empty state the page renders for them.
+ */
+export function rollUpFamilyEnrollments(
+  args: FamilyRollUpArgs & { family: readonly FamilyMember[] },
+): FamilyGamerEnrollments[] {
+  const byGamer = new Map<string, FamilyEnrollmentSummary[]>();
+  for (const { gamerId, enrollment } of toFamilyEnrollments(args)) {
+    const bucket = byGamer.get(gamerId);
+    if (bucket) bucket.push(enrollment);
+    else byGamer.set(gamerId, [enrollment]);
+  }
+
+  return args.family
+    .filter((member) => member.role === "gamer")
+    .sort((a, b) => a.first_name.localeCompare(b.first_name))
+    .map((member) => ({
+      id: member.id,
+      firstName: member.first_name,
+      // A row whose gamer is not in the family list is dropped rather than
+      // rendered under a heading nobody can name. RLS makes that impossible in
+      // practice — both reads are scoped to the same account the family read is
+      // — so this is a shape guarantee, not a filter with a job.
+      enrollments: sortFamilyEnrollments(byGamer.get(member.id) ?? [], args.now),
+    }));
+}
+
+/**
+ * The same mapping for a child's own dashboard, which has exactly one person on
+ * it and therefore no grouping to do — just this gamer's cards, sorted.
+ *
+ * It filters by id rather than trusting the reads to be self-scoped, because
+ * the family read a gamer gets back carries their siblings too, and the day
+ * somebody prefetches the sessions rows with the wrong audience is the day a
+ * child's dashboard would quietly show their brother's club.
+ */
+export function rollUpGamerEnrollments(
+  args: FamilyRollUpArgs & { gamerId: string },
+): FamilyEnrollmentSummary[] {
+  return sortFamilyEnrollments(
+    toFamilyEnrollments(args)
+      .filter((entry) => entry.gamerId === args.gamerId)
+      .map((entry) => entry.enrollment),
+    args.now,
+  );
+}
+
+/**
+ * An `status='active'` row — a seat the family holds, placed or not.
+ *
+ * **Everything the card shows stops at the paid window.** When a parent has
+ * cancelled, the occurrence walk is bounded by whichever comes first, the
+ * product's own last day or the instant paid access ends, so the next session
+ * the card names is one the family can actually attend and the sort cannot
+ * float a cancelled club above a live one on the strength of a session nobody
+ * is entitled to.
+ */
+function sessionSummary(
+  row: MyUpcomingSessionRow,
+  { now, locale, timeZone, openHref }: FamilyRollUpArgs,
+): FamilyEnrollmentSummary {
+  const { product } = row;
+  const awaiting = row.groupId === null;
+  const hasVoiceRoom = product.isRemote;
+  const subEnd = row.subscriptionEndsAt;
+
+  const occurrences = enumerateRowOccurrences({
+    slots: row.slots,
+    timezone: product.timezone,
+    now,
+    startBoundary: startDateToCutoff(product.startDate, product.timezone),
+    endBoundary: earlierBoundary(
+      endDateToCutoff(product.endDate, product.timezone),
+      subEnd,
+    ),
+    // One occurrence is all a card states — except on a cancelled membership,
+    // where the *last* covered session has to be identified as the last, and
+    // that cannot be known without walking to the end of the window. The walk
+    // is finite either way: a cancelled sub always supplies a terminal instant,
+    // so the uncapped branch is bounded by the boundary above.
+    cap: subEnd === null ? 1 : Infinity,
+    windowCloseMs: VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000,
+  });
+  // Guarded on the length rather than on the element, because indexed access is
+  // typed as always-present here — an `?? null` would read as a check the
+  // compiler has already refused to make.
+  const empty = occurrences.length === 0;
+  const next = empty ? null : occurrences[0];
+  const last = empty ? null : occurrences[occurrences.length - 1];
+
+  return {
+    participationId: row.participationId,
+    productName: resolveTranslation(product.translations, locale)?.name ?? "",
+    productType: product.type,
+    nextSessionStart: next === null ? null : next.start,
+    nextSessionEnd: next === null ? null : next.end,
+    hasVoiceRoom,
+    // The room is keyed by group, so an unplaced seat has no destination —
+    // the same inert `"#"` an in-person product gets, and for the same reason:
+    // there is nothing to navigate to. The card renders no Join in either case.
+    voiceHref:
+      hasVoiceRoom && row.groupId !== null
+        ? ROUTES.voice.groupSession(row.groupId)
+        : "#",
+    // Never carried by a remote product, whatever the row says: a product with
+    // a voice room has no building, and a card showing both would be claiming
+    // the family meets in two places. The read already gates this, so this is
+    // belt and braces on a claim the card makes visually.
+    siteName:
+      hasVoiceRoom || product.site === null
+        ? null
+        : localizedLocationName(product.site, locale),
+    // Nothing to open behind an unplaced seat: no group means no feed and no
+    // page, which is the same reason the card drops its chevron and its anchor.
+    openHref:
+      awaiting || openHref === undefined
+        ? "#"
+        : openHref({
+            participationId: row.participationId,
+            productType: product.type,
+          }),
+    endDate: product.endDate,
+    timezone: product.timezone,
+    waitlistPosition: null,
+    awaiting,
+    paymentProblem: row.paymentProblem,
+    // `null` when the window has already been used up: there is no last session
+    // left to name, and a won't-renew line pointing at nothing is worse than
+    // no line. The card's other states already say what such an enrollment is.
+    cancellation:
+      subEnd === null || last === null
+        ? null
+        : {
+            accessUntil: subEnd,
+            lastSessionStart: last.start,
+            isLastSession: occurrences.length === 1,
+          },
+    scheduleLines: scheduleLinesFor(
+      {
+        type: product.type,
+        startDate: product.startDate,
+        endDate: product.endDate,
+        timezone: product.timezone,
+        slots: row.slots,
+      },
+      { locale, timeZone, now },
+    ),
+  };
+}
+
+/**
+ * A `status='waitlisted'` row — a place in line, stated as a card in the same
+ * list as every seat.
+ *
+ * It carries **no next session**, because no occurrence of this product is
+ * theirs to turn up to; the schedule sentence still renders, because that is a
+ * fact about the product and it is exactly what a family weighing up whether to
+ * stay in the queue wants to read. And it links nowhere: `openHref` is not even
+ * consulted, since there is no page behind a queue position.
+ */
+function waitlistSummary(
+  row: MyWaitlistRow,
+  { now, locale, timeZone }: FamilyRollUpArgs,
+): FamilyEnrollmentSummary {
+  const { product } = row;
+  return {
+    participationId: row.participationId,
+    productName: resolveTranslation(product.translations, locale)?.name ?? "",
+    productType: product.type,
+    nextSessionStart: null,
+    nextSessionEnd: null,
+    hasVoiceRoom: product.isRemote,
+    voiceHref: "#",
+    siteName: null,
+    openHref: "#",
+    endDate: product.endDate,
+    timezone: product.timezone,
+    waitlistPosition: row.position,
+    awaiting: false,
+    // Both are facts about a subscription, and a queue position is not one:
+    // nothing has been charged for a place in line, so there is nothing to be
+    // past due on and nothing to wind down.
+    paymentProblem: false,
+    cancellation: null,
+    scheduleLines: scheduleLinesFor(
+      {
+        type: product.type,
+        startDate: product.startDate,
+        endDate: product.endDate,
+        timezone: product.timezone,
+        slots: row.slots,
+      },
+      { locale, timeZone, now },
+    ),
+  };
+}
+
+/**
+ * The product's cadence in words, through the same formatter the public browse
+ * cards and the gedu dashboard use — so a family reads the identical sentence
+ * wherever they meet the product, in their own zone.
+ *
+ * Deliberately blind to the enrollment: a cancelled membership does not change
+ * what day the club runs on, and neither does a place in line.
+ */
+function scheduleLinesFor(
+  product: {
+    type: ProductType;
+    startDate: string | null;
+    endDate: string | null;
+    timezone: string;
+    slots: readonly { weekday: number; startTime: string; durationMinutes: number }[];
+  },
+  { locale, timeZone, now }: { locale: SupportedLocale; timeZone: string; now: Date },
+): string[] {
+  return scheduleCardLines(
+    formatProductSchedule({
+      product: {
+        product_type: product.type,
+        start_date: product.startDate,
+        end_date: product.endDate,
+        timezone: product.timezone,
+        schedule_slots: product.slots.map((slot) => ({
+          weekday: slot.weekday,
+          start_time: slot.startTime,
+          duration_minutes: slot.durationMinutes,
+        })),
+      },
+      locale,
+      timeZone,
+      now,
+    }),
+  );
+}
+
+/**
+ * The earlier of two optional UTC cutoffs — the product's own last day and a
+ * cancelled subscription's paid-through instant. `null` on one side means "no
+ * bound there", so the other wins; both null means the walk is unbounded.
+ */
+function earlierBoundary(a: Date | null, b: Date | null): Date | null {
+  if (a === null) return b;
+  if (b === null) return a;
+  return a.getTime() <= b.getTime() ? a : b;
 }

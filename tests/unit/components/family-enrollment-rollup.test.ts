@@ -1,8 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
+  rollUpFamilyEnrollments,
+  rollUpGamerEnrollments,
   sortFamilyEnrollments,
+  toFamilyEnrollments,
   type FamilyEnrollmentSummary,
 } from "@/components/family/enrollment-rollup";
+import type { FamilyMember } from "@/services/family";
+import type {
+  MyUpcomingSessionRow,
+  MyWaitlistRow,
+} from "@/services/participations";
+import type { ProductTranslation } from "@/types";
 
 /**
  * The order of a child's cards is the order their week actually runs, and it is
@@ -15,6 +24,10 @@ import {
  * Every case is expressed as ids in, ids out, so a fixture says only what the
  * sort is allowed to read: the next session, the end date, and the name that
  * breaks a tie.
+ *
+ * The second half of the file covers the mapping that *produces* those
+ * summaries out of the two service reads: which row becomes which state, and
+ * where a cancelled membership stops.
  */
 
 const TZ = "Europe/Helsinki";
@@ -57,6 +70,7 @@ function enrollment(
     endDate: fields.endDate ?? null,
     timezone: TZ,
     waitlistPosition: null,
+    awaiting: false,
     paymentProblem: false,
     cancellation: null,
     scheduleLines: [],
@@ -151,5 +165,370 @@ describe("sortFamilyEnrollments — inside a band", () => {
       enrollment("last-month", { endDate: "2026-01-10" }),
     ];
     expect(sortedIds(input)).toEqual(["last-week", "last-month", "last-year"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Service rows → summaries
+// ---------------------------------------------------------------------------
+
+/**
+ * The mapping's fixtures are deliberately scheduled in **UTC**, so a slot's
+ * weekday and clock face are the same numbers the assertions read back and no
+ * case needs a zone conversion done in the reader's head. The one thing that is
+ * not about clock arithmetic — that a cancelled membership stops where the
+ * money stopped — is expressed as instants, which are zoneless anyway.
+ */
+
+const PRODUCT_TZ = "UTC";
+const AINO = "4c66fc68-a0e9-42de-8245-563c7edf8314";
+const OTSO = "13ab5d23-716f-4ecb-8958-67acbd3820e6";
+const PARENT = "9c39bfb5-67de-4bed-832d-ecb629c5298f";
+const GROUP = "33333333-3333-3333-3333-333333333333";
+
+/** Friday 17:00-18:30 UTC — the first one after NOW is Fri 2026-02-13. */
+const FRIDAY_SLOT = { weekday: 4, startTime: "17:00", durationMinutes: 90 };
+const FIRST_FRIDAY = "2026-02-13T17:00:00.000Z";
+const THIRD_FRIDAY = "2026-02-27T17:00:00.000Z";
+
+function translations(name: string): ProductTranslation[] {
+  return [
+    {
+      locale: "en",
+      name,
+      short_description: "",
+      long_description: null,
+      product_id: "p",
+      created_at: "",
+      updated_at: "",
+    },
+  ];
+}
+
+function sessionRow(
+  overrides: Partial<Omit<MyUpcomingSessionRow, "product">> & {
+    product?: Partial<MyUpcomingSessionRow["product"]>;
+  } = {},
+): MyUpcomingSessionRow {
+  const { product, ...rest } = overrides;
+  return {
+    participationId: "participation-1",
+    gamer: { id: AINO, firstName: "Aino" },
+    product: {
+      id: "product-1",
+      type: "consumer_club",
+      timezone: PRODUCT_TZ,
+      startDate: null,
+      endDate: null,
+      padletUrl: null,
+      isRemote: true,
+      site: null,
+      translations: translations("Minecraft Explorers Club"),
+      ...(product ?? {}),
+    },
+    groupId: overrides.groupId === undefined ? GROUP : overrides.groupId,
+    slots: [FRIDAY_SLOT],
+    paymentProblem: false,
+    subscriptionEndsAt: null,
+    ...rest,
+  };
+}
+
+function waitlistRow(
+  overrides: Partial<Omit<MyWaitlistRow, "product">> & {
+    product?: Partial<MyWaitlistRow["product"]>;
+  } = {},
+): MyWaitlistRow {
+  const { product, ...rest } = overrides;
+  return {
+    participationId: "waitlist-1",
+    gamer: { id: AINO, firstName: "Aino" },
+    product: {
+      type: "consumer_club",
+      timezone: PRODUCT_TZ,
+      startDate: null,
+      endDate: null,
+      isRemote: true,
+      translations: translations("Fortnite Creative Club"),
+      ...(product ?? {}),
+    },
+    slots: [FRIDAY_SLOT],
+    position: 3,
+    ...rest,
+  };
+}
+
+function mapOne(
+  args: {
+    sessionRows?: MyUpcomingSessionRow[];
+    waitlistRows?: MyWaitlistRow[];
+    openHref?: (e: { participationId: string }) => string;
+  } = {},
+): FamilyEnrollmentSummary {
+  const entries = toFamilyEnrollments({
+    sessionRows: args.sessionRows ?? [],
+    waitlistRows: args.waitlistRows ?? [],
+    now: NOW,
+    locale: "en",
+    timeZone: "UTC",
+    openHref: args.openHref,
+  });
+  expect(entries).toHaveLength(1);
+  return entries[0].enrollment;
+}
+
+describe("toFamilyEnrollments — a seat", () => {
+  it("names the next occurrence and points the Join at the group's room", () => {
+    const summary = mapOne({ sessionRows: [sessionRow()] });
+    expect(summary.nextSessionStart?.toISOString()).toBe(FIRST_FRIDAY);
+    expect(summary.nextSessionEnd?.toISOString()).toBe(
+      "2026-02-13T18:30:00.000Z",
+    );
+    expect(summary.hasVoiceRoom).toBe(true);
+    expect(summary.voiceHref).toContain(GROUP);
+    expect(summary.awaiting).toBe(false);
+    expect(summary.waitlistPosition).toBeNull();
+  });
+
+  it("states the product's cadence in words", () => {
+    expect(mapOne({ sessionRows: [sessionRow()] }).scheduleLines).toEqual([
+      "Friday · 17:00–18:30",
+    ]);
+  });
+
+  // The card opens a page that does not exist yet, so the mapping asks its
+  // caller rather than inventing a route — and answers "#" when nobody does.
+  it("resolves the open href through the seam, defaulting to inert", () => {
+    expect(mapOne({ sessionRows: [sessionRow()] }).openHref).toBe("#");
+    expect(
+      mapOne({
+        sessionRows: [sessionRow()],
+        openHref: (e) => `/parent/clubs/${e.participationId}`,
+      }).openHref,
+    ).toBe("/parent/clubs/participation-1");
+  });
+
+  it("names the venue on an in-person product and never on a remote one", () => {
+    const site = { name: "Kirjasto Oodi", name_i18n: null };
+    expect(
+      mapOne({
+        sessionRows: [sessionRow({ product: { isRemote: false, site } })],
+      }).siteName,
+    ).toBe("Kirjasto Oodi");
+    // A remote product has no building; a card claiming both would be saying
+    // the family meets in two places.
+    expect(
+      mapOne({ sessionRows: [sessionRow({ product: { isRemote: true, site } })] })
+        .siteName,
+    ).toBeNull();
+  });
+
+  it("resolves the venue name into the viewer's locale", () => {
+    const entries = toFamilyEnrollments({
+      sessionRows: [
+        sessionRow({
+          product: {
+            isRemote: false,
+            site: { name: "Helsinki", name_i18n: { sv: "Helsingfors" } },
+          },
+        }),
+      ],
+      waitlistRows: [],
+      now: NOW,
+      locale: "sv",
+      timeZone: "UTC",
+    });
+    expect(entries[0].enrollment.siteName).toBe("Helsingfors");
+  });
+});
+
+describe("toFamilyEnrollments — an unplaced seat", () => {
+  // The whole point of the state: the seat is real and the schedule is real,
+  // but there is no group, so there is nothing to join and nothing to open.
+  it("is awaiting, with a schedule, an inert room and no page", () => {
+    const summary = mapOne({ sessionRows: [sessionRow({ groupId: null })] });
+    expect(summary.awaiting).toBe(true);
+    expect(summary.nextSessionStart?.toISOString()).toBe(FIRST_FRIDAY);
+    expect(summary.scheduleLines).not.toEqual([]);
+    expect(summary.voiceHref).toBe("#");
+    expect(summary.openHref).toBe("#");
+  });
+
+  it("keeps the open href inert even when the caller offers one", () => {
+    expect(
+      mapOne({
+        sessionRows: [sessionRow({ groupId: null })],
+        openHref: () => "/parent/clubs/anything",
+      }).openHref,
+    ).toBe("#");
+  });
+});
+
+describe("toFamilyEnrollments — a place in line", () => {
+  it("carries the position and the schedule, and nothing a seat would", () => {
+    const summary = mapOne({ waitlistRows: [waitlistRow()] });
+    expect(summary.waitlistPosition).toBe(3);
+    expect(summary.scheduleLines).toEqual(["Friday · 17:00–18:30"]);
+    // No occurrence of this product is theirs to turn up to.
+    expect(summary.nextSessionStart).toBeNull();
+    expect(summary.nextSessionEnd).toBeNull();
+    expect(summary.awaiting).toBe(false);
+    expect(summary.openHref).toBe("#");
+    expect(summary.voiceHref).toBe("#");
+    expect(summary.paymentProblem).toBe(false);
+    expect(summary.cancellation).toBeNull();
+  });
+
+  it("still says whether the product has a room at all", () => {
+    expect(
+      mapOne({ waitlistRows: [waitlistRow({ product: { isRemote: false } })] })
+        .hasVoiceRoom,
+    ).toBe(false);
+  });
+});
+
+describe("toFamilyEnrollments — a cancelled membership", () => {
+  // The settled decision: nothing renders past the paid window. The walk is
+  // bounded by the access instant, so the last covered session is the last
+  // thing the card can name.
+  it("marks the final covered session as the last", () => {
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({ subscriptionEndsAt: new Date("2026-02-20T00:00:00Z") }),
+      ],
+    });
+    expect(summary.nextSessionStart?.toISOString()).toBe(FIRST_FRIDAY);
+    expect(summary.cancellation?.lastSessionStart.toISOString()).toBe(
+      FIRST_FRIDAY,
+    );
+    expect(summary.cancellation?.isLastSession).toBe(true);
+  });
+
+  it("names the last session without claiming this one is it", () => {
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({ subscriptionEndsAt: new Date("2026-02-28T00:00:00Z") }),
+      ],
+    });
+    expect(summary.nextSessionStart?.toISOString()).toBe(FIRST_FRIDAY);
+    expect(summary.cancellation?.lastSessionStart.toISOString()).toBe(
+      THIRD_FRIDAY,
+    );
+    expect(summary.cancellation?.isLastSession).toBe(false);
+  });
+
+  // A session the family is no longer entitled to must not float their card to
+  // the top of the page, so the clamp has to bite on the next session too.
+  it("shows nothing at all once the paid window is used up", () => {
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({ subscriptionEndsAt: new Date("2026-02-12T00:00:00Z") }),
+      ],
+    });
+    expect(summary.nextSessionStart).toBeNull();
+    // Nothing left to name as the last session, so the line that would name it
+    // is not rendered rather than pointed at a session that is not there.
+    expect(summary.cancellation).toBeNull();
+  });
+
+  it("stops at the product's own last day when that comes first", () => {
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({
+          product: { endDate: "2026-02-13" },
+          subscriptionEndsAt: new Date("2026-06-30T00:00:00Z"),
+        }),
+      ],
+    });
+    expect(summary.cancellation?.lastSessionStart.toISOString()).toBe(
+      FIRST_FRIDAY,
+    );
+    expect(summary.cancellation?.isLastSession).toBe(true);
+  });
+});
+
+describe("rollUpFamilyEnrollments — the page's shape", () => {
+  const FAMILY: FamilyMember[] = [
+    { id: PARENT, role: "customer", first_name: "Sanna" },
+    { id: OTSO, role: "gamer", first_name: "Otso" },
+    { id: AINO, role: "gamer", first_name: "Aino" },
+  ];
+
+  function rollUp(rows: {
+    sessionRows?: MyUpcomingSessionRow[];
+    waitlistRows?: MyWaitlistRow[];
+  }) {
+    return rollUpFamilyEnrollments({
+      family: FAMILY,
+      sessionRows: rows.sessionRows ?? [],
+      waitlistRows: rows.waitlistRows ?? [],
+      now: NOW,
+      locale: "en",
+      timeZone: "UTC",
+    });
+  }
+
+  // The family read hands back the reader as well as their children, and a
+  // parent is not a section on their own dashboard.
+  it("drops the parent's own profile and orders the children by first name", () => {
+    expect(rollUp({}).map((g) => g.firstName)).toEqual(["Aino", "Otso"]);
+  });
+
+  it("gives a child with nothing booked an empty section rather than none", () => {
+    const sections = rollUp({ sessionRows: [sessionRow()] });
+    expect(sections.map((g) => g.enrollments.length)).toEqual([1, 0]);
+  });
+
+  // The unification: a seat and a place in line are one list, sorted together.
+  it("puts a seat and a waitlist place in one list, running first", () => {
+    const [aino] = rollUp({
+      waitlistRows: [waitlistRow()],
+      sessionRows: [sessionRow()],
+    });
+    expect(aino.enrollments.map((e) => e.participationId)).toEqual([
+      "participation-1",
+      "waitlist-1",
+    ]);
+  });
+
+  it("files each row under the child it belongs to", () => {
+    const sections = rollUp({
+      sessionRows: [
+        sessionRow(),
+        sessionRow({
+          participationId: "participation-2",
+          gamer: { id: OTSO, firstName: "Otso" },
+        }),
+      ],
+    });
+    expect(sections[0].enrollments.map((e) => e.participationId)).toEqual([
+      "participation-1",
+    ]);
+    expect(sections[1].enrollments.map((e) => e.participationId)).toEqual([
+      "participation-2",
+    ]);
+  });
+});
+
+describe("rollUpGamerEnrollments — one child's own page", () => {
+  it("returns only that child's cards, sorted", () => {
+    const mine = rollUpGamerEnrollments({
+      gamerId: AINO,
+      sessionRows: [
+        sessionRow(),
+        sessionRow({
+          participationId: "someone-elses",
+          gamer: { id: OTSO, firstName: "Otso" },
+        }),
+      ],
+      waitlistRows: [waitlistRow()],
+      now: NOW,
+      locale: "en",
+      timeZone: "UTC",
+    });
+    expect(mine.map((e) => e.participationId)).toEqual([
+      "participation-1",
+      "waitlist-1",
+    ]);
   });
 });
