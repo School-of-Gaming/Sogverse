@@ -76,12 +76,17 @@ export interface SlotShape {
  * last week's slot start in local time, so `getNextSessionStart`
  * returns last week's already-finished session and the in-window check
  * fails. Today's in-progress session disappears from the dashboard.
- * Regression coverage lives with the timezone tests for the enrollment
- * helpers and the backward occurrence walk.
+ * The regression is pinned in `tests/unit/session-schedule.test.ts`, by
+ * the spring-forward case that reads a room's state mid-session: revert
+ * the week step to a flat 7×24h and that file — and only that file —
+ * goes red.
  *
  * Returns null when the product hasn't started yet
  * (`startBoundary > now`) — no prev-week occurrence can be in
- * progress in that case.
+ * progress in that case. Belt and braces with the `afterStart` check
+ * below, which rejects the same occurrence one step later; either alone
+ * is enough, which is why breaking one of them on its own leaves the
+ * suite green.
  */
 export function getCurrentInProgressOccurrence(args: {
   slot: SlotShape;

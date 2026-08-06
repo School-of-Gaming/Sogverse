@@ -11,9 +11,10 @@ import {
  * Backward occurrence enumeration — the half of the shared expansion helpers
  * the session feed needed and the dashboards never did.
  *
- * The forward walk has a long-standing TZ regression test because a naive
- * week step lands an hour out on a DST
- * transition and quietly drops or duplicates an occurrence. The backward walk
+ * The forward walk has long-standing TZ regression tests — the enrollment
+ * timezone suites, and the spring-forward case in `session-schedule.test.ts` —
+ * because a naive week step lands an hour out on a DST transition and quietly
+ * drops or duplicates an occurrence. The backward walk
  * takes exactly the same risk in the other direction, so it gets the same
  * treatment here: Helsinki, across the March transition, asserting the *dates*
  * rather than the instants, because a session's identity is its local date.
