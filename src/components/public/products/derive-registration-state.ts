@@ -241,12 +241,18 @@ export function deriveRegistrationState({
 }
 
 // How a state's browse-card CTA behaves:
-//   "primary"  → a working "View" button into the detail page (something to do
-//                there: sign up, watch the threshold, join the waitlist).
+//   "primary"  → the card opens: a worded "View" hint with a chevron, and the
+//                whole card surface links to the detail page, where there is
+//                something to do (sign up, watch the threshold, join a
+//                waitlist).
 //   "disabled" → a dead end — full with no waitlist, a camp already underway,
-//                or an event already over; the detail page has nothing
-//                actionable, so the parent isn't sent on a round-trip.
-//   null       → no button at all (ended).
+//                or an event already over. The label still appears, in the same
+//                place at the same size but muted and without a chevron,
+//                because it is the only thing saying *why* the card is inert.
+//                The detail page has nothing actionable, so the parent is not
+//                sent on a round-trip.
+//   null       → no label at all (ended); the whole footer row gives way to a
+//                one-line note.
 //
 // Lives next to the state it switches on so the CTA component
 // (`useRegistrationCta`) and anything deciding "does this state have a detail

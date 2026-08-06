@@ -24,14 +24,20 @@ import type {
 //
 // The set is curated down to the *visually distinct* surfaces worth eyeballing,
 // grouped by product type:
-//   • Consumer club — a subscription club (open) + an ended product.
+//   • Consumer club — a subscription club, open, and one still short of its
+//     signup threshold.
 //   • Municipality club — the full seat-fill range, plus the pre-launch
 //     countdown across the three auth states a parent can be in.
-//   • Event — a free product, plus the same event once it's over. Camps and
+//   • Camp — one not yet started, one underway, and one finished. Camps and
 //     events lock late joins at different moments (a camp from local midnight
-//     on its start date, an event only once its session has finished), and the
-//     disabled CTA says so — "Already started" vs. "Already over" — so both
-//     labels need somewhere to be looked at.
+//     on its start date, an event only once its session has finished) and say
+//     so differently — "Already started" vs. "Already over" — so both labels
+//     need somewhere to be looked at.
+//   • Event — a free product, plus the same event once it's over.
+//
+// Between them the scenarios cover every registration state the card can
+// render, including the one a parent can only reach by leaving a tab open past
+// midnight. A state with no scenario here is a state nobody can look at.
 //
 // Most scenarios author their registration `state` directly so they stay
 // deterministic regardless of the wall clock. The countdown scenarios are the
@@ -52,6 +58,7 @@ export type PreviewScenario =
   | "muni-opens-with-gamers"
   | "camp-open"
   | "camp-running"
+  | "camp-ended"
   | "free-event"
   | "event-over";
 
@@ -122,7 +129,7 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     },
   },
   "consumer-club-threshold": {
-    // The last reachable state without a card of its own. A club that needs a
+    // The state easiest to forget exists. A club that needs a
     // minimum intake before it can run sits here until the signups arrive, and
     // it is deliberately undramatic: threshold handling is deferred, so there
     // is no meter and no countdown, and the card is an ordinary openable one
@@ -258,6 +265,25 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     auth: "signed-in-with-gamers",
     state: { kind: "running_late", phase: "underway" },
   },
+  "camp-ended": {
+    // A parent cannot reach this from a fetch — the browse query and the
+    // service filter between them exclude every status that produces `ended` —
+    // but the card derives from a clock that ticks every 30 seconds, so a tab
+    // left open past a product's local midnight lands here in place. It is the
+    // only state that arrives that way, the only one with a desaturated card and
+    // a note instead of a footer row, and therefore the only one with nowhere
+    // else to be looked at. It is also the documented layout exception: that
+    // footer swap changes the card's height, so this is where you go to see the
+    // shrink that happens at midnight.
+    label: "Finished — desaturated, inert",
+    productType: "camp",
+    billingMode: "paid",
+    seatCount: null,
+    waitlistEnabled: false,
+    priceCentsEur: 25000,
+    auth: "signed-in-with-gamers",
+    state: { kind: "ended" },
+  },
   "free-event": {
     label: "Free — open",
     productType: "event",
@@ -277,9 +303,10 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     // The same evening event after it finished. An event stays joinable right
     // through its session, so the only late-join lock it ever shows is this
     // one — hence a different label from the camp above ("Already over", not
-    // "Already started"). Same dead-end treatment: disabled button, no detail
-    // page behind it. It stays on the browse grid until its end_date rolls
-    // over, which is the window this card represents.
+    // "Already started"). Same dead-end treatment: a muted label, no chevron,
+    // no detail page behind it. It stays on the browse grid until its end_date
+    // rolls over, which is the window this card represents — after that it
+    // becomes `camp-ended`'s state, which looks quite different.
     label: "Already over",
     productType: "event",
     billingMode: "free",
@@ -311,6 +338,7 @@ const SCENARIO_ORDER: PreviewScenario[] = [
   "muni-opens-with-gamers",
   "camp-open",
   "camp-running",
+  "camp-ended",
   "free-event",
   "event-over",
 ];

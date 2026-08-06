@@ -105,14 +105,21 @@ export function ProductBrowseCardView({
   // `registrationCtaKind` already decides that: only a "primary" state has
   // somewhere worth going, while full-no-waitlist, a camp underway and an ended
   // run are deliberate dead ends ("the detail page has nothing actionable, so
-  // the parent isn't sent on a round-trip"). One value drives all four of the
-  // card's clickable affordances — the chevron, the hover/active feedback, the
-  // button's fill and the stretched link — so a card can never *look* openable
-  // without being openable. Today's card gets that wrong in exactly one place:
-  // a full-no-waitlist card still brightens its border on hover and then
-  // swallows the click.
-  const openHref =
-    !isEnded && cta?.kind === "primary" ? detailHref : undefined;
+  // the parent isn't sent on a round-trip").
+  //
+  // Every clickable affordance reads this one value — the chevron, the
+  // hover/focus/active feedback, the label's colour and the stretched link — so
+  // a card cannot look openable without being openable. The shape this replaced
+  // gated the hover on `detailHref` alone, which the adapter always supplies, so
+  // a full-no-waitlist card brightened its border under the cursor and then
+  // swallowed the click.
+  //
+  // Note the converse is not enforced and cannot be from here: an openable state
+  // handed no `detailHref` falls into the inert branch and renders a muted
+  // "View" that does nothing. No caller does that — the adapter defaults the
+  // href and the style guide derives it from this same rule — so this is a note
+  // for whoever adds the next caller, not a live defect.
+  const openHref = cta?.kind === "primary" ? detailHref : undefined;
 
   // How the footer row aligns its two sides, which depends on what is actually
   // in them. The right is always one line of type; the left is a line of type
@@ -242,21 +249,14 @@ export function ProductBrowseCardView({
               ) : (
                 <PriceBlock price={price} />
               )}
-              {/* An openable card answers with a worded hint and a chevron,
-                  not a button. A filled button is the loudest thing on the card
-                  and it says "click *me*" — which is precisely the claim being
-                  withdrawn now that the whole surface is the target. "View ›"
-                  makes the softer, truer claim: there is more this way, and
-                  here is roughly where to aim. It is deliberately not an
-                  anchor — the stretched link over the card is the only one, so
-                  a grid of twenty cards is twenty tab stops rather than forty
-                  with every destination announced twice.
+              {/* An openable card answers with a worded hint and a chevron; a
+                  dead end answers in the same place, at the same size, muted and
+                  without one. The chevron's presence is the whole distinction.
 
-                  A dead end answers in the same place at the same size, but
-                  muted and without the chevron — see below. That slot is not an
-                  action there at all: it is the only place the card says "Full"
-                  or "Already started". A muni club has the seat bar to say that;
-                  a camp or an event has nothing else. */}
+                  `ml-auto` because the left-hand side is not guaranteed to be
+                  there: an uncapped municipality club renders no seat bar at all,
+                  leaving this the row's only child, and `justify-between` parks a
+                  lone child at the start. */}
               {cta &&
                 (openHref ? (
                   /* `items-baseline` inside, so the text participates in
@@ -267,7 +267,7 @@ export function ProductBrowseCardView({
                      undo the row's alignment. The chevron then takes
                      `self-center` to stay centred on the line rather than
                      hanging off the baseline by its bottom edge. */
-                  <span className="inline-flex shrink-0 items-baseline gap-0.5 whitespace-nowrap text-sm font-medium text-primary">
+                  <span className="ml-auto inline-flex shrink-0 items-baseline gap-0.5 whitespace-nowrap text-sm font-medium text-primary">
                     {cta.labelText}
                     <NavChevron
                       size="sm"
@@ -275,19 +275,11 @@ export function ProductBrowseCardView({
                     />
                   </span>
                 ) : (
-                  /* A dead end states a fact; it does not offer an action, so it
-                     is not shaped like one. As a button it was the heaviest mark
-                     on the card — a boxed, bordered "Full" shouting next to a
-                     quiet "View", which had the emphasis exactly backwards: the
-                     card you cannot open drew the eye over the card you can.
-                     Muted text says the same words and ranks them correctly, and
-                     the absence of the chevron is what distinguishes the two
-                     cases, in the same place, at the same size.
-
-                     The label has to stay: the seat bar deliberately prints no
-                     "Full" chip of its own, on the grounds that the label beside
-                     it already says so. */
-                  <span className="shrink-0 whitespace-nowrap text-sm text-muted-foreground">
+                  /* A dead end states a fact rather than offering an action, so
+                     it is not shaped like one. The label has to stay, though: the
+                     seat bar deliberately prints no "Full" chip of its own, on
+                     the grounds that the label beside it already says so. */
+                  <span className="ml-auto shrink-0 whitespace-nowrap text-sm text-muted-foreground">
                     {cta.labelText}
                   </span>
                 ))}
@@ -296,16 +288,24 @@ export function ProductBrowseCardView({
         </div>
       </CardContent>
 
-      {/* The whole card as one link — an empty anchor stretched over it, named
-          by the product it opens, exactly as the gedu assignment and family
-          enrollment cards do it. Nothing on this card owns a click of its own,
-          so nothing is lifted above it with a `z-10` and there is no anchor
-          nested inside another. The focus ring is inset because the card clips
-          its own overflow and would otherwise shave it off. */}
-      {openHref && (
+      {/* The whole card as one link — an empty anchor stretched over it, exactly
+          as the gedu assignment and family enrollment cards do it. Nothing on
+          this card owns a click of its own, so nothing is lifted above it with a
+          `z-10` and there is no anchor nested inside another. The focus ring is
+          inset because the card clips its own overflow and would otherwise shave
+          it off.
+
+          The accessible name leads with the footer's visible word. Those two
+          cards name themselves with the title alone and are right to, because
+          neither presents a word as the target's label; this one does, and a
+          control whose visible label is absent from its accessible name is
+          unreachable by voice — "click View" matches nothing (WCAG 2.5.3, Label
+          in Name). The product name still carries the meaning, so it follows
+          rather than being replaced. */}
+      {openHref && cta && (
         <Link
           href={openHref}
-          aria-label={name}
+          aria-label={`${cta.labelText} — ${name}`}
           className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
         />
       )}

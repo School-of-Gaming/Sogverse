@@ -1227,7 +1227,7 @@ const SEAT_DEMO_CASES: {
     waitlistEnabled: true,
   },
   {
-    label: "Full, no waitlist — 0 of 15 (no chip; the disabled CTA says Full)",
+    label: "Full, no waitlist — 0 of 15 (no chip; the label beside it says Full)",
     seatCount: 15,
     seatsLeft: 0,
     waitlistEnabled: false,
@@ -2089,12 +2089,15 @@ export default function AdminUIComponentsPage() {
           separate demo: it lives in the full-page view. The
           &ldquo;View&rdquo; hint in the footer is a label on that target
           rather than a separate one — it is not a link, and the card beneath
-          it takes the click. Cards with no chevron (full &amp; closed shows a disabled
-          button; an already-started camp shows none) are inert — there is no
-          detail page to open because a parent can&rsquo;t act there, so it
-          isn&rsquo;t mocked. Compare the two groups by hovering: only the
-          openable ones lift, brighten and nudge their chevron. The set is
-          curated to the visually distinct surfaces worth eyeballing.
+          it takes the click. <strong>Cards with no chevron are inert:</strong>{" "}
+          full-and-closed and an already-started camp each state the reason as
+          muted text where the hint would be, and a finished run drops the
+          footer row for a note and desaturates. None of the three has a detail
+          page, because a parent can&rsquo;t act there. Compare the two groups
+          by hovering: only the openable ones lift, brighten and nudge their
+          chevron. Between them the cards cover every registration state,
+          including one a parent reaches only by leaving a tab open past
+          midnight.
         </p>
         <ProductsDemo />
       </Section>
