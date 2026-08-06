@@ -301,17 +301,80 @@ describe("buildFamilySessionFeed — records beat projections", () => {
   });
 });
 
+/**
+ * The in-progress session, and the boundary the page depends on.
+ *
+ * A club that is running right now is not over, so it stays `future` — the
+ * opposite of the gedu builder, whose start-based split answers "may I take the
+ * register yet". The feed's live tag is `kind === "future" && startsAt <= now <
+ * endsAt`, a conjunction a start-based split makes *unsatisfiable*, so getting
+ * this wrong does not fail loudly: it quietly drops a running club below the
+ * divider as a "no write-up" line and tags next week "Next session".
+ */
 describe("buildFamilySessionFeed — the in-progress session", () => {
-  /** Monday 16 March, mid-session (the slot runs 14:30–16:00 UTC). */
+  /** The Monday slot runs 14:30–16:00 UTC. */
+  const BEFORE = new Date("2026-03-16T14:29:00.000Z");
   const DURING = new Date("2026-03-16T15:00:00.000Z");
+  /** Exactly the closing instant. */
+  const AT_END = new Date("2026-03-16T16:00:00.000Z");
+  /** Finished, but still inside the 5-minute voice window. */
+  const IN_VOICE_WINDOW = new Date("2026-03-16T16:03:00.000Z");
 
-  it("appears exactly once, on the past side of the divider", () => {
-    // The forward walk surfaces a session still inside its voice window and the
+  /** The page's own live computation, verbatim. */
+  function isLive(entry: FamilySessionEntry | undefined, now: Date): boolean {
+    return (
+      entry !== undefined &&
+      entry.kind === "future" &&
+      entry.startsAt.getTime() <= now.getTime() &&
+      now.getTime() < entry.endsAt.getTime()
+    );
+  }
+
+  it("classifies a session between its start and end as future", () => {
+    expect(byDate(build({ now: DURING }), "2026-03-16")?.kind).toBe("future");
+  });
+
+  it("satisfies the body's live conjunction while it runs, and only then", () => {
+    // The regression this whole block exists for: `live` has to be reachable.
+    expect(isLive(byDate(build({ now: DURING }), "2026-03-16"), DURING)).toBe(
+      true,
+    );
+    // Ahead of the start it is future but not live — "Next session".
+    expect(byDate(build({ now: BEFORE }), "2026-03-16")?.kind).toBe("future");
+    expect(isLive(byDate(build({ now: BEFORE }), "2026-03-16"), BEFORE)).toBe(
+      false,
+    );
+  });
+
+  it("turns past at exactly the instant the live tag stops", () => {
+    // One instant, not two. The kind's boundary and the tag's upper bound are
+    // the same exclusive `endsAt`, so there is no tick where a session is past
+    // but still tagged live, or future but no longer live.
+    expect(byDate(build({ now: AT_END }), "2026-03-16")?.kind).toBe("past");
+    expect(isLive(byDate(build({ now: AT_END }), "2026-03-16"), AT_END)).toBe(
+      false,
+    );
+  });
+
+  it("does not stretch the future kind across the voice window", () => {
+    // The forward walk still surfaces the occurrence here — that is what the
+    // window is for, so a just-finished session is not missing from the feed —
+    // but it is over, and a finished club tagged "Next session" for five more
+    // minutes is exactly the misread the end-based split prevents.
+    const entries = build({ now: IN_VOICE_WINDOW });
+    expect(dates(entries)).toContain("2026-03-16");
+    expect(byDate(entries, "2026-03-16")?.kind).toBe("past");
+  });
+
+  it("appears exactly once, and sorts as the last of the future run", () => {
+    // The forward walk surfaces a session inside its voice window and the
     // backward walk emits anything already started, so the same occurrence
-    // reaches the merge twice. It shares one date key, so it lands once.
+    // reaches the merge twice. It shares one date key, so it lands once — and
+    // being the newest future entry it is the one the shell makes prominent,
+    // which is what the live tag needs in order to be seen.
     const entries = build({ now: DURING });
     expect(dates(entries).filter((d) => d === "2026-03-16")).toHaveLength(1);
-    expect(byDate(entries, "2026-03-16")?.kind).toBe("past");
+    expect(futureDates(entries).at(-1)).toBe("2026-03-16");
   });
 });
 
@@ -366,5 +429,25 @@ describe("buildFamilySessionFeed — clamping at the paid window", () => {
     const emitted = dates(build({ accessUntil: ACCESS_UNTIL }));
     expect(emitted).toContain("2026-03-16");
     expect(emitted.at(-1)).toBe("2026-01-05");
+  });
+
+  it("walks an open-ended club past the shared horizon to its real last session", () => {
+    // The condition that separates this builder from the gedu's: the future cap
+    // turns on whether *anything* bounds the walk, not on whether the product
+    // has an end date. A cancelled open-ended club has no end date and still has
+    // a last day, and a parent winding down needs to see the run they paid for —
+    // not the first eight of it, and not a run that stops short of the date they
+    // were told access ends.
+    //
+    // Reverting the condition to the gedu's `endDate === null` caps this at
+    // OPEN_ENDED_OCCURRENCE_CAP and fails here.
+    const future = futureDates(
+      build({ endDate: null, accessUntil: new Date("2026-06-30T00:00:00.000Z") }),
+    );
+    expect(future.length).toBeGreaterThan(OPEN_ENDED_OCCURRENCE_CAP);
+    // Descending, so the head is the furthest away: the last Monday that still
+    // falls inside the paid window.
+    expect(future.at(0)).toBe("2026-06-29");
+    expect(future.at(-1)).toBe("2026-03-23");
   });
 });

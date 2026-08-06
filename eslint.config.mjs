@@ -93,11 +93,39 @@ const eslintConfig = defineConfig([
     ],
     rules: {
       "no-restricted-imports": ["error", {
-        patterns: [{
-          group: ["@/components/gedu/*"],
-          message:
-            "Family surfaces must not import gedu workspace code — the privacy line is structural. Shared feed pieces live in @/components/session-feed.",
-        }],
+        patterns: [
+          {
+            group: ["@/components/gedu/*"],
+            message:
+              "Family surfaces must not import gedu workspace code — the privacy line is structural. Shared feed pieces live in @/components/session-feed.",
+          },
+          {
+            // The service-layer half of the same line, and in practice the more
+            // likely leak: the gedu session contracts export the staff document
+            // shapes (a feed session carrying `gedu_note`, the site shape with
+            // its staff notes, the whole group-feed document). A family module
+            // reaching for one of those would compile, parse and render — the
+            // privacy guarantee is that the family document has no field for
+            // them, and importing the staff shapes is precisely how that
+            // guarantee gets bypassed.
+            //
+            // `attendanceStatus` and its companions are the deliberate
+            // exception, and the allow-list is what keeps the exception narrow.
+            // They are a *vocabulary* rather than a document shape: the members
+            // must match one CHECK constraint in the database, so a second copy
+            // would be a second source of truth for one fact and could only
+            // drift into being wrong. The family contracts file imports it and
+            // says so at length.
+            group: ["@/services/gedu-sessions", "@/services/gedu-sessions/*"],
+            allowImportNames: [
+              "attendanceStatus",
+              "AttendanceStatus",
+              "SUPPORTED_ATTENDANCE_STATUSES",
+            ],
+            message:
+              "Family surfaces must not import gedu document shapes — only the shared attendance vocabulary (attendanceStatus / AttendanceStatus / SUPPORTED_ATTENDANCE_STATUSES) crosses this line, because it mirrors a database CHECK constraint.",
+          },
+        ],
       }],
     },
   },

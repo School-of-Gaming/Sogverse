@@ -47,12 +47,14 @@ import type { FamilyFeedSession } from "@/services/family-product-feed/family-pr
  *   that ran at a particular hour, and an admin moving the club an hour later
  *   next term must not retroactively rewrite what happened last term. A row the
  *   schedule no longer projects at all still renders, for the same reason.
- * - **Kind is only which side of now the session is on.** There are two family
- *   kinds, not three: the gedu's `no_record` exists to hold the enforcement
- *   epoch, which decides what *staff* are owed and means nothing to a parent. To
- *   a family, a pre-epoch session and last week's unwritten one are the same
+ * - **Kind is only whether the evening is over.** There are two family kinds,
+ *   not three: the gedu's `no_record` exists to hold the enforcement epoch,
+ *   which decides what *staff* are owed and means nothing to a parent. To a
+ *   family, a pre-epoch session and last week's unwritten one are the same
  *   thing — a session that ran with nothing written down — and both render as
- *   the quiet placeholder line. The epoch never reaches this surface.
+ *   the quiet placeholder line. The epoch never reaches this surface. The line
+ *   between the two kinds is drawn at the session's **end**, not its start, and
+ *   that is the sharpest divergence from the gedu builder — see `toFamilyEntry`.
  *
  * Pure: no React, no network, no clock of its own. The caller passes `now`, so
  * SSR and the first client render agree and a test can stand anywhere in time.
@@ -209,6 +211,12 @@ export function buildFamilySessionFeed(
     );
   }
 
+  // Descending by start, which the feed shell reads as one leading run of
+  // future entries followed by the past. That the run stays contiguous while
+  // the *kinds* are decided by `endsAt` is not luck: entries are keyed by
+  // product-local date, so there is at most one per day and no two can overlap
+  // in time. Ordering by start and ordering by end are therefore the same
+  // ordering, and a future entry can never sort below a past one.
   entries.sort((a, b) => b.startsAt.getTime() - a.startsAt.getTime());
   return entries;
 }
@@ -216,10 +224,32 @@ export function buildFamilySessionFeed(
 /**
  * Which kind of entry one occurrence is, and what the family may read on it.
  *
- * **Only the start matters.** A session that has begun is a past entry, because
- * the only question this surface asks is whether the evening has happened —
- * there is nothing here to edit and nothing here that could be owed, so neither
- * the end instant nor the enforcement epoch has a job to do.
+ * **The boundary is the session's end, and this is where the two builders part
+ * company.** The gedu's splits on the *start*, because a session that has begun
+ * is one they can take the register for — the split is really "may I record
+ * this yet", and roll call during the club is the whole point of it. A family
+ * records nothing, so that question does not exist here. The only question this
+ * surface asks is whether the evening is over, and a club that is running right
+ * now is emphatically not over: it is the session the family is *in*.
+ *
+ * So a session in progress stays `future`, and that is a contract with the
+ * page rather than a preference. The feed's live tag is computed as
+ * `kind === "future" && startsAt <= now < endsAt` — a conjunction a start-based
+ * split makes unsatisfiable, which would leave a club running right now sitting
+ * below the divider as a quiet "no write-up" line while next week is tagged
+ * "Next session". **The two boundaries are deliberately the same instant**
+ * (`endsAt`, exclusive), so the entry becomes past in exactly the tick the tag
+ * stops being live and there is no window where one is true and the other is
+ * not.
+ *
+ * **The voice window is deliberately not part of this.** It governs how long a
+ * *room* stays joinable after a session, which is a fact about the room and not
+ * about the evening. Stretching the future kind to `endsAt + windowClose` would
+ * manufacture exactly the dead zone the paragraph above rules out: entries that
+ * are `future` but not live, tagged "Next session" for a club that finished
+ * twenty minutes ago. It still governs the forward *walk* — a just-finished
+ * occurrence is surfaced so it is not missing from the feed — but what kind it
+ * then is, is decided here, by the clock alone.
  *
  * **A report is passed through verbatim, `null` included.** Whether one *exists*
  * is a trimmed test, and it is made where the entry is rendered — the same
@@ -243,7 +273,7 @@ function toFamilyEntry(args: {
 }): FamilySessionEntry {
   const { id, startsAt, endsAt, row, now } = args;
 
-  if (startsAt.getTime() > now.getTime()) {
+  if (endsAt.getTime() > now.getTime()) {
     return {
       kind: "future",
       id,

@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import {
   ATTENDANCE_TONE,
   SessionReport,
+  hasReport,
   type AttendanceMark,
   type SessionLabels,
 } from "@/components/session-feed";
@@ -78,15 +79,15 @@ export function FamilySessionFeedItem({
 
   const attendance =
     entry.kind === "past" && showAttendance ? entry.attendance : null;
-  // Trimmed, matching the gedu side's rule: a report of whitespace is no
-  // report, and must fall through to the quiet dashed line rather than
-  // rendering a full card around an empty body.
-  const hasReport = entry.report !== null && entry.report.trim().length > 0;
+  // The shared trimmed test, which the feed's own quiet-row check also calls:
+  // a report of whitespace is no report, and must fall through to the quiet
+  // dashed line rather than rendering a full card around an empty body.
+  const written = hasReport(entry.report);
 
   // Nothing written and nothing to say about who was there — the one row that
   // is not a card. It still carries its date, because the session did happen
   // and a family scrolling the term should see the week is not missing.
-  if (entry.kind === "past" && !hasReport && attendance === null) {
+  if (entry.kind === "past" && !written && attendance === null) {
     return (
       <div className="rounded-md border border-dashed border-border/60 px-3 py-2 text-xs text-muted-foreground">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
@@ -153,7 +154,7 @@ export function FamilySessionFeedItem({
         {attendance !== null && <AttendanceMarkChip mark={attendance} />}
       </div>
 
-      {hasReport && (
+      {written && (
         <SessionReport
           markdown={entry.report ?? ""}
           clamped={false}
