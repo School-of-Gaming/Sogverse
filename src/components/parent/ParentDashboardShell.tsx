@@ -28,11 +28,10 @@ import {
  * things a parent can actually *do* on this page are wired to real backends.
  *
  * **The two dialogs live here, not in the sections that summon them.** Both are
- * overlays over the whole page, so neither belongs to any one part of it — and
- * the add-gamer dialog in particular used to be owned by the My Gamers tile
- * strip, which this design absorbs into the section headings. The strip's last
- * remaining job was holding that dialog's open state; the shell takes it over
- * so the route stops depending on a component that is on its way out.
+ * overlays over the whole page, so neither belongs to any one part of it. The
+ * add-gamer dialog is summoned from two places on this page — the quiet tile
+ * after the last child, and the full-strength button on the no-children card —
+ * and owning it in either would make the other reach across the page for it.
  *
  * The billing card arrives as a finished **node** from the server component
  * above, because it is one section with its own backend actions and nothing

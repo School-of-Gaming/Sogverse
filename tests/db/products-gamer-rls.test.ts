@@ -230,9 +230,9 @@ describe("products gamer-read RLS (00067)", () => {
     expect(rows[0].product.id).toBe(HIDDEN_ACTIVE_PRODUCT);
     expect(rows[0].product.is_visible).toBe(false);
     // The product surviving the inner join isn't enough: the dashboard reads
-    // the embedded children too. An empty slots array makes
-    // `expandUpcomingSessions` drop the row (the reported empty-Sessions bug);
-    // an empty translations array renders a blank product name. Both child
+    // the embedded children too. An empty slots array makes the occurrence
+    // walk drop the row (the reported empty-Sessions bug); an empty
+    // translations array renders a blank product name. Both child
     // tables need the enrolled-read policy, so assert both actually arrive.
     expect(rows[0].product.schedule_slots.length).toBeGreaterThan(0);
     expect(rows[0].product.product_translations.length).toBeGreaterThan(0);

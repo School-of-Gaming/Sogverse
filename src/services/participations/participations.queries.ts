@@ -1,21 +1,10 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo } from "react";
-import { useLocale } from "next-intl";
+import { useEffect } from "react";
 import { getClient } from "@/lib/supabase/client";
-import { resolveLocale } from "@/lib/constants/locales";
 import { CONFIRMATION_POLL_INTERVAL_MS } from "@/lib/constants/participations";
-import {
-  expandUpcomingSessions,
-  type UpcomingSessionEntry,
-} from "@/lib/upcoming-sessions";
-import { useNow } from "@/providers";
 import type { SessionAudience } from "@/types";
-import {
-  toWaitlistEntries,
-  type WaitlistEntry,
-} from "@/lib/waitlist-entries";
 import {
   ParticipationsService,
   type CreateParticipationInput,
@@ -29,50 +18,23 @@ import { productKeys } from "../products";
 import { participationKeys } from "./participations.keys";
 
 /**
- * Drives the dashboard Sessions section on both `/parent` and `/gamer`.
- * Fetches the logged-in user's active, placed participations (filtered by
- * audience — `customer` for the parent dashboard, `gamer` for the gamer
- * dashboard) and expands them into a time-sorted list of concrete upcoming
- * sessions (one entry per occurrence). `voiceIsOpen` and the
- * window-closed cut re-derive on every tick of `useNow()` so the live ↔
- * locked flip happens without a refetch.
+ * The viewer's active, placed participations — the rows, with no adapter over
+ * them.
  *
- * `initialData` is **required** — every consumer pairs the hook with a
- * server-side prefetch in the page's Server Component (see
- * `parent/page.tsx` and `gamer/page.tsx`) so the first client render has
- * the rows ready and the section paints with no loading state. Mutations
- * elsewhere (`useCreateParticipation`, `useJoinWaitlist`) still cascade
- * through `participationKeys.all` to refetch; the prefetch only affects
- * the initial render.
- */
-export function useMyUpcomingSessions(
-  audience: SessionAudience,
-  options: { initialData: MyUpcomingSessionRow[] },
-): UpcomingSessionEntry[] {
-  const rows = useMyUpcomingSessionRows(audience, options);
-  const locale = resolveLocale(useLocale());
-  const now = useNow();
-
-  return useMemo(
-    () => expandUpcomingSessions(rows, now, locale),
-    [rows, now, locale],
-  );
-}
-
-/**
- * The same rows, **unexpanded** — the read on its own, with no adapter over it.
+ * Filtered by audience: `customer` reaches the linked children's seats, `gamer`
+ * only their own. What the family dashboards want is the rows themselves, since
+ * the roll-up that turns a row into an enrollment card is a function of the
+ * viewer's locale and zone and has to re-derive on every clock tick — so it
+ * lives in a client hook of its own rather than baked into this query, and the
+ * live ↔ locked flip on a Join happens on the shared clock with no refetch.
  *
- * The family dashboards want the rows themselves: the roll-up that turns a row
- * into an enrollment card is a function of the viewer's locale and zone and has
- * to re-derive on every clock tick, so it belongs in a client hook of its own
- * rather than baked into this query. Splitting the fetch out from the expansion
- * is what lets two adapters sit over one read.
- *
- * Both hooks share this query key, so they share one cache entry and one fetch
- * no matter how many of them a page mounts. `initialData` is required for the
- * reason it is required above: every consumer server-prefetches these rows
- * because they decide the page's geometry, and a page whose geometry arrives
- * after the first frame is one that moves under the reader.
+ * One query key, one cache entry, one fetch, however many consumers a page
+ * mounts. `initialData` is **required**: every consumer server-prefetches these
+ * rows because they decide the page's geometry, and a page whose geometry
+ * arrives after the first frame is one that moves under the reader. Mutations
+ * elsewhere (`useCreateParticipation`, `useJoinWaitlist`) still cascade through
+ * `participationKeys.all` to refetch; the prefetch only affects the first
+ * render.
  *
  * **`initialDataUpdatedAt` is how a caller says "this prefetch failed".** Seeded
  * data is stamped as fetched *now*, and with a 60-second `staleTime` that means
@@ -103,35 +65,15 @@ export function useMyUpcomingSessionRows(
 }
 
 /**
- * Drives the "On the waitlist" band on both `/parent` and `/gamer` — the
- * companion to `useMyUpcomingSessions`, filtered to the rows that one excludes.
- * Returns the viewer's waitlisted participations as cards, each carrying a
- * position recomputed live by the database (so it shrinks as people ahead of
- * them leave) and a product name resolved into the current UI locale.
+ * The viewer's waitlisted participations — the counterpart of
+ * {@link useMyUpcomingSessionRows}, filtered to exactly the rows that one
+ * excludes, each carrying a position the database recomputes on read (so it
+ * shrinks as people ahead of them leave).
  *
- * `initialData` is **required** for the same reason it is on the sessions hook:
- * both dashboards prefetch in their Server Component, so the band paints
- * populated on first frame rather than appearing under content the viewer is
- * already reading. Leaving a waitlist cascades through `participationKeys.all`
- * and refetches this like everything else.
- */
-export function useMyWaitlist(
-  audience: SessionAudience,
-  options: { initialData: MyWaitlistRow[] },
-): WaitlistEntry[] {
-  const rows = useMyWaitlistRows(audience, options);
-  const locale = resolveLocale(useLocale());
-
-  return useMemo(() => toWaitlistEntries(rows, locale), [rows, locale]);
-}
-
-/**
- * The waitlist rows unexpanded — the counterpart of
- * {@link useMyUpcomingSessionRows}, and there for the same reason: the family
- * dashboards render a place in line as a card in the same list as every seat,
- * built by the same locale- and zone-aware roll-up, so they consume the row
- * rather than this read's own adapter. One query key, one cache entry, one
- * fetch.
+ * Rows rather than cards, for the reason given above: the family dashboards
+ * render a place in line as a card in the same list as every seat, built by the
+ * same locale- and zone-aware roll-up. Leaving a waitlist cascades through
+ * `participationKeys.all` and refetches this like everything else.
  *
  * `initialDataUpdatedAt` carries the same meaning it does on the sessions hook:
  * pass `0` when the seed is a failure fallback rather than an answer, so it

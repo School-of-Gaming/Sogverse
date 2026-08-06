@@ -19,7 +19,6 @@
       "geduSessionDetails": "may’ Qatlh",
       "familyProduct": "may’mey qonta’ je",
       "familyProductDescription": "ghom’a’vam poH mIw, may’ Hoch qonta’ je.",
-      "gamerHome": "toy’wI’",
       "gamerDashboard": "jIH SOG",
       "gamerDashboardDescription": "Sogverse-Daq ghom’a’meylIj, raghmeylIj, Qu’meylIj je",
       "gamerGroups": "jIH ghom’a’mey",
@@ -1135,13 +1134,8 @@
   },
   "dashboardSections": {
     "pageTitle": "jIH SOG",
-    "myFamily": "qorDu’wIj",
     "myGamers": "jIH toy’wI’pu’",
     "myGamersShort": "toy’wI’pu’",
-    "upcomingSessions": "ghoSqep’a’",
-    "upcomingSessionsEmptyStateGamer": "raghlIj qaS, naDev jatlh pa’Daq Gedu jupmey je yIghoS!",
-    "upcomingSessionsEmptyStateParent": "puqlIj raghDaj qaS, naDev jatlh pa’Daq Gedu jupmey je ghoSchoH!",
-    "upcomingSessionsEmptyStateGedu": "ghoSqep’a’lIj qaSchoH, naDev jatlh pa’Daq toy’wI’pu’lIj yIghoS!",
     "clubs": "ghom’a’mey",
     "camps": "raghmey",
     "events": "Qu’mey",
@@ -1152,8 +1146,6 @@
     "settings": "tlhInganpu’ chu’",
     "instantVoiceRoom": "tugh Daq",
     "instantVoiceRoomShort": "QIch Daq",
-    "waitlistBand": "loS tetlhDaq",
-    "scheduledBand": "ghoSqep’a’mey",
     "loadingAssignments": "ghom’a’meyraj raghmeyraj Qu’meyraj je laDlu’…"
   },
   "family": {
@@ -1230,7 +1222,6 @@
     "antiBullying": "Code of Honor"
   },
   "gamer": {
-    "welcome": "nuqneH, toy’wI’!",
     "welcomeNamed": "nuqneH, {name}!",
     "fallbackName": "toy’wI’",
     "subtitle": "DaH yItoy’ je yIghoj?",
@@ -1790,21 +1781,7 @@
     "placeholders": {
       "myGamersHint": "QunwI’Daj qelmeH toy’wI’ yIwIv."
     },
-    "nextSession": {
-      "title": "{name} veb may’",
-      "startsIn": "{countdown} qaSpa’ SoQ",
-      "inProgress": "poH ghoStaH",
-      "reports": "DaHoSmey"
-    },
-    "upcomingSession": {
-      "gamerLabel": "{name}vaD"
-    },
     "waitlist": {
-      "forLabel": "{name}vaD",
-      "positionLabel": "DaqlIj",
-      "positionValue": "{position}DIch",
-      "reassuranceCustomer": "quS poSDI’, QInHom wIngeH.",
-      "reassuranceGamer": "quS poSDI’, SoSlI’ vavlI’ je wIja’.",
       "footerReassuranceCustomer": "tlheghDaq {position}DIch SoH — quS poSDI’, QInHom wIngeH.",
       "footerReassuranceGamer": "tlheghDaq {position}DIch SoH — quS poSDI’, SoSlI’ vavlI’ je wIja’.",
       "leave": {
@@ -1814,16 +1791,6 @@
         "confirmCta": "tlhegh yImej",
         "backOfLineWarning": "tlhegh DajeSqa’chugh, tlhegh HeHDaq bIQam."
       }
-    },
-    "subscriptionEnding": {
-      "wontRenew": "qaSqa’be’",
-      "lastSession": "Qu’ Qav",
-      "tooltip": "may’morgh DanatlhHa’pu’! qaSqa’be’. {name} Qu’ Qav ’oH {lastSession}’e’, {accessUntil} tlhab SoH.",
-      "tooltipSameDay": "may’morgh DanatlhHa’pu’! qaSqa’be’. {name} Qu’ Qav ’oH {lastSession}’e’."
-    },
-    "awaiting": {
-      "customer": "{name} muvpu’! may’ wa’DIch Sutlhpa’, ghom DajojDaq lanlu’.",
-      "gamer": "bImuvpu’! may’ veb Sutlhpa’, ghomlIjDaq qalanlu’."
     },
     "help": {
       "contact": {

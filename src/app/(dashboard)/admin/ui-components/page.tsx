@@ -58,9 +58,14 @@ import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { ParticipantRow, type ParticipantRowData } from "@/components/voice/ParticipantRow";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
 import { UserRow } from "@/components/admin/user-row";
-import { SessionsSection, WaitlistCard } from "@/components/parent";
-import type { UpcomingSessionEntry } from "@/lib/upcoming-sessions";
-import type { WaitlistEntry } from "@/lib/waitlist-entries";
+import { EnrollmentCard } from "@/components/family/EnrollmentCard";
+import {
+  FIXTURE_TIMEZONE,
+  buildEnrollmentFixture,
+  type EnrollmentFixtureSpec,
+  type FixtureClock,
+} from "@/components/family/mock-enrollment-fixtures";
+import { futureSlot, liveNowSlot } from "@/components/preview/fixture-clock";
 import { useAuth, useNow, useTimezone } from "@/providers";
 import { useLocale, useTranslations } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
@@ -825,357 +830,163 @@ function ParticipantCardDemo() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Parent Sessions Section Demo                                       */
+/*  Family — Enrollment Card                                            */
 /* ------------------------------------------------------------------ */
 
-// Two labeled groups. "Loaded states" (3-up): empty (`sessions={[]}`),
-// countdown (soonest still in the future — countdown + locked CTA), and live
-// (soonest session already joinable — `NextSessionCard` with the active join
-// CTA). Countdown precedes live so the columns line up by type with the
-// awaiting pair below.
-// "Awaiting Gedu placement" (same 3-col track, two filled): purchased but
-// not yet placed — countdown
-// (head still upcoming, locked "Opens …" Join) and live (head's window open
-// *now*, so the card keeps the live gradient + "Session in progress" and
-// swaps the Join CTA for a disabled "matching with a Gedu" button). Both
-// awaiting variants also carry the "matching with a Gedu" caption. The
-// non-empty stacks include three trailing `UpcomingSessionCard`s so the
-// total height matches. All demo sessions run 14:00–16:30 local; the live
-// ones anchor to the most recent 14:00 (today if past, otherwise yesterday)
-// so they always display as "in progress".
-const SESSIONS_HOUR_MS = 3_600_000;
-const SESSIONS_MINUTE_MS = 60_000;
-const SESSIONS_DAY_MS = 24 * SESSIONS_HOUR_MS;
-const SESSIONS_DURATION_MS = 2 * SESSIONS_HOUR_MS + 30 * SESSIONS_MINUTE_MS;
-const SESSIONS_HOUR_OF_DAY = 14;
-interface SessionsFixture {
-  name: string;
-  /** Live = started recently (only valid for the head of a stack). */
-  live?: true;
-  /** Days from now (for non-live entries). */
-  daysAhead?: number;
-}
-
-const SESSIONS_LIVE_FIRST_GAMER = {
-  firstName: "Bobby",
-  seed: "22992a36-2b1d-4fe5-8c86-057d06df246a",
-} as const;
-const SESSIONS_COUNTDOWN_FIRST_GAMER = {
-  firstName: "Alex",
-  seed: "28c26921-d051-4126-944b-e8cfae4bb8d3",
-} as const;
-
-// Two products, each appearing twice, interleaved by time. The first
-// occurrence of each product is the prominent `NextSessionCard` (so a
-// multi-product gamer gets a Join button + Padlet link for *each*), and the
-// second occurrence is the compact `UpcomingSessionCard` — so the demo shows
-// both card variants and how they interleave.
-const SESSIONS_FIXTURES_LIVE_FIRST: readonly SessionsFixture[] = [
-  { name: "Cosmic Builders Camp", live: true },
-  { name: "Rocket League Club", daysAhead: 2 },
-  { name: "Cosmic Builders Camp", daysAhead: 4 },
-  { name: "Rocket League Club", daysAhead: 9 },
-];
-
-const SESSIONS_FIXTURES_COUNTDOWN_FIRST: readonly SessionsFixture[] = [
-  { name: "Cosmic Builders Camp", daysAhead: 1 },
-  { name: "Rocket League Club", daysAhead: 3 },
-  { name: "Cosmic Builders Camp", daysAhead: 8 },
-  { name: "Rocket League Club", daysAhead: 10 },
-];
-
 /**
- * Reads `useNow()` so the fixtures are anchored to the same wall clock the
- * SSR pass used — that's what keeps the first client render byte-identical
- * to the server HTML. No `mounted` flag needed.
+ * Every state the enrollment card can be in, side by side.
+ *
+ * It earns a style-guide section rather than a preview scene because it is the
+ * one component both family dashboards are built out of: no single page owns
+ * it, and no page shows more than a few of its states at once. The two
+ * dashboards' own scenes are still where it gets judged *in place* — this is
+ * where the states get judged against each other.
+ *
+ * The fixtures go through `buildEnrollmentFixture`, the same builder the two
+ * dashboard scenes use, so the schedule sentence and the next session are the
+ * real derivations rather than authored prose: the live card's Join is lit
+ * because its slot genuinely started twenty-five minutes ago, and the locked
+ * one's label names a time the shared clock will actually reach.
  */
-function SessionsSectionDemo() {
+const ENROLLMENT_DEMO_SITE = "Kirjasto Oodi, Helsinki";
+
+function EnrollmentCardDemo() {
   const now = useNow();
-  const liveFirst = buildLoadedSessions(
-    SESSIONS_FIXTURES_LIVE_FIRST,
-    SESSIONS_LIVE_FIRST_GAMER,
-    now,
-  );
-  const countdownFirst = buildLoadedSessions(
-    SESSIONS_FIXTURES_COUNTDOWN_FIRST,
-    SESSIONS_COUNTDOWN_FIRST_GAMER,
-    now,
-  );
-  // Purchased-but-not-yet-placed: same schedule cards, but each is flagged
-  // `awaiting` so the Join button stays disabled and the "matching with a
-  // Gedu" copy shows. Reuses the countdown stack (all future, so the head
-  // is already locked) to demo the prominent + compact awaiting states.
-  const awaitingPlacement = countdownFirst.map((s) => ({
-    ...s,
-    awaiting: true,
-  }));
-  // Awaiting + live: the head session's window is open *now*, so the card
-  // keeps its live styling (gradient + "Session in progress") — but the
-  // gamer still isn't placed, so the active Join CTA is swapped for a
-  // disabled "matching with a Gedu" button. `voiceIsOpen` stays true
-  // (window-open is independent of join-ability — the button gates on
-  // `awaiting`), exactly as the adapter now emits it.
-  const awaitingLive = liveFirst.map((s) => ({
-    ...s,
-    awaiting: true,
-  }));
+  const locale = resolveLocale(useLocale());
+  const timeZone = useTimezone();
 
-  return (
-    <div className="space-y-8">
-      <SubSection title="Loaded states">
-        <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="flex flex-col gap-2">
-            <DemoCaption>No sessions</DemoCaption>
-            <SessionsSection sessions={[]} />
-          </div>
-          <div className="flex flex-col gap-2">
-            <DemoCaption>Countdown</DemoCaption>
-            <SessionsSection sessions={countdownFirst} />
-          </div>
-          <div className="flex flex-col gap-2">
-            <DemoCaption>Live now</DemoCaption>
-            <SessionsSection sessions={liveFirst} />
-          </div>
-        </div>
-      </SubSection>
-      <SubSection title="Awaiting Gedu placement">
-        {/* Same 3-col track as "Loaded states" so card widths line up across
-            both groups. At the 3-col breakpoint the leading spacer leaves
-            column 1 empty so the pair sits under the "countdown" + "live"
-            loaded cards above; it collapses away below `lg` so the two cards
-            still fill the 2-col layout. */}
-        <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="hidden lg:block" aria-hidden="true" />
-          <div className="flex flex-col gap-2">
-            <DemoCaption>Countdown</DemoCaption>
-            <SessionsSection sessions={awaitingPlacement} />
-          </div>
-          <div className="flex flex-col gap-2">
-            <DemoCaption>Live now</DemoCaption>
-            <SessionsSection sessions={awaitingLive} />
-          </div>
-        </div>
-      </SubSection>
-    </div>
-  );
-}
+  // Built once from the first tick, for the reason the dashboard scenes hold
+  // theirs: re-deriving every slot from a new `now` every thirty seconds would
+  // walk the schedule text forward under whoever is reading it. What still
+  // follows the clock is what each card derives from `useNow()` itself — the
+  // Live badge and the voice window, which is the half that should.
+  const [cards] = useState(() => {
+    const clock: FixtureClock = { now, locale, timeZone };
+    const build = (spec: EnrollmentFixtureSpec) =>
+      buildEnrollmentFixture(clock, spec);
+    const remoteClub = {
+      productType: "consumer_club",
+      isRemote: true,
+      startedDaysAgo: 42,
+      endsInDays: null,
+    } as const;
 
-function buildLoadedSessions(
-  fixtures: readonly SessionsFixture[],
-  gamer: { firstName: string; seed: string },
-  now: Date,
-): UpcomingSessionEntry[] {
-  const midnightTomorrow = new Date(now);
-  midnightTomorrow.setHours(24, 0, 0, 0);
-  const midnightTomorrowMs = midnightTomorrow.getTime();
-
-  // Anchor the live session to the most recent SESSIONS_HOUR_OF_DAY:00 —
-  // today's if it has already passed, otherwise yesterday's — so the start
-  // and end always show round-hour times instead of "now − 30 min".
-  const liveStart = new Date(now);
-  liveStart.setHours(SESSIONS_HOUR_OF_DAY, 0, 0, 0);
-  if (liveStart.getTime() > now.getTime()) {
-    liveStart.setDate(liveStart.getDate() - 1);
-  }
-
-  // Mirrors `expandUpcomingSessions`: the first occurrence of each product is
-  // the prominent card. Every demo stack uses a single gamer, so the product
-  // name alone keys the (gamer × product) pairing.
-  const seenProducts = new Set<string>();
-
-  return fixtures.map((f) => {
-    const isNext = !seenProducts.has(f.name);
-    seenProducts.add(f.name);
-    // Fixture participation id. Only the payment-problem badge reads it (to
-    // name which subscription's billing portal to open), and no demo stack
-    // flags a payment problem — but the cards require it, so key it off the
-    // pairing the way the real expander does.
-    const participationId = `${gamer.seed}-${f.name}`;
-    if (f.live) {
-      const end = new Date(liveStart.getTime() + SESSIONS_DURATION_MS);
-      return {
-        participationId,
-        gamerFirstName: gamer.firstName,
-        gamerSeed: gamer.seed,
-        productName: f.name,
-        sessionStart: liveStart,
-        sessionEnd: end,
-        voiceIsOpen: true,
-        isNext,
-        voiceHref: "#",
-        reportsHref: "#",
-      };
-    }
-    const start = new Date(
-      midnightTomorrowMs
-        + ((f.daysAhead ?? 1) - 1) * SESSIONS_DAY_MS
-        + SESSIONS_HOUR_OF_DAY * SESSIONS_HOUR_MS,
-    );
-    const end = new Date(start.getTime() + SESSIONS_DURATION_MS);
     return {
-      participationId,
-      gamerFirstName: gamer.firstName,
-      gamerSeed: gamer.seed,
-      productName: f.name,
-      sessionStart: start,
-      sessionEnd: end,
-      voiceIsOpen: false,
-      isNext,
-      voiceHref: "#",
-      reportsHref: "#",
+      live: build({
+        ...remoteClub,
+        participationId: "demo-enrollment-live",
+        productName: "Minecraft Explorers Club",
+        slots: [liveNowSlot(now, 90, FIXTURE_TIMEZONE)],
+      }),
+      locked: build({
+        ...remoteClub,
+        participationId: "demo-enrollment-locked",
+        productName: "Rocket League Club",
+        slots: [futureSlot(now, 3, "17:00", 90, FIXTURE_TIMEZONE)],
+      }),
+      badged: build({
+        ...remoteClub,
+        participationId: "demo-enrollment-badged",
+        productName: "Roblox Studio Club",
+        slots: [futureSlot(now, 2, "16:30", 90, FIXTURE_TIMEZONE)],
+        paymentProblem: true,
+      }),
+      cancelled: build({
+        ...remoteClub,
+        participationId: "demo-enrollment-cancelled",
+        productName: "Stardew Valley Co-op Club",
+        slots: [futureSlot(now, 4, "16:00", 90, FIXTURE_TIMEZONE)],
+        cancelledAccessInDays: 12,
+      }),
+      awaiting: build({
+        ...remoteClub,
+        participationId: "demo-enrollment-awaiting",
+        productName: "Terraria Builders Club",
+        slots: [futureSlot(now, 5, "18:00", 90, FIXTURE_TIMEZONE)],
+        startedDaysAgo: 1,
+        awaiting: true,
+      }),
+      waitlisted: build({
+        ...remoteClub,
+        participationId: "demo-enrollment-waitlisted",
+        productName: "Valheim Survival Club",
+        slots: [futureSlot(now, 6, "15:00", 90, FIXTURE_TIMEZONE)],
+        waitlistPosition: 3,
+      }),
+      inPerson: build({
+        participationId: "demo-enrollment-in-person",
+        productName: "Cosmic Builders Camp",
+        productType: "camp",
+        isRemote: false,
+        slots: [futureSlot(now, 2, "10:00", 300, FIXTURE_TIMEZONE)],
+        startedDaysAgo: 1,
+        endsInDays: 4,
+        siteName: ENROLLMENT_DEMO_SITE,
+      }),
+      finished: build({
+        participationId: "demo-enrollment-finished",
+        productName: "Summer Speedrun Camp",
+        productType: "camp",
+        isRemote: true,
+        slots: [futureSlot(now, 2, "10:00", 300, FIXTURE_TIMEZONE)],
+        startedDaysAgo: 70,
+        endsInDays: -35,
+      }),
     };
   });
-}
 
-/* ------------------------------------------------------------------ */
-/*  Parent/Gamer — Waitlist Card                                        */
-/* ------------------------------------------------------------------ */
-
-// Card for a club the viewer waitlisted (a `status='waitlisted'` participation
-// — no scheduled session, so it never appears in the session stack). Two
-// groups: the card's own states (parent with the "For {name}" line and the
-// leave badge, the same mid-leave, and the gamer variant — no attribution, no
-// badge), then a composed preview of how it slots into the Sessions section —
-// an "On the waitlist" band above the "Scheduled" list. The band sub-labels
-// only show when both kinds are present; a viewer with only one kind sees the
-// cards with no labels.
-//
-// `onLeave` is a no-op here: the demo exists to show the badge + confirm dialog
-// without a backend, and clicking through to "Leave waitlist" should leave the
-// fixture card exactly where it is.
-const WAITLIST_DEMO_GAMER = {
-  firstName: "Eino",
-  seed: "9b2e5d18-7a4c-4f0b-9c31-1d6e2a5f8b04",
-} as const;
-const WAITLIST_DEMO_GAMER_ALT = {
-  firstName: "Aada",
-  seed: "4c7f9a20-3e51-4b8d-8f26-0a9d1c6e5b73",
-} as const;
-
-/**
- * The band fixture, in the shape `useMyWaitlist` returns — two children of the
- * same family in line for different clubs, which is what makes the per-card
- * "For {name}" attribution earn its place.
- */
-const WAITLIST_DEMO_ENTRIES: WaitlistEntry[] = [
-  {
-    participationId: "demo-waitlist-1",
-    productName: "Minecraft Builders Club",
-    gamerFirstName: WAITLIST_DEMO_GAMER_ALT.firstName,
-    gamerSeed: WAITLIST_DEMO_GAMER_ALT.seed,
-    position: 3,
-  },
-  {
-    participationId: "demo-waitlist-2",
-    productName: "Roblox Obby Makers",
-    gamerFirstName: WAITLIST_DEMO_GAMER.firstName,
-    gamerSeed: WAITLIST_DEMO_GAMER.seed,
-    position: 7,
-  },
-];
-
-function WaitlistCardDemo() {
-  const now = useNow();
-  const noop = () => {};
-  const scheduled = buildLoadedSessions(
-    [
-      { name: "Rocket League Club", daysAhead: 2 },
-      { name: "Rocket League Club", daysAhead: 9 },
-    ],
-    WAITLIST_DEMO_GAMER,
-    now,
-  );
+  // A no-op rather than an omitted prop: absent, the leave affordance is not
+  // drawn at all, and the demo's whole job on that card is showing that it is.
+  // The confirm dialog in front of it is pure UI and works.
+  const inert = () => {};
 
   return (
-    <div className="space-y-8">
-      <SubSection title="Card states">
-        <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="flex flex-col gap-2">
-            <DemoCaption>Parent — leave badge</DemoCaption>
-            <WaitlistCard
-              productName="Minecraft Builders Club"
-              gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
-              gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
-              position={3}
-              onLeave={noop}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            {/* What the parent sees between confirming and the row leaving the
-                list: the whole card fades, badge locked, no spinner. The caller
-                holds this set — the card never re-enables on its own. */}
-            <DemoCaption>Parent — leaving</DemoCaption>
-            <WaitlistCard
-              productName="Minecraft Builders Club"
-              gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
-              gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
-              position={3}
-              onLeave={noop}
-              leaving
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            {/* No attribution and no badge, even with `onLeave` passed — a kid
-                can't give up their own place in line. */}
-            <DemoCaption>Gamer — no attribution, no badge</DemoCaption>
-            <WaitlistCard
-              productName="Minecraft Builders Club"
-              gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
-              gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
-              position={3}
-              audience="gamer"
-              onLeave={noop}
-            />
-          </div>
+    <div className="space-y-6">
+      <SubSection title="Parent — every state">
+        <div className="grid gap-8 lg:grid-cols-2">
+          {(
+            [
+              ["Live — session in progress", cards.live],
+              ["Locked — next session named", cards.locked],
+              ["Failing card — corner badge", cards.badged],
+              ["Cancelled — won't renew line", cards.cancelled],
+              ["Awaiting placement — no seat yet", cards.awaiting],
+              ["Waitlisted — place in line", cards.waitlisted],
+              ["In person — venue, no Join", cards.inPerson],
+              ["Finished — muted, ended on", cards.finished],
+            ] as const
+          ).map(([caption, enrollment]) => (
+            <div key={enrollment.participationId} className="space-y-2">
+              <DemoCaption>{caption}</DemoCaption>
+              <EnrollmentCard
+                enrollment={enrollment}
+                audience="customer"
+                gamerFirstName="Aino"
+                onOpenPortal={inert}
+                onJoinClick={inert}
+                onLeaveWaitlist={inert}
+              />
+            </div>
+          ))}
         </div>
       </SubSection>
 
-      {/* Driven through the real `SessionsSection` rather than hand-composed
-          bands, so this demo shows the shipped band order and labelling rule
-          instead of a second arrangement that could quietly diverge from it.
-          The four cases below are the whole state space of the two lists. */}
-      <SubSection title="Bands within Sessions">
-        <div className="space-y-8">
-          <div className="flex flex-col gap-2">
-            <DemoCaption>
-              Both bands — labels appear only here, where there are two groups
-              to tell apart
-            </DemoCaption>
-            <SessionsSection
-              sessions={scheduled}
-              waitlist={WAITLIST_DEMO_ENTRIES}
-              onLeaveWaitlist={noop}
-            />
+      <SubSection title="Gamer — the same card, addressed to the child">
+        <p className="max-w-prose text-sm text-muted-foreground">
+          Only the two footers that speak <em>about</em> a child on the parent&rsquo;s
+          page speak <em>to</em> them here, and money is gone entirely: no corner
+          badge, no won&rsquo;t-renew line, and no way to give up a place in line
+          &mdash; not hidden, but unreachable, because the card&rsquo;s props make
+          the parent-only half unavailable to a <code>gamer</code> audience.
+        </p>
+        <div className="grid gap-8 lg:grid-cols-2">
+          <div className="space-y-2">
+            <DemoCaption>Awaiting placement</DemoCaption>
+            <EnrollmentCard enrollment={cards.awaiting} audience="gamer" />
           </div>
-          <div className="flex flex-col gap-2">
-            {/* The state the pre-waitlist section got wrong: a family holding
-                only waitlist spots was told they had no upcoming sessions. */}
-            <DemoCaption>Waitlist only — no label, nothing to disambiguate</DemoCaption>
-            <SessionsSection
-              sessions={[]}
-              waitlist={WAITLIST_DEMO_ENTRIES}
-              onLeaveWaitlist={noop}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            {/* Unchanged from before the waitlist band existed — the common
-                case stays exactly as it was. */}
-            <DemoCaption>Scheduled only — no label</DemoCaption>
-            <SessionsSection sessions={scheduled} waitlist={[]} />
-          </div>
-          <div className="flex flex-col gap-2">
-            {/* Read-only: no leave handler, and the cards drop the "For {name}"
-                attribution. What a logged-in kid sees. */}
-            <DemoCaption>Gamer audience — read-only band</DemoCaption>
-            <SessionsSection
-              sessions={[]}
-              waitlist={WAITLIST_DEMO_ENTRIES}
-              audience="gamer"
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <DemoCaption>Neither — empty state</DemoCaption>
-            <SessionsSection sessions={[]} waitlist={[]} />
+          <div className="space-y-2">
+            <DemoCaption>Waitlisted</DemoCaption>
+            <EnrollmentCard enrollment={cards.waitlisted} audience="gamer" />
           </div>
         </div>
       </SubSection>
@@ -2109,43 +1920,37 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 14: Parent — Sessions Section                          */}
+      {/* Section 14: Family — Enrollment Card                          */}
       {/* ============================================================ */}
-      <Section title="Parent — Sessions Section">
+      <Section title="Family — Enrollment Card">
         <p className="text-sm text-muted-foreground -mt-2">
-          The Sessions section on the parent dashboard. Three states side by
-          side: a section-level loading placeholder (not card-shaped — the
-          query hasn&rsquo;t told us how many cards to expect yet); the empty
-          state copy shown when the parent has no upcoming sessions; and the
-          loaded stack — the soonest occurrence of each gamer &times; product
-          as a full <code>NextSessionCard</code> (join button or locked CTA,
-          countdown, reports), interleaved by time with every later occurrence
-          rendered as a compact <code>UpcomingSessionCard</code> (purely
-          informational).
+          One card per <em>enrollment</em> &mdash; a family&rsquo;s participation
+          in one product &mdash; and the unit both family dashboards are built
+          out of. It states the <strong>schedule</strong>, not the next session:
+          the next session lives in the Join button&rsquo;s locked label and in
+          the Live badge, so a weekly club is one card all term instead of one
+          card per week. The type noun is the eyebrow, the schedule is the shared
+          product-schedule formatter&rsquo;s sentence, and the footer answers the
+          one remaining question in whichever way this enrollment can: the Join
+          on a remote product, the venue on an in-person one, the place in line
+          on a waitlisted one, the fact that a Gedu is being matched on a seat
+          nobody has been placed in yet, or the day a finished run ended.
         </p>
-        <SessionsSectionDemo />
+        <p className="text-sm text-muted-foreground">
+          <strong>Two states have nothing behind them</strong> &mdash; a queue
+          place and an unplaced seat &mdash; and both drop the link, the chevron
+          and the hover together, because nothing on a card may promise there is
+          more inside when there is not. The corner is reserved for a genuine
+          problem (a failing card), which is why a cancelled membership is a
+          quiet line in the body instead: the parent chose it, so it is
+          confirmation rather than an alarm. Leaving a waitlist is likewise a
+          quiet text link under its own footer sentence.
+        </p>
+        <EnrollmentCardDemo />
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 15: Parent/Gamer — Waitlist Card                       */}
-      {/* ============================================================ */}
-      <Section title="Parent/Gamer — Waitlist Card">
-        <p className="text-sm text-muted-foreground -mt-2">
-          A club the viewer joined the <em>waitlist</em> for. Waitlisted
-          participations have no scheduled session, so they never appear in the
-          session stack above &mdash; this card is their home on My SOG, mirroring
-          the post-signup confirmation page&rsquo;s <code>Hourglass</code> +{" "}
-          <code>#position</code> treatment. It renders the same on both the
-          parent and gamer dashboards; <code>audience</code> only toggles the
-          &ldquo;For {"{name}"}&rdquo; line and the reassurance voice. The
-          position badge is fixed-width + <code>tabular-nums</code> so a live
-          position change never reflows the copy beside it.
-        </p>
-        <WaitlistCardDemo />
-      </Section>
-
-      {/* ============================================================ */}
-      {/* Section 16: Product links — family vs. Gedu                   */}
+      {/* Section 15: Product links — family vs. Gedu                   */}
       {/* ============================================================ */}
       <Section title="Product links — family vs. Gedu">
         <p className="text-sm text-muted-foreground -mt-2">
@@ -2191,7 +1996,7 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 17: Rich text editor — authoring and what it stores   */}
+      {/* Section 16: Rich text editor — authoring and what it stores   */}
       {/* ============================================================ */}
       <Section title="Rich text editor — authoring and what it stores">
         <p className="text-sm text-muted-foreground -mt-2">
@@ -2213,7 +2018,7 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 18: Game account — one identity, any platform         */}
+      {/* Section 17: Game account — one identity, any platform         */}
       {/* ============================================================ */}
       <Section title="Game account — one identity, any platform">
         <p className="text-sm text-muted-foreground -mt-2">

@@ -26,8 +26,8 @@ export interface MyAssignedProductSessionRow {
     /**
      * Inclusive start date in product-local calendar (YYYY-MM-DD), or
      * null for ongoing clubs. Matches the participations shape so the
-     * shared upcoming-session expansion (`expandUpcomingSessions`) can
-     * clamp pre-start phantom occurrences out of the list.
+     * shared occurrence enumeration can clamp pre-start phantom
+     * occurrences out of the list.
      */
     startDate: string | null;
     /** Inclusive end date (YYYY-MM-DD), null for ongoing clubs. */

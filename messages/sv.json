@@ -19,7 +19,6 @@
       "geduSessionDetails": "Sessionsdetaljer",
       "familyProduct": "Tillfällen och sammanfattningar",
       "familyProductDescription": "Gruppens schema och sammanfattningen från varje tillfälle.",
-      "gamerHome": "Spelare",
       "gamerDashboard": "Min SOG",
       "gamerDashboardDescription": "Dina klubbar, läger och evenemang i Sogverse",
       "gamerGroups": "Mina grupper",
@@ -1090,13 +1089,8 @@
   },
   "dashboardSections": {
     "pageTitle": "Min SOG",
-    "myFamily": "Min familj",
     "myGamers": "Mina spelare",
     "myGamersShort": "Spelare",
-    "upcomingSessions": "Träffar",
-    "upcomingSessionsEmptyStateGamer": "När din nästa träff börjar är det här du går in i röstrummet med din Gedu och dina vänner.",
-    "upcomingSessionsEmptyStateParent": "När ditt barns nästa träff börjar är det här hen går in i röstrummet med sin Gedu och sina vänner.",
-    "upcomingSessionsEmptyStateGedu": "När en träff du leder närmar sig är det här du går in i röstrummet med dina spelare.",
     "clubs": "Klubbar",
     "camps": "Läger",
     "events": "Evenemang",
@@ -1107,8 +1101,6 @@
     "settings": "Inställningar",
     "instantVoiceRoom": "Direkt röstrum",
     "instantVoiceRoomShort": "Röstrum",
-    "waitlistBand": "På väntelistan",
-    "scheduledBand": "Schemalagda",
     "loadingAssignments": "Laddar dina klubbar, läger och evenemang."
   },
   "family": {
@@ -1185,7 +1177,6 @@
     "antiBullying": "Mot mobbning"
   },
   "gamer": {
-    "welcome": "Välkommen, spelare!",
     "welcomeNamed": "Välkommen, {name}!",
     "fallbackName": "spelare",
     "subtitle": "Redo att spela och lära dig?",
@@ -1745,21 +1736,7 @@
     "placeholders": {
       "myGamersHint": "Välj en spelare för att hantera kontot."
     },
-    "nextSession": {
-      "title": "{name}s nästa pass",
-      "startsIn": "Börjar om {countdown}",
-      "inProgress": "Pass pågår",
-      "reports": "Rapporter"
-    },
-    "upcomingSession": {
-      "gamerLabel": "För {name}"
-    },
     "waitlist": {
-      "forLabel": "För {name}",
-      "positionLabel": "Din plats i kön",
-      "positionValue": "nr {position}",
-      "reassuranceCustomer": "Vi mejlar så snart en plats blir ledig.",
-      "reassuranceGamer": "Vi mejlar en förälder så snart en plats blir ledig.",
       "footerReassuranceCustomer": "Plats {position} i kön — vi mejlar så snart en plats blir ledig.",
       "footerReassuranceGamer": "Du är på plats {position} i kön — vi mejlar en förälder så snart en plats blir ledig.",
       "leave": {
@@ -1769,16 +1746,6 @@
         "confirmCta": "Lämna väntelistan",
         "backOfLineWarning": "Om du ställer dig på väntelistan igen senare börjar du längst bak i kön."
       }
-    },
-    "subscriptionEnding": {
-      "wontRenew": "Förnyas inte",
-      "lastSession": "Sista passet",
-      "tooltip": "Du har sagt upp medlemskapet — det förnyas inte. {name}s sista pass är {lastSession}, och du har tillgång till {accessUntil}.",
-      "tooltipSameDay": "Du har sagt upp medlemskapet — det förnyas inte. {name}s sista pass är {lastSession}."
-    },
-    "awaiting": {
-      "customer": "{name} är med! Gedun placerar hen i en grupp innan det första passet börjar.",
-      "gamer": "Du är med! Vi placerar dig i din grupp innan nästa pass börjar."
     },
     "help": {
       "contact": {

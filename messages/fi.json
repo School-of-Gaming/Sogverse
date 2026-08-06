@@ -22,7 +22,6 @@
       "help": "Apu",
       "shop": "Kauppa",
       "schools": "Kuntakerhot",
-      "gamerHome": "Pelaaja",
       "gamerDashboard": "Oma SOG",
       "gamerDashboardDescription": "Kerhosi, leirisi ja tapahtumasi Sogversessa",
       "gamerGroups": "Omat ryhmät",
@@ -1090,13 +1089,8 @@
   },
   "dashboardSections": {
     "pageTitle": "Oma SOG",
-    "myFamily": "Perheeni",
     "myGamers": "Pelaajani",
     "myGamersShort": "Pelaajat",
-    "upcomingSessions": "Tapaamiset",
-    "upcomingSessionsEmptyStateGamer": "Kun seuraava tapaamisesi lähestyy, täältä pääset liittymään ryhmän omalle puhekanavalle.",
-    "upcomingSessionsEmptyStateParent": "Kun lapsesi seuraavan tapaamisen aika koittaa, ilmestyy tähän painike, josta pääsette sisään puhekanaville.",
-    "upcomingSessionsEmptyStateGedu": "Kun ohjaamasi tapaaminen lähestyy, täältä pääset liittymään puhekanavalle pelaajiesi kanssa.",
     "clubs": "Kerhot",
     "camps": "Leirit",
     "events": "Tapahtumat",
@@ -1107,8 +1101,6 @@
     "settings": "Asetukset",
     "instantVoiceRoom": "Pikaäänihuone",
     "instantVoiceRoomShort": "Äänihuone",
-    "waitlistBand": "Jonotuslistalla",
-    "scheduledBand": "Aikataulussa",
     "loadingAssignments": "Ladataan kerhojasi, leirejäsi ja tapahtumiasi."
   },
   "family": {
@@ -1185,7 +1177,6 @@
     "antiBullying": "Kiusaamisen ehkäisy"
   },
   "gamer": {
-    "welcome": "Tervetuloa, pelaaja!",
     "welcomeNamed": "Tervetuloa, {name}!",
     "fallbackName": "pelaaja",
     "subtitle": "Valmis pelaamaan ja oppimaan?",
@@ -1745,21 +1736,7 @@
     "placeholders": {
       "myGamersHint": "Valitse pelaaja hallitaksesi hänen tiliään."
     },
-    "nextSession": {
-      "title": "{name}: seuraava sessio",
-      "startsIn": "Alkaa {countdown} kuluttua",
-      "inProgress": "Sessio käynnissä",
-      "reports": "Raportit"
-    },
-    "upcomingSession": {
-      "gamerLabel": "Pelaaja: {name}"
-    },
     "waitlist": {
-      "forLabel": "Pelaaja: {name}",
-      "positionLabel": "Sijasi jonossa",
-      "positionValue": "{position}.",
-      "reassuranceCustomer": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
-      "reassuranceGamer": "Lähetämme vanhemmallesi sähköpostia heti, kun paikka vapautuu.",
       "footerReassuranceCustomer": "Jonossa sijalla {position} — lähetämme sähköpostia heti, kun paikka vapautuu.",
       "footerReassuranceGamer": "Olet jonossa sijalla {position} — lähetämme vanhemmallesi sähköpostia heti, kun paikka vapautuu.",
       "leave": {
@@ -1769,16 +1746,6 @@
         "confirmCta": "Poistu jonotuslistalta",
         "backOfLineWarning": "Jos liityt jonotuslistalle myöhemmin uudelleen, aloitat jonon lopusta."
       }
-    },
-    "subscriptionEnding": {
-      "wontRenew": "Ei uusiudu",
-      "lastSession": "Viimeinen kerta",
-      "tooltip": "Peruit tämän jäsenyyden – se ei uusiudu. {name}: viimeinen kerta on {lastSession}, ja käyttöoikeus jatkuu {accessUntil} asti.",
-      "tooltipSameDay": "Peruit tämän jäsenyyden – se ei uusiudu. {name}: viimeinen kerta on {lastSession}."
-    },
-    "awaiting": {
-      "customer": "{name} on mukana! Gedu sijoittaa hänet ryhmään ennen ensimmäisen session alkua.",
-      "gamer": "Olet mukana! Sijoitamme sinut ryhmääsi ennen seuraavan session alkua."
     },
     "help": {
       "contact": {

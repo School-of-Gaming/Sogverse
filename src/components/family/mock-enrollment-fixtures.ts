@@ -136,9 +136,10 @@ export function buildEnrollmentFixture(
     // a voice room has no building, and a card showing both would be claiming
     // the family meets in two places.
     siteName: spec.isRemote ? null : (spec.siteName ?? null),
-    // The product page a family opens from a card does not exist yet, so every
-    // card is a real link that goes nowhere rather than a div pretending to be
-    // one — the semantics are what this mock is for.
+    // Inert for the same reason the Join is: a fixture surface must not
+    // navigate to a page that would go looking for data. Still a real href, so
+    // the card is a real link rather than a div pretending to be one — the
+    // semantics are what this mock is for.
     openHref: "#",
     endDate,
     timezone: FIXTURE_TIMEZONE,

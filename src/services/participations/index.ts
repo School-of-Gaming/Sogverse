@@ -15,9 +15,7 @@ export type {
 } from "./participations.service";
 export { participationKeys } from "./participations.keys";
 export {
-  useMyUpcomingSessions,
   useMyUpcomingSessionRows,
-  useMyWaitlist,
   useMyWaitlistRows,
   useParticipationCounts,
   useCheckoutConfirmation,
