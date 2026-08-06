@@ -21,6 +21,26 @@ import { attendanceStatus } from "@/services/gedu-sessions/gedu-sessions.contrac
  * here too, rather than a field that quietly starts flowing through.
  */
 
+/*
+ * The next two shapes are byte-identical to their twins in the gedu session
+ * contracts, and they are duplicated ON PURPOSE rather than shared.
+ *
+ * The line this file draws is between a *vocabulary* and a *document shape*.
+ * `attendanceStatus` above is imported, because it is a vocabulary: its members
+ * must match a single CHECK constraint in the database, so a second copy would
+ * be a second source of truth for one fact and could only ever drift into being
+ * wrong. These two are document shapes. Each feed RPC builds its own JSONB, and
+ * the whole privacy argument for this contract — stated above — is that
+ * widening what a family may receive has to be a visible, deliberate edit *in
+ * this file*. Importing the object shapes would hand that decision to whoever
+ * next edits the staff contract, where a widening would look local while
+ * silently flowing through to families. The two documents are allowed to
+ * diverge; that they agree today is not a reason to fuse them.
+ *
+ * If they ever have to move in lockstep, that is a signal the underlying
+ * columns changed, and both files should be edited in the same change.
+ */
+
 const productTranslationSummary = z.object({
   locale: z.string(),
   name: z.string(),

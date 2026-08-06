@@ -490,15 +490,20 @@ describe("family product feed", () => {
       expect(own.error).toBeNull();
     });
 
-    it("refuses an unplaced participation, for its own owners", async () => {
+    it("refuses an unplaced participation as not-found, for its own owners", async () => {
       // Not an authorization failure — this parent owns the row. There is
       // simply no page: no group means no feed, no gedus and no group note.
+      //
+      // P0002 (`no_data_found`) specifically, not merely "some error that isn't
+      // 42501": PostgREST maps P0002 to a 404 and P0001 to a 400, and the club
+      // page is specified to render this case as not-found. A bare RAISE would
+      // be P0001 and would surface as a client error the page has no state for,
+      // so the code is the contract and this asserts it.
       for (const client of [customerAuth, gamerAuth]) {
         const { error } = await client.rpc("get_my_family_product_feed", {
           p_participation_id: unplaced,
         });
-        expect(error).not.toBeNull();
-        expect(error?.code).not.toBe("42501");
+        expect(error?.code).toBe("P0002");
       }
     });
 
@@ -534,6 +539,26 @@ describe("family product feed", () => {
       });
       // No grant to `anon` — refused at the privilege layer, before the body.
       expect(error).not.toBeNull();
+    });
+
+    it("refuses the service-role client, which has EXECUTE but no identity", async () => {
+      // The regression pin for 00152. `service_role` keeps its grant, so this
+      // call reaches the function body — and a service-role JWT carries no
+      // `sub`, so auth.uid() is NULL inside it. Until 00152 that made the
+      // ownership predicate evaluate to NULL, which PL/pgSQL reads as false,
+      // so the guard never fired and the FULL family document came back for an
+      // arbitrary participation id: a complete cross-family read for any
+      // server-side caller that passed through a URL-supplied id.
+      //
+      // `minePlaced` is a real, placed participation, which is what makes this
+      // non-vacuous: with a nonexistent id the not-found arm raises either way
+      // and a broken function would pass this test.
+      const { data, error } = await admin.rpc("get_my_family_product_feed", {
+        p_participation_id: minePlaced,
+      });
+
+      expect(error?.code).toBe("42501");
+      expect(data).toBeNull();
     });
   });
 });
