@@ -38,6 +38,7 @@ import { TEST_IDS } from "./constants";
  * The 5xx block has no tidy sub-range left below 5ff, so allocation continues
  * in 6xx (`...0000000006XX`):
  *   601-606        gedu-session-feed.test.ts (three products, three groups)
+ *   607-60c        family-product-feed.test.ts (three products, three groups)
  */
 
 export interface ProductOptions {
