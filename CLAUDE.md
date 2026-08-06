@@ -211,6 +211,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Locations | `src/services/locations/` |
 | WhatsApp | `src/services/whatsapp/` |
 | Session feeds — shared gedu/family machinery | `src/components/session-feed/` |
+| Family product page (a family's club/camp/event page) | `src/components/family/product-page/` |
 | Voice — scheduled group rooms | `src/components/voice/` |
 | Voice — instant rooms | `src/components/voice/instant/` |
 | Discord bot | `src/app/api/discord/` |

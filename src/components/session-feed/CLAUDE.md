@@ -16,13 +16,18 @@ identically; the gedu module keeps everything that makes its feed a *workspace*.
   owed/attention derivation, attendance rosters and summaries, the staff-note block, the
   alert badge, partial-save handling, and the workspace's mock fixtures.
 
-**Rule: family surfaces never import from `src/components/gedu/` — enforced, not
-promised.** A `no-restricted-imports` zone in the ESLint config fails the build on any
-import of gedu code from `components/family/`, `components/parent/` or
-`components/gamer/`. The point is structural privacy: the staff note, the roster and the
-completeness states must be unreachable from anything a family renders, and the family
-entry types additionally have no field such data could arrive in. Widening this module is
-how a new shared need gets met — never by a family component reaching into the gedu tree.
+**Rule: family surfaces never import gedu code — enforced, not promised.** One
+`no-restricted-imports` zone in the ESLint config covers the whole family *path*, not
+only its components: `components/family/`, `components/parent/`, `components/gamer/`, the
+lib module that builds the family feed, and the family feed service. It bans two things —
+the gedu component tree, and the gedu **session service entire**, which is in practice
+the likelier leak, since that service exports the staff document shapes and a family
+module importing one would compile, parse and render it. The one exception is the
+attendance vocabulary, permitted by name through an allow-list. The point is structural
+privacy: the staff note, the roster and the completeness states must be unreachable from
+anything a family renders, and the family entry types additionally have no field such
+data could arrive in. Widening this module is how a new shared need gets met — never by a
+family module reaching into the gedu tree.
 
 **Rule: a string both feeds render lives in a shared namespace, never under a role's.**
 `sessionFeed`, `sessionBadge`, `productType`, `activityCard` exist for this. A shared
