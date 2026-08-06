@@ -111,7 +111,7 @@ export const PREVIEW_SCENES = [
     surface: "parent-dashboard",
     title: "Parent dashboard",
     description:
-      "The parent dashboard reorganised around the children rather than around the sessions: a section per child, headed by their identicon, first name and a quiet Manage link to their identity page, with one card per enrollment beneath it — soonest session first, finished runs muted at the bottom. The cards carry no child's name, because the heading above them already does; the type noun is the eyebrow, the schedule is the shared formatter's sentence, and the footer holds the Join on a remote product, the venue on an in-person one, the place in line and what happens when a seat opens on a waitlisted one, the fact that a Gedu is being matched on a seat nobody has placed yet, or the day a finished run ended. The two cards with nothing behind them yet — the queue place and the unplaced seat — are the ones that are not links, and the corner is reserved for genuine problems: leaving a waitlist is a quiet text link under its own footer sentence, not a badge. The My Gamers tile strip is gone — the headings absorbed it, and adding a child is one quiet tile after the last section. Every action that would reach a backend is inert; the confirm dialog in front of the leave is pure UI and works.",
+      "The body `/parent` renders, over fixtures instead of the family's own rows. The page is organised around the children: a section per child, headed by their identicon, first name and a quiet Manage link to their identity page, with one card per enrollment beneath it — soonest session first, finished runs muted at the bottom. The cards carry no child's name, because the heading above them already does; the type noun is the eyebrow, the schedule is the shared formatter's sentence, and the footer holds the Join on a remote product, the venue on an in-person one, the place in line and what happens when a seat opens on a waitlisted one, the fact that a Gedu is being matched on a seat nobody has placed yet, or the day a finished run ended. The two cards with nothing behind them yet — the queue place and the unplaced seat — are the ones that are not links, and the corner is reserved for genuine problems: leaving a waitlist is a quiet text link under its own footer sentence, not a badge. The child headings are also how a parent reaches a child, so adding one is a single quiet tile after the last section — which hides itself once the account holds as many children as it may. Every action that would reach a backend is inert; the confirm dialog in front of the leave is pure UI and works.",
     chrome: "dashboard",
     scenarios: [
       {
@@ -130,7 +130,7 @@ export const PREVIEW_SCENES = [
         slug: "seven-gamers",
         label: "Seven children — pill collapsed",
         description:
-          "Past three children the section pill stops naming them one by one and collapses to a single “Gamers” chip, so this is where the collapse and the seven headings behind it can be judged together.",
+          "Past three children the section pill stops naming them one by one and collapses to a single “Gamers” chip, so this is where the collapse and the seven headings behind it can be judged together. Seven is also as many children as one account may hold, which makes this the one scenario with no add-a-child tile under the last section — withdrawn rather than disabled, since nothing is going to clear the condition.",
       },
       {
         slug: "new-family",
@@ -150,7 +150,7 @@ export const PREVIEW_SCENES = [
     surface: "gamer-dashboard",
     title: "Gamer dashboard",
     description:
-      "The child's own dashboard with the same enrollment cards, self-scoped: no attribution anywhere, grouped under the type nouns they actually have rather than by person, and with a section pill that names those nouns plus Yty. The hero greets the child by name — this was the one page in the product that said the same thing to every child on it — and the Yty grid is unchanged. Money is absent entirely — billing is a parent concern, so no payment or subscription badge ever renders here — and there is no way to give up a waitlist place. The parent-only props are not merely unpassed: the card's own types make them unreachable from a child's audience.",
+      "The body `/gamer` renders, over fixtures: the child's own dashboard with the same enrollment cards, self-scoped — no attribution anywhere, grouped under the type nouns they actually have rather than by person, and with a section pill that names those nouns plus Yty. The hero greets the child by name, and the Yty grid sits under it. Money is absent entirely — billing is a parent concern, so no payment or subscription badge ever renders here — and there is no way to give up a waitlist place. The parent-only props are not merely unpassed: the card's own types make them unreachable from a child's audience.",
     chrome: "dashboard",
     scenarios: [
       {

@@ -241,7 +241,7 @@ export const CLUB_FUTURE_SPECS: readonly EntrySpec[] = [
   {
     kind: "future",
     staffNote:
-      "Parents' evening runs late this week — the room may not be free until quarter past. Padlet is up to date if anyone needs to see where the group is.",
+      "Parents' evening runs late this week — the room may not be free until quarter past. Last week's write-up is in if anyone needs to see where the group is.",
   },
   { kind: "future" },
   { kind: "future" },

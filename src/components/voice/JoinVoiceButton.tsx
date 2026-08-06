@@ -52,9 +52,9 @@ interface JoinVoiceButtonProps {
 
 /**
  * The single Join Voice button shared across every surface that joins a
- * group voice room: parent / gamer `NextSessionCard`, the gedu dashboard's
- * prominent `GroupCard`, and every group card on the gedu session-details
- * page. An enabled `Link` to `/voice/group/[id]` when the window is open
+ * group voice room: the family enrollment cards and club pages, the gedu
+ * dashboard's prominent group card, and every group card on the gedu
+ * session-details page. An enabled `Link` to `/voice/group/[id]` when the window is open
  * (or a `<button>` firing `onJoinClick` when one is passed), a disabled
  * button with a lock icon + "Opens {date} at {time}" otherwise. The one
  * exception is `awaiting`: an unplaced gamer whose window is open can't join

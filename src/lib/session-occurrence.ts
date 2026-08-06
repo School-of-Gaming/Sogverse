@@ -3,17 +3,14 @@ import { getNextSessionStart, stepBackOneWeek } from "@/lib/enrollment";
 
 /**
  * Shared building blocks for resolving "what session does this slot
- * point to right now?" — the bit of expansion logic both
- * `expandUpcomingSessions` (parent/gamer) and
- * `expandAssignedProductsToCards` (gedu) need — **and for saying which
- * occurrence one is**, which every feed that merges stored rows over
- * projections has to agree on.
+ * point to right now?" — the bit of expansion logic the family and gedu
+ * roll-ups both need — **and for saying which occurrence one is**, which
+ * every feed that merges stored rows over projections has to agree on.
  *
- * Each consumer handles iteration differently (parent/gamer emits N
- * future occurrences per slot, gedu collapses to the soonest), so we
- * share the awkward pieces — the prev-week-in-window check, the
- * date-to-cutoff conversions and the identity helpers — and let the
- * callers iterate.
+ * Each consumer handles iteration differently (a feed walks a whole term
+ * of them, a dashboard card collapses to the soonest), so we share the
+ * awkward pieces — the prev-week-in-window check, the date-to-cutoff
+ * conversions and the identity helpers — and let the callers iterate.
  *
  * Role-agnostic on purpose. Every session feed in the app is built out
  * of these, and a second copy of any of them in a per-role module is how
@@ -79,12 +76,17 @@ export interface SlotShape {
  * last week's slot start in local time, so `getNextSessionStart`
  * returns last week's already-finished session and the in-window check
  * fails. Today's in-progress session disappears from the dashboard.
- * Regression coverage lives in
- * `tests/unit/lib/upcoming-sessions.test.ts`.
+ * The regression is pinned in `tests/unit/session-schedule.test.ts`, by
+ * the spring-forward case that reads a room's state mid-session: revert
+ * the week step to a flat 7×24h and that file — and only that file —
+ * goes red.
  *
  * Returns null when the product hasn't started yet
  * (`startBoundary > now`) — no prev-week occurrence can be in
- * progress in that case.
+ * progress in that case. Belt and braces with the `afterStart` check
+ * below, which rejects the same occurrence one step later; either alone
+ * is enough, which is why breaking one of them on its own leaves the
+ * suite green.
  */
 export function getCurrentInProgressOccurrence(args: {
   slot: SlotShape;
@@ -191,11 +193,10 @@ export function earlierBoundary(a: Date | null, b: Date | null): Date | null {
 }
 
 /**
- * Expand one row's slots into the concrete (start, end) pairs the
- * dashboards consume. Shared between `expandUpcomingSessions`
- * (parent/gamer) and `expandAssignedSessionsToCards` (gedu) — the only
- * difference between the callers was the per-row card shaping, not the
- * iteration.
+ * Expand one row's slots into the concrete (start, end) pairs every
+ * dashboard and feed consumes, on both the family and the gedu side —
+ * the only difference between those callers was the per-row card
+ * shaping, not the iteration.
  *
  * Per-slot it first surfaces a still-in-its-window previous occurrence
  * (the bit `getNextSessionStart` hides because it only ever returns

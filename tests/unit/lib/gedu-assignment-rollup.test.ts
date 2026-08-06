@@ -36,7 +36,6 @@ function row(over: {
       timezone: TZ,
       startDate: over.startDate ?? "2025-01-06",
       endDate: over.endDate ?? null,
-      padletUrl: null,
       isRemote: over.isRemote ?? true,
       productType: "consumer_club",
       translations: [{ locale: "en", name: over.name, description: "" }],

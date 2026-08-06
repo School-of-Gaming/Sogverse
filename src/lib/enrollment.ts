@@ -34,7 +34,7 @@ export function getNextSessionStart(
   // UTC fields. Using getUTC* here silently works on a UTC server (Vercel
   // prod) and breaks on every non-UTC environment: a dev laptop in another
   // zone, and crucially, every user's browser during client-side hydration
-  // of useMyUpcomingSessions. The day-of-week match shifts by the local
+  // of the family dashboards. The day-of-week match shifts by the local
   // offset, the function returns a past occurrence, and the occurrence-
   // enumeration loop in src/lib/session-occurrence.ts (which only escapes
   // via `start > endBoundary`) spins forever, pegging the renderer at

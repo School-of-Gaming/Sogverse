@@ -89,9 +89,8 @@ export interface GeduProductPageFixture {
   /** The venue and its shared notes, or `null` for a remote product. */
   site: SiteFixture | null;
   /**
-   * Staff-facing lesson/material URL. Separate from the product's Padlet, which
-   * is the family-facing link — the promotion step reads this from a new
-   * product column and must never render it to a parent or gamer.
+   * Staff-facing lesson/material URL, read from the product's staff-details
+   * row. Must never be rendered to a parent or gamer.
    */
   materialUrl: string | null;
 }
@@ -149,7 +148,6 @@ interface ScenarioConfig {
   isRemote: boolean;
   /** The venue, on in-person products only. */
   site: SiteFixture | null;
-  padletUrl: string | null;
   materialUrl: string | null;
   groupName: string;
   groupNotes: GroupNotesFixture;
@@ -610,7 +608,6 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
     isRemote: true,
     // Remote: no building, so no site-notes panel on the page.
     site: null,
-    padletUrl: "https://padlet.com/sog/minecraft-monday-club",
     materialUrl: "https://drive.sog.gg/minecraft-monday-club/lesson-plans",
     groupName: "Monday A",
     groupNotes: {
@@ -684,7 +681,6 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
       staffNote:
         "Room key is at the info desk on the ground floor, signed out under the SOG booking. The projector needs the HDMI adapter from the drawer, not the cable left on the table. Fire exit is the stairwell behind the room, not the lift lobby. The caretaker locks the second floor at 18:00 sharp.",
     },
-    padletUrl: "https://padlet.com/sog/roblox-builders-camp",
     materialUrl: "https://drive.sog.gg/roblox-builders-camp/day-by-day",
     groupName: "Builders red",
     groupNotes: {
@@ -755,7 +751,6 @@ export function buildGeduProductPageFixture(
       product: {
         id: `mock-product-${scenario}`,
         product_type: config.productType,
-        padlet_url: config.padletUrl,
         timezone: SESSION_FEED_TIMEZONE,
         start_date: calendarDate(now, -config.startedDaysAgo),
         end_date:

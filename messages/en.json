@@ -19,7 +19,6 @@
       "geduSessionDetails": "Session details",
       "familyProduct": "Sessions and reports",
       "familyProductDescription": "The schedule for this group and the write-up from every session.",
-      "gamerHome": "Gamer",
       "gamerDashboard": "My SOG",
       "gamerDashboardDescription": "Your clubs, camps and events in the Sogverse",
       "gamerGroups": "My Groups",
@@ -234,7 +233,6 @@
         },
         "fields": {
           "topic": "Topic",
-          "padletUrl": "Padlet",
           "materialUrl": "Lesson material",
           "locales": "Languages",
           "startDate": "Start date",
@@ -300,7 +298,6 @@
         "shortDescription": "Short description",
         "longDescription": "Long description",
         "topic": "Topic",
-        "padletUrl": "Padlet URL",
         "materialUrl": "Lesson material URL",
         "minAge": "Min age",
         "maxAge": "Max age",
@@ -333,7 +330,6 @@
       },
       "placeholders": {
         "selectTopic": "Select a topic…",
-        "padletUrl": "https://padlet.com/...",
         "materialUrl": "https://drive.sog.gg/...",
         "threshold": "e.g. 8",
         "name": {
@@ -441,7 +437,6 @@
         "longDescription": "Optional. Shown only on the product’s detail page. Build it from headings and paragraphs.",
         "topicHint": "The topic this product covers — a game (like Minecraft or Fortnite) or a subject (like Webinar).",
         "materialUrlHint": "Optional. For Gedus only — families never see this.",
-        "padletHint": "Optional. Shared with families after they sign up.",
         "deliveredInHint": "The primary language used during sessions.",
         "onlineNoLocation": "Online and available to anyone — no location needed. Any parent browsing will see this, no matter where they live.",
         "voiceRoomAuto": "A voice room will be set up for this product automatically.",
@@ -476,7 +471,6 @@
         "siteRequired": "Site is required for in-person products",
         "scheduleRequired": "At least one schedule slot is required",
         "materialUrlInvalid": "Lesson material URL must be a valid URL",
-        "padletInvalid": "Padlet URL must be a valid URL",
         "startDateRequired": "Start date is required",
         "endDateRequired": "End date is required",
         "seatCountInvalid": "Seat count must be a positive integer",
@@ -818,7 +812,6 @@
       "namePlaceholder": "Product name",
       "descriptionLabel": "Description",
       "descriptionPlaceholder": "Describe your product",
-      "padletUrlLabel": "Padlet URL",
       "approxPerSession": "≈ {amount} per session",
       "imageLabel": "Image",
       "preview": "Preview",
@@ -1090,13 +1083,8 @@
   },
   "dashboardSections": {
     "pageTitle": "My SOG",
-    "myFamily": "My Family",
     "myGamers": "My Gamers",
     "myGamersShort": "Gamers",
-    "upcomingSessions": "Sessions",
-    "upcomingSessionsEmptyStateGamer": "When your next session is coming up, this is where you’ll join the voice room with your Gedu and friends.",
-    "upcomingSessionsEmptyStateParent": "When your child’s next session is coming up, this is where they’ll join the voice room with their Gedu and friends.",
-    "upcomingSessionsEmptyStateGedu": "When a session you’re running is coming up, this is where you’ll join the voice room with your gamers.",
     "clubs": "Clubs",
     "camps": "Camps",
     "events": "Events",
@@ -1107,8 +1095,6 @@
     "settings": "Settings",
     "instantVoiceRoom": "Instant Voice Room",
     "instantVoiceRoomShort": "Voice room",
-    "waitlistBand": "On the waitlist",
-    "scheduledBand": "Scheduled",
     "loadingAssignments": "Loading your clubs, camps and events."
   },
   "family": {
@@ -1185,7 +1171,6 @@
     "antiBullying": "Anti-Bullying"
   },
   "gamer": {
-    "welcome": "Welcome, Gamer!",
     "welcomeNamed": "Welcome, {name}!",
     "fallbackName": "Gamer",
     "subtitle": "Ready to play and learn?",
@@ -1331,7 +1316,6 @@
     "everyDay": "Every {day}",
     "join": "Join",
     "alwaysOpen": "Always Open",
-    "padlet": "Padlet",
     "material": "Materials",
     "materialAction": "Teaching materials",
     "materialStaffOnly": "Gedu only — families never see this link",
@@ -1833,21 +1817,7 @@
     "placeholders": {
       "myGamersHint": "Select a gamer to manage their account."
     },
-    "nextSession": {
-      "title": "{name}’s next session",
-      "startsIn": "Starts in {countdown}",
-      "inProgress": "Session in progress",
-      "reports": "Your reports"
-    },
-    "upcomingSession": {
-      "gamerLabel": "For {name}"
-    },
     "waitlist": {
-      "forLabel": "For {name}",
-      "positionLabel": "Your position",
-      "positionValue": "#{position}",
-      "reassuranceCustomer": "We’ll email you the moment a seat opens.",
-      "reassuranceGamer": "We’ll email a parent as soon as a seat opens.",
       "footerReassuranceCustomer": "You’re #{position} in line — we’ll email you the moment a seat opens.",
       "footerReassuranceGamer": "You’re #{position} in line — we’ll email a parent as soon as a seat opens.",
       "leave": {
@@ -1857,16 +1827,6 @@
         "confirmCta": "Leave waitlist",
         "backOfLineWarning": "If you join again later, you’ll start at the back of the line."
       }
-    },
-    "subscriptionEnding": {
-      "wontRenew": "Won’t renew",
-      "lastSession": "Last session",
-      "tooltip": "You canceled this membership — it won’t renew. {name}’s last session is {lastSession}, and access runs through {accessUntil}.",
-      "tooltipSameDay": "You canceled this membership — it won’t renew. {name}’s last session is {lastSession}."
-    },
-    "awaiting": {
-      "customer": "{name} is in! Their Gedu will place them in a group before the first session starts.",
-      "gamer": "You’re all signed up! We’ll put you in your group before the next session begins."
     },
     "help": {
       "contact": {

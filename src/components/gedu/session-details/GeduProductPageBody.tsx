@@ -263,11 +263,11 @@ export function GeduProductPageBody({
       <SessionDetailsBackLink />
 
       {/* The masthead is a two-column row on desktop: identity on the left,
-          the one outward action on the right. The Padlet used to sit up here
-          beside it — it is gone from this page for good. Session reports are
-          what families now read, so a link out to a third-party wall was a
-          second, staler answer to the same question, and leaving it would have
-          taught gedus to keep posting there. */}
+          the one outward action on the right. A family-facing link out to a
+          third-party wall used to sit up here beside it, and is gone for good:
+          the session reports below are what families read now, so the link was
+          a second, staler answer to the same question, and leaving it would
+          have taught gedus to keep posting there. */}
       <header className="mt-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-4 border-b border-border pb-5">
         <div className="min-w-0">
           <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">

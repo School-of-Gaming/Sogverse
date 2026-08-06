@@ -857,7 +857,6 @@ export type Database = {
           max_age: number
           min_age: number
           municipality_fee_cents: number | null
-          padlet_url: string | null
           primary_gedu_fee_cents: number | null
           product_type: Database["public"]["Enums"]["product_type"]
           registration_opens_at: string
@@ -885,7 +884,6 @@ export type Database = {
           max_age: number
           min_age: number
           municipality_fee_cents?: number | null
-          padlet_url?: string | null
           primary_gedu_fee_cents?: number | null
           product_type: Database["public"]["Enums"]["product_type"]
           registration_opens_at: string
@@ -913,7 +911,6 @@ export type Database = {
           max_age?: number
           min_age?: number
           municipality_fee_cents?: number | null
-          padlet_url?: string | null
           primary_gedu_fee_cents?: number | null
           product_type?: Database["public"]["Enums"]["product_type"]
           registration_opens_at?: string
@@ -1504,7 +1501,6 @@ export type Database = {
           p_max_age: number
           p_min_age: number
           p_municipality_fee_cents?: number
-          p_padlet_url?: string
           p_prices?: Json
           p_primary_gedu_fee_cents?: number
           p_product_type: Database["public"]["Enums"]["product_type"]
@@ -1552,7 +1548,6 @@ export type Database = {
           group_count: number
           group_id: string
           is_remote: boolean
-          padlet_url: string
           product_id: string
           product_translations: Json
           product_type: Database["public"]["Enums"]["product_type"]
@@ -1794,7 +1789,6 @@ export type Database = {
           p_max_age: number
           p_min_age: number
           p_municipality_fee_cents?: number
-          p_padlet_url?: string
           p_prices?: Json
           p_primary_gedu_fee_cents?: number
           p_registration_opens_at: string

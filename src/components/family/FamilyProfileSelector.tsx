@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useAuth } from "@/providers/auth-provider";
 import { FamilyService, useFamily, type FamilyMember } from "@/services/family";
 import { AddGamerDialog } from "./AddGamerDialog";
@@ -74,6 +74,7 @@ export function FamilyProfileSelector({
   initialFamily,
 }: FamilyProfileSelectorProps = {}) {
   const t = useTranslations("family");
+  const locale = useLocale();
   const { user, profile } = useAuth();
   const { data: family, isLoading, error } = useFamily({ initialData: initialFamily });
   const [committingTargetId, setCommittingTargetId] = useState<string | null>(null);
@@ -151,8 +152,12 @@ export function FamilyProfileSelector({
     );
   }
 
-  const parents = family.filter((m) => m.role === "customer").sort(byFirstName);
-  const gamers = family.filter((m) => m.role === "gamer").sort(byFirstName);
+  const parents = family
+    .filter((m) => m.role === "customer")
+    .sort(byFirstName(locale));
+  const gamers = family
+    .filter((m) => m.role === "gamer")
+    .sort(byFirstName(locale));
 
   // The Steven Brown Rule (UI-only cap) — see MAX_GAMERS_PER_PARENT for lore.
   const underStevenBrownLimit = gamers.length < MAX_GAMERS_PER_PARENT;
@@ -247,8 +252,27 @@ export function FamilyProfileSelector({
   );
 }
 
-function byFirstName(a: FamilyMember, b: FamilyMember): number {
-  return a.first_name.localeCompare(b.first_name);
+/**
+ * Order tiles by first name, collated in the **viewer's own locale** and
+ * tie-broken by id — the same comparator the parent dashboard's child sections
+ * use, for the same two reasons.
+ *
+ * The collation is not the runtime's, because a Finnish family's Ämmi belongs
+ * after Zeno, and a comparator that agreed with that on the server and
+ * disagreed in the browser would rearrange the tiles on hydration, under the
+ * cursor of somebody already reaching for one.
+ *
+ * The id breaks a tie because a first name does not have to be unique: two
+ * children in one family may share one, and the family read imposes no order of
+ * its own, so a comparator returning 0 would leave that pair in whatever order
+ * Postgres happened to answer with — free to differ between two fetches. The id
+ * is arbitrary as an ordering; what it buys is the *same* arbitrary order every
+ * time.
+ */
+function byFirstName(locale: string) {
+  return (a: FamilyMember, b: FamilyMember): number =>
+    a.first_name.localeCompare(b.first_name, locale) ||
+    a.id.localeCompare(b.id);
 }
 
 function navigateToDashboard(role: FamilyMember["role"]) {
