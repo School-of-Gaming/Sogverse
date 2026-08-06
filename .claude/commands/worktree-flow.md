@@ -25,9 +25,15 @@ Run these from the **main checkout** (`C:/Users/Kyle/work/Sogverse`). If the
 session is already inside a worktree, stop and say so: a worktree-isolated
 session cannot create or modify another worktree, and the guard will refuse.
 
-1. **Verify the base.** `git fetch origin dev`, then confirm local `dev` matches
-   `origin/dev`. Fast-forward it if behind. Never branch from `main` — it is
-   hundreds of commits behind `dev`.
+1. **Verify the base — the latest `dev`, unless Kyle has said otherwise for this
+   piece of work.** That is a standing repo rule (see the Branching section of the
+   root `CLAUDE.md`), and this is the step that actually enforces it: no setting
+   can, because no setting fetches. `git fetch origin dev`, confirm local `dev`
+   matches `origin/dev`, fast-forward if behind. Never `main` — it trails `dev` by
+   hundreds of commits.
+
+   If he has named a different base, use it and say back which base you used, so a
+   deliberate choice and a mistake never look the same in the transcript.
 
 2. **Create the worktree**, branching from `dev` explicitly:
 
