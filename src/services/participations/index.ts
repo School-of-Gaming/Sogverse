@@ -16,7 +16,9 @@ export type {
 export {
   participationKeys,
   useMyUpcomingSessions,
+  useMyUpcomingSessionRows,
   useMyWaitlist,
+  useMyWaitlistRows,
   useParticipationCounts,
   useCheckoutConfirmation,
   useCreateParticipation,

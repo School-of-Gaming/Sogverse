@@ -60,21 +60,43 @@ export function useMyUpcomingSessions(
   audience: SessionAudience,
   options: { initialData: MyUpcomingSessionRow[] },
 ): UpcomingSessionEntry[] {
-  const supabase = getClient();
-  const service = new ParticipationsService(supabase);
+  const rows = useMyUpcomingSessionRows(audience, options);
   const locale = resolveLocale(useLocale());
   const now = useNow();
 
-  const query = useQuery({
+  return useMemo(
+    () => expandUpcomingSessions(rows, now, locale),
+    [rows, now, locale],
+  );
+}
+
+/**
+ * The same rows, **unexpanded** — the read on its own, with no adapter over it.
+ *
+ * The family dashboards want the rows themselves: the roll-up that turns a row
+ * into an enrollment card is a function of the viewer's locale and zone and has
+ * to re-derive on every clock tick, so it belongs in a client hook of its own
+ * rather than baked into this query. Splitting the fetch out from the expansion
+ * is what lets two adapters sit over one read.
+ *
+ * Both hooks share this query key, so they share one cache entry and one fetch
+ * no matter how many of them a page mounts. `initialData` is required for the
+ * reason it is required above: every consumer server-prefetches these rows
+ * because they decide the page's geometry, and a page whose geometry arrives
+ * after the first frame is one that moves under the reader.
+ */
+export function useMyUpcomingSessionRows(
+  audience: SessionAudience,
+  options: { initialData: MyUpcomingSessionRow[] },
+): MyUpcomingSessionRow[] {
+  const supabase = getClient();
+  const service = new ParticipationsService(supabase);
+
+  return useQuery({
     queryKey: participationKeys.myUpcomingSessions(audience),
     queryFn: () => service.getMyUpcomingSessions(audience),
     initialData: options.initialData,
-  });
-
-  return useMemo(
-    () => expandUpcomingSessions(query.data, now, locale),
-    [query.data, now, locale],
-  );
+  }).data;
 }
 
 /**
@@ -94,20 +116,32 @@ export function useMyWaitlist(
   audience: SessionAudience,
   options: { initialData: MyWaitlistRow[] },
 ): WaitlistEntry[] {
-  const supabase = getClient();
-  const service = new ParticipationsService(supabase);
+  const rows = useMyWaitlistRows(audience, options);
   const locale = resolveLocale(useLocale());
 
-  const query = useQuery({
+  return useMemo(() => toWaitlistEntries(rows, locale), [rows, locale]);
+}
+
+/**
+ * The waitlist rows unexpanded — the counterpart of
+ * {@link useMyUpcomingSessionRows}, and there for the same reason: the family
+ * dashboards render a place in line as a card in the same list as every seat,
+ * built by the same locale- and zone-aware roll-up, so they consume the row
+ * rather than this read's own adapter. One query key, one cache entry, one
+ * fetch.
+ */
+export function useMyWaitlistRows(
+  audience: SessionAudience,
+  options: { initialData: MyWaitlistRow[] },
+): MyWaitlistRow[] {
+  const supabase = getClient();
+  const service = new ParticipationsService(supabase);
+
+  return useQuery({
     queryKey: participationKeys.myWaitlist(audience),
     queryFn: () => service.getMyWaitlistEntries(audience),
     initialData: options.initialData,
-  });
-
-  return useMemo(
-    () => toWaitlistEntries(query.data, locale),
-    [query.data, locale],
-  );
+  }).data;
 }
 
 /**

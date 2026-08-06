@@ -17,6 +17,7 @@
       "geduDashboard": "My SOG",
       "geduSessionDetails": "Session details",
       "gamerHome": "Gamer",
+      "gamerDashboard": "My SOG",
       "gamerGroups": "My Groups",
       "gamerGroupDetails": "Group Details",
       "voiceSession": "Voice Session",
@@ -1179,6 +1180,7 @@
   "gamer": {
     "welcome": "Welcome, Gamer!",
     "welcomeNamed": "Welcome, {name}!",
+    "fallbackName": "Gamer",
     "subtitle": "Ready to play and learn?",
     "emptyDashboard": "Nothing here yet. Ask a parent to look at the clubs and camps with you, and pick one together."
   },

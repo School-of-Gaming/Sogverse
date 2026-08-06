@@ -17,6 +17,7 @@
       "geduDashboard": "Mon SOG",
       "geduSessionDetails": "Détails de la session",
       "gamerHome": "Joueur",
+      "gamerDashboard": "Mon SOG",
       "gamerGroups": "Mes groupes",
       "gamerGroupDetails": "Détails du groupe",
       "voiceSession": "Session vocale",
@@ -1179,6 +1180,7 @@
   "gamer": {
     "welcome": "Bienvenue, joueur !",
     "welcomeNamed": "Bienvenue, {name} !",
+    "fallbackName": "joueur",
     "subtitle": "Envie de jouer et d’apprendre ?",
     "emptyDashboard": "Rien ici pour l’instant. Demande à un parent de regarder les clubs et les camps avec toi, et choisissez-en un ensemble."
   },

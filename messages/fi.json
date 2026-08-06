@@ -20,6 +20,7 @@
       "shop": "Kauppa",
       "schools": "Kuntakerhot",
       "gamerHome": "Pelaaja",
+      "gamerDashboard": "Oma SOG",
       "gamerGroups": "Omat ryhmät",
       "gamerGroupDetails": "Ryhmän tiedot",
       "voiceSession": "Ääni-istunto",
@@ -1179,6 +1180,7 @@
   "gamer": {
     "welcome": "Tervetuloa, pelaaja!",
     "welcomeNamed": "Tervetuloa, {name}!",
+    "fallbackName": "pelaaja",
     "subtitle": "Valmis pelaamaan ja oppimaan?",
     "emptyDashboard": "Täällä ei ole vielä mitään. Pyydä vanhempaasi katsomaan kerhoja ja leirejä kanssasi, niin voitte valita jotain yhdessä."
   },
