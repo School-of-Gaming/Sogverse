@@ -271,14 +271,17 @@ export function GameUsernameEditableRow({
         figureUrls: account.figureUrls,
         displayName: account.displayName,
       });
-    } catch (err) {
+      // Bound to nothing on purpose: there is no longer anything in the
+      // rejection this component is allowed to read.
+    } catch {
       if (owned.current !== committed) return;
       setChecking(false);
-      setError(
-        err instanceof Error
-          ? err.message
-          : t("notFound", { platform: descriptor.name }),
-      );
+      // **The rejection's message is never rendered.** It carries the verify
+      // route's `{ error }` body, which is English written for a log — so
+      // preferring it, as this did, put English on screen in every locale, and
+      // the translated line below it was unreachable because a service always
+      // rejects with an `Error`.
+      setError(t("notFound", { platform: descriptor.name }));
       await report(unverifiedResult);
     }
   };
