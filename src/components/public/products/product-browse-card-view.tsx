@@ -248,20 +248,9 @@ export function ProductBrowseCardView({
                   lone child at the start. */}
               {cta &&
                 (openHref ? (
-                  /* `items-baseline` inside, so the text participates in
-                     baseline alignment and this span reports *its* baseline to
-                     the row outside. An `inline-flex` whose items are centred
-                     has no baseline to report and the spec falls back to
-                     synthesising one from the box edge, which would quietly
-                     undo the row's alignment. The chevron then takes
-                     `self-center` to stay centred on the line rather than
-                     hanging off the baseline by its bottom edge. */
-                  <span className="ml-auto inline-flex shrink-0 items-baseline gap-0.5 whitespace-nowrap text-sm font-medium text-primary">
+                  <span className="ml-auto inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap text-sm font-medium text-primary">
                     {cta.labelText}
-                    <NavChevron
-                      size="sm"
-                      className="self-center text-primary"
-                    />
+                    <NavChevron size="sm" className="text-primary" />
                   </span>
                 ) : (
                   /* A dead end states a fact rather than offering an action, so

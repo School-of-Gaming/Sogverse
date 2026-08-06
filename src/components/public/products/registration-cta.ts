@@ -28,8 +28,8 @@ export function useRegistrationCta(
 
   // The state→behaviour decision lives in `registrationCtaKind`; this hook
   // only resolves the matching label. Every primary state shares the same
-  // "View" CTA so card buttons stay visually identical row-to-row — the
-  // seat-availability bar and footer carry the state signal, not the button.
+  // "View" wording so the openable cards read identically row-to-row — the
+  // seat-availability bar and the footer carry the state signal, not the CTA.
   const kind = registrationCtaKind(state);
   if (kind === null) return null;
   if (kind === "disabled") {

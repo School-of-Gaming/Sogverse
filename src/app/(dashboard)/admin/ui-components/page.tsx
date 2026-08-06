@@ -2090,10 +2090,10 @@ export default function AdminUIComponentsPage() {
           &ldquo;View&rdquo; hint in the footer is a label on that target
           rather than a separate one — it is not a link, and the card beneath
           it takes the click. <strong>Cards with no chevron are inert:</strong>{" "}
-          full-and-closed and an already-started camp each state the reason as
-          muted text where the hint would be, and a finished run drops the
-          footer row for a note and desaturates. None of the three has a detail
-          page, because a parent can&rsquo;t act there. Compare the two groups
+          full-and-closed, an already-started camp and an already-over event
+          each state the reason as muted text where the hint would be, and a
+          finished run drops the footer row for a note and desaturates. None of
+          the four has a detail page, because a parent can&rsquo;t act there. Compare the two groups
           by hovering: only the openable ones lift, brighten and nudge their
           chevron. Between them the cards cover every registration state,
           including one a parent reaches only by leaving a tab open past

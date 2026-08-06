@@ -254,8 +254,8 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     },
   },
   "camp-running": {
-    // Camps lock late joins once running — the card shows a disabled
-    // "Already started" button, and there's no detail page to open.
+    // Camps lock late joins once running — the card states "Already started"
+    // as muted text, carries no chevron, and has no detail page to open.
     label: "Already started",
     productType: "camp",
     billingMode: "paid",
