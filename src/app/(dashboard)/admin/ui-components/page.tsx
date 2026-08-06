@@ -1310,8 +1310,10 @@ function ProductsDemo() {
 // schedule / price / location formatters) and passing the authored registration
 // `state` straight through as a prop. The production `deriveRegistrationState`
 // adapter is intentionally bypassed — the style guide authors the state it wants
-// to eyeball, the card never computes it. The card's own "View" CTA (for states
-// that have one) links to the matching full page at /preview/products/[slug].
+// to eyeball, the card never computes it. A card whose state opens takes its
+// whole surface to the matching full page at /preview/products/[slug]; a
+// dead-end state gets no href and stays inert, which is the same split the
+// shop makes.
 function ScenarioBrowseCard({
   slug,
   label,
@@ -1326,8 +1328,8 @@ function ScenarioBrowseCard({
   const topicLabel = useTopicLabel();
 
   const { product, state } = buildScenarioFixture(slug);
-  // Only states with a working "View" CTA navigate; the rest (full/closed,
-  // ended) render no link, so they get no detail href.
+  // Only openable states navigate; the rest (full/closed, ended) render an
+  // inert card, so they get no detail href.
   const detailHref = scenarioHasDetailPage(slug)
     ? `/preview/products/${slug}`
     : undefined;
@@ -2079,16 +2081,20 @@ export default function AdminUIComponentsPage() {
         <p className="text-sm text-muted-foreground -mt-2">
           Parent-facing product surfaces, grouped by product type. Each card is
           one mocked product rendered as the browse card a parent sees in the
-          shop (/shop); its own &ldquo;View&rdquo; button (for states that have
-          one) opens that same mock&rsquo;s full detail page in the public
-          layout — hero, long description, schedule calendar, and the
-          registration signup panel — exactly as a parent would see it. The
-          panel therefore needs no separate demo: it lives in the full-page
-          view. Cards with no working &ldquo;View&rdquo; button (full &amp;
-          closed shows a disabled button; an already-started camp shows none)
-          have no detail page to open — a parent can&rsquo;t act there, so it
-          isn&rsquo;t mocked. The set is curated to the visually distinct
-          surfaces worth eyeballing.
+          shop (/shop). <strong>The whole card is the click target</strong> —
+          clicking anywhere on one that carries a chevron opens that same
+          mock&rsquo;s full detail page in the public layout — hero, long
+          description, schedule calendar, and the registration signup panel —
+          exactly as a parent would see it. The panel therefore needs no
+          separate demo: it lives in the full-page view. The
+          &ldquo;View&rdquo; hint in the footer is a label on that target
+          rather than a separate one — it is not a link, and the card beneath
+          it takes the click. Cards with no chevron (full &amp; closed shows a disabled
+          button; an already-started camp shows none) are inert — there is no
+          detail page to open because a parent can&rsquo;t act there, so it
+          isn&rsquo;t mocked. Compare the two groups by hovering: only the
+          openable ones lift, brighten and nudge their chevron. The set is
+          curated to the visually distinct surfaces worth eyeballing.
         </p>
         <ProductsDemo />
       </Section>

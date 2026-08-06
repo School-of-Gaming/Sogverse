@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Users, MapPin, Globe } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LanguageFlag } from "@/components/ui/language-flag";
+import { NavChevron } from "@/components/ui/nav-chevron";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { cn } from "@/lib/utils";
 import type { ProductPriceLine } from "./format-product-price";
@@ -60,7 +61,12 @@ export interface ProductBrowseCardViewProps {
    */
   seatBar?: SeatBarValue;
   state: RegistrationState;
-  /** Detail-page URL. The card's CTA + the whole card surface link here. */
+  /**
+   * Detail-page URL. The whole card surface links here — but only when `state`
+   * is one the detail page can do something with; on a dead-end state the card
+   * is inert and this is ignored, so passing it is never a promise that the
+   * card will open.
+   */
   detailHref?: string;
 }
 
@@ -96,12 +102,36 @@ export function ProductBrowseCardView({
   const cta = useRegistrationCta(state);
   const isEnded = state.kind === "ended";
 
+  // Where this card opens, or `undefined` when it opens nowhere.
+  // `registrationCtaKind` already decides that: only a "primary" state has
+  // somewhere worth going, while full-no-waitlist, a camp underway and an ended
+  // run are deliberate dead ends ("the detail page has nothing actionable, so
+  // the parent isn't sent on a round-trip"). One value drives all four of the
+  // card's clickable affordances — the chevron, the hover/active feedback, the
+  // button's fill and the stretched link — so a card can never *look* openable
+  // without being openable. Today's card gets that wrong in exactly one place:
+  // a full-no-waitlist card still brightens its border on hover and then
+  // swallows the click.
+  const openHref =
+    !isEnded && cta?.kind === "primary" ? detailHref : undefined;
+
   return (
     <Card
       className={cn(
-        "flex h-full flex-col overflow-hidden transition-colors",
+        // `group` is what the chevron's nudge reads; `relative` is what the
+        // stretched link is positioned against.
+        "group relative flex h-full flex-col overflow-hidden transition-[border-color,box-shadow]",
         isEnded && "opacity-70 grayscale-[40%]",
-        detailHref && !isEnded && "hover:border-primary/40",
+        openHref && [
+          "cursor-pointer",
+          "hover:border-primary/40 hover:shadow-lg",
+          // `focus-within` so keyboard focus on the stretched link lights the
+          // whole card, not just the invisible anchor. `active` is the touch
+          // half of the same signal: a phone has no hover, so without it a tap
+          // gets no acknowledgement until the next page paints.
+          "focus-within:border-primary/40 focus-within:shadow-lg",
+          "active:border-primary/40",
+        ],
       )}
     >
       <CardContent className="flex flex-1 flex-col gap-3 p-4">
@@ -170,7 +200,17 @@ export function ProductBrowseCardView({
               {t("endedNote")}
             </p>
           ) : (
-            <div className="flex items-end justify-between gap-6">
+            /* `min-h-9` is the disabled Button's own height, held by the row
+               whatever lands in it. The openable cards now answer with a line
+               of text, and nothing makes a line of text as tall as a button —
+               so without this a card that opens would stand shorter than the
+               "Full" card beside it. Inside a stretched grid row that is
+               invisible (the row equalises and the difference lands as
+               padding), which is exactly how it goes unnoticed; it shows up on
+               the card left alone on the last row, where there is nothing to
+               stretch against. Same reservation, and for the same reason, as
+               the gedu assignment card's footer. */
+            <div className="flex min-h-9 items-end justify-between gap-6">
               {/* Muni clubs swap the price for a seat-availability bar;
                   everything else keeps the price. `seatBar` present (even with a
                   null total) is the muni signal — a null total renders nothing,
@@ -189,14 +229,26 @@ export function ProductBrowseCardView({
               ) : (
                 <PriceBlock price={price} />
               )}
+              {/* An openable card answers with a worded hint and a chevron,
+                  not a button. A filled button is the loudest thing on the card
+                  and it says "click *me*" — which is precisely the claim being
+                  withdrawn now that the whole surface is the target. "View ›"
+                  makes the softer, truer claim: there is more this way, and
+                  here is roughly where to aim. It is deliberately not an
+                  anchor — the stretched link over the card is the only one, so
+                  a grid of twenty cards is twenty tab stops rather than forty
+                  with every destination announced twice.
+
+                  A dead end keeps its real Button, because there the slot is
+                  not an action at all — it is the only place the card says
+                  "Full" or "Already started". A muni club has the seat bar to
+                  say that; a camp or an event has nothing else. */}
               {cta &&
-                (cta.kind === "primary" && detailHref ? (
-                  <Link
-                    href={detailHref}
-                    className={buttonVariants({ size: "sm" })}
-                  >
+                (openHref ? (
+                  <span className="inline-flex shrink-0 items-center gap-0.5 text-sm font-medium text-primary">
                     {cta.labelText}
-                  </Link>
+                    <NavChevron size="sm" className="text-primary" />
+                  </span>
                 ) : (
                   <Button
                     type="button"
@@ -212,6 +264,20 @@ export function ProductBrowseCardView({
           )}
         </div>
       </CardContent>
+
+      {/* The whole card as one link — an empty anchor stretched over it, named
+          by the product it opens, exactly as the gedu assignment and family
+          enrollment cards do it. Nothing on this card owns a click of its own,
+          so nothing is lifted above it with a `z-10` and there is no anchor
+          nested inside another. The focus ring is inset because the card clips
+          its own overflow and would otherwise shave it off. */}
+      {openHref && (
+        <Link
+          href={openHref}
+          aria-label={name}
+          className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+        />
+      )}
     </Card>
   );
 }

@@ -371,12 +371,17 @@ function configCtaKind(c: ScenarioConfig): RegistrationCtaKind {
   return "opensInMs" in c ? "primary" : registrationCtaKind(c.state);
 }
 
-// Whether a scenario's card links into a full detail page. Only states whose
-// browse-card CTA is a working "View" button do — a parent can never reach the
-// detail page of a full/closed or ended product, so there's nothing to
-// preview. The /preview route 404s the rest rather than mocking a page no one
-// lands on. Single-sourced from `registrationCtaKind` so this never drifts from
-// the actual card CTA.
+// Whether a scenario's *card* opens its detail page — the flag the UI
+// Components grid uses to decide which demo cards are live links. Only openable
+// states are: a parent can never reach the detail page of a full/closed or
+// ended product from the shop. Single-sourced from `registrationCtaKind` so it
+// never drifts from the card's own rule.
+//
+// This is not the same question as "does a preview page exist for this
+// scenario". Every scenario is previewable full-page from the UI Previews list
+// (the scene registry maps the whole of `PREVIEW_SCENARIOS`) — the closed
+// states especially, since no card links to them and that page is the only way
+// to look at one.
 export function scenarioHasDetailPage(slug: PreviewScenario): boolean {
   return configCtaKind(SCENARIOS[slug]) === "primary";
 }
