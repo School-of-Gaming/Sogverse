@@ -14,9 +14,12 @@
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Admin QaD",
       "parentDashboard": "jIH SOG",
+      "parentDashboardDescription": "toy’wI’pu’lIj ghom’a’meychaj je yIche’",
       "geduDashboard": "jIH SOG",
       "geduSessionDetails": "may’ Qatlh",
       "gamerHome": "toy’wI’",
+      "gamerDashboard": "jIH SOG",
+      "gamerDashboardDescription": "Sogverse-Daq ghom’a’meylIj, raghmeylIj, Qu’meylIj je",
       "gamerGroups": "jIH ghom’a’mey",
       "gamerGroupDetails": "ghom’a’ Qatlh",
       "voiceSession": "jatlh poH",
@@ -1224,6 +1227,7 @@
   "gamer": {
     "welcome": "nuqneH, toy’wI’!",
     "welcomeNamed": "nuqneH, {name}!",
+    "fallbackName": "toy’wI’",
     "subtitle": "DaH yItoy’ je yIghoj?",
     "emptyDashboard": "naDev pagh tu’lu’. SoSlI’ vavlI’ joq yIrI’, ’ej ghom’a’ qoj raQ yIwIv — batlh yIghoj!"
   },

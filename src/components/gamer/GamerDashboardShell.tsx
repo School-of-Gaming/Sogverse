@@ -1,0 +1,48 @@
+"use client";
+
+import { useGamerEnrollments } from "@/components/family/use-family-enrollments";
+import type {
+  MyUpcomingSessionRow,
+  MyWaitlistRow,
+} from "@/services/participations";
+import { GamerDashboardPageBody } from "./gamer-dashboard-page-body";
+
+/**
+ * The gamer dashboard's **data shell** — the parent shell's counterpart, and
+ * deliberately most of the way to empty.
+ *
+ * Every action the parent's shell wires is one this page does not have. There
+ * is nobody to switch into, so the Join is a plain link and no dialog fronts it;
+ * leaving a waitlist is a decision with a cost and belongs to the adult who
+ * joined it; a child has no billing to fix and no sibling to add. So the whole
+ * shell is the roll-up and the greeting's name — everything else the page needs
+ * is already in the body.
+ *
+ * The name arrives as a prop from the server component rather than being read
+ * from a session here. That keeps the body presentational (a preview scene
+ * passes a fixture name) and keeps the identity resolution on the one side of
+ * the boundary that has already verified it.
+ */
+export function GamerDashboardShell({
+  gamerId,
+  firstName,
+  initialSessionRows,
+  initialWaitlistRows,
+}: {
+  /** The signed-in gamer, whose rows these are and whose cards these become. */
+  gamerId: string;
+  /** Their first name, for the greeting. */
+  firstName: string;
+  initialSessionRows: MyUpcomingSessionRow[];
+  initialWaitlistRows: MyWaitlistRow[];
+}) {
+  const enrollments = useGamerEnrollments({
+    gamerId,
+    initialSessionRows,
+    initialWaitlistRows,
+  });
+
+  return (
+    <GamerDashboardPageBody firstName={firstName} enrollments={enrollments} />
+  );
+}

@@ -14,9 +14,12 @@
       "minecraftApi": "API du serveur Minecraft",
       "adminDashboard": "Tableau de bord admin",
       "parentDashboard": "Mon SOG",
+      "parentDashboardDescription": "Gérez vos joueurs et leurs inscriptions",
       "geduDashboard": "Mon SOG",
       "geduSessionDetails": "Détails de la session",
       "gamerHome": "Joueur",
+      "gamerDashboard": "Mon SOG",
+      "gamerDashboardDescription": "Vos clubs, camps et événements dans le Sogverse",
       "gamerGroups": "Mes groupes",
       "gamerGroupDetails": "Détails du groupe",
       "voiceSession": "Session vocale",
@@ -1179,6 +1182,7 @@
   "gamer": {
     "welcome": "Bienvenue, joueur !",
     "welcomeNamed": "Bienvenue, {name} !",
+    "fallbackName": "joueur",
     "subtitle": "Envie de jouer et d’apprendre ?",
     "emptyDashboard": "Rien ici pour l’instant. Demande à un parent de regarder les clubs et les camps avec toi, et choisissez-en un ensemble."
   },

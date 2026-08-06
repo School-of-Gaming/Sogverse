@@ -14,12 +14,15 @@
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Ylläpidon hallintapaneeli",
       "parentDashboard": "Oma SOG",
+      "parentDashboardDescription": "Hallitse pelaajiasi ja heidän ilmoittautumisiaan",
       "geduDashboard": "Oma SOG",
       "geduSessionDetails": "Session tiedot",
       "help": "Apu",
       "shop": "Kauppa",
       "schools": "Kuntakerhot",
       "gamerHome": "Pelaaja",
+      "gamerDashboard": "Oma SOG",
+      "gamerDashboardDescription": "Kerhosi, leirisi ja tapahtumasi Sogversessa",
       "gamerGroups": "Omat ryhmät",
       "gamerGroupDetails": "Ryhmän tiedot",
       "voiceSession": "Ääni-istunto",
@@ -1179,6 +1182,7 @@
   "gamer": {
     "welcome": "Tervetuloa, pelaaja!",
     "welcomeNamed": "Tervetuloa, {name}!",
+    "fallbackName": "pelaaja",
     "subtitle": "Valmis pelaamaan ja oppimaan?",
     "emptyDashboard": "Täällä ei ole vielä mitään. Pyydä vanhempaasi katsomaan kerhoja ja leirejä kanssasi, niin voitte valita jotain yhdessä."
   },

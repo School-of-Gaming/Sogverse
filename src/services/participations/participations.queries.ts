@@ -60,21 +60,43 @@ export function useMyUpcomingSessions(
   audience: SessionAudience,
   options: { initialData: MyUpcomingSessionRow[] },
 ): UpcomingSessionEntry[] {
-  const supabase = getClient();
-  const service = new ParticipationsService(supabase);
+  const rows = useMyUpcomingSessionRows(audience, options);
   const locale = resolveLocale(useLocale());
   const now = useNow();
 
-  const query = useQuery({
+  return useMemo(
+    () => expandUpcomingSessions(rows, now, locale),
+    [rows, now, locale],
+  );
+}
+
+/**
+ * The same rows, **unexpanded** — the read on its own, with no adapter over it.
+ *
+ * The family dashboards want the rows themselves: the roll-up that turns a row
+ * into an enrollment card is a function of the viewer's locale and zone and has
+ * to re-derive on every clock tick, so it belongs in a client hook of its own
+ * rather than baked into this query. Splitting the fetch out from the expansion
+ * is what lets two adapters sit over one read.
+ *
+ * Both hooks share this query key, so they share one cache entry and one fetch
+ * no matter how many of them a page mounts. `initialData` is required for the
+ * reason it is required above: every consumer server-prefetches these rows
+ * because they decide the page's geometry, and a page whose geometry arrives
+ * after the first frame is one that moves under the reader.
+ */
+export function useMyUpcomingSessionRows(
+  audience: SessionAudience,
+  options: { initialData: MyUpcomingSessionRow[] },
+): MyUpcomingSessionRow[] {
+  const supabase = getClient();
+  const service = new ParticipationsService(supabase);
+
+  return useQuery({
     queryKey: participationKeys.myUpcomingSessions(audience),
     queryFn: () => service.getMyUpcomingSessions(audience),
     initialData: options.initialData,
-  });
-
-  return useMemo(
-    () => expandUpcomingSessions(query.data, now, locale),
-    [query.data, now, locale],
-  );
+  }).data;
 }
 
 /**
@@ -94,20 +116,32 @@ export function useMyWaitlist(
   audience: SessionAudience,
   options: { initialData: MyWaitlistRow[] },
 ): WaitlistEntry[] {
-  const supabase = getClient();
-  const service = new ParticipationsService(supabase);
+  const rows = useMyWaitlistRows(audience, options);
   const locale = resolveLocale(useLocale());
 
-  const query = useQuery({
+  return useMemo(() => toWaitlistEntries(rows, locale), [rows, locale]);
+}
+
+/**
+ * The waitlist rows unexpanded — the counterpart of
+ * {@link useMyUpcomingSessionRows}, and there for the same reason: the family
+ * dashboards render a place in line as a card in the same list as every seat,
+ * built by the same locale- and zone-aware roll-up, so they consume the row
+ * rather than this read's own adapter. One query key, one cache entry, one
+ * fetch.
+ */
+export function useMyWaitlistRows(
+  audience: SessionAudience,
+  options: { initialData: MyWaitlistRow[] },
+): MyWaitlistRow[] {
+  const supabase = getClient();
+  const service = new ParticipationsService(supabase);
+
+  return useQuery({
     queryKey: participationKeys.myWaitlist(audience),
     queryFn: () => service.getMyWaitlistEntries(audience),
     initialData: options.initialData,
-  });
-
-  return useMemo(
-    () => toWaitlistEntries(query.data, locale),
-    [query.data, locale],
-  );
+  }).data;
 }
 
 /**
@@ -120,6 +154,18 @@ export function useMyWaitlist(
  * the click through to the row leaving the list, and `isPending` flips false
  * before `onSuccess` — let alone before the refetch lands. See the "Loading &
  * Disabled State" rule.
+ *
+ * **The invalidation is returned, not fired and forgotten**, so React Query
+ * awaits it before running the caller's own `onSuccess`. That is what gives a
+ * caller a moment that means "the refetch has settled" — and it has to exist,
+ * because the refetch is allowed to fail. A DELETE that succeeded followed by a
+ * refetch that didn't leaves React Query holding the previous rows, so the card
+ * the parent just left is still on screen: without a settled signal its
+ * committing flag would never clear and it would sit dimmed and unclickable
+ * until a reload. Clearing after this promise resolves is still clearing after
+ * the outcome — on the ordinary path the row is gone and the card unmounted
+ * with it, which is what the disabled-state rule wants; on the failed-refetch
+ * path the card comes back to life and can be retried.
  */
 export function useLeaveWaitlist() {
   const queryClient = useQueryClient();
@@ -127,10 +173,11 @@ export function useLeaveWaitlist() {
   const service = new ParticipationsService(supabase);
   return useMutation({
     mutationFn: (input: LeaveWaitlistInput) => service.leaveWaitlist(input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: participationKeys.all });
-      queryClient.invalidateQueries({ queryKey: productKeys.all });
-    },
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: participationKeys.all }),
+        queryClient.invalidateQueries({ queryKey: productKeys.all }),
+      ]),
   });
 }
 

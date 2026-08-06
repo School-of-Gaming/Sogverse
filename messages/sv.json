@@ -14,9 +14,12 @@
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Administratörspanel",
       "parentDashboard": "Min SOG",
+      "parentDashboardDescription": "Hantera dina spelare och deras anmälningar",
       "geduDashboard": "Min SOG",
       "geduSessionDetails": "Sessionsdetaljer",
       "gamerHome": "Spelare",
+      "gamerDashboard": "Min SOG",
+      "gamerDashboardDescription": "Dina klubbar, läger och evenemang i Sogverse",
       "gamerGroups": "Mina grupper",
       "gamerGroupDetails": "Gruppdetaljer",
       "voiceSession": "Röstsession",
@@ -1179,6 +1182,7 @@
   "gamer": {
     "welcome": "Välkommen, spelare!",
     "welcomeNamed": "Välkommen, {name}!",
+    "fallbackName": "spelare",
     "subtitle": "Redo att spela och lära dig?",
     "emptyDashboard": "Inget här än. Be en förälder titta på klubbarna och lägren tillsammans med dig, så väljer ni något ihop."
   },
