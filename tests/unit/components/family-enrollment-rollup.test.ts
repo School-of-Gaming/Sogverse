@@ -6,6 +6,7 @@ import {
   toFamilyEnrollments,
   type FamilyEnrollmentSummary,
 } from "@/components/family/enrollment-rollup";
+import type { SupportedLocale } from "@/lib/constants/locales";
 import type { FamilyMember } from "@/services/family";
 import type {
   MyUpcomingSessionRow,
@@ -77,8 +78,13 @@ function enrollment(
   };
 }
 
-function sortedIds(enrollments: readonly FamilyEnrollmentSummary[]): string[] {
-  return sortFamilyEnrollments(enrollments, NOW).map((e) => e.participationId);
+function sortedIds(
+  enrollments: readonly FamilyEnrollmentSummary[],
+  locale: SupportedLocale = "en",
+): string[] {
+  return sortFamilyEnrollments(enrollments, NOW, locale).map(
+    (e) => e.participationId,
+  );
 }
 
 /** One card of each band, deliberately built in the wrong order. */
@@ -154,6 +160,20 @@ describe("sortFamilyEnrollments — inside a band", () => {
       enrollment("alpha", { startsInMinutes: 90, productName: "Minecraft Club" }),
     ];
     expect(sortedIds(input)).toEqual(["alpha", "beta"]);
+  });
+
+  // Product names are user-visible text in the viewer's language, so the
+  // tiebreak has to collate the way that viewer's alphabet does. Ä is a letter
+  // of its own at the end of the Finnish alphabet, not a decorated A, and the
+  // runtime default gets that wrong for every non-Finnish server that renders
+  // a Finnish family's first paint.
+  it("collates the name tiebreak in the viewer's locale, not the runtime's", () => {
+    const input = [
+      enrollment("umlaut", { startsInMinutes: 90, productName: "Ämpäri Club" }),
+      enrollment("bee", { startsInMinutes: 90, productName: "Bomb Club" }),
+    ];
+    expect(sortedIds(input, "fi")).toEqual(["bee", "umlaut"]);
+    expect(sortedIds(input, "en")).toEqual(["umlaut", "bee"]);
   });
 
   // Inside the finished band the most recent run leads: a camp that ended last
@@ -454,16 +474,19 @@ describe("rollUpFamilyEnrollments — the page's shape", () => {
     { id: AINO, role: "gamer", first_name: "Aino" },
   ];
 
-  function rollUp(rows: {
-    sessionRows?: MyUpcomingSessionRow[];
-    waitlistRows?: MyWaitlistRow[];
-  }) {
+  function rollUp(
+    rows: {
+      sessionRows?: MyUpcomingSessionRow[];
+      waitlistRows?: MyWaitlistRow[];
+    },
+    locale: SupportedLocale = "en",
+  ) {
     return rollUpFamilyEnrollments({
       family: FAMILY,
       sessionRows: rows.sessionRows ?? [],
       waitlistRows: rows.waitlistRows ?? [],
       now: NOW,
-      locale: "en",
+      locale,
       timeZone: "UTC",
     });
   }
@@ -472,6 +495,31 @@ describe("rollUpFamilyEnrollments — the page's shape", () => {
   // parent is not a section on their own dashboard.
   it("drops the parent's own profile and orders the children by first name", () => {
     expect(rollUp({}).map((g) => g.firstName)).toEqual(["Aino", "Otso"]);
+  });
+
+  // The sections are the page's skeleton, and a Finnish family's Ämmi belongs
+  // after Zeno rather than before Bea. The runtime default would put her first
+  // — and would put her in a different place on the server than in the browser
+  // the moment the two disagree, moving every section under the reader on
+  // hydration.
+  it("collates the children in the viewer's locale, not the runtime's", () => {
+    const family: FamilyMember[] = [
+      { id: PARENT, role: "customer", first_name: "Sanna" },
+      { id: AINO, role: "gamer", first_name: "Ämmi" },
+      { id: OTSO, role: "gamer", first_name: "Bea" },
+    ];
+    const names = (locale: SupportedLocale) =>
+      rollUpFamilyEnrollments({
+        family,
+        sessionRows: [],
+        waitlistRows: [],
+        now: NOW,
+        locale,
+        timeZone: "UTC",
+      }).map((g) => g.firstName);
+
+    expect(names("fi")).toEqual(["Bea", "Ämmi"]);
+    expect(names("en")).toEqual(["Ämmi", "Bea"]);
   });
 
   it("gives a child with nothing booked an empty section rather than none", () => {

@@ -362,6 +362,7 @@ function gamer(
     enrollments: sortFamilyEnrollments(
       specs.map((spec) => buildEnrollmentFixture(clock, spec)),
       clock.now,
+      clock.locale,
     ),
   };
 }

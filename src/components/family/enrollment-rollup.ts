@@ -9,6 +9,7 @@ import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { runEndedOn, runLiveness, type RunLiveness } from "@/lib/product-run";
 import {
+  earlierBoundary,
   endDateToCutoff,
   enumerateRowOccurrences,
   startDateToCutoff,
@@ -176,10 +177,19 @@ function bandOf(endedOn: string | null, nextSessionStart: Date | null): number {
  * session to turn up to) and they are emphatically not history — a seat could
  * open tomorrow — so they land after everything scheduled and before everything
  * over.
+ *
+ * The final tiebreak compares product *names*, which are user-visible text in
+ * the viewer's language, so the collation has to be the viewer's too — hence
+ * the required `locale`. Left to the runtime default, a Finnish parent's list
+ * would file "Ämpäri Club" before "Bomb Club" instead of after "Zelda Club",
+ * and the ordering would differ between their phone and the server that
+ * rendered their first paint. Required rather than defaulted: a fallback here
+ * would be the runtime collation wearing a disguise.
  */
 export function sortFamilyEnrollments(
   enrollments: readonly FamilyEnrollmentSummary[],
   now: Date,
+  locale: SupportedLocale,
 ): FamilyEnrollmentSummary[] {
   // Endedness is resolved once per enrollment and carried through the sort
   // rather than recomputed inside the comparator: it is a zone-aware date parse,
@@ -208,7 +218,10 @@ export function sortFamilyEnrollments(
     if (a.band === 2 && a.endedOn !== null && b.endedOn !== null) {
       if (a.endedOn !== b.endedOn) return a.endedOn < b.endedOn ? 1 : -1;
     }
-    return a.enrollment.productName.localeCompare(b.enrollment.productName);
+    return a.enrollment.productName.localeCompare(
+      b.enrollment.productName,
+      locale,
+    );
   });
 
   return ranked.map((entry) => entry.enrollment);
@@ -319,10 +332,14 @@ export function toFamilyEnrollments(
  * happens — a parent is not a section on their own dashboard, and the identicon
  * heading would be their own face.
  *
- * Children are ordered by **first name**. There is no meaningful order in the
- * data — no birth order is recorded and a purchase order would reshuffle the
- * page every time a club was bought — and the one thing a parent scrolling for
- * a particular child needs is that the sections are where they were yesterday.
+ * Children are ordered by **first name**, collated in the viewer's own locale.
+ * There is no meaningful order in the data — no birth order is recorded and a
+ * purchase order would reshuffle the page every time a club was bought — and
+ * the one thing a parent scrolling for a particular child needs is that the
+ * sections are where they were yesterday. Which is also why the collation is
+ * not the runtime's: a Finnish family's Ämmi belongs after Zeno, and a sort
+ * that agreed with that on the server and disagreed on the phone would move
+ * the sections under the reader on hydration.
  *
  * A child with nothing booked still gets a section: their absence from the rows
  * is exactly the empty state the page renders for them.
@@ -339,7 +356,7 @@ export function rollUpFamilyEnrollments(
 
   return args.family
     .filter((member) => member.role === "gamer")
-    .sort((a, b) => a.first_name.localeCompare(b.first_name))
+    .sort((a, b) => a.first_name.localeCompare(b.first_name, args.locale))
     .map((member) => ({
       id: member.id,
       firstName: member.first_name,
@@ -347,7 +364,11 @@ export function rollUpFamilyEnrollments(
       // rendered under a heading nobody can name. RLS makes that impossible in
       // practice — both reads are scoped to the same account the family read is
       // — so this is a shape guarantee, not a filter with a job.
-      enrollments: sortFamilyEnrollments(byGamer.get(member.id) ?? [], args.now),
+      enrollments: sortFamilyEnrollments(
+        byGamer.get(member.id) ?? [],
+        args.now,
+        args.locale,
+      ),
     }));
 }
 
@@ -368,6 +389,7 @@ export function rollUpGamerEnrollments(
       .filter((entry) => entry.gamerId === args.gamerId)
       .map((entry) => entry.enrollment),
     args.now,
+    args.locale,
   );
 }
 
@@ -557,15 +579,4 @@ function scheduleLinesFor(
       now,
     }),
   );
-}
-
-/**
- * The earlier of two optional UTC cutoffs — the product's own last day and a
- * cancelled subscription's paid-through instant. `null` on one side means "no
- * bound there", so the other wins; both null means the walk is unbounded.
- */
-function earlierBoundary(a: Date | null, b: Date | null): Date | null {
-  if (a === null) return b;
-  if (b === null) return a;
-  return a.getTime() <= b.getTime() ? a : b;
 }

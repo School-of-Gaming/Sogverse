@@ -123,5 +123,6 @@ export function buildGamerDashboardFixture(
   return sortFamilyEnrollments(
     specs.map((spec) => buildEnrollmentFixture(clock, spec)),
     now,
+    locale,
   );
 }

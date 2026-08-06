@@ -3,6 +3,7 @@ import type { SupportedLocale } from "@/lib/constants/locales";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
+  earlierBoundary,
   endDateToCutoff,
   enumerateRowOccurrences,
   OPEN_ENDED_OCCURRENCE_CAP,
@@ -11,17 +12,6 @@ import {
 import { isVoiceWindowOpen } from "@/lib/voice-window";
 import type { NextSessionCardProps } from "@/components/parent/NextSessionCard";
 import type { MyUpcomingSessionRow } from "@/services/participations";
-
-/**
- * The earlier of two optional UTC cutoffs (the product's end date and a
- * cancelled subscription's paid-through instant). `null` means "no bound on
- * this side", so the other wins; both null means unbounded.
- */
-function earlierBoundary(a: Date | null, b: Date | null): Date | null {
-  if (a === null) return b;
-  if (b === null) return a;
-  return a.getTime() <= b.getTime() ? a : b;
-}
 
 /**
  * One expanded occurrence card. `isNext` distinguishes the soonest occurrence
