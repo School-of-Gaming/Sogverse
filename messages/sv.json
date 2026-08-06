@@ -17,6 +17,8 @@
       "parentDashboardDescription": "Hantera dina spelare och deras anmälningar",
       "geduDashboard": "Min SOG",
       "geduSessionDetails": "Sessionsdetaljer",
+      "familyProduct": "Tillfällen och sammanfattningar",
+      "familyProductDescription": "Gruppens schema och sammanfattningen från varje tillfälle.",
       "gamerHome": "Spelare",
       "gamerDashboard": "Min SOG",
       "gamerDashboardDescription": "Dina klubbar, läger och evenemang i Sogverse",
@@ -1164,7 +1166,10 @@
     "emptyFeedGamer": "Inget här än. Varje tillfälle du spelar dyker upp här efteråt.",
     "paymentProblemNotice": "Det är problem med betalningen för den här klubben – uppdatera ditt kort under Fakturering på Min SOG så att {name} behåller sin plats.",
     "cancellationNotice": "Du har sagt upp medlemskapet — det förnyas inte. {name}s sista pass är {date}.",
-    "cancellationNoticeNoSession": "Du har sagt upp medlemskapet — det förnyas inte. Du har tillgång till {date}."
+    "cancellationNoticeNoSession": "Du har sagt upp medlemskapet — det förnyas inte. Du har tillgång till {date}.",
+    "loadingPage": "Laddar gruppens tillfällen.",
+    "notFoundTitle": "Inget att visa här",
+    "notFoundBody": "Vi kunde inte öppna den här sidan. Den kanske inte är din, eller så finns det ingen grupp ännu. På Min SOG finns allt du är anmäld till."
   },
   "selectProfile": {
     "title": "Vem ska in i Sogverse?"

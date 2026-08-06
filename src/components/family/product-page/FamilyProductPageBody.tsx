@@ -1,10 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import Link from "next/link";
 import {
   AlertTriangle,
-  ArrowLeft,
   CalendarDays,
   MapPin,
   RefreshCwOff,
@@ -20,11 +18,11 @@ import {
   formatProductSchedule,
   renderScheduleLinesForDetail,
 } from "@/components/public/products/format-product-schedule";
-import { ROUTES } from "@/lib/constants";
 import { cn, formatDate } from "@/lib/utils";
 import { computeVoiceState } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
 import type { SessionAudience } from "@/types";
+import { FamilyProductBackLink } from "./BackLink";
 import { FamilySessionFeed } from "./FamilySessionFeed";
 import type {
   FamilyProductGedu,
@@ -257,13 +255,7 @@ export function FamilyProductPageBody({
     // the gedu page uses: there is one column here and nothing to fill the rest
     // of a desktop with.
     <div className="mx-auto max-w-3xl py-6 sm:py-10">
-      <Link
-        href={isParent ? ROUTES.customer.dashboard : ROUTES.gamer.dashboard}
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" aria-hidden />
-        {t("back")}
-      </Link>
+      <FamilyProductBackLink audience={audience} />
 
       <header className="mt-5 border-b border-border pb-5">
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">

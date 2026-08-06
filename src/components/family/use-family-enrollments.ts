@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useLocale } from "next-intl";
+import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useNow, useTimezone } from "@/providers";
 import { useFamily, type FamilyMember } from "@/services/family";
@@ -11,6 +12,7 @@ import {
   type MyUpcomingSessionRow,
   type MyWaitlistRow,
 } from "@/services/participations";
+import type { ProductType } from "@/types";
 import {
   rollUpFamilyEnrollments,
   rollUpGamerEnrollments,
@@ -42,11 +44,35 @@ import {
  * clock, and a summary carrying an `isOpen` boolean would give one card two
  * clocks.
  *
- * `openHref` is left unset on both hooks, so every card's link is the inert
- * `"#"` the roll-up defaults to. The family product pages do not exist yet;
- * pointing a card at a route that would 404 is worse than pointing it nowhere,
- * and wiring it later changes nothing else about this path.
+ * `openHref` is the one seam these hooks fill in, and filling it here lights up
+ * every card on both dashboards at once. The roll-up never consults it for a
+ * waitlist place or an unplaced seat — neither has a group, so neither has a
+ * page — and those cards go on rendering no link at all.
  */
+
+/**
+ * Each role's card destination, defined once at module scope rather than inline.
+ *
+ * Both roll-ups run inside a `useMemo`, and a callback re-created on every
+ * render is a dependency that changes on every render — the memo would recompute
+ * the whole page's cards each time, which is exactly what it exists to avoid.
+ * These close over nothing, so one instance each is all there ever needs to be.
+ */
+const parentOpenHref = ({
+  participationId,
+  productType,
+}: {
+  participationId: string;
+  productType: ProductType;
+}) => ROUTES.customer.enrollment(productType, participationId);
+
+const gamerOpenHref = ({
+  participationId,
+  productType,
+}: {
+  participationId: string;
+  productType: ProductType;
+}) => ROUTES.gamer.enrollment(productType, participationId);
 
 /** The rows a family dashboard's route prefetches, as its client shell holds them. */
 interface FamilyEnrollmentRows {
@@ -92,6 +118,7 @@ export function useFamilyEnrollments(
         now,
         locale,
         timeZone,
+        openHref: parentOpenHref,
       }),
     [sessionRows, waitlistRows, family, now, locale, timeZone],
   );
@@ -129,6 +156,7 @@ export function useGamerEnrollments(
         now,
         locale,
         timeZone,
+        openHref: gamerOpenHref,
       }),
     [sessionRows, waitlistRows, gamerId, now, locale, timeZone],
   );

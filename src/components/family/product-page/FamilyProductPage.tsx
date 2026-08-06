@@ -1,0 +1,248 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
+import { ROUTES } from "@/lib/constants";
+import { resolveLocale } from "@/lib/constants/locales";
+import { buildFamilySessionFeed } from "@/lib/family-session-feed";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { useNow } from "@/providers";
+import { useFamilyProductFeed } from "@/services/family-product-feed";
+import {
+  useMyUpcomingSessionRows,
+  type MyUpcomingSessionRow,
+} from "@/services/participations";
+import type { SessionAudience } from "@/types";
+import { FamilyProductNotFound } from "./FamilyProductNotFound";
+import { FamilyProductPageBody } from "./FamilyProductPageBody";
+import { FamilyProductPageSkeleton } from "./FamilyProductPageSkeleton";
+
+/**
+ * The data shell behind `/parent/{clubs,camps,events}/[id]` and its gamer
+ * twin — one enrollment's page, keyed by **participation id**.
+ *
+ * **Two reads, and they answer different halves of the page.**
+ *
+ * The feed RPC answers everything about the club itself: the child, the product
+ * shell and its schedule, the group and its note, the venue, the gedus, and the
+ * group's whole stored history. It is self-scoping, so a participation that is
+ * not this caller's and one with no group yet come back as `unavailable` rather
+ * than as an error — both render the not-found card.
+ *
+ * The participation rows answer everything about **this family's place in it**:
+ * whether the card behind the subscription is failing, and when paid access
+ * runs out on a membership the parent has cancelled. That is deliberately not
+ * on the feed document — the feed describes a group, and a group does not have
+ * a billing state — and it comes from the very cache entry the dashboard's
+ * corner badge reads, under the same key, so a card that badges a problem and
+ * the page it opens cannot disagree about whether there is one.
+ *
+ * **`accessUntil` is threaded into the builder, not just into the notice.** A
+ * cancelled enrollment must show nothing past its paid window *anywhere*, so
+ * the same instant that words the notice also bounds the occurrence walk. Pass
+ * it to one and not the other and the page says "last session on the 14th"
+ * over a feed listing the 21st.
+ *
+ * **The calendar math is not in either read.** The RPC returns schedule
+ * parameters and stored rows; the walk forward, the walk backward and the merge
+ * happen here, in a `useMemo` over the shared 30-second clock, so entry kinds
+ * advance while the page is open. Both this memo and the feed component read
+ * `useNow()`, which is one context value — every consumer sees the same instant
+ * in the same commit, so the live tag and the entry kind it depends on cannot
+ * straddle a tick.
+ *
+ * **On a direct load both reads are already answered.** The route's server half
+ * runs the same pair and hands them down — the feed hydrated under the hook's
+ * own key, the rows as `initialData` — so the first frame is the finished page.
+ * Everything below is written as though it had not: the skeleton and the
+ * not-found card are what a client-side navigation, a refetch and a failed
+ * prefetch still land on.
+ */
+export function FamilyProductPage({
+  participationId,
+  audience,
+  initialSessionRows,
+}: {
+  participationId: string;
+  /** Whose copy of the page this is — the URL prefix the route was reached by. */
+  audience: SessionAudience;
+  /** The viewer's active participation rows, server-prefetched. */
+  initialSessionRows: MyUpcomingSessionRow[];
+}) {
+  const { data: result, isPending } = useFamilyProductFeed(participationId);
+  const rows = useMyUpcomingSessionRows(audience, {
+    initialData: initialSessionRows,
+  });
+  const now = useNow();
+  const locale = resolveLocale(useLocale());
+
+  /**
+   * The join a parent clicked, held until the switch dialog resolves it. Same
+   * shape as the dashboard's, minus the lookup: this page is about exactly one
+   * enrollment, so there is only ever one destination to capture.
+   */
+  const [switching, setSwitching] = useState(false);
+
+  const feed = result?.status === "ok" ? result.feed : null;
+
+  /**
+   * This enrollment's row among the viewer's active participations.
+   *
+   * `undefined` is a real and harmless answer: a waitlisted or unplaced
+   * participation is not in this read at all (and has no page behind it
+   * either), and a rows read that failed degrades to `[]`. Both leave the page
+   * with no billing notice and no clamp, which is the same fallback the
+   * dashboards take and is strictly the *quieter* wrong answer of the two
+   * available.
+   */
+  const row = useMemo(
+    () =>
+      rows.find((candidate) => candidate.participationId === participationId) ??
+      null,
+    [rows, participationId],
+  );
+  const accessUntil = row?.subscriptionEndsAt ?? null;
+
+  const entries = useMemo(
+    () =>
+      feed === null
+        ? []
+        : buildFamilySessionFeed({
+            groupId: feed.group.id,
+            timezone: feed.product.timezone,
+            slots: feed.product.schedule_slots.map((slot) => ({
+              weekday: slot.weekday,
+              startTime: slot.start_time,
+              durationMinutes: slot.duration_minutes,
+            })),
+            startDate: feed.product.start_date,
+            endDate: feed.product.end_date,
+            sessions: feed.sessions,
+            now,
+            accessUntil,
+          }),
+    [feed, now, accessUntil],
+  );
+
+  /**
+   * The last session the paid window still covers, read back off the feed the
+   * page is about to render rather than derived a second time.
+   *
+   * Entries run newest first and are already clamped at `accessUntil`, so the
+   * first future one is the latest of them — the final session this family may
+   * turn up to. `null` when the window closes with nothing left on the
+   * schedule, which is the case the notice has its own sentence for. Deriving
+   * it from the same array is what stops the notice naming a date the feed
+   * beneath it disagrees with.
+   */
+  const lastSessionStart =
+    entries.find((entry) => entry.kind === "future")?.startsAt ?? null;
+
+  if (isPending) return <FamilyProductPageSkeleton audience={audience} />;
+  if (feed === null) return <FamilyProductNotFound audience={audience} />;
+
+  const isParent = audience === "customer";
+  const gamer = { id: feed.gamer.id, firstName: feed.gamer.first_name };
+  const productName =
+    resolveTranslation(feed.product.translations, locale)?.name ?? "";
+  const voiceHref = ROUTES.voice.groupSession(feed.group.id);
+
+  return (
+    <>
+      <FamilyProductPageBody
+        audience={audience}
+        productName={productName}
+        schedule={{
+          product_type: feed.product.product_type,
+          timezone: feed.product.timezone,
+          start_date: feed.product.start_date,
+          end_date: feed.product.end_date,
+          schedule_slots: feed.product.schedule_slots,
+        }}
+        isRemote={feed.product.is_remote}
+        gamer={gamer}
+        groupName={feed.group.name}
+        // Handed over on both audiences: the body is what decides that a child
+        // never meets a billing notice, and withholding the props here would
+        // move that decision somewhere a future caller could get it wrong.
+        paymentProblem={row?.paymentProblem ?? false}
+        cancellation={
+          accessUntil === null ? null : { accessUntil, lastSessionStart }
+        }
+        gedus={feed.gedus.map((gedu) => ({
+          id: gedu.id,
+          firstName: gedu.first_name,
+        }))}
+        groupPublicNote={feed.group.public_note}
+        venue={
+          feed.site === null
+            ? null
+            : {
+                name: feed.site.name,
+                address: feed.site.address,
+                publicNote: feed.site.public_note,
+              }
+        }
+        voiceHref={voiceHref}
+        // The parent is signed in as themselves and the room is gated by the
+        // child's enrollment, so their Join is intercepted: the dialog POSTs the
+        // account switch and then does the full-page navigation itself, per the
+        // house auth rule. A gamer is already the right person, so they get no
+        // handler and the button stays a plain link.
+        onJoinClick={isParent ? () => setSwitching(true) : undefined}
+        entries={entries}
+        sourceTimeZone={feed.product.timezone}
+      />
+
+      {switching && (
+        <JoinSwitchDialog
+          gamer={gamer}
+          productName={productName}
+          voiceHref={voiceHref}
+          onClose={() => setSwitching(false)}
+        />
+      )}
+    </>
+  );
+}
+
+/**
+ * The account switch standing between a parent's Join and the room.
+ *
+ * The parent is signed in as themselves and the room is gated by the child's
+ * enrollment, so joining means becoming the child first. The dialog POSTs the
+ * switch and then does the full-page navigation itself — the house auth rule,
+ * since the cookies that route sets never reach the browser client's in-memory
+ * session and a soft navigation would land the room on a stale one.
+ *
+ * Its own component so the parent-only copy namespace is read on the parent's
+ * copy of the page and nowhere else: a child's route has no account to switch
+ * into and no business reaching for the vocabulary of one.
+ */
+function JoinSwitchDialog({
+  gamer,
+  productName,
+  voiceHref,
+  onClose,
+}: {
+  gamer: { id: string; firstName: string };
+  productName: string;
+  voiceHref: string;
+  onClose: () => void;
+}) {
+  const t = useTranslations("parent");
+
+  return (
+    <SwitchProfileDialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      target={{ id: gamer.id, role: "gamer", first_name: gamer.firstName }}
+      redirectUrl={voiceHref}
+      title={t("switchToGamer.title", { name: gamer.firstName, productName })}
+      oneWayWarning={t("switchToGamer.oneWayWarning")}
+    />
+  );
+}

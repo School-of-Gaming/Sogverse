@@ -17,6 +17,8 @@
       "parentDashboardDescription": "Gérez vos joueurs et leurs inscriptions",
       "geduDashboard": "Mon SOG",
       "geduSessionDetails": "Détails de la session",
+      "familyProduct": "Séances et comptes rendus",
+      "familyProductDescription": "Le calendrier de ce groupe et le compte rendu de chaque séance.",
       "gamerHome": "Joueur",
       "gamerDashboard": "Mon SOG",
       "gamerDashboardDescription": "Vos clubs, camps et événements dans le Sogverse",
@@ -1164,7 +1166,10 @@
     "emptyFeedGamer": "Rien ici pour l’instant. Chaque séance que tu joues apparaîtra ici ensuite.",
     "paymentProblemNotice": "Le paiement de ce club pose problème — mettez votre carte à jour dans Facturation sur Mon SOG pour conserver la place de {name}.",
     "cancellationNotice": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. La dernière session de {name} est le {date}.",
-    "cancellationNoticeNoSession": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. L’accès reste ouvert jusqu’au {date}."
+    "cancellationNoticeNoSession": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. L’accès reste ouvert jusqu’au {date}.",
+    "loadingPage": "Chargement des séances de ce groupe.",
+    "notFoundTitle": "Rien à afficher ici",
+    "notFoundBody": "Nous n’avons pas pu ouvrir cette page. Elle ne vous appartient peut-être pas, ou le groupe n’a pas encore été constitué. Mon SOG rassemble toutes vos inscriptions."
   },
   "selectProfile": {
     "title": "Qui entre dans le Sogverse ?"
