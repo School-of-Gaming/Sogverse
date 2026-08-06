@@ -1,12 +1,11 @@
 ---
 name: worktree-flow
-description: The full lifecycle for a piece of parallel work in this repo — branch off dev into a worktree, build it, preview it, review it, and on Kyle's explicit go-ahead merge into dev and tear everything down. Invoke only when explicitly asked (typically `/worktree-flow` followed by the task, project, plan, or bug). Do not invoke autonomously, and do not invoke for a quick edit on the current branch.
+description: Take one piece of work through its whole life in an isolated worktree — branch off dev, build, preview, review, merge, tear down.
 ---
 
-# worktree-flow
-
-One piece of work, start to finish, in an isolated worktree. The argument to this
-skill is the task, project, plan, or bug — read it, then begin at Phase 1.
+Take one piece of work, start to finish, in an isolated worktree. Everything
+after the command — a task, a project, a plan, a bug — is the work itself. Read
+it, then begin at Phase 1.
 
 **Why this exists:** described in prose, this workflow gets executed differently
 every time, because a description leaves a decision open everywhere it doesn't
@@ -16,7 +15,7 @@ that command rather than an equivalent.
 **First action, before any of the work:** register Phases 3–5 as tasks
 (`TaskCreate`). Landing happens hours after setup, quite possibly past a context
 compaction, and the tasks are what survive that. A worktree still sitting on disk
-a day later is this skill having failed.
+a day later is this command having failed.
 
 ---
 
@@ -92,7 +91,7 @@ another one.
 
 ## Phase 4 — Review (when the change is not trivial)
 
-Invoke the `code-review` skill against the branch.
+Run `/code-review` against the branch.
 
 If you delegate it to a subagent, **launch that agent from inside this
 worktree** — an agent inherits the session's worktree as its write root and
