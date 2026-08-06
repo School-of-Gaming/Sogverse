@@ -48,7 +48,6 @@ import {
 } from "@/components/ui/dialog";
 import { Identicon } from "@/components/ui/identicon";
 import { MaterialLink } from "@/components/ui/material-link";
-import { PadletLink } from "@/components/ui/padlet-link";
 import {
   PersonChip,
   PersonChipList,
@@ -1950,15 +1949,16 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 15: Product links — family vs. Gedu                   */}
+      {/* Section 15: Product links — the Gedu material link            */}
       {/* ============================================================ */}
-      <Section title="Product links — family vs. Gedu">
+      <Section title="Product links — the Gedu material link">
         <p className="text-sm text-muted-foreground -mt-2">
-          A product carries outward links with different audiences. The{" "}
-          <strong>Padlet</strong> is the family-facing one; the{" "}
-          <strong>materials</strong> link is Gedu-only, carried by a padlocked
-          book glyph and a hover title. The material component renders whatever
-          href it is given and knows nothing about who is looking:{" "}
+          The one outward link a product still carries, and it is{" "}
+          <strong>Gedu-only</strong> &mdash; carried by a padlocked book glyph
+          and a hover title. A product used to carry a family-facing link beside
+          it as well; families read their sessions in the app now, so this is the
+          only one left. The component renders whatever href it is given and
+          knows nothing about who is looking:{" "}
           <em>
             only render it on a gedu- or admin-only surface. Never hide it with
             CSS on a page a parent can reach
@@ -1977,10 +1977,6 @@ export default function AdminUIComponentsPage() {
           all, in the staff-only warning that has to travel with the URL.
         </p>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-4 rounded-lg border p-4">
-          <div className="flex flex-col items-start gap-2">
-            <DemoCaption>Padlet chip (family-facing)</DemoCaption>
-            <PadletLink href="https://padlet.com/sog/minecraft-monday-club" />
-          </div>
           <div className="flex flex-col items-start gap-2">
             <DemoCaption>Material chip (quiet)</DemoCaption>
             <MaterialLink href="https://drive.sog.gg/minecraft-monday-club/lesson-plans" />

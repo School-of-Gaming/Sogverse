@@ -268,8 +268,8 @@ function HeaderCard({
 // ──────────────────────────────────────────────────────────────────────
 // Operational facts grid — the admin-only fields the parent-facing "When &
 // where" card (rendered above this on the page) doesn't carry: club term
-// dates, capacity/waitlist, registration window, billing + prices, topic,
-// Padlet. One scan answers "is this product set up the way I expect?".
+// dates, capacity/waitlist, registration window, billing + prices and topic.
+// One scan answers "is this product set up the way I expect?".
 // ──────────────────────────────────────────────────────────────────────
 function OperationalFacts({
   product,
@@ -393,19 +393,6 @@ function OperationalFacts({
         <Fact icon={Shapes} label={t("detailsPage.fields.topic")}>
           {topicName ?? <span className="text-muted-foreground">{c("notSet")}</span>}
         </Fact>
-
-        {product.padlet_url && (
-          <Fact icon={ExternalLink} label={t("detailsPage.fields.padletUrl")}>
-            <a
-              href={product.padlet_url}
-              target="_blank"
-              rel="noreferrer"
-              className="break-all text-primary underline-offset-2 hover:underline"
-            >
-              {product.padlet_url}
-            </a>
-          </Fact>
-        )}
 
         {/* Staff-only, and it lives on its own embedded row for exactly that
             reason — `products` is anon-readable by column selection, so the

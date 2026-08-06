@@ -40,11 +40,10 @@ export interface ProductSiteName {
 }
 
 /**
- * Row shape returned by `getMyUpcomingSessions()`. The parent dashboard's
- * Sessions section flattens this into one card per (participation, slot,
- * occurrence) so we need the per-product slot list, the date-range bounds
- * (for camp/event termination), the timezone (so we can compute occurrences
- * in product-local wall time), and the Padlet URL for the reports link.
+ * Row shape returned by `getMyUpcomingSessions()`. The family dashboards roll
+ * one of these up into a single enrollment card, so we need the per-product
+ * slot list, the date-range bounds (for camp/event termination) and the
+ * timezone (so occurrences can be computed in product-local wall time).
  *
  * Filtered to active participations (assigned and unassigned alike);
  * waitlisted rows are excluded since they have no placement. `groupId` is
@@ -81,8 +80,6 @@ export interface MyUpcomingSessionRow {
      * occurrences instead.
      */
     endDate: string | null;
-    /** External Padlet URL for the session reports link. Null if not set. */
-    padletUrl: string | null;
     /**
      * `false` for in-person products. The dashboard uses this together with
      * `groupId` to gate whether the Join Voice link gets a real
@@ -353,9 +350,8 @@ export class ParticipationsService {
 
   /**
    * The logged-in user's *active* participations, joined with the bits the
-   * dashboard Sessions section needs to render one card per upcoming
-   * occurrence: per-product weekly slots, start/end-date bounds, timezone,
-   * and the Padlet URL for the reports link.
+   * family dashboards need to roll one up into an enrollment card: per-product
+   * weekly slots, start/end-date bounds and timezone.
    *
    * Filtered to `status='active'` only — waitlisted rows aren't scheduled
    * yet, but BOTH assigned (`group_id IS NOT NULL`) and unassigned
@@ -776,7 +772,7 @@ function buildMyUpcomingSessionsQuery(
         gamer_id,
         group_id,
         product:products!inner(
-          id, product_type, timezone, start_date, end_date, padlet_url, is_remote,
+          id, product_type, timezone, start_date, end_date, is_remote,
           product_translations(*),
           schedule_slots(weekday, start_time, duration_minutes),
           location:locations(name, name_i18n)
@@ -859,7 +855,6 @@ function toMyUpcomingSessionRow(
       timezone: product.timezone,
       startDate: product.start_date,
       endDate: product.end_date,
-      padletUrl: product.padlet_url,
       isRemote: product.is_remote,
       // The join is gated here rather than in the select, because the select
       // cannot express it: a remote municipality club has a `location_id` and

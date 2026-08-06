@@ -125,7 +125,6 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
         timezone: "UTC",
         start_date: null,
         end_date: null,
-        padlet_url: null,
         is_remote: true,
         product_translations: [],
         schedule_slots: [],

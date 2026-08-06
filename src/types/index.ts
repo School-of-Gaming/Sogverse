@@ -393,7 +393,6 @@ export interface GeduAssignedProductGroup {
 export interface GeduAssignedProductShell {
   id: string;
   product_type: Database["public"]["Enums"]["product_type"];
-  padlet_url: string | null;
   timezone: string;
   start_date: string | null;
   end_date: string | null;
@@ -441,8 +440,8 @@ export type WhatsAppDirection = (typeof WHATSAPP_DIRECTION)[keyof typeof WHATSAP
 
 // get_my_assigned_products RPC — the generator marks every column of an RPC
 // RETURNS TABLE row as non-nullable from the column type alone, missing
-// products columns that are actually nullable (start_date, end_date,
-// padlet_url). It also degrades the jsonb arrays (product_translations,
+// products columns that are actually nullable (start_date, end_date). It also
+// degrades the jsonb arrays (product_translations,
 // schedule_slots) to `Json`, which forces every consumer to cast. Tighten
 // both: nullability matches the underlying products schema, and the
 // arrays get structured shapes that mirror the jsonb_build_object calls in
@@ -452,11 +451,10 @@ type _MyAssignedProductGenerated =
   Database["public"]["Functions"]["get_my_assigned_products"]["Returns"][number];
 export type MyAssignedProductRow = Omit<
   _MyAssignedProductGenerated,
-  "start_date" | "end_date" | "padlet_url" | "product_translations" | "schedule_slots"
+  "start_date" | "end_date" | "product_translations" | "schedule_slots"
 > & {
   start_date: string | null;
   end_date: string | null;
-  padlet_url: string | null;
   product_translations: Array<{
     locale: string;
     name: string;

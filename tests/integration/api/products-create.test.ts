@@ -98,7 +98,6 @@ const validBody = {
   min_age: 7,
   max_age: 12,
   spoken_language_code: "en",
-  padlet_url: null,
   material_url: null,
   location_id: null,
   is_remote: true,

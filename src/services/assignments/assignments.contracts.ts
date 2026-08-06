@@ -30,7 +30,6 @@ export const myAssignedProductRows = z.array(
     product_type: z.enum(Constants.public.Enums.product_type),
     timezone: z.string(),
     is_remote: z.boolean(),
-    padlet_url: z.string().nullable(),
     start_date: z.string().nullable(),
     end_date: z.string().nullable(),
     group_id: z.string(),
@@ -46,7 +45,6 @@ export const geduAssignedProduct = z.object({
   product: z.object({
     id: z.string(),
     product_type: z.enum(Constants.public.Enums.product_type),
-    padlet_url: z.string().nullable(),
     timezone: z.string(),
     start_date: z.string().nullable(),
     end_date: z.string().nullable(),

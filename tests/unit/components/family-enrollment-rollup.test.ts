@@ -242,7 +242,6 @@ function sessionRow(
       timezone: PRODUCT_TZ,
       startDate: null,
       endDate: null,
-      padletUrl: null,
       isRemote: true,
       site: null,
       translations: translations("Minecraft Explorers Club"),
