@@ -27,6 +27,15 @@ export const TEST_CREDENTIALS = {
     password: "testpassword123",
   },
   CUSTOMER_2: { email: "customer2@test.local", password: "testpassword123" },
+  /**
+   * The second child, linked to the SAME parent as GAMER — which is what makes
+   * them the sibling case for any scope test keyed on a participation rather
+   * than on a family.
+   */
+  GAMER_2: {
+    email: "testgamer-c1@gamer.sogverse.internal",
+    password: "testpassword123",
+  },
 } as const;
 
 /** Seed values — must match seed.sql */

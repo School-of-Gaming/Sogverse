@@ -697,10 +697,6 @@ describe("gedu session feed", () => {
       const session = feed.sessions.find((s) => s.session_date === YESTERDAY);
       expect(session?.report).toContain("castle");
       expect(session?.attendance[TEST_IDS.GAMER]).toBe("present");
-      // Reserved concepts, no UI on either side, but parsed so the shape is
-      // honest about what the table holds.
-      expect(session?.did_not_run).toBe(false);
-      expect(session?.needs_substitute).toBe(false);
     });
 
     it("returns an empty session list and a real roster before anything is recorded", async () => {

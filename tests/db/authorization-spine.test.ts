@@ -217,6 +217,10 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/get-my-participation-subscription-states.test.ts",
     why: "billing-state signals for participations the caller is party to",
   },
+  get_my_family_product_feed: {
+    scopeTest: "tests/db/family-product-feed.test.ts",
+    why: "the family club/camp/event page, keyed on ONE participation. Two roles reach the same document — the participation's gamer, and any parent linked to that gamer — so a role guard could only name both and would prove nothing; the real gate is the ownership predicate, which is keyed entirely to auth.uid(). A row that does not exist and a row belonging to another family are refused identically, so it cannot be used as an oracle for enrollment ids. The scope test is where the interesting half lives: a sibling in the SAME group is refused (the key is the participation, not the group), a parent of another family is refused, and the document's attendance field carries one answer — the named gamer's — rather than a roster map",
+  },
   submit_my_feedback: {
     scopeTest: "tests/db/feedback-submission.test.ts",
     why: "writes a feedback row for auth.uid(); no parameter names a user, and every role may send feedback",
