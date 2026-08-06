@@ -31,35 +31,49 @@ than remembered:
   out of the role-agnostic session-feed module, which contains no note block, no roster
   and no editor at all — so a family page cannot acquire one by reaching for a
   neighbouring export.
-- **`no-restricted-imports` zones fail the build on the crossing.** Two zones apply to
-  `components/family/`, `components/parent/` and `components/gamer/`: one bans the gedu
-  component tree outright, the other bans the gedu session *contracts*, which are the
-  likelier leak — they export the staff document shapes, and a family module importing
-  one would compile, parse and render it.
+- **One `no-restricted-imports` zone fails the build on the crossing, and it covers the
+  whole family *path* rather than only its components.** Five globs: the three component
+  directories (`components/family/`, `components/parent/`, `components/gamer/`), the lib
+  module that builds the family feed, and the service that fetches it. A gedu type pulled
+  in at the lib or service layer reaches the page just as surely as one imported in a
+  component. The zone carries two bans — the gedu component tree, and the gedu **session
+  service entire**, which is the likelier leak: it exports the staff document shapes, and
+  a family module reaching for one would compile, parse and render it.
 
-**Rule: the attendance vocabulary is the one thing that crosses, and it crosses through a
-named allow-list.** `attendanceStatus`, `AttendanceStatus` and
-`SUPPORTED_ATTENDANCE_STATUSES` are permitted imports from the gedu session contracts
-because they are a *vocabulary* rather than a document shape: their members must match a
-single `CHECK` constraint in the database, so a second copy would be a second source of
-truth for one fact and could only drift into being wrong. Widening the exception means
-widening that allow-list deliberately, in the ESLint config, where the next reader will
-see it — never by relaxing the zone.
+**Rule: the attendance vocabulary is the one thing that crosses the zone, and it crosses
+through a named allow-list.** `attendanceStatus`, `AttendanceStatus` and
+`SUPPORTED_ATTENDANCE_STATUSES` are permitted names because they are a *vocabulary*
+rather than a document shape: their members must match a single `CHECK` constraint in the
+database. One of the three does the work — the family contracts file parses its
+attendance field with the same zod enum the staff contracts declare — so **the wire
+vocabulary is genuinely single-sourced at the service layer**. Widening the exception
+means widening that allow-list deliberately, in the ESLint config where the next reader
+will see it, never by relaxing the zone.
+
+**Rule: the component layer deliberately does *not* share that enum, and the cost is a
+second copy.** The shared feed module declares its own two-member mark type by hand
+rather than deriving one from the service contracts, so that a role-agnostic component
+module never depends on a role's service — and that hand-written type, not the imported
+vocabulary, is what the family components actually consume. So the enum has two homes,
+and **widening it is an edit in both**: the service-layer vocabulary and the shared
+component type. A `planned_absent` member landing in one and not the other is the drift
+to watch for, and it is the same change that extends the tone decision below.
 
 ## Reports are the page
 
-**Rule: family reports render in full and are never clamped.** The gedu's feed clamps
-because it is a work queue — attendance sheets and editors that last month's prose must
-not bury. Here the reports *are* what the reader came for, they edit nothing, and the
-chunked past reveal already bounds how much lands at once, so a Read-more would only put
-a tap between a family and the content. The clamp arithmetic still lives in the shared
-module; this surface simply does not use it.
+**Rule: family reports render in full and are never clamped.** The clamp exists for a work
+queue — attendance sheets and editors that last month's prose must not bury — and this
+page is the opposite case: the reports *are* what the reader came for and they edit
+nothing, so a Read-more would only put a tap between a family and the content. The clamp
+arithmetic and the reasoning behind it live with the shared feed machinery; this surface
+simply does not use it.
 
 **A past session with nothing on it renders as a quiet line, not a card.** No report and
 no mark means there is genuinely nothing to say about that evening, and a full card
 holding one apologetic sentence would give an absence of paperwork the same weight as an
-actual write-up. There is no empty-history placeholder either: a timeline that starts
-fresh ends at the divider, which reads as a club that has not met yet.
+actual write-up. There is no placeholder for an empty *past* either: a timeline that
+starts fresh simply ends at the divider, which reads as a club that has not met yet. A
+feed with nothing in it at all does get a line, worded per audience.
 
 **There is no `no_record` kind on this surface.** The staff feed distinguishes a
 pre-epoch occurrence from a recent unwritten one because the enforcement epoch decides
@@ -84,19 +98,17 @@ keep.
 ## One fetch, and a scroll sentinel over it
 
 **Rule: the whole history arrives in one JSONB document; the feed pages nothing.** The
-feed read is a single self-scoping RPC returning the product shell, the group, the venue,
-the gedus, every stored session and the named child's marks. The feed renders its recent
-window and an IntersectionObserver sentinel below the list reveals the next
-already-loaded chunk as the reader approaches the bottom — instantly, with no spinner, no
-skeleton and no layout jump, because appending below grows away from the reader and the
-data is already in memory. There is no More button.
+feed read is a single self-scoping RPC returning **the child**, the product shell, the
+group, the venue, the gedus, every stored session and that child's marks. The reveal
+mechanism belongs to the shared feed shell — a scroll sentinel over fully-loaded data, no
+button and no spinner — and the arithmetic ruling paging out is documented with it.
 
-**A fetch-paged horizon was rejected twice and must not be rebuilt.** The client
-*projects* past occurrences from the schedule and merges stored rows onto them, so a
-partial fetch makes older sessions that have real reports render as "no write-up" —
-wrong, not merely short. And the data never justified the machinery: a weekly club is
-~52 small rows a year. If a club ever genuinely outgrows one fetch, paged loading can be
-added behind the same sentinel without the reading experience changing.
+**What is worth repeating here is that paging was rejected twice and must not be
+rebuilt**, because this is the surface that would want it. The client *projects* past
+occurrences from the schedule and merges stored rows onto them, so a partial fetch makes
+older sessions that have real reports render as "no write-up" — wrong, not merely short.
+If a club ever genuinely outgrows one fetch, paged loading can be added behind the same
+sentinel without the reading experience changing.
 
 **Rule: the server returns data, the client does the calendar math.** Nothing on the
 server expands a schedule. What comes back is the schedule parameters and the stored
