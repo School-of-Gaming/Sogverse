@@ -1169,7 +1169,7 @@
     "cancellationNoticeNoSession": "Du har sagt upp medlemskapet — det förnyas inte. Du har tillgång till {date}.",
     "loadingPage": "Laddar gruppens tillfällen.",
     "notFoundTitle": "Inget att visa här",
-    "notFoundBody": "Vi kunde inte öppna den här sidan. Den kanske inte är din, eller så finns det ingen grupp ännu. På Min SOG finns allt du är anmäld till."
+    "notFoundBody": "Vi kunde inte öppna den här sidan. På Min SOG finns allt du är anmäld till."
   },
   "selectProfile": {
     "title": "Vem ska in i Sogverse?"

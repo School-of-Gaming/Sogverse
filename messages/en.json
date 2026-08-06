@@ -1169,7 +1169,7 @@
     "cancellationNoticeNoSession": "You canceled this membership — it won’t renew. Access runs through {date}.",
     "loadingPage": "Loading this group’s sessions.",
     "notFoundTitle": "Nothing to show here",
-    "notFoundBody": "We couldn’t open this one. It may not be yours, or it may not have a group yet. My SOG has everything you’re signed up for."
+    "notFoundBody": "We couldn’t open this one. My SOG has everything you’re signed up for."
   },
   "selectProfile": {
     "title": "Who is entering Sogverse?"

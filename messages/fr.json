@@ -1169,7 +1169,7 @@
     "cancellationNoticeNoSession": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. L’accès reste ouvert jusqu’au {date}.",
     "loadingPage": "Chargement des séances de ce groupe.",
     "notFoundTitle": "Rien à afficher ici",
-    "notFoundBody": "Nous n’avons pas pu ouvrir cette page. Elle ne vous appartient peut-être pas, ou le groupe n’a pas encore été constitué. Mon SOG rassemble toutes vos inscriptions."
+    "notFoundBody": "Nous n’avons pas pu ouvrir cette page. Mon SOG rassemble toutes vos inscriptions."
   },
   "selectProfile": {
     "title": "Qui entre dans le Sogverse ?"

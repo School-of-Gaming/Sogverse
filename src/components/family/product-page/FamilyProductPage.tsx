@@ -67,12 +67,24 @@ export function FamilyProductPage({
   participationId: string;
   /** Whose copy of the page this is — the URL prefix the route was reached by. */
   audience: SessionAudience;
-  /** The viewer's active participation rows, server-prefetched. */
-  initialSessionRows: MyUpcomingSessionRow[];
+  /**
+   * The viewer's active participation rows, server-prefetched — or `null` when
+   * that prefetch failed, which is a different thing from no rows and is
+   * treated as one below.
+   */
+  initialSessionRows: MyUpcomingSessionRow[] | null;
 }) {
   const { data: result, isPending } = useFamilyProductFeed(participationId);
   const rows = useMyUpcomingSessionRows(audience, {
-    initialData: initialSessionRows,
+    initialData: initialSessionRows ?? [],
+    // A failed prefetch is seeded **stale**, so the client refetches on mount
+    // rather than trusting an empty list for the next 60 seconds. Left to the
+    // default, `[]` would be stamped as freshly fetched, and a cancelled
+    // enrollment would quietly lose its clamp — no rows means no paid-through
+    // instant, so the future block would run past the paid window on a page
+    // that never asks again. A genuinely empty answer keeps the default and
+    // stays cached, because it *is* an answer.
+    initialDataUpdatedAt: initialSessionRows === null ? 0 : undefined,
   });
   const now = useNow();
   const locale = resolveLocale(useLocale());
@@ -126,18 +138,24 @@ export function FamilyProductPage({
   );
 
   /**
-   * The last session the paid window still covers, read back off the feed the
-   * page is about to render rather than derived a second time.
+   * The last session the paid window still covers — **the same rule the
+   * dashboard card applies**, stated canonically beside the roll-up: the
+   * furthest-out session inside the window if any are still to come, otherwise
+   * the most recent one that already ran.
    *
-   * Entries run newest first and are already clamped at `accessUntil`, so the
-   * first future one is the latest of them — the final session this family may
-   * turn up to. `null` when the window closes with nothing left on the
-   * schedule, which is the case the notice has its own sentence for. Deriving
-   * it from the same array is what stops the notice naming a date the feed
-   * beneath it disagrees with.
+   * Here it is a single array read, because the feed above is already exactly
+   * that set. Entries are clamped at `accessUntil` and sorted newest-first, and
+   * ordering by start and by end are the same ordering (one entry per
+   * product-local date, so none overlap) — which means any future entry sorts
+   * above every past one and `entries[0]` *is* the rule's answer in both
+   * branches at once.
+   *
+   * Reading it off the rendered feed rather than re-deriving it is what stops
+   * the notice naming a date the sessions beneath it disagree with. `null` only
+   * when the window covers nothing at all, which is the case the notice has its
+   * own sentence for.
    */
-  const lastSessionStart =
-    entries.find((entry) => entry.kind === "future")?.startsAt ?? null;
+  const lastSessionStart = entries[0]?.startsAt ?? null;
 
   if (isPending) return <FamilyProductPageSkeleton audience={audience} />;
   if (feed === null) return <FamilyProductNotFound audience={audience} />;

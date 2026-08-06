@@ -45,7 +45,7 @@ export async function FamilyProductWorkspace({
   // Independently settled rather than one `Promise.all` over both, so a failure
   // on either side costs only its own read. They run concurrently regardless:
   // the page blocks on the slower of the two either way.
-  const [, initialSessionRows] = await Promise.all([
+  const [, sessionRows] = await Promise.all([
     seedFeed(queryClient, participationId),
     readSessionRows(audience),
   ]);
@@ -55,7 +55,10 @@ export async function FamilyProductWorkspace({
       <FamilyProductPage
         participationId={participationId}
         audience={audience}
-        initialSessionRows={initialSessionRows}
+        // `null` — the read failed — is handed on rather than flattened to
+        // `[]`, so the shell can seed the cache as already stale and let the
+        // client fetch the rows it could not get here.
+        initialSessionRows={sessionRows}
       />
     </HydrationBoundary>
   );
@@ -108,19 +111,25 @@ async function seedFeed(
  * arrives with the rows already warm, and the badge and the notice can never be
  * looking at two different answers.
  *
- * `[]` on any failure, exactly as both dashboards do: the page then renders no
- * notice and applies no clamp, which is a quieter wrong answer than refusing to
- * render the club at all.
+ * **`null` means the read failed, and that is emphatically not the same as no
+ * rows.** An empty answer is a fact, and caching it as fresh is right. A
+ * failure is the *absence* of an answer, and seeding it as though it were one
+ * is how a cancelled enrollment silently loses its clamp: no rows means no
+ * paid-through instant, which means no notice and a future block running past
+ * the paid window — on a page that looks complete while being wrong, and that
+ * (with a 60-second `staleTime` over seeded data) never corrects itself. The
+ * distinction has to survive the trip for the shell to be able to mark the seed
+ * stale, so it is carried rather than flattened.
  */
 async function readSessionRows(
   audience: SessionAudience,
-): Promise<MyUpcomingSessionRow[]> {
+): Promise<MyUpcomingSessionRow[] | null> {
   try {
     const supabase = await createClient();
     return await new ParticipationsService(supabase).getMyUpcomingSessions(
       audience,
     );
   } catch {
-    return [];
+    return null;
   }
 }

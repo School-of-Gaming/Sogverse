@@ -210,6 +210,8 @@ const GROUP = "33333333-3333-3333-3333-333333333333";
 const FRIDAY_SLOT = { weekday: 4, startTime: "17:00", durationMinutes: 90 };
 const FIRST_FRIDAY = "2026-02-13T17:00:00.000Z";
 const THIRD_FRIDAY = "2026-02-27T17:00:00.000Z";
+/** The last one *before* NOW — what a used-up paid window falls back to. */
+const PREVIOUS_FRIDAY = "2026-02-06T17:00:00.000Z";
 
 function translations(name: string): ProductTranslation[] {
   return [
@@ -439,16 +441,37 @@ describe("toFamilyEnrollments — a cancelled membership", () => {
 
   // A session the family is no longer entitled to must not float their card to
   // the top of the page, so the clamp has to bite on the next session too.
-  it("shows nothing at all once the paid window is used up", () => {
+  it("lists nothing to come once the paid window is used up", () => {
     const summary = mapOne({
       sessionRows: [
         sessionRow({ subscriptionEndsAt: new Date("2026-02-12T00:00:00Z") }),
       ],
     });
     expect(summary.nextSessionStart).toBeNull();
-    // Nothing left to name as the last session, so the line that would name it
-    // is not rendered rather than pointed at a session that is not there.
-    expect(summary.cancellation).toBeNull();
+  });
+
+  /**
+   * The stretch between the final session and the period end — several days on
+   * a monthly sub, and exactly when a parent is most likely to be checking.
+   *
+   * The membership is still winding down, so the card still says so and names
+   * the session that *was* the last one. It used to fall silent here, which
+   * both contradicted the plan's "visibly marked as not renewing" and put the
+   * card at odds with the club page, which announced the cancellation over the
+   * same enrollment at the same moment.
+   */
+  it("keeps the not-renewing mark after the last session has run", () => {
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({ subscriptionEndsAt: new Date("2026-02-12T00:00:00Z") }),
+      ],
+    });
+    expect(summary.cancellation).not.toBeNull();
+    expect(summary.cancellation?.lastSessionStart.toISOString()).toBe(
+      PREVIOUS_FRIDAY,
+    );
+    // Nothing is still to come, so no card can be "the last one".
+    expect(summary.cancellation?.isLastSession).toBe(false);
   });
 
   it("stops at the product's own last day when that comes first", () => {
