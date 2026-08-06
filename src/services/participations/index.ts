@@ -13,8 +13,8 @@ export type {
   LeaveWaitlistInput,
   LeaveWaitlistResponse,
 } from "./participations.service";
+export { participationKeys } from "./participations.keys";
 export {
-  participationKeys,
   useMyUpcomingSessions,
   useMyWaitlist,
   useParticipationCounts,

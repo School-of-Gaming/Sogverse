@@ -79,10 +79,17 @@ const eslintConfig = defineConfig([
     // @/components/session-feed — import those instead. Stated in prose in the
     // three barrel headers; enforced here so it fails the build, like the
     // route posture registry and the authorization spine enforce theirs.
+    // The zone is the whole family *path*, not only its components: the club
+    // page's feed is assembled in a lib module and fed by a service, and a gedu
+    // type pulled in at either of those would reach the page just as surely as
+    // one imported in a component. The shared arithmetic they legitimately need
+    // lives in @/lib/session-occurrence, which is role-agnostic by construction.
     files: [
       "src/components/family/**/*.{ts,tsx}",
       "src/components/parent/**/*.{ts,tsx}",
       "src/components/gamer/**/*.{ts,tsx}",
+      "src/lib/family-session-feed.ts",
+      "src/services/family-product-feed/**/*.ts",
     ],
     rules: {
       "no-restricted-imports": ["error", {

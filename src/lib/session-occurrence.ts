@@ -1,17 +1,59 @@
-import { fromZonedTime } from "date-fns-tz";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { getNextSessionStart, stepBackOneWeek } from "@/lib/enrollment";
 
 /**
  * Shared building blocks for resolving "what session does this slot
  * point to right now?" — the bit of expansion logic both
  * `expandUpcomingSessions` (parent/gamer) and
- * `expandAssignedProductsToCards` (gedu) need.
+ * `expandAssignedProductsToCards` (gedu) need — **and for saying which
+ * occurrence one is**, which every feed that merges stored rows over
+ * projections has to agree on.
  *
  * Each consumer handles iteration differently (parent/gamer emits N
  * future occurrences per slot, gedu collapses to the soonest), so we
- * share the awkward pieces — the prev-week-in-window check and the
- * date-to-cutoff conversions — and let the callers iterate.
+ * share the awkward pieces — the prev-week-in-window check, the
+ * date-to-cutoff conversions and the identity helpers — and let the
+ * callers iterate.
+ *
+ * Role-agnostic on purpose. Every session feed in the app is built out
+ * of these, and a second copy of any of them in a per-role module is how
+ * two surfaces end up disagreeing about which day a session happened on.
  */
+
+/**
+ * `YYYY-MM-DD` as the instant falls in the **product's own zone**.
+ *
+ * The zone is the product's rather than the viewer's because this is an
+ * identity, not a rendering: it is the key a stored row and a projected
+ * occurrence meet on, and both sides of that merge have to name the same
+ * day whoever is looking. Anything shown to a reader converts to the
+ * viewer's zone later, from the instant.
+ */
+export function productLocalDate(instant: Date, timezone: string): string {
+  return formatInTimeZone(instant, timezone, "yyyy-MM-dd");
+}
+
+/**
+ * A feed entry's stable id: the group, and the product-local date it
+ * happened on.
+ *
+ * **A session is a (group, product-local date)** — that is the row's
+ * unique key in Postgres and it is the entry's identity here, so a
+ * projection and a row for the same day are the same thing and meet on
+ * the same map key. Deliberately not the row's primary key, because most
+ * entries have no row, and the ones that do acquire one the moment
+ * anything is written against them — which would change the id of the
+ * card being typed into. `${group}:${date}` is the same string before and
+ * after materialization, which is what lets a scroll anchor, an open
+ * editor and React's own reconciliation survive a save.
+ *
+ * The date also survives the most common schedule edit there is —
+ * somebody fixing the time of day — which keying by instant or by slot
+ * start would not.
+ */
+export function sessionEntryId(groupId: string, sessionDate: string): string {
+  return `${groupId}:${sessionDate}`;
+}
 
 export interface SlotShape {
   weekday: number;
@@ -338,3 +380,27 @@ export function enumeratePastRowOccurrences(args: {
  * is expected to pass one.
  */
 export const MAX_PAST_OCCURRENCES_PER_SLOT = 520;
+
+/**
+ * How far back an **undated** product's history is projected.
+ *
+ * Nearly every product carries a start date and that is the floor the backward
+ * walk really wants; `start_date` is nullable for open-ended clubs, though, and
+ * a missing one cannot mean "walk to the beginning of time" — the backward
+ * helper would then run to its 520-occurrence guard rail and hand a feed ten
+ * years of dashed placeholder lines for a club nobody claims ran that long.
+ *
+ * A year is the honest answer to "how much history can we assume without being
+ * told": long enough that a club running a full term or three reads completely,
+ * short enough that a feed is not inventing a decade. Stored rows are never
+ * subject to it — a row older than this still renders, because a row is a fact
+ * rather than a projection.
+ */
+export const UNDATED_PRODUCT_PAST_HORIZON_DAYS = 365;
+
+/** The backward floor for a product that never declared a start date. */
+export function undatedPastFloor(now: Date): Date {
+  return new Date(
+    now.getTime() - UNDATED_PRODUCT_PAST_HORIZON_DAYS * 24 * 60 * 60 * 1000,
+  );
+}

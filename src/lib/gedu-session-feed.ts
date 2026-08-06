@@ -1,4 +1,3 @@
-import { formatInTimeZone } from "date-fns-tz";
 import { SESSION_RECORDING_EPOCH } from "@/lib/constants/session-epoch";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import {
@@ -7,7 +6,10 @@ import {
   enumerateRowOccurrences,
   MAX_PAST_OCCURRENCES_PER_SLOT,
   OPEN_ENDED_OCCURRENCE_CAP,
+  productLocalDate,
+  sessionEntryId,
   startDateToCutoff,
+  undatedPastFloor,
   type SlotShape,
 } from "@/lib/session-occurrence";
 import type { SessionFeedEntry } from "@/components/gedu/session-feed/types";
@@ -48,43 +50,6 @@ import type { GeduFeedSession } from "@/services/gedu-sessions/gedu-sessions.con
  * Pure: no React, no network, no clock of its own. The caller passes `now`, so
  * SSR and the first client render agree and a test can stand anywhere in time.
  */
-
-/**
- * How far back an **undated** product's history is projected.
- *
- * Nearly every product carries a start date and that is the floor the walk
- * really wants; `start_date` is nullable for open-ended clubs, though, and a
- * missing one cannot mean "walk to the beginning of time" — the backward helper
- * would then run to its own 520-occurrence guard rail and hand the feed ten
- * years of dashed placeholder lines for a club nobody claims ran that long.
- *
- * A year is the honest answer to "how much history can we assume without being
- * told": long enough that a club running a full term or three reads completely,
- * short enough that the feed is not inventing a decade. Stored rows are never
- * subject to it — a row older than this still renders, because a row is a fact
- * rather than a projection.
- */
-export const UNDATED_PRODUCT_PAST_HORIZON_DAYS = 365;
-
-/**
- * The feed entry's stable id: the group and the product-local date it happened
- * on.
- *
- * Deliberately not the row's primary key, because most entries have no row —
- * and the ones that do acquire one the moment a gedu writes anything, which
- * would change the id of the card they are typing into. `${group}:${date}` is
- * the same string before and after materialization, which is what lets the
- * scroll anchor, the open-editor state and React's own reconciliation survive a
- * save.
- */
-export function sessionEntryId(groupId: string, sessionDate: string): string {
-  return `${groupId}:${sessionDate}`;
-}
-
-/** `YYYY-MM-DD` as the instant falls in the product's own zone. */
-export function productLocalDate(instant: Date, timezone: string): string {
-  return formatInTimeZone(instant, timezone, "yyyy-MM-dd");
-}
 
 export interface GeduSessionFeedArgs {
   /** Half of every entry id, and the group whose rows these are. */
@@ -164,7 +129,7 @@ export function buildGeduSessionFeed(
       slots: slotList,
       timezone,
       now,
-      floor: startBoundary ?? undatedFloor(now),
+      floor: startBoundary ?? undatedPastFloor(now),
       endBoundary,
       maxOccurrences: MAX_PAST_OCCURRENCES_PER_SLOT,
     })) {
@@ -278,11 +243,4 @@ function toEntry(args: {
     staffNote: row?.gedu_note ?? null,
     attendance: row?.attendance ?? {},
   };
-}
-
-/** The backward floor for a product that never declared a start date. */
-function undatedFloor(now: Date): Date {
-  return new Date(
-    now.getTime() - UNDATED_PRODUCT_PAST_HORIZON_DAYS * 24 * 60 * 60 * 1000,
-  );
 }

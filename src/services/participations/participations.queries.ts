@@ -26,18 +26,7 @@ import {
   type ParticipationCounts,
 } from "./participations.service";
 import { productKeys } from "../products";
-
-export const participationKeys = {
-  all: ["participations"] as const,
-  myUpcomingSessions: (audience: SessionAudience) =>
-    [...participationKeys.all, "my-upcoming-sessions", audience] as const,
-  myWaitlist: (audience: SessionAudience) =>
-    [...participationKeys.all, "my-waitlist", audience] as const,
-  countsByProducts: (productIds: string[]) =>
-    [...participationKeys.all, "counts", { productIds: [...productIds].sort() }] as const,
-  byCheckoutSession: (checkoutSessionId: string) =>
-    [...participationKeys.all, "checkout-session", checkoutSessionId] as const,
-};
+import { participationKeys } from "./participations.keys";
 
 /**
  * Drives the dashboard Sessions section on both `/parent` and `/gamer`.
