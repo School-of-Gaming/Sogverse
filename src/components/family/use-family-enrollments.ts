@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useLocale } from "next-intl";
+import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { useNow, useTimezone } from "@/providers";
 import { useFamily, type FamilyMember } from "@/services/family";
@@ -11,6 +12,7 @@ import {
   type MyUpcomingSessionRow,
   type MyWaitlistRow,
 } from "@/services/participations";
+import type { ProductType } from "@/types";
 import {
   rollUpFamilyEnrollments,
   rollUpGamerEnrollments,
@@ -42,18 +44,63 @@ import {
  * clock, and a summary carrying an `isOpen` boolean would give one card two
  * clocks.
  *
- * `openHref` is left unset on both hooks, so every card's link is the inert
- * `"#"` the roll-up defaults to. The family product pages do not exist yet;
- * pointing a card at a route that would 404 is worse than pointing it nowhere,
- * and wiring it later changes nothing else about this path.
+ * `openHref` is the one seam these hooks fill in, and filling it here lights up
+ * every card on both dashboards at once. The roll-up never consults it for a
+ * waitlist place or an unplaced seat — neither has a group, so neither has a
+ * page — and those cards go on rendering no link at all.
  */
 
-/** The rows a family dashboard's route prefetches, as its client shell holds them. */
+/**
+ * Each role's card destination, defined once at module scope rather than inline.
+ *
+ * Both roll-ups run inside a `useMemo`, and a callback re-created on every
+ * render is a dependency that changes on every render — the memo would recompute
+ * the whole page's cards each time, which is exactly what it exists to avoid.
+ * These close over nothing, so one instance each is all there ever needs to be.
+ */
+const parentOpenHref = ({
+  participationId,
+  productType,
+}: {
+  participationId: string;
+  productType: ProductType;
+}) => ROUTES.customer.enrollment(productType, participationId);
+
+const gamerOpenHref = ({
+  participationId,
+  productType,
+}: {
+  participationId: string;
+  productType: ProductType;
+}) => ROUTES.gamer.enrollment(productType, participationId);
+
+/**
+ * The rows a family dashboard's route prefetches, as its client shell holds
+ * them.
+ *
+ * **`null` is a failed prefetch, and it is deliberately not the same value as
+ * an empty one.** Seeded data is stamped as fetched *now*, and against the
+ * 60-second `staleTime` that means the client does not go and ask again — which
+ * is right for a read that genuinely returned nothing, and quietly wrong for
+ * one that threw. Flattened to `[]`, a transient failure became a dashboard
+ * that told a family they were signed up for nothing and then never corrected
+ * itself. Carrying the distinction is what lets the hooks below seed a failure
+ * as already stale.
+ */
 interface FamilyEnrollmentRows {
   /** `status='active'` rows — seats held, placed and unplaced alike. */
-  initialSessionRows: MyUpcomingSessionRow[];
+  initialSessionRows: MyUpcomingSessionRow[] | null;
   /** `status='waitlisted'` rows, each with its live place in line. */
-  initialWaitlistRows: MyWaitlistRow[];
+  initialWaitlistRows: MyWaitlistRow[] | null;
+}
+
+/**
+ * `initialDataUpdatedAt` for a seed that may be a failure fallback: `0` marks
+ * it stale on arrival so the query refetches on mount, `undefined` leaves the
+ * default (stamped now, cached as the answer it is).
+ */
+function seedAge(prefetched: unknown[] | null): number | undefined {
+  return prefetched === null ? 0 : undefined;
 }
 
 /**
@@ -67,15 +114,25 @@ interface FamilyEnrollmentRows {
  * state their section renders.
  */
 export function useFamilyEnrollments(
-  options: FamilyEnrollmentRows & { initialFamily: FamilyMember[] },
+  options: FamilyEnrollmentRows & { initialFamily: FamilyMember[] | null },
 ): FamilyGamerEnrollments[] {
   const sessionRows = useMyUpcomingSessionRows("customer", {
-    initialData: options.initialSessionRows,
+    initialData: options.initialSessionRows ?? [],
+    initialDataUpdatedAt: seedAge(options.initialSessionRows),
   });
   const waitlistRows = useMyWaitlistRows("customer", {
-    initialData: options.initialWaitlistRows,
+    initialData: options.initialWaitlistRows ?? [],
+    initialDataUpdatedAt: seedAge(options.initialWaitlistRows),
   });
-  const { data: family } = useFamily({ initialData: options.initialFamily });
+  // `useFamily`'s `initialData` is optional, so a failed prefetch says so by
+  // passing nothing at all rather than by seeding an empty family and ageing
+  // it. Same outcome — the query fetches on mount — reached by the plainer
+  // route: there is no seed to be stale, because there is no seed.
+  const { data: family } = useFamily(
+    options.initialFamily === null
+      ? undefined
+      : { initialData: options.initialFamily },
+  );
   const now = useNow();
   const locale = resolveLocale(useLocale());
   const timeZone = useTimezone();
@@ -86,12 +143,14 @@ export function useFamilyEnrollments(
         sessionRows,
         waitlistRows,
         // `useFamily` types its data as optional because most of its callers
-        // mount without a prefetch; this one always has one, so the fallback is
-        // a shape guarantee rather than a state the parent dashboard reaches.
+        // mount without a prefetch. This one normally has one — so `undefined`
+        // here means the prefetch failed and the refetch has not landed yet,
+        // which renders the no-children state for one beat and then corrects.
         family: family ?? [],
         now,
         locale,
         timeZone,
+        openHref: parentOpenHref,
       }),
     [sessionRows, waitlistRows, family, now, locale, timeZone],
   );
@@ -110,10 +169,12 @@ export function useGamerEnrollments(
   options: FamilyEnrollmentRows & { gamerId: string },
 ): FamilyEnrollmentSummary[] {
   const sessionRows = useMyUpcomingSessionRows("gamer", {
-    initialData: options.initialSessionRows,
+    initialData: options.initialSessionRows ?? [],
+    initialDataUpdatedAt: seedAge(options.initialSessionRows),
   });
   const waitlistRows = useMyWaitlistRows("gamer", {
-    initialData: options.initialWaitlistRows,
+    initialData: options.initialWaitlistRows ?? [],
+    initialDataUpdatedAt: seedAge(options.initialWaitlistRows),
   });
   const now = useNow();
   const locale = resolveLocale(useLocale());
@@ -129,6 +190,7 @@ export function useGamerEnrollments(
         now,
         locale,
         timeZone,
+        openHref: gamerOpenHref,
       }),
     [sessionRows, waitlistRows, gamerId, now, locale, timeZone],
   );

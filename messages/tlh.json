@@ -17,6 +17,8 @@
       "parentDashboardDescription": "toy’wI’pu’lIj ghom’a’meychaj je yIche’",
       "geduDashboard": "jIH SOG",
       "geduSessionDetails": "may’ Qatlh",
+      "familyProduct": "may’mey qonta’ je",
+      "familyProductDescription": "ghom’a’vam poH mIw, may’ Hoch qonta’ je.",
       "gamerHome": "toy’wI’",
       "gamerDashboard": "jIH SOG",
       "gamerDashboardDescription": "Sogverse-Daq ghom’a’meylIj, raghmeylIj, Qu’meylIj je",
@@ -1209,7 +1211,10 @@
     "emptyFeedGamer": "naDev pagh tu’lu’. may’ Hoch DaSuvbogh naDev leghlu’ — batlh yIQuj!",
     "paymentProblemNotice": "ghom’a’vam Huch Qob! jIH SOGDaq Huch DIl DaSDIq yIchoH, {name} Daq yItaHmoH.",
     "cancellationNotice": "may’morgh DanatlhHa’pu’! qaSqa’be’. {name} Qu’ Qav ’oH {date}’e’.",
-    "cancellationNoticeNoSession": "may’morgh DanatlhHa’pu’! qaSqa’be’. {date} tlhab SoH."
+    "cancellationNoticeNoSession": "may’morgh DanatlhHa’pu’! qaSqa’be’. {date} tlhab SoH.",
+    "loadingPage": "ghom’a’vam may’mey laDlu’…",
+    "notFoundTitle": "naDev pagh tu’lu’",
+    "notFoundBody": "poSlu’laHbe’. My SOG-Daq Hoch DaleghlaH."
   },
   "selectProfile": {
     "title": "Sogverse ’el ’Iv?"

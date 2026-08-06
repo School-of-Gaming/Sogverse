@@ -29,17 +29,22 @@ export async function generateMetadata(): Promise<Metadata> {
  * `participationKeys.all` and refetch normally; this prefetch only affects the
  * initial render.
  *
- * Returns `[]` on any failure (no session, RLS rejection, transient Supabase
- * error). The client hook refetches on mount if so, which keeps the page
- * rendering even when the prefetch can't deliver.
+ * **Returns `null` on any failure (no session, RLS rejection, transient
+ * Supabase error) — which is deliberately not `[]`.** Seeded data is stamped as
+ * fetched *now*, so against the 60-second `staleTime` an empty seed is one the
+ * client never asks about again. Flattened, a transient failure told a parent
+ * they had signed nobody up for anything and then left that on screen, with
+ * nothing to correct it — the comment here used to claim the hook refetched on
+ * mount, and it does not. The shell marks a `null` seed stale so it does; a
+ * genuine `[]` stays cached, because it is a real answer.
  */
-async function getInitialSessionRows(): Promise<MyUpcomingSessionRow[]> {
+async function getInitialSessionRows(): Promise<MyUpcomingSessionRow[] | null> {
   try {
     const supabase = await createClient();
     const service = new ParticipationsService(supabase);
     return await service.getMyUpcomingSessions("customer");
   } catch {
-    return [];
+    return null;
   }
 }
 
@@ -48,15 +53,15 @@ async function getInitialSessionRows(): Promise<MyUpcomingSessionRow[]> {
  * positions, the same way and for the same reason as the session rows above.
  * These are cards in the same per-child lists rather than a band of their own,
  * so arriving late would insert rows above ones the parent was already reaching
- * for. `[]` on failure.
+ * for. `null` on failure, with the same meaning as above.
  */
-async function getInitialWaitlistRows(): Promise<MyWaitlistRow[]> {
+async function getInitialWaitlistRows(): Promise<MyWaitlistRow[] | null> {
   try {
     const supabase = await createClient();
     const service = new ParticipationsService(supabase);
     return await service.getMyWaitlistEntries("customer");
   } catch {
-    return [];
+    return null;
   }
 }
 
@@ -69,15 +74,20 @@ async function getInitialWaitlistRows(): Promise<MyWaitlistRow[]> {
  *
  * This one is load-bearing beyond speed: the children *are* the page's sections,
  * so without it the first frame would be a dashboard with no headings that then
- * grew several. Returns `[]` on any failure, which renders the no-children
- * empty state until the client refetch corrects it.
+ * grew several.
+ *
+ * **`null` on failure**, for the reason given on the session rows — and it
+ * matters most here, because an empty family is the one seed that rewrites the
+ * whole page rather than one section of it. The shell passes no `initialData`
+ * at all in that case, so the query fetches on mount instead of settling on a
+ * childless dashboard for a minute.
  */
-async function getInitialFamily(): Promise<FamilyMember[]> {
+async function getInitialFamily(): Promise<FamilyMember[] | null> {
   try {
     const supabase = await createClient();
     return await resolveCustomerFamilyViaRls(supabase);
   } catch {
-    return [];
+    return null;
   }
 }
 
@@ -86,8 +96,14 @@ async function getInitialFamily(): Promise<FamilyMember[]> {
  * RLS-scoped client. Resolved here rather than client-side because the count
  * decides how many buttons the billing card renders: fetching it after paint
  * would turn one rendered button into several under the parent's cursor, which
- * the "rendered content must not move" rule forbids. `[]` on failure, which the
- * card renders as the ordinary single button.
+ * the "rendered content must not move" rule forbids.
+ *
+ * **`[]` on failure, and unlike the three reads above that is the end of it.**
+ * This one is not a query seed — the card is handed down as a finished node,
+ * with no client query behind it and therefore nothing that could refetch. So
+ * there is no stale-seed trick available and none needed: `[]` renders the
+ * ordinary single button, which is the right thing to show a parent whose
+ * account count we could not read, and the next navigation asks again.
  */
 async function getInitialBillingAccounts(): Promise<BillingAccount[]> {
   try {

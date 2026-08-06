@@ -17,6 +17,8 @@
       "parentDashboardDescription": "Hallitse pelaajiasi ja heidän ilmoittautumisiaan",
       "geduDashboard": "Oma SOG",
       "geduSessionDetails": "Session tiedot",
+      "familyProduct": "Kerrat ja koosteet",
+      "familyProductDescription": "Tämän ryhmän aikataulu ja jokaisen kerran kooste.",
       "help": "Apu",
       "shop": "Kauppa",
       "schools": "Kuntakerhot",
@@ -1164,7 +1166,10 @@
     "emptyFeedGamer": "Täällä ei ole vielä mitään. Jokainen pelaamasi kerta näkyy täällä jälkeenpäin.",
     "paymentProblemNotice": "Tämän kerhon maksussa on ongelma – päivitä korttitietosi Oman SOGin Laskutus-osiossa, jotta {name} säilyttää paikkansa.",
     "cancellationNotice": "Peruit tämän jäsenyyden – se ei uusiudu. {name}: viimeinen kerta on {date}.",
-    "cancellationNoticeNoSession": "Peruit tämän jäsenyyden – se ei uusiudu. Käyttöoikeus jatkuu {date} asti."
+    "cancellationNoticeNoSession": "Peruit tämän jäsenyyden – se ei uusiudu. Käyttöoikeus jatkuu {date} asti.",
+    "loadingPage": "Ladataan tämän ryhmän kertoja.",
+    "notFoundTitle": "Täällä ei ole näytettävää",
+    "notFoundBody": "Tätä sivua ei voitu avata. Omasta SOGista löydät kaiken, mihin olet ilmoittautunut."
   },
   "selectProfile": {
     "title": "Kuka astuu Sogverseen?"

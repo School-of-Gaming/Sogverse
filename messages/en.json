@@ -17,6 +17,8 @@
       "parentDashboardDescription": "Manage your gamers and enrollments",
       "geduDashboard": "My SOG",
       "geduSessionDetails": "Session details",
+      "familyProduct": "Sessions and reports",
+      "familyProductDescription": "The schedule for this group and the write-up from every session.",
       "gamerHome": "Gamer",
       "gamerDashboard": "My SOG",
       "gamerDashboardDescription": "Your clubs, camps and events in the Sogverse",
@@ -1164,7 +1166,10 @@
     "emptyFeedGamer": "Nothing here yet. Every session you play turns up here afterwards.",
     "paymentProblemNotice": "There’s a problem with the payment for this club — update your card under Billing on My SOG to keep {name}’s place.",
     "cancellationNotice": "You canceled this membership — it won’t renew. {name}’s last session is {date}.",
-    "cancellationNoticeNoSession": "You canceled this membership — it won’t renew. Access runs through {date}."
+    "cancellationNoticeNoSession": "You canceled this membership — it won’t renew. Access runs through {date}.",
+    "loadingPage": "Loading this group’s sessions.",
+    "notFoundTitle": "Nothing to show here",
+    "notFoundBody": "We couldn’t open this one. My SOG has everything you’re signed up for."
   },
   "selectProfile": {
     "title": "Who is entering Sogverse?"

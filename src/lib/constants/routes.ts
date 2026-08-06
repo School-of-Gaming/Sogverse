@@ -24,6 +24,50 @@ function geduAssignedProductHref(
 }
 
 /**
+ * The URL segment a family's enrollment page sits under, from the product's
+ * type — the family analogue of the gedu prefix above, and the same collapse:
+ * consumer and municipality clubs are both "clubs" to the people in them.
+ *
+ * Shared by both roles, because the taxonomy is a fact about the product rather
+ * than about who is reading it. All that differs is the role root, which is why
+ * the two `ROUTES` entries below are separate rather than one taking a role.
+ */
+function familyEnrollmentSegment(productType: ProductType): string {
+  switch (productType) {
+    case "consumer_club":
+    case "municipality_club":
+      return "clubs";
+    case "camp":
+      return "camps";
+    case "event":
+      return "events";
+  }
+}
+
+/**
+ * A family's page for **one enrollment**, under the given role root.
+ *
+ * **Keyed by participation id, not product id** — the load-bearing difference
+ * from every other product href in this file. A family product page is
+ * gamer-scoped: two siblings in one club get two pages, because everything the
+ * page carries (attendance today, per-child notes tomorrow) is per-child. The
+ * participation row *is* the (gamer × product) pair, so it is the only id that
+ * names the page unambiguously — and it is what the dashboard card already
+ * holds.
+ *
+ * Only a **placed** enrollment has a page behind this URL. A waitlist place and
+ * an unplaced seat have no group, so they have no feed and nothing to render;
+ * both render no link at all rather than one landing on a not-found card.
+ */
+function familyEnrollmentHref(
+  root: "/parent" | "/gamer",
+  productType: ProductType,
+  participationId: string,
+): string {
+  return `${root}/${familyEnrollmentSegment(productType)}/${participationId}`;
+}
+
+/**
  * Public storefront detail URL for a product. A single `/shop/[id]` route
  * serves every product type — the page derives the type from the fetched row.
  * The URL ends in an opaque product id, so a per-type segment (`/shop/clubs/…`)
@@ -201,9 +245,19 @@ export const ROUTES = {
     // Authenticated "Change PIN" flow, reached from the settings security card.
     // Gated like the rest of /parent — only an unlocked customer can reach it.
     changePin: "/parent/change-pin",
+    /**
+     * The parent's page for one of their children's enrollments
+     * (`/parent/{clubs,camps,events}/[participationId]`). See
+     * `familyEnrollmentHref` for why it is keyed by participation.
+     */
+    enrollment: (productType: ProductType, participationId: string) =>
+      familyEnrollmentHref("/parent", productType, participationId),
   },
   gamer: {
     dashboard: "/gamer",
+    /** The same page in the child's own root — their copy of one enrollment. */
+    enrollment: (productType: ProductType, participationId: string) =>
+      familyEnrollmentHref("/gamer", productType, participationId),
   },
   gedu: {
     dashboard: "/gedu",

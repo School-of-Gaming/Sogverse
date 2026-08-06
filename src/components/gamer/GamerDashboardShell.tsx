@@ -33,8 +33,13 @@ export function GamerDashboardShell({
   gamerId: string;
   /** Their first name, for the greeting. */
   firstName: string;
-  initialSessionRows: MyUpcomingSessionRow[];
-  initialWaitlistRows: MyWaitlistRow[];
+  /*
+   * `null` means that prefetch failed — carried rather than flattened to `[]`,
+   * so the roll-up hook seeds it stale and the client refetches instead of
+   * telling a child they are signed up for nothing for the next minute.
+   */
+  initialSessionRows: MyUpcomingSessionRow[] | null;
+  initialWaitlistRows: MyWaitlistRow[] | null;
 }) {
   const enrollments = useGamerEnrollments({
     gamerId,
