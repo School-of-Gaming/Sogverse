@@ -73,9 +73,12 @@ export const geduFeedRosterEntry = z.object({
  *
  * `attendance` is the sparse per-gamer map exactly as stored — a roster id
  * missing from it is unmarked, which is the state a present-list cannot
- * express. `did_not_run` and `needs_substitute` are reserved schema concepts
- * with no UI on either side; they are parsed so the shape is honest, and
- * nothing reads them yet.
+ * express.
+ *
+ * Two reserved booleans stood here until 00151, parsed so the shape mirrored
+ * the table. They belonged to a cancellation/substitution flow that was cut
+ * from the gedu UI and is not being built, so the columns were dropped rather
+ * than left advertising a feature that does not exist.
  */
 export const geduFeedSession = z.object({
   id: z.string(),
@@ -86,8 +89,6 @@ export const geduFeedSession = z.object({
   ends_at: z.string(),
   report: z.string().nullable(),
   gedu_note: z.string().nullable(),
-  did_not_run: z.boolean(),
-  needs_substitute: z.boolean(),
   created_at: z.string(),
   updated_at: z.string(),
   created_by: z.string().nullable(),

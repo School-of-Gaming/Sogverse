@@ -52,8 +52,6 @@ function row(
     ends_at: `${sessionDate}T16:00:00.000Z`,
     report: null,
     gedu_note: null,
-    did_not_run: false,
-    needs_substitute: false,
     created_at: `${sessionDate}T16:05:00.000Z`,
     updated_at: `${sessionDate}T16:05:00.000Z`,
     created_by: null,

@@ -297,12 +297,10 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
-          did_not_run: boolean
           ends_at: string
           gedu_note: string | null
           group_id: string
           id: string
-          needs_substitute: boolean
           report: string | null
           session_date: string
           starts_at: string
@@ -312,12 +310,10 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
-          did_not_run?: boolean
           ends_at: string
           gedu_note?: string | null
           group_id: string
           id?: string
-          needs_substitute?: boolean
           report?: string | null
           session_date: string
           starts_at: string
@@ -327,12 +323,10 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
-          did_not_run?: boolean
           ends_at?: string
           gedu_note?: string | null
           group_id?: string
           id?: string
-          needs_substitute?: boolean
           report?: string | null
           session_date?: string
           starts_at?: string
@@ -1566,6 +1560,10 @@ export type Database = {
           start_date: string
           timezone: string
         }[]
+      }
+      get_my_family_product_feed: {
+        Args: { p_participation_id: string }
+        Returns: Json
       }
       get_my_gamers: {
         Args: never
