@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
+import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
 import {
-  buildGeduSessionFeed,
+  OPEN_ENDED_OCCURRENCE_CAP,
   productLocalDate,
   sessionEntryId,
   UNDATED_PRODUCT_PAST_HORIZON_DAYS,
-} from "@/lib/gedu-session-feed";
-import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
+} from "@/lib/session-occurrence";
 import type { GeduFeedSession } from "@/services/gedu-sessions";
 import type { SessionFeedEntry } from "@/components/gedu/session-feed";
 

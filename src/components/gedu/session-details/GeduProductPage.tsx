@@ -9,7 +9,8 @@ import {
   type SessionEntryDraft,
   type SessionFeedGamer,
 } from "@/components/gedu/session-feed";
-import { buildGeduSessionFeed, sessionEntryId } from "@/lib/gedu-session-feed";
+import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
+import { sessionEntryId } from "@/lib/session-occurrence";
 import { useNow } from "@/providers";
 import { useGeduAssignedProduct } from "@/services/assignments";
 import {

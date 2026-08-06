@@ -12,7 +12,7 @@
  * with the family's read-only feed and lives in `@/components/session-feed`.
  */
 
-import type { AttendanceMark } from "@/components/session-feed";
+import { hasReport, type AttendanceMark } from "@/components/session-feed";
 import type {
   AttendanceMarks,
   EditableSessionFeedEntry,
@@ -132,19 +132,6 @@ export function entryCompleteness(
     attendanceTally(roster, entry.attendance).complete && hasReport(entry.report);
   if (finished) return "complete";
   return entry.owed && roster.length > 0 ? "needs_attention" : null;
-}
-
-/**
- * Whether a stored report field actually carries a write-up.
- *
- * `null`, `""` and a field holding nothing but whitespace are the same answer:
- * nobody has written anything. The editor trims on the way out and collapses an
- * emptied field back to `null`, so the middle two are transient — but a value
- * can still arrive here untrimmed (a draft mid-save, a row written before that
- * collapse existed), and a space is not a session report.
- */
-function hasReport(report: string | null): boolean {
-  return report !== null && report.trim().length > 0;
 }
 
 /**

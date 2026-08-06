@@ -47,6 +47,7 @@ export {
   REPORT_CLAMP_LINES,
   REPORT_CLAMP_REM,
   estimateReportLines,
+  hasReport,
   reportOverflows,
 } from "./report-clamp";
 export {
