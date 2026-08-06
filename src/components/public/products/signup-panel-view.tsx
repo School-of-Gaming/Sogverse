@@ -134,8 +134,8 @@ function PanelShell({
 
 // One shared panel for every "you can't sign up right now" dead end (ended,
 // already started, or full with no waitlist). A parent never reaches these
-// through a browse card — registrationCtaKind resolves them to a disabled card
-// button or no button at all — so the only way in is a stale link or bookmark.
+// through a browse card — registrationCtaKind marks them inert, so the card
+// they came from is not a link — the only way in is a stale link or bookmark.
 // That makes three bespoke layouts not worth maintaining, and the exact reason
 // not worth spelling out: they collapse to one generic note, no actionable CTA.
 // (The RegistrationState kinds stay distinct — the card layer still needs them;

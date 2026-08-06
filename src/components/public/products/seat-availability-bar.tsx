@@ -27,10 +27,13 @@ export interface SeatAvailabilityBarProps {
  *
  * When full, the bar surfaces only the *actionable* state: a club with a
  * waiting list reads "Waitlist" (there's still something to do), while a full
- * club without one shows no chip at all — the disabled "Full" CTA sitting next
- * to the bar already says so, and repeating it here is just noise. The
- * indicator sits on the seats-remaining row, right-aligned, in a fixed-height
- * row so the component's height never changes whether or not one is present.
+ * club without one shows no chip at all — the "Full" label sitting beside the
+ * bar already says so, and repeating it here is just noise. That makes this a
+ * two-part arrangement rather than a self-contained one: a host that drops the
+ * label has to bring the chip back, or a full club stops saying it anywhere.
+ * The indicator sits on the seats-remaining row, right-aligned, in a
+ * fixed-height row so the component's height never changes whether or not one
+ * is present.
  */
 export function SeatAvailabilityBar({
   seatCount,
