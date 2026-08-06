@@ -13,7 +13,7 @@ import type {
   FamilyEnrollmentSummary,
   FamilyGamerEnrollments,
 } from "@/components/family/enrollment-rollup";
-import { ROUTES } from "@/lib/constants";
+import { MAX_GAMERS_PER_PARENT, ROUTES } from "@/lib/constants";
 import { ParentHelpSection } from "./ParentHelpSection";
 
 /**
@@ -193,6 +193,16 @@ export function ParentDashboardPageBody({
 
   const namedGamerEntries = gamers.length <= MAX_NAMED_GAMER_PILL_ENTRIES;
 
+  /**
+   * The Steven Brown Rule — see `MAX_GAMERS_PER_PARENT` for the lore.
+   *
+   * A UI-only cap the tile strip this page absorbed used to enforce, and which
+   * has to be enforced *here* now that this page owns every add affordance: the
+   * API accepts an eighth child, so a page that keeps offering the button past
+   * the limit is offering a parent an error message.
+   */
+  const canAddGamer = gamers.length < MAX_GAMERS_PER_PARENT;
+
   // With no children yet, the empty state is still a *section* — "Gamers",
   // with its own pill entry — rather than a card floating unattached while the
   // scroll-spy highlights Billing beneath it. The moment the first child is
@@ -352,17 +362,27 @@ export function ParentDashboardPageBody({
             {/* Adding a child sits after the last of them, deliberately quiet:
                 it is a once-a-year action, and a full-strength button at the top
                 of a page about the children you already have would compete with
-                them for the first thing read. */}
-            <div className="mx-auto max-w-3xl">
-              <button
-                type="button"
-                onClick={onAddGamer}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-muted-foreground/40 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <UserPlus className="h-4 w-4" aria-hidden />
-                {f("addGamer")}
-              </button>
-            </div>
+                them for the first thing read.
+
+                Absent at the cap rather than disabled. A disabled button is a
+                promise that something would happen if the condition cleared,
+                and nothing clears this one — a parent at seven children is not
+                waiting for a seat, they are done. Nothing survives the change
+                either way, since the count only moves when the parent
+                themselves adds a child, so removing the tile shifts only what
+                sits below it and only in direct answer to their own action. */}
+            {canAddGamer && (
+              <div className="mx-auto max-w-3xl">
+                <button
+                  type="button"
+                  onClick={onAddGamer}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-muted-foreground/40 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <UserPlus className="h-4 w-4" aria-hidden />
+                  {f("addGamer")}
+                </button>
+              </div>
+            )}
           </div>
         )}
 

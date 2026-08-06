@@ -130,7 +130,7 @@ export const PREVIEW_SCENES = [
         slug: "seven-gamers",
         label: "Seven children — pill collapsed",
         description:
-          "Past three children the section pill stops naming them one by one and collapses to a single “Gamers” chip, so this is where the collapse and the seven headings behind it can be judged together.",
+          "Past three children the section pill stops naming them one by one and collapses to a single “Gamers” chip, so this is where the collapse and the seven headings behind it can be judged together. Seven is also as many children as one account may hold, which makes this the one scenario with no add-a-child tile under the last section — withdrawn rather than disabled, since nothing is going to clear the condition.",
       },
       {
         slug: "new-family",
