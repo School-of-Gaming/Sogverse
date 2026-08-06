@@ -13,7 +13,17 @@ const GAMER_ID = "22222222-2222-2222-2222-222222222222";
 const GROUP_ID = "33333333-3333-3333-3333-333333333333";
 const PARTICIPATION_ID = "44444444-4444-4444-4444-444444444444";
 
-function makeRow(overrides: Partial<MyUpcomingSessionRow> = {}): MyUpcomingSessionRow {
+/**
+ * The product half is overridden **partially**: a case that only cares about an
+ * end date says so and inherits the rest, rather than restating a whole product
+ * shell that grows a field every time the read behind it widens.
+ */
+function makeRow(
+  overrides: Partial<Omit<MyUpcomingSessionRow, "product">> & {
+    product?: Partial<MyUpcomingSessionRow["product"]>;
+  } = {},
+): MyUpcomingSessionRow {
+  const { product, ...rest } = overrides;
   return {
     participationId: PARTICIPATION_ID,
     gamer: { id: GAMER_ID, firstName: "Alex" },
@@ -25,6 +35,7 @@ function makeRow(overrides: Partial<MyUpcomingSessionRow> = {}): MyUpcomingSessi
       endDate: null,
       padletUrl: "https://padlet.example/foo",
       isRemote: true,
+      site: null,
       translations: [
         {
           locale: "en",
@@ -36,7 +47,7 @@ function makeRow(overrides: Partial<MyUpcomingSessionRow> = {}): MyUpcomingSessi
           updated_at: "",
         },
       ],
-      ...(overrides.product ?? {}),
+      ...(product ?? {}),
     },
     groupId: overrides.groupId === undefined ? GROUP_ID : overrides.groupId,
     slots: overrides.slots ?? [
@@ -44,7 +55,7 @@ function makeRow(overrides: Partial<MyUpcomingSessionRow> = {}): MyUpcomingSessi
     ],
     paymentProblem: false,
     subscriptionEndsAt: null,
-    ...overrides,
+    ...rest,
   };
 }
 
