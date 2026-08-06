@@ -154,6 +154,18 @@ export function useMyWaitlistRows(
  * the click through to the row leaving the list, and `isPending` flips false
  * before `onSuccess` — let alone before the refetch lands. See the "Loading &
  * Disabled State" rule.
+ *
+ * **The invalidation is returned, not fired and forgotten**, so React Query
+ * awaits it before running the caller's own `onSuccess`. That is what gives a
+ * caller a moment that means "the refetch has settled" — and it has to exist,
+ * because the refetch is allowed to fail. A DELETE that succeeded followed by a
+ * refetch that didn't leaves React Query holding the previous rows, so the card
+ * the parent just left is still on screen: without a settled signal its
+ * committing flag would never clear and it would sit dimmed and unclickable
+ * until a reload. Clearing after this promise resolves is still clearing after
+ * the outcome — on the ordinary path the row is gone and the card unmounted
+ * with it, which is what the disabled-state rule wants; on the failed-refetch
+ * path the card comes back to life and can be retried.
  */
 export function useLeaveWaitlist() {
   const queryClient = useQueryClient();
@@ -161,10 +173,11 @@ export function useLeaveWaitlist() {
   const service = new ParticipationsService(supabase);
   return useMutation({
     mutationFn: (input: LeaveWaitlistInput) => service.leaveWaitlist(input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: participationKeys.all });
-      queryClient.invalidateQueries({ queryKey: productKeys.all });
-    },
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: participationKeys.all }),
+        queryClient.invalidateQueries({ queryKey: productKeys.all }),
+      ]),
   });
 }
 

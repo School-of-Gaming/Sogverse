@@ -522,6 +522,30 @@ describe("rollUpFamilyEnrollments — the page's shape", () => {
     expect(names("en")).toEqual(["Ämmi", "Bea"]);
   });
 
+  // Two children in one family may share a first name, and neither the server
+  // prefetch nor the client refetch imposes an order on the rows it hands back
+  // — so with no tiebreak the two sections would sit in whatever order Postgres
+  // chose that time, and could swap on hydration. The id is arbitrary as an
+  // ordering; being the *same* arbitrary order on both sides is the point.
+  it("breaks a shared first name on the id, whatever order the rows arrive in", () => {
+    const twins = (order: FamilyMember[]) =>
+      rollUpFamilyEnrollments({
+        family: order,
+        sessionRows: [],
+        waitlistRows: [],
+        now: NOW,
+        locale: "en",
+        timeZone: "UTC",
+      }).map((g) => g.id);
+
+    const first: FamilyMember = { id: AINO, role: "gamer", first_name: "Aino" };
+    const second: FamilyMember = { id: OTSO, role: "gamer", first_name: "Aino" };
+
+    // OTSO's id collates ahead of AINO's, so it leads either way round.
+    expect(twins([first, second])).toEqual([OTSO, AINO]);
+    expect(twins([second, first])).toEqual([OTSO, AINO]);
+  });
+
   it("gives a child with nothing booked an empty section rather than none", () => {
     const sections = rollUp({ sessionRows: [sessionRow()] });
     expect(sections.map((g) => g.enrollments.length)).toEqual([1, 0]);

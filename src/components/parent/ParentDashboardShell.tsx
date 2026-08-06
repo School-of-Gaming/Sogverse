@@ -82,9 +82,17 @@ export function ParentDashboardShell({
    * `mutate()` so it is live for the very next render, and deliberately not
    * derived from `leaveWaitlist.isPending` — that flips false the moment React
    * Query dispatches success, which is before `onSuccess` invalidates and well
-   * before the refetch drops the row. An id is removed only on that card's own
-   * error, the one outcome where the parent has to try again; on success the row
-   * disappears and the card with it. See the "Loading & Disabled State" rule.
+   * before the refetch drops the row. See the "Loading & Disabled State" rule.
+   *
+   * An id is released on **either** outcome, and in both cases only once the
+   * outcome is known. On an error the parent has to try again, so the card comes
+   * back to life where it already was. On success the release happens after the
+   * awaited invalidation has settled, by which point the ordinary path has
+   * already dropped the row and unmounted the card — the release is a no-op and
+   * the unmount did the work. The one path it exists for is the DELETE that
+   * succeeds while its refetch fails: React Query keeps the previous rows, the
+   * card is still on screen, and without this it would sit dimmed and
+   * unclickable until the parent reloaded the page.
    *
    * A set, not one id: a family can be queued for several things at once, and a
    * single id would clear the first card's flag the moment a second leave
@@ -95,6 +103,21 @@ export function ParentDashboardShell({
   const [leavingIds, setLeavingIds] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
+
+  /**
+   * Release one card, leaving any sibling leave still in flight untouched. The
+   * identity short-circuit keeps a release on an already-released id (or on a
+   * card that has since unmounted) from pushing a pointless re-render through
+   * every card on the page.
+   */
+  function stopLeaving(participationId: string) {
+    setLeavingIds((prev) => {
+      if (!prev.has(participationId)) return prev;
+      const next = new Set(prev);
+      next.delete(participationId);
+      return next;
+    });
+  }
 
   function handleJoinClick({ gamer, enrollment }: ParentEnrollmentAction) {
     // `"#"` is what the roll-up emits when there is no room to reach — an
@@ -119,16 +142,15 @@ export function ParentDashboardShell({
     leaveWaitlist.mutate(
       { participationId },
       {
+        // Runs after the hook's invalidation has settled, so by here the row is
+        // normally gone and this card with it. It matters when the refetch
+        // failed and the card is still standing — see `stopLeaving`.
+        onSuccess: () => stopLeaving(participationId),
         // Un-dim in place, and only this card — a sibling's leave may still be
         // in flight. With no toast anywhere in the app there is nothing else to
         // say what happened, so the card simply comes back to life where it
         // already was and stays clickable.
-        onError: () =>
-          setLeavingIds((prev) => {
-            const next = new Set(prev);
-            next.delete(participationId);
-            return next;
-          }),
+        onError: () => stopLeaving(participationId),
       },
     );
   }

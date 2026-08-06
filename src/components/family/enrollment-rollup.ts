@@ -341,6 +341,16 @@ export function toFamilyEnrollments(
  * that agreed with that on the server and disagreed on the phone would move
  * the sections under the reader on hydration.
  *
+ * **The id breaks a tie, because a first name does not have to be unique.** Two
+ * children in one family can share one, and neither read that feeds this — the
+ * server's RLS-scoped `profiles` select nor the client's family query — imposes
+ * an order of its own. With the comparator returning 0 the two sections would
+ * come out in whatever order Postgres happened to hand the rows back, which is
+ * free to differ between the prefetch and the client refetch: the same
+ * hydration-time shuffle the locale pinning above exists to prevent, reached
+ * from the other side. The id is arbitrary as an ordering, and that is fine —
+ * what it buys is that it is the *same* arbitrary order every time.
+ *
  * A child with nothing booked still gets a section: their absence from the rows
  * is exactly the empty state the page renders for them.
  */
@@ -356,7 +366,11 @@ export function rollUpFamilyEnrollments(
 
   return args.family
     .filter((member) => member.role === "gamer")
-    .sort((a, b) => a.first_name.localeCompare(b.first_name, args.locale))
+    .sort(
+      (a, b) =>
+        a.first_name.localeCompare(b.first_name, args.locale) ||
+        a.id.localeCompare(b.id),
+    )
     .map((member) => ({
       id: member.id,
       firstName: member.first_name,

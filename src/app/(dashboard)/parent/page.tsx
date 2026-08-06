@@ -15,29 +15,11 @@ import type { BillingAccount } from "@/services/billing";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
-  return { title: t("parentDashboard"), description: "Manage your gamers and enrollments" };
+  return {
+    title: t("parentDashboard"),
+    description: t("parentDashboardDescription"),
+  };
 }
-
-/**
- * The parent dashboard's route is a **data shell and nothing else**: it reads,
- * and it hands what it read to a client shell that hands it to a page body. The
- * body is the same component the preview scene renders over fixtures, which is
- * the whole point of the split — the page a parent meets and the page the design
- * was signed off from cannot drift apart.
- *
- * **Everything that decides the page's geometry is prefetched here**, and that
- * is the criterion, not "everything that is cheap". The family read decides how
- * many child sections there are and what they are called; the enrollment rows
- * decide how many cards sit under each and how tall they are; the billing
- * accounts decide how many buttons the billing card renders. Any one of them
- * arriving after the first paint would resize a page the parent is already
- * reading — the reflow the layout rule exists to prevent — so the first frame is
- * final and there is no skeleton anywhere on this route.
- *
- * What is emphatically *not* prefetched is the roll-up from rows to cards. That
- * needs the viewer's locale, the viewer's zone and a clock that keeps ticking,
- * so it runs client-side; see `useFamilyEnrollments`.
- */
 
 /**
  * Server-prefetch the parent's `status='active'` participation rows. The
@@ -116,6 +98,26 @@ async function getInitialBillingAccounts(): Promise<BillingAccount[]> {
   }
 }
 
+/**
+ * The parent dashboard's route is a **data shell and nothing else**: it reads,
+ * and it hands what it read to a client shell that hands it to a page body. The
+ * body is the same component the preview scene renders over fixtures, which is
+ * the whole point of the split — the page a parent meets and the page the design
+ * was signed off from cannot drift apart.
+ *
+ * **Everything that decides the page's geometry is prefetched here**, and that
+ * is the criterion, not "everything that is cheap". The family read decides how
+ * many child sections there are and what they are called; the enrollment rows
+ * decide how many cards sit under each and how tall they are; the billing
+ * accounts decide how many buttons the billing card renders. Any one of them
+ * arriving after the first paint would resize a page the parent is already
+ * reading — the reflow the layout rule exists to prevent — so the first frame is
+ * final and there is no skeleton anywhere on this route.
+ *
+ * What is emphatically *not* prefetched is the roll-up from rows to cards. That
+ * needs the viewer's locale, the viewer's zone and a clock that keeps ticking,
+ * so it runs client-side; see `useFamilyEnrollments`.
+ */
 export default async function CustomerDashboardPage() {
   // All four reads run together: the page blocks on the slowest of them either
   // way, so running the cheaper three alongside the sessions read costs ~no
