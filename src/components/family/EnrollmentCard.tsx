@@ -543,8 +543,8 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                 )}
               </div>
 
-              {/* Under the sentence it acts on, not over the corner.
-                  `LeaveWaitlistBadge` put this in the corner, where the product's
+              {/* Under the sentence it acts on, not over the corner. The
+                  design this replaced put it in the corner, where the product's
                   grammar reserves the space for an alarm the parent must act on
                   — and a queue place is not one. Down here it is the exact
                   counterpart of the Join on a live card: the single interactive

@@ -76,8 +76,8 @@ export interface SlotShape {
  * last week's slot start in local time, so `getNextSessionStart`
  * returns last week's already-finished session and the in-window check
  * fails. Today's in-progress session disappears from the dashboard.
- * Regression coverage lives in
- * `tests/unit/lib/upcoming-sessions.test.ts`.
+ * Regression coverage lives with the timezone tests for the enrollment
+ * helpers and the backward occurrence walk.
  *
  * Returns null when the product hasn't started yet
  * (`startBoundary > now`) — no prev-week occurrence can be in

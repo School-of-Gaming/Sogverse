@@ -24,7 +24,7 @@ A group inherits its schedule from one or more `schedule_slots` on the linked pr
 
 **Rule: Client-side open/locked state is display-only; the token endpoint is the security boundary.** The dashboard cards compute open/locked to pick "Join Voice" vs "Opens at …", but the server independently recomputes the window over every slot and 403s if none is open right now. No role bypasses the window.
 
-**Join surfaces** all render the shared `JoinVoiceButton` in this directory: parent/gamer `NextSessionCard`, gedu dashboard/session-details, and the admin product-details group cards.
+**Join surfaces** all render the shared `JoinVoiceButton` in this directory: the family enrollment cards and club pages, gedu dashboard/session-details, and the admin product-details group cards.
 
 ## Access control
 

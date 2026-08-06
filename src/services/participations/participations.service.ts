@@ -363,9 +363,10 @@ export class ParticipationsService {
    * a parent sees their purchase reflected immediately instead of an empty
    * section while an admin places the gamer in a group.
    *
-   * Expansion into concrete (start, end) pairs is the adapter's job
-   * (`src/lib/upcoming-sessions.ts`); this method just hands back the raw
-   * rows with everything that expansion needs in one round trip.
+   * Expansion into concrete (start, end) pairs belongs to the client-side
+   * roll-up, which needs the viewer's locale and zone and has to re-derive on
+   * the shared clock; this method just hands back the raw rows with everything
+   * that expansion needs in one round trip.
    *
    * Audience selects which column the row is keyed off:
    *   - 'customer' → `customer_id = auth.uid()`: every participation the
