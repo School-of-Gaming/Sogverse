@@ -272,8 +272,14 @@ describe("locations scoped reads", () => {
         .select("id", { count: "exact", head: true })
         .eq("country_code", country)
         .eq("type", type);
+      // The coded-level claim binds *sourced* rows: seed.sql's fixture FI tree
+      // is deliberately code-less AND key-less (it must not inherit anything a
+      // migration does to the real rows), so in CI it sits beside the real
+      // tree and would count as an offender here. Which rows may be both-null
+      // is the next test's job — it enumerates them exactly — so scoping this
+      // one by geonames_id loses nothing between the two.
       const { count, error } = codeless
-        ? await query.is("external_code", null)
+        ? await query.is("external_code", null).not("geonames_id", "is", null)
         : await query.not("external_code", "is", null);
       if (error) throw error;
       return count ?? 0;
@@ -298,16 +304,26 @@ describe("locations scoped reads", () => {
     it("gives every seeded row an upstream key, code or no code", async () => {
       // The two France synthetic rows are the only seeded rows anywhere with no
       // `geonames_id`, and they are config-declared: Mayotte's région and
-      // département exist in no GeoNames file as administrative rows.
+      // département exist in no GeoNames file as administrative rows. In CI,
+      // seed.sql's fixture FI tree also sits in the table — its own rows with
+      // fixed ids, key-less by design — so those exact ids are excluded rather
+      // than tolerated by shape: anything ELSE key-less is still a failure.
       const { data, error } = await admin
         .from("locations")
-        .select("name, country_code, type")
+        .select("id, name, country_code, type")
         .in("country_code", Object.keys(CODED))
         .in("type", ["country", "region", "district", "municipality"])
         .is("geonames_id", null);
       if (error) throw error;
 
-      expect(data.map((row) => `${row.country_code} ${row.type} ${row.name}`).sort()).toEqual([
+      const fixtureIds = new Set<string>([
+        TEST_IDS.LOCATION_COUNTRY,
+        TEST_IDS.LOCATION_REGION,
+        TEST_IDS.LOCATION_MUNICIPALITY,
+      ]);
+      const keyless = data.filter((row) => !fixtureIds.has(row.id));
+
+      expect(keyless.map((row) => `${row.country_code} ${row.type} ${row.name}`).sort()).toEqual([
         "FR district Mayotte",
         "FR region Mayotte",
       ]);

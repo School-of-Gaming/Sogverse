@@ -340,15 +340,19 @@ describe("locations GeoNames groundwork", () => {
 
   describe("geonames_id", () => {
     it("refuses a second row claiming the same upstream key", async () => {
+      // Negative on purpose: GeoNames ids are positive, so a negative key can
+      // never collide with a row the real seeds put in this database. The
+      // first draft used 660013 — Suomi's actual geonameid — and collided with
+      // the adopted Finland country row the moment CI ran the full chain.
       const first = await admin
         .from("locations")
-        .update({ geonames_id: 660013 })
+        .update({ geonames_id: -660013 })
         .eq("id", ZZ.MUNICIPALITY);
       expect(first.error).toBeNull();
 
       const second = await admin
         .from("locations")
-        .update({ geonames_id: 660013 })
+        .update({ geonames_id: -660013 })
         .eq("id", ZZ.UNDEAD_MUNICIPALITY);
       expect(second.error?.code).toBe("23505");
 

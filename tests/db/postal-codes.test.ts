@@ -140,9 +140,12 @@ describe("postal codes", () => {
 
     it("answers empty for a code nobody carries", async () => {
       // A lookup, not an assertion: an unknown code is "no municipality", never
-      // an error, because the caller is a parent typing into a box.
+      // an error, because the caller is a parent typing into a box. The junk is
+      // shape-impossible on purpose — FI and FR codes are digits, so letters
+      // can never exist in the data. The first draft guessed "99999" was free;
+      // it is Korvatunturi, Santa Claus's postal code, and very much carried.
       await expect(
-        service.getMunicipalitiesByPostalCode("FI", "99999"),
+        service.getMunicipalitiesByPostalCode("FI", "XXXXX"),
       ).resolves.toEqual([]);
     });
 
