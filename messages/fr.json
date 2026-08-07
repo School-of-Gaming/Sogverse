@@ -1496,8 +1496,8 @@
           "linkLabel": "Où se le procurer"
         },
         "roblox_studio": {
-          "description": "Roblox Studio est l’outil gratuit avec lequel les jeux Roblox eux-mêmes sont créés. Les enfants conçoivent des mondes, construisent avec de vrais outils 3D et programment avec du vrai code : leurs idées deviennent des expériences auxquelles d’autres peuvent réellement jouer. Dans nos clubs, les enfants créent au lieu de jouer — c’est du vrai développement de jeux vidéo.",
-          "note": "Roblox Studio est gratuit — il n’y a rien à acheter. Il fonctionne uniquement sur PC Windows et Mac : ni sur iPad ou autre tablette, ni sur Chromebook, téléphone ou console de jeu — votre enfant a donc besoin d’un ordinateur fixe ou portable pour participer. Un compte Roblox gratuit est également nécessaire, et le réglage d’âge du compte détermine ses protections de discussion et de confidentialité. Les créations terminées peuvent être publiées pour que d’autres joueurs les découvrent et y jouent.",
+          "description": "Roblox Studio est l’outil gratuit avec lequel les vrais jeux Roblox sont créés. Dans nos clubs, les enfants construisent leurs propres mondes en 3D et écrivent de vrais programmes pour les faire fonctionner — leurs idées deviennent des jeux auxquels d’autres peuvent vraiment jouer. C’est la première étape pour la création de jeux vidéo.",
+          "note": "Roblox Studio est entièrement gratuit, il n’y a rien à acheter. Il fonctionne uniquement sur PC Windows ou Mac — pas sur iPad, tablette, Chromebook, téléphone ou console. Votre enfant a donc besoin d’un ordinateur fixe ou portable pour participer. Un compte Roblox gratuit est aussi nécessaire ; les paramètres d’âge du compte permettent de gérer le chat et la confidentialité. Une fois leur jeu terminé, ils pourront le publier pour que d’autres joueurs le découvrent !",
           "linkLabel": "Obtenir Roblox Studio"
         }
       }
