@@ -18,6 +18,11 @@
  *   `allowMissing` names the codes upstream is known to lack; a code on that
  *   list that has *reappeared* fails too, because upstream healing is good news
  *   that still gets taken deliberately.
+ * - **Every `exclude` entry still claims a record.** Same rule as the
+ *   allowances, applied to the other quarantine list: an entry matching nothing
+ *   means GeoNames dropped the abolished row (or re-filed it somewhere the
+ *   selectors no longer look), and a quarantine with nothing in it has to be
+ *   deleted deliberately rather than left reading like a live decision.
  * - **Zero orphans** — every row below the country resolved a parent. A row
  *   whose parent key names nothing would otherwise be dropped by the
  *   migration's own JOIN and show up only as a count that happened to match.
@@ -177,6 +182,10 @@ export async function ingestCountry(config) {
   const byFileKey = new Map();
   const rowsByLevel = new Map(config.levelOrder.map((level) => [level, []]));
   let excluded = 0;
+  // Which `exclude` entries actually claimed a record. An entry that claims
+  // none is upstream having healed, and is gated below on exactly the same
+  // terms as a stale allowance: good news that still gets taken deliberately.
+  const excludeHits = new Set();
 
   for (const [file, fileLevels] of Object.entries(config.levels)) {
     const dump = dumps.get(file);
@@ -189,6 +198,7 @@ export async function ingestCountry(config) {
         if (!matchesWhere(record, mapping.where)) continue;
         if (config.exclude.has(record.geonameid)) {
           excluded += 1;
+          excludeHits.add(record.geonameid);
           continue;
         }
 
@@ -395,6 +405,19 @@ export async function ingestCountry(config) {
   /* ------------------------------------------------------------------- gates */
 
   const problems = [];
+
+  // An `exclude` entry that claimed nothing is a quarantine with nothing left
+  // in it: GeoNames dropped the abolished row, or re-filed it under a feature
+  // code the selectors no longer claim. Left unchecked the entry stays in the
+  // config forever, reading as a live decision about data that has moved on —
+  // and the next reader has no way to tell it from one still doing work.
+  for (const geonameid of config.exclude) {
+    if (excludeHits.has(geonameid)) continue;
+    problems.push(
+      `exclude names geonameid ${geonameid} but no parsed record carries it — ` +
+        `upstream healed, so shrink the exclude list in the config`,
+    );
+  }
 
   // Dedupe: geonameid is the identity, because official codes are not unique
   // across GeoNames' live/historic split and names are not unique at all.

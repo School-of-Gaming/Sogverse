@@ -32,6 +32,13 @@
  * generator header. `GEONAMES_REFRESH=1` forces a re-download when you
  * deliberately want today's dump.
  *
+ * **Idempotent against the same URL, and only that.** The sidecar beside each
+ * cached file records the URL the bytes came from, and a cache hit is only
+ * taken when it still matches what the caller asked for. Cache names are the
+ * caller's rather than derived from the URL, so a source that moves host keeps
+ * its name — La Poste's export has moved once already — and without the check a
+ * rerun would keep reading the old host's bytes, reproducibly and wrongly.
+ *
  * ## The zip reader
  *
  * Node ships `zlib` but no archive reader, and the alternative was a
@@ -85,7 +92,15 @@ async function fetchCached(url, name) {
 
   if (!process.env.GEONAMES_REFRESH && existsSync(file) && existsSync(metaFile)) {
     const meta = JSON.parse(readFileSync(metaFile, "utf8"));
-    return { bytes: readFileSync(file), lastModified: meta.lastModified, cached: true };
+    // The sidecar records where the bytes came from, and a cache hit is only a
+    // hit while that is still where they should come from. The cache name is
+    // the caller's, not the URL's, so a source that moves host keeps its name:
+    // La Poste has moved this export before, and without this check the old
+    // host's bytes would be served forever under the new URL — a stale
+    // "deterministic" run that reruns identically and is wrong.
+    if (meta.url === url) {
+      return { bytes: readFileSync(file), lastModified: meta.lastModified, cached: true };
+    }
   }
 
   const response = await fetch(url);

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   LocationPickerDialog,
+  useBoundCountryName,
   useCountryInitialPath,
 } from "@/components/locations/location-browser";
 import type { LocationSummary } from "@/components/locations/location-picker-panel";
@@ -91,6 +92,9 @@ export function VenuePickerDialog({
   const t = useTranslations("admin.products.locationPicker");
   const locale = useLocale();
   const initialPath = useCountryInitialPath(countryCode);
+  // Present only when the product type bound this field to a country, which is
+  // exactly when the panel must stop saying it searches every one of them.
+  const boundCountryName = useBoundCountryName(initialPath);
 
   /** The municipality the tree confirmed. Null means "still choosing where". */
   const [place, setPlace] = useState<LocationSummary | null>(null);
@@ -126,6 +130,7 @@ export function VenuePickerDialog({
         pickableTypes={VENUE_PICKABLE_TYPES}
         countryCode={countryCode}
         initialPath={initialPath}
+        boundCountryName={boundCountryName}
         onConfirm={({ location }) => {
           // The two confirmable types mean two different things, and this is
           // the only place that knows which: a site is the answer, a

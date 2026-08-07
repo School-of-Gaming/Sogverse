@@ -1,17 +1,69 @@
 /**
- * Rendering values into SQL literals.
+ * Rendering values into SQL literals, and into the prose around them.
  *
  * `standard_conforming_strings` is on (the default since 9.1), so a backslash is
  * an ordinary character and doubling the quote is the whole escape. What makes
  * that safe to rely on is the literal-safety gate in `ingest.mjs`, which refuses
  * any value that would make the assumption interesting — control characters and
  * empty strings — before a generator gets this far.
+ *
+ * That gate covers the *ingested* side and nothing else. Two other kinds of
+ * value reach an emitted file: a string a caller pastes into a message it is
+ * building by hand (`sqlEscaped`), and a value from a postal file or the live
+ * table rendered into a `--` comment or a report line (`commentSafe`). Each has
+ * its own helper below, because they fail differently: an unescaped quote ends
+ * a literal, and an unescaped newline ends a comment.
  */
+
+/**
+ * A value going *inside* a quoted SQL string somebody else is building — a
+ * `RAISE EXCEPTION` message, most often — rather than rendered as a literal of
+ * its own. Doubling the quote is the whole escape; `sqlText` is this plus the
+ * quotes.
+ *
+ * It exists so a hardcoded map of country titles is not trusted forever: every
+ * value in one today is apostrophe-free, and the first one that is not would
+ * otherwise emit a migration that fails to parse.
+ */
+export function sqlEscaped(value) {
+  return String(value).replace(/'/g, "''");
+}
+
+/**
+ * A value safe to render into a `--` comment or a line of a report.
+ *
+ * Control characters — CR and LF above all — end the comment they are written
+ * into and let whatever follows parse as SQL, and they garble a report line the
+ * same way. This is for values the ingestion gate never saw: an upstream postal
+ * file's place name, a name read back out of the live table. Values the gate
+ * *did* clear are already safe and go through nothing.
+ *
+ * Replaced rather than refused, because these values are being *described*: a
+ * sync run must not die over a stray byte someone put in a place name upstream,
+ * it must show the name with the byte neutralised.
+ */
+export function commentSafe(value) {
+  if (value === null || value === undefined) return "";
+  // An absent value stays absent. Callers render "no name" as nothing at all,
+  // and turning an empty string into a placeholder would put a word where they
+  // had deliberately arranged for silence.
+  if (String(value) === "") return "";
+  // Scanned by code point rather than matched by a character class, for the
+  // same reason `ingest.mjs` does it: a class would have to spell the control
+  // characters out and so put real control bytes in this file.
+  let out = "";
+  for (const char of String(value)) {
+    const point = char.codePointAt(0);
+    out += point < 0x20 || point === 0x7f ? " " : char;
+  }
+  const stripped = out.replace(/ {2,}/g, " ").trim();
+  return stripped === "" ? "(unprintable)" : stripped;
+}
 
 /** A Postgres text literal, or `NULL::text`. */
 export function sqlText(value) {
   if (value === null || value === undefined) return "NULL::text";
-  return `'${value.replace(/'/g, "''")}'`;
+  return `'${sqlEscaped(value)}'`;
 }
 
 /** A bigint literal, or `NULL::bigint`. The cast matters: a VALUES column whose

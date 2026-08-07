@@ -49,7 +49,7 @@ import { fail } from "./lib/geonames/cache.mjs";
 import { countryConfig } from "./lib/geonames/config.mjs";
 import { ingestCountry } from "./lib/geonames/ingest.mjs";
 import { ingestPostal } from "./lib/geonames/postal.mjs";
-import { sqlText } from "./lib/geonames/sql.mjs";
+import { sqlEscaped, sqlText } from "./lib/geonames/sql.mjs";
 
 /**
  * The migration each country's postal seed lands in. Literals for the same
@@ -95,6 +95,13 @@ if (!migrationFile) {
 
 const config = countryConfig(iso);
 const title = TITLES[iso] ?? iso;
+/**
+ * The same title, ready to sit inside a quoted SQL string — every assertion
+ * message below interpolates it into one. No title carries an apostrophe today,
+ * and the point is that the day one does it must not be the day a migration
+ * stops parsing.
+ */
+const sqlTitle = sqlEscaped(title);
 const ingested = await ingestCountry(config);
 const postal = await ingestPostal(config, ingested);
 
@@ -256,7 +263,7 @@ BEGIN
 
   IF n_rows <> ${postal.rows.length} THEN
     RAISE EXCEPTION
-      '${title} postal seed: expected ${postal.rows.length} rows for ${iso}, found %. A shortfall means the municipality join lost rows the generator matched; a surplus means rows exist this seed does not explain.',
+      '${sqlTitle} postal seed: expected ${postal.rows.length} rows for ${iso}, found %. A shortfall means the municipality join lost rows the generator matched; a surplus means rows exist this seed does not explain.',
       n_rows;
   END IF;
 
@@ -265,7 +272,7 @@ BEGIN
    WHERE country_code = ${sqlText(iso)};
 
   IF n_codes <> ${postal.stats.distinctCodes} THEN
-    RAISE EXCEPTION '${title} postal seed: expected ${postal.stats.distinctCodes} distinct ${iso} postal codes, found %', n_codes;
+    RAISE EXCEPTION '${sqlTitle} postal seed: expected ${postal.stats.distinctCodes} distinct ${iso} postal codes, found %', n_codes;
   END IF;
 
   -- Coverage, scoped to SOURCED municipalities. \`geonames_id IS NOT NULL\` is
@@ -279,7 +286,7 @@ BEGIN
 
   IF n_munis <> ${postal.stats.municipalities} THEN
     RAISE EXCEPTION
-      '${title} postal seed: expected ${postal.stats.municipalities} sourced ${iso} municipalities to attach codes to, found %',
+      '${sqlTitle} postal seed: expected ${postal.stats.municipalities} sourced ${iso} municipalities to attach codes to, found %',
       n_munis;
   END IF;
 
@@ -292,7 +299,7 @@ BEGIN
 
   IF n_uncovered <> ${postal.uncovered.length} THEN
     RAISE EXCEPTION
-      '${title} postal seed: % sourced ${iso} municipalities carry no postal code, expected exactly ${postal.uncovered.length}${postal.uncovered.length === 0 ? "" : ` (${postal.uncovered.map((row) => row.externalCode).join(", ")} — named in the header)`}',
+      '${sqlTitle} postal seed: % sourced ${iso} municipalities carry no postal code, expected exactly ${postal.uncovered.length}${postal.uncovered.length === 0 ? "" : ` (${postal.uncovered.map((row) => row.externalCode).join(", ")} — named in the header)`}',
       n_uncovered;
   END IF;
 END;

@@ -6,9 +6,11 @@ import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 
 /* The geographic tree is built from GeoNames (CC BY 4.0) and France's postal
    codes from La Poste's Base officielle (Licence Ouverte 2.0); both licences
-   require the credit this line carries. An anchor is fine here: the
-   no-off-site-links rule governs staff-authored copy shown to families, not
-   the app's own chrome. */
+   require the credit this line carries. It says "based on" rather than "from"
+   because the tree is not the dumps: rows are filtered, excluded, re-levelled
+   and renamed by the ingestion config, and CC BY asks that a modified work say
+   so. An anchor is fine here: the no-off-site-links rule governs staff-authored
+   copy shown to families, not the app's own chrome. */
 function AttributionLink({ href, children }: { href: string; children?: ReactNode }) {
   return (
     <a

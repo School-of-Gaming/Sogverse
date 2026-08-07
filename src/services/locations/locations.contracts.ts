@@ -26,8 +26,23 @@ import { Constants } from "@/types";
 export const createLocationBody = z.object({
   name: z.string().trim().min(1, "Name is required"),
   type: z.enum(Constants.public.Enums.location_type),
-  parent_id: z.string().nullable(),
+  // `.uuid()` rather than a bare string: this id is read back as a `uuid` on
+  // the way to deriving the country code, and Postgres refuses a malformed one
+  // with a cast error rather than "no such row". Without the check that error
+  // surfaces as a 500 on what is plainly a bad request.
+  parent_id: z.string().uuid().nullable(),
 });
+
+/**
+ * What `createLocation` takes — the parsed body, not the table's Insert type.
+ *
+ * The route strips everything else (`country_code` is derived from the parent;
+ * zod drops unknown keys), so typing the caller against the generated Insert
+ * would let it pass fields the write is guaranteed to discard, and read as
+ * though they meant something. This makes the discarded fields
+ * unrepresentable, which is what the contract already says in prose.
+ */
+export type CreateLocationBody = z.infer<typeof createLocationBody>;
 
 export const updateLocationBody = z.object({
   name: z.string().trim().min(1, "Name is required"),
@@ -72,16 +87,24 @@ export const LOCATION_COLUMNS =
 /**
  * The columns the postal lookup names.
  *
- * Only `location_id`, because that is the whole answer: the caller already
- * supplied the country and the code, so reading them back would be echoing the
- * filter. The row is then resolved through the existing keyed read, which is
- * what gives it a name and an ancestor chain.
+ * `location_id` is the whole answer: the caller already supplied the country
+ * and the code, so reading those back would be echoing the filter. The row is
+ * then resolved through the existing keyed read, which is what gives it a name
+ * and an ancestor chain.
+ *
+ * The embed beside it carries no answer at all — it is how the retired filter
+ * is expressed. A postal code is a way of *offering* a municipality, so a
+ * municipality a refresh retired must not come back from one; but `retired_at`
+ * is the database's business and no application row may select it. An inner
+ * join over the relation puts the filter on the server (`locations.retired_at
+ * is null`) while the only column that crosses the wire is the joined row's id,
+ * which the caller is about to look up anyway.
  *
  * A literal for the same reason `LOCATION_COLUMNS` is one — the Supabase client
  * infers the response shape from the *type* of the select string, and a string
  * built at runtime widens to `string` and takes the row type with it.
  */
-export const POSTAL_CODE_COLUMNS = "location_id";
+export const POSTAL_CODE_COLUMNS = "location_id, locations!inner(id)";
 
 // ---------------------------------------------------------------------------
 // Search

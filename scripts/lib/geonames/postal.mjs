@@ -62,6 +62,7 @@
  */
 import { downloadExternal, fail, readPostalDump } from "./cache.mjs";
 import { parsePostalDump } from "./dump.mjs";
+import { commentSafe } from "./sql.mjs";
 
 /**
  * A minimal RFC 4180 reader, for La Poste's quoted CSV.
@@ -154,11 +155,15 @@ async function readLaPostePairs(config) {
   const { bytes, lastModified } = await downloadExternal(url, `laposte_${config.iso}_hexasmal.csv`);
   const records = parseCsvRecords(bytes.toString("utf8"), url);
 
+  // A file with a header and no rows at all is a reshape like any other — an
+  // export that answered with its columns and nothing else — so it lands on
+  // this message rather than on a TypeError reading column names off a record
+  // that is not there.
   for (const column of ["code_commune_insee", "code_postal"]) {
-    if (records[0][column] === undefined) {
+    if (records[0]?.[column] === undefined) {
       fail(
-        `${config.iso}: ${url} has no "${column}" column — La Poste reshaped the export. ` +
-          `Columns seen: ${Object.keys(records[0]).join(", ")}`,
+        `${config.iso}: ${url} has no "${column}" column in ${records.length} row(s) — ` +
+          `La Poste reshaped the export. Columns seen: ${Object.keys(records[0] ?? {}).join(", ")}`,
       );
     }
   }
@@ -266,11 +271,19 @@ export async function ingestPostal(config, ingested) {
     .map((row) => ({ externalCode: row.externalCode, name: row.name }))
     .sort((a, b) => (a.externalCode < b.externalCode ? -1 : 1));
 
+  // The unmatched list is the one thing here made of values no gate ever
+  // cleared: these codes joined nothing, so they never reach the literal-safety
+  // loop below, and every one of them is rendered into the emitted migration's
+  // `--` header and into the run report. A control character in an upstream
+  // place name would end the comment it sits in and let the rest of the line
+  // parse as SQL, so each field goes through the shared helper on the way out.
+  // The matched rows do not: they are gated below, and sanitising a gated value
+  // would only make it look as though it needed it.
   const unmatched = [...unmatchedByCode.values()]
     .map((entry) => ({
-      municipalityCode: entry.municipalityCode,
-      placeName: entry.placeName,
-      postalCodes: [...entry.postalCodes].sort(),
+      municipalityCode: commentSafe(entry.municipalityCode),
+      placeName: commentSafe(entry.placeName),
+      postalCodes: [...entry.postalCodes].sort().map((code) => commentSafe(code)),
     }))
     .sort((a, b) => (a.municipalityCode < b.municipalityCode ? -1 : 1));
 

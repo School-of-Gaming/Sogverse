@@ -90,7 +90,11 @@ describe("locations GeoNames groundwork", () => {
     await admin.from("locations").delete().in("id", [...FIXTURE_IDS].reverse());
 
     // `depth` is deliberately not written by any of these inserts — the trigger
-    // computes it, and an emitted value would be decorative.
+    // computes it, and an emitted value would be decorative. Neither is
+    // `geonames_id`, and *that* absence is load-bearing rather than incidental:
+    // nine key-less rows landing under one country is the proof that the
+    // uniqueness on that column is partial. Giving a fixture a key would take
+    // the claim with it — see the geonames_id block below.
     const { error } = await admin.from("locations").insert([
       {
         id: ZZ.COUNTRY,
@@ -338,6 +342,12 @@ describe("locations GeoNames groundwork", () => {
   // geonames_id
   // -------------------------------------------------------------------------
 
+  // The permissive half — that the uniqueness is *partial*, so any number of
+  // rows may carry no key at all — is proved by this file's own fixtures: the
+  // nine rows in `beforeAll` are inserted with no `geonames_id`, under one
+  // country, and the insert throws if the database refuses any of them. A
+  // separate test counting NULLs across the whole table would restate that
+  // while asserting something weaker, so there is not one.
   describe("geonames_id", () => {
     it("refuses a second row claiming the same upstream key", async () => {
       // Negative on purpose: GeoNames ids are positive, so a negative key can
@@ -362,17 +372,6 @@ describe("locations GeoNames groundwork", () => {
         .eq("id", ZZ.MUNICIPALITY);
     });
 
-    it("lets every unsourced row carry no key at all", async () => {
-      // The uniqueness is partial for exactly this reason: sites and
-      // config-declared synthetic rows have no upstream record.
-      const { count, error } = await admin
-        .from("locations")
-        .select("id", { count: "exact", head: true })
-        .is("geonames_id", null);
-      if (error) throw error;
-
-      expect(count).toBeGreaterThan(1);
-    });
   });
 
   // -------------------------------------------------------------------------

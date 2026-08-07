@@ -41,11 +41,16 @@ import type { LocationType } from "@/types";
  * What a control will accept back from its own keyed read.
  *
  * `types` is a shape constraint — which levels of the hierarchy this field may
- * point at. `countryCode` is a *business* one, and it has exactly one caller:
- * an online municipality club is funded by a Finnish kunta and by nothing else,
- * so a French commune is a perfectly well-formed municipality row that this
- * field must still refuse. Omitting it accepts those levels in every country,
- * which is what the venue field wants.
+ * point at. `countryCode` is a *business* one, and both fields use it: the
+ * municipality field always, because an online municipality club is funded by a
+ * Finnish kunta and by nothing else; the venue field whenever the product type
+ * declares a `countryBound`, because an in-person municipality club runs at a
+ * Finnish venue for exactly the same reason. Neither constraint is about the
+ * row's shape — a French commune is a perfectly well-formed municipality and a
+ * French venue a perfectly good site; the funding rule refuses both — which is
+ * why this rides as an optional country beside the accepted levels rather than
+ * as a second function. Omitting it accepts those levels in every country,
+ * which is what an unbound product type's venue field wants.
  */
 export interface AcceptedLocation {
   /** The levels this control accepts. */
@@ -85,10 +90,13 @@ export function shouldDropStoredRow(
   // one, so it falls back to the absent case rather than to a verdict.
   if (row.id !== value) return false;
   if (!accepted.types.includes(row.type)) return true;
-  // A row at the right level in the wrong country. Only the online-muni field
-  // asks this, and it is the case the seeded browse path and the country-scoped
-  // search exist to stop anyone reaching in the first place — this catches what
-  // was already stored before either of them was there.
+  // A row at the right level in the wrong country. Both fields ask it whenever
+  // a bound applies — always for the municipality field, and for the venue
+  // field on a country-bound product type — and it is the case the seeded
+  // browse path and the country-scoped search exist to stop anyone reaching in
+  // the first place. This catches what the other two cannot: a row stored
+  // before either of them existed, and a row that was in the right country
+  // until the product's type changed under it.
   return (
     accepted.countryCode !== undefined &&
     row.country_code !== accepted.countryCode

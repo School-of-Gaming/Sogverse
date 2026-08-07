@@ -150,6 +150,20 @@ describe("POST /api/admin/locations/create", () => {
     expect(mockInsert).not.toHaveBeenCalled();
   });
 
+  // `parent_id` goes into a `uuid` column and is read back by id on the way to
+  // the country code, so a malformed one is a bad request rather than a missing
+  // row: without the schema's `.uuid()` it reaches Postgres as a cast error and
+  // is reported to the admin as a 500.
+  it("returns 400 for a parent_id that is not a uuid, before any read", async () => {
+    mockAdmin();
+
+    const res = await POST(createRequest({ ...validCreate, parent_id: "not-a-uuid" }));
+
+    expect(res.status).toBe(400);
+    expect(mockSelect).not.toHaveBeenCalled();
+    expect(mockInsert).not.toHaveBeenCalled();
+  });
+
   it("creates the location on the user-bound client", async () => {
     mockAdmin();
 
@@ -181,6 +195,37 @@ describe("POST /api/admin/locations/create", () => {
       ...validCreate,
       country_code: "FR",
     });
+  });
+
+  // PostgREST answers `.single()` with no row as PGRST116, which the route
+  // deliberately swallows rather than turning into a 404 it invented: the
+  // insert a moment later carries a foreign key on the same id, so the honest
+  // error is the database's own. The country code falls through as null,
+  // because there is no parent to take one from.
+  it("falls through with a null country code when the parent does not exist", async () => {
+    mockAdmin();
+    mockSelect.mockReturnValue(
+      parentLookup({ data: null, error: { code: "PGRST116", message: "no rows" } }),
+    );
+    mockInsert.mockReturnValue(
+      resolvesTo({
+        data: null,
+        error: {
+          code: "23503",
+          message: 'insert or update on table "locations" violates foreign key constraint',
+        },
+      }),
+    );
+
+    const res = await POST(createRequest(validCreate));
+
+    expect(mockInsert).toHaveBeenCalledWith({
+      ...validCreate,
+      country_code: null,
+    });
+    // The FK violation is what the caller sees, rather than a "no such parent"
+    // this route would have had to guess at.
+    expect(res.status).toBe(400);
   });
 
   it("reads no parent when there is none to read", async () => {

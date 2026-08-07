@@ -80,8 +80,13 @@ three, alongside `search_blob`.
   it creates between reads is the point of it. `gedu_locations.location_id` is
   `ON DELETE CASCADE`, so deleting a superseded place silently erases a gedu's coverage;
   nothing on a refresh path may delete. **Reads that *offer* a place filter retired rows
-  out** — browsing a level, the municipality directory, the search function (in its match
-  set, so the reported total drops them too). **Keyed reads deliberately do not**: a
+  out** — browsing a level, the municipality directory, the postal lookup (on its
+  `postal_codes` read, through the relation, so no application row selects the column),
+  the search function (in its match
+  set, so the reported total drops them too). What puts a read on this side is what it is
+  *for*, never which table it starts from: a postal code is a way of reaching a
+  municipality to pick, so it answers like every other way of reaching one.
+  **Keyed reads deliberately do not**: a
   stored pick must keep resolving, and the three-state guard's "absent vs invalid"
   distinction depends on a retired row answering as a *valid* pick rather than as a
   deleted one. The ancestor walk climbs **through** retired rows as well, because a chain
@@ -389,6 +394,15 @@ and that decision belongs to the surface. It is two reads, not an embed:
 they are*, which is the same call every other surface makes to turn a stored id
 into a name and a path. Embedding the chain off the postal table would be a
 second definition of that shape for the same answer.
+
+**The first read drops retired municipalities and the second does not, and that
+is the offer/keyed split rather than an inconsistency.** Typing a code is a way
+of reaching a place to pick, so it is an offering read and answers like every
+other one; by the time the keyed read runs, the ids are ones the first read
+already vouched for. The filter therefore rides on the `postal_codes` query, as
+an inner join over the relation — the database applies it and the only column
+that crosses the wire is the id the caller wanted, so `retired_at` stays
+unselected by anything in the app.
 
 No route and no RPC for the direct lookup: the table is anon-readable public
 reference data with a plain `USING (true)` policy and a `SELECT` grant to `anon`
@@ -707,8 +721,12 @@ duplicate spellings are therefore structurally impossible above site level.
 sites key, which is a grouping key with no query of its own sitting above the
 per-municipality venue lists, so every one of them refreshes without the mutation having
 to know which municipality the row landed in; it also invalidates the browse level it
-landed in. A rename invalidates the row's detail key, the lists that render it, and every
-cached search needle, since a rename changes what search matches.
+landed in, and every cached search needle. A rename invalidates the row's detail key and
+the lists that render it, and the search needles for the same reason. **Anything that
+changes what search matches invalidates the search key, and creating a row is one of
+those**: sites are in the index carrying their whole ancestor chain, and the needle most
+likely to be cached is the one an admin typed just before deciding the venue did not
+exist yet.
 
 ## Picking a place (UI)
 

@@ -81,7 +81,7 @@ import {
   wipe as cutoverWipe,
 } from "./lib/geonames/cutover.mjs";
 import { ingestCountry, nameResolutionCrossCheck } from "./lib/geonames/ingest.mjs";
-import { locationInsert, sqlBigint, sqlJsonb, sqlText } from "./lib/geonames/sql.mjs";
+import { locationInsert, sqlBigint, sqlEscaped, sqlJsonb, sqlText } from "./lib/geonames/sql.mjs";
 
 /**
  * The migration each country's seed lands in, per mode. Deliberately literals:
@@ -171,6 +171,14 @@ if (!migrationFile) {
 const config = countryConfig(iso);
 const ingested = await ingestCountry(config);
 const title = TITLES[iso] ?? iso;
+/**
+ * The same title, ready to sit inside a quoted SQL string — every assertion
+ * message below, and every one the cutover bracket emits, interpolates it into
+ * one. No title carries an apostrophe today; the point is that the day one does
+ * (an ISO code falling through, a country whose English name has one) it must
+ * not be the day a migration stops parsing.
+ */
+const sqlTitle = sqlEscaped(title);
 
 /** The dump's own publication date, which is what the header stamps. */
 const dumpDate = ingested.files.map((file) => file.dumpDate).sort().at(-1);
@@ -428,7 +436,7 @@ function assertions() {
 
   IF n_${level} <> ${rows.length} THEN
     RAISE EXCEPTION
-      '${title} GeoNames seed: expected ${rows.length} ${level} rows for ${iso}, found %. A shortfall means a level above did not land; a surplus means rows exist this seed does not explain.',
+      '${sqlTitle} GeoNames seed: expected ${rows.length} ${level} rows for ${iso}, found %. A shortfall means a level above did not land; a surplus means rows exist this seed does not explain.',
       n_${level};
   END IF;
 
@@ -441,7 +449,7 @@ function assertions() {
      AND (p.id IS NULL OR p.country_code <> ${sqlText(iso)} OR ${parentTest});
 
   IF orphans > 0 THEN
-    RAISE EXCEPTION '${title} GeoNames seed: % ${level} rows are not parented to a ${parents.join("/")} row in ${iso}', orphans;
+    RAISE EXCEPTION '${sqlTitle} GeoNames seed: % ${level} rows are not parented to a ${parents.join("/")} row in ${iso}', orphans;
   END IF;`;
     })
     .join("\n\n");
@@ -468,7 +476,7 @@ BEGIN
    WHERE country_code = ${sqlText(iso)} AND type = 'country';
 
   IF n_country <> 1 THEN
-    RAISE EXCEPTION '${title} GeoNames seed: expected exactly 1 ${iso} country row, found %', n_country;
+    RAISE EXCEPTION '${sqlTitle} GeoNames seed: expected exactly 1 ${iso} country row, found %', n_country;
   END IF;
 
 ${perLevel}
@@ -481,7 +489,7 @@ ${perLevel}
 
   IF n_keyless <> ${ingested.stats.synthetic} THEN
     RAISE EXCEPTION
-      '${title} GeoNames seed: % seeded ${iso} rows carry no geonames_id, expected ${ingested.stats.synthetic}',
+      '${sqlTitle} GeoNames seed: % seeded ${iso} rows carry no geonames_id, expected ${ingested.stats.synthetic}',
       n_keyless;
   END IF;
 
@@ -502,7 +510,7 @@ ${
 
   IF n_codeless > 0 THEN
     RAISE EXCEPTION
-      '${title} GeoNames seed: % ${iso} rows carry no external_code at a level that must have one',
+      '${sqlTitle} GeoNames seed: % ${iso} rows carry no external_code at a level that must have one',
       n_codeless;
   END IF;
 `
@@ -519,7 +527,7 @@ ${
     ) d;
 
   IF n_dupes > 0 THEN
-    RAISE EXCEPTION '${title} GeoNames seed: % (type, external_code) pairs are duplicated for ${iso}', n_dupes;
+    RAISE EXCEPTION '${sqlTitle} GeoNames seed: % (type, external_code) pairs are duplicated for ${iso}', n_dupes;
   END IF;
 END;
 $$;
@@ -541,7 +549,7 @@ for (const { level, rows } of ingested.levels) {
 const seedSection =
   mode === "cutover"
     ? [
-        cutoverAdopt(iso, ingested.country, title),
+        cutoverAdopt(iso, ingested.country, sqlTitle),
         "-- The rest of section 3 is byte for byte what this generator emits for a\n" +
           "-- brand-new country. That is the point of the cutover: one code path produces\n" +
           "-- every country's tree, so there is no such thing as a country whose rows were\n" +
@@ -556,11 +564,11 @@ const seedSection =
 const sql = [
   header(),
   "BEGIN;",
-  ...(mode === "cutover" ? [cutoverCapture(iso, config.levelOrder, title), cutoverWipe(iso, config.levelOrder, title)] : []),
+  ...(mode === "cutover" ? [cutoverCapture(iso, config.levelOrder, sqlTitle), cutoverWipe(iso, config.levelOrder, sqlTitle)] : []),
   ...seedSection,
   assertions(),
   ...(mode === "cutover"
-    ? [cutoverRepoint(iso, config.levelOrder, title), cutoverAssertions(iso, config.levelOrder, title)]
+    ? [cutoverRepoint(iso, config.levelOrder, sqlTitle), cutoverAssertions(iso, config.levelOrder, sqlTitle)]
     : []),
   "COMMIT;\n",
 ].join("\n");

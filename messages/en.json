@@ -1170,7 +1170,7 @@
     "privacy": "Privacy Policy",
     "terms": "Terms & Conditions",
     "antiBullying": "Anti-Bullying",
-    "attribution": "Location data from <geonames>GeoNames</geonames> (<cc>CC BY 4.0</cc>). French postal codes from <laposte>La Poste</laposte> (<lo>Licence Ouverte 2.0</lo>)."
+    "attribution": "Location data based on <geonames>GeoNames</geonames> (<cc>CC BY 4.0</cc>). French postal codes from <laposte>La Poste</laposte> (<lo>Licence Ouverte 2.0</lo>)."
   },
   "gamer": {
     "welcomeNamed": "Welcome, {name}!",
@@ -1781,7 +1781,9 @@
       "coverageDescription": "Tick anything you can cover. Each tick covers everything inside it, so ticking a region already covers every municipality in it.",
       "searchPlaceholder": "Search by name, code or postcode…",
       "searchingEverywhere": "Searching every country",
+      "searchingCountry": "Searching {country}",
       "allCountries": "All countries",
+      "allOfCountry": "All of {country}",
       "noResults": "Nothing matches “{query}”.",
       "keepTyping": "Type at least {count} characters to search.",
       "nothingHere": "Nothing here.",

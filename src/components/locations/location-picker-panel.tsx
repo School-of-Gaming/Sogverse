@@ -145,6 +145,20 @@ export interface LocationTreeScope {
   onOpenDepth: (depth: number) => void;
   /** How many characters search needs before it runs. */
   minQueryLength: number;
+  /**
+   * The display name of the country this picker is bound to, already resolved
+   * for the viewer's locale — present exactly when the container is filtering
+   * every row to one country.
+   *
+   * It is copy and nothing else: the filtering happens above, and the panel
+   * would behave identically without it. What it fixes is the panel saying two
+   * things that stop being true under a bound — that it is searching every
+   * country, and that the top of the breadcrumb is all of them. Both are read
+   * by someone deciding whether to keep looking, so a picker that says "all
+   * countries" and then offers one reads as a broken search rather than as a
+   * rule.
+   */
+  boundCountryName?: string;
   /** The current level. Ignored while a search is running. */
   browse: LocationPanelRows;
   /** The current query's hits. Ignored while the query is too short. */
@@ -212,7 +226,7 @@ function TreeScopeBody({ scope, query, onQueryChange }: TreeScopeBodyProps) {
   const c = useTranslations("common");
   const locale = useLocale();
 
-  const { path, selection, minQueryLength } = scope;
+  const { path, selection, minQueryLength, boundCountryName } = scope;
 
   const [selected, setSelected] = useState<LocationPick | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -327,7 +341,11 @@ function TreeScopeBody({ scope, query, onQueryChange }: TreeScopeBodyProps) {
           below it never moves. */}
       <div className="flex min-h-[20px] flex-wrap items-center gap-1 text-xs text-muted-foreground">
         {searching ? (
-          <span>{t("searchingEverywhere")}</span>
+          <span>
+            {boundCountryName
+              ? t("searchingCountry", { country: boundCountryName })
+              : t("searchingEverywhere")}
+          </span>
         ) : (
           <>
             <button
@@ -335,7 +353,9 @@ function TreeScopeBody({ scope, query, onQueryChange }: TreeScopeBodyProps) {
               onClick={() => scope.onOpenDepth(0)}
               className="rounded underline-offset-2 hover:text-foreground hover:underline"
             >
-              {t("allCountries")}
+              {boundCountryName
+                ? t("allOfCountry", { country: boundCountryName })
+                : t("allCountries")}
             </button>
             {path.map((node, depth) => (
               <span key={node.id} className="flex items-center gap-1">

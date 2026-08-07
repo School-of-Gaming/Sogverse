@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { SUPPORTED_COUNTRIES } from "@/lib/constants/location-hierarchies";
+// The ingestion config, imported from a test rather than from application code.
+// The generators are `.mjs` run by bare `node` and cannot resolve the `@/` path
+// alias, which is why they restate the level order instead of reading it — but
+// Vitest resolves both, so this is the one place the two declarations of one
+// fact can be checked against each other.
+import { COUNTRIES } from "../../../../scripts/lib/geonames/config.mjs";
 
 /**
  * Two assertions about the same field, deliberately kept apart.
@@ -39,10 +45,56 @@ describe("country hierarchy anchors", () => {
     // local-authority rung and re-declaring it there. This tripwire is what
     // made that a decision rather than an accident.
     const seeded = SUPPORTED_COUNTRIES.filter((country) => country.seeded);
-    expect(seeded.map((country) => country.code)).toEqual(["FI", "FR", "GB", "SE"]);
+    expect(seeded.map((country) => country.code).sort()).toEqual(["FI", "FR", "GB", "SE"]);
 
     for (const country of seeded) {
       expect(country.anchor, `${country.code} is seeded, so its anchor`).toBe("municipality");
     }
+  });
+});
+
+/**
+ * The same shape, declared twice, checked here and nowhere else.
+ *
+ * A country's levels live in two files: `SUPPORTED_COUNTRIES` says what each
+ * level is *called*, and `scripts/lib/geonames/config.mjs` says which row is
+ * whose parent when the seed is generated. The duplication is forced — the
+ * generators run under bare `node` and cannot resolve a TypeScript path alias —
+ * and nothing at generation time can catch a disagreement, because the
+ * generator has no way to read the other side. What a disagreement produces is
+ * a tree seeded at one shape and labelled at another: France's communes filed
+ * under a level the UI calls something else, with every gate passing.
+ *
+ * So it is checked from a test, which resolves both.
+ */
+describe("the ingestion config and the UI hierarchy config", () => {
+  it("declare the same levels for every country the generator can seed", () => {
+    for (const [code, entry] of Object.entries(COUNTRIES)) {
+      const country = SUPPORTED_COUNTRIES.find((candidate) => candidate.code === code);
+      expect(country, `${code} has an ingestion config but no hierarchy config`).toBeDefined();
+
+      // `site` is absent from the ingestion config by design: sites are created
+      // by admins and never seeded, so the generator has no business knowing
+      // the level exists. Everything above it must match, in order.
+      const seededLevels = country!.hierarchy
+        .map((level) => level.type)
+        .filter((type) => type !== "site");
+
+      expect(entry.levelOrder, `${code} levelOrder`).toEqual(seededLevels);
+    }
+  });
+
+  it("agree on which countries are seeded at all", () => {
+    // `seeded` is a declared flag rather than a query, and this is what keeps
+    // it honest: a country gets rows by having an ingestion config entry, so
+    // the two sets are the same set. A flag flipped without an entry means a
+    // seed that cannot be generated; an entry without the flag means the anchor
+    // tripwire above stops covering a country whose rows are live.
+    const configured = Object.keys(COUNTRIES).sort();
+    const declared = SUPPORTED_COUNTRIES.filter((country) => country.seeded)
+      .map((country) => country.code)
+      .sort();
+
+    expect(configured).toEqual(declared);
   });
 });

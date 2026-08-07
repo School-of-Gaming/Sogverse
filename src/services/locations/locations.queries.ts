@@ -11,8 +11,9 @@ import { LocationsService } from "./locations.service";
 import {
   LOCATION_SEARCH_LIMIT,
   LOCATION_SEARCH_MIN_QUERY,
+  type CreateLocationBody,
 } from "./locations.contracts";
-import type { Location, LocationInsert, LocationType } from "@/types";
+import type { Location, LocationType } from "@/types";
 
 /**
  * A cache key has to be a value, and the key-set lookups below take a *set*:
@@ -176,11 +177,17 @@ export function useCreateLocation() {
   const service = new LocationsService(supabase);
 
   return useMutation({
-    mutationFn: (location: LocationInsert) => service.createLocation(location),
+    mutationFn: (location: CreateLocationBody) => service.createLocation(location),
     onSuccess: () => {
       // The only thing this route creates is a site, and a new site changes
       // the per-municipality venue list it landed in — plus the browse level it
       // was created under, which is now one row longer.
+      //
+      // And every cached search needle, for the same reason a rename does:
+      // sites are in the search index carrying their whole ancestor chain, so
+      // an admin who names a venue and then types its name must find it. A
+      // cached "no results" for that very needle is the likely one to be
+      // holding, because looking before creating is how the flow goes.
       //
       // RETURNED, not fired-and-forgotten: React Query awaits a promise
       // returned from onSuccess before resolving mutateAsync, so the venue
@@ -189,6 +196,7 @@ export function useCreateLocation() {
       return Promise.all([
         queryClient.invalidateQueries({ queryKey: locationKeys.sites() }),
         queryClient.invalidateQueries({ queryKey: locationKeys.children() }),
+        queryClient.invalidateQueries({ queryKey: locationKeys.search() }),
       ]);
     },
   });

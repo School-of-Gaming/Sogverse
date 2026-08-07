@@ -1,6 +1,5 @@
 import type {
   Location,
-  LocationInsert,
   LocationType,
   AppSupabaseClient,
 } from "@/types";
@@ -16,6 +15,7 @@ import {
   POSTAL_CODE_COLUMNS,
   locationRow,
   locationSearchResult,
+  type CreateLocationBody,
 } from "./locations.contracts";
 import type { z } from "zod";
 
@@ -106,8 +106,9 @@ const CHAIN_COLUMNS = "id, name, name_i18n, type, parent_id, country_code, exter
 // column:
 //
 //   * **Reads that OFFER a place** — browsing a level, one country's
-//     municipalities for the directory — filter retired rows out. Nobody should
-//     be able to newly pick a place that no longer exists.
+//     municipalities for the directory, the municipalities a postal code
+//     reaches — filter retired rows out. Nobody should be able to newly pick a
+//     place that no longer exists, whichever way they reached for it.
 //   * **Keyed reads deliberately do not.** A stored pick must keep resolving:
 //     the three-state guard in front of every picker distinguishes "the read
 //     has not landed" from "this id resolves to nothing", and a retired row is
@@ -414,6 +415,16 @@ export class LocationsService {
    * inventing a case/space rule for a country that does not exist yet would be
    * a rule nobody could check.
    *
+   * **A retired municipality is not offered.** Typing a code is a way of
+   * *reaching* a place to pick, so this sits on the offering side of the split
+   * `retired_at` exists to create, exactly as browsing a level and the
+   * municipality directory do — a code that still routes mail to a merged-away
+   * kunta must not put it back in front of someone choosing where they live.
+   * The filter rides on the first read, through an inner join over the
+   * relation, so it is applied by the database and no application row ever
+   * selects the column. The keyed read that follows stays unfiltered, as every
+   * keyed read does: by then the ids are ones this method already vouched for.
+   *
    * No route in front of it and no RPC behind it. The table is anon-readable
    * public reference data with a plain `USING (true)` policy, so the caller's
    * own client asks it directly, exactly as browsing the tree does.
@@ -429,7 +440,8 @@ export class LocationsService {
       .from("postal_codes")
       .select(POSTAL_CODE_COLUMNS)
       .eq("country_code", countryCode)
-      .eq("postal_code", code);
+      .eq("postal_code", code)
+      .is("locations.retired_at", null);
 
     if (error) throw error;
     if (data.length === 0) return [];
@@ -443,7 +455,13 @@ export class LocationsService {
   // writes on the caller's own server-side client, so the route's answer and
   // the database's have to agree. The injected `supabase` client is unused by
   // these methods, kept for symmetry with the read methods.
-  async createLocation(location: LocationInsert): Promise<Location> {
+  //
+  // The argument is the *contract's* shape, not the table's Insert type: the
+  // route derives `country_code` from the parent and zod strips everything
+  // else, so a caller typed against the table could hand over fields the write
+  // is guaranteed to throw away. Naming the body schema makes those
+  // unrepresentable instead of merely futile.
+  async createLocation(location: CreateLocationBody): Promise<Location> {
     const response = await fetch("/api/admin/locations/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

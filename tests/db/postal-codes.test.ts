@@ -250,18 +250,41 @@ describe("postal codes", () => {
       expect(count).toBe(0);
     });
 
-    it("points every postal row at a municipality of its own country", async () => {
-      // The join is (country_code, type, external_code); a row landing on a
-      // region, a site or another country's commune means the join was written
-      // wrong and would answer a parent with the wrong place.
-      const { data, error } = await anon
+    it("points every postal row at a municipality, and a sample of them at one in the row's own country", async () => {
+      // The join is (country_code, type, external_code), and it can go wrong in
+      // two ways: land on a region or a site, or land on another country's
+      // commune. Only the first is a claim the database can settle over the
+      // whole table — `neq` on the embedded type asks for any row that broke it
+      // and gets none.
+      const { data: wrongLevel, error } = await anon
         .from("postal_codes")
         .select("country_code, postal_code, locations!inner(type, country_code)")
         .neq("locations.type", "municipality")
         .limit(5);
       if (error) throw error;
 
-      expect(data).toEqual([]);
+      expect(wrongLevel).toEqual([]);
+
+      // The second compares two columns, which PostgREST has no filter for. So
+      // it is a bounded sample per seeded country, compared here — deliberately
+      // a sample: sweeping France's ~39,000 rows to re-prove what the seed's
+      // own country-scoped join already guarantees would cost more than the
+      // claim is worth.
+      for (const country of ["FI", "FR"]) {
+        const { data: sample, error: sampleError } = await anon
+          .from("postal_codes")
+          .select("country_code, locations!inner(country_code)")
+          .eq("country_code", country)
+          .order("postal_code")
+          .limit(200);
+        if (sampleError) throw sampleError;
+
+        expect(sample.length, `${country} sample`).toBeGreaterThan(0);
+        const foreign = sample.filter(
+          (row) => row.locations.country_code !== row.country_code,
+        );
+        expect(foreign, `${country} rows pointing outside ${country}`).toEqual([]);
+      }
     });
 
     it("seeded France's communes and their codes together", async () => {

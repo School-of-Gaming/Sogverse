@@ -21,9 +21,16 @@
  *   makes "the level above this one" a question with an answer. Stated here
  *   rather than read from the UI hierarchy config in
  *   `src/lib/constants/location-hierarchies.ts`, which stays the authority on
- *   what each level is *called*: that file is TypeScript behind a path alias
- *   and cannot be imported from a `.mjs` script. The two must agree, and the
- *   gates will not tell you if they do not — check it when writing an entry.
+ *   what each level is *called*: that file is TypeScript behind a path alias,
+ *   so a `.mjs` script run by bare `node` cannot import it and this list has to
+ *   restate the shape.
+ *
+ *   The two must agree, and nothing at generation time can check that — but a
+ *   *unit test* can, because Vitest resolves both this module and the alias:
+ *   `tests/unit/lib/locations/hierarchy-anchor.test.ts` asserts every entry's
+ *   `levelOrder` against its country's declared hierarchy minus `site`, and
+ *   asserts the entries here are exactly the countries marked `seeded`. Adding
+ *   a country means both files, and that test is what says so.
  *
  * - **`levels`** — per *file*, which feature code is which level of our
  *   hierarchy and which admin-code column carries that level's key. Per-file
@@ -141,6 +148,12 @@
  *   abolished. Expected to be tiny, every entry a recorded human decision, and
  *   the durable fix is correcting GeoNames so the entry can be dropped.
  *
+ *   Checked in the same direction the allowances are: an entry that claims no
+ *   record fails the run. Upstream healed — it dropped the row or re-filed it
+ *   under a feature code the selectors no longer claim — and the entry has to
+ *   be deleted deliberately rather than left sitting here reading like a live
+ *   decision about data that has moved on.
+ *
  * - **`expected`** — per level, the count **from the national statistical
  *   agency, never derived from the files being read**, plus two named
  *   allowances for the places where upstream and the national list disagree.
@@ -224,7 +237,15 @@ export const SEEDED_LEVELS = ["region", "district", "municipality"];
 /* ------------------------------------------------------------------ entries */
 
 /**
- * @type {Record<string, object>}
+ * @type {Record<string, { levelOrder: string[] } & Record<string, unknown>>}
+ *
+ * The annotation names `levelOrder` and leaves the rest open, because that is
+ * the one field read from outside this module: a unit test checks it against
+ * the UI hierarchy config, which is the only thing that can catch the two
+ * declarations of a country's shape disagreeing. Every other field is validated
+ * by `countryConfig` below, with a message saying what to do about it — a type
+ * describing them would be a second statement of the same rules, kept in step
+ * by hand.
  *
  * Sweden is the pilot. Its shape is the clean case and worth reading as the
  * template: one file, two levels, no pins, no exclusions.

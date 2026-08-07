@@ -60,7 +60,11 @@
  *     recorded as `(type, official code)` rather than as row ids. Ids are what
  *     the cutover throws away; the code is what survives a change of source,
  *     because GeoNames' admin-code columns supply the same official codes the
- *     national classifications did.
+ *     national classifications did. It also asks the two questions that are
+ *     only answerable while the tree is intact: is there exactly one country
+ *     row to adopt and park on, and is every captured product a shape the park
+ *     is legal for. Both raise rather than warn — they are faults in the data
+ *     the cutover is about to move, not losses it can name and carry on from.
  *  2. **Detach, park & wipe** — sites lose their `parent_id` (they stay; they
  *     are the only rows in this tree a human created), products are parked on
  *     the country row, then the seeded level rows go bottom-up, because
@@ -92,11 +96,14 @@
  * be empty in production and is accepted on staging, whose location data is
  * fake and explicitly disposable.
  *
- * One sharp edge, stated rather than hidden: re-pointing a product runs the
- * products location trigger, so a product whose captured row is a type the
- * trigger forbids for that product's own shape (a relic from before the
- * trigger existed) fails the migration with the trigger's own message. That is
- * the correct outcome — such a product needs a human, and the failure names it.
+ * One sharp edge, stated rather than hidden: every product write here runs the
+ * products location trigger, and a relic product whose own shape contradicts
+ * where it points would fail on it. The trigger's message names the rule and
+ * not the row, and by the park in section 2 the tree is already half gone — so
+ * section 1 asks the question first, while everything is still intact, and
+ * raises its own exception naming each offending product. What is left for the
+ * trigger to catch is a shape section 1 could not have known about, which is
+ * the outcome that genuinely wants a human.
  */
 import { sqlBigint, sqlJsonb, sqlText } from "./sql.mjs";
 
@@ -114,7 +121,7 @@ function levelTypes(levelOrder) {
  * and capturing either would double-count the restored-reference assertions in
  * section 5).
  */
-export function capture(iso, levelOrder, title) {
+export function capture(iso, levelOrder, sqlTitle) {
   const country = sqlText(iso);
   return `-- ---------------------------------------------------------------------------
 -- 1. CAPTURE — what is about to be wiped, and everything pointing into it
@@ -149,6 +156,30 @@ CREATE TEMP TABLE cutover_country ON COMMIT DROP AS
     FROM public.locations c
    WHERE c.country_code = ${country} AND c.type = 'country';
 
+-- Exactly one country row, or none — asserted here, before anything is
+-- touched. Three things downstream assume it and none of them says so when it
+-- is false: the product park in section 2 is a scalar subquery over this
+-- table, adoption in section 3 updates every row it joins, and the arithmetic
+-- in section 5 sums \`pre_products\` across it. A second ${iso} country row is a
+-- data fault a human has to resolve before a cutover means anything, and the
+-- ids are named so they can be looked at.
+DO $$
+DECLARE
+  v_count integer;
+  v_ids   text;
+BEGIN
+  SELECT count(*), string_agg(id::text, ', ' ORDER BY id)
+    INTO v_count, v_ids
+    FROM cutover_country;
+
+  IF v_count > 1 THEN
+    RAISE EXCEPTION
+      '${sqlTitle} cutover: % rows claim to be the ${iso} country row (%). Adoption, the product park and the assertions in section 5 each assume exactly one — resolve the duplicates by hand first.',
+      v_count, v_ids;
+  END IF;
+END;
+$$;
+
 -- Each site's parent, as (type, official code).
 CREATE TEMP TABLE cutover_sites ON COMMIT DROP AS
   SELECT s.id           AS site_id,
@@ -163,12 +194,16 @@ CREATE TEMP TABLE cutover_sites ON COMMIT DROP AS
 -- survive adoption and are deliberately absent here — capturing one would
 -- re-insert a pair that still exists and violate the join table's primary key.
 --
--- DISTINCT because two scoped rows can share a (type, code) key only when both
--- carry NULL — code-less rows a hand edit left behind. Two claims that collapse
--- to one key would re-insert as one row and violate the primary key; deduping
--- here keeps the captured count equal to the count section 5 asserts against.
+-- One row per tick, NOT DISTINCT. Two scoped rows can share a (type, code) key
+-- only when both carry NULL — code-less rows a hand edit left behind — and a
+-- gedu who ticked both has lost two claims, not one. Deduping here would report
+-- one and let the other disappear unnamed. The de-duplication that is actually
+-- needed lives on the re-insert in section 4, where it stops two keys that
+-- resolve to one row from violating the join table's primary key; the loss
+-- arithmetic in section 5 counts ticks, and both sides of it count them the
+-- same way.
 CREATE TEMP TABLE cutover_gedu ON COMMIT DROP AS
-  SELECT DISTINCT gl.gedu_id, s.type, s.external_code
+  SELECT gl.gedu_id, s.type, s.external_code
     FROM public.gedu_locations gl
     JOIN cutover_scope s ON s.id = gl.location_id;
 
@@ -185,10 +220,39 @@ CREATE TEMP TABLE cutover_home ON COMMIT DROP AS
 -- that carry one — so unlike sites there is no detach: section 2 parks these
 -- on the country row while the trees are exchanged, and section 4 puts them
 -- back by the same code join as everything else.
+-- \`is_remote\` and \`product_type\` ride along because the park is only legal
+-- for the shapes the products trigger lets sit above site level; the check
+-- below is what turns the illegal case into a named failure here instead of an
+-- opaque one three statements later.
 CREATE TEMP TABLE cutover_products ON COMMIT DROP AS
-  SELECT p.id AS product_id, s.type, s.external_code
+  SELECT p.id AS product_id, p.is_remote, p.product_type, s.type, s.external_code
     FROM public.products p
     JOIN cutover_scope s ON s.id = p.location_id;
+
+-- A product whose own shape forbids the park. Everything in cutover_products
+-- points at a level row rather than a site — that is what being in scope means
+-- — so an in-person product in here already contradicts the trigger, which
+-- requires \`location_id\` to be a site whenever \`is_remote\` is false. It is a
+-- relic from before the trigger existed, and section 2's park would abort on it
+-- with the trigger's own message and no clue as to which row caused it.
+-- Refused by name, first, while the tree is still intact.
+DO $$
+DECLARE
+  v_names text;
+  v_count integer;
+BEGIN
+  SELECT count(*), string_agg(format('%s (%s, now under %s %s)', product_id, product_type, type, coalesce(external_code, '-')), ', ' ORDER BY product_id)
+    INTO v_count, v_names
+    FROM cutover_products
+   WHERE NOT is_remote;
+
+  IF v_count > 0 THEN
+    RAISE EXCEPTION
+      '${sqlTitle} cutover: % in-person product(s) are anchored above site level and so cannot be parked on the ${iso} country row while the tree is exchanged: %. Give each one a site, or make it remote, before running this migration.',
+      v_count, v_names;
+  END IF;
+END;
+$$;
 
 -- A code-less row below country level can never be re-pointed, so anything
 -- referencing one is lost before the wipe even runs. Named here rather than
@@ -206,7 +270,7 @@ BEGIN
 
   IF v_count > 0 THEN
     RAISE WARNING
-      '${title} cutover: % scoped row(s) carry no official code, so nothing pointing at them can be re-pointed: %',
+      '${sqlTitle} cutover: % scoped row(s) carry no official code, so nothing pointing at them can be re-pointed: %',
       v_count, v_names;
   END IF;
 END;
@@ -222,7 +286,7 @@ $$;
  * its municipalities are still there. The detach and the park come first for
  * the same reason, one foreign key each.
  */
-export function wipe(iso, levelOrder, title) {
+export function wipe(iso, levelOrder, sqlTitle) {
   const country = sqlText(iso);
   const deletes = [...levelOrder]
     .reverse()
@@ -269,7 +333,7 @@ BEGIN
 
   IF v_left > 0 THEN
     RAISE EXCEPTION
-      '${title} cutover: % seeded ${iso} row(s) survived the wipe — the reseed below would land on top of them',
+      '${sqlTitle} cutover: % seeded ${iso} row(s) survived the wipe — the reseed below would land on top of them',
       v_left;
   END IF;
 END;
@@ -285,7 +349,7 @@ $$;
  * keys this UPDATE satisfies, so it no-ops after an adoption and creates the
  * row from scratch on a database that never had one.)
  */
-export function adopt(iso, countryRow, title) {
+export function adopt(iso, countryRow, sqlTitle) {
   const country = sqlText(iso);
   return `-- ---------------------------------------------------------------------------
 -- 3. ADOPT & RESEED
@@ -315,7 +379,7 @@ BEGIN
         WHERE country_code = ${country} AND type = 'country'
           AND geonames_id = ${sqlBigint(countryRow.geonameid)}
      ) THEN
-    RAISE EXCEPTION '${title} cutover: the ${iso} country row did not take its GeoNames identity';
+    RAISE EXCEPTION '${sqlTitle} cutover: the ${iso} country row did not take its GeoNames identity';
   END IF;
 END;
 $$;
@@ -326,7 +390,7 @@ $$;
  * Section 4 — re-parent the sites, re-insert the claims, move the products off
  * the country row, name what did not map.
  */
-export function repoint(iso, levelOrder, title) {
+export function repoint(iso, levelOrder, sqlTitle) {
   const country = sqlText(iso);
   /** The one join, written once. `n` is the new row, `c` the captured reference. */
   const match = (codeColumn) =>
@@ -369,8 +433,12 @@ UPDATE public.locations s
  WHERE s.id = t.site_id
    AND t.new_parent_id IS NULL;
 
+-- DISTINCT here and nowhere else: two captured ticks can resolve to one new
+-- row, and re-inserting that pair twice would violate the join table's primary
+-- key. The capture stays one row per tick, so the loss report and section 5's
+-- arithmetic both count what the gedu actually lost.
 INSERT INTO public.gedu_locations (gedu_id, location_id)
-SELECT c.gedu_id, n.id
+SELECT DISTINCT c.gedu_id, n.id
   FROM cutover_gedu c
   JOIN public.locations n
 ${match("external_code")};
@@ -409,7 +477,7 @@ BEGIN
 
   IF v_count > 0 THEN
     RAISE WARNING
-      '${title} cutover: % site(s) had no counterpart for their old parent and are parked under the ${iso} country row: %',
+      '${sqlTitle} cutover: % site(s) had no counterpart for their old parent and are parked under the ${iso} country row: %',
       v_count, v_names;
   END IF;
 
@@ -425,7 +493,7 @@ BEGIN
 
   IF v_count > 0 THEN
     RAISE WARNING
-      '${title} cutover: % gedu coverage tick(s) had no counterpart and are gone: %',
+      '${sqlTitle} cutover: % gedu coverage tick(s) had no counterpart and are gone: %',
       v_count, v_names;
   END IF;
 
@@ -441,7 +509,7 @@ BEGIN
 
   IF v_count > 0 THEN
     RAISE WARNING
-      '${title} cutover: % family location pick(s) had no counterpart and are now empty: %',
+      '${sqlTitle} cutover: % family location pick(s) had no counterpart and are now empty: %',
       v_count, v_names;
   END IF;
 
@@ -457,7 +525,7 @@ BEGIN
 
   IF v_count > 0 THEN
     RAISE WARNING
-      '${title} cutover: % product(s) had no counterpart and are parked on the ${iso} country row — re-point them by hand: %',
+      '${sqlTitle} cutover: % product(s) had no counterpart and are parked on the ${iso} country row — re-point them by hand: %',
       v_count, v_names;
   END IF;
 END;
@@ -471,7 +539,7 @@ $$;
  * The seed gates say the new tree landed whole. These say nothing was lost on
  * the way across, and that every loss there was is one the report named.
  */
-export function assertions(iso, levelOrder, title) {
+export function assertions(iso, levelOrder, sqlTitle) {
   const country = sqlText(iso);
   const types = levelTypes(levelOrder);
   return `-- ---------------------------------------------------------------------------
@@ -498,13 +566,19 @@ BEGIN
 
   IF v_targets <> v_sites THEN
     RAISE EXCEPTION
-      '${title} cutover: % captured site(s) resolved to % target row(s) — the (type, external_code) join is not unique',
+      '${sqlTitle} cutover: % captured site(s) resolved to % target row(s) — the (type, external_code) join is not unique',
       v_sites, v_targets;
   END IF;
 
   -- Gedu coverage: restored = captured - warned, counted over the level rows
   -- only — claims on the country row survived adoption uncaptured, so they are
   -- outside both sides of this equation.
+  --
+  -- Captured counts ticks and restored counts rows, and the two agree because
+  -- the only way two ticks collapse into one row is two scoped rows sharing a
+  -- (type, code) key — which they can do only when both codes are NULL, and a
+  -- NULL code resolves to nothing in a reseeded tree whose every level row
+  -- carries one. Both such ticks are therefore counted as lost, by both sides.
   SELECT count(*) INTO v_captured FROM cutover_gedu;
   SELECT count(*) INTO v_lost
     FROM cutover_gedu c
@@ -520,7 +594,7 @@ BEGIN
 
   IF v_restored <> v_captured - v_lost THEN
     RAISE EXCEPTION
-      '${title} cutover: captured % gedu coverage tick(s), warned about %, but % came back',
+      '${sqlTitle} cutover: captured % gedu coverage tick(s), warned about %, but % came back',
       v_captured, v_lost, v_restored;
   END IF;
 
@@ -540,7 +614,7 @@ BEGIN
 
   IF v_restored <> v_captured - v_lost THEN
     RAISE EXCEPTION
-      '${title} cutover: captured % family location pick(s), warned about %, but % came back',
+      '${sqlTitle} cutover: captured % family location pick(s), warned about %, but % came back',
       v_captured, v_lost, v_restored;
   END IF;
 
@@ -561,7 +635,7 @@ BEGIN
 
   IF v_restored <> v_captured - v_lost THEN
     RAISE EXCEPTION
-      '${title} cutover: captured % product(s), warned about %, but % came back',
+      '${sqlTitle} cutover: captured % product(s), warned about %, but % came back',
       v_captured, v_lost, v_restored;
   END IF;
 
@@ -574,7 +648,7 @@ BEGIN
 
   IF v_restored <> v_expected THEN
     RAISE EXCEPTION
-      '${title} cutover: % product(s) sit on the ${iso} country row, expected % (pre-existing plus the warned set)',
+      '${sqlTitle} cutover: % product(s) sit on the ${iso} country row, expected % (pre-existing plus the warned set)',
       v_restored, v_expected;
   END IF;
 
@@ -585,7 +659,7 @@ BEGIN
 
   IF v_restored > 0 THEN
     RAISE EXCEPTION
-      '${title} cutover: % ${iso} site(s) have no parent and would surface beside the countries',
+      '${sqlTitle} cutover: % ${iso} site(s) have no parent and would surface beside the countries',
       v_restored;
   END IF;
 
@@ -603,7 +677,7 @@ BEGIN
 
   IF v_restored <> v_expected THEN
     RAISE EXCEPTION
-      '${title} cutover: % ${iso} site(s) sit directly under the country row, expected % (pre-existing plus the warned set)',
+      '${sqlTitle} cutover: % ${iso} site(s) sit directly under the country row, expected % (pre-existing plus the warned set)',
       v_restored, v_expected;
   END IF;
 END;

@@ -1215,7 +1215,7 @@
     "privacy": "Privacy Policy (So’wI’)",
     "terms": "Terms of the Pact",
     "antiBullying": "Code of Honor",
-    "attribution": "Sep De’ nobwI’: <geonames>GeoNames</geonames> (<cc>CC BY 4.0</cc>). vIraS QIn mI’mey: <laposte>La Poste</laposte> (<lo>Licence Ouverte 2.0</lo>)."
+    "attribution": "Sep De’maj chenmoHmeH <geonames>GeoNames</geonames> wIlo’ (<cc>CC BY 4.0</cc>). vIraS QIn mI’mey: <laposte>La Poste</laposte> (<lo>Licence Ouverte 2.0</lo>)."
   },
   "gamer": {
     "welcomeNamed": "nuqneH, {name}!",
@@ -1738,7 +1738,9 @@
       "coverageDescription": "DaSo’laHbogh Hoch yIwIv. wa’ wIv qoDDaq Hoch So’lu’, vaj Sep DawIvDI’ vengmeyDaj Hoch DaSo’.",
       "searchPlaceholder": "pong, mI’, ghap QIn mI’ yInej…",
       "searchingEverywhere": "Hoch Sepmey wInej",
+      "searchingCountry": "{country} neH wInej",
       "allCountries": "Hoch Sepmey",
+      "allOfCountry": "{country} Hoch",
       "noResults": "pagh! ”{query}” rurbogh Daq tu’lu’be’.",
       "keepTyping": "{count} ghItlhmey yIghItlh ’ej nejwI’ vIchu’.",
       "nothingHere": "naDev pagh tu’lu’.",

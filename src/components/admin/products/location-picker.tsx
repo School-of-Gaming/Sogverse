@@ -11,6 +11,7 @@ import {
 import { useSiteDetails } from "@/services/products";
 import {
   LocationPickerDialog,
+  useBoundCountryName,
   useCountryInitialPath,
 } from "@/components/locations/location-browser";
 import { withoutCountry } from "@/lib/locations/ancestor-chain";
@@ -251,6 +252,9 @@ function MunicipalityPickerDialog({
 }) {
   const t = useTranslations("admin.products.locationPicker");
   const initialPath = useCountryInitialPath(MUNI_COUNTRY_CODE);
+  // Off the same row the breadcrumb opens on, so the panel's copy and its
+  // breadcrumb can never name different countries.
+  const boundCountryName = useBoundCountryName(initialPath);
 
   return (
     <LocationPickerDialog
@@ -261,6 +265,7 @@ function MunicipalityPickerDialog({
       pickableTypes={MUNI_ACCEPTS.types}
       countryCode={MUNI_COUNTRY_CODE}
       initialPath={initialPath}
+      boundCountryName={boundCountryName}
       onConfirm={({ location }) => {
         // Nothing is fetched, resolved or created: the panel browses `locations`
         // rows, so the confirmed pick already *is* the row. The confirm button
