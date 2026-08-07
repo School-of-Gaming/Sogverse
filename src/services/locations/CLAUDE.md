@@ -106,13 +106,23 @@ locations.
 
 Every supported country is seeded complete, from **GeoNames**, by data-only migrations:
 
-| | Finland | France | Sweden |
-|---|---|---|---|
-| Levels | region, municipality | region, district, municipality | region, municipality |
-| Rows | 19 maakuntaa + 308 kuntaa | 18 régions + 101 départements + ~34,900 communes | 21 län + 290 kommuner |
+| | Finland | France | Sweden | United Kingdom |
+|---|---|---|---|---|
+| Levels | region, municipality | region, district, municipality | region, municipality | region, municipality |
+| Rows | 19 maakuntaa + 308 kuntaa | 18 régions + 101 départements + ~34,900 communes | 21 län + 290 kommuner | 4 nations + 217 local authorities |
 
-Plus one `country` row each. **Almost every seeded row carries its official code**, which
-GeoNames' admin-code columns supply — see below for the two kinds that do not.
+Plus one `country` row each. **Whether a seeded row carries an official code is a fact
+about its country, not a universal one** — see below for the kinds that do not.
+
+The UK is the country whose shape is worth reading before adding another, because it
+breaks two things the first three share. Its local-authority level is assembled from
+**two** of GeoNames' rungs — every ADM2 row outside Greater London, plus the 33 ADM3
+London boroughs inside it, since upstream files London one rung deeper than the rest of
+the country. Greater London's own row is deliberately not seeded (the boroughs are the
+authorities a family deals with), so every UK authority sits at the same depth under its
+nation whichever rung upstream put it on. And no UK row below the country carries an
+`external_code` at all, because GeoNames' GB admin codes are its own invention. Both are
+config, not code.
 
 **Rule: GeoNames is the single source *and* the single authority for every country's
 geography, with no country special-cased.** There is no dual regime where some countries
@@ -132,9 +142,11 @@ Consequences worth holding onto:
   already there, and the UI that pointed at it was looking at that very row. Nothing
   above `site` is ever inserted by the application.
 - **A seed is idempotent and asserted.** Inserts are `NOT EXISTS`-guarded on
-  `geonames_id` and the migration ends by asserting the exact row count, zero orphans,
-  zero rows without an upstream key and zero code-less rows, so a half-applied seed fails
-  loudly rather than shipping.
+  `geonames_id` and the migration ends by asserting the exact row count, zero orphans and
+  zero rows without an upstream key, so a half-applied seed fails loudly rather than
+  shipping. It also asserts zero code-less rows **at the levels its config maps a code
+  for** — a country that maps none emits no such check, because the claim would be
+  vacuous there and an unconditional one would have to be either wrong or deleted.
 - **35k reference rows are trivial for Postgres.** What is not trivial is fetching them,
   which is why the read layer below exists.
 
@@ -152,6 +164,24 @@ change what this column means.
 Two kinds of row carry NULL, which is why the column is nullable and its uniqueness
 partial: `site` rows, which exist in no national classification, and a level whose config
 declares no official code because upstream does not carry one for that country.
+
+**The United Kingdom is the named case of the second kind, and it is a whole country
+rather than one level.** GeoNames' GB admin codes (`A3`, `B9`, `GLA`, `Z5`…) are its own
+invention and correspond to no ONS or GSS code, so the config maps none and every UK row
+below the country carries NULL. What that costs is stated rather than hidden:
+**official-data joins are forfeited for the UK** — postal data included, which is why its
+postal ingestion will have to key on the postal file's own admin columns through
+`geonames_id` instead of on this column. What it does not cost is identity or
+reconciliation: `geonames_id` is what ingestion, sync and every dedupe run on, and every
+UK row has one. The alternative — storing GeoNames' invented codes here — would put a
+value in the column that satisfies its shape and breaks its contract, which is worse than
+NULL because nothing downstream could tell.
+
+**Rule: a claim about `external_code` is scoped by country and level, never made of the
+table.** "Every seeded row carries its official code" was true when three countries were
+seeded and is false now; the claim that generalizes is *uniformity* — a level either maps
+a code for its country or it does not, so a level with some coded rows and some code-less
+ones is a seed that went wrong. That is the shape the DB tests assert in.
 
 It is the key seeds, reconciliations and the FI/FR cutover's re-point dedupe on, because
 names are not one: France has homonymous communes, and each DROM has a région and a
@@ -181,9 +211,10 @@ One generator serves every country: `scripts/generate-geonames-seed.mjs <CC>`, o
 ingestion module in `scripts/lib/geonames/`. **Adding a country is a config entry plus a
 run** — there is deliberately no country-specific executable code anywhere, and every
 shape the dumps come in (a country that is several ISO files, a file whose columns shift,
-a level upstream models nowhere) is absorbed by a field in `scripts/lib/geonames/config.mjs`
-rather than by a branch in code. That module's header documents each field and the
-verified failure it answers; read it before writing an entry.
+a level upstream models nowhere, a level of ours assembled from two of theirs, a country
+with no official codes at all) is absorbed by a field in
+`scripts/lib/geonames/config.mjs` rather than by a branch in code. That module's header
+documents each field and the verified failure it answers; read it before writing an entry.
 
 Two things about an entry are irreducible human judgment and are checked empirically
 rather than trusted: the **expected row count per level**, which must come from the
@@ -211,12 +242,39 @@ we operate in changes. Stale names cost nothing until they do. The procedure is 
 for every country — Finland and France included, since the cutover; there is no annual
 national-classification diff any more:
 
-1. Run the differ for the country. It reads today's dumps and the live table (read-only)
-   and emits a human-readable report plus a reconciliation migration.
+1. Run `scripts/diff-geonames.mjs <CC>`. It reads today's dumps and the live table
+   (read-only — the only statement it sends is a SELECT) and emits a human-readable
+   report plus a reconciliation migration.
 2. Read the report. Anything ambiguous — a merge's coverage implications, a retirement
    something references, a rename that looks like vandalism — is a human decision made
    here, not by the tool.
-3. Push the migration through the normal workflow.
+3. **Renumber the migration and move it into `supabase/migrations/`.** The differ writes
+   it to `supabase/reconciliations/` under a name with no version number at all, because
+   it cannot know the next free one: an already-used version is silently treated as
+   applied, so the number is picked against *remote* migration history at the moment of
+   pushing rather than guessed at the moment of emitting.
+4. Push it through the normal workflow.
+
+Three things about the differ that are decisions rather than implementation:
+
+- **It is gated exactly like the seed generator, and a gate failure stops the run.** The
+  upstream side comes from the same ingestion with the same `expected` counts, so
+  upstream drift big enough to break a count halts sync instead of flowing into a
+  migration. That is the human-judgment moment the design names: re-source the count,
+  extend the named allowances, or extend `exclude` — in the config, deliberately.
+- **A row that changed parent upstream is reported, never moved.** Re-parenting a
+  non-leaf leaves its descendants' `depth` stale (the trigger is a row trigger), and an
+  administrative re-levelling wants a human writing the migration.
+- **A retired row that reappears upstream is reported, and un-retired only on request**
+  (`--unretire`). A reappearance is more often upstream flapping than a place coming
+  back, and putting a row back into every picker is a visible change to what people can
+  choose. Seeing it costs nothing; taking it costs one flag.
+
+**A country whose tree predates GeoNames cannot be diffed — it must be cut over first,**
+and the differ refuses rather than trying. Its rows carry no `geonames_id`, so every
+upstream row reads as new and every live row as retired at once; the "migration" that
+would fall out is a country wiped and rebuilt under new ids with no capture bracket,
+which is precisely the hazard the cutover exists to handle carefully.
 
 **Rule: nothing on a refresh path may DELETE a location row.** The only states a
 reconciliation can produce are inserted, renamed, code-corrected and **retired**
@@ -738,13 +796,25 @@ below a given row: it says what a country's levels are *called*, while the table
 its divisions *are*.
 
 Localized labels apply **only** to the country whose language matches the user's UI locale
-(a Finnish admin sees "Maakunta"/"Kunta" for Finland but plain English "Borough" for the
-UK). `resolveLabels(level, locale)` picks the localized pair or falls back to the English
-default; country names localize via `nameI18n`.
+(a Finnish admin sees "Maakunta"/"Kunta" for Finland but plain English "Local
+Authority" for the UK). `resolveLabels(level, locale)` picks the localized pair or falls
+back to the English default; country names localize via `nameI18n`.
 
 **Rule: Adding a country whose language is a supported UI locale requires `i18n` entries
 on each hierarchy level plus a `nameI18n` entry.** A country whose language isn't a
-supported UI locale needs none — English is the default.
+supported UI locale needs none — English is the default. **Nor does an
+English-speaking country**: `en` is the default label language, so a UK entry with `i18n`
+would be the same words written twice.
+
+**A country's level labels are the words that country uses, not the words that make its
+shape look like another country's.** The UK's speculative entry read Nation → City →
+Borough until it was seeded, which is how the UK looks from outside and not how it is
+governed: there is no administrative city level, and "borough" is one of several words
+for the same rung (Scotland has council areas, Wales principal areas, Northern Ireland
+districts, England a mixture of counties, unitaries and metropolitan boroughs). "Local
+Authority" is the term that covers all four nations and the one a parent reads on a
+council letter. The anchor tripwire is what forced the question — the entry anchored at
+`district`, and every seeded country must anchor at `municipality`.
 
 Adding a country end to end is now two things: hierarchy config, and an ingestion config
 entry whose generated seed migration supplies its rows. It appears in the picker, in search and in coverage the moment its rows exist —

@@ -31,6 +31,7 @@
  *   but not the data we meant.
  */
 import { fail, readAlternateNames, readCountryDump, readCountryInfo } from "./cache.mjs";
+import { allowanceLabel } from "./config.mjs";
 import { parseAlternateNames, parseCountryDump, parseCountryInfo } from "./dump.mjs";
 import { supportedLocales } from "./locales.mjs";
 import { resolveAlternate, resolveCanonicalName, resolveNameI18n } from "./names.mjs";
@@ -49,6 +50,34 @@ function assertLiteralSafe(what, value) {
       fail(`${what} contains a control character: ${JSON.stringify(value)}`);
     }
   }
+}
+
+/**
+ * Every `[level, selector]` pair a file declares, flattened.
+ *
+ * A level is normally one selector. It is several when our one level is
+ * assembled from two of GeoNames' — the UK's local authorities are its `ADM2`
+ * rows outside Greater London plus its `ADM3` rows inside it — and flattening
+ * here is what keeps the ingestion loop from knowing that.
+ */
+function* fileSelectors(fileLevels) {
+  for (const [level, selectors] of Object.entries(fileLevels)) {
+    for (const selector of selectors) yield [level, selector];
+  }
+}
+
+/**
+ * Whether a record passes a selector's `where` predicates — every one of them,
+ * or the selector does not claim the row. An empty predicate list claims
+ * everything with the right feature code, which is the ordinary case.
+ */
+function matchesWhere(record, predicates) {
+  for (const predicate of predicates) {
+    const value = record[predicate.field];
+    if (predicate.equals !== undefined && value !== predicate.equals) return false;
+    if (predicate.notEquals !== undefined && value === predicate.notEquals) return false;
+  }
+  return true;
 }
 
 /** Every language the run needs alternates for, deduped. */
@@ -136,22 +165,28 @@ export async function ingestCountry(config) {
 
   /* ------------------------------------------------------------- level rows */
 
-  // Keyed `<file>\u0000<level>\u0000<key>` — the address a child row's admin
-  // column resolves to. The separator is a control character precisely because
-  // no code or file name can contain one (the literal-safety gate below is what
-  // guarantees that of the codes).
+  // Keyed `<file>\u0000<level>\u0000<codeField>\u0000<key>` — the address a
+  // child row's admin column resolves to. The separator is a control character
+  // precisely because no code or file name can contain one (the literal-safety
+  // gate below is what guarantees that of the codes).
+  //
+  // `codeField` is part of the address because a level can be assembled from two
+  // selectors reading two different admin columns, whose key spaces are unrelated
+  // and may collide — the UK's ADM2 authority codes and its ADM3 London-borough
+  // codes are both two characters drawn from the same alphabet.
   const byFileKey = new Map();
   const rowsByLevel = new Map(config.levelOrder.map((level) => [level, []]));
   let excluded = 0;
 
   for (const [file, fileLevels] of Object.entries(config.levels)) {
     const dump = dumps.get(file);
-    for (const [level, mapping] of Object.entries(fileLevels)) {
+    for (const [level, mapping] of fileSelectors(fileLevels)) {
       for (const record of dump) {
         // Exact feature-code equality. The H variants carry the same admin
         // codes as the live rows that replaced them; a prefix match would
         // ingest a merged-away place on top of its successor.
         if (record.featureCode !== mapping.fcode) continue;
+        if (!matchesWhere(record, mapping.where)) continue;
         if (config.exclude.has(record.geonameid)) {
           excluded += 1;
           continue;
@@ -181,7 +216,7 @@ export async function ingestCountry(config) {
           record,
         };
         rowsByLevel.get(level).push(row);
-        byFileKey.set(`${file}\u0000${level}\u0000${key}`, row);
+        byFileKey.set(`${file}\u0000${level}\u0000${mapping.codeField}\u0000${key}`, row);
       }
     }
   }
@@ -258,13 +293,21 @@ export async function ingestCountry(config) {
         continue;
       }
 
-      const parentMapping = config.levels[row.file][parentLevel];
-      const parentKey = row.record[parentMapping.codeField];
-      const parent = byFileKey.get(`${row.file}\u0000${parentLevel}\u0000${parentKey}`);
+      // The parent level may itself be several selectors reading different
+      // admin columns; each is tried in turn and the first that names a row
+      // this run produced wins.
+      let parent;
+      const tried = [];
+      for (const parentMapping of config.levels[row.file][parentLevel]) {
+        const parentKey = row.record[parentMapping.codeField];
+        tried.push(`${parentMapping.codeField}="${parentKey}"`);
+        parent = byFileKey.get(`${row.file}\u0000${parentLevel}\u0000${parentMapping.codeField}\u0000${parentKey}`);
+        if (parent) break;
+      }
       if (!parent) {
         fail(
           `${config.iso}: ${row.type} ${row.geonameid} (${row.name}) names ${parentLevel} ` +
-            `${parentMapping.codeField}="${parentKey}" in ${row.file}, which is not a row this run produced`,
+            `${tried.join(" / ")} in ${row.file}, which is not a row this run produced`,
         );
       }
       row.parent = parent;
@@ -377,20 +420,30 @@ export async function ingestCountry(config) {
     const rows = rowsByLevel.get(level);
     const { count, allowMissing, allowExtra } = config.expected[level];
 
-    const present = new Set(rows.map((row) => row.externalCode).filter((code) => code !== null));
-    for (const code of allowMissing) {
-      if (present.has(code)) {
+    // An allowance is addressed by whatever key its level has: the official
+    // code where the config maps one, and otherwise the row's geonameid (for
+    // something upstream carries) or its resolved name (for something upstream
+    // does not, which has no geonameid to point at).
+    const present = {
+      code: new Set(rows.map((row) => row.externalCode).filter((code) => code !== null)),
+      geonameid: new Set(rows.map((row) => row.geonameid).filter((id) => id !== null)),
+      name: new Set(rows.map((row) => row.name)),
+    };
+    const carried = (entry) => present[entry.by].has(entry.value);
+
+    for (const entry of allowMissing) {
+      if (carried(entry)) {
         problems.push(
-          `${level}: "${code}" is on allowMissing but GeoNames now carries it — upstream healed, ` +
-            `so shrink allowMissing in the config`,
+          `${level}: ${allowanceLabel(entry)} is on allowMissing but GeoNames now carries it — ` +
+            `upstream healed, so shrink allowMissing in the config`,
         );
       }
     }
-    for (const code of allowExtra) {
-      if (!present.has(code)) {
+    for (const entry of allowExtra) {
+      if (!carried(entry)) {
         problems.push(
-          `${level}: "${code}" is on allowExtra but GeoNames no longer carries it — upstream ` +
-            `healed, so shrink allowExtra (and probably allowMissing) in the config`,
+          `${level}: ${allowanceLabel(entry)} is on allowExtra but GeoNames no longer carries it — ` +
+            `upstream healed, so shrink allowExtra (and probably allowMissing) in the config`,
         );
       }
     }

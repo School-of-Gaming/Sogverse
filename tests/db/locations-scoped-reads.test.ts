@@ -146,6 +146,174 @@ describe("locations scoped reads", () => {
     });
   });
 
+  /**
+   * The United Kingdom is the country that breaks two assumptions the other
+   * three share, and both breaks are decisions rather than gaps.
+   *
+   * Its local-authority level is assembled from *two* of GeoNames' rungs —
+   * every ADM2 row outside Greater London, plus the 33 ADM3 London boroughs
+   * inside it — because upstream files London one level deeper than the rest of
+   * the country. Greater London's own row is deliberately not seeded, so every
+   * UK authority sits at the same depth under its nation whichever rung
+   * upstream put it on. And no UK row below the country carries an
+   * `external_code` at all, because GeoNames' GB admin codes are its own
+   * invention rather than ONS/GSS codes.
+   */
+  describe("the United Kingdom tree", () => {
+    it("browses to exactly the four nations", async () => {
+      const [uk] = (await service.getChildren(null)).rows.filter(
+        (row) => row.country_code === "GB",
+      );
+      const page = await service.getChildren(uk.id);
+
+      expect(page.total).toBe(4);
+      expect(page.rows.map((row) => row.name)).toEqual([
+        "England",
+        "Northern Ireland",
+        "Scotland",
+        "Wales",
+      ]);
+      expect(page.rows.every((row) => row.type === "region")).toBe(true);
+    });
+
+    it("seeded every upper-tier authority the config's count names", async () => {
+      // 218 authorities in the national classification, minus the two councils
+      // that replaced Cumbria and that GeoNames does not carry, plus Cumbria
+      // itself, which it still does. Both halves are named in
+      // `scripts/lib/geonames/config.mjs`; this number is
+      // `count - allowMissing + allowExtra` from that entry and moves with it.
+      const { count, error } = await admin
+        .from("locations")
+        .select("id", { count: "exact", head: true })
+        .eq("country_code", "GB")
+        .eq("type", "municipality");
+      if (error) throw error;
+      expect(count).toBe(217);
+    });
+
+    it("hangs a London borough off England, beside the authorities outside London", async () => {
+      // The whole point of the two-selector level: Camden arrives as an ADM3
+      // row and Kent as an ADM2 one, and they must be indistinguishable
+      // afterwards — same type, same parent level, same distance from the root.
+      const { data, error } = await admin
+        .from("locations")
+        .select("name, type, depth, parent:parent_id(name, type)")
+        .eq("country_code", "GB")
+        .eq("type", "municipality")
+        .in("name", ["Camden", "City of London", "Kent"])
+        .order("name");
+      if (error) throw error;
+
+      expect(data.map((row) => row.name)).toEqual(["Camden", "City of London", "Kent"]);
+      for (const row of data) {
+        expect(row.parent).toMatchObject({ name: "England", type: "region" });
+        expect(row.depth).toBe(2);
+      }
+    });
+
+    it("does not seed Greater London, whose boroughs are the authorities", async () => {
+      const { count, error } = await admin
+        .from("locations")
+        .select("id", { count: "exact", head: true })
+        .eq("country_code", "GB")
+        .eq("name", "Greater London");
+      if (error) throw error;
+      expect(count).toBe(0);
+    });
+
+    // The named allowance, both halves, exactly as France's is asserted. This
+    // is the one discrepancy between GeoNames and the national picture, and it
+    // is named rather than absorbed: Cumbria was abolished in April 2023 and is
+    // still live upstream, and neither of the two councils that replaced it
+    // exists there. Cumbria is deliberately NOT excluded — excluding it would
+    // leave the county with no authority at all, which is a hole rather than a
+    // stale name.
+    it("carries Cumbria, and neither of the councils that replaced it", async () => {
+      const { data, error } = await admin
+        .from("locations")
+        .select("name")
+        .eq("country_code", "GB")
+        .eq("type", "municipality")
+        .in("name", ["Cumbria", "Cumberland", "Westmorland and Furness"]);
+      if (error) throw error;
+
+      expect(data.map((row) => row.name)).toEqual(["Cumbria"]);
+    });
+  });
+
+  /**
+   * `external_code` is a per-country fact, not a universal one — which is the
+   * shape this has to be asserted in now that a seeded country carries none.
+   *
+   * The claim that generalizes is *uniformity*: a level either maps an official
+   * code for its country or it does not, so a level with some coded rows and
+   * some code-less ones is a seed that went wrong. `geonames_id` is the key
+   * that really is universal, and it is asserted as such.
+   */
+  describe("official codes across the seeded countries", () => {
+    const CODED: Record<string, Database["public"]["Enums"]["location_type"][]> = {
+      FI: ["region", "municipality"],
+      FR: ["region", "district", "municipality"],
+      SE: ["region", "municipality"],
+      // GeoNames' GB admin codes (A3, B9, GLA, Z5…) are its own invention and
+      // match no ONS or GSS code, so the config maps none and the column stays
+      // NULL. What is forfeited — joins against official UK data — is named in
+      // the config; what is not affected is identity.
+      GB: [],
+    };
+
+    async function countCodeless(
+      country: string,
+      type: Database["public"]["Enums"]["location_type"],
+      codeless: boolean,
+    ) {
+      const query = admin
+        .from("locations")
+        .select("id", { count: "exact", head: true })
+        .eq("country_code", country)
+        .eq("type", type);
+      const { count, error } = codeless
+        ? await query.is("external_code", null)
+        : await query.not("external_code", "is", null);
+      if (error) throw error;
+      return count ?? 0;
+    }
+
+    it("gives every row of a coded level a code, and every row of a code-less level none", async () => {
+      const offenders: string[] = [];
+      for (const [country, codedTypes] of Object.entries(CODED)) {
+        for (const type of ["region", "district", "municipality"] as const) {
+          const wantsCode = codedTypes.includes(type);
+          const wrong = await countCodeless(country, type, wantsCode);
+          if (wrong > 0) {
+            offenders.push(
+              `${country} ${type}: ${wrong} row(s) ${wantsCode ? "carry no" : "unexpectedly carry an"} external_code`,
+            );
+          }
+        }
+      }
+      expect(offenders).toEqual([]);
+    });
+
+    it("gives every seeded row an upstream key, code or no code", async () => {
+      // The two France synthetic rows are the only seeded rows anywhere with no
+      // `geonames_id`, and they are config-declared: Mayotte's région and
+      // département exist in no GeoNames file as administrative rows.
+      const { data, error } = await admin
+        .from("locations")
+        .select("name, country_code, type")
+        .in("country_code", Object.keys(CODED))
+        .in("type", ["country", "region", "district", "municipality"])
+        .is("geonames_id", null);
+      if (error) throw error;
+
+      expect(data.map((row) => `${row.country_code} ${row.type} ${row.name}`).sort()).toEqual([
+        "FR district Mayotte",
+        "FR region Mayotte",
+      ]);
+    });
+  });
+
   describe("getMunicipalitiesByCountry", () => {
     // One walk each, shared by every assertion below: the France walk is 35
     // sequential pages with a three-level embed and an exact count per page —

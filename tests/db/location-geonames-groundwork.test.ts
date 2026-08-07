@@ -292,6 +292,12 @@ describe("locations GeoNames groundwork", () => {
       expect(await wrongDepth({ type: "district" }, 2)).toBe(0);
       expect(await wrongDepth({ type: "municipality", country: "FI" }, 2)).toBe(0);
       expect(await wrongDepth({ type: "municipality", country: "FR" }, 3)).toBe(0);
+      expect(await wrongDepth({ type: "municipality", country: "SE" }, 2)).toBe(0);
+      // The UK is the one whose uniform depth is a decision rather than a
+      // consequence: GeoNames files London's boroughs a rung deeper than every
+      // other authority in the country, and the config lifts them so a borough
+      // and a shire county sit at the same distance from the root.
+      expect(await wrongDepth({ type: "municipality", country: "GB" }, 2)).toBe(0);
     });
 
     it("keeps every site exactly one level below its parent", async () => {

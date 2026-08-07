@@ -112,12 +112,21 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
   {
     code: "GB",
     name: "United Kingdom",
-    anchor: "district",
-    seeded: false,
+    anchor: "municipality",
+    seeded: true,
+    // Nation → local authority. The speculative entry here used to read
+    // Nation → City → Borough, which is how the UK looks from outside and not
+    // how it is governed: "borough" is one of several words for the same rung
+    // (Scotland has council areas, Wales principal areas, Northern Ireland
+    // districts, England a mixture of counties, unitaries and metropolitan
+    // boroughs), and there is no administrative city level above them. "Local
+    // authority" is the term that covers all four nations and the one a UK
+    // parent reads on a council letter. No `i18n` entries: English is the
+    // default label language, so a country whose own language is English has
+    // nothing to add.
     hierarchy: [
       { type: "region", label: "Nation", pluralLabel: "Nations" },
-      { type: "municipality", label: "City", pluralLabel: "Cities" },
-      { type: "district", label: "Borough", pluralLabel: "Boroughs" },
+      { type: "municipality", label: "Local Authority", pluralLabel: "Local Authorities" },
       { type: "site", label: "Site", pluralLabel: "Sites" },
     ],
   },

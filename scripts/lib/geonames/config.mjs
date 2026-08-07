@@ -42,6 +42,37 @@
  *   `codeField` column, and a level with nothing above it in its file goes under
  *   the country row.
  *
+ * - **A level may be a *list* of selectors, each with a `where` filter**, for
+ *   the countries whose one level of our hierarchy is assembled from two
+ *   different feature codes. The United Kingdom is the verified case: its
+ *   local-authority level is every `ADM2` row *except* Greater London, plus the
+ *   33 `ADM3` rows *inside* Greater London — because GeoNames models London's
+ *   boroughs a rung lower than every other authority in the country, and
+ *   Greater London itself is a body we deliberately do not seed (the boroughs
+ *   are the authorities a parent deals with). Written as:
+ *
+ *   ```js
+ *   municipality: [
+ *     { fcode: "ADM2", where: { admin2: { not: "GLA" } } },
+ *     { fcode: "ADM3", where: { admin2: "GLA" } },
+ *   ]
+ *   ```
+ *
+ *   A `where` is a map of admin-code column to either a literal value or
+ *   `{ not: value }`, and every entry must hold for the row to be selected. It
+ *   filters only on the admin-code columns, because those are the columns that
+ *   say where in the country's own administrative structure a row sits — the
+ *   only thing a level definition has any business branching on. **Selectors
+ *   within a level must not overlap**: two of them matching one record would
+ *   produce that row twice, which the geonameid dedupe gate refuses by name.
+ *
+ *   Each selector carries its own `codeField`, `officialCode` and `parent`, and
+ *   parentage resolves per selector — so London's boroughs, whose `admin1` says
+ *   `ENG` exactly as every other English authority's does, land under England
+ *   beside them with no pin and no special case. That uniform depth is the
+ *   point: every UK local authority is one step below its nation, whichever
+ *   feature code upstream files it under.
+ *
  * - **`officialCode`** — what lands in `external_code`, which keeps its
  *   existing contract (the row's code in its country's official statistical
  *   classification, unique per country+type) and never holds a geonameid. By
@@ -56,6 +87,18 @@
  *   région as a single `ADM1` whose `admin1` is the territory's ISO letters
  *   ("GP"), where the COG says "01". `officialCode: null` says the level has no
  *   official code at all, and its rows carry NULL.
+ *
+ *   **A country may map no official code anywhere below its country row**, and
+ *   the United Kingdom is the verified case: GeoNames' GB admin codes (`A3`,
+ *   `B9`, `GLA`, `Z5`…) are its own invention and correspond to no ONS or GSS
+ *   code, so claiming them as `external_code` would put a made-up value in a
+ *   column whose whole contract is "the official code". What that costs is
+ *   named rather than hidden — joins against official UK data are forfeited,
+ *   and the postal generator will need a different key there — and what it
+ *   costs nothing is identity: `geonames_id` is what ingestion, sync and the
+ *   dedupe gates run on, and every GB row has one. The gates follow the config:
+ *   the code-less check covers only the levels a code is mapped for, and a
+ *   country with none emits no such check at all.
  *
  *   The `codeField` stays the level's *key* in every case — it is what a child
  *   row's own admin column names to find its parent — so overriding the
@@ -105,8 +148,8 @@
  *   forgotten `isoFiles` member into a failed run instead of a hole, and what
  *   surfaces an abolished-but-still-live row as a surplus.
  *
- *   `allowMissing` names official codes GeoNames does not carry; `allowExtra`
- *   names codes GeoNames carries that the national classification does not.
+ *   `allowMissing` names rows GeoNames does not carry; `allowExtra` names rows
+ *   GeoNames carries that the national classification does not.
  *   Both are needed because upstream lag comes in two shapes, and France has
  *   both at once: four communes GeoNames has simply never heard of, and four it
  *   files under the pre-merger chef-lieu's code — *present, under the wrong
@@ -115,9 +158,23 @@
  *   down. The target is therefore `count - allowMissing + allowExtra`.
  *
  *   Both lists are checked in both directions: the gate fails on an
- *   `allowMissing` code that *shows up* and on an `allowExtra` code that has
+ *   `allowMissing` entry that *shows up* and on an `allowExtra` entry that has
  *   *gone*, because upstream healing is good news that still gets taken
  *   deliberately, by shrinking the list here.
+ *
+ *   **An allowance entry is addressed by whatever key its level actually has.**
+ *   A bare string is an official code, which is what every level that maps one
+ *   uses. A level whose `officialCode` is `null` has no codes to name rows by,
+ *   so its entries are objects instead: `{ geonameid }` for a row upstream
+ *   carries (the strongest key there is — it survives a rename), and `{ name }`
+ *   for a row upstream does not carry at all, which by definition has no
+ *   geonameid to point at. The United Kingdom needs both at once: GeoNames
+ *   still files Cumbria, abolished in 2023, as a live authority
+ *   (`{ geonameid }` on `allowExtra`) and carries neither of the two councils
+ *   that replaced it (`{ name }` twice on `allowMissing`). The validator
+ *   refuses a code entry on a code-less level and an object entry on a coded
+ *   one, because an allowance that can never match is an allowance that silently
+ *   stops gating.
  *
  * - **`postal`** — where postal codes come from and, per file, which admin
  *   column of the postal dump carries the municipality code (it moves: Finland's
@@ -391,34 +448,197 @@ export const COUNTRIES = {
     // `code_commune_insee`. Declared here, consumed by the postal generator.
     postal: { source: "laposte" },
   },
+
+  GB: {
+    isoFiles: ["GB"],
+    // Nation → local authority. The nations are what a UK parent reads as the
+    // top division, and the local authority is the body that runs schools and
+    // funds provision — the level everything below a site hangs off.
+    levelOrder: ["region", "municipality"],
+    // Verified 2026-08-07 against the live dump. English is the canonical
+    // language either way here, so this is purely a quality judgment, and it
+    // lands the same way France's did: the dump name is the honest one.
+    //
+    // The `en` alternates would rename 35 of the 217 authorities. 29 of those
+    // are genuine cleanups — "City and Borough of Birmingham" → "Birmingham",
+    // "Borough of Bolton" → "Bolton", "Metropolitan Borough of Wirral" →
+    // "Wirral" — and they are the reason this was checked rather than assumed.
+    // Three are the wrong direction ("Newport" → "City of Newport", "Bridgend
+    // county borough" → "County Borough of Bridgend", "Eilean Siar" → the
+    // anglicized "Western Isles"), and one is a different place entirely:
+    // "Cheshire West and Chester" → "Cheshire", which is the ceremonial county
+    // containing both that authority and Cheshire East.
+    //
+    // What settles it is that the cleanup is not available *consistently*: 31
+    // rows carry no `en` alternate at all, so 12 verbose names survive it
+    // anyway ("Borough of Bury", "Glasgow City", "Caerphilly County Borough",
+    // "Armagh City Banbridge and Craigavon"). Switching would buy a
+    // half-cleaned list at the price of one row naming the wrong place. Every
+    // dump name is at least the authority's own formal name, and each verbose
+    // one is correctable *in GeoNames*. The generator prints both readings so
+    // this stays re-checkable in seconds.
+    nameResolution: "dump",
+    // Verified 2026-08-07 and deliberately empty. The payload below country
+    // level is 17 rows for `fi`, 6 for `sv` and 22 for `fr`, out of 221 — and
+    // most of it is the four nations (Englanti/Skotlanti, Angleterre/Ecosse),
+    // which are real but are only four rows, plus a handful of island groups
+    // (Shetlandsaaret, Orcades, Sorlingues). What is left is literal
+    // translations nobody says — `fi` renders West Lothian as "Länsi-Lothian"
+    // and Highland as "Ylämaa" — and one `sv` entry that is only a hyphenation
+    // ("Richmond-upon-Thames"). Turning a locale on for four correct nations
+    // and two dozen ambiguous authorities is not the trade `alternateLocales`
+    // is for; the country row itself takes every locale regardless, which is
+    // where the names anyone would recognize actually live.
+    alternateLocales: [],
+    levels: {
+      GB: {
+        // The four nations. GeoNames' admin1 values are ENG/WLS/SCT/NIR, which
+        // are its own convention — see the officialCode note below.
+        region: { fcode: "ADM1", codeField: "admin1", officialCode: null },
+        // The local-authority level, assembled from two of GeoNames' rungs
+        // because upstream files London one level deeper than the rest of the
+        // country. Everything outside Greater London is ADM2 — Scotland's 32
+        // council areas, Wales's 22 principal areas, Northern Ireland's 11
+        // districts, and England's metropolitan boroughs, unitary authorities
+        // and shire counties. Inside it, the 33 London boroughs (the City of
+        // London included) are ADM3 rows whose admin2 is "GLA".
+        //
+        // Greater London's own ADM2 row is deliberately NOT ingested: the
+        // boroughs are the authorities a family deals with, and seeding the
+        // GLA beside them would put a body that runs no schools at the same
+        // level as the ones that do. The boroughs carry admin1 = "ENG" like
+        // every other English authority, so they parent to England directly
+        // and the whole country is exactly two levels deep.
+        municipality: [
+          { fcode: "ADM2", codeField: "admin2", officialCode: null, where: { admin2: { not: "GLA" } } },
+          { fcode: "ADM3", codeField: "admin3", officialCode: null, where: { admin2: "GLA" } },
+        ],
+      },
+    },
+    countryRow: { geonameid: 2635167, nameLanguage: "en" },
+    pins: [],
+    // Cumbria is abolished and still live upstream, which is exactly what
+    // `exclude` is for elsewhere — and it is deliberately not excluded here.
+    // Finland's two entries are safe to drop because the municipalities that
+    // absorbed them exist upstream, so the place keeps a row. GeoNames carries
+    // neither of Cumbria's two successors, so excluding it would leave the
+    // whole county with no local authority at all — a hole a gedu's "England"
+    // tick would silently not cover. A stale name over a hole; named on
+    // `allowExtra` below so the count stays honest either way.
+    exclude: [],
+    expected: {
+      // ONS: the four countries of the UK.
+      region: 4,
+      municipality: {
+        // 218 upper-tier authorities: England 153 (ONS Census 2021 area-type
+        // definitions — 63 unitary authorities, 36 metropolitan districts, 33
+        // London boroughs including the City of London, 21 counties),
+        // Scotland's 32 council areas, Wales's 22 principal areas and Northern
+        // Ireland's 11 districts. Current as of 2026-08-07: no English
+        // reorganisation has vested since April 2023, and the next ones are
+        // Surrey in April 2027 and the rest in April 2028 (House of Commons
+        // Library CBP-10494), each of which will move this number.
+        count: 218,
+        // The single discrepancy, both halves of it. Cumbria County Council was
+        // abolished on 1 April 2023 and replaced by Cumberland Council and
+        // Westmorland and Furness Council; GeoNames carries neither successor
+        // and still files Cumbria as a live ADM2 (last touched 2026-04-01).
+        // The level maps no official code, so the rows are named by the key
+        // they do have: a geonameid for what upstream carries, a name for what
+        // it does not.
+        allowMissing: [{ name: "Cumberland" }, { name: "Westmorland and Furness" }],
+        allowExtra: [{ geonameid: 2651712 }], // Cumbria, abolished 2023-04-01
+      },
+    },
+    // Declared for completeness; the postal generator will need a different
+    // join for this country. Postal rows land against municipalities by
+    // (country_code, type, external_code), and the UK's are NULL — so GB's
+    // postal ingestion has to key on the postal file's own admin columns
+    // through geonames_id instead. Named here rather than discovered later.
+    postal: { source: "geonames" },
+  },
 };
 
 /* --------------------------------------------------------------- validation */
+
+/**
+ * One allowance entry, normalized to `{ by, value }` — the key it is addressed
+ * by and the value to match. A bare string is an official code; an object names
+ * the one key a code-less level has.
+ */
+function normalizeAllowance(entry, where) {
+  if (typeof entry === "string") {
+    if (entry === "") fail(`${where}: an official code entry is empty`);
+    return { by: "code", value: entry };
+  }
+  if (entry && typeof entry === "object") {
+    if (typeof entry.geonameid === "number" && entry.name === undefined) {
+      return { by: "geonameid", value: entry.geonameid };
+    }
+    if (typeof entry.name === "string" && entry.geonameid === undefined) {
+      if (entry.name === "") fail(`${where}: a name entry is empty`);
+      return { by: "name", value: entry.name };
+    }
+  }
+  fail(
+    `${where}: an allowance entry must be an official code string, ` +
+      `{ geonameid: <id> } for a row upstream carries, or { name: "<name>" } for one it does not`,
+  );
+}
+
+/** How an allowance entry reads in an error message. */
+export function allowanceLabel(entry) {
+  return entry.by === "code" ? `"${entry.value}"` : `${entry.by} ${JSON.stringify(entry.value)}`;
+}
 
 /** Normalize `expected` to the `{ count, allowMissing, allowExtra }` shape. */
 function normalizeExpected(value, where) {
   if (typeof value === "number") return { count: value, allowMissing: [], allowExtra: [] };
   if (value && typeof value === "object" && typeof value.count === "number") {
-    const normalized = {
-      count: value.count,
-      allowMissing: value.allowMissing ?? [],
-      allowExtra: value.allowExtra ?? [],
-    };
+    const normalized = { count: value.count, allowMissing: [], allowExtra: [] };
     for (const list of ["allowMissing", "allowExtra"]) {
-      if (!Array.isArray(normalized[list]) || normalized[list].some((code) => typeof code !== "string")) {
-        fail(`${where}: ${list} must be an array of official codes`);
-      }
+      const raw = value[list] ?? [];
+      if (!Array.isArray(raw)) fail(`${where}: ${list} must be an array`);
+      normalized[list] = raw.map((entry, i) => normalizeAllowance(entry, `${where}: ${list}[${i}]`));
     }
-    // A code on both lists says upstream both lacks it and carries it. That is
-    // never a fact about the data; it is a fact about someone editing one list
-    // and forgetting the other.
-    const both = normalized.allowMissing.filter((code) => normalized.allowExtra.includes(code));
+    // An entry on both lists says upstream both lacks a row and carries it.
+    // That is never a fact about the data; it is a fact about someone editing
+    // one list and forgetting the other.
+    const extras = new Set(normalized.allowExtra.map((entry) => `${entry.by} ${entry.value}`));
+    const both = normalized.allowMissing.filter((entry) => extras.has(`${entry.by} ${entry.value}`));
     if (both.length > 0) {
-      fail(`${where}: ${both.join(", ")} appear on both allowMissing and allowExtra`);
+      fail(`${where}: ${both.map(allowanceLabel).join(", ")} appear on both allowMissing and allowExtra`);
     }
     return normalized;
   }
   fail(`${where}: expected must be a count or { count, allowMissing, allowExtra }`);
+}
+
+/**
+ * One `where` filter, normalized to a list of predicates over the admin-code
+ * columns. Only those columns, because they are what says where in the
+ * country's own administrative structure a row sits — the one thing a level
+ * definition has any business branching on.
+ */
+function normalizeWhere(raw, where) {
+  if (raw === undefined) return [];
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+    fail(`${where}.where must be a map of admin-code column to a value or { not: value }`);
+  }
+  const predicates = [];
+  for (const [field, test] of Object.entries(raw)) {
+    if (!CODE_FIELDS.includes(field)) {
+      fail(`${where}.where names "${field}", which is not one of ${CODE_FIELDS.join(", ")}`);
+    }
+    if (typeof test === "string") predicates.push({ field, equals: test });
+    else if (test && typeof test === "object" && typeof test.not === "string") {
+      predicates.push({ field, notEquals: test.not });
+    } else {
+      fail(`${where}.where.${field} must be a string or { not: "<value>" }`);
+    }
+  }
+  if (predicates.length === 0) fail(`${where}.where is empty — omit it rather than declaring no filter`);
+  return predicates;
 }
 
 /**
@@ -478,63 +698,87 @@ export function countryConfig(iso) {
       fail(`${where}: levels declares file "${file}", which is not in isoFiles`);
     }
     const normalized = {};
-    for (const [level, mapping] of Object.entries(fileLevels)) {
+    for (const [level, declared] of Object.entries(fileLevels)) {
       if (!raw.levelOrder.includes(level)) {
         fail(`${where}: levels.${file} declares "${level}", which is not in levelOrder`);
       }
-      if (typeof mapping.fcode !== "string" || mapping.fcode === "") {
-        fail(`${where}: levels.${file}.${level}.fcode is required (an exact live feature code)`);
-      }
-      if (mapping.fcode.endsWith("H")) {
-        fail(
-          `${where}: levels.${file}.${level}.fcode is "${mapping.fcode}" — the H variants are ` +
-            `GeoNames' historical rows and are never live`,
-        );
-      }
-      // `ADM2` → `admin2`. The common case, stated once here instead of in
-      // every entry; a file that disagrees says so explicitly.
-      const derivedField = `admin${mapping.fcode.replace(/^ADM/, "")}`;
-      const codeField = mapping.codeField ?? (CODE_FIELDS.includes(derivedField) ? derivedField : null);
-      if (codeField !== null && !CODE_FIELDS.includes(codeField)) {
-        fail(`${where}: levels.${file}.${level}.codeField "${codeField}" is not one of ${CODE_FIELDS.join(", ")}`);
-      }
-      if (codeField === null) {
-        fail(
-          `${where}: levels.${file}.${level} has no codeField and none could be derived from ` +
-            `fcode "${mapping.fcode}" — name the admin column holding this level's key`,
-        );
+      // A level is one selector or a list of them. The list form exists for a
+      // level assembled from two feature codes — see the header's UK example.
+      const selectors = Array.isArray(declared) ? declared : [declared];
+      if (selectors.length === 0) {
+        fail(`${where}: levels.${file}.${level} is an empty list — a level needs at least one selector`);
       }
 
-      let officialCode = { from: "codeField" };
-      if (mapping.officialCode === null) officialCode = { from: "none" };
-      else if (mapping.officialCode !== undefined) {
-        const digits = mapping.officialCode.fromMunicipalityPrefix;
-        const literal = mapping.officialCode.literal;
-        if (typeof literal === "string") {
-          if (literal === "") fail(`${where}: levels.${file}.${level}.officialCode.literal is empty`);
-          officialCode = { from: "literal", literal };
-        } else if (typeof digits === "number" && digits > 0) {
-          officialCode = { from: "municipalityPrefix", digits };
-        } else {
+      normalized[level] = selectors.map((mapping, i) => {
+        const at = `${where}: levels.${file}.${level}${Array.isArray(declared) ? `[${i}]` : ""}`;
+        if (typeof mapping.fcode !== "string" || mapping.fcode === "") {
+          fail(`${at}.fcode is required (an exact live feature code)`);
+        }
+        if (mapping.fcode.endsWith("H")) {
           fail(
-            `${where}: levels.${file}.${level}.officialCode must be null, omitted, ` +
-              `{ literal: "<code>" }, or { fromMunicipalityPrefix: <digits> }`,
+            `${at}.fcode is "${mapping.fcode}" — the H variants are ` +
+              `GeoNames' historical rows and are never live`,
           );
         }
-      }
-
-      if (mapping.parent !== undefined) {
-        if (typeof mapping.parent.type !== "string" || typeof mapping.parent.externalCode !== "string") {
-          fail(`${where}: levels.${file}.${level}.parent must be { type, externalCode }`);
+        // `ADM2` → `admin2`. The common case, stated once here instead of in
+        // every entry; a file that disagrees says so explicitly.
+        const derivedField = `admin${mapping.fcode.replace(/^ADM/, "")}`;
+        const codeField = mapping.codeField ?? (CODE_FIELDS.includes(derivedField) ? derivedField : null);
+        if (codeField !== null && !CODE_FIELDS.includes(codeField)) {
+          fail(`${at}.codeField "${codeField}" is not one of ${CODE_FIELDS.join(", ")}`);
         }
-      }
+        if (codeField === null) {
+          fail(
+            `${at} has no codeField and none could be derived from ` +
+              `fcode "${mapping.fcode}" — name the admin column holding this level's key`,
+          );
+        }
 
-      normalized[level] = {
-        fcode: mapping.fcode,
-        codeField,
-        officialCode,
-        parent: mapping.parent ?? null,
-      };
+        let officialCode = { from: "codeField" };
+        if (mapping.officialCode === null) officialCode = { from: "none" };
+        else if (mapping.officialCode !== undefined) {
+          const digits = mapping.officialCode.fromMunicipalityPrefix;
+          const literal = mapping.officialCode.literal;
+          if (typeof literal === "string") {
+            if (literal === "") fail(`${at}.officialCode.literal is empty`);
+            officialCode = { from: "literal", literal };
+          } else if (typeof digits === "number" && digits > 0) {
+            officialCode = { from: "municipalityPrefix", digits };
+          } else {
+            fail(
+              `${at}.officialCode must be null, omitted, ` +
+                `{ literal: "<code>" }, or { fromMunicipalityPrefix: <digits> }`,
+            );
+          }
+        }
+
+        if (mapping.parent !== undefined) {
+          if (typeof mapping.parent.type !== "string" || typeof mapping.parent.externalCode !== "string") {
+            fail(`${at}.parent must be { type, externalCode }`);
+          }
+        }
+
+        return {
+          fcode: mapping.fcode,
+          codeField,
+          officialCode,
+          parent: mapping.parent ?? null,
+          where: normalizeWhere(mapping.where, at),
+        };
+      });
+
+      // Two selectors keyed on the same column with no filter between them
+      // would both claim the same records. The geonameid dedupe gate catches
+      // the general overlap; this catches the trivial case at config time,
+      // where the message can say what to do about it.
+      const keys = normalized[level].map((selector) => `${selector.fcode} ${selector.codeField}`);
+      const duplicated = keys.find((key, i) => keys.indexOf(key) !== i && normalized[level].every((s) => s.where.length === 0));
+      if (duplicated !== undefined) {
+        fail(
+          `${where}: levels.${file}.${level} declares two unfiltered selectors on the same feature code — ` +
+            `give each a \`where\` that separates them, or declare one`,
+        );
+      }
     }
     levels[file] = normalized;
   }
@@ -585,6 +829,31 @@ export function countryConfig(iso) {
       );
     }
     expected[level] = normalizeExpected(raw.expected[level], `${where}: expected.${level}`);
+
+    // An allowance has to be addressed by a key the level actually has. A code
+    // entry on a level whose rows carry no code could never match, so it would
+    // stop gating in silence — which is the one failure mode `expected` exists
+    // to make impossible.
+    const coded = Object.values(levels).some((fileLevels) =>
+      (fileLevels[level] ?? []).some((selector) => selector.officialCode.from !== "none"),
+    );
+    for (const list of ["allowMissing", "allowExtra"]) {
+      for (const entry of expected[level][list]) {
+        if (coded && entry.by !== "code") {
+          fail(
+            `${where}: expected.${level}.${list} names ${allowanceLabel(entry)}, but this level carries ` +
+              `official codes — name the code, which is the key every re-point and postal join runs on`,
+          );
+        }
+        if (!coded && entry.by === "code") {
+          fail(
+            `${where}: expected.${level}.${list} names the official code ${allowanceLabel(entry)}, but ` +
+              `this level's config maps no official code, so no row will ever carry it. Use ` +
+              `{ geonameid } for a row GeoNames carries or { name } for one it does not.`,
+          );
+        }
+      }
+    }
   }
 
   return {

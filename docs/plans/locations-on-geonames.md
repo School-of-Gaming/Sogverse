@@ -59,7 +59,9 @@ beats a slightly more accurate dual system.** This plan is written to that call.
     2026-08-07): the cutover re-points what maps by code and drops the rest with a
     warning.
 - Candidate next countries already sketched in the hierarchy config: SE, ES, US, GB, JP.
-  Sweden is the pilot here (clean shape, verified below, labels already configured).
+  Sweden is the pilot here (clean shape, verified below, labels already configured); the
+  United Kingdom follows it as the second new country and is what proves the config
+  absorbs a genuinely awkward one (below).
 
 ## The decision
 
@@ -647,6 +649,39 @@ Independently verifiable: app behaves identically; all assertions and tests gree
    construction.
 
 Independently verifiable: Sweden exists end to end with zero Sweden-specific code.
+
+### Phase 2b — the United Kingdom (the second new country; still no FK contact)
+
+The decision-owner's shape, verified against GB.txt on 2026-08-07: **region = nation,
+municipality = upper-tier local authority, site below.** Not the speculative Nation →
+City → Borough the hierarchy config sketched — the UK has no administrative city level,
+and "borough" is one of several words for the same rung.
+
+What it costs the config, and nothing else:
+
+- **A level assembled from two of GeoNames' rungs.** GB's ADM2 is 185 rows (SCT 32, WLS
+  22, NIR 11, ENG 120 including Greater London under admin2 `GLA`); London's 33 boroughs
+  are ADM3 rows whose admin2 is `GLA`. Our local-authority level is *ADM2 except GLA*
+  ∪ *ADM3 where GLA* — expressed as a list of selectors with a `where` filter, generic
+  and validated. Greater London's own row is not seeded; the boroughs carry admin1 =
+  `ENG` and parent to England directly, so the country is uniformly two levels deep.
+- **A country with no official codes below the country row.** GeoNames' GB admin codes
+  (`A3`, `B9`, `GLA`) are its own invention, so `officialCode: null` at both levels and
+  `external_code` stays NULL. Official-data joins are forfeited for the UK and named as
+  such; `geonames_id` carries identity, and the emitted code-less gate is omitted rather
+  than emitted as a vacuous check.
+- **Allowances keyed by something other than a code.** 218 authorities authoritatively
+  (England 153 per ONS, Scotland 32, Wales 22, NI 11) against 217 from the file: GeoNames
+  still carries Cumbria, abolished April 2023, and neither of the two councils that
+  replaced it. Named as `allowExtra: [{ geonameid }]` and `allowMissing: [{ name }, …]`.
+  Cumbria is deliberately *not* excluded — its successors do not exist upstream, so
+  excluding it would leave the county with no authority at all.
+- **Name resolution is `"dump"`**, checked both ways: the `en` alternates would clean 29
+  verbose names but leave 12 uncleaned, reverse three, and rename Cheshire West and
+  Chester to "Cheshire", a different entity.
+
+Independently verifiable: the UK exists end to end, its boroughs and its shire counties
+are indistinguishable once seeded, and no executable code knows what a borough is.
 
 ### Phase 3 — cut Finland and France over to the GeoNames tree
 

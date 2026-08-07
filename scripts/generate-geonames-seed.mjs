@@ -80,7 +80,7 @@ import {
   wipe as cutoverWipe,
 } from "./lib/geonames/cutover.mjs";
 import { ingestCountry, nameResolutionCrossCheck } from "./lib/geonames/ingest.mjs";
-import { sqlBigint, sqlJsonb, sqlText } from "./lib/geonames/sql.mjs";
+import { locationInsert, sqlBigint, sqlJsonb, sqlText } from "./lib/geonames/sql.mjs";
 
 /**
  * The migration each country's seed lands in, per mode. Deliberately literals:
@@ -97,6 +97,7 @@ import { sqlBigint, sqlJsonb, sqlText } from "./lib/geonames/sql.mjs";
 const MIGRATIONS = {
   seed: {
     SE: "00156_seed_sweden_geonames.sql",
+    GB: "00159_seed_uk_geonames.sql",
   },
   cutover: {
     FI: "00157_cutover_finland_geonames.sql",
@@ -109,6 +110,7 @@ const TITLES = {
   SE: "Sweden",
   FI: "Finland",
   FR: "France",
+  GB: "the United Kingdom",
 };
 
 /**
@@ -124,6 +126,13 @@ const PLURALS = {
 };
 
 const MIGRATIONS_DIR = join(import.meta.dirname, "..", "supabase", "migrations");
+
+/** One allowance entry, for prose in the emitted header and the run report. */
+function describeAllowance(entry) {
+  if (entry.by === "code") return entry.value;
+  if (entry.by === "name") return `"${entry.value}"`;
+  return `geonameid ${entry.value}`;
+}
 
 /**
  * Rows per INSERT statement. Large enough that small countries emit one
@@ -206,13 +215,32 @@ function header() {
     .map(({ level }) => {
       const { count, allowMissing, allowExtra } = config.expected[level];
       if (allowMissing.length === 0 && allowExtra.length === 0) return null;
+      // An allowance names rows by whatever key its level has, and the two
+      // cases are different facts rather than two spellings of one. A coded
+      // level's surplus is a row filed under a code the classification retired
+      // — present, under the wrong key, and lost to any official-data join. A
+      // code-less level has no such key to be wrong about: its surplus is
+      // simply a place the classification no longer has.
+      const coded = allowMissing.concat(allowExtra).every((entry) => entry.by === "code");
+      if (coded) {
+        return (
+          `-- The ${level} count is the national classification's ${count}, minus the\n` +
+          `-- ${allowMissing.length} code(s) GeoNames does not carry (${allowMissing.map((entry) => entry.value).join(", ")})\n` +
+          `-- and plus the ${allowExtra.length} it carries under a code the classification retired\n` +
+          `-- (${allowExtra.map((entry) => entry.value).join(", ")}). Both lists are named in the config and are re-surfaced by\n` +
+          `-- every sync report until upstream heals; an official-data join misses the second\n` +
+          `-- group until it does.\n--\n`
+        );
+      }
       return (
         `-- The ${level} count is the national classification's ${count}, minus the\n` +
-        `-- ${allowMissing.length} code(s) GeoNames does not carry (${allowMissing.join(", ")})\n` +
-        `-- and plus the ${allowExtra.length} it carries under a code the classification retired\n` +
-        `-- (${allowExtra.join(", ")}). Both lists are named in the config and are re-surfaced by\n` +
-        `-- every sync report until upstream heals; an official-data join misses the second\n` +
-        `-- group until it does.\n--\n`
+        `-- ${allowMissing.length} it names that GeoNames does not carry and plus the ${allowExtra.length} GeoNames\n` +
+        `-- carries that the classification does not. This level maps no official code, so\n` +
+        `-- each row is named by the key it does have:\n` +
+        `--   missing: ${allowMissing.map(describeAllowance).join(", ")}\n` +
+        `--   extra:   ${allowExtra.map(describeAllowance).join(", ")}\n` +
+        `-- Both lists are named in the config and are re-surfaced by every sync report\n` +
+        `-- until upstream heals.\n--\n`
       );
     })
     .filter(Boolean)
@@ -272,10 +300,21 @@ ${cutoverPreamble}--
 --
 -- CODES
 --
--- \`external_code\` keeps its existing contract — the row's code in its
+${
+    ingested.levels.every(({ rows }) => rows.every((row) => row.externalCode === null))
+      ? `-- \`external_code\` is NULL on every row below the country here, and that is a
+-- decision rather than a gap. GeoNames' admin codes for this country are its
+-- own invention and match no national classification, and the column's contract
+-- is the *official* code — putting a made-up value in it would break every join
+-- it exists for. What is forfeited is named: joins against this country's
+-- official datasets, postal data included, cannot run on this column. What is
+-- not affected is identity — \`geonames_id\` is what ingestion, sync and every
+-- dedupe run on, and every row below carries one.`
+      : `-- \`external_code\` keeps its existing contract — the row's code in its
 -- country's official statistical classification, unique per (country, type) —
 -- and never holds a geonameid. GeoNames' admin-code columns are what supply it,
--- so joins against official data keep working.
+-- so joins against official data keep working.`
+  }
 --
 ${allowanceNote}${excludeNote}${attachedNote}${syntheticNote}-- DEPTH
 --
@@ -334,73 +373,42 @@ function countryStatement() {
 }
 
 /**
- * One chunked INSERT for a level. The parent join and the idempotency guard
- * each come in two forms, chosen by the data rather than by the country: the
- * plain `geonames_id` form, and — where the config declared synthetic rows,
- * which have no geonameid to key on — the `(type, external_code)` form.
+ * One chunked INSERT for a level, headed by a comment saying which slice of the
+ * level it is. The statement itself is the shared one in
+ * `scripts/lib/geonames/sql.mjs` — the same one the differ emits, so a row
+ * inserted by a reconciliation lands exactly as a row inserted here would have.
  */
-function levelStatement(level, rows, chunk, index, total) {
-  const anySyntheticRow = chunk.some((row) => row.geonameid === null);
-  const anySyntheticParent = chunk.some((row) => row.parent.geonameid === null);
-
-  const values = chunk
-    .map(
-      (row) =>
-        `    (${sqlBigint(row.geonameid)}, ${sqlText(row.name)}, ${sqlJsonb(row.nameI18n)}, ` +
-        `${sqlText(row.externalCode)}, ${sqlBigint(row.parent.geonameid)}, ` +
-        `${sqlText(row.parent.type)}, ${sqlText(row.parent.externalCode)})`,
-    )
-    .join(",\n");
-
-  const parentMatch = anySyntheticParent
-    ? ` AND CASE WHEN v.parent_geonames_id IS NULL\n` +
-      `          THEN p.external_code = v.parent_external_code\n` +
-      `          ELSE p.geonames_id = v.parent_geonames_id\n` +
-      `     END\n`
-    : ` AND p.geonames_id = v.parent_geonames_id\n`;
-
-  const guard = anySyntheticRow
-    ? `  SELECT 1 FROM public.locations l\n` +
-      `   WHERE CASE WHEN v.geonames_id IS NULL\n` +
-      `              THEN l.country_code = ${sqlText(iso)} AND l.type = ${sqlText(level)} AND l.external_code = v.external_code\n` +
-      `              ELSE l.geonames_id = v.geonames_id\n` +
-      `         END\n`
-    : `  SELECT 1 FROM public.locations l WHERE l.geonames_id = v.geonames_id\n`;
-
+function levelStatement(level, chunk, index, total) {
   const plural = PLURALS[level] ?? level;
   const range =
     total > chunk.length
       ? ` ${index * CHUNK_SIZE + 1}–${index * CHUNK_SIZE + chunk.length} of ${total}`
       : ` (${total})`;
 
-  return (
-    `-- ${plural[0].toUpperCase()}${plural.slice(1)}${range}.\n` +
-    `INSERT INTO public.locations (geonames_id, name, name_i18n, type, parent_id, country_code, external_code)\n` +
-    `SELECT v.geonames_id, v.name, v.name_i18n, ${sqlText(level)}, p.id, ${sqlText(iso)}, v.external_code\n` +
-    `FROM (VALUES\n${values}\n` +
-    `) AS v(geonames_id, name, name_i18n, external_code, parent_geonames_id, parent_type, parent_external_code)\n` +
-    `JOIN public.locations p\n` +
-    `  ON p.country_code = ${sqlText(iso)}\n` +
-    ` AND p.type = v.parent_type::public.location_type\n` +
-    parentMatch +
-    `WHERE NOT EXISTS (\n${guard});\n`
-  );
+  return `-- ${plural[0].toUpperCase()}${plural.slice(1)}${range}.\n` + locationInsert(iso, level, chunk);
 }
 
 function assertions() {
-  const declarations = [
-    "  n_country integer;",
-    ...ingested.levels.map(({ level }) => `  n_${level} integer;`),
-    "  n_codeless integer;",
-    "  n_keyless integer;",
-    "  n_dupes integer;",
-    "  orphans integer;",
-  ].join("\n");
-
+  // The levels that carry an official code at all. A country whose config maps
+  // none below the country row — the United Kingdom, whose GeoNames admin codes
+  // are GeoNames' own invention rather than ONS/GSS codes — has an empty list
+  // here, and the code-less check is omitted rather than emitted as an
+  // `IN ()` that would not parse. Nothing is lost by that: the claim it makes
+  // is vacuous for such a country, and the config's `officialCode: null` is
+  // where the fact lives.
   const codedLevels = ingested.levels
     .filter(({ rows }) => rows.some((row) => row.externalCode !== null))
     .map(({ level }) => sqlText(level))
     .join(", ");
+
+  const declarations = [
+    "  n_country integer;",
+    ...ingested.levels.map(({ level }) => `  n_${level} integer;`),
+    ...(codedLevels === "" ? [] : ["  n_codeless integer;"]),
+    "  n_keyless integer;",
+    "  n_dupes integer;",
+    "  orphans integer;",
+  ].join("\n");
 
   const perLevel = ingested.levels
     .map(({ level, rows }) => {
@@ -472,7 +480,15 @@ ${perLevel}
       n_keyless;
   END IF;
 
-  -- Every row at a level the config maps a code for carries one. A code-less
+${
+    codedLevels === ""
+      ? `  -- No code-less check: this country's config maps no official code below the
+  -- country row, because GeoNames' admin codes for it are its own invention
+  -- rather than the national classification's. Every row is still keyed by
+  -- geonames_id, which is what ingestion, sync and the dedupe below run on;
+  -- what is forfeited is joins against official data, named in the config.
+`
+      : `  -- Every row at a level the config maps a code for carries one. A code-less
   -- row cannot be re-pointed by a reconciliation or joined by postal data.
   SELECT count(*) INTO n_codeless
     FROM public.locations
@@ -484,7 +500,8 @@ ${perLevel}
       '${title} GeoNames seed: % ${iso} rows carry no external_code at a level that must have one',
       n_codeless;
   END IF;
-
+`
+  }
   -- Codes are unique within (country, type) — the key every reconciliation and
   -- official-data join runs on.
   SELECT count(*) INTO n_dupes
@@ -507,7 +524,7 @@ $$;
 const statements = [];
 for (const { level, rows } of ingested.levels) {
   for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
-    statements.push(levelStatement(level, rows, rows.slice(i, i + CHUNK_SIZE), i / CHUNK_SIZE, rows.length));
+    statements.push(levelStatement(level, rows.slice(i, i + CHUNK_SIZE), i / CHUNK_SIZE, rows.length));
   }
 }
 

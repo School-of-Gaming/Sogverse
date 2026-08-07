@@ -32,8 +32,14 @@ describe("country hierarchy anchors", () => {
     // there. The day a district-below-municipality country is seeded, this
     // fails, and generalizing those pickers to read the anchor is the work it
     // is asking for. Do that work; do not relax this.
+    //
+    // The UK is what a seeded country looks like when the speculative entry was
+    // wrong: it was sketched Nation → City → Borough and anchored at
+    // `district`, and seeding it meant finding out the country has one
+    // local-authority rung and re-declaring it there. This tripwire is what
+    // made that a decision rather than an accident.
     const seeded = SUPPORTED_COUNTRIES.filter((country) => country.seeded);
-    expect(seeded.map((country) => country.code)).toEqual(["FI", "FR", "SE"]);
+    expect(seeded.map((country) => country.code)).toEqual(["FI", "FR", "GB", "SE"]);
 
     for (const country of seeded) {
       expect(country.anchor, `${country.code} is seeded, so its anchor`).toBe("municipality");
