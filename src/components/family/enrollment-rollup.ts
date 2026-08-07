@@ -469,16 +469,14 @@ function lastCoveredSession(args: {
     maxOccurrences: 1,
   });
 
-  // Ascending across each slot and then concatenated, so the newest is a max
-  // rather than the last element — two slots on different weekdays interleave.
-  let newest: Date | null = null;
-  for (const occurrence of past) {
-    if (occurrence.start.getTime() > accessUntil.getTime()) continue;
-    if (newest === null || occurrence.start.getTime() > newest.getTime()) {
-      newest = occurrence.start;
-    }
-  }
-  return newest;
+  // The walk returns **globally ascending**, not per-slot concatenated — it
+  // merges every slot's results and sorts before handing them back — so the
+  // newest is simply the last element, and two slots on different weekdays
+  // needing to interleave is exactly the case that sort already handles. Every
+  // occurrence in here is also at or before `accessUntil` already, since that
+  // instant is folded into the `endBoundary` above; re-testing it per element
+  // would be checking the boundary the walk was given.
+  return past.length === 0 ? null : past[past.length - 1].start;
 }
 
 /**

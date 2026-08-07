@@ -132,12 +132,17 @@ export interface FamilyProductPageBodyProps {
    * Set when the parent has cancelled this club's subscription. Parent variant
    * only, for the same reason as above.
    *
-   * **What it does not yet do is clamp the feed.** A cancelled enrollment must
-   * eventually show nothing past its paid window — the card's next session, the
-   * dashboard sort and this page's future block all stop at the same instant —
-   * and that clamping belongs with whoever resolves the occurrences, which is
-   * the data shell this page does not have yet. This prop only makes the state
-   * *visible*; entries arrive already clamped or they do not.
+   * **This prop makes the state visible; it does not clamp anything, and it is
+   * not meant to.** A cancelled enrollment shows nothing past its paid window
+   * anywhere — the card's next session, the dashboard sort and this page's
+   * future block all stop at the same instant — but that clamp belongs with
+   * whoever resolves the occurrences, and this body resolves none: it renders
+   * `entries` in the order it is given them. The data shell above passes the
+   * same paid-through instant to the feed builder *and* to this prop, which is
+   * what keeps the notice's date and the sessions beneath it describing one
+   * window. Passing it to one and not the other is the failure to watch for —
+   * the page would then say "last session on the 14th" over a feed listing the
+   * 21st.
    */
   cancellation?: FamilyProductCancellation | null;
   /** Who teaches this group — first names only, as identicon chips. */
