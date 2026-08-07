@@ -80,6 +80,17 @@ them as they come up, and expect several rounds of feedback and fixes before
 either of you is satisfied. Do not rush toward landing — Phase 5 begins only when
 they say so.
 
+**Build by delegating, not by typing.** The session's role in this phase is
+orchestration: write the implementation prompt, launch an agent into this
+worktree (model `opus` — the Models section below governs the whole flow, not
+just parallel work), judge what comes back, and iterate. Doing the
+implementation directly in the session is the expensive arrangement the Models
+section warns about, and it is the default failure mode precisely because it
+never feels like a decision — nobody chooses the session's model, they just
+start editing. The moment the work in front of you is more than the small
+interactive kind (a review-round fix, a two-file tweak), that is the cue to
+write a prompt instead of an edit.
+
 The unit of feedback is completed work, not elapsed time: run to done, report,
 take the rulings, fix, repeat. Block mid-build only on a question the work cannot
 proceed without; a judgment call with a buildable, reversible answer gets decided,
@@ -213,7 +224,9 @@ edits to one file are a merge conflict manufactured on purpose.
 ## Models
 
 The session orchestrates — decomposes, writes the agent prompts, judges
-findings, lands the result — and delegates the work itself. Delegated work
+findings, lands the result — and delegates the work itself. This is the
+arrangement for the whole command, single worktree or several: Phase 2's build
+and Phase 4's review are delegated work, not session work. Delegated work
 runs on **Opus** by default: pass `model` explicitly on every agent launch,
 because an agent silently inherits the session's model when none is passed,
 and on a stronger session tier that is the most expensive arrangement
@@ -239,7 +252,12 @@ available, invisible unless you look.
   anything it cannot statically verify stays inside — heredocs, scripts piped to
   an interpreter, compound chains with redirects. That refusal is almost always a
   sign the dedicated file tools were the right instrument anyway; reach for those
-  first, and keep Bash for git, npm, and single-purpose commands.
+  first, and keep Bash for git, npm, and single-purpose commands. Two habits that
+  trip it: tacking `2>&1 | tail` onto an otherwise-plain command to trim output
+  (run the plain command; the harness truncates long output itself), and inlining
+  a credential with `$(grep … .env.local)` (parse it into an env var and run the
+  tool in the same single PowerShell call — `$env:SUPABASE_DB_PASSWORD = …;
+  npx supabase …` — since shell state does not persist between calls).
 - **Never bare `git stash` / `git stash pop`.** The stack is shared with every
   other worktree and session. Prefer a temporary WIP commit.
 - **Do not merge, rebase, or delete any branch other than this one's.** Other
