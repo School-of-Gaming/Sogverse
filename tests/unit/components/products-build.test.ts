@@ -149,21 +149,21 @@ describe("validate", () => {
       });
     });
 
-    it("rejects an invalid padlet URL", () => {
+    it("rejects an invalid material URL", () => {
       const s = validConsumerState();
-      s.padletUrl = "not-a-url";
+      s.materialUrl = "not-a-url";
       expect(validate(s, consumerConfig)).toEqual({
-        messageKey: "padletInvalid",
+        messageKey: "materialUrlInvalid",
       });
     });
 
-    it("accepts a blank padlet URL (optional field)", () => {
+    it("accepts a blank material URL (optional field)", () => {
       const s = validConsumerState();
-      s.padletUrl = "";
+      s.materialUrl = "";
       expect(validate(s, consumerConfig)).toBeNull();
     });
 
-    // Both link fields end up as the `href` of an anchor somebody clicks, so
+    // The link field ends up as the `href` of an anchor somebody clicks, so
     // "parses as a URL" is not the bar — `new URL()` is perfectly happy with a
     // script URI, and storing one is a stored-XSS hole with an extra step. The
     // rule is an allow-list of the two web schemes, and these are the cases that
@@ -180,12 +180,6 @@ describe("validate", () => {
     ];
 
     for (const hostile of HOSTILE_SCHEMES) {
-      it(`rejects ${hostile.split(":")[0]}: as a padlet URL`, () => {
-        const s = validConsumerState();
-        s.padletUrl = hostile;
-        expect(validate(s, consumerConfig)?.messageKey).toBe("padletInvalid");
-      });
-
       it(`rejects ${hostile.split(":")[0]}: as a material URL`, () => {
         const s = validConsumerState();
         s.materialUrl = hostile;
@@ -195,12 +189,11 @@ describe("validate", () => {
       });
     }
 
-    it("accepts http and https on both link fields", () => {
+    it("accepts http and https on the link field", () => {
       // The allow-list has to stay an allow-list of *two*: dropping plain http
       // would break every link an admin has already saved.
       for (const scheme of ["http", "https"]) {
         const s = validConsumerState();
-        s.padletUrl = `${scheme}://padlet.com/x`;
         s.materialUrl = `${scheme}://drive.sog.gg/lesson-plans`;
         expect(validate(s, consumerConfig), scheme).toBeNull();
       }
@@ -611,22 +604,8 @@ describe("buildCreateInput", () => {
     });
   });
 
-  it("emits null padlet_url when blank, trims when set", () => {
-    const s = validConsumerState();
-    s.padletUrl = "";
-    expect(
-      buildCreateInput(s, "consumer_club", consumerConfig).padlet_url,
-    ).toBeNull();
-    s.padletUrl = "  https://padlet.com/x  ";
-    expect(
-      buildCreateInput(s, "consumer_club", consumerConfig).padlet_url,
-    ).toBe("https://padlet.com/x");
-  });
-
-  // The staff-facing sibling of the field above. It gets its own case rather
-  // than riding on the Padlet one because the two are separate columns with
-  // separate audiences, and a shared assertion would hide the day one of them
-  // stopped being emitted.
+  // Staff-facing, and it lands in its own table rather than on the product —
+  // so the assertion is that it is emitted at all, and emitted trimmed.
   it("emits null material_url when blank, trims when set", () => {
     const s = validConsumerState();
     s.materialUrl = "";
@@ -930,7 +909,6 @@ function mockDetailRow(
     min_age: 8,
     max_age: 12,
     spoken_language_code: "en",
-    padlet_url: "https://padlet.com/x",
     // The lesson link rides on its own staff-only row, not on the product.
     product_staff_details: { material_url: "https://drive.sog.gg/x" },
     image_path: "products/original.png",

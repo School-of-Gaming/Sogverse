@@ -1,5 +1,6 @@
 import type {
   AppSupabaseClient,
+  Json,
   ParticipationStatus,
   ParticipationSubscriptionState,
   ProductType,
@@ -25,11 +26,24 @@ import {
 } from "./participations.contracts";
 
 /**
- * Row shape returned by `getMyUpcomingSessions()`. The parent dashboard's
- * Sessions section flattens this into one card per (participation, slot,
- * occurrence) so we need the per-product slot list, the date-range bounds
- * (for camp/event termination), the timezone (so we can compute occurrences
- * in product-local wall time), and the Padlet URL for the reports link.
+ * A venue's name as it comes off the row — the canonical `name` plus the
+ * `locale -> name` override map — resolved to the viewer's locale at render
+ * time by the shared location-name helper.
+ *
+ * Kept raw for the same reason the product translations are: resolving here
+ * would put the viewer's locale in the query cache key, so switching locale
+ * would refetch a row whose only locale-dependent part is a string lookup.
+ */
+export interface ProductSiteName {
+  name: string;
+  name_i18n: Json | null;
+}
+
+/**
+ * Row shape returned by `getMyUpcomingSessions()`. The family dashboards roll
+ * one of these up into a single enrollment card, so we need the per-product
+ * slot list, the date-range bounds (for camp/event termination) and the
+ * timezone (so occurrences can be computed in product-local wall time).
  *
  * Filtered to active participations (assigned and unassigned alike);
  * waitlisted rows are excluded since they have no placement. `groupId` is
@@ -66,8 +80,6 @@ export interface MyUpcomingSessionRow {
      * occurrences instead.
      */
     endDate: string | null;
-    /** External Padlet URL for the session reports link. Null if not set. */
-    padletUrl: string | null;
     /**
      * `false` for in-person products. The dashboard uses this together with
      * `groupId` to gate whether the Join Voice link gets a real
@@ -75,6 +87,19 @@ export interface MyUpcomingSessionRow {
      * stays inert.
      */
     isRemote: boolean;
+    /**
+     * The venue an **in-person** product runs at, `null` on a remote one.
+     *
+     * Gated on `is_remote` rather than on whether the join found a row: a
+     * remote municipality club carries a `location_id` too (the municipality
+     * that commissioned it), and that is an administrative fact, not a
+     * building anybody travels to. Answering "where is this happening" with a
+     * municipality name on a card whose sessions are in a voice room would be
+     * worse than saying nothing. Every in-person product has a location by
+     * schema CHECK, so `null` here means "no building involved" rather than
+     * "not loaded".
+     */
+    site: ProductSiteName | null;
     /**
      * Raw translation rows. The dashboard resolves to the viewer's UI locale
      * at render time so the cache key doesn't need to include locale (and a
@@ -122,9 +147,20 @@ export interface MyUpcomingSessionRow {
  * a placement and a schedule; this one covers `status='waitlisted'` rows, which
  * have neither and so never appear in the sessions list.
  *
- * Deliberately thin. A waitlist card shows a product name, a gamer and a
- * number — no slots, timezone, Padlet URL or subscription state — so none of
- * that is fetched.
+ * **It carries roughly the sessions read's product shell**, because a waitlist
+ * place is now a card in the same list as every other enrollment rather than a
+ * band of its own: it wears the same type eyebrow and states the same schedule
+ * in words, so a family reading "you are #3 for this" can see what "this" would
+ * cost them on a Tuesday. That needs the product type, the slots, the source
+ * zone the slots are wall-clock times in, and the date bounds the schedule
+ * formatter reads for a dated run.
+ *
+ * What it still does not carry is anything that only a *seat* produces: no
+ * group, no subscription state, and no venue. A waitlisted family has no
+ * placement to derive a next session from and no billing relationship to be in
+ * trouble with, and their card's footer is the queue sentence, so nothing
+ * downstream has a use for them. The product's own id is absent for the same
+ * reason it always was — a waitlisted card links nowhere.
  */
 export interface MyWaitlistRow {
   /** The `participations.id`, and what the leave action names. */
@@ -134,14 +170,39 @@ export interface MyWaitlistRow {
     firstName: string;
   };
   product: {
+    /** The type noun the card's eyebrow reads. */
+    type: ProductType;
+    /** The zone the slot times below are wall-clock times **in**. */
+    timezone: string;
+    /**
+     * Inclusive start date in the product's local calendar (YYYY-MM-DD), or
+     * null on an open-ended club. The schedule formatter anchors a camp's slots
+     * to their first in-range date from this, so a dated run with no start date
+     * renders as "no schedule set yet" rather than as a wrong one.
+     */
+    startDate: string | null;
+    /** Inclusive end date in the product's local calendar, null when open-ended. */
+    endDate: string | null;
+    /**
+     * `false` for in-person products. No Join is ever drawn on a waitlisted
+     * card — there is no seat behind it — but the summary this row becomes says
+     * whether the product *has* a room, and inventing `false` for every
+     * waitlist place would be stating something untrue about the product.
+     */
+    isRemote: boolean;
     /**
      * Raw translation rows, resolved to the viewer's UI locale at render time —
      * same arrangement as the sessions read, so the cache key stays locale-free
-     * and switching locale doesn't refetch. The product's own id is not here:
-     * a waitlist card links nowhere, so nothing downstream ever needed it.
+     * and switching locale doesn't refetch.
      */
     translations: ProductTranslation[];
   };
+  /** The product's weekly slots, for the schedule sentence. */
+  slots: Array<{
+    weekday: number;
+    startTime: string;
+    durationMinutes: number;
+  }>;
   /**
    * 1-based position in line, recomputed live by the RPC rather than read from
    * the stamped-at-join value, so it shrinks as people ahead leave.
@@ -289,9 +350,8 @@ export class ParticipationsService {
 
   /**
    * The logged-in user's *active* participations, joined with the bits the
-   * dashboard Sessions section needs to render one card per upcoming
-   * occurrence: per-product weekly slots, start/end-date bounds, timezone,
-   * and the Padlet URL for the reports link.
+   * family dashboards need to roll one up into an enrollment card: per-product
+   * weekly slots, start/end-date bounds and timezone.
    *
    * Filtered to `status='active'` only — waitlisted rows aren't scheduled
    * yet, but BOTH assigned (`group_id IS NOT NULL`) and unassigned
@@ -303,9 +363,10 @@ export class ParticipationsService {
    * a parent sees their purchase reflected immediately instead of an empty
    * section while an admin places the gamer in a group.
    *
-   * Expansion into concrete (start, end) pairs is the adapter's job
-   * (`src/lib/upcoming-sessions.ts`); this method just hands back the raw
-   * rows with everything that expansion needs in one round trip.
+   * Expansion into concrete (start, end) pairs belongs to the client-side
+   * roll-up, which needs the viewer's locale and zone and has to re-derive on
+   * the shared clock; this method just hands back the raw rows with everything
+   * that expansion needs in one round trip.
    *
    * Audience selects which column the row is keyed off:
    *   - 'customer' → `customer_id = auth.uid()`: every participation the
@@ -712,9 +773,10 @@ function buildMyUpcomingSessionsQuery(
         gamer_id,
         group_id,
         product:products!inner(
-          id, product_type, timezone, start_date, end_date, padlet_url, is_remote,
+          id, product_type, timezone, start_date, end_date, is_remote,
           product_translations(*),
-          schedule_slots(weekday, start_time, duration_minutes)
+          schedule_slots(weekday, start_time, duration_minutes),
+          location:locations(name, name_i18n)
         ),
         gamer:profiles!participations_gamer_id_fkey!inner(
           first_name
@@ -735,6 +797,11 @@ type RawMyUpcomingSessionRow = QueryData<
  * `!inner` on both NOT-NULL-FK embeds so the inferred row treats `product` and
  * `gamer` as non-null, and standalone so `QueryData` can infer it.
  *
+ * The product shell it selects mirrors the sessions builder's minus the parts
+ * only a seat produces — see `MyWaitlistRow` for why each half is where it is.
+ * No location embed: a waitlisted card's footer is the queue sentence, so there
+ * is no venue line for one to fill.
+ *
  * Ordered oldest-first by the waitlist stamp, which is neither selected nor
  * needed by the card: it just gives the band a stable order that means
  * something (longest wait at the top) instead of whatever PostgREST returns.
@@ -752,7 +819,9 @@ function buildMyWaitlistQuery(
         id,
         gamer_id,
         product:products!inner(
-          product_translations(*)
+          product_type, timezone, start_date, end_date, is_remote,
+          product_translations(*),
+          schedule_slots(weekday, start_time, duration_minutes)
         ),
         gamer:profiles!participations_gamer_id_fkey!inner(
           first_name
@@ -787,8 +856,11 @@ function toMyUpcomingSessionRow(
       timezone: product.timezone,
       startDate: product.start_date,
       endDate: product.end_date,
-      padletUrl: product.padlet_url,
       isRemote: product.is_remote,
+      // The join is gated here rather than in the select, because the select
+      // cannot express it: a remote municipality club has a `location_id` and
+      // no venue. See `MyUpcomingSessionRow.product.site`.
+      site: product.is_remote ? null : product.location,
       translations: product.product_translations,
     },
     groupId: row.group_id,
@@ -816,7 +888,19 @@ function toMyWaitlistRow(
       id: row.gamer_id,
       firstName: gamer.first_name || row.gamer_id.slice(0, 8),
     },
-    product: { translations: product.product_translations },
+    product: {
+      type: product.product_type,
+      timezone: product.timezone,
+      startDate: product.start_date,
+      endDate: product.end_date,
+      isRemote: product.is_remote,
+      translations: product.product_translations,
+    },
+    slots: product.schedule_slots.map((s) => ({
+      weekday: s.weekday,
+      startTime: s.start_time,
+      durationMinutes: s.duration_minutes,
+    })),
     position,
   };
 }

@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
-import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
-import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
-import { MyGamersGrid } from "@/components/family";
 import { ManageBillingCard } from "@/components/billing";
-import { ParentHelpSection, ParentSessionsSection } from "@/components/parent";
+import { ParentDashboardShell } from "@/components/parent/ParentDashboardShell";
 import { createClient } from "@/lib/supabase/server";
 import {
   ParticipationsService,
@@ -18,46 +15,53 @@ import type { BillingAccount } from "@/services/billing";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
-  return { title: t("parentDashboard"), description: "Manage your gamers and enrollments" };
+  return {
+    title: t("parentDashboard"),
+    description: t("parentDashboardDescription"),
+  };
 }
 
 /**
- * Server-prefetch the parent's upcoming-session rows. The RLS-filtered
- * query is the same one `useMyUpcomingSessions` would fire client-side,
- * just one network hop earlier — the result seeds React Query's cache via
- * `initialRows`, so the section paints fully on first frame instead of
- * flashing a skeleton. Mutations elsewhere still cascade through
- * `participationKeys.all` to refetch normally; this prefetch only affects
- * the initial render.
+ * Server-prefetch the parent's `status='active'` participation rows. The
+ * RLS-filtered query is the same one the client hook would fire, one network hop
+ * earlier — the result seeds React Query's cache as `initialData`, so the cards
+ * paint on the first frame. Mutations elsewhere still cascade through
+ * `participationKeys.all` and refetch normally; this prefetch only affects the
+ * initial render.
  *
- * Returns `[]` on any failure (no session, RLS rejection, transient
- * Supabase error). The client hook will refetch on mount if so, which
- * keeps the page rendering even when the prefetch can't deliver.
+ * **Returns `null` on any failure (no session, RLS rejection, transient
+ * Supabase error) — which is deliberately not `[]`.** Seeded data is stamped as
+ * fetched *now*, so against the 60-second `staleTime` an empty seed is one the
+ * client never asks about again. Flattened, a transient failure told a parent
+ * they had signed nobody up for anything and then left that on screen, with
+ * nothing to correct it — the comment here used to claim the hook refetched on
+ * mount, and it does not. The shell marks a `null` seed stale so it does; a
+ * genuine `[]` stays cached, because it is a real answer.
  */
-async function getInitialSessionRows(): Promise<MyUpcomingSessionRow[]> {
+async function getInitialSessionRows(): Promise<MyUpcomingSessionRow[] | null> {
   try {
     const supabase = await createClient();
     const service = new ParticipationsService(supabase);
     return await service.getMyUpcomingSessions("customer");
   } catch {
-    return [];
+    return null;
   }
 }
 
 /**
  * Server-prefetch the parent's waitlisted participations and their live
  * positions, the same way and for the same reason as the session rows above.
- * These render in a band directly above the session cards, so arriving late
- * would push a button the parent was already reaching for — exactly the reflow
- * the layout-stability rule forbids. `[]` on failure.
+ * These are cards in the same per-child lists rather than a band of their own,
+ * so arriving late would insert rows above ones the parent was already reaching
+ * for. `null` on failure, with the same meaning as above.
  */
-async function getInitialWaitlistRows(): Promise<MyWaitlistRow[]> {
+async function getInitialWaitlistRows(): Promise<MyWaitlistRow[] | null> {
   try {
     const supabase = await createClient();
     const service = new ParticipationsService(supabase);
     return await service.getMyWaitlistEntries("customer");
   } catch {
-    return [];
+    return null;
   }
 }
 
@@ -67,16 +71,23 @@ async function getInitialWaitlistRows(): Promise<MyWaitlistRow[]> {
  * `users_view_own_profile` + `parents_view_linked_gamers` already scope a
  * customer to {self, their gamers}, so Postgres RLS is the access gate and
  * there's no service-role bypass on this path (see `resolveCustomerFamilyViaRls`).
- * Seeds React Query so My Gamers paints without a skeleton flash; the client
- * `useFamily` still refetches on mount. Returns `[]` on any failure so the page
- * renders regardless.
+ *
+ * This one is load-bearing beyond speed: the children *are* the page's sections,
+ * so without it the first frame would be a dashboard with no headings that then
+ * grew several.
+ *
+ * **`null` on failure**, for the reason given on the session rows — and it
+ * matters most here, because an empty family is the one seed that rewrites the
+ * whole page rather than one section of it. The shell passes no `initialData`
+ * at all in that case, so the query fetches on mount instead of settling on a
+ * childless dashboard for a minute.
  */
-async function getInitialFamily(): Promise<FamilyMember[]> {
+async function getInitialFamily(): Promise<FamilyMember[] | null> {
   try {
     const supabase = await createClient();
     return await resolveCustomerFamilyViaRls(supabase);
   } catch {
-    return [];
+    return null;
   }
 }
 
@@ -85,8 +96,14 @@ async function getInitialFamily(): Promise<FamilyMember[]> {
  * RLS-scoped client. Resolved here rather than client-side because the count
  * decides how many buttons the billing card renders: fetching it after paint
  * would turn one rendered button into several under the parent's cursor, which
- * the "rendered content must not move" rule forbids. `[]` on failure, which the
- * card renders as the ordinary single button.
+ * the "rendered content must not move" rule forbids.
+ *
+ * **`[]` on failure, and unlike the three reads above that is the end of it.**
+ * This one is not a query seed — the card is handed down as a finished node,
+ * with no client query behind it and therefore nothing that could refetch. So
+ * there is no stale-seed trick available and none needed: `[]` renders the
+ * ordinary single button, which is the right thing to show a parent whose
+ * account count we could not read, and the next navigation asks again.
  */
 async function getInitialBillingAccounts(): Promise<BillingAccount[]> {
   try {
@@ -97,11 +114,30 @@ async function getInitialBillingAccounts(): Promise<BillingAccount[]> {
   }
 }
 
+/**
+ * The parent dashboard's route is a **data shell and nothing else**: it reads,
+ * and it hands what it read to a client shell that hands it to a page body. The
+ * body is the same component the preview scene renders over fixtures, which is
+ * the whole point of the split — the page a parent meets and the page the design
+ * was signed off from cannot drift apart.
+ *
+ * **Everything that decides the page's geometry is prefetched here**, and that
+ * is the criterion, not "everything that is cheap". The family read decides how
+ * many child sections there are and what they are called; the enrollment rows
+ * decide how many cards sit under each and how tall they are; the billing
+ * accounts decide how many buttons the billing card renders. Any one of them
+ * arriving after the first paint would resize a page the parent is already
+ * reading — the reflow the layout rule exists to prevent — so the first frame is
+ * final and there is no skeleton anywhere on this route.
+ *
+ * What is emphatically *not* prefetched is the roll-up from rows to cards. That
+ * needs the viewer's locale, the viewer's zone and a clock that keeps ticking,
+ * so it runs client-side; see `useFamilyEnrollments`.
+ */
 export default async function CustomerDashboardPage() {
-  // All four reads run together: the page already blocks on the sessions
-  // fetch, so adding the (cheaper) waitlist, family and billing reads in
-  // parallel costs ~no extra wall-clock and lets every section paint populated
-  // on the first frame.
+  // All four reads run together: the page blocks on the slowest of them either
+  // way, so running the cheaper three alongside the sessions read costs ~no
+  // extra wall-clock and is what lets every section paint populated at once.
   const [
     initialSessionRows,
     initialWaitlistRows,
@@ -113,85 +149,33 @@ export default async function CustomerDashboardPage() {
     getInitialFamily(),
     getInitialBillingAccounts(),
   ]);
+
   return (
-    <CustomerDashboardPageBody
+    <ParentDashboardShell
       initialSessionRows={initialSessionRows}
       initialWaitlistRows={initialWaitlistRows}
       initialFamily={initialFamily}
-      billingAccounts={billingAccounts}
+      // Handed over finished rather than as data: billing is one self-contained
+      // section with its own backend actions, and nothing about the shape of the
+      // page depends on what is inside it.
+      //
+      // **The `key` looks redundant and is not — please do not delete it.**
+      // This element is built in a server component and handed across the RSC
+      // boundary to a client one, which renders it as a sibling of the billing
+      // <h2>. Two static children compile to a children *array*, which is the
+      // position React's key check applies to, and an element that has been
+      // through Flight serialization does not carry the mark JSX normally puts
+      // on statically-written children — so React reports it as an unkeyed list
+      // child and points the code frame at this line. Nothing on the path
+      // renders a real unkeyed array: the card's own maps are keyed, and this
+      // page creates exactly one element. A constant key satisfies the check
+      // outright, since having one is all it asks.
+      //
+      // Inert for reconciliation — the key never changes, so it cannot cause a
+      // remount — and the warning was dev-mode only: nothing was broken.
+      billingCard={
+        <ManageBillingCard key="billing-card" accounts={billingAccounts} />
+      }
     />
-  );
-}
-
-function CustomerDashboardPageBody({
-  initialSessionRows,
-  initialWaitlistRows,
-  initialFamily,
-  billingAccounts,
-}: {
-  initialSessionRows: MyUpcomingSessionRow[];
-  initialWaitlistRows: MyWaitlistRow[];
-  initialFamily: FamilyMember[];
-  billingAccounts: BillingAccount[];
-}) {
-  const t = useTranslations('dashboardSections');
-  const p = useTranslations('parent.placeholders');
-  const m = useTranslations('metadata.pages');
-
-  const sections: DashboardSection[] = [
-    { id: 'my-gamers', label: t('myGamers') },
-    { id: 'sessions', label: t('upcomingSessions') },
-    { id: 'billing', label: t('billing') },
-    { id: 'help', label: t('help') },
-  ];
-
-  return (
-    <>
-      {/* Visually-hidden page title — the four sections below are equal-weight
-          h2s under it, and the section pill is the visual nav. Gives screen
-          readers a single "My SOG" page heading instead of four competing h1s. */}
-      <h1 className="sr-only">{m('parentDashboard')}</h1>
-
-      <DashboardSectionPill sections={sections} ariaLabel={t('myGamers')} />
-
-      <div className="space-y-24 pb-24">
-        <section id="my-gamers" className="scroll-mt-32">
-          <div className="mx-auto max-w-3xl space-y-6">
-            <div className="space-y-1">
-              <h2 className="text-3xl font-bold">{t('myGamers')}</h2>
-              <p className="text-muted-foreground">{p('myGamersHint')}</p>
-            </div>
-            <MyGamersGrid initialFamily={initialFamily} />
-          </div>
-        </section>
-
-        <section id="sessions" className="scroll-mt-32">
-          <div className="mx-auto max-w-3xl space-y-6">
-            <h2 className="text-3xl font-bold">{t('upcomingSessions')}</h2>
-            <ParentSessionsSection
-              initialRows={initialSessionRows}
-              initialWaitlistRows={initialWaitlistRows}
-            />
-          </div>
-        </section>
-
-        <section id="billing" className="scroll-mt-32">
-          <div className="mx-auto max-w-3xl space-y-6">
-            <h2 className="text-3xl font-bold">{t('billing')}</h2>
-            <ManageBillingCard accounts={billingAccounts} />
-          </div>
-        </section>
-
-        {/* Last section gets viewport-height min so clicking its pill can
-            actually scroll it to the top — without this the page bottoms out
-            mid-scroll and the heading stays in the middle of the viewport. */}
-        <section id="help" className="scroll-mt-32 min-h-[calc(100svh-9rem)]">
-          <div className="mx-auto max-w-3xl space-y-6">
-            <h2 className="text-3xl font-bold">{t('help')}</h2>
-            <ParentHelpSection />
-          </div>
-        </section>
-      </div>
-    </>
   );
 }

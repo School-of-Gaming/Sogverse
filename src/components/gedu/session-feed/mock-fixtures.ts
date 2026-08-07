@@ -113,6 +113,15 @@ export type EntrySpec =
       report?: string;
       /** Gedu note — a reminder for whoever runs it. Plain text. */
       staffNote?: string;
+      /**
+       * Roster ids already marked present — only meaningful on the **live**
+       * entry, the session in progress whose register is already open.
+       *
+       * A future session that has not started can never carry a mark (the
+       * server refuses one before the start instant), so omitting this is the
+       * ordinary case and produces an empty sheet.
+       */
+      present?: readonly string[];
     }
   | {
       kind: "past";
@@ -241,7 +250,7 @@ export const CLUB_FUTURE_SPECS: readonly EntrySpec[] = [
   {
     kind: "future",
     staffNote:
-      "Parents' evening runs late this week — the room may not be free until quarter past. Padlet is up to date if anyone needs to see where the group is.",
+      "Parents' evening runs late this week — the room may not be free until quarter past. Last week's write-up is in if anyone needs to see where the group is.",
   },
   { kind: "future" },
   { kind: "future" },
@@ -617,6 +626,12 @@ function toEntry(
         endsAt,
         report: resolveReportDate(spec.report, startsAt),
         staffNote: spec.staffNote ?? null,
+        // Empty on every ordinary future session — nothing can be marked
+        // before one starts. Populated only to build the live case, whose
+        // register is open because the session is running.
+        attendance: Object.fromEntries(
+          (spec.present ?? []).map((id) => [id, "present" as const]),
+        ),
       };
     case "past":
       return {

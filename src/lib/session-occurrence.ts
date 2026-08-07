@@ -1,17 +1,56 @@
-import { fromZonedTime } from "date-fns-tz";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { getNextSessionStart, stepBackOneWeek } from "@/lib/enrollment";
 
 /**
  * Shared building blocks for resolving "what session does this slot
- * point to right now?" — the bit of expansion logic both
- * `expandUpcomingSessions` (parent/gamer) and
- * `expandAssignedProductsToCards` (gedu) need.
+ * point to right now?" — the bit of expansion logic the family and gedu
+ * roll-ups both need — **and for saying which occurrence one is**, which
+ * every feed that merges stored rows over projections has to agree on.
  *
- * Each consumer handles iteration differently (parent/gamer emits N
- * future occurrences per slot, gedu collapses to the soonest), so we
- * share the awkward pieces — the prev-week-in-window check and the
- * date-to-cutoff conversions — and let the callers iterate.
+ * Each consumer handles iteration differently (a feed walks a whole term
+ * of them, a dashboard card collapses to the soonest), so we share the
+ * awkward pieces — the prev-week-in-window check, the date-to-cutoff
+ * conversions and the identity helpers — and let the callers iterate.
+ *
+ * Role-agnostic on purpose. Every session feed in the app is built out
+ * of these, and a second copy of any of them in a per-role module is how
+ * two surfaces end up disagreeing about which day a session happened on.
  */
+
+/**
+ * `YYYY-MM-DD` as the instant falls in the **product's own zone**.
+ *
+ * The zone is the product's rather than the viewer's because this is an
+ * identity, not a rendering: it is the key a stored row and a projected
+ * occurrence meet on, and both sides of that merge have to name the same
+ * day whoever is looking. Anything shown to a reader converts to the
+ * viewer's zone later, from the instant.
+ */
+export function productLocalDate(instant: Date, timezone: string): string {
+  return formatInTimeZone(instant, timezone, "yyyy-MM-dd");
+}
+
+/**
+ * A feed entry's stable id: the group, and the product-local date it
+ * happened on.
+ *
+ * **A session is a (group, product-local date)** — that is the row's
+ * unique key in Postgres and it is the entry's identity here, so a
+ * projection and a row for the same day are the same thing and meet on
+ * the same map key. Deliberately not the row's primary key, because most
+ * entries have no row, and the ones that do acquire one the moment
+ * anything is written against them — which would change the id of the
+ * card being typed into. `${group}:${date}` is the same string before and
+ * after materialization, which is what lets a scroll anchor, an open
+ * editor and React's own reconciliation survive a save.
+ *
+ * The date also survives the most common schedule edit there is —
+ * somebody fixing the time of day — which keying by instant or by slot
+ * start would not.
+ */
+export function sessionEntryId(groupId: string, sessionDate: string): string {
+  return `${groupId}:${sessionDate}`;
+}
 
 export interface SlotShape {
   weekday: number;
@@ -37,12 +76,17 @@ export interface SlotShape {
  * last week's slot start in local time, so `getNextSessionStart`
  * returns last week's already-finished session and the in-window check
  * fails. Today's in-progress session disappears from the dashboard.
- * Regression coverage lives in
- * `tests/unit/lib/upcoming-sessions.test.ts`.
+ * The regression is pinned in `tests/unit/session-schedule.test.ts`, by
+ * the spring-forward case that reads a room's state mid-session: revert
+ * the week step to a flat 7×24h and that file — and only that file —
+ * goes red.
  *
  * Returns null when the product hasn't started yet
  * (`startBoundary > now`) — no prev-week occurrence can be in
- * progress in that case.
+ * progress in that case. Belt and braces with the `afterStart` check
+ * below, which rejects the same occurrence one step later; either alone
+ * is enough, which is why breaking one of them on its own leaves the
+ * suite green.
  */
 export function getCurrentInProgressOccurrence(args: {
   slot: SlotShape;
@@ -123,11 +167,36 @@ export function endDateToCutoff(
 export const OPEN_ENDED_OCCURRENCE_CAP = 8;
 
 /**
- * Expand one row's slots into the concrete (start, end) pairs the
- * dashboards consume. Shared between `expandUpcomingSessions`
- * (parent/gamer) and `expandAssignedSessionsToCards` (gedu) — the only
- * difference between the callers was the per-row card shaping, not the
- * iteration.
+ * How far forward a single slot is ever walked in one call.
+ *
+ * The mirror of `MAX_PAST_OCCURRENCES_PER_SLOT` below, and the same number for
+ * the same reason: ten years of weekly sessions is comfortably past any product
+ * that could exist and far short of anything that costs a frame. It is a guard
+ * rail, not a product horizon — the real bound is the caller's `endBoundary`,
+ * and every caller asking for an uncapped walk is expected to pass one.
+ */
+export const MAX_FUTURE_OCCURRENCES_PER_SLOT = 520;
+
+/**
+ * The earlier of two optional UTC cutoffs — typically a product's own end date
+ * and a cancelled subscription's paid-through instant. `null` on one side means
+ * "no bound there", so the other wins; both null means unbounded.
+ *
+ * Lives here, beside the `*DateToCutoff` helpers whose output it composes,
+ * because both family dashboards clamp a cancelled enrollment with it and a
+ * verbatim copy in each was a semantic fix waiting to land in only one of them.
+ */
+export function earlierBoundary(a: Date | null, b: Date | null): Date | null {
+  if (a === null) return b;
+  if (b === null) return a;
+  return a.getTime() <= b.getTime() ? a : b;
+}
+
+/**
+ * Expand one row's slots into the concrete (start, end) pairs every
+ * dashboard and feed consumes, on both the family and the gedu side —
+ * the only difference between those callers was the per-row card
+ * shaping, not the iteration.
  *
  * Per-slot it first surfaces a still-in-its-window previous occurrence
  * (the bit `getNextSessionStart` hides because it only ever returns
@@ -138,6 +207,17 @@ export const OPEN_ENDED_OCCURRENCE_CAP = 8;
  *
  * `cap = Infinity` means "no cap" — used for end-dated products where
  * the date range is the natural bound.
+ *
+ * **`Infinity` is bounded here, not by the caller's good behaviour.** An
+ * uncapped walk terminates only when `endBoundary` stops it, so `cap:
+ * Infinity` paired with a null boundary is an infinite loop. Every caller
+ * today does supply a boundary alongside `Infinity` — a product's end date,
+ * or a cancelled subscription's paid-through instant — but that invariant
+ * lived in five call sites and nowhere near the `while` it protects, so it
+ * was one refactor away from being false. `MAX_FUTURE_OCCURRENCES_PER_SLOT`
+ * enforces it where the loop is, exactly as `maxOccurrences` does for the
+ * backward walker below; an unbounded loop in an expansion helper is how
+ * this codebase once pegged a renderer at 100% CPU.
  */
 export function enumerateRowOccurrences(args: {
   slots: SlotShape[];
@@ -151,7 +231,13 @@ export function enumerateRowOccurrences(args: {
   const { slots, timezone, now, startBoundary, endBoundary, cap, windowCloseMs } =
     args;
   const out: Array<{ start: Date; end: Date }> = [];
-  const perSlotCap = Number.isFinite(cap) ? cap : Number.POSITIVE_INFINITY;
+  // The requested cap, floored by the hard ceiling. A finite `cap` is almost
+  // always far below it, so the ceiling only ever bites on an uncapped walk
+  // whose `endBoundary` failed to stop it — which is the case it exists for.
+  const perSlotCap = Math.min(
+    Number.isFinite(cap) ? cap : Number.POSITIVE_INFINITY,
+    MAX_FUTURE_OCCURRENCES_PER_SLOT,
+  );
 
   // If the product hasn't started yet (start_date is in the future), pin
   // the future-iteration cursor to "just before start_date" so the
@@ -295,3 +381,27 @@ export function enumeratePastRowOccurrences(args: {
  * is expected to pass one.
  */
 export const MAX_PAST_OCCURRENCES_PER_SLOT = 520;
+
+/**
+ * How far back an **undated** product's history is projected.
+ *
+ * Nearly every product carries a start date and that is the floor the backward
+ * walk really wants; `start_date` is nullable for open-ended clubs, though, and
+ * a missing one cannot mean "walk to the beginning of time" — the backward
+ * helper would then run to its 520-occurrence guard rail and hand a feed ten
+ * years of dashed placeholder lines for a club nobody claims ran that long.
+ *
+ * A year is the honest answer to "how much history can we assume without being
+ * told": long enough that a club running a full term or three reads completely,
+ * short enough that a feed is not inventing a decade. Stored rows are never
+ * subject to it — a row older than this still renders, because a row is a fact
+ * rather than a projection.
+ */
+export const UNDATED_PRODUCT_PAST_HORIZON_DAYS = 365;
+
+/** The backward floor for a product that never declared a start date. */
+export function undatedPastFloor(now: Date): Date {
+  return new Date(
+    now.getTime() - UNDATED_PRODUCT_PAST_HORIZON_DAYS * 24 * 60 * 60 * 1000,
+  );
+}

@@ -14,9 +14,13 @@
       "minecraftApi": "API du serveur Minecraft",
       "adminDashboard": "Tableau de bord admin",
       "parentDashboard": "Mon SOG",
+      "parentDashboardDescription": "Gérez vos joueurs et leurs inscriptions",
       "geduDashboard": "Mon SOG",
       "geduSessionDetails": "Détails de la session",
-      "gamerHome": "Joueur",
+      "familyProduct": "Séances et comptes rendus",
+      "familyProductDescription": "Le calendrier de ce groupe et le compte rendu de chaque séance.",
+      "gamerDashboard": "Mon SOG",
+      "gamerDashboardDescription": "Vos clubs, camps et événements dans le Sogverse",
       "gamerGroups": "Mes groupes",
       "gamerGroupDetails": "Détails du groupe",
       "voiceSession": "Session vocale",
@@ -229,7 +233,6 @@
         },
         "fields": {
           "topic": "Thème",
-          "padletUrl": "Padlet",
           "materialUrl": "Matériel pédagogique",
           "locales": "Langues",
           "startDate": "Date de début",
@@ -295,7 +298,6 @@
         "shortDescription": "Description courte",
         "longDescription": "Description longue",
         "topic": "Thème",
-        "padletUrl": "URL Padlet",
         "materialUrl": "URL du matériel pédagogique",
         "minAge": "Âge min.",
         "maxAge": "Âge max.",
@@ -328,7 +330,6 @@
       },
       "placeholders": {
         "selectTopic": "Choisir un thème…",
-        "padletUrl": "https://padlet.com/...",
         "materialUrl": "https://drive.sog.gg/...",
         "threshold": "ex. 8",
         "name": {
@@ -436,7 +437,6 @@
         "longDescription": "Facultatif. Affiché uniquement sur la page de détail du produit. Construisez-le à partir de titres et de paragraphes.",
         "topicHint": "Le thème de ce produit — un jeu (comme Minecraft ou Fortnite) ou un sujet (comme un webinaire).",
         "materialUrlHint": "Facultatif. Réservé aux Gedus — les familles ne le voient jamais.",
-        "padletHint": "Facultatif. Partagé avec les familles après leur inscription.",
         "deliveredInHint": "La langue principale utilisée pendant les sessions.",
         "onlineNoLocation": "En ligne et accessible à tous — aucun lieu n’est nécessaire. Tout parent parcourant le catalogue le verra, où qu’il habite.",
         "voiceRoomAuto": "Un salon vocal sera créé automatiquement pour ce produit.",
@@ -471,7 +471,6 @@
         "siteRequired": "Le site est obligatoire pour les produits en présentiel",
         "scheduleRequired": "Au moins un créneau est requis",
         "materialUrlInvalid": "L’URL du matériel pédagogique doit être une URL valide",
-        "padletInvalid": "L’URL Padlet doit être une URL valide",
         "startDateRequired": "La date de début est obligatoire",
         "endDateRequired": "La date de fin est obligatoire",
         "seatCountInvalid": "Le nombre de places doit être un entier positif",
@@ -813,7 +812,6 @@
       "namePlaceholder": "Nom du produit",
       "descriptionLabel": "Description",
       "descriptionPlaceholder": "Décrivez votre produit",
-      "padletUrlLabel": "URL Padlet",
       "approxPerSession": "≈ {amount} par session",
       "imageLabel": "Image",
       "preview": "Aperçu",
@@ -1085,13 +1083,8 @@
   },
   "dashboardSections": {
     "pageTitle": "Mon SOG",
-    "myFamily": "Ma famille",
     "myGamers": "Mes joueurs",
     "myGamersShort": "Joueurs",
-    "upcomingSessions": "Sessions",
-    "upcomingSessionsEmptyStateGamer": "Ta prochaine session apparaîtra ici — avec le lien pour rejoindre ton Gedu et tes amis.",
-    "upcomingSessionsEmptyStateParent": "Quand la prochaine session de votre enfant approchera, c’est ici qu’il rejoindra le salon vocal avec son Gedu et ses amis.",
-    "upcomingSessionsEmptyStateGedu": "Quand une session que vous animez approchera, c’est ici que vous rejoindrez le salon vocal avec vos joueurs.",
     "clubs": "Clubs",
     "camps": "Camps",
     "events": "Événements",
@@ -1102,8 +1095,6 @@
     "settings": "Paramètres",
     "instantVoiceRoom": "Salon vocal instantané",
     "instantVoiceRoomShort": "Salle vocale",
-    "waitlistBand": "En liste d’attente",
-    "scheduledBand": "Programmé",
     "loadingAssignments": "Chargement de vos clubs, camps et événements."
   },
   "family": {
@@ -1140,6 +1131,10 @@
   "familyEnrollment": {
     "emptyState": "{name} n’a encore rien de prévu. Regardez ensemble ce qui est proposé.",
     "wontRenew": "Non renouvelé — dernière session le {date}",
+    "wontRenewLastSession": "Non renouvelé — c’est la dernière session, le {date}",
+    "wontRenewAccessEnds": "Non renouvelé — accès jusqu’au {date}",
+    "awaitingCustomer": "Inscription confirmée — nous lui cherchons un Gedu et un groupe avant la première session.",
+    "awaitingGamer": "Tu es inscrit·e — nous te cherchons un Gedu et un groupe avant ta première session.",
     "noGamers": "Pas encore de joueur ici. Ajoutez votre premier joueur, puis choisissez ensemble un club ou un camp.",
     "emptyStateCta": "Voir les clubs et les camps"
   },
@@ -1158,7 +1153,10 @@
     "emptyFeedGamer": "Rien ici pour l’instant. Chaque séance que tu joues apparaîtra ici ensuite.",
     "paymentProblemNotice": "Le paiement de ce club pose problème — mettez votre carte à jour dans Facturation sur Mon SOG pour conserver la place de {name}.",
     "cancellationNotice": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. La dernière session de {name} est le {date}.",
-    "cancellationNoticeNoSession": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. L’accès reste ouvert jusqu’au {date}."
+    "cancellationNoticeNoSession": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. L’accès reste ouvert jusqu’au {date}.",
+    "loadingPage": "Chargement des séances de ce groupe.",
+    "notFoundTitle": "Rien à afficher ici",
+    "notFoundBody": "Nous n’avons pas pu ouvrir cette page. Mon SOG rassemble toutes vos inscriptions."
   },
   "selectProfile": {
     "title": "Qui entre dans le Sogverse ?"
@@ -1174,8 +1172,8 @@
     "antiBullying": "Lutte contre le harcèlement"
   },
   "gamer": {
-    "welcome": "Bienvenue, joueur !",
     "welcomeNamed": "Bienvenue, {name} !",
+    "fallbackName": "joueur",
     "subtitle": "Envie de jouer et d’apprendre ?",
     "emptyDashboard": "Rien ici pour l’instant. Demande à un parent de regarder les clubs et les camps avec toi, et choisissez-en un ensemble."
   },
@@ -1319,7 +1317,6 @@
     "everyDay": "Chaque {day}",
     "join": "Rejoindre",
     "alwaysOpen": "Toujours ouvert",
-    "padlet": "Padlet",
     "material": "Supports",
     "materialAction": "Supports pédagogiques",
     "materialStaffOnly": "Gedus uniquement — les familles ne voient jamais ce lien",
@@ -1734,21 +1731,7 @@
     "placeholders": {
       "myGamersHint": "Sélectionnez un joueur pour gérer son compte."
     },
-    "nextSession": {
-      "title": "Prochaine session de {name}",
-      "startsIn": "Commence dans {countdown}",
-      "inProgress": "Session en cours",
-      "reports": "Bulletins de session"
-    },
-    "upcomingSession": {
-      "gamerLabel": "Pour {name}"
-    },
     "waitlist": {
-      "forLabel": "Pour {name}",
-      "positionLabel": "Votre position",
-      "positionValue": "n° {position}",
-      "reassuranceCustomer": "Nous vous enverrons un e-mail dès qu’une place se libère.",
-      "reassuranceGamer": "Nous enverrons un e-mail à un parent dès qu’une place se libère.",
       "footerReassuranceCustomer": "Position {position} dans la file — nous vous enverrons un e-mail dès qu’une place se libère.",
       "footerReassuranceGamer": "Tu es en position {position} dans la file — nous enverrons un e-mail à un parent dès qu’une place se libère.",
       "leave": {
@@ -1758,16 +1741,6 @@
         "confirmCta": "Quitter la liste d’attente",
         "backOfLineWarning": "Si vous vous réinscrivez plus tard, vous repartirez de la fin de la file."
       }
-    },
-    "subscriptionEnding": {
-      "wontRenew": "Non renouvelé",
-      "lastSession": "Dernière session",
-      "tooltip": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. La dernière session de {name} est le {lastSession}, et l’accès reste ouvert jusqu’au {accessUntil}.",
-      "tooltipSameDay": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. La dernière session de {name} est le {lastSession}."
-    },
-    "awaiting": {
-      "customer": "{name} est inscrit ! Son Gedu le placera dans un groupe avant le début de la première session.",
-      "gamer": "Ton inscription est complète ! Nous te placerons dans ton groupe avant le début de la prochaine session."
     },
     "help": {
       "contact": {

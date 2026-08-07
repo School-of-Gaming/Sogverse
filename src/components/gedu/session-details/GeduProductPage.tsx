@@ -9,7 +9,8 @@ import {
   type SessionEntryDraft,
   type SessionFeedGamer,
 } from "@/components/gedu/session-feed";
-import { buildGeduSessionFeed, sessionEntryId } from "@/lib/gedu-session-feed";
+import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
+import { sessionEntryId } from "@/lib/session-occurrence";
 import { useNow } from "@/providers";
 import { useGeduAssignedProduct } from "@/services/assignments";
 import {
@@ -276,7 +277,13 @@ function Workspace({
 
     if (draft.kind !== "past") return;
 
-    const current = entry.kind === "past" ? entry.attendance : {};
+    // A live entry carries marks too — it is a `future` entry whose register is
+    // already open — so the diff has to read them. Treating them as `{}` would
+    // resend every mark on each save, and worse, silently swallow an *unmark*
+    // (undefined vs undefined reads as "no change"), losing the one correction
+    // a gedu is most likely to make mid-session.
+    const current =
+      entry.kind === "past" || entry.kind === "future" ? entry.attendance : {};
     const changed = feedRoster.filter(
       (gamer) => draft.attendance[gamer.id] !== current[gamer.id],
     );
@@ -386,6 +393,10 @@ function Workspace({
     <GeduProductPageBody
       data={data}
       entries={entries}
+      // The very instant `entries` were built from — frozen while an editor is
+      // open. Handing the feed anything fresher would step around the freeze
+      // and reclassify a card under a gedu who is typing into it.
+      feedNow={now}
       feedRoster={feedRoster}
       sourceTimeZone={feed.product.timezone}
       materialUrl={feed.product.material_url}

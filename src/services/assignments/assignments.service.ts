@@ -26,14 +26,12 @@ export interface MyAssignedProductSessionRow {
     /**
      * Inclusive start date in product-local calendar (YYYY-MM-DD), or
      * null for ongoing clubs. Matches the participations shape so the
-     * shared upcoming-session expansion (`expandUpcomingSessions`) can
-     * clamp pre-start phantom occurrences out of the list.
+     * shared occurrence enumeration can clamp pre-start phantom
+     * occurrences out of the list.
      */
     startDate: string | null;
     /** Inclusive end date (YYYY-MM-DD), null for ongoing clubs. */
     endDate: string | null;
-    /** External Padlet URL, null when unset. */
-    padletUrl: string | null;
     /** False for in-person products — the join button is a no-op in that case. */
     isRemote: boolean;
     /**
@@ -114,7 +112,6 @@ function toMyAssignedProductSessionRow(
       timezone: row.timezone,
       startDate: row.start_date,
       endDate: row.end_date,
-      padletUrl: row.padlet_url,
       isRemote: row.is_remote,
       productType: row.product_type,
       translations: row.product_translations,

@@ -53,7 +53,6 @@ export type ValidationKey =
   | "municipalityRequired"
   | "siteRequired"
   | "scheduleRequired"
-  | "padletInvalid"
   | "materialUrlInvalid"
   | "startDateRequired"
   | "endDateRequired"
@@ -90,8 +89,8 @@ function err(
  * accepts `javascript:alert(1)`, `data:text/html,…` and `vbscript:…` as
  * perfectly valid URLs, and both fields it guards end up as the `href` of an
  * anchor an admin or a gedu clicks — so parseability on its own is a stored-XSS
- * hole with an extra step. Nothing legitimate is lost: these are links to a
- * Padlet board and to a lesson-plan drive, and both are `https://`.
+ * hole with an extra step. Nothing legitimate is lost: a lesson-plan drive link
+ * is `https://`.
  *
  * An allow-list, deliberately, rather than a block-list of the schemes we happen
  * to know are dangerous — the browser knows more schemes than we do, and the
@@ -156,10 +155,6 @@ export function validate(
   }
 
   if (state.scheduleSlots.length === 0) return err("scheduleRequired");
-
-  if (state.padletUrl.trim() && !isWebUrl(state.padletUrl)) {
-    return err("padletInvalid");
-  }
 
   if (state.materialUrl.trim() && !isWebUrl(state.materialUrl)) {
     return err("materialUrlInvalid");
@@ -410,7 +405,6 @@ function buildSharedFields(
     min_age: minAge,
     max_age: maxAge,
     spoken_language_code: state.spokenLanguageCode,
-    padlet_url: state.padletUrl.trim() || null,
     material_url: state.materialUrl.trim() || null,
     location_id: state.locationId,
     is_remote: state.isRemote,
@@ -680,7 +674,6 @@ export function existingFormState(
     translations,
     activeLocale,
     topic: product.topic,
-    padletUrl: product.padlet_url ?? "",
     // Staff-only, so it rides in on its own embedded row rather than on the
     // product itself. No row at all is the ordinary "no lesson link" case.
     materialUrl: product.product_staff_details?.material_url ?? "",

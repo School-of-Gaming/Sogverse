@@ -162,6 +162,29 @@ export function reportOverflows(markdown: string): boolean {
 }
 
 /**
+ * Whether a stored report field actually carries a write-up.
+ *
+ * `null`, `""` and a field holding nothing but whitespace are the same answer:
+ * nobody has written anything. The editor trims on the way out and collapses an
+ * emptied field back to `null`, so the middle two are transient — but a value
+ * can still arrive here untrimmed (a draft mid-save, a row written before that
+ * collapse existed), and a space is not a session report.
+ *
+ * **It lives in the shared module because every surface has to answer it the
+ * same way,** and each of them asks it more than once: a feed decides whether a
+ * row is a card or a quiet dashed line, and the row itself decides whether to
+ * render a body. Two subtly different copies within one feed is all it takes to
+ * draw a card-weight rail marker beside a line that says "no write-up" — which
+ * is exactly what an untrimmed emptiness test did here. The builders pass the
+ * field through untrimmed so that this stays the only place the question is
+ * answered on the client; the dashboard's SQL twin uses `btrim` with an
+ * explicit whitespace list to give the same answer server-side.
+ */
+export function hasReport(report: string | null): boolean {
+  return report !== null && report.trim().length > 0;
+}
+
+/**
  * A markdown line reduced to the text a reader actually sees on it.
  *
  * Only the leading block markers and the inline emphasis runs matter here —

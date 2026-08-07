@@ -172,7 +172,6 @@ export type CreateProductInput = {
   min_age: number;
   max_age: number;
   spoken_language_code: string;
-  padlet_url: string | null;
   /**
    * Gedu/admin-only lesson material. Never rendered to a family — and not a
    * column on `products`, which is anon-readable by column selection. The RPC
@@ -218,7 +217,6 @@ export type UpdateProductInput = {
   min_age: number;
   max_age: number;
   spoken_language_code: string;
-  padlet_url: string | null;
   /**
    * Gedu/admin-only lesson material. Never rendered to a family — and not a
    * column on `products`, which is anon-readable by column selection. The RPC

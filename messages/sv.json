@@ -14,9 +14,13 @@
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Administratörspanel",
       "parentDashboard": "Min SOG",
+      "parentDashboardDescription": "Hantera dina spelare och deras anmälningar",
       "geduDashboard": "Min SOG",
       "geduSessionDetails": "Sessionsdetaljer",
-      "gamerHome": "Spelare",
+      "familyProduct": "Tillfällen och sammanfattningar",
+      "familyProductDescription": "Gruppens schema och sammanfattningen från varje tillfälle.",
+      "gamerDashboard": "Min SOG",
+      "gamerDashboardDescription": "Dina klubbar, läger och evenemang i Sogverse",
       "gamerGroups": "Mina grupper",
       "gamerGroupDetails": "Gruppdetaljer",
       "voiceSession": "Röstsession",
@@ -229,7 +233,6 @@
         },
         "fields": {
           "topic": "Ämne",
-          "padletUrl": "Padlet",
           "materialUrl": "Lektionsmaterial",
           "locales": "Språk",
           "startDate": "Startdatum",
@@ -295,7 +298,6 @@
         "shortDescription": "Kort beskrivning",
         "longDescription": "Lång beskrivning",
         "topic": "Ämne",
-        "padletUrl": "Padlet-URL",
         "materialUrl": "URL till lektionsmaterial",
         "minAge": "Min ålder",
         "maxAge": "Max ålder",
@@ -328,7 +330,6 @@
       },
       "placeholders": {
         "selectTopic": "Välj ett ämne…",
-        "padletUrl": "https://padlet.com/...",
         "materialUrl": "https://drive.sog.gg/...",
         "threshold": "t.ex. 8",
         "name": {
@@ -436,7 +437,6 @@
         "longDescription": "Valfritt. Visas endast på produktens detaljsida. Bygg den av rubriker och stycken.",
         "topicHint": "Produktens ämne — ett spel (som Minecraft eller Fortnite) eller ett ämne (som webbinarium).",
         "materialUrlHint": "Valfritt. Endast för Gedus — familjer ser aldrig detta.",
-        "padletHint": "Valfritt. Delas med familjer efter att de anmält sig.",
         "deliveredInHint": "Det primära språk som används under tillfällena.",
         "onlineNoLocation": "Online och tillgänglig för alla — ingen plats behövs. Alla föräldrar som bläddrar ser detta, oavsett var de bor.",
         "voiceRoomAuto": "Ett röstrum skapas automatiskt för denna produkt.",
@@ -471,7 +471,6 @@
         "siteRequired": "Lokal krävs för produkter på plats",
         "scheduleRequired": "Minst en schemarad krävs",
         "materialUrlInvalid": "URL till lektionsmaterial måste vara en giltig URL",
-        "padletInvalid": "Padlet-URL måste vara en giltig URL",
         "startDateRequired": "Startdatum krävs",
         "endDateRequired": "Slutdatum krävs",
         "seatCountInvalid": "Antal platser måste vara ett positivt heltal",
@@ -813,7 +812,6 @@
       "namePlaceholder": "Produktnamn",
       "descriptionLabel": "Beskrivning",
       "descriptionPlaceholder": "Beskriv din produkt",
-      "padletUrlLabel": "Padlet-URL",
       "approxPerSession": "≈ {amount} per session",
       "imageLabel": "Bild",
       "preview": "Förhandsgranska",
@@ -1085,13 +1083,8 @@
   },
   "dashboardSections": {
     "pageTitle": "Min SOG",
-    "myFamily": "Min familj",
     "myGamers": "Mina spelare",
     "myGamersShort": "Spelare",
-    "upcomingSessions": "Träffar",
-    "upcomingSessionsEmptyStateGamer": "När din nästa träff börjar är det här du går in i röstrummet med din Gedu och dina vänner.",
-    "upcomingSessionsEmptyStateParent": "När ditt barns nästa träff börjar är det här hen går in i röstrummet med sin Gedu och sina vänner.",
-    "upcomingSessionsEmptyStateGedu": "När en träff du leder närmar sig är det här du går in i röstrummet med dina spelare.",
     "clubs": "Klubbar",
     "camps": "Läger",
     "events": "Evenemang",
@@ -1102,8 +1095,6 @@
     "settings": "Inställningar",
     "instantVoiceRoom": "Direkt röstrum",
     "instantVoiceRoomShort": "Röstrum",
-    "waitlistBand": "På väntelistan",
-    "scheduledBand": "Schemalagda",
     "loadingAssignments": "Laddar dina klubbar, läger och evenemang."
   },
   "family": {
@@ -1140,6 +1131,10 @@
   "familyEnrollment": {
     "emptyState": "{name} är inte anmäld till något ännu. Titta tillsammans på vad som finns.",
     "wontRenew": "Förnyas inte — sista passet {date}",
+    "wontRenewLastSession": "Förnyas inte — det här är sista passet, {date}",
+    "wontRenewAccessEnds": "Förnyas inte — deltagandet upphör {date}",
+    "awaitingCustomer": "Anmälan är klar — vi letar upp en Gedu och en grupp före första passet.",
+    "awaitingGamer": "Du är anmäld — vi letar upp en Gedu och en grupp åt dig före ditt första pass.",
     "noGamers": "Inga gamers här ännu. Lägg till din första gamer och välj sedan en klubb eller ett läger tillsammans.",
     "emptyStateCta": "Bläddra bland klubbar och läger"
   },
@@ -1158,7 +1153,10 @@
     "emptyFeedGamer": "Inget här än. Varje tillfälle du spelar dyker upp här efteråt.",
     "paymentProblemNotice": "Det är problem med betalningen för den här klubben – uppdatera ditt kort under Fakturering på Min SOG så att {name} behåller sin plats.",
     "cancellationNotice": "Du har sagt upp medlemskapet — det förnyas inte. {name}s sista pass är {date}.",
-    "cancellationNoticeNoSession": "Du har sagt upp medlemskapet — det förnyas inte. Du har tillgång till {date}."
+    "cancellationNoticeNoSession": "Du har sagt upp medlemskapet — det förnyas inte. Du har tillgång till {date}.",
+    "loadingPage": "Laddar gruppens tillfällen.",
+    "notFoundTitle": "Inget att visa här",
+    "notFoundBody": "Vi kunde inte öppna den här sidan. På Min SOG finns allt du är anmäld till."
   },
   "selectProfile": {
     "title": "Vem ska in i Sogverse?"
@@ -1174,8 +1172,8 @@
     "antiBullying": "Mot mobbning"
   },
   "gamer": {
-    "welcome": "Välkommen, spelare!",
     "welcomeNamed": "Välkommen, {name}!",
+    "fallbackName": "spelare",
     "subtitle": "Redo att spela och lära dig?",
     "emptyDashboard": "Inget här än. Be en förälder titta på klubbarna och lägren tillsammans med dig, så väljer ni något ihop."
   },
@@ -1319,7 +1317,6 @@
     "everyDay": "Varje {day}",
     "join": "Gå med",
     "alwaysOpen": "Alltid öppen",
-    "padlet": "Padlet",
     "material": "Material",
     "materialAction": "Undervisningsmaterial",
     "materialStaffOnly": "Endast Gedus — familjerna ser aldrig den här länken",
@@ -1734,21 +1731,7 @@
     "placeholders": {
       "myGamersHint": "Välj en spelare för att hantera kontot."
     },
-    "nextSession": {
-      "title": "{name}s nästa pass",
-      "startsIn": "Börjar om {countdown}",
-      "inProgress": "Pass pågår",
-      "reports": "Rapporter"
-    },
-    "upcomingSession": {
-      "gamerLabel": "För {name}"
-    },
     "waitlist": {
-      "forLabel": "För {name}",
-      "positionLabel": "Din plats i kön",
-      "positionValue": "nr {position}",
-      "reassuranceCustomer": "Vi mejlar så snart en plats blir ledig.",
-      "reassuranceGamer": "Vi mejlar en förälder så snart en plats blir ledig.",
       "footerReassuranceCustomer": "Plats {position} i kön — vi mejlar så snart en plats blir ledig.",
       "footerReassuranceGamer": "Du är på plats {position} i kön — vi mejlar en förälder så snart en plats blir ledig.",
       "leave": {
@@ -1758,16 +1741,6 @@
         "confirmCta": "Lämna väntelistan",
         "backOfLineWarning": "Om du ställer dig på väntelistan igen senare börjar du längst bak i kön."
       }
-    },
-    "subscriptionEnding": {
-      "wontRenew": "Förnyas inte",
-      "lastSession": "Sista passet",
-      "tooltip": "Du har sagt upp medlemskapet — det förnyas inte. {name}s sista pass är {lastSession}, och du har tillgång till {accessUntil}.",
-      "tooltipSameDay": "Du har sagt upp medlemskapet — det förnyas inte. {name}s sista pass är {lastSession}."
-    },
-    "awaiting": {
-      "customer": "{name} är med! Gedun placerar hen i en grupp innan det första passet börjar.",
-      "gamer": "Du är med! Vi placerar dig i din grupp innan nästa pass börjar."
     },
     "help": {
       "contact": {

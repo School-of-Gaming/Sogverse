@@ -96,70 +96,147 @@ function future(
     ...WHEN,
     report: null,
     staffNote: null,
+    attendance: {},
     ...fields,
   };
 }
 
 /**
+ * Two instants either side of the fixture session, for the predicates that now
+ * take a clock.
+ *
+ * `BEFORE_START` is the ordinary future case — nothing has begun. `MID_SESSION`
+ * sits between the fixture's start and end, which is the **live** case: since
+ * the kind flips at the session's *end*, that entry is still `future`, and the
+ * register is open because the session has started.
+ */
+const BEFORE_START = new Date("2026-03-02T09:00:00.000Z");
+const MID_SESSION = new Date("2026-03-02T15:00:00.000Z");
+const AFTER_END = new Date("2026-03-02T18:00:00.000Z");
+
+/**
  * Editability is **not** the epoch's business, and this is where the two
  * questions are held apart. What is *owed* stops at the enforcement epoch; what
  * can be *recorded* reaches back to the product's start date, so a pre-epoch
- * gap opens the very same editor last week's session does. The only exclusion
- * is the future, and it has nothing to do with the epoch: attendance is a
- * record of what happened.
+ * gap opens the very same editor last week's session does.
+ *
+ * The one exclusion is a future session that **has not started**. It is no
+ * longer the same statement as "is not a future entry": the kind flips at the
+ * session's end, so the session in progress is a future entry *and* is
+ * editable. That is the roll-call case, and it is why these predicates take a
+ * clock at all.
  */
 describe("isEditableEntry", () => {
   it("accepts a past session whether or not anything is recorded on it", () => {
-    expect(isEditableEntry(past("r", { attendance: ALL_MARKED }))).toBe(true);
-    expect(isEditableEntry(past("g"))).toBe(true);
+    expect(
+      isEditableEntry(past("r", { attendance: ALL_MARKED }), AFTER_END),
+    ).toBe(true);
+    expect(isEditableEntry(past("g"), AFTER_END)).toBe(true);
   });
 
   it("accepts a pre-epoch gap — nothing is owed, everything is editable", () => {
-    expect(isEditableEntry(noRecord("n"))).toBe(true);
+    expect(isEditableEntry(noRecord("n"), AFTER_END)).toBe(true);
   });
 
   it("accepts a pre-epoch session somebody went back and recorded", () => {
-    expect(isEditableEntry(unowedPast("o", { attendance: ALL_MARKED }))).toBe(
-      true,
-    );
+    expect(
+      isEditableEntry(unowedPast("o", { attendance: ALL_MARKED }), AFTER_END),
+    ).toBe(true);
   });
 
-  it("rejects future sessions, and only those", () => {
-    expect(isEditableEntry(future("u"))).toBe(false);
+  it("rejects a future session that has not started", () => {
+    expect(isEditableEntry(future("u"), BEFORE_START)).toBe(false);
+  });
+
+  /*
+   * THE ROLL-CALL CASE. A gedu takes the register and writes the report while
+   * the session is running, and that has to keep working now the running
+   * session is classified `future` rather than `past`.
+   *
+   * The scenario that surfaced this is a daily camp scheduled 8:00-23:00. Under
+   * the old start-based split the session dropped into history at 8:00 and the
+   * workspace spent the next fifteen hours calling it "last time" and naming
+   * tomorrow as next - while the gedu was still standing in it. A ninety-minute
+   * club hid the problem; a fifteen-hour one makes it the whole day.
+   */
+  it("accepts a future session that has already started — roll call", () => {
+    expect(isEditableEntry(future("live"), MID_SESSION)).toBe(true);
+  });
+
+  /*
+   * THE INCOHERENT PAIR, and why these predicates say "is live" rather than
+   * "has started".
+   *
+   * A `future` entry paired with a clock past its own `endsAt` cannot come out
+   * of the builder — the kind means "has not ended", so entries and clock are
+   * built from one instant and agree. It arises only when somebody hands these
+   * predicates a FRESHER clock than the entries were built from, which is
+   * exactly the defect they were reconciled with the feed component to prevent:
+   * the workspace freezes the feed's clock while an editor is open, and a
+   * component reading the ticking provider instead produced precisely this pair
+   * and swapped the open editor out from under a gedu mid-roll-call.
+   *
+   * Pinned here so the pair stays total and disjoint even on input that should
+   * never occur. Both predicates are one expression and its negation, so no
+   * clock — coherent or not — can produce an entry offering two editors or
+   * none. Under the old start-only definition this same entry was editable
+   * *and* plannable's complement disagreed with the component's own rule, which
+   * is the drift that let the two definitions come apart unnoticed.
+   */
+  it("holds a stale future entry to exactly one editor", () => {
+    const stale = future("stale");
+    expect(isEditableEntry(stale, AFTER_END)).toBe(false);
+    expect(isPlannableEntry(stale, AFTER_END)).toBe(true);
   });
 });
 
 describe("isPlannableEntry", () => {
-  it("accepts only future sessions", () => {
-    expect(isPlannableEntry(future("u"))).toBe(true);
-    expect(isPlannableEntry(past("g"))).toBe(false);
-    expect(isPlannableEntry(noRecord("n"))).toBe(false);
+  it("accepts only a future session that has not started", () => {
+    expect(isPlannableEntry(future("u"), BEFORE_START)).toBe(true);
+    expect(isPlannableEntry(past("g"), AFTER_END)).toBe(false);
+    expect(isPlannableEntry(noRecord("n"), AFTER_END)).toBe(false);
+  });
+
+  // The live session takes the *record* editor, not the notes-only one: a
+  // register it cannot reach is exactly the regression this whole change had
+  // to avoid.
+  it("rejects the session in progress — that one records", () => {
+    expect(isPlannableEntry(future("live"), MID_SESSION)).toBe(false);
   });
 
   it("never overlaps with the record editor's set", () => {
-    const entries: SessionFeedEntry[] = [
-      future("u"),
-      past("r", { attendance: ALL_MARKED }),
-      past("g"),
-      unowedPast("o"),
-      noRecord("n"),
+    const cases: [SessionFeedEntry, Date][] = [
+      [future("u"), BEFORE_START],
+      [future("live"), MID_SESSION],
+      // The pair the builder never emits — see the stale-entry case above.
+      [future("stale"), AFTER_END],
+      [past("r", { attendance: ALL_MARKED }), AFTER_END],
+      [past("g"), AFTER_END],
+      [unowedPast("o"), AFTER_END],
+      [noRecord("n"), AFTER_END],
     ];
-    for (const entry of entries) {
-      expect(isEditableEntry(entry) && isPlannableEntry(entry)).toBe(false);
+    for (const [entry, now] of cases) {
+      expect(isEditableEntry(entry, now) && isPlannableEntry(entry, now)).toBe(
+        false,
+      );
     }
   });
 
   it("covers every entry between them — nothing opens no editor at all", () => {
-    const entries: SessionFeedEntry[] = [
-      future("u"),
-      past("g"),
-      unowedPast("o"),
-      noRecord("n"),
+    const cases: [SessionFeedEntry, Date][] = [
+      [future("u"), BEFORE_START],
+      [future("live"), MID_SESSION],
+      // The pair the builder never emits — see the stale-entry case above.
+      [future("stale"), AFTER_END],
+      [past("g"), AFTER_END],
+      [unowedPast("o"), AFTER_END],
+      [noRecord("n"), AFTER_END],
     ];
-    for (const entry of entries) {
-      expect(isEditableEntry(entry) || isPlannableEntry(entry), entry.id).toBe(
-        true,
-      );
+    for (const [entry, now] of cases) {
+      expect(
+        isEditableEntry(entry, now) || isPlannableEntry(entry, now),
+        entry.id,
+      ).toBe(true);
     }
   });
 });
@@ -532,6 +609,9 @@ describe("applyPlanDraftToEntry", () => {
       endsAt: END,
       report: "Lighthouse week.",
       staffNote: "Bring the spare mouse.",
+      // A future entry carries a sheet now, because one of them can be the
+      // session in progress. Planning notes never touch it.
+      attendance: {},
     });
   });
 

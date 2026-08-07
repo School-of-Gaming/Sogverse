@@ -130,6 +130,20 @@ interface GeduProductPageBodyProps {
    * so the next session is the last of them), then the term running backwards.
    */
   entries: readonly SessionFeedEntry[];
+  /**
+   * The instant `entries` were built from, handed to the feed so its liveness,
+   * its editor selection and its labels all answer off the same clock the
+   * entries did.
+   *
+   * **Deliberately not this component's own `useNow()`**, which is the live
+   * ticking clock and stays that way: the masthead's voice window must keep
+   * reading it, or a Join button would lie about whether a room is open. The
+   * feed's clock is the caller's to decide because the caller is what freezes
+   * it while a session editor is open — see the workspace's own note. Two
+   * clocks on this page on purpose, and the split is which of them can be
+   * stopped.
+   */
+  feedNow: Date;
   /** Attendance roster for the feed — same children as the group roster. */
   feedRoster: readonly SessionFeedGamer[];
   /** Zone the schedule was authored in; the feed renders in the viewer's. */
@@ -198,6 +212,7 @@ interface GeduProductPageBodyProps {
 export function GeduProductPageBody({
   data,
   entries,
+  feedNow,
   feedRoster,
   sourceTimeZone,
   materialUrl,
@@ -263,11 +278,11 @@ export function GeduProductPageBody({
       <SessionDetailsBackLink />
 
       {/* The masthead is a two-column row on desktop: identity on the left,
-          the one outward action on the right. The Padlet used to sit up here
-          beside it — it is gone from this page for good. Session reports are
-          what families now read, so a link out to a third-party wall was a
-          second, staler answer to the same question, and leaving it would have
-          taught gedus to keep posting there. */}
+          the one outward action on the right. A family-facing link out to a
+          third-party wall used to sit up here beside it, and is gone for good:
+          the session reports below are what families read now, so the link was
+          a second, staler answer to the same question, and leaving it would
+          have taught gedus to keep posting there. */}
       <header className="mt-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-4 border-b border-border pb-5">
         <div className="min-w-0">
           <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -386,6 +401,7 @@ export function GeduProductPageBody({
             // the rail — which read as a rendering fault, not as typography.
             <SessionFeed
               entries={entries}
+              now={feedNow}
               roster={feedRoster}
               sourceTimeZone={sourceTimeZone}
               editingEntryId={editingEntryId}

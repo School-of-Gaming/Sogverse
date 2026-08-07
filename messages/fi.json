@@ -14,12 +14,16 @@
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Ylläpidon hallintapaneeli",
       "parentDashboard": "Oma SOG",
+      "parentDashboardDescription": "Hallitse pelaajiasi ja heidän ilmoittautumisiaan",
       "geduDashboard": "Oma SOG",
       "geduSessionDetails": "Session tiedot",
+      "familyProduct": "Kerrat ja koosteet",
+      "familyProductDescription": "Tämän ryhmän aikataulu ja jokaisen kerran kooste.",
       "help": "Apu",
       "shop": "Kauppa",
       "schools": "Kuntakerhot",
-      "gamerHome": "Pelaaja",
+      "gamerDashboard": "Oma SOG",
+      "gamerDashboardDescription": "Kerhosi, leirisi ja tapahtumasi Sogversessa",
       "gamerGroups": "Omat ryhmät",
       "gamerGroupDetails": "Ryhmän tiedot",
       "voiceSession": "Ääni-istunto",
@@ -229,7 +233,6 @@
         },
         "fields": {
           "topic": "Aihe",
-          "padletUrl": "Padlet",
           "materialUrl": "Oppimateriaali",
           "locales": "Kielet",
           "startDate": "Alkamispäivä",
@@ -295,7 +298,6 @@
         "shortDescription": "Lyhyt kuvaus",
         "longDescription": "Pitkä kuvaus",
         "topic": "Aihe",
-        "padletUrl": "Padlet-osoite",
         "materialUrl": "Oppimateriaalin osoite",
         "minAge": "Alaikäraja",
         "maxAge": "Yläikäraja",
@@ -328,7 +330,6 @@
       },
       "placeholders": {
         "selectTopic": "Valitse aihe…",
-        "padletUrl": "https://padlet.com/...",
         "materialUrl": "https://drive.sog.gg/...",
         "threshold": "esim. 8",
         "name": {
@@ -436,7 +437,6 @@
         "longDescription": "Valinnainen. Näkyy vain tuotteen tuotesivulla. Koosta se otsikoista ja kappaleista.",
         "topicHint": "Tuotteen aihe — peli (kuten Minecraft tai Fortnite) tai aine (kuten webinaari).",
         "materialUrlHint": "Valinnainen. Vain Geduille — perheet eivät näe tätä.",
-        "padletHint": "Valinnainen. Jaetaan perheille ilmoittautumisen jälkeen.",
         "deliveredInHint": "Pääkieli, jota kerroilla käytetään.",
         "onlineNoLocation": "Verkossa ja avoin kaikille — sijaintia ei tarvita. Kaikki selailevat vanhemmat näkevät tämän asuinpaikasta riippumatta.",
         "voiceRoomAuto": "Tälle tuotteelle luodaan automaattisesti puhehuone.",
@@ -471,7 +471,6 @@
         "siteRequired": "Toimipiste vaaditaan paikan päällä toteutettaville tuotteille",
         "scheduleRequired": "Vähintään yksi aikatauluväli vaaditaan",
         "materialUrlInvalid": "Oppimateriaalin osoitteen on oltava kelvollinen URL",
-        "padletInvalid": "Padlet-osoitteen on oltava kelvollinen URL",
         "startDateRequired": "Alkupäivä vaaditaan",
         "endDateRequired": "Loppupäivä vaaditaan",
         "seatCountInvalid": "Paikkamäärän on oltava positiivinen kokonaisluku",
@@ -813,7 +812,6 @@
       "namePlaceholder": "Tuotteen nimi",
       "descriptionLabel": "Kuvaus",
       "descriptionPlaceholder": "Kuvaile tuotettasi",
-      "padletUrlLabel": "Padlet-URL",
       "approxPerSession": "≈ {amount} per kerta",
       "imageLabel": "Kuva",
       "preview": "Esikatselu",
@@ -1085,13 +1083,8 @@
   },
   "dashboardSections": {
     "pageTitle": "Oma SOG",
-    "myFamily": "Perheeni",
     "myGamers": "Pelaajani",
     "myGamersShort": "Pelaajat",
-    "upcomingSessions": "Tapaamiset",
-    "upcomingSessionsEmptyStateGamer": "Kun seuraava tapaamisesi lähestyy, täältä pääset liittymään ryhmän omalle puhekanavalle.",
-    "upcomingSessionsEmptyStateParent": "Kun lapsesi seuraavan tapaamisen aika koittaa, ilmestyy tähän painike, josta pääsette sisään puhekanaville.",
-    "upcomingSessionsEmptyStateGedu": "Kun ohjaamasi tapaaminen lähestyy, täältä pääset liittymään puhekanavalle pelaajiesi kanssa.",
     "clubs": "Kerhot",
     "camps": "Leirit",
     "events": "Tapahtumat",
@@ -1102,8 +1095,6 @@
     "settings": "Asetukset",
     "instantVoiceRoom": "Pikaäänihuone",
     "instantVoiceRoomShort": "Äänihuone",
-    "waitlistBand": "Jonotuslistalla",
-    "scheduledBand": "Aikataulussa",
     "loadingAssignments": "Ladataan kerhojasi, leirejäsi ja tapahtumiasi."
   },
   "family": {
@@ -1140,6 +1131,10 @@
   "familyEnrollment": {
     "emptyState": "{name} ei ole vielä ilmoittautunut mihinkään. Katsokaa yhdessä, mitä tarjolla on.",
     "wontRenew": "Ei uusiudu — viimeinen kerta {date}",
+    "wontRenewLastSession": "Ei uusiudu — tämä on viimeinen kerta {date}",
+    "wontRenewAccessEnds": "Ei uusiudu — osallistuminen päättyy {date}",
+    "awaitingCustomer": "Ilmoittautuminen on valmis — etsimme hänelle Gedun ja ryhmän ennen ensimmäistä kertaa.",
+    "awaitingGamer": "Olet mukana — etsimme sinulle Gedun ja ryhmän ennen ensimmäistä kertaa.",
     "noGamers": "Täällä ei ole vielä pelaajia. Lisää ensimmäinen pelaaja ja valitkaa sitten yhdessä kerho tai leiri.",
     "emptyStateCta": "Selaa kerhoja ja leirejä"
   },
@@ -1158,7 +1153,10 @@
     "emptyFeedGamer": "Täällä ei ole vielä mitään. Jokainen pelaamasi kerta näkyy täällä jälkeenpäin.",
     "paymentProblemNotice": "Tämän kerhon maksussa on ongelma – päivitä korttitietosi Oman SOGin Laskutus-osiossa, jotta {name} säilyttää paikkansa.",
     "cancellationNotice": "Peruit tämän jäsenyyden – se ei uusiudu. {name}: viimeinen kerta on {date}.",
-    "cancellationNoticeNoSession": "Peruit tämän jäsenyyden – se ei uusiudu. Käyttöoikeus jatkuu {date} asti."
+    "cancellationNoticeNoSession": "Peruit tämän jäsenyyden – se ei uusiudu. Käyttöoikeus jatkuu {date} asti.",
+    "loadingPage": "Ladataan tämän ryhmän kertoja.",
+    "notFoundTitle": "Täällä ei ole näytettävää",
+    "notFoundBody": "Tätä sivua ei voitu avata. Omasta SOGista löydät kaiken, mihin olet ilmoittautunut."
   },
   "selectProfile": {
     "title": "Kuka astuu Sogverseen?"
@@ -1174,8 +1172,8 @@
     "antiBullying": "Kiusaamisen ehkäisy"
   },
   "gamer": {
-    "welcome": "Tervetuloa, pelaaja!",
     "welcomeNamed": "Tervetuloa, {name}!",
+    "fallbackName": "pelaaja",
     "subtitle": "Valmis pelaamaan ja oppimaan?",
     "emptyDashboard": "Täällä ei ole vielä mitään. Pyydä vanhempaasi katsomaan kerhoja ja leirejä kanssasi, niin voitte valita jotain yhdessä."
   },
@@ -1319,7 +1317,6 @@
     "everyDay": "Joka {day}",
     "join": "Liity",
     "alwaysOpen": "Aina auki",
-    "padlet": "Padlet",
     "material": "Materiaalit",
     "materialAction": "Opetusmateriaalit",
     "materialStaffOnly": "Vain Geduille — perheet eivät näe tätä linkkiä",
@@ -1734,21 +1731,7 @@
     "placeholders": {
       "myGamersHint": "Valitse pelaaja hallitaksesi hänen tiliään."
     },
-    "nextSession": {
-      "title": "{name}: seuraava sessio",
-      "startsIn": "Alkaa {countdown} kuluttua",
-      "inProgress": "Sessio käynnissä",
-      "reports": "Raportit"
-    },
-    "upcomingSession": {
-      "gamerLabel": "Pelaaja: {name}"
-    },
     "waitlist": {
-      "forLabel": "Pelaaja: {name}",
-      "positionLabel": "Sijasi jonossa",
-      "positionValue": "{position}.",
-      "reassuranceCustomer": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
-      "reassuranceGamer": "Lähetämme vanhemmallesi sähköpostia heti, kun paikka vapautuu.",
       "footerReassuranceCustomer": "Jonossa sijalla {position} — lähetämme sähköpostia heti, kun paikka vapautuu.",
       "footerReassuranceGamer": "Olet jonossa sijalla {position} — lähetämme vanhemmallesi sähköpostia heti, kun paikka vapautuu.",
       "leave": {
@@ -1758,16 +1741,6 @@
         "confirmCta": "Poistu jonotuslistalta",
         "backOfLineWarning": "Jos liityt jonotuslistalle myöhemmin uudelleen, aloitat jonon lopusta."
       }
-    },
-    "subscriptionEnding": {
-      "wontRenew": "Ei uusiudu",
-      "lastSession": "Viimeinen kerta",
-      "tooltip": "Peruit tämän jäsenyyden – se ei uusiudu. {name}: viimeinen kerta on {lastSession}, ja käyttöoikeus jatkuu {accessUntil} asti.",
-      "tooltipSameDay": "Peruit tämän jäsenyyden – se ei uusiudu. {name}: viimeinen kerta on {lastSession}."
-    },
-    "awaiting": {
-      "customer": "{name} on mukana! Gedu sijoittaa hänet ryhmään ennen ensimmäisen session alkua.",
-      "gamer": "Olet mukana! Sijoitamme sinut ryhmääsi ennen seuraavan session alkua."
     },
     "help": {
       "contact": {

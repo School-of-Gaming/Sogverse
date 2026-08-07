@@ -488,7 +488,6 @@ function assignmentRow(opts: {
         opts.endsInDays === null
           ? null
           : calendarDate(opts.now, opts.endsInDays, SESSION_FEED_TIMEZONE),
-      padletUrl: null,
       isRemote: opts.isRemote,
       productType: opts.productType,
       translations: [{ locale: "en", name: opts.name, description: "" }],

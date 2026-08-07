@@ -12,12 +12,10 @@
  * with the family's read-only feed and lives in `@/components/session-feed`.
  */
 
-import type { AttendanceMark } from "@/components/session-feed";
+import { hasReport, type AttendanceMark } from "@/components/session-feed";
 import type {
   AttendanceMarks,
-  EditableSessionFeedEntry,
   FutureSessionFeedEntry,
-  PastSessionFeedEntry,
   SessionEditorState,
   SessionFeedEntry,
   SessionFeedGamer,
@@ -27,36 +25,102 @@ import type {
 } from "./types";
 
 /**
+ * Whether this entry is the session happening **right now** — started, not yet
+ * finished.
+ *
+ * Identical arithmetic to the family feed's live tag, including the exclusive
+ * `endsAt` boundary, and deliberately so: the kind flips at the same instant the
+ * tag stops being live, so there is no tick in which an entry is live but past,
+ * or future but untagged. A conjunction with `kind === "future"` rather than a
+ * bare time test, so that the one thing the caller renders and the one thing the
+ * builder decided cannot come apart.
+ *
+ * **This is the primitive the two editor predicates below are built from**, so
+ * the module holds one rule about the clock rather than three that have to be
+ * kept in step with each other.
+ */
+export function isLiveEntry(entry: SessionFeedEntry, now: Date): boolean {
+  return (
+    entry.kind === "future" &&
+    entry.startsAt.getTime() <= now.getTime() &&
+    now.getTime() < entry.endsAt.getTime()
+  );
+}
+
+/**
+ * **The clock these predicates take must be the one the entries were built
+ * from, not a fresher read.**
+ *
+ * The builder guarantees a `future` entry has not ended — that is what the kind
+ * means — and everything below leans on it. Hand them a `now` that has run past
+ * an entry's `endsAt` while the entry itself is still the `future` one built at
+ * an earlier instant, and the pair is incoherent: the entry says "not over", the
+ * clock says otherwise.
+ *
+ * That is not hypothetical, which is why it is written down here. The workspace
+ * deliberately **freezes** the feed's clock while an editor is open, so nothing
+ * can be reclassified under somebody who is typing into it. If liveness were
+ * then read from a ticking provider instead of from that frozen instant, the
+ * open editor would be swapped for the other editor mid-edit and the draft would
+ * go with it. One instant in, one coherent set of answers out.
+ */
+
+/**
  * Whether an entry can be expanded into the **write-up** editor.
  *
- * **Owed and editable are different questions, and they turn on different
- * things.** Editability turns on the session's *start*: everything that has
- * begun is editable, back to the product's start date, and a session under way
- * is included on purpose — that is the roll-call case. Being owed turns on the
- * epoch and the session's *end*, and lives on the entry's `owed` flag rather
- * than here. Every past session is editable, back to the product's start date:
- * a gedu who wants to record attendance on a session from before the platform
+ * **Owed and editable are different questions.** Being owed turns on the epoch
+ * and the session's *end*, and lives on the entry's `owed` flag rather than
+ * here. Every past session is editable, back to the product's start date: a
+ * gedu who wants to record attendance on a session from before the platform
  * started asking is doing something useful, and refusing them an editor to
  * enforce a deadline that was never set is the wrong shape of "no". So a
  * pre-epoch `no_record` gap opens the same editor as last week's session — it
  * simply keeps its muted rendering and never alerts, because *nothing is owed*
  * for it.
  *
- * `future` is the one exclusion, and it has nothing to do with the epoch:
- * attendance is a record of what happened, so a session that has not happened
- * cannot take one. It gets the notes-only editor instead.
+ * **A `future` entry can be editable, and that is the roll-call case.** Since
+ * the kind flips at the session's *end*, the session happening right now is a
+ * future entry — and the register opens at its start, so it takes the record
+ * editor exactly as a past entry does. Only a future session that is *not* live
+ * is excluded, for a reason the epoch has nothing to do with: attendance is a
+ * record of what happened, so a session that has not started cannot take one.
+ * It gets the notes-only editor instead.
+ *
+ * This is why the predicate needs `now` at all. Editability used to be readable
+ * off the kind alone, because the kind flipped at the start — the two questions
+ * were the same question wearing one flag. They are separate now, and this is
+ * the one that asks about the clock.
+ *
+ * **Phrased as "is live" rather than "has started", and the difference shows up
+ * only on an incoherent pair.** Under the invariant above the two are the same
+ * test, since a `future` entry has by definition not ended. Building both
+ * predicates on {@link isLiveEntry} is what makes this one and
+ * {@link isPlannableEntry} exact complements *by construction* rather than by
+ * two conditions that happen to line up — so no clock, coherent or not, can
+ * produce an entry offering two editors or none.
  */
-export function isEditableEntry(
-  entry: SessionFeedEntry,
-): entry is EditableSessionFeedEntry {
-  return entry.kind === "past" || entry.kind === "no_record";
+export function isEditableEntry(entry: SessionFeedEntry, now: Date): boolean {
+  return entry.kind !== "future" || isLiveEntry(entry, now);
 }
 
-/** Whether an entry can be expanded into the **notes-only** editor. */
+/**
+ * Whether an entry can be expanded into the **notes-only** editor: a future
+ * session that is not currently running.
+ *
+ * The exact complement of {@link isEditableEntry} over the same union — the
+ * negation of the same expression — so every entry gets one editor and no entry
+ * gets both.
+ *
+ * It still narrows, and soundly: anything it accepts is a future entry. The
+ * narrowing is simply *wider* than the runtime test, which additionally requires
+ * the session not to be live — a condition no type can carry, since it is a fact
+ * about the clock rather than about the shape.
+ */
 export function isPlannableEntry(
   entry: SessionFeedEntry,
+  now: Date,
 ): entry is FutureSessionFeedEntry {
-  return entry.kind === "future";
+  return entry.kind === "future" && !isLiveEntry(entry, now);
 }
 
 /**
@@ -132,19 +196,6 @@ export function entryCompleteness(
     attendanceTally(roster, entry.attendance).complete && hasReport(entry.report);
   if (finished) return "complete";
   return entry.owed && roster.length > 0 ? "needs_attention" : null;
-}
-
-/**
- * Whether a stored report field actually carries a write-up.
- *
- * `null`, `""` and a field holding nothing but whitespace are the same answer:
- * nobody has written anything. The editor trims on the way out and collapses an
- * emptied field back to `null`, so the middle two are transient — but a value
- * can still arrive here untrimmed (a draft mid-save, a row written before that
- * collapse existed), and a space is not a session report.
- */
-function hasReport(report: string | null): boolean {
-  return report !== null && report.trim().length > 0;
 }
 
 /**
@@ -278,7 +329,7 @@ export function rosterScopedMarks(
  * Every mark is somebody deciding about one child.
  */
 export function editorStateFromEntry(
-  entry: EditableSessionFeedEntry,
+  entry: SessionFeedEntry,
   roster: readonly SessionFeedGamer[],
 ): SessionEditorState {
   if (entry.kind === "no_record") {
@@ -326,23 +377,40 @@ export function draftFromEditorState(
  * something on it, and it carries `owed: false` forward so finishing an old
  * session can never turn it amber.
  *
+ * **A live entry stays future, and that is load-bearing.** Taking the register
+ * during a session must not move the card: flipping it to `past` would drop it
+ * below the divider, swap its Live tag for a completeness state and reorder the
+ * feed under a gedu who is mid-roll-call — a save doing all that at 14:30 of a
+ * session running to 23:00, on the surface they are actively working in. The
+ * session is still running, so the entry is still `future`; only its contents
+ * changed. The clock moves it when the clock is ready, on the tick that passes
+ * its end instant.
+ *
  * Empty text collapses back to `null` so a cleared note stops rendering its
  * block.
  */
 export function applyDraftToEntry(
-  entry: EditableSessionFeedEntry,
+  entry: SessionFeedEntry,
   draft: SessionRecordDraft,
-): PastSessionFeedEntry {
+): SessionFeedEntry {
   const { id, startsAt, endsAt } = entry;
+  const written = {
+    report: draft.report.length > 0 ? draft.report : null,
+    staffNote: draft.staffNote.length > 0 ? draft.staffNote : null,
+    attendance: draft.attendance,
+  };
+
+  if (entry.kind === "future") {
+    return { kind: "future", id, startsAt, endsAt, ...written };
+  }
+
   return {
     kind: "past",
     id,
     startsAt,
     endsAt,
     owed: entry.kind === "past" ? entry.owed : false,
-    report: draft.report.length > 0 ? draft.report : null,
-    staffNote: draft.staffNote.length > 0 ? draft.staffNote : null,
-    attendance: draft.attendance,
+    ...written,
   };
 }
 

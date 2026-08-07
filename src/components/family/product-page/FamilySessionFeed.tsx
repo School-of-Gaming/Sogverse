@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import {
   SessionFeedShell,
   formatSessionLabels,
+  hasReport,
   type SessionFeedRowContext,
 } from "@/components/session-feed";
 import { cn } from "@/lib/utils";
@@ -138,7 +139,7 @@ export function FamilySessionFeed({
 function isQuiet(entry: FamilySessionEntry, showAttendance: boolean): boolean {
   return (
     entry.kind === "past" &&
-    (entry.report === null || entry.report.length === 0) &&
+    !hasReport(entry.report) &&
     (entry.attendance === null || !showAttendance)
   );
 }

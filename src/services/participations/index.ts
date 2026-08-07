@@ -2,6 +2,7 @@ export { ParticipationsService } from "./participations.service";
 export type {
   MyUpcomingSessionRow,
   MyWaitlistRow,
+  ProductSiteName,
   AdminGamerParticipationRow,
   ParticipationCounts,
   ParticipationConfirmation,
@@ -12,10 +13,11 @@ export type {
   LeaveWaitlistInput,
   LeaveWaitlistResponse,
 } from "./participations.service";
+export { participationKeys } from "./participations.keys";
 export {
-  participationKeys,
-  useMyUpcomingSessions,
-  useMyWaitlist,
+  seedAge,
+  useMyUpcomingSessionRows,
+  useMyWaitlistRows,
   useParticipationCounts,
   useCheckoutConfirmation,
   useCreateParticipation,

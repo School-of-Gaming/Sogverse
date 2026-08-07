@@ -89,9 +89,8 @@ export interface GeduProductPageFixture {
   /** The venue and its shared notes, or `null` for a remote product. */
   site: SiteFixture | null;
   /**
-   * Staff-facing lesson/material URL. Separate from the product's Padlet, which
-   * is the family-facing link — the promotion step reads this from a new
-   * product column and must never render it to a parent or gamer.
+   * Staff-facing lesson/material URL, read from the product's staff-details
+   * row. Must never be rendered to a parent or gamer.
    */
   materialUrl: string | null;
 }
@@ -149,7 +148,6 @@ interface ScenarioConfig {
   isRemote: boolean;
   /** The venue, on in-person products only. */
   site: SiteFixture | null;
-  padletUrl: string | null;
   materialUrl: string | null;
   groupName: string;
   groupNotes: GroupNotesFixture;
@@ -610,7 +608,6 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
     isRemote: true,
     // Remote: no building, so no site-notes panel on the page.
     site: null,
-    padletUrl: "https://padlet.com/sog/minecraft-monday-club",
     materialUrl: "https://drive.sog.gg/minecraft-monday-club/lesson-plans",
     groupName: "Monday A",
     groupNotes: {
@@ -653,6 +650,14 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
    * divider reading "16 more upcoming sessions", and an upward reveal proved against
    * a screenful rather than against four rows.
    *
+   * **It is also where the feed's live state is shown.** A camp day runs the
+   * whole working day here, so at any ordinary reviewing hour one entry is a
+   * session in progress: still `future` (the kind flips at the session's end),
+   * rendered as the current session at the head of the feed, live-tagged, and
+   * carrying the record editor rather than the notes-only one — because the
+   * register opens when the session starts. That is the roll-call case, and a
+   * scenario is the only place it can be looked at in a real page.
+   *
    * It owes exactly one session — yesterday's, register not yet done — which is
    * what puts an attention badge on an in-person dashboard card. Every other day
    * of the run carries both halves, register and report, which is what keeps the
@@ -665,8 +670,17 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
     productType: "camp",
     cadence: "daily",
     specs: CAMP_SPECS,
-    startTime: "10:00",
-    durationMinutes: 180,
+    // **A full camp day, and the length is the point.** A three-hour morning
+    // made the feed's *live* state almost unreachable in review: a session in
+    // progress is the one entry that renders as current, live-tagged and
+    // carrying the record editor, and a reviewer opening the scene outside
+    // those three hours never saw it. A full-day camp puts a session in
+    // progress across the whole working day, which is also the shape that
+    // exposed the kind rule in the first place — a long session is where
+    // classifying a running club as history stops being a technicality and
+    // becomes most of the day.
+    startTime: "08:00",
+    durationMinutes: 10 * 60,
     slots: CAMP_SLOTS,
     startedDaysAgo: 9,
     // Four weeks out, which comfortably covers seventeen more weekday
@@ -680,18 +694,17 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
       name: "Sello Library, Espoo",
       address: "Leppävaarankatu 9, 02600 Espoo",
       publicNote:
-        "Drop-off and pick-up are at the main entrance on Leppävaarankatu. Come up to the second floor and the group room is on the right, past the study desks. There is a water fountain outside the room, and the café downstairs closes at 16:00.",
+        "Drop-off is from 08:00 and pick-up is by 18:00, both at the main entrance on Leppävaarankatu. Come up to the second floor and the group room is on the right, past the study desks. There is a water fountain outside the room, and the café downstairs closes at 16:00.",
       staffNote:
         "Room key is at the info desk on the ground floor, signed out under the SOG booking. The projector needs the HDMI adapter from the drawer, not the cable left on the table. Fire exit is the stairwell behind the room, not the lift lobby. The caretaker locks the second floor at 18:00 sharp.",
     },
-    padletUrl: "https://padlet.com/sog/roblox-builders-camp",
     materialUrl: "https://drive.sog.gg/roblox-builders-camp/day-by-day",
     groupName: "Builders red",
     groupNotes: {
       publicNote:
         "Builders red are working towards one shared obstacle course by Friday. Everything each team builds gets snapped into it at the end of the week.",
       staffNote:
-        "Venue laptops are slow to load Studio — start them ten minutes early. Lunch is 12:30 and the room has to be clear by 13:00.",
+        "Venue laptops are slow to load Studio — start them ten minutes early. Lunch is 12:30, there is a proper break at 15:00, and the room has to be clear by 18:00.",
     },
     peers: [
       {
@@ -755,7 +768,6 @@ export function buildGeduProductPageFixture(
       product: {
         id: `mock-product-${scenario}`,
         product_type: config.productType,
-        padlet_url: config.padletUrl,
         timezone: SESSION_FEED_TIMEZONE,
         start_date: calendarDate(now, -config.startedDaysAgo),
         end_date:

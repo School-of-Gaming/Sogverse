@@ -38,6 +38,15 @@ import { TEST_IDS } from "./constants";
  * The 5xx block has no tidy sub-range left below 5ff, so allocation continues
  * in 6xx (`...0000000006XX`):
  *   601-606        gedu-session-feed.test.ts (three products, three groups)
+ *   607-60b        family-product-feed.test.ts (three products 607-609, two
+ *                  groups 60a-60b)
+ *   6ff            family-product-feed.test.ts's must-NOT-exist participation
+ *                  id, backing the case that a nonexistent id is refused with
+ *                  exactly the message someone else's id gets. Declared here
+ *                  precisely because it sits apart from the block above:
+ *                  allocate it to a real fixture and that test quietly starts
+ *                  pointing at a row that exists, which is the one thing it
+ *                  must never do.
  */
 
 export interface ProductOptions {

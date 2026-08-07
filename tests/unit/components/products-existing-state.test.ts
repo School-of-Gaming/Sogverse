@@ -25,7 +25,6 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     max_age: 12,
     spoken_language_code: "en",
     image_path: "abc.png",
-    padlet_url: null,
     // Staff-only, so it arrives on its own embedded row rather than as a column
     // on the product. `null` is the ordinary case: no row means no lesson link.
     product_staff_details: null,

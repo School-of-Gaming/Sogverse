@@ -9,8 +9,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
 import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
 import { EnrollmentCard } from "@/components/family/EnrollmentCard";
-import type { FamilyEnrollmentSummary } from "@/components/family/enrollment-rollup";
-import { ROUTES } from "@/lib/constants";
+import type {
+  FamilyEnrollmentSummary,
+  FamilyGamerEnrollments,
+} from "@/components/family/enrollment-rollup";
+import { MAX_GAMERS_PER_PARENT, ROUTES } from "@/lib/constants";
 import { ParentHelpSection } from "./ParentHelpSection";
 
 /**
@@ -18,16 +21,34 @@ import { ParentHelpSection } from "./ParentHelpSection";
  * **already sorted** — soonest session first, finished runs beneath — because
  * the ordering is a fact about the data and belongs with whoever built it, not
  * with the component drawing it.
+ *
+ * An alias rather than a second declaration: this is exactly what the roll-up
+ * emits, and two identical interfaces either side of one hand-off is a drift
+ * waiting to happen. The name stays because the prop is the parent page's own
+ * vocabulary; the shape belongs to the roll-up.
  */
-export interface ParentDashboardGamer {
-  /**
-   * The gamer's profile id. It seeds the identicon, so it has to be the real
-   * UUID: the pattern is derived from the id's hex bytes, and a readable
-   * stand-in renders a degenerate grid rather than a different face.
-   */
-  id: string;
-  firstName: string;
-  enrollments: readonly FamilyEnrollmentSummary[];
+export type ParentDashboardGamer = FamilyGamerEnrollments;
+
+/**
+ * One card, plus the child whose section it sits in — what every parent-only
+ * action on this page needs to know.
+ *
+ * **The pair, not either half.** Both actions the parent dashboard owns need
+ * facts from both sides: the join has to name the gamer to switch into, the
+ * product to explain the switch, and the room to land in; the leave has to name
+ * the participation to delete, the child who loses the place, and the product
+ * they lose it for. Handing the shell one object with both is what lets the body
+ * stay ignorant of what either action involves — it knows where the affordances
+ * sit and nothing about switch dialogs or DELETE routes.
+ *
+ * The gamer half is deliberately the section's own `{id, firstName}` rather
+ * than a richer profile: the switch dialog wants exactly an id, a role and a
+ * first name, and the role is `"gamer"` by the fact that this is a child's
+ * section.
+ */
+export interface ParentEnrollmentAction {
+  gamer: { id: string; firstName: string };
+  enrollment: FamilyEnrollmentSummary;
 }
 
 /**
@@ -100,12 +121,23 @@ const EMPTY_GAMERS_SECTION_ID = "gamers";
  * actions behind it, so a shell can hand it over finished, whereas the shape of
  * the page — how many sections there are and what they are called — is derived
  * from the family, and no single node can express it.
+ *
+ * **Every action on the cards is a seam, and every one of them is parent-only.**
+ * Joining has to switch account first, and leaving a waitlist is a decision with
+ * a cost — so both arrive as optional callbacks the shell fills, and the child's
+ * own dashboard is not merely not passed them: the card's props make them
+ * unreachable from a `"gamer"` audience. The body decides *where* those
+ * affordances sit and knows nothing about switch dialogs, DELETE routes or
+ * portal sessions.
  */
 export function ParentDashboardPageBody({
   gamers,
   billingCard,
   onAddGamer,
   onOpenPortal,
+  onJoinClick,
+  onLeaveWaitlist,
+  leavingParticipationIds,
 }: {
   /** The parent's children, in the order their sections appear. */
   gamers: readonly ParentDashboardGamer[];
@@ -127,11 +159,49 @@ export function ParentDashboardPageBody({
    * the badge opens a real portal session, a preview passes a no-op.
    */
   onOpenPortal?: () => void;
+  /**
+   * A parent clicked Join on one of their children's cards.
+   *
+   * It has to be intercepted here and nowhere else: the parent is signed in as
+   * themselves, and the voice room is gated on the *gamer's* enrollment, so a
+   * direct navigation is refused every time. The shell opens the switch-profile
+   * dialog and does a full-page navigation once the switch lands — the house
+   * auth rule, since a cookie a server route set never reaches the browser
+   * client's in-memory session. The child's own dashboard passes nothing and
+   * gets a plain link, because there is nobody to switch into.
+   */
+  onJoinClick?: (action: ParentEnrollmentAction) => void;
+  /**
+   * A parent confirmed giving up a place in line. Fires **after** the card's
+   * own confirm dialog, so the shell receives a decision rather than an intent
+   * and has nothing left to ask.
+   */
+  onLeaveWaitlist?: (action: ParentEnrollmentAction) => void;
+  /**
+   * Which participations have a leave in flight.
+   *
+   * A set rather than a single id, and held by the shell rather than derived
+   * from the mutation's pending flag: a family can be queued for several things
+   * at once, and a single id would clear the first card's flag the moment a
+   * second leave started — un-dimming a card whose DELETE was still running,
+   * which is exactly the re-enable the disabled-state rule forbids.
+   */
+  leavingParticipationIds?: ReadonlySet<string>;
 }) {
   const t = useTranslations("dashboardSections");
   const f = useTranslations("family");
 
   const namedGamerEntries = gamers.length <= MAX_NAMED_GAMER_PILL_ENTRIES;
+
+  /**
+   * The Steven Brown Rule — see `MAX_GAMERS_PER_PARENT` for the lore.
+   *
+   * A UI-only cap the tile strip this page absorbed used to enforce, and which
+   * has to be enforced *here* now that this page owns every add affordance: the
+   * API accepts an eighth child, so a page that keeps offering the button past
+   * the limit is offering a parent an error message.
+   */
+  const canAddGamer = gamers.length < MAX_GAMERS_PER_PARENT;
 
   // With no children yet, the empty state is still a *section* — "Gamers",
   // with its own pill entry — rather than a card floating unattached while the
@@ -261,7 +331,26 @@ export function ParentDashboardPageBody({
                           key={enrollment.participationId}
                           enrollment={enrollment}
                           audience="customer"
+                          // Only inside the leave dialog, never on the card
+                          // face: the heading two rows up already says whose
+                          // this is, and the dialog is an overlay that cannot
+                          // borrow it.
+                          gamerFirstName={gamer.firstName}
                           onOpenPortal={onOpenPortal}
+                          // Both are handed the pair, so the shell never has to
+                          // re-derive which child a card belongs to from an id
+                          // it would have to look up.
+                          onJoinClick={
+                            onJoinClick &&
+                            (() => onJoinClick({ gamer, enrollment }))
+                          }
+                          onLeaveWaitlist={
+                            onLeaveWaitlist &&
+                            (() => onLeaveWaitlist({ gamer, enrollment }))
+                          }
+                          leavingWaitlist={leavingParticipationIds?.has(
+                            enrollment.participationId,
+                          )}
                         />
                       ))}
                     </div>
@@ -273,17 +362,27 @@ export function ParentDashboardPageBody({
             {/* Adding a child sits after the last of them, deliberately quiet:
                 it is a once-a-year action, and a full-strength button at the top
                 of a page about the children you already have would compete with
-                them for the first thing read. */}
-            <div className="mx-auto max-w-3xl">
-              <button
-                type="button"
-                onClick={onAddGamer}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-muted-foreground/40 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <UserPlus className="h-4 w-4" aria-hidden />
-                {f("addGamer")}
-              </button>
-            </div>
+                them for the first thing read.
+
+                Absent at the cap rather than disabled. A disabled button is a
+                promise that something would happen if the condition cleared,
+                and nothing clears this one — a parent at seven children is not
+                waiting for a seat, they are done. Nothing survives the change
+                either way, since the count only moves when the parent
+                themselves adds a child, so removing the tile shifts only what
+                sits below it and only in direct answer to their own action. */}
+            {canAddGamer && (
+              <div className="mx-auto max-w-3xl">
+                <button
+                  type="button"
+                  onClick={onAddGamer}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-muted-foreground/40 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <UserPlus className="h-4 w-4" aria-hidden />
+                  {f("addGamer")}
+                </button>
+              </div>
+            )}
           </div>
         )}
 

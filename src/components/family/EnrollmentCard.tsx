@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import {
+  AlertTriangle,
   CalendarClock,
   CalendarOff,
   ChevronRight,
@@ -9,14 +11,15 @@ import {
   MapPin,
   Radio,
   RefreshCwOff,
+  UserRoundSearch,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import { useNow, useTimezone } from "@/providers";
 import { cn, formatDate, formatDateOnly, formatTime } from "@/lib/utils";
-import type { SessionAudience } from "@/types";
 import { PaymentProblemBadge } from "@/components/parent/PaymentProblemBadge";
 import {
   enrollmentEndedOn,
@@ -57,7 +60,8 @@ import {
  *   no answer.** A remote product answers with the Join button (lit inside its
  *   window, locked and naming the next session outside it); an in-person one
  *   with its venue and a pin; a waitlisted one with the family's place in line
- *   and what happens when a seat opens; a finished one with the day it ended.
+ *   and what happens when a seat opens; an unplaced one with the fact that a
+ *   Gedu is being matched; a finished one with the day it ended.
  *   Those are exclusive by construction, so the row is populated rather than
  *   reserved — and on the one card where every branch comes up empty (a running
  *   enrollment whose product has no schedule slots yet, so there is no session
@@ -70,9 +74,23 @@ import {
  *   so mounting it as a flex sibling would widen the corner cluster and reflow
  *   the product name beside it mid-read. Everything else on the card is settled
  *   before it first paints. The slot is dropped entirely on the cards the badge
- *   can never land on — a finished run, a waitlist place, and anything with no
- *   session to start — because holding space for something that cannot come is
- *   its own defect.
+ *   can never land on — a finished run, a waitlist place, an unplaced seat, and
+ *   anything with no session to start — because holding space for something
+ *   that cannot come is its own defect.
+ *
+ * **Three states, one grammar: a seat, a queue place, and a seat with nowhere
+ * to sit yet.** The third is the purchased-but-unplaced enrollment
+ * (`group_id IS NULL`), the day or so between a payment landing and an admin
+ * matching the child with a Gedu. It is a first-class state rather than a
+ * variation on running, because *nothing* behind it exists yet: no group means
+ * no room, no feed and no page, so it carries no Join of any kind, no link and
+ * no chevron — the same inertness a waitlist place has, arrived at for the same
+ * reason. This is what closes the old bug where an unplaced enrollment drew a
+ * Join that looked joinable and did nothing. What it does not share with a
+ * waitlist place is its tone: it wears `info` rather than muted quiet, because
+ * the seat *is* theirs and the schedule on the card is one they will be
+ * attending. Nothing is pending on the family's side, which is exactly what the
+ * footer sentence says.
  *
  * **The corner means exactly one thing: an alarm the parent can act on.**
  * Across the product the corner badge means "this needs attention" — the
@@ -87,14 +105,21 @@ import {
  * Card, not a child — a card that clips its own overflow would otherwise cut it
  * in half.
  *
- * **The whole card is one link — except a waitlisted one, which is no link at
- * all.** A family in the queue has no access to the product's page yet, so the
- * card drops the stretched anchor, the chevron and the hover lift together:
- * nothing about it may promise "there is more inside" when there is not. On the
- * cards that do link, an invisible stretched anchor covers the card, the chevron
- * marks that there is more inside, and the Join button — and *only* the Join
- * button — lifts itself above the anchor so it keeps receiving its own clicks.
- * No `<a>` inside `<a>`, so middle-click and prefetch both behave.
+ * **The whole card is one link — except the two states with nothing behind
+ * them, which are no link at all.** A family in the queue and a family whose
+ * seat has not been placed both reach no product page, so those cards drop the
+ * stretched anchor, the chevron and the hover lift together: nothing about a
+ * card may promise "there is more inside" when there is not. On the cards that
+ * do link, an invisible stretched anchor covers the card, the chevron marks
+ * that there is more inside, and the Join button — and *only* the Join button —
+ * lifts itself above the anchor so it keeps receiving its own clicks. No `<a>`
+ * inside `<a>`, so middle-click and prefetch both behave.
+ *
+ * **Leaving a waitlist is the queue card's counterpart of the Join.** A quiet
+ * muted text link under the footer sentence, parent-only, opening a confirm
+ * dialog — the single interactive thing on an otherwise inert card, exactly as
+ * the Join is the single interactive thing on a live one. Not a corner badge:
+ * the corner means an alarm, and there is nothing wrong with a place in line.
  *
  * **The footer is part of the card.** Lifting the whole footer row rather than
  * the button was the easy version of that and quietly cost a click target: the
@@ -110,28 +135,93 @@ import {
  */
 interface EnrollmentCardCommonProps {
   enrollment: FamilyEnrollmentSummary;
+}
+
+/**
+ * The half of the card only a **parent's** dashboard may hand it.
+ *
+ * Split out as its own union member rather than left optional on one flat
+ * interface, so "the gamer body never receives parent-only props" is something
+ * the compiler enforces instead of something a reviewer has to notice. Every
+ * one of these is an adult's concern — money, a queue place worth money, and a
+ * join that has to pass through an account switch — and a child's card must not
+ * carry an action the child cannot or should not take.
+ */
+interface EnrollmentCardParentProps {
+  audience: "customer";
+  /**
+   * The child this enrollment belongs to.
+   *
+   * **Never rendered on the card face** — the card deliberately carries no
+   * child's name, because it always sits under a heading that already does.
+   * It exists for the leave-waitlist dialog, which is an overlay above the
+   * whole page and therefore has no heading of its own to borrow: "Aino will
+   * lose their place in line" has to name her, or the parent of three children
+   * is being asked to confirm something irreversible about an unnamed one.
+   */
+  gamerFirstName: string;
   /**
    * Open Stripe's Customer Portal instead of the badge doing it itself. The
    * live parent dashboard passes nothing and gets the real portal session; a
    * preview scene passes a no-op, which is what keeps a fixture page from
-   * POSTing. Parent-only by construction — a gamer's card carries no badge to
-   * click.
+   * POSTing.
    */
   onOpenPortal?: () => void;
+  /**
+   * Intercept the Join instead of letting it navigate.
+   *
+   * The parent is signed in as themselves and the voice room is gated on the
+   * *gamer's* enrollment, so a direct navigation would always be refused. The
+   * shell opens the switch-profile dialog, which POSTs the account switch and
+   * then does a full-page navigation to the room — the house auth rule, since
+   * cookies a server route changed never reach the browser client's singleton.
+   *
+   * Optional so the prop can exist before the shell that fills it: with nothing
+   * passed the button falls back to being a plain link, which is exactly what
+   * the gamer's own card does.
+   */
+  onJoinClick?: () => void;
+  /**
+   * Give up this place in line. Fires only after the parent confirms in the
+   * dialog the card opens; the card owns the dialog, the shell owns the
+   * mutation. Absent means the affordance is not drawn at all, which is what a
+   * surface with no mutation behind it (a preview scene passes a no-op instead)
+   * would otherwise have to fake.
+   */
+  onLeaveWaitlist?: () => void;
+  /**
+   * That leave is in flight. Dims the card and locks the link, and is held by
+   * the *shell* across the row's disappearance rather than derived from a
+   * mutation's pending flag — which flips false before the invalidation, let
+   * alone the refetch, and would re-enable the link under the parent's cursor.
+   */
+  leavingWaitlist?: boolean;
 }
 
-export interface EnrollmentCardProps extends EnrollmentCardCommonProps {
-  /**
-   * Whose dashboard this renders on. Billing never reaches the child's card —
-   * the payment corner badge and the won't-renew line are parent-only — and
-   * the waitlist footer speaks *to* the child on their own page, *about* them
-   * on the parent's.
-   */
-  audience: SessionAudience;
+/**
+ * The child's own card: the enrollment, and nothing else. Everything the parent
+ * variant adds is deliberately unavailable here rather than merely unused.
+ */
+interface EnrollmentCardGamerProps {
+  audience: "gamer";
 }
+
+/**
+ * Whose dashboard this renders on. Billing never reaches the child's card —
+ * the payment corner badge and the won't-renew line are parent-only — and the
+ * waitlist footer speaks *to* the child on their own page, *about* them on the
+ * parent's.
+ */
+export type EnrollmentCardProps = EnrollmentCardCommonProps &
+  (EnrollmentCardParentProps | EnrollmentCardGamerProps);
 
 export function EnrollmentCard(props: EnrollmentCardProps) {
-  const { enrollment, audience, onOpenPortal } = props;
+  const { enrollment } = props;
+  // Narrowed once, so every parent-only branch below reads as one question
+  // ("is there a parent behind this card?") rather than repeating the audience
+  // check beside each of the four props it guards.
+  const parent = props.audience === "customer" ? props : null;
+  const audience = props.audience;
   const p = useTranslations("productType");
   const c = useTranslations("activityCard");
   const b = useTranslations("sessionBadge");
@@ -152,6 +242,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
     siteName,
     openHref,
     waitlistPosition,
+    awaiting,
     paymentProblem,
     cancellation,
     scheduleLines,
@@ -160,22 +251,45 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
   const waitlisted = waitlistPosition !== null;
   const endedOn = enrollmentEndedOn(enrollment, now);
   const { inProgress, voiceIsOpen } = enrollmentLiveness(enrollment, now);
-  const live = voiceIsOpen || inProgress;
   const hasNext = nextSessionStart !== null && nextSessionEnd !== null;
-  /** Holding a seat, with the run still going: neither over nor in the queue. */
-  const running = endedOn === null && !waitlisted;
+  /**
+   * Holding a seat **in a group**, with the run still going.
+   *
+   * Awaiting placement is excluded alongside a waitlist place, and for the same
+   * reason rather than a similar one: with no group there is no room, no feed
+   * and no page, so every affordance `running` gates — the Join, the Live
+   * badge, the venue line — would be describing something that does not exist
+   * yet. The difference between the two is what the footer *says*, not what the
+   * card is allowed to do.
+   */
+  const running = endedOn === null && !waitlisted && !awaiting;
+  /**
+   * Whether there is a page behind this card. Two states have none — a queue
+   * position and an unplaced seat — and both drop the anchor, the chevron and
+   * the hover lift together: nothing about the card may promise "there is more
+   * inside" when there is not.
+   */
+  const opensAPage = !waitlisted && !awaiting;
+  // Derived per tick from the shared clock, then gated on the seat: an unplaced
+  // enrollment's product may well be mid-session, but not for this family, and
+  // a lit card would be inviting a child into a room that has not been created.
+  const live = running && (voiceIsOpen || inProgress);
   // The cards a Live badge can never land on. Reserving its width there would
   // be a hole held open for something that is not coming — which includes a
   // running enrollment with nothing on its schedule, since a badge that turns
   // on when a session starts needs a session to start.
   const canGoLive = running && hasNext;
-  // Whether the footer has anything to say, asked before it is drawn. The four
+  const leaving = parent?.leavingWaitlist ?? false;
+  /** The one interactive element a waitlisted card has, and parents only. */
+  const onLeaveWaitlist = waitlisted ? parent?.onLeaveWaitlist : undefined;
+  // Whether the footer has anything to say, asked before it is drawn. The five
   // branches below are exclusive by construction, and on the one card where
   // none of them lands — a running enrollment whose product has no slots yet —
   // the row is left out rather than rendered empty.
   const hasFooter =
     endedOn !== null ||
     waitlisted ||
+    awaiting ||
     (running && hasVoiceRoom && hasNext) ||
     (running && !hasVoiceRoom && siteName !== null);
 
@@ -184,12 +298,25 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
     // without the card's own `overflow-hidden` cutting it in half.
     <div className="relative">
       <Card
+        aria-busy={leaving}
         className={cn(
-          "group relative overflow-hidden transition-[border-color,box-shadow]",
-          !waitlisted &&
+          "group relative overflow-hidden transition-[border-color,box-shadow,opacity]",
+          opensAPage &&
             "hover:border-primary/40 hover:shadow-lg focus-within:border-primary/40 focus-within:shadow-lg",
           live &&
             "border-primary/40 bg-gradient-to-r from-primary/5 to-transparent",
+          // The awaiting tone: the same lit-card treatment in `info` rather than
+          // `primary`, because this *is* a card with something happening on it
+          // — a purchase has landed and placement is under way — and it must
+          // read as that rather than as a fault or as a waitlist place. Blue is
+          // already this product's colour for "we are telling you something",
+          // and the two gradients are mutually exclusive by `running`.
+          awaiting &&
+            "border-info/40 bg-gradient-to-r from-info/5 to-transparent",
+          // Dimmed in place while the leave is in flight, so the card that is
+          // about to disappear says so without moving. Matches the treatment
+          // the badge-era waitlist card used, for continuity.
+          leaving && "opacity-50",
         )}
       >
         <CardContent className="flex flex-col gap-4 p-5">
@@ -236,7 +363,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                   {b("live")}
                 </Badge>
               )}
-              {!waitlisted && (
+              {opensAPage && (
                 <ChevronRight
                   aria-hidden
                   className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5"
@@ -282,18 +409,49 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               tracks sessions, not billing instants. The line exists only on a
               cancelled card ("populated, not padded"), so cards differ in
               height by state; it cannot appear mid-read except as the direct
-              echo of the parent cancelling in the portal they just came from. */}
-          {audience === "customer" && cancellation !== null && running && (
+              echo of the parent cancelling in the portal they just came from.
+
+              **The final covered session is named as final.** Once the walk has
+              nothing left behind it, "last session 18 Mar" and the Join button
+              beside it are describing the same evening, and a parent reading
+              the first would have no way to tell that the second is their
+              child's last one. The line says so outright instead — the same
+              distinction the corner badge of the old design drew by swapping
+              its whole label.
+
+              **And once nothing is left inside the window, the line names no
+              session at all.** The roll-up hands over `lastSessionStart: null`
+              there, because the only date this surface could offer would be one
+              projected backwards from the product's *current* schedule — and a
+              club moved to another weekday mid-term makes that projection an
+              evening that never ran, contradicting the stored history the club
+              page shows. So the third branch states when access ends, which the
+              subscription row knows outright. Strictly less information, all of
+              it true. */}
+          {parent !== null && cancellation !== null && running && (
             <p className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
               <RefreshCwOff className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
               <span className="min-w-0">
-                {f("wontRenew", {
-                  date: formatDate(cancellation.lastSessionStart, locale, {
-                    month: "short",
-                    day: "numeric",
-                    timeZone,
-                  }),
-                })}
+                {cancellation.lastSessionStart === null
+                  ? f("wontRenewAccessEnds", {
+                      date: formatDate(cancellation.accessUntil, locale, {
+                        month: "short",
+                        day: "numeric",
+                        timeZone,
+                      }),
+                    })
+                  : f(
+                      cancellation.isLastSession
+                        ? "wontRenewLastSession"
+                        : "wontRenew",
+                      {
+                        date: formatDate(cancellation.lastSessionStart, locale, {
+                          month: "short",
+                          day: "numeric",
+                          timeZone,
+                        }),
+                      },
+                    )}
               </span>
             </p>
           )}
@@ -318,59 +476,107 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               of its own to receive, so it is the only thing that takes the
               `z-10`. */}
           {hasFooter && (
-            <div className="flex items-center justify-center">
-              {endedOn !== null && (
-                // Date-only and UTC-pinned: an end date is a calendar date with no
-                // clock face on it, so it must read the same everywhere rather
-                // than tipping a day either side of a viewer's midnight.
-                <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
-                  <CalendarOff className="h-4 w-4 shrink-0" aria-hidden />
-                  <span className="truncate">
-                    {c("endedOn", { date: formatDateOnly(endedOn, locale) })}
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex w-full items-center justify-center">
+                {endedOn !== null && (
+                  // Date-only and UTC-pinned: an end date is a calendar date with no
+                  // clock face on it, so it must read the same everywhere rather
+                  // than tipping a day either side of a viewer's midnight.
+                  <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+                    <CalendarOff className="h-4 w-4 shrink-0" aria-hidden />
+                    <span className="truncate">
+                      {c("endedOn", { date: formatDateOnly(endedOn, locale) })}
+                    </span>
                   </span>
-                </span>
-              )}
-              {endedOn === null && waitlisted && (
-                // The place in line leads the sentence, in body text rather than
-                // on the corner: the corner is this product's grammar for "this
-                // needs attention", and a queue position is information, not a
-                // fault. `tabular-nums` so the digits keep their width when
-                // somebody ahead gives up their spot — the one number on this
-                // page that can change while a parent is looking at it.
-                <span className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
-                  <Hourglass className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                  <span className="min-w-0 tabular-nums">
-                    {w(
-                      audience === "gamer"
-                        ? "footerReassuranceGamer"
-                        : "footerReassuranceCustomer",
-                      { position: waitlistPosition },
-                    )}
+                )}
+                {endedOn === null && waitlisted && (
+                  // The place in line leads the sentence, in body text rather than
+                  // on the corner: the corner is this product's grammar for "this
+                  // needs attention", and a queue position is information, not a
+                  // fault. `tabular-nums` so the digits keep their width when
+                  // somebody ahead gives up their spot — the one number on this
+                  // page that can change while a parent is looking at it.
+                  <span className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
+                    <Hourglass className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                    <span className="min-w-0 tabular-nums">
+                      {w(
+                        audience === "gamer"
+                          ? "footerReassuranceGamer"
+                          : "footerReassuranceCustomer",
+                        { position: waitlistPosition },
+                      )}
+                    </span>
                   </span>
-                </span>
-              )}
-              {running && hasVoiceRoom && hasNext && (
-                // The one thing in the footer that owns its clicks, so the one
-                // thing lifted above the stretched link covering the card.
-                <span className="relative z-10">
-                  <JoinVoiceButton
-                    voiceIsOpen={voiceIsOpen}
-                    voiceHref={voiceHref}
-                    opensDate={formatDate(nextSessionStart, locale, {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                      timeZone,
-                    })}
-                    opensTime={formatTime(nextSessionStart, locale, timeZone)}
-                  />
-                </span>
-              )}
-              {running && !hasVoiceRoom && siteName !== null && (
-                <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
-                  <MapPin className="h-4 w-4 shrink-0" aria-hidden />
-                  <span className="truncate">{siteName}</span>
-                </span>
+                )}
+                {endedOn === null && awaiting && (
+                  // The seat is bought; nobody has been placed yet. This wins
+                  // over the venue line an in-person product would otherwise get,
+                  // because the footer's question is "where is this happening"
+                  // and the honest answer here is "nowhere yet" — a building
+                  // named beside a group that does not exist would read as an
+                  // invitation to turn up. Static, with no spinner or pulse:
+                  // placement is a person's decision that can take a day, and a
+                  // loading cue would promise seconds.
+                  <span className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
+                    <UserRoundSearch
+                      className="mt-0.5 h-4 w-4 shrink-0 text-info"
+                      aria-hidden
+                    />
+                    <span className="min-w-0">
+                      {f(
+                        audience === "gamer"
+                          ? "awaitingGamer"
+                          : "awaitingCustomer",
+                      )}
+                    </span>
+                  </span>
+                )}
+                {running && hasVoiceRoom && hasNext && (
+                  // The one thing in the footer that owns its clicks, so the one
+                  // thing lifted above the stretched link covering the card.
+                  <span className="relative z-10">
+                    <JoinVoiceButton
+                      voiceIsOpen={voiceIsOpen}
+                      voiceHref={voiceHref}
+                      // Present only on a parent's card, where joining means
+                      // switching account first; passing nothing (a child's own
+                      // card) leaves the button the plain link it has always
+                      // been.
+                      onJoinClick={parent?.onJoinClick}
+                      opensDate={formatDate(nextSessionStart, locale, {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                        timeZone,
+                      })}
+                      opensTime={formatTime(nextSessionStart, locale, timeZone)}
+                    />
+                  </span>
+                )}
+                {running && !hasVoiceRoom && siteName !== null && (
+                  <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+                    <MapPin className="h-4 w-4 shrink-0" aria-hidden />
+                    <span className="truncate">{siteName}</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Under the sentence it acts on, not over the corner. The
+                  design this replaced put it in the corner, where the product's
+                  grammar reserves the space for an alarm the parent must act on
+                  — and a queue place is not one. Down here it is the exact
+                  counterpart of the Join on a live card: the single interactive
+                  thing on an otherwise inert card, sitting in the same zone,
+                  reading as an offer rather than a warning. No `z-10` needed,
+                  because the card it appears on renders no stretched anchor for
+                  it to sit above. */}
+              {onLeaveWaitlist !== undefined && parent !== null && (
+                <LeaveWaitlistLink
+                  productName={productName}
+                  gamerFirstName={parent.gamerFirstName}
+                  leaving={leaving}
+                  onConfirm={onLeaveWaitlist}
+                />
               )}
             </div>
           )}
@@ -380,9 +586,10 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
             by the product it opens. The ring is inset because the card clips its
             own overflow, so keyboard focus lights the card's edge rather than
             being shaved off it. Sits below the Join, which lifts itself with
-            `z-10` to keep receiving its own clicks. A waitlisted card renders no
-            anchor at all — there is no page behind it yet. */}
-        {!waitlisted && (
+            `z-10` to keep receiving its own clicks. A waitlisted card and an
+            unplaced one render no anchor at all — neither has a page behind it
+            yet. */}
+        {opensAPage && (
           <Link
             href={openHref}
             onClick={(e) => {
@@ -398,14 +605,75 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
           the card body. The corner carries exactly one thing: an alarm the
           parent can act on. Information — the waitlist position, the
           won't-renew line — lives in the card body instead. */}
-      {audience === "customer" && paymentProblem && (
+      {parent !== null && paymentProblem && (
         <PaymentProblemBadge
           participationId={participationId}
           audience="customer"
           showAlert
-          onOpenPortal={onOpenPortal}
+          onOpenPortal={parent.onOpenPortal}
         />
       )}
     </div>
+  );
+}
+
+/**
+ * "Leave waitlist", as a quiet text link under the queue sentence, plus the
+ * confirm dialog it opens.
+ *
+ * **Muted, never destructive, until the dialog.** Nothing is wrong with a place
+ * in line, so the affordance that opens the decision stays as quiet as the
+ * sentence above it; the red belongs on the confirm button, where the
+ * irreversible choice is actually made. The dialog carries the one thing a
+ * parent will not think of on their own — rejoining puts them at the back — as
+ * the same destructive callout the admin group panel uses.
+ *
+ * Private to the card because the card is the only thing that can draw it: the
+ * copy names both the product and the child, and the placement is defined
+ * relative to a footer sentence that exists nowhere else.
+ */
+function LeaveWaitlistLink({
+  productName,
+  gamerFirstName,
+  leaving,
+  onConfirm,
+}: {
+  productName: string;
+  gamerFirstName: string;
+  /** The leave is in flight — locks the link; the card carries the dimming. */
+  leaving: boolean;
+  onConfirm: () => void;
+}) {
+  const t = useTranslations("parent.waitlist.leave");
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        disabled={leaving}
+        className="rounded text-xs font-medium text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:hover:text-muted-foreground"
+      >
+        {t("trigger")}
+      </button>
+
+      <ConfirmDialog
+        open={open}
+        onOpenChange={setOpen}
+        title={t("confirmTitle")}
+        description={t("confirmDescription", {
+          name: gamerFirstName,
+          product: productName,
+        })}
+        confirmLabel={t("confirmCta")}
+        onConfirm={onConfirm}
+      >
+        <div className="flex items-start gap-2 rounded-md border border-destructive bg-destructive/10 px-3 py-2.5 text-sm font-semibold text-destructive">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <span>{t("backOfLineWarning")}</span>
+        </div>
+      </ConfirmDialog>
+    </>
   );
 }

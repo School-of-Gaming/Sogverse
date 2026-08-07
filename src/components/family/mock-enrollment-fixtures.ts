@@ -65,6 +65,13 @@ export interface EnrollmentFixtureSpec {
   siteName?: string | null;
   /** 1-based place in line, when this enrollment is a waitlist place. */
   waitlistPosition?: number | null;
+  /**
+   * The seat is paid for and nobody has been placed in a group yet. Mutually
+   * exclusive with `waitlistPosition` by construction — a waitlisted family has
+   * no seat to be unplaced in — and the builder does not police it, because a
+   * fixture that set both would be describing a row the database cannot hold.
+   */
+  awaiting?: boolean;
   /** The subscription behind this enrollment is `past_due`. */
   paymentProblem?: boolean;
   /**
@@ -72,6 +79,19 @@ export interface EnrollmentFixtureSpec {
    * `null`/omitted for a healthy subscription and for everything that isn't one.
    */
   cancelledAccessInDays?: number | null;
+  /**
+   * The cancelled membership has no session left inside its paid window, so the
+   * card is not entitled to name one — the roll-up emits `lastSessionStart:
+   * null` and the line states when access ends instead.
+   *
+   * A spec flag of its own because it is a genuinely different rendering rather
+   * than a different date, and the reason it exists is invisible from the card:
+   * the dashboard read holds only the product's *current* schedule, so the only
+   * way to name a session that already ran would be to project one backwards,
+   * and a schedule edited mid-term makes that projection an evening that never
+   * happened. Only meaningful alongside `cancelledAccessInDays`.
+   */
+  cancelledWithNoSessionLeft?: boolean;
 }
 
 export function buildEnrollmentFixture(
@@ -129,13 +149,15 @@ export function buildEnrollmentFixture(
     // a voice room has no building, and a card showing both would be claiming
     // the family meets in two places.
     siteName: spec.isRemote ? null : (spec.siteName ?? null),
-    // The product page a family opens from a card does not exist yet, so every
-    // card is a real link that goes nowhere rather than a div pretending to be
-    // one — the semantics are what this mock is for.
+    // Inert for the same reason the Join is: a fixture surface must not
+    // navigate to a page that would go looking for data. Still a real href, so
+    // the card is a real link rather than a div pretending to be one — the
+    // semantics are what this mock is for.
     openHref: "#",
     endDate,
     timezone: FIXTURE_TIMEZONE,
     waitlistPosition,
+    awaiting: spec.awaiting ?? false,
     paymentProblem: spec.paymentProblem ?? false,
     cancellation:
       cancelledAccessInDays === null
@@ -144,9 +166,14 @@ export function buildEnrollmentFixture(
             accessUntil: new Date(
               now.getTime() + cancelledAccessInDays * 86_400_000,
             ),
-            // The badge names the participation's final session; on a run with
+            // `null` is the window-exhausted case: no session left to name, so
+            // the line falls back to stating when access ends. Otherwise the
+            // line names the participation's final session — and on a run with
             // several left, this card is not it.
-            lastSessionStart: next?.start ?? now,
+            lastSessionStart:
+              spec.cancelledWithNoSessionLeft === true
+                ? null
+                : (next?.start ?? now),
             isLastSession: false,
           },
     scheduleLines,

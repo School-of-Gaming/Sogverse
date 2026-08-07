@@ -243,26 +243,12 @@ export function IdentitySection({
         </select>
       </Field>
 
-      <Field
-        label={t("labels.padletUrl")}
-        htmlFor="p-padlet"
-        optional
-        hint={t("hints.padletHint")}
-      >
-        <Input
-          id="p-padlet"
-          type="url"
-          placeholder={t("placeholders.padletUrl")}
-          value={state.padletUrl}
-          onChange={(e) => setState({ ...state, padletUrl: e.target.value })}
-        />
-      </Field>
-
       {/*
-        Staff-facing, and the hint says so, because the field sitting directly
-        above it is the family-facing one and the two are a trap for anyone
-        filling the form quickly. This link reaches game educators only — it is
-        rendered in their group workspace and on no parent or gamer surface.
+        Staff-facing, and the hint says so. The form used to carry a
+        family-facing link directly above this one, and the pair was a trap for
+        anyone filling it in quickly; that link is gone, but the warning stays,
+        because this one reaches game educators only — it is rendered in their
+        group workspace and on no parent or gamer surface.
       */}
       <Field
         label={t("labels.materialUrl")}

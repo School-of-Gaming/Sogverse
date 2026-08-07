@@ -29,7 +29,6 @@ function row(overrides: {
     location_id: null,
     min_age: overrides.minAge ?? 7,
     max_age: overrides.maxAge ?? 17,
-    padlet_url: null,
     product_type: "consumer_club",
     primary_gedu_fee_cents: null,
     assistant_gedu_fee_cents: null,

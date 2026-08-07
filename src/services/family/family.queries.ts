@@ -10,10 +10,11 @@ export const familyKeys = {
 
 /**
  * Family list for the current viewer. `initialData` lets a server component
- * seed React Query's cache so the selector / My Gamers grid paint populated on
- * the first frame instead of flashing skeletons — same prefetch-and-hydrate
- * shape as `useMyUpcomingSessions`. Omit it for client-only mounts (dialogs,
- * the admin style guide). The hook still refetches on mount to revalidate.
+ * seed React Query's cache so the profile selector and the parent dashboard's
+ * child sections paint populated on the first frame instead of flashing
+ * skeletons — the same prefetch-and-hydrate shape the participation reads use.
+ * Omit it for client-only mounts (dialogs, the admin style guide). The hook
+ * still refetches on mount to revalidate.
  */
 export function useFamily(options?: { initialData?: FamilyMember[] }) {
   return useQuery({
