@@ -1438,6 +1438,7 @@
       "seatsCapacity": "{count, plural, one {# place} other {# places}}",
       "endedNote": "Celui-ci est terminé — le prochain arrive bientôt !",
       "viewDetails": "Voir",
+      "cardLink": "{action} — {name}",
       "manage": "Gérer",
       "fullDisabled": "Complet",
       "alreadyStarted": "Déjà commencé",

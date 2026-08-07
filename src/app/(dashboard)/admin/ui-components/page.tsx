@@ -103,7 +103,6 @@ import {
 import {
   buildScenarioFixture,
   scenarioFilledSeats,
-  scenarioHasDetailPage,
   PREVIEW_SCENARIOS,
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
@@ -1037,7 +1036,7 @@ const SEAT_DEMO_CASES: {
     waitlistEnabled: true,
   },
   {
-    label: "Full, no waitlist — 0 of 15 (no chip; the disabled CTA says Full)",
+    label: "Full, no waitlist — 0 of 15 (no chip; the label beside it says Full)",
     seatCount: 15,
     seatsLeft: 0,
     waitlistEnabled: false,
@@ -1120,8 +1119,10 @@ function ProductsDemo() {
 // schedule / price / location formatters) and passing the authored registration
 // `state` straight through as a prop. The production `deriveRegistrationState`
 // adapter is intentionally bypassed — the style guide authors the state it wants
-// to eyeball, the card never computes it. The card's own "View" CTA (for states
-// that have one) links to the matching full page at /preview/products/[slug].
+// to eyeball, the card never computes it. A card whose state opens takes its
+// whole surface to the matching full page at /preview/products/[slug]; a
+// dead-end state gets no href and stays inert, which is the same split the
+// shop makes.
 function ScenarioBrowseCard({
   slug,
   label,
@@ -1136,11 +1137,11 @@ function ScenarioBrowseCard({
   const topicLabel = useTopicLabel();
 
   const { product, state } = buildScenarioFixture(slug);
-  // Only states with a working "View" CTA navigate; the rest (full/closed,
-  // ended) render no link, so they get no detail href.
-  const detailHref = scenarioHasDetailPage(slug)
-    ? `/preview/products/${slug}`
-    : undefined;
+  // Every scenario passes its href; the card decides whether to use it, from
+  // the state, exactly as it does in the shop. Withholding it here used to
+  // double as a way of saying "this one is inert", which was the style guide
+  // second-guessing the component about the one thing the component owns.
+  const detailHref = `/preview/products/${slug}`;
   const tr = resolveTranslation(product.product_translations, uiLocale);
   const isMuniClub = product.product_type === "municipality_club";
 
@@ -1889,16 +1890,23 @@ export default function AdminUIComponentsPage() {
         <p className="text-sm text-muted-foreground -mt-2">
           Parent-facing product surfaces, grouped by product type. Each card is
           one mocked product rendered as the browse card a parent sees in the
-          shop (/shop); its own &ldquo;View&rdquo; button (for states that have
-          one) opens that same mock&rsquo;s full detail page in the public
-          layout — hero, long description, schedule calendar, and the
-          registration signup panel — exactly as a parent would see it. The
-          panel therefore needs no separate demo: it lives in the full-page
-          view. Cards with no working &ldquo;View&rdquo; button (full &amp;
-          closed shows a disabled button; an already-started camp shows none)
-          have no detail page to open — a parent can&rsquo;t act there, so it
-          isn&rsquo;t mocked. The set is curated to the visually distinct
-          surfaces worth eyeballing.
+          shop (/shop). <strong>The whole card is the click target</strong> —
+          clicking anywhere on one that carries a chevron opens that same
+          mock&rsquo;s full detail page in the public layout — hero, long
+          description, schedule calendar, and the registration signup panel —
+          exactly as a parent would see it. The panel therefore needs no
+          separate demo: it lives in the full-page view. The
+          &ldquo;View&rdquo; hint in the footer is a label on that target
+          rather than a separate one — it is not a link, and the card beneath
+          it takes the click. <strong>Cards with no chevron are inert:</strong>{" "}
+          full-and-closed, an already-started camp and an already-over event
+          each state the reason as muted text where the hint would be, and a
+          finished run drops the footer row for a note and desaturates. None of
+          the four has a detail page, because a parent can&rsquo;t act there. Compare the two groups
+          by hovering: only the openable ones lift, brighten and nudge their
+          chevron. Between them the cards cover every registration state,
+          including one a parent reaches only by leaving a tab open past
+          midnight.
         </p>
         <ProductsDemo />
       </Section>

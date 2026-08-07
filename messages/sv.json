@@ -1438,6 +1438,7 @@
       "seatsCapacity": "{count, plural, one {# plats} other {# platser}}",
       "endedNote": "Den här är slut — håll utkik efter nästa.",
       "viewDetails": "Visa",
+      "cardLink": "{action} — {name}",
       "manage": "Hantera",
       "fullDisabled": "Fullt",
       "alreadyStarted": "Pågår",

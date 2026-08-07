@@ -278,11 +278,19 @@ describe("GameUsernameEditableRow", () => {
 
     type("zzqnotreal99812");
     press("Enter");
+    // The English the verify route actually answers a 404 with. Rejecting with
+    // it — rather than with something that happens to match the translation —
+    // is what makes the negative assertion below mean anything.
     await act(async () =>
-      settle.reject(new Error("Minecraft account not found.")),
+      settle.reject(new Error("No Minecraft account found with that username")),
     );
 
     expect(getByText("Minecraft account not found.")).toBeTruthy();
+    // The route's prose is a developer diagnostic and must never reach the DOM;
+    // rendering it was the bug, and it shipped English to every locale.
+    expect(container.textContent).not.toContain(
+      "No Minecraft account found with that username",
+    );
     expect(live(container)).toBe("zzqnotreal99812 (not yet verified)");
     expect(onCommit).toHaveBeenLastCalledWith("zzqnotreal99812", null);
   });

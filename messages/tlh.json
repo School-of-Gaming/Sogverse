@@ -1483,6 +1483,7 @@
       "seatsCapacity": "{count, plural, one {# quS} other {# quS}}",
       "endedNote": "rInpu’ – veb yIloS.",
       "viewDetails": "yIlegh",
+      "cardLink": "{action} — {name}",
       "manage": "yIche’",
       "fullDisabled": "buy’",
       "alreadyStarted": "taghpu’",

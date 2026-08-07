@@ -15,6 +15,24 @@ npm run test:ui          # Vitest with UI
 npm run test:smoke       # Build + smoke check (serves a production build, asserts headers/CSP)
 ```
 
+## Branching
+
+**Rule: branch off the latest `dev`, unless told otherwise.** `dev` is the
+integration branch; `main` is the release branch and trails it by hundreds of
+commits, so anything cut from `main` — or from a `dev` that hasn't been fetched —
+starts life missing work it will later collide with. Fetch and fast-forward
+first, then branch. This holds however the branch is created, including tooling
+that offers to pick a base for you: the default is usually `origin/<default
+branch>`, which is `main` here and is the wrong answer.
+
+Branches are named `feat/<kebab-summary>`; feature work merges back into `dev`
+with a real merge commit (`--no-ff`) whose subject reads `Merge the <thing> into
+dev`. Releases go `dev` → `main` through the `/pr-dev-to-main` command.
+
+For work that wants its own worktree — the usual shape when several things are in
+flight at once — `/worktree-flow` runs the whole lifecycle, from cutting the
+branch to tearing the worktree down after the merge.
+
 ## Architecture
 
 ### Tech Stack

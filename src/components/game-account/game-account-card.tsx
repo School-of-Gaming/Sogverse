@@ -39,22 +39,6 @@ import {
 /** What a caller does with the committed value. Rejecting shows the reason. */
 export type GameAccountSave = (username: string | null) => Promise<unknown>;
 
-/**
- * Pull a human sentence out of whatever a rejected save threw.
- *
- * A mutation may reject with an `Error`, with a Postgrest-shaped object carrying
- * a `message`, or with something with neither — and only the last of those is
- * the platform's fault rather than the caller's, so only it falls back to the
- * generic line.
- */
-function saveErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error) return error.message;
-  if (typeof error === "object" && error !== null && "message" in error) {
-    return String((error as { message: unknown }).message);
-  }
-  return fallback;
-}
-
 interface GameAccountFieldProps {
   platform: GamePlatform;
   /** The saved username, or `null` when there is none yet. */
@@ -125,7 +109,12 @@ export function GameAccountField({
     try {
       await onSave(value);
     } catch (err: unknown) {
-      setError(saveErrorMessage(err, g("saveFailed", { platform: name })));
+      // **The rejection is not read.** Whatever a mutation rejects with — an
+      // `Error` carrying a route's English, a Postgrest object, a `TypeError`
+      // from a dropped connection — says the same thing to the person in front
+      // of it: the change did not take. Preferring its `message`, as this did,
+      // only meant a server-authored English sentence on screen in every locale.
+      setError(g("saveFailed", { platform: name }));
       // Rethrown after the message is set: the row is awaiting this, and a
       // silent resolve would leave it showing a name nothing stored.
       throw err;

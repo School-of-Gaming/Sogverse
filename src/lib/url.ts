@@ -9,7 +9,7 @@
  *
  * Trusted sources, in priority order:
  *   1. `VERCEL_URL` — Vercel-injected per-deploy hostname. Not user-controllable.
- *      Covers per-PR preview deploys (Kyle tests on these).
+ *      Covers per-PR preview deploys, which do get tested on.
  *   2. `VERCEL_BRANCH_URL` — Vercel-injected branch alias hostname.
  *   3. The host of `NEXT_PUBLIC_SITE_URL` — configured per environment in
  *      Vercel's project settings: prod = sogverse.sog.gg, preview =
