@@ -16,13 +16,24 @@ import { TEST_IDS } from "./constants";
  * the pages it gets back, but it cannot prove PostgREST *accepts* the request.
  * Two things here are only knowable against a live server — whether a deep
  * self-referential embed resolves, and whether the paged walk really clears
- * `max_rows` on a 34,875-row country — and both are load-bearing for the
- * "nothing fetches the whole table" design.
+ * `max_rows` on a country of ~35,000 communes — and both are load-bearing for
+ * the "nothing fetches the whole table" design.
  *
- * The France commune seed (migration 00133) is asserted here too, for the same
- * reason its own assertion block exists: a partial seed is a hole in the tree
- * an admin browses, and it should fail in CI rather than in front of them.
+ * The France commune tree is asserted here too, for the same reason the seed's
+ * own assertion block exists: a partial seed is a hole in the tree an admin
+ * browses, and it should fail in CI rather than in front of them.
  */
+
+/**
+ * France's commune count after the GeoNames cutover: the COG's 34,875, minus
+ * the 8 codes GeoNames does not carry, plus the 4 communes it carries under a
+ * code the COG retired. Both lists are named in `scripts/lib/geonames/config.mjs`
+ * and this number is `count - allowMissing + allowExtra` from that entry — so
+ * when upstream heals and the config shrinks, this moves with it in the same
+ * change.
+ */
+const FR_COMMUNES = 34871;
+
 describe("locations scoped reads", () => {
   let admin: SupabaseClient<Database>;
   let service: LocationsService;
@@ -32,7 +43,7 @@ describe("locations scoped reads", () => {
     service = new LocationsService(admin);
   });
 
-  describe("France commune seed (00133)", () => {
+  describe("the France commune tree", () => {
     it("seeded every commune, each under its département", async () => {
       const { count, error } = await admin
         .from("locations")
@@ -40,7 +51,7 @@ describe("locations scoped reads", () => {
         .eq("country_code", "FR")
         .eq("type", "municipality");
       if (error) throw error;
-      expect(count).toBe(34875);
+      expect(count).toBe(FR_COMMUNES);
     });
 
     it("parents a commune to the right département", async () => {
@@ -56,7 +67,7 @@ describe("locations scoped reads", () => {
       expect(data.parent).toMatchObject({ type: "district", external_code: "59" });
     });
 
-    it("keeps INSEE's typography, apostrophes included", async () => {
+    it("keeps the source's typography, apostrophes included", async () => {
       const { data, error } = await admin
         .from("locations")
         .select("name")
@@ -68,6 +79,69 @@ describe("locations scoped reads", () => {
       expect(data.map((row) => row.name)).toEqual([
         "L'Abergement-Clémenciat",
         "M'Tsangamouji",
+      ]);
+    });
+
+    // Mayotte is the shape that breaks every assumption at once: GeoNames files
+    // its 17 communes as top-level rows of their own country file, with no
+    // région and no département row anywhere. Both of those are declared in
+    // config as synthetic rows, and this is what proves the subtree hangs off
+    // them rather than off nothing.
+    it("hangs Mayotte's communes off the two config-declared synthetic rows", async () => {
+      const { data, error } = await admin
+        .from("locations")
+        .select("name, geonames_id, parent:parent_id(external_code, geonames_id)")
+        .eq("country_code", "FR")
+        .eq("type", "municipality")
+        .eq("external_code", "97613")
+        .single();
+      if (error) throw error;
+
+      expect(data.parent).toMatchObject({ external_code: "976", geonames_id: null });
+      expect(data.geonames_id).not.toBeNull();
+
+      const { count, error: countError } = await admin
+        .from("locations")
+        .select("id", { count: "exact", head: true })
+        .eq("country_code", "FR")
+        .eq("type", "municipality")
+        .like("external_code", "976%");
+      if (countError) throw countError;
+      expect(count).toBe(17);
+    });
+
+    // The named allowance, both halves of it. These eight codes are the whole
+    // of what France gives up by moving to one authority, and they are named
+    // rather than absorbed: the first four are simply absent upstream, the
+    // second four are present under the pre-merger chef-lieu's retired code.
+    it("is missing exactly the communes the config names, and carries their stale-coded twins", async () => {
+      const { data, error } = await admin
+        .from("locations")
+        .select("external_code, name")
+        .eq("country_code", "FR")
+        .eq("type", "municipality")
+        .in("external_code", [
+          // allowMissing: absent upstream
+          "15031", "15035", "15047", "15171",
+          // allowMissing: present, but filed under an allowExtra code
+          "12218", "14581", "49126", "69114",
+          // allowExtra: the codes they are filed under
+          "12076", "14011", "49069", "69159",
+        ])
+        .order("external_code");
+      if (error) throw error;
+
+      expect(data.map((row) => row.external_code)).toEqual([
+        "12076",
+        "14011",
+        "49069",
+        "69159",
+      ]);
+      expect(data.map((row) => row.name)).toEqual([
+        "Conques-en-Rouergue",
+        "Aurseulles",
+        "Orée d'Anjou",
+        "Porte des Pierres Dorées",
       ]);
     });
   });
@@ -84,11 +158,11 @@ describe("locations scoped reads", () => {
       fiRows = await service.getMunicipalitiesByCountry("FI");
     }, 120_000);
 
-    // 34,875 rows is 35 pages at PostgREST's max_rows — the case an unpaged
+    // ~35,000 rows is 35 pages at PostgREST's max_rows — the case an unpaged
     // select would silently truncate to the first 1000.
     it("walks past max_rows for a country the size of France", () => {
-      expect(frRows).toHaveLength(34875);
-      expect(new Set(frRows.map((row) => row.id)).size).toBe(34875);
+      expect(frRows).toHaveLength(FR_COMMUNES);
+      expect(new Set(frRows.map((row) => row.id)).size).toBe(FR_COMMUNES);
     });
 
     it("returns Finland's municipalities and nothing else", () => {
@@ -209,8 +283,11 @@ describe("locations scoped reads", () => {
 
       expect(rows).toHaveLength(1);
       expect(rows[0].name).toBe("Lille");
+      // "Département du Nord", not "Nord": under one authority a place is
+      // called what GeoNames calls it, and the COG's shorter form is now
+      // something to correct upstream rather than to keep locally.
       expect(rows[0].ancestors.map((node) => node.name)).toEqual([
-        "Nord",
+        "Département du Nord",
         "Hauts-de-France",
         "France",
       ]);

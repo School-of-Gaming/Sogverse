@@ -5,8 +5,8 @@ import type { PostgrestResponse } from "@supabase/supabase-js";
  * project) and enforces it by returning a *short page*, not an error — so an
  * unbounded select is indistinguishable from a complete one and truncates
  * silently. Any list read not bounded by construction is therefore over the cap
- * as soon as its table is: `locations` is fully seeded from the official
- * classifications (France alone is 34,875 communes), and `profiles` only ever
+ * as soon as its table is: `locations` is fully seeded from GeoNames
+ * (France alone is some 34,900 communes), and `profiles` only ever
  * grows. Keep this in step with the server setting: a value larger than
  * `max_rows` makes every page look short and the walk stops at the cap again; a
  * smaller one just costs extra round-trips.

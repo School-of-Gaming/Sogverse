@@ -82,7 +82,7 @@ describe("LocationsService.getMunicipalitiesByCountry", () => {
   });
 
   // One level shallower than the keyed read, and that is the point: this one
-  // runs over 34,875 rows for France, so it asks for the depth a municipality
+  // runs over some 34,900 rows for France, so it asks for the depth a municipality
   // actually has (département -> région -> pays) and no more.
   it("embeds three ancestor levels, not the keyed read's four", async () => {
     fetchMock.mockResolvedValue(postgrestPage([], { from: 0, total: 0 }));

@@ -50,8 +50,16 @@
  *   country verified. The upper levels only sometimes do: Sweden's `admin1` is
  *   GeoNames' own numbering, not SCB's, so its regions declare
  *   `{ fromMunicipalityPrefix: 2 }` — the official län code is the first two
- *   digits of its kommuner's four-digit SCB codes. `officialCode: null` says
- *   the level has no official code at all, and its rows carry NULL.
+ *   digits of its kommuner's four-digit SCB codes. `{ literal: "01" }` states
+ *   the code outright, for a file whose whole level is one row GeoNames keys by
+ *   something that is not a code at all: each French DROM file carries its
+ *   région as a single `ADM1` whose `admin1` is the territory's ISO letters
+ *   ("GP"), where the COG says "01". `officialCode: null` says the level has no
+ *   official code at all, and its rows carry NULL.
+ *
+ *   The `codeField` stays the level's *key* in every case — it is what a child
+ *   row's own admin column names to find its parent — so overriding the
+ *   official code never disturbs parentage.
  *
  * - **`nameResolution`** — the one per-country judgment about names, made once
  *   when the entry is written and checked by generating and eyeballing the
@@ -91,13 +99,25 @@
  *   the durable fix is correcting GeoNames so the entry can be dropped.
  *
  * - **`expected`** — per level, the count **from the national statistical
- *   agency, never derived from the files being read**, and `allowMissing`
- *   naming exactly the official codes GeoNames is known to lack. This is the
- *   single most load-bearing gate in the system: it is what turns a forgotten
- *   `isoFiles` member into a failed run instead of a hole, and what surfaces an
- *   abolished-but-live row as a surplus. The gate also fails on an
- *   `allowMissing` code that *shows up* — upstream healing is good news that
- *   still gets taken deliberately, by shrinking the list here.
+ *   agency, never derived from the files being read**, plus two named
+ *   allowances for the places where upstream and the national list disagree.
+ *   This is the single most load-bearing gate in the system: it is what turns a
+ *   forgotten `isoFiles` member into a failed run instead of a hole, and what
+ *   surfaces an abolished-but-still-live row as a surplus.
+ *
+ *   `allowMissing` names official codes GeoNames does not carry; `allowExtra`
+ *   names codes GeoNames carries that the national classification does not.
+ *   Both are needed because upstream lag comes in two shapes, and France has
+ *   both at once: four communes GeoNames has simply never heard of, and four it
+ *   files under the pre-merger chef-lieu's code — *present, under the wrong
+ *   key*. A missing-only allowance would score the second kind twice, once as a
+ *   shortfall and once as a surplus, and no honest count could then be written
+ *   down. The target is therefore `count - allowMissing + allowExtra`.
+ *
+ *   Both lists are checked in both directions: the gate fails on an
+ *   `allowMissing` code that *shows up* and on an `allowExtra` code that has
+ *   *gone*, because upstream healing is good news that still gets taken
+ *   deliberately, by shrinking the list here.
  *
  * - **`postal`** — where postal codes come from and, per file, which admin
  *   column of the postal dump carries the municipality code (it moves: Finland's
@@ -167,17 +187,236 @@ export const COUNTRIES = {
     expected: { region: 21, municipality: 290 },
     postal: { source: "geonames" },
   },
+
+  FI: {
+    // Åland is country AX in GeoNames and maakunta 21 to Statistics Finland.
+    // Forgetting the second file is the Åland-shaped hole `expected` exists to
+    // catch: 16 kuntaa, and a gedu's "Finland" tick silently not covering them.
+    isoFiles: ["FI", "AX"],
+    levelOrder: ["region", "municipality"],
+    // Verified 2026-08-07 against the live dump: the dump's `name` column is not
+    // Finnish. 17 municipalities carry the Swedish form (Pargas, Korsholm,
+    // Jakobstad, Raseborg…) and several maakunnat are anglicized ("Central
+    // Finland", "Lapland"). Resolving through the `fi` alternates reproduces
+    // every one of the 19 + 308 + 1 names this tree already had, byte for byte
+    // — which is what makes the cutover invisible in Finland.
+    nameResolution: { language: "fi" },
+    // Verified 2026-08-07: mechanical `sv` resolution agrees with 50 of the 51
+    // curated legal Swedish names, loses none, and adds 83 established
+    // Finland-Swedish exonyms (Tammerfors, Nystad, Torneå). The one
+    // disagreement is Kanta-Häme, which resolves to "Tavastland" where the legal
+    // name is "Egentliga Tavastland" — fixed upstream in GeoNames if it matters,
+    // never with a local override.
+    alternateLocales: ["sv"],
+    levels: {
+      FI: {
+        // admin1 is the official maakunta code (01–19).
+        region: { fcode: "ADM1", codeField: "admin1" },
+        // admin3 is the official kunta code. Every ADM3 row carries admin1 too,
+        // so the parent chain comes off the row itself.
+        municipality: { fcode: "ADM3", codeField: "admin3" },
+      },
+      AX: {
+        // The column shift: Åland's kuntaa are ADM2 rows with the kunta code in
+        // admin2. AX's own ADM1 level is the three Åland sub-regions, which are
+        // not a level we model, so the whole file is pinned under maakunta 21.
+        municipality: {
+          fcode: "ADM2",
+          codeField: "admin2",
+          parent: { type: "region", externalCode: "21" },
+        },
+      },
+    },
+    countryRow: { geonameid: 660013, nameLanguage: "fi" },
+    // GeoNames has no maakunta row for Åland at all: its PCLD country record
+    // *is* our maakunta 21, so the pin attaches that record rather than
+    // declaring a synthetic row.
+    pins: [{ type: "region", externalCode: "21", geonameid: 661882 }],
+    // Two municipalities GeoNames still carries as live ADM3 years after they
+    // were abolished: 099 Honkajoki (merged into Kankaanpää in 2021, upstream
+    // last touched 2022) and 911 Valtimo (merged into Nurmes in 2020, upstream
+    // last touched 2016). Both are recorded human decisions, and the durable fix
+    // is correcting GeoNames so these entries can be dropped. A third stale code
+    // the investigation listed — 588 Pertunmaa — GeoNames has since moved to
+    // ADM3H itself, which is why it is not here.
+    exclude: [657480, 632553],
+    // Statistics Finland, 2026 classifications: 19 maakuntaa, 308 kuntaa.
+    expected: { region: 19, municipality: 308 },
+    postal: {
+      source: "geonames",
+      // The same file-set trap as the dumps, one column over: Åland's postal
+      // file carries the kunta code in admin code 2 where mainland Finland's
+      // carries it in admin code 3.
+      files: { FI: { muniCodeField: "adminCode3" }, AX: { muniCodeField: "adminCode2" } },
+    },
+  },
+
+  FR: {
+    // The five DROM are their own GeoNames countries. Mayotte is the one that
+    // breaks every assumption at once — see the YT mapping and the pins below.
+    isoFiles: ["FR", "GP", "MQ", "GF", "RE", "YT"],
+    levelOrder: ["region", "district", "municipality"],
+    // Verified 2026-08-07: France is the country where the dump name is the
+    // honest one and the alternates are not. Resolving through `fr` the way
+    // Finland resolves through `fi` renames a preferred-flagged "Département de
+    // Paris" over "Paris", picks "Région PACA" as the shortest candidate for
+    // Provence-Alpes-Côte d'Azur, collapses Bourgogne-Franche-Comté to
+    // "Bourgogne" and Auvergne-Rhône-Alpes to "Rhône-Alpes", and carries
+    // pre-merger names on dozens of renamed communes — 92 diffs in all.
+    //
+    // The dump name is not free either, and the cost is named rather than
+    // hidden: 15 communes and 10 départements differ from the COG names this
+    // tree had, the départements visibly so ("Upper Garonne" for Haute-Garonne,
+    // "South Corsica" for Corse-du-Sud, "Cote d'Or" with the accent lost,
+    // "Département du Nord" for Nord). Under one authority those are simply the
+    // names France ships with, and each is correctable *in GeoNames*. Swapping
+    // to `fr` would trade 10 wrong départements for 3 wrong régions and 92
+    // wrong rows overall, which is the worse half of the trade.
+    nameResolution: "dump",
+    // Verified 2026-08-07 and deliberately empty: France is the failing case for
+    // alternate payload. Only 13 of ~34,850 admin rows carry a `fi` alternate
+    // differing from the canonical name, none of them a name a Finnish speaker
+    // would recognize (no "Pariisi") — mostly mistagged orthographic variants
+    // and one outright wrong ("Chasselas"→"Gutedel", a German grape). English
+    // fares no better as display ("Département du Nord"→"North"). The famous
+    // exonyms live on GeoNames' populated-place records, which are different
+    // records with different geonameids from the administrative rows this tree
+    // ingests. A locale goes in here when its ingest diff shows real payload,
+    // and not before.
+    alternateLocales: [],
+    levels: {
+      FR: {
+        // Metropolitan France: admin1/admin2/admin4 are the official INSEE
+        // région, département and commune codes. ADM3 is the arrondissement, a
+        // rung we deliberately do not model.
+        region: { fcode: "ADM1", codeField: "admin1" },
+        district: { fcode: "ADM2", codeField: "admin2" },
+        municipality: { fcode: "ADM4", codeField: "admin4" },
+      },
+      // The four DROM that GeoNames models fully. Each file's single ADM1 keys
+      // itself by the territory's ISO letters ("GP") rather than by the COG's
+      // région code, so the official code is stated outright; ADM2 and ADM4
+      // carry the real 971–974 and five-digit codes.
+      GP: {
+        region: { fcode: "ADM1", codeField: "admin1", officialCode: { literal: "01" } },
+        district: { fcode: "ADM2", codeField: "admin2" },
+        municipality: { fcode: "ADM4", codeField: "admin4" },
+      },
+      MQ: {
+        region: { fcode: "ADM1", codeField: "admin1", officialCode: { literal: "02" } },
+        district: { fcode: "ADM2", codeField: "admin2" },
+        municipality: { fcode: "ADM4", codeField: "admin4" },
+      },
+      GF: {
+        region: { fcode: "ADM1", codeField: "admin1", officialCode: { literal: "03" } },
+        district: { fcode: "ADM2", codeField: "admin2" },
+        municipality: { fcode: "ADM4", codeField: "admin4" },
+      },
+      RE: {
+        region: { fcode: "ADM1", codeField: "admin1", officialCode: { literal: "04" } },
+        district: { fcode: "ADM2", codeField: "admin2" },
+        municipality: { fcode: "ADM4", codeField: "admin4" },
+      },
+      YT: {
+        // Mayotte has no ADM2, ADM3 or ADM4 at all: its 17 communes are ADM1
+        // rows carrying the full five-digit INSEE code in admin1. Nothing in
+        // the file stands for the région or the département, so the subtree is
+        // pinned under the synthetic département below.
+        municipality: {
+          fcode: "ADM1",
+          codeField: "admin1",
+          parent: { type: "district", externalCode: "976" },
+        },
+      },
+    },
+    countryRow: { geonameid: 3017382, nameLanguage: "fr" },
+    // Mayotte's région 06 and département 976 exist in no GeoNames file as
+    // administrative rows, so they are declared outright with `geonames_id`
+    // NULL. They could not borrow YT's country record between them in any case
+    // — `geonames_id` is unique. France's expected 18 régions and 101
+    // départements include these two.
+    pins: [
+      { type: "region", externalCode: "06", name: "Mayotte" },
+      {
+        type: "district",
+        externalCode: "976",
+        name: "Mayotte",
+        parent: { type: "region", externalCode: "06" },
+      },
+    ],
+    exclude: [],
+    expected: {
+      // INSEE Code officiel géographique 2026: 18 régions, 101 départements,
+      // 34,875 communes.
+      region: 18,
+      district: 101,
+      municipality: {
+        count: 34875,
+        // Four communes restored by the 2026 COG when a commune nouvelle was
+        // dissolved (all in Cantal), which GeoNames does not carry at all yet.
+        // They arrive through sync when upstream adds them.
+        allowMissing: [
+          "15031", // Celles
+          "15035", // Chalinargues
+          "15047", // Chavagnac
+          "15171", // Sainte-Anastasie
+          // Four communes nouvelles GeoNames *does* carry, under the wrong code
+          // — see allowExtra for the code it files each of them under.
+          "12218", // Conques-en-Rouergue
+          "14581", // Aurseulles
+          "49126", // Orée d'Anjou
+          "69114", // Porte des Pierres Dorées
+        ],
+        // The other half of those four. GeoNames still keys each commune
+        // nouvelle by its pre-merger chef-lieu's INSEE code, so the row is
+        // present under a code the COG retired. Named here so the count is
+        // honest in both directions rather than a shortfall and a surplus
+        // cancelling out. The consequence is real and small: an official-data
+        // join (La Poste postal, above all) misses these four until upstream
+        // corrects the code.
+        allowExtra: [
+          "12076", // Conques-en-Rouergue, filed under Conques
+          "14011", // Aurseulles, filed under Anctoville
+          "49069", // Orée d'Anjou, filed under Champtoceaux
+          "69159", // Porte des Pierres Dorées, filed under Le Breuil
+        ],
+      },
+    },
+    // GeoNames' French postal file carries the département+arrondissement code
+    // in admin code 3, not the commune INSEE code, so it joins 0 of 34,875
+    // communes. France is the one country whose postal source is overridden —
+    // La Poste's Base officielle des codes postaux, which joins on
+    // `code_commune_insee`. Declared here, consumed by the postal generator.
+    postal: { source: "laposte" },
+  },
 };
 
 /* --------------------------------------------------------------- validation */
 
-/** Normalize `expected` to the `{ count, allowMissing }` shape everywhere. */
+/** Normalize `expected` to the `{ count, allowMissing, allowExtra }` shape. */
 function normalizeExpected(value, where) {
-  if (typeof value === "number") return { count: value, allowMissing: [] };
+  if (typeof value === "number") return { count: value, allowMissing: [], allowExtra: [] };
   if (value && typeof value === "object" && typeof value.count === "number") {
-    return { count: value.count, allowMissing: value.allowMissing ?? [] };
+    const normalized = {
+      count: value.count,
+      allowMissing: value.allowMissing ?? [],
+      allowExtra: value.allowExtra ?? [],
+    };
+    for (const list of ["allowMissing", "allowExtra"]) {
+      if (!Array.isArray(normalized[list]) || normalized[list].some((code) => typeof code !== "string")) {
+        fail(`${where}: ${list} must be an array of official codes`);
+      }
+    }
+    // A code on both lists says upstream both lacks it and carries it. That is
+    // never a fact about the data; it is a fact about someone editing one list
+    // and forgetting the other.
+    const both = normalized.allowMissing.filter((code) => normalized.allowExtra.includes(code));
+    if (both.length > 0) {
+      fail(`${where}: ${both.join(", ")} appear on both allowMissing and allowExtra`);
+    }
+    return normalized;
   }
-  fail(`${where}: expected must be a count or { count, allowMissing }`);
+  fail(`${where}: expected must be a count or { count, allowMissing, allowExtra }`);
 }
 
 /**
@@ -268,13 +507,18 @@ export function countryConfig(iso) {
       if (mapping.officialCode === null) officialCode = { from: "none" };
       else if (mapping.officialCode !== undefined) {
         const digits = mapping.officialCode.fromMunicipalityPrefix;
-        if (typeof digits !== "number" || digits <= 0) {
+        const literal = mapping.officialCode.literal;
+        if (typeof literal === "string") {
+          if (literal === "") fail(`${where}: levels.${file}.${level}.officialCode.literal is empty`);
+          officialCode = { from: "literal", literal };
+        } else if (typeof digits === "number" && digits > 0) {
+          officialCode = { from: "municipalityPrefix", digits };
+        } else {
           fail(
-            `${where}: levels.${file}.${level}.officialCode must be null, omitted, or ` +
-              `{ fromMunicipalityPrefix: <digits> }`,
+            `${where}: levels.${file}.${level}.officialCode must be null, omitted, ` +
+              `{ literal: "<code>" }, or { fromMunicipalityPrefix: <digits> }`,
           );
         }
-        officialCode = { from: "municipalityPrefix", digits };
       }
 
       if (mapping.parent !== undefined) {

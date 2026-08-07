@@ -96,7 +96,7 @@ line, so the helper returns null for them.
 
 ### Locations: one seeded table, browsed and searched on the server
 
-Both countries are seeded complete and admins never hand-type a place name: everything above a `site` is seed data, and a site is the only row the app creates (see `src/services/locations/CLAUDE.md`). Follow-ups:
+Every supported country is seeded complete from GeoNames and admins never hand-type a place name: everything above a `site` is seed data, and a site is the only row the app creates (see `src/services/locations/CLAUDE.md`). Follow-ups:
 
 - [ ] **`useUpdateLocation` + the `PATCH /api/admin/locations/[id]` route have no caller.** Nothing in the UI renames a location — the naming dialog is only ever opened in "add a site" mode — so the route, the hook and the dialog's edit mode (`src/services/locations/`, `src/components/admin/location-form-dialog.tsx`) are dead. Remove them, or repurpose if we add a site-rename affordance to the venue picker.
 - [ ] **Consider enforcing site-only creation server-side.** `POST /api/admin/locations/create` is the only route that inserts a location, and `createLocationBody` (`src/services/locations/locations.contracts.ts`) still accepts any `location_type` — the site-only restriction is UI-only, so a scripted admin call could still create a region or a municipality by hand and put an unofficial row in seeded reference data. Tighten the contract to `type === 'site'` if we want the invariant enforced at the API.

@@ -10,8 +10,9 @@ service layer; the UI and the per-country config live in sibling modules noted b
 screen.**
 
 There is no second copy of the geography anywhere — no shipped catalog, no per-country
-asset, no client-side index. The `locations` table is fully seeded from the official
-statistical classifications and everything reads it: foreign-key integrity, ancestor
+asset, no client-side index. The `locations` table is fully seeded from GeoNames — one
+source and one authority for every country — and everything reads it: foreign-key
+integrity, ancestor
 chains, substitute matching, and the picker a human browses. What makes that affordable
 is not caching the table but never asking for more of it than a screen shows:
 
@@ -34,7 +35,7 @@ is not caching the table but never asking for more of it than a screen shows:
   collection as their content — a directory, a venue list inside a confirmed place — and
   no picker fetches one any more. Finland's 308 kuntaa were the last that did, and the
   tree dialog reaches any of them in three keystrokes against an index that also covers
-  the 34,875 it never held.
+  the ~34,900 French communes it never held.
 
 The payload is therefore O(what is rendered) and constant as countries are added.
 
@@ -103,26 +104,37 @@ locations.
 
 ## What is seeded
 
-Both supported countries are seeded complete, from the official statistical
-classifications, by data-only migrations:
+Every supported country is seeded complete, from **GeoNames**, by data-only migrations:
 
-| | Finland | France |
-|---|---|---|
-| Levels | region, municipality | region, district, municipality |
-| Rows | 19 maakuntaa + 308 kuntaa | 18 régions + 101 départements + 34,875 communes |
-| Source | Statistics Finland classifications | INSEE Code officiel géographique |
+| | Finland | France | Sweden |
+|---|---|---|---|
+| Levels | region, municipality | region, district, municipality | region, municipality |
+| Rows | 19 maakuntaa + 308 kuntaa | 18 régions + 101 départements + ~34,900 communes | 21 län + 290 kommuner |
 
-Plus one `country` row each. **Every seeded row carries its official code.** The only
-rows that do not are `site` rows, which are also the only rows anyone creates by hand.
+Plus one `country` row each. **Almost every seeded row carries its official code**, which
+GeoNames' admin-code columns supply — see below for the two kinds that do not.
+
+**Rule: GeoNames is the single source *and* the single authority for every country's
+geography, with no country special-cased.** There is no dual regime where some countries
+follow their national statistical classification and others follow GeoNames; Finland and
+France were cut over to it precisely so that no such fork exists. What that buys is one
+procedure for adding a country and one for keeping any country current. What it costs is
+named rather than hidden: currency for every country is GeoNames' currency, which has run
+six weeks behind a Finnish merger and five years behind an abolition, and a handful of
+places are spelled the way upstream spells them rather than the way the national list
+does. **A wrong name or a stale row is fixed in GeoNames, never with a local override** —
+local overrides are the curated data this supply exists to stop owning, and they drift
+silently the moment upstream corrects itself.
 
 Consequences worth holding onto:
 
 - **Nothing mints a place row on demand.** A commune a product or a gedu points at is
   already there, and the UI that pointed at it was looking at that very row. Nothing
   above `site` is ever inserted by the application.
-- **A seed is idempotent and asserted.** Inserts are `NOT EXISTS`-guarded on the code key
-  and the migration ends by asserting the exact row count, zero orphans and zero
-  code-less rows, so a half-applied seed fails loudly rather than shipping.
+- **A seed is idempotent and asserted.** Inserts are `NOT EXISTS`-guarded on
+  `geonames_id` and the migration ends by asserting the exact row count, zero orphans,
+  zero rows without an upstream key and zero code-less rows, so a half-applied seed fails
+  loudly rather than shipping.
 - **35k reference rows are trivial for Postgres.** What is not trivial is fetching them,
   which is why the read layer below exists.
 
@@ -130,10 +142,22 @@ Consequences worth holding onto:
 
 `external_code` holds the row's code in its country's official statistical classification
 — INSEE's Code officiel géographique for France, Statistics Finland's maakunta/kunta
-classifications for Finland. It is the key seeds and reconciliations dedupe on, because
+classifications for Finland, SCB's kommun codes for Sweden. **The contract is the code;
+the supplier is GeoNames**, whose admin-code columns carry those same national codes and
+are what the seeds read them out of. That is the whole reason the upstream key lives in
+its own `geonames_id` column: a join against official data (postal files, any national
+dataset) keeps working exactly as before, and changing where our rows come from did not
+change what this column means.
+
+Two kinds of row carry NULL, which is why the column is nullable and its uniqueness
+partial: `site` rows, which exist in no national classification, and a level whose config
+declares no official code because upstream does not carry one for that country.
+
+It is the key seeds, reconciliations and the FI/FR cutover's re-point dedupe on, because
 names are not one: France has homonymous communes, and each DROM has a région and a
-département of the same name. Sites carry NULL, which is why the column is nullable and
-its uniqueness partial.
+département of the same name. `geonames_id` is what *ingestion* dedupes on instead —
+official codes are reused across GeoNames' live/historic split, so they are not a key
+there.
 
 Uniqueness is `(country_code, type, external_code)`, not `(country_code, external_code)`.
 France reuses the same code across levels — every one of the 18 région codes is also a
@@ -151,25 +175,63 @@ any of them must take.
 The code is **searchable**, which is the one place it reaches a user: an admin working
 from a published list has the code in front of them rather than the spelling.
 
-## The generator
+## The generator, and adding a country
 
-`scripts/generate-france-communes-migration.mjs` emits the France commune seed migration,
-over the download/parse/naming module in `scripts/lib/`. Its output is fully deterministic
-— code-unit ordering, no timestamps, fixed chunking, explicit transaction — so a rerun
-against the same release is byte-identical. Finland has no generator and never had one;
-its rows were seeded by hand-written migrations, and its refresh is a hand-written
-migration too.
+One generator serves every country: `scripts/generate-geonames-seed.mjs <CC>`, over the
+ingestion module in `scripts/lib/geonames/`. **Adding a country is a config entry plus a
+run** — there is deliberately no country-specific executable code anywhere, and every
+shape the dumps come in (a country that is several ISO files, a file whose columns shift,
+a level upstream models nowhere) is absorbed by a field in `scripts/lib/geonames/config.mjs`
+rather than by a branch in code. That module's header documents each field and the
+verified failure it answers; read it before writing an entry.
+
+Two things about an entry are irreducible human judgment and are checked empirically
+rather than trusted: the **expected row count per level**, which must come from the
+national statistical agency and never from the files being read — it is what turns a
+forgotten ISO file into a failed run instead of a silent hole — and the **name-resolution
+rule**, which is per country because the dump's `name` column is not any single language
+(Finland's is Swedish for 17 municipalities; France's French *alternates* are the polluted
+side instead). The generator prints both alternatives side by side so the choice stays
+re-checkable in seconds.
+
+Output is deterministic against the same downloaded snapshot: rows ordered by geonameid,
+nothing run-dependent written, fixed chunking, explicit transaction. GeoNames publishes no
+archive, so that is the honest extent of the guarantee — the committed migration is the
+reviewable snapshot of record.
 
 **Rule: never regenerate an applied seed migration.** It is history. Renames and merges
-between annual releases can invalidate live references (products, sites, gedu coverage),
-so collapsing two rows or renaming one is a judgement call a human makes against the
-diff, not something a generator decides — reconcile in a *new* migration. A row whose
-name has drifted from the new release keeps working; only its display name is stale. A row
-whose code is gone is the case that needs a decision.
+between dumps can invalidate live references (products, sites, gedu coverage), so
+collapsing two rows or renaming one is a judgement call a human makes against the diff,
+not something a generator decides — reconcile in a *new* migration.
 
-Refreshing is deliberately unscheduled: the classifications are republished each January,
-but stale official names cost nothing until a place we operate in is affected. The
-procedure lives in the generator module's header.
+### Keeping a country current — one procedure, no exceptions
+
+Refreshing is deliberately unscheduled: run it before an expansion push, or when a place
+we operate in changes. Stale names cost nothing until they do. The procedure is the same
+for every country — Finland and France included, since the cutover; there is no annual
+national-classification diff any more:
+
+1. Run the differ for the country. It reads today's dumps and the live table (read-only)
+   and emits a human-readable report plus a reconciliation migration.
+2. Read the report. Anything ambiguous — a merge's coverage implications, a retirement
+   something references, a rename that looks like vandalism — is a human decision made
+   here, not by the tool.
+3. Push the migration through the normal workflow.
+
+**Rule: nothing on a refresh path may DELETE a location row.** The only states a
+reconciliation can produce are inserted, renamed, code-corrected and **retired**
+(`retired_at`). `gedu_locations.location_id` is ON DELETE CASCADE, so a delete would
+erase a gedu's coverage silently — which is exactly the hazard `retired_at` exists to
+avoid. The one sanctioned exception in the whole history of this table is the FI/FR
+cutover migration, which wipes and reseeds inside a capture/re-point bracket that carries
+every live reference across by official code and raises a `RAISE WARNING` naming anything
+that could not be carried. Deleting a retired, unreferenced row remains a manual,
+human-decided migration.
+
+**Rule: upstream garbage is quarantined in the config's `exclude` list, never patched
+locally.** GeoNames carries some abolished places as live rows for years (Finland needs
+exactly two entries). Each entry is a recorded human decision, and the durable fix is
+correcting GeoNames so the entry can be dropped.
 
 ## Search
 
@@ -361,7 +423,7 @@ for four levels, the deepest chain any supported country has (commune → dépar
 région → country), because a key set is whatever a caller stored and a stored pick can be
 a site — the deepest row in the tree. The **municipality list** read asks for three, which
 is all a municipality has. Each embedded level is an indexed lookup per row and that list
-query runs over 34,875 rows for France, so it asks for the depth it needs and no more. The
+query runs over ~34,900 rows for France, so it asks for the depth it needs and no more. The
 depths are spelled out as literal select strings rather than built at runtime — the client
 infers the response shape from the literal, and a computed string collapses it to
 `string`.
@@ -425,7 +487,7 @@ venues nobody had opened yet. Finland's **municipalities** genuinely were bounde
 a country is added — and the mode still went, because being bounded is not the same as
 being the right thing to pick from: three keystrokes against the search index reach any
 kunta faster than a scroll through a grouped list of all of them, and the same index also
-covers the 34,875 communes the list could never hold. What the set scope cost while it
+covers the ~34,900 communes the list could never hold. What the set scope cost while it
 lived is the shape of the argument: a whole branch of the panel, a grouping module, a flat
 read of every venue there was, and a second in-memory fold that had to be pinned to the
 database's by a shared fixture. All of it is deleted — the fold included, so the database
@@ -684,21 +746,46 @@ default; country names localize via `nameI18n`.
 on each hierarchy level plus a `nameI18n` entry.** A country whose language isn't a
 supported UI locale needs none — English is the default.
 
-Adding a country end to end is now two things: hierarchy config, and a seed migration for
-its rows. It appears in the picker, in search and in coverage the moment its rows exist —
+Adding a country end to end is now two things: hierarchy config, and an ingestion config
+entry whose generated seed migration supplies its rows. It appears in the picker, in search and in coverage the moment its rows exist —
 there is no asset to generate, no loader arm to add, and no bundle-size judgement call
 about whether it is small enough to ship.
 
 ## Localized display names (`name_i18n`)
 
 A location's `name` is the **canonical native-language name** — Finnish for FI rows,
-French for FR rows, English for UK/US. `name_i18n` is a `jsonb` map of `locale → name`
-overrides holding **only the rows that differ**, e.g. `{ "sv": "Helsingfors" }`. Seeded for
-Finland: the official Swedish names of the regions and municipalities that have one,
-sourced from Kotus (Institute for the Languages of Finland) and Government Decree
-1385/2022. Rows whose Swedish name equals the Finnish (Satakunta; Korsnäs; Åland's
-Swedish-only municipalities, already stored Swedish) get no entry, and most municipalities
-are monolingual Finnish with no legal Swedish name at all.
+French for FR rows, English for UK/US — resolved from GeoNames by the country's configured
+name rule. `name_i18n` is a `jsonb` map of `locale → name` holding **only the rows that
+differ**, e.g. `{ "sv": "Helsingfors" }`.
+
+**The column holds GeoNames-sourced display alternates, not a curated list of legal
+names.** A country's config declares which locales it ingests alternates for; the
+generator resolves each with the same mechanical rule it resolves canonical names with,
+and skips any value equal to the canonical name. Nothing here is authored by us. Finland
+ingests `sv`, which is why a Swedish-speaking parent sees Helsingfors, Åbo and Nyland —
+and now Tammerfors, Nystad and Torneå as well, which are customary exonyms rather than
+legal names and which the old curated contract deliberately excluded.
+
+Two things about that trade, both accepted with the numbers on the table. What was
+*gained* is owning zero curated data: adding a locale to a country is one config field and
+a regenerate, with no per-row work. What was *given up* is the legal-versus-customary
+distinction itself, plus one region's precision — Kanta-Häme resolves to "Tavastland"
+where its legal Swedish name is "Egentliga Tavastland". The route back to precision is
+flagging the right alternate **in GeoNames**, not a local override.
+
+**Rule: a locale goes into a country's `alternateLocales` only when its ingest diff shows
+real payload.** This is empirical per country/locale pair, never assumed. Finland's `sv`
+works because a co-official language got the administrative records richly annotated;
+France's `fi` is thirteen mistagged orthographic variants and one German grape name, and
+its `en` renders Nord as "North". The multilingual exonyms people expect live on
+GeoNames' *populated-place* records, which are different records with different
+geonameids from the administrative rows this tree ingests — and harvesting across the two
+is exactly the fuzzy matching step this supply exists to avoid.
+
+**Country rows are the exception and always ingest every supported UI locale.** They are
+the one level where every locale has real payload, and resolving them mechanically
+reproduces the hand-seeded country translations exactly (Suomi/Finland/Finlande,
+Ranska/Frankrike).
 
 **Rule: render location names through `localizedLocationName(loc, locale)`
 (`src/lib/locations/localized-name.ts`), never raw `loc.name`.** It resolves
@@ -711,9 +798,18 @@ work.
 **Rule: `name` is never duplicated into `name_i18n`.** Finland's own `fi` names live in
 `name`, not under a `"fi"` key — the resolver falls back to `name` for the native locale.
 Don't "helpfully" backfill a `fi` (or `fr`, or `en` for UK) key; the convention is *native
-name in `name`, alternates in `name_i18n`*. This is also why we don't store traditional
-exonyms of monolingual towns (Tampere → "Tammerfors"): those aren't the municipality's
-*legal* name, and the column is for legal/official alternates.
+name in `name`, alternates in `name_i18n`*. Ingestion enforces this mechanically by
+dropping any alternate that resolves to the canonical name, so a row whose Swedish name
+equals its Finnish one (Satakunta, Korsnäs, Åland's Swedish-named municipalities) simply
+carries no `sv` key.
+
+**Corollary: widening the alternate set widens the slug space, and that is the invariant
+to re-check.** `/schools/<slug>` has no disambiguation suffix because Finland's
+municipality names are 1:1 with their slugs, and slug resolution accepts every alternate
+after the canonical ones — first match wins, so a collision introduced by an exonym would
+be *silent*, one municipality's page answering for another's link. A DB test re-checks
+uniqueness across canonical names plus every ingested alternate, and it is the check to
+re-run whenever a locale is added to a country's `alternateLocales`.
 
 **Search and slugs follow the same data.** Every alternate is folded into the search
 index alongside the canonical name, so "Helsingfors" and "Helsinki" both find the row
@@ -722,10 +818,10 @@ display name (a Swedish viewer links to `helsingfors`), and slug resolution acce
 canonical *and* every alternate slug — canonical first, so an exonym can never shadow
 another municipality's native slug.
 
-Adding another locale (or another country's alternates) is data-only: add `name_i18n`
-entries; no schema change, since the column is locale-agnostic jsonb (this is why we chose
-it over per-locale `name_sv`/`name_xx` columns). The generated search fold picks the new
-alternates up on write, with no reindexing step.
+Adding another locale (or another country's alternates) is a config field and a
+reconciliation migration; no schema change, since the column is locale-agnostic jsonb
+(this is why we chose it over per-locale `name_sv`/`name_xx` columns). The generated
+search fold picks the new alternates up on write, with no reindexing step.
 
 ## Products ↔ locations
 

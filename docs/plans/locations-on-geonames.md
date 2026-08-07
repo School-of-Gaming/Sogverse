@@ -353,12 +353,20 @@ Key properties, each answering a verified failure shape:
   département 976 exist in no GeoNames file as administrative rows, and `geonames_id`'s
   uniqueness means they couldn't both borrow YT's country record anyway. France's
   expected counts (18 régions, 101 départements) include them.
-- `expected` is per level `{ count, allowMissing: [official codes…] }` — the count from
-  the national classification, `allowMissing` naming exactly the rows GeoNames is known
-  to lack (FR municipalities: the 8 codes above; empty everywhere else). The gate fails
-  on any shortfall not named, on any surplus, **and on an `allowMissing` code that
-  actually shows up** — a healed row is good news that must still be taken
-  deliberately, by shrinking the list in config.
+- `expected` is per level `{ count, allowMissing: […], allowExtra: […] }` — the count from
+  the national classification, `allowMissing` naming the official codes GeoNames is known
+  to lack and `allowExtra` the codes it carries that the classification does not.
+  **Both are needed, because upstream lag comes in two shapes and France has both**
+  (found while writing its config entry, 2026-08-07): 4 Cantal communes GeoNames simply
+  does not have, and 4 communes nouvelles it *does* have, filed under the pre-merger
+  chef-lieu's retired INSEE code — present, under the wrong key. Those 4 therefore sit on
+  `allowMissing` under their COG code *and* on `allowExtra` under GeoNames' code, and the
+  target is `count - allowMissing + allowExtra` = 34,875 − 8 + 4 = 34,871. A
+  missing-only allowance would have scored the second kind twice, as a shortfall and a
+  surplus at once, and no honest number could then be written down. The gate fails on any
+  shortfall or surplus not named, **on an `allowMissing` code that actually shows up, and
+  on an `allowExtra` code that has gone** — a healed row is good news that must still be
+  taken deliberately, by shrinking the lists in config.
 - `alternateLocales` governs the levels below country. **Country rows always ingest
   every supported UI locale** — verified 2026-08-07: the FI/AX/FR country records carry
   preferred-flagged alternates in all of them (Suomi/Finland/Finlande, Ranska/

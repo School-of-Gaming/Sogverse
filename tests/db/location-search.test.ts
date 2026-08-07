@@ -103,6 +103,16 @@ describe("search_locations", () => {
       expect(names(result)).toContain("Helsinki");
     });
 
+    it("matches an alternate that is a customary exonym, not a legal name", async () => {
+      // The cutover's visible gain, and the contract change behind it:
+      // `name_i18n` is GeoNames-sourced display alternates now, not a curated
+      // list of legally bilingual names. Tampere is monolingual Finnish by law
+      // and has always been Tammerfors to a Swedish speaker.
+      const result = await search(anon, { p_query: "tammerfors" });
+
+      expect(names(result)).toContain("Tampere");
+    });
+
     it("matches an infix, not only a prefix", async () => {
       const result = await search(anon, {
         p_query: "roubaix",
@@ -142,9 +152,15 @@ describe("search_locations", () => {
     });
 
     it("puts an exact name above everything that merely starts with it", async () => {
-      const result = await search(anon, { p_query: "nord", p_limit: 10 });
+      // "Lille" the commune, above Lillebonne, Lillemer and Lillers — and above
+      // the infix matches (Marquette-lez-Lille) that the previous rank covers.
+      // Exactness is the first ordering term, so it wins even though a commune
+      // is the deepest thing in the tree and every other kind of tie-break
+      // would put it last.
+      const result = await search(anon, { p_query: "lille", p_limit: 10 });
 
-      expect(result.results[0].name).toBe("Nord");
+      expect(result.results[0].name).toBe("Lille");
+      expect(names(result)).toEqual(expect.arrayContaining(["Lillebonne"]));
     });
 
     // The regression migration 00141 was written for, now ranked by the stored
@@ -158,8 +174,12 @@ describe("search_locations", () => {
       const result = await search(anon, { p_query: "haute", p_limit: 20 });
       const returned = names(result);
 
+      // Haute-Garonne and Haute-Corse are deliberately not in this list: under
+      // GeoNames they read "Upper Garonne" and "Upper Corsica" and no longer
+      // match the needle at all. That is the named cost of one authority, and
+      // the fix for it is a correction upstream, not a local override.
       expect(returned).toEqual(
-        expect.arrayContaining(["Haute-Savoie", "Haute-Garonne", "Hautes-Alpes"]),
+        expect.arrayContaining(["Haute-Savoie", "Haute-Loire", "Hautes-Alpes"]),
       );
       // Presence is only half of it: every one of the nine départements has to
       // precede every commune, or the next needle with a longer tail buries
@@ -282,7 +302,7 @@ describe("search_locations", () => {
       expect(result.results.every((row) => row.type === "municipality")).toBe(
         true,
       );
-      expect(names(result)).not.toContain("Nord");
+      expect(names(result)).not.toContain("Département du Nord");
     });
 
     it("searches every country at once, with no country chosen first", async () => {
@@ -308,7 +328,7 @@ describe("search_locations", () => {
 
       expect(lille.name).toBe("Lille");
       expect(lille.ancestors.map((node) => node.name)).toEqual([
-        "Nord",
+        "Département du Nord",
         "Hauts-de-France",
         "France",
       ]);

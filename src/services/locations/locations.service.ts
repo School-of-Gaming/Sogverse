@@ -145,7 +145,7 @@ const SITE_CHAIN_EMBED =
  * One level shallower, because a municipality *is* the level below a site: a
  * French commune sits under département → région → France, a Finnish kunta
  * under maakunta → Suomi. Each embedded level is an indexed lookup per row, and
- * this query runs over 34,875 rows for France — so it asks for the depth it
+ * this query runs over some 34,900 rows for France — so it asks for the depth it
  * needs and no more.
  */
 const MUNICIPALITY_CHAIN_EMBED =
@@ -242,7 +242,7 @@ export class LocationsService {
   /**
    * Every municipality of one country, each carrying its ancestor chain.
    * Drives the `/schools` list, Finland-only today (308 rows) — but the same
-   * call for France is 34,875, so this is a paged walk, not a select. The
+   * call for France is some 34,900, so this is a paged walk, not a select. The
    * chain is what lets the surface show (and group by) the region without a
    * second read.
    */

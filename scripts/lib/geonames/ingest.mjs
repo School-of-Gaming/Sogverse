@@ -188,7 +188,12 @@ export async function ingestCountry(config) {
 
   /* -------------------------------------------------------------------- pins */
 
-  const syntheticRows = [];
+  // Both pin shapes are collected here, but only the *synthetic* ones — the
+  // rows GeoNames has no record for at all — are what the emitted assertion
+  // counts. An attached pin carries a real geonameid and is keyed like any
+  // other sourced row; counting it as keyless would make the migration assert a
+  // number the seed cannot produce.
+  const pinnedRows = [];
   for (const pin of config.pins) {
     if (pin.geonameid !== null) {
       const record = records.get(pin.geonameid);
@@ -209,7 +214,7 @@ export async function ingestCountry(config) {
         pin,
       };
       rowsByLevel.get(pin.type).push(row);
-      syntheticRows.push(row);
+      pinnedRows.push(row);
     } else {
       // A row GeoNames has no administrative record for at all. `geonames_id`
       // stays NULL — it is unique, so a synthetic row could not borrow another
@@ -228,7 +233,7 @@ export async function ingestCountry(config) {
         pin,
       };
       rowsByLevel.get(pin.type).push(row);
-      syntheticRows.push(row);
+      pinnedRows.push(row);
     }
   }
 
@@ -273,6 +278,7 @@ export async function ingestCountry(config) {
     for (const row of rowsByLevel.get(level)) {
       if (row.mapping === null) continue;
       if (row.mapping.officialCode.from === "codeField") row.externalCode = row.key;
+      else if (row.mapping.officialCode.from === "literal") row.externalCode = row.mapping.officialCode.literal;
       else if (row.mapping.officialCode.from === "none") row.externalCode = null;
     }
   }
@@ -369,7 +375,7 @@ export async function ingestCountry(config) {
 
   for (const level of config.levelOrder) {
     const rows = rowsByLevel.get(level);
-    const { count, allowMissing } = config.expected[level];
+    const { count, allowMissing, allowExtra } = config.expected[level];
 
     const present = new Set(rows.map((row) => row.externalCode).filter((code) => code !== null));
     for (const code of allowMissing) {
@@ -380,8 +386,22 @@ export async function ingestCountry(config) {
         );
       }
     }
+    for (const code of allowExtra) {
+      if (!present.has(code)) {
+        problems.push(
+          `${level}: "${code}" is on allowExtra but GeoNames no longer carries it — upstream ` +
+            `healed, so shrink allowExtra (and probably allowMissing) in the config`,
+        );
+      }
+    }
 
-    const target = count - allowMissing.length;
+    const target = count - allowMissing.length + allowExtra.length;
+    const allowanceNote = [
+      allowMissing.length > 0 ? `minus ${allowMissing.length} named as missing` : null,
+      allowExtra.length > 0 ? `plus ${allowExtra.length} named as extra` : null,
+    ]
+      .filter(Boolean)
+      .join(", ");
     if (rows.length !== target) {
       const sample = rows
         .slice(0, 5)
@@ -389,7 +409,7 @@ export async function ingestCountry(config) {
         .join("; ");
       problems.push(
         `${level}: produced ${rows.length} rows, expected ${target} ` +
-          `(national count ${count}${allowMissing.length > 0 ? ` minus ${allowMissing.length} named as missing` : ""}). ` +
+          `(national count ${count}${allowanceNote === "" ? "" : ` ${allowanceNote}`}). ` +
           `Identify the surplus or shortfall against the national list, then fix the config, ` +
           `extend exclude, or fix GeoNames. First rows: ${sample}`,
       );
@@ -451,7 +471,11 @@ export async function ingestCountry(config) {
     country,
     levels,
     files,
-    stats: { excluded, synthetic: syntheticRows.length },
+    stats: {
+      excluded,
+      attached: pinnedRows.filter((row) => row.geonameid !== null).length,
+      synthetic: pinnedRows.filter((row) => row.geonameid === null).length,
+    },
     alternates,
   };
 }
