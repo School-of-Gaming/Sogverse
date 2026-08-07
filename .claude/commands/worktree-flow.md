@@ -235,6 +235,11 @@ available, invisible unless you look.
 - **Never `cd` to the main checkout from inside a worktree.** The isolation guard
   refuses, and a failed `cd X && ...` chain leaves the shell's tracked directory
   somewhere unexpected. Use absolute paths, and run `cd` as its own command.
+- **Inside a worktree, keep shell commands plain.** The isolation guard refuses
+  anything it cannot statically verify stays inside — heredocs, scripts piped to
+  an interpreter, compound chains with redirects. That refusal is almost always a
+  sign the dedicated file tools were the right instrument anyway; reach for those
+  first, and keep Bash for git, npm, and single-purpose commands.
 - **Never bare `git stash` / `git stash pop`.** The stack is shared with every
   other worktree and session. Prefer a temporary WIP commit.
 - **Do not merge, rebase, or delete any branch other than this one's.** Other
