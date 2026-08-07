@@ -1779,7 +1779,7 @@
     "picker": {
       "coverageTitle": "Choose the areas you cover",
       "coverageDescription": "Tick anything you can cover. Each tick covers everything inside it, so ticking a region already covers every municipality in it.",
-      "searchPlaceholder": "Search by name or code…",
+      "searchPlaceholder": "Search by name, code or postcode…",
       "searchingEverywhere": "Searching every country",
       "allCountries": "All countries",
       "noResults": "Nothing matches “{query}”.",
@@ -1797,7 +1797,7 @@
     "home": {
       "choose": "Add your location",
       "dialogTitle": "Where are you based?",
-      "dialogDescription": "Browse the list, or search by name."
+      "dialogDescription": "Browse the list, or search by name or postcode."
     }
   },
   "gameAccount": {

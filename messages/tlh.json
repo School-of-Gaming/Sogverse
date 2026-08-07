@@ -1736,7 +1736,7 @@
     "picker": {
       "coverageTitle": "DaSo’laHbogh Daqmey yIwIv",
       "coverageDescription": "DaSo’laHbogh Hoch yIwIv. wa’ wIv qoDDaq Hoch So’lu’, vaj Sep DawIvDI’ vengmeyDaj Hoch DaSo’.",
-      "searchPlaceholder": "pong ghap mI’ yInej…",
+      "searchPlaceholder": "pong, mI’, ghap QIn mI’ yInej…",
       "searchingEverywhere": "Hoch Sepmey wInej",
       "allCountries": "Hoch Sepmey",
       "noResults": "pagh! ”{query}” rurbogh Daq tu’lu’be’.",
@@ -1754,7 +1754,7 @@
     "home": {
       "choose": "DaqlIj yIchel",
       "dialogTitle": "nuqDaq bIDab?",
-      "dialogDescription": "tetlh yIlaD ghap pong yIlo’."
+      "dialogDescription": "tetlh yIlaD, ghap pong ghap QIn mI’ yIlo’."
     }
   },
   "gameAccount": {

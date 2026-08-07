@@ -1691,7 +1691,7 @@
     "picker": {
       "coverageTitle": "Valitse alueet, jotka katat",
       "coverageDescription": "Merkitse kaikki, jotka voit kattaa. Jokainen merkintä kattaa myös kaiken sen sisällä, joten maakunnan merkitseminen kattaa jo kaikki sen kunnat.",
-      "searchPlaceholder": "Hae nimellä tai koodilla…",
+      "searchPlaceholder": "Hae nimellä, koodilla tai postinumerolla…",
       "searchingEverywhere": "Haetaan kaikista maista",
       "allCountries": "Kaikki maat",
       "noResults": "Hakua ”{query}” vastaavaa ei löydy.",
@@ -1709,7 +1709,7 @@
     "home": {
       "choose": "Lisää sijaintisi",
       "dialogTitle": "Missä asut?",
-      "dialogDescription": "Selaa luetteloa tai hae nimellä."
+      "dialogDescription": "Selaa luetteloa tai hae nimellä tai postinumerolla."
     }
   },
   "gameAccount": {

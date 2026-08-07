@@ -20,8 +20,8 @@ is not caching the table but never asking for more of it than a screen shows:
   country is depth 0 of the same tree, so opening the picker and opening a région are the
   same request against the same index.
 - **Searching the hierarchy** is a ranked, capped, server-side query returning a top-N
-  plus the true match count. Nothing that could match the whole table is filtered in the
-  browser.
+  plus the true match count, over names, official codes and postal codes at once. Nothing
+  that could match the whole table is filtered in the browser.
 - **The bounded lists** a surface genuinely needs in full — one country's municipalities,
   one municipality's venues — are read whole and listed client-side. What makes such a
   list legitimate is that something *outside the geography* bounds it: a municipality club
@@ -390,18 +390,27 @@ they are*, which is the same call every other surface makes to turn a stored id
 into a name and a path. Embedding the chain off the postal table would be a
 second definition of that shape for the same answer.
 
-No route and no RPC: the table is anon-readable public reference data with a
-plain `USING (true)` policy and a `SELECT` grant to `anon` and `authenticated`,
-so the caller's own client asks it directly, exactly as browsing the tree does.
+No route and no RPC for the direct lookup: the table is anon-readable public
+reference data with a plain `USING (true)` policy and a `SELECT` grant to `anon`
+and `authenticated`, so the caller's own client asks it directly, exactly as
+browsing the tree does. `service_role` holds `SELECT` as well, for one reason
+that is worth stating because it is the shape any future grant here must take:
+the search RPC is `SECURITY INVOKER`, reads this table for its postal match arm
+(below) and is executable by that role, so **a role holding EXECUTE on the
+function has to hold the reads the function makes** — without it a privileged
+caller gets `permission denied` on a path no anonymous test would exercise.
+
 There is **no write grant for anybody, `service_role` included** — rows land
 through data migrations, which run as the database owner and need no Data API
-privilege, so a grant here would widen the reachable surface for no caller. A
-future admin surface that needs a privileged read adds the grant in that change,
-deliberately.
+privilege, so a write grant here would widen the reachable surface for no caller.
 
-The consuming UI — postal entry as a shortcut in the parent's picker, "clubs near
-me" — is deliberately separate later work. Coordinates and radius stay out of
-*coverage* semantics entirely, whatever that UI ends up doing.
+**The picker reads the codes through search instead, not through this method.** Typing a
+postal code into the picker's box is a search like any other — see the postal arm under
+Search below — so no surface has to decide *which* of several municipalities a code meant
+before the user has seen them. This direct lookup remains the shape for a caller that
+starts from a code it already holds; "clubs near me" is still separate later work, and
+coordinates and radius stay out of *coverage* semantics entirely whatever that UI ends up
+doing.
 
 ## Search
 
@@ -466,6 +475,68 @@ three places. The alias states the intent; it cannot enforce it, because `*` ret
 wider row and a wider row assigns to a narrower type without complaint, so the enforcement
 is a unit test that sweeps every read and fails on a `*` or a mention of the fold.
 
+### The postal arm — a second match source inside the same function
+
+Postal codes are searchable in the same box, through the same call: typing `00100` finds
+Helsinki, `75001` finds Paris, on every surface the picker serves. They are **not** in
+`search_blob`, and cannot be.
+
+**The fold is a generated column, and a generated column may only read its own row.** A
+postal code lives in another table with a many-to-many relation to this one — a
+municipality has dozens of codes, a French code spans dozens of communes — so putting
+codes in the blob would mean trigger-maintained denormalization: a second copy of the
+postal table kept in step by triggers on both sides, drifting silently the first time one
+was forgotten. Rejected on that basis. What the search function grows instead is a
+**second match arm**: `postal_codes` joined to the municipality each code reaches, merged
+into the same match set before ranking.
+
+**The fold-once rule survives intact, and that is why the arm lives here rather than
+anywhere else.** It is SQL inside the same function, reading the same needle the name arm
+reads. There is still exactly one fold, in the database, and nothing outside it matches
+anything.
+
+What the arm guarantees:
+
+- **A postal hit is the municipality row, deduped.** A prefix can reach many codes of one
+  place; one row comes out. A row matching by name *and* by code appears **once, at its
+  better rank**, and the reported total counts that deduped union.
+- **Ranked on the same scale as names**: the needle *is* a whole code → exact; the needle
+  is a *prefix* of one → prefix. **No infix arm on codes**, deliberately — nobody searches
+  the middle of a postcode, and an infix arm answers a four-digit needle with half a
+  country.
+- **Everything the name arm respects, the postal arm respects**: the level filter (applied
+  to the joined row's real type, not assumed from what the seed produced), the country
+  filter, `retired_at IS NULL`, the minimum needle length, and the folded needle.
+
+**The stored code is compared raw, and that is a scoped decision rather than an
+oversight.** Every seeded country's codes are fixed-width digits, on which the fold is the
+identity. A country whose codes carry letters or separators has to make that decision
+deliberately — as the `postal_code` column's own comment already says — and folding the
+stored side by reflex would be that decision made by accident, at the price of an
+expression no index can serve.
+
+**The arm is not gated on the needle looking like a code, and that is measured rather than
+assumed.** The tempting saving is to skip it unless the needle is digit-shaped. It costs
+one GIN probe that finds nothing — a fifth of what the name arm spends on the very same
+keystroke — and it would hardcode "postal codes are digits", which is a fact about Finland
+and France rather than about postal codes, whose failure mode is silent. That is the same
+country-shaped assumption the ranking rule below exists to keep out.
+
+**The index is a trigram one, for a reason that is invisible in a plan you have not run.**
+PostgreSQL rewrites `LIKE 'abc%'` into btree range bounds *at planning time*, and that
+rewrite needs the pattern to be a plan-time constant. Here it is not: the needle arrives as
+a subquery over the probe CTE, precisely so that one folded needle serves every arm — so a
+btree on the code sits unused behind this query shape, and only explicit pattern-comparison
+bounds would reach it, at the price of hand-rolled upper-bound arithmetic. A GIN trigram
+index extracts its query keys at *execution* time instead, which is exactly why the index
+over the stored fold already works against the same shape. Both arms are therefore one
+kind of index answering one kind of question.
+
+**The UK degrades silently and correctly.** It has no postal rows by construction — every
+UK row below the country carries a NULL official code, so there is no key for the postal
+join to run on — and the arm simply contributes nothing there. Nothing needs to know; a UK
+needle answers from names exactly as it did before.
+
 ### Ranking
 
 **Rule: rank the whole match set, then cap — never cap then sort.** At France's scale a
@@ -501,8 +572,10 @@ a table also keeps the total from being repeated on every row; the wire shape is
 through the feature's zod contract at both ends and by the db tests.
 
 **Rule: the search function is `SECURITY INVOKER`.** The caller's own RLS on `locations`
-then decides every row it can see, exactly as a direct select would, so the function
-cannot answer with anything a plain read would not already return. That is also what makes
+and `postal_codes` then decides every row it can see, exactly as a direct select would, so
+the function cannot answer with anything a plain read would not already return. The
+corollary binds every future arm: a table the function reads has to be readable by every
+role that may execute it. That is also what makes
 the route in front of it publicly cacheable — see below — and what lets it be classified
 as self-scoping in the DB authorization spine rather than needing a role gate it could not
 have.

@@ -15,6 +15,8 @@ import { createAdminTestClient, createAnonTestClient } from "./helpers";
  *  - diacritic-insensitivity **in both directions**, since a French user types
  *    "Nîmes" and a hurried one types "nimes",
  *  - the official statistical code as a search key,
+ *  - the **postal code** as a second search key, from a second table, merged
+ *    into the same match set before ranking,
  *  - `name_i18n` alternates, so a Swedish speaker finds the Finnish row,
  *  - **prefix beats infix regardless of where either sits in the table** — the
  *    property the old client-side two-bucket scan existed to guarantee, and the
@@ -120,6 +122,159 @@ describe("search_locations", () => {
       });
 
       expect(names(result)).toContain("Roubaix");
+    });
+  });
+
+  /**
+   * Postal codes are the one search key that does not live in `search_blob`,
+   * because a generated column may only read its own row and a code belongs to
+   * another table entirely — many codes to a municipality, many municipalities
+   * to a French code. The function grows a second match arm instead, joined back
+   * to the place each code reaches and merged in before ranking.
+   *
+   * What these assert is that the second arm is a *source*, not a second search:
+   * one folded needle, one match set, one ranking, one total.
+   */
+  describe("postal codes as a second search key", () => {
+    it("finds Helsinki from a Finnish postal code", async () => {
+      const result = await search(anon, { p_query: "00100" });
+
+      expect(result.total).toBe(1);
+      expect(result.results[0].name).toBe("Helsinki");
+      expect(result.results[0].type).toBe("municipality");
+      // A postal hit is an ordinary row, so it carries its chain like any other
+      // — which is what lets the picker render it without a second read.
+      expect(result.results[0].ancestors.map((node) => node.name)).toEqual([
+        "Uusimaa",
+        "Suomi",
+      ]);
+    });
+
+    it("finds Maarianhamina from an Åland code, ahead of the French communes that share it", async () => {
+      // 22100 is Mariehamn's code and also a Breton one around Dinan. Both are
+      // exact matches, so the tie falls to the ordering the panel already uses:
+      // an Åland kunta sits one level shallower than a French commune, and
+      // broadest-first puts it on top.
+      const result = await search(anon, { p_query: "22100" });
+
+      expect(result.results[0].name).toBe("Maarianhamina");
+      expect(result.total).toBeGreaterThan(1);
+    });
+
+    it("finds Paris from an arrondissement code, through the seed's rollup", async () => {
+      // La Poste keys Paris by arrondissement; the COG has one commune. The
+      // rollup happened at ingestion, so search sees one place per code.
+      const result = await search(anon, { p_query: "75001" });
+
+      expect(result.total).toBe(1);
+      expect(result.results[0].name).toBe("Paris");
+      expect(result.results[0].external_code).toBe("75056");
+    });
+
+    it("answers with the place once however many of its codes the needle reaches", async () => {
+      // "003" is the prefix of every code in the 00300–00399 block, all of them
+      // Helsinki's. One row comes out, and it outranks the infix code matches
+      // that a three-digit needle also finds in the blob.
+      const result = await search(anon, { p_query: "003", p_limit: 50 });
+      const helsinki = result.results.filter((row) => row.name === "Helsinki");
+
+      expect(helsinki).toHaveLength(1);
+      expect(result.results[0].name).toBe("Helsinki");
+    });
+
+    it("counts a place matched by both arms once, at its better rank", async () => {
+      // Espinasse-Vozelle's INSEE code is 03110 and 03110 is also one of its
+      // postal codes, so it is an exact hit on both arms at once. Nine communes
+      // share the code; a union that failed to dedupe would report ten.
+      const result = await search(anon, { p_query: "03110", p_limit: 50 });
+      const ids = result.results.map((row) => row.id);
+
+      expect(new Set(ids).size).toBe(ids.length);
+      expect(result.total).toBe(ids.length);
+      expect(
+        result.results.filter((row) => row.name === "Espinasse-Vozelle"),
+      ).toHaveLength(1);
+    });
+
+    it("gives a shared French code every commune it reaches, capped with a bigger total", async () => {
+      // A French code routinely spans dozens of communes. The cap is a rendering
+      // budget and the total is the truth behind it — the same "showing N of M"
+      // gap the name arm reports.
+      const result = await search(anon, { p_query: "51300", p_limit: 20 });
+
+      expect(result.results).toHaveLength(20);
+      expect(result.total).toBeGreaterThan(20);
+      expect(result.results.every((row) => row.type === "municipality")).toBe(
+        true,
+      );
+    });
+
+    it("does not match the middle of a code", async () => {
+      // Deliberately no infix arm on codes: "9800" sits inside a hundred French
+      // codes and starts none of them. Nobody searches the middle of a postcode,
+      // and an infix arm would answer a four-digit needle with half a country.
+      expect(await search(anon, { p_query: "9800" })).toEqual({
+        total: 0,
+        results: [],
+      });
+    });
+
+    it("offers no postal hit when the requested levels exclude municipalities", async () => {
+      // A postal row reaches a municipality, so a venue-only search must not see
+      // one. The filter is applied to the joined row's real type rather than
+      // assumed from what the seed happens to have produced.
+      expect(await search(anon, { p_query: "00100", p_types: ["site"] })).toEqual(
+        { total: 0, results: [] },
+      );
+    });
+
+    it("respects the country restriction, in the total as well as the page", async () => {
+      // The country is applied where the matching happens, for the postal arm
+      // exactly as for the name arm — otherwise a French code would crowd a
+      // Finland-restricted picker's page and inflate its "of M".
+      expect(await search(anon, { p_query: "75001", p_country: "FI" })).toEqual({
+        total: 0,
+        results: [],
+      });
+
+      const french = await search(anon, { p_query: "75001", p_country: "FR" });
+      expect(french.total).toBe(1);
+      expect(french.results[0].name).toBe("Paris");
+    });
+
+    it("leaves a name-shaped needle exactly as it was", async () => {
+      // The regression the second arm could plausibly cause: extra rows, a
+      // shifted ranking, or an inflated total on a needle no code can match.
+      // Tampere is reachable only through its Swedish alternate, and it is still
+      // the only row reachable at all.
+      const result = await search(anon, { p_query: "tammerfors" });
+
+      expect(result.total).toBe(1);
+      expect(result.results[0].name).toBe("Tampere");
+    });
+
+    it("still reaches France's départements first on a broad name needle", async () => {
+      // The 00141 regression, re-pinned across the union: the postal arm must
+      // not disturb the ordering of a needle it contributes nothing to.
+      const result = await search(anon, { p_query: "haute", p_limit: 20 });
+      const kinds = result.results.map((row) => row.type);
+
+      expect(kinds.lastIndexOf("district")).toBeLessThan(
+        kinds.indexOf("municipality"),
+      );
+      expect(names(result)).toEqual(
+        expect.arrayContaining(["Haute-Savoie", "Haute-Loire", "Hautes-Alpes"]),
+      );
+    });
+
+    it("answers a service-role caller too, not only anon", async () => {
+      // SECURITY INVOKER means the arm reads `postal_codes` as whoever called,
+      // and `service_role` may execute this function — so it needs the SELECT
+      // grant 00165 adds, or the postal arm raises permission denied on a path
+      // no anonymous test would ever exercise.
+      const privileged = await search(admin, { p_query: "00100" });
+
+      expect(privileged.results[0].name).toBe("Helsinki");
     });
   });
 

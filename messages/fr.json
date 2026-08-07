@@ -1691,7 +1691,7 @@
     "picker": {
       "coverageTitle": "Choisissez les zones que vous couvrez",
       "coverageDescription": "Cochez tout ce que vous pouvez couvrir. Chaque case cochée couvre tout ce qu’elle contient : cocher une région couvre déjà toutes ses communes.",
-      "searchPlaceholder": "Rechercher par nom ou code…",
+      "searchPlaceholder": "Rechercher par nom, code ou code postal…",
       "searchingEverywhere": "Recherche dans tous les pays",
       "allCountries": "Tous les pays",
       "noResults": "Aucun résultat pour « {query} ».",
@@ -1709,7 +1709,7 @@
     "home": {
       "choose": "Ajoutez votre localisation",
       "dialogTitle": "Où habitez-vous ?",
-      "dialogDescription": "Parcourez la liste ou recherchez par nom."
+      "dialogDescription": "Parcourez la liste ou recherchez par nom ou code postal."
     }
   },
   "gameAccount": {

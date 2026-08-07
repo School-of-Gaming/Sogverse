@@ -1691,7 +1691,7 @@
     "picker": {
       "coverageTitle": "Välj de områden du täcker",
       "coverageDescription": "Kryssa i allt du kan täcka. Varje kryss täcker allt som ligger inuti, så ett kryss för ett landskap täcker redan alla dess kommuner.",
-      "searchPlaceholder": "Sök på namn eller kod…",
+      "searchPlaceholder": "Sök på namn, kod eller postnummer…",
       "searchingEverywhere": "Söker i alla länder",
       "allCountries": "Alla länder",
       "noResults": "Ingenting matchar ”{query}”.",
@@ -1709,7 +1709,7 @@
     "home": {
       "choose": "Lägg till din plats",
       "dialogTitle": "Var bor du?",
-      "dialogDescription": "Bläddra i listan eller sök på namn."
+      "dialogDescription": "Bläddra i listan eller sök på namn eller postnummer."
     }
   },
   "gameAccount": {
