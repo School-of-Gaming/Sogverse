@@ -21,7 +21,13 @@ vi.mock("@/lib/auth", () => ({
 
 const mockInsert = vi.fn();
 const mockUpdate = vi.fn();
-const mockFrom = vi.fn(() => ({ insert: mockInsert, update: mockUpdate }));
+/** The top-level `.select(...)` — the create route's parent lookup uses it. */
+const mockSelect = vi.fn();
+const mockFrom = vi.fn(() => ({
+  select: mockSelect,
+  insert: mockInsert,
+  update: mockUpdate,
+}));
 
 const LOCATION_ID = "00000000-0000-0000-0000-0000000000aa";
 const PARENT_ID = "00000000-0000-0000-0000-0000000000ab";
@@ -40,6 +46,18 @@ const ROW = {
 /** `.insert(...).select().single()` / `.update(...).eq(...).select().single()`. */
 function resolvesTo(result: { data: unknown; error: unknown }) {
   return { select: () => ({ single: () => Promise.resolve(result) }) };
+}
+
+/** `.select(...).eq(...).single()` — the create route's parent lookup. */
+function parentLookup(result: { data: unknown; error: unknown }) {
+  return { eq: () => ({ single: () => Promise.resolve(result) }) };
+}
+
+/** What the parent lookup found, unless a test says otherwise. */
+function mockParentCountry(countryCode: string | null) {
+  mockSelect.mockReturnValue(
+    parentLookup({ data: { country_code: countryCode }, error: null }),
+  );
 }
 
 function mockAdmin() {
@@ -87,7 +105,6 @@ const validCreate = {
   name: "Helsinki",
   type: "municipality",
   parent_id: PARENT_ID,
-  country_code: null,
 };
 
 // --- Tests ---
@@ -95,7 +112,12 @@ const validCreate = {
 describe("POST /api/admin/locations/create", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFrom.mockReturnValue({ insert: mockInsert, update: mockUpdate });
+    mockFrom.mockReturnValue({
+      select: mockSelect,
+      insert: mockInsert,
+      update: mockUpdate,
+    });
+    mockParentCountry("FI");
     mockInsert.mockReturnValue(resolvesTo({ data: ROW, error: null }));
   });
 
@@ -137,7 +159,41 @@ describe("POST /api/admin/locations/create", () => {
     expect(res.status).toBe(200);
     expect(data).toEqual(ROW);
     expect(mockFrom).toHaveBeenCalledWith("locations");
-    expect(mockInsert).toHaveBeenCalledWith(validCreate);
+    expect(mockInsert).toHaveBeenCalledWith({
+      ...validCreate,
+      country_code: "FI",
+    });
+  });
+
+  // `country_code` is denormalized onto every row so country filtering needs no
+  // recursion, which makes the parent's code the only value that can be right.
+  // A caller-supplied one is a second source of truth for a field with exactly
+  // one — and country-scoping the venue dialog depends on this holding for
+  // every row, not for every well-behaved client.
+  it("derives country_code from the parent and discards what the client sent", async () => {
+    mockAdmin();
+    mockParentCountry("FR");
+
+    await POST(createRequest({ ...validCreate, country_code: "ZZ" }));
+
+    expect(mockSelect).toHaveBeenCalledWith("country_code");
+    expect(mockInsert).toHaveBeenCalledWith({
+      ...validCreate,
+      country_code: "FR",
+    });
+  });
+
+  it("reads no parent when there is none to read", async () => {
+    mockAdmin();
+
+    await POST(createRequest({ ...validCreate, parent_id: null }));
+
+    expect(mockSelect).not.toHaveBeenCalled();
+    expect(mockInsert).toHaveBeenCalledWith({
+      ...validCreate,
+      parent_id: null,
+      country_code: null,
+    });
   });
 
   it("returns 403 when the database refuses the insert", async () => {
@@ -158,7 +214,11 @@ describe("POST /api/admin/locations/create", () => {
 describe("PATCH /api/admin/locations/[id]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFrom.mockReturnValue({ insert: mockInsert, update: mockUpdate });
+    mockFrom.mockReturnValue({
+      select: mockSelect,
+      insert: mockInsert,
+      update: mockUpdate,
+    });
     mockUpdate.mockReturnValue({
       eq: () => resolvesTo({ data: ROW, error: null }),
     });

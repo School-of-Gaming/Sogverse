@@ -385,11 +385,14 @@ export type Database = {
         Row: {
           country_code: string | null
           created_at: string
+          depth: number
           external_code: string | null
+          geonames_id: number | null
           id: string
           name: string
           name_i18n: Json | null
           parent_id: string | null
+          retired_at: string | null
           search_blob: string | null
           type: Database["public"]["Enums"]["location_type"]
           updated_at: string
@@ -397,11 +400,14 @@ export type Database = {
         Insert: {
           country_code?: string | null
           created_at?: string
+          depth?: number
           external_code?: string | null
+          geonames_id?: number | null
           id?: string
           name: string
           name_i18n?: Json | null
           parent_id?: string | null
+          retired_at?: string | null
           search_blob?: string | null
           type: Database["public"]["Enums"]["location_type"]
           updated_at?: string
@@ -409,11 +415,14 @@ export type Database = {
         Update: {
           country_code?: string | null
           created_at?: string
+          depth?: number
           external_code?: string | null
+          geonames_id?: number | null
           id?: string
           name?: string
           name_i18n?: Json | null
           parent_id?: string | null
+          retired_at?: string | null
           search_blob?: string | null
           type?: Database["public"]["Enums"]["location_type"]
           updated_at?: string
@@ -1725,6 +1734,7 @@ export type Database = {
       }
       search_locations: {
         Args: {
+          p_country?: string
           p_limit?: number
           p_query: string
           p_types?: Database["public"]["Enums"]["location_type"][]

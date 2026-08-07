@@ -12,11 +12,21 @@ import { Constants } from "@/types";
  * returns `Location` (checked against the generated Row type).
  */
 
+/**
+ * What an admin may say when creating a location — in practice always a `site`.
+ *
+ * `country_code` is deliberately absent, and its absence is the contract: zod
+ * strips unknown keys, so a client that sends one is ignored rather than
+ * refused. The route derives it from the confirmed parent row instead. It is
+ * denormalized onto every row purely so country filtering needs no recursion,
+ * which makes "the parent's code" the only value that can be right — a
+ * client-supplied one is a second source of truth for a field that has exactly
+ * one.
+ */
 export const createLocationBody = z.object({
   name: z.string().trim().min(1, "Name is required"),
   type: z.enum(Constants.public.Enums.location_type),
   parent_id: z.string().nullable(),
-  country_code: z.string().nullable().default(null),
 });
 
 export const updateLocationBody = z.object({
@@ -112,6 +122,12 @@ export const locationSearchResult = z.object({
  * The public search route's query string. `types` arrives as a comma-separated
  * list because a repeated query parameter would produce a different URL for the
  * same request, and this route is meant to be cached by URL.
+ *
+ * `country` restricts matches to one ISO 3166-1 alpha-2 code, server-side. It
+ * is pinned to the canonical uppercase form rather than normalized, for the
+ * same reason `types` is one parameter: this route is cached by URL, and
+ * accepting `fi` alongside `FI` would spend two cache entries on one question.
+ * The only caller that sends it holds a constant.
  */
 export const searchLocationsQuery = z.object({
   q: z.string().min(LOCATION_SEARCH_MIN_QUERY).max(120),
@@ -126,4 +142,5 @@ export const searchLocationsQuery = z.object({
     .min(1)
     .max(LOCATION_SEARCH_MAX_LIMIT)
     .optional(),
+  country: z.string().regex(/^[A-Z]{2}$/).optional(),
 });

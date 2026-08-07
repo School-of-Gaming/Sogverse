@@ -51,16 +51,17 @@ import {
  * `countryCode` is a caller's business rule (a municipality club is funded by a
  * Finnish kunta and by nothing else), applied to *every* row this container
  * hands the panel — browsed or searched — so the restriction is "not offered"
- * rather than "refused afterwards". Its honest limitation is in the search
- * half: the server ranks and caps the page **before** this filter runs, so a
- * needle matching many rows in other countries can push the wanted ones off the
- * page entirely, and the "showing N of M" total is the true cross-country match
- * count rather than the count of rows this picker would offer. That direction
- * is the safe one — the number is never lower than the truth, so it can only
- * over-prompt an admin to narrow their needle, never claim a complete list —
- * but it is not the number a reader would assume. Closing the gap properly
- * means a country parameter on the search function itself; browsing, which is
- * exhaustive at every level, is unaffected.
+ * rather than "refused afterwards".
+ *
+ * The search half is now restricted **in the database**, which is where it has
+ * to happen: the server ranks and caps the page before any caller could filter,
+ * so a needle matching many rows in other countries used to push the wanted
+ * ones off the page entirely and report a "showing N of M" whose M counted
+ * matches this picker would never offer. Passing the country through fixes the
+ * page and the total together. The row filter below stays as the panel's own
+ * guarantee — it is what browsing needs, since a browse level is read whole and
+ * filtering it hides nothing reachable, and it costs nothing on a page of at
+ * most fifty already-restricted search hits.
  */
 
 /** Stable identity for "no seed", so the derived path does not churn. */
@@ -69,10 +70,11 @@ const NO_PATH: readonly LocationChainSummary[] = [];
 /**
  * Whether a row belongs to the country a caller restricted the picker to.
  *
- * A row with a null `country_code` is refused. Every seeded row carries its
- * code, so nothing is hidden today — but admin-created `site` rows don't (the
- * create route never sets it), so country-scoping the *venue* dialog would
- * silently hide every admin-created venue until sites get a backfilled code.
+ * A row with a null `country_code` is refused, and nothing is hidden by that:
+ * every seeded row carries its code, and every `site` now carries its parent's
+ * — derived server-side by the create route, backfilled onto the rows written
+ * before it did. That is what makes country-scoping the *venue* dialog possible
+ * rather than a way to silently hide every admin-created venue.
  */
 function inCountry(
   row: { country_code: string | null },
@@ -120,7 +122,10 @@ export function LocationBrowser({
   const parentId = path.at(-1)?.id ?? null;
 
   const level = useLocationChildren(parentId);
-  const search = useLocationSearch(debounced, { types: searchTypes });
+  const search = useLocationSearch(debounced, {
+    types: searchTypes,
+    country: countryCode,
+  });
 
   const browseRows = useMemo<LocationPick[]>(() => {
     // The ancestors of a browsed row are exactly the breadcrumb, reversed:

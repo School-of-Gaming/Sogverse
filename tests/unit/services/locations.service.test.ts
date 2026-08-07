@@ -69,6 +69,18 @@ describe("LocationsService.getMunicipalitiesByCountry", () => {
     expect(url.searchParams.get("order")).toBe("name.asc,id.asc");
   });
 
+  // A directory read *offers* places, so it drops the ones a refresh retired.
+  // Keyed reads deliberately do not — see the column discipline block below and
+  // the service's own note.
+  it("leaves retired municipalities out of the directory", async () => {
+    fetchMock.mockResolvedValue(postgrestPage([], { from: 0, total: 0 }));
+
+    await service.getMunicipalitiesByCountry("FI");
+
+    const url = requestedUrl(fetchMock.mock.calls[0][0]);
+    expect(url.searchParams.get("retired_at")).toBe("is.null");
+  });
+
   // One level shallower than the keyed read, and that is the point: this one
   // runs over 34,875 rows for France, so it asks for the depth a municipality
   // actually has (département -> région -> pays) and no more.
@@ -266,6 +278,25 @@ describe("LocationsService.getChildren", () => {
     expect(url.searchParams.get("parent_id")).toBe("eq.region-1");
   });
 
+  // Browsing is a read that *offers* places, at every level including the root,
+  // so a retired row must not appear in either.
+  it("leaves retired rows out of every browse level", async () => {
+    // A fresh Response per call: a single canned one has its body read once and
+    // is unusable on the second request.
+    fetchMock.mockImplementation(() =>
+      Promise.resolve(postgrestPage([], { from: 0, total: 0 })),
+    );
+
+    await service.getChildren(null);
+    await service.getChildren("region-1");
+
+    for (const call of fetchMock.mock.calls) {
+      expect(requestedUrl(call[0]).searchParams.get("retired_at")).toBe(
+        "is.null",
+      );
+    }
+  });
+
   it("returns one page and reports the true total behind it", async () => {
     fetchMock.mockResolvedValue(
       postgrestPage(locationRows(200), { from: 0, total: 812 }),
@@ -356,6 +387,19 @@ describe("LocationsService.searchLocations", () => {
     // request is always the same URL and therefore the same cache entry.
     expect(url.searchParams.get("types")).toBe("municipality,district");
     expect(url.searchParams.get("limit")).toBe("10");
+    // Not asked for, not sent — an unrestricted search and a restricted one
+    // have to be different URLs, which is what keeps them different cache
+    // entries in the shared cache in front of the route.
+    expect(url.searchParams.has("country")).toBe(false);
+  });
+
+  it("sends a country restriction to the server rather than filtering after", async () => {
+    fetchMock.mockResolvedValue(searchResponse({ total: 0, results: [] }));
+
+    await service.searchLocations("helsinki", { country: "FI" });
+
+    const url = new URL(String(fetchMock.mock.calls[0][0]), "https://example.test");
+    expect(url.searchParams.get("country")).toBe("FI");
   });
 
   it("parses the ranked answer, chains and all", async () => {
@@ -435,6 +479,12 @@ describe("LocationsService column discipline", () => {
       // Not `*` at the top level, and not `*` inside an embed either.
       expect(select).not.toContain("*");
       expect(select).not.toContain("search_blob");
+      // The GeoNames groundwork columns are read by nothing on any surface.
+      // `retired_at` decides which rows a read offers, which is a filter, not
+      // a column anyone renders.
+      expect(select).not.toContain("geonames_id");
+      expect(select).not.toContain("retired_at");
+      expect(select).not.toContain("depth");
       // Anchors the two negatives: a select asking for nothing recognisable
       // would satisfy them both.
       expect(select).toContain("external_code");

@@ -108,6 +108,14 @@ describe("GET /api/locations/search", () => {
     expect(mockRpc).not.toHaveBeenCalled();
   });
 
+  it("refuses a country code that is not the canonical two-letter form", async () => {
+    // Pinned rather than normalized: the route is cached by URL, so accepting
+    // `fi` alongside `FI` would spend two cache entries on one question.
+    expect((await GET(searchRequest("?q=lille&country=fi"))).status).toBe(400);
+    expect((await GET(searchRequest("?q=lille&country=FIN"))).status).toBe(400);
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
   // -- Query shape --
 
   it("passes the needle through and defaults the page size", async () => {
@@ -117,6 +125,7 @@ describe("GET /api/locations/search", () => {
       p_query: "lille",
       p_types: undefined,
       p_limit: 20,
+      p_country: undefined,
     });
   });
 
@@ -129,6 +138,22 @@ describe("GET /api/locations/search", () => {
       p_query: "lille",
       p_types: ["municipality", "district"],
       p_limit: 5,
+      p_country: undefined,
+    });
+  });
+
+  it("passes a country restriction down to the database", async () => {
+    // Restricting downstream of the RPC cannot work: the ranking and the cap
+    // are applied first, so a needle with many matches elsewhere would crowd
+    // the wanted country off the page and report a total counting rows the
+    // caller will never be offered.
+    await GET(searchRequest("?q=helsinki&country=FI"));
+
+    expect(mockRpc).toHaveBeenCalledWith("search_locations", {
+      p_query: "helsinki",
+      p_types: undefined,
+      p_limit: 20,
+      p_country: "FI",
     });
   });
 

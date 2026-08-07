@@ -33,6 +33,7 @@ async function search(
     p_query: string;
     p_types?: Database["public"]["Enums"]["location_type"][];
     p_limit?: number;
+    p_country?: string;
   },
 ) {
   const { data, error } = await client.rpc("search_locations", args);
@@ -144,6 +145,73 @@ describe("search_locations", () => {
       const result = await search(anon, { p_query: "nord", p_limit: 10 });
 
       expect(result.results[0].name).toBe("Nord");
+    });
+
+    // The regression migration 00141 was written for, now ranked by the stored
+    // `depth` instead of a hardcoded per-type CASE. "haute" matches dozens of
+    // communes and nine départements; ordering by the location_type enum's
+    // declaration order put every commune first, and since search does not
+    // paginate past the default page of 20, Haute-Savoie and its siblings were
+    // unreachable by search at all. `depth` says a French département is
+    // shallower than a commune without anyone spelling out France's shape.
+    it("reaches France's départements on the default page of a broad needle", async () => {
+      const result = await search(anon, { p_query: "haute", p_limit: 20 });
+      const returned = names(result);
+
+      expect(returned).toEqual(
+        expect.arrayContaining(["Haute-Savoie", "Haute-Garonne", "Hautes-Alpes"]),
+      );
+      // Presence is only half of it: every one of the nine départements has to
+      // precede every commune, or the next needle with a longer tail buries
+      // them again.
+      const kinds = result.results.map((row) => row.type);
+      expect(kinds.lastIndexOf("district")).toBeLessThan(
+        kinds.indexOf("municipality"),
+      );
+    });
+  });
+
+  describe("restricting to one country", () => {
+    // Restricting downstream of this function cannot work, and the picker's own
+    // docs record why: the ranking and the cap are applied first, so a needle
+    // with many matches elsewhere crowds the wanted country off the page, and
+    // the "showing N of M" total counts rows the caller will never be offered.
+    // Both halves are fixed by filtering in the match CTE.
+    it("returns only that country's rows", async () => {
+      const result = await search(anon, {
+        p_query: "helsinki",
+        p_country: "FI",
+      });
+
+      expect(result.results.length).toBeGreaterThan(0);
+      expect(result.results.every((row) => row.country_code === "FI")).toBe(true);
+    });
+
+    it("narrows the total, not just the page", async () => {
+      const everywhere = await search(anon, { p_query: "ille", p_limit: 1 });
+      const french = await search(anon, {
+        p_query: "ille",
+        p_limit: 1,
+        p_country: "FR",
+      });
+
+      expect(everywhere.total).toBeGreaterThan(0);
+      expect(french.total).toBeGreaterThan(0);
+      expect(french.total).toBeLessThanOrEqual(everywhere.total);
+    });
+
+    it("answers empty for a country the needle does not match in", async () => {
+      const result = await search(anon, { p_query: "helsinki", p_country: "FR" });
+
+      expect(result).toEqual({ total: 0, results: [] });
+    });
+
+    it("searches every country when no country is named", async () => {
+      // The parameter is optional and defaults to NULL, so every existing
+      // caller keeps the cross-country behaviour it had.
+      const result = await search(anon, { p_query: "lille" });
+
+      expect(result.results.some((row) => row.country_code === "FR")).toBe(true);
     });
   });
 

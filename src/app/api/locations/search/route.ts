@@ -36,7 +36,9 @@ import type { Database } from "@/types/database.types";
  *     one-character table scan. The database enforces both again — this is the
  *     cheaper of the two places to say no.
  *  3. **A stable cache key.** Types arrive as one comma-separated parameter
- *     rather than repeated ones, so the same request is always the same URL.
+ *     rather than repeated ones, and the optional country is pinned to its
+ *     canonical uppercase form, so the same request is always the same URL —
+ *     and two differently-scoped searches are never the same one.
  *
  * The client is built with the anon key and no cookies **on purpose**. The
  * search RPC is SECURITY INVOKER over a table whose policy grants every row to
@@ -67,6 +69,11 @@ export const GET = defineRoute({
       p_query: query.q,
       p_types: query.types ?? undefined,
       p_limit: query.limit ?? LOCATION_SEARCH_LIMIT,
+      // Restricting in the database rather than downstream: the ranking and the
+      // cap are applied before any caller could filter, so a needle with many
+      // matches elsewhere would otherwise crowd the wanted country off the page
+      // and report a total counting rows the caller will never be offered.
+      p_country: query.country ?? undefined,
     });
     if (error) throw error;
 

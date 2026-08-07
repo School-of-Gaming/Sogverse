@@ -40,8 +40,22 @@ export const locationKeys = {
   childrenOf: (parentId: string | null) =>
     [...locationKeys.children(), parentId ?? "root"] as const,
   search: () => [...locationKeys.all, "search"] as const,
-  searchFor: (query: string, types: readonly LocationType[] | undefined) =>
-    [...locationKeys.search(), query, types ? [...types].sort().join(",") : ""] as const,
+  // Every argument that changes the answer is in the key. The country
+  // restriction is one of them now that the database applies it: a search
+  // scoped to Finland and the same needle unscoped return different rows and a
+  // different total, so sharing a cache entry would serve one picker the
+  // other's answer.
+  searchFor: (
+    query: string,
+    types: readonly LocationType[] | undefined,
+    country: string | undefined,
+  ) =>
+    [
+      ...locationKeys.search(),
+      query,
+      types ? [...types].sort().join(",") : "",
+      country ?? "",
+    ] as const,
   byIds: (ids: readonly string[]) =>
     [...locationKeys.all, "by-ids", keySet(ids)] as const,
 };
@@ -110,25 +124,32 @@ export function useLocationChildren(parentId: string | null) {
 }
 
 /**
- * Cross-country search. Below the minimum needle length the query never runs,
- * which is what keeps a keystroke-driven box from firing a request per letter
- * before it could match anything meaningful.
+ * Cross-country search, or one country's when the caller names it. Below the
+ * minimum needle length the query never runs, which is what keeps a
+ * keystroke-driven box from firing a request per letter before it could match
+ * anything meaningful.
  */
 export function useLocationSearch(
   query: string,
-  options?: { types?: readonly LocationType[]; limit?: number },
+  options?: {
+    types?: readonly LocationType[];
+    limit?: number;
+    country?: string;
+  },
 ) {
   const supabase = getClient();
   const service = new LocationsService(supabase);
   const needle = query.trim();
   const types = options?.types;
+  const country = options?.country;
 
   return useQuery({
-    queryKey: locationKeys.searchFor(needle, types),
+    queryKey: locationKeys.searchFor(needle, types, country),
     queryFn: () =>
       service.searchLocations(needle, {
         types,
         limit: options?.limit ?? LOCATION_SEARCH_LIMIT,
+        country,
       }),
     enabled: needle.length >= LOCATION_SEARCH_MIN_QUERY,
     staleTime: REFERENCE_DATA_STALE_MS,

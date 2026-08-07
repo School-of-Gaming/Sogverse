@@ -96,6 +96,30 @@ function normalizeKeys(keys: readonly string[]): string[] {
 
 const CHAIN_COLUMNS = "id, name, name_i18n, type, parent_id, country_code, external_code";
 
+// ---------------------------------------------------------------------------
+// Retired rows, and which reads see them.
+//
+// A refresh never deletes a location — `gedu_locations.location_id` cascades,
+// so a DELETE would erase a gedu's coverage claim silently. It stamps
+// `retired_at` instead, and the split between reads is the whole point of the
+// column:
+//
+//   * **Reads that OFFER a place** — browsing a level, one country's
+//     municipalities for the directory — filter retired rows out. Nobody should
+//     be able to newly pick a place that no longer exists.
+//   * **Keyed reads deliberately do not.** A stored pick must keep resolving:
+//     the three-state guard in front of every picker distinguishes "the read
+//     has not landed" from "this id resolves to nothing", and a retired row is
+//     a *valid* pick, never cleared. Filtering it here would turn a live
+//     reference into a silently wiped one.
+//   * **The venue list is not filtered either**, and does not need to be:
+//     nothing retires a `site`. Sites are ours, created by an admin and absent
+//     from every upstream source, so no refresh path can reach them.
+//
+// No read selects `retired_at`, `geonames_id` or `depth` — no surface renders
+// any of them, and the column list is the contract's.
+// ---------------------------------------------------------------------------
+
 /**
  * Four ancestor levels, the deepest chain any supported country has: a French
  * site sits under commune → département → région → France, and a Finnish one
@@ -140,6 +164,7 @@ function buildMunicipalitiesQuery(
     })
     .eq("country_code", countryCode)
     .eq("type", "municipality")
+    .is("retired_at", null)
     .order("name")
     .order("id");
 }
@@ -259,7 +284,11 @@ export class LocationsService {
         parentId === null
           ? base.is("parent_id", null)
           : base.eq("parent_id", parentId);
-      return scoped.order("name").order("id").range(from, to);
+      return scoped
+        .is("retired_at", null)
+        .order("name")
+        .order("id")
+        .range(from, to);
     });
   }
 
@@ -273,10 +302,22 @@ export class LocationsService {
    * needle and the page size before anything reaches Postgres, and identical
    * queries from different visitors are answered without a round trip. The
    * injected client is deliberately unused here, as it is by the write methods.
+   *
+   * `country` is answered by the database rather than by the caller filtering
+   * what comes back. Filtering in the browser loses twice over: the server
+   * ranks and caps the page *before* a client-side filter can run, so a needle
+   * matching many rows elsewhere pushes every wanted row off the page, and the
+   * "showing N of M" total counts matches the picker would never offer. It
+   * rides in the URL, so a restricted and an unrestricted search are different
+   * cache entries at every layer.
    */
   async searchLocations(
     query: string,
-    options?: { types?: readonly LocationType[]; limit?: number },
+    options?: {
+      types?: readonly LocationType[];
+      limit?: number;
+      country?: string;
+    },
   ): Promise<z.infer<typeof locationSearchResult>> {
     const needle = query.trim();
     // The same floor the database enforces, applied before a request exists at
@@ -289,6 +330,7 @@ export class LocationsService {
     const params = new URLSearchParams({ q: needle });
     if (options?.types?.length) params.set("types", options.types.join(","));
     params.set("limit", String(options?.limit ?? LOCATION_SEARCH_LIMIT));
+    if (options?.country) params.set("country", options.country);
 
     const response = await fetch(`/api/locations/search?${params.toString()}`);
     if (!response.ok) {

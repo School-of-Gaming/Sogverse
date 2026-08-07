@@ -54,7 +54,44 @@ practice (3–5 levels).
 Columns: `id`, `name`, `name_i18n` (jsonb, see below), `type`, `parent_id` (FK to
 `locations`, `ON DELETE RESTRICT`), `country_code` (ISO 3166-1 alpha-2, **denormalized on
 every row** so country filtering needs no recursion), `external_code` (nullable, see
-below), `search_blob` (generated, see below), `created_at`, `updated_at`.
+below), `search_blob` (generated, see below), `geonames_id`, `retired_at`, `depth` (see
+below), `created_at`, `updated_at`.
+
+**`country_code` on a `site` is derived from the parent row, server-side, and any value
+the client sent is discarded.** The column exists to make country filtering
+recursion-free, which means the parent's code is the only value that can be right; a
+caller-supplied one is a second source of truth for a field with exactly one. The venue
+dialog does send the right code, and that is beside the point — country-scoping the
+dialog depends on the invariant holding for every row, not for every well-behaved client.
+
+### The three columns the data supply runs on
+
+`geonames_id`, `retired_at` and `depth` are the database's business rather than any
+surface's. **No read selects one**, and the row alias the application uses excludes all
+three, alongside `search_blob`.
+
+- **`geonames_id`** is the upstream key for a sourced row, unique where present. It is
+  what ingestion and sync dedupe on, because names are not a key and official codes are
+  reused across levels. NULL on sites and on any row an upstream source does not model.
+  It is **not** `external_code` and never holds an official code — the two are separate
+  columns with separate contracts.
+- **`retired_at`** is how a refresh removes a place without deleting a row, and the split
+  it creates between reads is the point of it. `gedu_locations.location_id` is
+  `ON DELETE CASCADE`, so deleting a superseded place silently erases a gedu's coverage;
+  nothing on a refresh path may delete. **Reads that *offer* a place filter retired rows
+  out** — browsing a level, the municipality directory, the search function (in its match
+  set, so the reported total drops them too). **Keyed reads deliberately do not**: a
+  stored pick must keep resolving, and the three-state guard's "absent vs invalid"
+  distinction depends on a retired row answering as a *valid* pick rather than as a
+  deleted one. The ancestor walk climbs **through** retired rows as well, because a chain
+  has to render whole — retirement hides a place from being *chosen*, never from being
+  *named*. Nothing retires a `site`.
+- **`depth`** is the row's distance from the root: 0 for a country, parent + 1 below,
+  maintained by a `BEFORE INSERT/UPDATE` trigger and never written by hand. It is what
+  lets search rank broadest-first for any hierarchy shape. Its one limit is written into
+  the trigger's own comment: a row trigger cannot re-depth a row's *descendants*, so
+  re-parenting a node that has any would leave them stale — nothing does that, since
+  nothing above `site` is created or moved by the application and sites are leaves.
 
 Hierarchy is flexible, not rigid — not every country uses every level (Finland skips
 `district`). A `country` row has `parent_id IS NULL`, which is what makes "the countries"
@@ -202,9 +239,20 @@ is a unit test that sweeps every read and fails on a `*` or a mention of the fol
 **Rule: rank the whole match set, then cap — never cap then sort.** At France's scale a
 two-letter needle matches thousands of communes, and an alphabetically early *infix* match
 sits ahead of the prefix match a user is obviously reaching for. Ordering by rank first
-(exact, then term-prefix, then infix), then by level, then by name, is what puts
+(exact, then term-prefix, then infix), then by breadth, then by name, is what puts
 "Ille-sur-Têt" above "Abbeville" for the needle "ille". A query that filtered and ordered
 by name alone would look correct on a small fixture and be useless on the real table.
+
+**Rule: breadth is the stored `depth`, never the `location_type` enum's declaration order
+and never a per-type CASE.** Both encode one country's shape: the enum sorts
+`municipality` before `district`, which is backwards for France, where a département *is*
+the district above the communes — a needle matching many communes buried all nine "haute"
+départements past the page and made them unreachable by search entirely. Spelling the
+order out per type fixed France and stayed wrong for a country nesting `district` *below*
+`municipality`, which the hierarchy config already sketches. `depth` is true for every
+shape and costs no per-country knowledge. **Sites are pushed below places by their own
+ordering term, ahead of depth**, because depth cannot separate them: a Finnish venue and a
+French commune both sit at depth 3, and a venue parked under a country row sits at 1.
 
 **Rule: the cap is a rendering budget, and the true match count is reported alongside
 it.** The panel says "showing N of M" off that gap; without it a capped list is
@@ -413,16 +461,16 @@ user had already navigated and drag them back out of the level they opened.
 **Rule: a country restriction is applied to every row before the panel sees it, so the
 answer is "not offered" rather than "refused afterwards".** Browsing is exact — every
 level is read in full, so filtering a level cannot hide anything the user could otherwise
-have reached. **Search is not, and the gap is worth stating plainly**: the server ranks and
-caps the page *before* a client-side filter can run, so a needle matching many rows
-elsewhere can push every wanted row off the page and leave the box empty on a needle that
-does match. The "showing N of M" total is the true cross-country match count for the same
-reason — never lower than the number of rows the picker would offer, so it can only
-over-prompt someone to narrow their needle rather than claim a complete list, but not the
-number a reader would assume it is. Closing that properly means a country parameter on the
-search function itself; until then the seeded browse path, not search, is the sound route
-to a restricted country's rows, and the clear-on-invalid guard is what makes the
-restriction binding rather than advisory.
+have reached.
+
+**Rule: search takes the country as a parameter and the database applies it — a country
+restriction is never a filter over what search returned.** The ranking and the cap are
+applied to the match set, so anything downstream of the function is downstream of the
+truncation: a needle matching many rows elsewhere pushes every wanted row off the page and
+leaves the box empty on a needle that does match, and the "showing N of M" total counts
+matches the picker would never offer. Both are one fault — the filter was in the wrong
+place — and both are fixed by putting it where the matching happens. The panel's own row
+filter stays as its guarantee, but it is no longer what makes the restriction true.
 
 The panel takes a **selection mode**:
 
@@ -556,10 +604,10 @@ index.
 one covers what the next cannot.** The DB trigger still permits a country or a region for
 online muni clubs (it predates the rule), so the picker is the gate. *Browsing* offers no
 country but Finland, at the root as well as below it, so the restriction holds even for
-someone who walks back up past the seeded breadcrumb. *Search* drops hits from elsewhere
-before they reach the panel — sound as far as it goes, with the honest caveat recorded
-above that the server's cap is applied before that filter, so a needle crowded out by
-foreign matches goes quiet rather than wrong. And the *clear-on-invalid guard* refuses a
+someone who walks back up past the seeded breadcrumb. *Search* is restricted in the
+database, by the country parameter the picker passes through, so the ranking and the cap
+are applied to Finnish rows only and a needle crowded out by foreign matches no longer
+goes quiet. And the *clear-on-invalid guard* refuses a
 stored id that is not a Finnish municipality, which is the only one of the three that can
 say anything about a row saved before the other two existed — a legacy club anchored to a
 region, or to the country itself. That last one is what makes the restriction binding
