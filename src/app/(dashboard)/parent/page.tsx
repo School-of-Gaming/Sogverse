@@ -158,7 +158,24 @@ export default async function CustomerDashboardPage() {
       // Handed over finished rather than as data: billing is one self-contained
       // section with its own backend actions, and nothing about the shape of the
       // page depends on what is inside it.
-      billingCard={<ManageBillingCard accounts={billingAccounts} />}
+      //
+      // **The `key` looks redundant and is not — please do not delete it.**
+      // This element is built in a server component and handed across the RSC
+      // boundary to a client one, which renders it as a sibling of the billing
+      // <h2>. Two static children compile to a children *array*, which is the
+      // position React's key check applies to, and an element that has been
+      // through Flight serialization does not carry the mark JSX normally puts
+      // on statically-written children — so React reports it as an unkeyed list
+      // child and points the code frame at this line. Nothing on the path
+      // renders a real unkeyed array: the card's own maps are keyed, and this
+      // page creates exactly one element. A constant key satisfies the check
+      // outright, since having one is all it asks.
+      //
+      // Inert for reconciliation — the key never changes, so it cannot cause a
+      // remount — and the warning was dev-mode only: nothing was broken.
+      billingCard={
+        <ManageBillingCard key="billing-card" accounts={billingAccounts} />
+      }
     />
   );
 }
