@@ -44,9 +44,7 @@ session cannot create or modify another worktree, and the guard will refuse.
    `.claude/worktrees/` is the only correct location. It is gitignored, and
    because it sits *inside* the checkout, Node resolves `node_modules` upward
    from the parent — **so do not run `npm install`**, it is not needed and costs
-   several minutes and a gigabyte. Sibling `Sogverse-<name>/` directories exist
-   from older sessions; they each carry their own `node_modules` and are not the
-   pattern to copy.
+   several minutes and a gigabyte.
 
    Three things make the nested location safe, and only the first two are
    visible from here: it is gitignored; lint and tests target explicit
@@ -149,13 +147,11 @@ Order matters — several of these steps block the next one if skipped.
    port — the user may well have servers of their own running. Afterwards re-check
    that their ports are still up.
 
-3. **Delete the copied `.env.local`** from the worktree.
-
-4. **Leave the worktree** — `ExitWorktree` with `keep`, which returns the session
+3. **Leave the worktree** — `ExitWorktree` with `keep`, which returns the session
    to the main checkout. `remove` will refuse here, because the worktree was
    created by hand rather than by `EnterWorktree`.
 
-5. **Merge and push**, from the main checkout on `dev`:
+4. **Merge and push**, from the main checkout on `dev`:
 
    ```
    git branch --show-current        # must say dev — check out dev if not
@@ -169,17 +165,17 @@ Order matters — several of these steps block the next one if skipped.
    deviate only when the user explicitly says to. Subject line:
    `Merge the <thing> into dev` — matching the house style, not git's default
    text. If `dev` gained commits since Phase 1, the push publishes a union CI
-   has not seen — that is accepted; CI on `dev` judges it (step 8).
+   has not seen — that is accepted; CI on `dev` judges it (step 7).
 
-6. **Remove the worktree:** `git worktree remove <absolute-path>`. If it refuses
+5. **Remove the worktree:** `git worktree remove <absolute-path>`. If it refuses
    because `node_modules` or `.next` are present, `rm -rf` the directory and then
    `git worktree prune`.
 
-7. **Delete the branch** — local, and the remote too if it was ever pushed for
+6. **Delete the branch** — local, and the remote too if it was ever pushed for
    CI. Do it now rather than leaving it for `cleanup-branches`; the merge just
    proved it is safe to delete, and that certainty decays.
 
-8. **Report** what landed, confirm the worktree, branch and server are all
+7. **Report** what landed, confirm the worktree, branch and server are all
    actually gone, and confirm the main checkout is back on `dev`. **Do not
    watch the CI run the push triggers** — the user watches `dev` CI themselves
    and will flag a failure; a session that sits polling it is spending the
@@ -240,12 +236,3 @@ available, invisible unless you look.
   worktrees are other sessions' live work.
 - If the plan changes mid-flight and the work should land somewhere else, say so
   and stop — do not quietly retarget the branch.
-
-## A simplification available later
-
-Setting `worktree.baseRef` to `head` would make `EnterWorktree` branch from the
-current HEAD instead of `origin/main`. Steps 2–3 would collapse into a single
-`EnterWorktree` call with a `name`, and step 4 of Phase 5 could then use
-`ExitWorktree` with `remove` — creation and teardown both tool-managed, and the
-location correct by construction rather than by instruction. Until that setting
-exists, follow the steps above as written.
