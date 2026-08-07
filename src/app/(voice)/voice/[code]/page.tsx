@@ -1,4 +1,3 @@
-import { InstantVoiceHeader } from "@/components/voice/instant/InstantVoiceHeader";
 import { InstantVoiceSession } from "@/components/voice/instant/InstantVoiceSession";
 import { RoomNotFoundScreen } from "@/components/voice/instant/RoomNotFoundScreen";
 import { Copyright } from "@/components/layout";
@@ -14,9 +13,8 @@ import { normalizeVoiceRoomCode } from "@/lib/voice-room-code";
  * rather than a hard 404, even when the code is malformed (extra chars,
  * disallowed letters, etc.). Most failures here are typos — the user was
  * trying to reach *some* room — so we echo the typed value back so they
- * can spot the mistake. The header's copy-link chip is hidden when the
- * code is invalid because we don't want to offer a copy action that just
- * pastes a broken URL.
+ * can spot the mistake. Page chrome (the standard app header, no footer)
+ * comes from the route's layout, so both branches get it.
  */
 export default async function InstantVoicePage({
   params,
@@ -27,12 +25,7 @@ export default async function InstantVoicePage({
   const code = normalizeVoiceRoomCode(rawCode);
 
   if (!code) {
-    return (
-      <>
-        <InstantVoiceHeader />
-        <RoomNotFoundScreen code={prettifyTypedCode(rawCode)} />
-      </>
-    );
+    return <RoomNotFoundScreen code={prettifyTypedCode(rawCode)} />;
   }
 
   // Same decision the token route uses to mint the owner token (admin or a
@@ -43,7 +36,6 @@ export default async function InstantVoicePage({
 
   return (
     <>
-      <InstantVoiceHeader code={code} />
       {/* Copyright is rendered here in the server boundary so its year is
           fixed at SSR time — passing it as a prop into the client session
           avoids a client-side getFullYear() that could disagree with the
