@@ -1165,7 +1165,8 @@
     },
     "privacy": "Integritetspolicy",
     "terms": "Användarvillkor",
-    "antiBullying": "Mot mobbning"
+    "antiBullying": "Mot mobbning",
+    "attribution": "Platsdata baseras på <geonames>GeoNames</geonames> (<cc>CC BY 4.0</cc>). Franska postnummer från <laposte>La Poste</laposte> (<lo>Licence Ouverte 2.0</lo>)."
   },
   "gamer": {
     "welcomeNamed": "Välkommen, {name}!",
@@ -1685,8 +1686,9 @@
     "picker": {
       "coverageTitle": "Välj de områden du täcker",
       "coverageDescription": "Kryssa i allt du kan täcka. Varje kryss täcker allt som ligger inuti, så ett kryss för ett landskap täcker redan alla dess kommuner.",
-      "searchPlaceholder": "Sök på namn eller kod…",
+      "searchPlaceholder": "Sök på namn, kod eller postnummer…",
       "searchingEverywhere": "Söker i alla länder",
+      "searchingCountry": "Söker i {country}",
       "allCountries": "Alla länder",
       "noResults": "Ingenting matchar ”{query}”.",
       "keepTyping": "Skriv minst {count} tecken för att söka.",
@@ -1694,7 +1696,6 @@
       "showingSome": "Visar de {shown} första av {total} träffar. Fortsätt skriva för att begränsa dem.",
       "loadMore": "Visa fler",
       "browseInto": "Visa vad som finns i {name}",
-      "nothingSelected": "Välj en plats för att fortsätta.",
       "confirm": "Fortsätt",
       "confirming": "Öppnar…",
       "clearSearch": "Rensa sökning",
@@ -1704,7 +1705,7 @@
     "home": {
       "choose": "Lägg till din plats",
       "dialogTitle": "Var bor du?",
-      "dialogDescription": "Bläddra i listan eller sök på namn."
+      "dialogDescription": "Bläddra i listan eller sök på namn eller postnummer."
     }
   },
   "gameAccount": {

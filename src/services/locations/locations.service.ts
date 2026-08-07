@@ -1,6 +1,5 @@
 import type {
   Location,
-  LocationInsert,
   LocationType,
   AppSupabaseClient,
 } from "@/types";
@@ -13,8 +12,10 @@ import {
   LOCATION_COLUMNS,
   LOCATION_SEARCH_LIMIT,
   LOCATION_SEARCH_MIN_QUERY,
+  POSTAL_CODE_COLUMNS,
   locationRow,
   locationSearchResult,
+  type CreateLocationBody,
 } from "./locations.contracts";
 import type { z } from "zod";
 
@@ -96,6 +97,31 @@ function normalizeKeys(keys: readonly string[]): string[] {
 
 const CHAIN_COLUMNS = "id, name, name_i18n, type, parent_id, country_code, external_code";
 
+// ---------------------------------------------------------------------------
+// Retired rows, and which reads see them.
+//
+// A refresh never deletes a location — `gedu_locations.location_id` cascades,
+// so a DELETE would erase a gedu's coverage claim silently. It stamps
+// `retired_at` instead, and the split between reads is the whole point of the
+// column:
+//
+//   * **Reads that OFFER a place** — browsing a level, one country's
+//     municipalities for the directory, the municipalities a postal code
+//     reaches — filter retired rows out. Nobody should be able to newly pick a
+//     place that no longer exists, whichever way they reached for it.
+//   * **Keyed reads deliberately do not.** A stored pick must keep resolving:
+//     the three-state guard in front of every picker distinguishes "the read
+//     has not landed" from "this id resolves to nothing", and a retired row is
+//     a *valid* pick, never cleared. Filtering it here would turn a live
+//     reference into a silently wiped one.
+//   * **The venue list is not filtered either**, and does not need to be:
+//     nothing retires a `site`. Sites are ours, created by an admin and absent
+//     from every upstream source, so no refresh path can reach them.
+//
+// No read selects `retired_at`, `geonames_id` or `depth` — no surface renders
+// any of them, and the column list is the contract's.
+// ---------------------------------------------------------------------------
+
 /**
  * Four ancestor levels, the deepest chain any supported country has: a French
  * site sits under commune → département → région → France, and a Finnish one
@@ -121,7 +147,7 @@ const SITE_CHAIN_EMBED =
  * One level shallower, because a municipality *is* the level below a site: a
  * French commune sits under département → région → France, a Finnish kunta
  * under maakunta → Suomi. Each embedded level is an indexed lookup per row, and
- * this query runs over 34,875 rows for France — so it asks for the depth it
+ * this query runs over some 34,900 rows for France — so it asks for the depth it
  * needs and no more.
  */
 const MUNICIPALITY_CHAIN_EMBED =
@@ -140,6 +166,7 @@ function buildMunicipalitiesQuery(
     })
     .eq("country_code", countryCode)
     .eq("type", "municipality")
+    .is("retired_at", null)
     .order("name")
     .order("id");
 }
@@ -217,7 +244,7 @@ export class LocationsService {
   /**
    * Every municipality of one country, each carrying its ancestor chain.
    * Drives the `/schools` list, Finland-only today (308 rows) — but the same
-   * call for France is 34,875, so this is a paged walk, not a select. The
+   * call for France is some 34,900, so this is a paged walk, not a select. The
    * chain is what lets the surface show (and group by) the region without a
    * second read.
    */
@@ -259,7 +286,11 @@ export class LocationsService {
         parentId === null
           ? base.is("parent_id", null)
           : base.eq("parent_id", parentId);
-      return scoped.order("name").order("id").range(from, to);
+      return scoped
+        .is("retired_at", null)
+        .order("name")
+        .order("id")
+        .range(from, to);
     });
   }
 
@@ -273,10 +304,22 @@ export class LocationsService {
    * needle and the page size before anything reaches Postgres, and identical
    * queries from different visitors are answered without a round trip. The
    * injected client is deliberately unused here, as it is by the write methods.
+   *
+   * `country` is answered by the database rather than by the caller filtering
+   * what comes back. Filtering in the browser loses twice over: the server
+   * ranks and caps the page *before* a client-side filter can run, so a needle
+   * matching many rows elsewhere pushes every wanted row off the page, and the
+   * "showing N of M" total counts matches the picker would never offer. It
+   * rides in the URL, so a restricted and an unrestricted search are different
+   * cache entries at every layer.
    */
   async searchLocations(
     query: string,
-    options?: { types?: readonly LocationType[]; limit?: number },
+    options?: {
+      types?: readonly LocationType[];
+      limit?: number;
+      country?: string;
+    },
   ): Promise<z.infer<typeof locationSearchResult>> {
     const needle = query.trim();
     // The same floor the database enforces, applied before a request exists at
@@ -289,6 +332,7 @@ export class LocationsService {
     const params = new URLSearchParams({ q: needle });
     if (options?.types?.length) params.set("types", options.types.join(","));
     params.set("limit", String(options?.limit ?? LOCATION_SEARCH_LIMIT));
+    if (options?.country) params.set("country", options.country);
 
     const response = await fetch(`/api/locations/search?${params.toString()}`);
     if (!response.ok) {
@@ -351,13 +395,73 @@ export class LocationsService {
     return rows.map(flattenChain);
   }
 
+  /**
+   * The municipalities one postal code reaches, each with its ancestor chain.
+   *
+   * Two reads rather than one embed, and the split is the design: `postal_codes`
+   * answers "which places" and `getLocationsByIds` answers "what are they",
+   * which is the read every other surface already uses to turn a stored id into
+   * a name and a path. Embedding the chain off the postal table instead would
+   * be a second definition of that shape, one join deeper, for the same answer.
+   *
+   * **A list, not a row.** A code can span municipalities — a French code
+   * routinely covers dozens of communes — which is exactly why `location_id` is
+   * part of the postal key rather than a unique column beside it. A caller that
+   * wants one place has to decide what to do with several, and that decision
+   * belongs to the surface, not here.
+   *
+   * The code is trimmed and otherwise taken as given: every seeded country's
+   * codes are fixed-width digits, so there is nothing to normalize, and
+   * inventing a case/space rule for a country that does not exist yet would be
+   * a rule nobody could check.
+   *
+   * **A retired municipality is not offered.** Typing a code is a way of
+   * *reaching* a place to pick, so this sits on the offering side of the split
+   * `retired_at` exists to create, exactly as browsing a level and the
+   * municipality directory do — a code that still routes mail to a merged-away
+   * kunta must not put it back in front of someone choosing where they live.
+   * The filter rides on the first read, through an inner join over the
+   * relation, so it is applied by the database and no application row ever
+   * selects the column. The keyed read that follows stays unfiltered, as every
+   * keyed read does: by then the ids are ones this method already vouched for.
+   *
+   * No route in front of it and no RPC behind it. The table is anon-readable
+   * public reference data with a plain `USING (true)` policy, so the caller's
+   * own client asks it directly, exactly as browsing the tree does.
+   */
+  async getMunicipalitiesByPostalCode(
+    countryCode: string,
+    postalCode: string,
+  ): Promise<LocationWithChain[]> {
+    const code = postalCode.trim();
+    if (code === "") return [];
+
+    const { data, error } = await this.supabase
+      .from("postal_codes")
+      .select(POSTAL_CODE_COLUMNS)
+      .eq("country_code", countryCode)
+      .eq("postal_code", code)
+      .is("locations.retired_at", null);
+
+    if (error) throw error;
+    if (data.length === 0) return [];
+
+    return this.getLocationsByIds(data.map((row) => row.location_id));
+  }
+
   // `locations` writes go through the admin API. `authenticated` holds INSERT
   // and UPDATE on the table (migration 00123) and the admin_manage_locations
   // policy decides who may use them — the route re-checks the role and then
   // writes on the caller's own server-side client, so the route's answer and
   // the database's have to agree. The injected `supabase` client is unused by
   // these methods, kept for symmetry with the read methods.
-  async createLocation(location: LocationInsert): Promise<Location> {
+  //
+  // The argument is the *contract's* shape, not the table's Insert type: the
+  // route derives `country_code` from the parent and zod strips everything
+  // else, so a caller typed against the table could hand over fields the write
+  // is guaranteed to throw away. Naming the body schema makes those
+  // unrepresentable instead of merely futile.
+  async createLocation(location: CreateLocationBody): Promise<Location> {
     const response = await fetch("/api/admin/locations/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

@@ -251,7 +251,7 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   },
   search_locations: {
     scopeTest: "tests/db/location-search.test.ts",
-    why: "SECURITY INVOKER over `locations` alone, so the caller's own RLS decides every row it can see exactly as a direct select would — it cannot answer with anything a plain read of that table would not already return, and the scope test proves an anonymous caller and a privileged one get the identical answer. Self-scoping by the same reading as can_read_product: the scope is the caller's, not a uid the arguments could aim elsewhere",
+    why: "SECURITY INVOKER over `locations` and, since 00165, `postal_codes` — two tables of public reference data whose policies grant every row to anon and authenticated alike, so the caller's own RLS decides every row it can see exactly as a direct select would. It cannot answer with anything a plain read of either table would not already return, and the scope test proves an anonymous caller and a privileged one get the identical answer. Self-scoping by the same reading as can_read_product: the scope is the caller's, not a uid the arguments could aim elsewhere. Its arguments — needle, levels, page size and, since 00155, an optional country — only ever NARROW that set; none of them names a user or widens what the caller's own RLS already permits",
   },
   // The three fold primitives below are a third shape the category has to
   // admit, and the widest reading of it: they read *no table at all*. Each is a
@@ -286,8 +286,14 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
  * `can_read_product` is the product read policies' own predicate — those
  * policies are `TO anon, authenticated`, so anon evaluates it itself.
  * `search_locations` is reached by the public educator registration page before
- * any account exists; it is SECURITY INVOKER over a table anon already holds
- * SELECT on for every row, so it narrows that surface rather than widening it.
+ * any account exists; it is SECURITY INVOKER over two tables anon already holds
+ * SELECT on for every row — `locations`, and `postal_codes` since 00165 gave the
+ * search a postal match arm — so it narrows that surface rather than widening it.
+ * Migration 00155 replaced its three-argument signature with a four-argument
+ * one (the optional country filter) — a new object with no privileges of its
+ * own, which is why that migration re-issues this grant in full. The allowlist
+ * keys on the name, so it covers whichever signature is live; the guarantee it
+ * rests on is unchanged, because the new argument only narrows the result.
  *
  * `immutable_unaccent` and `location_search_separator` are here because
  * `search_locations` calls them and runs as its caller — granting the entry

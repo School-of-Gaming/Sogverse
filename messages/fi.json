@@ -1165,7 +1165,8 @@
     },
     "privacy": "Tietosuojaseloste",
     "terms": "Käyttöehdot",
-    "antiBullying": "Kiusaamisen ehkäisy"
+    "antiBullying": "Kiusaamisen ehkäisy",
+    "attribution": "Paikkatiedot perustuvat <geonames>GeoNames</geonames>-aineistoon (<cc>CC BY 4.0</cc>). Ranskan postinumerot: <laposte>La Poste</laposte> (<lo>Licence Ouverte 2.0</lo>)."
   },
   "gamer": {
     "welcomeNamed": "Tervetuloa, {name}!",
@@ -1685,8 +1686,9 @@
     "picker": {
       "coverageTitle": "Valitse alueet, jotka katat",
       "coverageDescription": "Merkitse kaikki, jotka voit kattaa. Jokainen merkintä kattaa myös kaiken sen sisällä, joten maakunnan merkitseminen kattaa jo kaikki sen kunnat.",
-      "searchPlaceholder": "Hae nimellä tai koodilla…",
+      "searchPlaceholder": "Hae nimellä, koodilla tai postinumerolla…",
       "searchingEverywhere": "Haetaan kaikista maista",
+      "searchingCountry": "Haetaan: {country}",
       "allCountries": "Kaikki maat",
       "noResults": "Hakua ”{query}” vastaavaa ei löydy.",
       "keepTyping": "Kirjoita vähintään {count} merkkiä, niin haku alkaa.",
@@ -1694,7 +1696,6 @@
       "showingSome": "Näytetään {shown} ensimmäistä osumaa {total} osumasta. Tarkenna hakua kirjoittamalla lisää.",
       "loadMore": "Näytä lisää",
       "browseInto": "Näytä, mitä alueella {name} on",
-      "nothingSelected": "Jatka valitsemalla paikka.",
       "confirm": "Jatka",
       "confirming": "Avataan…",
       "clearSearch": "Tyhjennä haku",
@@ -1704,7 +1705,7 @@
     "home": {
       "choose": "Lisää sijaintisi",
       "dialogTitle": "Missä asut?",
-      "dialogDescription": "Selaa luetteloa tai hae nimellä."
+      "dialogDescription": "Selaa luetteloa tai hae nimellä tai postinumerolla."
     }
   },
   "gameAccount": {

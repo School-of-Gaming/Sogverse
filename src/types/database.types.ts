@@ -385,11 +385,14 @@ export type Database = {
         Row: {
           country_code: string | null
           created_at: string
+          depth: number
           external_code: string | null
+          geonames_id: number | null
           id: string
           name: string
           name_i18n: Json | null
           parent_id: string | null
+          retired_at: string | null
           search_blob: string | null
           type: Database["public"]["Enums"]["location_type"]
           updated_at: string
@@ -397,11 +400,14 @@ export type Database = {
         Insert: {
           country_code?: string | null
           created_at?: string
+          depth?: number
           external_code?: string | null
+          geonames_id?: number | null
           id?: string
           name: string
           name_i18n?: Json | null
           parent_id?: string | null
+          retired_at?: string | null
           search_blob?: string | null
           type: Database["public"]["Enums"]["location_type"]
           updated_at?: string
@@ -409,11 +415,14 @@ export type Database = {
         Update: {
           country_code?: string | null
           created_at?: string
+          depth?: number
           external_code?: string | null
+          geonames_id?: number | null
           id?: string
           name?: string
           name_i18n?: Json | null
           parent_id?: string | null
+          retired_at?: string | null
           search_blob?: string | null
           type?: Database["public"]["Enums"]["location_type"]
           updated_at?: string
@@ -607,6 +616,32 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      postal_codes: {
+        Row: {
+          country_code: string
+          location_id: string
+          postal_code: string
+        }
+        Insert: {
+          country_code: string
+          location_id: string
+          postal_code: string
+        }
+        Update: {
+          country_code?: string
+          location_id?: string
+          postal_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "postal_codes_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
@@ -1725,6 +1760,7 @@ export type Database = {
       }
       search_locations: {
         Args: {
+          p_country?: string
           p_limit?: number
           p_query: string
           p_types?: Database["public"]["Enums"]["location_type"][]

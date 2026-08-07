@@ -69,8 +69,20 @@ describe("LocationsService.getMunicipalitiesByCountry", () => {
     expect(url.searchParams.get("order")).toBe("name.asc,id.asc");
   });
 
+  // A directory read *offers* places, so it drops the ones a refresh retired.
+  // Keyed reads deliberately do not — see the column discipline block below and
+  // the service's own note.
+  it("leaves retired municipalities out of the directory", async () => {
+    fetchMock.mockResolvedValue(postgrestPage([], { from: 0, total: 0 }));
+
+    await service.getMunicipalitiesByCountry("FI");
+
+    const url = requestedUrl(fetchMock.mock.calls[0][0]);
+    expect(url.searchParams.get("retired_at")).toBe("is.null");
+  });
+
   // One level shallower than the keyed read, and that is the point: this one
-  // runs over 34,875 rows for France, so it asks for the depth a municipality
+  // runs over some 34,900 rows for France, so it asks for the depth a municipality
   // actually has (département -> région -> pays) and no more.
   it("embeds three ancestor levels, not the keyed read's four", async () => {
     fetchMock.mockResolvedValue(postgrestPage([], { from: 0, total: 0 }));
@@ -235,6 +247,119 @@ describe("LocationsService.getLocationsByIds", () => {
   });
 });
 
+// The postal lookup: a code is an alternative key onto a municipality, resolved
+// in two reads — `postal_codes` says which places, and the keyed read above says
+// what they are. What is specified here is the shape of the first read and the
+// hand-off to the second; the fixtures that prove a real code reaches the right
+// kunta or commune are DB tests, because they are claims about seeded data.
+
+describe("LocationsService.getMunicipalitiesByPostalCode", () => {
+  let fetchMock: FetchMock;
+  let service: LocationsService;
+
+  beforeEach(() => {
+    fetchMock = vi.fn<typeof fetch>();
+    service = new LocationsService(createFetchStubbedClient(fetchMock));
+  });
+
+  it("filters on the country and the code, and asks only for the id", async () => {
+    fetchMock.mockResolvedValueOnce(postgrestJson([{ location_id: "muni-1" }]));
+    fetchMock.mockResolvedValueOnce(postgrestJson(locationRows(1)));
+
+    await service.getMunicipalitiesByPostalCode("FI", "00100");
+
+    const url = requestedUrl(fetchMock.mock.calls[0][0]);
+    expect(url.pathname).toContain("postal_codes");
+    expect(url.searchParams.get("country_code")).toBe("eq.FI");
+    expect(url.searchParams.get("postal_code")).toBe("eq.00100");
+    // The country and the code came from the caller; reading them back would be
+    // echoing the filter. The embed beside `location_id` carries no answer
+    // either — it is how the retired filter below reaches the joined row.
+    expect(url.searchParams.get("select")).toBe("location_id,locations!inner(id)");
+  });
+
+  // A postal code is a way of *offering* a municipality, so it sits on the
+  // offering side of the retirement split, exactly as browsing a level and the
+  // directory do. The filter has to be on this read rather than on the keyed
+  // read that follows: keyed reads deliberately answer for retired rows, so a
+  // stored pick keeps resolving.
+  it("does not offer a municipality a refresh retired", async () => {
+    fetchMock.mockResolvedValueOnce(postgrestJson([{ location_id: "muni-1" }]));
+    fetchMock.mockResolvedValueOnce(postgrestJson(locationRows(1)));
+
+    await service.getMunicipalitiesByPostalCode("FI", "00100");
+
+    const postal = requestedUrl(fetchMock.mock.calls[0][0]);
+    expect(postal.searchParams.get("locations.retired_at")).toBe("is.null");
+    // And the second read stays unfiltered — by then the ids are ones the
+    // first read already vouched for.
+    const keyed = requestedUrl(fetchMock.mock.calls[1][0]);
+    expect(keyed.searchParams.has("retired_at")).toBe(false);
+  });
+
+  // A code can span municipalities — a French code routinely covers dozens of
+  // communes, which is exactly why `location_id` is part of the postal key
+  // rather than a unique column beside it. Answering with one row would pick a
+  // winner the data does not have.
+  it("resolves every municipality the code reaches, with its chain", async () => {
+    fetchMock.mockResolvedValueOnce(
+      postgrestJson([{ location_id: "a" }, { location_id: "b" }]),
+    );
+    fetchMock.mockResolvedValueOnce(
+      postgrestJson([
+        {
+          ...locationRows(1)[0],
+          parent: {
+            id: "district",
+            name: "Marne",
+            parent: { id: "country", name: "France", parent: null },
+          },
+        },
+        locationRows(1, 1)[0],
+      ]),
+    );
+
+    const rows = await service.getMunicipalitiesByPostalCode("FR", "51300");
+
+    expect(requestedUrl(fetchMock.mock.calls[1][0]).searchParams.get("id")).toBe(
+      "in.(a,b)",
+    );
+    expect(rows).toHaveLength(2);
+    expect(rows[0].ancestors.map((node) => node.name)).toEqual([
+      "Marne",
+      "France",
+    ]);
+  });
+
+  // An unknown code is a lookup that found nothing, not an error — and there is
+  // nothing to resolve, so the second read must not be made at all.
+  it("answers empty for a code no municipality carries, without a second read", async () => {
+    fetchMock.mockResolvedValueOnce(postgrestJson([]));
+
+    await expect(
+      service.getMunicipalitiesByPostalCode("FI", "99999"),
+    ).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  // A half-typed code is a search that has not started, so it answers like one
+  // rather than asking the database to match the empty string.
+  it("makes no request at all for a blank code", async () => {
+    await expect(
+      service.getMunicipalitiesByPostalCode("FI", "   "),
+    ).resolves.toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("throws rather than reporting an unknown code when the read fails", async () => {
+    fetchMock.mockResolvedValue(postgrestError("boom"));
+
+    await expect(
+      service.getMunicipalitiesByPostalCode("FI", "00100"),
+    ).rejects.toMatchObject({ message: "boom" });
+  });
+});
+
 describe("LocationsService.getChildren", () => {
   let fetchMock: FetchMock;
   let service: LocationsService;
@@ -264,6 +389,25 @@ describe("LocationsService.getChildren", () => {
 
     const url = requestedUrl(fetchMock.mock.calls[0][0]);
     expect(url.searchParams.get("parent_id")).toBe("eq.region-1");
+  });
+
+  // Browsing is a read that *offers* places, at every level including the root,
+  // so a retired row must not appear in either.
+  it("leaves retired rows out of every browse level", async () => {
+    // A fresh Response per call: a single canned one has its body read once and
+    // is unusable on the second request.
+    fetchMock.mockImplementation(() =>
+      Promise.resolve(postgrestPage([], { from: 0, total: 0 })),
+    );
+
+    await service.getChildren(null);
+    await service.getChildren("region-1");
+
+    for (const call of fetchMock.mock.calls) {
+      expect(requestedUrl(call[0]).searchParams.get("retired_at")).toBe(
+        "is.null",
+      );
+    }
   });
 
   it("returns one page and reports the true total behind it", async () => {
@@ -356,6 +500,19 @@ describe("LocationsService.searchLocations", () => {
     // request is always the same URL and therefore the same cache entry.
     expect(url.searchParams.get("types")).toBe("municipality,district");
     expect(url.searchParams.get("limit")).toBe("10");
+    // Not asked for, not sent — an unrestricted search and a restricted one
+    // have to be different URLs, which is what keeps them different cache
+    // entries in the shared cache in front of the route.
+    expect(url.searchParams.has("country")).toBe(false);
+  });
+
+  it("sends a country restriction to the server rather than filtering after", async () => {
+    fetchMock.mockResolvedValue(searchResponse({ total: 0, results: [] }));
+
+    await service.searchLocations("helsinki", { country: "FI" });
+
+    const url = new URL(String(fetchMock.mock.calls[0][0]), "https://example.test");
+    expect(url.searchParams.get("country")).toBe("FI");
   });
 
   it("parses the ranked answer, chains and all", async () => {
@@ -394,12 +551,43 @@ describe("LocationsService.searchLocations", () => {
   });
 });
 
-// Every read of `locations` names its columns. `*` drags the generated
-// `search_blob` fold along — the longest value on a row, on every row of a
-// 200-row browse page, and read by nothing outside the database. The `Location`
+// Column discipline, in two sweeps over two different populations — kept apart
+// because the claims are not the same claim.
+//
+// The first is about *every read this service makes*, whichever table it starts
+// from. `*` drags the generated `search_blob` fold along — the longest value on
+// a row, on every row of a 200-row browse page, and read by nothing outside the
+// database — and `geonames_id`, `retired_at` and `depth` are the database's own
+// business, decided by filters rather than rendered by anything. The `Location`
 // alias states that intent but cannot enforce it: `select("*")` returns a wider
-// row, and assigning a wider row to a narrower type compiles happily. So the
-// enforcement is here, over every read the service has.
+// row, and assigning a wider row to a narrower type compiles happily.
+//
+// The second is about the reads that actually select a `locations` row, and
+// anchors the negatives above: a select asking for nothing recognisable would
+// satisfy every "not contains" in the file.
+//
+// The postal lookup is in the first list and not the second, which is the shape
+// worth noticing: it reads `postal_codes`, names one column of it, and joins
+// `locations` only to apply the retired filter — so it must obey the column
+// rules without ever selecting a location row's columns.
+
+const READS: [string, (service: LocationsService) => Promise<unknown>][] = [
+  ["getLocation", (s) => s.getLocation("loc-0")],
+  ["getChildren (root)", (s) => s.getChildren(null)],
+  ["getChildren (node)", (s) => s.getChildren("loc-0")],
+  ["getSitesByParent", (s) => s.getSitesByParent("loc-0")],
+  ["getMunicipalitiesByCountry", (s) => s.getMunicipalitiesByCountry("FI")],
+  ["getLocationsByIds", (s) => s.getLocationsByIds(["loc-0"])],
+  [
+    "getMunicipalitiesByPostalCode",
+    (s) => s.getMunicipalitiesByPostalCode("FI", "00100"),
+  ],
+];
+
+/** The subset of the above that selects `locations` row columns. */
+const LOCATION_ROW_READS = READS.filter(
+  ([name]) => name !== "getMunicipalitiesByPostalCode",
+);
 
 describe("LocationsService column discipline", () => {
   let fetchMock: FetchMock;
@@ -408,35 +596,43 @@ describe("LocationsService column discipline", () => {
   beforeEach(() => {
     fetchMock = vi.fn<typeof fetch>();
     service = new LocationsService(createFetchStubbedClient(fetchMock));
+    // A fresh Response per call: the postal lookup makes two requests, and a
+    // single canned one has its body read once.
+    fetchMock.mockImplementation(() =>
+      Promise.resolve(postgrestPage(locationRows(1), { from: 0, total: 1 })),
+    );
   });
 
-  const reads: [string, (service: LocationsService) => Promise<unknown>][] = [
-    ["getLocation", (s) => s.getLocation("loc-0")],
-    ["getChildren (root)", (s) => s.getChildren(null)],
-    ["getChildren (node)", (s) => s.getChildren("loc-0")],
-    ["getSitesByParent", (s) => s.getSitesByParent("loc-0")],
-    ["getMunicipalitiesByCountry", (s) => s.getMunicipalitiesByCountry("FI")],
-    ["getLocationsByIds", (s) => s.getLocationsByIds(["loc-0"])],
-  ];
-
-  it.each(reads)(
-    "%s names its columns and omits the search fold",
+  it.each(READS)(
+    "%s names its columns and omits the fold and the supply columns",
     async (_name, read) => {
-      fetchMock.mockResolvedValue(
-        postgrestPage(locationRows(1), { from: 0, total: 1 }),
-      );
+      await read(service);
 
+      for (const call of fetchMock.mock.calls) {
+        const select = requestedUrl(call[0]).searchParams.get("select") ?? "";
+
+        // Not `*` at the top level, and not `*` inside an embed either.
+        expect(select).not.toContain("*");
+        expect(select).not.toContain("search_blob");
+        // The GeoNames groundwork columns are read by nothing on any surface.
+        // `retired_at` decides which rows a read offers, which is a filter —
+        // it appears in this method's query string, never in its select.
+        expect(select).not.toContain("geonames_id");
+        expect(select).not.toContain("retired_at");
+        expect(select).not.toContain("depth");
+      }
+    },
+  );
+
+  it.each(LOCATION_ROW_READS)(
+    "%s asks for the columns a location row is made of",
+    async (_name, read) => {
       await read(service);
 
       const select =
         requestedUrl(fetchMock.mock.calls[0][0]).searchParams.get("select") ??
         "";
 
-      // Not `*` at the top level, and not `*` inside an embed either.
-      expect(select).not.toContain("*");
-      expect(select).not.toContain("search_blob");
-      // Anchors the two negatives: a select asking for nothing recognisable
-      // would satisfy them both.
       expect(select).toContain("external_code");
       expect(select).toContain("created_at");
     },

@@ -16,11 +16,16 @@ import { getChildLevel, resolveLabels } from "@/lib/constants";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import type { Location } from "@/types";
 
+/**
+ * No `country_code`: the create route derives it from the parent row and
+ * discards whatever a client sends, so naming it here would be a value nobody
+ * reads. The parent's code is still used *in* this dialog — to resolve which
+ * level sits below the parent and what that country calls it.
+ */
 export interface LocationFormValues {
   name: string;
   type: Location["type"];
   parent_id: string | null;
-  country_code: string | null;
 }
 
 /**
@@ -120,10 +125,10 @@ function LocationFormDialogInner({
 
     let values: LocationFormValues;
     if (isEditing) {
-      values = { name: name.trim(), type: initialValues.type, parent_id: initialValues.parent_id, country_code: initialValues.country_code };
+      values = { name: name.trim(), type: initialValues.type, parent_id: initialValues.parent_id };
     } else {
       if (!childLevel || !parent) return;
-      values = { name: name.trim(), type: childLevel.type, parent_id: parent.id, country_code: parent.country_code };
+      values = { name: name.trim(), type: childLevel.type, parent_id: parent.id };
     }
 
     try {

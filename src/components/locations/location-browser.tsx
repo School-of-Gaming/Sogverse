@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { localizedLocationName } from "@/lib/locations/localized-name";
 import {
   LOCATION_SEARCH_MIN_QUERY,
   useLocationChildren,
@@ -51,16 +52,23 @@ import {
  * `countryCode` is a caller's business rule (a municipality club is funded by a
  * Finnish kunta and by nothing else), applied to *every* row this container
  * hands the panel — browsed or searched — so the restriction is "not offered"
- * rather than "refused afterwards". Its honest limitation is in the search
- * half: the server ranks and caps the page **before** this filter runs, so a
- * needle matching many rows in other countries can push the wanted ones off the
- * page entirely, and the "showing N of M" total is the true cross-country match
- * count rather than the count of rows this picker would offer. That direction
- * is the safe one — the number is never lower than the truth, so it can only
- * over-prompt an admin to narrow their needle, never claim a complete list —
- * but it is not the number a reader would assume. Closing the gap properly
- * means a country parameter on the search function itself; browsing, which is
- * exhaustive at every level, is unaffected.
+ * rather than "refused afterwards".
+ *
+ * The panel's copy follows the same bound: a picker offering one country must
+ * not go on saying it is searching every country, or that the top of its
+ * breadcrumb is all of them. The *name* comes down separately from the code,
+ * because the code is a caller's constant and the name has to be resolved from
+ * the country row for the viewer's locale — see `useBoundCountryName`.
+ *
+ * The search half is now restricted **in the database**, which is where it has
+ * to happen: the server ranks and caps the page before any caller could filter,
+ * so a needle matching many rows in other countries used to push the wanted
+ * ones off the page entirely and report a "showing N of M" whose M counted
+ * matches this picker would never offer. Passing the country through fixes the
+ * page and the total together. The row filter below stays as the panel's own
+ * guarantee — it is what browsing needs, since a browse level is read whole and
+ * filtering it hides nothing reachable, and it costs nothing on a page of at
+ * most fifty already-restricted search hits.
  */
 
 /** Stable identity for "no seed", so the derived path does not churn. */
@@ -69,16 +77,73 @@ const NO_PATH: readonly LocationChainSummary[] = [];
 /**
  * Whether a row belongs to the country a caller restricted the picker to.
  *
- * A row with a null `country_code` is refused. Every seeded row carries its
- * code, so nothing is hidden today — but admin-created `site` rows don't (the
- * create route never sets it), so country-scoping the *venue* dialog would
- * silently hide every admin-created venue until sites get a backfilled code.
+ * A row with a null `country_code` is refused, and nothing is hidden by that:
+ * every seeded row carries its code, and every `site` now carries its parent's
+ * — derived server-side by the create route, backfilled onto the rows written
+ * before it did. That is what makes country-scoping the *venue* dialog possible
+ * rather than a way to silently hide every admin-created venue.
  */
 function inCountry(
   row: { country_code: string | null },
   countryCode: string | undefined,
 ): boolean {
   return countryCode === undefined || row.country_code === countryCode;
+}
+
+/**
+ * The one-node breadcrumb that opens the dialog *inside* a country: the
+ * country's own row, read from the browse level at the root of the tree — the
+ * same request the panel makes when someone clicks back up to "all countries",
+ * so one cache entry serves both and the seed can never disagree with what
+ * browsing shows. Nothing waits on it: until the read lands (or with no
+ * `countryCode` at all) this is `undefined` and the dialog opens at the root.
+ *
+ * Issued from the *caller* rather than from inside the dialog, so it is in
+ * flight while the surrounding form is being filled in and already there when
+ * the dialog opens. It costs one indexed request for the handful of country
+ * rows, on a key the dialog would ask for anyway.
+ */
+export function useCountryInitialPath(
+  countryCode: string | undefined,
+): readonly LocationChainSummary[] | undefined {
+  // Always issued, and the cost is stated rather than glossed. It is the same
+  // cache entry the dialog's own root level uses, so opening the dialog costs
+  // nothing extra — but this hook lives on the *form*, so the request fires
+  // from every mounted in-person product form whether or not the dialog is ever
+  // opened. That is one indexed read of a handful of country rows, cached
+  // reference data with a five-minute stale time, shared by every picker on the
+  // page: small enough that gating it on `open` would buy less than the state
+  // and the late-arriving seed it would cost.
+  const countries = useLocationChildren(null);
+  return useMemo(() => {
+    if (countryCode === undefined) return undefined;
+    const country = (countries.data?.pages ?? [])
+      .flatMap((page) => page.rows)
+      .find((row) => row.country_code === countryCode);
+    // One node, and it is that row's own ancestry: a country has no ancestors,
+    // so "the row's ancestors reversed, plus the row" is exactly `[country]`.
+    // The breadcrumb is rebuilt from a row rather than appended to, here as
+    // everywhere, so a seeded path and a drilled one are the same shape.
+    return country ? [country] : undefined;
+  }, [countries.data, countryCode]);
+}
+
+/**
+ * The bound country's name for the viewer, read off the same seed row the
+ * breadcrumb opens on — so the copy and the breadcrumb can never name different
+ * countries, and neither can disagree with what browsing shows.
+ *
+ * `undefined` while the seed read is in flight, and for an unbound picker,
+ * which are the two cases the panel already answers with its unbound strings.
+ * That is honest in both: an unbound picker really is searching everywhere, and
+ * a picker whose seed has not landed is still at the root of the tree.
+ */
+export function useBoundCountryName(
+  path: readonly LocationChainSummary[] | undefined,
+): string | undefined {
+  const locale = useLocale();
+  const country = path?.[0];
+  return country ? localizedLocationName(country, locale) : undefined;
 }
 
 interface LocationBrowserProps {
@@ -92,6 +157,14 @@ interface LocationBrowserProps {
   initialPath?: readonly LocationChainSummary[];
   /** Offer only rows in this country, browsing and searching alike. */
   countryCode?: string;
+  /**
+   * That country's name in the viewer's locale, for the panel's copy. Separate
+   * from `countryCode` because the code is what filters and the name is what
+   * the panel says, and the name arrives with the country row rather than with
+   * the caller's constant — so a picker can be correctly bound a frame before
+   * it can say which country to.
+   */
+  boundCountryName?: string;
 }
 
 export function LocationBrowser({
@@ -99,6 +172,7 @@ export function LocationBrowser({
   searchTypes,
   initialPath,
   countryCode,
+  boundCountryName,
 }: LocationBrowserProps) {
   /**
    * Where the user has navigated to, root first — `null` until they navigate at
@@ -120,7 +194,10 @@ export function LocationBrowser({
   const parentId = path.at(-1)?.id ?? null;
 
   const level = useLocationChildren(parentId);
-  const search = useLocationSearch(debounced, { types: searchTypes });
+  const search = useLocationSearch(debounced, {
+    types: searchTypes,
+    country: countryCode,
+  });
 
   const browseRows = useMemo<LocationPick[]>(() => {
     // The ancestors of a browsed row are exactly the breadcrumb, reversed:
@@ -162,6 +239,7 @@ export function LocationBrowser({
           setUserPath([...[...pick.ancestors].reverse(), pick.location]),
         onOpenDepth: (depth) => setUserPath(path.slice(0, depth)),
         minQueryLength: LOCATION_SEARCH_MIN_QUERY,
+        boundCountryName,
         browse: {
           rows: browseRows,
           total: level.data?.pages.at(-1)?.total ?? browseRows.length,
@@ -198,6 +276,8 @@ interface LocationPickerDialogProps {
   initialPath?: readonly LocationChainSummary[];
   /** Offer only rows in this country, browsing and searching alike. */
   countryCode?: string;
+  /** That country's name in the viewer's locale, for the panel's copy. */
+  boundCountryName?: string;
   onConfirm: (pick: LocationPick) => Promise<unknown>;
 }
 
@@ -214,6 +294,7 @@ export function LocationPickerDialog({
   pickableTypes,
   initialPath,
   countryCode,
+  boundCountryName,
   onConfirm,
 }: LocationPickerDialogProps) {
   return (
@@ -227,6 +308,7 @@ export function LocationPickerDialog({
         searchTypes={pickableTypes}
         initialPath={initialPath}
         countryCode={countryCode}
+        boundCountryName={boundCountryName}
         selection={{
           mode: "single",
           pickableTypes,

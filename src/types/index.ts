@@ -72,23 +72,44 @@ export type SpokenLanguage = Database["public"]["Tables"]["spoken_languages"]["R
 
 // locations
 /**
- * A `locations` row as the application sees it: every column except
- * `search_blob`.
+ * A `locations` row as the application sees it: every column that any surface
+ * renders, and nothing else.
+ *
+ * Four columns are excluded, for two different reasons.
  *
  * `search_blob` is a generated column — the folded search terms the database
  * maintains for the row and the trigram index consumes — and nothing outside
  * Postgres reads it. It is also the largest value on a row, and a browse page
- * is 200 rows, so it is worth not sending. Excluding it from the alias is what
- * makes that stick: every read names its columns instead of selecting `*`, and
- * a read that regressed to `*` would be assigning a wider row to this narrower
- * type, which compiles — so the alias is the statement of intent, and the
- * explicit select lists in the service are the enforcement.
+ * is 200 rows, so it is worth not sending.
+ *
+ * `geonames_id`, `retired_at` and `depth` are the columns the GeoNames data
+ * supply runs on, and they are the database's business rather than the
+ * application's: the upstream key is used by ingestion and sync migrations,
+ * `depth` is maintained by a trigger and consumed by the search function's
+ * ranking, and `retired_at` decides which rows a read *offers* — which is a
+ * filter, not a value anyone renders. Nothing on any surface displays one, so
+ * nothing selects one.
+ *
+ * Excluding them from the alias is what makes that stick: every read names its
+ * columns instead of selecting `*`, and a read that regressed to `*` would be
+ * assigning a wider row to this narrower type, which compiles — so the alias is
+ * the statement of intent, and the explicit select lists in the service are the
+ * enforcement.
  */
 export type Location = Omit<
   Database["public"]["Tables"]["locations"]["Row"],
-  "search_blob"
+  "search_blob" | "geonames_id" | "retired_at" | "depth"
 >;
 export type LocationInsert = Database["public"]["Tables"]["locations"]["Insert"];
+
+/**
+ * A `postal_codes` row: the fact that one code reaches one municipality.
+ *
+ * The whole row is the key, so there is nothing to exclude the way `Location`
+ * excludes the columns no surface renders. Nothing references this table, which
+ * is why a refresh may rebuild it wholesale — see `src/services/locations/`.
+ */
+export type PostalCode = Database["public"]["Tables"]["postal_codes"]["Row"];
 
 // gedu_locations (a gedu's coverage areas for substitute matching — rows
 // can sit at any level of the location hierarchy)

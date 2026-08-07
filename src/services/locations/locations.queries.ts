@@ -11,8 +11,9 @@ import { LocationsService } from "./locations.service";
 import {
   LOCATION_SEARCH_LIMIT,
   LOCATION_SEARCH_MIN_QUERY,
+  type CreateLocationBody,
 } from "./locations.contracts";
-import type { Location, LocationInsert, LocationType } from "@/types";
+import type { Location, LocationType } from "@/types";
 
 /**
  * A cache key has to be a value, and the key-set lookups below take a *set*:
@@ -40,8 +41,22 @@ export const locationKeys = {
   childrenOf: (parentId: string | null) =>
     [...locationKeys.children(), parentId ?? "root"] as const,
   search: () => [...locationKeys.all, "search"] as const,
-  searchFor: (query: string, types: readonly LocationType[] | undefined) =>
-    [...locationKeys.search(), query, types ? [...types].sort().join(",") : ""] as const,
+  // Every argument that changes the answer is in the key. The country
+  // restriction is one of them now that the database applies it: a search
+  // scoped to Finland and the same needle unscoped return different rows and a
+  // different total, so sharing a cache entry would serve one picker the
+  // other's answer.
+  searchFor: (
+    query: string,
+    types: readonly LocationType[] | undefined,
+    country: string | undefined,
+  ) =>
+    [
+      ...locationKeys.search(),
+      query,
+      types ? [...types].sort().join(",") : "",
+      country ?? "",
+    ] as const,
   byIds: (ids: readonly string[]) =>
     [...locationKeys.all, "by-ids", keySet(ids)] as const,
 };
@@ -110,25 +125,32 @@ export function useLocationChildren(parentId: string | null) {
 }
 
 /**
- * Cross-country search. Below the minimum needle length the query never runs,
- * which is what keeps a keystroke-driven box from firing a request per letter
- * before it could match anything meaningful.
+ * Cross-country search, or one country's when the caller names it. Below the
+ * minimum needle length the query never runs, which is what keeps a
+ * keystroke-driven box from firing a request per letter before it could match
+ * anything meaningful.
  */
 export function useLocationSearch(
   query: string,
-  options?: { types?: readonly LocationType[]; limit?: number },
+  options?: {
+    types?: readonly LocationType[];
+    limit?: number;
+    country?: string;
+  },
 ) {
   const supabase = getClient();
   const service = new LocationsService(supabase);
   const needle = query.trim();
   const types = options?.types;
+  const country = options?.country;
 
   return useQuery({
-    queryKey: locationKeys.searchFor(needle, types),
+    queryKey: locationKeys.searchFor(needle, types, country),
     queryFn: () =>
       service.searchLocations(needle, {
         types,
         limit: options?.limit ?? LOCATION_SEARCH_LIMIT,
+        country,
       }),
     enabled: needle.length >= LOCATION_SEARCH_MIN_QUERY,
     staleTime: REFERENCE_DATA_STALE_MS,
@@ -155,11 +177,29 @@ export function useCreateLocation() {
   const service = new LocationsService(supabase);
 
   return useMutation({
-    mutationFn: (location: LocationInsert) => service.createLocation(location),
+    mutationFn: (location: CreateLocationBody) => service.createLocation(location),
     onSuccess: () => {
       // The only thing this route creates is a site, and a new site changes
       // the per-municipality venue list it landed in — plus the browse level it
       // was created under, which is now one row longer.
+      //
+      // And every cached search needle, for the same reason a rename does:
+      // sites are in the search index carrying their whole ancestor chain, so
+      // an admin who names a venue and then types its name must find it. A
+      // cached "no results" for that very needle is the likely one to be
+      // holding, because looking before creating is how the flow goes.
+      //
+      // Be exact about what that last one buys, because it is less than the
+      // others: it guarantees a fresh *refetch*, not a fresh *answer*. The two
+      // browse keys are PostgREST reads and come back from the database, but
+      // search goes through /api/locations/search, whose responses are keyed by
+      // URL in a shared cache for five minutes and served stale for an hour
+      // while they revalidate. So the refetch can legitimately be answered with
+      // the same pre-creation response the admin already saw, and the venue
+      // stays missing from that one needle until the entry ages out. Nothing on
+      // this side can shorten that window: seeding the new row into the search
+      // cache by hand would be this client inventing a ranked result the server
+      // did not produce, which is worse than a stale one it did.
       //
       // RETURNED, not fired-and-forgotten: React Query awaits a promise
       // returned from onSuccess before resolving mutateAsync, so the venue
@@ -168,6 +208,7 @@ export function useCreateLocation() {
       return Promise.all([
         queryClient.invalidateQueries({ queryKey: locationKeys.sites() }),
         queryClient.invalidateQueries({ queryKey: locationKeys.children() }),
+        queryClient.invalidateQueries({ queryKey: locationKeys.search() }),
       ]);
     },
   });

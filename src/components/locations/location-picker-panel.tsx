@@ -145,6 +145,21 @@ export interface LocationTreeScope {
   onOpenDepth: (depth: number) => void;
   /** How many characters search needs before it runs. */
   minQueryLength: number;
+  /**
+   * The display name of the country this picker is bound to, already resolved
+   * for the viewer's locale — present exactly when the container is filtering
+   * every row to one country.
+   *
+   * The filtering happens above, and the panel offers the same rows either
+   * way: what this changes is what the panel *says* about them. Two claims stop
+   * being true under a bound — that it is searching every country, and that
+   * there is a level above the country to step back out to — and both are read
+   * by someone deciding whether to keep looking, so a picker that says "all
+   * countries" and then offers one reads as a broken search rather than as a
+   * rule. Told, it names the country it is searching and starts the breadcrumb
+   * there, with no root crumb to a list of one.
+   */
+  boundCountryName?: string;
   /** The current level. Ignored while a search is running. */
   browse: LocationPanelRows;
   /** The current query's hits. Ignored while the query is too short. */
@@ -212,7 +227,7 @@ function TreeScopeBody({ scope, query, onQueryChange }: TreeScopeBodyProps) {
   const c = useTranslations("common");
   const locale = useLocale();
 
-  const { path, selection, minQueryLength } = scope;
+  const { path, selection, minQueryLength, boundCountryName } = scope;
 
   const [selected, setSelected] = useState<LocationPick | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -327,19 +342,35 @@ function TreeScopeBody({ scope, query, onQueryChange }: TreeScopeBodyProps) {
           below it never moves. */}
       <div className="flex min-h-[20px] flex-wrap items-center gap-1 text-xs text-muted-foreground">
         {searching ? (
-          <span>{t("searchingEverywhere")}</span>
+          <span>
+            {boundCountryName
+              ? t("searchingCountry", { country: boundCountryName })
+              : t("searchingEverywhere")}
+          </span>
         ) : (
           <>
-            <button
-              type="button"
-              onClick={() => scope.onOpenDepth(0)}
-              className="rounded underline-offset-2 hover:text-foreground hover:underline"
-            >
-              {t("allCountries")}
-            </button>
+            {/* The root crumb is the way back to the list of countries, which a
+                picker bound to one country has no use for: the level it opens
+                holds that country and nothing else, and the crumb beside it
+                reaches the same list. Rendered, it reads "All of Finland ›
+                Finland" — a step that goes nowhere, named twice. Bound, the bar
+                simply starts at the country. */}
+            {!boundCountryName && (
+              <button
+                type="button"
+                onClick={() => scope.onOpenDepth(0)}
+                className="rounded underline-offset-2 hover:text-foreground hover:underline"
+              >
+                {t("allCountries")}
+              </button>
+            )}
             {path.map((node, depth) => (
               <span key={node.id} className="flex items-center gap-1">
-                <ChevronRight className="h-3 w-3" />
+                {/* A separator only where there is something to separate from:
+                    bound, the first crumb is the start of the bar. */}
+                {(depth > 0 || !boundCountryName) && (
+                  <ChevronRight className="h-3 w-3" />
+                )}
                 <button
                   type="button"
                   onClick={() => scope.onOpenDepth(depth + 1)}
@@ -399,14 +430,12 @@ function TreeScopeBody({ scope, query, onQueryChange }: TreeScopeBodyProps) {
         </div>
       ) : (
         <div className="flex items-center justify-between gap-3">
+          {/* Empty until a pick is staged, deliberately: the disabled confirm
+              button already says a pick is required, and the slot keeps its
+              place in the row so the staged line appears without moving the
+              buttons. */}
           <p className="min-w-0 flex-1 truncate text-sm">
-            {selected ? (
-              <SelectedLine pick={selected} />
-            ) : (
-              <span className="text-muted-foreground">
-                {t("nothingSelected")}
-              </span>
-            )}
+            {selected ? <SelectedLine pick={selected} /> : null}
           </p>
           <div className="flex shrink-0 gap-2">
             <Button

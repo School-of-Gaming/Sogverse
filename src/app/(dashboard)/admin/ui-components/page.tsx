@@ -1753,7 +1753,8 @@ export default function AdminUIComponentsPage() {
             restricting every row offered to one country. The product form&rsquo;s
             municipality field uses both — it opens on Finland&rsquo;s maakunnat
             and will not offer a French commune — and both are fed by the same
-            browse and search reads this demo replaces with fixtures.
+            browse and search reads this demo replaces with fixtures. What the
+            panel does say about them has a demo of its own, below.
           </p>
           <LocationPickerDemo />
         </SubSection>
@@ -1790,6 +1791,19 @@ export default function AdminUIComponentsPage() {
             walking past the screen that carries creation.
           </p>
           <LocationSearchDemo />
+        </SubSection>
+        <SubSection title="Bound to one country">
+          <p className="text-sm text-muted-foreground mb-3">
+            The same panel, told which country its container has bound it to.
+            The bound country is copy and nothing else — the filtering happens
+            above, and the rows here are the same fixtures as everywhere else on
+            this page — but two lines would otherwise claim more than the picker
+            is doing. The breadcrumb starts <em>at</em> the country rather than
+            behind an &ldquo;all countries&rdquo; crumb that opens a list holding
+            only that country, and typing two characters says which country is
+            being searched instead of &ldquo;everywhere&rdquo;.
+          </p>
+          <LocationBoundCountryDemo />
         </SubSection>
         <SubSection title="Home location field (parent profile)">
           <p className="text-sm text-muted-foreground mb-3">
@@ -2120,8 +2134,8 @@ const HITS: LocationPick[] = [
  * Drives the panel's browse half from the fixture tree above: the path is
  * component state, and the rows are whatever level that path points at.
  */
-function useFixtureBrowse() {
-  const [path, setPath] = useState<LocationChainSummary[]>([]);
+function useFixtureBrowse(initialPath: LocationChainSummary[] = []) {
+  const [path, setPath] = useState<LocationChainSummary[]>(initialPath);
   const parentId = path.at(-1)?.id ?? "root";
   const ancestors = [...path].reverse();
   const rows = (LEVELS[parentId] ?? []).map((location) => ({ location, ancestors }));
@@ -2258,6 +2272,54 @@ function LocationSearchDemo() {
             // the caller decides what each one meant — a site is the answer, a
             // municipality is "show me the venues here".
             pickableTypes: ["municipality", "site"],
+            onConfirm: () => Promise.resolve(),
+            onCancel: () => setQuery(""),
+          },
+        }}
+      />
+    </div>
+  );
+}
+
+/**
+ * The panel told it is bound to one country — the product form's municipality
+ * field, whose container opens on Finland and filters every row to it.
+ *
+ * The bound country is copy and nothing else: the filtering lives in the
+ * container this demo replaces, so the panel offers the same fixture rows
+ * either way. What it changes is the two lines that would otherwise claim more
+ * than the picker is doing — browsing starts the breadcrumb *at* the country,
+ * with no root crumb to a list holding that one country, and typing says which
+ * country it is searching instead of "everywhere". Both are here: the initial
+ * view is the breadcrumb, and two characters in the box is the other.
+ */
+function LocationBoundCountryDemo() {
+  const [query, setQuery] = useState("");
+  const fixture = useFixtureBrowse([FR]);
+
+  return (
+    <div className="max-w-2xl rounded-md border border-input bg-card p-4">
+      <LocationPickerPanel
+        query={query}
+        onQueryChange={setQuery}
+        scope={{
+          path: fixture.path,
+          onDrill: fixture.onDrill,
+          onOpenDepth: fixture.onOpenDepth,
+          minQueryLength: 2,
+          // France rather than Finland only because the fixture tree is French;
+          // the real bound picker is Finland's.
+          boundCountryName: "France",
+          browse: fixture.browse,
+          search: {
+            rows: HITS,
+            total: HITS.length,
+            hasMore: false,
+            loading: false,
+          },
+          selection: {
+            mode: "single",
+            pickableTypes: ["municipality"],
             onConfirm: () => Promise.resolve(),
             onCancel: () => setQuery(""),
           },
