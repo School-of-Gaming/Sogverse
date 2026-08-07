@@ -137,12 +137,11 @@ product-local date) pair — the row's unique key in Postgres — so a projectio
 for the same day meet on the same map key, and a stored row wins outright where both
 exist, snapshotted start and end included.
 
-**Rule: a family entry's kind splits on the session's `endsAt`, not its start — this is
-the deliberate divergence from the staff builder.** The staff split asks "may I take the
-register yet", which is a start-time question; a family records nothing, so the only
-question here is whether the evening is over, and a club running right now is emphatically
-not over — it is the session the family is *in*. So an in-progress session stays `future`,
-and that is a contract with the page rather than a preference: the Live tag is
+**Rule: an entry's kind splits on the session's `endsAt`, not its start — and both feeds
+split there.** The only question either surface asks of the clock is whether the evening is
+over, and a club running right now is emphatically not over: it is the session the family
+is *in*, and the one the gedu is standing in. So an in-progress session stays `future` on
+both, and that is a contract with the page rather than a preference: the Live tag is
 `kind === "future"` conjoined with the session having started, which a start-based split
 makes unsatisfiable. It would leave a club running right now below the divider as a quiet
 "no write-up" line while next week was tagged "Next session". **The kind boundary and the
@@ -150,6 +149,22 @@ tag boundary are deliberately the same instant**, so there is no tick where one 
 and the other is not. The voice window is not part of this: it governs how long a *room*
 stays joinable, which is a fact about the room, and stretching the kind to cover it would
 manufacture entries that are `future` but not live.
+
+The staff feed used to split on the *start*, and the history is worth keeping because the
+reason was real: its kind was doing double duty as "may I take the register yet", since
+making the running session `past` was how it got the record editor — and roll call during
+the club is the whole point of that editor. Two questions wearing one flag. A long session
+made the cost plain: on a daily 8:00–23:00 camp the gedu spent fifteen hours being told the
+session they were teaching was history and that tomorrow was next, while a parent looking
+at the same hour was correctly told it was today's. The staff side now asks editability
+directly, against the session's start, and its live entry carries the record editor exactly
+as a past entry does — which frees the kind rule to mean one thing on both feeds.
+
+**Rule: the builders stay separate for the privacy boundary, not for kind semantics.**
+They emit different shapes — one carries a gedu note, the whole group's attendance map and
+an `owed` flag; the other a report and one child's mark — and that is the whole reason
+there are two. Sharing a kind rule does not make them mergeable, and the next person to
+notice the classifiers agree should not read it as an invitation to fuse them.
 
 ## Attendance, and the planned-absence future
 

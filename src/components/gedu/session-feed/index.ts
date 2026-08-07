@@ -26,6 +26,7 @@ export {
   entryIsComplete,
   entryNeedsAttention,
   isEditableEntry,
+  isLiveEntry,
   isPlannableEntry,
   planDraftFromEditorState,
   planEditorStateFromEntry,
@@ -38,7 +39,6 @@ export {
 } from "./partial-save";
 export type {
   AttendanceMarks,
-  EditableSessionFeedEntry,
   FutureSessionFeedEntry,
   NoRecordSessionFeedEntry,
   PastSessionFeedEntry,

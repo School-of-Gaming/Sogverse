@@ -79,12 +79,17 @@ export function GeduProductPageScene({
     setEntries((prev) =>
       prev.map((entry) => {
         if (entry.id !== entryId) return entry;
+        // Both predicates take the clock now: since the kind flips at the
+        // session's *end*, "may this take a register" is a question about the
+        // start and no longer readable off the kind alone.
         if (draft.kind === "plan") {
-          return isPlannableEntry(entry)
+          return isPlannableEntry(entry, now)
             ? applyPlanDraftToEntry(entry, draft)
             : entry;
         }
-        return isEditableEntry(entry) ? applyDraftToEntry(entry, draft) : entry;
+        return isEditableEntry(entry, now)
+          ? applyDraftToEntry(entry, draft)
+          : entry;
       }),
     );
   };

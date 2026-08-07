@@ -46,21 +46,27 @@ interface SessionFeedEntryBase {
  * recent past one. Making it a kind of its own would let a caller hand over two
  * next sessions, or a next session below a past one.
  *
- * A future entry holds **the two written fields only**. Attendance and a
- * ran/didn't-run status are records of what happened and only attach once the
- * session is past; what a gedu can say in advance is what is coming (which
- * families read) and a reminder to themselves. They are the *same two fields* a
- * past entry carries — there is deliberately no planned-versus-recorded
- * distinction in the model or in the copy, because a report written before a
- * session and one written after it are the same field at two moments, and
- * splitting them made every caller decide which one a session sitting on today's
- * date should show.
+ * **"Future" means the session has not *ended* yet, so the one running right
+ * now is one of these** — the last of the run, and the current session. The
+ * family feed classifies on the same instant; the two are one timeline read by
+ * two audiences and must not disagree about which side of the present a session
+ * is on.
+ *
+ * The two written fields are the *same two* a past entry carries. There is
+ * deliberately no planned-versus-recorded distinction in the model or the copy,
+ * because a report written before a session and one written after it are the
+ * same field at two moments, and splitting them made every caller decide which
+ * one a session sitting on today's date should show.
  *
  * A future entry carries **no voice state**, because no session card anywhere
  * renders a Join affordance: joining is a fact about a *room*, so it lives on
  * the group surfaces (the rail's own-group card, each peer row) and nowhere
  * else. A Join on the timeline made the same room look like a different room
  * from the one in the rail.
+ *
+ * It carries no `owed` flag either, and that is not an omission: nothing is
+ * owed for a session that has not finished, which is precisely what being on
+ * this side of the end instant means.
  */
 export interface FutureSessionFeedEntry extends SessionFeedEntryBase {
   kind: "future";
@@ -71,6 +77,21 @@ export interface FutureSessionFeedEntry extends SessionFeedEntryBase {
   report: string | null;
   /** The **gedu note** — a reminder for whoever runs it. `null` = unset. */
   staffNote: string | null;
+  /**
+   * What has been said about each child so far — **present here because a
+   * future entry can be the one in progress**, and the register opens at the
+   * session's start.
+   *
+   * On a session that has not begun this is `{}` and cannot be anything else:
+   * the server refuses a mark before the start instant, so there is no path
+   * that fills it. Read it as "what has been recorded so far", which is
+   * honestly nothing until the club opens.
+   *
+   * This is what lets the running session take the record editor without being
+   * misfiled as history — the arrangement that replaced the old start-based
+   * kind split, whose only real job was getting that editor onto the card.
+   */
+  attendance: AttendanceMarks;
 }
 
 /**
@@ -170,21 +191,23 @@ export type SessionFeedEntry =
   | PastSessionFeedEntry
   | NoRecordSessionFeedEntry;
 
-/**
- * The kinds that can be expanded into the write-up editor — everything on the
- * past side of now, whether or not anything is owed for it.
+/*
+ * **There is deliberately no `EditableSessionFeedEntry` type.** There used to
+ * be — `past | no_record`, excluding `future` — and it worked only for as long
+ * as the kind flipped at the session's *start*, which made "has begun" and "is
+ * not future" the same statement.
  *
- * Both past kinds are in here because **editability is not the epoch's
- * business**. The epoch decides what the platform asks for; what a gedu is
- * *allowed* to record reaches back to the product's own start date, so a
- * pre-epoch gap opens the same editor as last week's session. Only `future` is
- * excluded, and for a reason the epoch has nothing to do with: attendance is a
- * record of something that happened, so a session that has not happened gets
- * the notes-only editor instead.
+ * The kind now flips at the **end**, so the session in progress is a `future`
+ * entry and is editable: the register opens when the session starts. That makes
+ * every kind editable-shaped, and a union of all three is just
+ * `SessionFeedEntry` under another name — a type claiming to be a subset while
+ * being the whole set, which is worse than no type at all.
+ *
+ * So editability is a **runtime** question now, asked of the entry and the
+ * clock together by `isEditableEntry` in this directory's `entry-state` module.
+ * TypeScript cannot express "a future entry that has already started", and
+ * pretending otherwise is what the deleted alias was doing.
  */
-export type EditableSessionFeedEntry =
-  | PastSessionFeedEntry
-  | NoRecordSessionFeedEntry;
 
 /**
  * Per-gamer marks, keyed by roster id — both the editor's working state and the

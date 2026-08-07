@@ -12,7 +12,11 @@ import {
   type SessionFeedRowContext,
 } from "@/components/session-feed";
 import { SessionFeedItem } from "./SessionFeedItem";
-import { entryCompleteness, type SessionCompleteness } from "./entry-state";
+import {
+  entryCompleteness,
+  isLiveEntry,
+  type SessionCompleteness,
+} from "./entry-state";
 import { isPartialSessionSaveError } from "./partial-save";
 import type {
   SessionEntryDraft,
@@ -243,6 +247,12 @@ export function SessionFeed({
             entry={entry}
             roster={roster}
             prominent={prominent}
+            // Derived here rather than inside the item, so every row answers
+            // off one clock read. It is what puts the record editor on the
+            // session the gedu is currently teaching: the kind flips at the
+            // session's *end*, so the one in progress is a future entry, and
+            // the register opens at its start.
+            live={isLiveEntry(entry, now)}
             completeness={completenessById.get(entry.id) ?? null}
             // The newest session that actually ran is the one report a gedu
             // opens the page to read every week; every older one keeps its

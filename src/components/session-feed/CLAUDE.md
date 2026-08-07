@@ -16,6 +16,21 @@ identically; the gedu module keeps everything that makes its feed a *workspace*.
   owed/attention derivation, attendance rosters and summaries, the staff-note block, the
   alert badge, partial-save handling, and the workspace's mock fixtures.
 
+**Rule: both feeds classify an entry on the session's `endsAt`, and both compute the live
+tag as the same conjunction** — `kind === "future" && startsAt <= now < endsAt`, with the
+same exclusive end boundary, so the kind flips on the exact tick the tag stops being live
+and no dead zone opens between them. A session in progress is `future` on both feeds: it
+is the *current* session, not history. The builders stay separate — they emit different
+shapes, and that is where the privacy line is drawn — but they must never disagree about
+which side of the present a session is on. They are one timeline read by two audiences.
+
+The staff feed used to split on the session's *start*, because its kind was standing in
+for "may I take the register yet": making the running session `past` was how it reached
+the record editor. That conflation is gone. Editability is asked directly now, against the
+session's start, and the live entry carries the record editor exactly as a past entry
+does. A daily 8:00–23:00 camp is what made the old behaviour untenable — it spent fifteen
+hours calling the session in progress history and naming tomorrow as next.
+
 **Rule: family surfaces never import gedu code — enforced, not promised.** One
 `no-restricted-imports` zone in the ESLint config covers the whole family *path*, not
 only its components: `components/family/`, `components/parent/`, `components/gamer/`, the

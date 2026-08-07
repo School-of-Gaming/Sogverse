@@ -40,12 +40,14 @@ import type { GeduFeedSession } from "@/services/gedu-sessions/gedu-sessions.con
  *   schedule no longer projects at all — a weekday move orphans one — still
  *   renders, for the same reason.
  * - **Kind comes from dates, never from a column.** `now` against the session's
- *   *start* splits future from past — which is what opens the record editor, and
- *   why roll call works mid-session. `now` against its *end*, together with the
- *   enforcement epoch, decides whether anything is owed: a session still running
- *   is editable but not yet outstanding work, which is the same boundary the
- *   dashboard's SQL count draws. The product's start floors how far back the
- *   walk goes at all.
+ *   *end* splits future from past, so a session in progress is the **current**
+ *   one rather than history — the same rule the family feed uses, because the
+ *   two are one timeline read by two audiences. That same end instant, together
+ *   with the enforcement epoch, decides whether anything is owed. Editability is
+ *   the one question that turns on the *start*: the register opens when the
+ *   session begins, which is why roll call works mid-session, and the feed asks
+ *   it directly rather than reading it off the kind. The product's start floors
+ *   how far back the walk goes at all.
  *
  * Pure: no React, no network, no clock of its own. The caller passes `now`, so
  * SSR and the first client render agree and a test can stand anywhere in time.
@@ -177,14 +179,38 @@ export function buildGeduSessionFeed(
 /**
  * Which kind of entry one date is, from the dates that decide it.
  *
- * **Editability turns on the start; being owed turns on the end.** A session
- * that has begun is a past entry and opens its record editor from that instant,
- * which is what makes roll call during the club work — the server accepts marks
- * from the same moment. But nothing is *owed* until the session has actually
- * finished: an hour that is still running is not yet work outstanding, and an
- * amber warning against a session the gedu is in the middle of teaching is a nag
- * for a job they have not had the chance to finish. That is also exactly where
- * the dashboard badge draws its line, so the card and the badge agree.
+ * **The kind flips at the session's END, which is the rule the family feed
+ * uses too.** A session is `future` until its last minute has passed, so the one
+ * happening right now is the *current* session — the last of the future run,
+ * sitting at the top of the feed where the gedu is already looking — rather than
+ * something filed under history. The two feeds share the rule deliberately: they
+ * are one timeline read by two audiences, and a classifier that disagreed meant
+ * a club running at 14:00 was "today's session" to the parent and "last time" to
+ * the gedu standing in it. A long session is what makes this visible — on a
+ * daily 8:00–23:00 camp the old start-based split spent fifteen hours calling
+ * the session in progress history and naming tomorrow as next.
+ *
+ * **Three questions, three instants, and they are no longer collapsed into
+ * one.** The start-based split was really editability wearing the kind's
+ * clothes:
+ *
+ * - **Which kind** — the session's **end**. Drives position in the feed and the
+ *   tag on the card.
+ * - **Whether it is editable** — the session's **start**. The register opens
+ *   when the session begins and the server accepts marks from that same moment,
+ *   so a running session is editable. That is the roll-call case, and it is the
+ *   whole reason the kind used to flip at the start: making the running session
+ *   `past` was how it got the record editor. It no longer has to be, because the
+ *   feed asks editability directly and the live entry carries the record editor
+ *   exactly as a past entry does.
+ * - **Whether anything is owed** — the session's **end**, plus the epoch. An
+ *   hour the gedu is still standing in is not work outstanding. Untouched by
+ *   this change, and still the boundary the SQL attention count draws, so the
+ *   dashboard badge and the card go on agreeing.
+ *
+ * Because the kind now flips at the end, everything reaching the `past` branch
+ * has by definition finished — so `owed` no longer re-tests it and the epoch is
+ * the only question left there.
  *
  * The pre-epoch branch is the other one worth reading twice. A session dated
  * before the epoch with **nothing recorded on it** is a `no_record` line:
@@ -194,10 +220,8 @@ export function buildGeduSessionFeed(
  * ordinary past entry that simply never owes anything (`owed: false`), so the
  * amber warning can never apply to it while the green check still can.
  *
- * Note which of the two questions the `no_record` test asks: the **epoch** one,
- * not `owed`. A live session inside the enforcement era owes nothing yet, and
- * collapsing it to a muted gap on that basis would take its editor away at
- * precisely the moment the gedu wants it.
+ * A running session can never reach that branch whatever its date: it is
+ * `future` now, and the epoch test sits below the end-based split.
  */
 function toEntry(args: {
   id: string;
@@ -210,7 +234,7 @@ function toEntry(args: {
 }): SessionFeedEntry {
   const { id, date, startsAt, endsAt, row, now, epoch } = args;
 
-  if (startsAt.getTime() > now.getTime()) {
+  if (endsAt.getTime() > now.getTime()) {
     return {
       kind: "future",
       id,
@@ -218,6 +242,12 @@ function toEntry(args: {
       endsAt,
       report: row?.report ?? null,
       staffNote: row?.gedu_note ?? null,
+      // Carried on a future entry because one of them can be **in progress**,
+      // and the register opens at the start. For a session that has not begun
+      // this is `{}` and stays that way — the server refuses a mark before the
+      // start instant — so the field is "what has been said so far", which is
+      // honestly nothing until the club opens the door.
+      attendance: row?.attendance ?? {},
     };
   }
 
@@ -225,9 +255,6 @@ function toEntry(args: {
   // a calendar one — and it is made in the product's own terms, which is the
   // only zone in which "the session's date" means anything.
   const withinEnforcement = date >= epoch;
-  // The end instant, not the start: a session under way is editable but not yet
-  // owed. Same boundary the SQL attention count uses.
-  const finished = endsAt.getTime() <= now.getTime();
 
   if (row === undefined && !withinEnforcement) {
     return { kind: "no_record", id, startsAt, endsAt };
@@ -238,7 +265,10 @@ function toEntry(args: {
     id,
     startsAt,
     endsAt,
-    owed: withinEnforcement && finished,
+    // No end test here any more: reaching this branch *is* having finished,
+    // since the kind flips at the end instant a few lines up. The epoch is the
+    // only remaining question, and it is the same one the SQL count asks.
+    owed: withinEnforcement,
     report: row?.report ?? null,
     staffNote: row?.gedu_note ?? null,
     attendance: row?.attendance ?? {},

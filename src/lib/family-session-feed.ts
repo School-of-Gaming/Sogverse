@@ -54,7 +54,7 @@ import type { FamilyFeedSession } from "@/services/family-product-feed/family-pr
  *   thing — a session that ran with nothing written down — and both render as
  *   the quiet placeholder line. The epoch never reaches this surface. The line
  *   between the two kinds is drawn at the session's **end**, not its start, and
- *   that is the sharpest divergence from the gedu builder — see `toFamilyEntry`.
+ *   the gedu builder now draws it in the same place — see `toFamilyEntry`.
  *
  * Pure: no React, no network, no clock of its own. The caller passes `now`, so
  * SSR and the first client render agree and a test can stand anywhere in time.
@@ -224,20 +224,30 @@ export function buildFamilySessionFeed(
 /**
  * Which kind of entry one occurrence is, and what the family may read on it.
  *
- * **The boundary is the session's end, and this is where the two builders part
- * company.** The gedu's splits on the *start*, because a session that has begun
- * is one they can take the register for — the split is really "may I record
- * this yet", and roll call during the club is the whole point of it. A family
- * records nothing, so that question does not exist here. The only question this
- * surface asks is whether the evening is over, and a club that is running right
- * now is emphatically not over: it is the session the family is *in*.
+ * **The boundary is the session's end, and both builders now draw it there.**
+ * The only question either surface asks of the clock is whether the evening is
+ * over, and a club running right now is emphatically not over: it is the
+ * session the family is *in*, and the one the gedu is standing in.
+ *
+ * The gedu builder used to split on the *start*, and it is worth knowing why,
+ * because the reason was real. Its split was doing double duty as "may I record
+ * this yet" — making the running session `past` was how it got the record
+ * editor, which is what roll call during the club needs. That conflated two
+ * questions, and a long session made the cost obvious: on a daily 8:00–23:00
+ * camp the gedu spent fifteen hours being told the session they were teaching
+ * was history and that tomorrow was next, while the family looking at the same
+ * hour was correctly told it was today's. The staff side now asks editability
+ * directly, against the session's *start*, and its live entry carries the
+ * record editor exactly as a past entry does — so the kind rule is free to mean
+ * one thing on both feeds.
  *
  * So a session in progress stays `future`, and that is a contract with the
  * page rather than a preference. The feed's live tag is computed as
  * `kind === "future" && startsAt <= now < endsAt` — a conjunction a start-based
  * split makes unsatisfiable, which would leave a club running right now sitting
  * below the divider as a quiet "no write-up" line while next week is tagged
- * "Next session". **The two boundaries are deliberately the same instant**
+ * "Next session". The gedu feed computes its live tag from the identical
+ * conjunction. **The two boundaries are deliberately the same instant**
  * (`endsAt`, exclusive), so the entry becomes past in exactly the tick the tag
  * stops being live and there is no window where one is true and the other is
  * not.

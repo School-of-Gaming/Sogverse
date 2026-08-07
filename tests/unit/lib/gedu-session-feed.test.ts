@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildGeduSessionFeed } from "@/lib/gedu-session-feed";
+import { partitionFeedEntries } from "@/components/session-feed";
 import {
   OPEN_ENDED_OCCURRENCE_CAP,
   productLocalDate,
@@ -137,13 +138,17 @@ describe("buildGeduSessionFeed — entry kinds", () => {
     expect(byDate(entries, "2026-03-16")?.kind).toBe("past");
   });
 
-  it("carries a future row's notes without ever carrying attendance", () => {
+  it("carries a future row's notes, with an empty sheet until it starts", () => {
     const entries = build({
       sessions: [row("2026-03-23", { report: "# Lighthouse week" })],
     });
     const next = byDate(entries, "2026-03-23");
     expect(next).toMatchObject({ kind: "future", report: "# Lighthouse week" });
-    expect(next).not.toHaveProperty("attendance");
+    // A future entry does carry a sheet, because one of them can be the session
+    // in progress — but a session that has not started has nothing on it, and
+    // the server refuses a mark before the start instant, so there is no path
+    // that fills it.
+    expect(next).toMatchObject({ attendance: {} });
   });
 
   it("marks a finished session owed from the epoch onward, and never before it", () => {
@@ -233,11 +238,16 @@ describe("buildGeduSessionFeed — records beat projections", () => {
 /**
  * The two boundaries, and the gap between them.
  *
- * A session becomes **editable** at its start — that is the roll-call case, and
- * it is why the entry sorts into the past the moment it begins. It becomes
- * **owed** only at its end, which is the same line the dashboard's SQL count
- * draws. So a session under way sits in between: a fully editable past entry
- * that no badge and no amber marker may claim yet.
+ * **The kind flips at the session's END**, which is the same rule the family
+ * feed uses, so a session under way is still a `future` entry — the *current*
+ * one, at the top of the feed where the gedu is looking. It becomes **owed**
+ * only at that same end instant, which is the line the dashboard's SQL count
+ * draws too.
+ *
+ * Editability is the question that no longer rides on the kind: it turns on the
+ * session's *start*, so the running session takes the record editor while
+ * sitting on the future side. That is asserted over in the entry-state suite,
+ * where the predicates live.
  */
 describe("buildGeduSessionFeed — the in-progress session", () => {
   /** Monday 16 March, mid-session (the slot runs 14:30–16:00 UTC). */
@@ -258,23 +268,97 @@ describe("buildGeduSessionFeed — the in-progress session", () => {
     });
   }
 
-  it("appears exactly once, on the past side of the divider", () => {
+  it("appears exactly once, and is the current session rather than history", () => {
     // The forward walk surfaces a session still inside its voice window and the
     // backward walk emits anything already started, so the same occurrence
     // reaches the merge twice. It shares one date key, so it lands once.
     const entries = at(DURING);
     expect(dates(entries).filter((d) => d === "2026-03-16")).toHaveLength(1);
-    expect(byDate(entries, "2026-03-16")?.kind).toBe("past");
+    // Future, because the kind flips at the END. The gedu is standing in this
+    // session; filing it under history while they teach it is what this
+    // convergence fixed.
+    expect(byDate(entries, "2026-03-16")?.kind).toBe("future");
   });
 
-  it("is editable but owes nothing while it is still running", () => {
-    // The gedu is standing in the room. They may take the register — that is the
-    // whole point of the entry being past — but there is nothing outstanding
-    // about a session whose hour has not run out.
-    expect(byDate(at(DURING), "2026-03-16")).toMatchObject({
-      kind: "past",
-      owed: false,
+  it("owes nothing while it is still running", () => {
+    // Nothing is outstanding about a session whose hour has not run out. A
+    // future entry has no `owed` field at all, which says the same thing in the
+    // type: being on this side of the end instant *is* owing nothing.
+    const entry = byDate(at(DURING), "2026-03-16");
+    expect(entry?.kind).toBe("future");
+    expect(entry).not.toHaveProperty("owed");
+  });
+
+  /*
+   * ------------------------------------------------------------------
+   * The scenario that forced this: a daily camp running 8:00 to 23:00.
+   * ------------------------------------------------------------------
+   *
+   * The gedu feed used to split on the session's START. On a ninety-minute club
+   * that is nearly invisible - the session is "past" for the hour and a half the
+   * gedu is in it, and nobody much notices. On a fifteen-hour camp day it is the
+   * whole day: from 8:00 the workspace called the session the gedu was standing
+   * in "last time", filed it below the divider with the history, and named
+   * TOMORROW as the next session. Meanwhile the family feed, which has always
+   * split on the END, correctly called the same session today's and tagged it
+   * live. One timeline, two audiences, two different answers.
+   *
+   * Both feeds now split on the end. The assertions below pin the three things
+   * that have to hold simultaneously at 14:00 on such a day, which is the exact
+   * combination that was impossible before:
+   *
+   *   1. the running session is `future` (so it sits at the top as current),
+   *   2. the live tag is satisfiable on it (kind future AND started AND not
+   *      ended - a conjunction a start-based split makes unsatisfiable), and
+   *   3. it still owes nothing, because owed keys on the end and always did.
+   *
+   * MUTATION CHECK: revert the builder's split to `startsAt > now` and case (1)
+   * fails - the entry comes back `past`. Case (2) fails with it, since the live
+   * tag requires `kind === "future"`.
+   */
+  it("classifies a long camp day as current, live-taggable, and not yet owed", () => {
+    const CAMP_TZ = "Europe/Helsinki";
+    // 8:00-23:00 Helsinki on Monday 16 March: a 15-hour day.
+    const campDay = buildGeduSessionFeed({
+      groupId: GROUP,
+      timezone: CAMP_TZ,
+      // Weekday 0 is Monday in this codebase, matching MONDAY_SLOT above.
+      slots: [{ weekday: 0, startTime: "08:00", durationMinutes: 15 * 60 }],
+      startDate: "2026-03-02",
+      endDate: null,
+      sessions: [],
+      // 14:00 Helsinki - six hours in, nine hours to go.
+      now: new Date("2026-03-16T12:00:00.000Z"),
+      epoch: EPOCH,
     });
+
+    const entry = byDate(campDay, "2026-03-16");
+    const now = new Date("2026-03-16T12:00:00.000Z");
+
+    // (1) The current session, not history.
+    expect(entry?.kind).toBe("future");
+
+    // (2) The live tag is satisfiable: the family feed's exact conjunction.
+    const live =
+      entry !== undefined &&
+      entry.kind === "future" &&
+      entry.startsAt.getTime() <= now.getTime() &&
+      now.getTime() < entry.endsAt.getTime();
+    expect(live).toBe(true);
+
+    // (3) Nothing owed yet - the gedu has nine hours of camp left to run.
+    expect(entry).not.toHaveProperty("owed");
+
+    // And the workspace genuinely treats it as the current one. The feed runs
+    // newest-first, so the "next session" is the LAST of the leading future run
+    // - the one sitting directly above the divider - and that is the entry the
+    // page renders prominently. Under the old split this was tomorrow while the
+    // gedu was mid-session; now it is the session they are actually in.
+    const partition = partitionFeedEntries(campDay);
+    expect(partition.nextSession?.id).toBe(entry?.id);
+    expect(
+      partition.nextSession?.startsAt.getTime(),
+    ).toBeLessThanOrEqual(now.getTime());
   });
 
   it("becomes owed the moment it ends", () => {

@@ -16,8 +16,6 @@ import { AttendanceSummary } from "./AttendanceSummary";
 import { CollapsibleRegion } from "./CollapsibleRegion";
 import {
   editorStateFromEntry,
-  isEditableEntry,
-  isPlannableEntry,
   planEditorStateFromEntry,
   type SessionCompleteness,
 } from "./entry-state";
@@ -39,6 +37,19 @@ interface SessionFeedItemProps {
    * future tag's wording, not its weight — every future session is tagged.
    */
   prominent?: boolean;
+  /**
+   * Whether this session has started and not yet finished.
+   *
+   * Only a future entry can be one — the kind flips at the *end* instant, so a
+   * session in progress is still ahead of the gedu in the sense the feed's
+   * ordering cares about. It swaps the tag's wording and, more importantly,
+   * decides which editor opens: a live entry takes the record editor, because
+   * the register is open from the session's start. That is the roll-call case.
+   *
+   * Passed down rather than derived here so the whole feed answers it off one
+   * clock read — the timeline marker and the card must not straddle a tick.
+   */
+  live?: boolean;
   /**
    * Whether this entry's report may be clamped. The feed passes `false` for the
    * most recent past session, whose write-up is what the weekly loop came to
@@ -136,8 +147,11 @@ interface SessionFeedItemProps {
  * same record editor. The moment anything is saved on it, it stops being a gap
  * and renders as an ordinary past entry that owes nothing.
  *
- * **Every future session carries a tag, in the info tone.** The next one says
- * so by name and the rest say "future session", and both are the same blue —
+ * **Every future session carries a tag, in the info tone.** The one running
+ * right now says so, in the shared live copy the family feed also reads and in
+ * a filled tone — a session in progress is the one thing on this feed worth
+ * spotting from across the room. The next one says so by name, the rest say
+ * "future session", and all of them are the same blue —
  * the boundary between what has happened and what has not is the one thing a
  * reader must never have to work out from a date. The tone is info rather than
  * the primary brand one because the two signals in this feed sit inches apart
@@ -145,9 +159,14 @@ interface SessionFeedItemProps {
  * the warning amber that a column of cards read as one wash of attention. Info
  * separates on hue, so the two are told apart from across the room.
  *
- * Which editor opens follows the side of the present the entry is on: past
- * entries get the record editor (attendance + notes), future ones get the
- * notes-only editor. No entry ever offers both, and neither carries a Join —
+ * **Which editor opens follows whether the session has STARTED, not which side
+ * of the divider it sits on.** Anything begun takes the record editor
+ * (attendance + notes), including the session in progress — which is a `future`
+ * entry, because the kind flips at the *end*. That is the roll-call case: a gedu
+ * marks the register and writes the report while the club is running, and the
+ * affordance has to be on the card in front of them. Only a session that has not
+ * started yet gets the notes-only editor, because attendance is a record of
+ * something happening. No entry ever offers both, and neither carries a Join —
  * rooms are joined from the group surfaces, never from a session card.
  *
  * **Closing the editor hands focus back to the Edit button, and the feed does
@@ -162,6 +181,7 @@ export function SessionFeedItem({
   roster,
   labels,
   prominent = false,
+  live = false,
   clampReport = true,
   completeness,
   editing,
@@ -174,8 +194,10 @@ export function SessionFeedItem({
 }: SessionFeedItemProps) {
   const t = useTranslations("gedu.sessionFeed");
   const b = useTranslations("sessionBadge");
-  const recordable = isEditableEntry(entry);
-  const plannable = isPlannableEntry(entry);
+  // A live session takes the record editor: the register opens at its start.
+  // The two are exact complements, so exactly one editor ever opens.
+  const recordable = entry.kind !== "future" || live;
+  const plannable = entry.kind === "future" && !live;
   const editorId = useId();
 
   const recordEditor = recordable && (
@@ -236,11 +258,21 @@ export function SessionFeedItem({
         <SessionDateLine labels={labels} />
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
           {entry.kind === "future" && (
+            // The live tag is the same shared `sessionBadge` copy the family
+            // feed reads, in a filled tone rather than an outline one: a
+            // session happening right now is the one thing on this feed worth
+            // finding from across the room. "Next session" on a club that is
+            // running would be technically true and read as a mistake.
             <Badge
               variant="outline"
-              className="border-info/50 text-[10px] uppercase tracking-wide text-info"
+              className={cn(
+                "text-[10px] uppercase tracking-wide",
+                live
+                  ? "border-info bg-info/10 text-info"
+                  : "border-info/50 text-info",
+              )}
             >
-              {prominent ? b("nextSession") : b("upcoming")}
+              {live ? b("live") : prominent ? b("nextSession") : b("upcoming")}
             </Badge>
           )}
           {completeness === "needs_attention" && (

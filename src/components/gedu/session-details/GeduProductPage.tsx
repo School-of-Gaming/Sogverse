@@ -277,7 +277,13 @@ function Workspace({
 
     if (draft.kind !== "past") return;
 
-    const current = entry.kind === "past" ? entry.attendance : {};
+    // A live entry carries marks too — it is a `future` entry whose register is
+    // already open — so the diff has to read them. Treating them as `{}` would
+    // resend every mark on each save, and worse, silently swallow an *unmark*
+    // (undefined vs undefined reads as "no change"), losing the one correction
+    // a gedu is most likely to make mid-session.
+    const current =
+      entry.kind === "past" || entry.kind === "future" ? entry.attendance : {};
     const changed = feedRoster.filter(
       (gamer) => draft.attendance[gamer.id] !== current[gamer.id],
     );
