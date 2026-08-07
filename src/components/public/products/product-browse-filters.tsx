@@ -140,7 +140,12 @@ export function ProductBrowseFilters({
               // A multi-topic group (Minecraft) carries a literal brand label;
               // a single-topic chip resolves its label from the topic.
               label={chip.label ?? topicLabel(chip.topics[0])}
-              active={chip.topics.every((tp) => selectedTopics.includes(tp))}
+              // `some`, not `every`: a URL carrying a lone edition (an old
+              // shared link, or a hand-edited param) still filters the grid,
+              // and a chip that stays dark while its filter is on is a control
+              // lying about the results. Toggling a partially-selected group
+              // completes it; toggling a full group clears it.
+              active={chip.topics.some((tp) => selectedTopics.includes(tp))}
               onToggle={() => toggleTopics(chip.topics)}
             />
           ))}

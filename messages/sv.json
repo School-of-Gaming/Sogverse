@@ -1464,9 +1464,7 @@
       "event": "Evenemang"
     },
     "sections": {
-      "overview": "Bra att veta",
-      "calendar": "Schema",
-      "topic": "Ämne"
+      "overview": "Bra att veta"
     },
     "topicInfo": {
       "heading": "Om {name}",

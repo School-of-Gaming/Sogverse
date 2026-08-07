@@ -189,8 +189,9 @@ export const PRODUCT_TOPIC_VALUES = [
 // A topic filter chip groups one or more product topics behind a single chip.
 // Most chips are 1:1 with a topic; the Minecraft editions (Java/Education/
 // Bedrock) collapse into one "Minecraft" chip. A chip selects all its topics
-// together (OR-ed in `filterProducts`).
-export interface TopicFilterChip {
+// together (OR-ed in `filterProducts`). Module-local on purpose: the one chip
+// list below is the only chip set — a second one was built once and removed.
+interface TopicFilterChip {
   /** Stable key for the React list and the URL-membership check. */
   key: string;
   /** The topic enum values this chip selects together. */

@@ -133,13 +133,17 @@ describe("TopicInfoCard", () => {
       };
     });
 
-    const { TopicInfoCard: InfolessCard } = await import(
-      "@/components/public/products/topic-info-card"
-    );
-    const { container } = render(<InfolessCard topic="fortnite" />);
-    expect(container.innerHTML).toBe("");
-
-    vi.doUnmock("@/lib/products/topics");
-    vi.resetModules();
+    try {
+      const { TopicInfoCard: InfolessCard } = await import(
+        "@/components/public/products/topic-info-card"
+      );
+      const { container } = render(<InfolessCard topic="fortnite" />);
+      expect(container.innerHTML).toBe("");
+    } finally {
+      // Unwind even on assertion failure, so a later test in this file can
+      // never run against the patched registry.
+      vi.doUnmock("@/lib/products/topics");
+      vi.resetModules();
+    }
   });
 });

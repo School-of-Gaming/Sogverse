@@ -37,7 +37,10 @@ export function TopicInfoCard({ topic }: { topic: ProductTopic }) {
     <Card>
       <CardContent className="space-y-4 p-5 sm:p-6">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          {/* Deliberately NOT the uppercase section-heading style: the heading
+              interpolates a brand literal, and CSS `uppercase` would mangle the
+              casing the brand rule protects ("Pokémon GO" → "POKÉMON GO"). */}
+          <h2 className="text-sm font-semibold text-muted-foreground">
             {t("topicInfo.heading", { name: meta.label })}
           </h2>
           {info.pegi !== undefined && (
