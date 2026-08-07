@@ -102,6 +102,15 @@ export type Location = Omit<
 >;
 export type LocationInsert = Database["public"]["Tables"]["locations"]["Insert"];
 
+/**
+ * A `postal_codes` row: the fact that one code reaches one municipality.
+ *
+ * The whole row is the key, so there is nothing to exclude the way `Location`
+ * excludes the columns no surface renders. Nothing references this table, which
+ * is why a refresh may rebuild it wholesale — see `src/services/locations/`.
+ */
+export type PostalCode = Database["public"]["Tables"]["postal_codes"]["Row"];
+
 // gedu_locations (a gedu's coverage areas for substitute matching — rows
 // can sit at any level of the location hierarchy)
 export type GeduLocation = Database["public"]["Tables"]["gedu_locations"]["Row"];

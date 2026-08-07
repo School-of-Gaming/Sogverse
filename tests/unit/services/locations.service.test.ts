@@ -247,6 +247,99 @@ describe("LocationsService.getLocationsByIds", () => {
   });
 });
 
+// The postal lookup: a code is an alternative key onto a municipality, resolved
+// in two reads — `postal_codes` says which places, and the keyed read above says
+// what they are. What is specified here is the shape of the first read and the
+// hand-off to the second; the fixtures that prove a real code reaches the right
+// kunta or commune are DB tests, because they are claims about seeded data.
+
+describe("LocationsService.getMunicipalitiesByPostalCode", () => {
+  let fetchMock: FetchMock;
+  let service: LocationsService;
+
+  beforeEach(() => {
+    fetchMock = vi.fn<typeof fetch>();
+    service = new LocationsService(createFetchStubbedClient(fetchMock));
+  });
+
+  it("filters on the country and the code, and asks only for the id", async () => {
+    fetchMock.mockResolvedValueOnce(postgrestJson([{ location_id: "muni-1" }]));
+    fetchMock.mockResolvedValueOnce(postgrestJson(locationRows(1)));
+
+    await service.getMunicipalitiesByPostalCode("FI", "00100");
+
+    const url = requestedUrl(fetchMock.mock.calls[0][0]);
+    expect(url.pathname).toContain("postal_codes");
+    expect(url.searchParams.get("country_code")).toBe("eq.FI");
+    expect(url.searchParams.get("postal_code")).toBe("eq.00100");
+    // The country and the code came from the caller; reading them back would be
+    // echoing the filter.
+    expect(url.searchParams.get("select")).toBe("location_id");
+  });
+
+  // A code can span municipalities — a French code routinely covers dozens of
+  // communes, which is exactly why `location_id` is part of the postal key
+  // rather than a unique column beside it. Answering with one row would pick a
+  // winner the data does not have.
+  it("resolves every municipality the code reaches, with its chain", async () => {
+    fetchMock.mockResolvedValueOnce(
+      postgrestJson([{ location_id: "a" }, { location_id: "b" }]),
+    );
+    fetchMock.mockResolvedValueOnce(
+      postgrestJson([
+        {
+          ...locationRows(1)[0],
+          parent: {
+            id: "district",
+            name: "Marne",
+            parent: { id: "country", name: "France", parent: null },
+          },
+        },
+        locationRows(1, 1)[0],
+      ]),
+    );
+
+    const rows = await service.getMunicipalitiesByPostalCode("FR", "51300");
+
+    expect(requestedUrl(fetchMock.mock.calls[1][0]).searchParams.get("id")).toBe(
+      "in.(a,b)",
+    );
+    expect(rows).toHaveLength(2);
+    expect(rows[0].ancestors.map((node) => node.name)).toEqual([
+      "Marne",
+      "France",
+    ]);
+  });
+
+  // An unknown code is a lookup that found nothing, not an error — and there is
+  // nothing to resolve, so the second read must not be made at all.
+  it("answers empty for a code no municipality carries, without a second read", async () => {
+    fetchMock.mockResolvedValueOnce(postgrestJson([]));
+
+    await expect(
+      service.getMunicipalitiesByPostalCode("FI", "99999"),
+    ).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  // A half-typed code is a search that has not started, so it answers like one
+  // rather than asking the database to match the empty string.
+  it("makes no request at all for a blank code", async () => {
+    await expect(
+      service.getMunicipalitiesByPostalCode("FI", "   "),
+    ).resolves.toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("throws rather than reporting an unknown code when the read fails", async () => {
+    fetchMock.mockResolvedValue(postgrestError("boom"));
+
+    await expect(
+      service.getMunicipalitiesByPostalCode("FI", "00100"),
+    ).rejects.toMatchObject({ message: "boom" });
+  });
+});
+
 describe("LocationsService.getChildren", () => {
   let fetchMock: FetchMock;
   let service: LocationsService;

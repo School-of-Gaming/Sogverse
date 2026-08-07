@@ -3,10 +3,19 @@
  *
  * GeoNames publishes one zip per country under `/export/dump/<CC>.zip`, one zip
  * of alternate names per country under `/export/dump/alternatenames/<CC>.zip`,
- * and a plain `/export/dump/countryInfo.txt` — the three this module reads.
- * (Postal codes live under `/export/zip/<CC>.zip` and are a separate ingestion
- * with its own table; a reader for them belongs with that generator, not here,
- * until one exists.) Everything is CC BY 4.0 and republished daily.
+ * a plain `/export/dump/countryInfo.txt`, and postal codes under
+ * `/export/zip/<CC>.zip`. Everything is CC BY 4.0 and republished daily.
+ *
+ * ## One country's postal codes may not be GeoNames' at all
+ *
+ * France's postal file carries the département+arrondissement code rather than
+ * the commune INSEE code and joins zero communes, so France reads La Poste's
+ * Base officielle des codes postaux instead (Licence Ouverte 2.0). That is a
+ * different host, and `downloadExternal` below is what serves it — deliberately
+ * here rather than in the postal module, because the caching, the idempotence
+ * and the `GEONAMES_REFRESH` switch are the properties that make a generator
+ * rerun read the same bytes, and having two answers to "where did this file come
+ * from and when" is how one of them goes stale.
  *
  * ## The cache is working data, not repo content
  *
@@ -55,10 +64,22 @@ export function fail(message) {
  * — a cached run must report the date of the bytes it actually read.
  */
 async function download(path) {
+  return fetchCached(`${BASE}/${path}`, path.replace(/[/]/g, "_"));
+}
+
+/**
+ * A file from somewhere other than GeoNames, cached on exactly the same terms.
+ * `cacheName` is the file name it lands under and is the caller's to keep
+ * distinct — it is what makes a rerun read the same bytes.
+ */
+export async function downloadExternal(url, cacheName) {
+  return fetchCached(url, cacheName);
+}
+
+async function fetchCached(url, name) {
   const dir = cacheDir();
   mkdirSync(dir, { recursive: true });
 
-  const name = path.replace(/[/]/g, "_");
   const file = join(dir, name);
   const metaFile = `${file}.meta.json`;
 
@@ -67,7 +88,6 @@ async function download(path) {
     return { bytes: readFileSync(file), lastModified: meta.lastModified, cached: true };
   }
 
-  const url = `${BASE}/${path}`;
   const response = await fetch(url);
   if (!response.ok) {
     fail(`GET ${url} -> ${response.status} ${response.statusText}`);
@@ -158,4 +178,15 @@ export async function readAlternateNames(iso) {
 export async function readCountryInfo() {
   const { bytes, lastModified, cached } = await download("dump/countryInfo.txt");
   return { text: bytes.toString("utf8"), lastModified, cached };
+}
+
+/**
+ * `<CC>.txt` out of `/export/zip/<CC>.zip` — the country's postal codes. A
+ * different archive from the country dump with a different column layout, and
+ * the same file-set-per-country trap: Åland's codes are in AX.zip, not FI's.
+ */
+export async function readPostalDump(iso) {
+  const { bytes, lastModified, cached } = await download(`zip/${iso}.zip`);
+  const text = unzipEntry(bytes, `${iso}.txt`, `zip/${iso}.zip`).toString("utf8");
+  return { text, lastModified, cached };
 }

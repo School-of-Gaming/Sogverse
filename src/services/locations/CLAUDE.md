@@ -291,6 +291,118 @@ locally.** GeoNames carries some abolished places as live rows for years (Finlan
 exactly two entries). Each entry is a recorded human decision, and the durable fix is
 correcting GeoNames so the entry can be dropped.
 
+## Postal codes
+
+A separate table, `postal_codes`, holding one row per `(country_code,
+postal_code, location_id)` fact — all three columns are the key. **A postal code
+is an alternative *key* onto a municipality that already exists, never a level of
+the hierarchy**: it carries no name, no parent, no depth and nothing anyone
+browses, and it exists so a parent can type "00100" instead of walking Finland →
+Uusimaa → Helsinki. Neither direction of the relationship is single-valued — a
+municipality has many codes, and a French code routinely spans dozens of communes
+— which is why `location_id` is part of the key rather than a unique column
+beside it.
+
+**Rule: this table may be rebuilt wholesale and `locations` may not, and the
+difference is structural rather than a matter of taste.** Nothing references a
+postal row: no product, no gedu coverage claim, no family location pick, no
+foreign key anywhere points here. So a refresh is a plain delete-and-reinsert
+migration for the country. Over on `locations`, `gedu_locations.location_id` is
+`ON DELETE CASCADE`, which is the hazard that forces the retire-never-delete
+discipline. That hazard is absent here, so the discipline is too — which is
+exactly what lets postal data track upstream freely while the geography cannot.
+
+### Where the rows come from
+
+A second ingestion over the same config, with its own generator
+(`scripts/generate-postal-seed.mjs <CC>`, over the postal module in
+`scripts/lib/geonames/`), because the two sources move on different schedules and
+under different rules.
+
+**GeoNames' postal dumps by default; La Poste for France.** France's override is
+forced rather than chosen: GeoNames' French postal file carries the
+département+arrondissement code in its third admin column rather than the commune
+INSEE code, so it joins **zero** of ~34,900 communes — a structural mismatch that
+no amount of upstream healing repairs. La Poste's *Base officielle des codes
+postaux* keys on `code_commune_insee`, which is exactly what `external_code`
+holds. It is Licence Ouverte 2.0; the public attribution surface credits it
+alongside GeoNames' CC BY 4.0.
+
+Two shapes are absorbed by config rather than by code:
+
+- **The municipality-code column moves between files of one country.** Mainland
+  Finland's kunta code is in the postal dump's admin code 3 and Åland's is in
+  admin code 2 — the same file-set-per-country trap the geography dumps have, one
+  column over. Forgetting Åland's file is 16 kuntaa with no codes and nothing
+  saying so, which is why the coverage gate below is what catches it.
+- **The Paris/Lyon/Marseille rollup.** La Poste keys those three cities by
+  *arrondissement* (75101–75120, 69381–69389, 13201–13216) where the COG has one
+  commune each (75056, 69123, 13055). That is a fixed 45-code map, derivable from
+  neither file, enumerated in the config and applied before the join. Nothing in
+  executable code knows the three cities exist.
+
+### The join, and the country it rules out
+
+Every row lands by joining `(country_code, type = 'municipality',
+external_code)`. That is the whole reason `external_code` kept its contract
+through the GeoNames cutover — the column means "the official statistical code"
+whoever supplies it, so an official-data join keeps working.
+
+**The consequence is that a country mapping no official code cannot have postal
+data at all, and the United Kingdom is that country.** Every UK row below the
+country carries NULL there, because GeoNames' GB admin codes are its own
+invention, so there is no key to join on; the ingestion refuses GB by name rather
+than emitting an empty seed. Giving the UK postal data means giving it a key
+first — either upstream starts carrying ONS/GSS codes, or the postal join learns
+to key on `geonames_id` through the postal file's own admin columns.
+
+### The gates, and the deliberate asymmetry between them
+
+- **Coverage is a gate.** The fraction of a country's municipalities that got at
+  least one code must clear the config's floor. Finland's is 1: all 308 kuntaa
+  are covered, so anything less is a broken run. France's sits just below it, by
+  exactly the width of a *named* gap — the four communes nouvelles GeoNames still
+  files under a retired chef-lieu code, which no La Poste row keyed on the COG
+  code can reach. The floor is set tight enough that a fifth loss fails rather
+  than fits.
+- **Unmatched upstream codes are reported and never failed on.** A postal file
+  naming a municipality we do not carry is not a broken run: Finland's file still
+  routes mail through two kuntaa abolished in 2020 and 2021, and a postal
+  operator legitimately delivers to territories that are their own ISO countries
+  and their own GeoNames files. Failing here would make postal ingestion hostage
+  to the geography's currency, which heals on somebody else's schedule. Every
+  such code is named in the emitted migration's header, so the list is reviewable
+  rather than merely counted.
+
+**Rule: the coverage gate is scoped to rows with a `geonames_id`.** The DB
+fixtures in `supabase/seed.sql` include a small code-less Finnish tree that no
+postal source has ever heard of, and an unscoped count would fail the migration
+on any database that had loaded them. Both the generator's gate and the SQL
+restatement of it carry that scope.
+
+### Reading it
+
+One service method resolves `(country, code)` to the municipalities it reaches,
+**as a list** — a caller wanting one place has to decide what to do with several,
+and that decision belongs to the surface. It is two reads, not an embed:
+`postal_codes` answers *which places*, and the existing keyed read answers *what
+they are*, which is the same call every other surface makes to turn a stored id
+into a name and a path. Embedding the chain off the postal table would be a
+second definition of that shape for the same answer.
+
+No route and no RPC: the table is anon-readable public reference data with a
+plain `USING (true)` policy and a `SELECT` grant to `anon` and `authenticated`,
+so the caller's own client asks it directly, exactly as browsing the tree does.
+There is **no write grant for anybody, `service_role` included** — rows land
+through data migrations, which run as the database owner and need no Data API
+privilege, so a grant here would widen the reachable surface for no caller. A
+future admin surface that needs a privileged read adds the grant in that change,
+deliberately.
+
+The consuming UI — postal entry as a shortcut in the parent's picker, "clubs near
+me" — is deliberately separate later work. Coordinates and radius stay out of
+*coverage* semantics entirely, whatever that UI ends up doing.
+
 ## Search
 
 ### The stored fold
@@ -466,6 +578,11 @@ a partial order silently drops rows a user was about to scroll to.
 **Keyed reads** — rows by id. These chunk their keys into `in.(…)` batches sized well
 under `max_rows` and so cannot be truncated by construction; that is *why* they do not
 page. A key with no row is simply absent from the result — a lookup, not an assertion.
+
+The postal lookup (see Postal codes above) is the one read that starts on another table,
+and it is deliberately not a fourth shape: it resolves `(country, code)` to a set of ids
+and then *is* the keyed read, so a place found by postal code and a place found by
+browsing come back identical.
 
 ### Rows with their chains
 

@@ -620,6 +620,32 @@ export type Database = {
           },
         ]
       }
+      postal_codes: {
+        Row: {
+          country_code: string
+          location_id: string
+          postal_code: string
+        }
+        Insert: {
+          country_code: string
+          location_id: string
+          postal_code: string
+        }
+        Update: {
+          country_code?: string
+          location_id?: string
+          postal_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "postal_codes_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_groups: {
         Row: {
           created_at: string

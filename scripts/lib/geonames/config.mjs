@@ -179,12 +179,32 @@
  * - **`postal`** — where postal codes come from and, per file, which admin
  *   column of the postal dump carries the municipality code (it moves: Finland's
  *   is column `adminCode3`, Åland's `adminCode2`). Declared here, consumed by
- *   the postal generator; France is the one country that will override the
- *   source, because GeoNames' French postal file carries arrondissement codes
- *   and joins zero communes.
+ *   `scripts/generate-postal-seed.mjs`; France is the one country that overrides
+ *   the source, because GeoNames' French postal file carries arrondissement
+ *   codes and joins zero communes.
+ *
+ *   `source: "laposte"` additionally takes a `url` (the live export, which has
+ *   moved hosts before — the data.gouv mirror is stale and must not be used) and
+ *   a `rollup`: the fixed 45-code map from Paris/Lyon/Marseille *arrondissement*
+ *   INSEE codes to the single commune each city is in the COG. It is enumerated
+ *   rather than computed because it is derivable from neither file and has not
+ *   moved since the arrondissements were created.
+ *
+ *   `minCoverage` is the fraction of a country's sourced municipalities that
+ *   must end up with at least one code, and it is a gate rather than a
+ *   statistic. Finland's is 1 — every kunta is covered, so anything less is a
+ *   broken run. France's is below 1 by exactly the width of GeoNames' known lag:
+ *   the four communes nouvelles GeoNames still files under a retired chef-lieu
+ *   code cannot be reached by a La Poste row keyed on the COG code, and will
+ *   heal upstream rather than here.
+ *
+ *   **Postal ingestion joins on `external_code`, so a country that maps no
+ *   official code cannot have any.** The United Kingdom is that country; its
+ *   entry below says so, and the postal ingestion refuses it by name rather than
+ *   emitting an empty seed.
  */
 import { fail } from "./cache.mjs";
-import { CODE_FIELDS } from "./dump.mjs";
+import { CODE_FIELDS, POSTAL_CODE_FIELDS } from "./dump.mjs";
 
 /**
  * The levels this system seeds, from the top down. `site` is absent on purpose:
@@ -446,7 +466,41 @@ export const COUNTRIES = {
     // communes. France is the one country whose postal source is overridden —
     // La Poste's Base officielle des codes postaux, which joins on
     // `code_commune_insee`. Declared here, consumed by the postal generator.
-    postal: { source: "laposte" },
+    postal: {
+      source: "laposte",
+      // The live export. La Poste's open-data portal has moved hosts more than
+      // once and the widely-linked data.gouv mirror is stale, so this URL is
+      // re-checked whenever the file is refreshed rather than trusted forever;
+      // the parser fails loudly on a reshaped header, which is the tripwire.
+      url: "https://datanova.laposte.fr/data-fair/api/v1/datasets/laposte-hexasmal/metadata-attachments/base-officielle-codes-postaux.csv",
+      // The one place La Poste and the COG disagree about what a commune is.
+      // Paris, Lyon and Marseille are single communes in the COG (75056, 69123,
+      // 13055) and are keyed by arrondissement in the postal file. Enumerated
+      // rather than expressed as three ranges: a range would hide which codes
+      // actually exist, and this list is checked against the file by the
+      // unmatched-code report on every run.
+      rollup: {
+        "75101": "75056", "75102": "75056", "75103": "75056", "75104": "75056",
+        "75105": "75056", "75106": "75056", "75107": "75056", "75108": "75056",
+        "75109": "75056", "75110": "75056", "75111": "75056", "75112": "75056",
+        "75113": "75056", "75114": "75056", "75115": "75056", "75116": "75056",
+        "75117": "75056", "75118": "75056", "75119": "75056", "75120": "75056",
+        "69381": "69123", "69382": "69123", "69383": "69123", "69384": "69123",
+        "69385": "69123", "69386": "69123", "69387": "69123", "69388": "69123",
+        "69389": "69123",
+        "13201": "13055", "13202": "13055", "13203": "13055", "13204": "13055",
+        "13205": "13055", "13206": "13055", "13207": "13055", "13208": "13055",
+        "13209": "13055", "13210": "13055", "13211": "13055", "13212": "13055",
+        "13213": "13055", "13214": "13055", "13215": "13055", "13216": "13055",
+      },
+      // Below 1 by exactly the four communes nouvelles GeoNames still files
+      // under a retired chef-lieu code (12076, 14011, 49069, 69159 — the
+      // `allowExtra` list above). La Poste keys them by the COG code, so no
+      // postal row can reach our rows until upstream corrects the code. 4 of
+      // 34,871 is 0.0115%, so the floor is 99.98%; it is deliberately tighter
+      // than "≥99.9%" so a fifth loss fails rather than fits.
+      minCoverage: 0.9998,
+    },
   },
 
   GB: {
@@ -550,11 +604,15 @@ export const COUNTRIES = {
         allowExtra: [{ geonameid: 2651712 }], // Cumbria, abolished 2023-04-01
       },
     },
-    // Declared for completeness; the postal generator will need a different
-    // join for this country. Postal rows land against municipalities by
-    // (country_code, type, external_code), and the UK's are NULL — so GB's
-    // postal ingestion has to key on the postal file's own admin columns
-    // through geonames_id instead. Named here rather than discovered later.
+    // The United Kingdom is OUT OF POSTAL SCOPE, and this is where that is
+    // recorded. Postal rows land against municipalities by (country_code, type,
+    // external_code), and every UK row below the country carries NULL there —
+    // so there is no key to join on and the postal ingestion refuses this
+    // country by name rather than emitting an empty seed. Giving the UK postal
+    // data means giving it a key first: either GeoNames starts carrying ONS/GSS
+    // codes, or the postal join learns to key on `geonames_id` through the
+    // postal file's own admin columns. Neither is speculative work worth doing
+    // before a UK family needs it.
     postal: { source: "geonames" },
   },
 };
@@ -639,6 +697,66 @@ function normalizeWhere(raw, where) {
   }
   if (predicates.length === 0) fail(`${where}.where is empty — omit it rather than declaring no filter`);
   return predicates;
+}
+
+/**
+ * The `postal` block, normalized to `{ source, files, url, rollup,
+ * minCoverage }`.
+ *
+ * Shape only. What is *missing* is deliberately not fatal here: a country that
+ * is seeded but not yet postal-seeded is a normal state, and failing its config
+ * would break the geography generator over data nobody has asked for. The
+ * postal ingestion is the consumer, so it is where an incomplete block fails —
+ * with a message about the run it broke.
+ */
+function normalizePostal(raw, where, isoFiles) {
+  if (raw === undefined || raw === null) return null;
+  const sources = ["geonames", "laposte"];
+  if (!sources.includes(raw.source)) {
+    fail(`${where}: postal.source must be one of ${sources.join(", ")}`);
+  }
+
+  const files = {};
+  for (const [iso, file] of Object.entries(raw.files ?? {})) {
+    if (!isoFiles.includes(iso)) {
+      fail(`${where}: postal.files declares "${iso}", which is not in isoFiles`);
+    }
+    if (!POSTAL_CODE_FIELDS.includes(file.muniCodeField)) {
+      fail(
+        `${where}: postal.files.${iso}.muniCodeField must be one of ${POSTAL_CODE_FIELDS.join(", ")} — ` +
+          `the postal dump's admin columns are numbered separately from the country dump's`,
+      );
+    }
+    files[iso] = { muniCodeField: file.muniCodeField };
+  }
+
+  if (raw.source === "laposte") {
+    if (typeof raw.url !== "string" || !raw.url.startsWith("https://")) {
+      fail(`${where}: postal.url is required for an overridden source and must be https`);
+    }
+    if (Object.keys(files).length > 0) {
+      fail(`${where}: postal.files describes GeoNames' admin columns and means nothing for an overridden source`);
+    }
+  }
+
+  const rollup = raw.rollup ?? {};
+  for (const [from, to] of Object.entries(rollup)) {
+    if (typeof to !== "string" || to === "" || from === "") {
+      fail(`${where}: postal.rollup maps "${from}" to something that is not an official code`);
+    }
+    // A rollup target that is itself a rollup key would make the mapping
+    // order-dependent, which is how a one-pass rewrite silently half-applies.
+    if (rollup[to] !== undefined) {
+      fail(`${where}: postal.rollup maps "${from}" to "${to}", which is itself remapped — the rollup must be one hop`);
+    }
+  }
+
+  const minCoverage = raw.minCoverage ?? 1;
+  if (typeof minCoverage !== "number" || minCoverage <= 0 || minCoverage > 1) {
+    fail(`${where}: postal.minCoverage must be a fraction in (0, 1]`);
+  }
+
+  return { source: raw.source, files, url: raw.url ?? null, rollup, minCoverage };
 }
 
 /**
@@ -867,6 +985,6 @@ export function countryConfig(iso) {
     pins,
     exclude: new Set(exclude),
     expected,
-    postal: raw.postal ?? null,
+    postal: normalizePostal(raw.postal, where, raw.isoFiles),
   };
 }

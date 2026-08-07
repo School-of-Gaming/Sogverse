@@ -69,6 +69,20 @@ export const locationRow = z.object({
 export const LOCATION_COLUMNS =
   "id, name, name_i18n, type, parent_id, country_code, external_code, created_at, updated_at";
 
+/**
+ * The columns the postal lookup names.
+ *
+ * Only `location_id`, because that is the whole answer: the caller already
+ * supplied the country and the code, so reading them back would be echoing the
+ * filter. The row is then resolved through the existing keyed read, which is
+ * what gives it a name and an ancestor chain.
+ *
+ * A literal for the same reason `LOCATION_COLUMNS` is one — the Supabase client
+ * infers the response shape from the *type* of the select string, and a string
+ * built at runtime widens to `string` and takes the row type with it.
+ */
+export const POSTAL_CODE_COLUMNS = "location_id";
+
 // ---------------------------------------------------------------------------
 // Search
 // ---------------------------------------------------------------------------

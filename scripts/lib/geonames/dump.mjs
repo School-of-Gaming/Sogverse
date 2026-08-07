@@ -118,6 +118,53 @@ export function parseAlternateNames(text, languages) {
 }
 
 /**
+ * Column indices of the `postalCode` table (`/export/zip/<CC>.zip`), per the
+ * dump's own readme. A different file from the country dump with a different
+ * layout, so it gets its own map rather than borrowing `GEONAME`'s.
+ */
+const POSTAL = {
+  countryCode: 0,
+  postalCode: 1,
+  placeName: 2,
+  adminName1: 3,
+  adminCode1: 4,
+  adminName2: 5,
+  adminCode2: 6,
+  adminName3: 7,
+  adminCode3: 8,
+};
+
+/** The postal admin-code columns a config's `muniCodeField` may name. */
+export const POSTAL_CODE_FIELDS = ["adminCode1", "adminCode2", "adminCode3"];
+
+/**
+ * Rows of one country's postal file as
+ * `{ countryCode, postalCode, placeName, adminCode1..3 }`.
+ *
+ * Which of those admin columns holds the *municipality* code is a per-file fact
+ * and therefore config's to declare, not this parser's to guess: mainland
+ * Finland puts the kunta code in `adminCode3` and Åland — a separate file for
+ * the same country — puts it in `adminCode2`. Handing over all three is what
+ * keeps that decision in one place.
+ */
+export function parsePostalDump(text) {
+  const rows = [];
+  for (const line of text.split("\n")) {
+    if (line === "" || line === "\r") continue;
+    const cells = line.replace(/\r$/, "").split("\t");
+    rows.push({
+      countryCode: cells[POSTAL.countryCode] ?? "",
+      postalCode: cells[POSTAL.postalCode] ?? "",
+      placeName: cells[POSTAL.placeName] ?? "",
+      adminCode1: cells[POSTAL.adminCode1] ?? "",
+      adminCode2: cells[POSTAL.adminCode2] ?? "",
+      adminCode3: cells[POSTAL.adminCode3] ?? "",
+    });
+  }
+  return rows;
+}
+
+/**
  * `countryInfo.txt` as `Map<ISO alpha-2, { name, geonameid }>`. The file leads
  * with a block of `#` comment lines documenting its own columns.
  */

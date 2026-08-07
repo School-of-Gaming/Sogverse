@@ -13,6 +13,7 @@ import {
   LOCATION_COLUMNS,
   LOCATION_SEARCH_LIMIT,
   LOCATION_SEARCH_MIN_QUERY,
+  POSTAL_CODE_COLUMNS,
   locationRow,
   locationSearchResult,
 } from "./locations.contracts";
@@ -391,6 +392,49 @@ export class LocationsService {
       rows.push(...data);
     }
     return rows.map(flattenChain);
+  }
+
+  /**
+   * The municipalities one postal code reaches, each with its ancestor chain.
+   *
+   * Two reads rather than one embed, and the split is the design: `postal_codes`
+   * answers "which places" and `getLocationsByIds` answers "what are they",
+   * which is the read every other surface already uses to turn a stored id into
+   * a name and a path. Embedding the chain off the postal table instead would
+   * be a second definition of that shape, one join deeper, for the same answer.
+   *
+   * **A list, not a row.** A code can span municipalities — a French code
+   * routinely covers dozens of communes — which is exactly why `location_id` is
+   * part of the postal key rather than a unique column beside it. A caller that
+   * wants one place has to decide what to do with several, and that decision
+   * belongs to the surface, not here.
+   *
+   * The code is trimmed and otherwise taken as given: every seeded country's
+   * codes are fixed-width digits, so there is nothing to normalize, and
+   * inventing a case/space rule for a country that does not exist yet would be
+   * a rule nobody could check.
+   *
+   * No route in front of it and no RPC behind it. The table is anon-readable
+   * public reference data with a plain `USING (true)` policy, so the caller's
+   * own client asks it directly, exactly as browsing the tree does.
+   */
+  async getMunicipalitiesByPostalCode(
+    countryCode: string,
+    postalCode: string,
+  ): Promise<LocationWithChain[]> {
+    const code = postalCode.trim();
+    if (code === "") return [];
+
+    const { data, error } = await this.supabase
+      .from("postal_codes")
+      .select(POSTAL_CODE_COLUMNS)
+      .eq("country_code", countryCode)
+      .eq("postal_code", code);
+
+    if (error) throw error;
+    if (data.length === 0) return [];
+
+    return this.getLocationsByIds(data.map((row) => row.location_id));
   }
 
   // `locations` writes go through the admin API. `authenticated` holds INSERT
