@@ -25,6 +25,40 @@ export interface CountryConfig {
   code: string;
   name: string;
   hierarchy: HierarchyLevel[];
+  /**
+   * The level a parent identifies with, and the level a `site` is parented
+   * under. **One field for both roles, because the architecture requires them
+   * to be the same level**: a venue is created directly beneath the row an
+   * admin confirmed in the picker, and a family's own location is the level
+   * directly above a venue. Splitting them would invite a config where a site's
+   * parent is not the level a parent picks, which nothing downstream could
+   * reconcile.
+   *
+   * It is therefore always the level immediately above `site` in this country's
+   * own `hierarchy` — a unit test pins that structurally, for every country
+   * here. It is `municipality` for every country whose rows are seeded today,
+   * which a second assertion pins separately, because the two facts are not the
+   * same fact: the speculative US/GB/JP entries below honestly declare
+   * `district` *below* municipality, so their anchor is `district`. They just
+   * have no rows.
+   *
+   * The day one of those is seeded is the day the pickers' hardcoded
+   * `municipality` pickable types have to generalize to anchor-driven, and the
+   * seeded-country assertion is the tripwire that forces that work then. Until
+   * then the pickers keep their current types with no new machinery.
+   */
+  anchor: LocationType;
+  /**
+   * Whether this country's region/municipality/district rows exist in the
+   * `locations` table.
+   *
+   * A declared flag rather than a query: it is what the anchor tripwire above
+   * reads, and a tripwire that fired only after a seed migration reached a
+   * database would fire too late to be useful. Seeding a country is adding its
+   * rows *and* flipping this — and if flipping it fails the assertion, that
+   * failure is the whole point.
+   */
+  seeded: boolean;
 }
 
 /**
@@ -40,6 +74,8 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
   {
     code: "FI",
     name: "Finland",
+    anchor: "municipality",
+    seeded: true,
     hierarchy: [
       { type: "region", label: "Region", pluralLabel: "Regions", i18n: { fi: { label: "Maakunta", pluralLabel: "Maakunnat" } } },
       { type: "municipality", label: "Municipality", pluralLabel: "Municipalities", i18n: { fi: { label: "Kunta", pluralLabel: "Kunnat" } } },
@@ -49,6 +85,8 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
   {
     code: "FR",
     name: "France",
+    anchor: "municipality",
+    seeded: true,
     // France uses the `district` level Finland skips: région → département →
     // commune. `fr` is a supported UI locale, so every level carries its French
     // label pair per the rule in src/services/locations/CLAUDE.md.
@@ -62,6 +100,8 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
   {
     code: "US",
     name: "United States",
+    anchor: "district",
+    seeded: false,
     hierarchy: [
       { type: "region", label: "State", pluralLabel: "States" },
       { type: "municipality", label: "City", pluralLabel: "Cities" },
@@ -72,6 +112,8 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
   {
     code: "GB",
     name: "United Kingdom",
+    anchor: "district",
+    seeded: false,
     hierarchy: [
       { type: "region", label: "Nation", pluralLabel: "Nations" },
       { type: "municipality", label: "City", pluralLabel: "Cities" },
@@ -82,6 +124,8 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
   {
     code: "SE",
     name: "Sweden",
+    anchor: "municipality",
+    seeded: true,
     hierarchy: [
       { type: "region", label: "County", pluralLabel: "Counties", i18n: { sv: { label: "Län", pluralLabel: "Län" } } },
       { type: "municipality", label: "Municipality", pluralLabel: "Municipalities", i18n: { sv: { label: "Kommun", pluralLabel: "Kommuner" } } },
@@ -91,6 +135,8 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
   {
     code: "ES",
     name: "Spain",
+    anchor: "municipality",
+    seeded: false,
     hierarchy: [
       { type: "region", label: "Autonomous Community", pluralLabel: "Autonomous Communities" },
       { type: "municipality", label: "City", pluralLabel: "Cities" },
@@ -100,6 +146,8 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
   {
     code: "JP",
     name: "Japan",
+    anchor: "district",
+    seeded: false,
     hierarchy: [
       { type: "region", label: "Prefecture", pluralLabel: "Prefectures" },
       { type: "municipality", label: "City", pluralLabel: "Cities" },
