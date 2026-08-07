@@ -3,10 +3,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import { Sliders, X, Globe, MapPin } from "lucide-react";
 import { LanguageFlag } from "@/components/ui/language-flag";
-import {
-  GAME_TOPIC_CHIPS,
-  type TopicFilterChip,
-} from "@/lib/products/topics";
+import { TOPIC_FILTER_CHIPS } from "@/lib/products/topics";
 import { PRODUCT_AGE_BANDS } from "@/lib/constants/gamer-age";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { useSpokenLanguages } from "@/services/users";
@@ -22,12 +19,13 @@ import { useShopCategory } from "./use-shop-category";
 // here. The per-chip labels are still localised via `formatWeekday`.
 const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
 
-// Filter strip — horizontally-scrollable chip rows (type, game, format,
-// language). The game row lists the game topics; subject topics (e.g.
-// Webinar) are temporarily dropped — see the TODO in the row below.
-// Chips are pill-shaped with a clear active state (filled
-// primary) so taps register on small phone screens; rows are scrollable
-// rather than wrapping so they never push the cards down on overflow.
+// Filter strip — chip rows (type, subject, format, language, age, days).
+// Chips are pill-shaped with a clear active state (filled primary) so taps
+// register on small phone screens. Most rows scroll horizontally rather than
+// wrapping so they never push the cards down on overflow; the Subject row is
+// the exception and wraps at every viewport — that filter matters enough that
+// every option should be visible without a gesture, and the scroll treatment
+// hides its own overflow (no scrollbar, no fade) on a mouse-driven desktop.
 //
 // Format is single-valued — the parent picks Online OR In-person, not
 // both. Toggling the active chip clears the filter back to "either".
@@ -42,13 +40,6 @@ interface ProductBrowseFiltersProps {
   /** Lead with the Clubs|Camps|Events Type row. The shop does; the
    *  per-municipality page hides it (everything there is a club). Default true. */
   showTypeFilter?: boolean;
-  /** Topic chips to offer. The shop shows one chip per game (`GAME_TOPIC_CHIPS`,
-   *  the default); the municipality page passes a broader subject set with the
-   *  Minecraft editions collapsed into one chip (`MUNICIPALITY_TOPIC_CHIPS`). */
-  topicChoices?: readonly TopicFilterChip[];
-  /** Which `productBrowse.filters` key labels the topic row: `"topic"`
-   *  ("Game", shop default) or `"subject"` ("Subject", municipality page). */
-  topicLabelKey?: "topic" | "subject";
   /** Whether the Days row applies, forwarded from `<ProductBrowseResults>`'s
    *  `supportsDays` (its single source). True for clubs, false for camps and
    *  events. */
@@ -58,8 +49,6 @@ interface ProductBrowseFiltersProps {
 export function ProductBrowseFilters({
   initialSpokenLanguages,
   showTypeFilter = true,
-  topicChoices = GAME_TOPIC_CHIPS,
-  topicLabelKey = "topic",
   daysFilter,
 }: ProductBrowseFiltersProps) {
   const t = useTranslations("productBrowse.filters");
@@ -142,25 +131,24 @@ export function ProductBrowseFilters({
           </FilterRow>
         )}
 
-        <FilterRow label={t(topicLabelKey)}>
-          {topicChoices.map((chip) => (
+        {/* Wraps instead of scrolling: every subject should be visible without
+            a gesture, on any device. */}
+        <FilterRow label={t("subject")} wrap>
+          {TOPIC_FILTER_CHIPS.map((chip) => (
             <Chip
               key={chip.key}
               // A multi-topic group (Minecraft) carries a literal brand label;
-              // a single-topic chip resolves its label from the topic so
-              // localized subjects stay translated.
+              // a single-topic chip resolves its label from the topic.
               label={chip.label ?? topicLabel(chip.topics[0])}
-              active={chip.topics.every((tp) => selectedTopics.includes(tp))}
+              // `some`, not `every`: a URL carrying a lone edition (an old
+              // shared link, or a hand-edited param) still filters the grid,
+              // and a chip that stays dark while its filter is on is a control
+              // lying about the results. Toggling a partially-selected group
+              // completes it; toggling a full group clears it.
+              active={chip.topics.some((tp) => selectedTopics.includes(tp))}
               onToggle={() => toggleTopics(chip.topics)}
             />
           ))}
-          {/* TODO: Re-introduce subject topics (e.g. Webinar) here when we
-              bring them back. Render SUBJECT_TOPICS after a divider:
-                {SUBJECT_TOPICS.length > 0 && GAME_TOPICS.length > 0 && (
-                  <span aria-hidden className="mx-1 h-6 w-px shrink-0 bg-border" />
-                )}
-                {SUBJECT_TOPICS.map((topic) => ( <Chip ... /> ))}
-              and add SUBJECT_TOPICS back to the topics import above. */}
         </FilterRow>
 
         <FilterRow label={t("format")}>
@@ -253,17 +241,32 @@ export function ProductBrowseFilters({
 
 function FilterRow({
   label,
+  wrap = false,
   children,
 }: {
   label: string;
+  /** Wrap the chips onto further lines instead of scrolling horizontally.
+   *  The scroll treatment suppresses its own scrollbar, so overflowing chips
+   *  are undiscoverable on a mouse-driven desktop — a wrapping row keeps every
+   *  option visible at the cost of pushing content below it down as it grows.
+   *  With multiple lines the label can't centre against the chip area any
+   *  more; baseline alignment ties it to the first line's text instead. */
+  wrap?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-3">
+    <div className={cn("flex gap-3", wrap ? "items-baseline" : "items-center")}>
       <span className="w-12 shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:w-14">
         {label}
       </span>
-      <div className="flex flex-1 gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div
+        className={cn(
+          "flex flex-1 gap-1.5",
+          wrap
+            ? "flex-wrap"
+            : "overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        )}
+      >
         {children}
       </div>
     </div>

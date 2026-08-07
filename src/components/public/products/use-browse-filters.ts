@@ -144,9 +144,9 @@ export function useBrowseFilters() {
   );
 
   // Toggle a group of topics as one unit. Most chips carry a single topic; the
-  // municipality page's "Minecraft" chip stands for all three editions. Active
-  // when *every* topic in the group is selected; toggling on adds the whole
-  // group (deduped), toggling off removes it.
+  // "Minecraft" chip stands for all three editions on every browse surface.
+  // Toggling on adds the whole group (deduped) — a partially-selected group
+  // (possible via URL) completes to the full group; toggling off removes it.
   const toggleTopics = useCallback(
     (group: readonly string[]) => {
       const lowers = group.map((g) => g.toLowerCase());

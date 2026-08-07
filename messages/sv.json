@@ -357,10 +357,6 @@
         "moveDown": "Flytta ner",
         "remove": "Ta bort"
       },
-      "topicKinds": {
-        "game": "Spel",
-        "subject": "Ämnen"
-      },
       "locationPicker": {
         "hintMunicipality": "Välj den finländska kommun som klubben gäller — den som finansierar den. Lokaler och andra länder kan inte väljas här.",
         "change": "Ändra",
@@ -435,7 +431,7 @@
       "hints": {
         "shortDescription": "En enradig text som visas på bläddringskort, listor och högst upp på detaljsidan.",
         "longDescription": "Valfritt. Visas endast på produktens detaljsida. Bygg den av rubriker och stycken.",
-        "topicHint": "Produktens ämne — ett spel (som Minecraft eller Fortnite) eller ett ämne (som webbinarium).",
+        "topicHint": "Vad produkten handlar om. Familjer ser det som Ämne-filtret i butiken och på produktsidans infokort.",
         "materialUrlHint": "Valfritt. Endast för Gedus — familjer ser aldrig detta.",
         "deliveredInHint": "Det primära språk som används under tillfällena.",
         "onlineNoLocation": "Online och tillgänglig för alla — ingen plats behövs. Alla föräldrar som bläddrar ser detta, oavsett var de bor.",
@@ -1418,7 +1414,6 @@
       "typeClubs": "Klubbar",
       "typeCamps": "Läger",
       "typeEvents": "Evenemang",
-      "topic": "Spel",
       "subject": "Ämne",
       "format": "Format",
       "formatOnline": "Online",
@@ -1451,9 +1446,6 @@
       "noMatches": "Inga träffar. Prova att rensa filtren."
     }
   },
-  "topics": {
-    "webinar": "Webbinarium"
-  },
   "seatAvailability": {
     "remaining": "{count, plural, one {# av {total} plats kvar} other {# av {total} platser kvar}}",
     "waitlistAvailable": "Väntelista"
@@ -1472,14 +1464,12 @@
       "event": "Evenemang"
     },
     "sections": {
-      "overview": "Bra att veta",
-      "calendar": "Schema",
-      "topic": "Ämne",
-      "game": "Om spelet"
+      "overview": "Bra att veta"
     },
-    "gameInfo": {
+    "topicInfo": {
+      "heading": "Om {name}",
       "pegi": "PEGI {age}",
-      "games": {
+      "topics": {
         "minecraft_java": {
           "description": "Minecraft är ett kreativt byggspel – tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig, från ett mysigt hus till en hel stad. Det finns inget att vinna eller förlora; det är ett lugnt och öppet utrymme för att skapa och lösa problem. ”Java” är originalversionen för Windows-, Mac- och Linux-datorer, och det är den våra distansklubbar använder eftersom den stöder verktygen våra instruktörer behöver.",
           "note": "För våra klubbar behöver ditt barn Minecraft på en dator. På Minecraft.net säljs det som ”Minecraft: Java & Bedrock Edition for PC” – ett enda engångsköp (inte en prenumeration) som inkluderar versionen vi använder. Den separata versionen för konsol, telefon och surfplatta fungerar inte för de här klubbarna.",
@@ -1504,6 +1494,11 @@
           "description": "Pokémon GO spelas utomhus, på en telefon. Varelser dyker upp på en karta över den verkliga världen, och barnen går till parker, gator och landmärken för att hitta och samla dem. Det handlar om att samla snarare än att slåss – det roliga är att utforska, fylla sin Pokédex och jämföra fynd med kompisar. Det mesta av spelandet sker till fots, så spelet får barn att röra på sig.",
           "note": "Pokémon GO är gratis att ladda ner och spela – du köper inte själva spelet. Ditt barn behöver en telefon eller surfplatta med GPS och mobildata, samt ett gratis konto. Det finns valfria köp i appen, som du kan begränsa med föräldrakontroller. Eftersom spelet spelas utomhus på riktiga platser är det bra att i förväg komma överens om var barnet får röra sig och om en vuxen följer med.",
           "linkLabel": "Var du laddar ner det"
+        },
+        "roblox_studio": {
+          "description": "Roblox Studio är det kostnadsfria verktyg som Roblox-spelen själva byggs med. Barn designar världar, bygger med riktiga 3D-verktyg och programmerar med riktig kod, så att deras egna idéer blir upplevelser som andra faktiskt kan spela. I våra klubbar skapar barnen i stället för att spela – det är riktig spelutveckling.",
+          "note": "Roblox Studio är gratis – det finns inget att köpa. Det fungerar bara på Windows-datorer och Mac: inte på iPad eller andra surfplattor, inte på Chromebook, telefon eller spelkonsol, så ditt barn behöver en stationär eller bärbar dator för att delta. Ett gratis Roblox-konto behövs också, och kontots åldersinställning styr dess chatt- och integritetsskydd. Färdiga skapelser kan publiceras så att andra spelare kan hitta och spela dem.",
+          "linkLabel": "Skaffa Roblox Studio"
         }
       }
     },

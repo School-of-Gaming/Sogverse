@@ -357,10 +357,6 @@
         "moveDown": "Siirrä alas",
         "remove": "Poista"
       },
-      "topicKinds": {
-        "game": "Pelit",
-        "subject": "Aineet"
-      },
       "locationPicker": {
         "hintMunicipality": "Valitse kunta, jolle tämä kerho on tarkoitettu — se kunta, joka sen rahoittaa. Toimipisteet ja muut maat eivät ole valittavissa.",
         "change": "Vaihda",
@@ -435,7 +431,7 @@
       "hints": {
         "shortDescription": "Yhden rivin esittely, joka näkyy selauskorteissa, listoissa ja tuotesivun yläosassa.",
         "longDescription": "Valinnainen. Näkyy vain tuotteen tuotesivulla. Koosta se otsikoista ja kappaleista.",
-        "topicHint": "Tuotteen aihe — peli (kuten Minecraft tai Fortnite) tai aine (kuten webinaari).",
+        "topicHint": "Mistä tuotteessa on kyse. Perheet näkevät tämän Aihe-suodattimena kaupassa ja tuotesivun tietokortissa.",
         "materialUrlHint": "Valinnainen. Vain Geduille — perheet eivät näe tätä.",
         "deliveredInHint": "Pääkieli, jota kerroilla käytetään.",
         "onlineNoLocation": "Verkossa ja avoin kaikille — sijaintia ei tarvita. Kaikki selailevat vanhemmat näkevät tämän asuinpaikasta riippumatta.",
@@ -1418,7 +1414,6 @@
       "typeClubs": "Kerhot",
       "typeCamps": "Leirit",
       "typeEvents": "Tapahtumat",
-      "topic": "Peli",
       "subject": "Aihe",
       "format": "Muoto",
       "formatOnline": "Verkossa",
@@ -1451,9 +1446,6 @@
       "noMatches": "Ei osumia. Kokeile tyhjentää suodattimet."
     }
   },
-  "topics": {
-    "webinar": "Webinaari"
-  },
   "seatAvailability": {
     "remaining": "{count, plural, one {# / {total} paikka jäljellä} other {# / {total} paikkaa jäljellä}}",
     "waitlistAvailable": "Jonotuslista"
@@ -1472,14 +1464,12 @@
       "event": "Tapahtuma"
     },
     "sections": {
-      "overview": "Hyvä tietää",
-      "calendar": "Aikataulu",
-      "topic": "Aihe",
-      "game": "Tietoa pelistä"
+      "overview": "Hyvä tietää"
     },
-    "gameInfo": {
+    "topicInfo": {
+      "heading": "Tietoa: {name}",
       "pegi": "PEGI {age}",
-      "games": {
+      "topics": {
         "minecraft_java": {
           "description": "Minecraft on luova rakennuspeli – ajattele digitaalista legoa. Lapset tutkivat palikkamaailmaa, keräävät materiaaleja ja rakentavat mitä mielikuvitus keksii, kodikkaasta talosta kokonaiseen kaupunkiin. Pelissä ei voiteta eikä hävitä; se on rauhallinen ja avoin tila luoda ja ratkaista ongelmia. ”Java” on alkuperäinen versio Windows-, Mac- ja Linux-tietokoneille, ja sitä etäkerhomme käyttävät, koska se tukee ohjaajiemme tarvitsemia työkaluja.",
           "note": "Kerhojamme varten lapsesi tarvitsee Minecraftin tietokoneella. Minecraft.net-sivustolla se myydään nimellä ”Minecraft: Java & Bedrock Edition for PC” – yksi kertaluonteinen osto (ei tilaus), joka sisältää käyttämämme version. Erillinen konsoli-, puhelin- ja tablettiversio ei toimi näissä kerhoissa.",
@@ -1504,6 +1494,11 @@
           "description": "Pokémon GO on ulkona pelattava puhelinpeli. Olennot ilmestyvät kartalle oikeisiin paikkoihin, ja lapset kävelevät puistoihin, kaduille ja nähtävyyksille etsimään ja keräämään niitä. Pelissä keräillään eikä taistella – kiinnostavinta on tutkiminen, Pokédexin täydentäminen ja löytöjen vertailu kavereiden kanssa. Suurin osa pelaamisesta tapahtuu jalan, joten peli saa lapset liikkeelle.",
           "note": "Pokémon GO on ilmainen ladata ja pelata – itse peliä ei osteta. Lapsesi tarvitsee puhelimen tai tabletin, jossa on GPS ja mobiilidatayhteys, sekä ilmaisen käyttäjätilin. Peli sisältää valinnaisia ostoksia, joita voi rajoittaa lapsilukon asetuksilla. Koska peliä pelataan ulkona oikeissa paikoissa, kannattaa sopia etukäteen, missä lapsi saa liikkua ja kulkeeko aikuinen mukana.",
           "linkLabel": "Mistä sen saa"
+        },
+        "roblox_studio": {
+          "description": "Roblox Studio on ilmainen työkalu, jolla Roblox-pelit tehdään. Lapset suunnittelevat maailmoja, rakentavat 3D-työkaluilla ja ohjelmoivat oikealla koodilla, joten omat ideat muuttuvat peleiksi, joita muut voivat oikeasti pelata. Kerhoissamme lapset eivät pelaa vaan luovat – kyse on oikeasta pelinkehityksestä.",
+          "note": "Roblox Studio on ilmainen – mitään ei tarvitse ostaa. Se toimii vain Windows- ja Mac-tietokoneilla: ei iPadilla tai muulla tabletilla, ei Chromebookilla, puhelimella eikä pelikonsolilla, joten osallistumiseen lapsesi tarvitsee pöytäkoneen tai kannettavan. Lisäksi tarvitaan ilmainen Roblox-tili, jonka ikäasetus määrää keskustelu- ja yksityisyysasetukset. Valmiit luomukset voi julkaista muiden pelaajien löydettäväksi ja pelattavaksi.",
+          "linkLabel": "Hanki Roblox Studio"
         }
       }
     },
