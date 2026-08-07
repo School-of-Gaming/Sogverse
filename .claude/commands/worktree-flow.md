@@ -48,6 +48,12 @@ session cannot create or modify another worktree, and the guard will refuse.
    from older sessions; they each carry their own `node_modules` and are not the
    pattern to copy.
 
+   **The one exception: a branch that changes dependencies.** Upward resolution
+   hands the worktree the *main checkout's* install, so a branch that edits
+   `package.json` / `package-lock.json` runs against the wrong dependency tree,
+   and the failures that follow do not look like this. If the work will change
+   deps, run `npm install` in the worktree after the change — and only then.
+
    Branch prefix is `feat/`. (`feature/` and bare names in the history are drift.)
 
 3. **Enter it** — `EnterWorktree` with `path` set to the absolute path just
@@ -71,7 +77,9 @@ Before reporting any piece of work complete:
 
 - `npm run lint` — **zero errors and zero warnings**. A warning is a design
   signal; fix the cause rather than suppressing the rule.
-- `npx tsc --noEmit` — clean.
+- `npm run type-check` — clean. Use the script, not a bare `npx tsc --noEmit`:
+  the script also checks the workspace packages, which a bare `tsc` silently
+  skips.
 - Unit tests with `npx vitest run <file>`. Never `npm run test -- --run`.
 - DB tests are CI-only. If the change needs them, push the branch and let CI run
   them — never attempt them locally.
@@ -119,7 +127,10 @@ not when review comes back clean.
 
 Order matters — several of these steps block the next one if skipped.
 
-1. **Confirm clean:** lint and type-check pass, everything is committed.
+1. **Confirm clean:** `npm run lint`, `npm run type-check`, and the full
+   `npm run test` all pass — plus `npm run check-translations` if the branch
+   touched `messages/` — and everything is committed. Phase 2's per-file test
+   runs were for iteration; landing gets the whole suite.
 
 2. **Stop the dev server first, if Phase 3 started one.** Stopping the background
    task kills only the wrapper — the Next child survives and keeps holding the
@@ -138,12 +149,18 @@ Order matters — several of these steps block the next one if skipped.
 5. **Merge and push**, from the main checkout on `dev`:
 
    ```
+   git branch --show-current        # must say dev — check out dev if not
+   git fetch origin dev             # dev moves while worktree work runs
+   git merge --ff-only origin/dev   # fast-forward local dev to the tip
    git merge --no-ff feat/<branch>
    git push origin dev
    ```
 
-   Subject line: `Merge the <thing> into dev` — matching the house style, not
-   git's default text.
+   The main checkout's home branch is `dev` — start there, end there, and
+   deviate only when the user explicitly says to. Subject line:
+   `Merge the <thing> into dev` — matching the house style, not git's default
+   text. If `dev` gained commits since Phase 1, the push publishes a union CI
+   has not seen — that is accepted; CI on `dev` judges it (step 8).
 
 6. **Remove the worktree:** `git worktree remove <absolute-path>`. If it refuses
    because `node_modules` or `.next` are present, `rm -rf` the directory and then
@@ -153,10 +170,35 @@ Order matters — several of these steps block the next one if skipped.
    CI. Do it now rather than leaving it for `cleanup-branches`; the merge just
    proved it is safe to delete, and that certainty decays.
 
-8. **Report** what landed, and confirm the worktree, branch and server are all
-   actually gone.
+8. **Report** what landed, confirm the worktree, branch and server are all
+   actually gone, and confirm the main checkout is back on `dev`. **Do not
+   watch the CI run the push triggers** — the user watches `dev` CI themselves
+   and will flag a failure; a session that sits polling it is spending the
+   user's time on a job they have kept.
 
 ---
+
+## Working in parallel
+
+One worktree holds one piece of work — but nothing says only one worktree.
+When the work decomposes into independent pieces, run them in parallel where
+reasonable rather than queuing them: one worktree and one `feat/` branch per
+piece under `.claude/worktrees/`, each built by a delegated background agent
+while this session coordinates. Judge "independent" by files — pieces that
+would edit the same files belong in one worktree, sequenced, because parallel
+edits to one file are a merge conflict manufactured on purpose.
+
+- The shared upward `node_modules` is what makes parallel worktrees cheap:
+  no per-worktree install (same dependency-change exception as Phase 1).
+- Give each agent its **absolute** worktree path and tell it to work only
+  there. An agent cannot be redirected from one worktree into another — if a
+  piece has to move, relaunch a fresh agent rather than re-aiming a running
+  one.
+- Each piece still lands through Phase 5 on its own gate, one at a time, in
+  whatever order they become ready. Merging one piece re-bases the world for
+  the rest only at their own Phase 5 — no cross-worktree rebasing mid-flight.
+- A preview server per piece follows Phase 3 unchanged: one port each,
+  verified free.
 
 ## Guardrails
 
