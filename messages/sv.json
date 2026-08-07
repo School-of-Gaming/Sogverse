@@ -1978,12 +1978,9 @@
       "joinFailed": "Kunde inte gå med i rummet. Försök igen.",
       "share": {
         "hint": "Klicka på länken för att kopiera den.",
-        "copied": "Kopierat!"
-      },
-      "header": {
+        "copied": "Kopierat!",
         "roomCode": "Rumskod:",
-        "copyLink": "Kopiera rumslänk",
-        "copied": "Kopierat!"
+        "copyLink": "Kopiera rumslänk"
       },
       "lobby": {
         "title": "Redo att gå med?",

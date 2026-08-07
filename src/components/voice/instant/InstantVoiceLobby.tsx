@@ -14,10 +14,14 @@ import { useLocalStreamGlow } from "@/components/voice/hooks/use-local-stream-gl
 import { MicToggleButton, CameraToggleButton } from "@/components/voice/MediaToggleButtons";
 import { MicSettingsPopover } from "@/components/voice/MicSettingsPopover";
 import { MicLevelIndicator } from "@/components/voice/MicLevelIndicator";
+import { RoomLinkChip } from "./RoomLinkChip";
 import type { AudioInputDevice } from "@/components/voice/hooks/use-mic-devices";
 import { classifyMediaError, type MediaErrorCategory } from "@/lib/voice/media-error";
 
 interface InstantVoiceLobbyProps {
+  /** Validated, uppercase 4-character room code — rendered as the copyable
+   *  room link so whoever gets here first can invite the rest before joining. */
+  code: string;
   /**
    * Called with the lobby-supplied display name (empty for mods who use
    * their profile) and the user's preview-screen mic/camera choices,
@@ -58,7 +62,7 @@ interface InstantVoiceLobbyProps {
  * Vector D mitigation), so the in-call avatar pattern won't be identical.
  * Acceptable: identicons are abstract and don't function as identity.
  */
-export function InstantVoiceLobby({ onJoin, isModerator, joining, error }: InstantVoiceLobbyProps) {
+export function InstantVoiceLobby({ code, onJoin, isModerator, joining, error }: InstantVoiceLobbyProps) {
   const t = useTranslations("voice.instant.lobby");
   const { profile } = useAuth();
   // Server-decided (admin or verified gedu), NOT `profile.role` — see the
@@ -231,6 +235,11 @@ export function InstantVoiceLobby({ onJoin, isModerator, joining, error }: Insta
         <CardHeader>
           <CardTitle>{t("title")}</CardTitle>
           <CardDescription>{t("description")}</CardDescription>
+          {/* The room link, right where someone waiting in the lobby wants it:
+              the first person to arrive is usually the one inviting the rest. */}
+          <div className="pt-2">
+            <RoomLinkChip code={code} />
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">

@@ -9,6 +9,7 @@ import { VoiceRoom } from "@/components/voice/VoiceRoom";
 import { InstantVoiceLobby } from "./InstantVoiceLobby";
 import { CallEndedScreen, type EndReason } from "./CallEndedScreen";
 import { RoomNotFoundScreen } from "./RoomNotFoundScreen";
+import { RoomLinkChip } from "./RoomLinkChip";
 import { EndCallModal } from "./EndCallModal";
 import type { AppMessage } from "@/components/voice/hooks/types";
 
@@ -297,6 +298,7 @@ function InstantVoiceSessionInner({ code, isModerator, copyright }: InstantVoice
   if (state.phase === "lobby") {
     return (
       <InstantVoiceLobby
+        code={code}
         onJoin={handleJoin}
         isModerator={isModerator}
         joining={joining}
@@ -326,6 +328,9 @@ function InstantVoiceSessionInner({ code, isModerator, copyright }: InstantVoice
       <VoiceRoom
         onLeave={onLeaveButtonPressed}
         leaveLabel={t("leave")}
+        // The room link stays reachable mid-call so a mod can paste it to a
+        // latecomer without leaving. Compact variant — it shares the title row.
+        titleAccessory={<RoomLinkChip code={code} variant="compact" />}
       />
       <EndCallModal
         open={endModalOpen}
