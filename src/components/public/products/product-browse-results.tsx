@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import type { ParticipationCounts } from "@/services/participations";
-import type { TopicFilterChip } from "@/lib/products/topics";
 import type { ProductBrowseRow, SpokenLanguage } from "@/types";
 import { filterProducts } from "./filter-products";
 import { useBrowseFilters } from "./use-browse-filters";
@@ -33,7 +32,6 @@ interface ProductBrowseResultsProps {
   filters: {
     initialSpokenLanguages: SpokenLanguage[];
     showTypeFilter?: boolean;
-    topicChoices?: readonly TopicFilterChip[];
   };
   /** Detail-page URL builder for each card. Defaults to the storefront
    *  `/shop/[id]`; the municipality page passes `/schools/<slug>/[id]`. */

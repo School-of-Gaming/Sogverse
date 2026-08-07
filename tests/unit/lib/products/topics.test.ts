@@ -4,7 +4,7 @@ import { Constants } from "@/types/database.types";
 import {
   PRODUCT_TOPICS,
   PRODUCT_TOPIC_VALUES,
-  MUNICIPALITY_TOPIC_CHIPS,
+  TOPIC_FILTER_CHIPS,
   type TopicMeta,
 } from "@/lib/products/topics";
 
@@ -121,16 +121,16 @@ describe("product topics", () => {
     }
   });
 
-  it("covers every topic with exactly one municipality chip", () => {
+  it("covers every topic with exactly one filter chip", () => {
     // MINECRAFT_TOPICS is hand-maintained inside the module and collapses the
     // three editions behind one chip, so this is the one chip assertion that
     // isn't self-referential: a new Minecraft edition added to the enum but not
     // to that list would surface as its own stray chip beside the group.
-    expect(MUNICIPALITY_TOPIC_CHIPS.flatMap((c) => c.topics).sort()).toEqual(
+    expect(TOPIC_FILTER_CHIPS.flatMap((c) => c.topics).sort()).toEqual(
       [...PRODUCT_TOPIC_VALUES].sort(),
     );
     // Chip keys feed React lists and the URL membership check.
-    const keys = MUNICIPALITY_TOPIC_CHIPS.map((c) => c.key);
+    const keys = TOPIC_FILTER_CHIPS.map((c) => c.key);
     expect(new Set(keys).size).toBe(keys.length);
   });
 });

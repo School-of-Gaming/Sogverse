@@ -3,10 +3,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import { Sliders, X, Globe, MapPin } from "lucide-react";
 import { LanguageFlag } from "@/components/ui/language-flag";
-import {
-  SHOP_TOPIC_CHIPS,
-  type TopicFilterChip,
-} from "@/lib/products/topics";
+import { TOPIC_FILTER_CHIPS } from "@/lib/products/topics";
 import { PRODUCT_AGE_BANDS } from "@/lib/constants/gamer-age";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { useSpokenLanguages } from "@/services/users";
@@ -43,11 +40,6 @@ interface ProductBrowseFiltersProps {
   /** Lead with the Clubs|Camps|Events Type row. The shop does; the
    *  per-municipality page hides it (everything there is a club). Default true. */
   showTypeFilter?: boolean;
-  /** Topic chips to offer. The shop shows one chip per topic
-   *  (`SHOP_TOPIC_CHIPS`, the default); the municipality page passes the set
-   *  with the Minecraft editions collapsed into one chip
-   *  (`MUNICIPALITY_TOPIC_CHIPS`). Both rows are labelled "Subject". */
-  topicChoices?: readonly TopicFilterChip[];
   /** Whether the Days row applies, forwarded from `<ProductBrowseResults>`'s
    *  `supportsDays` (its single source). True for clubs, false for camps and
    *  events. */
@@ -57,7 +49,6 @@ interface ProductBrowseFiltersProps {
 export function ProductBrowseFilters({
   initialSpokenLanguages,
   showTypeFilter = true,
-  topicChoices = SHOP_TOPIC_CHIPS,
   daysFilter,
 }: ProductBrowseFiltersProps) {
   const t = useTranslations("productBrowse.filters");
@@ -143,7 +134,7 @@ export function ProductBrowseFilters({
         {/* Wraps instead of scrolling: every subject should be visible without
             a gesture, on any device. */}
         <FilterRow label={t("subject")} wrap>
-          {topicChoices.map((chip) => (
+          {TOPIC_FILTER_CHIPS.map((chip) => (
             <Chip
               key={chip.key}
               // A multi-topic group (Minecraft) carries a literal brand label;

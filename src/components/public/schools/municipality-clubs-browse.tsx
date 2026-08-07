@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { ROUTES } from "@/lib/constants";
-import { MUNICIPALITY_TOPIC_CHIPS } from "@/lib/products/topics";
 import { selectClubsInMunicipality } from "@/lib/schools/municipalities";
 import { useVisibleProductsByTypes } from "@/services/products";
 import {
@@ -15,10 +14,8 @@ import { ProductBrowseResults } from "@/components/public/products/product-brows
 
 // The per-municipality clubs page (`/schools/<slug>`). A shop browse page
 // narrowed to one municipality: same filter strip + card grid (via
-// <ProductBrowseResults>), minus the Clubs|Camps Type row (everything here is a
-// municipality club) and with the Minecraft editions collapsed behind a single
-// chip in the Subject row (municipality clubs are nearly always Education
-// edition, so there is nothing for a parent to choose between).
+// <ProductBrowseResults>), minus the Clubs|Camps Type row — everything here is
+// a municipality club.
 //
 // The page only renders for a municipality that runs clubs — the route 404s
 // otherwise (see `[municipalityName]/page.tsx`) — so there's no bespoke empty
@@ -90,7 +87,6 @@ export function MunicipalityClubsBrowse({
           filters={{
             initialSpokenLanguages,
             showTypeFilter: false,
-            topicChoices: MUNICIPALITY_TOPIC_CHIPS,
           }}
           productHref={(id) =>
             ROUTES.schoolMunicipalityProduct(municipalitySlug, id)
