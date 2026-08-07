@@ -115,9 +115,12 @@ beats a slightly more accurate dual system.** This plan is written to that call.
    legacy remnant.
 9. **`name_i18n` is never sourced from GeoNames.** Verified below: GeoNames cannot
    distinguish a legal minority-language name from an exonym, and the column's contract
-   is legal/official alternates only. Finland's curated Swedish set stays (it is our
-   data, orthogonal to the tree's source); new countries ship with native names and
-   official codes only.
+   is legal/official alternates only. Finland's curated Swedish set stays — and because
+   the cutover wipes the rows it lives on, it survives as a **per-country curated
+   overlay file** in the ingestion config, keyed by (type, official code) and re-applied
+   by the generator on every seed and reseed. That makes curated legal alternates a
+   defined mechanism any future country can use, while new countries ship with native
+   names and official codes only by default.
 
 ## What was verified against real data (2026-08-06/07)
 
@@ -274,6 +277,7 @@ Sketch (illustrative, not an API contract):
 FI: {
   isoFiles: ["FI", "AX"],
   nameResolution: { language: "fi" }, // verified: reproduces every current FI name exactly
+  nameI18nOverlay: "overlays/fi-name-i18n.json", // curated LEGAL sv names (Kotus), keyed by (type, official code)
   levels: {
     FI: { region: { fcode: "ADM1", codeField: "admin1" },
           municipality: { fcode: "ADM3", codeField: "admin3" } },
@@ -549,7 +553,10 @@ Independently verifiable: Sweden exists end to end with zero Sweden-specific cod
 ### Phase 3 — cut Finland and France over to the GeoNames tree
 
 7. FI + FR config entries (file sets, level mappings incl. AX/YT shapes, pins,
-   `nameResolution` per the verified rules, FI's two-entry `exclude`).
+   `nameResolution` per the verified rules, FI's two-entry `exclude`), plus a one-time
+   extraction of Finland's curated Swedish `name_i18n` entries into the FI overlay file
+   (from the live `dev` rows, keyed by type + official code) so the curated set rides
+   through the wipe.
 8. The generator gains a country-agnostic **cutover wrapper**: it emits the same seed
    statements as for a brand-new country, bracketed by capture/re-point steps, as one
    transactional migration per country:
@@ -563,7 +570,9 @@ Independently verifiable: Sweden exists end to end with zero Sweden-specific cod
      why the capture happens first; `products` reference only sites and are never
      touched.
    - **Reseed** through the standard generator path — GeoNames ids, resolved names,
-     codes, depth, full gates.
+     codes, depth, the curated `name_i18n` overlay merged in by code, full gates (the
+     generated search fold picks the alternates up on write, so "Helsingfors" keeps
+     finding Helsinki with no extra step).
    - **Re-point**: re-parent sites and re-insert gedu claims / home picks against the
      new rows via the (country, type, external_code) join; `RAISE WARNING` with names
      for anything that didn't map (expected zero on prod; staging losses are accepted).
