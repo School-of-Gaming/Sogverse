@@ -80,6 +80,11 @@ them as they come up, and expect several rounds of feedback and fixes before
 either of you is satisfied. Do not rush toward landing — Phase 5 begins only when
 they say so.
 
+The unit of feedback is completed work, not elapsed time: run to done, report,
+take the rulings, fix, repeat. Block mid-build only on a question the work cannot
+proceed without; a judgment call with a buildable, reversible answer gets decided,
+flagged, and carried to the report instead.
+
 Before reporting any piece of work complete:
 
 - `npm run lint` — **zero errors and zero warnings**. A warning is a design
