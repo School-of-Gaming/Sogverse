@@ -113,14 +113,19 @@ beats a slightly more accurate dual system.** This plan is written to that call.
    rollup), because GeoNames' French postal file structurally cannot join communes —
    verified below. The override is a data-source choice inside the new system, not a
    legacy remnant.
-9. **`name_i18n` is never sourced from GeoNames.** Verified below: GeoNames cannot
-   distinguish a legal minority-language name from an exonym, and the column's contract
-   is legal/official alternates only. Finland's curated Swedish set stays — and because
-   the cutover wipes the rows it lives on, it survives as a **per-country curated
-   overlay file** in the ingestion config, keyed by (type, official code) and re-applied
-   by the generator on every seed and reseed. That makes curated legal alternates a
-   defined mechanism any future country can use, while new countries ship with native
-   names and official codes only by default.
+9. **`name_i18n` is sourced from GeoNames too — no curated list anywhere.** The config
+   declares which locales a country ingests alternates for (`alternateLocales`, FI:
+   `["sv"]`); the generator resolves each with the same mechanical rule as canonical
+   names and skips values equal to the canonical name (the never-duplicate rule, now
+   mechanical). Verified below: this reproduces **50 of the 51** curated legal Swedish
+   names exactly and extends coverage with 83 established Swedish exonyms (Tammerfors,
+   Nystad, Torneå…). The decision-owner's call, with the trade on the table: this
+   *replaces* the "legal/official alternates only" contract on `name_i18n` — the column
+   becomes "GeoNames-sourced display alternates" — in exchange for owning zero curated
+   data. The implementing change rewrites that contract (and the no-exonyms rule) in
+   `src/services/locations/CLAUDE.md`. The one known imperfection (Kanta-Häme resolves
+   to "Tavastland" rather than the legal "Egentliga Tavastland") is fixed upstream in
+   GeoNames if it bothers anyone — never with a local override.
 
 ## What was verified against real data (2026-08-06/07)
 
@@ -167,12 +172,18 @@ own seed migrations.
   the AX alternates (Maarianhamina, Ahvenanmaa) and every anglicized maakunta. GeoNames'
   Finland, read in Finnish, *is* our Finland — which is what makes the cutover
   invisible there.
-- **The legal-vs-exonym distinction does not exist in GeoNames**: 293 of 294 kuntaa carry
-  a Swedish alternate that is neither colloquial nor historic — including monolingual
-  Finnish towns whose Swedish exonym is not a legal name (Tampere → "Tammerfors",
-  unflagged, exactly like Helsinki's legal "Helsingfors"). Roughly forty municipalities
-  have a *legal* Swedish name; GeoNames offers ~293. This is why `name_i18n` cannot be
-  sourced from GeoNames.
+- **The legal-vs-exonym distinction does not exist in GeoNames** — 293 of 294 kuntaa
+  carry a clean Swedish alternate, though only ~40 municipalities have a *legal*
+  Swedish name — but a follow-up simulation (2026-08-07) showed the distinction doesn't
+  need to exist for sourcing to work: resolving `sv` alternates with the same
+  mechanical rule as canonical names **agrees with 50 of the 51 curated legal entries
+  exactly** (regions included: Nyland, Birkaland, Kajanaland…), loses none, and adds
+  sv entries on 83 further rows — established exonyms in real Finland-Swedish usage
+  (Tammerfors, Nystad for Uusikaupunki, Nyslott for Savonlinna, Raumo, Torneå, Tusby).
+  The single disagreement is Kanta-Häme ("Tavastland" vs legal "Egentliga
+  Tavastland"), fixable upstream by flagging the preferred alternate. This is what
+  makes a fully GeoNames-sourced `name_i18n` viable once the legal-only contract is
+  dropped.
 
 ### France (FR.txt, 174,637 rows; GP/MQ/GF/RE/YT.txt)
 
@@ -277,7 +288,7 @@ Sketch (illustrative, not an API contract):
 FI: {
   isoFiles: ["FI", "AX"],
   nameResolution: { language: "fi" }, // verified: reproduces every current FI name exactly
-  nameI18nOverlay: "overlays/fi-name-i18n.json", // curated LEGAL sv names (Kotus), keyed by (type, official code)
+  alternateLocales: ["sv"],           // name_i18n from GeoNames sv alternates — verified 50/51 vs the old legal set
   levels: {
     FI: { region: { fcode: "ADM1", codeField: "admin1" },
           municipality: { fcode: "ADM3", codeField: "admin3" } },
@@ -378,7 +389,8 @@ either fix the config, extend `exclude`, or fix GeoNames.
 Reads the config's current dumps and the live table (read-only), and emits (a) a
 human-readable report and (b) a reconciliation migration containing only: INSERTs of
 genuinely new rows (guarded, gated, excluded-filtered), UPDATEs renaming rows whose
-resolved name changed, `external_code` updates where upstream corrected a code, and
+resolved name or `name_i18n` alternates changed, `external_code` updates where upstream
+corrected a code, and
 `retired_at` stamps on rows GeoNames no longer carries live. **It never emits DELETE and
 never reparents without a human widening the migration by hand.** A human reads the
 report, decides anything ambiguous (a merge's coverage implications, a retirement that
@@ -459,11 +471,16 @@ and per the invariants, coordinates/radius stay out of *coverage* semantics enti
   92 diffs including a preferred-flagged "Département de Paris" and "Région PACA";
   alternates carry stale pre-merger names on renamed rows. Name resolution is therefore
   a per-country config choice validated empirically, not a universal rule.
-- **Sourcing `name_i18n` from alternateNames.** GeoNames marks Tampere's "Tammerfors"
-  exactly like Helsinki's legal "Helsingfors" (verified: 293/294 kuntaa have clean sv
-  alternates; ~40 have legal Swedish names). The column's contract is legal alternates
-  only. A separate *search-only* aliases column fed by GeoNames alternates is a
-  plausible future enhancement, but it is out of scope and must not touch `name_i18n`.
+- **Keeping `name_i18n` curated (legal/official alternates only), riding through
+  reseeds as a per-country overlay file.** This was the plan's shape through two
+  revisions: GeoNames marks Tampere's exonym "Tammerfors" exactly like Helsinki's legal
+  "Helsingfors", so preserving the legal-only contract meant owning a curated list.
+  **Rejected by the decision-owner: no curated data we must maintain, anywhere.** The
+  verification that made dropping it safe: mechanical sv resolution agrees with 50/51
+  legal entries, loses none, and the 83 additions are established Finland-Swedish
+  exonyms, not junk. What was given up is the legal-vs-customary distinction itself and
+  one region's precision ("Tavastland") — both retrievable only by fixing GeoNames
+  upstream, which is the intended channel.
 - **Overloading `external_code` with geonameids.** Breaks the column's stated contract
   and every future join against official data; a separate keyed column is one line of
   schema.
@@ -503,9 +520,12 @@ and per the invariants, coordinates/radius stay out of *coverage* semantics enti
 2. **The anchor-level choice and the name-resolution rule are per-country judgments**,
    made once when the config entry is written. No data source makes them for you; both
    are validated empirically by the gates and a generate-and-eyeball pass.
-3. **New countries ship without minority-language legal alternates**; Finland's curated
-   Swedish set stays as-is. A future country that wants the equivalent pays for curation
-   then.
+3. **Minority-language display names are now free but uncurated.** Any country can turn
+   them on by listing a locale in `alternateLocales` — no per-row work — but what
+   arrives is GeoNames' alternates: customary names and exonyms alongside legal ones,
+   at whatever quality upstream has. Initial ingestion is reviewed as a diff (that is
+   how the 50/51 figure was produced); afterwards changes arrive only through reviewed
+   sync migrations.
 4. **Currency for every country — Finland and France now included — is GeoNames'
    currency.** Quantified: sometimes six weeks behind a merger, sometimes years behind
    an abolition (caught by the exclusion list), occasionally behind a rename wave (the
@@ -553,10 +573,8 @@ Independently verifiable: Sweden exists end to end with zero Sweden-specific cod
 ### Phase 3 — cut Finland and France over to the GeoNames tree
 
 7. FI + FR config entries (file sets, level mappings incl. AX/YT shapes, pins,
-   `nameResolution` per the verified rules, FI's two-entry `exclude`), plus a one-time
-   extraction of Finland's curated Swedish `name_i18n` entries into the FI overlay file
-   (from the live `dev` rows, keyed by type + official code) so the curated set rides
-   through the wipe.
+   `nameResolution` per the verified rules, FI's two-entry `exclude`, FI's
+   `alternateLocales: ["sv"]`).
 8. The generator gains a country-agnostic **cutover wrapper**: it emits the same seed
    statements as for a brand-new country, bracketed by capture/re-point steps, as one
    transactional migration per country:
@@ -570,9 +588,9 @@ Independently verifiable: Sweden exists end to end with zero Sweden-specific cod
      why the capture happens first; `products` reference only sites and are never
      touched.
    - **Reseed** through the standard generator path — GeoNames ids, resolved names,
-     codes, depth, the curated `name_i18n` overlay merged in by code, full gates (the
-     generated search fold picks the alternates up on write, so "Helsingfors" keeps
-     finding Helsinki with no extra step).
+     codes, depth, `name_i18n` filled from the config's `alternateLocales`, full gates
+     (the generated search fold picks the alternates up on write, so "Helsingfors"
+     keeps finding Helsinki with no extra step — and "Tammerfors" starts to).
    - **Re-point**: re-parent sites and re-insert gedu claims / home picks against the
      new rows via the (country, type, external_code) join; `RAISE WARNING` with names
      for anything that didn't map (expected zero on prod; staging losses are accepted).
@@ -588,7 +606,10 @@ Independently verifiable: Sweden exists end to end with zero Sweden-specific cod
    `scripts/lib/location-classifications.mjs` (their applied migrations remain
    history), and rewrite the seeding/refresh sections of
    `src/services/locations/CLAUDE.md` — one source, one sync, `external_code` now
-   supplied by GeoNames' admin-code columns.
+   supplied by GeoNames' admin-code columns, and the `name_i18n` contract restated as
+   GeoNames-sourced display alternates per `alternateLocales` (replacing the
+   legal-only and no-exonyms rules; slug resolution already accepts every alternate,
+   canonical first, so exonym slugs simply start working).
 
 Independently verifiable: on staging after push — the two products still show their
 venue, the five real coverage sets survive re-pointing on prod later (staging's fake
@@ -631,8 +652,10 @@ AX column shift; Paris 75101… → commune 75056 via the rollup; counts green.
 - Finland and France went through the cutover with every live reference carried across:
   both products still show their venue via the surviving site rows, all five prod
   coverage sets re-pointed whole, and the cutover's warning report is empty on
-  production (staging losses individually named). Finland's rendered names are
-  byte-identical before and after; France's differ only by GeoNames' named lag.
+  production (staging losses individually named). Finland's canonical names are
+  byte-identical before and after; its Swedish display keeps 50 of the 51 legal names
+  (Kanta-Häme's "Tavastland" being the noted one) and gains the verified exonym set;
+  France's canonical names differ only by GeoNames' named lag.
 - **One refresh procedure exists for all countries**; the France generator lineage and
   the national-classification refresh instructions are deleted, and the docs describe
   only the GeoNames sync.
