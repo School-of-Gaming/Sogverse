@@ -1,7 +1,26 @@
 import Link from "next/link";
 import { useTranslations } from 'next-intl';
+import type { ReactNode } from "react";
 import { Copyright } from "./copyright";
 import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
+
+/* The geographic tree is built from GeoNames (CC BY 4.0) and France's postal
+   codes from La Poste's Base officielle (Licence Ouverte 2.0); both licences
+   require the credit this line carries. An anchor is fine here: the
+   no-off-site-links rule governs staff-authored copy shown to families, not
+   the app's own chrome. */
+function AttributionLink({ href, children }: { href: string; children?: ReactNode }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="underline underline-offset-4 transition-colors hover:text-foreground"
+    >
+      {children}
+    </a>
+  );
+}
 
 export function Footer() {
   const t = useTranslations('footer');
@@ -46,6 +65,14 @@ export function Footer() {
               {t('antiBullying')}
             </Link>
           </nav>
+          <p className="text-xs text-muted-foreground">
+            {t.rich('attribution', {
+              geonames: (chunks) => <AttributionLink href="https://www.geonames.org">{chunks}</AttributionLink>,
+              cc: (chunks) => <AttributionLink href="https://creativecommons.org/licenses/by/4.0/">{chunks}</AttributionLink>,
+              laposte: (chunks) => <AttributionLink href="https://datanova.laposte.fr">{chunks}</AttributionLink>,
+              lo: (chunks) => <AttributionLink href="https://www.etalab.gouv.fr/licence-ouverte-open-licence">{chunks}</AttributionLink>,
+            })}
+          </p>
           <div className="w-full border-t border-border pt-4">
             <Copyright />
           </div>
