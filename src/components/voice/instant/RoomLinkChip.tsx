@@ -59,8 +59,12 @@ export function RoomLinkChip({
           "flex shrink-0 items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           copied && "border-success text-success",
         )}
-        aria-label={copied ? t("copied") : t("copyLink")}
-        title={copied ? t("copied") : t("copyLink")}
+        // The aria-label carries the code because a screen reader gets the
+        // label INSTEAD of the button's visible content — without it, this
+        // (the only in-call surface showing the code) would announce only
+        // the verb.
+        aria-label={copied ? t("copied") : t("copyLink", { code })}
+        title={copied ? t("copied") : t("copyLink", { code })}
       >
         {/* The label and the code never change, so the copied state only
             recolors the chip and swaps one same-sized icon for another —

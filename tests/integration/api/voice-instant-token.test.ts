@@ -239,6 +239,30 @@ describe("POST /api/voice/instant/token", () => {
       );
       expect((await response.json()).userId).toBe("gamer-1");
     });
+
+    it("ignores a fully hostile body on the signed-in path — every identity and permission field at once", async () => {
+      // The signed-in branch is where identity now comes from, so pin all
+      // four fields in one shot against the encoded token: a future edit
+      // that starts reading any of them once a profile resolves fails here.
+      authenticated("customer", { id: "parent-1", firstName: "Real Parent" });
+      const response = await POST(
+        createTokenRequest({
+          code: "K7P2",
+          displayName: "Fake Name",
+          role: "admin",
+          isOwner: true,
+          userId: "00000000-0000-0000-0000-000000000000",
+        }),
+      );
+      expect(response.status).toBe(200);
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({ isOwner: false }),
+      );
+      const slots = mockCreateMeetingToken.mock.calls[0][0].userName.split("|");
+      expect(slots[0]).toBe("parent-1");
+      expect(slots[1]).toBe("guest");
+      expect(slots[2]).toBe("Real Parent");
+    });
   });
 
   describe("moderator path", () => {

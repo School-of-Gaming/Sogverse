@@ -2025,7 +2025,7 @@
         "hint": "He yI’ang ’angmeH.",
         "copied": "’angta’!",
         "roomCode": "Daq ngoQ:",
-        "copyLink": "Daq He yI’ang"
+        "copyLink": "{code} Daq He yI’ang"
       },
       "lobby": {
         "title": "Daq DaSuq’a’?",

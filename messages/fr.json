@@ -1980,7 +1980,7 @@
         "hint": "Cliquez sur le lien pour le copier.",
         "copied": "Copié !",
         "roomCode": "Code du salon :",
-        "copyLink": "Copier le lien du salon"
+        "copyLink": "Copier le lien du salon {code}"
       },
       "lobby": {
         "title": "Envie de rejoindre l’aventure ?",

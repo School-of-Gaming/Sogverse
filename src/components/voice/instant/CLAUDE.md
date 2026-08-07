@@ -74,7 +74,11 @@ and then 400-bounced by the guest-name requirement. **That hazard is gone struct
 by vigilance**: a signed-in unverified gedu needs no name at all now, so there is no
 mismatch left to have. What the page reads instead is the session itself
 (`getUserWithProfile`) — the same session the token route reads — so lobby and token still
-agree about identity by construction.
+agree about identity by construction. One residual edge sits on the *freshness* axis
+rather than the predicate axis: the page's session read is a render-time snapshot, so a
+session that dies between render and join (sign-out in another tab, an account switch)
+still 400-bounces — name required, no input shown. A reload recovers, and that is the
+accepted answer for how rare it is; the join handler carries a comment marking it.
 
 **A signed-in gamer therefore shows their real first name** to everyone in the room rather than a chosen alias. Deliberate and accepted: scheduled group rooms already broadcast profile first names, and an instant room link is shared intentionally by a moderator.
 
@@ -88,6 +92,16 @@ The room is open by design; defenses target privilege escalation and bounding bl
 
 - **Daily-signed `is_owner` is the real authority.** Tokens are signed with `DAILY_API_KEY` server-side; nothing client-supplied confers mod power. Display-name role badges (if any) are cosmetic.
 - **Display-name pipe injection.** Daily `user_name` is encoded `userId|role|displayName`. `buildUserName` strips `|` from the display name so a guest can't inject a fake role slot. Cosmetic-only fix (the signed token wins) but keep it.
+- **A signed-in non-moderator's stable `profiles.id` is broadcast to the room.** It rides
+  the token's `userId` slot, which Daily hands to every participant — including signed-out
+  strangers, since the room is open to anyone with the link. **Accepted risk**, decided
+  alongside the first-name note above: group-scoped rooms are the locked-down surface;
+  instant rooms are public by nature and trade some privacy for that. A profile id is not
+  a secret (everything it could key is RLS-gated), and the real id is what keeps a
+  person's identicon consistent between lobby preview, in-call avatar, and scheduled
+  rooms. If that trade ever needs revisiting, the alternative considered was a
+  room-scoped pseudonymous id (an HMAC of profile id + room code) — at the cost of the
+  same person wearing a different identicon per room and per surface.
 - **Signed-out guest UUIDs are server-generated** via `crypto.randomUUID()` so a guest can't choose a UUID that yields a targeted identicon. For them the lobby's preview identicon uses a throwaway client UUID and intentionally won't match the in-call one — identicons are abstract, not identity. A signed-in joiner has no such gap: their lobby preview and their in-call avatar are both their `profiles.id`.
 - **Create / end require admin or a verified gedu** (`requireRole(["admin","gedu"], { requireVerifiedGedu: true })`). End has no per-room ownership check — any mod with the code can end any room (mods are trusted; there's no room-ownership concept). End treats a Daily 404 as a no-op success.
 - **Code enumeration** is a real but bounded risk: brute-forcing ~1M codes finds active rooms, but a hit only joins as a guest and a mod can end the call. Per-IP rate limiting on the token endpoint is the mitigation (not yet built).

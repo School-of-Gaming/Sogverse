@@ -1980,7 +1980,7 @@
         "hint": "Klicka på länken för att kopiera den.",
         "copied": "Kopierat!",
         "roomCode": "Rumskod:",
-        "copyLink": "Kopiera rumslänk"
+        "copyLink": "Kopiera länken till rum {code}"
       },
       "lobby": {
         "title": "Redo att gå med?",

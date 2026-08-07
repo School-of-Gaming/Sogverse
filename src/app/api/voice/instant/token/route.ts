@@ -91,13 +91,20 @@ export async function POST(request: Request) {
     );
   }
 
+  // One session read for the whole request. Both the owner gate and the
+  // identity branch below take this same snapshot, so they can never disagree
+  // about who is asking. (Don't be tempted to call `getUserWithProfile` twice
+  // "because it's cached" — React's `cache()` doesn't memoize in a Route
+  // Handler, so a second call is a second auth + profile fetch.)
+  const session = await getUserWithProfile();
+
   // Owner eligibility. `instantRoomModerator` is the single predicate for it
   // (admin or *verified* gedu) and returns the moderator identity or null. An
   // unverified gedu resolves to null — being handed any room link must not
   // confer ownership — and it fails closed to null on any lookup error, so
   // there is no path where ambiguous auth grants ownership. We deliberately
   // ignore `requireRole`-style 401/403 short-circuits — this endpoint is public.
-  const moderator = await instantRoomModerator();
+  const moderator = await instantRoomModerator(session);
 
   let userId: string;
   let role: "admin" | "gedu" | "guest";
@@ -109,11 +116,9 @@ export async function POST(request: Request) {
     displayName = moderator.displayName;
   } else {
     // Everyone below here gets guest *permissions*. Identity is a separate
-    // question, and the session answers it: a signed-in parent, gamer or
-    // unverified gedu joins as themselves. The lookup is request-`cache()`d,
-    // so reading it here after `instantRoomModerator` costs nothing.
+    // question, and the same session snapshot answers it: a signed-in parent,
+    // gamer or unverified gedu joins as themselves.
     role = "guest";
-    const session = await getUserWithProfile();
     const profile = session?.profile;
 
     if (profile) {

@@ -135,6 +135,12 @@ function InstantVoiceSessionInner({ code, viewer, copyright }: InstantVoiceSessi
         }
 
         if (!response.ok) {
+          // Known edge: `viewer` is a server-render snapshot, so if the
+          // session dies between page load and this POST (sign-out in another
+          // tab, an account switch), the route takes the signed-out path and
+          // 400s for a name the lobby isn't showing an input for. A reload
+          // recovers — the page re-derives the lobby from the live session —
+          // and that's accepted as the answer for how rare it is.
           const data = await response.json().catch(() => ({}));
           setJoinError(
             typeof data.error === "string" ? data.error : tInstant("joinFailed"),

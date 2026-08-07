@@ -2068,7 +2068,7 @@
         "hint": "Click the link to copy it.",
         "copied": "Copied!",
         "roomCode": "Room code:",
-        "copyLink": "Copy room link"
+        "copyLink": "Copy room link {code}"
       },
       "lobby": {
         "title": "Ready to join?",
