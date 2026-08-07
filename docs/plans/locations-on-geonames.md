@@ -47,9 +47,13 @@ beats a slightly more accurate dual system.** This plan is written to that call.
   - **2 products** carry a `location_id`, both via the single admin-created site, which
     is kept through any cutover — so `products` rows never need touching at all.
   - **702 `gedu_locations` rows across only 5 gedus** — two are full select-everything
-    enumerations from the old cascade-style editor (all 19 regions + all 308
-    municipalities + country + site each), one has 28 ticks, one 16, one a single
-    municipality. Five simple coverage sets, mechanically re-pointable by official code.
+    enumerations from the old cascade-style editor (one ticked the country + all 19
+    regions + all 308 municipalities + the site, 329 rows; the other the same minus the
+    country tick, 328), one has 28 ticks, one 16, one a single municipality. Five simple
+    coverage sets. Ticks on seeded rows re-point by official code; ticks on the site
+    survive the cutover untouched (sites are never wiped); the one country tick
+    re-points by (country_code, type), because country rows carry no official code in
+    any national classification.
   - **0 parent home locations** (the column does not exist on prod yet).
   - Staging's location data is fake and explicitly disposable (decision-owner's call,
     2026-08-07): the cutover re-points what maps by code and drops the rest with a
@@ -224,6 +228,7 @@ own seed migrations.
   empty for a pair until its ingest diff shows real payload, and harvesting P-record
   alternates onto A rows is rejected — it would be a fuzzy cross-record matching step
   of exactly the kind this plan exists to avoid.
+- **DROM**: GP/MQ/GF/RE each carry their région (ADM1), département (ADM2, admin2 =
   971/972/973/974) and all communes (ADM4, admin4 = INSEE code) — 32+34+22+24 = 112/112
   matched. **Mayotte (YT) is shaped differently: no ADM2/3/4 at all — its 17 communes are
   ADM1 rows with the full INSEE code in admin1** (97601…), 17/17 matched, and its
@@ -268,7 +273,7 @@ Columns: country(0), postal code(1), place name(2), admin name/code 1 (3/4), 2 (
   by arrondissement (75101–75120, 69381–69389, 13201–13216) where the COG has single
   communes (75056, 69123, 13055). That rollup is a fixed 45-code→3-commune mapping,
   encoded as data in the FR postal config. Note the La Poste join runs on
-  `external_code`, which GeoNames keeps populated (decision 4) — so full GeoNames
+  `external_code`, which GeoNames keeps populated (decision 4) — so
   the cutover does not disturb it, except for the 4 chef-lieu communes whose codes
   GeoNames still has stale (their postal rows go unmatched and are reported until
   upstream heals).
@@ -290,9 +295,15 @@ A new module under `scripts/lib/geonames/` holds one config entry per country. T
 existing UI hierarchy config (`src/lib/constants/location-hierarchies.ts`) stays the
 authority on labels/i18n; it gains one field: which level is the country's **anchor** —
 the level a parent identifies with and a site is parented under (one role, because the
-architecture requires them to be the same level). A unit test asserts every configured
-country's anchor is `municipality` until a country genuinely diverges; the pickers keep
-their current `municipality`/`site` pickable types and need no new machinery until then.
+architecture requires them to be the same level). Two unit assertions, not one:
+structurally, every config's anchor is the level immediately above `site` in its own
+declared hierarchy; and every **seeded** country's anchor is `municipality`. The split
+matters because the speculative US/GB/JP configs already declare `district` *below*
+municipality — their anchor is honestly `district`; they just have no rows. The day one
+of them is seeded is the day the pickers' hardcoded `municipality` pickable types must
+generalize to anchor-driven, and the seeded-country assertion is the tripwire that
+forces that work then. Until then the pickers keep their current types with no new
+machinery.
 
 Sketch (illustrative, not an API contract):
 
@@ -335,7 +346,27 @@ Key properties, each answering a verified failure shape:
 - Per-file level mappings absorb the AX column shift, Mayotte's ADM1 communes, and any
   future oddity, without code.
 - `pins` and per-file `parent` declarations handle subtrees whose upper levels GeoNames
-  doesn't model (AX, YT) — a handful of declarative lines, not bespoke code.
+  doesn't model (AX, YT) — a handful of declarative lines, not bespoke code. A pin
+  either attaches a geonameid to a row the level mappings already produce (AX's PCLD
+  *is* maakunta 21) or declares a **synthetic row outright** — literal type, name,
+  official code and parent, with `geonames_id` NULL: Mayotte's région 06 and
+  département 976 exist in no GeoNames file as administrative rows, and `geonames_id`'s
+  uniqueness means they couldn't both borrow YT's country record anyway. France's
+  expected counts (18 régions, 101 départements) include them.
+- `expected` is per level `{ count, allowMissing: [official codes…] }` — the count from
+  the national classification, `allowMissing` naming exactly the rows GeoNames is known
+  to lack (FR municipalities: the 8 codes above; empty everywhere else). The gate fails
+  on any shortfall not named, on any surplus, **and on an `allowMissing` code that
+  actually shows up** — a healed row is good news that must still be taken
+  deliberately, by shrinking the list in config.
+- `alternateLocales` governs the levels below country. **Country rows always ingest
+  every supported UI locale** — verified 2026-08-07: the FI/AX/FR country records carry
+  preferred-flagged alternates in all of them (Suomi/Finland/Finlande, Ranska/
+  Frankrike, Ahvenanmaa/Åland), and resolving them reproduces the hand-seeded country
+  translations of migration `00140` exactly. Countries are the one level where every
+  locale has real payload, which is how `00140`'s rule ("countries are the one level
+  that takes translations") survives the cutover mechanically instead of as curated
+  data.
 - `nameResolution` is the one per-country judgment about names, made once when the
   config entry is written and checked empirically (generate, diff, eyeball): the dump
   name where it is canonical (France, Sweden), a language-alternate resolution where the
@@ -352,22 +383,33 @@ Key properties, each answering a verified failure shape:
   **`external_code` is not touched and never holds a geonameid** — its contract
   (official code, unique per country+type) stays exactly as documented, with GeoNames'
   admin-code columns as the ongoing supplier of those codes.
-- `locations.depth smallint NOT NULL` — 0 for countries, parent+1 below, maintained by a
-  BEFORE INSERT/UPDATE trigger reading the parent row (EXECUTE revoked from client roles
-  like the existing products-location trigger; trigger functions don't need caller
-  EXECUTE). Backfilled recursively for existing rows, asserted (every row's depth =
-  ancestor-chain length). This is what lets search rank "broadest first" without a
-  per-country CASE.
+- `locations.depth smallint NOT NULL DEFAULT 0` — 0 for countries, parent+1 below,
+  maintained by a BEFORE INSERT/UPDATE trigger reading the parent row. The DEFAULT is
+  load-bearing for the generated types: without it the column becomes a required field
+  of the generated Insert type and the site-create route and its contract stop
+  compiling, even though the trigger fills the value at runtime (the
+  generated-nullability class `supabase/CLAUDE.md` warns about, erring safe). The
+  trigger function gets no grants at all — the existing products-location trigger is
+  the model, and trigger execution doesn't check the caller's EXECUTE — and seeds don't
+  emit `depth` (the trigger would overwrite whatever they wrote; an emitted value would
+  be decorative and misleading). Backfilled recursively for existing rows, asserted
+  (every row's depth = ancestor-chain length). A row trigger cannot re-depth
+  descendants on reparent; nothing reparents non-leaves (the cutover re-parents only
+  sites), and the trigger's comment must say so. This is what lets search rank
+  "broadest first" without a per-country CASE.
 - `locations.retired_at timestamptz` NULL. Retired rows are excluded from browse reads,
   the search function and the municipality-directory read; **keyed reads still return
   them** (a stored pick must keep resolving — the three-state guard's "absent vs
   invalid" distinction depends on it, and a retired row is a *valid* pick, never
   cleared), the ancestor walk still includes them, and substitute matching still sees
   claims on them. Nothing retires a `site`.
-- `locations.country_code` backfilled on the existing `site` rows from their parents
-  (verified the create route never sets it), and the site-create route starts stamping
-  it from the confirmed parent row. This unblocks country-scoping the venue dialog later
-  and keeps the denormalization invariant honest.
+- `locations.country_code` on `site` rows: the venue dialog already sends the parent's
+  country code and the create route inserts it as supplied — so today the value is
+  *client-supplied*, not absent (production's one site predates that dialog and does
+  need the backfill). The change is to **derive it server-side from the confirmed
+  parent row, ignoring any client value**, plus an assert-style backfill for rows
+  created before the dialog stamped it. This keeps the denormalization invariant honest
+  and unblocks country-scoping the venue dialog later.
 
 ### The generator and its gates
 
@@ -419,15 +461,25 @@ currency, bought deliberately in exchange for one uniform system.
 
 ### Search
 
-- `search_locations` is recreated (body copied from `supabase/schema.sql` per the
-  migration rules, grants re-stated, spine re-verified): ORDER BY switches from the
-  hardcoded level CASE to `depth` — retiring `00141`'s documented wrongness for
-  district-below-municipality countries before any such country ships — plus a
-  `retired_at IS NULL` filter and a new optional country parameter (default NULL,
-  backward-compatible). The country parameter closes the documented gap where the
+- `search_locations` gains a fourth parameter, which in Postgres means **DROP the
+  three-argument function and CREATE the four-argument one in the same migration** — a
+  bare CREATE OR REPLACE would leave both overloads live and every existing call
+  ambiguous, a 42883 surfacing on the first anonymous keystroke rather than at DDL
+  time. Re-issue the original search migration's full per-role grant block for the new
+  signature and update the authorization spine's entry (and anon allowlist) to match.
+  Body copied from `supabase/schema.sql` per the migration rules. The changes inside:
+  ORDER BY switches from the hardcoded level CASE to `(type = 'site')` **then**
+  `depth` — sites stay ranked below places, which depth alone would break now that a
+  Finnish site and a French commune both sit at depth 3 — retiring `00141`'s documented
+  wrongness for district-below-municipality countries before any such country ships.
+  The `retired_at IS NULL` filter lands in the *match* CTE, so the reported total drops
+  retired rows too; the recursive ancestor walk deliberately still climbs **through**
+  retired ancestors, because a chain must render whole. The new optional country
+  parameter (default NULL, backward-compatible) closes the documented gap where the
   server's cap starves a client-side country filter; the online-municipality picker and
-  any country-restricted caller pass it through the search route (which folds it into
-  the cache key URL).
+  any country-restricted caller pass it through the search route, which folds it into
+  the cache-key URL and into the query-key hierarchy. Accepted staleness: the route's
+  shared cache may keep serving a just-retired row until its TTL expires.
 - The fold, the trigram index, the ≥2-char floor (Finland's kunta **Ii** is two letters
   — the floor cannot rise), the cap, and the cached anonymous route are all untouched.
   New countries add rows to the same generated column with no reindexing step; total
@@ -557,9 +609,13 @@ version number is silently treated as applied).
    trigger + recursive backfill + assertions; site `country_code` backfill + assertion.
    Explicit grants unchanged (no new client-reachable functions; trigger function
    EXECUTE revoked). Push, regenerate types, add any aliases.
-2. Recreate `search_locations` (depth ordering, retired filter, country parameter);
-   re-state grants; spine re-verification. Update the search route/contracts/service for
-   the optional country parameter; the online-municipality picker passes FI.
+2. Recreate `search_locations` per the Search section (drop old signature + create the
+   four-argument one, sites-then-depth ordering, retired filter in the match CTE,
+   country parameter); re-state grants; update the spine entry and anon allowlist.
+   Update the search route/contracts/service and the query-key factory for the country
+   parameter (two differently-scoped searches must not share a cache entry), and the
+   integration tests that pin the RPC argument object; the online-municipality picker
+   passes FI.
 3. Service reads: browse/directory/whole-list reads exclude retired rows; keyed reads
    deliberately do not. Named-columns literals gain nothing (no read selects the new
    columns except where a surface needs `retired_at` — none do yet).
@@ -573,7 +629,9 @@ Independently verifiable: app behaves identically; all assertions and tests gree
 
 5. Build `scripts/lib/geonames/` (parser, config schema, name resolution, exclusion,
    gates) and the SE config entry; add the `anchor` role to the hierarchy config with
-   its everything-is-municipality assertion test.
+   its two assertions (structural anchor-above-site for every config; anchor-is-
+   municipality for seeded countries — US/GB/JP's district-below-municipality configs
+   make the distinction load-bearing).
 6. Run `generate-geonames-seed.mjs SE`; review the emitted migration; push to staging;
    verify by hand: picker browses Sweden, search finds "Umeå" with diacritic folding
    both ways, a coverage tick on a kommun saves, ranking puts län above kommuner. No
@@ -590,10 +648,15 @@ Independently verifiable: Sweden exists end to end with zero Sweden-specific cod
 8. The generator gains a country-agnostic **cutover wrapper**: it emits the same seed
    statements as for a brand-new country, bracketed by capture/re-point steps, as one
    transactional migration per country:
-   - **Capture** into temp tables, by official code: each site's parent municipality
-     code; each gedu claim as (gedu_id, type, code); each home pick as (profile_id,
-     type, code). Rows referencing a code-less or unmappable location are recorded for
-     the warning report instead.
+   - **Capture** into temp tables, scoped to the rows being wiped — the country's
+     seeded `country`/`region`/`district`/`municipality` rows and nothing else: each
+     site's parent municipality code; each gedu claim as (gedu_id, type, code); each
+     home pick as (profile_id, type, code). A claim on the country row captures as
+     (gedu_id, 'country') and re-points by (country_code, type), because country rows
+     carry no official code in any national classification. Claims on `site` rows are
+     deliberately *not* captured: sites survive the wipe, so those references never
+     move — capturing them would double-count the assert. Anything else referencing a
+     code-less or unmappable row is recorded for the warning report instead.
    - **Detach & wipe**: NULL the sites' `parent_id` (sites are ours and stay), then
      DELETE the country's seeded rows bottom-up (municipality → district → region →
      country) — `gedu_locations` CASCADE and `home_location_id` SET NULL fire, which is
@@ -604,10 +667,18 @@ Independently verifiable: Sweden exists end to end with zero Sweden-specific cod
      (the generated search fold picks the alternates up on write, so "Helsingfors"
      keeps finding Helsinki with no extra step — and "Tammerfors" starts to).
    - **Re-point**: re-parent sites and re-insert gedu claims / home picks against the
-     new rows via the (country, type, external_code) join; `RAISE WARNING` with names
-     for anything that didn't map (expected zero on prod; staging losses are accepted).
+     new rows via the (country, type, external_code) join — country-level claims via
+     (country_code, type); `RAISE WARNING` with names for anything that didn't map
+     (expected zero on prod; staging losses are accepted). A site whose captured parent
+     has no counterpart in the new tree is re-parented to the **country row** with a
+     warning — never left NULL (a NULL parent is the picker's root level, so the site
+     would surface beside the countries) and never deleted (products may RESTRICT on
+     it).
    - **Assert**: seed gates plus restored-reference counts equal captured counts minus
-     the warned list, and zero sites left unparented.
+     the warned list; zero sites with a NULL parent (a NULL parent would surface the
+     site at the picker's root); and the set of sites parented directly under a country
+     row exactly equals the parked-with-warning set — normally empty, each instance
+     named in the report.
    The migration is mechanical and identical in kind for both databases: by the time it
    runs anywhere, migration ordering guarantees `external_code` is populated (the
    backfill migrations precede it), so the code joins work on prod exactly as on
@@ -621,15 +692,23 @@ Independently verifiable: Sweden exists end to end with zero Sweden-specific cod
    supplied by GeoNames' admin-code columns, and the `name_i18n` contract restated as
    GeoNames-sourced display alternates per `alternateLocales` (replacing the
    legal-only and no-exonyms rules; slug resolution already accepts every alternate,
-   canonical first, so exonym slugs simply start working).
+   canonical first, so exonym slugs simply start working). In the same change, update
+   the DB tests that hardcode pre-cutover facts: the scoped-reads suite's exact
+   commune-count assertions become the config's count minus its named allowance; the
+   name-i18n suite's claims that Tampere carries no Swedish override (it gains
+   "Tammerfors") and that a Swedish name resolves to exactly one row are rewritten
+   against the new contract; and re-run the municipality-slug collision check across
+   canonical names **plus every ingested alternate** — the 83 exonyms add slug
+   candidates the documented 308-name check never saw, and the alternate resolution
+   pass is first-match-wins, so a collision there is silent.
 
 Independently verifiable: on staging after push — the two products still show their
 venue, the five real coverage sets survive re-pointing on prod later (staging's fake
 ones as far as they map), search finds Parainen/Helsingfors/Umeå exactly as before, and
 the warning report is empty or fully explained. Optional cleanup noted for prod, not
-required: the two old select-everything coverage enumerations (328 rows each) could be
-collapsed to a single country tick — semantically identical under claim-means-subtree;
-harmless to leave.
+required: the two old select-everything coverage enumerations (328–329 rows each) could
+be collapsed to a single country tick — semantically identical under
+claim-means-subtree; harmless to leave.
 
 ### Phase 4 — sync tooling
 
@@ -647,9 +726,10 @@ Independently verifiable: the three empty-or-explained diffs.
     sweep entries; types + aliases.
 12. `generate-postal-seed.mjs <CC>` with GeoNames default + FR La Poste override and the
     PLM rollup; seed FI (+AX) and FR; gates as designed (per-municipality coverage
-    threshold, unmatched-code report). Service-layer lookup: resolve (country, postal
-    code) → municipality row id, then the existing keyed read; no new RPC, so no spine
-    entry.
+    threshold, unmatched-code report), scoped to rows with a `geonames_id` — the test
+    fixtures in `supabase/seed.sql` include a small code-less FI tree that must not
+    trip a coverage gate. Service-layer lookup: resolve (country, postal code) →
+    municipality row id, then the existing keyed read; no new RPC, so no spine entry.
 13. Add the GeoNames CC BY 4.0 attribution (plus La Poste Licence Ouverte credit) to the
     public legal/about surface — small, legally required by the licences, translated per
     the i18n rule.
