@@ -96,12 +96,12 @@ import { locationInsert, sqlBigint, sqlJsonb, sqlText } from "./lib/geonames/sql
  */
 const MIGRATIONS = {
   seed: {
-    SE: "00156_seed_sweden_geonames.sql",
-    GB: "00159_seed_uk_geonames.sql",
+    SE: "00158_seed_sweden_geonames.sql",
+    GB: "00161_seed_uk_geonames.sql",
   },
   cutover: {
-    FI: "00157_cutover_finland_geonames.sql",
-    FR: "00158_cutover_france_geonames.sql",
+    FI: "00159_cutover_finland_geonames.sql",
+    FR: "00160_cutover_france_geonames.sql",
   },
 };
 

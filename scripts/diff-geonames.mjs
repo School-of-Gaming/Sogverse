@@ -3,7 +3,7 @@
  *
  *   node scripts/diff-geonames.mjs GB
  *   node scripts/diff-geonames.mjs FI --unretire
- *   node scripts/diff-geonames.mjs GB --from-migration supabase/migrations/00159_seed_uk_geonames.sql
+ *   node scripts/diff-geonames.mjs GB --from-migration supabase/migrations/00161_seed_uk_geonames.sql
  *
  * One procedure for every country — Finland and France included since the
  * cutover, which is why there is no annual national-classification diff any
