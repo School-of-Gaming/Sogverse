@@ -77,11 +77,12 @@ export default async function RootLayout({
           messages={clientMessages}
         >
           {/* Header rendering is owned by each route group's layout — that's
-              how the (voice) group can replace the standard chrome with its
-              own simplified header. Headers are `position: sticky top-0`
-              (via `<SiteHeaderShell>`, sized by `--header-height`), so they
-              reserve their own space in normal flow and no wrapper needs an
-              offset to clear them. The document is the single scroll
+              how a group can vary what sits around the header (the (voice)
+              group renders the standard one with no footer, the (preview)
+              group renders no chrome at all). Headers are `position: sticky
+              top-0` (via `<SiteHeaderShell>`, sized by `--header-height`), so
+              they reserve their own space in normal flow and no wrapper needs
+              an offset to clear them. The document is the single scroll
               container; no inner element should set h-screen overflow-auto. */}
           {children}
         </Providers>

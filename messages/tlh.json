@@ -2023,12 +2023,9 @@
       "joinFailed": "Daq muv Dabe’lu’. yItoH’egh!",
       "share": {
         "hint": "He yI’ang ’angmeH.",
-        "copied": "’angta’!"
-      },
-      "header": {
+        "copied": "’angta’!",
         "roomCode": "Daq ngoQ:",
-        "copyLink": "Daq He yI’ang",
-        "copied": "’angta’!"
+        "copyLink": "{code} Daq He yI’ang"
       },
       "lobby": {
         "title": "Daq DaSuq’a’?",

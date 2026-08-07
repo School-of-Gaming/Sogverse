@@ -19,8 +19,10 @@ Route-group wrappers:
 | `(public)` | `flex min-h-screen flex-col` → `<Header>` + `<main flex-1>` + `<Footer>` |
 | `(auth)` | same as public, `<main>` centers its child |
 | `(dashboard)` | `<Header>` then `DashboardLayout`: `<div className="flex">` → `<Sidebar>` (admin only) + `<main min-w-0 flex-1>` |
-| `(voice)` | page renders its own voice header (also via `SiteHeaderShell`) then session UI; no app chrome |
+| `(voice)` | the `(public)` shape **minus the footer**: `<Header>` + `<main flex-1>`, nothing below it — a live call page shouldn't end in site nav |
 | `(preview)` | pass-through layout — **no chrome at all**; each admin-only preview scene composes the shell of the page it mocks (see below) |
+
+**A group earns its own entry by what it puts *around* the header, not by replacing it.** `(voice)` once existed to swap in a simplified header of its own; it now renders the standard one and keeps the group solely for the missing footer. If a future group wants only a different header, it wants a prop on the header, not a route group.
 
 **Rule: the preview route group's layout stays a pass-through.** A full-page preview scene mocks a *specific* page, so it has to compose that page's chrome itself — a dashboard scene renders `Header` + `DashboardLayout` with no sidebar, a public scene renders `Header` + `main` + `Footer`. Putting any chrome in the group layout would either double-wrap a scene or force every scene into one role's shell, which is exactly what moving these routes out of the public group fixed. Adding a shell to a scene means naming it in the scene registry, not editing this layout.
 

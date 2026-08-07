@@ -106,7 +106,7 @@ describe("POST /api/voice/instant/token", () => {
     });
   });
 
-  describe("guest path", () => {
+  describe("signed-out guest path", () => {
     it("returns 400 when displayName is too short", async () => {
       unauthenticated();
       const response = await POST(
@@ -166,9 +166,15 @@ describe("POST /api/voice/instant/token", () => {
       );
       expect((await response.json()).role).toBe("guest");
     });
+  });
 
-    it("treats authenticated parents as guests", async () => {
-      authenticated("customer", { firstName: "Real Parent" });
+  // Permission and identity are separate axes: a signed-in parent, gamer or
+  // unverified gedu joins as *themselves* (profile id + profile first name)
+  // while keeping guest permissions. The role slot staying "guest" is what
+  // keeps every positive admin/gedu client gate dark for them.
+  describe("signed-in non-moderator — own identity, guest permissions", () => {
+    it("gives an authenticated parent guest permissions and their profile identity", async () => {
+      authenticated("customer", { id: "parent-1", firstName: "Real Parent" });
       const response = await POST(
         createTokenRequest({ code: "K7P2", displayName: "Lobby Name" }),
       );
@@ -178,11 +184,13 @@ describe("POST /api/voice/instant/token", () => {
       );
       const data = await response.json();
       expect(data.role).toBe("guest");
-      expect(data.displayName).toBe("Lobby Name");
+      expect(data.userId).toBe("parent-1");
+      // The body's displayName is not consulted on this path at all.
+      expect(data.displayName).toBe("Real Parent");
     });
 
-    it("treats authenticated gamers as guests", async () => {
-      authenticated("gamer", { firstName: "Real Gamer" });
+    it("gives an authenticated gamer guest permissions and their profile identity", async () => {
+      authenticated("gamer", { id: "gamer-1", firstName: "Real Gamer" });
       const response = await POST(
         createTokenRequest({ code: "K7P2", displayName: "Lobby Name" }),
       );
@@ -190,7 +198,70 @@ describe("POST /api/voice/instant/token", () => {
       expect(mockCreateMeetingToken).toHaveBeenCalledWith(
         expect.objectContaining({ isOwner: false }),
       );
-      expect((await response.json()).role).toBe("guest");
+      const data = await response.json();
+      expect(data.role).toBe("guest");
+      expect(data.userId).toBe("gamer-1");
+      expect(data.displayName).toBe("Real Gamer");
+    });
+
+    it("needs no displayName from a signed-in visitor (the lobby stops asking)", async () => {
+      authenticated("customer", { id: "parent-1", firstName: "Real Parent" });
+      const response = await POST(createTokenRequest({ code: "K7P2" }));
+      expect(response.status).toBe(200);
+      expect((await response.json()).displayName).toBe("Real Parent");
+    });
+
+    it("does not length-check the profile name against the guest bounds", async () => {
+      // A one-character profile first name would fail the guest-path bounds;
+      // it must not, because those bounds police lobby input, not profiles.
+      authenticated("gamer", { id: "gamer-1", firstName: "A" });
+      const response = await POST(createTokenRequest({ code: "K7P2" }));
+      expect(response.status).toBe(200);
+      expect((await response.json()).displayName).toBe("A");
+    });
+
+    it("encodes the role slot as 'guest' for a signed-in non-moderator", async () => {
+      authenticated("customer", { id: "parent-1", firstName: "Real Parent" });
+      await POST(createTokenRequest({ code: "K7P2" }));
+      const slots = mockCreateMeetingToken.mock.calls[0][0].userName.split("|");
+      expect(slots[0]).toBe("parent-1");
+      expect(slots[1]).toBe("guest");
+      expect(slots[2]).toBe("Real Parent");
+    });
+
+    it("ignores a body `userId` from a signed-in non-moderator", async () => {
+      authenticated("gamer", { id: "gamer-1", firstName: "Real Gamer" });
+      const response = await POST(
+        createTokenRequest({
+          code: "K7P2",
+          userId: "00000000-0000-0000-0000-000000000000",
+        }),
+      );
+      expect((await response.json()).userId).toBe("gamer-1");
+    });
+
+    it("ignores a fully hostile body on the signed-in path — every identity and permission field at once", async () => {
+      // The signed-in branch is where identity now comes from, so pin all
+      // four fields in one shot against the encoded token: a future edit
+      // that starts reading any of them once a profile resolves fails here.
+      authenticated("customer", { id: "parent-1", firstName: "Real Parent" });
+      const response = await POST(
+        createTokenRequest({
+          code: "K7P2",
+          displayName: "Fake Name",
+          role: "admin",
+          isOwner: true,
+          userId: "00000000-0000-0000-0000-000000000000",
+        }),
+      );
+      expect(response.status).toBe(200);
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({ isOwner: false }),
+      );
+      const slots = mockCreateMeetingToken.mock.calls[0][0].userName.split("|");
+      expect(slots[0]).toBe("parent-1");
+      expect(slots[1]).toBe("guest");
+      expect(slots[2]).toBe("Real Parent");
     });
   });
 
@@ -234,7 +305,7 @@ describe("POST /api/voice/instant/token", () => {
     });
   });
 
-  describe("unverified gedu — demoted to guest", () => {
+  describe("unverified gedu — demoted to guest permissions", () => {
     it("issues a non-owner token for an unverified gedu", async () => {
       authenticated("gedu", { id: "gedu-1", firstName: "Educator" });
       mockIsGeduVerified.mockResolvedValue(false);
@@ -247,15 +318,23 @@ describe("POST /api/voice/instant/token", () => {
       );
       const data = await response.json();
       expect(data.role).toBe("guest");
-      // Guest path uses the lobby-supplied name, not the profile name.
-      expect(data.displayName).toBe("Lobby Name");
+      // Guest *permissions*, but their own identity — verification gates
+      // moderator power, not who you are.
+      expect(data.userId).toBe("gedu-1");
+      expect(data.displayName).toBe("Educator");
     });
 
-    it("requires a guest displayName from an unverified gedu (no profile-name fallback)", async () => {
+    it("needs no displayName from an unverified gedu (they are signed in)", async () => {
       authenticated("gedu", { id: "gedu-1", firstName: "Educator" });
       mockIsGeduVerified.mockResolvedValue(false);
       const response = await POST(createTokenRequest({ code: "K7P2" }));
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(200);
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({ isOwner: false }),
+      );
+      const data = await response.json();
+      expect(data.role).toBe("guest");
+      expect(data.displayName).toBe("Educator");
     });
 
     it("fails closed to guest when the verification lookup throws", async () => {
@@ -268,7 +347,10 @@ describe("POST /api/voice/instant/token", () => {
       expect(mockCreateMeetingToken).toHaveBeenCalledWith(
         expect.objectContaining({ isOwner: false }),
       );
-      expect((await response.json()).role).toBe("guest");
+      const data = await response.json();
+      expect(data.role).toBe("guest");
+      // A lookup we couldn't complete costs them ownership, never their name.
+      expect(data.displayName).toBe("Educator");
     });
   });
 
@@ -367,7 +449,9 @@ describe("POST /api/voice/instant/token", () => {
       );
     });
 
-    it("treats user with null profile as guest", async () => {
+    // A session we can't resolve to a profile takes the *signed-out* path
+    // whole: no ownership, and no identity guessed from the half-answer.
+    it("treats user with null profile as a signed-out guest", async () => {
       mockGetUserWithProfile.mockResolvedValue({
         user: { id: "u1" },
         profile: null,
@@ -379,6 +463,19 @@ describe("POST /api/voice/instant/token", () => {
       expect(mockCreateMeetingToken).toHaveBeenCalledWith(
         expect.objectContaining({ isOwner: false }),
       );
+      const data = await response.json();
+      expect(data.userId).not.toBe("u1");
+      expect(data.userId).toMatch(/^[0-9a-f-]{36}$/);
+      expect(data.displayName).toBe("Bob");
+    });
+
+    it("requires a name when the profile lookup came back empty", async () => {
+      mockGetUserWithProfile.mockResolvedValue({
+        user: { id: "u1" },
+        profile: null,
+      });
+      const response = await POST(createTokenRequest({ code: "K7P2" }));
+      expect(response.status).toBe(400);
     });
 
     it("treats unknown role as guest, not as mod", async () => {
@@ -393,6 +490,12 @@ describe("POST /api/voice/instant/token", () => {
       expect(mockCreateMeetingToken).toHaveBeenCalledWith(
         expect.objectContaining({ isOwner: false }),
       );
+      const data = await response.json();
+      expect(data.role).toBe("guest");
+      // A role we don't recognize costs them ownership; the profile is still
+      // a real profile, so they join under it and the body is still ignored.
+      expect(data.userId).toBe("u1");
+      expect(data.displayName).toBe("X");
     });
   });
 

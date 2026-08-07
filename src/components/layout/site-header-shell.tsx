@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 
 /**
- * Visual chrome shared by every fixed site header (the main `<Header>` and
- * the `(voice)` group's `<InstantVoiceHeader>`). Pins the header to the top
- * of the viewport as the page scrolls and renders the frosted-glass strip
- * the rest of the chrome lives on.
+ * Visual chrome shared by every fixed site header — the main `<Header>` and
+ * the simplified profile-selector one. Pins the header to the top of the
+ * viewport as the page scrolls and renders the frosted-glass strip the rest
+ * of the chrome lives on.
  *
  * The height comes from the `--header-height` CSS variable in
  * `src/app/globals.css` — the same variable the dashboard sidebar's sticky

@@ -1978,12 +1978,9 @@
       "joinFailed": "Impossible de rejoindre le salon. Veuillez réessayer.",
       "share": {
         "hint": "Cliquez sur le lien pour le copier.",
-        "copied": "Copié !"
-      },
-      "header": {
+        "copied": "Copié !",
         "roomCode": "Code du salon :",
-        "copyLink": "Copier le lien du salon",
-        "copied": "Copié !"
+        "copyLink": "Copier le lien du salon {code}"
       },
       "lobby": {
         "title": "Envie de rejoindre l’aventure ?",

@@ -7,64 +7,74 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "@/providers";
 import { cn } from "@/lib/utils";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { useLocalStreamGlow } from "@/components/voice/hooks/use-local-stream-glow";
 import { MicToggleButton, CameraToggleButton } from "@/components/voice/MediaToggleButtons";
 import { MicSettingsPopover } from "@/components/voice/MicSettingsPopover";
 import { MicLevelIndicator } from "@/components/voice/MicLevelIndicator";
+import { RoomLinkChip } from "./RoomLinkChip";
 import type { AudioInputDevice } from "@/components/voice/hooks/use-mic-devices";
 import { classifyMediaError, type MediaErrorCategory } from "@/lib/voice/media-error";
 
+/**
+ * Who the server says is looking at this page — `profiles.id` and the first
+ * name the room will show — or `null` for a signed-out visitor.
+ *
+ * Computed in the `/voice/[code]` server component from the same session the
+ * token route reads, and threaded down. Deliberately *not* derived from the
+ * client's `useAuth()`: the browser client's session singleton is seeded from
+ * cookies at construction and can be stale, and a lobby disagreeing with the
+ * token route about who you are is exactly the drift this avoids.
+ */
+export interface InstantRoomViewer {
+  /** `profiles.id` — the same id the token bakes in, so the lobby's preview
+   *  identicon is the avatar the room will actually render. */
+  id: string;
+  firstName: string;
+}
+
 interface InstantVoiceLobbyProps {
+  /** Validated, uppercase 4-character room code — rendered as the copyable
+   *  room link so whoever gets here first can invite the rest before joining. */
+  code: string;
   /**
-   * Called with the lobby-supplied display name (empty for mods who use
-   * their profile) and the user's preview-screen mic/camera choices,
-   * which the call object honors at join time.
+   * Called with the lobby-supplied display name (empty whenever the viewer is
+   * signed in — the server uses their profile name) and the user's
+   * preview-screen mic/camera choices, which the call object honors at join
+   * time.
    */
   onJoin: (
     displayName: string,
     media: { micOn: boolean; cameraOn: boolean; audioDeviceId: string | null },
   ) => void;
-  /**
-   * Whether the server will issue this viewer an owner token (admin or a
-   * *verified* gedu) — computed server-side and passed down. The lobby must
-   * use this, not the client-side `profile.role`, to decide guest vs. mod:
-   * the client role can't see gedu verification, so an unverified gedu would
-   * otherwise be shown the mod UI (no name input) and then rejected by the
-   * token route's guest-name requirement.
-   */
-  isModerator: boolean;
+  /** The signed-in viewer's identity, or `null` when signed out. The *only*
+   *  thing it decides here is the name input; permissions are the token
+   *  route's business and a signed-in non-moderator still joins as a guest. */
+  viewer: InstantRoomViewer | null;
   joining: boolean;
   /** Most recent error from a failed join attempt; rendered above the join button. */
   error: string | null;
 }
 
 /**
- * Pre-join screen for instant voice rooms. Shows a live preview of the
- * avatar exactly as it will appear in the voice room — speaking
- * glow, camera-in-circle, mic indicator — and (for guests) collects a
- * display name.
+ * Pre-join screen for instant voice rooms. Everyone sees it — it is the
+ * device-prep screen, not a guest formality — and it shows a live preview of
+ * the avatar exactly as it will appear in the voice room: speaking glow,
+ * camera-in-circle, mic indicator.
  *
- * Authenticated admins and *verified* gedus skip the name input — the server
- * uses their profile display name. Everyone else — authenticated parents,
- * gamers, and *unverified* gedus — is treated as a guest and must provide a
- * name. Whether the viewer is a moderator is decided server-side and passed in
- * (`isModerator`); see that prop's doc for why the client role can't decide it.
+ * The one thing that varies is the name input, and it turns on sign-in, not on
+ * moderator status: anyone signed in joins as themselves under their profile
+ * name, so only a signed-out visitor is asked what to call them.
  *
- * The lobby's identicon is a *preview* generated from a fresh client-side
- * UUID. The actual call uses a server-issued UUID (see token route's
- * Vector D mitigation), so the in-call avatar pattern won't be identical.
+ * For a signed-in viewer the preview identicon is their profile id, which is
+ * exactly the avatar the call will render. For a signed-out one it is a
+ * throwaway client-side UUID and the call gets a *different* server-issued one
+ * (the token route's Vector D mitigation), so the pattern won't match.
  * Acceptable: identicons are abstract and don't function as identity.
  */
-export function InstantVoiceLobby({ onJoin, isModerator, joining, error }: InstantVoiceLobbyProps) {
+export function InstantVoiceLobby({ code, onJoin, viewer, joining, error }: InstantVoiceLobbyProps) {
   const t = useTranslations("voice.instant.lobby");
-  const { profile } = useAuth();
-  // Server-decided (admin or verified gedu), NOT `profile.role` — see the
-  // `isModerator` prop doc. An unverified gedu has a gedu profile role but is a
-  // guest here, so this is false for them.
-  const isMod = isModerator;
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
@@ -81,20 +91,19 @@ export function InstantVoiceLobby({ onJoin, isModerator, joining, error }: Insta
   const [currentAudioInputId, setCurrentAudioInputId] = useState<string | null>(null);
   const [name, setName] = useState("");
 
-  // Preview-only identicon. Generated client-side after mount so SSR doesn't
-  // produce a different UUID than the client (hydration mismatch). The server
-  // issues a separate UUID for the actual call — we don't try to keep these
-  // in sync; see the file-level note above.
+  // Preview-only identicon for signed-out visitors. Generated client-side
+  // after mount so SSR doesn't produce a different UUID than the client
+  // (hydration mismatch). The server issues a separate UUID for the actual
+  // call — we don't try to keep these in sync; see the file-level note above.
   const [previewId, setPreviewId] = useState<string | null>(null);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- the render-after-mount is the point: a fresh client-only UUID after hydration avoids the SSR/client mismatch we'd get from generating it during render.
     setPreviewId(crypto.randomUUID());
   }, []);
 
-  // For mods, show their profile identicon — that matches the avatar
-  // they'll have in-call. Everyone else (guests, including auth'd
-  // parents/gamers) sees the preview identicon.
-  const lobbyIdenticonId = profile && isMod ? profile.id : previewId;
+  // A signed-in viewer's profile id is what the token bakes in, so the preview
+  // is the real avatar. Signed-out visitors get the throwaway one.
+  const lobbyIdenticonId = viewer ? viewer.id : previewId;
 
   // Acquire mic + (optional) camera on mount and route the stream into the
   // preview <video>. Toggling cam/mic just enables/disables the existing
@@ -208,17 +217,18 @@ export function InstantVoiceLobby({ onJoin, isModerator, joining, error }: Insta
   const nameValid =
     trimmedName.length >= DISPLAY_NAME_MIN &&
     trimmedName.length <= DISPLAY_NAME_MAX;
-  const canJoin = isMod || nameValid;
+  const canJoin = viewer !== null || nameValid;
 
   // Display name shown under the avatar — mirrors what the in-call avatar
-  // will render (mods use profile.first_name, guests use the typed name).
-  const previewName =
-    profile && isMod ? profile.first_name : trimmedName;
+  // will render (profile first name when signed in, the typed name otherwise).
+  const previewName = viewer ? viewer.firstName : trimmedName;
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!canJoin || joining) return;
-    onJoin(isMod ? "" : trimmedName, {
+    // A signed-in viewer sends no name at all: the server takes it from their
+    // profile and ignores anything we'd put here.
+    onJoin(viewer ? "" : trimmedName, {
       micOn,
       cameraOn,
       audioDeviceId: currentAudioInputId,
@@ -231,6 +241,11 @@ export function InstantVoiceLobby({ onJoin, isModerator, joining, error }: Insta
         <CardHeader>
           <CardTitle>{t("title")}</CardTitle>
           <CardDescription>{t("description")}</CardDescription>
+          {/* The room link, right where someone waiting in the lobby wants it:
+              the first person to arrive is usually the one inviting the rest. */}
+          <div className="pt-2">
+            <RoomLinkChip code={code} />
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -288,8 +303,8 @@ export function InstantVoiceLobby({ onJoin, isModerator, joining, error }: Insta
               <CameraToggleButton on={cameraOn} onToggle={toggleCamera} disabled={!stream} />
             </div>
 
-            {/* Name input — guests only */}
-            {!isMod && (
+            {/* Name input — signed-out visitors only */}
+            {viewer === null && (
               <div className="space-y-2">
                 <label htmlFor="display-name" className="text-sm font-medium">
                   {t("nameLabel")}

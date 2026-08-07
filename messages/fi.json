@@ -1978,12 +1978,9 @@
       "joinFailed": "Huoneeseen liittyminen epäonnistui. Yritä uudelleen.",
       "share": {
         "hint": "Kopioi linkki napsauttamalla.",
-        "copied": "Kopioitu!"
-      },
-      "header": {
+        "copied": "Kopioitu!",
         "roomCode": "Huoneen koodi:",
-        "copyLink": "Kopioi huoneen linkki",
-        "copied": "Kopioitu!"
+        "copyLink": "Kopioi huoneen {code} linkki"
       },
       "lobby": {
         "title": "Valmiina liittymään?",

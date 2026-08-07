@@ -2066,12 +2066,9 @@
       "joinFailed": "Couldn’t join the room. Please try again.",
       "share": {
         "hint": "Click the link to copy it.",
-        "copied": "Copied!"
-      },
-      "header": {
+        "copied": "Copied!",
         "roomCode": "Room code:",
-        "copyLink": "Copy room link",
-        "copied": "Copied!"
+        "copyLink": "Copy room link {code}"
       },
       "lobby": {
         "title": "Ready to join?",
