@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { VoiceRoomProvider, useVoiceRoom } from "@/components/voice/VoiceRoomProvider";
 import { VoiceRoom } from "@/components/voice/VoiceRoom";
-import { InstantVoiceLobby } from "./InstantVoiceLobby";
+import { InstantVoiceLobby, type InstantRoomViewer } from "./InstantVoiceLobby";
 import { CallEndedScreen, type EndReason } from "./CallEndedScreen";
 import { RoomNotFoundScreen } from "./RoomNotFoundScreen";
 import { RoomLinkChip } from "./RoomLinkChip";
@@ -23,13 +23,12 @@ type SessionState =
 interface InstantVoiceSessionProps {
   /** Validated, uppercase 4-character code from the URL. */
   code: string;
-  /** Whether the server will grant this viewer an owner token (admin or a
-   *  verified gedu). Computed server-side and threaded into the lobby so it
-   *  shows the guest name input to anyone the token route treats as a guest —
-   *  an unverified gedu included. Don't re-derive this from the client-side
-   *  profile role: that can't see gedu verification and would mismatch the
-   *  server, leaving an unverified gedu with no name field and a 400 on join. */
-  isModerator: boolean;
+  /** The signed-in viewer's identity (profile id + first name), or null when
+   *  signed out. Computed server-side from the same session the token route
+   *  reads and threaded through to the lobby, which uses it to decide whether
+   *  to ask for a name. Don't re-derive it client-side from `useAuth()` — that
+   *  singleton can be stale, and the lobby must agree with the token route. */
+  viewer: InstantRoomViewer | null;
   /** Pre-rendered copyright slot from the parent server component. Threaded
    *  down to CallEndedScreen so the year is computed on the server and we
    *  don't risk a hydration mismatch at year boundaries. */
@@ -44,7 +43,8 @@ interface InstantVoiceSessionProps {
  *                   sure the room is real before asking the user to grant
  *                   camera/mic permission and pick a name. Resolves to
  *                   `lobby` or `not-found`.
- *   - `lobby`     — Pre-join: cam/mic preview, name input.
+ *   - `lobby`     — Pre-join: cam/mic preview, plus a name input for
+ *                   signed-out visitors.
  *   - `in-call`   — Connected to Daily; renders the zone-based voice room.
  *   - `ended`     — Either the user clicked Leave (reason: "left") or
  *                   the call ended for everyone (reason: "ended" — mod
@@ -53,15 +53,15 @@ interface InstantVoiceSessionProps {
  *   - `not-found` — Room doesn't exist. Echoes the code back so the user
  *                   can spot typos.
  */
-export function InstantVoiceSession({ code, isModerator, copyright }: InstantVoiceSessionProps) {
+export function InstantVoiceSession({ code, viewer, copyright }: InstantVoiceSessionProps) {
   return (
     <VoiceRoomProvider groupId={null}>
-      <InstantVoiceSessionInner code={code} isModerator={isModerator} copyright={copyright} />
+      <InstantVoiceSessionInner code={code} viewer={viewer} copyright={copyright} />
     </VoiceRoomProvider>
   );
 }
 
-function InstantVoiceSessionInner({ code, isModerator, copyright }: InstantVoiceSessionProps) {
+function InstantVoiceSessionInner({ code, viewer, copyright }: InstantVoiceSessionProps) {
   const t = useTranslations("voice");
   const tInstant = useTranslations("voice.instant");
   const { joined, join, leave, callObject } = useVoiceRoom();
@@ -300,7 +300,7 @@ function InstantVoiceSessionInner({ code, isModerator, copyright }: InstantVoice
       <InstantVoiceLobby
         code={code}
         onJoin={handleJoin}
-        isModerator={isModerator}
+        viewer={viewer}
         joining={joining}
         error={joinError}
       />

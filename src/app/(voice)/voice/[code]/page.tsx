@@ -1,7 +1,7 @@
 import { InstantVoiceSession } from "@/components/voice/instant/InstantVoiceSession";
 import { RoomNotFoundScreen } from "@/components/voice/instant/RoomNotFoundScreen";
 import { Copyright } from "@/components/layout";
-import { instantRoomModerator } from "@/lib/voice/instant-room-moderator";
+import { getUserWithProfile } from "@/lib/supabase/server";
 import { normalizeVoiceRoomCode } from "@/lib/voice-room-code";
 
 /**
@@ -28,11 +28,17 @@ export default async function InstantVoicePage({
     return <RoomNotFoundScreen code={prettifyTypedCode(rawCode)} />;
   }
 
-  // Same decision the token route uses to mint the owner token (admin or a
-  // verified gedu), so the lobby shows the guest name input to exactly the
-  // viewers the server will treat as guests. Null → guest. See
-  // `instantRoomModerator` for the rule and its fail-closed behavior.
-  const isModerator = (await instantRoomModerator()) !== null;
+  // Who's looking, read from the same session the token route reads — so the
+  // lobby and the minted token agree on identity. A profile we can't resolve
+  // (signed out, or a lookup that failed) is null, which is the signed-out
+  // path: type a name, get a server-minted UUID. Nothing about *permissions*
+  // is decided here; the token route owns that and treats every non-moderator
+  // as a guest regardless.
+  const session = await getUserWithProfile();
+  const profile = session?.profile;
+  const viewer = profile
+    ? { id: session.user.id, firstName: profile.first_name }
+    : null;
 
   return (
     <>
@@ -42,7 +48,7 @@ export default async function InstantVoicePage({
           server-rendered HTML at year boundaries. */}
       <InstantVoiceSession
         code={code}
-        isModerator={isModerator}
+        viewer={viewer}
         copyright={<Copyright className="text-xs" />}
       />
     </>

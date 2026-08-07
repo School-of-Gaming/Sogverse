@@ -4,8 +4,7 @@ import { isGeduVerified } from "@/services/gedu/gedu-profiles.service";
 /**
  * The identity an instant-voice-room moderator joins with: their stable
  * `profiles.id`, their (non-guest) role, and their profile display name. The
- * token route bakes these into the owner token; the page only needs to know
- * whether this is non-null.
+ * token route bakes these into the owner token.
  */
 export interface InstantRoomModerator {
   userId: string;
@@ -18,12 +17,11 @@ export interface InstantRoomModerator {
  * (owner) token in an instant voice room?" — returns the moderator identity, or
  * `null` for a guest.
  *
- * Both instant-room mod surfaces read it so they can't drift: the token route
- * (mints the owner token from the returned identity) and the public
- * `/voice/[code]` page (treats a null result as a guest, so the lobby shows the
- * name input). Deriving the decision independently on each side is what would
- * show an unverified gedu the mod UI and then bounce them off the token route's
- * guest-name requirement with a 400.
+ * The token route is the only consumer: it mints the owner token from the
+ * returned identity. The `/voice/[code]` page used to read it too, to decide
+ * whether the lobby asked for a name — that need is gone now that the name
+ * input turns on sign-in rather than on moderator status, so there is no second
+ * surface left to drift from this one.
  *
  * The rule: admin → moderator; gedu → moderator **only if** admin-verified;
  * everyone else (signed-out, parent, gamer) → guest. **Fails closed to `null`
