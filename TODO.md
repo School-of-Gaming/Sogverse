@@ -287,6 +287,23 @@ Currently the only way to link a parent to a gamer is when the parent creates th
 - [ ] Create a server-side API route (e.g., `POST /api/gamers/link`) that validates authorization before inserting into `parent_gamer` using the admin client
 - [ ] Add UI for the chosen flow (e.g., "Share invite code" button for existing parent, "Enter code" form for second parent)
 
+## Postal-code UI — the consumer the data now waits for
+
+- [ ] **Wire the postal-code lookup into a surface.** The GeoNames branch (August 2026)
+  shipped the whole supply side: a `postal_codes` table (FI 3,596 codes, FR 35,348 —
+  covering every kunta and 99.99% of communes, Paris/Lyon/Marseille rolled up), and
+  `LocationsService.getMunicipalitiesByPostalCode(country, code)` returning municipality
+  rows with full ancestor chains. **Nothing consumes it yet** — no hook, no UI — which
+  was a deliberate scope cut, not an oversight. Candidate consumers, each needing its own
+  decisions before any is built: a postal-code shortcut in the parent's home-location
+  picker on registration/settings (type "00100" instead of browsing to Helsinki — but a
+  French code can resolve to 40+ communes, so the multi-hit case needs a disambiguation
+  UI); and "clubs near me" on the public shop/schools surfaces (bigger: needs a
+  product-proximity notion, and per the locations invariants coordinates/radius must stay
+  *display*-only — never part of coverage semantics). The UK has no postal data by
+  construction (GeoNames' GB codes aren't official, so there is nothing to join on) — any
+  UI must degrade gracefully per country rather than assume coverage.
+
 ## Waitlist — the parent/gamer side
 
 A waitlisted seat is a state of the shared enrollment card on both dashboards, and
