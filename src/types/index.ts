@@ -103,8 +103,8 @@ export type GeduLocationInsert = Database["public"]["Tables"]["gedu_locations"][
 export type ProductType = Database["public"]["Enums"]["product_type"];
 export type BillingMode = Database["public"]["Enums"]["billing_mode"];
 export type ProductStatus = Database["public"]["Enums"]["product_status"];
-// Fixed set of product topics. The game/subject split + display labels live
-// in src/lib/products/topics.ts (PRODUCT_TOPICS).
+// Fixed set of product topics — one flat axis, no game/subject split. Display
+// labels and per-topic info live in src/lib/products/topics.ts (PRODUCT_TOPICS).
 export type ProductTopic = Database["public"]["Enums"]["product_topic"];
 
 // products

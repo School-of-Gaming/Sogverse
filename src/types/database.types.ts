@@ -1834,7 +1834,7 @@ export type Database = {
         | "minecraft_education"
         | "minecraft_bedrock"
         | "fortnite"
-        | "webinar"
+        | "roblox_studio"
         | "pokemon_go"
       product_type: "consumer_club" | "municipality_club" | "camp" | "event"
       user_role: "admin" | "customer" | "gamer" | "gedu"
@@ -1989,7 +1989,7 @@ export const Constants = {
         "minecraft_education",
         "minecraft_bedrock",
         "fortnite",
-        "webinar",
+        "roblox_studio",
         "pokemon_go",
       ],
       product_type: ["consumer_club", "municipality_club", "camp", "event"],

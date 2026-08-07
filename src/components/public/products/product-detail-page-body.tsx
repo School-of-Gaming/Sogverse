@@ -9,7 +9,6 @@ import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
-import { isGameTopic } from "@/lib/products/topics";
 import { parseLongDescription } from "@/types";
 import type {
   ProductBrowseRow,
@@ -18,7 +17,7 @@ import type {
 } from "@/types";
 import { LongDescription } from "./long-description";
 import { ProductOverviewCard } from "./product-overview-card";
-import { GameInfoCard } from "./game-info-card";
+import { TopicInfoCard } from "./topic-info-card";
 
 // Page body — pure layout + presentation. Owns nothing about fetching, and is
 // agnostic to the signup panel: the panel is injected as a slot, so the
@@ -172,9 +171,8 @@ function MainColumn({
   product: ProductDetailPageBodyProps["product"];
   longDescription: ProductLongDescription;
 }) {
-  // The game card only applies to game topics (Minecraft editions, Fortnite);
-  // subjects like Webinar have no game to describe. isGameTopic narrows
-  // product.topic to GameTopic so it can be passed straight to GameInfoCard.
+  // The topic card renders itself only when the topic carries an `info` block
+  // (all current topics do); a hypothetical info-less topic gets no card.
   return (
     <div className="space-y-6">
       {/* Marketing blurb first — the expanded pitch under the hero, ahead of
@@ -183,7 +181,7 @@ function MainColumn({
 
       <ProductOverviewCard product={product} />
 
-      {isGameTopic(product.topic) && <GameInfoCard topic={product.topic} />}
+      <TopicInfoCard topic={product.topic} />
     </div>
   );
 }

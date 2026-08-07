@@ -357,10 +357,6 @@
         "moveDown": "Déplacer vers le bas",
         "remove": "Retirer"
       },
-      "topicKinds": {
-        "game": "Jeux",
-        "subject": "Sujets"
-      },
       "locationPicker": {
         "hintMunicipality": "Choisissez la commune finlandaise concernée par ce club — celle qui le finance. Les sites et les autres pays ne sont pas proposés ici.",
         "change": "Changer",
@@ -435,7 +431,7 @@
       "hints": {
         "shortDescription": "Une accroche d’une ligne affichée sur les cartes du catalogue, dans les listes et en haut de la page de détail.",
         "longDescription": "Facultatif. Affiché uniquement sur la page de détail du produit. Construisez-le à partir de titres et de paragraphes.",
-        "topicHint": "Le thème de ce produit — un jeu (comme Minecraft ou Fortnite) ou un sujet (comme un webinaire).",
+        "topicHint": "Ce dont parle ce produit. Les familles le voient comme filtre « Univers » dans la boutique et sur la carte d’info de la page produit.",
         "materialUrlHint": "Facultatif. Réservé aux Gedus — les familles ne le voient jamais.",
         "deliveredInHint": "La langue principale utilisée pendant les sessions.",
         "onlineNoLocation": "En ligne et accessible à tous — aucun lieu n’est nécessaire. Tout parent parcourant le catalogue le verra, où qu’il habite.",
@@ -1418,8 +1414,7 @@
       "typeClubs": "Clubs",
       "typeCamps": "Camps",
       "typeEvents": "Événements",
-      "topic": "Jeu",
-      "subject": "Sujet",
+      "subject": "Univers",
       "format": "Format",
       "formatOnline": "En ligne",
       "formatInPerson": "En présentiel",
@@ -1451,9 +1446,6 @@
       "noMatches": "Aucun résultat. Essayez d’effacer vos filtres."
     }
   },
-  "topics": {
-    "webinar": "Webinaire"
-  },
   "seatAvailability": {
     "remaining": "{count, plural, one {# / {total} place restante} other {# / {total} places restantes}}",
     "waitlistAvailable": "Liste d’attente"
@@ -1474,12 +1466,12 @@
     "sections": {
       "overview": "Bon à savoir",
       "calendar": "Planning",
-      "topic": "Thème",
-      "game": "À propos du jeu"
+      "topic": "Thème"
     },
-    "gameInfo": {
+    "topicInfo": {
+      "heading": "À propos de {name}",
       "pegi": "PEGI {age}",
-      "games": {
+      "topics": {
         "minecraft_java": {
           "description": "Minecraft est un jeu de construction créatif — imaginez des LEGO numériques. Les enfants explorent un monde en blocs, récoltent des matériaux et construisent tout ce qu’ils imaginent, d’une maison douillette à une ville entière. Il n’y a ni victoire ni défaite ; c’est un espace calme et ouvert pour créer et résoudre des problèmes. « Java » est la version d’origine pour les ordinateurs Windows, Mac et Linux — celle qu’utilisent nos clubs à distance, car elle prend en charge les outils dont nos animateurs ont besoin.",
           "note": "Pour nos clubs, votre enfant a besoin de Minecraft sur un ordinateur. Sur Minecraft.net, il est vendu sous le nom « Minecraft: Java & Bedrock Edition for PC » — un achat unique (et non un abonnement) qui comprend la version que nous utilisons. La version distincte pour consoles, téléphones et tablettes ne fonctionne pas pour ces clubs.",
@@ -1504,6 +1496,11 @@
           "description": "Pokémon GO se joue dehors, sur un téléphone. Des créatures apparaissent sur une carte du monde réel, et les enfants marchent jusqu’aux parcs, aux rues et aux monuments pour les trouver et les collectionner. Le jeu repose sur la collection plutôt que sur le combat — l’intérêt est d’explorer, de compléter son Pokédex et de comparer ses trouvailles avec ses amis. L’essentiel du jeu se fait à pied, ce qui fait bouger les enfants.",
           "note": "Pokémon GO est gratuit à télécharger et à jouer — vous n’achetez pas le jeu lui-même. Votre enfant a besoin d’un téléphone ou d’une tablette avec GPS et connexion mobile, ainsi que d’un compte gratuit. Le jeu propose des achats facultatifs, que vous pouvez limiter avec le contrôle parental. Comme on y joue dehors, dans de vrais lieux, mieux vaut convenir à l’avance des endroits où votre enfant peut aller et de la présence ou non d’un adulte.",
           "linkLabel": "Où se le procurer"
+        },
+        "roblox_studio": {
+          "description": "Roblox Studio est l’outil gratuit avec lequel les jeux Roblox eux-mêmes sont créés. Les enfants conçoivent des mondes, construisent avec de vrais outils 3D et programment avec du vrai code : leurs idées deviennent des expériences auxquelles d’autres peuvent réellement jouer. Dans nos clubs, les enfants créent au lieu de jouer — c’est du vrai développement de jeux vidéo.",
+          "note": "Roblox Studio est gratuit — il n’y a rien à acheter. Il fonctionne uniquement sur PC Windows et Mac : ni sur iPad ou autre tablette, ni sur Chromebook, téléphone ou console de jeu — votre enfant a donc besoin d’un ordinateur fixe ou portable pour participer. Un compte Roblox gratuit est également nécessaire, et le réglage d’âge du compte détermine ses protections de discussion et de confidentialité. Les créations terminées peuvent être publiées pour que d’autres joueurs les découvrent et y jouent.",
+          "linkLabel": "Obtenir Roblox Studio"
         }
       }
     },

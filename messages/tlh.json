@@ -402,10 +402,6 @@
         "moveDown": "bIng yIvIH",
         "remove": "yIteq"
       },
-      "topicKinds": {
-        "game": "QujmeH",
-        "subject": "paQDI’norgh"
-      },
       "locationPicker": {
         "hintMunicipality": "veng yIwIv — Huch nob veng. Daqmey latlh Sepmey je luwIvlaHbe’.",
         "change": "choH",
@@ -480,7 +476,7 @@
       "hints": {
         "shortDescription": "wa’ tlhegh QIn. browse ’aqroSmeyDaq, tetlhmeyDaq, je ’aqroS tlhopDaq cha’lu’.",
         "longDescription": "vItlhutlh. Doch ’aqroSDaq neH cha’lu’. nargh je ’ay’mey lo’.",
-        "topicHint": "Doch — Quj (Minecraft, Fortnite, je latlh) ghap paQDI’norgh (ja’chuq).",
+        "topicHint": "Doch qel malja’vam. qech-lojmIt lulegh qorDu’pu’ malja’Daq, ’ej De’ navDaq je.",
         "materialUrlHint": "vItlhutlh. Gedupu’vaD neH — ghu’pu’ luleghbe’.",
         "deliveredInHint": "qaStaHvISmeyDaq Hol pIn.",
         "onlineNoLocation": "rurmey — Daq poQbe’. Hoch vavmey nej Hoch lulegh, qo’Daq pagh.",
@@ -1463,7 +1459,6 @@
       "typeClubs": "ghom’a’mey",
       "typeCamps": "raghmey",
       "typeEvents": "wanI’mey",
-      "topic": "Quj",
       "subject": "qech",
       "format": "rurmeH",
       "formatOnline": "QumDaq",
@@ -1496,9 +1491,6 @@
       "noMatches": "pagh Sam. tetlh yISay’moH."
     }
   },
-  "topics": {
-    "webinar": "ja’chuq"
-  },
   "seatAvailability": {
     "remaining": "{count, plural, one {# / {total} pa’ ratlh} other {# / {total} pa’ ratlh}}",
     "waitlistAvailable": "loS tetlh"
@@ -1519,12 +1511,12 @@
     "sections": {
       "overview": "yISov",
       "calendar": "jaj tetlh",
-      "topic": "Doch",
-      "game": "Qujvam De’"
+      "topic": "Doch"
     },
-    "gameInfo": {
+    "topicInfo": {
+      "heading": "{name} De’",
       "pegi": "PEGI {age}",
-      "games": {
+      "topics": {
         "minecraft_java": {
           "description": "Minecraft ’oH chenmoHmeH Quj quv’e’. nagh qo’Daq lengtaH puqpu’, Doch luSuq, qachmey’a’ luchenmoH – juHHom, veng, qo’ naQ ghap. Suvbe’lu’, QaplaHbe’lu’; jot ’ej tlhab Daq ’oH, vaj nuD ’ej Qatlh Sov luSamlaH. ”Java” ’oH mung Quj’e’, De’wI’mey Windows, Mac, Linux je lo’meH; ghojmoHwI’pu’maj lulo’.",
           "note": "ghojmoHghachmaj luSuvmeH, De’wI’Daq Minecraft poQ puqlI’. Minecraft.net-Daq ”Minecraft: Java & Bedrock Edition for PC” ponglu’ – wa’ wa’logh DIl (tlhachID ghobe’), mIllogh lo’bogh ngaSbogh. console, telategh, tablet je mIllogh pIm lI’be’.",
@@ -1549,6 +1541,11 @@
           "description": "Pokémon GO QujmeH juHlIj yImej – Hurgh yIghoS! qo’ teH chartDaq Ha’DIbaHmey chenlu’, ’ej Sammeh yIt puqpu’: wIchmey, Hemey, Daq Dunmey je. Suvbe’lu’ – qemlu’ neH. Pokédex yIteb ’ej juppu’ tlhej SammeH yIqel. Qujchugh puq, yItnIS – vaj vIHmoH Quj.",
           "note": "Pokémon GO yISuqmeH DIl HInobbe’ – Quj naQ yIje’be’. GPS ghajbogh jabbI’ID jan mobile-data je poQlu’, ’ej tlhab De’wI’ pong chenmoH. wejwI’ DachmeH Huch poQlu’, ’ach SoH yI’el lojmIt. Hurgh Qujlu’, Daq teHDaq – vaj yIqel: nuqDaq jaHlaH puqlI’, ’ej ghaH tlhej’a’ nuv tIn?",
           "linkLabel": "nuqDaq Suqlu’"
+        },
+        "roblox_studio": {
+          "description": "Roblox Studio ’oH tlhab jan’e’, Roblox Qujmey chenmoHlu’meH lo’lu’bogh. qo’mey Hutlhbogh chenmoH puqpu’, teH 3D janmey lo’, ’ej teH ngoq ghItlh – qechmeychaj Qujmey moj, ’ej bIQujlaHbogh latlhpu’. ghom’a’meymajDaq Qujbe’ puqpu’ – chenmoH! Quj chenmoHwI’ teH mIw ’oH.",
+          "note": "tlhab ’oH Roblox Studio’e’ – pagh yIje’. Windows De’wI’ Mac je neH: iPad ghobe’, tablet ghobe’, Chromebook ghobe’, telategh ghobe’, qImroQ ghobe’ – vaj De’wI’’a’ pagh laptop poQ puqlI’. tlhab Roblox pong je poQlu’, ’ej pong qan chur QIn ’ej pegh lojmIt che’. chenmoHpu’bogh Dochmey ngeHlaH, vaj Sam ’ej Quj latlh QujwI’pu’.",
+          "linkLabel": "Roblox Studio yISuq"
         }
       }
     },

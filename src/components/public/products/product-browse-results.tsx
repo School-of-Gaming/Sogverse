@@ -34,7 +34,6 @@ interface ProductBrowseResultsProps {
     initialSpokenLanguages: SpokenLanguage[];
     showTypeFilter?: boolean;
     topicChoices?: readonly TopicFilterChip[];
-    topicLabelKey?: "topic" | "subject";
   };
   /** Detail-page URL builder for each card. Defaults to the storefront
    *  `/shop/[id]`; the municipality page passes `/schools/<slug>/[id]`. */

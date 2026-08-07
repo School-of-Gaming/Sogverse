@@ -11,10 +11,7 @@ import {
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import {
-  GAME_TOPICS,
-  SUBJECT_TOPICS,
-} from "@/lib/products/topics";
+import { PRODUCT_TOPIC_VALUES } from "@/lib/products/topics";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { useLanguageNames } from "@/hooks/use-language-names";
 import { Constants } from "@/types";
@@ -226,20 +223,11 @@ export function IdentitySection({
           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         >
           <option value="">{t("placeholders.selectTopic")}</option>
-          <optgroup label={t("topicKinds.game")}>
-            {GAME_TOPICS.map((topic) => (
-              <option key={topic} value={topic}>
-                {topicLabel(topic)}
-              </option>
-            ))}
-          </optgroup>
-          <optgroup label={t("topicKinds.subject")}>
-            {SUBJECT_TOPICS.map((topic) => (
-              <option key={topic} value={topic}>
-                {topicLabel(topic)}
-              </option>
-            ))}
-          </optgroup>
+          {PRODUCT_TOPIC_VALUES.map((topic) => (
+            <option key={topic} value={topic}>
+              {topicLabel(topic)}
+            </option>
+          ))}
         </select>
       </Field>
 

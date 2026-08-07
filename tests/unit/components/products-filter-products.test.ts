@@ -73,7 +73,7 @@ const B = row({
 });
 const C = row({
   id: "c",
-  topic: "webinar",
+  topic: "roblox_studio",
   isRemote: true,
   spokenLanguageCode: "fi",
   minAge: 7,

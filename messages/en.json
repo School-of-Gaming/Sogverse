@@ -357,10 +357,6 @@
         "moveDown": "Move down",
         "remove": "Remove"
       },
-      "topicKinds": {
-        "game": "Games",
-        "subject": "Subjects"
-      },
       "locationPicker": {
         "hintMunicipality": "Pick the Finnish municipality this club is for — the one that funds it. Sites and other countries aren’t options here.",
         "change": "Change",
@@ -435,7 +431,7 @@
       "hints": {
         "shortDescription": "A one-line teaser shown on browse cards, listings, and the top of the detail page.",
         "longDescription": "Optional. Shown only on the product’s detail page. Build it from headings and paragraphs.",
-        "topicHint": "The topic this product covers — a game (like Minecraft or Fortnite) or a subject (like Webinar).",
+        "topicHint": "What this product is about. Families see it as the Subject filter in the shop and on the product page’s About card.",
         "materialUrlHint": "Optional. For Gedus only — families never see this.",
         "deliveredInHint": "The primary language used during sessions.",
         "onlineNoLocation": "Online and available to anyone — no location needed. Any parent browsing will see this, no matter where they live.",
@@ -1418,7 +1414,6 @@
       "typeClubs": "Clubs",
       "typeCamps": "Camps",
       "typeEvents": "Events",
-      "topic": "Game",
       "subject": "Subject",
       "format": "Format",
       "formatOnline": "Online",
@@ -1451,9 +1446,6 @@
       "noMatches": "No matches. Try clearing your filters."
     }
   },
-  "topics": {
-    "webinar": "Webinar"
-  },
   "seatAvailability": {
     "remaining": "{count, plural, one {# of {total} seat remaining} other {# of {total} seats remaining}}",
     "waitlistAvailable": "Waitlist"
@@ -1474,12 +1466,12 @@
     "sections": {
       "overview": "Good to know",
       "calendar": "Schedule",
-      "topic": "Topic",
-      "game": "About the game"
+      "topic": "Topic"
     },
-    "gameInfo": {
+    "topicInfo": {
+      "heading": "About {name}",
       "pegi": "PEGI {age}",
-      "games": {
+      "topics": {
         "minecraft_java": {
           "description": "Minecraft is a creative building game — think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine, from a cosy house to a whole city. There’s no winning or losing; it’s a calm, open-ended space to create and problem-solve. “Java” is the original version for Windows, Mac and Linux computers — the one our remote clubs use, because it supports the tools our instructors rely on.",
           "note": "For our clubs your child needs Minecraft on a computer. On Minecraft.net it’s sold as “Minecraft: Java & Bedrock Edition for PC” — a single one-time purchase (not a subscription) that includes the version we use. The separate console, phone and tablet version won’t work for these clubs.",
@@ -1504,6 +1496,11 @@
           "description": "Pokémon GO is played outdoors, on a phone. Creatures appear on a map of the real world, and children walk to parks, streets and landmarks to find and collect them. It’s about collecting rather than fighting — the appeal is exploring, filling up a Pokédex and comparing finds with friends. Most of the playing happens on foot, so it tends to get children moving.",
           "note": "Pokémon GO is free to download and play — you don’t buy the game itself. Your child needs a phone or tablet with GPS and a mobile data connection, plus a free account. There are optional in-app purchases, which you can limit with parental controls. Because it’s played outdoors in real places, it’s worth agreeing in advance where your child may go and whether an adult comes along.",
           "linkLabel": "Where to get it"
+        },
+        "roblox_studio": {
+          "description": "Roblox Studio is the free tool that Roblox games themselves are made with. Children design worlds, build with real 3D tools and script with real code, turning their own ideas into experiences other people can actually play. In our clubs they create rather than play — it’s a first step into real game development.",
+          "note": "Roblox Studio is free — there’s nothing to buy. It runs on Windows PCs and Macs only: not on an iPad or other tablet, not on a Chromebook, phone or games console, so your child needs a desktop or laptop computer to take part. A free Roblox account is needed too, and the account’s age setting governs its chat and privacy controls. Finished creations can be published for other players to find and play.",
+          "linkLabel": "Get Roblox Studio"
         }
       }
     },
