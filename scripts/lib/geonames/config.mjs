@@ -160,11 +160,13 @@ export const COUNTRIES = {
     // the anglicized "Norrbotten County" and for a kommun the Swedish "Umeå
     // Kommun". The `sv` alternates give "Norrbottens län" for all 21 regions
     // but exist for only 41 of the 290 kommuner, and disagree with the dump
-    // name on 14 of those (Haparanda Kommun → "Haparanda Stad") — so resolving
-    // through `sv` trades anglicized regions for a municipality level spelled
-    // three different ways. `"dump"` is one authority's own spelling
-    // throughout; the generator prints both so this stays re-checkable.
-    nameResolution: "dump",
+    // name on 14 of those (Haparanda Kommun → "Haparanda Stad"). Neither option
+    // is clean at the kommun level; the decision-owner's call (2026-08-07) is
+    // the same rule Finland's verification forced: canonical names are the
+    // country's own language, so the anglicized län are the defect that matters
+    // and the residual kommun spelling drift is GeoNames data quality, fixable
+    // upstream. The generator prints both readings so this stays re-checkable.
+    nameResolution: { language: "sv" },
     // Nothing below country level yet: `sv` is the canonical language of these
     // rows, so it would be the never-duplicate rule's own violation, and no
     // other locale has payload worth ingesting.
