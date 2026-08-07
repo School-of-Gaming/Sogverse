@@ -428,25 +428,35 @@ export function rollUpGamerEnrollments(
  * paid window covers is the furthest-out one inside it if any are still to
  * come, and otherwise the most recent one that already ran. What differs is
  * that this surface may only *say* the answer when it comes from the forward
- * walk. The club page says it in both cases, because it has the group's stored
- * history and therefore knows the past one as a fact.
+ * walk. The club page says it in both cases, because it reads a feed merged
+ * from the group's stored rows and so has the better answer available.
+ *
+ * **"Better" rather than "certain", and the distinction is worth keeping
+ * straight.** The page takes the newest entry of its feed, and that feed merges
+ * stored rows over projected occurrences — so where a row exists the date it
+ * names is that row's own snapshot of when the session actually ran, and where
+ * none exists it is a projection off the current schedule, exactly the kind of
+ * guess this card refuses to make. The page is therefore not immune to the
+ * moved-club case; what it is immune to is *contradicting itself*, because the
+ * date in the notice is read off the very list of sessions rendered beneath it.
  *
  * **Why the card must not answer the second case itself.** The dashboard read
  * fetches no session rows — only the product's *current* schedule — so the only
  * way to name a past session here is to project one backwards, and a projection
  * is not a record. Move a club from Mondays to Wednesdays mid-term and the
  * backward walk happily produces a Wednesday that never ran, while the club
- * page, reading real rows, names the Monday that did. That was a card and a
+ * page, where a row exists, names the Monday that did. That was a card and a
  * page contradicting each other about the same enrollment, in the surface a
  * parent checks *most* often, in exactly the situation they are most likely to
- * be checking it.
+ * be checking it. The card has no list of its own to be consistent with and no
+ * rows to fall back on, so it has nothing to offer but the guess.
  *
  * So the fallback returns `lastSessionStart: null` and the card drops to copy
  * that names no session, stating instead when access ends — which the
  * subscription row tells us outright and no walk has to guess. **This is a
  * deliberate information downgrade, not a gap waiting to be filled**: the card
  * gives up a date it could only have invented, keeps the not-renewing marking
- * the plan requires, and points at a page that has the real answer. Giving the
+ * the plan requires, and points at a page with the fuller answer. Giving the
  * card a truthful date means giving it the stored history, not a better walk.
  */
 function cancellationFor(

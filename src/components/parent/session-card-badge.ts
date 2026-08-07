@@ -23,10 +23,17 @@
  * first case, where a forward projection supplies it. In the second it has
  * nothing to name it from — the dashboard read carries no session rows — so it
  * reports `lastSessionStart: null` and the card says when access ends instead.
- * The club page names it in both cases, because stored rows make the past one a
- * fact rather than a guess. The whole argument is at `cancellationFor()` beside
- * the roll-up; changing the rule is an edit there plus a check that the page
- * still reads the same answer off its feed.
+ *
+ * The club page names it in both cases, and the honest statement of why is that
+ * the page has the **better** answer rather than a certain one: it reads off a
+ * feed merged from the group's stored rows, so where a row exists the date it
+ * names is that row's own snapshot, and where none does it is the same kind of
+ * projection this card would have made. What the page never does is contradict
+ * the sessions listed beneath it, because it reads the date off that very list.
+ * The card is silent in the second case because *it* could only ever guess —
+ * not because the page is always certain. The whole argument is at
+ * `cancellationFor()` beside the roll-up; changing the rule is an edit there
+ * plus a check that the page still reads the same answer off its feed.
  *
  * **Parent-only.** Every field here is downstream of a billing decision an
  * adult made, and the child-facing surfaces are structurally unable to receive
@@ -49,8 +56,9 @@ export interface SessionCancellation {
    * to project one backwards — and a schedule edited mid-term makes that
    * projection name an evening that never happened. So the card stops naming
    * and says when access ends instead. The club page, which holds the group's
-   * stored history, still names the real one. See `cancellationFor` beside the
-   * roll-up for the whole argument.
+   * stored history, names the best answer available: the stored row's own
+   * snapshot where a row exists, a projection where none does. See
+   * `cancellationFor` beside the roll-up for the whole argument.
    */
   lastSessionStart: Date | null;
   /**
