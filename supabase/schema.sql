@@ -3190,10 +3190,10 @@ $$;
 
 
 --
--- Name: search_locations(text, public.location_type[], integer); Type: FUNCTION; Schema: public; Owner: -
+-- Name: search_locations(text, public.location_type[], integer, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.search_locations(p_query text, p_types public.location_type[] DEFAULT NULL::public.location_type[], p_limit integer DEFAULT 20) RETURNS jsonb
+CREATE FUNCTION public.search_locations(p_query text, p_types public.location_type[] DEFAULT NULL::public.location_type[], p_limit integer DEFAULT 20, p_country text DEFAULT NULL::text) RETURNS jsonb
     LANGUAGE sql STABLE
     SET search_path TO ''
     AS $$
@@ -3202,7 +3202,8 @@ probe AS (
   SELECT
     folded.needle,
     -- LIKE metacharacters in the needle are escaped, not stripped: a user typing
-    -- "%" should find nothing rather than everything.
+    -- "%" should find nothing rather than everything. Both arms build their
+    -- patterns from this one value.
     replace(replace(replace(folded.needle, '\', '\\'), '%', '\%'), '_', '\_') AS pattern,
     char_length(folded.needle) >= 2 AS runnable,
     -- The cap is the server's, not the caller's. Clamped rather than rejected so
@@ -3213,51 +3214,94 @@ probe AS (
   ) AS folded
 ),
 matched AS (
-  SELECT
-    l.id, l.name, l.name_i18n, l.type, l.parent_id, l.country_code, l.external_code,
-    CASE
-      -- A term IS the needle.
-      WHEN l.search_blob LIKE (SELECT '%' || public.location_search_separator() || pattern || public.location_search_separator() || '%' FROM probe) THEN 0
-      -- A term STARTS WITH the needle. A prefix hit found late in the scan
-      -- therefore still outranks an infix hit found early, which is the whole
-      -- point of ranking rather than filtering.
-      WHEN l.search_blob LIKE (SELECT '%' || public.location_search_separator() || pattern || '%' FROM probe) THEN 1
-      ELSE 2
-    END AS match_rank
-  FROM public.locations l
-  -- Scalar subqueries rather than a join to `probe`: each becomes an InitPlan
-  -- evaluated once, which is what lets the planner treat the pattern as a
-  -- runtime constant and consider the trigram index.
-  WHERE (SELECT runnable FROM probe)
-    AND l.search_blob LIKE (SELECT '%' || pattern || '%' FROM probe)
-    AND (p_types IS NULL OR l.type = ANY (p_types))
+  -- One row per matching place, at its best rank across both arms. A place found
+  -- by name AND by postal code is one hit, not two, and it keeps the better of
+  -- the two ranks — which is what `DISTINCT ON (id) ORDER BY id, match_rank`
+  -- expresses.
+  SELECT DISTINCT ON (h.id)
+         h.id, h.name, h.name_i18n, h.type, h.parent_id, h.country_code,
+         h.external_code,
+         -- Carried for the ordering below only; not part of the wire shape.
+         h.depth,
+         h.match_rank
+    FROM (
+      -- ARM 1 — the stored fold: canonical name, name_i18n alternates, official
+      -- code. Unchanged from 00155.
+      SELECT
+        l.id, l.name, l.name_i18n, l.type, l.parent_id, l.country_code,
+        l.external_code, l.depth,
+        CASE
+          -- A term IS the needle.
+          WHEN l.search_blob LIKE (SELECT '%' || public.location_search_separator() || pattern || public.location_search_separator() || '%' FROM probe) THEN 0
+          -- A term STARTS WITH the needle. A prefix hit found late in the scan
+          -- therefore still outranks an infix hit found early, which is the whole
+          -- point of ranking rather than filtering.
+          WHEN l.search_blob LIKE (SELECT '%' || public.location_search_separator() || pattern || '%' FROM probe) THEN 1
+          ELSE 2
+        END AS match_rank
+      FROM public.locations l
+      -- Scalar subqueries rather than a join to `probe`: each becomes an InitPlan
+      -- evaluated once, which is what lets the planner treat the pattern as a
+      -- runtime constant and consider the trigram index.
+      WHERE (SELECT runnable FROM probe)
+        AND l.search_blob LIKE (SELECT '%' || pattern || '%' FROM probe)
+        AND (p_types IS NULL OR l.type = ANY (p_types))
+        -- Both filters live here rather than in `page`, so the total the panel
+        -- reports counts only rows it could actually offer.
+        AND l.retired_at IS NULL
+        AND (p_country IS NULL OR l.country_code = p_country)
+
+      UNION ALL
+
+      -- ARM 2 — postal codes, joined back to the municipality they reach. The
+      -- hit is the place, never the code: the code carries no name, no parent and
+      -- nothing anyone browses.
+      SELECT
+        l.id, l.name, l.name_i18n, l.type, l.parent_id, l.country_code,
+        l.external_code, l.depth,
+        -- The needle IS a whole code, or it is a prefix of one. Nothing else —
+        -- an infix arm on a five-digit code is noise, not a search.
+        --
+        -- Equality takes the unescaped needle because `=` interprets no
+        -- metacharacters; the prefix takes the escaped pattern for the same
+        -- reason arm 1 does.
+        CASE
+          WHEN pc.postal_code = (SELECT needle FROM probe) THEN 0
+          ELSE 1
+        END AS match_rank
+      FROM public.postal_codes pc
+      JOIN public.locations l ON l.id = pc.location_id
+      WHERE (SELECT runnable FROM probe)
+        AND pc.postal_code LIKE (SELECT pattern || '%' FROM probe)
+        -- Every filter arm 1 applies, applied to the joined row rather than
+        -- assumed from the fact that postal rows point at municipalities.
+        AND (p_types IS NULL OR l.type = ANY (p_types))
+        AND l.retired_at IS NULL
+        AND (p_country IS NULL OR l.country_code = p_country)
+    ) AS h
+   ORDER BY h.id, h.match_rank
 ),
 page AS (
   SELECT m.*
     FROM matched m
-   -- A total order, so the page is stable: rank, then broadest level first,
-   -- then name, then id to break the homonym ties France is full of.
+   -- A total order, so the page is stable: rank, then venues after places, then
+   -- broadest level first, then name, then id to break the homonym ties France
+   -- is full of.
    --
-   -- Breadth is spelled out rather than taken from the enum's declared order,
-   -- which sorts municipality before district and is therefore backwards for
-   -- France, where a district IS the departement above the communes. Ordering
-   -- by the enum buried all nine 'haute' departements behind 41 communes, past
-   -- the default page of 20 — and search does not paginate, so they could not
-   -- be reached at all.
-   ORDER BY m.match_rank,
-            CASE m.type
-             WHEN 'country'      THEN 0
-             WHEN 'region'       THEN 1
-             WHEN 'district'     THEN 2
-             WHEN 'municipality' THEN 3
-             ELSE 4
-           END,
-            m.name, m.id
+   -- Breadth is the stored `depth`, which is true for any hierarchy shape. Sites
+   -- are pushed below places by their own term ahead of depth, because depth
+   -- cannot separate them: a Finnish site and a French commune are both at
+   -- depth 3.
+   ORDER BY m.match_rank, (m.type = 'site'), m.depth, m.name, m.id
    LIMIT (SELECT cap FROM probe)
 ),
 -- The chain of every hit on this page, at most `cap` rows walking at most a
 -- handful of levels. Bounded by depth as well as by the parent FK in case a
 -- hand-made row ever forms a cycle.
+--
+-- Deliberately unfiltered on `retired_at`: a hit's ancestors are rendered as a
+-- path, and a path with a link missing is unreadable. Retirement hides a place
+-- from being *chosen*, not from being *named*.
 walk AS (
   SELECT p.id AS anchor_id, p.parent_id AS node_id, 1 AS depth
     FROM page p
@@ -3282,6 +3326,7 @@ chains AS (
    GROUP BY w.anchor_id
 )
 SELECT jsonb_build_object(
+  -- The union, deduped — so a place matching by name and by code counts once.
   'total', (SELECT count(*) FROM matched),
   'results', coalesce((
     SELECT jsonb_agg(
@@ -3295,15 +3340,7 @@ SELECT jsonb_build_object(
         'external_code', p.external_code,
         -- Nearest first, matching every other ancestor chain in this codebase.
         'ancestors',     coalesce(c.ancestors, '[]'::jsonb)
-      ) ORDER BY p.match_rank,
-                 CASE p.type
-             WHEN 'country'      THEN 0
-             WHEN 'region'       THEN 1
-             WHEN 'district'     THEN 2
-             WHEN 'municipality' THEN 3
-             ELSE 4
-           END,
-                 p.name, p.id
+      ) ORDER BY p.match_rank, (p.type = 'site'), p.depth, p.name, p.id
     )
       FROM page p
       LEFT JOIN chains c ON c.anchor_id = p.id
@@ -3313,10 +3350,10 @@ $$;
 
 
 --
--- Name: FUNCTION search_locations(p_query text, p_types public.location_type[], p_limit integer); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION search_locations(p_query text, p_types public.location_type[], p_limit integer, p_country text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer) IS 'Cross-country location search: diacritic-insensitive both ways, matching canonical names, name_i18n alternates and official codes. Returns {total, results[]} where results carry each hit''s ancestor chain nearest-first, ranked exact > term-prefix > infix and capped server-side. SECURITY INVOKER, so the caller''s RLS on locations applies unchanged; needles shorter than two characters return an empty result without reading the table.';
+COMMENT ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer, p_country text) IS 'Cross-country location search over two match sources merged before ranking: the stored fold on locations (canonical names, name_i18n alternates, official codes; exact > term-prefix > infix) and postal_codes joined to the municipality each code reaches (exact code > code prefix, no infix). Diacritic-insensitive both ways; one folded needle serves both arms. A place matching both ways appears once, at its better rank, and the total counts the deduped union. Returns {total, results[]} where results carry each hit''s ancestor chain nearest-first, ranked then places before venues, then broadest-first by the stored depth, and capped server-side. p_types and p_country restrict both arms, and the restriction applies to the total as well as the page. Retired rows are excluded from matches, but the ancestor walk still climbs through them so a chain renders whole. SECURITY INVOKER, so the caller''s RLS on locations and postal_codes applies unchanged; needles shorter than two characters return an empty result without reading either table.';
 
 
 --
@@ -3493,6 +3530,42 @@ $$;
 --
 
 COMMENT ON FUNCTION public.set_group_session_notes(p_group_id uuid, p_session_date date, p_report text, p_gedu_note text) IS 'Write the family-facing report and the gedu note for one session, materializing the row if needed. Gedu-gated on the group assignment. Last-write-wins.';
+
+
+--
+-- Name: set_location_depth(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_location_depth() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_parent_depth smallint;
+BEGIN
+  IF NEW.parent_id IS NULL THEN
+    NEW.depth := 0;
+    RETURN NEW;
+  END IF;
+
+  SELECT l.depth INTO v_parent_depth
+    FROM public.locations l
+   WHERE l.id = NEW.parent_id;
+
+  -- A BEFORE trigger runs ahead of the FK check, so a parent_id pointing at no
+  -- row arrives here first. Raising the FK error ourselves is what the products
+  -- location trigger does for the same case: without it the assignment below
+  -- would write NULL into a NOT NULL column and report a constraint the caller
+  -- did not violate.
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'locations.parent_id % references no row', NEW.parent_id
+      USING ERRCODE = 'foreign_key_violation';
+  END IF;
+
+  NEW.depth := v_parent_depth + 1;
+  RETURN NEW;
+END;
+$$;
 
 
 --
@@ -4232,6 +4305,9 @@ CREATE TABLE public.locations (
     name_i18n jsonb,
     external_code text,
     search_blob text GENERATED ALWAYS AS (public.location_search_blob(name, name_i18n, external_code)) STORED,
+    geonames_id bigint,
+    retired_at timestamp with time zone,
+    depth smallint DEFAULT 0 NOT NULL,
     CONSTRAINT locations_no_self_parent CHECK ((parent_id IS DISTINCT FROM id))
 );
 
@@ -4255,6 +4331,27 @@ COMMENT ON COLUMN public.locations.external_code IS 'Official statistical code f
 --
 
 COMMENT ON COLUMN public.locations.search_blob IS 'Derived, never written: the row''s folded searchable terms, separator-delimited. Read only by public.search_locations; it is present in select(*) responses and carries no information the other columns do not.';
+
+
+--
+-- Name: COLUMN locations.geonames_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.locations.geonames_id IS 'GeoNames geonameid for a row sourced from the GeoNames dumps: the dedupe key for ingestion and sync, unique where present. NULL on admin-created sites and on config-declared synthetic rows GeoNames models no administrative record for. Never holds an official statistical code — that is external_code, and the two are separate columns on purpose.';
+
+
+--
+-- Name: COLUMN locations.retired_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.locations.retired_at IS 'When a refresh found this place gone upstream. Retired rows are hidden from browse reads, the search function and the municipality directory, but keyed reads still return them and the ancestor walk still climbs through them: every existing FK, coverage claim and rendered chain has to keep working. Refresh never DELETEs a location row — gedu_locations cascades — so this is the only way a place leaves the pickers.';
+
+
+--
+-- Name: COLUMN locations.depth; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.locations.depth IS 'Distance from the root: 0 for a country row, parent.depth + 1 below. Maintained by trg_set_location_depth and never written by hand; the DEFAULT exists so the column stays optional in the generated Insert type. Search ranks broadest-first on this rather than on the location_type enum, whose declared order is wrong for any country that nests district below municipality.';
 
 
 --
@@ -4328,6 +4425,45 @@ CREATE TABLE public.payments (
     CONSTRAINT payments_amount_cents_check CHECK ((amount_cents >= 0)),
     CONSTRAINT payments_currency_check CHECK ((currency = ANY (ARRAY['eur'::text, 'gbp'::text, 'usd'::text])))
 );
+
+
+--
+-- Name: postal_codes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.postal_codes (
+    country_code text NOT NULL,
+    postal_code text NOT NULL,
+    location_id uuid NOT NULL
+);
+
+
+--
+-- Name: TABLE postal_codes; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.postal_codes IS 'Postal code -> municipality, one row per (country, code, place) fact. An alternative key onto a locations row, never a level of the hierarchy. Nothing references this table, which is what makes a refresh a plain delete-and-reinsert rather than the retire-never-delete discipline locations lives under. Public reference data: anon, authenticated and service_role may SELECT, nobody may write from a client, and rows land through generated data migrations. service_role holds SELECT because search_locations is SECURITY INVOKER, reads this table for its postal match arm, and is executable by that role.';
+
+
+--
+-- Name: COLUMN postal_codes.country_code; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.postal_codes.country_code IS 'ISO 3166-1 alpha-2, matching the locations row this points at. Part of the key rather than derivable from it because the lookup starts here: a caller has a country and a code and no id yet, and codes are not unique across countries.';
+
+
+--
+-- Name: COLUMN postal_codes.postal_code; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.postal_codes.postal_code IS 'The code exactly as the upstream source spells it — no normalization, no padding, no case folding. Every seeded country''s codes are fixed-width digits (Finland and France alike), so there is nothing to normalize yet; a country whose codes carry spaces or letters will need that decision made deliberately rather than inherited.';
+
+
+--
+-- Name: COLUMN postal_codes.location_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.postal_codes.location_id IS 'The municipality the code reaches. ON DELETE CASCADE, and safe here precisely because nothing references postal rows: losing them costs a lookup, never a coverage claim or a stored pick. Seeds resolve it by joining (country_code, type = ''municipality'', external_code), so a country whose level maps no official code cannot be seeded this way.';
 
 
 --
@@ -4876,6 +5012,14 @@ ALTER TABLE ONLY public.payments
 
 
 --
+-- Name: postal_codes postal_codes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.postal_codes
+    ADD CONSTRAINT postal_codes_pkey PRIMARY KEY (country_code, postal_code, location_id);
+
+
+--
 -- Name: product_groups product_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -5206,6 +5350,27 @@ CREATE INDEX idx_payments_payment_intent ON public.payments USING btree (stripe_
 
 
 --
+-- Name: idx_postal_codes_code_trgm; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_postal_codes_code_trgm ON public.postal_codes USING gin (postal_code extensions.gin_trgm_ops);
+
+
+--
+-- Name: INDEX idx_postal_codes_code_trgm; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON INDEX public.idx_postal_codes_code_trgm IS 'Serves the postal match arm of search_locations, which asks for codes starting with a folded needle across every country at once. Trigram rather than btree because the needle arrives as an InitPlan over the search function''s probe CTE, and PostgreSQL''s LIKE-prefix-to-range rewrite needs a plan-time Const; GIN extracts its query keys at execution time instead, exactly as the locations search blob index does.';
+
+
+--
+-- Name: idx_postal_codes_location_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_postal_codes_location_id ON public.postal_codes USING btree (location_id);
+
+
+--
 -- Name: idx_product_groups_product; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -5336,6 +5501,13 @@ CREATE INDEX session_attendance_session_idx ON public.session_attendance USING b
 --
 
 CREATE UNIQUE INDEX uq_locations_external_code ON public.locations USING btree (country_code, type, external_code) WHERE (external_code IS NOT NULL);
+
+
+--
+-- Name: uq_locations_geonames_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_locations_geonames_id ON public.locations USING btree (geonames_id) WHERE (geonames_id IS NOT NULL);
 
 
 --
@@ -5511,6 +5683,20 @@ CREATE TRIGGER trg_participations_refresh_counts_upd AFTER UPDATE OF status, pro
 --
 
 CREATE TRIGGER trg_products_seed_seat_counts AFTER INSERT ON public.products FOR EACH ROW EXECUTE FUNCTION public.trg_seed_product_seat_counts();
+
+
+--
+-- Name: locations trg_set_location_depth; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_set_location_depth BEFORE INSERT OR UPDATE ON public.locations FOR EACH ROW EXECUTE FUNCTION public.set_location_depth();
+
+
+--
+-- Name: TRIGGER trg_set_location_depth ON locations; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TRIGGER trg_set_location_depth ON public.locations IS 'Keeps locations.depth equal to the ancestor-chain length: 0 when parent_id is NULL, parent.depth + 1 otherwise. Fires on every INSERT and UPDATE so the column cannot be forged from outside. LIMIT, stated so nobody assumes otherwise: a FOR EACH ROW trigger corrects the row it is handed and cannot re-depth that row''s descendants, so re-parenting a node that HAS descendants would leave their depth stale. Nothing does that — nothing above `site` is ever created or moved by the application, sync never reparents without a human widening the migration by hand, and the FI/FR cutover re-parents only sites, which are leaves. A future migration that reparents a non-leaf must re-run the recursive backfill in this file.';
 
 
 --
@@ -5767,6 +5953,14 @@ ALTER TABLE ONLY public.participations
 
 ALTER TABLE ONLY public.payments
     ADD CONSTRAINT payments_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.profiles(id) ON DELETE RESTRICT;
+
+
+--
+-- Name: postal_codes postal_codes_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.postal_codes
+    ADD CONSTRAINT postal_codes_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.locations(id) ON DELETE CASCADE;
 
 
 --
@@ -6486,6 +6680,19 @@ ALTER TABLE public.participations ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: postal_codes; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.postal_codes ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: postal_codes postal_codes_are_public_reference_data; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY postal_codes_are_public_reference_data ON public.postal_codes FOR SELECT TO authenticated, anon USING (true);
+
 
 --
 -- Name: product_groups; Type: ROW SECURITY; Schema: public; Owner: -
@@ -7341,13 +7548,13 @@ GRANT ALL ON FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_
 
 
 --
--- Name: FUNCTION search_locations(p_query text, p_types public.location_type[], p_limit integer); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION search_locations(p_query text, p_types public.location_type[], p_limit integer, p_country text); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer) TO anon;
-GRANT ALL ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer) TO authenticated;
-GRANT ALL ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer) TO service_role;
+REVOKE ALL ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer, p_country text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer, p_country text) TO anon;
+GRANT ALL ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer, p_country text) TO authenticated;
+GRANT ALL ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer, p_country text) TO service_role;
 
 
 --
@@ -7383,6 +7590,13 @@ GRANT ALL ON FUNCTION public.set_group_notes(p_group_id uuid, p_public_note text
 REVOKE ALL ON FUNCTION public.set_group_session_notes(p_group_id uuid, p_session_date date, p_report text, p_gedu_note text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.set_group_session_notes(p_group_id uuid, p_session_date date, p_report text, p_gedu_note text) TO authenticated;
 GRANT ALL ON FUNCTION public.set_group_session_notes(p_group_id uuid, p_session_date date, p_report text, p_gedu_note text) TO service_role;
+
+
+--
+-- Name: FUNCTION set_location_depth(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.set_location_depth() FROM PUBLIC;
 
 
 --
@@ -7649,6 +7863,15 @@ GRANT SELECT ON TABLE public.participations TO authenticated;
 GRANT SELECT ON TABLE public.payments TO anon;
 GRANT ALL ON TABLE public.payments TO service_role;
 GRANT SELECT ON TABLE public.payments TO authenticated;
+
+
+--
+-- Name: TABLE postal_codes; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.postal_codes TO anon;
+GRANT SELECT ON TABLE public.postal_codes TO authenticated;
+GRANT SELECT ON TABLE public.postal_codes TO service_role;
 
 
 --
