@@ -7,6 +7,7 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { useNow, useTimezone } from "@/providers";
 import { useFamily, type FamilyMember } from "@/services/family";
 import {
+  seedAge,
   useMyUpcomingSessionRows,
   useMyWaitlistRows,
   type MyUpcomingSessionRow,
@@ -92,15 +93,6 @@ interface FamilyEnrollmentRows {
   initialSessionRows: MyUpcomingSessionRow[] | null;
   /** `status='waitlisted'` rows, each with its live place in line. */
   initialWaitlistRows: MyWaitlistRow[] | null;
-}
-
-/**
- * `initialDataUpdatedAt` for a seed that may be a failure fallback: `0` marks
- * it stale on arrival so the query refetches on mount, `undefined` leaves the
- * default (stamped now, cached as the answer it is).
- */
-function seedAge(prefetched: unknown[] | null): number | undefined {
-  return prefetched === null ? 0 : undefined;
 }
 
 /**

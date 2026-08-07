@@ -15,6 +15,7 @@ export type {
 } from "./participations.service";
 export { participationKeys } from "./participations.keys";
 export {
+  seedAge,
   useMyUpcomingSessionRows,
   useMyWaitlistRows,
   useParticipationCounts,

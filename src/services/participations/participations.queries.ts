@@ -18,6 +18,27 @@ import { productKeys } from "../products";
 import { participationKeys } from "./participations.keys";
 
 /**
+ * `initialDataUpdatedAt` for a seed that may be a failure fallback.
+ *
+ * The rule in one line: **`null` is a prefetch that threw, and it is not the
+ * same value as one that returned nothing.** A caller that flattens the failure
+ * to `[]` and seeds it normally gets it stamped as freshly fetched, and against
+ * the 60-second `staleTime` the client never asks again — so a transient server
+ * error becomes a page that tells a family they are enrolled in nothing and
+ * then leaves that on screen. Answering `0` marks the seed stale on arrival and
+ * the query refetches on mount; `undefined` keeps the default, which is right
+ * for a genuinely empty answer, because that *is* an answer.
+ *
+ * It lives here, beside the hooks whose option it feeds and the paragraph that
+ * explains the option, because every family surface that prefetches these rows
+ * has to make the same call — and a second copy of a rule this quiet is one
+ * that gets fixed in one place and not the other.
+ */
+export function seedAge(prefetched: readonly unknown[] | null): number | undefined {
+  return prefetched === null ? 0 : undefined;
+}
+
+/**
  * The viewer's active, placed participations — the rows, with no adapter over
  * them.
  *

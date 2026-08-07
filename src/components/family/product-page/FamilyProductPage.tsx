@@ -10,6 +10,7 @@ import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { useNow } from "@/providers";
 import { useFamilyProductFeed } from "@/services/family-product-feed";
 import {
+  seedAge,
   useMyUpcomingSessionRows,
   type MyUpcomingSessionRow,
 } from "@/services/participations";
@@ -78,13 +79,12 @@ export function FamilyProductPage({
   const rows = useMyUpcomingSessionRows(audience, {
     initialData: initialSessionRows ?? [],
     // A failed prefetch is seeded **stale**, so the client refetches on mount
-    // rather than trusting an empty list for the next 60 seconds. Left to the
-    // default, `[]` would be stamped as freshly fetched, and a cancelled
-    // enrollment would quietly lose its clamp — no rows means no paid-through
-    // instant, so the future block would run past the paid window on a page
-    // that never asks again. A genuinely empty answer keeps the default and
-    // stays cached, because it *is* an answer.
-    initialDataUpdatedAt: initialSessionRows === null ? 0 : undefined,
+    // rather than trusting an empty list for the next 60 seconds. The stake on
+    // this page specifically: no rows means no paid-through instant, so a
+    // cancelled enrollment would quietly lose its clamp and the future block
+    // would run past the paid window, on a page that never asks again. The rule
+    // itself is `seedAge`, shared with the dashboards' roll-up hooks.
+    initialDataUpdatedAt: seedAge(initialSessionRows),
   });
   const now = useNow();
   const locale = resolveLocale(useLocale());
