@@ -689,7 +689,11 @@ with a "change" affordance when set. What differs is what the dialog will accept
 where it starts. What lives in the product form itself and nowhere else is that card (with
 its site notes, for a venue) and the clear-on-invalid guard below.
 
-**The venue field** stops at no country and offers two ways of knowing where a venue is:
+**The venue field** stops at no country — unless the *product type* is bound to
+one: a municipality club exists only where a kunta funds it, so its venue field
+opens inside Finland and offers no other country's rows, through the same
+`countryBound` the type's config declares. Either way it offers two ways of
+knowing where a venue is:
 
 - **Searching reaches a site directly.** Sites are in the search index carrying their full
   ancestor chain, so an admin who knows the building's name types it and confirms the hit.
@@ -757,10 +761,12 @@ listed a set, and went with it — leaving it behind would have left the wrong o
 reach of a call site that looked plausible.
 
 **The two modes differ in what they accept, not in how they ask.** The venue field takes
-one level in any country; the municipality field takes one level in one country. That
-extra constraint is a *business* one — a French commune is a perfectly well-formed
-municipality row that the funding rule still refuses — so it rides as an optional country
-alongside the accepted levels rather than as a second function.
+one level — in any country by default, in the product type's one country when the type is
+bound to one; the municipality field takes one level in one country always. The
+constraint is a *business* one either way — a French commune is a perfectly well-formed
+municipality row that the funding rule still refuses, and a French venue is a perfectly
+good site the same rule refuses for a municipality club — so it rides as an optional
+country alongside the accepted levels rather than as a second function.
 
 ### Loading
 

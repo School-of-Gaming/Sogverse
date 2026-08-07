@@ -5,19 +5,21 @@ import { MapPin, Pencil } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
-  useLocationChildren,
   useLocationsByIds,
   type LocationWithChain,
 } from "@/services/locations";
 import { useSiteDetails } from "@/services/products";
-import { LocationPickerDialog } from "@/components/locations/location-browser";
-import type { LocationChainSummary } from "@/components/locations/location-picker-panel";
+import {
+  LocationPickerDialog,
+  useCountryInitialPath,
+} from "@/components/locations/location-browser";
 import { withoutCountry } from "@/lib/locations/ancestor-chain";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import {
   shouldDropStoredRow,
   type AcceptedLocation,
 } from "@/lib/locations/stored-pick";
+import { MUNI_CLUB_COUNTRY_CODE } from "./product-type-config";
 import { VenuePickerDialog } from "./venue-picker-dialog";
 import { SiteNotesEditor } from "./site-notes-editor";
 
@@ -34,10 +36,17 @@ const ANCESTOR_SEPARATOR = " · ";
  * dropped before the panel sees them, and the guard clears a stored id that is
  * not a Finnish municipality — which is what catches a row saved before any of
  * that existed.
+ *
+ * The constant lives with the product-type config, which also states it as
+ * municipality clubs' `countryBound` — the venue field reads it from there, so
+ * an in-person municipality club is Finland-bound through the same rule.
  */
-const MUNI_COUNTRY_CODE = "FI";
+const MUNI_COUNTRY_CODE = MUNI_CLUB_COUNTRY_CODE;
 
-/** The one level an in-person product may pin to, in any country. */
+/**
+ * The one level an in-person product may pin to — in any country, unless the
+ * product type itself is bound to one (see `SitePicker`'s `countryCode`).
+ */
 const VENUE_ACCEPTS: AcceptedLocation = { types: ["site"] };
 
 /** The one level, and the one country, an online municipality club may pin to. */
@@ -62,6 +71,15 @@ interface LocationPickerProps {
    *                  nothing to create, because the hierarchy is seeded.
    */
   pickable: PickableMode;
+  /**
+   * The product type's `countryBound`, when it has one: an in-person
+   * municipality club picks its venue inside Finland only, because the club
+   * itself exists only where a kunta funds it. Applied to the site mode's
+   * dialog (browse and search alike) and to its stored-pick guard, so a venue
+   * left over from a type change in another country is cleared, not kept.
+   * The municipality mode carries its own hardcoded bound and ignores this.
+   */
+  countryCode?: string;
 }
 
 /**
@@ -79,9 +97,9 @@ interface LocationPickerProps {
  * its site notes, for a venue), and the guard that drops a stored `location_id`
  * the current mode would no longer accept.
  */
-export function LocationPicker({ value, onChange, pickable }: LocationPickerProps) {
+export function LocationPicker({ value, onChange, pickable, countryCode }: LocationPickerProps) {
   return pickable === "site" ? (
-    <SitePicker value={value} onChange={onChange} />
+    <SitePicker value={value} onChange={onChange} countryCode={countryCode} />
   ) : (
     <MunicipalityPicker value={value} onChange={onChange} />
   );
@@ -108,17 +126,29 @@ function useStoredRow(value: string | null): LocationWithChain | null | undefine
   return rows[0] ?? null;
 }
 
-function SitePicker({ value, onChange }: ModeProps) {
+function SitePicker({
+  value,
+  onChange,
+  countryCode,
+}: ModeProps & { countryCode?: string }) {
   const t = useTranslations("admin.products.locationPicker");
   const [picking, setPicking] = useState(false);
 
   const row = useStoredRow(value);
 
+  // What this field accepts: a site, anywhere — or a site in the product
+  // type's one country, when the type is bound to one (an in-person
+  // municipality club runs at a Finnish venue, full stop).
+  const accepts = useMemo<AcceptedLocation>(
+    () => (countryCode ? { types: VENUE_ACCEPTS.types, countryCode } : VENUE_ACCEPTS),
+    [countryCode],
+  );
+
   // Clear a pick this field would not accept: a venue that was deleted, or —
   // the everyday one — a municipality club toggled from online to in-person,
   // which leaves a municipality id in a field that now takes only venues.
   // "Not read yet" must never be mistaken for either.
-  const dropping = shouldDropStoredRow(value, row, VENUE_ACCEPTS);
+  const dropping = shouldDropStoredRow(value, row, accepts);
 
   useEffect(() => {
     if (dropping) onChange(null);
@@ -138,6 +168,7 @@ function SitePicker({ value, onChange }: ModeProps) {
       <VenuePickerDialog
         open={picking}
         onOpenChange={setPicking}
+        countryCode={countryCode}
         onPick={(siteId) => {
           setPicking(false);
           onChange(siteId);
@@ -198,20 +229,16 @@ function MunicipalityPicker({ value, onChange }: ModeProps) {
  * with Finland already in the breadcrumb, listing its maakunnat, and no other
  * country's rows are offered by browsing or by search.
  *
- * The Finland row comes from the browse read at the root of the tree — the same
- * request the panel makes when someone clicks back up to "all countries", so it
- * is one cache entry serving both and can never disagree with what browsing
- * shows. Nothing waits on it: while the read is pending there is no seed and
- * the dialog opens at the (empty) root; the moment it resolves, the seed and
- * the root's rows land in the same render, so no one-country root list is ever
- * on screen. That degradation is deliberate, and it is why the seed is a
- * derived fallback rather than an effect that writes state — an effect could
- * land after the admin had already navigated and drag them back.
- *
- * The read is issued from *here* rather than from inside the dialog, so it is in
- * flight while the form is being filled in and the seed is already there when
- * the dialog opens. It costs one indexed request for the two country rows, on a
- * key the dialog would ask for anyway.
+ * The Finland row comes through `useCountryInitialPath` — the browse read at
+ * the root of the tree, the same request the panel makes when someone clicks
+ * back up to "all countries", so it is one cache entry serving both and can
+ * never disagree with what browsing shows. Nothing waits on it: while the read
+ * is pending there is no seed and the dialog opens at the (empty) root; the
+ * moment it resolves, the seed and the root's rows land in the same render, so
+ * no one-country root list is ever on screen. That degradation is deliberate,
+ * and it is why the seed is a derived fallback rather than an effect that
+ * writes state — an effect could land after the admin had already navigated
+ * and drag them back.
  */
 function MunicipalityPickerDialog({
   open,
@@ -223,18 +250,7 @@ function MunicipalityPickerDialog({
   onPick: (municipalityId: string) => void;
 }) {
   const t = useTranslations("admin.products.locationPicker");
-
-  const countries = useLocationChildren(null);
-  const initialPath = useMemo<readonly LocationChainSummary[] | undefined>(() => {
-    const country = (countries.data?.pages ?? [])
-      .flatMap((page) => page.rows)
-      .find((row) => row.country_code === MUNI_COUNTRY_CODE);
-    // One node, and it is that row's own ancestry: a country has no ancestors,
-    // so "the row's ancestors reversed, plus the row" is exactly `[country]`.
-    // The breadcrumb is rebuilt from a row rather than appended to, here as
-    // everywhere, so a seeded path and a drilled one are the same shape.
-    return country ? [country] : undefined;
-  }, [countries.data]);
+  const initialPath = useCountryInitialPath(MUNI_COUNTRY_CODE);
 
   return (
     <LocationPickerDialog

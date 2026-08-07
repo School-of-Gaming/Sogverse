@@ -11,7 +11,10 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { LocationPickerDialog } from "@/components/locations/location-browser";
+import {
+  LocationPickerDialog,
+  useCountryInitialPath,
+} from "@/components/locations/location-browser";
 import type { LocationSummary } from "@/components/locations/location-picker-panel";
 import { LocationFormDialog } from "@/components/admin/location-form-dialog";
 import { useCreateLocation, useSitesByParent } from "@/services/locations";
@@ -63,6 +66,13 @@ interface VenuePickerDialogProps {
   onOpenChange: (open: boolean) => void;
   /** A venue was chosen — searched for, listed, or named just now. */
   onPick: (siteId: string) => void;
+  /**
+   * A caller's business rule, when the product itself is bound to one country
+   * (a municipality club exists only where a kunta funds it): the tree opens
+   * inside that country and offers no other country's rows, browsing and
+   * searching alike. Absent, venues may be picked in any country.
+   */
+  countryCode?: string;
 }
 
 /**
@@ -76,9 +86,11 @@ export function VenuePickerDialog({
   open,
   onOpenChange,
   onPick,
+  countryCode,
 }: VenuePickerDialogProps) {
   const t = useTranslations("admin.products.locationPicker");
   const locale = useLocale();
+  const initialPath = useCountryInitialPath(countryCode);
 
   /** The municipality the tree confirmed. Null means "still choosing where". */
   const [place, setPlace] = useState<LocationSummary | null>(null);
@@ -112,6 +124,8 @@ export function VenuePickerDialog({
         title={t("venuePickerTitle")}
         description={t("venuePickerDescription")}
         pickableTypes={VENUE_PICKABLE_TYPES}
+        countryCode={countryCode}
+        initialPath={initialPath}
         onConfirm={({ location }) => {
           // The two confirmable types mean two different things, and this is
           // the only place that knows which: a site is the answer, a

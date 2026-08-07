@@ -83,6 +83,38 @@ function inCountry(
   return countryCode === undefined || row.country_code === countryCode;
 }
 
+/**
+ * The one-node breadcrumb that opens the dialog *inside* a country: the
+ * country's own row, read from the browse level at the root of the tree — the
+ * same request the panel makes when someone clicks back up to "all countries",
+ * so one cache entry serves both and the seed can never disagree with what
+ * browsing shows. Nothing waits on it: until the read lands (or with no
+ * `countryCode` at all) this is `undefined` and the dialog opens at the root.
+ *
+ * Issued from the *caller* rather than from inside the dialog, so it is in
+ * flight while the surrounding form is being filled in and already there when
+ * the dialog opens. It costs one indexed request for the handful of country
+ * rows, on a key the dialog would ask for anyway.
+ */
+export function useCountryInitialPath(
+  countryCode: string | undefined,
+): readonly LocationChainSummary[] | undefined {
+  // Always issued, countryCode or not: the root level is the first thing the
+  // dialog itself asks for, so this is the same cache entry either way.
+  const countries = useLocationChildren(null);
+  return useMemo(() => {
+    if (countryCode === undefined) return undefined;
+    const country = (countries.data?.pages ?? [])
+      .flatMap((page) => page.rows)
+      .find((row) => row.country_code === countryCode);
+    // One node, and it is that row's own ancestry: a country has no ancestors,
+    // so "the row's ancestors reversed, plus the row" is exactly `[country]`.
+    // The breadcrumb is rebuilt from a row rather than appended to, here as
+    // everywhere, so a seeded path and a drilled one are the same shape.
+    return country ? [country] : undefined;
+  }, [countries.data, countryCode]);
+}
+
 interface LocationBrowserProps {
   selection: LocationSelection;
   /** Restrict search hits to these types. Browsing always shows every level. */

@@ -73,6 +73,7 @@ export function WhereSection({ state, setState, config }: WhereSectionProps) {
               value={state.locationId}
               onChange={(id) => setState({ ...state, locationId: id })}
               pickable={pickerMode}
+              countryCode={config.countryBound ?? undefined}
             />
           </Field>
         ) : (
