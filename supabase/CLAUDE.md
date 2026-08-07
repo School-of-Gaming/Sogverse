@@ -175,6 +175,32 @@ a migration PR (run via the Bash tool):
 6. Commit migration + updated types + tests together in the PR. `schema.sql` is not part
    of it.
 
+### Staging is shared, and migration numbers are contended
+
+Two branches pushing to staging in the same week collide in two distinct ways, and a
+long-running branch should expect both:
+
+- **A version number verified free in the morning can be taken by afternoon.** Another
+  branch's push claims it on the remote, and a version already in remote history is
+  silently treated as applied — your migration under that number would be skipped
+  without a word. Re-verify against `supabase_migrations.schema_migrations` at *push*
+  time, not just at authoring time, and renumber around a newcomer rather than
+  contesting it (their number is applied history the moment it lands in the table).
+- **Once remote history holds a version with no local file, `db push` refuses
+  outright** — it wants the other branch's migration file, which exists only on their
+  unmerged branch. Do not "fix" this with `migration repair --status reverted` on their
+  version (that rewrites shared history under a branch that is still live) and do not
+  invent a local placeholder file (CI builds a database from `migrations/`, and a
+  placeholder ships a lie into it). The working pathway: apply your own files directly
+  with `psql -v ON_ERROR_STOP=1 -f <file>`, in order, then record them with
+  `npx supabase migration repair --status applied <versions…>`, then verify the history
+  table shows them. That is `db push`'s own two steps done by hand, skipping only the
+  local-file completeness check that the other branch's absence fails.
+
+The collision resolves itself when both branches land on `dev` — the files reunite and
+from-scratch builds see the full set. Until then, treat the history table as the truth
+and the CLI's refusal as a prompt to check it, not an obstacle to force past.
+
 ## Generated nullability can lie
 
 **Rule: Verify generated nullability matches what the SQL actually guarantees.**

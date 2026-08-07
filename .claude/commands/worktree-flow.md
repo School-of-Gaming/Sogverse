@@ -130,7 +130,11 @@ to start a second one.
 
 ## Phase 4 — Review (when the change is not trivial)
 
-Run `/code-review` against the branch.
+Run `/code-review` against the branch — but check first whether `dev` has moved
+since Phase 1. It usually has, on a session long enough to need this command,
+and a diff against moved `dev` pollutes the review with other work inverted.
+Diff from the merge-base (`git merge-base dev HEAD`) instead; the review is of
+this branch's commits, not of the gap between two moving points.
 
 If you delegate it to a subagent, **launch that agent from inside this
 worktree** — an agent inherits the session's worktree as its write root and
@@ -201,6 +205,14 @@ Order matters — several of these steps block the next one if skipped.
 
 ## Working in parallel
 
+**Two agents in one worktree** is the everyday parallelism, and it has exactly
+two rules. Each agent gets an explicit list of the files it owns, disjoint from
+every other agent's, written into its prompt — "don't touch X, another agent is
+working there" is cheap to say and expensive to skip. And when the next piece's
+files would overlap an agent still running, sequence it behind that agent
+rather than launching into a collision; waiting is cheaper than untangling two
+authors of one file.
+
 One worktree holds one piece of work — but nothing says only one worktree.
 When the work decomposes into independent pieces, run them in parallel where
 reasonable rather than queuing them: one worktree and one `feat/` branch per
@@ -258,6 +270,13 @@ available, invisible unless you look.
   a credential with `$(grep … .env.local)` (parse it into an env var and run the
   tool in the same single PowerShell call — `$env:SUPABASE_DB_PASSWORD = …;
   npx supabase …` — since shell state does not persist between calls).
+- **The session owns the git index; agents never commit and never stage.** Say
+  so in every agent prompt. An agent that runs `git rm` or `git add` leaves
+  state in the index that the session's next commit silently sweeps in — a
+  commit then contains work it does not describe, and nothing flags it. The
+  cheap tripwire on the session's side: before every commit, check the stat
+  line (or `git diff --cached --stat`) for files you did not put there, and
+  unstage rather than absorb them.
 - **Never bare `git stash` / `git stash pop`.** The stack is shared with every
   other worktree and session. Prefer a temporary WIP commit.
 - **Do not merge, rebase, or delete any branch other than this one's.** Other

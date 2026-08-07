@@ -49,6 +49,26 @@ verified: the access-control catalog checks, and the zod RPC-result schemas from
 feature's `*.contracts.ts` parsed against live RPC output. See `supabase/CLAUDE.md` for
 the migration workflow and the access-control rules these tests enforce.
 
+### CI's database is not staging: it is the migrations *plus* the fixture layer
+
+CI builds its database from `migrations/` and then loads `supabase/seed.sql` on top —
+an arrangement that exists nowhere else. Staging carries the migrations' data without
+the fixtures; CI carries both, side by side in the same tables. A DB test written and
+hand-verified against staging can therefore fail its first CI run for reasons that are
+not bugs, and one session lost four tests to exactly this class:
+
+- **Whole-table claims must survive the fixture rows.** A sweep asserting "every row of
+  this kind has property X" meets seed.sql's deliberately-minimal fixture rows, which
+  often lack exactly the property real seeded data guarantees. Scope the claim to the
+  rows it is actually about, or exclude the fixture ids by name (`TEST_IDS`) so
+  anything *else* violating it still fails.
+- **"Surely unused" values must be impossible, not merely unlikely.** A test that
+  needs a free key or an absent record cannot guess one from the real world — the real
+  seeded data is in CI too, and it is full of surprises (one guess at an unused Finnish
+  postal code turned out to be Santa Claus's). Construct values that cannot exist by
+  shape: negative numbers for an upstream key that is always positive, letters where
+  the data is all digits.
+
 ### DB test conventions
 
 Shared helpers and constants live in `tests/db/`:
