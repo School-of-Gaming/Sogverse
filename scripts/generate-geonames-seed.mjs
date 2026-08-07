@@ -74,6 +74,7 @@ import { join } from "node:path";
 import { fail } from "./lib/geonames/cache.mjs";
 import { countryConfig } from "./lib/geonames/config.mjs";
 import {
+  adopt as cutoverAdopt,
   assertions as cutoverAssertions,
   capture as cutoverCapture,
   repoint as cutoverRepoint,
@@ -254,22 +255,26 @@ function header() {
 --
 -- ${title} already had a location tree, seeded by hand or by a bespoke generator
 -- from its national statistical classification. This migration REPLACES it: the
--- old country/${config.levelOrder.join("/")} rows are wiped and the GeoNames tree
--- is seeded in their place, so that from here on ${title} is indistinguishable
--- from a country added yesterday — same config shape, same sync procedure, no
--- national-classification refresh.
+-- old ${config.levelOrder.join("/")} rows are wiped, the country row is adopted
+-- in place, and the GeoNames tree is seeded around it, so that from here on
+-- ${title} is indistinguishable from a country added yesterday — same config
+-- shape, same sync procedure, no national-classification refresh.
 --
--- New row uuids throughout are accepted: nothing durable outside the database
--- holds a location uuid (caches are ephemeral, public links use slugs). What is
--- NOT accepted is losing a live reference, so the seed statements below sit
--- inside a five-section bracket — capture, wipe, reseed, re-point, assert —
--- that carries sites, gedu coverage ticks and family location picks across by
--- official code. Each section explains itself where it starts.
+-- New row uuids below the country are accepted: nothing durable outside the
+-- database holds a location uuid (caches are ephemeral, public links use
+-- slugs). What is NOT accepted is losing a live reference, so the seed
+-- statements below sit inside a five-section bracket — capture; detach, park &
+-- wipe; adopt & reseed; re-point; assert — that carries sites, gedu coverage
+-- ticks, family location picks AND products across by official code. Each
+-- section explains itself where it starts.
 --
--- \`site\` rows are never wiped: they are ours, they are what products point at,
--- and they are simply re-parented. The one thing that can be lost is a
--- reference to a row the new tree has no counterpart for, and every such loss
--- raises a WARNING naming it.
+-- \`site\` rows are never wiped: they are ours, and they are simply re-parented.
+-- Products are parked on the surviving country row while the trees are
+-- exchanged and moved back by code — an online municipality club legitimately
+-- points at the municipality that funds it, and its column is ON DELETE
+-- RESTRICT, so a wipe that did not carry products would simply abort. The one
+-- thing that can be lost is a reference to a row the new tree has no
+-- counterpart for, and every such loss raises a WARNING naming it.
 `;
 
   return `-- ${mode === "cutover" ? `Cuts ${title} over to GeoNames` : `Seeds ${title}'s location tree from GeoNames`}: the country row plus ${levelCounts}.
@@ -536,14 +541,13 @@ for (const { level, rows } of ingested.levels) {
 const seedSection =
   mode === "cutover"
     ? [
-        "-- ---------------------------------------------------------------------------\n" +
-          "-- 3. RESEED — the ordinary seed statements, unchanged\n" +
-          "-- ---------------------------------------------------------------------------\n" +
-          "--\n" +
-          "-- Byte for byte what this generator emits for a brand-new country. That is the\n" +
-          "-- point of the cutover: one code path produces every country's tree, so there\n" +
-          "-- is no such thing as a country whose rows were made differently. The section\n" +
-          "-- ends with the standard seed gates; section 5 adds the cutover's own.\n",
+        cutoverAdopt(iso, ingested.country, title),
+        "-- The rest of section 3 is byte for byte what this generator emits for a\n" +
+          "-- brand-new country. That is the point of the cutover: one code path produces\n" +
+          "-- every country's tree, so there is no such thing as a country whose rows were\n" +
+          "-- made differently. The country INSERT no-ops here — adoption above satisfied\n" +
+          "-- its guard — and runs for real on a database that had no row to adopt. The\n" +
+          "-- section ends with the standard seed gates; section 5 adds the cutover's own.\n",
         countryStatement(),
         ...statements,
       ]
