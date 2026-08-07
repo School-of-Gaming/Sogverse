@@ -134,7 +134,7 @@ CREATE TYPE public.product_topic AS ENUM (
     'minecraft_education',
     'minecraft_bedrock',
     'fortnite',
-    'webinar',
+    'roblox_studio',
     'pokemon_go'
 );
 
