@@ -1700,7 +1700,6 @@
       "showingSome": "Visar de {shown} första av {total} träffar. Fortsätt skriva för att begränsa dem.",
       "loadMore": "Visa fler",
       "browseInto": "Visa vad som finns i {name}",
-      "nothingSelected": "Välj en plats för att fortsätta.",
       "confirm": "Fortsätt",
       "confirming": "Öppnar…",
       "clearSearch": "Rensa sökning",

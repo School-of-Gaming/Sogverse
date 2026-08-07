@@ -1700,7 +1700,6 @@
       "showingSome": "Näytetään {shown} ensimmäistä osumaa {total} osumasta. Tarkenna hakua kirjoittamalla lisää.",
       "loadMore": "Näytä lisää",
       "browseInto": "Näytä, mitä alueella {name} on",
-      "nothingSelected": "Jatka valitsemalla paikka.",
       "confirm": "Jatka",
       "confirming": "Avataan…",
       "clearSearch": "Tyhjennä haku",

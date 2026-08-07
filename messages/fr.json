@@ -1700,7 +1700,6 @@
       "showingSome": "Affichage des {shown} premiers résultats sur {total}. Continuez à saisir pour affiner.",
       "loadMore": "Afficher plus",
       "browseInto": "Afficher le contenu de {name}",
-      "nothingSelected": "Choisissez un lieu pour continuer.",
       "confirm": "Continuer",
       "confirming": "Ouverture…",
       "clearSearch": "Effacer la recherche",

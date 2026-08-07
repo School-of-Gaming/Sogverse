@@ -1788,7 +1788,6 @@
       "showingSome": "Showing the first {shown} of {total} matches. Keep typing to narrow them down.",
       "loadMore": "Show more",
       "browseInto": "Show what is inside {name}",
-      "nothingSelected": "Pick a place to continue.",
       "confirm": "Continue",
       "confirming": "Opening…",
       "clearSearch": "Clear search",

@@ -399,14 +399,12 @@ function TreeScopeBody({ scope, query, onQueryChange }: TreeScopeBodyProps) {
         </div>
       ) : (
         <div className="flex items-center justify-between gap-3">
+          {/* Empty until a pick is staged, deliberately: the disabled confirm
+              button already says a pick is required, and the slot keeps its
+              place in the row so the staged line appears without moving the
+              buttons. */}
           <p className="min-w-0 flex-1 truncate text-sm">
-            {selected ? (
-              <SelectedLine pick={selected} />
-            ) : (
-              <span className="text-muted-foreground">
-                {t("nothingSelected")}
-              </span>
-            )}
+            {selected ? <SelectedLine pick={selected} /> : null}
           </p>
           <div className="flex shrink-0 gap-2">
             <Button
