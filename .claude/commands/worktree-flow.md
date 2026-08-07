@@ -48,6 +48,15 @@ session cannot create or modify another worktree, and the guard will refuse.
    from older sessions; they each carry their own `node_modules` and are not the
    pattern to copy.
 
+   Three things make the nested location safe, and only the first two are
+   visible from here: it is gitignored; lint and tests target explicit
+   directories that never reach into `.claude/`; and the root `tsconfig.json`
+   lists `".claude"` in its `exclude` — without that, the parent checkout
+   type-checks worktree files against its *own* branch's `@/*` resolution and
+   reports phantom errors at `.claude/worktrees/...` paths. If such errors
+   ever appear on a clean parent branch, that exclude has been dropped —
+   restore it rather than debugging the worktree.
+
    **The one exception: a branch that changes dependencies.** Upward resolution
    hands the worktree the *main checkout's* install, so a branch that edits
    `package.json` / `package-lock.json` runs against the wrong dependency tree,
