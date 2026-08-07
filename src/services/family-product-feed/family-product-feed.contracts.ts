@@ -19,6 +19,19 @@ import { attendanceStatus } from "@/services/gedu-sessions/gedu-sessions.contrac
  * where the guarantee actually lives — but a schema that cannot *represent*
  * them means a future widening of the SQL has to be a visible, deliberate edit
  * here too, rather than a field that quietly starts flowing through.
+ *
+ * **Every object here is `.strict()`, and that is what makes the paragraph
+ * above true rather than merely intended.** A non-strict zod object *ignores*
+ * an unknown key: add `gedu_note` to the RPC's session builder and a permissive
+ * schema parses it happily, strips it, and reports nothing — the widening
+ * reaches CI as a silent no-op and the "deliberate edit here too" never
+ * happens. Strict turns that into a parse failure, and because the db test
+ * parses real Postgres output through these schemas in CI, the failure lands on
+ * the change that caused it. The cost is that adding a field to the RPC now
+ * *requires* adding it here in the same commit, which is exactly the friction
+ * the privacy line is asking for. Nested objects get it too: strict does not
+ * recurse, so a root-only `.strict()` would leave every inner shape — the ones
+ * that would actually carry a leaked field — wide open.
  */
 
 /*
@@ -41,17 +54,21 @@ import { attendanceStatus } from "@/services/gedu-sessions/gedu-sessions.contrac
  * columns changed, and both files should be edited in the same change.
  */
 
-const productTranslationSummary = z.object({
-  locale: z.string(),
-  name: z.string(),
-  description: z.string(),
-});
+const productTranslationSummary = z
+  .object({
+    locale: z.string(),
+    name: z.string(),
+    description: z.string(),
+  })
+  .strict();
 
-const scheduleSlotSummary = z.object({
-  weekday: z.number(),
-  start_time: z.string(),
-  duration_minutes: z.number(),
-});
+const scheduleSlotSummary = z
+  .object({
+    weekday: z.number(),
+    start_time: z.string(),
+    duration_minutes: z.number(),
+  })
+  .strict();
 
 /**
  * A person named to the family: an id and a first name, and nothing else.
@@ -63,10 +80,12 @@ const scheduleSlotSummary = z.object({
  * `first_name` is non-null because the column is (`profiles.first_name NOT
  * NULL`, with a length CHECK on top).
  */
-export const familyFeedPerson = z.object({
-  id: z.string(),
-  first_name: z.string(),
-});
+export const familyFeedPerson = z
+  .object({
+    id: z.string(),
+    first_name: z.string(),
+  })
+  .strict();
 
 /**
  * One stored session, as a family may see it.
@@ -86,17 +105,19 @@ export const familyFeedPerson = z.object({
  * the schedule, so the calendar math happens in one place rather than twice in
  * two languages.
  */
-export const familyFeedSession = z.object({
-  id: z.string(),
-  /** Product-local calendar date, `YYYY-MM-DD`. The row's real identity. */
-  session_date: z.string(),
-  /** Snapshot of the scheduled instants, taken at materialization. */
-  starts_at: z.string(),
-  ends_at: z.string(),
-  /** The family-facing write-up (markdown). `null` when none was written. */
-  report: z.string().nullable(),
-  attendance: attendanceStatus.nullable(),
-});
+export const familyFeedSession = z
+  .object({
+    id: z.string(),
+    /** Product-local calendar date, `YYYY-MM-DD`. The row's real identity. */
+    session_date: z.string(),
+    /** Snapshot of the scheduled instants, taken at materialization. */
+    starts_at: z.string(),
+    ends_at: z.string(),
+    /** The family-facing write-up (markdown). `null` when none was written. */
+    report: z.string().nullable(),
+    attendance: attendanceStatus.nullable(),
+  })
+  .strict();
 
 /**
  * The venue, on in-person products. `null` on anything remote.
@@ -109,57 +130,70 @@ export const familyFeedSession = z.object({
  * The gedu-only site note (`site_staff_details.notes`) has no field here; the
  * RPC does not join that table at all.
  */
-export const familyFeedSite = z.object({
-  location_id: z.string(),
-  name: z.string(),
-  address: z.string().nullable(),
-  public_note: z.string().nullable(),
-});
+export const familyFeedSite = z
+  .object({
+    location_id: z.string(),
+    name: z.string(),
+    address: z.string().nullable(),
+    public_note: z.string().nullable(),
+  })
+  .strict();
 
 /** Everything a family product page renders for one enrollment. */
-export const familyProductFeed = z.object({
-  /**
-   * The child this page is about. The page is gamer-scoped and reachable by
-   * URL, so it cannot rely on having been opened from a dashboard card that
-   * already knew the name.
-   */
-  gamer: familyFeedPerson,
-  product: z.object({
-    id: z.string(),
-    product_type: z.enum(Constants.public.Enums.product_type),
-    timezone: z.string(),
-    /** Bare calendar dates — UTC-pinned, never re-anchored to a viewer zone. */
-    start_date: z.string().nullable(),
-    end_date: z.string().nullable(),
-    is_remote: z.boolean(),
-    /** The product's names live here; `products` has no name column. */
-    translations: z.array(productTranslationSummary),
-    schedule_slots: z.array(scheduleSlotSummary),
-  }),
-  /**
-   * The group's family-facing half. `id` travels because the voice-room href
-   * and the feed's entry keys are built from it; `gedu_note` has no field.
-   */
-  group: z.object({
-    id: z.string(),
-    name: z.string(),
-    public_note: z.string().nullable(),
-  }),
-  site: familyFeedSite.nullable(),
-  /** Who teaches this group. Ordered by first name. */
-  gedus: z.array(familyFeedPerson),
-  /**
-   * The group's FULL stored history, newest first — including sessions from
-   * before this child enrolled, and rows the schedule no longer projects.
-   *
-   * There is no paging and none should be added. The client projects past
-   * occurrences from the schedule and merges these rows onto them, so a partial
-   * fetch would render older sessions that *do* have reports as though they had
-   * none — wrong, not merely short. One JSONB document is also one PostgREST
-   * row, so it is immune to the `max_rows` ceiling that truncates table selects.
-   */
-  sessions: z.array(familyFeedSession),
-});
+export const familyProductFeed = z
+  .object({
+    /**
+     * The child this page is about. The page is gamer-scoped and reachable by
+     * URL, so it cannot rely on having been opened from a dashboard card that
+     * already knew the name.
+     */
+    gamer: familyFeedPerson,
+    product: z
+      .object({
+        id: z.string(),
+        product_type: z.enum(Constants.public.Enums.product_type),
+        timezone: z.string(),
+        /** Bare calendar dates — UTC-pinned, never re-anchored to a viewer zone. */
+        start_date: z.string().nullable(),
+        end_date: z.string().nullable(),
+        is_remote: z.boolean(),
+        /** The product's names live here; `products` has no name column. */
+        translations: z.array(productTranslationSummary),
+        schedule_slots: z.array(scheduleSlotSummary),
+      })
+      // Strict here as well as at the root: `material_url` is a product-level
+      // field, so this is the object a staff leak would actually land in.
+      .strict(),
+    /**
+     * The group's family-facing half. `id` travels because the voice-room href
+     * and the feed's entry keys are built from it; `gedu_note` has no field.
+     */
+    group: z
+      .object({
+        id: z.string(),
+        name: z.string(),
+        public_note: z.string().nullable(),
+      })
+      // Likewise: `gedu_note` is a group-level column sitting one key away from
+      // `public_note`, which makes this the easiest of all of them to widen.
+      .strict(),
+    site: familyFeedSite.nullable(),
+    /** Who teaches this group. Ordered by first name. */
+    gedus: z.array(familyFeedPerson),
+    /**
+     * The group's FULL stored history, newest first — including sessions from
+     * before this child enrolled, and rows the schedule no longer projects.
+     *
+     * There is no paging and none should be added. The client projects past
+     * occurrences from the schedule and merges these rows onto them, so a
+     * partial fetch would render older sessions that *do* have reports as
+     * though they had none — wrong, not merely short. One JSONB document is
+     * also one PostgREST row, so it is immune to the `max_rows` ceiling that
+     * truncates table selects.
+     */
+    sessions: z.array(familyFeedSession),
+  })
+  .strict();
 
 export type FamilyProductFeed = z.infer<typeof familyProductFeed>;
 export type FamilyFeedSession = z.infer<typeof familyFeedSession>;
