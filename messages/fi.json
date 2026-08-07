@@ -1132,6 +1132,7 @@
     "emptyState": "{name} ei ole vielä ilmoittautunut mihinkään. Katsokaa yhdessä, mitä tarjolla on.",
     "wontRenew": "Ei uusiudu — viimeinen kerta {date}",
     "wontRenewLastSession": "Ei uusiudu — tämä on viimeinen kerta {date}",
+    "wontRenewAccessEnds": "Ei uusiudu — osallistuminen päättyy {date}",
     "awaitingCustomer": "Ilmoittautuminen on valmis — etsimme hänelle Gedun ja ryhmän ennen ensimmäistä kertaa.",
     "awaitingGamer": "Olet mukana — etsimme sinulle Gedun ja ryhmän ennen ensimmäistä kertaa.",
     "noGamers": "Täällä ei ole vielä pelaajia. Lisää ensimmäinen pelaaja ja valitkaa sitten yhdessä kerho tai leiri.",

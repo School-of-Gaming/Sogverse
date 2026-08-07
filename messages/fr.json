@@ -1132,6 +1132,7 @@
     "emptyState": "{name} n’a encore rien de prévu. Regardez ensemble ce qui est proposé.",
     "wontRenew": "Non renouvelé — dernière session le {date}",
     "wontRenewLastSession": "Non renouvelé — c’est la dernière session, le {date}",
+    "wontRenewAccessEnds": "Non renouvelé — accès jusqu’au {date}",
     "awaitingCustomer": "Inscription confirmée — nous lui cherchons un Gedu et un groupe avant la première session.",
     "awaitingGamer": "Tu es inscrit·e — nous te cherchons un Gedu et un groupe avant ta première session.",
     "noGamers": "Pas encore de joueur ici. Ajoutez votre premier joueur, puis choisissez ensemble un club ou un camp.",

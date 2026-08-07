@@ -419,7 +419,7 @@ describe("toFamilyEnrollments — a cancelled membership", () => {
       ],
     });
     expect(summary.nextSessionStart?.toISOString()).toBe(FIRST_FRIDAY);
-    expect(summary.cancellation?.lastSessionStart.toISOString()).toBe(
+    expect(summary.cancellation?.lastSessionStart?.toISOString()).toBe(
       FIRST_FRIDAY,
     );
     expect(summary.cancellation?.isLastSession).toBe(true);
@@ -432,7 +432,7 @@ describe("toFamilyEnrollments — a cancelled membership", () => {
       ],
     });
     expect(summary.nextSessionStart?.toISOString()).toBe(FIRST_FRIDAY);
-    expect(summary.cancellation?.lastSessionStart.toISOString()).toBe(
+    expect(summary.cancellation?.lastSessionStart?.toISOString()).toBe(
       THIRD_FRIDAY,
     );
     expect(summary.cancellation?.isLastSession).toBe(false);
@@ -453,11 +453,9 @@ describe("toFamilyEnrollments — a cancelled membership", () => {
    * The stretch between the final session and the period end — several days on
    * a monthly sub, and exactly when a parent is most likely to be checking.
    *
-   * The membership is still winding down, so the card still says so and names
-   * the session that *was* the last one. It used to fall silent here, which
-   * both contradicted the plan's "visibly marked as not renewing" and put the
-   * card at odds with the club page, which announced the cancellation over the
-   * same enrollment at the same moment.
+   * The membership is still winding down, so the card still says so. What it
+   * does **not** do any more is name a date: see the regression pair below for
+   * why naming one here was a bug rather than a feature.
    */
   it("keeps the not-renewing mark after the last session has run", () => {
     const summary = mapOne({
@@ -466,8 +464,8 @@ describe("toFamilyEnrollments — a cancelled membership", () => {
       ],
     });
     expect(summary.cancellation).not.toBeNull();
-    expect(summary.cancellation?.lastSessionStart.toISOString()).toBe(
-      PREVIOUS_FRIDAY,
+    expect(summary.cancellation?.accessUntil.toISOString()).toBe(
+      "2026-02-12T00:00:00.000Z",
     );
     // Nothing is still to come, so no card can be "the last one".
     expect(summary.cancellation?.isLastSession).toBe(false);
@@ -482,7 +480,86 @@ describe("toFamilyEnrollments — a cancelled membership", () => {
         }),
       ],
     });
-    expect(summary.cancellation?.lastSessionStart.toISOString()).toBe(
+    expect(summary.cancellation?.lastSessionStart?.toISOString()).toBe(
+      FIRST_FRIDAY,
+    );
+    expect(summary.cancellation?.isLastSession).toBe(true);
+  });
+
+  /*
+   * ---------------------------------------------------------------------
+   * The card must never name a date it only projected.
+   * ---------------------------------------------------------------------
+   *
+   * This pair is easy to misread as a missing feature, so here is the whole
+   * scenario in full.
+   *
+   * A club runs on Mondays. Halfway through the term an admin moves it to
+   * Wednesdays. The stored session rows for the Mondays that already ran are
+   * still there — they are records of evenings that happened — but the
+   * product's `schedule_slots` now say Wednesday, and **Wednesday is all the
+   * dashboard read knows**: it fetches the product's current schedule and no
+   * session rows at all.
+   *
+   * Now a parent cancels, and the paid window has no session left in it. To
+   * name "the last session" the roll-up would have to walk the schedule
+   * *backwards* — and that walk runs over Wednesdays, so it would confidently
+   * produce a Wednesday on which nothing ever happened. Meanwhile the club
+   * page, which loads the group's stored history through the feed RPC, names
+   * the real Monday. Two surfaces, one enrollment, two different dates, and the
+   * wrong one on the surface a parent looks at most.
+   *
+   * So the roll-up stops guessing: with nothing left in the window it emits a
+   * cancellation carrying `lastSessionStart: null`, and the card drops to copy
+   * that names no session and states when access ends instead — a fact the
+   * subscription row holds outright.
+   *
+   * **This is a deliberate information downgrade, not an unfinished feature.**
+   * The card gives up a date it could only have invented. Giving it a truthful
+   * one means giving it the stored history — a second read the dashboard does
+   * not do and should not start doing for one line of copy. The club page is
+   * where the real answer lives, and the card links to it.
+   *
+   * The forward case is untouched and is asserted alongside, because the fix
+   * must not cost the common case its date: a projection *forwards* names a
+   * session that is genuinely still scheduled, which is a promise about the
+   * future rather than a claim about the past, and the club page agrees with it.
+   */
+  it("names no date once the paid window has no session left to project", () => {
+    // Access ends 12 Feb; the schedule's remaining occurrences are all after
+    // it, so the forward walk comes back empty.
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({ subscriptionEndsAt: new Date("2026-02-12T00:00:00Z") }),
+      ],
+    });
+
+    // Still winding down, and still says so.
+    expect(summary.cancellation).not.toBeNull();
+    // But names no session: the only candidate would be a backward projection
+    // off the current schedule, which a mid-term schedule change makes a
+    // fabrication. PREVIOUS_FRIDAY is exactly the date the old code emitted.
+    expect(summary.cancellation?.lastSessionStart).toBeNull();
+    expect(summary.cancellation?.lastSessionStart?.toISOString()).not.toBe(
+      PREVIOUS_FRIDAY,
+    );
+    // The access instant is a fact off the subscription row, so it survives —
+    // it is what the date-less copy renders instead.
+    expect(summary.cancellation?.accessUntil.toISOString()).toBe(
+      "2026-02-12T00:00:00.000Z",
+    );
+  });
+
+  it("still names the date when a session is genuinely still to come", () => {
+    // Access ends 20 Feb, which leaves FIRST_FRIDAY inside the window. The
+    // forward walk finds it, so the card may name it — and does.
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({ subscriptionEndsAt: new Date("2026-02-20T00:00:00Z") }),
+      ],
+    });
+
+    expect(summary.cancellation?.lastSessionStart?.toISOString()).toBe(
       FIRST_FRIDAY,
     );
     expect(summary.cancellation?.isLastSession).toBe(true);

@@ -11,10 +11,8 @@ import { runEndedOn, runLiveness, type RunLiveness } from "@/lib/product-run";
 import {
   earlierBoundary,
   endDateToCutoff,
-  enumeratePastRowOccurrences,
   enumerateRowOccurrences,
   startDateToCutoff,
-  undatedPastFloor,
 } from "@/lib/session-occurrence";
 import type { FamilyMember } from "@/services/family";
 import type {
@@ -100,6 +98,18 @@ export interface FamilyEnrollmentSummary {
    *
    * Never true at the same time as `waitlistPosition !== null`: a waitlisted
    * row has no seat to be unplaced in.
+   *
+   * **It *can* be true on a product that has already ended, and that
+   * combination is accepted rather than overlooked.** It means an admin never
+   * placed the child before the run finished. The card then sorts into the
+   * finished band, stays inert and wears the awaiting tone, so the footer's
+   * "matching with a Gedu" reads as a promise about a product that is over —
+   * which is untidy, and was weighed and left alone: the state is an
+   * administrative slip rather than something the product does, it is rare, and
+   * every alternative costs a new card state and five locales' worth of copy to
+   * describe a situation whose real fix is placing the child. The inertness in
+   * particular is *not* a bug to correct — there is genuinely no page behind an
+   * unplaced seat, ended or not, and the feed RPC would refuse it.
    */
   awaiting: boolean;
   /** The subscription behind this enrollment is `past_due`. */
@@ -410,73 +420,60 @@ export function rollUpGamerEnrollments(
 }
 
 /**
- * **The last session a cancelled enrollment's paid window still covers.** This
- * is the canonical statement of that rule, and both family surfaces implement
- * it — the dashboard card through this function, the club page over the feed it
- * has already built (see the family product page's own note).
+ * The winding-down state a cancelled membership's card renders — and the part
+ * that actually needed deciding, **whether the card may name a date at all.**
  *
- * The rule, in one sentence: **the furthest-out session inside the paid window
- * if any are still to come, and otherwise the most recent one that already
- * ran.** `null` only when the window covers no session at all.
+ * **One rule for which session is last; a narrower rule for naming it.** The
+ * rule itself is shared with the club page and unchanged: the last session a
+ * paid window covers is the furthest-out one inside it if any are still to
+ * come, and otherwise the most recent one that already ran. What differs is
+ * that this surface may only *say* the answer when it comes from the forward
+ * walk. The club page says it in both cases, because it has the group's stored
+ * history and therefore knows the past one as a fact.
  *
- * **Why it does not stop at "still to come".** A membership that has had its
- * last session but has days of paid access left is still winding down, and the
- * plan is explicit that such an enrollment must be *visibly marked as not
- * renewing*. Reading the mark off the forward walk alone made the card fall
- * silent for the several days between the final session and the period end —
- * the exact stretch during which a parent is most likely to be checking. So the
- * walk falls back rather than the state disappearing, and the card names the
- * session that *was* the last one, which its copy already reads correctly for.
+ * **Why the card must not answer the second case itself.** The dashboard read
+ * fetches no session rows — only the product's *current* schedule — so the only
+ * way to name a past session here is to project one backwards, and a projection
+ * is not a record. Move a club from Mondays to Wednesdays mid-term and the
+ * backward walk happily produces a Wednesday that never ran, while the club
+ * page, reading real rows, names the Monday that did. That was a card and a
+ * page contradicting each other about the same enrollment, in the surface a
+ * parent checks *most* often, in exactly the situation they are most likely to
+ * be checking it.
  *
- * **And why the two surfaces cannot simply share one call.** They hold
- * different raw material — the card has schedule rows and walks them, the page
- * has a built, already-clamped feed and reads the top of it — and forcing one
- * signature over both would mean the page re-deriving occurrences it is already
- * holding, which is a second source of truth for what the page renders. What
- * they share is this rule, stated here, referenced there.
- *
- * The backward walk is asked for **one occurrence per slot**, because the only
- * question is which is newest; it runs only for a cancelled enrollment whose
- * forward walk came back empty, so it costs nothing in the ordinary case.
+ * So the fallback returns `lastSessionStart: null` and the card drops to copy
+ * that names no session, stating instead when access ends — which the
+ * subscription row tells us outright and no walk has to guess. **This is a
+ * deliberate information downgrade, not a gap waiting to be filled**: the card
+ * gives up a date it could only have invented, keeps the not-renewing marking
+ * the plan requires, and points at a page that has the real answer. Giving the
+ * card a truthful date means giving it the stored history, not a better walk.
  */
-function lastCoveredSession(args: {
-  /** The forward walk's occurrences, already bounded by the paid window. */
-  remaining: readonly { start: Date }[];
-  slots: readonly { weekday: number; startTime: string; durationMinutes: number }[];
-  timezone: string;
-  startDate: string | null;
-  endDate: string | null;
-  /** The instant paid access ends. */
-  accessUntil: Date;
-  now: Date;
-}): Date | null {
-  const { remaining, slots, timezone, startDate, endDate, accessUntil, now } =
-    args;
+function cancellationFor(
+  /** The instant paid access ends — `null` on a healthy subscription. */
+  accessUntil: Date | null,
+  /**
+   * The forward walk's occurrences, already bounded by the paid window and
+   * sorted soonest-first.
+   */
+  remaining: readonly { start: Date }[],
+): SessionCancellation | null {
+  if (accessUntil === null) return null;
 
-  if (remaining.length > 0) return remaining[remaining.length - 1].start;
-  if (slots.length === 0) return null;
+  // Nothing left inside the window. The membership is still winding down and
+  // still has to say so — it just has no session it may honestly name.
+  if (remaining.length === 0) {
+    return { accessUntil, lastSessionStart: null, isLastSession: false };
+  }
 
-  const startBoundary = startDateToCutoff(startDate, timezone);
-  const past = enumeratePastRowOccurrences({
-    slots: slots.map((slot) => ({ ...slot })),
-    timezone,
-    now,
-    floor: startBoundary ?? undatedPastFloor(now),
-    endBoundary: earlierBoundary(
-      endDateToCutoff(endDate, timezone),
-      accessUntil,
-    ),
-    maxOccurrences: 1,
-  });
-
-  // The walk returns **globally ascending**, not per-slot concatenated — it
-  // merges every slot's results and sorts before handing them back — so the
-  // newest is simply the last element, and two slots on different weekdays
-  // needing to interleave is exactly the case that sort already handles. Every
-  // occurrence in here is also at or before `accessUntil` already, since that
-  // instant is folded into the `endBoundary` above; re-testing it per element
-  // would be checking the boundary the walk was given.
-  return past.length === 0 ? null : past[past.length - 1].start;
+  return {
+    accessUntil,
+    lastSessionStart: remaining[remaining.length - 1].start,
+    // "This *is* the last one" — a claim about the session the card is
+    // otherwise pointing at, so it needs one still to come and it needs to be
+    // the only one left.
+    isLastSession: remaining.length === 1,
+  };
 }
 
 /**
@@ -520,18 +517,6 @@ function sessionSummary(
   // compiler has already refused to make.
   const empty = occurrences.length === 0;
   const next = empty ? null : occurrences[0];
-  const lastCovered =
-    subEnd === null
-      ? null
-      : lastCoveredSession({
-          remaining: occurrences,
-          slots: row.slots,
-          timezone: product.timezone,
-          startDate: product.startDate,
-          endDate: product.endDate,
-          accessUntil: subEnd,
-          now,
-        });
 
   return {
     participationId: row.participationId,
@@ -569,21 +554,12 @@ function sessionSummary(
     waitlistPosition: null,
     awaiting,
     paymentProblem: row.paymentProblem,
-    // Emitted whenever the subscription is winding down and the window covers
-    // any session at all — the mark is not dropped just because the last one
-    // has already run. `null` only on a healthy sub, or on an enrollment with
-    // no occurrences whatsoever to point at.
-    cancellation:
-      subEnd === null || lastCovered === null
-        ? null
-        : {
-            accessUntil: subEnd,
-            lastSessionStart: lastCovered,
-            // "This *is* the last one" — a claim about the session the card is
-            // otherwise pointing at, so it needs one still to come and it needs
-            // to be the only one left.
-            isLastSession: occurrences.length === 1,
-          },
+    // Emitted for the whole of a winding-down membership's life, including the
+    // stretch after its last session has run — that is when a parent is most
+    // likely to be looking. What varies is whether it carries a date: only the
+    // forward walk can supply one this surface is entitled to state. See
+    // `cancellationFor`.
+    cancellation: cancellationFor(subEnd, occurrences),
     scheduleLines: scheduleLinesFor(
       {
         type: product.type,

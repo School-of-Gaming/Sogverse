@@ -896,6 +896,18 @@ function EnrollmentCardDemo() {
         slots: [futureSlot(now, 4, "16:00", 90, FIXTURE_TIMEZONE)],
         cancelledAccessInDays: 12,
       }),
+      // The same state a few days later, once the window has no session left
+      // in it. Its own demo because the line renders differently rather than
+      // just later: the card is not entitled to name a session it could only
+      // have projected backwards, so it states when access ends instead.
+      cancelledNoDate: build({
+        ...remoteClub,
+        participationId: "demo-enrollment-cancelled-no-date",
+        productName: "Stardew Valley Co-op Club",
+        slots: [futureSlot(now, 4, "16:00", 90, FIXTURE_TIMEZONE)],
+        cancelledAccessInDays: 5,
+        cancelledWithNoSessionLeft: true,
+      }),
       awaiting: build({
         ...remoteClub,
         participationId: "demo-enrollment-awaiting",
@@ -948,6 +960,10 @@ function EnrollmentCardDemo() {
               ["Locked — next session named", cards.locked],
               ["Failing card — corner badge", cards.badged],
               ["Cancelled — won't renew line", cards.cancelled],
+              [
+                "Cancelled, window used up — no date named",
+                cards.cancelledNoDate,
+              ],
               ["Awaiting placement — no seat yet", cards.awaiting],
               ["Waitlisted — place in line", cards.waitlisted],
               ["In person — venue, no Join", cards.inPerson],

@@ -79,6 +79,19 @@ export interface EnrollmentFixtureSpec {
    * `null`/omitted for a healthy subscription and for everything that isn't one.
    */
   cancelledAccessInDays?: number | null;
+  /**
+   * The cancelled membership has no session left inside its paid window, so the
+   * card is not entitled to name one — the roll-up emits `lastSessionStart:
+   * null` and the line states when access ends instead.
+   *
+   * A spec flag of its own because it is a genuinely different rendering rather
+   * than a different date, and the reason it exists is invisible from the card:
+   * the dashboard read holds only the product's *current* schedule, so the only
+   * way to name a session that already ran would be to project one backwards,
+   * and a schedule edited mid-term makes that projection an evening that never
+   * happened. Only meaningful alongside `cancelledAccessInDays`.
+   */
+  cancelledWithNoSessionLeft?: boolean;
 }
 
 export function buildEnrollmentFixture(
@@ -153,9 +166,14 @@ export function buildEnrollmentFixture(
             accessUntil: new Date(
               now.getTime() + cancelledAccessInDays * 86_400_000,
             ),
-            // The badge names the participation's final session; on a run with
+            // `null` is the window-exhausted case: no session left to name, so
+            // the line falls back to stating when access ends. Otherwise the
+            // line names the participation's final session — and on a run with
             // several left, this card is not it.
-            lastSessionStart: next?.start ?? now,
+            lastSessionStart:
+              spec.cancelledWithNoSessionLeft === true
+                ? null
+                : (next?.start ?? now),
             isLastSession: false,
           },
     scheduleLines,

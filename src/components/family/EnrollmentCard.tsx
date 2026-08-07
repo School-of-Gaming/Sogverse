@@ -417,23 +417,41 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               the first would have no way to tell that the second is their
               child's last one. The line says so outright instead — the same
               distinction the corner badge of the old design drew by swapping
-              its whole label. */}
+              its whole label.
+
+              **And once nothing is left inside the window, the line names no
+              session at all.** The roll-up hands over `lastSessionStart: null`
+              there, because the only date this surface could offer would be one
+              projected backwards from the product's *current* schedule — and a
+              club moved to another weekday mid-term makes that projection an
+              evening that never ran, contradicting the stored history the club
+              page shows. So the third branch states when access ends, which the
+              subscription row knows outright. Strictly less information, all of
+              it true. */}
           {parent !== null && cancellation !== null && running && (
             <p className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground">
               <RefreshCwOff className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
               <span className="min-w-0">
-                {f(
-                  cancellation.isLastSession
-                    ? "wontRenewLastSession"
-                    : "wontRenew",
-                  {
-                    date: formatDate(cancellation.lastSessionStart, locale, {
-                      month: "short",
-                      day: "numeric",
-                      timeZone,
-                    }),
-                  },
-                )}
+                {cancellation.lastSessionStart === null
+                  ? f("wontRenewAccessEnds", {
+                      date: formatDate(cancellation.accessUntil, locale, {
+                        month: "short",
+                        day: "numeric",
+                        timeZone,
+                      }),
+                    })
+                  : f(
+                      cancellation.isLastSession
+                        ? "wontRenewLastSession"
+                        : "wontRenew",
+                      {
+                        date: formatDate(cancellation.lastSessionStart, locale, {
+                          month: "short",
+                          day: "numeric",
+                          timeZone,
+                        }),
+                      },
+                    )}
               </span>
             </p>
           )}
