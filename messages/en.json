@@ -1783,7 +1783,6 @@
       "searchingEverywhere": "Searching every country",
       "searchingCountry": "Searching {country}",
       "allCountries": "All countries",
-      "allOfCountry": "All of {country}",
       "noResults": "Nothing matches “{query}”.",
       "keepTyping": "Type at least {count} characters to search.",
       "nothingHere": "Nothing here.",

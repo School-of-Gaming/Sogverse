@@ -1695,7 +1695,6 @@
       "searchingEverywhere": "Recherche dans tous les pays",
       "searchingCountry": "Recherche : {country}",
       "allCountries": "Tous les pays",
-      "allOfCountry": "Pays : {country}",
       "noResults": "Aucun résultat pour « {query} ».",
       "keepTyping": "Saisissez au moins {count} caractères pour lancer la recherche.",
       "nothingHere": "Rien ici.",

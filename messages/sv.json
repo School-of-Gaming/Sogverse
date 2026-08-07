@@ -1695,7 +1695,6 @@
       "searchingEverywhere": "Söker i alla länder",
       "searchingCountry": "Söker i {country}",
       "allCountries": "Alla länder",
-      "allOfCountry": "Hela {country}",
       "noResults": "Ingenting matchar ”{query}”.",
       "keepTyping": "Skriv minst {count} tecken för att söka.",
       "nothingHere": "Ingenting här.",

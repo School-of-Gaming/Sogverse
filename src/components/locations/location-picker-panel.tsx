@@ -150,13 +150,14 @@ export interface LocationTreeScope {
    * for the viewer's locale — present exactly when the container is filtering
    * every row to one country.
    *
-   * It is copy and nothing else: the filtering happens above, and the panel
-   * would behave identically without it. What it fixes is the panel saying two
-   * things that stop being true under a bound — that it is searching every
-   * country, and that the top of the breadcrumb is all of them. Both are read
+   * The filtering happens above, and the panel offers the same rows either
+   * way: what this changes is what the panel *says* about them. Two claims stop
+   * being true under a bound — that it is searching every country, and that
+   * there is a level above the country to step back out to — and both are read
    * by someone deciding whether to keep looking, so a picker that says "all
    * countries" and then offers one reads as a broken search rather than as a
-   * rule.
+   * rule. Told, it names the country it is searching and starts the breadcrumb
+   * there, with no root crumb to a list of one.
    */
   boundCountryName?: string;
   /** The current level. Ignored while a search is running. */
@@ -348,18 +349,28 @@ function TreeScopeBody({ scope, query, onQueryChange }: TreeScopeBodyProps) {
           </span>
         ) : (
           <>
-            <button
-              type="button"
-              onClick={() => scope.onOpenDepth(0)}
-              className="rounded underline-offset-2 hover:text-foreground hover:underline"
-            >
-              {boundCountryName
-                ? t("allOfCountry", { country: boundCountryName })
-                : t("allCountries")}
-            </button>
+            {/* The root crumb is the way back to the list of countries, which a
+                picker bound to one country has no use for: the level it opens
+                holds that country and nothing else, and the crumb beside it
+                reaches the same list. Rendered, it reads "All of Finland ›
+                Finland" — a step that goes nowhere, named twice. Bound, the bar
+                simply starts at the country. */}
+            {!boundCountryName && (
+              <button
+                type="button"
+                onClick={() => scope.onOpenDepth(0)}
+                className="rounded underline-offset-2 hover:text-foreground hover:underline"
+              >
+                {t("allCountries")}
+              </button>
+            )}
             {path.map((node, depth) => (
               <span key={node.id} className="flex items-center gap-1">
-                <ChevronRight className="h-3 w-3" />
+                {/* A separator only where there is something to separate from:
+                    bound, the first crumb is the start of the bar. */}
+                {(depth > 0 || !boundCountryName) && (
+                  <ChevronRight className="h-3 w-3" />
+                )}
                 <button
                   type="button"
                   onClick={() => scope.onOpenDepth(depth + 1)}

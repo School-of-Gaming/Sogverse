@@ -728,6 +728,16 @@ those**: sites are in the index carrying their whole ancestor chain, and the nee
 likely to be cached is the one an admin typed just before deciding the venue did not
 exist yet.
 
+**What invalidating the search key guarantees is a refetch, not a fresh answer**, and the
+difference is worth knowing before trusting it. The browse reads go to PostgREST and come
+back from the database, so invalidating them is the whole fix. Search does not: it goes
+through the search route, whose responses live URL-keyed in a shared cache for minutes and
+are served stale for an hour behind a revalidation. A refetch triggered a second after the
+write can therefore be answered with the same pre-creation response, and the new venue
+stays missing from that one needle until the entry ages out. This is accepted rather than
+worked around — the window is short, it closes without anyone doing anything, and the
+alternative is a client writing ranked search results it did not compute.
+
 ## Picking a place (UI)
 
 **One panel** (`src/components/locations/`), and every control that picks a place is a
@@ -776,9 +786,11 @@ looking for Tampere types "Tampere".
 **A caller that already knows the country may say so, and it means two things at once.**
 It seeds the breadcrumb — the dialog opens *inside* that country, listing its regions
 rather than the world's countries — and it bounds what is offered, browsing and searching
-alike. The seed is a *starting position*, not a floor: the breadcrumb's root entry still
-walks back up, because trapping someone below a node they can see named above them is
-worse than opening a level too high. Two properties keep it honest. The seed row is read
+alike. **The breadcrumb says which of the two it is doing**: bound, it starts *at* the
+country, with no root crumb above it, because the level such a crumb opens holds that one
+country and nothing else. Rendered, it reads "All of Finland › Finland" — a step that goes
+nowhere, named twice, which reads as a broken control rather than as a rule. Two properties
+keep the seed honest. The seed row is read
 from the browse level at the root of the tree, which is the same request the panel makes
 when someone clicks back up to "all countries" — one cache entry serving both, so the seed
 can never disagree with what browsing shows. And **nothing waits on it**: until it lands
@@ -935,8 +947,10 @@ index.
 **Rule: the online-muni municipality restriction is UI-enforced, in three places, and each
 one covers what the next cannot.** The DB trigger still permits a country or a region for
 online muni clubs (it predates the rule), so the picker is the gate. *Browsing* offers no
-country but Finland, at the root as well as below it, so the restriction holds even for
-someone who walks back up past the seeded breadcrumb. *Search* is restricted in the
+country but Finland, at the root as well as below it. The breadcrumb no longer offers a way
+back up to the root under a bound, so that filter is not what keeps someone in — it is what
+makes the one frame before the seed lands show Finland alone rather than the world. *Search*
+is restricted in the
 database, by the country parameter the picker passes through, so the ranking and the cap
 are applied to Finnish rows only and a needle crowded out by foreign matches no longer
 goes quiet. And the *clear-on-invalid guard* refuses a

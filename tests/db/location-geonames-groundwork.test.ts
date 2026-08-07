@@ -92,9 +92,11 @@ describe("locations GeoNames groundwork", () => {
     // `depth` is deliberately not written by any of these inserts — the trigger
     // computes it, and an emitted value would be decorative. Neither is
     // `geonames_id`, and *that* absence is load-bearing rather than incidental:
-    // nine key-less rows landing under one country is the proof that the
-    // uniqueness on that column is partial. Giving a fixture a key would take
-    // the claim with it — see the geonames_id block below.
+    // nine key-less rows landing under one country is the proof that a row with
+    // no upstream key is accepted at all, and giving a fixture a key would take
+    // the claim with it. What it is *not* is proof that the index is partial —
+    // a plain unique index would take them too — see the geonames_id block
+    // below.
     const { error } = await admin.from("locations").insert([
       {
         id: ZZ.COUNTRY,
@@ -342,12 +344,22 @@ describe("locations GeoNames groundwork", () => {
   // geonames_id
   // -------------------------------------------------------------------------
 
-  // The permissive half — that the uniqueness is *partial*, so any number of
-  // rows may carry no key at all — is proved by this file's own fixtures: the
-  // nine rows in `beforeAll` are inserted with no `geonames_id`, under one
-  // country, and the insert throws if the database refuses any of them. A
-  // separate test counting NULLs across the whole table would restate that
-  // while asserting something weaker, so there is not one.
+  // The permissive half — that any number of rows may carry no key at all — is
+  // proved by this file's own fixtures: the nine rows in `beforeAll` are
+  // inserted with no `geonames_id`, under one country, and the insert throws if
+  // the database refuses any of them. A separate test counting NULLs across the
+  // whole table would restate that while asserting something weaker, so there
+  // is not one.
+  //
+  // What those rows do *not* prove is that the index is partial, and the
+  // difference is worth stating so nobody reads more into them later. A plain
+  // unique index would accept every one of them: NULLs are distinct from each
+  // other unless an index declares NULLS NOT DISTINCT, so tolerance of key-less
+  // rows is the default rather than something the WHERE clause bought. That
+  // clause is a size decision — it keeps every key-less row (every venue, and
+  // every synthetic row a country's config declares) out of the index instead
+  // of making it legal — and no assertion available here can tell the two index
+  // forms apart, so none tries.
   describe("geonames_id", () => {
     it("refuses a second row claiming the same upstream key", async () => {
       // Negative on purpose: GeoNames ids are positive, so a negative key can

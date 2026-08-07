@@ -189,6 +189,18 @@ export function useCreateLocation() {
       // cached "no results" for that very needle is the likely one to be
       // holding, because looking before creating is how the flow goes.
       //
+      // Be exact about what that last one buys, because it is less than the
+      // others: it guarantees a fresh *refetch*, not a fresh *answer*. The two
+      // browse keys are PostgREST reads and come back from the database, but
+      // search goes through /api/locations/search, whose responses are keyed by
+      // URL in a shared cache for five minutes and served stale for an hour
+      // while they revalidate. So the refetch can legitimately be answered with
+      // the same pre-creation response the admin already saw, and the venue
+      // stays missing from that one needle until the entry ages out. Nothing on
+      // this side can shorten that window: seeding the new row into the search
+      // cache by hand would be this client inventing a ranked result the server
+      // did not produce, which is worse than a stale one it did.
+      //
       // RETURNED, not fired-and-forgotten: React Query awaits a promise
       // returned from onSuccess before resolving mutateAsync, so the venue
       // dialog cannot hand a freshly created id back to a form whose caches

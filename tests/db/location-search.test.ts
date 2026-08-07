@@ -253,18 +253,47 @@ describe("search_locations", () => {
       expect(result.results[0].name).toBe("Tampere");
     });
 
-    it("still reaches France's départements first on a broad name needle", async () => {
-      // The 00141 regression, re-pinned across the union: the postal arm must
-      // not disturb the ordering of a needle it contributes nothing to.
+    it("adds nothing at all to a broad name needle — same total, same page, same order", async () => {
+      // The ranking test below already pins that "haute" reaches France's
+      // départements ahead of its communes, and repeating that here would prove
+      // nothing new. What is unproven is the *arithmetic* of the union on a
+      // needle the second arm cannot reach: no seeded postal code starts with
+      // "haute", so the deduped total and the whole first page have to be
+      // exactly what the blob arm produces on its own.
+      //
+      // Both halves are load-bearing and they fail differently. An arm leaking
+      // a row — a join that widened, a filter applied to the code instead of to
+      // the place — moves the total off 70 whether or not the row reaches the
+      // page. A merge that mis-ranked or double-counted leaves the total alone
+      // and reorders the page, which is why the names are asserted whole and in
+      // order rather than as a set.
       const result = await search(anon, { p_query: "haute", p_limit: 20 });
-      const kinds = result.results.map((row) => row.type);
 
-      expect(kinds.lastIndexOf("district")).toBeLessThan(
-        kinds.indexOf("municipality"),
-      );
-      expect(names(result)).toEqual(
-        expect.arrayContaining(["Haute-Savoie", "Haute-Loire", "Hautes-Alpes"]),
-      );
+      expect(result.total).toBe(70);
+      // Seven départements, not nine — the two missing ones are named in the
+      // ranking test below, along with why one authority costs them.
+      expect(names(result)).toEqual([
+        "Haute-Loire",
+        "Haute-Marne",
+        "Haute-Saône",
+        "Haute-Savoie",
+        "Haute-Vienne",
+        "Hautes-Alpes",
+        "Hautes-Pyrénées",
+        "Haute-Amance",
+        "Haute-Avesnes",
+        "Haute-Épine",
+        "Haute-Goulaine",
+        "Haute-Isle",
+        "Haute-Kontz",
+        "Haute-Rivoire",
+        "Haute-Vigneulles",
+        "Hautecloque",
+        "Hautecour",
+        "Hautecour",
+        "Hautecourt-Romanèche",
+        "Hautefage",
+      ]);
     });
 
     it("answers a service-role caller too, not only anon", async () => {
@@ -336,9 +365,9 @@ describe("search_locations", () => {
       expect(returned).toEqual(
         expect.arrayContaining(["Haute-Savoie", "Haute-Loire", "Hautes-Alpes"]),
       );
-      // Presence is only half of it: every one of the nine départements has to
-      // precede every commune, or the next needle with a longer tail buries
-      // them again.
+      // Presence is only half of it: every one of the départements still
+      // matching has to precede every commune, or the next needle with a longer
+      // tail buries them again.
       const kinds = result.results.map((row) => row.type);
       expect(kinds.lastIndexOf("district")).toBeLessThan(
         kinds.indexOf("municipality"),

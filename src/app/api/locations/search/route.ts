@@ -41,11 +41,12 @@ import type { Database } from "@/types/database.types";
  *     and two differently-scoped searches are never the same one.
  *
  * The client is built with the anon key and no cookies **on purpose**. The
- * search RPC is SECURITY INVOKER over a table whose policy grants every row to
- * `anon` and `authenticated` alike, so the answer is identical for every
- * caller; reading the session would change nothing except to make the response
- * vary per user and therefore uncacheable. "The answer does not depend on who
- * asks" is precisely what makes a public shared cache safe here.
+ * search RPC is SECURITY INVOKER over `locations` and, since `00165`,
+ * `postal_codes` — two tables of public reference data whose policies grant
+ * every row to `anon` and `authenticated` alike — so the answer is identical
+ * for every caller; reading the session would change nothing except to make the
+ * response vary per user and therefore uncacheable. "The answer does not depend
+ * on who asks" is precisely what makes a public shared cache safe here.
  */
 
 /** Five minutes in the shared cache, an hour of serving stale while it refreshes. */
@@ -55,7 +56,7 @@ const CACHE_CONTROL =
 export const GET = defineRoute({
   posture: "public",
   reason:
-    "the educator registration page asks an applicant where they can work before any account exists, so search cannot require a session. It reads only the locations reference table, every row of which anon may already SELECT directly under that table's own policy — the route narrows that surface rather than widening it, and bounds the needle length and page size on the way in",
+    "the educator registration page asks an applicant where they can work before any account exists, so search cannot require a session. It reads two tables of public reference data — `locations` and, since 00165, `postal_codes` — and every row of both is already SELECTable by anon directly, under identical policies, so the route narrows that surface rather than widening it, and bounds the needle length and page size on the way in",
   query: searchLocationsQuery,
 
   handler: async ({ query }) => {

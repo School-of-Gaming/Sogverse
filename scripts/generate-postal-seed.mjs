@@ -299,7 +299,7 @@ BEGIN
 
   IF n_uncovered <> ${postal.uncovered.length} THEN
     RAISE EXCEPTION
-      '${sqlTitle} postal seed: % sourced ${iso} municipalities carry no postal code, expected exactly ${postal.uncovered.length}${postal.uncovered.length === 0 ? "" : ` (${postal.uncovered.map((row) => row.externalCode).join(", ")} — named in the header)`}',
+      '${sqlTitle} postal seed: % sourced ${iso} municipalities carry no postal code, expected exactly ${postal.uncovered.length}${postal.uncovered.length === 0 ? "" : ` (${sqlEscaped(postal.uncovered.map((row) => row.externalCode).join(", "))} — named in the header)`}',
       n_uncovered;
   END IF;
 END;

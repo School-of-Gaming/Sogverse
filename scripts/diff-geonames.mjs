@@ -608,7 +608,13 @@ if (updates.length > 0) {
       .map((change) => {
         if (change.column === "name") return `name = ${sqlText(row.name)}`;
         if (change.column === "name_i18n") return `name_i18n = ${sqlJsonb(row.nameI18n)}`;
-        return `external_code = ${sqlText(row.externalCode)}`;
+        if (change.column === "external_code") return `external_code = ${sqlText(row.externalCode)}`;
+        // Named rather than defaulted: as a catch-all, a fourth compared column
+        // added above would silently be written out as an external_code
+        // correction — a wrong statement inside a migration, which is the one
+        // kind of bug this generator must never be able to emit. Failing here
+        // costs a run; failing there costs a review that believed the file.
+        throw new Error(`diff-geonames: no UPDATE assignment for changed column ${change.column}`);
       })
       .join(",\n       ");
     const was = changed.map((change) => `${change.column} was ${shown(change.from)}`).join("; ");
@@ -750,7 +756,12 @@ if (updates.length > 0) {
     for (const change of changed) {
       if (change.column === "name") terms.push(`name = ${sqlText(row.name)}`);
       else if (change.column === "name_i18n") terms.push(`name_i18n IS NOT DISTINCT FROM ${sqlJsonb(row.nameI18n)}`);
-      else terms.push(`external_code IS NOT DISTINCT FROM ${sqlText(row.externalCode)}`);
+      else if (change.column === "external_code") terms.push(`external_code IS NOT DISTINCT FROM ${sqlText(row.externalCode)}`);
+      // The assertion side of the same catch-all: a column with no term here
+      // would be checked as though it were external_code, so the migration
+      // would assert a value it never set and pass or fail for the wrong
+      // reason. Same rule as the UPDATE above — name the column or stop.
+      else throw new Error(`diff-geonames: no assertion term for changed column ${change.column}`);
     }
     return `(${terms.join(" AND ")})`;
   });

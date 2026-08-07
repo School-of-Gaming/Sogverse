@@ -1695,7 +1695,6 @@
       "searchingEverywhere": "Haetaan kaikista maista",
       "searchingCountry": "Haetaan: {country}",
       "allCountries": "Kaikki maat",
-      "allOfCountry": "Koko {country}",
       "noResults": "Hakua ”{query}” vastaavaa ei löydy.",
       "keepTyping": "Kirjoita vähintään {count} merkkiä, niin haku alkaa.",
       "nothingHere": "Täällä ei ole mitään.",

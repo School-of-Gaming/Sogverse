@@ -229,13 +229,22 @@ CREATE TEMP TABLE cutover_products ON COMMIT DROP AS
     FROM public.products p
     JOIN cutover_scope s ON s.id = p.location_id;
 
--- A product whose own shape forbids the park. Everything in cutover_products
--- points at a level row rather than a site — that is what being in scope means
--- — so an in-person product in here already contradicts the trigger, which
--- requires \`location_id\` to be a site whenever \`is_remote\` is false. It is a
--- relic from before the trigger existed, and section 2's park would abort on it
--- with the trigger's own message and no clue as to which row caused it.
--- Refused by name, first, while the tree is still intact.
+-- A product whose own shape forbids where this migration would have to put it.
+-- Two such shapes, failing at two different moments, both refused here by name
+-- while the old tree is still standing and the row can still be described.
+--
+-- Everything in cutover_products points at a level row rather than a site —
+-- that is what being in scope means — so an **in-person** product in here
+-- already contradicts the trigger, which requires \`location_id\` to be a site
+-- whenever \`is_remote\` is false. It is a relic from before the trigger existed,
+-- and section 2's park would abort on it with the trigger's own message and no
+-- clue as to which row caused it.
+--
+-- An **online municipality club** is allowed above site level, but only on a
+-- country, a region or a municipality. One anchored to any other level passes
+-- the park — the country row is legal for it — and then aborts in section 4's
+-- re-point, after the wipe, with the trigger naming a level rather than a
+-- product and the tree it came from already gone.
 DO $$
 DECLARE
   v_names text;
@@ -244,11 +253,14 @@ BEGIN
   SELECT count(*), string_agg(format('%s (%s, now under %s %s)', product_id, product_type, type, coalesce(external_code, '-')), ', ' ORDER BY product_id)
     INTO v_count, v_names
     FROM cutover_products
-   WHERE NOT is_remote;
+   WHERE NOT is_remote
+      OR (is_remote
+          AND product_type = 'municipality_club'
+          AND type NOT IN ('country', 'region', 'municipality'));
 
   IF v_count > 0 THEN
     RAISE EXCEPTION
-      '${sqlTitle} cutover: % in-person product(s) are anchored above site level and so cannot be parked on the ${iso} country row while the tree is exchanged: %. Give each one a site, or make it remote, before running this migration.',
+      '${sqlTitle} cutover: % product(s) are anchored to a level their own shape forbids, so the ${iso} cutover cannot park them and put them back: %. An in-person product needs a site; an online municipality club needs a country, region or municipality. Fix each one before running this migration.',
       v_count, v_names;
   END IF;
 END;
@@ -576,9 +588,19 @@ BEGIN
   --
   -- Captured counts ticks and restored counts rows, and the two agree because
   -- the only way two ticks collapse into one row is two scoped rows sharing a
-  -- (type, code) key — which they can do only when both codes are NULL, and a
-  -- NULL code resolves to nothing in a reseeded tree whose every level row
-  -- carries one. Both such ticks are therefore counted as lost, by both sides.
+  -- (type, code) key — which they can do only when both codes are NULL. Where
+  -- every level row of the reseeded tree carries a code, as Finland's and
+  -- France's do, a NULL key resolves to nothing at all: both such ticks are
+  -- counted as lost, by both sides, and the equation holds.
+  --
+  -- That premise is about the country, not about the join, and a country whose
+  -- reseeded level rows are themselves code-less breaks it in the other
+  -- direction. \`IS NOT DISTINCT FROM\` matches NULL to NULL, so a code-less
+  -- captured tick fans out to *every* code-less row of its type and the INSERT
+  -- above restores more than was ever captured. Nothing here prevents that; the
+  -- comparison below catches it — restored far exceeds captured - lost, and the
+  -- migration aborts. That is the right outcome: such a country needs a key
+  -- this join does not have, and finding out loudly beats a silent fan-out.
   SELECT count(*) INTO v_captured FROM cutover_gedu;
   SELECT count(*) INTO v_lost
     FROM cutover_gedu c
