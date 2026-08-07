@@ -209,6 +209,26 @@ edits to one file are a merge conflict manufactured on purpose.
 - A preview server per piece follows Phase 3 unchanged: one port each,
   verified free.
 
+## Models
+
+The session orchestrates — decomposes, writes the agent prompts, judges
+findings, lands the result — and delegates the work itself. Delegated work
+runs on **Opus** by default: pass `model` explicitly on every agent launch,
+because an agent silently inherits the session's model when none is passed,
+and on a stronger session tier that is the most expensive arrangement
+available, invisible unless you look.
+
+- **Implementation and review agents: `opus`.** Review findings still pass
+  through the session's own judgment before being relayed or applied — that
+  second tier comes free with orchestration.
+- **Below Opus only for a specific task you are very confident does not need
+  it** — a mechanical sweep (locale keys, fixture regeneration, rename
+  plumbing) can run `sonnet` at low effort; the gates catch what it fumbles.
+  Confidence is the bar: when unsure, Opus.
+- **Small interactive work is not delegated at all.** An agent costs a
+  setup, a transcript and a report; a two-file edit is cheaper done directly
+  in the session, whatever it runs on.
+
 ## Guardrails
 
 - **Never `cd` to the main checkout from inside a worktree.** The isolation guard
