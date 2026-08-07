@@ -25,62 +25,6 @@ import type {
 } from "./types";
 
 /**
- * Whether an entry can be expanded into the **write-up** editor.
- *
- * **Owed and editable are different questions, and they turn on different
- * things.** Editability turns on the session's *start*: everything that has
- * begun is editable, back to the product's start date, and a session under way
- * is included on purpose — that is the roll-call case. Being owed turns on the
- * epoch and the session's *end*, and lives on the entry's `owed` flag rather
- * than here. Every past session is editable, back to the product's start date:
- * a gedu who wants to record attendance on a session from before the platform
- * started asking is doing something useful, and refusing them an editor to
- * enforce a deadline that was never set is the wrong shape of "no". So a
- * pre-epoch `no_record` gap opens the same editor as last week's session — it
- * simply keeps its muted rendering and never alerts, because *nothing is owed*
- * for it.
- *
- * **A `future` entry can be editable, and that is the roll-call case.** Since
- * the kind flips at the session's *end*, the session happening right now is a
- * future entry — and the register opens at its start, so it takes the record
- * editor exactly as a past entry does. Only a future session that has not begun
- * is excluded, for a reason the epoch has nothing to do with: attendance is a
- * record of what happened, so a session that has not started cannot take one.
- * It gets the notes-only editor instead.
- *
- * This is why the predicate needs `now` at all. Editability used to be readable
- * off the kind alone, because the kind flipped at the start — the two questions
- * were the same question wearing one flag. They are separate now, and this is
- * the one that asks about the start.
- */
-export function isEditableEntry(
-  entry: SessionFeedEntry,
-  now: Date,
-): boolean {
-  if (entry.kind === "past" || entry.kind === "no_record") return true;
-  return entry.startsAt.getTime() <= now.getTime();
-}
-
-/**
- * Whether an entry can be expanded into the **notes-only** editor: a future
- * session that has not started yet.
- *
- * The exact complement of {@link isEditableEntry} over the same union, so every
- * entry gets one editor and no entry gets both.
- *
- * It still narrows, and soundly: anything it accepts is a future entry. The
- * narrowing is simply *wider* than the runtime test, which additionally
- * requires the session not to have started — a condition no type can carry,
- * since it is a fact about the clock rather than about the shape.
- */
-export function isPlannableEntry(
-  entry: SessionFeedEntry,
-  now: Date,
-): entry is FutureSessionFeedEntry {
-  return entry.kind === "future" && entry.startsAt.getTime() > now.getTime();
-}
-
-/**
  * Whether this entry is the session happening **right now** — started, not yet
  * finished.
  *
@@ -90,6 +34,10 @@ export function isPlannableEntry(
  * or future but untagged. A conjunction with `kind === "future"` rather than a
  * bare time test, so that the one thing the caller renders and the one thing the
  * builder decided cannot come apart.
+ *
+ * **This is the primitive the two editor predicates below are built from**, so
+ * the module holds one rule about the clock rather than three that have to be
+ * kept in step with each other.
  */
 export function isLiveEntry(entry: SessionFeedEntry, now: Date): boolean {
   return (
@@ -97,6 +45,82 @@ export function isLiveEntry(entry: SessionFeedEntry, now: Date): boolean {
     entry.startsAt.getTime() <= now.getTime() &&
     now.getTime() < entry.endsAt.getTime()
   );
+}
+
+/**
+ * **The clock these predicates take must be the one the entries were built
+ * from, not a fresher read.**
+ *
+ * The builder guarantees a `future` entry has not ended — that is what the kind
+ * means — and everything below leans on it. Hand them a `now` that has run past
+ * an entry's `endsAt` while the entry itself is still the `future` one built at
+ * an earlier instant, and the pair is incoherent: the entry says "not over", the
+ * clock says otherwise.
+ *
+ * That is not hypothetical, which is why it is written down here. The workspace
+ * deliberately **freezes** the feed's clock while an editor is open, so nothing
+ * can be reclassified under somebody who is typing into it. If liveness were
+ * then read from a ticking provider instead of from that frozen instant, the
+ * open editor would be swapped for the other editor mid-edit and the draft would
+ * go with it. One instant in, one coherent set of answers out.
+ */
+
+/**
+ * Whether an entry can be expanded into the **write-up** editor.
+ *
+ * **Owed and editable are different questions.** Being owed turns on the epoch
+ * and the session's *end*, and lives on the entry's `owed` flag rather than
+ * here. Every past session is editable, back to the product's start date: a
+ * gedu who wants to record attendance on a session from before the platform
+ * started asking is doing something useful, and refusing them an editor to
+ * enforce a deadline that was never set is the wrong shape of "no". So a
+ * pre-epoch `no_record` gap opens the same editor as last week's session — it
+ * simply keeps its muted rendering and never alerts, because *nothing is owed*
+ * for it.
+ *
+ * **A `future` entry can be editable, and that is the roll-call case.** Since
+ * the kind flips at the session's *end*, the session happening right now is a
+ * future entry — and the register opens at its start, so it takes the record
+ * editor exactly as a past entry does. Only a future session that is *not* live
+ * is excluded, for a reason the epoch has nothing to do with: attendance is a
+ * record of what happened, so a session that has not started cannot take one.
+ * It gets the notes-only editor instead.
+ *
+ * This is why the predicate needs `now` at all. Editability used to be readable
+ * off the kind alone, because the kind flipped at the start — the two questions
+ * were the same question wearing one flag. They are separate now, and this is
+ * the one that asks about the clock.
+ *
+ * **Phrased as "is live" rather than "has started", and the difference shows up
+ * only on an incoherent pair.** Under the invariant above the two are the same
+ * test, since a `future` entry has by definition not ended. Building both
+ * predicates on {@link isLiveEntry} is what makes this one and
+ * {@link isPlannableEntry} exact complements *by construction* rather than by
+ * two conditions that happen to line up — so no clock, coherent or not, can
+ * produce an entry offering two editors or none.
+ */
+export function isEditableEntry(entry: SessionFeedEntry, now: Date): boolean {
+  return entry.kind !== "future" || isLiveEntry(entry, now);
+}
+
+/**
+ * Whether an entry can be expanded into the **notes-only** editor: a future
+ * session that is not currently running.
+ *
+ * The exact complement of {@link isEditableEntry} over the same union — the
+ * negation of the same expression — so every entry gets one editor and no entry
+ * gets both.
+ *
+ * It still narrows, and soundly: anything it accepts is a future entry. The
+ * narrowing is simply *wider* than the runtime test, which additionally requires
+ * the session not to be live — a condition no type can carry, since it is a fact
+ * about the clock rather than about the shape.
+ */
+export function isPlannableEntry(
+  entry: SessionFeedEntry,
+  now: Date,
+): entry is FutureSessionFeedEntry {
+  return entry.kind === "future" && !isLiveEntry(entry, now);
 }
 
 /**

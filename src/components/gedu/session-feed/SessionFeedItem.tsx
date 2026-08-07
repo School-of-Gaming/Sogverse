@@ -16,6 +16,9 @@ import { AttendanceSummary } from "./AttendanceSummary";
 import { CollapsibleRegion } from "./CollapsibleRegion";
 import {
   editorStateFromEntry,
+  isEditableEntry,
+  isLiveEntry,
+  isPlannableEntry,
   planEditorStateFromEntry,
   type SessionCompleteness,
 } from "./entry-state";
@@ -38,18 +41,22 @@ interface SessionFeedItemProps {
    */
   prominent?: boolean;
   /**
-   * Whether this session has started and not yet finished.
+   * The instant this card reads the clock at — **the same one the entries were
+   * built from**, passed down rather than read from the provider here.
    *
-   * Only a future entry can be one — the kind flips at the *end* instant, so a
-   * session in progress is still ahead of the gedu in the sense the feed's
-   * ordering cares about. It swaps the tag's wording and, more importantly,
-   * decides which editor opens: a live entry takes the record editor, because
-   * the register is open from the session's start. That is the roll-call case.
+   * It decides three things that must never disagree: whether the session is
+   * live (the tag), and which of the two editors opens (a live entry takes the
+   * record editor, because the register is open from the session's start — the
+   * roll-call case).
    *
-   * Passed down rather than derived here so the whole feed answers it off one
-   * clock read — the timeline marker and the card must not straddle a tick.
+   * **Threading it is what makes the workspace's editor freeze work.** That
+   * page stops the feed's clock while an editor is open so no entry can be
+   * reclassified under somebody typing into it; a component that called the
+   * ticking clock itself would step straight around that freeze and swap the
+   * mounted editor mid-edit, destroying the draft. One instant for the entries
+   * and for liveness, or the two come apart.
    */
-  live?: boolean;
+  now: Date;
   /**
    * Whether this entry's report may be clamped. The feed passes `false` for the
    * most recent past session, whose write-up is what the weekly loop came to
@@ -181,7 +188,7 @@ export function SessionFeedItem({
   roster,
   labels,
   prominent = false,
-  live = false,
+  now,
   clampReport = true,
   completeness,
   editing,
@@ -194,10 +201,12 @@ export function SessionFeedItem({
 }: SessionFeedItemProps) {
   const t = useTranslations("gedu.sessionFeed");
   const b = useTranslations("sessionBadge");
-  // A live session takes the record editor: the register opens at its start.
-  // The two are exact complements, so exactly one editor ever opens.
-  const recordable = entry.kind !== "future" || live;
-  const plannable = entry.kind === "future" && !live;
+  // All three off the one instant handed down, through the module that owns the
+  // rule — so the card cannot drift from the predicates the tests aim at, and
+  // the two editors stay exact complements (exactly one ever opens).
+  const live = isLiveEntry(entry, now);
+  const recordable = isEditableEntry(entry, now);
+  const plannable = isPlannableEntry(entry, now);
   const editorId = useId();
 
   const recordEditor = recordable && (
@@ -309,6 +318,7 @@ export function SessionFeedItem({
         <SessionEntryBody
           entry={entry}
           roster={roster}
+          live={live}
           clampReport={clampReport}
         />
       </CollapsibleRegion>
@@ -363,10 +373,13 @@ function SessionDateLine({
 function SessionEntryBody({
   entry,
   roster,
+  live,
   clampReport,
 }: {
   entry: SessionFeedEntry;
   roster: readonly SessionFeedGamer[];
+  /** Whether this is the session in progress — see the attendance note below. */
+  live: boolean;
   clampReport: boolean;
 }) {
   const t = useTranslations("gedu.sessionFeed");
@@ -375,16 +388,47 @@ function SessionEntryBody({
     case "future": {
       const hasNotes =
         hasText(entry.report) || hasText(entry.staffNote);
-      // The report renders bare, exactly as it does on a past entry — no
-      // "Planned" heading over it. Written before the session and written after
-      // it are the same field at two moments; labelling one of them made the
-      // feed claim a distinction the model does not have. There is no
-      // attendance line, because nobody has been anywhere yet.
+      /*
+       * **A live session shows its register; a session still ahead has none to
+       * show.** Both are `future` entries — the kind flips at the session's end
+       * — so the difference is the clock, not the shape.
+       *
+       * The attendance line is conditional here rather than unconditional as it
+       * is on a past entry, and each half of that is deliberate. On a session
+       * that has not begun there is genuinely nothing to say: the register
+       * cannot be opened before the start, so the map is empty and a "0 of 8
+       * marked" line would be inventing a deficit out of a session nobody could
+       * have marked yet. On the session in progress there very much is — a gedu
+       * who marks six of eight and saves stays on a `future` entry (the save
+       * must not move the card mid-roll-call), and if the line were suppressed
+       * they would look at the card they just saved and see no trace of the
+       * work. That is the bug this condition exists to prevent, and it is the
+       * card a gedu spends the whole session looking at.
+       *
+       * Gated on *having marks* rather than on being live alone, so the moment
+       * the session opens the card does not immediately grow a "0 of 8" scold
+       * for a register nobody has had a chance to touch. The line appears with
+       * the first mark and stays.
+       *
+       * The report renders bare either way, exactly as on a past entry — no
+       * "Planned" heading over it. Written before the session and written after
+       * it are the same field at two moments; labelling one made the feed claim
+       * a distinction the model does not have.
+       */
+      const marks = entry.attendance;
+      const showAttendance =
+        live && roster.some((gamer) => marks[gamer.id] !== undefined);
       return (
         <div className="space-y-3 pb-1 pt-3">
+          {showAttendance && (
+            <AttendanceSummary roster={roster} attendance={marks} />
+          )}
           <WrittenFields entry={entry} clampReport={clampReport} />
           {/* A future session with nothing on it still needs a line, or the
-              card is a bare date with no reason to exist on the page. */}
+              card is a bare date with no reason to exist on the page. It stays
+              up alongside a live register too: "no notes yet" is still true
+              then, and it is the standing reminder that the other owed half of
+              the session has not been written. */}
           {!hasNotes && (
             <p className="text-sm text-muted-foreground">{t("noNotesYet")}</p>
           )}

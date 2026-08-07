@@ -31,6 +31,27 @@ session's start, and the live entry carries the record editor exactly as a past 
 does. A daily 8:00–23:00 camp is what made the old behaviour untenable — it spent fifteen
 hours calling the session in progress history and naming tomorrow as next.
 
+**Rule: a feed takes its `now` as a prop from whoever owns its entries — it must not call
+`useNow()` inside itself.** Entry kind, the live tag and editor selection are all derived
+from the clock, so the entries and every derivation over them have to answer off *one*
+instant. The gedu workspace **freezes** that instant while a session editor is open,
+precisely so nothing can be reclassified under somebody typing into it; a feed component
+reading the ticking provider itself would step straight around that freeze. The entries
+would stay frozen while liveness advanced, and at the session's `endsAt` the mounted
+record editor would be swapped for the notes-only one — destroying an unsaved register
+mid-roll-call, with no error and nothing to retry. So the rule is structural: the clock
+enters the feed as a required prop, and a surface with nothing to freeze simply passes
+its own `useNow()`. A page may legitimately run **two** clocks — the gedu workspace's
+voice window keeps reading the live one, because a Join button frozen mid-edit would lie
+about whether a room is open — and the split is which of them may be stopped.
+
+**Corollary: the predicates deciding which editor an entry opens are the component's own
+rule, not a parallel one.** They live beside the gedu feed, take the same `now`, and are
+built from one expression and its negation so they are total and disjoint by
+construction. A component deriving its own inline version is how the two drift apart —
+which they had, silently, because the drift is only observable on the incoherent
+entries-and-clock pair the freeze bug produced.
+
 **Rule: family surfaces never import gedu code — enforced, not promised.** One
 `no-restricted-imports` zone in the ESLint config covers the whole family *path*, not
 only its components: `components/family/`, `components/parent/`, `components/gamer/`, the

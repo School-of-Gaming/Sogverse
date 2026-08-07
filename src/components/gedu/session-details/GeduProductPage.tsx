@@ -393,6 +393,10 @@ function Workspace({
     <GeduProductPageBody
       data={data}
       entries={entries}
+      // The very instant `entries` were built from — frozen while an editor is
+      // open. Handing the feed anything fresher would step around the freeze
+      // and reclassify a card under a gedu who is typing into it.
+      feedNow={now}
       feedRoster={feedRoster}
       sourceTimeZone={feed.product.timezone}
       materialUrl={feed.product.material_url}

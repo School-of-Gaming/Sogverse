@@ -43,7 +43,19 @@ export function GeduProductPageScene({
 }: {
   scenario: GeduProductScenario;
 }) {
-  const now = useNow();
+  const liveNow = useNow();
+  /**
+   * One instant for the whole scene: the fixture's sessions are laid out around
+   * it, the feed classifies against it, and the editor predicates answer from
+   * it. Frozen at mount rather than ticking, for the same reason the live
+   * workspace freezes its feed clock while an editor is open — entries built at
+   * one instant and liveness read at another come apart, and the card being
+   * edited is where that shows up first.
+   *
+   * A scene loses nothing by holding still: the camp day runs long enough that
+   * whichever state was on screen at mount is the state under review.
+   */
+  const [now] = useState(liveNow);
   const [fixture] = useState(() => buildGeduProductPageFixture(now, scenario));
   const [data, setData] = useState(fixture.data);
   const [entries, setEntries] = useState<SessionFeedEntry[]>(fixture.entries);
@@ -204,6 +216,8 @@ export function GeduProductPageScene({
     <GeduProductPageBody
       data={data}
       entries={entries}
+      // The same frozen instant the fixture's sessions were laid out around.
+      feedNow={now}
       feedRoster={fixture.feedRoster}
       sourceTimeZone={fixture.sourceTimeZone}
       materialUrl={fixture.materialUrl}

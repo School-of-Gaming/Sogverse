@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { useNow, useTimezone } from "@/providers";
+import { useTimezone } from "@/providers";
 import { cn } from "@/lib/utils";
 import {
   SessionFeedShell,
@@ -12,11 +12,7 @@ import {
   type SessionFeedRowContext,
 } from "@/components/session-feed";
 import { SessionFeedItem } from "./SessionFeedItem";
-import {
-  entryCompleteness,
-  isLiveEntry,
-  type SessionCompleteness,
-} from "./entry-state";
+import { entryCompleteness, type SessionCompleteness } from "./entry-state";
 import { isPartialSessionSaveError } from "./partial-save";
 import type {
   SessionEntryDraft,
@@ -32,6 +28,25 @@ interface SessionFeedProps {
    * renders the order it is given — it does no sorting of its own.
    */
   entries: readonly SessionFeedEntry[];
+  /**
+   * The instant the feed reads the clock at — **the same one `entries` were
+   * built from**, and required rather than optional so a caller cannot forget.
+   *
+   * Liveness, which editor each card opens, and the relative dates in the
+   * labels all come from this one value. It is a prop instead of a `useNow()`
+   * call in here for a reason that is not stylistic: the workspace **freezes**
+   * the feed's clock while an editor is open, so that no entry can be
+   * reclassified under a gedu who is typing into it. Reading the ticking
+   * provider here would walk straight around that freeze — the entries would
+   * stay frozen while liveness advanced, and the moment a session's `endsAt`
+   * passed, the mounted record editor would be swapped for the notes-only one
+   * and the unsaved register would go with it, silently.
+   *
+   * So the rule is one clock for the entries and their liveness, chosen by
+   * whoever owns the feed's state. A caller with nothing to freeze passes its
+   * own `useNow()` and loses nothing.
+   */
+  now: Date;
   /** The group's current roster, for the attendance summary and checklist. */
   roster: readonly SessionFeedGamer[];
   /**
@@ -96,6 +111,7 @@ interface SessionFeedProps {
  */
 export function SessionFeed({
   entries,
+  now,
   roster,
   sourceTimeZone,
   editingEntryId,
@@ -106,7 +122,6 @@ export function SessionFeed({
   const t = useTranslations("gedu.sessionFeed");
   const locale = useLocale();
   const timeZone = useTimezone();
-  const now = useNow();
 
   /**
    * The entry whose save is in the air, and why the last one failed.
@@ -247,12 +262,12 @@ export function SessionFeed({
             entry={entry}
             roster={roster}
             prominent={prominent}
-            // Derived here rather than inside the item, so every row answers
-            // off one clock read. It is what puts the record editor on the
-            // session the gedu is currently teaching: the kind flips at the
-            // session's *end*, so the one in progress is a future entry, and
-            // the register opens at its start.
-            live={isLiveEntry(entry, now)}
+            // The feed's clock, handed to every row so the whole page answers
+            // off one instant. It is what puts the record editor on the session
+            // the gedu is currently teaching: the kind flips at the session's
+            // *end*, so the one in progress is a future entry, and the register
+            // opens at its start.
+            now={now}
             completeness={completenessById.get(entry.id) ?? null}
             // The newest session that actually ran is the one report a gedu
             // opens the page to read every week; every older one keeps its

@@ -162,6 +162,32 @@ describe("isEditableEntry", () => {
   it("accepts a future session that has already started — roll call", () => {
     expect(isEditableEntry(future("live"), MID_SESSION)).toBe(true);
   });
+
+  /*
+   * THE INCOHERENT PAIR, and why these predicates say "is live" rather than
+   * "has started".
+   *
+   * A `future` entry paired with a clock past its own `endsAt` cannot come out
+   * of the builder — the kind means "has not ended", so entries and clock are
+   * built from one instant and agree. It arises only when somebody hands these
+   * predicates a FRESHER clock than the entries were built from, which is
+   * exactly the defect they were reconciled with the feed component to prevent:
+   * the workspace freezes the feed's clock while an editor is open, and a
+   * component reading the ticking provider instead produced precisely this pair
+   * and swapped the open editor out from under a gedu mid-roll-call.
+   *
+   * Pinned here so the pair stays total and disjoint even on input that should
+   * never occur. Both predicates are one expression and its negation, so no
+   * clock — coherent or not — can produce an entry offering two editors or
+   * none. Under the old start-only definition this same entry was editable
+   * *and* plannable's complement disagreed with the component's own rule, which
+   * is the drift that let the two definitions come apart unnoticed.
+   */
+  it("holds a stale future entry to exactly one editor", () => {
+    const stale = future("stale");
+    expect(isEditableEntry(stale, AFTER_END)).toBe(false);
+    expect(isPlannableEntry(stale, AFTER_END)).toBe(true);
+  });
 });
 
 describe("isPlannableEntry", () => {
@@ -182,6 +208,8 @@ describe("isPlannableEntry", () => {
     const cases: [SessionFeedEntry, Date][] = [
       [future("u"), BEFORE_START],
       [future("live"), MID_SESSION],
+      // The pair the builder never emits — see the stale-entry case above.
+      [future("stale"), AFTER_END],
       [past("r", { attendance: ALL_MARKED }), AFTER_END],
       [past("g"), AFTER_END],
       [unowedPast("o"), AFTER_END],
@@ -198,6 +226,8 @@ describe("isPlannableEntry", () => {
     const cases: [SessionFeedEntry, Date][] = [
       [future("u"), BEFORE_START],
       [future("live"), MID_SESSION],
+      // The pair the builder never emits — see the stale-entry case above.
+      [future("stale"), AFTER_END],
       [past("g"), AFTER_END],
       [unowedPast("o"), AFTER_END],
       [noRecord("n"), AFTER_END],
