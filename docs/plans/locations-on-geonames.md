@@ -211,7 +211,19 @@ own seed migrations.
   **15 renames** — mostly GeoNames trailing recent COG renames, plus one upstream typo
   ("Waldighofen") worth correcting *in GeoNames* rather than locally. Under the cutover
   these are simply the names France ships with. DROM commune names: 0 diffs.
-- **DROM**: GP/MQ/GF/RE each carry their région (ADM1), département (ADM2, admin2 =
+- **Alternate-locale payload is a per-pair empirical question, and France is the
+  failing case (2026-08-07):** only 13 of its ~34,850 admin rows carry a `fi` alternate
+  differing from the canonical name — none of them an exonym a Finnish speaker would
+  recognize (no "Pariisi"), most mistagged orthographic variants and one outright wrong
+  ("Chasselas→Gutedel", a German grape name). English fares little better as display
+  ("Département du Nord→North", "Paris→Paris Department"). The structural reason: the
+  famous multilingual exonyms live on GeoNames' populated-place (P) records, which are
+  *different records with different geonameids* from the administrative (A) rows this
+  tree ingests; Finland's `sv` worked because a co-official language got its admin
+  records richly annotated, not because every pair is. So `alternateLocales` stays
+  empty for a pair until its ingest diff shows real payload, and harvesting P-record
+  alternates onto A rows is rejected — it would be a fuzzy cross-record matching step
+  of exactly the kind this plan exists to avoid.
   971/972/973/974) and all communes (ADM4, admin4 = INSEE code) — 32+34+22+24 = 112/112
   matched. **Mayotte (YT) is shaped differently: no ADM2/3/4 at all — its 17 communes are
   ADM1 rows with the full INSEE code in admin1** (97601…), 17/17 matched, and its
