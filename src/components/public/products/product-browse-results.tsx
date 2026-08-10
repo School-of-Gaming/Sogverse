@@ -126,7 +126,7 @@ export function ProductBrowseResults({
     // shifting the viewport-centred grid sideways — see the html:has() rule in
     // globals.css.
     <div
-      className="container mx-auto px-4 lg:grid lg:max-w-none lg:grid-cols-[minmax(16rem,1fr)_minmax(0,64rem)_minmax(0,1fr)] lg:gap-6"
+      className="container mx-auto px-4 lg:grid lg:max-w-none lg:grid-cols-[minmax(16rem,1fr)_minmax(0,64rem)_minmax(0,1fr)] lg:gap-6 min-[110rem]:grid-cols-[minmax(16rem,1fr)_minmax(0,87rem)_minmax(0,1fr)]"
       data-reserve-scroll-gutter
     >
       {/* Sticks below the site header (--header-height, the same variable the
@@ -152,8 +152,15 @@ export function ProductBrowseResults({
                   gutters leave the cards track ~688–944px, and a third column
                   there would squeeze each card under 300px. `xl` is the first
                   breakpoint where three still read (~304px at 1280, ~330px once
-                  the track caps out); two columns below it run 336–463px. */}
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  the track caps out); two columns below it run 336–463px. The
+                  fourth column arrives at 110rem (1760px) together with the
+                  root grid's 87rem cap — the first width where four cards
+                  beside the rail hold the ~330px they had at three-up, rather
+                  than dropping under 300px the way `2xl` (1536px) would. The
+                  variant is in rem because the theme breakpoints are: Tailwind
+                  only orders same-unit media queries numerically, and a px
+                  variant sorts before `xl`, which then overrides it. */}
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 min-[110rem]:grid-cols-4">
                 {section.products.map((p) => (
                   <ProductBrowseCard
                     key={p.id}
