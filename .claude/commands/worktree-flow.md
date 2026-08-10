@@ -130,6 +130,17 @@ to start a second one.
 
 ## Phase 4 — Review (when the change is not trivial)
 
+**Review cadence is a judgment call the session must make out loud.** One
+branch-level review after the build completes is the default, and it is usually
+right when builder agents run concurrently (a mid-flight review reads other
+agents' half-done edits) or when pieces interlock (an early piece that a later
+piece rewrites gets reviewed twice, once for nothing). Per-piece reviews as each
+implementation lands are right when the pieces are independent and long-lived
+enough that a defect would ride along expensively. Either way, **say which
+cadence was chosen and why at the moment the first build agent launches** — a
+silent deviation from "review each piece" is indistinguishable from forgetting
+to review at all, and the user can only veto a decision they can see.
+
 Run `/code-review` against the branch — but check first whether `dev` has moved
 since Phase 1. It usually has, on a session long enough to need this command,
 and a diff against moved `dev` pollutes the review with other work inverted.
