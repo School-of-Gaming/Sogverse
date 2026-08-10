@@ -153,8 +153,13 @@ describe("the pre-open → open swap is invisible", () => {
     expect(cta(container)).toBe(ctaBefore);
     // The clock outlives its own countdown: the cells stay put and go to `--`.
     expect(clock(container)).toBe(clockBefore);
-    expect(Array.from(body.children)).toEqual(childrenBefore);
-    expect(body.parentElement).not.toBeNull();
+    // Re-query the body through the live container — asserting on the
+    // captured `body` alone would still pass against a detached node if the
+    // panel had remounted, which is exactly the failure this test exists to
+    // catch.
+    const bodyAfter = clock(container)!.parentElement!;
+    expect(bodyAfter).toBe(body);
+    expect(Array.from(bodyAfter.children)).toEqual(childrenBefore);
   });
 
   it("holds the countdown slot open even though the open state has no target", () => {

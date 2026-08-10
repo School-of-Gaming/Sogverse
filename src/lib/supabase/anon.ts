@@ -6,13 +6,18 @@ import type { AppSupabaseClient } from "@/types";
  * A server-side Supabase client with **no cookies attached** — the anon key and
  * nothing else. Reads through it see exactly what a signed-out visitor sees.
  *
- * It exists for one job: server work that must stay **cacheable**. Reading
- * cookies in a server render opts that render out of caching for good, because
- * the framework can no longer prove the output is the same for everyone. On a
- * high-traffic public route (a shop page's `generateMetadata`, say) that turns a
- * response that could have been shared by every visitor into a per-request
- * render, and the read it was paying for did not need an identity in the first
- * place.
+ * It exists for reads that are **identity-free by nature** — the answer is the
+ * same whoever is asking (a page's robots policy, derived from a column on the
+ * row it is about). Reaching for the cookie-bound client there couples a public
+ * answer to session state it never consults, and drags `cookies()` into a
+ * function that has no business being request-specific.
+ *
+ * An honesty note on caching: this does **not** make anything cacheable today.
+ * The root layout reads the session on every request, so every route in the app
+ * renders dynamically regardless of what this file does. What it preserves is
+ * the *option*: an identity-free read is the kind that could move into a cached
+ * or prerendered segment if that ever changes, and one that reads cookies never
+ * can. Don't cite caching as a present-tense payoff of using this client.
  *
  * **Only use it where an anonymous answer is the correct answer.** Anything that
  * varies by who is asking — an enrolled family's view of a product, anything

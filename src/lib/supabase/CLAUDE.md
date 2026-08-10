@@ -9,19 +9,26 @@ codebase and not only the ones that happen to page today.
 
 ## The cookie-free anon client
 
-**Rule: server work whose answer is the same for every visitor must not read cookies to
-get it.** Touching cookies in a server render permanently opts that render out of caching
-— the framework can no longer prove the output is shareable — so a public route pays a
-per-request render for an identity the read never used. A page's robots policy, derived
-from a column on the row it is about, is the shape this bites hardest: it sits on the
-highest-traffic public routes and asks nothing about who is looking.
+**Rule: server work whose answer is the same for every visitor takes the anon client, not
+the cookie-bound one.** A read that never consults who is asking — a page's robots policy,
+derived from a column on the row it is about — gains nothing from a session and should not
+be coupled to one. The anon factory is the anon key and no cookies, so it reads exactly
+what a signed-out visitor reads.
 
-The anon factory is the answer: the anon key and no cookies, so it reads exactly what a
-signed-out visitor reads. **Use it only where an anonymous answer is the correct answer.**
-Anything varying by who is asking — anything behind an RLS policy keyed to `auth.uid()` —
-must keep the cookie-bound server client, or it will read as a stranger and silently
-return nothing rather than failing. Where a read can miss, the caller has to be built so
-the miss lands somewhere safe.
+Be honest about what this buys. It does **not** make anything cacheable today: the root
+layout reads the session on every request, so every route renders dynamically no matter
+which client a metadata function uses. The payoff is smaller and real — the read stays
+decoupled from request state — plus a preserved option: identity-free reads are the ones
+that could move into cached or prerendered segments if the app's rendering ever changes,
+and cookie-reading ones never can. A future session should not apply this rule expecting
+a measurable caching win, and should not weaken the root layout's session read to chase
+one without deciding that deliberately.
+
+**Use it only where an anonymous answer is the correct answer.** Anything varying by who
+is asking — anything behind an RLS policy keyed to `auth.uid()` — must keep the
+cookie-bound server client, or it will read as a stranger and silently return nothing
+rather than failing. Where a read can miss, the caller has to be built so the miss lands
+somewhere safe.
 
 ## The problem paging exists to solve
 

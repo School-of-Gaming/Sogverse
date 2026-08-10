@@ -43,9 +43,12 @@ interface PageProps {
  * and an unknown municipality slug 404s below regardless.
  *
  * Cookie-free anon client, as on `/shop/[id]`: `is_visible` is a column on the
- * product rather than a fact about the viewer, so reading cookies here would opt
- * a public route out of caching for nothing. A read miss lands on noindex, which
- * is the safe direction for a miss to fall.
+ * product rather than a fact about the viewer, so the read is identity-free
+ * (see the client's doc — no caching win today; the page body below reads
+ * cookies anyway). Only `data` is consulted, so a transient query error is
+ * indistinguishable from a missing row and both land on noindex — deliberately
+ * fail-closed: a wrongly-noindexed listed page heals on the next crawl, while
+ * an indexed unlisted one is the harm this tag exists to prevent.
  */
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;

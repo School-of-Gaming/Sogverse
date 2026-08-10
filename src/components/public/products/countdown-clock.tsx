@@ -115,7 +115,16 @@ function pad2(n: number): string {
  * `null` means "nothing to count down to" and is answered `false` without
  * starting a timer — the panel passes null once registration is open, and a
  * once-a-second re-render of a live form buys nothing there. The timer also
- * stops the moment the target is reached: the answer cannot change again.
+ * stops the moment the target is reached: for a *stable* target the answer
+ * cannot change again.
+ *
+ * NOT latched across prop changes: a caller that reaches `done === true` and
+ * then swaps `targetMs` to null sees the return value fall back to `false`.
+ * The signup panel is built for that — it ORs the hook with "no longer
+ * pre-open" and never feeds the raw value to anything that must stay true —
+ * and any new caller must either keep the target stable for the mount or
+ * compose the same way. Don't wire this hook's raw value straight into the
+ * clock's `done` prop.
  *
  * Hydration parity: `now` starts unset, so the first render returns `false`
  * everywhere. The interval picks up the real time on its first tick (within

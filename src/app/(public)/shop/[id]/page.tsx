@@ -31,14 +31,21 @@ import { ProductDetailPage } from "@/components/public/products/product-detail-p
  * could still be indexed bare off an external link. Allowing the crawl and
  * serving noindex is what actually deindexes.
  *
- * The read goes through the **cookie-free anon client**, deliberately. This is
- * the highest-traffic public route on the site, and touching cookies here would
- * opt every one of its renders out of caching for a question whose answer is the
- * same for everybody: `is_visible` is a column on the product, not a fact about
- * the viewer. Since 00168 an unlisted product is readable by anon, so the
- * anonymous read sees the same row a signed-in one would — and where it does
- * not (a cancelled or completed product falls outside the read policy) the miss
- * lands on noindex, which is the answer that page wants anyway.
+ * The read goes through the **cookie-free anon client**, deliberately:
+ * `is_visible` is a column on the product, not a fact about the viewer, so the
+ * question is identity-free (see the client's own doc for what that does and
+ * does not buy — no caching win today). Since 00168 an unlisted product is
+ * readable by anon, so the anonymous read sees the same row a signed-in one
+ * would — and where it does not (a cancelled or completed product falls outside
+ * the read policy) the miss lands on noindex, which is the answer that page
+ * wants anyway.
+ *
+ * Only `data` is consulted, so a transient query *error* (Supabase down during
+ * a crawl) is indistinguishable from a missing row and also lands on noindex —
+ * a listed product could briefly serve noindex during an outage. That is the
+ * deliberate fail-closed direction: the harm this tag guards against is an
+ * unlisted product getting indexed, and a wrongly-noindexed listed page heals
+ * on the next crawl.
  */
 export async function generateMetadata({
   params,
