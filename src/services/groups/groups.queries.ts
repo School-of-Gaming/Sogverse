@@ -20,6 +20,14 @@ export const groupsKeys = {
   all: ["groups"] as const,
   byProduct: (productId: string) =>
     [...groupsKeys.all, "product", productId] as const,
+  /**
+   * Nested under the product's key on purpose: every mutation below invalidates
+   * `byProduct`, and prefix matching carries that down here — so the markers
+   * refresh alongside the snapshot they're read next to, with nothing extra to
+   * remember at each mutation.
+   */
+  waitlistPayments: (productId: string) =>
+    [...groupsKeys.byProduct(productId), "waitlist-payments"] as const,
 };
 
 export function useProductGroups(productId: string) {
@@ -30,6 +38,25 @@ export function useProductGroups(productId: string) {
     queryKey: groupsKeys.byProduct(productId),
     queryFn: () => service.getProductGroups(productId),
     enabled: !!productId,
+  });
+}
+
+/**
+ * Which of the product's waitlisted participations were paid for (see the
+ * service method for what the marker is and why it decides a promotion).
+ *
+ * `enabled` is the caller's: only a paid product with a waitlist has a refusal
+ * to decide, so nothing else pays for the read. While it is disabled or still
+ * in flight the data is undefined, and the panel treats that as "no marker" —
+ * the refusal errs toward its dialog rather than toward a free seat.
+ */
+export function useWaitlistPaymentMarkers(productId: string, enabled: boolean) {
+  const service = new GroupsService(getClient());
+
+  return useQuery({
+    queryKey: groupsKeys.waitlistPayments(productId),
+    queryFn: () => service.getWaitlistPaymentMarkers(productId),
+    enabled: !!productId && enabled,
   });
 }
 

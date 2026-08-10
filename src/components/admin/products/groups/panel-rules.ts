@@ -1,0 +1,170 @@
+import type { BillingMode, ProductType } from "@/types";
+
+/**
+ * The Groups panel's pure rules: how a drag/drop payload is read, what a drop
+ * resolves to, and whether the panel may comp-enroll onto this product.
+ *
+ * They live outside the panel component so each one can be exercised directly —
+ * the interesting cases (a never-paid waitlister promoted onto a paid product, a
+ * subscribed member dragged onto the waitlist) are decisions, not rendering, and
+ * a decision that only exists inside a drag handler can't be tested without
+ * simulating a pointer.
+ */
+
+// ---------------------------------------------------------------------------
+// dnd-kit payload readers. Drag/drop `data.current` is an untyped record, so
+// these narrow it by checking the discriminating fields for real. Unknown
+// shapes return null and the handlers no-op — a drag must never throw.
+// ---------------------------------------------------------------------------
+
+/** Payload attached by GamerChip's useDraggable. */
+export interface GamerDragData {
+  participationId: string;
+  firstName: string;
+}
+
+export function readGamerDragData(value: unknown): GamerDragData | null {
+  if (typeof value !== "object" || value === null) return null;
+  if (
+    !("participationId" in value) ||
+    typeof value.participationId !== "string"
+  ) {
+    return null;
+  }
+  if (!("firstName" in value) || typeof value.firstName !== "string") {
+    return null;
+  }
+  return {
+    participationId: value.participationId,
+    firstName: value.firstName,
+  };
+}
+
+/**
+ * Payload attached by the droppables: group columns and the unassigned card
+ * carry `{ toGroupId }` (null = unassigned inbox); the header's removal zone
+ * carries `{ remove: true }`; the waitlist card carries `{ waitlist: true }`.
+ */
+export type DropData =
+  | { kind: "move"; toGroupId: string | null }
+  | { kind: "remove" }
+  | { kind: "waitlist" };
+
+export function readDropData(value: unknown): DropData | null {
+  if (typeof value !== "object" || value === null) return null;
+  if ("remove" in value && value.remove === true) return { kind: "remove" };
+  if ("waitlist" in value && value.waitlist === true) {
+    return { kind: "waitlist" };
+  }
+  if ("toGroupId" in value) {
+    const { toGroupId } = value;
+    if (typeof toGroupId === "string" || toGroupId === null) {
+      return { kind: "move", toGroupId };
+    }
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Drop resolution
+// ---------------------------------------------------------------------------
+
+/**
+ * Why a drop wrote nothing. Both cases are money problems the panel cannot fix
+ * by dragging, so the drop is refused and a dialog explains the manual path.
+ */
+export type BlockedDropReason =
+  /** Seating a waitlister who never paid, on a product that charges. */
+  | "unpaidPromote"
+  /** Demoting a member whose seat is behind a live Stripe subscription. */
+  | "liveSubscription";
+
+export type DropOutcome =
+  /** Nothing to do: dropped back where it started, or already there. */
+  | { kind: "none" }
+  | { kind: "remove" }
+  | { kind: "move"; toGroupId: string | null }
+  | { kind: "promote"; toGroupId: string | null }
+  | { kind: "demote" }
+  | { kind: "blocked"; reason: BlockedDropReason };
+
+/** The dragged participation's own facts, read off the panel's snapshot. */
+export interface DragSubject {
+  /** True when the chip currently sits on the waitlist. */
+  isWaitlisted: boolean;
+  /**
+   * Where an active chip sits now — a group id, or null for the unassigned
+   * inbox. Meaningless for a waitlisted chip, which has no group.
+   */
+  currentGroupId: string | null;
+  /**
+   * The participation has a live Stripe subscription behind it — carried by the
+   * groups snapshot, and the exact condition `demote_to_waitlist` refuses on.
+   */
+  hasLiveSubscription: boolean;
+  /**
+   * The participation carries a payment marker (its recorded Checkout Session),
+   * i.e. money once arrived for this seat. Demotion preserves the marker, so a
+   * camper who paid and was later demoted still has one and promotes plainly;
+   * a family who joined the queue without paying never has one.
+   */
+  hasPaymentMarker: boolean;
+}
+
+/**
+ * What a completed drag should do. Every refusal is decided here rather than at
+ * the mutation, so a blocked drop writes nothing at all — the panel shows the
+ * dialog and the snapshot is left exactly as it was.
+ *
+ * The promote refusal is keyed on the money, not the product type: a paid
+ * product plus a waitlisted row with no payment marker. Keying it on billing
+ * alone would trap every camper who genuinely paid and was later demoted, since
+ * they could then never be put back.
+ */
+export function resolveDrop(
+  drop: DropData,
+  subject: DragSubject,
+  billingMode: BillingMode,
+): DropOutcome {
+  switch (drop.kind) {
+    case "remove":
+      // Removal is confirmed in its own dialog and is legal from anywhere,
+      // including the waitlist (it just cancels the queued family).
+      return { kind: "remove" };
+
+    case "waitlist":
+      if (subject.isWaitlisted) return { kind: "none" };
+      if (subject.hasLiveSubscription) {
+        return { kind: "blocked", reason: "liveSubscription" };
+      }
+      return { kind: "demote" };
+
+    case "move":
+      if (subject.isWaitlisted) {
+        if (billingMode === "paid" && !subject.hasPaymentMarker) {
+          return { kind: "blocked", reason: "unpaidPromote" };
+        }
+        return { kind: "promote", toGroupId: drop.toGroupId };
+      }
+      if (subject.currentGroupId === drop.toGroupId) return { kind: "none" };
+      return { kind: "move", toGroupId: drop.toGroupId };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Comp-enrollment
+// ---------------------------------------------------------------------------
+
+/**
+ * Whether the panel offers its add-gamer affordance. Mirrors the enrollment
+ * RPC's own refusal: the one shape an admin cannot comp is a seat that requires
+ * a Stripe subscription nobody is creating — a paid consumer club. A free club
+ * comps exactly like a free event or a camp does. The RPC refuses independently
+ * (defense in depth); this only decides whether the button is worth offering.
+ */
+export function canCompEnroll(
+  productType: ProductType,
+  billingMode: BillingMode,
+): boolean {
+  return !(productType === "consumer_club" && billingMode === "paid");
+}

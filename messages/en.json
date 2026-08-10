@@ -633,6 +633,20 @@
           "title": "Waitlist",
           "subtitle": "Gamers waiting for a seat, numbered in the order they joined. Drag one into a group to give them a seat, or drop an active gamer here to send them to the back.",
           "empty": "No one is on the waitlist."
+        },
+        "seatsOverfilled": "{count} of {total} seats — {over} over",
+        "blockedMove": {
+          "acknowledge": "Got it",
+          "promoteUnpaid": {
+            "title": "This seat has not been paid for",
+            "description": "{name} is on the waitlist without having paid, and this product is paid. Seating them now would enroll them for free.",
+            "nextStep": "Ask the family to buy the seat instead: while a seat is open the product shows as available in the shop, so they can leave the waitlist from their My SOG card and check out as usual."
+          },
+          "demoteSubscribed": {
+            "title": "The subscription is still live",
+            "description": "Moving {name} to the waitlist would leave a live subscription behind, still billing the family for a seat they no longer hold.",
+            "nextStep": "The family cancels the subscription from their My SOG billing page. The seat is released as soon as the subscription ends."
+          }
         }
       },
       "seatLimitModes": {

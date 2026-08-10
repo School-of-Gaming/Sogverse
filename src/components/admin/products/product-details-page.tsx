@@ -167,6 +167,7 @@ export function ProductDetailsPage({
       <GroupsPanel
         productId={productId}
         productType={productType}
+        billingMode={product.billing_mode}
         seatCount={product.seat_count}
         waitlistEnabled={product.waitlist_enabled}
         voiceAvailable={voiceAvailable}

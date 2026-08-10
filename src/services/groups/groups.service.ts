@@ -59,6 +59,29 @@ export class GroupsService {
   }
 
   /**
+   * The ids of a product's waitlisted participations that carry a payment
+   * marker — a recorded Stripe Checkout Session, i.e. money once arrived for
+   * that seat. The Groups panel's promote refusal reads it: on a paid product,
+   * a waitlister with no marker never paid and cannot simply be seated, while a
+   * member who paid and was later demoted keeps their marker and promotes
+   * plainly (demotion doesn't clear it).
+   *
+   * A separate read rather than a field on the groups snapshot: the snapshot
+   * RPC does not carry the marker, and only a paid product's waitlist asks the
+   * question. Small and indexed — the waitlist of one product, ids only.
+   */
+  async getWaitlistPaymentMarkers(productId: string): Promise<string[]> {
+    const { data, error } = await this.supabase
+      .from("participations")
+      .select("id")
+      .eq("product_id", productId)
+      .eq("status", "waitlisted")
+      .not("stripe_checkout_session_id", "is", null);
+    if (error) throw error;
+    return data.map((row) => row.id);
+  }
+
+  /**
    * Applies a change set via the apply route, which calls the
    * `apply_group_changes` RPC. Mutations always go through the API route, never
    * directly from the browser client — `apply_group_changes` is SECURITY DEFINER

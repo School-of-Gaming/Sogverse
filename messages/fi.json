@@ -633,6 +633,20 @@
           "title": "Jonotuslista",
           "subtitle": "Paikkaa odottavat pelaajat liittymisjärjestyksessä numeroituina. Vedä pelaaja ryhmään antaaksesi hänelle paikan tai pudota aktiivinen pelaaja tähän siirtääksesi hänet jonon perälle.",
           "empty": "Jonotuslistalla ei ole ketään."
+        },
+        "seatsOverfilled": "{count} / {total} paikkaa – {over} yli",
+        "blockedMove": {
+          "acknowledge": "Selvä",
+          "promoteUnpaid": {
+            "title": "Paikkaa ei ole maksettu",
+            "description": "{name} on jonotuslistalla maksamatta, ja tuote on maksullinen. Jos annat paikan nyt, hän pääsee mukaan ilmaiseksi.",
+            "nextStep": "Pyydä perhettä ostamaan paikka: kun paikka on vapaana, tuote näkyy kaupassa avoimena, joten perhe voi poistua jonotuslistalta My SOG -korttinsa kautta ja maksaa paikan tavalliseen tapaan."
+          },
+          "demoteSubscribed": {
+            "title": "Tilaus on yhä voimassa",
+            "description": "Jos {name} siirtyy jonotuslistalle, tilaus jää voimaan ja perheeltä veloitetaan edelleen paikasta, jota heillä ei enää ole.",
+            "nextStep": "Perhe voi perua tilauksen My SOG -laskutussivullaan. Paikka vapautuu heti, kun tilaus päättyy."
+          }
         }
       },
       "seatLimitModes": {

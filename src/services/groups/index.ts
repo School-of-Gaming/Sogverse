@@ -6,6 +6,7 @@ export {
 export {
   groupsKeys,
   useProductGroups,
+  useWaitlistPaymentMarkers,
   useMoveParticipation,
   useRenameGroup,
   useCreateGroup,

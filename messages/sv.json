@@ -633,6 +633,20 @@
           "title": "Väntelista",
           "subtitle": "Spelare som väntar på en plats, numrerade i den ordning de ställde sig i kö. Dra en till en grupp för att ge hen en plats, eller släpp en aktiv spelare här för att flytta hen sist i kön.",
           "empty": "Ingen står på väntelistan."
+        },
+        "seatsOverfilled": "{count} av {total} platser – {over} över",
+        "blockedMove": {
+          "acknowledge": "Okej",
+          "promoteUnpaid": {
+            "title": "Platsen är inte betald",
+            "description": "{name} står på väntelistan utan att ha betalat, och den här produkten kostar. Att ge platsen nu skulle skriva in hen gratis.",
+            "nextStep": "Be familjen köpa platsen i stället: så länge en plats är ledig visas produkten som öppen i butiken, så de kan lämna väntelistan från sitt My SOG-kort och betala som vanligt."
+          },
+          "demoteSubscribed": {
+            "title": "Prenumerationen är fortfarande aktiv",
+            "description": "Om {name} flyttas till väntelistan blir prenumerationen kvar och familjen fortsätter att faktureras för en plats de inte längre har.",
+            "nextStep": "Familjen säger upp prenumerationen på sin My SOG-faktureringssida. Platsen frigörs så snart prenumerationen upphör."
+          }
         }
       },
       "seatLimitModes": {

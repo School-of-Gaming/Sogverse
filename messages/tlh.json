@@ -678,6 +678,20 @@
           "title": "loSwI’pu’",
           "subtitle": "pa’ loStaH SuvwI’pu’, ’el poHchaj mI’lu’. ghommeHghaj wa’ yIngeH ’ej pa’ yInob; pagh naDev SuvwI’ Sang yIqep, tlha’Daq yIlan.",
           "empty": "pagh loSwI’pu’ tu’lu’."
+        },
+        "seatsOverfilled": "{count} / {total} pa’ – {over} tlhoy law’",
+        "blockedMove": {
+          "acknowledge": "jIyaj",
+          "promoteUnpaid": {
+            "title": "pa’vam DIlbe’lu’",
+            "description": "loSwI’pu’ tetlhDaq {name} tu’lu’, ’ach DIlbe’. Huch poQ ngoptlhInvam. DaH pa’ Danobchugh, Huch Hutlh ’el — batlh ghajbe’ vay’.",
+            "nextStep": "qorDu’vaD yIja’: pa’ tlhab tu’lu’chugh, malja’Daq poSqu’ ngoptlhIn. vaj My SOG ngoptlhInDaj lo’ ’ej loSwI’pu’ tetlhvo’ mej, ’ej batlh DIl."
+          },
+          "demoteSubscribed": {
+            "title": "taHtaH Huch nge’ghach",
+            "description": "loSwI’pu’ tetlhDaq {name} DalanDI’, taHtaH Huch nge’ghach: pa’ Hutlh qorDu’, ’ach Huch nge’taH. quvHa’ghach ’oH!",
+            "nextStep": "My SOG Huch nge’ghach HaDDaq nge’ghach chIl qorDu’. chIlDI’, tlhab pa’."
+          }
         }
       },
       "seatLimitModes": {

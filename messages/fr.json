@@ -633,6 +633,20 @@
           "title": "Liste d’attente",
           "subtitle": "Joueurs en attente d’une place, numérotés dans leur ordre d’arrivée. Faites-en glisser un dans un groupe pour lui donner une place, ou déposez ici un joueur actif pour l’envoyer en fin de liste.",
           "empty": "Personne n’est sur la liste d’attente."
+        },
+        "seatsOverfilled": "{count} places sur {total} – {over} en trop",
+        "blockedMove": {
+          "acknowledge": "Compris",
+          "promoteUnpaid": {
+            "title": "La place n’a pas été payée",
+            "description": "{name} est sur la liste d’attente sans avoir payé, et ce produit est payant. Lui donner une place maintenant l’inscrirait gratuitement.",
+            "nextStep": "Demandez plutôt à la famille d’acheter la place : tant qu’une place est libre, le produit s’affiche comme ouvert dans la boutique, la famille peut donc quitter la liste d’attente depuis sa carte My SOG et payer normalement."
+          },
+          "demoteSubscribed": {
+            "title": "L’abonnement est toujours actif",
+            "description": "Déplacer {name} vers la liste d’attente laisserait un abonnement actif qui continuerait à facturer la famille pour une place qu’elle n’a plus.",
+            "nextStep": "La famille résilie l’abonnement depuis sa page de facturation My SOG. La place se libère dès la fin de l’abonnement."
+          }
         }
       },
       "seatLimitModes": {
