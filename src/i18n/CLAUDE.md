@@ -170,8 +170,6 @@ It is a merge, not an overwrite.
 
 `profiles.locale` is a nullable `text` column; null means "auto-detect from browser." It's persisted via a PATCH endpoint using the admin client; existing profiles RLS covers it. Distinct from `profiles.spoken_languages` (see locale-vs-spoken-language above): `locale` controls the app translation and the language of Sogverse communications; `spoken_languages` is the user's preferred club/product languages for gamer↔gedu matching.
 
-## Future direction
+## Known gaps
 
-The current setup resolves locale from cookie/header with no locale signal in the URL. The intended next step is **locale-prefix routing with translated slugs** (next-intl's `defineRouting()` + `pathnames`, a `[locale]` segment): each language gets its own URL namespace (`/fi/tietoa`, `/sv/om-oss`), bare paths redirect by the same resolution order as today. This unlocks locale-specific OG images/metadata (OG crawlers send no cookies, so cookie-only resolution can't do this), `hreflang` tags, per-language sitemaps, and URLs that always match displayed content. The cookie/profile system would remain as the redirect hint and persistence layer; the URL becomes the source of truth per request.
-
-Other known gaps: client message payload is shipped whole per navigation rather than per-page scoped (could filter namespaces by role/page), and `description`/`openGraph` metadata fields are still hardcoded English on many pages.
+Client message payload is shipped whole per navigation rather than per-page scoped (could filter namespaces by role/page). Localizing per-page SEO metadata (descriptions, OG text) is tracked in `TODO.md`.
