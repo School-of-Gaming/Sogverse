@@ -1,34 +1,17 @@
 # Supabase clients & the paged-read discipline
 
 This directory holds the Supabase client factories — browser (singleton), server
-component, the privileged service-role one, and a cookie-free anon one — plus the shared
-paging primitive every list read that can outgrow a single response goes through. The
-first three are described in the root `CLAUDE.md`; the fourth is described below, and the
-rest of this file is about the paging rules, which are normative for every service in the
-codebase and not only the ones that happen to page today.
+component, and the privileged service-role one — plus the shared paging primitive every
+list read that can outgrow a single response goes through. The factories are described in
+the root `CLAUDE.md`; the rest of this file is about the paging rules, which are
+normative for every service in the codebase and not only the ones that happen to page
+today.
 
-## The cookie-free anon client
-
-**Rule: server work whose answer is the same for every visitor takes the anon client, not
-the cookie-bound one.** A read that never consults who is asking — a page's robots policy,
-derived from a column on the row it is about — gains nothing from a session and should not
-be coupled to one. The anon factory is the anon key and no cookies, so it reads exactly
-what a signed-out visitor reads.
-
-Be honest about what this buys. It does **not** make anything cacheable today: the root
-layout reads the session on every request, so every route renders dynamically no matter
-which client a metadata function uses. The payoff is smaller and real — the read stays
-decoupled from request state — plus a preserved option: identity-free reads are the ones
-that could move into cached or prerendered segments if the app's rendering ever changes,
-and cookie-reading ones never can. A future session should not apply this rule expecting
-a measurable caching win, and should not weaken the root layout's session read to chase
-one without deciding that deliberately.
-
-**Use it only where an anonymous answer is the correct answer.** Anything varying by who
-is asking — anything behind an RLS policy keyed to `auth.uid()` — must keep the
-cookie-bound server client, or it will read as a stranger and silently return nothing
-rather than failing. Where a read can miss, the caller has to be built so the miss lands
-somewhere safe.
+(A cookie-free anon factory existed briefly in August 2026 for visibility-conditional
+robots metadata and was deleted when that policy became an unconditional static noindex —
+if a genuinely identity-free server read ever returns, that shape is in the git history,
+along with the caveat that it buys no caching while the root layout reads the session on
+every request.)
 
 ## The problem paging exists to solve
 

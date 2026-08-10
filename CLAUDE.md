@@ -59,7 +59,7 @@ Proxy (`src/proxy.ts`) refreshes Supabase auth sessions, enforces role-based rou
 ### Key Conventions
 - App routes are grouped: `(auth)`, `(dashboard)`, `(public)`, plus `api/`
 - Components are organized by role: `components/[role]/`, shared UI in `components/ui/`
-- Supabase clients: `lib/supabase/` — `client.ts` (browser), `server.ts` (RSC), `admin.ts` (privileged), `anon.ts` (cookie-free, so a public server render stays cacheable)
+- Supabase clients: `lib/supabase/` — `client.ts` (browser), `server.ts` (RSC), `admin.ts` (privileged)
 - Auto-generated types in `types/database.types.ts`, convenience aliases in `types/index.ts`
 
 ### Service Layer Pattern

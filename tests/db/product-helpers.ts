@@ -147,16 +147,37 @@ export async function createScheduleSlot(
 }
 
 /**
- * Hard-deletes v2 products by id. CASCADE removes participations,
- * schedule slots, holiday-calendar links, prices, groups, the seat-count
- * rollup row, etc. Use in afterAll.
+ * Hard-deletes v2 products by id, participations first. Every FK from
+ * products cascades, but the AFTER DELETE trigger on participations
+ * re-inserts a product_seat_counts row for the product mid-cascade —
+ * which violates its FK once the product row is gone and aborts the
+ * whole delete. Deleting participations as their own statement lets the
+ * trigger run while the product still exists (family_subscriptions
+ * cascade from participations, so they go too). Errors throw: a cleanup
+ * that silently fails leaves the id occupied, and the next
+ * createTestProduct in the same CI run dies on a duplicate key with no
+ * hint of why.
  */
 export async function deleteTestProducts(
   admin: SupabaseClient<Database>,
   productIds: string[],
 ): Promise<void> {
   if (productIds.length === 0) return;
-  await admin.from("products").delete().in("id", productIds);
+  const participations = await admin
+    .from("participations")
+    .delete()
+    .in("product_id", productIds);
+  if (participations.error) {
+    throw new Error(
+      `deleteTestProducts (participations) failed: ${participations.error.message}`,
+    );
+  }
+  const products = await admin.from("products").delete().in("id", productIds);
+  if (products.error) {
+    throw new Error(
+      `deleteTestProducts (products) failed: ${products.error.message}`,
+    );
+  }
 }
 
 /**
