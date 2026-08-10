@@ -1405,10 +1405,11 @@
     }
   },
   "productBrowse": {
-    "headings": {
-      "consumer_club": "Kerhomme",
-      "camp": "Leirimme",
-      "event": "Tapahtumamme"
+    "pageTitle": "Kauppa",
+    "sections": {
+      "clubs": "Kerhot",
+      "camps": "Leirit",
+      "events": "Tapahtumat"
     },
     "filters": {
       "type": "Tyyppi",

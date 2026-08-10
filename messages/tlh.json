@@ -1450,10 +1450,11 @@
     }
   },
   "productBrowse": {
-    "headings": {
-      "consumer_club": "ghom’a’meymaj",
-      "camp": "raghmeymaj",
-      "event": "wanI’meymaj"
+    "pageTitle": "ngevwI’",
+    "sections": {
+      "clubs": "ghom’a’mey",
+      "camps": "raghmey",
+      "events": "wanI’mey"
     },
     "filters": {
       "type": "mIw",

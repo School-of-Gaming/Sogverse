@@ -1405,10 +1405,11 @@
     }
   },
   "productBrowse": {
-    "headings": {
-      "consumer_club": "Our Clubs",
-      "camp": "Our Camps",
-      "event": "Our Events"
+    "pageTitle": "Shop",
+    "sections": {
+      "clubs": "Clubs",
+      "camps": "Camps",
+      "events": "Events"
     },
     "filters": {
       "type": "Type",

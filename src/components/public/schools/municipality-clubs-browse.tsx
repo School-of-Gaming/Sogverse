@@ -13,9 +13,10 @@ import type { ProductBrowseRow, SpokenLanguage } from "@/types";
 import { ProductBrowseResults } from "@/components/public/products/product-browse-results";
 
 // The per-municipality clubs page (`/schools/<slug>`). A shop browse page
-// narrowed to one municipality: same filter strip + card grid (via
+// narrowed to one municipality: same filters + card grid (via
 // <ProductBrowseResults>), minus the Clubs|Camps Type row — everything here is
-// a municipality club.
+// a municipality club. One unheaded section, so the grid reads as a plain grid
+// under this page's own h1 rather than repeating "Clubs" beneath it.
 //
 // The page only renders for a municipality that runs clubs — the route 404s
 // otherwise (see `[municipalityName]/page.tsx`) — so there's no bespoke empty
@@ -69,6 +70,11 @@ export function MunicipalityClubsBrowse({
     initialData: initialCounts,
   });
 
+  const sections = useMemo(
+    () => [{ id: "municipality-clubs", products: clubs }],
+    [clubs],
+  );
+
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
       <header className="mx-auto max-w-3xl text-center">
@@ -77,13 +83,12 @@ export function MunicipalityClubsBrowse({
         </h1>
       </header>
 
-      <div className="mx-auto mt-8 max-w-6xl">
+      {/* Same width budget as the shop: the filter rail takes a fixed slice
+          from `lg` up, and the cards need the rest. */}
+      <div className="mx-auto mt-8 max-w-7xl">
         <ProductBrowseResults
-          products={clubs}
+          sections={sections}
           counts={counts ?? []}
-          // Municipality clubs are recurring-weekly, so the Days filter applies
-          // (single source — also forwarded to the filter strip downstream).
-          supportsDays
           filters={{
             initialSpokenLanguages,
             showTypeFilter: false,

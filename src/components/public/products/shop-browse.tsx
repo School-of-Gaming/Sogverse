@@ -3,22 +3,23 @@
 import type { ProductBrowseRow, SpokenLanguage } from "@/types";
 import type { ParticipationCounts } from "@/services/participations";
 import { ProductBrowsePage } from "./product-browse-page";
-import { CATEGORY_TYPE, useShopCategory } from "./use-shop-category";
+import { useShopCategories, visibleCategories } from "./use-shop-categories";
 
-// The shop storefront. The required, mutually-exclusive category (Clubs |
-// Camps | Events) lives in the URL via useShopCategory and is switched from the
-// "Type" row inside the browse filters (see product-browse-filters.tsx). Here it
-// just selects which product type the browse grid shows; the grid itself loads
-// every shop type at once (see SHOP_PRODUCT_TYPES) and filters down
-// client-side, so switching category is instant.
+// The shop storefront. Type (Clubs | Camps | Events) is an inclusive filter
+// living in the URL via useShopCategories, toggled from the "Type" row inside
+// the browse filters (see product-browse-filters.tsx). Selecting nothing is the
+// default and shows every category; here that selection is expanded into the
+// list of sections the browse page renders. The page loads every shop type at
+// once (see SHOP_PRODUCT_TYPES) and splits them client-side, so toggling a
+// category is instant.
 //
 // Municipality clubs are intentionally not surfaced here — they are discovered
 // location-first from `/schools`. See the CATEGORY_TYPE map in
-// use-shop-category.ts.
+// shop-categories.ts.
 //
 // `initialProducts`/`initialCounts` are server-prefetched in `shop/page.tsx`
-// and forwarded so the grid paints on the first frame (no spinner). They cover
-// every shop type at once, so they stay valid across category switches.
+// and forwarded so the grids paint on the first frame (no spinner). They cover
+// every shop type at once, so they stay valid across category toggles.
 interface ShopBrowseProps {
   initialProducts: ProductBrowseRow[];
   initialCounts: ParticipationCounts[];
@@ -30,10 +31,10 @@ export function ShopBrowse({
   initialCounts,
   initialSpokenLanguages,
 }: ShopBrowseProps) {
-  const { category } = useShopCategory();
+  const { categories } = useShopCategories();
   return (
     <ProductBrowsePage
-      browseType={CATEGORY_TYPE[category]}
+      categories={visibleCategories(categories)}
       initialProducts={initialProducts}
       initialCounts={initialCounts}
       initialSpokenLanguages={initialSpokenLanguages}

@@ -84,18 +84,14 @@ export function useBrowseFilters() {
     () => parseDays(searchParams.get(DAYS_PARAM)),
     [searchParams],
   );
-  // Split out the non-day filters: whether the day filter counts as "active"
-  // is context-dependent (it only applies to clubs — see
-  // `productTypeSupportsDayFilter`), and only the caller knows the current
-  // category. Exposing `hasNonDayFilters` lets the filter strip decide whether
-  // a stale `?days=` should light up the Clear button without re-deriving this
-  // whole chain. `hasAny` keeps its old meaning for any other consumer.
-  const hasNonDayFilters =
+  // Every filter here applies on every browse surface, so one flag covers the
+  // Clear button: it shows exactly when clearing would change something.
+  const hasAny =
     topics.length > 0 ||
     format !== null ||
     languages.length > 0 ||
-    age !== null;
-  const hasAny = hasNonDayFilters || days.length > 0;
+    age !== null ||
+    days.length > 0;
 
   const writeNext = useCallback(
     (next: {
@@ -205,7 +201,6 @@ export function useBrowseFilters() {
     age,
     days,
     hasAny,
-    hasNonDayFilters,
     toggleTopics,
     toggleFormat,
     toggleLanguage,

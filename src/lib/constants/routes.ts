@@ -80,8 +80,9 @@ function publicProductHref(productId: string): string {
 /**
  * Public storefront browse URL for a product's type — the "back to listing"
  * target from a detail page. Lands on `/shop` with the matching category
- * pre-selected. The `category` query param name and values mirror
- * `use-shop-category.ts` (the parser) — keep the two in sync.
+ * pre-selected; the shop's Type filter is a multi-select, so this single value
+ * reads there as a selection of one. The `category` query param name and values
+ * mirror `shop-categories.ts` (the parser) — keep the two in sync.
  *
  * `municipality_club` is the one type the shop doesn't surface, so it falls back
  * to the bare `/shop`. A muni club opened from its `/schools/<slug>` listing
