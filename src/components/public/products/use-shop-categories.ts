@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   CATEGORY_PARAM,
   parseCategories,
@@ -23,7 +23,6 @@ export {
 } from "./shop-categories";
 
 export function useShopCategories() {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -39,9 +38,14 @@ export function useShopCategories() {
   // language/age/day filter chips) — those filters are shared across product
   // types, so a chip stays meaningful across the switch. Turning the last
   // selected category off drops the param entirely, returning to all types and
-  // keeping `/shop` as the canonical URL. `scroll: false` so the tap doesn't
-  // jerk the scroll position, matching the filter-chip behavior in
-  // use-browse-filters.ts.
+  // keeping `/shop` as the canonical URL.
+  //
+  // Written via the History API rather than `router.replace`, for the same
+  // reason as `use-browse-filters.ts`: the category only drives client-side
+  // narrowing of an already-fetched set, and an RSC navigation would re-run the
+  // shop page's Supabase prefetch — and light the chip only after that round
+  // trip — for a toggle that needs no server data. `useSearchParams()` reflects
+  // `replaceState`, so the chip and the sections update synchronously.
   const toggleCategory = useCallback(
     (value: ShopCategory) => {
       // Rebuilt from SHOP_CATEGORIES rather than appended to, so the param
@@ -53,9 +57,13 @@ export function useShopCategories() {
       if (next.length === 0) params.delete(CATEGORY_PARAM);
       else params.set(CATEGORY_PARAM, next.join(","));
       const qs = params.toString();
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      window.history.replaceState(
+        null,
+        "",
+        qs ? `${pathname}?${qs}` : pathname,
+      );
     },
-    [categories, pathname, router, searchParams],
+    [categories, pathname, searchParams],
   );
 
   return { categories, toggleCategory };
