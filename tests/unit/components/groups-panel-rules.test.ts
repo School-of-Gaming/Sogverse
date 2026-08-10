@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   canCompEnroll,
+  dragSubjectsFrom,
   readDropData,
   readGamerDragData,
   resolveDrop,
   type DragSubject,
 } from "@/components/admin/products/groups/panel-rules";
+import type { ProductGroupsSnapshot } from "@/types";
 
 // A member sitting in a group, paid for, no subscription — the boring case each
 // test bends one field of.
@@ -169,6 +171,116 @@ describe("resolveDrop — demoting onto the waitlist", () => {
     expect(resolveDrop(toWaitlist, waitlisted, "paid")).toEqual({
       kind: "none",
     });
+  });
+});
+
+describe("dragSubjectsFrom", () => {
+  type Participation = ProductGroupsSnapshot["unassigned"][number];
+
+  function participation(
+    id: string,
+    overrides: Partial<Participation> = {},
+  ): Participation {
+    return {
+      id,
+      gamer_id: `gamer-of-${id}`,
+      gamer_first_name: "Aino",
+      gamer_date_of_birth: null,
+      gamer_gender: null,
+      gamer_minecraft_username: null,
+      gamer_minecraft_uuid: null,
+      gamer_parent_first_name: null,
+      gamer_parent_last_name: null,
+      status: "active",
+      signed_up_at: "2026-01-01T00:00:00Z",
+      has_live_subscription: false,
+      has_payment_marker: false,
+      ...overrides,
+    };
+  }
+
+  // One product as the panel sees it: a subscribed member in a group, a plain
+  // member in the inbox, and two waitlisters who differ only in whether money
+  // ever arrived for them.
+  const snapshot: ProductGroupsSnapshot = {
+    product_id: "product-1",
+    groups: [
+      {
+        id: "group-1",
+        name: "Group A",
+        created_at: "2026-01-01T00:00:00Z",
+        gedus: [],
+        participations: [
+          participation("p-subscribed", {
+            has_live_subscription: true,
+            has_payment_marker: true,
+          }),
+        ],
+      },
+    ],
+    unassigned: [participation("p-inbox")],
+    waitlist: [
+      participation("p-queued", { status: "waitlisted" }),
+      participation("p-demoted", {
+        status: "waitlisted",
+        has_payment_marker: true,
+      }),
+    ],
+  };
+
+  const subjects = dragSubjectsFrom(snapshot);
+
+  it("places each chip where the snapshot has it", () => {
+    expect(subjects.get("p-subscribed")).toMatchObject({
+      isWaitlisted: false,
+      currentGroupId: "group-1",
+    });
+    expect(subjects.get("p-inbox")).toMatchObject({
+      isWaitlisted: false,
+      currentGroupId: null,
+    });
+    expect(subjects.get("p-queued")).toMatchObject({
+      isWaitlisted: true,
+      currentGroupId: null,
+    });
+  });
+
+  it("takes both money facts off the participation object", () => {
+    // Neither is a separate read any more: the snapshot RPC carries them, so
+    // the flags a drag is decided on came from the same document as the chip.
+    expect(subjects.get("p-subscribed")).toMatchObject({
+      hasLiveSubscription: true,
+      hasPaymentMarker: true,
+    });
+    expect(subjects.get("p-inbox")).toMatchObject({
+      hasLiveSubscription: false,
+      hasPaymentMarker: false,
+    });
+    // The waitlist is where the marker decides something, and it separates the
+    // two rows the RPC reports identically in every other respect.
+    expect(subjects.get("p-queued")?.hasPaymentMarker).toBe(false);
+    expect(subjects.get("p-demoted")?.hasPaymentMarker).toBe(true);
+  });
+
+  it("knows nothing before the snapshot lands", () => {
+    // Not "everyone is unpaid" — the panel refuses a drop it has no subject
+    // for, so an empty map writes nothing rather than deciding wrongly.
+    expect(dragSubjectsFrom(undefined).size).toBe(0);
+    expect(subjects.get("p-not-here")).toBeUndefined();
+  });
+
+  it("feeds resolveDrop the refusal the panel shows", () => {
+    // The end-to-end shape: snapshot → subject → outcome, on a paid product.
+    // Same queue, same drop, opposite answers — decided by the marker alone.
+    expect(
+      resolveDrop(toGroup2, subjects.get("p-queued")!, "paid"),
+    ).toEqual({ kind: "blocked", reason: "unpaidPromote" });
+    expect(
+      resolveDrop(toGroup2, subjects.get("p-demoted")!, "paid"),
+    ).toEqual({ kind: "promote", toGroupId: "group-2" });
+    expect(
+      resolveDrop(toWaitlist, subjects.get("p-subscribed")!, "paid"),
+    ).toEqual({ kind: "blocked", reason: "liveSubscription" });
   });
 });
 

@@ -1,4 +1,8 @@
-import type { BillingMode, ProductType } from "@/types";
+import type {
+  BillingMode,
+  ProductGroupsSnapshot,
+  ProductType,
+} from "@/types";
 
 /**
  * The Groups panel's pure rules: how a drag/drop payload is read, what a drop
@@ -109,6 +113,51 @@ export interface DragSubject {
    * a family who joined the queue without paying never has one.
    */
   hasPaymentMarker: boolean;
+}
+
+/**
+ * Every draggable chip's facts, keyed by participation id, read in one pass
+ * over the snapshot the panel already has. Both money questions a drop can ask
+ * — the live subscription behind a seat, and whether money ever arrived for it
+ * — are fields on the participation object, so a drag is decided from the same
+ * document that drew the chip and no second query can disagree with it.
+ *
+ * A chip that is not in the map cannot be reasoned about, and the panel refuses
+ * the drop rather than guessing; every chip it renders comes from this snapshot,
+ * so that is a state it should not reach.
+ */
+export function dragSubjectsFrom(
+  snapshot: ProductGroupsSnapshot | undefined,
+): Map<string, DragSubject> {
+  const subjects = new Map<string, DragSubject>();
+  if (!snapshot) return subjects;
+
+  const add = (
+    participation: ProductGroupsSnapshot["unassigned"][number],
+    placement: { isWaitlisted: boolean; currentGroupId: string | null },
+  ) => {
+    subjects.set(participation.id, {
+      ...placement,
+      hasLiveSubscription: participation.has_live_subscription,
+      hasPaymentMarker: participation.has_payment_marker,
+    });
+  };
+
+  for (const group of snapshot.groups) {
+    for (const p of group.participations) {
+      add(p, { isWaitlisted: false, currentGroupId: group.id });
+    }
+  }
+  for (const p of snapshot.unassigned) {
+    add(p, { isWaitlisted: false, currentGroupId: null });
+  }
+  // A waitlisted row has no group; currentGroupId is meaningless for it and
+  // resolveDrop never reads it on that branch.
+  for (const p of snapshot.waitlist) {
+    add(p, { isWaitlisted: true, currentGroupId: null });
+  }
+
+  return subjects;
 }
 
 /**

@@ -2,11 +2,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createClient } from "@supabase/supabase-js";
 import { GroupsService, type GroupChangeSet } from "@/services/groups";
 import { groupChangeSet } from "@/services/groups/groups.contracts";
-import {
-  createFetchStubbedClient,
-  postgrestJson,
-  type FetchMock,
-} from "../../mocks/postgrest-fetch";
 import type { Database } from "@/types/database.types";
 
 // The intent-named methods (createGroup, renameGroup, …) are thin adapters:
@@ -153,48 +148,6 @@ describe("GroupsService intent methods", () => {
 
     await expect(service.addGedu(PRODUCT_ID, "G1", "ge1")).rejects.toThrow(
       "A Gedu can only run one group",
-    );
-  });
-});
-
-describe("GroupsService.getWaitlistPaymentMarkers", () => {
-  let fetchMock: FetchMock;
-  let service: GroupsService;
-
-  beforeEach(() => {
-    fetchMock = vi.fn<typeof fetch>();
-    service = new GroupsService(createFetchStubbedClient(fetchMock));
-  });
-
-  /** The URL the real query builder produced for the last request. */
-  function requestedUrl(): URL {
-    const call = fetchMock.mock.calls.at(-1);
-    if (!call) throw new Error("expected fetch to have been called");
-    return new URL(String(call[0]));
-  }
-
-  it("asks only for this product's waitlisted rows that carry a marker", async () => {
-    fetchMock.mockResolvedValue(postgrestJson([{ id: "p1" }, { id: "p2" }]));
-
-    const ids = await service.getWaitlistPaymentMarkers(PRODUCT_ID);
-
-    expect(ids).toEqual(["p1", "p2"]);
-
-    // Each filter is load-bearing: the wrong status would report active
-    // members' markers, and dropping the not-null would report every
-    // waitlister as paid — which is precisely the refusal being decided.
-    const url = requestedUrl();
-    expect(url.pathname).toBe("/rest/v1/participations");
-    expect(url.searchParams.get("select")).toBe("id");
-    expect(url.searchParams.get("product_id")).toBe(`eq.${PRODUCT_ID}`);
-    expect(url.searchParams.get("status")).toBe("eq.waitlisted");
-    expect(url.searchParams.get("stripe_checkout_session_id")).toBe("not.is.null");
-  });
-
-  it("reports nobody when no waitlisted row was paid for", async () => {
-    fetchMock.mockResolvedValue(postgrestJson([]));
-    await expect(service.getWaitlistPaymentMarkers(PRODUCT_ID)).resolves.toEqual(
-      [],
     );
   });
 });

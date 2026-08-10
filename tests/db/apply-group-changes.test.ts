@@ -622,6 +622,13 @@ describe("get_product_groups_with_details", () => {
     // pinned in waitlist-admin.test.ts.
     expect(result.groups[0].participations[0].has_live_subscription).toBe(false);
     expect(result.unassigned[0].has_live_subscription).toBe(false);
+    // 00167's payment marker, on the same two branches. These seats were
+    // written straight into the table with no Checkout Session behind them —
+    // the shape a free enrollment or a comp-enrollment produces — so no money
+    // ever arrived for them and the marker is false. The true case lives on the
+    // waitlist, in waitlist-admin.test.ts.
+    expect(result.groups[0].participations[0].has_payment_marker).toBe(false);
+    expect(result.unassigned[0].has_payment_marker).toBe(false);
 
     // Cleanup.
     await admin

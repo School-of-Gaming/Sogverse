@@ -17,7 +17,9 @@ import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
  * Admin waitlist read + promote/demote, and the self-position RPC (migration
  * 00118). Covers:
  *  - get_product_groups_with_details surfaces the waitlist in derived order
- *    (waitlisted_at, id), parsed through the productGroupsSnapshot contract.
+ *    (waitlisted_at, id), parsed through the productGroupsSnapshot contract,
+ *    carrying both per-participation money flags the admin panel decides a
+ *    drag from: has_live_subscription (00166) and has_payment_marker (00167).
  *  - promote_from_waitlist seats a waitlisted gamer (capacity override, group
  *    placement, noop on a non-waitlisted row).
  *  - demote_to_waitlist sends an active gamer to the back of the waitlist, and
@@ -199,6 +201,42 @@ describe("waitlist — admin read + promote/demote + self position", () => {
       snapshot.unassigned.map((p) => [p.gamer_id, p.has_live_subscription]),
     );
     expect(flags).toEqual({
+      [TEST_IDS.GAMER]: true,
+      [TEST_IDS.GAMER_2]: false,
+    });
+    // Neither seat went through Checkout — they were written straight into the
+    // table, the shape a free club's enrollment produces — so no money ever
+    // arrived for either and 00167's marker is false on both.
+    expect(snapshot.unassigned.every((p) => !p.has_payment_marker)).toBe(true);
+  });
+
+  it("get_product_groups_with_details flags which waitlisted rows money once arrived for", async () => {
+    // The promote dialog's condition, and the branch where it decides
+    // something. Both rows are waitlisted and otherwise identical; the marker
+    // is the recorded Checkout Session id, which demotion does NOT clear. So
+    // it is what separates a camper who genuinely paid and was later moved to
+    // the waitlist — who promotes back with a plain drag — from a family that
+    // only ever joined the queue, who gets the dialog. Keying the refusal on
+    // the product's billing alone would trap the former there forever.
+    const paid = await joinWaitlist(TEST_IDS.GAMER);
+    await joinWaitlist(TEST_IDS.GAMER_2);
+    await admin
+      .from("participations")
+      .update({ stripe_checkout_session_id: "cs_test_waitlist_marker" })
+      .eq("id", paid);
+
+    const res = await adminUser.rpc("get_product_groups_with_details", {
+      p_product_id: PRODUCT_MUNI,
+    });
+    expect(res.error).toBeNull();
+
+    // Parsed through the production contract, so the added field is verified
+    // against real Postgres output rather than assumed.
+    const snapshot = productGroupsSnapshot.parse(res.data);
+    const markers = Object.fromEntries(
+      snapshot.waitlist.map((p) => [p.gamer_id, p.has_payment_marker]),
+    );
+    expect(markers).toEqual({
       [TEST_IDS.GAMER]: true,
       [TEST_IDS.GAMER_2]: false,
     });

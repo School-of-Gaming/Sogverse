@@ -30,7 +30,6 @@ import {
   usePromoteFromWaitlist,
   useRemoveGedu,
   useRenameGroup,
-  useWaitlistPaymentMarkers,
 } from "@/services/groups";
 import { SeatAvailabilityBar } from "@/components/public/products/seat-availability-bar";
 import { GamerPickerSheet } from "../gamer-picker-sheet";
@@ -40,11 +39,11 @@ import { GamerChip } from "./gamer-chip";
 import { GroupColumn } from "./group-column";
 import {
   canCompEnroll,
+  dragSubjectsFrom,
   readDropData,
   readGamerDragData,
   resolveDrop,
   type BlockedDropReason,
-  type DragSubject,
 } from "./panel-rules";
 import { UnassignedCard } from "./unassigned-card";
 import { WaitlistCard } from "./waitlist-card";
@@ -207,20 +206,6 @@ export function GroupsPanel({
 
   const canAddGamer = canCompEnroll(productType, billingMode);
 
-  // Which waitlisted rows were paid for. Only a paid product's promote refusal
-  // reads this, so the query doesn't run anywhere else. Until it lands (or if
-  // it fails) the set is empty and every waitlister reads as unpaid: the
-  // refusal errs toward the dialog, which costs an admin one retry, rather than
-  // toward handing out a free seat.
-  const { data: paidWaitlistIds } = useWaitlistPaymentMarkers(
-    productId,
-    billingMode === "paid" && waitlistEnabled,
-  );
-  const paidWaitlist = useMemo(
-    () => new Set(paidWaitlistIds ?? []),
-    [paidWaitlistIds],
-  );
-
   // Any enrolled gamer blocks a re-add via the picker.
   const enrolledGamerIds = useMemo(() => {
     const ids = new Set<string>();
@@ -244,40 +229,12 @@ export function GroupsPanel({
     return Array.from(ids);
   }, [snapshot]);
 
-  // Where each participation currently lives, to recognize a drop back onto the
-  // same column as a no-op (skip the round-trip mutation entirely).
-  const placementById = useMemo(() => {
-    const map = new Map<string, string | null>();
-    if (!snapshot) return map;
-    for (const g of snapshot.groups) {
-      for (const p of g.participations) map.set(p.id, g.id);
-    }
-    for (const p of snapshot.unassigned) map.set(p.id, null);
-    return map;
-  }, [snapshot]);
-
-  // Which chips are waitlisted — decides promote (waitlisted → group/unassigned)
-  // vs an ordinary move, and demote (active → waitlist) vs a no-op.
-  const waitlistedIds = useMemo(() => {
-    return new Set((snapshot?.waitlist ?? []).map((p) => p.id));
-  }, [snapshot]);
-
-  // Members whose seat is behind a live Stripe subscription — the condition
-  // `demote_to_waitlist` refuses on, carried by the snapshot so the dialog can
-  // fire from the drag handler without a round trip per chip.
-  const subscribedIds = useMemo(() => {
-    const ids = new Set<string>();
-    if (!snapshot) return ids;
-    for (const g of snapshot.groups) {
-      for (const p of g.participations) {
-        if (p.has_live_subscription) ids.add(p.id);
-      }
-    }
-    for (const p of snapshot.unassigned) {
-      if (p.has_live_subscription) ids.add(p.id);
-    }
-    return ids;
-  }, [snapshot]);
+  // Everything a drop needs to know about each chip — where it sits, whether a
+  // live subscription stands behind its seat, whether money ever arrived for it
+  // — read off the one snapshot. Both money facts are fields on the
+  // participation object, so the whole decision comes from the document that
+  // drew the chip and no second read can contradict it.
+  const dragSubjects = useMemo(() => dragSubjectsFrom(snapshot), [snapshot]);
 
   // Seats taken = every active participation (groups + unassigned; the snapshot
   // only ever holds active rows there). Drives the seat-availability bar and the
@@ -294,13 +251,6 @@ export function GroupsPanel({
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
 
-  const dragSubject = (participationId: string): DragSubject => ({
-    isWaitlisted: waitlistedIds.has(participationId),
-    currentGroupId: placementById.get(participationId) ?? null,
-    hasLiveSubscription: subscribedIds.has(participationId),
-    hasPaymentMarker: paidWaitlist.has(participationId),
-  });
-
   const handleDragEnd = (event: DragEndEvent) => {
     const { over, active } = event;
     if (!over) return;
@@ -310,11 +260,12 @@ export function GroupsPanel({
     if (!dragData || !dropData) return;
 
     const { participationId, firstName } = dragData;
-    const outcome = resolveDrop(
-      dropData,
-      dragSubject(participationId),
-      billingMode,
-    );
+    // Every chip on screen came out of this snapshot, so a miss here means the
+    // drag outlived the row it started on — write nothing.
+    const subject = dragSubjects.get(participationId);
+    if (!subject) return;
+
+    const outcome = resolveDrop(dropData, subject, billingMode);
 
     switch (outcome.kind) {
       case "none":

@@ -70,6 +70,16 @@ export const groupParticipationDetail = z.object({
    * row carrying a subscription, so there is nothing there to report.
    */
   has_live_subscription: z.boolean(),
+  /**
+   * Whether money ever arrived for this participation — the recorded Stripe
+   * Checkout Session id being non-null. It is a statement about the past, not
+   * about the seat being currently paid for: demotion to the waitlist
+   * preserves it, so a family that paid and was later demoted still reads
+   * true, while one that only ever joined the queue has no session id and
+   * reads false. That difference is the promote dialog's condition on a paid
+   * product.
+   */
+  has_payment_marker: z.boolean(),
 });
 
 export const groupGeduDetail = z.object({
