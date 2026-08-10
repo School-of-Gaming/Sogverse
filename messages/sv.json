@@ -194,7 +194,7 @@
         "empty": "Inga {plural} än. Klicka på Nytt {label} för att skapa ett.",
         "ageRange": "{min}–{max} år",
         "seats": "{count} platser",
-        "hidden": "dold",
+        "unlisted": "olistad",
         "untitled": "(utan titel)",
         "missingGeduFee": "Gedu-arvode saknas",
         "missingMunicipalityFee": "Kommunavgift saknas",
@@ -221,8 +221,8 @@
         "notFound": "Produkten kunde inte hittas.",
         "locationMissing": "—",
         "uncapped": "Ingen platsgräns",
-        "visible": "Synlig för föräldrar",
-        "hidden": "Dold för föräldrar",
+        "visible": "Listad publikt",
+        "hidden": "Olistad — endast via direktlänk",
         "waitlistOn": "väntelista på",
         "minutes": "{count} min",
         "perMonth": "{amount} / månad",
@@ -290,8 +290,8 @@
         },
         "registration": "Registreringstid",
         "registrationDescription": "Välj när föräldrar kan börja anmäla sig.",
-        "visibility": "Synlighet",
-        "visibilityDescription": "Bestäm om föräldrar kan hitta och se produkten. De som redan deltar har den kvar på sin My SOG-sida — det påverkar dem inte."
+        "visibility": "Listning",
+        "visibilityDescription": "Avgör var produkten visas, inte vem som får köpa den. Anmälningar öppnas och stängs av anmälningsdatumet, platsgränsen och produktens status — aldrig av den här inställningen."
       },
       "labels": {
         "name": "Namn",
@@ -325,7 +325,7 @@
         "seatCount": "Antal platser",
         "waitlistToggle": "Aktivera väntelista när platserna är fulla",
         "signupThreshold": "Antal anmälningar för att starta",
-        "makeVisible": "Visa produkten för föräldrar",
+        "makeVisible": "Lista produkten på sidorna Butik och Kommunklubbar",
         "seatLimit": "Platsgräns"
       },
       "placeholders": {
@@ -450,7 +450,7 @@
         "pricingMonthly": "Debiteras varje månad så länge prenumerationen är aktiv. Avsluta när som helst.",
         "pricingUpfront": "Debiteras en gång vid anmälan. Samma totalbelopp oavsett längd.",
         "seatHint": "När fullt går nya anmälningar till väntelistan.",
-        "visibleHint": "Avmarkera medan du fortfarande arbetar på produkten, eller för att stoppa nya anmälningar. Det döljer bara produkten för nya föräldrar — föräldrar och gamers som redan är anmälda ser den och sina tillfällen på sin My SOG-sida.",
+        "visibleHint": "Utan bocken visas produkten inte på någon publik sida, men den som har direktlänken kan ändå öppna den och köpa en plats. Det är just det som gör den lämplig för oannonserade produkter, inbjudningar och kampanjer. Det är inget sätt att stoppa anmälningar, och det påverkar aldrig föräldrar och gamers som redan deltar.",
         "seatLimitHint": "Begränsa antalet deltagare eller kör utan gräns.",
         "holidayComingSoon": "Lovkalendrar kommer snart. Tills vidare körs varje schemalagt tillfälle.",
         "startDateToday": "Låst till dagens datum tills vidare.",
@@ -487,7 +487,6 @@
         "createLabel": "Skapa {label}"
       },
       "status": {
-        "draft": "Utkast",
         "pending": "Väntar på start",
         "running": "Pågår",
         "completed": "Avslutat",

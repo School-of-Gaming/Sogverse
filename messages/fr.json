@@ -194,7 +194,7 @@
         "empty": "Pas encore de {plural}. Cliquez sur « Ajouter un {label} » pour en créer un.",
         "ageRange": "{min}–{max} ans",
         "seats": "{count} places",
-        "hidden": "masqué",
+        "unlisted": "hors catalogue",
         "untitled": "(sans titre)",
         "missingGeduFee": "Rémunération Gedu manquante",
         "missingMunicipalityFee": "Montant commune manquant",
@@ -221,8 +221,8 @@
         "notFound": "Produit introuvable.",
         "locationMissing": "—",
         "uncapped": "Aucune limite de places",
-        "visible": "Visible par les parents",
-        "hidden": "Masqué aux parents",
+        "visible": "Répertorié publiquement",
+        "hidden": "Hors catalogue — lien direct uniquement",
         "waitlistOn": "liste d’attente activée",
         "minutes": "{count} min",
         "perMonth": "{amount} / mois",
@@ -290,8 +290,8 @@
         },
         "registration": "Ouverture des inscriptions",
         "registrationDescription": "Choisissez à partir de quand les parents peuvent s’inscrire.",
-        "visibility": "Visibilité",
-        "visibilityDescription": "Décidez si les parents peuvent trouver et consulter ce produit. Toute personne déjà inscrite le conserve sur sa page Mon SOG — cela ne l’affecte jamais."
+        "visibility": "Catalogue",
+        "visibilityDescription": "Détermine où ce produit est mis en avant, pas qui peut l’acheter. Les inscriptions s’ouvrent et se ferment selon la date d’ouverture, le nombre de places et le statut du produit — jamais selon ce réglage."
       },
       "labels": {
         "name": "Nom",
@@ -325,7 +325,7 @@
         "seatCount": "Nombre de places",
         "waitlistToggle": "Activer la liste d’attente quand les places sont complètes",
         "signupThreshold": "Inscriptions nécessaires pour démarrer",
-        "makeVisible": "Rendre ce produit visible par les parents",
+        "makeVisible": "Répertorier ce produit sur les pages Boutique et Clubs municipaux",
         "seatLimit": "Limite de places"
       },
       "placeholders": {
@@ -450,7 +450,7 @@
         "pricingMonthly": "Prélevé chaque mois tant que l’abonnement est actif. Résiliable à tout moment.",
         "pricingUpfront": "Prélevé une seule fois à l’inscription. Même montant total quelle que soit la durée.",
         "seatHint": "Une fois complet, les nouvelles inscriptions passent en liste d’attente.",
-        "visibleHint": "Décochez pendant que vous préparez encore le produit, ou pour arrêter les nouvelles inscriptions. Cela ne masque le produit qu’aux nouveaux parents — les parents et les joueurs déjà inscrits continuent de le voir, ainsi que leurs sessions, sur leur page Mon SOG.",
+        "visibleHint": "Sans la case cochée, le produit n’apparaît sur aucune page publique, mais toute personne disposant du lien direct peut l’ouvrir et acheter une place. C’est précisément ce qui le rend adapté aux produits non annoncés, réservés sur invitation ou liés à une campagne. Ce n’est pas un moyen d’arrêter les inscriptions, et cela n’affecte jamais les parents et les joueurs déjà inscrits.",
         "seatLimitHint": "Plafonnez le nombre de joueurs, ou fonctionnez sans limite.",
         "holidayComingSoon": "Les calendriers de vacances arrivent bientôt. Pour l’instant, toutes les sessions programmées ont lieu.",
         "startDateToday": "Verrouillée sur la date du jour pour le moment.",
@@ -487,7 +487,6 @@
         "createLabel": "Créer un {label}"
       },
       "status": {
-        "draft": "Brouillon",
         "pending": "En attente de démarrage",
         "running": "En cours",
         "completed": "Terminé",

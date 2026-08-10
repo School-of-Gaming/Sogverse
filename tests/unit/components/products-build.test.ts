@@ -569,11 +569,12 @@ describe("buildCreateInput", () => {
     });
   });
 
-  describe("status / visibility independence", () => {
-    // `draft` is reserved for a future "save incomplete product" flow.
-    // The form only ever creates fully-validated products, so it always
-    // emits `status: "pending"` — visibility is its own knob.
-    it("visible product is created as pending", () => {
+  describe("status / listing independence", () => {
+    // The form only ever creates fully-validated products, so it always emits
+    // `status: "pending"` — the first state of the lifecycle. Listing is its
+    // own knob and says nothing about the lifecycle: an unlisted product is
+    // pending exactly like a listed one, and just as purchasable by link.
+    it("listed product is created as pending", () => {
       const s = validConsumerState();
       s.isVisible = true;
       const out = buildCreateInput(s, "consumer_club", consumerConfig);
@@ -581,7 +582,7 @@ describe("buildCreateInput", () => {
       expect(out.status).toBe("pending");
     });
 
-    it("hidden product is also created as pending (not draft)", () => {
+    it("unlisted product is also created as pending", () => {
       const s = validConsumerState();
       s.isVisible = false;
       const out = buildCreateInput(s, "consumer_club", consumerConfig);

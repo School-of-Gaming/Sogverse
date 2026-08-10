@@ -239,7 +239,7 @@
         "empty": "{plural} pagh. {label} chu’ yIchu’.",
         "ageRange": "{min}–{max} DIS",
         "seats": "{count} pa’",
-        "hidden": "So’lu’",
+        "unlisted": "tetlhDaq pagh",
         "untitled": "(pong pagh)",
         "missingGeduFee": "Gedu Huch Hutlh",
         "missingMunicipalityFee": "veng Huch Hutlh",
@@ -266,8 +266,8 @@
         "notFound": "Davchugh ghaj.",
         "locationMissing": "—",
         "uncapped": "quS veH pagh",
-        "visible": "vavpu’ Daleghbej",
-        "hidden": "vavpu’ SoQ",
+        "visible": "tetlhDaq tu’lu’",
+        "hidden": "tetlhDaq pagh — He nIH neH",
         "waitlistOn": "loS DIS naQ",
         "minutes": "{count} tup",
         "perMonth": "{amount} / jar",
@@ -335,8 +335,8 @@
         },
         "registration": "ghItlh poH",
         "registrationDescription": "ghItlh tagh poH yIwIv.",
-        "visibility": "leghlu’",
-        "visibilityDescription": "Doch luleghlaH vavpu’ ’e’ yIqotlh. ghoStaHbogh nuvpu’ My SOG HaqwI’chajDaq luleghtaH — luQaHbe’."
+        "visibility": "tetlh",
+        "visibilityDescription": "Doch DaQIjbogh Daq wIv, ’ach ’Iv je’laH ’e’ wIvbe’. ghItlh poH, pa’ mI’, Doch Dotlh je — bIH neH poSmoH ’ej SoQmoH."
       },
       "labels": {
         "name": "pong",
@@ -370,7 +370,7 @@
         "seatCount": "pa’ mI’",
         "waitlistToggle": "pa’ tebDI’, tetlh teb yIchu’",
         "signupThreshold": "ghItlh mI’ taghmeH",
-        "makeVisible": "vavpu’vaD Doch yI’ang",
+        "makeVisible": "Kauppa tetlh Kuntakerhot tetlh je Doch yIchel",
         "seatLimit": "pa’ mI’ Sub"
       },
       "placeholders": {
@@ -495,7 +495,7 @@
         "pricingMonthly": "jar Hoch Huch lo’ qaStaHvIS rar yoH. DaH yIqIl ’e’ DaneHchugh, yIqIl.",
         "pricingUpfront": "ghItlh wa’ Huch lo’. poH nab Sov pagh, Huch rapchu’.",
         "seatHint": "tebDI’, ghItlh chu’mey tetlh teb Daq jaH.",
-        "visibleHint": "DochlIj DachenmoHtaHvIS, ghap ghItlh chu’ DamevmeH, yIchu’Ha’. vav chu’vo’ neH Doch So’ — ghoStaHbogh vavpu’ QujwI’pu’ je Doch Qu’chaj je My SOG HaqwI’chajDaq luleghtaH.",
+        "visibleHint": "yIchu’Ha’chugh, pagh tetlhDaq Doch tu’lu’ — ’ach He nIH ghajbogh nuv Doch legh ’ej pa’ je’laH. vaj ’angbe’lu’bogh Doch, ri’bogh Doch, ghap tlhIngan may’ Doch DaSuqmeH QaQ. ghItlh chu’ DamevmeH mIw ghaHbe’, ’ej ghoStaHbogh vavpu’ QujwI’pu’ je luQaHbe’.",
         "seatLimitHint": "pa’ mI’ yIgheS pagh Sub Hutlh yIqaw.",
         "holidayComingSoon": "jaj Do’ De’wI’ tugh chol. DaH Hoch ghum qaS.",
         "startDateToday": "DaHjaj Daq poSmoHlu’pu’.",
@@ -532,7 +532,6 @@
         "createLabel": "{label} yIchu’"
       },
       "status": {
-        "draft": "chu’Ha’",
         "pending": "taghbe’",
         "running": "qaS",
         "completed": "rIn",

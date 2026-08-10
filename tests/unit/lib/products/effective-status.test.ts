@@ -26,10 +26,7 @@ function lifecycle(over: Partial<LifecycleInputs>): LifecycleInputs {
 }
 
 describe("effectiveStatus", () => {
-  it("passes through draft and cancelled untouched", () => {
-    expect(effectiveStatus(lifecycle({ status: "draft" }), NOW, 0)).toBe(
-      "draft",
-    );
+  it("passes through cancelled untouched", () => {
     expect(
       effectiveStatus(lifecycle({ status: "cancelled" }), NOW, 0),
     ).toBe("cancelled");

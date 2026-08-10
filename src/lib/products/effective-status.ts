@@ -35,7 +35,7 @@ export type LifecycleInputs = Pick<
  * doesn't drift from reality and we don't need a cron to flip
  * `pending → running` (or `running → completed`).
  *
- * - `draft` / `cancelled` pass through.
+ * - `cancelled` passes through.
  * - `pending` upgrades to `running` once start_date has been reached AND
  *   any signup_threshold is met. With neither condition set we stay
  *   pending — there's nothing to evaluate, admin must manually start.
@@ -63,7 +63,7 @@ export function effectiveStatus(
   now: Date,
   activeParticipations: number,
 ): EffectiveProductStatus {
-  if (p.status === "draft" || p.status === "cancelled") return p.status;
+  if (p.status === "cancelled") return "cancelled";
   if (p.status === "completed") return "completed";
 
   const nowDate = formatInTimeZone(now, p.timezone, "yyyy-MM-dd");

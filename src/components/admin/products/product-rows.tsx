@@ -16,7 +16,11 @@ import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { cn, formatDate, formatDateOnly, formatDateRange } from "@/lib/utils";
-import { effectiveStatus, pendingHintKey } from "@/lib/products/effective-status";
+import {
+  effectiveStatus,
+  pendingHintKey,
+  type EffectiveProductStatus,
+} from "@/lib/products/effective-status";
 import {
   formatProductSchedule,
   joinScheduleGroups,
@@ -26,8 +30,10 @@ import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductWithDetails } from "@/services/products";
 import type { ProductType } from "@/types";
 
-const STATUS_STYLE: Record<string, string> = {
-  draft: "bg-muted text-muted-foreground",
+// Keyed by the effective status, exhaustively: the compiler is what guarantees
+// every member has a chip style, so there is no fallback to reach for and no
+// way to add a status without being asked what colour it wears.
+const STATUS_STYLE: Record<EffectiveProductStatus, string> = {
   pending: "bg-primary/20 text-primary",
   running: "bg-primary text-primary-foreground",
   completed: "bg-muted text-muted-foreground",
@@ -166,15 +172,13 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
                     {tr?.name ?? t("list.untitled")}
                   </span>
                   <span
-                    className={`rounded-full px-2 py-0.5 text-xs ${
-                      STATUS_STYLE[status] ?? STATUS_STYLE.draft
-                    }`}
+                    className={`rounded-full px-2 py-0.5 text-xs ${STATUS_STYLE[status]}`}
                   >
                     {t(`status.${status}`)}
                   </span>
-                  {!p.is_visible && status !== "draft" && (
+                  {!p.is_visible && (
                     <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                      {t("list.hidden")}
+                      {t("list.unlisted")}
                     </span>
                   )}
                 </div>

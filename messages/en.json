@@ -194,7 +194,7 @@
         "empty": "No {plural} yet. Click New {label} to create one.",
         "ageRange": "{min}–{max} yrs",
         "seats": "{count} seats",
-        "hidden": "hidden",
+        "unlisted": "unlisted",
         "untitled": "(untitled)",
         "missingGeduFee": "Gedu fee missing",
         "missingMunicipalityFee": "Municipality fee missing",
@@ -221,8 +221,8 @@
         "notFound": "Product not found.",
         "locationMissing": "—",
         "uncapped": "No seat limit",
-        "visible": "Visible to parents",
-        "hidden": "Hidden from parents",
+        "visible": "Listed publicly",
+        "hidden": "Unlisted — direct link only",
         "waitlistOn": "waitlist on",
         "minutes": "{count} min",
         "perMonth": "{amount} / month",
@@ -290,8 +290,8 @@
         },
         "registration": "Registration timing",
         "registrationDescription": "Pick when parents can start signing up.",
-        "visibility": "Visibility",
-        "visibilityDescription": "Control whether parents can find and view this product. Anyone already taking part keeps it on their My SOG page — this never affects them."
+        "visibility": "Listing",
+        "visibilityDescription": "Decides where this product is advertised, not who may buy it. Sign-ups are opened and closed by the registration date, the seat limit and the product's status — never by this setting."
       },
       "labels": {
         "name": "Name",
@@ -325,7 +325,7 @@
         "seatCount": "Seat count",
         "waitlistToggle": "Enable waitlist when seats are full",
         "signupThreshold": "Signups needed to start",
-        "makeVisible": "Make this product visible to parents",
+        "makeVisible": "List this product on the shop and schools pages",
         "seatLimit": "Seat limit"
       },
       "placeholders": {
@@ -450,7 +450,7 @@
         "pricingMonthly": "Charged every month while the subscription is active. Cancel anytime.",
         "pricingUpfront": "Charged once at signup. Same total no matter the duration.",
         "seatHint": "When full, new signups go to the waitlist.",
-        "visibleHint": "Uncheck it while you’re still setting up, or to stop new sign-ups. It only hides the product from new parents — parents and gamers already enrolled still see it and their sessions on their My SOG page.",
+        "visibleHint": "Unchecked, the product appears on no public page — but anyone with the direct link can still open it and buy a place. That is what makes it right for unannounced, invite-only or campaign products. It is not a way to stop sign-ups, and it never affects parents and gamers already taking part.",
         "seatLimitHint": "Cap the number of gamers, or run with no limit.",
         "holidayComingSoon": "Holiday calendars are coming soon. For now, every scheduled session runs.",
         "startDateToday": "Locked to today’s date for now.",
@@ -487,7 +487,6 @@
         "createLabel": "Create {label}"
       },
       "status": {
-        "draft": "Draft",
         "pending": "Awaiting start",
         "running": "Running",
         "completed": "Completed",

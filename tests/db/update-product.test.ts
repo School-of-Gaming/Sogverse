@@ -426,7 +426,11 @@ describe("update_product", () => {
       registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
       seat_count: 10,
       waitlist_enabled: false,
-      status: "draft", // draft sidesteps the non-consumer end-date requirement
+      status: "pending",
+      // chk_products_non_consumer_has_end_date: a municipality club needs one,
+      // in every status. (Until 00169 a 'draft' row was exempt; the value and
+      // its escape hatch are both gone.)
+      end_date: "2099-12-31",
       is_visible: false,
       created_by: TEST_IDS.ADMIN,
     });

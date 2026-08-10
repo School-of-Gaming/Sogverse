@@ -14,35 +14,39 @@ import {
 } from "./product-helpers";
 
 /**
- * Pins the "soft-deprecate" use case: an admin can flip `is_visible` to
- * `false` to remove a product from the parent-facing browse grids, but
- * customers who already purchased it keep seeing the product in their
- * "My Clubs / Camps / Events" rail and can still open its detail page.
+ * Pins the purchaser carve-out: a product the public can no longer read stays
+ * readable for the customer who bought a place on it, so it keeps its spot in
+ * their "My Clubs / Camps / Events" rail and its detail page keeps opening.
  *
- * The policy under test is `purchaser_read_products` from migration
- * 00047. It complements `public_read_published_products` (which only
- * returns `is_visible = true AND status IN ('pending','running')` rows)
- * by adding a per-customer carve-out: any product the viewer has an
- * `active` or `waitlisted` participation on becomes readable, regardless
- * of `is_visible` / status.
+ * The predicate under test is the purchaser branch of `can_read_product`. It
+ * complements the public branch — which returns rows whose status is `pending`
+ * or `running`, and since 00168 asks nothing about `is_visible` — by adding a
+ * per-customer carve-out: any product the viewer has an `active` or
+ * `waitlisted` participation on becomes readable whatever its status.
  *
- * The carve-out is exactly those two statuses and nothing else. This file pins
- * that with a positive control (active/waitlisted DO grant access) and a
- * negative one: a row in any other status does NOT. `reserving` plays the
- * negative role — it is a retired status now (paid seats are created at payment
- * confirmation, so nothing writes it), which makes it the cleanest stand-in for
- * "some status the policy has no opinion about".
+ * **The fixtures are `cancelled`, and that is load-bearing.** Status is now the
+ * only thing that closes the public branch: an unlisted product is publicly
+ * readable by design (an ad campaign's landing page has to work), so a
+ * `is_visible = false` fixture would be readable by everyone and every negative
+ * assertion below would be exercising nothing.
+ *
+ * The carve-out is exactly those two participation statuses and nothing else.
+ * This file pins that with a positive control (active/waitlisted DO grant
+ * access) and a negative one: a row in any other status does NOT. `reserving`
+ * plays the negative role — it is a retired status now (paid seats are created
+ * at payment confirmation, so nothing writes it), which makes it the cleanest
+ * stand-in for "some status the policy has no opinion about".
  */
 
-const HIDDEN_ACTIVE_PRODUCT = "00000000-0000-0000-0000-0000000005e5";
-const HIDDEN_WAITLISTED_PRODUCT = "00000000-0000-0000-0000-0000000005e6";
-const HIDDEN_RESERVING_PRODUCT = "00000000-0000-0000-0000-0000000005e7";
-const HIDDEN_UNPURCHASED_PRODUCT = "00000000-0000-0000-0000-0000000005e8";
+const CLOSED_ACTIVE_PRODUCT = "00000000-0000-0000-0000-0000000005e5";
+const CLOSED_WAITLISTED_PRODUCT = "00000000-0000-0000-0000-0000000005e6";
+const CLOSED_RESERVING_PRODUCT = "00000000-0000-0000-0000-0000000005e7";
+const CLOSED_UNPURCHASED_PRODUCT = "00000000-0000-0000-0000-0000000005e8";
 const ALL_PRODUCTS = [
-  HIDDEN_ACTIVE_PRODUCT,
-  HIDDEN_WAITLISTED_PRODUCT,
-  HIDDEN_RESERVING_PRODUCT,
-  HIDDEN_UNPURCHASED_PRODUCT,
+  CLOSED_ACTIVE_PRODUCT,
+  CLOSED_WAITLISTED_PRODUCT,
+  CLOSED_RESERVING_PRODUCT,
+  CLOSED_UNPURCHASED_PRODUCT,
 ];
 
 const supabaseUrl =
@@ -75,12 +79,12 @@ describe("products purchaser-read RLS (00047)", () => {
 
     await deleteTestProducts(admin, ALL_PRODUCTS);
 
-    // Four products, all hidden. The participation kind is the only
-    // axis that varies between them — we want to assert that just the
-    // policy's status-filter discriminates active/waitlisted access
-    // from any-other-status/none.
+    // Four products, all cancelled — i.e. all past the public branch. The
+    // participation kind is the only axis that varies between them, so what
+    // discriminates access is the carve-out's participation-status filter and
+    // nothing else.
     for (const id of ALL_PRODUCTS) {
-      await createTestProduct(admin, { id, isVisible: false, seatCount: 10 });
+      await createTestProduct(admin, { id, status: "cancelled", seatCount: 10 });
     }
 
     // CUSTOMER's participations on three of the four products.
@@ -89,20 +93,20 @@ describe("products purchaser-read RLS (00047)", () => {
     // state without going through the SECURITY DEFINER signup RPC.
     const seed = await admin.from("participations").insert([
       {
-        product_id: HIDDEN_ACTIVE_PRODUCT,
+        product_id: CLOSED_ACTIVE_PRODUCT,
         gamer_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
       },
       {
-        product_id: HIDDEN_WAITLISTED_PRODUCT,
+        product_id: CLOSED_WAITLISTED_PRODUCT,
         gamer_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "waitlisted",
         waitlisted_at: new Date().toISOString(),
       },
       {
-        product_id: HIDDEN_RESERVING_PRODUCT,
+        product_id: CLOSED_RESERVING_PRODUCT,
         gamer_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "reserving",
@@ -117,14 +121,14 @@ describe("products purchaser-read RLS (00047)", () => {
     // tables carry their own RLS and were never extended to purchasers — so
     // the product survives while its slots (→ dropped session) and
     // translations (→ blank name) come back empty.
-    await createScheduleSlot(admin, HIDDEN_ACTIVE_PRODUCT, {
+    await createScheduleSlot(admin, CLOSED_ACTIVE_PRODUCT, {
       weekday: 1,
       startTime: "10:00",
     });
     const trans = await admin.from("product_translations").insert({
-      product_id: HIDDEN_ACTIVE_PRODUCT,
+      product_id: CLOSED_ACTIVE_PRODUCT,
       locale: "en",
-      name: "Hidden Active Camp",
+      name: "Cancelled Active Camp",
       short_description: "Seeded for the detail-join RLS assertion.",
     });
     if (trans.error) throw trans.error;
@@ -137,82 +141,81 @@ describe("products purchaser-read RLS (00047)", () => {
 
   // ---------------------------------------------------------------------------
   // Positive: active / waitlisted participation grants the purchaser read
-  // access to an otherwise-hidden product.
+  // access to a product the public can no longer read.
   // ---------------------------------------------------------------------------
 
-  it("customer with an active participation can SELECT the hidden product", async () => {
+  it("customer with an active participation can SELECT the closed product", async () => {
     const { data, error } = await customerClient
       .from("products")
-      .select("id, is_visible")
-      .eq("id", HIDDEN_ACTIVE_PRODUCT)
+      .select("id, status")
+      .eq("id", CLOSED_ACTIVE_PRODUCT)
       .maybeSingle();
 
     expect(error).toBeNull();
-    expect(data?.id).toBe(HIDDEN_ACTIVE_PRODUCT);
-    // Pin that the row really is hidden — otherwise the assertion
-    // would pass via `public_read_published_products` and we
-    // wouldn't be exercising the new policy at all.
-    expect(data?.is_visible).toBe(false);
+    expect(data?.id).toBe(CLOSED_ACTIVE_PRODUCT);
+    // Pin that the row really is outside the published statuses — otherwise
+    // the assertion would pass via the public branch and we would not be
+    // exercising the carve-out at all.
+    expect(data?.status).toBe("cancelled");
   });
 
-  it("customer with a waitlisted participation can SELECT the hidden product", async () => {
+  it("customer with a waitlisted participation can SELECT the closed product", async () => {
     const { data, error } = await customerClient
       .from("products")
-      .select("id, is_visible")
-      .eq("id", HIDDEN_WAITLISTED_PRODUCT)
+      .select("id, status")
+      .eq("id", CLOSED_WAITLISTED_PRODUCT)
       .maybeSingle();
 
     expect(error).toBeNull();
-    expect(data?.id).toBe(HIDDEN_WAITLISTED_PRODUCT);
-    expect(data?.is_visible).toBe(false);
+    expect(data?.id).toBe(CLOSED_WAITLISTED_PRODUCT);
+    expect(data?.status).toBe("cancelled");
   });
 
   // ---------------------------------------------------------------------------
   // Negative: reserving / no participation / wrong customer / anon all
-  // hit the baseline "hidden ⇒ no read" path.
+  // hit the baseline "outside the published statuses ⇒ no read" path.
   // ---------------------------------------------------------------------------
 
-  it("customer with only a reserving row CANNOT SELECT the hidden product", async () => {
-    // The policy names active and waitlisted; a row in any other status is a
-    // row the carve-out has nothing to say about, and `is_visible = false`
-    // keeps its privacy meaning.
+  it("customer with only a reserving row CANNOT SELECT the closed product", async () => {
+    // The carve-out names active and waitlisted; a row in any other status is
+    // a row it has nothing to say about, so the product's status decides.
     const { data, error } = await customerClient
       .from("products")
       .select("id")
-      .eq("id", HIDDEN_RESERVING_PRODUCT);
+      .eq("id", CLOSED_RESERVING_PRODUCT);
 
     expect(error).toBeNull();
     expect(data).toEqual([]);
   });
 
-  it("customer with no participation CANNOT SELECT the hidden product", async () => {
+  it("customer with no participation CANNOT SELECT the closed product", async () => {
     const { data, error } = await customerClient
       .from("products")
       .select("id")
-      .eq("id", HIDDEN_UNPURCHASED_PRODUCT);
+      .eq("id", CLOSED_UNPURCHASED_PRODUCT);
 
     expect(error).toBeNull();
     expect(data).toEqual([]);
   });
 
   it("a different customer's active participation does NOT grant access", async () => {
-    // CUSTOMER_2 has no participation on HIDDEN_ACTIVE_PRODUCT — only
-    // CUSTOMER does. The policy keys on `customer_id = auth.uid()`, so
+    // CUSTOMER_2 has no participation on CLOSED_ACTIVE_PRODUCT — only
+    // CUSTOMER does. The carve-out keys on `customer_id = auth.uid()`, so
     // a customer can only piggyback on their own participations.
     const { data, error } = await customer2Client
       .from("products")
       .select("id")
-      .eq("id", HIDDEN_ACTIVE_PRODUCT);
+      .eq("id", CLOSED_ACTIVE_PRODUCT);
 
     expect(error).toBeNull();
     expect(data).toEqual([]);
   });
 
-  it("anon CANNOT SELECT a hidden product (no session = no participation)", async () => {
+  it("anon CANNOT SELECT a closed product (no session = no participation)", async () => {
     const { data, error } = await anonClient
       .from("products")
       .select("id")
-      .eq("id", HIDDEN_ACTIVE_PRODUCT);
+      .eq("id", CLOSED_ACTIVE_PRODUCT);
 
     expect(error).toBeNull();
     expect(data).toEqual([]);
@@ -221,8 +224,8 @@ describe("products purchaser-read RLS (00047)", () => {
   // ---------------------------------------------------------------------------
   // Purchaser product-read RLS: assert the embedded product join comes through
   // for a customer's active/waitlisted participations and is nulled out for
-  // reserving rows. This is the `purchaser_read_products_v2` policy that lets a
-  // customer view a product they own even after an admin hides it.
+  // reserving rows. This is the carve-out that lets a customer view a product
+  // they bought a place on even after it leaves the published statuses.
   // ---------------------------------------------------------------------------
 
   it("rail join: active + waitlisted rows carry the product; reserving's product is filtered", async () => {
@@ -238,11 +241,11 @@ describe("products purchaser-read RLS (00047)", () => {
     // a widening annotation, not a narrowing cast.
     const query = customerClient
       .from("participations")
-      .select("product_id, status, product:products(id, is_visible)")
+      .select("product_id, status, product:products(id, status)")
       .in("product_id", [
-        HIDDEN_ACTIVE_PRODUCT,
-        HIDDEN_WAITLISTED_PRODUCT,
-        HIDDEN_RESERVING_PRODUCT,
+        CLOSED_ACTIVE_PRODUCT,
+        CLOSED_WAITLISTED_PRODUCT,
+        CLOSED_RESERVING_PRODUCT,
       ]);
 
     const { data, error } = await query;
@@ -256,40 +259,40 @@ describe("products purchaser-read RLS (00047)", () => {
     const rows: RailRow[] = data ?? [];
     const byProduct = new Map(rows.map((row) => [row.product_id, row]));
 
-    expect(byProduct.get(HIDDEN_ACTIVE_PRODUCT)?.product?.id).toBe(
-      HIDDEN_ACTIVE_PRODUCT,
+    expect(byProduct.get(CLOSED_ACTIVE_PRODUCT)?.product?.id).toBe(
+      CLOSED_ACTIVE_PRODUCT,
     );
-    expect(byProduct.get(HIDDEN_WAITLISTED_PRODUCT)?.product?.id).toBe(
-      HIDDEN_WAITLISTED_PRODUCT,
+    expect(byProduct.get(CLOSED_WAITLISTED_PRODUCT)?.product?.id).toBe(
+      CLOSED_WAITLISTED_PRODUCT,
     );
     // Reserving row exists, but the product join is RLS-nulled.
-    expect(byProduct.get(HIDDEN_RESERVING_PRODUCT)?.status).toBe("reserving");
-    expect(byProduct.get(HIDDEN_RESERVING_PRODUCT)?.product).toBeNull();
+    expect(byProduct.get(CLOSED_RESERVING_PRODUCT)?.status).toBe("reserving");
+    expect(byProduct.get(CLOSED_RESERVING_PRODUCT)?.product).toBeNull();
   });
 
   // ---------------------------------------------------------------------------
   // Dashboard surface: `getMyUpcomingSessions("customer")` embeds the product's
-  // schedule slots and translations. `purchaser_read_products` lets the
-  // product row through, but the child tables need their own matching policy.
-  // Without it the embedded slots array is empty (the dashboard drops the
-  // session — Kyle's reported empty-Sessions bug) and the translations array
-  // is empty (blank product name). Assert the purchaser reaches both children.
+  // schedule slots and translations. The purchaser carve-out lets the product
+  // row through, but the child tables need their own matching policy. Without
+  // it the embedded slots array is empty (the dashboard drops the session —
+  // Kyle's reported empty-Sessions bug) and the translations array is empty
+  // (blank product name). Assert the purchaser reaches both children.
   // ---------------------------------------------------------------------------
 
-  it("detail join: purchaser reads the hidden product's slots and translations", async () => {
+  it("detail join: purchaser reads the closed product's slots and translations", async () => {
     const { data: row, error } = await customerClient
       .from("products")
       .select(
-        "id, is_visible, schedule_slots(weekday), product_translations(locale, name)",
+        "id, status, schedule_slots(weekday), product_translations(locale, name)",
       )
-      .eq("id", HIDDEN_ACTIVE_PRODUCT)
+      .eq("id", CLOSED_ACTIVE_PRODUCT)
       .maybeSingle();
 
     expect(error).toBeNull();
-    expect(row?.id).toBe(HIDDEN_ACTIVE_PRODUCT);
-    // Pin that the row really is hidden, so the assertion exercises the
-    // purchaser carve-out rather than the public-read path.
-    expect(row?.is_visible).toBe(false);
+    expect(row?.id).toBe(CLOSED_ACTIVE_PRODUCT);
+    // Pin that the row really is outside the published statuses, so the
+    // assertion exercises the purchaser carve-out rather than the public path.
+    expect(row?.status).toBe("cancelled");
     expect(row?.schedule_slots.length).toBeGreaterThan(0);
     expect(row?.product_translations.length).toBeGreaterThan(0);
   });

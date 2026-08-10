@@ -479,11 +479,14 @@ function buildSharedFields(
 /**
  * Build the request payload for /api/admin/products/create.
  *
- * The form always creates products as `pending` regardless of visibility.
- * `is_visible` is the sole knob the form exposes for "should parents see
- * this?". `draft` is reserved in the schema for a future "save incomplete
- * product" flow — it means *fields are missing*, not *hidden*. See
- * docs/products-architecture.md § "Status vs. visibility".
+ * The form always creates products as `pending` — the first state of the
+ * lifecycle, and the only one a product can be created in. `is_visible` is a
+ * separate axis and answers a narrower question than its name suggests: it
+ * decides whether the product is *listed* on the shop and schools pages, not
+ * whether anyone may see or buy it. An unlisted product is reachable, readable
+ * and purchasable by direct link, which is what makes it usable for a campaign
+ * or an unannounced cohort. See docs/products-architecture.md § "Status vs.
+ * visibility".
  */
 export function buildCreateInput(
   state: FormState,

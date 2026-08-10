@@ -21,9 +21,9 @@ const PRODUCT_MUNI = "00000000-0000-0000-0000-0000000005b8";
 const PRODUCT_PAID = "00000000-0000-0000-0000-0000000005b9";
 const ALL_TEST_PRODUCTS = [PRODUCT_MUNI, PRODUCT_PAID];
 
-// Far-future end date — non-consumer products need a non-null end_date once
-// status != 'draft' (chk_products_non_consumer_has_end_date), and we need the
-// product non-draft so the effective-status gate accepts signups.
+// Far-future end date — non-consumer products need a non-null end_date
+// (chk_products_non_consumer_has_end_date), and it must not have passed or the
+// effective-status gate would read the product as completed and refuse signups.
 const FAR_FUTURE = "2099-12-31";
 
 describe("create_participation — external_contract (municipality) registration", () => {

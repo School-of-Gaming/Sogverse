@@ -194,7 +194,7 @@
         "empty": "Ei vielä kohteita ({plural}). Luo uusi painamalla Uusi {label}.",
         "ageRange": "{min}–{max} v",
         "seats": "{count} paikkaa",
-        "hidden": "piilotettu",
+        "unlisted": "ei listattu",
         "untitled": "(nimetön)",
         "missingGeduFee": "Gedun palkkio puuttuu",
         "missingMunicipalityFee": "Kunnan maksu puuttuu",
@@ -221,8 +221,8 @@
         "notFound": "Tuotetta ei löytynyt.",
         "locationMissing": "—",
         "uncapped": "Ei paikkarajaa",
-        "visible": "Näkyy vanhemmille",
-        "hidden": "Piilotettu vanhemmilta",
+        "visible": "Listattu julkisesti",
+        "hidden": "Ei listattu – vain suoralla linkillä",
         "waitlistOn": "jonotuslista käytössä",
         "minutes": "{count} min",
         "perMonth": "{amount} / kk",
@@ -290,8 +290,8 @@
         },
         "registration": "Ilmoittautumisaika",
         "registrationDescription": "Valitse, milloin vanhemmat voivat alkaa ilmoittautua.",
-        "visibility": "Näkyvyys",
-        "visibilityDescription": "Hallitse, voivatko vanhemmat löytää ja nähdä tuotteen. Jo osallistuvat näkevät sen edelleen My SOG -sivullaan — tämä ei vaikuta heihin."
+        "visibility": "Listaus",
+        "visibilityDescription": "Ratkaisee, missä tuotetta mainostetaan, ei sitä, kuka voi ostaa sen. Ilmoittautumisen avaavat ja sulkevat ilmoittautumispäivä, paikkamäärä ja tuotteen tila – eivät koskaan tämä asetus."
       },
       "labels": {
         "name": "Nimi",
@@ -325,7 +325,7 @@
         "seatCount": "Paikkamäärä",
         "waitlistToggle": "Käytä jonotuslistaa, kun paikat täynnä",
         "signupThreshold": "Ilmoittautumisraja aloitukseen",
-        "makeVisible": "Näytä tuote vanhemmille",
+        "makeVisible": "Listaa tuote Kauppa- ja Kuntakerhot-sivuille",
         "seatLimit": "Paikkaraja"
       },
       "placeholders": {
@@ -450,7 +450,7 @@
         "pricingMonthly": "Veloitetaan joka kuukausi tilauksen ollessa voimassa. Voit perua milloin tahansa.",
         "pricingUpfront": "Veloitetaan kerran ilmoittautuessa. Sama kokonaishinta riippumatta kestosta.",
         "seatHint": "Kun täynnä, uudet ilmoittautujat menevät jonotuslistalle.",
-        "visibleHint": "Poista valinta, kun tuote on vielä tekeillä tai kun haluat lopettaa uudet ilmoittautumiset. Tämä piilottaa tuotteen vain uusilta vanhemmilta — jo ilmoittautuneet vanhemmat ja pelaajat näkevät sen ja kertansa edelleen My SOG -sivullaan.",
+        "visibleHint": "Ilman valintaa tuote ei näy millään julkisella sivulla, mutta jokainen, jolla on suora linkki, voi silti avata sen ja ostaa paikan. Juuri siksi tämä sopii julkistamattomiin, kutsuvieraille tarkoitettuihin ja kampanjatuotteisiin. Tämä ei ole keino lopettaa ilmoittautumisia, eikä se vaikuta jo mukana oleviin vanhempiin ja pelaajiin.",
         "seatLimitHint": "Rajaa osallistujamäärä tai pidä se rajattomana.",
         "holidayComingSoon": "Lomakalenterit tulevat pian. Toistaiseksi jokainen aikataulutettu kerta pidetään.",
         "startDateToday": "Lukittu toistaiseksi tähän päivään.",
@@ -487,7 +487,6 @@
         "createLabel": "Luo {label}"
       },
       "status": {
-        "draft": "Luonnos",
         "pending": "Odottaa alkua",
         "running": "Käynnissä",
         "completed": "Päättynyt",

@@ -101,7 +101,7 @@ const validBody = {
   material_url: null,
   location_id: null,
   is_remote: true,
-  status: "draft",
+  status: "pending",
   signup_threshold: null,
   start_date: null,
   end_date: null,

@@ -34,7 +34,10 @@ import {
   type ProductAdminDetailRow,
 } from "@/services/products";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
-import { effectiveStatus } from "@/lib/products/effective-status";
+import {
+  effectiveStatus,
+  type EffectiveProductStatus,
+} from "@/lib/products/effective-status";
 import { computeVoiceState } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
 import { GroupsPanel } from "./groups/groups-panel";
@@ -46,8 +49,10 @@ interface ProductDetailsPageProps {
   productId: string;
 }
 
-const STATUS_STYLE: Record<string, string> = {
-  draft: "bg-muted text-muted-foreground",
+// Keyed by the effective status, exhaustively: the compiler is what guarantees
+// every member has a chip style, so there is no fallback to reach for and no
+// way to add a status without being asked what colour it wears.
+const STATUS_STYLE: Record<EffectiveProductStatus, string> = {
   pending: "bg-primary/20 text-primary",
   running: "bg-primary text-primary-foreground",
   completed: "bg-muted text-muted-foreground",
@@ -203,7 +208,7 @@ function HeaderCard({
   kicker: string;
   title: string;
   description: string | null;
-  statusKey: string;
+  statusKey: EffectiveProductStatus;
   statusLabel: string;
   isVisible: boolean;
   visibleLabel: string;
@@ -237,9 +242,7 @@ function HeaderCard({
           )}
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <span
-              className={`rounded-full px-2 py-0.5 text-xs ${
-                STATUS_STYLE[statusKey] ?? STATUS_STYLE.draft
-              }`}
+              className={`rounded-full px-2 py-0.5 text-xs ${STATUS_STYLE[statusKey]}`}
             >
               {statusLabel}
             </span>

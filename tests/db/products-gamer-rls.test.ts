@@ -15,31 +15,36 @@ import {
 } from "./product-helpers";
 
 /**
- * Regression gate for `gamer_read_enrolled_products` (migration 00067).
+ * Regression gate for the enrolled-gamer read (migration 00067).
  *
- * The bug it fixes: an admin hides a running product (`is_visible = false`).
- * The parent keeps access via `purchaser_read_products` (00048) and the
- * gedu via `gedu_assigned_read_products` (00056), but the *gamer* — the
- * child signed in to their own account — had no matching SELECT policy, so
- * the hidden product dropped out of the `products!inner` join in
- * `getMyUpcomingSessions("gamer")` and the session vanished from their
- * dashboard.
+ * The bug it fixes: a product leaves the statuses the public can read. The
+ * parent keeps access through the purchaser carve-out and the gedu through the
+ * assignment one, but the *gamer* — the child signed in to their own account —
+ * had no matching branch, so the product dropped out of the `products!inner`
+ * join in `getMyUpcomingSessions("gamer")` and the session vanished from their
+ * dashboard. A cancelled club a family is still owed the history of is exactly
+ * that case.
  *
- * Mirrors `products-purchaser-rls.test.ts`, keyed on `gamer_id` instead
- * of `customer_id`: active/waitlisted grant the gamer read of a hidden
- * product; any other status / no participation do not. (`reserving` stands in
- * for "any other status" — it is a retired value nothing writes any more.)
+ * Mirrors `products-purchaser-rls.test.ts`, keyed on `gamer_id` instead of
+ * `customer_id`: active/waitlisted grant the gamer read of a product outside
+ * the published statuses; any other status / no participation do not.
+ * (`reserving` stands in for "any other status" — it is a retired value nothing
+ * writes any more.)
+ *
+ * **The fixtures are `cancelled`, and that is load-bearing** — since 00168 an
+ * unlisted product is publicly readable by design, so `is_visible = false`
+ * fixtures would make every negative assertion here vacuous.
  */
 
-const HIDDEN_ACTIVE_PRODUCT = "00000000-0000-0000-0000-0000000005e1";
-const HIDDEN_WAITLISTED_PRODUCT = "00000000-0000-0000-0000-0000000005e2";
-const HIDDEN_RESERVING_PRODUCT = "00000000-0000-0000-0000-0000000005e3";
-const HIDDEN_UNENROLLED_PRODUCT = "00000000-0000-0000-0000-0000000005e4";
+const CLOSED_ACTIVE_PRODUCT = "00000000-0000-0000-0000-0000000005e1";
+const CLOSED_WAITLISTED_PRODUCT = "00000000-0000-0000-0000-0000000005e2";
+const CLOSED_RESERVING_PRODUCT = "00000000-0000-0000-0000-0000000005e3";
+const CLOSED_UNENROLLED_PRODUCT = "00000000-0000-0000-0000-0000000005e4";
 const ALL_PRODUCTS = [
-  HIDDEN_ACTIVE_PRODUCT,
-  HIDDEN_WAITLISTED_PRODUCT,
-  HIDDEN_RESERVING_PRODUCT,
-  HIDDEN_UNENROLLED_PRODUCT,
+  CLOSED_ACTIVE_PRODUCT,
+  CLOSED_WAITLISTED_PRODUCT,
+  CLOSED_RESERVING_PRODUCT,
+  CLOSED_UNENROLLED_PRODUCT,
 ];
 
 const supabaseUrl =
@@ -74,14 +79,14 @@ describe("products gamer-read RLS (00067)", () => {
 
     await deleteTestProducts(admin, ALL_PRODUCTS);
     for (const id of ALL_PRODUCTS) {
-      await createTestProduct(admin, { id, isVisible: false, seatCount: 10 });
+      await createTestProduct(admin, { id, status: "cancelled", seatCount: 10 });
     }
 
     // The active product gets a real group so the gamer's participation can
     // be placed — this lets the dashboard join-shape assertion (which
     // requires group_id NOT NULL) exercise the same query the dashboard runs.
     const created = await adminAuth.rpc("apply_group_changes", {
-      p_product_id: HIDDEN_ACTIVE_PRODUCT,
+      p_product_id: CLOSED_ACTIVE_PRODUCT,
       p_added_groups: [{ tempId: "tA", name: "Cohort A", geduIds: [] }],
     });
     activeGroupId = applyGroupChangesResult.parse(created.data).tempMap.tA;
@@ -90,21 +95,21 @@ describe("products gamer-read RLS (00067)", () => {
     // Admin client bypasses RLS to stage the post-signup state directly.
     const seed = await admin.from("participations").insert([
       {
-        product_id: HIDDEN_ACTIVE_PRODUCT,
+        product_id: CLOSED_ACTIVE_PRODUCT,
         gamer_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
         group_id: activeGroupId,
       },
       {
-        product_id: HIDDEN_WAITLISTED_PRODUCT,
+        product_id: CLOSED_WAITLISTED_PRODUCT,
         gamer_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "waitlisted",
         waitlisted_at: new Date().toISOString(),
       },
       {
-        product_id: HIDDEN_RESERVING_PRODUCT,
+        product_id: CLOSED_RESERVING_PRODUCT,
         gamer_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "reserving",
@@ -119,14 +124,14 @@ describe("products gamer-read RLS (00067)", () => {
     // child tables need the matching enrolled-read policy or the dashboard
     // sees an empty slots array (→ dropped row, the empty-Sessions bug) and
     // an empty translations array (→ blank product name).
-    await createScheduleSlot(admin, HIDDEN_ACTIVE_PRODUCT, {
+    await createScheduleSlot(admin, CLOSED_ACTIVE_PRODUCT, {
       weekday: 1,
       startTime: "10:00",
     });
     const trans = await admin.from("product_translations").insert({
-      product_id: HIDDEN_ACTIVE_PRODUCT,
+      product_id: CLOSED_ACTIVE_PRODUCT,
       locale: "en",
-      name: "Hidden Active Camp",
+      name: "Cancelled Active Camp",
       short_description: "Seeded for the dashboard-join RLS assertion.",
     });
     if (trans.error) throw trans.error;
@@ -137,66 +142,66 @@ describe("products gamer-read RLS (00067)", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // Positive: active / waitlisted enrollment grants the gamer read access to
-  // an otherwise-hidden product.
+  // Positive: active / waitlisted enrollment grants the gamer read access to a
+  // product the public can no longer read.
   // ---------------------------------------------------------------------------
 
-  it("gamer with an active participation can SELECT the hidden product", async () => {
+  it("gamer with an active participation can SELECT the closed product", async () => {
     const { data, error } = await gamerClient
       .from("products")
-      .select("id, is_visible")
-      .eq("id", HIDDEN_ACTIVE_PRODUCT)
+      .select("id, status")
+      .eq("id", CLOSED_ACTIVE_PRODUCT)
       .maybeSingle();
 
     expect(error).toBeNull();
-    expect(data?.id).toBe(HIDDEN_ACTIVE_PRODUCT);
-    // Pin that the row really is hidden — otherwise the assertion would pass
-    // via `public_read_published_products` and the new policy wouldn't be
-    // exercised at all.
-    expect(data?.is_visible).toBe(false);
+    expect(data?.id).toBe(CLOSED_ACTIVE_PRODUCT);
+    // Pin that the row really is outside the published statuses — otherwise
+    // the assertion would pass via the public branch and the enrolled-gamer
+    // branch would not be exercised at all.
+    expect(data?.status).toBe("cancelled");
   });
 
-  it("gamer with a waitlisted participation can SELECT the hidden product", async () => {
+  it("gamer with a waitlisted participation can SELECT the closed product", async () => {
     const { data, error } = await gamerClient
       .from("products")
-      .select("id, is_visible")
-      .eq("id", HIDDEN_WAITLISTED_PRODUCT)
+      .select("id, status")
+      .eq("id", CLOSED_WAITLISTED_PRODUCT)
       .maybeSingle();
 
     expect(error).toBeNull();
-    expect(data?.id).toBe(HIDDEN_WAITLISTED_PRODUCT);
-    expect(data?.is_visible).toBe(false);
+    expect(data?.id).toBe(CLOSED_WAITLISTED_PRODUCT);
+    expect(data?.status).toBe("cancelled");
   });
 
   // ---------------------------------------------------------------------------
   // Negative controls.
   // ---------------------------------------------------------------------------
 
-  it("gamer with only a reserving row CANNOT SELECT the hidden product", async () => {
+  it("gamer with only a reserving row CANNOT SELECT the closed product", async () => {
     const { data, error } = await gamerClient
       .from("products")
       .select("id")
-      .eq("id", HIDDEN_RESERVING_PRODUCT);
+      .eq("id", CLOSED_RESERVING_PRODUCT);
 
     expect(error).toBeNull();
     expect(data).toEqual([]);
   });
 
-  it("gamer with no participation CANNOT SELECT the hidden product", async () => {
+  it("gamer with no participation CANNOT SELECT the closed product", async () => {
     const { data, error } = await gamerClient
       .from("products")
       .select("id")
-      .eq("id", HIDDEN_UNENROLLED_PRODUCT);
+      .eq("id", CLOSED_UNENROLLED_PRODUCT);
 
     expect(error).toBeNull();
     expect(data).toEqual([]);
   });
 
-  it("anon CANNOT SELECT a hidden product", async () => {
+  it("anon CANNOT SELECT a closed product", async () => {
     const { data, error } = await anonClient
       .from("products")
       .select("id")
-      .eq("id", HIDDEN_ACTIVE_PRODUCT);
+      .eq("id", CLOSED_ACTIVE_PRODUCT);
 
     expect(error).toBeNull();
     expect(data).toEqual([]);
@@ -205,30 +210,30 @@ describe("products gamer-read RLS (00067)", () => {
   // ---------------------------------------------------------------------------
   // Dashboard surface: the exact join `getMyUpcomingSessions("gamer")` runs,
   // including the embedded child tables it actually projects. Before 00067 the
-  // inner join dropped the hidden product entirely; the product-row fix landed,
+  // inner join dropped the unreadable product entirely; the product-row fix landed,
   // but the *children* (slots, translations) have their own RLS and were never
   // extended to enrolled gamers — so the product survives while its slots and
   // translations come back empty. Assert all three layers arrive.
   // ---------------------------------------------------------------------------
 
-  it("dashboard join: gamer's active+placed session carries the hidden product with its slots and translations", async () => {
+  it("dashboard join: gamer's active+placed session carries the closed product with its slots and translations", async () => {
     const query = gamerClient
       .from("participations")
       .select(
-        "gamer_id, group_id, product:products!inner(id, is_visible, schedule_slots(weekday), product_translations(locale, name))",
+        "gamer_id, group_id, product:products!inner(id, status, schedule_slots(weekday), product_translations(locale, name))",
       )
       .eq("gamer_id", TEST_IDS.GAMER)
       .eq("status", "active")
       .not("group_id", "is", null)
-      .eq("product_id", HIDDEN_ACTIVE_PRODUCT);
+      .eq("product_id", CLOSED_ACTIVE_PRODUCT);
 
     const { data, error } = await query;
 
     expect(error).toBeNull();
     const rows: QueryData<typeof query> = data ?? [];
     expect(rows).toHaveLength(1);
-    expect(rows[0].product.id).toBe(HIDDEN_ACTIVE_PRODUCT);
-    expect(rows[0].product.is_visible).toBe(false);
+    expect(rows[0].product.id).toBe(CLOSED_ACTIVE_PRODUCT);
+    expect(rows[0].product.status).toBe("cancelled");
     // The product surviving the inner join isn't enough: the dashboard reads
     // the embedded children too. An empty slots array makes the occurrence
     // walk drop the row (the reported empty-Sessions bug); an empty

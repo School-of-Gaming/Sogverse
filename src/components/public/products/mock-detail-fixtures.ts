@@ -917,9 +917,7 @@ function buildPriceRows(
 // `state`, not this, but matching the shape a real row would carry avoids
 // confusing future readers: open/ended products stay 'running', full or
 // pre-launch ones sit in 'pending'.
-function pickStatus(
-  state: RegistrationState,
-): "pending" | "running" | "draft" | "cancelled" {
+function pickStatus(state: RegistrationState): "pending" | "running" {
   switch (state.kind) {
     case "full_closed":
     case "full_waitlist":
