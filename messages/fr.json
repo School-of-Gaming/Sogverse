@@ -637,14 +637,19 @@
         "blockedMove": {
           "acknowledge": "Compris",
           "promoteUnpaid": {
-            "title": "La place n’a pas été payée",
-            "description": "{name} est sur la liste d’attente sans avoir payé, et ce produit est payant. Lui donner une place maintenant l’inscrirait gratuitement.",
-            "nextStep": "Demandez plutôt à la famille d’acheter la place : tant qu’une place est libre, le produit s’affiche comme ouvert dans la boutique, la famille peut donc quitter la liste d’attente depuis sa carte My SOG et payer normalement."
+            "title": "Cette place nécessite un abonnement",
+            "description": "{name} est sur la liste d’attente sans abonnement, et une place dans ce club est facturée chaque mois. Lui donner une place maintenant l’inscrirait gratuitement.",
+            "nextStep": "Demandez plutôt à la famille de prendre la place elle-même : tant qu’une place est libre, le club s’affiche comme ouvert dans la boutique, la famille peut donc quitter la liste d’attente depuis sa carte My SOG et passer en caisse — c’est là que l’abonnement est créé."
           },
           "demoteSubscribed": {
             "title": "L’abonnement est toujours actif",
             "description": "Déplacer {name} vers la liste d’attente laisserait un abonnement actif qui continuerait à facturer la famille pour une place qu’elle n’a plus.",
             "nextStep": "La famille résilie l’abonnement depuis sa page de facturation My SOG. La place se libère dès la fin de l’abonnement."
+          },
+          "removeSubscribed": {
+            "title": "L’abonnement est toujours actif",
+            "description": "Retirer {name} laisserait l’abonnement de la famille facturer une place qui n’existe plus.",
+            "nextStep": "La famille ouvre la carte de facturation sur sa page My SOG, qui la conduit au portail de facturation sécurisé de Stripe pour résilier. La place se libère dès la fin de l’abonnement."
           }
         }
       },

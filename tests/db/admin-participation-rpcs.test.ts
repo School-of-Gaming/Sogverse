@@ -22,7 +22,10 @@ import {
  * re-keyed off the product type — enrollment refuses a *paid* consumer club
  * (the one seat that needs a subscription this RPC cannot create), and removal
  * refuses only a live subscription, so a CASCADE can never orphan one that
- * keeps billing.
+ * keeps billing. Migration 00170 then made "live" mean live: a
+ * family_subscriptions row whose status is anything but `cancelled`. A
+ * dunning-dead row must not refuse, because removal is the only exit a seat
+ * behind one has.
  *
  * The results are parsed through the contracts schemas the routes parse with, so
  * a shape change fails here rather than at runtime.
@@ -263,20 +266,26 @@ describe("admin participation RPCs", () => {
       expect(await participationOn(FREE_CLUB, TEST_IDS.GAMER)).toBeNull();
     });
 
+    /** Seats the gamer and hangs a subscription row in `status` off the seat. */
+    async function seatWithSubscription(status: string): Promise<string> {
+      const participationId = await seatTheGamer();
+      await admin.from("family_subscriptions").insert({
+        participation_id: participationId,
+        customer_id: TEST_IDS.CUSTOMER,
+        stripe_subscription_id: `sub_admin_rpc_${status}`,
+        stripe_customer_id: `cus_admin_rpc_${status}`,
+        currency: "eur",
+        status,
+      });
+      return participationId;
+    }
+
     it("refuses a participation with a live Stripe subscription", async () => {
       // Since 00166 this is the ONLY thing standing between an admin and a
       // cancellation, on every product type — the consumer-club check that used
       // to shadow it is gone. The failure mode it prevents is a subscription
       // that keeps billing with no DB row behind it.
-      const participationId = await seatTheGamer();
-      await admin.from("family_subscriptions").insert({
-        participation_id: participationId,
-        customer_id: TEST_IDS.CUSTOMER,
-        stripe_subscription_id: "sub_admin_rpc_test",
-        stripe_customer_id: "cus_admin_rpc_test",
-        currency: "eur",
-        status: "active",
-      });
+      const participationId = await seatWithSubscription("active");
 
       const { error } = await adminAuth.rpc("admin_remove_participation", {
         p_product_id: CAMP,
@@ -290,6 +299,51 @@ describe("admin participation RPCs", () => {
         .from("family_subscriptions")
         .delete()
         .eq("participation_id", participationId);
+    });
+
+    it("still refuses a past_due subscription — Stripe has not given up on it", async () => {
+      // 00170 narrowed "live" to "status is not cancelled", and past_due is the
+      // value most likely to be mistaken for dead. Stripe is still retrying it
+      // and it can recover, so the CASCADE would still orphan something
+      // billable.
+      const participationId = await seatWithSubscription("past_due");
+
+      const { error } = await adminAuth.rpc("admin_remove_participation", {
+        p_product_id: CAMP,
+        p_participation_id: participationId,
+      });
+
+      expect(error?.code).toBe("55000");
+      expect(await participationOn(CAMP, TEST_IDS.GAMER)).toBe(participationId);
+
+      await admin
+        .from("family_subscriptions")
+        .delete()
+        .eq("participation_id", participationId);
+    });
+
+    it("removes a participation whose subscription is cancelled", async () => {
+      // The bug 00170 fixes, and it is sharper here than on the demote side:
+      // when Stripe exhausts dunning it moves the subscription to `unpaid`,
+      // which we store as `cancelled`, and it never fires
+      // subscription.deleted — so the row survives with nothing left to bill.
+      // Under the old row-existence test removal refused forever, and removal
+      // is the only exit such a seat has: the refusal told the admin to cancel
+      // a subscription that no longer exists, while the seat stayed occupied.
+      const participationId = await seatWithSubscription("cancelled");
+
+      const { data, error } = await adminAuth.rpc(
+        "admin_remove_participation",
+        { p_product_id: CAMP, p_participation_id: participationId },
+      );
+
+      expect(error).toBeNull();
+      expect(adminRemoveParticipationRpcResult.parse(data).kind).toBe(
+        "cancelled",
+      );
+      // The subscription row went with it, which is exactly the CASCADE the
+      // refusal exists to prevent when there IS something live to orphan.
+      expect(await participationOn(CAMP, TEST_IDS.GAMER)).toBeNull();
     });
   });
 });

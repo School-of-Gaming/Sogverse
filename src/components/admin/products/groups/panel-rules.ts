@@ -9,10 +9,10 @@ import type {
  * resolves to, and whether the panel may comp-enroll onto this product.
  *
  * They live outside the panel component so each one can be exercised directly —
- * the interesting cases (a never-paid waitlister promoted onto a paid product, a
- * subscribed member dragged onto the waitlist) are decisions, not rendering, and
- * a decision that only exists inside a drag handler can't be tested without
- * simulating a pointer.
+ * the interesting cases (a never-paid waitlister promoted onto a subscription-
+ * billed club, a subscribed member dragged onto the waitlist or onto the remove
+ * zone) are decisions, not rendering, and a decision that only exists inside a
+ * drag handler can't be tested without simulating a pointer.
  */
 
 // ---------------------------------------------------------------------------
@@ -74,14 +74,16 @@ export function readDropData(value: unknown): DropData | null {
 // ---------------------------------------------------------------------------
 
 /**
- * Why a drop wrote nothing. Both cases are money problems the panel cannot fix
+ * Why a drop wrote nothing. All three are money problems the panel cannot fix
  * by dragging, so the drop is refused and a dialog explains the manual path.
  */
 export type BlockedDropReason =
-  /** Seating a waitlister who never paid, on a product that charges. */
+  /** Seating a never-paid waitlister on a product whose seat needs a sub. */
   | "unpaidPromote"
   /** Demoting a member whose seat is behind a live Stripe subscription. */
-  | "liveSubscription";
+  | "liveSubscription"
+  /** Removing a member whose seat is behind a live Stripe subscription. */
+  | "removeSubscribed";
 
 export type DropOutcome =
   /** Nothing to do: dropped back where it started, or already there. */
@@ -103,7 +105,9 @@ export interface DragSubject {
   currentGroupId: string | null;
   /**
    * The participation has a live Stripe subscription behind it — carried by the
-   * groups snapshot, and the exact condition `demote_to_waitlist` refuses on.
+   * groups snapshot, and the exact condition both `demote_to_waitlist` and
+   * `admin_remove_participation` refuse on. "Live" excludes a cancelled row:
+   * a dunning-dead subscription bills nothing and must not hold the seat.
    */
   hasLiveSubscription: boolean;
   /**
@@ -165,20 +169,32 @@ export function dragSubjectsFrom(
  * the mutation, so a blocked drop writes nothing at all — the panel shows the
  * dialog and the snapshot is left exactly as it was.
  *
- * The promote refusal is keyed on the money, not the product type: a paid
- * product plus a waitlisted row with no payment marker. Keying it on billing
- * alone would trap every camper who genuinely paid and was later demoted, since
- * they could then never be put back.
+ * Two of the three refusals key on the participation's own live subscription,
+ * which is the same condition the database refuses on, so the dialog and the
+ * RPC always agree. The third — promoting a never-paid waitlister — keys on the
+ * product being subscription-shaped, not on it merely costing money: a one-off
+ * paid camp or event is handled out of band and the admin's drag is trusted
+ * there. It also asks for the payment marker, because demotion preserves it, so
+ * a camper who genuinely paid and was later demoted promotes back plainly
+ * rather than being trapped on the queue forever.
  */
 export function resolveDrop(
   drop: DropData,
   subject: DragSubject,
-  billingMode: BillingMode,
+  subscriptionShaped: boolean,
 ): DropOutcome {
   switch (drop.kind) {
     case "remove":
-      // Removal is confirmed in its own dialog and is legal from anywhere,
-      // including the waitlist (it just cancels the queued family).
+      // Removal CASCADEs family_subscriptions, so a live subscription would go
+      // on billing a family with nothing left in the database to cancel it —
+      // and `admin_remove_participation` refuses exactly this, whatever the
+      // product type. Fronting it here means the admin reads why instead of
+      // confirming a removal that is about to fail.
+      if (subject.hasLiveSubscription) {
+        return { kind: "blocked", reason: "removeSubscribed" };
+      }
+      // Otherwise legal from anywhere, including the waitlist (it just cancels
+      // the queued family). Confirmed in its own dialog.
       return { kind: "remove" };
 
     case "waitlist":
@@ -190,7 +206,7 @@ export function resolveDrop(
 
     case "move":
       if (subject.isWaitlisted) {
-        if (billingMode === "paid" && !subject.hasPaymentMarker) {
+        if (subscriptionShaped && !subject.hasPaymentMarker) {
           return { kind: "blocked", reason: "unpaidPromote" };
         }
         return { kind: "promote", toGroupId: drop.toGroupId };
@@ -201,19 +217,40 @@ export function resolveDrop(
 }
 
 // ---------------------------------------------------------------------------
-// Comp-enrollment
+// The subscription-shaped product
 // ---------------------------------------------------------------------------
+
+/**
+ * A product whose active seat cannot exist without a monthly Stripe
+ * subscription: a consumer club that charges. Every other shape is either
+ * no-charge or paid once, out of band or through Checkout, and an admin action
+ * on it leaves no recurring charge unaccounted for.
+ *
+ * Two panel decisions ask this one question, deliberately the same one
+ * `admin_enroll_gamer` refuses on:
+ *
+ *  - whether the add-gamer affordance is offered at all (`canCompEnroll`), and
+ *  - whether promoting a never-paid waitlister needs the dialog. A paid camp or
+ *    event is *not* subscription-shaped: its payment is a one-off the admin
+ *    settles out of band, so the drag is trusted and goes straight through.
+ */
+export function isSubscriptionShaped(
+  productType: ProductType,
+  billingMode: BillingMode,
+): boolean {
+  return productType === "consumer_club" && billingMode === "paid";
+}
 
 /**
  * Whether the panel offers its add-gamer affordance. Mirrors the enrollment
  * RPC's own refusal: the one shape an admin cannot comp is a seat that requires
- * a Stripe subscription nobody is creating — a paid consumer club. A free club
- * comps exactly like a free event or a camp does. The RPC refuses independently
- * (defense in depth); this only decides whether the button is worth offering.
+ * a Stripe subscription nobody is creating. A free club comps exactly like a
+ * free event or a camp does. The RPC refuses independently (defense in depth);
+ * this only decides whether the button is worth offering.
  */
 export function canCompEnroll(
   productType: ProductType,
   billingMode: BillingMode,
 ): boolean {
-  return !(productType === "consumer_club" && billingMode === "paid");
+  return !isSubscriptionShaped(productType, billingMode);
 }

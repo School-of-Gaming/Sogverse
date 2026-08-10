@@ -40,6 +40,7 @@ import { GroupColumn } from "./group-column";
 import {
   canCompEnroll,
   dragSubjectsFrom,
+  isSubscriptionShaped,
   readDropData,
   readGamerDragData,
   resolveDrop,
@@ -53,10 +54,13 @@ interface GroupsPanelProps {
   productId: string;
   productType: ProductType;
   /**
-   * How the product is paid for. Together with the type it decides whether an
-   * admin may comp-enroll, and it is half of the promote refusal — a paid
-   * product is the only one where seating a never-paid waitlister gives a seat
-   * away.
+   * How the product is paid for. Only ever read together with the type, and
+   * only to answer one question: is this a subscription-shaped seat (a club
+   * that charges monthly)? That decides whether an admin may comp-enroll, and
+   * it is half of the promote refusal — seating a never-paid waitlister there
+   * hands out a seat no subscription is paying for. A paid camp or event is a
+   * one-off settled out of band, so it is not subscription-shaped and the drag
+   * is trusted.
    */
   billingMode: BillingMode;
   /** Capacity cap, or null for uncapped — drives the seat-availability bar. */
@@ -204,6 +208,10 @@ export function GroupsPanel({
     name: string;
   } | null>(null);
 
+  // The type and the billing meet here and nowhere else in the panel: both the
+  // add-gamer affordance and the promote refusal ask the same question of them
+  // — is this seat one that only a Stripe subscription can create?
+  const subscriptionShaped = isSubscriptionShaped(productType, billingMode);
   const canAddGamer = canCompEnroll(productType, billingMode);
 
   // Any enrolled gamer blocks a re-add via the picker.
@@ -265,7 +273,7 @@ export function GroupsPanel({
     const subject = dragSubjects.get(participationId);
     if (!subject) return;
 
-    const outcome = resolveDrop(dropData, subject, billingMode);
+    const outcome = resolveDrop(dropData, subject, subscriptionShaped);
 
     switch (outcome.kind) {
       case "none":

@@ -19,13 +19,16 @@ import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
  *  - get_product_groups_with_details surfaces the waitlist in derived order
  *    (waitlisted_at, id), parsed through the productGroupsSnapshot contract,
  *    carrying both per-participation money flags the admin panel decides a
- *    drag from: has_live_subscription (00166) and has_payment_marker (00167).
+ *    drag from: has_live_subscription (00166, made a real read on the waitlist
+ *    branch and status-filtered by 00170) and has_payment_marker (00167).
  *  - promote_from_waitlist seats a waitlisted gamer (capacity override, group
  *    placement, noop on a non-waitlisted row).
  *  - demote_to_waitlist sends an active gamer to the back of the waitlist, and
  *    refuses a participation carrying a live Stripe subscription — on any
  *    product type (migration 00166 re-keyed 00132's consumer-club refusal to
- *    the subscription it was standing in for).
+ *    the subscription it was standing in for). "Live" means status is anything
+ *    but `cancelled` (00170): past_due still refuses, a dunning-dead row does
+ *    not, because otherwise the seat could never be freed at all.
  *  - get_waitlist_position returns the owner's 1-based position and NULL for a
  *    non-owner.
  *  - the admin RPCs reject a non-admin caller.
@@ -151,9 +154,9 @@ describe("waitlist — admin read + promote/demote + self position", () => {
     // Waitlisted rows never carry a seat, so none leak into the active lists.
     expect(snapshot.unassigned).toHaveLength(0);
     expect(snapshot.waitlist.every((p) => p.status === "waitlisted")).toBe(true);
-    // The waitlist branch reports the flag as a constant false — a waitlisted
-    // row carrying a live subscription is the state demote_to_waitlist now
-    // refuses to create, so there is nothing there to read.
+    // False because neither row has a subscription behind it — not because the
+    // branch says so. Since 00170 the waitlist branch is a real read like the
+    // other two; the test below is the one that proves it can answer true.
     expect(snapshot.waitlist.every((p) => !p.has_live_subscription)).toBe(true);
   });
 
@@ -240,6 +243,72 @@ describe("waitlist — admin read + promote/demote + self position", () => {
       [TEST_IDS.GAMER]: true,
       [TEST_IDS.GAMER_2]: false,
     });
+  });
+
+  it("get_product_groups_with_details reads has_live_subscription on the WAITLIST branch too", async () => {
+    // Until 00170 this branch returned a constant false, on the reasoning that
+    // demote_to_waitlist refuses a subscribed row so the state cannot exist.
+    // It can: the products webhook inserts family_subscriptions after a Stripe
+    // round trip WITHOUT holding the product gate lock, so a demote landing in
+    // that window produces exactly this row — and the manual sub-adoption
+    // process writes one directly. The row is staged the same way here, and the
+    // snapshot has to report it rather than assert it away: a panel told the
+    // seat is free of money would happily let an admin act on it.
+    const queued = await joinWaitlist(TEST_IDS.GAMER);
+    const plain = await joinWaitlist(TEST_IDS.GAMER_2);
+    await admin.from("family_subscriptions").insert({
+      participation_id: queued,
+      customer_id: TEST_IDS.CUSTOMER,
+      stripe_subscription_id: "sub_waitlisted_live",
+      stripe_customer_id: "cus_waitlisted_live",
+      currency: "eur",
+      status: "active",
+    });
+
+    const res = await adminUser.rpc("get_product_groups_with_details", {
+      p_product_id: PRODUCT_MUNI,
+    });
+    expect(res.error).toBeNull();
+
+    const snapshot = productGroupsSnapshot.parse(res.data);
+    const flags = Object.fromEntries(
+      snapshot.waitlist.map((p) => [p.id, p.has_live_subscription]),
+    );
+    expect(flags).toEqual({ [queued]: true, [plain]: false });
+  });
+
+  it("get_product_groups_with_details treats a cancelled subscription as not live", async () => {
+    // The other half of 00170. A dunning-exhausted subscription (Stripe
+    // `unpaid`) is stored as `cancelled` and never fires subscription.deleted,
+    // so the row outlives anything Stripe will ever bill. Reporting it as live
+    // is what made the seat unmovable and unremovable.
+    const { data: seeded } = await admin
+      .from("participations")
+      .insert({
+        product_id: PRODUCT_FREE_CLUB,
+        gamer_id: TEST_IDS.GAMER,
+        customer_id: TEST_IDS.CUSTOMER,
+        status: "active",
+      })
+      .select("id")
+      .single();
+    await admin.from("family_subscriptions").insert({
+      participation_id: seeded!.id,
+      customer_id: TEST_IDS.CUSTOMER,
+      stripe_subscription_id: "sub_snapshot_dead",
+      stripe_customer_id: "cus_snapshot_dead",
+      currency: "eur",
+      status: "cancelled",
+    });
+
+    const res = await adminUser.rpc("get_product_groups_with_details", {
+      p_product_id: PRODUCT_FREE_CLUB,
+    });
+    expect(res.error).toBeNull();
+
+    const snapshot = productGroupsSnapshot.parse(res.data);
+    expect(snapshot.unassigned).toHaveLength(1);
+    expect(snapshot.unassigned[0].has_live_subscription).toBe(false);
   });
 
   it("promote_from_waitlist seats a gamer over a full cap (capacity override)", async () => {
@@ -367,6 +436,66 @@ describe("waitlist — admin read + promote/demote + self position", () => {
       .single();
     expect(row?.status).toBe("active");
     expect(row?.waitlisted_at).toBeNull();
+  });
+
+  it("demote_to_waitlist still refuses a past_due subscription — dunning is not death", async () => {
+    // 00170 narrowed the refusal to "not cancelled", and past_due is the value
+    // most likely to be mistaken for dead. It is not: Stripe is still retrying,
+    // the subscription can recover on the next attempt, and demoting it would
+    // put a billable subscription on a row the parent can delete outright.
+    const active = await registerActive(TEST_IDS.GAMER);
+    await admin.from("family_subscriptions").insert({
+      participation_id: active,
+      customer_id: TEST_IDS.CUSTOMER,
+      stripe_subscription_id: "sub_demote_past_due",
+      stripe_customer_id: "cus_demote_past_due",
+      currency: "eur",
+      status: "past_due",
+    });
+
+    const res = await adminUser.rpc("demote_to_waitlist", {
+      p_participation_id: active,
+    });
+
+    expect(res.error?.code).toBe("55000");
+    const { data: row } = await admin
+      .from("participations")
+      .select("status")
+      .eq("id", active)
+      .single();
+    expect(row?.status).toBe("active");
+  });
+
+  it("demote_to_waitlist allows a participation whose subscription is cancelled", async () => {
+    // The bug 00170 fixes. The webhook UPDATES status in place rather than
+    // deleting the row, and a subscription Stripe gave up dunning (`unpaid`)
+    // lands as `cancelled` without ever firing subscription.deleted. Under the
+    // old row-existence test that dead row refused the demote forever, so the
+    // seat could never be freed for anybody else.
+    const active = await registerActive(TEST_IDS.GAMER);
+    await admin.from("family_subscriptions").insert({
+      participation_id: active,
+      customer_id: TEST_IDS.CUSTOMER,
+      stripe_subscription_id: "sub_demote_dead",
+      stripe_customer_id: "cus_demote_dead",
+      currency: "eur",
+      status: "cancelled",
+    });
+
+    const res = await adminUser.rpc("demote_to_waitlist", {
+      p_participation_id: active,
+    });
+    expect(res.error).toBeNull();
+    expect(demoteToWaitlistRpcResult.parse(res.data).kind).toBe("demoted");
+
+    const { data: row } = await admin
+      .from("participations")
+      .select("status, group_id, waitlisted_at")
+      .eq("id", active)
+      .single();
+    expect(row?.status).toBe("waitlisted");
+    expect(row?.group_id).toBeNull();
+    expect(row?.waitlisted_at).not.toBeNull();
   });
 
   it("demote_to_waitlist demotes a free-club member, which the old type rule refused", async () => {

@@ -29,7 +29,7 @@ const routeParams = z.object({
  *
  *  - the participation must be on THIS product (an id from another product
  *    could otherwise be cancelled through this URL);
- *  - a participation with a live Stripe subscription is refused, because the
+ *  - a participation with a LIVE Stripe subscription is refused, because the
  *    CASCADE would orphan a subscription that keeps billing the customer with
  *    no DB record and no refund. In the RPC that check shares a transaction and
  *    a product lock with the delete, so unlike the route-level version it has no
@@ -38,7 +38,16 @@ const routeParams = z.object({
  *    refusal used to stand in for — that refusal is gone, because without
  *    admin removal a *free* club has no exit at all (there is no parent-facing
  *    cancel for a free enrollment) and a hard-capped one could never free a
- *    seat.
+ *    seat. "Live" means a family_subscriptions row whose status is anything but
+ *    `cancelled`; a dunning-dead subscription does not refuse, or removal —
+ *    that seat's only exit — would be closed forever.
+ *
+ * The live-subscription refusal is an ORDINARY OUTCOME of this route, not a
+ * broken invariant, and the status it answers with says so (400, exactly as the
+ * PATCH handler's identically-coded demote refusal does). Any admin can reach
+ * it by dragging a subscribed member onto the panel's remove zone, on any
+ * product — including a club that was flipped from paid to free, whose members
+ * keep their subscriptions. The panel's dialog normally stops the drag first.
  *
  * No refund is issued: nothing here calls Stripe.
  */
@@ -48,14 +57,17 @@ export const DELETE = defineRoute({
   forbiddenMessage: "Only admins can remove gamers from a product",
   params: routeParams,
 
-  // 55000 (object_not_in_prerequisite_state) is this route's only divergence
-  // from the shared table: it is the live-subscription refusal, which is not
-  // the admin's mistake but a broken invariant, so it stays a 500.
+  // 55000 (object_not_in_prerequisite_state) is the live-subscription refusal,
+  // the same code and the same status the PATCH handler answers for the same
+  // condition: a request the admin can legitimately make and the database
+  // legitimately declines, which is a 400. It was a 500 while a product-type
+  // check made it unreachable in practice; with that check gone it is a routine
+  // answer, and a 500 would have logged an ordinary refusal as a server fault.
   //
   // `no_data_found`: the participation is named by the URL path, so a
   // participation that is not on this product is a missing resource — the
   // shared table's 404 is what this route already answered.
-  errorStatus: { "55000": 500 },
+  errorStatus: { "55000": 400 },
 
   handler: async ({ supabase, user, params }) => {
     const { id: productId, participationId } = params;
@@ -84,7 +96,7 @@ export const DELETE = defineRoute({
             error:
               "This participation has a live Stripe subscription and can't be removed here. Cancel the subscription first.",
           },
-          { status: 500 },
+          { status: 400 },
         );
       }
       throw error;
@@ -154,13 +166,14 @@ export const PATCH = defineRoute({
   // go through the shared table with a generic message.
   //
   // 55000 (object_not_in_prerequisite_state) is the live-subscription demote
-  // refusal — the same ERRCODE `admin_remove_participation` raises. It is a 400
-  // here and a 500 there because it means different things: removal only meets
-  // it with a broken invariant, while demotion meets it whenever an admin drags
-  // a paying member onto the waitlist, which is a request, not a fault. Exactly
-  // the status the consumer-club refusal it replaces answered with. Normally
-  // unreachable — the groups panel's dialog stops the drag first. The handler
-  // returns the admin-facing copy itself; this pins the status.
+  // refusal — the same ERRCODE `admin_remove_participation` raises, now with
+  // the same 400 on both handlers. One condition, one code, one status,
+  // wherever it is met: an admin dragging a paying member onto the waitlist (or
+  // onto the remove zone) is making a request the database declines, not
+  // tripping a fault. Exactly the status the consumer-club refusal it replaces
+  // answered with. Normally unreachable — the groups panel's dialog stops the
+  // drag first. The handler returns the admin-facing copy itself; this pins the
+  // status.
   errorStatus: { "55000": 400 },
 
   handler: async ({ supabase, user, params, body }) => {

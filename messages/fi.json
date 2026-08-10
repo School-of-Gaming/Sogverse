@@ -637,14 +637,19 @@
         "blockedMove": {
           "acknowledge": "Selvä",
           "promoteUnpaid": {
-            "title": "Paikkaa ei ole maksettu",
-            "description": "{name} on jonotuslistalla maksamatta, ja tuote on maksullinen. Jos annat paikan nyt, hän pääsee mukaan ilmaiseksi.",
-            "nextStep": "Pyydä perhettä ostamaan paikka: kun paikka on vapaana, tuote näkyy kaupassa avoimena, joten perhe voi poistua jonotuslistalta My SOG -korttinsa kautta ja maksaa paikan tavalliseen tapaan."
+            "title": "Paikka vaatii tilauksen",
+            "description": "{name} on jonotuslistalla ilman tilausta, ja tämän kerhon paikka laskutetaan kuukausittain. Jos annat paikan nyt, hän pääsee mukaan ilmaiseksi.",
+            "nextStep": "Pyydä perhettä ottamaan paikka itse: kun paikka on vapaana, kerho näkyy kaupassa avoimena. Perhe voi poistua jonotuslistalta My SOG -korttinsa kautta ja tehdä tilauksen kassalla."
           },
           "demoteSubscribed": {
             "title": "Tilaus on yhä voimassa",
             "description": "Jos {name} siirtyy jonotuslistalle, tilaus jää voimaan ja perheeltä veloitetaan edelleen paikasta, jota heillä ei enää ole.",
             "nextStep": "Perhe voi perua tilauksen My SOG -laskutussivullaan. Paikka vapautuu heti, kun tilaus päättyy."
+          },
+          "removeSubscribed": {
+            "title": "Tilaus on yhä voimassa",
+            "description": "Jos {name} poistetaan, perheen tilaus jatkaa laskuttamista paikasta, jota ei enää ole.",
+            "nextStep": "Perhe avaa laskutuskortin My SOG -sivullaan ja siirtyy sitä kautta Stripen suojattuun laskutusportaaliin perumaan tilauksen. Paikka vapautuu heti, kun tilaus päättyy."
           }
         }
       },

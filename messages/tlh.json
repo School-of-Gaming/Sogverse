@@ -682,14 +682,19 @@
         "blockedMove": {
           "acknowledge": "jIyaj",
           "promoteUnpaid": {
-            "title": "pa’vam DIlbe’lu’",
-            "description": "loSwI’pu’ tetlhDaq {name} tu’lu’, ’ach DIlbe’. Huch poQ ngoptlhInvam. DaH pa’ Danobchugh, Huch Hutlh ’el — batlh ghajbe’ vay’.",
-            "nextStep": "qorDu’vaD yIja’: pa’ tlhab tu’lu’chugh, malja’Daq poSqu’ ngoptlhIn. vaj My SOG ngoptlhInDaj lo’ ’ej loSwI’pu’ tetlhvo’ mej, ’ej batlh DIl."
+            "title": "Huch nge’ghach poQ pa’vam",
+            "description": "loSwI’pu’ tetlhDaq {name} tu’lu’, ’ach Huch nge’ghach ghajbe’. Hoch jarmey Huch poQ ngoptlhInvam pa’. DaH pa’ Danobchugh, Huch Hutlh ’el — batlh ghajbe’ vay’.",
+            "nextStep": "qorDu’vaD yIja’: pa’ tlhab tu’lu’chugh, malja’Daq poSqu’ ngoptlhIn. vaj My SOG ngoptlhInDaj lo’, loSwI’pu’ tetlhvo’ mej, ’ej batlh DIl — DIltaHvIS chen Huch nge’ghachDaj."
           },
           "demoteSubscribed": {
             "title": "taHtaH Huch nge’ghach",
             "description": "loSwI’pu’ tetlhDaq {name} DalanDI’, taHtaH Huch nge’ghach: pa’ Hutlh qorDu’, ’ach Huch nge’taH. quvHa’ghach ’oH!",
             "nextStep": "My SOG Huch nge’ghach HaDDaq nge’ghach chIl qorDu’. chIlDI’, tlhab pa’."
+          },
+          "removeSubscribed": {
+            "title": "taHtaH Huch nge’ghach",
+            "description": "{name} Dateqchugh, ngab pa’ ’ach taHtaH Huch nge’ghach: pa’ Hutlhbogh qorDu’vo’ Huch nge’taH. quvHa’ghach ’oH!",
+            "nextStep": "My SOG yaHDaj Huch ngoptlhIn poSmoH qorDu’; vaj Hubbogh Stripe Huch pa’Daq nge’ghach chIl. chIlDI’, tlhab pa’."
           }
         }
       },

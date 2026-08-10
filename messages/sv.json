@@ -637,14 +637,19 @@
         "blockedMove": {
           "acknowledge": "Okej",
           "promoteUnpaid": {
-            "title": "Platsen är inte betald",
-            "description": "{name} står på väntelistan utan att ha betalat, och den här produkten kostar. Att ge platsen nu skulle skriva in hen gratis.",
-            "nextStep": "Be familjen köpa platsen i stället: så länge en plats är ledig visas produkten som öppen i butiken, så de kan lämna väntelistan från sitt My SOG-kort och betala som vanligt."
+            "title": "Platsen kräver en prenumeration",
+            "description": "{name} står på väntelistan utan prenumeration, och en plats i den här klubben faktureras varje månad. Att ge platsen nu skulle skriva in hen gratis.",
+            "nextStep": "Be familjen ta platsen själv: så länge en plats är ledig visas klubben som öppen i butiken, så de kan lämna väntelistan från sitt My SOG-kort och gå till kassan — det är där prenumerationen skapas."
           },
           "demoteSubscribed": {
             "title": "Prenumerationen är fortfarande aktiv",
             "description": "Om {name} flyttas till väntelistan blir prenumerationen kvar och familjen fortsätter att faktureras för en plats de inte längre har.",
             "nextStep": "Familjen säger upp prenumerationen på sin My SOG-faktureringssida. Platsen frigörs så snart prenumerationen upphör."
+          },
+          "removeSubscribed": {
+            "title": "Prenumerationen är fortfarande aktiv",
+            "description": "Att ta bort {name} skulle lämna familjens prenumeration kvar och fortsätta fakturera för en plats som inte längre finns.",
+            "nextStep": "Familjen öppnar faktureringskortet på sin My SOG-sida, som tar dem vidare till Stripes säkra faktureringsportal för att säga upp. Platsen frigörs så snart prenumerationen upphör."
           }
         }
       },

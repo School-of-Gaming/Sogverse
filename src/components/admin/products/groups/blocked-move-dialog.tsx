@@ -21,10 +21,22 @@ interface BlockedMoveDialogProps {
   onClose: () => void;
 }
 
+// Reason → message namespace. A total map rather than a ternary chain: a fourth
+// refusal then fails to compile until its copy exists, instead of silently
+// falling through to whichever branch was last. `as const satisfies` rather than
+// an annotation, because next-intl's `t()` checks the key against the message
+// tree — widening these values to `string` would defeat that and let a typo
+// through.
+const COPY_KEY = {
+  unpaidPromote: "promoteUnpaid",
+  liveSubscription: "demoteSubscribed",
+  removeSubscribed: "removeSubscribed",
+} as const satisfies Record<BlockedDropReason, string>;
+
 /**
  * Explains a drop the panel refused to perform. Acknowledge-only by design:
- * nothing was written and there is no "do it anyway" — both refusals are money
- * problems (a seat given away for free, a subscription left billing for a seat
+ * nothing was written and there is no "do it anyway" — every refusal is a money
+ * problem (a seat given away for free, a subscription left billing for a seat
  * that is gone) that the admin has to settle outside the panel, so the dialog's
  * job is to name the problem and hand over the manual path.
  */
@@ -34,7 +46,7 @@ export function BlockedMoveDialog({
   onClose,
 }: BlockedMoveDialogProps) {
   const t = useTranslations("admin.products.groupsPanel.blockedMove");
-  const copy = reason === "unpaidPromote" ? "promoteUnpaid" : "demoteSubscribed";
+  const copy = COPY_KEY[reason];
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>

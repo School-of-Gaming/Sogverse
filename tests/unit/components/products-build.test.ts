@@ -362,6 +362,32 @@ describe("validate", () => {
       });
     });
 
+    it("heals a stored uncapped municipality club into a required cap", () => {
+      // The edit-path half of the rule above, which is why it belongs here and
+      // not among the payload builders: nothing is built. Muni has no uncapped
+      // option, so the row loads as capped-with-a-blank number and validation
+      // demands the contracted figure before any payload can be built at all.
+      const state = existingFormState(
+        mockDetailRow({
+          product_type: "municipality_club",
+          billing_mode: "external_contract",
+          seat_count: null,
+          // A muni club is bounded and anchors to its funding municipality;
+          // without these, validation stops before it reaches the seat count.
+          end_date: "2026-12-01",
+          location_id: "00000000-0000-0000-0000-0000000000aa",
+        }),
+        muniConfig,
+        "en",
+      );
+
+      expect(state.uncapped).toBe(false);
+      expect(state.seatCount).toBe("");
+      expect(validate(state, muniConfig)).toEqual({
+        messageKey: "seatCountRequired",
+      });
+    });
+
     it("accepts a free consumer club", () => {
       // Clubs became free-or-paid; a free one collects no price at all, so the
       // blank price map the paid path would refuse is fine here.
@@ -691,31 +717,6 @@ describe("buildCreateInput", () => {
     expect(out.seat_count).toBe(16);
     expect(out.waitlist_enabled).toBe(true);
     expect(out.prices).toEqual([]);
-  });
-
-  it("heals a stored uncapped municipality club into a required cap", () => {
-    // Muni has no uncapped option, so the row loads as capped-with-a-blank
-    // number and validation demands the contracted figure before any payload
-    // is built. The build itself never sees the uncapped state.
-    const state = existingFormState(
-      mockDetailRow({
-        product_type: "municipality_club",
-        billing_mode: "external_contract",
-        seat_count: null,
-        // A muni club is bounded and anchors to its funding municipality;
-        // without these, validation stops before it reaches the seat count.
-        end_date: "2026-12-01",
-        location_id: "00000000-0000-0000-0000-0000000000aa",
-      }),
-      muniConfig,
-      "en",
-    );
-
-    expect(state.uncapped).toBe(false);
-    expect(state.seatCount).toBe("");
-    expect(validate(state, muniConfig)).toEqual({
-      messageKey: "seatCountRequired",
-    });
   });
 
   it("only emits signup_threshold when the start mode uses one", () => {

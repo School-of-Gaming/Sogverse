@@ -1,11 +1,27 @@
 # Supabase clients & the paged-read discipline
 
-This directory holds the three Supabase client factories — browser (singleton), server
-component, and the privileged service-role one — plus the shared paging primitive every
-list read that can outgrow a single response goes through. The client factories are
-described in the root `CLAUDE.md`; this file is about the paging rules, which are
-normative for every service in the codebase and not only the ones that happen to page
-today.
+This directory holds the Supabase client factories — browser (singleton), server
+component, the privileged service-role one, and a cookie-free anon one — plus the shared
+paging primitive every list read that can outgrow a single response goes through. The
+first three are described in the root `CLAUDE.md`; the fourth is described below, and the
+rest of this file is about the paging rules, which are normative for every service in the
+codebase and not only the ones that happen to page today.
+
+## The cookie-free anon client
+
+**Rule: server work whose answer is the same for every visitor must not read cookies to
+get it.** Touching cookies in a server render permanently opts that render out of caching
+— the framework can no longer prove the output is shareable — so a public route pays a
+per-request render for an identity the read never used. A page's robots policy, derived
+from a column on the row it is about, is the shape this bites hardest: it sits on the
+highest-traffic public routes and asks nothing about who is looking.
+
+The anon factory is the answer: the anon key and no cookies, so it reads exactly what a
+signed-out visitor reads. **Use it only where an anonymous answer is the correct answer.**
+Anything varying by who is asking — anything behind an RLS policy keyed to `auth.uid()` —
+must keep the cookie-bound server client, or it will read as a stranger and silently
+return nothing rather than failing. Where a read can miss, the caller has to be built so
+the miss lands somewhere safe.
 
 ## The problem paging exists to solve
 

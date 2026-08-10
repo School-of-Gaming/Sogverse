@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { createAnonClient } from "@/lib/supabase/anon";
 import { ProductDetailPage } from "@/components/public/products/product-detail-page";
 
 // Unified product detail / signup page for the shop. One route for every
@@ -30,6 +30,15 @@ import { ProductDetailPage } from "@/components/public/products/product-detail-p
  * URL is never fetched, so the crawler would never read the tag, and the URL
  * could still be indexed bare off an external link. Allowing the crawl and
  * serving noindex is what actually deindexes.
+ *
+ * The read goes through the **cookie-free anon client**, deliberately. This is
+ * the highest-traffic public route on the site, and touching cookies here would
+ * opt every one of its renders out of caching for a question whose answer is the
+ * same for everybody: `is_visible` is a column on the product, not a fact about
+ * the viewer. Since 00168 an unlisted product is readable by anon, so the
+ * anonymous read sees the same row a signed-in one would — and where it does
+ * not (a cancelled or completed product falls outside the read policy) the miss
+ * lands on noindex, which is the answer that page wants anyway.
  */
 export async function generateMetadata({
   params,
@@ -37,7 +46,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const supabase = await createClient();
+  const supabase = createAnonClient();
   const { data } = await supabase
     .from("products")
     .select("is_visible")

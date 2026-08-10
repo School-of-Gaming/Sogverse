@@ -2,12 +2,20 @@ import { describe, expect, it } from "vitest";
 import {
   canCompEnroll,
   dragSubjectsFrom,
+  isSubscriptionShaped,
   readDropData,
   readGamerDragData,
   resolveDrop,
   type DragSubject,
 } from "@/components/admin/products/groups/panel-rules";
 import type { ProductGroupsSnapshot } from "@/types";
+
+// resolveDrop's third argument, named at the call sites so the boolean reads.
+// It answers one question: can this product's active seat exist without a
+// monthly Stripe subscription? A paid camp or event can — its payment is a
+// one-off settled out of band, and the admin's drag is trusted there.
+const SUBSCRIPTION_CLUB = true;
+const ONE_OFF = false;
 
 // A member sitting in a group, paid for, no subscription — the boring case each
 // test bends one field of.
@@ -72,14 +80,14 @@ describe("readDropData", () => {
 
 describe("resolveDrop — ordinary moves", () => {
   it("moves a member into another group", () => {
-    expect(resolveDrop(toGroup2, member, "paid")).toEqual({
+    expect(resolveDrop(toGroup2, member, SUBSCRIPTION_CLUB)).toEqual({
       kind: "move",
       toGroupId: "group-2",
     });
   });
 
   it("moves a member back to the unassigned inbox", () => {
-    expect(resolveDrop(toUnassigned, member, "paid")).toEqual({
+    expect(resolveDrop(toUnassigned, member, SUBSCRIPTION_CLUB)).toEqual({
       kind: "move",
       toGroupId: null,
     });
@@ -87,55 +95,68 @@ describe("resolveDrop — ordinary moves", () => {
 
   it("does nothing when a chip is dropped back where it started", () => {
     expect(
-      resolveDrop({ kind: "move", toGroupId: "group-1" }, member, "paid"),
+      resolveDrop(
+        { kind: "move", toGroupId: "group-1" },
+        member,
+        SUBSCRIPTION_CLUB,
+      ),
     ).toEqual({ kind: "none" });
     expect(
-      resolveDrop(toUnassigned, { ...member, currentGroupId: null }, "free"),
+      resolveDrop(toUnassigned, { ...member, currentGroupId: null }, ONE_OFF),
     ).toEqual({ kind: "none" });
   });
 
-  it("always offers removal, from a group or from the waitlist", () => {
-    expect(resolveDrop(toRemoveZone, member, "paid")).toEqual({
+  it("offers removal from a group or from the waitlist when no money is behind the seat", () => {
+    expect(resolveDrop(toRemoveZone, member, SUBSCRIPTION_CLUB)).toEqual({
       kind: "remove",
     });
-    expect(resolveDrop(toRemoveZone, waitlisted, "paid")).toEqual({
+    expect(resolveDrop(toRemoveZone, waitlisted, SUBSCRIPTION_CLUB)).toEqual({
       kind: "remove",
     });
   });
 });
 
 describe("resolveDrop — promoting off the waitlist", () => {
-  it("refuses a never-paid waitlister on a paid product", () => {
-    expect(resolveDrop(toGroup2, waitlisted, "paid")).toEqual({
+  it("refuses a never-paid waitlister on a subscription-billed club", () => {
+    expect(resolveDrop(toGroup2, waitlisted, SUBSCRIPTION_CLUB)).toEqual({
       kind: "blocked",
       reason: "unpaidPromote",
     });
-    // Same refusal into the unassigned inbox — the seat is what costs money,
-    // not the group.
-    expect(resolveDrop(toUnassigned, waitlisted, "paid")).toEqual({
+    // Same refusal into the unassigned inbox — the seat is what needs the
+    // subscription, not the group.
+    expect(resolveDrop(toUnassigned, waitlisted, SUBSCRIPTION_CLUB)).toEqual({
       kind: "blocked",
       reason: "unpaidPromote",
     });
   });
 
-  it("promotes a demoted-after-paying member plainly, even on a paid product", () => {
-    // The payment marker survives demotion — this is the camper who genuinely
-    // paid, was moved to the waitlist, and is being put back. Keying the
-    // refusal on billing alone would trap them there forever.
-    expect(
-      resolveDrop(toGroup2, { ...waitlisted, hasPaymentMarker: true }, "paid"),
-    ).toEqual({ kind: "promote", toGroupId: "group-2" });
-  });
-
-  it("promotes plainly on free and externally-contracted products", () => {
-    expect(resolveDrop(toGroup2, waitlisted, "free")).toEqual({
+  it("promotes a never-paid waitlister plainly on a one-off paid camp or event", () => {
+    // The narrowed rule. A paid camp's seat is a single payment the admin
+    // settles out of band (an invoice, a transfer, a comp) — there is no
+    // recurring charge to leave unaccounted for, so the drag is trusted and no
+    // dialog fires. Only a monthly club seat needs the subscription the panel
+    // cannot create.
+    expect(resolveDrop(toGroup2, waitlisted, ONE_OFF)).toEqual({
       kind: "promote",
       toGroupId: "group-2",
     });
-    expect(resolveDrop(toUnassigned, waitlisted, "external_contract")).toEqual({
+    expect(resolveDrop(toUnassigned, waitlisted, ONE_OFF)).toEqual({
       kind: "promote",
       toGroupId: null,
     });
+  });
+
+  it("promotes a demoted-after-paying member plainly, even on a subscription club", () => {
+    // The payment marker survives demotion — this is the family who genuinely
+    // paid, was moved to the waitlist, and is being put back. Keying the
+    // refusal on the product alone would trap them there forever.
+    expect(
+      resolveDrop(
+        toGroup2,
+        { ...waitlisted, hasPaymentMarker: true },
+        SUBSCRIPTION_CLUB,
+      ),
+    ).toEqual({ kind: "promote", toGroupId: "group-2" });
   });
 
   it("ignores where a waitlisted chip 'currently' sits", () => {
@@ -145,7 +166,7 @@ describe("resolveDrop — promoting off the waitlist", () => {
       resolveDrop(
         { kind: "move", toGroupId: "group-1" },
         { ...waitlisted, currentGroupId: "group-1", hasPaymentMarker: true },
-        "paid",
+        SUBSCRIPTION_CLUB,
       ),
     ).toEqual({ kind: "promote", toGroupId: "group-1" });
   });
@@ -153,24 +174,71 @@ describe("resolveDrop — promoting off the waitlist", () => {
 
 describe("resolveDrop — demoting onto the waitlist", () => {
   it("demotes a member with no subscription", () => {
-    expect(resolveDrop(toWaitlist, member, "paid")).toEqual({ kind: "demote" });
-    expect(resolveDrop(toWaitlist, member, "free")).toEqual({ kind: "demote" });
+    expect(resolveDrop(toWaitlist, member, SUBSCRIPTION_CLUB)).toEqual({
+      kind: "demote",
+    });
+    expect(resolveDrop(toWaitlist, member, ONE_OFF)).toEqual({
+      kind: "demote",
+    });
   });
 
   it("refuses a member whose seat is behind a live subscription", () => {
-    // Keyed to the participation's subscription, not the product's billing —
-    // a club flipped to free can still have subscribed members.
-    for (const billing of ["paid", "free", "external_contract"] as const) {
+    // Keyed to the participation's subscription, not the product's shape — a
+    // club flipped to free can still have subscribed members.
+    for (const shape of [SUBSCRIPTION_CLUB, ONE_OFF]) {
       expect(
-        resolveDrop(toWaitlist, { ...member, hasLiveSubscription: true }, billing),
+        resolveDrop(toWaitlist, { ...member, hasLiveSubscription: true }, shape),
       ).toEqual({ kind: "blocked", reason: "liveSubscription" });
     }
   });
 
   it("does nothing when a waitlisted chip is dropped back on the waitlist", () => {
-    expect(resolveDrop(toWaitlist, waitlisted, "paid")).toEqual({
+    expect(resolveDrop(toWaitlist, waitlisted, SUBSCRIPTION_CLUB)).toEqual({
       kind: "none",
     });
+  });
+});
+
+describe("resolveDrop — removing a subscribed member", () => {
+  it("refuses removal while a live subscription stands behind the seat", () => {
+    // The same condition `admin_remove_participation` refuses on, fronted so
+    // the admin reads why instead of confirming a removal that is about to
+    // fail. Removal CASCADEs family_subscriptions, so the subscription would
+    // bill on with nothing in the database left to cancel it.
+    for (const shape of [SUBSCRIPTION_CLUB, ONE_OFF]) {
+      expect(
+        resolveDrop(
+          toRemoveZone,
+          { ...member, hasLiveSubscription: true },
+          shape,
+        ),
+      ).toEqual({ kind: "blocked", reason: "removeSubscribed" });
+    }
+  });
+
+  it("refuses it from the waitlist too", () => {
+    // A waitlisted row can carry a live subscription: the webhook writes one
+    // without the product lock, so a demote can land in that window.
+    expect(
+      resolveDrop(
+        toRemoveZone,
+        { ...waitlisted, hasLiveSubscription: true },
+        SUBSCRIPTION_CLUB,
+      ),
+    ).toEqual({ kind: "blocked", reason: "removeSubscribed" });
+  });
+
+  it("allows removal once the subscription is no longer live", () => {
+    // The flag is false for a cancelled subscription (the snapshot filters
+    // them out), which is what stops a dunning-dead row holding the seat
+    // forever — there is nothing left for the family to cancel.
+    expect(
+      resolveDrop(
+        toRemoveZone,
+        { ...member, hasLiveSubscription: false, hasPaymentMarker: true },
+        SUBSCRIPTION_CLUB,
+      ),
+    ).toEqual({ kind: "remove" });
   });
 });
 
@@ -270,22 +338,43 @@ describe("dragSubjectsFrom", () => {
   });
 
   it("feeds resolveDrop the refusal the panel shows", () => {
-    // The end-to-end shape: snapshot → subject → outcome, on a paid product.
-    // Same queue, same drop, opposite answers — decided by the marker alone.
+    // The end-to-end shape: snapshot → subject → outcome, on a subscription
+    // club. Same queue, same drop, opposite answers — decided by the marker
+    // alone.
     expect(
-      resolveDrop(toGroup2, subjects.get("p-queued")!, "paid"),
+      resolveDrop(toGroup2, subjects.get("p-queued")!, SUBSCRIPTION_CLUB),
     ).toEqual({ kind: "blocked", reason: "unpaidPromote" });
     expect(
-      resolveDrop(toGroup2, subjects.get("p-demoted")!, "paid"),
+      resolveDrop(toGroup2, subjects.get("p-demoted")!, SUBSCRIPTION_CLUB),
     ).toEqual({ kind: "promote", toGroupId: "group-2" });
     expect(
-      resolveDrop(toWaitlist, subjects.get("p-subscribed")!, "paid"),
+      resolveDrop(toWaitlist, subjects.get("p-subscribed")!, SUBSCRIPTION_CLUB),
     ).toEqual({ kind: "blocked", reason: "liveSubscription" });
+    expect(
+      resolveDrop(
+        toRemoveZone,
+        subjects.get("p-subscribed")!,
+        SUBSCRIPTION_CLUB,
+      ),
+    ).toEqual({ kind: "blocked", reason: "removeSubscribed" });
   });
 });
 
-describe("canCompEnroll", () => {
-  it("refuses only the subscription-shaped product", () => {
+describe("isSubscriptionShaped / canCompEnroll", () => {
+  // One predicate, two consumers, and they are deliberately the same question:
+  // a seat that only a monthly subscription can create is both the one an admin
+  // cannot comp-enroll and the one a never-paid promotion must not hand out.
+  it("is true only for a consumer club that charges", () => {
+    expect(isSubscriptionShaped("consumer_club", "paid")).toBe(true);
+    expect(isSubscriptionShaped("consumer_club", "free")).toBe(false);
+    expect(isSubscriptionShaped("camp", "paid")).toBe(false);
+    expect(isSubscriptionShaped("event", "paid")).toBe(false);
+    expect(isSubscriptionShaped("municipality_club", "external_contract")).toBe(
+      false,
+    );
+  });
+
+  it("refuses comp-enrollment on exactly that shape", () => {
     expect(canCompEnroll("consumer_club", "paid")).toBe(false);
   });
 
