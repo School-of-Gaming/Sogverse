@@ -1,5 +1,13 @@
 name: CI
 
+# Renaming or removing a job here has a twin edit OUTSIDE the repo: main's branch
+# protection (Settings -> Branches) lists required status checks by the job's
+# display name, and nothing links the two — a required check whose job no longer
+# runs blocks every future release PR, and it only surfaces at the next merge into
+# main, weeks after the rename lands on dev. (The e2e -> Build & Smoke conversion
+# did exactly this to the 2026-08-10 release.) Update the protection rule in the
+# same change that renames the job.
+
 on:
   push:
   pull_request:
