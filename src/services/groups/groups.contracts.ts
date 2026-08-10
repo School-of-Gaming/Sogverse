@@ -61,6 +61,15 @@ export const groupParticipationDetail = z.object({
   gamer_parent_last_name: z.string().nullable(),
   status: z.enum(Constants.public.Enums.participation_status),
   signed_up_at: z.string(),
+  /**
+   * Whether this participation has a live Stripe subscription behind it —
+   * the condition `demote_to_waitlist` refuses on, resolved server-side so the
+   * panel's demote dialog can fire from the drag handler without a round trip
+   * per chip. Required on every participation object, including waitlisted
+   * ones, where it is a constant false: the RPC refuses to create a waitlisted
+   * row carrying a subscription, so there is nothing there to report.
+   */
+  has_live_subscription: z.boolean(),
 });
 
 export const groupGeduDetail = z.object({

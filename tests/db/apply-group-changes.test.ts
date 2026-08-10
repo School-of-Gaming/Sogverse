@@ -616,6 +616,12 @@ describe("get_product_groups_with_details", () => {
       TEST_IDS.GAMER,
     ]);
     expect(result.unassigned.map((p) => p.gamer_id)).toEqual([TEST_IDS.GAMER_2]);
+    // 00166's per-participation flag, on the two branches that actually read
+    // family_subscriptions. Neither seat has a subscription behind it, so both
+    // report false; the true case and the waitlist branch's constant false are
+    // pinned in waitlist-admin.test.ts.
+    expect(result.groups[0].participations[0].has_live_subscription).toBe(false);
+    expect(result.unassigned[0].has_live_subscription).toBe(false);
 
     // Cleanup.
     await admin

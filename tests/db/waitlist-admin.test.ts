@@ -21,19 +21,22 @@ import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
  *  - promote_from_waitlist seats a waitlisted gamer (capacity override, group
  *    placement, noop on a non-waitlisted row).
  *  - demote_to_waitlist sends an active gamer to the back of the waitlist, and
- *    refuses a consumer club (migration 00132).
+ *    refuses a participation carrying a live Stripe subscription — on any
+ *    product type (migration 00166 re-keyed 00132's consumer-club refusal to
+ *    the subscription it was standing in for).
  *  - get_waitlist_position returns the owner's 1-based position and NULL for a
  *    non-owner.
  *  - the admin RPCs reject a non-admin caller.
  *
  * Product UUIDs 5c7, 5f6 (see product-helpers allocation registry). The muni
  * product points at LOCATION_MUNICIPALITY to satisfy the online-muni location
- * constraints; the club is a plain paid consumer_club and exists only for the
- * demote refusal. Both seeded gamers (GAMER, GAMER_2) are children of CUSTOMER.
+ * constraints; the club is a FREE consumer_club — the shape 00132's type rule
+ * would have wrongly refused, and the reason that rule was re-keyed. Both
+ * seeded gamers (GAMER, GAMER_2) are children of CUSTOMER.
  */
 
 const PRODUCT_MUNI = "00000000-0000-0000-0000-0000000005c7";
-const PRODUCT_CLUB = "00000000-0000-0000-0000-0000000005f6";
+const PRODUCT_FREE_CLUB = "00000000-0000-0000-0000-0000000005f6";
 const FAR_FUTURE = "2099-12-31";
 
 describe("waitlist — admin read + promote/demote + self position", () => {
@@ -57,7 +60,7 @@ describe("waitlist — admin read + promote/demote + self position", () => {
       TEST_CREDENTIALS.CUSTOMER_2.password,
     );
 
-    await deleteTestProducts(admin, [PRODUCT_MUNI, PRODUCT_CLUB]);
+    await deleteTestProducts(admin, [PRODUCT_MUNI, PRODUCT_FREE_CLUB]);
     await createTestProduct(admin, {
       id: PRODUCT_MUNI,
       productType: "municipality_club",
@@ -68,22 +71,26 @@ describe("waitlist — admin read + promote/demote + self position", () => {
       waitlistEnabled: true,
     });
     await createTestProduct(admin, {
-      id: PRODUCT_CLUB,
+      id: PRODUCT_FREE_CLUB,
       productType: "consumer_club",
+      billingMode: "free",
       seatCount: null,
       waitlistEnabled: true,
     });
   });
 
   afterAll(async () => {
-    await deleteTestProducts(admin, [PRODUCT_MUNI, PRODUCT_CLUB]);
+    await deleteTestProducts(admin, [PRODUCT_MUNI, PRODUCT_FREE_CLUB]);
   });
 
   afterEach(async () => {
+    // Deleting the participations takes any family_subscriptions rows with them
+    // (participation_id is ON DELETE CASCADE), which is what the subscribed-
+    // demote test below relies on for cleanup.
     await admin
       .from("participations")
       .delete()
-      .in("product_id", [PRODUCT_MUNI, PRODUCT_CLUB]);
+      .in("product_id", [PRODUCT_MUNI, PRODUCT_FREE_CLUB]);
     await admin.from("product_groups").delete().eq("product_id", PRODUCT_MUNI);
     await admin
       .from("products")
@@ -142,6 +149,59 @@ describe("waitlist — admin read + promote/demote + self position", () => {
     // Waitlisted rows never carry a seat, so none leak into the active lists.
     expect(snapshot.unassigned).toHaveLength(0);
     expect(snapshot.waitlist.every((p) => p.status === "waitlisted")).toBe(true);
+    // The waitlist branch reports the flag as a constant false — a waitlisted
+    // row carrying a live subscription is the state demote_to_waitlist now
+    // refuses to create, so there is nothing there to read.
+    expect(snapshot.waitlist.every((p) => !p.has_live_subscription)).toBe(true);
+  });
+
+  it("get_product_groups_with_details flags which active participations carry a live subscription", async () => {
+    // The field exists so the panel's demote dialog can fire from the drag
+    // handler without asking the database once per chip. Two active members on
+    // one product, one of them subscribed: the flag has to separate them.
+    const { data: seeded } = await admin
+      .from("participations")
+      .insert([
+        {
+          product_id: PRODUCT_FREE_CLUB,
+          gamer_id: TEST_IDS.GAMER,
+          customer_id: TEST_IDS.CUSTOMER,
+          status: "active",
+        },
+        {
+          product_id: PRODUCT_FREE_CLUB,
+          gamer_id: TEST_IDS.GAMER_2,
+          customer_id: TEST_IDS.CUSTOMER,
+          status: "active",
+        },
+      ])
+      .select("id, gamer_id");
+
+    const subscribed = seeded!.find((r) => r.gamer_id === TEST_IDS.GAMER)!;
+    await admin.from("family_subscriptions").insert({
+      participation_id: subscribed.id,
+      customer_id: TEST_IDS.CUSTOMER,
+      stripe_subscription_id: "sub_snapshot_flag_test",
+      stripe_customer_id: "cus_snapshot_flag_test",
+      currency: "eur",
+      status: "active",
+    });
+
+    const res = await adminUser.rpc("get_product_groups_with_details", {
+      p_product_id: PRODUCT_FREE_CLUB,
+    });
+    expect(res.error).toBeNull();
+
+    // Parsed through the production contract, so the added field is verified
+    // against real Postgres output rather than assumed.
+    const snapshot = productGroupsSnapshot.parse(res.data);
+    const flags = Object.fromEntries(
+      snapshot.unassigned.map((p) => [p.gamer_id, p.has_live_subscription]),
+    );
+    expect(flags).toEqual({
+      [TEST_IDS.GAMER]: true,
+      [TEST_IDS.GAMER_2]: false,
+    });
   });
 
   it("promote_from_waitlist seats a gamer over a full cap (capacity override)", async () => {
@@ -233,43 +293,74 @@ describe("waitlist — admin read + promote/demote + self position", () => {
     ).toBeGreaterThan(new Date(frontRow!.waitlisted_at!).getTime());
   });
 
-  it("demote_to_waitlist refuses a consumer club, so no waitlisted row can hold a subscription", async () => {
-    // consumer_club is the only subscription-billed type, and joining a
-    // waitlist never creates a subscription — so demoting an already-active
-    // club member was the only way to produce a waitlisted row with a live
-    // Stripe subscription behind it. A parent could then delete that row via
-    // leave_my_waitlist_spot, cascading family_subscriptions and leaving the
-    // subscription billing with nothing in the database to cancel it.
+  it("demote_to_waitlist refuses a participation with a live Stripe subscription, whatever the product type", async () => {
+    // Joining a waitlist never creates a subscription, so demoting an
+    // already-active member is the only way to produce a waitlisted row with a
+    // live Stripe subscription behind it. A parent could then delete that row
+    // via leave_my_waitlist_spot, cascading family_subscriptions and leaving
+    // the subscription billing with nothing in the database to cancel it.
     //
-    // Seeded directly: create_participation on a paid club writes no row at all
-    // (the seat is created when Stripe confirms payment), and the state under
-    // test is an already-seated member.
-    const { data: seeded } = await admin
-      .from("participations")
-      .insert({
-        product_id: PRODUCT_CLUB,
-        gamer_id: TEST_IDS.GAMER,
-        customer_id: TEST_IDS.CUSTOMER,
-        status: "active",
-      })
-      .select("id")
-      .single();
-
-    const res = await adminUser.rpc("demote_to_waitlist", {
-      p_participation_id: seeded!.id,
+    // Deliberately staged on the MUNI product: 00132 refused this by product
+    // type, which meant a subscription attached to anything else walked
+    // straight through. 00166 keys the refusal to the subscription itself, so
+    // the type here is exactly the one the old rule would have waved past.
+    const active = await registerActive(TEST_IDS.GAMER);
+    await admin.from("family_subscriptions").insert({
+      participation_id: active,
+      customer_id: TEST_IDS.CUSTOMER,
+      stripe_subscription_id: "sub_demote_refusal_test",
+      stripe_customer_id: "cus_demote_refusal_test",
+      currency: "eur",
+      status: "active",
     });
 
-    expect(res.error?.code).toBe("23514");
+    const res = await adminUser.rpc("demote_to_waitlist", {
+      p_participation_id: active,
+    });
+
+    // The same errcode admin_remove_participation raises for the same
+    // condition, so one refusal maps to one message wherever it is reached.
+    expect(res.error?.code).toBe("55000");
     // Refused, not partially applied — the member keeps the seat they pay for.
     const { data: row } = await admin
       .from("participations")
       .select("status, waitlisted_at")
-      .eq("id", seeded!.id)
+      .eq("id", active)
       .single();
     expect(row?.status).toBe("active");
     expect(row?.waitlisted_at).toBeNull();
-    // The non-subscription half of the rule is the muni demote above: types
-    // that never carry a subscription are untouched by this guard.
+  });
+
+  it("demote_to_waitlist demotes a free-club member, which the old type rule refused", async () => {
+    // A free club enrolls through create_participation's free branch, exactly
+    // as a free event does — instant active row, no Stripe, so no subscription
+    // to orphan. 00132 would have refused this purely for being a consumer
+    // club; there is nothing here to protect and the drag now goes through.
+    const enrolled = await admin.rpc("create_participation", {
+      p_product_id: PRODUCT_FREE_CLUB,
+      p_gamer_id: TEST_IDS.GAMER,
+      p_customer_id: TEST_IDS.CUSTOMER,
+      p_purchase_shape: "free",
+      p_currency: "eur",
+    });
+    expect(enrolled.error).toBeNull();
+    const parsed = createParticipationRpcResult.parse(enrolled.data);
+    expect(parsed.kind).toBe("free_active");
+
+    const res = await adminUser.rpc("demote_to_waitlist", {
+      p_participation_id: parsed.participation_id!,
+    });
+    expect(res.error).toBeNull();
+    expect(demoteToWaitlistRpcResult.parse(res.data).kind).toBe("demoted");
+
+    const { data: row } = await admin
+      .from("participations")
+      .select("status, group_id, waitlisted_at")
+      .eq("id", parsed.participation_id!)
+      .single();
+    expect(row?.status).toBe("waitlisted");
+    expect(row?.group_id).toBeNull();
+    expect(row?.waitlisted_at).not.toBeNull();
   });
 
   it("get_waitlist_position returns the owner's 1-based position, NULL for a non-owner", async () => {

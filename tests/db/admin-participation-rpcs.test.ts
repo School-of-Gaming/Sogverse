@@ -18,25 +18,31 @@ import {
  * What needs fixtures — and therefore lives here — is everything the routes used
  * to enforce in TypeScript and now enforce in SQL: the product-membership check
  * that stops a participation id from another product being cancelled through the
- * wrong URL, the consumer_club refusals, the parent resolution, and the
- * live-subscription refusal that exists so a CASCADE can never orphan a
- * subscription that keeps billing.
+ * wrong URL, the parent resolution, and the two refusals migration 00166
+ * re-keyed off the product type — enrollment refuses a *paid* consumer club
+ * (the one seat that needs a subscription this RPC cannot create), and removal
+ * refuses only a live subscription, so a CASCADE can never orphan one that
+ * keeps billing.
  *
  * The results are parsed through the contracts schemas the routes parse with, so
  * a shape change fails here rather than at runtime.
  *
- * Product UUIDs 5c8, 5c9 (see the product-helpers allocation registry).
+ * Product UUIDs 5c8-5ca (see the product-helpers allocation registry).
  */
 
 const CAMP = "00000000-0000-0000-0000-0000000005c8";
 const CLUB = "00000000-0000-0000-0000-0000000005c9";
+const FREE_CLUB = "00000000-0000-0000-0000-0000000005ca";
 
 describe("admin participation RPCs", () => {
   let admin: SupabaseClient<Database>;
   let adminAuth: SupabaseClient<Database>;
 
   async function clearParticipations() {
-    await admin.from("participations").delete().in("product_id", [CAMP, CLUB]);
+    await admin
+      .from("participations")
+      .delete()
+      .in("product_id", [CAMP, CLUB, FREE_CLUB]);
   }
 
   /** The participation id for a gamer on a product, read past RLS. */
@@ -60,7 +66,7 @@ describe("admin participation RPCs", () => {
       TEST_CREDENTIALS.ADMIN.password,
     );
 
-    await deleteTestProducts(admin, [CAMP, CLUB]);
+    await deleteTestProducts(admin, [CAMP, CLUB, FREE_CLUB]);
     await createTestProduct(admin, {
       id: CAMP,
       productType: "camp",
@@ -73,11 +79,19 @@ describe("admin participation RPCs", () => {
       productType: "consumer_club",
       seatCount: null,
     });
+    // The shape 00166 unlocked: a consumer club billed free. It has no
+    // subscription behind any seat, so neither RPC has anything to protect.
+    await createTestProduct(admin, {
+      id: FREE_CLUB,
+      productType: "consumer_club",
+      billingMode: "free",
+      seatCount: null,
+    });
   });
 
   beforeEach(clearParticipations);
   afterAll(async () => {
-    await deleteTestProducts(admin, [CAMP, CLUB]);
+    await deleteTestProducts(admin, [CAMP, CLUB, FREE_CLUB]);
   });
 
   describe("admin_enroll_gamer", () => {
@@ -105,7 +119,10 @@ describe("admin participation RPCs", () => {
       });
     });
 
-    it("refuses a consumer club", async () => {
+    it("refuses a PAID consumer club — the seat there needs a subscription", async () => {
+      // The refusal is the pair (consumer_club, paid), not the type: that is
+      // the only combination whose seat cannot exist without a Stripe
+      // subscription, and comp-enrollment has no way to create one.
       const { error } = await adminAuth.rpc("admin_enroll_gamer", {
         p_product_id: CLUB,
         p_gamer_id: TEST_IDS.GAMER,
@@ -113,6 +130,27 @@ describe("admin participation RPCs", () => {
 
       expect(error?.code).toBe("23514");
       expect(await participationOn(CLUB, TEST_IDS.GAMER)).toBeNull();
+    });
+
+    it("enrolls onto a FREE consumer club, exactly like a free camp or event", async () => {
+      // The other half of the same rule. Before 00166 the type alone refused
+      // this, which would have made comp-enrollment impossible on a whole
+      // product shape for no reason a free event does not share.
+      const { data, error } = await adminAuth.rpc("admin_enroll_gamer", {
+        p_product_id: FREE_CLUB,
+        p_gamer_id: TEST_IDS.GAMER,
+      });
+
+      expect(error).toBeNull();
+      const parsed = adminEnrollGamerRpcResult.parse(data);
+      expect(parsed.customer_id).toBe(TEST_IDS.CUSTOMER);
+
+      const { data: row } = await admin
+        .from("participations")
+        .select("status, product_id")
+        .eq("id", parsed.participation_id)
+        .single();
+      expect(row).toEqual({ status: "active", product_id: FREE_CLUB });
     });
 
     it("refuses an unknown product", async () => {
@@ -204,34 +242,32 @@ describe("admin participation RPCs", () => {
       expect(error?.code).toBe("P0002");
     });
 
-    it("refuses a participation on a consumer club", async () => {
-      // Seeded directly: admin_enroll_gamer refuses consumer clubs, and this is
-      // the other half of the same gate — removal must go through Stripe.
-      const { data: seeded } = await admin
-        .from("participations")
-        .insert({
-          product_id: CLUB,
-          gamer_id: TEST_IDS.GAMER,
-          customer_id: TEST_IDS.CUSTOMER,
-          status: "active",
-        })
-        .select("id")
-        .single();
+    it("removes a participation from a free consumer club", async () => {
+      // This is why the type refusal had to go: a free enrollment has no
+      // parent-facing cancel — there is no subscription to cancel — so admin
+      // removal is the only exit, and a hard-capped free club could otherwise
+      // never free a seat.
+      const { data } = await adminAuth.rpc("admin_enroll_gamer", {
+        p_product_id: FREE_CLUB,
+        p_gamer_id: TEST_IDS.GAMER,
+      });
+      const participationId =
+        adminEnrollGamerRpcResult.parse(data).participation_id;
 
       const { error } = await adminAuth.rpc("admin_remove_participation", {
-        p_product_id: CLUB,
-        p_participation_id: seeded!.id,
+        p_product_id: FREE_CLUB,
+        p_participation_id: participationId,
       });
 
-      expect(error?.code).toBe("23514");
-      expect(await participationOn(CLUB, TEST_IDS.GAMER)).toBe(seeded!.id);
+      expect(error).toBeNull();
+      expect(await participationOn(FREE_CLUB, TEST_IDS.GAMER)).toBeNull();
     });
 
     it("refuses a participation with a live Stripe subscription", async () => {
-      // Unreachable under current invariants (only consumer_club ever carries a
-      // live sub, and that is refused a step earlier) — constructed here because
-      // the failure mode if it ever became reachable is a subscription that
-      // keeps billing with no DB row behind it.
+      // Since 00166 this is the ONLY thing standing between an admin and a
+      // cancellation, on every product type — the consumer-club check that used
+      // to shadow it is gone. The failure mode it prevents is a subscription
+      // that keeps billing with no DB row behind it.
       const participationId = await seatTheGamer();
       await admin.from("family_subscriptions").insert({
         participation_id: participationId,
