@@ -91,7 +91,6 @@ import {
   ProductBrowseCardView,
   type LocationLine,
   type SeatBarValue,
-  type SeatsHint,
 } from "@/components/public/products/product-browse-card-view";
 import { SeatAvailabilityBar } from "@/components/public/products/seat-availability-bar";
 import { formatProductLocation } from "@/components/public/products/format-product-location";
@@ -1185,17 +1184,12 @@ function ScenarioBrowseCard({
       ? { kind: "in_person", label: loc.site }
       : { kind: "online", label: t("online") };
 
-  // Same rule as the production adapter: muni clubs tell the seat story through
-  // the footer bar, so they suppress the capacity hint; everything else shows
-  // its capacity, and an uncapped product shows nothing.
-  const seatsHint: SeatsHint | null = isMuniClub
-    ? null
-    : product.seat_count !== null
-      ? { kind: "capacity", count: product.seat_count }
-      : null;
-
   // Muni clubs swap the price for a seat-fill bar; the fill comes from the
-  // scenario's authored state so the bar and the card agree.
+  // scenario's authored state so the bar and the card agree. Nothing else on
+  // any card carries seat information — which is why the two capped non-muni
+  // scenarios below (a club full with a waitlist, a camp full without one) are
+  // worth looking at: neither says a word about capacity, and the only
+  // difference between them is whether the card opens.
   const seatBar: SeatBarValue | undefined = isMuniClub
     ? {
         filled: scenarioFilledSeats(slug),
@@ -1214,7 +1208,6 @@ function ScenarioBrowseCard({
         topicLabel={topicLabel(product.topic)}
         scheduleLines={scheduleLines}
         ageLine={t("ages", { min: product.min_age, max: product.max_age })}
-        seatsHint={seatsHint}
         locationLine={locationLine}
         spokenLanguageCode={product.spoken_language_code}
         price={price}
@@ -1937,6 +1930,19 @@ export default function AdminUIComponentsPage() {
           chevron. Between them the cards cover every registration state,
           including one a parent reaches only by leaving a tab open past
           midnight.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          <strong>No card carries seat information</strong> except the
+          municipality seat-fill bar, which is the deliberate exception
+          (schools are the known-scarce case) and reads counts that are not
+          live. Caps and waitlists are legal on every type now, so the pairs to
+          read against each other are the capped non-muni ones: the free club
+          and the full-with-waitlist club both look like ordinary open cards,
+          and the full-no-waitlist camp is inert &mdash; whether the card opens
+          is the only difference a parent can see before clicking, and fullness
+          is stated properly on the detail page behind it. The muni countdown
+          scenarios are the only pre-open ones because registration timing is
+          still a municipality-only setting.
         </p>
         <ProductsDemo />
       </Section>

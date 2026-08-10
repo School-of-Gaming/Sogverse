@@ -153,7 +153,17 @@ export function PurchaseConfirmationView({
               {isWaitlist ? (
                 <>
                   <li>{t("waitlist.next1")}</li>
-                  <li>{t("waitlist.next2", { gamer })}</li>
+                  {/* The one term-shaped line in the waitlist copy, so the one
+                      keyed by product type. A club (consumer or municipality)
+                      runs a term and keeps that wording; a camp and an event
+                      are each a single run and say so. Everything else in this
+                      block — the heading, the email promise, the My SOG
+                      pointer — is true of all four types and stays neutral.
+                      The type comes off the product row the page already
+                      passes in, so nothing extra had to be threaded here. */}
+                  <li>
+                    {t(`waitlist.next2.${product.product_type}`, { gamer })}
+                  </li>
                   <li>{t("waitlist.next3")}</li>
                 </>
               ) : (

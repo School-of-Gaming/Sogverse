@@ -1025,7 +1025,12 @@
       "positionLabel": "Sijasi jonossa",
       "positionValue": "{position}.",
       "next1": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
-      "next2": "{gamer} säilyttää paikkansa jonossa koko kauden ajan.",
+      "next2": {
+        "consumer_club": "{gamer} säilyttää paikkansa jonossa koko kauden ajan.",
+        "municipality_club": "{gamer} säilyttää paikkansa jonossa koko kauden ajan.",
+        "camp": "{gamer} säilyttää paikkansa jonossa koko leirin ajan.",
+        "event": "{gamer} säilyttää paikkansa jonossa koko tapahtuman ajan."
+      },
       "next3": "Voit seurata jonotustilannetta milloin tahansa Oma SOG -sivulla."
     }
   },
@@ -1447,7 +1452,6 @@
       "free": "Maksuton",
       "externalContract": "Kuntasi rahoittama",
       "notAvailableInCurrency": "Ei valuutassa {currency}",
-      "seatsCapacity": "{count, plural, one {# paikka} other {# paikkaa}}",
       "endedNote": "Tämä on päättynyt – seuraava on tulossa pian.",
       "viewDetails": "Katso",
       "cardLink": "{action} — {name}",

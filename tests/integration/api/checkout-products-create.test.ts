@@ -109,6 +109,16 @@ const MUNI_CLUB: ProductFixture = {
   billing_mode: "external_contract",
 };
 
+// A consumer club that costs nothing. Billing is a per-product choice on every
+// type now, so this combination is ordinary rather than exotic — and it is the
+// one that has to be shown passing the route, because the route's two
+// *type*-keyed guards both name `consumer_club`.
+const FREE_CLUB: ProductFixture = {
+  ...PAID_CLUB,
+  product_type: "consumer_club",
+  billing_mode: "free",
+};
+
 // --- Mock builders ---
 
 type AdminMockOptions = {
@@ -434,6 +444,97 @@ describe("POST /api/checkout/products/create", () => {
       p_purchase_shape: "free",
       p_currency: "eur",
     });
+  });
+
+  // ── Free consumer club ────────────────────────────────────────────
+  //
+  // The route resolves the purchase shape's coherence with `billing_mode`
+  // first, and only then branches on `product_type`. That ordering is what
+  // makes a free club work without touching either type guard: `free` is
+  // neither `single_payment` nor a `subscription_*` shape, so both guards are
+  // structurally unreachable on this request. They are still correct for the
+  // paid shapes — a *paid* club must be a subscription, and only a club may be
+  // one — so they are keyed on type deliberately and must not be re-keyed to
+  // billing. These two tests pin that reasoning rather than the outcome alone:
+  // the first shows the free club reaching the RPC at all, the second shows the
+  // guards' error strings never appearing on the way.
+
+  it("lets a free consumer club through to the RPC and confirms it without Stripe", async () => {
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: FREE_CLUB });
+    mockAdminRpc.mockResolvedValueOnce({
+      data: { kind: "free_active", participation_id: PARTICIPATION_ID },
+      error: null,
+    });
+
+    const res = await POST(
+      createRequest({
+        productId: PRODUCT_ID,
+        gamerId: GAMER_ID,
+        purchaseShape: "free",
+        currency: "eur",
+      }),
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data).toEqual({
+      status: "free_confirmed",
+      participationId: PARTICIPATION_ID,
+    });
+    // A free signup activates in the RPC and never reaches Stripe — same path
+    // a free event takes, because the whole enrollment flow branches on
+    // billing_mode, not on product_type.
+    expect(mockStripeSessionCreate).not.toHaveBeenCalled();
+    expect(mockGetOrCreateStripeCustomer).not.toHaveBeenCalled();
+    expect(mockAdminRpc).toHaveBeenCalledWith("create_participation", {
+      p_product_id: PRODUCT_ID,
+      p_gamer_id: GAMER_ID,
+      p_customer_id: CUSTOMER_ID,
+      p_purchase_shape: "free",
+      p_currency: "eur",
+    });
+  });
+
+  it("never reaches the consumer-club type guards on a free shape", async () => {
+    // The inertness stated directly: whatever else could go wrong for a free
+    // club, it cannot be either of the sentences those guards produce.
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: FREE_CLUB });
+    mockAdminRpc.mockResolvedValueOnce({
+      data: { kind: "free_active", participation_id: PARTICIPATION_ID },
+      error: null,
+    });
+
+    const res = await POST(
+      createRequest({
+        productId: PRODUCT_ID,
+        gamerId: GAMER_ID,
+        purchaseShape: "free",
+        currency: "eur",
+      }),
+    );
+    const body = JSON.stringify(await res.json());
+
+    expect(body).not.toContain("Consumer clubs use subscriptions");
+    expect(body).not.toContain("Only consumer clubs accept subscriptions");
+    // And the guards are still live for the paid shapes on the same type —
+    // asserted by the two tests above, which drive them from a paid club.
+    expect(mockAdminRpc).toHaveBeenCalledTimes(1);
+  });
+
+  it("still refuses a paid shape on a free consumer club", async () => {
+    // The coherence check that *does* fire here, and the reason the free branch
+    // is safe: a club whose billing is free cannot be bought as a subscription.
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: FREE_CLUB });
+
+    const res = await POST(createRequest(VALID_BODY));
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toBe("Paid purchase shapes only apply to paid products");
+    expect(mockAdminRpc).not.toHaveBeenCalled();
   });
 
   it("returns status='external_confirmed' for a municipality club, with no Stripe call", async () => {

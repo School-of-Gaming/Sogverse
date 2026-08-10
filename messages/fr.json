@@ -1025,7 +1025,12 @@
       "positionLabel": "Votre position",
       "positionValue": "n° {position}",
       "next1": "Nous vous enverrons un e-mail dès qu’une place se libère.",
-      "next2": "{gamer} conserve sa place dans la file pendant toute la période.",
+      "next2": {
+        "consumer_club": "{gamer} conserve sa place dans la file pendant toute la période.",
+        "municipality_club": "{gamer} conserve sa place dans la file pendant toute la période.",
+        "camp": "{gamer} conserve sa place dans la file pendant toute la durée du camp.",
+        "event": "{gamer} conserve sa place dans la file jusqu’à l’événement."
+      },
       "next3": "Vous pouvez suivre votre place en liste d’attente à tout moment dans Mon SOG."
     }
   },
@@ -1447,7 +1452,6 @@
       "free": "Gratuit",
       "externalContract": "Financé par votre commune",
       "notAvailableInCurrency": "Pas en {currency}",
-      "seatsCapacity": "{count, plural, one {# place} other {# places}}",
       "endedNote": "Celui-ci est terminé — le prochain arrive bientôt !",
       "viewDetails": "Voir",
       "cardLink": "{action} — {name}",

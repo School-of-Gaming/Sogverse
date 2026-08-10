@@ -19,7 +19,6 @@ import {
 import {
   ProductBrowseCardView,
   type LocationLine,
-  type SeatsHint,
   type SeatBarValue,
 } from "./product-browse-card-view";
 
@@ -92,19 +91,15 @@ export function ProductBrowseCard({
 
   const isMuniClub = product.product_type === "municipality_club";
 
-  // Muni clubs tell the whole seat story through the footer bar ("11 / 15
-  // seats"), so the meta-row capacity hint would just repeat it — suppress it
-  // there. Other products show their capacity; an uncapped product shows
-  // nothing (waitlist availability is a detail-page concern).
-  const seatsHint: SeatsHint | null = isMuniClub
-    ? null
-    : product.seat_count !== null
-      ? { kind: "capacity", count: product.seat_count }
-      : null;
-
   // Muni clubs are externally funded — show a seat-fill bar in the footer
   // instead of a price. `total: null` (no seat count set yet) leaves the
   // footer-left empty; non-muni products get no bar and keep their price.
+  //
+  // This bar is the only seat information on any browse card. Nothing else here
+  // reads `seat_count`, deliberately: caps are legal on every product type now,
+  // and the meta row used to print the capacity of any capped non-muni product
+  // — a number that reads as availability and is at its most misleading on a
+  // product that is full. Fullness belongs to the details page.
   const seatBar: SeatBarValue | undefined = isMuniClub
     ? {
         filled: participationsCount,
@@ -128,7 +123,6 @@ export function ProductBrowseCard({
       topicLabel={topicLabel(product.topic)}
       scheduleLines={scheduleLines}
       ageLine={t("ages", { min: product.min_age, max: product.max_age })}
-      seatsHint={seatsHint}
       locationLine={locationLine}
       spokenLanguageCode={product.spoken_language_code}
       price={price}

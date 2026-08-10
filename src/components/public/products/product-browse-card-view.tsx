@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Users, MapPin, Globe } from "lucide-react";
+import { MapPin, Globe } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { NavChevron } from "@/components/ui/nav-chevron";
@@ -34,8 +34,6 @@ export interface ProductBrowseCardViewProps {
    */
   scheduleLines: readonly string[];
   ageLine: string;
-  /** Pre-formatted "{count} seats", or null when there's no capacity to show. */
-  seatsHint: SeatsHint | null;
   /**
    * Single-line location/format label. Always present on browse cards so
    * every card carries the same meta row — the icon swaps between MapPin
@@ -57,6 +55,17 @@ export interface ProductBrowseCardViewProps {
    * for a muni club to replace the price block; a `null` total — a muni club
    * whose seat count isn't set yet — leaves the footer-left empty. Omit
    * entirely for priced products (the shop), which keep the price block.
+   *
+   * This bar is the *only* seat information any browse card carries, and it is
+   * deliberately confined to municipality clubs: schools are the known-scarce
+   * case where a family needs to see the fill before opening anything. Every
+   * other card says nothing about capacity — a card once printed a product's
+   * seat *count* beside the age line, which read as availability and was
+   * exactly wrong on a full product. Fullness is discovered on the details
+   * page, whose full panels (waitlist CTA / closed notice) already say it
+   * properly. Two consequences are accepted: a full product with a waitlist
+   * looks like an open one until it is clicked, and a full one without a
+   * waitlist renders as an inert card whose CTA label is the only explanation.
    */
   seatBar?: SeatBarValue;
   state: RegistrationState;
@@ -83,8 +92,6 @@ export type LocationLine = {
   label: string;
 };
 
-export type SeatsHint = { kind: "capacity"; count: number };
-
 export function ProductBrowseCardView({
   name,
   description,
@@ -92,7 +99,6 @@ export function ProductBrowseCardView({
   topicLabel,
   scheduleLines,
   ageLine,
-  seatsHint,
   locationLine,
   spokenLanguageCode,
   price,
@@ -183,7 +189,6 @@ export function ProductBrowseCardView({
               </li>
               <li className="flex flex-wrap items-center gap-x-2">
                 <span>{ageLine}</span>
-                <SeatsHintLine hint={seatsHint} />
                 {/* Delivery language sits here — short row, never
                     squeezed. Same flag treatment as the locale picker
                     in the site header so parents recognise it. */}
@@ -289,17 +294,6 @@ export function ProductBrowseCardView({
         />
       )}
     </Card>
-  );
-}
-
-function SeatsHintLine({ hint }: { hint: SeatsHint | null }) {
-  const t = useTranslations("productBrowse.card");
-  if (!hint) return null;
-  return (
-    <span className="inline-flex items-center gap-1">
-      <Users className="h-3 w-3" aria-hidden />
-      {t("seatsCapacity", { count: hint.count })}
-    </span>
   );
 }
 

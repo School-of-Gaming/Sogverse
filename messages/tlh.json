@@ -1070,7 +1070,12 @@
       "positionLabel": "DaqlIj",
       "positionValue": "{position}DIch",
       "next1": "quS poSDI’, QInHom wIngeH.",
-      "next2": "DIS naQ tetlhDaq {gamer} Daq qaD.",
+      "next2": {
+        "consumer_club": "DIS naQ tetlhDaq {gamer} Daq qaD.",
+        "municipality_club": "DIS naQ tetlhDaq {gamer} Daq qaD.",
+        "camp": "ragh naQ tetlhDaq {gamer} Daq qaD.",
+        "event": "wanI’ tetlhDaq {gamer} Daq qaD."
+      },
       "next3": "reH My SOG-Daq loS DaqlIj DaleghlaH."
     }
   },
@@ -1492,7 +1497,6 @@
       "free": "Huch Hutlh",
       "externalContract": "yejquv DIl",
       "notAvailableInCurrency": "{currency} ghajbe’",
-      "seatsCapacity": "{count, plural, one {# quS} other {# quS}}",
       "endedNote": "rInpu’ – veb yIloS.",
       "viewDetails": "yIlegh",
       "cardLink": "{action} — {name}",

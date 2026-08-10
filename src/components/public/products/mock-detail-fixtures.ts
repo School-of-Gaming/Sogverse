@@ -20,16 +20,22 @@ import type {
 //
 // The set is curated down to the *visually distinct* surfaces worth eyeballing,
 // grouped by product type:
-//   • Consumer club — a subscription club, open, and one still short of its
-//     signup threshold.
+//   • Consumer club — a subscription club, open; a free one (billing is a
+//     per-product choice on every type now); one full behind a waitlist; and
+//     one still short of its signup threshold.
 //   • Municipality club — the full seat-fill range, plus the pre-launch
 //     countdown across the three auth states a parent can be in.
-//   • Camp — one not yet started, one underway, and one finished. Camps and
-//     events lock late joins at different moments (a camp from local midnight
-//     on its start date, an event only once its session has finished) and say
-//     so differently — "Already started" vs. "Already over" — so both labels
-//     need somewhere to be looked at.
+//   • Camp — one not yet started, one full with no waitlist, one underway, and
+//     one finished. Camps and events lock late joins at different moments (a
+//     camp from local midnight on its start date, an event only once its
+//     session has finished) and say so differently — "Already started" vs.
+//     "Already over" — so both labels need somewhere to be looked at.
 //   • Event — a free product, plus the same event once it's over.
+//
+// The two capped non-muni scenarios are the pair worth reading together: a
+// browse card carries no seat information outside the municipality seat bar, so
+// full-with-waitlist and full-without are told apart on the card by exactly one
+// thing — whether it opens.
 //
 // Between them the scenarios cover every registration state the card can
 // render, including the one a parent can only reach by leaving a tab open past
@@ -42,6 +48,8 @@ import type {
 
 export type PreviewScenario =
   | "consumer-club"
+  | "consumer-club-free"
+  | "consumer-club-full-waitlist"
   | "consumer-club-threshold"
   | "muni-empty"
   | "muni-filling"
@@ -54,6 +62,7 @@ export type PreviewScenario =
   | "muni-opens-no-gamers"
   | "muni-opens-with-gamers"
   | "camp-open"
+  | "camp-full-closed"
   | "camp-running"
   | "camp-ended"
   | "free-event"
@@ -124,6 +133,39 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
       seatsLeft: null,
       waitlistEnabled: false,
     },
+  },
+  "consumer-club-free": {
+    // A free consumer club, which is a thing now: billing is a per-product
+    // choice on every type, not a property of the type. Two things to eyeball
+    // together — the card carries the same "Free" chip an event does, and it is
+    // capped (a no-charge signup is hard-capped in the database, so a free
+    // product is the one that most wants a number) without saying so anywhere
+    // on the card. The seat bar appears on the detail page, not here.
+    label: "Free — capped, open",
+    productType: "consumer_club",
+    billingMode: "free",
+    seatCount: 12,
+    waitlistEnabled: true,
+    priceCentsEur: null,
+    auth: "signed-in-with-gamers",
+    state: { kind: "open", seatCount: 12, seatsLeft: 4, waitlistEnabled: true },
+  },
+  "consumer-club-full-waitlist": {
+    // The accepted inherited behaviour, and the reason it is worth looking at:
+    // this card is indistinguishable from an open one. It keeps the ordinary
+    // "View" CTA, the chevron and the whole-card link, because the detail page
+    // behind it has a real action (join the waitlist) — the parent finds out it
+    // is full there, from a panel that says so properly. Compare it with
+    // `camp-full-closed` below, which is full with nothing to do and is the
+    // only inert one of the pair.
+    label: "Full with waitlist — still opens, generic CTA",
+    productType: "consumer_club",
+    billingMode: "paid",
+    seatCount: 12,
+    waitlistEnabled: true,
+    priceCentsEur: 4500,
+    auth: "signed-in-with-gamers",
+    state: { kind: "full_waitlist", seatCount: 12 },
   },
   "consumer-club-threshold": {
     // The state easiest to forget exists. A club that needs a
@@ -271,6 +313,21 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
       waitlistEnabled: false,
     },
   },
+  "camp-full-closed": {
+    // Paid, capped, no waitlist — the shape a real camp takes, and the one card
+    // state that is a dead end for a reason a parent could still act on
+    // tomorrow. The card is inert: muted label, no chevron, no link, because
+    // the detail page has nothing to offer. It says nothing about seats either;
+    // the muted "Full" label is the whole explanation a card owes.
+    label: "Full, no waitlist — inert",
+    productType: "camp",
+    billingMode: "paid",
+    seatCount: 20,
+    waitlistEnabled: false,
+    priceCentsEur: 25000,
+    auth: "signed-in-with-gamers",
+    state: { kind: "full_closed", seatCount: 20 },
+  },
   "camp-running": {
     // Camps lock late joins once running — the card states "Already started"
     // as muted text, carries no chevron, and has no detail page to open.
@@ -344,6 +401,8 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
 // the subsections come out in this order.
 const SCENARIO_ORDER: PreviewScenario[] = [
   "consumer-club",
+  "consumer-club-free",
+  "consumer-club-full-waitlist",
   "consumer-club-threshold",
   "muni-empty",
   "muni-filling",
@@ -356,6 +415,7 @@ const SCENARIO_ORDER: PreviewScenario[] = [
   "muni-opens-no-gamers",
   "muni-opens-with-gamers",
   "camp-open",
+  "camp-full-closed",
   "camp-running",
   "camp-ended",
   "free-event",

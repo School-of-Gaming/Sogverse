@@ -90,10 +90,13 @@ export function SignupPanel({
           response.status === "free_confirmed" ||
           response.status === "external_confirmed"
         ) {
-          // Free events and municipality clubs skip Stripe — the participation
-          // is already active. Send the parent to the same confirmation page
-          // the paid flow lands on. Keep `committing` set so the CTA stays
-          // disabled through the navigation (the panel unmounts on push).
+          // No-charge signups skip Stripe — the participation is already
+          // active. That is any product whose billing is free (a club as
+          // readily as an event; this branch has never read product_type) plus
+          // the externally-contracted municipality clubs. Send the parent to
+          // the same confirmation page the paid flow lands on. Keep
+          // `committing` set so the CTA stays disabled through the navigation
+          // (the panel unmounts on push).
           router.push(ROUTES.shopConfirmation(response.participationId));
           return;
         }

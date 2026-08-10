@@ -1025,7 +1025,12 @@
       "positionLabel": "Your position",
       "positionValue": "#{position}",
       "next1": "We’ll email you the moment a seat opens.",
-      "next2": "{gamer} keeps their place in line for the whole term.",
+      "next2": {
+        "consumer_club": "{gamer} keeps their place in line for the whole term.",
+        "municipality_club": "{gamer} keeps their place in line for the whole term.",
+        "camp": "{gamer} keeps their place in line for the camp.",
+        "event": "{gamer} keeps their place in line for the event."
+      },
       "next3": "You can keep track of your waitlist spot anytime in My SOG."
     }
   },
@@ -1447,7 +1452,6 @@
       "free": "Free",
       "externalContract": "Funded by your municipality",
       "notAvailableInCurrency": "Not in {currency}",
-      "seatsCapacity": "{count, plural, one {# seat} other {# seats}}",
       "endedNote": "This one’s wrapped — keep an eye out for the next one.",
       "viewDetails": "View",
       "cardLink": "{action} — {name}",

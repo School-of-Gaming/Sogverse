@@ -31,7 +31,9 @@ import { getOrigin } from "@/lib/url";
  *                        card — for the trust/safety moment. Each subscription
  *                        is its own Stripe sub (one per gamer x club), so there
  *                        is no inline add.
- *   free_confirmed     — free event; no Stripe involvement.
+ *   free_confirmed     — any product billed free (event, club, camp); no
+ *                        Stripe involvement. Keyed on billing_mode, never on
+ *                        product_type.
  *   external_confirmed — municipality club; invoiced off-platform, no Stripe.
  *   full               — seat gone; UI flips to the waitlist CTA.
  */
@@ -126,6 +128,11 @@ export const POST = defineRoute({
     const isSubscription = purchaseShape.startsWith("subscription_");
     const isSinglePayment = purchaseShape === "single_payment";
 
+    // The two type-keyed guards below are about *paid* shapes only, and the
+    // ordering above is what keeps them that way: a free club's shape resolves
+    // to `free`, which is neither of these, so both are unreachable on it. They
+    // are correct as written and must not be re-keyed to billing_mode — a paid
+    // club's seat requires a subscription, and only a club may be sold as one.
     if (isSinglePayment && product.product_type === "consumer_club") {
       return NextResponse.json(
         { error: "Consumer clubs use subscriptions, not single-payment" },

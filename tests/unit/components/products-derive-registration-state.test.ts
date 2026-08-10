@@ -310,6 +310,33 @@ describe("deriveRegistrationState", () => {
     }
   });
 
+  it("full_waitlist → overfull counts as full, with no negative seats to leak", () => {
+    // A soft cap on a paid product can be exceeded: the gate refuses new
+    // entrants at the cap, but anyone already inside a Stripe Checkout session
+    // completes and gets their seat. The state has to read as full rather than
+    // as "-2 seats", and there is deliberately no `seatsLeft` on this kind for
+    // a negative to hide in — the family-facing bar is handed a flat 0.
+    const state = deriveRegistrationState({
+      product: product({ seat_count: 20, waitlist_enabled: true }),
+      now: NOW,
+      participationsCount: 22,
+    });
+    expect(state.kind).toBe("full_waitlist");
+    if (state.kind === "full_waitlist") {
+      expect(state.seatCount).toBe(20);
+    }
+  });
+
+  it("full_closed → overfull with no waitlist is still a dead end", () => {
+    const state = deriveRegistrationState({
+      product: product({ seat_count: 20, waitlist_enabled: false }),
+      now: NOW,
+      participationsCount: 25,
+    });
+    expect(state.kind).toBe("full_closed");
+    expect(registrationCtaKind(state)).toBe("disabled");
+  });
+
   it("open → no cap, no threshold, just available", () => {
     const state = deriveRegistrationState({
       product: product({

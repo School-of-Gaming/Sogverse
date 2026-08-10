@@ -1025,7 +1025,12 @@
       "positionLabel": "Din plats i kön",
       "positionValue": "nr {position}",
       "next1": "Vi mejlar så snart en plats blir ledig.",
-      "next2": "{gamer} behåller sin plats i kön under hela terminen.",
+      "next2": {
+        "consumer_club": "{gamer} behåller sin plats i kön under hela terminen.",
+        "municipality_club": "{gamer} behåller sin plats i kön under hela terminen.",
+        "camp": "{gamer} behåller sin plats i kön under hela lägret.",
+        "event": "{gamer} behåller sin plats i kön fram till evenemanget."
+      },
       "next3": "Du kan följa din plats i kön när som helst i Min SOG."
     }
   },
@@ -1447,7 +1452,6 @@
       "free": "Gratis",
       "externalContract": "Finansieras av din kommun",
       "notAvailableInCurrency": "Inte i {currency}",
-      "seatsCapacity": "{count, plural, one {# plats} other {# platser}}",
       "endedNote": "Den här är slut — håll utkik efter nästa.",
       "viewDetails": "Visa",
       "cardLink": "{action} — {name}",
