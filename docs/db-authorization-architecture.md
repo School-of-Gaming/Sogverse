@@ -473,9 +473,11 @@ allowlists were retired once checks 1+2+5 were green, as planned.
 Three judgment calls worth carrying forward:
 
 - **Check 1 is applied to every plpgsql function exposed to `authenticated`, not only
-  the `SECURITY DEFINER` ones.** `create_product`/`update_product` are `SECURITY
-  INVOKER` and would have escaped the narrower reading, which is why the guard
-  primitives carry an `authenticated` grant in the first place. The partition is
+  the `SECURITY DEFINER` ones.** `create_product` is `SECURITY INVOKER` and would have
+  escaped the narrower reading, which is why the guard primitives carry an
+  `authenticated` grant in the first place. (Its cousin `update_product` was the second
+  such function until 00171 elevated it so it could delete a switched-off product's
+  waitlist — a table the caller has no write grant on.) The partition is
   "role-gated or self-scoping", and it is the same partition check 5 enforces.
 - **The matrix asserts both directions.** For a disallowed (role, RPC) pair the call
   must come back `42501`; for a permitted one it must come back *anything but* `42501`.

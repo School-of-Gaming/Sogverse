@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Plus } from "lucide-react";
@@ -15,19 +16,36 @@ import { CountdownClock, useCountdownDone } from "./countdown-clock";
 import type { RegistrationState } from "./derive-registration-state";
 import { PricingPanelView } from "./pricing-panel-view";
 import type { PricingOption } from "./pricing-options";
-import { SeatAvailabilityBar } from "./seat-availability-bar";
+import {
+  SeatAvailabilityBar,
+  type SeatAvailabilityBarProps,
+} from "./seat-availability-bar";
 
 // Top-level Signup Panel View. Pure presentational: takes resolved
 // state and emits intent callbacks. Renders the right banner + body
 // for the registration state, the pricing picker, and the form (or
 // the auth overlay).
 //
-// Important detail for the pre-open → open flip: the form-shaped panels
-// (closed_pre, open, full_waitlist) all reuse the same
-// `<SignupForm>` instance. That keeps the parent's selected gamer +
-// agreed checkbox + pricing pick stable across the countdown flip — so
-// when the clock hits zero, the parent really does have a one-tap
-// sign-up.
+// Two clocks drive this panel and they run at different speeds. The CTA's
+// pre-open → live flip rides a 1-second countdown *inside* the panel, so it
+// lands on the second. The registration *state* is re-derived from `useNow()`,
+// which ticks every 30 seconds — so for up to 29 seconds after registration
+// opens, the panel is still being handed `closed_pre` while its own button has
+// already gone live.
+//
+// That gap is why every signup-able state (closed_pre, pending_thr, open,
+// full_waitlist) renders through ONE component, `SignupBody`. React keeps the
+// same instance across a kind change, so the slower clock's swap reconciles in
+// place instead of unmounting a panel and mounting a different one. It has to
+// produce identical geometry as well as identical state: the seat bar is
+// rendered by every one of those kinds whenever the product has a cap, and the
+// countdown slot stays occupied for the rest of a mount that began during a
+// countdown. Nothing in the panel moves after the clock hits zero — the parent
+// hovering the button through the last five seconds is exactly who this is for.
+//
+// It also means the form-shaped variants genuinely reuse one `<SignupForm>`
+// instance, so the selected gamer, the agreed checkbox and the pricing pick
+// survive the flip and the sign-up really is one tap.
 
 export type AuthState =
   | { kind: "unauthenticated"; signInHref: string; createAccountHref: string }
@@ -94,14 +112,15 @@ export function SignupPanelView(props: SignupPanelViewProps) {
     case "running_late":
     case "full_closed":
       return <ClosedPanel productType={props.productType} />;
-    case "full_waitlist":
-      return <FullWaitlistPanel {...props} />;
-    case "pending_thr":
-      return <ThresholdPanel {...props} />;
+    // One component for every state with something to sign up on, so a state
+    // change between them reconciles in place — see the note above. Listed
+    // individually rather than as a `default` so a new kind has to be placed
+    // here deliberately.
     case "closed_pre":
-      return <PreOpenPanel {...props} />;
+    case "pending_thr":
     case "open":
-      return <OpenPanel {...props} />;
+    case "full_waitlist":
+      return <SignupBody {...props} />;
   }
 }
 
@@ -140,6 +159,14 @@ function PanelShell({
 // not worth spelling out: they collapse to one generic note, no actionable CTA.
 // (The RegistrationState kinds stay distinct — the card layer still needs them;
 // only the panel rendering merges.)
+//
+// This is the one swap that still changes the panel's shape: a product whose
+// last seat goes in the seconds between the drop and the state catching up
+// lands here, and there is nothing to preserve — the form, the CTA and the
+// countdown all cease to exist, because there is no longer anything to do. A
+// panel that held their geometry open would be reserving space for a control
+// that can never come back, which is the other way to get the layout rule
+// wrong. Something different is simply there now.
 function ClosedPanel({ productType }: { productType: ProductType }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
@@ -149,46 +176,44 @@ function ClosedPanel({ productType }: { productType: ProductType }) {
   );
 }
 
-// ---------- Variant: Full + waitlist ----------
+// ---------- Variant: everything with something to sign up on ----------
 
-function FullWaitlistPanel(props: SignupPanelViewProps) {
+/**
+ * What the seat bar shows for a state, or `null` when there is no bar to draw.
+ *
+ * Every capped state answers with a bar, which is the point: the bar's box is
+ * settled before registration opens, so the 30-second variant swap can't push
+ * the CTA down. A `full_waitlist` product reads "0 of N remaining" with the
+ * waitlist chip — the same capacity story, told at its end — and the "how the
+ * waitlist works" detail lives on the post-join summary instead ("what happens
+ * next").
+ *
+ * `seatsLeft ?? seatCount` is type narrowing only: the seat trio types
+ * `seatsLeft` as nullable, and it is null exactly when `seatCount` is — the
+ * branch above has already excluded that.
+ */
+function seatBarFor(state: RegistrationState): SeatAvailabilityBarProps | null {
+  switch (state.kind) {
+    case "closed_pre":
+    case "pending_thr":
+    case "open":
+      if (state.seatCount === null) return null;
+      return {
+        seatCount: state.seatCount,
+        seatsLeft: state.seatsLeft ?? state.seatCount,
+        waitlistEnabled: state.waitlistEnabled,
+      };
+    case "full_waitlist":
+      return { seatCount: state.seatCount, seatsLeft: 0, waitlistEnabled: true };
+    case "ended":
+    case "running_late":
+    case "full_closed":
+      return null;
+  }
+}
+
+function SignupBody(props: SignupPanelViewProps) {
   const t = useTranslations("productDetail.signupPanel");
-  if (props.state.kind !== "full_waitlist") return null;
-  return (
-    <PanelShell productType={props.productType}>
-      {/* Same seat bar as any capped product — full reads as "0 of N seats
-          remaining" with the waitlist chip, so the parent sees the capacity
-          story like everywhere else. The "how the waitlist works" detail moved
-          to the post-join summary (it's "what happens next"). */}
-      <SeatAvailabilityBar
-        seatCount={props.state.seatCount}
-        seatsLeft={0}
-        waitlistEnabled
-      />
-      <PricingPanelView
-        option={props.pricingOption}
-        currency={props.currency}
-        locale={props.locale}
-      />
-      <FormOrAuth
-        {...props}
-        // Full+waitlist branch dispatches to onJoinWaitlist instead of onSubmit.
-        onSubmit={props.onJoinWaitlist}
-        ctaLabelActive={t("ctaWaitlist")}
-        active
-        variant="secondary"
-      />
-    </PanelShell>
-  );
-}
-
-// ---------- Variant: Threshold-pending ----------
-
-// Threshold handling is deferred, so this state shows a plain sign-up panel —
-// the same banner / pricing / form as a non-urgent open product, with no seat
-// bar and no threshold meter. The product reads as if it has no seating
-// constraints (cf. the pre-open panel, which also renders no bar).
-function ThresholdPanel(props: SignupPanelViewProps) {
   const verb = useVerb(props.productType);
   const activeLabel = useActiveCtaLabel(
     verb,
@@ -197,45 +222,32 @@ function ThresholdPanel(props: SignupPanelViewProps) {
     props.locale,
   );
 
-  if (props.state.kind !== "pending_thr") return null;
+  // Aliased so the narrowing survives: TypeScript follows a discriminant
+  // through a `const` local, not through a property of a parameter.
+  const state = props.state;
+  const isPreOpen = state.kind === "closed_pre";
+  const opensAtMs = isPreOpen ? new Date(state.opensAt).getTime() : null;
+
+  // Whether this mount started during a countdown, remembered for the life of
+  // the mount. Once the 30-second clock re-derives the state as `open`, the
+  // component is handed a state with no `opensAt` on it — but the four cells
+  // are on screen and must stay there, so the slot is held from here rather
+  // than from the current state. A page loaded when registration was already
+  // open has no cursor mid-hover and no cells to preserve, so it gets none.
+  const [countdownAtMount] = useState(opensAtMs);
+  const countdownDone = useCountdownDone(opensAtMs);
+
+  // The CTA goes live on the 1-second countdown, ahead of the state swap, and
+  // stays live after it. Every other signup-able state is live on arrival — so
+  // this one boolean is both "the button works" and "the clock has finished",
+  // which are the same fact read from either end.
+  const active = !isPreOpen || countdownDone;
+  const isWaitlist = state.kind === "full_waitlist";
+  const seatBar = seatBarFor(state);
 
   return (
     <PanelShell productType={props.productType}>
-      <PricingPanelView
-        option={props.pricingOption}
-        currency={props.currency}
-        locale={props.locale}
-      />
-      <FormOrAuth {...props} ctaLabelActive={activeLabel} active />
-    </PanelShell>
-  );
-}
-
-// ---------- Variant: Pre-open ----------
-
-function PreOpenPanel(props: SignupPanelViewProps) {
-  // Hooks first so the linter can verify they always run in the same
-  // order across renders. The conditional early return is unreachable
-  // in practice (the parent dispatches by kind) but kept for type
-  // narrowing in the JSX below.
-  const opensAt =
-    props.state.kind === "closed_pre"
-      ? props.state.opensAt
-      : "2099-01-01T00:00:00Z";
-  const targetMs = new Date(opensAt).getTime();
-  const isOpen = useCountdownDone(targetMs);
-  const verb = useVerb(props.productType);
-  const activeLabel = useActiveCtaLabel(
-    verb,
-    props.pricingOption,
-    props.currency,
-    props.locale,
-  );
-
-  if (props.state.kind !== "closed_pre") return null;
-
-  return (
-    <PanelShell productType={props.productType}>
+      {seatBar !== null && <SeatAvailabilityBar {...seatBar} />}
       <PricingPanelView
         option={props.pricingOption}
         currency={props.currency}
@@ -245,59 +257,26 @@ function PreOpenPanel(props: SignupPanelViewProps) {
         {...props}
         // The prep checklist in SignupForm runs the same whether or not
         // registration is open yet, so a parent can finish every step during the
-        // countdown. `active={isOpen}` only gates the final leaf: until the clock
-        // hits zero a fully-prepped parent sees "Ready & waiting"; at zero it
-        // flips in place to the live action label (same as the open panel).
-        ctaLabelActive={activeLabel}
-        active={isOpen}
+        // countdown. `active` only gates the final leaf: until the clock hits
+        // zero a fully-prepped parent sees "Ready & waiting"; at zero it flips
+        // in place to the live action label.
+        onSubmit={isWaitlist ? props.onJoinWaitlist : props.onSubmit}
+        ctaLabelActive={isWaitlist ? t("ctaWaitlist") : activeLabel}
+        active={active}
+        variant={isWaitlist ? "secondary" : "default"}
       />
-      {/* Countdown stays mounted across the pre-open → open flip. When the
-          target instant arrives we set `done`, which keeps the four cells
-          in place but renders them as `--` placeholders. Unmounting the
-          clock would shrink the panel — and because the panel is sticky on
-          desktop and reflows on mobile, that shrink propagates outward
-          (page section height changes, sticky bottom anchor pulls content
-          up, etc.) and the Sign-up button shifts under the parent's
-          cursor. The whole point of the live countdown is the one-tap-buy
-          moment, so the slot is held constant. */}
-      <CountdownClock targetMs={targetMs} done={isOpen} />
-    </PanelShell>
-  );
-}
-
-// ---------- Variant: Open ----------
-
-function OpenPanel(props: SignupPanelViewProps) {
-  const verb = useVerb(props.productType);
-  const activeLabel = useActiveCtaLabel(
-    verb,
-    props.pricingOption,
-    props.currency,
-    props.locale,
-  );
-
-  if (props.state.kind !== "open") return null;
-
-  return (
-    <PanelShell productType={props.productType}>
-      {props.state.seatCount !== null && (
-        // seatsLeft is live now — deriveRegistrationState computes it from the
-        // real product_seat_counts row. The `?? seatCount` is only type
-        // narrowing: the open state types seatsLeft as `number | null`, but
-        // derive only returns null when seatCount is null (the branch we're
-        // already inside excludes that), so the fallback is unreachable.
-        <SeatAvailabilityBar
-          seatCount={props.state.seatCount}
-          seatsLeft={props.state.seatsLeft ?? props.state.seatCount}
-          waitlistEnabled={props.state.waitlistEnabled}
-        />
+      {/* The countdown outlives its own countdown. At the target instant it
+          switches to `done`, which keeps the four cells exactly where they are
+          and renders them as `--`; when the state swap arrives up to 29
+          seconds later, `countdownAtMount` keeps them rendered still.
+          Unmounting them at either moment would shrink the panel — and because
+          the panel is sticky on desktop and reflows on mobile, that shrink
+          propagates outward (page section height changes, the sticky bottom
+          anchor pulls content up) and the Sign-up button moves under the
+          parent's cursor at the exact second they meant to click it. */}
+      {countdownAtMount !== null && (
+        <CountdownClock targetMs={countdownAtMount} done={active} />
       )}
-      <PricingPanelView
-        option={props.pricingOption}
-        currency={props.currency}
-        locale={props.locale}
-      />
-      <FormOrAuth {...props} ctaLabelActive={activeLabel} active />
     </PanelShell>
   );
 }

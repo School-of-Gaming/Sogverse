@@ -109,21 +109,37 @@ function pad2(n: number): string {
 /**
  * Subscribe-friendly hook for callers that need the same flip from
  * pre-open → open the clock displays. Returns true once `now >= targetMs`.
- * Used by SignupPanel to swap the CTA from disabled to active without
+ * Used by the signup panel to swap the CTA from disabled to active without
  * unmounting the form.
  *
- * Hydration parity: both server and client start at `targetMs - 1` so the
- * first render returns `false` everywhere. The interval refreshes `now`
- * after mount, picking up the real time on the first tick (within 1s).
- * Same SSR-safe shape as `CountdownClock` above.
+ * `null` means "nothing to count down to" and is answered `false` without
+ * starting a timer — the panel passes null once registration is open, and a
+ * once-a-second re-render of a live form buys nothing there. The timer also
+ * stops the moment the target is reached: for a *stable* target the answer
+ * cannot change again.
+ *
+ * NOT latched across prop changes: a caller that reaches `done === true` and
+ * then swaps `targetMs` to null sees the return value fall back to `false`.
+ * The signup panel is built for that — it ORs the hook with "no longer
+ * pre-open" and never feeds the raw value to anything that must stay true —
+ * and any new caller must either keep the target stable for the mount or
+ * compose the same way. Don't wire this hook's raw value straight into the
+ * clock's `done` prop.
+ *
+ * Hydration parity: `now` starts unset, so the first render returns `false`
+ * everywhere. The interval picks up the real time on its first tick (within
+ * 1s). Same SSR-safe shape as `CountdownClock` above.
  */
-export function useCountdownDone(targetMs: number): boolean {
-  const [now, setNow] = useState<number>(() => targetMs - 1);
+export function useCountdownDone(targetMs: number | null): boolean {
+  const [now, setNow] = useState<number | null>(null);
+
+  const done = targetMs !== null && now !== null && now >= targetMs;
 
   useEffect(() => {
+    if (targetMs === null || done) return;
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [targetMs, done]);
 
-  return now >= targetMs;
+  return done;
 }

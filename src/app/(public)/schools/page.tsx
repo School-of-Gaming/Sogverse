@@ -12,7 +12,9 @@ import { SchoolsBrowse } from "@/components/public/schools/schools-browse";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
-  return { title: t("schools") };
+  // Owner decision (Aug 2026): search engines and AI crawlers may discover
+  // only the /shop browse surface — the entire /schools tree is noindex.
+  return { title: t("schools"), robots: { index: false, follow: false } };
 }
 
 /**

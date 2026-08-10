@@ -1845,7 +1845,6 @@ export type Database = {
     Enums: {
       billing_mode: "paid" | "free" | "external_contract"
       effective_product_status:
-        | "draft"
         | "pending"
         | "running"
         | "completed"
@@ -1859,12 +1858,7 @@ export type Database = {
         | "subscription_invoice"
         | "single_payment"
         | "reservation_duplicate"
-      product_status:
-        | "draft"
-        | "pending"
-        | "running"
-        | "completed"
-        | "cancelled"
+      product_status: "pending" | "running" | "completed" | "cancelled"
       product_topic:
         | "minecraft_java"
         | "minecraft_education"
@@ -2003,7 +1997,6 @@ export const Constants = {
     Enums: {
       billing_mode: ["paid", "free", "external_contract"],
       effective_product_status: [
-        "draft",
         "pending",
         "running",
         "completed",
@@ -2019,7 +2012,7 @@ export const Constants = {
         "single_payment",
         "reservation_duplicate",
       ],
-      product_status: ["draft", "pending", "running", "completed", "cancelled"],
+      product_status: ["pending", "running", "completed", "cancelled"],
       product_topic: [
         "minecraft_java",
         "minecraft_education",

@@ -194,7 +194,7 @@
         "empty": "Ei vielä kohteita ({plural}). Luo uusi painamalla Uusi {label}.",
         "ageRange": "{min}–{max} v",
         "seats": "{count} paikkaa",
-        "hidden": "piilotettu",
+        "unlisted": "ei listattu",
         "untitled": "(nimetön)",
         "missingGeduFee": "Gedun palkkio puuttuu",
         "missingMunicipalityFee": "Kunnan maksu puuttuu",
@@ -221,8 +221,8 @@
         "notFound": "Tuotetta ei löytynyt.",
         "locationMissing": "—",
         "uncapped": "Ei paikkarajaa",
-        "visible": "Näkyy vanhemmille",
-        "hidden": "Piilotettu vanhemmilta",
+        "listed": "Listattu julkisesti",
+        "unlisted": "Ei listattu – vain suoralla linkillä",
         "waitlistOn": "jonotuslista käytössä",
         "minutes": "{count} min",
         "perMonth": "{amount} / kk",
@@ -290,8 +290,8 @@
         },
         "registration": "Ilmoittautumisaika",
         "registrationDescription": "Valitse, milloin vanhemmat voivat alkaa ilmoittautua.",
-        "visibility": "Näkyvyys",
-        "visibilityDescription": "Hallitse, voivatko vanhemmat löytää ja nähdä tuotteen. Jo osallistuvat näkevät sen edelleen My SOG -sivullaan — tämä ei vaikuta heihin."
+        "visibility": "Listaus",
+        "visibilityDescription": "Ratkaisee, missä tuotetta mainostetaan, ei sitä, kuka voi ostaa sen. Ilmoittautumisen avaavat ja sulkevat ilmoittautumispäivä, paikkamäärä ja tuotteen tila – ei koskaan tämä asetus."
       },
       "labels": {
         "name": "Nimi",
@@ -325,7 +325,7 @@
         "seatCount": "Paikkamäärä",
         "waitlistToggle": "Käytä jonotuslistaa, kun paikat täynnä",
         "signupThreshold": "Ilmoittautumisraja aloitukseen",
-        "makeVisible": "Näytä tuote vanhemmille",
+        "makeVisible": "Listaa tuote Kauppa- ja Kuntakerhot-sivuille",
         "seatLimit": "Paikkaraja"
       },
       "placeholders": {
@@ -443,14 +443,15 @@
         "thresholdWithDate": "Jos vanhempia ilmoittautuu vähemmän kuin tämä alkupäivään mennessä, sinun täytyy perua ja palauttaa maksut tuotesivulta.",
         "timezoneFixedHelsinki": "Ajat ovat aikavyöhykkeellä Europe/Helsinki. Vanhemmat näkevät ne automaattisesti omalla aikavyöhykkeellään.",
         "holidayHint": "Yksikään kerta ei pidetä valittujen kalenterien päivinä. Muokkaa kalenteria kerran ja kaikki sitä käyttävät tuotteet päivittyvät automaattisesti.",
-        "billingHint": "Valinnasta riippumatta tapahtumilla ei ole toistaiseksi paikkarajaa.",
+        "billingHint": "Maksuttomilla tuotteilla on oletuksena paikkaraja, maksullisilla ei.",
         "freeDetail": "Ei maksua. Kuka tahansa voi liittyä yhdellä klikkauksella.",
         "paidDetail": "Kertamaksu ilmoittautumisen yhteydessä.",
         "paidByMunicipality": "Ei asiakaslaskutusta tämän järjestelmän sisällä. School of Gaming laskuttaa kuntaa suoraan.",
         "pricingMonthly": "Veloitetaan joka kuukausi tilauksen ollessa voimassa. Voit perua milloin tahansa.",
         "pricingUpfront": "Veloitetaan kerran ilmoittautuessa. Sama kokonaishinta riippumatta kestosta.",
-        "seatHint": "Kun täynnä, uudet ilmoittautujat menevät jonotuslistalle.",
-        "visibleHint": "Poista valinta, kun tuote on vielä tekeillä tai kun haluat lopettaa uudet ilmoittautumiset. Tämä piilottaa tuotteen vain uusilta vanhemmilta — jo ilmoittautuneet vanhemmat ja pelaajat näkevät sen ja kertansa edelleen My SOG -sivullaan.",
+        "seatHintWaitlist": "Kun täynnä, uudet ilmoittautujat menevät jonotuslistalle.",
+        "seatHintNoWaitlist": "Kun täynnä, uudet ilmoittautumiset hylätään.",
+        "visibleHint": "Ilman valintaa tuote ei näy millään julkisella sivulla, mutta jokainen, jolla on suora linkki, voi silti avata sen ja ostaa paikan. Juuri siksi tämä sopii julkistamattomiin, kutsuvieraille tarkoitettuihin ja kampanjatuotteisiin. Tämä ei ole keino lopettaa ilmoittautumisia, eikä se vaikuta jo mukana oleviin vanhempiin ja pelaajiin.",
         "seatLimitHint": "Rajaa osallistujamäärä tai pidä se rajattomana.",
         "holidayComingSoon": "Lomakalenterit tulevat pian. Toistaiseksi jokainen aikataulutettu kerta pidetään.",
         "startDateToday": "Lukittu toistaiseksi tähän päivään.",
@@ -469,6 +470,7 @@
         "materialUrlInvalid": "Oppimateriaalin osoitteen on oltava kelvollinen URL",
         "startDateRequired": "Alkupäivä vaaditaan",
         "endDateRequired": "Loppupäivä vaaditaan",
+        "seatCountRequired": "Paikkamäärä vaaditaan",
         "seatCountInvalid": "Paikkamäärän on oltava positiivinen kokonaisluku",
         "priceSessionMissing": "Anna kertahinta valuutassa {currency}",
         "priceSessionNegative": "Kertahinta valuutassa {currency} ei voi olla negatiivinen",
@@ -486,7 +488,6 @@
         "createLabel": "Luo {label}"
       },
       "status": {
-        "draft": "Luonnos",
         "pending": "Odottaa alkua",
         "running": "Käynnissä",
         "completed": "Päättynyt",
@@ -632,6 +633,25 @@
           "title": "Jonotuslista",
           "subtitle": "Paikkaa odottavat pelaajat liittymisjärjestyksessä numeroituina. Vedä pelaaja ryhmään antaaksesi hänelle paikan tai pudota aktiivinen pelaaja tähän siirtääksesi hänet jonon perälle.",
           "empty": "Jonotuslistalla ei ole ketään."
+        },
+        "seatsOverfilled": "{count} / {total} paikkaa – {over} yli",
+        "blockedMove": {
+          "acknowledge": "Selvä",
+          "promoteUnpaid": {
+            "title": "Paikka vaatii tilauksen",
+            "description": "{name} on jonotuslistalla ilman tilausta, ja tämän kerhon paikka laskutetaan kuukausittain. Jos annat paikan nyt, hän pääsee mukaan ilmaiseksi.",
+            "nextStep": "Pyydä perhettä ottamaan paikka itse: kun paikka on vapaana, kerho näkyy kaupassa avoimena. Perhe voi poistua jonotuslistalta Oma SOG -korttinsa kautta ja tehdä tilauksen kassalla."
+          },
+          "demoteSubscribed": {
+            "title": "Tilaus on yhä voimassa",
+            "description": "Jos {name} siirtyy jonotuslistalle, tilaus jää voimaan ja perheeltä veloitetaan edelleen paikasta, jota sillä ei enää ole.",
+            "nextStep": "Perhe avaa laskutuskortin Oma SOG -sivullaan ja siirtyy sitä kautta Stripen suojattuun laskutusportaaliin perumaan tilauksen. Paikka vapautuu heti, kun tilaus päättyy."
+          },
+          "removeSubscribed": {
+            "title": "Tilaus on yhä voimassa",
+            "description": "Jos {name} poistetaan, perheen tilaus jatkaa laskuttamista paikasta, jota ei enää ole.",
+            "nextStep": "Perhe avaa laskutuskortin Oma SOG -sivullaan ja siirtyy sitä kautta Stripen suojattuun laskutusportaaliin perumaan tilauksen. Paikka vapautuu heti, kun tilaus päättyy."
+          }
         }
       },
       "seatLimitModes": {
@@ -779,9 +799,6 @@
       "group": "Ryhmä",
       "groupNumber": "Ryhmä {number}",
       "groupDeleted": "{label} (poistettu)",
-      "hiddenNoGroups": "Tämä tuote on piilotettu eikä sillä ole ryhmiä. Lisää vähintään yksi ryhmä ja tee se näkyväksi, jotta vanhemmat näkevät sen.",
-      "hiddenWithGroups": "Tämä tuote on piilotettu. Vanhemmat eivät näe sitä luettelossa. Vaihda näkyvyyttä yllä olevasta Toiminnot-kortista.",
-      "visibleNoGroups": "Tämä tuote on näkyvissä, mutta sillä ei ole ryhmiä. Vanhemmat näkevät sen, mutta eivät voi ilmoittautua.",
       "gamerCount": "{count, plural, one {# pelaaja} other {# pelaajaa}}",
       "genderBoy": "Poika",
       "genderGirl": "Tyttö",
@@ -1010,7 +1027,12 @@
       "positionLabel": "Sijasi jonossa",
       "positionValue": "{position}.",
       "next1": "Lähetämme sähköpostia heti, kun paikka vapautuu.",
-      "next2": "{gamer} säilyttää paikkansa jonossa koko kauden ajan.",
+      "next2": {
+        "consumer_club": "{gamer} säilyttää paikkansa jonossa koko kauden ajan.",
+        "municipality_club": "{gamer} säilyttää paikkansa jonossa koko kauden ajan.",
+        "camp": "{gamer} säilyttää paikkansa jonossa koko leirin ajan.",
+        "event": "{gamer} säilyttää paikkansa jonossa koko tapahtuman ajan."
+      },
       "next3": "Voit seurata jonotustilannetta milloin tahansa Oma SOG -sivulla."
     }
   },
@@ -1432,7 +1454,6 @@
       "free": "Maksuton",
       "externalContract": "Kuntasi rahoittama",
       "notAvailableInCurrency": "Ei valuutassa {currency}",
-      "seatsCapacity": "{count, plural, one {# paikka} other {# paikkaa}}",
       "endedNote": "Tämä on päättynyt – seuraava on tulossa pian.",
       "viewDetails": "Katso",
       "cardLink": "{action} — {name}",

@@ -194,7 +194,7 @@
         "empty": "Inga {plural} än. Klicka på Nytt {label} för att skapa ett.",
         "ageRange": "{min}–{max} år",
         "seats": "{count} platser",
-        "hidden": "dold",
+        "unlisted": "olistad",
         "untitled": "(utan titel)",
         "missingGeduFee": "Gedu-arvode saknas",
         "missingMunicipalityFee": "Kommunavgift saknas",
@@ -221,8 +221,8 @@
         "notFound": "Produkten kunde inte hittas.",
         "locationMissing": "—",
         "uncapped": "Ingen platsgräns",
-        "visible": "Synlig för föräldrar",
-        "hidden": "Dold för föräldrar",
+        "listed": "Listad publikt",
+        "unlisted": "Olistad — endast via direktlänk",
         "waitlistOn": "väntelista på",
         "minutes": "{count} min",
         "perMonth": "{amount} / månad",
@@ -290,8 +290,8 @@
         },
         "registration": "Registreringstid",
         "registrationDescription": "Välj när föräldrar kan börja anmäla sig.",
-        "visibility": "Synlighet",
-        "visibilityDescription": "Bestäm om föräldrar kan hitta och se produkten. De som redan deltar har den kvar på sin My SOG-sida — det påverkar dem inte."
+        "visibility": "Listning",
+        "visibilityDescription": "Avgör var produkten visas, inte vem som får köpa den. Anmälningar öppnas och stängs av anmälningsdatumet, platsgränsen och produktens status — aldrig av den här inställningen."
       },
       "labels": {
         "name": "Namn",
@@ -325,7 +325,7 @@
         "seatCount": "Antal platser",
         "waitlistToggle": "Aktivera väntelista när platserna är fulla",
         "signupThreshold": "Antal anmälningar för att starta",
-        "makeVisible": "Visa produkten för föräldrar",
+        "makeVisible": "Lista produkten på sidorna Butik och Kommunklubbar",
         "seatLimit": "Platsgräns"
       },
       "placeholders": {
@@ -443,14 +443,15 @@
         "thresholdWithDate": "Om färre än så här många föräldrar anmäler sig till startdatumet behöver du ställa in den och återbetala från produktsidan.",
         "timezoneFixedHelsinki": "Tider är i tidszonen Europe/Helsinki. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
         "holidayHint": "Inget tillfälle körs på något datum från de valda kalendrarna. Redigera en kalender en gång och alla produkter som använder den uppdateras automatiskt.",
-        "billingHint": "Oavsett vilket körs evenemang tills vidare utan platsgräns.",
+        "billingHint": "Gratisprodukter får som standard en platsgräns, betalda börjar utan gräns.",
         "freeDetail": "Ingen avgift. Alla kan delta med ett klick.",
         "paidDetail": "Engångsavgift vid anmälan.",
         "paidByMunicipality": "Ingen kundfakturering inom detta system. School of Gaming fakturerar kommunen direkt.",
         "pricingMonthly": "Debiteras varje månad så länge prenumerationen är aktiv. Avsluta när som helst.",
         "pricingUpfront": "Debiteras en gång vid anmälan. Samma totalbelopp oavsett längd.",
-        "seatHint": "När fullt går nya anmälningar till väntelistan.",
-        "visibleHint": "Avmarkera medan du fortfarande arbetar på produkten, eller för att stoppa nya anmälningar. Det döljer bara produkten för nya föräldrar — föräldrar och gamers som redan är anmälda ser den och sina tillfällen på sin My SOG-sida.",
+        "seatHintWaitlist": "När fullt går nya anmälningar till väntelistan.",
+        "seatHintNoWaitlist": "När fullt nekas nya anmälningar.",
+        "visibleHint": "Utan bocken visas produkten inte på någon publik sida, men den som har direktlänken kan ändå öppna den och köpa en plats. Det är just det som gör den lämplig för oannonserade produkter, inbjudningar och kampanjer. Det är inget sätt att stoppa anmälningar, och det påverkar aldrig föräldrar och gamers som redan deltar.",
         "seatLimitHint": "Begränsa antalet deltagare eller kör utan gräns.",
         "holidayComingSoon": "Lovkalendrar kommer snart. Tills vidare körs varje schemalagt tillfälle.",
         "startDateToday": "Låst till dagens datum tills vidare.",
@@ -469,6 +470,7 @@
         "materialUrlInvalid": "URL till lektionsmaterial måste vara en giltig URL",
         "startDateRequired": "Startdatum krävs",
         "endDateRequired": "Slutdatum krävs",
+        "seatCountRequired": "Antal platser krävs",
         "seatCountInvalid": "Antal platser måste vara ett positivt heltal",
         "priceSessionMissing": "Ange ett pris per tillfälle i {currency}",
         "priceSessionNegative": "Pris per tillfälle i {currency} kan inte vara negativt",
@@ -486,7 +488,6 @@
         "createLabel": "Skapa {label}"
       },
       "status": {
-        "draft": "Utkast",
         "pending": "Väntar på start",
         "running": "Pågår",
         "completed": "Avslutat",
@@ -632,6 +633,25 @@
           "title": "Väntelista",
           "subtitle": "Spelare som väntar på en plats, numrerade i den ordning de ställde sig i kö. Dra en till en grupp för att ge hen en plats, eller släpp en aktiv spelare här för att flytta hen sist i kön.",
           "empty": "Ingen står på väntelistan."
+        },
+        "seatsOverfilled": "{count} av {total} platser – {over} över",
+        "blockedMove": {
+          "acknowledge": "Okej",
+          "promoteUnpaid": {
+            "title": "Platsen kräver en prenumeration",
+            "description": "{name} står på väntelistan utan prenumeration, och en plats i den här klubben faktureras varje månad. Att ge platsen nu skulle skriva in hen gratis.",
+            "nextStep": "Be familjen ta platsen själv: så länge en plats är ledig visas klubben som öppen i butiken, så de kan lämna väntelistan från sitt kort på Min SOG och gå till kassan — det är där prenumerationen skapas."
+          },
+          "demoteSubscribed": {
+            "title": "Prenumerationen är fortfarande aktiv",
+            "description": "Om {name} flyttas till väntelistan blir prenumerationen kvar och familjen fortsätter att faktureras för en plats den inte längre har.",
+            "nextStep": "Familjen öppnar faktureringskortet på Min SOG, som tar dem vidare till Stripes säkra faktureringsportal för att säga upp. Platsen frigörs så snart prenumerationen upphör."
+          },
+          "removeSubscribed": {
+            "title": "Prenumerationen är fortfarande aktiv",
+            "description": "Att ta bort {name} skulle lämna familjens prenumeration kvar och fortsätta fakturera för en plats som inte längre finns.",
+            "nextStep": "Familjen öppnar faktureringskortet på Min SOG, som tar dem vidare till Stripes säkra faktureringsportal för att säga upp. Platsen frigörs så snart prenumerationen upphör."
+          }
         }
       },
       "seatLimitModes": {
@@ -779,9 +799,6 @@
       "group": "Grupp",
       "groupNumber": "Grupp {number}",
       "groupDeleted": "{label} (raderad)",
-      "hiddenNoGroups": "Denna produkt är dold och har inga grupper. Lägg till minst en grupp och gör den synlig för att föräldrar ska kunna se den.",
-      "hiddenWithGroups": "Denna produkt är dold. Föräldrar kan inte se den i katalogen. Ändra synlighet från åtgärdskortet ovan.",
-      "visibleNoGroups": "Denna produkt är synlig men har inga grupper. Föräldrar kan se den men kan inte anmäla sig.",
       "gamerCount": "{count, plural, one {# spelare} other {# spelare}}",
       "genderBoy": "Pojke",
       "genderGirl": "Flicka",
@@ -1010,7 +1027,12 @@
       "positionLabel": "Din plats i kön",
       "positionValue": "nr {position}",
       "next1": "Vi mejlar så snart en plats blir ledig.",
-      "next2": "{gamer} behåller sin plats i kön under hela terminen.",
+      "next2": {
+        "consumer_club": "{gamer} behåller sin plats i kön under hela terminen.",
+        "municipality_club": "{gamer} behåller sin plats i kön under hela terminen.",
+        "camp": "{gamer} behåller sin plats i kön under hela lägret.",
+        "event": "{gamer} behåller sin plats i kön fram till evenemanget."
+      },
       "next3": "Du kan följa din plats i kön när som helst i Min SOG."
     }
   },
@@ -1432,7 +1454,6 @@
       "free": "Gratis",
       "externalContract": "Finansieras av din kommun",
       "notAvailableInCurrency": "Inte i {currency}",
-      "seatsCapacity": "{count, plural, one {# plats} other {# platser}}",
       "endedNote": "Den här är slut — håll utkik efter nästa.",
       "viewDetails": "Visa",
       "cardLink": "{action} — {name}",

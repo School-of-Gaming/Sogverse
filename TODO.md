@@ -49,10 +49,10 @@
   - **`AuthApiError: Invalid Refresh Token: Refresh Token Not Found`** from `serverless-middleware` (the proxy) on `/`, `/reset-password`, `/select-profile`. Routine `@supabase/ssr` dual-refresh: a visitor arrives with a stale/expired refresh-token cookie, the server refresh fails, they're treated as logged-out (responses are 200/307). Also its sibling `Too many concurrent token refresh requests` (409 conflict) — the browser/middleware refresh race. Drop both to `warn`/`info` where the proxy catches them.
   - **`generateLink error: User with this email not found`** on `/api/auth/forgot-password` — a reset requested for an unregistered email. The route correctly returns 200 (anti-enumeration); the log is the only noise. Drop to `info` or don't log.
 - [ ] **Consolidate hand-rolled badge pills onto the shared `<Badge>`.** ~11 places render a small status/label pill as a raw `<span>`/`<div>` (`rounded-full` + `px-` + `text-xs` + a bg tint) instead of `src/components/ui/badge.tsx`. **Root cause:** `<Badge>` only offers *solid* fills (`default/secondary/destructive/outline`) — no soft tints (`bg-primary/10`, `bg-destructive/20`) and no semantic `success`/`warning`/`info` tones, which is exactly what every hand-rolled one reaches for. So the high-leverage fix is **add soft/semantic variants to `<Badge>`** (e.g. a `tone` prop or `soft-*` variants, plus an `/admin/ui-components` demo), then fold the bespoke spans in. Strongest candidates, in order:
-  - **Product lifecycle status badge** — the `STATUS_STYLE` color map is duplicated *verbatim* across `src/components/admin/products/product-rows.tsx` (lines ~29-36, ~168) and `product-details-page.tsx` (lines ~49-56, ~238). Extract one map + a `<ProductStatusBadge>`. (Note: `product-details-page.tsx`'s visible/hidden pill was already migrated to `<Badge>` — the status pill sitting right next to it is the leftover.)
+  - **Product lifecycle status badge** — the `STATUS_STYLE` color map is duplicated *verbatim* between `src/components/admin/products/product-rows.tsx` and `product-details-page.tsx`, each with its own hand-rolled `<span>` rendering it. Extract one map + a `<ProductStatusBadge>`. (Note: `product-details-page.tsx`'s Listed/Unlisted pill was already migrated to `<Badge>` — the status pill sitting right next to it is the leftover.)
   - **Gedu person chip** (avatar + first name) — identical markup duplicated in `src/components/gedu/session-details/PeerGroupCard.tsx:67` and `AssignedGroupCard.tsx:78`. Embeds an `<Avatar>`, so it wants a shared composite, not a plain `<Badge>`.
   - **Soft-tint semantic pills** — `schools-browse.tsx` `StatusPill` (`:257`, `bg-primary/10`) and the HTTP status-code badges in `docs/minecraft-api/page.tsx` (~6 spans wanting success/warning/destructive tints). These unblock once `<Badge>` grows tinted variants.
-  - **Lower priority / bespoke** (icons or `text-[10px]`/uppercase sizing — case-by-case): `product-rows.tsx:176` hidden flag, `location-picker.tsx` type label on the selected-location card, `schools-browse.tsx` count pill, `voice/ZoneList.tsx:333` private-zone lock, `whatsapp/page.tsx:209` date divider. Also note a *good* existing pattern to consider folding into instead: `src/components/public/products/status-chip.tsx` (`StatusChip`, already has tones + sizes + optional icon). Own branch — bigger than a mechanical swap.
+  - **Lower priority / bespoke** (icons or `text-[10px]`/uppercase sizing — case-by-case): `product-rows.tsx`'s unlisted flag, `location-picker.tsx` type label on the selected-location card, `schools-browse.tsx` count pill, `voice/ZoneList.tsx:333` private-zone lock, `whatsapp/page.tsx:209` date divider. Also note a *good* existing pattern to consider folding into instead: `src/components/public/products/status-chip.tsx` (`StatusChip`, already has tones + sizes + optional icon). Own branch — bigger than a mechanical swap.
 - [ ] **Split subsystem-specific rules out of root `CLAUDE.md` into nested CLAUDE.md files.** Root CLAUDE.md is ~9k tokens and loaded on every turn. Claude Code lazily loads `CLAUDE.md` from any ancestor directory of a file being read/edited, so subsystem rules can live next to the code they govern — they cost zero tokens until that subtree is touched, and become *more* prominent (loaded alongside the code) when it is. Candidates, in rough ROI order:
 
   - **`src/components/voice/CLAUDE.md`** — done: the scheduled-room voice architecture now lives here (instant rooms in `src/components/voice/instant/CLAUDE.md`), with the Web Audio volume workaround folded in as a self-contained rule. The realtime-hook invalidation rule still lives at root under "Voice Chat". (Shipped via the docs→colocated-CLAUDE.md effort, which also moved layout, PIN, i18n, email, locations, whatsapp, and discord docs next to their code.)
@@ -321,7 +321,7 @@ Currently the only way to link a parent to a gamer is when the parent creates th
 ## Waitlist — the parent/gamer side
 
 A waitlisted seat is a state of the shared enrollment card on both dashboards, and
-its leave affordance has a backend. Two open questions remain:
+its leave affordance has a backend. One open question remains:
 
 - [ ] **The waitlist copy promises an email nobody sends.** The card's footer
   reassurance and the confirmation page's `next1` both say we'll email the moment a seat opens.
@@ -329,64 +329,3 @@ its leave affordance has a backend. Two open questions remain:
   notifies nobody. Emails + promotion are handled by hand for now (deliberate), so
   this is a note, not a bug — but if manual sending ever slips, soften the copy
   rather than leave the promise standing.
-- [ ] **Decide what promotion looks like to a parent.** `promote_from_waitlist`
-  flips the row to `active` with no payment step, and from the parent's side the card
-  silently changes state where it stands — into the running state if the promotion placed
-  the child in a group, or into the awaiting-placement state if it did not, which is a
-  second silent transition nobody has designed either. (The
-  "free seat on a paid product" hazard this could imply is unreachable today — caps are
-  muni-only and a muni club can't become paid; it's recorded as part of the cap unlock's
-  cost in the re-lock section below.) If the answer is ever "a seat opened — claim it by
-  {date}" rather than "you're in", that's a new card state (offer + expiry +
-  accept/decline) and it's much cheaper to design before the card hardens.
-
-## Event seat caps + waitlist: re-locked until the shop surface can express fullness
-
-The admin product form briefly unlocked the seat cap and the waitlist toggle for **free**
-events, then re-locked them (`src/components/admin/products/form-locks.ts`; events keep
-their `registrationTiming` unlock). The seat gate was never the blocker — a free signup
-validates the cap and writes its `active` row in one locked transaction, never touching
-Stripe Checkout, exactly like a municipality registration. The blocker is the
-**parent-facing shop**: nothing on the browse card or the pre-open panel can say a
-non-muni product is full, so an admin capping an event would publish a page that fills up
-and still reads as open. Unlocking again is a shop change first and a one-line form change
-second.
-
-- [ ] **A fullness affordance on the browse card for capped non-muni products.** Today the
-  seat bar is muni-only, and the `full_waitlist` state renders the same generic "View" CTA
-  an open product does — a full event with a waitlist is visually identical to one with
-  seats left. Whether that becomes the seat bar generalised, a state-aware CTA, or a
-  fullness pill is the open design question. **Constraint from the owner: the card must
-  *not* carry a "waitlist available" line for products that aren't capped** — the
-  affordance is for the full state, not an always-on advertisement of the waitlist.
-- [ ] **The card's seat hint shows capacity, not seats left.** "{count} seats" prints the
-  cap, so on a full product it prints a number that is exactly wrong. It has to be
-  seats-remaining (and say something else at zero).
-- [ ] **The pre-open → open panel swap mounts the seat bar above the CTA, late — and the
-  two halves flip on different clocks.** The countdown enables the button on its own
-  1-second tick, but the panel-variant swap that mounts the seat bar rides the 30-second
-  `useNow` tick — so the Join button goes live within a second of the drop and the seat
-  bar is then inserted *above* it up to 29s later, shoving it down under the cursor. That
-  is a data-schedule shift, which the layout rule in `CLAUDE.md` forbids outright — the
-  seat bar's box has to be settled before the button becomes clickable, not inserted
-  after it.
-- [ ] **Waitlist purchase-confirmation copy is club-shaped.** It tells the parent their
-  gamer is queued "for the whole term", which is nonsense for a single-date event. Key it
-  by product type like the panel's other action strings, in all five locales.
-- [ ] **No capped / full / waitlist event fixtures exist in the style guide**, so none of
-  the above can be signed off visually before it is wired. Add the states (capped with
-  seats left, full with a waitlist, full without one) to the card and panel demos.
-- [ ] **Optional hardening, raised in review, both cheap and both currently unreachable:**
-  a lifecycle/billing-mode guard on `join_waitlist` (a migration — nothing stops a row
-  joining the queue of a product that can no longer honour it), and a visible error on the
-  `'full'` race outcome (the signup path can lose the last seat between the gate and the
-  write, and the panel currently just re-enables the button saying nothing).
-- [ ] **The form-side change, once the above lands.** Give `formLocksFor` back its
-  free/paid parameter so the lock can track the money instead of the type, unlock
-  `seatCount`/`waitlist` for free events only, and restore the free→paid handler that
-  clears a cap the flip is about to lock away. Both were deleted in the re-lock rather than
-  left inert; their unit tests are in `tests/unit/components/products-form-locks.test.ts`
-  and git history has the originals. Also re-decide `promote_from_waitlist`'s missing
-  billing-mode guard at that point: with a cappable type whose billing mode can change
-  under a live queue, promoting a stranded row would grant an unpaid seat on a paid
-  product (see the seat-gate section of `docs/products-architecture.md`).

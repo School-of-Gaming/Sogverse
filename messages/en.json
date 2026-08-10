@@ -194,7 +194,7 @@
         "empty": "No {plural} yet. Click New {label} to create one.",
         "ageRange": "{min}–{max} yrs",
         "seats": "{count} seats",
-        "hidden": "hidden",
+        "unlisted": "unlisted",
         "untitled": "(untitled)",
         "missingGeduFee": "Gedu fee missing",
         "missingMunicipalityFee": "Municipality fee missing",
@@ -221,8 +221,8 @@
         "notFound": "Product not found.",
         "locationMissing": "—",
         "uncapped": "No seat limit",
-        "visible": "Visible to parents",
-        "hidden": "Hidden from parents",
+        "listed": "Listed publicly",
+        "unlisted": "Unlisted — direct link only",
         "waitlistOn": "waitlist on",
         "minutes": "{count} min",
         "perMonth": "{amount} / month",
@@ -290,8 +290,8 @@
         },
         "registration": "Registration timing",
         "registrationDescription": "Pick when parents can start signing up.",
-        "visibility": "Visibility",
-        "visibilityDescription": "Control whether parents can find and view this product. Anyone already taking part keeps it on their My SOG page — this never affects them."
+        "visibility": "Listing",
+        "visibilityDescription": "Decides where this product is advertised, not who may buy it. Sign-ups are opened and closed by the registration date, the seat limit and the product's status — never by this setting."
       },
       "labels": {
         "name": "Name",
@@ -325,7 +325,7 @@
         "seatCount": "Seat count",
         "waitlistToggle": "Enable waitlist when seats are full",
         "signupThreshold": "Signups needed to start",
-        "makeVisible": "Make this product visible to parents",
+        "makeVisible": "List this product on the Shop and Municipality Clubs pages",
         "seatLimit": "Seat limit"
       },
       "placeholders": {
@@ -443,14 +443,15 @@
         "thresholdWithDate": "If fewer than this many parents sign up by the start date, you’ll need to cancel and refund from the product’s page.",
         "timezoneFixedHelsinki": "Times are in Europe/Helsinki. Parents see them converted to their local timezone automatically.",
         "holidayHint": "No session will run on any date from the selected calendars. Edit a calendar once and every product using it updates automatically.",
-        "billingHint": "Either way, events run without a seat limit for now.",
+        "billingHint": "Free products default to a seat limit; paid ones start unlimited.",
         "freeDetail": "No charge. Anyone can join with one click.",
         "paidDetail": "One-time charge at signup.",
         "paidByMunicipality": "No customer billing inside this system. School of Gaming invoices the municipality directly.",
         "pricingMonthly": "Charged every month while the subscription is active. Cancel anytime.",
         "pricingUpfront": "Charged once at signup. Same total no matter the duration.",
-        "seatHint": "When full, new signups go to the waitlist.",
-        "visibleHint": "Uncheck it while you’re still setting up, or to stop new sign-ups. It only hides the product from new parents — parents and gamers already enrolled still see it and their sessions on their My SOG page.",
+        "seatHintWaitlist": "When full, new signups go to the waitlist.",
+        "seatHintNoWaitlist": "When full, new signups are refused.",
+        "visibleHint": "Unchecked, the product appears on no public page — but anyone with the direct link can still open it and buy a place. That is what makes it right for unannounced, invite-only or campaign products. It is not a way to stop sign-ups, and it never affects parents and gamers already taking part.",
         "seatLimitHint": "Cap the number of gamers, or run with no limit.",
         "holidayComingSoon": "Holiday calendars are coming soon. For now, every scheduled session runs.",
         "startDateToday": "Locked to today’s date for now.",
@@ -469,6 +470,7 @@
         "materialUrlInvalid": "Lesson material URL must be a valid URL",
         "startDateRequired": "Start date is required",
         "endDateRequired": "End date is required",
+        "seatCountRequired": "Seat count is required",
         "seatCountInvalid": "Seat count must be a positive integer",
         "priceSessionMissing": "Enter a price per session in {currency}",
         "priceSessionNegative": "Price per session in {currency} can’t be negative",
@@ -486,7 +488,6 @@
         "createLabel": "Create {label}"
       },
       "status": {
-        "draft": "Draft",
         "pending": "Awaiting start",
         "running": "Running",
         "completed": "Completed",
@@ -632,6 +633,25 @@
           "title": "Waitlist",
           "subtitle": "Gamers waiting for a seat, numbered in the order they joined. Drag one into a group to give them a seat, or drop an active gamer here to send them to the back.",
           "empty": "No one is on the waitlist."
+        },
+        "seatsOverfilled": "{count} of {total} seats — {over} over",
+        "blockedMove": {
+          "acknowledge": "Got it",
+          "promoteUnpaid": {
+            "title": "This seat needs a subscription",
+            "description": "{name} is on the waitlist without a subscription, and a seat on this club is billed every month. Seating them now would enroll them for free.",
+            "nextStep": "Ask the family to take the seat themselves: while a seat is open the club shows as available in the shop, so they can leave the waitlist from their My SOG card and check out — which is what sets the subscription up."
+          },
+          "demoteSubscribed": {
+            "title": "The subscription is still live",
+            "description": "Moving {name} to the waitlist would leave a live subscription behind, still billing the family for a seat they no longer hold.",
+            "nextStep": "The family opens the billing card on their My SOG page, which takes them to Stripe's secure billing portal to cancel. Once the subscription ends, the seat is released."
+          },
+          "removeSubscribed": {
+            "title": "The subscription is still live",
+            "description": "Removing {name} would leave the family's subscription billing for a seat that no longer exists.",
+            "nextStep": "The family opens the billing card on their My SOG page, which takes them to Stripe's secure billing portal to cancel. Once the subscription ends, the seat is released."
+          }
         }
       },
       "seatLimitModes": {
@@ -779,9 +799,6 @@
       "group": "Group",
       "groupNumber": "Group {number}",
       "groupDeleted": "{label} (deleted)",
-      "hiddenNoGroups": "This product is hidden and has no groups. Add at least one group and make it visible for parents to see it.",
-      "hiddenWithGroups": "This product is hidden. Parents cannot see it in the catalogue. Toggle visibility from the Actions card above.",
-      "visibleNoGroups": "This product is visible but has no groups. Parents can see it but cannot enrol.",
       "gamerCount": "{count, plural, one {# gamer} other {# gamers}}",
       "genderBoy": "Boy",
       "genderGirl": "Girl",
@@ -1010,7 +1027,12 @@
       "positionLabel": "Your position",
       "positionValue": "#{position}",
       "next1": "We’ll email you the moment a seat opens.",
-      "next2": "{gamer} keeps their place in line for the whole term.",
+      "next2": {
+        "consumer_club": "{gamer} keeps their place in line for the whole term.",
+        "municipality_club": "{gamer} keeps their place in line for the whole term.",
+        "camp": "{gamer} keeps their place in line for the camp.",
+        "event": "{gamer} keeps their place in line for the event."
+      },
       "next3": "You can keep track of your waitlist spot anytime in My SOG."
     }
   },
@@ -1432,7 +1454,6 @@
       "free": "Free",
       "externalContract": "Funded by your municipality",
       "notAvailableInCurrency": "Not in {currency}",
-      "seatsCapacity": "{count, plural, one {# seat} other {# seats}}",
       "endedNote": "This one’s wrapped — keep an eye out for the next one.",
       "viewDetails": "View",
       "cardLink": "{action} — {name}",

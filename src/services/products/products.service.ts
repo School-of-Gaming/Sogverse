@@ -30,6 +30,12 @@ import { productIdResponse } from "./products.contracts";
 // "Foo, undefined" in the UI.
 // ---------------------------------------------------------------------------
 
+// The browse listing. `is_visible` is filtered HERE and nowhere in the database
+// — that is what the column means: listed on the public browse pages. An
+// unlisted product stays readable and purchasable through its own URL, so
+// dropping this filter would publish products that were deliberately kept off
+// the grid, and adding the same filter to a single-product read would break the
+// direct link the unlisted state exists for.
 function buildVisibleProductsQuery(
   supabase: AppSupabaseClient,
   types: ProductType[],
@@ -130,10 +136,10 @@ export type ProductDetailRow = ProductBrowseRow & {
 };
 
 // Admin-only single-product detail, inferred from buildAdminProductQuery
-// (`NonNullable` strips the `maybeSingle()` `| null`). Unlike ProductDetailRow
-// this is NOT filtered on is_visible / status, so admins can fetch drafts and
-// cancelled rows. Carries the IDs the form needs to round-trip an edit plus
-// readable strings (location chain, holiday calendar names).
+// (`NonNullable` strips the `maybeSingle()` `| null`). Unlike the browse row
+// this is NOT filtered on listing or status, so admins can fetch unlisted and
+// cancelled rows alike. Carries the IDs the form needs to round-trip an edit
+// plus readable strings (location chain, holiday calendar names).
 export type ProductAdminDetailRow = NonNullable<
   QueryData<ReturnType<typeof buildAdminProductQuery>>
 >;
@@ -257,10 +263,10 @@ export class ProductsService {
   // state. RLS already restricts anon/customer reads to the same predicate
   // (per redesign §5.8) — the explicit filters here are defensive and let
   // admins (who can see everything) call this same hook from the public
-  // pages without seeing draft/cancelled rows. Joins everything the browse
+  // pages without seeing cancelled rows. Joins everything the browse
   // card needs in one round trip.
   //
-  // The stored-status filter below keeps draft/cancelled/completed rows out,
+  // The stored-status filter below keeps cancelled/completed rows out,
   // but it can't catch a row stored as `running` whose `end_date` has already
   // passed — that product has finished and must not appear in the storefront.
   // There is no cron flipping stored status, so we make the call here in JS:
@@ -291,14 +297,13 @@ export class ProductsService {
   // flattened `holidays` array sourced from the linked holiday calendars —
   // that's everything the calendar widget and the signup panel need to render.
   //
-  // RLS is the sole gate: a viewer reaches this row if either
-  // `public_read_published_products` (visible + pending/running) OR
-  // `purchaser_read_products` (active/waitlisted participation owned
-  // by the viewer) lets them through. The detail page renders the
-  // marketing layout for the former and the purchased layout for the
-  // latter — both branches need the row, so no explicit `is_visible` /
-  // status filters here. Returns null on miss so the page can render a
-  // clean "not found" state.
+  // RLS is the sole gate: a viewer reaches this row if the product is in a
+  // published status (pending/running — listed or not, which is the point of
+  // the direct link) OR they hold an active/waitlisted participation on it.
+  // The detail page renders the marketing layout for the former and the
+  // purchased layout for the latter — both branches need the row, so there are
+  // deliberately no listing or status filters here. Returns null on miss so the
+  // page can render a clean "not found" state.
   async getDetailById(
     id: string,
   ): Promise<ProductDetailRow | null> {
@@ -349,11 +354,11 @@ export class ProductsService {
     return product_id;
   }
 
-  // Admin-only single-product fetch. Same join shape as getDetailById but
-  // WITHOUT the `is_visible = true` and `status IN (pending, running)`
-  // filters, so admins see drafts, hidden, and cancelled products too.
-  // Carries the IDs the form needs to round-trip an edit (tag_id,
-  // calendar_id) plus readable strings for the read-only details page.
+  // Admin-only single-product fetch. Same join shape as getDetailById, read
+  // through the admin branch of the product read predicate, so an admin sees
+  // every row — unlisted, cancelled and completed included. Carries the IDs the
+  // form needs to round-trip an edit (tag_id, calendar_id) plus readable
+  // strings for the read-only details page.
   async getByIdForAdmin(
     id: string,
   ): Promise<ProductAdminDetailRow | null> {

@@ -4,10 +4,13 @@ import { DELETE } from "@/app/api/admin/products/[id]/participations/[participat
 import { getBoolean, getString } from "../../helpers/json";
 
 // The admin remove-gamer route is now one call: `admin_remove_participation` on
-// the USER-bound client. The product-membership check, the consumer_club gate
-// and the live-subscription refusal moved into that RPC — where the last of them
-// finally shares a transaction with the delete instead of racing it. What this
-// file covers is the handler's remaining job: the role check and the mapping
+// the USER-bound client. The product-membership check and the live-subscription
+// refusal live in that RPC — where the latter finally shares a transaction with
+// the delete instead of racing it. (A consumer-club gate sat beside them until
+// clubs became free-or-paid; the live-sub refusal is what it was standing in
+// for, and it covers every type — which is also why that refusal answers 400
+// rather than the 500 it carried while the type gate kept it unreachable.) What
+// this file covers is the handler's remaining job: the role check and the mapping
 // from SQLSTATE to HTTP status. The rules themselves are covered against a real
 // database in tests/db/admin-participation-rpcs.test.ts.
 
@@ -111,25 +114,41 @@ describe("DELETE /api/admin/products/[id]/participations/[participationId]", () 
     expect(error).toBe("Not found");
   });
 
-  it("rejects consumer_club products (removal goes through Stripe, not here)", async () => {
+  it("maps a check violation to the shared table's generic 400", async () => {
+    // This used to be the consumer-club refusal, with copy of its own. That
+    // refusal is gone from the RPC: without admin removal a *free* club has no
+    // exit at all, and a hard-capped one could never free a seat. What is left
+    // for 23514 is any other check the RPC's delegate might trip, which has no
+    // admin-facing story — so it gets the generic message.
     mockAuthenticatedAdmin();
-    rpcFails("23514", "admin removal is not supported for consumer clubs");
+    rpcFails("23514", "some check the admin never asked about");
     const response = await DELETE(createRequest(), { params });
     expect(response.status).toBe(400);
     const error = getString(await response.json(), "error");
-    expect(error).toContain("consumer club");
+    expect(error).toBe("Invalid request");
   });
 
-  it("refuses (500) when a live Stripe subscription is still linked", async () => {
+  it("refuses (400) when a live Stripe subscription is still linked", async () => {
     // Money-path guard: deleting would CASCADE-orphan the subscription, billing
-    // the customer forever. Unreachable under current invariants, but must fail
-    // loud rather than silently delete if it ever happens.
+    // the customer forever.
+    //
+    // 400, not 500, and the change of status is the point. This was justified
+    // as an unreachable broken invariant while a product-type check refused
+    // every consumer club before the subscription was ever consulted. With that
+    // check gone, any admin reaches it by dragging a subscribed member onto the
+    // panel's remove zone — on a paid club, or on one flipped to free whose
+    // existing members keep their subscriptions. It is an ordinary refusal of a
+    // legitimate request, which is what the PATCH handler already answers for
+    // the identical SQLSTATE, so the two now agree.
     mockAuthenticatedAdmin();
     rpcFails("55000", "participation still has live Stripe subscription sub_123");
     const response = await DELETE(createRequest(), { params });
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(400);
+    // The handler's own copy, not the shared table's generic 400 message: it is
+    // the one refusal here that tells the admin what to do next.
     const error = getString(await response.json(), "error");
     expect(error).toContain("live Stripe subscription");
+    expect(error).toContain("Cancel the subscription first");
   });
 
   it("returns a logged 500 for an unrecognized RPC error code", async () => {

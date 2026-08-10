@@ -24,8 +24,10 @@ interface WaitlistCardProps {
  *  - drag a chip OUT to a group / the unassigned inbox → promote (seat them), or
  *    to the header's remove zone → cancel them off the product entirely;
  *  - drop an active gamer ONTO this card → demote them to the back of the line.
- * This whole section is only rendered for product types that use a waitlist
- * (not consumer clubs), so every chip shown here is genuinely draggable.
+ * This whole section is only rendered for a product that opens a waitlist (any
+ * type, any billing), so every chip shown here is genuinely draggable. Whether
+ * a given drag is *allowed* is the panel's call: promoting a waitlister who
+ * never paid onto a paid product is refused with an explanation.
  */
 export function WaitlistCard({
   participations,

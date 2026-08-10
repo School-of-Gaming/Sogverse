@@ -1,11 +1,17 @@
 # Supabase clients & the paged-read discipline
 
-This directory holds the three Supabase client factories — browser (singleton), server
+This directory holds the Supabase client factories — browser (singleton), server
 component, and the privileged service-role one — plus the shared paging primitive every
-list read that can outgrow a single response goes through. The client factories are
-described in the root `CLAUDE.md`; this file is about the paging rules, which are
+list read that can outgrow a single response goes through. The factories are described in
+the root `CLAUDE.md`; the rest of this file is about the paging rules, which are
 normative for every service in the codebase and not only the ones that happen to page
 today.
+
+(A cookie-free anon factory existed briefly in August 2026 for visibility-conditional
+robots metadata and was deleted when that policy became an unconditional static noindex —
+if a genuinely identity-free server read ever returns, that shape is in the git history,
+along with the caveat that it buys no caching while the root layout reads the session on
+every request.)
 
 ## The problem paging exists to solve
 

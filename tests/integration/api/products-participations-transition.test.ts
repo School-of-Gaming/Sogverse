@@ -10,8 +10,15 @@ import { asString } from "../../helpers/json";
 //
 // The rules themselves live in the RPCs and are covered against a real database
 // in tests/db/. What this file covers is the handler's own job: the role gate,
-// the IDOR guard that ties the participation to THIS product, the consumer-club
-// refusal, and the mapping from SQLSTATE to HTTP status.
+// the IDOR guard that ties the participation to THIS product, and the mapping
+// from SQLSTATE to HTTP status.
+//
+// The refusal this route carries changed shape: it used to read the product's
+// type and block every consumer club, which would have wrongly blocked free
+// clubs the moment clubs became free-or-paid. It is now the DB's own
+// per-participation answer — demotion is refused when the seat carries a live
+// Stripe subscription — so the tests below drive it through the RPC's error
+// rather than through the product row.
 
 const mockRequireRole = vi.fn();
 vi.mock("@/lib/auth", () => ({
@@ -83,8 +90,10 @@ describe("PATCH /api/admin/products/[id]/participations/[participationId]", () =
       data: { id: PARTICIPATION_ID, product_id: PRODUCT_ID },
       error: null,
     });
+    // The product is read only so a URL naming a missing product 404s; nothing
+    // branches on its columns any more.
     mockProductRead.mockResolvedValue({
-      data: { product_type: "camp" },
+      data: { id: PRODUCT_ID },
       error: null,
     });
     mockRpc.mockResolvedValue({
@@ -201,22 +210,49 @@ describe("PATCH /api/admin/products/[id]/participations/[participationId]", () =
     expect(mockRpc).not.toHaveBeenCalled();
   });
 
-  // -- Consumer-club gate --
+  // -- The live-subscription demote refusal --
 
-  it("refuses a consumer club, where promote/demote would break billing", async () => {
-    // Promotion would mean an unbilled active seat; demotion would strand a
-    // paying subscriber on the waitlist. Symmetric with the add/remove gate.
+  it("refuses a demote that would strand a live Stripe subscription", async () => {
+    // The refusal that replaced the consumer-club gate, and it is keyed to the
+    // participation rather than the type: a waitlisted row can be deleted by
+    // the parent, CASCADEing family_subscriptions and orphaning a sub that
+    // keeps billing. The copy has to say what to do next, so it is the
+    // handler's, not the shared table's generic 400.
+    mockAuthenticatedAdmin();
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: {
+        code: "55000",
+        message: "participation still has live Stripe subscription sub_123",
+      },
+    });
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const response = await PATCH(patchRequest(demote), { params });
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).error).toContain("live Stripe subscription");
+    spy.mockRestore();
+  });
+
+  it("promotes on a consumer club, which the old type gate refused outright", async () => {
+    // A consumer club is exactly the row the removed gate blocked, and a *free*
+    // one has no billing to break. The product read is deliberately fed the
+    // type here so a reintroduced `product_type === "consumer_club"` branch
+    // fails this test rather than passing it by absence.
     mockAuthenticatedAdmin();
     mockProductRead.mockResolvedValue({
-      data: { product_type: "consumer_club" },
+      data: { id: PRODUCT_ID, product_type: "consumer_club" },
       error: null,
     });
 
     const response = await PATCH(patchRequest(promote), { params });
 
-    expect(response.status).toBe(400);
-    expect((await response.json()).error).toContain("consumer clubs");
-    expect(mockRpc).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    expect(mockRpc).toHaveBeenCalledWith("promote_from_waitlist", {
+      p_participation_id: PARTICIPATION_ID,
+      p_group_id: GROUP_ID,
+    });
   });
 
   // -- Happy paths --

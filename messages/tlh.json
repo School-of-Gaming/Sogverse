@@ -239,7 +239,7 @@
         "empty": "{plural} pagh. {label} chu’ yIchu’.",
         "ageRange": "{min}–{max} DIS",
         "seats": "{count} pa’",
-        "hidden": "So’lu’",
+        "unlisted": "tetlhDaq pagh",
         "untitled": "(pong pagh)",
         "missingGeduFee": "Gedu Huch Hutlh",
         "missingMunicipalityFee": "veng Huch Hutlh",
@@ -266,8 +266,8 @@
         "notFound": "Davchugh ghaj.",
         "locationMissing": "—",
         "uncapped": "quS veH pagh",
-        "visible": "vavpu’ Daleghbej",
-        "hidden": "vavpu’ SoQ",
+        "listed": "tetlhDaq tu’lu’",
+        "unlisted": "tetlhDaq pagh — He nIH neH",
         "waitlistOn": "loS DIS naQ",
         "minutes": "{count} tup",
         "perMonth": "{amount} / jar",
@@ -335,8 +335,8 @@
         },
         "registration": "ghItlh poH",
         "registrationDescription": "ghItlh tagh poH yIwIv.",
-        "visibility": "leghlu’",
-        "visibilityDescription": "Doch luleghlaH vavpu’ ’e’ yIqotlh. ghoStaHbogh nuvpu’ My SOG HaqwI’chajDaq luleghtaH — luQaHbe’."
+        "visibility": "tetlh",
+        "visibilityDescription": "Doch DaQIjbogh Daq wIv, ’ach ’Iv je’laH ’e’ wIvbe’. ghItlh poH, pa’ mI’, Doch Dotlh je — bIH neH poSmoH ’ej SoQmoH."
       },
       "labels": {
         "name": "pong",
@@ -370,7 +370,7 @@
         "seatCount": "pa’ mI’",
         "waitlistToggle": "pa’ tebDI’, tetlh teb yIchu’",
         "signupThreshold": "ghItlh mI’ taghmeH",
-        "makeVisible": "vavpu’vaD Doch yI’ang",
+        "makeVisible": "ngevwI’ tetlh veng ghomHommey tetlh je Doch yIchel",
         "seatLimit": "pa’ mI’ Sub"
       },
       "placeholders": {
@@ -488,14 +488,15 @@
         "thresholdWithDate": "jaj taghDaq ghItlh law’ pumchugh, De’ Daq tlhotlh ’ej Huch chegh.",
         "timezoneFixedHelsinki": "poHmey Europe/Helsinki Daq. vavmey Daq poHchaj choHlu’.",
         "holidayHint": "jajmey Do’ qaStaHvIS pagh qaS. wa’ jajmey Do’ DachoHchugh, Hoch ghor De’.",
-        "billingHint": "nuq DawIv ’e’ vISaHbe’ — DaH pa’ mI’ Sub ghajbe’ Qu’mey.",
+        "billingHint": "Huch Hutlhbogh Dochmey: pa’ mI’ Sub ghaj. Huch ghajbogh Dochmey: Sub Hutlh.",
         "freeDetail": "Huch pagh. Hoch wa’ chu’wI’ lo’.",
         "paidDetail": "ghItlh wa’ Huch.",
         "paidByMunicipality": "QumDaq vavmey Huch pagh. School of Gaming veng nIDqu’.",
         "pricingMonthly": "jar Hoch Huch lo’ qaStaHvIS rar yoH. DaH yIqIl ’e’ DaneHchugh, yIqIl.",
         "pricingUpfront": "ghItlh wa’ Huch lo’. poH nab Sov pagh, Huch rapchu’.",
-        "seatHint": "tebDI’, ghItlh chu’mey tetlh teb Daq jaH.",
-        "visibleHint": "DochlIj DachenmoHtaHvIS, ghap ghItlh chu’ DamevmeH, yIchu’Ha’. vav chu’vo’ neH Doch So’ — ghoStaHbogh vavpu’ QujwI’pu’ je Doch Qu’chaj je My SOG HaqwI’chajDaq luleghtaH.",
+        "seatHintWaitlist": "tebDI’, ghItlh chu’mey tetlh teb Daq jaH.",
+        "seatHintNoWaitlist": "tebDI’, ghItlh chu’mey lajQo’lu’.",
+        "visibleHint": "yIchu’Ha’chugh, pagh tetlhDaq Doch tu’lu’ — ’ach He nIH ghajbogh nuv Doch legh ’ej pa’ je’laH. vaj ’angbe’lu’bogh Doch, ri’bogh Doch, ghap tlhIngan may’ Doch DaSuqmeH QaQ. ghItlh chu’ DamevmeH mIw ghaHbe’, ’ej ghoStaHbogh vavpu’ QujwI’pu’ je luQaHbe’.",
         "seatLimitHint": "pa’ mI’ yIgheS pagh Sub Hutlh yIqaw.",
         "holidayComingSoon": "jaj Do’ De’wI’ tugh chol. DaH Hoch ghum qaS.",
         "startDateToday": "DaHjaj Daq poSmoHlu’pu’.",
@@ -514,6 +515,7 @@
         "materialUrlInvalid": "ghojmoHmeH De’ URL val ’oHnIS",
         "startDateRequired": "jaj tagh poQ",
         "endDateRequired": "jaj van poQ",
+        "seatCountRequired": "pa’ mI’ poQ",
         "seatCountInvalid": "pa’ mI’ positiv ’oHnIS",
         "priceSessionMissing": "{currency} per qaStaHvIS Huch yIqon",
         "priceSessionNegative": "{currency} per qaStaHvIS Huch nIQbe’ net poQ",
@@ -531,7 +533,6 @@
         "createLabel": "{label} yIchu’"
       },
       "status": {
-        "draft": "chu’Ha’",
         "pending": "taghbe’",
         "running": "qaS",
         "completed": "rIn",
@@ -677,6 +678,25 @@
           "title": "loSwI’pu’",
           "subtitle": "pa’ loStaH SuvwI’pu’, ’el poHchaj mI’lu’. ghommeHghaj wa’ yIngeH ’ej pa’ yInob; pagh naDev SuvwI’ Sang yIqep, tlha’Daq yIlan.",
           "empty": "pagh loSwI’pu’ tu’lu’."
+        },
+        "seatsOverfilled": "{count} / {total} pa’ – {over} tlhoy law’",
+        "blockedMove": {
+          "acknowledge": "jIyaj",
+          "promoteUnpaid": {
+            "title": "Huch nge’ghach poQ pa’vam",
+            "description": "loSwI’pu’ tetlhDaq {name} tu’lu’, ’ach Huch nge’ghach ghajbe’. Hoch jarmey Huch poQ ngoptlhInvam pa’. DaH pa’ Danobchugh, Huch Hutlh ’el — batlh ghajbe’ vay’.",
+            "nextStep": "qorDu’vaD yIja’: pa’ tlhab tu’lu’chugh, malja’Daq poSqu’ ngoptlhIn. vaj jIH SOG ngoptlhInDaj lo’, loSwI’pu’ tetlhvo’ mej, ’ej batlh DIl — DIltaHvIS chen Huch nge’ghachDaj."
+          },
+          "demoteSubscribed": {
+            "title": "taHtaH Huch nge’ghach",
+            "description": "loSwI’pu’ tetlhDaq {name} DalanDI’, taHtaH Huch nge’ghach: pa’ Hutlh qorDu’, ’ach Huch nge’taH. quvHa’ghach ’oH!",
+            "nextStep": "jIH SOG yaHDaj Huch ngoptlhIn poSmoH qorDu’; vaj Hubbogh Stripe Huch pa’Daq nge’ghach chIl. chIlDI’, tlhab pa’."
+          },
+          "removeSubscribed": {
+            "title": "taHtaH Huch nge’ghach",
+            "description": "{name} Dateqchugh, ngab pa’ ’ach taHtaH Huch nge’ghach: pa’ Hutlhbogh qorDu’vo’ Huch nge’taH. quvHa’ghach ’oH!",
+            "nextStep": "jIH SOG yaHDaj Huch ngoptlhIn poSmoH qorDu’; vaj Hubbogh Stripe Huch pa’Daq nge’ghach chIl. chIlDI’, tlhab pa’."
+          }
         }
       },
       "seatLimitModes": {
@@ -824,9 +844,6 @@
       "group": "ghom’a’",
       "groupNumber": "ghom’a’ {number}",
       "groupDeleted": "{label} (HoHlu’)",
-      "hiddenNoGroups": "De’vam peghHa’ — ghom’a’mey tu’be’lu’. wa’ ghom’a’ yIchel — vav/SoSmey legh.",
-      "hiddenWithGroups": "De’vam peghHa’. vav/SoSmey leghbe’. boch choHmoH tlhopmey HoSna’.",
-      "visibleNoGroups": "De’vam leghlu’ — ghom’a’mey tu’be’lu’. vav/SoSmey legh — qo’ ghoHbe’laH.",
       "gamerCount": "{count, plural, one {# toy’wI’} other {# toy’wI’pu’}}",
       "genderBoy": "loD",
       "genderGirl": "be’",
@@ -1055,7 +1072,12 @@
       "positionLabel": "DaqlIj",
       "positionValue": "{position}DIch",
       "next1": "quS poSDI’, QInHom wIngeH.",
-      "next2": "DIS naQ tetlhDaq {gamer} Daq qaD.",
+      "next2": {
+        "consumer_club": "DIS naQ tetlhDaq {gamer} Daq qaD.",
+        "municipality_club": "DIS naQ tetlhDaq {gamer} Daq qaD.",
+        "camp": "ragh naQ tetlhDaq {gamer} Daq qaD.",
+        "event": "wanI’ tetlhDaq {gamer} Daq qaD."
+      },
       "next3": "reH My SOG-Daq loS DaqlIj DaleghlaH."
     }
   },
@@ -1477,7 +1499,6 @@
       "free": "Huch Hutlh",
       "externalContract": "yejquv DIl",
       "notAvailableInCurrency": "{currency} ghajbe’",
-      "seatsCapacity": "{count, plural, one {# quS} other {# quS}}",
       "endedNote": "rInpu’ – veb yIloS.",
       "viewDetails": "yIlegh",
       "cardLink": "{action} — {name}",

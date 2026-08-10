@@ -194,7 +194,7 @@
         "empty": "Pas encore de {plural}. Cliquez sur « Ajouter un {label} » pour en créer un.",
         "ageRange": "{min}–{max} ans",
         "seats": "{count} places",
-        "hidden": "masqué",
+        "unlisted": "hors catalogue",
         "untitled": "(sans titre)",
         "missingGeduFee": "Rémunération Gedu manquante",
         "missingMunicipalityFee": "Montant commune manquant",
@@ -221,8 +221,8 @@
         "notFound": "Produit introuvable.",
         "locationMissing": "—",
         "uncapped": "Aucune limite de places",
-        "visible": "Visible par les parents",
-        "hidden": "Masqué aux parents",
+        "listed": "Répertorié publiquement",
+        "unlisted": "Hors catalogue — lien direct uniquement",
         "waitlistOn": "liste d’attente activée",
         "minutes": "{count} min",
         "perMonth": "{amount} / mois",
@@ -290,8 +290,8 @@
         },
         "registration": "Ouverture des inscriptions",
         "registrationDescription": "Choisissez à partir de quand les parents peuvent s’inscrire.",
-        "visibility": "Visibilité",
-        "visibilityDescription": "Décidez si les parents peuvent trouver et consulter ce produit. Toute personne déjà inscrite le conserve sur sa page Mon SOG — cela ne l’affecte jamais."
+        "visibility": "Catalogue",
+        "visibilityDescription": "Détermine où ce produit est mis en avant, pas qui peut l’acheter. Les inscriptions s’ouvrent et se ferment selon la date d’ouverture, le nombre de places et le statut du produit — jamais selon ce réglage."
       },
       "labels": {
         "name": "Nom",
@@ -325,7 +325,7 @@
         "seatCount": "Nombre de places",
         "waitlistToggle": "Activer la liste d’attente quand les places sont complètes",
         "signupThreshold": "Inscriptions nécessaires pour démarrer",
-        "makeVisible": "Rendre ce produit visible par les parents",
+        "makeVisible": "Répertorier ce produit sur les pages Boutique et Clubs municipaux",
         "seatLimit": "Limite de places"
       },
       "placeholders": {
@@ -443,14 +443,15 @@
         "thresholdWithDate": "Si moins de parents que ce nombre se sont inscrits à la date de début, vous devrez annuler et rembourser depuis la page du produit.",
         "timezoneFixedHelsinki": "Les horaires sont exprimés en heure Europe/Helsinki. Les parents les voient automatiquement convertis dans leur fuseau horaire.",
         "holidayHint": "Aucune session n’aura lieu aux dates issues des calendriers sélectionnés. Modifiez un calendrier une fois et tous les produits qui l’utilisent se mettent à jour automatiquement.",
-        "billingHint": "Quel que soit le choix, les événements fonctionnent sans limite de places pour l’instant.",
+        "billingHint": "Les produits gratuits ont une limite de places par défaut ; les produits payants démarrent sans limite.",
         "freeDetail": "Aucun frais. Tout le monde peut participer en un clic.",
         "paidDetail": "Paiement unique à l’inscription.",
         "paidByMunicipality": "Aucune facturation client dans ce système. School of Gaming facture directement la commune.",
         "pricingMonthly": "Prélevé chaque mois tant que l’abonnement est actif. Résiliable à tout moment.",
         "pricingUpfront": "Prélevé une seule fois à l’inscription. Même montant total quelle que soit la durée.",
-        "seatHint": "Une fois complet, les nouvelles inscriptions passent en liste d’attente.",
-        "visibleHint": "Décochez pendant que vous préparez encore le produit, ou pour arrêter les nouvelles inscriptions. Cela ne masque le produit qu’aux nouveaux parents — les parents et les joueurs déjà inscrits continuent de le voir, ainsi que leurs sessions, sur leur page Mon SOG.",
+        "seatHintWaitlist": "Une fois complet, les nouvelles inscriptions passent en liste d’attente.",
+        "seatHintNoWaitlist": "Une fois complet, les nouvelles inscriptions sont refusées.",
+        "visibleHint": "Sans la case cochée, le produit n’apparaît sur aucune page publique, mais toute personne disposant du lien direct peut l’ouvrir et acheter une place. C’est précisément ce qui le rend adapté aux produits non annoncés, réservés sur invitation ou liés à une campagne. Ce n’est pas un moyen d’arrêter les inscriptions, et cela n’affecte jamais les parents et les joueurs déjà inscrits.",
         "seatLimitHint": "Plafonnez le nombre de joueurs, ou fonctionnez sans limite.",
         "holidayComingSoon": "Les calendriers de vacances arrivent bientôt. Pour l’instant, toutes les sessions programmées ont lieu.",
         "startDateToday": "Verrouillée sur la date du jour pour le moment.",
@@ -469,6 +470,7 @@
         "materialUrlInvalid": "L’URL du matériel pédagogique doit être une URL valide",
         "startDateRequired": "La date de début est obligatoire",
         "endDateRequired": "La date de fin est obligatoire",
+        "seatCountRequired": "Le nombre de places est obligatoire",
         "seatCountInvalid": "Le nombre de places doit être un entier positif",
         "priceSessionMissing": "Saisissez un prix par session en {currency}",
         "priceSessionNegative": "Le prix par session en {currency} ne peut pas être négatif",
@@ -486,7 +488,6 @@
         "createLabel": "Créer un {label}"
       },
       "status": {
-        "draft": "Brouillon",
         "pending": "En attente de démarrage",
         "running": "En cours",
         "completed": "Terminé",
@@ -632,6 +633,25 @@
           "title": "Liste d’attente",
           "subtitle": "Joueurs en attente d’une place, numérotés dans leur ordre d’arrivée. Faites-en glisser un dans un groupe pour lui donner une place, ou déposez ici un joueur actif pour l’envoyer en fin de liste.",
           "empty": "Personne n’est sur la liste d’attente."
+        },
+        "seatsOverfilled": "{count} places sur {total} – {over} en trop",
+        "blockedMove": {
+          "acknowledge": "Compris",
+          "promoteUnpaid": {
+            "title": "Cette place nécessite un abonnement",
+            "description": "{name} est sur la liste d’attente sans abonnement, et une place dans ce club est facturée chaque mois. Lui donner une place maintenant l’inscrirait gratuitement.",
+            "nextStep": "Demandez plutôt à la famille de prendre la place elle-même : tant qu’une place est libre, le club s’affiche comme ouvert dans la boutique, la famille peut donc quitter la liste d’attente depuis sa carte sur Mon SOG et passer en caisse — c’est là que l’abonnement est créé."
+          },
+          "demoteSubscribed": {
+            "title": "L’abonnement est toujours actif",
+            "description": "Déplacer {name} vers la liste d’attente laisserait un abonnement actif qui continuerait à facturer la famille pour une place qu’elle n’a plus.",
+            "nextStep": "La famille ouvre la carte de facturation sur Mon SOG, qui la conduit au portail de facturation sécurisé de Stripe pour résilier. La place se libère dès la fin de l’abonnement."
+          },
+          "removeSubscribed": {
+            "title": "L’abonnement est toujours actif",
+            "description": "Retirer {name} laisserait l’abonnement de la famille facturer une place qui n’existe plus.",
+            "nextStep": "La famille ouvre la carte de facturation sur Mon SOG, qui la conduit au portail de facturation sécurisé de Stripe pour résilier. La place se libère dès la fin de l’abonnement."
+          }
         }
       },
       "seatLimitModes": {
@@ -779,9 +799,6 @@
       "group": "Groupe",
       "groupNumber": "Groupe {number}",
       "groupDeleted": "{label} (supprimé)",
-      "hiddenNoGroups": "Ce produit est masqué et n’a aucun groupe. Ajoutez au moins un groupe et rendez-le visible pour que les parents puissent le voir.",
-      "hiddenWithGroups": "Ce produit est masqué. Les parents ne peuvent pas le voir dans le catalogue. Modifiez la visibilité depuis la carte Actions ci-dessus.",
-      "visibleNoGroups": "Ce produit est visible mais n’a aucun groupe. Les parents peuvent le voir mais ne peuvent pas s’y inscrire.",
       "gamerCount": "{count, plural, one {# joueur} other {# joueurs}}",
       "genderBoy": "Garçon",
       "genderGirl": "Fille",
@@ -1010,7 +1027,12 @@
       "positionLabel": "Votre position",
       "positionValue": "n° {position}",
       "next1": "Nous vous enverrons un e-mail dès qu’une place se libère.",
-      "next2": "{gamer} conserve sa place dans la file pendant toute la période.",
+      "next2": {
+        "consumer_club": "{gamer} conserve sa place dans la file pendant toute la période.",
+        "municipality_club": "{gamer} conserve sa place dans la file pendant toute la période.",
+        "camp": "{gamer} conserve sa place dans la file pendant toute la durée du camp.",
+        "event": "{gamer} conserve sa place dans la file jusqu’à l’événement."
+      },
       "next3": "Vous pouvez suivre votre place en liste d’attente à tout moment dans Mon SOG."
     }
   },
@@ -1432,7 +1454,6 @@
       "free": "Gratuit",
       "externalContract": "Financé par votre commune",
       "notAvailableInCurrency": "Pas en {currency}",
-      "seatsCapacity": "{count, plural, one {# place} other {# places}}",
       "endedNote": "Celui-ci est terminé — le prochain arrive bientôt !",
       "viewDetails": "Voir",
       "cardLink": "{action} — {name}",

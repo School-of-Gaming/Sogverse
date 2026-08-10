@@ -28,6 +28,7 @@ import {
   effectivePricingShape,
   FIXED_TIMEZONE,
   locationPickerMode,
+  offersUncapped,
   startModeUsesDate,
   startModeUsesThreshold,
   type FormState,
@@ -57,6 +58,7 @@ export type ValidationKey =
   | "startDateRequired"
   | "endDateRequired"
   | "thresholdInvalid"
+  | "seatCountRequired"
   | "seatCountInvalid"
   | "priceSessionMissing"
   | "priceSessionNegative"
@@ -179,9 +181,15 @@ export function validate(
 
   const billingMode = effectiveBillingMode(config, state.paidMode);
 
-  // Any product type may be uncapped (seat_count = null); only validate the
-  // count when the admin chose a limited number of seats.
+  // A cap is optional everywhere but municipality clubs, so the count is only
+  // validated once the admin is capped — but *once capped it is required*, and
+  // a blank box gets its own message. "Seat count must be a positive integer"
+  // is the wrong sentence for an empty field: nothing was typed, so nothing is
+  // wrong with what was typed. Municipality clubs are always capped (their
+  // `uncapped` is pinned false on load), which is what makes a stored uncapped
+  // muni row demand a number on its next save.
   if (!state.uncapped) {
+    if (state.seatCount.trim() === "") return err("seatCountRequired");
     const seat = Number(state.seatCount);
     if (!Number.isInteger(seat) || seat < 1) return err("seatCountInvalid");
   }
@@ -363,6 +371,14 @@ function buildSharedFields(
   // before this rule, or the column's own default) is corrected by the next
   // save of anything at all. The state flag is deliberately left alone, so an
   // admin toggling Unlimited and back finds their tick still there.
+  //
+  // What sending `false` here does, server-side: `update_product` DELETES every
+  // waitlisted participation on the product (00171), sparing only a row that
+  // carries a live subscription. Silently — no confirmation, no email — by
+  // owner decision, on the reasoning that the same edit opens seats, so a
+  // dropped family can sign up again through the front door. Both branches of
+  // this line reach it: unticking the box and choosing Unlimited are one wire
+  // shape by the time the RPC sees them.
   const seat = state.uncapped ? null : Number(state.seatCount);
   const waitlist = state.uncapped ? false : state.waitlistEnabled;
 
@@ -471,11 +487,14 @@ function buildSharedFields(
 /**
  * Build the request payload for /api/admin/products/create.
  *
- * The form always creates products as `pending` regardless of visibility.
- * `is_visible` is the sole knob the form exposes for "should parents see
- * this?". `draft` is reserved in the schema for a future "save incomplete
- * product" flow — it means *fields are missing*, not *hidden*. See
- * docs/products-architecture.md § "Status vs. visibility".
+ * The form always creates products as `pending` — the first state of the
+ * lifecycle, and the only one a product can be created in. `is_visible` is a
+ * separate axis and answers a narrower question than its name suggests: it
+ * decides whether the product is *listed* on the shop and schools pages, not
+ * whether anyone may see or buy it. An unlisted product is reachable, readable
+ * and purchasable by direct link, which is what makes it usable for a campaign
+ * or an unannounced cohort. See docs/products-architecture.md § "Lifecycle &
+ * listing".
  */
 export function buildCreateInput(
   state: FormState,
@@ -700,7 +719,11 @@ export function existingFormState(
     paidMode,
     prices,
     seatCount: product.seat_count != null ? String(product.seat_count) : "",
-    uncapped: product.seat_count == null,
+    // Municipality clubs have no uncapped option, so a stored `seat_count null`
+    // on one loads as capped-with-a-blank-number rather than as a state the
+    // form cannot show. Validation then refuses the save until the contracted
+    // figure is typed — the heal-on-write the cap requirement is delivered by.
+    uncapped: offersUncapped(config) && product.seat_count == null,
     waitlistEnabled: product.waitlist_enabled,
     primaryGeduFee: primaryGeduFeeDraft(product.primary_gedu_fee_cents),
     assistantGeduFee: assistantGeduFeeDraft(product.assistant_gedu_fee_cents),

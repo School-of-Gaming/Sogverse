@@ -15,25 +15,32 @@ import { TEST_IDS } from "./constants";
  *
  * Allocation registry — keep this current when adding a v2 db test. The
  * suffix is the last byte of the UUID (`...0000000005XX`):
- *   5a1–5a3        exposed-function-scope.test.ts (5a3 is its product_groups id)
+ *   5a1–5a3, 5aa   exposed-function-scope.test.ts (5a3 is its product_groups
+ *                  id; 5aa is its unlisted-but-published product)
  *   5a4–5a9        write-idor.test.ts (5a4 is the product; 5a5–5a9 are the
  *                  group / zone / calendar / holiday / slot fixtures it seeds)
- *   5b1–5b5        participations-race.test.ts
+ *   5b1–5b5        participations-race.test.ts (5b2 is its soft-cap product)
  *   5b6–5b7        participations-rls.test.ts
  *   5b8–5b9        participations-external.test.ts
  *   5c1            product-seat-counts-trigger.test.ts
  *   5c2            cancel-participation.test.ts
  *   5c3–5c6        get-my-participation-subscription-states.test.ts
  *   5c7            waitlist-admin.test.ts (its muni product; see also 5f6)
- *   5c8–5c9        admin-participation-rpcs.test.ts
+ *   5c8–5ca        admin-participation-rpcs.test.ts (5ca is its free club)
  *   5d1–5da        session-credits-cron.test.ts
  *   5e1–5e4        products-gamer-rls.test.ts
  *   5e5–5e8        products-purchaser-rls.test.ts
- *   5f1, 5f2, 5ff  update-product.test.ts
+ *   5f1, 5f2, 5f7, 5f8, 5ff
+ *                  update-product.test.ts (5f7 is the product its 00171
+ *                  waitlist-deletion cases seed participations on, kept apart
+ *                  from 5f1 so the wipe-and-replace cases never see them;
+ *                  5f8 is the decoy whose queue pins the delete's product
+ *                  scoping)
  *   5f3            product-translations-trigger.test.ts
  *   5f4, 5f5       waitlist-self-service.test.ts
- *   5f6            waitlist-admin.test.ts (its consumer_club product, for the
- *                  demote refusal; the file's muni product is 5c7)
+ *   5f6            waitlist-admin.test.ts (its FREE consumer_club product, for
+ *                  the demote that 00132's type rule wrongly refused; the
+ *                  file's muni product is 5c7)
  *
  * The 5xx block has no tidy sub-range left below 5ff, so allocation continues
  * in 6xx (`...0000000006XX`):
@@ -142,16 +149,37 @@ export async function createScheduleSlot(
 }
 
 /**
- * Hard-deletes v2 products by id. CASCADE removes participations,
- * schedule slots, holiday-calendar links, prices, groups, the seat-count
- * rollup row, etc. Use in afterAll.
+ * Hard-deletes v2 products by id, participations first. Every FK from
+ * products cascades, but the AFTER DELETE trigger on participations
+ * re-inserts a product_seat_counts row for the product mid-cascade —
+ * which violates its FK once the product row is gone and aborts the
+ * whole delete. Deleting participations as their own statement lets the
+ * trigger run while the product still exists (family_subscriptions
+ * cascade from participations, so they go too). Errors throw: a cleanup
+ * that silently fails leaves the id occupied, and the next
+ * createTestProduct in the same CI run dies on a duplicate key with no
+ * hint of why.
  */
 export async function deleteTestProducts(
   admin: SupabaseClient<Database>,
   productIds: string[],
 ): Promise<void> {
   if (productIds.length === 0) return;
-  await admin.from("products").delete().in("id", productIds);
+  const participations = await admin
+    .from("participations")
+    .delete()
+    .in("product_id", productIds);
+  if (participations.error) {
+    throw new Error(
+      `deleteTestProducts (participations) failed: ${participations.error.message}`,
+    );
+  }
+  const products = await admin.from("products").delete().in("id", productIds);
+  if (products.error) {
+    throw new Error(
+      `deleteTestProducts (products) failed: ${products.error.message}`,
+    );
+  }
 }
 
 /**

@@ -20,16 +20,23 @@ import type {
 //
 // The set is curated down to the *visually distinct* surfaces worth eyeballing,
 // grouped by product type:
-//   • Consumer club — a subscription club, open, and one still short of its
-//     signup threshold.
+//   • Consumer club — a subscription club, open; a free one (billing is a
+//     per-product choice on every type now); one full behind a waitlist; and
+//     one capped club still short of its signup threshold.
 //   • Municipality club — the full seat-fill range, plus the pre-launch
-//     countdown across the three auth states a parent can be in.
-//   • Camp — one not yet started, one underway, and one finished. Camps and
-//     events lock late joins at different moments (a camp from local midnight
-//     on its start date, an event only once its session has finished) and say
-//     so differently — "Already started" vs. "Already over" — so both labels
-//     need somewhere to be looked at.
+//     countdown across the three auth states a parent can be in, one of them
+//     with places already comped away.
+//   • Camp — one not yet started, one full with no waitlist, one underway, and
+//     one finished. Camps and events lock late joins at different moments (a
+//     camp from local midnight on its start date, an event only once its
+//     session has finished) and say so differently — "Already started" vs.
+//     "Already over" — so both labels need somewhere to be looked at.
 //   • Event — a free product, plus the same event once it's over.
+//
+// The two capped non-muni scenarios are the pair worth reading together: a
+// browse card carries no seat information outside the municipality seat bar, so
+// full-with-waitlist and full-without are told apart on the card by exactly one
+// thing — whether it opens.
 //
 // Between them the scenarios cover every registration state the card can
 // render, including the one a parent can only reach by leaving a tab open past
@@ -39,9 +46,13 @@ import type {
 // deterministic regardless of the wall clock. The countdown scenarios are the
 // exception: they carry an `opensInMs` offset and resolve a live `closed_pre`
 // state at build time, so the clock actually ticks for an admin reviewing them.
+// Their seat numbers are still authored — only the instant moves — so the bar
+// they draw is as reproducible as everything else here.
 
 export type PreviewScenario =
   | "consumer-club"
+  | "consumer-club-free"
+  | "consumer-club-full-waitlist"
   | "consumer-club-threshold"
   | "muni-empty"
   | "muni-filling"
@@ -54,6 +65,7 @@ export type PreviewScenario =
   | "muni-opens-no-gamers"
   | "muni-opens-with-gamers"
   | "camp-open"
+  | "camp-full-closed"
   | "camp-running"
   | "camp-ended"
   | "free-event"
@@ -92,7 +104,16 @@ interface ScenarioBase {
 // clock ticks).
 type ScenarioConfig =
   | (ScenarioBase & { state: RegistrationState })
-  | (ScenarioBase & { opensInMs: number });
+  | (ScenarioBase & {
+      opensInMs: number;
+      /**
+       * Seats already gone before the doors open — an admin's comp enrolments,
+       * the only way a pre-open product has anyone on it. Defaults to none.
+       * The pre-open seat bar reads live availability like every other state,
+       * so this is what makes it show something other than a full track.
+       */
+      compSeats?: number;
+    });
 
 // Real UUIDs so the gamer picker's identicons hash to distinct, stable avatars
 // — placeholder ids like "g1" render degenerate identicons that misrepresent
@@ -125,6 +146,39 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
       waitlistEnabled: false,
     },
   },
+  "consumer-club-free": {
+    // A free consumer club, which is a thing now: billing is a per-product
+    // choice on every type, not a property of the type. Two things to eyeball
+    // together — the card carries the same "Free" chip an event does, and it is
+    // capped (a no-charge signup is hard-capped in the database, so a free
+    // product is the one that most wants a number) without saying so anywhere
+    // on the card. The seat bar appears on the detail page, not here.
+    label: "Free — capped, open",
+    productType: "consumer_club",
+    billingMode: "free",
+    seatCount: 12,
+    waitlistEnabled: true,
+    priceCentsEur: null,
+    auth: "signed-in-with-gamers",
+    state: { kind: "open", seatCount: 12, seatsLeft: 4, waitlistEnabled: true },
+  },
+  "consumer-club-full-waitlist": {
+    // The accepted inherited behaviour, and the reason it is worth looking at:
+    // this card is indistinguishable from an open one. It keeps the ordinary
+    // "View" CTA, the chevron and the whole-card link, because the detail page
+    // behind it has a real action (join the waitlist) — the parent finds out it
+    // is full there, from a panel that says so properly. Compare it with
+    // `camp-full-closed` below, which is full with nothing to do and is the
+    // only inert one of the pair.
+    label: "Full with waitlist — still opens, generic CTA",
+    productType: "consumer_club",
+    billingMode: "paid",
+    seatCount: 12,
+    waitlistEnabled: true,
+    priceCentsEur: 4500,
+    auth: "signed-in-with-gamers",
+    state: { kind: "full_waitlist", seatCount: 12 },
+  },
   "consumer-club-threshold": {
     // The state easiest to forget exists. A club that needs a
     // minimum intake before it can run sits here until the signups arrive, and
@@ -132,14 +186,28 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     // is no meter and no countdown, and the card is an ordinary openable one
     // carrying an ordinary "View". That sameness *is* the thing to eyeball —
     // it is why the state is easy to forget exists.
+    //
+    // Capped, and that is the one thing about it that is *not* undramatic: a
+    // minimum intake and a maximum are independent numbers, and the panel now
+    // draws the seat bar here exactly as it does on an open product. This is
+    // the only scenario that shows the bar on a threshold-pending product, so
+    // uncapping it would take that surface off the style guide entirely. The
+    // two counts agree on purpose — 2 of 6 signed up, 18 of 20 seats left.
     label: "€45/mo — awaiting threshold",
     productType: "consumer_club",
     billingMode: "paid",
-    seatCount: null,
+    seatCount: 20,
     waitlistEnabled: false,
     priceCentsEur: 4500,
     auth: "signed-in-with-gamers",
-    state: { kind: "pending_thr", threshold: 6, count: 2 },
+    state: {
+      kind: "pending_thr",
+      threshold: 6,
+      count: 2,
+      seatCount: 20,
+      seatsLeft: 18,
+      waitlistEnabled: false,
+    },
   },
   "muni-empty": {
     label: "15 / 15 seats",
@@ -217,6 +285,11 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     },
   },
   "muni-opens-10s": {
+    // The scenario the no-shift rule is judged against: park the cursor on the
+    // CTA and watch it through zero. The button flips label on the 1-second
+    // clock; the panel's *state* only catches up on the 30-second one, and
+    // between those two moments — and across the swap — nothing may move. Every
+    // seat free, which is the ordinary case for a drop.
     label: "Opens in 10 seconds (live)",
     productType: "municipality_club",
     billingMode: "external_contract",
@@ -247,7 +320,11 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     opensInMs: NINETY_MIN_MS,
   },
   "muni-opens-with-gamers": {
-    label: "Opens in 90 min — signed in, with gamers",
+    // The only pre-open scenario whose seat bar is not full: two places have
+    // been comped before the doors opened, so it reads 13 / 15 while the clock
+    // is still running. That the bar can be honestly short of full pre-open is
+    // the reason it is drawn at all rather than faked as "all seats free".
+    label: "Opens in 90 min — 2 comped, signed in with gamers",
     productType: "municipality_club",
     billingMode: "external_contract",
     seatCount: 15,
@@ -255,6 +332,7 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     priceCentsEur: null,
     auth: "signed-in-with-gamers",
     opensInMs: NINETY_MIN_MS,
+    compSeats: 2,
   },
   "camp-open": {
     label: "Not started yet — €250",
@@ -270,6 +348,21 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
       seatsLeft: null,
       waitlistEnabled: false,
     },
+  },
+  "camp-full-closed": {
+    // Paid, capped, no waitlist — the shape a real camp takes, and the one card
+    // state that is a dead end for a reason a parent could still act on
+    // tomorrow. The card is inert: muted label, no chevron, no link, because
+    // the detail page has nothing to offer. It says nothing about seats either;
+    // the muted "Full" label is the whole explanation a card owes.
+    label: "Full, no waitlist — inert",
+    productType: "camp",
+    billingMode: "paid",
+    seatCount: 20,
+    waitlistEnabled: false,
+    priceCentsEur: 25000,
+    auth: "signed-in-with-gamers",
+    state: { kind: "full_closed", seatCount: 20 },
   },
   "camp-running": {
     // Camps lock late joins once running — the card states "Already started"
@@ -344,6 +437,8 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
 // the subsections come out in this order.
 const SCENARIO_ORDER: PreviewScenario[] = [
   "consumer-club",
+  "consumer-club-free",
+  "consumer-club-full-waitlist",
   "consumer-club-threshold",
   "muni-empty",
   "muni-filling",
@@ -356,6 +451,7 @@ const SCENARIO_ORDER: PreviewScenario[] = [
   "muni-opens-no-gamers",
   "muni-opens-with-gamers",
   "camp-open",
+  "camp-full-closed",
   "camp-running",
   "camp-ended",
   "free-event",
@@ -445,13 +541,21 @@ export function findConfirmationNotice(
 
 // Seats already taken on a scenario — the count the municipality seat-fill bar
 // reads. Derived from the authored state so the bar and the card's state stay
-// in lock-step. Countdown / no-cap scenarios read empty (no one has registered
-// before registration opens).
+// in lock-step. A countdown scenario reads whatever comp enrolments it declares
+// (nobody can *register* before registration opens, but an admin can place
+// someone), which is the same number its pre-open detail panel draws.
 export function scenarioFilledSeats(slug: PreviewScenario): number {
   const c = SCENARIOS[slug];
-  if (c.seatCount === null || "opensInMs" in c) return 0;
+  if (c.seatCount === null) return 0;
+  if ("opensInMs" in c) return Math.min(c.compSeats ?? 0, c.seatCount);
   switch (c.state.kind) {
+    // The three states that carry live capacity read it the same way. A
+    // threshold-pending product has a cap like any other — a minimum intake and
+    // a maximum are independent numbers — so it cannot be lumped in with the
+    // states below that have no seats to report.
     case "open":
+    case "pending_thr":
+    case "closed_pre":
       return c.state.seatsLeft === null ? 0 : c.seatCount - c.state.seatsLeft;
     case "full_waitlist":
     case "full_closed":
@@ -483,7 +587,19 @@ export function buildScenarioFixture(slug: PreviewScenario): BuildFixtureResult 
     // Live countdown: opens a fixed offset ahead of *now* so the clock ticks.
     // The row's drop instant and the panel state share the same timestamp.
     const opensAt = new Date(Date.now() + config.opensInMs).toISOString();
-    state = { kind: "closed_pre", opensAt };
+    // Pre-open carries the same seat trio every other signup-able state does,
+    // so the panel's bar is already on screen while the clock runs — the whole
+    // point being that nothing mounts above the CTA when the state swaps.
+    state = {
+      kind: "closed_pre",
+      opensAt,
+      seatCount: config.seatCount,
+      seatsLeft:
+        config.seatCount === null
+          ? null
+          : Math.max(0, config.seatCount - (config.compSeats ?? 0)),
+      waitlistEnabled: config.waitlistEnabled,
+    };
     registrationOpensAt = opensAt;
   } else {
     state = config.state;
@@ -857,9 +973,7 @@ function buildPriceRows(
 // `state`, not this, but matching the shape a real row would carry avoids
 // confusing future readers: open/ended products stay 'running', full or
 // pre-launch ones sit in 'pending'.
-function pickStatus(
-  state: RegistrationState,
-): "pending" | "running" | "draft" | "cancelled" {
+function pickStatus(state: RegistrationState): "pending" | "running" {
   switch (state.kind) {
     case "full_closed":
     case "full_waitlist":

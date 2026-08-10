@@ -29,15 +29,25 @@ const routeParams = z.object({
  *
  *  - the participation must be on THIS product (an id from another product
  *    could otherwise be cancelled through this URL);
- *  - consumer clubs are refused, where removal must go through Stripe and the
- *    parent rather than an admin hard-delete;
- *  - a participation with a live Stripe subscription is refused, because the
+ *  - a participation with a LIVE Stripe subscription is refused, because the
  *    CASCADE would orphan a subscription that keeps billing the customer with
  *    no DB record and no refund. In the RPC that check shares a transaction and
  *    a product lock with the delete, so unlike the route-level version it has no
- *    window between checking and deleting. It is unreachable under current
- *    invariants — only consumer_club ever has a live sub — and stays as the
- *    thing that fails loud if that ever changes.
+ *    window between checking and deleting. It is what makes removal safe on
+ *    every product type, including the paid consumer clubs a blanket type
+ *    refusal used to stand in for — that refusal is gone, because without
+ *    admin removal a *free* club has no exit at all (there is no parent-facing
+ *    cancel for a free enrollment) and a hard-capped one could never free a
+ *    seat. "Live" means a family_subscriptions row whose status is anything but
+ *    `cancelled`; a dunning-dead subscription does not refuse, or removal —
+ *    that seat's only exit — would be closed forever.
+ *
+ * The live-subscription refusal is an ORDINARY OUTCOME of this route, not a
+ * broken invariant, and the status it answers with says so (400, exactly as the
+ * PATCH handler's identically-coded demote refusal does). Any admin can reach
+ * it by dragging a subscribed member onto the panel's remove zone, on any
+ * product — including a club that was flipped from paid to free, whose members
+ * keep their subscriptions. The panel's dialog normally stops the drag first.
  *
  * No refund is issued: nothing here calls Stripe.
  */
@@ -47,14 +57,17 @@ export const DELETE = defineRoute({
   forbiddenMessage: "Only admins can remove gamers from a product",
   params: routeParams,
 
-  // 55000 (object_not_in_prerequisite_state) is this route's only divergence
-  // from the shared table: it is the live-subscription refusal, which is not
-  // the admin's mistake but a broken invariant, so it stays a 500.
+  // 55000 (object_not_in_prerequisite_state) is the live-subscription refusal,
+  // the same code and the same status the PATCH handler answers for the same
+  // condition: a request the admin can legitimately make and the database
+  // legitimately declines, which is a 400. It was a 500 while a product-type
+  // check made it unreachable in practice; with that check gone it is a routine
+  // answer, and a 500 would have logged an ordinary refusal as a server fault.
   //
   // `no_data_found`: the participation is named by the URL path, so a
   // participation that is not on this product is a missing resource — the
   // shared table's 404 is what this route already answered.
-  errorStatus: { "55000": 500 },
+  errorStatus: { "55000": 400 },
 
   handler: async ({ supabase, user, params }) => {
     const { id: productId, participationId } = params;
@@ -65,7 +78,7 @@ export const DELETE = defineRoute({
     });
 
     if (error) {
-      // Two codes carry copy the admin needs, and the shared table's generic
+      // One code carries copy the admin needs, and the shared table's generic
       // message for the status would not tell them what to do next.
       if (error.code === "55000") {
         console.error(
@@ -82,15 +95,6 @@ export const DELETE = defineRoute({
           {
             error:
               "This participation has a live Stripe subscription and can't be removed here. Cancel the subscription first.",
-          },
-          { status: 500 },
-        );
-      }
-      if (error.code === "23514") {
-        return NextResponse.json(
-          {
-            error:
-              "Admin remove-gamer is not supported for consumer clubs (recurring billing). Cancel the subscription instead.",
           },
           { status: 400 },
         );
@@ -140,9 +144,14 @@ export const DELETE = defineRoute({
  * apply_group_changes, their drag-UI sibling), so they must run with the
  * caller's JWT — a service-role call has no auth.uid() and would be Forbidden.
  *
- * Gated to the same product types as add/remove: blocked on consumer_club,
- * where promotion would mean an unbilled active seat and demotion would strand
- * a paying subscriber on the waitlist.
+ * **No product-type gate.** This route used to refuse consumer clubs outright,
+ * which would have wrongly blocked every *free* club the moment clubs became
+ * free-or-paid. What the refusal actually protected is one thing —  demoting a
+ * family whose seat carries a live Stripe subscription, which a later
+ * parent-side leave would CASCADE into an orphaned, still-billing sub — and
+ * `demote_to_waitlist` now refuses exactly that, per participation, under the
+ * same lock as the write. One predicate, one home: the route reads the RPC's
+ * answer rather than keeping a coarser copy of it.
  */
 export const PATCH = defineRoute({
   posture: "role-gated",
@@ -151,10 +160,21 @@ export const PATCH = defineRoute({
   params: routeParams,
   body: waitlistTransitionBody,
 
-  // No overrides. `no_data_found` keeps the shared 404 for the same reason as
-  // the DELETE handler: the participation is named by the URL path. The reads
-  // and the RPCs used to answer 400 with raw Postgres text for every other
-  // failure; they now go through the shared table with a generic message.
+  // `no_data_found` keeps the shared 404 for the same reason as the DELETE
+  // handler: the participation is named by the URL path. The reads and the RPCs
+  // used to answer 400 with raw Postgres text for every other failure; they now
+  // go through the shared table with a generic message.
+  //
+  // 55000 (object_not_in_prerequisite_state) is the live-subscription demote
+  // refusal — the same ERRCODE `admin_remove_participation` raises, now with
+  // the same 400 on both handlers. One condition, one code, one status,
+  // wherever it is met: an admin dragging a paying member onto the waitlist (or
+  // onto the remove zone) is making a request the database declines, not
+  // tripping a fault. Exactly the status the consumer-club refusal it replaces
+  // answered with. Normally unreachable — the groups panel's dialog stops the
+  // drag first. The handler returns the admin-facing copy itself; this pins the
+  // status.
+  errorStatus: { "55000": 400 },
 
   handler: async ({ supabase, user, params, body }) => {
     const { id: productId, participationId } = params;
@@ -175,25 +195,19 @@ export const PATCH = defineRoute({
       );
     }
 
-    // Block consumer_club — symmetric with the add/remove gate (defense in depth).
+    // The product itself is no longer consulted for a *decision* — nothing here
+    // branches on its type any more — but it is still read, because a URL naming
+    // a product that does not exist deserves a 404 rather than whatever the RPC
+    // would say about a participation the caller reached through it.
     const { data: product, error: productError } = await supabase
       .from("products")
-      .select("product_type")
+      .select("id")
       .eq("id", productId)
       .maybeSingle();
 
     if (productError) throw productError;
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
-    }
-    if (product.product_type === "consumer_club") {
-      return NextResponse.json(
-        {
-          error:
-            "Waitlist promote/demote is not supported for consumer clubs (recurring billing).",
-        },
-        { status: 400 },
-      );
     }
 
     // Dispatch to the matching RPC and validate its Json result shape before
@@ -209,7 +223,31 @@ export const PATCH = defineRoute({
       const { data, error } = await supabase.rpc("demote_to_waitlist", {
         p_participation_id: participationId,
       });
-      if (error) throw error;
+      if (error) {
+        // The one refusal with copy of its own: demoting would strand a live
+        // Stripe subscription on a waitlisted row, which the parent can delete
+        // outright — CASCADE-orphaning a sub that keeps billing.
+        if (error.code === "55000") {
+          console.error(
+            JSON.stringify({
+              event: "admin_demote_blocked_live_subscription",
+              admin_id: user.id,
+              product_id: productId,
+              participation_id: participationId,
+              detail: error.message,
+              at: new Date().toISOString(),
+            }),
+          );
+          return NextResponse.json(
+            {
+              error:
+                "This gamer's seat has a live Stripe subscription, so they can't be moved to the waitlist. Cancel the subscription first.",
+            },
+            { status: 400 },
+          );
+        }
+        throw error;
+      }
       demoteToWaitlistRpcResult.parse(data);
     }
 

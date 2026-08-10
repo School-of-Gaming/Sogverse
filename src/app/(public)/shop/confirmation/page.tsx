@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import type Stripe from "stripe";
 import { createClient, getUser } from "@/lib/supabase/server";
 import { ParticipationsService } from "@/services/participations";
@@ -28,6 +29,13 @@ import type { AppSupabaseClient, ProductBrowseRow } from "@/types";
 // Fetched server-side with the viewer's RLS-scoped client so the page renders
 // complete on first paint. The one case that can't is a paid signup whose
 // webhook has not landed yet — see the finalizing branch below.
+
+// Owner decision (Aug 2026): search engines and AI crawlers may discover only
+// the /shop browse surface. A crawler arriving here without params only ever
+// sees the fallback, but the ruling is a static rule, so it applies here too.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 //
 // The static `/shop/confirmation` segment outranks the `/shop/[id]` dynamic
 // route, so it never collides with a product detail URL.

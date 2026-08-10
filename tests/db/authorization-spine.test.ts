@@ -148,9 +148,11 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   },
 
   // --- the guard primitives themselves -------------------------------------
-  // Exposed to `authenticated` because create_product / update_product are
-  // SECURITY INVOKER, so their guard runs as the caller (see migration 00120).
-  // They are role-gated by definition, so the matrix covers them like any other.
+  // Exposed to `authenticated` because create_product is SECURITY INVOKER, so
+  // its guard runs as the caller (see migration 00120; update_product was
+  // elevated to DEFINER by 00171 and no longer needs the grant, but its
+  // sibling still does). They are role-gated by definition, so the matrix
+  // covers them like any other.
   assert_admin: { permittedRoles: ["admin"] },
   // No role passes: the all-NULL convention hands it a NULL role name, which it
   // refuses outright rather than letting the comparison swallow it. That refusal
@@ -187,7 +189,7 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   },
   can_read_product: {
     scopeTest: "tests/db/exposed-function-scope.test.ts",
-    why: "read predicate behind the product policies; anon-reachable on purpose, and its anon branch returns true only for published+visible products",
+    why: "read predicate behind the product policies; anon-reachable on purpose, and its anon branch returns true only for products in a published status (pending/running). Since 00168 it does not ask about is_visible — that column decides whether a product is LISTED on the browse pages, and an unlisted product is deliberately readable by direct link, so the public branch is bounded by status alone",
   },
   has_active_participation_on_product: {
     scopeTest: "tests/db/exposed-function-scope.test.ts",
