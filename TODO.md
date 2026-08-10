@@ -8,6 +8,8 @@
 
 - [ ] **Convict the intermittent "content shifts down ~20-40px moments after load" bug, then remove the tripwire.** A dev-only diagnostic (`src/components/dev/layout-shift-tripwire.tsx`, mounted in the root layout) logs every browser-detected layout shift with attributed nodes and before/after rects (`[tripwire]` console lines; ring buffer on `window.__layoutShiftLog`), and separately logs any soft-nav landing with non-zero scrollY — the two suspect families from the 2026-08-04 investigation. Standing suspects, all live in prod code paths: (1) the spoken-languages filter row pops in (~38px) above the shop/schools product grids when an earlier page's failed server prefetch poisoned the shared query key — the row is rendered with no reserved box (`src/components/public/products/product-browse-filters.tsx`, unlike the Clear button right above it), and the global 60s `staleTime` defers the heal to a later mount/focus refetch, which is why reload-based repro can never show it; (2) Next.js soft navs preserve scroll offsets smaller than ~the header height (segment-visibility check), so pages land 20-40px high — the layout-shift API is blind to scroll, hence the landing channel. Related doc rot: ~10 comments claim seeded hooks "refetch on mount", which the global `staleTime` disables. When a sighting lands in the console, fix the named culprit, delete the tripwire, its layout.tsx mount, and this item.
 
+- [ ] **On a municipality club, the pre-open → open panel swap mounts the seat bar above the CTA, late — and the two halves flip on different clocks.** The countdown enables the button on its own 1-second tick, but the panel-variant swap that mounts the seat bar rides the 30-second `useNow` tick — so the Join button goes live within a second of the drop and the seat bar is then inserted *above* it up to 29s later, shoving it down under the cursor. That is a data-schedule shift, which the layout rule in `CLAUDE.md` forbids outright: the seat bar's box has to be settled before the button becomes clickable, not inserted after it. **Scoped to municipality clubs, and it stays that way** — a future registration drop is the one form control still keyed to product type, so every other type opens the moment it is visible and never renders the pre-open panel at all. Seat caps and waitlists are universal now, so the swap is unreachable elsewhere; on schools it is a live bug.
+
 - [ ] **Decide the theme story — the "dark mode via next-themes" claim is false and the `.light` tokens are dead.** `next-themes` is not a dependency (zero hits in `package.json`/lock), nothing ever applies a `light` class, and `<html className="dark">` is hardcoded in `src/app/layout.tsx` — yet root `CLAUDE.md`'s Styling section says "Dark mode is default (class-based via next-themes)" and `globals.css` carries ~49 lines of `.light` tokens nothing can activate. Either light mode is planned (then wire a real theme switch and keep the tokens) or it isn't (then delete the token block). Correct the `CLAUDE.md` sentence as part of whichever pass — today it misleads every session that reads it.
 
 - [ ] **`DashboardSectionPill` hardcodes the header offset in three places, against the layout doc's own rule.** `sticky top-20` (`src/components/layout/dashboard-section-pill.tsx`), the `REFERENCE_OFFSET_PX = 144` scroll-spy constant, and every consuming section's `scroll-mt-32` all encode header-height-derived numbers as literals; the component's own comment admits the coupling ("keep these in sync"). The home pill and the product-detail sticky rail derive from `--header-height` correctly — converge this one on the same variable (`top-[var(--header-height)+...]`-style arbitrary values) so a header resize can't strand it.
@@ -290,7 +292,7 @@ Currently the only way to link a parent to a gamer is when the parent creates th
 ## Waitlist — the parent/gamer side
 
 A waitlisted seat is a state of the shared enrollment card on both dashboards, and
-its leave affordance has a backend. Two open questions remain:
+its leave affordance has a backend. One open question remains:
 
 - [ ] **The waitlist copy promises an email nobody sends.** The card's footer
   reassurance and the confirmation page's `next1` both say we'll email the moment a seat opens.
@@ -298,64 +300,3 @@ its leave affordance has a backend. Two open questions remain:
   notifies nobody. Emails + promotion are handled by hand for now (deliberate), so
   this is a note, not a bug — but if manual sending ever slips, soften the copy
   rather than leave the promise standing.
-- [ ] **Decide what promotion looks like to a parent.** `promote_from_waitlist`
-  flips the row to `active` with no payment step, and from the parent's side the card
-  silently changes state where it stands — into the running state if the promotion placed
-  the child in a group, or into the awaiting-placement state if it did not, which is a
-  second silent transition nobody has designed either. (The
-  "free seat on a paid product" hazard this could imply is unreachable today — caps are
-  muni-only and a muni club can't become paid; it's recorded as part of the cap unlock's
-  cost in the re-lock section below.) If the answer is ever "a seat opened — claim it by
-  {date}" rather than "you're in", that's a new card state (offer + expiry +
-  accept/decline) and it's much cheaper to design before the card hardens.
-
-## Event seat caps + waitlist: re-locked until the shop surface can express fullness
-
-The admin product form briefly unlocked the seat cap and the waitlist toggle for **free**
-events, then re-locked them (`src/components/admin/products/form-locks.ts`; events keep
-their `registrationTiming` unlock). The seat gate was never the blocker — a free signup
-validates the cap and writes its `active` row in one locked transaction, never touching
-Stripe Checkout, exactly like a municipality registration. The blocker is the
-**parent-facing shop**: nothing on the browse card or the pre-open panel can say a
-non-muni product is full, so an admin capping an event would publish a page that fills up
-and still reads as open. Unlocking again is a shop change first and a one-line form change
-second.
-
-- [ ] **A fullness affordance on the browse card for capped non-muni products.** Today the
-  seat bar is muni-only, and the `full_waitlist` state renders the same generic "View" CTA
-  an open product does — a full event with a waitlist is visually identical to one with
-  seats left. Whether that becomes the seat bar generalised, a state-aware CTA, or a
-  fullness pill is the open design question. **Constraint from the owner: the card must
-  *not* carry a "waitlist available" line for products that aren't capped** — the
-  affordance is for the full state, not an always-on advertisement of the waitlist.
-- [ ] **The card's seat hint shows capacity, not seats left.** "{count} seats" prints the
-  cap, so on a full product it prints a number that is exactly wrong. It has to be
-  seats-remaining (and say something else at zero).
-- [ ] **The pre-open → open panel swap mounts the seat bar above the CTA, late — and the
-  two halves flip on different clocks.** The countdown enables the button on its own
-  1-second tick, but the panel-variant swap that mounts the seat bar rides the 30-second
-  `useNow` tick — so the Join button goes live within a second of the drop and the seat
-  bar is then inserted *above* it up to 29s later, shoving it down under the cursor. That
-  is a data-schedule shift, which the layout rule in `CLAUDE.md` forbids outright — the
-  seat bar's box has to be settled before the button becomes clickable, not inserted
-  after it.
-- [ ] **Waitlist purchase-confirmation copy is club-shaped.** It tells the parent their
-  gamer is queued "for the whole term", which is nonsense for a single-date event. Key it
-  by product type like the panel's other action strings, in all five locales.
-- [ ] **No capped / full / waitlist event fixtures exist in the style guide**, so none of
-  the above can be signed off visually before it is wired. Add the states (capped with
-  seats left, full with a waitlist, full without one) to the card and panel demos.
-- [ ] **Optional hardening, raised in review, both cheap and both currently unreachable:**
-  a lifecycle/billing-mode guard on `join_waitlist` (a migration — nothing stops a row
-  joining the queue of a product that can no longer honour it), and a visible error on the
-  `'full'` race outcome (the signup path can lose the last seat between the gate and the
-  write, and the panel currently just re-enables the button saying nothing).
-- [ ] **The form-side change, once the above lands.** Give `formLocksFor` back its
-  free/paid parameter so the lock can track the money instead of the type, unlock
-  `seatCount`/`waitlist` for free events only, and restore the free→paid handler that
-  clears a cap the flip is about to lock away. Both were deleted in the re-lock rather than
-  left inert; their unit tests are in `tests/unit/components/products-form-locks.test.ts`
-  and git history has the originals. Also re-decide `promote_from_waitlist`'s missing
-  billing-mode guard at that point: with a cappable type whose billing mode can change
-  under a live queue, promoting a stranded row would grant an unpaid seat on a paid
-  product (see the seat-gate section of `docs/products-architecture.md`).
