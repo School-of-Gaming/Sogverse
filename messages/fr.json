@@ -20,7 +20,7 @@
       "familyProduct": "Séances et comptes rendus",
       "familyProductDescription": "Le calendrier de ce groupe et le compte rendu de chaque séance.",
       "gamerDashboard": "Mon SOG",
-      "gamerDashboardDescription": "Vos clubs, camps et événements dans le Sogverse",
+      "gamerDashboardDescription": "Vos clubs, stages et événements dans le Sogverse",
       "gamerGroups": "Mes groupes",
       "gamerGroupDetails": "Détails du groupe",
       "voiceSession": "Session vocale",
@@ -142,7 +142,7 @@
       "heading": "Comment fonctionnent nos clubs",
       "paragraph1": "Chaque semaine, les joueurs retrouvent leur Gedu, leur animateur de jeu. Ensemble, ils explorent le thème du jour dans l’univers Minecraft, mais le Gedu laisse toujours aux enfants la liberté de s’approprier l’aventure.",
       "paragraph2": "Nos Gedus sont des joueurs avant tout. Ils savent ce que c’est de grandir avec les jeux vidéo, de construire son identité en ligne, de se lier d’amitié à travers un écran. Cette expérience, ils la mettent au service des enfants à chaque session.",
-      "paragraph3": "Les clubs sont construits autour d’histoires évolutives qui invitent à explorer, créer et imaginer. Entre les sessions, les joueurs reçoivent des défis à relever, en ligne et dans la vraie vie. Les vacances sont l’occasion de camps, et tout au long de l’année ont lieu des tournois, des événements communautaires et des concours.",
+      "paragraph3": "Les clubs sont construits autour d’histoires évolutives qui invitent à explorer, créer et imaginer. Entre les sessions, les joueurs reçoivent des défis à relever, en ligne et dans la vraie vie. Les vacances sont l’occasion de stages, et tout au long de l’année ont lieu des tournois, des événements communautaires et des concours.",
       "paragraph4": "Chaque joueur s’engage à se comporter avec bienveillance et intégrité : en jeu, en vocal, dans la vie réelle. Les mêmes valeurs, partout."
     },
     "forParents": {
@@ -180,8 +180,8 @@
           "plural": "clubs municipaux"
         },
         "camp": {
-          "label": "camp",
-          "plural": "camps"
+          "label": "stage",
+          "plural": "stages"
         },
         "event": {
           "label": "événement",
@@ -271,7 +271,7 @@
         "whereDescription": {
           "consumerClub": "En ligne ou en présentiel. Les clubs en ligne sont ouverts à tous — aucun lieu n’est nécessaire. Les clubs en présentiel se déroulent sur un site précis.",
           "municipalityClub": "Financé par une commune précise. Les clubs en ligne choisissent directement la commune ; les clubs en présentiel choisissent un site situé sur son territoire.",
-          "camp": "En ligne ou en présentiel. Les camps en ligne sont ouverts à tous — aucun lieu n’est nécessaire. Les camps en présentiel se déroulent sur un site précis.",
+          "camp": "En ligne ou en présentiel. Les stages en ligne sont ouverts à tous — aucun lieu n’est nécessaire. Les stages en présentiel se déroulent sur un site précis.",
           "event": "En ligne ou en présentiel. Les événements en ligne sont ouverts à tous — aucun lieu n’est nécessaire. Les événements en présentiel se déroulent sur un site précis."
         },
         "when": "Quand",
@@ -335,7 +335,7 @@
         "name": {
           "consumerClub": "ex. Club Minecraft Redstone",
           "municipalityClub": "ex. Club Minecraft de Montreuil · Printemps 2026",
-          "camp": "ex. Camp de game design · Vacances d’automne",
+          "camp": "ex. Stage de game design · Vacances d’automne",
           "event": "ex. Balade communautaire Pokémon GO · Paris"
         },
         "description": {
@@ -435,7 +435,7 @@
         "materialUrlHint": "Facultatif. Réservé aux Gedus — les familles ne le voient jamais.",
         "deliveredInHint": "La langue principale utilisée pendant les sessions.",
         "onlineNoLocation": "En ligne et accessible à tous — aucun lieu n’est nécessaire. Tout parent parcourant le catalogue le verra, où qu’il habite.",
-        "voiceRoomAuto": "Un salon vocal sera créé automatiquement pour ce produit.",
+        "voiceRoomAuto": "Une salle vocale sera créée automatiquement pour ce produit.",
         "municipalityHint": "Les clubs municipaux sont toujours rattachés à une commune finlandaise précise — celle qui les finance. Les parents de cette commune le verront en parcourant le catalogue.",
         "siteHint": "Où les sessions se déroulent physiquement.",
         "eventSingleDay": "Les événements ont lieu à une seule date.",
@@ -902,7 +902,7 @@
     "registerGedu": {
       "title": "Créez votre compte Gedu Sogverse",
       "verificationAlertTitle": "Votre compte doit être vérifié",
-      "verificationAlertDescription": "Vous pouvez vous connecter tout de suite, mais un administrateur doit vérifier votre compte avant que vous puissiez être affecté à un club ou à un camp.",
+      "verificationAlertDescription": "Vous pouvez vous connecter tout de suite, mais un administrateur doit vérifier votre compte avant que vous puissiez être affecté à un club ou à un stage.",
       "coverageHeading": "Zones où vous pouvez animer",
       "coverageNote": "Choisissez les zones où vous pouvez intervenir sur place. Si vous n’intervenez qu’à distance, laissez ce champ vide. Vous pourrez modifier votre sélection plus tard dans les paramètres de votre profil.",
       "invalidPhone": "Veuillez saisir un numéro de téléphone valide",
@@ -1082,16 +1082,16 @@
     "myGamers": "Mes joueurs",
     "myGamersShort": "Joueurs",
     "clubs": "Clubs",
-    "camps": "Camps",
+    "camps": "Stages",
     "events": "Événements",
     "myGroupsEmptyStateGedu": "Dès qu’un groupe vous est attribué, il apparaîtra ici avec sa prochaine séance.",
     "billing": "Facturation",
     "help": "Aide",
     "yty": "Yty",
     "settings": "Paramètres",
-    "instantVoiceRoom": "Salon vocal instantané",
+    "instantVoiceRoom": "Salle vocale instantanée",
     "instantVoiceRoomShort": "Salle vocale",
-    "loadingAssignments": "Chargement de vos clubs, camps et événements."
+    "loadingAssignments": "Chargement de vos clubs, stages et événements."
   },
   "family": {
     "addGamer": "Ajouter un joueur",
@@ -1131,8 +1131,8 @@
     "wontRenewAccessEnds": "Non renouvelé — accès jusqu’au {date}",
     "awaitingCustomer": "Inscription confirmée — nous lui cherchons un Gedu et un groupe avant la première session.",
     "awaitingGamer": "Tu es inscrit·e — nous te cherchons un Gedu et un groupe avant ta première session.",
-    "noGamers": "Pas encore de joueur ici. Ajoutez votre premier joueur, puis choisissez ensemble un club ou un camp.",
-    "emptyStateCta": "Voir les clubs et les camps"
+    "noGamers": "Pas encore de joueur ici. Ajoutez votre premier joueur, puis choisissez ensemble un club ou un stage.",
+    "emptyStateCta": "Voir les clubs et les stages"
   },
   "familyProduct": {
     "back": "Retour à Mon SOG",
@@ -1172,7 +1172,7 @@
     "welcomeNamed": "Bienvenue, {name} !",
     "fallbackName": "joueur",
     "subtitle": "Envie de jouer et d’apprendre ?",
-    "emptyDashboard": "Rien ici pour l’instant. Demande à un parent de regarder les clubs et les camps avec toi, et choisissez-en un ensemble."
+    "emptyDashboard": "Rien ici pour l’instant. Demande à un parent de regarder les clubs et les stages avec toi, et choisissez-en un ensemble."
   },
   "gedu": {
     "coverage": {
@@ -1281,7 +1281,7 @@
   "productType": {
     "consumer_club": "Club",
     "municipality_club": "Club",
-    "camp": "Camp",
+    "camp": "Stage",
     "event": "Événement"
   },
   "activityCard": {
@@ -1358,8 +1358,8 @@
           "a": "Sogverse — School of Gaming — anime des clubs Minecraft encadrés par des animateurs professionnels, pour que le temps d’écran devienne du temps qui fait grandir."
         },
         "productTypes": {
-          "q": "Quelle est la différence entre les clubs, les camps et les événements ?",
-          "a": "Les clubs se retrouvent selon un rythme régulier. Les camps se déroulent sur plusieurs jours pendant les vacances scolaires. Les événements sont des rendez-vous ponctuels."
+          "q": "Quelle est la différence entre les clubs, les stages et les événements ?",
+          "a": "Les clubs se retrouvent selon un rythme régulier. Les stages se déroulent sur plusieurs jours pendant les vacances scolaires. Les événements sont des rendez-vous ponctuels."
         },
         "whoLeads": {
           "q": "Qui anime les sessions ?",
@@ -1407,13 +1407,13 @@
   "productBrowse": {
     "headings": {
       "consumer_club": "Nos clubs",
-      "camp": "Nos camps",
+      "camp": "Nos stages",
       "event": "Nos événements"
     },
     "filters": {
       "type": "Type",
       "typeClubs": "Clubs",
-      "typeCamps": "Camps",
+      "typeCamps": "Stages",
       "typeEvents": "Événements",
       "subject": "Univers",
       "format": "Format",
@@ -1455,13 +1455,13 @@
     "back": {
       "consumer_club": "Tous les clubs",
       "municipality_club": "Tous les clubs municipaux",
-      "camp": "Tous les camps",
+      "camp": "Tous les stages",
       "event": "Tous les événements"
     },
     "typeLabel": {
       "consumer_club": "Club",
       "municipality_club": "Club municipal",
-      "camp": "Camp",
+      "camp": "Stage",
       "event": "Événement"
     },
     "sections": {
@@ -1623,7 +1623,7 @@
     "users": "Utilisateurs",
     "consumerClubs": "Clubs grand public",
     "municipalityClubs": "Clubs municipaux",
-    "camps": "Camps",
+    "camps": "Stages",
     "events": "Événements",
     "locations": "Lieux",
     "uiComponents": "Composants UI",
@@ -1741,12 +1741,12 @@
     "help": {
       "contact": {
         "heading": "Besoin d’un coup de main ?",
-        "body": "Nous sommes là pour vous aider, de l’arrivée à votre camp aux questions sur la plateforme. Écrivez-nous quand vous voulez — nous répondons généralement sous 24 heures.",
+        "body": "Nous sommes là pour vous aider, de l’arrivée à votre stage aux questions sur la plateforme. Écrivez-nous quand vous voulez — nous répondons généralement sous 24 heures.",
         "emailLabel": "Écrivez-nous à"
       },
       "minecraft": {
         "heading": "Préparez-vous pour Minecraft Java",
-        "intro": "Les camps et les clubs se déroulent sur le serveur Minecraft Java de SOG. Parcourez ces étapes avec votre enfant avant le début du camp pour qu’il puisse se connecter tout de suite.",
+        "intro": "Les stages et les clubs se déroulent sur le serveur Minecraft Java de SOG. Parcourez ces étapes avec votre enfant avant le début du stage pour qu’il puisse se connecter tout de suite.",
         "steps": {
           "install": {
             "title": "Installez Minecraft Java Edition",
@@ -1758,16 +1758,16 @@
           },
           "addServer": {
             "title": "Ajoutez le serveur SOG",
-            "body": "Dans Multijoueur → Ajouter un serveur, collez l’adresse correspondant à votre camp et enregistrez-la pour qu’elle soit prête le jour J :"
+            "body": "Dans Multijoueur → Ajouter un serveur, collez l’adresse correspondant à votre stage et enregistrez-la pour qu’elle soit prête le jour J :"
           },
           "joinAtCampTime": {
-            "title": "Connectez-vous au début du camp",
+            "title": "Connectez-vous au début du stage",
             "body": "Cliquez sur le serveur SOG dans la liste, puis sur Rejoindre. Le Gedu guidera tout le monde ensuite. Besoin d’aide ? Écrivez-nous à l’adresse ci-dessus."
           }
         },
         "servers": {
-          "fi": "Camps en finnois :",
-          "en": "Camps en anglais :"
+          "fi": "Stages en finnois :",
+          "en": "Stages en anglais :"
         }
       }
     },
@@ -1851,10 +1851,10 @@
     "unlockCamera": "Déverrouiller la caméra",
     "sharerScreen": "Écran de {name}",
     "stopSharing": "Arrêter le partage",
-    "voiceRoom": "Salon vocal",
+    "voiceRoom": "Salle vocale",
     "spatialDescription": "Faites glisser votre avatar pour changer de zone. Les participants d’une même zone s’entendent entre eux.",
     "leave": "Quitter",
-    "failedToJoinRoom": "Impossible de rejoindre le salon",
+    "failedToJoinRoom": "Impossible de rejoindre la salle",
     "sessionEnded": "La session est terminée",
     "disconnecting": "Déconnexion...",
     "connecting": "Connexion...",
@@ -1971,12 +1971,12 @@
       "empty": "Aucun message pour l’instant"
     },
     "instant": {
-      "joinFailed": "Impossible de rejoindre le salon. Veuillez réessayer.",
+      "joinFailed": "Impossible de rejoindre la salle. Veuillez réessayer.",
       "share": {
         "hint": "Cliquez sur le lien pour le copier.",
         "copied": "Copié !",
-        "roomCode": "Code du salon :",
-        "copyLink": "Copier le lien du salon {code}"
+        "roomCode": "Code de la salle :",
+        "copyLink": "Copier le lien de la salle {code}"
       },
       "lobby": {
         "title": "Envie de rejoindre l’aventure ?",
@@ -1988,42 +1988,42 @@
       },
       "end": {
         "guestTitle": "Quitter cet appel ?",
-        "guestDescription": "Vous pouvez revenir à tout moment avec le même lien, tant que le salon est ouvert.",
+        "guestDescription": "Vous pouvez revenir à tout moment avec le même lien, tant que la salle est ouverte.",
         "modTitle": "Vous quittez l’appel ?",
-        "modDescription": "Vous pouvez partir seul, ou mettre fin à l’appel pour tout le monde — cela déconnecte tous les participants et ferme le salon.",
+        "modDescription": "Vous pouvez partir seul, ou mettre fin à l’appel pour tout le monde — cela déconnecte tous les participants et ferme la salle.",
         "cancel": "Rester",
         "leave": "Quitter l’appel",
         "endForEveryone": "Terminer pour tout le monde"
       },
       "ended": {
         "title": "Appel terminé",
-        "body": "Le salon est fermé. Merci d’avoir participé."
+        "body": "La salle est fermée. Merci d’avoir participé."
       },
       "left": {
         "title": "Vous avez quitté l’appel",
-        "body": "Le salon est toujours ouvert — utilisez le lien pour revenir quand vous voulez."
+        "body": "La salle est toujours ouverte — utilisez le lien pour revenir quand vous voulez."
       },
       "notFound": {
-        "title": "Salon introuvable",
-        "body": "Nous n’avons trouvé aucun salon vocal avec ce code :",
+        "title": "Salle introuvable",
+        "body": "Nous n’avons trouvé aucune salle vocale avec ce code :",
         "hint": "Vérifiez le code : lettres et chiffres doivent correspondre exactement.",
-        "createNew": "Créer un nouveau salon vocal"
+        "createNew": "Créer une nouvelle salle vocale"
       },
       "createPage": {
-        "title": "Lancez un salon vocal en un clic",
-        "subtitle": "Un clic → un salon tout neuf et un lien à partager. Idéal pour des échanges en tête-à-tête improvisés, ou pour la coordination entre gedus en dehors de la session programmée ou en complément.",
-        "createButton": "Lancer un salon instantané",
+        "title": "Lancez une salle vocale en un clic",
+        "subtitle": "Un clic → une salle toute neuve et un lien à partager. Idéal pour des échanges en tête-à-tête improvisés, ou pour la coordination entre gedus en dehors de la session programmée ou en complément.",
+        "createButton": "Lancer une salle instantanée",
         "creating": "Création…",
-        "createFailed": "Impossible de créer un salon. Veuillez réessayer.",
-        "ready": "Votre salon est prêt",
+        "createFailed": "Impossible de créer une salle. Veuillez réessayer.",
+        "ready": "Votre salle est prête",
         "join": "Rejoindre",
         "unverifiedTitle": "En attente de vérification",
-        "unverifiedBody": "Un administrateur doit vérifier votre compte Gedu avant que vous puissiez créer des salons vocaux. Vous pourrez en lancer un ici dès que vous serez vérifié."
+        "unverifiedBody": "Un administrateur doit vérifier votre compte Gedu avant que vous puissiez créer des salles vocales. Vous pourrez en lancer une ici dès que vous serez vérifié."
       }
     }
   },
   "voiceButton": {
-    "joinVoice": "Rejoindre le salon vocal",
+    "joinVoice": "Rejoindre la salle vocale",
     "locked": "Ouvre le {date} à {time}",
     "awaitingMatch": "Mise en relation avec un Gedu"
   },
@@ -2063,7 +2063,7 @@
     },
     "earning": {
       "heading": "Comment les joueurs gagnent de l’Yty",
-      "paragraph1": "L’Yty se gagne en participant. Sessions hebdomadaires, quêtes et défis, bienveillance envers les autres joueurs, événements communautaires, camps : tout compte.",
+      "paragraph1": "L’Yty se gagne en participant. Sessions hebdomadaires, quêtes et défis, bienveillance envers les autres joueurs, événements communautaires, stages : tout compte.",
       "paragraph2": "Au fil des points accumulés, les joueurs font progresser leurs badges de réussite, du bronze à l’argent, l’or, le platine et le diamant. Chaque point alimente à la fois leur niveau global et l’élément auquel il correspond.",
       "paragraph3": "Et ce n’est pas réservé aux joueurs. Les Gedus, les parents, toute la communauté peuvent contribuer à l’Yty du Sogverse à travers les événements et les activités partagées."
     },
@@ -2182,7 +2182,7 @@
       "heading": "En bref",
       "paragraphs": [
         "School of Gaming existe pour offrir aux enfants un endroit sûr et amusant où apprendre par le jeu. Protéger la vie privée de votre famille — et celle de votre enfant avant tout — compte beaucoup pour nous : nous avons donc rédigé ce document en langage clair plutôt qu’en jargon juridique.",
-        "En résumé : nous ne collectons que ce dont nous avons besoin pour faire vivre nos clubs, nos camps et nos événements. Nous ne vendons jamais vos informations ni celles de votre enfant. Seul un parent peut créer le compte d’un enfant, et nous ne diffusons jamais de publicité aux enfants. Vous pouvez à tout moment nous demander de vous montrer, de corriger ou de supprimer vos informations en écrivant à hello@sog.gg."
+        "En résumé : nous ne collectons que ce dont nous avons besoin pour faire vivre nos clubs, nos stages et nos événements. Nous ne vendons jamais vos informations ni celles de votre enfant. Seul un parent peut créer le compte d’un enfant, et nous ne diffusons jamais de publicité aux enfants. Vous pouvez à tout moment nous demander de vous montrer, de corriger ou de supprimer vos informations en écrivant à hello@sog.gg."
       ]
     },
     "sections": {
@@ -2229,7 +2229,7 @@
         ],
         "bullets": [
           "Pour créer et gérer votre compte et celui de votre enfant.",
-          "Pour placer votre enfant dans le bon groupe de club, de camp ou d’événement et le mettre en relation avec un éducateur.",
+          "Pour placer votre enfant dans le bon groupe de club, de stage ou d’événement et le mettre en relation avec un éducateur.",
           "Pour assurer les sessions audio et vidéo en direct.",
           "Pour encaisser les paiements et envoyer les reçus, rappels et informations importantes concernant vos clubs.",
           "Pour répondre à vos questions lorsque vous nous contactez.",
@@ -2273,7 +2273,7 @@
       "voice": {
         "heading": "Sessions audio et vidéo",
         "paragraphs": [
-          "Les clubs, camps et événements en direct se déroulent en audio et en vidéo, via Daily.co. Chaque session est animée et supervisée par l’un de nos éducateurs formés, et nous n’utilisons cet outil que pour assurer la session à laquelle votre enfant s’est inscrit."
+          "Les clubs, stages et événements en direct se déroulent en audio et en vidéo, via Daily.co. Chaque session est animée et supervisée par l’un de nos éducateurs formés, et nous n’utilisons cet outil que pour assurer la session à laquelle votre enfant s’est inscrit."
         ]
       },
       "retention": {
@@ -2328,7 +2328,7 @@
     "intro": {
       "heading": "En bref",
       "paragraphs": [
-        "Voici les conditions d’utilisation de Sogverse et d’inscription de votre enfant à nos clubs, camps et événements. Nous les avons rédigées en langage clair, parce que nous voulons que vous compreniez vraiment ce que vous acceptez — et non que vous ayez à décrypter du jargon juridique.",
+        "Voici les conditions d’utilisation de Sogverse et d’inscription de votre enfant à nos clubs, stages et événements. Nous les avons rédigées en langage clair, parce que nous voulons que vous compreniez vraiment ce que vous acceptez — et non que vous ayez à décrypter du jargon juridique.",
         "En résumé : nos clubs se déroulent en ligne, votre enfant étant toujours encadré par un éducateur formé. Vous pouvez résilier un club mensuel quand vous le souhaitez, et la première session de votre enfant est satisfait ou remboursé. Si vous avez une question, écrivez à kanslia@sog.gg : une vraie personne vous répondra."
       ]
     },
@@ -2336,7 +2336,7 @@
       "whoWeAre": {
         "heading": "Avec qui vous contractez",
         "paragraphs": [
-          "Sogverse est édité par School of Gaming Galactic Oy (« School of Gaming », « nous »), une société finlandaise. Ces conditions s’appliquent dès que vous utilisez Sogverse ou achetez l’un de nos clubs, camps ou événements.",
+          "Sogverse est édité par School of Gaming Galactic Oy (« School of Gaming », « nous »), une société finlandaise. Ces conditions s’appliquent dès que vous utilisez Sogverse ou achetez l’un de nos clubs, stages ou événements.",
           "Nos coordonnées officielles :"
         ],
         "bullets": [
@@ -2348,7 +2348,7 @@
       "service": {
         "heading": "Comment fonctionnent nos clubs",
         "paragraphs": [
-          "Presque tout ce que nous faisons se passe en ligne — votre enfant rejoint son club, son camp ou son événement depuis la maison, via notre site. Si un produit fonctionne autrement (par exemple un événement en présentiel), nous l’indiquons toujours clairement sur sa page avant l’achat."
+          "Presque tout ce que nous faisons se passe en ligne — votre enfant rejoint son club, son stage ou son événement depuis la maison, via notre site. Si un produit fonctionne autrement (par exemple un événement en présentiel), nous l’indiquons toujours clairement sur sa page avant l’achat."
         ]
       },
       "games": {
@@ -2378,12 +2378,12 @@
         ]
       },
       "campsCancellation": {
-        "heading": "Annuler un camp",
+        "heading": "Annuler un stage",
         "paragraphs": [
-          "Les camps sont réservés et payés en une seule fois : les conditions d’annulation sont donc un peu différentes. Si vous devez annuler un camp :"
+          "Les stages sont réservés et payés en une seule fois : les conditions d’annulation sont donc un peu différentes. Si vous devez annuler un stage :"
         ],
         "bullets": [
-          "14 jours ou plus avant le début du camp : vous êtes intégralement remboursé.",
+          "14 jours ou plus avant le début du stage : vous êtes intégralement remboursé.",
           "Entre 7 et 14 jours avant : nous vous remboursons, déduction faite de 50 € de frais de dossier.",
           "Moins de 7 jours avant : nous ne pouvons pas rembourser le paiement, car la place a été réservée et préparée pour votre enfant — sauf urgence médicale ou circonstance véritablement indépendante de votre volonté.",
           "Si votre enfant ne peut pas participer pour cause de maladie, nous vous remboursons sur envoi d’un certificat médical à kanslia@sog.gg."
