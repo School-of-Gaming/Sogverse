@@ -485,8 +485,8 @@ function buildSharedFields(
  * decides whether the product is *listed* on the shop and schools pages, not
  * whether anyone may see or buy it. An unlisted product is reachable, readable
  * and purchasable by direct link, which is what makes it usable for a campaign
- * or an unannounced cohort. See docs/products-architecture.md § "Status vs.
- * visibility".
+ * or an unannounced cohort. See docs/products-architecture.md § "Lifecycle &
+ * listing".
  */
 export function buildCreateInput(
   state: FormState,

@@ -24,7 +24,7 @@ quietly return.
   distinct phone number, both admin-surface reads with no bound. An active conversation
   is the fastest-growing set in the app.
 - **Products:** the admin product list fetches every product ever created of a type
-  (drafts and ended included, nothing pruned). `/schools` reads every visible
+  (ended ones included, nothing pruned). `/schools` reads every visible
   municipality club — staging 50 / prod 20 on 2026-07-30 — but its row budget is consumed
   by ended clubs that keep matching the SQL filter.
 - The failure is silent in every case: no error is thrown, surfaces render and act on
@@ -77,7 +77,7 @@ phone numbers; it degrades gracefully (oldest-idle contacts drop) but is still w
 ### 2. Admin product lists
 
 The by-type product list read (in `src/services/products/`) fetches every product of a
-type ever created — all statuses including draft and ended, with translation / schedule /
+type ever created — every status, ended ones included, with translation / schedule /
 assignment / location embeds — ordered by creation time descending, unbounded. Past the
 cap the oldest products silently vanish from the admin list.
 

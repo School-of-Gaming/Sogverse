@@ -266,8 +266,8 @@
         "notFound": "Davchugh ghaj.",
         "locationMissing": "—",
         "uncapped": "quS veH pagh",
-        "visible": "tetlhDaq tu’lu’",
-        "hidden": "tetlhDaq pagh — He nIH neH",
+        "listed": "tetlhDaq tu’lu’",
+        "unlisted": "tetlhDaq pagh — He nIH neH",
         "waitlistOn": "loS DIS naQ",
         "minutes": "{count} tup",
         "perMonth": "{amount} / jar",
@@ -370,7 +370,7 @@
         "seatCount": "pa’ mI’",
         "waitlistToggle": "pa’ tebDI’, tetlh teb yIchu’",
         "signupThreshold": "ghItlh mI’ taghmeH",
-        "makeVisible": "Kauppa tetlh Kuntakerhot tetlh je Doch yIchel",
+        "makeVisible": "ngevwI’ tetlh veng ghomHommey tetlh je Doch yIchel",
         "seatLimit": "pa’ mI’ Sub"
       },
       "placeholders": {
@@ -494,7 +494,8 @@
         "paidByMunicipality": "QumDaq vavmey Huch pagh. School of Gaming veng nIDqu’.",
         "pricingMonthly": "jar Hoch Huch lo’ qaStaHvIS rar yoH. DaH yIqIl ’e’ DaneHchugh, yIqIl.",
         "pricingUpfront": "ghItlh wa’ Huch lo’. poH nab Sov pagh, Huch rapchu’.",
-        "seatHint": "tebDI’, ghItlh chu’mey tetlh teb Daq jaH.",
+        "seatHintWaitlist": "tebDI’, ghItlh chu’mey tetlh teb Daq jaH.",
+        "seatHintNoWaitlist": "tebDI’, ghItlh chu’mey lajQo’lu’.",
         "visibleHint": "yIchu’Ha’chugh, pagh tetlhDaq Doch tu’lu’ — ’ach He nIH ghajbogh nuv Doch legh ’ej pa’ je’laH. vaj ’angbe’lu’bogh Doch, ri’bogh Doch, ghap tlhIngan may’ Doch DaSuqmeH QaQ. ghItlh chu’ DamevmeH mIw ghaHbe’, ’ej ghoStaHbogh vavpu’ QujwI’pu’ je luQaHbe’.",
         "seatLimitHint": "pa’ mI’ yIgheS pagh Sub Hutlh yIqaw.",
         "holidayComingSoon": "jaj Do’ De’wI’ tugh chol. DaH Hoch ghum qaS.",
@@ -684,17 +685,17 @@
           "promoteUnpaid": {
             "title": "Huch nge’ghach poQ pa’vam",
             "description": "loSwI’pu’ tetlhDaq {name} tu’lu’, ’ach Huch nge’ghach ghajbe’. Hoch jarmey Huch poQ ngoptlhInvam pa’. DaH pa’ Danobchugh, Huch Hutlh ’el — batlh ghajbe’ vay’.",
-            "nextStep": "qorDu’vaD yIja’: pa’ tlhab tu’lu’chugh, malja’Daq poSqu’ ngoptlhIn. vaj My SOG ngoptlhInDaj lo’, loSwI’pu’ tetlhvo’ mej, ’ej batlh DIl — DIltaHvIS chen Huch nge’ghachDaj."
+            "nextStep": "qorDu’vaD yIja’: pa’ tlhab tu’lu’chugh, malja’Daq poSqu’ ngoptlhIn. vaj jIH SOG ngoptlhInDaj lo’, loSwI’pu’ tetlhvo’ mej, ’ej batlh DIl — DIltaHvIS chen Huch nge’ghachDaj."
           },
           "demoteSubscribed": {
             "title": "taHtaH Huch nge’ghach",
             "description": "loSwI’pu’ tetlhDaq {name} DalanDI’, taHtaH Huch nge’ghach: pa’ Hutlh qorDu’, ’ach Huch nge’taH. quvHa’ghach ’oH!",
-            "nextStep": "My SOG Huch nge’ghach HaDDaq nge’ghach chIl qorDu’. chIlDI’, tlhab pa’."
+            "nextStep": "jIH SOG yaHDaj Huch ngoptlhIn poSmoH qorDu’; vaj Hubbogh Stripe Huch pa’Daq nge’ghach chIl. chIlDI’, tlhab pa’."
           },
           "removeSubscribed": {
             "title": "taHtaH Huch nge’ghach",
             "description": "{name} Dateqchugh, ngab pa’ ’ach taHtaH Huch nge’ghach: pa’ Hutlhbogh qorDu’vo’ Huch nge’taH. quvHa’ghach ’oH!",
-            "nextStep": "My SOG yaHDaj Huch ngoptlhIn poSmoH qorDu’; vaj Hubbogh Stripe Huch pa’Daq nge’ghach chIl. chIlDI’, tlhab pa’."
+            "nextStep": "jIH SOG yaHDaj Huch ngoptlhIn poSmoH qorDu’; vaj Hubbogh Stripe Huch pa’Daq nge’ghach chIl. chIlDI’, tlhab pa’."
           }
         }
       },
@@ -843,9 +844,6 @@
       "group": "ghom’a’",
       "groupNumber": "ghom’a’ {number}",
       "groupDeleted": "{label} (HoHlu’)",
-      "hiddenNoGroups": "De’vam peghHa’ — ghom’a’mey tu’be’lu’. wa’ ghom’a’ yIchel — vav/SoSmey legh.",
-      "hiddenWithGroups": "De’vam peghHa’. vav/SoSmey leghbe’. boch choHmoH tlhopmey HoSna’.",
-      "visibleNoGroups": "De’vam leghlu’ — ghom’a’mey tu’be’lu’. vav/SoSmey legh — qo’ ghoHbe’laH.",
       "gamerCount": "{count, plural, one {# toy’wI’} other {# toy’wI’pu’}}",
       "genderBoy": "loD",
       "genderGirl": "be’",

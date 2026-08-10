@@ -147,8 +147,8 @@ export function ProductDetailsPage({
         statusKey={status}
         statusLabel={t(`status.${status}`)}
         isVisible={product.is_visible}
-        visibleLabel={t("detailsPage.visible")}
-        hiddenLabel={t("detailsPage.hidden")}
+        listedLabel={t("detailsPage.listed")}
+        unlistedLabel={t("detailsPage.unlisted")}
         editHref={editHref}
         editLabel={c("edit")}
         cloneHref={cloneHref}
@@ -197,8 +197,8 @@ function HeaderCard({
   statusKey,
   statusLabel,
   isVisible,
-  visibleLabel,
-  hiddenLabel,
+  listedLabel,
+  unlistedLabel,
   editHref,
   editLabel,
   cloneHref,
@@ -211,8 +211,8 @@ function HeaderCard({
   statusKey: EffectiveProductStatus;
   statusLabel: string;
   isVisible: boolean;
-  visibleLabel: string;
-  hiddenLabel: string;
+  listedLabel: string;
+  unlistedLabel: string;
   editHref: string;
   editLabel: string;
   cloneHref: string;
@@ -247,7 +247,7 @@ function HeaderCard({
               {statusLabel}
             </span>
             <Badge variant={isVisible ? "default" : "secondary"}>
-              {isVisible ? visibleLabel : hiddenLabel}
+              {isVisible ? listedLabel : unlistedLabel}
             </Badge>
           </div>
         </div>

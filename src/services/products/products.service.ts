@@ -263,10 +263,10 @@ export class ProductsService {
   // state. RLS already restricts anon/customer reads to the same predicate
   // (per redesign §5.8) — the explicit filters here are defensive and let
   // admins (who can see everything) call this same hook from the public
-  // pages without seeing draft/cancelled rows. Joins everything the browse
+  // pages without seeing cancelled rows. Joins everything the browse
   // card needs in one round trip.
   //
-  // The stored-status filter below keeps draft/cancelled/completed rows out,
+  // The stored-status filter below keeps cancelled/completed rows out,
   // but it can't catch a row stored as `running` whose `end_date` has already
   // passed — that product has finished and must not appear in the storefront.
   // There is no cron flipping stored status, so we make the call here in JS:

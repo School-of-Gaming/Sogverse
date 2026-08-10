@@ -158,11 +158,18 @@ export function BillingSection({
         </Field>
       )}
 
+      {/* What happens once the cap is reached is the waitlist tick's decision,
+          not the cap's: ticked, the overflow queues; unticked, it is turned
+          away outright. A single hint would be a lie in one of the two. */}
       {!state.uncapped && (
         <Field
           label={t("labels.seatCount")}
           htmlFor="p-seat"
-          hint={t("hints.seatHint")}
+          hint={t(
+            state.waitlistEnabled
+              ? "hints.seatHintWaitlist"
+              : "hints.seatHintNoWaitlist",
+          )}
         >
           <Input
             id="p-seat"

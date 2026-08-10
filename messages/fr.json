@@ -221,8 +221,8 @@
         "notFound": "Produit introuvable.",
         "locationMissing": "—",
         "uncapped": "Aucune limite de places",
-        "visible": "Répertorié publiquement",
-        "hidden": "Hors catalogue — lien direct uniquement",
+        "listed": "Répertorié publiquement",
+        "unlisted": "Hors catalogue — lien direct uniquement",
         "waitlistOn": "liste d’attente activée",
         "minutes": "{count} min",
         "perMonth": "{amount} / mois",
@@ -449,7 +449,8 @@
         "paidByMunicipality": "Aucune facturation client dans ce système. School of Gaming facture directement la commune.",
         "pricingMonthly": "Prélevé chaque mois tant que l’abonnement est actif. Résiliable à tout moment.",
         "pricingUpfront": "Prélevé une seule fois à l’inscription. Même montant total quelle que soit la durée.",
-        "seatHint": "Une fois complet, les nouvelles inscriptions passent en liste d’attente.",
+        "seatHintWaitlist": "Une fois complet, les nouvelles inscriptions passent en liste d’attente.",
+        "seatHintNoWaitlist": "Une fois complet, les nouvelles inscriptions sont refusées.",
         "visibleHint": "Sans la case cochée, le produit n’apparaît sur aucune page publique, mais toute personne disposant du lien direct peut l’ouvrir et acheter une place. C’est précisément ce qui le rend adapté aux produits non annoncés, réservés sur invitation ou liés à une campagne. Ce n’est pas un moyen d’arrêter les inscriptions, et cela n’affecte jamais les parents et les joueurs déjà inscrits.",
         "seatLimitHint": "Plafonnez le nombre de joueurs, ou fonctionnez sans limite.",
         "holidayComingSoon": "Les calendriers de vacances arrivent bientôt. Pour l’instant, toutes les sessions programmées ont lieu.",
@@ -639,17 +640,17 @@
           "promoteUnpaid": {
             "title": "Cette place nécessite un abonnement",
             "description": "{name} est sur la liste d’attente sans abonnement, et une place dans ce club est facturée chaque mois. Lui donner une place maintenant l’inscrirait gratuitement.",
-            "nextStep": "Demandez plutôt à la famille de prendre la place elle-même : tant qu’une place est libre, le club s’affiche comme ouvert dans la boutique, la famille peut donc quitter la liste d’attente depuis sa carte My SOG et passer en caisse — c’est là que l’abonnement est créé."
+            "nextStep": "Demandez plutôt à la famille de prendre la place elle-même : tant qu’une place est libre, le club s’affiche comme ouvert dans la boutique, la famille peut donc quitter la liste d’attente depuis sa carte sur Mon SOG et passer en caisse — c’est là que l’abonnement est créé."
           },
           "demoteSubscribed": {
             "title": "L’abonnement est toujours actif",
             "description": "Déplacer {name} vers la liste d’attente laisserait un abonnement actif qui continuerait à facturer la famille pour une place qu’elle n’a plus.",
-            "nextStep": "La famille résilie l’abonnement depuis sa page de facturation My SOG. La place se libère dès la fin de l’abonnement."
+            "nextStep": "La famille ouvre la carte de facturation sur Mon SOG, qui la conduit au portail de facturation sécurisé de Stripe pour résilier. La place se libère dès la fin de l’abonnement."
           },
           "removeSubscribed": {
             "title": "L’abonnement est toujours actif",
             "description": "Retirer {name} laisserait l’abonnement de la famille facturer une place qui n’existe plus.",
-            "nextStep": "La famille ouvre la carte de facturation sur sa page My SOG, qui la conduit au portail de facturation sécurisé de Stripe pour résilier. La place se libère dès la fin de l’abonnement."
+            "nextStep": "La famille ouvre la carte de facturation sur Mon SOG, qui la conduit au portail de facturation sécurisé de Stripe pour résilier. La place se libère dès la fin de l’abonnement."
           }
         }
       },
@@ -798,9 +799,6 @@
       "group": "Groupe",
       "groupNumber": "Groupe {number}",
       "groupDeleted": "{label} (supprimé)",
-      "hiddenNoGroups": "Ce produit est masqué et n’a aucun groupe. Ajoutez au moins un groupe et rendez-le visible pour que les parents puissent le voir.",
-      "hiddenWithGroups": "Ce produit est masqué. Les parents ne peuvent pas le voir dans le catalogue. Modifiez la visibilité depuis la carte Actions ci-dessus.",
-      "visibleNoGroups": "Ce produit est visible mais n’a aucun groupe. Les parents peuvent le voir mais ne peuvent pas s’y inscrire.",
       "gamerCount": "{count, plural, one {# joueur} other {# joueurs}}",
       "genderBoy": "Garçon",
       "genderGirl": "Fille",

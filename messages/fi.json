@@ -221,8 +221,8 @@
         "notFound": "Tuotetta ei löytynyt.",
         "locationMissing": "—",
         "uncapped": "Ei paikkarajaa",
-        "visible": "Listattu julkisesti",
-        "hidden": "Ei listattu – vain suoralla linkillä",
+        "listed": "Listattu julkisesti",
+        "unlisted": "Ei listattu – vain suoralla linkillä",
         "waitlistOn": "jonotuslista käytössä",
         "minutes": "{count} min",
         "perMonth": "{amount} / kk",
@@ -291,7 +291,7 @@
         "registration": "Ilmoittautumisaika",
         "registrationDescription": "Valitse, milloin vanhemmat voivat alkaa ilmoittautua.",
         "visibility": "Listaus",
-        "visibilityDescription": "Ratkaisee, missä tuotetta mainostetaan, ei sitä, kuka voi ostaa sen. Ilmoittautumisen avaavat ja sulkevat ilmoittautumispäivä, paikkamäärä ja tuotteen tila – eivät koskaan tämä asetus."
+        "visibilityDescription": "Ratkaisee, missä tuotetta mainostetaan, ei sitä, kuka voi ostaa sen. Ilmoittautumisen avaavat ja sulkevat ilmoittautumispäivä, paikkamäärä ja tuotteen tila – ei koskaan tämä asetus."
       },
       "labels": {
         "name": "Nimi",
@@ -449,7 +449,8 @@
         "paidByMunicipality": "Ei asiakaslaskutusta tämän järjestelmän sisällä. School of Gaming laskuttaa kuntaa suoraan.",
         "pricingMonthly": "Veloitetaan joka kuukausi tilauksen ollessa voimassa. Voit perua milloin tahansa.",
         "pricingUpfront": "Veloitetaan kerran ilmoittautuessa. Sama kokonaishinta riippumatta kestosta.",
-        "seatHint": "Kun täynnä, uudet ilmoittautujat menevät jonotuslistalle.",
+        "seatHintWaitlist": "Kun täynnä, uudet ilmoittautujat menevät jonotuslistalle.",
+        "seatHintNoWaitlist": "Kun täynnä, uudet ilmoittautumiset hylätään.",
         "visibleHint": "Ilman valintaa tuote ei näy millään julkisella sivulla, mutta jokainen, jolla on suora linkki, voi silti avata sen ja ostaa paikan. Juuri siksi tämä sopii julkistamattomiin, kutsuvieraille tarkoitettuihin ja kampanjatuotteisiin. Tämä ei ole keino lopettaa ilmoittautumisia, eikä se vaikuta jo mukana oleviin vanhempiin ja pelaajiin.",
         "seatLimitHint": "Rajaa osallistujamäärä tai pidä se rajattomana.",
         "holidayComingSoon": "Lomakalenterit tulevat pian. Toistaiseksi jokainen aikataulutettu kerta pidetään.",
@@ -639,17 +640,17 @@
           "promoteUnpaid": {
             "title": "Paikka vaatii tilauksen",
             "description": "{name} on jonotuslistalla ilman tilausta, ja tämän kerhon paikka laskutetaan kuukausittain. Jos annat paikan nyt, hän pääsee mukaan ilmaiseksi.",
-            "nextStep": "Pyydä perhettä ottamaan paikka itse: kun paikka on vapaana, kerho näkyy kaupassa avoimena. Perhe voi poistua jonotuslistalta My SOG -korttinsa kautta ja tehdä tilauksen kassalla."
+            "nextStep": "Pyydä perhettä ottamaan paikka itse: kun paikka on vapaana, kerho näkyy kaupassa avoimena. Perhe voi poistua jonotuslistalta Oma SOG -korttinsa kautta ja tehdä tilauksen kassalla."
           },
           "demoteSubscribed": {
             "title": "Tilaus on yhä voimassa",
-            "description": "Jos {name} siirtyy jonotuslistalle, tilaus jää voimaan ja perheeltä veloitetaan edelleen paikasta, jota heillä ei enää ole.",
-            "nextStep": "Perhe voi perua tilauksen My SOG -laskutussivullaan. Paikka vapautuu heti, kun tilaus päättyy."
+            "description": "Jos {name} siirtyy jonotuslistalle, tilaus jää voimaan ja perheeltä veloitetaan edelleen paikasta, jota sillä ei enää ole.",
+            "nextStep": "Perhe avaa laskutuskortin Oma SOG -sivullaan ja siirtyy sitä kautta Stripen suojattuun laskutusportaaliin perumaan tilauksen. Paikka vapautuu heti, kun tilaus päättyy."
           },
           "removeSubscribed": {
             "title": "Tilaus on yhä voimassa",
             "description": "Jos {name} poistetaan, perheen tilaus jatkaa laskuttamista paikasta, jota ei enää ole.",
-            "nextStep": "Perhe avaa laskutuskortin My SOG -sivullaan ja siirtyy sitä kautta Stripen suojattuun laskutusportaaliin perumaan tilauksen. Paikka vapautuu heti, kun tilaus päättyy."
+            "nextStep": "Perhe avaa laskutuskortin Oma SOG -sivullaan ja siirtyy sitä kautta Stripen suojattuun laskutusportaaliin perumaan tilauksen. Paikka vapautuu heti, kun tilaus päättyy."
           }
         }
       },
@@ -798,9 +799,6 @@
       "group": "Ryhmä",
       "groupNumber": "Ryhmä {number}",
       "groupDeleted": "{label} (poistettu)",
-      "hiddenNoGroups": "Tämä tuote on piilotettu eikä sillä ole ryhmiä. Lisää vähintään yksi ryhmä ja tee se näkyväksi, jotta vanhemmat näkevät sen.",
-      "hiddenWithGroups": "Tämä tuote on piilotettu. Vanhemmat eivät näe sitä luettelossa. Vaihda näkyvyyttä yllä olevasta Toiminnot-kortista.",
-      "visibleNoGroups": "Tämä tuote on näkyvissä, mutta sillä ei ole ryhmiä. Vanhemmat näkevät sen, mutta eivät voi ilmoittautua.",
       "gamerCount": "{count, plural, one {# pelaaja} other {# pelaajaa}}",
       "genderBoy": "Poika",
       "genderGirl": "Tyttö",

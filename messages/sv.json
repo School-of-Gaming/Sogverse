@@ -221,8 +221,8 @@
         "notFound": "Produkten kunde inte hittas.",
         "locationMissing": "—",
         "uncapped": "Ingen platsgräns",
-        "visible": "Listad publikt",
-        "hidden": "Olistad — endast via direktlänk",
+        "listed": "Listad publikt",
+        "unlisted": "Olistad — endast via direktlänk",
         "waitlistOn": "väntelista på",
         "minutes": "{count} min",
         "perMonth": "{amount} / månad",
@@ -449,7 +449,8 @@
         "paidByMunicipality": "Ingen kundfakturering inom detta system. School of Gaming fakturerar kommunen direkt.",
         "pricingMonthly": "Debiteras varje månad så länge prenumerationen är aktiv. Avsluta när som helst.",
         "pricingUpfront": "Debiteras en gång vid anmälan. Samma totalbelopp oavsett längd.",
-        "seatHint": "När fullt går nya anmälningar till väntelistan.",
+        "seatHintWaitlist": "När fullt går nya anmälningar till väntelistan.",
+        "seatHintNoWaitlist": "När fullt nekas nya anmälningar.",
         "visibleHint": "Utan bocken visas produkten inte på någon publik sida, men den som har direktlänken kan ändå öppna den och köpa en plats. Det är just det som gör den lämplig för oannonserade produkter, inbjudningar och kampanjer. Det är inget sätt att stoppa anmälningar, och det påverkar aldrig föräldrar och gamers som redan deltar.",
         "seatLimitHint": "Begränsa antalet deltagare eller kör utan gräns.",
         "holidayComingSoon": "Lovkalendrar kommer snart. Tills vidare körs varje schemalagt tillfälle.",
@@ -639,17 +640,17 @@
           "promoteUnpaid": {
             "title": "Platsen kräver en prenumeration",
             "description": "{name} står på väntelistan utan prenumeration, och en plats i den här klubben faktureras varje månad. Att ge platsen nu skulle skriva in hen gratis.",
-            "nextStep": "Be familjen ta platsen själv: så länge en plats är ledig visas klubben som öppen i butiken, så de kan lämna väntelistan från sitt My SOG-kort och gå till kassan — det är där prenumerationen skapas."
+            "nextStep": "Be familjen ta platsen själv: så länge en plats är ledig visas klubben som öppen i butiken, så de kan lämna väntelistan från sitt kort på Min SOG och gå till kassan — det är där prenumerationen skapas."
           },
           "demoteSubscribed": {
             "title": "Prenumerationen är fortfarande aktiv",
-            "description": "Om {name} flyttas till väntelistan blir prenumerationen kvar och familjen fortsätter att faktureras för en plats de inte längre har.",
-            "nextStep": "Familjen säger upp prenumerationen på sin My SOG-faktureringssida. Platsen frigörs så snart prenumerationen upphör."
+            "description": "Om {name} flyttas till väntelistan blir prenumerationen kvar och familjen fortsätter att faktureras för en plats den inte längre har.",
+            "nextStep": "Familjen öppnar faktureringskortet på Min SOG, som tar dem vidare till Stripes säkra faktureringsportal för att säga upp. Platsen frigörs så snart prenumerationen upphör."
           },
           "removeSubscribed": {
             "title": "Prenumerationen är fortfarande aktiv",
             "description": "Att ta bort {name} skulle lämna familjens prenumeration kvar och fortsätta fakturera för en plats som inte längre finns.",
-            "nextStep": "Familjen öppnar faktureringskortet på sin My SOG-sida, som tar dem vidare till Stripes säkra faktureringsportal för att säga upp. Platsen frigörs så snart prenumerationen upphör."
+            "nextStep": "Familjen öppnar faktureringskortet på Min SOG, som tar dem vidare till Stripes säkra faktureringsportal för att säga upp. Platsen frigörs så snart prenumerationen upphör."
           }
         }
       },
@@ -798,9 +799,6 @@
       "group": "Grupp",
       "groupNumber": "Grupp {number}",
       "groupDeleted": "{label} (raderad)",
-      "hiddenNoGroups": "Denna produkt är dold och har inga grupper. Lägg till minst en grupp och gör den synlig för att föräldrar ska kunna se den.",
-      "hiddenWithGroups": "Denna produkt är dold. Föräldrar kan inte se den i katalogen. Ändra synlighet från åtgärdskortet ovan.",
-      "visibleNoGroups": "Denna produkt är synlig men har inga grupper. Föräldrar kan se den men kan inte anmäla sig.",
       "gamerCount": "{count, plural, one {# spelare} other {# spelare}}",
       "genderBoy": "Pojke",
       "genderGirl": "Flicka",

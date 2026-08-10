@@ -221,8 +221,8 @@
         "notFound": "Product not found.",
         "locationMissing": "—",
         "uncapped": "No seat limit",
-        "visible": "Listed publicly",
-        "hidden": "Unlisted — direct link only",
+        "listed": "Listed publicly",
+        "unlisted": "Unlisted — direct link only",
         "waitlistOn": "waitlist on",
         "minutes": "{count} min",
         "perMonth": "{amount} / month",
@@ -325,7 +325,7 @@
         "seatCount": "Seat count",
         "waitlistToggle": "Enable waitlist when seats are full",
         "signupThreshold": "Signups needed to start",
-        "makeVisible": "List this product on the shop and schools pages",
+        "makeVisible": "List this product on the Shop and Municipality Clubs pages",
         "seatLimit": "Seat limit"
       },
       "placeholders": {
@@ -449,7 +449,8 @@
         "paidByMunicipality": "No customer billing inside this system. School of Gaming invoices the municipality directly.",
         "pricingMonthly": "Charged every month while the subscription is active. Cancel anytime.",
         "pricingUpfront": "Charged once at signup. Same total no matter the duration.",
-        "seatHint": "When full, new signups go to the waitlist.",
+        "seatHintWaitlist": "When full, new signups go to the waitlist.",
+        "seatHintNoWaitlist": "When full, new signups are refused.",
         "visibleHint": "Unchecked, the product appears on no public page — but anyone with the direct link can still open it and buy a place. That is what makes it right for unannounced, invite-only or campaign products. It is not a way to stop sign-ups, and it never affects parents and gamers already taking part.",
         "seatLimitHint": "Cap the number of gamers, or run with no limit.",
         "holidayComingSoon": "Holiday calendars are coming soon. For now, every scheduled session runs.",
@@ -644,7 +645,7 @@
           "demoteSubscribed": {
             "title": "The subscription is still live",
             "description": "Moving {name} to the waitlist would leave a live subscription behind, still billing the family for a seat they no longer hold.",
-            "nextStep": "The family cancels the subscription from their My SOG billing page. The seat is released as soon as the subscription ends."
+            "nextStep": "The family opens the billing card on their My SOG page, which takes them to Stripe's secure billing portal to cancel. Once the subscription ends, the seat is released."
           },
           "removeSubscribed": {
             "title": "The subscription is still live",
@@ -798,9 +799,6 @@
       "group": "Group",
       "groupNumber": "Group {number}",
       "groupDeleted": "{label} (deleted)",
-      "hiddenNoGroups": "This product is hidden and has no groups. Add at least one group and make it visible for parents to see it.",
-      "hiddenWithGroups": "This product is hidden. Parents cannot see it in the catalogue. Toggle visibility from the Actions card above.",
-      "visibleNoGroups": "This product is visible but has no groups. Parents can see it but cannot enrol.",
       "gamerCount": "{count, plural, one {# gamer} other {# gamers}}",
       "genderBoy": "Boy",
       "genderGirl": "Girl",
