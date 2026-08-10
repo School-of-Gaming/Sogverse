@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Sliders, X, Globe, MapPin } from "lucide-react";
 import { LanguageFlag } from "@/components/ui/language-flag";
@@ -88,10 +89,13 @@ export function ProductBrowseFilters({
 
   const hasLanguageRow = (spokenLanguages?.length ?? 0) > 0;
 
-  // The button shows exactly when clearing would change something, so it spans
-  // both state owners: `hasAny` covers the chip filters, the categories cover
-  // the Type row that `clear` now resets alongside them.
-  const showClear = hasAny || categories.length > 0;
+  // The button shows exactly when clearing would change something the user can
+  // see, so it spans both state owners: `hasAny` covers the chip filters, the
+  // categories cover the Type row that `clear` now resets alongside them — but
+  // only where that row is rendered. A surface without the Type row (the
+  // municipality page) still *reads* a stray `?category=` into `categories`,
+  // and a Clear button lit by an invisible param is a control lying.
+  const showClear = hasAny || (showTypeFilter && categories.length > 0);
 
   return (
     <div className="rounded-xl border bg-card/50 p-3 sm:p-4">
@@ -261,15 +265,24 @@ function FilterRow({
   wrap?: boolean;
   children: React.ReactNode;
 }) {
+  // Grouped for assistive tech: without `role="group"` + `aria-labelledby`,
+  // the six rows read as one undifferentiated run of ~30 toggle buttons — the
+  // visual label ("Type", "Days") never reaches a screen reader.
+  const labelId = useId();
   return (
     <div
+      role="group"
+      aria-labelledby={labelId}
       className={cn(
         // Label beside the chips as a strip, above them in the rail.
         "flex gap-3 lg:flex-col lg:items-stretch lg:gap-1.5",
         wrap ? "items-baseline" : "items-center",
       )}
     >
-      <span className="w-12 shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:w-14 lg:w-auto">
+      <span
+        id={labelId}
+        className="w-12 shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:w-14 lg:w-auto"
+      >
         {label}
       </span>
       <div

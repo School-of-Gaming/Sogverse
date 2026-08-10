@@ -12,16 +12,9 @@ import {
 // The category constants + parser live in the non-client `shop-categories.ts`
 // so the shop page's Server Component can import SHOP_PRODUCT_TYPES for its
 // prefetch (a "use client" module's runtime values don't survive import into a
-// Server Component). Re-exported here so client imports of these names from
-// `use-shop-categories` keep working.
-export {
-  SHOP_CATEGORIES,
-  CATEGORY_TYPE,
-  SHOP_PRODUCT_TYPES,
-  visibleCategories,
-  type ShopCategory,
-} from "./shop-categories";
-
+// Server Component). Import them from there, not from here: this module only
+// exports the hook, so nothing pure ever ends up behind its "use client"
+// boundary by accident.
 export function useShopCategories() {
   const pathname = usePathname();
   const searchParams = useSearchParams();

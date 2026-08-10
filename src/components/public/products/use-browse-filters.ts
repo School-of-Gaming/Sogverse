@@ -54,9 +54,10 @@ function parseAge(raw: string | null): AgeBand | null {
 
 // URL-state hook for the topic + tag + format chip filters.
 //
-// Toggling a chip writes via `router.replace({ scroll: false })` so chip
-// taps don't push history entries or jerk the scroll position. Other
-// query params (e.g. `?mock=1`) are preserved across writes.
+// Toggling a chip writes via `window.history.replaceState` — no history
+// entries pushed, no scroll jerk, no RSC navigation (see the note inside
+// `writeNext`). Other query params (e.g. `?mock=1`) are preserved across
+// writes.
 //
 // Format is single-valued — toggling a chip on with the other one active
 // replaces, not adds. Selecting the active chip clears the filter.
@@ -209,8 +210,11 @@ export function useBrowseFilters() {
   // calling into `useShopCategories` because both hooks read a snapshot of
   // `useSearchParams()` — a second, sequential write would rebuild the query
   // string from the pre-clear snapshot and resurrect everything this one just
-  // deleted. One `replaceState`, or nothing. Harmless on the municipality page,
-  // which never sets the param.
+  // deleted. One `replaceState`, or nothing. On the municipality page the
+  // delete is a no-op in practice (nothing there writes the param), but a
+  // stray hand-edited `?category=` would still be *read* — which is why the
+  // Clear button's visibility gates the categories term on the Type row being
+  // rendered (see `product-browse-filters.tsx`).
   const clear = useCallback(() => {
     writeNext(
       { topics: [], format: null, languages: [], age: null, days: [] },

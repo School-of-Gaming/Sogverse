@@ -80,10 +80,11 @@ export function MunicipalityClubsBrowse({
       {/* The heading stays a centred reading column while the results below
           break out of it from `lg` up (see <ProductBrowseResults>). Both are
           centred on the viewport and the heading is narrower than the cards'
-          64rem cap, so it reads as a title over the cards rather than as a
-          second, unrelated width — exactly aligned once the cards' gutters
-          equalise (~1616px), and up to ~128px left of the cards' centre below
-          that, which is the same tolerance the results grid accepts. */}
+          cap, so it reads as a title over the cards rather than as a second,
+          unrelated width — exactly aligned where the cards' gutters equalise
+          (~1616–1759px under the 64rem cap, ~1984px+ under the 87rem four-up
+          cap), and up to ~128px left of the cards' centre elsewhere, the same
+          tolerance the results grid accepts and documents. */}
       <header className="mx-auto max-w-3xl px-4 text-center">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
           {t("heading", { name: municipalityName })}

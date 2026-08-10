@@ -105,6 +105,10 @@ export function ProductBrowsePage({
         sections={sections}
         counts={counts ?? []}
         filters={{ initialSpokenLanguages }}
+        // From the un-narrowed fetch: `sections` only cover the selected
+        // categories, and an empty catalog must not be conflated with a Type
+        // selection the catalog lacks.
+        scopeHasProducts={(products ?? []).length > 0}
       />
     </div>
   );

@@ -49,14 +49,18 @@ export interface ProductBrowseSection {
 // The cards track caps at 64rem (`5xl`): three columns of ~330px, a shade wider
 // than the ~312px the capped-container layout gave at 1440. A larger cap (6xl)
 // pushes a three-column card past 370px and the grid starts reading as a list.
-// Both gutters are `1fr`, so once each can exceed the rail's
-// 16rem floor — viewport ≥ ~1616px — they equalise and the cards sit dead
-// centre of the viewport. Below that the left gutter is at its floor and the
-// right takes what is left, so the cards sit right of centre: +128px at 1024
-// and 1280, +88px at 1440, 0 from ~1616 up. That asymmetry is the tolerance we
-// accepted — true centring at 1440 would mean two 16rem gutters and three cards
-// of ~267px, and legibility beats symmetry. Checked at 1024 / 1280 / 1440 /
-// 1920.
+// From 110rem (1760px) the cap steps to 87rem and the section grids go four-up,
+// which holds cards at ~330px (see the section-grid comment below).
+// Both gutters are `1fr`, so the cards sit dead centre of the viewport once
+// each gutter can exceed the rail's 16rem floor — from ~1616px under the 64rem
+// cap, and again from ~1984px under the 87rem one. Elsewhere the left gutter is
+// at its floor and the right takes what is left, so the cards sit right of
+// centre: +128px at 1024 and 1280, +88px at 1440, 0 at 1616–1759, then the
+// 110rem step re-opens the offset (+112px at 1760, +32px at 1920) until ~1984.
+// That asymmetry is the tolerance we accepted — true centring at 1440 would
+// mean two 16rem gutters and three cards of ~267px, and a centred fourth
+// column at 1760 would need a ≤73rem cap and ~280px cards; legibility beats
+// symmetry both times. Checked at 1024 / 1280 / 1440 / 1616 / 1760 / 1920.
 interface ProductBrowseResultsProps {
   /** Sections to render, in display order. A section whose products all fail
    *  the chip filters disappears rather than rendering an empty shell. */
@@ -70,6 +74,13 @@ interface ProductBrowseResultsProps {
     initialSpokenLanguages: SpokenLanguage[];
     showTypeFilter?: boolean;
   };
+  /** Whether the page's scope holds any products before *any* filtering —
+   *  including the Type narrowing the shop applies while building `sections`.
+   *  Distinguishes "nothing here yet" from "no matches": without it, selecting
+   *  a type the catalog lacks would read as an empty catalog even though the
+   *  lit Type chip is the cause. Omitted where `sections` already carry the
+   *  whole scope (the municipality page). */
+  scopeHasProducts?: boolean;
   /** Detail-page URL builder for each card. Defaults to the storefront
    *  `/shop/[id]`; the municipality page passes `/schools/<slug>/[id]`. */
   productHref?: (id: string) => string;
@@ -82,6 +93,7 @@ export function ProductBrowseResults({
   sections,
   counts,
   filters,
+  scopeHasProducts,
   productHref,
   municipalityScoped,
 }: ProductBrowseResultsProps) {
@@ -116,9 +128,13 @@ export function ProductBrowseResults({
     [sections, topics, format, languages, age, days],
   );
 
-  // "Nothing here yet" vs "no matches" is decided before the chips run: a scope
-  // with no products at all can't be filtered into one.
-  const hasProducts = sections.some((section) => section.products.length > 0);
+  // "Nothing here yet" vs "no matches" is decided before *all* filtering, Type
+  // included — hence the host-provided `scopeHasProducts` where sections arrive
+  // already Type-narrowed (the shop). Falling back to the sections is only
+  // right where they carry the whole scope (the municipality page).
+  const hasProducts =
+    scopeHasProducts ??
+    sections.some((section) => section.products.length > 0);
 
   return (
     // Reserve the document scrollbar gutter: the chip filters can shrink the

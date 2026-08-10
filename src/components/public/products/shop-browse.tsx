@@ -3,7 +3,8 @@
 import type { ProductBrowseRow, SpokenLanguage } from "@/types";
 import type { ParticipationCounts } from "@/services/participations";
 import { ProductBrowsePage } from "./product-browse-page";
-import { useShopCategories, visibleCategories } from "./use-shop-categories";
+import { visibleCategories } from "./shop-categories";
+import { useShopCategories } from "./use-shop-categories";
 
 // The shop storefront. Type (Clubs | Camps | Events) is an inclusive filter
 // living in the URL via useShopCategories, toggled from the "Type" row inside
