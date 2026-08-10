@@ -148,9 +148,11 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   },
 
   // --- the guard primitives themselves -------------------------------------
-  // Exposed to `authenticated` because create_product / update_product are
-  // SECURITY INVOKER, so their guard runs as the caller (see migration 00120).
-  // They are role-gated by definition, so the matrix covers them like any other.
+  // Exposed to `authenticated` because create_product is SECURITY INVOKER, so
+  // its guard runs as the caller (see migration 00120; update_product was
+  // elevated to DEFINER by 00171 and no longer needs the grant, but its
+  // sibling still does). They are role-gated by definition, so the matrix
+  // covers them like any other.
   assert_admin: { permittedRoles: ["admin"] },
   // No role passes: the all-NULL convention hands it a NULL role name, which it
   // refuses outright rather than letting the comparison swallow it. That refusal

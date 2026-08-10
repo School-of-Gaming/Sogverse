@@ -34,6 +34,13 @@ const MUNI_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f2";
 // participations (and, in two of them, a family_subscriptions row), which the
 // wipe-and-replace cases above have no business seeing.
 const WAITLIST_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f7";
+// A decoy with its own waitlisted row, asserted untouched by every
+// queue-clearing save. This is the only thing anywhere that pins the delete's
+// `product_id = p_id` scoping: the migration's DO block checks the status
+// predicate and the carve-out but not the product key, so without this row a
+// predicate that lost its product scoping — one uncap wiping every queue in
+// the database — would pass the migration's own assertions and every test.
+const DECOY_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f8";
 
 describe("update_product", () => {
   /** Service-role client — bypasses RLS, used to seed and to read back. */
@@ -59,6 +66,7 @@ describe("update_product", () => {
       PRODUCT_ID,
       MUNI_PRODUCT_ID,
       WAITLIST_PRODUCT_ID,
+      DECOY_PRODUCT_ID,
     ]);
   });
 
@@ -476,9 +484,13 @@ describe("update_product", () => {
   // CUSTOMER, and uq_participations_active_or_waitlisted allows one live row per
   // gamer per product — which is why each case seeds at most two rows.
   describe("waitlist deletion when the flag goes off", () => {
-    /** Fresh product + no participations, before every case. */
+    /**
+     * Fresh product + no participations, before every case — plus the decoy
+     * product carrying one waitlisted row, which every queue-clearing case
+     * asserts survived (see DECOY_PRODUCT_ID).
+     */
     async function freshWaitlistProduct(): Promise<void> {
-      await deleteTestProducts(admin, [WAITLIST_PRODUCT_ID]);
+      await deleteTestProducts(admin, [WAITLIST_PRODUCT_ID, DECOY_PRODUCT_ID]);
       await createTestProduct(admin, {
         id: WAITLIST_PRODUCT_ID,
         productType: "consumer_club",
@@ -486,6 +498,32 @@ describe("update_product", () => {
         seatCount: 10,
         waitlistEnabled: true,
       });
+      await createTestProduct(admin, {
+        id: DECOY_PRODUCT_ID,
+        productType: "consumer_club",
+        billingMode: "paid",
+        seatCount: 10,
+        waitlistEnabled: true,
+      });
+      const { error } = await admin.from("participations").insert({
+        product_id: DECOY_PRODUCT_ID,
+        gamer_id: TEST_IDS.GAMER,
+        customer_id: TEST_IDS.CUSTOMER,
+        status: "waitlisted",
+        waitlisted_at: new Date().toISOString(),
+      });
+      expect(error).toBeNull();
+    }
+
+    /** The other product's queue must survive every save of this one. */
+    async function expectDecoyQueueUntouched(): Promise<void> {
+      const { data } = await admin
+        .from("participations")
+        .select("gamer_id, status")
+        .eq("product_id", DECOY_PRODUCT_ID);
+      expect(data).toEqual([
+        { gamer_id: TEST_IDS.GAMER, status: "waitlisted" },
+      ]);
     }
 
     /**
@@ -561,6 +599,7 @@ describe("update_product", () => {
       await saveProduct({ waitlistEnabled: false });
 
       expect(await survivors()).toEqual({ [TEST_IDS.GAMER_2]: "active" });
+      await expectDecoyQueueUntouched();
 
       const { data: row } = await admin
         .from("products")
@@ -580,6 +619,7 @@ describe("update_product", () => {
       await saveProduct({ seatCount: 10, waitlistEnabled: false });
 
       expect(await survivors()).toEqual({ [TEST_IDS.GAMER_2]: "active" });
+      await expectDecoyQueueUntouched();
 
       const { data: row } = await admin
         .from("products")
@@ -629,6 +669,7 @@ describe("update_product", () => {
       await saveProduct({ waitlistEnabled: false });
 
       expect(await survivors()).toEqual({ [TEST_IDS.GAMER]: "waitlisted" });
+      await expectDecoyQueueUntouched();
 
       // The subscription row is what the carve-out exists to protect, so assert
       // it directly rather than inferring it from the participation surviving.
@@ -661,6 +702,7 @@ describe("update_product", () => {
       await saveProduct({ waitlistEnabled: false });
 
       expect(await survivors()).toEqual({});
+      await expectDecoyQueueUntouched();
 
       // The dead subscription row went with it, via the ON DELETE CASCADE that
       // makes the live case dangerous in the first place.

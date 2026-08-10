@@ -191,8 +191,11 @@ export const ROUTES = {
    * running in France. Placeholder content while the partnership is being
    * finalised: reachable by anyone who has the URL (so it can be shared with
    * partners) but deliberately undiscoverable — no nav link, excluded from the
-   * sitemap, disallowed in robots.txt, and noindex via its own metadata.
-   * Flip all four together when the content is ready to be found.
+   * sitemap, and noindex via its own metadata. NOT disallowed in robots.txt,
+   * on purpose: a disallowed URL is never crawled, so the noindex tag would
+   * never be read and the bare URL could still be indexed off an external
+   * link (the page's own metadata comment explains the same). Flip the nav,
+   * sitemap and noindex together when the content is ready to be found.
    */
   roblox: "/roblox",
   privacy: "/privacy",
