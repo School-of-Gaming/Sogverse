@@ -48,13 +48,19 @@ CREATE TYPE public.billing_mode AS ENUM (
 --
 
 CREATE TYPE public.effective_product_status AS ENUM (
-    'draft',
     'pending',
     'running',
     'completed',
     'cancelled',
     'expired'
 );
+
+
+--
+-- Name: TYPE effective_product_status; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.effective_product_status IS 'The lifecycle as a reader sees it: product_status plus ''expired'', the derived state of a pending product whose end date passed without its start conditions ever being met. Computed at read time, never stored.';
 
 
 --
@@ -117,12 +123,18 @@ CREATE TYPE public.payment_purpose AS ENUM (
 --
 
 CREATE TYPE public.product_status AS ENUM (
-    'draft',
     'pending',
     'running',
     'completed',
     'cancelled'
 );
+
+
+--
+-- Name: TYPE product_status; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.product_status IS 'The admin-stored lifecycle of a product: pending → running → completed, with cancelled as the admin kill. ''draft'' was removed in 00169 — nothing ever wrote it and the save-incomplete flow it was reserved for was never built. Visibility is a separate axis and means listing, not access.';
 
 
 --
@@ -283,20 +295,26 @@ CREATE FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid) RE
     AS $$
 DECLARE
   v_product_type     public.product_type;
+  v_billing_mode     public.billing_mode;
   v_customer_id      uuid;
   v_participation_id uuid;
 BEGIN
   PERFORM public.assert_admin();
 
-  SELECT product_type INTO v_product_type
+  SELECT product_type, billing_mode
+    INTO v_product_type, v_billing_mode
     FROM public.products WHERE id = p_product_id;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'product % does not exist', p_product_id
       USING ERRCODE = 'no_data_found';
   END IF;
 
-  IF v_product_type = 'consumer_club' THEN
-    RAISE EXCEPTION 'admin enrollment is not supported for consumer clubs'
+  -- The one shape whose seat cannot exist without a Stripe subscription, which
+  -- comp-enrollment has no way to create. Every other combination — free clubs
+  -- included, since 00166 — is the free camp and free event this function has
+  -- always written.
+  IF v_product_type = 'consumer_club' AND v_billing_mode = 'paid' THEN
+    RAISE EXCEPTION 'admin enrollment is not supported for subscription-billed consumer clubs'
       USING ERRCODE = 'check_violation';
   END IF;
 
@@ -333,7 +351,7 @@ $$;
 -- Name: FUNCTION admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid) IS 'Admin-gated comp-enrollment: drops a gamer onto a non-consumer_club product with status=active, bypassing payment, seat caps and registration windows by design.';
+COMMENT ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_gamer_id uuid) IS 'Admin-gated comp-enrollment: drops a gamer onto a product with status=active, bypassing payment, seat caps and registration windows by design. Refuses only a paid consumer club — the one shape whose seat requires a Stripe subscription this function cannot create; free clubs enroll like any free camp or event.';
 
 
 --
@@ -346,7 +364,6 @@ CREATE FUNCTION public.admin_remove_participation(p_product_id uuid, p_participa
     AS $$
 DECLARE
   v_row_product_id uuid;
-  v_product_type   public.product_type;
   v_live_sub       text;
 BEGIN
   PERFORM public.assert_admin();
@@ -359,19 +376,20 @@ BEGIN
       USING ERRCODE = 'no_data_found';
   END IF;
 
-  SELECT product_type INTO v_product_type
-    FROM public.products WHERE id = p_product_id;
-  IF v_product_type = 'consumer_club' THEN
-    RAISE EXCEPTION 'admin removal is not supported for consumer clubs'
-      USING ERRCODE = 'check_violation';
-  END IF;
-
-  -- family_subscriptions.participation_id is UNIQUE and stripe_subscription_id
-  -- is NOT NULL, so the mere existence of a row means a live Stripe sub is
-  -- linked to this participation.
+  -- A LIVE subscription, not merely a row — see demote_to_waitlist above for
+  -- the whole reasoning; the two refusals are deliberately one predicate. The
+  -- stakes here are the sharper of the two: removal is the ONLY exit a
+  -- participation has once its subscription is dead (there is nothing left for
+  -- the family to cancel), so counting a `cancelled` row as live left the seat
+  -- permanently occupied with no instruction that could ever free it.
+  --
+  -- Still refused for anything that can bill: cancelling the participation
+  -- CASCADEs family_subscriptions, and a live subscription would carry on
+  -- charging a family the database no longer knows about.
   SELECT stripe_subscription_id INTO v_live_sub
     FROM public.family_subscriptions
-    WHERE participation_id = p_participation_id;
+    WHERE participation_id = p_participation_id
+      AND status <> 'cancelled';
   IF v_live_sub IS NOT NULL THEN
     RAISE EXCEPTION
       'participation % still has live Stripe subscription %',
@@ -388,7 +406,7 @@ $$;
 -- Name: FUNCTION admin_remove_participation(p_product_id uuid, p_participation_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.admin_remove_participation(p_product_id uuid, p_participation_id uuid) IS 'Admin-gated un-enrollment. Refuses a participation that is not on the named product, a consumer_club product, or a participation with a live Stripe subscription; otherwise delegates to cancel_participation.';
+COMMENT ON FUNCTION public.admin_remove_participation(p_product_id uuid, p_participation_id uuid) IS 'Admin-gated un-enrollment. Refuses a participation that is not on the named product, or one with a LIVE Stripe subscription — a family_subscriptions row whose status is anything but ''cancelled'' — which must be cancelled through Stripe first, or the cancel would orphan it; otherwise delegates to cancel_participation. A dunning-dead subscription is stored as ''cancelled'' and does NOT refuse: admin removal is the only exit such a seat has, so counting it would strand the seat forever. Product type is not consulted — a free club has no parent-facing cancel, so this is its only exit.';
 
 
 --
@@ -558,12 +576,18 @@ CREATE FUNCTION public.can_read_product(p_product_id uuid) RETURNS boolean
   SELECT COALESCE(
     -- admin sees everything (mirrors admin_full_access_* FOR ALL)
     (SELECT public.get_user_role()) = 'admin'::public.user_role
-    -- public: published and visible
+    -- public: published. `is_visible` is NOT tested here, and its absence is
+    -- the point: that column governs LISTING only — the browse queries filter
+    -- on it — while a direct link to an unlisted product is meant to lead to a
+    -- page a parent can read and buy from. The consequence is that an unlisted
+    -- product is readable, and therefore enumerable, through the Data API:
+    -- obscurity rather than secrecy, accepted by owner decision (Aug 2026).
+    -- What keeps a product unbuyable is its status, its seat cap and its
+    -- registration window — never its visibility.
     OR EXISTS (
       SELECT 1 FROM public.products pr
       WHERE pr.id = p_product_id
         AND pr.status IN ('pending'::public.product_status, 'running'::public.product_status)
-        AND pr.is_visible = true
     )
     -- enrolled gamer (child's own login) OR purchaser (parent), active/waitlisted
     OR EXISTS (
@@ -581,6 +605,13 @@ CREATE FUNCTION public.can_read_product(p_product_id uuid) RETURNS boolean
     false
   );
 $$;
+
+
+--
+-- Name: FUNCTION can_read_product(p_product_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.can_read_product(p_product_id uuid) IS 'Read predicate behind the products SELECT policy and the four satellite tables that follow it (translations, prices, schedule slots, holiday calendar links). True for: an admin; anyone at all on a product whose status is pending or running; a parent or gamer party to an active or waitlisted participation on it; an assigned gedu. It does NOT test is_visible — since 00168 that column means "not publicly listed" and is applied by the browse queries, so an unlisted product stays readable (and enumerable) by direct link. Wrapped in COALESCE so it answers a total boolean rather than NULL for a caller with no profiles row.';
 
 
 --
@@ -902,7 +933,7 @@ $$;
 -- Name: create_product(public.product_type, public.billing_mode, jsonb, public.product_topic, integer, integer, text, boolean, text, timestamp with time zone, public.product_status, boolean, boolean, text, uuid, integer, date, date, integer, jsonb, jsonb, uuid[], integer, integer, integer, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_status public.product_status DEFAULT 'draft'::public.product_status, p_is_visible boolean DEFAULT false, p_waitlist_enabled boolean DEFAULT true, p_image_path text DEFAULT NULL::text, p_location_id uuid DEFAULT NULL::uuid, p_signup_threshold integer DEFAULT NULL::integer, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_seat_count integer DEFAULT NULL::integer, p_schedule_slots jsonb DEFAULT NULL::jsonb, p_prices jsonb DEFAULT NULL::jsonb, p_holiday_calendar_ids uuid[] DEFAULT NULL::uuid[], p_primary_gedu_fee_cents integer DEFAULT NULL::integer, p_assistant_gedu_fee_cents integer DEFAULT NULL::integer, p_municipality_fee_cents integer DEFAULT NULL::integer, p_material_url text DEFAULT NULL::text) RETURNS uuid
+CREATE FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_status public.product_status DEFAULT 'pending'::public.product_status, p_is_visible boolean DEFAULT false, p_waitlist_enabled boolean DEFAULT true, p_image_path text DEFAULT NULL::text, p_location_id uuid DEFAULT NULL::uuid, p_signup_threshold integer DEFAULT NULL::integer, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_seat_count integer DEFAULT NULL::integer, p_schedule_slots jsonb DEFAULT NULL::jsonb, p_prices jsonb DEFAULT NULL::jsonb, p_holiday_calendar_ids uuid[] DEFAULT NULL::uuid[], p_primary_gedu_fee_cents integer DEFAULT NULL::integer, p_assistant_gedu_fee_cents integer DEFAULT NULL::integer, p_municipality_fee_cents integer DEFAULT NULL::integer, p_material_url text DEFAULT NULL::text) RETURNS uuid
     LANGUAGE plpgsql
     SET search_path TO ''
     AS $$
@@ -1009,10 +1040,10 @@ CREATE FUNCTION public.demote_to_waitlist(p_participation_id uuid) RETURNS jsonb
     SET search_path TO ''
     AS $$
 DECLARE
-  v_product_id   UUID;
-  v_product_type public.product_type;
-  v_status       public.participation_status;
-  v_now          TIMESTAMPTZ;
+  v_product_id UUID;
+  v_status     public.participation_status;
+  v_live_sub   TEXT;
+  v_now        TIMESTAMPTZ;
 BEGIN
   PERFORM public.assert_admin();
 
@@ -1023,18 +1054,35 @@ BEGIN
     RAISE EXCEPTION 'Participation not found' USING ERRCODE = 'P0002';
   END IF;
 
-  -- Same product-gate lock as before, now also reading the type it needs one
-  -- statement later rather than issuing a second query for it.
-  SELECT product_type INTO v_product_type
-    FROM public.products WHERE id = v_product_id FOR UPDATE;
+  -- The product gate lock, as before. The product's TYPE is not read: nothing
+  -- in this function branches on it.
+  PERFORM 1 FROM public.products WHERE id = v_product_id FOR UPDATE;
 
+  -- A LIVE subscription, not merely a row. participation_id is UNIQUE here and
+  -- stripe_subscription_id is NOT NULL, so at most one row can match — but the
+  -- webhook updates status in place instead of deleting, and a subscription
+  -- Stripe gave up dunning (`unpaid`, stored as `cancelled`) never fires
+  -- subscription.deleted. Treating that dead row as live made this refusal
+  -- permanent: the seat could never be waitlisted, and the family had nothing
+  -- left to cancel. `cancelled` is the only terminal value; past_due,
+  -- incomplete and canceling can all still bill and still refuse.
+  --
+  -- What is being protected is unchanged: demoting a genuinely subscribed
+  -- family puts a live subscription on a waitlisted row, which the parent's own
+  -- leave affordance can delete — CASCADEing family_subscriptions away while
+  -- Stripe keeps billing.
+  --
   -- Refused for the operation, not for the row's current state — so this
-  -- precedes the idempotent noop below, the way both siblings refuse a consumer
-  -- club before looking at anything else. There is no demotion of a consumer
-  -- club that is correct to perform, retried or otherwise.
-  IF v_product_type = 'consumer_club' THEN
-    RAISE EXCEPTION 'demotion to the waitlist is not supported for consumer clubs'
-      USING ERRCODE = 'check_violation';
+  -- precedes the idempotent noop below.
+  SELECT stripe_subscription_id INTO v_live_sub
+    FROM public.family_subscriptions
+    WHERE participation_id = p_participation_id
+      AND status <> 'cancelled';
+  IF v_live_sub IS NOT NULL THEN
+    RAISE EXCEPTION
+      'participation % still has live Stripe subscription %',
+      p_participation_id, v_live_sub
+      USING ERRCODE = 'object_not_in_prerequisite_state';
   END IF;
 
   -- Idempotent: already on the waitlist.
@@ -1069,7 +1117,7 @@ $$;
 -- Name: FUNCTION demote_to_waitlist(p_participation_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.demote_to_waitlist(p_participation_id uuid) IS 'Admin-gated demotion of an active participation to the back of the product waitlist, under the product gate lock. Refuses consumer clubs: those are the only subscription-billed type, and a waitlisted row carrying a live Stripe subscription could be deleted by the parent via leave_my_waitlist_spot, cascading family_subscriptions and orphaning the subscription.';
+COMMENT ON FUNCTION public.demote_to_waitlist(p_participation_id uuid) IS 'Admin-gated demotion of an active participation to the back of the product waitlist, under the product gate lock. Refuses any participation carrying a LIVE Stripe subscription — a family_subscriptions row whose status is anything but ''cancelled'' — on any product type: a waitlisted row can be deleted by the parent via leave_my_waitlist_spot, which cascades family_subscriptions and orphans a subscription that keeps billing. A ''cancelled'' row is explicitly not live: dunning-exhausted subscriptions are stored that way and never fire subscription.deleted, so counting them would hold the seat hostage forever. Raised with the same errcode admin_remove_participation uses for the same condition.';
 
 
 --
@@ -1169,7 +1217,6 @@ BEGIN
       USING ERRCODE = 'no_data_found';
   END IF;
 
-  IF v_status = 'draft' THEN     RETURN 'draft'; END IF;
   IF v_status = 'cancelled' THEN RETURN 'cancelled'; END IF;
   IF v_status = 'completed' THEN RETURN 'completed'; END IF;
 
@@ -2218,7 +2265,15 @@ BEGIN
                      'gamer_parent_first_name',  parent.first_name,
                      'gamer_parent_last_name',   parent.last_name,
                      'status',                   p.status,
-                     'signed_up_at',             p.signed_up_at
+                     'signed_up_at',             p.signed_up_at,
+                     -- The demote/remove dialogs' condition, resolved
+                     -- server-side so the panel needs no round trip per chip.
+                     -- The join below excludes dead subscriptions, so this is
+                     -- "live", not "ever existed".
+                     'has_live_subscription',    (fs.id IS NOT NULL),
+                     -- The promote dialog's condition (00167): money once
+                     -- arrived for this seat.
+                     'has_payment_marker',       (p.stripe_checkout_session_id IS NOT NULL)
                    )
                    ORDER BY p.updated_at, p.id
                  )
@@ -2226,6 +2281,13 @@ BEGIN
             JOIN profiles gmp ON gmp.id = p.gamer_id
             LEFT JOIN gamer_profiles gprof ON gprof.user_id = p.gamer_id
             LEFT JOIN minecraft_accounts mca ON mca.user_id = p.gamer_id
+            -- participation_id is UNIQUE here, so this cannot fan the row out.
+            -- The status predicate lives in the JOIN rather than a WHERE so a
+            -- dead subscription simply fails to match and leaves fs.id NULL,
+            -- instead of dropping the participation from the snapshot.
+            LEFT JOIN family_subscriptions fs
+                   ON fs.participation_id = p.id
+                  AND fs.status <> 'cancelled'
             LEFT JOIN LATERAL (
               SELECT pp.first_name, pp.last_name
                 FROM parent_gamer pgm
@@ -2254,7 +2316,9 @@ BEGIN
              'gamer_parent_first_name',  parent.first_name,
              'gamer_parent_last_name',   parent.last_name,
              'status',                   p.status,
-             'signed_up_at',             p.signed_up_at
+             'signed_up_at',             p.signed_up_at,
+             'has_live_subscription',    (fs.id IS NOT NULL),
+             'has_payment_marker',       (p.stripe_checkout_session_id IS NOT NULL)
            )
            ORDER BY p.updated_at, p.id
          ), '[]'::jsonb)
@@ -2263,6 +2327,9 @@ BEGIN
     JOIN profiles gmp ON gmp.id = p.gamer_id
     LEFT JOIN gamer_profiles gprof ON gprof.user_id = p.gamer_id
     LEFT JOIN minecraft_accounts mca ON mca.user_id = p.gamer_id
+    LEFT JOIN family_subscriptions fs
+           ON fs.participation_id = p.id
+          AND fs.status <> 'cancelled'
     LEFT JOIN LATERAL (
       SELECT pp.first_name, pp.last_name
         FROM parent_gamer pgm
@@ -2279,6 +2346,20 @@ BEGIN
   -- waitlist key (waitlisted_at, id). Position is the array index + 1, computed
   -- client-side — never stored. waitlisted_at drives ORDER BY but is omitted
   -- from the object so the row shape stays identical to a group/unassigned chip.
+  --
+  -- has_live_subscription is a REAL READ here as of 00170. It used to be a
+  -- constant FALSE, resting on "demote_to_waitlist refuses a subscribed row, so
+  -- this cannot exist". It can: the webhook inserts family_subscriptions after a
+  -- Stripe round trip without taking the product gate lock, so a demote landing
+  -- in that window creates exactly this row — and the manual sub-adoption
+  -- process writes one directly. A snapshot asserting FALSE about a seat that
+  -- has money behind it is the panel being lied to, so the branch reads the
+  -- same join as the other two.
+  --
+  -- has_payment_marker remains a real read and remains the branch where it
+  -- decides something: demotion leaves the Checkout Session id in place, so a
+  -- family that paid and was later demoted is distinguishable here from one
+  -- that only ever queued.
   SELECT COALESCE(jsonb_agg(
            jsonb_build_object(
              'id',                       p.id,
@@ -2291,7 +2372,9 @@ BEGIN
              'gamer_parent_first_name',  parent.first_name,
              'gamer_parent_last_name',   parent.last_name,
              'status',                   p.status,
-             'signed_up_at',             p.signed_up_at
+             'signed_up_at',             p.signed_up_at,
+             'has_live_subscription',    (fs.id IS NOT NULL),
+             'has_payment_marker',       (p.stripe_checkout_session_id IS NOT NULL)
            )
            ORDER BY p.waitlisted_at, p.id
          ), '[]'::jsonb)
@@ -2300,6 +2383,9 @@ BEGIN
     JOIN profiles gmp ON gmp.id = p.gamer_id
     LEFT JOIN gamer_profiles gprof ON gprof.user_id = p.gamer_id
     LEFT JOIN minecraft_accounts mca ON mca.user_id = p.gamer_id
+    LEFT JOIN family_subscriptions fs
+           ON fs.participation_id = p.id
+          AND fs.status <> 'cancelled'
     LEFT JOIN LATERAL (
       SELECT pp.first_name, pp.last_name
         FROM parent_gamer pgm
@@ -2319,6 +2405,13 @@ BEGIN
   );
 END;
 $$;
+
+
+--
+-- Name: FUNCTION get_product_groups_with_details(p_product_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.get_product_groups_with_details(p_product_id uuid) IS 'Admin-gated snapshot behind the product Groups panel: groups with their gedus and active members, the unassigned actives, and the waitlist in derived (waitlisted_at, id) order. Every participation object carries the same fields, including the two the panel''s refusal dialogs are keyed to: has_live_subscription (a real read on ALL THREE branches since 00170 — a LEFT JOIN to family_subscriptions excluding status ''cancelled'', so it means live rather than ever-existed) and has_payment_marker (a real read of stripe_checkout_session_id — money once arrived for this seat, which demotion does not clear). Both are resolved here so the panel decides a drag from one snapshot rather than asking per chip.';
 
 
 --
@@ -3794,7 +3887,7 @@ $$;
 --
 
 CREATE FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_is_visible boolean DEFAULT false, p_waitlist_enabled boolean DEFAULT true, p_image_path text DEFAULT NULL::text, p_location_id uuid DEFAULT NULL::uuid, p_signup_threshold integer DEFAULT NULL::integer, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_seat_count integer DEFAULT NULL::integer, p_schedule_slots jsonb DEFAULT NULL::jsonb, p_prices jsonb DEFAULT NULL::jsonb, p_holiday_calendar_ids uuid[] DEFAULT NULL::uuid[], p_primary_gedu_fee_cents integer DEFAULT NULL::integer, p_assistant_gedu_fee_cents integer DEFAULT NULL::integer, p_municipality_fee_cents integer DEFAULT NULL::integer, p_material_url text DEFAULT NULL::text) RETURNS uuid
-    LANGUAGE plpgsql
+    LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
 DECLARE
@@ -3806,7 +3899,13 @@ DECLARE
 BEGIN
   PERFORM public.assert_admin();
 
-  IF NOT EXISTS (SELECT 1 FROM public.products WHERE id = p_id) THEN
+  -- The product gate lock, taken where the existence probe used to be: this
+  -- function now deletes from the product's roster, so it serializes against
+  -- the participation RPCs that write it (join_waitlist et al) exactly as they
+  -- serialize against each other. FOUND is set by PERFORM, so the not-found
+  -- error is unchanged in code and position.
+  PERFORM 1 FROM public.products WHERE id = p_id FOR UPDATE;
+  IF NOT FOUND THEN
     RAISE EXCEPTION 'Product not found'
       USING ERRCODE = 'no_data_found';
   END IF;
@@ -3837,6 +3936,50 @@ BEGIN
     assistant_gedu_fee_cents = p_assistant_gedu_fee_cents,
     municipality_fee_cents   = p_municipality_fee_cents
   WHERE id = p_id;
+
+  -- A product with no waitlist holds no queue. The admin form turns the flag
+  -- off two ways — unticking the box, or choosing Unlimited seats, which
+  -- derives it false — and the groups panel draws its waitlist column only
+  -- while the flag is on, so anything left queued here would be invisible to
+  -- every affordance that could promote or remove it. Deleting is the clean
+  -- answer rather than the harsh one: the edit that got us here means the
+  -- product has seats open, so a dropped family can re-enter through the front
+  -- door and land in a BETTER state than the queue they were in (free products
+  -- re-enroll instantly; paid ones check out, which is what creates the
+  -- subscription a promotion could never have created for them). Promoting
+  -- them here instead would grant a free seat on a subscription-billed club.
+  --
+  -- This is silent by owner decision: no confirmation, no warning, no email.
+  -- The triggering edit is expected to be accidental, and the families are told
+  -- nothing — a known, accepted impact, recorded here because it is the kind of
+  -- thing a future reader will assume was an oversight.
+  --
+  -- Keyed to the flag's VALUE, not to it changing, so the same statement heals
+  -- a queue stranded by an edit made before this rule existed: the next save of
+  -- anything at all on the product clears it.
+  --
+  -- THE CARVE-OUT: never delete a row that carries a LIVE subscription
+  -- (00170's predicate — a family_subscriptions row with status <>
+  -- 'cancelled'; a dunning-dead one is not live and does not protect the row).
+  -- The FK is ON DELETE CASCADE, so dropping such a row would delete our only
+  -- record of a subscription Stripe keeps billing — the exact hazard
+  -- demote_to_waitlist and admin_remove_participation refuse for. A waitlisted
+  -- row with a live subscription is a webhook-race ghost (a demote landing
+  -- between Checkout completing and the webhook's insert, or a manual
+  -- sub-adoption), effectively unreachable, and it is skipped in silence:
+  -- there is no surface here to report it on, and refusing the whole product
+  -- edit over a row nobody can see would be worse than leaving it queued.
+  IF NOT p_waitlist_enabled THEN
+    DELETE FROM public.participations p
+     WHERE p.product_id = p_id
+       AND p.status = 'waitlisted'
+       AND NOT EXISTS (
+         SELECT 1
+           FROM public.family_subscriptions fs
+          WHERE fs.participation_id = p.id
+            AND fs.status <> 'cancelled'
+       );
+  END IF;
 
   -- Cleared means the row goes, so "no lesson material" stays the absence of a
   -- record rather than becoming a row holding NULL.
@@ -3926,6 +4069,13 @@ BEGIN
   RETURN p_id;
 END;
 $$;
+
+
+--
+-- Name: FUNCTION update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_is_visible boolean, p_waitlist_enabled boolean, p_image_path text, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_is_visible boolean, p_waitlist_enabled boolean, p_image_path text, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text) IS 'Admin-gated product edit: parent row plus wipe-and-replace of translations, schedule slots, prices, holiday calendars and the staff-only material link, under the product gate lock. Since 00171 it also DELETES the product''s waitlist whenever the saved waitlist_enabled is false — the flag goes off by unticking it or by uncapping, and the groups panel draws its waitlist column only while it is on, so a surviving queue would be invisible to every affordance that could work it. Deletion rather than promotion: promoting would grant seats with no subscription behind them, while the edit itself opens seats, so a dropped family can simply sign up again. It is silent by owner decision — no confirmation, warning or email — and keyed to the flag''s value rather than to it changing, so it also heals a queue stranded before the rule existed. One exception: a waitlisted row carrying a LIVE subscription (a family_subscriptions row with status <> ''cancelled'', 00170''s predicate) is skipped, because the FK cascades and deleting it would orphan billing Stripe still runs. SECURITY DEFINER since 00171 — participations grants authenticated no writes, so the delete cannot run as the caller; the assert_admin() first statement is what authorizes the whole function.';
 
 
 --
@@ -4608,7 +4758,7 @@ CREATE TABLE public.products (
     image_path text,
     location_id uuid,
     is_remote boolean NOT NULL,
-    status public.product_status DEFAULT 'draft'::public.product_status NOT NULL,
+    status public.product_status DEFAULT 'pending'::public.product_status NOT NULL,
     signup_threshold integer,
     start_date date,
     end_date date,
@@ -4626,12 +4776,11 @@ CREATE TABLE public.products (
     municipality_fee_cents integer,
     CONSTRAINT chk_products_age_range CHECK ((max_age >= min_age)),
     CONSTRAINT chk_products_date_range CHECK (((start_date IS NULL) OR (end_date IS NULL) OR (end_date >= start_date))),
-    CONSTRAINT chk_products_draft_implies_hidden CHECK (((status <> 'draft'::public.product_status) OR (is_visible = false))),
     CONSTRAINT chk_products_event_single_date CHECK (((product_type <> 'event'::public.product_type) OR (NOT (end_date IS DISTINCT FROM start_date)))),
     CONSTRAINT chk_products_external_contract_muni CHECK (((billing_mode <> 'external_contract'::public.billing_mode) OR (product_type = 'municipality_club'::public.product_type))),
     CONSTRAINT chk_products_in_person_has_location CHECK (((is_remote = true) OR (location_id IS NOT NULL))),
     CONSTRAINT chk_products_municipality_fee_only_for_muni CHECK (((municipality_fee_cents IS NULL) OR (product_type = 'municipality_club'::public.product_type))),
-    CONSTRAINT chk_products_non_consumer_has_end_date CHECK (((product_type = 'consumer_club'::public.product_type) OR (status = 'draft'::public.product_status) OR (end_date IS NOT NULL))),
+    CONSTRAINT chk_products_non_consumer_has_end_date CHECK (((product_type = 'consumer_club'::public.product_type) OR (end_date IS NOT NULL))),
     CONSTRAINT chk_products_online_muni_has_location CHECK (((NOT ((is_remote = true) AND (product_type = 'municipality_club'::public.product_type))) OR (location_id IS NOT NULL))),
     CONSTRAINT chk_products_online_non_muni_no_location CHECK (((NOT ((is_remote = true) AND (product_type <> 'municipality_club'::public.product_type))) OR (location_id IS NULL))),
     CONSTRAINT chk_products_running_has_start_date CHECK (((status <> 'running'::public.product_status) OR (start_date IS NOT NULL))),
