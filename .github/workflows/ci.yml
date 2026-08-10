@@ -1,12 +1,22 @@
 name: CI
 
-# Renaming or removing a job here has a twin edit OUTSIDE the repo: main's branch
-# protection (Settings -> Branches) lists required status checks by the job's
-# display name, and nothing links the two — a required check whose job no longer
-# runs blocks every future release PR, and it only surfaces at the next merge into
-# main, weeks after the rename lands on dev. (The e2e -> Build & Smoke conversion
-# did exactly this to the 2026-08-10 release.) Update the protection rule in the
-# same change that renames the job.
+# Renaming or removing a job here has TWO twin edits OUTSIDE the repo, both of
+# which list checks by the job's display name with nothing linking them back:
+#
+#   1. GitHub branch protection on main (repo Settings -> Branches): a required
+#      check whose job no longer runs blocks every future release PR.
+#   2. Vercel Deployment Checks (Vercel project Settings -> Deployment Checks):
+#      gates promoting a production deployment. A listed check that never reports
+#      leaves the deployment READY but STAGED forever — the build succeeds, prod
+#      keeps serving the old code, and because the migrations job doesn't wait
+#      for promotion, prod runs OLD code against the NEW schema until someone
+#      notices. A deployment snapshots the gate list at creation time, so fixing
+#      the settings does not unstick an already-staged deployment; that needs a
+#      manual promote (`vercel promote <url>`).
+#
+# Neither surfaces on dev — both only bite at the next merge into main, weeks
+# after the rename lands. (The e2e -> Build & Smoke conversion tripped both on
+# the 2026-08-10 release.) Update both in the same change that renames the job.
 
 on:
   push:
