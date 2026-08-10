@@ -40,6 +40,13 @@ export function useShopCategories() {
   // selected category off drops the param entirely, returning to all types and
   // keeping `/shop` as the canonical URL.
   //
+  // This is not the only writer of the param: the filter card's "Clear all"
+  // resets Type along with the chips, and deletes `category` from inside
+  // `useBrowseFilters`'s own write so the whole reset is one `replaceState`
+  // (two sequential writes would each rebuild the query string from the same
+  // pre-clear snapshot). Anything that changes the param's name or encoding has
+  // to look there too.
+  //
   // Written via the History API rather than `router.replace`, for the same
   // reason as `use-browse-filters.ts`: the category only drives client-side
   // narrowing of an already-fetched set, and an RSC navigation would re-run the

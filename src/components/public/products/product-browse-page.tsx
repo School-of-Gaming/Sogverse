@@ -90,24 +90,22 @@ export function ProductBrowsePage({
     [categories, products, t],
   );
 
+  // The page wrapper carries vertical rhythm only: <ProductBrowseResults> owns
+  // the horizontal width budget for both browse surfaces, because from `lg` up
+  // it breaks out of the centred container to put its rail in the gutter.
   return (
-    <div className="container mx-auto px-4 py-8 sm:py-12">
+    <div className="py-8 sm:py-12">
       {/* The storefront carries no visible page title — the section headings
           say what each block is, and a banner above them would only repeat the
           nav item that got the parent here. The h1 stays in the document so the
           section h2s hang off something. */}
       <h1 className="sr-only">{t("pageTitle")}</h1>
 
-      {/* Wider than the usual 6xl reading column: the filter rail takes a fixed
-          slice of it from `lg` up, and the cards need the rest to stay legible
-          at three columns. */}
-      <div className="mx-auto max-w-7xl">
-        <ProductBrowseResults
-          sections={sections}
-          counts={counts ?? []}
-          filters={{ initialSpokenLanguages }}
-        />
-      </div>
+      <ProductBrowseResults
+        sections={sections}
+        counts={counts ?? []}
+        filters={{ initialSpokenLanguages }}
+      />
     </div>
   );
 }

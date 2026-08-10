@@ -38,7 +38,8 @@ const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
 //
 // Type is an inclusive filter, not a choice: selecting nothing shows every
 // category, selecting chips narrows to them, and toggling the last one off
-// returns to everything. Format and Age are single-valued — toggling the active
+// returns to everything. Being an ordinary filter, it is reset by "Clear all"
+// like every other row. Format and Age are single-valued — toggling the active
 // chip clears the filter back to "either" / "any age".
 //
 // No match-count display: the visible card grids already convey that
@@ -66,7 +67,9 @@ export function ProductBrowseFilters({
   // Product category (Clubs | Camps | Events) leads the filter card as the
   // "Type" row. Unlike the other filters it lives in its own URL param
   // (useShopCategories) and drives which sections render rather than which
-  // cards survive a predicate; Clear below leaves it untouched.
+  // cards survive a predicate — but it is still an ordinary filter to the
+  // parent, so Clear below resets it too (the delete rides along inside
+  // `clear`'s single write).
   const { categories, toggleCategory } = useShopCategories();
   const {
     topics: selectedTopics,
@@ -74,7 +77,7 @@ export function ProductBrowseFilters({
     languages: selectedLanguages,
     age: selectedAge,
     days: selectedDays,
-    hasAny: showClear,
+    hasAny,
     toggleTopics,
     toggleFormat,
     toggleLanguage,
@@ -84,6 +87,11 @@ export function ProductBrowseFilters({
   } = useBrowseFilters();
 
   const hasLanguageRow = (spokenLanguages?.length ?? 0) > 0;
+
+  // The button shows exactly when clearing would change something, so it spans
+  // both state owners: `hasAny` covers the chip filters, the categories cover
+  // the Type row that `clear` now resets alongside them.
+  const showClear = hasAny || categories.length > 0;
 
   return (
     <div className="rounded-xl border bg-card/50 p-3 sm:p-4">

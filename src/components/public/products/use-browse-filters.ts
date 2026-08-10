@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 
 import { findAgeBand, type AgeBand } from "@/lib/constants/gamer-age";
 import type { ProductFormat } from "./filter-products";
+import { CATEGORY_PARAM } from "./shop-categories";
 
 const TOPIC_PARAM = "topic";
 const FORMAT_PARAM = "format";
@@ -59,6 +60,10 @@ function parseAge(raw: string | null): AgeBand | null {
 //
 // Format is single-valued — toggling a chip on with the other one active
 // replaces, not adds. Selecting the active chip clears the filter.
+//
+// `clear` is the one place this hook reaches outside its own params: it also
+// drops the shop's `category` param (owned by `useShopCategories`), because
+// "Clear all" means every filter including Type. See the note on `clear`.
 
 export function useBrowseFilters() {
   const pathname = usePathname();
@@ -84,8 +89,10 @@ export function useBrowseFilters() {
     () => parseDays(searchParams.get(DAYS_PARAM)),
     [searchParams],
   );
-  // Every filter here applies on every browse surface, so one flag covers the
-  // Clear button: it shows exactly when clearing would change something.
+  // Every filter *in this hook* applies on every browse surface, so one flag
+  // covers all of them. It is not the whole Clear-button condition on its own:
+  // clearing also resets the shop's Type row, so the button's owner ORs the
+  // selected categories in (see `product-browse-filters.tsx`).
   const hasAny =
     topics.length > 0 ||
     format !== null ||
@@ -94,13 +101,18 @@ export function useBrowseFilters() {
     days.length > 0;
 
   const writeNext = useCallback(
-    (next: {
-      topics?: string[];
-      format?: ProductFormat | null;
-      languages?: string[];
-      age?: AgeBand | null;
-      days?: number[];
-    }) => {
+    (
+      next: {
+        topics?: string[];
+        format?: ProductFormat | null;
+        languages?: string[];
+        age?: AgeBand | null;
+        days?: number[];
+      },
+      // The shop's Type param isn't one of this hook's filters; it rides along
+      // here so "Clear all" stays a single write (see `clear`).
+      options?: { clearCategories?: boolean },
+    ) => {
       const params = new URLSearchParams(searchParams.toString());
       if (next.topics !== undefined) {
         if (next.topics.length === 0) params.delete(TOPIC_PARAM);
@@ -122,6 +134,7 @@ export function useBrowseFilters() {
         if (next.days.length === 0) params.delete(DAYS_PARAM);
         else params.set(DAYS_PARAM, next.days.join(","));
       }
+      if (options?.clearCategories) params.delete(CATEGORY_PARAM);
       const qs = params.toString();
       // Update the URL via the History API rather than `router.replace` so a
       // chip tap doesn't trigger an RSC navigation. The shop page is a dynamic
@@ -190,8 +203,19 @@ export function useBrowseFilters() {
     [days, writeNext],
   );
 
+  // "Clear all" means all of them, Type included: the shop's category chips are
+  // an ordinary inclusive filter, so clearing returns to the default view with
+  // every section showing. The category param is deleted here rather than by
+  // calling into `useShopCategories` because both hooks read a snapshot of
+  // `useSearchParams()` — a second, sequential write would rebuild the query
+  // string from the pre-clear snapshot and resurrect everything this one just
+  // deleted. One `replaceState`, or nothing. Harmless on the municipality page,
+  // which never sets the param.
   const clear = useCallback(() => {
-    writeNext({ topics: [], format: null, languages: [], age: null, days: [] });
+    writeNext(
+      { topics: [], format: null, languages: [], age: null, days: [] },
+      { clearCategories: true },
+    );
   }, [writeNext]);
 
   return {
