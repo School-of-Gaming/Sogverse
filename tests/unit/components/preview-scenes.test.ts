@@ -30,6 +30,8 @@ import { runEndedOn, runLiveness } from "@/lib/product-run";
 import {
   CONFIRMATION_NOTICE_SCENARIOS,
   PREVIEW_SCENARIOS,
+  buildScenarioFixture,
+  scenarioFilledSeats,
 } from "@/components/public/products/mock-detail-fixtures";
 import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
 
@@ -145,6 +147,62 @@ describe("registry scenarios match their fixtures", () => {
       ...productSlugs,
       ...CONFIRMATION_NOTICE_SCENARIOS.map((n) => n.slug),
     ]);
+  });
+});
+
+/**
+ * The signup panel draws its seat bar in every state a product can be signed up
+ * on — pre-open included — so that the bar's box is settled before the CTA can
+ * ever go live. These scenarios are the only place that surface is looked at,
+ * and a fixture whose state disagreed with its own row would draw a bar for a
+ * capacity the page beside it does not have.
+ */
+describe("product scenarios tell one capacity story", () => {
+  it("gives every signup-able state the cap its own product row carries", () => {
+    for (const { slug } of PREVIEW_SCENARIOS) {
+      const { product, state } = buildScenarioFixture(slug);
+      if (
+        state.kind !== "closed_pre" &&
+        state.kind !== "pending_thr" &&
+        state.kind !== "open"
+      ) {
+        continue;
+      }
+      expect(state.seatCount, slug).toBe(product.seat_count);
+      expect(state.seatsLeft, slug).toBe(
+        product.seat_count === null
+          ? null
+          : product.seat_count - scenarioFilledSeats(slug),
+      );
+    }
+  });
+
+  it("keeps a capped countdown with every seat free, and one with seats already gone", () => {
+    // Both pre-open bars have to be reviewable. The full track is the ordinary
+    // drop; the short one is what an admin's comp enrolments do to it, and is
+    // the reason the bar shows real numbers pre-open instead of a placeholder.
+    const preOpen = PREVIEW_SCENARIOS.map(({ slug }) => ({
+      slug,
+      ...buildScenarioFixture(slug),
+    })).filter((s) => s.state.kind === "closed_pre");
+
+    expect(preOpen.length).toBeGreaterThan(0);
+    const capped = preOpen.filter((s) => s.product.seat_count !== null);
+    expect(capped.length).toBeGreaterThan(0);
+    expect(
+      capped.some((s) => scenarioFilledSeats(s.slug) === 0),
+    ).toBe(true);
+    expect(
+      capped.some((s) => scenarioFilledSeats(s.slug) > 0),
+    ).toBe(true);
+  });
+
+  it("caps the threshold-pending scenario, the only place that bar is visible", () => {
+    const threshold = PREVIEW_SCENARIOS.map(({ slug }) =>
+      buildScenarioFixture(slug),
+    ).filter((f) => f.state.kind === "pending_thr");
+    expect(threshold.length).toBeGreaterThan(0);
+    expect(threshold.some((f) => f.product.seat_count !== null)).toBe(true);
   });
 });
 

@@ -101,6 +101,84 @@ describe("deriveRegistrationState", () => {
     }
   });
 
+  it("closed_pre carries the seat trio, honestly reduced by comped places", () => {
+    // Seat counts are live whatever the registration window is doing: an admin
+    // can place someone before the doors open, and the pre-open bar has to say
+    // so. 15 seats, 2 already placed → 13 left, before anyone can register.
+    const state = deriveRegistrationState({
+      product: product({
+        status: "pending",
+        registration_opens_at: "2026-05-15T00:00:00Z",
+        seat_count: 15,
+        waitlist_enabled: true,
+      }),
+      now: NOW,
+      participationsCount: 2,
+    });
+    expect(state.kind).toBe("closed_pre");
+    if (state.kind === "closed_pre") {
+      expect(state.seatCount).toBe(15);
+      expect(state.seatsLeft).toBe(13);
+      expect(state.waitlistEnabled).toBe(true);
+    }
+  });
+
+  it("closed_pre on an uncapped product reports no capacity at all", () => {
+    const state = deriveRegistrationState({
+      product: product({
+        status: "pending",
+        registration_opens_at: "2026-05-15T00:00:00Z",
+        seat_count: null,
+      }),
+      now: NOW,
+      participationsCount: 0,
+    });
+    expect(state.kind).toBe("closed_pre");
+    if (state.kind === "closed_pre") {
+      expect(state.seatCount).toBeNull();
+      expect(state.seatsLeft).toBeNull();
+    }
+  });
+
+  it("the seat trio is identical either side of the moment registration opens", () => {
+    // The layout guarantee, stated as data. The panel renders one seat bar for
+    // both states, and the variant swap rides the 30-second clock — so if these
+    // two disagreed, the bar would change (or appear) under a cursor already on
+    // the CTA. Same row, same count, one second either side of the drop.
+    const row = product({
+      status: "pending",
+      registration_opens_at: "2026-04-29T12:00:00Z",
+      seat_count: 15,
+      waitlist_enabled: true,
+    });
+    const before = deriveRegistrationState({
+      product: row,
+      now: new Date("2026-04-29T11:59:59Z"),
+      participationsCount: 2,
+    });
+    const after = deriveRegistrationState({
+      product: row,
+      now: new Date("2026-04-29T12:00:00Z"),
+      participationsCount: 2,
+    });
+    expect(before.kind).toBe("closed_pre");
+    expect(after.kind).toBe("open");
+    const trio = (s: typeof before) =>
+      s.kind === "closed_pre" || s.kind === "open"
+        ? {
+            seatCount: s.seatCount,
+            seatsLeft: s.seatsLeft,
+            waitlistEnabled: s.waitlistEnabled,
+          }
+        : null;
+    expect(trio(before)).toEqual(trio(after));
+    expect(trio(before)).toEqual({
+      seatCount: 15,
+      seatsLeft: 13,
+      waitlistEnabled: true,
+    });
+  });
+
   it("running_late → camp that already started locks late joins", () => {
     const state = deriveRegistrationState({
       product: product({
@@ -262,6 +340,51 @@ describe("deriveRegistrationState", () => {
     if (state.kind === "pending_thr") {
       expect(state.threshold).toBe(5);
       expect(state.count).toBe(2);
+    }
+  });
+
+  it("pending_thr carries the seat trio as well — a minimum and a maximum coexist", () => {
+    // A club can need six to run and hold twenty. The threshold-pending panel
+    // draws the same bar as an open one, and this state is also where a
+    // countdown lands when the product it opens into still wants signups — so
+    // it needs the trio for the same no-shift reason `closed_pre` does.
+    const state = deriveRegistrationState({
+      product: product({
+        status: "pending",
+        signup_threshold: 6,
+        start_date: "2026-06-01",
+        end_date: "2026-08-30",
+        seat_count: 20,
+        waitlist_enabled: true,
+      }),
+      now: NOW,
+      participationsCount: 2,
+    });
+    expect(state.kind).toBe("pending_thr");
+    if (state.kind === "pending_thr") {
+      expect(state.threshold).toBe(6);
+      expect(state.seatCount).toBe(20);
+      expect(state.seatsLeft).toBe(18);
+      expect(state.waitlistEnabled).toBe(true);
+    }
+  });
+
+  it("pending_thr on an uncapped product reports no capacity", () => {
+    const state = deriveRegistrationState({
+      product: product({
+        status: "pending",
+        signup_threshold: 6,
+        start_date: "2026-06-01",
+        end_date: "2026-08-30",
+        seat_count: null,
+      }),
+      now: NOW,
+      participationsCount: 2,
+    });
+    expect(state.kind).toBe("pending_thr");
+    if (state.kind === "pending_thr") {
+      expect(state.seatCount).toBeNull();
+      expect(state.seatsLeft).toBeNull();
     }
   });
 

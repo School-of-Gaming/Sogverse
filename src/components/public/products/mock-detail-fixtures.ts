@@ -22,9 +22,10 @@ import type {
 // grouped by product type:
 //   • Consumer club — a subscription club, open; a free one (billing is a
 //     per-product choice on every type now); one full behind a waitlist; and
-//     one still short of its signup threshold.
+//     one capped club still short of its signup threshold.
 //   • Municipality club — the full seat-fill range, plus the pre-launch
-//     countdown across the three auth states a parent can be in.
+//     countdown across the three auth states a parent can be in, one of them
+//     with places already comped away.
 //   • Camp — one not yet started, one full with no waitlist, one underway, and
 //     one finished. Camps and events lock late joins at different moments (a
 //     camp from local midnight on its start date, an event only once its
@@ -45,6 +46,8 @@ import type {
 // deterministic regardless of the wall clock. The countdown scenarios are the
 // exception: they carry an `opensInMs` offset and resolve a live `closed_pre`
 // state at build time, so the clock actually ticks for an admin reviewing them.
+// Their seat numbers are still authored — only the instant moves — so the bar
+// they draw is as reproducible as everything else here.
 
 export type PreviewScenario =
   | "consumer-club"
@@ -101,7 +104,16 @@ interface ScenarioBase {
 // clock ticks).
 type ScenarioConfig =
   | (ScenarioBase & { state: RegistrationState })
-  | (ScenarioBase & { opensInMs: number });
+  | (ScenarioBase & {
+      opensInMs: number;
+      /**
+       * Seats already gone before the doors open — an admin's comp enrolments,
+       * the only way a pre-open product has anyone on it. Defaults to none.
+       * The pre-open seat bar reads live availability like every other state,
+       * so this is what makes it show something other than a full track.
+       */
+      compSeats?: number;
+    });
 
 // Real UUIDs so the gamer picker's identicons hash to distinct, stable avatars
 // — placeholder ids like "g1" render degenerate identicons that misrepresent
@@ -174,14 +186,28 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     // is no meter and no countdown, and the card is an ordinary openable one
     // carrying an ordinary "View". That sameness *is* the thing to eyeball —
     // it is why the state is easy to forget exists.
+    //
+    // Capped, and that is the one thing about it that is *not* undramatic: a
+    // minimum intake and a maximum are independent numbers, and the panel now
+    // draws the seat bar here exactly as it does on an open product. This is
+    // the only scenario that shows the bar on a threshold-pending product, so
+    // uncapping it would take that surface off the style guide entirely. The
+    // two counts agree on purpose — 2 of 6 signed up, 18 of 20 seats left.
     label: "€45/mo — awaiting threshold",
     productType: "consumer_club",
     billingMode: "paid",
-    seatCount: null,
+    seatCount: 20,
     waitlistEnabled: false,
     priceCentsEur: 4500,
     auth: "signed-in-with-gamers",
-    state: { kind: "pending_thr", threshold: 6, count: 2 },
+    state: {
+      kind: "pending_thr",
+      threshold: 6,
+      count: 2,
+      seatCount: 20,
+      seatsLeft: 18,
+      waitlistEnabled: false,
+    },
   },
   "muni-empty": {
     label: "15 / 15 seats",
@@ -259,6 +285,11 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     },
   },
   "muni-opens-10s": {
+    // The scenario the no-shift rule is judged against: park the cursor on the
+    // CTA and watch it through zero. The button flips label on the 1-second
+    // clock; the panel's *state* only catches up on the 30-second one, and
+    // between those two moments — and across the swap — nothing may move. Every
+    // seat free, which is the ordinary case for a drop.
     label: "Opens in 10 seconds (live)",
     productType: "municipality_club",
     billingMode: "external_contract",
@@ -289,7 +320,11 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     opensInMs: NINETY_MIN_MS,
   },
   "muni-opens-with-gamers": {
-    label: "Opens in 90 min — signed in, with gamers",
+    // The only pre-open scenario whose seat bar is not full: two places have
+    // been comped before the doors opened, so it reads 13 / 15 while the clock
+    // is still running. That the bar can be honestly short of full pre-open is
+    // the reason it is drawn at all rather than faked as "all seats free".
+    label: "Opens in 90 min — 2 comped, signed in with gamers",
     productType: "municipality_club",
     billingMode: "external_contract",
     seatCount: 15,
@@ -297,6 +332,7 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     priceCentsEur: null,
     auth: "signed-in-with-gamers",
     opensInMs: NINETY_MIN_MS,
+    compSeats: 2,
   },
   "camp-open": {
     label: "Not started yet — €250",
@@ -505,13 +541,21 @@ export function findConfirmationNotice(
 
 // Seats already taken on a scenario — the count the municipality seat-fill bar
 // reads. Derived from the authored state so the bar and the card's state stay
-// in lock-step. Countdown / no-cap scenarios read empty (no one has registered
-// before registration opens).
+// in lock-step. A countdown scenario reads whatever comp enrolments it declares
+// (nobody can *register* before registration opens, but an admin can place
+// someone), which is the same number its pre-open detail panel draws.
 export function scenarioFilledSeats(slug: PreviewScenario): number {
   const c = SCENARIOS[slug];
-  if (c.seatCount === null || "opensInMs" in c) return 0;
+  if (c.seatCount === null) return 0;
+  if ("opensInMs" in c) return Math.min(c.compSeats ?? 0, c.seatCount);
   switch (c.state.kind) {
+    // The three states that carry live capacity read it the same way. A
+    // threshold-pending product has a cap like any other — a minimum intake and
+    // a maximum are independent numbers — so it cannot be lumped in with the
+    // states below that have no seats to report.
     case "open":
+    case "pending_thr":
+    case "closed_pre":
       return c.state.seatsLeft === null ? 0 : c.seatCount - c.state.seatsLeft;
     case "full_waitlist":
     case "full_closed":
@@ -543,7 +587,19 @@ export function buildScenarioFixture(slug: PreviewScenario): BuildFixtureResult 
     // Live countdown: opens a fixed offset ahead of *now* so the clock ticks.
     // The row's drop instant and the panel state share the same timestamp.
     const opensAt = new Date(Date.now() + config.opensInMs).toISOString();
-    state = { kind: "closed_pre", opensAt };
+    // Pre-open carries the same seat trio every other signup-able state does,
+    // so the panel's bar is already on screen while the clock runs — the whole
+    // point being that nothing mounts above the CTA when the state swaps.
+    state = {
+      kind: "closed_pre",
+      opensAt,
+      seatCount: config.seatCount,
+      seatsLeft:
+        config.seatCount === null
+          ? null
+          : Math.max(0, config.seatCount - (config.compSeats ?? 0)),
+      waitlistEnabled: config.waitlistEnabled,
+    };
     registrationOpensAt = opensAt;
   } else {
     state = config.state;

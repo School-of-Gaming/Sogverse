@@ -40,10 +40,9 @@ import type { ProductType, Product } from "@/types";
 //
 // A browse row is filtered twice on its way to becoming a card: the query asks
 // only for visible products whose stored status is pending or running (so
-// draft, cancelled and completed never arrive at all), and the service then
-// drops anything whose effective status has already reached completed or
-// expired. Every state above except `ended` survives both and can arrive in a
-// response.
+// cancelled and completed never arrive at all), and the service then drops
+// anything whose effective status has already reached completed or expired.
+// Every state above except `ended` survives both and can arrive in a response.
 //
 // `ended` cannot. It requires an effective status of completed, expired or
 // cancelled, and between them those two filters exclude all three, so no fetch
@@ -71,9 +70,41 @@ import type { ProductType, Product } from "@/types";
 // to be open at the time — small enough not to be worth restructuring the
 // footer for, but a real exception rather than an oversight.
 
+/**
+ * Capacity as the signup panel's seat bar needs it.
+ *
+ * Carried by *every* state a capped product can still be signed up on —
+ * pre-open, threshold-pending and open alike — because the panel renders the
+ * bar in all of them. That uniformity is a layout requirement, not a
+ * convenience: the panel variant is dispatched off `useNow()`, which ticks
+ * every 30 seconds, so a bar that only existed on `open` would mount up to
+ * half a minute *after* the countdown hit zero, above a live CTA the parent
+ * already has their cursor on. Giving pre-open the same trio settles the bar's
+ * box before the button can ever go live.
+ *
+ * The numbers are honest at every stage: seat counts are live regardless of
+ * registration state (an admin can place comp enrolments before the doors
+ * open), so a pre-open bar reads real availability — usually every seat free,
+ * reduced by whatever has already been placed — and doubles as a plain
+ * statement that seats will be limited when it opens.
+ */
+export interface SeatAvailability {
+  /**
+   * Total capacity. `null` when there is no cap — the card and panel layers
+   * then render no capacity hint at all.
+   */
+  seatCount: number | null;
+  /**
+   * Seats still open, floored at zero. `null` exactly when `seatCount` is.
+   * Live: derived from the product's real active-participation count.
+   */
+  seatsLeft: number | null;
+  waitlistEnabled: boolean;
+}
+
 export type RegistrationState =
   | { kind: "ended" }
-  | { kind: "closed_pre"; opensAt: string }
+  | ({ kind: "closed_pre"; opensAt: string } & SeatAvailability)
   | {
       kind: "running_late";
       /**
@@ -83,12 +114,14 @@ export type RegistrationState =
        */
       phase: "underway" | "over";
     }
-  | {
+  | ({
       kind: "pending_thr";
       threshold: number;
-      /** 0 today; real once participations ships. */
       count: number;
-    }
+    } & SeatAvailability)
+  // The two full kinds carry the cap alone, with no `seatsLeft` for a negative
+  // to hide in: a soft cap can be exceeded, and "full" is the whole fact. The
+  // panel hands the bar a flat 0.
   | {
       kind: "full_waitlist";
       seatCount: number;
@@ -97,17 +130,7 @@ export type RegistrationState =
       kind: "full_closed";
       seatCount: number;
     }
-  | {
-      kind: "open";
-      /**
-       * `null` when there is no cap — the card layer then renders no
-       * capacity hint at all.
-       */
-      seatCount: number | null;
-      /** `null` until participations ships. */
-      seatsLeft: number | null;
-      waitlistEnabled: boolean;
-    };
+  | ({ kind: "open" } & SeatAvailability);
 
 // Lifecycle-relevant columns. Keeping the input narrow lets callers
 // project a smaller select without losing type-safety.
@@ -173,6 +196,26 @@ function eventEndInstant(product: RegistrationStateInputs): Date | null {
   return new Date(start.getTime() + slot.duration_minutes * 60_000);
 }
 
+/**
+ * The seat trio, read straight off the row and the live participation count.
+ * One helper rather than three copies because the three signup-able states
+ * have to agree exactly — the panel's whole no-shift guarantee rests on the
+ * bar being identical either side of the pre-open → open swap.
+ */
+function seatAvailability(
+  product: RegistrationStateInputs,
+  participationsCount: number,
+): SeatAvailability {
+  return {
+    seatCount: product.seat_count,
+    seatsLeft:
+      product.seat_count !== null
+        ? Math.max(0, product.seat_count - participationsCount)
+        : null,
+    waitlistEnabled: product.waitlist_enabled,
+  };
+}
+
 export function deriveRegistrationState({
   product,
   now,
@@ -185,7 +228,11 @@ export function deriveRegistrationState({
   }
 
   if (new Date(product.registration_opens_at).getTime() > now.getTime()) {
-    return { kind: "closed_pre", opensAt: product.registration_opens_at };
+    return {
+      kind: "closed_pre",
+      opensAt: product.registration_opens_at,
+      ...seatAvailability(product, participationsCount),
+    };
   }
 
   // Camps and events lock late joins; clubs allow drop-in late joins (the
@@ -220,6 +267,7 @@ export function deriveRegistrationState({
       kind: "pending_thr",
       threshold: product.signup_threshold,
       count: participationsCount,
+      ...seatAvailability(product, participationsCount),
     };
   }
 
@@ -229,15 +277,7 @@ export function deriveRegistrationState({
       : { kind: "full_closed", seatCount: product.seat_count };
   }
 
-  return {
-    kind: "open",
-    seatCount: product.seat_count,
-    seatsLeft:
-      product.seat_count !== null
-        ? Math.max(0, product.seat_count - participationsCount)
-        : null,
-    waitlistEnabled: product.waitlist_enabled,
-  };
+  return { kind: "open", ...seatAvailability(product, participationsCount) };
 }
 
 // How a state's browse-card CTA behaves:
