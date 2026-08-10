@@ -8,8 +8,6 @@
 
 - [ ] **Convict the intermittent "content shifts down ~20-40px moments after load" bug, then remove the tripwire.** A dev-only diagnostic (`src/components/dev/layout-shift-tripwire.tsx`, mounted in the root layout) logs every browser-detected layout shift with attributed nodes and before/after rects (`[tripwire]` console lines; ring buffer on `window.__layoutShiftLog`), and separately logs any soft-nav landing with non-zero scrollY — the two suspect families from the 2026-08-04 investigation. Standing suspects, all live in prod code paths: (1) the spoken-languages filter row pops in (~38px) above the shop/schools product grids when an earlier page's failed server prefetch poisoned the shared query key — the row is rendered with no reserved box (`src/components/public/products/product-browse-filters.tsx`, unlike the Clear button right above it), and the global 60s `staleTime` defers the heal to a later mount/focus refetch, which is why reload-based repro can never show it; (2) Next.js soft navs preserve scroll offsets smaller than ~the header height (segment-visibility check), so pages land 20-40px high — the layout-shift API is blind to scroll, hence the landing channel. Related doc rot: ~10 comments claim seeded hooks "refetch on mount", which the global `staleTime` disables. When a sighting lands in the console, fix the named culprit, delete the tripwire, its layout.tsx mount, and this item.
 
-- [ ] **An admin who uncaps a product, or unticks its waitlist, strands whoever is already queued on it.** Neither edit touches the existing `waitlisted` rows, and the groups panel only draws its waitlist column for a waitlist-enabled product — so the moment the tick comes off, the queue is still in the database, still counted by the parent-facing "you're #N" read, and no longer reachable by any admin affordance that could promote or remove it. There is no confirmation on the way out either; the form saves like any other edit. **The shape is not decided.** The cheapest plausible answer is to key the column on *rows existing* rather than on the flag, so a disabled waitlist that still holds people stays workable (and visibly anomalous) until it is empty; a warning on save, or a refusal while rows exist, are the other two. Pick one before an admin meets it — the failure is silent on both sides, and the families sitting in that queue are told nothing.
-
 - [ ] **A listed municipality club is indexable at two URLs with no canonical.** One product row is reachable through both its shop URL and its schools URL, and both serve the site-default (indexable) metadata for a listed product — so search engines see duplicate content and pick a winner themselves. The unlisted case is closed (both routes emit noindex); the listed case wants an `alternates.canonical` on one of the two, which first needs the product decision of which URL is the canonical home of a muni club. Cheap once decided; pointless to guess before.
 
 - [ ] **Decide the theme story — the "dark mode via next-themes" claim is false and the `.light` tokens are dead.** `next-themes` is not a dependency (zero hits in `package.json`/lock), nothing ever applies a `light` class, and `<html className="dark">` is hardcoded in `src/app/layout.tsx` — yet root `CLAUDE.md`'s Styling section says "Dark mode is default (class-based via next-themes)" and `globals.css` carries ~49 lines of `.light` tokens nothing can activate. Either light mode is planned (then wire a real theme switch and keep the tokens) or it isn't (then delete the token block). Correct the `CLAUDE.md` sentence as part of whichever pass — today it misleads every session that reads it.
@@ -294,7 +292,7 @@ Currently the only way to link a parent to a gamer is when the parent creates th
 ## Waitlist — the parent/gamer side
 
 A waitlisted seat is a state of the shared enrollment card on both dashboards, and
-its leave affordance has a backend. Two open questions remain:
+its leave affordance has a backend. One open question remains:
 
 - [ ] **The waitlist copy promises an email nobody sends.** The card's footer
   reassurance and the confirmation page's `next1` both say we'll email the moment a seat opens.
@@ -302,16 +300,3 @@ its leave affordance has a backend. Two open questions remain:
   notifies nobody. Emails + promotion are handled by hand for now (deliberate), so
   this is a note, not a bug — but if manual sending ever slips, soften the copy
   rather than leave the promise standing.
-
-- [ ] **`join_waitlist` has no lifecycle or billing-mode guard — nothing stops a
-  row joining the queue of a product that can no longer honour it.** The RPC takes
-  the product lock, stamps the timestamp and writes the row; it never asks whether
-  the product is cancelled, finished, past its registration window, or has since
-  been flipped to a billing mode whose seat the queue could never be promoted into.
-  The queue itself is billing-agnostic by design — joining takes no money and
-  creates nothing but a row — so the guard is about the *product's* state, not the
-  money. This was raised in review while caps were municipality-only and the
-  scenario was near-unreachable; **waitlists on every type made it reachable**, so
-  it is worth re-costing rather than leaving where it was. It is a migration, and
-  it needs a decision first: which conditions genuinely refuse a join, and what the
-  parent-facing surface says when one does.

@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
-import { deleteTestProducts } from "./product-helpers";
+import { createTestProduct, deleteTestProducts } from "./product-helpers";
 
 /**
  * DB-level coverage for update_product(). Cousin of the create RPC,
@@ -20,6 +20,9 @@ import { deleteTestProducts } from "./product-helpers";
  *   - translation BEFORE-DELETE trigger doesn't trip on wipe-and-replace
  *     (the upsert-then-delete-leftovers ordering is the load-bearing
  *     piece — see migration 00046 header comment).
+ *   - turning the waitlist off deletes the queue behind it (00171), with the
+ *     live-subscription carve-out that stops the delete cascading a
+ *     subscription Stripe still bills.
  */
 
 const PRODUCT_ID = "00000000-0000-0000-0000-0000000005f1";
@@ -27,6 +30,10 @@ const PRODUCT_ID = "00000000-0000-0000-0000-0000000005f1";
 // is meaningless on the consumer-club PRODUCT_ID and rejected by the muni-only
 // constraint). Muni clubs need a location, so it points at the seeded one.
 const MUNI_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f2";
+// Its own product for the 00171 waitlist-deletion cases: they seed
+// participations (and, in two of them, a family_subscriptions row), which the
+// wipe-and-replace cases above have no business seeing.
+const WAITLIST_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f7";
 
 describe("update_product", () => {
   /** Service-role client — bypasses RLS, used to seed and to read back. */
@@ -48,7 +55,11 @@ describe("update_product", () => {
   });
 
   afterAll(async () => {
-    await deleteTestProducts(admin, [PRODUCT_ID, MUNI_PRODUCT_ID]);
+    await deleteTestProducts(admin, [
+      PRODUCT_ID,
+      MUNI_PRODUCT_ID,
+      WAITLIST_PRODUCT_ID,
+    ]);
   });
 
   // Recreate a fresh product before each path so we're testing update,
@@ -448,5 +459,216 @@ describe("update_product", () => {
       .update({ municipality_fee_cents: 0 })
       .eq("id", MUNI_PRODUCT_ID);
     expect(zero.error?.code).toBe("23514"); // check_violation
+  });
+
+  // -------------------------------------------------------------------------
+  // 00171 — turning the waitlist off deletes the queue behind it
+  // -------------------------------------------------------------------------
+  //
+  // The flag goes off two ways in the admin form, and the RPC sees only one of
+  // them: `waitlist = uncapped ? false : checkbox`, so an uncapping save and an
+  // unticking save both arrive as p_waitlist_enabled = false. Both are exercised
+  // here because they are two different admin actions with one wire shape — a
+  // future form change that stops deriving would break the first without
+  // touching the second.
+  //
+  // The seeded family has exactly two gamers (GAMER, GAMER_2), both children of
+  // CUSTOMER, and uq_participations_active_or_waitlisted allows one live row per
+  // gamer per product — which is why each case seeds at most two rows.
+  describe("waitlist deletion when the flag goes off", () => {
+    /** Fresh product + no participations, before every case. */
+    async function freshWaitlistProduct(): Promise<void> {
+      await deleteTestProducts(admin, [WAITLIST_PRODUCT_ID]);
+      await createTestProduct(admin, {
+        id: WAITLIST_PRODUCT_ID,
+        productType: "consumer_club",
+        billingMode: "paid",
+        seatCount: 10,
+        waitlistEnabled: true,
+      });
+    }
+
+    /**
+     * Seeds participations directly. Waitlisted rows carry `waitlisted_at`
+     * because chk_participations_waitlisted_has_timestamp requires it; the
+     * queue's order is derived from that column, never stored.
+     */
+    async function seedParticipations(
+      rows: { gamerId: string; status: "active" | "waitlisted" }[],
+    ): Promise<Record<string, string>> {
+      const { data, error } = await admin
+        .from("participations")
+        .insert(
+          rows.map((row) => ({
+            product_id: WAITLIST_PRODUCT_ID,
+            gamer_id: row.gamerId,
+            customer_id: TEST_IDS.CUSTOMER,
+            status: row.status,
+            waitlisted_at:
+              row.status === "waitlisted" ? new Date().toISOString() : null,
+          })),
+        )
+        .select("id, gamer_id");
+      expect(error).toBeNull();
+      return Object.fromEntries(data!.map((r) => [r.gamer_id, r.id]));
+    }
+
+    /**
+     * Saves the product through the RPC exactly as the admin form's update
+     * route does: an omitted p_seat_count is the uncapped case (the route maps
+     * a null seat count to `undefined` so the RPC's DEFAULT NULL clears the
+     * column).
+     */
+    async function saveProduct(fields: {
+      seatCount?: number;
+      waitlistEnabled: boolean;
+    }): Promise<void> {
+      const { error } = await adminAuth.rpc("update_product", {
+        p_id: WAITLIST_PRODUCT_ID,
+        p_billing_mode: "paid",
+        p_translations: [{ locale: "en", name: "Queue", short_description: "" }],
+        p_topic: "minecraft_java",
+        p_min_age: 7,
+        p_max_age: 12,
+        p_spoken_language_code: "en",
+        p_is_remote: true,
+        p_timezone: "Europe/Helsinki",
+        p_registration_opens_at: new Date().toISOString(),
+        p_seat_count: fields.seatCount,
+        p_waitlist_enabled: fields.waitlistEnabled,
+      });
+      expect(error).toBeNull();
+    }
+
+    /** The product's surviving participations, as gamer_id → status. */
+    async function survivors(): Promise<Record<string, string>> {
+      const { data } = await admin
+        .from("participations")
+        .select("gamer_id, status")
+        .eq("product_id", WAITLIST_PRODUCT_ID);
+      return Object.fromEntries(data!.map((r) => [r.gamer_id, r.status]));
+    }
+
+    it("uncapping a capped product deletes its waitlisted rows and leaves the active ones", async () => {
+      await freshWaitlistProduct();
+      await seedParticipations([
+        { gamerId: TEST_IDS.GAMER, status: "waitlisted" },
+        { gamerId: TEST_IDS.GAMER_2, status: "active" },
+      ]);
+
+      // Unlimited seats: the form derives waitlist_enabled false from the same
+      // answer, which is what makes uncapping a queue-clearing edit.
+      await saveProduct({ waitlistEnabled: false });
+
+      expect(await survivors()).toEqual({ [TEST_IDS.GAMER_2]: "active" });
+
+      const { data: row } = await admin
+        .from("products")
+        .select("seat_count, waitlist_enabled")
+        .eq("id", WAITLIST_PRODUCT_ID)
+        .single();
+      expect(row).toMatchObject({ seat_count: null, waitlist_enabled: false });
+    });
+
+    it("unticking the waitlist on a still-capped product does the same", async () => {
+      await freshWaitlistProduct();
+      await seedParticipations([
+        { gamerId: TEST_IDS.GAMER, status: "waitlisted" },
+        { gamerId: TEST_IDS.GAMER_2, status: "active" },
+      ]);
+
+      await saveProduct({ seatCount: 10, waitlistEnabled: false });
+
+      expect(await survivors()).toEqual({ [TEST_IDS.GAMER_2]: "active" });
+
+      const { data: row } = await admin
+        .from("products")
+        .select("seat_count, waitlist_enabled")
+        .eq("id", WAITLIST_PRODUCT_ID)
+        .single();
+      expect(row).toMatchObject({ seat_count: 10, waitlist_enabled: false });
+    });
+
+    it("leaves the queue alone while the waitlist stays on", async () => {
+      // The negative half: the delete is keyed to the saved flag, so an
+      // ordinary edit of a waitlist-enabled product must not touch the queue.
+      await freshWaitlistProduct();
+      await seedParticipations([
+        { gamerId: TEST_IDS.GAMER, status: "waitlisted" },
+        { gamerId: TEST_IDS.GAMER_2, status: "active" },
+      ]);
+
+      await saveProduct({ seatCount: 10, waitlistEnabled: true });
+
+      expect(await survivors()).toEqual({
+        [TEST_IDS.GAMER]: "waitlisted",
+        [TEST_IDS.GAMER_2]: "active",
+      });
+    });
+
+    it("spares a waitlisted row carrying a live subscription, and deletes its unsubscribed neighbour", async () => {
+      // A waitlisted row with a live subscription is a webhook-race ghost (a
+      // demote landing between Checkout completing and the webhook's insert, or
+      // the manual sub-adoption process). Deleting it would CASCADE
+      // family_subscriptions away and orphan billing Stripe still runs — the
+      // hazard demote_to_waitlist and admin_remove_participation refuse for.
+      await freshWaitlistProduct();
+      const ids = await seedParticipations([
+        { gamerId: TEST_IDS.GAMER, status: "waitlisted" },
+        { gamerId: TEST_IDS.GAMER_2, status: "waitlisted" },
+      ]);
+      await admin.from("family_subscriptions").insert({
+        participation_id: ids[TEST_IDS.GAMER],
+        customer_id: TEST_IDS.CUSTOMER,
+        stripe_subscription_id: "sub_waitlist_off_live",
+        stripe_customer_id: "cus_waitlist_off",
+        currency: "eur",
+        status: "active",
+      });
+
+      await saveProduct({ waitlistEnabled: false });
+
+      expect(await survivors()).toEqual({ [TEST_IDS.GAMER]: "waitlisted" });
+
+      // The subscription row is what the carve-out exists to protect, so assert
+      // it directly rather than inferring it from the participation surviving.
+      const { data: subs } = await admin
+        .from("family_subscriptions")
+        .select("participation_id")
+        .eq("stripe_subscription_id", "sub_waitlist_off_live");
+      expect(subs).toEqual([{ participation_id: ids[TEST_IDS.GAMER] }]);
+    });
+
+    it("deletes a waitlisted row whose subscription is cancelled", async () => {
+      // 00170's liveness predicate, applied to the carve-out: `cancelled` is
+      // terminal (a dunning-dead subscription is stored that way and never
+      // fires subscription.deleted), so such a row is not protected — otherwise
+      // a dead subscription would strand a queue entry forever, which is the
+      // failure 00170 removed from the two admin refusals.
+      await freshWaitlistProduct();
+      const ids = await seedParticipations([
+        { gamerId: TEST_IDS.GAMER, status: "waitlisted" },
+      ]);
+      await admin.from("family_subscriptions").insert({
+        participation_id: ids[TEST_IDS.GAMER],
+        customer_id: TEST_IDS.CUSTOMER,
+        stripe_subscription_id: "sub_waitlist_off_dead",
+        stripe_customer_id: "cus_waitlist_off",
+        currency: "eur",
+        status: "cancelled",
+      });
+
+      await saveProduct({ waitlistEnabled: false });
+
+      expect(await survivors()).toEqual({});
+
+      // The dead subscription row went with it, via the ON DELETE CASCADE that
+      // makes the live case dangerous in the first place.
+      const { data: subs } = await admin
+        .from("family_subscriptions")
+        .select("participation_id")
+        .eq("stripe_subscription_id", "sub_waitlist_off_dead");
+      expect(subs).toEqual([]);
+    });
   });
 });

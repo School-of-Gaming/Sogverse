@@ -84,10 +84,12 @@ describe("Access Control", () => {
       ["products", new Set(["INSERT", "UPDATE", "DELETE"])],
       // The staff-only half of a product (the gedu lesson-material link), split
       // off `products` because that table is anon-readable by column selection.
-      // create_product / update_product are SECURITY INVOKER, so the row is
-      // written by the admin's own client and the grant has to be here; the
-      // admin-only RLS policy is what actually authorizes it. DELETE because
-      // clearing the link removes the row rather than storing a NULL.
+      // create_product is SECURITY INVOKER, so the row is written by the
+      // admin's own client and the grant has to be here; the admin-only RLS
+      // policy is what actually authorizes it. (update_product writes the same
+      // row but has been SECURITY DEFINER since 00171 — the grant stands on
+      // create_product alone now.) DELETE because clearing the link removes the
+      // row rather than storing a NULL.
       ["product_staff_details", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["schedule_slots", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["product_prices", new Set(["INSERT", "UPDATE", "DELETE"])],

@@ -30,7 +30,10 @@ import { TEST_IDS } from "./constants";
  *   5d1–5da        session-credits-cron.test.ts
  *   5e1–5e4        products-gamer-rls.test.ts
  *   5e5–5e8        products-purchaser-rls.test.ts
- *   5f1, 5f2, 5ff  update-product.test.ts
+ *   5f1, 5f2, 5f7, 5ff
+ *                  update-product.test.ts (5f7 is the product its 00171
+ *                  waitlist-deletion cases seed participations on, kept apart
+ *                  from 5f1 so the wipe-and-replace cases never see them)
  *   5f3            product-translations-trigger.test.ts
  *   5f4, 5f5       waitlist-self-service.test.ts
  *   5f6            waitlist-admin.test.ts (its FREE consumer_club product, for
