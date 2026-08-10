@@ -1,8 +1,7 @@
-import { InstantVoiceHeader } from "@/components/voice/instant/InstantVoiceHeader";
 import { InstantVoiceSession } from "@/components/voice/instant/InstantVoiceSession";
 import { RoomNotFoundScreen } from "@/components/voice/instant/RoomNotFoundScreen";
 import { Copyright } from "@/components/layout";
-import { instantRoomModerator } from "@/lib/voice/instant-room-moderator";
+import { getUserWithProfile } from "@/lib/supabase/server";
 import { normalizeVoiceRoomCode } from "@/lib/voice-room-code";
 
 /**
@@ -14,9 +13,8 @@ import { normalizeVoiceRoomCode } from "@/lib/voice-room-code";
  * rather than a hard 404, even when the code is malformed (extra chars,
  * disallowed letters, etc.). Most failures here are typos — the user was
  * trying to reach *some* room — so we echo the typed value back so they
- * can spot the mistake. The header's copy-link chip is hidden when the
- * code is invalid because we don't want to offer a copy action that just
- * pastes a broken URL.
+ * can spot the mistake. Page chrome (the standard app header, no footer)
+ * comes from the route's layout, so both branches get it.
  */
 export default async function InstantVoicePage({
   params,
@@ -27,30 +25,30 @@ export default async function InstantVoicePage({
   const code = normalizeVoiceRoomCode(rawCode);
 
   if (!code) {
-    return (
-      <>
-        <InstantVoiceHeader />
-        <RoomNotFoundScreen code={prettifyTypedCode(rawCode)} />
-      </>
-    );
+    return <RoomNotFoundScreen code={prettifyTypedCode(rawCode)} />;
   }
 
-  // Same decision the token route uses to mint the owner token (admin or a
-  // verified gedu), so the lobby shows the guest name input to exactly the
-  // viewers the server will treat as guests. Null → guest. See
-  // `instantRoomModerator` for the rule and its fail-closed behavior.
-  const isModerator = (await instantRoomModerator()) !== null;
+  // Who's looking, read from the same session the token route reads — so the
+  // lobby and the minted token agree on identity. A profile we can't resolve
+  // (signed out, or a lookup that failed) is null, which is the signed-out
+  // path: type a name, get a server-minted UUID. Nothing about *permissions*
+  // is decided here; the token route owns that and treats every non-moderator
+  // as a guest regardless.
+  const session = await getUserWithProfile();
+  const profile = session?.profile;
+  const viewer = profile
+    ? { id: session.user.id, firstName: profile.first_name }
+    : null;
 
   return (
     <>
-      <InstantVoiceHeader code={code} />
       {/* Copyright is rendered here in the server boundary so its year is
           fixed at SSR time — passing it as a prop into the client session
           avoids a client-side getFullYear() that could disagree with the
           server-rendered HTML at year boundaries. */}
       <InstantVoiceSession
         code={code}
-        isModerator={isModerator}
+        viewer={viewer}
         copyright={<Copyright className="text-xs" />}
       />
     </>

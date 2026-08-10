@@ -57,9 +57,10 @@ export type AuthState =
  * from `useParticipationCounts(...).myGamerStates` and threads it onto each
  * gamer in the `ready` auth state.
  *
- * `reserving` is intentionally not part of this union — the movie-ticket
- * reservation model treats a held seat as the parent's to retry against
- * (they just click Sign Up again), not as an "already signed up" state.
+ * Those two are the only states that lock a child out of the picker. A parent
+ * part-way through Stripe Checkout has no row at all — a paid seat is created
+ * when the payment lands — so an abandoned checkout leaves the child selectable
+ * and the parent simply clicks Sign Up again.
  */
 export type MyParticipationState = "waitlisted" | "active";
 
@@ -133,8 +134,8 @@ function PanelShell({
 
 // One shared panel for every "you can't sign up right now" dead end (ended,
 // already started, or full with no waitlist). A parent never reaches these
-// through a browse card — registrationCtaKind resolves them to a disabled card
-// button or no button at all — so the only way in is a stale link or bookmark.
+// through a browse card — registrationCtaKind marks them inert, so the card
+// they came from is not a link — the only way in is a stale link or bookmark.
 // That makes three bespoke layouts not worth maintaining, and the exact reason
 // not worth spelling out: they collapse to one generic note, no actionable CTA.
 // (The RegistrationState kinds stay distinct — the card layer still needs them;
@@ -320,6 +321,7 @@ function FormOrAuth(props: FormOrAuthProps) {
     case "unauthenticated":
       return (
         <UnauthenticatedOverlay
+          productType={props.productType}
           signInHref={props.authState.signInHref}
           createAccountHref={props.authState.createAccountHref}
         />
@@ -334,9 +336,11 @@ function FormOrAuth(props: FormOrAuthProps) {
 }
 
 function UnauthenticatedOverlay({
+  productType,
   signInHref,
   createAccountHref,
 }: {
+  productType: ProductType;
   signInHref: string;
   createAccountHref: string;
 }) {
@@ -350,7 +354,13 @@ function UnauthenticatedOverlay({
           className: "w-full text-base",
         })}
       >
-        {t("ctaSignIn")}
+        {/* Keyed by type like the panel's other action words, so this button can
+            name the action the signed-in CTA will. Only the event mismatch is
+            fixed here — it said "register" where every other word on an event
+            panel says "join". Clubs and camps still pair "Enrol"/"Sign up" with
+            "Sign in to register"; that is left as-is on purpose, as a copy
+            decision to make on its own rather than a mechanical sweep. */}
+        {t(`ctaSignIn.${productType}`)}
       </Link>
       <Link
         href={createAccountHref}

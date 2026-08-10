@@ -93,6 +93,60 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
       "positive path is covered by get-gedu-assigned-product.test.ts.",
   },
 
+  // --- the session feed ----------------------------------------------------
+  //
+  // Every one of these opens with the gedu role guard and then asks a SECOND
+  // question — "do you teach this group / run anything at this building / does
+  // this child sit on your roster" — which a NULL argument can only answer no
+  // to. So the positive half of the matrix is unassertable here for the same
+  // reason it is on get_gedu_assigned_product, and for the same reason it is
+  // not a hole: each names the file that drives its permitted path against a
+  // real fixture.
+  get_gedu_group_feed: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "past the role guard, a NULL group is a group the caller does not teach, " +
+      "so the assignment half of the gate refuses with a second 42501. The " +
+      "positive path is covered by gedu-session-feed.test.ts.",
+  },
+  // The one that CAN be asserted positively: it takes no id at all, only the
+  // enforcement epoch, so a gedu with no assignments gets an empty list rather
+  // than a refusal.
+  get_my_gedu_assignment_summaries: { permittedRoles: ["gedu"] },
+  set_group_session_notes: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "the assignment half of the gate refuses a NULL group with a second " +
+      "42501. Positive path: gedu-session-feed.test.ts.",
+  },
+  record_attendance: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "refused twice over on NULL arguments — the caller teaches no NULL group, " +
+      "and no NULL child is on its roster. Positive path: " +
+      "gedu-session-feed.test.ts.",
+  },
+  set_group_notes: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "the assignment half of the gate refuses a NULL group with a second " +
+      "42501. Positive path: gedu-session-feed.test.ts.",
+  },
+  set_site_notes: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "the caller runs no product at a NULL location, so the site half of the " +
+      "gate refuses with a second 42501. Positive path: " +
+      "gedu-session-feed.test.ts.",
+  },
+  set_group_member_minecraft: {
+    permittedRoles: ["gedu"],
+    permittedAlsoForbiddenOnNullArgs:
+      "no NULL child participates in a group the caller teaches, so the target " +
+      "half of the gate refuses with a second 42501. Positive path: " +
+      "gedu-session-feed.test.ts.",
+  },
+
   // --- the guard primitives themselves -------------------------------------
   // Exposed to `authenticated` because create_product / update_product are
   // SECURITY INVOKER, so their guard runs as the caller (see migration 00120).
@@ -163,6 +217,10 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/get-my-participation-subscription-states.test.ts",
     why: "billing-state signals for participations the caller is party to",
   },
+  get_my_family_product_feed: {
+    scopeTest: "tests/db/family-product-feed.test.ts",
+    why: "the family club/camp/event page, keyed on ONE participation. Two roles reach the same document — the participation's gamer, and any parent linked to that gamer — so a role guard could only name both and would prove nothing; the real gate is the ownership predicate, which is keyed entirely to auth.uid(). A row that does not exist and a row belonging to another family are refused identically, so it cannot be used as an oracle for enrollment ids. The scope test is where the interesting half lives: a sibling in the SAME group is refused (the key is the participation, not the group), a parent of another family is refused, and the document's attendance field carries one answer — the named gamer's — rather than a roster map",
+  },
   submit_my_feedback: {
     scopeTest: "tests/db/feedback-submission.test.ts",
     why: "writes a feedback row for auth.uid(); no parameter names a user, and every role may send feedback",
@@ -170,6 +228,14 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
   get_waitlist_position: {
     scopeTest: "tests/db/waitlist-admin.test.ts",
     why: "owner-authorized: returns NULL rather than a position for a row the caller neither purchased nor is the gamer on",
+  },
+  get_my_waitlist_positions: {
+    scopeTest: "tests/db/waitlist-self-service.test.ts",
+    why: "takes no argument at all: the set it answers with is defined by auth.uid() on the row's two owner columns, so rows ahead of the caller in a queue are counted but never returned",
+  },
+  leave_my_waitlist_spot: {
+    scopeTest: "tests/db/waitlist-self-service.test.ts",
+    why: "the only write here: both the lookup and the DELETE carry customer_id = auth.uid(), and a row belonging to someone else is answered identically to one that does not exist",
   },
   set_my_pin: {
     scopeTest: "tests/db/parent-pin.test.ts",
@@ -183,14 +249,65 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/parent-pin.test.ts",
     why: "boolean about the caller's own PIN",
   },
+  search_locations: {
+    scopeTest: "tests/db/location-search.test.ts",
+    why: "SECURITY INVOKER over `locations` and, since 00165, `postal_codes` — two tables of public reference data whose policies grant every row to anon and authenticated alike, so the caller's own RLS decides every row it can see exactly as a direct select would. It cannot answer with anything a plain read of either table would not already return, and the scope test proves an anonymous caller and a privileged one get the identical answer. Self-scoping by the same reading as can_read_product: the scope is the caller's, not a uid the arguments could aim elsewhere. Its arguments — needle, levels, page size and, since 00155, an optional country — only ever NARROW that set; none of them names a user or widens what the caller's own RLS already permits",
+  },
+  // The three fold primitives below are a third shape the category has to
+  // admit, and the widest reading of it: they read *no table at all*. Each is a
+  // pure function of its arguments — strip diacritics, return a constant
+  // separator, join a row's searchable strings — holding no privilege and
+  // exposing nothing a caller did not pass in. There is no scope to escape
+  // because there is no data behind them.
+  //
+  // They are granted rather than hidden because both paths that reach them are
+  // privilege-checked as the *caller*: `search_locations` is SECURITY INVOKER
+  // and folds its needle with them, and `locations.search_blob` is a generated
+  // column whose expression Postgres evaluates under the privileges of whoever
+  // writes the row. Revoking them does not hide anything; it only makes search
+  // fail with 42501 and blocks every admin write to `locations`.
+  immutable_unaccent: {
+    scopeTest: "tests/db/search-fold-agreement.test.ts",
+    why: "pure text→text fold, reads nothing; reachable because search_locations is SECURITY INVOKER and folds the needle with it",
+  },
+  location_search_separator: {
+    scopeTest: "tests/db/search-fold-agreement.test.ts",
+    why: "returns one constant control character, reads nothing; reachable because search_locations builds its LIKE patterns from it",
+  },
+  location_search_blob: {
+    scopeTest: "tests/db/search-fold-agreement.test.ts",
+    why: "folds the strings it is handed into one delimited blob, reads nothing; reachable because the locations.search_blob generated column evaluates it under the writing role's privileges, so an admin creating a venue needs it",
+  },
 };
 
 /**
- * Functions `anon` may execute. `can_read_product` is the sole member: the
- * product read policies are `TO anon, authenticated`, so anon evaluates the
- * predicate itself.
+ * Functions `anon` may execute.
+ *
+ * `can_read_product` is the product read policies' own predicate — those
+ * policies are `TO anon, authenticated`, so anon evaluates it itself.
+ * `search_locations` is reached by the public educator registration page before
+ * any account exists; it is SECURITY INVOKER over two tables anon already holds
+ * SELECT on for every row — `locations`, and `postal_codes` since 00165 gave the
+ * search a postal match arm — so it narrows that surface rather than widening it.
+ * Migration 00155 replaced its three-argument signature with a four-argument
+ * one (the optional country filter) — a new object with no privileges of its
+ * own, which is why that migration re-issues this grant in full. The allowlist
+ * keys on the name, so it covers whichever signature is live; the guarantee it
+ * rests on is unchanged, because the new argument only narrows the result.
+ *
+ * `immutable_unaccent` and `location_search_separator` are here because
+ * `search_locations` calls them and runs as its caller — granting the entry
+ * point alone yields 42501 on the first anonymous search. Both are pure
+ * functions over their arguments that read no table, so anon reaching them
+ * exposes nothing; `location_search_blob` is deliberately *not* here, because
+ * only the write path needs it and anon never writes to `locations`.
  */
-const ANON_ALLOWLIST = new Set(["can_read_product"]);
+const ANON_ALLOWLIST = new Set([
+  "can_read_product",
+  "search_locations",
+  "immutable_unaccent",
+  "location_search_separator",
+]);
 
 /**
  * check 1 exempts `assert_role` from the guard-first rule: it *is* the guard.
@@ -219,9 +336,12 @@ const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
   ["participations", "customer_id"],
   ["participations", "gamer_id"],
   ["participations", "group_id"],
+  // The Checkout Session that paid for the seat: writable, it would let one
+  // family point a seat at another family's payment — and it is what the paid
+  // confirmation page and the webhook's own replay check both key on.
+  ["participations", "stripe_checkout_session_id"],
   // Money.
   ["payments", "amount_cents"],
-  ["refunds", "amount_cents"],
   ["family_subscriptions", "status"],
   ["family_subscriptions", "current_period_end"],
   // Not money, but a capability: the billing-portal route turns this id into a
@@ -230,7 +350,6 @@ const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
   ["family_subscriptions", "stripe_customer_id"],
   // Seat accounting — the rollup the capacity gate reads.
   ["product_seat_counts", "active_count"],
-  ["product_seat_counts", "reserving_count"],
   ["product_seat_counts", "waitlist_count"],
   // The parent PIN hash.
   ["customer_profiles", "pin_hash"],
@@ -238,10 +357,12 @@ const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
 
 /**
  * The only table whose UPDATE surface is column-scoped rather than table-wide.
- * Pinned exactly: these five are the safe profile fields a user may edit —
- * identity and presentation, nothing that decides what they may do. `locale`
- * joined them in Phase 3 when the locale route stopped writing through the
- * service-role client.
+ * Pinned exactly: these are the safe profile fields a user may edit — identity
+ * and presentation, nothing that decides what they may do. `locale` joined them
+ * in Phase 3 when the locale route stopped writing through the service-role
+ * client; `home_location_id` in 00137, and it stays on the safe side of that
+ * line — it is a reference to public, anon-readable seeded geography, it gates
+ * nothing, and its FK is the only thing constraining what it may hold.
  */
 const PROFILES_UPDATABLE_COLUMNS = [
   "first_name",
@@ -249,6 +370,7 @@ const PROFILES_UPDATABLE_COLUMNS = [
   "phone",
   "spoken_languages",
   "locale",
+  "home_location_id",
 ];
 
 // ---------------------------------------------------------------------------

@@ -69,7 +69,7 @@ vi.mock("@/lib/stripe/customer", () => ({
 const CUSTOMER_ID = "11111111-1111-1111-1111-111111111111";
 const PRODUCT_ID = "22222222-2222-2222-2222-222222222222";
 const GAMER_ID = "33333333-3333-3333-3333-333333333333";
-const RESERVATION_ID = "44444444-4444-4444-4444-444444444444";
+const PARTICIPATION_ID = "44444444-4444-4444-4444-444444444444";
 const STRIPE_CUSTOMER_ID = "cus_test_customer";
 const STRIPE_PRICE_ID = "price_test_monthly";
 const GAMER_FIRST_NAME = "Liam";
@@ -119,8 +119,7 @@ type AdminMockOptions = {
 };
 
 function mockAdmin(opts: AdminMockOptions = {}): void {
-  const gamer =
-    opts.gamer ?? { first_name: GAMER_FIRST_NAME };
+  const gamer = opts.gamer ?? { first_name: GAMER_FIRST_NAME };
 
   mockAdminFrom.mockImplementation((table: string) => {
     if (table === "products") {
@@ -251,9 +250,26 @@ describe("POST /api/checkout/products/create", () => {
   });
 
   it.each([
-    ["productId", { gamerId: GAMER_ID, purchaseShape: "subscription_monthly", currency: "eur" }],
-    ["gamerId", { productId: PRODUCT_ID, purchaseShape: "subscription_monthly", currency: "eur" }],
-    ["purchaseShape", { productId: PRODUCT_ID, gamerId: GAMER_ID, currency: "eur" }],
+    [
+      "productId",
+      {
+        gamerId: GAMER_ID,
+        purchaseShape: "subscription_monthly",
+        currency: "eur",
+      },
+    ],
+    [
+      "gamerId",
+      {
+        productId: PRODUCT_ID,
+        purchaseShape: "subscription_monthly",
+        currency: "eur",
+      },
+    ],
+    [
+      "purchaseShape",
+      { productId: PRODUCT_ID, gamerId: GAMER_ID, currency: "eur" },
+    ],
   ])("returns 400 when %s is missing", async (_field, body) => {
     mockAuthenticatedCustomer();
     const res = await POST(createRequest(body));
@@ -276,9 +292,7 @@ describe("POST /api/checkout/products/create", () => {
 
   it("returns 400 when currency is not supported", async () => {
     mockAuthenticatedCustomer();
-    const res = await POST(
-      createRequest({ ...VALID_BODY, currency: "jpy" }),
-    );
+    const res = await POST(createRequest({ ...VALID_BODY, currency: "jpy" }));
     const data = await res.json();
     expect(res.status).toBe(400);
     expect(data.error).toContain("currency");
@@ -360,7 +374,9 @@ describe("POST /api/checkout/products/create", () => {
     );
     const data = await res.json();
     expect(res.status).toBe(400);
-    expect(data.error).toBe("Consumer clubs use subscriptions, not single-payment");
+    expect(data.error).toBe(
+      "Consumer clubs use subscriptions, not single-payment",
+    );
   });
 
   it("returns 400 when a subscription is sent for a non-club product type", async () => {
@@ -391,7 +407,7 @@ describe("POST /api/checkout/products/create", () => {
     mockAuthenticatedCustomer();
     mockAdmin({ product: FREE_EVENT });
     mockAdminRpc.mockResolvedValueOnce({
-      data: { kind: "free_active", participation_id: RESERVATION_ID },
+      data: { kind: "free_active", participation_id: PARTICIPATION_ID },
       error: null,
     });
 
@@ -408,7 +424,7 @@ describe("POST /api/checkout/products/create", () => {
     expect(res.status).toBe(200);
     expect(data).toEqual({
       status: "free_confirmed",
-      participationId: RESERVATION_ID,
+      participationId: PARTICIPATION_ID,
     });
     expect(mockStripeSessionCreate).not.toHaveBeenCalled();
     expect(mockAdminRpc).toHaveBeenCalledWith("create_participation", {
@@ -424,7 +440,7 @@ describe("POST /api/checkout/products/create", () => {
     mockAuthenticatedCustomer();
     mockAdmin({ product: MUNI_CLUB });
     mockAdminRpc.mockResolvedValueOnce({
-      data: { kind: "external_active", participation_id: RESERVATION_ID },
+      data: { kind: "external_active", participation_id: PARTICIPATION_ID },
       error: null,
     });
 
@@ -441,7 +457,7 @@ describe("POST /api/checkout/products/create", () => {
     expect(res.status).toBe(200);
     expect(data).toEqual({
       status: "external_confirmed",
-      participationId: RESERVATION_ID,
+      participationId: PARTICIPATION_ID,
     });
     // Municipality clubs are invoiced off-platform — never touch Stripe.
     expect(mockStripeSessionCreate).not.toHaveBeenCalled();
@@ -488,7 +504,7 @@ describe("POST /api/checkout/products/create", () => {
     mockAuthenticatedCustomer();
     mockAdmin({ product: PAID_CAMP });
     mockAdminRpc.mockResolvedValueOnce({
-      data: { kind: "reserving", participation_id: RESERVATION_ID },
+      data: { kind: "validated" },
       error: null,
     });
     mockComputeSinglePaymentAmount.mockResolvedValue(15000);
@@ -528,25 +544,31 @@ describe("POST /api/checkout/products/create", () => {
         product_data: { name: "Test Club" },
       },
     });
+    // The metadata is the only link between this session and the participation
+    // the webhook will create — there is no reservation id, because there is no
+    // row yet.
     expect(params.metadata).toEqual({
-      reservationId: RESERVATION_ID,
       customerId: CUSTOMER_ID,
       gamerId: GAMER_ID,
       productId: PRODUCT_ID,
       purchaseShape: "single_payment",
       currency: "eur",
     });
-    // Success lands on the purchase-confirmation page, keyed by the reservation
-    // (participation) id.
+    // Success lands on the confirmation page keyed by the Checkout Session.
+    // `{CHECKOUT_SESSION_ID}` is Stripe's literal placeholder and has to reach
+    // Stripe unencoded.
     expect(params.success_url).toBe(
-      `http://localhost:3000/shop/confirmation?p=${RESERVATION_ID}`,
+      "http://localhost:3000/shop/confirmation?session_id={CHECKOUT_SESSION_ID}",
     );
     // Cancel bounces straight back to the product page so the parent can retry.
-    expect(params.cancel_url).toBe(
-      `http://localhost:3000/shop/${PRODUCT_ID}`,
-    );
-    // expires_at sits ~30 minutes in the future (Stripe enforces a 30-min floor).
-    expect(params.expires_at).toBeGreaterThan(Math.floor(Date.now() / 1000));
+    expect(params.cancel_url).toBe(`http://localhost:3000/shop/${PRODUCT_ID}`);
+    // `expires_at` no longer pins a reservation lifetime — nothing is held — but
+    // it still bounds a stale tab, because the Session freezes the amount at
+    // creation. Thirty minutes is Stripe's floor; assert the window rather than
+    // an exact second, since the clock moves between the call and the assertion.
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    expect(params.expires_at).toBeGreaterThan(nowSeconds + 29 * 60);
+    expect(params.expires_at).toBeLessThanOrEqual(nowSeconds + 30 * 60);
     expect(mockComputeSinglePaymentAmount).toHaveBeenCalledWith(
       expect.anything(),
       PRODUCT_ID,
@@ -554,15 +576,14 @@ describe("POST /api/checkout/products/create", () => {
     );
   });
 
-  it("rolls the reservation back when the product has no price in the requested currency (single_payment)", async () => {
+  it("returns 400 and writes nothing when the product has no price in the requested currency (single_payment)", async () => {
     mockAuthenticatedCustomer();
     mockAdmin({ product: PAID_CAMP });
     mockAdminRpc
       .mockResolvedValueOnce({
-        data: { kind: "reserving", participation_id: RESERVATION_ID },
+        data: { kind: "validated" },
         error: null,
-      })
-      .mockResolvedValueOnce({ data: { kind: "expired" }, error: null });
+      });
     mockComputeSinglePaymentAmount.mockResolvedValue(null);
 
     const res = await POST(
@@ -573,20 +594,76 @@ describe("POST /api/checkout/products/create", () => {
     expect(res.status).toBe(400);
     expect(data.error).toBe("Product is not sold in eur");
     expect(mockStripeSessionCreate).not.toHaveBeenCalled();
-    expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation", {
-      p_reservation_id: RESERVATION_ID,
-    });
+    // create_participation is the only RPC this route makes: validation wrote
+    // nothing, so there is nothing to unwind.
+    expect(mockAdminRpc).toHaveBeenCalledTimes(1);
   });
 
-  it("rolls the reservation back when Stripe returns a session without a URL", async () => {
+  it("reports a server fault plainly when anything in the checkout block throws", async () => {
+    // There is nothing to reclaim on this path any more; what the block still
+    // owes the parent is a deliberate status and a message that isn't raw
+    // database text (this route discloses its error messages).
     mockAuthenticatedCustomer();
     mockAdmin({ product: PAID_CAMP });
     mockAdminRpc
       .mockResolvedValueOnce({
-        data: { kind: "reserving", participation_id: RESERVATION_ID },
+        data: { kind: "validated" },
         error: null,
-      })
-      .mockResolvedValueOnce({ data: { kind: "expired" }, error: null });
+      });
+    // Once, not persistently: clearAllMocks() resets calls but keeps
+    // implementations, so a lingering rejection would leak into later tests.
+    mockComputeSinglePaymentAmount.mockRejectedValueOnce(
+      Object.assign(new Error("canceling statement due to statement timeout"), {
+        code: "57014",
+      }),
+    );
+
+    const res = await POST(
+      createRequest({ ...VALID_BODY, purchaseShape: "single_payment" }),
+    );
+    const data = await res.json();
+
+    expect(mockStripeSessionCreate).not.toHaveBeenCalled();
+    // A server fault, reported as one — not the raw database text, and not the
+    // misleading status a Postgres error code would otherwise be mapped to.
+    expect(res.status).toBe(500);
+    expect(data.error).not.toContain("statement timeout");
+  });
+
+  it("answers 500 without leaking Stripe's text when the session call fails", async () => {
+    // The likeliest failure in the block: Stripe outage, rate limit or invalid
+    // param.
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: PAID_CAMP });
+    mockAdminRpc
+      .mockResolvedValueOnce({
+        data: { kind: "validated" },
+        error: null,
+      });
+    mockComputeSinglePaymentAmount.mockResolvedValue(15000);
+    mockStripeSessionCreate.mockRejectedValueOnce(
+      Object.assign(new Error("No such customer: cus_missing"), {
+        code: "resource_missing",
+      }),
+    );
+
+    const res = await POST(
+      createRequest({ ...VALID_BODY, purchaseShape: "single_payment" }),
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(data.error).not.toContain("No such customer");
+  });
+
+  it("returns 502 when Stripe returns a session without a URL", async () => {
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: PAID_CAMP });
+    mockAdminRpc
+      .mockResolvedValueOnce({
+        data: { kind: "validated" },
+        error: null,
+      });
     mockComputeSinglePaymentAmount.mockResolvedValue(15000);
     mockStripeSessionCreate.mockResolvedValue({ url: null });
 
@@ -597,9 +674,7 @@ describe("POST /api/checkout/products/create", () => {
 
     expect(res.status).toBe(502);
     expect(data.error).toBe("Stripe did not return a Checkout URL");
-    expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation", {
-      p_reservation_id: RESERVATION_ID,
-    });
+    expect(mockAdminRpc).toHaveBeenCalledTimes(1);
   });
 
   // ── Subscription path — always Stripe Checkout ────────────────────
@@ -608,7 +683,7 @@ describe("POST /api/checkout/products/create", () => {
     mockAuthenticatedCustomer();
     mockAdmin({ product: PAID_CLUB });
     mockAdminRpc.mockResolvedValueOnce({
-      data: { kind: "reserving", participation_id: RESERVATION_ID },
+      data: { kind: "validated" },
       error: null,
     });
     mockGetOrCreateSubscriptionPrice.mockResolvedValue({
@@ -636,9 +711,9 @@ describe("POST /api/checkout/products/create", () => {
       quantity: 1,
       price: STRIPE_PRICE_ID,
     });
-    // Sub metadata is mirrored onto subscription_data so the webhook can find
-    // the reservation, and a per-sub description ("{Club} — {Child}") makes each
-    // of a family's subs distinguishable in the hosted billing portal.
+    // Sub metadata is mirrored onto subscription_data so the webhook can build
+    // the participation, and a per-sub description ("{Club} — {Child}") makes
+    // each of a family's subs distinguishable in the hosted billing portal.
     expect(params.subscription_data).toEqual({
       metadata: params.metadata,
       description: `Test Club — ${GAMER_FIRST_NAME}`,
@@ -661,7 +736,7 @@ describe("POST /api/checkout/products/create", () => {
       },
     });
     mockAdminRpc.mockResolvedValueOnce({
-      data: { kind: "reserving", participation_id: RESERVATION_ID },
+      data: { kind: "validated" },
       error: null,
     });
     mockGetOrCreateSubscriptionPrice.mockResolvedValue({
@@ -692,7 +767,7 @@ describe("POST /api/checkout/products/create", () => {
     mockAuthenticatedCustomer("tlh");
     mockAdmin({ product: PAID_CLUB });
     mockAdminRpc.mockResolvedValueOnce({
-      data: { kind: "reserving", participation_id: RESERVATION_ID },
+      data: { kind: "validated" },
       error: null,
     });
     mockGetOrCreateSubscriptionPrice.mockResolvedValue({
@@ -712,15 +787,38 @@ describe("POST /api/checkout/products/create", () => {
     expect(mockStripeSessionCreate.mock.calls[0][0].locale).toBe("auto");
   });
 
-  it("rolls back and returns 400 when the product is not sold in the requested currency (sub branch)", async () => {
+  it("passes French through to the Stripe chrome", async () => {
+    mockAuthenticatedCustomer("fr");
+    mockAdmin({ product: PAID_CLUB });
+    mockAdminRpc.mockResolvedValueOnce({
+      data: { kind: "validated" },
+      error: null,
+    });
+    mockGetOrCreateSubscriptionPrice.mockResolvedValue({
+      product_id: PRODUCT_ID,
+      currency: "eur",
+      stripe_price_id: STRIPE_PRICE_ID,
+      unit_amount_cents: 5000,
+    });
+    mockStripeSessionCreate.mockResolvedValue({
+      url: "https://checkout.stripe.com/c/test_sub_fr",
+    });
+
+    const res = await POST(
+      createRequest({ ...VALID_BODY, purchaseShape: "subscription_monthly" }),
+    );
+    expect(res.status).toBe(200);
+    expect(mockStripeSessionCreate.mock.calls[0][0].locale).toBe("fr");
+  });
+
+  it("returns 400 when the product is not sold in the requested currency (sub branch)", async () => {
     mockAuthenticatedCustomer();
     mockAdmin({ product: PAID_CLUB });
     mockAdminRpc
       .mockResolvedValueOnce({
-        data: { kind: "reserving", participation_id: RESERVATION_ID },
+        data: { kind: "validated" },
         error: null,
-      })
-      .mockResolvedValueOnce({ data: { kind: "expired" }, error: null });
+      });
     mockGetOrCreateSubscriptionPrice.mockResolvedValue(null);
 
     const res = await POST(
@@ -735,9 +833,7 @@ describe("POST /api/checkout/products/create", () => {
     expect(res.status).toBe(400);
     expect(data.error).toBe("Product is not sold in eur");
     expect(mockStripeSessionCreate).not.toHaveBeenCalled();
-    expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation", {
-      p_reservation_id: RESERVATION_ID,
-    });
+    expect(mockAdminRpc).toHaveBeenCalledTimes(1);
   });
 
   // ── Defensive: unexpected RPC return shapes ───────────────────────
@@ -780,7 +876,11 @@ describe("POST /api/checkout/products/create", () => {
     expect(res.status).toBe(500);
   });
 
-  it("returns 500 when RPC returns reserving without a participation_id", async () => {
+  it("returns 500 when the RPC returns a kind the contract doesn't know", async () => {
+    // `reserving` was the paid outcome before the seat moved to payment time.
+    // A database still answering with it would be out of step with this route,
+    // and the contract parse is what catches that rather than the route quietly
+    // sending the parent to Stripe on a stale understanding.
     mockAuthenticatedCustomer();
     mockAdmin({ product: PAID_CLUB });
     mockAdminRpc.mockResolvedValueOnce({
@@ -790,6 +890,7 @@ describe("POST /api/checkout/products/create", () => {
 
     const res = await POST(createRequest(VALID_BODY));
     expect(res.status).toBe(500);
+    expect(mockStripeSessionCreate).not.toHaveBeenCalled();
   });
 
   // ── redirect URLs ─────────────────────────────────────────────────
@@ -801,7 +902,7 @@ describe("POST /api/checkout/products/create", () => {
     mockAuthenticatedCustomer();
     mockAdmin({ product: PAID_CAMP });
     mockAdminRpc.mockResolvedValueOnce({
-      data: { kind: "reserving", participation_id: RESERVATION_ID },
+      data: { kind: "validated" },
       error: null,
     });
     mockComputeSinglePaymentAmount.mockResolvedValue(15000);
@@ -819,7 +920,7 @@ describe("POST /api/checkout/products/create", () => {
 
     const params = mockStripeSessionCreate.mock.calls[0][0];
     expect(params.success_url).toBe(
-      `http://localhost:3000/shop/confirmation?p=${RESERVATION_ID}`,
+      "http://localhost:3000/shop/confirmation?session_id={CHECKOUT_SESSION_ID}",
     );
     expect(params.cancel_url).toBe(`http://localhost:3000/shop/${PRODUCT_ID}`);
   });

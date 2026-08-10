@@ -240,10 +240,18 @@ INSERT INTO parent_gamer (id, parent_id, gamer_id) VALUES (
 -- Finland -> Uusimaa (region) -> Helsinki (municipality) -> Test School (site).
 -- The site is the leaf referenced by product-location tests.
 
--- name_i18n mirrors the migration backfill (00110): regions/municipalities carry
--- their official Swedish name; sites and the country fall back to `name`.
+-- name_i18n mirrors the migrations: regions/municipalities carry their official
+-- Swedish name (00110), and the country carries its native name plus the
+-- published translations (00140). Sites fall back to `name` — a venue has one
+-- name, whoever is reading.
+--
+-- These are their own rows, not the seeded classification: the country here is
+-- a fixture with a fixed id, so it does not inherit anything a migration does
+-- to the real Finland row. Keeping the two spelled the same is deliberate, so a
+-- test reading a fixture chain and one reading the real one can assert the same
+-- thing — which is exactly what caught this when they disagreed.
 INSERT INTO locations (id, name, type, parent_id, country_code, name_i18n) VALUES
-  ('00000000-0000-0000-0000-000000000200', 'Finland',     'country',      NULL,                                   'FI', NULL),
+  ('00000000-0000-0000-0000-000000000200', 'Suomi',       'country',      NULL,                                   'FI', '{"sv": "Finland", "en": "Finland", "fr": "Finlande"}'),
   ('00000000-0000-0000-0000-000000000201', 'Uusimaa',     'region',       '00000000-0000-0000-0000-000000000200', 'FI', '{"sv": "Nyland"}'),
   ('00000000-0000-0000-0000-000000000202', 'Helsinki',    'municipality', '00000000-0000-0000-0000-000000000201', 'FI', '{"sv": "Helsingfors"}'),
   ('00000000-0000-0000-0000-000000000203', 'Test School', 'site',         '00000000-0000-0000-0000-000000000202', 'FI', NULL);

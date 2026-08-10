@@ -40,7 +40,7 @@ If you instead see `SIGTERM received, stopping session…` as the last line and 
 
 ## Things that will trip you up if you skip them
 
-- **SSH user must be `kyle_hutchinson@`.** Without the `user@` prefix, gcloud uses your local OS username (e.g. `Kyle@` on Windows) and `cd ~/Sogverse` lands in the wrong home directory. The repo lives at `/home/kyle_hutchinson/Sogverse`.
+- **SSH user must be `kyle_hutchinson@`.** Without the `user@` prefix, gcloud falls back to your local OS username, which will not match the account on the box, and `cd ~/Sogverse` lands in the wrong home directory. The repo lives at `/home/kyle_hutchinson/Sogverse`.
 - **`gcloud auth login` is interactive and cannot run inside Claude Code's non-interactive shell.** If gcloud says `Reauthentication failed. cannot prompt during non-interactive execution`, ask the user to run `gcloud auth login` themselves (in Claude Code, the `!gcloud auth login` prompt prefix). Once they do, retry the deploy command.
 - **`PATH` must include `$HOME/.local/bin`.** Node 20 is installed user-local on the box, not system-wide — without that export, `npm` and `node` aren't on PATH inside the SSH command.
 - **`--ff-only` is intentional.** The deploy should never silently merge — if `dev` has diverged from the box's HEAD, that's a signal to investigate, not paper over.

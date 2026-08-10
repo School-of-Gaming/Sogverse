@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { SupportedCurrency } from "@/lib/constants/currency";
-import {
-  isSupportedLocale,
-  resolveLocale,
-  type SupportedLocale,
-} from "@/lib/constants/locales";
+import { resolveLocale, stripeLocaleOrAuto } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   createCheckoutBody,
@@ -21,10 +17,9 @@ import {
   getOrCreateSubscriptionPrice,
 } from "@/lib/stripe/participation-prices";
 import { getOrCreateStripeCustomer } from "@/lib/stripe/customer";
-import { RESERVATION_LIFETIME_MINUTES } from "@/lib/constants/participations";
+import { stripe } from "@/lib/stripe/client";
+import { CHECKOUT_SESSION_LIFETIME_MINUTES } from "@/lib/constants/participations";
 import { getOrigin } from "@/lib/url";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 /**
  * POST /api/checkout/products/create
@@ -144,13 +139,12 @@ export const POST = defineRoute({
       );
     }
 
-    // Each click is an independent reservation. If the parent abandoned a
-    // previous Stripe session, that row stays in the seat-count until Stripe
-    // fires `checkout.session.expired` (~30 min) and the webhook deletes it.
-    // The schema's unique index on (product_id, gamer_id) excludes 'reserving',
-    // so multiple held rows for the same parent/gamer coexist fine. Pay-twice
-    // is bounded by the unique index firing on the second confirm — see the
-    // webhook for the 23505 catch.
+    // For a paid shape this call only *validates* — it runs every signup rule
+    // (parent-of, lifecycle, registration window, currency, already-enrolled,
+    // seat cap) under the product gate lock and writes nothing. The row is
+    // created from the Stripe webhook once payment lands, so a parent who
+    // abandons Checkout leaves nothing behind and there is no seat to release.
+    // The no-charge shapes (free, external) still activate here and now.
     const { data: rpcResult, error: rpcErr } = await admin.rpc(
       "create_participation",
       {
@@ -199,149 +193,149 @@ export const POST = defineRoute({
           };
     }
 
-    // kind === 'reserving'
-    if (!rpcJson.participation_id) {
-      throw new ApiError(
-        "create_participation returned reserving with no reservation id",
-        500,
-      );
-    }
-    const reservationId = rpcJson.participation_id;
+    // kind === 'validated' — the signup is acceptable and nothing was written.
+    // Nothing below this line needs unwinding on failure: an escape from the
+    // block leaves the database exactly as it was, so the try/catch exists only
+    // to keep raw Stripe/PostgREST text away from a parent (this route
+    // discloses its error messages) and to answer with a deliberate status.
+    try {
+      const stripeCustomerId = await getOrCreateStripeCustomer(admin, user.id);
 
-    const stripeCustomerId = await getOrCreateStripeCustomer(admin, user.id);
+      // Every paid signup — single-payment AND subscription — goes through Stripe
+      // Checkout. Each consumer-club subscription is its own Stripe subscription
+      // (one per gamer x club), created fresh below in `mode: "subscription"`.
+      // There is no inline subscription update: a parent with a card on file
+      // still sees Checkout (the trust moment), and one sub per club means each
+      // is independently cancelable from the Stripe portal.
 
-    // Every paid signup — single-payment AND subscription — goes through Stripe
-    // Checkout. Each consumer-club subscription is its own Stripe subscription
-    // (one per gamer x club), created fresh below in `mode: "subscription"`.
-    // There is no inline subscription update: a parent with a card on file
-    // still sees Checkout (the trust moment), and one sub per club means each
-    // is independently cancelable from the Stripe portal.
+      const origin = getOrigin(request);
+      // Success lands on the confirmation page keyed by the Checkout Session,
+      // not by a participation — there is no participation yet, and the session
+      // id is the only handle both ends share. `{CHECKOUT_SESSION_ID}` is
+      // Stripe's literal placeholder, substituted at redirect time; it must
+      // reach Stripe unencoded. The page resolves it back to the row the webhook
+      // wrote (Stripe waits up to 10s on our endpoint before redirecting, so it
+      // is almost always there) and shows a finalizing state if it is not.
+      const successUrl = `${origin}${ROUTES.shopPaidConfirmation("{CHECKOUT_SESSION_ID}")}`;
+      // Cancel bounces straight back to the product page so the parent can
+      // retry. Nothing to undo — no row was written.
+      const cancelUrl = `${origin}${ROUTES.shopProduct(productId)}`;
 
-    const origin = getOrigin(request);
-    // Success lands on the dedicated purchase-confirmation page, keyed by this
-    // reservation id. By the time Stripe redirects, the
-    // `checkout.session.completed` webhook has already confirmed the
-    // reservation (Stripe waits up to 10s for our endpoint before redirecting),
-    // so the row is 'active' — but every field the page shows lives on the row
-    // from creation, so the page renders correctly even in the rare case the
-    // redirect beats the webhook. No polling, no `?signup=` flag.
-    const successUrl = `${origin}${ROUTES.shopConfirmation(reservationId)}`;
-    // Cancel bounces straight back to the product page so the parent can retry.
-    // We do NOT free the seat — the reserving row stays held until either
-    // Stripe fires session.completed (→ confirm) or session.expired (→ expire).
-    const cancelUrl = `${origin}${ROUTES.shopProduct(productId)}`;
-
-    const metadata = {
-      reservationId,
-      customerId: user.id,
-      gamerId,
-      productId,
-      purchaseShape,
-      currency,
-    };
-
-    // Stripe Checkout's session expiry IS our reservation lifetime: Stripe
-    // refuses payment past `expires_at` and fires checkout.session.expired,
-    // which our webhook turns into expire_reservation.
-    const expiresAt =
-      Math.floor(Date.now() / 1000) + RESERVATION_LIFETIME_MINUTES * 60;
-
-    // Adaptive Pricing presents each customer their local currency and lets
-    // Stripe convert, while the Session/PaymentIntent still report our EUR
-    // integration currency and settle us in EUR at the price we set.
-    const sessionParams: Stripe.Checkout.SessionCreateParams = {
-      customer: stripeCustomerId,
-      adaptive_pricing: { enabled: true },
-      // Render Stripe's own chrome ("Subscribe", "Pay", field labels) in the
-      // parent's app locale. Falls back to 'auto' (browser Accept-Language) for
-      // locales Stripe doesn't support — e.g. Klingon.
-      locale: stripeCheckoutLocale(profile.locale),
-      // Show the "Add promotion code" field. Codes themselves are created and
-      // managed in the Stripe dashboard (per mode — test and live separately);
-      // nothing in our DB models them. With Adaptive Pricing, percent-off
-      // coupons convert cleanly; amount_off coupons are currency-bound, so
-      // prefer percent-off when creating codes.
-      allow_promotion_codes: true,
-      // Enable Stripe Tax so new signups get VAT itemized like the migrated
-      // subs do. `customer_update: { address: "auto" }` is required by Stripe
-      // whenever a `customer` is pre-set on the session with automatic_tax on;
-      // it also makes Checkout collect the billing address and persist it back
-      // onto the Customer, which Stripe Tax needs to locate the customer.
-      automatic_tax: { enabled: true },
-      customer_update: { address: "auto" },
-      expires_at: expiresAt,
-      metadata,
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      line_items: [],
-    };
-
-    if (isSinglePayment) {
-      const amount = await computeSinglePaymentAmount(admin, productId, currency);
-      if (amount === null) {
-        await rollbackReservation(admin, reservationId);
-        return NextResponse.json(
-          { error: `Product is not sold in ${currency}` },
-          { status: 400 },
-        );
-      }
-      sessionParams.mode = "payment";
-      sessionParams.line_items = [
-        {
-          quantity: 1,
-          price_data: {
-            currency,
-            unit_amount: amount,
-            product_data: { name: productName },
-          },
-        },
-      ];
-      // Offer to save the card for future purchases. Checked = saved with
-      // `allow_redisplay: always`, so it's offered/prefilled on the customer's
-      // next Checkout and manageable from the billing portal. Subscriptions
-      // (the other branch) already save the card by necessity.
-      sessionParams.saved_payment_method_options = {
-        payment_method_save: "enabled",
-      };
-    } else {
-      const priceRow = await getOrCreateSubscriptionPrice(
-        admin,
+      // The metadata IS the link between this session and the participation the
+      // webhook will create. Nothing else carries it, so every field here is
+      // load-bearing rather than informational.
+      const metadata = {
+        customerId: user.id,
+        gamerId,
         productId,
+        purchaseShape,
         currency,
-      );
-      if (!priceRow) {
-        await rollbackReservation(admin, reservationId);
-        return NextResponse.json(
-          { error: `Product is not sold in ${currency}` },
-          { status: 400 },
-        );
-      }
-      sessionParams.mode = "subscription";
-      sessionParams.line_items = [
-        { quantity: 1, price: priceRow.stripe_price_id },
-      ];
-      // Describe the sub as "{Club} — {Child}". A family has one Stripe sub per
-      // gamer x club, all listed together in the hosted portal; without a
-      // per-sub description they'd be indistinguishable there (and two kids in
-      // the same club would show as two identical rows). This is the label the
-      // parent reads when deciding which one to cancel.
-      sessionParams.subscription_data = {
-        metadata,
-        description: `${productName} — ${await pickGamerName(admin, gamerId)}`,
       };
+
+      // This no longer pins a reservation lifetime — nothing is held, and the
+      // expiry event isn't even handled. It bounds a *stale tab*: the Session
+      // freezes the amount at creation, so leaving it payable for Stripe's
+      // 24h default means a forgotten tab can pay yesterday's price and create
+      // a participation long after the parent last looked at the product.
+      const expiresAt =
+        Math.floor(Date.now() / 1000) + CHECKOUT_SESSION_LIFETIME_MINUTES * 60;
+
+      // Adaptive Pricing presents each customer their local currency and lets
+      // Stripe convert, while the Session/PaymentIntent still report our EUR
+      // integration currency and settle us in EUR at the price we set.
+      const sessionParams: Stripe.Checkout.SessionCreateParams = {
+        customer: stripeCustomerId,
+        adaptive_pricing: { enabled: true },
+        // Render Stripe's own chrome ("Subscribe", "Pay", field labels) in the
+        // parent's app locale. Falls back to 'auto' (browser Accept-Language) for
+        // locales Stripe doesn't support — e.g. Klingon.
+        locale: stripeLocaleOrAuto(profile.locale),
+        // Show the "Add promotion code" field. Codes themselves are created and
+        // managed in the Stripe dashboard (per mode — test and live separately);
+        // nothing in our DB models them. With Adaptive Pricing, percent-off
+        // coupons convert cleanly; amount_off coupons are currency-bound, so
+        // prefer percent-off when creating codes.
+        allow_promotion_codes: true,
+        // Enable Stripe Tax so new signups get VAT itemized like the migrated
+        // subs do. `customer_update: { address: "auto" }` is required by Stripe
+        // whenever a `customer` is pre-set on the session with automatic_tax on;
+        // it also makes Checkout collect the billing address and persist it back
+        // onto the Customer, which Stripe Tax needs to locate the customer.
+        automatic_tax: { enabled: true },
+        customer_update: { address: "auto" },
+        expires_at: expiresAt,
+        metadata,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        line_items: [],
+      };
+
+      if (isSinglePayment) {
+        const amount = await computeSinglePaymentAmount(
+          admin,
+          productId,
+          currency,
+        );
+        if (amount === null) {
+          throw new ApiError(`Product is not sold in ${currency}`, 400);
+        }
+        sessionParams.mode = "payment";
+        sessionParams.line_items = [
+          {
+            quantity: 1,
+            price_data: {
+              currency,
+              unit_amount: amount,
+              product_data: { name: productName },
+            },
+          },
+        ];
+        // Offer to save the card for future purchases. Checked = saved with
+        // `allow_redisplay: always`, so it's offered/prefilled on the customer's
+        // next Checkout and manageable from the billing portal. Subscriptions
+        // (the other branch) already save the card by necessity.
+        sessionParams.saved_payment_method_options = {
+          payment_method_save: "enabled",
+        };
+      } else {
+        const priceRow = await getOrCreateSubscriptionPrice(
+          admin,
+          productId,
+          currency,
+        );
+        if (!priceRow) {
+          throw new ApiError(`Product is not sold in ${currency}`, 400);
+        }
+        sessionParams.mode = "subscription";
+        sessionParams.line_items = [
+          { quantity: 1, price: priceRow.stripe_price_id },
+        ];
+        // Describe the sub as "{Club} — {Child}". A family has one Stripe sub per
+        // gamer x club, all listed together in the hosted portal; without a
+        // per-sub description they'd be indistinguishable there (and two kids in
+        // the same club would show as two identical rows). This is the label the
+        // parent reads when deciding which one to cancel.
+        sessionParams.subscription_data = {
+          metadata,
+          description: `${productName} — ${await pickGamerName(admin, gamerId)}`,
+        };
+      }
+
+      const session = await stripe.checkout.sessions.create(sessionParams);
+
+      if (!session.url) {
+        throw new ApiError("Stripe did not return a Checkout URL", 502);
+      }
+
+      return { status: "redirect" as const, checkoutUrl: session.url };
+    } catch (error) {
+      // Deliberate status and message. This route discloses error text to the
+      // parent, so a raw PostgREST or Stripe string must not reach them — and a
+      // driver's error code would otherwise be mapped to a misleading status.
+      if (error instanceof ApiError) throw error;
+      console.error("[checkout/products] checkout failed:", error);
+      throw new ApiError("Could not start checkout", 500);
     }
-
-    const session = await stripe.checkout.sessions.create(sessionParams);
-
-    if (!session.url) {
-      await rollbackReservation(admin, reservationId);
-      return NextResponse.json(
-        { error: "Stripe did not return a Checkout URL" },
-        { status: 502 },
-      );
-    }
-
-    return { status: "redirect" as const, checkoutUrl: session.url };
   },
 });
 
@@ -358,42 +352,4 @@ async function pickGamerName(
     .eq("id", gamerId)
     .maybeSingle();
   return data?.first_name || "your child";
-}
-
-// Stripe Checkout's `locale` is its own fixed enum, not our SUPPORTED_LOCALES.
-// This map is `Record<SupportedLocale, …>`, so the compiler forces an entry for
-// every app locale — add one to SUPPORTED_LOCALES and the build fails here until
-// it's mapped (no silent fall-through to the wrong language). Use Stripe's
-// matching locale where it has one; 'auto' (Stripe reads Accept-Language) for
-// locales Stripe doesn't speak, like Klingon.
-const APP_TO_STRIPE_LOCALE: Record<
-  SupportedLocale,
-  Stripe.Checkout.SessionCreateParams.Locale
-> = {
-  en: "en",
-  fi: "fi",
-  sv: "sv",
-  tlh: "auto",
-};
-
-function stripeCheckoutLocale(
-  appLocale: string | null,
-): Stripe.Checkout.SessionCreateParams.Locale {
-  return isSupportedLocale(appLocale) ? APP_TO_STRIPE_LOCALE[appLocale] : "auto";
-}
-
-async function rollbackReservation(
-  admin: ReturnType<typeof createAdminClient>,
-  reservationId: string,
-): Promise<void> {
-  const { error } = await admin.rpc("expire_reservation", {
-    p_reservation_id: reservationId,
-  });
-  if (error) {
-    console.error(
-      "[checkout/products] failed to roll back reservation:",
-      reservationId,
-      error,
-    );
-  }
 }

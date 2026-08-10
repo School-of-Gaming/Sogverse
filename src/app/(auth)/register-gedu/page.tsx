@@ -1,9 +1,7 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { RegisterGeduForm } from "@/components/auth";
 import { prefetchSpokenLanguages } from "@/services/users/users.prefetch";
-import { prefetchAllLocations } from "@/services/locations/locations.prefetch";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -13,21 +11,26 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function RegisterGeduPage() {
-  // Prefetch reference data server-side so the language checkboxes and coverage
-  // tree paint complete on the first frame (layout-shift rule). Both are
-  // anon-readable, so this works without a session.
-  const [spokenLanguages, locations] = await Promise.all([
+/** `?redirect=` is read server-side — see the note on the register page. */
+export default async function RegisterGeduPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ redirect?: string | string[] }>;
+}) {
+  // Prefetch the spoken languages server-side so the checkboxes paint complete
+  // on the first frame (layout-shift rule); the table is anon-readable, so this
+  // works without a session. Coverage needs no prefetch: the field renders a
+  // fixed-height, initially-empty chip box, and opening its dialog reads one
+  // indexed level of the tree — nothing worth moving to the server.
+  const [spokenLanguages, { redirect }] = await Promise.all([
     prefetchSpokenLanguages(),
-    prefetchAllLocations(),
+    searchParams,
   ]);
 
   return (
-    <Suspense fallback={<div className="h-96 w-full max-w-2xl animate-pulse rounded-lg bg-card" />}>
-      <RegisterGeduForm
-        initialSpokenLanguages={spokenLanguages}
-        initialLocations={locations}
-      />
-    </Suspense>
+    <RegisterGeduForm
+      initialSpokenLanguages={spokenLanguages}
+      redirect={typeof redirect === "string" ? redirect : null}
+    />
   );
 }

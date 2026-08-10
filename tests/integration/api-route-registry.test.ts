@@ -160,7 +160,9 @@ const TESTS = {
   forgotPassword: "tests/integration/auth/forgot-password.test.ts",
   gamersCreate: "tests/integration/api/gamers-create.test.ts",
   gamersUpdate: "tests/integration/api/gamers-update.test.ts",
+  geduGamerMinecraft: "tests/integration/api/gedu-gamer-minecraft.test.ts",
   geduRegister: "tests/integration/api/gedu-register.test.ts",
+  locationsSearch: "tests/integration/api/locations-search.test.ts",
   minecraftAccount: "tests/integration/api/minecraft-account.test.ts",
   minecraftJoinCheck: "tests/integration/api/minecraft-join-check.test.ts",
   minecraftVerify: "tests/integration/api/minecraft-verify.test.ts",
@@ -173,6 +175,10 @@ const TESTS = {
   productsParticipationsTransition:
     "tests/integration/api/products-participations-transition.test.ts",
   productsUpdate: "tests/integration/api/products-update.test.ts",
+  adminUserGameAccount: "tests/integration/api/admin-user-game-account.test.ts",
+  robloxAccount: "tests/integration/api/roblox-account.test.ts",
+  robloxAvatars: "tests/integration/api/roblox-avatars.test.ts",
+  robloxVerify: "tests/integration/api/roblox-verify.test.ts",
   sendTestEmail: "tests/integration/api/send-test-email.test.ts",
   signout: "tests/integration/auth/signout.test.ts",
   stripeWebhook: "tests/integration/api/stripe-webhook-products.test.ts",
@@ -209,6 +215,16 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: ADMIN_ONLY,
         body: { kind: "json", schema: "createLocationBody" },
         test: TESTS.adminLocations,
+      },
+    },
+  },
+
+  "src/app/api/admin/users/[id]/game-account/route.ts": {
+    handlers: {
+      PATCH: {
+        posture: ADMIN_ONLY,
+        body: { kind: "json", schema: "adminGameAccountBody" },
+        test: TESTS.adminUserGameAccount,
       },
     },
   },
@@ -557,6 +573,23 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
+  // --- Educator surfaces ---------------------------------------------------
+
+  // The role gate only establishes that the caller is an educator. WHICH
+  // children they may edit is decided by the RPC underneath, which re-derives
+  // the caller from auth.uid() and refuses any gamer who is not actively
+  // participating in a group that caller is assigned to — so the gamer id in
+  // the path names a target and grants nothing.
+  "src/app/api/gedu/gamers/[gamerId]/minecraft/route.ts": {
+    handlers: {
+      PATCH: {
+        posture: { kind: "role-gated", roles: ["gedu"] },
+        body: { kind: "json", schema: "updateGroupMemberMinecraftBody" },
+        test: TESTS.geduGamerMinecraft,
+      },
+    },
+  },
+
   // --- Educator self-registration ------------------------------------------
 
   "src/app/api/gedu/register/route.ts": {
@@ -575,6 +608,22 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
+  // --- Locations -----------------------------------------------------------
+
+  "src/app/api/locations/search/route.ts": {
+    handlers: {
+      GET: {
+        posture: {
+          kind: "public",
+          reason:
+            "the educator registration page asks an applicant where they can work before any account exists, so search cannot require a session. It reads two tables of public reference data — `locations` and, since 00165, `postal_codes` — and every row of both is already SELECTable by anon directly, under identical policies, so the route narrows that surface rather than widening it, and bounds the needle length and page size on the way in. It reads no session at all, which is what lets its answer be cached and shared",
+        },
+        body: { kind: "none" },
+        test: TESTS.locationsSearch,
+      },
+    },
+  },
+
   // --- Minecraft -----------------------------------------------------------
 
   "src/app/api/minecraft/account/route.ts": {
@@ -587,15 +636,16 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
+  // No adminClient entry: the session gating that read the database was removed
+  // when it became unportable, so the route reaches nothing. It authenticates,
+  // validates the uuid, and answers 501.
   "src/app/api/minecraft/join-check/route.ts": {
-    adminClient:
-      "server-to-server, authenticated by a shared API key rather than a user session",
     handlers: {
       GET: {
         posture: {
           kind: "api-key",
           reason:
-            "the game server calls this on player join; it has no user session to present. A bearer token compared in constant time is the authorization, and an unported role fails closed rather than being admitted",
+            "the game server calls this on player join; it has no user session to present. A bearer token compared in constant time is the authorization, and the endpoint fails closed — it admits nobody at all until the gating is rebuilt",
         },
         body: { kind: "none" },
         test: TESTS.minecraftJoinCheck,
@@ -625,6 +675,51 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: { kind: "role-gated", roles: ["customer"] },
         body: { kind: "json", schema: "joinWaitlistBody" },
         test: TESTS.waitlist,
+      },
+      DELETE: {
+        posture: { kind: "role-gated", roles: ["customer"] },
+        body: { kind: "json", schema: "leaveWaitlistBody" },
+        test: TESTS.waitlist,
+      },
+    },
+  },
+
+  // --- Roblox --------------------------------------------------------------
+
+  "src/app/api/roblox/account/route.ts": {
+    handlers: {
+      PATCH: {
+        posture: { kind: "role-gated", roles: ["gamer", "gedu"] },
+        body: { kind: "json", schema: "updateRobloxAccountBody" },
+        test: TESTS.robloxAccount,
+      },
+    },
+  },
+
+  "src/app/api/roblox/avatars/route.ts": {
+    handlers: {
+      GET: {
+        posture: {
+          kind: "any-authenticated",
+          reason:
+            "it takes Roblox account ids and answers with Roblox CDN URLs — both the platform's own public data — and reads no Sogverse row at all, so no role is more entitled to an answer than another and there is nothing here to own. What a session protects is not the data but the budget: the thumbnails API is rate limited to 60 requests a minute per IP across the whole serverless fleet, and an open route would be a free thumbnail proxy draining it",
+        },
+        body: { kind: "none" },
+        test: TESTS.robloxAvatars,
+      },
+    },
+  },
+
+  "src/app/api/roblox/verify/route.ts": {
+    handlers: {
+      GET: {
+        posture: {
+          kind: "public",
+          reason:
+            "a read-only passthrough to Roblox's public username lookup — no database access and no secrets. It mirrors the Minecraft verify route: a username is checked before any account exists, so it cannot require a session",
+        },
+        body: { kind: "none" },
+        test: TESTS.robloxVerify,
       },
     },
   },

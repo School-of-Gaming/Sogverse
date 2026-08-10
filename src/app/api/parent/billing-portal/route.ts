@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import { getLocale } from "next-intl/server";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { stripe } from "@/lib/stripe/client";
 import { getOrCreateStripeCustomer } from "@/lib/stripe/customer";
 import { getPortalConfigurationId } from "@/lib/stripe/portal-configuration";
 import { getOrigin } from "@/lib/url";
+import { stripeLocaleOrAuto } from "@/lib/constants/locales";
 import {
   billingPortalBody,
   billingPortalResponse,
@@ -17,20 +19,6 @@ import {
   resolveParticipationStripeCustomerId,
 } from "@/services/billing/billing.server";
 import type { AppSupabaseClient } from "@/types";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
-// Stripe's billing portal supports a fixed set of locale codes. Our `en`,
-// `fi`, and `sv` map straight through; `tlh` (the Klingon easter egg) isn't
-// a real Stripe locale, so fall back to `auto` (Stripe reads the browser).
-const STRIPE_PORTAL_LOCALES: Record<
-  string,
-  Stripe.BillingPortal.SessionCreateParams.Locale
-> = {
-  en: "en",
-  fi: "fi",
-  sv: "sv",
-};
 
 /**
  * Which Stripe customer this session opens, and whether to land the parent on
@@ -125,7 +113,9 @@ export const POST = defineRoute({
         // Send them back to the Billing section they came from. `getOrigin`
         // only trusts known hosts, so a spoofed Host can't redirect elsewhere.
         return_url: `${getOrigin(request)}/parent#billing`,
-        locale: STRIPE_PORTAL_LOCALES[locale] ?? "auto",
+        // The portal's chrome in the parent's app locale, or Stripe's own
+        // browser detection for one it can't render (the Klingon easter egg).
+        locale: stripeLocaleOrAuto(locale),
         ...(target.flowData ? { flow_data: target.flowData } : {}),
       });
 

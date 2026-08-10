@@ -20,17 +20,20 @@ import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
  *    (waitlisted_at, id), parsed through the productGroupsSnapshot contract.
  *  - promote_from_waitlist seats a waitlisted gamer (capacity override, group
  *    placement, noop on a non-waitlisted row).
- *  - demote_to_waitlist sends an active gamer to the back of the waitlist.
+ *  - demote_to_waitlist sends an active gamer to the back of the waitlist, and
+ *    refuses a consumer club (migration 00132).
  *  - get_waitlist_position returns the owner's 1-based position and NULL for a
  *    non-owner.
  *  - the admin RPCs reject a non-admin caller.
  *
- * Product UUID 5c7 (see product-helpers allocation registry). Muni product
- * points at LOCATION_MUNICIPALITY to satisfy the online-muni location
- * constraints. Both seeded gamers (GAMER, GAMER_2) are children of CUSTOMER.
+ * Product UUIDs 5c7, 5f6 (see product-helpers allocation registry). The muni
+ * product points at LOCATION_MUNICIPALITY to satisfy the online-muni location
+ * constraints; the club is a plain paid consumer_club and exists only for the
+ * demote refusal. Both seeded gamers (GAMER, GAMER_2) are children of CUSTOMER.
  */
 
 const PRODUCT_MUNI = "00000000-0000-0000-0000-0000000005c7";
+const PRODUCT_CLUB = "00000000-0000-0000-0000-0000000005f6";
 const FAR_FUTURE = "2099-12-31";
 
 describe("waitlist — admin read + promote/demote + self position", () => {
@@ -54,7 +57,7 @@ describe("waitlist — admin read + promote/demote + self position", () => {
       TEST_CREDENTIALS.CUSTOMER_2.password,
     );
 
-    await deleteTestProducts(admin, [PRODUCT_MUNI]);
+    await deleteTestProducts(admin, [PRODUCT_MUNI, PRODUCT_CLUB]);
     await createTestProduct(admin, {
       id: PRODUCT_MUNI,
       productType: "municipality_club",
@@ -64,14 +67,23 @@ describe("waitlist — admin read + promote/demote + self position", () => {
       seatCount: 1,
       waitlistEnabled: true,
     });
+    await createTestProduct(admin, {
+      id: PRODUCT_CLUB,
+      productType: "consumer_club",
+      seatCount: null,
+      waitlistEnabled: true,
+    });
   });
 
   afterAll(async () => {
-    await deleteTestProducts(admin, [PRODUCT_MUNI]);
+    await deleteTestProducts(admin, [PRODUCT_MUNI, PRODUCT_CLUB]);
   });
 
   afterEach(async () => {
-    await admin.from("participations").delete().eq("product_id", PRODUCT_MUNI);
+    await admin
+      .from("participations")
+      .delete()
+      .in("product_id", [PRODUCT_MUNI, PRODUCT_CLUB]);
     await admin.from("product_groups").delete().eq("product_id", PRODUCT_MUNI);
     await admin
       .from("products")
@@ -219,6 +231,45 @@ describe("waitlist — admin read + promote/demote + self position", () => {
     expect(
       new Date(demoted!.waitlisted_at!).getTime(),
     ).toBeGreaterThan(new Date(frontRow!.waitlisted_at!).getTime());
+  });
+
+  it("demote_to_waitlist refuses a consumer club, so no waitlisted row can hold a subscription", async () => {
+    // consumer_club is the only subscription-billed type, and joining a
+    // waitlist never creates a subscription — so demoting an already-active
+    // club member was the only way to produce a waitlisted row with a live
+    // Stripe subscription behind it. A parent could then delete that row via
+    // leave_my_waitlist_spot, cascading family_subscriptions and leaving the
+    // subscription billing with nothing in the database to cancel it.
+    //
+    // Seeded directly: create_participation on a paid club writes no row at all
+    // (the seat is created when Stripe confirms payment), and the state under
+    // test is an already-seated member.
+    const { data: seeded } = await admin
+      .from("participations")
+      .insert({
+        product_id: PRODUCT_CLUB,
+        gamer_id: TEST_IDS.GAMER,
+        customer_id: TEST_IDS.CUSTOMER,
+        status: "active",
+      })
+      .select("id")
+      .single();
+
+    const res = await adminUser.rpc("demote_to_waitlist", {
+      p_participation_id: seeded!.id,
+    });
+
+    expect(res.error?.code).toBe("23514");
+    // Refused, not partially applied — the member keeps the seat they pay for.
+    const { data: row } = await admin
+      .from("participations")
+      .select("status, waitlisted_at")
+      .eq("id", seeded!.id)
+      .single();
+    expect(row?.status).toBe("active");
+    expect(row?.waitlisted_at).toBeNull();
+    // The non-subscription half of the rule is the muni demote above: types
+    // that never carry a subscription are untouched by this guard.
   });
 
   it("get_waitlist_position returns the owner's 1-based position, NULL for a non-owner", async () => {

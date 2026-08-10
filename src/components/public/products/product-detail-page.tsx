@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
+import { useNow } from "@/providers";
 import { useAuth } from "@/providers/auth-provider";
 import { useProductDetail } from "@/services/products";
 import { useMyGamers } from "@/services/gamers";
@@ -46,6 +47,13 @@ export function ProductDetailPage({
 
   const { user, profile, isLoading: authLoading } = useAuth();
   const isCustomer = profile?.role === "customer";
+
+  // Ticking clock (30s), server-seeded so SSR and the first client render
+  // agree — same source the browse card derives its state from. An event's
+  // registration closes at the instant its session ends, which can land while
+  // this page is open; a one-shot `new Date()` would leave a stale signup
+  // panel up until the visitor reloaded.
+  const now = useNow();
 
   const { data: product, isLoading: productLoading, isError } =
     useProductDetail(productId);
@@ -114,16 +122,14 @@ export function ProductDetailPage({
     };
   })();
 
-  // Seat math feeds active+reserving for the seat-left pill. Reserving rows
-  // count against the seat too — they're held for 30 min while the parent
-  // is in Stripe Checkout. The threshold check uses the same number; the
-  // small over-count for in-flight reservations is acceptable.
-  const participationsCount =
-    (myCount?.activeCount ?? 0) + (myCount?.reservingCount ?? 0);
+  // Seats are held by active participations alone — the seat-left pill and the
+  // threshold check both read that one number, and so does the capacity gate in
+  // the database. A parent part-way through Stripe Checkout holds no seat.
+  const participationsCount = myCount?.activeCount ?? 0;
 
   const state = deriveRegistrationState({
     product,
-    now: new Date(),
+    now,
     participationsCount,
   });
 

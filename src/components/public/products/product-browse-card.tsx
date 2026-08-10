@@ -68,11 +68,10 @@ export function ProductBrowseCard({
 
   const tr = resolveTranslation(product.product_translations, uiLocale);
 
-  // Seat math feeds active+reserving — reserving rows hold the seat for
-  // 30 min during Stripe Checkout. The threshold check uses the same
-  // count; small over-count for in-flight reservations is acceptable.
-  const participationsCount =
-    (counts?.activeCount ?? 0) + (counts?.reservingCount ?? 0);
+  // Seats are held by active participations alone. A parent part-way through
+  // Stripe Checkout holds nothing — the row is created when the payment lands —
+  // so this count and the capacity gate in the database read the same rows.
+  const participationsCount = counts?.activeCount ?? 0;
 
   const state = deriveRegistrationState({
     product,
@@ -95,14 +94,13 @@ export function ProductBrowseCard({
 
   // Muni clubs tell the whole seat story through the footer bar ("11 / 15
   // seats"), so the meta-row capacity hint would just repeat it — suppress it
-  // there. Other products keep the capacity / waitlist hint.
+  // there. Other products show their capacity; an uncapped product shows
+  // nothing (waitlist availability is a detail-page concern).
   const seatsHint: SeatsHint | null = isMuniClub
     ? null
     : product.seat_count !== null
       ? { kind: "capacity", count: product.seat_count }
-      : product.waitlist_enabled
-        ? { kind: "waitlist" }
-        : null;
+      : null;
 
   // Muni clubs are externally funded — show a seat-fill bar in the footer
   // instead of a price. `total: null` (no seat count set yet) leaves the

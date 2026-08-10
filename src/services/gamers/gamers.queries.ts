@@ -2,8 +2,9 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
-import { GamerService } from "./gamers.service";
+import { GamerService, type GamerUpdate } from "./gamers.service";
 import { minecraftKeys } from "@/services/minecraft/minecraft.queries";
+import { robloxKeys } from "@/services/roblox/roblox.queries";
 import { familyKeys } from "@/services/family";
 import type { CreateGamerInput } from "@/types";
 
@@ -98,7 +99,7 @@ export function useUpdateGamer() {
       updates,
     }: {
       gamerId: string;
-      updates: { firstName?: string; password?: string; minecraftUsername?: string | null };
+      updates: GamerUpdate;
     }) => service.updateGamer(gamerId, updates),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: gamerKeys.myGamers() });
@@ -106,6 +107,9 @@ export function useUpdateGamer() {
         queryKey: gamerKeys.gamerProfile(variables.gamerId),
       });
       queryClient.invalidateQueries({ queryKey: minecraftKeys.all });
+      // The stored rows only — never the Roblox root, which would drag every
+      // mounted avatar lookup into a refetch against a per-IP rate limit.
+      queryClient.invalidateQueries({ queryKey: robloxKeys.accounts() });
     },
   });
 }

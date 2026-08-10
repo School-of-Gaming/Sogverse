@@ -45,11 +45,41 @@ export const createCheckoutBody = z.object({
   currency: z.enum(SUPPORTED_CURRENCIES),
 });
 
-/** Request body of POST /api/participations/waitlist. */
+/**
+ * Request body of POST /api/participations/waitlist.
+ *
+ * `.uuid()` rather than `.min(1)` because these ids go straight into a `uuid`
+ * RPC parameter: a merely non-empty string reaches Postgres, fails to cast, and
+ * comes back as `22P02` — which is not a status the route maps, so a
+ * malformed-input request is logged and answered as a 500 instead of the 400 it
+ * is. Rejecting the shape here keeps the classification honest.
+ */
 export const joinWaitlistBody = z.object({
-  productId: z.string().min(1, "productId and gamerId are required"),
-  gamerId: z.string().min(1, "productId and gamerId are required"),
+  productId: z.string().uuid("productId must be a UUID"),
+  gamerId: z.string().uuid("gamerId must be a UUID"),
 });
+
+/**
+ * Request body of DELETE /api/participations/waitlist — giving up a spot. The
+ * participation is the only input; who may give it up is decided from
+ * `auth.uid()` inside the RPC, never from the body. `.uuid()` for the same
+ * 22P02 reason as the join body above.
+ */
+export const leaveWaitlistBody = z.object({
+  participationId: z.string().uuid("participationId must be a UUID"),
+});
+
+/**
+ * Response of DELETE /api/participations/waitlist. Only the outcome kind
+ * crosses the wire: the client's three jobs — stop showing the card, keep the
+ * button locked, refetch — are the same for every outcome, and the ids the RPC
+ * echoes back are ones the caller already had.
+ */
+export const leaveWaitlistResponse = z.object({
+  kind: z.enum(["left", "noop", "not_found"]),
+});
+
+export type LeaveWaitlistResponse = z.infer<typeof leaveWaitlistResponse>;
 
 /** Response of POST /api/participations/waitlist. */
 export const joinWaitlistResponse = z.object({
@@ -62,15 +92,36 @@ export type JoinWaitlistResponse = z.infer<typeof joinWaitlistResponse>;
 
 /**
  * `create_participation` RPC result (Json in codegen; structure from
- * supabase/schema.sql). The id/until fields stay optional here because the
- * route turns their absence into a controlled 500 per kind — the schema
- * checks structure, the route checks the per-kind invariants.
+ * supabase/schema.sql). `validated` is the paid outcome: every rule passed, but
+ * no row was written — a paid participation is created at payment confirmation,
+ * so an abandoned checkout leaves nothing behind. The no-charge shapes still
+ * come back with a row. `participation_id` stays optional because the route
+ * turns its absence into a controlled 500 per kind — the schema checks
+ * structure, the route checks the per-kind invariants.
  */
 export const createParticipationRpcResult = z.object({
-  kind: z.enum(["free_active", "external_active", "reserving", "full"]),
+  kind: z.enum(["free_active", "external_active", "validated", "full"]),
   participation_id: z.string().optional(),
-  reserved_until: z.string().optional(),
 });
+
+/**
+ * `confirm_paid_participation` RPC result (Json in codegen; structure from
+ * supabase/schema.sql). Called from the Stripe webhook once payment lands:
+ * `confirmed` carries the row it just created, `duplicate_payment` names the row
+ * that was already there — the parent paid twice for one (product, gamer), and
+ * the route records the charge and cancels a live subscription rather than
+ * writing a second seat.
+ */
+export const confirmPaidParticipationRpcResult = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("confirmed"),
+    participation_id: z.string(),
+  }),
+  z.object({
+    kind: z.literal("duplicate_payment"),
+    existing_participation_id: z.string(),
+  }),
+]);
 
 /** `join_waitlist` RPC result (Json in codegen; structure from schema.sql). */
 export const joinWaitlistRpcResult = z.object({
@@ -107,6 +158,40 @@ export type WaitlistTransitionBody = z.infer<typeof waitlistTransitionBody>;
  * schema restores the truth the generator drops (see supabase/CLAUDE.md).
  */
 export const waitlistPositionResult = z.number().int().positive().nullable();
+
+/**
+ * `get_my_waitlist_positions` RPC result — the set-valued sibling of the above,
+ * one row per waitlisted participation the caller is party to. Codegen types
+ * the `RETURNS TABLE` columns as non-null, which the function body does
+ * guarantee (`id` is the primary key and the position is a `COUNT`), so this
+ * schema is not correcting nullability — it pins the *contents*: a position is
+ * a 1-based rank, and a zero or negative one would mean the derivation had gone
+ * three-valued against a NULL `waitlisted_at`. The db test parses live RPC
+ * output through it.
+ */
+export const myWaitlistPositions = z.array(
+  z.object({
+    participation_id: z.string(),
+    waitlist_position: z.number().int().positive(),
+  }),
+);
+
+/**
+ * `leave_my_waitlist_spot` RPC result (Json in codegen; structure from
+ * schema.sql). `left` when the row was waitlisted and is now gone; `noop` when
+ * it had already moved on (an admin promotion landing first); `not_found` when
+ * no row with that id belongs to the caller — deliberately the same answer for
+ * a stranger's id and a nonexistent one.
+ */
+export const leaveWaitlistRpcResult = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("left"),
+    participation_id: z.string(),
+    product_id: z.string(),
+  }),
+  z.object({ kind: z.literal("noop"), status: z.string() }),
+  z.object({ kind: z.literal("not_found") }),
+]);
 
 /**
  * `promote_from_waitlist` RPC result (Json in codegen; structure from

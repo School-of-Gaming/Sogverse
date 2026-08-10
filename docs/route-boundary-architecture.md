@@ -82,7 +82,7 @@ the wild — this taxonomy is exhaustive over today's surface, and §3.1 adopts 
 | `signed-token` | 1 | PIN reset: a signed token *is* the authorization; session-agnostic; deliberately admin-client |
 | `optional-auth` | 1 | Instant-room token: public, but silently elevates admin/verified-gedu to room owner; fails closed to guest. A `role-gated \| public` binary cannot express this route |
 | `webhook` | 4 | Three verifier strategies (Stripe signature, Meta HMAC + timing-safe compare, Discord Ed25519) plus Meta's GET challenge (plain `===` compare — recorded wart). All POST verifiers consume the **raw text body** before any JSON parse. Divergent error contracts: Stripe wants 5xx for retry; Meta must never 5xx or the endpoint is disabled |
-| `api-key` | 1 | Minecraft join-check: Bearer + timing-safe compare, server-to-server, fails closed 501 for unported roles |
+| `api-key` | 1 | Minecraft join-check: Bearer + timing-safe compare, server-to-server. Its gating is unbuilt, so it authenticates, validates, and fails closed 501 — it reaches no data at all |
 
 ### Existing primitives (the wrapper composes these; it replaces none of them)
 
@@ -95,8 +95,11 @@ the wild — this taxonomy is exhaustive over today's surface, and §3.1 adopts 
 - **`parseJsonBody` / `parseBodyValue`** (`src/lib/api/json-body.server.ts`) — JSON →
   schema → 400 with first-issue message, same early-return convention. `parseBodyValue`
   also serves the two multipart routes (JSON `data` field beside a `File`).
-- **`ApiError`** (`src/lib/api/api-error.ts`) — status + stable machine `code` +
-  log-only message. Currently service-side only; no route constructs it.
+- **`ApiError`** (`src/lib/api/api-error.ts`) — status + optional stable machine `code` +
+  log-only message. Thrown by routes and by services alike. The `code` slot is carried
+  but unused on both ends today: no route passes one, so the wrapper's forwarding of it
+  is unreachable, and the codes clients *do* see are attached to hand-built responses by
+  the role gate and the PIN route instead.
 - Boundary utilities the postures depend on: `getOrigin` (trusted-host origins),
   `resolveInternalPath` (redirect targets), the instant-room moderator resolver
   (optional-auth elevation, fails closed), timing-safe secret compares.
@@ -105,10 +108,13 @@ the wild — this taxonomy is exhaustive over today's surface, and §3.1 adopts 
 
 The db-auth refactor's Phase 3 triage CSV (`docs/db-authorization-architecture.md` §5,
 "The triage, machine-readably") classifies every module that used the service-role
-client, with one-clause justifications: 15 route modules justified as Model A, one
+client, with one-clause justifications: 14 route modules justified as Model A, one
 partial (feedback: user-client write, admin-client notification fan-out), 3 non-route
-modules, plus the factory. Verified 2026-07-27: its route set exactly matches today's
-`createAdminClient` importers — **no drift**. It seeds §3.3 check 3.
+modules, plus the factory. Verified 2026-08-01: its route set exactly matches today's
+`createAdminClient` importers — **no drift**. It seeds §3.3 check 3. (The CSV keeps a
+row per module that used the client *at triage time*, so a module that has since
+dropped it stays listed with its new model rather than being deleted; the Model-A
+count is the subset still importing it.)
 
 ### Verification precedent (copy this shape, don't reinvent it)
 

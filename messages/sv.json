@@ -14,9 +14,13 @@
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Administratörspanel",
       "parentDashboard": "Min SOG",
+      "parentDashboardDescription": "Hantera dina spelare och deras anmälningar",
       "geduDashboard": "Min SOG",
       "geduSessionDetails": "Sessionsdetaljer",
-      "gamerHome": "Spelare",
+      "familyProduct": "Tillfällen och sammanfattningar",
+      "familyProductDescription": "Gruppens schema och sammanfattningen från varje tillfälle.",
+      "gamerDashboard": "Min SOG",
+      "gamerDashboardDescription": "Dina klubbar, läger och evenemang i Sogverse",
       "gamerGroups": "Mina grupper",
       "gamerGroupDetails": "Gruppdetaljer",
       "voiceSession": "Röstsession",
@@ -28,7 +32,8 @@
       "changePin": "Byt PIN",
       "privacy": "Integritetspolicy",
       "terms": "Användarvillkor",
-      "antiBullying": "Mot mobbning och disciplin"
+      "antiBullying": "Mot mobbning och disciplin",
+      "roblox": "Roblox-speldesignprogram"
     }
   },
   "notFound": {
@@ -95,13 +100,11 @@
     "noRecentActivity": "Ingen senaste aktivitet att visa.",
     "recentActivity": "Senaste aktivitet",
     "selectLanguage": "Välj språk",
-    "languageEnglish": "engelska",
-    "languageFinnish": "finska",
-    "languageSwedish": "svenska",
     "roleAdmin": "Administratör",
     "roleParent": "Förälder",
     "roleGamer": "Spelare",
-    "roleGedu": "Gedu"
+    "roleGedu": "Gedu",
+    "gedus": "Geduer"
   },
   "about": {
     "hero": {
@@ -109,7 +112,7 @@
       "subtitle": "I våra Minecraft-klubbar blir skärmtid kvalitetstid. Vi sammanför barn, professionella spelfostrare och spelet som barnen redan älskar — och skapar lekfulla lärandeupplevelser där de får nya vänner, utvecklar riktiga färdigheter och har roligt."
     },
     "quote": {
-      "text": "\"Det som är sant nu, var en gång bara din fantasi.\"",
+      "text": "”Det som är sant nu, var en gång bara din fantasi.”",
       "attribution": "— Rektorn för School of Gaming"
     },
     "mission": {
@@ -230,7 +233,7 @@
         },
         "fields": {
           "topic": "Ämne",
-          "padletUrl": "Padlet",
+          "materialUrl": "Lektionsmaterial",
           "locales": "Språk",
           "startDate": "Startdatum",
           "endDate": "Slutdatum",
@@ -295,7 +298,7 @@
         "shortDescription": "Kort beskrivning",
         "longDescription": "Lång beskrivning",
         "topic": "Ämne",
-        "padletUrl": "Padlet-URL",
+        "materialUrl": "URL till lektionsmaterial",
         "minAge": "Min ålder",
         "maxAge": "Max ålder",
         "deliveredIn": "Genomförs på",
@@ -327,7 +330,7 @@
       },
       "placeholders": {
         "selectTopic": "Välj ett ämne…",
-        "padletUrl": "https://padlet.com/...",
+        "materialUrl": "https://drive.sog.gg/...",
         "threshold": "t.ex. 8",
         "name": {
           "consumerClub": "t.ex. Minecraft Redstone-klubb",
@@ -354,22 +357,11 @@
         "moveDown": "Flytta ner",
         "remove": "Ta bort"
       },
-      "topicKinds": {
-        "game": "Spel",
-        "subject": "Ämnen"
-      },
       "locationPicker": {
-        "searchPlaceholder": "Sök efter land, region, kommun eller lokal…",
-        "clearSearch": "Rensa sökning",
-        "noResults": "Inga platser matchar \"{query}\".",
-        "hintSite": "Välj en lokal. Saknas någon? Lägg till den under kommunen direkt här.",
         "hintMunicipality": "Välj den finländska kommun som klubben gäller — den som finansierar den. Lokaler och andra länder kan inte väljas här.",
-        "addCountry": "Lägg till nytt land",
         "change": "Ändra",
         "edit": "Redigera",
-        "cancel": "Avbryt",
-        "pick": "Välj",
-        "noVenueHint": "Ingen fysisk lokal. Föräldrar i {name} ser denna klubb när de bläddrar.",
+        "noVenueHint": "Ingen fysisk lokal. Föräldrar i den här kommunen ser klubben när de bläddrar.",
         "memberNotesLabel": "Medlemssynliga anteckningar",
         "memberNotesFieldLabel": "Anteckningar för föräldrar och spelare",
         "memberNotesPlaceholder": "Adressdetaljer, parkering, tillgänglighet — allt föräldrar behöver veta.",
@@ -381,7 +373,17 @@
         "addressLabel": "Adress",
         "addressPlaceholder": "Gata, postnummer, ort",
         "noMemberNotes": "Inga medlemssynliga anteckningar för denna lokal.",
-        "noStaffNotes": "Inga personalanteckningar för denna lokal."
+        "noStaffNotes": "Inga personalanteckningar för denna lokal.",
+        "chooseMunicipality": "Välj en kommun",
+        "municipalityPickerTitle": "Välj en kommun",
+        "chooseVenue": "Välj en lokal",
+        "venuePickerTitle": "Välj en lokal",
+        "venuePickerDescription": "Sök lokalen på namn så hittar du den direkt, eller bläddra ner till kommunen och se lokalerna där. Finns lokalen inte ännu kan du öppna en ny.",
+        "venuesIn": "Lokaler i {name}",
+        "venuesInDescription": "Välj en som redan finns, eller lägg till en ny.",
+        "venuesHereEmpty": "Inga lokaler här ännu.",
+        "addVenue": "Lägg till en lokal",
+        "changeMunicipality": "Välj en annan kommun"
       },
       "pricing": {
         "perMonthLabel": "Pris per månad",
@@ -389,11 +391,11 @@
       },
       "fees": {
         "sectionTitle": "Arvoden per tillfälle",
-        "sectionDescription": "Vad vi betalar spelpedagogerna (Gedu) per tillfälle och — för kommunklubbar — vad kommunen betalar oss. Detta är interna siffror, skilda från vad föräldrar betalar ovan.",
+        "sectionDescription": "Vad vi betalar Geduerna per tillfälle och — för kommunklubbar — vad kommunen betalar oss. Detta är interna siffror, skilda från vad föräldrar betalar ovan.",
         "primaryGeduLabel": "Huvud-Gedu-arvode",
-        "primaryGeduHint": "Betalas till den ledande spelpedagogen per tillfälle. Välj Okänt om du anger det senare, eller Volontär om hen leder gratis.",
+        "primaryGeduHint": "Betalas till den ledande Gedun per tillfälle. Välj Okänt om du anger det senare, eller Volontär om hen leder gratis.",
         "assistantGeduLabel": "Assisterande Gedu-arvode",
-        "assistantGeduHint": "Betalas till en assisterande spelpedagog per tillfälle. Välj Inget om det inte finns någon assistent.",
+        "assistantGeduHint": "Betalas till en assisterande Gedu per tillfälle. Välj Inget om det inte finns någon assistent.",
         "municipalityLabel": "Kommunavgift",
         "municipalityHint": "Vad kommunen betalar oss per tillfälle. Välj Okänt om du anger det senare.",
         "amountLabel": "Belopp per tillfälle i euro",
@@ -429,19 +431,19 @@
       "hints": {
         "shortDescription": "En enradig text som visas på bläddringskort, listor och högst upp på detaljsidan.",
         "longDescription": "Valfritt. Visas endast på produktens detaljsida. Bygg den av rubriker och stycken.",
-        "topicHint": "Produktens ämne — ett spel (som Minecraft eller Fortnite) eller ett ämne (som webbinarium).",
-        "padletHint": "Valfritt. Delas med familjer efter att de anmält sig.",
+        "topicHint": "Vad produkten handlar om. Familjer ser det som Ämne-filtret i butiken och på produktsidans infokort.",
+        "materialUrlHint": "Valfritt. Endast för Gedus — familjer ser aldrig detta.",
         "deliveredInHint": "Det primära språk som används under tillfällena.",
         "onlineNoLocation": "Online och tillgänglig för alla — ingen plats behövs. Alla föräldrar som bläddrar ser detta, oavsett var de bor.",
         "voiceRoomAuto": "Ett röstrum skapas automatiskt för denna produkt.",
         "municipalityHint": "Kommunklubbar är alltid kopplade till en specifik finländsk kommun — den som betalar. Föräldrar från den kommunen ser den när de bläddrar.",
         "siteHint": "Var tillfällena fysiskt äger rum.",
         "eventSingleDay": "Evenemang äger rum ett enda datum.",
-        "thresholdOnly": "Inget fast startdatum än. Föräldrar ser en räknare \"X av Y behövs\" medan den fylls. Du trycker Starta när du har tillräckligt med anmälningar och väljer första tillfällets datum då.",
+        "thresholdOnly": "Inget fast startdatum än. Föräldrar ser en räknare ”X av Y behövs” medan den fylls. Du trycker Starta när du har tillräckligt med anmälningar och väljer första tillfällets datum då.",
         "thresholdWithDate": "Om färre än så här många föräldrar anmäler sig till startdatumet behöver du ställa in den och återbetala från produktsidan.",
         "timezoneFixedHelsinki": "Tider är i tidszonen Europe/Helsinki. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
         "holidayHint": "Inget tillfälle körs på något datum från de valda kalendrarna. Redigera en kalender en gång och alla produkter som använder den uppdateras automatiskt.",
-        "billingHint": "Gratis evenemang behöver ingen platsgräns. Betalda har alltid en.",
+        "billingHint": "Oavsett vilket körs evenemang tills vidare utan platsgräns.",
         "freeDetail": "Ingen avgift. Alla kan delta med ett klick.",
         "paidDetail": "Engångsavgift vid anmälan.",
         "paidByMunicipality": "Ingen kundfakturering inom detta system. School of Gaming fakturerar kommunen direkt.",
@@ -464,7 +466,7 @@
         "municipalityRequired": "Kommun krävs för online-kommunklubbar",
         "siteRequired": "Lokal krävs för produkter på plats",
         "scheduleRequired": "Minst en schemarad krävs",
-        "padletInvalid": "Padlet-URL måste vara en giltig URL",
+        "materialUrlInvalid": "URL till lektionsmaterial måste vara en giltig URL",
         "startDateRequired": "Startdatum krävs",
         "endDateRequired": "Slutdatum krävs",
         "seatCountInvalid": "Antal platser måste vara ett positivt heltal",
@@ -648,6 +650,7 @@
       "all": "Alla",
       "noFilterResults": "Inga användare matchar dina filter.",
       "noUsers": "Inga användare hittades.",
+      "searchCapped": "Endast de {shown} senaste av {total} träffar tas med. Förfina sökningen för att se resten.",
       "backToUsers": "Tillbaka till användare",
       "userNotFound": "Användaren hittades inte.",
       "joined": "Gick med",
@@ -668,6 +671,10 @@
       "unassignedGroup": "Ingen grupp tilldelad",
       "needsGroup": "Behöver en grupp",
       "untitledProduct": "Namnlös produkt",
+      "gameAccounts": {
+        "title": "Spelkonton",
+        "description": "Ange eller korrigera kontots spelanvändarnamn. Sparandet kontrollerar namnet hos plattformen."
+      },
       "participationStatus": {
         "active": "Aktiv",
         "waitlisted": "På väntelista",
@@ -678,7 +685,7 @@
         "title": "Verifiering",
         "verified": "Verifierad",
         "unverified": "Inte verifierad",
-        "unverifiedNote": "Den här spelfostraren har inte verifierats ännu. Hen kan inte tilldelas en grupp förrän du verifierar hen.",
+        "unverifiedNote": "Den här Gedun har inte verifierats ännu. Hen kan inte tilldelas en grupp förrän du verifierar hen.",
         "verifiedOn": "Verifierad {date}",
         "verifiedByOn": "Verifierad av {name} {date}",
         "verifyAction": "Verifiera",
@@ -690,16 +697,11 @@
     "locations": {
       "title": "Platser",
       "description": "Hantera länder, städer och platser",
-      "addCountry": "Lägg till land",
       "searchPlaceholder": "Sök platser...",
       "editName": "Redigera {name}",
       "addChildUnder": "Lägg till {type} under {parent}",
       "location": "Plats",
-      "pleaseSelectCountry": "Välj ett land",
       "nameRequired": "Namn krävs",
-      "country": "Land",
-      "selectCountry": "Välj ett land...",
-      "allCountriesAdded": "Alla länder som stöds har redan lagts till.",
       "name": "Namn",
       "enterTypeName": "Ange namn för {type}",
       "enterName": "Ange namn",
@@ -772,7 +774,7 @@
       "networkError": "Nätverksfel",
       "geduGroups": "Gedu-grupper",
       "addGroup": "Lägg till grupp",
-      "noGroups": "Inga Gedu-grupper ännu. Lägg till en grupp för att tilldela en spelfostrare.",
+      "noGroups": "Inga Gedu-grupper ännu. Lägg till en grupp för att tilldela en Gedu.",
       "selectGeduForGroup": "Välj en Gedu för att skapa en ny grupp.",
       "group": "Grupp",
       "groupNumber": "Grupp {number}",
@@ -806,7 +808,6 @@
       "namePlaceholder": "Produktnamn",
       "descriptionLabel": "Beskrivning",
       "descriptionPlaceholder": "Beskriv din produkt",
-      "padletUrlLabel": "Padlet-URL",
       "approxPerSession": "≈ {amount} per session",
       "imageLabel": "Bild",
       "preview": "Förhandsgranska",
@@ -870,6 +871,7 @@
       "emailPlaceholder": "du@example.com",
       "passwordPlaceholder": "Skapa ett starkt lösenord",
       "confirmPasswordPlaceholder": "Bekräfta ditt lösenord",
+      "location": "Plats",
       "creatingAccount": "Skapar konto...",
       "accountExists": "Ett konto med denna e-postadress finns redan",
       "alreadyHaveAccount": "Har du redan ett konto? <link>Logga in</link>"
@@ -973,10 +975,9 @@
     },
     "nextTitle": "Vad händer nu",
     "next": {
-      "placement": "Vi placerar {gamer} i en grupp med en spelpedagog. Tillfällena visas sedan under Min SOG.",
+      "placement": "Vi placerar {gamer} i en grupp med en Gedu. Tillfällena visas sedan under Min SOG.",
       "subscription": "Du faktureras varje månad. Du kan hantera eller avsluta när som helst från Min SOG.",
-      "oneTime": "Detta var en engångsbetalning – det finns inget mer att betala.",
-      "refund": "Kostnadsfri avbokning inom {days} dagar efter ditt köp."
+      "oneTime": "Detta var en engångsbetalning – det finns inget mer att betala."
     },
     "goToDashboard": "Gå till Min SOG",
     "keepBrowsing": "Fortsätt bläddra",
@@ -985,13 +986,29 @@
       "description": "Länken kan vara gammal eller ofullständig. Dina köp finns alltid i Min SOG.",
       "cta": "Gå till Min SOG"
     },
+    "finalizing": {
+      "heading": "Betalningen är mottagen",
+      "subheading": "Vi slutför anmälan — det tar bara ett ögonblick.",
+      "reassurance": "Du kan lugnt stanna kvar på den här sidan. Anmälan visas också i Min SOG."
+    },
+    "timedOut": {
+      "heading": "Det här tar längre tid än väntat",
+      "subheading": "Din betalning gick igenom och är i tryggt förvar.",
+      "body": "Vi har inte hunnit göra klart anmälan än. Den bör dyka upp i Min SOG inom kort — titta gärna där, och hör av dig om den inte kommer."
+    },
+    "duplicatePayment": {
+      "heading": "Redan anmäld",
+      "subheading": "Det här barnet har redan en plats på den här produkten.",
+      "body": "Den här betalningen har inte skapat någon andra anmälan. Hör av dig, så tittar vårt team på den extra debiteringen tillsammans med dig."
+    },
+    "supportLine": "Behöver du hjälp? Mejla oss på <link>{email}</link>.",
     "waitlist": {
       "heading": "Du står på väntelistan",
       "subheading": "{gamer} står på väntelistan för {product}. Vi hör av oss så snart en plats blir ledig.",
       "summaryTitle": "Din väntelisteplats",
       "forLabel": "På väntelista",
       "positionLabel": "Din plats i kön",
-      "positionValue": "#{position}",
+      "positionValue": "nr {position}",
       "next1": "Vi mejlar så snart en plats blir ledig.",
       "next2": "{gamer} behåller sin plats i kön under hela terminen.",
       "next3": "Du kan följa din plats i kön när som helst i Min SOG."
@@ -1017,13 +1034,16 @@
         "playerAllowed": "Spelaren tillåts",
         "playerDenied": "Spelaren nekas",
         "errorResponses": "Felsvar",
+        "notImplementedTitle": "Inte implementerat ännu",
+        "notImplementedBody": "Sessionsbehörigheten byggs fortfarande om mot det nuvarande produktsystemet. Varje autentiserad och korrekt utformad förfrågan svarar i dag med 501 – ingen spelare släpps in. Svaren nedan beskriver det kontrakt som slutpunkten kommer att returnera när den är i drift. Bygg mot dem, men räkna med 501 tills vidare.",
+        "error501": "Sessionsbehörigheten är inte byggd ännu. Förfrågan var giltig och autentiserad, men inget antagningsbeslut kan fattas – misslyckas stängt i stället för att tolka detta som ett avslag.",
         "deniedDescription": "Spelaren finns i Sogverse men har ingen aktiv session just nu. Inget <code>endTime</code> inkluderas.",
         "fields": {
           "allowedTrue": "Spelaren har en aktiv session just nu.",
           "role": "Spelarens roll i Sogverse.",
           "firstName": "Spelarens förnamn.",
           "endTime": "När sessionsfönstret stängs (inkluderar en 5-minuters buffert efter schemalagt slut). Använd detta för att schemalägga en kick eller ny kontroll.",
-          "reason": "Läsbar beskrivning: produktnamn och utbildarens namn."
+          "reason": "Läsbar beskrivning: produktnamn och Geduns namn."
         },
         "error401": "Saknad, felformaterad eller ogiltig API-nyckel.",
         "error400": "Saknad eller ogiltig <code>uuid</code>-frågeparameter.",
@@ -1048,7 +1068,7 @@
     "subtitle": "Dela dina tankar med oss",
     "sendFeedback": "Skicka feedback",
     "feedbackDescription": "Vi vill gärna höra din feedback, dina förslag eller felrapporter.",
-    "gamerReplyNote": "Din utbildare kan följa upp med dig under nästa session.",
+    "gamerReplyNote": "Din Gedu kan följa upp med dig under nästa session.",
     "message": "Meddelande",
     "placeholder": "Dela dina tankar, förslag eller rapportera ett fel...",
     "charactersNeeded": "{count} tecken till behövs",
@@ -1058,22 +1078,25 @@
     "failedToSubmitRetry": "Kunde inte skicka feedback. Försök igen."
   },
   "dashboardSections": {
-    "myFamily": "Min familj",
+    "pageTitle": "Min SOG",
     "myGamers": "Mina spelare",
-    "upcomingSessions": "Träffar",
-    "upcomingSessionsEmptyStateGamer": "När din nästa träff börjar är det här du går in i röstrummet med din Gedu och dina vänner.",
-    "upcomingSessionsEmptyStateParent": "När ditt barns nästa träff börjar är det här hen går in i röstrummet med sin Gedu och sina vänner.",
-    "upcomingSessionsEmptyStateGedu": "När en träff du leder närmar sig är det här du går in i röstrummet med dina spelare.",
+    "myGamersShort": "Spelare",
+    "clubs": "Klubbar",
+    "camps": "Läger",
+    "events": "Evenemang",
+    "myGroupsEmptyStateGedu": "När du tilldelas en grupp visas den här tillsammans med sitt nästa tillfälle.",
     "billing": "Fakturering",
     "help": "Hjälp",
     "yty": "Yty",
     "settings": "Inställningar",
     "instantVoiceRoom": "Direkt röstrum",
-    "waitlistBand": "På väntelistan",
-    "scheduledBand": "Schemalagda"
+    "instantVoiceRoomShort": "Röstrum",
+    "loadingAssignments": "Laddar dina klubbar, läger och evenemang."
   },
   "family": {
     "addGamer": "Lägg till gamer",
+    "manageGamer": "Hantera",
+    "manageGamerAria": "Hantera {name}",
     "switchFailed": "Det gick inte att byta konto",
     "loadFailed": "Det gick inte att läsa in familjen",
     "switchToParentToAddGamer": {
@@ -1098,9 +1121,38 @@
       "firstNameTooLong": "Förnamnet får vara högst 32 tecken.",
       "birthMonthRequired": "Välj en födelsemånad.",
       "birthYearRequired": "Välj ett födelseår.",
-      "genericError": "Det gick inte att lägga till gamern. Försök igen.",
-      "minecraftAlreadyLinked": "Det här Minecraft-kontot är redan kopplat till en annan gamer."
+      "genericError": "Det gick inte att lägga till gamern. Försök igen."
     }
+  },
+  "familyEnrollment": {
+    "emptyState": "{name} är inte anmäld till något ännu. Titta tillsammans på vad som finns.",
+    "wontRenew": "Förnyas inte — sista passet {date}",
+    "wontRenewLastSession": "Förnyas inte — det här är sista passet, {date}",
+    "wontRenewAccessEnds": "Förnyas inte — deltagandet upphör {date}",
+    "awaitingCustomer": "Anmälan är klar — vi letar upp en Gedu och en grupp före första passet.",
+    "awaitingGamer": "Du är anmäld — vi letar upp en Gedu och en grupp åt dig före ditt första pass.",
+    "noGamers": "Inga gamers här ännu. Lägg till din första gamer och välj sedan en klubb eller ett läger tillsammans.",
+    "emptyStateCta": "Bläddra bland klubbar och läger"
+  },
+  "familyProduct": {
+    "back": "Tillbaka till Min SOG",
+    "forGamer": "för {name}",
+    "scheduleLabel": "När",
+    "venueLabel": "Var",
+    "aboutHeading": "Om gruppen",
+    "venueNoteHeading": "På {site}",
+    "feedHeading": "Tillfällen",
+    "attendancePresent": "Närvarande",
+    "attendanceNotPresent": "Inte närvarande",
+    "noWriteUp": "Ingen sammanfattning",
+    "emptyFeedCustomer": "Det finns inga tillfällen här än.",
+    "emptyFeedGamer": "Inget här än. Varje tillfälle du spelar dyker upp här efteråt.",
+    "paymentProblemNotice": "Det är problem med betalningen för den här klubben – uppdatera ditt kort under Fakturering på Min SOG så att {name} behåller sin plats.",
+    "cancellationNotice": "Du har sagt upp medlemskapet — det förnyas inte. {name}s sista pass är {date}.",
+    "cancellationNoticeNoSession": "Du har sagt upp medlemskapet — det förnyas inte. Du har tillgång till {date}.",
+    "loadingPage": "Laddar gruppens tillfällen.",
+    "notFoundTitle": "Inget att visa här",
+    "notFoundBody": "Vi kunde inte öppna den här sidan. På Min SOG finns allt du är anmäld till."
   },
   "selectProfile": {
     "title": "Vem ska in i Sogverse?"
@@ -1113,47 +1165,36 @@
     },
     "privacy": "Integritetspolicy",
     "terms": "Användarvillkor",
-    "antiBullying": "Mot mobbning"
+    "antiBullying": "Mot mobbning",
+    "attribution": "Platsdata baseras på <geonames>GeoNames</geonames> (<cc>CC BY 4.0</cc>). Franska postnummer från <laposte>La Poste</laposte> (<lo>Licence Ouverte 2.0</lo>)."
   },
   "gamer": {
-    "welcome": "Välkommen, spelare!",
-    "subtitle": "Redo att spela och lära dig?"
+    "welcomeNamed": "Välkommen, {name}!",
+    "fallbackName": "spelare",
+    "subtitle": "Redo att spela och lära dig?",
+    "emptyDashboard": "Inget här än. Be en förälder titta på klubbarna och lägren tillsammans med dig, så väljer ni något ihop."
   },
   "gedu": {
     "coverage": {
       "title": "Områden du täcker",
-      "remoteOnlyNote": "Används för att matcha dig som vikarie när en annan utbildare inte kan hålla sin klubb. Lämna tomt om du bara vikarierar på distans.",
+      "remoteOnlyNote": "Används för att matcha dig som vikarie när en annan Gedu inte kan hålla sin klubb. Lämna tomt om du bara vikarierar på distans.",
       "selectedHeading": "Valda ({count})",
       "noneSelected": "Inga områden valda",
       "remove": "Ta bort {name}",
       "clearAll": "Rensa alla",
-      "searchPlaceholder": "Sök platser...",
+      "chooseAreas": "Välj områden",
       "loading": "Laddar platser...",
       "save": "Spara",
       "saving": "Sparar...",
       "saveError": "Kunde inte spara"
     },
-    "myGroups": {
-      "counts": "{groupCount, plural, one {# grupp} other {# grupper}} · {gamerCount, plural, one {# spelare} other {# spelare}}",
-      "startsIn": "Börjar om {countdown}",
-      "inProgress": "Pågående pass",
-      "viewDetails": "Visa detaljer"
-    },
     "sessionDetails": {
-      "back": "Tillbaka till panelen",
-      "typeLabel": {
-        "consumer_club": "Klubb",
-        "municipality_club": "Klubb",
-        "camp": "Läger",
-        "event": "Evenemang"
-      },
-      "yourGroupBadge": "Din grupp",
-      "otherGroupsHeading": "Andra grupper i denna session",
-      "gedusLabel": "Geduer",
+      "back": "Tillbaka till Min SOG",
+      "railOtherGroupsHeading": "Andra grupper",
+      "noOtherGroups": "Inga andra grupper i denna session.",
+      "railGroupHeading": "Min grupp",
       "noGedus": "Inga Geduer tilldelade.",
       "gamersLabel": "Spelare",
-      "rosterGamerHeader": "Spelare",
-      "rosterParentEmailHeader": "Förälderns e-post",
       "gamerCount": "{count, plural, one {# spelare} other {# spelare}}",
       "emptyRoster": "Inga spelare anmälda i denna grupp ännu.",
       "untitledGroup": "Namnlös grupp",
@@ -1164,12 +1205,98 @@
       "genderBoy": "Pojke",
       "genderGirl": "Flicka",
       "genderNonBinary": "Icke-binär",
+      "minecraftUsernameLabel": "Minecraft-användarnamn",
+      "minecraftUsernamePlaceholder": "Minecraft-användarnamn",
+      "minecraftUsernameSave": "Spara",
+      "minecraftUsernameCancel": "Avbryt",
+      "editMinecraftUsername": "Redigera Minecraft-användarnamn för {name}",
       "copyParentEmail": "Kopiera förälderns e-post {email}",
-      "noParentEmail": "Ingen förälder-e-post sparad",
       "emailCopied": "E-post kopierad",
-      "copyAllParentEmails": "Kopiera alla förälder-e-postadresser ({count, plural, one {#} other {#}})",
-      "allEmailsCopied": "Alla förälder-e-postadresser kopierade"
+      "copyAllParentEmails": "Kopiera alla förälder-e-postadresser ({count})",
+      "allEmailsCopied": "Alla förälder-e-postadresser kopierade",
+      "loadingWorkspace": "Laddar gruppens tillfällen.",
+      "minecraftSaveFailed": "Användarnamnet sparades inte. Försök igen."
+    },
+    "sessionFeed": {
+      "edit": "Redigera",
+      "needsAttentionLabel": "Behöver åtgärd",
+      "completeLabel": "Klart",
+      "noRecordLabel": "Ingen anteckning",
+      "emptyFeed": "Den här gruppen har inga tillfällen än.",
+      "noNotesYet": "Inga anteckningar för det här tillfället än.",
+      "attendanceSummary": "{present} av {total} närvarande",
+      "presentLabel": "Närvarande",
+      "absentLabel": "Frånvarande",
+      "unmarkedLabel": "Inte markerad",
+      "staffNoteLabel": "Endast Gedus",
+      "staffNoteFieldLabel": "Anteckning till Gedus",
+      "staffNoteHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
+      "staffNotePlaceholder": "Något en annan Gedu bör veta om det här tillfället.",
+      "attendanceLegend": "Närvaro",
+      "attendanceRevertHint": "Välj samma svar igen för att ta bort en markering. Du kan spara en del av listan och fortsätta senare.",
+      "reportLabel": "Rapport om tillfället",
+      "reportFormattingHint": "Föräldrar och spelare i gruppen läser det här. Rubriker, fetstil och listor gör det lätt att överblicka.",
+      "reportPlaceholder": "Vad byggde, spelade eller kom gruppen på under det här tillfället?",
+      "save": "Spara",
+      "cancel": "Avbryt",
+      "alertBadge": "{count, plural, one {# tillfälle behöver åtgärd} other {# tillfällen behöver åtgärd}}",
+      "attendanceMarkedCount": "{marked} av {total} markerade",
+      "attendanceForGamer": "Närvaro för {name}",
+      "saveFailed": "Tillfället sparades inte. Försök igen.",
+      "savePartiallyFailed": "En del av ändringarna för det här tillfället sparades inte – kontrollera närvarolistan och försök igen."
+    },
+    "groupNotes": {
+      "heading": "Om gruppen",
+      "add": "Lägg till",
+      "edit": "Redigera",
+      "cancel": "Avbryt",
+      "save": "Spara",
+      "emptyHint": "Lägg till en gruppanteckning — något som gäller mellan tillfällena.",
+      "publicLabel": "Anteckning till familjerna",
+      "publicHint": "Föräldrar och spelare i gruppen läser det här.",
+      "publicPlaceholder": "Hur gruppen fungerar, vad som följer med mellan tillfällena…",
+      "staffLabel": "Anteckning till Gedus",
+      "staffHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
+      "staffPlaceholder": "Sådant som en annan Gedu bör veta om gruppen över tid.",
+      "saveFailed": "Anteckningarna sparades inte. Försök igen."
+    },
+    "siteNotes": {
+      "heading": "Anteckningar om platsen",
+      "sharedCaption": "{site} — alla produkter som körs på den här platsen visar samma anteckningar, så en ändring här slår igenom överallt.",
+      "addressLabel": "Adress",
+      "add": "Lägg till",
+      "edit": "Redigera",
+      "cancel": "Avbryt",
+      "save": "Spara",
+      "emptyHint": "Lägg till en platsanteckning — något som gäller själva lokalen.",
+      "publicLabel": "Anteckning till familjerna",
+      "publicHint": "Föräldrar och spelare som kommer hit läser det här.",
+      "publicPlaceholder": "Vilken dörr man använder, var man väntar, vad man tar med…",
+      "staffLabel": "Anteckning till Gedus",
+      "staffHint": "Bara Gedus och administratörer ser det här, aldrig familjerna.",
+      "staffPlaceholder": "Nycklar, utrustning, lokalens egenheter — vad nästa Gedu på plats behöver veta.",
+      "saveFailed": "Anteckningarna om platsen sparades inte. Försök igen."
     }
+  },
+  "productType": {
+    "consumer_club": "Klubb",
+    "municipality_club": "Klubb",
+    "camp": "Läger",
+    "event": "Evenemang"
+  },
+  "activityCard": {
+    "endedOn": "Avslutades {date}",
+    "noSchedule": "Inget schema ännu"
+  },
+  "sessionBadge": {
+    "live": "Pågår",
+    "nextSession": "Nästa tillfälle",
+    "upcoming": "Kommande tillfälle"
+  },
+  "sessionFeed": {
+    "readMore": "Läs mer",
+    "showLess": "Visa mindre",
+    "laterSessions": "{count, plural, one {ytterligare # kommande tillfälle} other {ytterligare # kommande tillfällen}}"
   },
   "groups": {
     "title": "Grupper",
@@ -1187,12 +1314,23 @@
     "everyDay": "Varje {day}",
     "join": "Gå med",
     "alwaysOpen": "Alltid öppen",
-    "padlet": "Padlet",
+    "material": "Material",
+    "materialAction": "Undervisningsmaterial",
+    "materialStaffOnly": "Endast Gedus — familjerna ser aldrig den här länken",
     "myGroupsHeading": "Mina grupper",
     "myGroupsSubheading": "Dina anmälda grupper och kommande röstsessioner.",
     "myGroupsEmpty": "Du är inte anmäld i någon grupp ännu.",
     "currentGedu": "Nuvarande",
     "assignedGedu": "Tilldelad"
+  },
+  "richText": {
+    "bold": "Fet stil",
+    "italic": "Kursiv stil",
+    "title": "Titel",
+    "heading": "Rubrik",
+    "subheading": "Underrubrik",
+    "bulletList": "Punktlista",
+    "orderedList": "Numrerad lista"
   },
   "header": {
     "nav": {
@@ -1263,24 +1401,20 @@
       "openClubs": "Vi har också klubbar som är öppna för alla, som en spelare kan gå med i oavsett var hen bor."
     },
     "municipality": {
-      "heading": "Klubbar från {name}",
-      "subheading": "Veckovisa klubbar som {name} erbjuder, där din spelare spelar, bygger och skapar med nya vänner och en Gedu som verkligen fattar."
+      "heading": "Klubbar från {name}"
     }
   },
   "productBrowse": {
     "headings": {
       "consumer_club": "Våra klubbar",
-      "camp": "Våra läger"
-    },
-    "subheadings": {
-      "consumer_club": "Veckovisa klubbar där din spelare spelar sina favoritspel med nya vänner och en Gedu som verkligen fattar.",
-      "camp": "Skollov förvandlade till spelfyllda äventyr – nya vänner, riktiga färdigheter och en Gedu med på resan."
+      "camp": "Våra läger",
+      "event": "Våra evenemang"
     },
     "filters": {
       "type": "Typ",
       "typeClubs": "Klubbar",
       "typeCamps": "Läger",
-      "topic": "Spel",
+      "typeEvents": "Evenemang",
       "subject": "Ämne",
       "format": "Format",
       "formatOnline": "Online",
@@ -1299,21 +1433,19 @@
       "externalContract": "Finansieras av din kommun",
       "notAvailableInCurrency": "Inte i {currency}",
       "seatsCapacity": "{count, plural, one {# plats} other {# platser}}",
-      "waitlistAvailable": "Väntelista finns",
       "endedNote": "Den här är slut — håll utkik efter nästa.",
       "viewDetails": "Visa",
+      "cardLink": "{action} — {name}",
       "manage": "Hantera",
       "fullDisabled": "Fullt",
       "alreadyStarted": "Pågår",
+      "alreadyEnded": "Avslutat",
       "online": "Online"
     },
     "empty": {
       "noProducts": "Inget här ännu – nya är på väg.",
       "noMatches": "Inga träffar. Prova att rensa filtren."
     }
-  },
-  "topics": {
-    "webinar": "Webbinarium"
   },
   "seatAvailability": {
     "remaining": "{count, plural, one {# av {total} plats kvar} other {# av {total} platser kvar}}",
@@ -1333,14 +1465,12 @@
       "event": "Evenemang"
     },
     "sections": {
-      "overview": "Bra att veta",
-      "calendar": "Schema",
-      "topic": "Ämne",
-      "game": "Om spelet"
+      "overview": "Bra att veta"
     },
-    "gameInfo": {
+    "topicInfo": {
+      "heading": "Om {name}",
       "pegi": "PEGI {age}",
-      "games": {
+      "topics": {
         "minecraft_java": {
           "description": "Minecraft är ett kreativt byggspel – tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig, från ett mysigt hus till en hel stad. Det finns inget att vinna eller förlora; det är ett lugnt och öppet utrymme för att skapa och lösa problem. ”Java” är originalversionen för Windows-, Mac- och Linux-datorer, och det är den våra distansklubbar använder eftersom den stöder verktygen våra instruktörer behöver.",
           "note": "För våra klubbar behöver ditt barn Minecraft på en dator. På Minecraft.net säljs det som ”Minecraft: Java & Bedrock Edition for PC” – ett enda engångsköp (inte en prenumeration) som inkluderar versionen vi använder. Den separata versionen för konsol, telefon och surfplatta fungerar inte för de här klubbarna.",
@@ -1360,6 +1490,16 @@
           "description": "Fortnite är ett färgglatt onlinespel i tecknad stil där spelare bildar lag och tävlar i korta matcher, omgång för omgång. Det är enormt populärt och väldigt socialt, och barn spelar tillsammans med vänner. Stilen är ljus och orealistisk, utan blod eller våld, även om matcherna är tävlingsinriktade och spelas online med andra.",
           "note": "Fortnite är gratis att ladda ner och spela – du köper inte själva spelet. Ditt barn skapar ett gratis Epic Games-konto för att spela. Vissa valfria extrasaker, som utstyrslar, kostar pengar, och du kan begränsa dem med föräldrakontroller.",
           "linkLabel": "Skaffa Fortnite"
+        },
+        "pokemon_go": {
+          "description": "Pokémon GO spelas utomhus, på en telefon. Varelser dyker upp på en karta över den verkliga världen, och barnen går till parker, gator och landmärken för att hitta och samla dem. Det handlar om att samla snarare än att slåss – det roliga är att utforska, fylla sin Pokédex och jämföra fynd med kompisar. Det mesta av spelandet sker till fots, så spelet får barn att röra på sig.",
+          "note": "Pokémon GO är gratis att ladda ner och spela – du köper inte själva spelet. Ditt barn behöver en telefon eller surfplatta med GPS och mobildata, samt ett gratis konto. Det finns valfria köp i appen, som du kan begränsa med föräldrakontroller. Eftersom spelet spelas utomhus på riktiga platser är det bra att i förväg komma överens om var barnet får röra sig och om en vuxen följer med.",
+          "linkLabel": "Var du laddar ner det"
+        },
+        "roblox_studio": {
+          "description": "Roblox Studio är det kostnadsfria verktyg som Roblox-spelen själva byggs med. Barn designar världar, bygger med riktiga 3D-verktyg och programmerar med riktig kod, så att deras egna idéer blir upplevelser som andra faktiskt kan spela. I våra klubbar skapar barnen i stället för att spela – det är riktig spelutveckling.",
+          "note": "Roblox Studio är gratis – det finns inget att köpa. Det fungerar bara på Windows-datorer och Mac: inte på iPad eller andra surfplattor, inte på Chromebook, telefon eller spelkonsol, så ditt barn behöver en stationär eller bärbar dator för att delta. Ett gratis Roblox-konto behövs också, och kontots åldersinställning styr dess chatt- och integritetsskydd. Färdiga skapelser kan publiceras så att andra spelare kan hitta och spela dem.",
+          "linkLabel": "Skaffa Roblox Studio"
         }
       }
     },
@@ -1408,7 +1548,12 @@
       "ctaAllSet": "Du är klar",
       "ctaAgreeRules": "Godkänn reglerna",
       "ctaWaitlist": "Gå med på väntelistan",
-      "ctaSignIn": "Logga in för att anmäla",
+      "ctaSignIn": {
+        "consumer_club": "Logga in för att anmäla",
+        "municipality_club": "Logga in för att anmäla",
+        "camp": "Logga in för att anmäla",
+        "event": "Logga in för att gå med"
+      },
       "ctaCreateAccount": "Skapa konto",
       "gamerAlreadySignedUp": {
         "consumer_club": "Redan anmäld",
@@ -1482,6 +1627,7 @@
     "events": "Evenemang",
     "locations": "Platser",
     "uiComponents": "UI-komponenter",
+    "uiPreviews": "UI-förhandsvisningar",
     "whatsapp": "WhatsApp",
     "testing": "Testning",
     "settings": "Inställningar",
@@ -1537,43 +1683,53 @@
     }
   },
   "locations": {
-    "tree": {
-      "empty": "Inga platser hittades som matchar din sökning.",
-      "clearSearch": "Rensa sökning"
+    "picker": {
+      "coverageTitle": "Välj de områden du täcker",
+      "coverageDescription": "Kryssa i allt du kan täcka. Varje kryss täcker allt som ligger inuti, så ett kryss för ett landskap täcker redan alla dess kommuner.",
+      "searchPlaceholder": "Sök på namn, kod eller postnummer…",
+      "searchingEverywhere": "Söker i alla länder",
+      "searchingCountry": "Söker i {country}",
+      "allCountries": "Alla länder",
+      "noResults": "Ingenting matchar ”{query}”.",
+      "keepTyping": "Skriv minst {count} tecken för att söka.",
+      "nothingHere": "Ingenting här.",
+      "showingSome": "Visar de {shown} första av {total} träffar. Fortsätt skriva för att begränsa dem.",
+      "loadMore": "Visa fler",
+      "browseInto": "Visa vad som finns i {name}",
+      "confirm": "Fortsätt",
+      "confirming": "Öppnar…",
+      "clearSearch": "Rensa sökning",
+      "tickedCount": "{count, plural, =0 {Inget ikryssat} one {# område ikryssat} other {# områden ikryssade}}",
+      "done": "Klar"
+    },
+    "home": {
+      "choose": "Lägg till din plats",
+      "dialogTitle": "Var bor du?",
+      "dialogDescription": "Bläddra i listan eller sök på namn eller postnummer."
     }
   },
-  "minecraft": {
-    "label": "Minecraft-användarnamn",
-    "placeholder": "t.ex. Steve",
-    "verify": "Verifiera",
+  "gameAccount": {
+    "label": "{platform}-användarnamn",
+    "usernameLabel": "{platform}-användarnamn",
+    "placeholder": "t.ex. {example}",
     "verifying": "Verifierar...",
-    "notFound": "Minecraft-kontot hittades inte. Kontrollera användarnamnet och försök igen.",
-    "mcHeadsAttribution": "Skin renderat av <link>mc-heads.net</link>",
-    "verified": "Verifierad",
+    "notFound": "{platform}-kontot hittades inte. Kontrollera användarnamnet och försök igen.",
     "verifiedUser": "{username} (verifierad)",
     "unverified": "{username} (ännu inte verifierad)",
-    "notProvided": "Inte angivet",
-    "none": "(okänt)"
+    "none": "(okänt)",
+    "edit": "Redigera {platform}-användarnamn",
+    "editFor": "Redigera {platform}-användarnamn för {name}",
+    "save": "Spara",
+    "cancel": "Avbryt",
+    "saveFailed": "Kunde inte uppdatera {platform}-användarnamn."
   },
   "parent": {
     "placeholders": {
       "myGamersHint": "Välj en spelare för att hantera kontot."
     },
-    "nextSession": {
-      "title": "{name}s nästa pass",
-      "startsIn": "Börjar om {countdown}",
-      "inProgress": "Pass pågår",
-      "reports": "Rapporter"
-    },
-    "upcomingSession": {
-      "gamerLabel": "För {name}"
-    },
     "waitlist": {
-      "forLabel": "För {name}",
-      "positionLabel": "Din plats i kön",
-      "positionValue": "#{position}",
-      "reassuranceCustomer": "Vi mejlar så snart en plats blir ledig.",
-      "reassuranceGamer": "Vi mejlar en förälder så snart en plats blir ledig.",
+      "footerReassuranceCustomer": "Plats {position} i kön — vi mejlar så snart en plats blir ledig.",
+      "footerReassuranceGamer": "Du är på plats {position} i kön — vi mejlar en förälder så snart en plats blir ledig.",
       "leave": {
         "trigger": "Lämna väntelistan",
         "confirmTitle": "Lämna väntelistan?",
@@ -1581,16 +1737,6 @@
         "confirmCta": "Lämna väntelistan",
         "backOfLineWarning": "Om du ställer dig på väntelistan igen senare börjar du längst bak i kön."
       }
-    },
-    "subscriptionEnding": {
-      "wontRenew": "Förnyas inte",
-      "lastSession": "Sista passet",
-      "tooltip": "Du har sagt upp medlemskapet — det förnyas inte. {name}s sista pass är {lastSession}, och du har tillgång till {accessUntil}.",
-      "tooltipSameDay": "Du har sagt upp medlemskapet — det förnyas inte. {name}s sista pass är {lastSession}."
-    },
-    "awaiting": {
-      "customer": "{name} är med! Ledaren placerar hen i en grupp innan det första passet börjar.",
-      "gamer": "Du är med! Vi placerar dig i din grupp innan nästa pass börjar."
     },
     "help": {
       "contact": {
@@ -1660,12 +1806,12 @@
       },
       "minecraft": {
         "title": "Minecraft-konto",
-        "description": "Koppla ett Minecraft Java Edition-användarnamn för funktioner i spelet.",
-        "save": "Spara Minecraft-användarnamn"
+        "description": "Koppla ett Minecraft Java Edition-användarnamn för funktioner i spelet."
       },
-      "mcSaved": "Minecraft-användarnamn sparat!",
-      "mcCleared": "Minecraft-användarnamn borttaget",
-      "failedUpdateMc": "Kunde inte uppdatera Minecraft-användarnamn"
+      "roblox": {
+        "title": "Roblox-konto",
+        "description": "Koppla ett Roblox-användarnamn för funktioner i spelet."
+      }
     },
     "switchToGamer": {
       "title": "Byt till {name}s profil för att gå med i {productName}?",
@@ -1687,11 +1833,11 @@
     "changePin": "Byt PIN",
     "minecraftAccount": "Minecraft-konto",
     "minecraftDescription": "Koppla ditt Minecraft Java Edition-konto",
-    "minecraftSaved": "Minecraft-användarnamn sparat!",
-    "minecraftCleared": "Minecraft-användarnamn borttaget.",
-    "failedToUpdateMinecraft": "Kunde inte uppdatera Minecraft-användarnamn.",
-    "saveMinecraft": "Spara Minecraft-användarnamn",
-    "spokenLanguages": "Talade språk"
+    "robloxAccount": "Roblox-konto",
+    "robloxDescription": "Koppla ditt Roblox-konto",
+    "mcHeadsAttribution": "Skins renderade av <link>mc-heads.net</link>",
+    "spokenLanguages": "Talade språk",
+    "location": "Plats"
   },
   "voice": {
     "participants": "Deltagare",
@@ -1828,12 +1974,9 @@
       "joinFailed": "Kunde inte gå med i rummet. Försök igen.",
       "share": {
         "hint": "Klicka på länken för att kopiera den.",
-        "copied": "Kopierat!"
-      },
-      "header": {
+        "copied": "Kopierat!",
         "roomCode": "Rumskod:",
-        "copyLink": "Kopiera rumslänk",
-        "copied": "Kopierat!"
+        "copyLink": "Kopiera länken till rum {code}"
       },
       "lobby": {
         "title": "Redo att gå med?",
@@ -1868,14 +2011,14 @@
       },
       "createPage": {
         "title": "Starta ett direkt röstrum",
-        "subtitle": "Ett tryck → nytt rum & delbar länk. Använd för spontana en-mot-en-samtal eller utbildarsamordning utöver det schemalagda mötet.",
+        "subtitle": "Ett tryck → nytt rum & delbar länk. Använd för spontana en-mot-en-samtal eller Gedu-samordning utöver det schemalagda mötet.",
         "createButton": "Starta direkt rum",
         "creating": "Skapar…",
         "createFailed": "Kunde inte skapa rummet. Försök igen.",
         "ready": "Ditt rum är redo",
         "join": "Gå med",
         "unverifiedTitle": "Inväntar verifiering",
-        "unverifiedBody": "En administratör måste verifiera ditt utbildarkonto innan du kan skapa röstrum. Du kan starta ett här så snart du är verifierad."
+        "unverifiedBody": "En administratör måste verifiera ditt Gedu-konto innan du kan skapa röstrum. Du kan starta ett här så snart du är verifierad."
       }
     }
   },
@@ -1984,7 +2127,7 @@
       "subject": "Du har tilldelats en ny grupp – {productName}",
       "heading": "Du har tilldelats en ny grupp",
       "body": "Hej {geduName}, du har tilldelats en ny grupp för {productName}.",
-      "dashboardNote": "Du kommer att se denna grupp i din instrumentpanel inom kort."
+      "dashboardNote": "Du kommer att se den här gruppen i Min SOG inom kort."
     },
     "groupDeleted": {
       "subject": "Din grupp har tagits bort – {productName}",
@@ -2345,6 +2488,94 @@
           "Om du har frågor om den här policyn, eller vill prata om något som har hänt, mejla vårt kansli på kanslia@sog.gg. Det är en riktig människa i andra änden, och vi finns här för att hjälpa till."
         ]
       }
+    }
+  },
+  "roblox": {
+    "hero": {
+      "title": "Bygg<br></br><primary>Spela</primary><br></br><secondary>Äg det</secondary>",
+      "subtitle": "Ett gratis Roblox-speldesignprogram för tonåringar — från Lynx Educate och School of Gaming, i samarbete med Roblox.",
+      "cta": "Anmäl dig nu"
+    },
+    "lockup": {
+      "heading": "Ett samarbete mellan",
+      "sogAlt": "School of Gaming",
+      "lynxAlt": "Lynx Educate",
+      "robloxAlt": "Roblox"
+    },
+    "what": {
+      "eyebrow": "Vad är det här",
+      "heading": "Lär dig bygga i Roblox.",
+      "paragraph1": "Programmet ger 15–18-åringar i Frankrike chansen att designa, koda och publicera sitt eget Roblox-spel — med de viktigaste personerna som hejar på. Det genomförs av Lynx Educate och School of Gaming med stöd av Roblox, och är en praktisk introduktion till speldesign, digital kreativitet och trygg samverkan online.",
+      "paragraph2": "När programmet är slut har deltagarna publicerat sin egen skapelse på Roblox. Ingen erfarenhet krävs — bara nyfikenhet."
+    },
+    "why": {
+      "eyebrow": "Varför vara med",
+      "heading": "Mer än en kodningskurs",
+      "skills": {
+        "title": "Färdigheter för framtiden",
+        "description": "Roblox Studio, AI-assisterad design och grunderna i kodningslogik."
+      },
+      "people": {
+        "title": "Hitta ditt gäng",
+        "description": "Träffa andra skapare som älskar att bygga lika mycket som du."
+      },
+      "portfolio": {
+        "title": "Bygg din portfölj",
+        "description": "Du går härifrån med en riktig, publicerad skapelse att visa upp."
+      },
+      "recognised": {
+        "title": "Bli uppmärksammad",
+        "description": "De bästa projekten visas upp på vår avslutningsfest."
+      },
+      "fun": {
+        "title": "Äkta kul",
+        "description": "Kreativt, socialt och gjort för att avnjutas."
+      },
+      "safe": {
+        "title": "Var trygg online",
+        "description": "Egna föräldrasessioner om digital trygghet, gott bemötande och föräldrakontroller."
+      }
+    },
+    "how": {
+      "eyebrow": "Så fungerar det",
+      "heading": "Kom igång i fyra enkla steg",
+      "subheading": "Välj det format som passar: evenemang på plats eller online, från en timme till fyra veckor.",
+      "step1": {
+        "title": "Välj ett evenemang",
+        "description": "Bland alternativen nedan — vi lägger till nya ofta, så titta in igen."
+      },
+      "step2": {
+        "title": "Skapa ditt konto",
+        "description": "Direkt på evenemangssidan. Snabbt och gratis för nya föräldrar."
+      },
+      "step3": {
+        "title": "Fyll i din tonårings uppgifter",
+        "description": "Några uppgifter för att slutföra anmälan."
+      },
+      "step4": {
+        "title": "Kolla din inkorg",
+        "description": "Du får bekräftelse och allt du behöver veta inför första tillfället."
+      }
+    },
+    "events": {
+      "heading": "Kommande evenemang",
+      "subheading": "Vi lägger till nya evenemang ofta — titta in och se vad som är på gång.",
+      "empty": "De första evenemangen planeras just nu. Titta in snart och se vad som är på gång."
+    },
+    "parents": {
+      "eyebrow": "För föräldrar",
+      "heading": "Vi vet att trygghet online spelar roll",
+      "body": "Parallellt med tonårsprogrammet håller vi egna föräldrasessioner om digital trygghet, föräldrakontroller och hur du stöttar din tonårings skapande.",
+      "cta": "Se våra föräldrasessioner"
+    },
+    "cta": {
+      "heading": "Redo att börja?",
+      "body": "Platserna är begränsade per stad och grupp.",
+      "button": "Kom igång"
+    },
+    "legal": {
+      "roblox": "© 2024 Roblox Corporation. Ordmärket Roblox, Roblox-logotypen och Roblox Tilt är bland Roblox Corporations registrerade och oregistrerade varumärken i USA och andra länder. Används med tillstånd.",
+      "lynx": "Lynx Educate och Lynx Educate-logotypen är varumärken som tillhör Lynx Educate. Används med tillstånd."
     }
   }
 }

@@ -69,6 +69,10 @@ describe("Access Control", () => {
       // row from auth.uid(), so actor and target are the same check. No DELETE:
       // unlinking clears the columns rather than removing the row.
       ["minecraft_accounts", new Set(["INSERT", "UPDATE"])],
+      // The same shape one platform over (00146). RLS derives the target row
+      // from auth.uid(), so actor and target are the same check, and there is
+      // no DELETE for the same reason: unlinking clears the columns.
+      ["roblox_accounts", new Set(["INSERT", "UPDATE"])],
       // Gedus write their own coverage rows directly from the browser
       // (setForGedu uses DELETE + INSERT). RLS enforces self-only access
       // and the role-is-gedu check on WITH CHECK.
@@ -78,6 +82,13 @@ describe("Access Control", () => {
       // table works). Grants enable the underlying commands; RLS restricts
       // authorisation. Stripped at cutover when the  suffix is removed.
       ["products", new Set(["INSERT", "UPDATE", "DELETE"])],
+      // The staff-only half of a product (the gedu lesson-material link), split
+      // off `products` because that table is anon-readable by column selection.
+      // create_product / update_product are SECURITY INVOKER, so the row is
+      // written by the admin's own client and the grant has to be here; the
+      // admin-only RLS policy is what actually authorizes it. DELETE because
+      // clearing the link removes the row rather than storing a NULL.
+      ["product_staff_details", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["schedule_slots", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["product_prices", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["holiday_calendars", new Set(["INSERT", "UPDATE", "DELETE"])],

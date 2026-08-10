@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, User, Gamepad2 } from "lucide-react";
+import { ArrowLeft, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,9 +11,10 @@ import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
-import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
+import { GameAccountCard } from "@/components/game-account";
 import { useMyGamers, useUpdateGamer, useGamerProfile } from "@/services/gamers";
 import { useMinecraftAccount } from "@/services/minecraft";
+import { useRobloxAccount } from "@/services/roblox";
 import { ROUTES, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { computeAge } from "@/lib/utils";
 import { useTimezone } from "@/providers";
@@ -25,6 +26,7 @@ export default function GamerDetailsPage() {
   const timeZone = useTimezone();
   const { data: gamers, isLoading } = useMyGamers();
   const { data: mcAccount } = useMinecraftAccount(id);
+  const { data: robloxAccount } = useRobloxAccount(id);
   const { data: gamerProfile } = useGamerProfile(id);
   const updateGamer = useUpdateGamer();
 
@@ -34,12 +36,6 @@ export default function GamerDetailsPage() {
   const [firstName, setFirstName] = useState("");
   const [profileInitialized, setProfileInitialized] = useState(false);
 
-  // Minecraft form state
-  const [minecraftUsername, setMinecraftUsername] = useState("");
-  const [mcInitialized, setMcInitialized] = useState(false);
-  const [isSavingMc, setIsSavingMc] = useState(false);
-  const [mcSuccess, setMcSuccess] = useState<string | null>(null);
-  const [mcError, setMcError] = useState<string | null>(null);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
@@ -48,12 +44,6 @@ export default function GamerDetailsPage() {
   if (gamer && !profileInitialized) {
     setFirstName(gamer.first_name);
     setProfileInitialized(true);
-  }
-
-  // Initialize minecraft username once account data loads
-  if (mcAccount !== undefined && !mcInitialized) {
-    setMinecraftUsername(mcAccount?.minecraft_username ?? "");
-    setMcInitialized(true);
   }
 
   const handleSaveProfile = async () => {
@@ -79,37 +69,6 @@ export default function GamerDetailsPage() {
       setProfileError(message);
     } finally {
       setIsSavingProfile(false);
-    }
-  };
-
-  const handleSaveMc = async () => {
-    if (!gamer) return;
-
-    setIsSavingMc(true);
-    setMcSuccess(null);
-    setMcError(null);
-
-    try {
-      const mcValue = minecraftUsername.trim() || null;
-      await updateGamer.mutateAsync({
-        gamerId: gamer.id,
-        updates: { minecraftUsername: mcValue },
-      });
-      setMcSuccess(
-        mcValue
-          ? t('gamerDetail.mcSaved')
-          : t('gamerDetail.mcCleared'),
-      );
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : typeof error === "object" && error !== null && "message" in error
-            ? String((error as { message: unknown }).message)
-            : t('gamerDetail.failedUpdateMc');
-      setMcError(message);
-    } finally {
-      setIsSavingMc(false);
     }
   };
 
@@ -246,46 +205,35 @@ export default function GamerDetailsPage() {
         </CardContent>
       </Card>
 
-      {/* Minecraft Account */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Gamepad2 className="h-5 w-5" />
-            <CardTitle>{t('gamerDetail.minecraft.title')}</CardTitle>
-          </div>
-          <CardDescription>
-            {t('gamerDetail.minecraft.description')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {mcSuccess && (
-            <div className="rounded-md bg-success/10 p-3 text-sm text-success">
-              {mcSuccess}
-            </div>
-          )}
+      <GameAccountCard
+        platform="minecraft"
+        title={t('gamerDetail.minecraft.title')}
+        description={t('gamerDetail.minecraft.description')}
+        personName={gamer.first_name}
+        username={mcAccount?.minecraft_username ?? null}
+        externalId={mcAccount?.minecraft_uuid ?? null}
+        onSave={(minecraftUsername) =>
+          updateGamer.mutateAsync({
+            gamerId: gamer.id,
+            updates: { minecraftUsername },
+          })
+        }
+      />
 
-          {mcError && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {mcError}
-            </div>
-          )}
-
-          <form onSubmit={(e) => { e.preventDefault(); handleSaveMc(); }} className="space-y-6">
-            <MinecraftUsernameField
-              value={minecraftUsername}
-              onChange={setMinecraftUsername}
-              disabled={isSavingMc}
-            />
-
-            <Button
-              type="submit"
-              disabled={isSavingMc}
-            >
-              {isSavingMc ? c('saving') : t('gamerDetail.minecraft.save')}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      <GameAccountCard
+        platform="roblox"
+        title={t('gamerDetail.roblox.title')}
+        description={t('gamerDetail.roblox.description')}
+        personName={gamer.first_name}
+        username={robloxAccount?.roblox_username ?? null}
+        externalId={robloxAccount?.roblox_user_id ?? null}
+        onSave={(robloxUsername) =>
+          updateGamer.mutateAsync({
+            gamerId: gamer.id,
+            updates: { robloxUsername },
+          })
+        }
+      />
 
     </div>
   );

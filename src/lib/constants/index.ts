@@ -1,8 +1,10 @@
 export * from "./currency";
+export * from "./game-platforms";
 export * from "./locales";
 export * from "./roles";
 export * from "./routes";
 export * from "./location-hierarchies";
+export * from "./session-epoch";
 export * from "./voice";
 
 export const GAMER_EMAIL_DOMAIN = "@gamer.sogverse.internal";

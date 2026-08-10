@@ -27,10 +27,13 @@ export interface SeatAvailabilityBarProps {
  *
  * When full, the bar surfaces only the *actionable* state: a club with a
  * waiting list reads "Waitlist" (there's still something to do), while a full
- * club without one shows no chip at all — the disabled "Full" CTA sitting next
- * to the bar already says so, and repeating it here is just noise. The
- * indicator sits on the seats-remaining row, right-aligned, in a fixed-height
- * row so the component's height never changes whether or not one is present.
+ * club without one shows no chip at all — the "Full" label sitting beside the
+ * bar already says so, and repeating it here is just noise. That makes this a
+ * two-part arrangement rather than a self-contained one: a host that drops the
+ * label has to bring the chip back, or a full club stops saying it anywhere.
+ * The indicator sits on the seats-remaining row, right-aligned, in a
+ * fixed-height row so the component's height never changes whether or not one
+ * is present.
  */
 export function SeatAvailabilityBar({
   seatCount,
@@ -59,9 +62,14 @@ export function SeatAvailabilityBar({
           right-aligned. The min-height reserves the indicator's space so the
           component is the same height with or without one. */}
       <div className="flex min-h-5 items-center gap-2 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1">
+        {/* min-w-0 + truncate (not whitespace-nowrap): the chip beside this is
+            shrink-0, so when a locale makes both long ("0 / 8 places restantes"
+            + "Liste d'attente") something must lose width — it has to be this
+            text, degrading to an ellipsis, never the chip spilling out of the
+            card. */}
+        <span className="flex min-w-0 items-center gap-1">
           <Users className="h-3 w-3 shrink-0" aria-hidden />
-          <span className="whitespace-nowrap tabular-nums">{remainingLabel}</span>
+          <span className="truncate tabular-nums">{remainingLabel}</span>
         </span>
         {isFull && waitlistEnabled && (
           <StatusChip

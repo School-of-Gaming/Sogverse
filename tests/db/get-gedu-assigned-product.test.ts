@@ -305,20 +305,17 @@ describe("get_gedu_assigned_product", () => {
       // and assert it disappears. Pins the `status = 'active'` filter shared
       // by the roster sub-aggregate and the gamer_count sub-select.
       //
-      // CHECK constraints require companion columns: waitlisted needs a
-      // waitlisted_at, reserving needs a reserved_until. The admin
-      // (service-role) client bypasses RLS but NOT CHECK constraints.
+      // A CHECK constraint requires waitlisted to carry a waitlisted_at. The
+      // admin (service-role) client bypasses RLS but NOT CHECK constraints.
+      // `reserving` is a retired status — nothing writes it any more — kept in
+      // the sweep because the filter under test must exclude every member of
+      // the enum that isn't 'active', retired ones included.
       const fixtures = [
         {
           status: "waitlisted" as const,
           extras: { waitlisted_at: new Date().toISOString() },
         },
-        {
-          status: "reserving" as const,
-          extras: {
-            reserved_until: new Date(Date.now() + 60_000).toISOString(),
-          },
-        },
+        { status: "reserving" as const, extras: {} },
         { status: "completed" as const, extras: {} },
       ];
 

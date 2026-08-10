@@ -54,6 +54,10 @@ export type GeduProfileUpdate = Database["public"]["Tables"]["gedu_profiles"]["U
 export type MinecraftAccount = Database["public"]["Tables"]["minecraft_accounts"]["Row"];
 export type MinecraftAccountUpdate = Database["public"]["Tables"]["minecraft_accounts"]["Update"];
 
+// roblox_accounts
+export type RobloxAccount = Database["public"]["Tables"]["roblox_accounts"]["Row"];
+export type RobloxAccountUpdate = Database["public"]["Tables"]["roblox_accounts"]["Update"];
+
 // parent_gamer
 export type ParentGamer = Database["public"]["Tables"]["parent_gamer"]["Row"];
 export type ParentGamerInsert = Database["public"]["Tables"]["parent_gamer"]["Insert"];
@@ -67,8 +71,45 @@ export type FeedbackSubmission = Database["public"]["Tables"]["feedback_submissi
 export type SpokenLanguage = Database["public"]["Tables"]["spoken_languages"]["Row"];
 
 // locations
-export type Location = Database["public"]["Tables"]["locations"]["Row"];
+/**
+ * A `locations` row as the application sees it: every column that any surface
+ * renders, and nothing else.
+ *
+ * Four columns are excluded, for two different reasons.
+ *
+ * `search_blob` is a generated column — the folded search terms the database
+ * maintains for the row and the trigram index consumes — and nothing outside
+ * Postgres reads it. It is also the largest value on a row, and a browse page
+ * is 200 rows, so it is worth not sending.
+ *
+ * `geonames_id`, `retired_at` and `depth` are the columns the GeoNames data
+ * supply runs on, and they are the database's business rather than the
+ * application's: the upstream key is used by ingestion and sync migrations,
+ * `depth` is maintained by a trigger and consumed by the search function's
+ * ranking, and `retired_at` decides which rows a read *offers* — which is a
+ * filter, not a value anyone renders. Nothing on any surface displays one, so
+ * nothing selects one.
+ *
+ * Excluding them from the alias is what makes that stick: every read names its
+ * columns instead of selecting `*`, and a read that regressed to `*` would be
+ * assigning a wider row to this narrower type, which compiles — so the alias is
+ * the statement of intent, and the explicit select lists in the service are the
+ * enforcement.
+ */
+export type Location = Omit<
+  Database["public"]["Tables"]["locations"]["Row"],
+  "search_blob" | "geonames_id" | "retired_at" | "depth"
+>;
 export type LocationInsert = Database["public"]["Tables"]["locations"]["Insert"];
+
+/**
+ * A `postal_codes` row: the fact that one code reaches one municipality.
+ *
+ * The whole row is the key, so there is nothing to exclude the way `Location`
+ * excludes the columns no surface renders. Nothing references this table, which
+ * is why a refresh may rebuild it wholesale — see `src/services/locations/`.
+ */
+export type PostalCode = Database["public"]["Tables"]["postal_codes"]["Row"];
 
 // gedu_locations (a gedu's coverage areas for substitute matching — rows
 // can sit at any level of the location hierarchy)
@@ -83,14 +124,23 @@ export type GeduLocationInsert = Database["public"]["Tables"]["gedu_locations"][
 export type ProductType = Database["public"]["Enums"]["product_type"];
 export type BillingMode = Database["public"]["Enums"]["billing_mode"];
 export type ProductStatus = Database["public"]["Enums"]["product_status"];
-// Fixed set of product topics. The game/subject split + display labels live
-// in src/lib/products/topics.ts (PRODUCT_TOPICS).
+// Fixed set of product topics — one flat axis, no game/subject split. Display
+// labels and per-topic info live in src/lib/products/topics.ts (PRODUCT_TOPICS).
 export type ProductTopic = Database["public"]["Enums"]["product_topic"];
 
 // products
 export type Product = Database["public"]["Tables"]["products"]["Row"];
 export type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
 export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
+
+// product_staff_details — the staff-only half of a product, split off `products`
+// because that table is readable by anon and by every parent, and PostgREST lets
+// a caller pick the columns it wants. Sparse: a product with nothing staff-only
+// recorded has no row here.
+export type ProductStaffDetails =
+  Database["public"]["Tables"]["product_staff_details"]["Row"];
+export type ProductStaffDetailsInsert =
+  Database["public"]["Tables"]["product_staff_details"]["Insert"];
 
 // schedule_slots
 export type ScheduleSlot = Database["public"]["Tables"]["schedule_slots"]["Row"];
@@ -194,7 +244,6 @@ export type { ProductBrowseRow } from "@/services/products/products.service";
 // Enums
 export type ParticipationStatus = Database["public"]["Enums"]["participation_status"];
 export type PaymentPurpose = Database["public"]["Enums"]["payment_purpose"];
-export type RefundReason = Database["public"]["Enums"]["refund_reason"];
 export type EffectiveProductStatusDB = Database["public"]["Enums"]["effective_product_status"];
 
 // participations
@@ -229,10 +278,6 @@ export type PurchaseShape =
 export type Payment = Database["public"]["Tables"]["payments"]["Row"];
 export type PaymentInsert = Database["public"]["Tables"]["payments"]["Insert"];
 
-// refunds
-export type Refund = Database["public"]["Tables"]["refunds"]["Row"];
-export type RefundInsert = Database["public"]["Tables"]["refunds"]["Insert"];
-
 // family_subscriptions — one Stripe subscription per (gamer, club) participation.
 // "Family" is historical: a row is one gamer in one club, not a family's whole bill.
 export type FamilySubscription = Database["public"]["Tables"]["family_subscriptions"]["Row"];
@@ -258,6 +303,39 @@ export type ProductGroupUpdate = Database["public"]["Tables"]["product_groups"][
 // gedu_group_assignments
 export type GeduGroupAssignment = Database["public"]["Tables"]["gedu_group_assignments"]["Row"];
 export type GeduGroupAssignmentInsert = Database["public"]["Tables"]["gedu_group_assignments"]["Insert"];
+
+// ---------------------------------------------------------------------------
+// products — session records (the gedu session feed)
+// ---------------------------------------------------------------------------
+
+// group_sessions — one lazily materialized row per (group, product-local date).
+// Neither table grants anything to `authenticated`: every read and write goes
+// through the SECURITY DEFINER RPCs in src/services/gedu-sessions/, so these
+// aliases exist for the service-role side (db tests, admin tooling) rather than
+// for browser queries.
+export type GroupSession = Database["public"]["Tables"]["group_sessions"]["Row"];
+export type GroupSessionInsert = Database["public"]["Tables"]["group_sessions"]["Insert"];
+export type GroupSessionUpdate = Database["public"]["Tables"]["group_sessions"]["Update"];
+
+// session_attendance — one row per explicit mark. A roster member with NO row
+// is unanswered, which is why the status column has no "unmarked" member: that
+// state is the absence of a row, not a value.
+export type SessionAttendance = Database["public"]["Tables"]["session_attendance"]["Row"];
+export type SessionAttendanceInsert = Database["public"]["Tables"]["session_attendance"]["Insert"];
+
+// The attendance vocabulary is a text column with a CHECK rather than a
+// Postgres enum (adding 'late'/'excused' is expected), so there is no
+// Constants entry to derive from — the tuple in the contracts file is the
+// code-side source of truth. Re-exported here so consumers keep importing
+// their types from "@/types".
+export type {
+  AttendanceStatus,
+  GeduAssignmentSummary,
+  GeduFeedRosterEntry,
+  GeduFeedSession,
+  GeduFeedSite,
+  GeduGroupFeed,
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 
 // ---------------------------------------------------------------------------
 // voice zones (00103) — the persisted half of the discrete-zone voice model.
@@ -336,7 +414,6 @@ export interface GeduAssignedProductGroup {
 export interface GeduAssignedProductShell {
   id: string;
   product_type: Database["public"]["Enums"]["product_type"];
-  padlet_url: string | null;
   timezone: string;
   start_date: string | null;
   end_date: string | null;
@@ -384,8 +461,8 @@ export type WhatsAppDirection = (typeof WHATSAPP_DIRECTION)[keyof typeof WHATSAP
 
 // get_my_assigned_products RPC — the generator marks every column of an RPC
 // RETURNS TABLE row as non-nullable from the column type alone, missing
-// products columns that are actually nullable (start_date, end_date,
-// padlet_url). It also degrades the jsonb arrays (product_translations,
+// products columns that are actually nullable (start_date, end_date). It also
+// degrades the jsonb arrays (product_translations,
 // schedule_slots) to `Json`, which forces every consumer to cast. Tighten
 // both: nullability matches the underlying products schema, and the
 // arrays get structured shapes that mirror the jsonb_build_object calls in
@@ -395,11 +472,10 @@ type _MyAssignedProductGenerated =
   Database["public"]["Functions"]["get_my_assigned_products"]["Returns"][number];
 export type MyAssignedProductRow = Omit<
   _MyAssignedProductGenerated,
-  "start_date" | "end_date" | "padlet_url" | "product_translations" | "schedule_slots"
+  "start_date" | "end_date" | "product_translations" | "schedule_slots"
 > & {
   start_date: string | null;
   end_date: string | null;
-  padlet_url: string | null;
   product_translations: Array<{
     locale: string;
     name: string;
@@ -472,6 +548,7 @@ export interface CreateGamerInput {
   dateOfBirth: string;
   gender?: "boy" | "girl" | "non_binary" | null;
   minecraftUsername?: string;
+  robloxUsername?: string;
 }
 
 export interface LoginCredentials {

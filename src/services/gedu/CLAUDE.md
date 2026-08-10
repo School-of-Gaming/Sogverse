@@ -21,7 +21,9 @@ three DB objects.
 Public, unauthenticated `/register-gedu` page → `POST /api/gedu/register`:
 
 1. Resolve the optional Minecraft username (Mojang HTTP) **before** creating the auth
-   user — the `minecraft_uuid` UNIQUE can reject it, and `createUser` is irreversible.
+   user — the format check is a 400, and `createUser` is irreversible. Resolution itself
+   can't refuse the registration: a name Mojang doesn't know is stored with a null uuid,
+   and one another account already holds is allowed (accounts may be shared).
 2. `admin.auth.admin.createUser` (`email_confirm: true` — email confirmation is disabled
    platform-wide). The new-user trigger seeds a `customer`-role profile.
 3. `register_gedu` RPC — one transaction: promote `customer`→`gedu`, swap
@@ -76,9 +78,16 @@ Verification state is read via `useGeduProfiles` / `useGeduVerificationMap` (lis
 and `useGeduProfile` (detail, seeded with a server fetch). `useSetGeduVerified` invalidates
 the whole `gedu-profiles` key on success.
 
-## Coverage picker reuse
+## Coverage field reuse
 
-The register form and the settings/admin coverage editor render the same presentational
-`CoveragePicker` (`../../components/gedu/coverage-picker.tsx`) — identical tree + cascade
-semantics. The editor wraps it with a Save button (immediate `gedu_locations` mutation);
-the register form collects the selection into the atomic `register_gedu` call instead.
+The register form and the settings/admin coverage editor render the same coverage field
+(`../../components/gedu/`) — a fixed-height box of claim chips plus the shared location
+picker, with identical positive-selection semantics (one tick is one independent "I cover
+this subtree" claim; ticking a parent never touches its descendants). The editor wraps it
+with a Save button (immediate `gedu_locations` mutation); the register form collects the
+selection into the atomic `register_gedu` call instead.
+
+Both hold ticks as `locations` row ids, because the picker browses that table and a
+ticked node is already a row. Nothing is resolved at commit, and there is no claim the
+field can display but cannot store — which is why the register form can collect coverage
+before an account exists at all (the table is anon-readable reference data).

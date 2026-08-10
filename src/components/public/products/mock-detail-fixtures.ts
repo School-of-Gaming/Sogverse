@@ -5,13 +5,12 @@ import type {
 } from "@/types";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import type { ProductDetailRow } from "@/services/products";
-import {
-  registrationCtaKind,
-  type RegistrationCtaKind,
-  type RegistrationState,
-} from "./derive-registration-state";
+import type { RegistrationState } from "./derive-registration-state";
 import type { AuthState, MyParticipationState } from "./signup-panel-view";
-import type { SignupOutcome } from "./purchase-confirmation-view";
+import type {
+  ConfirmationNoticeKind,
+  SignupOutcome,
+} from "./purchase-confirmation-view";
 
 // Synthetic fixtures, one per curated preview scenario. The mental model: each
 // scenario IS a mocked product. The /admin/ui-components card and the
@@ -21,10 +20,20 @@ import type { SignupOutcome } from "./purchase-confirmation-view";
 //
 // The set is curated down to the *visually distinct* surfaces worth eyeballing,
 // grouped by product type:
-//   • Consumer club — a subscription club (open) + an ended product.
+//   • Consumer club — a subscription club, open, and one still short of its
+//     signup threshold.
 //   • Municipality club — the full seat-fill range, plus the pre-launch
 //     countdown across the three auth states a parent can be in.
-//   • Event — a free product.
+//   • Camp — one not yet started, one underway, and one finished. Camps and
+//     events lock late joins at different moments (a camp from local midnight
+//     on its start date, an event only once its session has finished) and say
+//     so differently — "Already started" vs. "Already over" — so both labels
+//     need somewhere to be looked at.
+//   • Event — a free product, plus the same event once it's over.
+//
+// Between them the scenarios cover every registration state the card can
+// render, including the one a parent can only reach by leaving a tab open past
+// midnight. A state with no scenario here is a state nobody can look at.
 //
 // Most scenarios author their registration `state` directly so they stay
 // deterministic regardless of the wall clock. The countdown scenarios are the
@@ -33,18 +42,22 @@ import type { SignupOutcome } from "./purchase-confirmation-view";
 
 export type PreviewScenario =
   | "consumer-club"
+  | "consumer-club-threshold"
   | "muni-empty"
   | "muni-filling"
   | "muni-almost-full"
   | "muni-full-closed"
   | "muni-full-waitlist"
+  | "muni-uncapped"
   | "muni-opens-10s"
   | "muni-opens-signed-out"
   | "muni-opens-no-gamers"
   | "muni-opens-with-gamers"
   | "camp-open"
   | "camp-running"
-  | "free-event";
+  | "camp-ended"
+  | "free-event"
+  | "event-over";
 
 // Which signed-in shape the panel renders against. `signed-out` → the auth
 // overlay (sign in / create account); `no-gamers` → a `ready` customer whose
@@ -112,6 +125,22 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
       waitlistEnabled: false,
     },
   },
+  "consumer-club-threshold": {
+    // The state easiest to forget exists. A club that needs a
+    // minimum intake before it can run sits here until the signups arrive, and
+    // it is deliberately undramatic: threshold handling is deferred, so there
+    // is no meter and no countdown, and the card is an ordinary openable one
+    // carrying an ordinary "View". That sameness *is* the thing to eyeball —
+    // it is why the state is easy to forget exists.
+    label: "€45/mo — awaiting threshold",
+    productType: "consumer_club",
+    billingMode: "paid",
+    seatCount: null,
+    waitlistEnabled: false,
+    priceCentsEur: 4500,
+    auth: "signed-in-with-gamers",
+    state: { kind: "pending_thr", threshold: 6, count: 2 },
+  },
   "muni-empty": {
     label: "15 / 15 seats",
     productType: "municipality_club",
@@ -165,6 +194,27 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     priceCentsEur: null,
     auth: "signed-in-with-gamers",
     state: { kind: "full_waitlist", seatCount: 15 },
+  },
+  "muni-uncapped": {
+    // A municipality club whose contracted number of places has not been
+    // entered yet. The seat bar renders nothing at all without a cap, which
+    // leaves the CTA the only thing in the footer row — the one case the
+    // footer's `ml-auto` exists for, and before this branch the one case where
+    // the CTA slid to the left-hand edge. Every other muni scenario pins a seat
+    // count, which is exactly why nobody saw it.
+    label: "No cap set — footer left empty",
+    productType: "municipality_club",
+    billingMode: "external_contract",
+    seatCount: null,
+    waitlistEnabled: false,
+    priceCentsEur: null,
+    auth: "signed-in-with-gamers",
+    state: {
+      kind: "open",
+      seatCount: null,
+      seatsLeft: null,
+      waitlistEnabled: false,
+    },
   },
   "muni-opens-10s": {
     label: "Opens in 10 seconds (live)",
@@ -222,8 +272,8 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     },
   },
   "camp-running": {
-    // Camps lock late joins once running — the card shows a disabled
-    // "Already started" button, and there's no detail page to open.
+    // Camps lock late joins once running — the card states "Already started"
+    // as muted text, carries no chevron, and has no detail page to open.
     label: "Already started",
     productType: "camp",
     billingMode: "paid",
@@ -231,7 +281,26 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     waitlistEnabled: false,
     priceCentsEur: 25000,
     auth: "signed-in-with-gamers",
-    state: { kind: "running_late" },
+    state: { kind: "running_late", phase: "underway" },
+  },
+  "camp-ended": {
+    // A parent cannot reach this from a fetch — the browse query and the
+    // service filter between them exclude every status that produces `ended` —
+    // but the card derives from a clock that ticks every 30 seconds, so a tab
+    // left open past a product's local midnight lands here in place. It is the
+    // only state that arrives that way, the only one with a desaturated card and
+    // a note instead of a footer row, and therefore the only one with nowhere
+    // else to be looked at. It is also the documented layout exception: that
+    // footer swap changes the card's height, so this is where you go to see the
+    // shrink that happens at midnight.
+    label: "Finished — desaturated, inert",
+    productType: "camp",
+    billingMode: "paid",
+    seatCount: null,
+    waitlistEnabled: false,
+    priceCentsEur: 25000,
+    auth: "signed-in-with-gamers",
+    state: { kind: "ended" },
   },
   "free-event": {
     label: "Free — open",
@@ -248,6 +317,26 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
       waitlistEnabled: false,
     },
   },
+  "event-over": {
+    // The same evening event after it finished. An event stays joinable right
+    // through its session, so the only late-join lock it ever shows is this
+    // one — hence a different label from the camp above ("Already over", not
+    // "Already started"). Same dead-end treatment: a muted label, no chevron,
+    // no detail page behind it. It stays on the browse grid until its end_date
+    // rolls over, which is the window this card represents — after that it
+    // becomes `camp-ended`'s state, which looks quite different.
+    label: "Already over",
+    productType: "event",
+    billingMode: "free",
+    // No cap, like its open sibling: `scenarioFilledSeats` only derives a
+    // filled count from open/full states, so a capped fixture in a late-join
+    // state would draw an empty seat bar on a finished event.
+    seatCount: null,
+    waitlistEnabled: false,
+    priceCentsEur: null,
+    auth: "signed-in-with-gamers",
+    state: { kind: "running_late", phase: "over" },
+  },
 };
 
 // Render order for the UI Components grid. Explicit (rather than `Object.keys`)
@@ -255,18 +344,22 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
 // the subsections come out in this order.
 const SCENARIO_ORDER: PreviewScenario[] = [
   "consumer-club",
+  "consumer-club-threshold",
   "muni-empty",
   "muni-filling",
   "muni-almost-full",
   "muni-full-closed",
   "muni-full-waitlist",
+  "muni-uncapped",
   "muni-opens-10s",
   "muni-opens-signed-out",
   "muni-opens-no-gamers",
   "muni-opens-with-gamers",
   "camp-open",
   "camp-running",
+  "camp-ended",
   "free-event",
+  "event-over",
 ];
 
 // Subsection heading per product type (the type context the short labels omit).
@@ -292,21 +385,63 @@ export function isPreviewScenario(s: string): s is PreviewScenario {
   return s in SCENARIOS;
 }
 
-// CTA kind for a scenario without needing the wall clock — a countdown is
-// always `closed_pre`, which is a primary "View" CTA.
-function configCtaKind(c: ScenarioConfig): RegistrationCtaKind {
-  return "opensInMs" in c ? "primary" : registrationCtaKind(c.state);
+// The three states the paid confirmation page lands in when there is no order
+// row to show yet (or ever). Not product scenarios — no fixture builds them,
+// `PurchaseConfirmationNotice` takes only which state it is — but their slugs
+// live here so the scene registry (data-only, no React) and the scene renderer
+// read one list. All three follow a payment that *succeeded*, which is why
+// none of them may read as an error.
+export const CONFIRMATION_NOTICE_SCENARIOS = [
+  {
+    slug: "paid-finalizing",
+    kind: "finalizing",
+    label: "Finalizing — webhook not landed yet",
+    description:
+      "The bounded waiting state: payment received, order row not written yet. On the live page a wrapper polls and swaps this out; here it just holds.",
+  },
+  {
+    slug: "paid-timed-out",
+    kind: "timedOut",
+    label: "Timed out — stopped waiting",
+    description:
+      "The poll bound ran out. The copy stops promising “a moment” and says where the signup will appear and how to reach us.",
+  },
+  {
+    slug: "paid-duplicate",
+    kind: "duplicatePayment",
+    label: "Duplicate payment — seat already taken",
+    description:
+      "A second payment for a product the gamer already holds a spot on. No row will ever carry this session, so waiting would never resolve.",
+  },
+] as const satisfies readonly {
+  slug: string;
+  kind: ConfirmationNoticeKind;
+  label: string;
+  description: string;
+}[];
+
+export type ConfirmationNoticeScenario =
+  (typeof CONFIRMATION_NOTICE_SCENARIOS)[number]["slug"];
+
+/** The notice entry for a slug, or null when the slug is a product scenario. */
+export function findConfirmationNotice(
+  s: string,
+): (typeof CONFIRMATION_NOTICE_SCENARIOS)[number] | null {
+  return CONFIRMATION_NOTICE_SCENARIOS.find((n) => n.slug === s) ?? null;
 }
 
-// Whether a scenario's card links into a full detail page. Only states whose
-// browse-card CTA is a working "View" button do — a parent can never reach the
-// detail page of a full/closed or ended product, so there's nothing to
-// preview. The /preview route 404s the rest rather than mocking a page no one
-// lands on. Single-sourced from `registrationCtaKind` so this never drifts from
-// the actual card CTA.
-export function scenarioHasDetailPage(slug: PreviewScenario): boolean {
-  return configCtaKind(SCENARIOS[slug]) === "primary";
-}
+// CTA kind for a scenario without needing the wall clock — a countdown is
+// always `closed_pre`, which is a primary "View" CTA.
+// There is deliberately no "does this scenario's card link anywhere" helper.
+// The demo grid hands every scenario its href and lets the card decide from the
+// state, which is the same split the shop makes — a second copy of that rule
+// here could only ever drift from the first.
+//
+// Note also that a card being inert says nothing about whether a preview page
+// exists: every scenario is previewable full-page from the UI Previews list,
+// because the scene registry maps the whole of `PREVIEW_SCENARIOS`. The closed
+// states especially, since no card links to them and that page is the only way
+// to look at one.
 
 // Seats already taken on a scenario — the count the municipality seat-fill bar
 // reads. Derived from the authored state so the bar and the card's state stay
@@ -461,8 +596,15 @@ function buildBaseProduct(
     spoken_language_code: "fi",
     location_id: locationFixture?.id ?? null,
     locations: locationFixture,
-    padlet_url: null,
-    signup_threshold: null,
+    // There is deliberately no lesson-material field here. It moved off
+    // `products` into `product_staff_details` precisely so that no family-facing
+    // read path can reach it, and this fixture stands for one of those.
+    // Taken from the authored state rather than pinned null, so a
+    // threshold-pending scenario's row agrees with the state sitting beside it
+    // — the card reads the state, but a row claiming no threshold while the
+    // state names one is a fixture that contradicts itself, and the next
+    // person to build a surface off `product` inherits the contradiction.
+    signup_threshold: state.kind === "pending_thr" ? state.threshold : null,
     start_date: startDate,
     end_date: endDate,
     timezone: "Europe/Helsinki",
@@ -474,7 +616,6 @@ function buildBaseProduct(
     // the value just needs to be valid. Events get Fortnite, the rest
     // Minecraft Java.
     topic: productType === "event" ? "fortnite" : "minecraft_java",
-    refund_policy_days: null,
     primary_gedu_fee_cents: null,
     assistant_gedu_fee_cents: null,
     municipality_fee_cents: null,

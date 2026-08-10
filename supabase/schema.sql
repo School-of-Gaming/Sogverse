@@ -4,7 +4,7 @@
 
 
 -- Dumped from database version 17.6
--- Dumped by pg_dump version 18.2
+-- Dumped by pg_dump version 17.6
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -94,6 +94,13 @@ CREATE TYPE public.participation_status AS ENUM (
 
 
 --
+-- Name: TYPE participation_status; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.participation_status IS 'Participation lifecycle. ''reserving'' is RETIRED (2026-08, migration 00139): paid participations are created at payment confirmation, so nothing writes it. PostgreSQL cannot drop an enum value, hence it remains listed.';
+
+
+--
 -- Name: payment_purpose; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -127,7 +134,8 @@ CREATE TYPE public.product_topic AS ENUM (
     'minecraft_education',
     'minecraft_bedrock',
     'fortnite',
-    'webinar'
+    'roblox_studio',
+    'pokemon_go'
 );
 
 
@@ -140,20 +148,6 @@ CREATE TYPE public.product_type AS ENUM (
     'municipality_club',
     'camp',
     'event'
-);
-
-
---
--- Name: refund_reason; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.refund_reason AS ENUM (
-    'session_cancelled_in_window',
-    'admin_refund',
-    'product_cancelled',
-    'subscription_item_removed',
-    'subscription_period_proration',
-    'duplicate_payment'
 );
 
 
@@ -634,85 +628,73 @@ $$;
 
 
 --
--- Name: confirm_reservation(uuid); Type: FUNCTION; Schema: public; Owner: -
+-- Name: confirm_paid_participation(uuid, uuid, uuid, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.confirm_reservation(p_reservation_id uuid) RETURNS jsonb
+CREATE FUNCTION public.confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
 DECLARE
-  v_product_id   UUID;
-  v_gamer_id     UUID;
-  v_customer_id  UUID;
-  v_status       public.participation_status;
-  v_conflict_id  UUID;
+  v_conflict_id      UUID;
+  v_conflict_session TEXT;
+  v_conflict_status  public.participation_status;
+  v_participation_id UUID;
 BEGIN
-  SELECT product_id, gamer_id, customer_id, status
-    INTO v_product_id, v_gamer_id, v_customer_id, v_status
-    FROM public.participations
-    WHERE id = p_reservation_id
-    FOR UPDATE;
-
+  PERFORM 1 FROM public.products WHERE id = p_product_id FOR UPDATE;
   IF NOT FOUND THEN
-    RETURN jsonb_build_object('kind', 'orphan');
+    RAISE EXCEPTION 'product % does not exist', p_product_id
+      USING ERRCODE = 'no_data_found';
   END IF;
 
-  -- Idempotent replay of the same reservation's webhook.
-  IF v_status = 'active' THEN
-    RETURN jsonb_build_object(
-      'kind', 'confirmed',
-      'participation_id', p_reservation_id,
-      'product_id', v_product_id,
-      'gamer_id', v_gamer_id,
-      'customer_id', v_customer_id,
-      'idempotent', TRUE
-    );
-  END IF;
-
-  IF v_status <> 'reserving' THEN
-    RETURN jsonb_build_object('kind', 'orphan');
-  END IF;
-
-  -- Pre-check the partial UNIQUE: is there another non-reserving row for
-  -- this (product, gamer)? If so, the parent already has a confirmed seat
-  -- (or waitlist position) from a different reservation, and this Stripe
-  -- payment is a duplicate. Return early so the route layer can refund.
-  SELECT id
-    INTO v_conflict_id
+  -- Pre-check the partial UNIQUE on (product_id, gamer_id): under the gate lock
+  -- this decides the outcome, and the index itself is left as the backstop.
+  SELECT id, status, stripe_checkout_session_id
+    INTO v_conflict_id, v_conflict_status, v_conflict_session
     FROM public.participations
-    WHERE product_id = v_product_id
-      AND gamer_id   = v_gamer_id
-      AND id        <> p_reservation_id
+    WHERE product_id = p_product_id
+      AND gamer_id   = p_gamer_id
       AND status    IN ('active', 'waitlisted', 'completed')
     LIMIT 1;
 
   IF v_conflict_id IS NOT NULL THEN
+    IF v_conflict_session IS NOT NULL
+       AND v_conflict_session = p_checkout_session_id THEN
+      RETURN jsonb_build_object(
+        'kind', 'confirmed',
+        'participation_id', v_conflict_id,
+        'idempotent', TRUE
+      );
+    END IF;
+
     RETURN jsonb_build_object(
       'kind', 'duplicate_payment',
-      'reservation_id', p_reservation_id,
       'existing_participation_id', v_conflict_id,
-      'product_id', v_product_id,
-      'gamer_id', v_gamer_id,
-      'customer_id', v_customer_id
+      'existing_status', v_conflict_status::text
     );
   END IF;
 
-  UPDATE public.participations
-     SET status = 'active',
-         reserved_until = NULL
-   WHERE id = p_reservation_id;
+  INSERT INTO public.participations (
+    product_id, gamer_id, customer_id, status, stripe_checkout_session_id
+  ) VALUES (
+    p_product_id, p_gamer_id, p_customer_id, 'active', p_checkout_session_id
+  )
+  RETURNING id INTO v_participation_id;
 
   RETURN jsonb_build_object(
     'kind', 'confirmed',
-    'participation_id', p_reservation_id,
-    'product_id', v_product_id,
-    'gamer_id', v_gamer_id,
-    'customer_id', v_customer_id,
+    'participation_id', v_participation_id,
     'idempotent', FALSE
   );
 END;
 $$;
+
+
+--
+-- Name: FUNCTION confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text) IS 'Creates the active participation for a paid signup once Stripe confirms payment. service_role only — the arguments come from Checkout Session metadata we wrote. Returns kind=confirmed with participation_id (idempotent=true when this same session already bought the seat), or kind=duplicate_payment with existing_participation_id when a different payment already put this gamer on this product.';
 
 
 --
@@ -730,25 +712,10 @@ $$;
 
 
 --
--- Name: count_seats_taken(uuid); Type: FUNCTION; Schema: public; Owner: -
+-- Name: create_gamer(uuid, uuid, text, text, date, public.gender_type, text, text, text, bigint); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.count_seats_taken(p_product_id uuid) RETURNS integer
-    LANGUAGE sql STABLE SECURITY DEFINER
-    SET search_path TO ''
-    AS $$
-  SELECT COUNT(*)::INTEGER
-    FROM public.participations
-    WHERE product_id = p_product_id
-      AND status IN ('active', 'reserving');
-$$;
-
-
---
--- Name: create_gamer(uuid, uuid, text, text, date, public.gender_type, text, text); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type DEFAULT NULL::public.gender_type, p_minecraft_username text DEFAULT NULL::text, p_minecraft_uuid text DEFAULT NULL::text) RETURNS void
+CREATE FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type DEFAULT NULL::public.gender_type, p_minecraft_username text DEFAULT NULL::text, p_minecraft_uuid text DEFAULT NULL::text, p_roblox_username text DEFAULT NULL::text, p_roblox_user_id bigint DEFAULT NULL::bigint) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -775,13 +742,22 @@ begin
   insert into public.gamer_profiles (user_id, date_of_birth, gender)
   values (p_gamer_id, p_date_of_birth, p_gender);
 
-  -- Optional Minecraft link. A unique_violation here (the minecraft_uuid was
-  -- claimed between the route's pre-check and now) propagates as SQLSTATE 23505,
-  -- which the route maps to a 409 — and, being inside this transaction, aborts
-  -- the whole creation rather than leaving a half-built gamer.
+  -- Optional Minecraft link. Nothing here can reject a username: the account may
+  -- be shared with another Sogverse user, and an unresolvable one simply lands
+  -- with a null uuid. The insert is inside this transaction so a failure from any
+  -- other cause still aborts the whole creation rather than leaving a half-built
+  -- gamer.
   if p_minecraft_username is not null then
     insert into public.minecraft_accounts (user_id, minecraft_username, minecraft_uuid)
     values (p_gamer_id, p_minecraft_username, p_minecraft_uuid);
+  end if;
+
+  -- Optional Roblox link, on exactly the same terms: a shared account is fine,
+  -- a handle Roblox could not resolve lands with a null account id, and the two
+  -- platforms are independent — a child may have given one, both, or neither.
+  if p_roblox_username is not null then
+    insert into public.roblox_accounts (user_id, roblox_username, roblox_user_id)
+    values (p_gamer_id, p_roblox_username, p_roblox_user_id);
   end if;
 
   -- Link to the parent. The validate_parent_gamer_on_insert trigger re-checks
@@ -807,7 +783,6 @@ DECLARE
   v_existing_id           UUID;
   v_existing_status       public.participation_status;
   v_participation_id      UUID;
-  v_reserved_until        TIMESTAMPTZ;
   v_is_parent             BOOLEAN;
 BEGIN
   SELECT * INTO v_product FROM public.products WHERE id = p_product_id FOR UPDATE;
@@ -849,14 +824,19 @@ BEGIN
       USING ERRCODE = 'check_violation';
   END IF;
 
+  -- The already-enrolled gate. Its status list has to match the one
+  -- `confirm_paid_participation` conflicts on, or a signup can pass here, take
+  -- the parent's money, and then be refused at confirmation with nothing to
+  -- show for it. 'completed' is the member that was missing: nothing writes
+  -- that status today, so the gap was unreachable rather than harmless.
   SELECT id, status INTO v_existing_id, v_existing_status
     FROM public.participations
     WHERE product_id = p_product_id
       AND gamer_id = p_gamer_id
-      AND status IN ('active', 'waitlisted')
+      AND status IN ('active', 'waitlisted', 'completed')
     LIMIT 1;
   IF v_existing_id IS NOT NULL THEN
-    RAISE EXCEPTION 'gamer % already has a % participation on this product', p_gamer_id, v_existing_status
+    RAISE EXCEPTION 'gamer % already has a participation on this product (status: %)', p_gamer_id, v_existing_status
       USING ERRCODE = 'unique_violation';
   END IF;
 
@@ -865,7 +845,7 @@ BEGIN
   -- honored — earlier versions only checked the cap on paid signups, so a free
   -- product with seat_count=20 silently accepted the 21st signup.
   IF v_product.seat_count IS NOT NULL THEN
-    v_seats_taken := public.count_seats_taken(p_product_id);
+    v_seats_taken := public.count_active_seats(p_product_id);
     IF v_seats_taken >= v_product.seat_count THEN
       RETURN jsonb_build_object('kind', 'full');
     END IF;
@@ -888,9 +868,9 @@ BEGIN
     );
   END IF;
 
-  -- Municipality clubs are invoiced off-platform: no Stripe, no reservation.
-  -- Mirrors the free branch (instant active), gated on billing_mode so a paid
-  -- product can never be registered without payment.
+  -- Municipality clubs are invoiced off-platform: no Stripe, nothing to
+  -- confirm later. Mirrors the free branch (instant active), gated on
+  -- billing_mode so a paid product can never be registered without payment.
   IF p_purchase_shape = 'external' THEN
     IF v_product.billing_mode <> 'external_contract' THEN
       RAISE EXCEPTION 'product is not externally contracted'
@@ -908,28 +888,21 @@ BEGIN
     );
   END IF;
 
-  v_reserved_until := NOW() + INTERVAL '30 minutes';
-  INSERT INTO public.participations (
-    product_id, gamer_id, customer_id, status, reserved_until
-  ) VALUES (
-    p_product_id, p_gamer_id, p_customer_id, 'reserving', v_reserved_until
-  )
-  RETURNING id INTO v_participation_id;
-
-  RETURN jsonb_build_object(
-    'kind', 'reserving',
-    'participation_id', v_participation_id,
-    'reserved_until', v_reserved_until
-  );
+  -- Paid shapes (subscription_monthly, single_payment). Everything above has
+  -- passed, so this signup is one the platform would accept — but no row is
+  -- written until the money arrives. The caller creates the Stripe Checkout
+  -- Session next; if the parent abandons it, nothing was left behind to clean
+  -- up. `confirm_paid_participation` writes the row from the webhook.
+  RETURN jsonb_build_object('kind', 'validated');
 END;
 $$;
 
 
 --
--- Name: create_product(public.product_type, public.billing_mode, jsonb, public.product_topic, integer, integer, text, boolean, text, timestamp with time zone, public.product_status, boolean, boolean, text, text, uuid, integer, date, date, integer, integer, jsonb, jsonb, uuid[], integer, integer, integer); Type: FUNCTION; Schema: public; Owner: -
+-- Name: create_product(public.product_type, public.billing_mode, jsonb, public.product_topic, integer, integer, text, boolean, text, timestamp with time zone, public.product_status, boolean, boolean, text, uuid, integer, date, date, integer, jsonb, jsonb, uuid[], integer, integer, integer, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_status public.product_status DEFAULT 'draft'::public.product_status, p_is_visible boolean DEFAULT false, p_waitlist_enabled boolean DEFAULT true, p_image_path text DEFAULT NULL::text, p_padlet_url text DEFAULT NULL::text, p_location_id uuid DEFAULT NULL::uuid, p_signup_threshold integer DEFAULT NULL::integer, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_seat_count integer DEFAULT NULL::integer, p_refund_policy_days integer DEFAULT NULL::integer, p_schedule_slots jsonb DEFAULT NULL::jsonb, p_prices jsonb DEFAULT NULL::jsonb, p_holiday_calendar_ids uuid[] DEFAULT NULL::uuid[], p_primary_gedu_fee_cents integer DEFAULT NULL::integer, p_assistant_gedu_fee_cents integer DEFAULT NULL::integer, p_municipality_fee_cents integer DEFAULT NULL::integer) RETURNS uuid
+CREATE FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_status public.product_status DEFAULT 'draft'::public.product_status, p_is_visible boolean DEFAULT false, p_waitlist_enabled boolean DEFAULT true, p_image_path text DEFAULT NULL::text, p_location_id uuid DEFAULT NULL::uuid, p_signup_threshold integer DEFAULT NULL::integer, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_seat_count integer DEFAULT NULL::integer, p_schedule_slots jsonb DEFAULT NULL::jsonb, p_prices jsonb DEFAULT NULL::jsonb, p_holiday_calendar_ids uuid[] DEFAULT NULL::uuid[], p_primary_gedu_fee_cents integer DEFAULT NULL::integer, p_assistant_gedu_fee_cents integer DEFAULT NULL::integer, p_municipality_fee_cents integer DEFAULT NULL::integer, p_material_url text DEFAULT NULL::text) RETURNS uuid
     LANGUAGE plpgsql
     SET search_path TO ''
     AS $$
@@ -938,6 +911,7 @@ DECLARE
   v_slot          JSONB;
   v_price         JSONB;
   v_translation   JSONB;
+  v_material_url  TEXT := NULLIF(btrim(COALESCE(p_material_url, '')), '');
 BEGIN
   PERFORM public.assert_admin();
 
@@ -948,23 +922,29 @@ BEGIN
 
   INSERT INTO public.products (
     product_type, billing_mode, topic,
-    min_age, max_age, spoken_language_code, image_path, padlet_url,
+    min_age, max_age, spoken_language_code, image_path,
     location_id, is_remote, status, signup_threshold,
     start_date, end_date, timezone,
     seat_count, waitlist_enabled, registration_opens_at,
-    refund_policy_days, is_visible, created_by,
+    is_visible, created_by,
     primary_gedu_fee_cents, assistant_gedu_fee_cents, municipality_fee_cents
   )
   VALUES (
     p_product_type, p_billing_mode, p_topic,
-    p_min_age, p_max_age, p_spoken_language_code, p_image_path, p_padlet_url,
+    p_min_age, p_max_age, p_spoken_language_code, p_image_path,
     p_location_id, p_is_remote, p_status, p_signup_threshold,
     p_start_date, p_end_date, p_timezone,
     p_seat_count, p_waitlist_enabled, p_registration_opens_at,
-    p_refund_policy_days, p_is_visible, auth.uid(),
+    p_is_visible, auth.uid(),
     p_primary_gedu_fee_cents, p_assistant_gedu_fee_cents, p_municipality_fee_cents
   )
   RETURNING id INTO v_product_id;
+
+  -- Staff-only, so it lands in its own table. No row when there is no link.
+  IF v_material_url IS NOT NULL THEN
+    INSERT INTO public.product_staff_details (product_id, material_url)
+    VALUES (v_product_id, v_material_url);
+  END IF;
 
   FOR v_translation IN SELECT * FROM jsonb_array_elements(p_translations)
   LOOP
@@ -1029,9 +1009,10 @@ CREATE FUNCTION public.demote_to_waitlist(p_participation_id uuid) RETURNS jsonb
     SET search_path TO ''
     AS $$
 DECLARE
-  v_product_id  UUID;
-  v_status      public.participation_status;
-  v_now         TIMESTAMPTZ;
+  v_product_id   UUID;
+  v_product_type public.product_type;
+  v_status       public.participation_status;
+  v_now          TIMESTAMPTZ;
 BEGIN
   PERFORM public.assert_admin();
 
@@ -1042,7 +1023,19 @@ BEGIN
     RAISE EXCEPTION 'Participation not found' USING ERRCODE = 'P0002';
   END IF;
 
-  PERFORM 1 FROM public.products WHERE id = v_product_id FOR UPDATE;
+  -- Same product-gate lock as before, now also reading the type it needs one
+  -- statement later rather than issuing a second query for it.
+  SELECT product_type INTO v_product_type
+    FROM public.products WHERE id = v_product_id FOR UPDATE;
+
+  -- Refused for the operation, not for the row's current state — so this
+  -- precedes the idempotent noop below, the way both siblings refuse a consumer
+  -- club before looking at anything else. There is no demotion of a consumer
+  -- club that is correct to perform, retried or otherwise.
+  IF v_product_type = 'consumer_club' THEN
+    RAISE EXCEPTION 'demotion to the waitlist is not supported for consumer clubs'
+      USING ERRCODE = 'check_violation';
+  END IF;
 
   -- Idempotent: already on the waitlist.
   IF v_status = 'waitlisted' THEN
@@ -1070,6 +1063,77 @@ BEGIN
   );
 END;
 $$;
+
+
+--
+-- Name: FUNCTION demote_to_waitlist(p_participation_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.demote_to_waitlist(p_participation_id uuid) IS 'Admin-gated demotion of an active participation to the back of the product waitlist, under the product gate lock. Refuses consumer clubs: those are the only subscription-billed type, and a waitlisted row carrying a live Stripe subscription could be deleted by the parent via leave_my_waitlist_spot, cascading family_subscriptions and orphaning the subscription.';
+
+
+--
+-- Name: derive_group_session_window(uuid, date); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.derive_group_session_window(p_group_id uuid, p_session_date date) RETURNS tstzrange
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_timezone text;
+  v_start    time;
+  v_duration integer;
+  v_starts   timestamptz;
+BEGIN
+  IF p_group_id IS NULL OR p_session_date IS NULL THEN
+    RETURN NULL;
+  END IF;
+
+  SELECT p.timezone
+    INTO v_timezone
+    FROM public.product_groups g
+    JOIN public.products p ON p.id = g.product_id
+   WHERE g.id = p_group_id;
+
+  IF v_timezone IS NULL THEN
+    RETURN NULL;
+  END IF;
+
+  SELECT s.start_time, s.duration_minutes
+    INTO v_start, v_duration
+    FROM public.product_groups g
+    JOIN public.schedule_slots s ON s.product_id = g.product_id
+   WHERE g.id = p_group_id
+     -- schedule_slots.weekday is 0 = Monday; ISODOW is 1 = Monday.
+     AND s.weekday = (EXTRACT(ISODOW FROM p_session_date)::integer - 1)
+   ORDER BY s.start_time
+   LIMIT 1;
+
+  IF v_start IS NULL THEN
+    RETURN NULL;
+  END IF;
+
+  -- `timestamp AT TIME ZONE zone` resolves a wall-clock time in that zone to
+  -- the correct instant, so this is DST-correct without any arithmetic of our
+  -- own. Adding the duration to the INSTANT (not to the wall clock) keeps a
+  -- session that straddles a transition the right length.
+  v_starts := (p_session_date + v_start) AT TIME ZONE v_timezone;
+
+  RETURN tstzrange(
+    v_starts,
+    v_starts + make_interval(mins => v_duration),
+    '[)'
+  );
+END;
+$$;
+
+
+--
+-- Name: FUNCTION derive_group_session_window(p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.derive_group_session_window(p_group_id uuid, p_session_date date) IS 'Server-side derivation of a session''s scheduled instants from the CURRENT schedule. Holiday-blind on purpose. NULL when the date matches no slot weekday.';
 
 
 --
@@ -1142,6 +1206,62 @@ $$;
 
 
 --
+-- Name: ensure_group_session(uuid, date); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.ensure_group_session(p_group_id uuid, p_session_date date) RETURNS uuid
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_window     tstzrange;
+  v_session_id uuid;
+  v_uid        uuid := (SELECT auth.uid());
+BEGIN
+  SELECT id INTO v_session_id
+    FROM public.group_sessions
+   WHERE group_id = p_group_id AND session_date = p_session_date;
+
+  IF v_session_id IS NOT NULL THEN
+    RETURN v_session_id;
+  END IF;
+
+  v_window := public.derive_group_session_window(p_group_id, p_session_date);
+  IF v_window IS NULL THEN
+    RAISE EXCEPTION 'No scheduled session on % for this group', p_session_date
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  INSERT INTO public.group_sessions (
+    group_id, session_date, starts_at, ends_at, created_by, updated_by
+  )
+  VALUES (
+    p_group_id, p_session_date, lower(v_window), upper(v_window), v_uid, v_uid
+  )
+  ON CONFLICT (group_id, session_date) DO NOTHING
+  RETURNING id INTO v_session_id;
+
+  IF v_session_id IS NULL THEN
+    -- A concurrent writer materialized it between the SELECT and the INSERT.
+    -- Theirs is the snapshot; take it rather than overwriting.
+    SELECT id INTO v_session_id
+      FROM public.group_sessions
+     WHERE group_id = p_group_id AND session_date = p_session_date;
+  END IF;
+
+  RETURN v_session_id;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION ensure_group_session(p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.ensure_group_session(p_group_id uuid, p_session_date date) IS 'Find-or-create the session row for a (group, date), snapshotting the schedule instants at first write and never re-deriving them afterwards.';
+
+
+--
 -- Name: ensure_product_keeps_at_least_one_translation(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1174,31 +1294,27 @@ $$;
 
 
 --
--- Name: expire_reservation(uuid); Type: FUNCTION; Schema: public; Owner: -
+-- Name: gedu_teaches_group(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.expire_reservation(p_reservation_id uuid) RETURNS jsonb
-    LANGUAGE plpgsql SECURITY DEFINER
+CREATE FUNCTION public.gedu_teaches_group(p_group_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE
-  v_product_id UUID;
-  v_status     public.participation_status;
-BEGIN
-  SELECT product_id, status INTO v_product_id, v_status
-    FROM public.participations WHERE id = p_reservation_id;
-
-  IF NOT FOUND OR v_status <> 'reserving' THEN
-    RETURN jsonb_build_object('kind', 'noop');
-  END IF;
-
-  PERFORM 1 FROM public.products WHERE id = v_product_id FOR UPDATE;
-
-  DELETE FROM public.participations WHERE id = p_reservation_id AND status = 'reserving';
-
-  RETURN jsonb_build_object('kind', 'expired');
-END;
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.gedu_group_assignments ga
+     WHERE ga.group_id = p_group_id
+       AND ga.gedu_id  = (SELECT auth.uid())
+  );
 $$;
+
+
+--
+-- Name: FUNCTION gedu_teaches_group(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.gedu_teaches_group(p_group_id uuid) IS 'Internal predicate: is the caller assigned to this group? Not exposed to authenticated — it is called from inside the SECURITY DEFINER gedu RPCs.';
 
 
 --
@@ -1231,7 +1347,6 @@ BEGIN
   SELECT jsonb_build_object(
     'id',           p.id,
     'product_type', p.product_type,
-    'padlet_url',   p.padlet_url,
     'timezone',     p.timezone,
     'start_date',   p.start_date,
     'end_date',     p.end_date,
@@ -1344,10 +1459,184 @@ $$;
 
 
 --
+-- Name: get_gedu_group_feed(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_gedu_group_feed(p_group_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_product_id uuid;
+  v_product    jsonb;
+  v_group      jsonb;
+  v_site       jsonb;
+  v_roster     jsonb;
+  v_sessions   jsonb;
+BEGIN
+  PERFORM public.assert_role('gedu');
+
+  -- v1 shows a gedu only their OWN group's feed. Peer-group feeds are not a
+  -- schema restriction — relaxing this to "any group on a product the caller is
+  -- assigned to" is a change to this predicate alone, and nothing downstream
+  -- assumes the caller teaches the group they are reading.
+  IF NOT public.gedu_teaches_group(p_group_id) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT g.product_id INTO v_product_id
+    FROM public.product_groups g WHERE g.id = p_group_id;
+
+  SELECT jsonb_build_object(
+    'id',           p.id,
+    'product_type', p.product_type,
+    'timezone',     p.timezone,
+    'start_date',   p.start_date,
+    'end_date',     p.end_date,
+    'is_remote',    p.is_remote,
+    -- Gedu-only, and stored somewhere only this function and an admin can
+    -- reach. This document is never served to a parent or a gamer.
+    'material_url', psd.material_url,
+    'translations', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+               'locale',      pt.locale,
+               'name',        pt.name,
+               'description', pt.short_description
+             ) ORDER BY pt.locale)
+        FROM public.product_translations pt WHERE pt.product_id = p.id
+    ), '[]'::jsonb),
+    'schedule_slots', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+               'weekday',          ss.weekday,
+               'start_time',       to_char(ss.start_time, 'HH24:MI:SS'),
+               'duration_minutes', ss.duration_minutes
+             ) ORDER BY ss.weekday, ss.start_time)
+        FROM public.schedule_slots ss WHERE ss.product_id = p.id
+    ), '[]'::jsonb)
+  )
+  INTO v_product
+  FROM public.products p
+  LEFT JOIN public.product_staff_details psd ON psd.product_id = p.id
+  WHERE p.id = v_product_id;
+
+  SELECT jsonb_build_object(
+    'id',          g.id,
+    'name',        g.name,
+    'public_note', g.public_note,
+    'gedu_note',   g.gedu_note
+  )
+  INTO v_group
+  FROM public.product_groups g WHERE g.id = p_group_id;
+
+  -- The venue, on in-person products only. A remote municipality club carries a
+  -- location_id too (a municipality, by CHECK), so "has a location" is the
+  -- wrong test and would put a site-notes panel on a club that has no building.
+  SELECT jsonb_build_object(
+    'location_id', l.id,
+    'name',        l.name,
+    'address',     sd.address,
+    'public_note', sd.notes,
+    'gedu_note',   ssd.notes
+  )
+  INTO v_site
+  FROM public.products p
+  JOIN public.locations l ON l.id = p.location_id
+  LEFT JOIN public.site_details sd       ON sd.location_id  = l.id
+  LEFT JOIN public.site_staff_details ssd ON ssd.location_id = l.id
+  WHERE p.id = v_product_id
+    AND p.is_remote = false;
+
+  -- The current roster. There is deliberately no joined-by-date machinery and
+  -- no enrollment-at-the-time derivation: "who was enrolled then" is knowledge
+  -- we do not have and choose not to fake. `signed_up_at` travels with each row
+  -- so the client can tell a child who joined last week from one who has been
+  -- here all term.
+  SELECT COALESCE(jsonb_agg(entry ORDER BY entry->>'first_name'), '[]'::jsonb)
+    INTO v_roster
+    FROM (
+      SELECT jsonb_build_object(
+        'gamer_id',           part.gamer_id,
+        'first_name',         gmp.first_name,
+        'signed_up_at',       part.signed_up_at,
+        'date_of_birth',      gprof.date_of_birth,
+        'gender',             gprof.gender,
+        'minecraft_username', mca.minecraft_username,
+        'minecraft_uuid',     mca.minecraft_uuid,
+        -- Every gamer account is created by a parent who signed up with an
+        -- email, so this is non-null in practice and the wire contract says so.
+        'parent_email', (
+          SELECT pp.email
+            FROM public.parent_gamer pgm
+            JOIN public.profiles pp ON pp.id = pgm.parent_id
+           WHERE pgm.gamer_id = part.gamer_id
+           ORDER BY pgm.created_at ASC NULLS LAST, pgm.id ASC
+           LIMIT 1
+        )
+      ) AS entry
+        FROM public.participations part
+        JOIN public.profiles gmp                ON gmp.id        = part.gamer_id
+        LEFT JOIN public.gamer_profiles gprof   ON gprof.user_id = part.gamer_id
+        LEFT JOIN public.minecraft_accounts mca ON mca.user_id   = part.gamer_id
+       WHERE part.group_id = p_group_id
+         AND part.status   = 'active'::public.participation_status
+    ) AS roster_rows;
+
+  -- Every stored row for the group, newest first — including rows the schedule
+  -- no longer projects. An orphan is history, not a mistake.
+  --
+  -- Two reserved booleans were emitted here until 00151, purely so the document
+  -- mirrored the table. 00151 dropped the columns; nothing replaces them. Their
+  -- names are deliberately not repeated in this body — the end-state assertion
+  -- at the foot of that migration greps this source for them.
+  SELECT COALESCE(jsonb_agg(entry ORDER BY entry->>'session_date' DESC), '[]'::jsonb)
+    INTO v_sessions
+    FROM (
+      SELECT jsonb_build_object(
+        'id',               s.id,
+        'session_date',     s.session_date,
+        'starts_at',        s.starts_at,
+        'ends_at',          s.ends_at,
+        'report',           s.report,
+        'gedu_note',        s.gedu_note,
+        'created_at',       s.created_at,
+        'updated_at',       s.updated_at,
+        'created_by',       s.created_by,
+        'updated_by',       s.updated_by,
+        -- Sparse map keyed by gamer id. A roster member absent from this object
+        -- is UNMARKED, which is a different claim from 'absent'.
+        'attendance', COALESCE((
+          SELECT jsonb_object_agg(a.gamer_id, a.status)
+            FROM public.session_attendance a
+           WHERE a.session_id = s.id
+        ), '{}'::jsonb)
+      ) AS entry
+        FROM public.group_sessions s
+       WHERE s.group_id = p_group_id
+    ) AS session_rows;
+
+  RETURN jsonb_build_object(
+    'product',  v_product,
+    'group',    v_group,
+    'site',     v_site,
+    'roster',   v_roster,
+    'sessions', v_sessions
+  );
+END;
+$$;
+
+
+--
+-- Name: FUNCTION get_gedu_group_feed(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) IS 'One round trip for a gedu group workspace: product shell (with the gedu-only material link, read from product_staff_details), group notes, site notes on in-person products, the current roster, and every stored session row with its sparse attendance map. Contains no schedule expansion — the client owns the calendar math.';
+
+
+--
 -- Name: get_my_assigned_products(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.get_my_assigned_products() RETURNS TABLE(product_id uuid, group_id uuid, timezone text, start_date date, end_date date, padlet_url text, is_remote boolean, product_type public.product_type, product_translations jsonb, schedule_slots jsonb, group_count integer, gamer_count integer)
+CREATE FUNCTION public.get_my_assigned_products() RETURNS TABLE(product_id uuid, group_id uuid, timezone text, start_date date, end_date date, is_remote boolean, product_type public.product_type, product_translations jsonb, schedule_slots jsonb, group_count integer, gamer_count integer)
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
@@ -1363,7 +1652,6 @@ BEGIN
     p.timezone      AS timezone,
     p.start_date    AS start_date,
     p.end_date      AS end_date,
-    p.padlet_url    AS padlet_url,
     p.is_remote     AS is_remote,
     p.product_type  AS product_type,
     COALESCE((
@@ -1407,6 +1695,202 @@ END;
 $$;
 
 
+--
+-- Name: get_my_family_product_feed(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_my_family_product_feed(p_participation_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_uid        uuid := (SELECT auth.uid());
+  v_gamer_id   uuid;
+  v_group_id   uuid;
+  v_product_id uuid;
+  v_gamer      jsonb;
+  v_product    jsonb;
+  v_group      jsonb;
+  v_site       jsonb;
+  v_gedus      jsonb;
+  v_sessions   jsonb;
+BEGIN
+  -- No caller, no answer. This function is scoped entirely to auth.uid(); with
+  -- no uid there is nobody for it to be scoped TO, so there is no correct
+  -- document to return and the only safe reply is a refusal. Checked FIRST and
+  -- on its own, rather than folded into the predicate below, because the whole
+  -- failure this migration exists to fix was a NULL uid disappearing into a
+  -- larger boolean expression.
+  IF v_uid IS NULL THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT part.gamer_id, part.group_id, part.product_id
+    INTO v_gamer_id, v_group_id, v_product_id
+    FROM public.participations part
+   WHERE part.id = p_participation_id;
+
+  -- A participation that does not exist and one belonging to another family
+  -- answer IDENTICALLY, on purpose. Distinguishing them would turn this
+  -- function into an oracle for "is this a real enrollment id", which is a
+  -- question no caller has a right to ask about a row that is not theirs.
+  --
+  -- `IS NOT DISTINCT FROM`, not `=`: the equality form is only safe here
+  -- because of the guard above, and a predicate whose correctness depends on a
+  -- check twenty lines away is one edit away from being wrong again. This form
+  -- is false — never NULL — for every input, so the IF cannot be skipped.
+  IF v_gamer_id IS NULL
+     OR NOT (v_gamer_id IS NOT DISTINCT FROM v_uid
+             OR public.is_parent_of(v_gamer_id))
+  THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  -- An unplaced enrollment (purchased, awaiting a group) has no feed and no
+  -- page: the sessions, the gedus and the group note all hang off the group.
+  -- A DIFFERENT error from the refusal above, and deliberately so — the caller
+  -- owns this row, so there is nothing to conceal from them, and the client
+  -- renders both as not-found anyway. `no_data_found` is P0002, which PostgREST
+  -- maps to a 404; the refusals above are 42501, which it maps to a 403.
+  IF v_group_id IS NULL THEN
+    RAISE EXCEPTION 'Participation % is not placed in a group', p_participation_id
+      USING ERRCODE = 'no_data_found';
+  END IF;
+
+  -- The child this page is about. The page is gamer-scoped and reachable by
+  -- URL, so it cannot get the name from a dashboard card it was not opened
+  -- from. This is the caller's own child (or the caller themselves) — the
+  -- ownership check above is what makes that true.
+  SELECT jsonb_build_object(
+    'id',         pr.id,
+    'first_name', pr.first_name
+  )
+  INTO v_gamer
+  FROM public.profiles pr WHERE pr.id = v_gamer_id;
+
+  -- The product shell. Names live in product_translations, not on `products`,
+  -- so the translations array IS the name. `material_url` lives on
+  -- product_staff_details and this query does not join it.
+  SELECT jsonb_build_object(
+    'id',           p.id,
+    'product_type', p.product_type,
+    'timezone',     p.timezone,
+    'start_date',   p.start_date,
+    'end_date',     p.end_date,
+    'is_remote',    p.is_remote,
+    'translations', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+               'locale',      pt.locale,
+               'name',        pt.name,
+               'description', pt.short_description
+             ) ORDER BY pt.locale)
+        FROM public.product_translations pt WHERE pt.product_id = p.id
+    ), '[]'::jsonb),
+    'schedule_slots', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+               'weekday',          ss.weekday,
+               'start_time',       to_char(ss.start_time, 'HH24:MI:SS'),
+               'duration_minutes', ss.duration_minutes
+             ) ORDER BY ss.weekday, ss.start_time)
+        FROM public.schedule_slots ss WHERE ss.product_id = p.id
+    ), '[]'::jsonb)
+  )
+  INTO v_product
+  FROM public.products p
+  WHERE p.id = v_product_id;
+
+  -- The group's family-facing half. `gedu_note` is not selected, and its
+  -- absence here is the enforcement — not a filter somewhere downstream. The id
+  -- travels because the voice-room href and the feed's entry keys are built
+  -- from it.
+  SELECT jsonb_build_object(
+    'id',          g.id,
+    'name',        g.name,
+    'public_note', g.public_note
+  )
+  INTO v_group
+  FROM public.product_groups g WHERE g.id = v_group_id;
+
+  -- The venue, in-person products only — same test as the gedu feed, and for
+  -- the same reason: a remote municipality club carries a location_id (a
+  -- municipality, by CHECK), so "has a location" would put an address on a club
+  -- with no building. site_staff_details is not joined at all.
+  SELECT jsonb_build_object(
+    'location_id', l.id,
+    'name',        l.name,
+    'address',     sd.address,
+    'public_note', sd.notes
+  )
+  INTO v_site
+  FROM public.products p
+  JOIN public.locations l ON l.id = p.location_id
+  LEFT JOIN public.site_details sd ON sd.location_id = l.id
+  WHERE p.id = v_product_id
+    AND p.is_remote = false;
+
+  -- Who teaches this group, by first name. Nothing else about them: not the
+  -- surname, not the email, not the verification state. A family is being told
+  -- who their child is with, which is a first name's worth of information.
+  SELECT COALESCE(jsonb_agg(entry ORDER BY entry->>'first_name'), '[]'::jsonb)
+    INTO v_gedus
+    FROM (
+      SELECT jsonb_build_object(
+        'id',         pr.id,
+        'first_name', pr.first_name
+      ) AS entry
+        FROM public.gedu_group_assignments ga
+        JOIN public.profiles pr ON pr.id = ga.gedu_id
+       WHERE ga.group_id = v_group_id
+    ) AS gedu_rows;
+
+  -- The group's whole stored history, newest first — including sessions that
+  -- predate this child's enrolment, and including rows the schedule no longer
+  -- projects. See 00151's header for why there is no window here.
+  --
+  -- `report` and nothing else of the two note fields. `attendance` is ONE
+  -- answer — this gamer's — rather than the gedu feed's map over the roster,
+  -- which is what makes another child's mark structurally unreachable rather
+  -- than merely unrendered. NULL means unmarked, which is a third state and not
+  -- the same claim as 'absent'.
+  SELECT COALESCE(jsonb_agg(entry ORDER BY entry->>'session_date' DESC), '[]'::jsonb)
+    INTO v_sessions
+    FROM (
+      SELECT jsonb_build_object(
+        'id',           s.id,
+        'session_date', s.session_date,
+        'starts_at',    s.starts_at,
+        'ends_at',      s.ends_at,
+        'report',       s.report,
+        'attendance', (
+          SELECT a.status
+            FROM public.session_attendance a
+           WHERE a.session_id = s.id
+             AND a.gamer_id   = v_gamer_id
+        )
+      ) AS entry
+        FROM public.group_sessions s
+       WHERE s.group_id = v_group_id
+    ) AS session_rows;
+
+  RETURN jsonb_build_object(
+    'gamer',    v_gamer,
+    'product',  v_product,
+    'group',    v_group,
+    'site',     v_site,
+    'gedus',    v_gedus,
+    'sessions', v_sessions
+  );
+END;
+$$;
+
+
+--
+-- Name: FUNCTION get_my_family_product_feed(p_participation_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.get_my_family_product_feed(p_participation_id uuid) IS 'One round trip for a family club/camp/event page, scoped to ONE participation: the product shell, the group name and its family-facing note, the venue on in-person products, the teaching gedus'' first names, the group''s full stored session history with reports, and the named gamer''s own attendance marks. Self-scoping — the caller must be the participation''s gamer or a parent linked to them; an unplaced participation has no page. Carries no gedu note of any scope, no roster, no other child''s marks, no parent email, no material link and no owed/completeness state.';
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -1419,14 +1903,15 @@ CREATE TABLE public.profiles (
     id uuid NOT NULL,
     email text NOT NULL,
     role public.user_role DEFAULT 'customer'::public.user_role NOT NULL,
+    currency text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    currency text,
     phone text,
     spoken_languages text[] DEFAULT '{}'::text[] NOT NULL,
     locale text,
     first_name text NOT NULL,
     last_name text DEFAULT ''::text NOT NULL,
+    home_location_id uuid,
     CONSTRAINT profiles_first_name_len CHECK (((char_length(first_name) >= 2) AND (char_length(first_name) <= 32))),
     CONSTRAINT profiles_last_name_len CHECK ((char_length(last_name) <= 32)),
     CONSTRAINT profiles_phone_e164 CHECK ((phone ~ '^\d{7,15}$'::text))
@@ -1434,24 +1919,10 @@ CREATE TABLE public.profiles (
 
 
 --
--- Name: TABLE profiles; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.profiles IS 'User profiles extending Supabase auth.users with role-based access';
-
-
---
 -- Name: COLUMN profiles.email; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public.profiles.email IS 'Email address (NOT NULL for every role). Gamer accounts carry a generated synthetic <token>@gamer.sogverse.internal address until/unless replaced by a real one.';
-
-
---
--- Name: COLUMN profiles.role; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.profiles.role IS 'User role determining access permissions';
 
 
 --
@@ -1466,6 +1937,13 @@ COMMENT ON COLUMN public.profiles.spoken_languages IS 'Human languages the user 
 --
 
 COMMENT ON COLUMN public.profiles.locale IS 'BCP-47-style UI locale code (en, fi, sv, ...). Null = auto-detect from cookie/Accept-Language. Distinct from spoken_languages, which is the user''s human-language fluency.';
+
+
+--
+-- Name: COLUMN profiles.home_location_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.profiles.home_location_id IS 'Optional municipality-level locations row: where this parent''s family lives. ON DELETE SET NULL by choice — a merged or retired reference row empties this reference rather than blocking its removal, at the cost of silently clearing the parent''s pick. Acceptable only because the field is optional and carries no entitlement.';
 
 
 --
@@ -1484,6 +1962,135 @@ BEGIN
   WHERE pg.parent_id = auth.uid();
 END;
 $$;
+
+
+--
+-- Name: get_my_gedu_assignment_summaries(date); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date DEFAULT NULL::date) RETURNS jsonb
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_uid uuid := (SELECT auth.uid());
+BEGIN
+  PERFORM public.assert_role('gedu');
+
+  RETURN COALESCE((
+    SELECT jsonb_agg(
+             jsonb_build_object(
+               'product_id',         a.product_id,
+               'group_id',           a.group_id,
+               'group_name',         g.name,
+               'group_gamer_count',  roster.roster_size,
+               'site_name',          site.name,
+               'attention_count',    COALESCE(owed.owed_count, 0)
+             )
+             ORDER BY g.name
+           )
+      FROM public.gedu_group_assignments a
+      JOIN public.product_groups g ON g.id = a.group_id
+      JOIN public.products p       ON p.id = a.product_id
+
+      -- The venue, in-person products only (see get_gedu_group_feed).
+      LEFT JOIN LATERAL (
+        SELECT l.name
+          FROM public.locations l
+         WHERE l.id = p.location_id AND p.is_remote = false
+      ) AS site ON true
+
+      CROSS JOIN LATERAL (
+        SELECT COUNT(*)::integer AS roster_size
+          FROM public.participations part
+         WHERE part.group_id = g.id
+           AND part.status   = 'active'::public.participation_status
+      ) AS roster
+
+      LEFT JOIN LATERAL (
+        SELECT COUNT(*)::integer AS owed_count
+          FROM (
+            -- Occurrences the schedule projects, floored at max(product start,
+            -- epoch) and bounded above by "has actually finished".
+            --
+            -- The epoch floors THIS COUNT and nothing else. A pre-epoch session
+            -- is fully recordable — a gedu may take its attendance and write it
+            -- up — it simply never becomes work the platform asks for. That is
+            -- why the write validator has no epoch floor of its own.
+            SELECT d::date AS session_date
+              FROM generate_series(
+                     GREATEST(
+                       COALESCE(p.start_date, (now() AT TIME ZONE p.timezone)::date - 365),
+                       COALESCE(p_epoch_date, DATE '0001-01-01')
+                     )::timestamp,
+                     (now() AT TIME ZONE p.timezone)::date::timestamp,
+                     interval '1 day'
+                   ) AS d
+             WHERE (p.end_date IS NULL OR d::date <= p.end_date)
+               AND EXISTS (
+                 SELECT 1
+                   FROM public.schedule_slots s
+                  WHERE s.product_id = p.id
+                    AND s.weekday = (EXTRACT(ISODOW FROM d)::integer - 1)
+                    AND ((d::date + s.start_time) AT TIME ZONE p.timezone)
+                        + make_interval(mins => s.duration_minutes) <= now()
+               )
+            UNION
+            -- Rows the schedule no longer projects still count: a session
+            -- orphaned by a weekday move is history, and history that is
+            -- missing marks is still owed.
+            SELECT gs.session_date
+              FROM public.group_sessions gs
+             WHERE gs.group_id = g.id
+               AND gs.ends_at <= now()
+               AND gs.session_date >= COALESCE(p_epoch_date, DATE '0001-01-01')
+               AND (p.start_date IS NULL OR gs.session_date >= p.start_date)
+          ) AS occurrence
+         WHERE roster.roster_size > 0
+           -- "Needs attention" is two questions joined by OR, and either one
+           -- alone keeps the session on the list.
+           AND (
+             -- (1) Some of the CURRENT roster has no answer yet. Measured
+             -- against the current roster, never against the stored map's keys
+             -- — which is why a child joining a long-running group reopens
+             -- previously-complete sessions. That is the honest reading and it
+             -- is chosen with eyes open.
+             (
+               SELECT COUNT(*)
+                 FROM public.session_attendance att
+                 JOIN public.group_sessions gs2 ON gs2.id = att.session_id
+                 JOIN public.participations part2
+                   ON part2.gamer_id = att.gamer_id
+                  AND part2.group_id = g.id
+                  AND part2.status   = 'active'::public.participation_status
+                WHERE gs2.group_id     = g.id
+                  AND gs2.session_date = occurrence.session_date
+             ) < roster.roster_size
+             -- (2) Nothing has been written for the families. NOT EXISTS rather
+             -- than a LEFT JOIN's NULL test, so a date with no materialized row
+             -- at all — the common case for a session nobody has touched — is
+             -- the same answer as a row holding a blank report.
+             OR NOT EXISTS (
+               SELECT 1
+                 FROM public.group_sessions gs3
+                WHERE gs3.group_id     = g.id
+                  AND gs3.session_date = occurrence.session_date
+                  AND btrim(COALESCE(gs3.report, ''), E' \t\r\n\v\f') <> ''
+             )
+           )
+      ) AS owed ON true
+
+     WHERE a.gedu_id = v_uid
+  ), '[]'::jsonb);
+END;
+$$;
+
+
+--
+-- Name: FUNCTION get_my_gedu_assignment_summaries(p_epoch_date date); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date) IS 'One row per gedu assignment for the dashboard cards: group name, that group''s gamer count, the venue name on in-person products, and how many past sessions still owe a register or a family-facing report. A finished session on or after the epoch counts until BOTH are in. The enforcement epoch travels in as an argument because it is a code constant, not a column.';
 
 
 --
@@ -1521,6 +2128,42 @@ CREATE FUNCTION public.get_my_participation_subscription_states() RETURNS TABLE(
       OR p.gamer_id = (SELECT auth.uid())
     );
 $$;
+
+
+--
+-- Name: get_my_waitlist_positions(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.get_my_waitlist_positions() RETURNS TABLE(participation_id uuid, waitlist_position integer)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT mine.id,
+         -- Same derivation as join_waitlist and get_waitlist_position: count the
+         -- waitlisted rows ordered at-or-before this one by (waitlisted_at, id).
+         -- Recomputed live, so it shrinks as people ahead of them leave.
+         -- waitlisted_at is never NULL on a waitlisted row
+         -- (chk_participations_waitlisted_has_timestamp), so neither comparison
+         -- can go three-valued and swallow a peer.
+         (SELECT COUNT(*)::INTEGER
+            FROM public.participations peer
+           WHERE peer.product_id = mine.product_id
+             AND peer.status = 'waitlisted'::public.participation_status
+             AND (peer.waitlisted_at < mine.waitlisted_at
+                  OR (peer.waitlisted_at = mine.waitlisted_at
+                      AND peer.id <= mine.id)))
+    FROM public.participations mine
+   WHERE mine.status = 'waitlisted'::public.participation_status
+     AND (mine.customer_id = (SELECT auth.uid())
+          OR mine.gamer_id = (SELECT auth.uid()));
+$$;
+
+
+--
+-- Name: FUNCTION get_my_waitlist_positions(); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.get_my_waitlist_positions() IS 'Every waitlist position the caller is party to (purchasing parent or the gamer), in one snapshot. SECURITY DEFINER to count past the caller''s RLS; returns only their own participation ids and an integer each.';
 
 
 --
@@ -1687,9 +2330,7 @@ CREATE FUNCTION public.get_user_role() RETURNS public.user_role
     SET search_path TO 'public'
     AS $$
 BEGIN
-  RETURN (
-    SELECT role FROM public.profiles WHERE id = auth.uid()
-  );
+  RETURN (SELECT role FROM public.profiles WHERE id = auth.uid());
 END;
 $$;
 
@@ -1743,6 +2384,64 @@ BEGIN
   RETURN v_position;
 END;
 $$;
+
+
+--
+-- Name: group_session_date_is_writable(uuid, date); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.group_session_date_is_writable(p_group_id uuid, p_session_date date) RETURNS boolean
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_start_date date;
+  v_end_date   date;
+  v_timezone   text;
+  v_horizon    date;
+BEGIN
+  IF p_group_id IS NULL OR p_session_date IS NULL THEN
+    RETURN false;
+  END IF;
+
+  SELECT p.start_date, p.end_date, p.timezone
+    INTO v_start_date, v_end_date, v_timezone
+    FROM public.product_groups g
+    JOIN public.products p ON p.id = g.product_id
+   WHERE g.id = p_group_id;
+
+  IF NOT FOUND THEN
+    RETURN false;
+  END IF;
+
+  IF v_start_date IS NOT NULL AND p_session_date < v_start_date THEN
+    RETURN false;
+  END IF;
+
+  IF v_end_date IS NOT NULL THEN
+    v_horizon := v_end_date;
+  ELSE
+    -- Open-ended products show eight upcoming occurrences, which is eight weeks
+    -- for a weekly club and eight days for a daily one. Ninety days is a
+    -- comfortable superset of both and is meant to be: this is the loose bound,
+    -- not a second schedule model.
+    v_horizon := (now() AT TIME ZONE v_timezone)::date + 90;
+  END IF;
+
+  IF p_session_date > v_horizon THEN
+    RETURN false;
+  END IF;
+
+  RETURN public.derive_group_session_window(p_group_id, p_session_date) IS NOT NULL;
+END;
+$$;
+
+
+--
+-- Name: FUNCTION group_session_date_is_writable(p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.group_session_date_is_writable(p_group_id uuid, p_session_date date) IS 'Loose, holiday-blind write validation for a session date: at or after the product start, within the visible horizon, and on a weekday the current schedule uses.';
 
 
 --
@@ -1835,6 +2534,25 @@ CREATE FUNCTION public.has_active_participation_on_product(p_product_id uuid) RE
        AND p.status = 'active'
   );
 $$;
+
+
+--
+-- Name: immutable_unaccent(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.immutable_unaccent(p_value text) RETURNS text
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    SET search_path TO ''
+    AS $$
+  SELECT extensions.unaccent('extensions.unaccent'::regdictionary, p_value);
+$$;
+
+
+--
+-- Name: FUNCTION immutable_unaccent(p_value text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.immutable_unaccent(p_value text) IS 'Diacritic-stripping fold, declared IMMUTABLE so it may be used in a generated column. unaccent() itself is STABLE because it resolves a dictionary by name; pinning the dictionary makes the result depend on nothing but the input. If the extensions.unaccent dictionary is ever redefined, locations.search_blob must be recomputed and its index rebuilt.';
 
 
 --
@@ -2036,6 +2754,138 @@ $$;
 
 
 --
+-- Name: leave_my_waitlist_spot(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.leave_my_waitlist_spot(p_participation_id uuid) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_uid        UUID;
+  v_product_id UUID;
+  v_status     public.participation_status;
+BEGIN
+  v_uid := (SELECT auth.uid());
+  IF v_uid IS NULL THEN
+    RETURN jsonb_build_object('kind', 'not_found');
+  END IF;
+
+  -- Keyed to the purchasing parent rather than to the row's existence: a row
+  -- belonging to someone else is answered identically to one that never
+  -- existed, so a probe learns nothing from which id it aims at.
+  SELECT product_id, status
+    INTO v_product_id, v_status
+    FROM public.participations
+   WHERE id = p_participation_id
+     AND customer_id = v_uid;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('kind', 'not_found');
+  END IF;
+
+  -- Serialize against concurrent joins, promotions and cancels on this product,
+  -- the same gate every other waitlist transition takes.
+  PERFORM 1 FROM public.products WHERE id = v_product_id FOR UPDATE;
+
+  -- Re-read under the lock. An admin promotion can land between the ownership
+  -- read above and the lock; deleting then would throw away a seat the family
+  -- now holds, which is emphatically not what the parent confirmed.
+  SELECT status
+    INTO v_status
+    FROM public.participations
+   WHERE id = p_participation_id;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('kind', 'not_found');
+  END IF;
+
+  IF v_status <> 'waitlisted'::public.participation_status THEN
+    RETURN jsonb_build_object('kind', 'noop', 'status', v_status::text);
+  END IF;
+
+  -- The ownership predicate is repeated on the DELETE so the statement that
+  -- actually mutates carries the authorization itself, rather than inheriting
+  -- it from a SELECT several statements up.
+  DELETE FROM public.participations
+   WHERE id = p_participation_id
+     AND customer_id = v_uid;
+
+  RETURN jsonb_build_object(
+    'kind', 'left',
+    'participation_id', p_participation_id,
+    'product_id', v_product_id
+  );
+END;
+$$;
+
+
+--
+-- Name: FUNCTION leave_my_waitlist_spot(p_participation_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.leave_my_waitlist_spot(p_participation_id uuid) IS 'Give up a waitlist spot. Authorized to the purchasing parent (customer_id = auth.uid()); refuses any row that is not still waitlisted, under the product gate lock. Deletes the row, matching cancel_participation.';
+
+
+--
+-- Name: location_search_blob(text, jsonb, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.location_search_blob(p_name text, p_name_i18n jsonb, p_external_code text) RETURNS text
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    SET search_path TO ''
+    AS $$
+  SELECT coalesce(
+    public.location_search_separator()
+      || string_agg(term, public.location_search_separator() ORDER BY term)
+      || public.location_search_separator(),
+    public.location_search_separator()
+  )
+  FROM (
+    SELECT DISTINCT lower(public.immutable_unaccent(btrim(raw.value))) AS term
+      FROM (
+             SELECT p_name
+             UNION ALL
+             -- Alternates only. `name` is never duplicated into name_i18n, so
+             -- the keys are irrelevant here; only the values are searchable.
+             SELECT alternate.value
+               FROM jsonb_each_text(coalesce(p_name_i18n, '{}'::jsonb)) AS alternate
+             UNION ALL
+             SELECT p_external_code
+           ) AS raw(value)
+     WHERE raw.value IS NOT NULL
+       AND btrim(raw.value) <> ''
+  ) AS terms;
+$$;
+
+
+--
+-- Name: FUNCTION location_search_blob(p_name text, p_name_i18n jsonb, p_external_code text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.location_search_blob(p_name text, p_name_i18n jsonb, p_external_code text) IS 'Every searchable string for a location row — canonical name, each name_i18n alternate, the official code — folded to lowercase without diacritics and joined with the separator around each term. Backs the generated locations.search_blob column.';
+
+
+--
+-- Name: location_search_separator(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.location_search_separator() RETURNS text
+    LANGUAGE sql IMMUTABLE PARALLEL SAFE
+    SET search_path TO ''
+    AS $$
+  SELECT chr(31);
+$$;
+
+
+--
+-- Name: FUNCTION location_search_separator(); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.location_search_separator() IS 'The term delimiter inside locations.search_blob: U+001F UNIT SEPARATOR. A term-prefix match is "contains separator || needle"; an exact term match is "contains separator || needle || separator".';
+
+
+--
 -- Name: participation_state(public.participation_status, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2155,6 +3005,100 @@ $$;
 
 
 --
+-- Name: record_attendance(uuid, date, uuid, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_gamer_id uuid, p_status text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_session_id uuid;
+  v_starts_at  timestamptz;
+  v_status     text := NULLIF(btrim(COALESCE(p_status, '')), '');
+  v_uid        uuid := (SELECT auth.uid());
+BEGIN
+  PERFORM public.assert_role('gedu');
+
+  IF NOT public.gedu_teaches_group(p_group_id) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  -- Authorize the TARGET as well as the actor: the child must actually be on
+  -- this group's roster. Without this, an assigned gedu could aim a mark at any
+  -- gamer id in the system.
+  IF NOT EXISTS (
+    SELECT 1
+      FROM public.participations part
+     WHERE part.group_id = p_group_id
+       AND part.gamer_id = p_gamer_id
+       AND part.status   = 'active'::public.participation_status
+  ) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  IF NOT public.group_session_date_is_writable(p_group_id, p_session_date) THEN
+    RAISE EXCEPTION 'No scheduled session on % for this group', p_session_date
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  v_session_id := public.ensure_group_session(p_group_id, p_session_date);
+
+  SELECT starts_at INTO v_starts_at
+    FROM public.group_sessions WHERE id = v_session_id;
+
+  -- The roll-call boundary: marks open the moment the session's scheduled
+  -- start passes. A session under way takes attendance — that is when the gedu
+  -- can see who is in the room — while a session that has not started cannot,
+  -- because there is nothing yet to have attended.
+  IF v_starts_at > now() THEN
+    RAISE EXCEPTION 'Attendance can only be recorded once the session has started'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF v_status IS NULL THEN
+    DELETE FROM public.session_attendance
+     WHERE session_id = v_session_id AND gamer_id = p_gamer_id;
+
+    RETURN jsonb_build_object(
+      'session_id', v_session_id,
+      'gamer_id',   p_gamer_id,
+      'status',     NULL
+    );
+  END IF;
+
+  INSERT INTO public.session_attendance (
+    session_id, gamer_id, status, recorded_by
+  )
+  VALUES (v_session_id, p_gamer_id, v_status, v_uid)
+  ON CONFLICT (session_id, gamer_id) DO UPDATE
+    SET status      = EXCLUDED.status,
+        recorded_by = EXCLUDED.recorded_by,
+        recorded_at = now();
+
+  -- The session's audit trail follows the marks: recording attendance IS a
+  -- write to the session, even when neither note changed.
+  UPDATE public.group_sessions
+     SET updated_by = v_uid, updated_at = now()
+   WHERE id = v_session_id;
+
+  RETURN jsonb_build_object(
+    'session_id', v_session_id,
+    'gamer_id',   p_gamer_id,
+    'status',     v_status
+  );
+END;
+$$;
+
+
+--
+-- Name: FUNCTION record_attendance(p_group_id uuid, p_session_date date, p_gamer_id uuid, p_status text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_gamer_id uuid, p_status text) IS 'Record (or, with a NULL status, clear) ONE child''s attendance mark for one session. Per-mark so concurrent gedus cannot clobber each other; marks open at the session''s scheduled start (roll call during the session is the standard pattern) and never before; authorizes both the calling gedu and the target child.';
+
+
+--
 -- Name: refresh_product_seat_counts(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2164,24 +3108,21 @@ CREATE FUNCTION public.refresh_product_seat_counts(p_product_id uuid) RETURNS vo
     AS $$
 DECLARE
   v_active     INTEGER;
-  v_reserving  INTEGER;
   v_waitlist   INTEGER;
 BEGIN
   SELECT
     COUNT(*) FILTER (WHERE status = 'active'),
-    COUNT(*) FILTER (WHERE status = 'reserving' AND reserved_until > NOW()),
     COUNT(*) FILTER (WHERE status = 'waitlisted')
-    INTO v_active, v_reserving, v_waitlist
+    INTO v_active, v_waitlist
     FROM public.participations
     WHERE product_id = p_product_id;
 
   INSERT INTO public.product_seat_counts (
-    product_id, active_count, reserving_count, waitlist_count, updated_at
+    product_id, active_count, waitlist_count, updated_at
   )
-  VALUES (p_product_id, v_active, v_reserving, v_waitlist, NOW())
+  VALUES (p_product_id, v_active, v_waitlist, NOW())
   ON CONFLICT (product_id) DO UPDATE SET
     active_count    = EXCLUDED.active_count,
-    reserving_count = EXCLUDED.reserving_count,
     waitlist_count  = EXCLUDED.waitlist_count,
     updated_at      = EXCLUDED.updated_at;
 END;
@@ -2189,20 +3130,26 @@ $$;
 
 
 --
--- Name: register_gedu(uuid, text, text, text, text, text[], uuid[], text, text); Type: FUNCTION; Schema: public; Owner: -
+-- Name: register_gedu(uuid, text, text, text, text, text[], uuid[], text, text, text, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text) RETURNS void
+CREATE FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id text) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
 BEGIN
+  -- Only operate on a freshly-created customer profile (the role the new-user
+  -- trigger seeds). Refusing anything else stops this from being used to mutate
+  -- an established account of any role.
   IF NOT EXISTS (
     SELECT 1 FROM public.profiles WHERE id = p_user_id AND role = 'customer'
   ) THEN
     RAISE EXCEPTION 'register_gedu: % is not a newly-created customer profile', p_user_id;
   END IF;
 
+  -- Callers pass '' for absent optional text (the generated RPC arg types are
+  -- non-null `string`); NULLIF turns those back into SQL NULL so e.g. an empty
+  -- phone stays NULL rather than tripping the profiles.phone format CHECK.
   UPDATE public.profiles
   SET role             = 'gedu',
       first_name       = p_first_name,
@@ -2212,20 +3159,201 @@ BEGIN
       spoken_languages = COALESCE(p_spoken_languages, '{}')
   WHERE id = p_user_id;
 
+  -- Swap the trigger-created customer extension row for a gedu one.
   DELETE FROM public.customer_profiles WHERE user_id = p_user_id;
   INSERT INTO public.gedu_profiles (user_id) VALUES (p_user_id);
 
+  -- Coverage areas (empty = remote-only, which is valid).
   IF p_location_ids IS NOT NULL AND array_length(p_location_ids, 1) IS NOT NULL THEN
     INSERT INTO public.gedu_locations (gedu_id, location_id)
     SELECT p_user_id, unnest(p_location_ids);
   END IF;
 
+  -- Optional Minecraft account. A duplicate uuid is allowed (an educator may
+  -- share an account with someone else on the platform), so this insert has no
+  -- rejection path of its own.
   IF p_minecraft_username IS NOT NULL AND p_minecraft_username <> '' THEN
     INSERT INTO public.minecraft_accounts (user_id, minecraft_username, minecraft_uuid)
     VALUES (p_user_id, p_minecraft_username, NULLIF(p_minecraft_uuid, ''));
   END IF;
+
+  -- Optional Roblox account, on the same terms. The account id arrives as text
+  -- carrying the same '' sentinel and is cast once here; a non-numeric value
+  -- would raise, which is correct — the only caller resolves it from Roblox's
+  -- own answer, so anything else is a bug rather than a user's typo.
+  IF p_roblox_username IS NOT NULL AND p_roblox_username <> '' THEN
+    INSERT INTO public.roblox_accounts (user_id, roblox_username, roblox_user_id)
+    VALUES (p_user_id, p_roblox_username, NULLIF(p_roblox_user_id, '')::bigint);
+  END IF;
 END;
 $$;
+
+
+--
+-- Name: search_locations(text, public.location_type[], integer, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.search_locations(p_query text, p_types public.location_type[] DEFAULT NULL::public.location_type[], p_limit integer DEFAULT 20, p_country text DEFAULT NULL::text) RETURNS jsonb
+    LANGUAGE sql STABLE
+    SET search_path TO ''
+    AS $$
+WITH RECURSIVE
+probe AS (
+  SELECT
+    folded.needle,
+    -- LIKE metacharacters in the needle are escaped, not stripped: a user typing
+    -- "%" should find nothing rather than everything. Both arms build their
+    -- patterns from this one value.
+    replace(replace(replace(folded.needle, '\', '\\'), '%', '\%'), '_', '\_') AS pattern,
+    char_length(folded.needle) >= 2 AS runnable,
+    -- The cap is the server's, not the caller's. Clamped rather than rejected so
+    -- an out-of-range limit degrades to a sane page instead of an error.
+    least(greatest(coalesce(p_limit, 20), 1), 50) AS cap
+  FROM (
+    SELECT lower(public.immutable_unaccent(btrim(coalesce(p_query, '')))) AS needle
+  ) AS folded
+),
+matched AS (
+  -- One row per matching place, at its best rank across both arms. A place found
+  -- by name AND by postal code is one hit, not two, and it keeps the better of
+  -- the two ranks — which is what `DISTINCT ON (id) ORDER BY id, match_rank`
+  -- expresses.
+  SELECT DISTINCT ON (h.id)
+         h.id, h.name, h.name_i18n, h.type, h.parent_id, h.country_code,
+         h.external_code,
+         -- Carried for the ordering below only; not part of the wire shape.
+         h.depth,
+         h.match_rank
+    FROM (
+      -- ARM 1 — the stored fold: canonical name, name_i18n alternates, official
+      -- code. Unchanged from 00155.
+      SELECT
+        l.id, l.name, l.name_i18n, l.type, l.parent_id, l.country_code,
+        l.external_code, l.depth,
+        CASE
+          -- A term IS the needle.
+          WHEN l.search_blob LIKE (SELECT '%' || public.location_search_separator() || pattern || public.location_search_separator() || '%' FROM probe) THEN 0
+          -- A term STARTS WITH the needle. A prefix hit found late in the scan
+          -- therefore still outranks an infix hit found early, which is the whole
+          -- point of ranking rather than filtering.
+          WHEN l.search_blob LIKE (SELECT '%' || public.location_search_separator() || pattern || '%' FROM probe) THEN 1
+          ELSE 2
+        END AS match_rank
+      FROM public.locations l
+      -- Scalar subqueries rather than a join to `probe`: each becomes an InitPlan
+      -- evaluated once, which is what lets the planner treat the pattern as a
+      -- runtime constant and consider the trigram index.
+      WHERE (SELECT runnable FROM probe)
+        AND l.search_blob LIKE (SELECT '%' || pattern || '%' FROM probe)
+        AND (p_types IS NULL OR l.type = ANY (p_types))
+        -- Both filters live here rather than in `page`, so the total the panel
+        -- reports counts only rows it could actually offer.
+        AND l.retired_at IS NULL
+        AND (p_country IS NULL OR l.country_code = p_country)
+
+      UNION ALL
+
+      -- ARM 2 — postal codes, joined back to the municipality they reach. The
+      -- hit is the place, never the code: the code carries no name, no parent and
+      -- nothing anyone browses.
+      SELECT
+        l.id, l.name, l.name_i18n, l.type, l.parent_id, l.country_code,
+        l.external_code, l.depth,
+        -- The needle IS a whole code, or it is a prefix of one. Nothing else —
+        -- an infix arm on a five-digit code is noise, not a search.
+        --
+        -- Equality takes the unescaped needle because `=` interprets no
+        -- metacharacters; the prefix takes the escaped pattern for the same
+        -- reason arm 1 does.
+        CASE
+          WHEN pc.postal_code = (SELECT needle FROM probe) THEN 0
+          ELSE 1
+        END AS match_rank
+      FROM public.postal_codes pc
+      JOIN public.locations l ON l.id = pc.location_id
+      WHERE (SELECT runnable FROM probe)
+        AND pc.postal_code LIKE (SELECT pattern || '%' FROM probe)
+        -- Every filter arm 1 applies, applied to the joined row rather than
+        -- assumed from the fact that postal rows point at municipalities.
+        AND (p_types IS NULL OR l.type = ANY (p_types))
+        AND l.retired_at IS NULL
+        AND (p_country IS NULL OR l.country_code = p_country)
+    ) AS h
+   ORDER BY h.id, h.match_rank
+),
+page AS (
+  SELECT m.*
+    FROM matched m
+   -- A total order, so the page is stable: rank, then venues after places, then
+   -- broadest level first, then name, then id to break the homonym ties France
+   -- is full of.
+   --
+   -- Breadth is the stored `depth`, which is true for any hierarchy shape. Sites
+   -- are pushed below places by their own term ahead of depth, because depth
+   -- cannot separate them: a Finnish site and a French commune are both at
+   -- depth 3.
+   ORDER BY m.match_rank, (m.type = 'site'), m.depth, m.name, m.id
+   LIMIT (SELECT cap FROM probe)
+),
+-- The chain of every hit on this page, at most `cap` rows walking at most a
+-- handful of levels. Bounded by depth as well as by the parent FK in case a
+-- hand-made row ever forms a cycle.
+--
+-- Deliberately unfiltered on `retired_at`: a hit's ancestors are rendered as a
+-- path, and a path with a link missing is unreadable. Retirement hides a place
+-- from being *chosen*, not from being *named*.
+walk AS (
+  SELECT p.id AS anchor_id, p.parent_id AS node_id, 1 AS depth
+    FROM page p
+  UNION ALL
+  SELECT w.anchor_id, up.parent_id, w.depth + 1
+    FROM walk w
+    JOIN public.locations up ON up.id = w.node_id
+   WHERE w.depth < 10
+),
+chains AS (
+  SELECT w.anchor_id,
+         jsonb_agg(
+           jsonb_build_object(
+             'id', a.id,
+             'name', a.name,
+             'name_i18n', a.name_i18n,
+             'type', a.type
+           ) ORDER BY w.depth
+         ) AS ancestors
+    FROM walk w
+    JOIN public.locations a ON a.id = w.node_id
+   GROUP BY w.anchor_id
+)
+SELECT jsonb_build_object(
+  -- The union, deduped — so a place matching by name and by code counts once.
+  'total', (SELECT count(*) FROM matched),
+  'results', coalesce((
+    SELECT jsonb_agg(
+      jsonb_build_object(
+        'id',            p.id,
+        'name',          p.name,
+        'name_i18n',     p.name_i18n,
+        'type',          p.type,
+        'parent_id',     p.parent_id,
+        'country_code',  p.country_code,
+        'external_code', p.external_code,
+        -- Nearest first, matching every other ancestor chain in this codebase.
+        'ancestors',     coalesce(c.ancestors, '[]'::jsonb)
+      ) ORDER BY p.match_rank, (p.type = 'site'), p.depth, p.name, p.id
+    )
+      FROM page p
+      LEFT JOIN chains c ON c.anchor_id = p.id
+  ), '[]'::jsonb)
+);
+$$;
+
+
+--
+-- Name: FUNCTION search_locations(p_query text, p_types public.location_type[], p_limit integer, p_country text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer, p_country text) IS 'Cross-country location search over two match sources merged before ranking: the stored fold on locations (canonical names, name_i18n alternates, official codes; exact > term-prefix > infix) and postal_codes joined to the municipality each code reaches (exact code > code prefix, no infix). Diacritic-insensitive both ways; one folded needle serves both arms. A place matching both ways appears once, at its better rank, and the total counts the deduped union. Returns {total, results[]} where results carry each hit''s ancestor chain nearest-first, ranked then places before venues, then broadest-first by the stored depth, and capped server-side. p_types and p_country restrict both arms, and the restriction applies to the total as well as the page. Retired rows are excluded from matches, but the ancestor walk still climbs through them so a chain renders whole. SECURITY INVOKER, so the caller''s RLS on locations and postal_codes applies unchanged; needles shorter than two characters return an empty result without reading either table.';
 
 
 --
@@ -2250,6 +3378,192 @@ BEGIN
       verified_at = CASE WHEN p_verified THEN now() ELSE NULL END,
       verified_by = CASE WHEN p_verified THEN (SELECT auth.uid()) ELSE NULL END
   WHERE user_id = p_gedu_id;
+END;
+$$;
+
+
+--
+-- Name: set_group_member_minecraft(uuid, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_group_member_minecraft(p_gamer_id uuid, p_minecraft_username text, p_minecraft_uuid text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_username text;
+  v_uuid     text;
+BEGIN
+  PERFORM public.assert_role('gedu');
+
+  -- Actor AND target: the child must be actively participating in a group the
+  -- caller is assigned to. A gedu may fix a username for the children they
+  -- teach and for nobody else.
+  IF NOT EXISTS (
+    SELECT 1
+      FROM public.participations part
+      JOIN public.gedu_group_assignments ga ON ga.group_id = part.group_id
+     WHERE part.gamer_id = p_gamer_id
+       AND part.status   = 'active'::public.participation_status
+       AND ga.gedu_id    = (SELECT auth.uid())
+  ) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  v_username := NULLIF(btrim(COALESCE(p_minecraft_username, '')), '');
+  -- Clearing the username clears the uuid with it: a uuid without a name is a
+  -- verified link to nothing.
+  v_uuid := CASE WHEN v_username IS NULL
+                 THEN NULL
+                 ELSE NULLIF(btrim(COALESCE(p_minecraft_uuid, '')), '')
+            END;
+
+  INSERT INTO public.minecraft_accounts (user_id, minecraft_username, minecraft_uuid)
+  VALUES (p_gamer_id, v_username, v_uuid)
+  ON CONFLICT (user_id) DO UPDATE
+    SET minecraft_username = EXCLUDED.minecraft_username,
+        minecraft_uuid     = EXCLUDED.minecraft_uuid;
+
+  RETURN jsonb_build_object(
+    'gamer_id',           p_gamer_id,
+    'minecraft_username', v_username,
+    'minecraft_uuid',     v_uuid
+  );
+END;
+$$;
+
+
+--
+-- Name: FUNCTION set_group_member_minecraft(p_gamer_id uuid, p_minecraft_username text, p_minecraft_uuid text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.set_group_member_minecraft(p_gamer_id uuid, p_minecraft_username text, p_minecraft_uuid text) IS 'Set a group member''s Minecraft username + resolved UUID, scoped to gamers actively participating in a group the calling gedu teaches. The Mojang lookup happens in the calling route, so a successful edit lands verified.';
+
+
+--
+-- Name: set_group_notes(uuid, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_group_notes(p_group_id uuid, p_public_note text, p_gedu_note text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_row public.product_groups;
+BEGIN
+  PERFORM public.assert_role('gedu');
+
+  IF NOT public.gedu_teaches_group(p_group_id) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  UPDATE public.product_groups
+     SET public_note = NULLIF(btrim(COALESCE(p_public_note, '')), ''),
+         gedu_note   = NULLIF(btrim(COALESCE(p_gedu_note, '')), '')
+   WHERE id = p_group_id
+  RETURNING * INTO v_row;
+
+  RETURN jsonb_build_object(
+    'id',          v_row.id,
+    'public_note', v_row.public_note,
+    'gedu_note',   v_row.gedu_note
+  );
+END;
+$$;
+
+
+--
+-- Name: FUNCTION set_group_notes(p_group_id uuid, p_public_note text, p_gedu_note text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.set_group_notes(p_group_id uuid, p_public_note text, p_gedu_note text) IS 'Write a group''s standing family-facing and gedu notes. Gedu-gated on the group assignment. Last-write-wins.';
+
+
+--
+-- Name: set_group_session_notes(uuid, date, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_group_session_notes(p_group_id uuid, p_session_date date, p_report text, p_gedu_note text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_session_id uuid;
+  v_uid        uuid := (SELECT auth.uid());
+  v_row        public.group_sessions;
+BEGIN
+  PERFORM public.assert_role('gedu');
+
+  IF NOT public.gedu_teaches_group(p_group_id) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  IF NOT public.group_session_date_is_writable(p_group_id, p_session_date) THEN
+    RAISE EXCEPTION 'No scheduled session on % for this group', p_session_date
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  v_session_id := public.ensure_group_session(p_group_id, p_session_date);
+
+  UPDATE public.group_sessions
+     SET report     = NULLIF(btrim(COALESCE(p_report, '')), ''),
+         gedu_note  = NULLIF(btrim(COALESCE(p_gedu_note, '')), ''),
+         updated_by = v_uid
+   WHERE id = v_session_id
+  RETURNING * INTO v_row;
+
+  RETURN jsonb_build_object(
+    'id',           v_row.id,
+    'group_id',     v_row.group_id,
+    'session_date', v_row.session_date,
+    'starts_at',    v_row.starts_at,
+    'ends_at',      v_row.ends_at,
+    'report',       v_row.report,
+    'gedu_note',    v_row.gedu_note
+  );
+END;
+$$;
+
+
+--
+-- Name: FUNCTION set_group_session_notes(p_group_id uuid, p_session_date date, p_report text, p_gedu_note text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.set_group_session_notes(p_group_id uuid, p_session_date date, p_report text, p_gedu_note text) IS 'Write the family-facing report and the gedu note for one session, materializing the row if needed. Gedu-gated on the group assignment. Last-write-wins.';
+
+
+--
+-- Name: set_location_depth(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_location_depth() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_parent_depth smallint;
+BEGIN
+  IF NEW.parent_id IS NULL THEN
+    NEW.depth := 0;
+    RETURN NEW;
+  END IF;
+
+  SELECT l.depth INTO v_parent_depth
+    FROM public.locations l
+   WHERE l.id = NEW.parent_id;
+
+  -- A BEFORE trigger runs ahead of the FK check, so a parent_id pointing at no
+  -- row arrives here first. Raising the FK error ourselves is what the products
+  -- location trigger does for the same case: without it the assignment below
+  -- would write NULL into a NOT NULL column and report a constraint the caller
+  -- did not violate.
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'locations.parent_id % references no row', NEW.parent_id
+      USING ERRCODE = 'foreign_key_violation';
+  END IF;
+
+  NEW.depth := v_parent_depth + 1;
+  RETURN NEW;
 END;
 $$;
 
@@ -2303,6 +3617,65 @@ $_$;
 
 
 --
+-- Name: set_site_notes(uuid, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_public_note text;
+  v_gedu_note   text;
+  v_address     text;
+BEGIN
+  PERFORM public.assert_role('gedu');
+
+  IF NOT EXISTS (
+    SELECT 1
+      FROM public.gedu_group_assignments ga
+      JOIN public.products p ON p.id = ga.product_id
+     WHERE ga.gedu_id     = (SELECT auth.uid())
+       AND p.location_id  = p_location_id
+       AND p.is_remote    = false
+  ) THEN
+    RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  v_public_note := NULLIF(btrim(COALESCE(p_public_note, '')), '');
+  v_gedu_note   := NULLIF(btrim(COALESCE(p_gedu_note, '')), '');
+
+  INSERT INTO public.site_details (location_id, address, notes)
+  VALUES (p_location_id, NULL, v_public_note)
+  ON CONFLICT (location_id) DO UPDATE
+    -- `address` is deliberately absent from this SET list: whatever an admin
+    -- put there stays there.
+    SET notes = EXCLUDED.notes
+  RETURNING address INTO v_address;
+
+  INSERT INTO public.site_staff_details (location_id, notes)
+  VALUES (p_location_id, v_gedu_note)
+  ON CONFLICT (location_id) DO UPDATE
+    SET notes = EXCLUDED.notes;
+
+  RETURN jsonb_build_object(
+    'location_id', p_location_id,
+    'address',     v_address,
+    'public_note', v_public_note,
+    'gedu_note',   v_gedu_note
+  );
+END;
+$$;
+
+
+--
+-- Name: FUNCTION set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text) IS 'Write a site''s shared family note and its gedu note. The venue ADDRESS is not a parameter and is never touched — it belongs to the location record and is an admin''s to edit. Authorized by the caller teaching a group on an in-person product at that site. Last-write-wins on the notes, across products.';
+
+
+--
 -- Name: submit_feedback(uuid, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2313,6 +3686,7 @@ CREATE FUNCTION public.submit_feedback(p_user_id uuid, p_message text) RETURNS b
 DECLARE
   v_count integer;
 BEGIN
+  -- Advisory lock keyed to user prevents concurrent rate-limit bypass
   PERFORM pg_advisory_xact_lock(hashtext(p_user_id::text));
 
   SELECT count(*) INTO v_count
@@ -2407,8 +3781,8 @@ CREATE FUNCTION public.trg_seed_product_seat_counts() RETURNS trigger
     AS $$
 BEGIN
   INSERT INTO public.product_seat_counts (
-    product_id, active_count, reserving_count, waitlist_count
-  ) VALUES (NEW.id, 0, 0, 0)
+    product_id, active_count, waitlist_count
+  ) VALUES (NEW.id, 0, 0)
   ON CONFLICT (product_id) DO NOTHING;
   RETURN NEW;
 END;
@@ -2416,10 +3790,10 @@ $$;
 
 
 --
--- Name: update_product(uuid, public.billing_mode, jsonb, public.product_topic, integer, integer, text, boolean, text, timestamp with time zone, boolean, boolean, text, text, uuid, integer, date, date, integer, integer, jsonb, jsonb, uuid[], integer, integer, integer); Type: FUNCTION; Schema: public; Owner: -
+-- Name: update_product(uuid, public.billing_mode, jsonb, public.product_topic, integer, integer, text, boolean, text, timestamp with time zone, boolean, boolean, text, uuid, integer, date, date, integer, jsonb, jsonb, uuid[], integer, integer, integer, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_is_visible boolean DEFAULT false, p_waitlist_enabled boolean DEFAULT true, p_image_path text DEFAULT NULL::text, p_padlet_url text DEFAULT NULL::text, p_location_id uuid DEFAULT NULL::uuid, p_signup_threshold integer DEFAULT NULL::integer, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_seat_count integer DEFAULT NULL::integer, p_refund_policy_days integer DEFAULT NULL::integer, p_schedule_slots jsonb DEFAULT NULL::jsonb, p_prices jsonb DEFAULT NULL::jsonb, p_holiday_calendar_ids uuid[] DEFAULT NULL::uuid[], p_primary_gedu_fee_cents integer DEFAULT NULL::integer, p_assistant_gedu_fee_cents integer DEFAULT NULL::integer, p_municipality_fee_cents integer DEFAULT NULL::integer) RETURNS uuid
+CREATE FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_is_visible boolean DEFAULT false, p_waitlist_enabled boolean DEFAULT true, p_image_path text DEFAULT NULL::text, p_location_id uuid DEFAULT NULL::uuid, p_signup_threshold integer DEFAULT NULL::integer, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_seat_count integer DEFAULT NULL::integer, p_schedule_slots jsonb DEFAULT NULL::jsonb, p_prices jsonb DEFAULT NULL::jsonb, p_holiday_calendar_ids uuid[] DEFAULT NULL::uuid[], p_primary_gedu_fee_cents integer DEFAULT NULL::integer, p_assistant_gedu_fee_cents integer DEFAULT NULL::integer, p_municipality_fee_cents integer DEFAULT NULL::integer, p_material_url text DEFAULT NULL::text) RETURNS uuid
     LANGUAGE plpgsql
     SET search_path TO ''
     AS $$
@@ -2428,6 +3802,7 @@ DECLARE
   v_price         JSONB;
   v_translation   JSONB;
   v_locales       TEXT[];
+  v_material_url  TEXT := NULLIF(btrim(COALESCE(p_material_url, '')), '');
 BEGIN
   PERFORM public.assert_admin();
 
@@ -2448,7 +3823,6 @@ BEGIN
     max_age                  = p_max_age,
     spoken_language_code     = p_spoken_language_code,
     image_path               = p_image_path,
-    padlet_url               = p_padlet_url,
     location_id              = p_location_id,
     is_remote                = p_is_remote,
     signup_threshold         = p_signup_threshold,
@@ -2458,12 +3832,22 @@ BEGIN
     seat_count               = p_seat_count,
     waitlist_enabled         = p_waitlist_enabled,
     registration_opens_at    = p_registration_opens_at,
-    refund_policy_days       = p_refund_policy_days,
     is_visible               = p_is_visible,
     primary_gedu_fee_cents   = p_primary_gedu_fee_cents,
     assistant_gedu_fee_cents = p_assistant_gedu_fee_cents,
     municipality_fee_cents   = p_municipality_fee_cents
   WHERE id = p_id;
+
+  -- Cleared means the row goes, so "no lesson material" stays the absence of a
+  -- record rather than becoming a row holding NULL.
+  IF v_material_url IS NULL THEN
+    DELETE FROM public.product_staff_details WHERE product_id = p_id;
+  ELSE
+    INSERT INTO public.product_staff_details (product_id, material_url)
+    VALUES (p_id, v_material_url)
+    ON CONFLICT (product_id) DO UPDATE
+      SET material_url = EXCLUDED.material_url;
+  END IF;
 
   -- product_translations — UPSERT new set, then DELETE leftovers (the
   -- "≥1 row remains" trigger passes because the new rows are already in
@@ -2867,6 +4251,33 @@ CREATE TABLE public.gedu_profiles (
 
 
 --
+-- Name: group_sessions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.group_sessions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    group_id uuid NOT NULL,
+    session_date date NOT NULL,
+    starts_at timestamp with time zone NOT NULL,
+    ends_at timestamp with time zone NOT NULL,
+    report text,
+    gedu_note text,
+    created_by uuid,
+    updated_by uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT chk_group_sessions_ends_after_starts CHECK ((ends_at > starts_at))
+);
+
+
+--
+-- Name: TABLE group_sessions; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.group_sessions IS 'Lazily materialized session records: one row per (group, product-local date), written only when a report, a note or an attendance mark needs somewhere to live. starts_at/ends_at are a snapshot of the schedule at materialization and are never re-derived.';
+
+
+--
 -- Name: holiday_calendars; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2892,6 +4303,11 @@ CREATE TABLE public.locations (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     name_i18n jsonb,
+    external_code text,
+    search_blob text GENERATED ALWAYS AS (public.location_search_blob(name, name_i18n, external_code)) STORED,
+    geonames_id bigint,
+    retired_at timestamp with time zone,
+    depth smallint DEFAULT 0 NOT NULL,
     CONSTRAINT locations_no_self_parent CHECK ((parent_id IS DISTINCT FROM id))
 );
 
@@ -2901,6 +4317,41 @@ CREATE TABLE public.locations (
 --
 
 COMMENT ON COLUMN public.locations.name_i18n IS 'Locale -> display-name overrides (e.g. {"sv":"Helsingfors"}). Resolve as name_i18n[locale] ?? name. `name` holds the canonical native-language name and is never duplicated here.';
+
+
+--
+-- Name: COLUMN locations.external_code; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.locations.external_code IS 'Official statistical code for this location in its national classification: INSEE Code officiel géographique code for FR rows (région / département / commune), Statistics Finland region (maakunta) or municipality (kunta) code for FI rows. NULL on admin-created sites, which exist in no national classification. Unique per (country_code, type) — France reuses the same code across levels.';
+
+
+--
+-- Name: COLUMN locations.search_blob; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.locations.search_blob IS 'Derived, never written: the row''s folded searchable terms, separator-delimited. Read only by public.search_locations; it is present in select(*) responses and carries no information the other columns do not.';
+
+
+--
+-- Name: COLUMN locations.geonames_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.locations.geonames_id IS 'GeoNames geonameid for a row sourced from the GeoNames dumps: the dedupe key for ingestion and sync, unique where present. NULL on admin-created sites and on config-declared synthetic rows GeoNames models no administrative record for. Never holds an official statistical code — that is external_code, and the two are separate columns on purpose.';
+
+
+--
+-- Name: COLUMN locations.retired_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.locations.retired_at IS 'When a refresh found this place gone upstream. Retired rows are hidden from browse reads, the search function and the municipality directory, but keyed reads still return them and the ancestor walk still climbs through them: every existing FK, coverage claim and rendered chain has to keep working. Refresh never DELETEs a location row — gedu_locations cascades — so this is the only way a place leaves the pickers.';
+
+
+--
+-- Name: COLUMN locations.depth; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.locations.depth IS 'Distance from the root: 0 for a country row, parent.depth + 1 below. Maintained by trg_set_location_depth and never written by hand; the DEFAULT exists so the column stays optional in the generated Insert type. Search ranks broadest-first on this rather than on the location_type enum, whose declared order is wrong for any country that nests district below municipality.';
 
 
 --
@@ -2929,20 +4380,6 @@ CREATE TABLE public.parent_gamer (
 
 
 --
--- Name: TABLE parent_gamer; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.parent_gamer IS 'Junction table linking parent (customer) accounts to child (gamer) accounts';
-
-
---
--- Name: COLUMN parent_gamer.relationship; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.parent_gamer.relationship IS 'Relationship type (parent, guardian, etc.)';
-
-
---
 -- Name: participations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2953,15 +4390,21 @@ CREATE TABLE public.participations (
     gamer_id uuid NOT NULL,
     customer_id uuid NOT NULL,
     status public.participation_status NOT NULL,
-    reserved_until timestamp with time zone,
     signed_up_at timestamp with time zone DEFAULT now() NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     waitlisted_at timestamp with time zone,
+    stripe_checkout_session_id text,
     CONSTRAINT chk_participations_no_self_signup CHECK ((gamer_id <> customer_id)),
-    CONSTRAINT chk_participations_reserving_has_until CHECK (((status <> 'reserving'::public.participation_status) OR (reserved_until IS NOT NULL))),
     CONSTRAINT chk_participations_waitlisted_has_timestamp CHECK (((status <> 'waitlisted'::public.participation_status) OR (waitlisted_at IS NOT NULL)))
 );
+
+
+--
+-- Name: COLUMN participations.stripe_checkout_session_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.stripe_checkout_session_id IS 'Stripe Checkout Session that paid for this seat. NULL for no-charge seats (free, municipality, admin enrollment, waitlist) and for rows predating the create-on-confirmation flow.';
 
 
 --
@@ -2985,6 +4428,45 @@ CREATE TABLE public.payments (
 
 
 --
+-- Name: postal_codes; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.postal_codes (
+    country_code text NOT NULL,
+    postal_code text NOT NULL,
+    location_id uuid NOT NULL
+);
+
+
+--
+-- Name: TABLE postal_codes; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.postal_codes IS 'Postal code -> municipality, one row per (country, code, place) fact. An alternative key onto a locations row, never a level of the hierarchy. Nothing references this table, which is what makes a refresh a plain delete-and-reinsert rather than the retire-never-delete discipline locations lives under. Public reference data: anon, authenticated and service_role may SELECT, nobody may write from a client, and rows land through generated data migrations. service_role holds SELECT because search_locations is SECURITY INVOKER, reads this table for its postal match arm, and is executable by that role.';
+
+
+--
+-- Name: COLUMN postal_codes.country_code; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.postal_codes.country_code IS 'ISO 3166-1 alpha-2, matching the locations row this points at. Part of the key rather than derivable from it because the lookup starts here: a caller has a country and a code and no id yet, and codes are not unique across countries.';
+
+
+--
+-- Name: COLUMN postal_codes.postal_code; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.postal_codes.postal_code IS 'The code exactly as the upstream source spells it — no normalization, no padding, no case folding. Every seeded country''s codes are fixed-width digits (Finland and France alike), so there is nothing to normalize yet; a country whose codes carry spaces or letters will need that decision made deliberately rather than inherited.';
+
+
+--
+-- Name: COLUMN postal_codes.location_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.postal_codes.location_id IS 'The municipality the code reaches. ON DELETE CASCADE, and safe here precisely because nothing references postal rows: losing them costs a lookup, never a coverage claim or a stored pick. Seeds resolve it by joining (country_code, type = ''municipality'', external_code), so a country whose level maps no official code cannot be seeded this way.';
+
+
+--
 -- Name: product_groups; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2994,8 +4476,24 @@ CREATE TABLE public.product_groups (
     name text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    public_note text,
+    gedu_note text,
     CONSTRAINT chk_product_groups_name_not_blank CHECK ((length(btrim(name)) > 0))
 );
+
+
+--
+-- Name: COLUMN product_groups.public_note; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.product_groups.public_note IS 'Standing family-facing note about the group. Plain text (rich text for group/site notes is an open question).';
+
+
+--
+-- Name: COLUMN product_groups.gedu_note; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.product_groups.gedu_note IS 'Standing gedu + admin note about the group. Never shown to families. Plain text.';
 
 
 --
@@ -3031,13 +4529,37 @@ CREATE TABLE public.product_prices (
 CREATE TABLE public.product_seat_counts (
     product_id uuid NOT NULL,
     active_count integer DEFAULT 0 NOT NULL,
-    reserving_count integer DEFAULT 0 NOT NULL,
     waitlist_count integer DEFAULT 0 NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT product_seat_counts_active_count_check CHECK ((active_count >= 0)),
-    CONSTRAINT product_seat_counts_reserving_count_check CHECK ((reserving_count >= 0)),
     CONSTRAINT product_seat_counts_waitlist_count_check CHECK ((waitlist_count >= 0))
 );
+
+
+--
+-- Name: product_staff_details; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.product_staff_details (
+    product_id uuid NOT NULL,
+    material_url text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE product_staff_details; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.product_staff_details IS 'Admin + gedu only facts about a product, split off `products` because that table is anon-readable by column selection. One sparse row per product; a product with nothing staff-only recorded has no row. Reached by families through no path at all: admins read and write it under an admin-only RLS policy, gedus see only what get_gedu_group_feed hands them.';
+
+
+--
+-- Name: COLUMN product_staff_details.material_url; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.product_staff_details.material_url IS 'Gedu/admin-only lesson-material link, surfaced in the gedu group workspace. Never rendered to parents or gamers.';
 
 
 --
@@ -3084,7 +4606,6 @@ CREATE TABLE public.products (
     max_age integer NOT NULL,
     spoken_language_code text NOT NULL,
     image_path text,
-    padlet_url text,
     location_id uuid,
     is_remote boolean NOT NULL,
     status public.product_status DEFAULT 'draft'::public.product_status NOT NULL,
@@ -3095,7 +4616,6 @@ CREATE TABLE public.products (
     seat_count integer,
     waitlist_enabled boolean DEFAULT true NOT NULL,
     registration_opens_at timestamp with time zone NOT NULL,
-    refund_policy_days integer,
     is_visible boolean DEFAULT false NOT NULL,
     created_by uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
@@ -3114,7 +4634,6 @@ CREATE TABLE public.products (
     CONSTRAINT chk_products_non_consumer_has_end_date CHECK (((product_type = 'consumer_club'::public.product_type) OR (status = 'draft'::public.product_status) OR (end_date IS NOT NULL))),
     CONSTRAINT chk_products_online_muni_has_location CHECK (((NOT ((is_remote = true) AND (product_type = 'municipality_club'::public.product_type))) OR (location_id IS NOT NULL))),
     CONSTRAINT chk_products_online_non_muni_no_location CHECK (((NOT ((is_remote = true) AND (product_type <> 'municipality_club'::public.product_type))) OR (location_id IS NULL))),
-    CONSTRAINT chk_products_refund_policy_only_for_single_payment CHECK (((refund_policy_days IS NULL) OR (product_type = ANY (ARRAY['camp'::public.product_type, 'event'::public.product_type])))),
     CONSTRAINT chk_products_running_has_start_date CHECK (((status <> 'running'::public.product_status) OR (start_date IS NOT NULL))),
     CONSTRAINT chk_products_threshold_within_seat_count CHECK (((signup_threshold IS NULL) OR (seat_count IS NULL) OR (signup_threshold <= seat_count))),
     CONSTRAINT products_assistant_gedu_fee_cents_check CHECK (((assistant_gedu_fee_cents IS NULL) OR (assistant_gedu_fee_cents >= 0))),
@@ -3122,26 +4641,41 @@ CREATE TABLE public.products (
     CONSTRAINT products_min_age_check CHECK ((min_age >= 0)),
     CONSTRAINT products_municipality_fee_cents_check CHECK (((municipality_fee_cents IS NULL) OR (municipality_fee_cents > 0))),
     CONSTRAINT products_primary_gedu_fee_cents_check CHECK (((primary_gedu_fee_cents IS NULL) OR (primary_gedu_fee_cents >= 0))),
-    CONSTRAINT products_refund_policy_days_check CHECK (((refund_policy_days IS NULL) OR (refund_policy_days >= 0))),
     CONSTRAINT products_seat_count_check CHECK (((seat_count IS NULL) OR (seat_count >= 1))),
     CONSTRAINT products_signup_threshold_check CHECK (((signup_threshold IS NULL) OR (signup_threshold >= 1)))
 );
 
 
 --
--- Name: refunds; Type: TABLE; Schema: public; Owner: -
+-- Name: roblox_accounts; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.refunds (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    payment_id uuid NOT NULL,
-    amount_cents integer NOT NULL,
-    reason public.refund_reason NOT NULL,
-    stripe_refund_id text NOT NULL,
-    stripe_event_id text NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT refunds_amount_cents_check CHECK ((amount_cents >= 0))
+CREATE TABLE public.roblox_accounts (
+    user_id uuid NOT NULL,
+    roblox_username text,
+    roblox_user_id bigint
 );
+
+
+--
+-- Name: TABLE roblox_accounts; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.roblox_accounts IS 'One row per Sogverse account that has given a Roblox handle. Mirrors minecraft_accounts: the row key IS the profile, unlinking clears the columns rather than deleting the row, and two accounts may hold the same Roblox account (siblings share).';
+
+
+--
+-- Name: COLUMN roblox_accounts.roblox_username; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.roblox_accounts.roblox_username IS 'The handle as Roblox spells it when a lookup confirmed one, or as the person typed it when no lookup could. Never rejected for being taken: a shared account is legitimate.';
+
+
+--
+-- Name: COLUMN roblox_accounts.roblox_user_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.roblox_accounts.roblox_user_id IS 'Roblox''s int64 account id, present only when a lookup confirmed the account — its presence is the whole of "verified". Deliberately NOT unique: siblings sharing one Roblox account across two Sogverse accounts is supported, exactly as it is for Minecraft (00135).';
 
 
 --
@@ -3166,6 +4700,28 @@ CREATE TABLE public.schedule_slots (
 --
 
 COMMENT ON COLUMN public.schedule_slots.weekday IS '0=Monday .. 6=Sunday (ISO-style, matches products-redesign.md §4.2).';
+
+
+--
+-- Name: session_attendance; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.session_attendance (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    session_id uuid NOT NULL,
+    gamer_id uuid NOT NULL,
+    status text NOT NULL,
+    recorded_by uuid,
+    recorded_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT chk_session_attendance_status CHECK ((status = ANY (ARRAY['present'::text, 'absent'::text])))
+);
+
+
+--
+-- Name: TABLE session_attendance; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.session_attendance IS 'One row per explicit attendance mark. A roster member with NO row here is unanswered, never absent — the three-state distinction a boolean cannot express. Marks are written one at a time and reverting to unmarked deletes the row, so two gedus marking different children in one session never clobber each other.';
 
 
 --
@@ -3369,6 +4925,29 @@ ALTER TABLE ONLY public.gedu_profiles
 
 
 --
+-- Name: group_sessions group_sessions_group_date_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.group_sessions
+    ADD CONSTRAINT group_sessions_group_date_key UNIQUE (group_id, session_date);
+
+
+--
+-- Name: CONSTRAINT group_sessions_group_date_key ON group_sessions; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT group_sessions_group_date_key ON public.group_sessions IS 'One session per group per local calendar day — a deliberate architectural bet. It blocks multi-slot days (morning + afternoon camps), which we do not run; in exchange the key survives every schedule edit but a weekday move, and entry ids can be (group_id, session_date). Revisiting multi-slot days means revisiting this constraint.';
+
+
+--
+-- Name: group_sessions group_sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.group_sessions
+    ADD CONSTRAINT group_sessions_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: holiday_calendars holiday_calendars_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3398,14 +4977,6 @@ ALTER TABLE ONLY public.locations
 
 ALTER TABLE ONLY public.minecraft_accounts
     ADD CONSTRAINT minecraft_accounts_pkey PRIMARY KEY (user_id);
-
-
---
--- Name: minecraft_accounts minecraft_accounts_uuid_unique; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.minecraft_accounts
-    ADD CONSTRAINT minecraft_accounts_uuid_unique UNIQUE (minecraft_uuid);
 
 
 --
@@ -3441,6 +5012,14 @@ ALTER TABLE ONLY public.payments
 
 
 --
+-- Name: postal_codes postal_codes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.postal_codes
+    ADD CONSTRAINT postal_codes_pkey PRIMARY KEY (country_code, postal_code, location_id);
+
+
+--
 -- Name: product_groups product_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3470,6 +5049,14 @@ ALTER TABLE ONLY public.product_prices
 
 ALTER TABLE ONLY public.product_seat_counts
     ADD CONSTRAINT product_seat_counts_pkey PRIMARY KEY (product_id);
+
+
+--
+-- Name: product_staff_details product_staff_details_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_staff_details
+    ADD CONSTRAINT product_staff_details_pkey PRIMARY KEY (product_id);
 
 
 --
@@ -3505,27 +5092,11 @@ ALTER TABLE ONLY public.profiles
 
 
 --
--- Name: refunds refunds_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: roblox_accounts roblox_accounts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.refunds
-    ADD CONSTRAINT refunds_pkey PRIMARY KEY (id);
-
-
---
--- Name: refunds refunds_stripe_event_id_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.refunds
-    ADD CONSTRAINT refunds_stripe_event_id_key UNIQUE (stripe_event_id);
-
-
---
--- Name: refunds refunds_stripe_refund_id_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.refunds
-    ADD CONSTRAINT refunds_stripe_refund_id_key UNIQUE (stripe_refund_id);
+ALTER TABLE ONLY public.roblox_accounts
+    ADD CONSTRAINT roblox_accounts_pkey PRIMARY KEY (user_id);
 
 
 --
@@ -3542,6 +5113,22 @@ ALTER TABLE ONLY public.schedule_slots
 
 ALTER TABLE ONLY public.schedule_slots
     ADD CONSTRAINT schedule_slots_product_id_weekday_key UNIQUE (product_id, weekday);
+
+
+--
+-- Name: session_attendance session_attendance_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.session_attendance
+    ADD CONSTRAINT session_attendance_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: session_attendance session_attendance_session_gamer_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.session_attendance
+    ADD CONSTRAINT session_attendance_session_gamer_key UNIQUE (session_id, gamer_id);
 
 
 --
@@ -3609,6 +5196,13 @@ ALTER TABLE ONLY public.whatsapp_messages
 
 
 --
+-- Name: group_sessions_group_date_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX group_sessions_group_date_idx ON public.group_sessions USING btree (group_id, session_date DESC);
+
+
+--
 -- Name: idx_calendar_holidays_date; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3672,6 +5266,13 @@ CREATE INDEX idx_locations_parent ON public.locations USING btree (parent_id);
 
 
 --
+-- Name: idx_locations_search_blob; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_locations_search_blob ON public.locations USING gin (search_blob extensions.gin_trgm_ops);
+
+
+--
 -- Name: idx_locations_type; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3721,13 +5322,6 @@ CREATE INDEX idx_participations_group ON public.participations USING btree (grou
 
 
 --
--- Name: idx_participations_reserving_live; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_participations_reserving_live ON public.participations USING btree (product_id, reserved_until) WHERE (status = 'reserving'::public.participation_status);
-
-
---
 -- Name: idx_participations_waitlisted; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -3753,6 +5347,27 @@ CREATE INDEX idx_payments_invoice ON public.payments USING btree (stripe_invoice
 --
 
 CREATE INDEX idx_payments_payment_intent ON public.payments USING btree (stripe_payment_intent_id) WHERE (stripe_payment_intent_id IS NOT NULL);
+
+
+--
+-- Name: idx_postal_codes_code_trgm; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_postal_codes_code_trgm ON public.postal_codes USING gin (postal_code extensions.gin_trgm_ops);
+
+
+--
+-- Name: INDEX idx_postal_codes_code_trgm; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON INDEX public.idx_postal_codes_code_trgm IS 'Serves the postal match arm of search_locations, which asks for codes starting with a folded needle across every country at once. Trigram rather than btree because the needle arrives as an InitPlan over the search function''s probe CTE, and PostgreSQL''s LIKE-prefix-to-range rewrite needs a plan-time Const; GIN extracts its query keys at execution time instead, exactly as the locations search blob index does.';
+
+
+--
+-- Name: idx_postal_codes_location_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_postal_codes_location_id ON public.postal_codes USING btree (location_id);
 
 
 --
@@ -3826,17 +5441,17 @@ CREATE INDEX idx_profiles_email ON public.profiles USING btree (email) WHERE (em
 
 
 --
+-- Name: idx_profiles_home_location_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_profiles_home_location_id ON public.profiles USING btree (home_location_id) WHERE (home_location_id IS NOT NULL);
+
+
+--
 -- Name: idx_profiles_role; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_profiles_role ON public.profiles USING btree (role);
-
-
---
--- Name: idx_refunds_payment; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_refunds_payment ON public.refunds USING btree (payment_id);
 
 
 --
@@ -3861,10 +5476,52 @@ CREATE INDEX idx_whatsapp_messages_conversation ON public.whatsapp_messages USIN
 
 
 --
+-- Name: minecraft_accounts_uuid_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX minecraft_accounts_uuid_idx ON public.minecraft_accounts USING btree (minecraft_uuid);
+
+
+--
+-- Name: session_attendance_gamer_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX session_attendance_gamer_idx ON public.session_attendance USING btree (gamer_id);
+
+
+--
+-- Name: session_attendance_session_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX session_attendance_session_idx ON public.session_attendance USING btree (session_id);
+
+
+--
+-- Name: uq_locations_external_code; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_locations_external_code ON public.locations USING btree (country_code, type, external_code) WHERE (external_code IS NOT NULL);
+
+
+--
+-- Name: uq_locations_geonames_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_locations_geonames_id ON public.locations USING btree (geonames_id) WHERE (geonames_id IS NOT NULL);
+
+
+--
 -- Name: uq_participations_active_or_waitlisted; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE UNIQUE INDEX uq_participations_active_or_waitlisted ON public.participations USING btree (product_id, gamer_id) WHERE (status = ANY (ARRAY['active'::public.participation_status, 'waitlisted'::public.participation_status, 'completed'::public.participation_status]));
+
+
+--
+-- Name: uq_participations_checkout_session; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_participations_checkout_session ON public.participations USING btree (stripe_checkout_session_id) WHERE (stripe_checkout_session_id IS NOT NULL);
 
 
 --
@@ -3893,6 +5550,13 @@ CREATE INDEX voice_zones_group_id_idx ON public.voice_zones USING btree (group_i
 --
 
 CREATE TRIGGER family_subscriptions_updated_at BEFORE UPDATE ON public.family_subscriptions FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- Name: group_sessions group_sessions_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER group_sessions_updated_at BEFORE UPDATE ON public.group_sessions FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 
 --
@@ -3935,6 +5599,13 @@ CREATE TRIGGER product_groups_updated_at BEFORE UPDATE ON public.product_groups 
 --
 
 CREATE TRIGGER product_prices_updated_at BEFORE UPDATE ON public.product_prices FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- Name: product_staff_details product_staff_details_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER product_staff_details_updated_at BEFORE UPDATE ON public.product_staff_details FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 
 --
@@ -4004,7 +5675,7 @@ CREATE TRIGGER trg_participations_refresh_counts_ins AFTER INSERT ON public.part
 -- Name: participations trg_participations_refresh_counts_upd; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trg_participations_refresh_counts_upd AFTER UPDATE OF status, reserved_until, product_id ON public.participations FOR EACH ROW EXECUTE FUNCTION public.trg_refresh_product_seat_counts();
+CREATE TRIGGER trg_participations_refresh_counts_upd AFTER UPDATE OF status, product_id ON public.participations FOR EACH ROW EXECUTE FUNCTION public.trg_refresh_product_seat_counts();
 
 
 --
@@ -4012,6 +5683,20 @@ CREATE TRIGGER trg_participations_refresh_counts_upd AFTER UPDATE OF status, res
 --
 
 CREATE TRIGGER trg_products_seed_seat_counts AFTER INSERT ON public.products FOR EACH ROW EXECUTE FUNCTION public.trg_seed_product_seat_counts();
+
+
+--
+-- Name: locations trg_set_location_depth; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_set_location_depth BEFORE INSERT OR UPDATE ON public.locations FOR EACH ROW EXECUTE FUNCTION public.set_location_depth();
+
+
+--
+-- Name: TRIGGER trg_set_location_depth ON locations; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TRIGGER trg_set_location_depth ON public.locations IS 'Keeps locations.depth equal to the ancestor-chain length: 0 when parent_id is NULL, parent.depth + 1 otherwise. Fires on every INSERT and UPDATE so the column cannot be forged from outside. LIMIT, stated so nobody assumes otherwise: a FOR EACH ROW trigger corrects the row it is handed and cannot re-depth that row''s descendants, so re-parenting a node that HAS descendants would leave their depth stale. Nothing does that — nothing above `site` is ever created or moved by the application, sync never reparents without a human widening the migration by hand, and the FI/FR cutover re-parents only sites, which are leaves. A future migration that reparents a non-leaf must re-run the recursive backfill in this file.';
 
 
 --
@@ -4175,6 +5860,30 @@ ALTER TABLE ONLY public.gedu_profiles
 
 
 --
+-- Name: group_sessions group_sessions_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.group_sessions
+    ADD CONSTRAINT group_sessions_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
+
+
+--
+-- Name: group_sessions group_sessions_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.group_sessions
+    ADD CONSTRAINT group_sessions_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.product_groups(id) ON DELETE CASCADE;
+
+
+--
+-- Name: group_sessions group_sessions_updated_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.group_sessions
+    ADD CONSTRAINT group_sessions_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
+
+
+--
 -- Name: locations locations_parent_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4247,6 +5956,14 @@ ALTER TABLE ONLY public.payments
 
 
 --
+-- Name: postal_codes postal_codes_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.postal_codes
+    ADD CONSTRAINT postal_codes_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.locations(id) ON DELETE CASCADE;
+
+
+--
 -- Name: product_groups product_groups_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4284,6 +6001,14 @@ ALTER TABLE ONLY public.product_prices
 
 ALTER TABLE ONLY public.product_seat_counts
     ADD CONSTRAINT product_seat_counts_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+
+
+--
+-- Name: product_staff_details product_staff_details_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.product_staff_details
+    ADD CONSTRAINT product_staff_details_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
 
 
 --
@@ -4327,6 +6052,14 @@ ALTER TABLE ONLY public.products
 
 
 --
+-- Name: profiles profiles_home_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.profiles
+    ADD CONSTRAINT profiles_home_location_id_fkey FOREIGN KEY (home_location_id) REFERENCES public.locations(id) ON DELETE SET NULL;
+
+
+--
 -- Name: profiles profiles_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4335,11 +6068,11 @@ ALTER TABLE ONLY public.profiles
 
 
 --
--- Name: refunds refunds_payment_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: roblox_accounts roblox_accounts_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.refunds
-    ADD CONSTRAINT refunds_payment_id_fkey FOREIGN KEY (payment_id) REFERENCES public.payments(id) ON DELETE RESTRICT;
+ALTER TABLE ONLY public.roblox_accounts
+    ADD CONSTRAINT roblox_accounts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
 
 
 --
@@ -4348,6 +6081,30 @@ ALTER TABLE ONLY public.refunds
 
 ALTER TABLE ONLY public.schedule_slots
     ADD CONSTRAINT schedule_slots_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+
+
+--
+-- Name: session_attendance session_attendance_gamer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.session_attendance
+    ADD CONSTRAINT session_attendance_gamer_id_fkey FOREIGN KEY (gamer_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: session_attendance session_attendance_recorded_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.session_attendance
+    ADD CONSTRAINT session_attendance_recorded_by_fkey FOREIGN KEY (recorded_by) REFERENCES public.profiles(id) ON DELETE SET NULL;
+
+
+--
+-- Name: session_attendance session_attendance_session_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.session_attendance
+    ADD CONSTRAINT session_attendance_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.group_sessions(id) ON DELETE CASCADE;
 
 
 --
@@ -4563,6 +6320,15 @@ CREATE POLICY admin_full_access_product_prices ON public.product_prices TO authe
 
 
 --
+-- Name: product_staff_details admin_full_access_product_staff_details; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY admin_full_access_product_staff_details ON public.product_staff_details TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK ((( SELECT public.is_admin() AS is_admin) AND (EXISTS ( SELECT 1
+   FROM public.products p
+  WHERE (p.id = product_staff_details.product_id)))));
+
+
+--
 -- Name: product_subscription_prices admin_full_access_product_subscription_prices; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -4591,10 +6357,10 @@ CREATE POLICY admin_full_access_profiles ON public.profiles TO authenticated USI
 
 
 --
--- Name: refunds admin_full_access_refunds; Type: POLICY; Schema: public; Owner: -
+-- Name: roblox_accounts admin_full_access_roblox_accounts; Type: POLICY; Schema: public; Owner: -
 --
 
-CREATE POLICY admin_full_access_refunds ON public.refunds TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
+CREATE POLICY admin_full_access_roblox_accounts ON public.roblox_accounts TO authenticated USING (( SELECT public.is_admin() AS is_admin)) WITH CHECK (( SELECT public.is_admin() AS is_admin));
 
 
 --
@@ -4691,15 +6457,6 @@ CREATE POLICY customer_select_own_participations ON public.participations FOR SE
 --
 
 CREATE POLICY customer_select_own_payments ON public.payments FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'customer'::public.user_role) AND (customer_id = ( SELECT auth.uid() AS uid))));
-
-
---
--- Name: refunds customer_select_own_refunds; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY customer_select_own_refunds ON public.refunds FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'customer'::public.user_role) AND (EXISTS ( SELECT 1
-   FROM public.payments p
-  WHERE ((p.id = refunds.payment_id) AND (p.customer_id = ( SELECT auth.uid() AS uid)))))));
 
 
 --
@@ -4853,6 +6610,12 @@ CREATE POLICY gedus_read_own_gedu_profile ON public.gedu_profiles FOR SELECT TO 
 
 
 --
+-- Name: group_sessions; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.group_sessions ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: holiday_calendars; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -4891,6 +6654,13 @@ CREATE POLICY parents_read_linked_gamer_profiles ON public.gamer_profiles FOR SE
 
 
 --
+-- Name: roblox_accounts parents_read_linked_gamer_roblox; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY parents_read_linked_gamer_roblox ON public.roblox_accounts FOR SELECT TO authenticated USING (public.is_parent_of(user_id));
+
+
+--
 -- Name: profiles parents_view_linked_gamers; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -4910,6 +6680,19 @@ ALTER TABLE public.participations ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: postal_codes; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.postal_codes ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: postal_codes postal_codes_are_public_reference_data; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY postal_codes_are_public_reference_data ON public.postal_codes FOR SELECT TO authenticated, anon USING (true);
+
 
 --
 -- Name: product_groups; Type: ROW SECURITY; Schema: public; Owner: -
@@ -4934,6 +6717,12 @@ ALTER TABLE public.product_prices ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.product_seat_counts ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: product_staff_details; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.product_staff_details ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: product_subscription_prices; Type: ROW SECURITY; Schema: public; Owner: -
@@ -5016,16 +6805,22 @@ CREATE POLICY read_schedule_slots_via_product ON public.schedule_slots FOR SELEC
 
 
 --
--- Name: refunds; Type: ROW SECURITY; Schema: public; Owner: -
+-- Name: roblox_accounts; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
-ALTER TABLE public.refunds ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.roblox_accounts ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: schedule_slots; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.schedule_slots ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: session_attendance; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.session_attendance ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: site_details; Type: ROW SECURITY; Schema: public; Owner: -
@@ -5053,6 +6848,13 @@ CREATE POLICY users_insert_own_minecraft_account ON public.minecraft_accounts FO
 
 
 --
+-- Name: roblox_accounts users_insert_own_roblox_account; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY users_insert_own_roblox_account ON public.roblox_accounts FOR INSERT TO authenticated WITH CHECK ((user_id = ( SELECT auth.uid() AS uid)));
+
+
+--
 -- Name: feedback_submissions users_read_own_feedback; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -5067,6 +6869,13 @@ CREATE POLICY users_read_own_minecraft_account ON public.minecraft_accounts FOR 
 
 
 --
+-- Name: roblox_accounts users_read_own_roblox_account; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY users_read_own_roblox_account ON public.roblox_accounts FOR SELECT TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid)));
+
+
+--
 -- Name: minecraft_accounts users_update_own_minecraft_account; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -5078,6 +6887,13 @@ CREATE POLICY users_update_own_minecraft_account ON public.minecraft_accounts FO
 --
 
 CREATE POLICY users_update_own_profile ON public.profiles FOR UPDATE TO authenticated USING ((id = ( SELECT auth.uid() AS uid))) WITH CHECK (((id = ( SELECT auth.uid() AS uid)) AND (role = ( SELECT public.get_user_role() AS get_user_role))));
+
+
+--
+-- Name: roblox_accounts users_update_own_roblox_account; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY users_update_own_roblox_account ON public.roblox_accounts FOR UPDATE TO authenticated USING ((user_id = ( SELECT auth.uid() AS uid))) WITH CHECK ((user_id = ( SELECT auth.uid() AS uid)));
 
 
 --
@@ -5243,8 +7059,8 @@ GRANT ALL ON FUNCTION public.admin_remove_participation(p_product_id uuid, p_par
 --
 
 REVOKE ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb) TO service_role;
 GRANT ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb) TO authenticated;
+GRANT ALL ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb) TO service_role;
 
 
 --
@@ -5292,11 +7108,11 @@ GRANT ALL ON FUNCTION public.cancel_participation(p_participation_id uuid, p_rea
 
 
 --
--- Name: FUNCTION confirm_reservation(p_reservation_id uuid); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.confirm_reservation(p_reservation_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.confirm_reservation(p_reservation_id uuid) TO service_role;
+REVOKE ALL ON FUNCTION public.confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.confirm_paid_participation(p_product_id uuid, p_gamer_id uuid, p_customer_id uuid, p_checkout_session_id text) TO service_role;
 
 
 --
@@ -5308,19 +7124,11 @@ GRANT ALL ON FUNCTION public.count_active_seats(p_product_id uuid) TO service_ro
 
 
 --
--- Name: FUNCTION count_seats_taken(p_product_id uuid); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.count_seats_taken(p_product_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.count_seats_taken(p_product_id uuid) TO service_role;
-
-
---
--- Name: FUNCTION create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text); Type: ACL; Schema: public; Owner: -
---
-
-REVOKE ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text) TO service_role;
+REVOKE ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.create_gamer(p_gamer_id uuid, p_parent_id uuid, p_first_name text, p_last_name text, p_date_of_birth date, p_gender public.gender_type, p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id bigint) TO service_role;
 
 
 --
@@ -5332,12 +7140,12 @@ GRANT ALL ON FUNCTION public.create_participation(p_product_id uuid, p_gamer_id 
 
 
 --
--- Name: FUNCTION create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_image_path text, p_padlet_url text, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_refund_policy_days integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_image_path text, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_image_path text, p_padlet_url text, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_refund_policy_days integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_image_path text, p_padlet_url text, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_refund_policy_days integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer) TO authenticated;
-GRANT ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_image_path text, p_padlet_url text, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_refund_policy_days integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer) TO service_role;
+REVOKE ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_image_path text, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_image_path text, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text) TO authenticated;
+GRANT ALL ON FUNCTION public.create_product(p_product_type public.product_type, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_status public.product_status, p_is_visible boolean, p_waitlist_enabled boolean, p_image_path text, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text) TO service_role;
 
 
 --
@@ -5350,11 +7158,27 @@ GRANT ALL ON FUNCTION public.demote_to_waitlist(p_participation_id uuid) TO serv
 
 
 --
+-- Name: FUNCTION derive_group_session_window(p_group_id uuid, p_session_date date); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.derive_group_session_window(p_group_id uuid, p_session_date date) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.derive_group_session_window(p_group_id uuid, p_session_date date) TO service_role;
+
+
+--
 -- Name: FUNCTION effective_status(p_product_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.effective_status(p_product_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.effective_status(p_product_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION ensure_group_session(p_group_id uuid, p_session_date date); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.ensure_group_session(p_group_id uuid, p_session_date date) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.ensure_group_session(p_group_id uuid, p_session_date date) TO service_role;
 
 
 --
@@ -5366,11 +7190,11 @@ GRANT ALL ON FUNCTION public.ensure_product_keeps_at_least_one_translation() TO 
 
 
 --
--- Name: FUNCTION expire_reservation(p_reservation_id uuid); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION gedu_teaches_group(p_group_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.expire_reservation(p_reservation_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.expire_reservation(p_reservation_id uuid) TO service_role;
+REVOKE ALL ON FUNCTION public.gedu_teaches_group(p_group_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.gedu_teaches_group(p_group_id uuid) TO service_role;
 
 
 --
@@ -5378,8 +7202,17 @@ GRANT ALL ON FUNCTION public.expire_reservation(p_reservation_id uuid) TO servic
 --
 
 REVOKE ALL ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid) TO service_role;
 GRANT ALL ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION get_gedu_group_feed(p_group_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) TO service_role;
 
 
 --
@@ -5387,8 +7220,17 @@ GRANT ALL ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid) TO aut
 --
 
 REVOKE ALL ON FUNCTION public.get_my_assigned_products() FROM PUBLIC;
-GRANT ALL ON FUNCTION public.get_my_assigned_products() TO service_role;
 GRANT ALL ON FUNCTION public.get_my_assigned_products() TO authenticated;
+GRANT ALL ON FUNCTION public.get_my_assigned_products() TO service_role;
+
+
+--
+-- Name: FUNCTION get_my_family_product_feed(p_participation_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.get_my_family_product_feed(p_participation_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.get_my_family_product_feed(p_participation_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.get_my_family_product_feed(p_participation_id uuid) TO service_role;
 
 
 --
@@ -5396,8 +7238,8 @@ GRANT ALL ON FUNCTION public.get_my_assigned_products() TO authenticated;
 --
 
 GRANT SELECT ON TABLE public.profiles TO anon;
-GRANT SELECT ON TABLE public.profiles TO authenticated;
 GRANT ALL ON TABLE public.profiles TO service_role;
+GRANT SELECT ON TABLE public.profiles TO authenticated;
 
 
 --
@@ -5436,12 +7278,28 @@ GRANT UPDATE(last_name) ON TABLE public.profiles TO authenticated;
 
 
 --
+-- Name: COLUMN profiles.home_location_id; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT UPDATE(home_location_id) ON TABLE public.profiles TO authenticated;
+
+
+--
 -- Name: FUNCTION get_my_gamers(); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.get_my_gamers() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.get_my_gamers() TO authenticated;
 GRANT ALL ON FUNCTION public.get_my_gamers() TO service_role;
+
+
+--
+-- Name: FUNCTION get_my_gedu_assignment_summaries(p_epoch_date date); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date) TO authenticated;
+GRANT ALL ON FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date) TO service_role;
 
 
 --
@@ -5458,8 +7316,17 @@ GRANT ALL ON FUNCTION public.get_my_parents() TO service_role;
 --
 
 REVOKE ALL ON FUNCTION public.get_my_participation_subscription_states() FROM PUBLIC;
-GRANT ALL ON FUNCTION public.get_my_participation_subscription_states() TO service_role;
 GRANT ALL ON FUNCTION public.get_my_participation_subscription_states() TO authenticated;
+GRANT ALL ON FUNCTION public.get_my_participation_subscription_states() TO service_role;
+
+
+--
+-- Name: FUNCTION get_my_waitlist_positions(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.get_my_waitlist_positions() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.get_my_waitlist_positions() TO authenticated;
+GRANT ALL ON FUNCTION public.get_my_waitlist_positions() TO service_role;
 
 
 --
@@ -5487,6 +7354,14 @@ GRANT ALL ON FUNCTION public.get_user_role() TO service_role;
 REVOKE ALL ON FUNCTION public.get_waitlist_position(p_participation_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.get_waitlist_position(p_participation_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.get_waitlist_position(p_participation_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION group_session_date_is_writable(p_group_id uuid, p_session_date date); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.group_session_date_is_writable(p_group_id uuid, p_session_date date) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.group_session_date_is_writable(p_group_id uuid, p_session_date date) TO service_role;
 
 
 --
@@ -5523,6 +7398,16 @@ GRANT ALL ON FUNCTION public.has_active_participation_in_group(p_group_id uuid) 
 REVOKE ALL ON FUNCTION public.has_active_participation_on_product(p_product_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.has_active_participation_on_product(p_product_id uuid) TO service_role;
 GRANT ALL ON FUNCTION public.has_active_participation_on_product(p_product_id uuid) TO authenticated;
+
+
+--
+-- Name: FUNCTION immutable_unaccent(p_value text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.immutable_unaccent(p_value text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.immutable_unaccent(p_value text) TO anon;
+GRANT ALL ON FUNCTION public.immutable_unaccent(p_value text) TO authenticated;
+GRANT ALL ON FUNCTION public.immutable_unaccent(p_value text) TO service_role;
 
 
 --
@@ -5576,6 +7461,34 @@ REVOKE ALL ON FUNCTION public.join_waitlist(p_product_id uuid, p_gamer_id uuid, 
 
 
 --
+-- Name: FUNCTION leave_my_waitlist_spot(p_participation_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.leave_my_waitlist_spot(p_participation_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.leave_my_waitlist_spot(p_participation_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.leave_my_waitlist_spot(p_participation_id uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION location_search_blob(p_name text, p_name_i18n jsonb, p_external_code text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.location_search_blob(p_name text, p_name_i18n jsonb, p_external_code text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.location_search_blob(p_name text, p_name_i18n jsonb, p_external_code text) TO authenticated;
+GRANT ALL ON FUNCTION public.location_search_blob(p_name text, p_name_i18n jsonb, p_external_code text) TO service_role;
+
+
+--
+-- Name: FUNCTION location_search_separator(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.location_search_separator() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.location_search_separator() TO anon;
+GRANT ALL ON FUNCTION public.location_search_separator() TO authenticated;
+GRANT ALL ON FUNCTION public.location_search_separator() TO service_role;
+
+
+--
 -- Name: FUNCTION participation_state(p_status public.participation_status, p_group_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
@@ -5588,8 +7501,8 @@ GRANT ALL ON FUNCTION public.participation_state(p_status public.participation_s
 --
 
 REVOKE ALL ON FUNCTION public.pin_is_set() FROM PUBLIC;
-GRANT ALL ON FUNCTION public.pin_is_set() TO service_role;
 GRANT ALL ON FUNCTION public.pin_is_set() TO authenticated;
+GRANT ALL ON FUNCTION public.pin_is_set() TO service_role;
 
 
 --
@@ -5610,6 +7523,15 @@ GRANT ALL ON FUNCTION public.promote_from_waitlist(p_participation_id uuid, p_gr
 
 
 --
+-- Name: FUNCTION record_attendance(p_group_id uuid, p_session_date date, p_gamer_id uuid, p_status text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_gamer_id uuid, p_status text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_gamer_id uuid, p_status text) TO authenticated;
+GRANT ALL ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_gamer_id uuid, p_status text) TO service_role;
+
+
+--
 -- Name: FUNCTION refresh_product_seat_counts(p_product_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
@@ -5618,11 +7540,21 @@ GRANT ALL ON FUNCTION public.refresh_product_seat_counts(p_product_id uuid) TO s
 
 
 --
--- Name: FUNCTION register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id text); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text) TO service_role;
+REVOKE ALL ON FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.register_gedu(p_user_id uuid, p_first_name text, p_last_name text, p_locale text, p_phone text, p_spoken_languages text[], p_location_ids uuid[], p_minecraft_username text, p_minecraft_uuid text, p_roblox_username text, p_roblox_user_id text) TO service_role;
+
+
+--
+-- Name: FUNCTION search_locations(p_query text, p_types public.location_type[], p_limit integer, p_country text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer, p_country text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer, p_country text) TO anon;
+GRANT ALL ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer, p_country text) TO authenticated;
+GRANT ALL ON FUNCTION public.search_locations(p_query text, p_types public.location_type[], p_limit integer, p_country text) TO service_role;
 
 
 --
@@ -5634,12 +7566,46 @@ GRANT ALL ON FUNCTION public.set_gedu_verified(p_gedu_id uuid, p_verified boolea
 
 
 --
+-- Name: FUNCTION set_group_member_minecraft(p_gamer_id uuid, p_minecraft_username text, p_minecraft_uuid text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.set_group_member_minecraft(p_gamer_id uuid, p_minecraft_username text, p_minecraft_uuid text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.set_group_member_minecraft(p_gamer_id uuid, p_minecraft_username text, p_minecraft_uuid text) TO authenticated;
+GRANT ALL ON FUNCTION public.set_group_member_minecraft(p_gamer_id uuid, p_minecraft_username text, p_minecraft_uuid text) TO service_role;
+
+
+--
+-- Name: FUNCTION set_group_notes(p_group_id uuid, p_public_note text, p_gedu_note text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.set_group_notes(p_group_id uuid, p_public_note text, p_gedu_note text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.set_group_notes(p_group_id uuid, p_public_note text, p_gedu_note text) TO authenticated;
+GRANT ALL ON FUNCTION public.set_group_notes(p_group_id uuid, p_public_note text, p_gedu_note text) TO service_role;
+
+
+--
+-- Name: FUNCTION set_group_session_notes(p_group_id uuid, p_session_date date, p_report text, p_gedu_note text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.set_group_session_notes(p_group_id uuid, p_session_date date, p_report text, p_gedu_note text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.set_group_session_notes(p_group_id uuid, p_session_date date, p_report text, p_gedu_note text) TO authenticated;
+GRANT ALL ON FUNCTION public.set_group_session_notes(p_group_id uuid, p_session_date date, p_report text, p_gedu_note text) TO service_role;
+
+
+--
+-- Name: FUNCTION set_location_depth(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.set_location_depth() FROM PUBLIC;
+
+
+--
 -- Name: FUNCTION set_my_pin(p_pin text); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.set_my_pin(p_pin text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.set_my_pin(p_pin text) TO service_role;
 GRANT ALL ON FUNCTION public.set_my_pin(p_pin text) TO authenticated;
+GRANT ALL ON FUNCTION public.set_my_pin(p_pin text) TO service_role;
 
 
 --
@@ -5648,6 +7614,15 @@ GRANT ALL ON FUNCTION public.set_my_pin(p_pin text) TO authenticated;
 
 REVOKE ALL ON FUNCTION public.set_pin_for_user(p_user_id uuid, p_pin text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.set_pin_for_user(p_user_id uuid, p_pin text) TO service_role;
+
+
+--
+-- Name: FUNCTION set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text) TO authenticated;
+GRANT ALL ON FUNCTION public.set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text) TO service_role;
 
 
 --
@@ -5683,12 +7658,12 @@ GRANT ALL ON FUNCTION public.trg_seed_product_seat_counts() TO service_role;
 
 
 --
--- Name: FUNCTION update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_is_visible boolean, p_waitlist_enabled boolean, p_image_path text, p_padlet_url text, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_refund_policy_days integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_is_visible boolean, p_waitlist_enabled boolean, p_image_path text, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_is_visible boolean, p_waitlist_enabled boolean, p_image_path text, p_padlet_url text, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_refund_policy_days integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_is_visible boolean, p_waitlist_enabled boolean, p_image_path text, p_padlet_url text, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_refund_policy_days integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer) TO authenticated;
-GRANT ALL ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_is_visible boolean, p_waitlist_enabled boolean, p_image_path text, p_padlet_url text, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_refund_policy_days integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer) TO service_role;
+REVOKE ALL ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_is_visible boolean, p_waitlist_enabled boolean, p_image_path text, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_is_visible boolean, p_waitlist_enabled boolean, p_image_path text, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text) TO authenticated;
+GRANT ALL ON FUNCTION public.update_product(p_id uuid, p_billing_mode public.billing_mode, p_translations jsonb, p_topic public.product_topic, p_min_age integer, p_max_age integer, p_spoken_language_code text, p_is_remote boolean, p_timezone text, p_registration_opens_at timestamp with time zone, p_is_visible boolean, p_waitlist_enabled boolean, p_image_path text, p_location_id uuid, p_signup_threshold integer, p_start_date date, p_end_date date, p_seat_count integer, p_schedule_slots jsonb, p_prices jsonb, p_holiday_calendar_ids uuid[], p_primary_gedu_fee_cents integer, p_assistant_gedu_fee_cents integer, p_municipality_fee_cents integer, p_material_url text) TO service_role;
 
 
 --
@@ -5754,8 +7729,8 @@ GRANT ALL ON FUNCTION public.validate_site_details_location() TO service_role;
 --
 
 REVOKE ALL ON FUNCTION public.verify_my_pin(p_pin text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.verify_my_pin(p_pin text) TO service_role;
 GRANT ALL ON FUNCTION public.verify_my_pin(p_pin text) TO authenticated;
+GRANT ALL ON FUNCTION public.verify_my_pin(p_pin text) TO service_role;
 
 
 --
@@ -5772,8 +7747,8 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.calendar_holidays TO authentic
 --
 
 GRANT SELECT ON TABLE public.customer_profiles TO anon;
-GRANT SELECT ON TABLE public.customer_profiles TO authenticated;
 GRANT ALL ON TABLE public.customer_profiles TO service_role;
+GRANT SELECT ON TABLE public.customer_profiles TO authenticated;
 
 
 --
@@ -5799,8 +7774,8 @@ GRANT SELECT ON TABLE public.feedback_submissions TO authenticated;
 --
 
 GRANT SELECT ON TABLE public.gamer_profiles TO anon;
-GRANT SELECT,UPDATE ON TABLE public.gamer_profiles TO authenticated;
 GRANT ALL ON TABLE public.gamer_profiles TO service_role;
+GRANT SELECT,UPDATE ON TABLE public.gamer_profiles TO authenticated;
 
 
 --
@@ -5831,6 +7806,13 @@ GRANT ALL ON TABLE public.gedu_profiles TO service_role;
 
 
 --
+-- Name: TABLE group_sessions; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON TABLE public.group_sessions TO service_role;
+
+
+--
 -- Name: TABLE holiday_calendars; Type: ACL; Schema: public; Owner: -
 --
 
@@ -5852,7 +7834,6 @@ GRANT SELECT,INSERT,UPDATE ON TABLE public.locations TO authenticated;
 -- Name: TABLE minecraft_accounts; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT SELECT ON TABLE public.minecraft_accounts TO anon;
 GRANT ALL ON TABLE public.minecraft_accounts TO service_role;
 GRANT SELECT,INSERT,UPDATE ON TABLE public.minecraft_accounts TO authenticated;
 
@@ -5862,8 +7843,8 @@ GRANT SELECT,INSERT,UPDATE ON TABLE public.minecraft_accounts TO authenticated;
 --
 
 GRANT SELECT ON TABLE public.parent_gamer TO anon;
-GRANT SELECT,DELETE ON TABLE public.parent_gamer TO authenticated;
 GRANT ALL ON TABLE public.parent_gamer TO service_role;
+GRANT SELECT,DELETE ON TABLE public.parent_gamer TO authenticated;
 
 
 --
@@ -5882,6 +7863,15 @@ GRANT SELECT ON TABLE public.participations TO authenticated;
 GRANT SELECT ON TABLE public.payments TO anon;
 GRANT ALL ON TABLE public.payments TO service_role;
 GRANT SELECT ON TABLE public.payments TO authenticated;
+
+
+--
+-- Name: TABLE postal_codes; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public.postal_codes TO anon;
+GRANT SELECT ON TABLE public.postal_codes TO authenticated;
+GRANT SELECT ON TABLE public.postal_codes TO service_role;
 
 
 --
@@ -5921,6 +7911,14 @@ GRANT SELECT ON TABLE public.product_seat_counts TO authenticated;
 
 
 --
+-- Name: TABLE product_staff_details; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_staff_details TO authenticated;
+GRANT ALL ON TABLE public.product_staff_details TO service_role;
+
+
+--
 -- Name: TABLE product_subscription_prices; Type: ACL; Schema: public; Owner: -
 --
 
@@ -5947,12 +7945,11 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.products TO authenticated;
 
 
 --
--- Name: TABLE refunds; Type: ACL; Schema: public; Owner: -
+-- Name: TABLE roblox_accounts; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT SELECT ON TABLE public.refunds TO anon;
-GRANT ALL ON TABLE public.refunds TO service_role;
-GRANT SELECT ON TABLE public.refunds TO authenticated;
+GRANT ALL ON TABLE public.roblox_accounts TO service_role;
+GRANT SELECT,INSERT,UPDATE ON TABLE public.roblox_accounts TO authenticated;
 
 
 --
@@ -5962,6 +7959,13 @@ GRANT SELECT ON TABLE public.refunds TO authenticated;
 GRANT SELECT ON TABLE public.schedule_slots TO anon;
 GRANT ALL ON TABLE public.schedule_slots TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.schedule_slots TO authenticated;
+
+
+--
+-- Name: TABLE session_attendance; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON TABLE public.session_attendance TO service_role;
 
 
 --
@@ -5976,7 +7980,6 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.site_details TO authenticated;
 -- Name: TABLE site_staff_details; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT SELECT ON TABLE public.site_staff_details TO anon;
 GRANT ALL ON TABLE public.site_staff_details TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.site_staff_details TO authenticated;
 

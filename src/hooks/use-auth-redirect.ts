@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { ROUTES } from "@/lib/constants";
 import { resolveInternalPath } from "@/lib/navigation/internal-path";
 
@@ -42,14 +41,19 @@ export function resolveSafeRedirect(redirect: string | null): string | null {
 /**
  * Manages the redirect-after-auth flow (e.g. user clicks Buy → login/register → checkout).
  *
+ * **The raw `?redirect=` is passed in, not read here.** Reading it with
+ * `useSearchParams()` would make every auth form a search-params consumer, and
+ * in the App Router that forces the form under a `<Suspense>` boundary whose
+ * *fallback* is what the server prerenders — so the page shipped a grey
+ * placeholder and only built the real form after hydration. The pages read the
+ * param server-side from their own `searchParams` and hand it down, which costs
+ * one prop and buys a fully server-rendered form.
+ *
  * Returns:
- * - `redirect`: the raw redirect path from ?redirect= (or null)
  * - `status`: a user-facing message like "Redirecting to checkout..." (or null)
  * - `navigateAfterAuth`: call this after successful login/signup with a fallback path
  */
-export function useAuthRedirect() {
-  const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect");
+export function useAuthRedirect(redirect: string | null) {
   const [status, setStatus] = useState<string | null>(null);
 
   const safeRedirect = resolveSafeRedirect(redirect);

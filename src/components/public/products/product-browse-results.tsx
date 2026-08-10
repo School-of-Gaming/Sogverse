@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import type { ParticipationCounts } from "@/services/participations";
-import type { TopicFilterChip } from "@/lib/products/topics";
 import type { ProductBrowseRow, SpokenLanguage } from "@/types";
 import { filterProducts } from "./filter-products";
 import { useBrowseFilters } from "./use-browse-filters";
@@ -26,15 +25,13 @@ interface ProductBrowseResultsProps {
   counts: ParticipationCounts[];
   /** Whether the Days filter applies to this scope — the single source for it.
    *  Drives `filterProducts` here and, forwarded as `daysFilter`, the filter
-   *  strip's Days row. Clubs are recurring-weekly; camps are not. */
+   *  strip's Days row. Clubs are recurring-weekly; camps and events are not. */
   supportsDays: boolean;
   /** Forwarded verbatim to `<ProductBrowseFilters>`. The Days flag is *not*
    *  here — it's derived from `supportsDays` so the two can't drift. */
   filters: {
     initialSpokenLanguages: SpokenLanguage[];
     showTypeFilter?: boolean;
-    topicChoices?: readonly TopicFilterChip[];
-    topicLabelKey?: "topic" | "subject";
   };
   /** Detail-page URL builder for each card. Defaults to the storefront
    *  `/shop/[id]`; the municipality page passes `/schools/<slug>/[id]`. */

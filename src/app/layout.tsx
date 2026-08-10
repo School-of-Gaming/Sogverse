@@ -1,18 +1,14 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { Inter, Press_Start_2P } from "next/font/google";
+import { Press_Start_2P } from "next/font/google";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { Providers } from "@/providers";
 import { getUserWithProfile } from "@/lib/supabase/server";
 import { resolveTimezone, TIMEZONE_COOKIE_NAME } from "@/lib/timezone";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
+import { LayoutShiftTripwire } from "@/components/dev/layout-shift-tripwire";
 import "./globals.css";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
 
 const pressStart2P = Press_Start_2P({
   weight: "400",
@@ -70,7 +66,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} className="dark" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${pressStart2P.variable} antialiased bg-background text-foreground`}
+        className={`${pressStart2P.variable} antialiased bg-background text-foreground`}
       >
         <Providers
           initialUser={userWithProfile?.user ?? null}
@@ -81,14 +77,19 @@ export default async function RootLayout({
           messages={clientMessages}
         >
           {/* Header rendering is owned by each route group's layout — that's
-              how the (voice) group can replace the standard chrome with its
-              own simplified header. Headers are `position: sticky top-0`
-              (via `<SiteHeaderShell>`, sized by `--header-height`), so they
-              reserve their own space in normal flow and no wrapper needs an
-              offset to clear them. The document is the single scroll
+              how a group can vary what sits around the header (the (voice)
+              group renders the standard one with no footer, the (preview)
+              group renders no chrome at all). Headers are `position: sticky
+              top-0` (via `<SiteHeaderShell>`, sized by `--header-height`), so
+              they reserve their own space in normal flow and no wrapper needs
+              an offset to clear them. The document is the single scroll
               container; no inner element should set h-screen overflow-auto. */}
           {children}
         </Providers>
+        {/* Diagnostic for the intermittent ~20-40px post-load shift — logs
+            browser-attributed layout shifts and scroll-residue landings to
+            the console. Dev builds only; remove when convicted (TODO.md). */}
+        {process.env.NODE_ENV === "development" && <LayoutShiftTripwire />}
         <SpeedInsights />
         <Analytics />
       </body>

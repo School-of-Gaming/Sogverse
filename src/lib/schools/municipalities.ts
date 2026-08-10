@@ -1,14 +1,30 @@
-import type { Location } from "@/types";
+import type { LocationWithChain } from "@/services/locations";
 import { municipalitySlug } from "@/lib/locations/municipality-slug";
+import {
+  municipalityOf,
+  type EmbeddedLocation,
+} from "@/lib/locations/embedded-chain";
 import {
   localizedLocationName,
   localizedNameAlternates,
 } from "@/lib/locations/localized-name";
 
-// Pure logic behind the public /schools page: turn the flat FI locations list
-// plus the set of visible municipality-club locations into a sorted list of
+// Pure logic behind the public /schools page: turn Finland's municipality rows
+// plus the locations of the visible municipality clubs into a sorted list of
 // municipalities, each flagged with whether a club is currently available
 // there. Kept React/Supabase-free so it unit-tests directly.
+//
+// Both inputs are scoped reads that carry their own chain — the municipalities
+// come with their ancestors, the clubs with their location and its parent — so
+// nothing here needs the whole locations table to resolve a region name or to
+// walk a site up to its municipality.
+
+/**
+ * /schools is Finland-only, and this is the country whose municipality rows it
+ * lists. Scoping now happens in the query rather than in a filter here, so the
+ * page never reads a row it will not show.
+ */
+export const SCHOOLS_COUNTRY_CODE = "FI";
 
 /** One municipality row for the /schools list. */
 export interface MunicipalityEntry {
@@ -44,53 +60,30 @@ export interface RegionGroup {
 }
 
 /**
- * Walk a location up its parent chain to the nearest `municipality` (including
- * itself). An online municipality club's `location_id` *is* the municipality;
- * an in-person one points at a `site` whose parent is the municipality. A
- * region- or country-scoped location has no municipality ancestor and resolves
- * to `null` — deliberately: availability is municipality-exact, no cascade.
- * Cycle-guarded against malformed `parent_id`.
- */
-function nearestMunicipalityId(
-  locationId: string,
-  byId: Map<string, Location>,
-): string | null {
-  const seen = new Set<string>();
-  let current = byId.get(locationId);
-  while (current && !seen.has(current.id)) {
-    if (current.type === "municipality") return current.id;
-    seen.add(current.id);
-    current = current.parent_id ? byId.get(current.parent_id) : undefined;
-  }
-  return null;
-}
-
-/**
  * Build the full sorted list of Finnish municipalities, each flagged with
  * whether a visible club is available there.
  *
- * @param locations         the full flat locations list (any countries/levels)
- * @param clubLocationIds   `location_id` of each visible municipality club
- *                          (null entries are ignored)
+ * @param municipalities  Finland's municipality rows, each with its ancestor
+ *                        chain (nearest first, so `ancestors[0]` is the region)
+ * @param clubLocations   the embedded location of each visible municipality
+ *                        club (null entries are ignored)
  */
 export function buildMunicipalityEntries(
-  locations: Location[],
-  clubLocationIds: (string | null)[],
+  municipalities: LocationWithChain[],
+  clubLocations: (EmbeddedLocation | null)[],
   locale: string,
 ): MunicipalityEntry[] {
-  const byId = new Map(locations.map((l) => [l.id, l]));
-
   const activeMunicipalityIds = new Set<string>();
-  for (const locId of clubLocationIds) {
-    if (!locId) continue;
-    const muniId = nearestMunicipalityId(locId, byId);
-    if (muniId) activeMunicipalityIds.add(muniId);
+  for (const location of clubLocations) {
+    const municipality = municipalityOf(location);
+    if (municipality) activeMunicipalityIds.add(municipality.id);
   }
 
-  return locations
-    .filter((l) => l.type === "municipality" && l.country_code === "FI")
+  return municipalities
     .map((m) => {
-      const region = m.parent_id ? byId.get(m.parent_id) : undefined;
+      // `.at()` rather than `[0]`: a municipality whose parent row is missing
+      // really has an empty chain, and index access would type that away.
+      const region = m.ancestors.at(0);
       const isRegion = region?.type === "region";
       const displayName = localizedLocationName(m, locale);
       return {
@@ -107,6 +100,30 @@ export function buildMunicipalityEntries(
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name, locale));
+}
+
+/**
+ * The clubs that belong to one municipality, by *resolved* membership — the same
+ * rule that decides whether a municipality is listed as having clubs at all.
+ *
+ * A municipality club always carries a location, in one of two shapes: the
+ * municipality row itself (online) or a site inside it (in-person). Comparing a
+ * club's `location_id` against the municipality id therefore answers a
+ * different, narrower question — it matches only the online half and silently
+ * drops every in-person club. Resolving each club's own location up to its
+ * municipality is what puts both shapes in the same bucket.
+ *
+ * Delivery mode is a separate axis and is deliberately not touched here: a
+ * municipality page shows both modes and lets the viewer filter by format.
+ *
+ * Typed structurally (any row carrying its embedded location works) so the
+ * server prefetch and the client refetch can both hand over their product rows
+ * without this module knowing the product query's shape.
+ */
+export function selectClubsInMunicipality<
+  T extends { locations: EmbeddedLocation | null },
+>(clubs: readonly T[], municipalityId: string): T[] {
+  return clubs.filter((c) => municipalityOf(c.locations)?.id === municipalityId);
 }
 
 /**

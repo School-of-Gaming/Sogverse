@@ -2,8 +2,9 @@ import { formatInTimeZone } from "date-fns-tz";
 import { type SupportedCurrency } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { ProductLongDescription, ProductTopic } from "@/types";
-import { FORM_LOCKS, formLocksFor } from "./form-locks";
+import { formLocksFor } from "./form-locks";
 import type {
+  PaidMode,
   ProductTypeConfig,
   StartMode,
 } from "./product-type-config";
@@ -11,7 +12,8 @@ import type { ScheduleSlotDraft } from "./schedule-slots-editor";
 
 // Module-level constants — listed here rather than inline so the lint rule
 // against literal strings (i18n) doesn't fire for these structural keys.
-export const PAID_MODE_VALUES = ["paid", "free"] as const;
+// (The free/paid chooser's tuple is the one exception: it lives in
+// product-type-config.ts alongside the derivation that reads it.)
 export const REGISTRATION_OPENS_MODE_VALUES = [
   "immediately",
   "scheduled",
@@ -67,7 +69,6 @@ export const MINUTE_OPTIONS = ["00", "15", "30", "45"] as const;
 
 export const FIXED_TIMEZONE = "Europe/Helsinki";
 
-export type PaidMode = (typeof PAID_MODE_VALUES)[number];
 export type RegistrationOpensMode =
   (typeof REGISTRATION_OPENS_MODE_VALUES)[number];
 export type SeatLimitMode = (typeof SEAT_LIMIT_MODE_VALUES)[number];
@@ -92,7 +93,9 @@ export interface FormState {
   // Identity (non-translated). `topic` is the fixed product_topic enum; ""
   // is the unselected state the create form starts in.
   topic: ProductTopic | "";
-  padletUrl: string;
+  // Lesson material for whoever teaches this product. Staff-facing: it is
+  // rendered in the gedu group workspace and on no family surface at all.
+  materialUrl: string;
   // File   — newly picked replacement (admin uploaded a fresh image).
   // string — existing image_path on the product (edit-mode load).
   // null   — no image, or admin cleared the existing one.
@@ -173,26 +176,39 @@ export function initialState(
   // Events default to free; everything else has a real billing mode already.
   const initialPaidMode: PaidMode =
     config.billing.mode === "free_or_paid" ? "free" : "paid";
+  // The locks in effect for a brand-new product of this type, resolved through
+  // the same function the sections use — never FORM_LOCKS directly, so there is
+  // one place deciding.
+  const locks = formLocksFor(config);
   // Consumer clubs launch starting today while the start-date control is
-  // locked (see FORM_LOCKS.consumerClubStartDateToday). Helsinki-local "today"
-  // — the form is fixed to FIXED_TIMEZONE — never UTC (see CLAUDE.md "Date &
-  // Time Formatting").
+  // locked. Helsinki-local "today" — the form is fixed to FIXED_TIMEZONE —
+  // never UTC (see CLAUDE.md "Date & Time Formatting").
   const lockedConsumerStartDate =
-    FORM_LOCKS.consumerClubStartDateToday &&
-    config.productType === "consumer_club"
+    locks.consumerClubStartDateToday && config.productType === "consumer_club"
       ? formatInTimeZone(new Date(), FIXED_TIMEZONE, "yyyy-MM-dd")
       : "";
-  // Seat/waitlist defaults pair with the locks in effect for this type: where
-  // they're still locked the safe default is pinned (uncapped, waitlist off);
-  // muni clubs unlock them and default to capped + waitlist on (see form-locks).
-  const locks = formLocksFor(config.productType);
+  // Whether a fresh product of this type starts *capped*. Only one type does: a
+  // municipality club is contracted for a specific number of places, so it
+  // starts capped + waitlisted and the blank seatCount below forces the admin to
+  // type the contracted figure. Every other type starts open — the rest have the
+  // seat controls locked off entirely.
+  //
+  // The `!locks.seatCount` conjunct is redundant today — muni is the one type
+  // that unlocks the cap, so it is always true here — and is kept as a tripwire
+  // rather than simplified away. A capped default behind a *locked* seat control
+  // is a broken form, not merely a wrong default: it renders a fresh product as
+  // capped with a blank, disabled seat count, which validate() then refuses with
+  // no way for the admin to fix it. If muni is ever re-locked, this pins it back
+  // to uncapped instead.
+  const startsCapped =
+    !locks.seatCount && config.productType === "municipality_club";
   return {
     translations: {
       [uiLocale]: { name: "", shortDescription: "", longDescription: [] },
     },
     activeLocale: uiLocale,
     topic: "",
-    padletUrl: "",
+    materialUrl: "",
     image: null,
     minAge: "7",
     maxAge: "12",
@@ -219,13 +235,10 @@ export function initialState(
     primaryGeduFee: { status: "unknown", amount: "" },
     assistantGeduFee: { status: "none", amount: "" },
     municipalityFee: { status: "unknown", amount: "" },
-    // Capacity defaults follow the locks in effect for this type. Where seats
-    // are still locked (every type but muni) this pins "No seat limit"; muni
-    // unlocks it and so defaults to capped — the empty seatCount above then
-    // forces the admin to enter the contracted capacity.
-    uncapped: locks.seatCount,
-    // Waitlist defaults on only where it's unlocked (muni); locked off elsewhere.
-    waitlistEnabled: !locks.waitlist,
+    // Capacity defaults — see `startsCapped` above for which types cap.
+    uncapped: !startsCapped,
+    // The waitlist only exists behind a cap, so it follows the same answer.
+    waitlistEnabled: startsCapped,
     registrationOpensMode: "immediately",
     registrationOpensDate: "",
     registrationOpensHour: "10",
@@ -239,18 +252,6 @@ export function initialState(
 // Multi-line and/or used by both the parent (validate/submit) and individual
 // section components. Single-line booleans like `usesDate` are derived inline
 // where they're consumed.
-
-export function effectiveBillingMode(
-  config: ProductTypeConfig,
-  paidMode: PaidMode,
-): "paid" | "free" | "external_contract" {
-  if (config.billing.mode === "free_or_paid") {
-    return paidMode === "free" ? "free" : "paid";
-  }
-  return config.billing.mode === "external_contract"
-    ? "external_contract"
-    : "paid";
-}
 
 export function effectivePricingShape(
   config: ProductTypeConfig,

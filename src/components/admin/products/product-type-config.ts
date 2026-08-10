@@ -40,11 +40,28 @@ export interface ProductTypeConfig {
   allowsRemote: boolean;
   allowsInPerson: boolean;
   requiresMunicipalityWhenOnline: boolean;
+  /**
+   * The one country this product type exists in, or null for anywhere. A
+   * municipality club is funded by a Finnish kunta and by nothing else, so
+   * BOTH of its location shapes are bound to Finland: the funding municipality
+   * it anchors to online, and the venue it runs at in person. The location
+   * pickers read this to open inside that country and offer no other
+   * country's rows.
+   */
+  countryBound: string | null;
   hasHolidayCalendars: boolean;
   /** Start triggers admin can choose from. First entry is the default. */
   allowedStartModes: StartMode[];
   defaultBillingMode: BillingMode;
 }
+
+/**
+ * The country municipality clubs exist in: they are funded by Finnish kuntaa.
+ * One constant so the type's `countryBound` below and the online municipality
+ * field's own hardcoded gate (in the product location picker) cannot drift
+ * apart.
+ */
+export const MUNI_CLUB_COUNTRY_CODE = "FI";
 
 export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
   consumer_club: {
@@ -57,6 +74,7 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     allowsRemote: true,
     allowsInPerson: true,
     requiresMunicipalityWhenOnline: false,
+    countryBound: null,
     hasHolidayCalendars: true,
     allowedStartModes: ["date", "date_and_threshold", "threshold"],
     defaultBillingMode: "paid",
@@ -71,6 +89,7 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     allowsRemote: true,
     allowsInPerson: true,
     requiresMunicipalityWhenOnline: true,
+    countryBound: MUNI_CLUB_COUNTRY_CODE,
     hasHolidayCalendars: true,
     allowedStartModes: ["date"],
     defaultBillingMode: "external_contract",
@@ -85,6 +104,7 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     allowsRemote: true,
     allowsInPerson: true,
     requiresMunicipalityWhenOnline: false,
+    countryBound: null,
     hasHolidayCalendars: false,
     allowedStartModes: ["date", "date_and_threshold"],
     defaultBillingMode: "paid",
@@ -101,11 +121,44 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     allowsRemote: true,
     allowsInPerson: true,
     requiresMunicipalityWhenOnline: false,
+    countryBound: null,
     hasHolidayCalendars: false,
     allowedStartModes: ["date", "date_and_threshold", "threshold"],
     defaultBillingMode: "free",
   },
 };
+
+// ===== The free/paid choice =====
+//
+// Lives here rather than with the form's other chooser tuples because it is
+// the one chooser that feeds a *derivation* the non-form layers need too: the
+// lock resolver reads it, and putting the resolver's dependency in the form
+// state module would make the two import each other. This module has no
+// dependencies of its own, so it can sit under both.
+
+// Listed as a module-level constant so the lint rule against literal strings
+// (i18n) doesn't fire for these structural keys — same reason as the chooser
+// tuples in product-form-state.ts.
+export const PAID_MODE_VALUES = ["paid", "free"] as const;
+
+export type PaidMode = (typeof PAID_MODE_VALUES)[number];
+
+/**
+ * Which billing mode is actually in force, given the type's billing option and
+ * (for the one type that offers a choice) the admin's free/paid pick. Every
+ * type but `event` pins its mode, so `paidMode` is ignored for them.
+ */
+export function effectiveBillingMode(
+  config: ProductTypeConfig,
+  paidMode: PaidMode,
+): BillingMode {
+  if (config.billing.mode === "free_or_paid") {
+    return paidMode === "free" ? "free" : "paid";
+  }
+  return config.billing.mode === "external_contract"
+    ? "external_contract"
+    : "paid";
+}
 
 export function productTypeFromSlug(slug: string): ProductType | null {
   const entry = Object.values(PRODUCT_TYPE_CONFIG).find(

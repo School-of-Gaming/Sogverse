@@ -191,8 +191,15 @@ interface SharedRouteConfig<TBody, TQuery, TParams, TResult> {
    * the wrapper read the body — omit it and the request stream is untouched.
    */
   body?: z.ZodType<TBody>;
-  /** Schema for the query string, read as a flat string record. */
-  query?: z.ZodType<TQuery>;
+  /**
+   * Schema for the query string, read as a flat string record.
+   *
+   * The input side is `unknown` rather than `TQuery`: a query string is always
+   * strings, so a schema that has to produce anything else — a number, an enum
+   * array out of a delimited parameter — necessarily transforms, and a schema
+   * whose input and output are pinned to the same type cannot express that.
+   */
+  query?: z.ZodType<TQuery, z.ZodTypeDef, unknown>;
   /** Schema for the dynamic route params (Next.js's second handler argument). */
   params?: z.ZodType<TParams>;
   /** Schema the outgoing payload is validated against. Mismatch is a 500. */

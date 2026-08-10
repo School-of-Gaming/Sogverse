@@ -28,7 +28,9 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // via the prefix match below.
 // ROUTES.schools is the public municipality-club discovery page; the prefix
 // match also covers the per-municipality pages (/schools/[slug]).
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.help, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.docs, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.voice.prefix];
+// ROUTES.roblox is the partnership landing page — public so it can be shared
+// with partners, but kept out of robots.txt and the sitemap rather than gated.
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.help, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.docs, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.roblox, ROUTES.voice.prefix];
 
 // The /voice/* prefix is public for instant rooms, but /voice/group/[id] is
 // the authenticated group voice room — gamers join as participants, gedus
@@ -72,8 +74,12 @@ function buildCspHeader(nonce: string): string {
       ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`
       : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co",
     "style-src 'self' 'unsafe-inline'",
-    // mc-heads.net renders the Minecraft skin body avatar in MinecraftUsernameField (settings page for gamers/gedus)
-    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net`,
+    // mc-heads.net renders the Minecraft skin body, which the shared game-account
+    // row derives straight from a username — so it loads anywhere an identity is
+    // shown (settings, rosters, the admin panel, the voice room).
+    // tr.rbxcdn.com serves the Roblox avatar bust render — the thumbnails API hands back that one
+    // host for every completed render, so it is named rather than wildcarded across *.rbxcdn.com.
+    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net https://tr.rbxcdn.com`,
     "font-src 'self'",
     // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io",
@@ -235,11 +241,11 @@ export async function proxy(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // /preview/* are admin-only mock surfaces linked from /admin/ui-components.
-  // They live in the (public) layout group so the page renders in the
-  // parent-facing chrome (header + footer, no admin sidebar) — but only
-  // admins should be able to reach them. Non-admins bounce to their own
-  // dashboard; unauthenticated users were already redirected to /login above.
+  // /preview/* are admin-only mock surfaces indexed on /admin/ui-previews:
+  // full pages rendered from fixtures, each composing the chrome of the role
+  // whose page it mocks. Only admins should be able to reach them. Non-admins
+  // bounce to their own dashboard; unauthenticated users were already
+  // redirected to /login above. The prefix match covers every future scene.
   if (pathname.startsWith("/preview/") && userRole !== "admin") {
     return redirect(new URL(ROLE_DASHBOARD_PATHS[userRole], request.url));
   }
@@ -267,7 +273,24 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public folder files
      * - Next.js metadata file conventions (opengraph-image, sitemap.xml, robots.txt)
+     * - api/locations/search — see below, this one is load-bearing
+     *
+     * **Rule: a route whose response is marked publicly cacheable must not pass
+     * through here.** This proxy refreshes a near-expiry session and writes the
+     * new auth cookies onto whatever response it is handling. The location
+     * search route answers with `s-maxage=300` because its body depends only on
+     * the URL — but if the proxy attached a `Set-Cookie` to that same response,
+     * a shared cache holding it would hand one signed-in user's refreshed
+     * session to every anonymous requester of that URL. Concretely: a gedu
+     * whose token is inside the refresh margin types in the coverage picker,
+     * and the reply carries both their cookies and permission to cache.
+     *
+     * Vercel declines to cache a response carrying `Set-Cookie`, so this has
+     * never been reachable in production — but that is one vendor's behaviour
+     * standing between us and session disclosure, not a decision this repo
+     * made. Excluding the path makes it ours. The route needs nothing from the
+     * proxy anyway: it reads no cookies and builds its own anonymous client.
      */
-    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|sitemap\\.xml|robots\\.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|sitemap\\.xml|robots\\.txt|api/locations/search|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

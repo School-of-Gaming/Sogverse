@@ -293,6 +293,70 @@ export type Database = {
           },
         ]
       }
+      group_sessions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ends_at: string
+          gedu_note: string | null
+          group_id: string
+          id: string
+          report: string | null
+          session_date: string
+          starts_at: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ends_at: string
+          gedu_note?: string | null
+          group_id: string
+          id?: string
+          report?: string | null
+          session_date: string
+          starts_at: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string
+          gedu_note?: string | null
+          group_id?: string
+          id?: string
+          report?: string | null
+          session_date?: string
+          starts_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_sessions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_sessions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_sessions_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       holiday_calendars: {
         Row: {
           created_at: string
@@ -321,30 +385,45 @@ export type Database = {
         Row: {
           country_code: string | null
           created_at: string
+          depth: number
+          external_code: string | null
+          geonames_id: number | null
           id: string
           name: string
           name_i18n: Json | null
           parent_id: string | null
+          retired_at: string | null
+          search_blob: string | null
           type: Database["public"]["Enums"]["location_type"]
           updated_at: string
         }
         Insert: {
           country_code?: string | null
           created_at?: string
+          depth?: number
+          external_code?: string | null
+          geonames_id?: number | null
           id?: string
           name: string
           name_i18n?: Json | null
           parent_id?: string | null
+          retired_at?: string | null
+          search_blob?: string | null
           type: Database["public"]["Enums"]["location_type"]
           updated_at?: string
         }
         Update: {
           country_code?: string | null
           created_at?: string
+          depth?: number
+          external_code?: string | null
+          geonames_id?: number | null
           id?: string
           name?: string
           name_i18n?: Json | null
           parent_id?: string | null
+          retired_at?: string | null
+          search_blob?: string | null
           type?: Database["public"]["Enums"]["location_type"]
           updated_at?: string
         }
@@ -431,9 +510,9 @@ export type Database = {
           group_id: string | null
           id: string
           product_id: string
-          reserved_until: string | null
           signed_up_at: string
           status: Database["public"]["Enums"]["participation_status"]
+          stripe_checkout_session_id: string | null
           updated_at: string
           waitlisted_at: string | null
         }
@@ -444,9 +523,9 @@ export type Database = {
           group_id?: string | null
           id?: string
           product_id: string
-          reserved_until?: string | null
           signed_up_at?: string
           status: Database["public"]["Enums"]["participation_status"]
+          stripe_checkout_session_id?: string | null
           updated_at?: string
           waitlisted_at?: string | null
         }
@@ -457,9 +536,9 @@ export type Database = {
           group_id?: string | null
           id?: string
           product_id?: string
-          reserved_until?: string | null
           signed_up_at?: string
           status?: Database["public"]["Enums"]["participation_status"]
+          stripe_checkout_session_id?: string | null
           updated_at?: string
           waitlisted_at?: string | null
         }
@@ -541,26 +620,58 @@ export type Database = {
           },
         ]
       }
+      postal_codes: {
+        Row: {
+          country_code: string
+          location_id: string
+          postal_code: string
+        }
+        Insert: {
+          country_code: string
+          location_id: string
+          postal_code: string
+        }
+        Update: {
+          country_code?: string
+          location_id?: string
+          postal_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "postal_codes_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_groups: {
         Row: {
           created_at: string
+          gedu_note: string | null
           id: string
           name: string
           product_id: string
+          public_note: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
+          gedu_note?: string | null
           id?: string
           name: string
           product_id: string
+          public_note?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
+          gedu_note?: string | null
           id?: string
           name?: string
           product_id?: string
+          public_note?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -642,27 +753,53 @@ export type Database = {
         Row: {
           active_count: number
           product_id: string
-          reserving_count: number
           updated_at: string
           waitlist_count: number
         }
         Insert: {
           active_count?: number
           product_id: string
-          reserving_count?: number
           updated_at?: string
           waitlist_count?: number
         }
         Update: {
           active_count?: number
           product_id?: string
-          reserving_count?: number
           updated_at?: string
           waitlist_count?: number
         }
         Relationships: [
           {
             foreignKeyName: "product_seat_counts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_staff_details: {
+        Row: {
+          created_at: string
+          material_url: string | null
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          material_url?: string | null
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          material_url?: string | null
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_staff_details_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: true
             referencedRelation: "products"
@@ -755,10 +892,8 @@ export type Database = {
           max_age: number
           min_age: number
           municipality_fee_cents: number | null
-          padlet_url: string | null
           primary_gedu_fee_cents: number | null
           product_type: Database["public"]["Enums"]["product_type"]
-          refund_policy_days: number | null
           registration_opens_at: string
           seat_count: number | null
           signup_threshold: number | null
@@ -784,10 +919,8 @@ export type Database = {
           max_age: number
           min_age: number
           municipality_fee_cents?: number | null
-          padlet_url?: string | null
           primary_gedu_fee_cents?: number | null
           product_type: Database["public"]["Enums"]["product_type"]
-          refund_policy_days?: number | null
           registration_opens_at: string
           seat_count?: number | null
           signup_threshold?: number | null
@@ -813,10 +946,8 @@ export type Database = {
           max_age?: number
           min_age?: number
           municipality_fee_cents?: number | null
-          padlet_url?: string | null
           primary_gedu_fee_cents?: number | null
           product_type?: Database["public"]["Enums"]["product_type"]
-          refund_policy_days?: number | null
           registration_opens_at?: string
           seat_count?: number | null
           signup_threshold?: number | null
@@ -858,6 +989,7 @@ export type Database = {
           currency: string | null
           email: string
           first_name: string
+          home_location_id: string | null
           id: string
           last_name: string
           locale: string | null
@@ -871,6 +1003,7 @@ export type Database = {
           currency?: string | null
           email: string
           first_name: string
+          home_location_id?: string | null
           id: string
           last_name?: string
           locale?: string | null
@@ -884,6 +1017,7 @@ export type Database = {
           currency?: string | null
           email?: string
           first_name?: string
+          home_location_id?: string | null
           id?: string
           last_name?: string
           locale?: string | null
@@ -892,42 +1026,38 @@ export type Database = {
           spoken_languages?: string[]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_home_location_id_fkey"
+            columns: ["home_location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      refunds: {
+      roblox_accounts: {
         Row: {
-          amount_cents: number
-          created_at: string
-          id: string
-          payment_id: string
-          reason: Database["public"]["Enums"]["refund_reason"]
-          stripe_event_id: string
-          stripe_refund_id: string
+          roblox_user_id: number | null
+          roblox_username: string | null
+          user_id: string
         }
         Insert: {
-          amount_cents: number
-          created_at?: string
-          id?: string
-          payment_id: string
-          reason: Database["public"]["Enums"]["refund_reason"]
-          stripe_event_id: string
-          stripe_refund_id: string
+          roblox_user_id?: number | null
+          roblox_username?: string | null
+          user_id: string
         }
         Update: {
-          amount_cents?: number
-          created_at?: string
-          id?: string
-          payment_id?: string
-          reason?: Database["public"]["Enums"]["refund_reason"]
-          stripe_event_id?: string
-          stripe_refund_id?: string
+          roblox_user_id?: number | null
+          roblox_username?: string | null
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "refunds_payment_id_fkey"
-            columns: ["payment_id"]
-            isOneToOne: false
-            referencedRelation: "payments"
+            foreignKeyName: "roblox_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -966,6 +1096,55 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_attendance: {
+        Row: {
+          gamer_id: string
+          id: string
+          recorded_at: string
+          recorded_by: string | null
+          session_id: string
+          status: string
+        }
+        Insert: {
+          gamer_id: string
+          id?: string
+          recorded_at?: string
+          recorded_by?: string | null
+          session_id: string
+          status: string
+        }
+        Update: {
+          gamer_id?: string
+          id?: string
+          recorded_at?: string
+          recorded_by?: string | null
+          session_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_attendance_gamer_id_fkey"
+            columns: ["gamer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_attendance_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_attendance_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "group_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -1308,9 +1487,16 @@ export type Database = {
         Args: { p_participation_id: string; p_reason: string }
         Returns: Json
       }
-      confirm_reservation: { Args: { p_reservation_id: string }; Returns: Json }
+      confirm_paid_participation: {
+        Args: {
+          p_checkout_session_id: string
+          p_customer_id: string
+          p_gamer_id: string
+          p_product_id: string
+        }
+        Returns: Json
+      }
       count_active_seats: { Args: { p_product_id: string }; Returns: number }
-      count_seats_taken: { Args: { p_product_id: string }; Returns: number }
       create_gamer: {
         Args: {
           p_date_of_birth: string
@@ -1321,6 +1507,8 @@ export type Database = {
           p_minecraft_username?: string
           p_minecraft_uuid?: string
           p_parent_id: string
+          p_roblox_user_id?: number
+          p_roblox_username?: string
         }
         Returns: undefined
       }
@@ -1344,14 +1532,13 @@ export type Database = {
           p_is_remote: boolean
           p_is_visible?: boolean
           p_location_id?: string
+          p_material_url?: string
           p_max_age: number
           p_min_age: number
           p_municipality_fee_cents?: number
-          p_padlet_url?: string
           p_prices?: Json
           p_primary_gedu_fee_cents?: number
           p_product_type: Database["public"]["Enums"]["product_type"]
-          p_refund_policy_days?: number
           p_registration_opens_at: string
           p_schedule_slots?: Json
           p_seat_count?: number
@@ -1370,15 +1557,24 @@ export type Database = {
         Args: { p_participation_id: string }
         Returns: Json
       }
+      derive_group_session_window: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: unknown
+      }
       effective_status: {
         Args: { p_product_id: string }
         Returns: Database["public"]["Enums"]["effective_product_status"]
       }
-      expire_reservation: { Args: { p_reservation_id: string }; Returns: Json }
+      ensure_group_session: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: string
+      }
+      gedu_teaches_group: { Args: { p_group_id: string }; Returns: boolean }
       get_gedu_assigned_product: {
         Args: { p_product_id: string }
         Returns: Json
       }
+      get_gedu_group_feed: { Args: { p_group_id: string }; Returns: Json }
       get_my_assigned_products: {
         Args: never
         Returns: {
@@ -1387,7 +1583,6 @@ export type Database = {
           group_count: number
           group_id: string
           is_remote: boolean
-          padlet_url: string
           product_id: string
           product_translations: Json
           product_type: Database["public"]["Enums"]["product_type"]
@@ -1396,6 +1591,10 @@ export type Database = {
           timezone: string
         }[]
       }
+      get_my_family_product_feed: {
+        Args: { p_participation_id: string }
+        Returns: Json
+      }
       get_my_gamers: {
         Args: never
         Returns: {
@@ -1403,6 +1602,7 @@ export type Database = {
           currency: string | null
           email: string
           first_name: string
+          home_location_id: string | null
           id: string
           last_name: string
           locale: string | null
@@ -1418,6 +1618,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_my_gedu_assignment_summaries: {
+        Args: { p_epoch_date?: string }
+        Returns: Json
+      }
       get_my_parents: {
         Args: never
         Returns: {
@@ -1425,6 +1629,7 @@ export type Database = {
           currency: string | null
           email: string
           first_name: string
+          home_location_id: string | null
           id: string
           last_name: string
           locale: string | null
@@ -1448,6 +1653,13 @@ export type Database = {
           status: string
         }[]
       }
+      get_my_waitlist_positions: {
+        Args: never
+        Returns: {
+          participation_id: string
+          waitlist_position: number
+        }[]
+      }
       get_product_groups_with_details: {
         Args: { p_product_id: string }
         Returns: Json
@@ -1460,6 +1672,10 @@ export type Database = {
         Args: { p_participation_id: string }
         Returns: number
       }
+      group_session_date_is_writable: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: boolean
+      }
       has_active_participation_in_group: {
         Args: { p_group_id: string }
         Returns: boolean
@@ -1468,6 +1684,7 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: boolean
       }
+      immutable_unaccent: { Args: { p_value: string }; Returns: string }
       is_admin: { Args: never; Returns: boolean }
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }
       is_voice_group_member: { Args: { p_group_id: string }; Returns: boolean }
@@ -1487,6 +1704,15 @@ export type Database = {
         }
         Returns: Json
       }
+      leave_my_waitlist_spot: {
+        Args: { p_participation_id: string }
+        Returns: Json
+      }
+      location_search_blob: {
+        Args: { p_external_code: string; p_name: string; p_name_i18n: Json }
+        Returns: string
+      }
+      location_search_separator: { Args: never; Returns: string }
       participation_state: {
         Args: {
           p_group_id: string
@@ -1503,6 +1729,15 @@ export type Database = {
         Args: { p_group_id?: string; p_participation_id: string }
         Returns: Json
       }
+      record_attendance: {
+        Args: {
+          p_gamer_id: string
+          p_group_id: string
+          p_session_date: string
+          p_status: string
+        }
+        Returns: Json
+      }
       refresh_product_seat_counts: {
         Args: { p_product_id: string }
         Returns: undefined
@@ -1516,19 +1751,59 @@ export type Database = {
           p_minecraft_username: string
           p_minecraft_uuid: string
           p_phone: string
+          p_roblox_user_id: string
+          p_roblox_username: string
           p_spoken_languages: string[]
           p_user_id: string
         }
         Returns: undefined
       }
+      search_locations: {
+        Args: {
+          p_country?: string
+          p_limit?: number
+          p_query: string
+          p_types?: Database["public"]["Enums"]["location_type"][]
+        }
+        Returns: Json
+      }
       set_gedu_verified: {
         Args: { p_gedu_id: string; p_verified: boolean }
         Returns: undefined
+      }
+      set_group_member_minecraft: {
+        Args: {
+          p_gamer_id: string
+          p_minecraft_username: string
+          p_minecraft_uuid: string
+        }
+        Returns: Json
+      }
+      set_group_notes: {
+        Args: { p_gedu_note: string; p_group_id: string; p_public_note: string }
+        Returns: Json
+      }
+      set_group_session_notes: {
+        Args: {
+          p_gedu_note: string
+          p_group_id: string
+          p_report: string
+          p_session_date: string
+        }
+        Returns: Json
       }
       set_my_pin: { Args: { p_pin: string }; Returns: undefined }
       set_pin_for_user: {
         Args: { p_pin: string; p_user_id: string }
         Returns: undefined
+      }
+      set_site_notes: {
+        Args: {
+          p_gedu_note: string
+          p_location_id: string
+          p_public_note: string
+        }
+        Returns: Json
       }
       submit_feedback: {
         Args: { p_message: string; p_user_id: string }
@@ -1546,13 +1821,12 @@ export type Database = {
           p_is_remote: boolean
           p_is_visible?: boolean
           p_location_id?: string
+          p_material_url?: string
           p_max_age: number
           p_min_age: number
           p_municipality_fee_cents?: number
-          p_padlet_url?: string
           p_prices?: Json
           p_primary_gedu_fee_cents?: number
-          p_refund_policy_days?: number
           p_registration_opens_at: string
           p_schedule_slots?: Json
           p_seat_count?: number
@@ -1596,15 +1870,9 @@ export type Database = {
         | "minecraft_education"
         | "minecraft_bedrock"
         | "fortnite"
-        | "webinar"
+        | "roblox_studio"
+        | "pokemon_go"
       product_type: "consumer_club" | "municipality_club" | "camp" | "event"
-      refund_reason:
-        | "session_cancelled_in_window"
-        | "admin_refund"
-        | "product_cancelled"
-        | "subscription_item_removed"
-        | "subscription_period_proration"
-        | "duplicate_payment"
       user_role: "admin" | "customer" | "gamer" | "gedu"
     }
     CompositeTypes: {
@@ -1757,17 +2025,10 @@ export const Constants = {
         "minecraft_education",
         "minecraft_bedrock",
         "fortnite",
-        "webinar",
+        "roblox_studio",
+        "pokemon_go",
       ],
       product_type: ["consumer_club", "municipality_club", "camp", "event"],
-      refund_reason: [
-        "session_cancelled_in_window",
-        "admin_refund",
-        "product_cancelled",
-        "subscription_item_removed",
-        "subscription_period_proration",
-        "duplicate_payment",
-      ],
       user_role: ["admin", "customer", "gamer", "gedu"],
     },
   },

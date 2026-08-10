@@ -1,5 +1,6 @@
 import type {
   AppSupabaseClient,
+  Json,
   ParticipationStatus,
   ParticipationSubscriptionState,
   ProductType,
@@ -16,17 +17,33 @@ import {
 import {
   createParticipationResponse,
   joinWaitlistResponse,
+  leaveWaitlistResponse,
+  myWaitlistPositions,
   waitlistPositionResult,
   type CreateParticipationResponse,
   type JoinWaitlistResponse,
+  type LeaveWaitlistResponse,
 } from "./participations.contracts";
 
 /**
- * Row shape returned by `getMyUpcomingSessions()`. The parent dashboard's
- * Sessions section flattens this into one card per (participation, slot,
- * occurrence) so we need the per-product slot list, the date-range bounds
- * (for camp/event termination), the timezone (so we can compute occurrences
- * in product-local wall time), and the Padlet URL for the reports link.
+ * A venue's name as it comes off the row — the canonical `name` plus the
+ * `locale -> name` override map — resolved to the viewer's locale at render
+ * time by the shared location-name helper.
+ *
+ * Kept raw for the same reason the product translations are: resolving here
+ * would put the viewer's locale in the query cache key, so switching locale
+ * would refetch a row whose only locale-dependent part is a string lookup.
+ */
+export interface ProductSiteName {
+  name: string;
+  name_i18n: Json | null;
+}
+
+/**
+ * Row shape returned by `getMyUpcomingSessions()`. The family dashboards roll
+ * one of these up into a single enrollment card, so we need the per-product
+ * slot list, the date-range bounds (for camp/event termination) and the
+ * timezone (so occurrences can be computed in product-local wall time).
  *
  * Filtered to active participations (assigned and unassigned alike);
  * waitlisted rows are excluded since they have no placement. `groupId` is
@@ -63,8 +80,6 @@ export interface MyUpcomingSessionRow {
      * occurrences instead.
      */
     endDate: string | null;
-    /** External Padlet URL for the session reports link. Null if not set. */
-    padletUrl: string | null;
     /**
      * `false` for in-person products. The dashboard uses this together with
      * `groupId` to gate whether the Join Voice link gets a real
@@ -72,6 +87,19 @@ export interface MyUpcomingSessionRow {
      * stays inert.
      */
     isRemote: boolean;
+    /**
+     * The venue an **in-person** product runs at, `null` on a remote one.
+     *
+     * Gated on `is_remote` rather than on whether the join found a row: a
+     * remote municipality club carries a `location_id` too (the municipality
+     * that commissioned it), and that is an administrative fact, not a
+     * building anybody travels to. Answering "where is this happening" with a
+     * municipality name on a card whose sessions are in a voice room would be
+     * worse than saying nothing. Every in-person product has a location by
+     * schema CHECK, so `null` here means "no building involved" rather than
+     * "not loaded".
+     */
+    site: ProductSiteName | null;
     /**
      * Raw translation rows. The dashboard resolves to the viewer's UI locale
      * at render time so the cache key doesn't need to include locale (and a
@@ -110,6 +138,76 @@ export interface MyUpcomingSessionRow {
    * `getMyUpcomingSessions`.
    */
   subscriptionEndsAt: Date | null;
+}
+
+/**
+ * Row shape returned by `getMyWaitlistEntries()` — one waitlisted
+ * participation, with the live position that makes it a card. The counterpart
+ * to `MyUpcomingSessionRow`: that one covers `status='active'` rows, which have
+ * a placement and a schedule; this one covers `status='waitlisted'` rows, which
+ * have neither and so never appear in the sessions list.
+ *
+ * **It carries roughly the sessions read's product shell**, because a waitlist
+ * place is now a card in the same list as every other enrollment rather than a
+ * band of its own: it wears the same type eyebrow and states the same schedule
+ * in words, so a family reading "you are #3 for this" can see what "this" would
+ * cost them on a Tuesday. That needs the product type, the slots, the source
+ * zone the slots are wall-clock times in, and the date bounds the schedule
+ * formatter reads for a dated run.
+ *
+ * What it still does not carry is anything that only a *seat* produces: no
+ * group, no subscription state, and no venue. A waitlisted family has no
+ * placement to derive a next session from and no billing relationship to be in
+ * trouble with, and their card's footer is the queue sentence, so nothing
+ * downstream has a use for them. The product's own id is absent for the same
+ * reason it always was — a waitlisted card links nowhere.
+ */
+export interface MyWaitlistRow {
+  /** The `participations.id`, and what the leave action names. */
+  participationId: string;
+  gamer: {
+    id: string;
+    firstName: string;
+  };
+  product: {
+    /** The type noun the card's eyebrow reads. */
+    type: ProductType;
+    /** The zone the slot times below are wall-clock times **in**. */
+    timezone: string;
+    /**
+     * Inclusive start date in the product's local calendar (YYYY-MM-DD), or
+     * null on an open-ended club. The schedule formatter anchors a camp's slots
+     * to their first in-range date from this, so a dated run with no start date
+     * renders as "no schedule set yet" rather than as a wrong one.
+     */
+    startDate: string | null;
+    /** Inclusive end date in the product's local calendar, null when open-ended. */
+    endDate: string | null;
+    /**
+     * `false` for in-person products. No Join is ever drawn on a waitlisted
+     * card — there is no seat behind it — but the summary this row becomes says
+     * whether the product *has* a room, and inventing `false` for every
+     * waitlist place would be stating something untrue about the product.
+     */
+    isRemote: boolean;
+    /**
+     * Raw translation rows, resolved to the viewer's UI locale at render time —
+     * same arrangement as the sessions read, so the cache key stays locale-free
+     * and switching locale doesn't refetch.
+     */
+    translations: ProductTranslation[];
+  };
+  /** The product's weekly slots, for the schedule sentence. */
+  slots: Array<{
+    weekday: number;
+    startTime: string;
+    durationMinutes: number;
+  }>;
+  /**
+   * 1-based position in line, recomputed live by the RPC rather than read from
+   * the stamped-at-join value, so it shrinks as people ahead leave.
+   */
+  position: number;
 }
 
 /**
@@ -153,7 +251,7 @@ function buildGamerParticipationsQuery(
  * `buildGamerParticipationsQuery`. Powers the admin user-detail page's
  * "Assigned products" surface, where an admin views every product a gamer (or
  * a parent's gamers) is signed up to — across all statuses (active /
- * waitlisted / reserving / completed), so support can see exactly what state
+ * waitlisted / completed), so support can see exactly what state
  * each gamer is in. Reachable only for admins via the
  * `admin_full_access_participations` RLS policy.
  */
@@ -167,7 +265,6 @@ export type AdminGamerParticipationRow = QueryData<
 export interface ParticipationCounts {
   productId: string;
   activeCount: number;
-  reservingCount: number;
   waitlistCount: number;
   /**
    * Per-gamer signup state for the logged-in customer's children on this
@@ -175,10 +272,9 @@ export interface ParticipationCounts {
    * the map. The detail page's signup form uses this to disable each
    * already-signed-up child in the picker and label them in place.
    *
-   * `reserving` is deliberately excluded — the movie-ticket reservation model
-   * treats a held seat as the parent's to retry against (they just click Sign
-   * Up again), so a reserving gamer stays selectable. See
-   * docs/products-architecture.md "Movie-ticket reservation model".
+   * A parent part-way through Stripe Checkout has no row at all, so their
+   * gamer stays selectable — which is what we want: an abandoned checkout must
+   * leave the child free to try again.
    */
   myGamerStates: Record<string, "active" | "waitlisted">;
 }
@@ -197,6 +293,12 @@ export type CreateParticipationInput = {
  * the product row can't: which product, who it's for, and the row's status.
  */
 export interface ParticipationConfirmation {
+  /**
+   * The row's own id. Carried because the page can arrive holding a Stripe
+   * Checkout Session id instead, and the waitlist-position read needs the
+   * participation.
+   */
+  participationId: string;
   status: ParticipationStatus;
   productId: string;
   /** Gamer's first name (or username fallback); null → page shows "Your child". */
@@ -206,11 +308,16 @@ export interface ParticipationConfirmation {
 export type {
   CreateParticipationResponse,
   JoinWaitlistResponse,
+  LeaveWaitlistResponse,
 } from "./participations.contracts";
 
 export type JoinWaitlistInput = {
   productId: string;
   gamerId: string;
+};
+
+export type LeaveWaitlistInput = {
+  participationId: string;
 };
 
 export class ParticipationsService {
@@ -243,9 +350,8 @@ export class ParticipationsService {
 
   /**
    * The logged-in user's *active* participations, joined with the bits the
-   * dashboard Sessions section needs to render one card per upcoming
-   * occurrence: per-product weekly slots, start/end-date bounds, timezone,
-   * and the Padlet URL for the reports link.
+   * family dashboards need to roll one up into an enrollment card: per-product
+   * weekly slots, start/end-date bounds and timezone.
    *
    * Filtered to `status='active'` only — waitlisted rows aren't scheduled
    * yet, but BOTH assigned (`group_id IS NOT NULL`) and unassigned
@@ -257,9 +363,10 @@ export class ParticipationsService {
    * a parent sees their purchase reflected immediately instead of an empty
    * section while an admin places the gamer in a group.
    *
-   * Expansion into concrete (start, end) pairs is the adapter's job
-   * (`src/lib/upcoming-sessions.ts`); this method just hands back the raw
-   * rows with everything that expansion needs in one round trip.
+   * Expansion into concrete (start, end) pairs belongs to the client-side
+   * roll-up, which needs the viewer's locale and zone and has to re-derive on
+   * the shared clock; this method just hands back the raw rows with everything
+   * that expansion needs in one round trip.
    *
    * Audience selects which column the row is keyed off:
    *   - 'customer' → `customer_id = auth.uid()`: every participation the
@@ -329,6 +436,73 @@ export class ParticipationsService {
   }
 
   /**
+   * The logged-in user's *waitlisted* participations, with each one's live
+   * position — the waitlist band on both dashboards. The complement of
+   * `getMyUpcomingSessions`, which filters to `status='active'`: between them
+   * the two reads cover every row a family holds on a product, and neither
+   * shows a row the other does.
+   *
+   * Audience selects the owner column exactly as it does for the sessions read
+   * ('customer' → every child's spot the parent joined; 'gamer' → only the
+   * logged-in child's), with the matching RLS policy gating the other one out
+   * regardless.
+   *
+   * Two reads, not N+1. The rows come back through the caller's own RLS; the
+   * positions come from `get_my_waitlist_positions`, which self-scopes on
+   * `auth.uid()` and is SECURITY DEFINER because a position counts rows the
+   * caller may not see. Calling the single-row `get_waitlist_position` per card
+   * would issue N round trips answered at N different instants — an admin
+   * promotion landing mid-flight nulls one card's position while its
+   * neighbours keep a staler one.
+   *
+   * A row with no position in the map is DROPPED rather than rendered. The two
+   * reads run concurrently, so a promotion landing between them leaves a row
+   * that the select still calls waitlisted and the RPC no longer ranks; that
+   * family now holds a seat, and showing them a waitlist card — at a
+   * fabricated position, since `position` is required — would be worse than
+   * showing nothing. Nothing here schedules a retry, so the row simply stays
+   * absent from the band until some independent refetch — a remount, or React
+   * Query's refetch-on-window-focus once the cached data has gone stale — runs
+   * both reads again. By then both agree the row was promoted, so it never
+   * comes back to the band: it appears in the sessions list instead.
+   */
+  async getMyWaitlistEntries(
+    audience: SessionAudience,
+  ): Promise<MyWaitlistRow[]> {
+    const { data: claims } = await this.supabase.auth.getClaims();
+    const userId = claims?.claims.sub;
+    if (!userId) return [];
+
+    const audienceColumn =
+      audience === "customer" ? "customer_id" : "gamer_id";
+
+    const [{ data, error }, { data: positionRows, error: positionError }] =
+      await Promise.all([
+        buildMyWaitlistQuery(this.supabase, audienceColumn, userId),
+        this.supabase.rpc("get_my_waitlist_positions"),
+      ]);
+
+    if (error) throw error;
+    // Unlike the sessions read's badge signals, this one can't degrade: the
+    // position IS the card. Failing loudly beats a band of positionless cards.
+    if (positionError) throw positionError;
+
+    // No `?? []` fallback: throwing on `positionError` above is what makes the
+    // rows non-null here, unlike the sessions read where a failed signal query
+    // degrades instead of throwing.
+    const positions = new Map(
+      myWaitlistPositions
+        .parse(positionRows)
+        .map((row) => [row.participation_id, row.waitlist_position]),
+    );
+
+    return data.flatMap((row) => {
+      const position = positions.get(row.id);
+      return position === undefined ? [] : [toMyWaitlistRow(row, position)];
+    });
+  }
+
+  /**
    * Aggregate counts feeding the seat-left pill, threshold progress, and
    * "already signed up" detection for the listed products.
    *
@@ -343,7 +517,7 @@ export class ParticipationsService {
 
     const { data: countsData, error: countsErr } = await this.supabase
       .from("product_seat_counts")
-      .select("product_id, active_count, reserving_count, waitlist_count")
+      .select("product_id, active_count, waitlist_count")
       .in("product_id", productIds);
     if (countsErr) throw countsErr;
 
@@ -353,7 +527,6 @@ export class ParticipationsService {
       countsByProduct.set(id, {
         productId: id,
         activeCount: row?.active_count ?? 0,
-        reservingCount: row?.reserving_count ?? 0,
         waitlistCount: row?.waitlist_count ?? 0,
         myGamerStates: {},
       });
@@ -397,11 +570,9 @@ export class ParticipationsService {
    * forged `?p=` link), which the page renders as a friendly "couldn't find
    * that order" fallback.
    *
-   * Status is returned but NOT gated on. After Stripe Checkout the redirect
-   * waits on our webhook (`confirm_reservation` has run → 'active'), and free
-   * signups arrive 'active' — but every field the page displays lives on the
-   * row from creation, so a rare still-'reserving' row renders identically. We
-   * don't poll.
+   * Status is returned but NOT gated on: the row exists before the page is ever
+   * linked to (a free or municipality signup activates in the same request, a
+   * waitlist join likewise), so whatever status it carries is the one to show.
    */
   async getConfirmation(
     participationId: string,
@@ -410,7 +581,7 @@ export class ParticipationsService {
       .from("participations")
       .select(
         `
-          status, product_id,
+          id, status, product_id,
           gamer:profiles!participations_gamer_id_fkey(first_name)
         `,
       )
@@ -421,10 +592,77 @@ export class ParticipationsService {
     if (!data) return null;
 
     return {
+      participationId: data.id,
       status: data.status,
       productId: data.product_id,
       gamerName: data.gamer.first_name || null,
     };
+  }
+
+  /**
+   * The same read for a paid signup, which arrives holding a Stripe Checkout
+   * Session id instead of a participation id — the row did not exist when the
+   * `success_url` was built, so there was nothing else to key it on. The row
+   * records the session that bought it, which is what closes the loop.
+   *
+   * Same RLS gate as the sibling above (`customer_id = auth.uid()`, or the
+   * gamer's own row), so a session id belonging to someone else reads as null
+   * rather than as anyone's order.
+   *
+   * Null is NOT the same "stale link" answer here: the webhook creates the row,
+   * and Stripe waits up to ten seconds on it before redirecting, so null almost
+   * always means "not written *yet*". The page shows a finalizing state and
+   * polls this until it lands, rather than telling a parent who just paid that
+   * their order could not be found.
+   */
+  async getConfirmationByCheckoutSession(
+    checkoutSessionId: string,
+  ): Promise<ParticipationConfirmation | null> {
+    const { data, error } = await this.supabase
+      .from("participations")
+      .select(
+        `
+          id, status, product_id,
+          gamer:profiles!participations_gamer_id_fkey(first_name)
+        `,
+      )
+      .eq("stripe_checkout_session_id", checkoutSessionId)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+
+    return {
+      participationId: data.id,
+      status: data.status,
+      productId: data.product_id,
+      gamerName: data.gamer.first_name || null,
+    };
+  }
+
+  /**
+   * Does this gamer already hold a spot on this product? Asked by the paid
+   * confirmation page when the session it arrived with bought nothing, to tell
+   * the two reasons for that apart: the webhook has not landed yet (wait), or
+   * the payment was refused as a duplicate because the seat was already taken
+   * (there will never be a row for this session, so waiting is a dead end).
+   *
+   * Mirrors the status set the confirmation RPC conflicts on, so the page's
+   * answer and the database's decision cannot drift. RLS-scoped like every read
+   * here — the caller has already been checked to be the session's purchaser, so
+   * the row is theirs to see.
+   */
+  async hasSeatOnProduct(productId: string, gamerId: string): Promise<boolean> {
+    const { data, error } = await this.supabase
+      .from("participations")
+      .select("id")
+      .eq("product_id", productId)
+      .eq("gamer_id", gamerId)
+      .in("status", ["active", "waitlisted", "completed"])
+      .maybeSingle();
+
+    if (error) throw error;
+    return data !== null;
   }
 
   /**
@@ -485,6 +723,29 @@ export class ParticipationsService {
     }
     return parseJsonResponse(response, joinWaitlistResponse);
   }
+
+  /**
+   * Give up a waitlist spot — the same collection the join POSTs to, addressed
+   * with DELETE. Parent-only, and enforced in the database rather than here:
+   * the route is role-gated to `customer` and the RPC underneath keys on
+   * `customer_id = auth.uid()`, so a gamer's call would be refused even if the
+   * UI ever offered them the button.
+   */
+  async leaveWaitlist(
+    input: LeaveWaitlistInput,
+  ): Promise<LeaveWaitlistResponse> {
+    const response = await fetch("/api/participations/waitlist", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    if (!response.ok) {
+      throw new Error(
+        await readErrorMessage(response, "Failed to leave waitlist"),
+      );
+    }
+    return parseJsonResponse(response, leaveWaitlistResponse);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -512,9 +773,10 @@ function buildMyUpcomingSessionsQuery(
         gamer_id,
         group_id,
         product:products!inner(
-          id, product_type, timezone, start_date, end_date, padlet_url, is_remote,
+          id, product_type, timezone, start_date, end_date, is_remote,
           product_translations(*),
-          schedule_slots(weekday, start_time, duration_minutes)
+          schedule_slots(weekday, start_time, duration_minutes),
+          location:locations(name, name_i18n)
         ),
         gamer:profiles!participations_gamer_id_fkey!inner(
           first_name
@@ -528,6 +790,51 @@ function buildMyUpcomingSessionsQuery(
 type RawMyUpcomingSessionRow = QueryData<
   ReturnType<typeof buildMyUpcomingSessionsQuery>
 >[number];
+
+/**
+ * Builds the waitlist query for one audience — the `status='waitlisted'`
+ * counterpart to the upcoming-sessions builder, and the same shape of thing:
+ * `!inner` on both NOT-NULL-FK embeds so the inferred row treats `product` and
+ * `gamer` as non-null, and standalone so `QueryData` can infer it.
+ *
+ * The product shell it selects mirrors the sessions builder's minus the parts
+ * only a seat produces — see `MyWaitlistRow` for why each half is where it is.
+ * No location embed: a waitlisted card's footer is the queue sentence, so there
+ * is no venue line for one to fill.
+ *
+ * Ordered oldest-first by the waitlist stamp, which is neither selected nor
+ * needed by the card: it just gives the band a stable order that means
+ * something (longest wait at the top) instead of whatever PostgREST returns.
+ * `id` breaks sub-tick ties, the same tiebreaker the position derivation uses.
+ */
+function buildMyWaitlistQuery(
+  supabase: AppSupabaseClient,
+  audienceColumn: "customer_id" | "gamer_id",
+  userId: string,
+) {
+  return supabase
+    .from("participations")
+    .select(
+      `
+        id,
+        gamer_id,
+        product:products!inner(
+          product_type, timezone, start_date, end_date, is_remote,
+          product_translations(*),
+          schedule_slots(weekday, start_time, duration_minutes)
+        ),
+        gamer:profiles!participations_gamer_id_fkey!inner(
+          first_name
+        )
+      `,
+    )
+    .eq(audienceColumn, userId)
+    .eq("status", "waitlisted")
+    .order("waitlisted_at", { ascending: true })
+    .order("id", { ascending: true });
+}
+
+type RawMyWaitlistRow = QueryData<ReturnType<typeof buildMyWaitlistQuery>>[number];
 
 function toMyUpcomingSessionRow(
   row: RawMyUpcomingSessionRow,
@@ -549,8 +856,11 @@ function toMyUpcomingSessionRow(
       timezone: product.timezone,
       startDate: product.start_date,
       endDate: product.end_date,
-      padletUrl: product.padlet_url,
       isRemote: product.is_remote,
+      // The join is gated here rather than in the select, because the select
+      // cannot express it: a remote municipality club has a `location_id` and
+      // no venue. See `MyUpcomingSessionRow.product.site`.
+      site: product.is_remote ? null : product.location,
       translations: product.product_translations,
     },
     groupId: row.group_id,
@@ -564,6 +874,37 @@ function toMyUpcomingSessionRow(
   };
 }
 
+function toMyWaitlistRow(
+  row: RawMyWaitlistRow,
+  position: number,
+): MyWaitlistRow {
+  // Both non-null via the `!inner` joins in buildMyWaitlistQuery. Same
+  // first-name fallback as the sessions adapter, so a gamer with no name set
+  // reads identically on a waitlist card and a session card.
+  const { product, gamer } = row;
+  return {
+    participationId: row.id,
+    gamer: {
+      id: row.gamer_id,
+      firstName: gamer.first_name || row.gamer_id.slice(0, 8),
+    },
+    product: {
+      type: product.product_type,
+      timezone: product.timezone,
+      startDate: product.start_date,
+      endDate: product.end_date,
+      isRemote: product.is_remote,
+      translations: product.product_translations,
+    },
+    slots: product.schedule_slots.map((s) => ({
+      weekday: s.weekday,
+      startTime: s.start_time,
+      durationMinutes: s.duration_minutes,
+    })),
+    position,
+  };
+}
+
 type GamerSignupState = "active" | "waitlisted";
 
 function mergeGamerSignupState(
@@ -573,11 +914,11 @@ function mergeGamerSignupState(
   // Priority order: active > waitlisted. A gamer can hold more than one row on
   // a product (e.g. a stale waitlisted row plus a fresh active one); the
   // strongest state wins so the picker shows "Signed up" over "On waitlist".
-  // `reserving` and any other status are ignored — only placed/waitlisted rows
+  // `completed` and any other status are ignored — only placed/waitlisted rows
   // lock a child out of the picker.
   if (current === "active" || rowStatus === "active") return "active";
   if (current === "waitlisted" || rowStatus === "waitlisted") return "waitlisted";
   // `current` is narrowed to `undefined` here (both states returned above), and
-  // `rowStatus` is something we don't lock on (reserving/other) — no change.
+  // `rowStatus` is something we don't lock on (completed/other) — no change.
   return null;
 }

@@ -1,17 +1,24 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
-import { z } from "zod";
+import type Stripe from "stripe";
+import { stripe } from "@/lib/stripe/client";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { confirmPaidParticipationRpcResult } from "@/services/participations/participations.contracts";
 import type { Json, PaymentPurpose } from "@/types";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const webhookSecret = process.env.STRIPE_PRODUCTS_WEBHOOK_SECRET!;
 
-// Webhook idempotency: every payments / refunds row carries the
-// stripe_event_id; UNIQUE constraints catch duplicate deliveries.
+// Webhook idempotency: every payments row carries the stripe_event_id; a UNIQUE
+// constraint catches duplicate deliveries.
 //
 // Errors during writes return 500 so Stripe retries. Unhandled event types
 // return 200 — quieter than 4xx and Stripe will stop retrying.
+//
+// The payload shapes below are governed by the API version pinned on the *Stripe
+// endpoint* (or, while the endpoint is unpinned, by the account default) — never
+// by the version our own client sends with outbound calls. The two move
+// independently, and the endpoint's version can change without a deploy, so
+// every field Stripe has relocated across versions is read from both places.
+// See `src/lib/stripe/client.ts` for the outbound half of this split.
 
 export async function POST(request: Request) {
   const body = await request.text();
@@ -35,9 +42,9 @@ export async function POST(request: Request) {
         await handleCheckoutCompleted(admin, event);
         break;
 
-      case "checkout.session.expired":
-        await handleCheckoutExpired(admin, event);
-        break;
+      // No `checkout.session.expired` case on purpose: an abandoned session
+      // leaves nothing in the database to reclaim. The participation is created
+      // here, at payment confirmation, not before Checkout.
 
       case "invoice.paid":
         await handleInvoicePaid(admin, event);
@@ -51,9 +58,11 @@ export async function POST(request: Request) {
         await handleSubscriptionDeleted(admin, event);
         break;
 
-      case "charge.refunded":
-        await handleChargeRefunded(admin, event);
-        break;
+      // No `charge.refunded` case on purpose either: it used to write a local
+      // refunds ledger that nothing ever read back, so both the ledger and the
+      // handler were removed. Stripe is the system of record for refunds and
+      // retains them indefinitely, so the data is backfillable if a reader is
+      // ever built. The event now falls through to the default below.
 
       default:
         // Unhandled type — fine.
@@ -74,17 +83,6 @@ export async function POST(request: Request) {
 
 type Admin = ReturnType<typeof createAdminClient>;
 
-// Shape of confirm_reservation's jsonb return (function body lives in
-// supabase/schema.sql). `kind` is always present; participation_id only on
-// 'confirmed', existing_participation_id only on 'duplicate_payment'. The RPC
-// also returns keys this route doesn't read (product_id, idempotent, …) —
-// zod strips those.
-const confirmReservationResultSchema = z.object({
-  kind: z.enum(["confirmed", "orphan", "duplicate_payment"]),
-  participation_id: z.string().optional(),
-  existing_participation_id: z.string().optional(),
-});
-
 async function handleCheckoutCompleted(
   admin: Admin,
   event: Stripe.CheckoutSessionCompletedEvent,
@@ -92,7 +90,6 @@ async function handleCheckoutCompleted(
   const session = event.data.object;
   if (session.payment_status !== "paid") return;
 
-  const reservationId = session.metadata?.reservationId;
   const purchaseShape = session.metadata?.purchaseShape;
   const customerId = session.metadata?.customerId;
   const gamerId = session.metadata?.gamerId;
@@ -102,11 +99,14 @@ async function handleCheckoutCompleted(
   // report the EUR settlement amount we receive — the customer's local
   // currency lives in `session.presentment_details`, which we don't record.
   const currency = session.metadata?.currency;
-  if (!reservationId || !purchaseShape || !customerId || !gamerId || !productId || !currency) {
+  if (!purchaseShape || !customerId || !gamerId || !productId || !currency) {
     return;
   }
 
   // Idempotency on payments — UNIQUE on stripe_event_id is the safety net.
+  // This guard runs FIRST, before any write: it reads "a payment exists for this
+  // event" as "this event is fully processed", which is what makes a replayed
+  // delivery cheap and safe.
   const { data: existingPayment } = await admin
     .from("payments")
     .select("id")
@@ -116,68 +116,88 @@ async function handleCheckoutCompleted(
 
   const isSubscription = purchaseShape.startsWith("subscription_");
 
-  // Confirm reservation. The RPC returns one of:
-  //   'confirmed'        — happy path: row flipped reserving → active
-  //                        (or already active, in which case `idempotent: true`).
-  //   'orphan'           — row missing or in an unexpected status (admin
-  //                        interference). Log; charge sits in Stripe awaiting
-  //                        manual reconciliation.
-  //   'duplicate_payment' — parent has another active/waitlisted/completed
-  //                        row for this (product, gamer). Both Stripe sessions
-  //                        completed (parent paid the original tab and a retry
-  //                        tab). Record the duplicate so admin can find and
-  //                        refund it; release the orphan reserving row.
+  // The money has arrived, so this is where the participation is created — the
+  // (product, gamer, customer) triple comes from metadata we wrote ourselves
+  // when the session was built. The session's own id goes in too: the row
+  // records it, which is what lets a re-run of this handler recognise its own
+  // earlier work instead of reading it as a second payment. The RPC returns:
+  //   'confirmed'         — a fresh active row, or the row this very session
+  //                         already bought (the re-run case). Either way the
+  //                         writes below are the right ones to make.
+  //   'duplicate_payment' — a different payment already put this gamer on this
+  //                         product. Handled below.
   const { data: confirmResult, error: confirmErr } = await admin.rpc(
-    "confirm_reservation",
-    { p_reservation_id: reservationId },
+    "confirm_paid_participation",
+    {
+      p_product_id: productId,
+      p_gamer_id: gamerId,
+      p_customer_id: customerId,
+      p_checkout_session_id: session.id,
+    },
   );
   if (confirmErr) {
-    throw new Error(`confirm_reservation failed: ${confirmErr.message}`);
+    throw new Error(`confirm_paid_participation failed: ${confirmErr.message}`);
   }
-  const parsedConfirm = confirmReservationResultSchema.safeParse(confirmResult);
+  const parsedConfirm =
+    confirmPaidParticipationRpcResult.safeParse(confirmResult);
   if (!parsedConfirm.success) {
     // Unexpected shape from the RPC — throw so the route returns 500 and
-    // Stripe retries, same as a confirm_reservation error above.
+    // Stripe retries, same as an RPC error above.
     throw new Error(
-      `confirm_reservation returned an unexpected shape: ${parsedConfirm.error.message}`,
+      `confirm_paid_participation returned an unexpected shape: ${parsedConfirm.error.message}`,
     );
   }
   const confirmJson = parsedConfirm.data;
 
-  if (confirmJson.kind === "orphan") {
-    console.error(
-      "[stripe/products webhook] orphan confirmation — reservation row missing or in unexpected status",
-      { reservationId, eventId: event.id },
-    );
-    return;
-  }
-
   if (confirmJson.kind === "duplicate_payment") {
-    // Rare: parent paid two Stripe sessions that both targeted the same
-    // (product, gamer). The first webhook landed an active row; this one is
-    // the duplicate charge. Log loudly and record the payment under
-    // `reservation_duplicate` so admin can find it from a payments query
-    // (filter on purpose='reservation_duplicate') when the customer reports
-    // the double charge. No automated refund — admin issues it manually.
+    // Rare: the parent completed two Stripe sessions for the same
+    // (product, gamer) — the original tab and a retry tab — or paid for a seat
+    // the gamer already held. Log loudly and record the payment under
+    // `reservation_duplicate` (a name from the pre-payment-hold era, kept so the
+    // enum and every historical row stay put) so admin can find it from a
+    // payments query when the customer reports the double charge. The money
+    // itself is refunded by hand; there is no automated refund.
     console.error(
       "[stripe/products webhook] duplicate payment detected — admin must refund manually",
       {
-        reservationId,
         existingParticipationId: confirmJson.existing_participation_id,
         eventId: event.id,
         customerId,
         gamerId,
         productId,
-        paymentIntent:
-          typeof session.payment_intent === "string"
-            ? session.payment_intent
-            : null,
-        subscription:
-          typeof session.subscription === "string" ? session.subscription : null,
+        paymentIntent: expandableId(session.payment_intent),
+        subscription: expandableId(session.subscription),
         amountCents: session.amount_total ?? 0,
         currency,
       },
     );
+
+    // A duplicate *subscription* is live and recurring by the time this event
+    // fires, and nothing else will ever stop it: no family_subscriptions row is
+    // written, so renewals drop in the invoice handler and a cancellation finds
+    // no row to tear down. Refunding one invoice does not stop the next one —
+    // the subscription itself has to be cancelled, here. Single-payment
+    // duplicates need no equivalent: one charge, refunded by hand.
+    //
+    // A failed cancel is logged rather than thrown, deliberately. Throwing
+    // would win a free Stripe retry, but it would also stop the payment row
+    // landing — and that row is both this branch's commit marker and the record
+    // an admin queries when the customer reports the double charge. Worse, a
+    // cancel is not safely repeatable: if the first one succeeded and only its
+    // response was lost, the retry asks Stripe to cancel an already-cancelled
+    // subscription and fails again, looping until Stripe gives up with nothing
+    // recorded. So: record everything, and put the failure in the same log the
+    // admin is already reading, naming the subscription they must cancel.
+    if (isSubscription && typeof session.subscription === "string") {
+      try {
+        await stripe.subscriptions.cancel(session.subscription);
+      } catch (cancelErr) {
+        console.error(
+          "[stripe/products webhook] could not cancel the duplicate subscription — cancel it by hand or it keeps billing",
+          { subscription: session.subscription, eventId: event.id, cancelErr },
+        );
+      }
+    }
 
     await insertPaymentRow(admin, {
       stripeEventId: event.id,
@@ -185,25 +205,15 @@ async function handleCheckoutCompleted(
       amountCents: session.amount_total ?? 0,
       currency,
       purpose: "reservation_duplicate",
-      stripePaymentIntentId:
-        typeof session.payment_intent === "string" ? session.payment_intent : null,
-      stripeInvoiceId:
-        typeof session.invoice === "string" ? session.invoice : null,
+      stripePaymentIntentId: expandableId(session.payment_intent),
+      stripeInvoiceId: expandableId(session.invoice),
       metadata: {
         gamerId,
         productId,
         purchaseShape,
-        reservationId,
-        existingParticipationId: confirmJson.existing_participation_id ?? null,
+        existingParticipationId: confirmJson.existing_participation_id,
       },
     });
-
-    // Release the orphan reserving row so it doesn't permanently hold a seat.
-    await admin
-      .from("participations")
-      .delete()
-      .eq("id", reservationId)
-      .eq("status", "reserving");
 
     return;
   }
@@ -214,20 +224,18 @@ async function handleCheckoutCompleted(
   // event" as "this event is fully processed" and short-circuits the whole
   // handler. Writing the sub row first makes that invariant true: if the sub
   // insert fails, no payment row lands, so Stripe's retry re-runs the handler
-  // (confirm_reservation is idempotent) and gets another shot at the sub row —
-  // instead of the guard skipping it forever and leaving a live, untracked
-  // recurring Stripe sub (renewals would then drop in handleInvoicePaid, and
-  // a cancellation would find no row to tear the participation down).
+  // and gets another shot at the sub row — instead of the guard skipping it
+  // forever and leaving a live, untracked recurring Stripe sub (renewals would
+  // then drop in handleInvoicePaid, and a cancellation would find no row to tear
+  // the participation down). That re-run is only safe because the participation
+  // records the session that bought it: the RPC above hands back the same row
+  // rather than mistaking it for a second payment.
   //
   // Each subscription Checkout creates a brand-new Stripe sub (one per
   // gamer×club), so there's nothing to find-or-merge — just insert, keyed to the
   // participation. Idempotent on replay via the UNIQUE participation_id /
   // stripe_subscription_id (insert and swallow 23505).
-  if (
-    isSubscription &&
-    typeof session.subscription === "string" &&
-    confirmJson.participation_id !== undefined
-  ) {
+  if (isSubscription && typeof session.subscription === "string") {
     const subId = session.subscription;
     const sub = await stripe.subscriptions.retrieve(subId, {
       expand: ["items.data"],
@@ -243,7 +251,11 @@ async function handleCheckoutCompleted(
       stripe_customer_id: stripeCustomerId,
       stripe_price_id: sub.items.data[0]?.price.id ?? null,
       currency,
-      status: sub.status,
+      // Translated, not passed through — the column's CHECK accepts a narrower
+      // set than Stripe reports, and a sub created on a trial arrives `trialing`.
+      // Degrading, not throwing: see the note on the function itself for why this
+      // path cannot afford the throw the update path wants.
+      status: statusForNewSubscription(sub, event.id),
       current_period_end:
         periodEnd !== null ? new Date(periodEnd * 1000).toISOString() : null,
     });
@@ -261,37 +273,64 @@ async function handleCheckoutCompleted(
     amountCents: session.amount_total ?? 0,
     currency,
     purpose: paymentPurposeFor(purchaseShape),
-    stripePaymentIntentId:
-      typeof session.payment_intent === "string" ? session.payment_intent : null,
-    stripeInvoiceId:
-      typeof session.invoice === "string" ? session.invoice : null,
+    stripePaymentIntentId: expandableId(session.payment_intent),
+    stripeInvoiceId: expandableId(session.invoice),
     metadata: {
       gamerId,
       productId,
       purchaseShape,
-      reservationId,
+      participationId: confirmJson.participation_id,
     },
   });
 }
 
-async function handleCheckoutExpired(
-  admin: Admin,
-  event: Stripe.CheckoutSessionExpiredEvent,
-) {
-  const session = event.data.object;
-  const reservationId = session.metadata?.reservationId;
-  if (!reservationId) return;
-  await admin.rpc("expire_reservation", { p_reservation_id: reservationId });
+/**
+ * The subscription an invoice was raised for, read from both places Stripe has
+ * kept it.
+ *
+ * Up to and including API `2025-02-24.acacia` the id sits at the top level as
+ * `subscription`. In `2025-03-31.basil` it moved under
+ * `parent.subscription_details.subscription` and the top-level field is gone.
+ * Which one a delivery carries is decided by the webhook endpoint's own API
+ * version, so neither can be assumed — read the newer location first and fall
+ * back to the older, and a renewal is recorded under either. Reading only one is
+ * a silent failure: the handler returns early, the route answers 200, and
+ * renewals simply stop being recorded.
+ *
+ * Both fields are expandable, so each can arrive as an id string or as the
+ * object; webhook payloads never expand, but the object form costs one line.
+ */
+function invoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
+  // A widening assertion, not a reinterpretation: the installed SDK types
+  // describe exactly one API version — the one this codebase pins outbound calls
+  // to — and at that version `Stripe.Invoice` still has top-level `subscription`
+  // and no `parent` at all. The intersection adds the newer field as optional
+  // without contradicting anything the SDK says, so the runtime check below is
+  // what decides which shape arrived.
+  const { parent } = invoice as Stripe.Invoice & {
+    parent?: {
+      subscription_details?: {
+        subscription?: string | Stripe.Subscription | null;
+      } | null;
+    } | null;
+  };
+  return (
+    expandableId(parent?.subscription_details?.subscription) ??
+    expandableId(invoice.subscription)
+  );
+}
+
+/** An expandable Stripe reference as an id, whichever form it arrived in. */
+function expandableId(
+  value: string | { id: string } | null | undefined,
+): string | null {
+  if (typeof value === "string") return value;
+  return value?.id ?? null;
 }
 
 async function handleInvoicePaid(admin: Admin, event: Stripe.InvoicePaidEvent) {
   const invoice = event.data.object;
-  // `subscription` is an expandable field; webhook payloads carry the
-  // un-expanded id string, but handle the object form for type completeness.
-  const subId =
-    typeof invoice.subscription === "string"
-      ? invoice.subscription
-      : (invoice.subscription?.id ?? null);
+  const subId = invoiceSubscriptionId(invoice);
   // First-period invoices come in via checkout.session.completed.
   if (!subId || invoice.billing_reason === "subscription_create") return;
   const { data: famSub } = await admin
@@ -340,19 +379,169 @@ async function handleSubscriptionUpdated(
   if (!ours) return;
 
   const periodEnd = currentPeriodEndOf(sub);
-  await admin
+  const { error } = await admin
     .from("family_subscriptions")
     .update({
-      status:
-        sub.status === "active" && sub.cancel_at_period_end
-          ? "canceling"
-          : sub.status,
+      status: statusForSubscriptionUpdate(sub),
       current_period_end:
         periodEnd !== null
           ? new Date(periodEnd * 1000).toISOString()
           : null,
     })
     .eq("id", ours.id);
+  // Checked, like every other write in this route. It used to be dropped, which
+  // turned a rejected status into a no-op the route still answered 200 to: the
+  // row silently kept its previous status forever and nothing anywhere said so.
+  if (error) throw error;
+}
+
+/**
+ * The `family_subscriptions.status` vocabulary. A CHECK constraint enforces this
+ * exact set, so a value outside it is not a wrong-looking row — it is a rejected
+ * write.
+ */
+type FamilySubscriptionStatus =
+  | "active"
+  | "past_due"
+  | "cancelled"
+  | "incomplete"
+  | "canceling";
+
+/**
+ * Stripe's subscription statuses onto ours.
+ *
+ * Stripe's set is wider than the CHECK accepts, and it does not even agree on
+ * spelling (`canceled` there, `cancelled` here), so every status is translated
+ * rather than passed through. The mappings that are not identity:
+ *
+ *   `trialing`           → `active`     A trial is a live subscription as far as
+ *                                       anything downstream is concerned: the
+ *                                       seat is held and the sessions show up.
+ *                                       Overridden to `canceling` when the sub is
+ *                                       set to lapse — see below, and note that
+ *                                       this table alone would have swallowed
+ *                                       that case.
+ *   `unpaid`             → `cancelled`  Stripe has exhausted its retries and
+ *                                       stopped trying to collect.
+ *   `incomplete_expired` → `cancelled`  The first payment never completed and the
+ *                                       subscription can no longer be paid.
+ *   `paused`             → `past_due`   We never pause a subscription on purpose,
+ *                                       so this can only arrive from a hand
+ *                                       action in the Stripe dashboard. `past_due`
+ *                                       is the nearest thing we model — not
+ *                                       collecting, seat retained — and it is what
+ *                                       raises the parent's payment-problem badge,
+ *                                       which is the outcome we want for a
+ *                                       subscription that has quietly stopped
+ *                                       billing.
+ *
+ * The two type positions do different jobs and both are load-bearing. The
+ * `satisfies` clause is the completeness check: a status added to the SDK's union
+ * fails the build here until it is given a home. The declared type is looser on
+ * purpose — Stripe can start sending a status the *installed* SDK has never heard
+ * of, which arrives as a string outside the union, so a lookup miss is real at
+ * runtime even though the compiler cannot see it from the object literal.
+ */
+const FAMILY_SUBSCRIPTION_STATUS: Record<
+  string,
+  FamilySubscriptionStatus | undefined
+> = {
+  active: "active",
+  past_due: "past_due",
+  canceled: "cancelled",
+  unpaid: "cancelled",
+  incomplete: "incomplete",
+  incomplete_expired: "cancelled",
+  trialing: "active",
+  paused: "past_due",
+} satisfies Record<Stripe.Subscription.Status, FamilySubscriptionStatus>;
+
+/**
+ * The status to store for a Stripe subscription, or `null` when Stripe sent one
+ * nothing maps to. Callers decide what a miss costs them — see the two wrappers
+ * below, which answer that differently on purpose.
+ *
+ * A subscription set to lapse at the period end is `canceling` to us: the
+ * distinction Stripe draws with a boolean, we draw with a status, because it is
+ * what the parent's "ending soon" badge and the access-until date key on. It has
+ * to cover `trialing` as well as `active` — Stripe leaves a cancelling
+ * subscription at `trialing` for the rest of its trial, and with `trialing`
+ * mapping to `active` a parent who cancels mid-trial would otherwise read as
+ * plainly active, with no badge and no end date. `past_due` is deliberately not
+ * included: the parent-facing badges treat "ending soon" and "payment problem" as
+ * mutually exclusive, and a failing card is the more urgent of the two.
+ */
+function mapSubscriptionStatus(
+  sub: Stripe.Subscription,
+): FamilySubscriptionStatus | null {
+  if (
+    sub.cancel_at_period_end &&
+    (sub.status === "active" || sub.status === "trialing")
+  ) {
+    return "canceling";
+  }
+  return FAMILY_SUBSCRIPTION_STATUS[sub.status] ?? null;
+}
+
+/**
+ * The status for the `customer.subscription.updated` path, where an unmapped
+ * status **throws**.
+ *
+ * Nothing is stranded by that throw: the status update is the only write the
+ * handler has pending, so a 500 leaves the row exactly as it was, Stripe retries,
+ * and the failure is in the logs. That is strictly better than the bug this
+ * replaced, where a rejected write was swallowed and the row kept a stale status
+ * forever under a 200.
+ */
+function statusForSubscriptionUpdate(
+  sub: Stripe.Subscription,
+): FamilySubscriptionStatus {
+  const mapped = mapSubscriptionStatus(sub);
+  if (mapped === null) {
+    throw new Error(
+      `Unknown Stripe subscription status '${sub.status}' on ${sub.id} — no family_subscriptions.status maps to it`,
+    );
+  }
+  return mapped;
+}
+
+/**
+ * The status for the checkout path, where an unmapped status **degrades** instead
+ * of throwing.
+ *
+ * The asymmetry with the update path is the point. Here the throw would land
+ * mid-sequence: the Stripe subscription is already live and charging, and the
+ * payment row — this handler's commit marker — has not been written yet. Stripe's
+ * retry would re-read the same unmapped status and fail again, forever, so the
+ * subscription would be left with no `family_subscriptions` row at all: renewals
+ * drop in the invoice handler, and a cancellation finds nothing to tear the
+ * participation down with. That is the exact state the write-ordering comment
+ * further up this file exists to prevent, and a status we failed to translate is
+ * not a good enough reason to enter it.
+ *
+ * So: log loudly enough to be found, store `incomplete`, and let the payment row
+ * land. `incomplete` is the safe corner of the vocabulary — it does not claim the
+ * subscription is healthy, does not raise a payment-problem badge at a parent for
+ * something that may be fine, and does not end anything. A human correcting the
+ * row afterwards is a small job; reconstructing an untracked live subscription is
+ * not.
+ *
+ * Reachability, since it is not obvious: with outbound calls pinned, the retrieve
+ * that feeds this cannot return a status the pinned version does not define — so
+ * today this is unreachable. It stops being unreachable the moment the pin moves,
+ * and that is precisely when nobody will be thinking about this function.
+ */
+function statusForNewSubscription(
+  sub: Stripe.Subscription,
+  eventId: string,
+): FamilySubscriptionStatus {
+  const mapped = mapSubscriptionStatus(sub);
+  if (mapped !== null) return mapped;
+  console.error(
+    "[stripe/products webhook] unmapped Stripe subscription status on a new subscription — stored as 'incomplete', correct the row by hand",
+    { subscription: sub.id, stripeStatus: sub.status, eventId },
+  );
+  return "incomplete";
 }
 
 // Stripe API: `current_period_end` lives on the subscription in older API
@@ -401,48 +590,6 @@ async function handleSubscriptionDeleted(
     p_reason: "subscription_cancelled",
   });
   if (error) throw error;
-}
-
-async function handleChargeRefunded(
-  admin: Admin,
-  event: Stripe.ChargeRefundedEvent,
-) {
-  const charge = event.data.object;
-  const paymentIntentId = typeof charge.payment_intent === "string"
-    ? charge.payment_intent
-    : null;
-  if (!paymentIntentId) return;
-
-  const { data: payment } = await admin
-    .from("payments")
-    .select("id, amount_cents")
-    .eq("stripe_payment_intent_id", paymentIntentId)
-    .maybeSingle();
-  if (!payment) return;
-
-  // Pull the refund object from charge.refunds (the most recent one).
-  // Each `charge.refunded` event corresponds to exactly one refund creation,
-  // and Stripe sorts refunds.data newest-first — so data[0] is the refund this
-  // event is about. Don't iterate refunds.data here: refunds has UNIQUE on
-  // BOTH stripe_event_id AND stripe_refund_id, and looping would try to INSERT
-  // multiple rows sharing the same event_id, silently failing all but the first.
-  const refunds = charge.refunds;
-  if (!refunds || refunds.data.length === 0) return;
-  const latest = refunds.data[0];
-
-  // Idempotency: UNIQUE on stripe_refund_id. INSERT and swallow duplicates.
-  const { error } = await admin
-    .from("refunds")
-    .insert({
-      payment_id: payment.id,
-      amount_cents: latest.amount,
-      reason: "admin_refund",
-      stripe_refund_id: latest.id,
-      stripe_event_id: event.id,
-    });
-  if (error && error.code !== "23505") {
-    throw error;
-  }
 }
 
 interface InsertPaymentParams {

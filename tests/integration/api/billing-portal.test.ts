@@ -168,6 +168,17 @@ describe("POST /api/parent/billing-portal", () => {
     );
   });
 
+  it("renders the portal in an app locale Stripe does speak", async () => {
+    mockAuthenticatedCustomer();
+    mockGetLocale.mockResolvedValue("fr");
+
+    await POST(portalRequest());
+
+    expect(mockPortalCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ locale: "fr" }),
+    );
+  });
+
   // -- Routing by participation (the payment-problem badge) --
   //
   // A parent migrated from the old platform can own several Stripe customers,

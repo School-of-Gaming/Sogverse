@@ -1,16 +1,16 @@
 import type { QueryData } from "@supabase/supabase-js";
 import type { AppSupabaseClient } from "@/types";
+import { walkPages } from "@/lib/supabase/paging";
+
+// verifier joins through the verified_by FK (disambiguated from user_id, which
+// is the other FK to profiles). Nullable — an un-verified gedu, or a backfilled
+// one, has no verifier.
+const GEDU_PROFILE_COLUMNS =
+  "user_id, verified, verified_at, verified_by, verifier:profiles!gedu_profiles_verified_by_fkey(first_name, last_name)";
 
 /** Shared builder so the embedded-verifier row type is inferred, not hand-written. */
 function geduProfilesQuery(supabase: AppSupabaseClient) {
-  return supabase
-    .from("gedu_profiles")
-    .select(
-      // verifier joins through the verified_by FK (disambiguated from user_id,
-      // which is the other FK to profiles). Nullable — an un-verified gedu, or a
-      // backfilled one, has no verifier.
-      "user_id, verified, verified_at, verified_by, verifier:profiles!gedu_profiles_verified_by_fkey(first_name, last_name)",
-    );
+  return supabase.from("gedu_profiles").select(GEDU_PROFILE_COLUMNS);
 }
 
 export type GeduVerification = QueryData<ReturnType<typeof geduProfilesQuery>>[number];
@@ -47,11 +47,23 @@ export async function isGeduVerified(
 export class GeduProfilesService {
   constructor(private supabase: AppSupabaseClient) {}
 
-  /** Verification state for every gedu (admin-readable). */
+  /**
+   * Verification state for every gedu (admin-readable).
+   *
+   * Walked rather than selected: the admin users list renders an "Unverified"
+   * badge from the absence of a row here, so a read truncated at PostgREST's
+   * `max_rows` does not omit a badge — it prints a *wrong* one on every gedu
+   * that fell off the end. Ordered by the table's primary key, which is the
+   * total order the walk needs.
+   */
   async getAll(): Promise<GeduVerification[]> {
-    const { data, error } = await geduProfilesQuery(this.supabase);
-    if (error) throw error;
-    return data;
+    return walkPages("getAllGeduProfiles", (from, to) =>
+      this.supabase
+        .from("gedu_profiles")
+        .select(GEDU_PROFILE_COLUMNS, { count: "exact" })
+        .order("user_id")
+        .range(from, to),
+    );
   }
 
   /** Verification state for a single gedu, or null if none exists. */

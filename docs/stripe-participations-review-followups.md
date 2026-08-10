@@ -23,23 +23,50 @@ Inconsistent with every other status-shaped column in this migration. Loses type
 
 **Fix:** define `subscription_lifecycle AS ENUM ('active', 'past_due', 'canceling', 'incomplete', 'cancelled')` and migrate the column.
 
+**Note for whoever does it:** the webhook already treats this five-value set as a closed vocabulary and translates every Stripe subscription status into it before writing — Stripe's own set is wider and spells cancellation with one `l`. The enum must therefore be exactly these five values, and the translation table in the webhook is the second place that has to agree; changing one without the other is a rejected write.
+
 ---
 
 ## Correctness / reliability
 
 These will fire eventually, but not today. Defer-able with care.
 
-### Realtime rollup `reserving_count` and `count_seats_taken` disagree
+### ~~Realtime rollup `reserving_count` and `count_seats_taken` disagree~~ (resolved)
 
-00039:469 (rollup uses `reserved_until > NOW()`) vs 00041:25-30 (RPC dropped the time check, status alone holds the seat). Each query individually looks correct — together they diverge. Browse page fed by the rollup eventually shows "seats available" while `create_participation` returns `kind='full'`. UX glitch: parent clicks → mid-click flip to waitlist.
+The rollup counted a pre-payment hold only while its deadline was in the future; the capacity RPC counted every hold regardless. The browse page showed "seats available" while checkout answered "full", permanently, with no way for a parent to tell why.
 
-**Fix:** make the rollup match RPC semantics — `COUNT(*) FILTER (WHERE status = 'reserving')` with no time filter.
+**Resolved** by removing the pre-payment hold entirely: a paid participation is created when Stripe confirms payment, so the only thing that holds a seat is an active row, and both the rollup and the gate count exactly that. Left here because the shape of the bug — two queries each individually correct, counting the same thing differently — is the one to watch for if a seat hold is ever reintroduced.
 
-### `invoice.subscription` is deprecated on newer Stripe API versions
+### ~~Webhook payloads read from one API version's field placement~~ (resolved)
 
-Webhook `route.ts:232-238` reads `invoice.subscription` directly. On Stripe API ≥ `2024-09-30.acacia` this moved to `invoice.parent.subscription_details.subscription`. **Silent bomb:** if the Stripe account API version updates (auto-prompts in dashboard), every renewal `invoice.paid` becomes a no-op and the DB stops recording renewals. No error, just missing rows.
+Two fields the products webhook depended on have moved between Stripe API versions, and each was read from exactly one of its two homes:
 
-**Fix:** pin `apiVersion` on the Stripe SDK constructor (`new Stripe(key, { apiVersion: '2024-...' })`), or add a helper that reads both shapes.
+- **The invoice's subscription id.** Top-level `subscription` up to and including API `2025-02-24.acacia`; `parent.subscription_details.subscription` from `2025-03-31.basil` on, where the top-level field is gone. Read from the top level only, so on a basil-or-later version every renewal `invoice.paid` became an early return and renewals stopped being recorded.
+- **The charge's refund list.** Stripe stopped auto-expanding `refunds` on the Charge object in API `2022-11-15`, and a webhook event object is never expanded regardless — so from that version on the field is simply absent. Read as "no refunds to record", so refunds stopped being recorded.
+
+Both were the same shape of failure and the worst kind: no error, a 200 back to Stripe, and rows quietly missing.
+
+Note that the two did **not** move together, which is why neither could be described as simply "the old shape" or "the new shape". At the version outbound calls are pinned to, an invoice arrives in the *earlier* of its two shapes while a charge arrives in the *later* of its two. Name each case for where the field sits, not for an era.
+
+**Resolved for the invoice** by reading both placements — newer location first, falling back to the older. The integration suite exercises `invoice.paid` in **both** shapes, with each fixture carrying the field in exactly one place, so a handler that reads only one location fails.
+
+**Resolved for the charge by deleting the feature.** The only reader of the refund list was a handler that wrote a local `refunds` ledger, and that ledger was write-only: nothing in the application ever read a row back out of it. Table and handler were both dropped (2026-08-04), and `charge.refunded` is now answered 200 as an unhandled event type like any other. Stripe is the system of record for refunds, retains them indefinitely, and every column of the old ledger was copied from a Stripe object, so the data is fully backfillable if a reader is ever built. **Do not treat the bullet above as an open instruction — there is no refund path to fix, and reinstating one is a product decision, not a bug fix.**
+
+**A trap that lived inside the deleted fix, worth keeping as a rule: a value fetched to stand in for a missing event field is *live state*, not the snapshot the event described.** The refund fetch read the charge's current refund list, so two refunds landing close together made both deliveries see both refunds — and "take the newest" then recorded the second twice (the duplicate silently refused by a UNIQUE constraint) and the first never, understating the refunded total with no error anywhere. The fix was to select the newest entry **not already recorded**, which also made a replay a no-op for free. Any future fetch-on-absence fallback for a list-shaped field needs the same treatment; a single-item fetch is the bug.
+
+**The correction worth keeping:** the original write-up proposed pinning `apiVersion` on the SDK constructor as the fix. It is not one. **The constructor's `apiVersion` governs outbound calls only — the shape of an incoming webhook payload is decided by the API version pinned on the webhook endpoint, or by the Stripe account default while that endpoint is unpinned.** The two move independently, and the endpoint's version can change without any deploy of ours, so a handler cannot assume either shape and has to read both. Pinning the constructor is still worth doing (see below), just for a different reason.
+
+### Pin the outbound API version — done, and it is a separate concern
+
+The SDK is now instantiated once, in a single shared module, with an explicit `apiVersion`. Three things about it:
+
+- **It protects our outbound *reads*, not our webhook handlers.** An unpinned client tracks the account default, so an account upgrade reshapes every response we parse — at the moment someone clicks a button in the Stripe dashboard, with no deploy and no warning.
+- **The pinned literal must be the version the installed SDK's types describe.** The SDK ships response types for exactly one version and types the `apiVersion` option to that same literal, so TypeScript refuses any other value. That is deliberate and useful: an SDK upgrade surfaces as a compile error at the pin rather than as a runtime shape mismatch, and `type-check` becomes a real audit of every SDK response field we read.
+- **Pinning changes response shapes at deploy time**, ahead of any webhook cutover, so it needs the outbound reads audited in the same change — not just the ones the compiler can see. Fields that merely *moved* type-check fine when read through a fallback and have to be eyeballed.
+
+### A recurring-value field to keep in mind: `current_period_end`
+
+It sits on the subscription in older API versions and on the subscription *items* in newer ones, and the webhook reads whichever side has it. Worth naming because it is the third instance of the same pattern and the one most likely to catch the next reader out: unlike the two above, reading only one side yields a `null` period end rather than a skipped row, so it degrades quietly instead of stopping.
 
 ### `effective_status` (and siblings) marked `STABLE` but read mutable `participations`
 
@@ -61,21 +88,22 @@ The read-only stub was **deleted** (migration 00116), not fixed. We decided agai
 
 ## Test gaps
 
-### Webhook tests missing for the recurring-revenue hot loop
+### Webhook tests for the recurring-revenue hot loop — mostly closed
 
-`tests/integration/api/stripe-webhook-products.test.ts` — completely missing tests for:
+`tests/integration/api/stripe-webhook-products.test.ts` now covers `invoice.paid` (both payload shapes, the `subscription_create` filter, the replay dedup, `customer_id` read from the family-sub row rather than invoice metadata) and `customer.subscription.updated` (the status mapping and both halves of the silent-write bug). It once covered `charge.refunded` too; those cases went with the handler when the refunds ledger was dropped.
 
-- **`invoice.paid` renewal path** — the subscription-renewal hot loop. Every active sub fires this every period. Currently zero coverage. Tests should assert: `subscription_create` is filtered out, `existingPayment` dedup catches replays, `customer_id` is read from the family-sub row not the invoice metadata.
-- **`charge.refunded`** — also zero coverage. The handler picks `data[0]` heuristic; deserves coverage.
-- **`customer.subscription.updated`** — zero coverage.
-- **Replay where `confirmJson.idempotent === true`** — the dedup-bypassed-but-idempotent path.
+**The rule those tests encode, for whoever adds the next one:** a payload field Stripe has relocated between API versions gets a fixture per placement, and each fixture carries the field in **exactly one** of them. A fixture holding both passes for a handler that reads only whichever it happens to prefer, which is the entire failure mode being guarded against.
+
+Still open:
+
+- **Replay where the confirm RPC reports it recognised its own earlier work** — the dedup-bypassed-but-idempotent path.
 - **Unknown event types return 200** — easy regression catcher.
 
-### RLS IDOR test skipped for `family_subscriptions`
+### ~~RLS IDOR test skipped for `family_subscriptions`~~ (resolved)
 
-`tests/db/participations-rls.test.ts`. The comment dismisses a cross-customer test for `family_subscriptions` on the assumption that the participation ownership chain protects it. That's wrong for `family_subscriptions.stripe_customer_id` (direct PII, keyed on its own `customer_id` column, not via participations).
+The file's comment used to dismiss a cross-customer test for `family_subscriptions` on the assumption that the participation ownership chain protected it. That was wrong for `family_subscriptions.stripe_customer_id`: it is keyed on the table's own `customer_id` column rather than reached through participations, and it is the capability the billing-portal route turns into a Stripe session with saved cards and invoice history.
 
-**Fix:** add a cross-customer test mirroring the symmetric refunds test that's already in this file. The helpers exist.
+**Resolved** — the cross-customer cases are in the participations RLS test file now, including the lookups by `participation_id` and by `stripe_customer_id` with the application's own `customer_id` filter deliberately removed, so the policy has to refuse on its own.
 
 ---
 
@@ -113,7 +141,7 @@ These are documented in `products-architecture.md` already; listing here as a cr
 ## Suggested order if/when picking these up
 
 1. **Schema lock-in** — the `family_subscriptions.status` enum is a one-shot migration, cheap before data exists.
-2. **Webhook tests for the recurring-revenue hot loop** — high-value coverage, no schema risk.
-3. **Stripe API version pin + `invoice.subscription` shape** — silent-bomb prevention, one-time SDK change.
+2. **Recreate the products webhook endpoint pinned to a current API version.** The code now reads both shapes of everything that moved, so this is safe to do — but until it happens the endpoint still tracks the account default, which is ancient, and an account-level upgrade would flip every payload at once with no deploy involved. Pinning the endpoint makes the version an explicit, reviewable decision instead of a dashboard prompt.
+3. **`Stripe.products.search` race** — persist the Stripe product id instead of re-searching.
 4. **Realtime rollup vs. RPC seat-math fix** — UX glitch, two-line change.
 5. **Everything else** — handle as part of polishing for launch.

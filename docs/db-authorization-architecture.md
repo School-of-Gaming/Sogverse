@@ -16,12 +16,16 @@ Before touching anything it describes:
    schema in 2026-07 and will drift. Current state lives in `supabase/schema.sql`
    (function bodies, grants, policies) and the DB test suite's classifications — never
    in migration history. Regenerate the route list with
-   `git grep -l createAdminClient src/`. Note the corollary the Phase 4 drift repair
-   made concrete: `schema.sql` is a dump of a *hosted* database, so an object created
-   outside a migration lands in it and is invisible to every check we run, all of which
-   build their database from migrations alone.
+   `git grep -l createAdminClient src/`. Note the corollary, which **inverted** in
+   2026-07: `schema.sql` used to be a dump of a *hosted* database, so anything created
+   outside a migration landed in it. It is now built from `migrations/` by CI, so it
+   cannot record an object no migration creates — but the exposure runs the other way
+   instead. A hosted database can drift *away* from `schema.sql`, and nothing standing
+   watches for that; a `pg_dump` of the database you care about, diffed against
+   `schema.sql`, is how to check.
 2. **Follow the migration workflow in CLAUDE.md** (push migration → regenerate types →
-   dump `schema.sql` → check type aliases → commit together).
+   check type aliases → commit together). `schema.sql` is not part of it — CI
+   regenerates and commits that on `dev`.
 3. **DB tests run in CI** against a local Supabase stack started by the workflow. Do
    not run them locally or against the remote DB — push the branch and let CI run them.
 4. **A migration reaches the shared database the moment it is pushed; the code running
@@ -149,13 +153,16 @@ the verification spine treats each kind differently:
   predicate is not a hole *there*, but it is a trap for any consumer that is not a policy;
   wrap a disjunction whose first term can be NULL in `COALESCE(…, false)`.
 - **The participation state machine** (the waitlist-join, participation-create,
-  participation-cancel and reservation-confirm functions): granted to **service_role
+  participation-cancel and paid-confirmation functions): granted to **service_role
   only** — not callable by `authenticated` at all. Phase 3 put guarded,
   `authenticated`-facing entry points in front of the ones a signed-in user may
   legitimately drive, and left the engines themselves service_role-only. The ones
   that remain reachable *only* by service_role are the ones whose callers genuinely
-  have no session: the Stripe webhook's cancel and confirm paths, and checkout's
-  reservation handling.
+  have no session: the Stripe webhook's cancel and confirm paths, and the checkout
+  route's pre-payment validation. The confirmation function is the sharpest of
+  these — its arguments are trusted precisely because we wrote them into the
+  Checkout Session ourselves, so an `authenticated` grant would be handing a caller
+  a free seat.
 
 Several of these are `LANGUAGE sql`, where "first statement" has no meaning — all
 current `sql`-language functions are predicates or self-scoping helpers, which is
@@ -181,8 +188,8 @@ large one.
 ### Sensitive tables (grant-locked today)
 
 Writes revoked from `authenticated`, `SELECT` granted only: participations, payments,
-refunds, family subscriptions, feedback submissions, gedu group assignments, product
-groups, per-product seat counts. The subscription-price catalog has no `authenticated`
+family subscriptions, feedback submissions, gedu group assignments, product groups,
+per-product seat counts. The subscription-price catalog has no `authenticated`
 grant at all. When adding a table that holds money, seats, or enrollment state,
 grant-lock it by default.
 
@@ -216,9 +223,9 @@ What the DB test suite covers (don't rebuild this — extend it):
   bidirectional allowlist; `anon` holds no table write grant. The *function*-grant
   allowlists it used to carry were retired when the spine subsumed them.
 - **Behavioral, handwritten per-target**: SELECT-side IDOR tests (customer A cannot read
-  customer B's rows) for participations, payments, refunds, groups, and products; the
-  per-RPC happy-path and business-rule tests. These are the fixture-bearing coverage the
-  fixture-free matrix cannot replace.
+  customer B's rows) for participations, payments, family subscriptions, groups, and
+  products; the per-RPC happy-path and business-rule tests. These are the fixture-bearing
+  coverage the fixture-free matrix cannot replace.
 - **Substrate**: `tests/db/helpers.ts` signs in as any seeded role (admin, customer,
   second customer, gedu, gamer) with deterministic UUIDs, hands out an `anon` client and
   a raw access token, and can post an RPC call straight to PostgREST (which is how the
@@ -335,6 +342,29 @@ guarantees nothing escapes both.
    with no scope test is vetted by nothing. Allowlist growth is this design's failure
    mode; check 5 is what polices it. 1+2+5 subsume the old grant-allowlist test, which
    was retired with them (§5 Phase 2).
+
+**What "self-scoping" admits, precisely.** The common case is a function keyed to
+`auth.uid()` on every read and write. The category is slightly wider than that, and the
+widening is deliberate rather than accidental: what it actually requires is that the
+*caller's own identity, not an argument, determines the answer's scope*. A `SECURITY
+INVOKER` function reading only tables the caller's RLS already governs qualifies — it
+cannot return a row a direct select would not, so there is no scope for an argument to
+aim it at someone else. Two members are of this second kind: the product read predicate
+the RLS policies evaluate, and the location search behind the public picker. Both are
+also `anon`-reachable, which is a separate allowlist and a separate decision.
+
+There is a third and widest kind, and it is worth naming so it is not mistaken for an
+oversight: **a function that reads no table at all.** The location search's fold
+primitives — strip diacritics, return the term separator, join a row's searchable strings
+— are pure functions of their arguments, holding no privilege and returning nothing the
+caller did not pass in. There is no scope for an argument to aim because there is no data
+behind them. They are granted rather than hidden because both paths that reach them are
+checked as the *caller*: a `SECURITY INVOKER` function calling them, and a generated
+column whose expression Postgres evaluates under the privileges of whoever writes the row.
+Revoking them hides nothing — it only makes the feature fail closed. The
+requirement that each entry name a scope test is what keeps the widening honest — a
+function classified this way has to be *shown* answering identically regardless of who
+asks.
 
 ### 3.5 The RPC shape under this architecture
 
@@ -519,8 +549,13 @@ landed on. The route-layer refactor instance in `docs/refactor-playbook.md` cons
 this as its own step-2 classification, so keep the shape stable and re-derive rather
 than edit when the surface changes. `shape` is the conversion shape above (`1`
 grant-plus-guard, `2` new RPC, `3` Model B swap) or `-` for a module that stayed Model
-A. Twelve of the twenty-nine modules dropped the service-role client entirely; three
-kept it for a narrowed purpose.
+A, `none` for a module that reaches no database at all. Derive the tallies from the
+`model` column rather than trusting this sentence — it has drifted before. As of
+2026-08-01: of the twenty-nine rows, **ten** dropped the service-role client entirely
+(`B`, `C`, `none`), **one** kept it for a narrowed purpose (`C+A`), **seventeen** are
+still Model A, and one is the factory itself (`-`). The eighteen still importing it —
+seventeen `A` plus the `C+A` partial — are exactly today's `createAdminClient` importers:
+fourteen routes, the feedback partial, and three non-route modules.
 
 ```csv
 module,model,shape,justification
@@ -544,7 +579,7 @@ src/app/api/gamers/[id]/route.ts,A,-,Auth Admin API (metadata + password updates
 src/app/api/gedu/register/route.ts,A,-,Auth Admin API (self-registration creates the auth user before any session exists)
 src/app/api/webhooks/stripe/products/route.ts,A,-,webhook; no session by construction
 src/app/api/webhooks/whatsapp/route.ts,A,-,webhook; no session by construction
-src/app/api/minecraft/join-check/route.ts,A,-,server-to-server, authenticated by a shared API key rather than a user session
+src/app/api/minecraft/join-check/route.ts,none,-,dropped the client along with the session gating it served; the route authenticates a shared API key, validates the uuid, and answers 501 without reaching any data
 src/app/api/checkout/products/create/route.ts,A,-,caches a Stripe customer id onto the grant-locked billing table; an authenticated write path there would let a user point their billing row at someone else's Stripe customer
 src/app/api/parent/billing-portal/route.ts,A,-,same Stripe-customer helper as checkout
 src/app/api/family/list/route.ts,A,-,a gamer legitimately reads siblings beyond their own RLS view; the resolver is scoped to the verified caller's family

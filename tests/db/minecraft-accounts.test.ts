@@ -127,26 +127,121 @@ describe("minecraft_accounts RLS", () => {
     expect(data).toHaveLength(2);
   });
 
-  // -- UNIQUE constraint on minecraft_uuid --
+  // -- Admin writes anyone's row --
+  //
+  // The admin user page edits these in place, on the admin's OWN user-bound
+  // client — no service-role anywhere in that path. So `admin_full_access_*`
+  // being a `FOR ALL` policy is not decoration: it is the only thing permitting
+  // the write, and if it were ever narrowed to SELECT the feature would fail
+  // closed with nothing else to catch it.
 
-  it("rejects duplicate minecraft_uuid across users", async () => {
+  it("admin can update another user's minecraft account", async () => {
+    const { error } = await adminClient
+      .from("minecraft_accounts")
+      .update({ minecraft_username: "AdminFixed" })
+      .eq("user_id", TEST_IDS.GAMER);
+
+    expect(error).toBeNull();
+
+    const { data } = await admin
+      .from("minecraft_accounts")
+      .select("minecraft_username")
+      .eq("user_id", TEST_IDS.GAMER)
+      .single();
+
+    expect(data!.minecraft_username).toBe("AdminFixed");
+
+    await admin
+      .from("minecraft_accounts")
+      .update({ minecraft_username: SEED.MINECRAFT_USERNAME_GAMER })
+      .eq("user_id", TEST_IDS.GAMER);
+  });
+
+  it("admin can insert a minecraft account for a user who has none", async () => {
+    // The route upserts, so the first save for an account that never had a
+    // handle is an INSERT naming somebody else's id — the statement the
+    // self-write WITH CHECK refuses and the admin policy has to allow.
+    await admin
+      .from("minecraft_accounts")
+      .delete()
+      .eq("user_id", TEST_IDS.GAMER_2);
+
+    try {
+      const { error } = await adminClient
+        .from("minecraft_accounts")
+        .insert({ user_id: TEST_IDS.GAMER_2, minecraft_username: "AdminAdded" });
+
+      expect(error).toBeNull();
+
+      const { data } = await admin
+        .from("minecraft_accounts")
+        .select("minecraft_username")
+        .eq("user_id", TEST_IDS.GAMER_2)
+        .single();
+
+      expect(data!.minecraft_username).toBe("AdminAdded");
+    } finally {
+      await admin
+        .from("minecraft_accounts")
+        .delete()
+        .eq("user_id", TEST_IDS.GAMER_2);
+    }
+  });
+
+  it("admin still cannot delete a minecraft account — there is no grant", async () => {
+    // Unlinking clears the columns; the row itself only ever goes with the
+    // profile. The admin policy is `FOR ALL`, so this is the *grant* refusing,
+    // which is a stronger guarantee than a policy and worth pinning separately.
+    const { error } = await adminClient
+      .from("minecraft_accounts")
+      .delete()
+      .eq("user_id", TEST_IDS.GAMER);
+
+    expect(error).not.toBeNull();
+
+    const { data } = await admin
+      .from("minecraft_accounts")
+      .select("user_id")
+      .eq("user_id", TEST_IDS.GAMER)
+      .maybeSingle();
+
+    expect(data).not.toBeNull();
+  });
+
+  // -- Two accounts may share one Minecraft account --
+  //
+  // minecraft_uuid carried a UNIQUE constraint until it was dropped. It forbade
+  // the case it was most often met with — siblings sharing one Minecraft account
+  // from two Sogverse accounts — while never answering the question that made
+  // uniqueness sound useful in the first place (which of them is playing).
+
+  it("allows two users to hold the same minecraft_uuid", async () => {
     const sharedUuid = "069a79f4-44e9-4726-a5be-fca90e38aaf5";
 
     try {
-      // Set a UUID on the gamer's account
-      await admin
+      const { error: gamerError } = await admin
         .from("minecraft_accounts")
         .update({ minecraft_uuid: sharedUuid })
         .eq("user_id", TEST_IDS.GAMER);
 
-      // Try to set the same UUID on the gedu's account — should fail
-      const { error } = await admin
+      const { error: geduError } = await admin
         .from("minecraft_accounts")
         .update({ minecraft_uuid: sharedUuid })
         .eq("user_id", TEST_IDS.GEDU);
 
-      expect(error).not.toBeNull();
-      expect(error!.message).toContain("minecraft_accounts_uuid_unique");
+      expect(gamerError).toBeNull();
+      expect(geduError).toBeNull();
+
+      // Both rows really carry it — a reverse lookup by uuid returns a set, not
+      // a row, which is what a rebuilt join check has to be written against.
+      const { data } = await admin
+        .from("minecraft_accounts")
+        .select("user_id")
+        .eq("minecraft_uuid", sharedUuid);
+
+      expect(data?.map((r) => r.user_id).sort()).toEqual(
+        [TEST_IDS.GAMER, TEST_IDS.GEDU].sort(),
+      );
     } finally {
       // Reset both to NULL even if assertions fail
       await admin
@@ -154,17 +249,6 @@ describe("minecraft_accounts RLS", () => {
         .update({ minecraft_uuid: null })
         .in("user_id", [TEST_IDS.GAMER, TEST_IDS.GEDU]);
     }
-  });
-
-  it("allows multiple users with NULL minecraft_uuid", async () => {
-    // Both test accounts have NULL uuid — verify they coexist
-    const { data, error } = await admin
-      .from("minecraft_accounts")
-      .select("user_id, minecraft_uuid")
-      .is("minecraft_uuid", null);
-
-    expect(error).toBeNull();
-    expect(data!.length).toBeGreaterThanOrEqual(2);
   });
 
   // -- Writes: own row yes, anyone else's no, DELETE nobody --

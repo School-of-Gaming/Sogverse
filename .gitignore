@@ -62,6 +62,14 @@ supabase/.temp/
 # claude code (agent worktrees are local scratch checkouts)
 .claude/worktrees/
 
+# Reconciliation migrations emitted by scripts/diff-geonames.mjs. They land here
+# rather than in supabase/migrations/ precisely because they carry no version
+# number yet — the number is picked against remote history when the migration is
+# pushed, and the file is renamed and moved then. Until that happens it is a
+# working artifact, and committing one from this staging area would commit a
+# migration nobody can order.
+supabase/reconciliations/
+
 # Logs
 logs
 *.log

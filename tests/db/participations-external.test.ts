@@ -9,7 +9,7 @@ import { createParticipationRpcResult } from "@/services/participations/particip
 /**
  * create_participation for municipality clubs (billing_mode =
  * 'external_contract'). These are invoiced off-platform, so registration is
- * instant — no reserving row, no Stripe — mirroring the 'free' branch but gated
+ * instant — active on the spot, no Stripe — mirroring the 'free' branch but gated
  * on the external billing mode. See migration 00115.
  *
  * Product UUIDs in the 5b8–5b9 sub-range (see product-helpers allocation
@@ -89,13 +89,13 @@ describe("create_participation — external_contract (municipality) registration
 
     const { data: row } = await admin
       .from("participations")
-      .select("status, reserved_until, waitlisted_at")
+      .select("status, stripe_checkout_session_id, waitlisted_at")
       .eq("id", parsed.participation_id!)
       .single();
     expect(row?.status).toBe("active");
-    // External registrations hold the seat outright — never a timed reservation,
-    // never on the waitlist.
-    expect(row?.reserved_until).toBeNull();
+    // External registrations hold the seat outright — invoiced off-platform, so
+    // no Stripe session bought it, and never on the waitlist.
+    expect(row?.stripe_checkout_session_id).toBeNull();
     expect(row?.waitlisted_at).toBeNull();
   });
 

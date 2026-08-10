@@ -15,10 +15,10 @@ import { useAuth } from "@/providers";
 
 const PASSWORD_MIN_LENGTH = 6;
 
-export function LoginForm() {
+export function LoginForm({ redirect: redirectParam }: { redirect: string | null }) {
   const t = useTranslations('auth');
   const c = useTranslations('common');
-  const { redirect, status, navigateAfterAuth } = useAuthRedirect();
+  const { redirect, status, navigateAfterAuth } = useAuthRedirect(redirectParam);
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
 
   const [email, setEmail] = useState("");

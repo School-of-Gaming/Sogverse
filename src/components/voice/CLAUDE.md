@@ -24,7 +24,7 @@ A group inherits its schedule from one or more `schedule_slots` on the linked pr
 
 **Rule: Client-side open/locked state is display-only; the token endpoint is the security boundary.** The dashboard cards compute open/locked to pick "Join Voice" vs "Opens at …", but the server independently recomputes the window over every slot and 403s if none is open right now. No role bypasses the window.
 
-**Join surfaces** all render the shared `JoinVoiceButton` in this directory: parent/gamer `NextSessionCard`, gedu dashboard/session-details, and the admin product-details group cards.
+**Join surfaces** all render the shared `JoinVoiceButton` in this directory: the family enrollment cards and club pages, gedu dashboard/session-details, and the admin product-details group cards.
 
 ## Access control
 
@@ -137,7 +137,7 @@ Ephemeral text over the Daily app-message channel. **Rule: Chat is sender-truste
 
 **Rule: The UI is a pure consumer of the `VoiceRoomProvider` context.** All state and actions live in the provider + hooks; components only render what they're given and call actions. This is why the voice room demos in `/admin/ui-components` with a hand-built mock context (see the root CLAUDE.md note on that page) — and why the *visual* design is freely tweakable with zero risk to the logic.
 
-- `VoiceRoom` — the in-session layout (header, screen-share viewport, zone list, control bar, chat, participant list).
+- `VoiceRoom` — the in-session layout (title row, screen-share viewport, zone list, control bar, chat, participant list). Its `titleAccessory` slot renders a caller-supplied control at the right of the title row and is empty unless passed — instant rooms put their room-link chip there; scheduled rooms have no shareable link and pass nothing, so the row stays a bare heading with no gap held open.
 - `ZoneList` / `ZoneCard` — the mobile-first vertical stack of zone cards. Tap a zone to move into it, or drag your avatar onto it (dnd-kit, `PointerSensor` + `TouchSensor` with a press-delay so touch-drag doesn't fight page scroll). Mods drag any avatar: onto a normal zone → move, onto a private zone → place. A private zone is also tappable for mods (they self-enter, writing their own occupancy). Member tiles render live video in place when on; `PrivacyScreen` blurs a private zone's occupants for an outsider (they're real participants, just SFU-blocked of media).
 - `ZoneDialog` / `ZoneIconPicker` / `ZoneColorPicker` — mod-only create/edit; `MicSettingsPopover` — device picker + permission hint + live level behind the mic button.
 - `VoiceControls`, `ScreenShareDisplay`, `ParticipantList` / `ParticipantRow` (no volume slider), `ChatPanel`, `MicLevelIndicator`, `VoiceAvatar`, `JoinVoiceButton`.

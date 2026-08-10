@@ -1,5 +1,32 @@
 import { describe, it, expect } from "vitest";
-import { detectLocaleFromHeader } from "@/lib/constants/locales";
+import {
+  detectLocaleFromHeader,
+  LOCALE_CONFIG,
+  SUPPORTED_LOCALES,
+} from "@/lib/constants/locales";
+
+describe("SUPPORTED_LOCALES", () => {
+  // The compiler already forces the two key sets to match; this pins the one
+  // thing it can't see — that they are in the same order, so LOCALE_CONFIG
+  // reads as the picker does.
+  it("stays in LOCALE_CONFIG's order", () => {
+    expect([...SUPPORTED_LOCALES]).toEqual(Object.keys(LOCALE_CONFIG));
+  });
+
+  // Klingon is a novelty easter egg, so it never sits among the languages a
+  // user might actually need — it is always the last entry in the picker.
+  // Encoded by LOCALE_CONFIG's definition order; pinned here so a future locale
+  // appended at the bottom fails instead of shipping below Klingon.
+  it("keeps Klingon last", () => {
+    expect(SUPPORTED_LOCALES.at(-1)).toBe("tlh");
+  });
+
+  it("ships French", () => {
+    expect(SUPPORTED_LOCALES).toContain("fr");
+    expect(LOCALE_CONFIG.fr.nativeLabel).toBe("Français");
+    expect(LOCALE_CONFIG.fr.country).toBe("FR");
+  });
+});
 
 describe("detectLocaleFromHeader", () => {
   it("returns default for null header", () => {
@@ -19,11 +46,11 @@ describe("detectLocaleFromHeader", () => {
   });
 
   it("skips multiple unsupported languages to find a match", () => {
-    expect(detectLocaleFromHeader("ja,zh;q=0.9,fr;q=0.8,sv;q=0.7")).toBe("sv");
+    expect(detectLocaleFromHeader("ja,zh;q=0.9,pl;q=0.8,sv;q=0.7")).toBe("sv");
   });
 
   it("returns default when no language is supported", () => {
-    expect(detectLocaleFromHeader("de-DE,fr;q=0.9,ja;q=0.8")).toBe("en");
+    expect(detectLocaleFromHeader("de-DE,pl;q=0.9,ja;q=0.8")).toBe("en");
   });
 
   it("respects quality ordering over header position", () => {
@@ -36,5 +63,37 @@ describe("detectLocaleFromHeader", () => {
 
   it("handles single supported locale without region", () => {
     expect(detectLocaleFromHeader("sv")).toBe("sv");
+  });
+
+  it("matches French, region-qualified or not", () => {
+    expect(detectLocaleFromHeader("fr-FR,en;q=0.9")).toBe("fr");
+    expect(detectLocaleFromHeader("fr")).toBe("fr");
+    expect(detectLocaleFromHeader("de,fr;q=0.9,en;q=0.8")).toBe("fr");
+  });
+
+  // -- Exact-tag-then-language matching --
+  //
+  // Each entry is tried as a whole tag before being truncated to its language
+  // subtag. Today every supported locale is a bare language code, so the exact
+  // pass never changes an answer — these lock in the ordering so that adding a
+  // region-qualified locale (fr-CA next to fr, say) behaves as designed.
+
+  it("matches a whole tag before truncating it", () => {
+    // "sv" is both the whole tag and its own language subtag; the exact pass
+    // answers first and the result is the same either way.
+    expect(detectLocaleFromHeader("sv-SE,sv;q=0.9")).toBe("sv");
+  });
+
+  it("treats tags case-insensitively", () => {
+    expect(detectLocaleFromHeader("FI-fi")).toBe("fi");
+    expect(detectLocaleFromHeader("SV")).toBe("sv");
+  });
+
+  it("keeps quality order outside the exact/language passes", () => {
+    // The top-ranked entry only matches by language subtag, and it still wins
+    // over the exactly-matching lower-q entry: the language someone actually
+    // asked for outranks a region variant we happen to have. (A global
+    // exact-first pass would answer "fi" here and break the case above it.)
+    expect(detectLocaleFromHeader("fr-CA,fi;q=0.9")).toBe("fr");
   });
 });

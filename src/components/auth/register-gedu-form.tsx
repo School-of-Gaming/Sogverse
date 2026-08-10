@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { z } from "zod";
@@ -11,19 +11,29 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
+import { GAME_PLATFORMS, GameUsernameEditableRow } from "@/components/game-account";
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
-import { CoveragePicker } from "@/components/gedu/coverage-picker";
+import { CoverageAreasField } from "@/components/gedu/coverage-areas-field";
+import {
+  toggleCoverageTick,
+  type CoverageTick,
+} from "@/components/gedu/coverage-ticks";
 import { isValidPhoneNumber } from "react-phone-number-input";
 import { getClient } from "@/lib/supabase/client";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, SUPPORT_EMAIL } from "@/lib/constants";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 import { useAuth } from "@/providers";
 import { useSpokenLanguages } from "@/services/users";
-import { useAllLocations } from "@/services/locations";
 import { readErrorMessage } from "@/lib/api/json-response";
-import type { Location, SpokenLanguage } from "@/types";
+import type { SpokenLanguage } from "@/types";
+
+/**
+ * Literals rather than `useId()`s, because the other fields on this form name
+ * their inputs the same way — one page, one form, one of each.
+ */
+const MINECRAFT_USERNAME_INPUT_ID = "register-gedu-minecraft-username";
+const ROBLOX_USERNAME_INPUT_ID = "register-gedu-roblox-username";
 
 const registerGeduSchema = z.object({
   firstName: z.string().min(DISPLAY_NAME_MIN, `First name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `First name must be at most ${DISPLAY_NAME_MAX} characters`),
@@ -38,15 +48,16 @@ const registerGeduSchema = z.object({
 
 export function RegisterGeduForm({
   initialSpokenLanguages,
-  initialLocations,
+  redirect,
 }: {
   initialSpokenLanguages: SpokenLanguage[];
-  initialLocations: Location[];
+  redirect: string | null;
 }) {
   const t = useTranslations("auth");
+  const g = useTranslations("gameAccount");
   const c = useTranslations("common");
   const locale = useLocale();
-  const { navigateAfterAuth, status } = useAuthRedirect();
+  const { navigateAfterAuth, status } = useAuthRedirect(redirect);
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
 
   const [firstName, setFirstName] = useState("");
@@ -54,18 +65,24 @@ export function RegisterGeduForm({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [minecraftUsername, setMinecraftUsername] = useState("");
+  const [minecraftUsername, setMinecraftUsername] = useState<string | null>(null);
+  const [robloxUsername, setRobloxUsername] = useState<string | null>(null);
   const [phone, setPhone] = useState("");
   const [spokenLanguages, setSpokenLanguages] = useState<string[]>([]);
-  const [coverage, setCoverage] = useState<Set<string>>(new Set());
+  /**
+   * Coverage claims, keyed by `locations.id`. The picker browses the table
+   * itself — which anonymous callers may read, `locations` being public
+   * reference data — so a claim is already a row id here and submit sends it
+   * straight through.
+   */
+  const [coverage, setCoverage] = useState<ReadonlyMap<string, CoverageTick>>(
+    new Map(),
+  );
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const supabase = getClient();
   const { data: availableLanguages } = useSpokenLanguages({ initialData: initialSpokenLanguages });
-  const { data: locations } = useAllLocations({ initialData: initialLocations });
-
-  const locationList = useMemo(() => locations ?? [], [locations]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +111,8 @@ export function RegisterGeduForm({
     // re-enable between the click and the navigation that follows success.
     setIsLoading(true);
 
+    const locationIds = [...coverage.keys()];
+
     try {
       const response = await fetch("/api/gedu/register", {
         method: "POST",
@@ -106,8 +125,9 @@ export function RegisterGeduForm({
           phone: phone || undefined,
           spokenLanguages,
           locale,
-          locationIds: Array.from(coverage),
-          minecraftUsername: minecraftUsername.trim() || undefined,
+          locationIds,
+          minecraftUsername: minecraftUsername ?? undefined,
+          robloxUsername: robloxUsername ?? undefined,
         }),
       });
 
@@ -218,12 +238,44 @@ export function RegisterGeduForm({
               />
             </Field>
           </div>
-          <MinecraftUsernameField
-            value={minecraftUsername}
-            onChange={setMinecraftUsername}
-            disabled={isLoading}
-            optional
-          />
+          {/* First capture on both platforms: nothing is saved yet, so each row
+              opens straight into edit mode. The label belongs to the form, not
+              the row — a roster renders the same row with no label at all — so
+              the id is handed down and the row drops its own sr-only label
+              rather than labelling the input twice.
+
+              Side by side at the same breakpoint as the name and password
+              pairs, because they are the same kind of pair: two independent
+              optional answers, neither of which is more important than the
+              other. Stacked below `sm`, like everything else on this form. */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field
+              label={g("label", { platform: GAME_PLATFORMS.minecraft.name })}
+              htmlFor={MINECRAFT_USERNAME_INPUT_ID}
+              optional
+            >
+              <GameUsernameEditableRow
+                platform="minecraft"
+                username={minecraftUsername}
+                autoEdit
+                inputId={MINECRAFT_USERNAME_INPUT_ID}
+                onCommit={({ username }) => setMinecraftUsername(username)}
+              />
+            </Field>
+            <Field
+              label={g("label", { platform: GAME_PLATFORMS.roblox.name })}
+              htmlFor={ROBLOX_USERNAME_INPUT_ID}
+              optional
+            >
+              <GameUsernameEditableRow
+                platform="roblox"
+                username={robloxUsername}
+                autoEdit
+                inputId={ROBLOX_USERNAME_INPUT_ID}
+                onCommit={({ username }) => setRobloxUsername(username)}
+              />
+            </Field>
+          </div>
           <Field label={c("phoneNumber")} htmlFor="phone" optional>
             <InternationalPhoneInput
               id="phone"
@@ -240,7 +292,23 @@ export function RegisterGeduForm({
           <div className="space-y-2">
             <p className="text-sm font-medium">{t("registerGedu.coverageHeading")}</p>
             <p className="text-sm text-muted-foreground">{t("registerGedu.coverageNote")}</p>
-            <CoveragePicker locations={locationList} selected={coverage} onChange={setCoverage} />
+            <CoverageAreasField
+              ticks={coverage}
+              onToggle={(pick) =>
+                setCoverage((current) =>
+                  toggleCoverageTick(current, pick, locale),
+                )
+              }
+              onRemove={(locationId) =>
+                setCoverage((current) => {
+                  const next = new Map(current);
+                  next.delete(locationId);
+                  return next;
+                })
+              }
+              onClear={() => setCoverage(new Map())}
+              disabled={isLoading}
+            />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">

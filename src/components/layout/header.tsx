@@ -32,9 +32,9 @@ export function Header() {
   const t = useTranslations("header");
   const c = useTranslations("common");
 
-  // The storefront is a single Shop entry; clubs and camps are browsed within
-  // it via the in-page category selector. Events are not surfaced in the shop
-  // (see shop-browse.tsx).
+  // The storefront is a single Shop entry; every browseable product type —
+  // clubs, camps and events — is reached from within it via the in-page
+  // category selector, so the nav never grows a per-type link.
   const navLinks = [
     { href: ROUTES.shop, label: t("nav.shop") },
     { href: ROUTES.help, label: t("nav.help") },

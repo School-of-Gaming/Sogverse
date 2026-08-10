@@ -1,66 +1,187 @@
-import { createClient } from "@/lib/supabase/server";
+import type Stripe from "stripe";
+import { createClient, getUser } from "@/lib/supabase/server";
 import { ParticipationsService } from "@/services/participations";
 import { ProductsService } from "@/services/products";
 import {
   PurchaseConfirmationView,
   PurchaseConfirmationFallback,
+  PurchaseConfirmationNotice,
   type SignupOutcome,
 } from "@/components/public/products/purchase-confirmation-view";
-import type { ProductBrowseRow } from "@/types";
+import { PurchaseConfirmationFinalizing } from "@/components/public/products/purchase-confirmation-finalizing";
+import { stripe } from "@/lib/stripe/client";
+import type { ParticipationConfirmation } from "@/services/participations";
+import type { AppSupabaseClient, ProductBrowseRow } from "@/types";
 
-// Post-signup summary page. The paid flow (Stripe `success_url`), the free-
-// signup flow, and a waitlist join all land here with `?p=<participationId>`.
+// Post-signup summary page, reached two ways.
+//
+//   ?p=<participationId>      — the row already existed when the link was built:
+//                               a free event, a municipality registration, a
+//                               waitlist join.
+//   ?session_id=<checkoutId>  — a paid signup. The participation is created by
+//                               the Stripe webhook at payment confirmation, so
+//                               when `success_url` was built there was no row to
+//                               name. The Checkout Session is the handle both
+//                               ends share; the row records it, and this page
+//                               reads it back.
 //
 // Fetched server-side with the viewer's RLS-scoped client so the page renders
-// complete on first paint — no client loading state, no skeleton, and so no
-// layout shift. By the time the paid flow redirects here, Stripe has already
-// waited on our webhook (`confirm_reservation` has run), and every field lives
-// on the participation row from creation anyway, so there's nothing to poll.
+// complete on first paint. The one case that can't is a paid signup whose
+// webhook has not landed yet — see the finalizing branch below.
 //
 // The static `/shop/confirmation` segment outranks the `/shop/[id]` dynamic
 // route, so it never collides with a product detail URL.
 export default async function ShopConfirmationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ p?: string }>;
+  searchParams: Promise<{ p?: string; session_id?: string }>;
 }) {
-  const participationId = (await searchParams).p;
-  if (!participationId) return <PurchaseConfirmationFallback />;
+  const { p: participationId, session_id: checkoutSessionId } =
+    await searchParams;
 
   const supabase = await createClient();
   const participations = new ParticipationsService(supabase);
-  let product: ProductBrowseRow | null = null;
-  let gamerName: string | null = null;
-  let outcome: SignupOutcome = "enrolled";
-  let waitlistPosition: number | null = null;
+
+  if (checkoutSessionId) {
+    return renderPaidConfirmation(
+      supabase,
+      participations,
+      checkoutSessionId,
+    );
+  }
+
+  if (!participationId) return <PurchaseConfirmationFallback />;
+
+  let confirmation: ParticipationConfirmation | null = null;
   try {
-    const confirmation = await participations.getConfirmation(participationId);
-    if (confirmation) {
-      product = await new ProductsService(supabase).getDetailById(
-        confirmation.productId,
-      );
-      gamerName = confirmation.gamerName;
-      // A waitlisted participation lands on the waitlist summary variant.
-      outcome =
-        confirmation.status === "waitlisted" ? "waitlisted" : "enrolled";
-      // "You're #N" — fetched live (not the stale join-time value) so a parent
-      // who revisits sees their position shrink as people ahead leave. Null is
-      // tolerated: the view just omits the line.
-      if (outcome === "waitlisted") {
-        waitlistPosition =
-          await participations.getWaitlistPosition(participationId);
-      }
-    }
+    confirmation = await participations.getConfirmation(participationId);
   } catch {
     // RLS miss / stale id / transient error → render the friendly fallback
     // rather than a 500. A real purchaser effectively never lands here.
     //
     // Honest edge case: a transient DB/network blip is swallowed the same way,
-    // so a parent who *just* paid could momentarily see the "couldn't find
-    // that order" copy — alarming wording right after a charge. We accept it:
-    // the failure is rare, the purchase is safe (it's in My SOG regardless),
-    // and a simple page reload re-fetches and shows the real confirmation. Not
-    // worth distinguishing transient errors from genuine misses today.
+    // so a parent who *just* signed up could momentarily see the "couldn't find
+    // that order" copy. We accept it: the failure is rare, the signup is safe
+    // (it's in My SOG regardless), and a simple page reload re-fetches and shows
+    // the real confirmation. Not worth distinguishing transient errors from
+    // genuine misses today.
+  }
+
+  return renderConfirmation(supabase, participations, confirmation);
+}
+
+/**
+ * The paid path, in the order the happy path can afford.
+ *
+ * **The row read comes first**, because when it succeeds it has already answered
+ * the only question the Stripe gates below exist to answer. The read is
+ * RLS-scoped (`customer_id = auth.uid()`, or the gamer's own row), so a session
+ * id someone else pasted returns nothing and falls through to the gates. Asking
+ * Stripe first would put a third-party round trip in front of first paint on
+ * every ordinary confirmation, to re-derive an ownership fact the database just
+ * proved.
+ *
+ * When there is no row, the gates become load-bearing and all three run: Stripe
+ * must recognise the session, it must actually be paid, and its metadata must
+ * name the signed-in user as the purchaser. Without them a stranger's pasted
+ * session id would be answered "Payment received", which is both a lie and a
+ * leak.
+ */
+async function renderPaidConfirmation(
+  supabase: AppSupabaseClient,
+  participations: ParticipationsService,
+  checkoutSessionId: string,
+) {
+  let confirmation: ParticipationConfirmation | null = null;
+  try {
+    confirmation =
+      await participations.getConfirmationByCheckoutSession(checkoutSessionId);
+  } catch {
+    // Same swallow as the participation path: a transient read failure falls
+    // through to the waiting state below, which retries, rather than to a 500.
+  }
+
+  if (confirmation) {
+    return renderConfirmation(supabase, participations, confirmation);
+  }
+
+  const user = await getUser();
+  if (!user) return <PurchaseConfirmationFallback />;
+
+  let session: Stripe.Checkout.Session;
+  try {
+    session = await stripe.checkout.sessions.retrieve(checkoutSessionId);
+  } catch {
+    // Unknown or malformed session id — a stale or hand-edited link.
+    return <PurchaseConfirmationFallback />;
+  }
+
+  if (
+    session.payment_status !== "paid" ||
+    session.metadata?.customerId !== user.id
+  ) {
+    return <PurchaseConfirmationFallback />;
+  }
+
+  // Paid, and no row. Two very different reasons, and the parent deserves to be
+  // told which: the webhook hasn't landed yet (wait), or the payment was refused
+  // as a duplicate because this gamer already holds a spot on this product. In
+  // the second case no row will *ever* carry this session id, so waiting would
+  // spin forever under copy promising it only takes a moment.
+  // `metadata` is non-null past the check above: a session without it can't have
+  // matched the signed-in user's id.
+  const gamerId = session.metadata.gamerId;
+  const productId = session.metadata.productId;
+  if (gamerId && productId) {
+    let alreadySeated = false;
+    try {
+      alreadySeated = await participations.hasSeatOnProduct(productId, gamerId);
+    } catch {
+      // Unreadable → treat as "not a duplicate" and wait. The waiting state is
+      // bounded, so a wrong guess here costs a delay, not a dead end.
+    }
+    if (alreadySeated) {
+      return <PurchaseConfirmationNotice kind="duplicatePayment" />;
+    }
+  }
+
+  // Stripe waits up to ten seconds on our webhook before redirecting, so getting
+  // here needs the endpoint to have failed or run long. Show that the payment
+  // worked and wait for the row — telling a parent who has just been charged
+  // that we can't find their order would be both alarming and wrong.
+  return (
+    <PurchaseConfirmationFinalizing checkoutSessionId={checkoutSessionId} />
+  );
+}
+
+/** The shared tail: resolve the product, then render the summary. */
+async function renderConfirmation(
+  supabase: AppSupabaseClient,
+  participations: ParticipationsService,
+  confirmation: ParticipationConfirmation | null,
+) {
+  if (!confirmation) return <PurchaseConfirmationFallback />;
+
+  let product: ProductBrowseRow | null = null;
+  let waitlistPosition: number | null = null;
+  // A waitlisted participation lands on the waitlist summary variant.
+  const outcome: SignupOutcome =
+    confirmation.status === "waitlisted" ? "waitlisted" : "enrolled";
+
+  try {
+    product = await new ProductsService(supabase).getDetailById(
+      confirmation.productId,
+    );
+    // "You're #N" — fetched live (not the stale join-time value) so a parent
+    // who revisits sees their position shrink as people ahead leave. Null is
+    // tolerated: the view just omits the line.
+    if (outcome === "waitlisted" && confirmation.participationId) {
+      waitlistPosition = await participations.getWaitlistPosition(
+        confirmation.participationId,
+      );
+    }
+  } catch {
+    // Same swallow as above — a friendly fallback beats a 500.
   }
 
   if (!product) return <PurchaseConfirmationFallback />;
@@ -68,7 +189,7 @@ export default async function ShopConfirmationPage({
   return (
     <PurchaseConfirmationView
       product={product}
-      gamerName={gamerName}
+      gamerName={confirmation.gamerName}
       outcome={outcome}
       waitlistPosition={waitlistPosition}
     />

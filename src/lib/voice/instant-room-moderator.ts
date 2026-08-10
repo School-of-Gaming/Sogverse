@@ -1,11 +1,13 @@
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
 import { isGeduVerified } from "@/services/gedu/gedu-profiles.service";
 
+/** The resolved session shape `getUserWithProfile` produces. */
+type SessionWithProfile = Awaited<ReturnType<typeof getUserWithProfile>>;
+
 /**
  * The identity an instant-voice-room moderator joins with: their stable
  * `profiles.id`, their (non-guest) role, and their profile display name. The
- * token route bakes these into the owner token; the page only needs to know
- * whether this is non-null.
+ * token route bakes these into the owner token.
  */
 export interface InstantRoomModerator {
   userId: string;
@@ -18,12 +20,11 @@ export interface InstantRoomModerator {
  * (owner) token in an instant voice room?" — returns the moderator identity, or
  * `null` for a guest.
  *
- * Both instant-room mod surfaces read it so they can't drift: the token route
- * (mints the owner token from the returned identity) and the public
- * `/voice/[code]` page (treats a null result as a guest, so the lobby shows the
- * name input). Deriving the decision independently on each side is what would
- * show an unverified gedu the mod UI and then bounce them off the token route's
- * guest-name requirement with a 400.
+ * The token route is the only consumer: it mints the owner token from the
+ * returned identity. The `/voice/[code]` page used to read it too, to decide
+ * whether the lobby asked for a name — that need is gone now that the name
+ * input turns on sign-in rather than on moderator status, so there is no second
+ * surface left to drift from this one.
  *
  * The rule: admin → moderator; gedu → moderator **only if** admin-verified;
  * everyone else (signed-out, parent, gamer) → guest. **Fails closed to `null`
@@ -31,12 +32,16 @@ export interface InstantRoomModerator {
  * "ambiguous auth never grants ownership" invariant. Admins never trigger the
  * verification lookup.
  *
- * Reads the session via `getUserWithProfile`, which is request-`cache()`d, so
- * calling this and reading the session separately in the same request does not
- * double-fetch.
+ * Takes the already-resolved session rather than reading it itself: the caller
+ * reads `getUserWithProfile()` once and hands the same snapshot to both the
+ * owner gate (here) and its identity branch, so the two can never disagree
+ * about who is asking — and the route doesn't pay the session lookup twice.
+ * (React's `cache()` doesn't memoize inside a Route Handler, so "just call it
+ * again, it's cached" would silently double the auth + profile fetches.)
  */
-export async function instantRoomModerator(): Promise<InstantRoomModerator | null> {
-  const session = await getUserWithProfile();
+export async function instantRoomModerator(
+  session: SessionWithProfile,
+): Promise<InstantRoomModerator | null> {
   const profile = session?.profile;
   if (!profile) return null;
 

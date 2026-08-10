@@ -14,6 +14,7 @@ const messageLoaders: Record<SupportedLocale, () => Promise<{ default: Messages 
   en: () => import("../../messages/en.json"),
   fi: () => import("../../messages/fi.json"),
   sv: () => import("../../messages/sv.json"),
+  fr: () => import("../../messages/fr.json"),
   tlh: () => import("../../messages/tlh.json"),
 };
 

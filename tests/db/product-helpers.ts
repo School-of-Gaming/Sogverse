@@ -24,13 +24,29 @@ import { TEST_IDS } from "./constants";
  *   5c1            product-seat-counts-trigger.test.ts
  *   5c2            cancel-participation.test.ts
  *   5c3–5c6        get-my-participation-subscription-states.test.ts
- *   5c7            waitlist-admin.test.ts
+ *   5c7            waitlist-admin.test.ts (its muni product; see also 5f6)
  *   5c8–5c9        admin-participation-rpcs.test.ts
  *   5d1–5da        session-credits-cron.test.ts
  *   5e1–5e4        products-gamer-rls.test.ts
  *   5e5–5e8        products-purchaser-rls.test.ts
  *   5f1, 5f2, 5ff  update-product.test.ts
  *   5f3            product-translations-trigger.test.ts
+ *   5f4, 5f5       waitlist-self-service.test.ts
+ *   5f6            waitlist-admin.test.ts (its consumer_club product, for the
+ *                  demote refusal; the file's muni product is 5c7)
+ *
+ * The 5xx block has no tidy sub-range left below 5ff, so allocation continues
+ * in 6xx (`...0000000006XX`):
+ *   601-606        gedu-session-feed.test.ts (three products, three groups)
+ *   607-60b        family-product-feed.test.ts (three products 607-609, two
+ *                  groups 60a-60b)
+ *   6ff            family-product-feed.test.ts's must-NOT-exist participation
+ *                  id, backing the case that a nonexistent id is refused with
+ *                  exactly the message someone else's id gets. Declared here
+ *                  precisely because it sits apart from the block above:
+ *                  allocate it to a real fixture and that test quietly starts
+ *                  pointing at a row that exists, which is the one thing it
+ *                  must never do.
  */
 
 export interface ProductOptions {

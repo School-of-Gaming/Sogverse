@@ -25,7 +25,9 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     max_age: 12,
     spoken_language_code: "en",
     image_path: "abc.png",
-    padlet_url: null,
+    // Staff-only, so it arrives on its own embedded row rather than as a column
+    // on the product. `null` is the ordinary case: no row means no lesson link.
+    product_staff_details: null,
     location_id: null,
     is_remote: true,
     status: "pending",
@@ -37,7 +39,6 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     waitlist_enabled: true,
     // Already past — reverse transform should pick `immediately`.
     registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
-    refund_policy_days: null,
     primary_gedu_fee_cents: null,
     assistant_gedu_fee_cents: null,
     municipality_fee_cents: null,
@@ -114,16 +115,20 @@ describe("existingFormState", () => {
     expect(state.registrationOpensDate).toBe("");
   });
 
-  it("derives registrationOpensMode = 'scheduled' for a future timestamp and populates date/hour/minute", () => {
+  it("forces registrationOpensMode = 'immediately' on a locked type even for a future timestamp", () => {
+    // Consumer clubs keep the global registration-window lock, so the stored
+    // row does not get a vote here: deriving "scheduled" would open the form
+    // pinned to a disabled radio, with only the date fields live. The future
+    // drop is left unread and normalised away by the next save. The scheduled
+    // branch itself is exercised in products-build.test.ts against a
+    // municipality club, the one type where the chooser is editable.
     const product = syntheticConsumerProduct();
     // 2030-06-15 14:30 Helsinki time → fixed UTC.
     product.registration_opens_at = "2030-06-15T11:30:00.000Z";
     const state = existingFormState(product, consumerConfig, "en");
 
-    expect(state.registrationOpensMode).toBe("scheduled");
-    expect(state.registrationOpensDate).toBe("2030-06-15");
-    expect(state.registrationOpensHour).toBe("14");
-    expect(state.registrationOpensMinute).toBe("30");
+    expect(state.registrationOpensMode).toBe("immediately");
+    expect(state.registrationOpensDate).toBe("");
   });
 
   it("infers startMode = 'date_and_threshold' when both are set", () => {

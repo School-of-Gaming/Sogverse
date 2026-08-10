@@ -11,11 +11,9 @@ import {
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import {
-  GAME_TOPICS,
-  SUBJECT_TOPICS,
-} from "@/lib/products/topics";
+import { PRODUCT_TOPIC_VALUES } from "@/lib/products/topics";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
+import { useLanguageNames } from "@/hooks/use-language-names";
 import { Constants } from "@/types";
 import { FormSection } from "../form-primitives";
 import { ImagePicker } from "../image-picker";
@@ -41,6 +39,7 @@ export function IdentitySection({
 }: IdentitySectionProps) {
   const t = useTranslations("admin.products");
   const topicLabel = useTopicLabel();
+  const languageName = useLanguageNames();
 
   const addedLocales = SUPPORTED_LOCALES.filter(
     (l) => state.translations[l] !== undefined,
@@ -130,7 +129,7 @@ export function IdentitySection({
                     onClick={() => removeLocaleTab(locale)}
                     className="rounded p-0.5 text-muted-foreground hover:text-destructive"
                     aria-label={t("translations.removeLocale", {
-                      locale: LOCALE_CONFIG[locale].label,
+                      locale: languageName(locale, LOCALE_CONFIG[locale].label),
                     })}
                   >
                     <X className="h-3 w-3" />
@@ -151,7 +150,7 @@ export function IdentitySection({
               <option value="">{t("translations.addLocale")}</option>
               {addableLocales.map((l) => (
                 <option key={l} value={l}>
-                  {LOCALE_CONFIG[l].label}
+                  {languageName(l, LOCALE_CONFIG[l].label)}
                 </option>
               ))}
             </select>
@@ -224,35 +223,33 @@ export function IdentitySection({
           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         >
           <option value="">{t("placeholders.selectTopic")}</option>
-          <optgroup label={t("topicKinds.game")}>
-            {GAME_TOPICS.map((topic) => (
-              <option key={topic} value={topic}>
-                {topicLabel(topic)}
-              </option>
-            ))}
-          </optgroup>
-          <optgroup label={t("topicKinds.subject")}>
-            {SUBJECT_TOPICS.map((topic) => (
-              <option key={topic} value={topic}>
-                {topicLabel(topic)}
-              </option>
-            ))}
-          </optgroup>
+          {PRODUCT_TOPIC_VALUES.map((topic) => (
+            <option key={topic} value={topic}>
+              {topicLabel(topic)}
+            </option>
+          ))}
         </select>
       </Field>
 
+      {/*
+        Staff-facing, and the hint says so. The form used to carry a
+        family-facing link directly above this one, and the pair was a trap for
+        anyone filling it in quickly; that link is gone, but the warning stays,
+        because this one reaches game educators only — it is rendered in their
+        group workspace and on no parent or gamer surface.
+      */}
       <Field
-        label={t("labels.padletUrl")}
-        htmlFor="p-padlet"
+        label={t("labels.materialUrl")}
+        htmlFor="p-material"
         optional
-        hint={t("hints.padletHint")}
+        hint={t("hints.materialUrlHint")}
       >
         <Input
-          id="p-padlet"
+          id="p-material"
           type="url"
-          placeholder={t("placeholders.padletUrl")}
-          value={state.padletUrl}
-          onChange={(e) => setState({ ...state, padletUrl: e.target.value })}
+          placeholder={t("placeholders.materialUrl")}
+          value={state.materialUrl}
+          onChange={(e) => setState({ ...state, materialUrl: e.target.value })}
         />
       </Field>
     </FormSection>

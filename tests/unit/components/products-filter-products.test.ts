@@ -29,9 +29,7 @@ function row(overrides: {
     location_id: null,
     min_age: overrides.minAge ?? 7,
     max_age: overrides.maxAge ?? 17,
-    padlet_url: null,
     product_type: "consumer_club",
-    refund_policy_days: null,
     primary_gedu_fee_cents: null,
     assistant_gedu_fee_cents: null,
     municipality_fee_cents: null,
@@ -75,7 +73,7 @@ const B = row({
 });
 const C = row({
   id: "c",
-  topic: "webinar",
+  topic: "roblox_studio",
   isRemote: true,
   spokenLanguageCode: "fi",
   minAge: 7,

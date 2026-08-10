@@ -12,16 +12,17 @@ import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
 import { GeduVerificationCard } from "@/components/admin/gedu-verification-card";
+import { UserGameAccountsCard } from "@/components/admin/user-game-accounts-card";
 import { cn, computeAge, formatDate } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 import { getServerTimezone } from "@/lib/timezone.server";
 import { UsersService } from "@/services/users";
 import { GamerService } from "@/services/gamers";
 import { MinecraftService } from "@/services/minecraft";
+import { RobloxService } from "@/services/roblox";
 import { ParticipationsService } from "@/services/participations";
 import type { AdminGamerParticipationRow } from "@/services/participations";
 import { GeduProfilesService, type GeduVerification } from "@/services/gedu/gedu-profiles.service";
-import { MinecraftUsernameBadge } from "@/components/minecraft/minecraft-username-badge";
 import type { ParticipationStatus, ProductType } from "@/types";
 
 /** Status → semantic badge classes (no raw Tailwind colors — see CLAUDE.md). */
@@ -107,6 +108,7 @@ export default async function AdminUserDetailPage({
   const usersService = new UsersService(supabase);
   const gamerService = new GamerService(supabase);
   const minecraftService = new MinecraftService(supabase);
+  const robloxService = new RobloxService(supabase);
 
   const profile = await usersService.getProfile(userId).catch(() => null);
 
@@ -125,7 +127,19 @@ export default async function AdminUserDetailPage({
   const isGamer = profile.role === "gamer";
   const isGedu = profile.role === "gedu";
 
-  const [linkedGamers, linkedParents, gamerProfile, minecraftAccount, geduVerification] = await Promise.all([
+  // Game identities belong to the people who play — a child, and the educator
+  // running the session. A parent's or another admin's account has none, which
+  // is also what the write route refuses as a target.
+  const showGameAccounts = isGamer || isGedu;
+
+  const [
+    linkedGamers,
+    linkedParents,
+    gamerProfile,
+    minecraftAccount,
+    robloxAccount,
+    geduVerification,
+  ] = await Promise.all([
     isCustomer
       ? gamerService.getLinkedGamers(userId).catch(() => [])
       : Promise.resolve([]),
@@ -135,17 +149,16 @@ export default async function AdminUserDetailPage({
     isGamer
       ? gamerService.getGamerProfile(userId).catch(() => null)
       : Promise.resolve(null),
-    isGamer || isGedu
+    showGameAccounts
       ? minecraftService.getMinecraftAccount(userId).catch(() => null)
+      : Promise.resolve(null),
+    showGameAccounts
+      ? robloxService.getRobloxAccount(userId).catch(() => null)
       : Promise.resolve(null),
     isGedu
       ? new GeduProfilesService(supabase).getOne(userId).catch(() => null)
       : Promise.resolve<GeduVerification | null>(null),
   ]);
-
-  const showMinecraft = isGamer || isGedu;
-  const mcUsername = minecraftAccount?.minecraft_username ?? null;
-  const mcUuid = minecraftAccount?.minecraft_uuid ?? null;
 
   // Products this user is assigned to. For a gamer, their own participations;
   // for a parent, every participation across their linked gamers (grouped per
@@ -232,9 +245,11 @@ export default async function AdminUserDetailPage({
                 )}
               </p>
             )}
-            {showMinecraft && (
-              <MinecraftUsernameBadge username={mcUsername} uuid={mcUuid} size="base" />
-            )}
+            {/* The Minecraft row used to sit here, read-only. It moved into the
+                editable Game accounts card below: an admin who can change these
+                needs one place that shows both platforms and holds the outcome
+                of a save, and a summary line that could go stale the moment the
+                card underneath it was used is the wrong second home. */}
             <div className="mt-2 flex items-center gap-3">
               <Badge className={ROLE_BADGE_STYLES[profile.role]}>
                 {c(ROLE_LABEL_KEYS[profile.role])}
@@ -362,6 +377,18 @@ export default async function AdminUserDetailPage({
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* Both game identities, editable. Admins have always had the database
+          permission to fix these (a `FOR ALL` policy over `is_admin()` on both
+          tables); this is the surface that finally uses it. */}
+      {showGameAccounts && (
+        <UserGameAccountsCard
+          userId={userId}
+          personName={profile.first_name}
+          initialMinecraft={minecraftAccount}
+          initialRoblox={robloxAccount}
+        />
       )}
 
       {/* Gedu verification + coverage areas (substitute matching) */}

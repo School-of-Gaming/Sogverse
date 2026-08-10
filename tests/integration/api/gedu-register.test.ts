@@ -15,8 +15,10 @@ vi.mock("@/lib/auth", () => ({
 const mockCreateUser = vi.fn();
 const mockDeleteUser = vi.fn();
 const mockRpc = vi.fn();
-const mockMinecraftLookupRow = vi.fn();
 
+// No `from` here on purpose: the route reaches the database only through the
+// promotion RPC. It used to query `minecraft_accounts` first to reject an
+// already-linked account; sharing one is allowed now, so that read is gone.
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
     auth: {
@@ -25,9 +27,6 @@ vi.mock("@/lib/supabase/admin", () => ({
         deleteUser: (...args: unknown[]) => mockDeleteUser(...args),
       },
     },
-    from: () => ({
-      select: () => ({ eq: () => ({ maybeSingle: () => mockMinecraftLookupRow() }) }),
-    }),
     rpc: (...args: unknown[]) => mockRpc(...args),
   }),
 }));
@@ -38,6 +37,15 @@ vi.mock("@/lib/mojang", async (importOriginal) => {
   return {
     ...actual,
     lookupMinecraftUser: (...args: unknown[]) => mockLookupMinecraftUser(...args),
+  };
+});
+
+const mockLookupRobloxProfile = vi.fn();
+vi.mock("@/lib/roblox", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/roblox")>();
+  return {
+    ...actual,
+    lookupRobloxProfile: (...args: unknown[]) => mockLookupRobloxProfile(...args),
   };
 });
 
@@ -70,8 +78,14 @@ function registerRequest(body: unknown, rawBody?: string): Request {
 describe("POST /api/gedu/register", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockMinecraftLookupRow.mockResolvedValue({ data: null, error: null });
     mockLookupMinecraftUser.mockResolvedValue({ uuid: "mc-uuid-1" });
+    mockLookupRobloxProfile.mockResolvedValue({
+      username: "builderman",
+      userId: 156,
+      displayName: "builderman",
+      avatarUrl: null,
+      headshotUrl: null,
+    });
     mockCreateUser.mockResolvedValue({
       data: { user: { id: NEW_USER_ID } },
       error: null,
@@ -169,35 +183,88 @@ describe("POST /api/gedu/register", () => {
     expect(JSON.stringify(args)).not.toContain("admin");
   });
 
-  // -- Minecraft conflict --
+  // -- Minecraft --
 
-  it("returns 409 for an already-linked Minecraft account, without creating the user", async () => {
-    // Checked before createUser because createUser burns the email
-    // irreversibly — the registrant can retry with a different Minecraft name.
-    mockMinecraftLookupRow.mockResolvedValue({
-      data: { user_id: "someone-else" },
-      error: null,
-    });
+  it("registers an educator on a Minecraft account someone else already holds", async () => {
+    // Sharing is allowed, so there is no pre-check to fail and no conflict to
+    // report — the resolved name and uuid go straight to the RPC.
+    mockLookupMinecraftUser.mockResolvedValue({ uuid: "shared-uuid" });
 
     const response = await POST(
       registerRequest({ ...validBody, minecraftUsername: "Notch" }),
     );
 
-    expect(response.status).toBe(409);
+    expect(response.status).toBe(200);
+    const args = asObject(mockRpc.mock.calls[0][1]);
+    expect(args.p_minecraft_username).toBe("Notch");
+    expect(args.p_minecraft_uuid).toBe("shared-uuid");
+    expect(mockDeleteUser).not.toHaveBeenCalled();
+  });
+
+  it("passes an empty uuid when Mojang cannot resolve the username", async () => {
+    // An unresolvable name is still recorded; the RPC NULLIFs the empty uuid.
+    mockLookupMinecraftUser.mockResolvedValue(null);
+
+    const response = await POST(
+      registerRequest({ ...validBody, minecraftUsername: "Notch" }),
+    );
+
+    expect(response.status).toBe(200);
+    const args = asObject(mockRpc.mock.calls[0][1]);
+    expect(args.p_minecraft_username).toBe("Notch");
+    expect(args.p_minecraft_uuid).toBe("");
+  });
+
+  // -- Roblox --
+  //
+  // Same shape one platform over, with one difference that matters: the account
+  // id is an int64, and it reaches the RPC as *text* because '' is this
+  // function's sentinel for every absent optional argument and a bigint
+  // parameter could not carry it.
+
+  it("returns 400 for a malformed Roblox username, before creating anything", async () => {
+    const response = await POST(
+      // Two underscores — Roblox permits at most one, never at either end.
+      registerRequest({ ...validBody, robloxUsername: "a_b_c" }),
+    );
+
+    expect(response.status).toBe(400);
     expect(mockCreateUser).not.toHaveBeenCalled();
   });
 
-  it("returns 409 and deletes the auth user when the RPC loses the Minecraft race", async () => {
-    mockRpc.mockResolvedValue({
-      error: { code: "23505", message: "duplicate key minecraft_uuid" },
-    });
-
+  it("passes the resolved Roblox account id as a decimal string", async () => {
     const response = await POST(
-      registerRequest({ ...validBody, minecraftUsername: "Notch" }),
+      registerRequest({ ...validBody, robloxUsername: "builderman" }),
     );
 
-    expect(response.status).toBe(409);
-    expect(mockDeleteUser).toHaveBeenCalledWith(NEW_USER_ID);
+    expect(response.status).toBe(200);
+    const args = asObject(mockRpc.mock.calls[0][1]);
+    expect(args.p_roblox_username).toBe("builderman");
+    expect(args.p_roblox_user_id).toBe("156");
+  });
+
+  it("passes an empty account id when Roblox cannot resolve the handle", async () => {
+    mockLookupRobloxProfile.mockResolvedValue(null);
+
+    const response = await POST(
+      registerRequest({ ...validBody, robloxUsername: "nobody_here" }),
+    );
+
+    expect(response.status).toBe(200);
+    const args = asObject(mockRpc.mock.calls[0][1]);
+    expect(args.p_roblox_username).toBe("nobody_here");
+    expect(args.p_roblox_user_id).toBe("");
+  });
+
+  it("passes both sentinels when the educator gave no game handles at all", async () => {
+    const response = await POST(registerRequest(validBody));
+
+    expect(response.status).toBe(200);
+    expect(mockLookupRobloxProfile).not.toHaveBeenCalled();
+    const args = asObject(mockRpc.mock.calls[0][1]);
+    expect(args.p_roblox_username).toBe("");
+    expect(args.p_roblox_user_id).toBe("");
+    expect(args.p_minecraft_username).toBe("");
   });
 
   // -- Failure --

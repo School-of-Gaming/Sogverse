@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, Lock, Gamepad2, LogOut } from "lucide-react";
+import { User, Lock, LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,17 +10,31 @@ import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
-import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
+import { GameAccountCard } from "@/components/game-account";
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
+import { HomeLocationField } from "@/components/locations/home-location-field";
+import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
 import { useAuth } from "@/providers";
 import { isValidPhoneNumber } from "react-phone-number-input";
 import { useUpdateProfile, useSpokenLanguages } from "@/services/users";
+import { useLocationsByIds, type LocationWithChain } from "@/services/locations";
 import { toE164Digits } from "@/lib/utils";
 import { useMyMinecraftAccount, useUpdateMyMinecraft } from "@/services/minecraft";
+import { useMyRobloxAccount, useUpdateMyRoblox } from "@/services/roblox";
 import { isGamerProfile, type ProfileUpdate, type SpokenLanguage } from "@/types";
+
+/**
+ * A keyed location read, as the picker's own value shape. The two are already
+ * the same information — a row plus its ancestors, nearest first — so this only
+ * renames the row half; there is nothing to look up and nothing to reconcile.
+ */
+function toLocationPick(row: LocationWithChain | undefined): LocationPick | null {
+  if (!row) return null;
+  return { location: row, ancestors: row.ancestors };
+}
 
 export function SettingsSectionContent({
   initialSpokenLanguages,
@@ -32,11 +46,16 @@ export function SettingsSectionContent({
   const { user, profile, refreshProfile } = useAuth();
   const updateProfile = useUpdateProfile();
   const router = useRouter();
-  const showMinecraft = profile?.role === "gamer" || profile?.role === "gedu";
+  // Game identities belong to the people who play: a child and the educator
+  // running the session. A parent's own account has none.
+  const showGameAccounts = profile?.role === "gamer" || profile?.role === "gedu";
   const isGedu = profile?.role === "gedu";
   const isGamer = isGamerProfile(profile);
+  const isParent = profile?.role === "customer";
   const { data: mcAccount } = useMyMinecraftAccount();
   const updateMyMc = useUpdateMyMinecraft();
+  const { data: robloxAccount } = useMyRobloxAccount();
+  const updateMyRoblox = useUpdateMyRoblox();
   const { data: availableLanguages } = useSpokenLanguages({
     initialData: initialSpokenLanguages,
   });
@@ -49,16 +68,49 @@ export function SettingsSectionContent({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const [minecraftUsername, setMinecraftUsername] = useState("");
-  const [mcInitialized, setMcInitialized] = useState(false);
-  const [isSavingMc, setIsSavingMc] = useState(false);
-  const [mcSuccess, setMcSuccess] = useState<string | null>(null);
-  const [mcError, setMcError] = useState<string | null>(null);
+  // ---------------------------------------------------------------------
+  // The parent's own location
+  //
+  // Stored as a single `locations` id on the profile. The row behind it —
+  // and the ancestor chain that renders its path — comes from one keyed read,
+  // which is exactly the shape the picker hands back, so a place restored from
+  // the database and a place just chosen are the same value to the field.
+  // ---------------------------------------------------------------------
+  // `isParent` is `profile?.role === "customer"`, which narrows `profile` to
+  // non-null here — the field is only ever mounted for a parent anyway.
+  const savedHomeLocationId = isParent ? profile.home_location_id : null;
+  const { data: savedHomeLocationRows } = useLocationsByIds(
+    savedHomeLocationId ? [savedHomeLocationId] : [],
+  );
 
-  if (mcAccount !== undefined && !mcInitialized) {
-    setMinecraftUsername(mcAccount?.minecraft_username ?? "");
-    setMcInitialized(true);
-  }
+  /**
+   * The saved value: `undefined` until the row lands, `null` once we know there
+   * is none. With no id stored there is nothing to wait for, so that case
+   * resolves synchronously and the field never blinks through an empty box on
+   * its way to the prompt.
+   *
+   * A stored id that matches no row also lands here as `null` — a keyed read is
+   * a lookup, not an assertion, and `ON DELETE SET NULL` means this should not
+   * happen. Rendering it as "not chosen" is the honest answer either way.
+   */
+  const savedHomeLocation: LocationPick | null | undefined =
+    savedHomeLocationId === null
+      ? null
+      : savedHomeLocationRows === undefined
+        ? undefined
+        : toLocationPick(savedHomeLocationRows[0]);
+
+  /**
+   * Any edit made on top of the saved value. Wrapped rather than held as a bare
+   * `LocationPick | null`, because `null` is a real edit — the user cleared the
+   * field — and would otherwise be indistinguishable from "no edit yet".
+   */
+  const [homeLocationEdit, setHomeLocationEdit] = useState<{
+    pick: LocationPick | null;
+  } | null>(null);
+  const homeLocation = homeLocationEdit
+    ? homeLocationEdit.pick
+    : savedHomeLocation;
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -83,12 +135,24 @@ export function SettingsSectionContent({
         return;
       }
 
+      // Both names trimmed on the way out. This write goes straight to Supabase
+      // from the browser — no route, no contract — so nothing downstream will
+      // strip whitespace the field picked up.
       const updates: ProfileUpdate = {
-        first_name: firstName,
+        first_name: firstName.trim(),
         last_name: lastName.trim(),
         phone: toE164Digits(phone),
         spoken_languages: spokenLanguages,
       };
+
+      // Only when we know what the current value is. An unresolved read is
+      // `undefined`, and writing `null` for it would clear a location the user
+      // never touched and has not even been shown yet — omitting the key leaves
+      // it alone. A cleared field is `null` and does have to be written.
+      if (isParent && homeLocation !== undefined) {
+        updates.home_location_id = homeLocation?.location.id ?? null;
+      }
+
       await updateProfile.mutateAsync({ userId: user.id, updates });
       await refreshProfile();
       setSuccessMessage(t('profileUpdated'));
@@ -107,32 +171,6 @@ export function SettingsSectionContent({
 
   const handleChangePassword = () => {
     router.push("/reset-password");
-  };
-
-  const handleSaveMc = async () => {
-    setIsSavingMc(true);
-    setMcSuccess(null);
-    setMcError(null);
-
-    try {
-      const mcValue = minecraftUsername.trim() || null;
-      await updateMyMc.mutateAsync(mcValue);
-      setMcSuccess(
-        mcValue
-          ? t('minecraftSaved')
-          : t('minecraftCleared'),
-      );
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : typeof error === "object" && error !== null && "message" in error
-            ? String((error as { message: unknown }).message)
-            : t('failedToUpdateMinecraft');
-      setMcError(message);
-    } finally {
-      setIsSavingMc(false);
-    }
   };
 
   return (
@@ -224,6 +262,21 @@ export function SettingsSectionContent({
             onChange={setSpokenLanguages}
           />
 
+          {isParent && (
+            <Field
+              label={t('location')}
+              htmlFor="homeLocation"
+              optional
+            >
+              <HomeLocationField
+                id="homeLocation"
+                value={homeLocation}
+                onChange={(pick) => setHomeLocationEdit({ pick })}
+                disabled={isSaving}
+              />
+            </Field>
+          )}
+
           {!isGamer && (
             <Field label={c('email')}>
               <Input
@@ -276,47 +329,50 @@ export function SettingsSectionContent({
 
       {isGedu && user && <GeduCoverageEditor geduId={user.id} />}
 
-      {showMinecraft && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Gamepad2 className="h-5 w-5" />
-              <CardTitle>{t('minecraftAccount')}</CardTitle>
-            </div>
-            <CardDescription>
-              {t('minecraftDescription')}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {mcSuccess && (
-              <div className="rounded-md bg-success/10 p-3 text-sm text-success">
-                {mcSuccess}
-              </div>
-            )}
+      {showGameAccounts && (
+        <>
+          <GameAccountCard
+            platform="minecraft"
+            title={t('minecraftAccount')}
+            description={t('minecraftDescription')}
+            username={mcAccount?.minecraft_username ?? null}
+            externalId={mcAccount?.minecraft_uuid ?? null}
+            onSave={(value) => updateMyMc.mutateAsync(value)}
+            note={
+              /* A courtesy credit, not a licence condition — mc-heads asks for
+                 nothing and encourages this. One home is enough for a thank-you,
+                 and this is the page where a person is looking at their own skin,
+                 so it is the one that earns it. An anchor is fine here: the
+                 no-off-site-links rule governs staff-authored copy shown to
+                 families, not the app's own chrome. */
+              <p className="text-xs text-muted-foreground">
+                {t.rich('mcHeadsAttribution', {
+                  link: (chunks) => (
+                    <a
+                      href="https://mc-heads.net"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-foreground"
+                    >
+                      {chunks}
+                    </a>
+                  ),
+                })}
+              </p>
+            }
+          />
 
-            {mcError && (
-              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                {mcError}
-              </div>
-            )}
-
-            <form onSubmit={(e) => { e.preventDefault(); handleSaveMc(); }} className="space-y-6">
-              <MinecraftUsernameField
-                value={minecraftUsername}
-                onChange={setMinecraftUsername}
-                disabled={isSavingMc}
-              />
-
-              <Button
-                type="submit"
-                disabled={isSavingMc}
-              >
-                {isSavingMc ? c('saving') : t('saveMinecraft')}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+          <GameAccountCard
+            platform="roblox"
+            title={t('robloxAccount')}
+            description={t('robloxDescription')}
+            username={robloxAccount?.roblox_username ?? null}
+            externalId={robloxAccount?.roblox_user_id ?? null}
+            onSave={(value) => updateMyRoblox.mutateAsync(value)}
+          />
+        </>
       )}
     </div>
   );
 }
+

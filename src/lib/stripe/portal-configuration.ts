@@ -1,7 +1,5 @@
 import "server-only";
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+import { stripe } from "@/lib/stripe/client";
 
 // Bump when the feature set below changes. We never edit an existing
 // configuration — we supersede it, so a new version tag forces a fresh config

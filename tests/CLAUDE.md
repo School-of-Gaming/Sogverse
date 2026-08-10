@@ -1,6 +1,6 @@
 # Testing
 
-Tests live here in four categories — `unit/`, `integration/`, `db/`, and `e2e/` — plus
+Tests live here in four categories — `unit/`, `integration/`, `db/`, and `smoke/` — plus
 two support dirs: `mocks/` (shared mock factories — add new mocks here rather than
 duplicating across files) and `helpers/`. Two Vitest configs drive them:
 `vitest.config.mts` (jsdom, runs `unit/` + `integration/`) and `vitest.config.db.mts`
@@ -13,10 +13,28 @@ duplicating across files) and `helpers/`. Two Vitest configs drive them:
 | **unit** | Pure functions, service classes with injected mock dependencies, mapping/transform logic | `.test.ts`, Vitest |
 | **integration** | Route handlers (import real POST/PATCH/GET), proxy, auth flows — full request pipeline with mocked external deps | `.test.ts`, Vitest |
 | **db** | RPCs, constraints, RLS policies against real Postgres | `.test.ts`, Vitest (`vitest.config.db.mts`) |
-| **e2e** | Playwright browser tests against running dev server | `.spec.ts`, Playwright |
+| **smoke** | Assertions on the HTTP responses of a served production build — headers, CSP | `.spec.ts`, Playwright |
 
-`npm run test` runs `unit/` + `integration/` (the jsdom config). `npm run test:e2e`
+`npm run test` runs `unit/` + `integration/` (the jsdom config). `npm run test:smoke`
 runs Playwright.
+
+## The smoke check is a build gate first
+
+`smoke/` is the only place we build the app and serve it. Playwright's config starts the
+production server, so the check fails if the build breaks or the server refuses to boot —
+and that gate is most of its value. The assertions on top of it are the ones that can
+only be made against a real response: the static security headers, and the per-request
+CSP nonce the proxy generates (which is absent in dev, so nothing else can verify it).
+
+**It uses Playwright's request fixture only — never a browser.** That is deliberate, and
+it is what keeps the job cheap: no engine matrix, no device emulation, no browser
+binaries to install in CI, no retries, because HTTP header assertions are deterministic.
+A spec here that needs a `page` does not belong here.
+
+There was a browser-driven suite before, asserting on marketing copy and unauthenticated
+redirects; it was deleted in August 2026 for churning on every copy edit while catching
+nothing. `TODO.md` holds the plan for a real browser suite against a local Supabase stack
+— that would be a new category, not an addition to this one.
 
 ## DB tests run in CI, not locally
 
@@ -30,6 +48,26 @@ Because they run against a real DB, they're also where the schema-side guarantee
 verified: the access-control catalog checks, and the zod RPC-result schemas from each
 feature's `*.contracts.ts` parsed against live RPC output. See `supabase/CLAUDE.md` for
 the migration workflow and the access-control rules these tests enforce.
+
+### CI's database is not staging: it is the migrations *plus* the fixture layer
+
+CI builds its database from `migrations/` and then loads `supabase/seed.sql` on top —
+an arrangement that exists nowhere else. Staging carries the migrations' data without
+the fixtures; CI carries both, side by side in the same tables. A DB test written and
+hand-verified against staging can therefore fail its first CI run for reasons that are
+not bugs, and one session lost four tests to exactly this class:
+
+- **Whole-table claims must survive the fixture rows.** A sweep asserting "every row of
+  this kind has property X" meets seed.sql's deliberately-minimal fixture rows, which
+  often lack exactly the property real seeded data guarantees. Scope the claim to the
+  rows it is actually about, or exclude the fixture ids by name (`TEST_IDS`) so
+  anything *else* violating it still fails.
+- **"Surely unused" values must be impossible, not merely unlikely.** A test that
+  needs a free key or an absent record cannot guess one from the real world — the real
+  seeded data is in CI too, and it is full of surprises (one guess at an unused Finnish
+  postal code turned out to be Santa Claus's). Construct values that cannot exist by
+  shape: negative numbers for an upstream key that is always positive, letters where
+  the data is all digits.
 
 ### DB test conventions
 

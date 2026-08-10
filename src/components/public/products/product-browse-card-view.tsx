@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Users, Hourglass, MapPin, Globe } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Users, MapPin, Globe } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { LanguageFlag } from "@/components/ui/language-flag";
+import { NavChevron } from "@/components/ui/nav-chevron";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { cn } from "@/lib/utils";
 import type { ProductPriceLine } from "./format-product-price";
@@ -34,7 +34,7 @@ export interface ProductBrowseCardViewProps {
    */
   scheduleLines: readonly string[];
   ageLine: string;
-  /** Pre-formatted "{count} seats" / "Waitlist available" / null. */
+  /** Pre-formatted "{count} seats", or null when there's no capacity to show. */
   seatsHint: SeatsHint | null;
   /**
    * Single-line location/format label. Always present on browse cards so
@@ -60,8 +60,16 @@ export interface ProductBrowseCardViewProps {
    */
   seatBar?: SeatBarValue;
   state: RegistrationState;
-  /** Detail-page URL. The card's CTA + the whole card surface link here. */
-  detailHref?: string;
+  /**
+   * Detail-page URL. Required, and deliberately so: whether the card opens is
+   * this component's decision, taken from `state`, not the caller's. On a
+   * dead-end state the card is inert and this goes unused — so passing it is
+   * never a promise that the card will open, and withholding it was never a way
+   * to stop one. Making it optional only created a fourth combination (an
+   * openable state with no href) that would render as inert with the wrong
+   * word; required, that combination cannot be expressed.
+   */
+  detailHref: string;
 }
 
 export type SeatBarValue = {
@@ -75,9 +83,7 @@ export type LocationLine = {
   label: string;
 };
 
-export type SeatsHint =
-  | { kind: "capacity"; count: number }
-  | { kind: "waitlist" };
+export type SeatsHint = { kind: "capacity"; count: number };
 
 export function ProductBrowseCardView({
   name,
@@ -98,12 +104,39 @@ export function ProductBrowseCardView({
   const cta = useRegistrationCta(state);
   const isEnded = state.kind === "ended";
 
+  // Where this card opens, or `undefined` when it opens nowhere.
+  // `registrationCtaKind` already decides that: only a "primary" state has
+  // somewhere worth going, while full-no-waitlist, a camp underway and an ended
+  // run are deliberate dead ends ("the detail page has nothing actionable, so
+  // the parent isn't sent on a round-trip").
+  //
+  // Every clickable affordance reads this one value — the chevron, the
+  // hover/focus/active feedback, the label's colour and the stretched link — so
+  // a card cannot look openable without being openable. The shape this replaced
+  // gated the hover on `detailHref` alone, which the adapter always supplies, so
+  // a full-no-waitlist card brightened its border under the cursor and then
+  // swallowed the click. `detailHref` being required is what closes the other
+  // direction: with no way to withhold it, there is no openable state that can
+  // arrive here without somewhere to go.
+  const openHref = cta?.kind === "primary" ? detailHref : undefined;
+
   return (
     <Card
       className={cn(
-        "flex h-full flex-col overflow-hidden transition-colors",
+        // `group` is what the chevron's nudge reads; `relative` is what the
+        // stretched link is positioned against.
+        "group relative flex h-full flex-col overflow-hidden transition-[border-color,box-shadow]",
         isEnded && "opacity-70 grayscale-[40%]",
-        detailHref && !isEnded && "hover:border-primary/40",
+        openHref && [
+          "cursor-pointer",
+          "hover:border-primary/40 hover:shadow-lg",
+          // `focus-within` so keyboard focus on the stretched link lights the
+          // whole card, not just the invisible anchor. `active` is the touch
+          // half of the same signal: a phone has no hover, so without it a tap
+          // gets no acknowledgement until the next page paints.
+          "focus-within:border-primary/40 focus-within:shadow-lg",
+          "active:border-primary/40",
+        ],
       )}
     >
       <CardContent className="flex flex-1 flex-col gap-3 p-4">
@@ -172,7 +205,20 @@ export function ProductBrowseCardView({
               {t("endedNote")}
             </p>
           ) : (
-            <div className="flex items-end justify-between gap-6">
+            /* Two pieces, and neither takes its position from the other. The
+               left states what the product costs or how full it is; the right
+               states whether you can open it. Both are anchored to the card —
+               centred in this row, at their own end of it — so the layout does
+               not change shape when the left slot swaps a price for a two-row
+               seat bar, or holds nothing at all.
+
+               Aligning them to *each other* was the mistake this replaces.
+               Baselines are exact when both sides are type, but they stop being
+               available the moment one side is a block, which forces the rule to
+               branch on what the data happens to be — and worse, it anchors the
+               CTA to the price, so the two read as one phrase that has drifted
+               apart. They are not one phrase. */
+            <div className="flex items-center justify-between gap-6">
               {/* Muni clubs swap the price for a seat-availability bar;
                   everything else keeps the price. `seatBar` present (even with a
                   null total) is the muni signal — a null total renders nothing,
@@ -191,29 +237,57 @@ export function ProductBrowseCardView({
               ) : (
                 <PriceBlock price={price} />
               )}
+              {/* An openable card answers with a worded hint and a chevron; a
+                  dead end answers in the same place, at the same size, muted and
+                  without one. The chevron's presence is the whole distinction.
+
+                  `ml-auto` because the left-hand side is not guaranteed to be
+                  there: an uncapped municipality club renders no seat bar at all,
+                  leaving this the row's only child, and `justify-between` parks a
+                  lone child at the start. */}
               {cta &&
-                (cta.kind === "primary" && detailHref ? (
-                  <Link
-                    href={detailHref}
-                    className={buttonVariants({ size: "sm" })}
-                  >
+                (openHref ? (
+                  <span className="ml-auto inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap text-sm font-medium text-primary">
                     {cta.labelText}
-                  </Link>
+                    <NavChevron size="sm" className="text-primary" />
+                  </span>
                 ) : (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={cta.kind === "disabled" ? "outline" : "default"}
-                    disabled={cta.kind === "disabled"}
-                    className="whitespace-nowrap"
-                  >
+                  /* A dead end states a fact rather than offering an action, so
+                     it is not shaped like one. The label has to stay, though: the
+                     seat bar deliberately prints no "Full" chip of its own, on
+                     the grounds that the label beside it already says so. */
+                  <span className="ml-auto shrink-0 whitespace-nowrap text-sm text-muted-foreground">
                     {cta.labelText}
-                  </Button>
+                  </span>
                 ))}
             </div>
           )}
         </div>
       </CardContent>
+
+      {/* The whole card as one link — an empty anchor stretched over it, exactly
+          as the gedu assignment and family enrollment cards do it. Nothing on
+          this card owns a click of its own, so nothing is lifted above it with a
+          `z-10` and there is no anchor nested inside another. The focus ring is
+          inset because the card clips its own overflow and would otherwise shave
+          it off.
+
+          The accessible name leads with the footer's visible word. Those two
+          cards name themselves with the title alone and are right to, because
+          neither presents a word as the target's label; this one does, and a
+          control whose visible label is absent from its accessible name is
+          unreachable by voice — "click View" matches nothing (WCAG 2.5.3, Label
+          in Name). The product name still carries the meaning, so it follows
+          rather than being replaced. The joining goes through a message rather
+          than string concatenation: the separator and the word order are as
+          translatable as the words either side of them. */}
+      {openHref && cta && (
+        <Link
+          href={openHref}
+          aria-label={t("cardLink", { action: cta.labelText, name })}
+          className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+        />
+      )}
     </Card>
   );
 }
@@ -221,18 +295,10 @@ export function ProductBrowseCardView({
 function SeatsHintLine({ hint }: { hint: SeatsHint | null }) {
   const t = useTranslations("productBrowse.card");
   if (!hint) return null;
-  if (hint.kind === "capacity") {
-    return (
-      <span className="inline-flex items-center gap-1">
-        <Users className="h-3 w-3" aria-hidden />
-        {t("seatsCapacity", { count: hint.count })}
-      </span>
-    );
-  }
   return (
     <span className="inline-flex items-center gap-1">
-      <Hourglass className="h-3 w-3" aria-hidden />
-      {t("waitlistAvailable")}
+      <Users className="h-3 w-3" aria-hidden />
+      {t("seatsCapacity", { count: hint.count })}
     </span>
   );
 }

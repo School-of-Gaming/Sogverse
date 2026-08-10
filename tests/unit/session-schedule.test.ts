@@ -154,6 +154,50 @@ describe("computeSessionWindow", () => {
     expect(result.nextSessionStart.toISOString()).toBe("2026-10-20T11:00:00.000Z");
   });
 
+  it("keeps the room open mid-session on the first Tuesday after spring-forward", () => {
+    // Europe/Helsinki springs forward Sunday 2026-03-29, so the following
+    // Tuesday's session (Mar 31, 14:00 EEST = 11:00 UTC) is the one a flat
+    // `now - 7×24h` prev-search breaks: stepping 168 real hours back from
+    // mid-session crosses the transition and lands at Tue Mar 24 13:30 EET
+    // — *before* last week's 14:00 wall-clock start — so the prev lookup
+    // resolved last week's finished session while nextStart had already
+    // skipped to Apr 7, and the room read closed for the entire live
+    // session. The zone-aware week step lands at Mar 24 14:30 and finds
+    // the in-progress occurrence.
+    const helsinkiSchedule = {
+      day_of_week: 1, // Tuesday
+      start_time: "14:00",
+      timezone: "Europe/Helsinki",
+      duration_minutes: 60,
+    };
+
+    const now = utcDate("2026-03-31T11:30:00Z"); // 14:30 EEST, mid-session
+    const result = computeSessionWindow(helsinkiSchedule, now);
+
+    expect(result.isOpen).toBe(true);
+    expect(result.nextSessionStart.toISOString()).toBe("2026-03-31T11:00:00.000Z");
+  });
+
+  it("keeps the room open mid-session on the first Tuesday after fall-back", () => {
+    // The mirror week: Helsinki falls back Sunday 2026-10-25, next Tuesday
+    // is Oct 27 (14:00 EET = 12:00 UTC). The flat back-step happened to be
+    // harmless in this direction (it landed *after* last week's start, so
+    // the lookup still found the in-progress session) — pinned so the
+    // shared week step keeps both directions correct.
+    const helsinkiSchedule = {
+      day_of_week: 1, // Tuesday
+      start_time: "14:00",
+      timezone: "Europe/Helsinki",
+      duration_minutes: 60,
+    };
+
+    const now = utcDate("2026-10-27T12:30:00Z"); // 14:30 EET, mid-session
+    const result = computeSessionWindow(helsinkiSchedule, now);
+
+    expect(result.isOpen).toBe(true);
+    expect(result.nextSessionStart.toISOString()).toBe("2026-10-27T12:00:00.000Z");
+  });
+
   it("should detect active session that crosses midnight", () => {
     // Tuesday 23:30 UTC, 90-minute session → ends Wednesday 01:00 UTC
     const lateSchedule = {

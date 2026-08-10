@@ -1,0 +1,119 @@
+/**
+ * Shape of the **family product page** — the page a parent (or, in a lighter
+ * variant, the gamer themselves) opens from their dashboard for one enrollment.
+ *
+ * **The page is gamer-scoped**: one page per (gamer × product), titled by the
+ * product and attributed to the child. Attendance is per-child, and every
+ * feature queued behind this one — planned absences, per-gamer notes, a line to
+ * the gedu — is per-child too. A product-scoped page would have had to grow a
+ * child selector the moment the second of those landed.
+ *
+ * **These types are the privacy boundary, and that is their main job.** The
+ * gedu's feed entry carries a staff note, the whole group's attendance map and
+ * an `owed` flag; the family's carries a report, one child's mark, and nothing
+ * else. Narrowing the *type* rather than filtering in a component is what makes
+ * "never render staff notes or another child's attendance on a family surface" a
+ * compile-time fact instead of a rule somebody has to remember. Anything that
+ * would have to be stripped on the way in has no field to be stripped from.
+ *
+ * **The separation is structural on the component side too.** This module builds
+ * its feed out of the shared session-feed module, which contains no staff-note
+ * component, no attendance roster and no editor at all — so a family page cannot
+ * import one by reaching for a neighbouring export. The workspace's own module
+ * is never imported from anywhere under `components/family/`, and that is the
+ * invariant worth keeping rather than a habit worth following.
+ *
+ * Presentation types, deliberately independent of any table: the feed mixes
+ * sessions that have a stored record with occurrences that only exist as an
+ * *absence*, exactly as the gedu's does. Whoever feeds the page reconciles the
+ * schedule against the stored records and emits one entry per occurrence.
+ */
+
+import type { AttendanceMark } from "@/components/session-feed";
+
+interface FamilySessionEntryBase {
+  /**
+   * Stable key for the occurrence — not necessarily a stored row id, since an
+   * unrecorded occurrence has no row behind it.
+   */
+  id: string;
+  /** Absolute instant the session starts; rendered in the viewer's zone. */
+  startsAt: Date;
+  /** Absolute instant the session ends; rendered in the viewer's zone. */
+  endsAt: Date;
+}
+
+/**
+ * A session still ahead of this family.
+ *
+ * It carries the report field and nothing else, for the same reason the gedu's
+ * future entry does: a report written before a session and one written after it
+ * are the same field at two moments. Most future sessions have nothing on them
+ * and render as a dated row.
+ */
+export interface FamilyFutureSessionEntry extends FamilySessionEntryBase {
+  kind: "future";
+  /**
+   * What the gedu has said in advance about this one, as markdown. `null` —
+   * the common case — renders a bare dated row.
+   */
+  report: string | null;
+}
+
+/**
+ * A session that has already happened, as this one child's family sees it.
+ *
+ * **There is no `no_record` kind here, and its absence is deliberate.** The
+ * gedu's feed distinguishes a pre-epoch occurrence from a recent unwritten one
+ * because the enforcement epoch decides what a gedu is *owed for* — which is a
+ * staff-workflow fact and means nothing to a parent. To a family both are the
+ * same thing: a session that ran with nothing written down about it. So a past
+ * entry with no report and no mark renders as the quiet placeholder line, and
+ * the epoch never reaches this surface at all.
+ */
+export interface FamilyPastSessionEntry extends FamilySessionEntryBase {
+  kind: "past";
+  /** The gedu's write-up for the families, as markdown. `null` = unwritten. */
+  report: string | null;
+  /**
+   * What was recorded about **this child**, or `null` when nobody marked them.
+   *
+   * Three states, and only two of them render. `null` shows nothing at all: an
+   * unmarked session is a gap in the gedu's paperwork, not information about a
+   * child, and a family reading "unmarked" would reasonably take it as a claim
+   * about their kid rather than about the register.
+   *
+   * The group's marks are not here and there is no shape for them to arrive in.
+   */
+  attendance: AttendanceMark | null;
+}
+
+/**
+ * One occurrence in a family's feed. Two kinds, because the only question a
+ * family surface asks about a session is which side of now it is on.
+ */
+export type FamilySessionEntry =
+  | FamilyFutureSessionEntry
+  | FamilyPastSessionEntry;
+
+/**
+ * The venue an in-person product runs at, as a family may read it.
+ *
+ * **The public half only.** The site record also carries a staff note (door
+ * codes, who locks up, where the key is signed out) and this type has nowhere
+ * to put it.
+ */
+export interface FamilyProductVenue {
+  name: string;
+  /** Street address, or `null` when the venue record has none. */
+  address: string | null;
+  /** The venue note written for families. `null` = nothing standing to say. */
+  publicNote: string | null;
+}
+
+/** One gedu, as a first-name chip. The id seeds their identicon. */
+export interface FamilyProductGedu {
+  /** Real UUID — the identicon is hashed out of its hex bytes. */
+  id: string;
+  firstName: string;
+}

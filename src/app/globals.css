@@ -221,7 +221,12 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: var(--font-inter);
+  /* Body text deliberately renders in Tailwind's default system-UI stack —
+     the app's typography has always been tuned against it. (An Inter import
+     existed here once but never actually applied: its variable lived on <body>
+     while this block resolves at :root, so the indirection failed and the
+     system stack is what every page has ever rendered. The OG image fetches
+     Inter independently and still uses it.) */
   --font-display: var(--font-press-start-2p);
 }
 

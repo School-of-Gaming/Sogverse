@@ -1,7 +1,14 @@
 /* eslint-disable i18next/no-literal-string -- internal admin-only style guide; all content is copy-paste component examples, not user-facing text that ships in any locale */
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  Fragment,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   Plus,
   Pencil,
@@ -16,9 +23,9 @@ import {
   Info,
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ROLE_BADGE_STYLES } from "@/lib/constants";
+import { ROLE_BADGE_STYLES, ROUTES } from "@/lib/constants";
 import {
   Card,
   CardContent,
@@ -40,12 +47,24 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Identicon } from "@/components/ui/identicon";
+import { MaterialLink } from "@/components/ui/material-link";
+import {
+  PersonChip,
+  PersonChipList,
+  type PersonChipListPerson,
+} from "@/components/ui/person-chip";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { ParticipantRow, type ParticipantRowData } from "@/components/voice/ParticipantRow";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
 import { UserRow } from "@/components/admin/user-row";
-import { SessionsSection, WaitlistCard } from "@/components/parent";
-import type { UpcomingSessionEntry } from "@/lib/upcoming-sessions";
+import { EnrollmentCard } from "@/components/family/EnrollmentCard";
+import {
+  FIXTURE_TIMEZONE,
+  buildEnrollmentFixture,
+  type EnrollmentFixtureSpec,
+  type FixtureClock,
+} from "@/components/family/mock-enrollment-fixtures";
+import { futureSlot, liveNowSlot } from "@/components/preview/fixture-clock";
 import { useAuth, useNow, useTimezone } from "@/providers";
 import { useLocale, useTranslations } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
@@ -60,8 +79,14 @@ import type {
   VoiceRoomContextValue,
   VoiceParticipant,
 } from "@/components/voice/hooks/types";
-import type { VoiceZone, Location } from "@/types";
-import { LocationTree } from "@/components/locations/location-tree";
+import type { VoiceZone } from "@/types";
+import {
+  LocationPickerPanel,
+  type LocationChainSummary,
+  type LocationPick,
+  type LocationSummary,
+} from "@/components/locations/location-picker-panel";
+import { HomeLocationField } from "@/components/locations/home-location-field";
 import {
   ProductBrowseCardView,
   type LocationLine,
@@ -78,7 +103,6 @@ import {
 import {
   buildScenarioFixture,
   scenarioFilledSeats,
-  scenarioHasDetailPage,
   PREVIEW_SCENARIOS,
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
@@ -86,6 +110,31 @@ import {
   ManageBillingCardView,
   type BillingAccountSummary,
 } from "@/components/billing";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import {
+  GAME_PLATFORMS,
+  GameUsernameEditableRow,
+  GameUsernameRow,
+  type GameFigure,
+  type GamePlatform,
+} from "@/components/game-account";
+import { useRobloxProfile } from "@/services/roblox";
+import { GamerChip } from "@/components/admin/products/groups/gamer-chip";
+import { DndContext } from "@dnd-kit/core";
+import { AddGamerFormCard } from "@/components/family";
+import { cn } from "@/lib/utils";
+
+/**
+ * Chip demo people. Real generated UUIDv4s, hardcoded: an identicon is hashed
+ * out of the id's hex bytes, so a readable stand-in renders an empty square and
+ * a generated one gives the same person a different face on every reload.
+ */
+const PERSON_CHIP_PEOPLE: readonly PersonChipListPerson[] = [
+  { id: "8f6f0242-a296-4f05-a046-c7a6f26c8962", name: "Sanna" },
+  { id: "65884374-5a68-4b8c-83bb-dbeb60fe39c2", name: "Petra" },
+  { id: "5a880b4d-b6a7-46b3-afcc-49e445c650e4", name: "Joonas" },
+  { id: "60e43688-3e84-43a3-9e57-1be908284716", name: "Markus" },
+];
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -378,7 +427,7 @@ function SwitchProfileDialogDemo() {
         <SwitchProfileDialog
           open={open}
           onOpenChange={setOpen}
-          target={{ id: "demo-gamer-id", role: "gamer", first_name: "Aino" }}
+          target={{ id: "7d0cf9eb-2567-4ec8-a883-2e67b9138a98", role: "gamer", first_name: "Aino" }}
           redirectUrl="#"
           title="Switch to Aino's profile to join Minecraft Club?"
           oneWayWarning="You'll be signed out of your parent account."
@@ -461,9 +510,11 @@ function DialogDemo() {
 /*  Participant Card Demo                                              */
 /* ------------------------------------------------------------------ */
 
-// Roles + Minecraft fields exercise every badge state: gedu/gamer rows show
-// the badge (verified / unverified / "(Unknown)"), while non-gedu/gamer rows
-// (and rows with `minecraftUsername === undefined`) show none.
+// Roles + Minecraft fields exercise every identity state: gedu/gamer rows show
+// the compact identity row (verified / unverified / "(Unknown)"), while
+// non-gedu/gamer rows (and rows with `minecraftUsername === undefined`) show
+// none. Five of them, because the point of the compact figure is density —
+// one row cannot show whether a list breathes.
 const DEMO_PARTICIPANTS = [
   {
     userId: "4babfc78-d197-496e-860d-48f1207f5bc6",
@@ -502,7 +553,7 @@ const DEMO_PARTICIPANTS = [
     videoOn: false,
   },
   {
-    userId: "a3b7c912-45de-4f01-b8a2-9c6d3e7f1234",
+    userId: "8661f882-c470-4225-934d-b7330e6867d1",
     userName: "Väinö",
     role: "gedu",
     minecraftUsername: "DarkPhoenixRising",
@@ -513,7 +564,7 @@ const DEMO_PARTICIPANTS = [
     videoOn: true,
   },
   {
-    userId: "d5e8f234-67ab-4c12-9d3e-a1b2c3d4e5f6",
+    userId: "6f6a6faf-f556-43cd-8ffe-87a0573e68b5",
     userName: "Sofia",
     role: "gamer",
     minecraftUsername: "GalaxyDestroyer9000",
@@ -777,312 +828,179 @@ function ParticipantCardDemo() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Parent Sessions Section Demo                                       */
+/*  Family — Enrollment Card                                            */
 /* ------------------------------------------------------------------ */
-
-// Two labeled groups. "Loaded states" (3-up): empty (`sessions={[]}`),
-// countdown (soonest still in the future — countdown + locked CTA), and live
-// (soonest session already joinable — `NextSessionCard` with the active join
-// CTA). Countdown precedes live so the columns line up by type with the
-// awaiting pair below.
-// "Awaiting Gedu placement" (same 3-col track, two filled): purchased but
-// not yet placed — countdown
-// (head still upcoming, locked "Opens …" Join) and live (head's window open
-// *now*, so the card keeps the live gradient + "Session in progress" and
-// swaps the Join CTA for a disabled "matching with a Gedu" button). Both
-// awaiting variants also carry the "matching with a Gedu" caption. The
-// non-empty stacks include three trailing `UpcomingSessionCard`s so the
-// total height matches. All demo sessions run 14:00–16:30 local; the live
-// ones anchor to the most recent 14:00 (today if past, otherwise yesterday)
-// so they always display as "in progress".
-const SESSIONS_HOUR_MS = 3_600_000;
-const SESSIONS_MINUTE_MS = 60_000;
-const SESSIONS_DAY_MS = 24 * SESSIONS_HOUR_MS;
-const SESSIONS_DURATION_MS = 2 * SESSIONS_HOUR_MS + 30 * SESSIONS_MINUTE_MS;
-const SESSIONS_HOUR_OF_DAY = 14;
-interface SessionsFixture {
-  name: string;
-  /** Live = started recently (only valid for the head of a stack). */
-  live?: true;
-  /** Days from now (for non-live entries). */
-  daysAhead?: number;
-}
-
-const SESSIONS_LIVE_FIRST_GAMER = {
-  firstName: "Bobby",
-  seed: "22992a36-2b1d-4fe5-8c86-057d06df246a",
-} as const;
-const SESSIONS_COUNTDOWN_FIRST_GAMER = {
-  firstName: "Alex",
-  seed: "28c26921-d051-4126-944b-e8cfae4bb8d3",
-} as const;
-
-// Two products, each appearing twice, interleaved by time. The first
-// occurrence of each product is the prominent `NextSessionCard` (so a
-// multi-product gamer gets a Join button + Padlet link for *each*), and the
-// second occurrence is the compact `UpcomingSessionCard` — so the demo shows
-// both card variants and how they interleave.
-const SESSIONS_FIXTURES_LIVE_FIRST: readonly SessionsFixture[] = [
-  { name: "Cosmic Builders Camp", live: true },
-  { name: "Rocket League Club", daysAhead: 2 },
-  { name: "Cosmic Builders Camp", daysAhead: 4 },
-  { name: "Rocket League Club", daysAhead: 9 },
-];
-
-const SESSIONS_FIXTURES_COUNTDOWN_FIRST: readonly SessionsFixture[] = [
-  { name: "Cosmic Builders Camp", daysAhead: 1 },
-  { name: "Rocket League Club", daysAhead: 3 },
-  { name: "Cosmic Builders Camp", daysAhead: 8 },
-  { name: "Rocket League Club", daysAhead: 10 },
-];
 
 /**
- * Reads `useNow()` so the fixtures are anchored to the same wall clock the
- * SSR pass used — that's what keeps the first client render byte-identical
- * to the server HTML. No `mounted` flag needed.
+ * Every state the enrollment card can be in, side by side.
+ *
+ * It earns a style-guide section rather than a preview scene because it is the
+ * one component both family dashboards are built out of: no single page owns
+ * it, and no page shows more than a few of its states at once. The two
+ * dashboards' own scenes are still where it gets judged *in place* — this is
+ * where the states get judged against each other.
+ *
+ * The fixtures go through `buildEnrollmentFixture`, the same builder the two
+ * dashboard scenes use, so the schedule sentence and the next session are the
+ * real derivations rather than authored prose: the live card's Join is lit
+ * because its slot genuinely started twenty-five minutes ago, and the locked
+ * one's label names a time the shared clock will actually reach.
  */
-function SessionsSectionDemo() {
+const ENROLLMENT_DEMO_SITE = "Kirjasto Oodi, Helsinki";
+
+function EnrollmentCardDemo() {
   const now = useNow();
-  const liveFirst = buildLoadedSessions(
-    SESSIONS_FIXTURES_LIVE_FIRST,
-    SESSIONS_LIVE_FIRST_GAMER,
-    now,
-  );
-  const countdownFirst = buildLoadedSessions(
-    SESSIONS_FIXTURES_COUNTDOWN_FIRST,
-    SESSIONS_COUNTDOWN_FIRST_GAMER,
-    now,
-  );
-  // Purchased-but-not-yet-placed: same schedule cards, but each is flagged
-  // `awaiting` so the Join button stays disabled and the "matching with a
-  // Gedu" copy shows. Reuses the countdown stack (all future, so the head
-  // is already locked) to demo the prominent + compact awaiting states.
-  const awaitingPlacement = countdownFirst.map((s) => ({
-    ...s,
-    awaiting: true,
-  }));
-  // Awaiting + live: the head session's window is open *now*, so the card
-  // keeps its live styling (gradient + "Session in progress") — but the
-  // gamer still isn't placed, so the active Join CTA is swapped for a
-  // disabled "matching with a Gedu" button. `voiceIsOpen` stays true
-  // (window-open is independent of join-ability — the button gates on
-  // `awaiting`), exactly as the adapter now emits it.
-  const awaitingLive = liveFirst.map((s) => ({
-    ...s,
-    awaiting: true,
-  }));
+  const locale = resolveLocale(useLocale());
+  const timeZone = useTimezone();
 
-  return (
-    <div className="space-y-8">
-      <SubSection title="Loaded states">
-        <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="flex flex-col gap-2">
-            <DemoCaption>No sessions</DemoCaption>
-            <SessionsSection sessions={[]} />
-          </div>
-          <div className="flex flex-col gap-2">
-            <DemoCaption>Countdown</DemoCaption>
-            <SessionsSection sessions={countdownFirst} />
-          </div>
-          <div className="flex flex-col gap-2">
-            <DemoCaption>Live now</DemoCaption>
-            <SessionsSection sessions={liveFirst} />
-          </div>
-        </div>
-      </SubSection>
-      <SubSection title="Awaiting Gedu placement">
-        {/* Same 3-col track as "Loaded states" so card widths line up across
-            both groups. At the 3-col breakpoint the leading spacer leaves
-            column 1 empty so the pair sits under the "countdown" + "live"
-            loaded cards above; it collapses away below `lg` so the two cards
-            still fill the 2-col layout. */}
-        <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="hidden lg:block" aria-hidden="true" />
-          <div className="flex flex-col gap-2">
-            <DemoCaption>Countdown</DemoCaption>
-            <SessionsSection sessions={awaitingPlacement} />
-          </div>
-          <div className="flex flex-col gap-2">
-            <DemoCaption>Live now</DemoCaption>
-            <SessionsSection sessions={awaitingLive} />
-          </div>
-        </div>
-      </SubSection>
-    </div>
-  );
-}
+  // Built once from the first tick, for the reason the dashboard scenes hold
+  // theirs: re-deriving every slot from a new `now` every thirty seconds would
+  // walk the schedule text forward under whoever is reading it. What still
+  // follows the clock is what each card derives from `useNow()` itself — the
+  // Live badge and the voice window, which is the half that should.
+  const [cards] = useState(() => {
+    const clock: FixtureClock = { now, locale, timeZone };
+    const build = (spec: EnrollmentFixtureSpec) =>
+      buildEnrollmentFixture(clock, spec);
+    const remoteClub = {
+      productType: "consumer_club",
+      isRemote: true,
+      startedDaysAgo: 42,
+      endsInDays: null,
+    } as const;
 
-function buildLoadedSessions(
-  fixtures: readonly SessionsFixture[],
-  gamer: { firstName: string; seed: string },
-  now: Date,
-): UpcomingSessionEntry[] {
-  const midnightTomorrow = new Date(now);
-  midnightTomorrow.setHours(24, 0, 0, 0);
-  const midnightTomorrowMs = midnightTomorrow.getTime();
-
-  // Anchor the live session to the most recent SESSIONS_HOUR_OF_DAY:00 —
-  // today's if it has already passed, otherwise yesterday's — so the start
-  // and end always show round-hour times instead of "now − 30 min".
-  const liveStart = new Date(now);
-  liveStart.setHours(SESSIONS_HOUR_OF_DAY, 0, 0, 0);
-  if (liveStart.getTime() > now.getTime()) {
-    liveStart.setDate(liveStart.getDate() - 1);
-  }
-
-  // Mirrors `expandUpcomingSessions`: the first occurrence of each product is
-  // the prominent card. Every demo stack uses a single gamer, so the product
-  // name alone keys the (gamer × product) pairing.
-  const seenProducts = new Set<string>();
-
-  return fixtures.map((f) => {
-    const isNext = !seenProducts.has(f.name);
-    seenProducts.add(f.name);
-    // Fixture participation id. Only the payment-problem badge reads it (to
-    // name which subscription's billing portal to open), and no demo stack
-    // flags a payment problem — but the cards require it, so key it off the
-    // pairing the way the real expander does.
-    const participationId = `${gamer.seed}-${f.name}`;
-    if (f.live) {
-      const end = new Date(liveStart.getTime() + SESSIONS_DURATION_MS);
-      return {
-        participationId,
-        gamerFirstName: gamer.firstName,
-        gamerSeed: gamer.seed,
-        productName: f.name,
-        sessionStart: liveStart,
-        sessionEnd: end,
-        voiceIsOpen: true,
-        isNext,
-        voiceHref: "#",
-        reportsHref: "#",
-      };
-    }
-    const start = new Date(
-      midnightTomorrowMs
-        + ((f.daysAhead ?? 1) - 1) * SESSIONS_DAY_MS
-        + SESSIONS_HOUR_OF_DAY * SESSIONS_HOUR_MS,
-    );
-    const end = new Date(start.getTime() + SESSIONS_DURATION_MS);
     return {
-      participationId,
-      gamerFirstName: gamer.firstName,
-      gamerSeed: gamer.seed,
-      productName: f.name,
-      sessionStart: start,
-      sessionEnd: end,
-      voiceIsOpen: false,
-      isNext,
-      voiceHref: "#",
-      reportsHref: "#",
+      live: build({
+        ...remoteClub,
+        participationId: "demo-enrollment-live",
+        productName: "Minecraft Explorers Club",
+        slots: [liveNowSlot(now, 90, FIXTURE_TIMEZONE)],
+      }),
+      locked: build({
+        ...remoteClub,
+        participationId: "demo-enrollment-locked",
+        productName: "Rocket League Club",
+        slots: [futureSlot(now, 3, "17:00", 90, FIXTURE_TIMEZONE)],
+      }),
+      badged: build({
+        ...remoteClub,
+        participationId: "demo-enrollment-badged",
+        productName: "Roblox Studio Club",
+        slots: [futureSlot(now, 2, "16:30", 90, FIXTURE_TIMEZONE)],
+        paymentProblem: true,
+      }),
+      cancelled: build({
+        ...remoteClub,
+        participationId: "demo-enrollment-cancelled",
+        productName: "Stardew Valley Co-op Club",
+        slots: [futureSlot(now, 4, "16:00", 90, FIXTURE_TIMEZONE)],
+        cancelledAccessInDays: 12,
+      }),
+      // The same state a few days later, once the window has no session left
+      // in it. Its own demo because the line renders differently rather than
+      // just later: the card is not entitled to name a session it could only
+      // have projected backwards, so it states when access ends instead.
+      cancelledNoDate: build({
+        ...remoteClub,
+        participationId: "demo-enrollment-cancelled-no-date",
+        productName: "Stardew Valley Co-op Club",
+        slots: [futureSlot(now, 4, "16:00", 90, FIXTURE_TIMEZONE)],
+        cancelledAccessInDays: 5,
+        cancelledWithNoSessionLeft: true,
+      }),
+      awaiting: build({
+        ...remoteClub,
+        participationId: "demo-enrollment-awaiting",
+        productName: "Terraria Builders Club",
+        slots: [futureSlot(now, 5, "18:00", 90, FIXTURE_TIMEZONE)],
+        startedDaysAgo: 1,
+        awaiting: true,
+      }),
+      waitlisted: build({
+        ...remoteClub,
+        participationId: "demo-enrollment-waitlisted",
+        productName: "Valheim Survival Club",
+        slots: [futureSlot(now, 6, "15:00", 90, FIXTURE_TIMEZONE)],
+        waitlistPosition: 3,
+      }),
+      inPerson: build({
+        participationId: "demo-enrollment-in-person",
+        productName: "Cosmic Builders Camp",
+        productType: "camp",
+        isRemote: false,
+        slots: [futureSlot(now, 2, "10:00", 300, FIXTURE_TIMEZONE)],
+        startedDaysAgo: 1,
+        endsInDays: 4,
+        siteName: ENROLLMENT_DEMO_SITE,
+      }),
+      finished: build({
+        participationId: "demo-enrollment-finished",
+        productName: "Summer Speedrun Camp",
+        productType: "camp",
+        isRemote: true,
+        slots: [futureSlot(now, 2, "10:00", 300, FIXTURE_TIMEZONE)],
+        startedDaysAgo: 70,
+        endsInDays: -35,
+      }),
     };
   });
-}
 
-/* ------------------------------------------------------------------ */
-/*  Parent/Gamer — Waitlist Card                                        */
-/* ------------------------------------------------------------------ */
-
-// Card for a club the viewer waitlisted (a `status='waitlisted'` participation
-// — no scheduled session, so it never appears in the session stack). Two
-// groups: the card's own states (parent with the "For {name}" line and the
-// leave badge, the same mid-leave, and the gamer variant — no attribution, no
-// badge), then a composed preview of how it slots into the Sessions section —
-// an "On the waitlist" band above the "Scheduled" list. The band sub-labels
-// only show when both kinds are present; a viewer with only one kind sees the
-// cards with no labels.
-//
-// `onLeave` is a no-op here: the demo exists to show the badge + confirm dialog
-// without a backend, and clicking through to "Leave waitlist" should leave the
-// fixture card exactly where it is.
-const WAITLIST_DEMO_GAMER = {
-  firstName: "Eino",
-  seed: "9b2e5d18-7a4c-4f0b-9c31-1d6e2a5f8b04",
-} as const;
-const WAITLIST_DEMO_GAMER_ALT = {
-  firstName: "Aada",
-  seed: "4c7f9a20-3e51-4b8d-8f26-0a9d1c6e5b73",
-} as const;
-
-function WaitlistCardDemo() {
-  const t = useTranslations("dashboardSections");
-  const now = useNow();
-  const noop = () => {};
-  const scheduled = buildLoadedSessions(
-    [
-      { name: "Rocket League Club", daysAhead: 2 },
-      { name: "Rocket League Club", daysAhead: 9 },
-    ],
-    WAITLIST_DEMO_GAMER,
-    now,
-  );
+  // A no-op rather than an omitted prop: absent, the leave affordance is not
+  // drawn at all, and the demo's whole job on that card is showing that it is.
+  // The confirm dialog in front of it is pure UI and works.
+  const inert = () => {};
 
   return (
-    <div className="space-y-8">
-      <SubSection title="Card states">
-        <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="flex flex-col gap-2">
-            <DemoCaption>Parent — leave badge</DemoCaption>
-            <WaitlistCard
-              productName="Minecraft Builders Club"
-              gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
-              gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
-              position={3}
-              onLeave={noop}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            {/* What the parent sees between confirming and the row leaving the
-                list: the whole card fades, badge locked, no spinner. The caller
-                holds this set — the card never re-enables on its own. */}
-            <DemoCaption>Parent — leaving</DemoCaption>
-            <WaitlistCard
-              productName="Minecraft Builders Club"
-              gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
-              gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
-              position={3}
-              onLeave={noop}
-              leaving
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            {/* No attribution and no badge, even with `onLeave` passed — a kid
-                can't give up their own place in line. */}
-            <DemoCaption>Gamer — no attribution, no badge</DemoCaption>
-            <WaitlistCard
-              productName="Minecraft Builders Club"
-              gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
-              gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
-              position={3}
-              audience="gamer"
-              onLeave={noop}
-            />
-          </div>
+    <div className="space-y-6">
+      <SubSection title="Parent — every state">
+        <div className="grid gap-8 lg:grid-cols-2">
+          {(
+            [
+              ["Live — session in progress", cards.live],
+              ["Locked — next session named", cards.locked],
+              ["Failing card — corner badge", cards.badged],
+              ["Cancelled — won't renew line", cards.cancelled],
+              [
+                "Cancelled, window used up — no date named",
+                cards.cancelledNoDate,
+              ],
+              ["Awaiting placement — no seat yet", cards.awaiting],
+              ["Waitlisted — place in line", cards.waitlisted],
+              ["In person — venue, no Join", cards.inPerson],
+              ["Finished — muted, ended on", cards.finished],
+            ] as const
+          ).map(([caption, enrollment]) => (
+            <div key={enrollment.participationId} className="space-y-2">
+              <DemoCaption>{caption}</DemoCaption>
+              <EnrollmentCard
+                enrollment={enrollment}
+                audience="customer"
+                gamerFirstName="Aino"
+                onOpenPortal={inert}
+                onJoinClick={inert}
+                onLeaveWaitlist={inert}
+              />
+            </div>
+          ))}
         </div>
       </SubSection>
 
-      <SubSection title="Band within Sessions">
-        <div className="mx-auto w-full max-w-lg space-y-6">
-          <div className="space-y-3">
-            <DemoCaption>{t("waitlistBand")}</DemoCaption>
-            <WaitlistCard
-              productName="Minecraft Builders Club"
-              gamerFirstName={WAITLIST_DEMO_GAMER_ALT.firstName}
-              gamerSeed={WAITLIST_DEMO_GAMER_ALT.seed}
-              position={3}
-              onLeave={noop}
-            />
-            <WaitlistCard
-              productName="Roblox Obby Makers"
-              gamerFirstName={WAITLIST_DEMO_GAMER.firstName}
-              gamerSeed={WAITLIST_DEMO_GAMER.seed}
-              position={7}
-              onLeave={noop}
-            />
+      <SubSection title="Gamer — the same card, addressed to the child">
+        <p className="max-w-prose text-sm text-muted-foreground">
+          Only the two footers that speak <em>about</em> a child on the parent&rsquo;s
+          page speak <em>to</em> them here, and money is gone entirely: no corner
+          badge, no won&rsquo;t-renew line, and no way to give up a place in line
+          &mdash; not hidden, but unreachable, because the card&rsquo;s props make
+          the parent-only half unavailable to a <code>gamer</code> audience.
+        </p>
+        <div className="grid gap-8 lg:grid-cols-2">
+          <div className="space-y-2">
+            <DemoCaption>Awaiting placement</DemoCaption>
+            <EnrollmentCard enrollment={cards.awaiting} audience="gamer" />
           </div>
-          <div className="space-y-3">
-            <DemoCaption>{t("scheduledBand")}</DemoCaption>
-            <SessionsSection sessions={scheduled} />
+          <div className="space-y-2">
+            <DemoCaption>Waitlisted</DemoCaption>
+            <EnrollmentCard enrollment={cards.waitlisted} audience="gamer" />
           </div>
         </div>
       </SubSection>
@@ -1134,7 +1052,7 @@ const SEAT_DEMO_CASES: {
     waitlistEnabled: true,
   },
   {
-    label: "Full, no waitlist — 0 of 15 (no chip; the disabled CTA says Full)",
+    label: "Full, no waitlist — 0 of 15 (no chip; the label beside it says Full)",
     seatCount: 15,
     seatsLeft: 0,
     waitlistEnabled: false,
@@ -1153,7 +1071,13 @@ function SeatAvailabilityDemo() {
       {SEAT_DEMO_CASES.map((c) => (
         <div key={c.label} className="flex flex-col gap-2">
           <DemoCaption>{c.label}</DemoCaption>
-          <div className="max-w-[260px] rounded-md border p-3">
+          {/* w-80 mirrors the narrowest fixed real consumer (the groups panel
+              caps the bar at w-80); the detail panel gives it more. Don't demo
+              at an arbitrary tighter width — a fixture narrower than every real
+              container reports fake overflow bugs. The genuinely tighter case
+              (browse-card footer, flex-1 beside a CTA) is shown in the product
+              card demos in real context. */}
+          <div className="w-80 max-w-full rounded-md border p-3">
             <SeatAvailabilityBar
               seatCount={c.seatCount}
               seatsLeft={c.seatsLeft}
@@ -1193,16 +1117,13 @@ function ProductsDemo() {
         <p className="max-w-prose text-sm text-muted-foreground">
           The shared &ldquo;registration closed&rdquo; panel (ended / already
           started / fully booked) has no browse-card link &mdash; a parent only
-          reaches it through a stale link or bookmark. Preview it full-page:
+          reaches it through a stale link or bookmark. It is still previewable
+          full-page: every scenario, closed ones included, is listed on the{" "}
+          <a href={ROUTES.admin.uiPreviews} className="underline">
+            UI Previews
+          </a>{" "}
+          page.
         </p>
-        <a
-          href="/preview/products/muni-full-closed"
-          target="_blank"
-          rel="noreferrer"
-          className={buttonVariants({ variant: "outline", size: "sm" })}
-        >
-          View closed panel &rarr;
-        </a>
       </SubSection>
     </div>
   );
@@ -1214,8 +1135,10 @@ function ProductsDemo() {
 // schedule / price / location formatters) and passing the authored registration
 // `state` straight through as a prop. The production `deriveRegistrationState`
 // adapter is intentionally bypassed — the style guide authors the state it wants
-// to eyeball, the card never computes it. The card's own "View" CTA (for states
-// that have one) links to the matching full page at /preview/products/[slug].
+// to eyeball, the card never computes it. A card whose state opens takes its
+// whole surface to the matching full page at /preview/products/[slug]; a
+// dead-end state gets no href and stays inert, which is the same split the
+// shop makes.
 function ScenarioBrowseCard({
   slug,
   label,
@@ -1230,11 +1153,11 @@ function ScenarioBrowseCard({
   const topicLabel = useTopicLabel();
 
   const { product, state } = buildScenarioFixture(slug);
-  // Only states with a working "View" CTA navigate; the rest (full/closed,
-  // ended) render no link, so they get no detail href.
-  const detailHref = scenarioHasDetailPage(slug)
-    ? `/preview/products/${slug}`
-    : undefined;
+  // Every scenario passes its href; the card decides whether to use it, from
+  // the state, exactly as it does in the shop. Withholding it here used to
+  // double as a way of saying "this one is inert", which was the style guide
+  // second-guessing the component about the one thing the component owns.
+  const detailHref = `/preview/products/${slug}`;
   const tr = resolveTranslation(product.product_translations, uiLocale);
   const isMuniClub = product.product_type === "municipality_club";
 
@@ -1264,14 +1187,12 @@ function ScenarioBrowseCard({
 
   // Same rule as the production adapter: muni clubs tell the seat story through
   // the footer bar, so they suppress the capacity hint; everything else shows
-  // its capacity (or "waitlist available" when uncapped but waitlisted).
+  // its capacity, and an uncapped product shows nothing.
   const seatsHint: SeatsHint | null = isMuniClub
     ? null
     : product.seat_count !== null
       ? { kind: "capacity", count: product.seat_count }
-      : product.waitlist_enabled
-        ? { kind: "waitlist" }
-        : null;
+      : null;
 
   // Muni clubs swap the price for a seat-fill bar; the fill comes from the
   // scenario's authored state so the bar and the card agree.
@@ -1573,6 +1494,50 @@ export default function AdminUIComponentsPage() {
             </div>
           </div>
         </SubSection>
+
+        <SubSection title="Person chip">
+          <p className="max-w-prose text-sm text-muted-foreground">
+            A person as a pill — identicon plus first name. The avatar box and
+            the identicon&rsquo;s pixel size are paired inside the component, so
+            a call site can&rsquo;t desync them. Use{" "}
+            <code>compact</code> on a line that already carries something else
+            (a rail row with a button beside the chips); the default size is for
+            a row of chips on their own line.
+          </p>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground">Default</p>
+              <PersonChipList people={PERSON_CHIP_PEOPLE} />
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground">Compact</p>
+              <PersonChipList people={PERSON_CHIP_PEOPLE} size="compact" />
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground">
+                Labelled, as the product page&rsquo;s rail does it — the row
+                already shows a gamer count, so an unlabelled set of faces would
+                read as children rather than as the Gedus teaching the group.
+              </p>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Gedus
+                </span>
+                <PersonChipList
+                  people={PERSON_CHIP_PEOPLE.slice(0, 2)}
+                  size="compact"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground">Single chip</p>
+              <PersonChip
+                id={PERSON_CHIP_PEOPLE[0].id}
+                name={PERSON_CHIP_PEOPLE[0].name}
+              />
+            </div>
+          </div>
+        </SubSection>
       </Section>
 
       {/* ============================================================ */}
@@ -1739,18 +1704,124 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 9b: Location Tree                                     */}
+      {/* Section 9b: Location Picker                                   */}
       {/* ============================================================ */}
-      <Section title="Location Tree">
+      <Section title="Location Picker">
         <p className="text-sm text-muted-foreground">
-          The one shared location-tree component, driven entirely by a hardcoded
-          fixture (no network, no providers). Single-select powers the product
-          location picker; multi-select powers the gedu coverage editor. Because
-          the data and the create handler are injected as props, the same
-          component renders identically from fixtures — which is the
-          separation-of-concerns check: the tree owns no business logic.
+          One panel, and every location control in the app is a configuration of
+          it: it browses the hierarchy from the countries down, searches it from
+          the first keystroke, and stops at whatever level the caller made
+          pickable. It once had a second, &ldquo;set&rdquo; scope — a bounded,
+          pre-fetched collection grouped under the place above each row — but
+          every surface that used one (the flat every-venue list, the Finnish
+          municipality list) now reaches the same rows through this tree, so the
+          panel has one shape and the demos below show its states.
         </p>
-        <LocationTreeDemo />
+        <p className="text-sm text-muted-foreground">
+          Its consumers: gedu coverage, a parent&rsquo;s own location, and the
+          product form&rsquo;s venue and municipality fields — the last two as
+          dialogs, configured by <code>pickableTypes</code> (a venue pick stops
+          at <code>site</code>, a municipality pick at{" "}
+          <code>municipality</code>, seeded at Finland).
+        </p>
+        <p className="text-sm text-muted-foreground">
+          In the real app a container above the panel owns the browse position,
+          the debounced query and the two server reads behind them — one level
+          of children by parent, or a ranked top-N from the search index. Here
+          every scope is fed a fixture and fake handlers, no network at all: the
+          panel takes rows and a <code>scope</code> config as props and owns
+          nothing else, which is the separation-of-concerns check.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Note what is <em>not</em> here: no country to choose first (a country
+          is simply the top level of the tree) and no loading skeleton. Every
+          read behind the real panel is a small indexed lookup, so the list box
+          — which already has its final height — just fills in.
+        </p>
+        <SubSection title="Single mode (pick one place)">
+          <p className="text-sm text-muted-foreground mb-3">
+            The rows are real table rows, so confirming one hands the caller the
+            row itself plus its ancestors — enough to write the foreign key and
+            render the place with its path, with nothing left to resolve. A row
+            of a pickable type is terminal: clicking it selects rather than
+            descends, so the level a caller asked for is where browsing stops.
+          </p>
+          <p className="text-sm text-muted-foreground mb-3">
+            Two things a caller can do are deliberately <em>not</em> visible
+            here, because they belong to the data container rather than to this
+            panel: opening the breadcrumb already inside a country, and
+            restricting every row offered to one country. The product form&rsquo;s
+            municipality field uses both — it opens on Finland&rsquo;s maakunnat
+            and will not offer a French commune — and both are fed by the same
+            browse and search reads this demo replaces with fixtures. What the
+            panel does say about them has a demo of its own, below.
+          </p>
+          <LocationPickerDemo />
+        </SubSection>
+        <SubSection title="Multi mode (gedu coverage)">
+          <p className="text-sm text-muted-foreground mb-3">
+            Every level is tickable and each tick is an independent &ldquo;I
+            cover this whole subtree&rdquo; claim, so ticking Hauts-de-France and
+            then drilling into it shows Nord and Pas-de-Calais{" "}
+            <em>unticked</em> — deliberately. Half-ticking them would say
+            something the saved rows don&rsquo;t: one claim is one row, and
+            matching walks the ancestor chain to find it.
+          </p>
+          <LocationCoverageDemo />
+        </SubSection>
+        <SubSection title="Searching">
+          <p className="text-sm text-muted-foreground mb-3">
+            The same panel, told it is showing search hits: each row carries the
+            path that tells two identically-named communes apart, and the status
+            line reports the true match count behind the rendered cap. In the
+            real app the ranking, the cap and that count all come from the
+            database — a prefix match beats an infix one however late in the
+            table it sits.
+          </p>
+          <p className="text-sm text-muted-foreground mb-3">
+            This one is configured the way the product form&rsquo;s venue dialog
+            configures it: <code>municipality</code> and <code>site</code> are
+            both pickable, so the venue &ldquo;Gymnase municipal de Nîmes&rdquo;
+            is confirmable straight from a search. The caller reads the type to
+            decide what the confirmation meant — a site is the answer, a
+            municipality is the next question (&ldquo;show me the venues
+            here&rdquo;, which is also the only screen that can offer to create
+            one). That is why a site is confirmable but never browsable to:
+            making a municipality terminal is exactly what stops the tree
+            walking past the screen that carries creation.
+          </p>
+          <LocationSearchDemo />
+        </SubSection>
+        <SubSection title="Bound to one country">
+          <p className="text-sm text-muted-foreground mb-3">
+            The same panel, told which country its container has bound it to.
+            The bound country is copy and nothing else — the filtering happens
+            above, and the rows here are the same fixtures as everywhere else on
+            this page — but two lines would otherwise claim more than the picker
+            is doing. The breadcrumb starts <em>at</em> the country rather than
+            behind an &ldquo;all countries&rdquo; crumb that opens a list holding
+            only that country, and typing two characters says which country is
+            being searched instead of &ldquo;everywhere&rdquo;.
+          </p>
+          <LocationBoundCountryDemo />
+        </SubSection>
+        <SubSection title="Home location field (parent profile)">
+          <p className="text-sm text-muted-foreground mb-3">
+            The parent&rsquo;s own place: one optional municipality, on the
+            registration form and in settings. It asks single mode for the
+            municipality level — Finland&rsquo;s kunta, France&rsquo;s commune,
+            the one directly above a venue. Unlike the panels above, this demo
+            opens the real dialog, so browsing and search here hit the database.
+          </p>
+          <p className="text-sm text-muted-foreground mb-3">
+            The box <em>is</em> the picker rather than a display row over a
+            &ldquo;choose&rdquo; button — one control, and no button caption
+            that has to guess what the viewer&rsquo;s country calls this level.
+            A confirmed pick is a row, so what comes back is a foreign key and a
+            path, with nothing left to resolve.
+          </p>
+          <HomeLocationFieldDemo />
+        </SubSection>
       </Section>
 
       {/* ============================================================ */}
@@ -1849,16 +1920,23 @@ export default function AdminUIComponentsPage() {
         <p className="text-sm text-muted-foreground -mt-2">
           Parent-facing product surfaces, grouped by product type. Each card is
           one mocked product rendered as the browse card a parent sees in the
-          shop (/shop); its own &ldquo;View&rdquo; button (for states that have
-          one) opens that same mock&rsquo;s full detail page in the public
-          layout — hero, long description, schedule calendar, and the
-          registration signup panel — exactly as a parent would see it. The
-          panel therefore needs no separate demo: it lives in the full-page
-          view. Cards with no working &ldquo;View&rdquo; button (full &amp;
-          closed shows a disabled button; an already-started camp shows none)
-          have no detail page to open — a parent can&rsquo;t act there, so it
-          isn&rsquo;t mocked. The set is curated to the visually distinct
-          surfaces worth eyeballing.
+          shop (/shop). <strong>The whole card is the click target</strong> —
+          clicking anywhere on one that carries a chevron opens that same
+          mock&rsquo;s full detail page in the public layout — hero, long
+          description, schedule calendar, and the registration signup panel —
+          exactly as a parent would see it. The panel therefore needs no
+          separate demo: it lives in the full-page view. The
+          &ldquo;View&rdquo; hint in the footer is a label on that target
+          rather than a separate one — it is not a link, and the card beneath
+          it takes the click. <strong>Cards with no chevron are inert:</strong>{" "}
+          full-and-closed, an already-started camp and an already-over event
+          each state the reason as muted text where the hint would be, and a
+          finished run drops the footer row for a note and desaturates. None of
+          the four has a detail page, because a parent can&rsquo;t act there. Compare the two groups
+          by hovering: only the openable ones lift, brighten and nudge their
+          chevron. Between them the cards cover every registration state,
+          including one a parent reaches only by leaving a tab open past
+          midnight.
         </p>
         <ProductsDemo />
       </Section>
@@ -1879,39 +1957,112 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 14: Parent — Sessions Section                          */}
+      {/* Section 14: Family — Enrollment Card                          */}
       {/* ============================================================ */}
-      <Section title="Parent — Sessions Section">
+      <Section title="Family — Enrollment Card">
         <p className="text-sm text-muted-foreground -mt-2">
-          The Sessions section on the parent dashboard. Three states side by
-          side: a section-level loading placeholder (not card-shaped — the
-          query hasn&rsquo;t told us how many cards to expect yet); the empty
-          state copy shown when the parent has no upcoming sessions; and the
-          loaded stack — the soonest occurrence of each gamer &times; product
-          as a full <code>NextSessionCard</code> (join button or locked CTA,
-          countdown, reports), interleaved by time with every later occurrence
-          rendered as a compact <code>UpcomingSessionCard</code> (purely
-          informational).
+          One card per <em>enrollment</em> &mdash; a family&rsquo;s participation
+          in one product &mdash; and the unit both family dashboards are built
+          out of. It states the <strong>schedule</strong>, not the next session:
+          the next session lives in the Join button&rsquo;s locked label and in
+          the Live badge, so a weekly club is one card all term instead of one
+          card per week. The type noun is the eyebrow, the schedule is the shared
+          product-schedule formatter&rsquo;s sentence, and the footer answers the
+          one remaining question in whichever way this enrollment can: the Join
+          on a remote product, the venue on an in-person one, the place in line
+          on a waitlisted one, the fact that a Gedu is being matched on a seat
+          nobody has been placed in yet, or the day a finished run ended.
         </p>
-        <SessionsSectionDemo />
+        <p className="text-sm text-muted-foreground">
+          <strong>Two states have nothing behind them</strong> &mdash; a queue
+          place and an unplaced seat &mdash; and both drop the link, the chevron
+          and the hover together, because nothing on a card may promise there is
+          more inside when there is not. The corner is reserved for a genuine
+          problem (a failing card), which is why a cancelled membership is a
+          quiet line in the body instead: the parent chose it, so it is
+          confirmation rather than an alarm. Leaving a waitlist is likewise a
+          quiet text link under its own footer sentence.
+        </p>
+        <EnrollmentCardDemo />
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 15: Parent/Gamer — Waitlist Card                       */}
+      {/* Section 15: Product links — the Gedu material link            */}
       {/* ============================================================ */}
-      <Section title="Parent/Gamer — Waitlist Card">
+      <Section title="Product links — the Gedu material link">
         <p className="text-sm text-muted-foreground -mt-2">
-          A club the viewer joined the <em>waitlist</em> for. Waitlisted
-          participations have no scheduled session, so they never appear in the
-          session stack above &mdash; this card is their home on My SOG, mirroring
-          the post-signup confirmation page&rsquo;s <code>Hourglass</code> +{" "}
-          <code>#position</code> treatment. It renders the same on both the
-          parent and gamer dashboards; <code>audience</code> only toggles the
-          &ldquo;For {"{name}"}&rdquo; line and the reassurance voice. The
-          position badge is fixed-width + <code>tabular-nums</code> so a live
-          position change never reflows the copy beside it.
+          The one outward link a product still carries, and it is{" "}
+          <strong>Gedu-only</strong> &mdash; carried by a padlocked book glyph
+          and a hover title. A product used to carry a family-facing link beside
+          it as well; families read their sessions in the app now, so this is the
+          only one left. The component renders whatever href it is given and
+          knows nothing about who is looking:{" "}
+          <em>
+            only render it on a gedu- or admin-only surface. Never hide it with
+            CSS on a page a parent can reach
+          </em>{" "}
+          &mdash; the URL would still be in the HTML.
         </p>
-        <WaitlistCardDemo />
+        <p className="text-sm text-muted-foreground">
+          The material link has <strong>two weights</strong>, because it means two
+          different things in two places. In a row of a product&rsquo;s links it
+          is one entry among several and takes the quiet <code>chip</code> form.
+          On a gedu&rsquo;s own workspace it is the thing they came for &mdash; a
+          gedu opening the page before a session is going to fetch the material
+          &mdash; so there it takes the <code>button</code> form and reads as an
+          action rather than as metadata about the product. Both are the same
+          component: two implementations would drift in glyph, label and, worst of
+          all, in the staff-only warning that has to travel with the URL.
+        </p>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-4 rounded-lg border p-4">
+          <div className="flex flex-col items-start gap-2">
+            <DemoCaption>Material chip (quiet)</DemoCaption>
+            <MaterialLink href="https://drive.sog.gg/minecraft-monday-club/lesson-plans" />
+          </div>
+          <div className="flex flex-col items-start gap-2">
+            <DemoCaption>Material button (prominent)</DemoCaption>
+            <MaterialLink
+              href="https://drive.sog.gg/minecraft-monday-club/lesson-plans"
+              variant="button"
+            />
+          </div>
+        </div>
+      </Section>
+
+      {/* ============================================================ */}
+      {/* Section 16: Rich text editor — authoring and what it stores   */}
+      {/* ============================================================ */}
+      <Section title="Rich text editor — authoring and what it stores">
+        <p className="text-sm text-muted-foreground -mt-2">
+          The shared authoring control for anywhere a person writes prose the app
+          stores. It round-trips <strong>markdown</strong> &mdash; the format that
+          converts cleanly into email &mdash; behind a small fixed toolbar, so a
+          writer never has to know what <code>##</code> does. The value below the
+          editor is exactly what gets persisted.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          The toolbar produces a deliberately narrow subset: headings, paragraphs,
+          bold, italics and lists. Whatever consumes the stored markdown is
+          expected to enforce that same subset as a <em>whitelist</em> on the way
+          out, unwrapping anything outside it to its text rather than dropping it,
+          so a pasted table or a stray tag shows its words instead of silently
+          deleting a paragraph of somebody&rsquo;s writing.
+        </p>
+        <RichTextEditorDemo />
+      </Section>
+
+      {/* ============================================================ */}
+      {/* Section 17: Game account — one identity, any platform         */}
+      {/* ============================================================ */}
+      <Section title="Game account — one identity, any platform">
+        <p className="text-sm text-muted-foreground -mt-2">
+          One component set for a child&rsquo;s game identity, parameterised by{" "}
+          <code>platform</code>; everything a platform does differently lives in a
+          descriptor in <code>components/game-account/platforms.tsx</code>. Three
+          ways it is ever shown, one height for all of them, and every one carries
+          the skin.
+        </p>
+        <GameAccountDemo />
       </Section>
 
     </div>
@@ -1923,112 +2074,291 @@ export default function AdminUIComponentsPage() {
 /* ------------------------------------------------------------------ */
 
 /* ------------------------------------------------------------------ */
-/*  Location Tree Demo                                                 */
+/*  Location Picker Demo                                               */
 /* ------------------------------------------------------------------ */
 
-function fixtureLocation(
+// A miniature stand-in for the rows the browse query returns: same columns,
+// three levels, five communes instead of 35,000. Nîmes and Béziers are here on
+// purpose — they are what the real search's diacritic folding is for, and the
+// search demo below shows them found from an unaccented needle.
+const FR: LocationSummary = {
+  id: "fr",
+  name: "France",
+  name_i18n: null,
+  type: "country",
+  country_code: "FR",
+};
+
+function fixtureRow(
   id: string,
   name: string,
-  type: Location["type"],
-  parent_id: string | null,
-  name_i18n: Location["name_i18n"] = null,
-): Location {
+  type: LocationSummary["type"],
+): LocationSummary {
+  return { id, name, name_i18n: null, type, country_code: "FR" };
+}
+
+const HDF = fixtureRow("32", "Hauts-de-France", "region");
+const OCC = fixtureRow("76", "Occitanie", "region");
+const NORD = fixtureRow("59", "Nord", "district");
+const GARD = fixtureRow("30", "Gard", "district");
+
+/** One level of the tree, keyed by the id of the node above it. */
+const LEVELS: Record<string, LocationSummary[]> = {
+  root: [FR],
+  fr: [HDF, OCC],
+  "32": [NORD, fixtureRow("62", "Pas-de-Calais", "district")],
+  "76": [GARD, fixtureRow("34", "Hérault", "district")],
+  "59": [fixtureRow("59350", "Lille", "municipality"), fixtureRow("59512", "Roubaix", "municipality")],
+  "62": [fixtureRow("62041", "Arras", "municipality")],
+  "30": [fixtureRow("30189", "Nîmes", "municipality")],
+  "34": [fixtureRow("34032", "Béziers", "municipality")],
+};
+
+const NIMES = fixtureRow("30189", "Nîmes", "municipality");
+
+/**
+ * Fixture search hits for the needle "nimes", each with the path a real hit
+ * carries. The third is a venue rather than a commune, and it is the whole
+ * point of the search demo's configuration: the product form's venue dialog
+ * makes `site` pickable alongside `municipality`, so an admin who knows the
+ * building's name confirms it here in one step instead of walking down to its
+ * commune first. Both types rank against the same needle.
+ */
+const HITS: LocationPick[] = [
+  { location: NIMES, ancestors: [GARD, OCC, FR] },
+  { location: fixtureRow("34032", "Béziers", "municipality"), ancestors: [fixtureRow("34", "Hérault", "district"), OCC, FR] },
+  { location: fixtureRow("s-30189-1", "Gymnase municipal de Nîmes", "site"), ancestors: [NIMES, GARD, OCC, FR] },
+];
+
+/**
+ * Drives the panel's browse half from the fixture tree above: the path is
+ * component state, and the rows are whatever level that path points at.
+ */
+function useFixtureBrowse(initialPath: LocationChainSummary[] = []) {
+  const [path, setPath] = useState<LocationChainSummary[]>(initialPath);
+  const parentId = path.at(-1)?.id ?? "root";
+  const ancestors = [...path].reverse();
+  const rows = (LEVELS[parentId] ?? []).map((location) => ({ location, ancestors }));
+
   return {
-    id,
-    name,
-    name_i18n,
-    type,
-    parent_id,
-    country_code: "FI",
-    created_at: "2026-01-01T00:00:00Z",
-    updated_at: "2026-01-01T00:00:00Z",
+    path,
+    // The same rule the real browser uses: a row's path is its ancestors
+    // reversed to root-first plus the row itself, which holds whether the row
+    // was browsed to or searched for. Appending instead would look right here —
+    // the fixture only browses — while being wrong in the app.
+    onDrill: (pick: LocationPick) =>
+      setPath([...[...pick.ancestors].reverse(), pick.location]),
+    onOpenDepth: (depth: number) => setPath((current) => current.slice(0, depth)),
+    browse: { rows, total: rows.length, hasMore: false, loading: false },
   };
 }
 
-// A couple of rows carry their Swedish name so the tree demo shows localized
-// display (the names render in the viewer's locale via localizedLocationName).
-const LOCATION_FIXTURE: Location[] = [
-  fixtureLocation("fi", "Finland", "country", null),
-  fixtureLocation("uusimaa", "Uusimaa", "region", "fi", { sv: "Nyland" }),
-  fixtureLocation("helsinki", "Helsinki", "municipality", "uusimaa", {
-    sv: "Helsingfors",
-  }),
-  fixtureLocation("hki-site", "Itälahdenkatu 23 B", "site", "helsinki"),
-  fixtureLocation("espoo", "Espoo", "municipality", "uusimaa", { sv: "Esbo" }),
-  fixtureLocation("pirkanmaa", "Pirkanmaa", "region", "fi", {
-    sv: "Birkaland",
-  }),
-  fixtureLocation("tampere", "Tampere", "municipality", "pirkanmaa"),
-  fixtureLocation("tre-site", "Sampola", "site", "tampere"),
-];
+const EMPTY_ROWS = { rows: [], total: 0, hasMore: false, loading: false };
 
-function LocationTreeDemo() {
-  const [locations, setLocations] = useState<Location[]>(LOCATION_FIXTURE);
-  const [siteValue, setSiteValue] = useState<string | null>(null);
-  const [coverage, setCoverage] = useState<ReadonlySet<string>>(new Set());
-  const [createCount, setCreateCount] = useState(0);
+function LocationPickerDemo() {
+  const [query, setQuery] = useState("");
+  const [confirmed, setConfirmed] = useState<string | null>(null);
+  const fixture = useFixtureBrowse();
+
+  // Mirrors the real flow: on success the parent swaps this view away, which
+  // is why the picker never has to re-enable its confirm button.
+  if (confirmed) {
+    return (
+      <div className="space-y-3 rounded-md border border-input bg-card p-4">
+        <p className="text-sm">
+          Confirmed <span className="font-medium">{confirmed}</span> — the venue
+          flow would now list the venues already in it, with that row as the
+          parent of any new one.
+        </p>
+        <Button type="button" variant="outline" onClick={() => setConfirmed(null)}>
+          Pick another
+        </Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      <div className="space-y-2">
-        <h4 className="text-sm font-semibold">Single-select (product picker)</h4>
-        <p className="text-xs text-muted-foreground">
-          Pickable: sites only. Hover a municipality to add a new site under it —
-          the freshly created site auto-selects.
-        </p>
-        <LocationTree
-          locations={locations}
-          selection={{
+    <div className="max-w-2xl rounded-md border border-input bg-card p-4">
+      <LocationPickerPanel
+        query={query}
+        onQueryChange={setQuery}
+        scope={{
+          path: fixture.path,
+          onDrill: fixture.onDrill,
+          onOpenDepth: fixture.onOpenDepth,
+          minQueryLength: 2,
+          browse: fixture.browse,
+          search: EMPTY_ROWS,
+          selection: {
             mode: "single",
-            value: siteValue,
-            onSelect: setSiteValue,
-            pickableTypes: ["site"],
-          }}
-          create={{
-            allowedChildTypes: ["site"],
-            onCreate: async (values) => {
-              const created = fixtureLocation(
-                `demo-site-${createCount}`,
-                values.name,
-                values.type,
-                values.parent_id,
-              );
-              setLocations((prev) => [...prev, created]);
-              setCreateCount((c) => c + 1);
-              return created;
+            pickableTypes: ["municipality"],
+            onConfirm: (pick) =>
+              new Promise<void>((resolve) =>
+                setTimeout(() => {
+                  setConfirmed(pick.location.name);
+                  resolve();
+                }, 600),
+              ),
+            onCancel: () => setConfirmed(null),
+          },
+        }}
+      />
+    </div>
+  );
+}
+
+function LocationCoverageDemo() {
+  const [query, setQuery] = useState("");
+  const [ticked, setTicked] = useState<ReadonlySet<string>>(new Set());
+  const fixture = useFixtureBrowse();
+
+  return (
+    <div className="space-y-2">
+      <div className="max-w-2xl rounded-md border border-input bg-card p-4">
+        <LocationPickerPanel
+          query={query}
+          onQueryChange={setQuery}
+          scope={{
+            path: fixture.path,
+            onDrill: fixture.onDrill,
+            onOpenDepth: fixture.onOpenDepth,
+            minQueryLength: 2,
+            browse: fixture.browse,
+            search: EMPTY_ROWS,
+            selection: {
+              mode: "multi",
+              selectedIds: ticked,
+              onToggle: (pick) =>
+                setTicked((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(pick.location.id)) next.delete(pick.location.id);
+                  else next.add(pick.location.id);
+                  return next;
+                }),
+              onDone: () => setTicked(new Set()),
             },
           }}
-          searchPlaceholder="Search locations…"
-          listClassName="max-h-[300px]"
         />
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Ticked: {ticked.size === 0 ? "(none)" : [...ticked].join(", ")}{" "}
+        &mdash; &ldquo;Done&rdquo; clears the demo&rsquo;s state; in the real app
+        it closes the dialog and the caller&rsquo;s save commits the ticks.
+      </p>
+    </div>
+  );
+}
+
+function LocationSearchDemo() {
+  // Held above the minimum length so the panel stays in its search branch: the
+  // point of this demo is the hit rows, not the transition into them.
+  const [query, setQuery] = useState("nimes");
+
+  return (
+    <div className="max-w-2xl rounded-md border border-input bg-card p-4">
+      <LocationPickerPanel
+        query={query}
+        onQueryChange={setQuery}
+        scope={{
+          path: [],
+          onDrill: () => {},
+          onOpenDepth: () => {},
+          minQueryLength: 2,
+          browse: EMPTY_ROWS,
+          search: { rows: HITS, total: 47, hasMore: false, loading: false },
+          selection: {
+            mode: "single",
+            // The venue dialog's own configuration: two confirmable types, and
+            // the caller decides what each one meant — a site is the answer, a
+            // municipality is "show me the venues here".
+            pickableTypes: ["municipality", "site"],
+            onConfirm: () => Promise.resolve(),
+            onCancel: () => setQuery(""),
+          },
+        }}
+      />
+    </div>
+  );
+}
+
+/**
+ * The panel told it is bound to one country — the product form's municipality
+ * field, whose container opens on Finland and filters every row to it.
+ *
+ * The bound country is copy and nothing else: the filtering lives in the
+ * container this demo replaces, so the panel offers the same fixture rows
+ * either way. What it changes is the two lines that would otherwise claim more
+ * than the picker is doing — browsing starts the breadcrumb *at* the country,
+ * with no root crumb to a list holding that one country, and typing says which
+ * country it is searching instead of "everywhere". Both are here: the initial
+ * view is the breadcrumb, and two characters in the box is the other.
+ */
+function LocationBoundCountryDemo() {
+  const [query, setQuery] = useState("");
+  const fixture = useFixtureBrowse([FR]);
+
+  return (
+    <div className="max-w-2xl rounded-md border border-input bg-card p-4">
+      <LocationPickerPanel
+        query={query}
+        onQueryChange={setQuery}
+        scope={{
+          path: fixture.path,
+          onDrill: fixture.onDrill,
+          onOpenDepth: fixture.onOpenDepth,
+          minQueryLength: 2,
+          // France rather than Finland only because the fixture tree is French;
+          // the real bound picker is Finland's.
+          boundCountryName: "France",
+          browse: fixture.browse,
+          search: {
+            rows: HITS,
+            total: HITS.length,
+            hasMore: false,
+            loading: false,
+          },
+          selection: {
+            mode: "single",
+            pickableTypes: ["municipality"],
+            onConfirm: () => Promise.resolve(),
+            onCancel: () => setQuery(""),
+          },
+        }}
+      />
+    </div>
+  );
+}
+
+function HomeLocationFieldDemo() {
+  const [place, setPlace] = useState<LocationPick | null>(null);
+
+  return (
+    <div className="max-w-md space-y-4 rounded-md border border-input bg-card p-4">
+      <div className="space-y-2">
+        <HomeLocationField value={place} onChange={setPlace} />
         <p className="text-xs text-muted-foreground">
-          Selected: {siteValue ?? "(none)"}
+          Value:{" "}
+          {place ? `${place.location.id} (${place.location.name})` : "(none)"}{" "}
+          &mdash; a row id, so the caller has a foreign key to store and a path
+          to render without a second read. It decides what committing means: a
+          registration submit, or a settings save.
         </p>
       </div>
 
+      {/* The third state, which is the reason the prop is not just
+          `LocationPick | null`. It cannot be reached by clicking, because the
+          read it represents lands in a frame or two — so it is pinned here as a
+          fixture rather than demonstrated by waiting for one. */}
       <div className="space-y-2">
-        <h4 className="text-sm font-semibold">Multi-select (gedu coverage)</h4>
+        <HomeLocationField value={undefined} onChange={() => {}} />
         <p className="text-xs text-muted-foreground">
-          The component just reports each tick; cascade semantics (tick a parent →
-          tick its subtree) live in the consumer, not here.
+          Value: <code>undefined</code> &mdash; a stored id whose row has not
+          arrived yet, as settings mounts. The box is silent at its final height
+          rather than showing the &ldquo;add your location&rdquo; prompt, which
+          would tell someone who has chosen a place that they have not, and be
+          clickable while it did so. Reading one row by id is an indexed lookup,
+          so there is no skeleton and no spinner here by design.
         </p>
-        <LocationTree
-          locations={locations}
-          selection={{
-            mode: "multi",
-            selectedIds: coverage,
-            onToggle: (id) =>
-              setCoverage((prev) => {
-                const next = new Set(prev);
-                if (next.has(id)) next.delete(id);
-                else next.add(id);
-                return next;
-              }),
-          }}
-          searchPlaceholder="Search areas…"
-          listClassName="max-h-[300px]"
-        />
-        <p className="text-xs text-muted-foreground">{coverage.size} selected</p>
       </div>
     </div>
   );
@@ -2049,6 +2379,631 @@ const BILLING_ACCOUNTS_SPLIT: BillingAccountSummary[] = [
   },
   { stripeCustomerId: "cus_demo_empty", covers: [] },
 ];
+
+/* ------------------------------------------------------------------ */
+/*  Rich text editor                                                   */
+/* ------------------------------------------------------------------ */
+
+/** Seeds the editor with every construct its toolbar produces. */
+const DEMO_MARKDOWN = `# Mob-proofing night
+
+We lit the paths, walled the gaps and got through a whole session without losing anybody to a creeper.`;
+
+/**
+ * The writer, with its own serialised output beside it.
+ *
+ * Showing the stored markdown next to the editor is the one thing worth being
+ * able to see at a glance: a writer never meets the syntax, so this is the only
+ * place to confirm the round trip is honest. Type a heading, watch the `#`
+ * appear in the serialised output.
+ *
+ * How stored markdown *renders* is deliberately not demoed here — a renderer is
+ * only meaningful inside the surface that owns it, at that surface's width and
+ * clamping. Those live in the full-page preview scenes on `/admin/ui-previews`.
+ */
+function RichTextEditorDemo() {
+  const [markdown, setMarkdown] = useState(DEMO_MARKDOWN);
+
+  return (
+    <div className="space-y-8">
+      <SubSection title="The editor, and what it stores">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="space-y-2">
+            <DemoCaption>
+              Rich editor — seven buttons, fixed toolbar height
+            </DemoCaption>
+            <RichTextEditor
+              initialValue={DEMO_MARKDOWN}
+              onChange={setMarkdown}
+              ariaLabel="Session report"
+              placeholder="What the group built, played or figured out."
+            />
+          </div>
+          <div className="space-y-2">
+            <DemoCaption>
+              Serialised markdown — the value that is actually stored
+            </DemoCaption>
+            <pre className="min-h-40 overflow-auto whitespace-pre-wrap rounded-md border border-input bg-muted/40 p-3 text-xs text-muted-foreground">
+              {markdown}
+            </pre>
+          </div>
+        </div>
+      </SubSection>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Game account — one identity, any platform                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Both platforms in every demo. The components take one platform each — a
+ * surface may end up showing only the identity that matters for the product in
+ * front of the child — so showing two is the caller composing, which is exactly
+ * how a real page would do it.
+ */
+const DEMO_PLATFORMS: readonly GamePlatform[] = ["minecraft", "roblox"];
+
+/**
+ * Real handles, so the live lookups below actually resolve and the Minecraft
+ * rows draw real skins rather than the drawn stand-in.
+ */
+const DEMO_USERNAME: Readonly<Record<GamePlatform, string>> = {
+  minecraft: "Notch",
+  roblox: "builderman",
+};
+
+/**
+ * The one grid all three demos are laid out on: a label column, then a column
+ * per platform.
+ *
+ * Shared so the identity rows line up vertically down the whole section. The
+ * three demos exist to be *compared* — they are three presentations of one row —
+ * and three different container widths made that impossible.
+ */
+const GAME_DEMO_GRID =
+  "grid max-w-4xl grid-cols-[9rem_minmax(0,1fr)_minmax(0,1fr)] gap-x-8 rounded-lg border p-4";
+
+/** The header row every demo grid opens with. */
+function GameDemoHeader() {
+  return (
+    <>
+      <div />
+      {DEMO_PLATFORMS.map((platform) => (
+        <DemoCaption key={platform}>{GAME_PLATFORMS[platform].name}</DemoCaption>
+      ))}
+    </>
+  );
+}
+
+/** One person's accounts, as a surface would hold them. */
+type DemoAccount = { username: string | null; externalId: string | number | null };
+
+const EMPTY_ACCOUNTS: Readonly<Record<GamePlatform, DemoAccount>> = {
+  minecraft: { username: null, externalId: null },
+  roblox: { username: null, externalId: null },
+};
+
+/**
+ * First capture: the same row, opened straight into edit mode.
+ *
+ * A register form has nothing to view yet, so `autoEdit` puts the input where
+ * the name will be. Live — both verify routes are public, and committing is what
+ * runs the lookup.
+ */
+function GameFirstCaptureDemo() {
+  const [accounts, setAccounts] =
+    useState<Readonly<Record<GamePlatform, DemoAccount>>>(EMPTY_ACCOUNTS);
+
+  return (
+    <div className={cn(GAME_DEMO_GRID, "items-start gap-y-3")}>
+      <GameDemoHeader />
+      <DemoCaption>Nothing saved yet</DemoCaption>
+      {DEMO_PLATFORMS.map((platform) => (
+        <div key={platform} className="space-y-1.5">
+          {/* The label is the surface's, not the row's — a roster wants no label
+              at all, so the component does not carry one. */}
+          <Label htmlFor={undefined}>
+            {GAME_PLATFORMS[platform].name} username
+          </Label>
+          <GameUsernameEditableRow
+            platform={platform}
+            username={accounts[platform].username}
+            externalId={accounts[platform].externalId}
+            autoEdit
+            onCommit={({ username, externalId }) =>
+              setAccounts((prev) => ({
+                ...prev,
+                [platform]: { username, externalId },
+              }))
+            }
+          />
+          <p className="text-[11px] text-muted-foreground">
+            committed:{" "}
+            <code>
+              {accounts[platform].username ?? "null"} /{" "}
+              {String(accounts[platform].externalId ?? "null")}
+            </code>
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * The three fixture rows for the read-only demo: one account we have confirmed,
+ * one saved name nobody ever checked, one child who has never given a name. The
+ * fourth state, `checking`, is not a fixture — it belongs to a lookup in flight,
+ * so it is met by committing in the demos either side of this one.
+ */
+const VIEW_ONLY_ROWS: readonly {
+  caption: string;
+  named: boolean;
+  externalId: Readonly<Record<GamePlatform, string | number | null>>;
+}[] = [
+  {
+    caption: "Verified",
+    named: true,
+    externalId: {
+      minecraft: "8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6",
+      roblox: 68306362,
+    },
+  },
+  {
+    caption: "Saved, never checked",
+    named: true,
+    externalId: { minecraft: null, roblox: null },
+  },
+  {
+    caption: "No username on the account",
+    named: false,
+    externalId: { minecraft: null, roblox: null },
+  },
+];
+
+/**
+ * The demo's own Roblox renders.
+ *
+ * Minecraft rows need nothing: the row derives a body or a face straight from a
+ * username. Roblox has no username-addressable endpoint, so a picture has to be
+ * looked up server-side and handed *in* — and a demo that skipped that step
+ * showed a permanent stand-in beside a real Minecraft skin, which is a false
+ * picture of the component rather than an honest one.
+ *
+ * **It resolves by handle, which a production surface does not.** A real surface
+ * is looking at a *stored* account and goes straight to the by-id route: two
+ * upstream calls, batchable, no username hop. This page has fixtures rather than
+ * rows, so the only thing it holds is a handle — which makes verification the
+ * only lookup available to it, and is why it is behind a button.
+ *
+ * **The lookup belongs here, not in the row** — the row stays fixture-pure and
+ * takes a URL. Both demos call this with the same handle, so React Query serves
+ * one request for the pair. While it is in flight `data` is undefined and the
+ * rows draw the stand-in in a box that is already its final size, so nothing
+ * moves when the render lands.
+ */
+function useRobloxDemoRenders(
+  live: boolean,
+): Readonly<Record<GameFigure, string | null>> {
+  // Disabled until asked for. A Roblox verification is three upstream calls
+  // against a bucket of sixty a minute shared by every IP the fleet has, and
+  // this page gets opened to look at buttons far more often than to look at
+  // Roblox — so it does not spend that budget on arrival.
+  const { data } = useRobloxProfile(live ? DEMO_USERNAME.roblox : null);
+  return { full: data?.avatarUrl ?? null, head: data?.headshotUrl ?? null };
+}
+
+/**
+ * The button that spends the request.
+ *
+ * Stays a button once pressed, disabled with different words, so the row of
+ * controls keeps its height and the rows below it do not move when the renders
+ * land — the figure boxes were already at their final size, so the pictures
+ * simply appear.
+ */
+function RobloxLiveToggle({
+  live,
+  onLoad,
+}: {
+  live: boolean;
+  onLoad: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <Button variant="outline" size="sm" onClick={onLoad} disabled={live}>
+        {live ? "Real Roblox renders loaded" : "Load real Roblox renders"}
+      </Button>
+      <span className="text-xs text-muted-foreground">
+        Minecraft draws from the username with no lookup; Roblox needs a live
+        verification, so it stays on the stand-in until you ask.
+      </span>
+    </div>
+  );
+}
+
+/**
+ * What to hand the row for one fixture cell.
+ *
+ * `undefined` for Minecraft — the three meanings of `avatarUrl` make that "let
+ * the platform derive it", which is exactly right. For Roblox it is the resolved
+ * URL, or `null` for the row that has no username at all: an unknown row draws
+ * the stand-in whatever it is handed, and passing a face to it would be asking
+ * the component to contradict itself.
+ */
+function demoFigureUrl(
+  platform: GamePlatform,
+  named: boolean,
+  resolved: string | null,
+): string | null | undefined {
+  if (platform === "minecraft") return undefined;
+  return named ? resolved : null;
+}
+
+function GameViewOnlyDemo() {
+  const [live, setLive] = useState(false);
+  const renders = useRobloxDemoRenders(live);
+
+  return (
+    <div className="space-y-3">
+      <RobloxLiveToggle live={live} onLoad={() => setLive(true)} />
+      <div className={cn(GAME_DEMO_GRID, "items-center gap-y-2")}>
+        <GameDemoHeader />
+        {VIEW_ONLY_ROWS.map(({ caption, named, externalId }) => (
+          <Fragment key={caption}>
+            <DemoCaption>{caption}</DemoCaption>
+            {DEMO_PLATFORMS.map((platform) => (
+              <GameUsernameRow
+                key={platform}
+                platform={platform}
+                username={named ? DEMO_USERNAME[platform] : null}
+                externalId={externalId[platform]}
+                avatarUrl={demoFigureUrl(platform, named, renders.full)}
+              />
+            ))}
+          </Fragment>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The editable roster, driven by local state — and by the real verify routes,
+ * because committing is what runs the lookup.
+ *
+ * One person per row, both platforms across, so the columns line up with the two
+ * demos above. Commit a name and watch the status square: the spinner sits where
+ * the tick will land, and a skin arrives into the box that was already holding
+ * its space.
+ */
+const EDITABLE_SEED: readonly {
+  key: string;
+  person: string;
+  accounts: Readonly<Record<GamePlatform, DemoAccount>>;
+}[] = [
+  {
+    key: "aino",
+    person: "Aino",
+    accounts: {
+      minecraft: {
+        username: "Notch",
+        externalId: "8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6",
+      },
+      roblox: { username: "builderman", externalId: 68306362 },
+    },
+  },
+  {
+    key: "joonas",
+    person: "Joonas",
+    accounts: {
+      minecraft: { username: "jeb_", externalId: null },
+      roblox: { username: null, externalId: null },
+    },
+  },
+  {
+    key: "petra",
+    person: "Petra",
+    accounts: {
+      minecraft: { username: null, externalId: null },
+      roblox: { username: "Roblox", externalId: 1 },
+    },
+  },
+];
+
+function GameEditableRowDemo() {
+  const [rows, setRows] = useState(EDITABLE_SEED);
+
+  const commit = (
+    key: string,
+    platform: GamePlatform,
+    account: DemoAccount,
+  ) =>
+    setRows((prev) =>
+      prev.map((row) =>
+        row.key === key
+          ? { ...row, accounts: { ...row.accounts, [platform]: account } }
+          : row,
+      ),
+    );
+
+  return (
+    <div className={cn(GAME_DEMO_GRID, "items-start gap-y-1")}>
+      <GameDemoHeader />
+      {rows.map((row) => (
+        <Fragment key={row.key}>
+          <DemoCaption>{row.person}</DemoCaption>
+          {DEMO_PLATFORMS.map((platform) => (
+            <GameUsernameEditableRow
+              key={platform}
+              platform={platform}
+              username={row.accounts[platform].username}
+              externalId={row.accounts[platform].externalId}
+              personName={row.person}
+              onCommit={({ username, externalId }) =>
+                commit(row.key, platform, { username, externalId })
+              }
+            />
+          ))}
+        </Fragment>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * The compact figure, in every state, on both platforms — both showing a real
+ * picture, the Minecraft face derived from the name and the Roblox headshot
+ * resolved by the demo.
+ */
+function GameHeadRowDemo() {
+  const [live, setLive] = useState(false);
+  const renders = useRobloxDemoRenders(live);
+
+  return (
+    <div className="space-y-3">
+      <RobloxLiveToggle live={live} onLoad={() => setLive(true)} />
+      <div className={cn(GAME_DEMO_GRID, "items-center gap-y-2")}>
+        <GameDemoHeader />
+        {VIEW_ONLY_ROWS.map(({ caption, named, externalId }) => (
+          <Fragment key={caption}>
+            <DemoCaption>{caption}</DemoCaption>
+            {DEMO_PLATFORMS.map((platform) => (
+              <GameUsernameRow
+                key={platform}
+                platform={platform}
+                figure="head"
+                username={named ? DEMO_USERNAME[platform] : null}
+                externalId={externalId[platform]}
+                avatarUrl={demoFigureUrl(platform, named, renders.head)}
+              />
+            ))}
+          </Fragment>
+        ))}
+
+        <DemoCaption>Checking</DemoCaption>
+        {DEMO_PLATFORMS.map((platform) => (
+          <GameUsernameRow
+            key={platform}
+            platform={platform}
+            figure="head"
+            username={DEMO_USERNAME[platform]}
+            status="checking"
+            avatarUrl={demoFigureUrl(platform, true, renders.head)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Add-gamer dialog (real components, inert)                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The submit, defanged. Resolves after a beat with a fixed id so the committing
+ * state is actually visible, and creates nothing — the real mutation is the one
+ * prop `AddGamerFormCard` takes rather than a hook it reaches for, precisely so
+ * this page can hand it something inert.
+ */
+function inertCreateGamer(): Promise<{ gamerId: string }> {
+  return new Promise((resolve) =>
+    setTimeout(
+      () => resolve({ gamerId: "1a8e1e2a-32f6-4c6f-9a6a-9d0f2a1b7c44" }),
+      700,
+    ),
+  );
+}
+
+function AddGamerDialogDemo() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="rounded-lg border p-4">
+      <Button onClick={() => setOpen(true)}>Open the add-gamer dialog</Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <AddGamerFormCard onOpenChange={setOpen} onCreate={inertCreateGamer} />
+      </Dialog>
+    </div>
+  );
+}
+
+function GameAccountDemo() {
+  return (
+    <div className="space-y-8">
+      <SubSection title="1. First time entering a username (register)">
+        <p className="text-sm text-muted-foreground">
+          The same row, opened straight into edit mode &mdash; there is nothing to
+          view yet, so the input sits where the name will be. Live: committing
+          <em> is </em>the verification, so press Enter or the tick and watch the
+          status square. The label above each row belongs to the surface, not to
+          the component; a roster wants none.
+        </p>
+        <GameFirstCaptureDemo />
+      </SubSection>
+
+      <SubSection title="2. View, no editing here">
+        <p className="text-sm text-muted-foreground">
+          Real pictures on both sides. Minecraft derives its skin from the
+          username, so the row needs nothing; Roblox has no username-addressable
+          endpoint, so somebody has to resolve one server-side and hand the URL
+          in. The row itself stays fixture-pure &mdash; it takes a picture, it
+          never goes and finds one. The stand-in is what the last row shows,
+          because it has no username to resolve. <em>This demo</em> resolves by
+          handle, behind the button, because fixtures are all it has; a real
+          surface holds a <em>stored</em> account and resolves by its numeric id
+          instead &mdash; two upstream calls rather than three, and one call for
+          a whole roster rather than one per row.
+        </p>
+        <GameViewOnlyDemo />
+      </SubSection>
+
+      <SubSection title="2b. The compact figure — head instead of full">
+        <p className="text-sm text-muted-foreground">
+          Same row, same four states, <code>figure=&quot;head&quot;</code>: 32px
+          instead of 60px, for a dense list where the whole character crowds out
+          what the list is about. Two surfaces use it &mdash; the voice
+          participant row and the gamer chip below. Everywhere else, including the
+          admin user detail page, keeps the whole figure. Both platforms are{" "}
+          <em>identical</em> here
+          &mdash; a Minecraft face render and a Roblox headshot are both square,
+          so the 1:2-vs-1:1 divergence that makes the full figure&rsquo;s box
+          differ simply does not exist. Both draw a real picture: Minecraft
+          derives its face from the username, and the demo resolves the Roblox
+          headshot from the same lookup as the section above &mdash; one request
+          for the pair, because they ask for the same handle.
+        </p>
+        <GameHeadRowDemo />
+      </SubSection>
+
+      <SubSection title="3. View and edit, in place">
+        <p className="text-sm text-muted-foreground">
+          The same component as demo 1 without <code>autoEdit</code>. Enter
+          commits, Escape cancels, and a commit runs the real lookup: the name
+          appears immediately, the spinner sits in the square the tick will land
+          in, and a failed lookup leaves the name saved as unverified with the
+          reason underneath.
+        </p>
+        <GameEditableRowDemo />
+      </SubSection>
+
+      <SubSection title="4. Where both rows land — the add-gamer dialog">
+        <p className="text-sm text-muted-foreground">
+          The real dialog, inert: the create call is a prop rather than a hook, so
+          this page hands it something that resolves after a beat and writes
+          nothing. The PIN gate in front of it is skipped &mdash; it is a
+          conditional on one query with nothing of its own to look at. Both game
+          rows are the real thing and both commits run the real lookup; only the
+          submit is defanged. They sit <em>closed</em> rather than opened, unlike
+          the register form in demo 1 &mdash; the same row costs the same height
+          either way, so the choice is about how much the dialog appears to be
+          asking for. The gender buttons are three across at every width, which is
+          what pays for the two rows fitting on a phone.
+        </p>
+        <AddGamerDialogDemo />
+      </SubSection>
+
+      <SubSection title="In the admin gamer chip">
+        <p className="text-sm text-muted-foreground">
+          The chip is the draggable roster token in the product groups panel, and
+          it appears in four places: the group columns, the waitlist card, the
+          unassigned card and the drag overlay. It stacks name, age/gender, parent
+          and the identity row inside a narrow rail, so it takes the compact
+          figure: the whole body was taller than the other three lines put
+          together. Drag is live &mdash; the chips below are real, and there is
+          nowhere to drop them.
+        </p>
+        <GamerChipDemo />
+      </SubSection>
+    </div>
+  );
+}
+
+/**
+ * Chip fixtures. The ids are real generated UUIDv4s, hardcoded: an identicon is
+ * hashed out of the id's hex bytes, so a readable stand-in renders a degenerate
+ * square and a freshly generated one gives the same child a different face on
+ * every reload.
+ */
+const CHIP_GAMERS = {
+  aino: "3f5f2c9a-1d7e-4c8b-9a2f-6b1e0c4d8a37",
+  joonas: "c81b47e2-9f30-4a15-8d6c-2e7b5a091f4d",
+  petra: "7d2a6e13-5c84-4b09-a7f1-38e9c0b2d654",
+} as const;
+
+function GamerChipDemo() {
+  return (
+    // The chip is a dnd-kit draggable, so it needs the context its real parents
+    // give it. There are no droppables here — picking one up and letting go puts
+    // it back, which is all this demo needs.
+    <DndContext>
+      <GamerChipRow />
+    </DndContext>
+  );
+}
+
+function GamerChipRow() {
+  return (
+    <div className="flex flex-wrap items-start gap-6">
+      {/* The real rail width in the groups panel, so the chip is judged at the
+          size it actually renders at rather than stretched across the page. */}
+      <div className="w-64 space-y-2 rounded-lg border p-3">
+        <DemoCaption>In a group column (w-64, the real rail)</DemoCaption>
+        <GamerChip
+          participationId="demo-1"
+          gamerId={CHIP_GAMERS.aino}
+          firstName="Aino"
+          dateOfBirth="2014-03-11"
+          gender="girl"
+          parentFirstName="Sanna"
+          parentLastName="Virtanen"
+          minecraftUsername="Notch"
+          minecraftUuid="8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6"
+        />
+        <GamerChip
+          participationId="demo-2"
+          gamerId={CHIP_GAMERS.joonas}
+          firstName="Joonas"
+          dateOfBirth="2012-09-02"
+          gender="boy"
+          parentFirstName="Petra"
+          parentLastName="Nieminen"
+          minecraftUsername="jeb_"
+          minecraftUuid={null}
+        />
+        <GamerChip
+          participationId="demo-3"
+          gamerId={CHIP_GAMERS.petra}
+          firstName="Petra"
+          dateOfBirth={null}
+          gender={null}
+          parentFirstName={null}
+          parentLastName={null}
+          minecraftUsername={null}
+          minecraftUuid={null}
+        />
+      </div>
+
+      <div className="w-64 space-y-2 rounded-lg border p-3">
+        <DemoCaption>Mid-save — greyed and undraggable</DemoCaption>
+        <GamerChip
+          participationId="demo-4"
+          gamerId={CHIP_GAMERS.aino}
+          firstName="Aino"
+          dateOfBirth="2014-03-11"
+          gender="girl"
+          parentFirstName="Sanna"
+          parentLastName="Virtanen"
+          minecraftUsername="Notch"
+          minecraftUuid="8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6"
+          isPending
+        />
+      </div>
+    </div>
+  );
+}
 
 function ManageBillingCardDemo() {
   return (

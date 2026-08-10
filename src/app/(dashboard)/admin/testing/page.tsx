@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/providers";
 import { SENDER_EMAIL } from "@/lib/constants";
 import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from "@/lib/constants/locales";
+import { useLanguageNames } from "@/hooks/use-language-names";
 import { findOption } from "@/lib/utils";
 import { templateRegistry, type TemplateField } from "@/lib/email-templates/registry";
 
@@ -41,6 +42,7 @@ function isSelectField(field: TemplateField): field is Extract<TemplateField, { 
 
 export default function TestingPage() {
   const t = useTranslations('admin.testing');
+  const languageName = useLanguageNames();
   const c = useTranslations('common');
   const { profile } = useAuth();
 
@@ -237,7 +239,7 @@ export default function TestingPage() {
                     >
                       {SUPPORTED_LOCALES.map((opt) => (
                         <option key={opt} value={opt}>
-                          {LOCALE_CONFIG[opt].nativeLabel} ({LOCALE_CONFIG[opt].label})
+                          {LOCALE_CONFIG[opt].nativeLabel} ({languageName(opt, LOCALE_CONFIG[opt].label)})
                         </option>
                       ))}
                     </select>

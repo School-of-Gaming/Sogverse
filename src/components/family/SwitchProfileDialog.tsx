@@ -44,8 +44,8 @@ interface SwitchProfileDialogProps {
  * the same everywhere it happens.
  *
  * Both directions of the switch reuse this:
- *  - parent → gamer, to drop the parent straight into a gamer's voice room
- *    (`ParentSessionsSection`).
+ *  - parent → gamer, to drop the parent straight into a gamer's voice room,
+ *    from an enrollment card on the parent dashboard or a family club page.
  *  - gamer → parent, so a gamer who clicked "Add Gamer" can switch into the
  *    parent who's allowed to create one (`FamilyProfileSelector`). There the
  *    `redirectUrl` carries the add-gamer intent marker so the form re-opens

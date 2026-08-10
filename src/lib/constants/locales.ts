@@ -3,7 +3,7 @@
 // =============================================================================
 //
 // This file owns the **UI locale** system — which translation of the web app
-// the user sees (English, Finnish, Swedish, Klingon, ...). It backs:
+// the user sees (English, Finnish, Swedish, French, Klingon, ...). It backs:
 //   - profiles.locale           (DB column)
 //   - the `locale` cookie       (set on every locale change for SSR)
 //   - the LocalePicker dropdown in the header
@@ -20,11 +20,114 @@
 // fluency. They are deliberately named differently — see CLAUDE.md and
 // src/i18n/CLAUDE.md.
 //
-// When adding a new locale, also update LOCALE_CONFIG below, add a
-// messages/<code>.json file, and update the CI check script.
+// Adding a locale is a checklist, not a one-liner: `LOCALE_CONFIG` entry → flag
+// registration → messages loader → `messages/<code>.json` → phone-country
+// decision. The full checklist lives in src/i18n/CLAUDE.md ("Adding a locale").
+// The translation-completeness CI script discovers `messages/*.json` on its own
+// and needs no edit.
 
-export const SUPPORTED_LOCALES = ["en", "fi", "sv", "tlh"] as const;
+import type Stripe from "stripe";
+import type { FlagCountry } from "@/components/ui/flags";
+
+/**
+ * The Stripe locale codes we may hand to *either* Stripe surface we localize —
+ * Checkout sessions and the Billing Portal. The two enums are close but not
+ * identical (the portal ships extra English regions), so the intersection is
+ * the only set safe to use from one config field. `import type` keeps the
+ * Stripe SDK out of every bundle that reads a locale label.
+ */
+type StripeLocale = Stripe.Checkout.SessionCreateParams.Locale &
+  Stripe.BillingPortal.SessionCreateParams.Locale;
+
+interface LocaleDefinition {
+  /** English name of the language, for admin-facing UI. */
+  label: string;
+  /** The language's own name, for the user-facing picker. */
+  nativeLabel: string;
+  /**
+   * Flag rendered beside the locale. `FlagCountry` is the registry in
+   * src/components/ui/flags.ts, so a locale whose flag was never imported fails
+   * to compile. `"KLINGON"` is the one non-country value — the picker draws it
+   * inline rather than from country-flag-icons.
+   */
+  country: FlagCountry | "KLINGON";
+  /**
+   * Locale to render Stripe's own chrome in. `"auto"` means "let Stripe read
+   * the browser's Accept-Language" — the honest answer for a locale Stripe does
+   * not speak, rather than silently picking the wrong language.
+   */
+  stripe: StripeLocale;
+}
+
+/**
+ * Every supported locale, **in picker order — Klingon always last.** `tlh` is a
+ * novelty easter egg, so it never sits among the languages someone might
+ * actually need; real locales go before it. A unit test pins
+ * `SUPPORTED_LOCALES.at(-1) === "tlh"`.
+ *
+ * **Codes are bare language subtags** (`fr`, not `fr-FR`). A region-qualified
+ * code is added only when we genuinely ship two variants of one language
+ * (`fr` *and* `fr-CA`). Doing so touches more than this list: the `locale`
+ * column and cookie carry the longer code, `detectLocaleFromHeader` already
+ * prefers an exact tag match over a language-subtag one, and any future
+ * locale-prefixed routing has to decide how the region appears in URLs. Decide
+ * the scheme deliberately — do not add one incidentally.
+ *
+ * Written out as a literal tuple rather than derived from `LOCALE_CONFIG`'s
+ * keys: `Object.keys` is typed `string[]`, and narrowing it back to this tuple
+ * would take exactly the kind of type assertion the lint config bans. The tuple
+ * is what lets `z.enum(SUPPORTED_LOCALES)` compile at its call sites, and the
+ * two stay in lockstep anyway — `LOCALE_CONFIG` below `satisfies` a record
+ * keyed by this union, so a locale here with no config (or a config with no
+ * locale here) fails the build, and a unit test pins the order.
+ */
+export const SUPPORTED_LOCALES = ["en", "fi", "sv", "fr", "tlh"] as const;
+
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
+
+/**
+ * The single definition of everything that varies per locale. Nothing
+ * downstream keeps a parallel map — the Stripe checkout and billing-portal
+ * routes used to hand-maintain one each, and a new locale meant remembering
+ * both.
+ *
+ * Keep the entries in `SUPPORTED_LOCALES` order (the compiler enforces that the
+ * key *sets* match; only the order is on the author).
+ */
+export const LOCALE_CONFIG = {
+  en: {
+    label: "English",
+    nativeLabel: "English",
+    country: "GB",
+    stripe: "en",
+  },
+  fi: {
+    label: "Finnish",
+    nativeLabel: "Suomi",
+    country: "FI",
+    stripe: "fi",
+  },
+  sv: {
+    label: "Swedish",
+    nativeLabel: "Svenska",
+    country: "SE",
+    stripe: "sv",
+  },
+  fr: {
+    label: "French",
+    nativeLabel: "Français",
+    country: "FR",
+    stripe: "fr",
+  },
+  // Klingon stays last — see the ordering rule on SUPPORTED_LOCALES.
+  tlh: {
+    label: "Klingon",
+    nativeLabel: "Klingon",
+    country: "KLINGON",
+    stripe: "auto",
+  },
+} as const satisfies Record<SupportedLocale, LocaleDefinition>;
+
 export const DEFAULT_LOCALE: SupportedLocale = "en";
 
 // Server-side default for next-intl's date/time formatters (useFormatter).
@@ -34,16 +137,6 @@ export const DEFAULT_LOCALE: SupportedLocale = "en";
 // Used in both src/i18n/request.ts (server) and src/providers/index.tsx (client).
 export const DEFAULT_TIMEZONE = "Europe/Helsinki";
 
-export const LOCALE_CONFIG: Record<
-  SupportedLocale,
-  { label: string; nativeLabel: string; country: string }
-> = {
-  en: { label: "English", nativeLabel: "English", country: "GB" },
-  fi: { label: "Finnish", nativeLabel: "Suomi", country: "FI" },
-  sv: { label: "Swedish", nativeLabel: "Svenska", country: "SE" },
-  tlh: { label: "Klingon", nativeLabel: "Klingon", country: "KLINGON" },
-};
-
 /**
  * Walk an Accept-Language header in priority order and return the first
  * supported locale. Falls back to DEFAULT_LOCALE when no match is found.
@@ -52,6 +145,16 @@ export const LOCALE_CONFIG: Record<
  * unsupported but who list a supported language lower in the preference
  * list still get a match. Also accepts a single tag like "fi-FI"
  * (navigator.language) — treated as a one-entry list with implicit q=1.
+ *
+ * Each entry is tried as a whole tag first, then truncated to its language
+ * subtag (RFC 4647 "lookup"). Today every supported locale is a bare language
+ * code, so the exact pass never decides anything — it exists so that the day we
+ * ship a region-qualified locale (see the tripwire on `LOCALE_CONFIG`), a
+ * browser asking for `fr-CA` gets `fr-CA` instead of falling through to `fr`.
+ *
+ * Quality order stays the outer loop: a caller's higher-ranked language beats a
+ * lower-ranked exact tag, because "the language I actually want" outranks "the
+ * region variant you happen to have".
  */
 export function detectLocaleFromHeader(
   header: string | null,
@@ -79,7 +182,11 @@ export function detectLocaleFromHeader(
   entries.sort((a, b) => b.q - a.q);
 
   for (const { tag } of entries) {
-    const lang = tag.split("-")[0]?.toLowerCase();
+    // Language tags are case-insensitive per RFC 5646; our codes are lowercase.
+    const full = tag.toLowerCase();
+    if (isSupportedLocale(full)) return full;
+
+    const lang = full.split("-")[0];
     if (isSupportedLocale(lang)) return lang;
   }
 
@@ -106,4 +213,17 @@ export function resolveLocale(
   fallback: SupportedLocale = DEFAULT_LOCALE,
 ): SupportedLocale {
   return isSupportedLocale(value) ? value : fallback;
+}
+
+/**
+ * The Stripe locale to render Stripe's own chrome in, for a locale value we do
+ * not trust yet (a nullable `profiles.locale`, a resolved request locale).
+ *
+ * Anything we don't recognise — including a locale Stripe has no translation
+ * for — becomes `"auto"`, which tells Stripe to read the browser's
+ * Accept-Language. Both Stripe surfaces we localize (Checkout, Billing Portal)
+ * call this, so the mapping is stated once in `LOCALE_CONFIG`.
+ */
+export function stripeLocaleOrAuto(value: unknown): StripeLocale {
+  return isSupportedLocale(value) ? LOCALE_CONFIG[value].stripe : "auto";
 }

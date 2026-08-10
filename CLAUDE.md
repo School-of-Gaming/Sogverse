@@ -12,9 +12,26 @@ npm run lint             # ESLint
 npm run type-check       # TypeScript check (tsc --noEmit)
 npm run test             # Vitest unit tests
 npm run test:ui          # Vitest with UI
-npm run test:e2e         # Playwright E2E tests
-npm run test:e2e:ui      # Playwright with UI
+npm run test:smoke       # Build + smoke check (serves a production build, asserts headers/CSP)
 ```
+
+## Branching
+
+**Rule: branch off the latest `dev`, unless told otherwise.** `dev` is the
+integration branch; `main` is the release branch and trails it by hundreds of
+commits, so anything cut from `main` — or from a `dev` that hasn't been fetched —
+starts life missing work it will later collide with. Fetch and fast-forward
+first, then branch. This holds however the branch is created, including tooling
+that offers to pick a base for you: the default is usually `origin/<default
+branch>`, which is `main` here and is the wrong answer.
+
+Branches are named `feat/<kebab-summary>`; feature work merges back into `dev`
+with a real merge commit (`--no-ff`) whose subject reads `Merge the <thing> into
+dev`. Releases go `dev` → `main` through the `/pr-dev-to-main` command.
+
+For work that wants its own worktree — the usual shape when several things are in
+flight at once — `/worktree-flow` runs the whole lifecycle, from cutting the
+branch to tearing the worktree down after the merge.
 
 ## Architecture
 
@@ -36,6 +53,8 @@ Four user roles with separate dashboards:
 - `gedu` → `/gedu` - Game educators (self-register at `/register-gedu`; an account is unverified until an admin approves it — verification gates only group assignment, not platform access. See `src/services/gedu/`)
 
 Proxy (`src/proxy.ts`) refreshes Supabase auth sessions, enforces role-based routing, and sets a per-request nonce-based Content Security Policy (Next.js 16 uses `proxy.ts` instead of `middleware.ts`). RLS policies protect data at the database level.
+
+**Rule: user-facing copy calls a role's dashboard "My SOG" — "dashboard" is internal vocabulary.** The role dashboards (`/parent`, `/gamer`, `/gedu`) are named "My SOG" to the people using them, in page titles, back links, buttons and emails alike. "Dashboard" is what we call them among ourselves and in the code; a translated string that says it has leaked an implementation word into the product. The brand name itself stays "My SOG" rather than being translated wholesale — locales localise the surrounding words and the possessive, not the mark. The one exception is the **admin** dashboard, which is genuinely an admin panel and is called one: admin sidebar entries and admin page titles keep saying "Dashboard".
 
 ### Key Conventions
 - App routes are grouped: `(auth)`, `(dashboard)`, `(public)`, plus `api/`
@@ -79,13 +98,21 @@ CSP is generated per-request in `src/proxy.ts` with a unique nonce (`crypto.rand
 
 ### Layout & Scrolling
 
-**Rule: Once a clickable or readable element is on screen, it must not move unless the user does something.** The promise is about *rendered* content — text the user is reading, buttons/links/inputs they're about to click. If something is already painted, no in-place shift may happen without a user interaction triggering it. Shifts make the UI feel janky and — worse — cause fast users to mis-click when buttons move out from under their cursor.
+**Rule: An element on screen before a change and still on screen after it must not change position.** The harm is specific — a target moving out from under a cursor mid-click, and a reader losing their place — and both require the element to *survive* the change. Survival, not geometry, is what makes this rule bind.
 
-A skeleton with no rendered text or interactions (just animated placeholders) doesn't constrain anything — when the body renders, no element is "moving," the body simply appears for the first time. The rule kicks in *the moment* a real button/link/text is on the page; from there, no reflows around it without user input.
+The test: **is there something here a user could be pointing at or reading that outlives this change and lands somewhere else?** If yes, it must not move. If nothing outlives it — a placeholder line replaced by the value it stood for, animated skeleton bars giving way to the body, a panel swapped for a different panel — then nothing moved. Something different is simply there now, and the rule has nothing to say about it.
 
-**Corollary: render what you safely can as early as possible.** If a piece of content doesn't depend on a network call — page chrome, hardcoded copy, headers, breadcrumbs, navigation, anything bundled with the route — render it in the loading state too. The user sees more of the page sooner, and they can start reading or clicking it before the data lands. The constraint is just that anything you render early must land in its final position: if data arriving will push it around, leave it for later (or pre-reserve its spot). The trap to avoid is "render as much as possible and figure out the layout later" — that's what produces the jank this rule exists to stop.
+**Reserving space has its own cost, and reserving it for something that can never coexist with what is there now is itself a defect.** A slot held open beside content it will never sit next to is dead space, and it reads as a rendering fault: a hover fill stopping short of its own border, a label truncated with room to spare beside it. "Reserve it just in case" is not the safe default — it is the other way to get this wrong. Weigh the shift you would prevent against the hole you would leave, and when nothing survives the change, leave no hole.
 
-Layout changes on the same page *after* user interaction (clicking a button that reveals more content) are more acceptable but still not ideal — prefer an animated transition over a jump when you do need to reflow. Navigating to a new page is fine; this rule is about in-place shifts. If you're unsure how to reconcile the design with this rule, or hit a genuine edge case (e.g. a countdown timer that must update continuously — `tabular-nums` keeps digit columns from reflowing), check in with me. One reasonable escape hatch for unavoidable reflow is to place clickable elements somewhere the shifting region won't push them.
+**What counts as the user doing something:** a change that is the direct, expected result of an action they just took — confirming in a dialog, expanding a section, submitting a form. Causal distance doesn't matter, and neither does whether the change lands in the surface they touched; committing a value inside a dialog may freely rewrite the field underneath it. What is *not* allowed is a change on data's own schedule — a query resolving, a subscription firing, an image finally measuring. The user didn't ask for it and isn't braced for it.
+
+**Corollary: content revealed *above* what the reader is looking at must be paid for out of the scroll position, not out of their place on the page.** Some reveals genuinely have to insert above — a feed in date order cannot put tomorrow below today — and inserting there pushes everything already painted down the viewport. The fix is to measure a chosen anchor's viewport position before the state change (in the event handler, while the old layout is still up) and correct `window.scrollY` by however far it moved, in a layout effect, before the browser paints. Two things follow from that: **do not animate the geometry of such a reveal** — a correction fighting a transition has to re-run every frame and is the fragile half of the pattern, so an upward reveal is instant — and **a page cannot scroll above its own top**, so a collapse near the top of the document will not have the scroll to give back; the remainder is a real shift, and the right move is to name it rather than pretend it did not happen.
+
+Even permitted reflows are worth softening: prefer an animated transition over a jump. Navigating to a new page is fine; this rule is about in-place shifts. If you hit a genuine edge case (a countdown timer that must update continuously — `tabular-nums` keeps digit columns from reflowing), check in with me. One reasonable escape hatch for unavoidable reflow is to place clickable elements somewhere the shifting region won't push them.
+
+**Rule: Render what you safely can as early as possible.** Anything not waiting on a network call — page chrome, hardcoded copy, headers, breadcrumbs, navigation, anything bundled with the route — belongs in the loading state too, so the user can read and click it before the data lands. The one constraint is the rule above, and here it does bind: what you render early *will* still be there when the data arrives, so it has to land in its final position. If incoming data would push it around, reserve its spot or leave it for later. The trap is "render as much as possible and sort the layout out afterwards" — that is precisely how you manufacture the shifts the first rule exists to prevent.
+
+**Rule: Parent and gamer surfaces are designed mobile-first; gedu and admin surfaces are designed desktop-default.** Families meet the product on a phone between other things, so their pages are laid out for a narrow viewport first and widen from there. Gedus and admins work at a desk — a gedu is prepping a session or writing one up on a laptop, an admin is managing the platform on a monitor — so their pages assume a wide landscape viewport (roughly 16:9 to 16:10) and are allowed to *use* that width: a wider container, two- or three-column arrangements, a reference column beside the main one, tables that stay tables. Mobile on those surfaces is supported and must not break, but it is the secondary layout, and collapsing to a single stack is an acceptable answer there. This is a deliberate site-wide split, not a per-page judgment call — don't build a gedu or admin page that wastes two thirds of the screen because the phone layout came first, and don't push a desktop-shaped grid onto a parent or gamer page.
 
 ### Loading & Disabled State
 
@@ -95,6 +122,14 @@ The pattern that works: hold a local `committing` boolean, flip it true *synchro
 
 Setting the flag *inside* `onSuccess` (or via a hook that does so) is too late and does not close the gap. The flag has to be live before any render after the click.
 
+**Rule: the loading affordance is a property of the call, chosen when you write it — never something discovered at runtime.** You are the one writing the query. You know whether it is a cached read, an indexed lookup of a bounded set, or a heavy aggregate over a third party. That knowledge picks the affordance; a timer that waits to find out does not. There are three categories and nothing else:
+
+1. **Already cached, or resolvable synchronously** → **no loading state at all**, ever. React Query knows this for you, and it is the strongest signal available because it costs nothing.
+2. **A near-instant call that still needs a network hop** — a small, indexed, bounded read: one node's children, a top-N search, a row by id. It lands in a frame or two. Render **nothing**, inside a container that already has its final size. No skeleton, no spinner, no delay, no fade. If such a call is ever slow that is an anomaly to investigate, not the case to design for.
+3. **A perceptibly slow call** — a large payload, a heavy aggregate, a third-party round trip. Render a structured skeleton **immediately**, with no delay, because you already know it is coming. Prefer ghosts shaped like the content (bars where rows will be) over one solid block.
+
+**Corollary: if you cannot tell which category a call falls into, you do not yet understand the query — go and find out.** Hedging with a timer is what that uncertainty used to buy, and it bought a loading state that was wrong in both directions: a flash on the fast path, and dead air on the slow one. The container keeping its final size across loading and loaded is what the layout rule needs; the skeleton was never the part doing that work.
+
 ### Date & Time Formatting
 
 **Rule: Pick the right tool for the date/time operation, and never use UTC as a stand-in for someone's local date.**
@@ -103,6 +138,7 @@ Setting the flag *inside* `onSuccess` (or via a hook that does so) is too late a
 - **Local-date strings** (calendar keys, "today" markers, anything `YYYY-MM-DD`-shaped that means *today in someone's zone*). Use `formatInTimeZone(new Date(), tz, "yyyy-MM-dd")` from `date-fns-tz`. Pick the timezone deliberately: usually the entity's zone (e.g. `product.timezone`) for entity-local rendering, or the viewer's local zone (no explicit `timeZone`) for personal data. Never both implicitly.
 - **Zone-to-zone conversion.** `fromZonedTime` / `toZonedTime` from `date-fns-tz` (already a project dep — see `src/lib/utils.ts`, `effective-status.ts`).
 - **Anti-pattern: never write `new Date().toISOString().slice(0, 10)`.** That's the date in UTC, not anyone's local date — for any non-UTC viewer it's off-by-one near midnight and silently wrong everywhere else without anyone noticing. If you find yourself reaching for it, you want `formatInTimeZone` with an explicit zone instead.
+- **Anti-pattern: never do day/week arithmetic on a Date that carries a zoned wall clock** — stepping a `toZonedTime` result by `± n × 86_400_000` (a local day is 24 hours except on the two DST transition days, so instant stepping repeats or skips a calendar date once a year), or mutating one with `setDate()` (it is a runtime-local Date, and a wall clock landing in the *runtime* zone's DST gap silently normalizes an hour away). Both misfire only when the runtime zone crosses a transition, so UTC CI can't catch either. The safe shape has three steps: read the wall clock from the zoned Date's **local** fields (never `getUTC*` — those agree only on a UTC runtime, and in any non-UTC browser they land on the wrong weekday once the runtime offset crosses midnight); do the day-stepping as UTC-pinned calendar arithmetic (`Date.UTC(y, m, d ± n)` read back via `getUTC*` — UTC has no DST, so day arithmetic there is exact; a `T12:00:00Z`-anchored date walk is the same trick); convert back to an instant with `fromZonedTime` at the end. Dates that are UTC-pinned end to end (built from `Date.UTC`/`...Z` strings and read only via `getUTC*`) are outside this rule — arithmetic on those is exact.
 
 **Rule: Anything with a time of day renders in the *viewer's* timezone — never the runtime default, never the source/product zone.** A true instant (a timestamptz column) or a date+time (a session, an event, a recurring slot) is shown in the viewer's IANA zone — resolved from the viewer's profile/settings, paired with a request-stable "now" so SSR and the first client render agree. Make the viewer zone a required argument of the shared date/time formatters so a call can't silently fall back to the runtime default; a genuinely zoneless date goes through the date-only path instead. When the displayed zone differs from the source (products are authored in `Europe/Helsinki`), surface the viewer's short tz abbrev next to the time so the adjustment is visible — the abbrev is already locale-formatted by `Intl`, so it is not a translated string. A recurring wall-clock slot can't be converted without a concrete date (the offset is DST-dependent): resolve one (the next occurrence of that weekday), turn it into an absolute instant, then derive the weekday + clock face and **re-group in viewer space** — a Helsinki Mon/Wed pair can shift to different viewer weekdays. Compute end times by adding the duration to the *instant* and re-formatting — never string-add the viewer-local start, or a DST transition inside the session corrupts it.
 
@@ -126,6 +162,20 @@ A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoke
 
 **Rule: Never use hardcoded colors or raw Tailwind color classes (e.g. `text-sky-400`, `bg-red-500`).** All colors must come from CSS custom properties defined in `src/app/globals.css` and referenced via semantic Tailwind classes (`text-primary`, `bg-destructive`, etc.). For non-CSS contexts (email templates, canvas), use the hex constants in `src/lib/constants/colors.ts`. This ensures a single source of truth for colors and brand identity.
 
+### Authored rich text
+
+Some user-authored fields are stored as **markdown** rather than plain text, because markdown is the one format that renders in-app *and* converts cleanly into the email the same content is later sent as. Three rules govern it:
+
+**Rule: markdown is rendered through the shared `Markdown` component (`src/components/ui/markdown.tsx`), never by converting it to an HTML string.** There is no `dangerouslySetInnerHTML` anywhere in `src/`, and adding one behind a field any user can type into is how a stored-XSS hole ships. The renderer produces React elements, refuses raw HTML in the source, and takes an **allow-list** of elements — anything outside it is unwrapped to its text rather than dropped, so an unsupported construct shows its words instead of silently deleting a paragraph of somebody's writing.
+
+**Rule: authored fields carry no links — the allow-list excludes `a` deliberately, and the editor offers no link control.** Off-site links from staff-authored copy to families are banned as a policy decision, not a rendering limitation, so a markdown link in a stored value unwraps to its plain label wherever it is rendered.
+
+**Rule: the rendered subset and the editor's toolbar are the same subset.** Whatever the writer can produce is exactly what the reader can see styled — no more (an editor button whose output the renderer strips is a trap) and no less (a construct that renders but cannot be typed can only arrive by paste and will surprise whoever edits the field next). Widening one means widening the other in the same change. Levels of the same construct have to stay *visually* distinguishable in the rendered output too: three heading buttons that produce two visible sizes is a choice the writer cannot see themselves making.
+
+**Rule: only the editor may be loaded on demand — the renderer is always in the page bundle.** They look like the same kind of dependency and are not. A rich editor is a large one (a document model, a parser and a serialiser) that the overwhelmingly common visit never opens, so splitting it out is a real saving and its placeholder can hold the exact box the editor will fill. A markdown *renderer* is small and every visit reads the field, so deferring it buys nothing and costs the thing that matters most: the body appears after the page around it, and any affordance that depends on it (an expand control, a clamp's fade) lands later still, shoving everything below down as it arrives. **Anything a reader's first paint depends on must be decidable without the browser, and must then stay decided** — a server cannot measure text, so a control gated on a measured height cannot exist in server HTML. Decide it from the source with arithmetic both ends run identically, and let no post-mount measurement revise it. Seeding from the source and correcting from a measurement is the tempting middle ground and is worse than either end: it puts the affordance on screen a hydration after the text it belongs to, on exactly the borderline content where the reader is least likely to expect the page to move. An estimate that is occasionally a line eager or a line late is the price, and it is the right one — pick the arithmetic so both kinds of error are small and local, and write down the tolerance you accepted next to it.
+
+**Rule: markdown is edited as rich text, not as syntax.** The people writing these fields are not writing documentation; asking them to remember what `##` does is how a formatting feature ends up unused. The stored value stays markdown either way — the syntax is an implementation detail of the column, not something a writer should ever meet. The editor (`src/components/ui/rich-text-editor.tsx`) is headless and styled with semantic tokens like everything else, is loaded on demand, and is only instantiated once a field is actually opened: a page holding many collapsed editors must not construct one per field.
+
 ### UI Component Reference
 A living style guide is available at `/admin/ui-components` (admin login required). It shows every component variant, composite patterns, and the color palette. **Reference this page before creating new UI patterns.** The source at `src/app/(dashboard)/admin/ui-components/page.tsx` serves as copy-paste examples.
 
@@ -133,11 +183,27 @@ A living style guide is available at `/admin/ui-components` (admin login require
 1. **Fast UI iteration.** It renders components with hand-built mock data, so you can see and tweak a component without manually recreating its state through the normal app flow (no logging in as the right role, seeding a DB row, joining a live call, etc.). Demos feed fixtures directly — including a full mock context where a component reads one (e.g. the voice room renders inside a fixture `VoiceRoomContext.Provider`).
 2. **A separation-of-concerns check.** It's a UI-only surface, so a component that's cleanly demoable here is one whose business logic lives elsewhere (in a provider/hook/service) and that just consumes data + actions. If a component is *painful* to demo — needs real network calls, can't be driven by fixtures — that difficulty is the smell signal that UI and business logic are too coupled; fix the coupling rather than forcing the demo.
 
-**When to add a demo here:** when you build or substantially restyle a reusable component or composite pattern, add (or update) its demo so the next person can iterate on it in isolation. **When not to:** one-off page-specific layouts, or anything that can't render without live side effects — if you can't construct a plausible fixture for it, treat that as a design smell first, not a reason to wire real logic into the page.
+**When to add a demo here — a piece earns one for exactly two reasons, and needs at least one of them:** it is *reused* (a component or composite pattern more than one surface renders, where the demo is the one place to see all its states side by side), or it *needs iteration* (the design isn't settled and refining it wants fast feedback cycles against fixtures rather than round-trips through the live app). **When not to:** anything with neither property — a one-off confirm dialog with settled copy, a page-specific layout — however component-shaped it looks. Also anything that can't render without live side effects — if you can't construct a plausible fixture for it, treat that as a design smell first, not a reason to wire real logic into the page.
+
+**Rule: for a piece that earns a demo, its home is decided by whether it needs the page around it to be judged.** The style guide is for anything that can be looked at on its own — which includes every overlay (a dialog, popover, sheet or toast opens above whatever summoned it, so the page contributes nothing to how it reads). A preview scene is for anything that can only be assessed against what sits near it — a feed, a card in a column, a panel in a rail are judged by how they sit against their neighbours, at that page's width, with that page's scrolling, and a demo card that isolates them throws away the only thing you needed to see. Ask what you would be unable to tell from a demo card; if the answer is "nothing", it belongs in the style guide, however large the thing is.
+
+**Corollary: one home, not two.** When a scene renders something in context, the style guide does not also carry it — two homes for one thing is worse than either alone, and it is the style guide's copy that goes stale, because the scene is what gets opened when the design is actually reviewed. A component reused across surfaces still earns its section: no single page owns it, and the style guide is the only place to see all its states side by side. Let the style guide keep the reusable pieces and the self-contained overlays, and let scenes keep the page-shaped compositions built from them.
+
+**Rule: a fixture id that feeds an identicon-style avatar must be a real, generated UUID, hardcoded as a literal.** The identicon is a pattern derived from the id's hex bytes, so a readable stand-in like `"mock-gamer-aino"` doesn't render a different-looking avatar — it renders a degenerate one (the non-hex characters parse to nothing, and the grid collapses), which quietly makes every avatar-bearing demo a false picture of the real thing. Generate the UUIDs once (`node -e "console.log(crypto.randomUUID())"`) and paste them in; **never** call a UUID generator at module load or render time, because the same person would then get a different face on every reload, which destroys the stability a fixture exists to provide and makes screenshots unreproducible. Where a spec or scenario needs to refer to a fixture person, give the ids a named map so the readable name lives in the key and the UUID stays the value.
+
+### Full-page preview scenes
+
+The style guide demos components; a *page-level* change has to be judged as a page — real chrome, real viewport, real scrolling. That's what a **preview scene** is: one fixture-driven page at `/preview/{surface}/{scenario}`, served by a single dynamic route from a central scene registry (`src/components/preview/`), admin-gated in the proxy, noindex, and listed automatically on the admin **UI Previews** page (its own sidebar entry, directly below UI Components). Scenes make page-level iteration cheap: sign the design off from fixtures first, wire it once afterwards.
+
+**Rule: the registry is the only place a scene is declared.** The UI Previews page enumerates it, so adding a scene or a scenario surfaces its links with no edit to that page and no hand-maintained index anywhere. Scene titles, descriptions and scenario labels are literal English on purpose: they are developer-facing metadata on an admin-only page, never shown to a user, so they do not belong in the message files.
+
+**Rule: a scene never owns a layout — one body, two shells.** It renders the same presentational page body the live route renders: either the *live* body (a showcase that cannot drift) or the *draft* body that is going to replace it. Promotion means the draft body becomes the route's body and the data shell swaps fixtures for service calls; the layout does not change in that step. A scene that becomes a permanent third fork of a page is the rot this rule exists to prevent.
+
+**Rule: chrome is composed, never simulated,** and never inherited by accident — each scene names the shell it wants and gets the real components (a dashboard scene renders the header plus the dashboard layout with no sidebar). **Rule: a scene mocks the whole page as the role meets it** — every section present, with backend-touching actions inert but rendering their real states, and pure-UI interactions working against local state. Faking or omitting a section because it's awkward to feed is the same separation-of-concerns smell the style guide exists to catch: fix the coupling (give the section a presentational core that takes rows/props), don't fake the section.
 
 ### Customer Enrollment & Billing
 
-See `docs/products-architecture.md` for the purchase / participation flow, the billing model (monthly family subscriptions for clubs, single upfront payments for camps/events), and refund windows.
+See `docs/products-architecture.md` for the purchase / participation flow and the billing model (monthly family subscriptions for clubs, single upfront payments for camps/events).
 
 ### Voice Chat (Daily.co)
 
@@ -152,12 +218,16 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | System | Location |
 |---|---|
 | Layout & scrolling | `src/components/layout/` |
+| Game accounts (Minecraft, Roblox) | `src/components/game-account/` |
 | Billing portal | `src/services/billing/` |
 | Parent PIN | `src/services/pin/` |
 | i18n | `src/i18n/` |
 | Email templates | `src/lib/email-templates/` |
+| Supabase clients & paged list reads | `src/lib/supabase/` |
 | Locations | `src/services/locations/` |
 | WhatsApp | `src/services/whatsapp/` |
+| Session feeds — shared gedu/family machinery | `src/components/session-feed/` |
+| Family product page (a family's club/camp/event page) | `src/components/family/product-page/` |
 | Voice — scheduled group rooms | `src/components/voice/` |
 | Voice — instant rooms | `src/components/voice/instant/` |
 | Discord bot | `src/app/api/discord/` |
@@ -176,9 +246,10 @@ All env vars are in `.env.local`. Keys for Supabase, Stripe, and Daily.co — in
 
 ## Database
 
-Migrations in `supabase/migrations/`. The migration workflow (push → regenerate types →
-dump `schema.sql`), the "read current state from `schema.sql`/`database.types.ts`, not
-migrations" rule, the generated-nullability fix patterns, and the access-control rules
+Migrations in `supabase/migrations/`. The migration workflow (push → regenerate types —
+`schema.sql` is CI-maintained and must not be dumped or edited by hand), the "read
+current state from `schema.sql`/`database.types.ts`, not migrations" rule, the
+generated-nullability fix patterns, and the access-control rules
 all live in **`supabase/CLAUDE.md`** (auto-loads when you work under `supabase/`). The
 always-on tripwires:
 
@@ -199,7 +270,7 @@ always-on tripwires:
 
 ## Testing
 
-Tests are in `tests/`, split into `unit/`, `integration/`, `db/`, and `e2e/`. The
+Tests are in `tests/`, split into `unit/`, `integration/`, `db/`, and `smoke/`. The
 classification rules and the per-category conventions (DB test helpers, integration-test
 route-handler mocking, unit setup) live in **`tests/CLAUDE.md`** (auto-loads when you
 work under `tests/`). Two things worth knowing from anywhere:
@@ -209,6 +280,9 @@ work under `tests/`). Two things worth knowing from anywhere:
   branch, not locally.
 - **Shared mock factories live in `tests/mocks/`** — add new mocks there rather than
   duplicating across files.
+- **`smoke/` is the only CI job that builds the app**, and it asserts security headers
+  and the per-request CSP against a served production build over plain HTTP. No browser
+  is launched there; a test that needs one does not belong in that directory.
 - **A new API route has to be classified in the integration suite's route posture
   registry** — its auth posture (with a written reason for anything that is not
   role-gated), how it takes its body, and the test that exercises it. The registry's

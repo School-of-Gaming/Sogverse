@@ -12,8 +12,10 @@ import {
 // running_late). Otherwise returns a primary "View" CTA regardless of which
 // actionable state we're in.
 //
-// `kind` lets the card pick a button variant; `labelText` is pre-resolved
-// so the card doesn't need to know the i18n keys.
+// `kind` tells the card whether this is an offer or a statement of fact — the
+// browse card renders the first as a worded hint with a chevron and the second
+// as muted text; `labelText` is pre-resolved so the card doesn't need to know
+// the i18n keys.
 export interface RegistrationCta {
   kind: "primary" | "disabled";
   labelText: string;
@@ -26,16 +28,24 @@ export function useRegistrationCta(
 
   // The state→behaviour decision lives in `registrationCtaKind`; this hook
   // only resolves the matching label. Every primary state shares the same
-  // "View" CTA so card buttons stay visually identical row-to-row — the
-  // seat-availability bar and footer carry the state signal, not the button.
+  // "View" wording so the openable cards read identically row-to-row — the
+  // seat-availability bar and the footer carry the state signal, not the CTA.
   const kind = registrationCtaKind(state);
   if (kind === null) return null;
   if (kind === "disabled") {
-    // Two states share the disabled outline button; the label says which —
-    // "Full" (no seats) vs. "Already started" (camp/event underway).
-    const labelText =
-      state.kind === "running_late" ? t("alreadyStarted") : t("fullDisabled");
-    return { kind, labelText };
+    // Two states share the muted dead-end label; the words say which —
+    // "Full" (no seats) vs. a timing lock. The timing lock reads differently
+    // per product: a camp is mid-term ("Already started"), whereas an event
+    // stays joinable until its session ends, so by the time it locks the
+    // event is finished ("Already over").
+    if (state.kind !== "running_late") {
+      return { kind, labelText: t("fullDisabled") };
+    }
+    return {
+      kind,
+      labelText:
+        state.phase === "over" ? t("alreadyEnded") : t("alreadyStarted"),
+    };
   }
   return { kind, labelText: t("viewDetails") };
 }

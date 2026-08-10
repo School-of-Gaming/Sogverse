@@ -13,6 +13,8 @@ import { UsersService } from "@/services/users";
 import {
   buildMunicipalityEntries,
   findMunicipalityBySlug,
+  selectClubsInMunicipality,
+  SCHOOLS_COUNTRY_CODE,
   type MunicipalityEntry,
 } from "@/lib/schools/municipalities";
 import { MunicipalityClubsBrowse } from "@/components/public/schools/municipality-clubs-browse";
@@ -35,10 +37,15 @@ interface MunicipalityPageData {
 /**
  * Resolve the `/schools/<slug>` URL to its municipality and prefetch the page's
  * first frame, using the viewer's RLS-scoped client (locations + published
- * municipality clubs are both anon-readable). We fetch the same two sets the
- * /schools list does, resolve the slug against every locale's name (so both
+ * municipality clubs are both anon-readable). We fetch the same two scoped sets
+ * the /schools list does, resolve the slug against every locale's name (so both
  * `helsinki` and `helsingfors` land here), and narrow the clubs + their seat
  * counts to this municipality.
+ *
+ * The narrowing goes through the same resolved-membership rule that decides
+ * which municipalities the /schools list links, so both delivery modes land
+ * here: an online club anchored at the municipality itself and an in-person one
+ * anchored at a site inside it. Format is filtered separately, downstream.
  *
  * Returns `null` — the page 404s — when the slug matches no real Finnish
  * municipality *or* when that municipality runs no clubs. The /schools list
@@ -54,22 +61,22 @@ interface MunicipalityPageData {
 const loadMunicipality = cache(
   async (slug: string, locale: string): Promise<MunicipalityPageData | null> => {
     const supabase = await createClient();
-    const [locations, allClubs] = await Promise.all([
-      new LocationsService(supabase).getAllLocations(),
+    const [municipalities, allClubs] = await Promise.all([
+      new LocationsService(supabase).getMunicipalitiesByCountry(
+        SCHOOLS_COUNTRY_CODE,
+      ),
       new ProductsService(supabase).listVisibleByTypes(["municipality_club"]),
     ]);
 
     const entries = buildMunicipalityEntries(
-      locations,
-      allClubs.map((c) => c.location_id),
+      municipalities,
+      allClubs.map((c) => c.locations),
       locale,
     );
     const municipality = findMunicipalityBySlug(slug, entries);
     if (!municipality) return null;
 
-    const muniClubs = allClubs.filter(
-      (c) => c.location_id === municipality.id,
-    );
+    const muniClubs = selectClubsInMunicipality(allClubs, municipality.id);
     if (muniClubs.length === 0) return null;
 
     const [counts, spokenLanguages] = await Promise.all([

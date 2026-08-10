@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { AudioLines, Lock, UserRoundSearch } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { buttonVariants } from "@/components/ui/button";
+import { resolveInternalPath } from "@/lib/navigation/internal-path";
 import { cn } from "@/lib/utils";
 
 interface JoinVoiceButtonProps {
@@ -33,15 +34,27 @@ interface JoinVoiceButtonProps {
    * Defaults to `false`; only the parent/gamer session cards pass it.
    */
   awaiting?: boolean;
+  /**
+   * Where leaving the voice room should land, overriding "the page this button
+   * was on".
+   *
+   * The default — the current pathname — is right for every surface where the
+   * page you launched from is the page you want back. It is wrong on the gedu
+   * dashboard, where the room belongs to a *group* and the useful destination
+   * after a session is that group's workspace, not the tile grid the gedu
+   * happened to click from. Gedu call sites therefore name the workspace
+   * explicitly, and every other role keeps the pathname default untouched.
+   */
+  backHref?: string;
   /** Button size variant — defaults to `sm` to match the dashboard card. */
   size?: "sm" | "default";
 }
 
 /**
  * The single Join Voice button shared across every surface that joins a
- * group voice room: parent / gamer `NextSessionCard`, the gedu dashboard's
- * prominent `GroupCard`, and every group card on the gedu session-details
- * page. An enabled `Link` to `/voice/group/[id]` when the window is open
+ * group voice room: the family enrollment cards and club pages, the gedu
+ * dashboard's prominent group card, and every group card on the gedu
+ * session-details page. An enabled `Link` to `/voice/group/[id]` when the window is open
  * (or a `<button>` firing `onJoinClick` when one is passed), a disabled
  * button with a lock icon + "Opens {date} at {time}" otherwise. The one
  * exception is `awaiting`: an unplaced gamer whose window is open can't join
@@ -55,12 +68,18 @@ interface JoinVoiceButtonProps {
  * state copy when the window is closed; that repetition is intentional
  * (full reuse over a one-off banner).
  *
- * The link always carries a `?back=<current path>` query so leaving the
- * voice room returns the user to the page they launched from instead of
- * the role dashboard. The voice route validates the path before honoring
- * it (must start with `/`, not `//`) so this surface can't be turned into
- * an open redirect. Callers don't need to pass anything for this — we read
- * the pathname here.
+ * The link carries a `?back=<internal path>` query so leaving the voice room
+ * returns the user somewhere useful instead of the role dashboard. It defaults
+ * to the page the button is on — most callers pass nothing and get that — and
+ * `backHref` overrides it where the launching page is not the right
+ * destination.
+ *
+ * **The value is resolved through `resolveInternalPath` before it is put in the
+ * URL**, and it is dropped entirely if it resolves off-origin. The voice route
+ * resolves it again on the way out, which is the check that actually protects
+ * the redirect; doing it here as well means this button cannot *emit* a link
+ * that promises an off-site destination, which is the half a reader hovering
+ * over it can see.
  */
 export function JoinVoiceButton({
   voiceIsOpen,
@@ -69,6 +88,7 @@ export function JoinVoiceButton({
   opensTime,
   onJoinClick,
   awaiting = false,
+  backHref,
   size = "sm",
 }: JoinVoiceButtonProps) {
   const t = useTranslations("voiceButton");
@@ -105,10 +125,13 @@ export function JoinVoiceButton({
         </button>
       );
     }
+    // An empty fallback is the "nothing safe to say" answer: the query is then
+    // omitted and the voice route falls back to the viewer's own dashboard.
+    const back = resolveInternalPath(backHref ?? pathname, "");
     const hrefWithBack =
-      voiceHref === "#" || !pathname
+      voiceHref === "#" || back === ""
         ? voiceHref
-        : `${voiceHref}?back=${encodeURIComponent(pathname)}`;
+        : `${voiceHref}?back=${encodeURIComponent(back)}`;
     return (
       <Link
         href={hrefWithBack}

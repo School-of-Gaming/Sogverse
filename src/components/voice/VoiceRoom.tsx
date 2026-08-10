@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { Mic, Loader2, PhoneOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,13 @@ import { ParticipantList } from "./ParticipantList";
 interface VoiceRoomProps {
   /** Optional title shown in the card header. Defaults to the localized "Voice room" string. */
   title?: string;
+  /**
+   * Optional control rendered at the right-hand end of the title row. Instant
+   * rooms put the room-link chip here, so a moderator can hand the link out
+   * mid-call; scheduled group rooms pass nothing (their room isn't shareable
+   * by link) and the row is then just the heading.
+   */
+  titleAccessory?: ReactNode;
   onLeave: () => Promise<void>;
   leaveLabel?: string;
 }
@@ -36,6 +43,7 @@ const DOCK_HEIGHT_ESTIMATE = "8rem";
 
 export function VoiceRoom({
   title,
+  titleAccessory,
   onLeave,
   leaveLabel,
 }: VoiceRoomProps) {
@@ -113,12 +121,20 @@ export function VoiceRoom({
           (also bordered rows) follows the same flush-section pattern. Chat stays
           carded — it wraps flat text, so its border earns its keep. */}
       <section className="space-y-4">
-        <div className="space-y-1">
-          <h2 className="flex items-center gap-2 text-sm font-medium">
-            <Mic className="h-4 w-4" />
-            {title ?? t('voiceRoom')}
-          </h2>
-          <p className="text-xs text-muted-foreground">{t('zonesDescription')}</p>
+        {/* Title block left, optional accessory pinned to the top right. The
+            accessory is rendered only when one is passed — an empty slot held
+            open beside a heading that will never have one is dead space, not
+            stability, and nothing here survives a swap anyway (the prop is
+            fixed per surface). */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1">
+            <h2 className="flex items-center gap-2 text-sm font-medium">
+              <Mic className="h-4 w-4" />
+              {title ?? t('voiceRoom')}
+            </h2>
+            <p className="text-xs text-muted-foreground">{t('zonesDescription')}</p>
+          </div>
+          {titleAccessory}
         </div>
 
         {/* Screen share display (above the zone list when active) — animated in/out */}

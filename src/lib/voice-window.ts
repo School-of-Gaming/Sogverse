@@ -13,11 +13,11 @@ import { formatDate, formatTime } from "@/lib/utils";
  * `SESSION_WINDOW_AFTER_MINUTES` after its end.
  *
  * Single source of truth for the locked-vs-Live boundary shared by the
- * parent/gamer dashboard (`expandUpcomingSessions`), the gedu dashboard
- * (`expandAssignedSessionsToCards`), and the per-group join surfaces that
- * call `computeVoiceState` (the gedu session-details page and the admin
- * product-details page). Keeping the arithmetic here means the boundary can
- * never drift between those surfaces.
+ * parent/gamer dashboards and family club pages, the gedu dashboard and
+ * workspace, and the per-group join surfaces that call `computeVoiceState`
+ * (the gedu session-details page and the admin product-details page). Keeping
+ * the arithmetic here means the boundary can never drift between those
+ * surfaces.
  *
  * Note this only answers "is the window open"; callers still feed
  * `SESSION_WINDOW_AFTER_MINUTES` into `enumerateRowOccurrences` separately to
