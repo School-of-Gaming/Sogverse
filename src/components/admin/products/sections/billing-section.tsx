@@ -7,11 +7,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 import { FormSection } from "../form-primitives";
-import { formLocksFor } from "../form-locks";
 import { PricingBlock } from "../pricing-block";
 import {
   SEAT_LIMIT_MODE_VALUES,
   effectivePricingShape,
+  offersUncapped,
+  withPaidMode,
   type FormState,
 } from "../product-form-state";
 import {
@@ -39,13 +40,11 @@ export function BillingSection({
   const pricingShape = effectivePricingShape(config);
   const showExternalInfo = billingMode === "external_contract";
 
-  // Seats: any product may be capped or uncapped (no seat count). The chooser
-  // and the waitlist toggle are pre-prod-locked for every type but municipality
-  // clubs (form-locks.ts), so the lock is a constant of the product being
-  // edited — it does not move while the form is open.
-  const locks = formLocksFor(config);
-  const lockSeat = locks.seatCount;
-  const lockWaitlist = locks.waitlist;
+  // Seats: a cap is available on every type and optional on all but one.
+  // Municipality clubs are contracted for a fixed number of places, so instead
+  // of a chooser whose second option they may never pick, they get the number
+  // field on its own — required, with nothing to decide first.
+  const showSeatLimitChooser = offersUncapped(config);
 
   return (
     <FormSection
@@ -72,7 +71,7 @@ export function BillingSection({
                     type="radio"
                     name="paidMode"
                     checked={active}
-                    onChange={() => setState({ ...state, paidMode: mode })}
+                    onChange={() => setState(withPaidMode(state, mode))}
                     className="mt-1"
                   />
                   <div className="min-w-0 flex-1">
@@ -120,54 +119,45 @@ export function BillingSection({
         </Field>
       )}
 
-      <Field label={t("labels.seatLimit")} hint={t("hints.seatLimitHint")}>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {SEAT_LIMIT_MODE_VALUES.map((mode) => {
-            const active = state.uncapped === (mode === "unlimited");
-            return (
-              <label
-                key={mode}
-                className={cn(
-                  "flex items-start gap-3 rounded-md border p-3 text-sm transition-colors",
-                  active ? "border-primary bg-primary/5" : "border-input",
-                  lockSeat
-                    ? "cursor-not-allowed opacity-60"
-                    : cn(
-                        "cursor-pointer",
-                        !active && "hover:border-foreground/30"
-                      )
-                )}
-              >
-                <input
-                  type="radio"
-                  name="seatLimitMode"
-                  checked={active}
-                  disabled={lockSeat}
-                  onChange={() =>
-                    setState({ ...state, uncapped: mode === "unlimited" })
-                  }
-                  className="mt-1 h-4 w-4"
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="font-medium">
-                    {t(`seatLimitModes.${mode}`)}
+      {showSeatLimitChooser && (
+        <Field label={t("labels.seatLimit")} hint={t("hints.seatLimitHint")}>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {SEAT_LIMIT_MODE_VALUES.map((mode) => {
+              const active = state.uncapped === (mode === "unlimited");
+              return (
+                <label
+                  key={mode}
+                  className={cn(
+                    "flex cursor-pointer items-start gap-3 rounded-md border p-3 text-sm transition-colors",
+                    active
+                      ? "border-primary bg-primary/5"
+                      : "border-input hover:border-foreground/30"
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="seatLimitMode"
+                    checked={active}
+                    onChange={() =>
+                      setState({ ...state, uncapped: mode === "unlimited" })
+                    }
+                    className="mt-1 h-4 w-4"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium">
+                      {t(`seatLimitModes.${mode}`)}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {t(`seatLimitModes.${mode}Description`)}
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    {t(`seatLimitModes.${mode}Description`)}
-                  </div>
-                </div>
-              </label>
-            );
-          })}
-        </div>
-      </Field>
+                </label>
+              );
+            })}
+          </div>
+        </Field>
+      )}
 
-      {/* Only reachable while a cap is set, which the chooser above normally
-          keeps in step with the lock. The one way in with the lock on is an
-          edit form loaded from a stored capped row whose type is no longer
-          allowed one — the value is shown rather than wiped, so the input has
-          to carry the lock too or it would be the one editable half of a locked
-          pair. */}
       {!state.uncapped && (
         <Field
           label={t("labels.seatCount")}
@@ -179,7 +169,6 @@ export function BillingSection({
             type="number"
             min="1"
             value={state.seatCount}
-            disabled={lockSeat}
             onChange={(e) =>
               setState({ ...state, seatCount: e.target.value })
             }
@@ -195,15 +184,9 @@ export function BillingSection({
           What stops that hidden `true` reaching the database is the build, which
           derives `waitlist_enabled` from the cap instead of copying this flag. */}
       {!state.uncapped && (
-        <label
-          className={cn(
-            "flex items-center gap-2 text-sm text-muted-foreground",
-            lockWaitlist ? "cursor-not-allowed opacity-60" : "cursor-pointer"
-          )}
-        >
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
           <Checkbox
             checked={state.waitlistEnabled}
-            disabled={lockWaitlist}
             onChange={(e) =>
               setState({ ...state, waitlistEnabled: e.target.checked })
             }

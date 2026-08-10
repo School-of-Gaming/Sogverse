@@ -3,6 +3,7 @@ import { type SupportedCurrency } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { ProductLongDescription, ProductTopic } from "@/types";
 import { formLocksFor } from "./form-locks";
+import { effectiveBillingMode } from "./product-type-config";
 import type {
   PaidMode,
   ProductTypeConfig,
@@ -19,8 +20,9 @@ export const REGISTRATION_OPENS_MODE_VALUES = [
   "scheduled",
 ] as const;
 // Seat-limit chooser values. "limited" pairs with a seat-count input;
-// "unlimited" means no seat cap (seat_count = null) and is available for every
-// product type. Maps to the `uncapped` boolean: unlimited ⇔ uncapped.
+// "unlimited" means no seat cap (seat_count = null). Maps to the `uncapped`
+// boolean: unlimited ⇔ uncapped. Offered for every type but municipality clubs
+// — see `offersUncapped`.
 export const SEAT_LIMIT_MODE_VALUES = ["limited", "unlimited"] as const;
 // End-date chooser values for consumer clubs (the only ongoing type). "ongoing"
 // means no end date (end_date = null); "dated" pairs with a date input. Maps to
@@ -173,9 +175,10 @@ export function initialState(
   config: ProductTypeConfig,
   uiLocale: SupportedLocale,
 ): FormState {
-  // Events default to free; everything else has a real billing mode already.
-  const initialPaidMode: PaidMode =
-    config.billing.mode === "free_or_paid" ? "free" : "paid";
+  // The type's own default billing mode, folded into the form's free/paid
+  // chooser. Events start free; clubs and camps start paid; municipality clubs
+  // have no choice to make and the pick is ignored for them.
+  const initialPaidMode = defaultPaidMode(config);
   // The locks in effect for a brand-new product of this type, resolved through
   // the same function the sections use — never FORM_LOCKS directly, so there is
   // one place deciding.
@@ -187,21 +190,7 @@ export function initialState(
     locks.consumerClubStartDateToday && config.productType === "consumer_club"
       ? formatInTimeZone(new Date(), FIXED_TIMEZONE, "yyyy-MM-dd")
       : "";
-  // Whether a fresh product of this type starts *capped*. Only one type does: a
-  // municipality club is contracted for a specific number of places, so it
-  // starts capped + waitlisted and the blank seatCount below forces the admin to
-  // type the contracted figure. Every other type starts open — the rest have the
-  // seat controls locked off entirely.
-  //
-  // The `!locks.seatCount` conjunct is redundant today — muni is the one type
-  // that unlocks the cap, so it is always true here — and is kept as a tripwire
-  // rather than simplified away. A capped default behind a *locked* seat control
-  // is a broken form, not merely a wrong default: it renders a fresh product as
-  // capped with a blank, disabled seat count, which validate() then refuses with
-  // no way for the admin to fix it. If muni is ever re-locked, this pins it back
-  // to uncapped instead.
-  const startsCapped =
-    !locks.seatCount && config.productType === "municipality_club";
+  const startsCapped = capacityDefaultsToCapped(config, initialPaidMode);
   return {
     translations: {
       [uiLocale]: { name: "", shortDescription: "", longDescription: [] },
@@ -235,7 +224,7 @@ export function initialState(
     primaryGeduFee: { status: "unknown", amount: "" },
     assistantGeduFee: { status: "none", amount: "" },
     municipalityFee: { status: "unknown", amount: "" },
-    // Capacity defaults — see `startsCapped` above for which types cap.
+    // Capacity defaults — see `capacityDefaultsToCapped` for who caps and why.
     uncapped: !startsCapped,
     // The waitlist only exists behind a cap, so it follows the same answer.
     waitlistEnabled: startsCapped,
@@ -257,6 +246,66 @@ export function effectivePricingShape(
   config: ProductTypeConfig,
 ): "monthly" | "upfront_total" {
   return config.pricingShape === "monthly" ? "monthly" : "upfront_total";
+}
+
+// ===== Capacity =====
+//
+// Three rules, all keyed to the money rather than the product type, because
+// what a cap *means* is keyed to the money: on a no-charge signup the RPC
+// validates the cap and writes the seat in one locked transaction, so the cap
+// is hard; on a paid one the seat arrives with the payment, so the cap is soft
+// and deliberately opt-in.
+
+/** The free/paid pick a brand-new product of this type starts on. */
+export function defaultPaidMode(config: ProductTypeConfig): PaidMode {
+  return config.defaultBillingMode === "free" ? "free" : "paid";
+}
+
+/**
+ * Whether "no seat limit" is on offer at all. Municipality clubs are contracted
+ * for a specific number of places, so they are the one type where it is not:
+ * their form drops the chooser and asks for the number outright.
+ *
+ * `initialState` and `existingFormState` both pin `uncapped` to false for them,
+ * so the rest of the form (which reads the flag, not the type) needs no second
+ * special case — and a stored uncapped muni row heals on its next save, with
+ * validation demanding the number before the payload is built.
+ */
+export function offersUncapped(config: ProductTypeConfig): boolean {
+  return config.productType !== "municipality_club";
+}
+
+/**
+ * Whether a fresh product starts capped. Municipality clubs must be (above),
+ * and **no-charge products default to it** so "forgot to cap" cannot happen:
+ * the admin either types a number or actively picks "no seat limit". Paid
+ * products default uncapped — a soft cap is a deliberate choice, not something
+ * to opt out of.
+ */
+export function capacityDefaultsToCapped(
+  config: ProductTypeConfig,
+  paidMode: PaidMode,
+): boolean {
+  if (!offersUncapped(config)) return true;
+  return effectiveBillingMode(config, paidMode) === "free";
+}
+
+/**
+ * Apply a free/paid change to the whole form state, capacity included.
+ *
+ * Flipping **to free** turns the cap on if the form is currently uncapped —
+ * same "cannot forget" rule the initial state applies, arriving at the same
+ * place by a different route — and takes the waitlist to its free default of
+ * on. Flipping **to paid** leaves capacity entirely alone: caps and waitlists
+ * are legal on both sides, so there is nothing to clear.
+ *
+ * Neither direction touches a seat count the admin already typed. That matters
+ * most on the edit form, where flipping a capped paid product to free must keep
+ * its stored cap rather than blanking it and demanding the number again.
+ */
+export function withPaidMode(state: FormState, paidMode: PaidMode): FormState {
+  if (paidMode !== "free" || !state.uncapped) return { ...state, paidMode };
+  return { ...state, paidMode, uncapped: false, waitlistEnabled: true };
 }
 
 export function startModeUsesDate(mode: StartMode): boolean {

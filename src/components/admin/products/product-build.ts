@@ -28,6 +28,7 @@ import {
   effectivePricingShape,
   FIXED_TIMEZONE,
   locationPickerMode,
+  offersUncapped,
   startModeUsesDate,
   startModeUsesThreshold,
   type FormState,
@@ -57,6 +58,7 @@ export type ValidationKey =
   | "startDateRequired"
   | "endDateRequired"
   | "thresholdInvalid"
+  | "seatCountRequired"
   | "seatCountInvalid"
   | "priceSessionMissing"
   | "priceSessionNegative"
@@ -179,9 +181,15 @@ export function validate(
 
   const billingMode = effectiveBillingMode(config, state.paidMode);
 
-  // Any product type may be uncapped (seat_count = null); only validate the
-  // count when the admin chose a limited number of seats.
+  // A cap is optional everywhere but municipality clubs, so the count is only
+  // validated once the admin is capped — but *once capped it is required*, and
+  // a blank box gets its own message. "Seat count must be a positive integer"
+  // is the wrong sentence for an empty field: nothing was typed, so nothing is
+  // wrong with what was typed. Municipality clubs are always capped (their
+  // `uncapped` is pinned false on load), which is what makes a stored uncapped
+  // muni row demand a number on its next save.
   if (!state.uncapped) {
+    if (state.seatCount.trim() === "") return err("seatCountRequired");
     const seat = Number(state.seatCount);
     if (!Number.isInteger(seat) || seat < 1) return err("seatCountInvalid");
   }
@@ -700,7 +708,11 @@ export function existingFormState(
     paidMode,
     prices,
     seatCount: product.seat_count != null ? String(product.seat_count) : "",
-    uncapped: product.seat_count == null,
+    // Municipality clubs have no uncapped option, so a stored `seat_count null`
+    // on one loads as capped-with-a-blank-number rather than as a state the
+    // form cannot show. Validation then refuses the save until the contracted
+    // figure is typed — the heal-on-write the cap requirement is delivered by.
+    uncapped: offersUncapped(config) && product.seat_count == null,
     waitlistEnabled: product.waitlist_enabled,
     primaryGeduFee: primaryGeduFeeDraft(product.primary_gedu_fee_cents),
     assistantGeduFee: assistantGeduFeeDraft(product.assistant_gedu_fee_cents),

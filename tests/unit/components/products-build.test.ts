@@ -49,8 +49,8 @@ function validConsumerState(): FormState {
   s.prices = {
     eur: { session: "10.00", month: "30.00" },
   };
-  // initialState now defaults uncapped=true (pre-prod seat lock), so the
-  // baseline "capped club" must opt back into a real seat count explicitly.
+  // A paid club defaults uncapped (soft caps are opt-in), so the baseline
+  // "capped club" opts back into a real seat count explicitly.
   s.uncapped = false;
   s.seatCount = "10";
   return s;
@@ -338,6 +338,37 @@ describe("validate", () => {
       expect(validate(s, consumerConfig)).toEqual({
         messageKey: "seatCountInvalid",
       });
+    });
+
+    it("asks for a blank seat count in its own words", () => {
+      // Not "must be a positive integer" — nothing was typed, so there is
+      // nothing wrong with what was typed, and the number-shaped complaint
+      // sends the admin looking for a mistake they did not make.
+      const s = validConsumerState();
+      s.seatCount = "";
+      expect(validate(s, consumerConfig)).toEqual({
+        messageKey: "seatCountRequired",
+      });
+    });
+
+    it("requires a cap on a municipality club", () => {
+      // The one type with no uncapped option: it is contracted for a specific
+      // number of places. A stored uncapped muni row loads as capped-and-blank
+      // (see existingFormState), so this is also the heal-on-write refusal.
+      const s = validMuniState();
+      s.seatCount = "";
+      expect(validate(s, muniConfig)).toEqual({
+        messageKey: "seatCountRequired",
+      });
+    });
+
+    it("accepts a free consumer club", () => {
+      // Clubs became free-or-paid; a free one collects no price at all, so the
+      // blank price map the paid path would refuse is fine here.
+      const s = validConsumerState();
+      s.paidMode = "free";
+      s.prices = { eur: { session: "", month: "" } };
+      expect(validate(s, consumerConfig)).toBeNull();
     });
 
     it("does NOT require seat count when free event is uncapped", () => {
@@ -644,6 +675,46 @@ describe("buildCreateInput", () => {
     const out = buildCreateInput(s, "consumer_club", consumerConfig);
     expect(out.seat_count).toBeNull();
     expect(out.billing_mode).toBe("paid");
+  });
+
+  it("emits a free, hard-capped consumer club with no prices", () => {
+    // The free club: billing_mode free, so the cap the RPC validates before it
+    // writes the seat is a hard one, and no price rows are collected at all.
+    const s = validConsumerState();
+    s.paidMode = "free";
+    s.uncapped = false;
+    s.seatCount = "16";
+    s.waitlistEnabled = true;
+    const out = buildCreateInput(s, "consumer_club", consumerConfig);
+    expect(out.billing_mode).toBe("free");
+    expect(out.seat_count).toBe(16);
+    expect(out.waitlist_enabled).toBe(true);
+    expect(out.prices).toEqual([]);
+  });
+
+  it("heals a stored uncapped municipality club into a required cap", () => {
+    // Muni has no uncapped option, so the row loads as capped-with-a-blank
+    // number and validation demands the contracted figure before any payload
+    // is built. The build itself never sees the uncapped state.
+    const state = existingFormState(
+      mockDetailRow({
+        product_type: "municipality_club",
+        billing_mode: "external_contract",
+        seat_count: null,
+        // A muni club is bounded and anchors to its funding municipality;
+        // without these, validation stops before it reaches the seat count.
+        end_date: "2026-12-01",
+        location_id: "00000000-0000-0000-0000-0000000000aa",
+      }),
+      muniConfig,
+      "en",
+    );
+
+    expect(state.uncapped).toBe(false);
+    expect(state.seatCount).toBe("");
+    expect(validate(state, muniConfig)).toEqual({
+      messageKey: "seatCountRequired",
+    });
   });
 
   it("only emits signup_threshold when the start mode uses one", () => {
