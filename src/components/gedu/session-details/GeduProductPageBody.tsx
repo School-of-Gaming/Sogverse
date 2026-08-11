@@ -27,7 +27,8 @@ import {
   geduChipPeople,
 } from "./roster-helpers";
 import { SessionDetailsBackLink } from "./BackLink";
-import { GamerRosterRow } from "./GamerRosterRow";
+import { ParticipantRosterRow } from "./ParticipantRosterRow";
+import { rosterContactEmail } from "./types";
 import { GroupNotesPanel, type GroupNotesDraft } from "./GroupNotesPanel";
 import { SiteNotesPanel, type SiteNotesDraft } from "./SiteNotesPanel";
 
@@ -303,7 +304,7 @@ export function GeduProductPageBody({
                   the message files. */}
               <span className="inline-flex items-center gap-1 before:mr-1 before:text-muted-foreground/50 before:content-['·']">
                 <Users className="h-4 w-4" aria-hidden />
-                {t("gamerCount", { count: assignedGroup.gamer_count })}
+                {t("participantCount", { count: assignedGroup.participant_count })}
               </span>
             </p>
           )}
@@ -460,12 +461,12 @@ function RailCard({
 }
 
 /** The gamer-count line the group card and every peer row share. */
-function GamerCount({ count }: { count: number }) {
+function ParticipantCount({ count }: { count: number }) {
   const t = useTranslations("gedu.sessionDetails");
   return (
     <span className="inline-flex shrink-0 items-center gap-1 text-[11px] tabular-nums text-muted-foreground">
       <Users className="h-3 w-3" aria-hidden />
-      {t("gamerCount", { count })}
+      {t("participantCount", { count })}
     </span>
   );
 }
@@ -530,7 +531,7 @@ function OtherGroupsRailCard({
                 <p className="min-w-0 flex-1 truncate text-sm font-medium leading-tight">
                   {group.name || t("untitledGroup")}
                 </p>
-                <GamerCount count={group.gamer_count} />
+                <ParticipantCount count={group.participant_count} />
               </div>
               {/* The chips are labelled, because the line above them already
                   carries a *gamer* count — an unlabelled row of faces next to
@@ -629,14 +630,14 @@ function GroupRailCard({
   const g = useTranslations("common");
   const roster = useMemo(() => group.roster ?? [], [group.roster]);
   const emails = useMemo(
-    () => deduplicateEmails(roster.map((r) => r.parent_email)),
+    () => deduplicateEmails(roster.map(rosterContactEmail)),
     [roster],
   );
 
   return (
     <RailCard
       title={t("railGroupHeading")}
-      trailing={<GamerCount count={group.gamer_count} />}
+      trailing={<ParticipantCount count={group.participant_count} />}
     >
       {isRemote && (
         <div className="flex justify-center">
@@ -668,18 +669,18 @@ function GroupRailCard({
 
       <div className="space-y-2 border-t border-border pt-3">
         <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-          {t("gamersLabel")}
+          {t("participantsLabel")}
         </p>
         {roster.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("emptyRoster")}</p>
         ) : (
           <ul className="space-y-1.5">
             {roster.map((g) => (
-              <GamerRosterRow
-                key={g.gamer_id}
-                gamer={g}
+              <ParticipantRosterRow
+                key={g.participant_id}
+                participant={g}
                 onSaveMinecraftUsername={onSaveMinecraftUsername}
-                minecraftStatus={minecraftStatuses?.[g.gamer_id]}
+                minecraftStatus={minecraftStatuses?.[g.participant_id]}
               />
             ))}
           </ul>

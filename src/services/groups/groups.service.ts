@@ -175,10 +175,13 @@ export class GroupsService {
   }
 
   /**
-   * Admin comp-enrollment: drops a gamer directly into the product as an
+   * Admin comp-enrollment: drops a participant directly into the product as an
    * active participation, bypassing payment, seat caps, registration windows,
-   * and the effective-status gate. Blocked server-side on consumer_club —
-   * recurring billing makes a no-payment comp awkward and we don't model it.
+   * and the effective-status gate. The participant is a child or, on a
+   * for-parents product, an adult taking a seat on their own account; the RPC
+   * decides which by their role and refuses a wrong-audience pick. Blocked
+   * server-side on subscription-billed clubs — recurring billing makes a
+   * no-payment comp awkward and we don't model it.
    *
    * This deliberately does NOT go through `apply_group_changes`: creating a
    * participation is an enrollment-lifecycle action (its domain siblings are
@@ -186,23 +189,23 @@ export class GroupsService {
    * structure. On success the caller should invalidate
    * `groupsKeys.byProduct(productId)` so the new chip appears in Unassigned.
    */
-  async addGamerToProduct(
+  async addParticipantToProduct(
     productId: string,
-    gamerId: string,
+    participantId: string,
   ): Promise<{ participation_id: string }> {
     const response = await fetch(
       `/api/admin/products/${productId}/participations`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ participantId: gamerId }),
+        body: JSON.stringify({ participantId }),
       },
     );
     if (!response.ok) {
       throw new Error(
         await readErrorMessage(
           response,
-          `Failed to add gamer (${response.status})`,
+          `Failed to add participant (${response.status})`,
         ),
       );
     }
@@ -270,7 +273,7 @@ export class GroupsService {
 
   /**
    * Admin un-enrollment: hard-deletes a participation — the inverse of
-   * addGamerToProduct. Hits the DELETE participations route, which calls
+   * addParticipantToProduct. Hits the DELETE participations route, which calls
    * cancel_participation(reason='admin_cancelled'). No refund is issued (see
    * the route). Blocked server-side on consumer_club, same as the add path. On
    * success the caller should invalidate groupsKeys.byProduct(productId) so the

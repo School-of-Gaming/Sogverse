@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import type { GroupPending } from "@/services/groups";
 import type { ProductGroupWithDetails } from "@/types";
-import { GamerChip } from "./gamer-chip";
+import { ParticipantChip } from "./participant-chip";
 import { GeduPill } from "./gedu-pill";
 
 interface GroupColumnProps {
@@ -204,7 +204,7 @@ export function GroupColumn({
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <Users className="h-3.5 w-3.5" />
             <span>
-              {t("group.gamerCount", { count: group.participations.length })}
+              {t("group.participantCount", { count: group.participations.length })}
             </span>
           </div>
         </CardHeader>
@@ -248,24 +248,25 @@ export function GroupColumn({
           {/* Participations row */}
           <div className="space-y-2">
             <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              {t("group.gamersLabel")}
+              {t("group.participantsLabel")}
             </Label>
             {group.participations.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t("group.empty")}</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {group.participations.map((p) => (
-                  <GamerChip
+                  <ParticipantChip
                     key={p.id}
                     participationId={p.id}
-                    gamerId={p.gamer_id}
-                    firstName={p.gamer_first_name}
-                    dateOfBirth={p.gamer_date_of_birth}
-                    gender={p.gamer_gender}
-                    parentFirstName={p.gamer_parent_first_name}
-                    parentLastName={p.gamer_parent_last_name}
-                    minecraftUsername={p.gamer_minecraft_username}
-                    minecraftUuid={p.gamer_minecraft_uuid}
+                    participantId={p.participant_id}
+                    participantEmail={p.participant_email}
+                    firstName={p.participant_first_name}
+                    dateOfBirth={p.participant_date_of_birth}
+                    gender={p.participant_gender}
+                    parentFirstName={p.parent_first_name}
+                    parentLastName={p.parent_last_name}
+                    minecraftUsername={p.participant_minecraft_username}
+                    minecraftUuid={p.participant_minecraft_uuid}
                     isPending={pending.moves.has(p.id) || pending.removes.has(p.id)}
                   />
                 ))}
@@ -282,7 +283,7 @@ export function GroupColumn({
         description={
           group.participations.length === 0
             ? t("group.deleteConfirmEmpty")
-            : t("group.deleteConfirmWithGamers", {
+            : t("group.deleteConfirmWithParticipants", {
                 count: group.participations.length,
               })
         }

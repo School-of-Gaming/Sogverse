@@ -1,6 +1,7 @@
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import {
   CLUB_FUTURE_SPECS,
+  SESSION_FEED_ADULT_ID,
   SESSION_FEED_GAMER_IDS,
   SESSION_FEED_ROSTER,
   SESSION_FEED_TIMEZONE,
@@ -21,7 +22,7 @@ import type {
  * all computed from a `now` the caller supplies. No absolute dates: whenever the
  * scene is opened it shows a plausible term around today.
  *
- * The roster is the same eight children the feed's attendance checklist uses,
+ * The roster is the same nine people the feed's attendance checklist uses,
  * so the names in a write-up and the names in the roster panel agree. Note
  * copy, names and emails are mock *data*, not UI copy, so they are not
  * translated — the same convention the other fixture files follow.
@@ -159,7 +160,7 @@ interface ScenarioConfig {
   peers: readonly {
     id: string;
     name: string;
-    gamerCount: number;
+    participantCount: number;
     /** The gedus teaching the peer group — each id renders an identicon. */
     gedus: readonly { id: string; firstName: string }[];
   }[];
@@ -508,8 +509,8 @@ function yearlongSpecs(): readonly EntrySpec[] {
       continue;
     }
     if (PART_MARKED_AT.has(index)) {
-      // Four of eight answered and then something else happened. It saved, it
-      // is still flagged, and it reads "4 of 8 marked" until someone finishes.
+      // Four of nine answered and then something else happened. It saved, it
+      // is still flagged, and it reads "4 of 9 marked" until someone finishes.
       past.push({
         kind: "past",
         report: YEARLONG_RECAPS[index % YEARLONG_RECAPS.length],
@@ -540,7 +541,7 @@ function yearlongSpecs(): readonly EntrySpec[] {
       continue;
     }
     // Rotate the absentee through the roster so the attendance summary is not
-    // "8 of 8" on every single row of a year.
+    // "9 of 9" on every single row of a year.
     const away =
       index % 3 === 0
         ? [SESSION_FEED_ROSTER[index % SESSION_FEED_ROSTER.length].id]
@@ -617,16 +618,16 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
         "Two siblings in this group (Aino and Väinö) — same parent email, so one message reaches both. Siiri needs pairing rather than free choice of partner. Room laptops 3 and 5 have flaky audio. Everything before last autumn predates write-ups, so the oldest entries are blank by design, not by neglect.",
     },
     peers: [
-      { id: "mock-group-b", name: "Monday B", gamerCount: 7, gedus: [PETRA] },
+      { id: "mock-group-b", name: "Monday B", participantCount: 7, gedus: [PETRA] },
       {
         id: "mock-group-c",
         name: "Monday C",
-        gamerCount: 6,
+        participantCount: 6,
         gedus: [PETRA, JOONAS],
       },
       // Newly split off and not staffed yet — the peer row's "no Gedus
       // assigned" line, which is a real state on a growing product.
-      { id: "mock-group-d", name: "Monday D", gamerCount: 4, gedus: [] },
+      { id: "mock-group-d", name: "Monday D", participantCount: 4, gedus: [] },
     ],
   },
 
@@ -710,13 +711,13 @@ const SCENARIOS: Record<GeduProductScenario, ScenarioConfig> = {
       {
         id: "mock-group-blue",
         name: "Builders blue",
-        gamerCount: 8,
+        participantCount: 8,
         gedus: [PETRA],
       },
       {
         id: "mock-group-green",
         name: "Builders green",
-        gamerCount: 7,
+        participantCount: 7,
         gedus: [JOONAS, MARKUS],
       },
     ],
@@ -742,7 +743,7 @@ export function buildGeduProductPageFixture(
     name: config.groupName,
     created_at: calendarDate(now, -config.startedDaysAgo),
     is_my_group: true,
-    gamer_count: SESSION_FEED_ROSTER.length,
+    participant_count: SESSION_FEED_ROSTER.length,
     gedus: [
       { id: GEDU_IDS.sanna, first_name: "Sanna" },
       { id: GEDU_IDS.petra, first_name: "Petra" },
@@ -755,7 +756,7 @@ export function buildGeduProductPageFixture(
     name: peer.name,
     created_at: calendarDate(now, -config.startedDaysAgo),
     is_my_group: false,
-    gamer_count: peer.gamerCount,
+    participant_count: peer.participantCount,
     gedus: peer.gedus.map((gedu) => ({
       id: gedu.id,
       first_name: gedu.firstName,
@@ -816,17 +817,18 @@ function calendarDate(now: Date, dayOffset: number): string {
 }
 
 /**
- * The eight feed regulars as roster rows. Ages, genders and Minecraft states are
- * spread across the group so every shape this surface can produce is on screen
- * at once.
+ * The nine feed regulars as roster rows — eight children and one adult. Ages,
+ * genders and Minecraft states are spread across the group so every shape this
+ * surface can produce is on screen at once.
  *
- * That is **two** rendered states, not three. The row draws a check for an
- * account with a verified UUID and nothing at all otherwise, so a name typed in
- * but never checked and no name at all land on the same treatment — the only
- * difference between them is the text, one showing the username and the other
- * the "none" placeholder. Both are here anyway, because that text is the thing a
- * gedu reads. The row's other two states (a check in flight, a name Mojang does
- * not know) can only come from a live lookup, which a preview never makes.
+ * That is **two** rendered states for the game account, not three. The row draws
+ * a check for an account with a verified UUID and nothing at all otherwise, so a
+ * name typed in but never checked and no name at all land on the same treatment
+ * — the only difference between them is the text, one showing the username and
+ * the other the "none" placeholder. Both are here anyway, because that text is
+ * the thing a gedu reads. The row's other two states (a check in flight, a name
+ * Mojang does not know) can only come from a live lookup, which a preview never
+ * makes.
  *
  * Two children share a parent email — that's the sibling case the
  * copy-all-emails helper de-duplicates.
@@ -835,6 +837,15 @@ function calendarDate(now: Date, dayOffset: number): string {
  * account is created by a parent who signed up with one. There is no
  * missing-email state in the UI any more, so a fixture withholding one would be
  * rehearsing a case the product does not have.
+ *
+ * **Marja is the adult**, and she is the case the empty half of the row exists
+ * for: `null` age, gender and game account, because those live on tables an
+ * adult has no row in, and her own address in `participant_email` where a child
+ * carries their parent's. She is deliberately *the same Marja* whose address
+ * two of the children already share — a parent who enrolled herself on the club
+ * her children attend is the likeliest real shape of this, and it makes the
+ * copy-all list's de-duplication meet the case where the duplicate is a
+ * participant rather than a sibling's parent.
  *
  * One address is deliberately very long. Roster rows have to survive an email
  * that is wider than the rail they sit in, and a fixture full of tidy
@@ -858,11 +869,25 @@ function buildRoster(now: Date): GeduAssignedProductRosterEntry[] {
     { age: 10, gender: "non_binary", minecraftUsername: "HildaHollow", verified: true, parentEmail: "kaisa.nieminen@example.com" },
   ];
 
-  return SESSION_FEED_ROSTER.map((gamer, index) => {
+  return SESSION_FEED_ROSTER.map((person, index) => {
+    if (person.id === SESSION_FEED_ADULT_ID) {
+      return {
+        participant_id: person.id,
+        first_name: person.firstName,
+        date_of_birth: null,
+        minecraft_username: null,
+        minecraft_uuid: null,
+        gender: null,
+        // No linked parent — she is the adult. The RPC's two contact fields are
+        // mutually exclusive and this is the other side of that.
+        parent_email: null,
+        participant_email: "marja.korhonen@example.com",
+      };
+    }
     const detail = details[index];
     return {
-      gamer_id: gamer.id,
-      first_name: gamer.firstName,
+      participant_id: person.id,
+      first_name: person.firstName,
       // Offset a few days past the birthday so the computed age is exact.
       date_of_birth: calendarDate(now, -(detail.age * 365 + 12)),
       minecraft_username: detail.minecraftUsername,
@@ -872,9 +897,8 @@ function buildRoster(now: Date): GeduAssignedProductRosterEntry[] {
           : null,
       gender: detail.gender,
       parent_email: detail.parentEmail,
-      // Every fixture here is a child, and a child row's contact is their
-      // parent's address. The adult-participant variant of the roster row is
-      // the roster step's work.
+      // A child's contact is their linked parent's address; their own profile
+      // email is the synthetic handle and is never emitted.
       participant_email: null,
     };
   });

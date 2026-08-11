@@ -502,7 +502,7 @@ describe("identicon fixture ids are real UUIDs", () => {
           expect(gedu.id, `${scenario}/${group.name}`).toMatch(UUID_V4);
         }
         for (const child of group.roster ?? []) {
-          expect(child.gamer_id, `${scenario}/${group.name}`).toMatch(UUID_V4);
+          expect(child.participant_id, `${scenario}/${group.name}`).toMatch(UUID_V4);
           if (child.minecraft_uuid !== null) {
             expect(child.minecraft_uuid).toMatch(UUID_V4);
           }
@@ -584,27 +584,54 @@ describe("every scenario exercises the reference rail's other-groups card", () =
 });
 
 /**
- * The roster row renders a parent email unconditionally — there is no
+ * The roster row renders a contact email unconditionally — there is no
  * missing-email state left in the UI, because a gamer account is created by a
- * parent who signed up with one. A fixture that dropped an address would render
- * a row with a hole in it and nothing would fail.
+ * parent who signed up with one and an adult is their own contact. A fixture
+ * that dropped an address would render a row with a hole in it and nothing
+ * would fail.
+ *
+ * **Exactly one of the two fields, never both**, is the invariant the RPC
+ * enforces and the row's whole variant switch rests on: `participant_email`
+ * non-null *is* "this is an adult seat". A fixture carrying both would make the
+ * adult variant render for a child, which is a picture of a product state that
+ * cannot happen.
  *
  * The long address is pinned for the same reason the roster row was redesigned:
  * an email has no useful upper bound, and a fixture of tidy short ones is how a
  * wrapping bug reaches a gedu's screen.
  */
-describe("every roster row carries a parent email", () => {
+describe("every roster row carries exactly one contact email", () => {
   const now = new Date("2026-02-11T09:00:00Z");
 
-  it("gives every child in every scenario an address", () => {
+  it("gives everyone in every scenario an address, and only one kind", () => {
     for (const scenario of GEDU_PRODUCT_SCENARIOS) {
       const { data } = buildGeduProductPageFixture(now, scenario);
       for (const group of data.groups) {
-        for (const child of group.roster ?? []) {
-          expect(child.parent_email, `${scenario}/${child.first_name}`)
-            .toBeTruthy();
+        for (const row of group.roster ?? []) {
+          const where = `${scenario}/${row.first_name}`;
+          expect(row.parent_email ?? row.participant_email, where).toBeTruthy();
+          expect(
+            row.parent_email !== null && row.participant_email !== null,
+            where,
+          ).toBe(false);
         }
       }
+    }
+  });
+
+  it("includes an adult seat, with its child-shaped fields empty", () => {
+    for (const scenario of GEDU_PRODUCT_SCENARIOS) {
+      const { data } = buildGeduProductPageFixture(now, scenario);
+      const roster = data.groups.find((g) => g.id === data.my_group_id)?.roster;
+      const adults = (roster ?? []).filter((r) => r.participant_email !== null);
+      expect(adults.length, scenario).toBe(1);
+      // The absence the adult variant renders. A fixture that gave the adult an
+      // age would make the badge and the age line coexist, which the row has no
+      // branch for and the product cannot produce.
+      expect(adults[0].date_of_birth).toBeNull();
+      expect(adults[0].gender).toBeNull();
+      expect(adults[0].minecraft_username).toBeNull();
+      expect(adults[0].minecraft_uuid).toBeNull();
     }
   });
 
@@ -612,7 +639,9 @@ describe("every roster row carries a parent email", () => {
     const { data } = buildGeduProductPageFixture(now, "club");
     const roster = data.groups.find((g) => g.id === data.my_group_id)?.roster;
     const longest = Math.max(
-      ...(roster ?? []).map((r) => (r.parent_email ?? "").length),
+      ...(roster ?? []).map(
+        (r) => (r.parent_email ?? r.participant_email ?? "").length,
+      ),
     );
     expect(longest).toBeGreaterThan(40);
   });

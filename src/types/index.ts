@@ -382,14 +382,19 @@ export type {
 //
 // Generated as `Json`; pin a structured shape here so consumers don't cast.
 // Roster + parent_email are populated only on the caller's own group; sister
-// groups carry just gamer_count + gedus[] so a gedu can see who they're
+// groups carry just participant_count + gedus[] so a gedu can see who they're
 // teaching alongside without leaking the sister-group roster.
 export interface GeduAssignedProductRosterEntry {
-  gamer_id: string;
+  participant_id: string;
   first_name: string;
+  /**
+   * The child-shaped facts, null together on an adult seat: an adult has no
+   * `gamer_profiles` row and no linked game account. Rendered as a deliberate
+   * absence, not as missing data.
+   */
   date_of_birth: string | null;
   minecraft_username: string | null;
-  /** UUID present only when the gamer has *verified* their Minecraft username via the verify flow. */
+  /** UUID present only when the account's Minecraft username is *verified*. */
   minecraft_uuid: string | null;
   gender: GenderType | null;
   parent_email: string | null;
@@ -412,7 +417,7 @@ export interface GeduAssignedProductGroup {
   name: string;
   created_at: string;
   is_my_group: boolean;
-  gamer_count: number;
+  participant_count: number;
   gedus: GeduAssignedProductGroupGedu[];
   /** Populated only when `is_my_group` is true; null otherwise. */
   roster: GeduAssignedProductRosterEntry[] | null;

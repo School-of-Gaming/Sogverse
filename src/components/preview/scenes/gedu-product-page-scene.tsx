@@ -166,7 +166,7 @@ export function GeduProductPageScene({
           : {
               ...group,
               roster: group.roster.map((member) =>
-                member.gamer_id === gamerId
+                member.participant_id === gamerId
                   ? {
                       ...member,
                       minecraft_username: trimmed.length > 0 ? trimmed : null,
@@ -201,7 +201,7 @@ export function GeduProductPageScene({
             : {
                 ...group,
                 roster: group.roster.map((member) =>
-                  member.gamer_id === gamerId
+                  member.participant_id === gamerId
                     ? { ...member, minecraft_uuid: SIMULATED_CHECK_UUID }
                     : member,
                 ),

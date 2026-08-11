@@ -261,7 +261,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     handlers: {
       POST: {
         posture: ADMIN_ONLY,
-        body: { kind: "json", schema: "adminEnrollGamerBody" },
+        body: { kind: "json", schema: "adminEnrollParticipantBody" },
         test: TESTS.productsParticipations,
       },
     },

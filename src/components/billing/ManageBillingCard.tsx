@@ -162,10 +162,10 @@ export function ManageBillingCard({
     covers: account.covers.map((cover) => {
       const productName =
         resolveTranslation(cover.productTranslations, locale)?.name ?? "";
-      // A gamer profile can legitimately have no first name; the club alone
-      // still identifies which subscription this account pays for.
-      return cover.gamerFirstName
-        ? t("coversItem", { name: cover.gamerFirstName, product: productName })
+      // A profile can legitimately have no first name; the club alone still
+      // identifies which subscription this account pays for.
+      return cover.participantFirstName
+        ? t("coversItem", { name: cover.participantFirstName, product: productName })
         : productName;
     }),
   }));

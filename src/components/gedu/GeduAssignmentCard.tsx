@@ -205,7 +205,7 @@ export function GeduAssignmentCard({
     productName,
     productType,
     groupName,
-    groupGamerCount,
+    groupParticipantCount,
     nextSessionStart,
     nextSessionEnd,
     hasVoiceRoom,
@@ -290,7 +290,7 @@ export function GeduAssignmentCard({
                     its own, so it has no business in the message files. */}
                 <span className="inline-flex items-center gap-1 tabular-nums before:mr-1 before:text-muted-foreground/50 before:content-['·']">
                   <Users className="h-3.5 w-3.5" aria-hidden />
-                  {d("gamerCount", { count: groupGamerCount })}
+                  {d("participantCount", { count: groupParticipantCount })}
                 </span>
               </p>
             </div>

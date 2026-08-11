@@ -40,7 +40,7 @@ export const updateGroupMemberMinecraftBody = z.object({
  * it in CI.
  */
 export const groupMemberMinecraftResult = z.object({
-  gamer_id: z.string(),
+  participant_id: z.string(),
   minecraft_username: z.string().nullable(),
   minecraft_uuid: z.string().nullable(),
 });

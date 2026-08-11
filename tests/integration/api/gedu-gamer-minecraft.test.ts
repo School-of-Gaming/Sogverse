@@ -66,7 +66,7 @@ function mockRpcSuccess(
 ) {
   mockRpc.mockResolvedValue({
     data: {
-      gamer_id: GAMER_ID,
+      participant_id: GAMER_ID,
       minecraft_username: username,
       minecraft_uuid: uuid,
     },

@@ -190,7 +190,7 @@ function Workspace({
   const feedRoster = useMemo<SessionFeedGamer[]>(
     () =>
       feed.roster.map((member) => ({
-        id: member.gamer_id,
+        id: member.participant_id,
         firstName: member.first_name,
       })),
     [feed.roster],
@@ -222,7 +222,7 @@ function Workspace({
       ...product,
       groups: product.groups.map((group) =>
         group.id === product.my_group_id
-          ? { ...group, roster: feed.roster, gamer_count: feed.roster.length }
+          ? { ...group, roster: feed.roster, participant_count: feed.roster.length }
           : group,
       ),
     }),
@@ -292,7 +292,7 @@ function Workspace({
       changed.map((gamer) =>
         recordAttendance.mutateAsync({
           sessionDate,
-          gamerId: gamer.id,
+          participantId: gamer.id,
           status: draft.attendance[gamer.id] ?? null,
         }),
       ),

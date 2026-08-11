@@ -20,8 +20,14 @@ import type { GeduAssignedProductGroup } from "@/types";
  */
 
 /**
- * "Copy all parent emails (7)" — one comma-separated list the gedu can paste
+ * "Copy all contact emails (7)" — one comma-separated list the gedu can paste
  * straight into Gmail.
+ *
+ * It is **every** address on the roster, which since 00173 means an adult
+ * participant's own address alongside the children's parents. The whole point
+ * of the button is "mail this group", and a group mail that silently omits the
+ * one member who is their own contact is worse than no button — the gedu would
+ * have no way to notice.
  */
 export function CopyAllEmailsButton({ emails }: { emails: string[] }) {
   const t = useTranslations("gedu.sessionDetails");
@@ -42,7 +48,7 @@ export function CopyAllEmailsButton({ emails }: { emails: string[] }) {
       )}
       {copied
         ? t("allEmailsCopied")
-        : t("copyAllParentEmails", { count: emails.length })}
+        : t("copyAllContactEmails", { count: emails.length })}
     </Button>
   );
 }
@@ -60,8 +66,8 @@ export function geduChipPeople(
 }
 
 /**
- * Strip nulls and de-duplicate so the same parent (e.g. two siblings in
- * the same group) only appears once in the pasted list.
+ * Strip nulls and de-duplicate so the same address (e.g. two siblings in the
+ * same group sharing a parent) only appears once in the pasted list.
  */
 export function deduplicateEmails(emails: (string | null)[]): string[] {
   const seen = new Set<string>();

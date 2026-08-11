@@ -234,7 +234,7 @@ describe("get_gedu_assigned_product", () => {
       expect(mine?.group_id).toBe(myGroupId);
       // Both groups exist on the product; one active gamer sits in each.
       expect(mine?.group_count).toBe(2);
-      expect(mine?.gamer_count).toBe(2);
+      expect(mine?.participant_count).toBe(2);
       expect(mine?.product_translations.length).toBeGreaterThan(0);
       expect(mine?.schedule_slots.length).toBeGreaterThan(0);
     });
@@ -269,14 +269,14 @@ describe("get_gedu_assigned_product", () => {
 
       // Own group: flagged, roster present with the one active gamer.
       expect(mine?.is_my_group).toBe(true);
-      expect(mine?.gamer_count).toBe(1);
+      expect(mine?.participant_count).toBe(1);
       expect(mine?.roster).toHaveLength(1);
       expect(mine?.gedus.map((g) => g.id)).toEqual([TEST_IDS.GEDU]);
 
       // Sister group: NOT flagged, roster withheld even though it has an
       // active participant. This is the privacy guarantee.
       expect(sister?.is_my_group).toBe(false);
-      expect(sister?.gamer_count).toBe(1);
+      expect(sister?.participant_count).toBe(1);
       expect(sister?.roster).toBeNull();
     });
 
@@ -288,7 +288,7 @@ describe("get_gedu_assigned_product", () => {
       const mine = result.groups.find((g) => g.id === myGroupId);
       const entry = mine?.roster?.[0];
 
-      expect(entry?.gamer_id).toBe(TEST_IDS.GAMER);
+      expect(entry?.participant_id).toBe(TEST_IDS.GAMER);
       expect(entry?.first_name).toBe("Test");
       expect(entry?.date_of_birth).toBe("2015-06-15");
       expect(entry?.gender).toBe("boy");
@@ -300,10 +300,10 @@ describe("get_gedu_assigned_product", () => {
       expect(entry?.parent_email).not.toBeNull();
     });
 
-    it("excludes non-active participations from the roster and gamer_count", async () => {
+    it("excludes non-active participations from the roster and participant_count", async () => {
       // Flip GAMER's own-group participation through every non-active status
       // and assert it disappears. Pins the `status = 'active'` filter shared
-      // by the roster sub-aggregate and the gamer_count sub-select.
+      // by the roster sub-aggregate and the participant_count sub-select.
       //
       // A CHECK constraint requires waitlisted to carry a waitlisted_at. The
       // admin (service-role) client bypasses RLS but NOT CHECK constraints.
@@ -335,7 +335,7 @@ describe("get_gedu_assigned_product", () => {
         const result = geduAssignedProduct.parse(data);
         const mine = result.groups.find((g) => g.id === myGroupId);
         expect(mine?.roster).toEqual([]);
-        expect(mine?.gamer_count).toBe(0);
+        expect(mine?.participant_count).toBe(0);
       }
 
       await admin

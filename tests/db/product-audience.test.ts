@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { geduGroupFeed } from "@/services/gedu-sessions/gedu-sessions.contracts";
+import {
+  attendanceMarkResult,
+  geduGroupFeed,
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 import { geduAssignedProduct } from "@/services/assignments/assignments.contracts";
 import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
 import {
@@ -10,7 +13,11 @@ import {
   createAuthenticatedClient,
 } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import {
+  createScheduleSlot,
+  createTestProduct,
+  deleteTestProducts,
+} from "./product-helpers";
 
 /**
  * A product's AUDIENCE, and the seat a parent may take on their own account
@@ -23,7 +30,7 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  *      TypeScript cannot see — `min_age` reads as merely nullable there — so a
  *      test is the only thing that keeps "null iff no gamer audience" true.
  *   2. **The pre-money gates.** `create_participation`, `join_waitlist` (via
- *      its guarded wrapper) and `admin_enroll_gamer` all decide the same two
+ *      its guarded wrapper) and `admin_enroll_participant` all decide the same two
  *      questions: is this the payer's own seat, and does the product admit that
  *      audience. Each is asserted in BOTH directions, because a gate that
  *      refuses everything passes a one-sided test.
@@ -46,6 +53,18 @@ const PRODUCT_BOTH = "00000000-0000-0000-0000-000000000612";
 const GROUP_ROSTER = "00000000-0000-0000-0000-000000000613";
 const PRODUCT_ROSTER = "00000000-0000-0000-0000-000000000614";
 const PRODUCT_AGE_PROBE = "00000000-0000-0000-0000-000000000615";
+
+/**
+ * `YYYY-MM-DD`, `offset` days from today. The fixture products run in UTC, so a
+ * UTC-pinned walk is exact here rather than merely convenient.
+ */
+function dayOffset(offset: number): string {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() + offset);
+  return d.toISOString().slice(0, 10);
+}
+
+const YESTERDAY = dayOffset(-1);
 
 const ALL_PRODUCTS = [
   PRODUCT_GAMERS,
@@ -80,7 +99,7 @@ describe("product audience", () => {
 
     // FREE consumer clubs: the free branch of create_participation writes the
     // row immediately, so a gate's verdict is observable without Stripe, and
-    // admin_enroll_gamer accepts them (it refuses only PAID consumer clubs,
+    // admin_enroll_participant accepts them (it refuses only PAID consumer clubs,
     // whose seat needs a subscription it cannot create). No dates, so nothing
     // here depends on how effective_status reads a calendar.
     const common = {
@@ -113,6 +132,14 @@ describe("product audience", () => {
       id: PRODUCT_ROSTER,
       forGamers: true,
       forParents: true,
+      startDate: dayOffset(-30),
+    });
+    // A slot on yesterday's weekday, so the group has one finished session an
+    // attendance mark can land on. 09:00 UTC has passed on any day already in
+    // the past, which is what record_attendance's roll-call boundary needs.
+    await createScheduleSlot(admin, PRODUCT_ROSTER, {
+      weekday: (new Date(`${YESTERDAY}T00:00:00Z`).getUTCDay() + 6) % 7,
+      startTime: "09:00",
     });
 
     for (const id of ALL_PRODUCTS.filter((p) => p !== PRODUCT_AGE_PROBE)) {
@@ -483,14 +510,14 @@ describe("product audience", () => {
   });
 
   // -------------------------------------------------------------------------
-  // admin_enroll_gamer — the comp-enrollment path
+  // admin_enroll_participant — the comp-enrollment path
   // -------------------------------------------------------------------------
 
-  describe("admin_enroll_gamer", () => {
+  describe("admin_enroll_participant", () => {
     it("comp-enrolls an adult as their own customer on a for-parents product", async () => {
       // This RPC is told no customer — it derives one. For a `customer` profile
       // that derivation is "themselves", which is the whole self case.
-      const { data, error } = await adminAuth.rpc("admin_enroll_gamer", {
+      const { data, error } = await adminAuth.rpc("admin_enroll_participant", {
         p_product_id: PRODUCT_PARENTS,
         p_participant_id: TEST_IDS.CUSTOMER_2,
       });
@@ -499,7 +526,7 @@ describe("product audience", () => {
     });
 
     it("refuses an adult on a gamers-only product", async () => {
-      const { error } = await adminAuth.rpc("admin_enroll_gamer", {
+      const { error } = await adminAuth.rpc("admin_enroll_participant", {
         p_product_id: PRODUCT_GAMERS,
         p_participant_id: TEST_IDS.CUSTOMER_2,
       });
@@ -507,7 +534,7 @@ describe("product audience", () => {
     });
 
     it("refuses a child on a parents-only product", async () => {
-      const { error } = await adminAuth.rpc("admin_enroll_gamer", {
+      const { error } = await adminAuth.rpc("admin_enroll_participant", {
         p_product_id: PRODUCT_PARENTS,
         p_participant_id: TEST_IDS.GAMER,
       });
@@ -515,7 +542,7 @@ describe("product audience", () => {
     });
 
     it("still resolves a child's customer through the parent link", async () => {
-      const { data, error } = await adminAuth.rpc("admin_enroll_gamer", {
+      const { data, error } = await adminAuth.rpc("admin_enroll_participant", {
         p_product_id: PRODUCT_GAMERS,
         p_participant_id: TEST_IDS.GAMER,
       });
@@ -572,8 +599,8 @@ describe("product audience", () => {
       expect(error).toBeNull();
 
       const feed = geduGroupFeed.parse(data);
-      const adult = feed.roster.find((r) => r.gamer_id === TEST_IDS.CUSTOMER);
-      const child = feed.roster.find((r) => r.gamer_id === TEST_IDS.GAMER);
+      const adult = feed.roster.find((r) => r.participant_id === TEST_IDS.CUSTOMER);
+      const child = feed.roster.find((r) => r.participant_id === TEST_IDS.GAMER);
 
       expect(adult?.participant_email).toBe(TEST_CREDENTIALS.CUSTOMER.email);
       // A gamer's own profile email is the synthetic
@@ -591,8 +618,8 @@ describe("product audience", () => {
 
       const result = geduAssignedProduct.parse(data);
       const mine = result.groups.find((g) => g.id === GROUP_ROSTER);
-      const adult = mine?.roster?.find((r) => r.gamer_id === TEST_IDS.CUSTOMER);
-      const child = mine?.roster?.find((r) => r.gamer_id === TEST_IDS.GAMER);
+      const adult = mine?.roster?.find((r) => r.participant_id === TEST_IDS.CUSTOMER);
+      const child = mine?.roster?.find((r) => r.participant_id === TEST_IDS.GAMER);
 
       expect(adult?.participant_email).toBe(TEST_CREDENTIALS.CUSTOMER.email);
       expect(child?.participant_email).toBeNull();
@@ -608,19 +635,80 @@ describe("product audience", () => {
       const snapshot = productGroupsSnapshot.parse(data);
       const group = snapshot.groups.find((g) => g.id === GROUP_ROSTER);
       const adult = group?.participations.find(
-        (p) => p.gamer_id === TEST_IDS.CUSTOMER,
+        (p) => p.participant_id === TEST_IDS.CUSTOMER,
       );
       const child = group?.participations.find(
-        (p) => p.gamer_id === TEST_IDS.GAMER,
+        (p) => p.participant_id === TEST_IDS.GAMER,
       );
 
       // An adult has no linked parent, so the two name fields are empty and the
       // email is the only contact the chip can show. The child row is the exact
       // mirror.
       expect(adult?.participant_email).toBe(TEST_CREDENTIALS.CUSTOMER.email);
-      expect(adult?.gamer_parent_first_name).toBeNull();
+      expect(adult?.parent_first_name).toBeNull();
       expect(child?.participant_email).toBeNull();
-      expect(child?.gamer_parent_first_name).not.toBeNull();
+      expect(child?.parent_first_name).not.toBeNull();
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Attendance for an adult seat
+  // -------------------------------------------------------------------------
+
+  /**
+   * A gedu marks an adult present exactly as they mark a child, and the claim
+   * is worth a test precisely because **nothing was written to make it true**.
+   * `session_attendance` is participant-keyed and `record_attendance`'s target
+   * check asks only "is this person on this group's active roster" — no role,
+   * no parent link. So the only way this breaks is if someone later adds a
+   * branch that assumes a gamer, and this is what would catch them.
+   */
+  describe("attendance on an adult seat", () => {
+    it("records and clears a parent's own mark, with no special case", async () => {
+      const marked = await geduAuth.rpc("record_attendance", {
+        p_group_id: GROUP_ROSTER,
+        p_session_date: YESTERDAY,
+        p_participant_id: TEST_IDS.CUSTOMER,
+        p_status: "present",
+      });
+      expect(marked.error).toBeNull();
+      // Parsed through the app's own contract, which is what makes this file
+      // coverage for 00175's renamed result key rather than for the write alone.
+      const result = attendanceMarkResult.parse(marked.data);
+      expect(result.participant_id).toBe(TEST_IDS.CUSTOMER);
+      expect(result.status).toBe("present");
+
+      // The mark reaches the gedu's feed on the same key the roster row is
+      // drawn from — the sparse attendance map is participant-keyed too, so an
+      // adult's mark is findable by the same lookup a child's is.
+      const feed = geduGroupFeed.parse(
+        (await geduAuth.rpc("get_gedu_group_feed", { p_group_id: GROUP_ROSTER }))
+          .data,
+      );
+      const session = feed.sessions.find((s) => s.session_date === YESTERDAY);
+      expect(session?.attendance[TEST_IDS.CUSTOMER]).toBe("present");
+
+      const cleared = await geduAuth.rpc("record_attendance", {
+        p_group_id: GROUP_ROSTER,
+        p_session_date: YESTERDAY,
+        p_participant_id: TEST_IDS.CUSTOMER,
+        p_status: "",
+      });
+      expect(cleared.error).toBeNull();
+      expect(attendanceMarkResult.parse(cleared.data).status).toBeNull();
+    });
+
+    it("still refuses a mark aimed at someone off the roster", async () => {
+      // The target check is the same one that admits the adult above. If it
+      // had been loosened to let adults through, this is the case that would
+      // stop failing.
+      const { error } = await geduAuth.rpc("record_attendance", {
+        p_group_id: GROUP_ROSTER,
+        p_session_date: YESTERDAY,
+        p_participant_id: TEST_IDS.ADMIN,
+        p_status: "present",
+      });
+      expect(error?.code).toBe("42501");
     });
   });
 });

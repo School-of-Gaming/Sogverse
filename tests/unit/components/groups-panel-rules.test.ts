@@ -4,7 +4,7 @@ import {
   dragSubjectsFrom,
   isSubscriptionShaped,
   readDropData,
-  readGamerDragData,
+  readChipDragData,
   resolveDrop,
   type DragSubject,
 } from "@/components/admin/products/groups/panel-rules";
@@ -38,20 +38,20 @@ const toUnassigned = { kind: "move", toGroupId: null } as const;
 const toWaitlist = { kind: "waitlist" } as const;
 const toRemoveZone = { kind: "remove" } as const;
 
-describe("readGamerDragData", () => {
+describe("readChipDragData", () => {
   it("reads a well-formed chip payload", () => {
     expect(
-      readGamerDragData({ participationId: "p1", firstName: "Aino" }),
+      readChipDragData({ participationId: "p1", firstName: "Aino" }),
     ).toEqual({ participationId: "p1", firstName: "Aino" });
   });
 
   it("rejects anything that isn't one", () => {
-    expect(readGamerDragData(null)).toBeNull();
-    expect(readGamerDragData(undefined)).toBeNull();
-    expect(readGamerDragData("p1")).toBeNull();
-    expect(readGamerDragData({ participationId: "p1" })).toBeNull();
-    expect(readGamerDragData({ firstName: "Aino" })).toBeNull();
-    expect(readGamerDragData({ participationId: 7, firstName: "Aino" })).toBeNull();
+    expect(readChipDragData(null)).toBeNull();
+    expect(readChipDragData(undefined)).toBeNull();
+    expect(readChipDragData("p1")).toBeNull();
+    expect(readChipDragData({ participationId: "p1" })).toBeNull();
+    expect(readChipDragData({ firstName: "Aino" })).toBeNull();
+    expect(readChipDragData({ participationId: 7, firstName: "Aino" })).toBeNull();
   });
 });
 
@@ -251,14 +251,14 @@ describe("dragSubjectsFrom", () => {
   ): Participation {
     return {
       id,
-      gamer_id: `gamer-of-${id}`,
-      gamer_first_name: "Aino",
-      gamer_date_of_birth: null,
-      gamer_gender: null,
-      gamer_minecraft_username: null,
-      gamer_minecraft_uuid: null,
-      gamer_parent_first_name: null,
-      gamer_parent_last_name: null,
+      participant_id: `gamer-of-${id}`,
+      participant_first_name: "Aino",
+      participant_date_of_birth: null,
+      participant_gender: null,
+      participant_minecraft_username: null,
+      participant_minecraft_uuid: null,
+      parent_first_name: null,
+      parent_last_name: null,
       participant_email: null,
       status: "active",
       signed_up_at: "2026-01-01T00:00:00Z",

@@ -50,6 +50,8 @@ export const SESSION_FEED_TIMEZONE = TIMEZONE;
  * generating them at module load would hand every reload a different avatar for
  * the same child, which is exactly the drift a fixture exists to avoid.
  */
+export const SESSION_FEED_ADULT_ID = "07981ead-c695-4cac-be1e-d88d5c13306f";
+
 export const SESSION_FEED_GAMER_IDS = {
   aino: "e1dd1bcd-1b1b-408a-adab-bacb876d4bb2",
   vaino: "606abb0b-52fa-4de4-9b63-be5903ba08d8",
@@ -62,9 +64,16 @@ export const SESSION_FEED_GAMER_IDS = {
 } as const;
 
 /**
- * Eight regulars with plausible Finnish and Swedish first names — enough that
- * "6 of 8 present" reads like a real group and the attendance checklist has to
- * wrap.
+ * Eight child regulars with plausible Finnish and Swedish first names, plus one
+ * adult holding a seat of her own — enough that "6 of 9 present" reads like a
+ * real group and the attendance checklist has to wrap.
+ *
+ * Marja is last and is not in SESSION_FEED_GAMER_IDS, because she is not a
+ * gamer: she is a parent on a for-parents club. She is on this list because a
+ * gedu marks her present exactly as they mark a child — the attendance table is
+ * participant-keyed and has no branch for her — so a fixture that left her off
+ * the checklist while showing her on the rail roster would be rehearsing a
+ * split the product does not have.
  */
 export const SESSION_FEED_ROSTER: readonly SessionFeedGamer[] = [
   { id: SESSION_FEED_GAMER_IDS.aino, firstName: "Aino" },
@@ -75,6 +84,7 @@ export const SESSION_FEED_ROSTER: readonly SessionFeedGamer[] = [
   { id: SESSION_FEED_GAMER_IDS.siiri, firstName: "Siiri" },
   { id: SESSION_FEED_GAMER_IDS.emil, firstName: "Emil" },
   { id: SESSION_FEED_GAMER_IDS.hilda, firstName: "Hilda" },
+  { id: SESSION_FEED_ADULT_ID, firstName: "Marja" },
 ];
 
 /**
@@ -144,7 +154,7 @@ export type EntrySpec =
       /**
        * A **part-marked** sheet: only the ids listed here get a mark, everyone
        * else on the roster stays unmarked. This is the state a save can now
-       * land in — a gedu interrupted three children into a roster of eight —
+       * land in — a gedu interrupted three names into a roster of nine —
        * and the entry it produces still needs attention, renders its report, and
        * reports its own progress.
        */
@@ -288,9 +298,9 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
     report: COMMAND_BLOCKS_REPORT,
   },
 
-  // Started and abandoned: three children marked, five still unanswered. The
-  // state a partial save leaves behind — the entry keeps its alert, reports "3
-  // of 8 marked", and reopens on the three marks rather than on a blank sheet.
+  // Started and abandoned: three marked, six still unanswered. The state a
+  // partial save leaves behind — the entry keeps its alert, reports "3 of 9
+  // marked", and reopens on the three marks rather than on a blank sheet.
   {
     kind: "past",
     partial: {

@@ -134,7 +134,7 @@ export const joinWaitlistRpcResult = z.object({
  * Body of POST /api/admin/products/[id]/participations — admin comp-enrollment.
  * The product comes from the URL path, so the body names only the participant.
  */
-export const adminEnrollGamerBody = z.object({
+export const adminEnrollParticipantBody = z.object({
   participantId: z.string().min(1, "participantId is required"),
 });
 
@@ -223,11 +223,12 @@ export const demoteToWaitlistRpcResult = z.discriminatedUnion("kind", [
 ]);
 
 /**
- * `admin_enroll_gamer` RPC result (Json in codegen; structure from schema.sql).
- * The customer id is resolved inside the function from the gamer's parent link,
- * so the route learns it from the result rather than looking it up itself.
+ * `admin_enroll_participant` RPC result (Json in codegen; structure from
+ * schema.sql). The customer id is resolved inside the function — from the
+ * child's parent link, or from the participant themselves on an adult's own
+ * seat — so the route learns it from the result rather than looking it up.
  */
-export const adminEnrollGamerRpcResult = z.object({
+export const adminEnrollParticipantRpcResult = z.object({
   participation_id: z.string(),
   customer_id: z.string(),
 });

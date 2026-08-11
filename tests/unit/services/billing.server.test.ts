@@ -48,13 +48,13 @@ function claimsFor(sub: string) {
 
 function subscriptionRow(
   stripeCustomerId: string,
-  gamerFirstName: string,
+  participantFirstName: string,
   productName: string,
 ) {
   return {
     stripe_customer_id: stripeCustomerId,
     participation: {
-      gamer: { first_name: gamerFirstName },
+      participant: { first_name: participantFirstName },
       product: {
         product_translations: [
           { locale: "en", name: productName },
@@ -107,7 +107,7 @@ describe("resolveBillingAccountsViaRls", () => {
         stripeCustomerId: "cus_native",
         covers: [
           {
-            gamerFirstName: "Alex",
+            participantFirstName: "Alex",
             productTranslations: [{ locale: "en", name: "Rocket League Club" }],
           },
         ],
@@ -128,7 +128,7 @@ describe("resolveBillingAccountsViaRls", () => {
     const accounts = await resolveBillingAccountsViaRls(supabase);
 
     expect(accounts).toHaveLength(1);
-    expect(accounts[0].covers.map((c) => c.gamerFirstName)).toEqual([
+    expect(accounts[0].covers.map((c) => c.participantFirstName)).toEqual([
       "Alex",
       "Bobby",
     ]);
@@ -166,7 +166,7 @@ describe("resolveBillingAccountsViaRls", () => {
         stripeCustomerId: "cus_migrated",
         covers: [
           {
-            gamerFirstName: "Bobby",
+            participantFirstName: "Bobby",
             productTranslations: [
               { locale: "en", name: "Cosmic Builders Club" },
             ],

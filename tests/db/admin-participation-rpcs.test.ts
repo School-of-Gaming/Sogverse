@@ -5,12 +5,12 @@ import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
 import {
-  adminEnrollGamerRpcResult,
+  adminEnrollParticipantRpcResult,
   adminRemoveParticipationRpcResult,
 } from "@/services/participations/participations.contracts";
 
 /**
- * `admin_enroll_gamer` / `admin_remove_participation` — the two RPCs Phase 3 of
+ * `admin_enroll_participant` / `admin_remove_participation` — the two RPCs Phase 3 of
  * the DB authorization refactor wrote so the admin comp-enroll and un-enroll
  * routes could stop holding the service-role client.
  *
@@ -97,15 +97,15 @@ describe("admin participation RPCs", () => {
     await deleteTestProducts(admin, [CAMP, CLUB, FREE_CLUB]);
   });
 
-  describe("admin_enroll_gamer", () => {
+  describe("admin_enroll_participant", () => {
     it("enrolls the gamer as active and resolves the customer from the parent link", async () => {
-      const { data, error } = await adminAuth.rpc("admin_enroll_gamer", {
+      const { data, error } = await adminAuth.rpc("admin_enroll_participant", {
         p_product_id: CAMP,
         p_participant_id: TEST_IDS.GAMER,
       });
 
       expect(error).toBeNull();
-      const parsed = adminEnrollGamerRpcResult.parse(data);
+      const parsed = adminEnrollParticipantRpcResult.parse(data);
       expect(parsed.customer_id).toBe(TEST_IDS.CUSTOMER);
 
       const { data: row } = await admin
@@ -126,7 +126,7 @@ describe("admin participation RPCs", () => {
       // The refusal is the pair (consumer_club, paid), not the type: that is
       // the only combination whose seat cannot exist without a Stripe
       // subscription, and comp-enrollment has no way to create one.
-      const { error } = await adminAuth.rpc("admin_enroll_gamer", {
+      const { error } = await adminAuth.rpc("admin_enroll_participant", {
         p_product_id: CLUB,
         p_participant_id: TEST_IDS.GAMER,
       });
@@ -139,13 +139,13 @@ describe("admin participation RPCs", () => {
       // The other half of the same rule. Before 00166 the type alone refused
       // this, which would have made comp-enrollment impossible on a whole
       // product shape for no reason a free event does not share.
-      const { data, error } = await adminAuth.rpc("admin_enroll_gamer", {
+      const { data, error } = await adminAuth.rpc("admin_enroll_participant", {
         p_product_id: FREE_CLUB,
         p_participant_id: TEST_IDS.GAMER,
       });
 
       expect(error).toBeNull();
-      const parsed = adminEnrollGamerRpcResult.parse(data);
+      const parsed = adminEnrollParticipantRpcResult.parse(data);
       expect(parsed.customer_id).toBe(TEST_IDS.CUSTOMER);
 
       const { data: row } = await admin
@@ -157,7 +157,7 @@ describe("admin participation RPCs", () => {
     });
 
     it("refuses an unknown product", async () => {
-      const { error } = await adminAuth.rpc("admin_enroll_gamer", {
+      const { error } = await adminAuth.rpc("admin_enroll_participant", {
         p_product_id: "00000000-0000-0000-0000-00000000dead",
         p_participant_id: TEST_IDS.GAMER,
       });
@@ -168,7 +168,7 @@ describe("admin participation RPCs", () => {
     it("refuses a gamer with no linked parent", async () => {
       // The admin account has no parent_gamer row, which is the same shape as an
       // orphaned gamer: there is no customer to attribute the seat to.
-      const { error } = await adminAuth.rpc("admin_enroll_gamer", {
+      const { error } = await adminAuth.rpc("admin_enroll_participant", {
         p_product_id: CAMP,
         p_participant_id: TEST_IDS.ADMIN,
       });
@@ -177,12 +177,12 @@ describe("admin participation RPCs", () => {
     });
 
     it("refuses a second enrollment of the same gamer", async () => {
-      await adminAuth.rpc("admin_enroll_gamer", {
+      await adminAuth.rpc("admin_enroll_participant", {
         p_product_id: CAMP,
         p_participant_id: TEST_IDS.GAMER,
       });
 
-      const { error } = await adminAuth.rpc("admin_enroll_gamer", {
+      const { error } = await adminAuth.rpc("admin_enroll_participant", {
         p_product_id: CAMP,
         p_participant_id: TEST_IDS.GAMER,
       });
@@ -195,11 +195,11 @@ describe("admin participation RPCs", () => {
 
   describe("admin_remove_participation", () => {
     async function seatTheGamer(): Promise<string> {
-      const { data } = await adminAuth.rpc("admin_enroll_gamer", {
+      const { data } = await adminAuth.rpc("admin_enroll_participant", {
         p_product_id: CAMP,
         p_participant_id: TEST_IDS.GAMER,
       });
-      return adminEnrollGamerRpcResult.parse(data).participation_id;
+      return adminEnrollParticipantRpcResult.parse(data).participation_id;
     }
 
     it("cancels the participation and reports what it removed", async () => {
@@ -250,12 +250,12 @@ describe("admin participation RPCs", () => {
       // parent-facing cancel — there is no subscription to cancel — so admin
       // removal is the only exit, and a hard-capped free club could otherwise
       // never free a seat.
-      const { data } = await adminAuth.rpc("admin_enroll_gamer", {
+      const { data } = await adminAuth.rpc("admin_enroll_participant", {
         p_product_id: FREE_CLUB,
         p_participant_id: TEST_IDS.GAMER,
       });
       const participationId =
-        adminEnrollGamerRpcResult.parse(data).participation_id;
+        adminEnrollParticipantRpcResult.parse(data).participation_id;
 
       const { error } = await adminAuth.rpc("admin_remove_participation", {
         p_product_id: FREE_CLUB,

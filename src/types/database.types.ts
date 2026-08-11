@@ -1462,7 +1462,7 @@ export type Database = {
           table_name: string
         }[]
       }
-      admin_enroll_gamer: {
+      admin_enroll_participant: {
         Args: { p_participant_id: string; p_product_id: string }
         Returns: Json
       }
@@ -1587,10 +1587,10 @@ export type Database = {
         Args: never
         Returns: {
           end_date: string
-          gamer_count: number
           group_count: number
           group_id: string
           is_remote: boolean
+          participant_count: number
           product_id: string
           product_translations: Json
           product_type: Database["public"]["Enums"]["product_type"]

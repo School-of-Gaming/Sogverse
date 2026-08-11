@@ -19,8 +19,8 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 import {
   useAddGedu,
-  useAdminAddGamerToProduct,
-  useAdminRemoveGamerFromProduct,
+  useAdminAddParticipantToProduct,
+  useAdminRemoveParticipantFromProduct,
   useCreateGroup,
   useDeleteGroup,
   useDemoteToWaitlist,
@@ -32,17 +32,17 @@ import {
   useRenameGroup,
 } from "@/services/groups";
 import { SeatAvailabilityBar } from "@/components/public/products/seat-availability-bar";
-import { GamerPickerSheet } from "../gamer-picker-sheet";
+import { ParticipantPickerSheet } from "../participant-picker-sheet";
 import { GeduPickerSheet } from "../gedu-picker-sheet";
 import { BlockedMoveDialog } from "./blocked-move-dialog";
-import { GamerChip } from "./gamer-chip";
+import { ParticipantChip } from "./participant-chip";
 import { GroupColumn } from "./group-column";
 import {
   canCompEnroll,
   dragSubjectsFrom,
   isSubscriptionShaped,
   readDropData,
-  readGamerDragData,
+  readChipDragData,
   resolveDrop,
   type BlockedDropReason,
 } from "./panel-rules";
@@ -96,7 +96,7 @@ function DragOverlayContent({
 
   const overlay = useMemo(() => {
     if (!active || !snapshot) return null;
-    const data = readGamerDragData(active.data.current);
+    const data = readChipDragData(active.data.current);
     if (!data) return null;
 
     const all = [
@@ -114,38 +114,39 @@ function DragOverlayContent({
   // element under the pointer mid-drag, and overrides the chip's own grab.
   return (
     <div className="drag-ghost">
-      <GamerChip
+      <ParticipantChip
         participationId={overlay.id}
-        gamerId={overlay.gamer_id}
-        firstName={overlay.gamer_first_name}
-        dateOfBirth={overlay.gamer_date_of_birth}
-        gender={overlay.gamer_gender}
-        parentFirstName={overlay.gamer_parent_first_name}
-        parentLastName={overlay.gamer_parent_last_name}
-        minecraftUsername={overlay.gamer_minecraft_username}
-        minecraftUuid={overlay.gamer_minecraft_uuid}
+        participantId={overlay.participant_id}
+        participantEmail={overlay.participant_email}
+        firstName={overlay.participant_first_name}
+        dateOfBirth={overlay.participant_date_of_birth}
+        gender={overlay.participant_gender}
+        parentFirstName={overlay.parent_first_name}
+        parentLastName={overlay.parent_last_name}
+        minecraftUsername={overlay.participant_minecraft_username}
+        minecraftUuid={overlay.participant_minecraft_uuid}
       />
     </div>
   );
 }
 
-// The gamer action in the panel header. At rest it's the "Add gamer" button;
-// the moment a gamer chip is being dragged it becomes a destructive "Remove
-// gamer" drop zone. The swap is user-initiated (by the drag itself), so it
-// doesn't violate the no-in-place-reflow rule. It lives inside the DndContext
-// and subscribes to dnd state, so only this node re-renders on pointer move —
-// not the whole panel.
-function HeaderGamerAction({ onAddGamer }: { onAddGamer: () => void }) {
+// The enrolment action in the panel header. At rest it's the "Add participant"
+// button; the moment a chip is being dragged it becomes a destructive "Remove"
+// drop zone. The swap is user-initiated (by the drag itself), so it doesn't
+// violate the no-in-place-reflow rule. It lives inside the DndContext and
+// subscribes to dnd state, so only this node re-renders on pointer move — not
+// the whole panel.
+function HeaderParticipantAction({ onAdd }: { onAdd: () => void }) {
   const t = useTranslations("admin.products.groupsPanel");
   const { active } = useDndContext();
-  const draggingGamer = readGamerDragData(active?.data.current) !== null;
+  const draggingChip = readChipDragData(active?.data.current) !== null;
 
   const { setNodeRef, isOver } = useDroppable({
     id: "remove-gamer-zone",
     data: { remove: true },
   });
 
-  if (draggingGamer) {
+  if (draggingChip) {
     return (
       <div
         ref={setNodeRef}
@@ -155,15 +156,15 @@ function HeaderGamerAction({ onAddGamer }: { onAddGamer: () => void }) {
         )}
       >
         <Trash2 className="h-4 w-4" />
-        {t("unassigned.removeGamer")}
+        {t("unassigned.removeParticipant")}
       </div>
     );
   }
 
   return (
-    <Button variant="outline" size="sm" onClick={onAddGamer}>
+    <Button variant="outline" size="sm" onClick={onAdd}>
       <UserPlus className="mr-1 h-4 w-4" />
-      {t("unassigned.addGamer")}
+      {t("unassigned.addParticipant")}
     </Button>
   );
 }
@@ -189,13 +190,13 @@ export function GroupsPanel({
   const addGedu = useAddGedu(productId);
   const removeGedu = useRemoveGedu(productId);
   const deleteGroup = useDeleteGroup(productId);
-  const addGamer = useAdminAddGamerToProduct(productId);
-  const removeGamer = useAdminRemoveGamerFromProduct(productId);
+  const addParticipant = useAdminAddParticipantToProduct(productId);
+  const removeParticipant = useAdminRemoveParticipantFromProduct(productId);
   const promote = usePromoteFromWaitlist(productId);
   const demote = useDemoteToWaitlist(productId);
 
   const [pickerForGroupId, setPickerForGroupId] = useState<string | null>(null);
-  const [gamerPickerOpen, setGamerPickerOpen] = useState(false);
+  const [participantPickerOpen, setParticipantPickerOpen] = useState(false);
   // The gamer pending removal-confirmation (id + name for the dialog copy), or
   // null when the confirm dialog is closed. The mutation only fires on confirm.
   const [removing, setRemoving] = useState<{ id: string; name: string } | null>(
@@ -214,14 +215,14 @@ export function GroupsPanel({
   const subscriptionShaped = isSubscriptionShaped(productType, billingMode);
   const canAddGamer = canCompEnroll(productType, billingMode);
 
-  // Any enrolled gamer blocks a re-add via the picker.
-  const enrolledGamerIds = useMemo(() => {
+  // Anyone already holding a seat blocks a re-add via the picker.
+  const enrolledParticipantIds = useMemo(() => {
     const ids = new Set<string>();
     if (!snapshot) return ids;
     for (const g of snapshot.groups) {
-      for (const p of g.participations) ids.add(p.gamer_id);
+      for (const p of g.participations) ids.add(p.participant_id);
     }
-    for (const p of snapshot.unassigned) ids.add(p.gamer_id);
+    for (const p of snapshot.unassigned) ids.add(p.participant_id);
     return ids;
   }, [snapshot]);
 
@@ -263,7 +264,7 @@ export function GroupsPanel({
     const { over, active } = event;
     if (!over) return;
 
-    const dragData = readGamerDragData(active.data.current);
+    const dragData = readChipDragData(active.data.current);
     const dropData = readDropData(over.data.current);
     if (!dragData || !dropData) return;
 
@@ -395,7 +396,7 @@ export function GroupsPanel({
               />
             )}
             {canAddGamer && (
-              <HeaderGamerAction onAddGamer={() => setGamerPickerOpen(true)} />
+              <HeaderParticipantAction onAdd={() => setParticipantPickerOpen(true)} />
             )}
             <Button
               variant="outline"
@@ -473,17 +474,17 @@ export function GroupsPanel({
         </DragOverlay>
       </DndContext>
 
-      {/* GamerPickerSheet and GeduPickerSheet are deliberately rendered
+      {/* ParticipantPickerSheet and GeduPickerSheet are deliberately rendered
           OUTSIDE the DndContext above. dnd-kit re-renders subscribed children
           on every pointer move during a drag, so a heavy always-mounted
           subtree under it would tank drag responsiveness. Keep these as
           siblings of the DndContext, not children. */}
-      <GamerPickerSheet
-        open={gamerPickerOpen}
-        onOpenChange={setGamerPickerOpen}
-        enrolledGamerIds={enrolledGamerIds}
-        onAddGamer={async (gamerId) => {
-          await addGamer.mutateAsync(gamerId);
+      <ParticipantPickerSheet
+        open={participantPickerOpen}
+        onOpenChange={setParticipantPickerOpen}
+        enrolledParticipantIds={enrolledParticipantIds}
+        onAddParticipant={async (participantId) => {
+          await addParticipant.mutateAsync(participantId);
         }}
       />
 
@@ -515,16 +516,16 @@ export function GroupsPanel({
           onOpenChange={(open) => {
             if (!open) setRemoving(null);
           }}
-          title={t("removeGamer.confirmTitle", { name: removing.name })}
-          description={t("removeGamer.confirmDescription", {
+          title={t("removeParticipant.confirmTitle", { name: removing.name })}
+          description={t("removeParticipant.confirmDescription", {
             name: removing.name,
           })}
-          confirmLabel={t("removeGamer.confirmCta")}
-          onConfirm={() => removeGamer.mutate({ participationId: removing.id })}
+          confirmLabel={t("removeParticipant.confirmCta")}
+          onConfirm={() => removeParticipant.mutate({ participationId: removing.id })}
         >
           <div className="flex items-start gap-2 rounded-md border border-destructive bg-destructive/10 px-3 py-2.5 text-sm font-semibold text-destructive">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-            <span>{t("removeGamer.noRefundWarning")}</span>
+            <span>{t("removeParticipant.noRefundWarning")}</span>
           </div>
         </ConfirmDialog>
       )}

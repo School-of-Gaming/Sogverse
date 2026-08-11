@@ -562,12 +562,12 @@
         "alreadyAssigned": "Jo nimetty",
         "notVerified": "Ei vahvistettu"
       },
-      "gamerPicker": {
-        "title": "Lisää pelaaja",
-        "description": "Lisää pelaaja suoraan tähän tuotteeseen ohittaen maksun.",
-        "searchPlaceholder": "Hae vanhemman tai pelaajan nimellä…",
+      "participantPicker": {
+        "title": "Lisää osallistuja",
+        "description": "Lisää lapsi tai vanhempi suoraan tähän tuotteeseen ohittaen maksun. Vanhempi voi ottaa paikan vain tuotteesta, joka on avoin vanhemmille.",
+        "searchPlaceholder": "Hae vanhemman tai pelaajan nimellä",
         "searchHint": "Hae kirjoittamalla vähintään 2 merkkiä.",
-        "noParents": "Yhdelläkään vanhemmalla ei ole vielä yhdistettyjä pelaajia.",
+        "noParents": "Ei vielä yhtään vanhempaa.",
         "noSearchResults": "Yksikään vanhempi tai pelaaja ei vastaa hakuasi.",
         "unnamedParent": "Nimetön vanhempi",
         "unnamedGamer": "Nimetön pelaaja",
@@ -575,11 +575,11 @@
         "adding": "Lisätään…",
         "added": "Lisätty",
         "alreadyAdded": "Jo lisätty",
-        "addFailed": "Pelaajan lisääminen epäonnistui."
+        "addFailed": "Osallistujan lisääminen epäonnistui."
       },
       "groupsPanel": {
         "title": "Ryhmät",
-        "subtitle": "Vedä jokainen pelaaja siihen ryhmään, jossa hän pelaa. Lisää Geduja vetämään ryhmiä.",
+        "subtitle": "Vedä jokainen osallistuja siihen ryhmään, jossa hän pelaa. Lisää Geduja vetämään ryhmiä.",
         "addGroup": "Lisää ryhmä",
         "loading": "Ladataan…",
         "genderBoy": "poika",
@@ -587,18 +587,19 @@
         "genderNonBinary": "muunsukupuolinen",
         "chip": {
           "age": "{age}v",
-          "parent": "Vanhempi: {name}"
+          "parent": "Vanhempi: {name}",
+          "participantEmail": "Yhteystieto: {email}"
         },
         "unassigned": {
           "title": "Nimeämättömät",
-          "subtitle": "Pelaajat, jotka ovat maksaneet mutta eivät ole vielä missään ryhmässä. Vedä heidät ryhmään sijoittaaksesi.",
+          "subtitle": "Osallistujat, jotka ovat maksaneet mutta eivät ole vielä missään ryhmässä. Vedä heidät ryhmään sijoittaaksesi.",
           "empty": "Kaikilla on ryhmä.",
-          "addGamer": "Lisää pelaaja",
-          "removeGamer": "Poista pelaaja"
+          "addParticipant": "Lisää osallistuja",
+          "removeParticipant": "Poista osallistuja"
         },
         "empty": {
           "title": "Ei vielä ryhmiä",
-          "description": "Lisää ryhmä, kun olet valmis sijoittelemaan pelaajia.",
+          "description": "Lisää ryhmä, kun olet valmis sijoittelemaan osallistujia.",
           "addFirst": "Lisää ensimmäinen ryhmä"
         },
         "group": {
@@ -610,15 +611,15 @@
           "saveNameAria": "Tallenna nimi",
           "cancelEditAria": "Peruuta",
           "deleteAria": "Poista {name}",
-          "gamerCount": "{count, plural, =0 {Ei pelaajia} =1 {1 pelaaja} other {# pelaajaa}}",
+          "participantCount": "{count, plural, =0 {Ei osallistujia} =1 {1 osallistuja} other {# osallistujaa}}",
           "assignedGedus": "Gedut",
           "noGedus": "Ei vielä Geduja.",
           "addGedu": "Lisää Gedu",
-          "gamersLabel": "Pelaajat",
-          "empty": "Ei pelaajia vielä — vedä joku tähän.",
+          "participantsLabel": "Osallistujat",
+          "empty": "Ei osallistujia vielä — vedä joku tähän.",
           "deleteConfirmTitle": "Poistetaanko {name}?",
           "deleteConfirmEmpty": "Ryhmässä ei ole pelaajia, joten poistaminen vain poistaa Gedu-nimitykset.",
-          "deleteConfirmWithGamers": "{count, plural, =1 {Tässä ryhmässä on 1 pelaaja} other {Tässä ryhmässä on # pelaajaa}}. He siirtyvät Nimeämättömiin."
+          "deleteConfirmWithParticipants": "{count, plural, =1 {Tässä ryhmässä on 1 osallistuja} other {Tässä ryhmässä on # osallistujaa}}. He siirtyvät Nimeämättömiin."
         },
         "gedu": {
           "removeAria": "Poista {name}"
@@ -627,15 +628,15 @@
           "addTitle": "Lisää Gedu ryhmään {name}",
           "addDescription": "Yksi Gedu voi vetää vain yhden ryhmän per tuote. Muualle nimetyt näkyvät harmaina."
         },
-        "removeGamer": {
+        "removeParticipant": {
           "confirmTitle": "Poistetaanko {name} tästä tuotteesta?",
           "confirmDescription": "{name} poistetaan ilmoittautuneista, ja hän menettää pääsyn välittömästi.",
           "noRefundWarning": "Hyvitystä ei makseta. Jos tämä asiakas on maksanut, hän ei saa rahojaan takaisin.",
-          "confirmCta": "Poista pelaaja"
+          "confirmCta": "Poista osallistuja"
         },
         "waitlist": {
           "title": "Jonotuslista",
-          "subtitle": "Paikkaa odottavat pelaajat liittymisjärjestyksessä numeroituina. Vedä pelaaja ryhmään antaaksesi hänelle paikan tai pudota aktiivinen pelaaja tähän siirtääksesi hänet jonon perälle.",
+          "subtitle": "Paikkaa odottavat osallistujat liittymisjärjestyksessä numeroituina. Vedä osallistuja ryhmään antaaksesi hänelle paikan tai pudota aktiivinen osallistuja tähän siirtääksesi hänet jonon perälle.",
           "empty": "Jonotuslistalla ei ole ketään."
         },
         "seatsOverfilled": "{count} / {total} paikkaa – {over} yli",
@@ -1253,9 +1254,9 @@
       "noOtherGroups": "Tässä sessiossa ei ole muita ryhmiä.",
       "railGroupHeading": "Oma ryhmä",
       "noGedus": "Ryhmälle ei ole määritetty Geduja.",
-      "gamersLabel": "Pelaajat",
-      "gamerCount": "{count, plural, one {# pelaaja} other {# pelaajaa}}",
-      "emptyRoster": "Ryhmässä ei ole vielä pelaajia.",
+      "participantsLabel": "Osallistujat",
+      "participantCount": "{count, plural, one {# osallistuja} other {# osallistujaa}}",
+      "emptyRoster": "Ryhmässä ei ole vielä osallistujia.",
       "untitledGroup": "Nimetön ryhmä",
       "noAssignedGroup": "Sinulle ei ole määritetty ryhmää tässä sessiossa.",
       "notAssignedTitle": "Ei sinun session",
@@ -1269,10 +1270,10 @@
       "minecraftUsernameSave": "Tallenna",
       "minecraftUsernameCancel": "Peruuta",
       "editMinecraftUsername": "Muokkaa pelaajan {name} Minecraft-käyttäjänimeä",
-      "copyParentEmail": "Kopioi vanhemman sähköposti {email}",
+      "copyContactEmail": "Kopioi yhteyssähköposti {email}",
       "emailCopied": "Sähköposti kopioitu",
-      "copyAllParentEmails": "Kopioi kaikki vanhempien sähköpostit ({count})",
-      "allEmailsCopied": "Kaikki vanhempien sähköpostit kopioitu",
+      "copyAllContactEmails": "Kopioi kaikki yhteyssähköpostit ({count})",
+      "allEmailsCopied": "Kaikki yhteyssähköpostit kopioitu",
       "loadingWorkspace": "Ladataan tämän ryhmän kertoja.",
       "minecraftSaveFailed": "Käyttäjänimen tallennus epäonnistui. Yritä uudelleen."
     },
@@ -2175,24 +2176,28 @@
       "notProvided": "Ei annettu"
     },
     "enrollmentParent": {
-      "subject": "{gamerName} on nyt ilmoittautunut kerhoon {productName}",
+      "subject": "{participantName} on nyt ilmoittautunut kerhoon {productName}",
+      "subjectSelf": "Sinut on nyt ilmoitettu kurssille {productName}",
       "heading": "Ilmoittautuminen vahvistettu",
-      "body": "Hei {parentName}, {gamerName} on nyt ilmoittautunut kerhoon {productName} Gedun {geduName} kanssa."
+      "body": "Hei {parentName}, {participantName} on nyt ilmoittautunut kerhoon {productName} Gedun {geduName} kanssa.",
+      "bodySelf": "Hei {parentName}, sinut on nyt ilmoitettu kurssille {productName}, ohjaajana Gedu {geduName}."
     },
     "enrollmentGedu": {
-      "subject": "{gamerName} on liittynyt ryhmääsi – {productName}",
+      "subject": "{participantName} on liittynyt ryhmääsi – {productName}",
       "heading": "Uusi pelaaja ryhmässäsi",
-      "body": "Hei {geduName}, {gamerName} on liittynyt ryhmääsi kerhossa {productName}."
+      "body": "Hei {geduName}, {participantName} on liittynyt ryhmääsi kerhossa {productName}."
     },
     "unenrollmentParent": {
-      "subject": "{gamerName} on poistettu kerhosta {productName}",
+      "subject": "{participantName} on poistettu kerhosta {productName}",
+      "subjectSelf": "Ilmoittautumisesi kurssille {productName} on peruttu",
       "heading": "Ilmoittautumisen peruutus vahvistettu",
-      "body": "Hei {parentName}, {gamerName} on poistettu kerhosta {productName} (Gedu: {geduName})."
+      "body": "Hei {parentName}, {participantName} on poistettu kerhosta {productName} (Gedu: {geduName}).",
+      "bodySelf": "Hei {parentName}, ilmoittautumisesi kurssille {productName} on peruttu (Gedu: {geduName})."
     },
     "unenrollmentGedu": {
-      "subject": "{gamerName} on poistunut ryhmästäsi – {productName}",
+      "subject": "{participantName} on poistunut ryhmästäsi – {productName}",
       "heading": "Pelaaja poistunut ryhmästäsi",
-      "body": "Hei {geduName}, {gamerName} on poistunut ryhmästäsi kerhossa {productName}."
+      "body": "Hei {geduName}, {participantName} on poistunut ryhmästäsi kerhossa {productName}."
     },
     "groupAdded": {
       "subject": "Sinut on määrätty uuteen ryhmään – {productName}",

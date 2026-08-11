@@ -235,7 +235,7 @@ function sessionRow(
   const { product, ...rest } = overrides;
   return {
     participationId: "participation-1",
-    gamer: { id: AINO, firstName: "Aino" },
+    participant: { id: AINO, firstName: "Aino" },
     product: {
       id: "product-1",
       type: "consumer_club",
@@ -263,7 +263,7 @@ function waitlistRow(
   const { product, ...rest } = overrides;
   return {
     participationId: "waitlist-1",
-    gamer: { id: AINO, firstName: "Aino" },
+    participant: { id: AINO, firstName: "Aino" },
     product: {
       type: "consumer_club",
       timezone: PRODUCT_TZ,
@@ -672,7 +672,7 @@ describe("rollUpFamilyEnrollments — the page's shape", () => {
         sessionRow(),
         sessionRow({
           participationId: "participation-2",
-          gamer: { id: OTSO, firstName: "Otso" },
+          participant: { id: OTSO, firstName: "Otso" },
         }),
       ],
     });
@@ -721,7 +721,7 @@ describe("rollUpFamilyEnrollments — the parent's own seat", () => {
   /** A row whose participant is the parent — the shape 00173 made possible. */
   const selfSeat = sessionRow({
     participationId: "parents-evening",
-    gamer: { id: PARENT, firstName: "Sanna" },
+    participant: { id: PARENT, firstName: "Sanna" },
   });
 
   it("keeps the seat rather than dropping it", () => {
@@ -747,7 +747,7 @@ describe("rollUpFamilyEnrollments — the parent's own seat", () => {
       waitlistRows: [
         waitlistRow({
           participationId: "parents-queue",
-          gamer: { id: PARENT, firstName: "Sanna" },
+          participant: { id: PARENT, firstName: "Sanna" },
         }),
       ],
     });
@@ -766,7 +766,7 @@ describe("rollUpFamilyEnrollments — the parent's own seat", () => {
       waitlistRows: [
         waitlistRow({
           participationId: "parents-queue",
-          gamer: { id: PARENT, firstName: "Sanna" },
+          participant: { id: PARENT, firstName: "Sanna" },
         }),
       ],
     });
@@ -791,7 +791,7 @@ describe("rollUpGamerEnrollments — one child's own page", () => {
         sessionRow(),
         sessionRow({
           participationId: "someone-elses",
-          gamer: { id: OTSO, firstName: "Otso" },
+          participant: { id: OTSO, firstName: "Otso" },
         }),
       ],
       waitlistRows: [waitlistRow()],

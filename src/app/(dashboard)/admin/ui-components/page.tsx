@@ -119,7 +119,8 @@ import {
   type GamePlatform,
 } from "@/components/game-account";
 import { useRobloxProfile } from "@/services/roblox";
-import { GamerChip } from "@/components/admin/products/groups/gamer-chip";
+import { ParticipantChip } from "@/components/admin/products/groups/participant-chip";
+import { ParticipantRosterRow } from "@/components/gedu/session-details/ParticipantRosterRow";
 import { DndContext } from "@dnd-kit/core";
 import { AddGamerFormCard } from "@/components/family";
 import { cn } from "@/lib/utils";
@@ -2987,55 +2988,81 @@ function GameAccountDemo() {
         <AddGamerDialogDemo />
       </SubSection>
 
-      <SubSection title="In the admin gamer chip">
+      <SubSection title="In the admin participant chip">
         <p className="text-sm text-muted-foreground">
           The chip is the draggable roster token in the product groups panel, and
           it appears in four places: the group columns, the waitlist card, the
-          unassigned card and the drag overlay. It stacks name, age/gender, parent
-          and the identity row inside a narrow rail, so it takes the compact
-          figure: the whole body was taller than the other three lines put
-          together. Drag is live &mdash; the chips below are real, and there is
-          nowhere to drop them.
+          unassigned card and the drag overlay. A child stacks name, age/gender,
+          parent and the identity row inside a narrow rail, so it takes the
+          compact figure: the whole body was taller than the other three lines
+          put together. An adult holding their own seat has none of those three
+          facts, so the chip drops them rather than drawing blanks, and carries
+          the one thing a child&rsquo;s chip has no room for &mdash; the address
+          &mdash; where the parent&rsquo;s name would be. Drag is live &mdash;
+          the chips below are real, and there is nowhere to drop them.
         </p>
-        <GamerChipDemo />
+        <ParticipantChipDemo />
+      </SubSection>
+
+      <SubSection title="In the gedu roster row">
+        <p className="text-sm text-muted-foreground">
+          The gedu workspace&rsquo;s rail roster: two lines, identity above and
+          the contact address on its own below, because an address is the one
+          field here with no useful upper bound. A child shows age/gender and an
+          editable Minecraft username, and the address is their linked
+          parent&rsquo;s. An adult holding their own seat shows a Parent badge
+          where the age went, their own address as the contact, and{" "}
+          <em>no Minecraft cell at all</em> &mdash; not a blank one. Game-account
+          linking for parents does not exist, so a &ldquo;none&rdquo; placeholder
+          beside a pencil would be an affordance pointing at nothing, and three
+          empty child fields would read as a row that failed to load. The two
+          variants are side by side because the only way to judge &ldquo;shorter
+          on purpose&rdquo; is against the row it is shorter than.
+        </p>
+        <ParticipantRosterRowDemo />
       </SubSection>
     </div>
   );
 }
 
 /**
- * Chip fixtures. The ids are real generated UUIDv4s, hardcoded: an identicon is
- * hashed out of the id's hex bytes, so a readable stand-in renders a degenerate
- * square and a freshly generated one gives the same child a different face on
- * every reload.
+ * Chip and roster-row fixtures. The ids are real generated UUIDv4s, hardcoded:
+ * an identicon is hashed out of the id's hex bytes, so a readable stand-in
+ * renders a degenerate square and a freshly generated one gives the same person
+ * a different face on every reload.
+ *
+ * `marja` is an adult holding a seat of her own. She has no date of birth, no
+ * gender and no game account on purpose — those live on `gamer_profiles` and
+ * `minecraft_accounts`, and an adult seat has neither row.
  */
-const CHIP_GAMERS = {
+const CHIP_PEOPLE = {
   aino: "3f5f2c9a-1d7e-4c8b-9a2f-6b1e0c4d8a37",
   joonas: "c81b47e2-9f30-4a15-8d6c-2e7b5a091f4d",
   petra: "7d2a6e13-5c84-4b09-a7f1-38e9c0b2d654",
+  marja: "37cbff02-0866-4259-9586-20d91010007a",
 } as const;
 
-function GamerChipDemo() {
+function ParticipantChipDemo() {
   return (
     // The chip is a dnd-kit draggable, so it needs the context its real parents
     // give it. There are no droppables here — picking one up and letting go puts
     // it back, which is all this demo needs.
     <DndContext>
-      <GamerChipRow />
+      <ParticipantChipRow />
     </DndContext>
   );
 }
 
-function GamerChipRow() {
+function ParticipantChipRow() {
   return (
     <div className="flex flex-wrap items-start gap-6">
       {/* The real rail width in the groups panel, so the chip is judged at the
           size it actually renders at rather than stretched across the page. */}
       <div className="w-64 space-y-2 rounded-lg border p-3">
         <DemoCaption>In a group column (w-64, the real rail)</DemoCaption>
-        <GamerChip
+        <ParticipantChip
           participationId="demo-1"
-          gamerId={CHIP_GAMERS.aino}
+          participantId={CHIP_PEOPLE.aino}
           firstName="Aino"
           dateOfBirth="2014-03-11"
           gender="girl"
@@ -3043,10 +3070,11 @@ function GamerChipRow() {
           parentLastName="Virtanen"
           minecraftUsername="Notch"
           minecraftUuid="8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6"
+          participantEmail={null}
         />
-        <GamerChip
+        <ParticipantChip
           participationId="demo-2"
-          gamerId={CHIP_GAMERS.joonas}
+          participantId={CHIP_PEOPLE.joonas}
           firstName="Joonas"
           dateOfBirth="2012-09-02"
           gender="boy"
@@ -3054,10 +3082,11 @@ function GamerChipRow() {
           parentLastName="Nieminen"
           minecraftUsername="jeb_"
           minecraftUuid={null}
+          participantEmail={null}
         />
-        <GamerChip
+        <ParticipantChip
           participationId="demo-3"
-          gamerId={CHIP_GAMERS.petra}
+          participantId={CHIP_PEOPLE.petra}
           firstName="Petra"
           dateOfBirth={null}
           gender={null}
@@ -3065,14 +3094,32 @@ function GamerChipRow() {
           parentLastName={null}
           minecraftUsername={null}
           minecraftUuid={null}
+          participantEmail={null}
+        />
+        {/* The adult variant, deliberately last in the same column: the thing
+            worth seeing is how it sits against three child chips at the real
+            rail width, not how it looks alone. Three lines become one, the
+            badge carries the difference at a glance, and the address takes the
+            line the parent's name had. */}
+        <ParticipantChip
+          participationId="demo-5"
+          participantId={CHIP_PEOPLE.marja}
+          firstName="Marja"
+          dateOfBirth={null}
+          gender={null}
+          parentFirstName={null}
+          parentLastName={null}
+          minecraftUsername={null}
+          minecraftUuid={null}
+          participantEmail="marja.korhonen@example.com"
         />
       </div>
 
       <div className="w-64 space-y-2 rounded-lg border p-3">
         <DemoCaption>Mid-save — greyed and undraggable</DemoCaption>
-        <GamerChip
+        <ParticipantChip
           participationId="demo-4"
-          gamerId={CHIP_GAMERS.aino}
+          participantId={CHIP_PEOPLE.aino}
           firstName="Aino"
           dateOfBirth="2014-03-11"
           gender="girl"
@@ -3080,8 +3127,78 @@ function GamerChipRow() {
           parentLastName="Virtanen"
           minecraftUsername="Notch"
           minecraftUuid="8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6"
+          participantEmail={null}
           isPending
         />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The gedu rail's roster row, both variants, at the rail's real width.
+ *
+ * The Minecraft save handler is a resolved promise rather than omitted: without
+ * one the row is read-only and the pencil never renders, which is the one state
+ * this demo is not for. Nothing is written — the row closes its editor on the
+ * handler resolving, which is exactly what a successful save looks like.
+ */
+function ParticipantRosterRowDemo() {
+  const saveInert = async () => {};
+  return (
+    <div className="flex flex-wrap items-start gap-6">
+      <div className="w-80 space-y-2 rounded-lg border p-3">
+        <DemoCaption>Children (w-80, the real rail)</DemoCaption>
+        <ul className="space-y-1.5">
+          <ParticipantRosterRow
+            participant={{
+              participant_id: CHIP_PEOPLE.aino,
+              first_name: "Aino",
+              date_of_birth: "2014-03-11",
+              gender: "girl",
+              minecraft_username: "AinoBuilds",
+              minecraft_uuid: "617bc50c-7dfe-4b39-8c74-8f01b9110f92",
+              parent_email: "marja.korhonen@example.com",
+              participant_email: null,
+            }}
+            onSaveMinecraftUsername={saveInert}
+          />
+          {/* No username and a long address: the two things that stress the
+              row's second line and its identity line at once. */}
+          <ParticipantRosterRow
+            participant={{
+              participant_id: CHIP_PEOPLE.joonas,
+              first_name: "Joonas",
+              date_of_birth: "2012-09-02",
+              gender: "boy",
+              minecraft_username: null,
+              minecraft_uuid: null,
+              parent_email:
+                "sofia.margareta.lindqvist-holmberg@kotiposti.example.com",
+              participant_email: null,
+            }}
+            onSaveMinecraftUsername={saveInert}
+          />
+        </ul>
+      </div>
+
+      <div className="w-80 space-y-2 rounded-lg border p-3">
+        <DemoCaption>An adult holding their own seat</DemoCaption>
+        <ul className="space-y-1.5">
+          <ParticipantRosterRow
+            participant={{
+              participant_id: CHIP_PEOPLE.marja,
+              first_name: "Marja",
+              date_of_birth: null,
+              gender: null,
+              minecraft_username: null,
+              minecraft_uuid: null,
+              parent_email: null,
+              participant_email: "marja.korhonen@example.com",
+            }}
+            onSaveMinecraftUsername={saveInert}
+          />
+        </ul>
       </div>
     </div>
   );

@@ -562,12 +562,12 @@
         "alreadyAssigned": "Already assigned",
         "notVerified": "Not verified"
       },
-      "gamerPicker": {
-        "title": "Add a gamer",
-        "description": "Drop a gamer directly into this product, bypassing payment.",
+      "participantPicker": {
+        "title": "Add a participant",
+        "description": "Drop a child or a parent straight into this product, bypassing payment. A parent can only take a seat on a product that is open to parents.",
         "searchPlaceholder": "Search by parent or gamer name…",
         "searchHint": "Type at least 2 characters to search.",
-        "noParents": "No parents with linked gamers yet.",
+        "noParents": "No parents yet.",
         "noSearchResults": "No parents or gamers match your search.",
         "unnamedParent": "Unnamed parent",
         "unnamedGamer": "Unnamed gamer",
@@ -575,11 +575,11 @@
         "adding": "Adding…",
         "added": "Added",
         "alreadyAdded": "Already added",
-        "addFailed": "Failed to add gamer."
+        "addFailed": "Failed to add participant."
       },
       "groupsPanel": {
         "title": "Groups",
-        "subtitle": "Drag each gamer into the group they’ll play with. Add Gedus to lead each group.",
+        "subtitle": "Drag each participant into the group they’ll play with. Add Gedus to lead each group.",
         "addGroup": "Add group",
         "loading": "Loading…",
         "genderBoy": "boy",
@@ -587,18 +587,19 @@
         "genderNonBinary": "non-binary",
         "chip": {
           "age": "{age}y",
-          "parent": "Parent: {name}"
+          "parent": "Parent: {name}",
+          "participantEmail": "Contact: {email}"
         },
         "unassigned": {
           "title": "Unassigned",
-          "subtitle": "Gamers who’ve paid but aren’t in a group yet. Drag them into one to place them.",
+          "subtitle": "People who’ve paid but aren’t in a group yet. Drag them into one to place them.",
           "empty": "Everyone has a group.",
-          "addGamer": "Add gamer",
-          "removeGamer": "Remove gamer"
+          "addParticipant": "Add participant",
+          "removeParticipant": "Remove participant"
         },
         "empty": {
           "title": "No groups yet",
-          "description": "Add a group when you’re ready to start placing gamers.",
+          "description": "Add a group when you’re ready to start placing people.",
           "addFirst": "Add your first group"
         },
         "group": {
@@ -610,15 +611,15 @@
           "saveNameAria": "Save name",
           "cancelEditAria": "Cancel",
           "deleteAria": "Delete {name}",
-          "gamerCount": "{count, plural, =0 {No gamers} =1 {1 gamer} other {# gamers}}",
+          "participantCount": "{count, plural, =0 {No participants} =1 {1 participant} other {# participants}}",
           "assignedGedus": "Gedus",
           "noGedus": "No Gedus yet.",
           "addGedu": "Add Gedu",
-          "gamersLabel": "Gamers",
-          "empty": "No gamers here yet — drag one in.",
+          "participantsLabel": "Participants",
+          "empty": "Nobody here yet — drag someone in.",
           "deleteConfirmTitle": "Delete {name}?",
           "deleteConfirmEmpty": "Nobody is in this group, so deleting it just clears the Gedu assignments.",
-          "deleteConfirmWithGamers": "{count, plural, =1 {1 gamer is in this group} other {# gamers are in this group}}. They’ll move to Unassigned."
+          "deleteConfirmWithParticipants": "{count, plural, =1 {1 participant is in this group} other {# participants are in this group}}. They’ll move to Unassigned."
         },
         "gedu": {
           "removeAria": "Remove {name}"
@@ -627,15 +628,15 @@
           "addTitle": "Add Gedu to {name}",
           "addDescription": "A Gedu can only run one group per product. Anyone already assigned is greyed out."
         },
-        "removeGamer": {
+        "removeParticipant": {
           "confirmTitle": "Remove {name} from this product?",
           "confirmDescription": "{name} will be unenrolled and lose access immediately.",
           "noRefundWarning": "No refund is issued. If this customer paid, they will not get their money back.",
-          "confirmCta": "Remove gamer"
+          "confirmCta": "Remove participant"
         },
         "waitlist": {
           "title": "Waitlist",
-          "subtitle": "Gamers waiting for a seat, numbered in the order they joined. Drag one into a group to give them a seat, or drop an active gamer here to send them to the back.",
+          "subtitle": "People waiting for a seat, numbered in the order they joined. Drag one into a group to give them a seat, or drop an active participant here to send them to the back.",
           "empty": "No one is on the waitlist."
         },
         "seatsOverfilled": "{count} of {total} seats — {over} over",
@@ -1253,9 +1254,9 @@
       "noOtherGroups": "No other groups in this session.",
       "railGroupHeading": "My Group",
       "noGedus": "No Gedus assigned.",
-      "gamersLabel": "Gamers",
-      "gamerCount": "{count, plural, one {# gamer} other {# gamers}}",
-      "emptyRoster": "No gamers enrolled in this group yet.",
+      "participantsLabel": "Participants",
+      "participantCount": "{count, plural, one {# participant} other {# participants}}",
+      "emptyRoster": "Nobody is enrolled in this group yet.",
       "untitledGroup": "Untitled group",
       "noAssignedGroup": "You don’t have an assigned group in this session.",
       "notAssignedTitle": "Not your session",
@@ -1269,10 +1270,10 @@
       "minecraftUsernameSave": "Save",
       "minecraftUsernameCancel": "Cancel",
       "editMinecraftUsername": "Edit Minecraft username for {name}",
-      "copyParentEmail": "Copy parent email {email}",
+      "copyContactEmail": "Copy contact email {email}",
       "emailCopied": "Email copied",
-      "copyAllParentEmails": "Copy all parent emails ({count})",
-      "allEmailsCopied": "All parent emails copied",
+      "copyAllContactEmails": "Copy all contact emails ({count})",
+      "allEmailsCopied": "All contact emails copied",
       "loadingWorkspace": "Loading this group’s sessions.",
       "minecraftSaveFailed": "That username didn’t save. Try again."
     },
@@ -2807,24 +2808,28 @@
       "notProvided": "Not provided"
     },
     "enrollmentParent": {
-      "subject": "{gamerName} is now enrolled in {productName}",
+      "subject": "{participantName} is now enrolled in {productName}",
+      "subjectSelf": "You are now enrolled in {productName}",
       "heading": "Enrolment Confirmed",
-      "body": "Hi {parentName}, {gamerName} is now enrolled in {productName} with Gedu {geduName}."
+      "body": "Hi {parentName}, {participantName} is now enrolled in {productName} with Gedu {geduName}.",
+      "bodySelf": "Hi {parentName}, you are now enrolled in {productName} with Gedu {geduName}."
     },
     "enrollmentGedu": {
-      "subject": "{gamerName} has joined your group – {productName}",
+      "subject": "{participantName} has joined your group – {productName}",
       "heading": "New Gamer in Your Group",
-      "body": "Hi {geduName}, {gamerName} has joined your group for {productName}."
+      "body": "Hi {geduName}, {participantName} has joined your group for {productName}."
     },
     "unenrollmentParent": {
-      "subject": "{gamerName} has been unenrolled from {productName}",
+      "subject": "{participantName} has been unenrolled from {productName}",
+      "subjectSelf": "You have been unenrolled from {productName}",
       "heading": "Unenrolment Confirmed",
-      "body": "Hi {parentName}, {gamerName} has been unenrolled from {productName} (Gedu: {geduName})."
+      "body": "Hi {parentName}, {participantName} has been unenrolled from {productName} (Gedu: {geduName}).",
+      "bodySelf": "Hi {parentName}, you have been unenrolled from {productName} (Gedu: {geduName})."
     },
     "unenrollmentGedu": {
-      "subject": "{gamerName} has left your group – {productName}",
+      "subject": "{participantName} has left your group – {productName}",
       "heading": "Gamer Left Your Group",
-      "body": "Hi {geduName}, {gamerName} has left your group for {productName}."
+      "body": "Hi {geduName}, {participantName} has left your group for {productName}."
     },
     "groupAdded": {
       "subject": "You’ve been assigned to a new group – {productName}",

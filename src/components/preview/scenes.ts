@@ -225,7 +225,7 @@ export const PREVIEW_SCENES = [
     surface: "gedu-product",
     title: "Gedu product page",
     description:
-      "The product page rebuilt around the session feed: the masthead, the standing notes row, one continuous timeline with a “now” divider between the future and the past, the term running backwards behind month dividers, and the reference rail beside it. Expanding the future reveals it upward with the viewport pinned, so nothing already on screen moves. Every editor — write-up, forward plan, group notes, site notes — works against local state.",
+      "The product page rebuilt around the session feed: the masthead, the standing notes row, one continuous timeline with a “now” divider between the future and the past, the term running backwards behind month dividers, and the reference rail beside it. Expanding the future reveals it upward with the viewport pinned, so nothing already on screen moves. Every editor — write-up, forward plan, group notes, site notes — works against local state. Both scenarios carry a mixed roster: eight children and one adult holding a seat of her own, so the rail's adult row is judged where it actually sits — last in a column of child rows, a line shorter than all of them — and she appears on the attendance checklist alongside them, because a gedu marks a parent present exactly as they mark a child.",
     chrome: "dashboard",
     scenarios: [
       {
