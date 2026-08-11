@@ -576,12 +576,11 @@ const DEMO_PARTICIPANTS = [
   },
   {
     // A parent on their own seat (same Marja as the gedu roster fixtures, so
-    // she wears one face everywhere). Deliberately renders as a plain
-    // participant: no Minecraft line (that gate is a positive gamer/gedu
-    // allow-list — parents cannot link game accounts) and no role badge of
-    // any kind, the guest-equivalent treatment the voice access decided on.
-    // This row exists so that treatment is looked at rather than assumed —
-    // whether an in-room "Parent" tag is wanted is judged here.
+    // she wears one face everywhere). Her identity slot carries the shared
+    // Parent badge where a child's row shows the Minecraft identity — the
+    // adult-variant grammar the rosters established, decided by the owner
+    // after judging the unbadged treatment in this very demo. No game
+    // identity: parents cannot link game accounts, by scope decision.
     userId: "07981ead-c695-4cac-be1e-d88d5c13306f",
     userName: "Marja",
     role: "customer",
