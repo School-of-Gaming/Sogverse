@@ -393,6 +393,13 @@ export interface GeduAssignedProductRosterEntry {
   minecraft_uuid: string | null;
   gender: GenderType | null;
   parent_email: string | null;
+  /**
+   * The seat-holder's own address, and only theirs: emitted for an adult
+   * participant (a parent occupying their own seat) and null for every child
+   * row, because a gamer profile's email is the synthetic
+   * `@gamer.sogverse.internal` handle rather than a mailbox.
+   */
+  participant_email: string | null;
 }
 
 export interface GeduAssignedProductGroupGedu {

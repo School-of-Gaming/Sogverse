@@ -21,6 +21,8 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     product_type: "consumer_club",
     billing_mode: "paid",
     topic: "minecraft_java",
+    for_gamers: true,
+    for_parents: false,
     min_age: 7,
     max_age: 12,
     spoken_language_code: "en",

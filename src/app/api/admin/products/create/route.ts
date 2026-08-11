@@ -120,8 +120,15 @@ export const POST = defineRoute({
       p_billing_mode: body.billing_mode,
       p_translations: body.translations,
       p_topic: body.topic,
-      p_min_age: body.min_age,
-      p_max_age: body.max_age,
+      // Non-defaulted on the RPC, so they are unconditional here: a product's
+      // audience is never inferred from an omission.
+      p_for_gamers: body.for_gamers,
+      p_for_parents: body.for_parents,
+      // Absent ages are an omission, not a NULL argument — the RPC's DEFAULT
+      // NULL is what writes the null, and the audience CHECK is what makes a
+      // missing age on a for-gamers product fail loudly instead of silently.
+      p_min_age: body.min_age ?? undefined,
+      p_max_age: body.max_age ?? undefined,
       p_spoken_language_code: body.spoken_language_code,
       p_is_remote: body.is_remote,
       p_timezone: body.timezone,

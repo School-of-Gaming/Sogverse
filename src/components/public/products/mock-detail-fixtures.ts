@@ -707,6 +707,8 @@ function buildBaseProduct(
     status: pickStatus(state),
     is_visible: true,
     is_remote: isRemote,
+    for_gamers: true,
+    for_parents: false,
     min_age: 8,
     max_age: 12,
     spoken_language_code: "fi",

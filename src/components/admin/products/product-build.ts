@@ -418,6 +418,11 @@ function buildSharedFields(
     billing_mode: billingMode,
     translations,
     topic,
+    // Round-tripped from state, never defaulted here: on an edit these carry
+    // the product's own audience back to an RPC that assigns every editable
+    // column, so a hardcoded pair would silently rewrite it.
+    for_gamers: state.forGamers,
+    for_parents: state.forParents,
     min_age: minAge,
     max_age: maxAge,
     spoken_language_code: state.spokenLanguageCode,
@@ -697,8 +702,13 @@ export function existingFormState(
     // product itself. No row at all is the ordinary "no lesson link" case.
     materialUrl: product.product_staff_details?.material_url ?? "",
     image: product.image_path ?? null,
-    minAge: String(product.min_age),
-    maxAge: String(product.max_age),
+    forGamers: product.for_gamers,
+    forParents: product.for_parents,
+    // `String(null)` is the string "null", which the payload builder would then
+    // parse back to NaN — so an absent age becomes the empty field it is,
+    // never a stringified null.
+    minAge: product.min_age == null ? "" : String(product.min_age),
+    maxAge: product.max_age == null ? "" : String(product.max_age),
     spokenLanguageCode: product.spoken_language_code,
     isRemote: product.is_remote,
     locationId: product.location_id,

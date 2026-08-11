@@ -979,6 +979,8 @@ function mockDetailRow(
     is_remote: true,
     location_id: null,
     topic: "minecraft_java",
+    for_gamers: true,
+    for_parents: false,
     min_age: 8,
     max_age: 12,
     spoken_language_code: "en",

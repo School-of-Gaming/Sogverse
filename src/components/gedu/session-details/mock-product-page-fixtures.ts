@@ -872,6 +872,10 @@ function buildRoster(now: Date): GeduAssignedProductRosterEntry[] {
           : null,
       gender: detail.gender,
       parent_email: detail.parentEmail,
+      // Every fixture here is a child, and a child row's contact is their
+      // parent's address. The adult-participant variant of the roster row is
+      // the roster step's work.
+      participant_email: null,
     };
   });
 }

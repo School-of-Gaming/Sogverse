@@ -10,8 +10,12 @@ function row(overrides: {
   topic: ProductTopic;
   isRemote?: boolean;
   spokenLanguageCode?: string;
-  minAge?: number;
-  maxAge?: number;
+  // Null on both is the adults-only shape: a product with no gamer audience
+  // carries no age range at all.
+  minAge?: number | null;
+  maxAge?: number | null;
+  forGamers?: boolean;
+  forParents?: boolean;
   // Weekdays (0=Mon..6=Sun) the product's recurring schedule touches. Each
   // becomes a schedule_slot; only `weekday` matters for filterProducts().
   weekdays?: number[];
@@ -27,8 +31,10 @@ function row(overrides: {
     is_remote: overrides.isRemote ?? false,
     is_visible: true,
     location_id: null,
-    min_age: overrides.minAge ?? 7,
-    max_age: overrides.maxAge ?? 17,
+    for_gamers: overrides.forGamers ?? true,
+    for_parents: overrides.forParents ?? false,
+    min_age: overrides.minAge === undefined ? 7 : overrides.minAge,
+    max_age: overrides.maxAge === undefined ? 17 : overrides.maxAge,
     product_type: "consumer_club",
     primary_gedu_fee_cents: null,
     assistant_gedu_fee_cents: null,
@@ -224,6 +230,39 @@ describe("filterProducts", () => {
       days: [],
     }).map((p) => p.id);
     expect(ids.sort()).toEqual(["b", "c"]);
+  });
+
+  it("drops a product with no age range from a band-filtered result", () => {
+    // A band expresses "shopping for a child of this age", so an adults-only
+    // product — no gamer audience, therefore no range — is not a near miss.
+    const adultsOnly = row({
+      id: "adults",
+      topic: "minecraft_java",
+      forGamers: false,
+      forParents: true,
+      minAge: null,
+      maxAge: null,
+    });
+    const base = {
+      topics: [] as string[],
+      format: null,
+      languages: [] as string[],
+      days: [] as number[],
+    };
+
+    // Unfiltered it is present, so its absence below is the filter's doing.
+    expect(
+      filterProducts([...ALL, adultsOnly], { ...base, age: null }).map(
+        (p) => p.id,
+      ),
+    ).toContain("adults");
+
+    expect(
+      filterProducts([...ALL, adultsOnly], {
+        ...base,
+        age: { min: 7, max: 9 },
+      }).map((p) => p.id),
+    ).not.toContain("adults");
   });
 
   it("ANDs age with other filters", () => {
