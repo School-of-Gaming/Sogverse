@@ -49,6 +49,9 @@ export type ValidationKey =
   | "translationIncomplete"
   | "topicRequired"
   | "spokenLanguageRequired"
+  | "audienceRequired"
+  | "minAgeRequired"
+  | "maxAgeRequired"
   | "minAgeInvalid"
   | "maxAgeInvalid"
   | "municipalityRequired"
@@ -143,15 +146,33 @@ export function validate(
   }
 
   if (!state.topic) return err("topicRequired");
-  if (!state.spokenLanguageCode) return err("spokenLanguageRequired");
 
-  // A blank age passes here as 0 — the same open half of the age round-trip
-  // documented at buildSharedFields' Number(state.minAge); the conditional
-  // presence rule lands with step 8's audience checkboxes.
-  const minAge = Number(state.minAge);
-  const maxAge = Number(state.maxAge);
-  if (!Number.isInteger(minAge) || minAge < 0) return err("minAgeInvalid");
-  if (!Number.isInteger(maxAge) || maxAge < minAge) return err("maxAgeInvalid");
+  // A product with no audience at all is refused by a CHECK on `products`, and
+  // the Audience section makes the state unreachable by refusing to release the
+  // last remaining tick. This is the backstop, stated where every other rule
+  // about a submittable form is stated rather than living only in a `disabled`
+  // attribute one refactor away from disappearing.
+  if (!state.forGamers && !state.forParents) return err("audienceRequired");
+
+  // Ages are a property of the gamer audience and of nothing else, so they are
+  // required exactly when For gamers is ticked — and not looked at otherwise,
+  // since the fields are hidden then and the payload builder sends null whatever
+  // they still hold. Emptiness is checked before parsing: `Number("")` is 0, so
+  // a blank box would otherwise sail through as a perfectly valid age of zero.
+  // A blank field gets its own sentence for the same reason the seat count does
+  // — nothing was typed, so nothing is wrong with what was typed.
+  if (state.forGamers) {
+    if (state.minAge.trim() === "") return err("minAgeRequired");
+    if (state.maxAge.trim() === "") return err("maxAgeRequired");
+    const minAge = Number(state.minAge);
+    const maxAge = Number(state.maxAge);
+    if (!Number.isInteger(minAge) || minAge < 0) return err("minAgeInvalid");
+    if (!Number.isInteger(maxAge) || maxAge < minAge) {
+      return err("maxAgeInvalid");
+    }
+  }
+
+  if (!state.spokenLanguageCode) return err("spokenLanguageRequired");
 
   const showLocationPicker =
     locationPickerMode(config, state.isRemote) !== null;
@@ -254,6 +275,15 @@ export function validate(
   }
 
   return null;
+}
+
+/**
+ * A typed age as a number, or `null` for an empty box — never `Number("")`'s
+ * zero, which is a real age the DB would happily store.
+ */
+function ageOrNull(value: string): number | null {
+  const trimmed = value.trim();
+  return trimmed === "" ? null : Number(trimmed);
 }
 
 /** A "fee" amount is valid only as a real positive number of cents. */
@@ -359,17 +389,23 @@ function buildSharedFields(
   const showPricing =
     billingMode === "paid" && config.pricingShape !== "external";
 
-  // Half of the age round-trip is still open, by plan: `Number("")` is 0, so a
-  // product loaded with null ages (for-parents only, creatable through the raw
-  // API today) would be sent back as 0/0 and refused by the age CHECK — loudly,
-  // which is the accepted handling until step 8 of the products-for-parents
-  // plan lands the empty-age → null emission and conditional presence
-  // validation alongside the audience checkboxes. Admins are trusted to act
-  // only through the UI (root CLAUDE.md), and the UI cannot yet produce a
-  // for-parents product, so every form product is for-gamers with required
-  // ages until then.
-  const minAge = Number(state.minAge);
-  const maxAge = Number(state.maxAge);
+  // Ages belong to the gamer audience: a product nobody's child can take a seat
+  // on carries no range at all rather than a sentinel adult one, and `null` here
+  // reaches the RPC as an *omitted* argument, whose DEFAULT NULL writes the SQL
+  // NULL the age CHECK demands of a parents-only product.
+  //
+  // Derived from the audience flag rather than cleared when the checkbox flips —
+  // the same shape the waitlist tick below uses, and for the same two reasons: a
+  // range the admin typed survives an accidental untick for as long as the form
+  // is open, and one gate on the write beats one on every path to it, including
+  // a stored row whose ages and audience disagree.
+  //
+  // `Number("")` is 0, so emptiness is answered before parsing, never after —
+  // otherwise a blank box submits as an age of zero. validate() already refuses
+  // a blank age on a for-gamers product, so that branch is unreachable from the
+  // form; it is written for the value it emits, not for the case it handles.
+  const minAge = state.forGamers ? ageOrNull(state.minAge) : null;
+  const maxAge = state.forGamers ? ageOrNull(state.maxAge) : null;
   // Uncapped (no seat limit) → null for any product type; otherwise the count.
   //
   // The waitlist is derived from the same answer rather than submitted as the
