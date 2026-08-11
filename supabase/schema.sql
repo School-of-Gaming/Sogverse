@@ -753,7 +753,7 @@ $$;
 -- Name: FUNCTION confirm_paid_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_checkout_session_id text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.confirm_paid_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_checkout_session_id text) IS 'Creates the active participation for a paid signup once Stripe confirms payment. service_role only — the arguments come from Checkout Session metadata we wrote. Returns kind=confirmed with participation_id (idempotent=true when this same session already bought the seat), or kind=duplicate_payment with existing_participation_id when a different payment already put this gamer on this product.';
+COMMENT ON FUNCTION public.confirm_paid_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_checkout_session_id text) IS 'Creates the active participation for a paid signup once Stripe confirms payment. service_role only — the arguments come from Checkout Session metadata we wrote. Deliberately audience-ungated: validation happened before the money, and this after-money recorder refusing would strand a charge with no seat. Returns kind=confirmed with participation_id (idempotent=true when this same session already bought the seat), or kind=duplicate_payment with existing_participation_id when a different payment already put this participant on this product.';
 
 
 --
@@ -1552,9 +1552,12 @@ BEGIN
                          -- deliberately rather than left out: one roster shape
                          -- with two definitions is how the two drift, and the
                          -- next reader would delete the wrong one. Do not
-                         -- remove this as unused.
+                         -- remove this as unused. The role check (00177) keeps
+                         -- it in step with the feed: an id transposition yields
+                         -- NULL rather than a gamer's synthetic handle.
                          'participant_email',
                            CASE WHEN part.participant_id = part.customer_id
+                                 AND gmp.role = 'customer'
                                 THEN gmp.email END
                        )
                        ORDER BY gmp.first_name
@@ -1714,9 +1717,14 @@ BEGIN
         -- The adult's own address, and NULL on every child row. Deliberately
         -- not "the participant's email whoever they are": a gamer's profile
         -- email is the synthetic @gamer.sogverse.internal handle, which is not
-        -- a mailbox and must never reach a copy-email affordance.
+        -- a mailbox and must never reach a copy-email affordance. The role
+        -- check (00177) is what makes "adult seat" mean the ROLE, not id
+        -- equality alone: a hand-written row with a gamer's id transposed into
+        -- customer_id satisfies the equality but is not a customer, and yields
+        -- NULL here rather than leaking the synthetic handle.
         'participant_email',
-          CASE WHEN part.participant_id = part.customer_id THEN gmp.email END
+          CASE WHEN part.participant_id = part.customer_id
+                AND gmp.role = 'customer' THEN gmp.email END
       ) AS entry
         FROM public.participations part
         JOIN public.profiles gmp                ON gmp.id        = part.participant_id
@@ -2384,9 +2392,12 @@ BEGIN
                      -- An adult seat has no linked parent to name, so the chip
                      -- shows an address instead. NULL on every child row: a
                      -- gamer profile's email is the synthetic
-                     -- @gamer.sogverse.internal handle, not a mailbox.
+                     -- @gamer.sogverse.internal handle, not a mailbox. The role
+                     -- check (00177) makes "adult seat" the ROLE, not the id
+                     -- equality alone — a transposed id yields NULL, not a leak.
                      'participant_email',
                        CASE WHEN p.participant_id = p.customer_id
+                             AND gmp.role = 'customer'
                             THEN gmp.email END,
                      'status',                         p.status,
                      'signed_up_at',                   p.signed_up_at,
@@ -2441,6 +2452,7 @@ BEGIN
              'parent_last_name',               parent.last_name,
              'participant_email',
                CASE WHEN p.participant_id = p.customer_id
+                     AND gmp.role = 'customer'
                     THEN gmp.email END,
              'status',                         p.status,
              'signed_up_at',                   p.signed_up_at,
@@ -2500,6 +2512,7 @@ BEGIN
              'parent_last_name',               parent.last_name,
              'participant_email',
                CASE WHEN p.participant_id = p.customer_id
+                     AND gmp.role = 'customer'
                     THEN gmp.email END,
              'status',                         p.status,
              'signed_up_at',                   p.signed_up_at,
@@ -3651,6 +3664,20 @@ BEGIN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 
+  -- Target must be a GAMER (00177). A Minecraft link is a child's; an adult
+  -- seat carries no game account and the roster renders that slot empty by
+  -- design, so a row keyed to a customer would be an orphan the admin twin
+  -- already refuses to write. The scope check above does not care about the
+  -- target's role, so this stands on its own.
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles pr
+     WHERE pr.id = p_participant_id
+       AND pr.role = 'gamer'
+  ) THEN
+    RAISE EXCEPTION 'participant % is not a gamer', p_participant_id
+      USING ERRCODE = 'check_violation';
+  END IF;
+
   v_username := NULLIF(btrim(COALESCE(p_minecraft_username, '')), '');
   -- Clearing the username clears the uuid with it: a uuid without a name is a
   -- verified link to nothing.
@@ -4707,7 +4734,7 @@ CREATE TABLE public.participations (
 -- Name: COLUMN participations.participant_id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.participations.participant_id IS 'The profile occupying this seat. Today always a gamer; the column is named for what it means rather than for who currently fills it, because a parent seat on a for-parents product is the next step.';
+COMMENT ON COLUMN public.participations.participant_id IS 'The profile occupying this seat: a gamer enrolled by their parent, or — on a product whose audience admits adults — the paying customer themselves (participant_id = customer_id is what a self seat looks like). The column is named for what it means rather than for any one role that fills it.';
 
 
 --
