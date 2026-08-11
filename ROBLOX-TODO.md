@@ -6,10 +6,44 @@ documents promise that the app does not have yet. Same semantics as `TODO.md`: t
 tracks open work only — when an item is fully done, delete it; when the file is empty,
 delete the file. The record of what was done lives in git history.
 
+An item has two states. **Open** — still being researched or waiting on a decision;
+it sits in one of the topic sections below. **Resolved** — the decision is made and the
+exact change is written down, but nothing has been applied to the codebase yet; it moves
+to [Resolved — ready to apply](#resolved--ready-to-apply) at the foot of this file. The
+copy changes land in **one pass at the end**, once enough of the document is settled to
+be worth translating and reviewing together, rather than dribbling in item by item. Each
+resolved entry therefore has to be self-contained enough for a fresh session to apply it
+with no prior context: the final English copy, the message keys, and the mechanical
+steps.
+
 The programme surface (`/roblox` and its child pages) is unpublished — noindex, absent
 from the sitemap, no nav links — until copy is signed off by SOG and Roblox. The flip to
 published happens for all of it together: nav + sitemap + noindex in one change (see the
 comment on `roblox` in `src/lib/constants/routes.ts`).
+
+## How we work through this list
+
+One item at a time, start to finish, before touching the next.
+
+1. **Research it first.** The truth lives in the repo, the database, the internal Gedu
+   handbook (`src/data/gedu-docs/`), and the public **sog.gg** marketing site — sog.gg
+   already publishes claims we can reuse rather than invent (it is where "trained,
+   background-checked Gedus" is already committed to in public, for example).
+2. **Propose, then ask.** Bring back a concrete resolution and the specific decisions it
+   needs — not an open "what should this say?".
+3. **Change no copy until the resolution is settled.** These are joint legal documents;
+   the web copy follows the signed-off upstream text rather than leading it. Editing
+   ahead of a decision publishes a claim nobody agreed to.
+4. **Escalate what isn't ours to decide.** If it's Lynx's call or an upstream Notion
+   edit, draft a message for the Lynx × SOG Slack channel — explicitly framed as coming
+   from Claude, with the context and a clear ask — and put it on the clipboard to paste.
+   Keep it short; the channel already has the context that we're editing this copy.
+5. **Put the finalised draft on the clipboard for review.** Plain prose, no Slack markup
+   — it is the copy itself, so it has to paste cleanly into Notion or the channel. Verify
+   the encoding by codepoint after copying; em dashes and curly quotes are the ones that
+   corrupt silently.
+6. **Write the resolution down, don't apply it.** Move the item to *Resolved — ready to
+   apply* with the final copy and the steps. The edits happen in one pass at the end.
 
 ## Placeholder copy waiting on real content
 
@@ -17,11 +51,26 @@ Each gap below renders a visible "still being written" marker on the page rather
 invented copy or a silently short section, and every programme legal page carries a draft
 banner until its copy is signed off.
 
-- [ ] **Child Safeguarding Policy — vetting & training list.** The "Before someone works
-      with children" section ends with "This includes:" and the list is missing (was
-      `xxx` in the draft). Needs the real, publicly-committable vetting/training steps.
 - [ ] **Child Safeguarding Policy — "During in-person events" section.** Entirely
-      missing (was `xyz` in the draft).
+      missing (was `xyz` in the draft). Needs Lynx: the programme's in-person events are
+      in France, at venues Lynx arranges, so none of the controls in the "During online
+      sessions" section (Sogverse accounts, no child-to-child DMs, no outside invites)
+      carry over, and the Gedu handbook has no in-person safeguarding protocol to reuse.
+      The section has to answer: supervision (how many adults, is a child ever alone with
+      one adult), arrival and collection (who signs a child in, who may take them home),
+      the venue (who checks it, are children kept to designated areas), who else is on
+      site (are all adults present identifiable and vetted, including venue staff), and
+      first aid (a named first-aider per event). Photography is already handled by the
+      `data` section deferring to the Privacy Policy, and emergencies by the `escalation`
+      section.
+- [ ] **Whose vetting does the Safeguarding Policy actually describe?** Surfaced while
+      resolving the vetting list. "Who this covers" says the policy applies to "all Lynx
+      Educate and School of Gaming staff, facilitators …, volunteers, and any contractor",
+      but the section directly beneath it describes **only SOG's** process, and the
+      resolved copy is explicitly scoped to SOG's Gedus. If Lynx staff supervise the
+      French in-person events, either Lynx's equivalent vetting belongs alongside it or
+      the heading needs to say it is SOG-specific. Same conversation as the in-person
+      section above.
 - [ ] **SOG contact address, needed in two documents.** The Safeguarding Policy says
       `xxx@sog.gg` ("If you have a concern") and the Terms & Conditions says `xx@sog.gg`
       (same section). Decide: `hello@sog.gg` (matches the privacy policy) or a dedicated
@@ -134,3 +183,71 @@ edits first — the web copy follows the signed-off text.
       place that ban should be lifted is the open question.
 - [ ] **Draft banners come off** each page as its copy is confirmed final (the banner is
       the "copy pending / in draft" warning added while content is incomplete).
+
+## Resolved — ready to apply
+
+Decided, with the exact change written out. Nothing here has been applied yet; it all
+lands in one pass. Delete an entry once its change is in.
+
+### Child Safeguarding Policy — vetting & training list
+
+Decided 2026-08-11 by SOG's CEO. The section "Before someone works with children" ended
+on "This includes:" with the list missing (`xxx` in the draft), so the page renders the
+`pendingSection` marker instead.
+
+**Grounding, so nobody re-litigates it:** sog.gg already commits to this publicly —
+"Our educators undergo thorough background checks and are trained by School of Gaming for
+their role" (`/lessons/…`), "trained, background-checked Gedu" (`/partnerships/schools`),
+and over-18 plus "successfully finish School of Gaming's Basic Course" (`/jobs`). The
+mechanics come from the Gedu handbook (`src/data/gedu-docs/Gedun Perusopas 2026.md`):
+framework contract walked through with SOG staff before signing, the written three-step
+warning procedure attached to it, and the criminal record extract shown but not retained.
+
+**Final English copy** — the lead-in paragraph is unchanged; the bullets are new. Plain
+prose with no markup: the policy renderer only understands cross-reference link tags, and
+none apply here.
+
+> All Game Educators (Gedus) are required to complete School of Gaming's own vetting and
+> training process before working with children on Sogverse. This includes:
+>
+> - Being over 18. Every Game Educator is an adult.
+> - A background check. Every Gedu shows us a criminal record extract of the kind issued
+>   for people who work with children, before they're assigned to any group — so we know
+>   who is spending time with your child. We check it ourselves, and we're not allowed to
+>   keep a copy, so we don't.
+> - School of Gaming's Basic Course for game educators, which every Gedu has to complete
+>   successfully.
+> - Our Game Educator handbook, which sets out how we expect a Gedu to behave and makes
+>   the atmosphere of the group their responsibility.
+> - A signed agreement with School of Gaming, talked through with a member of our staff
+>   before it's signed. It sets out the written procedure we follow — starting with a
+>   warning and a conversation — if a Gedu doesn't meet those expectations.
+
+**To apply:**
+
+1. In each locale file that carries the namespace, append the five bullets as a second
+   entry in `robloxSafeguarding.sections.vetting.blocks` — an array of strings, after the
+   existing lead-in paragraph string. Check whether `tlh` carries `robloxSafeguarding` at
+   all before translating: `tlh` omits legal pages and falls back to English for them.
+2. In `src/app/(public)/roblox/safeguarding/page.tsx`, change the `vetting` entry in
+   `SECTIONS` from `pending: "pendingSection"` to `pending: null`.
+3. Delete this entry.
+
+**Two claims deliberately excluded** — do not add them back without a new decision:
+
+- *Any re-check or ongoing monitoring.* The extract is valid six months and, per the
+  handbook, is never re-shown.
+- *That unverified educators cannot reach the platform.* In Sogverse today `verified`
+  gates only group assignment and instant-voice-room moderation, and the assignment gate
+  is UI-only — `apply_group_changes` does not re-check it.
+
+**Rejected:** a bullet for the *Nepsy-lasten ohjaaminen pelikerhossa* course — the CEO
+confirmed it is optional, mandatory only for ND-specific groups, so it fails the test
+every bullet here must pass (true of every Gedu, before any group). The conditional
+version was rejected too: ND groups are a Finnish municipality arrangement, and raising
+them in a France programme policy poses a question the document never answers.
+
+**Also rejected:** a bullet for the in-Sogverse verification step. It is one admin button
+with no recorded criteria, every pre-existing gedu was bulk-verified with `verified_by`
+NULL, and the gate it controls is UI-only — publishing it would imply a control that is
+not really there.
