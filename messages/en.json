@@ -663,6 +663,17 @@
         "limitedDescription": "Cap how many gamers can join. When full, new signups can go to a waitlist.",
         "unlimited": "No seat limit",
         "unlimitedDescription": "Anyone who signs up can join — there’s no cap."
+      },
+      "vat": {
+        "headline": {
+          "reduced": "Reduced VAT rate — {rate}",
+          "standard": "Standard VAT rate — {rate}"
+        },
+        "reason": {
+          "reduced": "Camps qualify for Finland’s reduced rate — a finance ruling that covers every camp. It follows from the product type and can’t be changed here.",
+          "standard": "Clubs and paid events are sold at Finland’s standard rate. The rate follows from the product type and can’t be changed here."
+        },
+        "note": "The price above includes VAT. Stripe works out the exact amount when the sale happens, so this is Finland’s rate today."
       }
     },
     "users": {

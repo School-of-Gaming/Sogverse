@@ -1,10 +1,11 @@
 "use client";
 
-import { CircleDollarSign, Gift, Info } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { CircleDollarSign, Gift, Info, Percent } from "lucide-react";
+import { useFormatter, useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
+import { vatForProductType } from "@/lib/stripe/vat";
 import { cn } from "@/lib/utils";
 import { FormSection } from "../form-primitives";
 import { PricingBlock } from "../pricing-block";
@@ -33,12 +34,25 @@ export function BillingSection({
   config,
 }: BillingSectionProps) {
   const t = useTranslations("admin.products");
+  const format = useFormatter();
 
   const billingMode = effectiveBillingMode(config, state.paidMode);
   const isPaid = billingMode === "paid";
   const showPricing = isPaid && config.pricingShape !== "external";
   const pricingShape = effectivePricingShape(config);
   const showExternalInfo = billingMode === "external_contract";
+
+  // VAT is derived from the product type and shown only for a product that
+  // actually reaches Stripe: a free club or a municipality club never produces
+  // a sale, so a rate beside them would claim an invoice we never issue.
+  const vat = vatForProductType(config.productType);
+  // `style: "percent"` defaults to zero fraction digits, which would round both
+  // live Finnish rates to a wrong whole number ("14 %", "26 %"). The maximum is
+  // a maximum, so a future whole-number rate still renders without a decimal.
+  const vatRate = format.number(vat.displayRate, {
+    style: "percent",
+    maximumFractionDigits: 1,
+  });
 
   // Seats: a cap is available on every type and optional on all but one.
   // Municipality clubs are contracted for a fixed number of places, so instead
@@ -117,6 +131,23 @@ export function BillingSection({
             onChange={(next) => setState({ ...state, ...next })}
           />
         </Field>
+      )}
+
+      {/* Read-only by design: the treatment follows from the product type, and
+          an admin who could pick it is an admin who could pick the wrong one. */}
+      {isPaid && (
+        <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-sm">
+          <Percent className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+          <div className="space-y-1">
+            <div className="font-medium">
+              {t(`vat.headline.${vat.treatment}`, { rate: vatRate })}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t(`vat.reason.${vat.treatment}`)}
+            </p>
+            <p className="text-xs text-muted-foreground">{t("vat.note")}</p>
+          </div>
+        </div>
       )}
 
       {showSeatLimitChooser && (

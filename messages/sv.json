@@ -663,6 +663,17 @@
         "limitedDescription": "Begränsa hur många spelare som kan delta. När det är fullt kan nya anmälningar gå till en väntelista.",
         "unlimited": "Ingen platsgräns",
         "unlimitedDescription": "Alla som anmäler sig får delta — ingen gräns."
+      },
+      "vat": {
+        "headline": {
+          "reduced": "Reducerad momssats – {rate}",
+          "standard": "Allmän momssats – {rate}"
+        },
+        "reason": {
+          "reduced": "Läger omfattas av Finlands reducerade momssats – ett beslut från ekonomiledningen som gäller alla läger. Satsen följer av produkttypen och kan inte ändras här.",
+          "standard": "Klubbar och avgiftsbelagda evenemang säljs med Finlands allmänna momssats. Satsen följer av produkttypen och kan inte ändras här."
+        },
+        "note": "Priset ovan innehåller moms. Stripe räknar ut det exakta beloppet när köpet sker, så det här är Finlands sats i dag."
       }
     },
     "users": {

@@ -663,6 +663,17 @@
         "limitedDescription": "Limitez le nombre de joueurs pouvant participer. Une fois complet, les nouvelles inscriptions peuvent aller en liste d’attente.",
         "unlimited": "Aucune limite de places",
         "unlimitedDescription": "Toute personne qui s’inscrit peut participer — il n’y a pas de plafond."
+      },
+      "vat": {
+        "headline": {
+          "reduced": "TVA à taux réduit — {rate}",
+          "standard": "TVA à taux normal — {rate}"
+        },
+        "reason": {
+          "reduced": "Les stages relèvent du taux réduit finlandais — une décision de la direction financière qui vaut pour tous les stages. Le taux découle du type de produit et ne se modifie pas ici.",
+          "standard": "Les clubs et les événements payants sont vendus au taux normal finlandais. Le taux découle du type de produit et ne se modifie pas ici."
+        },
+        "note": "Le prix ci-dessus est TTC. Stripe calcule le montant exact au moment de la vente, il s’agit donc du taux finlandais en vigueur aujourd’hui."
       }
     },
     "users": {
