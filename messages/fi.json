@@ -34,7 +34,9 @@
       "terms": "Käyttöehdot",
       "antiBullying": "Kiusaamisen ehkäisy ja kurinpito",
       "roblox": "Roblox-pelisuunnitteluohjelma",
-      "robloxPrivacy": "Roblox-ohjelman tietosuojaseloste"
+      "robloxPrivacy": "Roblox-ohjelman tietosuojaseloste",
+      "robloxSafeguarding": "Roblox-ohjelman lasten turvallisuuden toimintaohje",
+      "robloxTerms": "Roblox-ohjelman käyttöehdot"
     }
   },
   "notFound": {
@@ -2197,6 +2199,10 @@
       "gamerNote": "Tämä palaute on pelaajatililtä. Vastaukset ohjataan hänen vanhemmalleen ({parentEmail})."
     }
   },
+  "legal": {
+    "draftNotice": "Luonnos – tämän sivun sisältöä viimeistellään edelleen, eikä sitä ole vielä hyväksytty. Yksityiskohdat voivat muuttua.",
+    "pendingSection": "Tätä osiota kirjoitetaan vielä, ja se lisätään ennen Ohjelman alkua."
+  },
   "privacy": {
     "title": "Tietosuojaseloste",
     "lastUpdated": "Päivitetty viimeksi: {date}",
@@ -2598,7 +2604,9 @@
     "legal": {
       "roblox": "© 2024 Roblox Corporation. Roblox-sanamerkki, Roblox-logo ja Roblox Tilt ovat Roblox Corporationin rekisteröityjä ja rekisteröimättömiä tavaramerkkejä Yhdysvalloissa ja muissa maissa. Käytetty luvalla.",
       "lynx": "Lynx Educate ja Lynx Educate -logo ovat Lynx Educaten tavaramerkkejä. Käytetty luvalla.",
-      "privacy": "Roblox-ohjelman tietosuojaseloste"
+      "privacy": "Roblox-ohjelman tietosuojaseloste",
+      "safeguarding": "Roblox-ohjelman lasten turvallisuuden toimintaohje",
+      "terms": "Roblox-ohjelman käyttöehdot"
     }
   },
   "robloxPrivacy": {
@@ -2994,6 +3002,150 @@
           "Isokatu 56",
           "90100 Oulu, Suomi",
           "hello@sog.gg"
+        ]
+      }
+    }
+  },
+  "robloxSafeguarding": {
+    "title": "Roblox-ohjelman lasten turvallisuuden toimintaohje",
+    "subtitle": "Tämä toimintaohje täydentää School of Gamingin kiusaamisen ehkäisyn ohjetta, jota sovelletaan edelleen tapaamisten arkiseen käyttäytymiseen. Tässä asiakirjassa kuvataan Lynx Educaten ja School of Gamingin laajemmat vastuut lasten turvallisuudesta Ohjelmassa, myös lähitapahtumissa.",
+    "lastUpdated": "Tarkistettu viimeksi: {date}",
+    "pendingContact": "School of Gamingin yhteysosoitetta turvallisuushuolia varten vahvistetaan vielä, ja se lisätään tähän.",
+    "intro": {
+      "heading": "Sitoumuksemme",
+      "blocks": [
+        "Jokaisella Ohjelmaan osallistuvalla lapsella on oikeus tuntea olonsa turvalliseksi, tulla kunnioitetuksi ja saada suojelua – osallistuipa hän verkossa tai lähitapahtumassa. Sekä Lynx Educate että School of Gaming suhtautuvat tähän vastuuseen vakavasti."
+      ]
+    },
+    "sections": {
+      "covers": {
+        "heading": "Keitä tämä koskee",
+        "blocks": [
+          "Tämä toimintaohje koskee kaikkia Lynx Educaten ja School of Gamingin työntekijöitä, ohjaajia (pelikasvattajia eli ”Geduja”), vapaaehtoisia ja kaikkia sopimuskumppaneita, jotka ovat tekemisissä lasten kanssa tämän Ohjelman kautta."
+        ]
+      },
+      "vetting": {
+        "heading": "Ennen kuin joku työskentelee lasten kanssa",
+        "blocks": [
+          "Kaikkien pelikasvattajien (Gedujen) on suoritettava School of Gamingin oma taustatarkistus- ja koulutusprosessi, ennen kuin he työskentelevät lasten kanssa Sogversessa. Tähän kuuluu:"
+        ]
+      },
+      "online": {
+        "heading": "Verkkotapaamisissa",
+        "blocks": [
+          [
+            "Jokaisen Pelaajan tili on liitetty vanhemman tiliin; lapset eivät voi ilmoittautua itse.",
+            "Lasten välillä ei ole suoraviestejä – kaikki viestintä tapahtuu ryhmässä, ja koulutettu pelikasvattaja valvoo sitä aktiivisesti.",
+            "Mukaan pääsevät vain ilmoittautuneet Pelaajat ja taustatarkistetut pelikasvattajat – ulkopuolisia kutsuja tai kontakteja ei sallita.",
+            "Tapaamisia ei tallenneta."
+          ]
+        ]
+      },
+      "inPerson": {
+        "heading": "Lähitapahtumissa",
+        "blocks": []
+      },
+      "behaviour": {
+        "heading": "Käyttäytyminen ja kurinpito",
+        "blocks": [
+          "SOG:n ohjaamissa tapaamisissa arjen käyttäytymistilanteet käsitellään School of Gamingin kiusaamisen ehkäisyn ja kurinpidon ohjeen mukaisesti. Ohje etenee tukevasti ja askel kerrallaan, ennen kuin lapsi poistetaan tapaamisesta tai yhteisöstä."
+        ]
+      },
+      "escalation": {
+        "heading": "Huolen eteneminen",
+        "blocks": [
+          "School of Gaming käsittelee huolet ensisijaisesti, koska se on päivittäin tekemisissä osallistujien kanssa. Kaikki lasten turvallisuutta koskevat huolet – kaltoinkohtelu, häirintä, itsensä vahingoittaminen tai vakava loukkaantuminen – siirretään Lynx Educatelle 24 tunnin kuluessa, ja Lynx ilmoittaa asiasta viipymättä Robloxille silloin, kun se on tarpeen. Jos lapsi voi olla välittömässä vaarassa, otamme ensin yhteyttä hätäpalveluihin ja vasta sen jälkeen etenemme sisäisesti."
+        ]
+      },
+      "concern": {
+        "heading": "Jos sinulla on huoli",
+        "blocks": [
+          "Jos sinulla tai lapsellasi on lasten turvallisuutta koskeva huoli, ota yhteyttä osoitteeseen support@lynxeducate.com."
+        ]
+      },
+      "data": {
+        "heading": "Tiedot ja valokuvat",
+        "blocks": [
+          "Kaikkeen valokuvaamiseen, kuvaamiseen ja lapsen kuvan käyttöön sovelletaan Roblox-ohjelman tietosuojaselosteessa kuvattuja suostumusvalintoja – suostumusta ei koskaan oleteta, se on aina vapaaehtoinen ja aina muutettavissa."
+        ]
+      },
+      "review": {
+        "heading": "Toimintaohjeen tarkistaminen",
+        "blocks": [
+          "Tarkistamme tämän toimintaohjeen vuosittain."
+        ]
+      }
+    }
+  },
+  "robloxTerms": {
+    "title": "Roblox-ohjelman käyttöehdot",
+    "subtitle": "Koskee perheitä, jotka ilmoittautuvat Lynx Educaten, School of Gamingin ja Robloxin yhteiseen ohjelmaan Ranskassa.",
+    "lastUpdated": "Päivitetty: {date}",
+    "pendingContact": "School of Gamingin yhteysosoitetta vahvistetaan vielä, ja se lisätään tähän.",
+    "intro": {
+      "heading": "Lyhyesti",
+      "blocks": [
+        "Tässä kerrotaan, mihin ilmoitat lapsesi, kun ilmoittaudut Roblox-ohjelmaan. Kyseessä on Lynx Educaten ja School of Gamingin yhteinen ohjelma, jota Roblox tukee. Jos jokin jää epäselväksi, lähetä sähköpostia osoitteeseen support@lynxeducate.com."
+      ]
+    },
+    "sections": {
+      "involved": {
+        "heading": "Keitä tässä on mukana",
+        "blocks": [
+          [
+            "Lynx Educate SAS ja School of Gaming Galactic Oy (”SOG”) suunnittelevat ja toteuttavat tämän Ohjelman yhdessä. Tässä asiakirjassa ”me” tarkoittaa molempia yhdessä, ellei toisin mainita.",
+            "Roblox Corporation (”Roblox”) tukee Ohjelmaa ja tarjoaa alustan, jolla lapsesi rakentaa. Roblox ei ole näiden ehtojen osapuoli."
+          ],
+          "Ilmoittautuminen ja tapaamiset tapahtuvat School of Gamingin alustalla (”Sogverse”). Ilmoittautumalla hyväksyt nämä Ohjelmaa koskevat ehdot, joita sovelletaan School of Gamingin ja Lynxin yleisten käyttöehtojen rinnalla. Jos ehdot ovat keskenään ristiriidassa, nämä Ohjelman ehdot menevät edelle."
+        ]
+      },
+      "eligibility": {
+        "heading": "Kuka voi osallistua",
+        "blocks": [
+          "Ohjelma on tarkoitettu 8–17-vuotiaille nuorille Ranskassa, ja ilmoittautumisen tekee vanhempi tai laillinen huoltaja. Vanhemman tai huoltajan on tehtävä ilmoittautuminen ja annettava suostumus lapsen puolesta."
+        ]
+      },
+      "whatsInvolved": {
+        "heading": "Mitä Ohjelmaan kuuluu",
+        "blocks": [
+          "Lapsesi osallistuu tapaamisiin (verkossa ja/tai paikan päällä sen mukaan, mihin olet ilmoittautunut), joissa opetellaan pelien rakentamista Roblox-alustalla. Lopuksi lapsi julkaisee oman pelinsä tai esineensä. Vanhemmat kutsutaan erillisiin tapaamisiin, joissa käsitellään verkkoturvallisuutta ja lapsilukkoja."
+        ]
+      },
+      "cost": {
+        "heading": "Hinta",
+        "blocks": [
+          "Ohjelma on maksuton ilmoittautuneille perheille."
+        ]
+      },
+      "safety": {
+        "heading": "Turvallisuus ja valvonta",
+        "blocks": [
+          "Jokaista tapaamista valvoo koulutettu ohjaaja. Käyttäytymistä ja lasten turvallisuutta koskeva toimintatapamme on kuvattu yhteisessä lasten turvallisuuden toimintaohjeessamme, joka on saatavilla pyynnöstä."
+        ]
+      },
+      "information": {
+        "heading": "Sinun tietosi",
+        "blocks": [
+          "Roblox-ohjelman tietosuojaselosteessa kerrotaan, miten käytämme sinun ja lapsesi tietoja. Ilmoittautumalla vahvistat lukeneesi ja ymmärtäneesi sen.",
+          "Kun ilmoittaudut Roblox-ohjelmaan, School of Gaming -tiliisi liittyvät tiedot (mukaan lukien yhteystietosi ja lapsesi tilitiedot) jaetaan myös Lynx Educatelle ohjelman toteuttamista varten ja Robloxille ohjelman vaikuttavuustutkimusta varten."
+        ]
+      },
+      "media": {
+        "heading": "Valokuvat, video ja markkinointi",
+        "blocks": [
+          "Se, valokuvataanko tai kuvataanko lastasi ja käytetäänkö aineistoa markkinointiin, riippuu täysin ilmoittautumisen yhteydessä tekemistäsi valinnoista. Valinnat ovat vapaaehtoisia, ja voit muuttaa mieltäsi milloin tahansa Sogverse-profiilisi asetuksissa."
+        ]
+      },
+      "concern": {
+        "heading": "Jos sinulla on huoli",
+        "blocks": [
+          "Jos olet huolissasi lapsesi kokemuksesta Ohjelmassa, ota yhteyttä osoitteeseen support@lynxeducate.com – huolehdimme siitä, että viesti tavoittaa oikeat ihmiset."
+        ]
+      },
+      "changes": {
+        "heading": "Ehtojen muutokset",
+        "blocks": [
+          "Voimme päivittää näitä ehtoja. Päivitämme aina yllä olevan päivämäärän ja kerromme sinulle suoraan, jos jokin olennainen asia muuttuu."
         ]
       }
     }

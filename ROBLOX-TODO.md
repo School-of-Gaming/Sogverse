@@ -13,6 +13,10 @@ comment on `roblox` in `src/lib/constants/routes.ts`).
 
 ## Placeholder copy waiting on real content
 
+Each gap below renders a visible "still being written" marker on the page rather than
+invented copy or a silently short section, and every programme legal page carries a draft
+banner until its copy is signed off.
+
 - [ ] **Child Safeguarding Policy — vetting & training list.** The "Before someone works
       with children" section ends with "This includes:" and the list is missing (was
       `xxx` in the draft). Needs the real, publicly-committable vetting/training steps.
@@ -38,10 +42,10 @@ comment on `roblox` in `src/lib/constants/routes.ts`).
       struck through in the Safeguarding Policy). Not currently true — removed from the
       web copy on 2026-08-11. The Notion documents (and whatever version Lynx's lawyers
       reviewed) need the same edit so the document of record matches the published page.
-- [ ] **"Child Safeguarding Policy, available upon request" (Terms & Conditions).** We
-      are publishing that policy at `/roblox/safeguarding`, so "upon request" undersells
-      it — once the page is live, the Terms wording should point at it instead. An
-      upstream/Notion wording edit.
+- [ ] **"Child Safeguarding Policy, available upon request" (Terms & Conditions).** That
+      policy now has a page at `/roblox/safeguarding`, so "upon request" undersells it —
+      the Terms wording should point at the page instead. Rendered faithfully as written
+      for now, because the fix is an upstream/Notion wording edit.
 - [ ] **"Sessions are not recorded" wording mismatch.** The Safeguarding Policy says it
       flatly; the Privacy Policy says "*Routine* online sessions are not recorded" and
       contemplates announced photography/filming at selected sessions/events. Align the
@@ -121,8 +125,9 @@ edits first — the web copy follows the signed-off text.
 
 - [ ] **Linkify cross-references between the legal pages?** The Programme Privacy Policy
       mentions the general Privacy Policy, the Programme Terms and the Safeguarding
-      Policy in plain text (the `PolicyPage` pattern stores plain strings). Making them
-      real links needs a small rich-text extension. Recommendation on the table: yes for
-      internal cross-references once all pages exist; Kyle hasn't ruled.
+      Policy in plain text (the `PolicyPage` pattern stores plain strings), and the Terms
+      and the Safeguarding Policy cross-reference each other the same way. Making them
+      real links needs a small rich-text extension. All three pages now exist, so the
+      only thing left is the ruling; Kyle hasn't given it.
 - [ ] **Draft banners come off** each page as its copy is confirmed final (the banner is
       the "copy pending / in draft" warning added while content is incomplete).

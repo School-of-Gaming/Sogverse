@@ -77,6 +77,7 @@ const SECTIONS = [
 
 export default async function RobloxPrivacyPage() {
   const t = await getTranslations("robloxPrivacy");
+  const tLegal = await getTranslations("legal");
   const locale = await getLocale();
 
   return (
@@ -86,6 +87,7 @@ export default async function RobloxPrivacyPage() {
       lastUpdated={t("lastUpdated", {
         date: formatDateOnly(LAST_UPDATED, locale, { dateStyle: "long" }),
       })}
+      draftNotice={tLegal("draftNotice")}
       intro={{
         heading: t("intro.heading"),
         blocks: rawPolicyBlocks(t.raw("intro.blocks")),

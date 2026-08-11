@@ -34,7 +34,9 @@
       "terms": "Conditions générales",
       "antiBullying": "Lutte contre le harcèlement et discipline",
       "roblox": "Programme de création de jeux Roblox",
-      "robloxPrivacy": "Politique de confidentialité du Programme Roblox"
+      "robloxPrivacy": "Politique de confidentialité du Programme Roblox",
+      "robloxSafeguarding": "Politique de protection de l’enfance du Programme Roblox",
+      "robloxTerms": "Conditions générales du Programme Roblox"
     }
   },
   "notFound": {
@@ -2197,6 +2199,10 @@
       "gamerNote": "Ce retour provient d’un compte joueur. Les réponses seront adressées à son parent ({parentEmail})."
     }
   },
+  "legal": {
+    "draftNotice": "Brouillon — le contenu de cette page est en cours de finalisation et n’a pas encore été approuvé. Les détails peuvent changer.",
+    "pendingSection": "Cette section est encore en cours de rédaction et sera ajoutée avant le lancement du Programme."
+  },
   "privacy": {
     "title": "Politique de confidentialité",
     "lastUpdated": "Dernière mise à jour : {date}",
@@ -2598,7 +2604,9 @@
     "legal": {
       "roblox": "© 2024 Roblox Corporation. Roblox, le logo Roblox et Roblox Tilt font partie des marques déposées et non déposées de Roblox Corporation aux États-Unis et dans d’autres pays. Utilisées avec autorisation.",
       "lynx": "Lynx Educate et le logo Lynx Educate sont des marques de Lynx Educate. Utilisées avec autorisation.",
-      "privacy": "Politique de confidentialité du Programme Roblox"
+      "privacy": "Politique de confidentialité du Programme Roblox",
+      "safeguarding": "Politique de protection de l’enfance du Programme Roblox",
+      "terms": "Conditions générales du Programme Roblox"
     }
   },
   "robloxPrivacy": {
@@ -2994,6 +3002,150 @@
           "Isokatu 56",
           "90100 Oulu, Finlande",
           "hello@sog.gg"
+        ]
+      }
+    }
+  },
+  "robloxSafeguarding": {
+    "title": "Politique de protection de l’enfance du Programme Roblox",
+    "subtitle": "Ce document complète la politique de lutte contre le harcèlement de School of Gaming, qui continue de s’appliquer aux comportements du quotidien pendant les sessions. Il couvre les responsabilités plus larges de Lynx Educate et de School of Gaming en matière de protection de l’enfance dans le cadre du Programme, y compris lors des événements en présentiel.",
+    "lastUpdated": "Dernière révision : {date}",
+    "pendingContact": "Une adresse de contact School of Gaming pour les questions de protection de l’enfance est en cours de confirmation et sera ajoutée ici.",
+    "intro": {
+      "heading": "Notre engagement",
+      "blocks": [
+        "Chaque enfant qui participe à ce Programme a le droit de se sentir en sécurité, respecté et protégé — qu’il participe en ligne ou qu’il assiste à un événement en présentiel. Lynx Educate et School of Gaming prennent tous deux cette responsabilité au sérieux."
+      ]
+    },
+    "sections": {
+      "covers": {
+        "heading": "Qui est concerné",
+        "blocks": [
+          "Cette politique s’applique à l’ensemble du personnel de Lynx Educate et de School of Gaming, aux éducateurs de jeu (les « Gedus »), aux bénévoles et à tout prestataire en contact avec des enfants dans le cadre de ce Programme."
+        ]
+      },
+      "vetting": {
+        "heading": "Avant de travailler auprès d’enfants",
+        "blocks": [
+          "Tous les éducateurs de jeu (Gedus) doivent suivre le processus de vérification et de formation propre à School of Gaming avant de travailler auprès d’enfants sur Sogverse. Cela comprend :"
+        ]
+      },
+      "online": {
+        "heading": "Pendant les sessions en ligne",
+        "blocks": [
+          [
+            "Le compte de chaque Joueur est rattaché à un compte parent ; les enfants ne peuvent pas s’inscrire eux-mêmes.",
+            "Il n’existe pas de messagerie directe entre enfants — tous les échanges se font en groupe et sont activement supervisés par un éducateur de jeu formé.",
+            "Seuls les Joueurs inscrits et les éducateurs vérifiés peuvent participer — aucune invitation externe ni aucun contact extérieur.",
+            "Les sessions ne sont pas enregistrées."
+          ]
+        ]
+      },
+      "inPerson": {
+        "heading": "Pendant les événements en présentiel",
+        "blocks": []
+      },
+      "behaviour": {
+        "heading": "Comportement et discipline",
+        "blocks": [
+          "Les questions de comportement au quotidien pendant les sessions animées par SOG relèvent de la politique de lutte contre le harcèlement et de discipline de School of Gaming, qui privilégie une approche bienveillante et progressive avant tout retrait d’un enfant d’une session ou de la communauté."
+        ]
+      },
+      "escalation": {
+        "heading": "Procédure de remontée",
+        "blocks": [
+          "Les signalements sont traités en première intention par School of Gaming, qui est en contact quotidien avec les participants. Tout signalement relatif à la protection de l’enfance — maltraitance, harcèlement, automutilation ou blessure grave — est transmis à Lynx Educate dans les 24 heures, et Lynx en informe Roblox sans délai lorsque cela est requis. Lorsqu’un enfant peut se trouver en danger immédiat, nous contactons d’abord les services d’urgence, avant toute remontée interne."
+        ]
+      },
+      "concern": {
+        "heading": "Si vous avez une inquiétude",
+        "blocks": [
+          "Si vous ou votre enfant avez une inquiétude relative à la protection de l’enfance, veuillez écrire à support@lynxeducate.com."
+        ]
+      },
+      "data": {
+        "heading": "Données et photos",
+        "blocks": [
+          "Toute photographie, tout enregistrement vidéo et toute utilisation de l’image d’un enfant sont régis par les choix de consentement décrits dans la Politique de confidentialité du Programme Roblox — jamais présumés, toujours facultatifs, toujours modifiables."
+        ]
+      },
+      "review": {
+        "heading": "Révision de cette politique",
+        "blocks": [
+          "Nous révisons cette politique chaque année."
+        ]
+      }
+    }
+  },
+  "robloxTerms": {
+    "title": "Conditions générales du Programme Roblox",
+    "subtitle": "S’applique aux familles qui inscrivent leur enfant au programme Lynx Educate × School of Gaming × Roblox en France.",
+    "lastUpdated": "Mise à jour : {date}",
+    "pendingContact": "Une adresse de contact School of Gaming est en cours de confirmation et sera ajoutée ici.",
+    "intro": {
+      "heading": "En bref",
+      "blocks": [
+        "Ce document explique ce à quoi vous inscrivez votre enfant lorsque vous vous enregistrez au Programme Roblox. Il s’agit d’un programme commun à Lynx Educate et à School of Gaming, parrainé par Roblox. Si quelque chose n’est pas clair, écrivez à support@lynxeducate.com."
+      ]
+    },
+    "sections": {
+      "involved": {
+        "heading": "Qui intervient",
+        "blocks": [
+          [
+            "Lynx Educate SAS et School of Gaming Galactic Oy (« SOG ») conçoivent et déploient ce Programme ensemble — dans ce document, « nous » désigne les deux entités conjointement, sauf mention contraire.",
+            "Roblox Corporation (« Roblox ») parraine le Programme et fournit la plateforme sur laquelle votre enfant créera. Roblox n’est pas partie aux présentes Conditions."
+          ],
+          "L’inscription et les sessions se déroulent sur la plateforme de School of Gaming (« Sogverse »). En vous inscrivant, vous acceptez les présentes conditions propres au Programme, qui s’appliquent en complément des conditions générales habituelles de School of Gaming et de Lynx et qui prévalent sur celles-ci en cas de contradiction."
+        ]
+      },
+      "eligibility": {
+        "heading": "Qui peut participer",
+        "blocks": [
+          "Le Programme s’adresse aux jeunes de 8–17 ans résidant en France, inscrits par un parent ou un représentant légal. Un parent ou un représentant légal doit effectuer l’inscription et donner son consentement au nom de l’enfant."
+        ]
+      },
+      "whatsInvolved": {
+        "heading": "En quoi cela consiste",
+        "blocks": [
+          "Votre enfant participera à des sessions (en ligne et/ou en présentiel, selon ce à quoi vous l’avez inscrit) conçues pour enseigner la création de jeux sur la plateforme Roblox, jusqu’à la publication de son propre jeu ou de son propre objet. Les parents sont invités à des sessions distinctes consacrées à la sécurité en ligne et au contrôle parental."
+        ]
+      },
+      "cost": {
+        "heading": "Coût",
+        "blocks": [
+          "Le Programme est gratuit pour les familles inscrites."
+        ]
+      },
+      "safety": {
+        "heading": "Sécurité et encadrement",
+        "blocks": [
+          "Chaque session est encadrée par un éducateur de jeu formé. Notre approche du comportement et de la protection de l’enfance est exposée dans notre Politique commune de protection de l’enfance, disponible sur demande."
+        ]
+      },
+      "information": {
+        "heading": "Vos informations",
+        "blocks": [
+          "La manière dont nous utilisons vos informations et celles de votre enfant est expliquée dans notre Politique de confidentialité du Programme Roblox. En vous inscrivant, vous confirmez en avoir pris connaissance et l’avoir comprise.",
+          "Lors de l’inscription à un programme Roblox, les informations associées à votre compte School of Gaming (y compris vos coordonnées et les informations du compte de votre enfant) seront également communiquées à Lynx Educate aux fins de la mise en œuvre du programme et à Roblox aux fins de la recherche sur l’impact du programme."
+        ]
+      },
+      "media": {
+        "heading": "Photos, vidéos et communication",
+        "blocks": [
+          "Le fait que votre enfant soit photographié ou filmé, et que ces contenus soient utilisés à des fins de communication, dépend entièrement des choix que vous faites lors de l’inscription. Ces choix sont facultatifs et vous pouvez revenir dessus à tout moment dans les paramètres de votre profil Sogverse."
+        ]
+      },
+      "concern": {
+        "heading": "Si vous avez une inquiétude",
+        "blocks": [
+          "Si l’expérience de votre enfant dans le Programme vous inquiète, écrivez à support@lynxeducate.com — nous veillerons à ce que votre message parvienne aux bonnes personnes."
+        ]
+      },
+      "changes": {
+        "heading": "Modifications des présentes conditions",
+        "blocks": [
+          "Nous pouvons mettre à jour ces conditions ; nous mettrons toujours à jour la date ci-dessus et vous informerons directement en cas de changement important."
         ]
       }
     }

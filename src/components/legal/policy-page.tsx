@@ -1,3 +1,4 @@
+import { TriangleAlert } from "lucide-react";
 import type { PolicyBlock } from "./policy-content";
 
 interface PolicySubsection {
@@ -10,6 +11,14 @@ interface PolicySection {
   blocks: PolicyBlock[];
   /** Second-level headings under this section, in render order. */
   subsections?: PolicySubsection[];
+  /**
+   * Set where the source document has a gap we refuse to invent copy for — a
+   * list that was never written, a section that does not exist yet, a contact
+   * address nobody has decided on. Rendered after the section's own copy as a
+   * visible marker, so a reader can tell "not written yet" apart from "not
+   * applicable" instead of meeting a silently short section.
+   */
+  pending?: string;
 }
 
 interface PolicyPageProps {
@@ -19,6 +28,12 @@ interface PolicyPageProps {
   subtitle?: string;
   /** Fully-formed "Last updated: …" line (already localized by the caller). */
   lastUpdated: string;
+  /**
+   * Set while the document is a draft: renders a prominent banner above the
+   * summary box saying so. Omitted once the copy is signed off — a page with
+   * no banner is a page whose text is final.
+   */
+  draftNotice?: string;
   /** Plain-language summary box shown up top. */
   intro: { heading: string; blocks: PolicyBlock[] };
   /** Body sections, in render order. */
@@ -50,8 +65,26 @@ function PolicyBlocks({ blocks }: { blocks: PolicyBlock[] }) {
 }
 
 /**
+ * Marks a heading whose copy the source document has not supplied yet. Quieter
+ * than the page-level draft banner and louder than body text: the reader is
+ * meant to notice the hole rather than read past it.
+ */
+function PendingNotice({ notice }: { notice: string }) {
+  return (
+    <div className="flex items-start gap-2.5 rounded-md border border-dashed border-warning/60 bg-warning/5 px-4 py-3">
+      <TriangleAlert
+        className="mt-0.5 h-4 w-4 shrink-0 text-warning"
+        aria-hidden="true"
+      />
+      <p className="text-sm italic text-muted-foreground">{notice}</p>
+    </div>
+  );
+}
+
+/**
  * Shared layout for our plain-language legal pages (Privacy Policy, Terms &
- * Conditions, Anti-Bullying & Discipline, the Roblox Programme Privacy Policy).
+ * Conditions, Anti-Bullying & Discipline, and the three Roblox Programme
+ * documents — its privacy policy, safeguarding policy and terms).
  * Pure presentation: the caller owns the copy and pulls it from
  * `messages/*.json` with a literal next-intl namespace, so each page keeps full
  * message-key type safety while the markup lives in one place. A section
@@ -61,6 +94,7 @@ export function PolicyPage({
   title,
   subtitle,
   lastUpdated,
+  draftNotice,
   intro,
   sections,
 }: PolicyPageProps) {
@@ -71,6 +105,23 @@ export function PolicyPage({
         {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
         <p className="text-sm text-muted-foreground">{lastUpdated}</p>
       </div>
+
+      {/* Above the summary box, not below it: a reader who takes only the
+          short version still has to pass the "this is not final" warning. */}
+      {draftNotice && (
+        <div
+          role="note"
+          className="mt-8 flex items-start gap-4 rounded-lg border-2 border-warning bg-warning/10 p-5 sm:p-6"
+        >
+          <TriangleAlert
+            className="mt-0.5 h-7 w-7 shrink-0 text-warning"
+            aria-hidden="true"
+          />
+          <p className="text-base font-bold leading-relaxed sm:text-lg">
+            {draftNotice}
+          </p>
+        </div>
+      )}
 
       {/* Plain-language summary up top — the one part we most want a hurried
           parent to actually read. */}
@@ -90,6 +141,7 @@ export function PolicyPage({
                 <PolicyBlocks blocks={subsection.blocks} />
               </div>
             ))}
+            {section.pending && <PendingNotice notice={section.pending} />}
           </section>
         ))}
       </div>

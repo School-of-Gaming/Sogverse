@@ -82,6 +82,16 @@ export default function RobloxPage() {
     description: t(`how.${key}.description`),
   }));
 
+  // The Programme's own legal documents, in the order a family meets them:
+  // what you are agreeing to, how your child is kept safe, what happens to your
+  // information. This footer is the only link to any of them while the whole
+  // Programme surface is unpublished.
+  const programmeDocuments = [
+    { href: ROUTES.robloxTerms, label: t("legal.terms") },
+    { href: ROUTES.robloxSafeguarding, label: t("legal.safeguarding") },
+    { href: ROUTES.robloxPrivacy, label: t("legal.privacy") },
+  ];
+
   return (
     <>
       <RobloxHero />
@@ -194,20 +204,22 @@ export default function RobloxPage() {
 
       {/* Trademark attribution. Required wherever the Roblox mark appears, and
           the courteous equivalent for Lynx. Small and quiet, but on the page —
-          alongside the Programme's own privacy policy, which is linked from
-          here and nowhere else while both pages stay unpublished. */}
+          alongside the Programme's own legal documents, which are linked from
+          here and nowhere else while the whole surface stays unpublished. */}
       <section className="container mx-auto px-4 pb-16">
         <div className="mx-auto max-w-3xl space-y-2 border-t pt-8 text-xs leading-relaxed text-muted-foreground/70">
           <p>{t("legal.roblox")}</p>
           <p>{t("legal.lynx")}</p>
-          <p>
-            <Link
-              href={ROUTES.robloxPrivacy}
-              className="underline underline-offset-2 hover:text-muted-foreground"
-            >
-              {t("legal.privacy")}
-            </Link>
-          </p>
+          {programmeDocuments.map((document) => (
+            <p key={document.href}>
+              <Link
+                href={document.href}
+                className="underline underline-offset-2 hover:text-muted-foreground"
+              >
+                {document.label}
+              </Link>
+            </p>
+          ))}
         </div>
       </section>
     </>

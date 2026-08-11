@@ -27,6 +27,8 @@ Per-locale JSON in `messages/<code>.json` at the repo root (`en`, `fi`, `sv`, `f
 
 **Rule: Every user-facing string must be translated for every locale file in `messages/`. Never leave placeholder copy or skip a locale. Best-effort translation is expected; Klingon (`tlh`) is an easter egg where fun takes are welcome and accuracy is not the goal.**
 
+**Rule: legal-page namespaces are served in English under `tlh` — the easter egg stops at the courtroom door.** A privacy policy, a set of terms, a safeguarding policy and their programme-specific siblings are binding text a family may be held to; an in-character rendering of one is a joke told at the reader's expense, and it is the one place where "accuracy is not the goal" is the wrong instruction. The shape: the `tlh` values for those namespaces are the `en` values **verbatim**, so the catalog stays structurally identical to `en` and the completeness and placeholder-parity gates pass unchanged. The same applies to those pages' `metadata.pages` titles and to any link label that names one of the documents — a footer link must call a page what the page calls itself. Everything else in `tlh` (nav, dashboards, marketing copy) stays in character.
+
 **Rule: No emoji in `messages/` files** — untranslatable, unthemeable copy. When a string needs a glyph, render a `lucide-react` icon next to the translated text in the component.
 
 A CI script (under `scripts/`) validates translation completeness on every push — missing keys, empty values, and stale keys. It picks up new locale files automatically.

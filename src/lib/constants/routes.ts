@@ -205,6 +205,20 @@ export const ROUTES = {
    * flips to published in the same change that publishes `/roblox`.
    */
   robloxPrivacy: "/roblox/privacy",
+  /**
+   * The Programme's joint child safeguarding policy, held by Lynx Educate and
+   * School of Gaming together. Same posture as `robloxPrivacy` above — noindex,
+   * no sitemap entry, no nav link, reachable only from `/roblox` itself — and
+   * flips to published in the same change that publishes `/roblox`.
+   */
+  robloxSafeguarding: "/roblox/safeguarding",
+  /**
+   * The Programme's own terms, supplementing the platform ones at
+   * `/terms-and-conditions`. Same posture as `robloxPrivacy` above — noindex,
+   * no sitemap entry, no nav link, reachable only from `/roblox` itself — and
+   * flips to published in the same change that publishes `/roblox`.
+   */
+  robloxTerms: "/roblox/terms",
   privacy: "/privacy",
   termsAndConditions: "/terms-and-conditions",
   antiBullying: "/anti-bullying-and-discipline",
