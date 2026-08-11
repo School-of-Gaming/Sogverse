@@ -286,10 +286,10 @@ $$;
 
 
 --
--- Name: admin_enroll_gamer(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
+-- Name: admin_enroll_participant(uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_participant_id uuid) RETURNS jsonb
+CREATE FUNCTION public.admin_enroll_participant(p_product_id uuid, p_participant_id uuid) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -376,10 +376,10 @@ $$;
 
 
 --
--- Name: FUNCTION admin_enroll_gamer(p_product_id uuid, p_participant_id uuid); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION admin_enroll_participant(p_product_id uuid, p_participant_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_participant_id uuid) IS 'Admin-gated comp-enrollment: drops a participant onto a product with status=active, bypassing payment, seat caps and registration windows by design. Refuses only a paid consumer club — the one shape whose seat requires a Stripe subscription this function cannot create; free clubs enroll like any free camp or event. Since 00173 it also enforces the audience: a customer profile takes a seat as their own customer and needs for_parents, anyone else is resolved through the parent link and needs for_gamers.';
+COMMENT ON FUNCTION public.admin_enroll_participant(p_product_id uuid, p_participant_id uuid) IS 'Admin-gated comp-enrollment: drops a participant onto a product with status=active, bypassing payment, seat caps and registration windows by design. Refuses only a paid consumer club — the one shape whose seat requires a Stripe subscription this function cannot create; free clubs enroll like any free camp or event. Since 00173 it also enforces the audience: a customer profile takes a seat as their own customer and needs for_parents, anyone else is resolved through the parent link and needs for_gamers. Renamed from admin_enroll_gamer in 00175 — it has not only enrolled gamers since 00173.';
 
 
 --
@@ -1506,7 +1506,10 @@ BEGIN
         'name',          pg.name,
         'created_at',    pg.created_at,
         'is_my_group',   (pg.id = v_my_group_id),
-        'gamer_count',   (
+        -- Every active seat on the group, whoever holds it. Spelled for a gamer
+        -- until 00175, at which point counting an adult parent under that name
+        -- became a lie the badge repeated on screen.
+        'participant_count',   (
           SELECT COUNT(*)::INTEGER
             FROM participations part
            WHERE part.group_id = pg.id
@@ -1529,7 +1532,7 @@ BEGIN
             COALESCE((
               SELECT jsonb_agg(
                        jsonb_build_object(
-                         'gamer_id',           part.participant_id,
+                         'participant_id',     part.participant_id,
                          'first_name',         gmp.first_name,
                          'date_of_birth',      gprof.date_of_birth,
                          'gender',             gprof.gender,
@@ -1577,6 +1580,13 @@ BEGIN
   );
 END;
 $$;
+
+
+--
+-- Name: FUNCTION get_gedu_assigned_product(p_product_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid) IS 'One round trip for a gedu opening a product they are assigned to: the product shell, which group is theirs, and every group on the product with its participant_count and gedus. The roster rides only on the caller''s own group and is keyed by participant_id (00175) — the same shape get_gedu_group_feed serves, kept in parity on purpose even though the rendered roster always comes from the feed''s fresher copy.';
 
 
 --
@@ -1670,13 +1680,18 @@ BEGIN
   -- The current roster. There is deliberately no joined-by-date machinery and
   -- no enrollment-at-the-time derivation: "who was enrolled then" is knowledge
   -- we do not have and choose not to fake. `signed_up_at` travels with each row
-  -- so the client can tell a child who joined last week from one who has been
+  -- so the client can tell someone who joined last week from one who has been
   -- here all term.
+  --
+  -- The identity key is `participant_id` as of 00175. Every row on this roster
+  -- is whoever holds the seat, and since 00173 that can be an adult — the
+  -- date_of_birth / gender / minecraft columns below simply come back NULL for
+  -- one, which is the deliberate empty the row renders rather than a gap.
   SELECT COALESCE(jsonb_agg(entry ORDER BY entry->>'first_name'), '[]'::jsonb)
     INTO v_roster
     FROM (
       SELECT jsonb_build_object(
-        'gamer_id',           part.participant_id,
+        'participant_id',     part.participant_id,
         'first_name',         gmp.first_name,
         'signed_up_at',       part.signed_up_at,
         'date_of_birth',      gprof.date_of_birth,
@@ -1759,14 +1774,14 @@ $$;
 -- Name: FUNCTION get_gedu_group_feed(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) IS 'One round trip for a gedu group workspace: product shell (with the gedu-only material link, read from product_staff_details), group notes, site notes on in-person products, the current roster, and every stored session row with its sparse attendance map. Contains no schedule expansion — the client owns the calendar math. Each roster row carries two contact fields and never both: parent_email for a child (their linked parent), participant_email for an adult seat (their own address, NULL on child rows because a gamer profile''s email is a synthetic non-mailbox).';
+COMMENT ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) IS 'One round trip for a gedu group workspace: product shell (with the gedu-only material link, read from product_staff_details), group notes, site notes on in-person products, the current roster, and every stored session row with its sparse attendance map. Contains no schedule expansion — the client owns the calendar math. Each roster row is keyed by participant_id (00175 — whoever holds the seat, child or adult) and carries two contact fields and never both: parent_email for a child (their linked parent), participant_email for an adult seat (their own address, NULL on child rows because a gamer profile''s email is a synthetic non-mailbox).';
 
 
 --
 -- Name: get_my_assigned_products(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.get_my_assigned_products() RETURNS TABLE(product_id uuid, group_id uuid, timezone text, start_date date, end_date date, is_remote boolean, product_type public.product_type, product_translations jsonb, schedule_slots jsonb, group_count integer, gamer_count integer)
+CREATE FUNCTION public.get_my_assigned_products() RETURNS TABLE(product_id uuid, group_id uuid, timezone text, start_date date, end_date date, is_remote boolean, product_type public.product_type, product_translations jsonb, schedule_slots jsonb, group_count integer, participant_count integer)
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO 'public'
     AS $$
@@ -1817,12 +1832,19 @@ BEGIN
         FROM participations part
        WHERE part.product_id = p.id
          AND part.status     = 'active'
-    ) AS gamer_count
+    ) AS participant_count
   FROM gedu_group_assignments a
   JOIN products p ON p.id = a.product_id
   WHERE a.gedu_id = v_gedu_id;
 END;
 $$;
+
+
+--
+-- Name: FUNCTION get_my_assigned_products(); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.get_my_assigned_products() IS 'Every product the calling gedu is assigned to, one row per assignment, with the product shell, its schedule slots, how many groups it has and how many active seats (participant_count — renamed from gamer_count in 00175, because a seat may be held by an adult since 00173). Gedu-gated on its first statement.';
 
 
 --
@@ -2115,12 +2137,15 @@ BEGIN
   RETURN COALESCE((
     SELECT jsonb_agg(
              jsonb_build_object(
-               'product_id',         a.product_id,
-               'group_id',           a.group_id,
-               'group_name',         g.name,
-               'group_gamer_count',  roster.roster_size,
-               'site_name',          site.name,
-               'attention_count',    COALESCE(owed.owed_count, 0)
+               'product_id',              a.product_id,
+               'group_id',                a.group_id,
+               'group_name',              g.name,
+               -- Renamed from group_gamer_count in 00175: the count is every
+               -- active seat on the group, and since 00173 one of those can be
+               -- an adult.
+               'group_participant_count', roster.roster_size,
+               'site_name',               site.name,
+               'attention_count',         COALESCE(owed.owed_count, 0)
              )
              ORDER BY g.name
            )
@@ -2187,7 +2212,7 @@ BEGIN
            AND (
              -- (1) Some of the CURRENT roster has no answer yet. Measured
              -- against the current roster, never against the stored map's keys
-             -- — which is why a child joining a long-running group reopens
+             -- — which is why someone joining a long-running group reopens
              -- previously-complete sessions. That is the honest reading and it
              -- is chosen with eyes open.
              (
@@ -2225,7 +2250,7 @@ $$;
 -- Name: FUNCTION get_my_gedu_assignment_summaries(p_epoch_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date) IS 'One row per gedu assignment for the dashboard cards: group name, that group''s gamer count, the venue name on in-person products, and how many past sessions still owe a register or a family-facing report. A finished session on or after the epoch counts until BOTH are in. The enforcement epoch travels in as an argument because it is a code constant, not a column.';
+COMMENT ON FUNCTION public.get_my_gedu_assignment_summaries(p_epoch_date date) IS 'One row per gedu assignment for the dashboard cards: group name, that group''s participant count (renamed from group_gamer_count in 00175 — an active seat may be held by an adult since 00173), the venue name on in-person products, and how many past sessions still owe a register or a family-facing report. A finished session on or after the epoch counts until BOTH are in. The enforcement epoch travels in as an argument because it is a code constant, not a column.';
 
 
 --
@@ -2343,35 +2368,36 @@ BEGIN
         'participations', COALESCE((
           SELECT jsonb_agg(
                    jsonb_build_object(
-                     'id',                       p.id,
-                     'gamer_id',                 p.participant_id,
-                     'gamer_first_name',         gmp.first_name,
-                     'gamer_date_of_birth',      gprof.date_of_birth,
-                     'gamer_gender',             gprof.gender,
-                     'gamer_minecraft_username', mca.minecraft_username,
-                     'gamer_minecraft_uuid',     mca.minecraft_uuid,
-                     'gamer_parent_first_name',  parent.first_name,
-                     'gamer_parent_last_name',   parent.last_name,
+                     'id',                             p.id,
+                     'participant_id',                 p.participant_id,
+                     'participant_first_name',         gmp.first_name,
+                     'participant_date_of_birth',      gprof.date_of_birth,
+                     'participant_gender',             gprof.gender,
+                     'participant_minecraft_username', mca.minecraft_username,
+                     'participant_minecraft_uuid',     mca.minecraft_uuid,
+                     -- The contact behind a CHILD's seat, which is what these
+                     -- two describe — not the participant. Hence `parent_`
+                     -- rather than `participant_parent_`: one prefix per
+                     -- subject, and parent_email next door already set it.
+                     'parent_first_name',              parent.first_name,
+                     'parent_last_name',               parent.last_name,
                      -- An adult seat has no linked parent to name, so the chip
                      -- shows an address instead. NULL on every child row: a
                      -- gamer profile's email is the synthetic
-                     -- @gamer.sogverse.internal handle, not a mailbox. Spelled
-                     -- for the participant rather than the gamer because it is
-                     -- a NEW field — the gamer_* keys around it rename with the
-                     -- roster step, this one is already right.
+                     -- @gamer.sogverse.internal handle, not a mailbox.
                      'participant_email',
                        CASE WHEN p.participant_id = p.customer_id
                             THEN gmp.email END,
-                     'status',                   p.status,
-                     'signed_up_at',             p.signed_up_at,
+                     'status',                         p.status,
+                     'signed_up_at',                   p.signed_up_at,
                      -- The demote/remove dialogs' condition, resolved
                      -- server-side so the panel needs no round trip per chip.
                      -- The join below excludes dead subscriptions, so this is
                      -- "live", not "ever existed".
-                     'has_live_subscription',    (fs.id IS NOT NULL),
+                     'has_live_subscription',          (fs.id IS NOT NULL),
                      -- The promote dialog's condition (00167): money once
                      -- arrived for this seat.
-                     'has_payment_marker',       (p.stripe_checkout_session_id IS NOT NULL)
+                     'has_payment_marker',             (p.stripe_checkout_session_id IS NOT NULL)
                    )
                    ORDER BY p.updated_at, p.id
                  )
@@ -2404,22 +2430,22 @@ BEGIN
 
   SELECT COALESCE(jsonb_agg(
            jsonb_build_object(
-             'id',                       p.id,
-             'gamer_id',                 p.participant_id,
-             'gamer_first_name',         gmp.first_name,
-             'gamer_date_of_birth',      gprof.date_of_birth,
-             'gamer_gender',             gprof.gender,
-             'gamer_minecraft_username', mca.minecraft_username,
-             'gamer_minecraft_uuid',     mca.minecraft_uuid,
-             'gamer_parent_first_name',  parent.first_name,
-             'gamer_parent_last_name',   parent.last_name,
+             'id',                             p.id,
+             'participant_id',                 p.participant_id,
+             'participant_first_name',         gmp.first_name,
+             'participant_date_of_birth',      gprof.date_of_birth,
+             'participant_gender',             gprof.gender,
+             'participant_minecraft_username', mca.minecraft_username,
+             'participant_minecraft_uuid',     mca.minecraft_uuid,
+             'parent_first_name',              parent.first_name,
+             'parent_last_name',               parent.last_name,
              'participant_email',
                CASE WHEN p.participant_id = p.customer_id
                     THEN gmp.email END,
-             'status',                   p.status,
-             'signed_up_at',             p.signed_up_at,
-             'has_live_subscription',    (fs.id IS NOT NULL),
-             'has_payment_marker',       (p.stripe_checkout_session_id IS NOT NULL)
+             'status',                         p.status,
+             'signed_up_at',                   p.signed_up_at,
+             'has_live_subscription',          (fs.id IS NOT NULL),
+             'has_payment_marker',             (p.stripe_checkout_session_id IS NOT NULL)
            )
            ORDER BY p.updated_at, p.id
          ), '[]'::jsonb)
@@ -2463,22 +2489,22 @@ BEGIN
   -- that only ever queued.
   SELECT COALESCE(jsonb_agg(
            jsonb_build_object(
-             'id',                       p.id,
-             'gamer_id',                 p.participant_id,
-             'gamer_first_name',         gmp.first_name,
-             'gamer_date_of_birth',      gprof.date_of_birth,
-             'gamer_gender',             gprof.gender,
-             'gamer_minecraft_username', mca.minecraft_username,
-             'gamer_minecraft_uuid',     mca.minecraft_uuid,
-             'gamer_parent_first_name',  parent.first_name,
-             'gamer_parent_last_name',   parent.last_name,
+             'id',                             p.id,
+             'participant_id',                 p.participant_id,
+             'participant_first_name',         gmp.first_name,
+             'participant_date_of_birth',      gprof.date_of_birth,
+             'participant_gender',             gprof.gender,
+             'participant_minecraft_username', mca.minecraft_username,
+             'participant_minecraft_uuid',     mca.minecraft_uuid,
+             'parent_first_name',              parent.first_name,
+             'parent_last_name',               parent.last_name,
              'participant_email',
                CASE WHEN p.participant_id = p.customer_id
                     THEN gmp.email END,
-             'status',                   p.status,
-             'signed_up_at',             p.signed_up_at,
-             'has_live_subscription',    (fs.id IS NOT NULL),
-             'has_payment_marker',       (p.stripe_checkout_session_id IS NOT NULL)
+             'status',                         p.status,
+             'signed_up_at',                   p.signed_up_at,
+             'has_live_subscription',          (fs.id IS NOT NULL),
+             'has_payment_marker',             (p.stripe_checkout_session_id IS NOT NULL)
            )
            ORDER BY p.waitlisted_at, p.id
          ), '[]'::jsonb)
@@ -2515,7 +2541,7 @@ $$;
 -- Name: FUNCTION get_product_groups_with_details(p_product_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_product_groups_with_details(p_product_id uuid) IS 'Admin-gated snapshot behind the product Groups panel: groups with their gedus and active members, the unassigned actives, and the waitlist in derived (waitlisted_at, id) order. Every participation object carries the same fields, including the two the panel''s refusal dialogs are keyed to: has_live_subscription (a real read on ALL THREE branches since 00170 — a LEFT JOIN to family_subscriptions excluding status ''cancelled'', so it means live rather than ever-existed) and has_payment_marker (a real read of stripe_checkout_session_id — money once arrived for this seat, which demotion does not clear). Both are resolved here so the panel decides a drag from one snapshot rather than asking per chip. Since 00173 each object also carries participant_email: the adult''s own address on a self seat, NULL on a child row, where gamer_parent_first_name/last_name name the contact instead.';
+COMMENT ON FUNCTION public.get_product_groups_with_details(p_product_id uuid) IS 'Admin-gated snapshot behind the product Groups panel: groups with their gedus and active members, the unassigned actives, and the waitlist in derived (waitlisted_at, id) order. Every participation object carries the same fields, including the two the panel''s refusal dialogs are keyed to: has_live_subscription (a real read on ALL THREE branches since 00170 — a LEFT JOIN to family_subscriptions excluding status ''cancelled'', so it means live rather than ever-existed) and has_payment_marker (a real read of stripe_checkout_session_id — money once arrived for this seat, which demotion does not clear). Both are resolved here so the panel decides a drag from one snapshot rather than asking per chip. Since 00175 the person keys are participant_* (whoever holds the seat) and the contact behind a child''s seat is parent_first_name/parent_last_name; an adult seat names none of those and carries participant_email — its own address — instead.';
 
 
 --
@@ -3238,9 +3264,10 @@ BEGIN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 
-  -- Authorize the TARGET as well as the actor: the child must actually be on
+  -- Authorize the TARGET as well as the actor: the person must actually be on
   -- this group's roster. Without this, an assigned gedu could aim a mark at any
-  -- gamer id in the system.
+  -- profile id in the system. The predicate has never cared who the participant
+  -- is, which is why an adult seat is markable with no branch here.
   IF NOT EXISTS (
     SELECT 1
       FROM public.participations part
@@ -3275,9 +3302,9 @@ BEGIN
      WHERE session_id = v_session_id AND participant_id = p_participant_id;
 
     RETURN jsonb_build_object(
-      'session_id', v_session_id,
-      'gamer_id',   p_participant_id,
-      'status',     NULL
+      'session_id',     v_session_id,
+      'participant_id', p_participant_id,
+      'status',         NULL
     );
   END IF;
 
@@ -3297,9 +3324,9 @@ BEGIN
    WHERE id = v_session_id;
 
   RETURN jsonb_build_object(
-    'session_id', v_session_id,
-    'gamer_id',   p_participant_id,
-    'status',     v_status
+    'session_id',     v_session_id,
+    'participant_id', p_participant_id,
+    'status',         v_status
   );
 END;
 $$;
@@ -3309,7 +3336,7 @@ $$;
 -- Name: FUNCTION record_attendance(p_group_id uuid, p_session_date date, p_participant_id uuid, p_status text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_participant_id uuid, p_status text) IS 'Record (or, with a NULL status, clear) ONE child''s attendance mark for one session. Per-mark so concurrent gedus cannot clobber each other; marks open at the session''s scheduled start (roll call during the session is the standard pattern) and never before; authorizes both the calling gedu and the target child.';
+COMMENT ON FUNCTION public.record_attendance(p_group_id uuid, p_session_date date, p_participant_id uuid, p_status text) IS 'Record (or, with a NULL status, clear) ONE participant''s attendance mark for one session. Per-mark so concurrent gedus cannot clobber each other; marks open at the session''s scheduled start (roll call during the session is the standard pattern) and never before; authorizes both the calling gedu and the target. The target is whoever holds the seat — a gedu marks an adult present exactly as they mark a child, with no branch for it.';
 
 
 --
@@ -3610,8 +3637,8 @@ DECLARE
 BEGIN
   PERFORM public.assert_role('gedu');
 
-  -- Actor AND target: the child must be actively participating in a group the
-  -- caller is assigned to. A gedu may fix a username for the children they
+  -- Actor AND target: the participant must be actively participating in a group
+  -- the caller is assigned to. A gedu may fix a username for the people they
   -- teach and for nobody else.
   IF NOT EXISTS (
     SELECT 1
@@ -3639,7 +3666,7 @@ BEGIN
         minecraft_uuid     = EXCLUDED.minecraft_uuid;
 
   RETURN jsonb_build_object(
-    'gamer_id',           p_participant_id,
+    'participant_id',     p_participant_id,
     'minecraft_username', v_username,
     'minecraft_uuid',     v_uuid
   );
@@ -3651,7 +3678,7 @@ $$;
 -- Name: FUNCTION set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text) IS 'Set a group member''s Minecraft username + resolved UUID, scoped to gamers actively participating in a group the calling gedu teaches. The Mojang lookup happens in the calling route, so a successful edit lands verified.';
+COMMENT ON FUNCTION public.set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text) IS 'Set a group member''s Minecraft username + resolved UUID, scoped to participants actively enrolled in a group the calling gedu teaches. The Mojang lookup happens in the calling route, so a successful edit lands verified. In practice this is always a child: an adult seat carries no linked game account and the roster row shows that slot empty by design.';
 
 
 --
@@ -7348,12 +7375,12 @@ GRANT ALL ON FUNCTION public._list_tables_without_rls() TO service_role;
 
 
 --
--- Name: FUNCTION admin_enroll_gamer(p_product_id uuid, p_participant_id uuid); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION admin_enroll_participant(p_product_id uuid, p_participant_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_participant_id uuid) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_participant_id uuid) TO authenticated;
-GRANT ALL ON FUNCTION public.admin_enroll_gamer(p_product_id uuid, p_participant_id uuid) TO service_role;
+REVOKE ALL ON FUNCTION public.admin_enroll_participant(p_product_id uuid, p_participant_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.admin_enroll_participant(p_product_id uuid, p_participant_id uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.admin_enroll_participant(p_product_id uuid, p_participant_id uuid) TO service_role;
 
 
 --
