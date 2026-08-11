@@ -17,8 +17,8 @@ import type { ProductType } from "@/types";
 import {
   rollUpFamilyEnrollments,
   rollUpGamerEnrollments,
+  type FamilyDashboardEnrollments,
   type FamilyEnrollmentSummary,
-  type FamilyGamerEnrollments,
 } from "./enrollment-rollup";
 
 /**
@@ -97,17 +97,20 @@ interface FamilyEnrollmentRows {
 
 /**
  * The parent dashboard's whole shape: one entry per child, in the order their
- * sections appear, each carrying that child's sorted cards.
+ * sections appear, each carrying that child's sorted cards — and the reader's
+ * own section when they hold a seat themselves.
  *
  * The family read is in here rather than beside it because it is *geometry* —
  * it decides how many sections the page has and what they are called — and the
  * roll-up needs it anyway to give a child with nothing booked a section of
  * their own. A child's absence from the enrollment rows is exactly the empty
- * state their section renders.
+ * state their section renders. It is also what names the reader: their own
+ * profile is in the family list, and without it a parent's own seats would have
+ * a heading with nothing to put in it.
  */
 export function useFamilyEnrollments(
   options: FamilyEnrollmentRows & { initialFamily: FamilyMember[] | null },
-): FamilyGamerEnrollments[] {
+): FamilyDashboardEnrollments {
   const sessionRows = useMyUpcomingSessionRows("customer", {
     initialData: options.initialSessionRows ?? [],
     initialDataUpdatedAt: seedAge(options.initialSessionRows),

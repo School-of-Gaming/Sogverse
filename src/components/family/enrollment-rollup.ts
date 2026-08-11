@@ -290,22 +290,60 @@ export interface FamilyRollUpArgs {
   }) => string;
 }
 
-/** One enrollment, with the child it belongs to — the grouping's raw material. */
+/**
+ * One enrollment, with **whoever holds the seat** — the grouping's raw material.
+ *
+ * The id is the participant's, not a child's, and the distinction is the whole
+ * reason this type was renamed: a product may be for parents, so the person in
+ * the seat can be the account holder themselves. Everything downstream keys off
+ * this id without caring which of the two it is.
+ */
 export interface FamilyEnrollmentEntry {
-  gamerId: string;
+  participantId: string;
   enrollment: FamilyEnrollmentSummary;
 }
 
-/** One child's section of a family dashboard: who they are, and what they are in. */
-export interface FamilyGamerEnrollments {
+/**
+ * One person's section of a family dashboard: who they are, and what they are
+ * in.
+ *
+ * **A person, not a child.** The parent's own enrollments come back in exactly
+ * this shape, because a section is a heading with a face and a name over a list
+ * of cards whichever of them it is about — what differs is only what the page
+ * puts *beside* the heading and which audience the cards are rendered for, and
+ * both of those are the page's business rather than this type's.
+ */
+export interface FamilyParticipantEnrollments {
   /**
-   * The gamer's profile id. It seeds the identicon, so it has to be the real
-   * UUID — the pattern is derived from the id's hex bytes.
+   * The participant's profile id. It seeds the identicon, so it has to be the
+   * real UUID — the pattern is derived from the id's hex bytes.
    */
   id: string;
   firstName: string;
   /** Already sorted: running, then waiting, then finished. */
   enrollments: readonly FamilyEnrollmentSummary[];
+}
+
+/**
+ * The parent dashboard's whole cast: the children, and the reader themselves
+ * when they hold a seat of their own.
+ *
+ * **Two fields rather than one list with a role flag on each entry**, because
+ * the two are not interchangeable to the page that renders them: a child's
+ * section carries a Manage link to their identity page and an empty-state card
+ * when nothing is booked, and the reader's carries neither — it does not exist
+ * at all unless there is something in it. Handing the body one list would make
+ * every one of those a per-entry conditional on a flag, which is the shape that
+ * lets a caller forget one.
+ */
+export interface FamilyDashboardEnrollments {
+  /** One section per linked child, in the order the sections appear. */
+  gamers: FamilyParticipantEnrollments[];
+  /**
+   * The reader's own seats, or `null` when they hold none — which is the
+   * overwhelmingly common case and the reason the section is conditional.
+   */
+  self: FamilyParticipantEnrollments | null;
 }
 
 /**
@@ -325,11 +363,11 @@ export function toFamilyEnrollments(
 ): FamilyEnrollmentEntry[] {
   return [
     ...args.sessionRows.map((row) => ({
-      gamerId: row.gamer.id,
+      participantId: row.gamer.id,
       enrollment: sessionSummary(row, args),
     })),
     ...args.waitlistRows.map((row) => ({
-      gamerId: row.gamer.id,
+      participantId: row.gamer.id,
       enrollment: waitlistSummary(row, args),
     })),
   ];
@@ -337,12 +375,29 @@ export function toFamilyEnrollments(
 
 /**
  * The parent dashboard's whole shape: one section per child, in the order the
- * sections appear, each carrying that child's sorted cards.
+ * sections appear, each carrying that child's sorted cards — **plus the
+ * reader's own section when they hold a seat themselves.**
  *
  * **The family read includes the reader**, and one linked parent may see
- * another, so the list is filtered to `role === 'gamer'` before anything else
- * happens — a parent is not a section on their own dashboard, and the identicon
- * heading would be their own face.
+ * another, so the child list is filtered to `role === 'gamer'` before anything
+ * else happens. That filter used to be the end of it, and that was the bug: a
+ * product may be for parents, so an enrollment can be bucketed under the
+ * reader's own id, match no `gamer` member, and vanish — a seat paid for and
+ * shown nowhere. The reader now gets their bucket back, **and only when it has
+ * something in it**: a parent is not a standing section on their own dashboard,
+ * because the page is about their children and a permanently empty heading
+ * carrying their own face would say so wrongly.
+ *
+ * **The reader is identified as "a `customer` member with a non-empty bucket",
+ * and at most one member can satisfy that.** Both reads behind this are scoped
+ * to `customer_id = auth.uid()`, so every row here is one the reader is paying
+ * for; a row whose participant is an adult is therefore a row where that adult
+ * is also the customer — the reader. A co-parent visible in the family list has
+ * their own seats under their own customer id and cannot appear in this read at
+ * all. There is deliberately no de-duplication in the other direction either:
+ * the RLS select policies on participations are role-partitioned, so no session
+ * can match both the customer arm and the gamer arm and a seat cannot render
+ * twice.
  *
  * Children are ordered by **first name**, collated in the viewer's own locale.
  * There is no meaningful order in the data — no birth order is recorded and a
@@ -368,34 +423,45 @@ export function toFamilyEnrollments(
  */
 export function rollUpFamilyEnrollments(
   args: FamilyRollUpArgs & { family: readonly FamilyMember[] },
-): FamilyGamerEnrollments[] {
-  const byGamer = new Map<string, FamilyEnrollmentSummary[]>();
-  for (const { gamerId, enrollment } of toFamilyEnrollments(args)) {
-    const bucket = byGamer.get(gamerId);
+): FamilyDashboardEnrollments {
+  const byParticipant = new Map<string, FamilyEnrollmentSummary[]>();
+  for (const { participantId, enrollment } of toFamilyEnrollments(args)) {
+    const bucket = byParticipant.get(participantId);
     if (bucket) bucket.push(enrollment);
-    else byGamer.set(gamerId, [enrollment]);
+    else byParticipant.set(participantId, [enrollment]);
   }
 
-  return args.family
-    .filter((member) => member.role === "gamer")
-    .sort(
-      (a, b) =>
-        a.first_name.localeCompare(b.first_name, args.locale) ||
-        a.id.localeCompare(b.id),
-    )
-    .map((member) => ({
-      id: member.id,
-      firstName: member.first_name,
-      // A row whose gamer is not in the family list is dropped rather than
-      // rendered under a heading nobody can name. RLS makes that impossible in
-      // practice — both reads are scoped to the same account the family read is
-      // — so this is a shape guarantee, not a filter with a job.
-      enrollments: sortFamilyEnrollments(
-        byGamer.get(member.id) ?? [],
-        args.now,
-        args.locale,
-      ),
-    }));
+  const sectionFor = (member: FamilyMember): FamilyParticipantEnrollments => ({
+    id: member.id,
+    firstName: member.first_name,
+    // A row whose participant is not in the family list is dropped rather than
+    // rendered under a heading nobody can name. RLS makes that impossible in
+    // practice — both reads are scoped to the same account the family read is
+    // — so this is a shape guarantee, not a filter with a job.
+    enrollments: sortFamilyEnrollments(
+      byParticipant.get(member.id) ?? [],
+      args.now,
+      args.locale,
+    ),
+  });
+
+  const self =
+    args.family
+      .filter((member) => member.role === "customer")
+      .map(sectionFor)
+      .find((section) => section.enrollments.length > 0) ?? null;
+
+  return {
+    gamers: args.family
+      .filter((member) => member.role === "gamer")
+      .sort(
+        (a, b) =>
+          a.first_name.localeCompare(b.first_name, args.locale) ||
+          a.id.localeCompare(b.id),
+      )
+      .map(sectionFor),
+    self,
+  };
 }
 
 /**
@@ -412,7 +478,7 @@ export function rollUpGamerEnrollments(
 ): FamilyEnrollmentSummary[] {
   return sortFamilyEnrollments(
     toFamilyEnrollments(args)
-      .filter((entry) => entry.gamerId === args.gamerId)
+      .filter((entry) => entry.participantId === args.gamerId)
       .map((entry) => entry.enrollment),
     args.now,
     args.locale,

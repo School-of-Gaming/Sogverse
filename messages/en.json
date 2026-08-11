@@ -1153,12 +1153,14 @@
     "wontRenewAccessEnds": "Won’t renew — access ends {date}",
     "awaitingCustomer": "Signed up — we’re matching them with a Gedu and a group before the first session.",
     "awaitingGamer": "You’re signed up — we’re matching you with a Gedu and a group before your first session.",
+    "awaitingSelf": "You’re signed up — we’re matching you with a Gedu and a group before your first session.",
     "noGamers": "No gamers here yet. Add your first gamer, then pick a club or camp together.",
     "emptyStateCta": "Browse clubs and camps"
   },
   "familyProduct": {
     "back": "Back to My SOG",
     "forGamer": "for {name}",
+    "forSelf": "for you",
     "scheduleLabel": "When",
     "venueLabel": "Where",
     "aboutHeading": "About this group",
@@ -1170,7 +1172,9 @@
     "emptyFeedCustomer": "There are no sessions on this one yet.",
     "emptyFeedGamer": "Nothing here yet. Every session you play turns up here afterwards.",
     "paymentProblemNotice": "There’s a problem with the payment for this club — update your card under Billing on My SOG to keep {name}’s place.",
+    "paymentProblemNoticeSelf": "There’s a problem with the payment for this club — update your card under Billing on My SOG to keep your place.",
     "cancellationNotice": "You canceled this membership — it won’t renew. {name}’s last session is {date}.",
+    "cancellationNoticeSelf": "You canceled this membership — it won’t renew. Your last session is {date}.",
     "cancellationNoticeNoSession": "You canceled this membership — it won’t renew. Access runs through {date}.",
     "loadingPage": "Loading this group’s sessions.",
     "notFoundTitle": "Nothing to show here",
@@ -1844,6 +1848,7 @@
         "trigger": "Leave waitlist",
         "confirmTitle": "Leave the waitlist?",
         "confirmDescription": "{name} will lose their place in line for {product}.",
+        "confirmDescriptionSelf": "You’ll lose your place in line for {product}.",
         "confirmCta": "Leave waitlist",
         "backOfLineWarning": "If you join again later, you’ll start at the back of the line."
       }

@@ -10,9 +10,10 @@ import {
  * One method, one RPC, no writes: nothing on a family product page is editable.
  * The function is SECURITY DEFINER and self-scoping — it resolves the
  * participation itself and answers only if the caller is that participation's
- * gamer or a parent linked to them — so the authorization lives in one place
- * rather than being re-derived at every call site, and the underlying tables
- * grant `authenticated` nothing at all.
+ * participant (their own seat, on a for-parents product) or a parent linked to
+ * them — so the authorization lives in one place rather than being re-derived
+ * at every call site, and the underlying tables grant `authenticated` nothing
+ * at all.
  */
 
 /**
@@ -26,7 +27,8 @@ import {
  * day want to word differently (an unplaced seat is a *state of theirs*, not a
  * refusal, and the dashboard already says so on its awaiting card).
  *
- * - `not_yours` — the participation is not this caller's, **or does not exist**.
+ * - `not_yours` — the participation is neither this caller's own seat nor one
+ *   of their children's, **or does not exist**.
  *   The two are deliberately indistinguishable: an error that separated them
  *   would answer "does this id exist" for any id anyone cared to try.
  * - `unplaced` — it is genuinely theirs, and it has no group yet. There is no
@@ -51,10 +53,11 @@ export class FamilyProductFeedService {
   constructor(private supabase: AppSupabaseClient) {}
 
   /**
-   * Everything one (gamer × product) enrollment renders, in a single round
-   * trip: the child, the product shell and its schedule, the group and its
-   * public note, the venue on in-person products, the gedus, and the group's
-   * **full** stored session history with this one child's attendance marks.
+   * Everything one (participant × product) enrollment renders, in a single
+   * round trip: whoever holds the seat, the product shell and its schedule, the
+   * group and its public note, the venue on in-person products, the gedus, and
+   * the group's **full** stored session history with that one participant's
+   * attendance marks.
    *
    * The whole history comes back at once and that is load-bearing rather than
    * merely convenient. The client projects past occurrences from the schedule

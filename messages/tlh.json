@@ -1198,12 +1198,14 @@
     "wontRenewAccessEnds": "qaSqa’be’ — poH Qav {date}",
     "awaitingCustomer": "DamuvmoHpu’! Qu’ wa’DIch qaSpa’, Gedu ghom je wISamlI’.",
     "awaitingGamer": "bImuvpu’! Qu’ wa’DIch qaSpa’, Gedu ghom je DISamlI’.",
+    "awaitingSelf": "bImuvpu’, la’! Qu’ wa’DIch qaSpa’, Gedu ghom je DISamlI’. yIloS.",
     "noGamers": "naDev QujwI’ tu’be’lu’. QujwI’ wa’DIch yIchel, ghIq ghom’a’ qoj raQ bowIv!",
     "emptyStateCta": "ghom’a’mey raghmey je tIbej"
   },
   "familyProduct": {
     "back": "jIH SOGDaq yIchegh",
     "forGamer": "{name}vaD",
+    "forSelf": "SoHvaD",
     "scheduleLabel": "ghorgh",
     "venueLabel": "nuqDaq",
     "aboutHeading": "ghom’a’vam De’",
@@ -1215,7 +1217,9 @@
     "emptyFeedCustomer": "naDev may’mey tu’lu’be’.",
     "emptyFeedGamer": "naDev pagh tu’lu’. may’ Hoch DaSuvbogh naDev leghlu’ — batlh yIQuj!",
     "paymentProblemNotice": "ghom’a’vam Huch Qob! jIH SOGDaq Huch DIl DaSDIq yIchoH, {name} Daq yItaHmoH.",
+    "paymentProblemNoticeSelf": "ghom’a’vam Huch Qob! jIH SOGDaq Huch DIl DaSDIq yIchoH, DaqlIj yItaHmoH.",
     "cancellationNotice": "may’morgh DanatlhHa’pu’! qaSqa’be’. {name} Qu’ Qav ’oH {date}’e’.",
+    "cancellationNoticeSelf": "may’morgh DanatlhHa’pu’! qaSqa’be’. Qu’lIj Qav ’oH {date}’e’.",
     "cancellationNoticeNoSession": "may’morgh DanatlhHa’pu’! qaSqa’be’. {date} tlhab SoH.",
     "loadingPage": "ghom’a’vam may’mey laDlu’…",
     "notFoundTitle": "naDev pagh tu’lu’",
@@ -1801,6 +1805,7 @@
         "trigger": "tlhegh yImej",
         "confirmTitle": "tlhegh Damejqang’a’?",
         "confirmDescription": "DaqDaj chIl {name}. ({product})",
+        "confirmDescriptionSelf": "DaqlIj DachIl. ({product})",
         "confirmCta": "tlhegh yImej",
         "backOfLineWarning": "tlhegh DajeSqa’chugh, tlhegh HeHDaq bIQam."
       }
