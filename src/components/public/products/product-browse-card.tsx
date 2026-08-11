@@ -11,7 +11,7 @@ import type { ProductBrowseRow } from "@/types";
 import type { ParticipationCounts } from "@/services/participations";
 import { deriveRegistrationState } from "./derive-registration-state";
 import { formatProductLocation } from "./format-product-location";
-import { productAudience } from "./product-audience";
+import { audienceLabelKey } from "./product-audience";
 import { formatProductPrice } from "./format-product-price";
 import {
   formatProductSchedule,
@@ -112,17 +112,12 @@ export function ProductBrowseCard({
       }
     : undefined;
 
-  // Only the two audiences that are news get a badge. `gamers` is what every
-  // product was before audiences existed, so it says nothing a card needs to
-  // spend a chip on — and the message keys are written out per case rather than
-  // templated off the audience value so each one stays greppable.
-  const audience = productAudience(product);
+  // The badge-or-nothing decision (gamers-only stays unbadged) lives in
+  // product-audience.ts with the rest of the audience vocabulary, so this
+  // card, the overview card and the style-guide grid cannot drift apart.
+  const audienceLabelMessageKey = audienceLabelKey(product);
   const audienceLabel =
-    audience === "parents"
-      ? tAudience("parents")
-      : audience === "both"
-        ? tAudience("both")
-        : null;
+    audienceLabelMessageKey === null ? null : tAudience(audienceLabelMessageKey);
 
   const locationLine = resolveLocationLine(
     product,

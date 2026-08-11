@@ -213,10 +213,12 @@ export function useBrowseFilters() {
     [languages, writeNext],
   );
 
-  // Multi-select like topic and language, not single-valued like format: both
-  // chips lit is a meaningful state ("show me anything either of us can do"),
-  // and it is not the same query as neither chip lit, which also drops the
-  // filter but says nothing about audience at all.
+  // Multi-select like topic and language, not single-valued like format. Both
+  // chips lit is the widest query the row can express — which, under the
+  // at-least-one-flag CHECK, returns the same set as no selection at all; the
+  // difference is intent, not result, and the row keeps both states because a
+  // reader who lit two chips meant something ("anything either of us can do")
+  // that an empty row does not say.
   const toggleAudience = useCallback(
     (value: AudienceFilterValue) => {
       const next = audiences.includes(value)

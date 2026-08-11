@@ -439,10 +439,12 @@ function SignupForm(
   // every step during the pre-open countdown and land on "Ready & waiting",
   // primed to one-tap the instant it opens. Only the final leaf differs by
   // window: the live action label once open (`active`), the holding state until
-  // then. selectedGamerId is null only when no child is selectable: either
-  // there's still room to add one (canAddGamer → prompt to add a gamer), or
-  // every child is already on the product at the gamer cap (nothing left to do
-  // — the picker rows show each child's exact seat/waitlist status in place).
+  // then. selectedParticipantId is null only when nobody is selectable: there
+  // is still room to add a child (canAddGamer → prompt to add a gamer), every
+  // child is already on the product at the gamer cap, or — on a parents-only
+  // product — the reader already holds the one seat there is. The latter two
+  // both land on ctaAllSet; the picker rows show each person's exact
+  // seat/waitlist status in place.
   const ctaLabel = props.submitting
     ? t("ctaSubmitting")
     : props.selectedParticipantId === null

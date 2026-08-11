@@ -503,8 +503,10 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     // checkout is the rule everywhere (the multi-select idea is deferred). The
     // middle child is already on it, so the child lockout and a selectable
     // parent row sit in the same picker; the add-a-child row is back, because
-    // this product does have a gamer audience, and it is the scenario that
-    // proves the reader's row is not counted against the child cap.
+    // this product does have a gamer audience. (That the reader's row is not
+    // counted against the child cap is pinned by the unit tests at the cap's
+    // exact borderline — a seven-child fixture here would bury the audience
+    // picker this scenario exists to show.)
     label: "For parents and gamers — children plus the reader",
     productType: "event",
     billingMode: "paid",

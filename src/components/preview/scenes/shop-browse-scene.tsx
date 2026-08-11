@@ -7,11 +7,11 @@ import {
   SHOP_SCENE_AUDIENCES,
   SHOP_SCENE_DEFAULT,
 } from "@/components/public/products/mock-detail-fixtures";
+import { type ProductBrowseSection } from "@/components/public/products/product-browse-results";
 import {
-  ProductBrowseResults,
-  type ProductBrowseSection,
-} from "@/components/public/products/product-browse-results";
-import { sectionHeading } from "@/components/public/products/product-browse-page";
+  ProductBrowseBody,
+  sectionHeading,
+} from "@/components/public/products/product-browse-page";
 import {
   CATEGORY_TYPE,
   visibleCategories,
@@ -115,19 +115,12 @@ export function ShopBrowseScene({
   );
 
   return (
-    <div className="py-8 sm:py-12">
-      {/* The storefront's own invisible h1 — the section headings say what each
-          block is, so the page carries no visible title. Rendered here for the
-          same reason the live page renders it: the section h2s have to hang off
-          something. */}
-      <h1 className="sr-only">{t("pageTitle")}</h1>
-      <ProductBrowseResults
-        sections={sections}
-        counts={[]}
-        filters={{ initialSpokenLanguages: SPOKEN_LANGUAGES }}
-        scopeHasProducts
-        productHref={productHref}
-      />
-    </div>
+    <ProductBrowseBody
+      sections={sections}
+      counts={[]}
+      filters={{ initialSpokenLanguages: SPOKEN_LANGUAGES }}
+      scopeHasProducts
+      productHref={productHref}
+    />
   );
 }

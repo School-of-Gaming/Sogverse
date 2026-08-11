@@ -658,7 +658,8 @@ export class ParticipationsService {
   }
 
   /**
-   * Does this gamer already hold a spot on this product? Asked by the paid
+   * Does this participant — a child, or the buyer themselves on a for-parents
+   * product — already hold a spot on this product? Asked by the paid
    * confirmation page when the session it arrived with bought nothing, to tell
    * the two reasons for that apart: the webhook has not landed yet (wait), or
    * the payment was refused as a duplicate because the seat was already taken
@@ -669,12 +670,15 @@ export class ParticipationsService {
    * here — the caller has already been checked to be the session's purchaser, so
    * the row is theirs to see.
    */
-  async hasSeatOnProduct(productId: string, gamerId: string): Promise<boolean> {
+  async hasSeatOnProduct(
+    productId: string,
+    participantId: string,
+  ): Promise<boolean> {
     const { data, error } = await this.supabase
       .from("participations")
       .select("id")
       .eq("product_id", productId)
-      .eq("participant_id", gamerId)
+      .eq("participant_id", participantId)
       .in("status", ["active", "waitlisted", "completed"])
       .maybeSingle();
 

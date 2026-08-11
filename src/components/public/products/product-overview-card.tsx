@@ -8,7 +8,7 @@ import { LanguageFlag } from "@/components/ui/language-flag";
 import { resolveLocale } from "@/lib/constants/locales";
 import type { ProductBrowseRow } from "@/types";
 import { formatProductLocation } from "./format-product-location";
-import { productAudience } from "./product-audience";
+import { audienceLabelKey } from "./product-audience";
 import { formatClubTermDates } from "./format-product-term-dates";
 import {
   formatProductSchedule,
@@ -63,14 +63,11 @@ export function ProductOverviewCard({ product }: ProductOverviewCardProps) {
   // would be a row every existing product page grew for no news. The row
   // appears exactly where the meaning is new — and on a parents-only page it is
   // the fact that replaces the age range rather than sitting beside it, which
-  // is why it renders whether or not there is an age row above.
-  const audience = productAudience(product);
+  // is why it renders whether or not there is an age row above. The
+  // badge-or-nothing decision itself lives in product-audience.ts.
+  const audienceLabelMessageKey = audienceLabelKey(product);
   const audienceLabel =
-    audience === "parents"
-      ? tAudience("parents")
-      : audience === "both"
-        ? tAudience("both")
-        : null;
+    audienceLabelMessageKey === null ? null : tAudience(audienceLabelMessageKey);
 
   const termRange = formatClubTermDates(product, uiLocale);
   const scheduleDisplayLines = termRange
@@ -83,8 +80,11 @@ export function ProductOverviewCard({ product }: ProductOverviewCardProps) {
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           {t("sections.overview")}
         </h2>
-        {/* Two-up on wider widths — Schedule | Format, then Age | Language —
-            and a single stacked column on mobile, where there isn't room. */}
+        {/* Two-up on wider widths and a single stacked column on mobile, where
+            there isn't room. The common shape is Schedule | Format, then
+            Age | Language; an Audience fact joins the flow when it is news
+            (mixed products carry five facts and leave the last cell empty,
+            parents-only products swap Audience in where Age would have been). */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-4">
           <DetailRow icon={Clock} label={t("info.schedule")}>
             {scheduleDisplayLines.length === 1 ? (

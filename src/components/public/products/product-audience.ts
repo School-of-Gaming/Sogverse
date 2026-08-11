@@ -33,6 +33,24 @@ export function productAudience(
 }
 
 /**
+ * The `productAudience.*` message key a surface labels a product with, or
+ * null for the audience that deliberately gets no label. `gamers` is what
+ * every product was before audiences existed, so a label there would spend a
+ * chip marking the absence of news — while on a parents-only surface the
+ * label is the only audience signal, since no age line renders (an adult
+ * range like "18+" was rejected as saying something else entirely). The
+ * badge-or-nothing decision lives here so the browse card, the overview card
+ * and the style-guide grid cannot drift apart; the literal keys stay
+ * greppable at the filter chip row, which names them one by one.
+ */
+export function audienceLabelKey(
+  product: Pick<ProductBrowseRow, "for_gamers" | "for_parents">,
+): "parents" | "both" | null {
+  const audience = productAudience(product);
+  return audience === "gamers" ? null : audience;
+}
+
+/**
  * Whether a product answers a chip selection, with OR semantics across the
  * selected chips — the same shape the topic and language rows use. A mixed
  * product answers to either chip, which is the whole reason the filter reads

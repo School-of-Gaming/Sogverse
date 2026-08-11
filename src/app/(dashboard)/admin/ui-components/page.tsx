@@ -93,6 +93,7 @@ import {
   type SeatBarValue,
 } from "@/components/public/products/product-browse-card-view";
 import { SeatAvailabilityBar } from "@/components/public/products/seat-availability-bar";
+import { audienceLabelKey } from "@/components/public/products/product-audience";
 import { formatProductLocation } from "@/components/public/products/format-product-location";
 import { formatProductPrice } from "@/components/public/products/format-product-price";
 import {
@@ -1259,6 +1260,11 @@ function ScenarioBrowseCard({
       }
     : undefined;
 
+  // The badge-or-nothing decision (gamers-only unbadged) lives in
+  // product-audience.ts — this grid is where the three audiences sit beside
+  // each other, and the shop scene shows the same comparison at page width.
+  const audienceLabelMessageKey = audienceLabelKey(product);
+
   return (
     <div className="flex flex-col gap-2">
       <DemoCaption>{label}</DemoCaption>
@@ -1274,15 +1280,9 @@ function ScenarioBrowseCard({
             : null
         }
         audienceLabel={
-          // Only the two audiences that are news carry a badge — a gamers-only
-          // card is what every card was before audiences existed. This grid is
-          // where the three are seen beside each other; the shop scene shows
-          // the same comparison at page width.
-          product.for_parents
-            ? product.for_gamers
-              ? tAudience("both")
-              : tAudience("parents")
-            : null
+          audienceLabelMessageKey === null
+            ? null
+            : tAudience(audienceLabelMessageKey)
         }
         locationLine={locationLine}
         spokenLanguageCode={product.spoken_language_code}
