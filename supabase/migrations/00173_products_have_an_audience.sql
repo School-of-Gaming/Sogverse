@@ -1412,7 +1412,9 @@ BEGIN
     FROM unnest(ARRAY[
       'chk_products_has_an_audience',
       'chk_products_ages_iff_for_gamers',
-      'chk_products_age_range'
+      'chk_products_age_range',
+      'products_min_age_check',
+      'products_max_age_check'
     ]) AS want
    WHERE NOT EXISTS (
      SELECT 1 FROM pg_constraint c
@@ -1521,7 +1523,24 @@ BEGIN
     NULL;
   END;
 
-  -- (6) And the two shapes that MUST be accepted, so the CHECKs are not simply
+  -- (6) A negative age still refused — the half of the two restated per-column
+  --     range CHECKs that their NULL rewrite must not have weakened.
+  BEGIN
+    INSERT INTO _audience_probe (
+      product_type, billing_mode, topic, spoken_language_code, is_remote,
+      timezone, registration_opens_at, created_by,
+      for_gamers, for_parents, min_age, max_age
+    ) VALUES (
+      'consumer_club', 'free', 'minecraft_java', 'en', true,
+      'Europe/Helsinki', now(), gen_random_uuid(),
+      true, false, -1, 12
+    );
+    RAISE EXCEPTION 'products_min_age_check accepted a negative min_age';
+  EXCEPTION WHEN check_violation THEN
+    NULL;
+  END;
+
+  -- (7) And the two shapes that MUST be accepted, so the CHECKs are not simply
   --     refusing everything.
   INSERT INTO _audience_probe (
     product_type, billing_mode, topic, spoken_language_code, is_remote,
@@ -1567,14 +1586,23 @@ BEGIN
     RAISE EXCEPTION 'a service-role-only participation writer is executable by authenticated';
   END IF;
 
-  -- And the admin-facing ones kept the grant they are supposed to have, so a
-  -- REVOKE typo cannot pass as "fail-closed".
-  IF NOT has_function_privilege('authenticated', 'public.admin_enroll_gamer(uuid, uuid)', 'EXECUTE')
-     OR NOT has_function_privilege('authenticated', 'public.get_gedu_group_feed(uuid)', 'EXECUTE')
-     OR NOT has_function_privilege('authenticated', 'public.get_gedu_assigned_product(uuid)', 'EXECUTE')
-     OR NOT has_function_privilege('authenticated', 'public.get_product_groups_with_details(uuid)', 'EXECUTE')
-  THEN
-    RAISE EXCEPTION 'a role-gated RPC lost its authenticated EXECUTE grant';
+  -- And the browser-facing ones kept the grant they are supposed to have, so a
+  -- REVOKE typo cannot pass as "fail-closed". Catalog-driven by name so it also
+  -- covers the two DROPped product writers — the only functions here whose ACLs
+  -- were rebuilt from scratch, and so the ones this check exists for — without
+  -- transcribing their 27-element signatures.
+  SELECT string_agg(p.proname, ', ' ORDER BY p.proname)
+    INTO c_missing
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+   WHERE n.nspname = 'public'
+     AND p.proname IN (
+       'admin_enroll_gamer', 'get_gedu_group_feed', 'get_gedu_assigned_product',
+       'get_product_groups_with_details', 'create_product', 'update_product'
+     )
+     AND NOT has_function_privilege('authenticated', p.oid, 'EXECUTE');
+  IF c_missing IS NOT NULL THEN
+    RAISE EXCEPTION 'a role-gated RPC lost its authenticated EXECUTE grant: %', c_missing;
   END IF;
 END
 $assert$;

@@ -4,7 +4,11 @@ import type { Database } from "@/types/database.types";
 import { geduGroupFeed } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import { geduAssignedProduct } from "@/services/assignments/assignments.contracts";
 import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  callRpcRaw,
+  createAdminTestClient,
+  createAuthenticatedClient,
+} from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
 
@@ -434,6 +438,47 @@ describe("product audience", () => {
       });
       expect(error).toBeNull();
       expect(data).toMatchObject({ status: "waitlisted" });
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // NULL ids are nobody — the fail-closed operator, pinned
+  // -------------------------------------------------------------------------
+
+  describe("NULL participant/customer ids", () => {
+    /**
+     * The gates test "self" with plain `=`, chosen over IS NOT DISTINCT FROM
+     * precisely so that a NULL id falls through to the parent-link arm and is
+     * refused, instead of two NULLs reading as a self seat (00173 documents
+     * the choice at the gate itself). These cases make that operator swap fail
+     * loudly: under IS NOT DISTINCT FROM, both calls below would pass the
+     * audience gate as "self seats" rather than raising the parent-link
+     * refusal asserted here. Typed clients and the routes already forbid null
+     * ids — the raw HTTP caller is the point: the DB gate is the last line,
+     * and it must hold for a caller that skips all of them.
+     */
+    it("create_participation refuses NULL/NULL as nobody's seat", async () => {
+      const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      if (!serviceKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY is unset");
+      const result = await callRpcRaw(serviceKey, "create_participation", {
+        p_product_id: PRODUCT_PARENTS,
+        p_participant_id: null,
+        p_customer_id: null,
+        p_purchase_shape: "free",
+        p_currency: "eur",
+      });
+      expect(result.message).toMatch(/is not the parent of/);
+    });
+
+    it("join_product_waitlist refuses a NULL participant", async () => {
+      const { data } = await customerAuth.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error("customer session has no access token");
+      const result = await callRpcRaw(token, "join_product_waitlist", {
+        p_product_id: PRODUCT_PARENTS,
+        p_participant_id: null,
+      });
+      expect(result.message).toMatch(/is not the parent of/);
     });
   });
 
