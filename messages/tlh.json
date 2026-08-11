@@ -30,9 +30,6 @@
       "unlockPin": "PIN yIghItlh",
       "resetPin": "PIN yIchu’qa’",
       "changePin": "PIN yIchoH",
-      "privacy": "Privacy Policy",
-      "terms": "Terms and Conditions",
-      "antiBullying": "Anti-Bullying and Discipline",
       "roblox": "Roblox qetlh chenmoHmeH ghojmoH"
     }
   },
@@ -196,6 +193,16 @@
       "okLabel": "OK",
       "okValue": "Qapla’",
       "okMeaning": "Success!",
+      "privacyLabel": "Privacy Policy",
+      "privacyValue": "Privacy Policy (So’wI’)",
+      "privacyMeaning": "So’wI’ is a cloaking device — what a Klingon calls keeping something out of sight",
+      "termsLabel": "Terms & Conditions",
+      "termsValue": "Terms of the Pact",
+      "termsMeaning": "The pact is the agreement itself, sworn to before the first battle",
+      "honorLabel": "Anti-Bullying",
+      "honorValue": "Code of Honor",
+      "honorMeaning": "A warrior who preys on the weak has no honour to speak of",
+      "retiredNote": "Those last three names are retired. The Privacy Policy, the Terms & Conditions and the Anti-Bullying Policy now read the same in every locale, Federation Standard included — they are binding documents, and no family should have to decode their own rights. An honourable translation, but the wrong battlefield for one.",
       "note": "Date and time formatting appears in English because the browser’s Intl APIs don’t have Klingon locale data. Klingons don’t use a 7-day week anyway.",
       "qapla": "Qapla’!"
     }
@@ -1229,15 +1236,10 @@
     "title": "Sogverse ’el ’Iv?"
   },
   "footer": {
-    "tagline": "toy’wI’ ghom - DaH bIQam, batlh yIghoS.",
     "copyright": "© {year} toy’wI’ ghom. Hoch batlh.",
     "contact": {
       "email": "QIn: {email}"
-    },
-    "privacy": "Privacy Policy (So’wI’)",
-    "terms": "Terms of the Pact",
-    "antiBullying": "Code of Honor",
-    "attribution": "Sep De’maj chenmoHmeH <geonames>GeoNames</geonames> wIlo’ (<cc>CC BY 4.0</cc>). vIraS QIn mI’mey: <laposte>La Poste</laposte> (<lo>Licence Ouverte 2.0</lo>)."
+    }
   },
   "gamer": {
     "welcomeNamed": "nuqneH, {name}!",
@@ -2245,321 +2247,6 @@
       "sent": "ngeHlu’",
       "message": "QIn",
       "gamerNote": "QIn’vam toy’wI’ account vo’. jangmey vav/SoS naDev ({parentEmail}) ghoS."
-    }
-  },
-  "privacy": {
-    "title": "Privacy Policy (batlh So’wI’)",
-    "lastUpdated": "Last updated: {date}",
-    "intro": {
-      "heading": "The short version, warrior",
-      "paragraphs": [
-        "School of Gaming gives younglings a glorious, honorable place to train through gaming. Guarding your House’s privacy — above all your child’s — is a matter of honor. So we speak plainly here, with no lawyer’s cloaking device.",
-        "In short: we take only the data our clubs, camps, and events demand. We never sell your data, nor your child’s — that would be without honor. Only a parent may forge a child’s account, and we never hawk wares at children. Demand to see, correct, or destroy your data any time: hail us at hello@sog.gg."
-      ]
-    },
-    "sections": {
-      "whoWeAre": {
-        "heading": "Who we are",
-        "paragraphs": [
-          "Sogverse is commanded by School of Gaming Galactic Oy (\"School of Gaming\", \"we\"), a Finnish house. We are the keepers of the personal data you and your child entrust to us — the lawyers call this the \"data controller\". Qapla'!",
-          "Our House, in full:"
-        ],
-        "bullets": [
-          "School of Gaming Galactic Oy (business ID 3110461-1)",
-          "Isokatu 56, 90100 Oulu, Finland",
-          "Email: hello@sog.gg"
-        ]
-      },
-      "infoWeCollect": {
-        "heading": "The data we collect",
-        "paragraphs": [
-          "We seize as little as honor allows — only what running Sogverse truly demands:"
-        ],
-        "bullets": [
-          "Your name, email, and (if you offer it) phone number — to forge your account and send word of your child’s clubs.",
-          "Your language and currency — so the viewscreen shows what you expect.",
-          "Your password, kept only as a scrambled cipher — not even we may read it.",
-          "Payment details are handled directly within Stripe’s vault. We never glimpse your full card number.",
-          "Of your child: first name, birth month and year (never the full date — only what we truly need), and if you wish their gender — to place them in the right battle group and address them with respect.",
-          "If you wish, your child’s Minecraft name — to connect to our Minecraft server during sessions.",
-          "Plain, nameless data on how the site is used (see \"Cookies and analytics\" below)."
-        ]
-      },
-      "childrensPrivacy": {
-        "heading": "A child’s privacy is sacred",
-        "paragraphs": [
-          "Most who walk Sogverse are younglings, so their safety and privacy outrank all else.",
-          "No child may forge their own account. Only a parent or guardian raises a child’s account, chooses what is shared, and grants permission on their behalf. Thus we keep our oath under the data-protection law for children.",
-          "We hold a child’s data to the bare minimum, we never show children advertising, and we never sell or trade it for marketing. In every live session a trained educator (we call them Gedus) stands watch.",
-          "Wish to see, change, or destroy your child’s data? Send word to hello@sog.gg and it is done."
-        ]
-      },
-      "howWeUse": {
-        "heading": "How we wield your data",
-        "paragraphs": [
-          "We wield the data above only to run Sogverse and serve your House well — namely:"
-        ],
-        "bullets": [
-          "To forge and command your account and your child’s.",
-          "To place your child in the right club, camp, or event group and unite them with an educator.",
-          "To hold the live voice and video sessions.",
-          "To take payment and send receipts, reminders, and vital word about your clubs.",
-          "To answer your call when you seek aid.",
-          "To keep Sogverse secure, crush bugs, and forge it stronger over time."
-        ]
-      },
-      "legalBasis": {
-        "heading": "Why we are permitted",
-        "paragraphs": [
-          "The data-protection law (the GDPR) demands a clear reason to wield your data. Ours are plain:"
-        ],
-        "bullets": [
-          "To deliver what you enlisted for — the clubs and services you bought (our pact with you).",
-          "Because a parent granted permission on a child’s behalf (consent).",
-          "To honor our legal duties, such as keeping payment records.",
-          "For our legitimate interest in a secure, well-running site — ever balanced against your privacy."
-        ]
-      },
-      "providers": {
-        "heading": "The allies who help us run Sogverse",
-        "paragraphs": [
-          "No house stands alone. We rely on a few trusted allies for hosting, payments, and email. They touch your data only to serve us, bound by contracts to guard it. The chief allies:"
-        ],
-        "bullets": [
-          "Supabase — guards your account, family, and club data.",
-          "Stripe — handles payments. Your card flies straight to Stripe; we never see it.",
-          "Brevo — sends our messages, such as receipts and reminders.",
-          "Daily.co — powers the live voice and video sessions.",
-          "Vercel — hosts the site and gives anonymous, cookie-free battle statistics.",
-          "Meta (WhatsApp) — to send some messages to houses who favor WhatsApp."
-        ]
-      },
-      "cookies": {
-        "heading": "Cookies and analytics",
-        "paragraphs": [
-          "We use no advertising or tracking cookies, and we do not stalk you across the stars.",
-          "We use a few necessary cookies to keep you securely logged in — the site cannot fight without them, so they need no consent.",
-          "To learn how many visit and whether by phone or computer, we use Vercel’s analytics — honorable and private: no cookies, and no naming you."
-        ]
-      },
-      "voice": {
-        "heading": "Voice and video sessions",
-        "paragraphs": [
-          "Live clubs, camps, and events are waged over voice and video by Daily.co. Every session is led and guarded by a trained educator, used only to deliver the session your child enlisted in."
-        ]
-      },
-      "retention": {
-        "heading": "How long we keep your data",
-        "paragraphs": [
-          "We keep your data as long as you hold an account with us. Close it, and we destroy or anonymize your data — save where the law commands we keep certain records longer, as Finnish accounting law demands payment records be kept for several years."
-        ]
-      },
-      "storage": {
-        "heading": "Where your data dwells",
-        "paragraphs": [
-          "Some allies above dwell beyond the European Union, such as in the United States. When your data travels to them, we guard it with the safeguards the law demands — usually the European Commission’s Standard Contractual Clauses."
-        ]
-      },
-      "rights": {
-        "heading": "Your rights — and your child’s",
-        "paragraphs": [
-          "You command your data. Any time, you may demand we:"
-        ],
-        "bullets": [
-          "Reveal what data we hold on you and your child.",
-          "Correct what is false.",
-          "Destroy your data (the \"right to be forgotten\").",
-          "Grant you a copy to carry elsewhere.",
-          "Halt or limit how we wield it."
-        ]
-      },
-      "security": {
-        "heading": "Guarding your data",
-        "paragraphs": [
-          "We shield your data with proven defenses: encrypted channels, passwords kept only as scrambled ciphers, and strict guard over who may reach the data. No system is ever truly impregnable, but we fight hard to keep your House’s data safe."
-        ]
-      },
-      "changes": {
-        "heading": "Changes to this policy",
-        "paragraphs": [
-          "We may update this policy from time to time — say, when we forge a new feature. On an important change, we update the date above and send word when it matters."
-        ]
-      },
-      "contact": {
-        "heading": "Hail us — and your right to complain",
-        "paragraphs": [
-          "To wield any right above, or for any question about your privacy or your child’s data, hail hello@sog.gg. No charge, we always answer, and the surest channel is email — our House does not muster around a letterbox.",
-          "If our handling of your data dishonors you, you have the right to complain to the Finnish Data Protection Ombudsman (Tietosuojavaltuutetun toimisto, tietosuoja.fi). Qapla'!"
-        ]
-      }
-    }
-  },
-  "terms": {
-    "title": "Terms and Conditions",
-    "lastUpdated": "Last updated: {date}",
-    "intro": {
-      "heading": "The short version, warrior",
-      "paragraphs": [
-        "These are the terms of the pact you forge when you use Sogverse and send your young one into our clubs, camps, and events. We have written them in plain tongue, for an honorable pact is one both sides truly understand — not one buried in the riddles of lawyers.",
-        "In short: our clubs are fought online, and a trained educator stands watch over your child at all times. You may break a monthly club whenever you choose, and your child’s first battle carries a coin-back oath. Have a question? Hail kanslia@sog.gg — a true warrior of flesh and blood will answer. Qapla'!"
-      ]
-    },
-    "sections": {
-      "whoWeAre": {
-        "heading": "Whose House you treat with",
-        "paragraphs": [
-          "Sogverse is commanded by School of Gaming Galactic Oy (\"School of Gaming\", \"we\", \"us\"), a Finnish House. These terms bind whenever you use Sogverse or claim one of our clubs, camps, or events.",
-          "Our standard and seal:"
-        ],
-        "bullets": [
-          "School of Gaming Galactic Oy (business ID 3110461-1)",
-          "Isokatu 56, 90100 Oulu, Finland",
-          "Email: kanslia@sog.gg"
-        ]
-      },
-      "service": {
-        "heading": "How our clubs are waged",
-        "paragraphs": [
-          "Nearly all our battles are fought online — your child joins their club, camp, or event from the home hearth, through our website. Should a particular campaign be waged differently (an in-person muster, say), we declare it plainly on that product’s page before you claim it."
-        ]
-      },
-      "games": {
-        "heading": "The games your child does battle in",
-        "paragraphs": [
-          "Our clubs are forged around video games made by other Houses, such as Minecraft. We honor Finland’s official age-rating guidance.",
-          "In plain terms: a child may take up a game rated up to three years above their own age, so long as a parent stands beside them and is at ease with it — but never a game rated 18+. When you send your child to the field, you affirm you are content with the age ratings of the games in play."
-        ]
-      },
-      "online": {
-        "heading": "Honor and safety online",
-        "paragraphs": [
-          "The tools we wield for live sessions carry their own minimum-age laws, set by the Houses that forge them and by local law. To keep the field honorable, children under 13 take part through a parent’s account, and every session is watched over by one of our trained educators (we call them Gedus). No child is ever online with us unguarded."
-        ]
-      },
-      "pricing": {
-        "heading": "Tribute and payment",
-        "paragraphs": [
-          "All prices are shown in euro and include VAT. We may change our tribute from time to time, but a change shall never fall upon a club you already pay for without word given to you first."
-        ]
-      },
-      "clubsCancellation": {
-        "heading": "Breaking a monthly club",
-        "paragraphs": [
-          "Our clubs run as a monthly subscription, and you are free to break the pact whenever you will — no chains of fixed commitment. You may do it yourself from your account, and your child holds their place until the end of the moon you have already paid for.",
-          "We would have you test your steel with confidence. If your child fights their first session and the field is not the right one, send us word within 2 days of that first session and we will return your coin in full."
-        ]
-      },
-      "campsCancellation": {
-        "heading": "Calling off a camp",
-        "paragraphs": [
-          "Camps are claimed and paid as a single strike, so their terms of withdrawal differ a little. Should you need to call off a camp:"
-        ],
-        "bullets": [
-          "14 days or more before the camp begins: your coin is returned in full.",
-          "Between 7 and 14 days before: we return your coin less a €50 administration tribute.",
-          "Fewer than 7 days before: we cannot return the payment, for the place has been held and made ready for your child — unless a medical emergency or a force beyond your command intervenes.",
-          "If your child cannot muster because of illness, we return your coin when you send us a healer’s certificate at kanslia@sog.gg."
-        ]
-      },
-      "conduct": {
-        "heading": "Conduct and casting a child from a club",
-        "paragraphs": [
-          "We would have every child stand safe and welcome, so we suffer no bullying nor conduct that spoils the field for others. When trouble rises, we begin always by standing with the child and helping them set it right — our full code is laid out in our Anti-Bullying and Discipline policy.",
-          "Only after those steps of support, and where toxic or disruptive conduct or bullying endures, may we end a child’s part in the battle. We will always counsel it through with you first."
-        ]
-      },
-      "privacy": {
-        "heading": "Your House’s privacy",
-        "paragraphs": [
-          "We hold the privacy of your House — and your child above all — as a matter of honor, and we handle your data under Finnish and EU data-protection law. Our Privacy Policy declares plainly what we gather and why."
-        ]
-      },
-      "changes": {
-        "heading": "Changes to these terms",
-        "paragraphs": [
-          "We may sharpen these terms from time to time — should we raise a new kind of club or change how a thing is waged. When the change is one of weight, we update the date at the head of this page, and where it matters we send you word directly."
-        ]
-      },
-      "contact": {
-        "heading": "Hail us",
-        "paragraphs": [
-          "If aught here is unclear, or you would counsel something through, hail kanslia@sog.gg. A true warrior of flesh and blood stands at the other end, and we answer gladly. Qapla'!"
-        ]
-      }
-    }
-  },
-  "discipline": {
-    "title": "Anti-Bullying and Discipline",
-    "lastUpdated": "Last updated: {date}",
-    "intro": {
-      "heading": "The short version, warrior",
-      "paragraphs": [
-        "Every child shall stand safe, respected, and welcome in our clubs. Bullying and cruelty hold no honor here, and we meet them head-on.",
-        "When a thing goes wrong, we do not merely punish — we aid. We follow a calm path, rung by rung, set on helping a child grasp what happened, set it right, and fight with more honor next time. We climb to a firmer rung only if the conduct endures, and we keep you informed every step of the climb."
-      ]
-    },
-    "sections": {
-      "commitment": {
-        "heading": "Our oath to your child",
-        "paragraphs": [
-          "Our clubs are a place to learn, to win comrades, and to revel — and that holds only if all stand safe. We are sworn to a community free of bullying, harassment, and cruelty, where every child is met with respect by our educators and by one another."
-        ]
-      },
-      "approach": {
-        "heading": "How we meet trouble",
-        "paragraphs": [
-          "When a child acts in a way that wounds or disrupts others, our educators (we call them Gedus) answer in a manner calm, kind, and fit for the child’s years. The aim is ever to help the child grasp the effect of their deed and to set it right — not merely to punish.",
-          "Most matters we settle gently, with a quiet word. If the conduct endures, we take firmer steps, one rung at a time. The rungs below are the ladder we climb, and you are kept at our side as we go."
-        ]
-      },
-      "step1": {
-        "heading": "Rung 1 — A reminder and setting it right",
-        "paragraphs": [
-          "The Gedu speaks with your child about what happened and how it struck others, and helps them find a better way to wield it. It is gentle and plain — for instance: \"Remember not to take from another’s chest without leave. You might ask whether they would trade instead.\""
-        ]
-      },
-      "step2": {
-        "heading": "Rung 2 — A quiet word",
-        "paragraphs": [
-          "Should it happen again, the Gedu holds a one-on-one council with your child to weigh what they did and how it strikes others. We also send word to the hearth that we have spoken with your child about their conduct in the club."
-        ]
-      },
-      "step3": {
-        "heading": "Rung 3 — Stepping in mid-session",
-        "paragraphs": [
-          "If the disruptive conduct carries on, the Gedu steps in to halt it during the session — by muting your child a moment, say, or limiting what they may do in the game. The Gedu speaks with your child apart, and we send word to the hearth."
-        ]
-      },
-      "step4": {
-        "heading": "Rung 4 — A time apart from a session",
-        "paragraphs": [
-          "If the field still will not settle, the Gedu may bid your child sit out the rest of that session. Should a longer rest be needed, we tell you beforehand. The Gedu counsels it through with your child apart, we send word to the hearth, and our chancery (kanslia@sog.gg) joins the council."
-        ]
-      },
-      "step5": {
-        "heading": "Rung 5 — Time apart from the community",
-        "paragraphs": [
-          "If the conduct endures despite all above, a child may be set apart from the SOG community for a time — their clubs, our Minecraft server, and our Discord. Our chancery hails you to lay out the ruling, and we counsel it through with your child as well."
-        ]
-      },
-      "step6": {
-        "heading": "Rung 6 — A fresh muster later",
-        "paragraphs": [
-          "Time apart need not be the end. Your child may return when both you and they stand ready. Should they return and the conduct stand unchanged, we set them apart from the field for good rather than begin the ladder anew — yet our hope, always, is a fresh start that holds. Qapla'!"
-        ]
-      },
-      "partnership": {
-        "heading": "We stand shoulder to shoulder",
-        "paragraphs": [
-          "You know your child best, and our finest victories come when we fight side by side. If you fear for how your child fares — or suspect another treats them without honor — send us word. Speaking the same expectations at the hearth and in the club strikes true."
-        ]
-      },
-      "contact": {
-        "heading": "Hail us",
-        "paragraphs": [
-          "If you hold any question on this code, or would counsel a thing that has come to pass, hail our chancery at kanslia@sog.gg. A true warrior of flesh and blood stands at the other end, and we are here to aid. Qapla'!"
-        ]
-      }
     }
   },
   "roblox": {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { useTranslations } from "next-intl";
 import {
@@ -18,6 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
+import { ROUTES } from "@/lib/constants/routes";
 import { RobloxHero } from "@/components/roblox/roblox-hero";
 import { PartnershipCta } from "@/components/roblox/partnership-cta";
 import { UpcomingEvents } from "@/components/roblox/upcoming-events";
@@ -79,6 +81,16 @@ export default function RobloxPage() {
     title: t(`how.${key}.title`),
     description: t(`how.${key}.description`),
   }));
+
+  // The Programme's own legal documents, in the order a family meets them:
+  // what you are agreeing to, how your child is kept safe, what happens to your
+  // information. This footer is the only link to any of them while the whole
+  // Programme surface is unpublished.
+  const programmeDocuments = [
+    { href: ROUTES.robloxTerms, label: t("legal.terms") },
+    { href: ROUTES.robloxSafeguarding, label: t("legal.safeguarding") },
+    { href: ROUTES.robloxPrivacy, label: t("legal.privacy") },
+  ];
 
   return (
     <>
@@ -191,11 +203,29 @@ export default function RobloxPage() {
       <PartnershipCta />
 
       {/* Trademark attribution. Required wherever the Roblox mark appears, and
-          the courteous equivalent for Lynx. Small and quiet, but on the page. */}
+          the courteous equivalent for Lynx. Small and quiet, but on the page —
+          alongside the Programme's own legal documents, which are linked from
+          here and nowhere else while the whole surface stays unpublished. */}
       <section className="container mx-auto px-4 pb-16">
         <div className="mx-auto max-w-3xl space-y-2 border-t pt-8 text-xs leading-relaxed text-muted-foreground/70">
           <p>{t("legal.roblox")}</p>
           <p>{t("legal.lynx")}</p>
+          {/* A step more present than the trademark boilerplate above — a
+              parent looking for the terms has to be able to find them. Still
+              quiet (muted, not primary): three primary-coloured rows would
+              shout from the bottom of the page. */}
+          <div className="space-y-1.5 pt-4 text-sm text-muted-foreground">
+            {programmeDocuments.map((document) => (
+              <p key={document.href}>
+                <Link
+                  href={document.href}
+                  className="underline underline-offset-2 hover:text-foreground"
+                >
+                  {document.label}
+                </Link>
+              </p>
+            ))}
+          </div>
         </div>
       </section>
     </>

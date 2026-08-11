@@ -3,6 +3,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { formatDateOnly } from "@/lib/utils";
 import { rawStringArray } from "@/lib/i18n/raw-messages";
 import { PolicyPage } from "@/components/legal/policy-page";
+import { paragraphsThenBullets } from "@/components/legal/policy-content";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -44,14 +45,18 @@ export default async function AntiBullyingPage() {
       })}
       intro={{
         heading: t("intro.heading"),
-        paragraphs: rawStringArray(t.raw("intro.paragraphs")),
+        blocks: paragraphsThenBullets(
+          rawStringArray(t.raw("intro.paragraphs")),
+        ),
       }}
       sections={SECTIONS.map((key) => ({
         heading: t(`sections.${key}.heading`),
-        paragraphs: rawStringArray(t.raw(`sections.${key}.paragraphs`)),
-        bullets: t.has(`sections.${key}.bullets`)
-          ? rawStringArray(t.raw(`sections.${key}.bullets`))
-          : undefined,
+        blocks: paragraphsThenBullets(
+          rawStringArray(t.raw(`sections.${key}.paragraphs`)),
+          t.has(`sections.${key}.bullets`)
+            ? rawStringArray(t.raw(`sections.${key}.bullets`))
+            : undefined,
+        ),
       }))}
     />
   );
