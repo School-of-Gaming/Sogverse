@@ -394,9 +394,10 @@ export function buildParentDashboardFixture(
           gamer(clock, GAMER_IDS.linnea, "Linnea", [
             club(now, "mock-seven-linnea", "Stardew Valley Co-op Club", 4, "16:00"),
           ]),
-          // Signed up for nothing, like Otso in `busy-family` — kept empty here
-          // too because seven full sections would bury the thing this scenario
-          // exists to show, which is the nav above them.
+          // Signed up for nothing — the empty-child card's home is
+          // `no-enrollments`; kept empty here too because seven full sections
+          // would bury the thing this scenario exists to show, which is the
+          // nav above them.
           gamer(clock, GAMER_IDS.otso, "Otso", []),
           gamer(clock, GAMER_IDS.venla, "Venla", [
             club(now, "mock-seven-venla", "Terraria Builders Club", 6, "18:00"),

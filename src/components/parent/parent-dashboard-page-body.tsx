@@ -63,10 +63,16 @@ export interface ParentGamerEnrollmentAction {
  * compile-time fact rather than a guard somebody has to remember to write. The
  * leave takes the whole union: giving up a place in line is the same act
  * whoever is standing in it.
+ *
+ * The discriminant is `seat`, not `audience`, on purpose: the card's own
+ * `audience` prop is a different vocabulary with an overlapping value set
+ * (`"gamer"` means "the child's own dashboard" there and "a child's seat"
+ * here), and the two appear lines apart at the call sites — same-named
+ * discriminants would make them silently interchangeable to the compiler.
  */
 export type ParentEnrollmentAction =
-  | ({ audience: "gamer" } & ParentGamerEnrollmentAction)
-  | { audience: "self"; enrollment: FamilyEnrollmentSummary };
+  | ({ seat: "gamer" } & ParentGamerEnrollmentAction)
+  | { seat: "self"; enrollment: FamilyEnrollmentSummary };
 
 /**
  * Above this many **named** entries the pill stops naming the children one by
@@ -95,6 +101,16 @@ export type ParentEnrollmentAction =
  * on desktop, collapsed on phone, toggled by CSS alone) is the legitimate way
  * to make this width-aware if the desktop trade ever hurts — measuring and
  * correcting after hydration is not.
+ *
+ * One caveat to "final shape on first paint": the count includes the parent
+ * chip, whose existence derives from the *enrollment* rows, not the family
+ * list. On the seeded-stale error path (initial reads failed, the page paints
+ * from empty seeds and refetches on mount) a parent with three children and a
+ * seat of their own paints named and collapses when the refetch lands. That is
+ * this page's already-accepted degradation for failed initial reads — every
+ * section revises then, not just the pill — and not a license for
+ * measurement: the decision stays arithmetic, and on the healthy path it is
+ * final.
  */
 const MAX_NAMED_PILL_ENTRIES = 3;
 
@@ -434,7 +450,7 @@ export function ParentDashboardPageBody({
                             onLeaveWaitlist &&
                             (() =>
                               onLeaveWaitlist({
-                                audience: "gamer",
+                                seat: "gamer",
                                 gamer,
                                 enrollment,
                               }))
@@ -522,7 +538,7 @@ export function ParentDashboardPageBody({
                     // and the Join navigates straight there.
                     onLeaveWaitlist={
                       onLeaveWaitlist &&
-                      (() => onLeaveWaitlist({ audience: "self", enrollment }))
+                      (() => onLeaveWaitlist({ seat: "self", enrollment }))
                     }
                     leavingWaitlist={leavingParticipationIds?.has(
                       enrollment.participationId,

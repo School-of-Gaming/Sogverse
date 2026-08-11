@@ -388,16 +388,19 @@ export function toFamilyEnrollments(
  * because the page is about their children and a permanently empty heading
  * carrying their own face would say so wrongly.
  *
- * **The reader is identified as "a `customer` member with a non-empty bucket",
- * and at most one member can satisfy that.** Both reads behind this are scoped
- * to `customer_id = auth.uid()`, so every row here is one the reader is paying
- * for; a row whose participant is an adult is therefore a row where that adult
- * is also the customer — the reader. A co-parent visible in the family list has
- * their own seats under their own customer id and cannot appear in this read at
- * all. There is deliberately no de-duplication in the other direction either:
- * the RLS select policies on participations are role-partitioned, so no session
- * can match both the customer arm and the gamer arm and a seat cannot render
- * twice.
+ * **The reader is the family list's only `customer` member — that is the real
+ * invariant, and it is stronger than "at most one has a bucket".** Both
+ * resolvers build the list as the reader plus their linked gamers (the RLS
+ * profile policies expose exactly that; the admin-side resolver pins the
+ * parent ids to the caller), so a co-parent is never in the list at all and
+ * `find(role === "customer")` yields the reader or nothing. Separately, both
+ * enrollment reads are scoped to `customer_id = auth.uid()`, so an adult
+ * participant on any row here is the reader — belt to the invariant's braces,
+ * written down because a future widening of the family list would land on
+ * this reasoning first. There is deliberately no de-duplication in the other
+ * direction either: the RLS select policies on participations are
+ * role-partitioned, so no session can match both the customer arm and the
+ * gamer arm and a seat cannot render twice.
  *
  * Children are ordered by **first name**, collated in the viewer's own locale.
  * There is no meaningful order in the data — no birth order is recorded and a
@@ -445,11 +448,10 @@ export function rollUpFamilyEnrollments(
     ),
   });
 
+  const reader = args.family.find((member) => member.role === "customer");
+  const readerSection = reader ? sectionFor(reader) : null;
   const self =
-    args.family
-      .filter((member) => member.role === "customer")
-      .map(sectionFor)
-      .find((section) => section.enrollments.length > 0) ?? null;
+    readerSection && readerSection.enrollments.length > 0 ? readerSection : null;
 
   return {
     gamers: args.family

@@ -1045,18 +1045,18 @@ describe("the family club page's billing states", () => {
   }));
 
   it("shows each of them somewhere, and never together", () => {
-    // At least one of each rather than exactly one: the notices are worded in
-    // the third person about a child and in the second person on a parent's own
-    // seat, so the self scenario carries its own copy of one of them and that
-    // is a second page a state legitimately appears on. What has to stay exact
-    // is that no single page claims both — Stripe cannot be `past_due` and
-    // `canceling` at once, so a page showing both would be inventing a state.
-    expect(
-      fixtures.filter((f) => f.fixture.paymentProblem).length,
-    ).toBeGreaterThanOrEqual(1);
+    // paymentProblem appears on exactly two pages — worded in the third person
+    // about a child and in the second person on the parent's own seat — because
+    // the self scenario deliberately carries the longest self-worded string.
+    // cancellation stays on exactly one: no scenario has earned a second copy,
+    // and holding the count exact keeps a future scenario from acquiring one
+    // by accident. What must also stay exact is that no single page claims
+    // both — Stripe cannot be `past_due` and `canceling` at once, so a page
+    // showing both would be inventing a state.
+    expect(fixtures.filter((f) => f.fixture.paymentProblem).length).toBe(2);
     expect(
       fixtures.filter((f) => f.fixture.cancellation !== null).length,
-    ).toBeGreaterThanOrEqual(1);
+    ).toBe(1);
     for (const { scenario, fixture } of fixtures) {
       expect(
         fixture.paymentProblem && fixture.cancellation !== null,
