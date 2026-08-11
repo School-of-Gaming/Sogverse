@@ -48,7 +48,7 @@ branch to tearing the worktree down after the merge.
 ### Role-Based Access Control (RBAC)
 Four user roles with separate dashboards:
 - `admin` → `/admin` - System management
-- `customer` → `/parent` - Parents who purchase products and manage linked gamers (the role identifier is `customer`; the URL is `/parent`)
+- `customer` → `/parent` - Parents who purchase products and manage linked gamers — and who can hold a seat themselves on a product whose audience admits adults, attending it and joining its voice room as a participant (the role identifier is `customer`; the URL is `/parent`)
 - `gamer` → `/gamer` - Child accounts (email-first like every role; email is a synthetic `<token>@gamer.sogverse.internal` address; login is via account-switch from the parent, not a typed credential)
 - `gedu` → `/gedu` - Game educators (self-register at `/register-gedu`; an account is unverified until an admin approves it — verification gates only group assignment, not platform access. See `src/services/gedu/`)
 

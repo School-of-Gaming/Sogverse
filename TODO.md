@@ -113,6 +113,33 @@ Now unlocked by the one-Stripe-sub-per-participation model (each consumer-club s
 - [ ] Decide the rule for **threshold-start** clubs (no fixed `start_date`): simplest is to charge immediately as today (there's no date to anchor to); deferring those would need a job that anchors the sub when the product flips to `running`. See the AskUserQuestion discussion that scoped this.
 - [ ] Parent-facing checkout copy must make "you won't be charged until {date}" explicit.
 
+### Family multi-select checkout — one flow for several family members
+
+Today one seat is one flow: a parent buying for themselves and two children goes through
+signup three times, exactly as buying for three children does. Now that a parent can hold a
+seat of their own (see `docs/products-architecture.md`, "Audience"), the case is a little
+commoner than it was — a family event where everybody goes is the shape that wants it — so
+it is recorded rather than dropped.
+
+**Deliberately deferred, and twice narrowed without getting tight enough to build.** The
+second narrowing was to the money-free variant only (free events, external-contract
+municipality clubs), where an atomic multi-insert avoids Stripe entirely and the whole
+thing is one RPC. Even that variant does not escape the product decision below, which is
+why it was kept out rather than shipped small.
+
+- [ ] **Decide the seat-shortfall behaviour — this is the blocker, not the plumbing.** One
+  seat left, two family members selected: is it all-or-nothing with an error that says so,
+  or does it place one and put the other on the waitlist? The first is predictable and
+  refuses a parent something they could have had; the second gets everyone a place of some
+  kind and silently splits the family across two states in a flow they asked to be one.
+  Both are defensible and neither is obviously right, which is exactly why nothing was
+  built.
+- [ ] Once decided, build the **free path first** — it is the natural follow-up shape, and
+  nothing in the shipped schema resists an atomic multi-insert RPC: seats are keyed by
+  participant, the uniqueness and the seat count are per row, and the product lock already
+  serializes the whole transaction. The paid path is a separate question (one Checkout
+  Session covering several seats, and what a partial failure means there).
+
 ### Localize the line-item name on the Stripe Checkout page
 
 **Core problem:** a parent should see what they're buying named in the locale they expect, whenever the product has a translation for it. Today they don't — the headline **line item** on the Stripe Checkout page shows the cached Stripe Product's name, which is resolved at `DEFAULT_LOCALE` (`en`) rather than at the viewer's locale, so the fallback chain collapses to `en → first translation` with **no viewer step**. So a Finnish parent who saw "Minecraft-kerho" throughout the app — and now gets Finnish Checkout chrome and a Finnish subscription *description* — still sees the **line item** in English. Two languages for the same product, stacked on one page.
