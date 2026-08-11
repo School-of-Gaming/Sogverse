@@ -271,11 +271,14 @@ as three children today.
   under the same audience gate. The picker currently **drops parents with zero linked
   children entirely** — on a for-parents product a childless parent must be listed and
   selectable.
-- Shop browse: a new audience filter chip row (For gamers / For parents, multi-select OR
-  like topic/language) in the client-side filter predicate, plus audience labels on
-  cards. The chips may briefly ship before any for-parents product exists (the admin
-  form lands last — see Steps); a filter with an empty result set for a few days is
-  accepted.
+- Shop browse: a new audience filter chip row (For parents / For families, multi-select
+  OR like topic/language) in the client-side filter predicate, plus the same two labels
+  as badges on cards. A chip is the badge: it matches exactly the products wearing it —
+  "For parents" the parents-only shape, "For families" the both-audience one — and
+  gamers-only, the assumed default, wears no badge and answers no chip, so both chips
+  lit is narrower than an empty row rather than equal to it. The chips may briefly ship
+  before any for-parents product exists (the admin form lands last — see Steps); a
+  filter with an empty result set for a few days is accepted.
 - Billing portal labels and the Stripe subscription description derive from the
   participant's name; every child-assuming string (signup heading, confirmation page,
   emails) gets audience-aware variants in **all five locales** — plus the checkout
@@ -409,7 +412,10 @@ before the switch is flippable. Do not reorder step 8 earlier.
    deliberately-empty child fields) in the gedu group feed and admin groups panel —
    including the gedu bulk copy-all-emails affordance and the admin chip's new email
    line; relax the gedu-feed roster contract's required parent email; comp-enroll
-   picker gains adults (including childless parents, which it drops today);
+   picker gains adults (including childless parents, which it drops today); the
+   enrollment-change emails fired on group assignment still third-person the
+   participant ("Hi Marja, Marja is now enrolled…") — they get self variants here,
+   since this is the step that makes an admin-assigned adult seat produce one;
    opportunistic renames ride here — the `gamer_*` result JSON keys on the shapes
    being touched and the `admin_enroll_gamer` function name (with its
    authorization-spine entry). Style-guide demo for the adult roster row.

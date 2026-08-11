@@ -992,6 +992,25 @@
       "event": "{gamer} on liittynyt toimintaan {product}."
     },
     "fallbackGamer": "Lapsesi",
+    "self": {
+      "subheading": {
+        "consumer_club": "Sinut on ilmoitettu toimintaan {product}.",
+        "municipality_club": "Sinut on rekisteröity toimintaan {product}.",
+        "camp": "Sinut on ilmoitettu toimintaan {product}.",
+        "event": "Olet liittynyt toimintaan {product}."
+      },
+      "fallbackName": "Sinä",
+      "nextPlacement": "Sinut sijoitetaan ryhmään, jossa toimii Gedu. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
+      "waitlist": {
+        "subheading": "Olet jonotuslistalla – {product}. Ilmoitamme heti, kun paikka vapautuu.",
+        "next2": {
+          "consumer_club": "Säilytät paikkasi jonossa koko kauden ajan.",
+          "municipality_club": "Säilytät paikkasi jonossa koko kauden ajan.",
+          "camp": "Säilytät paikkasi jonossa koko leirin ajan.",
+          "event": "Säilytät paikkasi jonossa koko tapahtuman ajan."
+        }
+      }
+    },
     "summaryTitle": "Tilauksesi",
     "forLabel": {
       "consumer_club": "Ilmoitettu",
@@ -1030,7 +1049,7 @@
     },
     "duplicatePayment": {
       "heading": "Ilmoittautuminen on jo tehty",
-      "subheading": "Tällä lapsella on jo paikka tässä tuotteessa.",
+      "subheading": "Henkilöllä, jolle tämä oli tarkoitettu, on jo paikka tässä tuotteessa.",
       "body": "Tämä maksu ei ole luonut toista ilmoittautumista. Ota yhteyttä, niin selvitämme ylimääräisen veloituksen kanssasi."
     },
     "supportLine": "Tarvitsetko apua? Lähetä meille sähköpostia osoitteeseen <link>{email}</link>.",
@@ -1453,6 +1472,7 @@
     },
     "filters": {
       "type": "Tyyppi",
+      "audience": "Kohderyhmä",
       "typeClubs": "Kerhot",
       "typeCamps": "Leirit",
       "typeEvents": "Tapahtumat",
@@ -1486,6 +1506,11 @@
       "noProducts": "Täällä ei ole vielä mitään – uusia on tulossa.",
       "noMatches": "Ei osumia. Kokeile tyhjentää suodattimet."
     }
+  },
+  "productAudience": {
+    "parents": "Vanhemmille",
+    "families": "Perheille",
+    "familiesWithAges": "Perheille, ikä {min}–{max}"
   },
   "seatAvailability": {
     "remaining": "{count, plural, one {# / {total} paikka jäljellä} other {# / {total} paikkaa jäljellä}}",
@@ -1549,6 +1574,7 @@
       "format": "Muoto",
       "ages": "Ikä {min}–{max}",
       "ageRange": "Ikähaarukka",
+      "audience": "Kohderyhmä",
       "language": "Kieli",
       "online": "Verkossa",
       "atVenue": "Paikassa {venue}",
@@ -1603,11 +1629,13 @@
       },
       "gamerAlreadyWaitlisted": "Jonossa",
       "nonCustomerNote": "Vain vanhempi voi ilmoittaa pelaajan tähän.",
+      "nonCustomerNoteParents": "Vain vanhempi voi ilmoittautua tähän.",
       "closedNote": "Tämä ei ole juuri nyt avoinna. Pidä silmällä seuraavaa kierrosta.",
       "rulesHeading": "Säännöt",
       "rules": {
         "consumer_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä.",
         "municipality_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa lapseni paikan seuraavalle jonossa olevalle perheelle.",
+        "municipality_club_self": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa paikkani seuraavalle jonossa olevalle perheelle.",
         "camp": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä.",
         "event": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä."
       },
@@ -1617,8 +1645,10 @@
         "camp": "Kenet ilmoitat?",
         "event": "Kuka liittyy?"
       },
+      "seatIsFor": "Kenelle paikka on",
       "selected": "Valittu",
-      "agePill": "Ikä {age}"
+      "agePill": "Ikä {age}",
+      "parentPill": "Vanhempi"
     },
     "pricing": {
       "title": "Hinta",

@@ -93,6 +93,7 @@ import {
   type SeatBarValue,
 } from "@/components/public/products/product-browse-card-view";
 import { SeatAvailabilityBar } from "@/components/public/products/seat-availability-bar";
+import { audienceLabelKey } from "@/components/public/products/product-audience";
 import { formatProductLocation } from "@/components/public/products/format-product-location";
 import { formatProductPrice } from "@/components/public/products/format-product-price";
 import {
@@ -1206,6 +1207,7 @@ function ScenarioBrowseCard({
   label: string;
 }) {
   const t = useTranslations("productBrowse.card");
+  const tAudience = useTranslations("productAudience");
   const uiLocale = resolveLocale(useLocale());
   const timeZone = useTimezone();
   const now = useNow();
@@ -1258,6 +1260,11 @@ function ScenarioBrowseCard({
       }
     : undefined;
 
+  // The badge-or-nothing decision (gamers-only unbadged) lives in
+  // product-audience.ts — this grid is where the three audiences sit beside
+  // each other, and the shop scene shows the same comparison at page width.
+  const audienceLabelMessageKey = audienceLabelKey(product);
+
   return (
     <div className="flex flex-col gap-2">
       <DemoCaption>{label}</DemoCaption>
@@ -1271,6 +1278,11 @@ function ScenarioBrowseCard({
           product.min_age !== null && product.max_age !== null
             ? t("ages", { min: product.min_age, max: product.max_age })
             : null
+        }
+        audienceLabel={
+          audienceLabelMessageKey === null
+            ? null
+            : tAudience(audienceLabelMessageKey)
         }
         locationLine={locationLine}
         spokenLanguageCode={product.spoken_language_code}

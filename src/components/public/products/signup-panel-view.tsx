@@ -47,26 +47,50 @@ import {
 // instance, so the selected gamer, the agreed checkbox and the pricing pick
 // survive the flip and the sign-up really is one tap.
 
+/**
+ * One selectable row in the picker: a child, or — on a product sold to parents
+ * — the reader themselves.
+ *
+ * The panel is deliberately id-agnostic about which is which. Everything that
+ * makes a row work (selection, the identicon, the already-enrolled lockout) is
+ * keyed on the id alone, and the participation-counts read is filtered on the
+ * customer and keyed on the participant column, so a parent's own seat lands
+ * under their own id with no service change. `isSelf` exists only for the two
+ * places the *wording* has to change, never for the mechanics.
+ */
+export interface SignupParticipantChoice {
+  id: string;
+  name: string;
+  age: number | null;
+  /**
+   * When set, this participant already holds a seat (`active`) or a waitlist
+   * spot (`waitlisted`) on the product — the picker shows the row disabled and
+   * labels its state in place instead of offering a second signup.
+   */
+  signupState?: MyParticipationState | null;
+  /** True on the parent's own row. Selects the second-person copy, nothing else. */
+  isSelf?: boolean;
+}
+
 export type AuthState =
   | { kind: "unauthenticated"; signInHref: string; createAccountHref: string }
   | { kind: "non_customer" }
   | {
-      // A signed-in customer. `gamers` may be empty — the picker always renders
-      // an "Add a child" row, so the zero-gamer case needs no separate state;
-      // it's just a picker with no selectable rows yet.
+      // A signed-in customer. `participants` may be empty — on a product with a
+      // gamer audience the picker always renders an "Add a child" row, so the
+      // zero-gamer case needs no separate state; it's just a picker with no
+      // selectable rows yet.
       kind: "ready";
-      gamers: readonly {
-        id: string;
-        name: string;
-        age: number | null;
-        /**
-         * When set, this child already holds a seat (`active`) or a waitlist
-         * spot (`waitlisted`) on the product — the picker shows them disabled
-         * and labels their state in place instead of letting the parent sign
-         * them up a second time.
-         */
-        signupState?: MyParticipationState | null;
-      }[];
+      participants: readonly SignupParticipantChoice[];
+      /**
+       * How many children the account holds — the number the add-a-child cap is
+       * measured against, and deliberately NOT `participants.length`.
+       *
+       * On a for-parents product the parent's own row rides in the same array,
+       * and counting it would hide the add affordance one child early: a family
+       * at the cap minus one would be told they were full.
+       */
+      gamerCount: number;
     };
 
 /**
@@ -84,13 +108,22 @@ export type MyParticipationState = "waitlisted" | "active";
 
 export interface SignupPanelViewProps {
   productType: ProductType;
+  /**
+   * Whether the product is sold to children at all (`products.for_gamers`).
+   *
+   * False on a parents-only product, where two things follow: the add-a-child
+   * affordance is withdrawn (offering to create an account that could not be
+   * signed up here is a dead end), and the picker heading stops asking who is
+   * being signed up — there is one answer and it is already selected.
+   */
+  forGamers: boolean;
   state: RegistrationState;
   authState: AuthState;
   /** The single purchase option for this product (one per type). */
   pricingOption: PricingOption;
-  /** Resolved by the adapter; null while the user has no gamer selected. */
-  selectedGamerId: string | null;
-  onSelectGamer: (gamerId: string) => void;
+  /** Resolved by the adapter; null while nobody selectable is selected. */
+  selectedParticipantId: string | null;
+  onSelectParticipant: (participantId: string) => void;
   /** Opens the Add Gamer dialog (owned by the adapter). */
   onAddGamer: () => void;
   agreed: boolean;
@@ -306,11 +339,17 @@ function FormOrAuth(props: FormOrAuthProps) {
         />
       );
     case "non_customer":
-      return <NonCustomerOverlay />;
+      return <NonCustomerOverlay forGamers={props.forGamers} />;
     case "ready":
-      // selectedGamerId comes through `props` (it's a top-level View prop,
+      // selectedParticipantId comes through `props` (it's a top-level View prop,
       // not part of the AuthState union — see SignupPanelViewProps).
-      return <SignupForm {...props} gamers={props.authState.gamers} />;
+      return (
+        <SignupForm
+          {...props}
+          participants={props.authState.participants}
+          gamerCount={props.authState.gamerCount}
+        />
+      );
   }
 }
 
@@ -355,29 +394,42 @@ function UnauthenticatedOverlay({
   );
 }
 
-function NonCustomerOverlay() {
+// The signed-in-but-wrong-role note (a gamer or a gedu on a shop URL). The
+// gamers-only wording names what this page is for — registering a gamer — which
+// on a parents-only product would be describing the wrong product, so that case
+// says the same thing about the seat instead of about a child.
+function NonCustomerOverlay({ forGamers }: { forGamers: boolean }) {
   const t = useTranslations("productDetail.signupPanel");
   return (
     <p className="rounded-md border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
-      {t("nonCustomerNote")}
+      {forGamers ? t("nonCustomerNote") : t("nonCustomerNoteParents")}
     </p>
   );
 }
 
 function SignupForm(
   props: FormOrAuthProps & {
-    gamers: Extract<AuthState, { kind: "ready" }>["gamers"];
+    participants: readonly SignupParticipantChoice[];
+    gamerCount: number;
   },
 ) {
   const t = useTranslations("productDetail.signupPanel");
   // The "Add Gamer" row reuses the family namespace's label so the wording
   // stays in lockstep with the family selector / My Gamers tile.
   const tFamily = useTranslations("family");
-  // Steven Brown Rule — hide the add affordance at the cap, same as the family
-  // selector / My Gamers grid. `gamers` is the parent's full roster (enrolled
-  // ones included), so its length is the right count to test.
-  const canAddGamer = props.gamers.length < MAX_GAMERS_PER_PARENT;
-  const formReady = props.selectedGamerId !== null && props.agreed;
+  // Two independent reasons to withhold the add affordance. Steven Brown Rule —
+  // hidden at the cap, same as the family selector / My Gamers grid; the count
+  // is the parent's full roster (enrolled children included) and comes in
+  // separately precisely because `participants` may carry the parent's own row,
+  // which is not a child and must not count against the cap. And a
+  // parents-only product has no gamer audience at all, so adding a child here
+  // would create an account that cannot be signed up on this page.
+  const canAddGamer =
+    props.forGamers && props.gamerCount < MAX_GAMERS_PER_PARENT;
+  const selectedIsSelf =
+    props.participants.find((p) => p.id === props.selectedParticipantId)
+      ?.isSelf === true;
+  const formReady = props.selectedParticipantId !== null && props.agreed;
   const clickable = formReady && props.active && !props.submitting;
 
   // The CTA doubles as the instruction for the parent's next step: while it's
@@ -387,13 +439,15 @@ function SignupForm(
   // every step during the pre-open countdown and land on "Ready & waiting",
   // primed to one-tap the instant it opens. Only the final leaf differs by
   // window: the live action label once open (`active`), the holding state until
-  // then. selectedGamerId is null only when no child is selectable: either
-  // there's still room to add one (canAddGamer → prompt to add a gamer), or
-  // every child is already on the product at the gamer cap (nothing left to do
-  // — the picker rows show each child's exact seat/waitlist status in place).
+  // then. selectedParticipantId is null only when nobody is selectable: there
+  // is still room to add a child (canAddGamer → prompt to add a gamer), every
+  // child is already on the product at the gamer cap, or — on a parents-only
+  // product — the reader already holds the one seat there is. The latter two
+  // both land on ctaAllSet; the picker rows show each person's exact
+  // seat/waitlist status in place.
   const ctaLabel = props.submitting
     ? t("ctaSubmitting")
-    : props.selectedGamerId === null
+    : props.selectedParticipantId === null
       ? canAddGamer
         ? t("ctaAddGamer")
         : t("ctaAllSet")
@@ -408,8 +462,14 @@ function SignupForm(
       <div className="rounded-md border border-border bg-muted/30 p-4">
         <h3 id="gamer-picker-label" className="text-sm font-semibold">
           {/* Per-type heading — matches the product's action verb
-              (enrol / register / sign up / join). */}
-          {t(`whoAreYouSigningUp.${props.productType}`)}
+              (enrol / register / sign up / join). A parents-only product has
+              exactly one answer and it is already selected, so the heading
+              states the seat rather than asking a question with no second
+              option; it stays type-neutral because the verb it would carry
+              belongs to the question it is no longer asking. */}
+          {props.forGamers
+            ? t(`whoAreYouSigningUp.${props.productType}`)
+            : t("seatIsFor")}
         </h3>
         <div className="mt-3 space-y-2">
           <div
@@ -417,12 +477,15 @@ function SignupForm(
             aria-labelledby="gamer-picker-label"
             className="space-y-2"
           >
-            {props.gamers.map((g) => {
-              // A child already holding a seat / waitlist spot can't be signed up
-              // again — the row is disabled and labels its state in place rather
-              // than offering itself for selection.
+            {props.participants.map((g) => {
+              // A participant already holding a seat / waitlist spot can't be
+              // signed up again — the row is disabled and labels its state in
+              // place rather than offering itself for selection. This covers the
+              // parent's own row for free: the counts read is filtered on the
+              // customer and keyed on the participant column, so a self seat
+              // arrives under the parent's own id like any other.
               const alreadyOn = g.signupState ?? null;
-              const selected = props.selectedGamerId === g.id;
+              const selected = props.selectedParticipantId === g.id;
               return (
                 <button
                   key={g.id}
@@ -430,7 +493,7 @@ function SignupForm(
                   role="radio"
                   aria-checked={selected}
                   disabled={alreadyOn !== null}
-                  onClick={() => props.onSelectGamer(g.id)}
+                  onClick={() => props.onSelectParticipant(g.id)}
                   className={cn(
                     "flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm transition-colors",
                     alreadyOn !== null
@@ -453,10 +516,20 @@ function SignupForm(
                       >
                         {g.name}
                       </span>
-                      {g.age !== null && (
+                      {/* The slot beside the name says who this row is: a
+                          child's age, or the word "Parent" on the reader's own
+                          row — same position, same weight, so the picker reads
+                          uniformly whoever is in it. */}
+                      {g.isSelf === true ? (
                         <span className="ml-2 text-xs text-muted-foreground">
-                          {t("agePill", { age: g.age })}
+                          {t("parentPill")}
                         </span>
+                      ) : (
+                        g.age !== null && (
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            {t("agePill", { age: g.age })}
+                          </span>
+                        )
                       )}
                     </span>
                   </span>
@@ -500,6 +573,7 @@ function SignupForm(
 
       <RulesCheckbox
         productType={props.productType}
+        selfSeat={selectedIsSelf}
         agreed={props.agreed}
         onAgreedChange={props.onAgreedChange}
       />
@@ -525,10 +599,18 @@ function SignupForm(
 
 function RulesCheckbox({
   productType,
+  selfSeat,
   agreed,
   onAgreedChange,
 }: {
   productType: ProductType;
+  /**
+   * True when the selected participant is the reader themselves. Chosen from
+   * the *selection*, not from the product's audience: on a mixed product the
+   * same panel ticks a consent about a child or about the reader depending on
+   * which row is lit, and the sentence has to follow the row.
+   */
+  selfSeat: boolean;
   agreed: boolean;
   onAgreedChange: (next: boolean) => void;
 }) {
@@ -540,6 +622,16 @@ function RulesCheckbox({
   // outer box wraps a border-per-selectable-row — the rules section is a single
   // choice, so a box-in-a-box would just be visual noise.
   const tPanel = useTranslations("productDetail.signupPanel");
+  // Exactly one of the four rules third-persons a child: the municipality
+  // club's, which is a consent about "my child's seat" opening for the next
+  // family. The other three are about conduct and read identically whoever
+  // holds the seat, so the self variant is keyed on the one rule that needs it
+  // rather than duplicating three identical sentences into a parallel group
+  // that would then have to be kept in step in five locales.
+  const ruleText =
+    selfSeat && productType === "municipality_club"
+      ? t("municipality_club_self")
+      : t(productType);
   return (
     <label
       className={cn(
@@ -556,7 +648,7 @@ function RulesCheckbox({
           checked={agreed}
           onChange={(e) => onAgreedChange(e.target.checked)}
         />
-        <span className="text-muted-foreground">{t(productType)}</span>
+        <span className="text-muted-foreground">{ruleText}</span>
       </div>
     </label>
   );

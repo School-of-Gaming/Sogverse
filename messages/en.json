@@ -992,6 +992,25 @@
       "event": "{gamer} is joining {product}."
     },
     "fallbackGamer": "Your child",
+    "self": {
+      "subheading": {
+        "consumer_club": "You’re enrolled in {product}.",
+        "municipality_club": "You’re registered for {product}.",
+        "camp": "You’re signed up for {product}.",
+        "event": "You’re joining {product}."
+      },
+      "fallbackName": "You",
+      "nextPlacement": "We’ll place you in a group with a Gedu. The sessions will then appear under My SOG.",
+      "waitlist": {
+        "subheading": "You’re on the waitlist for {product}. We’ll let you know if a seat opens.",
+        "next2": {
+          "consumer_club": "You keep your place in line for the whole term.",
+          "municipality_club": "You keep your place in line for the whole term.",
+          "camp": "You keep your place in line for the camp.",
+          "event": "You keep your place in line for the event."
+        }
+      }
+    },
     "summaryTitle": "Your order",
     "forLabel": {
       "consumer_club": "Enrolled",
@@ -1030,7 +1049,7 @@
     },
     "duplicatePayment": {
       "heading": "Already signed up",
-      "subheading": "This child already has a place on this product.",
+      "subheading": "The person this was for already has a place on this product.",
       "body": "This payment has not created a second signup. Get in touch and our team will look into the extra charge with you."
     },
     "supportLine": "Need a hand? Email us at <link>{email}</link>.",
@@ -1453,6 +1472,7 @@
     },
     "filters": {
       "type": "Type",
+      "audience": "Audience",
       "typeClubs": "Clubs",
       "typeCamps": "Camps",
       "typeEvents": "Events",
@@ -1486,6 +1506,11 @@
       "noProducts": "Nothing here yet — new ones are on the way.",
       "noMatches": "No matches. Try clearing your filters."
     }
+  },
+  "productAudience": {
+    "parents": "For parents",
+    "families": "For families",
+    "familiesWithAges": "For families, ages {min}–{max}"
   },
   "seatAvailability": {
     "remaining": "{count, plural, one {# of {total} seat remaining} other {# of {total} seats remaining}}",
@@ -1549,6 +1574,7 @@
       "format": "Format",
       "ages": "Ages {min}–{max}",
       "ageRange": "Age range",
+      "audience": "Audience",
       "language": "Language",
       "online": "Online",
       "atVenue": "At {venue}",
@@ -1603,11 +1629,13 @@
       },
       "gamerAlreadyWaitlisted": "On waitlist",
       "nonCustomerNote": "Only parents can register a gamer here.",
+      "nonCustomerNoteParents": "Only parents can sign up here.",
       "closedNote": "This one’s not open right now. Keep an eye out for the next one.",
       "rulesHeading": "The Rules",
       "rules": {
         "consumer_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior.",
         "municipality_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, and that repeated unexcused absences may open my child’s seat for the next family on the waitlist.",
+        "municipality_club_self": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, and that repeated unexcused absences may open my seat for the next family on the waitlist.",
         "camp": "I understand School of Gaming has zero tolerance for bullying and toxic behavior.",
         "event": "I understand School of Gaming has zero tolerance for bullying and toxic behavior."
       },
@@ -1617,8 +1645,10 @@
         "camp": "Who are you signing up?",
         "event": "Who’s joining?"
       },
+      "seatIsFor": "Who this seat is for",
       "selected": "Selected",
-      "agePill": "Age {age}"
+      "agePill": "Age {age}",
+      "parentPill": "Parent"
     },
     "pricing": {
       "title": "Pricing",

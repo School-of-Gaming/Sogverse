@@ -1113,6 +1113,206 @@ describe("POST /api/checkout/products/create", () => {
     expect(params.cancel_url).toBe(`http://localhost:3000/shop/${PRODUCT_ID}`);
   });
 
+  // ── The participant may be the payer ──────────────────────────────
+  //
+  // A for-parents product lets a customer buy a seat for themselves, which
+  // arrives here as `participantId === user.id`. **The route deliberately does
+  // not judge that pair**: audience is a property of the product, and the
+  // gate lives in `create_participation` where it can be read under the same
+  // lock as the capacity check. What the route does keep is the pinning —
+  // `p_customer_id` is always the session user, never anything the body says —
+  // so the pair the database is asked about is one the caller could not forge.
+  describe("participant identity", () => {
+    it("forwards a self seat to the RPC with the customer still pinned", async () => {
+      mockAuthenticatedCustomer();
+      mockAdmin({
+        product: FREE_EVENT,
+        gamer: { first_name: "Marja" },
+      });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "free_active", participation_id: PARTICIPATION_ID },
+        error: null,
+      });
+
+      const res = await POST(
+        createRequest({
+          productId: PRODUCT_ID,
+          participantId: CUSTOMER_ID,
+          purchaseShape: "free",
+          currency: "eur",
+        }),
+      );
+      const data = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(data).toEqual({
+        status: "free_confirmed",
+        participationId: PARTICIPATION_ID,
+      });
+      expect(mockAdminRpc).toHaveBeenCalledWith("create_participation", {
+        p_product_id: PRODUCT_ID,
+        p_participant_id: CUSTOMER_ID,
+        p_customer_id: CUSTOMER_ID,
+        p_purchase_shape: "free",
+        p_currency: "eur",
+      });
+      // Stripe is never reached on a no-charge shape, self seat or not.
+      expect(mockStripeSessionCreate).not.toHaveBeenCalled();
+    });
+
+    it("still forwards a child seat unchanged", async () => {
+      mockAuthenticatedCustomer();
+      mockAdmin({ product: FREE_EVENT });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "free_active", participation_id: PARTICIPATION_ID },
+        error: null,
+      });
+
+      const res = await POST(
+        createRequest({
+          productId: PRODUCT_ID,
+          participantId: GAMER_ID,
+          purchaseShape: "free",
+          currency: "eur",
+        }),
+      );
+
+      expect(res.status).toBe(200);
+      expect(mockAdminRpc).toHaveBeenCalledWith("create_participation", {
+        p_product_id: PRODUCT_ID,
+        p_participant_id: GAMER_ID,
+        p_customer_id: CUSTOMER_ID,
+        p_purchase_shape: "free",
+        p_currency: "eur",
+      });
+    });
+
+    it("relays the RPC's refusal when the participant is somebody else's adult", async () => {
+      // The route forwards the pair and the database refuses it — an unlinked
+      // adult is neither the caller nor one of their children. This is the
+      // shape a route-side audience check would have hidden: the refusal has to
+      // arrive as the RPC's own message, because that message is what the shop
+      // renders beside the signup button.
+      mockAuthenticatedCustomer();
+      mockAdmin({ product: FREE_EVENT });
+      const otherAdult = "99999999-9999-9999-9999-999999999999";
+      mockAdminRpc.mockResolvedValueOnce({
+        data: null,
+        error: {
+          code: "23514",
+          message: `customer ${CUSTOMER_ID} is not the parent of participant ${otherAdult}`,
+        },
+      });
+
+      const res = await POST(
+        createRequest({
+          productId: PRODUCT_ID,
+          participantId: otherAdult,
+          purchaseShape: "free",
+          currency: "eur",
+        }),
+      );
+      const data = await res.json();
+
+      expect(res.status).toBe(400);
+      expect(data.error).toContain("is not the parent of participant");
+      // The route asked about the pair rather than pre-judging it.
+      expect(mockAdminRpc).toHaveBeenCalledWith(
+        "create_participation",
+        expect.objectContaining({
+          p_participant_id: otherAdult,
+          p_customer_id: CUSTOMER_ID,
+        }),
+      );
+    });
+
+    it("relays the RPC's audience refusal on a gamers-only product", async () => {
+      mockAuthenticatedCustomer();
+      mockAdmin({ product: FREE_EVENT });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: null,
+        error: {
+          code: "23514",
+          message: "this product is not open to parents",
+        },
+      });
+
+      const res = await POST(
+        createRequest({
+          productId: PRODUCT_ID,
+          participantId: CUSTOMER_ID,
+          purchaseShape: "free",
+          currency: "eur",
+        }),
+      );
+      const data = await res.json();
+
+      expect(res.status).toBe(400);
+      expect(data.error).toBe("this product is not open to parents");
+    });
+
+    it("names the payer in the Stripe subscription description on a self seat", async () => {
+      // The description is what the parent reads in the hosted portal when
+      // deciding which sub to cancel, so a seat they hold themselves has to
+      // carry their own name there like any child's does.
+      mockAuthenticatedCustomer();
+      mockAdmin({ product: PAID_CLUB, gamer: { first_name: "Marja" } });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "validated" },
+        error: null,
+      });
+      mockGetOrCreateSubscriptionPrice.mockResolvedValue({
+        product_id: PRODUCT_ID,
+        currency: "eur",
+        stripe_price_id: STRIPE_PRICE_ID,
+        unit_amount_cents: 3900,
+      });
+      mockStripeSessionCreate.mockResolvedValue({
+        url: "https://checkout.stripe.com/c/test_self",
+      });
+
+      await POST(createRequest({ ...VALID_BODY, participantId: CUSTOMER_ID }));
+
+      const params = mockStripeSessionCreate.mock.calls[0][0];
+      expect(params.subscription_data.description).toBe("Test Club — Marja");
+    });
+
+    it("falls back to an audience-aware label when the profile has no name", async () => {
+      // The fallback lives outside `messages/` — it lands in Stripe receipts —
+      // so no locale sweep would ever catch it saying "your child" on a seat
+      // the payer holds. A self seat says "you"; a child's still says "your
+      // child".
+      const cases: [participantId: string, expected: string][] = [
+        [CUSTOMER_ID, "Test Club — you"],
+        [GAMER_ID, "Test Club — your child"],
+      ];
+      for (const [participantId, expected] of cases) {
+        vi.clearAllMocks();
+        mockGetOrCreateStripeCustomer.mockResolvedValue(STRIPE_CUSTOMER_ID);
+        mockAuthenticatedCustomer();
+        mockAdmin({ product: PAID_CLUB, gamer: { first_name: "" } });
+        mockAdminRpc.mockResolvedValueOnce({
+          data: { kind: "validated" },
+          error: null,
+        });
+        mockGetOrCreateSubscriptionPrice.mockResolvedValue({
+          product_id: PRODUCT_ID,
+          currency: "eur",
+          stripe_price_id: STRIPE_PRICE_ID,
+          unit_amount_cents: 3900,
+        });
+        mockStripeSessionCreate.mockResolvedValue({
+          url: "https://checkout.stripe.com/c/test_fallback",
+        });
+
+        await POST(createRequest({ ...VALID_BODY, participantId }));
+
+        const params = mockStripeSessionCreate.mock.calls[0][0];
+        expect(params.subscription_data.description).toBe(expected);
+      }
+    });
+  });
+
   // ── The product read both branches are built from ─────────────────
 
   it("orders the embedded translations so the resolved name is deterministic", async () => {

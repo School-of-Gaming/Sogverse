@@ -5,11 +5,16 @@ import { usePathname, useSearchParams } from "next/navigation";
 
 import { findAgeBand, type AgeBand } from "@/lib/constants/gamer-age";
 import type { ProductFormat } from "./filter-products";
+import {
+  isAudienceFilterValue,
+  type AudienceFilterValue,
+} from "./product-audience";
 import { CATEGORY_PARAM } from "./shop-categories";
 
 const TOPIC_PARAM = "topic";
 const FORMAT_PARAM = "format";
 const LANGUAGE_PARAM = "lang";
+const AUDIENCE_PARAM = "audience";
 const AGE_PARAM = "age";
 const DAYS_PARAM = "days";
 
@@ -33,6 +38,18 @@ function parseDays(raw: string | null): number[] {
     if (Number.isInteger(n) && n >= 0 && n <= 6) seen.add(n);
   }
   return [...seen].sort((a, b) => a - b);
+}
+
+// The audience chips, deduped and restricted to the two values the row offers
+// ("parents", "families"), so a hand-edited `?audience=everyone` — or a stale
+// link carrying the retired `?audience=gamers` — reads as no selection rather
+// than filtering the grid down to nothing.
+function parseAudiences(raw: string | null): AudienceFilterValue[] {
+  const seen = new Set<AudienceFilterValue>();
+  for (const value of parseList(raw)) {
+    if (isAudienceFilterValue(value)) seen.add(value);
+  }
+  return [...seen];
 }
 
 function parseFormat(raw: string | null): ProductFormat | null {
@@ -82,6 +99,10 @@ export function useBrowseFilters() {
     () => parseList(searchParams.get(LANGUAGE_PARAM)),
     [searchParams],
   );
+  const audiences = useMemo(
+    () => parseAudiences(searchParams.get(AUDIENCE_PARAM)),
+    [searchParams],
+  );
   const age = useMemo(
     () => parseAge(searchParams.get(AGE_PARAM)),
     [searchParams],
@@ -98,6 +119,7 @@ export function useBrowseFilters() {
     topics.length > 0 ||
     format !== null ||
     languages.length > 0 ||
+    audiences.length > 0 ||
     age !== null ||
     days.length > 0;
 
@@ -107,6 +129,7 @@ export function useBrowseFilters() {
         topics?: string[];
         format?: ProductFormat | null;
         languages?: string[];
+        audiences?: AudienceFilterValue[];
         age?: AgeBand | null;
         days?: number[];
       },
@@ -126,6 +149,10 @@ export function useBrowseFilters() {
       if (next.languages !== undefined) {
         if (next.languages.length === 0) params.delete(LANGUAGE_PARAM);
         else params.set(LANGUAGE_PARAM, next.languages.join(","));
+      }
+      if (next.audiences !== undefined) {
+        if (next.audiences.length === 0) params.delete(AUDIENCE_PARAM);
+        else params.set(AUDIENCE_PARAM, next.audiences.join(","));
       }
       if (next.age !== undefined) {
         if (next.age === null) params.delete(AGE_PARAM);
@@ -187,6 +214,22 @@ export function useBrowseFilters() {
     [languages, writeNext],
   );
 
+  // Multi-select like topic and language, not single-valued like format — but
+  // each chip is a tag rather than a flag, so the row never widens back to the
+  // unfiltered grid: both chips lit is every product carrying an audience
+  // badge, which deliberately excludes the gamers-only ones (the assumed
+  // default, badged with nothing). Clearing the row is the only way back to
+  // everything.
+  const toggleAudience = useCallback(
+    (value: AudienceFilterValue) => {
+      const next = audiences.includes(value)
+        ? audiences.filter((a) => a !== value)
+        : [...audiences, value];
+      writeNext({ audiences: next });
+    },
+    [audiences, writeNext],
+  );
+
   const setAge = useCallback(
     (value: AgeBand | null) => {
       writeNext({ age: value });
@@ -217,7 +260,14 @@ export function useBrowseFilters() {
   // rendered (see `product-browse-filters.tsx`).
   const clear = useCallback(() => {
     writeNext(
-      { topics: [], format: null, languages: [], age: null, days: [] },
+      {
+        topics: [],
+        format: null,
+        languages: [],
+        audiences: [],
+        age: null,
+        days: [],
+      },
       { clearCategories: true },
     );
   }, [writeNext]);
@@ -226,12 +276,14 @@ export function useBrowseFilters() {
     topics,
     format,
     languages,
+    audiences,
     age,
     days,
     hasAny,
     toggleTopics,
     toggleFormat,
     toggleLanguage,
+    toggleAudience,
     setAge,
     toggleDay,
     clear,

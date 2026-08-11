@@ -210,7 +210,11 @@ async function renderConfirmation(
   return (
     <PurchaseConfirmationView
       product={product}
-      gamerName={confirmation.gamerName}
+      participantName={confirmation.participantName}
+      // Which of the two voices the page speaks in. The row answers it
+      // (participant = customer), so the same page is in the second person for
+      // a parent's own seat and in the third for a child's, whoever is reading.
+      isSelfSeat={confirmation.isSelfSeat}
       outcome={outcome}
       waitlistPosition={waitlistPosition}
     />

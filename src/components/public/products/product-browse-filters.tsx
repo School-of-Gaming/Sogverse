@@ -60,6 +60,9 @@ export function ProductBrowseFilters({
   showTypeFilter = true,
 }: ProductBrowseFiltersProps) {
   const t = useTranslations("productBrowse.filters");
+  // The audience chips share their labels with the card badge and the overview
+  // card's audience row — one vocabulary for the whole concept.
+  const tAudience = useTranslations("productAudience");
   const locale = useLocale();
   const topicLabel = useTopicLabel();
   const { data: spokenLanguages } = useSpokenLanguages({
@@ -76,12 +79,14 @@ export function ProductBrowseFilters({
     topics: selectedTopics,
     format: selectedFormat,
     languages: selectedLanguages,
+    audiences: selectedAudiences,
     age: selectedAge,
     days: selectedDays,
     hasAny,
     toggleTopics,
     toggleFormat,
     toggleLanguage,
+    toggleAudience,
     setAge,
     toggleDay,
     clear,
@@ -139,6 +144,37 @@ export function ProductBrowseFilters({
               label={t("typeEvents")}
               active={categories.includes("events")}
               onToggle={() => toggleCategory("events")}
+            />
+          </FilterRow>
+        )}
+
+        {/* Audience sits directly under Type because it is the same coarse cut:
+            both answer "which shelf am I looking at" before anything about the
+            product itself — and it shares Type's guard by owner decision: the
+            municipality school pages hide both rows, since every product there
+            is that school's own clubs and a one-answer filter is a control
+            with nothing to control. Two chips, not three: a chip is the badge
+            its cards wear, so each one matches exactly the products bearing
+            that tag, and gamers-only — the assumed default, badged with
+            nothing — is what the row has no chip for. Multi-select with OR
+            semantics like Subject and Language, but lighting both is still
+            narrower than lighting none: it is every badged product, and the
+            unbadged majority answers only to an empty row. The labels are the
+            card's own audience words, reused rather than re-authored so a chip
+            and the card it surfaces say the same thing. The row ships before
+            any for-parents product exists; a chip with an empty result set for
+            a few days is accepted (see the plan). */}
+        {showTypeFilter && (
+          <FilterRow label={t("audience")}>
+            <Chip
+              label={tAudience("parents")}
+              active={selectedAudiences.includes("parents")}
+              onToggle={() => toggleAudience("parents")}
+            />
+            <Chip
+              label={tAudience("families")}
+              active={selectedAudiences.includes("families")}
+              onToggle={() => toggleAudience("families")}
             />
           </FilterRow>
         )}

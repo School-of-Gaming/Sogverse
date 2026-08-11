@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import type { ParticipationCounts } from "@/services/participations";
 import type { ProductBrowseRow, SpokenLanguage } from "@/types";
 import { filterProducts } from "./filter-products";
@@ -97,7 +97,12 @@ export function ProductBrowseResults({
   municipalityScoped,
 }: ProductBrowseResultsProps) {
   const t = useTranslations("productBrowse");
-  const { topics, format, languages, age, days } = useBrowseFilters();
+  // The empty state's clear affordance is the rail's button in another place,
+  // so it reuses that button's label rather than authoring a second word for
+  // the same action.
+  const tFilters = useTranslations("productBrowse.filters");
+  const { topics, format, languages, audiences, age, days, clear } =
+    useBrowseFilters();
 
   const countsByProduct = useMemo(() => {
     const map = new Map<string, ParticipationCounts>();
@@ -119,12 +124,13 @@ export function ProductBrowseResults({
             topics,
             format,
             languages,
+            audiences,
             age,
             days,
           }),
         }))
         .filter((section) => section.products.length > 0),
-    [sections, topics, format, languages, age, days],
+    [sections, topics, format, languages, audiences, age, days],
   );
 
   // "Nothing here yet" vs "no matches" is decided before *all* filtering, Type
@@ -185,11 +191,37 @@ export function ProductBrowseResults({
           ))}
         </div>
       ) : (
-        <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+        /* No box: a card is a container for something, and an empty grid has
+           nothing for it to contain — the border only draws attention to the
+           absence. Plain centred text in the cards track instead, with the
+           vertical room a grid of cards would have had so the page doesn't
+           collapse to a strip under the filters. Nothing survives the swap
+           between the grid and this (or between its two messages), so there is
+           no position to preserve. */
+        <div className="py-16 text-center">
+          <p className="text-sm text-muted-foreground">
             {hasProducts ? t("empty.noMatches") : t("empty.noProducts")}
-          </CardContent>
-        </Card>
+          </p>
+          {/* Only on "no matches": the filters are what hid the cards, so the
+              rail's own Clear — the same `clear` from the same hook — is worth
+              repeating where the reader is actually looking. On an empty scope
+              there is nothing for it to reveal, and a button that changes
+              nothing is a control lying. */}
+          {hasProducts && (
+            <Button
+              type="button"
+              variant="link"
+              // `sm` for the 36px tap target a phone wants, with the body's
+              // text size back on top of it — the size's own `text-xs` reads
+              // as fine print under a line it is the answer to.
+              size="sm"
+              className="mt-1 text-sm"
+              onClick={clear}
+            >
+              {tFilters("clearAll")}
+            </Button>
+          )}
+        </div>
       )}
     </div>
   );

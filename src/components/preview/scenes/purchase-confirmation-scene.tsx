@@ -20,12 +20,13 @@ export function PurchaseConfirmationScene({
 }: {
   scenario: PreviewScenario;
 }) {
-  const { product, gamerName, outcome, waitlistPosition } =
+  const { product, participantName, isSelfSeat, outcome, waitlistPosition } =
     buildConfirmationFixture(scenario);
   return (
     <PurchaseConfirmationView
       product={product}
-      gamerName={gamerName}
+      participantName={participantName}
+      isSelfSeat={isSelfSeat}
       outcome={outcome}
       waitlistPosition={waitlistPosition}
     />

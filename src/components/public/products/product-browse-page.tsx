@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type ComponentProps } from "react";
 import { useTranslations } from "next-intl";
 import { useVisibleProductsByTypes } from "@/services/products";
 import {
@@ -31,7 +31,11 @@ interface ProductBrowsePageProps {
 // Section heading copy lives under productBrowse.sections, keyed on the shop
 // category. We resolve to literal keys here (rather than templating with the
 // category name) so next-intl's typed t() call narrows to a known message path.
-function sectionHeading(
+//
+// Exported because the shop's preview scene builds the same sections from
+// fixtures and must head them with the same words — a scene that re-authored
+// its own headings would be a second copy of this mapping, free to drift.
+export function sectionHeading(
   t: ReturnType<typeof useTranslations<"productBrowse">>,
   category: ShopCategory,
 ): string {
@@ -43,6 +47,31 @@ function sectionHeading(
     case "events":
       return t("sections.events");
   }
+}
+
+/**
+ * The storefront's presentational shell — the vertical rhythm wrapper and the
+ * invisible page title — over `<ProductBrowseResults>`, which owns the
+ * horizontal width budget for both browse surfaces (from `lg` up it breaks out
+ * of the centred container to put its rail in the gutter).
+ *
+ * One body, two shells: the live route's data shell below and the shop preview
+ * scene both render this, so the storefront's rhythm and title cannot fork.
+ * The storefront carries no *visible* title — the section headings say what
+ * each block is, and a banner above them would only repeat the nav item that
+ * got the reader here; the h1 stays in the document so the section h2s hang
+ * off something.
+ */
+export function ProductBrowseBody(
+  props: ComponentProps<typeof ProductBrowseResults>,
+) {
+  const t = useTranslations("productBrowse");
+  return (
+    <div className="py-8 sm:py-12">
+      <h1 className="sr-only">{t("pageTitle")}</h1>
+      <ProductBrowseResults {...props} />
+    </div>
+  );
 }
 
 export function ProductBrowsePage({
@@ -90,26 +119,15 @@ export function ProductBrowsePage({
     [categories, products, t],
   );
 
-  // The page wrapper carries vertical rhythm only: <ProductBrowseResults> owns
-  // the horizontal width budget for both browse surfaces, because from `lg` up
-  // it breaks out of the centred container to put its rail in the gutter.
   return (
-    <div className="py-8 sm:py-12">
-      {/* The storefront carries no visible page title — the section headings
-          say what each block is, and a banner above them would only repeat the
-          nav item that got the parent here. The h1 stays in the document so the
-          section h2s hang off something. */}
-      <h1 className="sr-only">{t("pageTitle")}</h1>
-
-      <ProductBrowseResults
-        sections={sections}
-        counts={counts ?? []}
-        filters={{ initialSpokenLanguages }}
-        // From the un-narrowed fetch: `sections` only cover the selected
-        // categories, and an empty catalog must not be conflated with a Type
-        // selection the catalog lacks.
-        scopeHasProducts={(products ?? []).length > 0}
-      />
-    </div>
+    <ProductBrowseBody
+      sections={sections}
+      counts={counts ?? []}
+      filters={{ initialSpokenLanguages }}
+      // From the un-narrowed fetch: `sections` only cover the selected
+      // categories, and an empty catalog must not be conflated with a Type
+      // selection the catalog lacks.
+      scopeHasProducts={(products ?? []).length > 0}
+    />
   );
 }

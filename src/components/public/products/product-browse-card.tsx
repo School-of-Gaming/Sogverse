@@ -11,6 +11,7 @@ import type { ProductBrowseRow } from "@/types";
 import type { ParticipationCounts } from "@/services/participations";
 import { deriveRegistrationState } from "./derive-registration-state";
 import { formatProductLocation } from "./format-product-location";
+import { audienceLabelKey } from "./product-audience";
 import { formatProductPrice } from "./format-product-price";
 import {
   formatProductSchedule,
@@ -57,6 +58,9 @@ export function ProductBrowseCard({
   municipalityScoped = false,
 }: ProductBrowseCardProps) {
   const t = useTranslations("productBrowse.card");
+  // Shared with the filter chips and the detail page's overview card, so the
+  // words a parent filtered by are the words the card answers with.
+  const tAudience = useTranslations("productAudience");
   const uiLocale = resolveLocale(useLocale());
   const timeZone = useTimezone();
   // `useNow()` is seeded server-side at request time, so SSR and the first
@@ -108,6 +112,13 @@ export function ProductBrowseCard({
       }
     : undefined;
 
+  // The badge-or-nothing decision (gamers-only stays unbadged) lives in
+  // product-audience.ts with the rest of the audience vocabulary, so this
+  // card, the overview card and the style-guide grid cannot drift apart.
+  const audienceLabelMessageKey = audienceLabelKey(product);
+  const audienceLabel =
+    audienceLabelMessageKey === null ? null : tAudience(audienceLabelMessageKey);
+
   const locationLine = resolveLocationLine(
     product,
     t("online"),
@@ -127,6 +138,7 @@ export function ProductBrowseCard({
           ? t("ages", { min: product.min_age, max: product.max_age })
           : null
       }
+      audienceLabel={audienceLabel}
       locationLine={locationLine}
       spokenLanguageCode={product.spoken_language_code}
       price={price}

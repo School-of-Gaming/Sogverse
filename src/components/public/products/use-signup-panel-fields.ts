@@ -22,9 +22,11 @@ import type { AuthState } from "./signup-panel-view";
 // everything feeding it lives here.
 export interface SignupPanelFields {
   productType: ProductType;
+  /** `products.for_gamers` — see the prop of the same name on the view. */
+  forGamers: boolean;
   pricingOption: PricingOption;
-  selectedGamerId: string | null;
-  onSelectGamer: (gamerId: string) => void;
+  selectedParticipantId: string | null;
+  onSelectParticipant: (participantId: string) => void;
   agreed: boolean;
   onAgreedChange: (next: boolean) => void;
   currency: SupportedCurrency;
@@ -34,7 +36,7 @@ export interface SignupPanelFields {
 export function useSignupPanelFields(
   product: Pick<
     ProductBrowseRow,
-    "product_type" | "billing_mode" | "product_prices"
+    "product_type" | "billing_mode" | "product_prices" | "for_gamers"
   >,
   authState: AuthState,
 ): SignupPanelFields {
@@ -55,33 +57,39 @@ export function useSignupPanelFields(
     [product.product_prices, product.billing_mode, product.product_type, currency],
   );
 
-  // Only children who aren't already on the product are selectable. The default
-  // falls to the first selectable child (skipping any already signed up /
-  // waitlisted); a user pick of a now-locked child is ignored. When every child
+  // Only participants who aren't already on the product are selectable. The
+  // default falls to the first selectable one (skipping anyone already signed
+  // up / waitlisted); a user pick of a now-locked row is ignored. When everyone
   // is already on, this resolves to null and the CTA stays disabled — the page
   // still renders, the picker just shows their states.
-  const [userPickedGamerId, setUserPickedGamerId] = useState<string | null>(
-    null,
-  );
-  const selectableGamers =
+  //
+  // The parent's own row (a for-parents product) is an ordinary member of this
+  // list: the adapter puts it in the array and nothing here has to know. On a
+  // parents-only product it is the only row, so "the first selectable one"
+  // is the preselection the plan asks for, with no special case.
+  const [userPickedParticipantId, setUserPickedParticipantId] = useState<
+    string | null
+  >(null);
+  const selectable =
     authState.kind === "ready"
-      ? authState.gamers.filter((g) => !g.signupState)
+      ? authState.participants.filter((p) => !p.signupState)
       : [];
-  const selectedGamerId: string | null =
+  const selectedParticipantId: string | null =
     authState.kind === "ready"
-      ? userPickedGamerId !== null &&
-        selectableGamers.some((g) => g.id === userPickedGamerId)
-        ? userPickedGamerId
-        : (selectableGamers[0]?.id ?? null)
+      ? userPickedParticipantId !== null &&
+        selectable.some((p) => p.id === userPickedParticipantId)
+        ? userPickedParticipantId
+        : (selectable[0]?.id ?? null)
       : null;
 
   const [agreed, setAgreed] = useState(false);
 
   return {
     productType: product.product_type,
+    forGamers: product.for_gamers,
     pricingOption,
-    selectedGamerId,
-    onSelectGamer: setUserPickedGamerId,
+    selectedParticipantId,
+    onSelectParticipant: setUserPickedParticipantId,
     agreed,
     onAgreedChange: setAgreed,
     currency,

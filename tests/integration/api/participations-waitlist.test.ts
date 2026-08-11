@@ -276,6 +276,82 @@ describe("POST /api/participations/waitlist", () => {
     expect(res.status).toBe(403);
   });
 
+  // -- The participant may be the caller --
+  //
+  // A for-parents product lets a customer queue for a seat of their own, which
+  // arrives as `participantId === user.id`. The route judges nothing about that
+  // pair: it never sends a customer id at all — `join_product_waitlist` reads
+  // the caller from `auth.uid()` — so who may sit in the seat is entirely the
+  // database's decision, under the same audience gate the signup path uses.
+
+  it("forwards a self waitlist join without naming a customer", async () => {
+    mockAuthenticatedCustomer();
+    mockRpc.mockResolvedValue({
+      data: {
+        participation_id: PARTICIPATION_ID,
+        waitlist_position: 2,
+        status: "waitlisted",
+      },
+      error: null,
+    });
+
+    const res = await POST(
+      createRequest({ productId: PRODUCT_ID, participantId: CUSTOMER_ID }),
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.waitlistPosition).toBe(2);
+    expect(mockRpc).toHaveBeenCalledWith("join_product_waitlist", {
+      p_product_id: PRODUCT_ID,
+      p_participant_id: CUSTOMER_ID,
+    });
+    expect(mockRpc.mock.calls[0][1]).not.toHaveProperty("p_customer_id");
+  });
+
+  it("relays the RPC's refusal for an adult who is not the caller", async () => {
+    // Forwarded, then refused in the database — the shape a route-side check
+    // would have hidden. The message is the RPC's own, because that is what the
+    // signup panel renders.
+    mockAuthenticatedCustomer();
+    const otherAdult = "99999999-9999-9999-9999-999999999999";
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: {
+        code: "23514",
+        message: `customer ${CUSTOMER_ID} is not the parent of participant ${otherAdult}`,
+      },
+    });
+
+    const res = await POST(
+      createRequest({ productId: PRODUCT_ID, participantId: otherAdult }),
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toContain("is not the parent of participant");
+    expect(mockRpc).toHaveBeenCalledWith("join_product_waitlist", {
+      p_product_id: PRODUCT_ID,
+      p_participant_id: otherAdult,
+    });
+  });
+
+  it("relays the RPC's audience refusal on a gamers-only product", async () => {
+    mockAuthenticatedCustomer();
+    mockRpc.mockResolvedValue({
+      data: null,
+      error: { code: "23514", message: "this product is not open to parents" },
+    });
+
+    const res = await POST(
+      createRequest({ productId: PRODUCT_ID, participantId: CUSTOMER_ID }),
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toBe("this product is not open to parents");
+  });
+
   it("returns 400 when the product does not exist", async () => {
     mockAuthenticatedCustomer();
     mockRpc.mockResolvedValue({

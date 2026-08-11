@@ -44,7 +44,7 @@ function renderWaitlisted(productType: ProductType) {
   return render(
     <PurchaseConfirmationView
       product={productOfType(productType)}
-      gamerName="Aino"
+      participantName="Aino"
       outcome="waitlisted"
       waitlistPosition={3}
     />,
@@ -85,7 +85,7 @@ describe("waitlist confirmation copy", () => {
     const { queryByText, getByText } = render(
       <PurchaseConfirmationView
         product={productOfType("consumer_club")}
-        gamerName="Aino"
+        participantName="Aino"
         outcome="enrolled"
       />,
     );

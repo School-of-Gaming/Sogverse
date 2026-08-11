@@ -992,6 +992,25 @@
       "event": "L’inscription de {gamer} à {product} est confirmée."
     },
     "fallbackGamer": "Votre enfant",
+    "self": {
+      "subheading": {
+        "consumer_club": "Votre inscription à {product} est confirmée.",
+        "municipality_club": "Votre inscription à {product} est confirmée.",
+        "camp": "Votre inscription à {product} est confirmée.",
+        "event": "Votre inscription à {product} est confirmée."
+      },
+      "fallbackName": "Vous",
+      "nextPlacement": "Nous vous placerons dans un groupe avec un Gedu. Les sessions apparaîtront ensuite dans Mon SOG.",
+      "waitlist": {
+        "subheading": "Vous êtes sur la liste d’attente pour {product}. Nous vous préviendrons dès qu’une place se libère.",
+        "next2": {
+          "consumer_club": "Vous conservez votre place dans la file pendant toute la période.",
+          "municipality_club": "Vous conservez votre place dans la file pendant toute la période.",
+          "camp": "Vous conservez votre place dans la file pendant toute la durée du camp.",
+          "event": "Vous conservez votre place dans la file jusqu’à l’événement."
+        }
+      }
+    },
     "summaryTitle": "Votre commande",
     "forLabel": {
       "consumer_club": "Inscription",
@@ -1030,7 +1049,7 @@
     },
     "duplicatePayment": {
       "heading": "Déjà inscrit",
-      "subheading": "Cet enfant a déjà une place sur ce produit.",
+      "subheading": "La personne concernée a déjà une place sur ce produit.",
       "body": "Ce paiement n’a pas créé de seconde inscription. Contactez-nous : notre équipe examinera ce prélèvement supplémentaire avec vous."
     },
     "supportLine": "Besoin d’aide ? Écrivez-nous à <link>{email}</link>.",
@@ -1453,6 +1472,7 @@
     },
     "filters": {
       "type": "Type",
+      "audience": "Public",
       "typeClubs": "Clubs",
       "typeCamps": "Stages",
       "typeEvents": "Événements",
@@ -1486,6 +1506,11 @@
       "noProducts": "Rien ici pour l’instant — de nouvelles offres arrivent.",
       "noMatches": "Aucun résultat. Essayez d’effacer vos filtres."
     }
+  },
+  "productAudience": {
+    "parents": "Pour les parents",
+    "families": "Pour les familles",
+    "familiesWithAges": "Pour les familles, {min}–{max} ans"
   },
   "seatAvailability": {
     "remaining": "{count, plural, one {# / {total} place restante} other {# / {total} places restantes}}",
@@ -1549,6 +1574,7 @@
       "format": "Format",
       "ages": "{min}–{max} ans",
       "ageRange": "Tranche d’âge",
+      "audience": "Public",
       "language": "Langue",
       "online": "En ligne",
       "atVenue": "À {venue}",
@@ -1603,11 +1629,13 @@
       },
       "gamerAlreadyWaitlisted": "En liste d’attente",
       "nonCustomerNote": "Seuls les parents peuvent inscrire un joueur ici.",
+      "nonCustomerNoteParents": "Seuls les parents peuvent s’inscrire ici.",
       "closedNote": "Ce n’est pas ouvert pour le moment. Guettez la prochaine occasion.",
       "rulesHeading": "Les règles",
       "rules": {
         "consumer_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques.",
         "municipality_club": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, et que des absences répétées et non justifiées peuvent libérer la place de mon enfant au profit de la famille suivante sur la liste d’attente.",
+        "municipality_club_self": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques, et que des absences répétées et non justifiées peuvent libérer ma place au profit de la famille suivante sur la liste d’attente.",
         "camp": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques.",
         "event": "Je comprends que School of Gaming applique une tolérance zéro face au harcèlement et aux comportements toxiques."
       },
@@ -1617,8 +1645,10 @@
         "camp": "Qui inscrivez-vous ?",
         "event": "Qui participe ?"
       },
+      "seatIsFor": "À qui revient cette place",
       "selected": "Sélectionné",
-      "agePill": "{age} ans"
+      "agePill": "{age} ans",
+      "parentPill": "Parent"
     },
     "pricing": {
       "title": "Tarifs",

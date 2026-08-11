@@ -5,8 +5,13 @@ import type {
 } from "@/types";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import type { ProductDetailRow } from "@/services/products";
+import type { ParticipationCounts } from "@/services/participations";
 import type { RegistrationState } from "./derive-registration-state";
-import type { AuthState, MyParticipationState } from "./signup-panel-view";
+import type {
+  AuthState,
+  MyParticipationState,
+  SignupParticipantChoice,
+} from "./signup-panel-view";
 import type {
   ConfirmationNoticeKind,
   SignupOutcome,
@@ -33,6 +38,17 @@ import type {
 //     "Already over" — so both labels need somewhere to be looked at.
 //   • Event — a free product, plus the same event once it's over.
 //
+// Three of them exist for the **audience** axis rather than for a registration
+// state, because a product sold to parents is otherwise unreachable: no such
+// product exists yet, and the admin switch that creates one lands last. They
+// are the only place the three signup-panel cases can be looked at, so between
+// them they carry all three — a parents-only panel with the reader
+// preselected, a mixed one with children and the reader in the same picker,
+// and a parents-only one where the reader already holds the seat (the
+// already-enrolled lockout, which the panel gets for free on a self seat and
+// which nothing else would prove). Every other scenario is gamers-only and is
+// the regression case.
+//
 // The two capped non-muni scenarios are the pair worth reading together: a
 // browse card carries no seat information outside the municipality seat bar, so
 // full-with-waitlist and full-without are told apart on the card by exactly one
@@ -54,6 +70,7 @@ export type PreviewScenario =
   | "consumer-club-free"
   | "consumer-club-full-waitlist"
   | "consumer-club-threshold"
+  | "consumer-club-parents-only"
   | "muni-empty"
   | "muni-filling"
   | "muni-almost-full"
@@ -69,6 +86,8 @@ export type PreviewScenario =
   | "camp-running"
   | "camp-ended"
   | "free-event"
+  | "event-parents-only"
+  | "event-both-audiences"
   | "event-over";
 
 // Which signed-in shape the panel renders against. `signed-out` → the auth
@@ -76,6 +95,14 @@ export type PreviewScenario =
 // gamer picker is empty (just the "Add a child" row); `with-gamers` → a `ready`
 // customer with the two demo children.
 type AuthKind = "signed-in-with-gamers" | "signed-in-no-gamers" | "signed-out";
+
+/**
+ * Who the product is sold to — the fixture's spelling of the two `products`
+ * booleans, plus the age range they gate. Defaults to `gamers`, which is what
+ * every product was before audiences existed and what every scenario that is
+ * not *about* audience should stay.
+ */
+type ScenarioAudience = "gamers" | "parents" | "both";
 
 interface ScenarioBase {
   /** Short label shown above the demo card (the subsection carries the type). */
@@ -91,6 +118,19 @@ interface ScenarioBase {
    */
   priceCentsEur: number | null;
   auth: AuthKind;
+  /**
+   * Defaults to `gamers`. `parents` also strips the age range (the schema ties
+   * ages to the gamer audience by CHECK, and "18+" was rejected as saying
+   * something else entirely), which is why a parents-only card renders no age
+   * line and drops out of every age band.
+   */
+  audience?: ScenarioAudience;
+  /**
+   * The reader's own already-on-this-product state, for the one scenario that
+   * exists to show the lockout on a self seat. Only meaningful when the
+   * audience includes parents.
+   */
+  selfSignupState?: MyParticipationState;
   /**
    * Online municipality club: `is_remote` with a municipality-typed location
    * (no school site), so the card/detail render the "online — {city}" location
@@ -126,6 +166,16 @@ const DEMO_GAMERS = [
   { id: "decdae83-3f51-4209-bf1a-254e88f1c32f", name: "Väinö", age: 11 },
   { id: "d010872c-7034-401b-9c2d-5dfa675f60d8", name: "Aino", age: 8 },
 ] as const;
+
+// The reader — the parent whose picker this is, and on a for-parents product a
+// selectable row in it. A real UUID for the same reason the children have one:
+// their row carries an identicon, and it is the one face on the panel that is
+// the reader's own. No age: ages belong to the gamer audience and never to
+// adults.
+const DEMO_PARENT = {
+  id: "5b0f2b6d-6ad9-4a02-8f75-3a3d2a4a7c11",
+  name: "Marja",
+} as const;
 
 const NINETY_MIN_MS = 90 * 60 * 1000;
 const TEN_SEC_MS = 10 * 1000;
@@ -208,6 +258,25 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
       seatsLeft: 18,
       waitlistEnabled: false,
     },
+  },
+  "consumer-club-parents-only": {
+    // The lockout on a self seat, and the one scenario that proves it comes for
+    // free. The reader already holds their place, so their row is the disabled
+    // "Already enrolled" one — and since it is the *only* row on a parents-only
+    // product, the CTA falls all the way through to "You're all set" with no
+    // add-a-child affordance underneath to soften it. A subscription club
+    // rather than an event on purpose: this is also where the paid monthly path
+    // for a parent's own seat is visible, price and cadence on the button.
+    label: "For parents only — €39/mo, seat already held",
+    productType: "consumer_club",
+    billingMode: "paid",
+    seatCount: 20,
+    waitlistEnabled: false,
+    priceCentsEur: 3900,
+    auth: "signed-in-with-gamers",
+    audience: "parents",
+    selfSignupState: "active",
+    state: { kind: "open", seatCount: 20, seatsLeft: 6, waitlistEnabled: false },
   },
   "muni-empty": {
     label: "15 / 15 seats",
@@ -410,6 +479,50 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
       waitlistEnabled: false,
     },
   },
+  "event-parents-only": {
+    // The parents' evening — the shape this whole capability was built for, and
+    // the plainest of the three audience cases. No child list at all: the
+    // reader is the single row and is preselected, so "who is this seat for"
+    // is answered before paying rather than skipped. The add-a-child row is
+    // withdrawn (a child could not be signed up here), the picker heading
+    // states the seat instead of asking a question with one answer, and the
+    // card and overview card carry the audience label in place of an age line.
+    label: "For parents only — free, reader preselected",
+    productType: "event",
+    billingMode: "free",
+    seatCount: 40,
+    waitlistEnabled: true,
+    priceCentsEur: null,
+    auth: "signed-in-with-gamers",
+    audience: "parents",
+    state: { kind: "open", seatCount: 40, seatsLeft: 11, waitlistEnabled: true },
+  },
+  "event-both-audiences": {
+    // The mixed case: a family event both a parent and their children can be
+    // signed up for. Children first, the reader beneath them — the order their
+    // dashboard uses — and one selection out of the four, because a seat per
+    // checkout is the rule everywhere (the multi-select idea is deferred). The
+    // middle child is already on it, so the child lockout and a selectable
+    // parent row sit in the same picker; the add-a-child row is back, because
+    // this product does have a gamer audience. (That the reader's row is not
+    // counted against the child cap is pinned by the unit tests at the cap's
+    // exact borderline — a seven-child fixture here would bury the audience
+    // picker this scenario exists to show.)
+    label: "For families — children plus the reader",
+    productType: "event",
+    billingMode: "paid",
+    seatCount: null,
+    waitlistEnabled: false,
+    priceCentsEur: 1500,
+    auth: "signed-in-with-gamers",
+    audience: "both",
+    state: {
+      kind: "open",
+      seatCount: null,
+      seatsLeft: null,
+      waitlistEnabled: false,
+    },
+  },
   "event-over": {
     // The same evening event after it finished. An event stays joinable right
     // through its session, so the only late-join lock it ever shows is this
@@ -440,6 +553,7 @@ const SCENARIO_ORDER: PreviewScenario[] = [
   "consumer-club-free",
   "consumer-club-full-waitlist",
   "consumer-club-threshold",
+  "consumer-club-parents-only",
   "muni-empty",
   "muni-filling",
   "muni-almost-full",
@@ -455,6 +569,8 @@ const SCENARIO_ORDER: PreviewScenario[] = [
   "camp-running",
   "camp-ended",
   "free-event",
+  "event-parents-only",
+  "event-both-audiences",
   "event-over",
 ];
 
@@ -479,6 +595,129 @@ export const PREVIEW_SCENARIOS: {
 
 export function isPreviewScenario(s: string): s is PreviewScenario {
   return s in SCENARIOS;
+}
+
+/**
+ * The scenarios the **shop browse** scene puts on its grid, in section order.
+ *
+ * Municipality clubs are absent because the storefront does not surface them —
+ * they are discovered location-first from `/schools` — so a shop scene carrying
+ * one would be showing a card the real page cannot produce.
+ *
+ * Two lists, because the two questions are different. `SHOP_SCENE_DEFAULT` is
+ * the ordinary storefront: every card gamers-only, which is the regression case
+ * and the shape the grid has today. `SHOP_SCENE_AUDIENCES` is the audience
+ * question, and it is deliberately the *smallest* grid that can answer it —
+ * one card of each audience per section, so the badge's presence on two of
+ * them and its absence on the third is a comparison the eye makes in one pass
+ * rather than a hunt. It is also the only place the audience chips have
+ * anything to filter.
+ */
+export const SHOP_SCENE_DEFAULT: readonly PreviewScenario[] = [
+  "consumer-club",
+  "consumer-club-free",
+  "consumer-club-full-waitlist",
+  "consumer-club-threshold",
+  "camp-open",
+  "camp-full-closed",
+  "free-event",
+];
+
+export const SHOP_SCENE_AUDIENCES: readonly PreviewScenario[] = [
+  "consumer-club",
+  "consumer-club-parents-only",
+  "free-event",
+  "event-parents-only",
+  "event-both-audiences",
+];
+
+/**
+ * The shop browse scene's scenario slugs and guard.
+ *
+ * They live here — not in the scene component — because the scene file is
+ * `"use client"` and the scene router narrows the slug on the server: a guard
+ * exported from a client module is a client reference there, and calling it
+ * during server render is a runtime error. Same arrangement as every other
+ * surface (the guard lives with the fixtures, the component imports it).
+ */
+export const SHOP_BROWSE_SCENARIOS = ["default", "audiences"] as const;
+
+export type ShopBrowseScenario = (typeof SHOP_BROWSE_SCENARIOS)[number];
+
+export function isShopBrowseScenario(s: string): s is ShopBrowseScenario {
+  return (SHOP_BROWSE_SCENARIOS as readonly string[]).includes(s);
+}
+
+/**
+ * A scenario's product row, with its name suffixed by the scenario's own label.
+ *
+ * The per-type copy above gives every consumer club the same name, which is
+ * fine on a detail page (one product per page) and unreadable on a grid of
+ * them. The suffix is what makes each card identifiable as the fixture behind
+ * it — the browse scene's whole job is comparing cards side by side, and cards
+ * you cannot tell apart defeat it.
+ */
+export function buildBrowseFixture(
+  slug: PreviewScenario,
+  now: Date,
+): ProductDetailRow {
+  const { product } = buildScenarioFixture(slug);
+  // The browse card DERIVES its registration state from the row's calendar
+  // (unlike the detail scene, which is handed the authored state directly), so
+  // the fixture's static January anchor must be re-based onto the live clock —
+  // otherwise every card reads as months-ended, whatever its scenario claims.
+  // Whole days, floored, so "now" keeps the same position inside the authored
+  // week that STATIC_REF had, and the date-only fields stay exact under
+  // UTC-pinned arithmetic. Countdown scenarios already anchor their
+  // registration instant on the live clock and are left alone.
+  const config = SCENARIOS[slug];
+  const dayShift = Math.floor((now.getTime() - STATIC_REF_MS) / DAY_MS);
+  return {
+    ...product,
+    start_date: shiftDateOnly(product.start_date, dayShift),
+    end_date: shiftDateOnly(product.end_date, dayShift),
+    registration_opens_at:
+      "opensInMs" in config
+        ? product.registration_opens_at
+        : new Date(
+            new Date(product.registration_opens_at).getTime() +
+              dayShift * DAY_MS,
+          ).toISOString(),
+    product_translations: product.product_translations.map((tr) => ({
+      ...tr,
+      name: `${tr.name} · ${SCENARIOS[slug].label}`,
+    })),
+  };
+}
+
+/** UTC-pinned day arithmetic on a bare `yyyy-mm-dd` — exact, no DST to hit. */
+function shiftDateOnly(date: string | null, days: number): string | null {
+  if (date === null) return null;
+  const [y, m, d] = date.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
+/**
+ * The counts row the browse scene feeds beside each fixture card. The card
+ * derives fullness from live counts, so a full-waitlist scenario handed no
+ * count would derive "open" and mislabel itself — the same authored state the
+ * detail panel draws is translated into the numbers that make the card agree.
+ */
+export function buildBrowseCounts(
+  slug: PreviewScenario,
+  productId: string,
+): ParticipationCounts {
+  const config = SCENARIOS[slug];
+  const isFullWaitlist =
+    !("opensInMs" in config) && config.state.kind === "full_waitlist";
+  return {
+    productId,
+    activeCount: scenarioFilledSeats(slug),
+    // A short queue, not zero: a full-waitlist card whose queue is empty is a
+    // state the shop can produce but not an interesting one to preview.
+    waitlistCount: isFullWaitlist ? 3 : 0,
+    myGamerStates: {},
+  };
 }
 
 // The three states the paid confirmation page lands in when there is no order
@@ -608,13 +847,20 @@ export function buildScenarioFixture(slug: PreviewScenario): BuildFixtureResult 
   }
 
   const product = buildBaseProduct(slug, config, registrationOpensAt, state);
-  const authState = buildAuthState(config.auth, detailHref, state);
+  const authState = buildAuthState(config, detailHref, state);
   return { product, state, authState };
+}
+
+/** The fixture's audience, with the gamers-only default applied. */
+function audienceOf(config: ScenarioConfig): ScenarioAudience {
+  return config.audience ?? "gamers";
 }
 
 export interface ConfirmationFixtureResult {
   product: ProductDetailRow;
-  gamerName: string;
+  participantName: string;
+  /** True on a scenario whose seat is the reader's own — the self-worded page. */
+  isSelfSeat: boolean;
   outcome: SignupOutcome;
   /** Mock waitlist position for the waitlist outcome; null otherwise. */
   waitlistPosition: number | null;
@@ -630,48 +876,75 @@ export function buildConfirmationFixture(
 ): ConfirmationFixtureResult {
   const { product, state } = buildScenarioFixture(slug);
   const isWaitlist = state.kind === "full_waitlist";
+  // A parents-only scenario can only have been bought for the reader, so its
+  // summary is the self-worded one — which is the only place that copy is
+  // reviewable. A mixed product's panel preselects the first child, so it lands
+  // on the ordinary third-person page like everything else.
+  const isSelfSeat = audienceOf(SCENARIOS[slug]) === "parents";
   return {
     product,
-    // Literal placeholder rather than a demo gamer's name — makes it obvious
-    // this is a mock. The live summary shows the actual child's first name.
-    gamerName: "GamerName",
+    // A literal placeholder rather than a demo child's name — it makes obvious
+    // that this is a mock. The self page names the reader instead, because the
+    // whole point of that variant is reading a page about yourself.
+    participantName: isSelfSeat ? DEMO_PARENT.name : "GamerName",
+    isSelfSeat,
     outcome: isWaitlist ? "waitlisted" : "enrolled",
     // A sample rank so the "You're #N" row shows in the preview.
     waitlistPosition: isWaitlist ? 3 : null,
   };
 }
 
+// The picker's rows, assembled the way the route adapter assembles them: the
+// children (only where the product has a gamer audience), then the reader's own
+// row beneath them (only where it has a parent audience). `gamerCount` is the
+// account's children regardless of which rows were offered — the number the
+// add-a-child cap is measured against, and the reason the reader's row cannot
+// hide that affordance one child early.
 function buildAuthState(
-  auth: AuthKind,
+  config: ScenarioConfig,
   detailHref: string,
   state: RegistrationState,
 ): AuthState {
-  switch (auth) {
-    case "signed-out": {
-      const redirect = `?redirect=${encodeURIComponent(detailHref)}`;
-      return {
-        kind: "unauthenticated",
-        signInHref: `/login${redirect}`,
-        createAccountHref: `/register${redirect}`,
-      };
-    }
-    case "signed-in-no-gamers":
-      return { kind: "ready", gamers: [] };
-    case "signed-in-with-gamers": {
-      // The middle child already participates — on a full product with a
-      // waitlist they hold a waitlist spot; otherwise they hold a seat.
-      const signupState: MyParticipationState =
-        state.kind === "full_waitlist" ? "waitlisted" : "active";
-      return {
-        kind: "ready",
-        gamers: [
-          DEMO_GAMERS[0],
-          { ...DEMO_GAMERS[1], signupState },
-          DEMO_GAMERS[2],
-        ],
-      };
-    }
+  const audience = audienceOf(config);
+  if (config.auth === "signed-out") {
+    const redirect = `?redirect=${encodeURIComponent(detailHref)}`;
+    return {
+      kind: "unauthenticated",
+      signInHref: `/login${redirect}`,
+      createAccountHref: `/register${redirect}`,
+    };
   }
+
+  const hasGamers = config.auth === "signed-in-with-gamers";
+  // The middle child already participates — on a full product with a waitlist
+  // they hold a waitlist spot; otherwise they hold a seat.
+  const childState: MyParticipationState =
+    state.kind === "full_waitlist" ? "waitlisted" : "active";
+  const gamerRows: SignupParticipantChoice[] =
+    hasGamers && audience !== "parents"
+      ? [
+          { ...DEMO_GAMERS[0] },
+          { ...DEMO_GAMERS[1], signupState: childState },
+          { ...DEMO_GAMERS[2] },
+        ]
+      : [];
+  const selfRow: SignupParticipantChoice[] =
+    audience === "gamers"
+      ? []
+      : [
+          {
+            ...DEMO_PARENT,
+            age: null,
+            signupState: config.selfSignupState ?? null,
+            isSelf: true,
+          },
+        ];
+
+  return {
+    kind: "ready",
+    participants: [...gamerRows, ...selfRow],
+    gamerCount: hasGamers ? DEMO_GAMERS.length : 0,
+  };
 }
 
 // ---------- Base product shape ----------
@@ -683,7 +956,8 @@ function buildBaseProduct(
   state: RegistrationState,
 ): ProductDetailRow {
   const { productType, billingMode } = config;
-  const copy = COPY[productType];
+  const audience = audienceOf(config);
+  const copy = copyFor(productType, audience);
   const { startDate, endDate, scheduleSlots } = pickSchedule(productType);
   // Online muni clubs are remote and reference a municipality node (not a
   // school site); everything else keeps its per-type location + remoteness.
@@ -707,10 +981,15 @@ function buildBaseProduct(
     status: pickStatus(state),
     is_visible: true,
     is_remote: isRemote,
-    for_gamers: true,
-    for_parents: false,
-    min_age: 8,
-    max_age: 12,
+    // Audience, and the age range the schema ties to it: `min_age`/`max_age`
+    // are required with a gamer audience and must be null without one, so a
+    // parents-only fixture that kept 8–12 would be a row the database would
+    // refuse. This is also what makes such a product drop out of every age
+    // band on the browse grid.
+    for_gamers: audience !== "parents",
+    for_parents: audience !== "gamers",
+    min_age: audience === "parents" ? null : 8,
+    max_age: audience === "parents" ? null : 12,
     spoken_language_code: "fi",
     location_id: locationFixture?.id ?? null,
     locations: locationFixture,
@@ -828,6 +1107,65 @@ const COPY: Record<ProductType, TypeCopy> = {
     isRemote: false,
   },
 };
+
+/**
+ * Narrative copy for the audience scenarios.
+ *
+ * The blurb is the longest thing anyone reads on these pages, and the
+ * gamers-only copy above is written about somebody's child throughout ("what
+ * your child takes away"). Rendering that under a "For parents" label would be
+ * a fixture contradicting the page it sits on — the one thing a preview must
+ * never do, since the whole point is judging the page as a parent meets it.
+ * Only the (type, audience) pairs the scenarios actually use are written out;
+ * anything else falls back to the gamers-only copy.
+ */
+const AUDIENCE_COPY: Record<
+  Exclude<ScenarioAudience, "gamers">,
+  Partial<Record<ProductType, TypeCopy>>
+> = {
+  parents: {
+    consumer_club: {
+      name: "Vanhempien peli-ilta · Parents' Gaming Evening",
+      description:
+        "A monthly evening for the grown-ups: we play the games your kids play, badly and cheerfully, and talk about what they actually do online. No prior experience, no judgement, and nobody is grading you.",
+      long: [
+        { type: "heading", text: "What happens each month" },
+        {
+          type: "paragraph",
+          text: "We pick one game the children in our clubs are playing, and spend the evening in it together. A Gedu hosts, explains what you are looking at, and answers the questions that are hard to ask a twelve-year-old.",
+        },
+        { type: "heading", text: "What you take away" },
+        {
+          type: "paragraph",
+          text: "A feel for the thing your child disappears into after school, some vocabulary to talk about it, and an evening with other parents who are working the same thing out.",
+        },
+      ],
+      isRemote: true,
+    },
+    event: {
+      name: "Vanhempainilta · Parents' Evening",
+      description:
+        "One evening for the adults in our clubs: what the children are building, how the groups run, and what safe play online actually looks like. Coffee, a short talk, and plenty of time for questions.",
+      isRemote: false,
+    },
+  },
+  both: {
+    event: {
+      name: "Pokémon GO -perheretki · Family Outing",
+      description:
+        "A Saturday walk around the city for families — grown-ups and children on the same team, one seat each. Bring a charged phone and comfortable shoes; we supply the route, the snacks and someone who knows where the rare ones are.",
+      isRemote: false,
+    },
+  },
+};
+
+function copyFor(
+  productType: ProductType,
+  audience: ScenarioAudience,
+): TypeCopy {
+  if (audience === "gamers") return COPY[productType];
+  return AUDIENCE_COPY[audience][productType] ?? COPY[productType];
+}
 
 // ---------- Schedule ----------
 

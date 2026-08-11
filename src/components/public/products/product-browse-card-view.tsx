@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { MapPin, Globe } from "lucide-react";
+import { MapPin, Globe, UserRound } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { NavChevron } from "@/components/ui/nav-chevron";
@@ -33,8 +33,26 @@ export interface ProductBrowseCardViewProps {
    * in `product-browse-card.tsx` — owns the splitting rule.
    */
   scheduleLines: readonly string[];
-  /** Null on a product with no age range — an adults-only product has none. */
+  /**
+   * Null on a product with no age range — an adults-only product has none.
+   * Rendered only when `audienceLabel` is null: a badged card shows the badge
+   * instead (see the meta-row comment), so a family product's range appears on
+   * its detail page, not its card.
+   */
   ageLine: string | null;
+  /**
+   * Audience badge, or `null` on the ordinary gamers-only product.
+   *
+   * Deliberately withheld from gamers-only cards: that is what every card on
+   * the grid was before audiences existed, so badging it would put a label on
+   * the whole catalog to mark the absence of news. The badge appears exactly
+   * where the meaning is new — a product a parent can attend themselves — and
+   * on any badged card it is also the only audience-and-ages fact shown: the
+   * age line yields to it (an adult range like "18+" was rejected as saying
+   * something else entirely, and a family card carrying badge + range + flag
+   * wraps ugly at card width).
+   */
+  audienceLabel: string | null;
   /**
    * Single-line location/format label. Always present on browse cards so
    * every card carries the same meta row — the icon swaps between MapPin
@@ -100,6 +118,7 @@ export function ProductBrowseCardView({
   topicLabel,
   scheduleLines,
   ageLine,
+  audienceLabel,
   locationLine,
   spokenLanguageCode,
   price,
@@ -188,8 +207,28 @@ export function ProductBrowseCardView({
                 )}
                 <span className="truncate">{locationLine.label}</span>
               </li>
-              <li className="flex flex-wrap items-center gap-x-2">
-                {ageLine !== null && <span>{ageLine}</span>}
+              <li className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                {/* The audience badge leads this row when there is one: it is
+                    the coarser fact than an age range, and on a parents-only
+                    card it stands where the age line would otherwise be. A
+                    chip rather than another line of muted text, because it is
+                    the one thing here a parent might be scanning the grid
+                    *for*; it reuses the card's existing chip vocabulary (the
+                    "Free" price badge) rather than inventing a second one.
+                    A badged card shows the badge INSTEAD of the age line —
+                    owner ruling: badge + range + flag overflows this row at
+                    card width and wraps ugly, and the coarser fact wins on a
+                    card. The range is not lost, it lives in the detail page's
+                    who-it's-for cell. Enforced here rather than in each
+                    adapter so the shop and the style guide cannot disagree. */}
+                {audienceLabel !== null && (
+                  <StatusChip tone="info" icon={UserRound}>
+                    {audienceLabel}
+                  </StatusChip>
+                )}
+                {audienceLabel === null && ageLine !== null && (
+                  <span>{ageLine}</span>
+                )}
                 {/* Delivery language sits here — short row, never
                     squeezed. Same flag treatment as the locale picker
                     in the site header so parents recognise it. */}

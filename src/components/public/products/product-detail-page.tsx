@@ -102,23 +102,62 @@ export function ProductDetailPage({
         createAccountHref: `/register${redirectParam}`,
       };
     }
-    if (!isCustomer) {
+    // `profile` is re-tested rather than leaning on `isCustomer`: the parent's
+    // own row is built from it, so the narrowing has to be one the compiler
+    // can see.
+    if (!profile || profile.role !== "customer") {
       return { kind: "non_customer" };
     }
     // A signed-in customer is always "ready" — even with zero gamers. The
-    // picker renders whatever gamers exist (possibly none) and the CTA stays
-    // disabled until one is selected, so the no-gamers case needs no separate
-    // state. Each gamer carries its own signup state (active / waitlisted) so
-    // the picker can disable an already-enrolled child in place.
-    const gamerStates = myCount?.myGamerStates ?? {};
+    // picker renders whatever participants exist (possibly none) and the CTA
+    // stays disabled until one is selected, so the no-gamers case needs no
+    // separate state. Each row carries its own signup state (active /
+    // waitlisted) so the picker can disable an already-enrolled one in place.
+    //
+    // **This is the one place the three audience cases are told apart**, and
+    // the whole of the difference is which rows go into the array:
+    //
+    //   gamers-only  — the children, exactly as before.
+    //   parents-only — the reader alone, so the hook's "first selectable row"
+    //                  preselects them and the seat is explicit before paying.
+    //   both         — the children, then the reader beneath them, matching the
+    //                  order their dashboard puts them in. One selection, one
+    //                  seat, one checkout.
+    //
+    // Everything downstream is id-agnostic. In particular the already-enrolled
+    // lockout needs no work at all: `myGamerStates` is built from the rows where
+    // `customer_id` is the reader, keyed on the participant column, so a self
+    // seat is already filed under the reader's own id.
+    const participantStates = myCount?.myGamerStates ?? {};
+    const gamerRows = product.for_gamers
+      ? (gamers ?? []).map((g) => ({
+          id: g.id,
+          name: g.first_name,
+          age: null,
+          signupState: participantStates[g.id] ?? null,
+        }))
+      : [];
+    const selfRow = product.for_parents
+      ? [
+          {
+            id: user.id,
+            name: profile.first_name,
+            // Ages belong to the gamer audience and never to adults — a parent
+            // row deliberately shows no age pill.
+            age: null,
+            signupState: participantStates[user.id] ?? null,
+            isSelf: true,
+          },
+        ]
+      : [];
     return {
       kind: "ready",
-      gamers: (gamers ?? []).map((g) => ({
-        id: g.id,
-        name: g.first_name,
-        age: null,
-        signupState: gamerStates[g.id] ?? null,
-      })),
+      participants: [...gamerRows, ...selfRow],
+      // The account's children, never the picker's rows: counting the injected
+      // parent would hide the add-a-child affordance one child early. It is
+      // also the full roster including children already on this product, which
+      // is the number the Steven Brown cap is about.
+      gamerCount: (gamers ?? []).length,
     };
   })();
 
