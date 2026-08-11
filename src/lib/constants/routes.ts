@@ -222,6 +222,13 @@ export const ROUTES = {
   privacy: "/privacy",
   termsAndConditions: "/terms-and-conditions",
   antiBullying: "/anti-bullying-and-discipline",
+  /**
+   * Every credit the product owes — the data sources behind the location tree
+   * and the services that render game-account art. Linked from the footer's
+   * legal row and published like the pages beside it (indexed, in the sitemap):
+   * it is site-wide compliance, not part of any one programme.
+   */
+  attributions: "/attributions",
   settings: "/settings",
   /**
    * Voice rooms. Two shapes share the `/voice` prefix:

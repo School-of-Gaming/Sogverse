@@ -11,5 +11,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/privacy`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
     { url: `${baseUrl}/terms-and-conditions`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
     { url: `${baseUrl}/anti-bullying-and-discipline`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
+    { url: `${baseUrl}/attributions`, lastModified: new Date(), changeFrequency: "yearly", priority: 0.3 },
   ];
 }

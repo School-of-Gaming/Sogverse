@@ -153,7 +153,7 @@ Setting the flag *inside* `onSuccess` (or via a hook that does so) is too late a
 
 A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoken_languages = ["en"]` (wants their child placed in English clubs). Don't conflate them.
 
-**Rule: User-facing strings must be translated for every locale message file in `messages/`. Never leave placeholder copy or skip a locale. Best-effort translation is expected. Klingon (`tlh`) is an easter egg — fun and quirky takes are welcome, accuracy is not the goal there. The exception is legal pages (privacy, terms, safeguarding and their programme-specific siblings): their `tlh` catalogs carry the English text verbatim — binding copy is never in-character.**
+**Rule: User-facing strings must be translated for every locale message file in `messages/`. Never leave placeholder copy or skip a locale. Best-effort translation is expected. Klingon (`tlh`) is an easter egg — fun and quirky takes are welcome, accuracy is not the goal there. The exception is legal pages (privacy, terms, safeguarding and their programme-specific siblings, plus the attributions page): their `tlh` catalogs carry the English text verbatim — binding copy is never in-character.**
 
 **Rule: No emoji in `messages/` files** — they're untranslatable copy that can't be themed or recolored. When a string needs a glyph (warning triangle, checkmark, arrow), render a `lucide-react` icon next to the translated text in the component instead.
 
