@@ -3,38 +3,17 @@ import { POST } from "@/app/api/webhooks/stripe/products/route";
 
 // --- Mocks ---
 
-const {
-  mockConstructEvent,
-  mockSubscriptionsRetrieve,
-  mockSubscriptionsCancel,
-} = vi.hoisted(() => ({
-  mockConstructEvent: vi.fn(),
-  mockSubscriptionsRetrieve: vi.fn(),
-  mockSubscriptionsCancel: vi.fn(),
+const { stripeMock } = await vi.hoisted(async () => ({
+  stripeMock: (await import("../../mocks/stripe")).createStripeMock(),
 }));
 
-vi.mock("stripe", () => {
-  // Object.assign produces the intersection type, so `errors` rides along
-  // without any cast. The route only ever does `new Stripe(...)` and uses
-  // the nested methods below.
-  const StripeMock = Object.assign(
-    vi.fn(function () {
-      return {
-        webhooks: { constructEvent: mockConstructEvent },
-        subscriptions: {
-          retrieve: mockSubscriptionsRetrieve,
-          cancel: mockSubscriptionsCancel,
-        },
-      };
-    }),
-    {
-      errors: {
-        StripeCardError: class StripeCardError extends Error {},
-      },
-    },
-  );
-  return { default: StripeMock };
-});
+vi.mock("stripe", async () =>
+  (await import("../../mocks/stripe")).stripeModuleMock(stripeMock),
+);
+
+const mockConstructEvent = stripeMock.webhooks.constructEvent;
+const mockSubscriptionsRetrieve = stripeMock.subscriptions.retrieve;
+const mockSubscriptionsCancel = stripeMock.subscriptions.cancel;
 
 const mockAdminFrom = vi.fn();
 const mockAdminRpc = vi.fn();
@@ -840,6 +819,38 @@ describe("POST /api/webhooks/stripe/products", () => {
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
       expect(inserts.payments).toHaveLength(0);
+    });
+
+    it("ignores a one-off invoice, which carries no subscription in either placement", async () => {
+      // One-off checkouts create invoices now — the thing that makes a credit
+      // note (and therefore a VAT-reversing refund) possible — so `invoice.paid`
+      // fires for purchases that have no subscription at all. That is a live
+      // path rather than a defensive one, and every other fixture here supplies
+      // a subscription id.
+      //
+      // The handler must return before it reads or writes anything: the sale
+      // was already recorded by checkout.session.completed, and a second
+      // payments row here would double-count it.
+      mockConstructEvent.mockReturnValue({
+        id: "evt_invoice_one_off",
+        type: "invoice.paid",
+        data: {
+          object: {
+            id: "in_one_off_1",
+            amount_paid: 15000,
+            currency: "eur",
+            billing_reason: "manual",
+          },
+        },
+      });
+      const inserts = mockAdmin({ famSubRow: null });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.payments).toHaveLength(0);
+      // Before any read — not merely before the write. The admin client is
+      // never touched, so a one-off invoice costs no database round trip.
+      expect(mockAdminFrom).not.toHaveBeenCalled();
     });
 
     it("writes nothing on a replay, where the event id is already recorded", async () => {

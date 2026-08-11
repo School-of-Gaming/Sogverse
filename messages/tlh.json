@@ -711,6 +711,17 @@
         "limitedDescription": "pa’ mI’ yIgheS. tebDI’, chu’mey tetlh teb Daq jaH.",
         "unlimited": "pa’ mI’ Sub pagh",
         "unlimitedDescription": "ghISbogh Hoch jaH — Sub pagh."
+      },
+      "vat": {
+        "headline": {
+          "reduced": "Huch nob puS — {rate}",
+          "standard": "Huch nob motlh — {rate}"
+        },
+        "reason": {
+          "reduced": "pa’ Qugh Huch nob puS lo’ — Huch la’ ra’. Segh ngu’ nob, vaj naDev choHlaH pagh.",
+          "standard": "ghomHom Qu’mey je Huch nob motlh lo’. Segh ngu’ nob, vaj naDev choHlaH pagh."
+        },
+        "note": "Dung Huch Huch nob ghaj. ngeHbej poHDaq nob mI’ ngu’ Stripe, vaj DaHjaj Finland nob ’oH."
       }
     },
     "users": {

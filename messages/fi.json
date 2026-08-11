@@ -663,6 +663,17 @@
         "limitedDescription": "Rajaa, kuinka moni pelaaja voi liittyä. Kun paikat täyttyvät, uudet ilmoittautujat voivat siirtyä jonotuslistalle.",
         "unlimited": "Ei paikkarajaa",
         "unlimitedDescription": "Kuka tahansa ilmoittautunut pääsee mukaan — ei rajaa."
+      },
+      "vat": {
+        "headline": {
+          "reduced": "Alennettu alv-kanta – {rate}",
+          "standard": "Yleinen alv-kanta – {rate}"
+        },
+        "reason": {
+          "reduced": "Leirit kuuluvat Suomen alennetun verokannan piiriin – talousjohdon linjaus, joka koskee kaikkia leirejä. Kanta määräytyy tuotetyypin mukaan, eikä sitä voi muuttaa täällä.",
+          "standard": "Kerhot ja maksulliset tapahtumat myydään Suomen yleisellä verokannalla. Kanta määräytyy tuotetyypin mukaan, eikä sitä voi muuttaa täällä."
+        },
+        "note": "Yllä oleva hinta sisältää arvonlisäveron. Stripe laskee tarkan määrän myyntihetkellä, joten tässä näkyy Suomen tämänhetkinen verokanta."
       }
     },
     "users": {
