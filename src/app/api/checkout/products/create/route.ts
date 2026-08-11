@@ -278,7 +278,13 @@ export const POST = defineRoute({
       // parent may buy an English-delivered camp.
       const purchaseMetadata: Record<string, string> = {
         product_id: productId,
-        gamer_id: participantId,
+        // participant_id, not gamer_id: this finance snapshot was born inside
+        // the participant-rename window and has no history to preserve (unlike
+        // the payments ledger echo, which keeps gamerId deliberately), so on a
+        // self seat it names the payer's own id honestly. The finance report
+        // reads this key and a backfill corrects existing test- and live-mode
+        // objects — the two move together.
+        participant_id: participantId,
         customer_id: user.id,
         locale,
         spoken_language_code: product.spoken_language_code,

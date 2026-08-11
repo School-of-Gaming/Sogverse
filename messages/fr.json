@@ -462,7 +462,7 @@
         "seatHintWaitlist": "Une fois complet, les nouvelles inscriptions passent en liste d’attente.",
         "seatHintNoWaitlist": "Une fois complet, les nouvelles inscriptions sont refusées.",
         "visibleHint": "Sans la case cochée, le produit n’apparaît sur aucune page publique, mais toute personne disposant du lien direct peut l’ouvrir et acheter une place. C’est précisément ce qui le rend adapté aux produits non annoncés, réservés sur invitation ou liés à une campagne. Ce n’est pas un moyen d’arrêter les inscriptions, et cela n’affecte jamais les parents et les joueurs déjà inscrits.",
-        "seatLimitHint": "Plafonnez le nombre de joueurs, ou fonctionnez sans limite.",
+        "seatLimitHint": "Plafonnez le nombre de participants, ou fonctionnez sans limite.",
         "holidayComingSoon": "Les calendriers de vacances arrivent bientôt. Pour l’instant, toutes les sessions programmées ont lieu.",
         "startDateToday": "Verrouillée sur la date du jour pour le moment.",
         "startDateLocked": "La date de début est verrouillée pour le moment."

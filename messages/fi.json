@@ -1203,7 +1203,7 @@
   },
   "familyProduct": {
     "back": "Takaisin Omaan SOGiin",
-    "forGamer": "Pelaaja: {name}",
+    "forGamer": "Osallistuja: {name}",
     "forSelf": "Osallistuja: sinä",
     "scheduleLabel": "Milloin",
     "venueLabel": "Missä",
@@ -2186,10 +2186,10 @@
     },
     "enrollmentParent": {
       "subject": "{participantName} on nyt ilmoittautunut kerhoon {productName}",
-      "subjectSelf": "Sinut on nyt ilmoitettu kerhoon {productName}",
+      "subjectSelf": "Sinut on nyt ilmoitettu toimintaan {productName}",
       "heading": "Ilmoittautuminen vahvistettu",
       "body": "Hei {parentName}, {participantName} on nyt ilmoittautunut kerhoon {productName} Gedun {geduName} kanssa.",
-      "bodySelf": "Hei {parentName}, sinut on nyt ilmoitettu kerhoon {productName}, ohjaajana Gedu {geduName}."
+      "bodySelf": "Hei {parentName}, sinut on nyt ilmoitettu toimintaan {productName}, ohjaajana Gedu {geduName}."
     },
     "enrollmentGedu": {
       "subject": "{participantName} on liittynyt ryhmääsi – {productName}",
@@ -2198,10 +2198,10 @@
     },
     "unenrollmentParent": {
       "subject": "{participantName} on poistettu kerhosta {productName}",
-      "subjectSelf": "Ilmoittautumisesi kerhoon {productName} on peruttu",
+      "subjectSelf": "Ilmoittautumisesi toimintaan {productName} on peruttu",
       "heading": "Ilmoittautumisen peruutus vahvistettu",
       "body": "Hei {parentName}, {participantName} on poistettu kerhosta {productName} (Gedu: {geduName}).",
-      "bodySelf": "Hei {parentName}, ilmoittautumisesi kerhoon {productName} on peruttu (Gedu: {geduName})."
+      "bodySelf": "Hei {parentName}, ilmoittautumisesi toimintaan {productName} on peruttu (Gedu: {geduName})."
     },
     "unenrollmentGedu": {
       "subject": "{participantName} on poistunut ryhmästäsi – {productName}",

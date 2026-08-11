@@ -141,8 +141,8 @@ async function handleCheckoutCompleted(
   //   'confirmed'         — a fresh active row, or the row this very session
   //                         already bought (the re-run case). Either way the
   //                         writes below are the right ones to make.
-  //   'duplicate_payment' — a different payment already put this gamer on this
-  //                         product. Handled below.
+  //   'duplicate_payment' — a different payment already put this participant on
+  //                         this product. Handled below.
   const { data: confirmResult, error: confirmErr } = await admin.rpc(
     "confirm_paid_participation",
     {
