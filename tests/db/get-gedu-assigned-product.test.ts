@@ -120,14 +120,14 @@ describe("get_gedu_assigned_product", () => {
     await admin.from("participations").insert([
       {
         product_id: PRODUCT_GEDU_ON,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
         group_id: myGroupId,
       },
       {
         product_id: PRODUCT_GEDU_ON,
-        gamer_id: TEST_IDS.GAMER_2,
+        participant_id: TEST_IDS.GAMER_2,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
         group_id: sisterGroupId,
@@ -324,7 +324,7 @@ describe("get_gedu_assigned_product", () => {
           .from("participations")
           .update({ status, ...extras })
           .eq("product_id", PRODUCT_GEDU_ON)
-          .eq("gamer_id", TEST_IDS.GAMER);
+          .eq("participant_id", TEST_IDS.GAMER);
         expect(updateErr).toBeNull();
 
         const { data, error } = await geduAuth.rpc(
@@ -342,7 +342,7 @@ describe("get_gedu_assigned_product", () => {
         .from("participations")
         .update({ status: "active" })
         .eq("product_id", PRODUCT_GEDU_ON)
-        .eq("gamer_id", TEST_IDS.GAMER);
+        .eq("participant_id", TEST_IDS.GAMER);
     });
   });
 });

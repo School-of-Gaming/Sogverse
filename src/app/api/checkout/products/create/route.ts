@@ -64,7 +64,7 @@ export const POST = defineRoute({
     "create_participation's messages are the user-facing explanation of a refused signup, and the shop surface renders them as-is",
 
   handler: async ({ request, user, profile, body }) => {
-    const { productId, gamerId, purchaseShape } = body;
+    const { productId, participantId, purchaseShape } = body;
     const currency: SupportedCurrency = body.currency;
 
     const admin = createAdminClient();
@@ -156,7 +156,7 @@ export const POST = defineRoute({
       "create_participation",
       {
         p_product_id: productId,
-        p_gamer_id: gamerId,
+        p_participant_id: participantId,
         p_customer_id: user.id,
         p_purchase_shape: purchaseShape,
         p_currency: currency,
@@ -231,9 +231,15 @@ export const POST = defineRoute({
       // The metadata IS the link between this session and the participation the
       // webhook will create. Nothing else carries it, so every field here is
       // load-bearing rather than informational.
+      //
+      // `participantId` replaced `gamerId` here with the participant rename.
+      // Stripe metadata is the one boundary the rename cannot cross atomically:
+      // sessions created before the deploy carry the old key and can complete
+      // after it, so the webhook and the confirmation page accept both. See
+      // their fallbacks — and delete them together, not this line alone.
       const metadata = {
         customerId: user.id,
-        gamerId,
+        participantId,
         productId,
         purchaseShape,
         currency,
@@ -324,7 +330,7 @@ export const POST = defineRoute({
         // parent reads when deciding which one to cancel.
         sessionParams.subscription_data = {
           metadata,
-          description: `${productName} — ${await pickGamerName(admin, gamerId)}`,
+          description: `${productName} — ${await pickGamerName(admin, participantId)}`,
         };
       }
 

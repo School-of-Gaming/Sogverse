@@ -195,7 +195,7 @@ export class GroupsService {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gamerId }),
+        body: JSON.stringify({ participantId: gamerId }),
       },
     );
     if (!response.ok) {

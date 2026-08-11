@@ -689,7 +689,7 @@ describe("write-path IDOR (§3.4 check 3)", () => {
     await admin.from("participations").insert({
       product_id: PRODUCT,
       group_id: GROUP,
-      gamer_id: TEST_IDS.GAMER,
+      participant_id: TEST_IDS.GAMER,
       customer_id: TEST_IDS.CUSTOMER,
       status: "active",
     });

@@ -42,7 +42,7 @@ export const POST = defineRoute({
   handler: async ({ supabase, user, params, body }) => {
     const { data, error } = await supabase.rpc("admin_enroll_gamer", {
       p_product_id: params.id,
-      p_gamer_id: body.gamerId,
+      p_participant_id: body.participantId,
     });
 
     if (error) {
@@ -75,7 +75,7 @@ export const POST = defineRoute({
         event: "admin_add_gamer",
         admin_id: user.id,
         product_id: params.id,
-        gamer_id: body.gamerId,
+        participant_id: body.participantId,
         customer_id: parsed.data.customer_id,
         participation_id: parsed.data.participation_id,
         at: new Date().toISOString(),

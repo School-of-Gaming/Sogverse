@@ -92,14 +92,27 @@ async function handleCheckoutCompleted(
 
   const purchaseShape = session.metadata?.purchaseShape;
   const customerId = session.metadata?.customerId;
-  const gamerId = session.metadata?.gamerId;
+  // The participant rename crosses one boundary we do not control: a Checkout
+  // Session created before the deploy carries `gamerId` and can complete after
+  // it. The fallback is resolved HERE, once, and every use below reads this
+  // one binding — because the guard immediately after returns 200 with no
+  // retry, so a fallback applied at some use sites and not at the destructure
+  // would drop a legacy in-flight session silently: the parent is charged, no
+  // seat is written, and Stripe never redelivers.
+  //
+  // DELETE ONCE PRE-DEPLOY SESSIONS HAVE AGED OUT. Checkout Sessions expire
+  // within 24h (ours sooner still — see CHECKOUT_SESSION_LIFETIME_MINUTES), so
+  // a day after the deploy no live session can carry the old key. Delete this
+  // fallback together with the one on the paid confirmation page.
+  const participantId =
+    session.metadata?.participantId ?? session.metadata?.gamerId;
   const productId = session.metadata?.productId;
   // Our integration currency, always EUR. Safe to pair with `amount_total`
   // below: even with Adaptive Pricing on, `session.amount_total`/`currency`
   // report the EUR settlement amount we receive — the customer's local
   // currency lives in `session.presentment_details`, which we don't record.
   const currency = session.metadata?.currency;
-  if (!purchaseShape || !customerId || !gamerId || !productId || !currency) {
+  if (!purchaseShape || !customerId || !participantId || !productId || !currency) {
     return;
   }
 
@@ -130,7 +143,7 @@ async function handleCheckoutCompleted(
     "confirm_paid_participation",
     {
       p_product_id: productId,
-      p_gamer_id: gamerId,
+      p_participant_id: participantId,
       p_customer_id: customerId,
       p_checkout_session_id: session.id,
     },
@@ -163,7 +176,7 @@ async function handleCheckoutCompleted(
         existingParticipationId: confirmJson.existing_participation_id,
         eventId: event.id,
         customerId,
-        gamerId,
+        participantId,
         productId,
         paymentIntent: expandableId(session.payment_intent),
         subscription: expandableId(session.subscription),
@@ -207,8 +220,14 @@ async function handleCheckoutCompleted(
       purpose: "reservation_duplicate",
       stripePaymentIntentId: expandableId(session.payment_intent),
       stripeInvoiceId: expandableId(session.invoice),
+      // The ledger echo KEEPS the historical `gamerId` key. Every payments row
+      // ever written carries it, nothing reads the column programmatically
+      // (it is an admin's forensic breadcrumb when a family reports a double
+      // charge), and renaming it here would fork the stored shape into a
+      // before/after that any future reader has to know about. One spelling,
+      // for all of history.
       metadata: {
-        gamerId,
+        gamerId: participantId,
         productId,
         purchaseShape,
         existingParticipationId: confirmJson.existing_participation_id,
@@ -275,8 +294,9 @@ async function handleCheckoutCompleted(
     purpose: paymentPurposeFor(purchaseShape),
     stripePaymentIntentId: expandableId(session.payment_intent),
     stripeInvoiceId: expandableId(session.invoice),
+    // `gamerId` again, and deliberately — see the duplicate branch above.
     metadata: {
-      gamerId,
+      gamerId: participantId,
       productId,
       purchaseShape,
       participationId: confirmJson.participation_id,

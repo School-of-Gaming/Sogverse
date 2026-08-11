@@ -82,7 +82,7 @@ export const POST = defineRoute({
         .from("participations")
         .select("id")
         .eq("group_id", groupId)
-        .eq("gamer_id", user.id)
+        .eq("participant_id", user.id)
         .eq("status", "active")
         .limit(1)
         .maybeSingle();

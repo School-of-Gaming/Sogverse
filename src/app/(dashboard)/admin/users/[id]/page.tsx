@@ -178,9 +178,9 @@ export default async function AdminUserDetailPage({
 
   const participationsByGamer = new Map<string, AdminGamerParticipationRow[]>();
   for (const row of assignedParticipations) {
-    const list = participationsByGamer.get(row.gamer_id) ?? [];
+    const list = participationsByGamer.get(row.participant_id) ?? [];
     list.push(row);
-    participationsByGamer.set(row.gamer_id, list);
+    participationsByGamer.set(row.participant_id, list);
   }
 
   const uiLocale = resolveLocale(locale);

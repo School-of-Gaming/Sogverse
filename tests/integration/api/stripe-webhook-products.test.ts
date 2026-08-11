@@ -91,7 +91,7 @@ function createCompletedEvent(overrides: Partial<{
         customer: overrides.customer ?? "cus_test_1",
         metadata: {
           productId: PRODUCT_ID,
-          gamerId: GAMER_ID,
+          participantId: GAMER_ID,
           customerId: CUSTOMER_ID,
           purchaseShape: overrides.purchaseShape ?? "single_payment",
           currency: overrides.currency ?? "eur",
@@ -336,7 +336,7 @@ describe("POST /api/webhooks/stripe/products", () => {
 
       expect(mockAdminRpc).toHaveBeenCalledWith("confirm_paid_participation", {
         p_product_id: PRODUCT_ID,
-        p_gamer_id: GAMER_ID,
+        p_participant_id: GAMER_ID,
         p_customer_id: CUSTOMER_ID,
         p_checkout_session_id: SESSION_ID,
       });
@@ -349,6 +349,50 @@ describe("POST /api/webhooks/stripe/products", () => {
         purpose: "single_payment",
         stripe_payment_intent_id: "pi_test_1",
       });
+      // The ledger echo keeps the historical spelling on purpose — every
+      // payments row ever written carries `gamerId`, and forking the stored
+      // shape at the rename would buy nothing and cost every future reader.
+      expect(inserts.payments[0].metadata).toMatchObject({
+        gamerId: GAMER_ID,
+        productId: PRODUCT_ID,
+        participationId: PARTICIPATION_ID,
+      });
+    });
+
+    it("confirms a session created before the rename, carrying the legacy gamerId key", async () => {
+      // Stripe metadata is the one boundary the participant rename cannot cross
+      // atomically: a session built before the deploy carries `gamerId` and can
+      // complete after it. The fallback lives at the destructure, ahead of the
+      // guard that returns 200 without a retry — so if it were ever applied per
+      // use site instead, this delivery would be dropped silently: charged, no
+      // seat, no error, no redelivery. That is what this test pins.
+      const event = createCompletedEvent();
+      const metadata = (
+        event.data.object as { metadata: Record<string, string | undefined> }
+      ).metadata;
+      metadata.gamerId = GAMER_ID;
+      delete metadata.participantId;
+      mockConstructEvent.mockReturnValue(event);
+      const inserts = mockAdmin();
+      mockAdminRpc.mockResolvedValue({
+        data: {
+          kind: "confirmed",
+          participation_id: PARTICIPATION_ID,
+          idempotent: false,
+        },
+        error: null,
+      });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+
+      expect(mockAdminRpc).toHaveBeenCalledWith("confirm_paid_participation", {
+        p_product_id: PRODUCT_ID,
+        p_participant_id: GAMER_ID,
+        p_customer_id: CUSTOMER_ID,
+        p_checkout_session_id: SESSION_ID,
+      });
+      expect(inserts.payments).toHaveLength(1);
     });
 
     it("writes a per-participation family_subscriptions row on subscription completion", async () => {
@@ -479,7 +523,7 @@ describe("POST /api/webhooks/stripe/products", () => {
       // thing naming who the seat is for, so a missing field has to stop the
       // handler rather than have it guess.
       (event.data.object as { metadata: Record<string, string | undefined> })
-        .metadata.gamerId = undefined;
+        .metadata.participantId = undefined;
       mockConstructEvent.mockReturnValue(event);
       mockAdmin();
 
@@ -541,7 +585,7 @@ describe("POST /api/webhooks/stripe/products", () => {
           existingParticipationId: EXISTING_PARTICIPATION_ID,
           eventId: "evt_completed_2",
           customerId: CUSTOMER_ID,
-          gamerId: GAMER_ID,
+          participantId: GAMER_ID,
           productId: PRODUCT_ID,
           paymentIntent: "pi_dup_1",
         }),

@@ -57,7 +57,7 @@ describe("cancel_participation", () => {
       .from("participations")
       .insert({
         product_id: PRODUCT_CANCEL,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
       })
@@ -125,7 +125,7 @@ describe("cancel_participation", () => {
       .from("participations")
       .insert({
         product_id: PRODUCT_CANCEL,
-        gamer_id: TEST_IDS.GAMER_2,
+        participant_id: TEST_IDS.GAMER_2,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
       })

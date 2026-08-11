@@ -92,7 +92,7 @@ describe("waitlist — self-service positions + leave", () => {
   ): Promise<string> {
     const res = await customer.rpc("join_product_waitlist", {
       p_product_id: productId,
-      p_gamer_id: gamerId,
+      p_participant_id: gamerId,
     });
     expect(res.error).toBeNull();
     return joinWaitlistRpcResult.parse(res.data).participation_id;
@@ -152,7 +152,7 @@ describe("waitlist — self-service positions + leave", () => {
         .from("participations")
         .insert({
           product_id: PRODUCT_A,
-          gamer_id: TEST_IDS.GAMER_2,
+          participant_id: TEST_IDS.GAMER_2,
           customer_id: TEST_IDS.CUSTOMER_2,
           status: "waitlisted",
           waitlisted_at: new Date(Date.now() - 60_000).toISOString(),

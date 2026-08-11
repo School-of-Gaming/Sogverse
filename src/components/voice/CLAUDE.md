@@ -34,7 +34,7 @@ Request `{ groupId }`. Gates, in order:
 
 1. **Role** — `requireRole(["gedu","gamer","admin"])`; customers blocked.
 2. **Group + remoteness** — group must exist and its product must be `is_remote = true`; else 404.
-3. **Membership** — gamer: active `participations` row for `(group_id, gamer_id)`. Gedu: a `gedu_group_assignments` row on **product_id** (cross-group voice mobility). Admin: bypass.
+3. **Membership** — gamer: active `participations` row for `(group_id, participant_id)`. Gedu: a `gedu_group_assignments` row on **product_id** (cross-group voice mobility). Admin: bypass.
 4. **Session window** — at least one slot must currently be open; the first open slot drives the room name and token `exp`.
 5. **Private-zone `canReceive` bake** — the route reads the current window's `voice_private_zone_occupants` and bakes the joiner's `canReceive` (see the private-zone section) so the SFU won't forward a private member's media to them before they even connect.
 6. **Issuance** — `is_owner = role !== "gamer"`. The Daily token also sets `user_id = profiles.id` (so peers' `participant.user_id` matches what `canReceive.byUserId` keys on). `exp = windowClosesAt + grace`. The response returns `sessionOpensAt` so the client can stamp occupancy rows with the current window.

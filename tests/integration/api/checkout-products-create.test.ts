@@ -218,7 +218,7 @@ function createRequest(
 // there. Single-payment tests override purchaseShape + product to a camp.
 const VALID_BODY = {
   productId: PRODUCT_ID,
-  gamerId: GAMER_ID,
+  participantId: GAMER_ID,
   purchaseShape: "subscription_monthly",
   currency: "eur",
 };
@@ -263,13 +263,13 @@ describe("POST /api/checkout/products/create", () => {
     [
       "productId",
       {
-        gamerId: GAMER_ID,
+        participantId: GAMER_ID,
         purchaseShape: "subscription_monthly",
         currency: "eur",
       },
     ],
     [
-      "gamerId",
+      "participantId",
       {
         productId: PRODUCT_ID,
         purchaseShape: "subscription_monthly",
@@ -278,7 +278,7 @@ describe("POST /api/checkout/products/create", () => {
     ],
     [
       "purchaseShape",
-      { productId: PRODUCT_ID, gamerId: GAMER_ID, currency: "eur" },
+      { productId: PRODUCT_ID, participantId: GAMER_ID, currency: "eur" },
     ],
   ])("returns 400 when %s is missing", async (_field, body) => {
     mockAuthenticatedCustomer();
@@ -424,7 +424,7 @@ describe("POST /api/checkout/products/create", () => {
     const res = await POST(
       createRequest({
         productId: PRODUCT_ID,
-        gamerId: GAMER_ID,
+        participantId: GAMER_ID,
         purchaseShape: "free",
         currency: "eur",
       }),
@@ -439,7 +439,7 @@ describe("POST /api/checkout/products/create", () => {
     expect(mockStripeSessionCreate).not.toHaveBeenCalled();
     expect(mockAdminRpc).toHaveBeenCalledWith("create_participation", {
       p_product_id: PRODUCT_ID,
-      p_gamer_id: GAMER_ID,
+      p_participant_id: GAMER_ID,
       p_customer_id: CUSTOMER_ID,
       p_purchase_shape: "free",
       p_currency: "eur",
@@ -470,7 +470,7 @@ describe("POST /api/checkout/products/create", () => {
     const res = await POST(
       createRequest({
         productId: PRODUCT_ID,
-        gamerId: GAMER_ID,
+        participantId: GAMER_ID,
         purchaseShape: "free",
         currency: "eur",
       }),
@@ -489,7 +489,7 @@ describe("POST /api/checkout/products/create", () => {
     expect(mockGetOrCreateStripeCustomer).not.toHaveBeenCalled();
     expect(mockAdminRpc).toHaveBeenCalledWith("create_participation", {
       p_product_id: PRODUCT_ID,
-      p_gamer_id: GAMER_ID,
+      p_participant_id: GAMER_ID,
       p_customer_id: CUSTOMER_ID,
       p_purchase_shape: "free",
       p_currency: "eur",
@@ -509,7 +509,7 @@ describe("POST /api/checkout/products/create", () => {
     const res = await POST(
       createRequest({
         productId: PRODUCT_ID,
-        gamerId: GAMER_ID,
+        participantId: GAMER_ID,
         purchaseShape: "free",
         currency: "eur",
       }),
@@ -548,7 +548,7 @@ describe("POST /api/checkout/products/create", () => {
     const res = await POST(
       createRequest({
         productId: PRODUCT_ID,
-        gamerId: GAMER_ID,
+        participantId: GAMER_ID,
         purchaseShape: "external",
         currency: "eur",
       }),
@@ -565,7 +565,7 @@ describe("POST /api/checkout/products/create", () => {
     expect(mockGetOrCreateStripeCustomer).not.toHaveBeenCalled();
     expect(mockAdminRpc).toHaveBeenCalledWith("create_participation", {
       p_product_id: PRODUCT_ID,
-      p_gamer_id: GAMER_ID,
+      p_participant_id: GAMER_ID,
       p_customer_id: CUSTOMER_ID,
       p_purchase_shape: "external",
       p_currency: "eur",
@@ -650,7 +650,7 @@ describe("POST /api/checkout/products/create", () => {
     // row yet.
     expect(params.metadata).toEqual({
       customerId: CUSTOMER_ID,
-      gamerId: GAMER_ID,
+      participantId: GAMER_ID,
       productId: PRODUCT_ID,
       purchaseShape: "single_payment",
       currency: "eur",
@@ -950,7 +950,7 @@ describe("POST /api/checkout/products/create", () => {
     const res = await POST(
       createRequest({
         productId: PRODUCT_ID,
-        gamerId: GAMER_ID,
+        participantId: GAMER_ID,
         purchaseShape: "free",
         currency: "eur",
       }),
@@ -969,7 +969,7 @@ describe("POST /api/checkout/products/create", () => {
     const res = await POST(
       createRequest({
         productId: PRODUCT_ID,
-        gamerId: GAMER_ID,
+        participantId: GAMER_ID,
         purchaseShape: "external",
         currency: "eur",
       }),

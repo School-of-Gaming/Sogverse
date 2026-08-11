@@ -94,20 +94,20 @@ describe("products purchaser-read RLS (00047)", () => {
     const seed = await admin.from("participations").insert([
       {
         product_id: CLOSED_ACTIVE_PRODUCT,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
       },
       {
         product_id: CLOSED_WAITLISTED_PRODUCT,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "waitlisted",
         waitlisted_at: new Date().toISOString(),
       },
       {
         product_id: CLOSED_RESERVING_PRODUCT,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "reserving",
       },

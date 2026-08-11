@@ -114,7 +114,7 @@ export class GeduSessionsService {
     const { data, error } = await this.supabase.rpc("record_attendance", {
       p_group_id: args.groupId,
       p_session_date: args.sessionDate,
-      p_gamer_id: args.gamerId,
+      p_participant_id: args.gamerId,
       // The empty string is how "unmarked" travels: generated RPC argument
       // types make every text parameter a non-null `string`, so there is no
       // SQL NULL to send from here. The function normalizes '' back to NULL —

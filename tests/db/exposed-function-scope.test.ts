@@ -133,7 +133,7 @@ describe("self-scoping exposed functions", () => {
     await admin.from("participations").insert({
       product_id: PRIVATE_PRODUCT,
       group_id: GROUP_ID,
-      gamer_id: TEST_IDS.GAMER,
+      participant_id: TEST_IDS.GAMER,
       customer_id: TEST_IDS.CUSTOMER,
       status: "active",
     });

@@ -157,7 +157,7 @@ INSERT INTO auth.identities (
 -- Gamer 2 (second gamer linked to customer 1 — needed for v2 race / waitlist
 -- monotonicity tests where two distinct (customer, gamer) pairs are required.
 -- Linked to customer 1 because the join_waitlist_v2 idempotency check is keyed
--- on gamer_id alone, so distinct gamers — not distinct customers — are what
+-- on participant_id alone, so distinct gamers — not distinct customers — are what
 -- yields independent rows.)
 INSERT INTO auth.users (
   id, instance_id, aud, role, email,

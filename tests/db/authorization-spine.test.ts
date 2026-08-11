@@ -336,7 +336,7 @@ const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
   // Enrollment state — a writable status is a free seat.
   ["participations", "status"],
   ["participations", "customer_id"],
-  ["participations", "gamer_id"],
+  ["participations", "participant_id"],
   ["participations", "group_id"],
   // The Checkout Session that paid for the seat: writable, it would let one
   // family point a seat at another family's payment — and it is what the paid

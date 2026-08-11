@@ -171,14 +171,14 @@ describe("gedu session feed", () => {
       {
         product_id: PRODUCT_MINE,
         group_id: GROUP_MINE,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
       },
       {
         product_id: PRODUCT_OTHER,
         group_id: GROUP_OTHER,
-        gamer_id: TEST_IDS.GAMER_2,
+        participant_id: TEST_IDS.GAMER_2,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
       },
@@ -242,7 +242,7 @@ describe("gedu session feed", () => {
         const mark = await client.rpc("record_attendance", {
           p_group_id: GROUP_MINE,
           p_session_date: YESTERDAY,
-          p_gamer_id: TEST_IDS.GAMER,
+          p_participant_id: TEST_IDS.GAMER,
           p_status: "present",
         });
         expect(mark.error?.code).toBe("42501");
@@ -262,7 +262,7 @@ describe("gedu session feed", () => {
         expect(siteNotes.error?.code).toBe("42501");
 
         const minecraft = await client.rpc("set_group_member_minecraft", {
-          p_gamer_id: TEST_IDS.GAMER,
+          p_participant_id: TEST_IDS.GAMER,
           p_minecraft_username: "Defaced",
           p_minecraft_uuid: "",
         });
@@ -321,7 +321,7 @@ describe("gedu session feed", () => {
       const { error } = await geduAuth.rpc("record_attendance", {
         p_group_id: GROUP_MINE,
         p_session_date: YESTERDAY,
-        p_gamer_id: TEST_IDS.GAMER_2,
+        p_participant_id: TEST_IDS.GAMER_2,
         p_status: "present",
       });
       expect(error?.code).toBe("42501");
@@ -329,7 +329,7 @@ describe("gedu session feed", () => {
 
     it("refuses a Minecraft edit for a child the gedu does not teach", async () => {
       const { error } = await geduAuth.rpc("set_group_member_minecraft", {
-        p_gamer_id: TEST_IDS.GAMER_2,
+        p_participant_id: TEST_IDS.GAMER_2,
         p_minecraft_username: "Defaced",
         p_minecraft_uuid: "",
       });
@@ -340,7 +340,7 @@ describe("gedu session feed", () => {
       const { data, error } = await geduAuth.rpc(
         "set_group_member_minecraft",
         {
-          p_gamer_id: TEST_IDS.GAMER,
+          p_participant_id: TEST_IDS.GAMER,
           p_minecraft_username: "FeedFixture",
           p_minecraft_uuid: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
         },
@@ -360,7 +360,7 @@ describe("gedu session feed", () => {
       const { data, error } = await geduAuth.rpc(
         "set_group_member_minecraft",
         {
-          p_gamer_id: TEST_IDS.GAMER,
+          p_participant_id: TEST_IDS.GAMER,
           p_minecraft_username: "",
           p_minecraft_uuid: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
         },
@@ -415,7 +415,7 @@ describe("gedu session feed", () => {
       const { error } = await geduAuth.rpc("record_attendance", {
         p_group_id: GROUP_MINE,
         p_session_date: TOMORROW,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_status: "present",
       });
       // Marks open at the scheduled START, and the server is what enforces it —
@@ -441,7 +441,7 @@ describe("gedu session feed", () => {
       const { data, error } = await geduAuth.rpc("record_attendance", {
         p_group_id: GROUP_MINE,
         p_session_date: TODAY,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_status: "present",
       });
       expect(error).toBeNull();
@@ -454,7 +454,7 @@ describe("gedu session feed", () => {
       const { error } = await geduAuth.rpc("record_attendance", {
         p_group_id: GROUP_MINE,
         p_session_date: YESTERDAY,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_status: "maybe",
       });
       expect(error?.code).toBe("23514");
@@ -569,7 +569,7 @@ describe("gedu session feed", () => {
         const { error } = await geduAuth.rpc("record_attendance", {
           p_group_id: GROUP_MINE,
           p_session_date: YESTERDAY,
-          p_gamer_id: TEST_IDS.GAMER,
+          p_participant_id: TEST_IDS.GAMER,
           p_status: status,
         });
         expect(error).toBeNull();
@@ -577,7 +577,7 @@ describe("gedu session feed", () => {
         const { data: rows } = await admin
           .from("session_attendance")
           .select("status")
-          .eq("gamer_id", TEST_IDS.GAMER);
+          .eq("participant_id", TEST_IDS.GAMER);
 
         expect(rows?.[0]?.status).toBe(status);
       }
@@ -587,7 +587,7 @@ describe("gedu session feed", () => {
       const { error } = await geduAuth.rpc("record_attendance", {
         p_group_id: GROUP_MINE,
         p_session_date: TWO_DAYS_AGO,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_status: "present",
       });
       expect(error).toBeNull();
@@ -607,7 +607,7 @@ describe("gedu session feed", () => {
       await geduAuth.rpc("record_attendance", {
         p_group_id: GROUP_MINE,
         p_session_date: YESTERDAY,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_status: "absent",
       });
 
@@ -616,7 +616,7 @@ describe("gedu session feed", () => {
       const { error } = await geduAuth.rpc("record_attendance", {
         p_group_id: GROUP_MINE,
         p_session_date: YESTERDAY,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_status: "",
       });
       expect(error).toBeNull();
@@ -624,7 +624,7 @@ describe("gedu session feed", () => {
       const { count } = await admin
         .from("session_attendance")
         .select("*", { count: "exact", head: true })
-        .eq("gamer_id", TEST_IDS.GAMER);
+        .eq("participant_id", TEST_IDS.GAMER);
 
       // Unmarked has to stay the ABSENCE of a record — a stored "unmarked"
       // would be indistinguishable from an answer to every reader.
@@ -636,7 +636,7 @@ describe("gedu session feed", () => {
         await geduAuth.rpc("record_attendance", {
           p_group_id: GROUP_MINE,
           p_session_date: YESTERDAY,
-          p_gamer_id: TEST_IDS.GAMER,
+          p_participant_id: TEST_IDS.GAMER,
           p_status: status,
         });
       }
@@ -644,7 +644,7 @@ describe("gedu session feed", () => {
       const { count } = await admin
         .from("session_attendance")
         .select("*", { count: "exact", head: true })
-        .eq("gamer_id", TEST_IDS.GAMER);
+        .eq("participant_id", TEST_IDS.GAMER);
 
       expect(count).toBe(1);
     });
@@ -665,7 +665,7 @@ describe("gedu session feed", () => {
       await geduAuth.rpc("record_attendance", {
         p_group_id: GROUP_MINE,
         p_session_date: YESTERDAY,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_status: "present",
       });
       await geduAuth.rpc("set_group_notes", {
@@ -782,7 +782,7 @@ describe("gedu session feed", () => {
         const { error } = await geduAuth.rpc("record_attendance", {
           p_group_id: GROUP_MINE,
           p_session_date: date,
-          p_gamer_id: TEST_IDS.GAMER,
+          p_participant_id: TEST_IDS.GAMER,
           p_status: "present",
         });
         expect(error).toBeNull();
@@ -981,7 +981,7 @@ describe("gedu session feed", () => {
       const { error } = await geduAuth.rpc("record_attendance", {
         p_group_id: GROUP_MINE,
         p_session_date: dayOffset(-20),
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_status: "present",
       });
       expect(error).toBeNull();

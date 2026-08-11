@@ -40,7 +40,7 @@ export const POST = defineRoute({
   handler: async ({ supabase, body }) => {
     const { data, error } = await supabase.rpc("join_product_waitlist", {
       p_product_id: body.productId,
-      p_gamer_id: body.gamerId,
+      p_participant_id: body.participantId,
     });
 
     if (error) throw error;

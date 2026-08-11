@@ -91,7 +91,7 @@ describe("POST /api/participations/waitlist", () => {
     mockUnauthenticated();
 
     const res = await POST(
-      createRequest({ productId: PRODUCT_ID, gamerId: GAMER_ID }),
+      createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
     );
 
     expect(res.status).toBe(401);
@@ -102,7 +102,7 @@ describe("POST /api/participations/waitlist", () => {
     mockForbidden("gamer");
 
     const res = await POST(
-      createRequest({ productId: PRODUCT_ID, gamerId: GAMER_ID }),
+      createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
     );
     const data = await res.json();
 
@@ -115,7 +115,7 @@ describe("POST /api/participations/waitlist", () => {
     mockForbidden("gedu");
 
     const res = await POST(
-      createRequest({ productId: PRODUCT_ID, gamerId: GAMER_ID }),
+      createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
     );
 
     expect(res.status).toBe(403);
@@ -126,7 +126,7 @@ describe("POST /api/participations/waitlist", () => {
     mockForbidden("admin");
 
     const res = await POST(
-      createRequest({ productId: PRODUCT_ID, gamerId: GAMER_ID }),
+      createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
     );
 
     expect(res.status).toBe(403);
@@ -149,22 +149,22 @@ describe("POST /api/participations/waitlist", () => {
   it("returns 400 when productId is missing", async () => {
     mockAuthenticatedCustomer();
 
-    const res = await POST(createRequest({ gamerId: GAMER_ID }));
+    const res = await POST(createRequest({ participantId: GAMER_ID }));
     const data = await res.json();
 
     expect(res.status).toBe(400);
-    expect(data.error).toMatch(/(productId|gamerId): Required/);
+    expect(data.error).toMatch(/(productId|participantId): Required/);
     expect(mockRpc).not.toHaveBeenCalled();
   });
 
-  it("returns 400 when gamerId is missing", async () => {
+  it("returns 400 when participantId is missing", async () => {
     mockAuthenticatedCustomer();
 
     const res = await POST(createRequest({ productId: PRODUCT_ID }));
     const data = await res.json();
 
     expect(res.status).toBe(400);
-    expect(data.error).toMatch(/(productId|gamerId): Required/);
+    expect(data.error).toMatch(/(productId|participantId): Required/);
     expect(mockRpc).not.toHaveBeenCalled();
   });
 
@@ -182,7 +182,7 @@ describe("POST /api/participations/waitlist", () => {
     });
 
     const res = await POST(
-      createRequest({ productId: PRODUCT_ID, gamerId: GAMER_ID }),
+      createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
     );
     const data = await res.json();
 
@@ -194,7 +194,7 @@ describe("POST /api/participations/waitlist", () => {
     });
     expect(mockRpc).toHaveBeenCalledWith("join_product_waitlist", {
       p_product_id: PRODUCT_ID,
-      p_gamer_id: GAMER_ID,
+      p_participant_id: GAMER_ID,
     });
   });
 
@@ -212,7 +212,7 @@ describe("POST /api/participations/waitlist", () => {
     });
 
     const res = await POST(
-      createRequest({ productId: PRODUCT_ID, gamerId: GAMER_ID }),
+      createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
     );
     const data = await res.json();
 
@@ -233,7 +233,7 @@ describe("POST /api/participations/waitlist", () => {
     });
 
     const res = await POST(
-      createRequest({ productId: PRODUCT_ID, gamerId: GAMER_ID }),
+      createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
     );
     const data = await res.json();
 
@@ -252,7 +252,7 @@ describe("POST /api/participations/waitlist", () => {
     });
 
     const res = await POST(
-      createRequest({ productId: PRODUCT_ID, gamerId: GAMER_ID }),
+      createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
     );
     const data = await res.json();
 
@@ -270,7 +270,7 @@ describe("POST /api/participations/waitlist", () => {
     });
 
     const res = await POST(
-      createRequest({ productId: PRODUCT_ID, gamerId: GAMER_ID }),
+      createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
     );
 
     expect(res.status).toBe(403);
@@ -287,7 +287,7 @@ describe("POST /api/participations/waitlist", () => {
     });
 
     const res = await POST(
-      createRequest({ productId: PRODUCT_ID, gamerId: GAMER_ID }),
+      createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
     );
     const data = await res.json();
 
