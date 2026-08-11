@@ -225,7 +225,7 @@ describe("apply_group_changes", () => {
         .from("participations")
         .insert({
           product_id: PRODUCT_DELETE,
-          gamer_id: TEST_IDS.GAMER,
+          participant_id: TEST_IDS.GAMER,
           customer_id: TEST_IDS.CUSTOMER,
           status: "active",
           group_id: groupId,
@@ -372,7 +372,7 @@ describe("apply_group_changes", () => {
         .from("participations")
         .insert({
           product_id: PRODUCT_MOVES,
-          gamer_id: TEST_IDS.GAMER,
+          participant_id: TEST_IDS.GAMER,
           customer_id: TEST_IDS.CUSTOMER,
           status: "active",
           group_id: null,
@@ -580,14 +580,14 @@ describe("get_product_groups_with_details", () => {
     await admin.from("participations").insert([
       {
         product_id: PRODUCT_DETAILS,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
         group_id: groupA,
       },
       {
         product_id: PRODUCT_DETAILS,
-        gamer_id: TEST_IDS.GAMER_2,
+        participant_id: TEST_IDS.GAMER_2,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
         group_id: null,
@@ -649,7 +649,7 @@ describe("get_product_groups_with_details", () => {
     await admin.from("participations").insert([
       {
         product_id: PRODUCT_DETAILS,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
         group_id: groupA,
@@ -657,7 +657,7 @@ describe("get_product_groups_with_details", () => {
       },
       {
         product_id: PRODUCT_DETAILS,
-        gamer_id: TEST_IDS.GAMER_2,
+        participant_id: TEST_IDS.GAMER_2,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
         group_id: groupA,

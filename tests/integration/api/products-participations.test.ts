@@ -72,14 +72,14 @@ beforeEach(() => {
 describe("POST /api/admin/products/[id]/participations", () => {
   it("returns 401 when unauthenticated", async () => {
     mockUnauthenticated();
-    const response = await POST(createRequest({ gamerId: GAMER_ID }), { params });
+    const response = await POST(createRequest({ participantId: GAMER_ID }), { params });
     expect(response.status).toBe(401);
     expect(mockRpc).not.toHaveBeenCalled();
   });
 
   it("returns 403 when caller is not an admin", async () => {
     mockNonAdmin();
-    const response = await POST(createRequest({ gamerId: GAMER_ID }), { params });
+    const response = await POST(createRequest({ participantId: GAMER_ID }), { params });
     expect(response.status).toBe(403);
     expect(mockRpc).not.toHaveBeenCalled();
   });
@@ -89,7 +89,7 @@ describe("POST /api/admin/products/[id]/participations", () => {
     // a bypass of the handler's own check still gets nothing.
     mockAuthenticatedAdmin();
     rpcFails("42501", "Forbidden");
-    const response = await POST(createRequest({ gamerId: GAMER_ID }), { params });
+    const response = await POST(createRequest({ participantId: GAMER_ID }), { params });
     expect(response.status).toBe(403);
   });
 
@@ -100,19 +100,19 @@ describe("POST /api/admin/products/[id]/participations", () => {
     expect(mockRpc).not.toHaveBeenCalled();
   });
 
-  it("returns 400 when gamerId is missing", async () => {
+  it("returns 400 when participantId is missing", async () => {
     mockAuthenticatedAdmin();
     const response = await POST(createRequest({}), { params });
     expect(response.status).toBe(400);
     const error = getString(await response.json(), "error");
-    expect(error).toContain("gamerId");
+    expect(error).toContain("participantId");
     expect(mockRpc).not.toHaveBeenCalled();
   });
 
   it("returns 404 when the product does not exist", async () => {
     mockAuthenticatedAdmin();
     rpcFails("P0002", "product does not exist");
-    const response = await POST(createRequest({ gamerId: GAMER_ID }), { params });
+    const response = await POST(createRequest({ participantId: GAMER_ID }), { params });
     expect(response.status).toBe(404);
   });
 
@@ -120,7 +120,7 @@ describe("POST /api/admin/products/[id]/participations", () => {
     // consumer_club and "no linked parent" both come back as check_violation.
     mockAuthenticatedAdmin();
     rpcFails("23514", "admin enrollment is not supported for consumer clubs");
-    const response = await POST(createRequest({ gamerId: GAMER_ID }), { params });
+    const response = await POST(createRequest({ participantId: GAMER_ID }), { params });
     expect(response.status).toBe(400);
   });
 
@@ -130,7 +130,7 @@ describe("POST /api/admin/products/[id]/participations", () => {
       "23505",
       'duplicate key value violates unique constraint "uq_participations_active_or_waitlisted"',
     );
-    const response = await POST(createRequest({ gamerId: GAMER_ID }), { params });
+    const response = await POST(createRequest({ participantId: GAMER_ID }), { params });
     expect(response.status).toBe(409);
     const error = getString(await response.json(), "error");
     expect(error).toContain("already enrolled");
@@ -139,20 +139,20 @@ describe("POST /api/admin/products/[id]/participations", () => {
   it("returns 500 when the RPC result does not match its contract", async () => {
     mockAuthenticatedAdmin();
     mockRpc.mockResolvedValue({ data: { unexpected: true }, error: null });
-    const response = await POST(createRequest({ gamerId: GAMER_ID }), { params });
+    const response = await POST(createRequest({ participantId: GAMER_ID }), { params });
     expect(response.status).toBe(500);
   });
 
   it("happy path: calls the RPC with the URL product and returns the new id", async () => {
     mockAuthenticatedAdmin();
-    const response = await POST(createRequest({ gamerId: GAMER_ID }), { params });
+    const response = await POST(createRequest({ participantId: GAMER_ID }), { params });
 
     expect(response.status).toBe(200);
     const participationId = getString(await response.json(), "participation_id");
     expect(participationId).toBe(PARTICIPATION_ID);
     expect(mockRpc).toHaveBeenCalledWith("admin_enroll_gamer", {
       p_product_id: PRODUCT_ID,
-      p_gamer_id: GAMER_ID,
+      p_participant_id: GAMER_ID,
     });
   });
 });

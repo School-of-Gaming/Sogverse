@@ -72,7 +72,7 @@ describe("create_participation — external_contract (municipality) registration
   function register(productId: string, gamerId: string) {
     return admin.rpc("create_participation", {
       p_product_id: productId,
-      p_gamer_id: gamerId,
+      p_participant_id: gamerId,
       p_customer_id: TEST_IDS.CUSTOMER,
       p_purchase_shape: "external",
       p_currency: "eur",

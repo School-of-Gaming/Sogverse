@@ -101,13 +101,13 @@ describe("participations race + idempotency", () => {
         const [a, b] = await Promise.all([
           admin.rpc("confirm_paid_participation", {
             p_product_id: PRODUCT_RACE_1SEAT,
-            p_gamer_id: TEST_IDS.GAMER,
+            p_participant_id: TEST_IDS.GAMER,
             p_customer_id: TEST_IDS.CUSTOMER,
             p_checkout_session_id: `cs_race_${i}_a`,
           }),
           admin.rpc("confirm_paid_participation", {
             p_product_id: PRODUCT_RACE_1SEAT,
-            p_gamer_id: TEST_IDS.GAMER,
+            p_participant_id: TEST_IDS.GAMER,
             p_customer_id: TEST_IDS.CUSTOMER,
             p_checkout_session_id: `cs_race_${i}_b`,
           }),
@@ -145,7 +145,7 @@ describe("participations race + idempotency", () => {
       // abandoned checkout has to leave the product exactly as it was.
       const validated = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_RACE_1SEAT,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
@@ -167,14 +167,14 @@ describe("participations race + idempotency", () => {
     it("an active seat fills the product for everyone else", async () => {
       await admin.rpc("confirm_paid_participation", {
         p_product_id: PRODUCT_RACE_1SEAT,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_checkout_session_id: "cs_fills_the_seat",
       });
 
       const second = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_RACE_1SEAT,
-        p_gamer_id: TEST_IDS.GAMER_2,
+        p_participant_id: TEST_IDS.GAMER_2,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
@@ -194,7 +194,7 @@ describe("participations race + idempotency", () => {
         // needs a test rather than a bug report.
         const { error: seedErr } = await admin.from("participations").insert({
           product_id: PRODUCT_RACE_1SEAT,
-          gamer_id: TEST_IDS.GAMER,
+          participant_id: TEST_IDS.GAMER,
           customer_id: TEST_IDS.CUSTOMER,
           status,
           waitlisted_at:
@@ -204,7 +204,7 @@ describe("participations race + idempotency", () => {
 
         const again = await admin.rpc("create_participation", {
           p_product_id: PRODUCT_RACE_1SEAT,
-          p_gamer_id: TEST_IDS.GAMER,
+          p_participant_id: TEST_IDS.GAMER,
           p_customer_id: TEST_IDS.CUSTOMER,
           p_purchase_shape: "subscription_monthly",
           p_currency: "eur",
@@ -231,7 +231,7 @@ describe("participations race + idempotency", () => {
     it("creates an active row and records the session that bought it", async () => {
       const result = await admin.rpc("confirm_paid_participation", {
         p_product_id: PRODUCT_CONFIRM,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_checkout_session_id: "cs_confirm_1",
       });
@@ -257,13 +257,13 @@ describe("participations race + idempotency", () => {
       // would cancel a paying customer's live subscription.
       const first = await admin.rpc("confirm_paid_participation", {
         p_product_id: PRODUCT_CONFIRM,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_checkout_session_id: "cs_replay_1",
       });
       const second = await admin.rpc("confirm_paid_participation", {
         p_product_id: PRODUCT_CONFIRM,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_checkout_session_id: "cs_replay_1",
       });
@@ -283,7 +283,7 @@ describe("participations race + idempotency", () => {
         .from("participations")
         .select("id")
         .eq("product_id", PRODUCT_CONFIRM)
-        .eq("gamer_id", TEST_IDS.GAMER);
+        .eq("participant_id", TEST_IDS.GAMER);
       expect(rows?.length).toBe(1);
     });
 
@@ -295,7 +295,7 @@ describe("participations race + idempotency", () => {
       // of looping on Stripe retries.
       const first = await admin.rpc("confirm_paid_participation", {
         p_product_id: PRODUCT_CONFIRM,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_checkout_session_id: "cs_dup_first",
       });
@@ -303,7 +303,7 @@ describe("participations race + idempotency", () => {
 
       const second = await admin.rpc("confirm_paid_participation", {
         p_product_id: PRODUCT_CONFIRM,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_checkout_session_id: "cs_dup_second",
       });
@@ -320,7 +320,7 @@ describe("participations race + idempotency", () => {
         .from("participations")
         .select("id")
         .eq("product_id", PRODUCT_CONFIRM)
-        .eq("gamer_id", TEST_IDS.GAMER);
+        .eq("participant_id", TEST_IDS.GAMER);
       expect(rows?.length).toBe(1);
     });
 
@@ -333,7 +333,7 @@ describe("participations race + idempotency", () => {
         .from("participations")
         .insert({
           product_id: PRODUCT_CONFIRM,
-          gamer_id: TEST_IDS.GAMER_2,
+          participant_id: TEST_IDS.GAMER_2,
           customer_id: TEST_IDS.CUSTOMER,
           status: "waitlisted",
           waitlisted_at: new Date().toISOString(),
@@ -343,7 +343,7 @@ describe("participations race + idempotency", () => {
 
       const result = await admin.rpc("confirm_paid_participation", {
         p_product_id: PRODUCT_CONFIRM,
-        p_gamer_id: TEST_IDS.GAMER_2,
+        p_participant_id: TEST_IDS.GAMER_2,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_checkout_session_id: "cs_waitlist_clash",
       });
@@ -357,7 +357,7 @@ describe("participations race + idempotency", () => {
     it("raises for a product that does not exist", async () => {
       const result = await admin.rpc("confirm_paid_participation", {
         p_product_id: "00000000-0000-0000-0000-000000000fff",
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_checkout_session_id: "cs_no_product",
       });
@@ -385,11 +385,11 @@ describe("participations race + idempotency", () => {
       const [a, b] = await Promise.all([
         customer.rpc("join_product_waitlist", {
           p_product_id: PRODUCT_WAITLIST,
-          p_gamer_id: TEST_IDS.GAMER,
+          p_participant_id: TEST_IDS.GAMER,
         }),
         customer.rpc("join_product_waitlist", {
           p_product_id: PRODUCT_WAITLIST,
-          p_gamer_id: TEST_IDS.GAMER_2,
+          p_participant_id: TEST_IDS.GAMER_2,
         }),
       ]);
 
@@ -411,14 +411,14 @@ describe("participations race + idempotency", () => {
     it("repeat call for the same (product, gamer) returns the existing row", async () => {
       const first = await customer.rpc("join_product_waitlist", {
         p_product_id: PRODUCT_WAITLIST,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
       });
       const firstId = getString(first.data, "participation_id");
       const firstPos = getNumber(first.data, "waitlist_position");
 
       const second = await customer.rpc("join_product_waitlist", {
         p_product_id: PRODUCT_WAITLIST,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
       });
       expect(getString(second.data, "participation_id")).toBe(firstId);
       expect(getNumber(second.data, "waitlist_position")).toBe(firstPos);
@@ -428,7 +428,7 @@ describe("participations race + idempotency", () => {
         .from("participations")
         .select("id")
         .eq("product_id", PRODUCT_WAITLIST)
-        .eq("gamer_id", TEST_IDS.GAMER);
+        .eq("participant_id", TEST_IDS.GAMER);
       expect(rows?.length).toBe(1);
     });
   });
@@ -455,7 +455,7 @@ describe("participations race + idempotency", () => {
     it("first free signup activates; second returns 'full'", async () => {
       const first = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_FREE_CAP,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_purchase_shape: "free",
         p_currency: "eur",
@@ -465,7 +465,7 @@ describe("participations race + idempotency", () => {
 
       const second = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_FREE_CAP,
-        p_gamer_id: TEST_IDS.GAMER_2,
+        p_participant_id: TEST_IDS.GAMER_2,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_purchase_shape: "free",
         p_currency: "eur",
@@ -511,7 +511,7 @@ describe("participations race + idempotency", () => {
       // The one seat, taken.
       const filled = await admin.rpc("confirm_paid_participation", {
         p_product_id: PRODUCT_PAID_CAP,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_checkout_session_id: "cs_soft_cap_first",
       });
@@ -522,7 +522,7 @@ describe("participations race + idempotency", () => {
       // The gate does its job: a NEW entrant is turned away before Stripe.
       const gate = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_PAID_CAP,
-        p_gamer_id: TEST_IDS.GAMER_2,
+        p_participant_id: TEST_IDS.GAMER_2,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
@@ -533,7 +533,7 @@ describe("participations race + idempotency", () => {
       // seat regardless — this is the soft half, and it must stay true.
       const overCap = await admin.rpc("confirm_paid_participation", {
         p_product_id: PRODUCT_PAID_CAP,
-        p_gamer_id: TEST_IDS.GAMER_2,
+        p_participant_id: TEST_IDS.GAMER_2,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_checkout_session_id: "cs_soft_cap_over",
       });

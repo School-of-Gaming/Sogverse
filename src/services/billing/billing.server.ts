@@ -54,7 +54,7 @@ export async function resolveBillingAccountsViaRls(
       .eq("user_id", userId)
       .maybeSingle(),
     // `!inner` on both embeds mirrors the schema (`participation_id` and
-    // `gamer_id` are NOT-NULL FKs), so the inferred row treats them as
+    // `participant_id` are NOT-NULL FKs), so the inferred row treats them as
     // non-null. Ordered so the button order is stable across renders.
     //
     // The translation embed names its columns rather than taking `*`: these
@@ -67,7 +67,7 @@ export async function resolveBillingAccountsViaRls(
         `
           stripe_customer_id,
           participation:participations!inner(
-            gamer:profiles!participations_gamer_id_fkey!inner(first_name),
+            gamer:profiles!participations_participant_id_fkey!inner(first_name),
             product:products!inner(product_translations(locale, name))
           )
         `,

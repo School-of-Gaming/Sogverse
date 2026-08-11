@@ -233,7 +233,7 @@ function buildGamerParticipationsQuery(
     .from("participations")
     .select(
       `
-        id, gamer_id, status, signed_up_at,
+        id, participant_id, status, signed_up_at,
         product:products!inner(
           id, product_type,
           product_translations(*)
@@ -241,8 +241,8 @@ function buildGamerParticipationsQuery(
         group:product_groups(name)
       `,
     )
-    .in("gamer_id", gamerIds)
-    .order("gamer_id", { ascending: true })
+    .in("participant_id", gamerIds)
+    .order("participant_id", { ascending: true })
     .order("signed_up_at", { ascending: false });
 }
 
@@ -268,7 +268,7 @@ export interface ParticipationCounts {
   waitlistCount: number;
   /**
    * Per-gamer signup state for the logged-in customer's children on this
-   * product, keyed by `gamer_id`. A gamer with no row is simply absent from
+   * product, keyed by `participant_id`. A gamer with no row is simply absent from
    * the map. The detail page's signup form uses this to disable each
    * already-signed-up child in the picker and label them in place.
    *
@@ -281,7 +281,7 @@ export interface ParticipationCounts {
 
 export type CreateParticipationInput = {
   productId: string;
-  gamerId: string;
+  participantId: string;
   purchaseShape: PurchaseShape;
   currency: SupportedCurrency;
 };
@@ -313,7 +313,7 @@ export type {
 
 export type JoinWaitlistInput = {
   productId: string;
-  gamerId: string;
+  participantId: string;
 };
 
 export type LeaveWaitlistInput = {
@@ -371,7 +371,7 @@ export class ParticipationsService {
    * Audience selects which column the row is keyed off:
    *   - 'customer' → `customer_id = auth.uid()`: every participation the
    *     parent paid for, across all their kids.
-   *   - 'gamer' → `gamer_id = auth.uid()`: only the rows belonging to the
+   *   - 'gamer' → `participant_id = auth.uid()`: only the rows belonging to the
    *     logged-in gamer.
    * The matching RLS policy gates the other audience out either way; the
    * filter is here so the network call doesn't drag rows the policy would
@@ -385,7 +385,7 @@ export class ParticipationsService {
     if (!userId) return [];
 
     const audienceColumn =
-      audience === "customer" ? "customer_id" : "gamer_id";
+      audience === "customer" ? "customer_id" : "participant_id";
 
     // Fetch the sessions and the subscription-state signals concurrently. The
     // signals come from `get_my_participation_subscription_states` (00093)
@@ -474,7 +474,7 @@ export class ParticipationsService {
     if (!userId) return [];
 
     const audienceColumn =
-      audience === "customer" ? "customer_id" : "gamer_id";
+      audience === "customer" ? "customer_id" : "participant_id";
 
     const [{ data, error }, { data: positionRows, error: positionError }] =
       await Promise.all([
@@ -538,7 +538,7 @@ export class ParticipationsService {
     if (userId) {
       const { data: mine } = await this.supabase
         .from("participations")
-        .select("product_id, gamer_id, status")
+        .select("product_id, participant_id, status")
         .eq("customer_id", userId)
         .in("product_id", productIds);
       if (mine) {
@@ -546,10 +546,10 @@ export class ParticipationsService {
           const existing = countsByProduct.get(row.product_id);
           if (!existing) continue;
           const next = mergeGamerSignupState(
-            existing.myGamerStates[row.gamer_id],
+            existing.myGamerStates[row.participant_id],
             row.status,
           );
-          if (next) existing.myGamerStates[row.gamer_id] = next;
+          if (next) existing.myGamerStates[row.participant_id] = next;
         }
       }
     }
@@ -563,7 +563,7 @@ export class ParticipationsService {
    * `customer_select_own_participations` (`customer_id = auth.uid()`) is the
    * intended path — a parent reading their own purchase. Note RLS *also* lets a
    * gamer read their OWN row (`gamer_select_own_participations`,
-   * `gamer_id = auth.uid()`), so a logged-in child who somehow has the `?p=`
+   * `participant_id = auth.uid()`), so a logged-in child who somehow has the `?p=`
    * link can load their own confirmation. That's not the intended flow but it's
    * harmless: own data only (no IDOR), and the product detail is public anyway.
    * Returns null when the id matches nothing the caller may see (a stale or
@@ -582,7 +582,7 @@ export class ParticipationsService {
       .select(
         `
           id, status, product_id,
-          gamer:profiles!participations_gamer_id_fkey(first_name)
+          gamer:profiles!participations_participant_id_fkey(first_name)
         `,
       )
       .eq("id", participationId)
@@ -623,7 +623,7 @@ export class ParticipationsService {
       .select(
         `
           id, status, product_id,
-          gamer:profiles!participations_gamer_id_fkey(first_name)
+          gamer:profiles!participations_participant_id_fkey(first_name)
         `,
       )
       .eq("stripe_checkout_session_id", checkoutSessionId)
@@ -657,7 +657,7 @@ export class ParticipationsService {
       .from("participations")
       .select("id")
       .eq("product_id", productId)
-      .eq("gamer_id", gamerId)
+      .eq("participant_id", gamerId)
       .in("status", ["active", "waitlisted", "completed"])
       .maybeSingle();
 
@@ -673,7 +673,7 @@ export class ParticipationsService {
    * stamped-at-join value join_waitlist returns.
    *
    * Backed by the get_waitlist_position RPC: SECURITY DEFINER so it can count
-   * past the caller's RLS, but owner-authorized (customer_id OR gamer_id) and
+   * past the caller's RLS, but owner-authorized (customer_id OR participant_id) and
    * returns ONLY the integer. Null when the row is unknown, not waitlisted, or
    * not the caller's — the contract schema makes that nullability explicit
    * (codegen types the RPC as a bare number). Uses the injected RLS-scoped
@@ -754,7 +754,7 @@ export class ParticipationsService {
 
 /**
  * Builds the upcoming-sessions query for one audience. Both embeds use
- * `!inner` (`product_id` and `gamer_id` are NOT-NULL FKs, so an inner join
+ * `!inner` (`product_id` and `participant_id` are NOT-NULL FKs, so an inner join
  * drops nothing), which lets the inferred row treat `product` and `gamer` as
  * non-null — no post-filter, no `!` assertions in the mapper. Standalone so
  * the row type can be inferred via `QueryData` with no hand-written shape and
@@ -762,7 +762,7 @@ export class ParticipationsService {
  */
 function buildMyUpcomingSessionsQuery(
   supabase: AppSupabaseClient,
-  audienceColumn: "customer_id" | "gamer_id",
+  audienceColumn: "customer_id" | "participant_id",
   userId: string,
 ) {
   return supabase
@@ -770,7 +770,7 @@ function buildMyUpcomingSessionsQuery(
     .select(
       `
         id,
-        gamer_id,
+        participant_id,
         group_id,
         product:products!inner(
           id, product_type, timezone, start_date, end_date, is_remote,
@@ -778,7 +778,7 @@ function buildMyUpcomingSessionsQuery(
           schedule_slots(weekday, start_time, duration_minutes),
           location:locations(name, name_i18n)
         ),
-        gamer:profiles!participations_gamer_id_fkey!inner(
+        gamer:profiles!participations_participant_id_fkey!inner(
           first_name
         )
       `,
@@ -809,7 +809,7 @@ type RawMyUpcomingSessionRow = QueryData<
  */
 function buildMyWaitlistQuery(
   supabase: AppSupabaseClient,
-  audienceColumn: "customer_id" | "gamer_id",
+  audienceColumn: "customer_id" | "participant_id",
   userId: string,
 ) {
   return supabase
@@ -817,13 +817,13 @@ function buildMyWaitlistQuery(
     .select(
       `
         id,
-        gamer_id,
+        participant_id,
         product:products!inner(
           product_type, timezone, start_date, end_date, is_remote,
           product_translations(*),
           schedule_slots(weekday, start_time, duration_minutes)
         ),
-        gamer:profiles!participations_gamer_id_fkey!inner(
+        gamer:profiles!participations_participant_id_fkey!inner(
           first_name
         )
       `,
@@ -844,12 +844,12 @@ function toMyUpcomingSessionRow(
   // Both non-null via the `!inner` joins in buildMyUpcomingSessionsQuery.
   const { product, gamer } = row;
   // Mirror the purchased-card fallback chain so a missing first_name still
-  // renders something readable. The seed comes from `gamer_id` regardless,
+  // renders something readable. The seed comes from `participant_id` regardless,
   // so the identicon stays stable across name edits.
-  const firstName = gamer.first_name || row.gamer_id.slice(0, 8);
+  const firstName = gamer.first_name || row.participant_id.slice(0, 8);
   return {
     participationId: row.id,
-    gamer: { id: row.gamer_id, firstName },
+    gamer: { id: row.participant_id, firstName },
     product: {
       id: product.id,
       type: product.product_type,
@@ -885,8 +885,8 @@ function toMyWaitlistRow(
   return {
     participationId: row.id,
     gamer: {
-      id: row.gamer_id,
-      firstName: gamer.first_name || row.gamer_id.slice(0, 8),
+      id: row.participant_id,
+      firstName: gamer.first_name || row.participant_id.slice(0, 8),
     },
     product: {
       type: product.product_type,

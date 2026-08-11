@@ -45,7 +45,7 @@ export const PATCH = defineRoute({
         : await lookupMinecraftUser(minecraftUsername);
 
     const { data, error } = await supabase.rpc("set_group_member_minecraft", {
-      p_gamer_id: params.gamerId,
+      p_participant_id: params.gamerId,
       // The name Mojang gave back wins over the one that was typed: usernames
       // are case-preserving, and storing the canonical spelling is what makes
       // the roster row agree with the skin the client renders beside it.

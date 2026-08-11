@@ -507,7 +507,7 @@ describe("update_product", () => {
       });
       const { error } = await admin.from("participations").insert({
         product_id: DECOY_PRODUCT_ID,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "waitlisted",
         waitlisted_at: new Date().toISOString(),
@@ -519,10 +519,10 @@ describe("update_product", () => {
     async function expectDecoyQueueUntouched(): Promise<void> {
       const { data } = await admin
         .from("participations")
-        .select("gamer_id, status")
+        .select("participant_id, status")
         .eq("product_id", DECOY_PRODUCT_ID);
       expect(data).toEqual([
-        { gamer_id: TEST_IDS.GAMER, status: "waitlisted" },
+        { participant_id: TEST_IDS.GAMER, status: "waitlisted" },
       ]);
     }
 
@@ -539,16 +539,16 @@ describe("update_product", () => {
         .insert(
           rows.map((row) => ({
             product_id: WAITLIST_PRODUCT_ID,
-            gamer_id: row.gamerId,
+            participant_id: row.gamerId,
             customer_id: TEST_IDS.CUSTOMER,
             status: row.status,
             waitlisted_at:
               row.status === "waitlisted" ? new Date().toISOString() : null,
           })),
         )
-        .select("id, gamer_id");
+        .select("id, participant_id");
       expect(error).toBeNull();
-      return Object.fromEntries(data!.map((r) => [r.gamer_id, r.id]));
+      return Object.fromEntries(data!.map((r) => [r.participant_id, r.id]));
     }
 
     /**
@@ -578,13 +578,13 @@ describe("update_product", () => {
       expect(error).toBeNull();
     }
 
-    /** The product's surviving participations, as gamer_id → status. */
+    /** The product's surviving participations, as participant_id → status. */
     async function survivors(): Promise<Record<string, string>> {
       const { data } = await admin
         .from("participations")
-        .select("gamer_id, status")
+        .select("participant_id, status")
         .eq("product_id", WAITLIST_PRODUCT_ID);
-      return Object.fromEntries(data!.map((r) => [r.gamer_id, r.status]));
+      return Object.fromEntries(data!.map((r) => [r.participant_id, r.status]));
     }
 
     it("uncapping a capped product deletes its waitlisted rows and leaves the active ones", async () => {

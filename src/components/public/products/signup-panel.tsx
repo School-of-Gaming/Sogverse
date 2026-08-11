@@ -76,7 +76,7 @@ export function SignupPanel({
     setCommitting(true);
     const input: CreateParticipationInput = {
       productId: product.id,
-      gamerId: fields.selectedGamerId,
+      participantId: fields.selectedGamerId,
       purchaseShape,
       currency: fields.currency,
     };
@@ -118,7 +118,7 @@ export function SignupPanel({
     setSubmitError(null);
     setCommitting(true);
     waitlistMutation.mutate(
-      { productId: product.id, gamerId: fields.selectedGamerId },
+      { productId: product.id, participantId: fields.selectedGamerId },
       {
         onSuccess: (response) => {
           // Mirror the free-signup branch: land the parent on the summary

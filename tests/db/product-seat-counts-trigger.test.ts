@@ -78,7 +78,7 @@ describe("product_seat_counts trigger", () => {
   it("inserting an active row increments active_count", async () => {
     await admin.from("participations").insert({
       product_id: PRODUCT_TRIG,
-      gamer_id: TEST_IDS.GAMER,
+      participant_id: TEST_IDS.GAMER,
       customer_id: TEST_IDS.CUSTOMER,
       status: "active",
     });
@@ -92,7 +92,7 @@ describe("product_seat_counts trigger", () => {
   it("inserting a waitlisted row increments waitlist_count", async () => {
     await admin.from("participations").insert({
       product_id: PRODUCT_TRIG,
-      gamer_id: TEST_IDS.GAMER,
+      participant_id: TEST_IDS.GAMER,
       customer_id: TEST_IDS.CUSTOMER,
       status: "waitlisted",
       waitlisted_at: new Date().toISOString(),
@@ -111,7 +111,7 @@ describe("product_seat_counts trigger", () => {
       .from("participations")
       .insert({
         product_id: PRODUCT_TRIG,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "waitlisted",
         waitlisted_at: new Date().toISOString(),
@@ -140,7 +140,7 @@ describe("product_seat_counts trigger", () => {
       .from("participations")
       .insert({
         product_id: PRODUCT_TRIG,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
       })
@@ -163,7 +163,7 @@ describe("product_seat_counts trigger", () => {
       .from("participations")
       .insert({
         product_id: PRODUCT_TRIG,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
       })
@@ -185,20 +185,20 @@ describe("product_seat_counts trigger", () => {
     // a bulk insert so the AFTER-INSERT trigger fires on each row.
     //
     // Two rows is the ceiling here, and the constraint is real rather than
-    // laziness: the partial unique index `(product_id, gamer_id) WHERE status
+    // laziness: the partial unique index `(product_id, participant_id) WHERE status
     // IN (active, waitlisted, completed)` allows one row per gamer per product
     // across every status the rollup can count, and the seed data carries two
     // gamers. There is no longer a status outside that index to stack extra
     // rows with.
     await admin.from("participations").insert({
       product_id: PRODUCT_TRIG,
-      gamer_id: TEST_IDS.GAMER,
+      participant_id: TEST_IDS.GAMER,
       customer_id: TEST_IDS.CUSTOMER,
       status: "active",
     });
     await admin.from("participations").insert({
       product_id: PRODUCT_TRIG,
-      gamer_id: TEST_IDS.GAMER_2,
+      participant_id: TEST_IDS.GAMER_2,
       customer_id: TEST_IDS.CUSTOMER,
       status: "waitlisted",
       waitlisted_at: new Date().toISOString(),

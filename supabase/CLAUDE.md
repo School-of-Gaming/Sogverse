@@ -247,7 +247,12 @@ admin-client-called ones — and classify any function exposed to `authenticated
 in the DB test suite's authorization spine (see below). A forgotten grant fails closed as
 `permission denied` in CI's DB tests; never "fix" that with blanket `ON ALL TABLES`
 grants or by re-adding auto-expose `ALTER DEFAULT PRIVILEGES` — the failure is the
-feature. The `REVOKE EXECUTE` boilerplate in older migrations is historical and harmless.
+feature. The `REVOKE EXECUTE ... FROM PUBLIC` boilerplate is **not** historical — it is
+load-bearing: a created (or drop/recreated) function comes back `PUBLIC`-executable
+(observed on staging during `00172`, where a drop/recreate cycle briefly left
+service-role-only paid-seat writers callable by `anon` until re-revoked), so a migration
+that creates or recreates a function must pair its per-role `GRANT`s with an explicit
+`REVOKE EXECUTE ... FROM PUBLIC`.
 Extra care with `SECURITY DEFINER` functions: they bypass RLS, so granting one broadly
 is a privilege escalation vector.
 

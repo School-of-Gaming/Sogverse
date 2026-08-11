@@ -68,7 +68,7 @@ describe("voice_zones + voice_private_zone_occupants RLS", () => {
 
     await admin.from("participations").insert({
       product_id: PRODUCT_X,
-      gamer_id: TEST_IDS.GAMER,
+      participant_id: TEST_IDS.GAMER,
       customer_id: TEST_IDS.CUSTOMER,
       status: "active",
       group_id: groupX1,

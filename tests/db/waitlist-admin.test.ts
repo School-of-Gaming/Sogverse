@@ -114,7 +114,7 @@ describe("waitlist — admin read + promote/demote + self position", () => {
   async function joinWaitlist(gamerId: string): Promise<string> {
     const res = await customer.rpc("join_product_waitlist", {
       p_product_id: PRODUCT_MUNI,
-      p_gamer_id: gamerId,
+      p_participant_id: gamerId,
     });
     expect(res.error).toBeNull();
     return joinWaitlistRpcResult.parse(res.data).participation_id;
@@ -124,7 +124,7 @@ describe("waitlist — admin read + promote/demote + self position", () => {
   async function registerActive(gamerId: string): Promise<string> {
     const res = await admin.rpc("create_participation", {
       p_product_id: PRODUCT_MUNI,
-      p_gamer_id: gamerId,
+      p_participant_id: gamerId,
       p_customer_id: TEST_IDS.CUSTOMER,
       p_purchase_shape: "external",
       p_currency: "eur",
@@ -169,20 +169,20 @@ describe("waitlist — admin read + promote/demote + self position", () => {
       .insert([
         {
           product_id: PRODUCT_FREE_CLUB,
-          gamer_id: TEST_IDS.GAMER,
+          participant_id: TEST_IDS.GAMER,
           customer_id: TEST_IDS.CUSTOMER,
           status: "active",
         },
         {
           product_id: PRODUCT_FREE_CLUB,
-          gamer_id: TEST_IDS.GAMER_2,
+          participant_id: TEST_IDS.GAMER_2,
           customer_id: TEST_IDS.CUSTOMER,
           status: "active",
         },
       ])
-      .select("id, gamer_id");
+      .select("id, participant_id");
 
-    const subscribed = seeded!.find((r) => r.gamer_id === TEST_IDS.GAMER)!;
+    const subscribed = seeded!.find((r) => r.participant_id === TEST_IDS.GAMER)!;
     await admin.from("family_subscriptions").insert({
       participation_id: subscribed.id,
       customer_id: TEST_IDS.CUSTOMER,
@@ -286,7 +286,7 @@ describe("waitlist — admin read + promote/demote + self position", () => {
       .from("participations")
       .insert({
         product_id: PRODUCT_FREE_CLUB,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
       })
@@ -505,7 +505,7 @@ describe("waitlist — admin read + promote/demote + self position", () => {
     // club; there is nothing here to protect and the drag now goes through.
     const enrolled = await admin.rpc("create_participation", {
       p_product_id: PRODUCT_FREE_CLUB,
-      p_gamer_id: TEST_IDS.GAMER,
+      p_participant_id: TEST_IDS.GAMER,
       p_customer_id: TEST_IDS.CUSTOMER,
       p_purchase_shape: "free",
       p_currency: "eur",
@@ -575,7 +575,7 @@ describe("waitlist — admin read + promote/demote + self position", () => {
     it("authenticated users cannot call join_waitlist directly", async () => {
       const { error } = await customer.rpc("join_waitlist", {
         p_product_id: PRODUCT_MUNI,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
       });
 
@@ -586,7 +586,7 @@ describe("waitlist — admin read + promote/demote + self position", () => {
     it("service_role cannot call join_waitlist directly either", async () => {
       const { error } = await admin.rpc("join_waitlist", {
         p_product_id: PRODUCT_MUNI,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
       });
 

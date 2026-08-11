@@ -25,7 +25,7 @@ import {
  * dashboard. A cancelled club a family is still owed the history of is exactly
  * that case.
  *
- * Mirrors `products-purchaser-rls.test.ts`, keyed on `gamer_id` instead of
+ * Mirrors `products-purchaser-rls.test.ts`, keyed on `participant_id` instead of
  * `customer_id`: active/waitlisted grant the gamer read of a product outside
  * the published statuses; any other status / no participation do not.
  * (`reserving` stands in for "any other status" — it is a retired value nothing
@@ -91,26 +91,26 @@ describe("products gamer-read RLS (00067)", () => {
     });
     activeGroupId = applyGroupChangesResult.parse(created.data).tempMap.tA;
 
-    // GAMER's participations, keyed on gamer_id (the child's own account).
+    // GAMER's participations, keyed on participant_id (the child's own account).
     // Admin client bypasses RLS to stage the post-signup state directly.
     const seed = await admin.from("participations").insert([
       {
         product_id: CLOSED_ACTIVE_PRODUCT,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
         group_id: activeGroupId,
       },
       {
         product_id: CLOSED_WAITLISTED_PRODUCT,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "waitlisted",
         waitlisted_at: new Date().toISOString(),
       },
       {
         product_id: CLOSED_RESERVING_PRODUCT,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "reserving",
       },
@@ -220,9 +220,9 @@ describe("products gamer-read RLS (00067)", () => {
     const query = gamerClient
       .from("participations")
       .select(
-        "gamer_id, group_id, product:products!inner(id, status, schedule_slots(weekday), product_translations(locale, name))",
+        "participant_id, group_id, product:products!inner(id, status, schedule_slots(weekday), product_translations(locale, name))",
       )
-      .eq("gamer_id", TEST_IDS.GAMER)
+      .eq("participant_id", TEST_IDS.GAMER)
       .eq("status", "active")
       .not("group_id", "is", null)
       .eq("product_id", CLOSED_ACTIVE_PRODUCT);

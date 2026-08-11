@@ -506,9 +506,9 @@ export type Database = {
         Row: {
           created_at: string
           customer_id: string
-          gamer_id: string
           group_id: string | null
           id: string
+          participant_id: string
           product_id: string
           signed_up_at: string
           status: Database["public"]["Enums"]["participation_status"]
@@ -519,9 +519,9 @@ export type Database = {
         Insert: {
           created_at?: string
           customer_id: string
-          gamer_id: string
           group_id?: string | null
           id?: string
+          participant_id: string
           product_id: string
           signed_up_at?: string
           status: Database["public"]["Enums"]["participation_status"]
@@ -532,9 +532,9 @@ export type Database = {
         Update: {
           created_at?: string
           customer_id?: string
-          gamer_id?: string
           group_id?: string | null
           id?: string
+          participant_id?: string
           product_id?: string
           signed_up_at?: string
           status?: Database["public"]["Enums"]["participation_status"]
@@ -551,17 +551,17 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "participations_gamer_id_fkey"
-            columns: ["gamer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "participations_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participations_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1102,24 +1102,24 @@ export type Database = {
       }
       session_attendance: {
         Row: {
-          gamer_id: string
           id: string
+          participant_id: string
           recorded_at: string
           recorded_by: string | null
           session_id: string
           status: string
         }
         Insert: {
-          gamer_id: string
           id?: string
+          participant_id: string
           recorded_at?: string
           recorded_by?: string | null
           session_id: string
           status: string
         }
         Update: {
-          gamer_id?: string
           id?: string
+          participant_id?: string
           recorded_at?: string
           recorded_by?: string | null
           session_id?: string
@@ -1127,8 +1127,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "session_attendance_gamer_id_fkey"
-            columns: ["gamer_id"]
+            foreignKeyName: "session_attendance_participant_id_fkey"
+            columns: ["participant_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1457,7 +1457,7 @@ export type Database = {
         }[]
       }
       admin_enroll_gamer: {
-        Args: { p_gamer_id: string; p_product_id: string }
+        Args: { p_participant_id: string; p_product_id: string }
         Returns: Json
       }
       admin_remove_participation: {
@@ -1491,7 +1491,7 @@ export type Database = {
         Args: {
           p_checkout_session_id: string
           p_customer_id: string
-          p_gamer_id: string
+          p_participant_id: string
           p_product_id: string
         }
         Returns: Json
@@ -1516,7 +1516,7 @@ export type Database = {
         Args: {
           p_currency: string
           p_customer_id: string
-          p_gamer_id: string
+          p_participant_id: string
           p_product_id: string
           p_purchase_shape: string
         }
@@ -1693,13 +1693,13 @@ export type Database = {
         Returns: boolean
       }
       join_product_waitlist: {
-        Args: { p_gamer_id: string; p_product_id: string }
+        Args: { p_participant_id: string; p_product_id: string }
         Returns: Json
       }
       join_waitlist: {
         Args: {
           p_customer_id: string
-          p_gamer_id: string
+          p_participant_id: string
           p_product_id: string
         }
         Returns: Json
@@ -1731,8 +1731,8 @@ export type Database = {
       }
       record_attendance: {
         Args: {
-          p_gamer_id: string
           p_group_id: string
+          p_participant_id: string
           p_session_date: string
           p_status: string
         }
@@ -1773,9 +1773,9 @@ export type Database = {
       }
       set_group_member_minecraft: {
         Args: {
-          p_gamer_id: string
           p_minecraft_username: string
           p_minecraft_uuid: string
+          p_participant_id: string
         }
         Returns: Json
       }

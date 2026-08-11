@@ -184,38 +184,38 @@ describe("family product feed", () => {
         {
           product_id: PRODUCT_MINE,
           group_id: GROUP_MINE,
-          gamer_id: TEST_IDS.GAMER,
+          participant_id: TEST_IDS.GAMER,
           customer_id: TEST_IDS.CUSTOMER,
           status: "active",
         },
         {
           product_id: PRODUCT_MINE,
           group_id: GROUP_MINE,
-          gamer_id: TEST_IDS.GAMER_2,
+          participant_id: TEST_IDS.GAMER_2,
           customer_id: TEST_IDS.CUSTOMER,
           status: "active",
         },
         {
           product_id: PRODUCT_SITE,
           group_id: GROUP_SITE,
-          gamer_id: TEST_IDS.GAMER,
+          participant_id: TEST_IDS.GAMER,
           customer_id: TEST_IDS.CUSTOMER,
           status: "active",
         },
         {
           product_id: PRODUCT_UNPLACED,
           group_id: null,
-          gamer_id: TEST_IDS.GAMER,
+          participant_id: TEST_IDS.GAMER,
           customer_id: TEST_IDS.CUSTOMER,
           status: "active",
         },
       ])
-      .select("id, product_id, gamer_id, group_id");
+      .select("id, product_id, participant_id, group_id");
     expect(error).toBeNull();
 
     const find = (productId: string, gamerId: string) => {
       const row = (parts ?? []).find(
-        (p) => p.product_id === productId && p.gamer_id === gamerId,
+        (p) => p.product_id === productId && p.participant_id === gamerId,
       );
       if (!row) throw new Error(`fixture participation missing: ${productId}`);
       return row.id;
@@ -255,19 +255,19 @@ describe("family product feed", () => {
     await admin.from("session_attendance").insert([
       {
         session_id: sessionOn(YESTERDAY),
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         status: "present",
       },
       {
         session_id: sessionOn(YESTERDAY),
-        gamer_id: TEST_IDS.GAMER_2,
+        participant_id: TEST_IDS.GAMER_2,
         status: "absent",
       },
       // TWO_DAYS_AGO is marked for the sibling only, so the first child's
       // answer there is the unmarked third state rather than a stored value.
       {
         session_id: sessionOn(TWO_DAYS_AGO),
-        gamer_id: TEST_IDS.GAMER_2,
+        participant_id: TEST_IDS.GAMER_2,
         status: "present",
       },
     ]);

@@ -11,7 +11,7 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  * dashboard subscription badges (payment-problem and access-until). The
  * contract the UI leans on:
  *   * Returns only the caller's OWN participations — scoped to
- *     customer_id = auth.uid() OR gamer_id = auth.uid(). A parent and the
+ *     customer_id = auth.uid() OR participant_id = auth.uid(). A parent and the
  *     gamer on the same enrollment both see it; another family does not.
  *   * Returns only `past_due` and `canceling` subscriptions. Healthy
  *     ('active') subs are excluded.
@@ -53,7 +53,7 @@ describe("get_my_participation_subscription_states", () => {
       .from("participations")
       .insert({
         product_id: productId,
-        gamer_id: gamerId,
+        participant_id: gamerId,
         customer_id: customerId,
         status: "active",
       })

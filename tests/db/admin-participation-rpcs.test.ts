@@ -57,7 +57,7 @@ describe("admin participation RPCs", () => {
       .from("participations")
       .select("id")
       .eq("product_id", productId)
-      .eq("gamer_id", gamerId)
+      .eq("participant_id", gamerId)
       .maybeSingle();
     return data?.id ?? null;
   }
@@ -101,7 +101,7 @@ describe("admin participation RPCs", () => {
     it("enrolls the gamer as active and resolves the customer from the parent link", async () => {
       const { data, error } = await adminAuth.rpc("admin_enroll_gamer", {
         p_product_id: CAMP,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
       });
 
       expect(error).toBeNull();
@@ -110,14 +110,14 @@ describe("admin participation RPCs", () => {
 
       const { data: row } = await admin
         .from("participations")
-        .select("status, customer_id, gamer_id, product_id")
+        .select("status, customer_id, participant_id, product_id")
         .eq("id", parsed.participation_id)
         .single();
 
       expect(row).toEqual({
         status: "active",
         customer_id: TEST_IDS.CUSTOMER,
-        gamer_id: TEST_IDS.GAMER,
+        participant_id: TEST_IDS.GAMER,
         product_id: CAMP,
       });
     });
@@ -128,7 +128,7 @@ describe("admin participation RPCs", () => {
       // subscription, and comp-enrollment has no way to create one.
       const { error } = await adminAuth.rpc("admin_enroll_gamer", {
         p_product_id: CLUB,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
       });
 
       expect(error?.code).toBe("23514");
@@ -141,7 +141,7 @@ describe("admin participation RPCs", () => {
       // product shape for no reason a free event does not share.
       const { data, error } = await adminAuth.rpc("admin_enroll_gamer", {
         p_product_id: FREE_CLUB,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
       });
 
       expect(error).toBeNull();
@@ -159,7 +159,7 @@ describe("admin participation RPCs", () => {
     it("refuses an unknown product", async () => {
       const { error } = await adminAuth.rpc("admin_enroll_gamer", {
         p_product_id: "00000000-0000-0000-0000-00000000dead",
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
       });
 
       expect(error?.code).toBe("P0002");
@@ -170,7 +170,7 @@ describe("admin participation RPCs", () => {
       // orphaned gamer: there is no customer to attribute the seat to.
       const { error } = await adminAuth.rpc("admin_enroll_gamer", {
         p_product_id: CAMP,
-        p_gamer_id: TEST_IDS.ADMIN,
+        p_participant_id: TEST_IDS.ADMIN,
       });
 
       expect(error?.code).toBe("23514");
@@ -179,12 +179,12 @@ describe("admin participation RPCs", () => {
     it("refuses a second enrollment of the same gamer", async () => {
       await adminAuth.rpc("admin_enroll_gamer", {
         p_product_id: CAMP,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
       });
 
       const { error } = await adminAuth.rpc("admin_enroll_gamer", {
         p_product_id: CAMP,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
       });
 
       // The partial unique index is the source of truth, not a re-check in the
@@ -197,7 +197,7 @@ describe("admin participation RPCs", () => {
     async function seatTheGamer(): Promise<string> {
       const { data } = await adminAuth.rpc("admin_enroll_gamer", {
         p_product_id: CAMP,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
       });
       return adminEnrollGamerRpcResult.parse(data).participation_id;
     }
@@ -252,7 +252,7 @@ describe("admin participation RPCs", () => {
       // never free a seat.
       const { data } = await adminAuth.rpc("admin_enroll_gamer", {
         p_product_id: FREE_CLUB,
-        p_gamer_id: TEST_IDS.GAMER,
+        p_participant_id: TEST_IDS.GAMER,
       });
       const participationId =
         adminEnrollGamerRpcResult.parse(data).participation_id;

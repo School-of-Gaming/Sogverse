@@ -138,12 +138,25 @@ async function renderPaidConfirmation(
   // spin forever under copy promising it only takes a moment.
   // `metadata` is non-null past the check above: a session without it can't have
   // matched the signed-in user's id.
-  const gamerId = session.metadata.gamerId;
+  //
+  // Both metadata keys are read for the same reason the webhook reads both: a
+  // session created before the participant rename shipped carries `gamerId`
+  // and can land here after it. Delete this fallback with the webhook's, once
+  // pre-deploy sessions have expired (within 24h of the deploy).
+  // `||` rather than `??`: Stripe types metadata as a total string map, so a
+  // key it does not actually carry reads as `undefined` at runtime while the
+  // compiler believes it is a string. Falsiness is the honest test either way —
+  // a blank id is as unusable here as a missing one.
+  const participantId =
+    session.metadata.participantId || session.metadata.gamerId;
   const productId = session.metadata.productId;
-  if (gamerId && productId) {
+  if (participantId && productId) {
     let alreadySeated = false;
     try {
-      alreadySeated = await participations.hasSeatOnProduct(productId, gamerId);
+      alreadySeated = await participations.hasSeatOnProduct(
+        productId,
+        participantId,
+      );
     } catch {
       // Unreadable → treat as "not a duplicate" and wait. The waiting state is
       // bounded, so a wrong guess here costs a delay, not a dead end.
