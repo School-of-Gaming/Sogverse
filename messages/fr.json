@@ -1157,12 +1157,14 @@
     "wontRenewAccessEnds": "Non renouvelé — accès jusqu’au {date}",
     "awaitingCustomer": "Inscription confirmée — nous lui cherchons un Gedu et un groupe avant la première session.",
     "awaitingGamer": "Tu es inscrit·e — nous te cherchons un Gedu et un groupe avant ta première session.",
+    "awaitingSelf": "Vous êtes inscrit·e — nous vous cherchons un Gedu et un groupe avant votre première session.",
     "noGamers": "Pas encore de joueur ici. Ajoutez votre premier joueur, puis choisissez ensemble un club ou un stage.",
     "emptyStateCta": "Voir les clubs et les stages"
   },
   "familyProduct": {
     "back": "Retour à Mon SOG",
     "forGamer": "pour {name}",
+    "forSelf": "pour vous",
     "scheduleLabel": "Quand",
     "venueLabel": "Où",
     "aboutHeading": "À propos du groupe",
@@ -1174,7 +1176,9 @@
     "emptyFeedCustomer": "Il n’y a pas encore de séances ici.",
     "emptyFeedGamer": "Rien ici pour l’instant. Chaque séance que tu joues apparaîtra ici ensuite.",
     "paymentProblemNotice": "Le paiement de ce club pose problème — mettez votre carte à jour dans Facturation sur Mon SOG pour conserver la place de {name}.",
+    "paymentProblemNoticeSelf": "Le paiement de ce club pose problème — mettez votre carte à jour dans Facturation sur Mon SOG pour conserver votre place.",
     "cancellationNotice": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. La dernière session de {name} est le {date}.",
+    "cancellationNoticeSelf": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. Votre dernière session est le {date}.",
     "cancellationNoticeNoSession": "Vous avez résilié cet abonnement — il ne sera pas renouvelé. L’accès reste ouvert jusqu’au {date}.",
     "loadingPage": "Chargement des séances de ce groupe.",
     "notFoundTitle": "Rien à afficher ici",
@@ -1759,6 +1763,7 @@
         "trigger": "Quitter la liste d’attente",
         "confirmTitle": "Quitter la liste d’attente ?",
         "confirmDescription": "{name} perdra sa place dans la file pour {product}.",
+        "confirmDescriptionSelf": "Vous perdrez votre place dans la file pour {product}.",
         "confirmCta": "Quitter la liste d’attente",
         "backOfLineWarning": "Si vous vous réinscrivez plus tard, vous repartirez de la fin de la file."
       }

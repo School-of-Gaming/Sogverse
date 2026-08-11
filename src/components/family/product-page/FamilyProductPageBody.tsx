@@ -38,13 +38,16 @@ import type {
  *
  * The shape, and why:
  *
- * - **It is gamer-scoped, and the masthead says so.** "Minecraft Monday Club,
- *   for Alex" — not "Minecraft Monday Club" with a child picker on it. A parent
- *   with two children in the same club has two of these pages, because
- *   everything the page carries is per-child: attendance today, and planned
- *   absences, per-gamer notes and a line to the gedu tomorrow. A product-scoped
- *   page would have grown a selector the moment the second of those landed, and
- *   every one of those features would have had to answer "which child?" twice.
+ * - **It is participant-scoped, and the masthead says so.** "Minecraft Monday
+ *   Club, for Alex" — not "Minecraft Monday Club" with a person picker on it. A
+ *   parent with two children in the same club has two of these pages, because
+ *   everything the page carries is per-participant: attendance today, and
+ *   planned absences, per-participant notes and a line to the gedu tomorrow. A
+ *   product-scoped page would have grown a selector the moment the second of
+ *   those landed, and every one of those features would have had to answer
+ *   "which of them?" twice. A parent holding a seat of their own gets a page
+ *   like any other, and it is theirs: the attribution line reads "for you"
+ *   rather than naming them at themselves.
  * - **Single column, capped for reading, mobile-first.** Families meet this
  *   product on a phone between other things. There is deliberately **no
  *   reference rail**: the gedu's rail exists because a gedu is at a desk with
@@ -80,19 +83,26 @@ import type {
  * none of them has a prop to arrive in. See the types module for why that is the
  * shape the privacy line takes.
  *
- * One body serves both audiences. The gamer's copy is the parent's minus the
+ * One body serves every audience. The gamer's copy is the parent's minus the
  * attendance marks, the "for Alex" attribution and the billing notices, with the
- * empty states in their own voice; the group name is on both, under the product
- * name that is the page's primary identity either way. That is a handful of
- * small conditionals against two near-identical forks, and the fork is how the
- * two drift.
+ * empty states in their own voice; the parent's own copy is the parent's copy
+ * with the attribution and two of the notices moved into the second person. The
+ * group name is on all of them, under the product name that is the page's
+ * primary identity either way. That is a handful of small conditionals against
+ * three near-identical forks, and the fork is how they drift.
  */
 export interface FamilyProductPageBodyProps {
   /**
-   * Whose copy of the page this is. `"customer"` is the parent's, `"gamer"` is
-   * the child's own — see the component note for what differs.
+   * Whose copy of the page this is, and whose seat it is about.
+   *
+   * `"customer"` is a parent reading about their child, `"self"` is a parent
+   * reading about a seat they hold themselves, `"gamer"` is the child's own —
+   * see the component note for what differs. The first two are the same reader
+   * and differ only in who the page is about; the third is a different reader
+   * entirely, which is why the split is one value rather than a boolean beside
+   * the audience.
    */
-  audience: SessionAudience;
+  audience: FamilyProductPageAudience;
   /** The product's name in the viewer's locale, already resolved. */
   productName: string;
   /**
@@ -109,8 +119,12 @@ export interface FamilyProductPageBodyProps {
    * testing for one would print an address for a club that meets online.
    */
   isRemote: boolean;
-  /** The child this page is about. */
-  gamer: { id: string; firstName: string };
+  /**
+   * Whoever holds the seat this page is about — the child on a parent's or a
+   * child's copy, the reader themselves on a self seat. The id seeds the
+   * identicon beside the attribution line, so it has to be the real UUID.
+   */
+  participant: { id: string; firstName: string };
   /**
    * The group they are in — a secondary identity line on both copies of the
    * page. A default name ("Group A") is expected and fine: it is still the
@@ -120,7 +134,8 @@ export interface FamilyProductPageBodyProps {
   /**
    * Whether the subscription behind this enrollment is failing (`past_due`).
    *
-   * **Parent variant only**, and presentational: the page states the problem
+   * **The parent-side variants only** (their child's seat and their own), and
+   * presentational: the page states the problem
    * and points at the dashboard's billing section rather than opening a portal
    * itself, so a card that badges a problem and the page it opens can never
    * disagree about whether there is one. A child's copy never renders it —
@@ -129,8 +144,8 @@ export interface FamilyProductPageBodyProps {
    */
   paymentProblem?: boolean;
   /**
-   * Set when the parent has cancelled this club's subscription. Parent variant
-   * only, for the same reason as above.
+   * Set when the parent has cancelled this club's subscription. The
+   * parent-side variants only, for the same reason as above.
    *
    * **This prop makes the state visible; it does not clamp anything, and it is
    * not meant to.** A cancelled enrollment shows nothing past its paid window
@@ -154,19 +169,47 @@ export interface FamilyProductPageBodyProps {
   /** Where the Join navigates when the window is open. */
   voiceHref: string;
   /**
-   * Intercept the Join instead of navigating. The parent's live page passes the
-   * switch-to-gamer handler (the parent is signed in as themselves; the room is
-   * gated by the child's enrollment); the gamer's passes nothing and gets the
-   * plain link. A preview scene passes a no-op, which is what makes it inert.
+   * Intercept the Join instead of navigating. The parent's page **about a
+   * child** passes the switch-to-gamer handler (the parent is signed in as
+   * themselves; the room is gated by the child's enrollment); the gamer's own
+   * page and the parent's own seat pass nothing and get the plain link,
+   * because in both of those the reader is already the person the room is
+   * gated on. A preview scene passes a no-op, which is what makes it inert.
    */
   onJoinClick?: () => void;
   /**
-   * This child's sessions, newest first — future horizon at the head, then the
-   * term running backwards. Rendered in the order given.
+   * This participant's sessions, newest first — future horizon at the head,
+   * then the term running backwards. Rendered in the order given.
    */
   entries: readonly FamilySessionEntry[];
   /** The zone the schedule was authored in; the feed renders in the viewer's. */
   sourceTimeZone: string;
+}
+
+/**
+ * Whose copy of the family product page this is.
+ *
+ * A superset of `SessionAudience` rather than a reuse of it, because the two
+ * answer different questions. `SessionAudience` is *which role's route this
+ * is*, which is what the back link and the empty-state voice key off and which
+ * has exactly two values; this adds the one distinction the page's own copy
+ * needs on top — whether the parent is reading about their child or about
+ * themselves — which no route prefix can express, since both live under
+ * `/parent`.
+ */
+export type FamilyProductPageAudience = SessionAudience | "self";
+
+/**
+ * The route-shaped half of the audience: which My SOG the reader came from.
+ *
+ * A parent's own seat is still a parent's page, so it goes back to `/parent`
+ * and speaks in the parent's empty-state voice — the self variant changes who
+ * the page is *about*, never whose it is.
+ */
+function routeAudience(
+  audience: FamilyProductPageAudience,
+): SessionAudience {
+  return audience === "gamer" ? "gamer" : "customer";
 }
 
 /**
@@ -211,7 +254,7 @@ export function FamilyProductPageBody({
   productName,
   schedule,
   isRemote,
-  gamer,
+  participant,
   groupName,
   paymentProblem = false,
   cancellation = null,
@@ -230,7 +273,12 @@ export function FamilyProductPageBody({
   const timeZone = useTimezone();
   const now = useNow();
 
-  const isParent = audience === "customer";
+  // Both parent-side audiences: the attribution line, the attendance marks and
+  // the billing notices are all "is an adult reading this", which a child's
+  // copy answers no to and a self seat answers yes to.
+  const isParent = audience !== "gamer";
+  /** The parent is the person in the seat — attribution moves to second person. */
+  const isSelf = audience === "self";
 
   const scheduleLines = useMemo(
     () =>
@@ -260,7 +308,7 @@ export function FamilyProductPageBody({
     // the gedu page uses: there is one column here and nothing to fill the rest
     // of a desktop with.
     <div className="mx-auto max-w-3xl py-6 sm:py-10">
-      <FamilyProductBackLink audience={audience} />
+      <FamilyProductBackLink audience={routeAudience(audience)} />
 
       <header className="mt-5 border-b border-border pb-5">
         <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -272,10 +320,17 @@ export function FamilyProductPageBody({
         </h1>
 
         {/* The identity lines. The product name above is the page's primary
-            identity on both copies; what differs is what a reader needs
+            identity on every copy; what differs is what a reader needs
             *beside* it. A parent is looking at one of several pages and has to
-            know whose it is, so theirs leads with the child; a gamer is on
-            their own page, where "for you" would be noise.
+            know whose it is, so theirs leads with the person in the seat — and
+            that line stays on their **own** seat too, reading "for you", for
+            exactly the same reason: a parent with a club of their own and two
+            children in others has three of these pages and needs to know which
+            one this is. Naming them at themselves would have been the other
+            way to answer that, and it reads as the page talking about a
+            stranger who happens to share their name.
+            A gamer is on their own page and has only ever one, so there is
+            nothing to disambiguate and the line is dropped entirely.
             **Both then name the group.** It is the other identity this page
             has, it is what a gedu says on the phone ("Aino is in Builders A"),
             and a default like "Group A" is an acceptable answer — a line that
@@ -286,9 +341,13 @@ export function FamilyProductPageBody({
         {isParent && (
           <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
             <Avatar className="h-6 w-6">
-              <Identicon id={gamer.id} size={24} />
+              <Identicon id={participant.id} size={24} />
             </Avatar>
-            <span>{t("forGamer", { name: gamer.firstName })}</span>
+            <span>
+              {isSelf
+                ? t("forSelf")
+                : t("forGamer", { name: participant.firstName })}
+            </span>
           </p>
         )}
         <p
@@ -360,22 +419,35 @@ export function FamilyProductPageBody({
           the page presentational and keeps one action in one place. */}
       {isParent && paymentProblem ? (
         <ProblemNotice tone="destructive" icon={AlertTriangle}>
-          {t("paymentProblemNotice", { name: gamer.firstName })}
+          {isSelf
+            ? t("paymentProblemNoticeSelf")
+            : t("paymentProblemNotice", { name: participant.firstName })}
         </ProblemNotice>
       ) : isParent && cancellation !== null ? (
         <ProblemNotice tone="muted" icon={RefreshCwOff}>
+          {/* The no-session sentence is shared across both parent variants and
+              needs no self twin: it names nobody at all, because the only fact
+              it has left is when access lapses. */}
           {cancellation.lastSessionStart === null
             ? t("cancellationNoticeNoSession", {
                 date: noticeDate(cancellation.accessUntil, locale, timeZone),
               })
-            : t("cancellationNotice", {
-                name: gamer.firstName,
-                date: noticeDate(
-                  cancellation.lastSessionStart,
-                  locale,
-                  timeZone,
-                ),
-              })}
+            : isSelf
+              ? t("cancellationNoticeSelf", {
+                  date: noticeDate(
+                    cancellation.lastSessionStart,
+                    locale,
+                    timeZone,
+                  ),
+                })
+              : t("cancellationNotice", {
+                  name: participant.firstName,
+                  date: noticeDate(
+                    cancellation.lastSessionStart,
+                    locale,
+                    timeZone,
+                  ),
+                })}
         </ProblemNotice>
       ) : null}
 
@@ -430,7 +502,7 @@ export function FamilyProductPageBody({
           entries={entries}
           sourceTimeZone={sourceTimeZone}
           showAttendance={isParent}
-          audience={audience}
+          audience={routeAudience(audience)}
         />
       </section>
     </div>

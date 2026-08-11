@@ -15,7 +15,8 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { useNow, useTimezone } from "@/providers";
 
 /**
- * The parent dashboard as a parent meets it: a section per child, one card per
+ * The parent dashboard as a parent meets it: a section per child, then the
+ * parent's own section when they hold a seat themselves, one card per
  * enrollment, then billing and help.
  *
  * Every section is the real presentational component over fixtures, and every
@@ -50,6 +51,7 @@ export function ParentDashboardScene({
   return (
     <ParentDashboardPageBody
       gamers={fixture.gamers}
+      self={fixture.self}
       billingCard={<FixtureBillingCard accounts={fixture.accounts} />}
       onAddGamer={noop}
       onOpenPortal={noop}
@@ -79,7 +81,7 @@ function FixtureBillingCard({
 }: {
   accounts: readonly {
     stripeCustomerId: string;
-    covers: { gamerFirstName: string; productName: string }[];
+    covers: { participantFirstName: string; productName: string }[];
   }[];
 }) {
   const t = useTranslations("parent.billing.manage");
@@ -88,7 +90,7 @@ function FixtureBillingCard({
     stripeCustomerId: account.stripeCustomerId,
     covers: account.covers.map((cover) =>
       t("coversItem", {
-        name: cover.gamerFirstName,
+        name: cover.participantFirstName,
         product: cover.productName,
       }),
     ),

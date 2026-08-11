@@ -18,6 +18,10 @@ import {
   FAMILY_PRODUCT_SCENARIOS,
   buildFamilyProductPageFixture,
 } from "@/components/family/product-page/mock-fixtures";
+import {
+  PARENT_DASHBOARD_SCENARIOS,
+  buildParentDashboardFixture,
+} from "@/components/parent/mock-dashboard-fixtures";
 import { SESSION_FEED_ROSTER } from "@/components/gedu/session-feed/mock-fixtures";
 import {
   attendanceTally,
@@ -128,6 +132,12 @@ describe("registry scenarios match their fixtures", () => {
     expect(slugsFor("gedu-product")).toEqual([...GEDU_PRODUCT_SCENARIOS]);
   });
 
+  it("parent dashboard", () => {
+    expect(slugsFor("parent-dashboard")).toEqual([
+      ...PARENT_DASHBOARD_SCENARIOS,
+    ]);
+  });
+
   it("family product page, both audiences", () => {
     // The parent's scene enumerates every scenario; the gamer's deliberately
     // carries one, because its variant is about attendance and voice rather
@@ -216,6 +226,74 @@ describe("product scenarios tell one capacity story", () => {
 const UUID_V4 =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
+/**
+ * The parent dashboard's own scenario set, and the two things about it that no
+ * other test would notice going wrong.
+ *
+ * The **pill's named limit** is arithmetic the body runs on first paint, and it
+ * counts the parent's chip alongside the children's — one cap over both kinds,
+ * not two. `busy-family` is the scenario that sits exactly on it, so a fixture
+ * edit that added a third child there would silently take the widest-named bar
+ * off the previews and replace it with a collapsed one that `seven-gamers`
+ * already shows.
+ *
+ * The **parent's own section** is conditional, so a fixture that quietly
+ * stopped producing one anywhere would leave the whole variant unreviewable
+ * without failing a thing.
+ */
+describe("the parent dashboard scenarios", () => {
+  const now = new Date("2026-02-11T20:00:00Z");
+
+  function fixture(scenario: (typeof PARENT_DASHBOARD_SCENARIOS)[number]) {
+    return buildParentDashboardFixture(now, scenario, "en", "Europe/Helsinki");
+  }
+
+  /** Mirrors `MAX_NAMED_PILL_ENTRIES` in the page body. */
+  const MAX_NAMED_PILL_ENTRIES = 3;
+
+  it("puts busy-family exactly on the pill's named limit", () => {
+    const { gamers, self } = fixture("busy-family");
+    expect(self).not.toBeNull();
+    expect(gamers.length + 1).toBe(MAX_NAMED_PILL_ENTRIES);
+  });
+
+  it("collapses seven-gamers while keeping the parent's chip named", () => {
+    const { gamers, self } = fixture("seven-gamers");
+    expect(self).not.toBeNull();
+    expect(gamers.length + 1).toBeGreaterThan(MAX_NAMED_PILL_ENTRIES);
+  });
+
+  it("gives the childless parent a section and no children at all", () => {
+    const { gamers, self } = fixture("parent-only");
+    expect(gamers).toEqual([]);
+    expect(self?.enrollments.length).toBeGreaterThan(0);
+  });
+
+  it("leaves the parent seatless everywhere the variant is not the point", () => {
+    for (const scenario of ["typical", "new-family", "no-enrollments"] as const) {
+      expect(fixture(scenario).self, scenario).toBeNull();
+    }
+  });
+
+  /**
+   * The two card states a self seat has that a child's does not — a Join with
+   * no account switch behind it, and a leave dialog that names nobody — are
+   * only visible if the parent's section actually holds one of each.
+   */
+  it("gives the parent's section a live seat and a place in line", () => {
+    const { self } = fixture("busy-family");
+    const enrollments = self?.enrollments ?? [];
+    expect(
+      enrollments.some((e) => e.waitlistPosition !== null),
+    ).toBe(true);
+    expect(
+      enrollments.some(
+        (e) => e.waitlistPosition === null && e.hasVoiceRoom && e.nextSessionStart !== null,
+      ),
+    ).toBe(true);
+  });
+});
+
 describe("identicon fixture ids are real UUIDs", () => {
   it("every child on the feed roster", () => {
     expect(SESSION_FEED_ROSTER.length).toBeGreaterThan(0);
@@ -239,6 +317,37 @@ describe("identicon fixture ids are real UUIDs", () => {
           }
         }
       }
+    }
+  });
+
+  it("every section heading on every parent-dashboard scenario", () => {
+    // The parent's own heading is the newest of these and the easiest to get
+    // wrong: it is the one id in the file that is not a child's, so it is the
+    // one a readable stand-in would slip into unnoticed.
+    const now = new Date("2026-02-11T20:00:00Z");
+    for (const scenario of PARENT_DASHBOARD_SCENARIOS) {
+      const { gamers, self } = buildParentDashboardFixture(
+        now,
+        scenario,
+        "en",
+        "Europe/Helsinki",
+      );
+      for (const gamer of gamers) {
+        expect(gamer.id, `${scenario}/${gamer.firstName}`).toMatch(UUID_V4);
+      }
+      if (self !== null) expect(self.id, scenario).toMatch(UUID_V4);
+    }
+  });
+
+  it("the participant every family product-page scenario is about", () => {
+    const now = new Date("2026-02-11T09:00:00Z");
+    for (const scenario of FAMILY_PRODUCT_SCENARIOS) {
+      const { participant, gedus } = buildFamilyProductPageFixture(
+        now,
+        scenario,
+      );
+      expect(participant.id, scenario).toMatch(UUID_V4);
+      for (const gedu of gedus) expect(gedu.id, scenario).toMatch(UUID_V4);
     }
   });
 
@@ -936,16 +1045,40 @@ describe("the family club page's billing states", () => {
   }));
 
   it("shows each of them somewhere, and never together", () => {
-    expect(fixtures.filter((f) => f.fixture.paymentProblem)).toHaveLength(1);
+    // paymentProblem appears on exactly two pages — worded in the third person
+    // about a child and in the second person on the parent's own seat — because
+    // the self scenario deliberately carries the longest self-worded string.
+    // cancellation stays on exactly one: no scenario has earned a second copy,
+    // and holding the count exact keeps a future scenario from acquiring one
+    // by accident. What must also stay exact is that no single page claims
+    // both — Stripe cannot be `past_due` and `canceling` at once, so a page
+    // showing both would be inventing a state.
+    expect(fixtures.filter((f) => f.fixture.paymentProblem).length).toBe(2);
     expect(
-      fixtures.filter((f) => f.fixture.cancellation !== null),
-    ).toHaveLength(1);
+      fixtures.filter((f) => f.fixture.cancellation !== null).length,
+    ).toBe(1);
     for (const { scenario, fixture } of fixtures) {
       expect(
         fixture.paymentProblem && fixture.cancellation !== null,
         scenario,
       ).toBe(false);
     }
+  });
+
+  /**
+   * The self variant is three strings' worth of second person, and every one of
+   * them is invisible on a page about somebody's child. So exactly one scenario
+   * has to be a self seat — none and the wording is never reviewed, more than
+   * one and the child case (which is the overwhelmingly common page) starts
+   * losing scenarios to it.
+   */
+  it("carries exactly one self seat, and it carries a billing notice", () => {
+    const selfSeats = fixtures.filter((f) => f.fixture.isSelfSeat);
+    expect(selfSeats).toHaveLength(1);
+    expect(
+      selfSeats[0].fixture.paymentProblem ||
+        selfSeats[0].fixture.cancellation !== null,
+    ).toBe(true);
   });
 
   it("names a last session the feed actually contains", () => {

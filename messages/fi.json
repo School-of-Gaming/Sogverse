@@ -1157,12 +1157,14 @@
     "wontRenewAccessEnds": "Ei uusiudu — osallistuminen päättyy {date}",
     "awaitingCustomer": "Ilmoittautuminen on valmis — etsimme hänelle Gedun ja ryhmän ennen ensimmäistä kertaa.",
     "awaitingGamer": "Olet mukana — etsimme sinulle Gedun ja ryhmän ennen ensimmäistä kertaa.",
+    "awaitingSelf": "Olet mukana — etsimme sinulle Gedun ja ryhmän ennen ensimmäistä kertaa.",
     "noGamers": "Täällä ei ole vielä pelaajia. Lisää ensimmäinen pelaaja ja valitkaa sitten yhdessä kerho tai leiri.",
     "emptyStateCta": "Selaa kerhoja ja leirejä"
   },
   "familyProduct": {
     "back": "Takaisin Omaan SOGiin",
     "forGamer": "Pelaaja: {name}",
+    "forSelf": "Osallistuja: sinä",
     "scheduleLabel": "Milloin",
     "venueLabel": "Missä",
     "aboutHeading": "Tietoa ryhmästä",
@@ -1174,7 +1176,9 @@
     "emptyFeedCustomer": "Tällä ei ole vielä yhtään kertaa.",
     "emptyFeedGamer": "Täällä ei ole vielä mitään. Jokainen pelaamasi kerta näkyy täällä jälkeenpäin.",
     "paymentProblemNotice": "Tämän kerhon maksussa on ongelma – päivitä korttitietosi Oman SOGin Laskutus-osiossa, jotta {name} säilyttää paikkansa.",
+    "paymentProblemNoticeSelf": "Tämän kerhon maksussa on ongelma – päivitä korttitietosi Oman SOGin Laskutus-osiossa, jotta säilytät paikkasi.",
     "cancellationNotice": "Peruit tämän jäsenyyden – se ei uusiudu. {name}: viimeinen kerta on {date}.",
+    "cancellationNoticeSelf": "Peruit tämän jäsenyyden – se ei uusiudu. Viimeinen kertasi on {date}.",
     "cancellationNoticeNoSession": "Peruit tämän jäsenyyden – se ei uusiudu. Käyttöoikeus jatkuu {date} asti.",
     "loadingPage": "Ladataan tämän ryhmän kertoja.",
     "notFoundTitle": "Täällä ei ole näytettävää",
@@ -1759,6 +1763,7 @@
         "trigger": "Poistu jonotuslistalta",
         "confirmTitle": "Poistutaanko jonotuslistalta?",
         "confirmDescription": "{name} menettää paikkansa jonossa ({product}).",
+        "confirmDescriptionSelf": "Menetät paikkasi jonossa ({product}).",
         "confirmCta": "Poistu jonotuslistalta",
         "backOfLineWarning": "Jos liityt jonotuslistalle myöhemmin uudelleen, aloitat jonon lopusta."
       }

@@ -1157,12 +1157,14 @@
     "wontRenewAccessEnds": "Förnyas inte — deltagandet upphör {date}",
     "awaitingCustomer": "Anmälan är klar — vi letar upp en Gedu och en grupp före första passet.",
     "awaitingGamer": "Du är anmäld — vi letar upp en Gedu och en grupp åt dig före ditt första pass.",
+    "awaitingSelf": "Du är anmäld — vi letar upp en Gedu och en grupp åt dig före ditt första pass.",
     "noGamers": "Inga gamers här ännu. Lägg till din första gamer och välj sedan en klubb eller ett läger tillsammans.",
     "emptyStateCta": "Bläddra bland klubbar och läger"
   },
   "familyProduct": {
     "back": "Tillbaka till Min SOG",
     "forGamer": "för {name}",
+    "forSelf": "för dig",
     "scheduleLabel": "När",
     "venueLabel": "Var",
     "aboutHeading": "Om gruppen",
@@ -1174,7 +1176,9 @@
     "emptyFeedCustomer": "Det finns inga tillfällen här än.",
     "emptyFeedGamer": "Inget här än. Varje tillfälle du spelar dyker upp här efteråt.",
     "paymentProblemNotice": "Det är problem med betalningen för den här klubben – uppdatera ditt kort under Fakturering på Min SOG så att {name} behåller sin plats.",
+    "paymentProblemNoticeSelf": "Det är problem med betalningen för den här klubben – uppdatera ditt kort under Fakturering på Min SOG så att du behåller din plats.",
     "cancellationNotice": "Du har sagt upp medlemskapet — det förnyas inte. {name}s sista pass är {date}.",
+    "cancellationNoticeSelf": "Du har sagt upp medlemskapet — det förnyas inte. Ditt sista pass är {date}.",
     "cancellationNoticeNoSession": "Du har sagt upp medlemskapet — det förnyas inte. Du har tillgång till {date}.",
     "loadingPage": "Laddar gruppens tillfällen.",
     "notFoundTitle": "Inget att visa här",
@@ -1759,6 +1763,7 @@
         "trigger": "Lämna väntelistan",
         "confirmTitle": "Lämna väntelistan?",
         "confirmDescription": "{name} förlorar sin plats i kön ({product}).",
+        "confirmDescriptionSelf": "Du förlorar din plats i kön ({product}).",
         "confirmCta": "Lämna väntelistan",
         "backOfLineWarning": "Om du ställer dig på väntelistan igen senare börjar du längst bak i kön."
       }

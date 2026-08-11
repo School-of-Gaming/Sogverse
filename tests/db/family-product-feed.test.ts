@@ -81,6 +81,8 @@ describe("family product feed", () => {
   let siblingPlaced = "";
   let sitePlaced = "";
   let unplaced = "";
+  /** The parent's OWN seat in the same group — participant = customer. */
+  let selfPlaced = "";
 
   beforeAll(async () => {
     admin = createAdminTestClient();
@@ -209,13 +211,26 @@ describe("family product feed", () => {
           customer_id: TEST_IDS.CUSTOMER,
           status: "active",
         },
+        // The parent's own seat, in the same group as their children's. Written
+        // directly rather than through create_participation, exactly as every
+        // other row here is: this file tests the read, and the audience gate
+        // that would police the write has its own coverage in the enrollment
+        // suite. What matters here is that the row shape (participant =
+        // customer) is one the table has permitted since 00173.
+        {
+          product_id: PRODUCT_MINE,
+          group_id: GROUP_MINE,
+          participant_id: TEST_IDS.CUSTOMER,
+          customer_id: TEST_IDS.CUSTOMER,
+          status: "active",
+        },
       ])
       .select("id, product_id, participant_id, group_id");
     expect(error).toBeNull();
 
-    const find = (productId: string, gamerId: string) => {
+    const find = (productId: string, participantId: string) => {
       const row = (parts ?? []).find(
-        (p) => p.product_id === productId && p.participant_id === gamerId,
+        (p) => p.product_id === productId && p.participant_id === participantId,
       );
       if (!row) throw new Error(`fixture participation missing: ${productId}`);
       return row.id;
@@ -224,6 +239,7 @@ describe("family product feed", () => {
     siblingPlaced = find(PRODUCT_MINE, TEST_IDS.GAMER_2);
     sitePlaced = find(PRODUCT_SITE, TEST_IDS.GAMER);
     unplaced = find(PRODUCT_UNPLACED, TEST_IDS.GAMER);
+    selfPlaced = find(PRODUCT_MINE, TEST_IDS.CUSTOMER);
 
     // Three sessions of stored history on GROUP_MINE, seeded directly rather
     // than through the gedu write RPCs: this file tests the read, and direct
@@ -299,8 +315,11 @@ describe("family product feed", () => {
 
       const feed = familyProductFeed.parse(data);
 
-      expect(feed.gamer.id).toBe(TEST_IDS.GAMER);
-      expect(feed.gamer.first_name).toBeTruthy();
+      // `participant`, not `gamer`, since 00174: the seat's occupant can be a
+      // parent, and the contract is `.strict()`, so this parse is what would
+      // fail if the RPC and the schema ever disagreed about the key again.
+      expect(feed.participant.id).toBe(TEST_IDS.GAMER);
+      expect(feed.participant.first_name).toBeTruthy();
       expect(feed.group.id).toBe(GROUP_MINE);
       expect(feed.group.name).toBe("Cohort Family");
       expect(feed.group.public_note).toContain("headphones");
@@ -326,6 +345,42 @@ describe("family product feed", () => {
       expect(familyProductFeed.parse(asParent.data)).toEqual(
         familyProductFeed.parse(asGamer.data),
       );
+    });
+
+    /**
+     * **A parent's own seat is a page like any other**, and this is the case
+     * the `participant` key exists for.
+     *
+     * The access predicate's first arm — "the participation's participant is
+     * the caller" — is what admits it, with the parent-link fallback never
+     * reached; the plan calls that true by construction post-rename, and this
+     * is where "by construction" is checked rather than assumed. The child of
+     * the same parent, in the same group, is *not* reachable from this
+     * document, which is the same participation-not-group scoping the sibling
+     * case pins from the other side.
+     */
+    it("hands a parent their own seat, named as the participant", async () => {
+      const { data, error } = await customerAuth.rpc(
+        "get_my_family_product_feed",
+        { p_participation_id: selfPlaced },
+      );
+      expect(error).toBeNull();
+
+      const feed = familyProductFeed.parse(data);
+      expect(feed.participant.id).toBe(TEST_IDS.CUSTOMER);
+      expect(feed.group.id).toBe(GROUP_MINE);
+      // Their own page carries nothing about the children sharing the group.
+      expect(JSON.stringify(feed)).not.toContain(TEST_IDS.GAMER);
+      expect(JSON.stringify(feed)).not.toContain(TEST_IDS.GAMER_2);
+    });
+
+    it("refuses a parent's own seat to their child", async () => {
+      // The other direction of the same scoping: a child in the group cannot
+      // read the adult's participation just because they share it.
+      const { error } = await gamerAuth.rpc("get_my_family_product_feed", {
+        p_participation_id: selfPlaced,
+      });
+      expect(error?.code).toBe("42501");
     });
 
     it("carries the venue on an in-person product", async () => {

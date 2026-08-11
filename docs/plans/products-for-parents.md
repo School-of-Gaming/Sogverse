@@ -104,8 +104,11 @@ but **not small** — state the true scope so nobody budgets it as a sed:
 **Out of the mechanical commit, renamed opportunistically** when the roster step touches
 those shapes: RPC **result JSON keys** literally named `'gamer_id'`/`gamer_*` (emitted by
 `get_gedu_group_feed`, `get_gedu_assigned_product`, `get_product_groups_with_details`,
-and the attendance and minecraft-set RPCs, parsed by the roster contracts), and
-**function names** containing "gamer" (`admin_enroll_gamer`, the
+and the attendance and minecraft-set RPCs, parsed by the roster contracts), the
+participations service's `gamer`-named PostgREST embed aliases and the row fields
+they produce (after step 4 these are the last "gamer" vocabulary on a path that
+carries a parent's own seat — the family rollup reads them to build the self
+section), and **function names** containing "gamer" (`admin_enroll_gamer`, the
 `gamer_count` result column) — renaming a function also means updating its entry in the
 DB test suite's authorization spine, so it rides with the step that rewrites its body
 anyway.

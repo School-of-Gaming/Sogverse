@@ -32,7 +32,7 @@ import type {
 const TIMEZONE = "Europe/Helsinki";
 
 /**
- * **Four scenarios, chosen for what they cannot show each other.**
+ * **Five scenarios, chosen for what they cannot show each other.**
  *
  * `active-club` is the kitchen sink and the only one with a live room.
  * `in-person-club` is the venue shape, which is the one arrangement where the
@@ -44,12 +44,22 @@ const TIMEZONE = "Europe/Helsinki";
  * is deliberately live). It is dressed as a brand-new club, so the empty past
  * comes along incidentally — not because "no history yet" is a state that
  * needs designing for, but because a locked Join needed a page to live on.
+ *
+ * `my-own-club` is the **parent's own seat** — the one scenario where the
+ * reader is the participant. It is not a variation on `active-club`: three
+ * things on the page are worded in the second person there and in the third
+ * person everywhere else, and none of them can be looked at on a page about
+ * somebody's child. It carries the failing card for the same reason
+ * `in-person-club` does — that notice is the longest of the three self-worded
+ * strings and the one most likely to read wrong — which is why the two never
+ * share a page.
  */
 export const FAMILY_PRODUCT_SCENARIOS = [
   "active-club",
   "in-person-club",
   "camp",
   "locked-join",
+  "my-own-club",
 ] as const;
 
 export type FamilyProductScenario = (typeof FAMILY_PRODUCT_SCENARIOS)[number];
@@ -62,7 +72,18 @@ export interface FamilyProductPageFixture {
   productName: string;
   schedule: FamilyProductSchedule;
   isRemote: boolean;
-  gamer: { id: string; firstName: string };
+  /** Whoever holds the seat — a child on every scenario but `my-own-club`. */
+  participant: { id: string; firstName: string };
+  /**
+   * The participant **is** the reader.
+   *
+   * A fixture field rather than a scene prop, because it is a fact about the
+   * enrollment the fixture describes and not about which URL is open — the live
+   * page derives exactly this by comparing the signed-in user with the feed's
+   * participant, and a scene that decided it from its own surface would be
+   * proving the scene's conditional instead of the page's.
+   */
+  isSelfSeat: boolean;
   groupName: string;
   /** The parent-only payment-problem notice. Never true beside a cancellation. */
   paymentProblem: boolean;
@@ -91,6 +112,20 @@ export interface FamilyProductPageFixture {
 const AINO = {
   id: "b7d3a6a1-4c58-4f21-9e08-2d6a1f77c4b3",
   firstName: "Aino",
+} as const;
+
+/**
+ * Aino's mother — the reader, on the one scenario where the seat is her own.
+ *
+ * Her name is in the fixture and deliberately never rendered: the whole point
+ * of the self variant is that the page addresses her in the second person, so
+ * a scene showing "Marja" anywhere is the bug this scenario exists to catch.
+ * The id still has to be a real UUID, because her identicon sits beside the
+ * "for you" line exactly where Aino's sits beside "for Aino".
+ */
+const MARJA = {
+  id: "7a212fe5-26bc-4511-98a6-b879e031a15d",
+  firstName: "Marja",
 } as const;
 
 const SANNA: FamilyProductGedu = {
@@ -318,6 +353,59 @@ Thank you for a very good week — they were tired by Wednesday and still turned
 ];
 
 /**
+ * The parent's own club: three sessions ahead, six behind.
+ *
+ * Short on purpose — the history is not what this scenario is for, and a
+ * fourth long feed would only make the page slower to read. What it does need
+ * is enough past to prove the ordinary machinery is untouched on a self seat:
+ * reports render, an attendance mark renders (a gedu marks a parent present
+ * exactly as they mark a child), an unmarked week renders nothing, and a bare
+ * week renders the quiet line.
+ *
+ * The write-ups are addressed to a room of adults rather than to a parent
+ * *about* a child, which is what a gedu running a parents' evening would
+ * actually type.
+ */
+const PARENTS_CLUB_SPECS: readonly FamilyEntrySpec[] = [
+  { kind: "future" },
+  { kind: "future" },
+  {
+    kind: "future",
+    report:
+      "# Next week: the parental controls tour\n\nWe are going through the console and launcher settings together — screen time, purchases, and who can message whom.\n\n**Bring** the device your family actually argues about. Nothing needs installing beforehand.",
+  },
+
+  {
+    kind: "past",
+    attendance: "present",
+    report: `# What our kids are actually building
+
+A slower session than usual, and a better one for it.
+
+We went round the room and everyone described what their child is building at the moment. Two of you had not seen it, which turned into the most useful ten minutes of the evening — the shared world is open to parents, and several people logged in for the first time.
+
+The redstone conversation ran long. The short version: the contraptions are genuinely engineering, the frustration is genuinely part of it, and the thing that helps most is asking what they were trying to make rather than what went wrong.
+
+We finished on screen time. No consensus, which was expected, but the agreement that a stopping point works better than a countdown was unanimous.`,
+  },
+  {
+    kind: "past",
+    attendance: "present",
+    report:
+      "# Servers, whitelists and who can join\n\nWe walked through how a private world differs from a public one, and why the club's own world is neither.\n\nThe practical takeaway: a whitelist is a list of names, somebody has to keep it, and that somebody is us.",
+  },
+  { kind: "past", attendance: "absent" },
+  {
+    kind: "past",
+    report:
+      "# The first evening\n\nIntroductions, what each of us was hoping to get out of this, and a very quick tour of the game most of our children spend their week in.\n\nNobody was expected to have played before, and most had not.",
+    attendance: "present",
+  },
+  { kind: "past", report: SHORT_REPORTS[5] },
+  { kind: "past", attendance: "present" },
+];
+
+/**
  * A club nobody has met for yet: eight sessions ahead, nothing behind.
  *
  * The whole point of the scenario is the empty past, so the horizon is left
@@ -385,6 +473,16 @@ type Anchor =
 interface ScenarioConfig {
   productName: string;
   productType: FamilyProductSchedule["product_type"];
+  /**
+   * Who holds the seat. Omitted means Aino, which is every scenario but the
+   * parent's own — the child is the default because the child is the case.
+   */
+  participant?: { id: string; firstName: string };
+  /**
+   * The participant is the reader. Set on exactly one scenario, and it is what
+   * flips the page's whole attribution into the second person.
+   */
+  selfSeat?: boolean;
   cadence: Cadence;
   anchor: Anchor;
   specs: readonly FamilyEntrySpec[];
@@ -528,6 +626,38 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
     venue: null,
     startsWithFeed: true,
   },
+
+  /**
+   * **The parent's own seat**, and the only page here the reader is *in*.
+   *
+   * A parents' evening club, remote and running right now, so the two things
+   * the self variant changes are both on screen at once: the masthead reads
+   * "for you" over the reader's own identicon, and the Join is lit with no
+   * account switch behind it — the live page hands this seat no join handler at
+   * all, because the room is already gated on the person clicking.
+   *
+   * It carries the failing card rather than the cancellation because the
+   * payment notice is the longest of the three self-worded strings and the one
+   * whose third-person original ("to keep Aino's place") most obviously breaks
+   * when the reader is the participant.
+   */
+  "my-own-club": {
+    productName: "Parents’ Minecraft Evening",
+    productType: "consumer_club",
+    participant: MARJA,
+    selfSeat: true,
+    cadence: "weekly",
+    anchor: { kind: "live" },
+    specs: PARENTS_CLUB_SPECS,
+    durationMinutes: 90,
+    isRemote: true,
+    groupName: "Parents’ evening",
+    gedus: [JOONAS],
+    groupPublicNote:
+      "An hour a week for the grown-ups: what your children are building, how the games work, and what the settings actually do. No experience assumed, and nothing to install.",
+    venue: null,
+    paymentProblem: true,
+  },
 };
 
 /* ------------------------------------------------------------------ */
@@ -581,7 +711,8 @@ export function buildFamilyProductPageFixture(
       schedule_slots: slotsFor(config, slot),
     },
     isRemote: config.isRemote,
-    gamer: AINO,
+    participant: config.participant ?? AINO,
+    isSelfSeat: config.selfSeat === true,
     groupName: config.groupName,
     paymentProblem: config.paymentProblem === true,
     cancellation:

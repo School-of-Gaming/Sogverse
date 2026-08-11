@@ -6,13 +6,25 @@ that has happened. Six URLs render it — `/parent/{clubs,camps,events}/[id]` an
 triplet — over one page. The type segment is vocabulary families use, not a routing
 decision; the role root fixes the audience, which is the only thing that varies.
 
-**The page is gamer-scoped and keyed by participation id, not product id.** One page per
-(gamer × product): two siblings in one club get two pages. Everything the page carries is
-per-child — attendance today, planned absences and a line to the gedu tomorrow — so a
-product-scoped page would have grown a child selector the moment the second of those
-landed. **Only a placed enrollment has a page**: no group means no feed and nothing to
-show, so a waitlisted or awaiting-placement card links nowhere and the read refuses the
-id.
+**The page is participant-scoped and keyed by participation id, not product id.** One page
+per (participant × product): two siblings in one club get two pages, and a parent holding a
+seat of their own gets one more. Everything the page carries is per-participant —
+attendance today, planned absences and a line to the gedu tomorrow — so a product-scoped
+page would have grown a person selector the moment the second of those landed. **Only a
+placed enrollment has a page**: no group means no feed and nothing to show, so a waitlisted
+or awaiting-placement card links nowhere and the read refuses the id.
+
+**Rule: the participant is not always a child, and the copy has to know which.** The role
+root fixes whose page it is; it cannot say who the page is *about*, because a parent
+reaches their child's club and their own through the same `/parent` URLs. The page
+resolves that by comparing the signed-in user with the feed's participant, and the answer
+picks the second person over a name in three strings — the masthead attribution, the
+failing-card notice and the won't-renew notice. **Never render the reader's own name at
+them as though they were a third party** where second person is available; a page that
+says "for Sanna" to Sanna reads as a page about somebody else who shares her name. The
+Join follows the same fact from the other side: an account switch stands between a parent
+and their *child's* room and between nobody and their own, so the self seat is handed no
+join handler at all and the button stays the plain link it is on a child's own dashboard.
 
 ## The privacy line
 
@@ -98,7 +110,7 @@ keep.
 ## One fetch, and a scroll sentinel over it
 
 **Rule: the whole history arrives in one JSONB document; the feed pages nothing.** The
-feed read is a single self-scoping RPC returning **the child**, the product shell, the
+feed read is a single self-scoping RPC returning **the participant**, the product shell, the
 group, the venue, the gedus, every stored session and that child's marks. The reveal
 mechanism belongs to the shared feed shell — a scroll sentinel over fully-loaded data, no
 button and no spinner — and the arithmetic ruling paging out is documented with it.
@@ -162,7 +174,7 @@ as a past entry does — which frees the kind rule to mean one thing on both fee
 
 **Rule: the builders stay separate for the privacy boundary, not for kind semantics.**
 They emit different shapes — one carries a gedu note, the whole group's attendance map and
-an `owed` flag; the other a report and one child's mark — and that is the whole reason
+an `owed` flag; the other a report and one participant's mark — and that is the whole reason
 there are two. Sharing a kind rule does not make them mergeable, and the next person to
 notice the classifiers agree should not read it as an invitation to fuse them.
 

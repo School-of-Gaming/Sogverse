@@ -839,6 +839,13 @@ function ParticipantCardDemo() {
  * dashboards' own scenes are still where it gets judged *in place* — this is
  * where the states get judged against each other.
  *
+ * **Three audiences, and that is the second reason this section exists.** Two
+ * of the footers on this card have three wordings — a parent reading about
+ * their child, the child reading about themselves, and a parent reading about a
+ * seat of their own — and a page can only ever be one of the three. Stacked
+ * here they can be read one after another, which is the only way to tell
+ * whether the three actually say the same thing.
+ *
  * The fixtures go through `buildEnrollmentFixture`, the same builder the two
  * dashboard scenes use, so the schedule sentence and the next session are the
  * real derivations rather than authored prose: the live card's Join is lit
@@ -1000,6 +1007,59 @@ function EnrollmentCardDemo() {
           <div className="space-y-2">
             <DemoCaption>Waitlisted</DemoCaption>
             <EnrollmentCard enrollment={cards.waitlisted} audience="gamer" />
+          </div>
+        </div>
+      </SubSection>
+
+      {/* The third audience, and the reason this section is worth having at all
+          rather than leaving the card to the dashboard scenes: these two
+          footers are the only strings in the product with three wordings, and
+          no single page can show more than one of them. Here they sit under the
+          other two. */}
+      <SubSection title="The parent's own seat — the card about the reader">
+        <p className="max-w-prose text-sm text-muted-foreground">
+          A for-parents product puts the reader in the seat, so the two footers
+          move into the second person again &mdash; and the leave dialog behind
+          the waitlist card names nobody, because there is nobody but them to
+          name. Money stays, since it is still their card being charged. The
+          Join is the invisible difference: this arm has no{" "}
+          <code>onJoinClick</code> at all, so it falls back to a plain link
+          straight to the room rather than opening the switch-profile dialog a
+          child&rsquo;s card opens.
+        </p>
+        <div className="grid gap-8 lg:grid-cols-2">
+          <div className="space-y-2">
+            <DemoCaption>Live — Join goes straight to the room</DemoCaption>
+            <EnrollmentCard
+              enrollment={cards.live}
+              audience="self"
+              onOpenPortal={inert}
+            />
+          </div>
+          <div className="space-y-2">
+            <DemoCaption>Awaiting placement</DemoCaption>
+            <EnrollmentCard
+              enrollment={cards.awaiting}
+              audience="self"
+              onOpenPortal={inert}
+            />
+          </div>
+          <div className="space-y-2">
+            <DemoCaption>Waitlisted — the dialog names nobody</DemoCaption>
+            <EnrollmentCard
+              enrollment={cards.waitlisted}
+              audience="self"
+              onOpenPortal={inert}
+              onLeaveWaitlist={inert}
+            />
+          </div>
+          <div className="space-y-2">
+            <DemoCaption>Failing card — corner badge, unchanged</DemoCaption>
+            <EnrollmentCard
+              enrollment={cards.badged}
+              audience="self"
+              onOpenPortal={inert}
+            />
           </div>
         </div>
       </SubSection>
