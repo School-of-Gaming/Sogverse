@@ -5,6 +5,7 @@ import type {
 } from "@/types";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import type { ProductDetailRow } from "@/services/products";
+import type { ParticipationCounts } from "@/services/participations";
 import type { RegistrationState } from "./derive-registration-state";
 import type {
   AuthState,
@@ -631,6 +632,23 @@ export const SHOP_SCENE_AUDIENCES: readonly PreviewScenario[] = [
 ];
 
 /**
+ * The shop browse scene's scenario slugs and guard.
+ *
+ * They live here — not in the scene component — because the scene file is
+ * `"use client"` and the scene router narrows the slug on the server: a guard
+ * exported from a client module is a client reference there, and calling it
+ * during server render is a runtime error. Same arrangement as every other
+ * surface (the guard lives with the fixtures, the component imports it).
+ */
+export const SHOP_BROWSE_SCENARIOS = ["default", "audiences"] as const;
+
+export type ShopBrowseScenario = (typeof SHOP_BROWSE_SCENARIOS)[number];
+
+export function isShopBrowseScenario(s: string): s is ShopBrowseScenario {
+  return (SHOP_BROWSE_SCENARIOS as readonly string[]).includes(s);
+}
+
+/**
  * A scenario's product row, with its name suffixed by the scenario's own label.
  *
  * The per-type copy above gives every consumer club the same name, which is
@@ -639,14 +657,66 @@ export const SHOP_SCENE_AUDIENCES: readonly PreviewScenario[] = [
  * it — the browse scene's whole job is comparing cards side by side, and cards
  * you cannot tell apart defeat it.
  */
-export function buildBrowseFixture(slug: PreviewScenario): ProductDetailRow {
+export function buildBrowseFixture(
+  slug: PreviewScenario,
+  now: Date,
+): ProductDetailRow {
   const { product } = buildScenarioFixture(slug);
+  // The browse card DERIVES its registration state from the row's calendar
+  // (unlike the detail scene, which is handed the authored state directly), so
+  // the fixture's static January anchor must be re-based onto the live clock —
+  // otherwise every card reads as months-ended, whatever its scenario claims.
+  // Whole days, floored, so "now" keeps the same position inside the authored
+  // week that STATIC_REF had, and the date-only fields stay exact under
+  // UTC-pinned arithmetic. Countdown scenarios already anchor their
+  // registration instant on the live clock and are left alone.
+  const config = SCENARIOS[slug];
+  const dayShift = Math.floor((now.getTime() - STATIC_REF_MS) / DAY_MS);
   return {
     ...product,
+    start_date: shiftDateOnly(product.start_date, dayShift),
+    end_date: shiftDateOnly(product.end_date, dayShift),
+    registration_opens_at:
+      "opensInMs" in config
+        ? product.registration_opens_at
+        : new Date(
+            new Date(product.registration_opens_at).getTime() +
+              dayShift * DAY_MS,
+          ).toISOString(),
     product_translations: product.product_translations.map((tr) => ({
       ...tr,
       name: `${tr.name} · ${SCENARIOS[slug].label}`,
     })),
+  };
+}
+
+/** UTC-pinned day arithmetic on a bare `yyyy-mm-dd` — exact, no DST to hit. */
+function shiftDateOnly(date: string | null, days: number): string | null {
+  if (date === null) return null;
+  const [y, m, d] = date.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
+/**
+ * The counts row the browse scene feeds beside each fixture card. The card
+ * derives fullness from live counts, so a full-waitlist scenario handed no
+ * count would derive "open" and mislabel itself — the same authored state the
+ * detail panel draws is translated into the numbers that make the card agree.
+ */
+export function buildBrowseCounts(
+  slug: PreviewScenario,
+  productId: string,
+): ParticipationCounts {
+  const config = SCENARIOS[slug];
+  const isFullWaitlist =
+    !("opensInMs" in config) && config.state.kind === "full_waitlist";
+  return {
+    productId,
+    activeCount: scenarioFilledSeats(slug),
+    // A short queue, not zero: a full-waitlist card whose queue is empty is a
+    // state the shop can produce but not an interesting one to preview.
+    waitlistCount: isFullWaitlist ? 3 : 0,
+    myGamerStates: {},
   };
 }
 

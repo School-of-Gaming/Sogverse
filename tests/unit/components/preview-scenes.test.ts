@@ -42,7 +42,7 @@ import {
   scenarioFilledSeats,
   type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
-import { SHOP_BROWSE_SCENARIOS } from "@/components/preview/scenes/shop-browse-scene";
+import { SHOP_BROWSE_SCENARIOS } from "@/components/public/products/mock-detail-fixtures";
 import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
 
 /**
@@ -290,19 +290,24 @@ describe("the audience scenarios cover all three cases", () => {
  * failing a thing.
  */
 describe("the shop browse scene", () => {
+  // Any fixed instant works: the anchor only re-bases the fixture calendar,
+  // and these tests assert audience/type/name, none of which depend on it.
+  const anchor = new Date("2026-08-11T12:00:00Z");
   const audienceOf = (product: { for_gamers: boolean; for_parents: boolean }) =>
     !product.for_parents ? "gamers" : product.for_gamers ? "both" : "parents";
 
   it("puts all three audiences on the audience grid", () => {
     const audiences = new Set(
-      SHOP_SCENE_AUDIENCES.map((slug) => audienceOf(buildBrowseFixture(slug))),
+      SHOP_SCENE_AUDIENCES.map((slug) =>
+        audienceOf(buildBrowseFixture(slug, anchor)),
+      ),
     );
     expect(audiences).toEqual(new Set(["gamers", "parents", "both"]));
   });
 
   it("keeps the default grid entirely gamers-only, so it stays the regression case", () => {
     for (const slug of SHOP_SCENE_DEFAULT) {
-      expect(audienceOf(buildBrowseFixture(slug)), slug).toBe("gamers");
+      expect(audienceOf(buildBrowseFixture(slug, anchor)), slug).toBe("gamers");
     }
   });
 
@@ -310,7 +315,7 @@ describe("the shop browse scene", () => {
     // The storefront discovers those location-first from /schools, so a shop
     // scene carrying one would show a card the real page cannot produce.
     for (const slug of [...SHOP_SCENE_DEFAULT, ...SHOP_SCENE_AUDIENCES]) {
-      expect(buildBrowseFixture(slug).product_type, slug).not.toBe(
+      expect(buildBrowseFixture(slug, anchor).product_type, slug).not.toBe(
         "municipality_club",
       );
     }
@@ -322,9 +327,26 @@ describe("the shop browse scene", () => {
     // each name with its fixture's label for exactly this reason.
     for (const slugs of [SHOP_SCENE_DEFAULT, SHOP_SCENE_AUDIENCES]) {
       const names = slugs.map(
-        (slug) => buildBrowseFixture(slug).product_translations[0].name,
+        (slug) => buildBrowseFixture(slug, anchor).product_translations[0].name,
       );
       expect(new Set(names).size).toBe(names.length);
+    }
+  });
+
+  it("re-bases the fixture calendar onto the anchor, so no card reads as ended", () => {
+    // The browse card derives its state from the row's dates against the live
+    // clock; the raw fixtures are anchored to a static January reference, so
+    // an un-rebased grid renders every card as months-over ("wrapped") — the
+    // bug this pins. A fixture authored as ended would legitimately fail this
+    // sweep, and should: neither shop list carries one.
+    for (const slug of [...SHOP_SCENE_DEFAULT, ...SHOP_SCENE_AUDIENCES]) {
+      const { end_date } = buildBrowseFixture(slug, anchor);
+      if (end_date !== null) {
+        expect(
+          new Date(`${end_date}T23:59:59Z`).getTime(),
+          slug,
+        ).toBeGreaterThan(anchor.getTime());
+      }
     }
   });
 });

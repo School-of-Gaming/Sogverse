@@ -1,12 +1,15 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
+  buildBrowseCounts,
   buildBrowseFixture,
   SHOP_SCENE_AUDIENCES,
   SHOP_SCENE_DEFAULT,
+  type ShopBrowseScenario,
 } from "@/components/public/products/mock-detail-fixtures";
+import { useNow } from "@/providers";
 import { type ProductBrowseSection } from "@/components/public/products/product-browse-results";
 import {
   ProductBrowseBody,
@@ -35,14 +38,6 @@ import { previewSceneHref } from "../href";
  * a grid that actually answers. Cards open the matching product-detail scene
  * rather than `/shop/<id>`, which no fixture id resolves to.
  */
-export const SHOP_BROWSE_SCENARIOS = ["default", "audiences"] as const;
-
-export type ShopBrowseScenario = (typeof SHOP_BROWSE_SCENARIOS)[number];
-
-export function isShopBrowseScenario(s: string): s is ShopBrowseScenario {
-  return (SHOP_BROWSE_SCENARIOS as readonly string[]).includes(s);
-}
-
 /**
  * The reference set the Language chip row paints from.
  *
@@ -86,10 +81,17 @@ export function ShopBrowseScene({
   const slugs =
     scenario === "audiences" ? SHOP_SCENE_AUDIENCES : SHOP_SCENE_DEFAULT;
 
-  const { sections, hrefById } = useMemo(() => {
+  // The fixtures are anchored once, on the first `useNow()` value, and held —
+  // the same arrangement every other scene uses. The card keeps deriving its
+  // state from the ticking clock; what is frozen is the calendar it derives
+  // against, so a card cannot drift from open to ended while someone looks.
+  const liveNow = useNow();
+  const [anchorNow] = useState(() => liveNow);
+
+  const { sections, counts, hrefById } = useMemo(() => {
     const products = slugs.map((slug) => ({
       slug,
-      product: buildBrowseFixture(slug),
+      product: buildBrowseFixture(slug, anchorNow),
     }));
     // Fixture ids resolve to no real product, so a card must open its own
     // detail scene rather than `/shop/<id>`.
@@ -106,8 +108,16 @@ export function ShopBrowseScene({
         .filter(({ product }) => categoryOf(product.product_type) === category)
         .map(({ product }) => product),
     }));
-    return { sections: built, hrefById: hrefs };
-  }, [slugs, t, visible]);
+    return {
+      sections: built,
+      // Counts synthesized from each scenario's authored state, so a card's
+      // derived fullness agrees with the label on its name.
+      counts: products.map(({ slug, product }) =>
+        buildBrowseCounts(slug, product.id),
+      ),
+      hrefById: hrefs,
+    };
+  }, [anchorNow, slugs, t, visible]);
 
   const productHref = useCallback(
     (id: string) => hrefById.get(id) ?? "#",
@@ -117,7 +127,7 @@ export function ShopBrowseScene({
   return (
     <ProductBrowseBody
       sections={sections}
-      counts={[]}
+      counts={counts}
       filters={{ initialSpokenLanguages: SPOKEN_LANGUAGES }}
       scopeHasProducts
       productHref={productHref}

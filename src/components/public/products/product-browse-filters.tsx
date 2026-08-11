@@ -150,25 +150,31 @@ export function ProductBrowseFilters({
 
         {/* Audience sits directly under Type because it is the same coarse cut:
             both answer "which shelf am I looking at" before anything about the
-            product itself. Multi-select with OR semantics like Subject and
-            Language, and a mixed product answers to either chip — so lighting
-            both is a wider query than lighting one, not a narrower one. The
-            labels are the card's own audience words, reused rather than
-            re-authored so a chip and the card it surfaces say the same thing.
-            The row ships before any for-parents product exists; a chip with an
-            empty result set for a few days is accepted (see the plan). */}
-        <FilterRow label={t("audience")}>
-          <Chip
-            label={tAudience("gamers")}
-            active={selectedAudiences.includes("gamers")}
-            onToggle={() => toggleAudience("gamers")}
-          />
-          <Chip
-            label={tAudience("parents")}
-            active={selectedAudiences.includes("parents")}
-            onToggle={() => toggleAudience("parents")}
-          />
-        </FilterRow>
+            product itself — and it shares Type's guard by owner decision: the
+            municipality school pages hide both rows, since every product there
+            is that school's own clubs and a one-answer filter is a control
+            with nothing to control. Multi-select with OR semantics like
+            Subject and Language, and a mixed product answers to either chip —
+            so lighting both is a wider query than lighting one, not a narrower
+            one. The labels are the card's own audience words, reused rather
+            than re-authored so a chip and the card it surfaces say the same
+            thing. The row ships before any for-parents product exists; a chip
+            with an empty result set for a few days is accepted (see the
+            plan). */}
+        {showTypeFilter && (
+          <FilterRow label={t("audience")}>
+            <Chip
+              label={tAudience("gamers")}
+              active={selectedAudiences.includes("gamers")}
+              onToggle={() => toggleAudience("gamers")}
+            />
+            <Chip
+              label={tAudience("parents")}
+              active={selectedAudiences.includes("parents")}
+              onToggle={() => toggleAudience("parents")}
+            />
+          </FilterRow>
+        )}
 
         {/* Wraps instead of scrolling: every subject should be visible without
             a gesture, on any device. */}
