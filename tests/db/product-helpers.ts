@@ -47,6 +47,8 @@ import { TEST_IDS } from "./constants";
  *   601-606        gedu-session-feed.test.ts (three products, three groups)
  *   607-60b        family-product-feed.test.ts (three products 607-609, two
  *                  groups 60a-60b)
+ *   610-616        product-audience.test.ts (three products 610-612, one group
+ *                  613, and 614-616 for the roster-shape fixtures)
  *   6ff            family-product-feed.test.ts's must-NOT-exist participation
  *                  id, backing the case that a nonexistent id is refused with
  *                  exactly the message someone else's id gets. Declared here
@@ -82,6 +84,18 @@ export interface ProductOptions {
   timezone?: string;
   waitlistEnabled?: boolean;
   isVisible?: boolean;
+  /**
+   * Audience. Defaults to gamers-only, which is what every product was before
+   * 00173 and what the whole existing suite assumes.
+   *
+   * The age range follows `forGamers` rather than being separately settable,
+   * because `chk_products_ages_iff_for_gamers` gives it no freedom: 8–18 when
+   * there is a gamer audience, both null when there is not. A helper that let a
+   * caller set them independently would only ever be used to build a row the
+   * database refuses.
+   */
+  forGamers?: boolean;
+  forParents?: boolean;
 }
 
 /**
@@ -97,6 +111,7 @@ export async function createTestProduct(
   options: ProductOptions = {},
 ): Promise<string> {
   const productId = options.id ?? crypto.randomUUID();
+  const forGamers = options.forGamers ?? true;
 
   const { error } = await admin.from("products").insert({
     id: productId,
@@ -115,8 +130,10 @@ export async function createTestProduct(
     waitlist_enabled: options.waitlistEnabled ?? true,
     is_visible: options.isVisible ?? true,
     is_remote: true,
-    min_age: 8,
-    max_age: 18,
+    for_gamers: forGamers,
+    for_parents: options.forParents ?? false,
+    min_age: forGamers ? 8 : null,
+    max_age: forGamers ? 18 : null,
     spoken_language_code: "en",
     created_by: TEST_IDS.ADMIN,
   });

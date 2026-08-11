@@ -165,6 +165,7 @@ function participation(
     gamer_minecraft_uuid: null,
     gamer_parent_first_name: null,
     gamer_parent_last_name: null,
+    participant_email: null,
     status: "active",
     signed_up_at: "2026-01-01T00:00:00Z",
     has_live_subscription: false,

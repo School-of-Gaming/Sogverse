@@ -71,6 +71,11 @@ export function filterProducts(
       }
     }
     if (filters.age !== null) {
+      // A band expresses "I am shopping for a child of this age", so a product
+      // with no age range at all — one with no gamer audience — is not a near
+      // miss, it is a different question. It drops out by construction rather
+      // than by a rule of its own.
+      if (p.min_age === null || p.max_age === null) return false;
       // Overlap: the product's [min_age, max_age] and the selected band share
       // at least one age.
       if (p.min_age > filters.age.max || p.max_age < filters.age.min) {

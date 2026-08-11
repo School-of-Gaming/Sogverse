@@ -45,8 +45,18 @@ const productDataBase = z.object({
   billing_mode: z.enum(Constants.public.Enums.billing_mode),
   translations: z.array(productTranslationInput),
   topic: z.enum(Constants.public.Enums.product_topic),
-  min_age: z.number(),
-  max_age: z.number(),
+  // Who may occupy a seat. Mutually inclusive, and the DB CHECKs are what
+  // enforce the two rules that matter: at least one must be true, and the age
+  // range is present exactly when `for_gamers` is. Both are required on the
+  // wire because both RPC parameters are non-defaulted — an omitting caller
+  // must fail loudly rather than silently reset a product's audience.
+  for_gamers: z.boolean(),
+  for_parents: z.boolean(),
+  // Null when the product has no gamer audience: age is a property of the
+  // children a product serves and of nothing else, so an adults-only product
+  // carries no range rather than a sentinel one.
+  min_age: z.number().nullable(),
+  max_age: z.number().nullable(),
   spoken_language_code: z.string(),
   // Gedu/admin-only lesson-material link. It is a field of the product *form*
   // but not a column on `products` — the RPC files it under

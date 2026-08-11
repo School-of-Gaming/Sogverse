@@ -33,7 +33,8 @@ export interface ProductBrowseCardViewProps {
    * in `product-browse-card.tsx` — owns the splitting rule.
    */
   scheduleLines: readonly string[];
-  ageLine: string;
+  /** Null on a product with no age range — an adults-only product has none. */
+  ageLine: string | null;
   /**
    * Single-line location/format label. Always present on browse cards so
    * every card carries the same meta row — the icon swaps between MapPin
@@ -188,7 +189,7 @@ export function ProductBrowseCardView({
                 <span className="truncate">{locationLine.label}</span>
               </li>
               <li className="flex flex-wrap items-center gap-x-2">
-                <span>{ageLine}</span>
+                {ageLine !== null && <span>{ageLine}</span>}
                 {/* Delivery language sits here — short row, never
                     squeezed. Same flag treatment as the locale picker
                     in the site header so parents recognise it. */}

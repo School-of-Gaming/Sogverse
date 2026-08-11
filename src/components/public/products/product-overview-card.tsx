@@ -94,9 +94,15 @@ export function ProductOverviewCard({ product }: ProductOverviewCardProps) {
               tTbd: t("info.tbd"),
             })}
           </DetailRow>
-          <DetailRow icon={Users} label={t("info.ageRange")}>
-            {t("info.ages", { min: product.min_age, max: product.max_age })}
-          </DetailRow>
+          {/* No range, no row: a product with no gamer audience has no age to
+              state, and an adult range ("18+") would say something else
+              entirely. Nothing survives this change to be pushed around — the
+              grid simply has three facts instead of four. */}
+          {product.min_age !== null && product.max_age !== null && (
+            <DetailRow icon={Users} label={t("info.ageRange")}>
+              {t("info.ages", { min: product.min_age, max: product.max_age })}
+            </DetailRow>
+          )}
           <DetailRow icon={Languages} label={t("info.language")}>
             <LanguageFlag code={product.spoken_language_code} />
           </DetailRow>

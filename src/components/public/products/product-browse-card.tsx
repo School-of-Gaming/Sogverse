@@ -122,7 +122,11 @@ export function ProductBrowseCard({
       imagePath={product.image_path}
       topicLabel={topicLabel(product.topic)}
       scheduleLines={scheduleLines}
-      ageLine={t("ages", { min: product.min_age, max: product.max_age })}
+      ageLine={
+        product.min_age !== null && product.max_age !== null
+          ? t("ages", { min: product.min_age, max: product.max_age })
+          : null
+      }
       locationLine={locationLine}
       spokenLanguageCode={product.spoken_language_code}
       price={price}

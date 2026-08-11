@@ -70,9 +70,12 @@ backfill.
   like any other**), waitlist ordering, the Stripe checkout-session idempotency column,
   free/external immediate-insert paths, and `session_attendance` (a gedu marks a parent
   present exactly like a gamer).
-- Waitlists: self-waitlisting allowed under the same audience gate. The existing "a
-  parent may leave a waitlist" rule already covers leaving their own spot
-  (`leave_my_waitlist_spot` is customer-scoped on `customer_id` and needs no change).
+- Waitlists: self-waitlisting allowed under the same audience gate. The "waitlist-join
+  pair" gates at its single engine point (`join_waitlist`) — the public wrapper only
+  asserts the role and pins the customer to the session user, so it carries no gate of
+  its own. The existing "a parent may leave a waitlist" rule already covers leaving
+  their own spot (`leave_my_waitlist_spot` is customer-scoped on `customer_id` and
+  needs no change).
 
 ### The rename: `gamer_id` → `participant_id`
 
@@ -254,11 +257,11 @@ as three children today.
   field, in the behavioral migration (step 3) so the roster step only consumes it.
   (The assigned-product roster is only ever rendered via the feed's fresher copy — its
   copy of the field is for shape parity; comment it so nobody deletes it as unused.)
-  The contract relaxation is smaller than it sounds: only the gedu-feed roster contract
-  still declares the parent email required (with a "deliberate tightening" comment to
-  unwind); the assignments and groups contracts are already nullable where it matters
-  and only gain the new field. Refine the row visually in UI Components; judge the
-  panel in UI Previews.
+  The contract relaxation landed with step 3 (the migration is what made adult rows
+  constructible, so the gedu-feed contract's required parent email was relaxed in the
+  same change, with db coverage parsing a real adult row); the assignments and groups
+  contracts were already nullable where it matters. Step 7's remaining work is the UI.
+  Refine the row visually in UI Components; judge the panel in UI Previews.
 - Admin comp-enrollment: the picker (today parent-first, children nested) gains the
   ability to select the parent themselves; the admin enroll RPC's "resolve the customer
   via the parent link, raise if none" logic gains the self case (customer = participant),
@@ -381,8 +384,9 @@ before the switch is flippable. Do not reorder step 8 earlier.
    off from fixtures, then wire: **fix the enrollment rollup** so self-seat buckets
    survive (the silent-drop bug — including its gamer-named entry vocabulary), and
    land the card and product-page changes with their locale strings.
-5. **Shop and signup panel.** Audience filter chips + card audience labels + conditional
-   age line; the three signup-panel cases (parent injected as a selectable row in the
+5. **Shop and signup panel.** Audience filter chips + card audience labels (the
+   conditional age line and the band-filter's drop-out of range-less products already
+   landed with step 3 — nullable ages forced the display sites to decide); the three signup-panel cases (parent injected as a selectable row in the
    route adapter, excluded from the max-children count; lockout is free via the
    customer-filtered participant-keyed read); checkout and waitlist routes accept the
    parent as participant (validation is the RPC's job); subscription description and

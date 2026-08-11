@@ -145,6 +145,9 @@ export function validate(
   if (!state.topic) return err("topicRequired");
   if (!state.spokenLanguageCode) return err("spokenLanguageRequired");
 
+  // A blank age passes here as 0 — the same open half of the age round-trip
+  // documented at buildSharedFields' Number(state.minAge); the conditional
+  // presence rule lands with step 8's audience checkboxes.
   const minAge = Number(state.minAge);
   const maxAge = Number(state.maxAge);
   if (!Number.isInteger(minAge) || minAge < 0) return err("minAgeInvalid");
@@ -356,6 +359,15 @@ function buildSharedFields(
   const showPricing =
     billingMode === "paid" && config.pricingShape !== "external";
 
+  // Half of the age round-trip is still open, by plan: `Number("")` is 0, so a
+  // product loaded with null ages (for-parents only, creatable through the raw
+  // API today) would be sent back as 0/0 and refused by the age CHECK — loudly,
+  // which is the accepted handling until step 8 of the products-for-parents
+  // plan lands the empty-age → null emission and conditional presence
+  // validation alongside the audience checkboxes. Admins are trusted to act
+  // only through the UI (root CLAUDE.md), and the UI cannot yet produce a
+  // for-parents product, so every form product is for-gamers with required
+  // ages until then.
   const minAge = Number(state.minAge);
   const maxAge = Number(state.maxAge);
   // Uncapped (no seat limit) → null for any product type; otherwise the count.
@@ -418,6 +430,11 @@ function buildSharedFields(
     billing_mode: billingMode,
     translations,
     topic,
+    // Round-tripped from state, never defaulted here: on an edit these carry
+    // the product's own audience back to an RPC that assigns every editable
+    // column, so a hardcoded pair would silently rewrite it.
+    for_gamers: state.forGamers,
+    for_parents: state.forParents,
     min_age: minAge,
     max_age: maxAge,
     spoken_language_code: state.spokenLanguageCode,
@@ -697,8 +714,13 @@ export function existingFormState(
     // product itself. No row at all is the ordinary "no lesson link" case.
     materialUrl: product.product_staff_details?.material_url ?? "",
     image: product.image_path ?? null,
-    minAge: String(product.min_age),
-    maxAge: String(product.max_age),
+    forGamers: product.for_gamers,
+    forParents: product.for_parents,
+    // `String(null)` is the string "null", which the payload builder would then
+    // parse back to NaN — so an absent age becomes the empty field it is,
+    // never a stringified null.
+    minAge: product.min_age == null ? "" : String(product.min_age),
+    maxAge: product.max_age == null ? "" : String(product.max_age),
     spokenLanguageCode: product.spoken_language_code,
     isRemote: product.is_remote,
     locationId: product.location_id,

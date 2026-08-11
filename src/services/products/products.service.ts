@@ -175,8 +175,16 @@ export type CreateProductInput = {
   billing_mode: BillingMode;
   translations: ProductTranslationInput[];
   topic: ProductTopic;
-  min_age: number;
-  max_age: number;
+  /**
+   * Audience. At least one must be true (DB CHECK), and the ages below are
+   * present exactly when `for_gamers` is. Both travel on every call — the RPC
+   * parameters are non-defaulted so an omission cannot quietly reset them.
+   */
+  for_gamers: boolean;
+  for_parents: boolean;
+  /** Null on a product with no gamer audience — never a sentinel adult range. */
+  min_age: number | null;
+  max_age: number | null;
   spoken_language_code: string;
   /**
    * Gedu/admin-only lesson material. Never rendered to a family — and not a
@@ -220,8 +228,12 @@ export type UpdateProductInput = {
   billing_mode: BillingMode;
   translations: ProductTranslationInput[];
   topic: ProductTopic;
-  min_age: number;
-  max_age: number;
+  /** Audience — see CreateProductInput. */
+  for_gamers: boolean;
+  for_parents: boolean;
+  /** Null on a product with no gamer audience — never a sentinel adult range. */
+  min_age: number | null;
+  max_age: number | null;
   spoken_language_code: string;
   /**
    * Gedu/admin-only lesson material. Never rendered to a family — and not a

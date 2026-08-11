@@ -884,13 +884,15 @@ export type Database = {
           created_at: string
           created_by: string
           end_date: string | null
+          for_gamers: boolean
+          for_parents: boolean
           id: string
           image_path: string | null
           is_remote: boolean
           is_visible: boolean
           location_id: string | null
-          max_age: number
-          min_age: number
+          max_age: number | null
+          min_age: number | null
           municipality_fee_cents: number | null
           primary_gedu_fee_cents: number | null
           product_type: Database["public"]["Enums"]["product_type"]
@@ -911,13 +913,15 @@ export type Database = {
           created_at?: string
           created_by: string
           end_date?: string | null
+          for_gamers?: boolean
+          for_parents?: boolean
           id?: string
           image_path?: string | null
           is_remote: boolean
           is_visible?: boolean
           location_id?: string | null
-          max_age: number
-          min_age: number
+          max_age?: number | null
+          min_age?: number | null
           municipality_fee_cents?: number | null
           primary_gedu_fee_cents?: number | null
           product_type: Database["public"]["Enums"]["product_type"]
@@ -938,13 +942,15 @@ export type Database = {
           created_at?: string
           created_by?: string
           end_date?: string | null
+          for_gamers?: boolean
+          for_parents?: boolean
           id?: string
           image_path?: string | null
           is_remote?: boolean
           is_visible?: boolean
           location_id?: string | null
-          max_age?: number
-          min_age?: number
+          max_age?: number | null
+          min_age?: number | null
           municipality_fee_cents?: number | null
           primary_gedu_fee_cents?: number | null
           product_type?: Database["public"]["Enums"]["product_type"]
@@ -1527,14 +1533,16 @@ export type Database = {
           p_assistant_gedu_fee_cents?: number
           p_billing_mode: Database["public"]["Enums"]["billing_mode"]
           p_end_date?: string
+          p_for_gamers: boolean
+          p_for_parents: boolean
           p_holiday_calendar_ids?: string[]
           p_image_path?: string
           p_is_remote: boolean
           p_is_visible?: boolean
           p_location_id?: string
           p_material_url?: string
-          p_max_age: number
-          p_min_age: number
+          p_max_age?: number
+          p_min_age?: number
           p_municipality_fee_cents?: number
           p_prices?: Json
           p_primary_gedu_fee_cents?: number
@@ -1815,6 +1823,8 @@ export type Database = {
           p_assistant_gedu_fee_cents?: number
           p_billing_mode: Database["public"]["Enums"]["billing_mode"]
           p_end_date?: string
+          p_for_gamers: boolean
+          p_for_parents: boolean
           p_holiday_calendar_ids?: string[]
           p_id: string
           p_image_path?: string
@@ -1822,8 +1832,8 @@ export type Database = {
           p_is_visible?: boolean
           p_location_id?: string
           p_material_url?: string
-          p_max_age: number
-          p_min_age: number
+          p_max_age?: number
+          p_min_age?: number
           p_municipality_fee_cents?: number
           p_prices?: Json
           p_primary_gedu_fee_cents?: number

@@ -5,7 +5,7 @@ description: Focused code review of the current branch against local dev.
 
 Perform a focused code review of the current branch against local `dev`.
 
-**This is a static review only.** Do not run type-check, lint, or tests — CI handles those. Do not apply any fixes. Produce the review, then wait for the user to pick what to address.
+**This is a static review only.** Do not run type-check, lint, or tests — CI handles those. The review step itself never applies fixes; what happens after the list depends on who invoked it — see Step 4.
 
 ## Step 1 — Gather the diff
 
@@ -29,7 +29,7 @@ Read the code with these concerns in mind. Do not produce a section per concern 
 - **Duplication.** Logic, types, or UI patterns that already exist elsewhere. Aim for single point of control — but don't go crazy with premature abstraction.
 - **Race conditions & timing.** Any `setTimeout` / `setInterval` used to paper over network timing is a bug waiting to happen — flag it. Watch for read-then-write without locking, async ordering assumptions, and `useEffect` used to sync state that should be derived.
 - **Tests.** High-value tests only — ones that assert real behavior and could catch bugs or regressions. Do not flag missing tests unless the code is genuinely high-risk (auth, payments, RLS, SECURITY DEFINER RPCs, financial logic). Flag low-value tests (coverage-for-coverage) that should be removed or rewritten.
-- **Security.** Adopt an adversarial mindset. Admins are always trusted. For every other role, ask: "If I were an attacker, how could I see or do something I shouldn't?" This app manages child data — privacy matters. Watch for IDOR, missing auth checks, RLS gaps, and payment/financial manipulation.
+- **Security.** Adopt an adversarial mindset. Admins are always trusted — and trusted, further, to act only through the admin UI: "an admin could reach a bad state by calling the API directly" is not a finding, provided the schema would refuse the state loudly rather than corrupt. For every other role, ask: "If I were an attacker, how could I see or do something I shouldn't?" This app manages child data — privacy matters. Watch for IDOR, missing auth checks, RLS gaps, and payment/financial manipulation.
 - **Performance.** Flag *obvious* issues (N+1 queries, waterfall fetches, expensive work in hot paths). Do not flag speculative optimizations.
 
 **Error-handling restraint:** Do *not* flag missing try/catch, missing null checks, or missing logging unless the absence would break a user flow or create bad UX. Errors caught and logged "for safety" are noise, not a fix. Only surface error-handling gaps that have a concrete user-visible consequence.
@@ -45,4 +45,7 @@ Produce one ranked list, most important to least important. Each finding include
 
 Only include findings that are **actionable** and represent a **real improvement**. No praise, no "consider refactoring" fluff, no nitpicks that don't matter. If there's nothing to flag in a category you considered, don't mention it.
 
-After the list, stop. Wait for the user to choose what to address. If they pick an item whose tradeoffs are non-obvious, walk through the options before making changes.
+After the list, stop — the review itself applies nothing. What happens next depends on the consumer:
+
+- **Invoked directly by the user** (an ad-hoc review of work they want a second pair of eyes on): wait for them to choose what to address. If they pick an item whose tradeoffs are non-obvious, walk through the options before making changes.
+- **Run by a session orchestrating `/worktree-flow`**: that command's Phase 4 governs the follow-through — the session triages every finding, applies the accepted non-fork ones immediately and reports them as applied, and surfaces only genuine forks for the user to decide.

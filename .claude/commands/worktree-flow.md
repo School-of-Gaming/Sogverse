@@ -156,6 +156,19 @@ Then **assess the findings before relaying them**. Say which you accept, which
 you think are wrong and why, and which are judgement calls for the user. A review
 relayed without an opinion has moved the work no further forward.
 
+**Findings accepted with no meaningful judgment call left open — mechanical
+correctness fixes, guard/assertion strengthening, test pinning, doc corrections,
+housekeeping merges — are applied immediately and reported as applied.** (This
+flow's rule, not `/code-review`'s ad-hoc default of waiting for the user to
+pick.) Surface, and wait on, only findings that create a real fork: anything
+touching product behavior, money/auth semantics, schema shape, user-facing copy,
+or the plan's step boundaries. The test is fork-ness, not confidence — if the
+justification has to weigh two defensible options, it is the user's call
+however strongly the session prefers one of them. The triage is always shown
+either way (applied findings in the past tense), and the Phase 5 merge gate
+remains the user's backstop: nothing reaches `dev` without their explicit
+instruction.
+
 ---
 
 ## Phase 5 — Land

@@ -168,8 +168,16 @@ export const POST = defineRoute({
       p_billing_mode: body.billing_mode,
       p_translations: body.translations,
       p_topic: body.topic,
-      p_min_age: body.min_age,
-      p_max_age: body.max_age,
+      // The RPC assigns every editable column on every call, so these two have
+      // to arrive on an ordinary edit or the audience would be reset by it.
+      // Non-defaulted parameters are what make that a compile error rather than
+      // a silent one.
+      p_for_gamers: body.for_gamers,
+      p_for_parents: body.for_parents,
+      // Omission is how a null age reaches the column (DEFAULT NULL); the
+      // audience CHECK refuses it on a product that still has a gamer audience.
+      p_min_age: body.min_age ?? undefined,
+      p_max_age: body.max_age ?? undefined,
       p_spoken_language_code: body.spoken_language_code,
       p_is_remote: body.is_remote,
       p_timezone: body.timezone,

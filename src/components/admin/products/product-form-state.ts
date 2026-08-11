@@ -104,6 +104,16 @@ export interface FormState {
   image: File | string | null;
 
   // Audience
+  //
+  // Who may occupy a seat. There is no control for these yet — the checkboxes
+  // land with the rest of the audience UI — but they live in form state from
+  // the moment the columns exist, because the update RPC assigns every editable
+  // column on every save: a product's audience has to survive an edit that was
+  // about something else, and the only way it can is by being loaded into state
+  // and sent back out. Hardcoding the defaults in the payload builder instead
+  // would reset every product an admin so much as renamed.
+  forGamers: boolean;
+  forParents: boolean;
   minAge: string;
   maxAge: string;
   spokenLanguageCode: string;
@@ -199,6 +209,10 @@ export function initialState(
     topic: "",
     materialUrl: "",
     image: null,
+    // A new product is for children until somebody says otherwise — the shape
+    // every product has today, and the only one the form can currently express.
+    forGamers: true,
+    forParents: false,
     minAge: "7",
     maxAge: "12",
     spokenLanguageCode: "",

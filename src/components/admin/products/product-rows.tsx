@@ -186,13 +186,17 @@ export function ProductRows({ products, productType }: ProductRowsProps) {
                   {tr?.short_description ?? ""}
                 </p>
                 <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1">
-                    <Users className="h-3 w-3" />
-                    {t("list.ageRange", {
-                      min: p.min_age,
-                      max: p.max_age,
-                    })}
-                  </span>
+                  {/* A product with no gamer audience carries no age range;
+                      the chip goes rather than showing an invented one. */}
+                  {p.min_age !== null && p.max_age !== null && (
+                    <span className="inline-flex items-center gap-1">
+                      <Users className="h-3 w-3" />
+                      {t("list.ageRange", {
+                        min: p.min_age,
+                        max: p.max_age,
+                      })}
+                    </span>
+                  )}
                   {dateChip && (
                     <span className="inline-flex items-center gap-1">
                       <Calendar className="h-3 w-3" />

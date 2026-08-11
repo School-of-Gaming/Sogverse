@@ -54,6 +54,8 @@ Four user roles with separate dashboards:
 
 Proxy (`src/proxy.ts`) refreshes Supabase auth sessions, enforces role-based routing, and sets a per-request nonce-based Content Security Policy (Next.js 16 uses `proxy.ts` instead of `middleware.ts`). RLS policies protect data at the database level.
 
+**Rule: admins are trusted — including trusted to act only through the admin UI.** An admin hand-crafting API or RPC calls is neither a threat model nor a supported workflow, so "an admin could reach an invalid state via the raw API" is not a defect worth building UI or validation for. The database's own guarantees (CHECKs, constraints, grants) still stand behind everything — a state the UI cannot produce must fail loudly at the schema if it somehow arises, never corrupt silently — but the loud failure *is* the accepted handling, not a gap.
+
 **Rule: user-facing copy calls a role's dashboard "My SOG" — "dashboard" is internal vocabulary.** The role dashboards (`/parent`, `/gamer`, `/gedu`) are named "My SOG" to the people using them, in page titles, back links, buttons and emails alike. "Dashboard" is what we call them among ourselves and in the code; a translated string that says it has leaked an implementation word into the product. The brand name itself stays "My SOG" rather than being translated wholesale — locales localise the surrounding words and the possessive, not the mark. The one exception is the **admin** dashboard, which is genuinely an admin panel and is called one: admin sidebar entries and admin page titles keep saying "Dashboard".
 
 ### Key Conventions

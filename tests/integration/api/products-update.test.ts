@@ -79,6 +79,8 @@ const validBody = {
     { locale: "en", name: "X", short_description: "Y", long_description: null },
   ],
   topic: "minecraft_java",
+  for_gamers: true,
+  for_parents: false,
   min_age: 7,
   max_age: 12,
   spoken_language_code: "en",
@@ -289,6 +291,48 @@ describe("POST /api/admin/products/[id]/update", () => {
       "update_product",
       expect.objectContaining({ p_id: PRODUCT_ID }),
     );
+  });
+
+  it("carries the product's own audience through an unrelated edit", async () => {
+    // The RPC assigns every editable column on every call, so an edit that
+    // never touched the audience still has to send it. The form loads these
+    // from the product; the route must not substitute a default for them.
+    mockAuthenticatedAdmin();
+
+    await POST(
+      updateRequest({
+        data: {
+          ...validBody,
+          for_gamers: false,
+          for_parents: true,
+          min_age: null,
+          max_age: null,
+        },
+      }),
+      { params },
+    );
+
+    expect(mockUserRpc).toHaveBeenCalledWith(
+      "update_product",
+      expect.objectContaining({ p_for_gamers: false, p_for_parents: true }),
+    );
+    const args = mockUserRpc.mock.calls[0][1];
+    expect(args.p_min_age).toBeUndefined();
+    expect(args.p_max_age).toBeUndefined();
+  });
+
+  it("returns 400 when the audience flags are missing", async () => {
+    mockAuthenticatedAdmin();
+    const {
+      for_gamers: _g,
+      for_parents: _p,
+      ...noAudience
+    } = validBody;
+
+    const response = await POST(updateRequest({ data: noAudience }), { params });
+
+    expect(response.status).toBe(400);
+    expect(mockUserRpc).not.toHaveBeenCalled();
   });
 
   it("uploads the new blob BEFORE the RPC, and commits its server-derived path", async () => {
