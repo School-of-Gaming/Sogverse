@@ -217,6 +217,74 @@ describe("validate", () => {
         messageKey: "maxAgeInvalid",
       });
     });
+
+    // The DB CHECK the form is standing in front of: a product nobody can take
+    // a seat on is not a product. The section makes the state unreachable by
+    // disabling the last remaining tick; this is the backstop behind it.
+    it("rejects a product with no audience at all", () => {
+      const s = validConsumerState();
+      s.forGamers = false;
+      s.forParents = false;
+      expect(validate(s, consumerConfig)).toEqual({
+        messageKey: "audienceRequired",
+      });
+    });
+
+    // `Number("")` is 0, a perfectly valid age — so emptiness has to be its own
+    // question, asked before the parse, and answered in its own words.
+    it("rejects a blank min age while For gamers is ticked", () => {
+      const s = validConsumerState();
+      s.minAge = "";
+      expect(validate(s, consumerConfig)).toEqual({
+        messageKey: "minAgeRequired",
+      });
+    });
+
+    it("rejects a blank max age while For gamers is ticked", () => {
+      const s = validConsumerState();
+      s.maxAge = "";
+      expect(validate(s, consumerConfig)).toEqual({
+        messageKey: "maxAgeRequired",
+      });
+    });
+
+    it("rejects whitespace-only ages while For gamers is ticked", () => {
+      const s = validConsumerState();
+      s.minAge = "  ";
+      expect(validate(s, consumerConfig)).toEqual({
+        messageKey: "minAgeRequired",
+      });
+    });
+
+    it("accepts blank ages on a parents-only product", () => {
+      const s = validConsumerState();
+      s.forGamers = false;
+      s.forParents = true;
+      s.minAge = "";
+      s.maxAge = "";
+      expect(validate(s, consumerConfig)).toBeNull();
+    });
+
+    // Unticking For gamers hides the fields without emptying them, so whatever
+    // was typed is still sitting in state at submit. It must not be judged: the
+    // payload builder is going to drop it on the floor either way.
+    it("ignores a stale, self-contradicting range once For gamers is unticked", () => {
+      const s = validConsumerState();
+      s.forGamers = false;
+      s.forParents = true;
+      s.minAge = "10";
+      s.maxAge = "5";
+      expect(validate(s, consumerConfig)).toBeNull();
+    });
+
+    it("still requires a valid range on a both-audience product", () => {
+      const s = validConsumerState();
+      s.forParents = true; // forGamers stays ticked
+      s.minAge = "";
+      expect(validate(s, consumerConfig)).toEqual({
+        messageKey: "minAgeRequired",
+      });
+    });
   });
 
   describe("location", () => {
@@ -737,6 +805,93 @@ describe("buildCreateInput", () => {
     const s = validConsumerState();
     const out = buildCreateInput(s, "consumer_club", consumerConfig);
     expect(out.timezone).toBe("Europe/Helsinki");
+  });
+});
+
+// The audience flags and the age range are one decision on the wire: ages are a
+// property of the gamer audience, so they are present exactly when `for_gamers`
+// is — enforced by a CHECK, which makes every shape below a save that either
+// works or is refused outright.
+describe("audience and ages on the wire", () => {
+  it("creates a for-gamers product with its range by default", () => {
+    // The create form's seeded audience, unread and unedited: children, with
+    // the default range. Every product the form could make before audiences
+    // existed had exactly this shape.
+    const s = initialState(consumerConfig, "en");
+    expect(s.forGamers).toBe(true);
+    expect(s.forParents).toBe(false);
+
+    const out = buildCreateInput(
+      validConsumerState(),
+      "consumer_club",
+      consumerConfig,
+    );
+    expect(out.for_gamers).toBe(true);
+    expect(out.for_parents).toBe(false);
+    expect(out.min_age).toBe(7);
+    expect(out.max_age).toBe(12);
+  });
+
+  it("emits null ages for a parents-only product, not 0 and not \"null\"", () => {
+    const s = validConsumerState();
+    s.forGamers = false;
+    s.forParents = true;
+    s.minAge = "";
+    s.maxAge = "";
+    const out = buildCreateInput(s, "consumer_club", consumerConfig);
+
+    expect(out.for_gamers).toBe(false);
+    expect(out.for_parents).toBe(true);
+    // The two ways this has gone wrong: `Number("")` is 0 (a real age the DB
+    // would store, and a CHECK violation on a product with no gamer audience),
+    // and `String(null)` is "null" (which parses back as NaN).
+    expect(out.min_age).toBeNull();
+    expect(out.max_age).toBeNull();
+    expect(out.min_age).not.toBe(0);
+    expect(out.max_age).not.toBe(0);
+  });
+
+  // Unticking For gamers hides the age fields without emptying them, so the
+  // typed range survives a mis-click for as long as the form is open. What must
+  // not survive is the range reaching the database — the flag decides, not the
+  // boxes.
+  it("drops a still-typed range once For gamers is unticked", () => {
+    const s = validConsumerState();
+    s.forGamers = false;
+    s.forParents = true;
+    s.minAge = "7";
+    s.maxAge = "12";
+    const out = buildCreateInput(s, "consumer_club", consumerConfig);
+    expect(out.min_age).toBeNull();
+    expect(out.max_age).toBeNull();
+  });
+
+  it("keeps the range on a both-audience product", () => {
+    const s = validConsumerState();
+    s.forParents = true;
+    s.minAge = "9";
+    s.maxAge = "14";
+    const out = buildCreateInput(s, "consumer_club", consumerConfig);
+    expect(out.for_gamers).toBe(true);
+    expect(out.for_parents).toBe(true);
+    expect(out.min_age).toBe(9);
+    expect(out.max_age).toBe(14);
+  });
+
+  // Every product type gets the checkboxes — the capability is deliberately not
+  // narrowed to events, which is only where it is expected to be used first.
+  it("carries the audience on every product type", () => {
+    const camp = validConsumerState();
+    camp.forGamers = false;
+    camp.forParents = true;
+    camp.minAge = "";
+    camp.maxAge = "";
+    camp.endDate = "2026-09-05";
+    camp.prices = { eur: { session: "120.00", month: "" } };
+    const out = buildCreateInput(camp, "camp", campConfig);
+    expect(out.for_gamers).toBe(false);
+    expect(out.for_parents).toBe(true);
+    expect(out.min_age).toBeNull();
   });
 });
 

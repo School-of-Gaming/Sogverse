@@ -105,15 +105,19 @@ export interface FormState {
 
   // Audience
   //
-  // Who may occupy a seat. There is no control for these yet — the checkboxes
-  // land with the rest of the audience UI — but they live in form state from
-  // the moment the columns exist, because the update RPC assigns every editable
-  // column on every save: a product's audience has to survive an edit that was
-  // about something else, and the only way it can is by being loaded into state
-  // and sent back out. Hardcoding the defaults in the payload builder instead
-  // would reset every product an admin so much as renamed.
+  // Who may occupy a seat, edited as the Audience section's checkbox pair. Both
+  // flags are loaded and sent back on every save because the update RPC assigns
+  // every editable column on every call: a product's audience has to survive an
+  // edit that was about something else, and the only way it can is by riding in
+  // state. Hardcoding the defaults in the payload builder instead would reset
+  // every product an admin so much as renamed.
   forGamers: boolean;
   forParents: boolean;
+  // The gamer audience's age range, as typed. Blank means "no range" and reaches
+  // the database as NULL — which is legal exactly when `forGamers` is false, so
+  // the payload builder derives the pair from the flag rather than copying it.
+  // Unticking For gamers hides the fields without emptying them, so a mis-click
+  // costs nothing for as long as the form stays open.
   minAge: string;
   maxAge: string;
   spokenLanguageCode: string;
