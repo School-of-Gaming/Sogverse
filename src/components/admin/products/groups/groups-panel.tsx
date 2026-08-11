@@ -355,9 +355,10 @@ export function GroupsPanel({
 
   return (
     <div className="space-y-3">
-      {/* The header is inside the DndContext so the "Add gamer" button can swap
-          to a "Remove gamer" drop zone mid-drag (HeaderGamerAction). The picker
-          sheets are deliberately kept OUTSIDE it — see the note below. */}
+      {/* The header is inside the DndContext so the "Add participant" button can
+          swap to a "Remove participant" drop zone mid-drag
+          (HeaderParticipantAction). The picker sheets are deliberately kept
+          OUTSIDE it — see the note below. */}
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">

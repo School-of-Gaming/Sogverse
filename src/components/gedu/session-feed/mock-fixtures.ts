@@ -42,7 +42,19 @@ export const SESSION_FEED_CLUB_NAME = "Minecraft Monday Club";
 export const SESSION_FEED_TIMEZONE = TIMEZONE;
 
 /**
- * Roster ids, named so a spec can say who was away without repeating a UUID.
+ * The one adult on the roster — a parent holding a seat of her own. She is kept
+ * out of the gamer map below because she is not a gamer: nothing that keys off
+ * that map (ages, game accounts, a parent's address) has anything to say about
+ * her.
+ *
+ * A real generated UUIDv4, hardcoded as a literal, for the reason spelled out
+ * on the gamer ids.
+ */
+export const SESSION_FEED_ADULT_ID = "07981ead-c695-4cac-be1e-d88d5c13306f";
+
+/**
+ * The children's ids, named so a spec can say who was away without repeating a
+ * UUID.
  *
  * They are real generated UUIDv4s and hardcoded as literals. Both halves matter:
  * an identicon is a pattern hashed out of the id's hex bytes, so a readable id
@@ -50,8 +62,6 @@ export const SESSION_FEED_TIMEZONE = TIMEZONE;
  * generating them at module load would hand every reload a different avatar for
  * the same child, which is exactly the drift a fixture exists to avoid.
  */
-export const SESSION_FEED_ADULT_ID = "07981ead-c695-4cac-be1e-d88d5c13306f";
-
 export const SESSION_FEED_GAMER_IDS = {
   aino: "e1dd1bcd-1b1b-408a-adab-bacb876d4bb2",
   vaino: "606abb0b-52fa-4de4-9b63-be5903ba08d8",

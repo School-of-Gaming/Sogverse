@@ -565,7 +565,7 @@
       "participantPicker": {
         "title": "Lisää osallistuja",
         "description": "Lisää lapsi tai vanhempi suoraan tähän tuotteeseen ohittaen maksun. Vanhempi voi ottaa paikan vain tuotteesta, joka on avoin vanhemmille.",
-        "searchPlaceholder": "Hae vanhemman tai pelaajan nimellä",
+        "searchPlaceholder": "Hae vanhemman tai pelaajan nimellä…",
         "searchHint": "Hae kirjoittamalla vähintään 2 merkkiä.",
         "noParents": "Ei vielä yhtään vanhempaa.",
         "noSearchResults": "Yksikään vanhempi tai pelaaja ei vastaa hakuasi.",
@@ -2177,26 +2177,26 @@
     },
     "enrollmentParent": {
       "subject": "{participantName} on nyt ilmoittautunut kerhoon {productName}",
-      "subjectSelf": "Sinut on nyt ilmoitettu kurssille {productName}",
+      "subjectSelf": "Sinut on nyt ilmoitettu kerhoon {productName}",
       "heading": "Ilmoittautuminen vahvistettu",
       "body": "Hei {parentName}, {participantName} on nyt ilmoittautunut kerhoon {productName} Gedun {geduName} kanssa.",
-      "bodySelf": "Hei {parentName}, sinut on nyt ilmoitettu kurssille {productName}, ohjaajana Gedu {geduName}."
+      "bodySelf": "Hei {parentName}, sinut on nyt ilmoitettu kerhoon {productName}, ohjaajana Gedu {geduName}."
     },
     "enrollmentGedu": {
       "subject": "{participantName} on liittynyt ryhmääsi – {productName}",
-      "heading": "Uusi pelaaja ryhmässäsi",
+      "heading": "Uusi osallistuja ryhmässäsi",
       "body": "Hei {geduName}, {participantName} on liittynyt ryhmääsi kerhossa {productName}."
     },
     "unenrollmentParent": {
       "subject": "{participantName} on poistettu kerhosta {productName}",
-      "subjectSelf": "Ilmoittautumisesi kurssille {productName} on peruttu",
+      "subjectSelf": "Ilmoittautumisesi kerhoon {productName} on peruttu",
       "heading": "Ilmoittautumisen peruutus vahvistettu",
       "body": "Hei {parentName}, {participantName} on poistettu kerhosta {productName} (Gedu: {geduName}).",
-      "bodySelf": "Hei {parentName}, ilmoittautumisesi kurssille {productName} on peruttu (Gedu: {geduName})."
+      "bodySelf": "Hei {parentName}, ilmoittautumisesi kerhoon {productName} on peruttu (Gedu: {geduName})."
     },
     "unenrollmentGedu": {
       "subject": "{participantName} on poistunut ryhmästäsi – {productName}",
-      "heading": "Pelaaja poistunut ryhmästäsi",
+      "heading": "Osallistuja poistunut ryhmästäsi",
       "body": "Hei {geduName}, {participantName} on poistunut ryhmästäsi kerhossa {productName}."
     },
     "groupAdded": {

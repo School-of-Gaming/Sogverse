@@ -618,7 +618,7 @@
         "noParents": "vav pagh tu’lu’.",
         "noSearchResults": "vav qoj SuvwI’ tu’be’lu’.",
         "unnamedParent": "vav pongHa’",
-        "unnamedGamer": "Suvwl’ pongHa’",
+        "unnamedGamer": "SuvwI’ pongHa’",
         "add": "chel",
         "adding": "chellu’taH…",
         "added": "chellu’pu’",
@@ -659,15 +659,15 @@
           "saveNameAria": "pong yIQon",
           "cancelEditAria": "yImev",
           "deleteAria": "{name} yIteq",
-          "participantCount": "{count, plural, =0 {pagh} =1 {1 SuvwI’} other {# ghompu’}}",
+          "participantCount": "{count, plural, =0 {pagh} =1 {1 ghom} other {# ghompu’}}",
           "assignedGedus": "Gedupu’",
           "noGedus": "Gedupu’ pagh.",
           "addGedu": "Gedu yIchu’",
           "participantsLabel": "ghompu’",
           "empty": "pagh — naDev yIngeH.",
           "deleteConfirmTitle": "{name} yIteq’a’?",
-          "deleteConfirmEmpty": "ghomvamDaq Suvwl’ pagh — Daj. Gedu ngu’ je teqlu’.",
-          "deleteConfirmWithParticipants": "{count, plural, =1 {ghomvamDaq 1 SuvwI’} other {ghomvamDaq # ghompu’}}. ngu’be’pu’ jolDaq lengtaH."
+          "deleteConfirmEmpty": "ghomvamDaq ghom pagh — Daj. Gedu ngu’ je teqlu’.",
+          "deleteConfirmWithParticipants": "{count, plural, =1 {ghomvamDaq 1 ghom} other {ghomvamDaq # ghompu’}}. ngu’be’pu’ jolDaq lengtaH."
         },
         "gedu": {
           "removeAria": "{name} yIteq"
@@ -1299,7 +1299,7 @@
       "railGroupHeading": "ghom’a’wIj",
       "noGedus": "Gedu tu’lu’be’.",
       "participantsLabel": "ghompu’",
-      "participantCount": "{count, plural, one {1 SuvwI’} other {# SuvwI’pu’}}",
+      "participantCount": "{count, plural, one {1 ghom} other {# ghompu’}}",
       "emptyRoster": "ghomvamDaq pagh tu’lu’.",
       "untitledGroup": "ghom’a’ pong Hutlh",
       "noAssignedGroup": "may’vamDaq ghom’a’ Daghaj.",
@@ -2228,7 +2228,7 @@
     },
     "enrollmentGedu": {
       "subject": "{participantName} ghom’a’Daq muv — {productName}",
-      "heading": "toy’wI’ chu’ ghom’a’Daq",
+      "heading": "ghom’a’lIjDaq muv ghom chu’",
       "body": "nuqneH {geduName}, {participantName} {productName}vaH ghom’a’Daq muv."
     },
     "unenrollmentParent": {
@@ -2240,7 +2240,7 @@
     },
     "unenrollmentGedu": {
       "subject": "{participantName} ghom’a’ voQ — {productName}",
-      "heading": "toy’wI’ ghom’a’ voQ",
+      "heading": "ghom’a’lIjvo’ mej ghom",
       "body": "nuqneH {geduName}, {participantName} {productName}vaH ghom’a’ voQ."
     },
     "groupAdded": {

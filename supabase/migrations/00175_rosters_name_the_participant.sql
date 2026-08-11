@@ -996,8 +996,9 @@ COMMENT ON FUNCTION public.get_my_assigned_products() IS
 -- (comp-enrollment) an admin uses to do exactly that.
 --
 -- DROP + CREATE rather than ALTER FUNCTION ... RENAME TO, so the grants and the
--- COMMENT are re-stated in this file rather than inherited invisibly. The body
--- is unchanged from 00173's, with only the parent-link comment reworded.
+-- COMMENT are re-stated in this file rather than inherited invisibly. Below the
+-- CREATE line the body is byte-identical to 00173's — argument names included —
+-- so the only thing this section changes is what the function is called.
 -- ---------------------------------------------------------------------------
 
 DROP FUNCTION public.admin_enroll_gamer(uuid, uuid);
@@ -1099,8 +1100,8 @@ COMMENT ON FUNCTION public.admin_enroll_participant(p_product_id uuid, p_partici
 --
 -- Every claim below has a way of being wrong that nothing else would catch: a
 -- key renamed in two of three branches, an old key left behind beside its
--- replacement, a drop/recreate that came back PUBLIC-executable or without its
--- authenticated grant, a rename that left the old function in place so both
+-- replacement, a drop/recreate that came back PUBLIC-executable or without one
+-- of its two role grants, a rename that left the old function in place so both
 -- names answer. Type-check and the jsdom suites are blind to all of it —
 -- a stale key arrives as `undefined` at a zod parse in CI at the earliest, and
 -- a surviving old function never fails at all.
@@ -1231,7 +1232,9 @@ BEGIN
   END IF;
 
   -- The two drop/recreate cycles lost their ACL outright. anon must not have
-  -- come back with one, and authenticated must have got one back.
+  -- come back with one, and both granted roles must have got theirs back —
+  -- service_role included, because an admin-client caller is the one path that
+  -- would fail in production while every browser-side test still passed.
   FOREACH c_key IN ARRAY ARRAY[
     'public.admin_enroll_participant(uuid, uuid)',
     'public.get_my_assigned_products()',
@@ -1248,67 +1251,99 @@ BEGIN
     IF NOT has_function_privilege('authenticated', c_key, 'EXECUTE') THEN
       RAISE EXCEPTION '% is not executable by authenticated', c_key;
     END IF;
+    IF NOT has_function_privilege('service_role', c_key, 'EXECUTE') THEN
+      RAISE EXCEPTION '% is not executable by service_role', c_key;
+    END IF;
   END LOOP;
 END
 $assert$;
 
 -- ---------------------------------------------------------------------------
--- Proof the assertions can fail.
+-- Proof the counting assertion can fail.
 --
--- A self-checking migration is only worth its lines if a wrong end state really
--- raises. The cheap, faithful way to know is to reconstruct the state this file
--- was written to replace — the real body of get_gedu_group_feed with its key
--- put back the way it was five minutes ago — and run the same two predicates
--- over it. The new-key test must raise, the old-key test must raise, and if
--- either passes then the corresponding check in the block above is decoration.
+-- The block above names the counting checks as the load-bearing ones, and that
+-- claim is worth exactly as much as a demonstration that they catch what the
+-- `position()` checks cannot. So this reconstructs the failure they were
+-- written for: the real body of get_product_groups_with_details with one person
+-- key half-renamed — kept on one of the three branches and landing on some
+-- other name on the other two.
 --
--- Reconstructing from real source rather than planting a stub is the point: a
--- hand-written stub proves a `position()` call works, which was never in doubt.
--- This proves the predicates recognise THE pre-migration body.
+-- That body is invisible to both position() predicates by construction, and
+-- this asserts as much before going near the count: the new key is still
+-- present (once), and no old `gamer_` key came back, so neither of the loop's
+-- two checks has anything to say. The count check must then raise, and if it
+-- does not, it is decoration and the three-branch guarantee is unenforced.
+--
+-- Renaming the missed branches to a *third* name rather than back to the old
+-- one is the point. Putting `gamer_first_name` there would trip the old-key
+-- check, and the proof would then be about that check instead — which is the
+-- shape of proof this block replaced: predicates fired at a string that
+-- replace() had just guaranteed the answer for.
 -- ---------------------------------------------------------------------------
 
 DO $proof$
 DECLARE
-  c_src       text;
-  c_pre       text;
-  c_new_fired boolean := false;
-  c_old_fired boolean := false;
+  c_src   text;
+  c_pre   text;
+  c_key   text := 'participant_first_name';
+  c_pos   integer;
+  c_count integer;
+  c_fired boolean := false;
+  i       integer;
 BEGIN
   SELECT p.prosrc INTO c_src
     FROM pg_proc p
     JOIN pg_namespace n ON n.oid = p.pronamespace
-   WHERE n.nspname = 'public' AND p.proname = 'get_gedu_group_feed';
+   WHERE n.nspname = 'public' AND p.proname = 'get_product_groups_with_details';
 
-  c_pre := replace(c_src, '''participant_id'',', '''gamer_id'',');
-
-  IF c_pre = c_src THEN
+  -- Start from the real three-branch body, or the construction below is
+  -- rehearsing a shape that does not exist.
+  c_count := (length(c_src) - length(replace(c_src, '''' || c_key || '''', '')))
+             / (length(c_key) + 2);
+  IF c_count <> 3 THEN
     RAISE EXCEPTION
-      '00175 proof could not rebuild the pre-rename body — the key it renames is not in the source';
+      '00175 proof cannot start: get_product_groups_with_details emits % on % branches, not 3',
+      c_key, c_count;
   END IF;
 
-  BEGIN
-    IF position('''participant_id'',' IN c_pre) = 0 THEN
-      RAISE EXCEPTION 'pre-rename body does not emit a participant_id key';
+  -- Knock the key off two of the three branches, one occurrence at a time.
+  c_pre := c_src;
+  FOR i IN 1 .. 2 LOOP
+    c_pos := position('''' || c_key || ''',' IN c_pre);
+    IF c_pos = 0 THEN
+      RAISE EXCEPTION
+        '00175 proof could not find occurrence % of the % key', i, c_key;
     END IF;
-  EXCEPTION WHEN raise_exception THEN
-    c_new_fired := true;
-  END;
+    -- Quote + key + quote + comma is what gets overwritten.
+    c_pre := overlay(c_pre PLACING '''first_name'',' FROM c_pos FOR length(c_key) + 3);
+  END LOOP;
 
-  BEGIN
-    IF position('''gamer_id'',' IN c_pre) > 0 THEN
-      RAISE EXCEPTION 'pre-rename body still emits the old gamer_id key';
-    END IF;
-  EXCEPTION WHEN raise_exception THEN
-    c_old_fired := true;
-  END;
-
-  IF NOT c_new_fired THEN
+  IF position('''' || c_key || ''',' IN c_pre) = 0 THEN
     RAISE EXCEPTION
-      '00175 new-key assertion is vacuous: the pre-rename body passed it';
+      '00175 proof is malformed: the two-of-three body lost the % key entirely', c_key;
   END IF;
-  IF NOT c_old_fired THEN
+  IF position('''gamer_first_name'',' IN c_pre) > 0 THEN
     RAISE EXCEPTION
-      '00175 old-key assertion is vacuous: the pre-rename body passed it';
+      '00175 proof is malformed: the two-of-three body reintroduced the old key';
+  END IF;
+
+  -- The counting assertion, verbatim, over that body.
+  BEGIN
+    c_count := (length(c_pre) - length(replace(c_pre, '''' || c_key || '''', '')))
+               / (length(c_key) + 2);
+    IF c_count <> 3 THEN
+      RAISE EXCEPTION
+        'get_product_groups_with_details emits % on % of its 3 branches, not 3',
+        c_key, c_count;
+    END IF;
+  EXCEPTION WHEN raise_exception THEN
+    c_fired := true;
+  END;
+
+  IF NOT c_fired THEN
+    RAISE EXCEPTION
+      '00175 counting assertion is vacuous: a body emitting % on 1 of its 3 branches passed it',
+      c_key;
   END IF;
 END
 $proof$;

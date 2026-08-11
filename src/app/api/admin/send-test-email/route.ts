@@ -26,7 +26,13 @@ const templateSchema = z.object({
   mode: z.literal("template"),
   toEmail: z.string().min(1),
   template: z.string(),
-  params: z.record(z.string().nullable()),
+  // The same union the registry's `TemplateParams` declares: a param is a
+  // string, a variant flag the testing UI's select expands into a boolean
+  // (`isSelfSeat`), or null. Kept this narrow rather than `z.unknown()`
+  // because this is the outer gate — the per-template schema behind it is the
+  // one that names each key, and a wire schema that admits anything makes a
+  // malformed body a per-template error message instead of a wire-shape one.
+  params: z.record(z.union([z.string(), z.boolean()]).nullable()),
   locale: z.string().optional(),
 });
 

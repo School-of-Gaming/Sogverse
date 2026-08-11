@@ -21,7 +21,7 @@ import type {
 // shapes return null and the handlers no-op — a drag must never throw.
 // ---------------------------------------------------------------------------
 
-/** Payload attached by GamerChip's useDraggable. */
+/** Payload attached by ParticipantChip's useDraggable. */
 export interface ChipDragData {
   participationId: string;
   firstName: string;

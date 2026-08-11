@@ -116,7 +116,7 @@ describe("enrollment-changes email templates", () => {
       expect(html).toContain("Alice");
       expect(html).toContain("Kid");
       expect(html).toContain("Minecraft 101");
-      expect(html).toContain("New Gamer in Your Group");
+      expect(html).toContain("New Participant in Your Group");
     });
 
     it("shows verified minecraft status with skin image", () => {
@@ -217,7 +217,7 @@ describe("enrollment-changes email templates", () => {
       expect(html).toContain("Alice");
       expect(html).toContain("Kid");
       expect(html).toContain("Test");
-      expect(html).toContain("Gamer Left Your Group");
+      expect(html).toContain("Participant Left Your Group");
     });
 
     it("shows verified minecraft status with skin image for whitelist removal", () => {

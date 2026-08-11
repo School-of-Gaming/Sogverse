@@ -2184,7 +2184,7 @@
     },
     "enrollmentGedu": {
       "subject": "{participantName} a rejoint votre groupe – {productName}",
-      "heading": "Nouveau joueur dans votre groupe",
+      "heading": "Nouveau participant dans votre groupe",
       "body": "Bonjour {geduName}, {participantName} a rejoint votre groupe pour {productName}."
     },
     "unenrollmentParent": {
@@ -2196,7 +2196,7 @@
     },
     "unenrollmentGedu": {
       "subject": "{participantName} a quitté votre groupe – {productName}",
-      "heading": "Un joueur a quitté votre groupe",
+      "heading": "Un participant a quitté votre groupe",
       "body": "Bonjour {geduName}, {participantName} a quitté votre groupe pour {productName}."
     },
     "groupAdded": {

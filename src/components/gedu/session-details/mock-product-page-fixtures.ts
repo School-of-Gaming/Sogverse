@@ -104,22 +104,6 @@ const GEDU_IDS = {
   markus: "a79fc7fd-8527-4826-8062-94d25ed30873",
 } as const;
 
-/**
- * Minecraft account UUIDs for the verified children. Mojang hands out real
- * UUIDs, so a fixture standing in for one has to look like a UUID or the row
- * that renders it stops being a fair test of the real thing.
- */
-const MINECRAFT_UUIDS: readonly string[] = [
-  "617bc50c-7dfe-4b39-8c74-8f01b9110f92",
-  "04c2b904-a933-44b1-b295-38d499d58b2b",
-  "7c99b686-bb6c-4b4b-8ebb-efd5880aa2e7",
-  "b31d117c-0e4e-4b15-862b-89147e7349ac",
-  "c0be0c66-a9ab-40ee-9768-c4f8307f8cdb",
-  "e38c400e-c160-44f4-b08e-19b7bfb10e35",
-  "4493f692-a30f-4cea-af7e-95a186112d69",
-  "550f9847-3598-44a8-8232-7280d4881f5b",
-];
-
 /** A camp's five weekday slots; a club's single weekly one. */
 const CLUB_SLOTS = [{ weekday: 0, start_time: "16:30", duration_minutes: 90 }];
 const CAMP_SLOTS = [0, 1, 2, 3, 4].map((weekday) => ({
@@ -852,24 +836,36 @@ function calendarDate(now: Date, dayOffset: number): string {
  * eleven-character addresses is exactly how a wrapping bug ships.
  */
 function buildRoster(now: Date): GeduAssignedProductRosterEntry[] {
-  const details: readonly {
+  /**
+   * Keyed by participant id rather than positioned against the roster array:
+   * the adult sits in that array too, so an index-aligned list of eight child
+   * details only lines up while she happens to be last. Reordering the roster —
+   * or giving a second adult a seat — would then hand a child somebody else's
+   * age, gender and parent address with nothing failing.
+   *
+   * The Minecraft UUIDs are real generated UUIDv4s: Mojang hands out real ones,
+   * so a fixture standing in for one has to look like a UUID or the row that
+   * renders it stops being a fair test. A null UUID beside a username is the
+   * typed-but-never-checked state.
+   */
+  const details: Record<string, {
     age: number;
     gender: GeduAssignedProductRosterEntry["gender"];
     minecraftUsername: string | null;
-    verified: boolean;
+    minecraftUuid: string | null;
     parentEmail: string;
-  }[] = [
-    { age: 11, gender: "girl", minecraftUsername: "AinoBuilds", verified: true, parentEmail: "marja.korhonen@example.com" },
-    { age: 12, gender: "boy", minecraftUsername: "VainoTheBold", verified: true, parentEmail: "marja.korhonen@example.com" },
-    { age: 10, gender: "boy", minecraftUsername: "EliasRedstone", verified: false, parentEmail: "tuomas.laine@example.com" },
-    { age: 13, gender: "girl", minecraftUsername: null, verified: false, parentEmail: "sofia.margareta.lindqvist-holmberg@kotiposti.example.com" },
-    { age: 9, gender: "boy", minecraftUsername: "OskarOre", verified: true, parentEmail: "henrik.lindqvist@example.com" },
-    { age: 11, gender: "girl", minecraftUsername: "SiiriSky", verified: false, parentEmail: "petri.makinen@example.com" },
-    { age: 12, gender: "boy", minecraftUsername: null, verified: false, parentEmail: "anna.virtanen@example.com" },
-    { age: 10, gender: "non_binary", minecraftUsername: "HildaHollow", verified: true, parentEmail: "kaisa.nieminen@example.com" },
-  ];
+  } | undefined> = {
+    [SESSION_FEED_GAMER_IDS.aino]: { age: 11, gender: "girl", minecraftUsername: "AinoBuilds", minecraftUuid: "617bc50c-7dfe-4b39-8c74-8f01b9110f92", parentEmail: "marja.korhonen@example.com" },
+    [SESSION_FEED_GAMER_IDS.vaino]: { age: 12, gender: "boy", minecraftUsername: "VainoTheBold", minecraftUuid: "04c2b904-a933-44b1-b295-38d499d58b2b", parentEmail: "marja.korhonen@example.com" },
+    [SESSION_FEED_GAMER_IDS.elias]: { age: 10, gender: "boy", minecraftUsername: "EliasRedstone", minecraftUuid: null, parentEmail: "tuomas.laine@example.com" },
+    [SESSION_FEED_GAMER_IDS.linnea]: { age: 13, gender: "girl", minecraftUsername: null, minecraftUuid: null, parentEmail: "sofia.margareta.lindqvist-holmberg@kotiposti.example.com" },
+    [SESSION_FEED_GAMER_IDS.oskar]: { age: 9, gender: "boy", minecraftUsername: "OskarOre", minecraftUuid: "c0be0c66-a9ab-40ee-9768-c4f8307f8cdb", parentEmail: "henrik.lindqvist@example.com" },
+    [SESSION_FEED_GAMER_IDS.siiri]: { age: 11, gender: "girl", minecraftUsername: "SiiriSky", minecraftUuid: null, parentEmail: "petri.makinen@example.com" },
+    [SESSION_FEED_GAMER_IDS.emil]: { age: 12, gender: "boy", minecraftUsername: null, minecraftUuid: null, parentEmail: "anna.virtanen@example.com" },
+    [SESSION_FEED_GAMER_IDS.hilda]: { age: 10, gender: "non_binary", minecraftUsername: "HildaHollow", minecraftUuid: "550f9847-3598-44a8-8232-7280d4881f5b", parentEmail: "kaisa.nieminen@example.com" },
+  };
 
-  return SESSION_FEED_ROSTER.map((person, index) => {
+  return SESSION_FEED_ROSTER.map((person) => {
     if (person.id === SESSION_FEED_ADULT_ID) {
       return {
         participant_id: person.id,
@@ -884,17 +880,19 @@ function buildRoster(now: Date): GeduAssignedProductRosterEntry[] {
         participant_email: "marja.korhonen@example.com",
       };
     }
-    const detail = details[index];
+    const detail = details[person.id];
+    if (!detail) {
+      throw new Error(
+        `session-feed roster member ${person.firstName} (${person.id}) has no roster detail fixture`,
+      );
+    }
     return {
       participant_id: person.id,
       first_name: person.firstName,
       // Offset a few days past the birthday so the computed age is exact.
       date_of_birth: calendarDate(now, -(detail.age * 365 + 12)),
       minecraft_username: detail.minecraftUsername,
-      minecraft_uuid:
-        detail.verified && detail.minecraftUsername
-          ? MINECRAFT_UUIDS[index]
-          : null,
+      minecraft_uuid: detail.minecraftUsername ? detail.minecraftUuid : null,
       gender: detail.gender,
       parent_email: detail.parentEmail,
       // A child's contact is their linked parent's address; their own profile

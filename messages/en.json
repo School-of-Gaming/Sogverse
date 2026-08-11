@@ -2816,7 +2816,7 @@
     },
     "enrollmentGedu": {
       "subject": "{participantName} has joined your group – {productName}",
-      "heading": "New Gamer in Your Group",
+      "heading": "New Participant in Your Group",
       "body": "Hi {geduName}, {participantName} has joined your group for {productName}."
     },
     "unenrollmentParent": {
@@ -2828,7 +2828,7 @@
     },
     "unenrollmentGedu": {
       "subject": "{participantName} has left your group – {productName}",
-      "heading": "Gamer Left Your Group",
+      "heading": "Participant Left Your Group",
       "body": "Hi {geduName}, {participantName} has left your group for {productName}."
     },
     "groupAdded": {

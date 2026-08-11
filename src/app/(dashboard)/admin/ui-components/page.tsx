@@ -120,7 +120,6 @@ import {
 } from "@/components/game-account";
 import { useRobloxProfile } from "@/services/roblox";
 import { ParticipantChip } from "@/components/admin/products/groups/participant-chip";
-import { ParticipantRosterRow } from "@/components/gedu/session-details/ParticipantRosterRow";
 import { DndContext } from "@dnd-kit/core";
 import { AddGamerFormCard } from "@/components/family";
 import { cn } from "@/lib/utils";
@@ -2948,7 +2947,7 @@ function GameAccountDemo() {
           Same row, same four states, <code>figure=&quot;head&quot;</code>: 32px
           instead of 60px, for a dense list where the whole character crowds out
           what the list is about. Two surfaces use it &mdash; the voice
-          participant row and the gamer chip below. Everywhere else, including the
+          participant row and the participant chip below. Everywhere else, including the
           admin user detail page, keeps the whole figure. Both platforms are{" "}
           <em>identical</em> here
           &mdash; a Minecraft face render and a Roblox headshot are both square,
@@ -3003,30 +3002,12 @@ function GameAccountDemo() {
         </p>
         <ParticipantChipDemo />
       </SubSection>
-
-      <SubSection title="In the gedu roster row">
-        <p className="text-sm text-muted-foreground">
-          The gedu workspace&rsquo;s rail roster: two lines, identity above and
-          the contact address on its own below, because an address is the one
-          field here with no useful upper bound. A child shows age/gender and an
-          editable Minecraft username, and the address is their linked
-          parent&rsquo;s. An adult holding their own seat shows a Parent badge
-          where the age went, their own address as the contact, and{" "}
-          <em>no Minecraft cell at all</em> &mdash; not a blank one. Game-account
-          linking for parents does not exist, so a &ldquo;none&rdquo; placeholder
-          beside a pencil would be an affordance pointing at nothing, and three
-          empty child fields would read as a row that failed to load. The two
-          variants are side by side because the only way to judge &ldquo;shorter
-          on purpose&rdquo; is against the row it is shorter than.
-        </p>
-        <ParticipantRosterRowDemo />
-      </SubSection>
     </div>
   );
 }
 
 /**
- * Chip and roster-row fixtures. The ids are real generated UUIDv4s, hardcoded:
+ * Chip fixtures. The ids are real generated UUIDv4s, hardcoded:
  * an identicon is hashed out of the id's hex bytes, so a readable stand-in
  * renders a degenerate square and a freshly generated one gives the same person
  * a different face on every reload.
@@ -3130,75 +3111,6 @@ function ParticipantChipRow() {
           participantEmail={null}
           isPending
         />
-      </div>
-    </div>
-  );
-}
-
-/**
- * The gedu rail's roster row, both variants, at the rail's real width.
- *
- * The Minecraft save handler is a resolved promise rather than omitted: without
- * one the row is read-only and the pencil never renders, which is the one state
- * this demo is not for. Nothing is written — the row closes its editor on the
- * handler resolving, which is exactly what a successful save looks like.
- */
-function ParticipantRosterRowDemo() {
-  const saveInert = async () => {};
-  return (
-    <div className="flex flex-wrap items-start gap-6">
-      <div className="w-80 space-y-2 rounded-lg border p-3">
-        <DemoCaption>Children (w-80, the real rail)</DemoCaption>
-        <ul className="space-y-1.5">
-          <ParticipantRosterRow
-            participant={{
-              participant_id: CHIP_PEOPLE.aino,
-              first_name: "Aino",
-              date_of_birth: "2014-03-11",
-              gender: "girl",
-              minecraft_username: "AinoBuilds",
-              minecraft_uuid: "617bc50c-7dfe-4b39-8c74-8f01b9110f92",
-              parent_email: "marja.korhonen@example.com",
-              participant_email: null,
-            }}
-            onSaveMinecraftUsername={saveInert}
-          />
-          {/* No username and a long address: the two things that stress the
-              row's second line and its identity line at once. */}
-          <ParticipantRosterRow
-            participant={{
-              participant_id: CHIP_PEOPLE.joonas,
-              first_name: "Joonas",
-              date_of_birth: "2012-09-02",
-              gender: "boy",
-              minecraft_username: null,
-              minecraft_uuid: null,
-              parent_email:
-                "sofia.margareta.lindqvist-holmberg@kotiposti.example.com",
-              participant_email: null,
-            }}
-            onSaveMinecraftUsername={saveInert}
-          />
-        </ul>
-      </div>
-
-      <div className="w-80 space-y-2 rounded-lg border p-3">
-        <DemoCaption>An adult holding their own seat</DemoCaption>
-        <ul className="space-y-1.5">
-          <ParticipantRosterRow
-            participant={{
-              participant_id: CHIP_PEOPLE.marja,
-              first_name: "Marja",
-              date_of_birth: null,
-              gender: null,
-              minecraft_username: null,
-              minecraft_uuid: null,
-              parent_email: null,
-              participant_email: "marja.korhonen@example.com",
-            }}
-            onSaveMinecraftUsername={saveInert}
-          />
-        </ul>
       </div>
     </div>
   );
