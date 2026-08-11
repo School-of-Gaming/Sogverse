@@ -4,25 +4,21 @@ import { NextResponse } from "next/server";
 
 // --- Stripe mock ---
 //
-// The route's only Stripe call is `checkout.sessions.create` — every paid
-// signup (single-payment AND subscription) goes through hosted Checkout now.
-// There is no `subscriptions.update` inline-add path anymore.
+// The route's only direct Stripe call is `checkout.sessions.create` — every
+// paid signup (single-payment AND subscription) goes through hosted Checkout
+// now. There is no `subscriptions.update` inline-add path anymore. The Stripe
+// Product lookup the one-off branch now makes is stubbed at its own module
+// boundary below, alongside the other I/O helpers.
 
-const { mockStripeSessionCreate } = vi.hoisted(() => ({
-  mockStripeSessionCreate: vi.fn(),
+const { stripeMock } = await vi.hoisted(async () => ({
+  stripeMock: (await import("../../mocks/stripe")).createStripeMock(),
 }));
 
-vi.mock("stripe", () => {
-  // The route only ever does `new Stripe(...)` and calls
-  // checkout.sessions.create — vi.mock's factory isn't typed against the
-  // real module, so the bare vi.fn constructor needs no cast.
-  const StripeMock = vi.fn(function () {
-    return {
-      checkout: { sessions: { create: mockStripeSessionCreate } },
-    };
-  });
-  return { default: StripeMock };
-});
+vi.mock("stripe", async () =>
+  (await import("../../mocks/stripe")).stripeModuleMock(stripeMock),
+);
+
+const mockStripeSessionCreate = stripeMock.checkout.sessions.create;
 
 // --- Auth + Supabase admin mocks ---
 
@@ -33,6 +29,8 @@ vi.mock("@/lib/auth", () => ({
 
 const mockAdminFrom = vi.fn();
 const mockAdminRpc = vi.fn();
+/** Records the arguments the products select's `.order()` was called with. */
+const mockProductsOrder = vi.fn();
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({ from: mockAdminFrom, rpc: mockAdminRpc })),
 }));
@@ -44,6 +42,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 const mockGetOrCreateStripeCustomer = vi.fn();
 const mockGetOrCreateSubscriptionPrice = vi.fn();
 const mockComputeSinglePaymentAmount = vi.fn();
+const mockEnsureStripeProductForProduct = vi.fn();
 
 vi.mock("@/lib/stripe/participation-prices", async (importOriginal) => {
   const actual =
@@ -54,6 +53,8 @@ vi.mock("@/lib/stripe/participation-prices", async (importOriginal) => {
       mockGetOrCreateSubscriptionPrice(...args),
     computeSinglePaymentAmount: (...args: unknown[]) =>
       mockComputeSinglePaymentAmount(...args),
+    ensureStripeProductForProduct: (...args: unknown[]) =>
+      mockEnsureStripeProductForProduct(...args),
   };
 });
 
@@ -72,6 +73,7 @@ const GAMER_ID = "33333333-3333-3333-3333-333333333333";
 const PARTICIPATION_ID = "44444444-4444-4444-4444-444444444444";
 const STRIPE_CUSTOMER_ID = "cus_test_customer";
 const STRIPE_PRICE_ID = "price_test_monthly";
+const STRIPE_PRODUCT_ID = "prod_test_product";
 const GAMER_FIRST_NAME = "Liam";
 
 type ProductFixture = {
@@ -80,6 +82,9 @@ type ProductFixture = {
   billing_mode: "paid" | "free" | "external_contract";
   seat_count: number | null;
   timezone: string;
+  spoken_language_code: string;
+  start_date: string | null;
+  end_date: string | null;
   product_translations: { locale: string; name: string }[];
 };
 
@@ -89,12 +94,20 @@ const PAID_CLUB: ProductFixture = {
   billing_mode: "paid",
   seat_count: 10,
   timezone: "Europe/Helsinki",
+  spoken_language_code: "en",
+  // A club's end date is nullable (a check constraint forces one for every
+  // other type), which is also the case that has to omit its metadata key.
+  start_date: "2026-09-01",
+  end_date: null,
   product_translations: [{ locale: "en", name: "Test Club" }],
 };
 
 const PAID_CAMP: ProductFixture = {
   ...PAID_CLUB,
   product_type: "camp",
+  spoken_language_code: "fi",
+  start_date: "2026-08-03",
+  end_date: "2026-08-07",
 };
 
 const FREE_EVENT: ProductFixture = {
@@ -136,15 +149,24 @@ function mockAdmin(opts: AdminMockOptions = {}): void {
       return {
         select: () => ({
           eq: () => ({
-            single: () =>
-              Promise.resolve(
-                opts.product
-                  ? { data: opts.product, error: null }
-                  : {
-                      data: null,
-                      error: opts.productErr ?? { message: "not found" },
-                    },
-              ),
+            // `.order("locale", { referencedTable: "product_translations" })`
+            // sits between the filter and `.single()`: embedded translations
+            // come back unordered otherwise, and the name a product without an
+            // English translation resolves to would be arbitrary.
+            order: (...args: unknown[]) => {
+              mockProductsOrder(...args);
+              return {
+                single: () =>
+                  Promise.resolve(
+                    opts.product
+                      ? { data: opts.product, error: null }
+                      : {
+                          data: null,
+                          error: opts.productErr ?? { message: "not found" },
+                        },
+                  ),
+              };
+            },
           }),
         }),
       };
@@ -229,6 +251,7 @@ describe("POST /api/checkout/products/create", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetOrCreateStripeCustomer.mockResolvedValue(STRIPE_CUSTOMER_ID);
+    mockEnsureStripeProductForProduct.mockResolvedValue(STRIPE_PRODUCT_ID);
   });
 
   // ── Auth ──────────────────────────────────────────────────────────
@@ -637,23 +660,53 @@ describe("POST /api/checkout/products/create", () => {
       payment_method_save: "enabled",
     });
     expect(params.line_items).toHaveLength(1);
+    // The price stays inline (the amount varies by currency and discount) but
+    // it now points at the real Stripe Product rather than carrying an inline
+    // product name. That Product is what holds the tax code deciding the VAT
+    // rate — without one, Stripe fell back to the account-wide default and
+    // charged camps the standard 25.5% instead of the reduced 13.5%.
     expect(params.line_items[0]).toMatchObject({
       quantity: 1,
       price_data: {
         currency: "eur",
         unit_amount: 15000,
-        product_data: { name: "Test Club" },
+        product: STRIPE_PRODUCT_ID,
+        tax_behavior: "inclusive",
       },
     });
-    // The metadata is the only link between this session and the participation
-    // the webhook will create — there is no reservation id, because there is no
-    // row yet.
+    expect(params.line_items[0].price_data).not.toHaveProperty("product_data");
+    expect(mockEnsureStripeProductForProduct).toHaveBeenCalledWith(PAID_CAMP);
+    // The session metadata is the only link between this session and the
+    // participation the webhook will create — there is no reservation id,
+    // because there is no row yet. Its camelCase keys are read by the webhook
+    // and the confirmation page, so the finance keys added below are a separate
+    // set on separate objects rather than a rename of these.
     expect(params.metadata).toEqual({
       customerId: CUSTOMER_ID,
       participantId: GAMER_ID,
       productId: PRODUCT_ID,
       purchaseShape: "single_payment",
       currency: "eur",
+    });
+    // Stripe metadata does not propagate between objects, and a charge is the
+    // one thing that inherits — from its payment intent. So the finance
+    // snapshot goes on the intent and, separately, on the invoice.
+    const purchaseMetadata = {
+      product_id: PRODUCT_ID,
+      gamer_id: GAMER_ID,
+      customer_id: CUSTOMER_ID,
+      locale: "en",
+      spoken_language_code: "fi",
+      delivery_start: "2026-08-03",
+      delivery_end: "2026-08-07",
+    };
+    expect(params.payment_intent_data).toEqual({ metadata: purchaseMetadata });
+    // The invoice is the refund fix: a Stripe Refund carries no tax and no
+    // discount fields, and a credit note — which carries both — needs an
+    // invoice to exist.
+    expect(params.invoice_creation).toEqual({
+      enabled: true,
+      invoice_data: { metadata: purchaseMetadata },
     });
     // Success lands on the confirmation page keyed by the Checkout Session.
     // `{CHECKOUT_SESSION_ID}` is Stripe's literal placeholder and has to reach
@@ -812,13 +865,47 @@ describe("POST /api/checkout/products/create", () => {
       quantity: 1,
       price: STRIPE_PRICE_ID,
     });
-    // Sub metadata is mirrored onto subscription_data so the webhook can build
-    // the participation, and a per-sub description ("{Club} — {Child}") makes
+    // The session and the subscription no longer share one metadata object.
+    // The session keeps exactly its camelCase keys (the webhook and the
+    // confirmation page read those), and the subscription carries them *plus*
+    // the finance snapshot — because nothing propagates from a session to the
+    // subscription it created. A per-sub description ("{Club} — {Child}") makes
     // each of a family's subs distinguishable in the hosted billing portal.
+    expect(params.metadata).toEqual({
+      customerId: CUSTOMER_ID,
+      participantId: GAMER_ID,
+      productId: PRODUCT_ID,
+      purchaseShape: "subscription_monthly",
+      currency: "eur",
+    });
     expect(params.subscription_data).toEqual({
-      metadata: params.metadata,
+      metadata: {
+        customerId: CUSTOMER_ID,
+        participantId: GAMER_ID,
+        productId: PRODUCT_ID,
+        purchaseShape: "subscription_monthly",
+        currency: "eur",
+        product_id: PRODUCT_ID,
+        gamer_id: GAMER_ID,
+        customer_id: CUSTOMER_ID,
+        locale: "en",
+        spoken_language_code: "en",
+        // A consumer club is the one type whose end date may be null, and a
+        // null date omits its key rather than sending an empty one.
+        delivery_start: "2026-09-01",
+      },
       description: `Test Club — ${GAMER_FIRST_NAME}`,
     });
+    expect(params.subscription_data.metadata).not.toHaveProperty(
+      "delivery_end",
+    );
+    // A subscription checkout resolves its Stripe Product through the price
+    // cache, which returns early when the cached amount still matches — so the
+    // route must not reach for one itself.
+    expect(mockEnsureStripeProductForProduct).not.toHaveBeenCalled();
+    // Nor does it enable invoice creation: subscriptions already invoice.
+    expect(params.invoice_creation).toBeUndefined();
+    expect(params.payment_intent_data).toBeUndefined();
     // No app locale on the profile → Stripe chrome falls back to 'auto'.
     expect(params.locale).toBe("auto");
     // Promotion-code entry is enabled on the subscription path too.
@@ -1024,5 +1111,54 @@ describe("POST /api/checkout/products/create", () => {
       "http://localhost:3000/shop/confirmation?session_id={CHECKOUT_SESSION_ID}",
     );
     expect(params.cancel_url).toBe(`http://localhost:3000/shop/${PRODUCT_ID}`);
+  });
+
+  // ── The product read both branches are built from ─────────────────
+
+  it("orders the embedded translations so the resolved name is deterministic", async () => {
+    // Embedded resources come back unordered, so a product with no English
+    // translation resolved its name from an arbitrary row. Harmless while the
+    // name was only a display string; load-bearing now — a flapping name makes
+    // the Stripe Product reconcile on every purchase, and makes two concurrent
+    // creates differ under one idempotency key. Ordering an *embedded* resource
+    // needs its table named: a bare `.order("locale")` would try to order
+    // `products` by a column it does not have, and fail loudly.
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: PAID_CLUB });
+
+    await POST(createRequest({ ...VALID_BODY, purchaseShape: "free" }));
+
+    expect(mockProductsOrder).toHaveBeenCalledWith("locale", {
+      referencedTable: "product_translations",
+    });
+  });
+
+  it("hands the subscription price helper the row it already read", async () => {
+    // One read is the single source for everything Stripe is told: the Stripe
+    // Product's name, tax code and metadata, and the purchase snapshot on the
+    // subscription. Two reads could disagree.
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: PAID_CLUB });
+    mockAdminRpc.mockResolvedValueOnce({
+      data: { kind: "validated" },
+      error: null,
+    });
+    mockGetOrCreateSubscriptionPrice.mockResolvedValue({
+      product_id: PRODUCT_ID,
+      currency: "eur",
+      stripe_price_id: STRIPE_PRICE_ID,
+      unit_amount_cents: 5000,
+    });
+    mockStripeSessionCreate.mockResolvedValue({
+      url: "https://checkout.stripe.com/c/test_sub",
+    });
+
+    await POST(createRequest(VALID_BODY));
+
+    expect(mockGetOrCreateSubscriptionPrice).toHaveBeenCalledWith(
+      expect.anything(),
+      PAID_CLUB,
+      "eur",
+    );
   });
 });
