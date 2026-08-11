@@ -100,8 +100,9 @@ but **not small** — state the true scope so nobody budgets it as a sed:
 
 **Out of the mechanical commit, renamed opportunistically** when the roster step touches
 those shapes: RPC **result JSON keys** literally named `'gamer_id'`/`gamer_*` (emitted by
-the gedu-feed, groups-details, attendance and minecraft-set RPCs and parsed by the roster
-contracts), and **function names** containing "gamer" (`admin_enroll_gamer`, the
+`get_gedu_group_feed`, `get_gedu_assigned_product`, `get_product_groups_with_details`,
+and the attendance and minecraft-set RPCs, parsed by the roster contracts), and
+**function names** containing "gamer" (`admin_enroll_gamer`, the
 `gamer_count` result column) — renaming a function also means updating its entry in the
 DB test suite's authorization spine, so it rides with the step that rewrites its body
 anyway.
@@ -152,7 +153,10 @@ Three cases by audience:
    checkout. Per-participant already-enrolled lockout applies to the parent row **for
    free**: the participation-counts read is keyed by the participant column filtered on
    the customer, so a self seat lands under the parent's own id with no service change —
-   inject the parent as a row in the signup-fields hook and the lockout follows.
+   inject the parent as a row where the route adapter assembles the child rows (the
+   signup-fields hook and panel view are id-agnostic and need no change for lockout).
+   The injected row must be excluded from the max-children-per-parent count that gates
+   the add-a-child affordance, or a parent row hides the add button one child early.
 
 One seat per checkout everywhere — the family multi-select idea is **deferred**
 (see Rejected alternatives). Buying for yourself and two children is three flows, same
@@ -194,39 +198,73 @@ as three children today.
   participation rows by participant id, then iterates only family members with role
   `gamer` — a parent's own bucket matches no member and vanishes. This is the central
   surface fix (and the reason for the step ordering below): until it lands, a parent
-  seat would be paid for and appear **nowhere**.
+  seat would be paid for and appear **nowhere**. The fix lands in the family rollup
+  helper, and its public vocabulary — the per-member entry types and their gamer-named
+  id field — is part of the same change: decide the renamed shape there, not ad hoc at
+  call sites.
 - Parent dashboard: gamer sections first, then a section for the parent's own
   enrollments titled with the **parent's first name** (not "You"), rendered only when
-  they have any. The section-jump pill has a measured 3-name cap against a fixed width
-  budget; working default (refine in UI Previews): the parent chip counts against the
-  same budget, collapsing to the "Gamers" abbreviation at >2 children when a parent
-  section exists — one cap, not two — with a preview scenario pinning the widest case.
+  they have any; the section list gains the parent section between the gamer sections
+  and billing. The section-jump pill's cap is a **fixed count of three named entries,
+  deliberately arithmetic rather than measured** (the server renders the pill's final
+  shape on first paint), collapsing all-or-nothing to a single "Gamers" chip aimed at
+  the first child's section; each named entry is separately width-capped and
+  ellipsised. Working default (refine in UI Previews): the parent chip counts against
+  the same count — at >2 children with a parent section present, the child entries
+  collapse as today and the parent chip stays named; one cap, not two. The existing
+  widest-case preview scenario (exactly three children) gets revised for the new
+  widest case rather than a new one added. Two states need deciding while in there:
+  what the collapsed "Gamers" chip targets when a parent section reorders things, and
+  the **childless parent with own enrollments** — today zero children renders a
+  no-children empty state that would swallow the parent's section; working default:
+  render the parent section and demote the add-a-child prompt to a section rather
+  than the whole page.
 - The parent-side enrollment card's props are a **discriminated union whose parent arm
-  requires a gamer first name** and whose join path routes through the switch-profile
-  dialog — the self-seat case needs a new union member (own seat: own name, direct
-  join), and every string in the card that interpolates a child's name needs an
-  audience-aware variant in all five locales.
+  requires a gamer first name** (consumed only by the leave-waitlist confirm — kept,
+  since self-waitlisting exists) — the self-seat case needs a new union member. The
+  discriminant doubles as the message-key selector in the card's copy ternaries, so a
+  third member widens each of those choices; the strings needing self variants in all
+  five locales are the name-interpolating leave-waitlist confirm plus the third-person
+  "awaiting a Gedu" sentence. **Direct join is achieved by omission**: the card
+  already falls back to a plain link when no join-click handler is passed, so the
+  self-seat card simply doesn't get the dashboard shell's handler (which opens the
+  switch-profile dialog with the role hardcoded to gamer and a title interpolating
+  the child's name). The dashboard's per-enrollment action shape carries a doc-comment
+  assertion that its person is always a gamer — that shape gains the self case too.
 - Family product page: **routing and authorization already work** — the six route shells
   key on participation id with the audience fixed by the role root, and the feed RPC's
   access predicate ("participant is me, or I am their parent") admits a self seat by
-  construction post-rename. The work is attribution only: the child-attributed copy, the
-  `'gamer'` JSON key, the RPC `COMMENT`, and the colocated CLAUDE.md's "gamer-scoped"
-  line.
+  construction post-rename. The work is attribution only: the `'gamer'` JSON key, the
+  RPC `COMMENT`, the "gamer-scoped" doc blocks (the colocated CLAUDE.md **and** the
+  page's types module carry the same assertion), the page body's gamer-named prop, and
+  the three name-interpolating strings (`familyProduct.forGamer`,
+  `familyProduct.paymentProblemNotice`, `familyProduct.cancellationNotice`).
 - Gedu group feed and admin group-management rosters: an **adult participant variant** of
-  the roster row — a parent/adult badge, their own email in the contact slot (there is no
-  linked parent), and the age/gender/Minecraft fields rendered deliberately empty rather
-  than as broken data. **The contact email is an RPC change, not just a contract
-  relaxation**: no roster RPC emits the participant's own email today (they emit the
-  linked parent's, via the parent-link lateral join, which is NULL for an adult) — the
-  gedu-feed, gedu-assigned-product and groups-details RPCs each gain the field, in the
-  behavioral migration (step 3) so the roster step only consumes it. The roster result
-  contracts relax the fields that assumed a child (date of birth, parent name/email
-  become nullable). Refine the row visually in UI Components; judge the panel in UI
-  Previews.
+  the roster row — a parent/adult badge, their own email as contact (there is no linked
+  parent), and the age/gender/Minecraft fields rendered deliberately empty rather than
+  as broken data. The two surfaces differ and the variant lands differently on each:
+  the gedu rail roster shows a click-to-copy parent-email cell (an adult substitutes
+  their own email) and has a **bulk copy-all-emails affordance that must include the
+  adult's own email**; the admin group chip shows parent first+last name and **no email
+  of any kind today** — its adult variant adds an email where the child variant shows a
+  parent name. **The contact email is an RPC change, not just a contract relaxation**:
+  no roster RPC emits the participant's own email today (they emit the linked parent's,
+  via the parent-link lateral join, which is NULL for an adult) — `get_gedu_group_feed`,
+  `get_gedu_assigned_product` and `get_product_groups_with_details` each gain the
+  field, in the behavioral migration (step 3) so the roster step only consumes it.
+  (The assigned-product roster is only ever rendered via the feed's fresher copy — its
+  copy of the field is for shape parity; comment it so nobody deletes it as unused.)
+  The contract relaxation is smaller than it sounds: only the gedu-feed roster contract
+  still declares the parent email required (with a "deliberate tightening" comment to
+  unwind); the assignments and groups contracts are already nullable where it matters
+  and only gain the new field. Refine the row visually in UI Components; judge the
+  panel in UI Previews.
 - Admin comp-enrollment: the picker (today parent-first, children nested) gains the
   ability to select the parent themselves; the admin enroll RPC's "resolve the customer
   via the parent link, raise if none" logic gains the self case (customer = participant),
-  under the same audience gate.
+  under the same audience gate. The picker currently **drops parents with zero linked
+  children entirely** — on a for-parents product a childless parent must be listed and
+  selectable.
 - Shop browse: a new audience filter chip row (For gamers / For parents, multi-select OR
   like topic/language) in the client-side filter predicate, plus audience labels on
   cards. The chips may briefly ship before any for-parents product exists (the admin
@@ -237,6 +275,10 @@ as three children today.
   emails) gets audience-aware variants in **all five locales** — plus the checkout
   route's hardcoded English `"your child"` fallback for the Stripe subscription
   description, which lives outside `messages/` and won't be caught by a locale sweep.
+  Two more child-assuming strings to name explicitly: the purchase-confirmation view's
+  translated "Your child" fallback (in `messages/`, but needs an audience-aware
+  variant, not just translation), and the municipality-club consent checkbox ("my
+  child's seat") — a consent-bearing string a self-enrolling parent must tick.
 
 ### Deferred (recorded, not built)
 
@@ -330,19 +372,24 @@ before the switch is flippable. Do not reorder step 8 earlier.
    enrolling an unlinked adult is refused, parent self-waitlist works, confirm-paid
    still records a seat with no audience check, age CHECK enforces
    null-iff-no-gamer-audience.
-4. **Family surfaces.** Preview scenes first: the parent's own-enrollments section
-   (gamers first, parent's first name, conditional presence), the single-budget section
-   pill with its widest-case scenario, the self-seat enrollment card variant (new union
-   member: own name, direct voice join, no switch dialog), and the participant-scoped
-   product-page attribution. Sign off from fixtures, then wire: **fix the enrollment
-   rollup** so self-seat buckets survive (the silent-drop bug), and land the card and
-   product-page changes with their locale strings.
+4. **Family surfaces.** Preview scenes first — the surfaces are the parent dashboard
+   scene and the parent/gamer club-page pair (one shared body, split by audience): the
+   parent's own-enrollments section (gamers first, parent's first name, conditional
+   presence), the single-count section pill (revise the existing widest-case scenario;
+   add the childless-parent-with-enrollments state), the self-seat enrollment card
+   variant (new union member: own name, direct voice join by omitting the
+   switch-dialog handler), and the participant-scoped product-page attribution. Sign
+   off from fixtures, then wire: **fix the enrollment rollup** so self-seat buckets
+   survive (the silent-drop bug — including its gamer-named entry vocabulary), and
+   land the card and product-page changes with their locale strings.
 5. **Shop and signup panel.** Audience filter chips + card audience labels + conditional
-   age line; the three signup-panel cases (parent injected as a selectable row; lockout
-   is free via the participant-keyed counts); checkout and waitlist routes accept the
+   age line; the three signup-panel cases (parent injected as a selectable row in the
+   route adapter, excluded from the max-children count; lockout is free via the
+   customer-filtered participant-keyed read); checkout and waitlist routes accept the
    parent as participant (validation is the RPC's job); subscription description and
    confirmation copy become participant-aware, including the out-of-messages "your
-   child" fallback in the checkout route. Update the route posture registry entries.
+   child" fallback in the checkout route, the confirmation view's translated fallback,
+   and the municipality consent checkbox. Update the route posture registry entries.
    All five locales.
 6. **Voice.** Token route: admit `customer`, participant-keyed membership check, flip
    ownership to positive gedu/admin gating covering **both** `is_owner` and the
@@ -353,11 +400,13 @@ before the switch is flippable. Do not reorder step 8 earlier.
    CLAUDE.md access-control table (customer column: join own group's room in window; no
    moderator capabilities).
 7. **Gedu/admin rosters.** Adult row variant (badge, own email from the new RPC field,
-   deliberately-empty child fields) in the gedu group feed and admin groups panel; relax
-   the roster contracts' nullability; comp-enroll picker gains adults; opportunistic
-   renames ride here — the `gamer_*` result JSON keys on the shapes being touched and
-   the `admin_enroll_gamer` function name (with its authorization-spine entry).
-   Style-guide demo for the adult roster row.
+   deliberately-empty child fields) in the gedu group feed and admin groups panel —
+   including the gedu bulk copy-all-emails affordance and the admin chip's new email
+   line; relax the gedu-feed roster contract's required parent email; comp-enroll
+   picker gains adults (including childless parents, which it drops today);
+   opportunistic renames ride here — the `gamer_*` result JSON keys on the shapes
+   being touched and the `admin_enroll_gamer` function name (with its
+   authorization-spine entry). Style-guide demo for the adult roster row.
 8. **Admin product form — the enabling switch, deliberately last.** Audience checkboxes
    in the existing Audience section; age fields required with For Gamers, hidden and
    cleared without it; the three payload-path fixes so empty ages emit `null` (not
