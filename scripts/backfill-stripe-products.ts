@@ -21,11 +21,16 @@
  *   npx tsx scripts/backfill-stripe-products.ts
  *   npx tsx scripts/backfill-stripe-products.ts --apply --live
  *
- * A live *write* needs `--live` alongside `--apply`. The two keys are set
- * independently, so the mistake this guards is the plausible one: a live Stripe
- * key still paired with the staging database, which would stamp staging names
- * and metadata onto real catalogue entries. The banner printed before any work
- * names both sides so the pairing is checkable by eye either way.
+ * A live *write* needs `--live` alongside `--apply`, and the pairing is checked
+ * rather than merely acknowledged. The two keys are set independently, so the
+ * mistake this guards is the plausible one: a live Stripe key still paired with
+ * the staging database, which would stamp staging names and metadata onto real
+ * catalogue entries. A live `--apply` therefore refuses outright when
+ * `NEXT_PUBLIC_SUPABASE_URL` came from `.env.local` rather than the shell — the
+ * shell is the only way to name a database deliberately, and `.env.local` names
+ * staging by construction. The banner printed before any work labels each side
+ * with where its value came from, so the pairing is checkable by eye in report
+ * mode too, where nothing is refused.
  *
  * A restricted live key needs Products read **and** write granted before
  * `--apply` will get anywhere; report mode needs read alone.
@@ -55,11 +60,20 @@
  * clubs, which only revisit their Stripe Product on a first sale or a price
  * change and can otherwise drift indefinitely.
  *
- * Report mode exits non-zero if any product we own carries **no tax code** —
- * that is the claim the finance audit procedure in `docs/stripe.md` rests on,
- * and it is meant to be checkable rather than assumed. Ordinary drift, and a
- * `product_id` pointing at a row that no longer exists, are reported and exit 0:
- * the first is what `--apply` is for, and the second this script cannot fix.
+ * Either mode exits non-zero if any product we own is left carrying **no tax
+ * code** — that is the claim the finance audit procedure in `docs/stripe.md`
+ * rests on, and it is meant to be checkable rather than assumed. Report mode
+ * checks every owned product; `--apply` re-checks whatever it did not manage to
+ * bring into line (a failed write, a skipped duplicate, an orphan, a row it
+ * could not derive a shape from), so an apply run cannot exit 0 with the audit's
+ * foundational claim unverified. Ordinary drift, and a `product_id` pointing at
+ * a row that no longer exists, are reported and exit 0: the first is what
+ * `--apply` is for, and the second this script cannot fix.
+ *
+ * Duplicates are the one thing `--apply` steps around. Two Stripe Products
+ * claiming one Sogverse product are reported but never written to, because
+ * normalising both copies would make them identical and rob the human deciding
+ * which to keep of the evidence for deciding.
  */
 
 import fs from "fs";
@@ -82,10 +96,16 @@ import type { Database, ProductType } from "@/types";
  * Load `.env.local` without clobbering the shell. Precedence is the whole point
  * (see the header): whatever is already exported wins, so pointing the script at
  * the live account is three assignments rather than an edited file.
+ *
+ * Returns the keys this call supplied — i.e. the ones the shell did *not* set.
+ * Which side a value came from is not cosmetic: `.env.local` names the staging
+ * database by construction, so "the Supabase URL came from the file" is the
+ * signal that a live write is aimed at the wrong account.
  */
-function loadEnvLocal(): void {
+function loadEnvLocal(): Set<string> {
+  const suppliedByFile = new Set<string>();
   const envPath = path.join(process.cwd(), ".env.local");
-  if (!fs.existsSync(envPath)) return;
+  if (!fs.existsSync(envPath)) return suppliedByFile;
   const envFile = fs.readFileSync(envPath, "utf-8");
   for (const line of envFile.split("\n")) {
     const trimmed = line.trim();
@@ -95,7 +115,9 @@ function loadEnvLocal(): void {
     const key = trimmed.slice(0, eqIndex).trim();
     if (key in process.env) continue;
     process.env[key] = trimmed.slice(eqIndex + 1).trim();
+    suppliedByFile.add(key);
   }
+  return suppliedByFile;
 }
 
 function requireEnv(name: string): string {
@@ -309,29 +331,54 @@ async function main(): Promise<void> {
   const unknown = args.filter((a) => !["--apply", "--live"].includes(a));
   if (unknown.length > 0) {
     console.error(`Unknown argument(s): ${unknown.join(", ")}`);
-    console.error("Usage: npx tsx scripts/backfill-stripe-products.ts [--apply [--live]]");
+    console.error(
+      "Usage: npx tsx scripts/backfill-stripe-products.ts [--apply [--live]]",
+    );
     process.exit(1);
   }
   const apply = args.includes("--apply");
   const liveAcknowledged = args.includes("--live");
 
-  loadEnvLocal();
+  const suppliedByEnvFile = loadEnvLocal();
   const stripeKey = requireEnv("STRIPE_SECRET_KEY");
   const supabaseUrl = requireEnv("NEXT_PUBLIC_SUPABASE_URL");
   const supabaseServiceKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
+
+  const sourceOf = (name: string): string =>
+    suppliedByEnvFile.has(name) ? ".env.local" : "shell";
 
   // A live key is `sk_live_` / `rk_live_`; anything else is test mode.
   const isLiveKey = /^[a-z]k_live_/.test(stripeKey);
 
   console.log("");
-  console.log(`Stripe:   ${isLiveKey ? "LIVE MODE" : "test mode"} (${stripeKey.slice(0, 8)}…)`);
-  console.log(`Supabase: ${supabaseUrl}`);
-  console.log(`Mode:     ${apply ? "APPLY — will write to Stripe" : "report only — writes nothing"}`);
+  console.log(
+    `Stripe:   ${isLiveKey ? "LIVE MODE" : "test mode"} (${stripeKey.slice(0, 8)}…, from ${sourceOf("STRIPE_SECRET_KEY")})`,
+  );
+  console.log(
+    `Supabase: ${supabaseUrl} (from ${sourceOf("NEXT_PUBLIC_SUPABASE_URL")})`,
+  );
+  console.log(
+    `Mode:     ${apply ? "APPLY — will write to Stripe" : "report only — writes nothing"}`,
+  );
   console.log("");
 
   if (apply && isLiveKey && !liveAcknowledged) {
     console.error(
       "Refusing to write to the LIVE Stripe account without --live. Check the Supabase URL above is the production project first.",
+    );
+    process.exit(1);
+  }
+
+  // `--live` says the pairing was checked; this checks it. `.env.local` holds
+  // the staging project and nothing else, so a live key reading its database
+  // URL from that file is the exact mismatch --live is meant to have ruled out —
+  // and it is caught here, before either client is constructed.
+  if (apply && isLiveKey && suppliedByEnvFile.has("NEXT_PUBLIC_SUPABASE_URL")) {
+    console.error(
+      "Refusing a LIVE write against the Supabase project from .env.local — that is the staging database, and writing to Stripe from it would stamp staging names onto real catalogue entries.",
+    );
+    console.error(
+      "Name the production project in the shell (NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY) and re-run.",
     );
     process.exit(1);
   }
@@ -364,10 +411,9 @@ async function main(): Promise<void> {
     owned.push({ stripeProduct: product, sogverseProductId });
   }
 
-  const rows = await loadProductRows(
-    admin,
-    [...new Set(owned.map((o) => o.sogverseProductId))],
-  );
+  const rows = await loadProductRows(admin, [
+    ...new Set(owned.map((o) => o.sogverseProductId)),
+  ]);
 
   // Two Stripe Products claiming one Sogverse product. The app's search-then-
   // create is eventually consistent, so concurrent first purchases could both
@@ -384,10 +430,18 @@ async function main(): Promise<void> {
   const duplicated = [...byProductId.entries()].filter(
     ([, entries]) => entries.length > 1,
   );
+  const duplicatedIds = new Set(
+    duplicated.map(([sogverseProductId]) => sogverseProductId),
+  );
 
   const inSync: OwnedProduct[] = [];
-  const drifted: { owned: OwnedProduct; diffs: FieldDiff[]; update: Stripe.ProductUpdateParams }[] = [];
+  const drifted: {
+    owned: OwnedProduct;
+    diffs: FieldDiff[];
+    update: Stripe.ProductUpdateParams;
+  }[] = [];
   const orphaned: OwnedProduct[] = [];
+  const undescribable: { owned: OwnedProduct; message: string }[] = [];
   const noTaxCode: OwnedProduct[] = [];
 
   for (const entry of owned.sort((a, b) =>
@@ -400,10 +454,20 @@ async function main(): Promise<void> {
       orphaned.push(entry);
       continue;
     }
-    const { update, diffs } = planUpdate(
-      entry.stripeProduct,
-      desiredStripeProduct(row),
-    );
+    // A row with no translations cannot name a Stripe Product, and the
+    // derivation says so by throwing. A database trigger makes that near
+    // unreachable, but this is a diagnostic tool: one unnameable row must cost
+    // its own line in the report, not the rest of the scan — and in `--apply`,
+    // not the rest of the writes.
+    let desired: DesiredStripeProduct;
+    try {
+      desired = desiredStripeProduct(row);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      undescribable.push({ owned: entry, message });
+      continue;
+    }
+    const { update, diffs } = planUpdate(entry.stripeProduct, desired);
     if (diffs.length === 0) inSync.push(entry);
     else drifted.push({ owned: entry, diffs, update });
   }
@@ -412,13 +476,16 @@ async function main(): Promise<void> {
   console.log(`  ${owned.length} ours (metadata.product_id)`);
   console.log(`  ${notOurs.length} not ours — left alone`);
   if (malformedId.length > 0) {
-    console.log(`  ${malformedId.length} with a non-UUID product_id — left alone`);
+    console.log(
+      `  ${malformedId.length} with a non-UUID product_id — left alone`,
+    );
   }
   console.log("");
 
   if (inSync.length > 0) {
     console.log(`In sync (${inSync.length}) — nothing to write:`);
-    for (const entry of inSync) console.log(`  ${describe(entry.stripeProduct)}`);
+    for (const entry of inSync)
+      console.log(`  ${describe(entry.stripeProduct)}`);
     console.log("");
   }
 
@@ -438,7 +505,20 @@ async function main(): Promise<void> {
       `No Sogverse row (${orphaned.length}) — cannot be reconciled, reported only:`,
     );
     for (const entry of orphaned) {
-      console.log(`  ${describe(entry.stripeProduct)}  product_id=${entry.sogverseProductId}`);
+      console.log(
+        `  ${describe(entry.stripeProduct)}  product_id=${entry.sogverseProductId}`,
+      );
+    }
+    console.log("");
+  }
+
+  if (undescribable.length > 0) {
+    console.log(
+      `No desired shape (${undescribable.length}) — cannot be reconciled, reported only:`,
+    );
+    for (const { owned: entry, message } of undescribable) {
+      console.log(`  ${describe(entry.stripeProduct)}`);
+      console.log(`      ${message}`);
     }
     console.log("");
   }
@@ -446,27 +526,36 @@ async function main(): Promise<void> {
   if (malformedId.length > 0) {
     console.log(`Non-UUID product_id (${malformedId.length}) — reported only:`);
     for (const product of malformedId) {
-      console.log(`  ${describe(product)}  product_id=${product.metadata.product_id}`);
+      console.log(
+        `  ${describe(product)}  product_id=${product.metadata.product_id}`,
+      );
     }
     console.log("");
   }
 
   if (duplicated.length > 0) {
     console.log(
-      `Duplicate Stripe products (${duplicated.length} Sogverse product(s)) — reported only:`,
+      `Duplicate Stripe products (${duplicated.length} Sogverse product(s)) — skipped by --apply, resolve by hand first:`,
     );
     for (const [sogverseProductId, entries] of duplicated) {
       console.log(`  product_id=${sogverseProductId}`);
-      for (const entry of entries) console.log(`      ${describe(entry.stripeProduct)}`);
+      for (const entry of entries)
+        console.log(`      ${describe(entry.stripeProduct)}`);
     }
+    console.log(
+      "  Normalising both copies would make them identical — pick the one prices and subscriptions reference, then re-run.",
+    );
     console.log("");
   }
 
   // The audit claim in docs/stripe.md — "every product we own carries an
   // explicit tax code" — stated as a check rather than an assumption.
   if (noTaxCode.length > 0) {
-    console.log(`NO TAX CODE (${noTaxCode.length}) — billed at the account default:`);
-    for (const entry of noTaxCode) console.log(`  ${describe(entry.stripeProduct)}`);
+    console.log(
+      `NO TAX CODE (${noTaxCode.length}) — billed at the account default:`,
+    );
+    for (const entry of noTaxCode)
+      console.log(`  ${describe(entry.stripeProduct)}`);
     console.log("");
   } else {
     console.log("Tax codes: every product we own carries one.");
@@ -475,42 +564,87 @@ async function main(): Promise<void> {
 
   if (!apply) {
     if (drifted.length > 0) {
-      console.log("Report only — re-run with --apply to write the diffs above.");
+      console.log(
+        "Report only — re-run with --apply to write the diffs above.",
+      );
     }
     // Drift is normal and `--apply` fixes it; a missing tax code is the defect
-    // the audit procedure depends on not existing.
+    // the audit procedure depends on not existing, and a row we cannot derive a
+    // shape from is a claim we cannot make either way.
     //
     // `process.exitCode` rather than `process.exit()`: forcing an exit while the
     // Stripe and Supabase HTTP handles are still closing aborts the Node process
     // with a libuv assertion on Windows, which loses the very status this line
     // exists to set. Nothing here holds the loop open, so returning exits on its
     // own with this code.
-    if (noTaxCode.length > 0) process.exitCode = 1;
+    if (noTaxCode.length > 0 || undescribable.length > 0) process.exitCode = 1;
     return;
   }
 
-  if (drifted.length === 0) {
-    console.log("Nothing to apply.");
-    return;
+  // Duplicates are reported but never written: writing to both copies of a pair
+  // normalises them into each other, and the human choosing which to keep needs
+  // them told apart.
+  const toWrite = drifted.filter(
+    ({ owned: entry }) => !duplicatedIds.has(entry.sogverseProductId),
+  );
+  const skippedAsDuplicate = drifted.length - toWrite.length;
+  if (skippedAsDuplicate > 0) {
+    console.log(
+      `Skipping ${skippedAsDuplicate} drifted product(s) that share a product_id — see the duplicates above.`,
+    );
+    console.log("");
   }
+
+  // Everything the run leaves in its desired state: already there, or written
+  // there below. Whatever is missing from this set is what the audit claim has
+  // to be re-checked against.
+  const inDesiredState = new Set(inSync.map((entry) => entry.stripeProduct.id));
 
   let updated = 0;
   const failures: { id: string; message: string }[] = [];
-  for (const { owned: entry, update } of drifted) {
-    try {
-      await stripe.products.update(entry.stripeProduct.id, update);
-      updated += 1;
-      console.log(`updated ${entry.stripeProduct.id}`);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      failures.push({ id: entry.stripeProduct.id, message });
-      console.error(`FAILED  ${entry.stripeProduct.id}: ${message}`);
+  if (toWrite.length === 0) {
+    console.log("Nothing to apply.");
+  } else {
+    for (const { owned: entry, update } of toWrite) {
+      try {
+        await stripe.products.update(entry.stripeProduct.id, update);
+        updated += 1;
+        inDesiredState.add(entry.stripeProduct.id);
+        console.log(`updated ${entry.stripeProduct.id}`);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        failures.push({ id: entry.stripeProduct.id, message });
+        console.error(`FAILED  ${entry.stripeProduct.id}: ${message}`);
+      }
     }
+    console.log("");
+    console.log(`Applied ${updated} update(s), ${failures.length} failure(s).`);
   }
+  // A row with no derivable shape is unreconcilable in either mode, so it fails
+  // the run in either mode — an --apply that silently exited 0 on what report
+  // mode exits 1 on would make the two disagree about the same account.
+  if (failures.length > 0 || undescribable.length > 0) process.exitCode = 1;
 
+  // The audit claim again, over what this run did *not* fix: a failed write, a
+  // skipped duplicate, an orphan, a row with no derivable shape. Applying the
+  // desired state always writes a tax code, so anything reached above is
+  // covered; anything else still has to be asserted, or an apply run could exit
+  // 0 having left the claim in docs/stripe.md untested.
   console.log("");
-  console.log(`Applied ${updated} update(s), ${failures.length} failure(s).`);
-  if (failures.length > 0) process.exitCode = 1;
+  const stillNoTaxCode = noTaxCode.filter(
+    (entry) => !inDesiredState.has(entry.stripeProduct.id),
+  );
+  if (stillNoTaxCode.length > 0) {
+    console.log(
+      `NO TAX CODE after applying (${stillNoTaxCode.length}) — billed at the account default:`,
+    );
+    for (const entry of stillNoTaxCode) {
+      console.log(`  ${describe(entry.stripeProduct)}`);
+    }
+    process.exitCode = 1;
+  } else {
+    console.log("Tax codes: every product we own carries one.");
+  }
 }
 
 main().catch((error: unknown) => {
