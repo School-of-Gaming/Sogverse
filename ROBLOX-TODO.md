@@ -52,17 +52,58 @@ invented copy or a silently short section, and every programme legal page carrie
 banner until its copy is signed off.
 
 - [ ] **Child Safeguarding Policy — "During in-person events" section.** Entirely
-      missing (was `xyz` in the draft). Needs Lynx: the programme's in-person events are
-      in France, at venues Lynx arranges, so none of the controls in the "During online
-      sessions" section (Sogverse accounts, no child-to-child DMs, no outside invites)
-      carry over, and the Gedu handbook has no in-person safeguarding protocol to reuse.
-      The section has to answer: supervision (how many adults, is a child ever alone with
-      one adult), arrival and collection (who signs a child in, who may take them home),
-      the venue (who checks it, are children kept to designated areas), who else is on
-      site (are all adults present identifiable and vetted, including venue staff), and
-      first aid (a named first-aider per event). Photography is already handled by the
-      `data` section deferring to the Privacy Policy, and emergencies by the `escalation`
-      section.
+      missing (was `xyz` in the draft). **The responsibility split is settled; only two
+      wording choices are open, and the section is publishable whichever way they go.**
+
+      *Why nothing existing filled it:* every control in the "During online sessions"
+      section (Sogverse accounts, no child-to-child DMs, no outside invites, sessions not
+      recorded) is a property of our platform and none of it carries to a room, and the
+      Gedu handbook has no in-person safeguarding protocol to reuse despite SOG running
+      plenty of in-person activity. Photography is already handled by the `data` section
+      deferring to the Privacy Policy, and emergencies by the `escalation` section.
+
+      *Settled — SOG's position*, from SOG's CEO on 2026-08-11: SOG is the act, not the
+      organiser. "We are not the organizer of the event. We are the show number." Whoever
+      invites us in owns the venue, arrival and collection, supervision around the
+      session, and first aid. Write this as **who does what, never as a disclaimer** —
+      the policy's own intro promises a child is safe "whether they're joining online or
+      attending an in-person event", so a section that reads as "not our problem"
+      contradicts the document two headings above it. The second paragraph below is what
+      stops it reading as a shrug, and it costs nothing because it is all already true.
+
+      *Settled — who the counterparty is*, from Lynx on 2026-08-11: **Lynx Educate and
+      its venue partners.** Lynx also confirmed that under their contract with Roblox,
+      Lynx is ultimately on the hook for ensuring venues and facilitators comply with
+      safety and child protection requirements. Frances leads venue partnerships once
+      back in office — that gates the venue *negotiations*, not this copy, since the
+      policy states who holds the duty and the contracts implement it.
+
+      *Draft* (Lynx proposed the first sentence; the colon-clause is ours, restored):
+
+      > Our Game Educators run the session; they are not the organisers of the event.
+      > Lynx Educate and its venue partners are responsible for the venue and the
+      > arrangements around it: the space itself and its safety, how children arrive and
+      > are collected, supervision before and after the session, and first aid.
+      >
+      > Inside the session, the group is ours. The standards of behaviour, supervision
+      > and escalation set out in this policy apply in a room exactly as they do online,
+      > and the same trained, background-checked Game Educators lead both.
+
+      *Open — two wording choices, both strengthenings:* (1) Does the colon-clause stay?
+      Lynx's own version stopped at "the arrangements around it", which is the part a
+      parent cannot picture — the section's job is letting them see arrival, collection
+      and first aid are somebody's named responsibility. (2) Do we publish Lynx's
+      backstop? Something like "Lynx Educate is responsible for making sure the venues
+      and facilitators it works with meet the Programme's safety and child protection
+      requirements." It is the most reassuring sentence available and currently exists
+      only in Slack. A reply making both arguments is drafted but **deliberately held**:
+      Lynx asked a SOG colleague for her view first, and posting ahead of her would
+      pre-empt it — the backstop point especially.
+
+      *Also:* the page subtitle says the document covers "Lynx Educate and School of
+      Gaming's broader safeguarding responsibilities for the Programme, including
+      in-person events". With this section that overpromises — it covers who *holds*
+      those responsibilities. Trim it in the same pass.
 - [ ] **Whose vetting does the Safeguarding Policy actually describe?** Surfaced while
       resolving the vetting list. "Who this covers" says the policy applies to "all Lynx
       Educate and School of Gaming staff, facilitators …, volunteers, and any contractor",
