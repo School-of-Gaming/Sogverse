@@ -17,9 +17,6 @@ export function Footer() {
             </span>
             <span className="text-lg font-semibold">{c('appName')}</span>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {t('tagline')}
-          </p>
           <a
             href={`mailto:${SUPPORT_EMAIL}`}
             className="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"

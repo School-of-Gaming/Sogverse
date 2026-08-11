@@ -210,16 +210,22 @@ export default function RobloxPage() {
         <div className="mx-auto max-w-3xl space-y-2 border-t pt-8 text-xs leading-relaxed text-muted-foreground/70">
           <p>{t("legal.roblox")}</p>
           <p>{t("legal.lynx")}</p>
-          {programmeDocuments.map((document) => (
-            <p key={document.href}>
-              <Link
-                href={document.href}
-                className="underline underline-offset-2 hover:text-muted-foreground"
-              >
-                {document.label}
-              </Link>
-            </p>
-          ))}
+          {/* A step more present than the trademark boilerplate above — a
+              parent looking for the terms has to be able to find them. Still
+              quiet (muted, not primary): three primary-coloured rows would
+              shout from the bottom of the page. */}
+          <div className="space-y-1.5 pt-4 text-sm text-muted-foreground">
+            {programmeDocuments.map((document) => (
+              <p key={document.href}>
+                <Link
+                  href={document.href}
+                  className="underline underline-offset-2 hover:text-foreground"
+                >
+                  {document.label}
+                </Link>
+              </p>
+            ))}
+          </div>
         </div>
       </section>
     </>
