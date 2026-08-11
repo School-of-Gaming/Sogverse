@@ -649,6 +649,91 @@ describe("product audience", () => {
       expect(child?.participant_email).toBeNull();
       expect(child?.parent_first_name).not.toBeNull();
     });
+
+    /**
+     * 00177: the email arm keys on the ROLE, not on id equality alone.
+     *
+     * The manual Stripe-sub-adoption process writes participation rows by hand,
+     * so a gamer's id transposed into customer_id is a real input the typed
+     * writers cannot produce. Such a row satisfies participant_id = customer_id,
+     * and before 00177 the arm inferred "adult seat" from exactly that equality
+     * and emitted the gamer's OWN profile email — the synthetic
+     * @gamer.sogverse.internal handle, which is not a mailbox — straight into a
+     * gedu's copy-all-emails. The role check turns that leak into a NULL, and
+     * this transposes the fixture's child row to prove it.
+     */
+    it("withholds the email for a transposed row where a gamer sits in customer_id", async () => {
+      const { data: gamerProfile } = await admin
+        .from("profiles")
+        .select("email, role")
+        .eq("id", TEST_IDS.GAMER)
+        .single();
+      // The value the pre-00177 arm WOULD have leaked: a synthetic handle.
+      expect(gamerProfile?.role).toBe("gamer");
+      expect(gamerProfile?.email).toContain("@gamer.sogverse.internal");
+
+      await admin
+        .from("participations")
+        .update({ customer_id: TEST_IDS.GAMER })
+        .eq("product_id", PRODUCT_ROSTER)
+        .eq("participant_id", TEST_IDS.GAMER);
+      try {
+        const { data, error } = await geduAuth.rpc("get_gedu_group_feed", {
+          p_group_id: GROUP_ROSTER,
+        });
+        expect(error).toBeNull();
+
+        const feed = geduGroupFeed.parse(data);
+        const child = feed.roster.find(
+          (r) => r.participant_id === TEST_IDS.GAMER,
+        );
+        // Positionally an "adult seat" now, but the participant is a gamer, so
+        // the address is withheld rather than leaked.
+        expect(child?.participant_email).toBeNull();
+      } finally {
+        // Restore the child seat's customer for the blocks that follow.
+        await admin
+          .from("participations")
+          .update({ customer_id: TEST_IDS.CUSTOMER })
+          .eq("product_id", PRODUCT_ROSTER)
+          .eq("participant_id", TEST_IDS.GAMER);
+      }
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // set_group_member_minecraft refuses a non-gamer target (00177)
+  // -------------------------------------------------------------------------
+
+  /**
+   * The adult sits on GROUP_ROSTER and the gedu teaches it, so the scope check
+   * passes and the new role guard is the only thing left standing. A
+   * minecraft_accounts row keyed to a customer is an orphan no surface renders
+   * and the admin twin already refuses — before 00177 this write went through.
+   *
+   * The gamer direction is not re-asserted here: gedu-session-feed.test.ts
+   * already pins that an assigned gedu may edit a gamer on their roster, and
+   * that test continuing to pass is what proves this guard does not refuse
+   * everyone.
+   */
+  describe("set_group_member_minecraft target role", () => {
+    it("refuses a Minecraft edit aimed at an adult seat", async () => {
+      const { error } = await geduAuth.rpc("set_group_member_minecraft", {
+        p_participant_id: TEST_IDS.CUSTOMER,
+        p_minecraft_username: "AdultShouldFail",
+        p_minecraft_uuid: "",
+      });
+      // check_violation — distinct from the 42501 the scope check raises, which
+      // is what proves scope was satisfied and the role guard is what refused.
+      expect(error?.code).toBe("23514");
+
+      // Nothing was written: the guard sits before the INSERT.
+      const { data } = await admin
+        .from("minecraft_accounts")
+        .select("user_id")
+        .eq("user_id", TEST_IDS.CUSTOMER);
+      expect(data ?? []).toEqual([]);
+    });
   });
 
   // -------------------------------------------------------------------------

@@ -92,24 +92,7 @@ async function handleCheckoutCompleted(
 
   const purchaseShape = session.metadata?.purchaseShape;
   const customerId = session.metadata?.customerId;
-  // The participant rename crosses one boundary we do not control: a Checkout
-  // Session created before the deploy carries `gamerId` and can complete after
-  // it. The fallback is resolved HERE, once, and every use below reads this
-  // one binding — because the guard immediately after returns 200 with no
-  // retry, so a fallback applied at some use sites and not at the destructure
-  // would drop a legacy in-flight session silently: the parent is charged, no
-  // seat is written, and Stripe never redelivers.
-  //
-  // DELETE ONCE PRE-CUTOVER SESSIONS HAVE AGED OUT — and the clock is the
-  // PRODUCTION release, not the dev merge. The gamer_id → participant_id rename
-  // (00172) reaches production only on a dev→main release deploy; until that
-  // ships, the live production build still mints `gamerId`, so deleting this on
-  // merge would strand exactly the sessions it protects. Safe to remove ~30 min
-  // (CHECKOUT_SESSION_LIFETIME_MINUTES) after the release that first carries
-  // 00172. Delete this fallback together with the ones on the paid confirmation
-  // page and the checkout route's finance snapshot (tracked in TODO.md).
-  const participantId =
-    session.metadata?.participantId ?? session.metadata?.gamerId;
+  const participantId = session.metadata?.participantId;
   const productId = session.metadata?.productId;
   // Our integration currency, always EUR. Safe to pair with `amount_total`
   // below: even with Adaptive Pricing on, `session.amount_total`/`currency`

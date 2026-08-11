@@ -338,42 +338,6 @@ describe("POST /api/webhooks/stripe/products", () => {
       });
     });
 
-    it("confirms a session created before the rename, carrying the legacy gamerId key", async () => {
-      // Stripe metadata is the one boundary the participant rename cannot cross
-      // atomically: a session built before the deploy carries `gamerId` and can
-      // complete after it. The fallback lives at the destructure, ahead of the
-      // guard that returns 200 without a retry — so if it were ever applied per
-      // use site instead, this delivery would be dropped silently: charged, no
-      // seat, no error, no redelivery. That is what this test pins.
-      const event = createCompletedEvent();
-      const metadata = (
-        event.data.object as { metadata: Record<string, string | undefined> }
-      ).metadata;
-      metadata.gamerId = GAMER_ID;
-      delete metadata.participantId;
-      mockConstructEvent.mockReturnValue(event);
-      const inserts = mockAdmin();
-      mockAdminRpc.mockResolvedValue({
-        data: {
-          kind: "confirmed",
-          participation_id: PARTICIPATION_ID,
-          idempotent: false,
-        },
-        error: null,
-      });
-
-      const res = await POST(createWebhookRequest());
-      expect(res.status).toBe(200);
-
-      expect(mockAdminRpc).toHaveBeenCalledWith("confirm_paid_participation", {
-        p_product_id: PRODUCT_ID,
-        p_participant_id: GAMER_ID,
-        p_customer_id: CUSTOMER_ID,
-        p_checkout_session_id: SESSION_ID,
-      });
-      expect(inserts.payments).toHaveLength(1);
-    });
-
     it("writes a per-participation family_subscriptions row on subscription completion", async () => {
       mockConstructEvent.mockReturnValue(
         createCompletedEvent({
@@ -681,7 +645,7 @@ describe("POST /api/webhooks/stripe/products", () => {
             id: "cs_expired_1",
             metadata: {
               productId: PRODUCT_ID,
-              gamerId: GAMER_ID,
+              participantId: GAMER_ID,
               customerId: CUSTOMER_ID,
             },
           },

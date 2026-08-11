@@ -245,13 +245,8 @@ export const POST = defineRoute({
 
       // The metadata IS the link between this session and the participation the
       // webhook will create. Nothing else carries it, so every field here is
-      // load-bearing rather than informational.
-      //
-      // `participantId` replaced `gamerId` here with the participant rename.
-      // Stripe metadata is the one boundary the rename cannot cross atomically:
-      // sessions created before the deploy carry the old key and can complete
-      // after it, so the webhook and the confirmation page accept both. See
-      // their fallbacks — and delete them together, not this line alone.
+      // load-bearing rather than informational. The webhook and the
+      // confirmation page read `participantId` back by exactly this name.
       const sessionMetadata = {
         customerId: user.id,
         participantId,
