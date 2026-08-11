@@ -134,7 +134,10 @@ export function ParticipantRosterRow({
           <Identicon id={participant.participant_id} size={32} />
         </Avatar>
         <div className="min-w-0 flex-1 space-y-1">
-          <p className="flex min-w-0 flex-wrap items-baseline gap-x-2 text-sm font-medium leading-tight">
+          {/* A div, not a p: the adult variant's Badge renders a div, and a
+              block element inside a p is invalid HTML — the browser closes the
+              p early and React fails hydration on the mismatch. */}
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 text-sm font-medium leading-tight">
             <span className="truncate">{participant.first_name}</span>
             {isAdult ? (
               /* The same badge and the same word the admin surfaces use for a
@@ -156,7 +159,7 @@ export function ParticipantRosterRow({
                 </span>
               )
             )}
-          </p>
+          </div>
           {!isAdult && (
             <MinecraftIdentityCell
               participant={participant}

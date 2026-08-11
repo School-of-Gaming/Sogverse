@@ -74,7 +74,10 @@ const ChipContent = memo(function ChipContent({
         <Identicon id={participantId} size={28} />
       </Avatar>
       <div className="min-w-0 flex-1">
-        <p className="flex min-w-0 items-center gap-1.5 leading-tight">
+        {/* A div, not a p: Badge renders a div, and a block element inside a
+            p is invalid HTML — the browser closes the p early and hydration
+            fails on the mismatch. */}
+        <div className="flex min-w-0 items-center gap-1.5 leading-tight">
           <span className="truncate">{firstName}</span>
           {isAdult && (
             /* Read off the shared role constants, the same badge the picker
@@ -90,7 +93,7 @@ const ChipContent = memo(function ChipContent({
               {c(ROLE_LABEL_KEYS.customer)}
             </Badge>
           )}
-        </p>
+        </div>
         {/* An adult seat carries none of the three child-shaped facts — no
             gamer profile, no linked game account — so the chip simply does not
             draw those lines. Three empty rows would read as a chip that failed
