@@ -21,6 +21,53 @@ function flattenKeys(obj, prefix = "") {
   return keys;
 }
 
+/**
+ * Keys the Klingon easter-egg catalog deliberately leaves out.
+ *
+ * The legal surface — the policy and terms namespaces, the attributions credit,
+ * those pages' metadata titles, and every link label that names one of the
+ * documents — is served in English under `tlh`: binding text and licence
+ * conditions are not a place for an in-character rendering. The keys are
+ * *omitted* rather than copied so English stays the single source of truth
+ * (a verbatim copy would silently go stale the next time the English is
+ * edited), and the message loader under `src/i18n/` lays the Klingon catalog
+ * over the English one so the omissions resolve to English at runtime. See
+ * `src/i18n/CLAUDE.md` for all three pieces of the convention.
+ *
+ * Deliberately a narrow list, not a blanket pass: a *non*-legal Klingon key
+ * that goes missing must still fail this check. Each entry matches itself and
+ * anything nested beneath it — never a sibling that merely shares its opening
+ * characters.
+ */
+const ENGLISH_UNDER_KLINGON = [
+  "legal",
+  "privacy",
+  "terms",
+  "discipline",
+  "robloxPrivacy",
+  "robloxSafeguarding",
+  "robloxTerms",
+  "attributions",
+  "metadata.pages.privacy",
+  "metadata.pages.terms",
+  "metadata.pages.antiBullying",
+  "metadata.pages.attributions",
+  "metadata.pages.robloxPrivacy",
+  "metadata.pages.robloxSafeguarding",
+  "metadata.pages.robloxTerms",
+  "roblox.legal.privacy",
+  "roblox.legal.safeguarding",
+  "roblox.legal.terms",
+  "footer.privacy",
+  "footer.terms",
+  "footer.antiBullying",
+  "footer.attributions",
+];
+
+const isEnglishUnderKlingon = (locale, key) =>
+  locale === "tlh" &&
+  ENGLISH_UNDER_KLINGON.some((root) => key === root || key.startsWith(`${root}.`));
+
 const sourceFile = join(MESSAGES_DIR, `${SOURCE_LOCALE}.json`);
 const sourceMessages = JSON.parse(readFileSync(sourceFile, "utf-8"));
 const sourceKeys = flattenKeys(sourceMessages);
@@ -38,7 +85,9 @@ for (const file of localeFiles) {
   const keySet = new Set(Object.keys(keys));
 
   // Missing keys (in source but not in target)
-  const missing = [...sourceKeySet].filter((k) => !keySet.has(k));
+  const missing = [...sourceKeySet].filter(
+    (k) => !keySet.has(k) && !isEnglishUnderKlingon(locale, k),
+  );
   if (missing.length > 0) {
     hasErrors = true;
     console.error(`\n[${locale}] Missing ${missing.length} key(s):`);

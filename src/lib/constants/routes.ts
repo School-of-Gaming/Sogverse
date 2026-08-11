@@ -199,9 +199,37 @@ export const ROUTES = {
    * sitemap and noindex together when the content is ready to be found.
    */
   roblox: "/roblox",
+  /**
+   * The Programme's own privacy policy, supplementing the platform one at
+   * `/privacy`. Shares `/roblox`'s unpublished posture exactly — noindex, no
+   * sitemap entry, no nav link, reachable only from `/roblox` itself — and
+   * flips to published in the same change that publishes `/roblox`.
+   */
+  robloxPrivacy: "/roblox/privacy",
+  /**
+   * The Programme's joint child safeguarding policy, held by Lynx Educate and
+   * School of Gaming together. Same posture as `robloxPrivacy` above — noindex,
+   * no sitemap entry, no nav link, reachable only from `/roblox` itself — and
+   * flips to published in the same change that publishes `/roblox`.
+   */
+  robloxSafeguarding: "/roblox/safeguarding",
+  /**
+   * The Programme's own terms, supplementing the platform ones at
+   * `/terms-and-conditions`. Same posture as `robloxPrivacy` above — noindex,
+   * no sitemap entry, no nav link, reachable only from `/roblox` itself — and
+   * flips to published in the same change that publishes `/roblox`.
+   */
+  robloxTerms: "/roblox/terms",
   privacy: "/privacy",
   termsAndConditions: "/terms-and-conditions",
   antiBullying: "/anti-bullying-and-discipline",
+  /**
+   * Every credit the product owes — the data sources behind the location tree
+   * and the services that render game-account art. Linked from the footer's
+   * legal row and published like the pages beside it (indexed, in the sitemap):
+   * it is site-wide compliance, not part of any one programme.
+   */
+  attributions: "/attributions",
   settings: "/settings",
   /**
    * Voice rooms. Two shapes share the `/voice` prefix:

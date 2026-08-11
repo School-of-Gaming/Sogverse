@@ -18,14 +18,22 @@ The two are fully independent: a Finnish-speaking parent can have `locale = "fi"
 ## Files in this directory
 
 - `request.ts` — next-intl request config (SSR/RSC). Resolves the per-request locale and loads its messages.
-- `messages.ts` — `Messages` type (derived from `en.json`) and `loadMessages(locale)`, a static import map of `messages/<code>.json`. Static imports so a moved/deleted message file fails the build, not runtime.
+- `messages.ts` — `Messages` type (derived from `en.json`) and `loadMessages(locale)`, a static import map of `messages/<code>.json`. Static imports so a moved/deleted message file fails the build, not runtime. The `tlh` entry is the one that merges — it is the English-fallback mechanism described under the legal-copy rule below.
 - `types.ts` — module augmentation that registers `Messages` as next-intl's `AppConfig["Messages"]`, giving compile-time key validation and autocomplete in `useTranslations()`/`getTranslations()`.
 
 ## Translation files
 
-Per-locale JSON in `messages/<code>.json` at the repo root (`en`, `fi`, `sv`, `fr`, `tlh`). `en.json` is the source of truth; the others mirror its shape exactly.
+Per-locale JSON in `messages/<code>.json` at the repo root (`en`, `fi`, `sv`, `fr`, `tlh`). `en.json` is the source of truth; the others mirror its shape exactly, with one deliberate hole in `tlh` (see the legal-copy rule below).
 
 **Rule: Every user-facing string must be translated for every locale file in `messages/`. Never leave placeholder copy or skip a locale. Best-effort translation is expected; Klingon (`tlh`) is an easter egg where fun takes are welcome and accuracy is not the goal.**
+
+**Rule: legal-page namespaces are served in English under `tlh` — the easter egg stops at the courtroom door.** A privacy policy, a set of terms, a safeguarding policy and their programme-specific siblings are binding text a family may be held to; an in-character rendering of one is a joke told at the reader's expense, and it is the one place where "accuracy is not the goal" is the wrong instruction. **The attributions page is in this set too**, for the adjacent reason: it is the credit two data licences oblige us to publish, and a licence condition discharged in Klingon is a licence condition not discharged. The same reach applies to those pages' `metadata.pages` titles and to any link label that names one of the documents — a footer link must call a page what the page calls itself. Everything else in `tlh` (nav, dashboards, marketing copy) stays in character.
+
+**The shape: `tlh` omits those keys entirely and they resolve to English at runtime.** They used to be `en`'s values copied in verbatim, which read as tidy — the catalog stayed structurally identical and every gate passed untouched — and was a drift hazard: nothing asserted the byte-equality, so the first English legal edit that nobody thought to mirror would have left Klingon serving *stale* binding text. Omission makes `en` the single source of truth by construction. Three pieces implement it, and a change to one wants a look at the other two:
+
+1. **The message loader lays the `tlh` catalog over the full `en` one** and returns the result as a complete catalog (next-intl 4.x ships no merge helper; its docs point at a general deep-merge package). Ours is spread by hand, subtree by subtree, rather than merged generically — deliberately. A generic deep merge has to assert its own return type, which this repo's lint bans outright, and it would absorb a *new* hole in silence; the hand-written merge is checked by the compiler, so the day a namespace starts omitting a key with no matching line in the loader, the build fails and names the key. **The merge is scoped to `tlh` alone.** Every other locale is loaded as-is and typed as a complete catalog, so a missing `fi`/`fr`/`sv` key stays a build failure rather than quietly becoming English.
+2. **The completeness script under `scripts/` carries a `tlh`-scoped exemption** naming exactly those namespaces and labels — a narrow list of subtree roots, not a blanket pass, so a *non*-legal Klingon key that goes missing still fails CI.
+3. **Unit tests pin both halves**: that the loader returns English for the omitted keys and Klingon for everything else (and merges no other locale), and that the namespaces are *absent* from `tlh` rather than merely equal to `en`. Absence is the assertion that matters — a partially re-introduced namespace is worse than the old convention it replaced, because it shadows English with a value nothing keeps in step, in the one place where stale text is a liability.
 
 **Rule: No emoji in `messages/` files** — untranslatable, unthemeable copy. When a string needs a glyph, render a `lucide-react` icon next to the translated text in the component.
 
