@@ -97,7 +97,8 @@ export function ProductBrowseResults({
   municipalityScoped,
 }: ProductBrowseResultsProps) {
   const t = useTranslations("productBrowse");
-  const { topics, format, languages, age, days } = useBrowseFilters();
+  const { topics, format, languages, audiences, age, days } =
+    useBrowseFilters();
 
   const countsByProduct = useMemo(() => {
     const map = new Map<string, ParticipationCounts>();
@@ -119,12 +120,13 @@ export function ProductBrowseResults({
             topics,
             format,
             languages,
+            audiences,
             age,
             days,
           }),
         }))
         .filter((section) => section.products.length > 0),
-    [sections, topics, format, languages, age, days],
+    [sections, topics, format, languages, audiences, age, days],
   );
 
   // "Nothing here yet" vs "no matches" is decided before *all* filtering, Type

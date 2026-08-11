@@ -40,7 +40,9 @@ import { getOrigin } from "@/lib/url";
 export const POST = defineRoute({
   posture: "role-gated",
   roles: "customer",
-  forbiddenMessage: "Only customers can sign gamers up for products",
+  // "sign up for products", not "sign gamers up": the seat may be the caller's
+  // own on a for-parents product.
+  forbiddenMessage: "Only customers can sign up for products",
   // The body used to be read as a bag of optional strings and checked field by
   // field. The schema states the same rules once, and `purchaseShape` and
   // `currency` arrive as the supported enums rather than as strings the handler
@@ -323,14 +325,20 @@ export const POST = defineRoute({
         sessionParams.line_items = [
           { quantity: 1, price: priceRow.stripe_price_id },
         ];
-        // Describe the sub as "{Club} — {Child}". A family has one Stripe sub per
-        // gamer x club, all listed together in the hosted portal; without a
-        // per-sub description they'd be indistinguishable there (and two kids in
-        // the same club would show as two identical rows). This is the label the
-        // parent reads when deciding which one to cancel.
+        // Describe the sub as "{Club} — {Participant}". A family has one Stripe
+        // sub per participant x club, all listed together in the hosted portal;
+        // without a per-sub description they'd be indistinguishable there (and
+        // two kids in the same club would show as two identical rows). This is
+        // the label the parent reads when deciding which one to cancel — and
+        // since a parent can now hold a seat themselves, the participant may be
+        // the payer.
         sessionParams.subscription_data = {
           metadata,
-          description: `${productName} — ${await pickGamerName(admin, participantId)}`,
+          description: `${productName} — ${await pickParticipantName(
+            admin,
+            participantId,
+            participantId === user.id,
+          )}`,
         };
       }
 
@@ -352,17 +360,30 @@ export const POST = defineRoute({
   },
 });
 
-// Resolve a short display name for the gamer, for the Stripe subscription
-// description (what the parent sees in the billing portal). Falls back to a
-// generic label so the description is never blank.
-async function pickGamerName(
+/**
+ * A short display name for whoever occupies the seat, for the Stripe
+ * subscription description (what the parent reads in the billing portal).
+ *
+ * The fallback is deliberately audience-aware. It lands in Stripe receipts and
+ * the hosted portal — outside `messages/`, so no locale sweep will ever reach
+ * it — and "Parents' Evening — your child" would be a plainly wrong label on a
+ * seat the payer holds themselves. A self seat therefore falls back to "you",
+ * which answers the same "who is this for" question the child names answer, in
+ * the same register as the child fallback beside it.
+ *
+ * `isSelfSeat` is passed in rather than re-derived here: the caller holds the
+ * session user, and the participant-equals-customer test is the same one the
+ * database's audience gate makes.
+ */
+async function pickParticipantName(
   admin: ReturnType<typeof createAdminClient>,
-  gamerId: string,
+  participantId: string,
+  isSelfSeat: boolean,
 ): Promise<string> {
   const { data } = await admin
     .from("profiles")
     .select("first_name")
-    .eq("id", gamerId)
+    .eq("id", participantId)
     .maybeSingle();
-  return data?.first_name || "your child";
+  return data?.first_name || (isSelfSeat ? "you" : "your child");
 }

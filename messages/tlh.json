@@ -1029,6 +1029,25 @@
       "event": "{product}Daq jeSpu’ {gamer}."
     },
     "fallbackGamer": "puqlIj",
+    "self": {
+      "subheading": {
+        "consumer_club": "{product} QujmeH ghItlhlu’pu’ SoH.",
+        "municipality_club": "{product} QujmeH ghItlhlu’pu’ SoH.",
+        "camp": "{product} QujmeH ghItlhlu’pu’ SoH.",
+        "event": "{product}Daq bIjeSpu’."
+      },
+      "fallbackName": "SoH",
+      "nextPlacement": "Gedu tlhej ghomDaq qalanpu’. My SOG-Daq Qu’mey Dalegh.",
+      "waitlist": {
+        "subheading": "bIloS tetlhDaq: {product}. quS poSDI’, SoH wIja’.",
+        "next2": {
+          "consumer_club": "DIS naQ tetlhDaq Daq DaqaD.",
+          "municipality_club": "DIS naQ tetlhDaq Daq DaqaD.",
+          "camp": "ragh naQ tetlhDaq Daq DaqaD.",
+          "event": "wanI’ tetlhDaq Daq DaqaD."
+        }
+      }
+    },
     "summaryTitle": "ralHa’ghachlIj",
     "forLabel": {
       "consumer_club": "ghItlhlu’pu’",
@@ -1067,7 +1086,7 @@
     },
     "duplicatePayment": {
       "heading": "ghItlh qaSpu’ net Sov",
-      "subheading": "Doch vamDaq quS ghaj puq.",
+      "subheading": "Doch vamDaq quS ghaj ghot.",
       "body": "cha’DIch ghItlh chenmoHbe’ DIlmeH mIw vam. maH yIQIH: Huch tIn law’ wInej ’ej SoH wIQaH."
     },
     "supportLine": "QaH DaneH’a’? <link>{email}</link>-Daq maH yIQIH.",
@@ -1486,6 +1505,7 @@
     },
     "filters": {
       "type": "mIw",
+      "audience": "ghotpu’",
       "typeClubs": "ghom’a’mey",
       "typeCamps": "raghmey",
       "typeEvents": "wanI’mey",
@@ -1519,6 +1539,11 @@
       "noProducts": "DaH pagh tu’lu’ — chu’ chenmoH.",
       "noMatches": "pagh Sam. tetlh yISay’moH."
     }
+  },
+  "productAudience": {
+    "gamers": "QujwI’pu’vaD",
+    "parents": "vavpu’vaD",
+    "both": "vavpu’vaD QujwI’pu’vaD je"
   },
   "seatAvailability": {
     "remaining": "{count, plural, one {# / {total} pa’ ratlh} other {# / {total} pa’ ratlh}}",
@@ -1582,6 +1607,7 @@
       "format": "rurmeH",
       "ages": "qan {min}–{max}",
       "ageRange": "qan SaH",
+      "audience": "ghotpu’",
       "language": "Hol",
       "online": "QumDaq",
       "atVenue": "{venue}Daq",
@@ -1636,11 +1662,13 @@
       },
       "gamerAlreadyWaitlisted": "tetlhDaq",
       "nonCustomerNote": "vavmey neH puq qonlaH naDev.",
+      "nonCustomerNoteParents": "vavmey neH jeSlaH naDev.",
       "closedNote": "DaH poSbe’. latlh boqDI’ yI’aHta’.",
       "rulesHeading": "chutmey",
       "rules": {
         "consumer_club": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj.",
         "municipality_club": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, ’ej qaSpa’ choHmeH puqwI’ DaH lop laH latlh qorDu’ tetlh teb ’oHbogh, jIyaj.",
+        "municipality_club_self": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, ’ej qaSpa’ choHmeH quSwI’ DaH lop laH latlh qorDu’ tetlh teb ’oHbogh, jIyaj.",
         "camp": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj.",
         "event": "qIp ’ej tlhejHa’ vuvbe’ School of Gaming, jIyaj."
       },
@@ -1650,6 +1678,7 @@
         "camp": "’Iv muvbogh SoH?",
         "event": "’Iv muvbogh SoH?"
       },
+      "seatIsFor": "’Iv quSvam ghaj",
       "selected": "wIvlu’",
       "agePill": "qan {age}"
     },

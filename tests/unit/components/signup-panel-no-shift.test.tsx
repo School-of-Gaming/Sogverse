@@ -41,7 +41,8 @@ const GAMER_ID = "e8e14bde-b6f1-4c5b-ab6a-44561d32aabe";
 
 const READY: AuthState = {
   kind: "ready",
-  gamers: [{ id: GAMER_ID, name: "Oona", age: 10 }],
+  participants: [{ id: GAMER_ID, name: "Oona", age: 10 }],
+  gamerCount: 1,
 };
 
 // An hour out, so the countdown is genuinely mid-flight at mount.
@@ -57,11 +58,12 @@ const UNCAPPED = {
 function panel(state: RegistrationState): SignupPanelViewProps {
   return {
     productType: "municipality_club",
+    forGamers: true,
     state,
     authState: READY,
     pricingOption: { kind: "external" },
-    selectedGamerId: GAMER_ID,
-    onSelectGamer: () => {},
+    selectedParticipantId: GAMER_ID,
+    onSelectParticipant: () => {},
     onAddGamer: () => {},
     agreed: true,
     onAgreedChange: () => {},

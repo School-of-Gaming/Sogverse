@@ -11,6 +11,7 @@ import type { ProductBrowseRow } from "@/types";
 import type { ParticipationCounts } from "@/services/participations";
 import { deriveRegistrationState } from "./derive-registration-state";
 import { formatProductLocation } from "./format-product-location";
+import { productAudience } from "./product-audience";
 import { formatProductPrice } from "./format-product-price";
 import {
   formatProductSchedule,
@@ -57,6 +58,9 @@ export function ProductBrowseCard({
   municipalityScoped = false,
 }: ProductBrowseCardProps) {
   const t = useTranslations("productBrowse.card");
+  // Shared with the filter chips and the detail page's overview card, so the
+  // words a parent filtered by are the words the card answers with.
+  const tAudience = useTranslations("productAudience");
   const uiLocale = resolveLocale(useLocale());
   const timeZone = useTimezone();
   // `useNow()` is seeded server-side at request time, so SSR and the first
@@ -108,6 +112,18 @@ export function ProductBrowseCard({
       }
     : undefined;
 
+  // Only the two audiences that are news get a badge. `gamers` is what every
+  // product was before audiences existed, so it says nothing a card needs to
+  // spend a chip on — and the message keys are written out per case rather than
+  // templated off the audience value so each one stays greppable.
+  const audience = productAudience(product);
+  const audienceLabel =
+    audience === "parents"
+      ? tAudience("parents")
+      : audience === "both"
+        ? tAudience("both")
+        : null;
+
   const locationLine = resolveLocationLine(
     product,
     t("online"),
@@ -127,6 +143,7 @@ export function ProductBrowseCard({
           ? t("ages", { min: product.min_age, max: product.max_age })
           : null
       }
+      audienceLabel={audienceLabel}
       locationLine={locationLine}
       spokenLanguageCode={product.spoken_language_code}
       price={price}

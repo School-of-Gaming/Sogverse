@@ -31,7 +31,11 @@ interface ProductBrowsePageProps {
 // Section heading copy lives under productBrowse.sections, keyed on the shop
 // category. We resolve to literal keys here (rather than templating with the
 // category name) so next-intl's typed t() call narrows to a known message path.
-function sectionHeading(
+//
+// Exported because the shop's preview scene builds the same sections from
+// fixtures and must head them with the same words — a scene that re-authored
+// its own headings would be a second copy of this mapping, free to drift.
+export function sectionHeading(
   t: ReturnType<typeof useTranslations<"productBrowse">>,
   category: ShopCategory,
 ): string {

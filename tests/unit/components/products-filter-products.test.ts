@@ -97,6 +97,7 @@ describe("filterProducts", () => {
         topics: [],
         format: null,
         languages: [],
+        audiences: [],
         age: null,
         days: [],
       }),
@@ -109,6 +110,7 @@ describe("filterProducts", () => {
         topics: ["minecraft_java"],
         format: null,
         languages: [],
+        audiences: [],
         age: null,
         days: [],
       }).map((p) => p.id),
@@ -120,6 +122,7 @@ describe("filterProducts", () => {
       topics: ["minecraft_java", "fortnite"],
       format: null,
       languages: [],
+      audiences: [],
       age: null,
       days: [],
     }).map((p) => p.id);
@@ -133,6 +136,7 @@ describe("filterProducts", () => {
         topics: ["fortnite"],
         format: "online",
         languages: [],
+        audiences: [],
         age: null,
         days: [],
       }),
@@ -144,6 +148,7 @@ describe("filterProducts", () => {
       topics: [],
       format: "online",
       languages: [],
+      audiences: [],
       age: null,
       days: [],
     }).map((p) => p.id);
@@ -156,6 +161,7 @@ describe("filterProducts", () => {
       topics: [],
       format: "in_person",
       languages: [],
+      audiences: [],
       age: null,
       days: [],
     }).map((p) => p.id);
@@ -167,6 +173,7 @@ describe("filterProducts", () => {
       topics: ["minecraft_java", "fortnite"],
       format: "online",
       languages: [],
+      audiences: [],
       age: null,
       days: [],
     }).map((p) => p.id);
@@ -179,6 +186,7 @@ describe("filterProducts", () => {
       topics: [],
       format: null,
       languages: ["fi"],
+      audiences: [],
       age: null,
       days: [],
     }).map((p) => p.id);
@@ -191,6 +199,7 @@ describe("filterProducts", () => {
       topics: [],
       format: null,
       languages: ["en", "fi"],
+      audiences: [],
       age: null,
       days: [],
     }).map((p) => p.id);
@@ -202,6 +211,7 @@ describe("filterProducts", () => {
       topics: ["minecraft_java", "fortnite"],
       format: null,
       languages: ["en"],
+      audiences: [],
       age: null,
       days: [],
     }).map((p) => p.id);
@@ -214,6 +224,7 @@ describe("filterProducts", () => {
       topics: [],
       format: null,
       languages: [],
+      audiences: [],
       age: { min: 7, max: 9 },
       days: [],
     }).map((p) => p.id);
@@ -227,6 +238,7 @@ describe("filterProducts", () => {
       topics: [],
       format: null,
       languages: [],
+      audiences: [],
       age: { min: 10, max: 12 },
       days: [],
     }).map((p) => p.id);
@@ -248,6 +260,7 @@ describe("filterProducts", () => {
       topics: [] as string[],
       format: null,
       languages: [] as string[],
+      audiences: [],
       days: [] as number[],
     };
 
@@ -271,6 +284,7 @@ describe("filterProducts", () => {
       topics: [],
       format: "online",
       languages: [],
+      audiences: [],
       age: { min: 13, max: 16 },
       days: [],
     }).map((p) => p.id);
@@ -285,6 +299,7 @@ describe("filterProducts", () => {
       topics: [],
       format: null,
       languages: [],
+      audiences: [],
       age: null,
       days: [2], // Wed
     }).map((p) => p.id);
@@ -296,6 +311,7 @@ describe("filterProducts", () => {
       topics: [],
       format: null,
       languages: [],
+      audiences: [],
       age: null,
       days: [0, 4], // Mon or Fri
     }).map((p) => p.id);
@@ -308,6 +324,7 @@ describe("filterProducts", () => {
       topics: [],
       format: null,
       languages: [],
+      audiences: [],
       age: null,
       days: [1, 3, 5], // Tue/Thu/Sat — nobody meets these
     }).map((p) => p.id);
@@ -319,6 +336,7 @@ describe("filterProducts", () => {
       topics: [],
       format: "online",
       languages: [],
+      audiences: [],
       age: null,
       days: [0], // Mon
     }).map((p) => p.id);
@@ -349,6 +367,7 @@ describe("filterProducts", () => {
         topics: [],
         format: null,
         languages: [],
+        audiences: [],
         age: null,
         days: [1],
       }).map((p) => p.id),
@@ -358,6 +377,7 @@ describe("filterProducts", () => {
         topics: [],
         format: null,
         languages: [],
+        audiences: [],
         age: null,
         days: [5],
       }).map((p) => p.id),
@@ -367,9 +387,99 @@ describe("filterProducts", () => {
         topics: [],
         format: null,
         languages: [],
+        audiences: [],
         age: null,
         days: [0], // Mon — neither meets then
       }),
     ).toEqual([]);
+  });
+
+  /**
+   * The audience row, and the one thing that makes it unlike the topic and
+   * language rows beside it: a product can answer to *both* chips, because
+   * `for_gamers` and `for_parents` are independent booleans rather than one
+   * column's value. So lighting both chips is a *wider* query than lighting
+   * one, and the mixed product is the row that proves it.
+   */
+  describe("audience", () => {
+    const parentsOnly = row({
+      id: "parents",
+      topic: "minecraft_java",
+      forGamers: false,
+      forParents: true,
+      minAge: null,
+      maxAge: null,
+    });
+    const both = row({
+      id: "both",
+      topic: "minecraft_java",
+      forGamers: true,
+      forParents: true,
+    });
+    const rows = [...ALL, parentsOnly, both];
+    const base = {
+      topics: [] as string[],
+      format: null,
+      languages: [] as string[],
+      age: null,
+      days: [] as number[],
+    };
+
+    it("passes everything when nothing is selected", () => {
+      expect(
+        filterProducts(rows, { ...base, audiences: [] }).map((p) => p.id),
+      ).toEqual(rows.map((p) => p.id));
+    });
+
+    it("keeps gamer products and the mixed one under the gamers chip", () => {
+      expect(
+        filterProducts(rows, { ...base, audiences: ["gamers"] })
+          .map((p) => p.id)
+          .sort(),
+      ).toEqual(["a", "b", "both", "c"]);
+    });
+
+    it("keeps the parent product and the mixed one under the parents chip", () => {
+      expect(
+        filterProducts(rows, { ...base, audiences: ["parents"] })
+          .map((p) => p.id)
+          .sort(),
+      ).toEqual(["both", "parents"]);
+    });
+
+    it("ORs the two chips rather than intersecting them", () => {
+      // Both lit means "either audience", not "products serving both" — the
+      // intersection reading would leave only the mixed product.
+      expect(
+        filterProducts(rows, { ...base, audiences: ["gamers", "parents"] })
+          .map((p) => p.id)
+          .sort(),
+      ).toEqual(["a", "b", "both", "c", "parents"]);
+    });
+
+    it("ANDs with the other rows", () => {
+      // The two audience-bearing rows are both in-person (the factory's
+      // default), so an online + parents query keeps neither.
+      expect(
+        filterProducts(rows, {
+          ...base,
+          audiences: ["parents"],
+          format: "online",
+        }).map((p) => p.id),
+      ).toEqual([]);
+    });
+
+    it("drops a parents-only product from an age band, chip or no chip", () => {
+      // The two filters answer different questions and never stand in for each
+      // other: a band means "shopping for a child of this age", so a product
+      // with no gamer range drops out of it even with the parents chip lit.
+      expect(
+        filterProducts(rows, {
+          ...base,
+          audiences: ["parents"],
+          age: { min: 7, max: 9 },
+        }).map((p) => p.id),
+      ).toEqual(["both"]);
+    });
   });
 });

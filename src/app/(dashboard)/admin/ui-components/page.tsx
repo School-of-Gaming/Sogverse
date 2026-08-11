@@ -1206,6 +1206,7 @@ function ScenarioBrowseCard({
   label: string;
 }) {
   const t = useTranslations("productBrowse.card");
+  const tAudience = useTranslations("productAudience");
   const uiLocale = resolveLocale(useLocale());
   const timeZone = useTimezone();
   const now = useNow();
@@ -1270,6 +1271,17 @@ function ScenarioBrowseCard({
         ageLine={
           product.min_age !== null && product.max_age !== null
             ? t("ages", { min: product.min_age, max: product.max_age })
+            : null
+        }
+        audienceLabel={
+          // Only the two audiences that are news carry a badge — a gamers-only
+          // card is what every card was before audiences existed. This grid is
+          // where the three are seen beside each other; the shop scene shows
+          // the same comparison at page width.
+          product.for_parents
+            ? product.for_gamers
+              ? tAudience("both")
+              : tAudience("parents")
             : null
         }
         locationLine={locationLine}

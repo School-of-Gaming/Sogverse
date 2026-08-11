@@ -27,8 +27,18 @@ export type SignupOutcome = "enrolled" | "waitlisted";
 
 interface PurchaseConfirmationViewProps {
   product: ProductBrowseRow;
-  /** Gamer's first name (or username fallback); null → "Your child". */
-  gamerName: string | null;
+  /**
+   * The participant's first name — a child's, or the buyer's own on a self
+   * seat. Null falls back to "Your child" / "You" per `isSelfSeat`.
+   */
+  participantName: string | null;
+  /**
+   * True when the seat is the buyer's own (a for-parents product), which puts
+   * every sentence naming the participant into the second person. Resolved from
+   * the row (`participant_id = customer_id`) rather than from the viewer — see
+   * the service's `isSelfSeat`.
+   */
+  isSelfSeat?: boolean;
   /** `enrolled` (paid/free signup) or `waitlisted` (joined the waitlist). */
   outcome?: SignupOutcome;
   /**
@@ -40,18 +50,27 @@ interface PurchaseConfirmationViewProps {
 
 export function PurchaseConfirmationView({
   product,
-  gamerName,
+  participantName,
+  isSelfSeat = false,
   outcome = "enrolled",
   waitlistPosition = null,
 }: PurchaseConfirmationViewProps) {
   const t = useTranslations("purchaseConfirmation");
+  const tSelf = useTranslations("purchaseConfirmation.self");
   const tProduct = useTranslations("productDetail");
   const locale = resolveLocale(useLocale());
 
   const isWaitlist = outcome === "waitlisted";
   const tr = resolveTranslation(product.product_translations, locale);
   const productName = tr?.name ?? "";
-  const gamer = gamerName ?? t("fallbackGamer");
+  // The summary row keeps naming the person even on a self seat — the reader's
+  // own first name is what they recognise beside "Enrolled", and it is the one
+  // place a name is a value rather than a subject. Only the *sentences* move
+  // into the second person, and each of those is a separate key rather than an
+  // interpolated pronoun, because a possessive that agrees with a name in
+  // English does not in Finnish or Swedish.
+  const participant =
+    participantName ?? (isSelfSeat ? tSelf("fallbackName") : t("fallbackGamer"));
 
   // Price is recomputed from the product's *current* prices, not stored as a
   // receipt of what was charged. For the fresh post-checkout view that's
@@ -85,11 +104,20 @@ export function PurchaseConfirmationView({
           </h1>
           <p className="mt-2 text-muted-foreground">
             {isWaitlist
-              ? t("waitlist.subheading", { gamer, product: productName })
-              : t(`subheading.${product.product_type}`, {
-                  gamer,
-                  product: productName,
-                })}
+              ? isSelfSeat
+                ? tSelf("waitlist.subheading", { product: productName })
+                : t("waitlist.subheading", {
+                    gamer: participant,
+                    product: productName,
+                  })
+              : isSelfSeat
+                ? tSelf(`subheading.${product.product_type}`, {
+                    product: productName,
+                  })
+                : t(`subheading.${product.product_type}`, {
+                    gamer: participant,
+                    product: productName,
+                  })}
           </p>
         </div>
 
@@ -119,7 +147,7 @@ export function PurchaseConfirmationView({
                     ? t("waitlist.forLabel")
                     : t(`forLabel.${product.product_type}`)
                 }
-                value={gamer}
+                value={participant}
               />
               {/* "You're #N in line" — the reassuring number. Omitted if the
                   position couldn't be read (e.g. a stale revisit). */}
@@ -162,13 +190,21 @@ export function PurchaseConfirmationView({
                       The type comes off the product row the page already
                       passes in, so nothing extra had to be threaded here. */}
                   <li>
-                    {t(`waitlist.next2.${product.product_type}`, { gamer })}
+                    {isSelfSeat
+                      ? tSelf(`waitlist.next2.${product.product_type}`)
+                      : t(`waitlist.next2.${product.product_type}`, {
+                          gamer: participant,
+                        })}
                   </li>
                   <li>{t("waitlist.next3")}</li>
                 </>
               ) : (
                 <>
-                  <li>{t("next.placement", { gamer })}</li>
+                  <li>
+                    {isSelfSeat
+                      ? tSelf("nextPlacement")
+                      : t("next.placement", { gamer: participant })}
+                  </li>
                   {pricingOption.kind === "subscription" && (
                     <li>{t("next.subscription")}</li>
                   )}
@@ -262,6 +298,11 @@ function priceText(
  * - `duplicatePayment` — the seat was already taken, so the payment was refused
  *   as a duplicate and no row will ever carry this session. Waiting is a dead
  *   end here by construction, not by bad luck.
+ *
+ * This component takes only which state it is — there is no row and therefore
+ * no participant to name — so its copy says "the person this was for" rather
+ * than "this child". A seat can be the buyer's own now, and a notice with no
+ * participant in reach must not guess which.
  */
 export type ConfirmationNoticeKind =
   | "finalizing"

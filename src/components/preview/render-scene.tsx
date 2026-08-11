@@ -17,6 +17,10 @@ import { ParentDashboardScene } from "./scenes/parent-dashboard-scene";
 import { GeduProductPageScene } from "./scenes/gedu-product-page-scene";
 import { ProductDetailScene } from "./scenes/product-detail-scene";
 import { PurchaseConfirmationScene } from "./scenes/purchase-confirmation-scene";
+import {
+  ShopBrowseScene,
+  isShopBrowseScenario,
+} from "./scenes/shop-browse-scene";
 
 /**
  * What each scene renders for a given scenario.
@@ -35,6 +39,10 @@ const SCENE_RENDERERS: Record<
   PreviewSurface,
   (scenario: string) => React.ReactNode
 > = {
+  shop: (scenario) => {
+    if (!isShopBrowseScenario(scenario)) notFound();
+    return <ShopBrowseScene scenario={scenario} />;
+  },
   products: (scenario) => {
     if (!isPreviewScenario(scenario)) notFound();
     return <ProductDetailScene scenario={scenario} />;

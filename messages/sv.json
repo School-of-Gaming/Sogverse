@@ -981,6 +981,25 @@
       "event": "{gamer} har gått med i {product}."
     },
     "fallbackGamer": "Ditt barn",
+    "self": {
+      "subheading": {
+        "consumer_club": "Du är anmäld till {product}.",
+        "municipality_club": "Du är registrerad för {product}.",
+        "camp": "Du är anmäld till {product}.",
+        "event": "Du har gått med i {product}."
+      },
+      "fallbackName": "Du",
+      "nextPlacement": "Vi placerar dig i en grupp med en Gedu. Tillfällena visas sedan under Min SOG.",
+      "waitlist": {
+        "subheading": "Du står på väntelistan för {product}. Vi hör av oss så snart en plats blir ledig.",
+        "next2": {
+          "consumer_club": "Du behåller din plats i kön under hela terminen.",
+          "municipality_club": "Du behåller din plats i kön under hela terminen.",
+          "camp": "Du behåller din plats i kön under hela lägret.",
+          "event": "Du behåller din plats i kön fram till evenemanget."
+        }
+      }
+    },
     "summaryTitle": "Din beställning",
     "forLabel": {
       "consumer_club": "Anmäld",
@@ -1019,7 +1038,7 @@
     },
     "duplicatePayment": {
       "heading": "Redan anmäld",
-      "subheading": "Det här barnet har redan en plats på den här produkten.",
+      "subheading": "Personen som detta gällde har redan en plats på den här produkten.",
       "body": "Den här betalningen har inte skapat någon andra anmälan. Hör av dig, så tittar vårt team på den extra debiteringen tillsammans med dig."
     },
     "supportLine": "Behöver du hjälp? Mejla oss på <link>{email}</link>.",
@@ -1442,6 +1461,7 @@
     },
     "filters": {
       "type": "Typ",
+      "audience": "Målgrupp",
       "typeClubs": "Klubbar",
       "typeCamps": "Läger",
       "typeEvents": "Evenemang",
@@ -1475,6 +1495,11 @@
       "noProducts": "Inget här ännu – nya är på väg.",
       "noMatches": "Inga träffar. Prova att rensa filtren."
     }
+  },
+  "productAudience": {
+    "gamers": "För spelare",
+    "parents": "För föräldrar",
+    "both": "För föräldrar och spelare"
   },
   "seatAvailability": {
     "remaining": "{count, plural, one {# av {total} plats kvar} other {# av {total} platser kvar}}",
@@ -1538,6 +1563,7 @@
       "format": "Format",
       "ages": "Ålder {min}–{max}",
       "ageRange": "Åldersintervall",
+      "audience": "Målgrupp",
       "language": "Språk",
       "online": "Online",
       "atVenue": "På {venue}",
@@ -1592,11 +1618,13 @@
       },
       "gamerAlreadyWaitlisted": "På väntelistan",
       "nonCustomerNote": "Endast föräldrar kan anmäla en spelare här.",
+      "nonCustomerNoteParents": "Endast föräldrar kan anmäla sig här.",
       "closedNote": "Den här är inte öppen just nu. Håll utkik efter nästa omgång.",
       "rulesHeading": "Regler",
       "rules": {
         "consumer_club": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende.",
         "municipality_club": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, samt att upprepad oanmäld frånvaro kan göra att mitt barns plats erbjuds nästa familj på väntelistan.",
+        "municipality_club_self": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, samt att upprepad oanmäld frånvaro kan göra att min plats erbjuds nästa familj på väntelistan.",
         "camp": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende.",
         "event": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende."
       },
@@ -1606,6 +1634,7 @@
         "camp": "Vem anmäler du?",
         "event": "Vem går med?"
       },
+      "seatIsFor": "Vem platsen är för",
       "selected": "Vald",
       "agePill": "Ålder {age}"
     },

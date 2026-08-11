@@ -301,8 +301,23 @@ export interface ParticipationConfirmation {
   participationId: string;
   status: ParticipationStatus;
   productId: string;
-  /** Gamer's first name (or username fallback); null → page shows "Your child". */
-  gamerName: string | null;
+  /**
+   * The participant's first name — a child's, or the buyer's own on a self
+   * seat. Null → the page falls back to "Your child" / "You" depending on
+   * `isSelfSeat`.
+   */
+  participantName: string | null;
+  /**
+   * Whether the seat is the buyer's own, i.e. `participant_id = customer_id`.
+   *
+   * Read from the **row**, not from the viewer. That is the structural
+   * definition of a self seat and it answers identically for both readers RLS
+   * lets in here — a parent reading their own purchase, and a gamer who somehow
+   * has the `?p=` link to their own row. Comparing the participant against
+   * `auth.uid()` would call the second of those a self seat and put the whole
+   * confirmation into the second person about a child's own signup.
+   */
+  isSelfSeat: boolean;
 }
 
 export type {
@@ -581,8 +596,8 @@ export class ParticipationsService {
       .from("participations")
       .select(
         `
-          id, status, product_id,
-          gamer:profiles!participations_participant_id_fkey(first_name)
+          id, status, product_id, participant_id, customer_id,
+          participant:profiles!participations_participant_id_fkey(first_name)
         `,
       )
       .eq("id", participationId)
@@ -595,7 +610,8 @@ export class ParticipationsService {
       participationId: data.id,
       status: data.status,
       productId: data.product_id,
-      gamerName: data.gamer.first_name || null,
+      participantName: data.participant.first_name || null,
+      isSelfSeat: data.participant_id === data.customer_id,
     };
   }
 
@@ -622,8 +638,8 @@ export class ParticipationsService {
       .from("participations")
       .select(
         `
-          id, status, product_id,
-          gamer:profiles!participations_participant_id_fkey(first_name)
+          id, status, product_id, participant_id, customer_id,
+          participant:profiles!participations_participant_id_fkey(first_name)
         `,
       )
       .eq("stripe_checkout_session_id", checkoutSessionId)
@@ -636,7 +652,8 @@ export class ParticipationsService {
       participationId: data.id,
       status: data.status,
       productId: data.product_id,
-      gamerName: data.gamer.first_name || null,
+      participantName: data.participant.first_name || null,
+      isSelfSeat: data.participant_id === data.customer_id,
     };
   }
 

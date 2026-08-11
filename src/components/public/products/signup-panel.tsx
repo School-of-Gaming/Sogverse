@@ -28,7 +28,7 @@ import type { RegistrationState } from "./derive-registration-state";
 interface SignupPanelProps {
   product: Pick<
     ProductBrowseRow,
-    "id" | "product_type" | "billing_mode" | "product_prices"
+    "id" | "product_type" | "billing_mode" | "product_prices" | "for_gamers"
   >;
   state: RegistrationState;
   authState: AuthState;
@@ -71,12 +71,16 @@ export function SignupPanel({
   const purchaseShape = purchaseShapeFor(fields.pricingOption);
 
   const handleSubmit = () => {
-    if (!fields.selectedGamerId || !purchaseShape) return;
+    if (!fields.selectedParticipantId || !purchaseShape) return;
     setSubmitError(null);
     setCommitting(true);
     const input: CreateParticipationInput = {
       productId: product.id,
-      participantId: fields.selectedGamerId,
+      // The parent's own id when they picked their own row. The route pins
+      // `p_customer_id` to the session user either way and the RPC's audience
+      // gate is what decides whether the pair is allowed — nothing here has to
+      // tell the two cases apart.
+      participantId: fields.selectedParticipantId,
       purchaseShape,
       currency: fields.currency,
     };
@@ -114,11 +118,11 @@ export function SignupPanel({
   };
 
   const handleJoinWaitlist = () => {
-    if (!fields.selectedGamerId) return;
+    if (!fields.selectedParticipantId) return;
     setSubmitError(null);
     setCommitting(true);
     waitlistMutation.mutate(
-      { productId: product.id, participantId: fields.selectedGamerId },
+      { productId: product.id, participantId: fields.selectedParticipantId },
       {
         onSuccess: (response) => {
           // Mirror the free-signup branch: land the parent on the summary
@@ -156,7 +160,7 @@ export function SignupPanel({
       <AddGamerDialog
         open={addGamerOpen}
         onOpenChange={setAddGamerOpen}
-        onCreated={fields.onSelectGamer}
+        onCreated={fields.onSelectParticipant}
       />
     </>
   );

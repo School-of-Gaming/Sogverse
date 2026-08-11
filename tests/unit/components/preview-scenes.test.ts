@@ -34,9 +34,15 @@ import { runEndedOn, runLiveness } from "@/lib/product-run";
 import {
   CONFIRMATION_NOTICE_SCENARIOS,
   PREVIEW_SCENARIOS,
+  SHOP_SCENE_AUDIENCES,
+  SHOP_SCENE_DEFAULT,
+  buildBrowseFixture,
+  buildConfirmationFixture,
   buildScenarioFixture,
   scenarioFilledSeats,
+  type PreviewScenario,
 } from "@/components/public/products/mock-detail-fixtures";
+import { SHOP_BROWSE_SCENARIOS } from "@/components/preview/scenes/shop-browse-scene";
 import { OPEN_ENDED_OCCURRENCE_CAP } from "@/lib/session-occurrence";
 
 /**
@@ -157,6 +163,169 @@ describe("registry scenarios match their fixtures", () => {
       ...productSlugs,
       ...CONFIRMATION_NOTICE_SCENARIOS.map((n) => n.slug),
     ]);
+  });
+
+  it("shop browse", () => {
+    expect(slugsFor("shop")).toEqual([...SHOP_BROWSE_SCENARIOS]);
+  });
+});
+
+/**
+ * The audience scenarios exist because **no for-parents product exists yet**:
+ * the admin checkbox that creates one lands last, so these fixtures are the
+ * only way anybody can look at the surfaces this step builds. Losing one would
+ * take a whole case off the previews without failing anything else, which is
+ * exactly the silence this file exists to break.
+ */
+describe("the audience scenarios cover all three cases", () => {
+  const fixtures = PREVIEW_SCENARIOS.map(({ slug }) => ({
+    slug,
+    ...buildScenarioFixture(slug),
+  }));
+
+  function pickerRows(slug: PreviewScenario) {
+    const { authState } = buildScenarioFixture(slug);
+    if (authState.kind !== "ready") throw new Error(`${slug} is not signed in`);
+    return authState;
+  }
+
+  it("carries a parents-only product, a mixed one, and everything else gamers-only", () => {
+    const parentsOnly = fixtures.filter(
+      (f) => f.product.for_parents && !f.product.for_gamers,
+    );
+    const mixed = fixtures.filter(
+      (f) => f.product.for_parents && f.product.for_gamers,
+    );
+    expect(parentsOnly.length).toBeGreaterThan(0);
+    expect(mixed.length).toBeGreaterThan(0);
+    // The regression case is the overwhelming majority and must stay so — the
+    // audience scenarios are additions, not a re-theming of the set.
+    expect(
+      fixtures.filter((f) => !f.product.for_parents).length,
+    ).toBeGreaterThan(parentsOnly.length + mixed.length);
+  });
+
+  it("gives every product at least one audience, as the CHECK requires", () => {
+    for (const { slug, product } of fixtures) {
+      expect(product.for_gamers || product.for_parents, slug).toBe(true);
+    }
+  });
+
+  it("ties the age range to the gamer audience, exactly as the schema does", () => {
+    // Null iff no gamer audience. This is also what drops a parents-only
+    // product out of every age band and takes the age line off its card — the
+    // audience label carries the whole meaning instead, and no "18+" appears
+    // anywhere.
+    for (const { slug, product } of fixtures) {
+      const hasRange = product.min_age !== null && product.max_age !== null;
+      expect(hasRange, slug).toBe(product.for_gamers);
+      expect(product.min_age === null, slug).toBe(product.max_age === null);
+    }
+  });
+
+  it("preselects nobody but the reader on a parents-only product", () => {
+    const { participants } = pickerRows("event-parents-only");
+    expect(participants).toHaveLength(1);
+    expect(participants[0].isSelf).toBe(true);
+    // Ages belong to the gamer audience and never to adults.
+    expect(participants[0].age).toBeNull();
+  });
+
+  it("puts the children first and the reader last on a mixed product", () => {
+    const { participants, gamerCount } = pickerRows("event-both-audiences");
+    expect(participants.length).toBeGreaterThan(1);
+    expect(participants.filter((p) => p.isSelf)).toHaveLength(1);
+    expect(participants[participants.length - 1].isSelf).toBe(true);
+    // The cap counts children, never picker rows — one fewer than the array.
+    expect(gamerCount).toBe(participants.length - 1);
+    // And one child is already on it, so the child lockout and a selectable
+    // parent row are visible in the same picker.
+    expect(participants.some((p) => !p.isSelf && p.signupState)).toBe(true);
+  });
+
+  it("shows the lockout on a seat the reader already holds", () => {
+    const { participants } = pickerRows("consumer-club-parents-only");
+    expect(participants).toHaveLength(1);
+    expect(participants[0].isSelf).toBe(true);
+    expect(participants[0].signupState).toBe("active");
+  });
+
+  it("keeps the reader out of every gamers-only picker", () => {
+    for (const { slug, product, authState } of fixtures) {
+      if (product.for_parents || authState.kind !== "ready") continue;
+      expect(authState.participants.some((p) => p.isSelf), slug).toBe(false);
+    }
+  });
+
+  it("uses a real UUID for the reader, whose row carries an identicon", () => {
+    for (const { slug, authState } of fixtures) {
+      if (authState.kind !== "ready") continue;
+      for (const participant of authState.participants) {
+        expect(participant.id, `${slug}/${participant.name}`).toMatch(UUID_V4);
+      }
+    }
+  });
+
+  it("words the confirmation in the second person only on a self seat", () => {
+    // The self-worded summary is otherwise unreachable — the confirmation scene
+    // reuses these scenarios, so a parents-only one is the only page that
+    // renders it.
+    const self = PREVIEW_SCENARIOS.map(({ slug }) =>
+      buildConfirmationFixture(slug),
+    ).filter((c) => c.isSelfSeat);
+    expect(self.length).toBeGreaterThan(0);
+    for (const confirmation of self) {
+      expect(confirmation.product.for_parents).toBe(true);
+      expect(confirmation.product.for_gamers).toBe(false);
+      expect(confirmation.participantName.trim()).not.toBe("");
+    }
+  });
+});
+
+/**
+ * The shop scene is a comparison, and a comparison needs the things being
+ * compared on the same page. Its audience scenario is the only grid where the
+ * badge's presence and its absence sit side by side, so a fixture edit that
+ * left it single-audience would take the whole point of the scene away without
+ * failing a thing.
+ */
+describe("the shop browse scene", () => {
+  const audienceOf = (product: { for_gamers: boolean; for_parents: boolean }) =>
+    !product.for_parents ? "gamers" : product.for_gamers ? "both" : "parents";
+
+  it("puts all three audiences on the audience grid", () => {
+    const audiences = new Set(
+      SHOP_SCENE_AUDIENCES.map((slug) => audienceOf(buildBrowseFixture(slug))),
+    );
+    expect(audiences).toEqual(new Set(["gamers", "parents", "both"]));
+  });
+
+  it("keeps the default grid entirely gamers-only, so it stays the regression case", () => {
+    for (const slug of SHOP_SCENE_DEFAULT) {
+      expect(audienceOf(buildBrowseFixture(slug)), slug).toBe("gamers");
+    }
+  });
+
+  it("surfaces no municipality club on either grid", () => {
+    // The storefront discovers those location-first from /schools, so a shop
+    // scene carrying one would show a card the real page cannot produce.
+    for (const slug of [...SHOP_SCENE_DEFAULT, ...SHOP_SCENE_AUDIENCES]) {
+      expect(buildBrowseFixture(slug).product_type, slug).not.toBe(
+        "municipality_club",
+      );
+    }
+  });
+
+  it("gives every card on a grid a distinct name", () => {
+    // The per-type copy names every consumer club the same thing, which is fine
+    // on a detail page and unreadable on a grid of them — the scene suffixes
+    // each name with its fixture's label for exactly this reason.
+    for (const slugs of [SHOP_SCENE_DEFAULT, SHOP_SCENE_AUDIENCES]) {
+      const names = slugs.map(
+        (slug) => buildBrowseFixture(slug).product_translations[0].name,
+      );
+      expect(new Set(names).size).toBe(names.length);
+    }
   });
 });
 

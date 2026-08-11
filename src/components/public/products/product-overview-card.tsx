@@ -2,12 +2,13 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { useNow, useTimezone } from "@/providers";
-import { Clock, Globe, Languages, MapPin, Users } from "lucide-react";
+import { Clock, Globe, Languages, MapPin, UserRound, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { resolveLocale } from "@/lib/constants/locales";
 import type { ProductBrowseRow } from "@/types";
 import { formatProductLocation } from "./format-product-location";
+import { productAudience } from "./product-audience";
 import { formatClubTermDates } from "./format-product-term-dates";
 import {
   formatProductSchedule,
@@ -36,12 +37,15 @@ interface ProductOverviewCardProps {
     | "locations"
     | "min_age"
     | "max_age"
+    | "for_gamers"
+    | "for_parents"
     | "spoken_language_code"
   >;
 }
 
 export function ProductOverviewCard({ product }: ProductOverviewCardProps) {
   const t = useTranslations("productDetail");
+  const tAudience = useTranslations("productAudience");
   const uiLocale = resolveLocale(useLocale());
   const timeZone = useTimezone();
   const now = useNow();
@@ -54,6 +58,20 @@ export function ProductOverviewCard({ product }: ProductOverviewCardProps) {
   // line — camps/events already fold their dates into the schedule, so the
   // helper returns null for them. Fold the club range in as an extra schedule
   // line (rather than a 5th overview Fact) to keep the 2×2 grid intact.
+  // Same restraint the browse card shows: a gamers-only product states its
+  // audience through the age range beside it, so an extra "For gamers" fact
+  // would be a row every existing product page grew for no news. The row
+  // appears exactly where the meaning is new — and on a parents-only page it is
+  // the fact that replaces the age range rather than sitting beside it, which
+  // is why it renders whether or not there is an age row above.
+  const audience = productAudience(product);
+  const audienceLabel =
+    audience === "parents"
+      ? tAudience("parents")
+      : audience === "both"
+        ? tAudience("both")
+        : null;
+
   const termRange = formatClubTermDates(product, uiLocale);
   const scheduleDisplayLines = termRange
     ? [...scheduleLines, termRange]
@@ -101,6 +119,11 @@ export function ProductOverviewCard({ product }: ProductOverviewCardProps) {
           {product.min_age !== null && product.max_age !== null && (
             <DetailRow icon={Users} label={t("info.ageRange")}>
               {t("info.ages", { min: product.min_age, max: product.max_age })}
+            </DetailRow>
+          )}
+          {audienceLabel !== null && (
+            <DetailRow icon={UserRound} label={t("info.audience")}>
+              {audienceLabel}
             </DetailRow>
           )}
           <DetailRow icon={Languages} label={t("info.language")}>
