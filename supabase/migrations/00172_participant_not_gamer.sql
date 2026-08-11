@@ -1593,21 +1593,26 @@ COMMENT ON FUNCTION public.set_group_member_minecraft(uuid, text, text) IS 'Set 
 --
 -- The token cannot simply be banned: 'gamer_id' legitimately survives as a JSON
 -- key several RPCs emit, and as `parent_gamer`'s own column. So the check is in
--- three parts, and each part can fail on its own.
+-- four parts, and each part can fail on its own.
 -- ---------------------------------------------------------------------------
 
 DO $assert$
 DECLARE
   -- Forms of the token that can ONLY be a reference to a renamed column: the
-  -- aliases the two tables are read under, and the column lists they are
-  -- written through. None of these can spell a parent_gamer reference (that
-  -- table is read as pgm./pg./OLD./NEW.) or a quoted JSON key.
+  -- aliases the two tables are read under, the column lists they are written
+  -- through, and the bare seat-lookup predicates (functions that are in
+  -- c_expected for their parent_gamer reads would otherwise get a free pass on
+  -- these — and a parent_gamer read cannot spell them, because there gamer_id
+  -- pairs with parent_id, never with product_id/session_id). None of these can
+  -- spell a parent_gamer reference (that table is read as pgm./pg./OLD./NEW.)
+  -- or a quoted JSON key.
   c_column_ref CONSTANT text :=
     '(\mv_gamer_id\M'
     || '|\mpart\.gamer_id\M|\mpart2\.gamer_id\M|\matt\.gamer_id\M'
     || '|\mmine\.gamer_id\M|\mpeer\.gamer_id\M'
     || '|\mp\.gamer_id\M|\ma\.gamer_id\M'
     || '|product_id, gamer_id|session_id, gamer_id'
+    || '|product_id = p_product_id\s+AND gamer_id\M'
     || '|session_id = v_session_id AND gamer_id)';
 
   -- Every function whose body may still contain the token at all, and why.
