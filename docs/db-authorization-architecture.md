@@ -678,9 +678,13 @@ policy re-derives an ownership question a predicate already answers.
   next row inserted.
 - **The row it could additionally admit is the policies' own intent.** That row is a
   caller holding one party's role who occupies the *other* party's column — a
-  customer-role account that is the gamer on an active participation, or the reverse.
-  It does not exist on the shared database (checked in both directions before writing
-  the migration) and is unreachable through the application's own creation paths:
+  customer-role account that is the participant on an active participation, or the
+  reverse. At the time of the widening it did not exist on the shared database
+  (checked in both directions before writing the migration); since parent seats
+  shipped, a customer occupying the participant column is the *designed, gated*
+  self-seat state (products-for-parents), which is exactly the intent this bullet
+  anticipated. At widening time it was also unreachable through the application's
+  own creation paths:
   participation parties are resolved from parent/gamer links, gamer accounts are created
   with the gamer role by the atomic creation RPC, which refuses to promote an existing
   account, and the role column carries no write grant for `authenticated` at all, so only

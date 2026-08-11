@@ -462,7 +462,7 @@
         "seatHintWaitlist": "When full, new signups go to the waitlist.",
         "seatHintNoWaitlist": "When full, new signups are refused.",
         "visibleHint": "Unchecked, the product appears on no public page — but anyone with the direct link can still open it and buy a place. That is what makes it right for unannounced, invite-only or campaign products. It is not a way to stop sign-ups, and it never affects parents and gamers already taking part.",
-        "seatLimitHint": "Cap the number of gamers, or run with no limit.",
+        "seatLimitHint": "Cap the number of participants, or run with no limit.",
         "holidayComingSoon": "Holiday calendars are coming soon. For now, every scheduled session runs.",
         "startDateToday": "Locked to today’s date for now.",
         "startDateLocked": "Start date is locked for now."

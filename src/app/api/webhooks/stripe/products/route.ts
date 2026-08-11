@@ -92,20 +92,7 @@ async function handleCheckoutCompleted(
 
   const purchaseShape = session.metadata?.purchaseShape;
   const customerId = session.metadata?.customerId;
-  // The participant rename crosses one boundary we do not control: a Checkout
-  // Session created before the deploy carries `gamerId` and can complete after
-  // it. The fallback is resolved HERE, once, and every use below reads this
-  // one binding — because the guard immediately after returns 200 with no
-  // retry, so a fallback applied at some use sites and not at the destructure
-  // would drop a legacy in-flight session silently: the parent is charged, no
-  // seat is written, and Stripe never redelivers.
-  //
-  // DELETE ONCE PRE-DEPLOY SESSIONS HAVE AGED OUT. Checkout Sessions expire
-  // within 24h (ours sooner still — see CHECKOUT_SESSION_LIFETIME_MINUTES), so
-  // a day after the deploy no live session can carry the old key. Delete this
-  // fallback together with the one on the paid confirmation page.
-  const participantId =
-    session.metadata?.participantId ?? session.metadata?.gamerId;
+  const participantId = session.metadata?.participantId;
   const productId = session.metadata?.productId;
   // Our integration currency, always EUR. Safe to pair with `amount_total`
   // below: even with Adaptive Pricing on, `session.amount_total`/`currency`
@@ -137,8 +124,8 @@ async function handleCheckoutCompleted(
   //   'confirmed'         — a fresh active row, or the row this very session
   //                         already bought (the re-run case). Either way the
   //                         writes below are the right ones to make.
-  //   'duplicate_payment' — a different payment already put this gamer on this
-  //                         product. Handled below.
+  //   'duplicate_payment' — a different payment already put this participant on
+  //                         this product. Handled below.
   const { data: confirmResult, error: confirmErr } = await admin.rpc(
     "confirm_paid_participation",
     {

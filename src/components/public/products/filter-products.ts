@@ -17,13 +17,15 @@ import {
 // - `languages`: list of spoken-language codes (`fi`, `en`, `sv`).
 //   Single-valued on a product (`spoken_language_code`) — a product passes
 //   when its language is in the selected set. OR semantics across the set.
-// - `audiences`: list of audience values (`gamers`, `parents`) the parent has
-//   selected. Unlike topic and language, a product can answer to *both* chips —
-//   `for_gamers` and `for_parents` are independent booleans — so a mixed
-//   product passes under either. OR semantics across the set, and an empty set
-//   skips the filter, exactly like the chip rows above it. It is the tool for
-//   "shopping for me"; the age band below is the tool for "shopping for a
-//   child of age X", which is why the two never fold into one row.
+// - `audiences`: list of audience values (`parents`, `families`) the parent
+//   has selected. A chip is the badge: each matches exactly the products
+//   wearing that label (`parents` = parents-only, `families` = the both-flags
+//   shape), so a mixed product answers the Families chip and only that one,
+//   and gamers-only — badged with nothing — answers neither; clearing the row
+//   is the only way back to everything. OR semantics across the set, and an
+//   empty set skips the filter. It is the tool for "shopping for me"; the age
+//   band below is the tool for "shopping for a child of age X", which is why
+//   the two never fold into one row.
 // - `age`: a selected age band ({min, max}), or null. A product passes when its
 //   [min_age, max_age] *overlaps* the band — i.e. it serves some age the band
 //   covers. Null means "any age" and skips the filter. The offered bands come

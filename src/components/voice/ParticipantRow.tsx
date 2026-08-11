@@ -5,8 +5,10 @@ import { Mic, MicOff, Video, VideoOff, Lock, LockOpen, MoreVertical } from "luci
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Identicon } from "@/components/ui/identicon";
 import { GameUsernameRow } from "@/components/game-account";
+import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { VoiceRole } from "./hooks/types";
 
@@ -45,6 +47,7 @@ export function ParticipantRow({
   onMute,
   onLock,
 }: ParticipantRowProps) {
+  const c = useTranslations("common");
   const showModMenu = isModView && !p.isLocal && !p.isOwner;
   // Show the Minecraft identity for gedu/gamer participants, but only when the
   // token actually carried Minecraft context (group rooms). `undefined` ==
@@ -68,10 +71,13 @@ export function ParticipantRow({
         </Avatar>
       </div>
 
-      {/* Name + game identity — takes all the flexible width; the name truncates
-          while the identity row keeps its fixed geometry. The moderation controls
-          no longer sit here, so there's nothing to crowd the username on a narrow
-          screen. */}
+      {/* Name + identity — takes all the flexible width; the name truncates
+          while the identity slot keeps its fixed geometry. The moderation
+          controls no longer sit here, so there's nothing to crowd the username
+          on a narrow screen. The identity slot follows the adult-variant
+          grammar the rosters established: a child-shaped fact for children
+          (the game account), the Parent badge for a parent on their own seat —
+          the same slot answers "who is this" either way. */}
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <span className="truncate text-sm font-medium">
           {p.userName}
@@ -88,6 +94,20 @@ export function ParticipantRow({
             figure="head"
             className="w-40 shrink-0"
           />
+        )}
+        {p.role === "customer" && (
+          /* The same badge and word the roster row and admin chips draw for a
+             customer, read off the shared role constants. Rendered inside a
+             flex div — a Badge is a div, and this exact badge inside a <p>
+             was a hydration failure once already. */
+          <Badge
+            className={cn(
+              ROLE_BADGE_STYLES.customer,
+              "shrink-0 px-1.5 py-0 text-[10px] font-normal",
+            )}
+          >
+            {c(ROLE_LABEL_KEYS.customer)}
+          </Badge>
         )}
       </div>
 

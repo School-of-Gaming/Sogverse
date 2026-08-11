@@ -16,7 +16,7 @@
 
 - [ ] **Per-participant volume slider — wiring removed; would be desktop-only if revived.** The discrete-zone redesign dropped the per-participant volume slider; the `element.volume`/`base` multiplier plumbing was then removed entirely when audio routing switched to a binary `element.muted` (zone in/out is the only control; see `src/lib/voice/audio-routing.ts`). **A volume slider can't work on iPhone:** iOS Safari ignores `element.volume` *and* the Web Audio `GainNode` path for WebRTC (volume is hardware-buttons-only), so a true per-participant volume would be desktop/iPad-only — reconsider whether it's worth a platform-split control before reviving it. To restore: bring back a per-remote multiplier (`isAudible` → a volume number on non-iOS), a `setParticipantVolume` action, and the slider; gate it off mobile.
 
-- [ ] **Restore per-action email notifications for group changes.** The apply route sends no emails (`src/app/api/admin/products/[id]/groups/apply/route.ts` has a comment saying so explicitly); the old groups flow notified affected gedus/gamers/parents. Now that each action auto-saves, wire notifications per action. This is the last parity gap with the old groups flow — a visible product with zero groups is fine (signups land in the Unassigned section, `participations.group_id` is nullable), so no zero-groups visibility warning or auto-hide is needed.
+- [ ] **The admin user-detail page shows nothing for a parent's own seat.** `src/app/(dashboard)/admin/users/[id]/page.tsx` was built when only gamers held group assignments: `assignedGamerIds` is `[userId]` for a gamer and `linkedGamers.map(...)` for a customer, never the customer's own id, and the "Assigned products" card is `isGamer`-gated. So an admin looking up a parent who holds a self seat (on a for-parents/family product) sees no trace of it, and a **childless** parent with a paid seat renders "No connected gamers" and nothing else — the same childless-parent case the comp-enroll picker and the parent dashboard were deliberately fixed for when parent seats shipped. This is the admin's support surface when a parent writes in about *their own* enrollment. The data is intact and visible from the product-side groups panel, so it is a lookup gap, not loss: include the customer's own id in the assignment read and render the products card for a customer with self seats (the row and RPC are already participant-keyed — no new query shape, just the id set and the render gate).
 - [ ] **Build the Minecraft join-check session-gating against the current product system.** `src/app/api/minecraft/join-check/route.ts` is a shell: it checks the API key, validates the uuid, and answers 501 to everything. Its original gating queried the now-dropped legacy product/groups tables, so it has not authorized anyone since; the dead lookup was removed rather than left limping, because it had no consumers and had to be rewritten anyway. The URL, its auth contract, and the public `/docs/minecraft-api` page are all still live, so this is a body to fill in, not a route to invent. Build it against the current schema: a gamer is allowed when they hold an active `participations` row on a product whose session window is open right now (and the participation covers it); a gedu is allowed via a `gedu_group_assignments` row on such a product. The window math lives in `@/lib/session-schedule` but is shaped for a single-slot product — a product has multiple `schedule_slots`, so that helper needs reworking too. **`/docs/minecraft-api` already documents the response contract** (`allowed`, `role`, `firstName`, `endTime`, `reason`) — treat it as the spec, and correct it if the rebuild lands somewhere else.
   - **Write it as an entitlement question, not an identity one — a Minecraft UUID does not name a single Sogverse user.** The `UNIQUE` on `minecraft_accounts.minecraft_uuid` was dropped so siblings can share one Minecraft account across two Sogverse accounts, which means a reverse lookup by UUID returns a **set of rows**, not one. The question to answer is *"does anyone holding this UUID have access to this server right now?"* — gather every linked user and allow if any of them qualifies; a single-row read breaks the moment a shared account appears. This is not a regression the drop introduced: no constraint could ever have told the server *which* sibling is at the keyboard. If a future feature genuinely needs the individual (per-gamer progress, attendance credit), it needs its own mechanism — an in-game selection, or matching against who currently holds an open session — not a database constraint.
 - [ ] **Pill clicks don't reflect the section in the URL — add a hash push (outbound only).** Both `src/components/layout/dashboard-section-pill.tsx` and `src/components/home/section-pill.tsx` intercept clicks with `e.preventDefault()` + `scrollIntoView({behavior:"smooth"})` and never push the hash, so the URL stays at `/parent` regardless of which pill is active and the position isn't shareable/bookmarkable.
@@ -112,6 +112,33 @@ Now unlocked by the one-Stripe-sub-per-participation model (each consumer-club s
 
 - [ ] Decide the rule for **threshold-start** clubs (no fixed `start_date`): simplest is to charge immediately as today (there's no date to anchor to); deferring those would need a job that anchors the sub when the product flips to `running`. See the AskUserQuestion discussion that scoped this.
 - [ ] Parent-facing checkout copy must make "you won't be charged until {date}" explicit.
+
+### Family multi-select checkout — one flow for several family members
+
+Today one seat is one flow: a parent buying for themselves and two children goes through
+signup three times, exactly as buying for three children does. Now that a parent can hold a
+seat of their own (see `docs/products-architecture.md`, "Audience"), the case is a little
+commoner than it was — a family event where everybody goes is the shape that wants it — so
+it is recorded rather than dropped.
+
+**Deliberately deferred, and twice narrowed without getting tight enough to build.** The
+second narrowing was to the money-free variant only (free events, external-contract
+municipality clubs), where an atomic multi-insert avoids Stripe entirely and the whole
+thing is one RPC. Even that variant does not escape the product decision below, which is
+why it was kept out rather than shipped small.
+
+- [ ] **Decide the seat-shortfall behaviour — this is the blocker, not the plumbing.** One
+  seat left, two family members selected: is it all-or-nothing with an error that says so,
+  or does it place one and put the other on the waitlist? The first is predictable and
+  refuses a parent something they could have had; the second gets everyone a place of some
+  kind and silently splits the family across two states in a flow they asked to be one.
+  Both are defensible and neither is obviously right, which is exactly why nothing was
+  built.
+- [ ] Once decided, build the **free path first** — it is the natural follow-up shape, and
+  nothing in the shipped schema resists an atomic multi-insert RPC: seats are keyed by
+  participant, the uniqueness and the seat count are per row, and the product lock already
+  serializes the whole transaction. The paid path is a separate question (one Checkout
+  Session covering several seats, and what a partial failure means there).
 
 ### Localize the line-item name on the Stripe Checkout page
 
