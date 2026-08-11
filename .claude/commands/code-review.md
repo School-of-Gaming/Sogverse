@@ -5,7 +5,7 @@ description: Focused code review of the current branch against local dev.
 
 Perform a focused code review of the current branch against local `dev`.
 
-**This is a static review only.** Do not run type-check, lint, or tests — CI handles those. Do not apply any fixes. Produce the review, then wait for the user to pick what to address.
+**This is a static review only.** Do not run type-check, lint, or tests — CI handles those. The review step itself never applies fixes; what happens after the list depends on who invoked it — see Step 4.
 
 ## Step 1 — Gather the diff
 
@@ -45,4 +45,7 @@ Produce one ranked list, most important to least important. Each finding include
 
 Only include findings that are **actionable** and represent a **real improvement**. No praise, no "consider refactoring" fluff, no nitpicks that don't matter. If there's nothing to flag in a category you considered, don't mention it.
 
-After the list, stop. Wait for the user to choose what to address. If they pick an item whose tradeoffs are non-obvious, walk through the options before making changes.
+After the list, stop — the review itself applies nothing. What happens next depends on the consumer:
+
+- **Invoked directly by the user** (an ad-hoc review of work they want a second pair of eyes on): wait for them to choose what to address. If they pick an item whose tradeoffs are non-obvious, walk through the options before making changes.
+- **Run by a session orchestrating `/worktree-flow`**: that command's Phase 4 governs the follow-through — the session triages every finding, applies the accepted non-fork ones immediately and reports them as applied, and surfaces only genuine forks for the user to decide.
