@@ -65,6 +65,7 @@ import {
   type FixtureClock,
 } from "@/components/family/mock-enrollment-fixtures";
 import { futureSlot, liveNowSlot } from "@/components/preview/fixture-clock";
+import { SESSION_FEED_ADULT_ID } from "@/components/gedu/session-feed/mock-fixtures";
 import { useAuth, useNow, useTimezone } from "@/providers";
 import { useLocale, useTranslations } from "next-intl";
 import { resolveLocale } from "@/lib/constants/locales";
@@ -575,13 +576,14 @@ const DEMO_PARTICIPANTS = [
     videoOn: false,
   },
   {
-    // A parent on their own seat (same Marja as the gedu roster fixtures, so
-    // she wears one face everywhere). Her identity slot carries the shared
+    // A parent on their own seat — the imported id IS the gedu roster
+    // fixtures' Marja, so she wears one face everywhere by construction
+    // rather than by a copied literal. Her identity slot carries the shared
     // Parent badge where a child's row shows the Minecraft identity — the
     // adult-variant grammar the rosters established, decided by the owner
     // after judging the unbadged treatment in this very demo. No game
     // identity: parents cannot link game accounts, by scope decision.
-    userId: "07981ead-c695-4cac-be1e-d88d5c13306f",
+    userId: SESSION_FEED_ADULT_ID,
     userName: "Marja",
     role: "customer",
     minecraftUsername: null,
@@ -799,19 +801,24 @@ function ParticipantCardDemo() {
     "19ffd6e5-2e78-4742-a65f-6ed40b2b8b47": { audio: true, video: false },
   });
 
-  // Refs for simulated speaking glow (one per participant)
+  // Refs for simulated speaking glow — one per participant, and the count is
+  // load-bearing: hooks can't loop, so a fixture row without its ref + glow
+  // call silently renders audio-on with no pulse (which is how the parent row
+  // shipped glow-less for a day).
   const ref0 = useRef<HTMLDivElement>(null);
   const ref1 = useRef<HTMLDivElement>(null);
   const ref2 = useRef<HTMLDivElement>(null);
   const ref3 = useRef<HTMLDivElement>(null);
   const ref4 = useRef<HTMLDivElement>(null);
-  const avatarRefs = [ref0, ref1, ref2, ref3, ref4];
+  const ref5 = useRef<HTMLDivElement>(null);
+  const avatarRefs = [ref0, ref1, ref2, ref3, ref4, ref5];
 
   useSimulatedGlow(ref0, DEMO_PARTICIPANTS[0].audioOn, 0);
   useSimulatedGlow(ref1, DEMO_PARTICIPANTS[1].audioOn, 2.1);
   useSimulatedGlow(ref2, DEMO_PARTICIPANTS[2].audioOn, 4.2);
   useSimulatedGlow(ref3, DEMO_PARTICIPANTS[3].audioOn, 6.3);
   useSimulatedGlow(ref4, DEMO_PARTICIPANTS[4].audioOn, 1.4);
+  useSimulatedGlow(ref5, DEMO_PARTICIPANTS[5].audioOn, 3.6);
 
   return (
     <Card>
