@@ -32,25 +32,27 @@ A group inherits its schedule from one or more `schedule_slots` on the linked pr
 
 Request `{ groupId }`. Gates, in order:
 
-1. **Role** — `requireRole(["gedu","gamer","admin"])`; customers blocked.
+1. **Role** — `requireRole(["gedu","gamer","admin","customer"])`. Customers are admitted for their **own** seat only (see membership); the role gate also applies the parent-PIN check to them, so a locked parent session can't mint a token.
 2. **Group + remoteness** — group must exist and its product must be `is_remote = true`; else 404.
-3. **Membership** — gamer: active `participations` row for `(group_id, participant_id)`. Gedu: a `gedu_group_assignments` row on **product_id** (cross-group voice mobility). Admin: bypass.
+3. **Membership** — seat-holder (gamer **or** customer): active `participations` row for `(group_id, participant_id)`. One query serves both — `participant_id` is whoever occupies the seat, so a parent's own seat on a for-parents product satisfies it and a parent has no path to their *child's* seat (that row carries the child's id). Gedu: a `gedu_group_assignments` row on **product_id** (cross-group voice mobility). Admin: bypass.
 4. **Session window** — at least one slot must currently be open; the first open slot drives the room name and token `exp`.
 5. **Private-zone `canReceive` bake** — the route reads the current window's `voice_private_zone_occupants` and bakes the joiner's `canReceive` (see the private-zone section) so the SFU won't forward a private member's media to them before they even connect.
-6. **Issuance** — `is_owner = role !== "gamer"`. The Daily token also sets `user_id = profiles.id` (so peers' `participant.user_id` matches what `canReceive.byUserId` keys on). `exp = windowClosesAt + grace`. The response returns `sessionOpensAt` so the client can stamp occupancy rows with the current window.
+6. **Issuance** — `is_owner = (role is gedu or admin)`. **Rule: moderator rights come from a positive allow-list of roles, never from excluding one.** The flag is doubled at the mint — the Daily helper feeds it to both `is_owner` and `enable_screenshare` — so it is the token's entire moderator surface, and a negative test ("not a gamer") hands moderation *and* screen share to whichever role is admitted next. That is not hypothetical: it is exactly what admitting customers would have done. The Daily token also sets `user_id = profiles.id` (so peers' `participant.user_id` matches what `canReceive.byUserId` keys on). `exp = windowClosesAt + grace`. The response returns `sessionOpensAt` so the client can stamp occupancy rows with the current window.
 
 There is **no separate locked-room endpoint** — one room per session, so this is the only token route.
 
-| Capability | Admin | Gedu | Gamer |
-|---|---|---|---|
-| Join (in window) | any group | assigned product | active participation |
-| Camera / mic | yes | yes | yes |
-| Move self to a non-locked zone | yes | yes | yes |
-| Screen share / broadcast / deafen | yes | yes | no |
-| Create / edit / delete zones | yes | yes | no |
-| Move others (any zone); place into a private zone | yes | yes | no |
-| Enter a private zone | freely (self), or placed by another mod | freely (self), or placed by another mod | only when placed by a mod |
-| Self-leave a private zone | yes | yes | no (mod-only) |
+| Capability | Admin | Gedu | Gamer | Customer (parent) |
+|---|---|---|---|---|
+| Join (in window) | any group | assigned product | active participation | active participation on their **own** seat |
+| Camera / mic | yes | yes | yes | yes |
+| Move self to a non-locked zone | yes | yes | yes | yes |
+| Screen share / broadcast / deafen | yes | yes | no | no |
+| Create / edit / delete zones | yes | yes | no | no |
+| Move others (any zone); place into a private zone | yes | yes | no | no |
+| Enter a private zone | freely (self), or placed by another mod | freely (self), or placed by another mod | only when placed by a mod | only when placed by a mod |
+| Self-leave a private zone | yes | yes | no (mod-only) | no (mod-only) |
+
+A parent is a participant with no moderator capabilities — guest-equivalent, exactly like a gamer. Nothing in the room UI branches on `customer`: every mod gate is a positive `admin`/`gedu` check (client-side) or `is_voice_group_moderator` (RLS, which is admin-or-assigned-gedu), so the column falls out with no UI code. Joining their child's room is a different thing entirely and still goes through the switch-to-gamer flow.
 
 **Rule: Owner-only actions (screen share, mute, lock, broadcast, deafen, moving others, private-zone occupancy writes) are enforced server-side — by the Daily `is_owner` token flag for SFU actions (including setting another participant's `canReceive`), and by RLS (`is_voice_group_moderator`) for the DB writes. Hiding buttons client-side is cosmetic defense-in-depth only.**
 

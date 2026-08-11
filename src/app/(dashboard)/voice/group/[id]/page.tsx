@@ -33,11 +33,16 @@ export async function generateMetadata(): Promise<Metadata> {
  * Join. The value is run through `resolveInternalPath`, which accepts it only
  * if it resolves to a same-origin path (rejecting `//host`, `/\host`, absolute
  * URLs, etc.) so this surface can't be turned into an open redirect —
- * `backHref` is fed straight to `window.location.href` on leave. Customers
- * are excluded —
- * they only ever reach a voice room through `SwitchProfileDialog`, which
- * swaps the session to a gamer first, so by the time we're here the role
- * is gamer/gedu/admin.
+ * `backHref` is fed straight to `window.location.href` on leave.
+ *
+ * Every signed-in role may land here, customers included: a parent holding
+ * their *own* seat on a for-parents product joins directly (their child's
+ * seat still goes through `SwitchProfileDialog`, which swaps the session to
+ * the gamer first). This page deliberately does no membership check of its
+ * own — the token route is the boundary, and it refuses a caller with no
+ * active participation on the group whatever their role. A page-level role
+ * redirect here would be a second, weaker copy of that gate: it would let a
+ * seatless *gamer* through while bouncing a seated parent.
  */
 export default async function VoiceGroupSessionPage({
   params,
@@ -54,14 +59,10 @@ export default async function VoiceGroupSessionPage({
 
   // `!role` only fires if the profile fetch failed under an authenticated
   // session (proxy already gated unauthenticated visitors). `/login` is the
-  // defensible fallback there. Customers, on the other hand, are signed
-  // in but landing on the wrong page — send them to their own dashboard
-  // instead of bouncing through `/login` and letting the proxy hop them.
+  // defensible fallback there. Every resolved role is allowed through — the
+  // token route decides who actually gets into the room.
   if (!role) {
     redirect(ROUTES.login);
-  }
-  if (role === "customer") {
-    redirect(ROLE_DASHBOARD_PATHS.customer);
   }
 
   const backHref = resolveInternalPath(sp.back, ROLE_DASHBOARD_PATHS[role]);

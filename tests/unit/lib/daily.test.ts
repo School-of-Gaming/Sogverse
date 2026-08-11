@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   buildUserName,
+  createMeetingToken,
   DailyApiError,
   getOrCreateDailyRoom,
   groupVoiceRoomName,
@@ -236,5 +237,57 @@ describe("getOrCreateDailyRoom", () => {
       DailyApiError,
     );
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("createMeetingToken — the doubled owner flag", () => {
+  const originalKey = process.env.DAILY_API_KEY;
+
+  beforeEach(() => {
+    process.env.DAILY_API_KEY = "test-key";
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    process.env.DAILY_API_KEY = originalKey;
+  });
+
+  /** Mint a token and return the `properties` Daily was actually sent. */
+  async function mintedProperties(
+    isOwner: boolean,
+  ): Promise<Record<string, unknown>> {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ token: "t" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await createMeetingToken({
+      roomName: "g-x-202605270425",
+      isOwner,
+      expUnix: 1_800_000_000,
+    });
+
+    const body = fetchMock.mock.calls[0]?.[1]?.body;
+    return JSON.parse(String(body)).properties;
+  }
+
+  // `isOwner` is one caller-facing option that fans out to TWO Daily
+  // properties. Asserting the route's argument only proves the route's local
+  // variable; these assert the request body Daily actually receives, which is
+  // the only place the doubling is visible. A future edit that decouples
+  // screen share from ownership has to come through here.
+  it("withholds screen share from a non-owner (this is what keeps parents/gamers off it)", async () => {
+    const properties = await mintedProperties(false);
+    expect(properties.is_owner).toBe(false);
+    expect(properties.enable_screenshare).toBe(false);
+  });
+
+  it("grants screen share to an owner", async () => {
+    const properties = await mintedProperties(true);
+    expect(properties.is_owner).toBe(true);
+    expect(properties.enable_screenshare).toBe(true);
   });
 });

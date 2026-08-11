@@ -24,7 +24,8 @@ import { voiceTokenResponse } from "@/services/voice/voice.contracts";
  * joiners) once the window passes.
  *
  * Gates:
- *   1. Membership — gamers via an active participation, gedus via a
+ *   1. Membership — participants (a gamer, or a parent holding their own seat
+ *      on a for-parents product) via an active participation, gedus via a
  *      product-level assignment (cross-group voice mobility), admins pass
  *      through.
  *   2. Session window — at least one slot's window must be open right now.
@@ -32,10 +33,19 @@ import { voiceTokenResponse } from "@/services/voice/voice.contracts";
  * Notably absent: there is no "did you enroll before this session started?"
  * gate. Active membership is the binary access predicate. (Credit-based
  * billing makes a mid-session enrollment cut-off irrelevant.)
+ *
+ * A `customer` reaches this route only for a seat they occupy themselves —
+ * `participations.participant_id` is the seat's occupant, so the one
+ * membership query below covers both a gamer's seat and a parent's own
+ * without a customer-specific branch. A parent can never mint a token for
+ * their child's seat: the child's row is keyed to the child's id, not theirs.
+ * (`requireRole` additionally holds the parent-PIN gate for `customer`, so a
+ * locked parent session can't join either — matching the proxy, which bounces
+ * a locked customer off this page to the unlock screen.)
  */
 export const POST = defineRoute({
   posture: "role-gated",
-  roles: ["gedu", "gamer", "admin"],
+  roles: ["gedu", "gamer", "admin", "customer"],
   forbiddenMessage: "You do not have permission to join voice rooms",
   body: z.object({ groupId: z.string().min(1, "groupId is required") }),
   response: voiceTokenResponse,
@@ -77,7 +87,11 @@ export const POST = defineRoute({
     const slots = group.product.slots;
 
     // ---- Membership gate ----
-    if (role === "gamer") {
+    // One participant-keyed query for both seat-holding roles: `participant_id`
+    // is whoever occupies the seat, so a gamer's row and a parent's own row are
+    // the same shape and satisfy the same predicate. No customer-specific
+    // query, and no path to a child's seat (that row carries the child's id).
+    if (role === "gamer" || role === "customer") {
       const { data: participation } = await admin
         .from("participations")
         .select("id")
@@ -210,9 +224,18 @@ export const POST = defineRoute({
       .eq("user_id", user.id)
       .maybeSingle();
 
+    // Moderator rights are granted by an explicit allow-list, never by
+    // excluding a role. `isOwner` is doubled at the mint — `createMeetingToken`
+    // feeds it to both Daily's `is_owner` and `enable_screenshare` — so this one
+    // predicate is the whole moderator surface, and a negative test here
+    // ("everyone who isn't a gamer") would silently hand moderator powers and
+    // screen share to the next role admitted to this route. It just was:
+    // customers now reach it as seat-holding participants.
+    const isModerator = role === "gedu" || role === "admin";
+
     const token = await createMeetingToken({
       roomName: dailyRoomName,
-      isOwner: role !== "gamer",
+      isOwner: isModerator,
       userName: buildUserName({
         userId: user.id,
         role,

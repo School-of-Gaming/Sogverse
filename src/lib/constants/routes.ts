@@ -236,9 +236,10 @@ export const ROUTES = {
    * - `forCode(code)` → `/voice/<code>` — public on-the-fly instant rooms,
    *   share-via-link by design (see src/components/voice/instant/CLAUDE.md).
    * - `groupSession(groupId)` → `/voice/group/<id>` — authenticated group
-   *   voice room used by gamers (as participants) and gedus/admins (as
-   *   moderators); the page authorizes by role + product assignment via
-   *   `/api/voice/token`. The proxy gates this branch behind auth even
+   *   voice room used by seat-holders (a gamer, or a parent on their own
+   *   seat) as participants and gedus/admins as moderators; the page does no
+   *   authorization of its own — membership and moderator rights are decided
+   *   by `/api/voice/token`. The proxy gates this branch behind auth even
    *   though the rest of `/voice/*` is public — it imports
    *   `groupSessionPrefix` so the carve-out can't drift from the route.
    * `prefix` is the route base used for proxy matching.
