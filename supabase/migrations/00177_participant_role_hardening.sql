@@ -702,7 +702,6 @@ GRANT EXECUTE ON FUNCTION public.set_group_member_minecraft(uuid, text, text) TO
 DO $assert$
 DECLARE
   c_src   text;
-  c_pre   text;
   c_count integer;
   c_fn    text;
   c_fns   text[] := ARRAY[
@@ -725,15 +724,6 @@ BEGIN
     IF position('gmp.role = ''customer''' IN c_src) = 0 THEN
       RAISE EXCEPTION
         '%: the participant_email arm does not check the customer role', c_fn;
-    END IF;
-
-    -- Non-vacuous: strip the predicate everywhere it appears and require the
-    -- check to fail on what remains — i.e. the pre-hardening body would NOT
-    -- have passed.
-    c_pre := replace(c_src, 'gmp.role = ''customer''', '');
-    IF position('gmp.role = ''customer''' IN c_pre) > 0 THEN
-      RAISE EXCEPTION
-        '00177 #7 proof is vacuous for %: the predicate survived stripping', c_fn;
     END IF;
   END LOOP;
 
@@ -768,14 +758,6 @@ BEGIN
       'set_group_member_minecraft does not guard the target role';
   END IF;
 
-  -- Non-vacuous: the pre-hardening body (the guard predicate removed) would not
-  -- pass the check above.
-  c_pre := replace(c_src, 'pr.role = ''gamer''', '');
-  IF position('pr.role = ''gamer''' IN c_pre) > 0 THEN
-    RAISE EXCEPTION
-      '00177 #3 proof is vacuous: the guard predicate survived stripping';
-  END IF;
-
   -- The recreates must not have come back PUBLIC-executable, and both granted
   -- roles must still reach them — service_role included, the admin-client path
   -- that no browser-side test would catch.
@@ -797,3 +779,98 @@ BEGIN
   END LOOP;
 END
 $assert$;
+
+-- ---------------------------------------------------------------------------
+-- Proof the checks above can fail.
+--
+-- Each positive check is `position(<predicate> IN prosrc) = 0 → RAISE`, and
+-- the count check is `<n> <> 3 → RAISE`. This block reconstructs the
+-- PRE-hardening body of each function — the exact predicate stripped out — and
+-- runs the same check against it, requiring the raise. A check that could not
+-- fail on a body lacking the hardening would be decoration.
+-- ---------------------------------------------------------------------------
+
+DO $proof$
+DECLARE
+  c_src   text;
+  c_pre   text;
+  c_count integer;
+  c_fn    text;
+  c_fired boolean;
+  c_fns   text[] := ARRAY[
+    'get_gedu_group_feed',
+    'get_gedu_assigned_product',
+    'get_product_groups_with_details'
+  ];
+BEGIN
+  -- #7 — the presence check, run against a body with the predicate removed.
+  FOREACH c_fn IN ARRAY c_fns LOOP
+    SELECT p.prosrc INTO c_src
+      FROM pg_proc p
+      JOIN pg_namespace n ON n.oid = p.pronamespace
+     WHERE n.nspname = 'public' AND p.proname = c_fn;
+
+    c_pre   := replace(c_src, 'gmp.role = ''customer''', '');
+    c_fired := false;
+    BEGIN
+      IF position('gmp.role = ''customer''' IN c_pre) = 0 THEN
+        RAISE EXCEPTION
+          '%: the participant_email arm does not check the customer role', c_fn;
+      END IF;
+    EXCEPTION WHEN raise_exception THEN
+      c_fired := true;
+    END;
+    IF NOT c_fired THEN
+      RAISE EXCEPTION
+        '00177 #7 check is vacuous for %: a body with no role predicate passed it',
+        c_fn;
+    END IF;
+  END LOOP;
+
+  -- The three-branch count, run against a body with every occurrence stripped
+  -- (which is 0 of 3, not 3).
+  SELECT p.prosrc INTO c_src
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+   WHERE n.nspname = 'public' AND p.proname = 'get_product_groups_with_details';
+
+  c_pre   := replace(c_src, 'gmp.role = ''customer''', '');
+  c_fired := false;
+  BEGIN
+    c_count := (length(c_pre) - length(replace(c_pre, 'gmp.role = ''customer''', '')))
+               / GREATEST(length('gmp.role = ''customer'''), 1);
+    IF c_count <> 3 THEN
+      RAISE EXCEPTION
+        'get_product_groups_with_details checks the customer role on % of its 3 branches, not 3',
+        c_count;
+    END IF;
+  EXCEPTION WHEN raise_exception THEN
+    c_fired := true;
+  END;
+  IF NOT c_fired THEN
+    RAISE EXCEPTION
+      '00177 three-branch count is vacuous: a body with 0 role checks passed it';
+  END IF;
+
+  -- #3 — the guard presence check, run against a body with the guard removed.
+  SELECT p.prosrc INTO c_src
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+   WHERE n.nspname = 'public' AND p.proname = 'set_group_member_minecraft';
+
+  c_pre   := replace(c_src, 'pr.role = ''gamer''', '');
+  c_fired := false;
+  BEGIN
+    IF position('pr.role = ''gamer''' IN c_pre) = 0 THEN
+      RAISE EXCEPTION
+        'set_group_member_minecraft does not guard the target role';
+    END IF;
+  EXCEPTION WHEN raise_exception THEN
+    c_fired := true;
+  END;
+  IF NOT c_fired THEN
+    RAISE EXCEPTION
+      '00177 #3 check is vacuous: a body with no role guard passed it';
+  END IF;
+END
+$proof$;
