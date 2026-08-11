@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { TriangleAlert } from "lucide-react";
-import type { PolicyBlock } from "./policy-content";
+import { policyTextSegments, type PolicyBlock } from "./policy-content";
 
 interface PolicySubsection {
   heading: string;
@@ -24,7 +25,11 @@ interface PolicySection {
 interface PolicyPageProps {
   /** Page title, e.g. "Privacy Policy". */
   title: string;
-  /** One-line scope note under the title, where the document carries one. */
+  /**
+   * One-line scope note under the title, where the document carries one. Goes
+   * through the same cross-reference renderer as the body, because a scope note
+   * is exactly where one document names another ("this sits alongside …").
+   */
   subtitle?: string;
   /** Fully-formed "Last updated: …" line (already localized by the caller). */
   lastUpdated: string;
@@ -40,6 +45,32 @@ interface PolicyPageProps {
   sections: PolicySection[];
 }
 
+/**
+ * One line of policy copy, with any cross-reference to another of our legal
+ * pages rendered as a real link. The copy arrives tagged from the message file
+ * and is split by `policyTextSegments`, which owns the allow-list and the
+ * hrefs; all this decides is what a link looks like in body prose.
+ */
+function PolicyText({ text }: { text: string }) {
+  return (
+    <>
+      {policyTextSegments(text).map((segment, i) =>
+        segment.href === undefined ? (
+          segment.text
+        ) : (
+          <Link
+            key={i}
+            href={segment.href}
+            className="rounded-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {segment.text}
+          </Link>
+        ),
+      )}
+    </>
+  );
+}
+
 /** Renders a run of policy copy — paragraphs and bulleted lists, in order. */
 function PolicyBlocks({ blocks }: { blocks: PolicyBlock[] }) {
   return (
@@ -47,7 +78,7 @@ function PolicyBlocks({ blocks }: { blocks: PolicyBlock[] }) {
       {blocks.map((block, i) =>
         "paragraph" in block ? (
           <p key={i} className="text-muted-foreground">
-            {block.paragraph}
+            <PolicyText text={block.paragraph} />
           </p>
         ) : (
           <ul
@@ -55,7 +86,9 @@ function PolicyBlocks({ blocks }: { blocks: PolicyBlock[] }) {
             className="list-disc space-y-2 pl-6 text-muted-foreground"
           >
             {block.bullets.map((bullet, bi) => (
-              <li key={bi}>{bullet}</li>
+              <li key={bi}>
+                <PolicyText text={bullet} />
+              </li>
             ))}
           </ul>
         ),
@@ -89,6 +122,12 @@ function PendingNotice({ notice }: { notice: string }) {
  * `messages/*.json` with a literal next-intl namespace, so each page keeps full
  * message-key type safety while the markup lives in one place. A section
  * renders its own copy and then any second-level subsections beneath it.
+ *
+ * Every string of body copy (subtitle, paragraphs, bullets) may name one of our
+ * other legal pages through a cross-reference tag, which becomes a link here;
+ * see `policy-content.ts` for the allow-list. Headings, the "last updated" line
+ * and the draft/pending notices are structural rather than authored prose, so
+ * they render as plain text.
  */
 export function PolicyPage({
   title,
@@ -102,7 +141,11 @@ export function PolicyPage({
     <div className="container mx-auto max-w-3xl px-4 py-12">
       <div className="space-y-3">
         <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-        {subtitle && <p className="text-muted-foreground">{subtitle}</p>}
+        {subtitle && (
+          <p className="text-muted-foreground">
+            <PolicyText text={subtitle} />
+          </p>
+        )}
         <p className="text-sm text-muted-foreground">{lastUpdated}</p>
       </div>
 

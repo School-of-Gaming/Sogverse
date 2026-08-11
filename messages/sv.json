@@ -2420,14 +2420,14 @@
       "conduct": {
         "heading": "Beteende och att ta ett barn ur en klubb",
         "paragraphs": [
-          "Vi vill att varje barn ska känna sig tryggt och välkommet, så vi accepterar inte mobbning eller beteende som förstör för andra. När ett problem uppstår börjar vi alltid med att stötta barnet och hjälpa det att ställa saker till rätta – hela vårt arbetssätt beskrivs i vår policy mot mobbning och om disciplin.",
+          "Vi vill att varje barn ska känna sig tryggt och välkommet, så vi accepterar inte mobbning eller beteende som förstör för andra. När ett problem uppstår börjar vi alltid med att stötta barnet och hjälpa det att ställa saker till rätta – hela vårt arbetssätt beskrivs i vår <linkDiscipline>policy mot mobbning och om disciplin</linkDiscipline>.",
           "Först efter dessa stödjande steg, och vid fortsatt toxiskt eller störande beteende eller mobbning, kan vi avsluta ett barns deltagande. Vi pratar alltid igenom det med dig först."
         ]
       },
       "privacy": {
         "heading": "Din familjs integritet",
         "paragraphs": [
-          "Vi tar din familjs – och särskilt ditt barns – integritet på största allvar, och vi hanterar dina uppgifter i enlighet med finländsk och europeisk dataskyddslagstiftning. Vår integritetspolicy förklarar exakt vad vi samlar in och varför."
+          "Vi tar din familjs – och särskilt ditt barns – integritet på största allvar, och vi hanterar dina uppgifter i enlighet med finländsk och europeisk dataskyddslagstiftning. Vår <linkPrivacy>integritetspolicy</linkPrivacy> förklarar exakt vad vi samlar in och varför."
         ]
       },
       "changes": {
@@ -2641,9 +2641,9 @@
         "blocks": [
           "Den här policyn gäller föräldrar, vårdnadshavare och unga som anmäler sig till Roblox program för ungas digitala kreativitet i Frankrike (Programmet).",
           "Programmet riktar sig till unga i åldern 8–17 år. En förälder eller vårdnadshavare måste göra anmälan och bekräfta att hen har rätt att anmäla barnet.",
-          "Policyn omfattar anmälan till Programmet, administration, lärandeträffar, evenemang, support, barns trygghet och utvärdering av effekt. Den kompletterar School of Gamings allmänna integritetspolicy. Om de två policyerna står i konflikt med varandra när det gäller Programmet gäller den här programspecifika policyn.",
+          "Policyn omfattar anmälan till Programmet, administration, lärandeträffar, evenemang, support, barns trygghet och utvärdering av effekt. Den kompletterar School of Gamings <linkPrivacy>allmänna integritetspolicy</linkPrivacy>. Om de två policyerna står i konflikt med varandra när det gäller Programmet gäller den här programspecifika policyn.",
           "Barnets egen användning av ett Roblox-konto, Roblox Studio eller någon annan Roblox-tjänst omfattas av Roblox egen integritetspolicy och egna villkor.",
-          "Programmets villkor fastställer åldersspannet 8–17 år, att anmälan görs av föräldern och den datadelning som är specifik för Programmet."
+          "<linkRobloxTerms>Programmets villkor</linkRobloxTerms> fastställer åldersspannet 8–17 år, att anmälan görs av föräldern och den datadelning som är specifik för Programmet."
         ]
       },
       "responsible": {
@@ -2696,7 +2696,7 @@
             "Telefonnummer, om det uppges.",
             "Språkval och kommunikationsönskemål.",
             "Uppgifter om Sogverse-konto och inloggning. Lösenord sparas i hashad form och kan inte läsas av personalen.",
-            "Bekräftelse på att Programmets villkor och den här integritetspolicyn har godkänts.",
+            "Bekräftelse på att <linkRobloxTerms>Programmets villkor</linkRobloxTerms> och den här integritetspolicyn har godkänts.",
             "Bekräftelser om integritet och frivilliga samtyckesval.",
             "Meddelanden, supportärenden, klagomål och kommunikation som rör barns trygghet.",
             "Närvaro vid föräldraträffar och frivilliga enkätsvar."
@@ -2735,7 +2735,7 @@
             "Nödvändiga sessionscookies.",
             "Grundläggande statistik över hur webbplatsen används."
           ],
-          "De här kategorierna följer av SOG:s allmänna integritetspolicy, av Sogverses integritetsinriktade arkitektur och av Programmets krav på rapportering av närvaro, slutförande och publicering."
+          "De här kategorierna följer av SOG:s <linkPrivacy>allmänna integritetspolicy</linkPrivacy>, av Sogverses integritetsinriktade arkitektur och av Programmets krav på rapportering av närvaro, slutförande och publicering."
         ]
       },
       "use": {
@@ -2895,7 +2895,7 @@
             "Vanliga träffar spelas inte in.",
             "Lynx Educate och School of Gaming använder inte anmälningsuppgifter från Programmet för beteendebaserad reklam riktad till barn."
           ],
-          "Oro som rör barns trygghet hanteras enligt den gemensamma barnskyddspolicyn. School of Gaming hanterar vardagliga ärenden i första hand och för allvarliga ärenden vidare till Lynx Educate. Räddningstjänsten kontaktas först om ett barn kan vara i omedelbar fara.",
+          "Oro som rör barns trygghet hanteras enligt den gemensamma <linkRobloxSafeguarding>barnskyddspolicyn</linkRobloxSafeguarding>. School of Gaming hanterar vardagliga ärenden i första hand och för allvarliga ärenden vidare till Lynx Educate. Räddningstjänsten kontaktas först om ett barn kan vara i omedelbar fara.",
           "Barn ska också få en åldersanpassad förklaring av hur deras uppgifter används. Fransk lag kräver att information som riktar sig till ett barn är tydlig och lätt att förstå. När en behandling online verkligen vilar på samtycke och gäller ett barn under 15 år kräver fransk lag att barnet och den eller de som har föräldraansvaret samtycker gemensamt."
         ]
       },
@@ -3008,7 +3008,7 @@
   },
   "robloxSafeguarding": {
     "title": "Barnskyddspolicy för Roblox-programmet",
-    "subtitle": "Det här dokumentet kompletterar School of Gamings policy mot mobbning, som fortsatt gäller för vardagligt beteende under träffarna. Här beskrivs Lynx Educates och School of Gamings bredare ansvar för barns trygghet i Programmet, även vid fysiska evenemang.",
+    "subtitle": "Det här dokumentet kompletterar School of Gamings <linkDiscipline>policy mot mobbning</linkDiscipline>, som fortsatt gäller för vardagligt beteende under träffarna. Här beskrivs Lynx Educates och School of Gamings bredare ansvar för barns trygghet i Programmet, även vid fysiska evenemang.",
     "lastUpdated": "Senast granskad: {date}",
     "pendingContact": "En kontaktadress hos School of Gaming för trygghetsfrågor håller på att bekräftas och läggs till här.",
     "intro": {
@@ -3048,7 +3048,7 @@
       "behaviour": {
         "heading": "Beteende och disciplin",
         "blocks": [
-          "Vardagliga beteendefrågor under träffar som SOG håller i hanteras enligt School of Gamings policy mot mobbning och disciplin, som bygger på ett stödjande steg-för-steg-arbetssätt innan ett barn tas bort från en träff eller från gemenskapen."
+          "Vardagliga beteendefrågor under träffar som SOG håller i hanteras enligt School of Gamings <linkDiscipline>policy mot mobbning och disciplin</linkDiscipline>, som bygger på ett stödjande steg-för-steg-arbetssätt innan ett barn tas bort från en träff eller från gemenskapen."
         ]
       },
       "escalation": {
@@ -3066,7 +3066,7 @@
       "data": {
         "heading": "Uppgifter och foton",
         "blocks": [
-          "All fotografering, filmning och användning av ett barns bild styrs av de samtyckesval som beskrivs i Integritetspolicyn för Roblox-programmet – aldrig förutsatta, alltid frivilliga, alltid möjliga att ändra."
+          "All fotografering, filmning och användning av ett barns bild styrs av de samtyckesval som beskrivs i <linkRobloxPrivacy>Integritetspolicyn för Roblox-programmet</linkRobloxPrivacy> – aldrig förutsatta, alltid frivilliga, alltid möjliga att ändra."
         ]
       },
       "review": {
@@ -3096,7 +3096,7 @@
             "Lynx Educate SAS och School of Gaming Galactic Oy (”SOG”) utformar och genomför Programmet tillsammans – i det här dokumentet betyder ”vi” båda parterna gemensamt, om vi inte säger något annat.",
             "Roblox Corporation (”Roblox”) sponsrar Programmet och tillhandahåller plattformen som ditt barn bygger på. Roblox är inte part i dessa villkor."
           ],
-          "Anmälan och träffar sker på School of Gamings plattform (”Sogverse”). Genom att anmäla dig godkänner du dessa programspecifika villkor, som gäller vid sidan av School of Gamings och Lynx ordinarie användarvillkor och som har företräde om villkoren skulle stå i strid med varandra."
+          "Anmälan och träffar sker på School of Gamings plattform (”Sogverse”). Genom att anmäla dig godkänner du dessa programspecifika villkor, som gäller vid sidan av <linkTerms>School of Gamings</linkTerms> och Lynx ordinarie användarvillkor och som har företräde om villkoren skulle stå i strid med varandra."
         ]
       },
       "eligibility": {
@@ -3120,13 +3120,13 @@
       "safety": {
         "heading": "Trygghet och tillsyn",
         "blocks": [
-          "Varje träff leds av en utbildad ledare. Vår hållning till beteende och barns trygghet framgår av vår gemensamma barnskyddspolicy, som finns tillgänglig på begäran."
+          "Varje träff leds av en utbildad ledare. Vår hållning till beteende och barns trygghet framgår av vår gemensamma <linkRobloxSafeguarding>barnskyddspolicy</linkRobloxSafeguarding>, som finns tillgänglig på begäran."
         ]
       },
       "information": {
         "heading": "Dina uppgifter",
         "blocks": [
-          "Hur vi använder dina och ditt barns uppgifter förklaras i vår Integritetspolicy för Roblox-programmet. Genom att anmäla dig bekräftar du att du har läst och förstått den.",
+          "Hur vi använder dina och ditt barns uppgifter förklaras i vår <linkRobloxPrivacy>Integritetspolicy för Roblox-programmet</linkRobloxPrivacy>. Genom att anmäla dig bekräftar du att du har läst och förstått den.",
           "När du anmäler dig till ett Roblox-program delas även uppgifterna som är kopplade till ditt School of Gaming-konto (inklusive dina kontaktuppgifter och ditt barns kontouppgifter) med Lynx Educate för att genomföra programmet och med Roblox för forskning om programmets effekter."
         ]
       },

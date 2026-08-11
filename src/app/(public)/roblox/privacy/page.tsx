@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import { formatDateOnly } from "@/lib/utils";
+import { rawString } from "@/lib/i18n/raw-messages";
 import { PolicyPage } from "@/components/legal/policy-page";
 import { rawPolicyBlocks } from "@/components/legal/policy-content";
 
@@ -83,7 +84,10 @@ export default async function RobloxPrivacyPage() {
   return (
     <PolicyPage
       title={t("title")}
-      subtitle={t("subtitle")}
+      // Raw, like the blocks below it — the subtitle is cross-reference-tagged
+      // copy on every policy page, so it reaches `PolicyPage` untouched by ICU
+      // whether or not this particular document's scope note names another one.
+      subtitle={rawString(t.raw("subtitle"))}
       lastUpdated={t("lastUpdated", {
         date: formatDateOnly(LAST_UPDATED, locale, { dateStyle: "long" }),
       })}

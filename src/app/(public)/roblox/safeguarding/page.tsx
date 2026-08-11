@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import { formatDateOnly } from "@/lib/utils";
+import { rawString } from "@/lib/i18n/raw-messages";
 import { PolicyPage } from "@/components/legal/policy-page";
 import { rawPolicyBlocks } from "@/components/legal/policy-content";
 
@@ -57,7 +58,10 @@ export default async function RobloxSafeguardingPage() {
   return (
     <PolicyPage
       title={t("title")}
-      subtitle={t("subtitle")}
+      // Raw, like the blocks below it: the subtitle names another of our legal
+      // documents and carries the cross-reference tag for it, which `PolicyPage`
+      // parses. Running it through ICU instead would demand a tag handler here.
+      subtitle={rawString(t.raw("subtitle"))}
       lastUpdated={t("lastUpdated", {
         date: formatDateOnly(LAST_UPDATED, locale, { dateStyle: "long" }),
       })}

@@ -44,8 +44,9 @@ banner until its copy is signed off.
       reviewed) need the same edit so the document of record matches the published page.
 - [ ] **"Child Safeguarding Policy, available upon request" (Terms & Conditions).** That
       policy now has a page at `/roblox/safeguarding`, so "upon request" undersells it —
-      the Terms wording should point at the page instead. Rendered faithfully as written
-      for now, because the fix is an upstream/Notion wording edit.
+      the Terms wording should point at the page instead. The document's name in that
+      sentence is now a link to the page, but the words "available upon request" are
+      rendered faithfully as written, because changing them is an upstream/Notion edit.
 - [ ] **"Sessions are not recorded" wording mismatch.** The Safeguarding Policy says it
       flatly; the Privacy Policy says "*Routine* online sessions are not recorded" and
       contemplates announced photography/filming at selected sessions/events. Align the
@@ -123,11 +124,13 @@ edits first — the web copy follows the signed-off text.
 
 ## Open decisions
 
-- [ ] **Linkify cross-references between the legal pages?** The Programme Privacy Policy
-      mentions the general Privacy Policy, the Programme Terms and the Safeguarding
-      Policy in plain text (the `PolicyPage` pattern stores plain strings), and the Terms
-      and the Safeguarding Policy cross-reference each other the same way. Making them
-      real links needs a small rich-text extension. All three pages now exist, so the
-      only thing left is the ruling; Kyle hasn't given it.
+- [ ] **Should external references become links too?** Internal cross-references are
+      now real links: every mention of one of *our* legal documents inside another one's
+      copy is tagged in the message files and rendered as a link (see the allow-list in
+      `src/components/legal/policy-content.ts`). References to documents we don't own —
+      Roblox's own privacy policy and terms, Lynx's standard Terms and Conditions, CNIL,
+      tietosuoja.fi — were deliberately left as plain text, on the same reasoning that
+      keeps `a` out of the authored-markdown allow-list. Whether a legal page is the one
+      place that ban should be lifted is the open question.
 - [ ] **Draft banners come off** each page as its copy is confirmed final (the banner is
       the "copy pending / in draft" warning added while content is incomplete).

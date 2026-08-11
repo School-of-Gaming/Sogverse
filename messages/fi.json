@@ -2420,14 +2420,14 @@
       "conduct": {
         "heading": "Käytös ja lapsen poistaminen kerhosta",
         "paragraphs": [
-          "Haluamme jokaisen lapsen tuntevan olonsa turvalliseksi ja tervetulleeksi, joten emme hyväksy kiusaamista tai käytöstä, joka pilaa muiden kokemuksen. Kun ongelma syntyy, lähdemme aina liikkeelle tukemalla lasta ja auttamalla häntä korjaamaan tilanteen – koko toimintatapamme on kuvattu kiusaamisen ehkäisyn ja kurinpidon ohjeessamme.",
+          "Haluamme jokaisen lapsen tuntevan olonsa turvalliseksi ja tervetulleeksi, joten emme hyväksy kiusaamista tai käytöstä, joka pilaa muiden kokemuksen. Kun ongelma syntyy, lähdemme aina liikkeelle tukemalla lasta ja auttamalla häntä korjaamaan tilanteen – koko toimintatapamme on kuvattu <linkDiscipline>kiusaamisen ehkäisyn ja kurinpidon ohjeessamme</linkDiscipline>.",
           "Vasta näiden tukea antavien vaiheiden jälkeen, ja jos myrkyllinen tai häiritsevä käytös tai kiusaaminen jatkuu, voimme päättää lapsen osallistumisen. Keskustelemme asiasta aina ensin kanssasi."
         ]
       },
       "privacy": {
         "heading": "Perheesi yksityisyys",
         "paragraphs": [
-          "Suhtaudumme perheesi – ja erityisesti lapsesi – yksityisyyteen erittäin vakavasti, ja käsittelemme tietojasi Suomen ja EU:n tietosuojalainsäädännön mukaisesti. Tietosuojaselosteemme kertoo tarkalleen, mitä keräämme ja miksi."
+          "Suhtaudumme perheesi – ja erityisesti lapsesi – yksityisyyteen erittäin vakavasti, ja käsittelemme tietojasi Suomen ja EU:n tietosuojalainsäädännön mukaisesti. <linkPrivacy>Tietosuojaselosteemme</linkPrivacy> kertoo tarkalleen, mitä keräämme ja miksi."
         ]
       },
       "changes": {
@@ -2641,9 +2641,9 @@
         "blocks": [
           "Tämä seloste koskee vanhempia, huoltajia ja nuoria, jotka ilmoittautuvat Ranskassa järjestettävään Robloxin nuorten digitaalisen luovuuden Ohjelmaan (Ohjelma).",
           "Ohjelma on tarkoitettu 8–17-vuotiaille nuorille. Vanhemman tai huoltajan on tehtävä ilmoittautuminen ja vahvistettava, että hänellä on oikeus ilmoittaa lapsi mukaan.",
-          "Seloste kattaa Ohjelmaan ilmoittautumisen, hallinnoinnin, oppimistapaamiset, tapahtumat, tuen, lasten turvallisuuden ja vaikuttavuuden arvioinnin. Se täydentää School of Gamingin yleistä tietosuojaselostetta. Jos selosteet ovat tämän Ohjelman osalta ristiriidassa, sovelletaan tätä Ohjelmaa koskevaa selostetta.",
+          "Seloste kattaa Ohjelmaan ilmoittautumisen, hallinnoinnin, oppimistapaamiset, tapahtumat, tuen, lasten turvallisuuden ja vaikuttavuuden arvioinnin. Se täydentää School of Gamingin <linkPrivacy>yleistä tietosuojaselostetta</linkPrivacy>. Jos selosteet ovat tämän Ohjelman osalta ristiriidassa, sovelletaan tätä Ohjelmaa koskevaa selostetta.",
           "Lapsen omaan Roblox-tilin, Roblox Studion tai muun Roblox-palvelun käyttöön sovelletaan Robloxin omaa tietosuojaselostetta ja käyttöehtoja.",
-          "Ohjelman ehdoissa määritellään 8–17 vuoden ikäraja, vanhemman tekemä ilmoittautuminen ja Ohjelmaan liittyvä tietojen jakaminen."
+          "<linkRobloxTerms>Ohjelman ehdoissa</linkRobloxTerms> määritellään 8–17 vuoden ikäraja, vanhemman tekemä ilmoittautuminen ja Ohjelmaan liittyvä tietojen jakaminen."
         ]
       },
       "responsible": {
@@ -2696,7 +2696,7 @@
             "Puhelinnumero, jos se on annettu.",
             "Kieliasetus ja viestintätoiveet.",
             "Sogverse-tilin ja kirjautumisen tiedot. Salasanat säilytetään tiivistemuodossa, eikä henkilöstö voi lukea niitä.",
-            "Vahvistus Ohjelman ehtojen ja tämän tietosuojaselosteen hyväksymisestä.",
+            "Vahvistus <linkRobloxTerms>Ohjelman ehtojen</linkRobloxTerms> ja tämän tietosuojaselosteen hyväksymisestä.",
             "Tietosuojaa koskevat kuittaukset ja vapaaehtoiset suostumusvalinnat.",
             "Viestit, tukipyynnöt, valitukset ja lasten turvallisuutta koskeva viestintä.",
             "Osallistuminen vanhempien tapaamisiin ja vapaaehtoiset kyselyvastaukset."
@@ -2735,7 +2735,7 @@
             "Välttämättömät istuntoevästeet.",
             "Perustason tilastot sivuston käytöstä."
           ],
-          "Nämä tietoryhmät perustuvat SOG:n yleiseen tietosuojaselosteeseen, Sogversen tietosuojaa korostavaan arkkitehtuuriin sekä Ohjelman raportointivaatimuksiin, jotka koskevat osallistumista, suorittamista ja julkaisemista."
+          "Nämä tietoryhmät perustuvat SOG:n <linkPrivacy>yleiseen tietosuojaselosteeseen</linkPrivacy>, Sogversen tietosuojaa korostavaan arkkitehtuuriin sekä Ohjelman raportointivaatimuksiin, jotka koskevat osallistumista, suorittamista ja julkaisemista."
         ]
       },
       "use": {
@@ -2895,7 +2895,7 @@
             "Tavanomaisia tapaamisia ei tallenneta.",
             "Lynx Educate ja School of Gaming eivät käytä Ohjelman ilmoittautumistietoja lapsille suunnattuun käyttäytymiseen perustuvaan mainontaan."
           ],
-          "Turvallisuushuolet käsitellään yhteisen lasten turvallisuuden toimintaohjeen mukaisesti. School of Gaming hoitaa arjen tilanteet ensisijaisesti ja siirtää vakavat asiat Lynx Educaten käsiteltäviksi. Jos lapsi voi olla välittömässä vaarassa, hätäpalveluihin otetaan yhteyttä ensin.",
+          "Turvallisuushuolet käsitellään yhteisen <linkRobloxSafeguarding>lasten turvallisuuden toimintaohjeen</linkRobloxSafeguarding> mukaisesti. School of Gaming hoitaa arjen tilanteet ensisijaisesti ja siirtää vakavat asiat Lynx Educaten käsiteltäviksi. Jos lapsi voi olla välittömässä vaarassa, hätäpalveluihin otetaan yhteyttä ensin.",
           "Lasten on myös saatava ikätasolleen sopiva selitys siitä, miten heidän tietojaan käytetään. Ranskan laki edellyttää, että lapselle osoitettu tieto on selkeää ja helposti ymmärrettävää. Kun verkossa tapahtuva käsittely aidosti perustuu suostumukseen ja koskee alle 15-vuotiasta lasta, Ranskan laki edellyttää, että lapsi ja huoltaja tai huoltajat antavat suostumuksen yhdessä."
         ]
       },
@@ -3008,7 +3008,7 @@
   },
   "robloxSafeguarding": {
     "title": "Roblox-ohjelman lasten turvallisuuden toimintaohje",
-    "subtitle": "Tämä toimintaohje täydentää School of Gamingin kiusaamisen ehkäisyn ohjetta, jota sovelletaan edelleen tapaamisten arkiseen käyttäytymiseen. Tässä asiakirjassa kuvataan Lynx Educaten ja School of Gamingin laajemmat vastuut lasten turvallisuudesta Ohjelmassa, myös lähitapahtumissa.",
+    "subtitle": "Tämä toimintaohje täydentää School of Gamingin <linkDiscipline>kiusaamisen ehkäisyn ohjetta</linkDiscipline>, jota sovelletaan edelleen tapaamisten arkiseen käyttäytymiseen. Tässä asiakirjassa kuvataan Lynx Educaten ja School of Gamingin laajemmat vastuut lasten turvallisuudesta Ohjelmassa, myös lähitapahtumissa.",
     "lastUpdated": "Tarkistettu viimeksi: {date}",
     "pendingContact": "School of Gamingin yhteysosoitetta turvallisuushuolia varten vahvistetaan vielä, ja se lisätään tähän.",
     "intro": {
@@ -3048,7 +3048,7 @@
       "behaviour": {
         "heading": "Käyttäytyminen ja kurinpito",
         "blocks": [
-          "SOG:n ohjaamissa tapaamisissa arjen käyttäytymistilanteet käsitellään School of Gamingin kiusaamisen ehkäisyn ja kurinpidon ohjeen mukaisesti. Ohje etenee tukevasti ja askel kerrallaan, ennen kuin lapsi poistetaan tapaamisesta tai yhteisöstä."
+          "SOG:n ohjaamissa tapaamisissa arjen käyttäytymistilanteet käsitellään School of Gamingin <linkDiscipline>kiusaamisen ehkäisyn ja kurinpidon ohjeen</linkDiscipline> mukaisesti. Ohje etenee tukevasti ja askel kerrallaan, ennen kuin lapsi poistetaan tapaamisesta tai yhteisöstä."
         ]
       },
       "escalation": {
@@ -3066,7 +3066,7 @@
       "data": {
         "heading": "Tiedot ja valokuvat",
         "blocks": [
-          "Kaikkeen valokuvaamiseen, kuvaamiseen ja lapsen kuvan käyttöön sovelletaan Roblox-ohjelman tietosuojaselosteessa kuvattuja suostumusvalintoja – suostumusta ei koskaan oleteta, se on aina vapaaehtoinen ja aina muutettavissa."
+          "Kaikkeen valokuvaamiseen, kuvaamiseen ja lapsen kuvan käyttöön sovelletaan <linkRobloxPrivacy>Roblox-ohjelman tietosuojaselosteessa</linkRobloxPrivacy> kuvattuja suostumusvalintoja – suostumusta ei koskaan oleteta, se on aina vapaaehtoinen ja aina muutettavissa."
         ]
       },
       "review": {
@@ -3096,7 +3096,7 @@
             "Lynx Educate SAS ja School of Gaming Galactic Oy (”SOG”) suunnittelevat ja toteuttavat tämän Ohjelman yhdessä. Tässä asiakirjassa ”me” tarkoittaa molempia yhdessä, ellei toisin mainita.",
             "Roblox Corporation (”Roblox”) tukee Ohjelmaa ja tarjoaa alustan, jolla lapsesi rakentaa. Roblox ei ole näiden ehtojen osapuoli."
           ],
-          "Ilmoittautuminen ja tapaamiset tapahtuvat School of Gamingin alustalla (”Sogverse”). Ilmoittautumalla hyväksyt nämä Ohjelmaa koskevat ehdot, joita sovelletaan School of Gamingin ja Lynxin yleisten käyttöehtojen rinnalla. Jos ehdot ovat keskenään ristiriidassa, nämä Ohjelman ehdot menevät edelle."
+          "Ilmoittautuminen ja tapaamiset tapahtuvat School of Gamingin alustalla (”Sogverse”). Ilmoittautumalla hyväksyt nämä Ohjelmaa koskevat ehdot, joita sovelletaan <linkTerms>School of Gamingin</linkTerms> ja Lynxin yleisten käyttöehtojen rinnalla. Jos ehdot ovat keskenään ristiriidassa, nämä Ohjelman ehdot menevät edelle."
         ]
       },
       "eligibility": {
@@ -3120,13 +3120,13 @@
       "safety": {
         "heading": "Turvallisuus ja valvonta",
         "blocks": [
-          "Jokaista tapaamista valvoo koulutettu ohjaaja. Käyttäytymistä ja lasten turvallisuutta koskeva toimintatapamme on kuvattu yhteisessä lasten turvallisuuden toimintaohjeessamme, joka on saatavilla pyynnöstä."
+          "Jokaista tapaamista valvoo koulutettu ohjaaja. Käyttäytymistä ja lasten turvallisuutta koskeva toimintatapamme on kuvattu yhteisessä <linkRobloxSafeguarding>lasten turvallisuuden toimintaohjeessamme</linkRobloxSafeguarding>, joka on saatavilla pyynnöstä."
         ]
       },
       "information": {
         "heading": "Sinun tietosi",
         "blocks": [
-          "Roblox-ohjelman tietosuojaselosteessa kerrotaan, miten käytämme sinun ja lapsesi tietoja. Ilmoittautumalla vahvistat lukeneesi ja ymmärtäneesi sen.",
+          "<linkRobloxPrivacy>Roblox-ohjelman tietosuojaselosteessa</linkRobloxPrivacy> kerrotaan, miten käytämme sinun ja lapsesi tietoja. Ilmoittautumalla vahvistat lukeneesi ja ymmärtäneesi sen.",
           "Kun ilmoittaudut Roblox-ohjelmaan, School of Gaming -tiliisi liittyvät tiedot (mukaan lukien yhteystietosi ja lapsesi tilitiedot) jaetaan myös Lynx Educatelle ohjelman toteuttamista varten ja Robloxille ohjelman vaikuttavuustutkimusta varten."
         ]
       },

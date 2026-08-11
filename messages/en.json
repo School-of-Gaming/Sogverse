@@ -1829,9 +1829,9 @@
         "blocks": [
           "This policy applies to parents, legal guardians and young people registering for the Roblox youth digital creativity Programme in France (The Programme).",
           "The Programme is for young people aged 8–17. A parent or legal guardian must complete registration and confirm that they have authority to register the child.",
-          "The policy covers Programme registration, administration, learning sessions, events, support, safeguarding and impact evaluation. It supplements School of Gaming’s general Privacy Policy. Where the two policies conflict in relation to this Programme, this Programme-specific policy applies.",
+          "The policy covers Programme registration, administration, learning sessions, events, support, safeguarding and impact evaluation. It supplements School of Gaming’s <linkPrivacy>general Privacy Policy</linkPrivacy>. Where the two policies conflict in relation to this Programme, this Programme-specific policy applies.",
           "The child’s separate use of a Roblox account, Roblox Studio or another Roblox service is governed by Roblox’s own privacy policy and terms.",
-          "The Programme Terms establish the 8–17 age range, parent-led registration and Programme-specific data sharing."
+          "The <linkRobloxTerms>Programme Terms</linkRobloxTerms> establish the 8–17 age range, parent-led registration and Programme-specific data sharing."
         ]
       },
       "responsible": {
@@ -1884,7 +1884,7 @@
             "Telephone number, where provided.",
             "Preferred language and communication preferences.",
             "Sogverse account and login information. Passwords are stored in hashed form and cannot be read by staff.",
-            "Confirmation of acceptance of the Programme Terms and this Privacy Policy.",
+            "Confirmation of acceptance of the <linkRobloxTerms>Programme Terms</linkRobloxTerms> and this Privacy Policy.",
             "Privacy acknowledgements and optional consent choices.",
             "Messages, support requests, complaints and safeguarding communications.",
             "Attendance at parent sessions and optional survey responses."
@@ -1923,7 +1923,7 @@
             "Necessary session cookies.",
             "Basic website-usage statistics."
           ],
-          "These categories reflect SOG’s generic Privacy Policy, its privacy-first Sogverse architecture and the Programme’s attendance, completion and publication reporting requirements."
+          "These categories reflect SOG’s <linkPrivacy>generic Privacy Policy</linkPrivacy>, its privacy-first Sogverse architecture and the Programme’s attendance, completion and publication reporting requirements."
         ]
       },
       "use": {
@@ -2083,7 +2083,7 @@
             "Routine sessions are not recorded.",
             "Lynx Educate and School of Gaming do not use Programme registration data for behavioural advertising to children."
           ],
-          "Safeguarding concerns are handled under the joint Child Safeguarding Policy. School of Gaming handles day-to-day concerns in the first instance and escalates serious matters to Lynx Educate. Emergency services are contacted first where a child may be in immediate danger.",
+          "Safeguarding concerns are handled under the joint <linkRobloxSafeguarding>Child Safeguarding Policy</linkRobloxSafeguarding>. School of Gaming handles day-to-day concerns in the first instance and escalates serious matters to Lynx Educate. Emergency services are contacted first where a child may be in immediate danger.",
           "Children must also receive an age-appropriate explanation of how their information is used. French law requires information addressed to a child to be clear and easily understandable. Where an online processing activity genuinely relies on consent and concerns a child under 15, French law requires the child and the holder or holders of parental authority to consent jointly."
         ]
       },
@@ -2196,7 +2196,7 @@
   },
   "robloxSafeguarding": {
     "title": "Roblox Programme Child Safeguarding Policy",
-    "subtitle": "This sits alongside School of Gaming’s Anti-Bullying policy, which continues to apply to day-to-day behaviour in sessions. This document covers Lynx Educate and School of Gaming’s broader safeguarding responsibilities for the Programme, including in-person events.",
+    "subtitle": "This sits alongside School of Gaming’s <linkDiscipline>Anti-Bullying policy</linkDiscipline>, which continues to apply to day-to-day behaviour in sessions. This document covers Lynx Educate and School of Gaming’s broader safeguarding responsibilities for the Programme, including in-person events.",
     "lastUpdated": "Last reviewed: {date}",
     "pendingContact": "A School of Gaming contact address for safeguarding concerns is still being confirmed and will be added here.",
     "intro": {
@@ -2236,7 +2236,7 @@
       "behaviour": {
         "heading": "Behaviour and discipline",
         "blocks": [
-          "Day-to-day behavioural issues during SOG-delivered sessions follow School of Gaming’s Anti-Bullying and Discipline policy, which uses a supportive, step-by-step approach before any child is removed from a session or the community."
+          "Day-to-day behavioural issues during SOG-delivered sessions follow School of Gaming’s <linkDiscipline>Anti-Bullying and Discipline policy</linkDiscipline>, which uses a supportive, step-by-step approach before any child is removed from a session or the community."
         ]
       },
       "escalation": {
@@ -2254,7 +2254,7 @@
       "data": {
         "heading": "Data and photos",
         "blocks": [
-          "Any photography, filming, or use of a child’s image is governed by the consent choices set out in the Roblox Programme Privacy Policy — never assumed, always optional, always changeable."
+          "Any photography, filming, or use of a child’s image is governed by the consent choices set out in the <linkRobloxPrivacy>Roblox Programme Privacy Policy</linkRobloxPrivacy> — never assumed, always optional, always changeable."
         ]
       },
       "review": {
@@ -2284,7 +2284,7 @@
             "Lynx Educate SAS and School of Gaming Galactic Oy (“SOG”) design and deliver this Programme together — in this document, “we”/“us” means both of us jointly, unless we say otherwise.",
             "Roblox Corporation (“Roblox”) sponsors the Programme and provides the platform your child will build on. Roblox is not a party to these Terms."
           ],
-          "Registration and sessions happen on School of Gaming’s platform (“Sogverse”). By registering, you’re agreeing to these Programme-specific terms, which apply alongside (and take precedence over, where they conflict with) School of Gaming and Lynx’s standard Terms and Conditions."
+          "Registration and sessions happen on School of Gaming’s platform (“Sogverse”). By registering, you’re agreeing to these Programme-specific terms, which apply alongside (and take precedence over, where they conflict with) <linkTerms>School of Gaming</linkTerms> and Lynx’s standard Terms and Conditions."
         ]
       },
       "eligibility": {
@@ -2308,13 +2308,13 @@
       "safety": {
         "heading": "Safety and supervision",
         "blocks": [
-          "Every session is supervised by a trained facilitator. Our approach to behaviour and safeguarding is set out in our joint Child Safeguarding Policy, available upon request."
+          "Every session is supervised by a trained facilitator. Our approach to behaviour and safeguarding is set out in our joint <linkRobloxSafeguarding>Child Safeguarding Policy</linkRobloxSafeguarding>, available upon request."
         ]
       },
       "information": {
         "heading": "Your information",
         "blocks": [
-          "How we use your and your child’s information is explained in our Roblox Programme Privacy Policy. By registering, you confirm you’ve read and understood it.",
+          "How we use your and your child’s information is explained in our <linkRobloxPrivacy>Roblox Programme Privacy Policy</linkRobloxPrivacy>. By registering, you confirm you’ve read and understood it.",
           "When enrolling in a Roblox programme, the information associated with your School of Gaming account (including your contact details and your child’s account information) will also be shared with Lynx Educate for the purposes of delivering the programme and with Roblox for the purposes of programme impact research."
         ]
       },
@@ -3052,14 +3052,14 @@
       "conduct": {
         "heading": "Behaviour and removing a child from a club",
         "paragraphs": [
-          "We want every child to feel safe and welcome, so we don’t tolerate bullying or behaviour that spoils things for others. When a problem comes up, we always start by supporting the child and helping them put it right — our full approach is set out in our Anti-Bullying and Discipline policy.",
+          "We want every child to feel safe and welcome, so we don’t tolerate bullying or behaviour that spoils things for others. When a problem comes up, we always start by supporting the child and helping them put it right — our full approach is set out in our <linkDiscipline>Anti-Bullying and Discipline policy</linkDiscipline>.",
           "Only after those supportive steps, and in the case of ongoing toxic or disruptive behaviour or bullying, may we end a child’s participation. We’ll always talk it through with you first."
         ]
       },
       "privacy": {
         "heading": "Your family’s privacy",
         "paragraphs": [
-          "We take the privacy of your family — and your child especially — very seriously, and we handle your information in line with Finnish and EU data-protection law. Our Privacy Policy explains exactly what we collect and why."
+          "We take the privacy of your family — and your child especially — very seriously, and we handle your information in line with Finnish and EU data-protection law. Our <linkPrivacy>Privacy Policy</linkPrivacy> explains exactly what we collect and why."
         ]
       },
       "changes": {
