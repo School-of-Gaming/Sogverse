@@ -1636,7 +1636,8 @@
       },
       "seatIsFor": "À qui revient cette place",
       "selected": "Sélectionné",
-      "agePill": "{age} ans"
+      "agePill": "{age} ans",
+      "parentPill": "Parent"
     },
     "pricing": {
       "title": "Tarifs",

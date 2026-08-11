@@ -1636,7 +1636,8 @@
       },
       "seatIsFor": "Vem platsen är för",
       "selected": "Vald",
-      "agePill": "Ålder {age}"
+      "agePill": "Ålder {age}",
+      "parentPill": "Förälder"
     },
     "pricing": {
       "title": "Pris",

@@ -516,10 +516,20 @@ function SignupForm(
                       >
                         {g.name}
                       </span>
-                      {g.age !== null && (
+                      {/* The slot beside the name says who this row is: a
+                          child's age, or the word "Parent" on the reader's own
+                          row — same position, same weight, so the picker reads
+                          uniformly whoever is in it. */}
+                      {g.isSelf === true ? (
                         <span className="ml-2 text-xs text-muted-foreground">
-                          {t("agePill", { age: g.age })}
+                          {t("parentPill")}
                         </span>
+                      ) : (
+                        g.age !== null && (
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            {t("agePill", { age: g.age })}
+                          </span>
+                        )
                       )}
                     </span>
                   </span>

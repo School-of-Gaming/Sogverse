@@ -33,7 +33,12 @@ export interface ProductBrowseCardViewProps {
    * in `product-browse-card.tsx` — owns the splitting rule.
    */
   scheduleLines: readonly string[];
-  /** Null on a product with no age range — an adults-only product has none. */
+  /**
+   * Null on a product with no age range — an adults-only product has none.
+   * Rendered only when `audienceLabel` is null: a badged card shows the badge
+   * instead (see the meta-row comment), so a family product's range appears on
+   * its detail page, not its card.
+   */
   ageLine: string | null;
   /**
    * Audience badge, or `null` on the ordinary gamers-only product.
@@ -42,9 +47,10 @@ export interface ProductBrowseCardViewProps {
    * the grid was before audiences existed, so badging it would put a label on
    * the whole catalog to mark the absence of news. The badge appears exactly
    * where the meaning is new — a product a parent can attend themselves — and
-   * on a parents-only card it is also the *only* thing saying so, since such a
-   * product renders no age line by construction (an adult range like "18+" was
-   * rejected as saying something else entirely).
+   * on any badged card it is also the only audience-and-ages fact shown: the
+   * age line yields to it (an adult range like "18+" was rejected as saying
+   * something else entirely, and a family card carrying badge + range + flag
+   * wraps ugly at card width).
    */
   audienceLabel: string | null;
   /**
@@ -208,13 +214,21 @@ export function ProductBrowseCardView({
                     chip rather than another line of muted text, because it is
                     the one thing here a parent might be scanning the grid
                     *for*; it reuses the card's existing chip vocabulary (the
-                    "Free" price badge) rather than inventing a second one. */}
+                    "Free" price badge) rather than inventing a second one.
+                    A badged card shows the badge INSTEAD of the age line —
+                    owner ruling: badge + range + flag overflows this row at
+                    card width and wraps ugly, and the coarser fact wins on a
+                    card. The range is not lost, it lives in the detail page's
+                    who-it's-for cell. Enforced here rather than in each
+                    adapter so the shop and the style guide cannot disagree. */}
                 {audienceLabel !== null && (
                   <StatusChip tone="info" icon={UserRound}>
                     {audienceLabel}
                   </StatusChip>
                 )}
-                {ageLine !== null && <span>{ageLine}</span>}
+                {audienceLabel === null && ageLine !== null && (
+                  <span>{ageLine}</span>
+                )}
                 {/* Delivery language sits here — short row, never
                     squeezed. Same flag treatment as the locale picker
                     in the site header so parents recognise it. */}

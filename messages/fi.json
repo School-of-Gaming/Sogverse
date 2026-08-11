@@ -1636,7 +1636,8 @@
       },
       "seatIsFor": "Kenelle paikka on",
       "selected": "Valittu",
-      "agePill": "Ikä {age}"
+      "agePill": "Ikä {age}",
+      "parentPill": "Vanhempi"
     },
     "pricing": {
       "title": "Hinta",

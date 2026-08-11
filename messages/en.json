@@ -1636,7 +1636,8 @@
       },
       "seatIsFor": "Who this seat is for",
       "selected": "Selected",
-      "agePill": "Age {age}"
+      "agePill": "Age {age}",
+      "parentPill": "Parent"
     },
     "pricing": {
       "title": "Pricing",
