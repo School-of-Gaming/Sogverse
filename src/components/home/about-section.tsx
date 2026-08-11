@@ -13,6 +13,8 @@ const valueKeys = ["playIsEssential", "friendsCarry", "keepChildrenSafe", "famil
 const easterEggRows = [
   "brandName", "tagline", "delete", "deleting", "close", "cancel", "getStarted",
   "password", "error", "english", "ok", "copyright", "learnMore",
+  // Retired names, kept as lore — see easterEgg.retiredNote below the table.
+  "privacy", "terms", "honor",
 ] as const;
 
 export function AboutSection({ id }: AboutSectionProps) {
@@ -152,7 +154,11 @@ export function AboutSection({ id }: AboutSectionProps) {
                   </tbody>
                 </table>
               </div>
-              <p className="mt-6 text-center text-xs text-white/30">
+              <p className="mt-6 text-xs leading-5 text-white/40">
+                {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
+                {t("easterEgg.retiredNote")}
+              </p>
+              <p className="mt-4 text-center text-xs text-white/30">
                 {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
                 {t("easterEgg.note")}
               </p>

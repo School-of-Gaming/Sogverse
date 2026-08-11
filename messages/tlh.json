@@ -200,6 +200,16 @@
       "okLabel": "OK",
       "okValue": "Qapla’",
       "okMeaning": "Success!",
+      "privacyLabel": "Privacy Policy",
+      "privacyValue": "Privacy Policy (So’wI’)",
+      "privacyMeaning": "So’wI’ is a cloaking device — what a Klingon calls keeping something out of sight",
+      "termsLabel": "Terms & Conditions",
+      "termsValue": "Terms of the Pact",
+      "termsMeaning": "The pact is the agreement itself, sworn to before the first battle",
+      "honorLabel": "Anti-Bullying",
+      "honorValue": "Code of Honor",
+      "honorMeaning": "A warrior who preys on the weak has no honour to speak of",
+      "retiredNote": "Those last three names are retired. The Privacy Policy, the Terms & Conditions and the Anti-Bullying Policy now read the same in every locale, Federation Standard included — they are binding documents, and no family should have to decode their own rights. An honourable translation, but the wrong battlefield for one.",
       "note": "Date and time formatting appears in English because the browser’s Intl APIs don’t have Klingon locale data. Klingons don’t use a 7-day week anyway.",
       "qapla": "Qapla’!"
     }
