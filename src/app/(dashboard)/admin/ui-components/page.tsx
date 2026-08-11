@@ -574,6 +574,24 @@ const DEMO_PARTICIPANTS = [
     audioOn: true,
     videoOn: false,
   },
+  {
+    // A parent on their own seat (same Marja as the gedu roster fixtures, so
+    // she wears one face everywhere). Deliberately renders as a plain
+    // participant: no Minecraft line (that gate is a positive gamer/gedu
+    // allow-list — parents cannot link game accounts) and no role badge of
+    // any kind, the guest-equivalent treatment the voice access decided on.
+    // This row exists so that treatment is looked at rather than assumed —
+    // whether an in-room "Parent" tag is wanted is judged here.
+    userId: "07981ead-c695-4cac-be1e-d88d5c13306f",
+    userName: "Marja",
+    role: "customer",
+    minecraftUsername: null,
+    minecraftUuid: null,
+    isLocal: false,
+    isOwner: false,
+    audioOn: true,
+    videoOn: false,
+  },
 ] satisfies ParticipantRowData[];
 
 /** Simulate speaking glow on a ref using a sine wave. Different phase offsets
