@@ -26,12 +26,15 @@ import { ROUTES } from "@/lib/constants/routes";
  * 3. **No page links to itself.** A citation of the page you are already on is
  *    a dead end, and it is the easy mistake to make while sweeping the catalog.
  *
- * Properties 2 and 3 run over **every** catalog, not just English, and each
- * translation is additionally held to English's tags key for key. The
- * completeness script compares keys and ICU placeholders and never looks inside
- * a value for a tag, so a Finnish paragraph that quietly loses its
- * `<linkPrivacy>` wrapper would otherwise ship a binding document with a
- * missing link in the one language nobody reviewing English would open.
+ * Properties 2 and 3 run over **every catalog that carries these documents**,
+ * not just English, and each translation is additionally held to English's tags
+ * key for key. The completeness script compares keys and ICU placeholders and
+ * never looks inside a value for a tag, so a Finnish paragraph that quietly
+ * loses its `<linkPrivacy>` wrapper would otherwise ship a binding document with
+ * a missing link in the one language nobody reviewing English would open.
+ *
+ * Klingon carries none of them, on purpose, and gets the opposite assertion —
+ * see below.
  *
  * Rendered to static markup rather than driven in jsdom: a legal page has no
  * interactivity and the server's HTML is the whole of what a reader meets.
@@ -57,14 +60,44 @@ const LEGAL_DOCUMENTS = [
   { name: "robloxTerms", ownTag: "linkRobloxTerms" },
 ] as const;
 
-/** Every shipped catalog, English first — it is what the rest are measured against. */
+/**
+ * Every catalog that translates these documents, English first — it is what the
+ * rest are measured against. Klingon is absent by design (see below).
+ */
 const CATALOGS: Record<string, Record<string, unknown>> = {
   en: messages,
   fi,
   fr,
   sv,
-  tlh,
 };
+
+/**
+ * The namespaces the Klingon catalog omits so those pages serve English: the six
+ * documents above, plus the shared legal chrome and the attributions credit.
+ */
+const OMITTED_UNDER_KLINGON = [
+  ...LEGAL_DOCUMENTS.map(({ name }) => name),
+  "legal",
+  "attributions",
+];
+
+/** The individual labels Klingon omits for the same reason. */
+const OMITTED_LABELS_UNDER_KLINGON = [
+  "metadata.pages.privacy",
+  "metadata.pages.terms",
+  "metadata.pages.antiBullying",
+  "metadata.pages.attributions",
+  "metadata.pages.robloxPrivacy",
+  "metadata.pages.robloxSafeguarding",
+  "metadata.pages.robloxTerms",
+  "roblox.legal.privacy",
+  "roblox.legal.safeguarding",
+  "roblox.legal.terms",
+  "footer.privacy",
+  "footer.terms",
+  "footer.antiBullying",
+  "footer.attributions",
+];
 
 /** The text a reader ends up with, ignoring which parts are links. */
 const rendered = (source: string) =>
@@ -93,6 +126,9 @@ function flatStrings(node: unknown, prefix = ""): Map<string, string> {
   }
   return found;
 }
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
 
 /** The tags a string carries, sorted so two strings can be compared directly. */
 const tagsIn = (value: string) =>
@@ -210,6 +246,54 @@ describe("every catalog's legal namespaces", () => {
     expect(messages.terms.sections.privacy.paragraphs[0]).toContain(
       "<linkPrivacy>Privacy Policy</linkPrivacy>",
     );
+  });
+});
+
+/**
+ * The easter egg stops at the courtroom door: a family may be held to these
+ * documents, and two of the attributions are a licence condition, so Klingon
+ * serves the English text. It does that by **leaving the keys out** — the
+ * message loader lays the Klingon catalog over the English one, so an omitted
+ * key resolves to English at runtime and English stays the single source of
+ * truth. The loader's own behaviour is pinned beside it; this file pins the
+ * catalog's shape.
+ *
+ * What that buys is only real while the omission is total. A single
+ * re-introduced key is worse than the old verbatim-copy convention it replaced:
+ * it shadows English with a value nothing keeps in step, in the one place where
+ * stale text is a liability rather than a blemish. Hence an absence assertion
+ * rather than a parity one, and hence it covers the leaf labels too.
+ */
+describe("the legal surface under Klingon", () => {
+  const klingon: Record<string, unknown> = tlh;
+
+  it("omits the legal namespaces entirely", () => {
+    for (const name of OMITTED_UNDER_KLINGON) {
+      expect(Object.keys(klingon), `tlh must not carry the "${name}" namespace`).not.toContain(
+        name,
+      );
+    }
+  });
+
+  it("omits every label that names one of the documents", () => {
+    for (const path of OMITTED_LABELS_UNDER_KLINGON) {
+      const segments = path.split(".");
+      const leaf = segments.pop();
+      const parent = segments.reduce<unknown>(
+        (node, key) => (isRecord(node) ? node[key] : undefined),
+        klingon,
+      );
+      expect(Object.keys(isRecord(parent) ? parent : {}), `tlh must not carry "${path}"`)
+        .not.toContain(leaf);
+    }
+  });
+
+  it("still speaks Klingon everywhere else", () => {
+    // A canary: if the merge were ever applied the other way round, or the strip
+    // ran too wide, these would come back as English.
+    expect(tlh.footer.copyright).not.toBe(messages.footer.copyright);
+    expect(tlh.roblox.legal.roblox).not.toBe(messages.roblox.legal.roblox);
+    expect(Object.keys(tlh.about)).toContain("easterEgg");
   });
 });
 
