@@ -508,7 +508,7 @@ const SCENARIOS: Record<PreviewScenario, ScenarioConfig> = {
     // counted against the child cap is pinned by the unit tests at the cap's
     // exact borderline — a seven-child fixture here would bury the audience
     // picker this scenario exists to show.)
-    label: "For parents and gamers — children plus the reader",
+    label: "For families — children plus the reader",
     productType: "event",
     billingMode: "paid",
     seatCount: null,

@@ -1541,9 +1541,9 @@
     }
   },
   "productAudience": {
-    "gamers": "QujwI’pu’vaD",
     "parents": "vavpu’vaD",
-    "both": "vavpu’vaD QujwI’pu’vaD je"
+    "families": "qorDu’pu’vaD",
+    "familiesWithAges": "qorDu’pu’vaD, qan {min}–{max}"
   },
   "seatAvailability": {
     "remaining": "{count, plural, one {# / {total} pa’ ratlh} other {# / {total} pa’ ratlh}}",

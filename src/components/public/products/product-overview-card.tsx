@@ -16,7 +16,8 @@ import {
 } from "./format-product-schedule";
 
 // Shared "Good to know" overview card. Renders schedule (day/time),
-// location/format, age range, and spoken language — the at-a-glance facts.
+// location/format, who the product is for (its audience, its age range, or
+// both in one cell), and spoken language — the at-a-glance facts.
 // Used by the shop detail body, the purchase-confirmation view, and the
 // admin product details page, so the layout lives here as the single
 // source of truth.
@@ -54,21 +55,68 @@ export function ProductOverviewCard({ product }: ProductOverviewCardProps) {
   const scheduleLines = renderScheduleLinesForDetail(schedule);
   const location = formatProductLocation(product, uiLocale);
 
+  const ages =
+    product.min_age !== null && product.max_age !== null
+      ? { min: product.min_age, max: product.max_age }
+      : null;
+
+  // One cell answers "who is this for", in whichever of the three shapes the
+  // product has — which is what keeps the grid 2×2 for every audience instead
+  // of a family product growing a fifth fact and a third row.
+  //
+  //   - Gamers-only: the age range alone, unchanged and unlabelled by
+  //     audience. That is the assumed default, so a "For gamers" fact would be
+  //     a row every existing product page grew for no news — the same
+  //     restraint the browse card's badge shows.
+  //   - Parents-only: the audience label alone. No age range exists to state
+  //     (an adult "18+" was rejected as saying something else entirely), so
+  //     this is the fact that *replaces* the ages rather than joining them.
+  //   - Family: both, composed by one message ("For families, ages 8–12")
+  //     rather than concatenated from two — a comma is grammar, and grammar is
+  //     the translator's to own.
+  //
+  // The label follows the same split: "Age range" where the cell is a range,
+  // "Audience" where it leads with the audience word. The
+  // badge-or-nothing decision itself lives in product-audience.ts.
+  const whoItsFor = ((): {
+    icon: React.ComponentType<{ className?: string }>;
+    label: string;
+    value: string;
+  } | null => {
+    switch (audienceLabelKey(product)) {
+      case null:
+        return ages === null
+          ? null
+          : {
+              icon: Users,
+              label: t("info.ageRange"),
+              value: t("info.ages", ages),
+            };
+      case "parents":
+        return {
+          icon: UserRound,
+          label: t("info.audience"),
+          value: tAudience("parents"),
+        };
+      case "families":
+        return {
+          icon: Users,
+          label: t("info.audience"),
+          // The CHECK ties a range to the gamer audience, so a family product
+          // always has one; the fallback is the shape of the data, not a case
+          // anyone should see.
+          value:
+            ages === null
+              ? tAudience("families")
+              : tAudience("familiesWithAges", ages),
+        };
+    }
+  })();
+
   // A club's term range ("13 Jan – 30 May 2026") isn't in its weekly schedule
   // line — camps/events already fold their dates into the schedule, so the
   // helper returns null for them. Fold the club range in as an extra schedule
   // line (rather than a 5th overview Fact) to keep the 2×2 grid intact.
-  // Same restraint the browse card shows: a gamers-only product states its
-  // audience through the age range beside it, so an extra "For gamers" fact
-  // would be a row every existing product page grew for no news. The row
-  // appears exactly where the meaning is new — and on a parents-only page it is
-  // the fact that replaces the age range rather than sitting beside it, which
-  // is why it renders whether or not there is an age row above. The
-  // badge-or-nothing decision itself lives in product-audience.ts.
-  const audienceLabelMessageKey = audienceLabelKey(product);
-  const audienceLabel =
-    audienceLabelMessageKey === null ? null : tAudience(audienceLabelMessageKey);
-
   const termRange = formatClubTermDates(product, uiLocale);
   const scheduleDisplayLines = termRange
     ? [...scheduleLines, termRange]
@@ -81,10 +129,11 @@ export function ProductOverviewCard({ product }: ProductOverviewCardProps) {
           {t("sections.overview")}
         </h2>
         {/* Two-up on wider widths and a single stacked column on mobile, where
-            there isn't room. The common shape is Schedule | Format, then
-            Age | Language; an Audience fact joins the flow when it is news
-            (mixed products carry five facts and leave the last cell empty,
-            parents-only products swap Audience in where Age would have been). */}
+            there isn't room. Exactly four facts on every audience — Schedule |
+            Format, then who-it's-for | Language — so the grid is a filled 2×2
+            whatever the product's shape is. That invariant is why the audience
+            and the age range share one cell above rather than taking one
+            each. */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-4">
           <DetailRow icon={Clock} label={t("info.schedule")}>
             {scheduleDisplayLines.length === 1 ? (
@@ -112,18 +161,13 @@ export function ProductOverviewCard({ product }: ProductOverviewCardProps) {
               tTbd: t("info.tbd"),
             })}
           </DetailRow>
-          {/* No range, no row: a product with no gamer audience has no age to
-              state, and an adult range ("18+") would say something else
-              entirely. Nothing survives this change to be pushed around — the
-              grid simply has three facts instead of four. */}
-          {product.min_age !== null && product.max_age !== null && (
-            <DetailRow icon={Users} label={t("info.ageRange")}>
-              {t("info.ages", { min: product.min_age, max: product.max_age })}
-            </DetailRow>
-          )}
-          {audienceLabel !== null && (
-            <DetailRow icon={UserRound} label={t("info.audience")}>
-              {audienceLabel}
+          {/* Null only for a row carrying neither an audience label nor an age
+              range, which the schema's CHECKs make unreachable — the grid
+              would fall back to three facts rather than render an empty
+              cell. */}
+          {whoItsFor !== null && (
+            <DetailRow icon={whoItsFor.icon} label={whoItsFor.label}>
+              {whoItsFor.value}
             </DetailRow>
           )}
           <DetailRow icon={Languages} label={t("info.language")}>

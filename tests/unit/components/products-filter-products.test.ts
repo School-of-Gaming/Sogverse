@@ -396,10 +396,12 @@ describe("filterProducts", () => {
 
   /**
    * The audience row, and the one thing that makes it unlike the topic and
-   * language rows beside it: a product can answer to *both* chips, because
-   * `for_gamers` and `for_parents` are independent booleans rather than one
-   * column's value. So lighting both chips is a *wider* query than lighting
-   * one, and the mixed product is the row that proves it.
+   * language rows beside it: a chip is a *tag*, not a flag. "For parents"
+   * matches the parents-only shape and "For families" matches the both-flags
+   * shape, one chip per badge a card can wear — so gamers-only products, the
+   * assumed default that wears none, answer to no chip at all. Lighting every
+   * chip is therefore *narrower* than lighting none, which is the inversion
+   * these cases exist to pin.
    */
   describe("audience", () => {
     const parentsOnly = row({
@@ -431,39 +433,67 @@ describe("filterProducts", () => {
       ).toEqual(rows.map((p) => p.id));
     });
 
-    it("keeps gamer products and the mixed one under the gamers chip", () => {
-      expect(
-        filterProducts(rows, { ...base, audiences: ["gamers"] })
-          .map((p) => p.id)
-          .sort(),
-      ).toEqual(["a", "b", "both", "c"]);
-    });
-
-    it("keeps the parent product and the mixed one under the parents chip", () => {
+    it("keeps only the parents-only product under the parents chip", () => {
+      // Not the mixed one: that product's badge says "For families", so it
+      // belongs to the other chip and to no part of this one.
       expect(
         filterProducts(rows, { ...base, audiences: ["parents"] })
+          .map((p) => p.id)
+          .sort(),
+      ).toEqual(["parents"]);
+    });
+
+    it("keeps only the mixed product under the families chip", () => {
+      expect(
+        filterProducts(rows, { ...base, audiences: ["families"] })
+          .map((p) => p.id)
+          .sort(),
+      ).toEqual(["both"]);
+    });
+
+    it("ORs the two chips — every badged product, and nothing else", () => {
+      // Both lit is a union of the two tags, not a return to the unfiltered
+      // grid: the three gamers-only products wear no badge and stay out.
+      expect(
+        filterProducts(rows, { ...base, audiences: ["parents", "families"] })
           .map((p) => p.id)
           .sort(),
       ).toEqual(["both", "parents"]);
     });
 
-    it("ORs the two chips rather than intersecting them", () => {
-      // Both lit means "either audience", not "products serving both" — the
-      // intersection reading would leave only the mixed product.
-      expect(
-        filterProducts(rows, { ...base, audiences: ["gamers", "parents"] })
-          .map((p) => p.id)
-          .sort(),
-      ).toEqual(["a", "b", "both", "c", "parents"]);
-    });
-
-    it("ANDs with the other rows", () => {
-      // The two audience-bearing rows are both in-person (the factory's
-      // default), so an online + parents query keeps neither.
+    it("surfaces a gamers-only product under no chip at all", () => {
+      // The one asymmetry worth stating outright: the default audience is
+      // reachable only by clearing the row (or by any other filter), which is
+      // what makes a lit chip row narrower than an empty one.
+      for (const audiences of [
+        ["parents"] as const,
+        ["families"] as const,
+        ["parents", "families"] as const,
+      ]) {
+        expect(
+          filterProducts(rows, { ...base, audiences: [...audiences] }).map(
+            (p) => p.id,
+          ),
+        ).not.toContain("a");
+      }
+      // Every other row still reaches it: the audience row is the only one
+      // that treats gamers-only as unmatched.
       expect(
         filterProducts(rows, {
           ...base,
-          audiences: ["parents"],
+          audiences: [],
+          topics: ["fortnite"],
+        }).map((p) => p.id),
+      ).toEqual(["b"]);
+    });
+
+    it("ANDs with the other rows", () => {
+      // The two badged rows are both in-person (the factory's default), so an
+      // online + families query keeps neither.
+      expect(
+        filterProducts(rows, {
+          ...base,
+          audiences: ["families"],
           format: "online",
         }).map((p) => p.id),
       ).toEqual([]);
@@ -472,11 +502,19 @@ describe("filterProducts", () => {
     it("drops a parents-only product from an age band, chip or no chip", () => {
       // The two filters answer different questions and never stand in for each
       // other: a band means "shopping for a child of this age", so a product
-      // with no gamer range drops out of it even with the parents chip lit.
+      // with no gamer range drops out of it even with its own chip lit — and
+      // the families chip is the one that keeps the mixed product there.
       expect(
         filterProducts(rows, {
           ...base,
           audiences: ["parents"],
+          age: { min: 7, max: 9 },
+        }).map((p) => p.id),
+      ).toEqual([]);
+      expect(
+        filterProducts(rows, {
+          ...base,
+          audiences: ["families"],
           age: { min: 7, max: 9 },
         }).map((p) => p.id),
       ).toEqual(["both"]);

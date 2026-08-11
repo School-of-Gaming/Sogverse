@@ -1497,9 +1497,9 @@
     }
   },
   "productAudience": {
-    "gamers": "Pelaajille",
     "parents": "Vanhemmille",
-    "both": "Vanhemmille ja pelaajille"
+    "families": "Perheille",
+    "familiesWithAges": "Perheille, ikä {min}–{max}"
   },
   "seatAvailability": {
     "remaining": "{count, plural, one {# / {total} paikka jäljellä} other {# / {total} paikkaa jäljellä}}",

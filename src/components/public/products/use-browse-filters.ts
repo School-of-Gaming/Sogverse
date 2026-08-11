@@ -40,9 +40,10 @@ function parseDays(raw: string | null): number[] {
   return [...seen].sort((a, b) => a - b);
 }
 
-// The audience chips, deduped and restricted to the two values the row offers,
-// so a hand-edited `?audience=everyone` reads as no selection rather than
-// filtering the grid down to nothing.
+// The audience chips, deduped and restricted to the two values the row offers
+// ("parents", "families"), so a hand-edited `?audience=everyone` — or a stale
+// link carrying the retired `?audience=gamers` — reads as no selection rather
+// than filtering the grid down to nothing.
 function parseAudiences(raw: string | null): AudienceFilterValue[] {
   const seen = new Set<AudienceFilterValue>();
   for (const value of parseList(raw)) {
@@ -213,12 +214,12 @@ export function useBrowseFilters() {
     [languages, writeNext],
   );
 
-  // Multi-select like topic and language, not single-valued like format. Both
-  // chips lit is the widest query the row can express — which, under the
-  // at-least-one-flag CHECK, returns the same set as no selection at all; the
-  // difference is intent, not result, and the row keeps both states because a
-  // reader who lit two chips meant something ("anything either of us can do")
-  // that an empty row does not say.
+  // Multi-select like topic and language, not single-valued like format — but
+  // each chip is a tag rather than a flag, so the row never widens back to the
+  // unfiltered grid: both chips lit is every product carrying an audience
+  // badge, which deliberately excludes the gamers-only ones (the assumed
+  // default, badged with nothing). Clearing the row is the only way back to
+  // everything.
   const toggleAudience = useCallback(
     (value: AudienceFilterValue) => {
       const next = audiences.includes(value)

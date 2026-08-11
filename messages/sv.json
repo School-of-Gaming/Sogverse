@@ -1497,9 +1497,9 @@
     }
   },
   "productAudience": {
-    "gamers": "För spelare",
     "parents": "För föräldrar",
-    "both": "För föräldrar och spelare"
+    "families": "För familjer",
+    "familiesWithAges": "För familjer, ålder {min}–{max}"
   },
   "seatAvailability": {
     "remaining": "{count, plural, one {# av {total} plats kvar} other {# av {total} platser kvar}}",

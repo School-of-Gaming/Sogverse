@@ -1497,9 +1497,9 @@
     }
   },
   "productAudience": {
-    "gamers": "Pour les joueurs",
     "parents": "Pour les parents",
-    "both": "Pour les parents et les joueurs"
+    "families": "Pour les familles",
+    "familiesWithAges": "Pour les familles, {min}–{max} ans"
   },
   "seatAvailability": {
     "remaining": "{count, plural, one {# / {total} place restante} other {# / {total} places restantes}}",

@@ -95,13 +95,13 @@ export const PREVIEW_SCENES = [
         slug: "default",
         label: "Ordinary storefront",
         description:
-          "Every card gamers-only, which is the shape the grid has today and the regression case: no audience badge anywhere, an age line on every card, and the Audience chip row present but with nothing on the grid that answers only one of its chips. Clubs, camps and events all headed.",
+          "Every card gamers-only, which is the shape the grid has today and the regression case: no audience badge anywhere, an age line on every card, and an Audience chip row that nothing here answers — a chip matches the products wearing its badge, and these wear none, so lighting either one empties the page onto its no-matches state. Clubs, camps and events all headed.",
       },
       {
         slug: "audiences",
         label: "Mixed audiences",
         description:
-          "The smallest grid that answers the audience question: a gamers-only club beside a parents-only one, and an events section holding one card of each of the three audiences. It is the only page where the badge's presence on two cards and its absence on the third can be compared in one pass — and the only place the Audience chips have something to filter. The parents-only cards are also where the missing age line is visible: no range, no “18+”, the badge carrying the whole meaning.",
+          "The smallest grid that answers the audience question: a gamers-only club beside a parents-only one, and an events section holding one card of each of the three audiences. It is the only page where the badge's presence on two cards and its absence on the third can be compared in one pass — and the only place the Audience chips have something to filter, one chip per badge: “For parents” leaves the parents-only cards, “For families” the both-audience ones, and neither leaves a gamers-only card standing. The parents-only cards are also where the missing age line is visible: no range, no “18+”, the badge carrying the whole meaning.",
       },
     ],
   },
