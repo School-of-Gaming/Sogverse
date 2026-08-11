@@ -198,6 +198,13 @@ export const ROUTES = {
    * sitemap and noindex together when the content is ready to be found.
    */
   roblox: "/roblox",
+  /**
+   * The Programme's own privacy policy, supplementing the platform one at
+   * `/privacy`. Shares `/roblox`'s unpublished posture exactly — noindex, no
+   * sitemap entry, no nav link, reachable only from `/roblox` itself — and
+   * flips to published in the same change that publishes `/roblox`.
+   */
+  robloxPrivacy: "/roblox/privacy",
   privacy: "/privacy",
   termsAndConditions: "/terms-and-conditions",
   antiBullying: "/anti-bullying-and-discipline",

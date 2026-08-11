@@ -33,7 +33,8 @@
       "privacy": "Privacy Policy",
       "terms": "Terms and Conditions",
       "antiBullying": "Anti-Bullying and Discipline",
-      "roblox": "Roblox Game Design Programme"
+      "roblox": "Roblox Game Design Programme",
+      "robloxPrivacy": "Roblox Programme Privacy Policy"
     }
   },
   "notFound": {
@@ -1788,7 +1789,405 @@
     },
     "legal": {
       "roblox": "© 2024 Roblox Corporation. The Roblox word mark, Roblox Logo and Roblox Tilt are among the registered and unregistered trademarks of Roblox Corporation in the U.S. and other countries. Used with permission.",
-      "lynx": "Lynx Educate and the Lynx Educate logo are trademarks of Lynx Educate. Used with permission."
+      "lynx": "Lynx Educate and the Lynx Educate logo are trademarks of Lynx Educate. Used with permission.",
+      "privacy": "Roblox Programme Privacy Policy"
+    }
+  },
+  "robloxPrivacy": {
+    "title": "Roblox Programme Privacy Policy",
+    "subtitle": "For families registering for the youth digital creativity Programme in France delivered by Lynx Educate and School of Gaming and sponsored by Roblox.",
+    "lastUpdated": "Last updated: {date}",
+    "intro": {
+      "heading": "The short version — for parents and young people",
+      "blocks": [
+        "The Programme is for young people in France aged 8–17. A parent or legal guardian must complete registration.",
+        "We collect only what we need to register your child, deliver the Programme safely and understand whether it is working. This includes the parent’s contact details, limited information about the child, the child’s Roblox username or User ID, and information about attendance, completion and game publication.",
+        "School of Gaming uses information to operate the registration and learning platform. Lynx Educate processes Programme information as needed to manage delivery. Each organisation has different responsibilities depending on the activity and the purpose for which personal information is used.",
+        [
+          "School of Gaming is the data controller for the operation of Sogverse and the personal information it processes for its own platform services.",
+          "For the limited Programme impact research carried out on behalf of Roblox, Roblox is the data controller, Lynx Educate acts as Roblox’s data processor, and School of Gaming acts as Lynx Educate’s approved sub-processor.",
+          "Where Lynx Educate processes personal information for its own independently determined purposes (such as optional Lynx email communications), Lynx Educate acts as the data controller for that processing."
+        ],
+        "The following choices are optional and will not affect your child’s place:",
+        [
+          "Emails to the parent from Lynx Educate about future Roblox events and gaming resources.",
+          "Photography or filming for private Programme reporting to Roblox.",
+          "Public use of photographs or footage by Lynx Educate, School of Gaming and Roblox."
+        ],
+        "Routine online sessions are not recorded. A child will not be photographed or filmed where the required permission has not been given or where the child does not want to take part.",
+        "Lynx Educate and School of Gaming do not sell Programme registration information or use it to advertise to children.",
+        "You and your child may ask to see, correct or delete information, withdraw an optional consent, or object to certain uses by contacting support@lynxeducate.com or hello@sog.gg."
+      ]
+    },
+    "sections": {
+      "applies": {
+        "heading": "Who this policy applies to",
+        "blocks": [
+          "This policy applies to parents, legal guardians and young people registering for the Roblox youth digital creativity Programme in France (The Programme).",
+          "The Programme is for young people aged 8–17. A parent or legal guardian must complete registration and confirm that they have authority to register the child.",
+          "The policy covers Programme registration, administration, learning sessions, events, support, safeguarding and impact evaluation. It supplements School of Gaming’s general Privacy Policy. Where the two policies conflict in relation to this Programme, this Programme-specific policy applies.",
+          "The child’s separate use of a Roblox account, Roblox Studio or another Roblox service is governed by Roblox’s own privacy policy and terms.",
+          "The Programme Terms establish the 8–17 age range, parent-led registration and Programme-specific data sharing."
+        ]
+      },
+      "responsible": {
+        "heading": "Who is responsible for the information",
+        "blocks": []
+      },
+      "responsibleLynx": {
+        "heading": "Lynx Educate SAS",
+        "blocks": [
+          "Lynx Educate manages learner recruitment, Programme administration, operational delivery, participant communications and reporting.",
+          "Lynx Educate SAS",
+          "185 rue Ordener",
+          "75018 Paris, France",
+          "Email: support@lynxeducate.com"
+        ]
+      },
+      "responsibleSog": {
+        "heading": "School of Gaming Galactic Oy",
+        "blocks": [
+          "School of Gaming operates Sogverse, manages the registration and learning environment, provides the curriculum and facilitators, delivers learning sessions and ensures safeguarding oversight.",
+          "School of Gaming Galactic Oy",
+          "Business ID: 3110461-1",
+          "Isokatu 56",
+          "90100 Oulu, Finland",
+          "Email: hello@sog.gg"
+        ]
+      },
+      "responsibleRoblox": {
+        "heading": "Roblox Corporation",
+        "blocks": [
+          "Roblox sponsors the Programme and operates the Roblox platform.",
+          "Roblox is a separate data controller for:",
+          [
+            "Information processed through the child’s Roblox account or use of Roblox Studio.",
+            "The limited Programme dataset Roblox receives for its internal Programme-impact research.",
+            "Photographs, footage or related material supplied to Roblox under an optional media permission."
+          ]
+        ]
+      },
+      "collect": {
+        "heading": "The information we collect",
+        "blocks": []
+      },
+      "collectParent": {
+        "heading": "About the parent or guardian",
+        "blocks": [
+          "We may collect:",
+          [
+            "Name and email address.",
+            "Telephone number, where provided.",
+            "Preferred language and communication preferences.",
+            "Sogverse account and login information. Passwords are stored in hashed form and cannot be read by staff.",
+            "Confirmation of acceptance of the Programme Terms and this Privacy Policy.",
+            "Privacy acknowledgements and optional consent choices.",
+            "Messages, support requests, complaints and safeguarding communications.",
+            "Attendance at parent sessions and optional survey responses."
+          ],
+          "The Programme is free, so no payment-card information is required for Programme participation."
+        ]
+      },
+      "collectChild": {
+        "heading": "About the child",
+        "blocks": [
+          "Depending on the activity, we may collect:",
+          [
+            "A display name and, where genuinely needed, a first name.",
+            "Age, age bracket, or birth month and year rather than a full date of birth.",
+            "Roblox username and Roblox User ID.",
+            "The course, club, camp, event or group attended.",
+            "Attendance, participation, learning progress and completion.",
+            "Whether the child publishes their first Roblox game, experience or digital item.",
+            "The name or link of a published experience where required to verify the Programme outcome.",
+            "Learner feedback and optional survey responses.",
+            "Limited moderation, behavioural or safeguarding information where needed to keep participants safe.",
+            "Accessibility, dietary or health information provided for a particular event, but only where necessary.",
+            "Photographs, footage, audio or related media where the relevant optional permission has been given."
+          ],
+          "We do not ask for the child’s Roblox password. The child does not need to provide a separate email address for Sogverse where the account is managed through the parent or guardian."
+        ]
+      },
+      "collectTechnical": {
+        "heading": "Technical information",
+        "blocks": [
+          "Sogverse may process limited technical information required to operate and secure the service, including:",
+          [
+            "Login and security records.",
+            "Browser, device and operating-system information.",
+            "IP address and error information.",
+            "Necessary session cookies.",
+            "Basic website-usage statistics."
+          ],
+          "These categories reflect SOG’s generic Privacy Policy, its privacy-first Sogverse architecture and the Programme’s attendance, completion and publication reporting requirements."
+        ]
+      },
+      "use": {
+        "heading": "How and why we use the information",
+        "blocks": []
+      },
+      "useDeliver": {
+        "heading": "To register and deliver the Programme",
+        "blocks": [
+          "We use account, age, enrolment and contact information to:",
+          [
+            "Confirm eligibility.",
+            "Create and manage the family’s Sogverse profile.",
+            "Place the child in an appropriate group.",
+            "Schedule and deliver online or in-person activities.",
+            "Provide learning support and important Programme communications.",
+            "Help the child build and publish a Roblox experience."
+          ],
+          "This processing is necessary to provide the Programme under the Terms accepted by the parent or guardian and for our legitimate interests in delivering a safe and effective educational service."
+        ]
+      },
+      "useSafety": {
+        "heading": "To keep children and the service safe",
+        "blocks": [
+          "We use limited account, session, moderation and incident information to:",
+          [
+            "Protect accounts and prevent unauthorised access.",
+            "Supervise sessions and respond to inappropriate behaviour.",
+            "Investigate complaints and safeguarding concerns.",
+            "Communicate with a parent or guardian.",
+            "Contact emergency services or competent authorities where necessary.",
+            "Protect the rights, safety and welfare of participants, facilitators and other people."
+          ],
+          "We rely on our legitimate interests in operating a safe Programme, applicable legal obligations and, in an emergency, the protection of someone’s vital interests."
+        ]
+      },
+      "useEvaluate": {
+        "heading": "To evaluate the Programme",
+        "blocks": [
+          "We use attendance, completion, publication outcomes, parent participation and survey information to understand whether the Programme is achieving its objectives and to prepare Programme reports.",
+          "Where possible, reports use aggregated or anonymised information that does not identify an individual child.",
+          "This processing is based on the legitimate interests of the organisations involved in evaluating and improving the Programme, balanced against the enhanced protection owed to children."
+        ]
+      },
+      "useEmail": {
+        "heading": "Optional email communications",
+        "blocks": [
+          "Lynx Educate uses the parent’s email address to send information about future Roblox events and gaming resources only where the parent selects the optional email checkbox.",
+          "This use is based on the parent’s consent. It is not required for participation and can be stopped through the unsubscribe link in any email or by contacting Lynx Educate.",
+          "School of Gaming and Roblox do not receive the parent’s email under this checkbox for their own marketing."
+        ]
+      },
+      "useMedia": {
+        "heading": "Optional photography and filming",
+        "blocks": [
+          "Photography, filming and public communications are based on separate, optional permissions. Declining either media option will not affect registration or participation.",
+          "Consent is not the legal basis for the core registration, delivery or safeguarding activities described above."
+        ]
+      },
+      "research": {
+        "heading": "Limited information shared with Roblox for impact research",
+        "blocks": [
+          "Under the Programme’s current Data Processing Addendum, the identifiable information that may be provided to Roblox for internal impact research is limited to:",
+          [
+            "Roblox username.",
+            "Roblox User ID.",
+            "The email address associated with the Programme account, which may be the parent or guardian’s email.",
+            "The particular Programme service or activity attended."
+          ],
+          "Roblox uses this dataset for internal research into the benefits and impact of the Programme. It is not supplied through the Programme for advertising or direct marketing.",
+          "Roblox may also receive aggregated attendance, completion, publication and satisfaction reporting that does not identify individual families.",
+          "The optional photography and marketing choices do not control this limited research transfer. The transfer is explained through the Privacy Policy and acknowledged through the required registration checkbox.",
+          "Parents and participants may object to this processing by contacting Lynx Educate or School of Gaming, and the request will be passed to Roblox for assessment."
+        ]
+      },
+      "marketing": {
+        "heading": "Email marketing from Lynx Educate",
+        "blocks": [
+          "Where the parent selects the optional email box:",
+          [
+            "Only the parent’s email address is used.",
+            "Emails are sent by Lynx Educate.",
+            "The emails relate to future educational events and gaming resources.",
+            "The parent can unsubscribe at any time.",
+            "Declining or withdrawing consent does not affect the child’s Programme participation."
+          ],
+          "Lynx Educate keeps the marketing contact information until the parent unsubscribes or, where there has been no interaction, for no more than three years from the last contact. A minimal suppression record may then be retained to ensure the parent is not added back to the mailing list."
+        ]
+      },
+      "media": {
+        "heading": "Photography, filming and public use",
+        "blocks": [
+          "Routine online sessions are not recorded. Where photography or filming is planned for a selected session or event, families will be told in advance.",
+          "There are two separate optional choices."
+        ]
+      },
+      "mediaSponsor": {
+        "heading": "Private sponsor reporting",
+        "blocks": [
+          "The first media choice permits the child to be photographed or filmed for private Programme reporting to Roblox as Programme sponsor. This may include internal impact reports, delivery updates or sponsor presentations.",
+          "This permission does not permit publication on websites, social media or in the press."
+        ]
+      },
+      "mediaPublic": {
+        "heading": "Public impact communications",
+        "blocks": [
+          "The second media choice permits Lynx Educate, School of Gaming and Roblox to use photographs or footage publicly to show the impact of the Programme, including on:",
+          [
+            "Their websites.",
+            "Their social-media channels.",
+            "Press and public-relations materials.",
+            "Programme and impact communications."
+          ],
+          "Public content may be accessible worldwide and may be copied or shared by other users beyond the organisations’ control."
+        ]
+      },
+      "mediaChildAgrees": {
+        "heading": "The child must also agree",
+        "blocks": [
+          "The parent should discuss the media choice with the child before selecting it. We will also explain the photography or filming to the child in an age-appropriate way.",
+          "We will not deliberately photograph or film a child who objects, even where a parent previously selected a media checkbox. Staff will use reasonable practical measures to keep children without permission out of identifiable footage."
+        ]
+      },
+      "mediaCaseStudies": {
+        "heading": "Case studies, names and participant-created content",
+        "blocks": [
+          "The two registration media boxes cover photographs and footage only.",
+          "A separate written release will be obtained before using:",
+          [
+            "A child’s full name.",
+            "A named or detailed case study.",
+            "A testimonial or quotation.",
+            "An audio interview.",
+            "Identifiable survey responses.",
+            "Game screenshots linked to the child.",
+            "Participant-created content or intellectual property."
+          ]
+        ]
+      },
+      "mediaChanging": {
+        "heading": "Changing a media choice",
+        "blocks": [
+          "A parent or child may withdraw a media permission by contacting us or using the available Sogverse setting.",
+          "After withdrawal, we will stop new uses and remove material from channels we control where reasonably possible. Withdrawal cannot make earlier lawful use unlawful, undo printed materials already distributed, or guarantee deletion of copies already shared by third parties."
+        ]
+      },
+      "childSafety": {
+        "heading": "Children’s privacy and safety",
+        "blocks": [
+          "The Programme uses a private and moderated learning environment.",
+          [
+            "Every child’s profile is linked to a parent or guardian account.",
+            "Children use a display name rather than publishing their contact details.",
+            "Only registered participants and vetted facilitators may join.",
+            "Communication is group-based and supervised.",
+            "There is no private direct messaging between children.",
+            "Routine sessions are not recorded.",
+            "Lynx Educate and School of Gaming do not use Programme registration data for behavioural advertising to children."
+          ],
+          "Safeguarding concerns are handled under the joint Child Safeguarding Policy. School of Gaming handles day-to-day concerns in the first instance and escalates serious matters to Lynx Educate. Emergency services are contacted first where a child may be in immediate danger.",
+          "Children must also receive an age-appropriate explanation of how their information is used. French law requires information addressed to a child to be clear and easily understandable. Where an online processing activity genuinely relies on consent and concerns a child under 15, French law requires the child and the holder or holders of parental authority to consent jointly."
+        ]
+      },
+      "helpers": {
+        "heading": "Who else helps us deliver the Programme",
+        "blocks": [
+          "Information may be accessed only where necessary by:",
+          [
+            "Authorised Lynx Educate personnel.",
+            "Authorised School of Gaming personnel and trained Game Educators.",
+            "Roblox for the limited research and consented media uses described above.",
+            "Event venues, accessibility providers or photographers that need limited information for a particular activity.",
+            "Professional advisers, insurers, emergency services, safeguarding bodies or public authorities where required.",
+            "Technical providers that operate Sogverse."
+          ],
+          "School of Gaming’s principal technical providers currently include:",
+          [
+            "Supabase, for account and Programme information.",
+            "Brevo, for operational emails and reminders.",
+            "Daily.co, for live voice and video functionality.",
+            "Vercel, for website hosting and privacy-friendly analytics.",
+            "Meta/WhatsApp, only where a family chooses WhatsApp communications."
+          ],
+          "These providers may process information only to perform their contracted services and must protect it appropriately."
+        ]
+      },
+      "transfers": {
+        "heading": "International transfers",
+        "blocks": [
+          "Lynx Educate is based in France and School of Gaming is based in Finland.",
+          "Roblox is based in the United States, and some technical providers may also process information outside the European Economic Area.",
+          "Where information is transferred outside the EEA, the responsible organisation uses an approved transfer mechanism, such as an adequacy decision or the European Commission’s Standard Contractual Clauses, together with appropriate security measures.",
+          "The Roblox–Lynx Data Processing Addendum includes Standard Contractual Clauses and requirements concerning encryption, pseudonymisation, access control, logging, separation and secure deletion."
+        ]
+      },
+      "retention": {
+        "heading": "How long we keep information",
+        "blocks": [
+          "We do not keep every type of information for the same period.",
+          [
+            "Sogverse account information: kept while the family account is active and then deleted or anonymised, except where a limited record must lawfully be retained.",
+            "Programme administration and participation information: kept until Programme delivery, final reporting and reasonable follow-up are complete, then deleted or anonymised.",
+            "Roblox research dataset: returned or securely deleted when the relevant processing services end, unless applicable law requires limited retention.",
+            "Marketing information: kept until the parent unsubscribes.",
+            "Media and media permissions: kept for the permitted reporting or publication purpose and reviewed periodically.",
+            "Safeguarding, incident and legal records: may be kept longer where necessary to protect a child, investigate a concern, comply with law, or establish or defend legal claims.",
+            "Security records: kept only for the period reasonably needed to protect and investigate the service."
+          ],
+          "Closing a Sogverse account does not automatically close a separate Roblox account or remove an experience published on Roblox."
+        ]
+      },
+      "rights": {
+        "heading": "Your rights — and your child’s rights",
+        "blocks": [
+          "Depending on the circumstances, the parent and child may ask us to:",
+          [
+            "Provide access to the personal information held.",
+            "Correct inaccurate or incomplete information.",
+            "Delete information.",
+            "Restrict how information is used.",
+            "Provide certain information in a portable format.",
+            "Object to processing based on legitimate interests, including identifiable Programme-impact research.",
+            "Withdraw an optional consent at any time."
+          ],
+          "Withdrawing consent does not affect processing that was lawful before withdrawal.",
+          "Children may contact us directly about their own information. Parents or legal guardians may also make a request for a child, subject to the child’s own rights, age and maturity.",
+          "There is no solely automated decision-making that produces legal or similarly significant effects on participants.",
+          "Send requests to support@lynxeducate.com or hello@sog.gg. The organisations will coordinate the response and route Roblox-related requests to Roblox where necessary.",
+          "Families also have the right to complain to the Commission nationale de l’informatique et des libertés — CNIL."
+        ]
+      },
+      "security": {
+        "heading": "Keeping information safe",
+        "blocks": [
+          "We use measures appropriate to the risks involved, including:",
+          [
+            "Encryption in transit and at rest.",
+            "Hashed passwords.",
+            "Role-based access controls.",
+            "Access and security logging.",
+            "Pseudonymisation where appropriate.",
+            "Logical separation of datasets.",
+            "Backups and incident-response procedures.",
+            "Confidentiality obligations for personnel and contractors.",
+            "Restrictions on downloading, copying and reusing participant information."
+          ]
+        ]
+      },
+      "changes": {
+        "heading": "Changes to this policy",
+        "blocks": [
+          "We may update this policy if the Programme, its technology or legal requirements change.",
+          "We will update the date at the top. Where a change materially affects how information is used, registered families will be notified before the change takes effect and a new consent will be requested where required."
+        ]
+      },
+      "contact": {
+        "heading": "Contact",
+        "blocks": [
+          "Lynx Educate SAS",
+          "185 rue Ordener",
+          "75018 Paris, France",
+          "support@lynxeducate.com",
+          "School of Gaming Galactic Oy",
+          "Isokatu 56",
+          "90100 Oulu, Finland",
+          "hello@sog.gg"
+        ]
+      }
     }
   },
   "locations": {

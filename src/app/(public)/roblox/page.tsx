@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { useTranslations } from "next-intl";
 import {
@@ -18,6 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
+import { ROUTES } from "@/lib/constants/routes";
 import { RobloxHero } from "@/components/roblox/roblox-hero";
 import { PartnershipCta } from "@/components/roblox/partnership-cta";
 import { UpcomingEvents } from "@/components/roblox/upcoming-events";
@@ -191,11 +193,21 @@ export default function RobloxPage() {
       <PartnershipCta />
 
       {/* Trademark attribution. Required wherever the Roblox mark appears, and
-          the courteous equivalent for Lynx. Small and quiet, but on the page. */}
+          the courteous equivalent for Lynx. Small and quiet, but on the page —
+          alongside the Programme's own privacy policy, which is linked from
+          here and nowhere else while both pages stay unpublished. */}
       <section className="container mx-auto px-4 pb-16">
         <div className="mx-auto max-w-3xl space-y-2 border-t pt-8 text-xs leading-relaxed text-muted-foreground/70">
           <p>{t("legal.roblox")}</p>
           <p>{t("legal.lynx")}</p>
+          <p>
+            <Link
+              href={ROUTES.robloxPrivacy}
+              className="underline underline-offset-2 hover:text-muted-foreground"
+            >
+              {t("legal.privacy")}
+            </Link>
+          </p>
         </div>
       </section>
     </>
