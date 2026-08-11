@@ -53,36 +53,52 @@ export function AudienceSection({ state, setState }: AudienceSectionProps) {
       description={t("sections.audienceDescription")}
     >
       <Field label={t("labels.seatAudience")} hint={t("hints.seatAudienceHint")}>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {audienceFlags.map(({ flag, checked, apply }) => {
-            const locked = checked && checkedCount === 1;
-            return (
-              <label
-                key={flag}
-                className={cn(
-                  "flex items-start gap-3 rounded-md border p-3 transition-colors",
-                  checked
-                    ? "border-primary bg-primary/5"
-                    : "border-input hover:border-foreground/30",
-                  locked ? "cursor-default" : "cursor-pointer"
-                )}
-              >
-                <Checkbox
-                  className="mt-0.5"
-                  checked={checked}
-                  disabled={locked}
-                  onChange={(e) => apply(e.target.checked)}
-                />
-                <div className="min-w-0 flex-1 text-sm">
-                  <div className="font-medium">{t(`labels.${flag}`)}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {t(`hints.${flag}Hint`)}
+        {/* Function children so the pair is a real group to assistive tech:
+            the label names it and the hint (which carries the "pick at least
+            one" rule) describes it — loose text under a pair of checkboxes is
+            announced by nothing. The locked box stays aria-disabled rather
+            than disabled so it keeps its place in the tab order and announces
+            its state; a disabled input would vanish from keyboard traversal
+            and take the pair down to one stop. */}
+        {({ hintId, labelId }) => (
+          <div
+            role="group"
+            aria-labelledby={labelId}
+            aria-describedby={hintId}
+            className="grid gap-3 sm:grid-cols-2"
+          >
+            {audienceFlags.map(({ flag, checked, apply }) => {
+              const locked = checked && checkedCount === 1;
+              return (
+                <label
+                  key={flag}
+                  className={cn(
+                    "flex items-start gap-3 rounded-md border p-3 transition-colors",
+                    checked
+                      ? "border-primary bg-primary/5"
+                      : "border-input hover:border-foreground/30",
+                    locked ? "cursor-default" : "cursor-pointer"
+                  )}
+                >
+                  <Checkbox
+                    className="mt-0.5"
+                    checked={checked}
+                    aria-disabled={locked}
+                    onChange={(e) => {
+                      if (!locked) apply(e.target.checked);
+                    }}
+                  />
+                  <div className="min-w-0 flex-1 text-sm">
+                    <div className="font-medium">{t(`labels.${flag}`)}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {t(`hints.${flag}Hint`)}
+                    </div>
                   </div>
-                </div>
-              </label>
-            );
-          })}
-        </div>
+                </label>
+              );
+            })}
+          </div>
+        )}
       </Field>
 
       {/* Ages describe the children a product serves, so they are collected
@@ -116,13 +132,14 @@ export function AudienceSection({ state, setState }: AudienceSectionProps) {
         </div>
       )}
 
-      {spokenLanguages && (
-        <Field
-          label={t("labels.deliveredIn")}
-          hint={t("hints.deliveredInHint")}
-        >
-          <div className="flex flex-wrap gap-2">
-            {spokenLanguages.map((lang) => (
+      {/* The reference set is a bounded, near-instant read (category 2 of the
+          loading rules), so the field renders at once with its final chrome —
+          label, hint, and a chip row holding its one-row height — instead of
+          the whole Field popping in on the query's schedule and shoving the
+          sections below it down. */}
+      <Field label={t("labels.deliveredIn")} hint={t("hints.deliveredInHint")}>
+        <div className="flex min-h-9 flex-wrap gap-2">
+          {(spokenLanguages ?? []).map((lang) => (
               <button
                 key={lang.code}
                 type="button"
@@ -144,9 +161,8 @@ export function AudienceSection({ state, setState }: AudienceSectionProps) {
                 {languageName(lang.code, lang.name)}
               </button>
             ))}
-          </div>
-        </Field>
-      )}
+        </div>
+      </Field>
     </FormSection>
   );
 }

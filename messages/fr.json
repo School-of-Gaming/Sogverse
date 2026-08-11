@@ -440,7 +440,7 @@
         "longDescription": "Facultatif. Affiché uniquement sur la page de détail du produit. Construisez-le à partir de titres et de paragraphes.",
         "topicHint": "Ce dont parle ce produit. Les familles le voient comme filtre « Univers » dans la boutique et sur la carte d’info de la page produit.",
         "materialUrlHint": "Facultatif. Réservé aux Gedus — les familles ne le voient jamais.",
-        "seatAudienceHint": "Choisissez-en au moins un. Les deux désignent un produit auquel un parent et son joueur participent ensemble.",
+        "seatAudienceHint": "Choisissez-en au moins un. Les deux désignent un produit auquel un parent et son joueur participent ensemble — la boutique l'affiche « Pour les familles ».",
         "forGamersHint": "Un parent inscrit son joueur et le joueur occupe la place. Nécessite une tranche d’âge.",
         "forParentsHint": "Un parent occupe une place pour lui-même et y participe. Pas de tranche d’âge — l’âge décrit les enfants, pas les adultes.",
         "deliveredInHint": "La langue principale utilisée pendant les sessions.",
