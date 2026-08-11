@@ -49,18 +49,17 @@ export interface ProductBrowseSection {
 // The cards track caps at 64rem (`5xl`): three columns of ~330px, a shade wider
 // than the ~312px the capped-container layout gave at 1440. A larger cap (6xl)
 // pushes a three-column card past 370px and the grid starts reading as a list.
-// From 110rem (1760px) the cap steps to 87rem and the section grids go four-up,
-// which holds cards at ~330px (see the section-grid comment below).
-// Both gutters are `1fr`, so the cards sit dead centre of the viewport once
-// each gutter can exceed the rail's 16rem floor — from ~1616px under the 64rem
-// cap, and again from ~1984px under the 87rem one. Elsewhere the left gutter is
-// at its floor and the right takes what is left, so the cards sit right of
-// centre: +128px at 1024 and 1280, +88px at 1440, 0 at 1616–1759, then the
-// 110rem step re-opens the offset (+112px at 1760, +32px at 1920) until ~1984.
-// That asymmetry is the tolerance we accepted — true centring at 1440 would
-// mean two 16rem gutters and three cards of ~267px, and a centred fourth
-// column at 1760 would need a ≤73rem cap and ~280px cards; legibility beats
-// symmetry both times. Checked at 1024 / 1280 / 1440 / 1616 / 1760 / 1920.
+// A fourth column was tried (an 87rem cap stepping in at 110rem) and reverted:
+// four readable columns put the cards block at ~1390px, which reads too wide
+// on an ordinary desktop — don't re-add it by widening this cap alone.
+// Both gutters are `1fr`, so once each can exceed the rail's 16rem floor —
+// viewport ≥ ~1616px — they equalise and the cards sit dead centre of the
+// viewport. Below that the left gutter is at its floor and the right takes
+// what is left, so the cards sit right of centre: +128px at 1024 and 1280,
+// +88px at 1440, 0 from ~1616 up. That asymmetry is the tolerance we accepted
+// — true centring at 1440 would mean two 16rem gutters and three cards of
+// ~267px, and legibility beats symmetry. Checked at 1024 / 1280 / 1440 / 1616
+// / 1920.
 interface ProductBrowseResultsProps {
   /** Sections to render, in display order. A section whose products all fail
    *  the chip filters disappears rather than rendering an empty shell. */
@@ -142,7 +141,7 @@ export function ProductBrowseResults({
     // shifting the viewport-centred grid sideways — see the html:has() rule in
     // globals.css.
     <div
-      className="container mx-auto px-4 lg:grid lg:max-w-none lg:grid-cols-[minmax(16rem,1fr)_minmax(0,64rem)_minmax(0,1fr)] lg:gap-6 min-[110rem]:grid-cols-[minmax(16rem,1fr)_minmax(0,87rem)_minmax(0,1fr)]"
+      className="container mx-auto px-4 lg:grid lg:max-w-none lg:grid-cols-[minmax(16rem,1fr)_minmax(0,64rem)_minmax(0,1fr)] lg:gap-6"
       data-reserve-scroll-gutter
     >
       {/* Sticks below the site header (--header-height, the same variable the
@@ -168,15 +167,10 @@ export function ProductBrowseResults({
                   gutters leave the cards track ~688–944px, and a third column
                   there would squeeze each card under 300px. `xl` is the first
                   breakpoint where three still read (~304px at 1280, ~330px once
-                  the track caps out); two columns below it run 336–463px. The
-                  fourth column arrives at 110rem (1760px) together with the
-                  root grid's 87rem cap — the first width where four cards
-                  beside the rail hold the ~330px they had at three-up, rather
-                  than dropping under 300px the way `2xl` (1536px) would. The
-                  variant is in rem because the theme breakpoints are: Tailwind
-                  only orders same-unit media queries numerically, and a px
-                  variant sorts before `xl`, which then overrides it. */}
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 min-[110rem]:grid-cols-4">
+                  the track caps out); two columns below it run 336–463px. Three
+                  is also the ceiling — a fourth column was tried and reverted,
+                  see the width-budget comment on the root element. */}
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {section.products.map((p) => (
                   <ProductBrowseCard
                     key={p.id}
