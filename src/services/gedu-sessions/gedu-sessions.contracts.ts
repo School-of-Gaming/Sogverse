@@ -61,10 +61,15 @@ const scheduleSlotSummary = z.object({
  * as "no address", so the relaxation costs no caller a `?? ""`.
  */
 export const geduFeedRosterEntry = z.object({
-  gamer_id: z.string(),
+  participant_id: z.string(),
   first_name: z.string(),
-  /** When this child joined the group — the feed uses it for nothing else. */
+  /** When they joined the group — the feed uses it for nothing else. */
   signed_up_at: z.string(),
+  /**
+   * The three child-shaped facts, null together on an adult seat: an adult has
+   * no `gamer_profiles` row and no linked game account. The row renders that as
+   * a deliberate absence rather than as missing data.
+   */
   date_of_birth: z.string().nullable(),
   gender: z.enum(Constants.public.Enums.gender_type).nullable(),
   minecraft_username: z.string().nullable(),
@@ -171,7 +176,7 @@ export const geduAssignmentSummary = z.object({
   group_id: z.string(),
   group_name: z.string(),
   /** Active participations in THIS group, not across the product. */
-  group_gamer_count: z.number(),
+  group_participant_count: z.number(),
   /** The venue name on in-person products; `null` when there is no building. */
   site_name: z.string().nullable(),
   attention_count: z.number(),
@@ -199,7 +204,7 @@ export const groupSessionNotesResult = z.object({
  */
 export const attendanceMarkResult = z.object({
   session_id: z.string(),
-  gamer_id: z.string(),
+  participant_id: z.string(),
   status: attendanceStatus.nullable(),
 });
 

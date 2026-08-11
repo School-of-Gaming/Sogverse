@@ -30,7 +30,13 @@ export type TemplateField = TextField | SelectField;
 
 // --- Template definition (shared by API route and testing UI) ---
 
-type TemplateParams = Record<string, string | null>;
+/**
+ * A validated param bag. Booleans are in the union because a template can carry
+ * a variant flag (see `isSelfSeat`) that the testing UI expresses as a select
+ * and the builders take as a boolean; the resolver in between is where the
+ * widening happens.
+ */
+type TemplateParams = Record<string, string | boolean | null>;
 
 export interface RenderedTemplate {
   subject: string;
@@ -52,7 +58,7 @@ export interface TemplateDefinition {
   /** Translation key for sender display name (e.g. "senderAuth"). */
   fromNameKey: "senderAuth" | "senderEnrollment" | "senderFeedback";
   /** Optional: transform UI field values into API params (e.g. minecraft status → username + uuid). */
-  resolveParams?: (params: Record<string, string>) => Record<string, string | null>;
+  resolveParams?: (params: Record<string, string>) => TemplateParams;
 }
 
 /**
@@ -92,6 +98,38 @@ const MINECRAFT_STATUS_OPTIONS = [
   { label: "Not provided", value: "none" },
 ];
 
+/**
+ * Whose seat the mail is about, for the two parent-facing templates.
+ *
+ * A select rather than a checkbox because the testing UI's fields are strings
+ * and because the two options want naming: "the parent's own seat" is the case
+ * a reader would otherwise have to infer from an unlabelled tick.
+ */
+const SEAT_OPTIONS = [
+  { label: "A child's seat (third person)", value: "child" },
+  { label: "The parent's own seat (second person)", value: "self" },
+];
+
+/**
+ * Expand the seat select into the boolean the builders take, defaulting to the
+ * child case — which is what an unfilled field in the testing UI means, and what
+ * every seat was before for-parents products existed.
+ *
+ * Two resolvers rather than one shared `resolveSeat` composed with the Minecraft
+ * one: composing them would have to agree on an intermediate shape, and both
+ * halves here are three lines. The unenrollment twin carries no Minecraft block
+ * at all, so there is nothing to compose with on that side anyway.
+ */
+function resolveEnrollmentParent(params: Record<string, string>): TemplateParams {
+  const { seat, ...rest } = params;
+  return { ...resolveMinecraftStatus(rest), isSelfSeat: seat === "self" };
+}
+
+function resolveUnenrollmentParent(params: Record<string, string>): TemplateParams {
+  const { seat, ...rest } = params;
+  return { ...rest, isSelfSeat: seat === "self" };
+}
+
 function resolveMinecraftStatus(params: Record<string, string>): Record<string, string | null> {
   const resolved: Record<string, string | null> = { ...params };
   const status = params.minecraftStatus;
@@ -127,16 +165,17 @@ const feedbackParamsSchema = z.object({
 
 const enrollmentParentParamsSchema = z.object({
   parentName: z.string().min(1),
-  gamerName: z.string().min(1),
+  participantName: z.string().min(1),
   geduName: z.string().min(1),
   productName: z.string().min(1),
   minecraftUsername: z.string().nullable(),
   minecraftUuid: z.string().nullable(),
+  isSelfSeat: z.boolean(),
 });
 
 const enrollmentGeduParamsSchema = z.object({
   geduName: z.string().min(1),
-  gamerName: z.string().min(1),
+  participantName: z.string().min(1),
   productName: z.string().min(1),
   minecraftUsername: z.string().nullable(),
   minecraftUuid: z.string().nullable(),
@@ -144,14 +183,15 @@ const enrollmentGeduParamsSchema = z.object({
 
 const unenrollmentParentParamsSchema = z.object({
   parentName: z.string().min(1),
-  gamerName: z.string().min(1),
+  participantName: z.string().min(1),
   geduName: z.string().min(1),
   productName: z.string().min(1),
+  isSelfSeat: z.boolean(),
 });
 
 const unenrollmentGeduParamsSchema = z.object({
   geduName: z.string().min(1),
-  gamerName: z.string().min(1),
+  participantName: z.string().min(1),
   productName: z.string().min(1),
   minecraftUsername: z.string().nullable(),
   minecraftUuid: z.string().nullable(),
@@ -200,28 +240,36 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     label: "Enrollment (Parent)",
     fields: [
       { key: "parentName", label: "Parent Name", placeholder: "Jane Doe" },
-      { key: "gamerName", label: "Gamer Name", placeholder: "Little Johnny" },
+      { key: "participantName", label: "Participant Name", placeholder: "Little Johnny" },
       { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
       { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
+      { key: "seat", label: "Whose seat", type: "select", options: SEAT_OPTIONS },
       { key: "minecraftStatus", label: "Minecraft Status", type: "select", options: MINECRAFT_STATUS_OPTIONS },
     ],
     schema: enrollmentParentParamsSchema,
     build: (p, t, locale) => buildEnrollmentParentEmail(t, locale, p),
-    subject: (p, t) => t("enrollmentParent.subject", { gamerName: p.gamerName, productName: p.productName }),
+    // The subject moves into the second person with the body. A mail whose
+    // subject line says "Marja is now enrolled" and whose body says "you are"
+    // is the half-applied version of this change, and the subject is the half
+    // that shows up in the inbox list.
+    subject: (p, t) =>
+      p.isSelfSeat
+        ? t("enrollmentParent.subjectSelf", { productName: p.productName })
+        : t("enrollmentParent.subject", { participantName: p.participantName, productName: p.productName }),
     fromNameKey: "senderEnrollment",
-    resolveParams: resolveMinecraftStatus,
+    resolveParams: resolveEnrollmentParent,
   }),
   enrollmentGedu: defineTemplate({
     label: "Enrollment (Gedu)",
     fields: [
       { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
-      { key: "gamerName", label: "Gamer Name", placeholder: "Little Johnny" },
+      { key: "participantName", label: "Participant Name", placeholder: "Little Johnny" },
       { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
       { key: "minecraftStatus", label: "Minecraft Status", type: "select", options: MINECRAFT_STATUS_OPTIONS },
     ],
     schema: enrollmentGeduParamsSchema,
     build: (p, t, locale) => buildEnrollmentGeduEmail(t, locale, p),
-    subject: (p, t) => t("enrollmentGedu.subject", { gamerName: p.gamerName, productName: p.productName }),
+    subject: (p, t) => t("enrollmentGedu.subject", { participantName: p.participantName, productName: p.productName }),
     fromNameKey: "senderEnrollment",
     resolveParams: resolveMinecraftStatus,
   }),
@@ -229,26 +277,31 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     label: "Unenrollment (Parent)",
     fields: [
       { key: "parentName", label: "Parent Name", placeholder: "Jane Doe" },
-      { key: "gamerName", label: "Gamer Name", placeholder: "Little Johnny" },
+      { key: "participantName", label: "Participant Name", placeholder: "Little Johnny" },
       { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
       { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
+      { key: "seat", label: "Whose seat", type: "select", options: SEAT_OPTIONS },
     ],
     schema: unenrollmentParentParamsSchema,
     build: (p, t, locale) => buildUnenrollmentParentEmail(t, locale, p),
-    subject: (p, t) => t("unenrollmentParent.subject", { gamerName: p.gamerName, productName: p.productName }),
+    subject: (p, t) =>
+      p.isSelfSeat
+        ? t("unenrollmentParent.subjectSelf", { productName: p.productName })
+        : t("unenrollmentParent.subject", { participantName: p.participantName, productName: p.productName }),
     fromNameKey: "senderEnrollment",
+    resolveParams: resolveUnenrollmentParent,
   }),
   unenrollmentGedu: defineTemplate({
     label: "Unenrollment (Gedu)",
     fields: [
       { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
-      { key: "gamerName", label: "Gamer Name", placeholder: "Little Johnny" },
+      { key: "participantName", label: "Participant Name", placeholder: "Little Johnny" },
       { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
       { key: "minecraftStatus", label: "Minecraft Status", type: "select", options: MINECRAFT_STATUS_OPTIONS },
     ],
     schema: unenrollmentGeduParamsSchema,
     build: (p, t, locale) => buildUnenrollmentGeduEmail(t, locale, p),
-    subject: (p, t) => t("unenrollmentGedu.subject", { gamerName: p.gamerName, productName: p.productName }),
+    subject: (p, t) => t("unenrollmentGedu.subject", { participantName: p.participantName, productName: p.productName }),
     fromNameKey: "senderEnrollment",
     resolveParams: resolveMinecraftStatus,
   }),

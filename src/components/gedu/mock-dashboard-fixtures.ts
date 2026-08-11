@@ -159,9 +159,9 @@ export function buildGeduDashboardFixture(
       startedDaysAgo: 84,
       endsInDays: null,
       groupCount: 3,
-      gamerCount: 21,
+      participantCount: 21,
       groupName: "Monday A",
-      groupGamerCount: 8,
+      groupParticipantCount: 8,
     }),
     assignmentRow({
       now,
@@ -176,9 +176,9 @@ export function buildGeduDashboardFixture(
       startedDaysAgo: 35,
       endsInDays: null,
       groupCount: 2,
-      gamerCount: 14,
+      participantCount: 14,
       groupName: "Thursday B",
-      groupGamerCount: 7,
+      groupParticipantCount: 7,
     }),
   ];
 
@@ -205,9 +205,9 @@ export function buildGeduDashboardFixture(
       startedDaysAgo: 21,
       endsInDays: null,
       groupCount: 2,
-      gamerCount: 15,
+      participantCount: 15,
       groupName: "Tuesday A",
-      groupGamerCount: 8,
+      groupParticipantCount: 8,
     }),
     assignmentRow({
       now,
@@ -219,9 +219,9 @@ export function buildGeduDashboardFixture(
       startedDaysAgo: 63,
       endsInDays: null,
       groupCount: 4,
-      gamerCount: 28,
+      participantCount: 28,
       groupName: "Wednesday C",
-      groupGamerCount: 6,
+      groupParticipantCount: 6,
     }),
     assignmentRow({
       now,
@@ -233,9 +233,9 @@ export function buildGeduDashboardFixture(
       startedDaysAgo: 14,
       endsInDays: null,
       groupCount: 1,
-      gamerCount: 6,
+      participantCount: 6,
       groupName: "Friday A",
-      groupGamerCount: 6,
+      groupParticipantCount: 6,
     }),
     assignmentRow({
       now,
@@ -247,9 +247,9 @@ export function buildGeduDashboardFixture(
       startedDaysAgo: 112,
       endsInDays: null,
       groupCount: 2,
-      gamerCount: 13,
+      participantCount: 13,
       groupName: "Saturday B",
-      groupGamerCount: 7,
+      groupParticipantCount: 7,
     }),
     assignmentRow({
       now,
@@ -261,9 +261,9 @@ export function buildGeduDashboardFixture(
       startedDaysAgo: 42,
       endsInDays: null,
       groupCount: 3,
-      gamerCount: 19,
+      participantCount: 19,
       groupName: "Sunday A",
-      groupGamerCount: 9,
+      groupParticipantCount: 9,
     }),
   ];
 
@@ -296,9 +296,9 @@ export function buildGeduDashboardFixture(
       startedDaysAgo: 160,
       endsInDays: -46,
       groupCount: 2,
-      gamerCount: 16,
+      participantCount: 16,
       groupName: "Thursday A",
-      groupGamerCount: 8,
+      groupParticipantCount: 8,
     }),
   ];
 
@@ -322,9 +322,9 @@ export function buildGeduDashboardFixture(
       startedDaysAgo: 9,
       endsInDays: 6,
       groupCount: 3,
-      gamerCount: 23,
+      participantCount: 23,
       groupName: "Builders red",
-      groupGamerCount: 8,
+      groupParticipantCount: 8,
       // Read off the product-page scene this card opens, so the venue on the
       // card and the venue in that page's site-notes panel are one string.
       siteName: sceneSiteNames[CAMP_PRODUCT_ID] ?? null,
@@ -343,9 +343,9 @@ export function buildGeduDashboardFixture(
       startedDaysAgo: 0,
       endsInDays: 0,
       groupCount: 2,
-      gamerCount: 18,
+      participantCount: 18,
       groupName: "Reds",
-      groupGamerCount: 9,
+      groupParticipantCount: 9,
       siteName: EVENT_SITE_NAME,
     }),
   ];
@@ -473,9 +473,9 @@ function assignmentRow(opts: {
    */
   endsInDays: number | null;
   groupCount: number;
-  gamerCount: number;
+  participantCount: number;
   groupName: string;
-  groupGamerCount: number;
+  groupParticipantCount: number;
   /** The venue, on in-person products. Remote products have no building. */
   siteName?: string | null;
 }): GeduAssignmentRow {
@@ -494,9 +494,9 @@ function assignmentRow(opts: {
     },
     groupId: `${opts.id}-group-a`,
     groupCount: opts.groupCount,
-    gamerCount: opts.gamerCount,
+    participantCount: opts.participantCount,
     groupName: opts.groupName,
-    groupGamerCount: opts.groupGamerCount,
+    groupParticipantCount: opts.groupParticipantCount,
     siteName: opts.siteName ?? null,
     slots: opts.slots,
   };

@@ -385,20 +385,21 @@ export function useDeleteGroup(productId: string) {
 }
 
 /**
- * Admin comp-enrollment mutation — drops a gamer directly into a product
- * (status='active', group_id=NULL). Invalidates the product's groups snapshot
- * so the new chip appears in the Unassigned card. Kept as a plain mutation: it
- * doesn't go through apply_group_changes (enrollment lifecycle, not group
- * structure) and the picker lacks the full participation row to optimistically
- * insert, so it just refetches on success.
+ * Admin comp-enrollment mutation — drops a participant (a child, or an adult on
+ * a for-parents product) directly into a product (status='active',
+ * group_id=NULL). Invalidates the product's groups snapshot so the new chip
+ * appears in the Unassigned card. Kept as a plain mutation: it doesn't go
+ * through apply_group_changes (enrollment lifecycle, not group structure) and
+ * the picker lacks the full participation row to optimistically insert, so it
+ * just refetches on success.
  */
-export function useAdminAddGamerToProduct(productId: string) {
+export function useAdminAddParticipantToProduct(productId: string) {
   const queryClient = useQueryClient();
   const service = new GroupsService(getClient());
 
   return useMutation({
-    mutationFn: (gamerId: string) =>
-      service.addGamerToProduct(productId, gamerId),
+    mutationFn: (participantId: string) =>
+      service.addParticipantToProduct(productId, participantId),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: groupsKeys.byProduct(productId),
@@ -409,13 +410,13 @@ export function useAdminAddGamerToProduct(productId: string) {
 
 /**
  * Admin un-enrollment mutation — hard-deletes a participation (inverse of
- * useAdminAddGamerToProduct). Destructive, so no optimistic removal: the chip
+ * useAdminAddParticipantToProduct). Destructive, so no optimistic removal: the chip
  * greys via the pending registry (`removes`) while in flight and disappears on
  * the settle refetch, matching the delete-group / remove-Gedu model (shared
  * `destructiveSettle` config, which also documents the flicker it avoids).
  * Keyed into groupMutationBase so the pending registry can surface it.
  */
-export function useAdminRemoveGamerFromProduct(productId: string) {
+export function useAdminRemoveParticipantFromProduct(productId: string) {
   const queryClient = useQueryClient();
   const service = new GroupsService(getClient());
   const key = groupsKeys.byProduct(productId);

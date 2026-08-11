@@ -12,8 +12,11 @@ export type { BillingPortalBody } from "./billing.contracts";
 
 /** One subscription sitting under a billing account: whose club it pays for. */
 export interface BillingAccountSubscription {
-  /** The child's first name. Empty when the profile has no name set. */
-  gamerFirstName: string;
+  /**
+   * The seat-holder's first name — a child, or the parent themselves on a seat
+   * they hold. Empty when the profile has no name set.
+   */
+  participantFirstName: string;
   /**
    * The club's name in each locale it has been translated into. Resolved to
    * the viewer's UI locale at render time, the same way the session cards do

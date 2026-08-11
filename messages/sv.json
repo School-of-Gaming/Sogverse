@@ -562,12 +562,12 @@
         "alreadyAssigned": "Redan tilldelad",
         "notVerified": "Inte verifierad"
       },
-      "gamerPicker": {
-        "title": "Lägg till en spelare",
-        "description": "Lägg till en spelare direkt i denna produkt, förbi betalningen.",
+      "participantPicker": {
+        "title": "Lägg till en deltagare",
+        "description": "Lägg till ett barn eller en förälder direkt i denna produkt, förbi betalningen. En förälder kan bara ta en plats på en produkt som är öppen för föräldrar.",
         "searchPlaceholder": "Sök på förälder eller spelarnamn…",
         "searchHint": "Skriv minst 2 tecken för att söka.",
-        "noParents": "Inga föräldrar med kopplade spelare ännu.",
+        "noParents": "Inga föräldrar ännu.",
         "noSearchResults": "Inga föräldrar eller spelare matchar din sökning.",
         "unnamedParent": "Namnlös förälder",
         "unnamedGamer": "Namnlös spelare",
@@ -575,11 +575,11 @@
         "adding": "Lägger till…",
         "added": "Tillagd",
         "alreadyAdded": "Redan tillagd",
-        "addFailed": "Det gick inte att lägga till spelaren."
+        "addFailed": "Det gick inte att lägga till deltagaren."
       },
       "groupsPanel": {
         "title": "Grupper",
-        "subtitle": "Dra varje spelare till gruppen de ska spela med. Lägg till Geduer som leder varje grupp.",
+        "subtitle": "Dra varje deltagare till gruppen de ska spela med. Lägg till Geduer som leder varje grupp.",
         "addGroup": "Lägg till grupp",
         "loading": "Laddar…",
         "genderBoy": "pojke",
@@ -587,18 +587,19 @@
         "genderNonBinary": "ickebinär",
         "chip": {
           "age": "{age}å",
-          "parent": "Förälder: {name}"
+          "parent": "Förälder: {name}",
+          "participantEmail": "Kontakt: {email}"
         },
         "unassigned": {
           "title": "Otilldelade",
-          "subtitle": "Spelare som har betalat men ännu inte är i en grupp. Dra dem in i en för att placera dem.",
+          "subtitle": "Personer som har betalat men ännu inte är i en grupp. Dra dem in i en för att placera dem.",
           "empty": "Alla har en grupp.",
-          "addGamer": "Lägg till spelare",
-          "removeGamer": "Ta bort spelare"
+          "addParticipant": "Lägg till deltagare",
+          "removeParticipant": "Ta bort deltagare"
         },
         "empty": {
           "title": "Inga grupper än",
-          "description": "Lägg till en grupp när du är redo att börja placera spelare.",
+          "description": "Lägg till en grupp när du är redo att börja placera deltagare.",
           "addFirst": "Lägg till din första grupp"
         },
         "group": {
@@ -610,15 +611,15 @@
           "saveNameAria": "Spara namn",
           "cancelEditAria": "Avbryt",
           "deleteAria": "Ta bort {name}",
-          "gamerCount": "{count, plural, =0 {Inga spelare} =1 {1 spelare} other {# spelare}}",
+          "participantCount": "{count, plural, =0 {Inga deltagare} =1 {1 deltagare} other {# deltagare}}",
           "assignedGedus": "Geduer",
           "noGedus": "Inga Geduer än.",
           "addGedu": "Lägg till Gedu",
-          "gamersLabel": "Spelare",
-          "empty": "Inga spelare här än — dra in någon.",
+          "participantsLabel": "Deltagare",
+          "empty": "Ingen här än — dra in någon.",
           "deleteConfirmTitle": "Ta bort {name}?",
           "deleteConfirmEmpty": "Ingen är i den här gruppen, så att ta bort den rensar bara Gedu-tilldelningarna.",
-          "deleteConfirmWithGamers": "{count, plural, =1 {1 spelare finns i denna grupp} other {# spelare finns i denna grupp}}. De flyttas till Otilldelade."
+          "deleteConfirmWithParticipants": "{count, plural, =1 {1 deltagare finns i denna grupp} other {# deltagare finns i denna grupp}}. De flyttas till Otilldelade."
         },
         "gedu": {
           "removeAria": "Ta bort {name}"
@@ -627,15 +628,15 @@
           "addTitle": "Lägg till Gedu i {name}",
           "addDescription": "En Gedu kan bara leda en grupp per produkt. De som redan är tilldelade är gråa."
         },
-        "removeGamer": {
+        "removeParticipant": {
           "confirmTitle": "Ta bort {name} från den här produkten?",
           "confirmDescription": "{name} avregistreras och förlorar åtkomsten omedelbart.",
           "noRefundWarning": "Ingen återbetalning sker. Om den här kunden har betalat får de inte tillbaka pengarna.",
-          "confirmCta": "Ta bort spelare"
+          "confirmCta": "Ta bort deltagare"
         },
         "waitlist": {
           "title": "Väntelista",
-          "subtitle": "Spelare som väntar på en plats, numrerade i den ordning de ställde sig i kö. Dra en till en grupp för att ge hen en plats, eller släpp en aktiv spelare här för att flytta hen sist i kön.",
+          "subtitle": "Personer som väntar på en plats, numrerade i den ordning de ställde sig i kö. Dra en till en grupp för att ge hen en plats, eller släpp en aktiv deltagare här för att flytta hen sist i kön.",
           "empty": "Ingen står på väntelistan."
         },
         "seatsOverfilled": "{count} av {total} platser – {over} över",
@@ -1253,9 +1254,9 @@
       "noOtherGroups": "Inga andra grupper i denna session.",
       "railGroupHeading": "Min grupp",
       "noGedus": "Inga Geduer tilldelade.",
-      "gamersLabel": "Spelare",
-      "gamerCount": "{count, plural, one {# spelare} other {# spelare}}",
-      "emptyRoster": "Inga spelare anmälda i denna grupp ännu.",
+      "participantsLabel": "Deltagare",
+      "participantCount": "{count, plural, one {# deltagare} other {# deltagare}}",
+      "emptyRoster": "Ingen är anmäld i denna grupp än.",
       "untitledGroup": "Namnlös grupp",
       "noAssignedGroup": "Du har ingen tilldelad grupp i denna session.",
       "notAssignedTitle": "Inte din session",
@@ -1269,10 +1270,10 @@
       "minecraftUsernameSave": "Spara",
       "minecraftUsernameCancel": "Avbryt",
       "editMinecraftUsername": "Redigera Minecraft-användarnamn för {name}",
-      "copyParentEmail": "Kopiera förälderns e-post {email}",
+      "copyContactEmail": "Kopiera kontaktadress {email}",
       "emailCopied": "E-post kopierad",
-      "copyAllParentEmails": "Kopiera alla förälder-e-postadresser ({count})",
-      "allEmailsCopied": "Alla förälder-e-postadresser kopierade",
+      "copyAllContactEmails": "Kopiera alla kontaktadresser ({count})",
+      "allEmailsCopied": "Alla kontaktadresser kopierade",
       "loadingWorkspace": "Laddar gruppens tillfällen.",
       "minecraftSaveFailed": "Användarnamnet sparades inte. Försök igen."
     },
@@ -2175,24 +2176,28 @@
       "notProvided": "Inte angivet"
     },
     "enrollmentParent": {
-      "subject": "{gamerName} är nu anmäld till {productName}",
+      "subject": "{participantName} är nu anmäld till {productName}",
+      "subjectSelf": "Du är nu anmäld till {productName}",
       "heading": "Anmälan bekräftad",
-      "body": "Hej {parentName}, {gamerName} är nu anmäld till {productName} med Gedu {geduName}."
+      "body": "Hej {parentName}, {participantName} är nu anmäld till {productName} med Gedu {geduName}.",
+      "bodySelf": "Hej {parentName}, du är nu anmäld till {productName} med Gedu {geduName}."
     },
     "enrollmentGedu": {
-      "subject": "{gamerName} har gått med i din grupp – {productName}",
-      "heading": "Ny spelare i din grupp",
-      "body": "Hej {geduName}, {gamerName} har gått med i din grupp för {productName}."
+      "subject": "{participantName} har gått med i din grupp – {productName}",
+      "heading": "Ny deltagare i din grupp",
+      "body": "Hej {geduName}, {participantName} har gått med i din grupp för {productName}."
     },
     "unenrollmentParent": {
-      "subject": "{gamerName} har avregistrerats från {productName}",
+      "subject": "{participantName} har avregistrerats från {productName}",
+      "subjectSelf": "Din anmälan till {productName} har tagits bort",
       "heading": "Avregistrering bekräftad",
-      "body": "Hej {parentName}, {gamerName} har avregistrerats från {productName} (Gedu: {geduName})."
+      "body": "Hej {parentName}, {participantName} har avregistrerats från {productName} (Gedu: {geduName}).",
+      "bodySelf": "Hej {parentName}, din anmälan till {productName} har tagits bort (Gedu: {geduName})."
     },
     "unenrollmentGedu": {
-      "subject": "{gamerName} har lämnat din grupp – {productName}",
-      "heading": "Spelare har lämnat din grupp",
-      "body": "Hej {geduName}, {gamerName} har lämnat din grupp för {productName}."
+      "subject": "{participantName} har lämnat din grupp – {productName}",
+      "heading": "Deltagare har lämnat din grupp",
+      "body": "Hej {geduName}, {participantName} har lämnat din grupp för {productName}."
     },
     "groupAdded": {
       "subject": "Du har tilldelats en ny grupp – {productName}",

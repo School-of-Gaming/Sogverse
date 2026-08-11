@@ -42,7 +42,19 @@ export const SESSION_FEED_CLUB_NAME = "Minecraft Monday Club";
 export const SESSION_FEED_TIMEZONE = TIMEZONE;
 
 /**
- * Roster ids, named so a spec can say who was away without repeating a UUID.
+ * The one adult on the roster — a parent holding a seat of her own. She is kept
+ * out of the gamer map below because she is not a gamer: nothing that keys off
+ * that map (ages, game accounts, a parent's address) has anything to say about
+ * her.
+ *
+ * A real generated UUIDv4, hardcoded as a literal, for the reason spelled out
+ * on the gamer ids.
+ */
+export const SESSION_FEED_ADULT_ID = "07981ead-c695-4cac-be1e-d88d5c13306f";
+
+/**
+ * The children's ids, named so a spec can say who was away without repeating a
+ * UUID.
  *
  * They are real generated UUIDv4s and hardcoded as literals. Both halves matter:
  * an identicon is a pattern hashed out of the id's hex bytes, so a readable id
@@ -62,9 +74,16 @@ export const SESSION_FEED_GAMER_IDS = {
 } as const;
 
 /**
- * Eight regulars with plausible Finnish and Swedish first names — enough that
- * "6 of 8 present" reads like a real group and the attendance checklist has to
- * wrap.
+ * Eight child regulars with plausible Finnish and Swedish first names, plus one
+ * adult holding a seat of her own — enough that "6 of 9 present" reads like a
+ * real group and the attendance checklist has to wrap.
+ *
+ * Marja is last and is not in SESSION_FEED_GAMER_IDS, because she is not a
+ * gamer: she is a parent on a for-parents club. She is on this list because a
+ * gedu marks her present exactly as they mark a child — the attendance table is
+ * participant-keyed and has no branch for her — so a fixture that left her off
+ * the checklist while showing her on the rail roster would be rehearsing a
+ * split the product does not have.
  */
 export const SESSION_FEED_ROSTER: readonly SessionFeedGamer[] = [
   { id: SESSION_FEED_GAMER_IDS.aino, firstName: "Aino" },
@@ -75,6 +94,7 @@ export const SESSION_FEED_ROSTER: readonly SessionFeedGamer[] = [
   { id: SESSION_FEED_GAMER_IDS.siiri, firstName: "Siiri" },
   { id: SESSION_FEED_GAMER_IDS.emil, firstName: "Emil" },
   { id: SESSION_FEED_GAMER_IDS.hilda, firstName: "Hilda" },
+  { id: SESSION_FEED_ADULT_ID, firstName: "Marja" },
 ];
 
 /**
@@ -144,7 +164,7 @@ export type EntrySpec =
       /**
        * A **part-marked** sheet: only the ids listed here get a mark, everyone
        * else on the roster stays unmarked. This is the state a save can now
-       * land in — a gedu interrupted three children into a roster of eight —
+       * land in — a gedu interrupted three names into a roster of nine —
        * and the entry it produces still needs attention, renders its report, and
        * reports its own progress.
        */
@@ -288,9 +308,9 @@ export const SESSION_FEED_WEEK_SPECS: readonly EntrySpec[] = [
     report: COMMAND_BLOCKS_REPORT,
   },
 
-  // Started and abandoned: three children marked, five still unanswered. The
-  // state a partial save leaves behind — the entry keeps its alert, reports "3
-  // of 8 marked", and reopens on the three marks rather than on a blank sheet.
+  // Started and abandoned: three marked, six still unanswered. The state a
+  // partial save leaves behind — the entry keeps its alert, reports "3 of 9
+  // marked", and reopens on the three marks rather than on a blank sheet.
   {
     kind: "past",
     partial: {

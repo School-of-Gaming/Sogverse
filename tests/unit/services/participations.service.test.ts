@@ -114,7 +114,7 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
     });
   }
 
-  function rawRow(id: string, gamerFirstName: string) {
+  function rawRow(id: string, participantFirstName: string) {
     return {
       id,
       participant_id: `gamer-${id}`,
@@ -130,13 +130,13 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
         schedule_slots: [],
         location: null,
       },
-      gamer: { first_name: gamerFirstName },
+      participant: { first_name: participantFirstName },
     };
   }
 
   /** The same row on an in-person product, with the venue the embed returns. */
-  function inPersonRawRow(id: string, gamerFirstName: string) {
-    const row = rawRow(id, gamerFirstName);
+  function inPersonRawRow(id: string, participantFirstName: string) {
+    const row = rawRow(id, participantFirstName);
     return {
       ...row,
       product: {
@@ -177,8 +177,8 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
       "eq.user-1",
     );
 
-    const alex = result.find((r) => r.gamer.firstName === "Alex");
-    const bobby = result.find((r) => r.gamer.firstName === "Bobby");
+    const alex = result.find((r) => r.participant.firstName === "Alex");
+    const bobby = result.find((r) => r.participant.firstName === "Bobby");
     expect(alex?.paymentProblem).toBe(true);
     expect(alex?.subscriptionEndsAt).toBeNull();
     expect(bobby?.paymentProblem).toBe(false);
@@ -300,7 +300,7 @@ describe("ParticipationsService.getMyWaitlistEntries", () => {
    * everything only a *seat* produces — no group, no subscription state, no
    * venue.
    */
-  function rawRow(id: string, gamerFirstName: string) {
+  function rawRow(id: string, participantFirstName: string) {
     return {
       id,
       participant_id: `gamer-${id}`,
@@ -315,7 +315,7 @@ describe("ParticipationsService.getMyWaitlistEntries", () => {
           { weekday: 1, start_time: "17:00:00", duration_minutes: 90 },
         ],
       },
-      gamer: { first_name: gamerFirstName },
+      participant: { first_name: participantFirstName },
     };
   }
 
@@ -365,7 +365,7 @@ describe("ParticipationsService.getMyWaitlistEntries", () => {
     expect(result).toEqual([
       {
         participationId: "p1",
-        gamer: { id: "gamer-p1", firstName: "Alex" },
+        participant: { id: "gamer-p1", firstName: "Alex" },
         product: {
           ...productShell,
           translations: [{ locale: "en", name: "Club p1" }],
@@ -375,7 +375,7 @@ describe("ParticipationsService.getMyWaitlistEntries", () => {
       },
       {
         participationId: "p2",
-        gamer: { id: "gamer-p2", firstName: "Bobby" },
+        participant: { id: "gamer-p2", firstName: "Bobby" },
         product: {
           ...productShell,
           translations: [{ locale: "en", name: "Club p2" }],
@@ -430,7 +430,7 @@ describe("ParticipationsService.getMyWaitlistEntries", () => {
 
     // Same fallback the sessions adapter uses, so one gamer reads identically
     // on a waitlist card and a session card.
-    expect(result[0].gamer.firstName).toBe("abcdefgh");
+    expect(result[0].participant.firstName).toBe("abcdefgh");
   });
 
   it("returns [] without touching the database when there is no session", async () => {

@@ -612,10 +612,10 @@ describe("get_product_groups_with_details", () => {
     expect(result.groups).toHaveLength(1);
     expect(result.groups[0].name).toBe("Alpha");
     expect(result.groups[0].gedus.map((g) => g.id)).toEqual([GEDU_A]);
-    expect(result.groups[0].participations.map((p) => p.gamer_id)).toEqual([
+    expect(result.groups[0].participations.map((p) => p.participant_id)).toEqual([
       TEST_IDS.GAMER,
     ]);
-    expect(result.unassigned.map((p) => p.gamer_id)).toEqual([TEST_IDS.GAMER_2]);
+    expect(result.unassigned.map((p) => p.participant_id)).toEqual([TEST_IDS.GAMER_2]);
     // 00166's per-participation flag, on the two branches that actually read
     // family_subscriptions. Neither seat has a subscription behind it, so both
     // report false; the true case and the waitlist branch's constant false are
@@ -673,14 +673,14 @@ describe("get_product_groups_with_details", () => {
         groups: z.array(
           z.object({
             id: z.string(),
-            participations: z.array(z.object({ gamer_id: z.string() })),
+            participations: z.array(z.object({ participant_id: z.string() })),
           }),
         ),
       })
       .parse(data);
     // A prior test leaves its own group behind, so target the one we created.
     const alpha = result.groups.find((g) => g.id === groupA);
-    expect(alpha?.participations.map((p) => p.gamer_id)).toEqual([
+    expect(alpha?.participations.map((p) => p.participant_id)).toEqual([
       TEST_IDS.GAMER,
       TEST_IDS.GAMER_2,
     ]);

@@ -413,12 +413,17 @@ before the switch is flippable. Do not reorder step 8 earlier.
    including the gedu bulk copy-all-emails affordance and the admin chip's new email
    line; relax the gedu-feed roster contract's required parent email; comp-enroll
    picker gains adults (including childless parents, which it drops today); the
-   enrollment-change emails fired on group assignment still third-person the
-   participant ("Hi Marja, Marja is now enrolled…") — they get self variants here,
-   since this is the step that makes an admin-assigned adult seat produce one;
+   enrollment-change emails got self variants here — with a correction discovered
+   during the build: nothing fires them in production (their orchestrator was
+   deleted; restoring it is an existing `TODO.md` item), so the second-person
+   subject+body pair and the participant-=-customer selection are built and dormant,
+   ready the day the send path returns;
    opportunistic renames ride here — the `gamer_*` result JSON keys on the shapes
    being touched and the `admin_enroll_gamer` function name (with its
-   authorization-spine entry). Style-guide demo for the adult roster row.
+   authorization-spine entry). Style-guide demo for the adult chip, which four
+   surfaces render; the adult roster row is judged in the gedu-product preview scene
+   instead — one surface renders it, and a demo card cannot show it against the rail
+   it sits in.
 8. **Admin product form — the enabling switch, deliberately last.** Audience checkboxes
    in the existing Audience section; age fields required with For Gamers, hidden and
    cleared without it; the three payload-path fixes so empty ages emit `null` (not

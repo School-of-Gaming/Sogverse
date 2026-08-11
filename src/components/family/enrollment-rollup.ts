@@ -363,11 +363,11 @@ export function toFamilyEnrollments(
 ): FamilyEnrollmentEntry[] {
   return [
     ...args.sessionRows.map((row) => ({
-      participantId: row.gamer.id,
+      participantId: row.participant.id,
       enrollment: sessionSummary(row, args),
     })),
     ...args.waitlistRows.map((row) => ({
-      participantId: row.gamer.id,
+      participantId: row.participant.id,
       enrollment: waitlistSummary(row, args),
     })),
   ];

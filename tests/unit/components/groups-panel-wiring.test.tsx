@@ -86,8 +86,8 @@ vi.mock("@/components/admin/products/groups/unassigned-card", () => ({
 vi.mock("@/components/admin/products/groups/waitlist-card", () => ({
   WaitlistCard: () => <div data-testid="waitlist-card" />,
 }));
-vi.mock("@/components/admin/products/gamer-picker-sheet", () => ({
-  GamerPickerSheet: () => null,
+vi.mock("@/components/admin/products/participant-picker-sheet", () => ({
+  ParticipantPickerSheet: () => null,
 }));
 vi.mock("@/components/admin/products/gedu-picker-sheet", () => ({
   GeduPickerSheet: () => null,
@@ -127,8 +127,8 @@ vi.mock("@/services/groups", () => {
     useMoveParticipation: stub(() => mutations.move),
     usePromoteFromWaitlist: stub(() => mutations.promote),
     useDemoteToWaitlist: stub(() => mutations.demote),
-    useAdminRemoveGamerFromProduct: stub(() => mutations.removeGamer),
-    useAdminAddGamerToProduct: stub(() => mutations.addGamer),
+    useAdminRemoveParticipantFromProduct: stub(() => mutations.removeGamer),
+    useAdminAddParticipantToProduct: stub(() => mutations.addGamer),
     useRenameGroup: stub(() => mutations.other),
     useCreateGroup: stub(() => mutations.other),
     useAddGedu: stub(() => mutations.other),
@@ -157,14 +157,14 @@ function participation(
 ): Participation {
   return {
     id,
-    gamer_id: IDS.gamer,
-    gamer_first_name: "Aino",
-    gamer_date_of_birth: null,
-    gamer_gender: null,
-    gamer_minecraft_username: null,
-    gamer_minecraft_uuid: null,
-    gamer_parent_first_name: null,
-    gamer_parent_last_name: null,
+    participant_id: IDS.gamer,
+    participant_first_name: "Aino",
+    participant_date_of_birth: null,
+    participant_gender: null,
+    participant_minecraft_username: null,
+    participant_minecraft_uuid: null,
+    parent_first_name: null,
+    parent_last_name: null,
     participant_email: null,
     status: "active",
     signed_up_at: "2026-01-01T00:00:00Z",
@@ -280,7 +280,7 @@ describe("GroupsPanel — a blocked drop writes nothing", () => {
     noMutationFired();
     expect(
       screen.queryByText(
-        "admin.products.groupsPanel.removeGamer.confirmCta",
+        "admin.products.groupsPanel.removeParticipant.confirmCta",
       ),
     ).toBeNull();
     expect(
@@ -310,7 +310,7 @@ describe("GroupsPanel — a blocked drop writes nothing", () => {
 
     expect(mutations.removeGamer).not.toHaveBeenCalled();
     expect(
-      screen.getByText("admin.products.groupsPanel.removeGamer.confirmCta"),
+      screen.getByText("admin.products.groupsPanel.removeParticipant.confirmCta"),
     ).toBeTruthy();
   });
 });

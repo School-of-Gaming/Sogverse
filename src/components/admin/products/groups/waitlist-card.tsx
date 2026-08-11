@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { GroupParticipationDetail } from "@/types";
-import { GamerChip } from "./gamer-chip";
+import { ParticipantChip } from "./participant-chip";
 
 interface WaitlistCardProps {
   /** Waitlisted gamers in derived order (waitlisted_at, id) — already ordered. */
@@ -19,7 +19,7 @@ interface WaitlistCardProps {
 /**
  * The admin waitlist section. Renders the product's waitlisted gamers as a
  * numbered 1..N list (position = derived order, computed here as the array
- * index + 1 — never stored), reusing the same draggable GamerChip as the groups
+ * index + 1 — never stored), reusing the same draggable ParticipantChip as the groups
  * and unassigned inbox. Two things an admin can do from here, both via drag:
  *  - drag a chip OUT to a group / the unassigned inbox → promote (seat them), or
  *    to the header's remove zone → cancel them off the product entirely;
@@ -74,16 +74,17 @@ export function WaitlistCard({
                 {/* The chip keeps its natural, content-driven width — the same
                     size it is in a group or the unassigned inbox, so it doesn't
                     visibly resize when dragged between sections. */}
-                <GamerChip
+                <ParticipantChip
                   participationId={p.id}
-                  gamerId={p.gamer_id}
-                  firstName={p.gamer_first_name}
-                  dateOfBirth={p.gamer_date_of_birth}
-                  gender={p.gamer_gender}
-                  parentFirstName={p.gamer_parent_first_name}
-                  parentLastName={p.gamer_parent_last_name}
-                  minecraftUsername={p.gamer_minecraft_username}
-                  minecraftUuid={p.gamer_minecraft_uuid}
+                  participantId={p.participant_id}
+                  participantEmail={p.participant_email}
+                  firstName={p.participant_first_name}
+                  dateOfBirth={p.participant_date_of_birth}
+                  gender={p.participant_gender}
+                  parentFirstName={p.parent_first_name}
+                  parentLastName={p.parent_last_name}
+                  minecraftUsername={p.participant_minecraft_username}
+                  minecraftUuid={p.participant_minecraft_uuid}
                   isPending={pendingChipIds.has(p.id)}
                 />
               </li>

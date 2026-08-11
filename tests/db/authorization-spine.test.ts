@@ -73,7 +73,7 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   set_gedu_verified: { permittedRoles: ["admin"] },
   // Phase 3's new-RPC conversions. Past the admin guard, all-NULL arguments hit
   // "no such product" / "no such participation" — an error, but not 42501.
-  admin_enroll_gamer: { permittedRoles: ["admin"] },
+  admin_enroll_participant: { permittedRoles: ["admin"] },
   admin_remove_participation: { permittedRoles: ["admin"] },
 
   // --- customer-gated ------------------------------------------------------

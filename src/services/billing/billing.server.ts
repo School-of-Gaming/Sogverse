@@ -67,7 +67,7 @@ export async function resolveBillingAccountsViaRls(
         `
           stripe_customer_id,
           participation:participations!inner(
-            gamer:profiles!participations_participant_id_fkey!inner(first_name),
+            participant:profiles!participations_participant_id_fkey!inner(first_name),
             product:products!inner(product_translations(locale, name))
           )
         `,
@@ -107,7 +107,7 @@ export async function resolveBillingAccountsViaRls(
       accounts.set(row.stripe_customer_id, account);
     }
     account.covers.push({
-      gamerFirstName: row.participation.gamer.first_name,
+      participantFirstName: row.participation.participant.first_name,
       productTranslations: row.participation.product.product_translations,
     });
   }

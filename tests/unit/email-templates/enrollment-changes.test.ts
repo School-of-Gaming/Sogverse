@@ -18,11 +18,12 @@ describe("enrollment-changes email templates", () => {
     it("includes parent, gamer, gedu, and product names", () => {
       const html = buildEnrollmentParentEmail(t, "en", {
         parentName: "Parent",
-        gamerName: "Kid",
+        participantName: "Kid",
         geduName: "Alice",
         productName: "Minecraft 101",
         minecraftUsername: "PlayerOne",
         minecraftUuid: "uuid-123",
+        isSelfSeat: false,
       });
       expect(html).toContain("Parent");
       expect(html).toContain("Kid");
@@ -34,11 +35,12 @@ describe("enrollment-changes email templates", () => {
     it("escapes HTML in names", () => {
       const html = buildEnrollmentParentEmail(t, "en", {
         parentName: "<script>xss</script>",
-        gamerName: "Kid",
+        participantName: "Kid",
         geduName: "Alice",
         productName: "Test",
         minecraftUsername: null,
         minecraftUuid: null,
+        isSelfSeat: false,
       });
       expect(html).not.toContain("<script>xss</script>");
       expect(html).toContain("&lt;script&gt;xss&lt;/script&gt;");
@@ -47,11 +49,12 @@ describe("enrollment-changes email templates", () => {
     it("wraps in layout", () => {
       const html = buildEnrollmentParentEmail(t, "en", {
         parentName: "Parent",
-        gamerName: "Kid",
+        participantName: "Kid",
         geduName: "Alice",
         productName: "Test",
         minecraftUsername: null,
         minecraftUuid: null,
+        isSelfSeat: false,
       });
       expect(html).toContain("<!DOCTYPE html>");
       expect(html).toContain("SOG");
@@ -60,11 +63,12 @@ describe("enrollment-changes email templates", () => {
     it("shows verified minecraft status with skin image", () => {
       const html = buildEnrollmentParentEmail(t, "en", {
         parentName: "Parent",
-        gamerName: "Kid",
+        participantName: "Kid",
         geduName: "Alice",
         productName: "Test",
         minecraftUsername: "PlayerOne",
         minecraftUuid: "uuid-123",
+        isSelfSeat: false,
       });
       expect(html).toContain("PlayerOne");
       expect(html).toContain("verified");
@@ -74,11 +78,12 @@ describe("enrollment-changes email templates", () => {
     it("shows unverified minecraft status without skin image", () => {
       const html = buildEnrollmentParentEmail(t, "en", {
         parentName: "Parent",
-        gamerName: "Kid",
+        participantName: "Kid",
         geduName: "Alice",
         productName: "Test",
         minecraftUsername: "PlayerOne",
         minecraftUuid: null,
+        isSelfSeat: false,
       });
       expect(html).toContain("PlayerOne");
       expect(html).toContain("not yet verified");
@@ -88,11 +93,12 @@ describe("enrollment-changes email templates", () => {
     it("shows not provided minecraft status", () => {
       const html = buildEnrollmentParentEmail(t, "en", {
         parentName: "Parent",
-        gamerName: "Kid",
+        participantName: "Kid",
         geduName: "Alice",
         productName: "Test",
         minecraftUsername: null,
         minecraftUuid: null,
+        isSelfSeat: false,
       });
       expect(html).toContain("Not provided");
     });
@@ -102,7 +108,7 @@ describe("enrollment-changes email templates", () => {
     it("includes gedu, gamer, and product names", () => {
       const html = buildEnrollmentGeduEmail(t, "en", {
         geduName: "Alice",
-        gamerName: "Kid",
+        participantName: "Kid",
         productName: "Minecraft 101",
         minecraftUsername: "PlayerOne",
         minecraftUuid: "uuid-123",
@@ -110,13 +116,13 @@ describe("enrollment-changes email templates", () => {
       expect(html).toContain("Alice");
       expect(html).toContain("Kid");
       expect(html).toContain("Minecraft 101");
-      expect(html).toContain("New Gamer in Your Group");
+      expect(html).toContain("New Participant in Your Group");
     });
 
     it("shows verified minecraft status with skin image", () => {
       const html = buildEnrollmentGeduEmail(t, "en", {
         geduName: "Alice",
-        gamerName: "Kid",
+        participantName: "Kid",
         productName: "Test",
         minecraftUsername: "PlayerOne",
         minecraftUuid: "uuid-123",
@@ -129,7 +135,7 @@ describe("enrollment-changes email templates", () => {
     it("shows unverified minecraft status", () => {
       const html = buildEnrollmentGeduEmail(t, "en", {
         geduName: "Alice",
-        gamerName: "Kid",
+        participantName: "Kid",
         productName: "Test",
         minecraftUsername: "PlayerOne",
         minecraftUuid: null,
@@ -140,7 +146,7 @@ describe("enrollment-changes email templates", () => {
     it("shows not provided minecraft status", () => {
       const html = buildEnrollmentGeduEmail(t, "en", {
         geduName: "Alice",
-        gamerName: "Kid",
+        participantName: "Kid",
         productName: "Test",
         minecraftUsername: null,
         minecraftUuid: null,
@@ -151,7 +157,7 @@ describe("enrollment-changes email templates", () => {
     it("escapes HTML in names", () => {
       const html = buildEnrollmentGeduEmail(t, "en", {
         geduName: "A&B",
-        gamerName: "Kid",
+        participantName: "Kid",
         productName: "Test",
         minecraftUsername: null,
         minecraftUuid: null,
@@ -164,9 +170,10 @@ describe("enrollment-changes email templates", () => {
     it("includes parent, gamer, gedu, and product names", () => {
       const html = buildUnenrollmentParentEmail(t, "en", {
         parentName: "Parent",
-        gamerName: "Kid",
+        participantName: "Kid",
         geduName: "Alice",
         productName: "Roblox Pro",
+        isSelfSeat: false,
       });
       expect(html).toContain("Parent");
       expect(html).toContain("Kid");
@@ -178,9 +185,10 @@ describe("enrollment-changes email templates", () => {
     it("confirms gamer unenrolled", () => {
       const html = buildUnenrollmentParentEmail(t, "en", {
         parentName: "Parent",
-        gamerName: "Kid",
+        participantName: "Kid",
         geduName: "Alice",
         productName: "Test",
+        isSelfSeat: false,
       });
       expect(html).toContain("unenrolled");
     });
@@ -188,9 +196,10 @@ describe("enrollment-changes email templates", () => {
     it("escapes HTML", () => {
       const html = buildUnenrollmentParentEmail(t, "en", {
         parentName: "<b>P</b>",
-        gamerName: "Kid",
+        participantName: "Kid",
         geduName: "Alice",
         productName: "Test",
+        isSelfSeat: false,
       });
       expect(html).not.toContain("<b>P</b>");
     });
@@ -200,7 +209,7 @@ describe("enrollment-changes email templates", () => {
     it("includes gedu, gamer, and product names", () => {
       const html = buildUnenrollmentGeduEmail(t, "en", {
         geduName: "Alice",
-        gamerName: "Kid",
+        participantName: "Kid",
         productName: "Test",
         minecraftUsername: "PlayerOne",
         minecraftUuid: "uuid-123",
@@ -208,13 +217,13 @@ describe("enrollment-changes email templates", () => {
       expect(html).toContain("Alice");
       expect(html).toContain("Kid");
       expect(html).toContain("Test");
-      expect(html).toContain("Gamer Left Your Group");
+      expect(html).toContain("Participant Left Your Group");
     });
 
     it("shows verified minecraft status with skin image for whitelist removal", () => {
       const html = buildUnenrollmentGeduEmail(t, "en", {
         geduName: "Alice",
-        gamerName: "Kid",
+        participantName: "Kid",
         productName: "Test",
         minecraftUsername: "PlayerOne",
         minecraftUuid: "uuid-123",
@@ -227,12 +236,91 @@ describe("enrollment-changes email templates", () => {
     it("shows not provided minecraft status", () => {
       const html = buildUnenrollmentGeduEmail(t, "en", {
         geduName: "Alice",
-        gamerName: "Kid",
+        participantName: "Kid",
         productName: "Test",
         minecraftUsername: null,
         minecraftUuid: null,
       });
       expect(html).toContain("Not provided");
+    });
+  });
+
+  /**
+   * The self-seat variants: a parent enrolled on a for-parents product is both
+   * the recipient and the participant, so the copy moves into the second person.
+   *
+   * The assertions are about what must **not** be there as much as what must:
+   * the third-person sentence naming the reader back at themselves is the
+   * failure this variant exists to prevent, and it would still render a
+   * perfectly valid-looking email.
+   */
+  describe("the parent's own seat", () => {
+    it("addresses the reader directly and never third-persons them", () => {
+      const html = buildEnrollmentParentEmail(t, "en", {
+        parentName: "Marja",
+        participantName: "Marja",
+        geduName: "Alice",
+        productName: "Parents' Minecraft Evening",
+        minecraftUsername: null,
+        minecraftUuid: null,
+        isSelfSeat: true,
+      });
+      expect(html).toContain("you are now enrolled");
+      expect(html).toContain("Alice");
+      expect(html).toContain("Parents&#39; Minecraft Evening");
+      expect(html).not.toContain("Marja is now enrolled");
+    });
+
+    it("omits the Minecraft block, which an adult can never fill", () => {
+      const html = buildEnrollmentParentEmail(t, "en", {
+        parentName: "Marja",
+        participantName: "Marja",
+        geduName: "Alice",
+        productName: "Test",
+        minecraftUsername: null,
+        minecraftUuid: null,
+        isSelfSeat: true,
+      });
+      expect(html).not.toContain("Not provided");
+      expect(html).not.toContain("Minecraft Username");
+    });
+
+    it("still renders the child variant's Minecraft block when the seat is a child's", () => {
+      const html = buildEnrollmentParentEmail(t, "en", {
+        parentName: "Marja",
+        participantName: "Aino",
+        geduName: "Alice",
+        productName: "Test",
+        minecraftUsername: null,
+        minecraftUuid: null,
+        isSelfSeat: false,
+      });
+      expect(html).toContain("Not provided");
+      expect(html).toContain("Aino");
+    });
+
+    it("un-enrolls in the second person too", () => {
+      const html = buildUnenrollmentParentEmail(t, "en", {
+        parentName: "Marja",
+        participantName: "Marja",
+        geduName: "Alice",
+        productName: "Test",
+        isSelfSeat: true,
+      });
+      expect(html).toContain("you have been unenrolled");
+      expect(html).not.toContain("Marja has been unenrolled");
+    });
+
+    it("escapes the reader's name on the self path as well", () => {
+      const html = buildUnenrollmentParentEmail(t, "en", {
+        parentName: "<b>P</b>",
+        participantName: "<b>P</b>",
+        geduName: "Alice",
+        productName: "Test",
+        isSelfSeat: true,
+      });
+      expect(html).not.toContain("<b>P</b>");
+      expect(html).toContain("&lt;b&gt;P&lt;/b&gt;");
     });
   });
 });

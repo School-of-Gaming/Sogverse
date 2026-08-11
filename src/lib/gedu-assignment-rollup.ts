@@ -50,7 +50,7 @@ export interface GeduAssignmentRow extends MyAssignedProductSessionRow {
   /** Display name of the gedu's own group, or `null` when unnamed. */
   groupName: string | null;
   /** Active participations in the gedu's own group — not the product total. */
-  groupGamerCount: number;
+  groupParticipantCount: number;
   /**
    * The venue an in-person product runs at, or `null` for a remote one. Every
    * in-person product has a location (the schema requires it), so `null` here
@@ -69,7 +69,7 @@ export interface GeduAssignmentSummary {
   productType: ProductType;
   groupName: string | null;
   /** Gamers in the gedu's own group. */
-  groupGamerCount: number;
+  groupParticipantCount: number;
   /**
    * The product's last day as a bare `YYYY-MM-DD` calendar date, or `null` on an
    * open-ended run that has no last day at all.
@@ -168,7 +168,7 @@ export function rollUpGeduAssignments({
         resolveTranslation(row.product.translations, locale)?.name ?? "",
       productType: row.product.productType,
       groupName: row.groupName,
-      groupGamerCount: row.groupGamerCount,
+      groupParticipantCount: row.groupParticipantCount,
       endDate: row.product.endDate,
       timezone: row.product.timezone,
       nextSessionStart: next?.start ?? null,

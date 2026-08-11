@@ -59,7 +59,12 @@ export interface MyUpcomingSessionRow {
    * several Stripe customers, and a portal session covers only one.
    */
   participationId: string;
-  gamer: {
+  /**
+   * Whoever holds the seat. A child on a parent's dashboard, or the parent
+   * themselves on a seat they bought for themselves — the read is keyed on the
+   * participant column, so a self seat lands here with no special case.
+   */
+  participant: {
     id: string;
     firstName: string;
   };
@@ -165,7 +170,8 @@ export interface MyUpcomingSessionRow {
 export interface MyWaitlistRow {
   /** The `participations.id`, and what the leave action names. */
   participationId: string;
-  gamer: {
+  /** Whoever holds the queued spot — a child, or the parent themselves. */
+  participant: {
     id: string;
     firstName: string;
   };
@@ -776,7 +782,7 @@ export class ParticipationsService {
 /**
  * Builds the upcoming-sessions query for one audience. Both embeds use
  * `!inner` (`product_id` and `participant_id` are NOT-NULL FKs, so an inner join
- * drops nothing), which lets the inferred row treat `product` and `gamer` as
+ * drops nothing), which lets the inferred row treat `product` and `participant` as
  * non-null — no post-filter, no `!` assertions in the mapper. Standalone so
  * the row type can be inferred via `QueryData` with no hand-written shape and
  * no cast (select string and type stay in lockstep — drift is a compile error).
@@ -799,7 +805,7 @@ function buildMyUpcomingSessionsQuery(
           schedule_slots(weekday, start_time, duration_minutes),
           location:locations(name, name_i18n)
         ),
-        gamer:profiles!participations_participant_id_fkey!inner(
+        participant:profiles!participations_participant_id_fkey!inner(
           first_name
         )
       `,
@@ -816,7 +822,7 @@ type RawMyUpcomingSessionRow = QueryData<
  * Builds the waitlist query for one audience — the `status='waitlisted'`
  * counterpart to the upcoming-sessions builder, and the same shape of thing:
  * `!inner` on both NOT-NULL-FK embeds so the inferred row treats `product` and
- * `gamer` as non-null, and standalone so `QueryData` can infer it.
+ * `participant` as non-null, and standalone so `QueryData` can infer it.
  *
  * The product shell it selects mirrors the sessions builder's minus the parts
  * only a seat produces — see `MyWaitlistRow` for why each half is where it is.
@@ -844,7 +850,7 @@ function buildMyWaitlistQuery(
           product_translations(*),
           schedule_slots(weekday, start_time, duration_minutes)
         ),
-        gamer:profiles!participations_participant_id_fkey!inner(
+        participant:profiles!participations_participant_id_fkey!inner(
           first_name
         )
       `,
@@ -863,14 +869,14 @@ function toMyUpcomingSessionRow(
   subscriptionEndsAt: Date | null,
 ): MyUpcomingSessionRow {
   // Both non-null via the `!inner` joins in buildMyUpcomingSessionsQuery.
-  const { product, gamer } = row;
+  const { product, participant } = row;
   // Mirror the purchased-card fallback chain so a missing first_name still
   // renders something readable. The seed comes from `participant_id` regardless,
   // so the identicon stays stable across name edits.
-  const firstName = gamer.first_name || row.participant_id.slice(0, 8);
+  const firstName = participant.first_name || row.participant_id.slice(0, 8);
   return {
     participationId: row.id,
-    gamer: { id: row.participant_id, firstName },
+    participant: { id: row.participant_id, firstName },
     product: {
       id: product.id,
       type: product.product_type,
@@ -900,14 +906,14 @@ function toMyWaitlistRow(
   position: number,
 ): MyWaitlistRow {
   // Both non-null via the `!inner` joins in buildMyWaitlistQuery. Same
-  // first-name fallback as the sessions adapter, so a gamer with no name set
-  // reads identically on a waitlist card and a session card.
-  const { product, gamer } = row;
+  // first-name fallback as the sessions adapter, so a participant with no name
+  // set reads identically on a waitlist card and a session card.
+  const { product, participant } = row;
   return {
     participationId: row.id,
-    gamer: {
+    participant: {
       id: row.participant_id,
-      firstName: gamer.first_name || row.participant_id.slice(0, 8),
+      firstName: participant.first_name || row.participant_id.slice(0, 8),
     },
     product: {
       type: product.product_type,

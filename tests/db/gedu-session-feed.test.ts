@@ -801,7 +801,7 @@ describe("gedu session feed", () => {
       const onSite = summaries.find((s) => s.group_id === GROUP_SITE);
 
       expect(mine?.group_name).toBe("Cohort A");
-      expect(mine?.group_gamer_count).toBe(1);
+      expect(mine?.group_participant_count).toBe(1);
       // Remote: no building at all, which is a different answer from "we do not
       // know the name".
       expect(mine?.site_name).toBeNull();

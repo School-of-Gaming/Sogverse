@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { POST } from "@/app/api/admin/products/[id]/participations/route";
 import { getString } from "../../helpers/json";
 
-// The admin add-gamer route is now one call: `admin_enroll_gamer` on the
+// The admin add-gamer route is now one call: `admin_enroll_participant` on the
 // USER-bound client. The product-type gate, the parent resolution and the
 // "already enrolled" constraint all live inside that RPC, behind an admin guard
 // — so what this file covers is the handler's job, which is the role check, the
@@ -150,7 +150,7 @@ describe("POST /api/admin/products/[id]/participations", () => {
     expect(response.status).toBe(200);
     const participationId = getString(await response.json(), "participation_id");
     expect(participationId).toBe(PARTICIPATION_ID);
-    expect(mockRpc).toHaveBeenCalledWith("admin_enroll_gamer", {
+    expect(mockRpc).toHaveBeenCalledWith("admin_enroll_participant", {
       p_product_id: PRODUCT_ID,
       p_participant_id: GAMER_ID,
     });

@@ -86,7 +86,7 @@ export function useRecordAttendance(groupId: string) {
   return useMutation({
     mutationFn: (vars: {
       sessionDate: string;
-      gamerId: string;
+      participantId: string;
       status: AttendanceStatus | null;
     }) => service.recordAttendance({ groupId, ...vars }),
     onSuccess: () => {

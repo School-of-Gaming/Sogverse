@@ -610,24 +610,24 @@
         "alreadyAssigned": "ngu’lu’pu’",
         "notVerified": "ngu’be’lu’"
       },
-      "gamerPicker": {
-        "title": "Suvwl’ yIchel",
-        "description": "DochvamDaq Suvwl’ yIchel; Huch DaH poQbe’.",
-        "searchPlaceholder": "vav pong, qoj Suvwl’ pong yInej…",
+      "participantPicker": {
+        "title": "ghom yIchel",
+        "description": "DochvamDaq puq qoj vav yIchel; Huch DaH poQbe’. vavpu’vaD poSmoHlu’bogh Dochmey neH lo’laH vav.",
+        "searchPlaceholder": "vav pong, qoj SuvwI’ pong yInej…",
         "searchHint": "cha’ mu’ pIm yIghItlh, vaj yInej.",
-        "noParents": "Suvwl’pu’ DIvI’pu’ ghajbogh vav pagh tu’lu’.",
-        "noSearchResults": "vav qoj Suvwl’ tu’be’lu’.",
+        "noParents": "vav pagh tu’lu’.",
+        "noSearchResults": "vav qoj SuvwI’ tu’be’lu’.",
         "unnamedParent": "vav pongHa’",
-        "unnamedGamer": "Suvwl’ pongHa’",
+        "unnamedGamer": "SuvwI’ pongHa’",
         "add": "chel",
         "adding": "chellu’taH…",
         "added": "chellu’pu’",
         "alreadyAdded": "wa’logh chellu’pu’",
-        "addFailed": "Suvwl’ chellu’pu’be’."
+        "addFailed": "ghom chellu’pu’be’."
       },
       "groupsPanel": {
         "title": "ghommey",
-        "subtitle": "Suvwl’ QujmeH ghomvaD yIngeH. ghom DevmeH Gedupu’ yIchu’.",
+        "subtitle": "QujmeH ghomvaD Hoch ghom yIngeH. ghom DevmeH Gedupu’ yIchu’.",
         "addGroup": "ghom yIchu’",
         "loading": "tIjwI’…",
         "genderBoy": "loDHom",
@@ -635,18 +635,19 @@
         "genderNonBinary": "loDHomHey",
         "chip": {
           "age": "{age} DIS",
-          "parent": "vavnI’: {name}"
+          "parent": "vavnI’: {name}",
+          "participantEmail": "QInHom: {email}"
         },
         "unassigned": {
           "title": "ngu’be’pu’",
-          "subtitle": "DIl Suvwl’pu’, ’ach ghomDaq pagh. ghomvaD yIngeH ngu’meH.",
+          "subtitle": "DIl ghompu’, ’ach ghomDaq pagh. ghomvaD yIngeH ngu’meH.",
           "empty": "Hoch ghom ghaj.",
-          "addGamer": "Suvwl’ yIchel",
-          "removeGamer": "Suvwl’ yIteq"
+          "addParticipant": "ghom yIchel",
+          "removeParticipant": "ghom yIteq"
         },
         "empty": {
           "title": "ghommey pagh",
-          "description": "ghom yIchu’ Suvwl’pu’ Daq ngu’meH.",
+          "description": "ghom yIchu’ ghompu’ Daq ngu’meH.",
           "addFirst": "wa’DIch ghom yIchu’"
         },
         "group": {
@@ -658,15 +659,15 @@
           "saveNameAria": "pong yIQon",
           "cancelEditAria": "yImev",
           "deleteAria": "{name} yIteq",
-          "gamerCount": "{count, plural, =0 {Suvwl’pu’ pagh} =1 {1 Suvwl’} other {# Suvwl’pu’}}",
+          "participantCount": "{count, plural, =0 {pagh} =1 {1 ghom} other {# ghompu’}}",
           "assignedGedus": "Gedupu’",
           "noGedus": "Gedupu’ pagh.",
           "addGedu": "Gedu yIchu’",
-          "gamersLabel": "Suvwl’pu’",
-          "empty": "Suvwl’ pagh — naDev yIngeH.",
+          "participantsLabel": "ghompu’",
+          "empty": "pagh — naDev yIngeH.",
           "deleteConfirmTitle": "{name} yIteq’a’?",
-          "deleteConfirmEmpty": "ghomvamDaq Suvwl’ pagh — Daj. Gedu ngu’ je teqlu’.",
-          "deleteConfirmWithGamers": "{count, plural, =1 {ghomvamDaq 1 Suvwl’} other {ghomvamDaq # Suvwl’pu’}}. ngu’be’pu’ jolDaq lengtaH."
+          "deleteConfirmEmpty": "ghomvamDaq ghom pagh — Daj. Gedu ngu’ je teqlu’.",
+          "deleteConfirmWithParticipants": "{count, plural, =1 {ghomvamDaq 1 ghom} other {ghomvamDaq # ghompu’}}. ngu’be’pu’ jolDaq lengtaH."
         },
         "gedu": {
           "removeAria": "{name} yIteq"
@@ -675,15 +676,15 @@
           "addTitle": "{name} ghomvaD Gedu yIchu’",
           "addDescription": "wa’ Gedu, wa’ ghom — Hoch Daq. ngu’lu’pu’ wovbe’."
         },
-        "removeGamer": {
+        "removeParticipant": {
           "confirmTitle": "ngoptlhInvamvo’ {name} yIteq’a’?",
           "confirmDescription": "ngu’be’choH {name}, ’ej DaH ’el laHbe’.",
           "noRefundWarning": "Huch nobHa’lu’be’! DIlta’ ’e’ DIl, vaj HuchDaj Suqqa’be’.",
-          "confirmCta": "Suvwl’ yIteq"
+          "confirmCta": "ghom yIteq"
         },
         "waitlist": {
           "title": "loSwI’pu’",
-          "subtitle": "pa’ loStaH SuvwI’pu’, ’el poHchaj mI’lu’. ghommeHghaj wa’ yIngeH ’ej pa’ yInob; pagh naDev SuvwI’ Sang yIqep, tlha’Daq yIlan.",
+          "subtitle": "pa’ loStaH ghompu’, ’el poHchaj mI’lu’. ghommeHghaj wa’ yIngeH ’ej pa’ yInob; pagh naDev ghom Sang yIqep, tlha’Daq yIlan.",
           "empty": "pagh loSwI’pu’ tu’lu’."
         },
         "seatsOverfilled": "{count} / {total} pa’ – {over} tlhoy law’",
@@ -1297,9 +1298,9 @@
       "noOtherGroups": "may’vamDaq latlh ghom tu’lu’be’.",
       "railGroupHeading": "ghom’a’wIj",
       "noGedus": "Gedu tu’lu’be’.",
-      "gamersLabel": "Suvwl’pu’",
-      "gamerCount": "{count, plural, one {1 Suvwl’} other {# Suvwl’pu’}}",
-      "emptyRoster": "Suvwl’ jaSHa’ Suvwl’pu’ tu’lu’be’.",
+      "participantsLabel": "ghompu’",
+      "participantCount": "{count, plural, one {1 ghom} other {# ghompu’}}",
+      "emptyRoster": "ghomvamDaq pagh tu’lu’.",
       "untitledGroup": "ghom’a’ pong Hutlh",
       "noAssignedGroup": "may’vamDaq ghom’a’ Daghaj.",
       "notAssignedTitle": "may’lIj ’oHbe’",
@@ -1313,10 +1314,10 @@
       "minecraftUsernameSave": "yIpol",
       "minecraftUsernameCancel": "yIqIl",
       "editMinecraftUsername": "{name} Minecraft pong yIchoH",
-      "copyParentEmail": "vavnI’ QInHom yI’aQ {email}",
+      "copyContactEmail": "QInHom yI’aQ {email}",
       "emailCopied": "QInHom ’aQpu’",
-      "copyAllParentEmails": "Hoch vavnI’ QInHommey yI’aQ ({count})",
-      "allEmailsCopied": "Hoch vavnI’ QInHommey ’aQpu’",
+      "copyAllContactEmails": "Hoch QInHommey yI’aQ ({count})",
+      "allEmailsCopied": "Hoch QInHommey ’aQpu’",
       "loadingWorkspace": "ghom’a’vam may’mey laDlu’…",
       "minecraftSaveFailed": "pong pollu’be’. yIboq."
     },
@@ -2219,24 +2220,28 @@
       "notProvided": "ngeHbe’lu’"
     },
     "enrollmentParent": {
-      "subject": "{gamerName} DaH {productName}Daq tu’lu’",
+      "subject": "{participantName} DaH {productName}Daq tu’lu’",
+      "subjectSelf": "{productName} DaghojmeH DaH SoH ngu’lu’",
       "heading": "qo’ ghoH chellu’",
-      "body": "nuqneH {parentName}, {gamerName} DaH {productName}Daq Gedu {geduName}."
+      "body": "nuqneH {parentName}, {participantName} DaH {productName}Daq Gedu {geduName}.",
+      "bodySelf": "{parentName}, DaH {productName} DaghojmeH ngu’lu’; ghojmoHwI’ Gedu {geduName}."
     },
     "enrollmentGedu": {
-      "subject": "{gamerName} ghom’a’Daq muv — {productName}",
-      "heading": "toy’wI’ chu’ ghom’a’Daq",
-      "body": "nuqneH {geduName}, {gamerName} {productName}vaH ghom’a’Daq muv."
+      "subject": "{participantName} ghom’a’Daq muv — {productName}",
+      "heading": "ghom’a’lIjDaq muv ghom chu’",
+      "body": "nuqneH {geduName}, {participantName} {productName}vaH ghom’a’Daq muv."
     },
     "unenrollmentParent": {
-      "subject": "{gamerName} {productName}Daq tu’be’lu’",
+      "subject": "{participantName} {productName}Daq tu’be’lu’",
+      "subjectSelf": "{productName} vo’ SoH teqlu’pu’",
       "heading": "qo’ ghoHHa’ chellu’",
-      "body": "nuqneH {parentName}, {gamerName} {productName}Daq tu’be’lu’ (Gedu: {geduName})."
+      "body": "nuqneH {parentName}, {participantName} {productName}Daq tu’be’lu’ (Gedu: {geduName}).",
+      "bodySelf": "{parentName}, {productName} vo’ SoH teqlu’pu’ (Gedu: {geduName})."
     },
     "unenrollmentGedu": {
-      "subject": "{gamerName} ghom’a’ voQ — {productName}",
-      "heading": "toy’wI’ ghom’a’ voQ",
-      "body": "nuqneH {geduName}, {gamerName} {productName}vaH ghom’a’ voQ."
+      "subject": "{participantName} ghom’a’ voQ — {productName}",
+      "heading": "ghom’a’lIjvo’ mej ghom",
+      "body": "nuqneH {geduName}, {participantName} {productName}vaH ghom’a’ voQ."
     },
     "groupAdded": {
       "subject": "ghom’a’ chu’ ngeHlu’ — {productName}",

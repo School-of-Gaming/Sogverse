@@ -147,7 +147,7 @@ describe("waitlist — admin read + promote/demote + self position", () => {
 
     const snapshot = productGroupsSnapshot.parse(res.data);
     expect(snapshot.waitlist).toHaveLength(2);
-    expect(snapshot.waitlist.map((p) => p.gamer_id)).toEqual([
+    expect(snapshot.waitlist.map((p) => p.participant_id)).toEqual([
       TEST_IDS.GAMER,
       TEST_IDS.GAMER_2,
     ]);
@@ -201,7 +201,7 @@ describe("waitlist — admin read + promote/demote + self position", () => {
     // against real Postgres output rather than assumed.
     const snapshot = productGroupsSnapshot.parse(res.data);
     const flags = Object.fromEntries(
-      snapshot.unassigned.map((p) => [p.gamer_id, p.has_live_subscription]),
+      snapshot.unassigned.map((p) => [p.participant_id, p.has_live_subscription]),
     );
     expect(flags).toEqual({
       [TEST_IDS.GAMER]: true,
@@ -237,7 +237,7 @@ describe("waitlist — admin read + promote/demote + self position", () => {
     // against real Postgres output rather than assumed.
     const snapshot = productGroupsSnapshot.parse(res.data);
     const markers = Object.fromEntries(
-      snapshot.waitlist.map((p) => [p.gamer_id, p.has_payment_marker]),
+      snapshot.waitlist.map((p) => [p.participant_id, p.has_payment_marker]),
     );
     expect(markers).toEqual({
       [TEST_IDS.GAMER]: true,

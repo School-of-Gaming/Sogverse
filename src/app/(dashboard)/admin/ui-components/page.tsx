@@ -119,7 +119,7 @@ import {
   type GamePlatform,
 } from "@/components/game-account";
 import { useRobloxProfile } from "@/services/roblox";
-import { GamerChip } from "@/components/admin/products/groups/gamer-chip";
+import { ParticipantChip } from "@/components/admin/products/groups/participant-chip";
 import { DndContext } from "@dnd-kit/core";
 import { AddGamerFormCard } from "@/components/family";
 import { cn } from "@/lib/utils";
@@ -2947,7 +2947,7 @@ function GameAccountDemo() {
           Same row, same four states, <code>figure=&quot;head&quot;</code>: 32px
           instead of 60px, for a dense list where the whole character crowds out
           what the list is about. Two surfaces use it &mdash; the voice
-          participant row and the gamer chip below. Everywhere else, including the
+          participant row and the participant chip below. Everywhere else, including the
           admin user detail page, keeps the whole figure. Both platforms are{" "}
           <em>identical</em> here
           &mdash; a Minecraft face render and a Roblox headshot are both square,
@@ -2987,55 +2987,63 @@ function GameAccountDemo() {
         <AddGamerDialogDemo />
       </SubSection>
 
-      <SubSection title="In the admin gamer chip">
+      <SubSection title="In the admin participant chip">
         <p className="text-sm text-muted-foreground">
           The chip is the draggable roster token in the product groups panel, and
           it appears in four places: the group columns, the waitlist card, the
-          unassigned card and the drag overlay. It stacks name, age/gender, parent
-          and the identity row inside a narrow rail, so it takes the compact
-          figure: the whole body was taller than the other three lines put
-          together. Drag is live &mdash; the chips below are real, and there is
-          nowhere to drop them.
+          unassigned card and the drag overlay. A child stacks name, age/gender,
+          parent and the identity row inside a narrow rail, so it takes the
+          compact figure: the whole body was taller than the other three lines
+          put together. An adult holding their own seat has none of those three
+          facts, so the chip drops them rather than drawing blanks, and carries
+          the one thing a child&rsquo;s chip has no room for &mdash; the address
+          &mdash; where the parent&rsquo;s name would be. Drag is live &mdash;
+          the chips below are real, and there is nowhere to drop them.
         </p>
-        <GamerChipDemo />
+        <ParticipantChipDemo />
       </SubSection>
     </div>
   );
 }
 
 /**
- * Chip fixtures. The ids are real generated UUIDv4s, hardcoded: an identicon is
- * hashed out of the id's hex bytes, so a readable stand-in renders a degenerate
- * square and a freshly generated one gives the same child a different face on
- * every reload.
+ * Chip fixtures. The ids are real generated UUIDv4s, hardcoded:
+ * an identicon is hashed out of the id's hex bytes, so a readable stand-in
+ * renders a degenerate square and a freshly generated one gives the same person
+ * a different face on every reload.
+ *
+ * `marja` is an adult holding a seat of her own. She has no date of birth, no
+ * gender and no game account on purpose — those live on `gamer_profiles` and
+ * `minecraft_accounts`, and an adult seat has neither row.
  */
-const CHIP_GAMERS = {
+const CHIP_PEOPLE = {
   aino: "3f5f2c9a-1d7e-4c8b-9a2f-6b1e0c4d8a37",
   joonas: "c81b47e2-9f30-4a15-8d6c-2e7b5a091f4d",
   petra: "7d2a6e13-5c84-4b09-a7f1-38e9c0b2d654",
+  marja: "37cbff02-0866-4259-9586-20d91010007a",
 } as const;
 
-function GamerChipDemo() {
+function ParticipantChipDemo() {
   return (
     // The chip is a dnd-kit draggable, so it needs the context its real parents
     // give it. There are no droppables here — picking one up and letting go puts
     // it back, which is all this demo needs.
     <DndContext>
-      <GamerChipRow />
+      <ParticipantChipRow />
     </DndContext>
   );
 }
 
-function GamerChipRow() {
+function ParticipantChipRow() {
   return (
     <div className="flex flex-wrap items-start gap-6">
       {/* The real rail width in the groups panel, so the chip is judged at the
           size it actually renders at rather than stretched across the page. */}
       <div className="w-64 space-y-2 rounded-lg border p-3">
         <DemoCaption>In a group column (w-64, the real rail)</DemoCaption>
-        <GamerChip
+        <ParticipantChip
           participationId="demo-1"
-          gamerId={CHIP_GAMERS.aino}
+          participantId={CHIP_PEOPLE.aino}
           firstName="Aino"
           dateOfBirth="2014-03-11"
           gender="girl"
@@ -3043,10 +3051,11 @@ function GamerChipRow() {
           parentLastName="Virtanen"
           minecraftUsername="Notch"
           minecraftUuid="8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6"
+          participantEmail={null}
         />
-        <GamerChip
+        <ParticipantChip
           participationId="demo-2"
-          gamerId={CHIP_GAMERS.joonas}
+          participantId={CHIP_PEOPLE.joonas}
           firstName="Joonas"
           dateOfBirth="2012-09-02"
           gender="boy"
@@ -3054,10 +3063,11 @@ function GamerChipRow() {
           parentLastName="Nieminen"
           minecraftUsername="jeb_"
           minecraftUuid={null}
+          participantEmail={null}
         />
-        <GamerChip
+        <ParticipantChip
           participationId="demo-3"
-          gamerId={CHIP_GAMERS.petra}
+          participantId={CHIP_PEOPLE.petra}
           firstName="Petra"
           dateOfBirth={null}
           gender={null}
@@ -3065,14 +3075,32 @@ function GamerChipRow() {
           parentLastName={null}
           minecraftUsername={null}
           minecraftUuid={null}
+          participantEmail={null}
+        />
+        {/* The adult variant, deliberately last in the same column: the thing
+            worth seeing is how it sits against three child chips at the real
+            rail width, not how it looks alone. Three lines become one, the
+            badge carries the difference at a glance, and the address takes the
+            line the parent's name had. */}
+        <ParticipantChip
+          participationId="demo-5"
+          participantId={CHIP_PEOPLE.marja}
+          firstName="Marja"
+          dateOfBirth={null}
+          gender={null}
+          parentFirstName={null}
+          parentLastName={null}
+          minecraftUsername={null}
+          minecraftUuid={null}
+          participantEmail="marja.korhonen@example.com"
         />
       </div>
 
       <div className="w-64 space-y-2 rounded-lg border p-3">
         <DemoCaption>Mid-save — greyed and undraggable</DemoCaption>
-        <GamerChip
+        <ParticipantChip
           participationId="demo-4"
-          gamerId={CHIP_GAMERS.aino}
+          participantId={CHIP_PEOPLE.aino}
           firstName="Aino"
           dateOfBirth="2014-03-11"
           gender="girl"
@@ -3080,6 +3108,7 @@ function GamerChipRow() {
           parentLastName="Virtanen"
           minecraftUsername="Notch"
           minecraftUuid="8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6"
+          participantEmail={null}
           isPending
         />
       </div>

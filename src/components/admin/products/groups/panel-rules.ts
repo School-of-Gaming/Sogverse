@@ -21,13 +21,13 @@ import type {
 // shapes return null and the handlers no-op — a drag must never throw.
 // ---------------------------------------------------------------------------
 
-/** Payload attached by GamerChip's useDraggable. */
-export interface GamerDragData {
+/** Payload attached by ParticipantChip's useDraggable. */
+export interface ChipDragData {
   participationId: string;
   firstName: string;
 }
 
-export function readGamerDragData(value: unknown): GamerDragData | null {
+export function readChipDragData(value: unknown): ChipDragData | null {
   if (typeof value !== "object" || value === null) return null;
   if (
     !("participationId" in value) ||
@@ -227,7 +227,7 @@ export function resolveDrop(
  * on it leaves no recurring charge unaccounted for.
  *
  * Two panel decisions ask this one question, deliberately the same one
- * `admin_enroll_gamer` refuses on:
+ * `admin_enroll_participant` refuses on:
  *
  *  - whether the add-gamer affordance is offered at all (`canCompEnroll`), and
  *  - whether promoting a never-paid waitlister needs the dialog. A paid camp or
