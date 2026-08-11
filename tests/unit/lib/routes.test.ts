@@ -4,7 +4,7 @@ import {
   CATEGORY_PARAM,
   CATEGORY_TYPE,
   SHOP_CATEGORIES,
-  parseCategory,
+  parseCategories,
 } from "@/components/public/products/shop-categories";
 import type { ProductType } from "@/types";
 
@@ -49,12 +49,15 @@ describe("ROUTES.shopBrowse", () => {
   it.each(SHOP_CATEGORIES)(
     "emits a %s param the shop's own parser round-trips",
     (category) => {
+      // The back link names one category; the shop's Type filter is a
+      // multi-select, so it has to read that single value as a selection of
+      // one — not as a stale format it ignores.
       const emitted = new URL(
         ROUTES.shopBrowse(CATEGORY_TYPE[category]),
         "https://example.test",
       ).searchParams.get(CATEGORY_PARAM);
       expect(emitted).not.toBeNull();
-      expect(parseCategory(emitted)).toBe(category);
+      expect(parseCategories(emitted)).toEqual([category]);
     },
   );
 

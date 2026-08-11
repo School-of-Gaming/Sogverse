@@ -1427,10 +1427,11 @@
     }
   },
   "productBrowse": {
-    "headings": {
-      "consumer_club": "Våra klubbar",
-      "camp": "Våra läger",
-      "event": "Våra evenemang"
+    "pageTitle": "Butik",
+    "sections": {
+      "clubs": "Klubbar",
+      "camps": "Läger",
+      "events": "Evenemang"
     },
     "filters": {
       "type": "Typ",

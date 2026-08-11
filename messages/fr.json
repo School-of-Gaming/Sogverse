@@ -1427,10 +1427,11 @@
     }
   },
   "productBrowse": {
-    "headings": {
-      "consumer_club": "Nos clubs",
-      "camp": "Nos stages",
-      "event": "Nos événements"
+    "pageTitle": "Boutique",
+    "sections": {
+      "clubs": "Clubs",
+      "camps": "Stages",
+      "events": "Événements"
     },
     "filters": {
       "type": "Type",
