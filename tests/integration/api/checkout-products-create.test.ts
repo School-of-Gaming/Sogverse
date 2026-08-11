@@ -693,7 +693,7 @@ describe("POST /api/checkout/products/create", () => {
     // snapshot goes on the intent and, separately, on the invoice.
     const purchaseMetadata = {
       product_id: PRODUCT_ID,
-      gamer_id: GAMER_ID,
+      participant_id: GAMER_ID,
       customer_id: CUSTOMER_ID,
       locale: "en",
       spoken_language_code: "fi",
@@ -886,7 +886,7 @@ describe("POST /api/checkout/products/create", () => {
         purchaseShape: "subscription_monthly",
         currency: "eur",
         product_id: PRODUCT_ID,
-        gamer_id: GAMER_ID,
+        participant_id: GAMER_ID,
         customer_id: CUSTOMER_ID,
         locale: "en",
         spoken_language_code: "en",
