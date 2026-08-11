@@ -9,9 +9,18 @@ Perform a focused code review of the current branch against local `dev`.
 
 ## Step 1 — Gather the diff
 
-Run `git diff dev..HEAD` against **local `dev`** (do not fetch, do not use `origin/dev`). Identify every changed file.
+Diff from the **merge-base with local `dev`** (do not fetch, do not use `origin/dev`):
 
-**Two-dot, not three-dot** — this repo rebase-merges PRs, so three-dot's merge-base predates the twins on dev and inflates the diff with work that's already landed.
+```
+BASE=$(git merge-base dev HEAD)
+git diff "$BASE"..HEAD
+```
+
+Identify every changed file.
+
+**Why merge-base and not `dev..HEAD`:** the two are identical while `dev` hasn't moved since the branch was cut — but on any session long enough to want a review, `dev` usually *has* moved, and a two-dot diff against its tip then includes an inverted copy of everyone else's new work alongside the branch's own. The review is of this branch's commits, not of the gap between two moving points. A branch that is merely *behind* `dev` does not need a rebase or merge to get a clean diff — the merge-base diff is already clean; semantic collisions with newer `dev` work are the merge's and CI's job to catch, not the review's.
+
+**Check for twin commits before trusting the diff:** run `git cherry dev HEAD`. Commits marked `-` have an equivalent patch already on `dev` (a rebase-merged or cherry-picked twin), and the merge-base diff would re-show that already-landed work as if it were new. If any `-` appear, say so in the review and either exclude those commits' changes from consideration or have the branch updated (merge `dev` in, or rebase) before reviewing — that is the one case where updating the branch is what produces a clean diff.
 
 ## Step 2 — Decide how to read and whether to split
 
