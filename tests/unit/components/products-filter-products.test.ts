@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { filterProducts } from "@/components/public/products/filter-products";
-import type { ProductBrowseRow, ProductTopic } from "@/types";
+import type { ProductBrowseRow, ProductTopic, ProductType } from "@/types";
 
 // Row factory — only the fields filterProducts() looks at are overridable;
 // every other ProductBrowseRow column carries an honest, fully-typed default
@@ -8,6 +8,7 @@ import type { ProductBrowseRow, ProductTopic } from "@/types";
 function row(overrides: {
   id: string;
   topic: ProductTopic;
+  productType?: ProductType;
   isRemote?: boolean;
   spokenLanguageCode?: string;
   // Null on both is the adults-only shape: a product with no gamer audience
@@ -16,8 +17,8 @@ function row(overrides: {
   maxAge?: number | null;
   forGamers?: boolean;
   forParents?: boolean;
-  // Weekdays (0=Mon..6=Sun) the product's recurring schedule touches. Each
-  // becomes a schedule_slot; only `weekday` matters for filterProducts().
+  // Weekdays (0=Mon..6=Sun) the product's schedule touches. Each becomes a
+  // schedule_slot; only `weekday` matters for filterProducts().
   weekdays?: number[];
 }): ProductBrowseRow {
   return {
@@ -35,7 +36,7 @@ function row(overrides: {
     for_parents: overrides.forParents ?? false,
     min_age: overrides.minAge === undefined ? 7 : overrides.minAge,
     max_age: overrides.maxAge === undefined ? 17 : overrides.maxAge,
-    product_type: "consumer_club",
+    product_type: overrides.productType ?? "consumer_club",
     primary_gedu_fee_cents: null,
     assistant_gedu_fee_cents: null,
     municipality_fee_cents: null,
@@ -323,5 +324,52 @@ describe("filterProducts", () => {
     }).map((p) => p.id);
     // A meets Mon and is online; B meets Fri (wrong day); only A passes.
     expect(ids).toEqual(["a"]);
+  });
+
+  it("applies days to camps and events, not just clubs", () => {
+    // The day filter is universal: every product type's slots carry a weekday,
+    // and "which days is my child busy" is the same question for a camp day or
+    // a one-off event as it is for a weekly club.
+    const camp = row({
+      id: "camp",
+      topic: "minecraft_java",
+      productType: "camp",
+      weekdays: [1, 2], // Tue, Wed
+    });
+    const event = row({
+      id: "event",
+      topic: "fortnite",
+      productType: "event",
+      weekdays: [5], // Sat
+    });
+    const rows = [camp, event];
+
+    expect(
+      filterProducts(rows, {
+        topics: [],
+        format: null,
+        languages: [],
+        age: null,
+        days: [1],
+      }).map((p) => p.id),
+    ).toEqual(["camp"]);
+    expect(
+      filterProducts(rows, {
+        topics: [],
+        format: null,
+        languages: [],
+        age: null,
+        days: [5],
+      }).map((p) => p.id),
+    ).toEqual(["event"]);
+    expect(
+      filterProducts(rows, {
+        topics: [],
+        format: null,
+        languages: [],
+        age: null,
+        days: [0], // Mon — neither meets then
+      }),
+    ).toEqual([]);
   });
 });

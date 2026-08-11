@@ -1,5 +1,5 @@
 import type { AgeBand } from "@/lib/constants/gamer-age";
-import type { ProductBrowseRow, ProductType } from "@/types";
+import type { ProductBrowseRow } from "@/types";
 
 // Topic + format + language filters as the parent navigates the catalog.
 //
@@ -19,13 +19,13 @@ import type { ProductBrowseRow, ProductType } from "@/types";
 //   from `PRODUCT_AGE_BANDS` in `@/lib/constants/gamer-age` (see
 //   `product-browse-filters.tsx`).
 // - `days`: list of weekdays (0=Mon..6=Sun, matching `schedule_slots.weekday`)
-//   the recurring schedule must touch. A product passes when any of its
-//   `schedule_slots` falls on a selected day. OR semantics across the set
-//   (a parent picking Mon AND Wed expects clubs meeting on either). Empty
-//   means "any day". This is a Clubs-only filter — the chip row is hidden for
-//   Camps and Events and the caller passes `[]` there (see
-//   `product-browse-page.tsx`), so a camp or event with weekday slots is never
-//   narrowed by it.
+//   the schedule must touch. A product passes when any of its `schedule_slots`
+//   falls on a selected day. OR semantics across the set (a parent picking Mon
+//   AND Wed expects to see either). Empty means "any day". It applies to every
+//   product type: a club's recurring slot, a camp's day and an event's date all
+//   carry a weekday, and "which days of the week is my child busy" is the same
+//   question in all three cases. A product with no slots at all (schedule TBD)
+//   therefore drops out of any day selection.
 //
 // Filters AND together: a product must pass every active filter.
 // Empty filter values are no-ops, so unset filters always pass.
@@ -51,17 +51,6 @@ export const EMPTY_FILTERS: BrowseFilters = {
   age: null,
   days: [],
 };
-
-// Single source of truth for "does the day-of-week filter apply to this product
-// type". Only types with a recurring weekly schedule (clubs) qualify — camps
-// run over a date range and events happen once, so even though their slots
-// carry weekdays the filter is neither offered nor applied for them. Both the
-// filter-row visibility (`product-browse-filters.tsx`, via the category's
-// product type) and the filter application (`product-browse-page.tsx`, via the
-// browse type) gate on this, so the two can't drift.
-export function productTypeSupportsDayFilter(type: ProductType): boolean {
-  return type === "consumer_club" || type === "municipality_club";
-}
 
 export function filterProducts(
   products: readonly ProductBrowseRow[],
