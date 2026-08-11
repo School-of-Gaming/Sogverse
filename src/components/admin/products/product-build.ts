@@ -145,6 +145,9 @@ export function validate(
   if (!state.topic) return err("topicRequired");
   if (!state.spokenLanguageCode) return err("spokenLanguageRequired");
 
+  // A blank age passes here as 0 — the same open half of the age round-trip
+  // documented at buildSharedFields' Number(state.minAge); the conditional
+  // presence rule lands with step 8's audience checkboxes.
   const minAge = Number(state.minAge);
   const maxAge = Number(state.maxAge);
   if (!Number.isInteger(minAge) || minAge < 0) return err("minAgeInvalid");
@@ -356,6 +359,15 @@ function buildSharedFields(
   const showPricing =
     billingMode === "paid" && config.pricingShape !== "external";
 
+  // Half of the age round-trip is still open, by plan: `Number("")` is 0, so a
+  // product loaded with null ages (for-parents only, creatable through the raw
+  // API today) would be sent back as 0/0 and refused by the age CHECK — loudly,
+  // which is the accepted handling until step 8 of the products-for-parents
+  // plan lands the empty-age → null emission and conditional presence
+  // validation alongside the audience checkboxes. Admins are trusted to act
+  // only through the UI (root CLAUDE.md), and the UI cannot yet produce a
+  // for-parents product, so every form product is for-gamers with required
+  // ages until then.
   const minAge = Number(state.minAge);
   const maxAge = Number(state.maxAge);
   // Uncapped (no seat limit) → null for any product type; otherwise the count.
