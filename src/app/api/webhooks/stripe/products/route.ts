@@ -100,10 +100,14 @@ async function handleCheckoutCompleted(
   // would drop a legacy in-flight session silently: the parent is charged, no
   // seat is written, and Stripe never redelivers.
   //
-  // DELETE ONCE PRE-DEPLOY SESSIONS HAVE AGED OUT. Checkout Sessions expire
-  // within 24h (ours sooner still — see CHECKOUT_SESSION_LIFETIME_MINUTES), so
-  // a day after the deploy no live session can carry the old key. Delete this
-  // fallback together with the one on the paid confirmation page.
+  // DELETE ONCE PRE-CUTOVER SESSIONS HAVE AGED OUT — and the clock is the
+  // PRODUCTION release, not the dev merge. The gamer_id → participant_id rename
+  // (00172) reaches production only on a dev→main release deploy; until that
+  // ships, the live production build still mints `gamerId`, so deleting this on
+  // merge would strand exactly the sessions it protects. Safe to remove ~30 min
+  // (CHECKOUT_SESSION_LIFETIME_MINUTES) after the release that first carries
+  // 00172. Delete this fallback together with the ones on the paid confirmation
+  // page and the checkout route's finance snapshot (tracked in TODO.md).
   const participantId =
     session.metadata?.participantId ?? session.metadata?.gamerId;
   const productId = session.metadata?.productId;

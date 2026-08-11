@@ -140,9 +140,11 @@ async function renderPaidConfirmation(
   // matched the signed-in user's id.
   //
   // Both metadata keys are read for the same reason the webhook reads both: a
-  // session created before the participant rename shipped carries `gamerId`
-  // and can land here after it. Delete this fallback with the webhook's, once
-  // pre-deploy sessions have expired (within 24h of the deploy).
+  // session created before the participant rename (00172) reached PRODUCTION
+  // carries `gamerId` and can land here after it. The clock is the production
+  // release, not the dev merge — see the webhook's fuller note. Delete this
+  // fallback with the webhook's and the checkout finance snapshot's, ~30 min
+  // after the release that first carries 00172 (tracked in TODO.md).
   // `||` rather than `??`: Stripe types metadata as a total string map, so a
   // key it does not actually carry reads as `undefined` at runtime while the
   // compiler believes it is a string. Falsiness is the honest test either way —
