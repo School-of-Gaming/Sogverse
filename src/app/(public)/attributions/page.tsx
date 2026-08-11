@@ -99,8 +99,21 @@ const RESOURCES: AttributedResource[] = [
   },
 ];
 
-/** An outbound credit link, marked as leaving the site. */
-function OutboundLink({ href, children }: { href: string; children: ReactNode }) {
+/**
+ * An outbound credit link, marked as leaving the site. Every link on this page
+ * opens a new tab, so both audiences have to be told: the arrow glyph for a
+ * reader who can see it, and `newTabLabel` for one who cannot. The label is
+ * passed in rather than read here so this stays a plain synchronous component.
+ */
+function OutboundLink({
+  href,
+  newTabLabel,
+  children,
+}: {
+  href: string;
+  newTabLabel: string;
+  children: ReactNode;
+}) {
   return (
     <a
       href={href}
@@ -110,6 +123,7 @@ function OutboundLink({ href, children }: { href: string; children: ReactNode })
     >
       {children}
       <ExternalLink className="h-3 w-3 shrink-0" aria-hidden="true" />
+      <span className="sr-only">{newTabLabel}</span>
     </a>
   );
 }
@@ -117,6 +131,7 @@ function OutboundLink({ href, children }: { href: string; children: ReactNode })
 export default async function AttributionsPage() {
   const t = await getTranslations("attributions");
   const locale = await getLocale();
+  const newTabLabel = t("opensInNewTab");
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
@@ -140,7 +155,10 @@ export default async function AttributionsPage() {
                 <span className="text-muted-foreground">
                   {t("sourceLabel")}{" "}
                 </span>
-                <OutboundLink href={resource.source.href}>
+                <OutboundLink
+                  href={resource.source.href}
+                  newTabLabel={newTabLabel}
+                >
                   {resource.source.label}
                 </OutboundLink>
               </span>
@@ -149,7 +167,10 @@ export default async function AttributionsPage() {
                   <span className="text-muted-foreground">
                     {t("licenceLabel")}{" "}
                   </span>
-                  <OutboundLink href={resource.licence.href}>
+                  <OutboundLink
+                    href={resource.licence.href}
+                    newTabLabel={newTabLabel}
+                  >
                     {resource.licence.label}
                   </OutboundLink>
                 </span>

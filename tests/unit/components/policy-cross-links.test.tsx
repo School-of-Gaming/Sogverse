@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import messages from "@/../messages/en.json";
+import fi from "@/../messages/fi.json";
+import fr from "@/../messages/fr.json";
+import sv from "@/../messages/sv.json";
+import tlh from "@/../messages/tlh.json";
 import { PolicyPage } from "@/components/legal/policy-page";
 import { policyTextSegments } from "@/components/legal/policy-content";
 import { ROUTES } from "@/lib/constants/routes";
@@ -22,6 +26,13 @@ import { ROUTES } from "@/lib/constants/routes";
  * 3. **No page links to itself.** A citation of the page you are already on is
  *    a dead end, and it is the easy mistake to make while sweeping the catalog.
  *
+ * Properties 2 and 3 run over **every** catalog, not just English, and each
+ * translation is additionally held to English's tags key for key. The
+ * completeness script compares keys and ICU placeholders and never looks inside
+ * a value for a tag, so a Finnish paragraph that quietly loses its
+ * `<linkPrivacy>` wrapper would otherwise ship a binding document with a
+ * missing link in the one language nobody reviewing English would open.
+ *
  * Rendered to static markup rather than driven in jsdom: a legal page has no
  * interactivity and the server's HTML is the whole of what a reader meets.
  */
@@ -36,23 +47,24 @@ const TAG_ROUTES = {
   linkRobloxTerms: ROUTES.robloxTerms,
 } as const;
 
-/** The six documents: the message subtree each one's copy lives in, and its own tag. */
+/** The six documents: the namespace each one's copy lives in, and its own tag. */
 const LEGAL_DOCUMENTS = [
-  { name: "privacy", copy: messages.privacy, ownTag: "linkPrivacy" },
-  { name: "terms", copy: messages.terms, ownTag: "linkTerms" },
-  { name: "discipline", copy: messages.discipline, ownTag: "linkDiscipline" },
-  {
-    name: "robloxPrivacy",
-    copy: messages.robloxPrivacy,
-    ownTag: "linkRobloxPrivacy",
-  },
-  {
-    name: "robloxSafeguarding",
-    copy: messages.robloxSafeguarding,
-    ownTag: "linkRobloxSafeguarding",
-  },
-  { name: "robloxTerms", copy: messages.robloxTerms, ownTag: "linkRobloxTerms" },
+  { name: "privacy", ownTag: "linkPrivacy" },
+  { name: "terms", ownTag: "linkTerms" },
+  { name: "discipline", ownTag: "linkDiscipline" },
+  { name: "robloxPrivacy", ownTag: "linkRobloxPrivacy" },
+  { name: "robloxSafeguarding", ownTag: "linkRobloxSafeguarding" },
+  { name: "robloxTerms", ownTag: "linkRobloxTerms" },
 ] as const;
+
+/** Every shipped catalog, English first — it is what the rest are measured against. */
+const CATALOGS: Record<string, Record<string, unknown>> = {
+  en: messages,
+  fi,
+  fr,
+  sv,
+  tlh,
+};
 
 /** The text a reader ends up with, ignoring which parts are links. */
 const rendered = (source: string) =>
@@ -60,15 +72,33 @@ const rendered = (source: string) =>
     .map((segment) => segment.text)
     .join("");
 
-/** Every string anywhere under a message subtree, in reading order. */
-function stringsIn(node: unknown): string[] {
-  if (typeof node === "string") return [node];
-  if (Array.isArray(node)) return node.flatMap(stringsIn);
-  if (typeof node === "object" && node !== null) {
-    return Object.values(node).flatMap(stringsIn);
+/**
+ * Every string anywhere under a message subtree, keyed by its path — the path
+ * is what lets one locale's value be lined up against English's.
+ */
+function flatStrings(node: unknown, prefix = ""): Map<string, string> {
+  const found = new Map<string, string>();
+  const absorb = (child: unknown, path: string) => {
+    for (const [key, value] of flatStrings(child, path)) found.set(key, value);
+  };
+
+  if (typeof node === "string") {
+    found.set(prefix, node);
+  } else if (Array.isArray(node)) {
+    node.forEach((child, i) => absorb(child, `${prefix}.${i}`));
+  } else if (typeof node === "object" && node !== null) {
+    for (const [key, child] of Object.entries(node)) {
+      absorb(child, prefix ? `${prefix}.${key}` : key);
+    }
   }
-  return [];
+  return found;
 }
+
+/** The tags a string carries, sorted so two strings can be compared directly. */
+const tagsIn = (value: string) =>
+  [...value.matchAll(/<\/?([A-Za-z][A-Za-z0-9]*)>/g)]
+    .map(([, tag]) => tag)
+    .sort();
 
 describe("policy cross-reference tags", () => {
   it("leaves untagged copy exactly as written, as a single segment", () => {
@@ -128,23 +158,42 @@ describe("policy cross-reference tags", () => {
   });
 });
 
-describe("the English catalog's legal namespaces", () => {
+describe("every catalog's legal namespaces", () => {
   it("uses only tags the renderer knows", () => {
-    for (const { name, copy } of LEGAL_DOCUMENTS) {
-      for (const value of stringsIn(copy)) {
-        for (const [, tag] of value.matchAll(/<\/?([A-Za-z][A-Za-z0-9]*)>/g)) {
-          expect(Object.keys(TAG_ROUTES), `${name}: ${value}`).toContain(tag);
+    for (const [locale, catalog] of Object.entries(CATALOGS)) {
+      for (const { name } of LEGAL_DOCUMENTS) {
+        for (const [path, value] of flatStrings(catalog[name])) {
+          for (const tag of tagsIn(value)) {
+            expect(Object.keys(TAG_ROUTES), `${locale}: ${name}.${path}`).toContain(tag);
+          }
         }
       }
     }
   });
 
   it("never has a document cite itself as a link", () => {
-    for (const { name, copy, ownTag } of LEGAL_DOCUMENTS) {
-      for (const value of stringsIn(copy)) {
-        expect(value, `${name} links to its own page`).not.toContain(
-          `<${ownTag}>`,
-        );
+    for (const [locale, catalog] of Object.entries(CATALOGS)) {
+      for (const { name, ownTag } of LEGAL_DOCUMENTS) {
+        for (const [path, value] of flatStrings(catalog[name])) {
+          expect(value, `${locale}: ${name}.${path} links to its own page`).not.toContain(
+            `<${ownTag}>`,
+          );
+        }
+      }
+    }
+  });
+
+  it("gives every translation the same cross-links as the English source", () => {
+    for (const [locale, catalog] of Object.entries(CATALOGS)) {
+      if (locale === "en") continue;
+      for (const { name } of LEGAL_DOCUMENTS) {
+        const translated = flatStrings(catalog[name]);
+        for (const [path, source] of flatStrings(messages[name])) {
+          expect(
+            tagsIn(translated.get(path) ?? ""),
+            `${locale}: ${name}.${path}`,
+          ).toEqual(tagsIn(source));
+        }
       }
     }
   });

@@ -15,9 +15,13 @@ export type PolicyBlock = { paragraph: string } | { bullets: string[] };
  * another one's copy, the message wraps that name in the tag for the document
  * being named — `<linkRobloxPrivacy>Roblox Programme Privacy Policy</…>` — so
  * the translator writes their language's name for the document and never
- * chooses (or mistypes) a URL. One stable tag per document also means the i18n
- * tag-parity gate protects every locale mechanically: a translation that drops
- * or renames a tag fails the check rather than silently losing a link.
+ * chooses (or mistypes) a URL. One stable tag per document also means every
+ * locale is protected mechanically: the unit suite compares each legal
+ * namespace's tags against the English catalog, key for key, so a translation
+ * that drops, renames or invents one fails CI rather than silently losing a
+ * link in the one language nobody reviewing English would notice. (The
+ * translation-completeness script does not look inside a value for tags — this
+ * is the check that does.)
  *
  * **Only our own documents are in here, on purpose.** A reference to somebody
  * else's policy — Roblox's, Lynx's standard terms, a regulator's site — stays

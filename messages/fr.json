@@ -3161,6 +3161,7 @@
       "geonames": "La liste des pays, des régions et des communes dans laquelle vous choisissez le lieu où vit votre famille — la même liste qui nous sert à trouver les clubs proches de chez vous. La nôtre s’appuie sur GeoNames sans en être une copie : nous écartons les lieux où nous n’intervenons pas, nous en regroupons certains autrement et nous en renommons d’autres sous la forme employée localement.",
       "laPoste": "Les codes postaux français de cette même liste, pour qu’une famille en France puisse saisir son code plutôt que de chercher sa commune.",
       "mcHeads": "Dessine le personnage Minecraft affiché à côté d’un compte Minecraft associé. Rien ne nous oblige à les citer : ils ne demandent rien en retour, et ce crédit est un remerciement."
-    }
+    },
+    "opensInNewTab": "(s’ouvre dans un nouvel onglet)"
   }
 }

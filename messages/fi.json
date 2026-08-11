@@ -3161,6 +3161,7 @@
       "geonames": "Maiden, alueiden ja kuntien luettelo, josta valitset, missä perheesi asuu — sama luettelo, jonka avulla etsimme lähelläsi olevia kerhoja. Luettelomme perustuu GeoNamesin aineistoon, mutta se ei ole siitä suora kopio: jätämme pois paikat, joissa emme toimi, ryhmittelemme osan toisin ja nimeämme osan uudelleen siihen muotoon, jota paikalliset käyttävät.",
       "laPoste": "Ranskan postinumerot samassa luettelossa, jotta Ranskassa asuva perhe voi kirjoittaa numeron sen sijaan, että etsisi kuntaansa listalta.",
       "mcHeads": "Piirtää Minecraft-hahmon, joka näkyy liitetyn Minecraft-tilin vieressä. Palvelu ei vaadi mainintaa, joten tämä on kiitos eikä velvollisuus."
-    }
+    },
+    "opensInNewTab": "(avautuu uuteen välilehteen)"
   }
 }
